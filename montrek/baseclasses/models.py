@@ -7,7 +7,7 @@ class MontrekHubABC(models.Model):
     class Meta:
         abstract = True
 
-    name = models.CharField(max_length=12)
+    identifier = models.CharField(max_length=12)
 
 
 #Base Satellite Model ABC
@@ -16,8 +16,10 @@ class MontrekSatelliteABC(models.Model):
         abstract = True
     start_date = models.DateTimeField()
     end_date = models.DateTimeField()
+    hub_entity = models.ForeignKey(MontrekHubABC, on_delete=models.CASCADE)
 
 #Base Link Model ABC
 class MontrekLinkABC(models.Model):
     class Meta:
         abstract = True
+
