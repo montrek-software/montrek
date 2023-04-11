@@ -1,12 +1,14 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from account.models import AccountHub, AccountStaticSatellite
 
 # Create your views here.
 
-def new_account(request):
-    return render(request, 'account_list.html')
+def account_new(request):
+    return redirect('/account/list')
 
-def new_account_form(request):
-    if request.GET.get('new_account_submit'):
-        return redirect('/account/new')
+def account_new_form(request):
     return render(request, 'new_account_form.html')
+
+def account_list(request):
+    return render(request, 'account_list.html')
 

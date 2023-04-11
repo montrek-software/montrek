@@ -46,7 +46,7 @@ class AccountFunctionalTests(MontrekFunctionalTest):
         # The page title is 'Montrek'
         self.assertIn('Montrek', self.browser.title)
         # The header line says 'Add new Account'
-        header_text = self.browser.find_element(By.TAG_NAME,'h1').header_text
+        header_text = self.browser.find_element(By.TAG_NAME,'h1').text
         self.assertIn('Add new Account', header_text)
         # He enters 'Billy's account' into the Account Name Box
         new_account_name_box = self.browser.find_element(By.ID,
@@ -55,7 +55,7 @@ class AccountFunctionalTests(MontrekFunctionalTest):
         # When he hits the submit button, he is directed to the accounts-list,
         # where he finds his new account listed
         new_list_submit = self.browser.find_element(By.ID,
-                                                    'id_new_list_submit').click()
-        header_text = self.browser.find_element(By.TAG_NAME,'h1').header_text
+                                                    'id_account_new__submit').click()
+        header_text = self.browser.find_element(By.TAG_NAME,'h1').text
         self.assertIn('Account List', header_text)
         self.check_for_row_in_table('Billy\'s account')
