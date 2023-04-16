@@ -1,9 +1,15 @@
+
 from django.shortcuts import render, redirect
 from account.models import AccountHub, AccountStaticSatellite
 
 # Create your views here.
 
 def account_new(request):
+    account_hub = AccountHub.objects.create()
+    account_static_satellite = AccountStaticSatellite.objects.create(
+        hub_entity=account_hub,
+        account_name=request.POST['account_name'],
+                                )
     return redirect('/account/list')
 
 def account_new_form(request):
