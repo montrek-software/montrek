@@ -7,4 +7,17 @@
         </div>
     </div>
 </div>
+{% block table %}
+    <div id="id_account_list">
+        <table class="table">
+            <tr><th colspan="2">Account Name</th></tr>
+            {% for account in accounts_static %}
+            <tr><td>{{ account.account_name }}</td>
+                <td><a id='link_account_{{ account.hub_entity.id }}'
+                       href="{% url 'account_view' account.hub_entity.id %}"><span class="glyphicon glyphicon-chevron-right"></a>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+{% endblock %}
 {% endblock %}

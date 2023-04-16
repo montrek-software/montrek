@@ -16,5 +16,10 @@ def account_new_form(request):
     return render(request, 'new_account_form.html')
 
 def account_list(request):
-    return render(request, 'account_list.html')
+    accounts_static = AccountStaticSatellite.objects.all()
+    return render(request, 
+                  'account_list.html', 
+                  {'accounts_static': accounts_static})
+def account_view(request, account_id: int):
+    pass
 

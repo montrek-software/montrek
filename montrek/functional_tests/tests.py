@@ -58,4 +58,4 @@ class AccountFunctionalTests(MontrekFunctionalTest):
                                                     'id_account_new__submit').click()
         header_text = self.browser.find_element(By.TAG_NAME,'h1').text
         self.assertIn('Account List', header_text)
-        self.check_for_row_in_table('Billy\'s account')
+        self.check_for_row_in_table('Billy\'s account', 'id_account_list')
