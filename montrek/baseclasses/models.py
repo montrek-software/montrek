@@ -1,5 +1,6 @@
 import datetime
 from django.db import models
+from django.utils import timezone
 
 # Create your models here.
 
@@ -15,7 +16,7 @@ class MontrekHubABC(models.Model):
 class MontrekSatelliteABC(models.Model):
     class Meta:
         abstract = True
-    start_date = models.DateTimeField(default=datetime.datetime.now())
+    start_date = models.DateTimeField(default=timezone.now)
     end_date = models.DateTimeField(default=datetime.datetime(2100,1,1))
     hub_entity = models.ForeignKey(MontrekHubABC, on_delete=models.CASCADE)
 
