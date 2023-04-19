@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-6">
+            <h1>{{ account_statics.account_name }}</h1>
+        </div>
+    </div>
+</div>
+{% block table %}
+    <div id="id_account_list">
+        <table class="table">
+        </table>
+    </div>
+{% endblock %}
+{% endblock %}
