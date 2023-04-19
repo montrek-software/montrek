@@ -1,0 +1,12 @@
+import factory
+
+class AccountHubFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = 'account.AccountHub'
+
+class AccountStaticSatelliteFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = 'account.AccountStaticSatellite'
+    hub_entity = factory.SubFactory(AccountHubFactory)
+    account_name = factory.Sequence(lambda n: f'Account {n}')
+
