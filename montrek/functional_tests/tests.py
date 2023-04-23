@@ -58,7 +58,7 @@ class AccountFunctionalTests(MontrekFunctionalTest):
                                                     'id_account_new__submit').click()
         header_text = self.browser.find_element(By.TAG_NAME,'h1').text
         self.assertIn('Account List', header_text)
-        self.check_for_row_in_table('Billy\'s account', 'id_account_list')
+        self.check_for_row_in_table('Billy\'s account', 'id_list')
 
     def test_access_account_in_list(self):
         # The user sets up two new accounts
@@ -73,7 +73,7 @@ class AccountFunctionalTests(MontrekFunctionalTest):
         new_account_name_box.send_keys('Billy\'s second account')
         self.browser.find_element(By.ID, 'id_account_new__submit').click()
         # He clicks on the first account link in the list
-        self.browser.find_element(By.ID, 'link_account_5').click()
+        self.browser.find_element(By.ID, 'link_5').click()
         # The name of the Account is shown in the header
         header_text = self.browser.find_element(By.TAG_NAME,'h1').text
         self.assertIn('Billy\'s account', header_text)

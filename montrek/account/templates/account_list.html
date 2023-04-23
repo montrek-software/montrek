@@ -1,23 +1,21 @@
-{% extends 'base.html' %}
-{% block content %}
-<div class="container">
-    <div class="row">
-        <div class="col-lg-6">
-            <h1>Account List</h1>
-        </div>
-    </div>
-</div>
-{% block table %}
-    <div id="id_account_list">
-        <table class="table">
-            <tr><th colspan="2">Account Name</th></tr>
-            {% for account in accounts_static %}
-            <tr><td>{{ account.account_name }}</td>
-                <td><a id='link_account_{{ account.hub_entity.id }}'
-                       href="{% url 'account_view' account.hub_entity.id %}"><span class="glyphicon glyphicon-chevron-right"></a>
-            </tr>
-            {% endfor %}
-        </table>
-    </div>
+{% extends 'base_list.html' %}
+
+{% block title %}
+Account List
 {% endblock %}
+
+{% block header %}
+Account Name
+{% endblock %}
+
+{% block table %}
+{{ block.super }}
+{% endblock %}
+
+{% block item_url %}
+{% url 'account_view' item.hub_entity.id %}
+{% endblock %}
+
+{% block item_name %}
+{{ item.account_name }}
 {% endblock %}

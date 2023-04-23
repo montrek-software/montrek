@@ -19,7 +19,7 @@ def account_list(request):
     accounts_statics = AccountStaticSatellite.objects.all()
     return render(request, 
                   'account_list.html', 
-                  {'accounts_static': accounts_statics})
+                  {'items': accounts_statics})
 
 def account_view(request, account_id: int):
     account_statics = AccountStaticSatellite.objects.get(hub_entity=account_id)

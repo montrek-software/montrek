@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-6">
+            <h1>{% block title %}{% endblock %}</h1>
+        </div>
+    </div>
+</div>
+
+{% block table %}
+<div id="id_list">
+    <table class="table">
+        <tr><th colspan="2">{% block header %}{% endblock %}</th></tr>
+        {% for item in items %}
+	<tr><td>{% block item_name %}{% endblock %}</td>
+            <td><a id='link_{{ item.hub_entity.id }}'
+		   href="{% block item_url %}{% endblock %}"><span class="glyphicon glyphicon-chevron-right"></a>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}
+{% endblock %}
