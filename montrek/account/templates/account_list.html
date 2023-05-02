@@ -1,0 +1,21 @@
+{% extends 'base_list.html' %}
+
+{% block title %}
+Account List
+{% endblock %}
+
+{% block header %}
+Account Name
+{% endblock %}
+
+{% block table %}
+{{ block.super }}
+{% endblock %}
+
+{% block item_url %}
+{% url 'account_view' item.hub_entity.id %}
+{% endblock %}
+
+{% block item_name %}
+{{ item.account_name }}
+{% endblock %}

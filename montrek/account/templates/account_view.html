@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-6">
+            <h1>{{ account_statics.account_name }}</h1>
+        </div>
+    </div>
+</div>
+{% block table %}
+    <div id="id_account_list">
+        <table class="table">
+        </table>
+    </div>
+{% endblock %}
+<div class="panel-footer">
+    <a id="list_back" href={% url "account_list" %}>
+        <span class="glyphicon glyphicon-chevron-left"></a>
+	</div>
+{% endblock %}
