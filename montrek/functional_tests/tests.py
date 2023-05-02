@@ -77,13 +77,12 @@ class AccountFunctionalTests(MontrekFunctionalTest):
         # The name of the Account is shown in the header
         header_text = self.browser.find_element(By.TAG_NAME,'h1').text
         self.assertIn('Billy\'s account', header_text)
-        """
         # After clicking on the back button he is back at the list
         self.browser.find_element(By.ID, 'list_back').click()
         header_text = self.browser.find_element(By.TAG_NAME,'h1').text
         self.assertIn('Account List', header_text)
         # He clicks on the second link and finds the account's name
-        self.browser.find_element(By.ID, 'link_account_6').click()
+        self.browser.find_element(By.ID, 'link_6').click()
         # The name of the Account is shown in the header
         header_text = self.browser.find_element(By.TAG_NAME,'h1').text
         self.assertIn('Billy\'s second account', header_text)
@@ -91,7 +90,6 @@ class AccountFunctionalTests(MontrekFunctionalTest):
         self.browser.find_element(By.ID, 'list_back').click()
         header_text = self.browser.find_element(By.TAG_NAME,'h1').text
         self.assertIn('Account List', header_text)
-        """
 
 
 
