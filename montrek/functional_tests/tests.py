@@ -73,7 +73,7 @@ class AccountFunctionalTests(MontrekFunctionalTest):
         new_account_name_box.send_keys('Billy\'s second account')
         self.browser.find_element(By.ID, 'id_account_new__submit').click()
         # He clicks on the first account link in the list
-        self.browser.find_element(By.ID, 'link_5').click()
+        self.browser.find_element(By.ID, 'link_1').click()
         # The name of the Account is shown in the header
         header_text = self.browser.find_element(By.TAG_NAME,'h1').text
         self.assertIn('Billy\'s account', header_text)
@@ -82,7 +82,7 @@ class AccountFunctionalTests(MontrekFunctionalTest):
         header_text = self.browser.find_element(By.TAG_NAME,'h1').text
         self.assertIn('Account List', header_text)
         # He clicks on the second link and finds the account's name
-        self.browser.find_element(By.ID, 'link_6').click()
+        self.browser.find_element(By.ID, 'link_2').click()
         # The name of the Account is shown in the header
         header_text = self.browser.find_element(By.TAG_NAME,'h1').text
         self.assertIn('Billy\'s second account', header_text)
@@ -90,6 +90,21 @@ class AccountFunctionalTests(MontrekFunctionalTest):
         self.browser.find_element(By.ID, 'list_back').click()
         header_text = self.browser.find_element(By.TAG_NAME,'h1').text
         self.assertIn('Account List', header_text)
+        # He now wants to delete the first account
+        self.browser.find_element(By.ID, 'link_1').click()
+        # He clicks on the delete button
+        self.browser.find_element(By.ID, 'delete_account').click()
+        # He is asked to confirm the deletion
+        header_text = self.browser.find_element(By.TAG_NAME,'h1').text
+        self.assertIn('Delete Account', header_text)
+        # He clicks on the delete button
+        self.browser.find_element(By.ID, 'delete_account').click()
+        # He is back at the list and the first account is gone
+        header_text = self.browser.find_element(By.TAG_NAME,'h1').text
+        self.assertIn('Account List', header_text)
+        self.check_for_row_in_table('Billy\'s second account', 'id_list')
+        self.assertNotIn('Billy\'s account', self.browser.page_source)
+
 
 
 

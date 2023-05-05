@@ -26,3 +26,16 @@ def account_view(request, account_id: int):
     return render(request,
                   'account_view.html',
                   {'account_statics': account_statics})
+
+def account_delete(request, account_id: int):
+    account_statics = AccountStaticSatellite.objects.get(hub_entity=account_id)
+    account_statics.delete()
+    account = AccountHub.objects.get(id=account_id)
+    account.delete()
+    return redirect('/account/list')
+
+def account_delete_form(request, account_id: int):
+    account_statics = AccountStaticSatellite.objects.get(hub_entity=account_id)
+    return render(request,
+                  'account_delete_form.html',
+                  {'account_statics': account_statics})

@@ -33,3 +33,14 @@ class test_new_account(TestCase):
             response = self.client.post(f'/account/{acc_no}/view')
             self.assertTemplateUsed(response, 'account_view.html')
 
+    def test_account_delete(self):
+        for acc_no in range(1, ACCOUNTS_UNDER_TEST + 1): 
+            response = self.client.post(f'/account/{acc_no}/delete')
+            self.assertEqual(AccountHub.objects.count(), ACCOUNTS_UNDER_TEST - acc_no)
+            self.assertEqual(AccountStaticSatellite.objects.count(),
+                             ACCOUNTS_UNDER_TEST - acc_no)  
+
+    def test_account_delete_form(self):
+        for acc_no in range(1, ACCOUNTS_UNDER_TEST + 1): 
+            response = self.client.post(f'/account/{acc_no}/delete_form')
+            self.assertTemplateUsed(response, 'account_delete_form.html')
