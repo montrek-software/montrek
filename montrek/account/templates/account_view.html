@@ -14,7 +14,14 @@
     </div>
 {% endblock %}
 <div class="panel-footer">
+    <table>
+        <tr>
     <a id="list_back" href={% url "account_list" %}>
-        <span class="glyphicon glyphicon-chevron-left"></a>
-	</div>
+        <span class="glyphicon glyphicon-chevron-left"/></a>
+    <a id="delete_account" href=
+        {% url 'account_delete_form' account_id=account_statics.hub_entity.id %}>
+        <span class="glyphicon glyphicon-trash"/></a>
+        </tr>
+    </table>
+</div>
 {% endblock %}
