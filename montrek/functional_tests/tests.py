@@ -7,6 +7,7 @@ import time
 import unittest
 
 from account.models import AccountStaticSatellite
+from baseclasses.models import MontrekSatelliteABC
 
 MAX_WAIT = 10
 
