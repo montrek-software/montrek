@@ -12,7 +12,7 @@ class MontrekHubABC(models.Model):
     identifier = models.CharField(max_length=12)
 
 
-#Base Satellite Model ABC
+#Base Static Satellite Model ABC
 class MontrekSatelliteABC(models.Model):
     class Meta:
         abstract = True
@@ -24,4 +24,5 @@ class MontrekSatelliteABC(models.Model):
 class MontrekLinkABC(models.Model):
     class Meta:
         abstract = True
-
+    from_hub = models.ForeignKey(MontrekHubABC, on_delete=models.CASCADE, related_name='from_hub')
+    to_hub = models.ForeignKey(MontrekHubABC, on_delete=models.CASCADE, related_name='to_hub')
