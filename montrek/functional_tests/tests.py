@@ -6,9 +6,7 @@ from selenium.common.exceptions import WebDriverException, NoSuchElementExceptio
 import time
 import unittest
 
-from account.models import AccountHub
 from account.models import AccountStaticSatellite
-from baseclasses.models import MontrekSatelliteABC
 
 MAX_WAIT = 10
 
