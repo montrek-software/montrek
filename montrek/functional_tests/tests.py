@@ -6,9 +6,13 @@ from selenium.common.exceptions import WebDriverException, NoSuchElementExceptio
 import time
 import unittest
 
+from account.models import AccountStaticSatellite
+from baseclasses.models import MontrekSatelliteABC
+
 MAX_WAIT = 10
 
 class MontrekFunctionalTest(StaticLiveServerTestCase):
+
 
     def setUp(self):
         try:
@@ -37,6 +41,14 @@ class MontrekFunctionalTest(StaticLiveServerTestCase):
         table = self.browser.find_element(By.ID, table_id)
         rows = table.find_elements(By.TAG_NAME,'td')
         self.assertIn(row_text, [row.text for row in rows])
+
+    def find_object_hub_id(self, satellite_model: MontrekSatelliteABC, 
+                           object_name: str, 
+                           object_field: str):
+        # Since the table ids depend on what has been in the DB before the test
+        # ran, we need to find the id of the object we are looking for
+        satelitte_object = satellite_model.objects.get(**{object_field: object_name})
+        return satellite_model.hub_entity_id.__get__(satelitte_object)
 
 class AccountFunctionalTests(MontrekFunctionalTest):
 
@@ -73,7 +85,10 @@ class AccountFunctionalTests(MontrekFunctionalTest):
         new_account_name_box.send_keys('Billy\'s second account')
         self.browser.find_element(By.ID, 'id_account_new__submit').click()
         # He clicks on the first account link in the list
-        self.browser.find_element(By.ID, 'link_1').click()
+        first_id = self.find_object_hub_id(AccountStaticSatellite, 
+                                           'Billy\'s account',
+                                          'account_name')
+        self.browser.find_element(By.ID, f'link_{first_id}').click()
         # The name of the Account is shown in the header
         header_text = self.browser.find_element(By.TAG_NAME,'h1').text
         self.assertIn('Billy\'s account', header_text)
@@ -82,7 +97,10 @@ class AccountFunctionalTests(MontrekFunctionalTest):
         header_text = self.browser.find_element(By.TAG_NAME,'h1').text
         self.assertIn('Account List', header_text)
         # He clicks on the second link and finds the account's name
-        self.browser.find_element(By.ID, 'link_2').click()
+        second_id = self.find_object_hub_id(AccountStaticSatellite, 
+                                           'Billy\'s second account',
+                                          'account_name')
+        self.browser.find_element(By.ID, f'link_{second_id}').click()
         # The name of the Account is shown in the header
         header_text = self.browser.find_element(By.TAG_NAME,'h1').text
         self.assertIn('Billy\'s second account', header_text)
@@ -91,7 +109,7 @@ class AccountFunctionalTests(MontrekFunctionalTest):
         header_text = self.browser.find_element(By.TAG_NAME,'h1').text
         self.assertIn('Account List', header_text)
         # He now wants to delete the first account
-        self.browser.find_element(By.ID, 'link_1').click()
+        self.browser.find_element(By.ID, f'link_{first_id}').click()
         # He clicks on the delete button
         self.browser.find_element(By.ID, 'delete_account').click()
         # He is asked to confirm the deletion
