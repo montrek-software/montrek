@@ -5,7 +5,7 @@ from account.tests.factories import account_factories
 
 ACCOUNTS_UNDER_TEST=3
 # Create your tests here.
-class test_new_account(TestCase):
+class TestAccountViews(TestCase):
     @classmethod
     def setUpTestData(cls):
         account_factories.AccountStaticSatelliteFactory.create_batch(ACCOUNTS_UNDER_TEST)
