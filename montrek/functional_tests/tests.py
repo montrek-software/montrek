@@ -10,6 +10,7 @@ from typing import List
 from account.models import AccountStaticSatellite
 from baseclasses.models import MontrekSatelliteABC
 from account.tests.factories import account_factories
+from baseclasses.model_utils import get_hub_ids_by_satellite_attribute
 
 MAX_WAIT = 10
 
@@ -50,8 +51,10 @@ class MontrekFunctionalTest(StaticLiveServerTestCase):
                            object_field: str):
         # Since the table ids depend on what has been in the DB before the test
         # ran, we need to find the id of the object we are looking for
-        satelitte_object = satellite_model.objects.get(**{object_field: object_name})
-        return satellite_model.hub_entity_id.__get__(satelitte_object)
+        satellite_object = get_hub_ids_by_satellite_attribute(satellite_model, 
+                                                              object_field,
+                                           object_name)[0]
+        return satellite_object
 
 class AccountFunctionalTests(MontrekFunctionalTest):
 
