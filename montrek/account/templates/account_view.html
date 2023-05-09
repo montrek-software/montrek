@@ -21,6 +21,9 @@
     <a id="delete_account" href=
         {% url 'account_delete_form' account_id=account_statics.hub_entity.id %}>
         <span class="glyphicon glyphicon-trash"/></a>
+    <a id="add_transaction" href=
+        {% url 'transaction_add_form' account_id=account_statics.hub_entity.id %}>
+        <span class="glyphicon glyphicon-plus"/></a>
         </tr>
     </table>
 </div>

@@ -141,12 +141,12 @@ class TransactionFunctionalTest(MontrekFunctionalTest):
                                              'Account 0',
                                             'account_name')
         #The user visists the account page
-        self.browser.get(self.live_server_url + f'/account/{account_id}')
+        self.browser.get(self.live_server_url + f'/account/{account_id}/view')
         # He clicks on the add transaction button
         self.browser.find_element(By.ID, 'add_transaction').click()
         # He is directed to the transaction form
         header_text = self.browser.find_element(By.TAG_NAME,'h1').text
-        self.assertIn('Add new Transaction', header_text)
+        self.assertIn('Add transaction to Account 0', header_text)
         # He enters the transaction data
         new_transaction_name_box = self.browser.find_element(By.ID,
             'id_transaction_new__name')
@@ -156,10 +156,11 @@ class TransactionFunctionalTest(MontrekFunctionalTest):
         new_transaction_amount_box.send_keys('1')
         new_transaction_price_box = self.browser.find_element(By.ID,
             'id_transaction_new__price')
-        new_transaction_amount_box.send_keys('100')
+        new_transaction_price_box.send_keys('100.00')
         new_transaction_date_box = self.browser.find_element(By.ID,
             'id_transaction_new__date')
-        new_transaction_date_box.send_keys('2020-01-01')
+        new_transaction_date_box.send_keys('01/01/2022')
+        breakpoint()
         # He hits the submit button
         self.browser.find_element(By.ID, 'id_transaction_new__submit').click()
         # He is directed back to the account page

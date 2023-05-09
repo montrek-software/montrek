@@ -1,6 +1,7 @@
 
 from django.shortcuts import render, redirect
 from account.models import AccountHub, AccountStaticSatellite
+from account.model_utils import new_transaction_to_account
 
 # Create your views here.
 
@@ -39,3 +40,21 @@ def account_delete_form(request, account_id: int):
     return render(request,
                   'account_delete_form.html',
                   {'account_statics': account_statics})
+
+def transaction_add_form(request, account_id: int):
+    account_statics = AccountStaticSatellite.objects.get(hub_entity=account_id)
+    return render(request,
+                  'transaction_add_form.html',
+                  {'account_statics': account_statics})
+
+def transaction_add(request, account_id: int):
+    new_transaction_to_account(
+        account_id=account_id, 
+        transaction_date=request.POST['transaction_date'],
+        transaction_amount= request.POST['transaction_amount'],
+        transaction_price= request.POST['transaction_price'],
+        transaction_description=request.POST['transaction_description'],
+        transaction_type="",
+        transaction_category="",
+    )
+    return redirect(f'/account/{account_id}/view')
