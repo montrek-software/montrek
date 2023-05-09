@@ -26,3 +26,15 @@ class MontrekLinkABC(models.Model):
         abstract = True
     from_hub = models.ForeignKey(MontrekHubABC, on_delete=models.CASCADE, related_name='from_hub')
     to_hub = models.ForeignKey(MontrekHubABC, on_delete=models.CASCADE, related_name='to_hub')
+
+
+class TestMontrekHub(MontrekHubABC):
+    pass
+
+class TestMontrekSatellite(MontrekSatelliteABC):
+    hub_entity = models.ForeignKey(TestMontrekHub, on_delete=models.CASCADE)
+    test_name = models.CharField(max_length=12)
+
+class TestMontrekLink(MontrekLinkABC):
+    from_hub = models.ForeignKey(TestMontrekHub, on_delete=models.CASCADE, related_name='from_hub')
+    to_hub = models.ForeignKey(TestMontrekHub, on_delete=models.CASCADE, related_name='to_hub')
