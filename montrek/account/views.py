@@ -2,6 +2,7 @@
 from django.shortcuts import render, redirect
 from account.models import AccountHub, AccountStaticSatellite
 from account.model_utils import new_transaction_to_account
+from account.model_utils import get_transactions_by_account_id
 
 # Create your views here.
 
@@ -24,9 +25,11 @@ def account_list(request):
 
 def account_view(request, account_id: int):
     account_statics = AccountStaticSatellite.objects.get(hub_entity=account_id)
+    account_transactions = get_transactions_by_account_id(account_id).all()
     return render(request,
                   'account_view.html',
-                  {'account_statics': account_statics})
+                  {'account_statics': account_statics,
+                   'account_transactions': account_transactions})
 
 def account_delete(request, account_id: int):
     account_statics = AccountStaticSatellite.objects.get(hub_entity=account_id)

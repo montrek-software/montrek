@@ -160,14 +160,16 @@ class TransactionFunctionalTest(MontrekFunctionalTest):
         new_transaction_date_box = self.browser.find_element(By.ID,
             'id_transaction_new__date')
         new_transaction_date_box.send_keys('01/01/2022')
-        breakpoint()
         # He hits the submit button
         self.browser.find_element(By.ID, 'id_transaction_new__submit').click()
         # He is directed back to the account page
         header_text = self.browser.find_element(By.TAG_NAME,'h1').text
         self.assertIn('Account 0', header_text)
         # He sees the new transaction in the list
-        self.check_for_row_in_table(['Billy\'s transaction', '100', '1',
-                                     '202-01-01'], 'id_list')
+        transaction_list_title = self.browser.find_element(By.ID,'id_transaction_list_title').text
+        self.assertIn('Transactions', transaction_list_title)
+        self.check_for_row_in_table(['Billy\'s transaction', '100.00', '1',
+                                     'Jan. 1, 2022, midnight'],
+                                     'id_transaction_list')
 
 
