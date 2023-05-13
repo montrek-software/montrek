@@ -46,7 +46,7 @@ jobs:
         DBNAME: montrek_db
         DBUSER: montrekuser
         DBPASSWORD: X5e%85~-Xs
-        DBHOST: 127.0.0.1
+        DBHOST: localhost
         DBPORT: $
     - name: Run Tests
       run: |
@@ -57,5 +57,5 @@ jobs:
         DBNAME: montrek_db
         DBUSER: montrekuser
         DBPASSWORD: X5e%85~-Xs
-        DBHOST: 127.0.0.1
+        DBHOST: localhost
         DBPORT: $
