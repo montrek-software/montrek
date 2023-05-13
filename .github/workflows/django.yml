@@ -19,7 +19,7 @@ jobs:
       mariadb:
         image: mariadb:latest
         env:
-          MYSQL_ROOT_PASSWORD: root
+          MYSQL_ROOT_PASSWORD: X5e%85~-Xs
           MYSQL_USER: montrekuser
           MYSQL_PASSWORD: X5e%85~-Xs
           MYSQL_DATABASE: montrek_db
@@ -37,15 +37,25 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-    - name: Wait for MariaDB
-      run: |
-        echo "Waiting for MariaDB to start"
-        until mysql -h localhost -P 3306 -u montrekuser -pX5e%85~-Xs -e "SELECT 1"; do sleep 1; done
     - name: Run migrations
       run: |
         cd montrek
         python manage.py migrate
+      env:
+        DBENGINE: django.db.backends.mysql
+        DBNAME: montrek_db
+        DBUSER: montrekuser
+        DBPASSWORD: X5e%85~-Xs
+        DBHOST: 127.0.0.1
+        DBPORT: $
     - name: Run Tests
       run: |
         cd montrek
         python manage.py test
+      env:
+        DBENGINE: django.db.backends.mysql
+        DBNAME: montrek_db
+        DBUSER: montrekuser
+        DBPASSWORD: X5e%85~-Xs
+        DBHOST: 127.0.0.1
+        DBPORT: $
