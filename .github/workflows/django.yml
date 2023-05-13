@@ -27,9 +27,11 @@ jobs:
         pwd
         ls
         pip install -r requirements.txt
-    - name: Move directory
-      run: cd montrek/
     - name: Run migrations
-      run: python manage.py migrate
+      run: |
+        cd montrek
+        python manage.py migrate
     - name: Run Tests
-      run: python manage.py test
+      run: |
+        cd montrek
+        python manage.py test
