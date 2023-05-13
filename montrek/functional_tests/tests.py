@@ -5,9 +5,12 @@ from selenium.webdriver.common.by import By
 from selenium.common.exceptions import WebDriverException, NoSuchElementException
 import time
 import unittest
+from typing import List
 
 from account.models import AccountStaticSatellite
 from baseclasses.models import MontrekSatelliteABC
+from account.tests.factories import account_factories
+from baseclasses.model_utils import get_hub_ids_by_satellite_attribute
 
 MAX_WAIT = 10
 
@@ -37,18 +40,21 @@ class MontrekFunctionalTest(StaticLiveServerTestCase):
         return inner_function
 
     @wait_for_browser_action
-    def check_for_row_in_table(self, row_text, table_id):
+    def check_for_row_in_table(self, row_content:List[str], table_id:str):
         table = self.browser.find_element(By.ID, table_id)
         rows = table.find_elements(By.TAG_NAME,'td')
-        self.assertIn(row_text, [row.text for row in rows])
+        for row_text in row_content:
+            self.assertIn(row_text, [row.text for row in rows])
 
     def find_object_hub_id(self, satellite_model: MontrekSatelliteABC, 
                            object_name: str, 
                            object_field: str):
         # Since the table ids depend on what has been in the DB before the test
         # ran, we need to find the id of the object we are looking for
-        satelitte_object = satellite_model.objects.get(**{object_field: object_name})
-        return satellite_model.hub_entity_id.__get__(satelitte_object)
+        satellite_object = get_hub_ids_by_satellite_attribute(satellite_model, 
+                                                              object_field,
+                                           object_name)[0]
+        return satellite_object
 
 class AccountFunctionalTests(MontrekFunctionalTest):
 
@@ -70,7 +76,7 @@ class AccountFunctionalTests(MontrekFunctionalTest):
                                                     'id_account_new__submit').click()
         header_text = self.browser.find_element(By.TAG_NAME,'h1').text
         self.assertIn('Account List', header_text)
-        self.check_for_row_in_table('Billy\'s account', 'id_list')
+        self.check_for_row_in_table(['Billy\'s account'], 'id_list')
 
     def test_access_account_in_list(self):
         # The user sets up two new accounts
@@ -120,10 +126,51 @@ class AccountFunctionalTests(MontrekFunctionalTest):
         # He is back at the list and the first account is gone
         header_text = self.browser.find_element(By.TAG_NAME,'h1').text
         self.assertIn('Account List', header_text)
-        self.check_for_row_in_table('Billy\'s second account', 'id_list')
+        self.check_for_row_in_table(['Billy\'s second account'], 'id_list')
         self.assertNotIn('Billy\'s account', self.browser.page_source)
 
 
+class TransactionFunctionalTest(MontrekFunctionalTest):
+    @classmethod
+    def setUp(cls):
+        account_factories.AccountStaticSatelliteFactory.create_batch(1)
+        super().setUp(cls)
 
+    def test_add_transaction_to_account(self):
+        last_account_name = AccountStaticSatellite.objects.last().account_name
+        account_id = self.find_object_hub_id(AccountStaticSatellite,
+                                             last_account_name,
+                                            'account_name')
+        #The user visists the account page
+        self.browser.get(self.live_server_url + f'/account/{account_id}/view')
+        # He clicks on the add transaction button
+        self.browser.find_element(By.ID, 'add_transaction').click()
+        # He is directed to the transaction form
+        header_text = self.browser.find_element(By.TAG_NAME,'h1').text
+        self.assertIn(f'Add transaction to {last_account_name}', header_text)
+        # He enters the transaction data
+        new_transaction_name_box = self.browser.find_element(By.ID,
+            'id_transaction_new__name')
+        new_transaction_name_box.send_keys('Billy\'s transaction')
+        new_transaction_amount_box = self.browser.find_element(By.ID,
+            'id_transaction_new__amount')
+        new_transaction_amount_box.send_keys('1')
+        new_transaction_price_box = self.browser.find_element(By.ID,
+            'id_transaction_new__price')
+        new_transaction_price_box.send_keys('100.00')
+        new_transaction_date_box = self.browser.find_element(By.ID,
+            'id_transaction_new__date')
+        new_transaction_date_box.send_keys('01/01/2022')
+        # He hits the submit button
+        self.browser.find_element(By.ID, 'id_transaction_new__submit').click()
+        # He is directed back to the account page
+        header_text = self.browser.find_element(By.TAG_NAME,'h1').text
+        self.assertIn(last_account_name, header_text)
+        # He sees the new transaction in the list
+        transaction_list_title = self.browser.find_element(By.ID,'id_transaction_list_title').text
+        self.assertIn('Transactions', transaction_list_title)
+        self.check_for_row_in_table(['Billy\'s transaction', '100.00', '1',
+                                     'Jan. 1, 2022, midnight'],
+                                     'id_transaction_list')
 
 

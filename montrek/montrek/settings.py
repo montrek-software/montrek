@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'account',
     'baseclasses',
+    'transaction',
+    'link_tables',
 ]
 
 MIDDLEWARE = [

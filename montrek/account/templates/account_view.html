@@ -7,12 +7,6 @@
         </div>
     </div>
 </div>
-{% block table %}
-    <div id="id_account_list">
-        <table class="table">
-        </table>
-    </div>
-{% endblock %}
 <div class="panel-footer">
     <table>
         <tr>
@@ -21,7 +15,37 @@
     <a id="delete_account" href=
         {% url 'account_delete_form' account_id=account_statics.hub_entity.id %}>
         <span class="glyphicon glyphicon-trash"/></a>
+    <a id="add_transaction" href=
+        {% url 'transaction_add_form' account_id=account_statics.hub_entity.id %}>
+        <span class="glyphicon glyphicon-plus"/></a>
         </tr>
     </table>
+</div>
+<div class="container">
+    <h2 id="id_transaction_list_title">Transactions</h2>
+
+    {% block table %}
+        <div id="id_transaction_list">
+            <table class="table">
+                <tr>
+                    <th>Description</th>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>Price</th>
+                    <th>Account</th>
+                </tr>
+                {% for transaction in account_transactions %}
+                    <tr>
+                        <td>{{ transaction.transaction_description }}</td>
+                        <td>{{ transaction.transaction_date }}</td>
+                        <td>{{ transaction.transaction_amount }}</td>
+                        <td>{{ transaction.transaction_price }}</td>
+                        <td>{{ account_statics.account_name }}</td>
+                    </tr>
+                {% endfor %}
+            </table>
+
+        </div>
+    {% endblock %}
 </div>
 {% endblock %}
