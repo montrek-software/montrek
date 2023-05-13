@@ -47,7 +47,7 @@ jobs:
         DBUSER: montrekuser
         DBPASSWORD: X5e%85~-Xs
         DBHOST: 0.0.0.0
-        DBPORT: 3306
+        DBPORT: '3306'
     - name: Run Tests
       run: |
         cd montrek
@@ -58,4 +58,4 @@ jobs:
         DBUSER: montrekuser
         DBPASSWORD: X5e%85~-Xs
         DBHOST: 0.0.0.0
-        DBPORT: 3306
+        DBPORT: '3306'
