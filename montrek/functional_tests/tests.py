@@ -137,8 +137,9 @@ class TransactionFunctionalTest(MontrekFunctionalTest):
         super().setUp(cls)
 
     def test_add_transaction_to_account(self):
+        last_account_name = AccountStaticSatellite.objects.last().account_name
         account_id = self.find_object_hub_id(AccountStaticSatellite,
-                                             'Account 0',
+                                             last_account_name,
                                             'account_name')
         #The user visists the account page
         self.browser.get(self.live_server_url + f'/account/{account_id}/view')
@@ -146,7 +147,7 @@ class TransactionFunctionalTest(MontrekFunctionalTest):
         self.browser.find_element(By.ID, 'add_transaction').click()
         # He is directed to the transaction form
         header_text = self.browser.find_element(By.TAG_NAME,'h1').text
-        self.assertIn('Add transaction to Account 0', header_text)
+        self.assertIn(f'Add transaction to {last_account_name}', header_text)
         # He enters the transaction data
         new_transaction_name_box = self.browser.find_element(By.ID,
             'id_transaction_new__name')
@@ -164,7 +165,7 @@ class TransactionFunctionalTest(MontrekFunctionalTest):
         self.browser.find_element(By.ID, 'id_transaction_new__submit').click()
         # He is directed back to the account page
         header_text = self.browser.find_element(By.TAG_NAME,'h1').text
-        self.assertIn('Account 0', header_text)
+        self.assertIn(last_account_name, header_text)
         # He sees the new transaction in the list
         transaction_list_title = self.browser.find_element(By.ID,'id_transaction_list_title').text
         self.assertIn('Transactions', transaction_list_title)
