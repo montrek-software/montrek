@@ -38,6 +38,7 @@ jobs:
     - name: Run migrations
       run: |
         cd montrek
+        echo $DB_NAME
         python manage.py migrate
       env:
         DB: mariadb
