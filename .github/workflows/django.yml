@@ -40,10 +40,6 @@ jobs:
         cd montrek
         echo $DB_NAME
         python manage.py migrate
-    - name:  Install Google Chrome
-      run:   |
-              chmod +x ./scripts/InstallChrome.sh
-                          ./scripts/InstallChrome.sh
 
     - name: Run Tests
       run: |
