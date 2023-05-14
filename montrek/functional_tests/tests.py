@@ -1,4 +1,5 @@
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
+from django.test import tag
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
@@ -58,6 +59,7 @@ class MontrekFunctionalTest(StaticLiveServerTestCase):
 
 class AccountFunctionalTests(MontrekFunctionalTest):
 
+    @tag('functional')
     def test_add_new_account(self):
         # The user visits the new account form
         self.browser.get(self.live_server_url + '/account/new_form')
@@ -78,6 +80,7 @@ class AccountFunctionalTests(MontrekFunctionalTest):
         self.assertIn('Account List', header_text)
         self.check_for_row_in_table(['Billy\'s account'], 'id_list')
 
+    @tag('functional')
     def test_access_account_in_list(self):
         # The user sets up two new accounts
         self.browser.get(self.live_server_url + '/account/new_form')
@@ -136,6 +139,7 @@ class TransactionFunctionalTest(MontrekFunctionalTest):
         account_factories.AccountStaticSatelliteFactory.create_batch(1)
         super().setUp(cls)
 
+    @tag('functional')
     def test_add_transaction_to_account(self):
         last_account_name = AccountStaticSatellite.objects.last().account_name
         account_id = self.find_object_hub_id(AccountStaticSatellite,
