@@ -83,7 +83,7 @@ DATABASES = {
         'NAME': 'montrek_db',
         'USER': 'montrekuser',
         'PASSWORD': 'X5e%85~-Xs',
-        'HOST': 'localhost',
+        'HOST': '0.0.0.0',
         'PORT': '3306',
     }
 }
