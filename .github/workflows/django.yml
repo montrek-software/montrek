@@ -40,19 +40,8 @@ jobs:
         cd montrek
         echo $DB_NAME
         python manage.py migrate
-      env:
-        DB: mariadb
-        DB_NAME: montrek_db
-        DB_PASSWORD: X5e%85~-Xs
-        DB_HOST: 127.0.0.1
 
     - name: Run Tests
       run: |
         cd montrek
         python manage.py test
-      env:
-        DBENGINE: django.db.backends.mysql
-        DBNAME: montrek_db
-        DBUSER: root
-        DBPASSWORD: X5e%85~-Xs
-        DBHOST: 127.0.0.1
