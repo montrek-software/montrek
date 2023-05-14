@@ -81,7 +81,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'montrek_db',
-        'USER': 'montrekuser',
+        'USER': 'root',
         'PASSWORD': 'X5e%85~-Xs',
         'HOST': '0.0.0.0',
         'PORT': '3306',
