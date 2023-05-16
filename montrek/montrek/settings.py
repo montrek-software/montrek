@@ -10,8 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+import os
 from pathlib import Path
-
+from decouple import config
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -25,7 +26,7 @@ SECRET_KEY = 'django-insecure-2@8w*43%w2=36x1y3#v8mlll#!3kw9)jnn&^i&xw-o8^br_od-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['0.0.0.0','localhost']
 
 
 # Application definition
@@ -80,11 +81,11 @@ WSGI_APPLICATION = 'montrek.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'montrek_db',
-        'USER': 'root',
-        'PASSWORD': 'X5e%85~-Xs',
-        'HOST': '0.0.0.0',
-        'PORT': '3306',
+        'NAME': config('DB_NAME', default='montrek_db'),
+        'USER': config('DB_USER', default='root'),
+        'PASSWORD': config('DB_PASSWORD'),
+        'HOST': config('DB_HOST', default='localhost'),
+        'PORT': config('DB_PORT', default=3306,cast=int),
     }
 }
 
@@ -123,7 +124,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = 'baseclasses/static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR,'baseclasses/static')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
