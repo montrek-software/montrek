@@ -19,8 +19,8 @@ jobs:
       mariadb:
         image: mariadb:latest
         env:
-          MYSQL_ROOT_PASSWORD: X5e%85~-Xs
-          MYSQL_DATABASE: montrek_db
+          MYSQL_ROOT_PASSWORD: ci_pipe_pssw
+          MYSQL_DATABASE: montrek_ci_pipe_db
         ports:
           - 3306:3306
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
@@ -35,6 +35,12 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+    - name: Setup env
+      run: |
+        echo "DB_USER=root" >> .env
+        echo "DB_PASSWORD=ci_pipe_pssw" >> .env
+        echo "DB_NAME=montrek_ci_pipe_db" >> .env
+        echo "DB_HOST=0.0.0.0" >> .env
     - name: Run migrations
       run: |
         cd montrek

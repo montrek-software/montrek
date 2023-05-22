@@ -1,0 +1,47 @@
+version: "3.7"
+
+services:
+  nginx:
+    build: ./nginx
+    ports:
+      - 1339:80
+    volumes:
+      - static_volume:/home/app/montrek/montrek/baseclasses/static
+    depends_on:
+      - web
+    restart: "on-failure"
+
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: sh -c "cd montrek &&
+                    python manage.py makemigrations &&
+                    python manage.py migrate &&
+                    gunicorn --chdir montrek montrek.wsgi:application --bind 0.0.0.0:${APP_PORT}"
+    volumes:
+      - .:/montrek
+      - static_volume:/home/app/montrek/montrek/baseclasses/static
+    env_file:
+      - .env
+    image: montrek_app
+    expose:
+      - ${APP_PORT}
+    restart: "on-failure"
+    depends_on:
+      - db
+
+  db:
+    image: mariadb:latest
+    environment:
+      MYSQL_DATABASE: montrek_db
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "3308:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+volumes:
+  db_data:
+  static_volume:
