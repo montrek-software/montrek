@@ -29,6 +29,8 @@ Follow instructions for MariaDb here: [Django-Maria-DB Setup](https://www.digita
 
 ### In Docker container ###
 
+Install docker (e.g. like here: [Django installation Linux](https://www.simplilearn.com/tutorials/docker-tutorial/how-to-install-docker-on-ubuntu)
+
 Install docker-compose.
 
 Run
