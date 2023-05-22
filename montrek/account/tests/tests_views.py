@@ -1,5 +1,6 @@
 from django.test import TestCase
 import datetime
+from decimal import Decimal
 from account.models import AccountHub
 from account.models import AccountStaticSatellite
 from account.tests.factories import account_factories
@@ -65,3 +66,10 @@ class TestAccountViews(TestCase):
                                      'transaction_date':datetime.date(2020, 1, 1)})
             transactions = get_transactions_by_account_id(acc_no) 
             self.assertEqual(len(transactions), 1)
+            self.assertEqual(transactions[0].transaction_amount, 1000)
+            self.assertEqual(transactions[0].transaction_price,
+                             Decimal('12.20'))
+            self.assertEqual(transactions[0].transaction_description, 'Test Transaction')
+            self.assertEqual(transactions[0].transaction_date,
+                             datetime.datetime(2020, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc))
+            self.assertEqual(transactions[0].value, Decimal('12200.00'))
