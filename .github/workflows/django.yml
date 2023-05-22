@@ -39,6 +39,7 @@ jobs:
       run: |
         echo "DB_USER=root" >> .env
         echo "DB_PASSWORD=ci_pipe_pssw" >> .env
+        echo "DB_NAME=montrek_ci_pipe_db" >> .env
     - name: Run migrations
       run: |
         cd montrek
