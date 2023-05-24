@@ -1,10 +1,23 @@
+from django.apps import apps
 import datetime
 from typing import List
 
-from .models import AccountHub
-from transaction.models import TransactionHub
-from transaction.models import TransactionSatellite 
-from link_tables.models import AccountTransactionLink
+from baseclasses import models as baseclass_models
+
+def account_hub():
+    return apps.get_model('account','AccountHub')
+
+def account_static_satellite():
+    return apps.get_model('account','AccountStaticSatellite')
+
+def account_transaction_link():
+    return apps.get_model('link_tables','AccountTransactionLink')
+
+def transaction_hub():
+    return apps.get_model('transaction','TransactionHub')
+
+def transaction_satellite():
+    return apps.get_model('transaction','TransactionSatellite')
 
 def new_transaction_to_account(account_id:int,
                                transaction_date:datetime.date,
@@ -13,23 +26,26 @@ def new_transaction_to_account(account_id:int,
                                transaction_type:str,
                                transaction_category:str,
                                transaction_description:str) -> None:
-    account_hub = AccountHub.objects.get(id=account_id)
-    transaction_hub = TransactionHub.objects.create()
-    transaction_satellite = TransactionSatellite.objects.create(
-        hub_entity=transaction_hub,
+    account_hub_object = account_hub().objects.get(id=account_id)
+    transaction_hub_object = transaction_hub().objects.create()
+    transaction_satellite_object = transaction_satellite().objects.create(
+        hub_entity=transaction_hub_object,
         transaction_date=transaction_date,
         transaction_amount=transaction_amount,
         transaction_price=transaction_price,
         transaction_type=transaction_type,
         transaction_category=transaction_category,
         transaction_description=transaction_description)
-    AccountTransactionLink.objects.create(
-        from_hub=account_hub,
-        to_hub=transaction_hub)
+    account_transaction_link().objects.create(
+        from_hub=account_hub_object,
+        to_hub=transaction_hub_object)
 
-def get_transactions_by_account_id(account_id:int) -> List[TransactionSatellite]:
-    account_hub = AccountHub.objects.get(id=account_id)
-    account_transaction_links = AccountTransactionLink.objects.filter(from_hub=account_hub)
+def get_transactions_by_account_id(account_id:int) -> List[baseclass_models.MontrekSatelliteABC]:
+    account_hub_object = account_hub().objects.get(id=account_id)
+    return get_transactions_by_account(account_hub_object)
+
+def get_transactions_by_account(account_hub_object) -> List[baseclass_models.MontrekSatelliteABC]:
+    account_transaction_links = account_transaction_link().objects.filter(from_hub=account_hub_object)
     transaction_hubs = [account_transaction_link.to_hub for account_transaction_link in account_transaction_links]
-    transaction_satellites = TransactionSatellite.objects.filter(hub_entity__in=transaction_hubs)
+    transaction_satellites = transaction_satellite().objects.filter(hub_entity__in=transaction_hubs)
     return transaction_satellites
