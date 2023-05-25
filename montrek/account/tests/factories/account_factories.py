@@ -10,3 +10,7 @@ class AccountStaticSatelliteFactory(factory.django.DjangoModelFactory):
     hub_entity = factory.SubFactory(AccountHubFactory)
     account_name = factory.Sequence(lambda n: f'Account {n}')
 
+class BankAccountSatelliteFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = 'account.BankAccountSatellite'
+    hub_entity = factory.SubFactory(AccountHubFactory)
