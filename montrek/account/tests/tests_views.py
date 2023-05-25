@@ -3,7 +3,13 @@ import datetime
 from decimal import Decimal
 from account.models import AccountHub
 from account.models import AccountStaticSatellite
-from account.tests.factories import account_factories
+from account.models import BankAccountSatellite
+from account.tests.factories.account_factories import AccountStaticSatelliteFactory
+from account.tests.factories.account_factories import BankAccountSatelliteFactory
+from account.tests.factories.account_factories import AccountHubFactory
+from transaction.tests.factories.transaction_factories import TransactionHubFactory
+from transaction.tests.factories.transaction_factories import TransactionSatelliteFactory
+from link_tables.tests.factories.link_tables_factories import AccountTransactionLinkFactory
 from baseclasses.model_utils import get_hub_ids_by_satellite_attribute
 from account.model_utils import get_transactions_by_account_id
 
@@ -11,7 +17,7 @@ from account.model_utils import get_transactions_by_account_id
 class TestAccountViews(TestCase):
     @classmethod
     def setUpTestData(cls):
-        account_factories.AccountStaticSatelliteFactory.create_batch(3)
+        AccountStaticSatelliteFactory.create_batch(3)
 
     def test_new_list_form_returns_correct_html(self):
         response = self.client.get('/account/new_form')
@@ -73,3 +79,18 @@ class TestAccountViews(TestCase):
             self.assertEqual(transactions[0].transaction_date,
                              datetime.datetime(2020, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc))
             self.assertEqual(transactions[0].transaction_value, Decimal('12200.00'))
+
+class TestBankAccountViews(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        account_hub = AccountHubFactory()
+        account_static_satellite = AccountStaticSatelliteFactory(hub_entity=account_hub)
+        transaction_hub = TransactionHubFactory()
+        transaction_satellite_1 = TransactionSatelliteFactory(hub_entity=transaction_hub)
+        transaction_satellite_2 = TransactionSatelliteFactory(hub_entity=transaction_hub)
+        account_transaction_link = AccountTransactionLinkFactory(from_hub=account_hub, to_hub=transaction_hub)
+        bank_account_satellite = BankAccountSatelliteFactory(hub_entity=account_hub)
+
+    def test_bank_account_account_value(self):
+        bank_account_satellite = BankAccountSatellite.objects.last()
+        breakpoint()
