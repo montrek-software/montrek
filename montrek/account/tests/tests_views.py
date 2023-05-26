@@ -93,4 +93,4 @@ class TestBankAccountViews(TestCase):
 
     def test_bank_account_account_value(self):
         bank_account_satellite = BankAccountSatellite.objects.last()
-        breakpoint()
+        self.assertTrue(isinstance(bank_account_satellite.account_value, Decimal))
