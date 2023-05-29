@@ -15,3 +15,7 @@ class TransactionSatellite(baseclass_models.MontrekSatelliteABC):
     transaction_type = models.CharField(max_length=50)
     transaction_description = models.CharField(max_length=50)
     transaction_category = models.CharField(max_length=50)
+
+    @property
+    def transaction_value(self):
+        return self.transaction_amount * self.transaction_price

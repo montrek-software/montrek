@@ -1,5 +1,6 @@
 
 from django.shortcuts import render, redirect
+from django.db import models
 from account.models import AccountHub, AccountStaticSatellite
 from account.model_utils import new_transaction_to_account
 from account.model_utils import get_transactions_by_account_id
@@ -18,7 +19,9 @@ def account_new_form(request):
     return render(request, 'new_account_form.html')
 
 def account_list(request):
-    accounts_statics = AccountStaticSatellite.objects.all()
+    accounts_statics = AccountHub.objects.all().prefetch_related(
+        'accountstaticsatellite_set',
+        'bankaccountsatellite_set')
     return render(request, 
                   'account_list.html', 
                   {'items': accounts_statics})
