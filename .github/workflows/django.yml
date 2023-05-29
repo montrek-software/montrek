@@ -46,6 +46,7 @@ jobs:
         cd montrek
         echo $DB_NAME
         python manage.py migrate
+        python manage.py makemigrations
 
     - name: Run Tests
       run: |
