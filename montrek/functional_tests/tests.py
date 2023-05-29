@@ -158,7 +158,7 @@ class TransactionFunctionalTest(MontrekFunctionalTest):
         new_transaction_name_box.send_keys('Billy\'s transaction')
         new_transaction_amount_box = self.browser.find_element(By.ID,
             'id_transaction_new__amount')
-        new_transaction_amount_box.send_keys('1')
+        new_transaction_amount_box.send_keys('3')
         new_transaction_price_box = self.browser.find_element(By.ID,
             'id_transaction_new__price')
         new_transaction_price_box.send_keys('100.00')
@@ -173,7 +173,8 @@ class TransactionFunctionalTest(MontrekFunctionalTest):
         # He sees the new transaction in the list
         transaction_list_title = self.browser.find_element(By.ID,'id_transaction_list_title').text
         self.assertIn('Transactions', transaction_list_title)
-        self.check_for_row_in_table(['Billy\'s transaction', '100.00', '1',
+        self.check_for_row_in_table(['Billy\'s transaction', '100.00', '3',
+                                     '300.00',
                                      'Jan. 1, 2022, midnight'],
                                      'id_transaction_list')
 

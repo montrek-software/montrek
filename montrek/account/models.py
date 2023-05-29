@@ -17,4 +17,3 @@ class BankAccountSatellite(baseclass_models.MontrekSatelliteABC):
     def account_value(self):
         transactions = get_transactions_by_account(self.hub_entity)
         return transactions.aggregate(total_value=Sum(F('transaction_amount') * F('transaction_price')))['total_value'] or 0
-

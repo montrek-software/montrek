@@ -32,6 +32,7 @@
                     <th>Date</th>
                     <th>Amount</th>
                     <th>Price</th>
+                    <th>Value</th>
                     <th>Account</th>
                 </tr>
                 {% for transaction in account_transactions %}
@@ -40,6 +41,7 @@
                         <td>{{ transaction.transaction_date }}</td>
                         <td>{{ transaction.transaction_amount }}</td>
                         <td>{{ transaction.transaction_price }}</td>
+                        <td>{{ transaction.transaction_value }}</td>
                         <td>{{ account_statics.account_name }}</td>
                     </tr>
                 {% endfor %}
