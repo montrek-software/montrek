@@ -94,3 +94,7 @@ class TestBankAccountViews(TestCase):
     def test_bank_account_account_value(self):
         bank_account_satellite = BankAccountSatellite.objects.last()
         self.assertTrue(isinstance(bank_account_satellite.account_value, Decimal))
+
+    def test_bank_account_list_returns_correct_html(self):
+        response = self.client.post('/account/list')
+        self.assertTemplateUsed(response, 'account_list.html')
