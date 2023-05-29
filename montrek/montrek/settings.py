@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'baseclasses',
     'transaction',
     'link_tables',
+    'credit_institution',
 ]
 
 MIDDLEWARE = [
