@@ -12,3 +12,5 @@ class TestCreditInstitutionModels(TestCase):
     def test_credit_institution_static_satellite_attrs(self):
         credit_institutions = CreditInstitutionStaticSatellite.objects.all()
         self.assertEqual(credit_institutions.count(), 1)
+        self.assertTrue(isinstance(credit_institutions.first().credit_institution_name,
+                                   str))

@@ -8,3 +8,4 @@ class CreditInstitutionStaticSatelliteFactory(factory.django.DjangoModelFactory)
     class Meta:
         model = 'credit_institution.CreditInstitutionStaticSatellite'
     hub_entity = factory.SubFactory(CreditInstitutionHubFactory)
+    credit_institution_name = factory.Faker('company')
