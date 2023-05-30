@@ -19,6 +19,12 @@ def transaction_hub():
 def transaction_satellite():
     return apps.get_model('transaction','TransactionSatellite')
 
+def new_account(account_name:str) -> None:
+    account_hub_object = account_hub().objects.create()
+    account_static_satellite().objects.create(
+        hub_entity=account_hub_object,
+        account_name=account_name)
+
 def new_transaction_to_account(account_id:int,
                                transaction_date:datetime.date,
                                transaction_amount:int,

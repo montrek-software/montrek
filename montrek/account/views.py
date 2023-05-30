@@ -4,15 +4,12 @@ from django.db import models
 from account.models import AccountHub, AccountStaticSatellite
 from account.model_utils import new_transaction_to_account
 from account.model_utils import get_transactions_by_account_id
+from account.model_utils import new_account
 
 # Create your views here.
 
 def account_new(request):
-    account_hub = AccountHub.objects.create()
-    account_static_satellite = AccountStaticSatellite.objects.create(
-        hub_entity=account_hub,
-        account_name=request.POST['account_name'],
-                                )
+    new_account(request.POST['account_name'])
     return redirect('/account/list')
 
 def account_new_form(request):
