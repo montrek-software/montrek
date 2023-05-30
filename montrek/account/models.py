@@ -17,3 +17,6 @@ class BankAccountPropertySatellite(baseclass_models.MontrekSatelliteABC):
     def account_value(self):
         transactions = get_transactions_by_account(self.hub_entity)
         return transactions.aggregate(total_value=Sum(F('transaction_amount') * F('transaction_price')))['total_value'] or 0
+
+class BankAccountStaticSatellite(baseclass_models.MontrekSatelliteABC):
+    hub_entity = models.ForeignKey(AccountHub, on_delete=models.CASCADE)

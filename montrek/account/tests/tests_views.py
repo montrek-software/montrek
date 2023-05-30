@@ -4,9 +4,10 @@ from decimal import Decimal
 from account.models import AccountHub
 from account.models import AccountStaticSatellite
 from account.models import BankAccountPropertySatellite
+from account.tests.factories.account_factories import AccountHubFactory
 from account.tests.factories.account_factories import AccountStaticSatelliteFactory
 from account.tests.factories.account_factories import BankAccountPropertySatelliteFactory
-from account.tests.factories.account_factories import AccountHubFactory
+from account.tests.factories.account_factories import BankAccountStaticSatelliteFactory
 from transaction.tests.factories.transaction_factories import TransactionHubFactory
 from transaction.tests.factories.transaction_factories import TransactionSatelliteFactory
 from link_tables.tests.factories.link_tables_factories import AccountTransactionLinkFactory
@@ -89,7 +90,8 @@ class TestBankAccountViews(TestCase):
         transaction_satellite_1 = TransactionSatelliteFactory(hub_entity=transaction_hub)
         transaction_satellite_2 = TransactionSatelliteFactory(hub_entity=transaction_hub)
         account_transaction_link = AccountTransactionLinkFactory(from_hub=account_hub, to_hub=transaction_hub)
-        bank_account_satellite = BankAccountPropertySatelliteFactory(hub_entity=account_hub)
+        bank_account_property_satellite = BankAccountPropertySatelliteFactory(hub_entity=account_hub)
+        bank_account_static_satellite = BankAccountStaticSatelliteFactory(hub_entity=account_hub)
 
     def test_bank_account_account_value(self):
         bank_account_satellite = BankAccountPropertySatellite.objects.last()
