@@ -1,7 +1,9 @@
 
 from django.shortcuts import render, redirect
 from django.db import models
-from account.models import AccountHub, AccountStaticSatellite
+from account.models import AccountHub 
+from account.models import AccountStaticSatellite
+from account.models import BankAccountSatellite
 from account.model_utils import new_transaction_to_account
 from account.model_utils import get_transactions_by_account_id
 from account.model_utils import new_account
@@ -61,3 +63,10 @@ def transaction_add(request, account_id: int):
         transaction_category="",
     )
     return redirect(f'/account/{account_id}/view')
+
+def bank_account_new(request):
+    account_hub = new_account(request.POST['account_name'])
+    BankAccountSatellite.objects.create(
+        hub_entity=account_hub,
+    )
+    return redirect('/account/list')

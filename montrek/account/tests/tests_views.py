@@ -98,3 +98,18 @@ class TestBankAccountViews(TestCase):
     def test_bank_account_list_returns_correct_html(self):
         response = self.client.post('/account/list')
         self.assertTemplateUsed(response, 'account_list.html')
+
+    def test_new_bank_account(self):
+        accounts_under_test = len(AccountHub.objects.all())
+        self.client.post('/account/bank_account/new', 
+                         data={'account_name': 'New Bank Account'})
+        self.assertEqual(AccountHub.objects.count(), accounts_under_test + 1)
+        self.assertEqual(AccountStaticSatellite.objects.count(),
+                         accounts_under_test + 1)
+        account_hub = AccountHub.objects.last()
+        account_static_satellite = AccountStaticSatellite.objects.last()
+        self.assertEqual(account_static_satellite.account_name, 'New Bank Account')
+        self.assertEqual(account_static_satellite.hub_entity.id, account_hub.id)
+        bank_account_satellite = BankAccountSatellite.objects.last()
+        self.assertEqual(bank_account_satellite.hub_entity.id, account_hub.id)
+
