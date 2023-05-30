@@ -11,7 +11,7 @@ class AccountStaticSatellite(baseclass_models.MontrekSatelliteABC):
     account_name = models.CharField(max_length=50) 
     hub_entity = models.ForeignKey(AccountHub, on_delete=models.CASCADE)
 
-class BankAccountSatellite(baseclass_models.MontrekSatelliteABC):
+class BankAccountPropertySatellite(baseclass_models.MontrekSatelliteABC):
     hub_entity = models.ForeignKey(AccountHub, on_delete=models.CASCADE)
     @property
     def account_value(self):

@@ -3,9 +3,9 @@ import datetime
 from decimal import Decimal
 from account.models import AccountHub
 from account.models import AccountStaticSatellite
-from account.models import BankAccountSatellite
+from account.models import BankAccountPropertySatellite
 from account.tests.factories.account_factories import AccountStaticSatelliteFactory
-from account.tests.factories.account_factories import BankAccountSatelliteFactory
+from account.tests.factories.account_factories import BankAccountPropertySatelliteFactory
 from account.tests.factories.account_factories import AccountHubFactory
 from transaction.tests.factories.transaction_factories import TransactionHubFactory
 from transaction.tests.factories.transaction_factories import TransactionSatelliteFactory
@@ -89,10 +89,10 @@ class TestBankAccountViews(TestCase):
         transaction_satellite_1 = TransactionSatelliteFactory(hub_entity=transaction_hub)
         transaction_satellite_2 = TransactionSatelliteFactory(hub_entity=transaction_hub)
         account_transaction_link = AccountTransactionLinkFactory(from_hub=account_hub, to_hub=transaction_hub)
-        bank_account_satellite = BankAccountSatelliteFactory(hub_entity=account_hub)
+        bank_account_satellite = BankAccountPropertySatelliteFactory(hub_entity=account_hub)
 
     def test_bank_account_account_value(self):
-        bank_account_satellite = BankAccountSatellite.objects.last()
+        bank_account_satellite = BankAccountPropertySatellite.objects.last()
         self.assertTrue(isinstance(bank_account_satellite.account_value, Decimal))
 
     def test_bank_account_list_returns_correct_html(self):
@@ -110,6 +110,6 @@ class TestBankAccountViews(TestCase):
         account_static_satellite = AccountStaticSatellite.objects.last()
         self.assertEqual(account_static_satellite.account_name, 'New Bank Account')
         self.assertEqual(account_static_satellite.hub_entity.id, account_hub.id)
-        bank_account_satellite = BankAccountSatellite.objects.last()
+        bank_account_satellite = BankAccountPropertySatellite.objects.last()
         self.assertEqual(bank_account_satellite.hub_entity.id, account_hub.id)
 

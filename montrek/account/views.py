@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect
 from django.db import models
 from account.models import AccountHub 
 from account.models import AccountStaticSatellite
-from account.models import BankAccountSatellite
+from account.models import BankAccountPropertySatellite
 from account.model_utils import new_transaction_to_account
 from account.model_utils import get_transactions_by_account_id
 from account.model_utils import new_account
@@ -20,7 +20,7 @@ def account_new_form(request):
 def account_list(request):
     accounts_statics = AccountHub.objects.all().prefetch_related(
         'accountstaticsatellite_set',
-        'bankaccountsatellite_set')
+        'bankaccountpropertysatellite_set')
     return render(request, 
                   'account_list.html', 
                   {'items': accounts_statics})
@@ -66,7 +66,7 @@ def transaction_add(request, account_id: int):
 
 def bank_account_new(request):
     account_hub = new_account(request.POST['account_name'])
-    BankAccountSatellite.objects.create(
+    BankAccountPropertySatellite.objects.create(
         hub_entity=account_hub,
     )
     return redirect('/account/list')
