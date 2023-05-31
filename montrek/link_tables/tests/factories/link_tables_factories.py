@@ -9,8 +9,8 @@ class AccountTransactionLinkFactory(factory.django.DjangoModelFactory):
     from_hub = factory.SubFactory(AccountHubFactory)
     to_hub = factory.SubFactory(TransactionHubFactory)
 
-class AccountCreditInstituteLinkFactory(factory.django.DjangoModelFactory):
+class AccountCreditInstitutionLinkFactory(factory.django.DjangoModelFactory):
     class Meta:
-        model = 'link_tables.AccountCreditInstituteLink'
+        model = 'link_tables.AccountCreditInstitutionLink'
     from_hub = factory.SubFactory(AccountHubFactory)
     to_hub = factory.SubFactory(CreditInstitutionHubFactory)

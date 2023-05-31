@@ -7,6 +7,10 @@ from account.models import BankAccountPropertySatellite
 from account.model_utils import new_transaction_to_account
 from account.model_utils import get_transactions_by_account_id
 from account.model_utils import new_account
+from credit_institution.model_utils import new_credit_institution
+from credit_institution.models import CreditInstitutionStaticSatellite
+from credit_institution.models import CreditInstitutionHub
+from link_tables.model_utils import new_account_credit_instition_link
 
 # Create your views here.
 
@@ -69,4 +73,10 @@ def bank_account_new(request):
     BankAccountPropertySatellite.objects.create(
         hub_entity=account_hub,
     )
+    credit_institution_name = request.POST['credit_institution_name']
+    credit_institution_hub = CreditInstitutionHub.objects.prefetch_related('creditinstitutionstaticsatellite_set').filter(
+        creditinstitutionstaticsatellite__credit_institution_name=credit_institution_name)
+    if len(credit_institution_hub) == 0:
+        credit_institution_hub = new_credit_institution(credit_institution_name)
+    new_account_credit_instition_link(account_hub, credit_institution_hub)
     return redirect('/account/list')

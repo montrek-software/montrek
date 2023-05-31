@@ -13,10 +13,10 @@ class AccountTransactionLink(baseclass_models.MontrekLinkABC):
                                on_delete=models.CASCADE, 
                                related_name='account_transaction_to_hub')
 
-class AccountCreditInstituteLink(baseclass_models.MontrekLinkABC):
+class AccountCreditInstitutionLink(baseclass_models.MontrekLinkABC):
     from_hub = models.ForeignKey(account_models.AccountHub,
                                  on_delete=models.CASCADE,
-                                 related_name='account_credit_institute_link_from_hub')
+                                 related_name='account_credit_institution_link_from_hub')
     to_hub = models.ForeignKey(credit_institution_models.CreditInstitutionHub, 
                                on_delete=models.CASCADE, 
-                               related_name='account_credit_institute_link_to_hub')
+                               related_name='account_credit_institution_link_to_hub')

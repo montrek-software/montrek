@@ -13,6 +13,7 @@ from transaction.tests.factories.transaction_factories import TransactionSatelli
 from link_tables.tests.factories.link_tables_factories import AccountTransactionLinkFactory
 from baseclasses.model_utils import get_hub_ids_by_satellite_attribute
 from account.model_utils import get_transactions_by_account_id
+from account.model_utils import get_credit_institution_by_account
 
 # Create your tests here.
 class TestAccountViews(TestCase):
@@ -104,7 +105,8 @@ class TestBankAccountViews(TestCase):
     def test_new_bank_account(self):
         accounts_under_test = len(AccountHub.objects.all())
         self.client.post('/account/bank_account/new', 
-                         data={'account_name': 'New Bank Account'})
+                         data={'account_name': 'New Bank Account',
+                               'credit_institution_name': 'Test Bank',})
         self.assertEqual(AccountHub.objects.count(), accounts_under_test + 1)
         self.assertEqual(AccountStaticSatellite.objects.count(),
                          accounts_under_test + 1)
@@ -112,6 +114,9 @@ class TestBankAccountViews(TestCase):
         account_static_satellite = AccountStaticSatellite.objects.last()
         self.assertEqual(account_static_satellite.account_name, 'New Bank Account')
         self.assertEqual(account_static_satellite.hub_entity.id, account_hub.id)
-        bank_account_satellite = BankAccountPropertySatellite.objects.last()
-        self.assertEqual(bank_account_satellite.hub_entity.id, account_hub.id)
+        bank_account_property_satellite = BankAccountPropertySatellite.objects.last()
+        self.assertEqual(bank_account_property_satellite.hub_entity.id, account_hub.id)
+        credit_institution = get_credit_institution_by_account(account_hub)
+        self.assertEqual(credit_institution.credit_institution_name, 'Test Bank')
+
 
