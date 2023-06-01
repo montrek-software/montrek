@@ -4,6 +4,7 @@ from decimal import Decimal
 from account.models import AccountHub
 from account.models import AccountStaticSatellite
 from account.models import BankAccountPropertySatellite
+from account.models import BankAccountStaticSatellite
 from account.tests.factories.account_factories import AccountHubFactory
 from account.tests.factories.account_factories import AccountStaticSatelliteFactory
 from account.tests.factories.account_factories import BankAccountPropertySatelliteFactory
@@ -116,7 +117,13 @@ class TestBankAccountViews(TestCase):
         self.assertEqual(account_static_satellite.hub_entity.id, account_hub.id)
         bank_account_property_satellite = BankAccountPropertySatellite.objects.last()
         self.assertEqual(bank_account_property_satellite.hub_entity.id, account_hub.id)
-        credit_institution = get_credit_institution_by_account(account_hub)
+        credit_institution = get_credit_institution_by_account(account_hub).last()
         self.assertEqual(credit_institution.credit_institution_name, 'Test Bank')
+
+    def test_bank_account_returns_correct_html(self):
+        for acc_no in [acc_sat.hub_entity.id for acc_sat in
+                       BankAccountStaticSatellite.objects.all()]: 
+            response = self.client.post(f'/account/{acc_no}/bank_account_view')
+            self.assertTemplateUsed(response, 'bank_account_view.html')
 
 

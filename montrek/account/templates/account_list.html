@@ -23,7 +23,7 @@ Account Name
 {% endblock %}
 
 {% block item_value %}
-    {% for bankaccountitem in item.bankaccountsatellite_set.all %}
+    {% for bankaccountitem in item.bankaccountpropertysatellite_set.all %}
         {{ bankaccountitem.account_value }}
     {% endfor %}
 {% endblock %}
