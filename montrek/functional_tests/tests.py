@@ -214,6 +214,10 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
         new_account_credit_institution_box = self.browser.find_element(By.ID,
             'id_bank_account_new__credit_institution')
         new_account_credit_institution_box.send_keys('Bank of Testonia')
+        # He enters his IBAN in the IBAN box
+        new_account_iban_box = self.browser.find_element(By.ID,
+            'id_bank_account_new__iban')
+        new_account_iban_box.send_keys('DE12345678901234567890')
 
         # When he hits the submit button, he is directed to the accounts-list,
         # where he finds his new account listed
@@ -228,4 +232,6 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
         self.browser.find_element(By.ID, f'link_{first_id}').click()
         header_text = self.browser.find_element(By.TAG_NAME,'h2').text
         self.assertIn('Bank Account Details', header_text)
-        self.check_for_row_in_table(['Billy\'s Bank account','Bank of Testonia'], 'id_account_details')
+        self.check_for_row_in_table(['Billy\'s Bank account',
+                                     'Bank of Testonia',
+                                     'DE12345678901234567890'], 'id_account_details')

@@ -120,6 +120,10 @@ def bank_account_new(request, account_name: str):
 
 def bank_account_view_data(account_id: int):
     account_data = account_view_data(account_id)
+    bank_account_static_satellite = BankAccountStaticSatellite.objects.get(
+        hub_entity=account_id)
+    account_data['bank_account_statics'] = bank_account_static_satellite
+    breakpoint()
     account_data['credit_institution'] = get_credit_institution_by_account_id(account_id).last()
     return account_data
 
