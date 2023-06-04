@@ -4,6 +4,7 @@ from django.db import models
 from account.models import AccountHub 
 from account.models import AccountStaticSatellite
 from account.models import BankAccountPropertySatellite
+from account.models import BankAccountStaticSatellite
 from account.model_utils import new_transaction_to_account
 from account.model_utils import get_transactions_by_account_id
 from account.model_utils import get_credit_institution_by_account_id
@@ -104,6 +105,10 @@ def bank_account_new(request, account_name: str):
                               'BankAccount')
     BankAccountPropertySatellite.objects.create(
         hub_entity=account_hub,
+    )
+    BankAccountStaticSatellite.objects.create(
+        hub_entity=account_hub,
+        bank_account_iban=request.POST['bank_account_iban'],
     )
     credit_institution_name = request.POST['credit_institution_name']
     credit_institution_hub = CreditInstitutionHub.objects.prefetch_related('creditinstitutionstaticsatellite_set').filter(

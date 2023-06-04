@@ -4,6 +4,7 @@ from django.db.models import Sum, F
 from typing import List
 from baseclasses import models as baseclass_models
 from .model_utils import get_transactions_by_account
+from baseclasses.model_utils import montrek_iban_validator
 # Create your models here.
 
 class AccountHub(baseclass_models.MontrekHubABC): pass
@@ -37,3 +38,8 @@ class BankAccountPropertySatellite(baseclass_models.MontrekSatelliteABC):
 
 class BankAccountStaticSatellite(baseclass_models.MontrekSatelliteABC):
     hub_entity = models.ForeignKey(AccountHub, on_delete=models.CASCADE)
+    bank_account_iban = models.CharField(
+        max_length=34,
+        validators=[montrek_iban_validator()],
+        default='XX00000000000000000000'
+    )

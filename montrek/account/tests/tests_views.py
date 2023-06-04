@@ -107,7 +107,9 @@ class TestBankAccountViews(TestCase):
     def test_new_bank_account(self):
         accounts_under_test = len(AccountHub.objects.all())
         self.client.post('/account/bank_account/new/New%20Bank%20Account', 
-                         data={ 'credit_institution_name': 'Test Bank',})
+                         data={ 'credit_institution_name': 'Test Bank',
+                                'bank_account_iban': 'DE12345678901234567890',
+                                })
         self.assertEqual(AccountHub.objects.count(), accounts_under_test + 1)
         self.assertEqual(AccountStaticSatellite.objects.count(),
                          accounts_under_test + 1)
@@ -118,6 +120,9 @@ class TestBankAccountViews(TestCase):
         self.assertEqual(account_static_satellite.account_type, 'BankAccount')
         bank_account_property_satellite = BankAccountPropertySatellite.objects.last()
         self.assertEqual(bank_account_property_satellite.hub_entity.id, account_hub.id)
+        bank_account_static_satellite = BankAccountStaticSatellite.objects.last()
+        self.assertEqual(bank_account_static_satellite.bank_account_iban,
+                         'DE12345678901234567890')
         credit_institution = get_credit_institution_by_account(account_hub).last()
         self.assertEqual(credit_institution.credit_institution_name, 'Test Bank')
 
