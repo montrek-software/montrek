@@ -110,7 +110,7 @@ def bank_account_new(request, account_name: str):
         creditinstitutionstaticsatellite__credit_institution_name=credit_institution_name)
     if len(credit_institution_hub) == 0:
         credit_institution_hub = new_credit_institution(credit_institution_name)
-    new_account_credit_instition_link(account_hub, credit_institution_hub)
+    new_account_credit_instition_link(account_hub, credit_institution_hub[0])
     return redirect('/account/list')
 
 def bank_account_view_data(account_id: int):

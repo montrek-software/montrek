@@ -11,6 +11,7 @@ from typing import List
 from account.models import AccountStaticSatellite
 from baseclasses.models import MontrekSatelliteABC
 from account.tests.factories import account_factories
+from credit_institution.tests.factories import credit_institution_factories
 from baseclasses.model_utils import get_hub_ids_by_satellite_attribute
 
 MAX_WAIT = 10
@@ -179,6 +180,12 @@ class TransactionFunctionalTest(MontrekFunctionalTest):
                                      'id_transaction_list')
 
 class BankAccountFunctionalTest(MontrekFunctionalTest):
+    @classmethod
+    def setUp(cls):
+        credit_institution_factories.CreditInstitutionStaticSatelliteFactory.create(
+            credit_institution_name='Bank of Testonia')
+        super().setUp(cls) 
+
     @tag('functional')
     def test_add_bank_account(self):
         # The user visits the new account form
@@ -215,3 +222,10 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
         header_text = self.browser.find_element(By.TAG_NAME,'h1').text
         self.assertIn('Account List', header_text)
         self.check_for_row_in_table(['Billy\'s Bank account'], 'id_list')
+        first_id = self.find_object_hub_id(AccountStaticSatellite, 
+                                           'Billy\'s Bank account',
+                                          'account_name')
+        self.browser.find_element(By.ID, f'link_{first_id}').click()
+        header_text = self.browser.find_element(By.TAG_NAME,'h2').text
+        self.assertIn('Bank Account Details', header_text)
+        self.check_for_row_in_table(['Billy\'s Bank account','Bank of Testonia'], 'id_account_details')
