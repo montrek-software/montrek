@@ -13,7 +13,7 @@ Account Name
 {% endblock %}
 
 {% block item_url %}
-{% url 'account_view' item.id %}
+{% url item.accountstaticsatellite_set.first.view_name item.id %}
 {% endblock %}
 
 {% block item_name %}
@@ -25,5 +25,11 @@ Account Name
 {% block item_value %}
     {% for bankaccountitem in item.bankaccountpropertysatellite_set.all %}
         {{ bankaccountitem.account_value }}
+    {% endfor %}
+{% endblock %}
+
+{% block item_type %}
+    {% for accountstaticitem in item.accountstaticsatellite_set.all %}
+        {{ accountstaticitem.account_type }}
     {% endfor %}
 {% endblock %}

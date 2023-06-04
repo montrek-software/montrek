@@ -1,3 +1,4 @@
+import re
 from django.db import models
 from django.db.models import Sum, F 
 from typing import List
@@ -18,6 +19,14 @@ class AccountStaticSatellite(baseclass_models.MontrekSatelliteABC):
     hub_entity = models.ForeignKey(AccountHub, on_delete=models.CASCADE)
     account_type = models.CharField(max_length=50, choices=AccountType.choices, default=AccountType.OTHER)
     account_name = models.CharField(max_length=50) 
+    @property
+    def view_name(self):
+        if self.account_type == self.AccountType.OTHER:
+            return 'account_view'
+        else:
+            view_rep = re.sub(r'(?<!^)(?=[A-Z])', '_',
+                              self.account_type).lower()
+            return f'{view_rep}_view'
 
 class BankAccountPropertySatellite(baseclass_models.MontrekSatelliteABC):
     hub_entity = models.ForeignKey(AccountHub, on_delete=models.CASCADE)
