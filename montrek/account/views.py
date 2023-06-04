@@ -17,8 +17,16 @@ from link_tables.model_utils import new_account_credit_instition_link
 
 #### Account Views ####
 def account_new(request):
-    new_account(request.POST['account_name'])
-    return redirect('/account/list')
+    account_type = request.POST['account_type']
+    if account_type == 'Other':
+        new_account(request.POST['account_name'])
+        return redirect('/account/list')
+    elif account_type == 'Bank Account':
+        return redirect('/account/bank_account/new_form')
+    else:
+        return render(request,
+                      'under_construction.html')
+
 
 def account_new_form(request):
     account_types = AccountStaticSatellite.AccountType.choices
