@@ -18,6 +18,14 @@
                        name="account_name"
                        placeholder="Name of new Account"
                        id="id_account_new__name" />
+                <label for="item-account-type">Account Type</label>
+                <select class="form-control" 
+                        name="account_type"
+                        id="id_account_new__account_type">
+                    {% for account_option, account_type in account_types %}
+                    <option value="{{ account_type }}">{{ account_type }}</option>
+                    {% endfor %}
+                </select>
             </div>
             <input type="submit" 
             class="btn btn-warning" 

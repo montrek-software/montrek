@@ -178,4 +178,40 @@ class TransactionFunctionalTest(MontrekFunctionalTest):
                                      'Jan. 1, 2022, midnight'],
                                      'id_transaction_list')
 
+class BankAccountFunctionalTest(MontrekFunctionalTest):
+    @tag('functional')
+    def test_add_bank_account(self):
+        # The user visits the new account form
+        self.browser.get(self.live_server_url + '/account/new_form')
+        # The page title is 'Montrek'
+        self.assertIn('Montrek', self.browser.title)
+        # The header line says 'Add new Account'
+        header_text = self.browser.find_element(By.TAG_NAME,'h1').text
+        self.assertIn('Add new Account', header_text)
+        # He enters 'Billy's account' into the Account Name Box
+        new_account_name_box = self.browser.find_element(By.ID,
+            'id_account_new__name')
+        new_account_name_box.send_keys('Billy\'s Bank account')
+        # he selects 'Bank Account' from the Account Type dropdown
+        new_account_type_box = self.browser.find_element(By.ID,
+            'id_account_new__account_type')
+        new_account_type_box.send_keys('Bank Account')
+        # When he hits the submit button, he is directed to the new bank
+        # account form
+        new_account_submit = self.browser.find_element(By.ID,
+                                                    'id_account_new__submit').click()
+        header_text = self.browser.find_element(By.TAG_NAME,'h1').text
+        self.assertIn('Add new Bank Account', header_text)
+        # He enters the bank account data
+        # He selects 'Bank of Testonia' from the credit institution dropdown
+        new_account_credit_institution_box = self.browser.find_element(By.ID,
+            'id_bank_account_new__credit_institution')
+        new_account_credit_institution_box.send_keys('Bank of Testonia')
 
+        # When he hits the submit button, he is directed to the accounts-list,
+        # where he finds his new account listed
+        new_list_submit = self.browser.find_element(By.ID,
+                                                    'id_bank_account_new__submit').click()
+        header_text = self.browser.find_element(By.TAG_NAME,'h1').text
+        self.assertIn('Account List', header_text)
+        self.check_for_row_in_table(['Billy\'s Bank account'], 'id_list')

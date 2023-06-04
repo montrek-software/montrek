@@ -21,7 +21,10 @@ def account_new(request):
     return redirect('/account/list')
 
 def account_new_form(request):
-    return render(request, 'new_account_form.html')
+    account_types = AccountStaticSatellite.AccountType.choices
+    return render(request, 
+                  'new_account_form.html',
+                 {'account_types': account_types})
 
 def account_list(request):
     accounts_statics = AccountHub.objects.all().prefetch_related(

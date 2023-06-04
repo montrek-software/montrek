@@ -10,11 +10,11 @@ class AccountHub(baseclass_models.MontrekHubABC): pass
 
 class AccountStaticSatellite(baseclass_models.MontrekSatelliteABC):
     class AccountType(models.TextChoices):
-        BANKACCOUNT = "BankAccount"
+        OTHER = "Other"
+        BANK_ACCOUNT = "BankAccount"
         CASH = "Cash"
         DEPOT = "Depot"
         REAL_ESTATE = "RealEstate"
-        OTHER = "Other"
 
     hub_entity = models.ForeignKey(AccountHub, on_delete=models.CASCADE)
     account_type = models.CharField(max_length=50, choices=AccountType.choices, default=AccountType.OTHER)
