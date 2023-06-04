@@ -17,7 +17,7 @@ from link_tables.model_utils import new_account_credit_instition_link
 
 #### Account Views ####
 def account_new(request):
-    account_type = request.POST['account_type']
+    account_type = request.POST.get('account_type', 'Other')
     account_name = request.POST['account_name']
     if account_type == 'Other':
         new_account(request.POST['account_name'])
@@ -109,7 +109,7 @@ def bank_account_new(request, account_name: str):
     credit_institution_hub = CreditInstitutionHub.objects.prefetch_related('creditinstitutionstaticsatellite_set').filter(
         creditinstitutionstaticsatellite__credit_institution_name=credit_institution_name)
     if len(credit_institution_hub) == 0:
-        credit_institution_hub = new_credit_institution(credit_institution_name)
+        credit_institution_hub = [new_credit_institution(credit_institution_name)]
     new_account_credit_instition_link(account_hub, credit_institution_hub[0])
     return redirect('/account/list')
 

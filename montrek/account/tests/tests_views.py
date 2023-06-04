@@ -106,9 +106,8 @@ class TestBankAccountViews(TestCase):
 
     def test_new_bank_account(self):
         accounts_under_test = len(AccountHub.objects.all())
-        self.client.post('/account/bank_account/new', 
-                         data={'account_name': 'New Bank Account',
-                               'credit_institution_name': 'Test Bank',})
+        self.client.post('/account/bank_account/new/New%20Bank%20Account', 
+                         data={ 'credit_institution_name': 'Test Bank',})
         self.assertEqual(AccountHub.objects.count(), accounts_under_test + 1)
         self.assertEqual(AccountStaticSatellite.objects.count(),
                          accounts_under_test + 1)
