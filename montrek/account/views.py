@@ -80,7 +80,8 @@ def transaction_add(request, account_id: int):
 #### Bank Account Views ####
 
 def bank_account_new(request):
-    account_hub = new_account(request.POST['account_name'])
+    account_hub = new_account(request.POST['account_name'],
+                              'BankAccount')
     BankAccountPropertySatellite.objects.create(
         hub_entity=account_hub,
     )

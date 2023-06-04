@@ -28,11 +28,14 @@ def credit_institution_hub():
 def credit_institution_static_satellite():
     return apps.get_model('credit_institution','CreditInstitutionStaticSatellite')
 
-def new_account(account_name:str) -> baseclass_models.MontrekHubABC:
+def new_account(account_name:str,
+                account_type:str='Other') -> baseclass_models.MontrekHubABC:
     account_hub_object = account_hub().objects.create()
     account_static_satellite().objects.create(
         hub_entity=account_hub_object,
-        account_name=account_name)
+        account_type=account_type,
+        account_name=account_name,
+    )
     return account_hub_object
 
 def new_transaction_to_account(account_id:int,

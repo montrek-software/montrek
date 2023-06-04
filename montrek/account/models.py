@@ -8,8 +8,16 @@ from .model_utils import get_transactions_by_account
 class AccountHub(baseclass_models.MontrekHubABC): pass
 
 class AccountStaticSatellite(baseclass_models.MontrekSatelliteABC):
-    account_name = models.CharField(max_length=50) 
+    class AccountType(models.TextChoices):
+        BANKACCOUNT = "BankAccount"
+        CASH = "Cash"
+        DEPOT = "Depot"
+        REAL_ESTATE = "RealEstate"
+        OTHER = "Other"
+
     hub_entity = models.ForeignKey(AccountHub, on_delete=models.CASCADE)
+    account_type = models.CharField(max_length=50, choices=AccountType.choices, default=AccountType.OTHER)
+    account_name = models.CharField(max_length=50) 
 
 class BankAccountPropertySatellite(baseclass_models.MontrekSatelliteABC):
     hub_entity = models.ForeignKey(AccountHub, on_delete=models.CASCADE)

@@ -36,6 +36,7 @@ class TestAccountViews(TestCase):
         account_static_satellite = AccountStaticSatellite.objects.last()
         self.assertEqual(account_static_satellite.account_name, 'New Account')
         self.assertEqual(account_static_satellite.hub_entity.id, account_hub.id)
+        self.assertEqual(account_static_satellite.account_type, 'Other')
 
     def test_account_list_returns_correct_html(self):
         response = self.client.post('/account/list')
@@ -115,6 +116,7 @@ class TestBankAccountViews(TestCase):
         account_static_satellite = AccountStaticSatellite.objects.last()
         self.assertEqual(account_static_satellite.account_name, 'New Bank Account')
         self.assertEqual(account_static_satellite.hub_entity.id, account_hub.id)
+        self.assertEqual(account_static_satellite.account_type, 'BankAccount')
         bank_account_property_satellite = BankAccountPropertySatellite.objects.last()
         self.assertEqual(bank_account_property_satellite.hub_entity.id, account_hub.id)
         credit_institution = get_credit_institution_by_account(account_hub).last()
