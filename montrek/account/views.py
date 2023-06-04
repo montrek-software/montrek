@@ -18,11 +18,12 @@ from link_tables.model_utils import new_account_credit_instition_link
 #### Account Views ####
 def account_new(request):
     account_type = request.POST['account_type']
+    account_name = request.POST['account_name']
     if account_type == 'Other':
         new_account(request.POST['account_name'])
         return redirect('/account/list')
     elif account_type == 'Bank Account':
-        return redirect('/account/bank_account/new_form')
+        return redirect(f'/account/bank_account/new_form/{account_name}')
     else:
         return render(request,
                       'under_construction.html')
@@ -90,8 +91,16 @@ def transaction_add(request, account_id: int):
 
 #### Bank Account Views ####
 
-def bank_account_new(request):
-    account_hub = new_account(request.POST['account_name'],
+def bank_account_new_form(request, account_name: str):
+    return render(request,
+                  'bank_account_new_form.html',
+                  {'credit_institutions':
+                   CreditInstitutionStaticSatellite.objects.all(),
+                  'account_name': account_name,
+                  })
+
+def bank_account_new(request, account_name: str):
+    account_hub = new_account(account_name,
                               'BankAccount')
     BankAccountPropertySatellite.objects.create(
         hub_entity=account_hub,
