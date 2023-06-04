@@ -10,4 +10,8 @@ urlpatterns = [
     path('<int:account_id>/delete_form', views.account_delete_form, name='account_delete_form'),
     path('<int:account_id>/transaction_add_form', views.transaction_add_form, name='transaction_add_form'),
     path('<int:account_id>/transaction_add', views.transaction_add, name='transaction_add'),
+    path('bank_account/new_form/<str:account_name>', views.bank_account_new_form,
+         name='bank_account_new_form'),
+    path('bank_account/new/<str:account_name>', views.bank_account_new, name='bank_account_new'),
+    path('<int:account_id>/bank_account_view', views.bank_account_view, name='bank_account_view'),
 ]

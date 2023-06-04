@@ -11,6 +11,7 @@ from typing import List
 from account.models import AccountStaticSatellite
 from baseclasses.models import MontrekSatelliteABC
 from account.tests.factories import account_factories
+from credit_institution.tests.factories import credit_institution_factories
 from baseclasses.model_utils import get_hub_ids_by_satellite_attribute
 
 MAX_WAIT = 10
@@ -178,4 +179,59 @@ class TransactionFunctionalTest(MontrekFunctionalTest):
                                      'Jan. 1, 2022, midnight'],
                                      'id_transaction_list')
 
+class BankAccountFunctionalTest(MontrekFunctionalTest):
+    @classmethod
+    def setUp(cls):
+        credit_institution_factories.CreditInstitutionStaticSatelliteFactory.create(
+            credit_institution_name='Bank of Testonia')
+        super().setUp(cls) 
 
+    @tag('functional')
+    def test_add_bank_account(self):
+        # The user visits the new account form
+        self.browser.get(self.live_server_url + '/account/new_form')
+        # The page title is 'Montrek'
+        self.assertIn('Montrek', self.browser.title)
+        # The header line says 'Add new Account'
+        header_text = self.browser.find_element(By.TAG_NAME,'h1').text
+        self.assertIn('Add new Account', header_text)
+        # He enters 'Billy's account' into the Account Name Box
+        new_account_name_box = self.browser.find_element(By.ID,
+            'id_account_new__name')
+        new_account_name_box.send_keys('Billy\'s Bank account')
+        # he selects 'Bank Account' from the Account Type dropdown
+        new_account_type_box = self.browser.find_element(By.ID,
+            'id_account_new__account_type')
+        new_account_type_box.send_keys('Bank Account')
+        # When he hits the submit button, he is directed to the new bank
+        # account form
+        new_account_submit = self.browser.find_element(By.ID,
+                                                    'id_account_new__submit').click()
+        header_text = self.browser.find_element(By.TAG_NAME,'h1').text
+        self.assertIn('Add new Bank Account', header_text)
+        # He enters the bank account data
+        # He selects 'Bank of Testonia' from the credit institution dropdown
+        new_account_credit_institution_box = self.browser.find_element(By.ID,
+            'id_bank_account_new__credit_institution')
+        new_account_credit_institution_box.send_keys('Bank of Testonia')
+        # He enters his IBAN in the IBAN box
+        new_account_iban_box = self.browser.find_element(By.ID,
+            'id_bank_account_new__iban')
+        new_account_iban_box.send_keys('DE12345678901234567890')
+
+        # When he hits the submit button, he is directed to the accounts-list,
+        # where he finds his new account listed
+        new_list_submit = self.browser.find_element(By.ID,
+                                                    'id_bank_account_new__submit').click()
+        header_text = self.browser.find_element(By.TAG_NAME,'h1').text
+        self.assertIn('Account List', header_text)
+        self.check_for_row_in_table(['Billy\'s Bank account'], 'id_list')
+        first_id = self.find_object_hub_id(AccountStaticSatellite, 
+                                           'Billy\'s Bank account',
+                                          'account_name')
+        self.browser.find_element(By.ID, f'link_{first_id}').click()
+        header_text = self.browser.find_element(By.TAG_NAME,'h2').text
+        self.assertIn('Bank Account Details', header_text)
+        self.check_for_row_in_table(['Billy\'s Bank account',
+                                     'Bank of Testonia',
+                                     'DE12345678901234567890'], 'id_account_details')

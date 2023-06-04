@@ -1,9 +1,9 @@
 from django.contrib import admin
 from .models import AccountHub
 from .models import AccountStaticSatellite
-from .models import BankAccountSatellite
+from .models import BankAccountPropertySatellite
 
 # Register your models here.
 admin.site.register(AccountHub)
 admin.site.register(AccountStaticSatellite)
-admin.site.register(BankAccountSatellite)
+admin.site.register(BankAccountPropertySatellite)
