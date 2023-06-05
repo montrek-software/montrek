@@ -13,7 +13,7 @@ from transaction.tests.factories.transaction_factories import TransactionHubFact
 from transaction.tests.factories.transaction_factories import TransactionSatelliteFactory
 from link_tables.tests.factories.link_tables_factories import AccountTransactionLinkFactory
 from baseclasses.model_utils import get_hub_ids_by_satellite_attribute
-from account.model_utils import get_transactions_by_account_id
+from transaction.model_utils import get_transactions_by_account_id
 from account.model_utils import get_credit_institution_by_account
 
 # Create your tests here.
@@ -62,27 +62,6 @@ class TestAccountViews(TestCase):
             response = self.client.post(f'/account/{acc_no}/delete_form')
             self.assertTemplateUsed(response, 'account_delete_form.html')
 
-    def test_transaction_add_form(self):
-        for acc_no in [acc_sat.hub_entity.id for acc_sat in AccountStaticSatellite.objects.all()]: 
-            response = self.client.post(f'/account/{acc_no}/transaction_add_form')
-            self.assertTemplateUsed(response, 'transaction_add_form.html')
-
-    def test_transaction_add(self):
-        for acc_no in [acc_sat.hub_entity.id for acc_sat in AccountStaticSatellite.objects.all()]: 
-            self.client.post(f'/account/{acc_no}/transaction_add',
-                               data={'transaction_amount': 1000, 
-                                     'transaction_price': 12.20,
-                                     'transaction_description': 'Test Transaction',
-                                     'transaction_date':datetime.date(2020, 1, 1)})
-            transactions = get_transactions_by_account_id(acc_no) 
-            self.assertEqual(len(transactions), 1)
-            self.assertEqual(transactions[0].transaction_amount, 1000)
-            self.assertEqual(transactions[0].transaction_price,
-                             Decimal('12.20'))
-            self.assertEqual(transactions[0].transaction_description, 'Test Transaction')
-            self.assertEqual(transactions[0].transaction_date,
-                             datetime.datetime(2020, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc))
-            self.assertEqual(transactions[0].transaction_value, Decimal('12200.00'))
 
 class TestBankAccountViews(TestCase):
     @classmethod

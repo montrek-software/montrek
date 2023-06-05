@@ -5,8 +5,7 @@ from account.models import AccountHub
 from account.models import AccountStaticSatellite
 from account.models import BankAccountPropertySatellite
 from account.models import BankAccountStaticSatellite
-from account.model_utils import new_transaction_to_account
-from account.model_utils import get_transactions_by_account_id
+from transaction.model_utils import get_transactions_by_account_id
 from account.model_utils import get_credit_institution_by_account_id
 from account.model_utils import new_account
 from credit_institution.model_utils import new_credit_institution
@@ -70,25 +69,6 @@ def account_delete_form(request, account_id: int):
                   'account_delete_form.html',
                   {'account_statics': account_statics})
 
-#### Transaction Views ####
-
-def transaction_add_form(request, account_id: int):
-    account_statics = AccountStaticSatellite.objects.get(hub_entity=account_id)
-    return render(request,
-                  'transaction_add_form.html',
-                  {'account_statics': account_statics})
-
-def transaction_add(request, account_id: int):
-    new_transaction_to_account(
-        account_id=account_id, 
-        transaction_date=request.POST['transaction_date'],
-        transaction_amount= request.POST['transaction_amount'],
-        transaction_price= request.POST['transaction_price'],
-        transaction_description=request.POST['transaction_description'],
-        transaction_type="",
-        transaction_category="",
-    )
-    return redirect(f'/account/{account_id}/view')
 
 #### Bank Account Views ####
 

@@ -3,7 +3,7 @@ from django.db import models
 from django.db.models import Sum, F 
 from typing import List
 from baseclasses import models as baseclass_models
-from .model_utils import get_transactions_by_account
+from transaction.model_utils import get_transactions_by_account
 from baseclasses.model_utils import montrek_iban_validator
 # Create your models here.
 
@@ -25,6 +25,7 @@ class AccountStaticSatellite(baseclass_models.MontrekSatelliteABC):
         if self.account_type == self.AccountType.OTHER:
             return 'account_view'
         else:
+            # https://stackoverflow.com/questions/1175208/elegant-python-function-to-convert-camelcase-to-snake-case
             view_rep = re.sub(r'(?<!^)(?=[A-Z])', '_',
                               self.account_type).lower()
             return f'{view_rep}_view'
