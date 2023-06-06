@@ -3,7 +3,8 @@ from typing import List
 import datetime
 
 from baseclasses import models as baseclass_models
-from link_tables.model_utils import new_link_entry
+from baseclasses.model_utils import new_link_entry
+from baseclasses.model_utils import new_satellite_entry
 
 def account_hub():
     return apps.get_model('account','AccountHub')
@@ -26,8 +27,9 @@ def new_transaction_to_account(account_id:int,
                                transaction_description:str) -> None:
     account_hub_object = account_hub().objects.get(id=account_id)
     transaction_hub_object = transaction_hub().objects.create()
-    transaction_satellite_object = transaction_satellite().objects.create(
+    transaction_satellite_object = new_satellite_entry( 
         hub_entity=transaction_hub_object,
+        satellite_class=transaction_satellite(),
         transaction_date=transaction_date,
         transaction_amount=transaction_amount,
         transaction_price=transaction_price,

@@ -13,6 +13,13 @@ def new_link_entry(from_hub:MontrekHubABC,
     link_table.objects.create(
         from_hub=from_hub,
         to_hub=to_hub)
+def new_satellite_entry(hub_entity:MontrekHubABC,
+                        satellite_class:MontrekSatelliteABC,
+                        **kwargs) -> MontrekSatelliteABC:
+    satellite_entity = satellite_class.objects.create(
+        hub_entity=hub_entity,
+        **kwargs)
+    return satellite_entity
 
 def get_hub_ids_by_satellite_attribute(satellite: ModelBase,
                                       field: str,

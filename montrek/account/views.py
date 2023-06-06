@@ -12,6 +12,7 @@ from credit_institution.model_utils import new_credit_institution
 from credit_institution.models import CreditInstitutionStaticSatellite
 from credit_institution.models import CreditInstitutionHub
 from baseclasses.model_utils import new_link_entry
+from baseclasses.model_utils import new_satellite_entry
 from link_tables.models import AccountCreditInstitutionLink
 
 # Create your views here.
@@ -87,8 +88,9 @@ def bank_account_new(request, account_name: str):
     BankAccountPropertySatellite.objects.create(
         hub_entity=account_hub,
     )
-    BankAccountStaticSatellite.objects.create(
+    new_satellite_entry(
         hub_entity=account_hub,
+        satellite_class=BankAccountStaticSatellite,
         bank_account_iban=request.POST['bank_account_iban'],
     )
     credit_institution_name = request.POST['credit_institution_name']
