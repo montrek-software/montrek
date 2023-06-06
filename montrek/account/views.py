@@ -5,14 +5,14 @@ from account.models import AccountHub
 from account.models import AccountStaticSatellite
 from account.models import BankAccountPropertySatellite
 from account.models import BankAccountStaticSatellite
-from account.model_utils import new_transaction_to_account
-from account.model_utils import get_transactions_by_account_id
-from account.model_utils import get_credit_institution_by_account_id
+from transaction.model_utils import get_transactions_by_account_id
 from account.model_utils import new_account
-from credit_institution.model_utils import new_credit_institution
+from credit_institution.model_utils import get_credit_institution_by_account_id
+from credit_institution.model_utils import new_credit_institution_to_account
 from credit_institution.models import CreditInstitutionStaticSatellite
 from credit_institution.models import CreditInstitutionHub
-from link_tables.model_utils import new_account_credit_instition_link
+from baseclasses.model_utils import new_link_entry
+from baseclasses.model_utils import new_satellite_entry
 
 # Create your views here.
 
@@ -70,25 +70,6 @@ def account_delete_form(request, account_id: int):
                   'account_delete_form.html',
                   {'account_statics': account_statics})
 
-#### Transaction Views ####
-
-def transaction_add_form(request, account_id: int):
-    account_statics = AccountStaticSatellite.objects.get(hub_entity=account_id)
-    return render(request,
-                  'transaction_add_form.html',
-                  {'account_statics': account_statics})
-
-def transaction_add(request, account_id: int):
-    new_transaction_to_account(
-        account_id=account_id, 
-        transaction_date=request.POST['transaction_date'],
-        transaction_amount= request.POST['transaction_amount'],
-        transaction_price= request.POST['transaction_price'],
-        transaction_description=request.POST['transaction_description'],
-        transaction_type="",
-        transaction_category="",
-    )
-    return redirect(f'/account/{account_id}/view')
 
 #### Bank Account Views ####
 
@@ -106,16 +87,13 @@ def bank_account_new(request, account_name: str):
     BankAccountPropertySatellite.objects.create(
         hub_entity=account_hub,
     )
-    BankAccountStaticSatellite.objects.create(
+    new_satellite_entry(
         hub_entity=account_hub,
+        satellite_class=BankAccountStaticSatellite,
         bank_account_iban=request.POST['bank_account_iban'],
     )
     credit_institution_name = request.POST['credit_institution_name']
-    credit_institution_hub = CreditInstitutionHub.objects.prefetch_related('creditinstitutionstaticsatellite_set').filter(
-        creditinstitutionstaticsatellite__credit_institution_name=credit_institution_name)
-    if len(credit_institution_hub) == 0:
-        credit_institution_hub = [new_credit_institution(credit_institution_name)]
-    new_account_credit_instition_link(account_hub, credit_institution_hub[0])
+    new_credit_institution_to_account(credit_institution_name, account_hub )
     return redirect('/account/list')
 
 def bank_account_view_data(account_id: int):
