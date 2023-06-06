@@ -3,6 +3,7 @@ from typing import List
 import datetime
 
 from baseclasses import models as baseclass_models
+from link_tables.model_utils import new_link_entry
 
 def account_hub():
     return apps.get_model('account','AccountHub')
@@ -33,9 +34,9 @@ def new_transaction_to_account(account_id:int,
         transaction_type=transaction_type,
         transaction_category=transaction_category,
         transaction_description=transaction_description)
-    account_transaction_link().objects.create(
-        from_hub=account_hub_object,
-        to_hub=transaction_hub_object)
+    new_link_entry(account_hub_object, 
+                   transaction_hub_object,
+                  account_transaction_link())
 
 def get_transactions_by_account_id(account_id:int) -> List[baseclass_models.MontrekSatelliteABC]:
     account_hub_object = account_hub().objects.get(id=account_id)

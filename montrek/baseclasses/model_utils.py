@@ -1,8 +1,18 @@
 # Purpose: Utility functions for the model package
 from baseclasses.models import MontrekSatelliteABC
+from baseclasses.models import MontrekHubABC
+from baseclasses.models import MontrekLinkABC
 from django.db.models.base import ModelBase
 from django.core.validators import RegexValidator
 from typing import Any, List
+
+
+def new_link_entry(from_hub:MontrekHubABC,
+                   to_hub:MontrekHubABC,
+                   link_table:MontrekLinkABC) -> None:
+    link_table.objects.create(
+        from_hub=from_hub,
+        to_hub=to_hub)
 
 def get_hub_ids_by_satellite_attribute(satellite: ModelBase,
                                       field: str,

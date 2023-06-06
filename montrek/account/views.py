@@ -11,7 +11,8 @@ from account.model_utils import new_account
 from credit_institution.model_utils import new_credit_institution
 from credit_institution.models import CreditInstitutionStaticSatellite
 from credit_institution.models import CreditInstitutionHub
-from link_tables.model_utils import new_account_credit_instition_link
+from baseclasses.model_utils import new_link_entry
+from link_tables.models import AccountCreditInstitutionLink
 
 # Create your views here.
 
@@ -95,7 +96,7 @@ def bank_account_new(request, account_name: str):
         creditinstitutionstaticsatellite__credit_institution_name=credit_institution_name)
     if len(credit_institution_hub) == 0:
         credit_institution_hub = [new_credit_institution(credit_institution_name)]
-    new_account_credit_instition_link(account_hub, credit_institution_hub[0])
+    new_link_entry(account_hub, credit_institution_hub[0], AccountCreditInstitutionLink)
     return redirect('/account/list')
 
 def bank_account_view_data(account_id: int):

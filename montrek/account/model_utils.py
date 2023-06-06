@@ -10,8 +10,6 @@ def account_hub():
 def account_static_satellite():
     return apps.get_model('account','AccountStaticSatellite')
 
-
-
 def account_credit_institution_link():
     return apps.get_model('link_tables','AccountCreditInstitutionLink')
 

@@ -2,11 +2,9 @@ from django.apps import apps
 
 from baseclasses import models as baseclass_models
 
-def account_credit_institution_link():
-    return apps.get_model('link_tables','AccountCreditInstitutionLink')
-
-def new_account_credit_instition_link(account_hub:baseclass_models.MontrekHubABC,
-                                      credit_institution_hub:baseclass_models.MontrekHubABC) -> None:
-    account_credit_institution_link().objects.create(
-        from_hub=account_hub,
-        to_hub=credit_institution_hub)
+def new_link_entry(from_hub:baseclass_models.MontrekHubABC,
+                   to_hub:baseclass_models.MontrekHubABC,
+                   link_table:baseclass_models.MontrekLinkABC) -> None:
+    link_table.objects.create(
+        from_hub=from_hub,
+        to_hub=to_hub)
