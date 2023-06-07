@@ -14,7 +14,7 @@ from transaction.tests.factories.transaction_factories import TransactionSatelli
 from link_tables.tests.factories.link_tables_factories import AccountTransactionLinkFactory
 from baseclasses.model_utils import get_hub_ids_by_satellite_attribute
 from transaction.model_utils import get_transactions_by_account_id
-from account.model_utils import get_credit_institution_by_account
+from credit_institution.model_utils import get_credit_institution_by_account
 
 # Create your tests here.
 class TestAccountViews(TestCase):
