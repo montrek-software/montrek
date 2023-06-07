@@ -30,14 +30,3 @@ def new_account(account_name:str,
         account_name=account_name,
     )
     return account_hub_object
-
-
-def get_credit_institution_by_account_id(account_id:int) -> baseclass_models.MontrekSatelliteABC:
-    account_hub_object = account_hub().objects.get(id=account_id)
-    return get_credit_institution_by_account(account_hub_object)
-
-def get_credit_institution_by_account(account_hub_object) -> baseclass_models.MontrekSatelliteABC:
-    account_credit_institution_links = account_credit_institution_link().objects.filter(from_hub=account_hub_object)
-    credit_institution_hubs = [account_credit_institution_link.to_hub for account_credit_institution_link in account_credit_institution_links]
-    credit_institution_satellites = credit_institution_static_satellite().objects.filter(hub_entity__in=credit_institution_hubs)
-    return credit_institution_satellites
