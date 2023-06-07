@@ -30,5 +30,3 @@ def new_account(account_name:str,
         account_name=account_name,
     )
     return account_hub_object
-
-
