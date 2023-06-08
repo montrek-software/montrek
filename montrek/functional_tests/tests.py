@@ -10,8 +10,15 @@ from typing import List
 
 from account.models import AccountStaticSatellite
 from baseclasses.models import MontrekSatelliteABC
-from account.tests.factories import account_factories
-from credit_institution.tests.factories import credit_institution_factories
+from account.tests.factories.account_factories import AccountHubFactory
+from account.tests.factories.account_factories import AccountStaticSatelliteFactory
+from account.tests.factories.account_factories import BankAccountPropertySatelliteFactory
+from account.tests.factories.account_factories import BankAccountStaticSatelliteFactory
+from transaction.tests.factories.transaction_factories import TransactionHubFactory
+from transaction.tests.factories.transaction_factories import TransactionSatelliteFactory
+from link_tables.tests.factories.link_tables_factories import AccountTransactionLinkFactory
+from link_tables.tests.factories.link_tables_factories import AccountCreditInstitutionLinkFactory
+from credit_institution.tests.factories.credit_institution_factories import CreditInstitutionStaticSatelliteFactory
 from baseclasses.model_utils import get_hub_ids_by_satellite_attribute
 
 MAX_WAIT = 10
@@ -137,7 +144,7 @@ class AccountFunctionalTests(MontrekFunctionalTest):
 class TransactionFunctionalTest(MontrekFunctionalTest):
     @classmethod
     def setUp(cls):
-        account_factories.AccountStaticSatelliteFactory.create_batch(1)
+        AccountStaticSatelliteFactory.create_batch(1)
         super().setUp(cls)
 
     @tag('functional')
@@ -182,8 +189,21 @@ class TransactionFunctionalTest(MontrekFunctionalTest):
 class BankAccountFunctionalTest(MontrekFunctionalTest):
     @classmethod
     def setUp(cls):
-        credit_institution_factories.CreditInstitutionStaticSatelliteFactory.create(
+        CreditInstitutionStaticSatelliteFactory.create(
             credit_institution_name='Bank of Testonia')
+        dkb_credit_institution = CreditInstitutionStaticSatelliteFactory.create(
+            credit_institution_name='DKB')
+        # DKB Bank account with two transactions
+        account_hub = AccountHubFactory()
+        account_static_satellite = AccountStaticSatelliteFactory(hub_entity=account_hub)
+        transaction_hub = TransactionHubFactory()
+        transaction_satellite_1 = TransactionSatelliteFactory(hub_entity=transaction_hub)
+        transaction_satellite_2 = TransactionSatelliteFactory(hub_entity=transaction_hub)
+        account_transaction_link = AccountTransactionLinkFactory(from_hub=account_hub, to_hub=transaction_hub)
+        bank_account_property_satellite = BankAccountPropertySatelliteFactory(hub_entity=account_hub)
+        bank_account_static_satellite = BankAccountStaticSatelliteFactory(hub_entity=account_hub)
+        credit_institution_link = AccountCreditInstitutionLinkFactory(from_hub=account_hub,
+                                     to_hub=dkb_credit_institution.hub_entity)
         super().setUp(cls) 
 
     @tag('functional')
@@ -235,3 +255,8 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
         self.check_for_row_in_table(['Billy\'s Bank account',
                                      'Bank of Testonia',
                                      'DE12345678901234567890'], 'id_account_details')
+
+    @tag('functional')
+    def test_dkb_transactions_upload(self):
+        # The user visits the bank account page
+        pass

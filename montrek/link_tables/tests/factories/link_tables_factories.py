@@ -14,3 +14,4 @@ class AccountCreditInstitutionLinkFactory(factory.django.DjangoModelFactory):
         model = 'link_tables.AccountCreditInstitutionLink'
     from_hub = factory.SubFactory(AccountHubFactory)
     to_hub = factory.SubFactory(CreditInstitutionHubFactory)
+
