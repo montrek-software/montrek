@@ -2,7 +2,6 @@
 from baseclasses.models import MontrekSatelliteABC
 from baseclasses.models import MontrekHubABC
 from baseclasses.models import MontrekLinkABC
-from django.db.models.base import ModelBase
 from django.core.validators import RegexValidator
 from typing import Any, List
 
@@ -21,11 +20,11 @@ def new_satellite_entry(hub_entity:MontrekHubABC,
         **kwargs)
     return satellite_entity
 
-def get_hub_ids_by_satellite_attribute(satellite: ModelBase,
+def get_hub_ids_by_satellite_attribute(satellite: MontrekSatelliteABC,
                                       field: str,
                                       value: Any) -> List[int]:
-    if not isinstance(satellite, ModelBase):
-        raise TypeError('satellite must be a BaseModel')
+    if not isinstance(satellite(), MontrekSatelliteABC):
+        raise TypeError('satellite must be a MontrekSatelliteABC')
     if not isinstance(field, str):
         raise TypeError('field must be a str')
     satellite_instance = satellite.objects.filter(**{field: value}).all()
