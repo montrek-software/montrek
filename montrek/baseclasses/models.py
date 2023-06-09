@@ -4,8 +4,14 @@ from django.utils import timezone
 
 # Create your models here.
 
+class TimeStampMixin(models.Model):
+    class Meta:
+        abstract = True
+    created_at = models.DateTimeField(auto_now_add=True) 
+    updated_at = models.DateTimeField(auto_now=True )
+
 #Base Hub Model ABC
-class MontrekHubABC(models.Model):
+class MontrekHubABC(TimeStampMixin):
     class Meta:
         abstract = True
 
@@ -13,7 +19,7 @@ class MontrekHubABC(models.Model):
 
 
 #Base Static Satellite Model ABC
-class MontrekSatelliteABC(models.Model):
+class MontrekSatelliteABC(TimeStampMixin):
     class Meta:
         abstract = True
     start_date = models.DateTimeField(default=timezone.now)
@@ -21,20 +27,20 @@ class MontrekSatelliteABC(models.Model):
     hub_entity = models.ForeignKey(MontrekHubABC, on_delete=models.CASCADE)
 
 #Base Link Model ABC
-class MontrekLinkABC(models.Model):
+class MontrekLinkABC(TimeStampMixin):
     class Meta:
         abstract = True
     from_hub = models.ForeignKey(MontrekHubABC, on_delete=models.CASCADE, related_name='from_hub')
     to_hub = models.ForeignKey(MontrekHubABC, on_delete=models.CASCADE, related_name='to_hub')
 
 
-class TestMontrekHub(MontrekHubABC):
+class TestMontrekHub(TimeStampMixin):
     pass
 
-class TestMontrekSatellite(MontrekSatelliteABC):
+class TestMontrekSatellite(TimeStampMixin):
     hub_entity = models.ForeignKey(TestMontrekHub, on_delete=models.CASCADE)
     test_name = models.CharField(max_length=12)
 
-class TestMontrekLink(MontrekLinkABC):
+class TestMontrekLink(TimeStampMixin):
     from_hub = models.ForeignKey(TestMontrekHub, on_delete=models.CASCADE, related_name='from_hub')
     to_hub = models.ForeignKey(TestMontrekHub, on_delete=models.CASCADE, related_name='to_hub')
