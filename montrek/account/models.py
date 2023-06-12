@@ -17,8 +17,9 @@ class AccountStaticSatellite(baseclass_models.MontrekSatelliteABC):
         DEPOT = "Depot"
         REAL_ESTATE = "RealEstate"
 
+
     hub_entity = models.ForeignKey(AccountHub, on_delete=models.CASCADE)
-    account_type = models.CharField(max_length=50, choices=AccountType.choices, default=AccountType.OTHER)
+    account_type = models.CharField(max_length=15, choices=AccountType.choices, default=AccountType.OTHER)
     account_name = models.CharField(max_length=50) 
     @property
     def view_name(self):
@@ -29,6 +30,7 @@ class AccountStaticSatellite(baseclass_models.MontrekSatelliteABC):
             view_rep = re.sub(r'(?<!^)(?=[A-Z])', '_',
                               self.account_type).lower()
             return f'{view_rep}_view'
+
 
 class BankAccountPropertySatellite(baseclass_models.MontrekSatelliteABC):
     hub_entity = models.ForeignKey(AccountHub, on_delete=models.CASCADE)
