@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block title %}Upload Transaction File To Account{% endblock %}
+{% block content %}
+<form>
+    {% csrf_token %}
+    {{ form.as_div }}
+    <input type="submit" value="Upload" />
+</form>
+{% endblock %}
