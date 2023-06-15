@@ -16,6 +16,9 @@ class UploadTransactionToAccountFileViewTest(TestCase):
             from_hub=cls.account_satellite.hub_entity,
             to_hub=cls.credit_institution_satellite.hub_entity
         )
+        # Create a file to upload
+        txt_file_content = b'Test file content'
+        cls.txt_file = SimpleUploadedFile('test_file.txt', file_content)
 
     def test_upload_transaction_to_account_file_view_get(self):
         account_id = self.account_satellite.hub_entity.id
@@ -28,16 +31,13 @@ class UploadTransactionToAccountFileViewTest(TestCase):
     def test_upload_transaction_to_account_file_view_post(self):
         account_id = self.account_satellite.hub_entity.id
         credit_institution_id = self.credit_institution_satellite.hub_entity.id
-        # Create a file to upload
-        file_content = b'Test file content'
-        uploaded_file = SimpleUploadedFile('test_file.txt', file_content)
 
         # Create a POST request with the file
         url = reverse('upload_transaction_to_account_file', args=(account_id, credit_institution_id))
         data = {'file': uploaded_file}
         request_factory = RequestFactory()
         request = request_factory.post(url, data, format='multipart')
-        request.FILES['file'] = uploaded_file
+        request.FILES['file'] = self.txt_file
 
         # Execute the view function
         response = upload_transaction_to_account_file(request, account_id, credit_institution_id)
@@ -45,3 +45,8 @@ class UploadTransactionToAccountFileViewTest(TestCase):
          # Assertions
         self.assertEqual(response.status_code, 302)  # Check if redirect
         self.assertEqual(response.url, '/success/url/')  # Check if redirect URL is correct
+
+    def test_init_file_upload_registry():
+        upload_registry_sat = init_file_upload_registry(self.txt_file)
+        
+
