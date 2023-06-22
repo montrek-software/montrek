@@ -45,4 +45,3 @@ class TestModelUtils(TestCase):
             get_hub_ids_by_satellite_attribute(1,
                                                'test_name',
                                                'Test Name 0')
-

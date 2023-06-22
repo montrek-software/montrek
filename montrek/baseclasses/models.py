@@ -16,8 +16,7 @@ class MontrekHubABC(models.Model):
 class MontrekSatelliteABC(models.Model):
     class Meta:
         abstract = True
-    start_date = models.DateTimeField(default=timezone.now)
-    end_date = models.DateTimeField(default=datetime.datetime(2100,1,1))
+    state_date = models.DateTimeField(default=timezone.now)
     hub_entity = models.ForeignKey(MontrekHubABC, on_delete=models.CASCADE)
 
 #Base Link Model ABC
