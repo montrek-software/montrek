@@ -1,5 +1,5 @@
 from django.test import TestCase
-import datetime
+from django.utils import timezone
 from baseclasses.tests.factories.baseclass_factories import TestMontrekHubFactory, TestMontrekSatelliteFactory, TestMontrekLinkFactory
 from baseclasses.models import TestMontrekSatellite
 
@@ -22,5 +22,5 @@ class TestModelUtils(TestCase):
         test_satellites = TestMontrekSatellite.objects.all()
         for test_satellite in test_satellites:
             self.assertEqual(
-                test_satellite.state_date, datetime.datetime(2023,6,20, 0, 0, 0, tzinfo=datetime.timezone.utc)
+                test_satellite.state_date, timezone.datetime(2023,6,20, tzinfo=timezone.utc)
             )

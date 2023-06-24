@@ -4,6 +4,7 @@ from baseclasses.models import MontrekHubABC
 from baseclasses.models import MontrekLinkABC
 from django.db.models.base import ModelBase
 from django.core.validators import RegexValidator
+from django.utils import timezone
 from typing import Any, List
 
 
@@ -38,5 +39,15 @@ def montrek_iban_validator():
         message="Invalid IBAN format."
     )
 
+def select_satellite(
+                     hub_entity:MontrekHubABC,
+                     satellite:MontrekSatelliteABC,
+                     reference_date:timezone = timezone.now(),
+):
+    satellite_instance = satellite.objects.filter(
+        hub_entity=hub_entity,
+        state_date__lte=reference_date,
+    ).order_by('-state_date').first()
+    return satellite_instance
 
 
