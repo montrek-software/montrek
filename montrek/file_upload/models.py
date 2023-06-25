@@ -28,7 +28,6 @@ class FileUploadRegistryStaticSatellite(baseclass_models.MontrekSatelliteABC):
     hub_entity = models.ForeignKey(FileUploadRegistryHub, 
                                    on_delete=models.CASCADE)
     file_name = models.CharField(max_length=255)
-    file_path = models.CharField(max_length=255)
     file_type = models.CharField(max_length=5, 
                                  choices=FileTypes.choices,
                                  default=FileTypes.NONE)
@@ -42,10 +41,6 @@ class FileUploadRegistryStaticSatellite(baseclass_models.MontrekSatelliteABC):
             raise IOError(f'File "{self.file_name}" has no file type')
         if self.file_type not in self.FileTypes.values:
             raise IOError(f'File type "{self.file_type}" is not valid')
-        # Regular expression pattern to validate the path structure
-        pattern = r'^[a-zA-Z0-9_/\\-]*$'
-        if not re.match(pattern, self.file_path):
-            raise IOError(f'File path is not valid\n\tfile path: {self.file_path}')
 
     def save(self, *args, **kwargs):
         if self.file_type == self.FileTypes.NONE and '.' in self.file_name:
