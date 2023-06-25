@@ -52,3 +52,11 @@ class FileUploadRegistryStaticSatellite(baseclass_models.MontrekSatelliteABC):
             self.file_type = self.file_name.split('.')[-1]
         self.clean()
         super().save(*args, **kwargs)
+
+class FileUploadFileHub(baseclass_models.MontrekHubABC):
+    pass
+
+class FileUploadFileStaticSatellite(baseclass_models.MontrekSatelliteABC):
+    hub_entity = models.ForeignKey(FileUploadFileHub, 
+                                   on_delete=models.CASCADE)
+    file = models.FileField(upload_to='uploads/')
