@@ -27,17 +27,17 @@ class TestModelUtils(TestCase):
         self.assertEqual(
             get_hub_ids_by_satellite_attribute(TestMontrekSatellite,
                                                'test_name', 
-                                               'Test Name 0'),
+                                               self.satellite1.test_name),
             [self.hub1.id])
         self.assertEqual(
             get_hub_ids_by_satellite_attribute(TestMontrekSatellite,
                                                'test_name',
-                                               'Test Name 1'),
+                                               self.satellite2.test_name),
             [self.hub2.id])
         self.assertEqual(
             get_hub_ids_by_satellite_attribute(TestMontrekSatellite,
                                                'test_name',
-                                               'Test Name 2'),
+                                               self.satellite3.test_name),
             [self.hub3.id])
 
     def test_get_hub_ids_by_satellite_attribute_raises_TypeError(self):

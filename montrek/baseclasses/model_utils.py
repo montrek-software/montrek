@@ -3,6 +3,7 @@ import copy
 from baseclasses.models import MontrekSatelliteABC
 from baseclasses.models import MontrekHubABC
 from baseclasses.models import MontrekLinkABC
+from django.db.models.base import ModelBase
 from django.core.validators import RegexValidator
 from django.utils import timezone
 from typing import Any, List
