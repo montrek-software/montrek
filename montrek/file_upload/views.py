@@ -50,3 +50,14 @@ def upload_file(file: TextIO) -> FileUploadFileStaticSatellite:
         file=file,
     )
     return fileuploadstaticsatellite
+
+def get_file_satellite_from_registry_satellite(
+    registry_satellite: FileUploadRegistryStaticSatellite
+):
+    link = FileUploadRegistryFileUploadFileLink.objects.get(
+        from_hub=registry_satellite.hub_entity
+    )
+    file_satellite = FileUploadFileStaticSatellite.objects.get(
+        hub_entity=link.to_hub
+    )
+    return file_satellite

@@ -6,9 +6,13 @@ from django.core.files.storage import default_storage
 from account.tests.factories.account_factories import AccountStaticSatelliteFactory
 from credit_institution.tests.factories.credit_institution_factories import CreditInstitutionStaticSatelliteFactory
 from link_tables.tests.factories.link_tables_factories import AccountCreditInstitutionLinkFactory
+from file_upload.tests.factories.file_upload_factories import FileUploadRegistryStaticSatelliteFactory
+from file_upload.tests.factories.file_upload_factories import FileUploadFileStaticSatelliteFactory
+from link_tables.tests.factories.link_tables_factories import FileUploadRegistryFileUploadFileLinkFactory
 from file_upload.views import upload_transaction_to_account_file
 from file_upload.views import upload_file_upload_registry
 from file_upload.views import upload_file
+from file_upload.views import get_file_satellite_from_registry_satellite
 from file_upload.models import FileUploadRegistryStaticSatellite
 
 class UploadTransactionToAccountFileViewTest(TestCase):
@@ -23,6 +27,15 @@ class UploadTransactionToAccountFileViewTest(TestCase):
         # Create a file to upload
         txt_file_content = b'Test file content'
         cls.txt_file = SimpleUploadedFile('test_file.txt', txt_file_content)
+        cls.file_registry_sat_factory = FileUploadRegistryStaticSatelliteFactory(
+            file_name=cls.txt_file.name
+        )
+        cls.file_file_sat_factory = FileUploadFileStaticSatelliteFactory()
+        file_registry_file_link_factory = FileUploadRegistryFileUploadFileLinkFactory(
+            from_hub=cls.file_registry_sat_factory.hub_entity,
+            to_hub=cls.file_file_sat_factory.hub_entity
+        )
+
 
     def test_upload_transaction_to_account_file_view_get(self):
         account_id = self.account_satellite.hub_entity.id
@@ -61,6 +74,8 @@ class UploadTransactionToAccountFileViewTest(TestCase):
         self.assertEqual(upload_registry_pending.file_name, self.txt_file.name)
         self.assertEqual(upload_registry_pending.file_type, 'txt')
         self.assertEqual(upload_registry_pending.upload_status, 'pending')
+        file_sat = get_file_satellite_from_registry_satellite(upload_registry_sat)
+        self.assertEqual(file_sat.file.name, 'uploads/test_file.txt')
         if default_storage.exists('uploads/test_file.txt'):
             default_storage.delete('uploads/test_file.txt')
 
@@ -77,3 +92,11 @@ class UploadTransactionToAccountFileViewTest(TestCase):
         if default_storage.exists('uploads/test_file.txt'):
             default_storage.delete('uploads/test_file.txt')
 
+
+    def test_get_file_satellite_from_registry_satellite(self):
+        self.file_file_sat_factory.file = self.txt_file
+        self.file_file_sat_factory.save()
+        file_sat = get_file_satellite_from_registry_satellite(self.file_registry_sat_factory)
+        self.assertEqual(file_sat.file.name, 'uploads/test_file.txt')
+        if default_storage.exists('uploads/test_file.txt'):
+            default_storage.delete('uploads/test_file.txt')
