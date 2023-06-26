@@ -4,6 +4,7 @@ from account.models import AccountHub
 from transaction.models import TransactionHub
 from credit_institution.models import CreditInstitutionHub
 from file_upload.models import FileUploadRegistryHub
+from file_upload.models import FileUploadFileHub
 
 # Create your models here.
 class AccountTransactionLink(MontrekLinkABC):
@@ -29,3 +30,11 @@ class FileUploadRegistryTransactionLink(MontrekLinkABC):
     to_hub = models.ForeignKey(TransactionHub, 
                                on_delete=models.CASCADE, 
                                related_name='file_upload_registry_transaction_link_to_hub')
+
+class FileUploadRegistryFileUploadFileLink(MontrekLinkABC):
+    from_hub = models.ForeignKey(FileUploadRegistryHub,
+                                 on_delete=models.CASCADE,
+                                 related_name='file_upload_registry_file_upload_file_link_from_hub')
+    to_hub = models.ForeignKey(FileUploadFileHub, 
+                               on_delete=models.CASCADE, 
+                               related_name='file_upload_registry_file_upload_file_link_to_hub')

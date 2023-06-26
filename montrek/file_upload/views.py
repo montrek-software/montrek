@@ -2,9 +2,13 @@ from typing import TextIO
 from django.shortcuts import render
 from django.http import HttpResponseRedirect
 from file_upload.forms import UploadFileForm
+from file_upload.models import FileUploadRegistryHub
 from file_upload.models import FileUploadRegistryStaticSatellite
 from file_upload.models import FileUploadFileStaticSatellite
 from file_upload.models import FileUploadFileHub
+from link_tables.models import FileUploadRegistryFileUploadFileLink
+from baseclasses.model_utils import update_satellite
+from baseclasses.model_utils import new_link_entry
 
 from account.models import AccountHub
 
@@ -20,9 +24,24 @@ def upload_transaction_to_account_file(request, account_id:int, credit_instituti
         form = UploadFileForm()
     return render(request, 'upload_transaction_to_account_form.html', {'form': form})
 
-def init_file_upload_registry(file: TextIO,
-                              account_hub_entity: AccountHub) -> FileUploadRegistryStaticSatellite:
-    pass
+def upload_file_upload_registry(file: TextIO) -> FileUploadRegistryStaticSatellite:
+    fileuploadregistryhub = FileUploadRegistryHub.objects.create()
+    fileuploadregistrystaticsattelite_pend = FileUploadRegistryStaticSatellite.objects.create(
+        hub_entity = fileuploadregistryhub,
+        file_name=file.name,
+    )
+    uploadedfile = upload_file(file)
+    new_link_entry(
+        from_hub = fileuploadregistrystaticsattelite_pend.hub_entity,
+        to_hub = uploadedfile.hub_entity,
+        link_table=FileUploadRegistryFileUploadFileLink,
+    )
+    fileuploadregistrystaticsattelite_upd = update_satellite(
+        fileuploadregistrystaticsattelite_pend,
+        upload_status='uploaded',
+    )
+
+    return fileuploadregistrystaticsattelite_upd
 
 def upload_file(file: TextIO) -> FileUploadFileStaticSatellite:
     fileuploadhub = FileUploadFileHub.objects.create()
