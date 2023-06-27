@@ -14,12 +14,13 @@ from account.models import AccountHub
 
 # Create your views here.
 
-def upload_transaction_to_account_file(request, account_id:int, credit_institution_id:int):
+def upload_transaction_to_account_file(request, account_id:int):
     if request.method == 'POST':
         form = UploadFileForm(request.POST, request.FILES)
         if form.is_valid():
             # handle_uploaded_file(request.FILES['file'])
-            return HttpResponseRedirect('/success/url/')
+            upload_file_upload_registry(request.FILES['file'])
+            return HttpResponseRedirect(f'/account/{account_id}/bank_account_view')
     else:
         form = UploadFileForm()
     return render(request, 'upload_transaction_to_account_form.html', {'form': form})
