@@ -15,6 +15,7 @@ def new_link_entry(from_hub:MontrekHubABC,
     link_table.objects.create(
         from_hub=from_hub,
         to_hub=to_hub)
+
 def new_satellite_entry(hub_entity:MontrekHubABC,
                         satellite_class:MontrekSatelliteABC,
                         **kwargs) -> MontrekSatelliteABC:
@@ -43,8 +44,9 @@ def montrek_iban_validator():
 def select_satellite(
                      hub_entity:MontrekHubABC,
                      satellite_class:MontrekSatelliteABC,
-                     reference_date:timezone = timezone.now(),
+                     reference_date:timezone = None,
 ):
+    reference_date = timezone.now() if reference_date is None else reference_date
     satellite_instance = satellite_class.objects.filter(
         hub_entity=hub_entity,
         state_date__lte=reference_date,

@@ -3,6 +3,7 @@ from django.apps import apps
 from baseclasses import models as baseclass_models
 from baseclasses.model_utils import new_link_entry
 from baseclasses.model_utils import new_satellite_entry
+from baseclasses.model_utils import select_satellite
 
 def credit_institution_hub():
     return apps.get_model('credit_institution','CreditInstitutionHub')
@@ -40,7 +41,9 @@ def get_credit_institution_by_account_id(account_id:int) -> baseclass_models.Mon
     return get_credit_institution_by_account(account_hub_object)
 
 def get_credit_institution_by_account(account_hub_object) -> baseclass_models.MontrekSatelliteABC:
-    account_credit_institution_links = account_credit_institution_link().objects.filter(from_hub=account_hub_object)
-    credit_institution_hubs = [account_credit_institution_link.to_hub for account_credit_institution_link in account_credit_institution_links]
-    credit_institution_satellites = credit_institution_static_satellite().objects.filter(hub_entity__in=credit_institution_hubs)
-    return credit_institution_satellites
+    credit_institution_hub = account_credit_institution_link().objects.get(
+        from_hub=account_hub_object).to_hub
+    return select_satellite(
+        credit_institution_hub,
+        credit_institution_static_satellite(), 
+    )

@@ -7,7 +7,7 @@ class CreditInstitutionHub(baseclass_models.MontrekHubABC): pass
 
 class CreditInstitutionStaticSatellite(baseclass_models.MontrekSatelliteABC): 
     class UploadMethod(models.TextChoices):
-        NONE = "None"
+        NONE = "none"
         DKB = "dkb"
     hub_entity = models.ForeignKey(CreditInstitutionHub, on_delete=models.CASCADE)
     credit_institution_name = models.CharField(max_length=255, default='NoName')

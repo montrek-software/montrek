@@ -13,6 +13,7 @@ from file_upload.views import upload_transaction_to_account_file
 from file_upload.views import upload_file_upload_registry
 from file_upload.views import upload_file
 from file_upload.views import get_file_satellite_from_registry_satellite
+from file_upload.views import process_file
 from file_upload.models import FileUploadRegistryStaticSatellite
 
 class UploadTransactionToAccountFileViewTest(TestCase):
@@ -36,12 +37,15 @@ class UploadTransactionToAccountFileViewTest(TestCase):
             to_hub=cls.file_file_sat_factory.hub_entity
         )
 
+    def tearDown(self):
+        if default_storage.exists('uploads/test_file.txt'):
+            default_storage.delete('uploads/test_file.txt')
 
     def test_upload_transaction_to_account_file_view_get(self):
         account_id = self.account_satellite.hub_entity.id
         credit_institution_id = self.credit_institution_satellite.hub_entity.id
         response = self.client.get(
-            f'/file_upload/upload_transaction_to_account_file/{account_id}/{credit_institution_id}/')
+            f'/file_upload/upload_transaction_to_account_file/{account_id}/')
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'upload_transaction_to_account_form.html')
 
@@ -50,18 +54,18 @@ class UploadTransactionToAccountFileViewTest(TestCase):
         credit_institution_id = self.credit_institution_satellite.hub_entity.id
 
         # Create a POST request with the file
-        url = reverse('upload_transaction_to_account_file', args=(account_id, credit_institution_id))
+        url = reverse('upload_transaction_to_account_file', args=(account_id, ))
         data = {'file': self.txt_file}
         request_factory = RequestFactory()
         request = request_factory.post(url, data, format='multipart')
         request.FILES['file'] = self.txt_file
 
         # Execute the view function
-        response = upload_transaction_to_account_file(request, account_id, credit_institution_id)
+        response = upload_transaction_to_account_file(request, account_id)
 
          # Assertions
         self.assertEqual(response.status_code, 302)  # Check if redirect
-        self.assertEqual(response.url, '/success/url/')  # Check if redirect URL is correct
+        self.assertEqual(response.url, '/file_upload/message/')  # Check if redirect URL is correct
 
     def test_file_upload_registry_upload_cycle(self):
         upload_registry_sat = upload_file_upload_registry(self.txt_file)
@@ -76,8 +80,6 @@ class UploadTransactionToAccountFileViewTest(TestCase):
         self.assertEqual(upload_registry_pending.upload_status, 'pending')
         file_sat = get_file_satellite_from_registry_satellite(upload_registry_sat)
         self.assertEqual(file_sat.file.name, 'uploads/test_file.txt')
-        if default_storage.exists('uploads/test_file.txt'):
-            default_storage.delete('uploads/test_file.txt')
 
 
     def test_upload_file(self):
@@ -89,8 +91,6 @@ class UploadTransactionToAccountFileViewTest(TestCase):
                          '/uploads/' + self.txt_file.name)
         with fileuploadsatellite.file.open():
             self.assertEqual(fileuploadsatellite.file.read(), b'Test file content')
-        if default_storage.exists('uploads/test_file.txt'):
-            default_storage.delete('uploads/test_file.txt')
 
 
     def test_get_file_satellite_from_registry_satellite(self):
@@ -98,5 +98,19 @@ class UploadTransactionToAccountFileViewTest(TestCase):
         self.file_file_sat_factory.save()
         file_sat = get_file_satellite_from_registry_satellite(self.file_registry_sat_factory)
         self.assertEqual(file_sat.file.name, 'uploads/test_file.txt')
-        if default_storage.exists('uploads/test_file.txt'):
-            default_storage.delete('uploads/test_file.txt')
+
+    def test_process_file_upload_method_not_uploaded(self):
+        file_reg_sat = process_file(self.file_registry_sat_factory,
+                                    self.account_satellite.hub_entity.id)
+        self.assertEqual(file_reg_sat.upload_status, 'failed')
+        self.assertEqual(file_reg_sat.upload_message, 
+                         'Try to process file that has not been not uploaded')
+
+    def test_process_file_no_account_upload_method(self):
+        self.file_registry_sat_factory.upload_status = 'uploaded'
+        self.file_registry_sat_factory.save()
+        file_reg_sat = process_file(self.file_registry_sat_factory,
+                                    self.account_satellite.hub_entity.id)
+        self.assertEqual(file_reg_sat.upload_status, 'failed')
+        self.assertEqual(file_reg_sat.upload_message, 
+                         f'Credit Institution {self.credit_institution_satellite.credit_institution_name} provides no upload method')

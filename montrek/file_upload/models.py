@@ -34,7 +34,8 @@ class FileUploadRegistryStaticSatellite(baseclass_models.MontrekSatelliteABC):
     upload_status = models.CharField(max_length=20,
                                      choices=UploadStatus.choices,
                                      default=UploadStatus.PENDING)
-
+    upload_message = models.CharField(max_length=255,
+                                      default='')
     def clean(self):
         super().clean()
         if self.file_type == self.FileTypes.NONE:
