@@ -32,5 +32,5 @@ class TestTransactionViews(TestCase):
                              Decimal('12.20'))
             self.assertEqual(transactions[0].transaction_description, 'Test Transaction')
             self.assertEqual(transactions[0].transaction_date,
-                             datetime.datetime(2020, 1, 1, 0, 0, 0))
+                             datetime.datetime(2020, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc))
             self.assertEqual(transactions[0].transaction_value, Decimal('12200.00'))
