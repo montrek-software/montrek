@@ -36,11 +36,11 @@ def new_credit_institution_to_account(credit_institution_name:str,
         to_hub=credit_institution_hub_object,
         link_table=account_credit_institution_link())
 
-def get_credit_institution_by_account_id(account_id:int) -> baseclass_models.MontrekSatelliteABC:
+def get_credit_institution_satellite_by_account_hub_id(account_id:int) -> baseclass_models.MontrekSatelliteABC:
     account_hub_object = account_hub().objects.get(id=account_id)
     return get_credit_institution_by_account(account_hub_object)
 
-def get_credit_institution_by_account(account_hub_object) -> baseclass_models.MontrekSatelliteABC:
+def get_credit_institution_satellite_by_account_hub(account_hub_object) -> baseclass_models.MontrekSatelliteABC:
     credit_institution_hub = account_credit_institution_link().objects.get(
         from_hub=account_hub_object).to_hub
     return select_satellite(

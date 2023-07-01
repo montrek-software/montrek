@@ -67,4 +67,8 @@ def update_satellite(
     new_satellite_entry.save()
     return new_satellite_entry
 
-
+def get_hub_by_id(
+    hub_id: int,
+    hub_class: MontrekHubABC,
+):
+    return hub_class.objects.get(id=hub_id)

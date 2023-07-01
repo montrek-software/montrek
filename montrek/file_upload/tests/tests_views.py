@@ -12,8 +12,7 @@ from link_tables.tests.factories.link_tables_factories import FileUploadRegistry
 from file_upload.views import upload_transaction_to_account_file
 from file_upload.views import upload_file_upload_registry
 from file_upload.views import upload_file
-from file_upload.views import get_file_satellite_from_registry_satellite
-from file_upload.views import process_file
+from file_upload.model_utils import get_file_satellite_from_registry_satellite
 from file_upload.models import FileUploadRegistryStaticSatellite
 
 class UploadTransactionToAccountFileViewTest(TestCase):
@@ -90,11 +89,6 @@ class UploadTransactionToAccountFileViewTest(TestCase):
             self.assertEqual(fileuploadsatellite.file.read(), b'Test file content')
 
 
-    def test_get_file_satellite_from_registry_satellite(self):
-        self.file_file_sat_factory.file = self.txt_file
-        self.file_file_sat_factory.save()
-        file_sat = get_file_satellite_from_registry_satellite(self.file_registry_sat_factory)
-        self.assertEqual(file_sat.file.name, 'uploads/test_file.txt')
 
     def test_process_file_upload_method_not_uploaded(self):
         file_reg_sat = process_file(self.file_registry_sat_factory,
@@ -111,3 +105,15 @@ class UploadTransactionToAccountFileViewTest(TestCase):
         self.assertEqual(file_reg_sat.upload_status, 'failed')
         self.assertEqual(file_reg_sat.upload_message, 
                          f'Credit Institution {self.credit_institution_satellite.credit_institution_name} provides no upload method')
+
+    def test_dkb_file_upload_wrong_input_type(self):
+        self.file_registry_sat_factory.upload_status = 'pending'
+        self.file_registry_sat_factory.save()
+        self.credit_institution_satellite.account_upload_method = 'dkb'
+        self.credit_institution_satellite.save()
+        file_reg_sat = process_file(self.file_registry_sat_factory,
+                                    self.account_satellite.hub_entity.id)
+        self.assertEqual(file_reg_sat.upload_status, 'failed')
+        self.assertEqual(file_reg_sat.upload_message, 
+            f'DKB Upload expects a file of type .csv, but got {self.txt_file.name} '
+                        )    

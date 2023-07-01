@@ -7,7 +7,7 @@ from account.models import BankAccountPropertySatellite
 from account.models import BankAccountStaticSatellite
 from transaction.model_utils import get_transactions_by_account_id
 from account.model_utils import new_account
-from credit_institution.model_utils import get_credit_institution_by_account_id
+from credit_institution.model_utils import get_credit_institution_satellite_by_account_hub_id
 from credit_institution.model_utils import new_credit_institution_to_account
 from credit_institution.models import CreditInstitutionStaticSatellite
 from credit_institution.models import CreditInstitutionHub
@@ -101,7 +101,7 @@ def bank_account_view_data(account_id: int):
     bank_account_static_satellite = BankAccountStaticSatellite.objects.get(
         hub_entity=account_id)
     account_data['bank_account_statics'] = bank_account_static_satellite
-    account_data['credit_institution'] = get_credit_institution_by_account_id(account_id)
+    account_data['credit_institution'] = get_credit_institution_satellite_by_account_hub_id(account_id)
     return account_data
 
 def bank_account_view(request, account_id: int):
