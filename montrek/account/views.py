@@ -101,7 +101,7 @@ def bank_account_view_data(account_id: int):
     bank_account_static_satellite = BankAccountStaticSatellite.objects.get(
         hub_entity=account_id)
     account_data['bank_account_statics'] = bank_account_static_satellite
-    account_data['credit_institution'] = get_credit_institution_by_account_id(account_id).last()
+    account_data['credit_institution'] = get_credit_institution_by_account_id(account_id)
     return account_data
 
 def bank_account_view(request, account_id: int):

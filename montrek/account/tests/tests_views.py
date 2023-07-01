@@ -12,6 +12,8 @@ from account.tests.factories.account_factories import BankAccountStaticSatellite
 from transaction.tests.factories.transaction_factories import TransactionHubFactory
 from transaction.tests.factories.transaction_factories import TransactionSatelliteFactory
 from link_tables.tests.factories.link_tables_factories import AccountTransactionLinkFactory
+from credit_institution.tests.factories.credit_institution_factories import CreditInstitutionStaticSatelliteFactory
+from link_tables.tests.factories.link_tables_factories import AccountCreditInstitutionLinkFactory
 from baseclasses.model_utils import get_hub_ids_by_satellite_attribute
 from transaction.model_utils import get_transactions_by_account_id
 from credit_institution.model_utils import get_credit_institution_by_account
@@ -75,6 +77,8 @@ class TestBankAccountViews(TestCase):
         account_transaction_link = AccountTransactionLinkFactory(from_hub=account_hub, to_hub=transaction_hub)
         bank_account_property_satellite = BankAccountPropertySatelliteFactory(hub_entity=account_hub)
         bank_account_static_satellite = BankAccountStaticSatelliteFactory(hub_entity=account_hub)
+        credit_institution_factory = CreditInstitutionStaticSatelliteFactory()
+        account_credit_institution_link = AccountCreditInstitutionLinkFactory(from_hub=account_hub, to_hub=credit_institution_factory.hub_entity)
 
     def test_bank_account_account_value(self):
         bank_account_satellite = BankAccountPropertySatellite.objects.last()
@@ -103,7 +107,7 @@ class TestBankAccountViews(TestCase):
         bank_account_static_satellite = BankAccountStaticSatellite.objects.last()
         self.assertEqual(bank_account_static_satellite.bank_account_iban,
                          'DE12345678901234567890')
-        credit_institution = get_credit_institution_by_account(account_hub).last()
+        credit_institution = get_credit_institution_by_account(account_hub)
         self.assertEqual(credit_institution.credit_institution_name, 'Test Bank')
 
     def test_bank_account_returns_correct_html(self):

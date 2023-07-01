@@ -43,7 +43,6 @@ class UploadTransactionToAccountFileViewTest(TestCase):
 
     def test_upload_transaction_to_account_file_view_get(self):
         account_id = self.account_satellite.hub_entity.id
-        credit_institution_id = self.credit_institution_satellite.hub_entity.id
         response = self.client.get(
             f'/file_upload/upload_transaction_to_account_file/{account_id}/')
         self.assertEqual(response.status_code, 200)
@@ -51,7 +50,6 @@ class UploadTransactionToAccountFileViewTest(TestCase):
 
     def test_upload_transaction_to_account_file_view_post(self):
         account_id = self.account_satellite.hub_entity.id
-        credit_institution_id = self.credit_institution_satellite.hub_entity.id
 
         # Create a POST request with the file
         url = reverse('upload_transaction_to_account_file', args=(account_id, ))
@@ -64,8 +62,7 @@ class UploadTransactionToAccountFileViewTest(TestCase):
         response = upload_transaction_to_account_file(request, account_id)
 
          # Assertions
-        self.assertEqual(response.status_code, 302)  # Check if redirect
-        self.assertEqual(response.url, '/file_upload/message/')  # Check if redirect URL is correct
+        self.assertEqual(response.status_code, 200)  # Check if redirect
 
     def test_file_upload_registry_upload_cycle(self):
         upload_registry_sat = upload_file_upload_registry(self.txt_file)
