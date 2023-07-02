@@ -1,7 +1,20 @@
+from typing import TextIO
 from file_upload.models import FileUploadFileStaticSatellite
+from file_upload.models import FileUploadRegistryStaticSatellite
+from file_upload.models import FileUploadRegistryHub
+from file_upload.models import FileUploadFileHub
 from file_upload.repositories.file_upload_queries import get_account_hub_from_file_upload_registry_satellite
 from credit_institution.model_utils import get_credit_institution_satellite_by_account_hub
 from baseclasses.model_utils import update_satellite
+from baseclasses.model_utils import get_hub_by_id
+
+def init_file_upload_registry(account_id:int,
+                              file: TextIO):
+    fileuploadregistrystaticsattelite_pend = new_file_upload_registry(
+        account_id,
+        file,
+    )
+    return fileuploadregistrystaticsattelite_pend
 
 def upload_transactions_to_account_manager(
     upload_registry_sat: FileUploadFileStaticSatellite

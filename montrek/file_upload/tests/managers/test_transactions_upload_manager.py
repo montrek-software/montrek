@@ -10,6 +10,8 @@ from file_upload.tests.factories.file_upload_factories import FileUploadFileStat
 from link_tables.tests.factories.link_tables_factories import FileUploadRegistryFileUploadFileLinkFactory
 from link_tables.tests.factories.link_tables_factories import AccountFileUploadRegistryLinkFactory
 
+from file_upload.managers.transactions_upload_manager import init_file_upload_registry
+from file_upload.managers.transactions_upload_manager import upload_file_upload_registry
 from file_upload.managers.transactions_upload_manager import upload_error_file_not_uploaded_registry
 from file_upload.managers.transactions_upload_manager import upload_error_account_upload_method_none
 from file_upload.managers.transactions_upload_manager import upload_transactions_to_account_manager
@@ -42,6 +44,14 @@ class TestTransactionsUploadManager(TestCase):
     def tearDown(self):
         if default_storage.exists('uploads/test_file.txt'):
             default_storage.delete('uploads/test_file.txt')
+
+    def test_init_file_upload_registry(self):
+        file_registry_sat = init_file_upload_registry(
+            self.account_satellite.hub_entity.id,
+            self.txt_file,
+        )
+        self.assertEqual(file_registry_sat.upload_status, 'pending')
+        self.assertEqual(file_registry_sat.file_name, self.txt_file.name)
 
     def test_upload_transactions_to_account_manager(self):
         not_uploaded_file_reg = upload_transactions_to_account_manager(self.file_registry_sat_factory)

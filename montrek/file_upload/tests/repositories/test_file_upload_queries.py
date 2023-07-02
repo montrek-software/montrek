@@ -3,6 +3,8 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.files.storage import default_storage
 from file_upload.repositories.file_upload_queries import get_file_satellite_from_registry_satellite
 from file_upload.repositories.file_upload_queries import get_account_hub_from_file_upload_registry_satellite
+from file_upload.repositories.file_upload_queries import new_file_upload_registry
+from file_upload.repositories.file_upload_queries import new_file_upload_file
 from file_upload.tests.factories.file_upload_factories import FileUploadRegistryStaticSatelliteFactory
 from file_upload.tests.factories.file_upload_factories import FileUploadFileStaticSatelliteFactory
 from account.tests.factories.account_factories import AccountHubFactory
@@ -44,3 +46,22 @@ class UploadTransactionToAccountFileViewTest(TestCase):
             self.file_registry_sat_factory
         )
         self.assertEqual(account_hub, self.account_hub_factory)
+
+    def test_new_file_upload_registry(self):
+        file_registry_sat = new_file_upload_registry(
+            self.account_hub_factory.id,
+            self.txt_file
+        )
+        self.assertEqual(file_registry_sat.file_name, self.txt_file.name) 
+        self.assertEqual(file_registry_sat.upload_status, 'pending')
+        test_account = get_account_hub_from_file_upload_registry_satellite( 
+            file_registry_sat
+        )
+        self.assertEqual(test_account, self.account_hub_factory)
+
+    def test_new_file_upload_file(self):
+        file_file_sat = new_file_upload_file(
+            self.file_registry_sat_factory,
+            self.txt_file
+        )
+        self.assertEqual(file_file_sat.file.name, 'uploads/test_file.txt')
