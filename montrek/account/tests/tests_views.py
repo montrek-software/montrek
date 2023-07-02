@@ -16,7 +16,7 @@ from credit_institution.tests.factories.credit_institution_factories import Cred
 from link_tables.tests.factories.link_tables_factories import AccountCreditInstitutionLinkFactory
 from baseclasses.model_utils import get_hub_ids_by_satellite_attribute
 from transaction.model_utils import get_transactions_by_account_id
-from credit_institution.model_utils import get_credit_institution_by_account
+from credit_institution.model_utils import get_credit_institution_satellite_by_account_hub
 
 
 # Create your tests here.
@@ -107,7 +107,7 @@ class TestBankAccountViews(TestCase):
         bank_account_static_satellite = BankAccountStaticSatellite.objects.last()
         self.assertEqual(bank_account_static_satellite.bank_account_iban,
                          'DE12345678901234567890')
-        credit_institution = get_credit_institution_by_account(account_hub)
+        credit_institution = get_credit_institution_satellite_by_account_hub(account_hub)
         self.assertEqual(credit_institution.credit_institution_name, 'Test Bank')
 
     def test_bank_account_returns_correct_html(self):

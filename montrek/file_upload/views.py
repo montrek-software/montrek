@@ -12,7 +12,7 @@ from baseclasses.model_utils import new_link_entry
 
 from account.models import AccountHub
 from credit_institution.model_utils import get_credit_institution_satellite_by_account_hub_id
-from file_upload.managers.transactions_upload_manager import upload_transactions_to_account_manager 
+from file_upload.managers.transactions_upload_manager import process_upload_transaction_file 
 
 # Create your views here.
 
@@ -20,14 +20,11 @@ def upload_transaction_to_account_file(request, account_id:int):
     if request.method == 'POST':
         form = UploadFileForm(request.POST, request.FILES)
         if form.is_valid():
-            init_upload_registry = init_file_upload_registry(account_id,
-                                                       request.FILES['file'])
-            uploaded_upload_registry = upload_file_upload_registry(
-                init_upload_registry, request.FILES['file'])
-            processed_registry = upload_transactions_to_account_manager(
-                uploaded_upload_registry, 
-                account_id)
-            return upload_file_message(request, processed_registry)
+            upload_registry = process_upload_transaction_file(
+                account_id,
+                request.FILES['file'],
+            )
+            return upload_file_message(request, upload_registry)
     else:
         form = UploadFileForm()
     return render(request, 'upload_transaction_to_account_form.html', {'form': form})

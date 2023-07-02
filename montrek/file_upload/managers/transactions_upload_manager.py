@@ -10,7 +10,15 @@ from credit_institution.model_utils import get_credit_institution_satellite_by_a
 from baseclasses.model_utils import update_satellite
 from baseclasses.model_utils import get_hub_by_id
 
-def init_file_upload_registry(account_id:int,
+def process_upload_transaction_file(account_id: int,
+                                    file: TextIO):
+    fileuploadregistrysat = _init_file_upload_registry(account_id, file)
+    fileuploadregistrysat = _upload_file_to_registry(fileuploadregistrysat, file)
+    fileuploadregistrysat = _upload_transactions_to_account_manager(fileuploadregistrysat)
+    return fileuploadregistrysat
+    
+
+def _init_file_upload_registry(account_id:int,
                               file: TextIO):
     fileuploadregistrystaticsattelite_pend = new_file_upload_registry(
         account_id,
@@ -18,23 +26,35 @@ def init_file_upload_registry(account_id:int,
     )
     return fileuploadregistrystaticsattelite_pend
 
-def upload_transactions_to_account_manager(
+def _upload_transactions_to_account_manager(
     upload_registry_sat: FileUploadFileStaticSatellite
-) -> None:
+) -> FileUploadRegistryStaticSatellite:
     if upload_registry_sat.upload_status != 'uploaded':
-        return upload_error_file_not_uploaded_registry(upload_registry_sat)
+        return _upload_error_file_not_uploaded_registry(upload_registry_sat)
     account_hub =  get_account_hub_from_file_upload_registry_satellite(
         upload_registry_sat
     )
     credit_institution_satellite = get_credit_institution_satellite_by_account_hub(
         account_hub
     )
-    if credit_institution_satellite.account_upload_method == 'none':
-        return upload_error_account_upload_method_none(upload_registry_sat, 
+    credit_institution_upload_method = credit_institution_satellite.account_upload_method
+    if credit_institution_upload_method == 'none':
+        return _upload_error_account_upload_method_none(upload_registry_sat, 
             credit_institution_satellite)
-    raise NotImplementedError('Upload mechanism not implemented yet')
+    if credit_institution_upload_method == 'test':
+        return update_satellite(
+            upload_registry_sat,
+            upload_status='processed',
+            upload_message='Test upload was successful!',
+        )
+    return update_satellite(
+        upload_registry_sat,
+        upload_status='failed',
+        upload_message=f'Upload method {credit_institution_upload_method} not implemented',
+    )
 
-def upload_file_to_registry(
+
+def _upload_file_to_registry(
     fileuploadregistrysat: FileUploadRegistryStaticSatellite,
     file: TextIO,
 ) -> FileUploadFileStaticSatellite:
@@ -49,7 +69,7 @@ def upload_file_to_registry(
 
 
 
-def upload_error_file_not_uploaded_registry(upload_registry_sat):
+def _upload_error_file_not_uploaded_registry(upload_registry_sat):
     fileuploadregistry_failed = update_satellite(
         upload_registry_sat,
         upload_status='failed',
@@ -57,7 +77,7 @@ def upload_error_file_not_uploaded_registry(upload_registry_sat):
     )
     return fileuploadregistry_failed
 
-def upload_error_account_upload_method_none(upload_registry_sat, credit_institution_satellite):
+def _upload_error_account_upload_method_none(upload_registry_sat, credit_institution_satellite):
     credit_institution_name = credit_institution_satellite.credit_institution_name
     fileuploadregistry_failed = update_satellite(
         upload_registry_sat,
