@@ -5,11 +5,11 @@
 <h1>Upload File Result</h1>
 {% if fileuploadregistry.upload_status == 'processed' %}
     <div class="alert alert-success" role="alert">
-        {{ fileuploadregistry.upload_file_message }}
+        {{ fileuploadregistry.upload_message }}
     </div>
 {% else %}
     <div class="alert alert-danger" role="alert">
-        {{ fileuploadregistry.upload_file_message }}
+        {{ fileuploadregistry.upload_message }}
     </div>
 {% endif %}
 
