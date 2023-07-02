@@ -31,6 +31,13 @@ class FileUploadRegistryTransactionLink(MontrekLinkABC):
                                on_delete=models.CASCADE, 
                                related_name='file_upload_registry_transaction_link_to_hub')
 
+class AccountFileUploadRegistryLink(MontrekLinkABC):
+    from_hub = models.ForeignKey(AccountHub,
+                                 on_delete=models.CASCADE,
+                                 related_name='account_file_upload_registry_link_from_hub')
+    to_hub = models.ForeignKey(FileUploadRegistryHub, 
+                               on_delete=models.CASCADE, 
+                               related_name='account_file_upload_registry_link_to_hub')
 class FileUploadRegistryFileUploadFileLink(MontrekLinkABC):
     from_hub = models.ForeignKey(FileUploadRegistryHub,
                                  on_delete=models.CASCADE,

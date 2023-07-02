@@ -1,5 +1,5 @@
 from file_upload.models import FileUploadFileStaticSatellite
-from file_upload.model_utils import get_account_hub_from_file_upload_registry_satellite
+from file_upload.repositories.file_upload_queries import get_account_hub_from_file_upload_registry_satellite
 from credit_institution.model_utils import get_credit_institution_satellite_by_account_hub
 
 def upload_transactions_to_account_manager(

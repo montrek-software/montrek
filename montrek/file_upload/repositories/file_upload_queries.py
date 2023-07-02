@@ -1,23 +1,23 @@
 from django.apps import apps
 
 def file_upload_registry_hub():
-    return apps.get.model('file_upload', 'FileUploadRegistryHub')
+    return apps.get_model('file_upload', 'FileUploadRegistryHub')
 
 def account_file_upload_registry_link():
-    return apps.get.model('link_tables', 'AccountFileUploadRegistryLink')
+    return apps.get_model('link_tables', 'AccountFileUploadRegistryLink')
 
 def file_upload_registry_file_upload_file_link():
-    return apps.get.model('link_tables', 'FileUploadRegistryFileUploadFileLink')
+    return apps.get_model('link_tables', 'FileUploadRegistryFileUploadFileLink')
 
 def file_upload_file_static_satellite():
-    return apps.get.model('file_upload', 'FileUploadFileStaticSatellite')
+    return apps.get_model('file_upload', 'FileUploadFileStaticSatellite')
 
 def get_account_hub_from_file_upload_registry_satellite(
     file_upload_registry
 ):
     account_hub = account_file_upload_registry_link().objects.get(
         to_hub=file_upload_registry.hub_entity,
-    )[0].from_hub
+    ).from_hub
     return account_hub
 
 def get_file_satellite_from_registry_satellite(
@@ -26,7 +26,7 @@ def get_file_satellite_from_registry_satellite(
     link = file_upload_registry_file_upload_file_link().objects.get(
         from_hub=registry_satellite.hub_entity
     )
-    file_satellite = file_upload_file_static_satellite.objects.get(
+    file_satellite = file_upload_file_static_satellite().objects.get(
         hub_entity=link.to_hub
     )
     return file_satellite

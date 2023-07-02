@@ -18,6 +18,11 @@ class AccountCreditInstitutionLinkFactory(factory.django.DjangoModelFactory):
     from_hub = factory.SubFactory(AccountHubFactory)
     to_hub = factory.SubFactory(CreditInstitutionHubFactory)
 
+class AccountFileUploadRegistryLinkFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = 'link_tables.AccountFileUploadRegistryLink'
+    from_hub = factory.SubFactory(AccountHubFactory)
+    to_hub = factory.SubFactory(FileUploadRegistryHubFactory)
 
 class FileUploadRegistryFileUploadFileLinkFactory(factory.django.DjangoModelFactory):
     class Meta:
