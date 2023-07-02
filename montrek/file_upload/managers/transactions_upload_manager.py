@@ -4,6 +4,8 @@ from file_upload.models import FileUploadRegistryStaticSatellite
 from file_upload.models import FileUploadRegistryHub
 from file_upload.models import FileUploadFileHub
 from file_upload.repositories.file_upload_queries import get_account_hub_from_file_upload_registry_satellite
+from file_upload.repositories.file_upload_queries import new_file_upload_registry
+from file_upload.repositories.file_upload_queries import new_file_upload_file
 from credit_institution.model_utils import get_credit_institution_satellite_by_account_hub
 from baseclasses.model_utils import update_satellite
 from baseclasses.model_utils import get_hub_by_id
@@ -31,6 +33,21 @@ def upload_transactions_to_account_manager(
         return upload_error_account_upload_method_none(upload_registry_sat, 
             credit_institution_satellite)
     raise NotImplementedError('Upload mechanism not implemented yet')
+
+def upload_file_to_registry(
+    fileuploadregistrysat: FileUploadRegistryStaticSatellite,
+    file: TextIO,
+) -> FileUploadFileStaticSatellite:
+    new_file_upload_file(fileuploadregistrysat,
+                        file)
+    fileuploadregistry_uploaded = update_satellite( 
+        fileuploadregistrysat,
+        upload_status='uploaded',
+        upload_message=f'File {fileuploadregistrysat.file_name} has been uploaded',
+    )
+    return fileuploadregistry_uploaded
+
+
 
 def upload_error_file_not_uploaded_registry(upload_registry_sat):
     fileuploadregistry_failed = update_satellite(

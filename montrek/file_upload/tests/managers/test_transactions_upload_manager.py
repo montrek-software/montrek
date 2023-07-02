@@ -11,10 +11,11 @@ from link_tables.tests.factories.link_tables_factories import FileUploadRegistry
 from link_tables.tests.factories.link_tables_factories import AccountFileUploadRegistryLinkFactory
 
 from file_upload.managers.transactions_upload_manager import init_file_upload_registry
-from file_upload.managers.transactions_upload_manager import upload_file_upload_registry
 from file_upload.managers.transactions_upload_manager import upload_error_file_not_uploaded_registry
 from file_upload.managers.transactions_upload_manager import upload_error_account_upload_method_none
 from file_upload.managers.transactions_upload_manager import upload_transactions_to_account_manager
+from file_upload.managers.transactions_upload_manager import upload_file_to_registry
+from file_upload.repositories.file_upload_queries import get_file_satellite_from_registry_satellite
 
 class TestTransactionsUploadManager(TestCase):
     @classmethod
@@ -53,6 +54,15 @@ class TestTransactionsUploadManager(TestCase):
         self.assertEqual(file_registry_sat.upload_status, 'pending')
         self.assertEqual(file_registry_sat.file_name, self.txt_file.name)
 
+    def test_upload_file_to_registry(self):
+        file_registry_sat = upload_file_to_registry(self.file_registry_sat_factory,
+                                                    self.txt_file)
+        self.assertEqual(file_registry_sat.upload_status, 'uploaded')
+        self.assertEqual(file_registry_sat.upload_message, 'File test_file.txt has been uploaded')
+        file_file_sat = get_file_satellite_from_registry_satellite(
+            self.file_registry_sat_factory)
+        self.assertEqual(file_file_sat.file_content, b'Test file content')
+
     def test_upload_transactions_to_account_manager(self):
         not_uploaded_file_reg = upload_transactions_to_account_manager(self.file_registry_sat_factory)
         self.assertEqual(not_uploaded_file_reg.upload_status, 'failed')
@@ -82,3 +92,5 @@ class TestTransactionsUploadManager(TestCase):
         self.assertEqual(file_registry_sat_failed.upload_status, 'failed')
         self.assertEqual(file_registry_sat_failed.upload_message, 
                          f'Credit Institution {self.credit_institution_satellite.credit_institution_name} provides no upload method')
+
+
