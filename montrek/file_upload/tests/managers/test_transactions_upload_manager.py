@@ -32,11 +32,11 @@ class TestTransactionsUploadManager(TestCase):
         cls.file_registry_sat_factory = FileUploadRegistryStaticSatelliteFactory(
             file_name=cls.txt_file.name
         )
-        cls.file_file_sat_factory = FileUploadFileStaticSatelliteFactory()
-        file_registry_file_link_factory = FileUploadRegistryFileUploadFileLinkFactory(
-            from_hub=cls.file_registry_sat_factory.hub_entity,
-            to_hub=cls.file_file_sat_factory.hub_entity
-        )
+        #cls.file_file_sat_factory = FileUploadFileStaticSatelliteFactory()
+        #file_registry_file_link_factory = FileUploadRegistryFileUploadFileLinkFactory(
+        #    from_hub=cls.file_registry_sat_factory.hub_entity,
+        #    to_hub=cls.file_file_sat_factory.hub_entity
+        #)
         AccountFileUploadRegistryLinkFactory(
             from_hub=cls.account_satellite.hub_entity,
             to_hub=cls.file_registry_sat_factory.hub_entity
@@ -61,7 +61,7 @@ class TestTransactionsUploadManager(TestCase):
         self.assertEqual(file_registry_sat.upload_message, 'File test_file.txt has been uploaded')
         file_file_sat = get_file_satellite_from_registry_satellite(
             self.file_registry_sat_factory)
-        self.assertEqual(file_file_sat.file_content, b'Test file content')
+        self.assertEqual(file_file_sat.file.read(), b'Test file content')
 
     def test_upload_transactions_to_account_manager(self):
         not_uploaded_file_reg = upload_transactions_to_account_manager(self.file_registry_sat_factory)
