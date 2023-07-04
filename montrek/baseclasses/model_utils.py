@@ -22,6 +22,12 @@ def new_link_entry(from_hub:MontrekHubABC,
         from_hub=from_hub,
         to_hub=to_hub)
 
+def get_link_to_hub(from_hub:MontrekHubABC,
+                    link_table:MontrekLinkABC) -> MontrekHubABC:
+    link_instance = link_table.objects.get(
+        from_hub=from_hub)
+    return link_instance.to_hub
+
 def new_satellite_entry(hub_entity:MontrekHubABC,
                         satellite_class:MontrekSatelliteABC,
                         **kwargs) -> MontrekSatelliteABC:

@@ -1,0 +1,22 @@
+"Kontonummer:";"DE96120300001008028225 / Girokonto";
+
+"Von:";"30.06.2023";
+"Bis:";"04.07.2023";
+"Kontostand vom 04.07.2023:";"792,15 EUR";
+
+"Buchungstag";"Wertstellung";"Buchungstext";"Auftraggeber / Begünstigter";"Verwendungszweck";"Kontonummer";"BLZ";"Betrag (EUR)";"Gläubiger-ID";"Mandatsreferenz";"Kundenreferenz";
+"05.07.2023";"05.07.2023";"ONLINE-UEBERWEISUNG";"FINANZAMT LIMBURG WEILBURG";"3090327406418         DATUM 04.07.2023, 20.17 UHR";"DE68500500000001000397";"HELADEFFXXX";"-4.348,50";"";"";"";
+"04.07.2023";"04.07.2023";"Kartenzahlung";"BACKHAUS DRIES GMBH";"2023-07-03      Debitk.13 VISA Debit";"DE96120300009005290904";"BYLADEM1001";"-5,00";"";"";"483184210273574";
+"04.07.2023";"04.07.2023";"Kartenzahlung";"REWE Wiesbaden Luisenst";"2023-07-03      Debitk.13 VISA Debit";"DE96120300009005290904";"BYLADEM1001";"-22,00";"";"";"483184538540128";
+"04.07.2023";"04.07.2023";"Kartenzahlung";"Taunus Apotheke";"2023-07-03      Debitk.13 VISA Debit";"DE96120300009005290904";"BYLADEM1001";"-26,95";"";"";"483184583755885";
+"04.07.2023";"04.07.2023";"DAUERAUFTRAG";"DANIELA HOMBACH";"Steuer Ausgleich + KK Beitrag";"DE70760300800220037231";"CSDBDE71XXX";"-749,63";"";"";"";
+"03.07.2023";"03.07.2023";"Dauerauftrag";"CHRISTOPH HOMBACH";"Unterhalt";"DE41120300001083117885";"BYLADEM1001";"-2.000,00";"";"";"NOTPROVIDED";
+"03.07.2023";"03.07.2023";"Dauerauftrag";"CHRISTOPH HOMBACH";"Anlage";"DE45514108000264295047";"BOURDEFFXXX";"-1.000,00";"";"";"NOTPROVIDED";
+"03.07.2023";"03.07.2023";"Lastschrift";"HALLESCHE";"G0516700026625351 VNR 26625351/Beitrag 07.2023";"DE24600501010001114445";"SOLADEST600";"-887,41";"";"";"";
+"03.07.2023";"03.07.2023";"Dauerauftrag";"DAVID HOMBACH";"Ruecklage fuer den kleenen";"DE62200411550162445100";"COBADEHD055";"-100,00";"";"";"NOTPROVIDED";
+"03.07.2023";"03.07.2023";"Lastschrift";"R + V LEBENSVERSICHERUNG AKTIENGESELLSCHAFT";"70742975452 Leben / Hombach, Christoph / 67.76 Folgeb. 01.07";"DE96500604000008012255";"GENODEFF";"-67,76";"";"";"";
+"03.07.2023";"03.07.2023";"Lastschrift";"WEG IRENENSTR. 4";"-20,84 VORSCHUSS FUER KOST / -3,33 ZAHLUNGEN ZUR ERHAL / -20,83 ZAHLUNGEN ZUR ERHA /";"DE92510500150113057157";"NASSDE55XXX";"-45,00";"";"";"";
+"03.07.2023";"03.07.2023";"Lastschrift";"PayPal Europe S.a.r.l. et Cie S.C.A";"1027902834778 PP.2012.PP . DB Vertrieb GmbH, Ihr Einkauf bei DB Vertrieb GmbH";"LU89751000135104200E";"PPLXLUL2";"-19,90";"";"";"";
+"03.07.2023";"01.07.2023";"Abschluss";"";"Abrechnung 30.06.2023siehe AnlageAbrechnung 30.06.2023Information zur AbrechnungKontostand am 30.06.2023                                        9.984,30 +Abrechnungszeitraum vom 01.04.2023 bis 30.06.2023Abrechnung 30.06.2023                                                0,00+Sollzinssätze am 30.06.2023 9,2900 v.H. für eingeräumte Kontoüberziehung(aktuell eingeräumte Kontoüberziehung       7.100,00) 9,2900 v.H. für geduldete Kontoüberziehungüber die eingeräumte Kontoüberziehung hinausKontostand/Rechnungsabschluss am 30.06.2023                     9.984,30 +Rechnungsnummer: 20230630-BY111-00160234378";"1008028225";"12030000";"0,00";"";"";"";
+"03.07.2023";"03.07.2023";"Gutschrift";"Igor Parkhomenko";"Kfz-Abstellplatz Irenenstr. 4";"DE26760300800220428060";"CSDBDE71";"80,00";"";"";"NOTPROVIDED";
+"30.06.2023";"30.06.2023";"Kartenzahlung";"BACKHAUS DRIES GMBH";"2023-06-29      Debitk.13 VISA Debit";"DE96120300009005290904";"BYLADEM1001";"-5,00";"";"";"483180244664409";
