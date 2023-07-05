@@ -1,4 +1,5 @@
 # Purpose: Utility functions for the model package
+import pandas as pd
 import copy
 from typing import Any, List, Dict
 from baseclasses.models import MontrekSatelliteABC
@@ -22,9 +23,21 @@ def new_satellite_entry(hub_entity:MontrekHubABC,
         **kwargs)
     return satellite_entity
 
+def new_satellites_bunch_from_df(hub_entity:MontrekHubABC,
+                                 satellite_class:MontrekSatelliteABC,
+                                 import_df:pd.DataFrame,
+                                ) -> List[MontrekSatelliteABC]:
+    columns = import_df.columns
+    satellite_attributes = [{column: row[column] for column in columns} for _, row in import_df.iterrows()]
+    return new_satellites_bunch(hub_entity=hub_entity,
+                                satellite_class=satellite_class,
+                                attributes=satellite_attributes)
+
+
 def new_satellites_bunch(hub_entity:MontrekHubABC,
                         satellite_class:MontrekSatelliteABC,
-                        attributes: List[dict]) -> None:
+                        attributes: List[dict]
+                        ) -> MontrekSatelliteABC:
     satellites = [satellite_class(hub_entity=hub_entity, **attribute) for attribute in attributes]
     satellite_entities = satellite_class.objects.bulk_create(satellites)
     return satellite_entities

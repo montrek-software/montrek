@@ -1,3 +1,4 @@
+import pandas as pd
 from freezegun import freeze_time
 from django.test import TestCase
 from django.utils import timezone
@@ -7,6 +8,7 @@ from baseclasses.repositories.db_helper import select_satellite
 from baseclasses.repositories.db_helper import update_satellite
 from baseclasses.repositories.db_helper import new_satellite_entry
 from baseclasses.repositories.db_helper import new_satellites_bunch
+from baseclasses.repositories.db_helper import new_satellites_bunch_from_df
 from baseclasses.tests.factories.baseclass_factories import TestMontrekHubFactory, TestMontrekSatelliteFactory, TestMontrekLinkFactory
 from baseclasses.models import TestMontrekSatellite
 
@@ -125,6 +127,24 @@ class TestDBHelpers(TestCase):
             hub_entity=self.hub1,
             attributes = [{'test_name':'NewTestName'},
                           {'test_name':'NewTestName2'}])
+        self.assertEqual(len(test_satellites), 2)
+        self.assertEqual(test_satellites[0].test_name, 'NewTestName')
+        self.assertEqual(test_satellites[0].hub_entity, self.hub1)
+        self.assertEqual(test_satellites[0].state_date,
+                            timezone.datetime(2023,6,20, 0, 0, 0, tzinfo=timezone.utc))
+        self.assertEqual(test_satellites[1].test_name, 'NewTestName2')
+        self.assertEqual(test_satellites[1].hub_entity, self.hub1)
+        self.assertEqual(test_satellites[1].state_date,
+                            timezone.datetime(2023,6,20, 0, 0, 0, tzinfo=timezone.utc))
+
+
+    @freeze_time("2023-06-20")
+    def test_new_satellites_bunch_from_df(self):
+        test_df = pd.DataFrame({'test_name':['NewTestName','NewTestName2']})
+        test_satellites = new_satellites_bunch_from_df(
+            satellite_class=TestMontrekSatellite,
+            hub_entity=self.hub1,
+            import_df = test_df)
         self.assertEqual(len(test_satellites), 2)
         self.assertEqual(test_satellites[0].test_name, 'NewTestName')
         self.assertEqual(test_satellites[0].hub_entity, self.hub1)
