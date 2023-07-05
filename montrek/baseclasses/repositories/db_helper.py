@@ -1,11 +1,11 @@
 # Purpose: Utility functions for the model package
 import copy
+from typing import Any, List, Dict
 from baseclasses.models import MontrekSatelliteABC
 from baseclasses.models import MontrekHubABC
 from baseclasses.models import MontrekLinkABC
 from django.db.models.base import ModelBase
 from django.utils import timezone
-from typing import Any, List
 
 
 def new_link_entry(from_hub:MontrekHubABC,
@@ -21,6 +21,13 @@ def new_satellite_entry(hub_entity:MontrekHubABC,
         hub_entity=hub_entity,
         **kwargs)
     return satellite_entity
+
+def new_satellites_bunch(hub_entity:MontrekHubABC,
+                        satellite_class:MontrekSatelliteABC,
+                        attributes: List[dict]) -> None:
+    satellites = [satellite_class(hub_entity=hub_entity, **attribute) for attribute in attributes]
+    satellite_entities = satellite_class.objects.bulk_create(satellites)
+    return satellite_entities
 
 def get_hub_ids_by_satellite_attribute(satellite: ModelBase,
                                       field: str,

@@ -1,14 +1,17 @@
+from freezegun import freeze_time
 from django.test import TestCase
 from django.utils import timezone
 
 from baseclasses.repositories.db_helper import get_hub_ids_by_satellite_attribute
 from baseclasses.repositories.db_helper import select_satellite
 from baseclasses.repositories.db_helper import update_satellite
+from baseclasses.repositories.db_helper import new_satellite_entry
+from baseclasses.repositories.db_helper import new_satellites_bunch
 from baseclasses.tests.factories.baseclass_factories import TestMontrekHubFactory, TestMontrekSatelliteFactory, TestMontrekLinkFactory
 from baseclasses.models import TestMontrekSatellite
 
 
-class TestModelUtils(TestCase):
+class TestDBHelpers(TestCase):
     def setUp(self):
         self.hub1 = TestMontrekHubFactory()
         self.hub2 = TestMontrekHubFactory()
@@ -104,6 +107,32 @@ class TestModelUtils(TestCase):
         self.assertEqual(test_updated_satellite_2.state_date,
                             timezone.datetime(2023,5,1, 0, 0, 0, tzinfo=timezone.utc))  
 
+    @freeze_time("2023-06-20")
+    def test_new_satellites_entry(self):
+        test_satellite = new_satellite_entry(
+            satellite_class=TestMontrekSatellite,
+            hub_entity=self.hub1,
+            test_name='NewTestName')
+        self.assertEqual(test_satellite.test_name, 'NewTestName')
+        self.assertEqual(test_satellite.hub_entity, self.hub1)
+        self.assertEqual(test_satellite.state_date,
+                            timezone.datetime(2023,6,20, 0, 0, 0, tzinfo=timezone.utc))
 
+    @freeze_time("2023-06-20")
+    def test_new_satellites_bunch(self):
+        test_satellites = new_satellites_bunch(
+            satellite_class=TestMontrekSatellite,
+            hub_entity=self.hub1,
+            attributes = [{'test_name':'NewTestName'},
+                          {'test_name':'NewTestName2'}])
+        self.assertEqual(len(test_satellites), 2)
+        self.assertEqual(test_satellites[0].test_name, 'NewTestName')
+        self.assertEqual(test_satellites[0].hub_entity, self.hub1)
+        self.assertEqual(test_satellites[0].state_date,
+                            timezone.datetime(2023,6,20, 0, 0, 0, tzinfo=timezone.utc))
+        self.assertEqual(test_satellites[1].test_name, 'NewTestName2')
+        self.assertEqual(test_satellites[1].hub_entity, self.hub1)
+        self.assertEqual(test_satellites[1].state_date,
+                            timezone.datetime(2023,6,20, 0, 0, 0, tzinfo=timezone.utc))
 
 
