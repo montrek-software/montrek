@@ -33,7 +33,8 @@ def new_satellite_entry(hub_entity:MontrekHubABC,
                         **kwargs) -> MontrekSatelliteABC:
     satellite_entity = satellite_class.objects.create(
         hub_entity=hub_entity,
-        **kwargs)
+        **kwargs
+    )
     return satellite_entity
 
 def get_hub_ids_by_satellite_attribute(satellite: MontrekSatelliteABC,
