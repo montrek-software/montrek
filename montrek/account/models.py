@@ -4,7 +4,7 @@ from django.db.models import Sum, F
 from typing import List
 from baseclasses import models as baseclass_models
 from transaction.model_utils import get_transactions_by_account
-from baseclasses.model_utils import montrek_iban_validator
+from account.managers.validators import montrek_iban_validator
 # Create your models here.
 
 class AccountHub(baseclass_models.MontrekHubABC): pass

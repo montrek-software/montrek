@@ -1,8 +1,8 @@
 from django.apps import apps
 
 from baseclasses import models as baseclass_models
-from baseclasses.model_utils import new_link_entry
-from baseclasses.model_utils import new_satellite_entry
+from baseclasses.repositories.db_helper import new_link_entry
+from baseclasses.repositories.db_helper import new_satellite_entry
 
 def credit_institution_hub():
     return apps.get_model('credit_institution','CreditInstitutionHub')

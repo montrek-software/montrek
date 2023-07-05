@@ -1,12 +1,12 @@
 # Purpose: Utility functions for the model package
+import pandas as pd
 import copy
+from typing import Any, List, Dict
 from baseclasses.models import MontrekSatelliteABC
 from baseclasses.models import MontrekHubABC
 from baseclasses.models import MontrekLinkABC
 from django.db.models.base import ModelBase
-from django.core.validators import RegexValidator
 from django.utils import timezone
-from typing import Any, List
 
 
 def new_link_entry(from_hub:MontrekHubABC,
@@ -23,6 +23,25 @@ def new_satellite_entry(hub_entity:MontrekHubABC,
         **kwargs)
     return satellite_entity
 
+def new_satellites_bunch_from_df(hub_entity:MontrekHubABC,
+                                 satellite_class:MontrekSatelliteABC,
+                                 import_df:pd.DataFrame,
+                                ) -> List[MontrekSatelliteABC]:
+    columns = import_df.columns
+    satellite_attributes = [{column: row[column] for column in columns} for _, row in import_df.iterrows()]
+    return new_satellites_bunch(hub_entity=hub_entity,
+                                satellite_class=satellite_class,
+                                attributes=satellite_attributes)
+
+
+def new_satellites_bunch(hub_entity:MontrekHubABC,
+                        satellite_class:MontrekSatelliteABC,
+                        attributes: List[dict]
+                        ) -> MontrekSatelliteABC:
+    satellites = [satellite_class(hub_entity=hub_entity, **attribute) for attribute in attributes]
+    satellite_entities = satellite_class.objects.bulk_create(satellites)
+    return satellite_entities
+
 def get_hub_ids_by_satellite_attribute(satellite: ModelBase,
                                       field: str,
                                       value: Any) -> List[int]:
@@ -32,13 +51,6 @@ def get_hub_ids_by_satellite_attribute(satellite: ModelBase,
         raise TypeError('field must be a str')
     satellite_instance = satellite.objects.filter(**{field: value}).all()
     return [instance.hub_entity.id for instance in satellite_instance]
-
-def montrek_iban_validator():
-    iban_regex = r'^[A-Z]{2}\d{2}[A-Z0-9]{1,30}$'
-    return RegexValidator(
-        regex=iban_regex,
-        message="Invalid IBAN format."
-    )
 
 def select_satellite(
                      hub_entity:MontrekHubABC,
