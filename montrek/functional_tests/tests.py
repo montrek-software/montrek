@@ -19,7 +19,7 @@ from transaction.tests.factories.transaction_factories import TransactionSatelli
 from link_tables.tests.factories.link_tables_factories import AccountTransactionLinkFactory
 from link_tables.tests.factories.link_tables_factories import AccountCreditInstitutionLinkFactory
 from credit_institution.tests.factories.credit_institution_factories import CreditInstitutionStaticSatelliteFactory
-from baseclasses.model_utils import get_hub_ids_by_satellite_attribute
+from baseclasses.repositories.db_helper import get_hub_ids_by_satellite_attribute
 
 MAX_WAIT = 10
 

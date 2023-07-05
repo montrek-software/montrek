@@ -2,17 +2,8 @@ from typing import TextIO
 from django.shortcuts import render
 from django.http import HttpResponseRedirect
 from file_upload.forms import UploadFileForm
-from file_upload.models import FileUploadRegistryHub
-from file_upload.models import FileUploadRegistryStaticSatellite
-from file_upload.models import FileUploadFileStaticSatellite
-from file_upload.models import FileUploadFileHub
-from link_tables.models import FileUploadRegistryFileUploadFileLink
-from baseclasses.model_utils import update_satellite
-from baseclasses.model_utils import new_link_entry
-
-from account.models import AccountHub
-from credit_institution.model_utils import get_credit_institution_satellite_by_account_hub_id
 from file_upload.managers.transactions_upload_manager import process_upload_transaction_file 
+from file_upload.models import FileUploadRegistryStaticSatellite
 
 # Create your views here.
 

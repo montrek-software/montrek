@@ -1,8 +1,8 @@
 from typing import TextIO
 from django.apps import apps
 
-from baseclasses.model_utils import get_hub_by_id
-from baseclasses.model_utils import new_link_entry
+from baseclasses.repositories.db_helper import get_hub_by_id
+from baseclasses.repositories.db_helper import new_link_entry
 from account.models import AccountHub
 
 def file_upload_registry_hub():

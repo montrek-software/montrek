@@ -7,8 +7,8 @@ from file_upload.repositories.file_upload_queries import get_account_hub_from_fi
 from file_upload.repositories.file_upload_queries import new_file_upload_registry
 from file_upload.repositories.file_upload_queries import new_file_upload_file
 from credit_institution.model_utils import get_credit_institution_satellite_by_account_hub
-from baseclasses.model_utils import update_satellite
-from baseclasses.model_utils import get_hub_by_id
+from baseclasses.repositories.db_helper import update_satellite
+from baseclasses.repositories.db_helper import get_hub_by_id
 
 def process_upload_transaction_file(account_id: int,
                                     file: TextIO):
