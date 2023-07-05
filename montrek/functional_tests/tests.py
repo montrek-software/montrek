@@ -12,7 +12,7 @@ from account.models import AccountStaticSatellite
 from baseclasses.models import MontrekSatelliteABC
 from account.tests.factories import account_factories
 from credit_institution.tests.factories import credit_institution_factories
-from baseclasses.model_utils import get_hub_ids_by_satellite_attribute
+from baseclasses.repositories.db_helper import get_hub_ids_by_satellite_attribute
 
 MAX_WAIT = 10
 

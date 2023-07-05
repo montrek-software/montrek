@@ -1,9 +1,9 @@
 from django.test import TestCase
 from django.utils import timezone
 
-from baseclasses.model_utils import get_hub_ids_by_satellite_attribute
-from baseclasses.model_utils import select_satellite
-from baseclasses.model_utils import update_satellite
+from baseclasses.repositories.db_helper import get_hub_ids_by_satellite_attribute
+from baseclasses.repositories.db_helper import select_satellite
+from baseclasses.repositories.db_helper import update_satellite
 from baseclasses.tests.factories.baseclass_factories import TestMontrekHubFactory, TestMontrekSatelliteFactory, TestMontrekLinkFactory
 from baseclasses.models import TestMontrekSatellite
 

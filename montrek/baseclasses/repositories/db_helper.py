@@ -4,7 +4,6 @@ from baseclasses.models import MontrekSatelliteABC
 from baseclasses.models import MontrekHubABC
 from baseclasses.models import MontrekLinkABC
 from django.db.models.base import ModelBase
-from django.core.validators import RegexValidator
 from django.utils import timezone
 from typing import Any, List
 
@@ -32,13 +31,6 @@ def get_hub_ids_by_satellite_attribute(satellite: ModelBase,
         raise TypeError('field must be a str')
     satellite_instance = satellite.objects.filter(**{field: value}).all()
     return [instance.hub_entity.id for instance in satellite_instance]
-
-def montrek_iban_validator():
-    iban_regex = r'^[A-Z]{2}\d{2}[A-Z0-9]{1,30}$'
-    return RegexValidator(
-        regex=iban_regex,
-        message="Invalid IBAN format."
-    )
 
 def select_satellite(
                      hub_entity:MontrekHubABC,

@@ -11,8 +11,8 @@ from credit_institution.model_utils import get_credit_institution_by_account_id
 from credit_institution.model_utils import new_credit_institution_to_account
 from credit_institution.models import CreditInstitutionStaticSatellite
 from credit_institution.models import CreditInstitutionHub
-from baseclasses.model_utils import new_link_entry
-from baseclasses.model_utils import new_satellite_entry
+from baseclasses.repositories.db_helper import new_link_entry
+from baseclasses.repositories.db_helper import new_satellite_entry
 
 # Create your views here.
 
