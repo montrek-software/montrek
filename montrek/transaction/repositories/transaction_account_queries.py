@@ -41,7 +41,7 @@ def new_transaction_to_account(account_id:int,
                    transaction_hub_object,
                   account_transaction_link())
 
-def new_transactions_to_account_from_df(account_hub: baseclass_models.MontrekSatelliteABC,
+def new_transactions_to_account_from_df(account_hub_object: baseclass_models.MontrekSatelliteABC,
                                         transaction_df: pd.DataFrame) -> None:
     expected_columns = ['transaction_date',
                         'transaction_amount',
@@ -54,12 +54,13 @@ def new_transactions_to_account_from_df(account_hub: baseclass_models.MontrekSat
         got_columns_str = ', '.join(transaction_df.columns)
         raise KeyError(
             f'Wrong columns in transaction_df\n\tGot: {got_columns_str}\n\tExpected: {expected_columns_str}')
+    transaction_hub_objects = [transaction_hub().objects.create() for _ in range(len(transaction_df))]
 
 def get_transactions_by_account_id(account_id:int) -> List[baseclass_models.MontrekSatelliteABC]:
     account_hub_object = account_hub().objects.get(id=account_id)
     return get_transactions_by_account(account_hub_object)
 
-def get_transactions_by_account(account_hub_object) -> List[baseclass_models.MontrekSatelliteABC]:
+def get_transactions_by_account_hub(account_hub_object) -> List[baseclass_models.MontrekSatelliteABC]:
     account_transaction_links = account_transaction_link().objects.filter(from_hub=account_hub_object)
     transaction_hubs = [account_transaction_link.to_hub for account_transaction_link in account_transaction_links]
     transaction_satellites = transaction_satellite().objects.filter(hub_entity__in=transaction_hubs)
