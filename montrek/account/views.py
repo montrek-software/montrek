@@ -5,7 +5,7 @@ from account.models import AccountHub
 from account.models import AccountStaticSatellite
 from account.models import BankAccountPropertySatellite
 from account.models import BankAccountStaticSatellite
-from transaction.model_utils import get_transactions_by_account_id
+from transaction.repositories.transaction_account_queries import get_transactions_by_account_id
 from account.model_utils import new_account
 from credit_institution.model_utils import get_credit_institution_satellite_by_account_hub_id
 from credit_institution.model_utils import new_credit_institution_to_account

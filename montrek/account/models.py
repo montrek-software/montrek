@@ -3,7 +3,7 @@ from django.db import models
 from django.db.models import Sum, F 
 from typing import List
 from baseclasses import models as baseclass_models
-from transaction.model_utils import get_transactions_by_account
+from transaction.repositories.transaction_account_queries import get_transactions_by_account
 from account.managers.validators import montrek_iban_validator
 # Create your models here.
 

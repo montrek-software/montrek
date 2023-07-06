@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.shortcuts import redirect
-from .model_utils import new_transaction_to_account
+from transaction.repositories.transaction_account_queries import new_transaction_to_account
 from account.models import AccountStaticSatellite
 
 # Create your views here.
