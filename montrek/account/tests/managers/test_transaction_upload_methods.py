@@ -32,5 +32,24 @@ class TestDKBTransactionUpload(TestCase):
 
     def test_read_dkb_transactions(self):
         test_df = read_dkb_transactions_from_csv(self.test_csv_path)
-        breakpoint()
         self.assertTrue(isinstance(test_df, pd.DataFrame))
+        self.assertEqual(test_df.shape, (15, 6))
+        self.assertTrue(
+            all([col in test_df.columns for col in ['transaction_date',
+                                                    'transaction_description',
+                                                    'transaction_amount',
+                                                    'transaction_type',
+                                                    'transaction_price',
+                                                    'transaction_category',
+                                                   ]]))
+        self.assertAlmostEqual(test_df['transaction_amount'].sum(), -9197.15)
+        self.assertTrue(all([val == 1.0 for val in test_df['transaction_price']]))
+
+    def test_upload_dkb_transactions(self):
+        self.credit_institution.account_upload_method = 'dkb'
+        self.credit_institution.save()
+        transactions = upload_dkb_transactions(self.bank_account.hub_entity,
+                                               self.test_csv_path)
+        self.assertEqual(transactions.count(), 15)
+        tranaction_amount = transactions.aggregate(models.Sum('transaction_amount'))
+        breakpoint()
