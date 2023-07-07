@@ -1,3 +1,4 @@
+import pandas as pd
 from django.apps import apps
 from typing import List
 import datetime
@@ -39,6 +40,12 @@ def new_transaction_to_account(account_id:int,
     new_link_entry(account_hub_object, 
                    transaction_hub_object,
                   account_transaction_link())
+
+def new_transactions_to_account_from_df(account_hub:baseclass_models.MontrekHubABC,
+                                        import_df: pd.DataFrame) -> None:
+    expected_columns = ['transaction_date', 'transaction_amount', 'transaction_price', 'transaction_type', 'transaction_category', 'transaction_description']
+    if not all([column in import_df.columns for column in expected_columns]):
+        raise KeyError(f'Wrong columns in dataframe\n\tGot: {import_df.columns}\n\tExpected: {expected_columns}')
 
 def get_transactions_by_account_id(account_id:int) -> List[baseclass_models.MontrekSatelliteABC]:
     account_hub_object = account_hub().objects.get(id=account_id)

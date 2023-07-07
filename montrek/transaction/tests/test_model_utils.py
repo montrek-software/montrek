@@ -5,8 +5,8 @@ from decimal import Decimal
 
 from account.models import AccountHub
 from account.tests.factories import account_factories
-from transaction.model_utils import new_transaction_to_account
-from transaction.model_utils import get_transactions_by_account_id
+from transaction.repositories.transaction_account_queries import new_transaction_to_account
+from transaction.repositories.transaction_account_queries import get_transactions_by_account_id
 
 ACCOUNTS_UNDER_TEST=1
 

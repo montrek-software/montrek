@@ -18,6 +18,9 @@
     <a id="add_transaction" href=
         {% url 'transaction_add_form' account_id=account_statics.hub_entity.id %}>
         <span class="glyphicon glyphicon-plus"/></a>
+    <a id="id_transactions_upload" href=
+        {% url 'upload_transaction_to_account_file' account_id=account_statics.hub_entity.id %}>
+        <span class="glyphicon glyphicon-upload"/></a>
         </tr>
     </table>
 </div>

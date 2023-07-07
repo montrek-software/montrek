@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'transaction',
     'link_tables',
     'credit_institution',
+    'file_upload',
 ]
 
 MIDDLEWARE = [
