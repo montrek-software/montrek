@@ -9,7 +9,7 @@ from account.tests.factories import account_factories
 from transaction.repositories.transaction_account_queries import new_transaction_to_account
 from transaction.repositories.transaction_account_queries import new_transactions_to_account_from_df
 from transaction.repositories.transaction_account_queries import get_transactions_by_account_id
-from transaction.repositories.transaction_account_queries import get_transactions_by_account
+from transaction.repositories.transaction_account_queries import get_transactions_by_account_hub
 
 ACCOUNTS_UNDER_TEST=1
 
@@ -54,7 +54,7 @@ class TestModelUtils(TestCase):
                                 'transaction_description': ['Test transaction 1', 'Test transaction 2', 'Test transaction 3']})
         new_transactions_to_account_from_df(account_hub_object = account_hub,
                                             transaction_df = test_df)
-        new_transactions = get_transactions_by_account(account_hub_object=account_hub)
+        new_transactions = get_transactions_by_account_hub(account_hub_object=account_hub)
         self.assertEqual(new_transactions[0].transaction_date.date(), datetime.date(2022, 1, 1))
         self.assertEqual(new_transactions[0].transaction_amount, 1)
         self.assertAlmostEqual(new_transactions[0].transaction_price, Decimal(251.35))

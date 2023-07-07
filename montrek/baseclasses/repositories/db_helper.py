@@ -28,31 +28,48 @@ def get_link_to_hub(from_hub:MontrekHubABC,
         from_hub=from_hub)
     return link_instance.to_hub
 
-def new_satellite_entry(hub_entity:MontrekHubABC,
-                        satellite_class:MontrekSatelliteABC,
+def new_satellite_entry(satellite_class:MontrekSatelliteABC,
+                        hub_entity:MontrekHubABC = None,
                         **kwargs) -> MontrekSatelliteABC:
+    if hub_entity is None:
+        hub_class = satellite_class._meta.get_field('hub_entity').related_model
+        hub_entity = hub_class.objects.create() 
     satellite_entity = satellite_class.objects.create(
         hub_entity=hub_entity,
         **kwargs
     )
     return satellite_entity
 
-def new_satellites_bunch_from_df(hub_entity:MontrekHubABC,
-                                 satellite_class:MontrekSatelliteABC,
+def new_satellites_bunch_from_df_and_from_hub_link(
+    satellite_class:MontrekSatelliteABC,
+    import_df:pd.DataFrame,
+    from_hub:MontrekHubABC,
+    link_table_class:MontrekLinkABC) -> List[MontrekSatelliteABC]:
+    satellites = new_satellites_bunch_from_df(
+        satellite_class=satellite_class,
+        import_df=import_df)
+    for satellite in satellites:
+        new_link_entry(
+            from_hub=from_hub,
+            to_hub=satellite.hub_entity,
+            link_table=link_table_class)
+    return satellites
+
+def new_satellites_bunch_from_df(satellite_class:MontrekSatelliteABC,
                                  import_df:pd.DataFrame,
                                 ) -> List[MontrekSatelliteABC]:
     columns = import_df.columns
     satellite_attributes = [{column: row[column] for column in columns} for _, row in import_df.iterrows()]
-    return new_satellites_bunch(hub_entity=hub_entity,
-                                satellite_class=satellite_class,
+    return new_satellites_bunch(satellite_class=satellite_class,
                                 attributes=satellite_attributes)
 
 
-def new_satellites_bunch(hub_entity:MontrekHubABC,
-                        satellite_class:MontrekSatelliteABC,
-                        attributes: List[dict]
-                        ) -> MontrekSatelliteABC:
-    satellites = [satellite_class(hub_entity=hub_entity, **attribute) for attribute in attributes]
+def new_satellites_bunch(satellite_class:MontrekSatelliteABC,
+                         attributes: List[dict]
+                         ) -> List[MontrekSatelliteABC]:
+    hub_class = satellite_class._meta.get_field('hub_entity').related_model
+    hubs = [hub_class.objects.create() for _ in range(len(attributes))]
+    satellites = [satellite_class(hub_entity=hubs[i], **attribute) for i, attribute in enumerate(attributes)]
     satellite_entities = satellite_class.objects.bulk_create(satellites)
     return satellite_entities
 

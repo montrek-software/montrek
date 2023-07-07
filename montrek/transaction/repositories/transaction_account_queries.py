@@ -58,7 +58,7 @@ def new_transactions_to_account_from_df(account_hub_object: baseclass_models.Mon
 
 def get_transactions_by_account_id(account_id:int) -> List[baseclass_models.MontrekSatelliteABC]:
     account_hub_object = account_hub().objects.get(id=account_id)
-    return get_transactions_by_account(account_hub_object)
+    return get_transactions_by_account_hub(account_hub_object)
 
 def get_transactions_by_account_hub(account_hub_object) -> List[baseclass_models.MontrekSatelliteABC]:
     account_transaction_links = account_transaction_link().objects.filter(from_hub=account_hub_object)
