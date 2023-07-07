@@ -50,6 +50,8 @@ class TestDKBTransactionUpload(TestCase):
         self.credit_institution.save()
         transactions = upload_dkb_transactions(self.bank_account.hub_entity,
                                                self.test_csv_path)
-        self.assertEqual(transactions.count(), 15)
-        tranaction_amount = transactions.aggregate(models.Sum('transaction_amount'))
-        breakpoint()
+        self.assertEqual(len(transactions), 15)
+        transaction_amount = 0
+        for transaction in transactions:
+            transaction_amount += transaction.transaction_amount
+        self.assertAlmostEqual(transaction_amount, -9197.15)

@@ -13,7 +13,7 @@ class TransactionSatellite(baseclass_models.MontrekSatelliteABC):
     transaction_amount = models.IntegerField()
     transaction_price = models.DecimalField(max_digits=15, decimal_places=2)
     transaction_type = models.CharField(max_length=50)
-    transaction_description = models.CharField(max_length=250)
+    transaction_description = models.TextField()
     transaction_category = models.CharField(max_length=50)
 
     @property
