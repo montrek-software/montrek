@@ -3,12 +3,20 @@
 {% block content %}
 
 <h1>Upload File Result</h1>
+<div class="panel-footer">
+    <table>
+        <tr>
+    <a id="id_back_button" href={% url "bank_account_view" account_id=account_id %}>
+        <span class="glyphicon glyphicon-chevron-left"/></a>
+        </tr>
+    </table>
+</div>
 {% if fileuploadregistry.upload_status == 'processed' %}
-    <div class="alert alert-success" role="alert">
+    <div class="alert alert-success" role="alert" id="id_upload_message_success">
         {{ fileuploadregistry.upload_message }}
     </div>
 {% else %}
-    <div class="alert alert-danger" role="alert">
+    <div class="alert alert-danger" role="alert" id="id_upload_message_error">
         {{ fileuploadregistry.upload_message }}
     </div>
 {% endif %}

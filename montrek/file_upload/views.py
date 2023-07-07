@@ -15,11 +15,16 @@ def upload_transaction_to_account_file(request, account_id:int):
                 account_id,
                 request.FILES['file'],
             )
-            return upload_file_message(request, upload_registry)
+            return upload_file_message(request, upload_registry, account_id)
     else:
         form = UploadFileForm()
     return render(request, 'upload_transaction_to_account_form.html', {'form': form})
 
-def upload_file_message(request, fileuploadregistry: FileUploadRegistryStaticSatellite):
-    return render(request, 'upload_file_message.html', {'fileuploadregistry': fileuploadregistry})
+def upload_file_message(request, 
+                        fileuploadregistry: FileUploadRegistryStaticSatellite,
+                        account_id:int):
+    return render(request, 
+                  'upload_file_message.html', 
+                  {'fileuploadregistry': fileuploadregistry,
+                   'account_id': account_id})
 

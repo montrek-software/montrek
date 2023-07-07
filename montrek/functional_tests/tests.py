@@ -1,3 +1,4 @@
+import os
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.test import tag
 from selenium import webdriver
@@ -192,7 +193,9 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
         CreditInstitutionStaticSatelliteFactory.create(
             credit_institution_name='Bank of Testonia')
         dkb_credit_institution = CreditInstitutionStaticSatelliteFactory.create(
-            credit_institution_name='DKB')
+            credit_institution_name='DKB',
+            account_upload_method='dkb',
+         )
         # DKB Bank account with two transactions
         account_hub = AccountHubFactory()
         account_static_satellite = AccountStaticSatelliteFactory(hub_entity=account_hub,
@@ -262,7 +265,7 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
         # The user visits the bank account page
         account_id = get_hub_ids_by_satellite_attribute(
             AccountStaticSatellite, 'account_name', 'Billy\'s DKB account')[0]
-        self.browser.get(self.live_server_url + f'/account/{account_id}/view')
+        self.browser.get(self.live_server_url + f'/account/{account_id}/bank_account_view')
         header_text = self.browser.find_element(By.TAG_NAME,'h1').text
         self.assertIn('Billy\'s DKB account', header_text)
         # He has two transactions listed
@@ -273,16 +276,25 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
         self.browser.find_element(By.ID, 'id_transactions_upload').click()
         # He is directed to the upload form
         header_text = self.browser.find_element(By.TAG_NAME,'h1').text
-        self.assertIn('Upload DKB Transactions', header_text)
+        self.assertIn('Upload Transaction File To Account', header_text)
         # He selects the file to upload
         file_upload_box = self.browser.find_element(By.ID,
             'id_dkb_transactions_upload__file')
         file_upload_box.send_keys(os.path.join(os.path.dirname(__file__),
-                                               'test_dkb_data.csv',
+                                               'data/test_dkb_data.csv',
                                               ))
-        # When he hits the submit button, he is directed to the account view
+        # When he hits the submit button, he is directed to a upload summary page
         new_list_submit = self.browser.find_element(By.ID,
                                                     'id_dkb_transactions_upload__submit').click()
+        header_text = self.browser.find_element(By.TAG_NAME,'h1').text
+        self.assertIn('Upload File Result', header_text)
+        # He sees that the upload was successful
+        message_text = self.browser.find_element(By.ID,'id_upload_message_success').text
+        self.assertIn('DKB upload was successful!', message_text)
+        # He sees that two transactions were added
+        #TODO: check for the actual transactions
+        # HE hits the back button and is directed to the account page
+        self.browser.find_element(By.ID, 'id_back_button').click()
         header_text = self.browser.find_element(By.TAG_NAME,'h1').text
         self.assertIn('Billy\'s DKB account', header_text)
         
