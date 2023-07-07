@@ -6,9 +6,11 @@ from file_upload.models import FileUploadFileHub
 from file_upload.repositories.file_upload_queries import get_account_hub_from_file_upload_registry_satellite
 from file_upload.repositories.file_upload_queries import new_file_upload_registry
 from file_upload.repositories.file_upload_queries import new_file_upload_file
+from file_upload.repositories.file_upload_queries import get_file_satellite_from_registry_satellite
 from credit_institution.model_utils import get_credit_institution_satellite_by_account_hub
 from baseclasses.repositories.db_helper import update_satellite
 from baseclasses.repositories.db_helper import get_hub_by_id
+from account.managers.transaction_upload_methods import upload_dkb_transactions 
 
 def process_upload_transaction_file(account_id: int,
                                     file: TextIO):
@@ -46,6 +48,19 @@ def _upload_transactions_to_account_manager(
             upload_registry_sat,
             upload_status='processed',
             upload_message='Test upload was successful!',
+        )
+    if credit_institution_upload_method == 'dkb':
+        file_satellite = get_file_satellite_from_registry_satellite(
+            upload_registry_sat
+        )
+        transactions = upload_dkb_transactions( 
+            account_hub,
+            file_satellite.file.path,
+        )
+        return update_satellite(
+            upload_registry_sat,
+            upload_status='processed',
+            upload_message='DKB upload was successful!',
         )
     return update_satellite(
         upload_registry_sat,

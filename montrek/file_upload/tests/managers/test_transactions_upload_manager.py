@@ -37,6 +37,10 @@ class TestTransactionsUploadManager(TestCase):
             from_hub=cls.account_satellite.hub_entity,
             to_hub=cls.file_registry_sat_factory.hub_entity
         )
+        dkb_csv_file_content = ('Kontonummer'+'\n'*6 +
+                '"Buchungstag";"Wertstellung";"Buchungstext";"Auftraggeber / Begünstigter";"Verwendungszweck";"Kontonummer";"BLZ";"Betrag (EUR)";"Gläubiger-ID";"Mandatsreferenz";"Kundenreferenz";\n'
+                                + '"05.07.2023";"05.07.2023";"ONLINE-UEBERWEISUNG";"FINANZAMT LIMBURG WEILBURG";"3090327406418         DATUM 04.07.2023, 20.17 UHR";"DE68500500000001000397";"HELADEFFXXX";"-4.348,50";"";"";"";')
+        cls.dkb_csv_file = SimpleUploadedFile('dkb_csv_file.csv', dkb_csv_file_content.encode('utf-8'))
 
     def tearDown(self):
         if default_storage.exists('uploads/test_file.txt'):
@@ -51,6 +55,15 @@ class TestTransactionsUploadManager(TestCase):
         self.assertEqual(test_registry.upload_message, 
                          f'Credit Institution {self.credit_institution_satellite.credit_institution_name} provides no upload method')
 
+    def test_process_upload_transaction_file_dkb(self):
+        self.credit_institution_satellite.account_upload_method = 'dkb'
+        self.credit_institution_satellite.save()
+        test_registry = process_upload_transaction_file(
+            self.account_satellite.hub_entity.id,
+            self.dkb_csv_file,
+        )
+        self.assertEqual(test_registry.upload_status, 'processed')
+        self.assertEqual(test_registry.upload_message, 'DKB upload was successful!')
 
     def test_init_file_upload_registry(self):
         file_registry_sat = _init_file_upload_registry(
@@ -104,5 +117,4 @@ class TestTransactionsUploadManager(TestCase):
         self.assertEqual(file_registry_sat_failed.upload_status, 'failed')
         self.assertEqual(file_registry_sat_failed.upload_message, 
                          f'Credit Institution {self.credit_institution_satellite.credit_institution_name} provides no upload method')
-
 
