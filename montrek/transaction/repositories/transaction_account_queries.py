@@ -6,6 +6,7 @@ import datetime
 from baseclasses import models as baseclass_models
 from baseclasses.repositories.db_helper import new_link_entry
 from baseclasses.repositories.db_helper import new_satellite_entry
+from baseclasses.repositories.db_helper import new_satellites_bunch_from_df_and_from_hub_link
 
 def account_hub():
     return apps.get_model('account','AccountHub')
@@ -42,7 +43,7 @@ def new_transaction_to_account(account_id:int,
                   account_transaction_link())
 
 def new_transactions_to_account_from_df(account_hub_object: baseclass_models.MontrekSatelliteABC,
-                                        transaction_df: pd.DataFrame) -> None:
+                                        transaction_df: pd.DataFrame) -> List[baseclass_models.MontrekSatelliteABC]:
     expected_columns = ['transaction_date',
                         'transaction_amount',
                         'transaction_price',
@@ -54,7 +55,12 @@ def new_transactions_to_account_from_df(account_hub_object: baseclass_models.Mon
         got_columns_str = ', '.join(transaction_df.columns)
         raise KeyError(
             f'Wrong columns in transaction_df\n\tGot: {got_columns_str}\n\tExpected: {expected_columns_str}')
-    transaction_hub_objects = [transaction_hub().objects.create() for _ in range(len(transaction_df))]
+    transaction_satellites = new_satellites_bunch_from_df_and_from_hub_link(
+        satellite_class=transaction_satellite(),
+        import_df=transaction_df,
+        from_hub=account_hub_object,
+        link_table_class=account_transaction_link())
+    return transaction_satellites
 
 def get_transactions_by_account_id(account_id:int) -> List[baseclass_models.MontrekSatelliteABC]:
     account_hub_object = account_hub().objects.get(id=account_id)
