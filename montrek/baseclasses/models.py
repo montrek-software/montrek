@@ -34,7 +34,7 @@ class MontrekSatelliteABC(TimeStampMixin):
     def _get_identifier_hash(self) -> None:
         if not hasattr(self, 'identifier_fields'):
             raise AttributeError(f'Satellite {self.__class__.__name__} must have attribute identifier_fields')
-        identifier_string = ''.join(getattr(self, field) for field in self.identifier_fields)
+        identifier_string = ''.join(str(getattr(self, field)) for field in self.identifier_fields)
         sha256_hash = hashlib.sha256(identifier_string.encode()).hexdigest()
         self.hash_identifier = sha256_hash
 

@@ -19,6 +19,7 @@ class AccountStaticSatellite(baseclass_models.MontrekSatelliteABC):
 
 
     hub_entity = models.ForeignKey(AccountHub, on_delete=models.CASCADE)
+    identifier_fields = ['account_type', 'account_name']
     account_type = models.CharField(max_length=15, choices=AccountType.choices, default=AccountType.OTHER)
     account_name = models.CharField(max_length=50) 
     @property
@@ -34,6 +35,7 @@ class AccountStaticSatellite(baseclass_models.MontrekSatelliteABC):
 
 class BankAccountPropertySatellite(baseclass_models.MontrekSatelliteABC):
     hub_entity = models.ForeignKey(AccountHub, on_delete=models.CASCADE)
+    identifier_fields = ['hub_entity_id']
     @property
     def account_value(self):
         transactions = get_transactions_by_account_hub(self.hub_entity)
@@ -41,6 +43,7 @@ class BankAccountPropertySatellite(baseclass_models.MontrekSatelliteABC):
 
 class BankAccountStaticSatellite(baseclass_models.MontrekSatelliteABC):
     hub_entity = models.ForeignKey(AccountHub, on_delete=models.CASCADE)
+    identifier_fields = ['bank_account_iban']
     bank_account_iban = models.CharField(
         max_length=34,
         validators=[montrek_iban_validator()],

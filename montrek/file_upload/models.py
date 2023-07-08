@@ -27,6 +27,7 @@ class FileUploadRegistryStaticSatellite(baseclass_models.MontrekSatelliteABC):
 
     hub_entity = models.ForeignKey(FileUploadRegistryHub, 
                                    on_delete=models.CASCADE)
+    identifier_fields = ['file_name', 'file_type']
     file_name = models.CharField(max_length=255)
     file_type = models.CharField(max_length=5, 
                                  choices=FileTypes.choices,
@@ -55,4 +56,5 @@ class FileUploadFileHub(baseclass_models.MontrekHubABC):
 class FileUploadFileStaticSatellite(baseclass_models.MontrekSatelliteABC):
     hub_entity = models.ForeignKey(FileUploadFileHub, 
                                    on_delete=models.CASCADE)
+    identifier_fields = ['hub_entity_id']
     file = models.FileField(upload_to='uploads/')
