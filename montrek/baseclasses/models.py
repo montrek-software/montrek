@@ -26,9 +26,11 @@ class MontrekSatelliteABC(TimeStampMixin):
     state_date = models.DateTimeField(default=timezone.now)
     hub_entity = models.ForeignKey(MontrekHubABC, on_delete=models.CASCADE)
     hash_identifier = models.CharField(max_length=64, default='')
+    hash_value = models.CharField(max_length=64, default='')
 
     def save(self, *args, **kwargs):
         self._get_identifier_hash()
+        self._get_value_hash()
         super().save(*args, **kwargs)
 
     def _get_identifier_hash(self) -> None:
@@ -37,6 +39,13 @@ class MontrekSatelliteABC(TimeStampMixin):
         identifier_string = ''.join(str(getattr(self, field)) for field in self.identifier_fields)
         sha256_hash = hashlib.sha256(identifier_string.encode()).hexdigest()
         self.hash_identifier = sha256_hash
+
+    def _get_value_hash(self) -> None:
+        exclude_fields = ['id', 'hash_identifier', 'hash_value', 'created_at', 'updated_at', 'state_date']
+        value_fields = [field.name for field in self._meta.get_fields() if field.name not in exclude_fields and not field.is_relation]
+        value_string = ''.join(str(getattr(self, field)) for field in value_fields)
+        sha256_hash = hashlib.sha256(value_string.encode()).hexdigest()
+        self.hash_value = sha256_hash
 
 #Base Link Model ABC
 class MontrekLinkABC(TimeStampMixin):
