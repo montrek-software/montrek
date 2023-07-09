@@ -75,6 +75,11 @@ def new_satellites_bunch(satellite_class:MontrekSatelliteABC,
     satellites = [satellite_class(hub_entity=hubs[i], **attribute) for i, attribute in enumerate(attributes)]
     satellites_updates = [update_satellite(satellite) for satellite in satellites]
     satellites_updates_new = [satellite for satellite in satellites_updates if satellite.id is None]
+    # Need to set hash_identifier and hash_value for new satellites manually, since create_bulk does not run the save
+    # method but enteres the rows directly in the db
+    for satellite in satellites_updates_new:
+        satellite.get_hash_identifier
+        satellite.get_hash_value
     satellite_entities = satellite_class.objects.bulk_create(satellites_updates_new)
     return satellite_entities
 

@@ -140,6 +140,8 @@ class TestDBHelpers(TestCase):
         self.assertEqual(test_satellites[1].test_name, 'NewTestName2')
         self.assertEqual(test_satellites[1].state_date,
                             timezone.datetime(1,1,1, 0, 0, 0))
+        test_sat_from_db = TestMontrekSatellite.objects.last()
+        self.assertNotEqual(test_sat_from_db.hash_value, '')
 
 
     def test_new_satellites_bunch_from_df(self):
