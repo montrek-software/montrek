@@ -186,4 +186,45 @@ class TestDBHelpers(TestCase):
        new_sat = new_satellite_entry(satellite_class=TestMontrekSatellite,
                                      **sat_values)
        self.assertEqual(new_sat, existing_sat)
-        
+
+    def test_new_satellite_updates(self):
+       sat_values = {'test_name':'NewTestName',
+                     'test_value': 'TestValue'} 
+       test_hub = TestMontrekHubFactory()
+       sat_update_values = {'test_name':'NewTestName',
+                            'test_value': 'NewTestValue'}
+       TestMontrekSatellite.objects.create(
+           hub_entity=test_hub,
+           **sat_values)
+       new_satellite_entry(satellite_class=TestMontrekSatellite, 
+                           **sat_update_values)
+
+       satellites = TestMontrekSatellite.objects.filter(hub_entity=test_hub).all()
+       self.assertEqual(satellites.count(), 2)
+       self.assertTrue(all([sat.test_name == 'NewTestName' for sat in satellites]))
+       self.assertGreater(satellites[1].state_date, satellites[0].state_date)
+       self.assertEqual(satellites[1].test_value, 'NewTestValue')
+       self.assertEqual(satellites[0].test_value, 'TestValue')
+
+    def test_new_satellite_updates_and_change_back(self):
+       sat_values = {'test_name':'NewTestName',
+                     'test_value': 'TestValue'} 
+       test_hub = TestMontrekHubFactory()
+       sat_update_values = {'test_name':'NewTestName',
+                            'test_value': 'NewTestValue'}
+       TestMontrekSatellite.objects.create(
+           hub_entity=test_hub,
+           **sat_values)
+       new_satellite_entry(satellite_class=TestMontrekSatellite, 
+                           **sat_update_values)
+       new_satellite_entry(satellite_class=TestMontrekSatellite,
+                           **sat_values)
+
+       satellites = TestMontrekSatellite.objects.filter(hub_entity=test_hub).all()
+       self.assertEqual(satellites.count(), 3)
+       self.assertTrue(all([sat.test_name == 'NewTestName' for sat in satellites]))
+       self.assertGreater(satellites[1].state_date, satellites[0].state_date)
+       self.assertGreater(satellites[2].state_date, satellites[1].state_date)
+       self.assertEqual(satellites[1].test_value, 'NewTestValue')
+       self.assertEqual(satellites[0].test_value, 'TestValue')
+       self.assertEqual(satellites[2].hash_value, satellites[0].hash_value)

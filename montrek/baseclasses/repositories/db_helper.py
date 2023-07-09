@@ -38,12 +38,10 @@ def new_satellite_entry(satellite_class:MontrekSatelliteABC,
         hub_entity=hub_entity,
         **kwargs
     )
-    satellite_exists = _satelitte_exists(satellite_entity)
-    if satellite_exists:
-        satellite_entity = satellite_exists
-    else:
-        satellite_entity.save()
-    return satellite_entity
+    satellite_update = update_satellite(satellite_entity)
+    if satellite_update.id is None:
+        satellite_update.save()
+    return satellite_update
 
 def new_satellites_bunch_from_df_and_from_hub_link(
     satellite_class:MontrekSatelliteABC,
@@ -78,12 +76,22 @@ def new_satellites_bunch(satellite_class:MontrekSatelliteABC,
     satellite_entities = satellite_class.objects.bulk_create(satellites)
     return satellite_entities
 
-def _satelitte_exists(satellite:MontrekSatelliteABC) -> bool:
+def update_satellite(satellite:MontrekSatelliteABC,) -> bool:
     satellite_class = satellite.__class__
+    sat_hash_identifier = satellite.get_hash_identifier
+    satellite_updates_or_none = (satellite_class.objects
+                                .filter(hash_identifier = sat_hash_identifier)
+                                .order_by('-state_date')
+                                .first()
+                               )
+    if satellite_updates_or_none is None:
+        return satellite
     sat_hash_value = satellite.get_hash_value
-    satellite_exists_or_none = satellite_class.objects.filter(
-        hash_value = sat_hash_value).first()
-    return satellite_exists_or_none
+    if satellite_updates_or_none.hash_value == sat_hash_value:
+        return satellite_updates_or_none
+    satellite.hub_entity = satellite_updates_or_none.hub_entity
+    satellite.state_date = timezone.now()
+    return satellite
 
 def get_hub_ids_by_satellite_attribute(satellite: ModelBase,
                                       field: str,
@@ -107,19 +115,6 @@ def select_satellite(
     ).order_by('-state_date').first()
     return satellite_instance
 
-def update_satellite(
-    satellite_instance:ModelBase,
-    **kwargs,
-):
-    satellite_class = satellite_instance.__class__
-    new_satellite_entry = copy.copy(satellite_instance)
-    new_satellite_entry.pk = None
-    if 'state_date' not in kwargs:
-        new_satellite_entry.state_date = timezone.now()
-    for key, value in kwargs.items():
-        setattr(new_satellite_entry, key, value)
-    new_satellite_entry.save()
-    return new_satellite_entry
 
 def get_hub_by_id(
     hub_id: int,
