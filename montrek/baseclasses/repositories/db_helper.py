@@ -33,12 +33,14 @@ def new_satellite_entry(satellite_class:MontrekSatelliteABC,
                         **kwargs) -> MontrekSatelliteABC:
     if hub_entity is None:
         hub_class = satellite_class._meta.get_field('hub_entity').related_model
-        hub_entity = hub_class.objects.create() 
+        hub_entity = hub_class() 
     satellite_entity = satellite_class(
         hub_entity=hub_entity,
         **kwargs
     )
     satellite_update = update_satellite(satellite_entity)
+    if hub_entity.id is None:
+        hub_entity.save()
     if satellite_update.id is None:
         satellite_update.save()
     return satellite_update
@@ -80,8 +82,8 @@ def new_satellites_bunch(satellite_class:MontrekSatelliteABC,
     for satellite in satellites_updates_new:
         satellite.get_hash_identifier
         satellite.get_hash_value
-    hub_ids = [hub.id for hub in hub_class.objects.all()]
-    new_hubs = [satellite.hub_entity for satellite in satellites_updates_new if satellite.hub_entity.id not in hub_ids]
+    #hub_ids = [hub.id for hub in hub_class.objects.all()]
+    new_hubs = [satellite.hub_entity for satellite in satellites_updates_new if satellite.hub_entity.id is None]
     hub_class.objects.bulk_create(new_hubs)
     satellite_entities = satellite_class.objects.bulk_create(satellites_updates_new)
     return satellite_entities
