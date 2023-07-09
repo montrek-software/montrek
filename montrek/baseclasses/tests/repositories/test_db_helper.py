@@ -5,7 +5,7 @@ from django.utils import timezone
 
 from baseclasses.repositories.db_helper import get_hub_ids_by_satellite_attribute
 from baseclasses.repositories.db_helper import select_satellite
-from baseclasses.repositories.db_helper import update_satellite
+from baseclasses.repositories.db_helper import update_satellite_from_satellite
 from baseclasses.repositories.db_helper import new_satellite_entry
 from baseclasses.repositories.db_helper import new_satellites_bunch
 from baseclasses.repositories.db_helper import new_satellites_bunch_from_df
@@ -95,14 +95,14 @@ class TestDBHelpers(TestCase):
     def test_update_satellite_by_hub_id(self):
         test_satellite = self.satellite1
         test_satellite_name = test_satellite.test_name
-        test_updated_satellite = update_satellite(
+        test_updated_satellite = update_satellite_from_satellite(
             satellite_instance=test_satellite,
             test_name='NewTestName')
         self.assertEqual(test_updated_satellite.test_name, 'NewTestName')
         self.assertEqual(test_updated_satellite.hub_entity, self.hub1)
         self.assertGreater(test_updated_satellite.state_date,
                            test_satellite.state_date) 
-        test_updated_satellite_2 = update_satellite(
+        test_updated_satellite_2 = update_satellite_from_satellite(
             satellite_instance=test_updated_satellite,
             state_date = timezone.datetime(2023,5,1, 0, 0, 0, tzinfo=timezone.utc))
         self.assertEqual(test_updated_satellite_2.test_name, 'NewTestName')

@@ -93,6 +93,18 @@ def update_satellite(satellite:MontrekSatelliteABC,) -> bool:
     satellite.state_date = timezone.now()
     return satellite
 
+def update_satellite_from_satellite(satellite_instance:MontrekSatelliteABC,
+                                    **kwargs) -> MontrekSatelliteABC: 
+    satellite_class = satellite_instance.__class__
+    new_satellite_entry = copy.copy(satellite_instance)
+    new_satellite_entry.pk = None
+    if 'state_date' not in kwargs:
+        new_satellite_entry.state_date = timezone.now()
+    for key, value in kwargs.items():
+        setattr(new_satellite_entry, key, value)
+    new_satellite_entry.save()
+    return new_satellite_entry
+
 def get_hub_ids_by_satellite_attribute(satellite: ModelBase,
                                       field: str,
                                       value: Any) -> List[int]:
