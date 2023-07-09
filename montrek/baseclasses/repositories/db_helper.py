@@ -71,7 +71,7 @@ def new_satellites_bunch(satellite_class:MontrekSatelliteABC,
                          attributes: List[dict]
                          ) -> List[MontrekSatelliteABC]:
     hub_class = satellite_class._meta.get_field('hub_entity').related_model
-    hubs = [hub_class.objects.create() for _ in range(len(attributes))]
+    hubs = [hub_class() for _ in range(len(attributes))]
     satellites = [satellite_class(hub_entity=hubs[i], **attribute) for i, attribute in enumerate(attributes)]
     satellites_updates = [update_satellite(satellite) for satellite in satellites]
     satellites_updates_new = [satellite for satellite in satellites_updates if satellite.id is None]
@@ -80,6 +80,9 @@ def new_satellites_bunch(satellite_class:MontrekSatelliteABC,
     for satellite in satellites_updates_new:
         satellite.get_hash_identifier
         satellite.get_hash_value
+    hub_ids = [hub.id for hub in hub_class.objects.all()]
+    new_hubs = [satellite.hub_entity for satellite in satellites_updates_new if satellite.hub_entity.id not in hub_ids]
+    hub_class.objects.bulk_create(new_hubs)
     satellite_entities = satellite_class.objects.bulk_create(satellites_updates_new)
     return satellite_entities
 
