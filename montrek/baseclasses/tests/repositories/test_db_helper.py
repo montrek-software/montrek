@@ -110,7 +110,6 @@ class TestDBHelpers(TestCase):
         self.assertEqual(test_updated_satellite_2.state_date,
                             timezone.datetime(2023,5,1, 0, 0, 0, tzinfo=timezone.utc))  
 
-    @freeze_time("2023-06-20")
     def test_new_satellites_entry(self):
         test_satellite = new_satellite_entry(
             satellite_class=TestMontrekSatellite,
@@ -119,18 +118,16 @@ class TestDBHelpers(TestCase):
         self.assertEqual(test_satellite.test_name, 'NewTestName')
         self.assertEqual(test_satellite.hub_entity, self.hub1)
         self.assertEqual(test_satellite.state_date,
-                            timezone.datetime(2023,6,20, 0, 0, 0, tzinfo=timezone.utc))
+                            timezone.datetime(1,1,1, 0, 0, 0))
 
-    @freeze_time("2023-06-20")
     def test_new_satellites_entry_no_hub(self):
         test_satellite = new_satellite_entry(
             satellite_class=TestMontrekSatellite,
             test_name='NewTestName')
         self.assertEqual(test_satellite.test_name, 'NewTestName')
         self.assertEqual(test_satellite.state_date,
-                            timezone.datetime(2023,6,20, 0, 0, 0, tzinfo=timezone.utc))
+                            timezone.datetime(1,1,1, 0, 0, 0))
 
-    @freeze_time("2023-06-20")
     def test_new_satellites_bunch(self):
         test_satellites = new_satellites_bunch(
             satellite_class=TestMontrekSatellite,
@@ -139,13 +136,12 @@ class TestDBHelpers(TestCase):
         self.assertEqual(len(test_satellites), 2)
         self.assertEqual(test_satellites[0].test_name, 'NewTestName')
         self.assertEqual(test_satellites[0].state_date,
-                            timezone.datetime(2023,6,20, 0, 0, 0, tzinfo=timezone.utc))
+                            timezone.datetime(1,1,1, 0, 0, 0))
         self.assertEqual(test_satellites[1].test_name, 'NewTestName2')
         self.assertEqual(test_satellites[1].state_date,
-                            timezone.datetime(2023,6,20, 0, 0, 0, tzinfo=timezone.utc))
+                            timezone.datetime(1,1,1, 0, 0, 0))
 
 
-    @freeze_time("2023-06-20")
     def test_new_satellites_bunch_from_df(self):
         test_df = pd.DataFrame({'test_name':['NewTestName','NewTestName2']})
         test_satellites = new_satellites_bunch_from_df(
@@ -154,12 +150,11 @@ class TestDBHelpers(TestCase):
         self.assertEqual(len(test_satellites), 2)
         self.assertEqual(test_satellites[0].test_name, 'NewTestName')
         self.assertEqual(test_satellites[0].state_date,
-                            timezone.datetime(2023,6,20, 0, 0, 0, tzinfo=timezone.utc))
+                            timezone.datetime(1,1,1, 0, 0, 0))
         self.assertEqual(test_satellites[1].test_name, 'NewTestName2')
         self.assertEqual(test_satellites[1].state_date,
-                            timezone.datetime(2023,6,20, 0, 0, 0, tzinfo=timezone.utc))
+                            timezone.datetime(1,1,1, 0, 0, 0))
 
-    @freeze_time("2023-06-20")
     def test_new_satellites_bunch_from_df_and_from_hub_link(self):
         test_df = pd.DataFrame({'test_name':['NewTestName','NewTestName2']})
         test_satellites = new_satellites_bunch_from_df_and_from_hub_link(
@@ -171,12 +166,24 @@ class TestDBHelpers(TestCase):
         self.assertEqual(len(test_satellites), 2)
         self.assertEqual(test_satellites[0].test_name, 'NewTestName')
         self.assertEqual(test_satellites[0].state_date,
-                            timezone.datetime(2023,6,20, 0, 0, 0, tzinfo=timezone.utc))
+                            timezone.datetime(1,1,1, 0, 0, 0))
         self.assertEqual(test_satellites[1].test_name, 'NewTestName2')
         self.assertEqual(test_satellites[1].state_date,
-                            timezone.datetime(2023,6,20, 0, 0, 0, tzinfo=timezone.utc))
+                            timezone.datetime(1,1,1, 0, 0, 0))
         created_links = TestMontrekLink.objects.filter(
             to_hub__in=[sat.hub_entity for sat in test_satellites])
         self.assertTrue(created_links.exists())
         self.assertEqual(created_links.count(), len(test_satellites))
         self.assertTrue(all([link.from_hub == self.hub1 for link in created_links]))
+
+    def test_new_satellite_exists_already(self):
+       sat_values = {'test_name':'NewTestName',
+                     'test_value': 'TestValue'} 
+       test_hub = TestMontrekHubFactory()
+       existing_sat = TestMontrekSatellite.objects.create(
+           hub_entity=test_hub,
+           **sat_values)
+       new_sat = new_satellite_entry(satellite_class=TestMontrekSatellite,
+                                     **sat_values)
+       self.assertEqual(new_sat, existing_sat)
+        

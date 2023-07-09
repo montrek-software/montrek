@@ -34,10 +34,15 @@ def new_satellite_entry(satellite_class:MontrekSatelliteABC,
     if hub_entity is None:
         hub_class = satellite_class._meta.get_field('hub_entity').related_model
         hub_entity = hub_class.objects.create() 
-    satellite_entity = satellite_class.objects.create(
+    satellite_entity = satellite_class(
         hub_entity=hub_entity,
         **kwargs
     )
+    satellite_exists = _satelitte_exists(satellite_entity)
+    if satellite_exists:
+        satellite_entity = satellite_exists
+    else:
+        satellite_entity.save()
     return satellite_entity
 
 def new_satellites_bunch_from_df_and_from_hub_link(
@@ -72,6 +77,13 @@ def new_satellites_bunch(satellite_class:MontrekSatelliteABC,
     satellites = [satellite_class(hub_entity=hubs[i], **attribute) for i, attribute in enumerate(attributes)]
     satellite_entities = satellite_class.objects.bulk_create(satellites)
     return satellite_entities
+
+def _satelitte_exists(satellite:MontrekSatelliteABC) -> bool:
+    satellite_class = satellite.__class__
+    sat_hash_value = satellite.get_hash_value
+    satellite_exists_or_none = satellite_class.objects.filter(
+        hash_value = sat_hash_value).first()
+    return satellite_exists_or_none
 
 def get_hub_ids_by_satellite_attribute(satellite: ModelBase,
                                       field: str,
