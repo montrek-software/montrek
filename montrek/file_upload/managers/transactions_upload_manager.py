@@ -60,7 +60,7 @@ def _upload_transactions_to_account_manager(
         return update_satellite_from_satellite(
             upload_registry_sat,
             upload_status='processed',
-            upload_message='DKB upload was successful!',
+            upload_message=f'DKB upload was successful! (uploaded {len(transactions)} transactions)',
         )
     return update_satellite_from_satellite(
         upload_registry_sat,

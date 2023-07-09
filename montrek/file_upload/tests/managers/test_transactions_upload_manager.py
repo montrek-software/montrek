@@ -62,7 +62,7 @@ class TestTransactionsUploadManager(TestCase):
             self.dkb_csv_file,
         )
         self.assertEqual(test_registry.upload_status, 'processed')
-        self.assertEqual(test_registry.upload_message, 'DKB upload was successful!')
+        self.assertEqual(test_registry.upload_message, 'DKB upload was successful! (uploaded 1 transactions)')
 
     def test_init_file_upload_registry(self):
         file_registry_sat = _init_file_upload_registry(
