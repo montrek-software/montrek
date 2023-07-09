@@ -73,7 +73,9 @@ def new_satellites_bunch(satellite_class:MontrekSatelliteABC,
     hub_class = satellite_class._meta.get_field('hub_entity').related_model
     hubs = [hub_class.objects.create() for _ in range(len(attributes))]
     satellites = [satellite_class(hub_entity=hubs[i], **attribute) for i, attribute in enumerate(attributes)]
-    satellite_entities = satellite_class.objects.bulk_create(satellites)
+    satellites_updates = [update_satellite(satellite) for satellite in satellites]
+    satellites_updates_new = [satellite for satellite in satellites_updates if satellite.id is None]
+    satellite_entities = satellite_class.objects.bulk_create(satellites_updates_new)
     return satellite_entities
 
 def update_satellite(satellite:MontrekSatelliteABC,) -> bool:

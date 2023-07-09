@@ -75,7 +75,7 @@ class TestMontrekSatellite(MontrekSatelliteABC):
     hub_entity = models.ForeignKey(TestMontrekHub, on_delete=models.CASCADE)
     identifier_fields = ['test_name']
     test_name = models.CharField(max_length=12)
-    test_value = models.CharField(max_length=12, default='DEFAULT')
+    test_value = models.CharField(max_length=50, default='DEFAULT')
 
 class TestMontrekSatelliteNoIdFields(MontrekSatelliteABC):
     hub_entity = models.ForeignKey(TestMontrekHub, on_delete=models.CASCADE)

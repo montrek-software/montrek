@@ -228,3 +228,35 @@ class TestDBHelpers(TestCase):
        self.assertEqual(satellites[1].test_value, 'NewTestValue')
        self.assertEqual(satellites[0].test_value, 'TestValue')
        self.assertEqual(satellites[2].hash_value, satellites[0].hash_value)
+
+    def test_new_satellite_bunch_with_updates_and_existings(self):
+       sat_values = {'test_name':'NewTestName',
+                     'test_value': 'TestValue'} 
+       test_hub = TestMontrekHubFactory()
+       TestMontrekSatellite.objects.create(
+           hub_entity=test_hub,
+           **sat_values)
+       test_satellites1 = new_satellites_bunch(
+           satellite_class=TestMontrekSatellite,
+           attributes = [{'test_name':'NewTestName', 'test_value':'TestValue'},
+                         {'test_name':'NewTestName2', 'test_value':'TestValue2'},
+                         ])
+       self.assertEqual(len(test_satellites1), 1)
+       self.assertEqual(test_satellites1[0].test_name, 'NewTestName2')
+       self.assertEqual(test_satellites1[0].test_value, 'TestValue2')
+       self.assertEqual(test_satellites1[0].state_date,
+                           timezone.datetime(1,1,1, 0, 0, 0))
+       test_satellites2 = new_satellites_bunch(
+           satellite_class=TestMontrekSatellite,
+           attributes = [{'test_name':'NewTestName', 'test_value':'NewTestValue'},
+                         {'test_name':'NewTestName2', 'test_value':'NewTestValue2'},])
+       test_satellites3 = new_satellites_bunch(
+           satellite_class=TestMontrekSatellite,
+           attributes = [{'test_name':'NewTestName', 'test_value':'TestValue'},])
+       test_satellites_from_db = TestMontrekSatellite.objects.filter(
+           hub_entity=test_hub).order_by('-state_date').all()
+       self.assertEqual(len(test_satellites_from_db), 3)
+       self.assertEqual(test_satellites_from_db[1], test_satellites2[0])
+       self.assertEqual(test_satellites_from_db[0], test_satellites3[0])
+
+    
