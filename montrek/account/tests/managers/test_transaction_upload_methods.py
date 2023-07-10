@@ -33,7 +33,7 @@ class TestDKBTransactionUpload(TestCase):
     def test_read_dkb_transactions(self):
         test_df = read_dkb_transactions_from_csv(self.test_csv_path)
         self.assertTrue(isinstance(test_df, pd.DataFrame))
-        self.assertEqual(test_df.shape, (15, 6))
+        self.assertEqual(test_df.shape, (14, 8))
         self.assertTrue(
             all([col in test_df.columns for col in ['transaction_date',
                                                     'transaction_description',
@@ -41,17 +41,19 @@ class TestDKBTransactionUpload(TestCase):
                                                     'transaction_type',
                                                     'transaction_price',
                                                     'transaction_category',
+                                                    'transaction_party',
+                                                    'transaction_party_iban',
                                                    ]]))
-        self.assertAlmostEqual(test_df['transaction_amount'].sum(), -9197.15)
-        self.assertTrue(all([val == 1.0 for val in test_df['transaction_price']]))
+        self.assertAlmostEqual(test_df['transaction_price'].sum(), -9197.15)
+        self.assertTrue(all([val == 1.0 for val in test_df['transaction_amount']]))
 
     def test_upload_dkb_transactions(self):
         self.credit_institution.account_upload_method = 'dkb'
         self.credit_institution.save()
         transactions = upload_dkb_transactions(self.bank_account.hub_entity,
                                                self.test_csv_path)
-        self.assertEqual(len(transactions), 15)
-        transaction_amount = 0
+        self.assertEqual(len(transactions), 14)
+        transaction_price = 0
         for transaction in transactions:
-            transaction_amount += transaction.transaction_amount
-        self.assertAlmostEqual(transaction_amount, -9197.15)
+            transaction_price += transaction.transaction_price
+        self.assertAlmostEqual(transaction_price, -9197.15)

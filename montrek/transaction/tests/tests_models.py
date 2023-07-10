@@ -9,12 +9,14 @@ class TestAccountIdentifier(TestCase):
         transaction_date = timezone.datetime(2023,1,1,13,3,0)
         transaction_type = 'testtype'
         transaction_party = 'testparty'
+        transaction_party_iban = 'DE12345678901234567890'
         transaction_category = 'testcategory'
         account_sat = TransactionSatellite.objects.create(
             hub_entity=TransactionHubFactory(),
             transaction_date=transaction_date,
             transaction_type=transaction_type,
             transaction_party=transaction_party,
+            transaction_party_iban=transaction_party_iban,
             transaction_category=transaction_category,
             transaction_amount=100,
             transaction_description='bliblubb',
@@ -24,6 +26,7 @@ class TestAccountIdentifier(TestCase):
             transaction_date,
             transaction_type,
             transaction_party,
+            transaction_party_iban,
             transaction_category,
         ]])
         test_hash = hashlib.sha256(id_str.encode()).hexdigest()
@@ -33,12 +36,14 @@ class TestAccountIdentifier(TestCase):
         transaction_date = timezone.datetime(2023,1,1,13,3,0)
         transaction_type = 'testtype'
         transaction_party = 'testparty'
+        transaction_party_iban = 'DE12345678901234567890'
         transaction_category = 'testcategory'
         account_sat = TransactionSatellite.objects.create(
             hub_entity=TransactionHubFactory(),
             transaction_date=timezone.datetime(2023,1,1,13,4,0),
             transaction_type=transaction_type,
             transaction_party=transaction_party,
+            transaction_party_iban=transaction_party_iban,
             transaction_category=transaction_category,
             transaction_amount=100,
             transaction_description='bliblubb',
@@ -48,6 +53,7 @@ class TestAccountIdentifier(TestCase):
             transaction_date,
             transaction_type,
             transaction_party,
+            transaction_party_iban,
             transaction_category,
         ]])
         test_hash = hashlib.sha256(id_str.encode()).hexdigest()

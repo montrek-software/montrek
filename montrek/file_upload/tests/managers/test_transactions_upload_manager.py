@@ -39,7 +39,7 @@ class TestTransactionsUploadManager(TestCase):
         )
         dkb_csv_file_content = ('"Kontonummer:";"DE96120300001008028225 / Girokonto";\n\n"Von:";"30.06.2023";\n"Bis:";"04.07.2023";\n"Kontostand vom 04.07.2023:";"792,15 EUR";\n\n"Buchungstag";"Wertstellung";"Buchungstext";"Auftraggeber / Begünstigter";"Verwendungszweck";"Kontonummer";"BLZ";"Betrag (EUR)";"Gläubiger-ID";"Mandatsreferenz";"Kundenreferenz";\n"05.07.2023";"05.07.2023";"ONLINE-UEBERWEISUNG";"FINANZAMT LIMBURG WEILBURG";"DATUM 04.07.2023, 20.17 UHR";"DE68500500000001000397";"HELADEFFXXX";"-1.348,50";"";"";"";')
 
-        cls.dkb_csv_file = SimpleUploadedFile('dkb_csv_file.csv', dkb_csv_file_content.encode('utf-8'))
+        cls.dkb_csv_file = SimpleUploadedFile('dkb_csv_file.csv', dkb_csv_file_content.encode('iso-8859-1'))
 
     def tearDown(self):
         if default_storage.exists('uploads/test_file.txt'):

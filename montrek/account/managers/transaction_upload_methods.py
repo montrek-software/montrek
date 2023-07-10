@@ -31,18 +31,30 @@ def read_dkb_transactions_from_csv(file_path: str) -> pd.DataFrame:
                                   dayfirst=True,
                                  )
     transaction_df = transactions_df.loc[:,['Buchungstext',
-                                          'Verwendungszweck',
-                                          'Betrag (EUR)',
-                                          'Buchungstag',
+                                            'Verwendungszweck',
+                                            'Betrag (EUR)',
+                                            'Buchungstag',
+                                            'Auftraggeber / Begünstigter',
+                                            'Kontonummer',
                                          ]]
     transaction_df = transaction_df.rename(columns={'Buchungstag': 'transaction_date',
                                                     'Verwendungszweck': 'transaction_description',
-                                                    'Betrag (EUR)': 'transaction_amount',
+                                                    'Betrag (EUR)': 'transaction_price',
                                                     'Buchungstext': 'transaction_type',
+                                                    'Auftraggeber / Begünstigter': 'transaction_party',
+                                                    'Kontonummer': 'transaction_party_iban',
                                                    })
-    transaction_df['transaction_price'] = 1.0
+    aggregations = {
+        'transaction_description': lambda x: ' '.join(x),
+        'transaction_price': lambda x: x.sum(),
+    }
+    transaction_df = transaction_df.groupby(['transaction_date',
+                                             'transaction_type',
+                                             'transaction_party',
+                                             'transaction_party_iban']).agg(aggregations).reset_index()
+    transaction_df['transaction_amount'] = 1
     transaction_df['transaction_category'] = transaction_df.apply(
-        lambda x: 'INCOME' if x['transaction_amount'] > 0 else 'EXPENSE',
+        lambda x: 'INCOME' if x['transaction_price'] > 0 else 'EXPENSE',
         axis=1)
     return transaction_df
 

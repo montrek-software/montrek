@@ -46,7 +46,10 @@ def account_list(request):
 
 def account_view_data(account_id: int):
     account_statics = AccountStaticSatellite.objects.get(hub_entity=account_id)
-    account_transactions = get_transactions_by_account_id(account_id).all()
+    account_transactions = (get_transactions_by_account_id(account_id)
+                            .order_by('-transaction_date')
+                            .all()
+                           )
     return {'account_statics': account_statics,
             'account_transactions': account_transactions,
            }
@@ -100,7 +103,10 @@ def bank_account_view_data(account_id: int):
     account_data = account_view_data(account_id)
     bank_account_static_satellite = BankAccountStaticSatellite.objects.get(
         hub_entity=account_id)
+    bank_account_property_satellite = BankAccountPropertySatellite.objects.get(
+        hub_entity=account_id)
     account_data['bank_account_statics'] = bank_account_static_satellite
+    account_data['bank_account_properties'] = bank_account_property_satellite
     account_data['credit_institution'] = get_credit_institution_satellite_by_account_hub_id(account_id)
     return account_data
 

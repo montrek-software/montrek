@@ -50,7 +50,9 @@ def new_transactions_to_account_from_df(account_hub_object: baseclass_models.Mon
                         'transaction_price',
                         'transaction_type',
                         'transaction_category',
-                        'transaction_description']
+                        'transaction_description',
+                        'transaction_party',
+                        'transaction_party_iban']
     if not all([column in transaction_df.columns for column in expected_columns]):
         expected_columns_str = ', '.join(expected_columns)
         got_columns_str = ', '.join(transaction_df.columns)

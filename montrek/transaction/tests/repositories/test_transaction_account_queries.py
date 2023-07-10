@@ -47,7 +47,7 @@ class TestModelUtils(TestCase):
         with self.assertRaises(KeyError) as e:
             new_transactions_to_account_from_df(account_hub_object = account_hub,
                                                 transaction_df = test_df)
-        self.assertEqual(str(e.exception), "'Wrong columns in transaction_df\\n\\tGot: wrong_column\\n\\tExpected: transaction_date, transaction_amount, transaction_price, transaction_type, transaction_category, transaction_description'")
+        self.assertEqual(str(e.exception), "'Wrong columns in transaction_df\\n\\tGot: wrong_column\\n\\tExpected: transaction_date, transaction_amount, transaction_price, transaction_type, transaction_category, transaction_description, transaction_party, transaction_party_iban'")
 
     def test_new_transactions_to_account_from_df(self):
         account_hub = account_factories.AccountHubFactory.create()
@@ -56,7 +56,11 @@ class TestModelUtils(TestCase):
                                 'transaction_price': [251.35, 252.35, 253.35],
                                 'transaction_type': ['DEPOSIT', 'DEPOSIT', 'DEPOSIT'],
                                 'transaction_category': ['TRANSFER', 'TRANSFER', 'TRANSFER'],
-                                'transaction_description': ['Test transaction 1', 'Test transaction 2', 'Test transaction 3']})
+                                'transaction_description': ['Test transaction 1', 'Test transaction 2', 'Test transaction 3'],
+                                'transaction_party': ['Test Party 1', 'Test Party 2', 'Test Party 3'],
+                                'transaction_party_iban': ['XX123456789012345678901234567890', 'XX123456789012345678901234567890', 'XX123456789012345678901234567890'],
+
+                                })
         new_transactions_to_account_from_df(account_hub_object = account_hub,
                                             transaction_df = test_df)
         new_transactions = get_transactions_by_account_hub(account_hub_object=account_hub)
