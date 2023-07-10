@@ -115,4 +115,3 @@ class TestBankAccountViews(TestCase):
             response = self.client.post(f'/account/{acc_no}/bank_account_view')
             self.assertTemplateUsed(response, 'bank_account_view.html')
 
-

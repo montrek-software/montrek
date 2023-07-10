@@ -37,9 +37,9 @@ class TestTransactionsUploadManager(TestCase):
             from_hub=cls.account_satellite.hub_entity,
             to_hub=cls.file_registry_sat_factory.hub_entity
         )
-        dkb_csv_file_content = ('"Kontonummer:";"DE96120300001008028225 / Girokonto";\n\n"Von:";"30.06.2023";\n"Bis:";"04.07.2023";\n"Kontostand vom 04.07.2023:";"792,15 EUR";\n\n"Buchungstag";"Wertstellung";"Buchungstext";"Auftraggeber / Begünstigter";"Verwendungszweck";"Kontonummer";"BLZ";"Betrag (EUR)";"Gläubiger-ID";"Mandatsreferenz";"Kundenreferenz";\n"05.07.2023";"05.07.2023";"ONLINE-UEBERWEISUNG";"FINANZAMT LIMBURG WEILBURG";"3090327406418         DATUM 04.07.2023, 20.17 UHR";"DE68500500000001000397";"HELADEFFXXX";"-4.348,50";"";"";"";')
+        dkb_csv_file_content = ('"Kontonummer:";"DE96120300001008028225 / Girokonto";\n\n"Von:";"30.06.2023";\n"Bis:";"04.07.2023";\n"Kontostand vom 04.07.2023:";"792,15 EUR";\n\n"Buchungstag";"Wertstellung";"Buchungstext";"Auftraggeber / Begünstigter";"Verwendungszweck";"Kontonummer";"BLZ";"Betrag (EUR)";"Gläubiger-ID";"Mandatsreferenz";"Kundenreferenz";\n"05.07.2023";"05.07.2023";"ONLINE-UEBERWEISUNG";"FINANZAMT LIMBURG WEILBURG";"DATUM 04.07.2023, 20.17 UHR";"DE68500500000001000397";"HELADEFFXXX";"-1.348,50";"";"";"";')
 
-        cls.dkb_csv_file = SimpleUploadedFile('dkb_csv_file.csv', dkb_csv_file_content.encode('utf-8'))
+        cls.dkb_csv_file = SimpleUploadedFile('dkb_csv_file.csv', dkb_csv_file_content.encode('iso-8859-1'))
 
     def tearDown(self):
         if default_storage.exists('uploads/test_file.txt'):
@@ -62,7 +62,7 @@ class TestTransactionsUploadManager(TestCase):
             self.dkb_csv_file,
         )
         self.assertEqual(test_registry.upload_status, 'processed')
-        self.assertEqual(test_registry.upload_message, 'DKB upload was successful!')
+        self.assertEqual(test_registry.upload_message, 'DKB upload was successful! (uploaded 1 transactions)')
 
     def test_init_file_upload_registry(self):
         file_registry_sat = _init_file_upload_registry(

@@ -2,10 +2,15 @@ import pandas as pd
 import datetime
 # Tests for model_utils.py
 from django.test import TestCase
+from django.utils import timezone
+from django.db.models import F, Sum
+
 from decimal import Decimal
 
 from account.models import AccountHub
 from account.tests.factories import account_factories
+from link_tables.tests.factories.link_tables_factories import AccountTransactionLinkFactory
+from transaction.tests.factories.transaction_factories import TransactionSatelliteFactory
 from transaction.repositories.transaction_account_queries import new_transaction_to_account
 from transaction.repositories.transaction_account_queries import new_transactions_to_account_from_df
 from transaction.repositories.transaction_account_queries import get_transactions_by_account_id
@@ -42,7 +47,7 @@ class TestModelUtils(TestCase):
         with self.assertRaises(KeyError) as e:
             new_transactions_to_account_from_df(account_hub_object = account_hub,
                                                 transaction_df = test_df)
-        self.assertEqual(str(e.exception), "'Wrong columns in transaction_df\\n\\tGot: wrong_column\\n\\tExpected: transaction_date, transaction_amount, transaction_price, transaction_type, transaction_category, transaction_description'")
+        self.assertEqual(str(e.exception), "'Wrong columns in transaction_df\\n\\tGot: wrong_column\\n\\tExpected: transaction_date, transaction_amount, transaction_price, transaction_type, transaction_category, transaction_description, transaction_party, transaction_party_iban'")
 
     def test_new_transactions_to_account_from_df(self):
         account_hub = account_factories.AccountHubFactory.create()
@@ -51,7 +56,11 @@ class TestModelUtils(TestCase):
                                 'transaction_price': [251.35, 252.35, 253.35],
                                 'transaction_type': ['DEPOSIT', 'DEPOSIT', 'DEPOSIT'],
                                 'transaction_category': ['TRANSFER', 'TRANSFER', 'TRANSFER'],
-                                'transaction_description': ['Test transaction 1', 'Test transaction 2', 'Test transaction 3']})
+                                'transaction_description': ['Test transaction 1', 'Test transaction 2', 'Test transaction 3'],
+                                'transaction_party': ['Test Party 1', 'Test Party 2', 'Test Party 3'],
+                                'transaction_party_iban': ['XX123456789012345678901234567890', 'XX123456789012345678901234567890', 'XX123456789012345678901234567890'],
+
+                                })
         new_transactions_to_account_from_df(account_hub_object = account_hub,
                                             transaction_df = test_df)
         new_transactions = get_transactions_by_account_hub(account_hub_object=account_hub)
@@ -73,4 +82,68 @@ class TestModelUtils(TestCase):
         self.assertEqual(new_transactions[2].transaction_type, 'DEPOSIT')
         self.assertEqual(new_transactions[2].transaction_category, 'TRANSFER')
         self.assertEqual(new_transactions[2].transaction_description, 'Test transaction 3')
+
+    def test_get_transactions_by_account_hub_for_state_date(self):
+        account_hub = AccountHub.objects.create()
+        transaction_1 = TransactionSatelliteFactory.create(
+            transaction_amount=100,
+            transaction_price=1.0,
+            state_date_start=timezone.datetime(2023,6,1),
+            state_date_end=timezone.datetime(2023,7,1),
+        )
+        transaction_2 = TransactionSatelliteFactory.create(
+            transaction_amount=200,
+            transaction_price=1.0,
+            state_date_start=timezone.datetime(2023,7,1),
+            state_date_end=timezone.datetime.max,
+            hub_entity=transaction_1.hub_entity
+        )
+        transaction_3 = TransactionSatelliteFactory.create(
+            transaction_amount=100,
+            transaction_price=1.0,
+            state_date_start=timezone.datetime(2023,6,15),
+            state_date_end=timezone.datetime(2023,7,9),
+        )
+        transaction_4 = TransactionSatelliteFactory.create(
+            transaction_amount=200,
+            transaction_price=1.0,
+            state_date_start=timezone.datetime(2023,7,9),
+            state_date_end=timezone.datetime.max,
+            hub_entity=transaction_3.hub_entity
+        )
+        AccountTransactionLinkFactory.create(
+            from_hub=account_hub,
+            to_hub=transaction_1.hub_entity)
+        AccountTransactionLinkFactory.create(
+            from_hub=account_hub,
+            to_hub=transaction_3.hub_entity)
+        account_transactions = get_transactions_by_account_hub(account_hub)
+        self.assertEqual(len(account_transactions), 2)
+        account_value = account_transactions.aggregate(total_value=Sum(F('transaction_amount') * F('transaction_price')))['total_value'] or 0. 
+        self.assertEqual(account_value, 400)
+        account_transactions = get_transactions_by_account_hub(
+            account_hub, 
+            reference_date=timezone.datetime(2023,7,1))
+        self.assertEqual(len(account_transactions), 2)
+        account_value = account_transactions.aggregate(total_value=Sum(F('transaction_amount') * F('transaction_price')))['total_value'] or 0.
+        self.assertEqual(account_value, 300)
+        account_transactions = get_transactions_by_account_hub(
+            account_hub,
+            reference_date=timezone.datetime(2023,6,1))
+        self.assertEqual(len(account_transactions), 1)
+        account_value = account_transactions.aggregate(total_value=Sum(F('transaction_amount') * F('transaction_price')))['total_value'] or 0.
+        self.assertEqual(account_value, 100)
+        account_transactions = get_transactions_by_account_hub(
+            account_hub,
+            reference_date=timezone.datetime(2023,7,9))
+        self.assertEqual(len(account_transactions), 2)
+        account_value = account_transactions.aggregate(total_value=Sum(F('transaction_amount') * F('transaction_price')))['total_value'] or 0.
+        self.assertEqual(account_value, 400)
+        account_transactions = get_transactions_by_account_hub(
+            account_hub,
+            reference_date=timezone.datetime(2023,5,10))
+        self.assertEqual(len(account_transactions), 0)
+
+        
+
 

@@ -8,7 +8,7 @@ from file_upload.repositories.file_upload_queries import new_file_upload_registr
 from file_upload.repositories.file_upload_queries import new_file_upload_file
 from file_upload.repositories.file_upload_queries import get_file_satellite_from_registry_satellite
 from credit_institution.model_utils import get_credit_institution_satellite_by_account_hub
-from baseclasses.repositories.db_helper import update_satellite
+from baseclasses.repositories.db_helper import update_satellite_from_satellite
 from baseclasses.repositories.db_helper import get_hub_by_id
 from account.managers.transaction_upload_methods import upload_dkb_transactions 
 
@@ -44,7 +44,7 @@ def _upload_transactions_to_account_manager(
         return _upload_error_account_upload_method_none(upload_registry_sat, 
             credit_institution_satellite)
     if credit_institution_upload_method == 'test':
-        return update_satellite(
+        return update_satellite_from_satellite(
             upload_registry_sat,
             upload_status='processed',
             upload_message='Test upload was successful!',
@@ -57,12 +57,12 @@ def _upload_transactions_to_account_manager(
             account_hub,
             file_satellite.file.path,
         )
-        return update_satellite(
+        return update_satellite_from_satellite(
             upload_registry_sat,
             upload_status='processed',
-            upload_message='DKB upload was successful!',
+            upload_message=f'DKB upload was successful! (uploaded {len(transactions)} transactions)',
         )
-    return update_satellite(
+    return update_satellite_from_satellite(
         upload_registry_sat,
         upload_status='failed',
         upload_message=f'Upload method {credit_institution_upload_method} not implemented',
@@ -75,7 +75,7 @@ def _upload_file_to_registry(
 ) -> FileUploadFileStaticSatellite:
     new_file_upload_file(fileuploadregistrysat,
                         file)
-    fileuploadregistry_uploaded = update_satellite( 
+    fileuploadregistry_uploaded = update_satellite_from_satellite( 
         fileuploadregistrysat,
         upload_status='uploaded',
         upload_message=f'File {fileuploadregistrysat.file_name} has been uploaded',
@@ -85,7 +85,7 @@ def _upload_file_to_registry(
 
 
 def _upload_error_file_not_uploaded_registry(upload_registry_sat):
-    fileuploadregistry_failed = update_satellite(
+    fileuploadregistry_failed = update_satellite_from_satellite(
         upload_registry_sat,
         upload_status='failed',
         upload_message=f'File {upload_registry_sat.file_name} has not been not uploaded',
@@ -94,7 +94,7 @@ def _upload_error_file_not_uploaded_registry(upload_registry_sat):
 
 def _upload_error_account_upload_method_none(upload_registry_sat, credit_institution_satellite):
     credit_institution_name = credit_institution_satellite.credit_institution_name
-    fileuploadregistry_failed = update_satellite(
+    fileuploadregistry_failed = update_satellite_from_satellite(
         upload_registry_sat,
         upload_status='failed',
         upload_message=f'Credit Institution {credit_institution_name} provides no upload method',
