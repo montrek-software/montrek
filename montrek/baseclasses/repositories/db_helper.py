@@ -6,6 +6,7 @@ from baseclasses.models import MontrekSatelliteABC
 from baseclasses.models import MontrekHubABC
 from baseclasses.models import MontrekLinkABC
 from django.db.models.base import ModelBase
+from django.db.models import Q
 from django.utils import timezone
 
 
@@ -96,7 +97,7 @@ def update_satellite(satellite:MontrekSatelliteABC,) -> bool:
     sat_hash_identifier = satellite.get_hash_identifier
     satellite_updates_or_none = (satellite_class.objects
                                 .filter(hash_identifier = sat_hash_identifier)
-                                .order_by('-state_date')
+                                .order_by('-state_date_start')
                                 .first()
                                )
     if satellite_updates_or_none is None:
@@ -105,7 +106,11 @@ def update_satellite(satellite:MontrekSatelliteABC,) -> bool:
     if satellite_updates_or_none.hash_value == sat_hash_value:
         return satellite_updates_or_none
     satellite.hub_entity = satellite_updates_or_none.hub_entity
-    satellite.state_date = timezone.now()
+    state_date = timezone.now()
+    new_state_date = state_date
+    satellite_updates_or_none.state_date_end = new_state_date
+    satellite_updates_or_none.save()
+    satellite.state_date_start = state_date
     return satellite
 
 def update_satellite_from_satellite(satellite_instance:MontrekSatelliteABC,
@@ -113,10 +118,15 @@ def update_satellite_from_satellite(satellite_instance:MontrekSatelliteABC,
     satellite_class = satellite_instance.__class__
     new_satellite_entry = copy.copy(satellite_instance)
     new_satellite_entry.pk = None
-    if 'state_date' not in kwargs:
-        new_satellite_entry.state_date = timezone.now()
+    new_state_date = timezone.now() 
+    if 'state_date_start' in kwargs:
+        new_state_date = kwargs['state_date_start']
+        del kwargs['state_date_start']
     for key, value in kwargs.items():
         setattr(new_satellite_entry, key, value)
+    new_satellite_entry.state_date_start = new_state_date
+    satellite_instance.state_date_end = new_state_date
+    satellite_instance.save()
     new_satellite_entry.save()
     return new_satellite_entry
 
@@ -137,9 +147,10 @@ def select_satellite(
 ):
     reference_date = timezone.now() if reference_date is None else reference_date
     satellite_instance = satellite_class.objects.filter(
-        hub_entity=hub_entity,
-        state_date__lte=reference_date,
-    ).order_by('-state_date').first()
+        Q(hub_entity=hub_entity) &
+        Q(state_date_start__lte=reference_date) &
+        Q(state_date_end__gte=reference_date)
+    ).first()
     return satellite_instance
 
 

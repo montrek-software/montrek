@@ -3,6 +3,8 @@ import datetime
 # Tests for model_utils.py
 from django.test import TestCase
 from django.utils import timezone
+from django.db.models import F, Sum
+
 from decimal import Decimal
 
 from account.models import AccountHub
@@ -82,23 +84,27 @@ class TestModelUtils(TestCase):
         transaction_1 = TransactionSatelliteFactory.create(
             transaction_amount=100,
             transaction_price=1.0,
-            state_date=timezone.datetime(2023,6,1)
+            state_date_start=timezone.datetime(2023,6,1),
+            state_date_end=timezone.datetime(2023,7,1),
         )
         transaction_2 = TransactionSatelliteFactory.create(
             transaction_amount=200,
             transaction_price=1.0,
-            state_date=timezone.datetime(2023,7,1),
+            state_date_start=timezone.datetime(2023,7,1),
+            state_date_end=timezone.datetime.max,
             hub_entity=transaction_1.hub_entity
         )
         transaction_3 = TransactionSatelliteFactory.create(
             transaction_amount=100,
             transaction_price=1.0,
-            state_date=timezone.datetime(2023,6,15)
+            state_date_start=timezone.datetime(2023,6,15),
+            state_date_end=timezone.datetime(2023,7,9),
         )
         transaction_4 = TransactionSatelliteFactory.create(
             transaction_amount=200,
             transaction_price=1.0,
-            state_date=timezone.datetime(2023,7,15),
+            state_date_start=timezone.datetime(2023,7,9),
+            state_date_end=timezone.datetime.max,
             hub_entity=transaction_3.hub_entity
         )
         AccountTransactionLinkFactory.create(
@@ -110,7 +116,30 @@ class TestModelUtils(TestCase):
         account_transactions = get_transactions_by_account_hub(account_hub)
         self.assertEqual(len(account_transactions), 2)
         account_value = account_transactions.aggregate(total_value=Sum(F('transaction_amount') * F('transaction_price')))['total_value'] or 0. 
-        self.assertEqual(account_value, 200)
+        self.assertEqual(account_value, 400)
+        account_transactions = get_transactions_by_account_hub(
+            account_hub, 
+            reference_date=timezone.datetime(2023,7,1))
+        self.assertEqual(len(account_transactions), 2)
+        account_value = account_transactions.aggregate(total_value=Sum(F('transaction_amount') * F('transaction_price')))['total_value'] or 0.
+        self.assertEqual(account_value, 300)
+        account_transactions = get_transactions_by_account_hub(
+            account_hub,
+            reference_date=timezone.datetime(2023,6,1))
+        self.assertEqual(len(account_transactions), 1)
+        account_value = account_transactions.aggregate(total_value=Sum(F('transaction_amount') * F('transaction_price')))['total_value'] or 0.
+        self.assertEqual(account_value, 100)
+        account_transactions = get_transactions_by_account_hub(
+            account_hub,
+            reference_date=timezone.datetime(2023,7,9))
+        self.assertEqual(len(account_transactions), 2)
+        account_value = account_transactions.aggregate(total_value=Sum(F('transaction_amount') * F('transaction_price')))['total_value'] or 0.
+        self.assertEqual(account_value, 400)
+        account_transactions = get_transactions_by_account_hub(
+            account_hub,
+            reference_date=timezone.datetime(2023,5,10))
+        self.assertEqual(len(account_transactions), 0)
+
         
 
 

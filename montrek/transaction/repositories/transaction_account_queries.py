@@ -1,5 +1,6 @@
 import pandas as pd
 from django.apps import apps
+from django.db.models import Q
 from typing import List
 import datetime
 
@@ -66,12 +67,15 @@ def get_transactions_by_account_id(account_id:int) -> List[baseclass_models.Mont
     account_hub_object = account_hub().objects.get(id=account_id)
     return get_transactions_by_account_hub(account_hub_object)
 
-def get_transactions_by_account_hub(account_hub_object) -> List[baseclass_models.MontrekSatelliteABC]:
+def get_transactions_by_account_hub(account_hub_object,
+                                    reference_date:datetime.datetime=datetime.datetime.now()
+                                   ) -> List[baseclass_models.MontrekSatelliteABC]:
     account_transaction_links = account_transaction_link().objects.filter(from_hub=account_hub_object)
     transaction_hubs = [account_transaction_link.to_hub for account_transaction_link in account_transaction_links]
     transaction_satellites = (transaction_satellite().objects
-                              .filter(hub_entity__in=transaction_hubs)
-                              .order_by('-state_date')
-                              .groupby('hash_identifier')
+                              .filter(Q(hub_entity__in=transaction_hubs) &
+                                      Q(state_date_start__lte = reference_date) &
+                                      Q(state_date_end__gt = reference_date) 
+                                     )
                              )
     return transaction_satellites

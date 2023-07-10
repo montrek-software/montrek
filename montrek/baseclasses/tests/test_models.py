@@ -48,8 +48,11 @@ class TestModelUtils(TestCase):
         test_satellites = TestMontrekSatellite.objects.all()
         for test_satellite in test_satellites:
             self.assertEqual(
-                test_satellite.state_date, timezone.datetime(2023,6,20, tzinfo=timezone.utc)
-        )
+                test_satellite.state_date_start, timezone.datetime(2023,6,20, tzinfo=timezone.utc)
+            )
+            self.assertEqual(
+                test_satellite.state_date_end, timezone.datetime(2023,7,10, tzinfo=timezone.utc)
+            )
 
 
 class TestSatelliteIdentifier(TestCase):
