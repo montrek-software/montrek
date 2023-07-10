@@ -2,10 +2,13 @@ import pandas as pd
 import datetime
 # Tests for model_utils.py
 from django.test import TestCase
+from django.utils import timezone
 from decimal import Decimal
 
 from account.models import AccountHub
 from account.tests.factories import account_factories
+from link_tables.tests.factories.link_tables_factories import AccountTransactionLinkFactory
+from transaction.tests.factories.transaction_factories import TransactionSatelliteFactory
 from transaction.repositories.transaction_account_queries import new_transaction_to_account
 from transaction.repositories.transaction_account_queries import new_transactions_to_account_from_df
 from transaction.repositories.transaction_account_queries import get_transactions_by_account_id
@@ -73,4 +76,41 @@ class TestModelUtils(TestCase):
         self.assertEqual(new_transactions[2].transaction_type, 'DEPOSIT')
         self.assertEqual(new_transactions[2].transaction_category, 'TRANSFER')
         self.assertEqual(new_transactions[2].transaction_description, 'Test transaction 3')
+
+    def test_get_transactions_by_account_hub_for_state_date(self):
+        account_hub = AccountHub.objects.create()
+        transaction_1 = TransactionSatelliteFactory.create(
+            transaction_amount=100,
+            transaction_price=1.0,
+            state_date=timezone.datetime(2023,6,1)
+        )
+        transaction_2 = TransactionSatelliteFactory.create(
+            transaction_amount=200,
+            transaction_price=1.0,
+            state_date=timezone.datetime(2023,7,1),
+            hub_entity=transaction_1.hub_entity
+        )
+        transaction_3 = TransactionSatelliteFactory.create(
+            transaction_amount=100,
+            transaction_price=1.0,
+            state_date=timezone.datetime(2023,6,15)
+        )
+        transaction_4 = TransactionSatelliteFactory.create(
+            transaction_amount=200,
+            transaction_price=1.0,
+            state_date=timezone.datetime(2023,7,15),
+            hub_entity=transaction_3.hub_entity
+        )
+        AccountTransactionLinkFactory.create(
+            from_hub=account_hub,
+            to_hub=transaction_1.hub_entity)
+        AccountTransactionLinkFactory.create(
+            from_hub=account_hub,
+            to_hub=transaction_3.hub_entity)
+        account_transactions = get_transactions_by_account_hub(account_hub)
+        self.assertEqual(len(account_transactions), 2)
+        account_value = account_transactions.aggregate(total_value=Sum(F('transaction_amount') * F('transaction_price')))['total_value'] or 0. 
+        self.assertEqual(account_value, 200)
+        
+
 

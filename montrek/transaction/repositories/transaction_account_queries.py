@@ -69,5 +69,9 @@ def get_transactions_by_account_id(account_id:int) -> List[baseclass_models.Mont
 def get_transactions_by_account_hub(account_hub_object) -> List[baseclass_models.MontrekSatelliteABC]:
     account_transaction_links = account_transaction_link().objects.filter(from_hub=account_hub_object)
     transaction_hubs = [account_transaction_link.to_hub for account_transaction_link in account_transaction_links]
-    transaction_satellites = transaction_satellite().objects.filter(hub_entity__in=transaction_hubs)
+    transaction_satellites = (transaction_satellite().objects
+                              .filter(hub_entity__in=transaction_hubs)
+                              .order_by('-state_date')
+                              .groupby('hash_identifier')
+                             )
     return transaction_satellites

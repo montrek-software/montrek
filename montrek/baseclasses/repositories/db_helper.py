@@ -85,7 +85,10 @@ def new_satellites_bunch(satellite_class:MontrekSatelliteABC,
     #hub_ids = [hub.id for hub in hub_class.objects.all()]
     new_hubs = [satellite.hub_entity for satellite in satellites_updates_new if satellite.hub_entity.id is None]
     hub_class.objects.bulk_create(new_hubs)
-    satellite_entities = satellite_class.objects.bulk_create(satellites_updates_new)
+    satellite_entities = satellite_class.objects.bulk_create(
+        satellites_updates_new,
+        batch_size=1000,
+    )
     return satellite_entities
 
 def update_satellite(satellite:MontrekSatelliteABC,) -> bool:
