@@ -17,7 +17,7 @@ jobs:
 
     services:
       mariadb:
-        image: mariadb:latest
+        image: mariadb:10.9
         env:
           MYSQL_ROOT_PASSWORD: ci_pipe_pssw
           MYSQL_DATABASE: montrek_ci_pipe_db
