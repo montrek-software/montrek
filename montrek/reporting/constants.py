@@ -6,3 +6,12 @@ class ReportingTextType(Enum):
     HTML = 2
     LATEX = 3
 
+
+class ReportingPlotType(Enum):
+    LINE = 0
+    BAR = 1
+    PIE = 2
+    SCATTER = 3
+    HISTOGRAM = 4
+    BOXPLOT = 5
+    HEATMAP = 6

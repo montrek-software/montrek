@@ -1,9 +1,6 @@
 from typing import Protocol
 from typing import Union
-
-
-class ReportingData(Protocol):
-    ...
+from reporting.core.reporting_data import ReportingData
 
 
 class ReportingElement(Protocol):
