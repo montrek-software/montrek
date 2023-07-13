@@ -11,6 +11,7 @@ class ReportingTextParagraph(ReportingElement):
         self.text = data
 
     def format_latex(self) -> str:
+        self._check_for_generating()
         if self.text_type == ReportingTextType.PLAIN:
             return f"{self.text}\n\n"
         return self.text
@@ -22,6 +23,11 @@ class ReportingTextParagraph(ReportingElement):
         return self._format_to_html()
 
     def _format_to_html(self) -> str:
+        self._check_for_generating()
         if self.text_type == ReportingTextType.PLAIN:
             return f"<p>{self.text}</p>"
         return self.text
+
+    def _check_for_generating(self) -> None:
+        if self.text is None:
+            raise ValueError("Text is not generated, call generate() first")

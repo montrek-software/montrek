@@ -21,13 +21,16 @@ class TestReportText(TestCase):
         paragraph = ReportingTextParagraph()
         self.assertEqual(paragraph.text, None)
         self.assertEqual(paragraph.text_type.name, "PLAIN")
-        test_plain_to_html = paragraph.format_html()
-        self.assertEqual(test_plain_to_html, "")
-        test_plain_to_latex = paragraph.format_latex()
-        self.assertEqual(test_plain_to_latex, "")
+        with self.assertRaises(ValueError):
+            paragraph.format_html()
+        with self.assertRaises(ValueError):
+            paragraph.format_latex()
+        with self.assertRaises(ValueError):
+            paragraph.format_mail()
 
     def test_paragraph_plain(self):
-        paragraph = ReportingTextParagraph(self.plain_text)
+        paragraph = ReportingTextParagraph()
+        paragraph.generate(self.plain_text)
         self.assertEqual(paragraph.text, self.plain_text)
         self.assertEqual(paragraph.text_type.name, "PLAIN")
         test_plain_to_html = paragraph.format_html()
