@@ -1,7 +1,9 @@
 from reporting.constants import ReportingTextType
 from reporting.core.reporting_protocols import ReportingElement
+from reporting.core.reporting_mixins import ReportingChecksMixin
 
-class ReportingTextParagraph(ReportingElement):
+class ReportingTextParagraph(ReportingElement,
+                             ReportingChecksMixin):
     def __init__(self, 
                  text_type: ReportingTextType = ReportingTextType.PLAIN):
         self.text = None
@@ -28,6 +30,3 @@ class ReportingTextParagraph(ReportingElement):
             return f"<p>{self.text}</p>"
         return self.text
 
-    def _check_for_generating(self) -> None:
-        if self.text is None:
-            raise ValueError("Text is not generated, call generate() first")
