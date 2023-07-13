@@ -1,4 +1,5 @@
 from typing import Protocol
+from typing import Union
 
 
 class ReportingData(Protocol):
@@ -6,7 +7,7 @@ class ReportingData(Protocol):
 
 
 class ReportingElement(Protocol):
-    def generate(self, data: ReportingData) -> None:
+    def generate(self, data: Union[ReportingData, str]) -> None:
         ...
 
     def format_latex(self) -> str:

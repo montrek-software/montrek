@@ -17,6 +17,15 @@ class TestReportText(TestCase):
         cls.latex_text = "This is a $latex$ text. \n This is a new $line$"
         cls.latex_html_text = "This is a <b>latex</b> text. <br> This is a new <i>line</i>"
 
+    def test_paragraph_not_generated(self):
+        paragraph = ReportingTextParagraph()
+        self.assertEqual(paragraph.text, None)
+        self.assertEqual(paragraph.text_type.name, "PLAIN")
+        test_plain_to_html = paragraph.format_html()
+        self.assertEqual(test_plain_to_html, "")
+        test_plain_to_latex = paragraph.format_latex()
+        self.assertEqual(test_plain_to_latex, "")
+
     def test_paragraph_plain(self):
         paragraph = ReportingTextParagraph(self.plain_text)
         self.assertEqual(paragraph.text, self.plain_text)
