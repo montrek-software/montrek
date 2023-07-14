@@ -8,10 +8,11 @@ class ReportingTextType(Enum):
 
 
 class ReportingPlotType(Enum):
-    LINE = 0
-    BAR = 1
-    PIE = 2
-    SCATTER = 3
-    HISTOGRAM = 4
-    BOXPLOT = 5
-    HEATMAP = 6
+    NONE = 0
+    LINE = 1
+    BAR = 2
+    PIE = 3
+    SCATTER = 4
+    HISTOGRAM = 5
+    BOXPLOT = 6
+    HEATMAP = 7
