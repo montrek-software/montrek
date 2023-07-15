@@ -7,7 +7,7 @@ from reporting.constants import ReportingPlotType
 @dataclass
 class ReportingData:
     data_df: pd.DataFrame
-    x_axis_column: str
-    y_axis_columns: List[str]
-    plot_types: List[ReportingPlotType]
-
+    x_axis_column: str = None
+    x_axis_is_index: bool = False
+    y_axis_columns: List[str] = None
+    plot_types: List[ReportingPlotType] = None

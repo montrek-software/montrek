@@ -38,6 +38,18 @@ class TestReportingPlots(TestCase):
                 reporting_data
             )
 
+    def test_reporting_plots_neither_index_nor_xaxis(self):
+        reporting_data = ReportingData(
+                    data_df=self.test_df,
+                    y_axis_columns=['Value'],
+                    plot_types=[ReportingPlotType.BAR]
+        )    
+        with self.assertRaises(ValueError) as e:
+            ReportingPlot().generate(
+                reporting_data
+            )
+        self.assertEqual(str(e.exception), "Either x_axis_column or x_axis_is_index must be provided")
+
     def test_reporting_plots_bar_line(self):
         reporting_data = ReportingData(
                     data_df=self.test_df,

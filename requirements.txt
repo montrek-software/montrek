@@ -5,6 +5,7 @@ backports.zoneinfo==0.2.1
 certifi==2022.12.7
 dataclasses==0.6
 Django==4.2
+django-pandas==0.6.6
 exceptiongroup==1.1.1
 factory-boy==3.2.1
 Faker==18.4.0
