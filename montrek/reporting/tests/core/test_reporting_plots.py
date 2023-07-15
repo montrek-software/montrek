@@ -21,10 +21,12 @@ class TestReportingPlots(TestCase):
                     y_axis_columns=['Value', 'ValueLine'],
                     plot_types=[ReportingPlotType.BAR]
         )    
-        with self.assertRaises(ValueError):
+        with self.assertRaises(ValueError) as e:
             ReportingPlot().generate(
                 reporting_data
             )
+        self.assertEqual(str(e.exception), "Number of y_axis_columns and plot_types must match")
+
 
     def test_reporting_plots_none_type_not_supported(self):
         reporting_data = ReportingData(
@@ -33,10 +35,11 @@ class TestReportingPlots(TestCase):
                     y_axis_columns=['Value'],
                     plot_types=[ReportingPlotType.NONE]
         )    
-        with self.assertRaises(ValueError):
+        with self.assertRaises(ValueError) as e:
             ReportingPlot().generate(
                 reporting_data
             )
+        self.assertEqual(str(e.exception), "Plot type ReportingPlotType.NONE not supported")
 
     def test_reporting_plots_neither_index_nor_xaxis(self):
         reporting_data = ReportingData(
@@ -48,7 +51,7 @@ class TestReportingPlots(TestCase):
             ReportingPlot().generate(
                 reporting_data
             )
-        self.assertEqual(str(e.exception), "Either x_axis_column or x_axis_is_index must be provided")
+        self.assertEqual(str(e.exception), "x_axis_column must be provided if x_axis_is_index is False")
 
     def test_reporting_plots_bar_line(self):
         reporting_data = ReportingData(
@@ -75,3 +78,35 @@ class TestReportingPlots(TestCase):
         self.assertTrue(reporting_plot_html.startswith('<div>'))
         self.assertTrue(reporting_plot_html.endswith('</div>'))
 
+    def test_set_x_axis(self):
+        test_df = pd.DataFrame(
+            {'Category': ['A', 'B', 'C', 'D'],
+             'Value': [10, 25, 15, 30],
+            },
+        )
+        reporting_data = ReportingData(
+                    data_df=test_df,
+                    x_axis_column='Category',
+                    y_axis_columns=['Value'],
+                    plot_types=[ReportingPlotType.BAR]
+        )    
+        reporting_plot = ReportingPlot()
+        test_x = reporting_plot._set_x_axis(reporting_data)
+        self.assertEqual(test_x.tolist(), ['A', 'B', 'C', 'D'])
+        
+    def test_set_x_axis_index(self):
+        test_df = pd.DataFrame(
+            {
+             'Value': [10, 25, 15, 30],
+            },
+            index=['A', 'B', 'C', 'D']
+        )
+        reporting_data = ReportingData(
+                    data_df=test_df,
+                    x_axis_is_index=True,
+                    y_axis_columns=['Value'],
+                    plot_types=[ReportingPlotType.BAR]
+        )    
+        reporting_plot = ReportingPlot()
+        test_x = reporting_plot._set_x_axis(reporting_data)
+        self.assertEqual(test_x.tolist(), ['A', 'B', 'C', 'D'])
