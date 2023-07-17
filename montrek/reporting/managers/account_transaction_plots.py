@@ -21,5 +21,4 @@ def draw_monthly_income_expanses_plot(transactions_data:pd.DataFrame) -> go.Figu
     )
     plot = ReportingPlot()
     plot.generate(report_data)
-    plot.figure.show()
     return plot
