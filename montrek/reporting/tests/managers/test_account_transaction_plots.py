@@ -23,8 +23,12 @@ class TestAccountTransactionPlots(TestCase):
                                          freq='W')
         trans_date_range_iter = iter(trans_date_range)
         sample_len = len(trans_date_range)
-        income_vals = iter(np.random.normal(3000, 500, sample_len))
-        expanse_vals = iter(np.random.normal(-2000, 500, sample_len))
+        income_list = np.random.normal(30, 5, sample_len)
+        expanse_list = np.random.normal(-20, 5, sample_len)
+        income_list = [1000 + income_list[i]*(i) for i in range(sample_len)]
+        expanse_list = [-500 + expanse_list[i]*(i) for i in range(sample_len)]
+        income_vals = iter(income_list)
+        expanse_vals = iter(expanse_list)
         transactions = TransactionSatelliteFactory.create_batch(
             sample_len,
             transaction_price=factory.Sequence(lambda _: next(income_vals)),
@@ -51,6 +55,6 @@ class TestAccountTransactionPlots(TestCase):
         transactions = get_transactions_by_account_hub(self.account_hub.id)
         transactions_data = read_frame(transactions)
         test_plot = draw_monthly_income_expanses_plot(transactions_data)
-        self.assertTrue(isinstance(test_plot, go.Figure))
+        self.assertTrue(isinstance(test_plot.figure, go.Figure))
 
 

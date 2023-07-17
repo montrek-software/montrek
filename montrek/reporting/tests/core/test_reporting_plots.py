@@ -110,3 +110,24 @@ class TestReportingPlots(TestCase):
         reporting_plot = ReportingPlot()
         test_x = reporting_plot._set_x_axis(reporting_data)
         self.assertEqual(test_x.tolist(), ['A', 'B', 'C', 'D'])
+
+    def test_set_plot_types_valid(self):
+        test_plot_types = [
+            ReportingPlotType.BAR, 
+            ReportingPlotType.LINE,
+            'bar',
+            'liNE']
+        expected_plot_types = [
+            ReportingPlotType.BAR, 
+            ReportingPlotType.LINE,
+            ReportingPlotType.BAR, 
+            ReportingPlotType.LINE,
+        ]
+        reporting_data = ReportingData(data_df = pd.DataFrame(),
+                                       plot_types=test_plot_types)
+        reporting_plot = ReportingPlot()
+        result_plot_types = reporting_plot._set_plot_types(
+            reporting_data
+        )
+        self.assertEqual(result_plot_types, expected_plot_types)
+
