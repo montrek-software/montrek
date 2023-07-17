@@ -45,6 +45,9 @@
 </div>
 <div class="container">
     <h2 id="id_transaction_list_title">Transactions</h2>
+    <div id='id_income_expanse_plot'>
+        {{ income_expanse_plot|safe }}
+    </div>
 
     {% block table %}
         <div id="id_transaction_list">
