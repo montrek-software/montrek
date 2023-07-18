@@ -1,6 +1,8 @@
 
 from django.shortcuts import render, redirect
 from django.db import models
+from django_pandas.io import read_frame
+
 from account.models import AccountHub 
 from account.models import AccountStaticSatellite
 from account.models import BankAccountPropertySatellite
@@ -13,6 +15,7 @@ from credit_institution.models import CreditInstitutionStaticSatellite
 from credit_institution.models import CreditInstitutionHub
 from baseclasses.repositories.db_helper import new_link_entry
 from baseclasses.repositories.db_helper import new_satellite_entry
+from reporting.managers.account_transaction_plots import draw_monthly_income_expanses_plot
 
 # Create your views here.
 
@@ -50,8 +53,11 @@ def account_view_data(account_id: int):
                             .order_by('-transaction_date')
                             .all()
                            )
+    account_transactions_df = read_frame(account_transactions)
+    income_expanse_plot = draw_monthly_income_expanses_plot(account_transactions_df).format_html()
     return {'account_statics': account_statics,
             'account_transactions': account_transactions,
+            'income_expanse_plot': income_expanse_plot,
            }
 
 def account_view(request, account_id: int):
