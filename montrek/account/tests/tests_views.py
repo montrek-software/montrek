@@ -15,7 +15,7 @@ from link_tables.tests.factories.link_tables_factories import AccountTransaction
 from credit_institution.tests.factories.credit_institution_factories import CreditInstitutionStaticSatelliteFactory
 from link_tables.tests.factories.link_tables_factories import AccountCreditInstitutionLinkFactory
 from transaction.repositories.transaction_account_queries import get_transactions_by_account_id
-from credit_institution.model_utils import get_credit_institution_satellite_by_account_hub
+from credit_institution.repositories.credit_institution_model_queries import get_credit_institution_satellite_by_account_hub
 
 
 # Create your tests here.
