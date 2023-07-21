@@ -32,3 +32,14 @@ class TransactionSatellite(baseclass_models.MontrekSatelliteABC):
     @property
     def transaction_value(self):
         return self.transaction_amount * self.transaction_price
+
+class TransactionTypeHub(baseclass_models.MontrekHubABC): pass
+class TransactionTypeSatellite(baseclass_models.MontrekSatelliteABC,
+                               baseclass_models.TypeMixin):
+    hub_entity = models.ForeignKey(TransactionTypeHub,
+                                   on_delete=models.CASCADE)
+class TransactionTransactionTypeLink(baseclass_models.MontrekLinkABC):
+    from_hub = models.ForeignKey(TransactionHub,
+                                 on_delete=models.CASCADE)
+    to_hub = models.ForeignKey(TransactionTypeHub,
+                               on_delete=models.CASCADE)
