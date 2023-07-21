@@ -11,11 +11,17 @@ class TimeStampMixin(models.Model):
     created_at = models.DateTimeField(auto_now_add=True) 
     updated_at = models.DateTimeField(auto_now=True )
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
 class TypeMixin(models.Model):
     class Meta:
         abstract = True
     identifier_fields = ['typename']
     typename = models.CharField(max_length=50, default='NONE')
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
 
 
 #Base Hub Model ABC
