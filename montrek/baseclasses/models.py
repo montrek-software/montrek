@@ -11,6 +11,13 @@ class TimeStampMixin(models.Model):
     created_at = models.DateTimeField(auto_now_add=True) 
     updated_at = models.DateTimeField(auto_now=True )
 
+class TypeMixin(models.Model):
+    class Meta:
+        abstract = True
+    identifier_fields = ['typename']
+    typename = models.CharField(max_length=50, default='NONE')
+
+
 #Base Hub Model ABC
 class MontrekHubABC(TimeStampMixin):
     class Meta:
