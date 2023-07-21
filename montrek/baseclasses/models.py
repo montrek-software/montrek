@@ -23,6 +23,10 @@ class MontrekHubABC(TimeStampMixin):
 class MontrekSatelliteABC(TimeStampMixin):
     class Meta:
         abstract = True
+        indexes = [
+            models.Index(fields=['hash_identifier']),
+            models.Index(fields=['hash_value']),
+        ]
     hub_entity = models.ForeignKey(MontrekHubABC, on_delete=models.CASCADE)
     hash_identifier = models.CharField(max_length=64, default='')
     hash_value = models.CharField(max_length=64, default='')
