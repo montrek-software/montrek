@@ -40,7 +40,7 @@ def read_dkb_transactions_from_csv(file_path: str) -> pd.DataFrame:
     transaction_df = transaction_df.rename(columns={'Buchungstag': 'transaction_date',
                                                     'Verwendungszweck': 'transaction_description',
                                                     'Betrag (EUR)': 'transaction_price',
-                                                    'Buchungstext': 'transaction_type',
+                                                    'Buchungstext': 'transaction_category',
                                                     'Auftraggeber / Begünstigter': 'transaction_party',
                                                     'Kontonummer': 'transaction_party_iban',
                                                    })
@@ -49,12 +49,9 @@ def read_dkb_transactions_from_csv(file_path: str) -> pd.DataFrame:
         'transaction_price': lambda x: x.sum(),
     }
     transaction_df = transaction_df.groupby(['transaction_date',
-                                             'transaction_type',
+                                             'transaction_category',
                                              'transaction_party',
                                              'transaction_party_iban']).agg(aggregations).reset_index()
     transaction_df['transaction_amount'] = 1
-    transaction_df['transaction_category'] = transaction_df.apply(
-        lambda x: 'INCOME' if x['transaction_price'] > 0 else 'EXPENSE',
-        axis=1)
     return transaction_df
 
