@@ -134,7 +134,7 @@ def get_hub_ids_by_satellite_attribute(satellite: MontrekSatelliteABC,
                                       field: str,
                                       value: Any) -> List[int]:
     hubs = get_hubs_by_satellite_attribute(satellite, field, value)
-    return [instance.id for instrance in hubs]
+    return [instance.id for instance in hubs]
 
 def get_hubs_by_satellite_attribute(satellite: MontrekSatelliteABC,
                                     field: str,
