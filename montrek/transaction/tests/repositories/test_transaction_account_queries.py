@@ -11,10 +11,14 @@ from account.models import AccountHub
 from account.tests.factories import account_factories
 from link_tables.tests.factories.link_tables_factories import AccountTransactionLinkFactory
 from transaction.tests.factories.transaction_factories import TransactionSatelliteFactory
+from transaction.models import TransactionTransactionTypeLink
+from transaction.models import TransactionTypeSatellite
 from transaction.repositories.transaction_account_queries import new_transaction_to_account
 from transaction.repositories.transaction_account_queries import new_transactions_to_account_from_df
 from transaction.repositories.transaction_account_queries import get_transactions_by_account_id
 from transaction.repositories.transaction_account_queries import get_transactions_by_account_hub
+from baseclasses.repositories.db_helper import get_link_to_hub
+from baseclasses.repositories.db_helper import select_satellite
 
 ACCOUNTS_UNDER_TEST=1
 
@@ -29,16 +33,17 @@ class TestModelUtils(TestCase):
                                    transaction_date=datetime.date(2022, 1, 1),
                                    transaction_amount=1,
                                    transaction_price=251.35,
-                                   transaction_type='DEPOSIT',
+                                   transaction_type='INCOME',
                                    transaction_category='TRANSFER',
                                    transaction_description='Test transaction')
         new_transaction = get_transactions_by_account_id(account_id=account_id).last()
         self.assertEqual(new_transaction.transaction_date.date(), datetime.date(2022, 1, 1))
         self.assertEqual(new_transaction.transaction_amount, 1)
         self.assertAlmostEqual(new_transaction.transaction_price, Decimal(251.35))
-        self.assertEqual(new_transaction.transaction_type, 'DEPOSIT')
         self.assertEqual(new_transaction.transaction_category, 'TRANSFER')
         self.assertEqual(new_transaction.transaction_description, 'Test transaction')
+        self.assertEqual(transaction_type_sat.typename, 'INCOME')
+
 
 
     def test_new_transactions_to_account_from_df_wrong_columns(self):

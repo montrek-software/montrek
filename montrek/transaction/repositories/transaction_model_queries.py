@@ -6,6 +6,10 @@ import datetime
 from baseclasses import models as baseclass_models
 from baseclasses.repositories.db_helper import new_link_entry
 from baseclasses.repositories.db_helper import new_satellite_entry
+from baseclasses.repositories.db_helper import get_link_to_hub
+from baseclasses.repositories.db_helper import select_satellite
+from transaction.models import TransactionTransactionTypeLink
+from transaction.models import TransactionTypeSatellite
 
 def account_hub():
     return apps.get_model('account','AccountHub')
@@ -56,3 +60,10 @@ def get_transactions_by_account(account_hub_object) -> List[baseclass_models.Mon
     transaction_hubs = [account_transaction_link.to_hub for account_transaction_link in account_transaction_links]
     transaction_satellites = transaction_satellite().objects.filter(hub_entity__in=transaction_hubs)
     return transaction_satellites
+
+def get_transaction_type_by_transaction(transaction_hub: baseclass_models.MontrekHubABC) -> str:
+    transaction_type_hub = get_link_to_hub(from_hub=transaction_hub,
+                                           link_table=TransactionTransactionTypeLink)
+    return select_satellite(
+        hub_entity=transaction_type_hub,
+        satellite_class=TransactionTypeSatellite)

@@ -25,6 +25,7 @@ def new_link_entry(from_hub:MontrekHubABC,
 
 def get_link_to_hub(from_hub:MontrekHubABC,
                     link_table:MontrekLinkABC) -> MontrekHubABC:
+    #TODO Rename function as we dont return the link, but the to_hub
     link_instance = link_table.objects.get(
         from_hub=from_hub)
     return link_instance.to_hub
@@ -144,6 +145,7 @@ def select_satellite(
                      satellite_class:MontrekSatelliteABC,
                      reference_date:timezone = None,
 ):
+    #TODO: Rename to better name
     reference_date = timezone.now() if reference_date is None else reference_date
     satellite_instance = satellite_class.objects.filter(
         Q(hub_entity=hub_entity) &
