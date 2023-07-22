@@ -130,15 +130,21 @@ def update_satellite_from_satellite(satellite_instance:MontrekSatelliteABC,
     new_satellite_entry.save()
     return new_satellite_entry
 
-def get_hub_ids_by_satellite_attribute(satellite: ModelBase,
+def get_hub_ids_by_satellite_attribute(satellite: MontrekSatelliteABC,
                                       field: str,
                                       value: Any) -> List[int]:
+    hubs = get_hubs_by_satellite_attribute(satellite, field, value)
+    return [instance.id for instrance in hubs]
+
+def get_hubs_by_satellite_attribute(satellite: MontrekSatelliteABC,
+                                    field: str,
+                                    value: Any) -> List[MontrekHubABC]:
     if not isinstance(satellite(), MontrekSatelliteABC):
         raise TypeError('satellite must be a MontrekSatelliteABC')
     if not isinstance(field, str):
         raise TypeError('field must be a str')
     satellite_instance = satellite.objects.filter(**{field: value}).all()
-    return [instance.hub_entity.id for instance in satellite_instance]
+    return [instance.hub_entity for instance in satellite_instance]
 
 def select_satellite(
                      hub_entity:MontrekHubABC,
