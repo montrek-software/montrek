@@ -25,6 +25,7 @@ def new_link_entry(from_hub:MontrekHubABC,
 
 def get_link_to_hub(from_hub:MontrekHubABC,
                     link_table:MontrekLinkABC) -> MontrekHubABC:
+    #TODO Rename function as we dont return the link, but the to_hub
     link_instance = link_table.objects.get(
         from_hub=from_hub)
     return link_instance.to_hub
@@ -129,21 +130,28 @@ def update_satellite_from_satellite(satellite_instance:MontrekSatelliteABC,
     new_satellite_entry.save()
     return new_satellite_entry
 
-def get_hub_ids_by_satellite_attribute(satellite: ModelBase,
+def get_hub_ids_by_satellite_attribute(satellite: MontrekSatelliteABC,
                                       field: str,
                                       value: Any) -> List[int]:
+    hubs = get_hubs_by_satellite_attribute(satellite, field, value)
+    return [instance.id for instance in hubs]
+
+def get_hubs_by_satellite_attribute(satellite: MontrekSatelliteABC,
+                                    field: str,
+                                    value: Any) -> List[MontrekHubABC]:
     if not isinstance(satellite(), MontrekSatelliteABC):
         raise TypeError('satellite must be a MontrekSatelliteABC')
     if not isinstance(field, str):
         raise TypeError('field must be a str')
     satellite_instance = satellite.objects.filter(**{field: value}).all()
-    return [instance.hub_entity.id for instance in satellite_instance]
+    return [instance.hub_entity for instance in satellite_instance]
 
 def select_satellite(
                      hub_entity:MontrekHubABC,
                      satellite_class:MontrekSatelliteABC,
                      reference_date:timezone = None,
 ):
+    #TODO: Rename to better name
     reference_date = timezone.now() if reference_date is None else reference_date
     satellite_instance = satellite_class.objects.filter(
         Q(hub_entity=hub_entity) &

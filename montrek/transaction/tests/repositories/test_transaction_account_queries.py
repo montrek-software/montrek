@@ -11,10 +11,15 @@ from account.models import AccountHub
 from account.tests.factories import account_factories
 from link_tables.tests.factories.link_tables_factories import AccountTransactionLinkFactory
 from transaction.tests.factories.transaction_factories import TransactionSatelliteFactory
+from transaction.models import TransactionTransactionTypeLink
+from transaction.models import TransactionTypeSatellite
 from transaction.repositories.transaction_account_queries import new_transaction_to_account
 from transaction.repositories.transaction_account_queries import new_transactions_to_account_from_df
 from transaction.repositories.transaction_account_queries import get_transactions_by_account_id
 from transaction.repositories.transaction_account_queries import get_transactions_by_account_hub
+from transaction.repositories.transaction_model_queries import get_transaction_type_by_transaction
+from baseclasses.repositories.db_helper import get_link_to_hub
+from baseclasses.repositories.db_helper import select_satellite
 
 ACCOUNTS_UNDER_TEST=1
 
@@ -29,16 +34,18 @@ class TestModelUtils(TestCase):
                                    transaction_date=datetime.date(2022, 1, 1),
                                    transaction_amount=1,
                                    transaction_price=251.35,
-                                   transaction_type='DEPOSIT',
+                                   transaction_type='INCOME',
                                    transaction_category='TRANSFER',
                                    transaction_description='Test transaction')
         new_transaction = get_transactions_by_account_id(account_id=account_id).last()
         self.assertEqual(new_transaction.transaction_date.date(), datetime.date(2022, 1, 1))
         self.assertEqual(new_transaction.transaction_amount, 1)
         self.assertAlmostEqual(new_transaction.transaction_price, Decimal(251.35))
-        self.assertEqual(new_transaction.transaction_type, 'DEPOSIT')
         self.assertEqual(new_transaction.transaction_category, 'TRANSFER')
         self.assertEqual(new_transaction.transaction_description, 'Test transaction')
+        transaction_type_sat = get_transaction_type_by_transaction(new_transaction)
+        self.assertEqual(transaction_type_sat.typename, 'INCOME')
+
 
 
     def test_new_transactions_to_account_from_df_wrong_columns(self):
@@ -47,14 +54,13 @@ class TestModelUtils(TestCase):
         with self.assertRaises(KeyError) as e:
             new_transactions_to_account_from_df(account_hub_object = account_hub,
                                                 transaction_df = test_df)
-        self.assertEqual(str(e.exception), "'Wrong columns in transaction_df\\n\\tGot: wrong_column\\n\\tExpected: transaction_date, transaction_amount, transaction_price, transaction_type, transaction_category, transaction_description, transaction_party, transaction_party_iban'")
+        self.assertEqual(str(e.exception), "'Wrong columns in transaction_df\\n\\tGot: wrong_column\\n\\tExpected: transaction_date, transaction_amount, transaction_price, transaction_category, transaction_description, transaction_party, transaction_party_iban'")
 
     def test_new_transactions_to_account_from_df(self):
         account_hub = account_factories.AccountHubFactory.create()
         test_df = pd.DataFrame({'transaction_date': [datetime.date(2022, 1, 1), datetime.date(2022, 1, 2), datetime.date(2022, 1, 3)],
                                 'transaction_amount': [1, 2, 3],
-                                'transaction_price': [251.35, 252.35, 253.35],
-                                'transaction_type': ['DEPOSIT', 'DEPOSIT', 'DEPOSIT'],
+                                'transaction_price': [251.35, 252.35, -253.35],
                                 'transaction_category': ['TRANSFER', 'TRANSFER', 'TRANSFER'],
                                 'transaction_description': ['Test transaction 1', 'Test transaction 2', 'Test transaction 3'],
                                 'transaction_party': ['Test Party 1', 'Test Party 2', 'Test Party 3'],
@@ -67,19 +73,22 @@ class TestModelUtils(TestCase):
         self.assertEqual(new_transactions[0].transaction_date.date(), datetime.date(2022, 1, 1))
         self.assertEqual(new_transactions[0].transaction_amount, 1)
         self.assertAlmostEqual(new_transactions[0].transaction_price, Decimal(251.35))
-        self.assertEqual(new_transactions[0].transaction_type, 'DEPOSIT')
+        transaction_type_sat = get_transaction_type_by_transaction(new_transactions[0])
+        self.assertEqual(transaction_type_sat.typename, 'INCOME')
         self.assertEqual(new_transactions[0].transaction_category, 'TRANSFER')
         self.assertEqual(new_transactions[0].transaction_description, 'Test transaction 1')
         self.assertEqual(new_transactions[1].transaction_date.date(), datetime.date(2022, 1, 2))
         self.assertEqual(new_transactions[1].transaction_amount, 2)
         self.assertAlmostEqual(new_transactions[1].transaction_price, Decimal(252.35))
-        self.assertEqual(new_transactions[1].transaction_type, 'DEPOSIT')
+        transaction_type_sat = get_transaction_type_by_transaction(new_transactions[1])
+        self.assertEqual(transaction_type_sat.typename, 'INCOME')
         self.assertEqual(new_transactions[1].transaction_category, 'TRANSFER')
         self.assertEqual(new_transactions[1].transaction_description, 'Test transaction 2')
         self.assertEqual(new_transactions[2].transaction_date.date(), datetime.date(2022, 1, 3))
         self.assertEqual(new_transactions[2].transaction_amount, 3)
-        self.assertAlmostEqual(new_transactions[2].transaction_price, Decimal(253.35))
-        self.assertEqual(new_transactions[2].transaction_type, 'DEPOSIT')
+        self.assertAlmostEqual(new_transactions[2].transaction_price, Decimal(-253.35))
+        transaction_type_sat = get_transaction_type_by_transaction(new_transactions[2])
+        self.assertEqual(transaction_type_sat.typename, 'EXPANSE')
         self.assertEqual(new_transactions[2].transaction_category, 'TRANSFER')
         self.assertEqual(new_transactions[2].transaction_description, 'Test transaction 3')
 

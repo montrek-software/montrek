@@ -6,6 +6,9 @@ import datetime
 from baseclasses import models as baseclass_models
 from baseclasses.repositories.db_helper import new_link_entry
 from baseclasses.repositories.db_helper import new_satellite_entry
+from baseclasses.repositories.db_helper import get_link_to_hub
+from baseclasses.repositories.db_helper import select_satellite
+from baseclasses.repositories.db_helper import get_hubs_by_satellite_attribute
 
 def account_hub():
     return apps.get_model('account','AccountHub')
@@ -18,6 +21,12 @@ def transaction_satellite():
 
 def account_transaction_link():
     return apps.get_model('link_tables','AccountTransactionLink')
+
+def transaction_transaction_type_link():
+    return apps.get_model('transaction','TransactionTransactionTypeLink')
+
+def transaction_type_satellite():
+    return apps.get_model('transaction','TransactionTypeSatellite')
 
 def new_transaction_to_account(account_id:int,
                                transaction_date:datetime.date,
@@ -56,3 +65,51 @@ def get_transactions_by_account(account_hub_object) -> List[baseclass_models.Mon
     transaction_hubs = [account_transaction_link.to_hub for account_transaction_link in account_transaction_links]
     transaction_satellites = transaction_satellite().objects.filter(hub_entity__in=transaction_hubs)
     return transaction_satellites
+
+def get_transaction_type_by_transaction(transaction_satellite_object: baseclass_models.MontrekSatelliteABC) -> str:
+    transaction_hub = transaction_satellite_object.hub_entity
+    try:
+        transaction_type_hub = get_link_to_hub(from_hub=transaction_hub,
+                                               link_table=transaction_transaction_type_link())
+    except transaction_transaction_type_link().DoesNotExist:
+        transaction_type_hub = _set_transaction_type_by_value(
+            transaction_satellite_object
+        )
+    return select_satellite(
+        hub_entity=transaction_type_hub,
+        satellite_class=transaction_type_satellite())
+
+def set_transaction_type(transaction_satellite_object: baseclass_models.MontrekSatelliteABC,
+                         value: str = None) -> None:
+    if value is None:
+        _set_transaction_type_by_value(transaction_satellite_object)
+    else:
+        transaction_type_hub = get_hubs_by_satellite_attribute(
+            transaction_type_satellite(),
+            'typename',
+            value)[0]
+        new_link_entry(
+            from_hub=transaction_satellite_object.hub_entity,
+            to_hub=transaction_type_hub,
+            link_table=transaction_transaction_type_link())
+
+
+def _set_transaction_type_by_value(transaction_satellite_object: baseclass_models.MontrekSatelliteABC,
+                                  ) -> baseclass_models.MontrekHubABC:
+    transaction_value = transaction_satellite_object.transaction_value
+    if transaction_value >= 0:
+        transaction_type_hub = get_hubs_by_satellite_attribute(
+            transaction_type_satellite(),
+            'typename',
+            'INCOME')[0]
+    else:
+        transaction_type_hub = get_hubs_by_satellite_attribute(
+            transaction_type_satellite(),
+            'typename',
+            'EXPANSE')[0]
+    new_link_entry(
+        from_hub=transaction_satellite_object.hub_entity,
+        to_hub=transaction_type_hub,
+        link_table=transaction_transaction_type_link())
+    return transaction_type_hub
+

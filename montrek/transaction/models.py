@@ -11,7 +11,6 @@ class TransactionSatellite(baseclass_models.MontrekSatelliteABC):
     hub_entity = models.ForeignKey(TransactionHub,
                                    on_delete=models.CASCADE)
     identifier_fields = ['transaction_date',
-                         'transaction_type',
                          'transaction_party',
                          'transaction_party_iban',
                          'transaction_category',
@@ -19,7 +18,6 @@ class TransactionSatellite(baseclass_models.MontrekSatelliteABC):
     transaction_date = models.DateTimeField()
     transaction_amount = models.IntegerField()
     transaction_price = models.DecimalField(max_digits=15, decimal_places=2)
-    transaction_type = models.CharField(max_length=50)
     transaction_description = models.TextField()
     transaction_category = models.CharField(max_length=50)
     transaction_party = models.CharField(max_length=250, default='NONE')
@@ -32,3 +30,14 @@ class TransactionSatellite(baseclass_models.MontrekSatelliteABC):
     @property
     def transaction_value(self):
         return self.transaction_amount * self.transaction_price
+
+class TransactionTypeHub(baseclass_models.MontrekHubABC): pass
+class TransactionTypeSatellite(baseclass_models.MontrekSatelliteABC,
+                               baseclass_models.TypeMixin):
+    hub_entity = models.ForeignKey(TransactionTypeHub,
+                                   on_delete=models.CASCADE)
+class TransactionTransactionTypeLink(baseclass_models.MontrekLinkABC):
+    from_hub = models.ForeignKey(TransactionHub,
+                                 on_delete=models.CASCADE)
+    to_hub = models.ForeignKey(TransactionTypeHub,
+                               on_delete=models.CASCADE)
