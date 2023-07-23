@@ -29,3 +29,19 @@ class TransactionTransactionTypeLinkFactory(factory.django.DjangoModelFactory):
         model = 'transaction.TransactionTransactionTypeLink'
     from_hub = factory.SubFactory(TransactionHubFactory)
     to_hub = factory.SubFactory(TransactionTypeHubFactory)
+
+class TransactionCategoryHubFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = 'transaction.TransactionCategoryHub'
+
+class TransactionCategorySatelliteFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = 'transaction.TransactionCategorySatellite'
+    hub_entity = factory.SubFactory(TransactionCategoryHubFactory)
+    typename = 'EXAMPLE'
+
+class TransactionTransactionCategoryLinkFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = 'transaction.TransactionTransactionCategoryLink'
+    from_hub = factory.SubFactory(TransactionHubFactory)
+    to_hub = factory.SubFactory(TransactionCategoryHubFactory)
