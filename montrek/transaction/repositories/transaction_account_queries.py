@@ -38,7 +38,6 @@ def new_transaction_to_account(account_id:int,
         transaction_date=transaction_date,
         transaction_amount=float(transaction_amount),
         transaction_price=float(transaction_price),
-        transaction_category=transaction_category,
         transaction_description=transaction_description)
     new_link_entry(account_hub_object, 
                    transaction_hub_object,
@@ -51,7 +50,6 @@ def new_transactions_to_account_from_df(account_hub_object: baseclass_models.Mon
     expected_columns = ['transaction_date',
                         'transaction_amount',
                         'transaction_price',
-                        'transaction_category',
                         'transaction_description',
                         'transaction_party',
                         'transaction_party_iban']

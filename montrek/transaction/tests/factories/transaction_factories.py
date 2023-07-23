@@ -13,7 +13,6 @@ class TransactionSatelliteFactory(factory.django.DjangoModelFactory):
     transaction_amount = factory.Faker('pyint')
     transaction_price = factory.Faker('pydecimal', left_digits=13, right_digits=2)
     transaction_description = factory.Faker('word')
-    transaction_category = factory.Faker('word')
 
 class TransactionTypeHubFactory(factory.django.DjangoModelFactory):
     class Meta:
