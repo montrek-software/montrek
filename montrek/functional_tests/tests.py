@@ -17,6 +17,7 @@ from account.tests.factories.account_factories import BankAccountPropertySatelli
 from account.tests.factories.account_factories import BankAccountStaticSatelliteFactory
 from transaction.tests.factories.transaction_factories import TransactionHubFactory
 from transaction.tests.factories.transaction_factories import TransactionSatelliteFactory
+from transaction.tests.factories.transaction_factories import TransactionTypeSatelliteFactory
 from link_tables.tests.factories.link_tables_factories import AccountTransactionLinkFactory
 from link_tables.tests.factories.link_tables_factories import AccountCreditInstitutionLinkFactory
 from credit_institution.tests.factories.credit_institution_factories import CreditInstitutionStaticSatelliteFactory
@@ -145,15 +146,15 @@ class AccountFunctionalTests(MontrekFunctionalTest):
 class TransactionFunctionalTest(MontrekFunctionalTest):
     @classmethod
     def setUp(cls):
-        AccountStaticSatelliteFactory.create_batch(1)
+        cls.test_account = AccountStaticSatelliteFactory()
+        TransactionTypeSatelliteFactory.create(typename='INCOME')
+        TransactionTypeSatelliteFactory.create(typename='EXPANSE')
         super().setUp(cls)
 
     @tag('functional')
     def test_add_transaction_to_account(self):
-        last_account_name = AccountStaticSatellite.objects.last().account_name
-        account_id = self.find_object_hub_id(AccountStaticSatellite,
-                                             last_account_name,
-                                            'account_name')
+        last_account_name = self.test_account.account_name
+        account_id = self.test_account.hub_entity.id
         #The user visists the account page
         self.browser.get(self.live_server_url + f'/account/{account_id}/view')
         # He clicks on the add transaction button
