@@ -19,7 +19,7 @@ def transaction_add(request, account_id: int):
         transaction_amount= request.POST['transaction_amount'],
         transaction_price= request.POST['transaction_price'],
         transaction_description=request.POST['transaction_description'],
-        transaction_type="",
+        transaction_type=None,
         transaction_category="",
     )
     return redirect(f'/account/{account_id}/view')
