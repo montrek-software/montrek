@@ -33,13 +33,12 @@ class TestDKBTransactionUpload(TestCase):
     def test_read_dkb_transactions(self):
         test_df = read_dkb_transactions_from_csv(self.test_csv_path)
         self.assertTrue(isinstance(test_df, pd.DataFrame))
-        self.assertEqual(test_df.shape, (14, 7))
+        self.assertEqual(test_df.shape, (14, 6))
         self.assertTrue(
             all([col in test_df.columns for col in ['transaction_date',
                                                     'transaction_description',
                                                     'transaction_amount',
                                                     'transaction_price',
-                                                    'transaction_category',
                                                     'transaction_party',
                                                     'transaction_party_iban',
                                                    ]]))

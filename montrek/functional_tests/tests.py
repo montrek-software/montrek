@@ -98,6 +98,7 @@ class AccountFunctionalTests(MontrekFunctionalTest):
             'id_account_new__name')
         new_account_name_box.send_keys('Billy\'s account')
         self.browser.find_element(By.ID, 'id_account_new__submit').click()
+        time.sleep(0.1)
         self.browser.get(self.live_server_url + '/account/new_form')
         new_account_name_box = self.browser.find_element(By.ID,
             'id_account_new__name')
