@@ -60,3 +60,12 @@ class TransactionTransactionCategoryLink(baseclass_models.MontrekLinkABC):
                                  on_delete=models.CASCADE)
     to_hub = models.ForeignKey(TransactionCategoryHub,
                                on_delete=models.CASCADE)
+
+class TransactionCategoryMapHub(baseclass_models.MontrekHubABC): pass
+class TransactionCategoryMapSatellite(baseclass_models.MontrekSatelliteABC):
+    identifier_fields = ['field', 'value', 'category']
+    hub_entity = models.ForeignKey(TransactionCategoryMapHub,
+                                   on_delete=models.CASCADE)
+    field = models.CharField(max_length=250, default='NONE')
+    value = models.CharField(max_length=250, default='NONE')
+    category = models.CharField(max_length=250, default='NONE')

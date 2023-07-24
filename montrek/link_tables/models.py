@@ -2,6 +2,7 @@ from django.db import models
 from baseclasses.models import MontrekLinkABC
 from account.models import AccountHub
 from transaction.models import TransactionHub
+from transaction.models import TransactionCategoryMapHub
 from credit_institution.models import CreditInstitutionHub
 from file_upload.models import FileUploadRegistryHub
 from file_upload.models import FileUploadFileHub
@@ -45,3 +46,11 @@ class FileUploadRegistryFileUploadFileLink(MontrekLinkABC):
     to_hub = models.ForeignKey(FileUploadFileHub, 
                                on_delete=models.CASCADE, 
                                related_name='file_upload_registry_file_upload_file_link_to_hub')
+
+class AccountTransactionCategoryMapLink(MontrekLinkABC):
+    from_hub = models.ForeignKey(AccountHub,
+                                 on_delete=models.CASCADE,
+                                 related_name='account_transaction_category_map_link_from_hub')
+    to_hub = models.ForeignKey(TransactionCategoryMapHub,
+                               on_delete=models.CASCADE,
+                               related_name='account_transaction_category_map_link_to_hub')

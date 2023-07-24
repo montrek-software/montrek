@@ -29,3 +29,9 @@ class FileUploadRegistryFileUploadFileLinkFactory(factory.django.DjangoModelFact
         model = 'link_tables.FileUploadRegistryFileUploadFileLink'
     from_hub = factory.SubFactory(FileUploadRegistryHubFactory)
     to_hub = factory.SubFactory(FileUploadFileHubFactory)
+
+class AccountTransactionCategoryMapLinkFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = 'link_tables.AccountTransactionCategoryMapLink'
+    from_hub = factory.SubFactory(AccountHubFactory)
+    to_hub = factory.SubFactory(TransactionHubFactory)

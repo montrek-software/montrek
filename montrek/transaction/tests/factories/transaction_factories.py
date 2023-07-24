@@ -45,3 +45,12 @@ class TransactionTransactionCategoryLinkFactory(factory.django.DjangoModelFactor
         model = 'transaction.TransactionTransactionCategoryLink'
     from_hub = factory.SubFactory(TransactionHubFactory)
     to_hub = factory.SubFactory(TransactionCategoryHubFactory)
+
+class TransactionCategoryMapHubFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = 'transaction.TransactionCategoryMapHub'
+
+class TransactionCategoryMapSatelliteFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = 'transaction.TransactionCategoryMapSatellite'
+    hub_entity = factory.SubFactory(TransactionCategoryMapHubFactory)

@@ -205,7 +205,7 @@ def get_transaction_category_by_transaction(transaction_satellite_object: basecl
 
 def set_transaction_category_by_map(
     transaction_satellite_object: baseclass_models.MontrekSatelliteABC,
-                                    ) -> baseclass_models.MontrekHubABC:
+                                    ) -> baseclass_models.MontrekSatelliteABC:
     transaction_category_sat = new_satellite_entry(
         satellite_class=transaction_category_satellite(),
         typename='UNKNOWN',
