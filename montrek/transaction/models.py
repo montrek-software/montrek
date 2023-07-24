@@ -2,6 +2,7 @@ from django.db import models
 from baseclasses import models as baseclass_models
 from account import models as account_models
 from account.managers.validators import montrek_iban_validator
+from transaction.repositories.transaction_model_queries import set_transaction_category_by_map
 
 # Create your models here.
 class TransactionHub(baseclass_models.MontrekHubABC): pass
@@ -28,6 +29,15 @@ class TransactionSatellite(baseclass_models.MontrekSatelliteABC):
     @property
     def transaction_value(self):
         return self.transaction_amount * self.transaction_price
+
+    @property
+    def transaction_category(self):
+        transactioncategory_hub = self.hub_entity.transactiontransactioncategorylink_set.all()
+        if len(transactioncategory_hub) == 0:
+            transactioncategory_hub = set_transaction_category_by_map(self)
+        else:
+            transactioncategory_hub = transactioncategory_hub[0].to_hub
+        return transactioncategory_hub.transactioncategorysatellite_set.all()[0]
 
 class TransactionTypeHub(baseclass_models.MontrekHubABC): pass
 class TransactionTypeSatellite(baseclass_models.MontrekSatelliteABC,

@@ -80,4 +80,5 @@ def get_transactions_by_account_hub(account_hub_object,
                                       Q(state_date_end__gt = reference_date) 
                                      )
                              )
+
     return transaction_satellites

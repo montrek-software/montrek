@@ -196,14 +196,14 @@ def get_transaction_category_by_transaction(transaction_satellite_object: basecl
         transaction_category_hub = get_link_to_hub(from_hub=transaction_hub,
                                                    link_table=transaction_transaction_category_link())
     except transaction_transaction_category_link().DoesNotExist:
-        transaction_category_hub = _set_transaction_category_by_map(
+        transaction_category_hub = set_transaction_category_by_map(
             transaction_satellite_object
         )
     return select_satellite(
         hub_entity=transaction_category_hub,
         satellite_class=transaction_category_satellite())
 
-def _set_transaction_category_by_map(
+def set_transaction_category_by_map(
     transaction_satellite_object: baseclass_models.MontrekSatelliteABC,
                                     ) -> baseclass_models.MontrekHubABC:
     transaction_category_sat = new_satellite_entry(
