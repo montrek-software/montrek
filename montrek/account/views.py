@@ -1,18 +1,15 @@
 from django.shortcuts import render, redirect
 from django.db import models
-from django_pandas.io import read_frame
 
 from account.models import AccountHub
 from account.models import AccountStaticSatellite
 from account.models import BankAccountPropertySatellite
 from account.models import BankAccountStaticSatellite
-from transaction.repositories.transaction_account_queries import (
-    get_transactions_by_account_id,
-)
 from transaction.repositories.transaction_model_queries import (
     get_transaction_category_by_transaction,
 )
 from account.repositories.account_model_queries import new_account
+from account.repositories.account_model_queries import account_view_data
 from credit_institution.repositories.credit_institution_model_queries import (
     get_credit_institution_satellite_by_account_hub_id,
 )
@@ -23,9 +20,6 @@ from credit_institution.models import CreditInstitutionStaticSatellite
 from credit_institution.models import CreditInstitutionHub
 from baseclasses.repositories.db_helper import new_link_entry
 from baseclasses.repositories.db_helper import new_satellite_entry
-from reporting.managers.account_transaction_plots import (
-    draw_monthly_income_expanses_plot,
-)
 
 # Create your views here.
 
@@ -53,21 +47,6 @@ def account_list(request):
     )
     return render(request, "account_list.html", {"items": accounts_statics})
 
-
-def account_view_data(account_id: int):
-    account_statics = AccountStaticSatellite.objects.get(hub_entity=account_id)
-    account_transactions = (
-        get_transactions_by_account_id(account_id).order_by("-transaction_date").all()
-    )
-    account_transactions_df = read_frame(account_transactions)
-    income_expanse_plot = draw_monthly_income_expanses_plot(
-        account_transactions_df
-    ).format_html()
-    return {
-        "account_statics": account_statics,
-        "account_transactions": account_transactions,
-        "income_expanse_plot": income_expanse_plot,
-    }
 
 
 def account_view(request, account_id: int):

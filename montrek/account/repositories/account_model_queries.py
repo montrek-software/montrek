@@ -1,10 +1,16 @@
 from django.apps import apps
 import datetime
 from typing import List
+from django_pandas.io import read_frame
 
 from baseclasses import models as baseclass_models
 from baseclasses.repositories.db_helper import new_satellite_entry
-
+from transaction.repositories.transaction_account_queries import (
+    get_transactions_by_account_id,
+)
+from reporting.managers.account_transaction_plots import (
+    draw_monthly_income_expanses_plot,
+)
 
 def account_hub():
     return apps.get_model("account", "AccountHub")
@@ -37,3 +43,19 @@ def new_account(
         account_name=account_name,
     )
     return account_hub_object
+
+
+def account_view_data(account_id: int):
+    account_statics = account_static_satellite().objects.get(hub_entity=account_id)
+    account_transactions = (
+        get_transactions_by_account_id(account_id).order_by("-transaction_date").all()
+    )
+    account_transactions_df = read_frame(account_transactions)
+    income_expanse_plot = draw_monthly_income_expanses_plot(
+        account_transactions_df
+    ).format_html()
+    return {
+        "account_statics": account_statics,
+        "account_transactions": account_transactions,
+        "income_expanse_plot": income_expanse_plot,
+    }

@@ -90,6 +90,6 @@ class TransactionCategoryMapSatellite(baseclass_models.MontrekSatelliteABC):
 
     def save(self, *args, **kwargs):
         self.hash_searchfield = hashlib.sha256(
-            (self.field + str(self.value).upper()).encode()
+            (self.field + str(self.value).replace(' ','').upper()).encode()
         ).hexdigest()
         super().save(*args, **kwargs)

@@ -1,4 +1,5 @@
 import pandas as pd
+import hashlib
 from django.apps import apps
 from typing import List
 import datetime
@@ -268,14 +269,23 @@ def get_transaction_category_by_transaction(
 def set_transaction_category_by_map(
     transaction_satellite_object: baseclass_models.MontrekSatelliteABC,
 ) -> baseclass_models.MontrekSatelliteABC:
-    breakpoint()
-    # TODO Loop over all transaction identifier fields, get the hash of field + upper value and check if there is a
-    # match in the transaction category map. If there is a match, set the transaction category to the value of the
-    # transaction category map. If there is no match, set the transaction category to 'UNKNOWN'
+    cat_typename = "UNKNOWN"
+    for field in transaction_satellite_object.__class__().identifier_fields:
+        field_value = getattr(transaction_satellite_object, field)
+        if field_value is None:
+            continue
+        field_value = field+str(field_value).replace(' ','').upper()
+        field_value_hash = hashlib.sha256(field_value.encode()).hexdigest()
+        transaction_category_map = transaction_category_map_satellite().objects.filter(
+            hash_searchfield=field_value_hash
+        )
+        if len(transaction_category_map) > 0:
+            cat_typename = transaction_category_map[0].category.replace(' ','').upper()
+            break
 
     transaction_category_sat = new_satellite_entry(
         satellite_class=transaction_category_satellite(),
-        typename="UNKNOWN",
+        typename=cat_typename,
     )
     new_link_entry(
         from_hub=transaction_satellite_object.hub_entity,
