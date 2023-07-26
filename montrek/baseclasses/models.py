@@ -5,66 +5,87 @@ from django.utils import timezone
 
 # Create your models here.
 
+
 class TimeStampMixin(models.Model):
     class Meta:
         abstract = True
-    created_at = models.DateTimeField(auto_now_add=True) 
-    updated_at = models.DateTimeField(auto_now=True )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
+
 
 class TypeMixin(models.Model):
     class Meta:
         abstract = True
-    identifier_fields = ['typename']
-    typename = models.CharField(max_length=50, default='NONE')
+
+    identifier_fields = ["typename"]
+    typename = models.CharField(max_length=50, default="NONE")
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
 
 
-#Base Hub Model ABC
+# Base Hub Model ABC
 class MontrekHubABC(TimeStampMixin):
     class Meta:
         abstract = True
 
-    identifier = models.CharField(max_length=12, default='')
+    identifier = models.CharField(max_length=12, default="")
 
 
-#Base Static Satellite Model ABC
+# Base Static Satellite Model ABC
 class MontrekSatelliteABC(TimeStampMixin):
     class Meta:
         abstract = True
         indexes = [
-            models.Index(fields=['hash_identifier']),
-            models.Index(fields=['hash_value']),
+            models.Index(fields=["hash_identifier"]),
+            models.Index(fields=["hash_value"]),
         ]
+
     hub_entity = models.ForeignKey(MontrekHubABC, on_delete=models.CASCADE)
-    hash_identifier = models.CharField(max_length=64, default='')
-    hash_value = models.CharField(max_length=64, default='')
+    hash_identifier = models.CharField(max_length=64, default="")
+    hash_value = models.CharField(max_length=64, default="")
     state_date_start = models.DateTimeField(default=timezone.datetime.min)
     state_date_end = models.DateTimeField(default=timezone.datetime.max)
 
     def save(self, *args, **kwargs):
-        if self.hash_identifier == '':
+        if self.hash_identifier == "":
             self._get_hash_identifier()
-        if self.hash_value == '':
+        if self.hash_value == "":
             self._get_hash_value()
         super().save(*args, **kwargs)
 
     def _get_hash_identifier(self) -> str:
-        if not hasattr(self, 'identifier_fields'):
-            raise AttributeError(f'Satellite {self.__class__.__name__} must have attribute identifier_fields')
-        identifier_string = ''.join(str(getattr(self, field)) for field in self.identifier_fields)
+        if not hasattr(self, "identifier_fields"):
+            raise AttributeError(
+                f"Satellite {self.__class__.__name__} must have attribute identifier_fields"
+            )
+        identifier_string = "".join(
+            str(getattr(self, field)) for field in self.identifier_fields
+        )
         sha256_hash = hashlib.sha256(identifier_string.encode()).hexdigest()
         self.hash_identifier = sha256_hash
         return sha256_hash
 
     def _get_hash_value(self) -> str:
-        exclude_fields = ['id', 'hash_identifier', 'hash_value', 'created_at', 'updated_at', 'state_date_start', 'state_date_end']
-        value_fields = [field.name for field in self._meta.get_fields() if field.name not in exclude_fields and not field.is_relation]
-        value_string = ''.join(str(getattr(self, field)) for field in value_fields)
+        exclude_fields = [
+            "id",
+            "hash_identifier",
+            "hash_value",
+            "created_at",
+            "updated_at",
+            "state_date_start",
+            "state_date_end",
+        ]
+        value_fields = [
+            field.name
+            for field in self._meta.get_fields()
+            if field.name not in exclude_fields and not field.is_relation
+        ]
+        value_string = "".join(str(getattr(self, field)) for field in value_fields)
         sha256_hash = hashlib.sha256(value_string.encode()).hexdigest()
         self.hash_value = sha256_hash
         return sha256_hash
@@ -78,26 +99,38 @@ class MontrekSatelliteABC(TimeStampMixin):
         return self._get_hash_value()
 
 
-#Base Link Model ABC
+# Base Link Model ABC
 class MontrekLinkABC(TimeStampMixin):
     class Meta:
         abstract = True
-    from_hub = models.ForeignKey(MontrekHubABC, on_delete=models.CASCADE, related_name='from_hub')
-    to_hub = models.ForeignKey(MontrekHubABC, on_delete=models.CASCADE, related_name='to_hub')
+
+    from_hub = models.ForeignKey(
+        MontrekHubABC, on_delete=models.CASCADE, related_name="from_hub"
+    )
+    to_hub = models.ForeignKey(
+        MontrekHubABC, on_delete=models.CASCADE, related_name="to_hub"
+    )
 
 
 class TestMontrekHub(MontrekHubABC):
     pass
 
+
 class TestMontrekSatellite(MontrekSatelliteABC):
     hub_entity = models.ForeignKey(TestMontrekHub, on_delete=models.CASCADE)
-    identifier_fields = ['test_name']
+    identifier_fields = ["test_name"]
     test_name = models.CharField(max_length=12)
-    test_value = models.CharField(max_length=50, default='DEFAULT')
+    test_value = models.CharField(max_length=50, default="DEFAULT")
+
 
 class TestMontrekSatelliteNoIdFields(MontrekSatelliteABC):
     hub_entity = models.ForeignKey(TestMontrekHub, on_delete=models.CASCADE)
 
+
 class TestMontrekLink(MontrekLinkABC):
-    from_hub = models.ForeignKey(TestMontrekHub, on_delete=models.CASCADE, related_name='from_hub')
-    to_hub = models.ForeignKey(TestMontrekHub, on_delete=models.CASCADE, related_name='to_hub')
+    from_hub = models.ForeignKey(
+        TestMontrekHub, on_delete=models.CASCADE, related_name="from_hub"
+    )
+    to_hub = models.ForeignKey(
+        TestMontrekHub, on_delete=models.CASCADE, related_name="to_hub"
+    )

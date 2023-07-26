@@ -2,13 +2,15 @@
 
 from django.db import migrations
 
+
 def add_default_transaction_types(apps, schema_editor):
-    TransactionTypeHub = apps.get_model('transaction', 'TransactionTypeHub')
-    TransactionTypeSatellite = apps.get_model('transaction', 'TransactionTypeSatellite')
-    for transaction_type in ['INCOME', 'EXPANSE', 'TRANSFER', 'CANCELLATION']:
+    TransactionTypeHub = apps.get_model("transaction", "TransactionTypeHub")
+    TransactionTypeSatellite = apps.get_model("transaction", "TransactionTypeSatellite")
+    for transaction_type in ["INCOME", "EXPANSE", "TRANSFER", "CANCELLATION"]:
         trans_hub = TransactionTypeHub.objects.create()
-        TransactionTypeSatellite.objects.create(typename=transaction_type,
-                                                hub_entity=trans_hub)
+        TransactionTypeSatellite.objects.create(
+            typename=transaction_type, hub_entity=trans_hub
+        )
 
 
 class Migration(migrations.Migration):
