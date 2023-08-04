@@ -13,8 +13,8 @@ urlpatterns = [
         name="transaction_add",
     ),
     path(
-        "<int:transaction_id>/view/",
-        views.transaction_view,
+        "<int:pk>/view/",
+        views.TransactionSatelliteDetailView.as_view(),
         name="transaction_view",
     ),
 ]

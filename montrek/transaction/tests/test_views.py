@@ -11,9 +11,3 @@ class TestTransactionView(TestCase):
         response = self.client.get(f'/transaction/{self.test_transaction.id}/view/')
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'transaction_view.html')
-
-    def test_transaction_view_post(self):
-        response = self.client.post(f'/transaction/{self.test_transaction.id}/view/')
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'transaction_view.html')
-
