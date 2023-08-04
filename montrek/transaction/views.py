@@ -27,3 +27,6 @@ def transaction_add(request, account_id: int):
         transaction_category="",
     )
     return redirect(f"/account/{account_id}/view")
+
+def transaction_view(request, transaction_id: int):
+    return render(request, "transaction_view.html")

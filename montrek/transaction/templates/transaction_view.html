@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-6">
+            <h1>Add transaction to {{ account_statics.account_name }}  </h1>
+        </div>
+    </div>
+    <div class="row">
+        <form class="form-horizontal" 
+              role="form" 
+              method="POST"
+              action='/transaction/transaction_add/{{ account_statics.hub_entity.id }}'>
+            <div class="form-group">
+            </div>
+            <input type="submit" 
+            class="btn btn-warning" 
+            value="Submit"
+            id="id_transaction_new__submit"/>
+            {% csrf_token %}
+        </form>
+    </div>
+</div>
+{% endblock %}

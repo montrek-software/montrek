@@ -217,28 +217,28 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
             account_upload_method="dkb",
         )
         # DKB Bank account with two transactions
-        account_hub = AccountHubFactory()
+        cls.account_hub = AccountHubFactory()
         account_static_satellite = AccountStaticSatelliteFactory(
-            hub_entity=account_hub, account_name="Billy's DKB account"
+            hub_entity=cls.account_hub, account_name="Billy's DKB account"
         )
         transaction_hub = TransactionHubFactory()
-        transaction_satellite_1 = TransactionSatelliteFactory(
+        cls.transaction_satellite_1 = TransactionSatelliteFactory(
             hub_entity=transaction_hub
         )
-        transaction_satellite_2 = TransactionSatelliteFactory(
+        cls.transaction_satellite_2 = TransactionSatelliteFactory(
             hub_entity=transaction_hub
         )
         account_transaction_link = AccountTransactionLinkFactory(
-            from_hub=account_hub, to_hub=transaction_hub
+            from_hub=cls.account_hub, to_hub=transaction_hub
         )
         bank_account_property_satellite = BankAccountPropertySatelliteFactory(
-            hub_entity=account_hub
+            hub_entity=cls.account_hub
         )
         bank_account_static_satellite = BankAccountStaticSatelliteFactory(
-            hub_entity=account_hub
+            hub_entity=cls.account_hub
         )
         credit_institution_link = AccountCreditInstitutionLinkFactory(
-            from_hub=account_hub, to_hub=dkb_credit_institution.hub_entity
+            from_hub=cls.account_hub, to_hub=dkb_credit_institution.hub_entity
         )
         super().setUp(cls)
 
@@ -296,6 +296,19 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
             ["Billy's Bank account", "Bank of Testonia", "DE12345678901234567890"],
             "id_account_details",
         )
+
+    @tag("functional")
+    def test_transaction_view(self):
+        #Steve looks at his account
+        self.browser.get(self.live_server_url + f"/account/{self.account_hub.id}/bank_account_view")
+        # He clicks on the transaction view of the first transaction
+        self.browser.find_element(By.ID, f"transaction_view_{self.transaction_satellite_1.hub_entity.id}").click()
+        # He finds all the necessary information
+        self.assertEqual(self.browser.find_element(By.ID, "id_transaction_details__transaction_date").text, "2019-01-01")
+        self.assertEqual(self.browser.find_element(By.ID, "id_transaction_details__amount").text, "100.00")
+        self.assertEqual(self.browser.find_element(By.ID, "id_transaction_details__price").text, "1.00")
+        self.assertEqual(self.browser.find_element(By.ID, "id_transaction_details__party").text, "Testonia")
+        self.assertEqual(self.browser.find_element(By.ID, "id_transaction_details__description").text, "Test transaction 1")
 
     @tag("functional")
     def test_dkb_transactions_upload(self):
