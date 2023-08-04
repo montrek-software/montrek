@@ -37,7 +37,6 @@ def new_satellite_entry(
     satellite_entity = satellite_class(hub_entity=hub_entity, **kwargs)
     satellite_update = update_satellite(satellite_entity)
     hub_entity = satellite_update.hub_entity
-    breakpoint()
     if hub_entity.id is None:
         hub_entity.save()
     if satellite_update.id is None:
@@ -133,19 +132,19 @@ def update_satellite_from_satellite(
     satellite_instance: MontrekSatelliteABC, **kwargs
 ) -> MontrekSatelliteABC:
     satellite_class = satellite_instance.__class__
-    new_satellite_entry = copy.copy(satellite_instance)
-    new_satellite_entry.pk = None
-    new_state_date = timezone.now()
+    updated_satellite_entry = copy.copy(satellite_instance)
+    updated_satellite_entry.pk = None
+    updated_state_date = timezone.now()
     if "state_date_start" in kwargs:
-        new_state_date = kwargs["state_date_start"]
+        updated_state_date = kwargs["state_date_start"]
         del kwargs["state_date_start"]
     for key, value in kwargs.items():
-        setattr(new_satellite_entry, key, value)
-    new_satellite_entry.state_date_start = new_state_date
-    satellite_instance.state_date_end = new_state_date
+        setattr(updated_satellite_entry, key, value)
+    updated_satellite_entry.state_date_start = updated_state_date
+    satellite_instance.state_date_end = updated_state_date
     satellite_instance.save()
-    new_satellite_entry.save()
-    return new_satellite_entry
+    updated_satellite_entry.save()
+    return updated_satellite_entry
 
 
 def get_hub_ids_by_satellite_attribute(

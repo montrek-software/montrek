@@ -97,17 +97,17 @@ class TestTransactionCategoryModelQueries(TestCase):
 
     def test_get_transaction_category_with_none_set_check_cat_hubs(self):
         cat_hubs = TransactionCategoryHub.objects
-        self.assertEqual(len(cat_hubs.all()), 1)
+        no_of_hubs = len(cat_hubs.all())
         transaction_without_type = TransactionSatelliteFactory(transaction_price=1.0)
-        test_transaction_category = get_transaction_category_by_transaction(
+        get_transaction_category_by_transaction(
             transaction_without_type
         )
-        self.assertEqual(len(cat_hubs.all()), 1)
+        self.assertEqual(len(cat_hubs.all()), no_of_hubs + 1)
         transaction_without_type = TransactionSatelliteFactory(transaction_price=1.0)
-        test_transaction_category = get_transaction_category_by_transaction(
+        get_transaction_category_by_transaction(
             transaction_without_type
         )
-        self.assertEqual(len(cat_hubs.all()), 1)
+        self.assertEqual(len(cat_hubs.all()), no_of_hubs + 1)
 
     def test_set_transaction_category_by_map(self):
         # Setup

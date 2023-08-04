@@ -20,6 +20,7 @@ from baseclasses.tests.factories.baseclass_factories import (
 )
 from baseclasses.models import TestMontrekSatellite
 from baseclasses.models import TestMontrekLink
+from baseclasses.models import TestMontrekHub
 
 
 class TestDBHelpers(TestCase):
@@ -160,6 +161,14 @@ class TestDBHelpers(TestCase):
         self.assertEqual(
             test_satellite.state_date_start, timezone.datetime(1, 1, 1, 0, 0, 0)
         )
+
+    def test_update_satellite_number_of_hubs_stays_the_same(self):
+        test_satellite_name = self.satellite1.test_name
+        no_of_sats = len(TestMontrekSatellite.objects.all())
+        no_of_hubs = len(TestMontrekHub.objects.all())
+        new_satellite_entry(satellite_class=TestMontrekSatellite, test_name=test_satellite_name)
+        self.assertEqual(no_of_sats, len(TestMontrekSatellite.objects.all()))
+        self.assertEqual(no_of_hubs, len(TestMontrekHub.objects.all()))
 
     def test_new_satellites_bunch(self):
         test_satellites = new_satellites_bunch(
