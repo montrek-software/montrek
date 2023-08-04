@@ -2,10 +2,12 @@
 
 from django.db import migrations
 
+
 def get_hashes(apps, schema_editor):
-    TransactionTypeSatellite = apps.get_model('transaction', 'TransactionTypeSatellite')
+    TransactionTypeSatellite = apps.get_model("transaction", "TransactionTypeSatellite")
     for transaction_type in TransactionTypeSatellite.objects.all():
         transaction_type.save()
+
 
 class Migration(migrations.Migration):
 

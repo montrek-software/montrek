@@ -2,8 +2,8 @@ from django.test import TestCase
 
 from reporting.core.reporting_text import ReportingTextParagraph
 
-class TestReportText(TestCase):
 
+class TestReportText(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.plain_text = "This is a plain text"
@@ -11,11 +11,15 @@ class TestReportText(TestCase):
         cls.plain_latex_text = "This is a plain text\n\n"
         cls.html_text = "This is a <b>html</b> text. <br> This is a new <i>line</i>"
         cls.markdown_text = "This is a **markdown** text. \n This is a new *line*"
-        cls.markdown_html_text = "This is a <b>markdown</b> text. <br> This is a new <i>line</i>"
+        cls.markdown_html_text = (
+            "This is a <b>markdown</b> text. <br> This is a new <i>line</i>"
+        )
         cls.markdown_latex_text = "This is a $markdown$ text. \n This is a new $line$"
 
         cls.latex_text = "This is a $latex$ text. \n This is a new $line$"
-        cls.latex_html_text = "This is a <b>latex</b> text. <br> This is a new <i>line</i>"
+        cls.latex_html_text = (
+            "This is a <b>latex</b> text. <br> This is a new <i>line</i>"
+        )
 
     def test_paragraph_not_generated(self):
         paragraph = ReportingTextParagraph()

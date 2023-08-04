@@ -15,4 +15,3 @@ class ReportingElement(Protocol):
 
     def format_mail(self) -> str:
         ...
-

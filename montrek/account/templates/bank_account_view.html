@@ -58,7 +58,7 @@
                     <th>Amount</th>
                     <th>Price</th>
                     <th>Value</th>
-                    <th>Account</th>
+                    <th>Category</th>
                 </tr>
                 {% for transaction in account_transactions %}
                     <tr>
@@ -67,7 +67,7 @@
                         <td>{{ transaction.transaction_amount }}</td>
                         <td>{{ transaction.transaction_price }}</td>
                         <td>{{ transaction.transaction_value }}</td>
-                        <td>{{ account_statics.account_name }}</td>
+                        <td>{{ transaction.transaction_category.typename }}</td>
                     </tr>
                 {% endfor %}
             </table>
