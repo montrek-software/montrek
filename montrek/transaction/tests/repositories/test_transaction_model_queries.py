@@ -34,6 +34,7 @@ from link_tables.tests.factories.link_tables_factories import (
     AccountTransactionCategoryMapLinkFactory,
 )
 from transaction.models import TransactionTransactionTypeLink
+from transaction.models import TransactionCategoryHub
 
 
 class TestTransactionTypeModelQueries(TestCase):
@@ -93,6 +94,20 @@ class TestTransactionCategoryModelQueries(TestCase):
             transaction_without_type
         )
         self.assertEqual(test_transaction_category.typename, "UNKNOWN")
+
+    def test_get_transaction_category_with_none_set_check_cat_hubs(self):
+        cat_hubs = TransactionCategoryHub.objects
+        self.assertEqual(len(cat_hubs.all()), 1)
+        transaction_without_type = TransactionSatelliteFactory(transaction_price=1.0)
+        test_transaction_category = get_transaction_category_by_transaction(
+            transaction_without_type
+        )
+        self.assertEqual(len(cat_hubs.all()), 1)
+        transaction_without_type = TransactionSatelliteFactory(transaction_price=1.0)
+        test_transaction_category = get_transaction_category_by_transaction(
+            transaction_without_type
+        )
+        self.assertEqual(len(cat_hubs.all()), 1)
 
     def test_set_transaction_category_by_map(self):
         # Setup

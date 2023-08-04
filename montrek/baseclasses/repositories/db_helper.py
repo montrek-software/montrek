@@ -36,6 +36,8 @@ def new_satellite_entry(
         hub_entity = hub_class()
     satellite_entity = satellite_class(hub_entity=hub_entity, **kwargs)
     satellite_update = update_satellite(satellite_entity)
+    hub_entity = satellite_update.hub_entity
+    breakpoint()
     if hub_entity.id is None:
         hub_entity.save()
     if satellite_update.id is None:
