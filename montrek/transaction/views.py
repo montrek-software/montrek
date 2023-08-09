@@ -16,6 +16,7 @@ class TransactionSatelliteDetailView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['form'] = TransactionSatelliteForm(instance=self.object)
+        context['category'] = self.object.transaction_category
         return context
 
 # Create your views here.
