@@ -13,15 +13,9 @@ from django.utils import timezone
 def new_link_entry(
     from_hub: MontrekHubABC, 
     to_hub: MontrekHubABC, 
-    link_table: MontrekLinkABC
+    related_field: str,
 ) -> None:
-    raise(NotImplementedError("TODO: Rewrite with ManyToMany"))
-    existing_link = link_table.objects.filter(from_hub=from_hub, to_hub=to_hub).first()
-    if existing_link:
-        # TODO add logging
-        return
-    link_table.objects.create(from_hub=from_hub, to_hub=to_hub)
-
+    getattr(from_hub, related_field).add(to_hub)
 
 def get_link_to_hub(
     from_hub: MontrekHubABC, link_table: MontrekLinkABC
@@ -51,20 +45,25 @@ def new_satellites_bunch_from_df_and_from_hub_link(
     satellite_class: MontrekSatelliteABC,
     import_df: pd.DataFrame,
     from_hub: MontrekHubABC,
-    related_field_from: str = None,
-    related_field_to: str = None,
+    related_field: str = None,
+    use_realted_field_from_hub: bool = True,
 ) -> List[MontrekSatelliteABC]:
-    if related_field_from is None and related_field_to is None:
-        raise ValueError("neither related_field_from not related_field_to given!")
     satellites = new_satellites_bunch_from_df(
         satellite_class=satellite_class, import_df=import_df
     )
     for satellite in satellites:
-        new_link_entry(
-            from_hub=from_hub, 
-            to_hub=satellite.hub_entity, 
-            link_table=link_table_class
-        )
+        if use_realted_field_from_hub:
+            new_link_entry(
+                from_hub=from_hub, 
+                to_hub=satellite.hub_entity, 
+                related_field=related_field,
+            )
+        else:
+            new_link_entry(
+                from_hub=satellite.hub_entity,
+                to_hub=from_hub,
+                related_field=related_field,
+            )
     return satellites
 
 

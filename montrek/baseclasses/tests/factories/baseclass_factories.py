@@ -15,4 +15,6 @@ class TestMontrekSatelliteFactory(factory.django.DjangoModelFactory):
     state_date_start = timezone.datetime(2023, 6, 20, tzinfo=timezone.utc)
     state_date_end = timezone.datetime(2023, 7, 10, tzinfo=timezone.utc)
 
-
+class TestLinkHubFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "baseclasses.TestLinkHub"
