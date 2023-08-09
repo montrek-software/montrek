@@ -16,12 +16,10 @@ from baseclasses.repositories.db_helper import (
 from baseclasses.tests.factories.baseclass_factories import (
     TestMontrekHubFactory,
     TestMontrekSatelliteFactory,
-    TestMontrekLinkFactory,
 )
 from baseclasses.models import TestMontrekSatellite
-from baseclasses.models import TestMontrekLink
 from baseclasses.models import TestMontrekHub
-
+from baseclasses.models import TestLinkHub
 
 class TestDBHelpers(TestCase):
     def setUp(self):
@@ -31,12 +29,6 @@ class TestDBHelpers(TestCase):
         self.satellite1 = TestMontrekSatelliteFactory(hub_entity=self.hub1)
         self.satellite2 = TestMontrekSatelliteFactory(hub_entity=self.hub2)
         self.satellite3 = TestMontrekSatelliteFactory(hub_entity=self.hub3)
-        self.link1 = TestMontrekLinkFactory(from_hub=self.hub1, to_hub=self.hub2)
-        self.link2 = TestMontrekLinkFactory(from_hub=self.hub2, to_hub=self.hub3)
-        self.link3 = TestMontrekLinkFactory(from_hub=self.hub3, to_hub=self.hub1)
-        self.link4 = TestMontrekLinkFactory(from_hub=self.hub1, to_hub=self.hub3)
-        self.link5 = TestMontrekLinkFactory(from_hub=self.hub3, to_hub=self.hub2)
-        self.link6 = TestMontrekLinkFactory(from_hub=self.hub2, to_hub=self.hub1)
 
     def test_get_hub_ids_by_satellite_attribute(self):
         self.assertEqual(
@@ -202,13 +194,24 @@ class TestDBHelpers(TestCase):
             test_satellites[1].state_date_start, timezone.datetime(1, 1, 1, 0, 0, 0)
         )
 
+    def test_new_satellites_bunch_from_df_and_from_hub_link_no_related_fields(self):
+        test_df = pd.DataFrame({"test_name": ["NewTestName", "NewTestName2"]})
+        with self.assertRaises(ValueError) as e:
+            new_satellites_bunch_from_df_and_from_hub_link(
+                satellite_class=TestMontrekSatellite,
+                import_df=test_df,
+                from_hub=self.hub1,
+            )
+        self.assertEqual(str(e.exception), "neither related_field_from not related_field_to given!")
+
     def test_new_satellites_bunch_from_df_and_from_hub_link(self):
         test_df = pd.DataFrame({"test_name": ["NewTestName", "NewTestName2"]})
+        hublink = TestLinkHub.objects.create()
         test_satellites = new_satellites_bunch_from_df_and_from_hub_link(
             satellite_class=TestMontrekSatellite,
             import_df=test_df,
-            from_hub=self.hub1,
-            link_table_class=TestMontrekLink,
+            from_hub=hublink,
+            related_field_from="test_link_hub",
         )
         self.assertEqual(len(test_satellites), 2)
         self.assertEqual(test_satellites[0].test_name, "NewTestName")

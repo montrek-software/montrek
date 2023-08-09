@@ -11,8 +11,11 @@ from django.utils import timezone
 
 
 def new_link_entry(
-    from_hub: MontrekHubABC, to_hub: MontrekHubABC, link_table: MontrekLinkABC
+    from_hub: MontrekHubABC, 
+    to_hub: MontrekHubABC, 
+    link_table: MontrekLinkABC
 ) -> None:
+    raise(NotImplementedError("TODO: Rewrite with ManyToMany"))
     existing_link = link_table.objects.filter(from_hub=from_hub, to_hub=to_hub).first()
     if existing_link:
         # TODO add logging
@@ -48,14 +51,19 @@ def new_satellites_bunch_from_df_and_from_hub_link(
     satellite_class: MontrekSatelliteABC,
     import_df: pd.DataFrame,
     from_hub: MontrekHubABC,
-    link_table_class: MontrekLinkABC,
+    related_field_from: str = None,
+    related_field_to: str = None,
 ) -> List[MontrekSatelliteABC]:
+    if related_field_from is None and related_field_to is None:
+        raise ValueError("neither related_field_from not related_field_to given!")
     satellites = new_satellites_bunch_from_df(
         satellite_class=satellite_class, import_df=import_df
     )
     for satellite in satellites:
         new_link_entry(
-            from_hub=from_hub, to_hub=satellite.hub_entity, link_table=link_table_class
+            from_hub=from_hub, 
+            to_hub=satellite.hub_entity, 
+            link_table=link_table_class
         )
     return satellites
 
@@ -87,7 +95,7 @@ def new_satellites_bunch(
         satellite for satellite in satellites_updates if satellite.id is None
     ]
     # Need to set hash_identifier and hash_value for new satellites manually, since create_bulk does not run the save
-    # method but enteres the rows directly in the db
+    # method but enters the rows directly in the db
     for satellite in satellites_updates_new:
         satellite.get_hash_identifier
         satellite.get_hash_value
