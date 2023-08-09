@@ -1,9 +1,23 @@
 from django.shortcuts import render
 from django.shortcuts import redirect
+from django.views.generic import DetailView
+from .forms import TransactionSatelliteForm
 from transaction.repositories.transaction_account_queries import (
     new_transaction_to_account,
 )
+from transaction.models import TransactionSatellite
 from account.models import AccountStaticSatellite
+
+class TransactionSatelliteDetailView(DetailView):
+    model = TransactionSatellite
+    template_name = 'transaction_view.html'  # The name of your HTML template
+    context_object_name = 'transaction'  # This is what the object will be called in the template
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form'] = TransactionSatelliteForm(instance=self.object)
+        context['category'] = self.object.transaction_category
+        return context
 
 # Create your views here.
 #### Transaction Views ####
@@ -27,3 +41,4 @@ def transaction_add(request, account_id: int):
         transaction_category="",
     )
     return redirect(f"/account/{account_id}/view")
+

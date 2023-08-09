@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-6">
+            <h1>Transaction</h1>
+        </div>
+    </div>
+    <h3>Transaction data</h3>
+    <div class="table">
+        <table>
+	  <tr><td>{{ form.transaction_date.label }}</td>
+		  <td id="id_transaction_details__transaction_date">{{ form.transaction_date }}</td></tr>
+	  <tr><td>{{ form.transaction_amount.label }}</td><td>{{ form.transaction_amount }}</td></tr>
+	  <tr><td>{{ form.transaction_price.label }}</td><td>{{ form.transaction_price }}</td></tr>
+	  <tr><td>{{ form.transaction_description.label }}</td><td>{{ form.transaction_description }}</td></tr>
+	  <tr><td>{{ form.transaction_party.label }}</td><td>{{ form.transaction_party }}</td></tr>
+	  <tr><td>{{ form.transaction_party_iban.label }}</td><td>{{ form.transaction_party_iban }}</td></tr>
+	  <tr><td>Category</td><td>{{ category.typename }}</td></tr>
+        </table>
+    </div>
+    <h3>Meta Data</h3>
+    <div class="table">
+	<table>
+	  <tr><td>{{ form.hash_identifier.label }}</td><td>{{ form.hash_identifier }}</td></tr>
+	  <tr><td>{{ form.hash_value.label }}</td><td>{{ form.hash_value }}</td></tr>
+	  <tr><td>{{ form.state_date_start.label }}</td><td>{{ form.state_date_start }}</td></tr>
+	  <tr><td>{{ form.state_date_end.label }}</td><td>{{ form.state_date_end }}</td></tr>
+	  <tr><td>{{ form.hub_entity.label }}</td><td>{{ form.hub_entity }}</td></tr>
+	  <tr><td>{{ form.created_at.label }}</td><td>{{ form.created_at }}</td></tr>
+	  
+	
+</div>
+{% endblock %}

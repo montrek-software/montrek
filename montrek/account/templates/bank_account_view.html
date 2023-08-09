@@ -59,6 +59,7 @@
                     <th>Price</th>
                     <th>Value</th>
                     <th>Category</th>
+                    <th>Actions</th>
                 </tr>
                 {% for transaction in account_transactions %}
                     <tr>
@@ -68,6 +69,10 @@
                         <td>{{ transaction.transaction_price }}</td>
                         <td>{{ transaction.transaction_value }}</td>
                         <td>{{ transaction.transaction_category.typename }}</td>
+                        <td><a id="id_transaction_view_{{ transaction.id }}" href=
+                            {% url 'transaction_view' pk=transaction.id %}>
+                            <span class="glyphicon glyphicon-eye-open"/></a>
+                        </td>
                     </tr>
                 {% endfor %}
             </table>
