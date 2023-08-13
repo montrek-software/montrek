@@ -211,7 +211,7 @@ def set_transaction_type(
         new_link_entry(
             from_hub=transaction_satellite_object.hub_entity,
             to_hub=transaction_type_hub,
-            link_table=transaction_transaction_type_link(),
+            related_field='link_transaction_transaction_type',
         )
 
 
@@ -230,7 +230,7 @@ def _set_transaction_type_by_value(
     new_link_entry(
         from_hub=transaction_satellite_object.hub_entity,
         to_hub=transaction_type_hub,
-        link_table=transaction_transaction_type_link(),
+        related_field='link_transaction_transaction_type',
     )
     return transaction_type_hub
 
@@ -244,7 +244,7 @@ def set_transaction_category_by_value(
     new_link_entry(
         from_hub=transaction_satellite_object.hub_entity,
         to_hub=transaction_category_hub,
-        link_table=transaction_transaction_type_link(),
+        related_field='link_transaction_transaction_category',
     )
 
 

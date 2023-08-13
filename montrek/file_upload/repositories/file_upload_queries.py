@@ -1,6 +1,7 @@
 from typing import TextIO
 from django.apps import apps
 
+from baseclasses.repositories.db_helper import  select_satellite
 from baseclasses.repositories.db_helper import get_hub_by_id
 from baseclasses.repositories.db_helper import new_link_entry
 from account.models import AccountHub
@@ -28,8 +29,8 @@ def get_account_hub_from_file_upload_registry_satellite(file_upload_registry):
 
 
 def get_file_satellite_from_registry_satellite(registry_satellite):
-    file_satellite = registry_satellite.hub_entity.link_file_upload_registry_file_upload_file.all().first()
-    return file_satellite
+    file_hub = registry_satellite.hub_entity.link_file_upload_registry_file_upload_file.all().first()
+    return select_satellite(file_hub, file_upload_file_static_satellite())
 
 
 def new_file_upload_registry(account_id: int, file: TextIO):

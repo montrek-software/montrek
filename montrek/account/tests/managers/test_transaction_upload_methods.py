@@ -27,9 +27,8 @@ class TestDKBTransactionUpload(TestCase):
             account_type="BankAccount",
         )
         cls.credit_institution = CreditInstitutionStaticSatelliteFactory.create()
-        AccountCreditInstitutionLinkFactory.create(
-            from_hub=cls.bank_account.hub_entity,
-            to_hub=cls.credit_institution.hub_entity,
+        cls.bank_account.hub_entity.link_account_credit_institution.add(
+            cls.credit_institution.hub_entity
         )
 
     def test_check_if_upload_method_is_dkb(self):

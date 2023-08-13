@@ -173,12 +173,8 @@ class TestModelUtils(TestCase):
             state_date_end=timezone.datetime.max,
             hub_entity=transaction_3.hub_entity,
         )
-        AccountTransactionLinkFactory.create(
-            from_hub=account_hub, to_hub=transaction_1.hub_entity
-        )
-        AccountTransactionLinkFactory.create(
-            from_hub=account_hub, to_hub=transaction_3.hub_entity
-        )
+        account_hub.link_account_transaction.add(transaction_1.hub_entity)
+        account_hub.link_account_transaction.add(transaction_3.hub_entity)
         account_transactions = get_transactions_by_account_hub(account_hub)
         self.assertEqual(len(account_transactions), 2)
         account_value = (

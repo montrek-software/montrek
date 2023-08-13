@@ -93,13 +93,7 @@ def get_transactions_by_account_id(
 def get_transactions_by_account_hub(
     account_hub_object, reference_date: datetime.datetime = datetime.datetime.now()
 ) -> List[baseclass_models.MontrekSatelliteABC]:
-    account_transaction_links = account_transaction_link().objects.filter(
-        from_hub=account_hub_object
-    )
-    transaction_hubs = [
-        account_transaction_link.to_hub
-        for account_transaction_link in account_transaction_links
-    ]
+    transaction_hubs = account_hub_object.link_account_transaction.all()
     transaction_satellites = transaction_satellite().objects.filter(
         Q(hub_entity__in=transaction_hubs)
         & Q(state_date_start__lte=reference_date)

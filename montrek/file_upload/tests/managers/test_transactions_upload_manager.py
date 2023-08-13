@@ -44,21 +44,17 @@ from file_upload.repositories.file_upload_queries import (
 class TestTransactionsUploadManager(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.account_satellite = AccountStaticSatelliteFactory()
         cls.credit_institution_satellite = CreditInstitutionStaticSatelliteFactory()
-        cls.account_credit_institution_link = AccountCreditInstitutionLinkFactory(
-            from_hub=cls.account_satellite.hub_entity,
-            to_hub=cls.credit_institution_satellite.hub_entity,
-        )
+        cls.account_satellite = AccountStaticSatelliteFactory()
+        cls.account_satellite.hub_entity.link_account_credit_institution.add(cls.credit_institution_satellite.hub_entity)
         # Create a file to upload
         txt_file_content = b"Test file content"
         cls.txt_file = SimpleUploadedFile("test_file.txt", txt_file_content)
         cls.file_registry_sat_factory = FileUploadRegistryStaticSatelliteFactory(
             file_name=cls.txt_file.name
         )
-        AccountFileUploadRegistryLinkFactory(
-            from_hub=cls.account_satellite.hub_entity,
-            to_hub=cls.file_registry_sat_factory.hub_entity,
+        cls.account_satellite.hub_entity.link_account_file_upload_registry.add(
+            cls.file_registry_sat_factory.hub_entity
         )
         dkb_csv_file_content = '"Kontonummer:";"DE96120300001008028225 / Girokonto";\n\n"Von:";"30.06.2023";\n"Bis:";"04.07.2023";\n"Kontostand vom 04.07.2023:";"792,15 EUR";\n\n"Buchungstag";"Wertstellung";"Buchungstext";"Auftraggeber / Begünstigter";"Verwendungszweck";"Kontonummer";"BLZ";"Betrag (EUR)";"Gläubiger-ID";"Mandatsreferenz";"Kundenreferenz";\n"05.07.2023";"05.07.2023";"ONLINE-UEBERWEISUNG";"FINANZAMT LIMBURG WEILBURG";"DATUM 04.07.2023, 20.17 UHR";"DE68500500000001000397";"HELADEFFXXX";"-1.348,50";"";"";"";'
 

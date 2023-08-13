@@ -27,9 +27,8 @@ class UploadTransactionToAccountFileViewTest(TestCase):
     def setUpTestData(cls):
         cls.account_satellite = AccountStaticSatelliteFactory()
         cls.credit_institution_satellite = CreditInstitutionStaticSatelliteFactory()
-        cls.account_credit_institution_link = AccountCreditInstitutionLinkFactory(
-            from_hub=cls.account_satellite.hub_entity,
-            to_hub=cls.credit_institution_satellite.hub_entity,
+        cls.account_satellite.hub_entity.link_account_credit_institution.add(
+            cls.credit_institution_satellite.hub_entity
         )
         # Create a file to upload
         txt_file_content = b"Test file content"

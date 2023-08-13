@@ -56,9 +56,9 @@ class TestTransactionTypeModelQueries(TestCase):
             transaction_without_type
         )
         self.assertEqual(test_transaction_type.typename, "INCOME")
-        income_transaction_type_hub = TransactionTransactionTypeLink.objects.get(
-            from_hub=transaction_without_type.hub_entity
-        ).to_hub
+        income_transaction_type_hub = (
+            transaction_without_type.hub_entity.link_transaction_transaction_type.all().first()
+        )
         self.assertEqual(test_transaction_type.hub_entity, income_transaction_type_hub)
 
         transaction_without_type = TransactionSatelliteFactory(transaction_price=-1.0)
@@ -66,9 +66,9 @@ class TestTransactionTypeModelQueries(TestCase):
             transaction_without_type
         )
         self.assertEqual(test_transaction_type.typename, "EXPANSE")
-        expanse_transaction_type_hub = TransactionTransactionTypeLink.objects.get(
-            from_hub=transaction_without_type.hub_entity
-        ).to_hub
+        expanse_transaction_type_hub = (
+            transaction_without_type.hub_entity.link_transaction_transaction_type.all().first()
+        )
         self.assertEqual(test_transaction_type.hub_entity, expanse_transaction_type_hub)
 
 

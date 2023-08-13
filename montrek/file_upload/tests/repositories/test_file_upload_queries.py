@@ -34,14 +34,12 @@ class UploadTransactionToAccountFileViewTest(TestCase):
             file_name=cls.txt_file.name
         )
         cls.file_file_sat_factory = FileUploadFileStaticSatelliteFactory()
-        FileUploadRegistryFileUploadFileLinkFactory(
-            from_hub=cls.file_registry_sat_factory.hub_entity,
-            to_hub=cls.file_file_sat_factory.hub_entity,
+        cls.file_registry_sat_factory.hub_entity.link_file_upload_registry_file_upload_file.add(
+            cls.file_file_sat_factory.hub_entity
         )
         cls.account_hub_factory = AccountHubFactory()
-        AccountFileUploadRegistryLinkFactory(
-            from_hub=cls.account_hub_factory,
-            to_hub=cls.file_registry_sat_factory.hub_entity,
+        cls.account_hub_factory.link_account_file_upload_registry.add(
+            cls.file_registry_sat_factory.hub_entity
         )
 
     def tearDown(self):

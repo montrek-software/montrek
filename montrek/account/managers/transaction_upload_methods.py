@@ -14,7 +14,7 @@ from transaction.repositories.transaction_account_queries import (
 def upload_dkb_transactions(
     account_hub: AccountHub, file_path: str
 ) -> List[TransactionSatellite]:
-    credit_institution_hub = get_link_to_hub(account_hub, AccountCreditInstitutionLink)
+    credit_institution_hub = account_hub.link_account_credit_institution.all().first()
     credit_institution = select_satellite(
         credit_institution_hub, CreditInstitutionStaticSatellite
     )

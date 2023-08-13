@@ -228,17 +228,15 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
         cls.transaction_satellite_2 = TransactionSatelliteFactory(
             hub_entity=transaction_hub
         )
-        account_transaction_link = AccountTransactionLinkFactory(
-            from_hub=cls.account_hub, to_hub=transaction_hub
-        )
+        cls.account_hub.link_account_transaction.add(transaction_hub)
         bank_account_property_satellite = BankAccountPropertySatelliteFactory(
             hub_entity=cls.account_hub
         )
         bank_account_static_satellite = BankAccountStaticSatelliteFactory(
             hub_entity=cls.account_hub
         )
-        credit_institution_link = AccountCreditInstitutionLinkFactory(
-            from_hub=cls.account_hub, to_hub=dkb_credit_institution.hub_entity
+        cls.account_hub.link_account_credit_institution.add(
+            dkb_credit_institution.hub_entity
         )
         super().setUp(cls)
 
