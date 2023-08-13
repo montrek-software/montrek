@@ -49,7 +49,9 @@ def new_transaction_to_account(
         transaction_description=transaction_description,
     )
     new_link_entry(
-        account_hub_object, transaction_hub_object, account_transaction_link()
+        account_hub_object, 
+        transaction_hub_object, 
+        "link_account_transaction",
     )
     set_transaction_type(transaction_satellite_object, transaction_type)
 
@@ -76,7 +78,7 @@ def new_transactions_to_account_from_df(
         satellite_class=transaction_satellite(),
         import_df=transaction_df,
         from_hub=account_hub_object,
-        link_table_class=account_transaction_link(),
+        related_field="link_account_transaction",
     )
     return transaction_satellites
 

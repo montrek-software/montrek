@@ -290,6 +290,6 @@ def set_transaction_category_by_map(
     new_link_entry(
         from_hub=transaction_satellite_object.hub_entity,
         to_hub=transaction_category_sat.hub_entity,
-        link_table=transaction_transaction_category_link(),
+        related_field="link_transaction_transaction_category",
     )
     return transaction_category_sat.hub_entity

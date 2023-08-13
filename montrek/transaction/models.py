@@ -9,7 +9,14 @@ from transaction.repositories.transaction_model_queries import (
 
 # Create your models here.
 class TransactionHub(baseclass_models.MontrekHubABC):
-    pass
+    link_transaction_transaction_category = models.ManyToManyField(
+        "TransactionCategoryHub", 
+        related_name = "link_transaction_category_transaction",
+    )
+    link_transaction_transaction_type = models.ManyToManyField(
+        "TransactionTypeHub", 
+        related_name = "link_transaction_type_transaction",
+    )
 
 
 class TransactionSatellite(baseclass_models.MontrekSatelliteABC):

@@ -8,7 +8,10 @@ from baseclasses import models as baseclass_models
 
 
 class FileUploadRegistryHub(baseclass_models.MontrekHubABC):
-    pass
+    link_file_upload_registry_file_upload_file = models.ManyToManyField(
+        "FileUploadFileHub",
+        related_name="link_file_upload_file_file_upload_registry",
+    )
 
 
 class FileUploadRegistryStaticSatellite(baseclass_models.MontrekSatelliteABC):
