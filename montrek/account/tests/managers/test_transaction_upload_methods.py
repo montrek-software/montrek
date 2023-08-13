@@ -8,9 +8,6 @@ from account.tests.factories.account_factories import AccountStaticSatelliteFact
 from credit_institution.tests.factories.credit_institution_factories import (
     CreditInstitutionStaticSatelliteFactory,
 )
-from link_tables.tests.factories.link_tables_factories import (
-    AccountCreditInstitutionLinkFactory,
-)
 
 from account.managers.transaction_upload_methods import upload_dkb_transactions
 from account.managers.transaction_upload_methods import read_dkb_transactions_from_csv

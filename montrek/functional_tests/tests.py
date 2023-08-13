@@ -24,12 +24,6 @@ from transaction.tests.factories.transaction_factories import (
 from transaction.tests.factories.transaction_factories import (
     TransactionTypeSatelliteFactory,
 )
-from link_tables.tests.factories.link_tables_factories import (
-    AccountTransactionLinkFactory,
-)
-from link_tables.tests.factories.link_tables_factories import (
-    AccountCreditInstitutionLinkFactory,
-)
 from credit_institution.tests.factories.credit_institution_factories import (
     CreditInstitutionStaticSatelliteFactory,
 )

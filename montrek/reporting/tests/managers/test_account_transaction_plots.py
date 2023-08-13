@@ -14,9 +14,6 @@ from account.tests.factories.account_factories import AccountHubFactory
 from transaction.tests.factories.transaction_factories import (
     TransactionSatelliteFactory,
 )
-from link_tables.tests.factories.link_tables_factories import (
-    AccountTransactionLinkFactory,
-)
 from transaction.repositories.transaction_account_queries import (
     get_transactions_by_account_hub,
 )

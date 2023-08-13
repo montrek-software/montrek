@@ -99,18 +99,6 @@ class MontrekSatelliteABC(TimeStampMixin):
         return self._get_hash_value()
 
 
-# Base Link Model ABC
-class MontrekLinkABC(TimeStampMixin):
-    class Meta:
-        abstract = True
-
-    from_hub = models.ForeignKey(
-        MontrekHubABC, on_delete=models.CASCADE, related_name="from_hub"
-    )
-    to_hub = models.ForeignKey(
-        MontrekHubABC, on_delete=models.CASCADE, related_name="to_hub"
-    )
-
 # Montrek Test Models
 
 class TestMontrekHub(MontrekHubABC):

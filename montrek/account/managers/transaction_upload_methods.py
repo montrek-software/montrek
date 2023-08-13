@@ -2,10 +2,8 @@ import pandas as pd
 from typing import List
 from account.models import AccountHub
 from credit_institution.models import CreditInstitutionStaticSatellite
-from link_tables.models import AccountCreditInstitutionLink
 from transaction.models import TransactionSatellite
 from baseclasses.repositories.db_helper import select_satellite
-from baseclasses.repositories.db_helper import get_link_to_hub
 from transaction.repositories.transaction_account_queries import (
     new_transactions_to_account_from_df,
 )

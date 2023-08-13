@@ -25,10 +25,6 @@ def transaction_satellite():
     return apps.get_model("transaction", "TransactionSatellite")
 
 
-def account_transaction_link():
-    return apps.get_model("link_tables", "AccountTransactionLink")
-
-
 def new_transaction_to_account(
     account_id: int,
     transaction_date: datetime.date,

@@ -15,25 +15,12 @@ from transaction.tests.factories.transaction_factories import (
     TransactionTypeSatelliteFactory,
 )
 from transaction.tests.factories.transaction_factories import (
-    TransactionTransactionTypeLinkFactory,
-)
-from transaction.tests.factories.transaction_factories import (
     TransactionCategorySatelliteFactory,
-)
-from transaction.tests.factories.transaction_factories import (
-    TransactionTransactionCategoryLinkFactory,
 )
 from transaction.tests.factories.transaction_factories import (
     TransactionCategoryMapSatelliteFactory,
 )
 from account.tests.factories.account_factories import AccountHubFactory
-from link_tables.tests.factories.link_tables_factories import (
-    AccountTransactionLinkFactory,
-)
-from link_tables.tests.factories.link_tables_factories import (
-    AccountTransactionCategoryMapLinkFactory,
-)
-from transaction.models import TransactionTransactionTypeLink
 from transaction.models import TransactionCategoryHub
 
 
@@ -42,8 +29,8 @@ class TestTransactionTypeModelQueries(TestCase):
     def setUpTestData(cls):
         cls.transaction = TransactionSatelliteFactory()
         cls.transaction_type = TransactionTypeSatelliteFactory()
-        TransactionTransactionTypeLinkFactory(
-            from_hub=cls.transaction.hub_entity, to_hub=cls.transaction_type.hub_entity
+        cls.transaction.hub_entity.link_transaction_transaction_type.add(
+            cls.transaction_type.hub_entity
         )
 
     def test_get_transaction_type_by_transaction(self):
@@ -77,9 +64,8 @@ class TestTransactionCategoryModelQueries(TestCase):
     def setUpTestData(cls):
         cls.transaction = TransactionSatelliteFactory()
         cls.transaction_category = TransactionCategorySatelliteFactory()
-        TransactionTransactionCategoryLinkFactory(
-            from_hub=cls.transaction.hub_entity,
-            to_hub=cls.transaction_category.hub_entity,
+        cls.transaction.hub_entity.link_transaction_transaction_category.add(
+            cls.transaction_category.hub_entity
         )
 
     def test_get_transaction_category_by_transaction(self):
@@ -121,19 +107,19 @@ class TestTransactionCategoryModelQueries(TestCase):
             category="WORK",
             hub_entity=transaction_cat_map.hub_entity,
         )
-        AccountTransactionCategoryMapLinkFactory(
-            from_hub=account, to_hub=transaction_cat_map.hub_entity
+        account.link_account_transaction_category_map.add(
+            transaction_cat_map.hub_entity
         )
         transaction1 = TransactionSatelliteFactory(
             transaction_party="SuperParty",
         )
-        AccountTransactionLinkFactory(from_hub=account, to_hub=transaction1.hub_entity)
+        account.link_account_transaction.add(transaction1.hub_entity)
 
         transaction2 = TransactionSatelliteFactory()
-        AccountTransactionLinkFactory(from_hub=account, to_hub=transaction2.hub_entity)
+        account.link_account_transaction.add(transaction2.hub_entity)
 
         transaction3 = TransactionSatelliteFactory()
-        AccountTransactionLinkFactory(from_hub=account, to_hub=transaction3.hub_entity)
+        account.link_account_transaction.add(transaction3.hub_entity)
         set_transaction_category_by_map(transaction1)
         transcat_1 = get_transaction_category_by_transaction(transaction1)
         self.assertEqual(transcat_1.typename, "AMUSEMENT")

@@ -14,7 +14,6 @@ from credit_institution.repositories.credit_institution_model_queries import (
 from account.tests.factories.account_factories import AccountHubFactory
 from credit_institution.models import CreditInstitutionStaticSatellite
 from credit_institution.models import CreditInstitutionHub
-from link_tables.models import AccountCreditInstitutionLink
 
 
 class TestCreditInstitutionModelQueries(TestCase):

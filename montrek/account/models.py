@@ -24,6 +24,10 @@ class AccountHub(baseclass_models.MontrekHubABC):
         "file_upload.FileUploadRegistryHub",
         related_name="link_file_upload_registry_account",
     )
+    link_account_transaction_category_map = models.ManyToManyField(
+        "transaction.TransactionCategoryMapHub",
+        related_name="link_transaction_category_map_account",
+    )
 
 
 class AccountStaticSatellite(baseclass_models.MontrekSatelliteABC):

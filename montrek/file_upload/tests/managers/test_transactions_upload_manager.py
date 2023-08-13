@@ -6,20 +6,11 @@ from account.tests.factories.account_factories import AccountStaticSatelliteFact
 from credit_institution.tests.factories.credit_institution_factories import (
     CreditInstitutionStaticSatelliteFactory,
 )
-from link_tables.tests.factories.link_tables_factories import (
-    AccountCreditInstitutionLinkFactory,
-)
 from file_upload.tests.factories.file_upload_factories import (
     FileUploadRegistryStaticSatelliteFactory,
 )
 from file_upload.tests.factories.file_upload_factories import (
     FileUploadFileStaticSatelliteFactory,
-)
-from link_tables.tests.factories.link_tables_factories import (
-    FileUploadRegistryFileUploadFileLinkFactory,
-)
-from link_tables.tests.factories.link_tables_factories import (
-    AccountFileUploadRegistryLinkFactory,
 )
 
 from file_upload.managers.transactions_upload_manager import _init_file_upload_registry

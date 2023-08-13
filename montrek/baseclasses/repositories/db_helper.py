@@ -4,7 +4,6 @@ import copy
 from typing import Any, List, Dict
 from baseclasses.models import MontrekSatelliteABC
 from baseclasses.models import MontrekHubABC
-from baseclasses.models import MontrekLinkABC
 from django.db.models.base import ModelBase
 from django.db.models import Q
 from django.utils import timezone
@@ -16,14 +15,6 @@ def new_link_entry(
     related_field: str,
 ) -> None:
     getattr(from_hub, related_field).add(to_hub)
-
-def get_link_to_hub(
-    from_hub: MontrekHubABC, link_table: MontrekLinkABC
-) -> MontrekHubABC:
-    # TODO Rename function as we dont return the link, but the to_hub
-    link_instance = link_table.objects.get(from_hub=from_hub)
-    return link_instance.to_hub
-
 
 def new_satellite_entry(
     satellite_class: MontrekSatelliteABC, hub_entity: MontrekHubABC = None, **kwargs

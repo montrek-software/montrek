@@ -10,13 +10,9 @@ from decimal import Decimal
 
 from account.models import AccountHub
 from account.tests.factories import account_factories
-from link_tables.tests.factories.link_tables_factories import (
-    AccountTransactionLinkFactory,
-)
 from transaction.tests.factories.transaction_factories import (
     TransactionSatelliteFactory,
 )
-from transaction.models import TransactionTransactionTypeLink
 from transaction.models import TransactionTypeSatellite
 from transaction.repositories.transaction_account_queries import (
     new_transaction_to_account,
@@ -33,7 +29,6 @@ from transaction.repositories.transaction_account_queries import (
 from transaction.repositories.transaction_model_queries import (
     get_transaction_type_by_transaction,
 )
-from baseclasses.repositories.db_helper import get_link_to_hub
 from baseclasses.repositories.db_helper import select_satellite
 
 ACCOUNTS_UNDER_TEST = 1

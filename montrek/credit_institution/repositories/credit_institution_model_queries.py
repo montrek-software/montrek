@@ -15,10 +15,6 @@ def credit_institution_static_satellite():
     return apps.get_model("credit_institution", "CreditInstitutionStaticSatellite")
 
 
-def account_credit_institution_link():
-    return apps.get_model("link_tables", "AccountCreditInstitutionLink")
-
-
 def account_hub():
     return apps.get_model("account", "AccountHub")
 

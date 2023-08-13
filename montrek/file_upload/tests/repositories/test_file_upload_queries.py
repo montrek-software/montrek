@@ -16,12 +16,6 @@ from file_upload.tests.factories.file_upload_factories import (
     FileUploadFileStaticSatelliteFactory,
 )
 from account.tests.factories.account_factories import AccountHubFactory
-from link_tables.tests.factories.link_tables_factories import (
-    FileUploadRegistryFileUploadFileLinkFactory,
-)
-from link_tables.tests.factories.link_tables_factories import (
-    AccountFileUploadRegistryLinkFactory,
-)
 
 
 class UploadTransactionToAccountFileViewTest(TestCase):
