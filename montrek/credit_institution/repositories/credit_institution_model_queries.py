@@ -15,10 +15,6 @@ def credit_institution_static_satellite():
     return apps.get_model("credit_institution", "CreditInstitutionStaticSatellite")
 
 
-def account_credit_institution_link():
-    return apps.get_model("link_tables", "AccountCreditInstitutionLink")
-
-
 def account_hub():
     return apps.get_model("account", "AccountHub")
 
@@ -51,7 +47,7 @@ def new_credit_institution_to_account(
     new_link_entry(
         from_hub=account_hub,
         to_hub=credit_institution_hub_object,
-        link_table=account_credit_institution_link(),
+        related_field='link_account_credit_institution',
     )
 
 
@@ -66,9 +62,7 @@ def get_credit_institution_satellite_by_account_hub(
     account_hub_object,
 ) -> baseclass_models.MontrekSatelliteABC:
     credit_institution_hub = (
-        account_credit_institution_link()
-        .objects.get(from_hub=account_hub_object)
-        .to_hub
+        account_hub_object.link_account_credit_institution.all().first()
     )
     return select_satellite(
         credit_institution_hub,

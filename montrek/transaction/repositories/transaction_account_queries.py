@@ -25,10 +25,6 @@ def transaction_satellite():
     return apps.get_model("transaction", "TransactionSatellite")
 
 
-def account_transaction_link():
-    return apps.get_model("link_tables", "AccountTransactionLink")
-
-
 def new_transaction_to_account(
     account_id: int,
     transaction_date: datetime.date,
@@ -49,7 +45,9 @@ def new_transaction_to_account(
         transaction_description=transaction_description,
     )
     new_link_entry(
-        account_hub_object, transaction_hub_object, account_transaction_link()
+        account_hub_object, 
+        transaction_hub_object, 
+        "link_account_transaction",
     )
     set_transaction_type(transaction_satellite_object, transaction_type)
 
@@ -76,7 +74,7 @@ def new_transactions_to_account_from_df(
         satellite_class=transaction_satellite(),
         import_df=transaction_df,
         from_hub=account_hub_object,
-        link_table_class=account_transaction_link(),
+        related_field="link_account_transaction",
     )
     return transaction_satellites
 
@@ -91,13 +89,7 @@ def get_transactions_by_account_id(
 def get_transactions_by_account_hub(
     account_hub_object, reference_date: datetime.datetime = datetime.datetime.now()
 ) -> List[baseclass_models.MontrekSatelliteABC]:
-    account_transaction_links = account_transaction_link().objects.filter(
-        from_hub=account_hub_object
-    )
-    transaction_hubs = [
-        account_transaction_link.to_hub
-        for account_transaction_link in account_transaction_links
-    ]
+    transaction_hubs = account_hub_object.link_account_transaction.all()
     transaction_satellites = transaction_satellite().objects.filter(
         Q(hub_entity__in=transaction_hubs)
         & Q(state_date_start__lte=reference_date)

@@ -4,29 +4,17 @@ import copy
 from typing import Any, List, Dict
 from baseclasses.models import MontrekSatelliteABC
 from baseclasses.models import MontrekHubABC
-from baseclasses.models import MontrekLinkABC
 from django.db.models.base import ModelBase
 from django.db.models import Q
 from django.utils import timezone
 
 
 def new_link_entry(
-    from_hub: MontrekHubABC, to_hub: MontrekHubABC, link_table: MontrekLinkABC
+    from_hub: MontrekHubABC, 
+    to_hub: MontrekHubABC, 
+    related_field: str,
 ) -> None:
-    existing_link = link_table.objects.filter(from_hub=from_hub, to_hub=to_hub).first()
-    if existing_link:
-        # TODO add logging
-        return
-    link_table.objects.create(from_hub=from_hub, to_hub=to_hub)
-
-
-def get_link_to_hub(
-    from_hub: MontrekHubABC, link_table: MontrekLinkABC
-) -> MontrekHubABC:
-    # TODO Rename function as we dont return the link, but the to_hub
-    link_instance = link_table.objects.get(from_hub=from_hub)
-    return link_instance.to_hub
-
+    getattr(from_hub, related_field).add(to_hub)
 
 def new_satellite_entry(
     satellite_class: MontrekSatelliteABC, hub_entity: MontrekHubABC = None, **kwargs
@@ -48,15 +36,25 @@ def new_satellites_bunch_from_df_and_from_hub_link(
     satellite_class: MontrekSatelliteABC,
     import_df: pd.DataFrame,
     from_hub: MontrekHubABC,
-    link_table_class: MontrekLinkABC,
+    related_field: str = None,
+    use_realted_field_from_hub: bool = True,
 ) -> List[MontrekSatelliteABC]:
     satellites = new_satellites_bunch_from_df(
         satellite_class=satellite_class, import_df=import_df
     )
     for satellite in satellites:
-        new_link_entry(
-            from_hub=from_hub, to_hub=satellite.hub_entity, link_table=link_table_class
-        )
+        if use_realted_field_from_hub:
+            new_link_entry(
+                from_hub=from_hub, 
+                to_hub=satellite.hub_entity, 
+                related_field=related_field,
+            )
+        else:
+            new_link_entry(
+                from_hub=satellite.hub_entity,
+                to_hub=from_hub,
+                related_field=related_field,
+            )
     return satellites
 
 
@@ -87,7 +85,7 @@ def new_satellites_bunch(
         satellite for satellite in satellites_updates if satellite.id is None
     ]
     # Need to set hash_identifier and hash_value for new satellites manually, since create_bulk does not run the save
-    # method but enteres the rows directly in the db
+    # method but enters the rows directly in the db
     for satellite in satellites_updates_new:
         satellite.get_hash_identifier
         satellite.get_hash_value

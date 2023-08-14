@@ -14,9 +14,6 @@ from account.tests.factories.account_factories import AccountHubFactory
 from transaction.tests.factories.transaction_factories import (
     TransactionSatelliteFactory,
 )
-from link_tables.tests.factories.link_tables_factories import (
-    AccountTransactionLinkFactory,
-)
 from transaction.repositories.transaction_account_queries import (
     get_transactions_by_account_hub,
 )
@@ -48,19 +45,11 @@ class TestAccountTransactionPlots(TestCase):
             transaction_date=factory.Sequence(lambda _: next(trans_date_range_iter)),
             transaction_amount=factory.Sequence(lambda _: Decimal(1)),
         )
-        transactions_hubs = iter(
-            [transaction.hub_entity for transaction in transactions]
-        )
-        AccountTransactionLinkFactory.create_batch(
-            sample_len * 2,
-            from_hub=factory.Sequence(
-                lambda _: next(iter([cls.account_hub for _ in range(sample_len * 2)]))
-            ),
-            to_hub=factory.Sequence(lambda _: next(iter(transactions_hubs))),
-        )
+        for transaction in transactions: 
+            cls.account_hub.link_account_transaction.add(transaction.hub_entity)
 
     def test_get_monthly_income_expanses_plot(self):
-        transactions = get_transactions_by_account_hub(self.account_hub.id)
+        transactions = get_transactions_by_account_hub(self.account_hub)
         transactions_data = read_frame(transactions)
         test_plot = draw_monthly_income_expanses_plot(transactions_data)
         self.assertTrue(isinstance(test_plot.figure, go.Figure))

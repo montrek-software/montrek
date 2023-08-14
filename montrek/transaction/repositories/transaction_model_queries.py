@@ -7,7 +7,6 @@ import datetime
 from baseclasses import models as baseclass_models
 from baseclasses.repositories.db_helper import new_link_entry
 from baseclasses.repositories.db_helper import new_satellite_entry
-from baseclasses.repositories.db_helper import get_link_to_hub
 from baseclasses.repositories.db_helper import select_satellite
 from baseclasses.repositories.db_helper import get_hubs_by_satellite_attribute
 
@@ -24,24 +23,12 @@ def transaction_satellite():
     return apps.get_model("transaction", "TransactionSatellite")
 
 
-def account_transaction_link():
-    return apps.get_model("link_tables", "AccountTransactionLink")
-
-
-def transaction_transaction_type_link():
-    return apps.get_model("transaction", "TransactionTransactionTypeLink")
-
-
 def transaction_type_satellite():
     return apps.get_model("transaction", "TransactionTypeSatellite")
 
 
 def transaction_category_satellite():
     return apps.get_model("transaction", "TransactionCategorySatellite")
-
-
-def transaction_transaction_category_link():
-    return apps.get_model("transaction", "TransactionTransactionCategoryLink")
 
 
 def transaction_category_map_satellite():
@@ -118,14 +105,13 @@ def get_transaction_type_by_transaction(
     transaction_satellite_object: baseclass_models.MontrekSatelliteABC,
 ) -> str:
     transaction_hub = transaction_satellite_object.hub_entity
-    try:
-        transaction_type_hub = get_link_to_hub(
-            from_hub=transaction_hub, link_table=transaction_transaction_type_link()
-        )
-    except transaction_transaction_type_link().DoesNotExist:
+    transaction_type_hub = transaction_hub.link_transaction_transaction_type.all()
+    if len(transaction_type_hub) == 0:
         transaction_type_hub = _set_transaction_type_by_value(
             transaction_satellite_object
         )
+    else:
+        transaction_type_hub = transaction_type_hub[0]
     return select_satellite(
         hub_entity=transaction_type_hub, satellite_class=transaction_type_satellite()
     )
@@ -185,14 +171,13 @@ def get_transaction_type_by_transaction(
     transaction_satellite_object: baseclass_models.MontrekSatelliteABC,
 ) -> str:
     transaction_hub = transaction_satellite_object.hub_entity
-    try:
-        transaction_type_hub = get_link_to_hub(
-            from_hub=transaction_hub, link_table=transaction_transaction_type_link()
-        )
-    except transaction_transaction_type_link().DoesNotExist:
+    transaction_type_hub = transaction_hub.link_transaction_transaction_type.all()
+    if len(transaction_type_hub) == 0:
         transaction_type_hub = _set_transaction_type_by_value(
             transaction_satellite_object
         )
+    else:
+        transaction_type_hub = transaction_type_hub[0]
     return select_satellite(
         hub_entity=transaction_type_hub, satellite_class=transaction_type_satellite()
     )
@@ -211,7 +196,7 @@ def set_transaction_type(
         new_link_entry(
             from_hub=transaction_satellite_object.hub_entity,
             to_hub=transaction_type_hub,
-            link_table=transaction_transaction_type_link(),
+            related_field='link_transaction_transaction_type',
         )
 
 
@@ -230,7 +215,7 @@ def _set_transaction_type_by_value(
     new_link_entry(
         from_hub=transaction_satellite_object.hub_entity,
         to_hub=transaction_type_hub,
-        link_table=transaction_transaction_type_link(),
+        related_field='link_transaction_transaction_type',
     )
     return transaction_type_hub
 
@@ -244,7 +229,7 @@ def set_transaction_category_by_value(
     new_link_entry(
         from_hub=transaction_satellite_object.hub_entity,
         to_hub=transaction_category_hub,
-        link_table=transaction_transaction_type_link(),
+        related_field='link_transaction_transaction_category',
     )
 
 
@@ -252,14 +237,13 @@ def get_transaction_category_by_transaction(
     transaction_satellite_object: baseclass_models.MontrekSatelliteABC,
 ) -> str:
     transaction_hub = transaction_satellite_object.hub_entity
-    try:
-        transaction_category_hub = get_link_to_hub(
-            from_hub=transaction_hub, link_table=transaction_transaction_category_link()
-        )
-    except transaction_transaction_category_link().DoesNotExist:
+    transaction_category_hub = transaction_hub.link_transaction_transaction_category.all()
+    if len(transaction_category_hub) == 0:
         transaction_category_hub = set_transaction_category_by_map(
             transaction_satellite_object
         )
+    else:
+        transaction_category_hub = transaction_category_hub[0]
     return select_satellite(
         hub_entity=transaction_category_hub,
         satellite_class=transaction_category_satellite(),
@@ -290,6 +274,6 @@ def set_transaction_category_by_map(
     new_link_entry(
         from_hub=transaction_satellite_object.hub_entity,
         to_hub=transaction_category_sat.hub_entity,
-        link_table=transaction_transaction_category_link(),
+        related_field="link_transaction_transaction_category",
     )
     return transaction_category_sat.hub_entity

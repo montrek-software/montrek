@@ -8,9 +8,6 @@ from account.tests.factories.account_factories import AccountStaticSatelliteFact
 from credit_institution.tests.factories.credit_institution_factories import (
     CreditInstitutionStaticSatelliteFactory,
 )
-from link_tables.tests.factories.link_tables_factories import (
-    AccountCreditInstitutionLinkFactory,
-)
 
 from account.managers.transaction_upload_methods import upload_dkb_transactions
 from account.managers.transaction_upload_methods import read_dkb_transactions_from_csv
@@ -27,9 +24,8 @@ class TestDKBTransactionUpload(TestCase):
             account_type="BankAccount",
         )
         cls.credit_institution = CreditInstitutionStaticSatelliteFactory.create()
-        AccountCreditInstitutionLinkFactory.create(
-            from_hub=cls.bank_account.hub_entity,
-            to_hub=cls.credit_institution.hub_entity,
+        cls.bank_account.hub_entity.link_account_credit_institution.add(
+            cls.credit_institution.hub_entity
         )
 
     def test_check_if_upload_method_is_dkb(self):

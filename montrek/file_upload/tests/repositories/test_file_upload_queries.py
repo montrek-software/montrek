@@ -16,12 +16,6 @@ from file_upload.tests.factories.file_upload_factories import (
     FileUploadFileStaticSatelliteFactory,
 )
 from account.tests.factories.account_factories import AccountHubFactory
-from link_tables.tests.factories.link_tables_factories import (
-    FileUploadRegistryFileUploadFileLinkFactory,
-)
-from link_tables.tests.factories.link_tables_factories import (
-    AccountFileUploadRegistryLinkFactory,
-)
 
 
 class UploadTransactionToAccountFileViewTest(TestCase):
@@ -34,14 +28,12 @@ class UploadTransactionToAccountFileViewTest(TestCase):
             file_name=cls.txt_file.name
         )
         cls.file_file_sat_factory = FileUploadFileStaticSatelliteFactory()
-        FileUploadRegistryFileUploadFileLinkFactory(
-            from_hub=cls.file_registry_sat_factory.hub_entity,
-            to_hub=cls.file_file_sat_factory.hub_entity,
+        cls.file_registry_sat_factory.hub_entity.link_file_upload_registry_file_upload_file.add(
+            cls.file_file_sat_factory.hub_entity
         )
         cls.account_hub_factory = AccountHubFactory()
-        AccountFileUploadRegistryLinkFactory(
-            from_hub=cls.account_hub_factory,
-            to_hub=cls.file_registry_sat_factory.hub_entity,
+        cls.account_hub_factory.link_account_file_upload_registry.add(
+            cls.file_registry_sat_factory.hub_entity
         )
 
     def tearDown(self):

@@ -7,17 +7,11 @@ from account.tests.factories.account_factories import AccountStaticSatelliteFact
 from credit_institution.tests.factories.credit_institution_factories import (
     CreditInstitutionStaticSatelliteFactory,
 )
-from link_tables.tests.factories.link_tables_factories import (
-    AccountCreditInstitutionLinkFactory,
-)
 from file_upload.tests.factories.file_upload_factories import (
     FileUploadRegistryStaticSatelliteFactory,
 )
 from file_upload.tests.factories.file_upload_factories import (
     FileUploadFileStaticSatelliteFactory,
-)
-from link_tables.tests.factories.link_tables_factories import (
-    FileUploadRegistryFileUploadFileLinkFactory,
 )
 from file_upload.views import upload_transaction_to_account_file
 
@@ -27,9 +21,8 @@ class UploadTransactionToAccountFileViewTest(TestCase):
     def setUpTestData(cls):
         cls.account_satellite = AccountStaticSatelliteFactory()
         cls.credit_institution_satellite = CreditInstitutionStaticSatelliteFactory()
-        cls.account_credit_institution_link = AccountCreditInstitutionLinkFactory(
-            from_hub=cls.account_satellite.hub_entity,
-            to_hub=cls.credit_institution_satellite.hub_entity,
+        cls.account_satellite.hub_entity.link_account_credit_institution.add(
+            cls.credit_institution_satellite.hub_entity
         )
         # Create a file to upload
         txt_file_content = b"Test file content"
@@ -38,9 +31,8 @@ class UploadTransactionToAccountFileViewTest(TestCase):
             file_name=cls.txt_file.name
         )
         cls.file_file_sat_factory = FileUploadFileStaticSatelliteFactory()
-        file_registry_file_link_factory = FileUploadRegistryFileUploadFileLinkFactory(
-            from_hub=cls.file_registry_sat_factory.hub_entity,
-            to_hub=cls.file_file_sat_factory.hub_entity,
+        cls.file_registry_sat_factory.hub_entity.link_file_upload_registry_file_upload_file.add(
+            cls.file_file_sat_factory.hub_entity
         )
 
     def test_upload_transaction_to_account_file_view_get(self):

@@ -9,7 +9,14 @@ from transaction.repositories.transaction_model_queries import (
 
 # Create your models here.
 class TransactionHub(baseclass_models.MontrekHubABC):
-    pass
+    link_transaction_transaction_category = models.ManyToManyField(
+        "TransactionCategoryHub", 
+        related_name = "link_transaction_category_transaction",
+    )
+    link_transaction_transaction_type = models.ManyToManyField(
+        "TransactionTypeHub", 
+        related_name = "link_transaction_type_transaction",
+    )
 
 
 class TransactionSatellite(baseclass_models.MontrekSatelliteABC):
@@ -37,12 +44,12 @@ class TransactionSatellite(baseclass_models.MontrekSatelliteABC):
     @property
     def transaction_category(self):
         transactioncategory_hub = (
-            self.hub_entity.transactiontransactioncategorylink_set.all()
+            self.hub_entity.link_transaction_transaction_category.all()
         )
         if len(transactioncategory_hub) == 0:
             transactioncategory_hub = set_transaction_category_by_map(self)
         else:
-            transactioncategory_hub = transactioncategory_hub[0].to_hub
+            transactioncategory_hub = transactioncategory_hub[0]
         return transactioncategory_hub.transactioncategorysatellite_set.all()[0]
 
 
@@ -56,10 +63,6 @@ class TransactionTypeSatellite(
     hub_entity = models.ForeignKey(TransactionTypeHub, on_delete=models.CASCADE)
 
 
-class TransactionTransactionTypeLink(baseclass_models.MontrekLinkABC):
-    from_hub = models.ForeignKey(TransactionHub, on_delete=models.CASCADE)
-    to_hub = models.ForeignKey(TransactionTypeHub, on_delete=models.CASCADE)
-
 
 class TransactionCategoryHub(baseclass_models.MontrekHubABC):
     pass
@@ -69,11 +72,6 @@ class TransactionCategorySatellite(
     baseclass_models.MontrekSatelliteABC, baseclass_models.TypeMixin
 ):
     hub_entity = models.ForeignKey(TransactionCategoryHub, on_delete=models.CASCADE)
-
-
-class TransactionTransactionCategoryLink(baseclass_models.MontrekLinkABC):
-    from_hub = models.ForeignKey(TransactionHub, on_delete=models.CASCADE)
-    to_hub = models.ForeignKey(TransactionCategoryHub, on_delete=models.CASCADE)
 
 
 class TransactionCategoryMapHub(baseclass_models.MontrekHubABC):

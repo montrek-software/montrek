@@ -10,18 +10,18 @@ from baseclasses.repositories.db_helper import update_satellite_from_satellite
 from baseclasses.repositories.db_helper import new_satellite_entry
 from baseclasses.repositories.db_helper import new_satellites_bunch
 from baseclasses.repositories.db_helper import new_satellites_bunch_from_df
+from baseclasses.repositories.db_helper import new_link_entry
 from baseclasses.repositories.db_helper import (
     new_satellites_bunch_from_df_and_from_hub_link,
 )
 from baseclasses.tests.factories.baseclass_factories import (
     TestMontrekHubFactory,
     TestMontrekSatelliteFactory,
-    TestMontrekLinkFactory,
+    TestLinkHubFactory,
 )
 from baseclasses.models import TestMontrekSatellite
-from baseclasses.models import TestMontrekLink
 from baseclasses.models import TestMontrekHub
-
+from baseclasses.models import TestLinkHub
 
 class TestDBHelpers(TestCase):
     def setUp(self):
@@ -31,12 +31,6 @@ class TestDBHelpers(TestCase):
         self.satellite1 = TestMontrekSatelliteFactory(hub_entity=self.hub1)
         self.satellite2 = TestMontrekSatelliteFactory(hub_entity=self.hub2)
         self.satellite3 = TestMontrekSatelliteFactory(hub_entity=self.hub3)
-        self.link1 = TestMontrekLinkFactory(from_hub=self.hub1, to_hub=self.hub2)
-        self.link2 = TestMontrekLinkFactory(from_hub=self.hub2, to_hub=self.hub3)
-        self.link3 = TestMontrekLinkFactory(from_hub=self.hub3, to_hub=self.hub1)
-        self.link4 = TestMontrekLinkFactory(from_hub=self.hub1, to_hub=self.hub3)
-        self.link5 = TestMontrekLinkFactory(from_hub=self.hub3, to_hub=self.hub2)
-        self.link6 = TestMontrekLinkFactory(from_hub=self.hub2, to_hub=self.hub1)
 
     def test_get_hub_ids_by_satellite_attribute(self):
         self.assertEqual(
@@ -204,11 +198,12 @@ class TestDBHelpers(TestCase):
 
     def test_new_satellites_bunch_from_df_and_from_hub_link(self):
         test_df = pd.DataFrame({"test_name": ["NewTestName", "NewTestName2"]})
+        hublink = TestLinkHub.objects.create()
         test_satellites = new_satellites_bunch_from_df_and_from_hub_link(
             satellite_class=TestMontrekSatellite,
             import_df=test_df,
-            from_hub=self.hub1,
-            link_table_class=TestMontrekLink,
+            from_hub=hublink,
+            related_field="test_hub",
         )
         self.assertEqual(len(test_satellites), 2)
         self.assertEqual(test_satellites[0].test_name, "NewTestName")
@@ -221,12 +216,7 @@ class TestDBHelpers(TestCase):
             test_satellites[1].state_date_start, timezone.datetime(1, 1, 1, 0, 0, 0)
         )
         self.assertEqual(test_satellites[1].state_date_end, timezone.datetime.max)
-        created_links = TestMontrekLink.objects.filter(
-            to_hub__in=[sat.hub_entity for sat in test_satellites]
-        )
-        self.assertTrue(created_links.exists())
-        self.assertEqual(created_links.count(), len(test_satellites))
-        self.assertTrue(all([link.from_hub == self.hub1 for link in created_links]))
+        self.assertTrue(all([sat.hub_entity.test_link_hub.last() == hublink for sat in test_satellites]))
 
     def test_new_satellite_exists_already(self):
         sat_values = {"test_name": "NewTestName", "test_value": "TestValue"}
@@ -335,3 +325,22 @@ class TestDBHelpers(TestCase):
         self.assertEqual(len(test_satellites_from_db), 3)
         self.assertEqual(test_satellites_from_db[1], test_satellites2[0])
         self.assertEqual(test_satellites_from_db[0], test_satellites3[0])
+
+class TestNewLinkEntry(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.test_hub = TestMontrekHubFactory()
+        cls.test_link_hub = TestLinkHubFactory()
+        cls.test_link_hub2 = TestLinkHubFactory()
+
+
+    def test_new_link_entry(self):
+        new_link_entry(from_hub=self.test_link_hub, 
+                       to_hub=self.test_hub,
+                       related_field='test_hub')
+        self.assertEqual(self.test_link_hub.test_hub.last(), self.test_hub)
+        new_link_entry(from_hub=self.test_hub,
+                       to_hub=self.test_link_hub2,
+                       related_field='test_link_hub')
+        self.assertEqual(self.test_hub.test_link_hub.last(), self.test_link_hub2)
+        self.assertEqual(len(self.test_hub.test_link_hub.all()), 2)

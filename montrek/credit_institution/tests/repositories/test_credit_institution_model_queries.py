@@ -14,7 +14,6 @@ from credit_institution.repositories.credit_institution_model_queries import (
 from account.tests.factories.account_factories import AccountHubFactory
 from credit_institution.models import CreditInstitutionStaticSatellite
 from credit_institution.models import CreditInstitutionHub
-from link_tables.models import AccountCreditInstitutionLink
 
 
 class TestCreditInstitutionModelQueries(TestCase):
@@ -39,13 +38,9 @@ class TestCreditInstitutionModelQueries(TestCase):
             credit_institution_sat_db.credit_institution_name, "Test Credit Institution"
         )
         credit_institution_hub = CreditInstitutionHub.objects.last()
-        self.assertEqual(credit_institution_hub, credit_institution_sat_db.hub_entity)
-        account_credit_institution_link_table = (
-            AccountCreditInstitutionLink.objects.last()
-        )
-        self.assertEqual(account_credit_institution_link_table.from_hub, account_hub)
+        self.assertEqual(credit_institution_hub.link_credit_institution_account.all().first(), account_hub)
         self.assertEqual(
-            account_credit_institution_link_table.to_hub, credit_institution_hub
+            account_hub.link_account_credit_institution.all().first(), credit_institution_hub
         )
         # When trying to create a new credit institution with the same name, it should not create a new one
         new_credit_institution_to_account(

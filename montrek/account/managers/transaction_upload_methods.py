@@ -2,10 +2,8 @@ import pandas as pd
 from typing import List
 from account.models import AccountHub
 from credit_institution.models import CreditInstitutionStaticSatellite
-from link_tables.models import AccountCreditInstitutionLink
 from transaction.models import TransactionSatellite
 from baseclasses.repositories.db_helper import select_satellite
-from baseclasses.repositories.db_helper import get_link_to_hub
 from transaction.repositories.transaction_account_queries import (
     new_transactions_to_account_from_df,
 )
@@ -14,7 +12,7 @@ from transaction.repositories.transaction_account_queries import (
 def upload_dkb_transactions(
     account_hub: AccountHub, file_path: str
 ) -> List[TransactionSatellite]:
-    credit_institution_hub = get_link_to_hub(account_hub, AccountCreditInstitutionLink)
+    credit_institution_hub = account_hub.link_account_credit_institution.all().first()
     credit_institution = select_satellite(
         credit_institution_hub, CreditInstitutionStaticSatellite
     )

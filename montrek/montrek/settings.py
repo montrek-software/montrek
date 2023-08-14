@@ -42,7 +42,6 @@ INSTALLED_APPS = [
     "account",
     "baseclasses",
     "transaction",
-    "link_tables",
     "credit_institution",
     "file_upload",
 ]

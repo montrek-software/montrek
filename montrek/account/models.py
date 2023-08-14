@@ -12,7 +12,22 @@ from account.managers.validators import montrek_iban_validator
 
 
 class AccountHub(baseclass_models.MontrekHubABC):
-    pass
+    link_account_credit_institution = models.ManyToManyField(
+        "credit_institution.CreditInstitutionHub",
+        related_name="link_credit_institution_account",
+    )
+    link_account_transaction = models.ManyToManyField(
+        "transaction.TransactionHub", 
+        related_name="link_transaction_account"
+    )
+    link_account_file_upload_registry = models.ManyToManyField(
+        "file_upload.FileUploadRegistryHub",
+        related_name="link_file_upload_registry_account",
+    )
+    link_account_transaction_category_map = models.ManyToManyField(
+        "transaction.TransactionCategoryMapHub",
+        related_name="link_transaction_category_map_account",
+    )
 
 
 class AccountStaticSatellite(baseclass_models.MontrekSatelliteABC):

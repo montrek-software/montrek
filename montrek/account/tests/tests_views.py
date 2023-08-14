@@ -15,14 +15,8 @@ from transaction.tests.factories.transaction_factories import TransactionHubFact
 from transaction.tests.factories.transaction_factories import (
     TransactionSatelliteFactory,
 )
-from link_tables.tests.factories.link_tables_factories import (
-    AccountTransactionLinkFactory,
-)
 from credit_institution.tests.factories.credit_institution_factories import (
     CreditInstitutionStaticSatelliteFactory,
-)
-from link_tables.tests.factories.link_tables_factories import (
-    AccountCreditInstitutionLinkFactory,
 )
 from transaction.repositories.transaction_account_queries import (
     get_transactions_by_account_id,
@@ -98,9 +92,7 @@ class TestBankAccountViews(TestCase):
         transaction_satellite_2 = TransactionSatelliteFactory(
             hub_entity=transaction_hub
         )
-        account_transaction_link = AccountTransactionLinkFactory(
-            from_hub=account_hub, to_hub=transaction_hub
-        )
+        account_hub.link_account_transaction.add(transaction_hub)
         bank_account_property_satellite = BankAccountPropertySatelliteFactory(
             hub_entity=account_hub
         )
@@ -108,8 +100,8 @@ class TestBankAccountViews(TestCase):
             hub_entity=account_hub
         )
         credit_institution_factory = CreditInstitutionStaticSatelliteFactory()
-        account_credit_institution_link = AccountCreditInstitutionLinkFactory(
-            from_hub=account_hub, to_hub=credit_institution_factory.hub_entity
+        account_hub.link_account_credit_institution.add(
+            credit_institution_factory.hub_entity
         )
 
     def test_bank_account_account_value(self):
