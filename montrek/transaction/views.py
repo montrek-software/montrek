@@ -6,7 +6,7 @@ from .forms import TransactionSatelliteForm
 from transaction.repositories.transaction_account_queries import (
     new_transaction_to_account,
 )
-from transaction.repositories.transaction_model_queries import (
+from transaction.repositories.transaction_account_queries import (
     get_transactions_by_account_id
 )
 from transaction.models import TransactionSatellite
@@ -27,6 +27,7 @@ class AccountTransactionsListView(ListView):
     template_name = 'account_transactions_list.html'
     context_object_name = 'transactions'
     model = TransactionSatellite
+    paginate_by = 10
 
     def get_queryset(self):
         account_id = self.kwargs['account_id']
