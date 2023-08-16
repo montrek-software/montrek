@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block content %}
+ {% for transaction in page_obj %}
+  <div class="row">
+   <div class="col-md-2">{{ transaction.transaction_date }}</div>
+   <div class="col-md-2">{{ transaction.transaction_description }}</div>
+  </div>
+ {% endfor %}
+
+{% endblock %}

@@ -1,9 +1,13 @@
 from django.shortcuts import render
 from django.shortcuts import redirect
 from django.views.generic import DetailView
+from django.views.generic import ListView
 from .forms import TransactionSatelliteForm
 from transaction.repositories.transaction_account_queries import (
     new_transaction_to_account,
+)
+from transaction.repositories.transaction_model_queries import (
+    get_transactions_by_account_id
 )
 from transaction.models import TransactionSatellite
 from account.models import AccountStaticSatellite
@@ -18,6 +22,15 @@ class TransactionSatelliteDetailView(DetailView):
         context['form'] = TransactionSatelliteForm(instance=self.object)
         context['category'] = self.object.transaction_category
         return context
+
+class AccountTransactionsListView(ListView):
+    template_name = 'account_transactions_list.html'
+    context_object_name = 'transactions'
+    model = TransactionSatellite
+
+    def get_queryset(self):
+        account_id = self.kwargs['account_id']
+        return get_transactions_by_account_id(account_id)
 
 # Create your views here.
 #### Transaction Views ####
