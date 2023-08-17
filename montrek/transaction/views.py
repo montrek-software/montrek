@@ -23,16 +23,6 @@ class TransactionSatelliteDetailView(DetailView):
         context['category'] = self.object.transaction_category
         return context
 
-class AccountTransactionsListView(ListView):
-    template_name = 'account_transactions_list.html'
-    context_object_name = 'transactions'
-    model = TransactionSatellite
-    paginate_by = 10
-
-    def get_queryset(self):
-        account_id = self.kwargs['account_id']
-        transactions = get_transactions_by_account_id(account_id)
-        return transactions.order_by("-transaction_date").all()
 
 # Create your views here.
 #### Transaction Views ####

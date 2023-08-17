@@ -17,9 +17,4 @@ urlpatterns = [
         views.TransactionSatelliteDetailView.as_view(),
         name="transaction_view",
     ),
-    path(
-        "account_transactions/<int:account_id>",
-        views.AccountTransactionsListView.as_view(),
-        name="account_transactions",
-    )
 ]
