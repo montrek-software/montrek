@@ -50,34 +50,7 @@
     </div>
 
     {% block table %}
-        <div id="id_transaction_list">
-            <table class="table">
-                <tr>
-                    <th>Description</th>
-                    <th>Date</th>
-                    <th>Amount</th>
-                    <th>Price</th>
-                    <th>Value</th>
-                    <th>Category</th>
-                    <th>Actions</th>
-                </tr>
-                {% for transaction in account_transactions %}
-                    <tr>
-                        <td>{{ transaction.transaction_description }}</td>
-                        <td>{{ transaction.transaction_date }}</td>
-                        <td>{{ transaction.transaction_amount }}</td>
-                        <td>{{ transaction.transaction_price }}</td>
-                        <td>{{ transaction.transaction_value }}</td>
-                        <td>{{ transaction.transaction_category.typename }}</td>
-                        <td><a id="id_transaction_view_{{ transaction.id }}" href=
-                            {% url 'transaction_view' pk=transaction.id %}>
-                            <span class="glyphicon glyphicon-eye-open"/></a>
-                        </td>
-                    </tr>
-                {% endfor %}
-            </table>
-
-        </div>
+    {% include 'account_transactions_list.html' with transactions=transactions_page %}
     {% endblock %}
 </div>
 {% endblock %}

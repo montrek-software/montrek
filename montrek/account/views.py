@@ -10,6 +10,7 @@ from transaction.repositories.transaction_model_queries import (
 )
 from account.repositories.account_model_queries import new_account
 from account.repositories.account_model_queries import account_view_data
+from transaction.repositories.transaction_account_queries import get_paginated_transactions
 from credit_institution.repositories.credit_institution_model_queries import (
     get_credit_institution_satellite_by_account_hub_id,
 )
@@ -116,4 +117,7 @@ def bank_account_view_data(account_id: int):
 
 def bank_account_view(request, account_id: int):
     account_data = bank_account_view_data(account_id)
+    # Get the paginated transactions
+    page_number = request.GET.get('page', 1)
+    account_data['transactions_page'] = get_paginated_transactions(account_id, page_number)
     return render(request, "bank_account_view.html", account_data)

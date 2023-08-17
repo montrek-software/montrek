@@ -31,7 +31,8 @@ class AccountTransactionsListView(ListView):
 
     def get_queryset(self):
         account_id = self.kwargs['account_id']
-        return get_transactions_by_account_id(account_id)
+        transactions = get_transactions_by_account_id(account_id)
+        return transactions.order_by("-transaction_date").all()
 
 # Create your views here.
 #### Transaction Views ####

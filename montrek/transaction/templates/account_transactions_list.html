@@ -1,28 +1,45 @@
-{% extends 'base.html' %}
-
-{% block content %}
- {% for transaction in page_obj %}
-  <div class="row">
-   <div class="col-md-2">{{ transaction.transaction_date }}</div>
-   <div class="col-md-2">{{ transaction.transaction_description }}</div>
-  </div>
- {% endfor %}
+<div id="id_transaction_list">
+<table class="table">
+    <tr>
+        <th>Description</th>
+        <th>Date</th>
+        <th>Amount</th>
+        <th>Price</th>
+        <th>Value</th>
+        <th>Category</th>
+        <th>Actions</th>
+    </tr>
+     {% for transaction in transactions %}
+        <tr>
+            <td>{{ transaction.transaction_description }}</td>
+            <td>{{ transaction.transaction_date }}</td>
+            <td>{{ transaction.transaction_amount }}</td>
+            <td>{{ transaction.transaction_price }}</td>
+            <td>{{ transaction.transaction_value }}</td>
+            <td>{{ transaction.transaction_category.typename }}</td>
+            <td><a id="id_transaction_view_{{ transaction.id }}" href=
+                {% url 'transaction_view' pk=transaction.id %}>
+                <span class="glyphicon glyphicon-eye-open"/></a>
+            </td>
+        </tr>
+     {% endfor %}
+</table>
+</div>
  <div class="pagination">
     <span class="step-links">
-        {% if page_obj.has_previous %}
+        {% if transactions.has_previous %}
             <a href="?page=1">&laquo; first</a>
-            <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+            <a href="?page={{ transactions.previous_page_number }}">previous</a>
         {% endif %}
 
         <span class="current">
-            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+            Page {{ transactions.number }} of {{ transactions.paginator.num_pages }}.
         </span>
 
-        {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}">next</a>
-            <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+        {% if transactions.has_next %}
+            <a href="?page={{ transactions.next_page_number }}">next</a>
+            <a href="?page={{ transactions.paginator.num_pages }}">last &raquo;</a>
         {% endif %}
     </span>
 </div>
 
-{% endblock %}
