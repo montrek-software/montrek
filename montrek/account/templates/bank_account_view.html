@@ -1,29 +1,6 @@
 {% extends 'base.html' %}
+{% block title %}{{ account_statics.account_name }}{% endblock %}
 {% block content %}
-<div class="container">
-    <div class="row">
-        <div class="col-lg-6">
-            <h1>{{ account_statics.account_name }}</h1>
-        </div>
-    </div>
-</div>
-<div class="panel-footer">
-    <table>
-        <tr>
-    <a id="list_back" href={% url "account_list" %}>
-        <span class="glyphicon glyphicon-chevron-left"/></a>
-    <a id="delete_account" href=
-        {% url 'account_delete_form' account_id=account_statics.hub_entity.id %}>
-        <span class="glyphicon glyphicon-trash"/></a>
-    <a id="add_transaction" href=
-        {% url 'transaction_add_form' account_id=account_statics.hub_entity.id %}>
-        <span class="glyphicon glyphicon-plus"/></a>
-    <a id="id_transactions_upload" href=
-        {% url 'upload_transaction_to_account_file' account_id=account_statics.hub_entity.id %}>
-        <span class="glyphicon glyphicon-upload"/></a>
-        </tr>
-    </table>
-</div>
 <div class="container">
     <h2 id="id_account_details_title">Bank Account Details</h2>
     <div id="id_account_details">

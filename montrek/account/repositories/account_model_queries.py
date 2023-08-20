@@ -2,6 +2,8 @@ from django.apps import apps
 import datetime
 from typing import List
 from django_pandas.io import read_frame
+from django.urls import reverse
+from dataclasses import dataclass
 
 from baseclasses import models as baseclass_models
 from baseclasses.repositories.db_helper import new_satellite_entry
@@ -40,6 +42,18 @@ def new_account(
     )
     return account_hub_object
 
+@dataclass
+class TabElement:
+    # TODO: Move to baseclasses
+    name: str
+    link: str
+    active: bool = False
+
+@dataclass
+class ActionElement:
+    icon: str
+    link: str
+    action_id: str
 
 def account_view_data(account_id: int):
     account_statics = account_static_satellite().objects.get(hub_entity=account_id)
@@ -50,8 +64,40 @@ def account_view_data(account_id: int):
     income_expanse_plot = draw_monthly_income_expanses_plot(
         account_transactions_df
     ).format_html()
+    tabs = (
+        TabElement(name="Overview", link="#overview", active=True),
+        TabElement(name="Transactions", link="#transactions"),
+        TabElement(name="Graphs", link="#graphs"),
+        TabElement(name="Uploads", link="#uploads"),
+        TabElement(name="Transaction Category Map", link="#transaction_category_map"),
+    )
+    actions = (
+        ActionElement(
+            icon="chevron-left",
+            link=reverse('account_list'),
+            action_id="list_back",
+        ),
+        ActionElement(
+            icon="trash",
+            link=reverse('account_delete_form', kwargs={'account_id': account_id}),
+            action_id="delete_account",
+        ),
+        ActionElement(
+            icon="plus",
+            link=reverse('transaction_add_form', kwargs={'account_id': account_id}),
+            action_id="add_transaction",
+        ),
+        ActionElement(
+            icon="upload",
+            link=reverse('upload_transaction_to_account_file', kwargs={'account_id': account_id}),
+            action_id="id_transactions_upload",
+        ),
+    )
+
     return {
         "account_statics": account_statics,
         "account_transactions": account_transactions,
         "income_expanse_plot": income_expanse_plot,
+        "tab_elements": tabs,
+        "action_elements": actions,
     }

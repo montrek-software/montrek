@@ -22,49 +22,41 @@
             <!-- ... Your Navbar Code ... -->
     </div>
 
-    <!-- TITLE -->
     <div class="row">
-        <div class="col-md-offset-2 col-md-8">
-            <h1>TITLE</h1>
-        </div>
-    </div>
-
-    <!-- TABS -->
-    <div class="row">
-        <div class="col-md-offset-2 col-md-8">
-            <!-- Use Bootstrap's tab component or just styled links/buttons -->
-            <ul class="nav nav-tabs">
-                <li class="active"><a href="#">Tab1</a></li>
-                <li><a href="#">Tab2</a></li>
-                <!-- ... More tabs ... -->
-            </ul>
-        </div>
-    </div>
-
-    <!-- ACTION BAR -->
-    <div class="row">
-        <div class="col-md-offset-2 col-md-8">
-            <!-- Your action bar elements (could be buttons or other controls) -->
-        </div>
-    </div>
-
-    <!-- CONTENT -->
-    <div class="row">
-        <!-- OVERVIEW -->
-        <div class="col-md-2">
-            <h2>OVERVIEW</h2>
-            <!-- Overview content here -->
-        </div>
-
-        <!-- MAIN CONTENT -->
-        <div class="col-md-8">
-            <!-- Your main content goes here -->
+	<div class="col-md-2">
+		<div class="row">
+		    <h2>OVERVIEW</h2>
+		</div>
+		<div class="row">
+		    <h2>LINKS</h2>
+		</div>
+	</div>
+	<div class="col-md-8">
+	    <!-- TITLE -->
+	    <div class="row">
+		    <h1>{% block title %}{% endblock %}</h1>
+	    </div>
+	    <!-- TABS -->
+	    <div class="row">
+		    <!-- Use Bootstrap's tab component or just styled links/buttons -->
+		    <ul class="nav nav-tabs">
+			{% for tab in tab_elements %}
+			<li><a href="{{ tab.link }}">{{ tab.name }}</a></li>
+			{% endfor %}
+		    </ul>
+	    </div>
+	    <!-- ACTION BAR -->
+	    <div class="row">
+		{% for action in action_elements %}
+		<a id="{{ action.action_id }}" href="{{ action.link }}" class="btn btn-primary">
+			<span class="glyphicon glyphicon-{{ action.icon }}"/></a>
+		{% endfor %}
+	    </div>
+	    <!-- CONTENT -->
+	    <div class="row">
 		  {% block content %}{% endblock %}
-
-            <!-- LINKS -->
-            <h2>LINKS</h2>
-            <!-- Your links or related content goes here -->
-        </div>
+	    </div>
+	</div>
     </div>
 
 </div>
