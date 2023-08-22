@@ -1,18 +1,11 @@
 from django.apps import apps
 import datetime
 from typing import List
-from django_pandas.io import read_frame
 from django.urls import reverse
 from dataclasses import dataclass
 
 from baseclasses import models as baseclass_models
 from baseclasses.repositories.db_helper import new_satellite_entry
-from transaction.repositories.transaction_account_queries import (
-    get_transactions_by_account_id,
-)
-from reporting.managers.account_transaction_plots import (
-    draw_monthly_income_expanses_plot,
-)
 
 def account_hub():
     return apps.get_model("account", "AccountHub")
@@ -56,20 +49,28 @@ class ActionElement:
     action_id: str
 
 def account_view_data(account_id: int):
-    account_statics = account_static_satellite().objects.get(hub_entity=account_id)
-    account_transactions = (
-        get_transactions_by_account_id(account_id).order_by("-transaction_date").all()
-    )
-    account_transactions_df = read_frame(account_transactions)
-    income_expanse_plot = draw_monthly_income_expanses_plot(
-        account_transactions_df
-    ).format_html()
     tabs = (
-        TabElement(name="Overview", link="#overview", active=True),
-        TabElement(name="Transactions", link="#transactions"),
-        TabElement(name="Graphs", link="#graphs"),
-        TabElement(name="Uploads", link="#uploads"),
-        TabElement(name="Transaction Category Map", link="#transaction_category_map"),
+        TabElement(
+            name="Overview", 
+            link=reverse('bank_account_view_overview', kwargs={'account_id': account_id}),
+            active=True
+        ),
+        TabElement(
+            name="Transactions", 
+            link=reverse('bank_account_view_transactions', kwargs={'account_id': account_id}),
+        ),
+        TabElement(
+            name="Graphs", 
+            link=reverse('bank_account_view_graphs', kwargs={'account_id': account_id}),
+        ),
+        TabElement(
+            name="Uploads", 
+            link=reverse('bank_account_view_uploads', kwargs={'account_id': account_id}),
+        ),
+        TabElement(
+            name="Transaction Category Map", 
+            link=reverse('bank_account_view_transaction_category_map', kwargs={'account_id': account_id}),
+        ),
     )
     actions = (
         ActionElement(
@@ -93,11 +94,10 @@ def account_view_data(account_id: int):
             action_id="id_transactions_upload",
         ),
     )
+    account_statics = account_static_satellite().objects.get(hub_entity=account_id)
 
     return {
-        "account_statics": account_statics,
-        "account_transactions": account_transactions,
-        "income_expanse_plot": income_expanse_plot,
         "tab_elements": tabs,
         "action_elements": actions,
+        "account_statics": account_statics,
     }
