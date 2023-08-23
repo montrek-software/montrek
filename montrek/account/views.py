@@ -59,6 +59,8 @@ def account_list(request):
 
 def account_view(request, account_id: int):
     account_data = account_view_data(account_id)
+    page_number = request.GET.get('page', 1)
+    account_data['transactions_page'] = get_paginated_transactions(account_id, page_number)
     return render(request, "account_view.html", account_data)
 
 

@@ -11,6 +11,8 @@ from transaction.repositories.transaction_account_queries import (
 )
 from transaction.models import TransactionSatellite
 from account.models import AccountStaticSatellite
+from account.models import AccountHub
+from baseclasses.repositories import db_helper 
 
 class TransactionSatelliteDetailView(DetailView):
     model = TransactionSatellite
@@ -24,12 +26,12 @@ class TransactionSatelliteDetailView(DetailView):
         return context
 
 
-# Create your views here.
-#### Transaction Views ####
-
+def _get_account_statics(account_id: int):
+    account_hub = db_helper.get_hub_by_id(account_id, AccountHub)
+    return db_helper.select_satellite(account_hub, AccountStaticSatellite )
 
 def transaction_add_form(request, account_id: int):
-    account_statics = AccountStaticSatellite.objects.get(hub_entity=account_id)
+    account_statics = _get_account_statics(account_id)
     return render(
         request, "transaction_add_form.html", {"account_statics": account_statics}
     )
@@ -45,5 +47,8 @@ def transaction_add(request, account_id: int):
         transaction_type=None,
         transaction_category="",
     )
+    account_statics = _get_account_statics(account_id) 
+    if account_statics.account_type == "BankAccount":
+        return redirect(f"/account/{account_id}/bank_account_view/transactions")
     return redirect(f"/account/{account_id}/view")
 

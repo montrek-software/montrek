@@ -310,7 +310,7 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
             AccountStaticSatellite, "account_name", "Billy's DKB account"
         )[0]
         self.browser.get(
-            self.live_server_url + f"/account/{account_id}/bank_account_view"
+            self.live_server_url + f"/account/{account_id}/bank_account_view/transactions"
         )
         header_text = self.browser.find_element(By.TAG_NAME, "h1").text
         self.assertIn("Billy's DKB account", header_text)
