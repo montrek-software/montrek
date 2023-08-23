@@ -19,6 +19,7 @@ from django.urls import path, include
 from baseclasses import views as base_views
 
 urlpatterns = [
+    path("", base_views.home, name="home"),
     path("under_construction", base_views.under_construction, name="under_construction"),
     path("admin/", admin.site.urls),
     path("account/", include("account.urls")),
