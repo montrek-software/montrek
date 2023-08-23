@@ -2,10 +2,10 @@ from django.apps import apps
 import datetime
 from typing import List
 from django.urls import reverse
-from dataclasses import dataclass
 
 from baseclasses import models as baseclass_models
 from baseclasses.repositories.db_helper import new_satellite_entry
+from baseclasses.dataclasses.view_classes import TabElement, ActionElement
 
 def account_hub():
     return apps.get_model("account", "AccountHub")
@@ -35,18 +35,6 @@ def new_account(
     )
     return account_hub_object
 
-@dataclass
-class TabElement:
-    # TODO: Move to baseclasses
-    name: str
-    link: str
-    active: bool = False
-
-@dataclass
-class ActionElement:
-    icon: str
-    link: str
-    action_id: str
 
 def account_view_data(account_id: int):
     tabs = (
