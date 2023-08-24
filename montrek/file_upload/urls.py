@@ -7,4 +7,9 @@ urlpatterns = [
         views.upload_transaction_to_account_file,
         name="upload_transaction_to_account_file",
     ),
+    path(
+        "download_upload_file/<int:upload_registry_id>/",
+        views.download_upload_file,
+        name="download_upload_file",
+    ),
 ]

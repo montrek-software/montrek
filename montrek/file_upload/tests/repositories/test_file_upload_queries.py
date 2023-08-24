@@ -9,6 +9,10 @@ from file_upload.repositories.file_upload_queries import (
 )
 from file_upload.repositories.file_upload_queries import new_file_upload_registry
 from file_upload.repositories.file_upload_queries import new_file_upload_file
+from file_upload.repositories.file_upload_queries import get_upload_regisrty_files_from_account_id
+from file_upload.repositories.file_upload_queries import (
+    get_file_satellite_from_registry_hub_id
+)
 from file_upload.tests.factories.file_upload_factories import (
     FileUploadRegistryStaticSatelliteFactory,
 )
@@ -70,3 +74,27 @@ class UploadTransactionToAccountFileViewTest(TestCase):
             self.file_registry_sat_factory, self.txt_file
         )
         self.assertEqual(file_file_sat.file.name, "uploads/test_file.txt")
+
+    def test_get_upload_regisrty_files_from_account_id(self):
+        test_upload_files = get_upload_regisrty_files_from_account_id(
+            self.account_hub_factory.id
+        )
+        self.assertEqual(len(test_upload_files), 1)
+        self.assertEqual(test_upload_files[0].file_name, self.txt_file.name)
+        file_registry_sat_factory = FileUploadRegistryStaticSatelliteFactory(
+            file_name="test_file2.txt"
+        )
+        self.account_hub_factory.link_account_file_upload_registry.add(
+            file_registry_sat_factory.hub_entity
+        )
+        test_upload_files = get_upload_regisrty_files_from_account_id(
+            self.account_hub_factory.id
+        )
+        self.assertEqual(len(test_upload_files), 2)
+        self.assertEqual(test_upload_files[1].file_name, "test_file2.txt")
+
+    def test_get_file_satellite_from_registry_hub_id(self):
+        test_file_sat = get_file_satellite_from_registry_hub_id(
+            self.file_registry_sat_factory.hub_entity.id
+        )
+        self.assertEqual(test_file_sat, self.file_file_sat_factory)

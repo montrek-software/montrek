@@ -2,8 +2,6 @@
 {% block content %}
 <div class="container">
     <h2 id="id_graphs_title">Uploads</h2>
-    <div>
-        Under construction!
-    </div>
+     {% include 'account_upload_registries_list.html' with upload_registries=upload_registries_page %}
 </div>
 {% endblock %}

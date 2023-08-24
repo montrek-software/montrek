@@ -15,6 +15,7 @@ from transaction.repositories.transaction_account_queries import (
 from account.repositories.account_model_queries import new_account
 from account.repositories.account_model_queries import account_view_data
 from transaction.repositories.transaction_account_queries import get_paginated_transactions
+from file_upload.repositories.upload_registry_account_queries import get_paginated_upload_registries
 from credit_institution.repositories.credit_institution_model_queries import (
     get_credit_institution_satellite_by_account_hub_id,
 )
@@ -163,6 +164,8 @@ def bank_account_view_graphs(request, account_id: int):
 
 def bank_account_view_uploads(request, account_id: int):
     account_data = account_view_data(account_id)
+    page_number = request.GET.get('page', 1)
+    account_data['upload_registries_page'] = get_paginated_upload_registries(account_id, page_number)
     return render(request, "bank_account_view_uploads.html", account_data)
 
 def bank_account_view_transaction_category_map(request, account_id: int):

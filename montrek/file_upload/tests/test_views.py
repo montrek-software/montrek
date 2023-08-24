@@ -14,6 +14,7 @@ from file_upload.tests.factories.file_upload_factories import (
     FileUploadFileStaticSatelliteFactory,
 )
 from file_upload.views import upload_transaction_to_account_file
+from file_upload.views import download_upload_file
 
 
 class UploadTransactionToAccountFileViewTest(TestCase):
@@ -59,15 +60,35 @@ class UploadTransactionToAccountFileViewTest(TestCase):
         # Assertions
         self.assertEqual(response.status_code, 200)  # Check if redirect
 
+class DownloadTransactionToAccountFileViewTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.account_satellite = AccountStaticSatelliteFactory()
+        cls.credit_institution_satellite = CreditInstitutionStaticSatelliteFactory()
+        cls.account_satellite.hub_entity.link_account_credit_institution.add(
+            cls.credit_institution_satellite.hub_entity
+        )
+        # Create a file to upload
+        txt_file_content = b"Test file content"
+        cls.txt_file = SimpleUploadedFile("test_file.txt", txt_file_content)
+        cls.file_registry_sat_factory = FileUploadRegistryStaticSatelliteFactory(
+            file_name=cls.txt_file.name
+        )
+        cls.file_file_sat_factory = FileUploadFileStaticSatelliteFactory(
+            file=cls.txt_file
+        )
+        cls.file_registry_sat_factory.hub_entity.link_file_upload_registry_file_upload_file.add(
+            cls.file_file_sat_factory.hub_entity
+        )
 
-#    def test_dkb_file_upload_wrong_input_type(self):
-#        self.file_registry_sat_factory.upload_status = 'pending'
-#        self.file_registry_sat_factory.save()
-#        self.credit_institution_satellite.account_upload_method = 'dkb'
-#        self.credit_institution_satellite.save()
-#        file_reg_sat = process_file(self.file_registry_sat_factory,
-#                                    self.account_satellite.hub_entity.id)
-#        self.assertEqual(file_reg_sat.upload_status, 'failed')
-#        self.assertEqual(file_reg_sat.upload_message,
-#            f'DKB Upload expects a file of type .csv, but got {self.txt_file.name} '
-#                        )
+    def test_download_upload_file(self):
+        file_registry_hub_id = self.file_registry_sat_factory.hub_entity.id
+        url = reverse("download_upload_file", args=(file_registry_hub_id,))
+        request_factory = RequestFactory()
+        request = request_factory.get(url)
+
+        # Execute the view function
+        response = download_upload_file(request, file_registry_hub_id)
+        self.assertEqual(response.status_code, 200)  # Check if redirect
+
+
