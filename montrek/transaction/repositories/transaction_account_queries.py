@@ -1,6 +1,7 @@
 import pandas as pd
 from django.apps import apps
 from django.db.models import Q
+from django.core.paginator import Paginator
 from typing import List
 import datetime
 
@@ -97,3 +98,10 @@ def get_transactions_by_account_hub(
     )
 
     return transaction_satellites
+
+def get_paginated_transactions(account_id, page_number=1, paginate_by=10):
+    transactions = get_transactions_by_account_id(account_id)
+    paginator = Paginator(transactions.order_by("-transaction_date").all(), paginate_by)
+    page = paginator.get_page(page_number)
+    return page
+

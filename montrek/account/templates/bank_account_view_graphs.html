@@ -1,0 +1,9 @@
+{% extends 'bank_account_view.html' %}
+{% block content %}
+<div class="container">
+    <h2 id="id_graphs_title">Graphs</h2>
+    <div id='id_income_expanse_plot'>
+        {{ income_expanse_plot|safe }}
+    </div>
+</div>
+{% endblock %}

@@ -114,7 +114,7 @@ class AccountFunctionalTests(MontrekFunctionalTest):
         )
         self.browser.find_element(By.ID, f"link_{first_id}").click()
         # The name of the Account is shown in the header
-        header_text = self.browser.find_element(By.TAG_NAME, "h1").text
+        header_text = self.browser.find_element(By.ID, "page_title").text
         self.assertIn("Billy's account", header_text)
         # After clicking on the back button he is back at the list
         self.browser.find_element(By.ID, "list_back").click()
@@ -282,7 +282,7 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
             AccountStaticSatellite, "Billy's Bank account", "account_name"
         )
         self.browser.find_element(By.ID, f"link_{first_id}").click()
-        header_text = self.browser.find_element(By.TAG_NAME, "h2").text
+        header_text = self.browser.find_element(By.ID, "id_account_details_title").text
         self.assertIn("Bank Account Details", header_text)
         self.check_for_row_in_table(
             ["Billy's Bank account", "Bank of Testonia", "DE12345678901234567890"],
@@ -310,7 +310,7 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
             AccountStaticSatellite, "account_name", "Billy's DKB account"
         )[0]
         self.browser.get(
-            self.live_server_url + f"/account/{account_id}/bank_account_view"
+            self.live_server_url + f"/account/{account_id}/bank_account_view/transactions"
         )
         header_text = self.browser.find_element(By.TAG_NAME, "h1").text
         self.assertIn("Billy's DKB account", header_text)

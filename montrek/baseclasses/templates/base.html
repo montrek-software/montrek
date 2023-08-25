@@ -10,7 +10,72 @@
   <link rel="stylesheet" href="{% static 'base.css' %}" >
  </head>
  <body>
-  {% include 'navbar.html' %}
-  {% block content %}{% endblock %}
+	 <!-- Bootstrap CSS Link -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+<!-- Your Webpage -->
+<div class="container-fluid">
+
+    <!-- NAVBAR -->
+    <div class="row">
+	  {% include 'navbar.html' %}
+            <!-- ... Your Navbar Code ... -->
+    </div>
+
+    <div class="row">
+	<div class="col-md-2">
+		<div class="row">
+		    <h2>OVERVIEW</h2>
+		</div>
+		<div class="row">
+		    <h2>LINKS</h2>
+            <table>
+                <tr>
+                    <td><a href="https://github.com/chrishombach/montrek" target="_blank">Github</a></td>
+                </tr>
+                <tr>
+                    <td><a href="https://banking.dkb.de/login" target="_blank">DKB</a></td>
+                </tr>
+                <tr>
+                    <td><a href="https://webtrading.onvista-bank.de/login" target="_blank">Onvista</a></td>
+                </tr>
+            </table>
+		</div>
+	</div>
+	<div class="col-md-8">
+	    <!-- TITLE -->
+	    <div class="row">
+		    <h1 id="page_title">{% block title %}{% endblock %}</h1>
+	    </div>
+	    <!-- TABS -->
+	    <div class="row">
+		    <!-- Use Bootstrap's tab component or just styled links/buttons -->
+		    <ul class="nav nav-tabs">
+			{% for tab in tab_elements %}
+			<li><a href="{{ tab.link }}">{{ tab.name }}</a></li>
+			{% endfor %}
+		    </ul>
+	    </div>
+	    <!-- ACTION BAR -->
+	    <div class="row">
+		{% for action in action_elements %}
+		<a id="{{ action.action_id }}" href="{{ action.link }}" class="btn btn-primary">
+			<span class="glyphicon glyphicon-{{ action.icon }}"/></a>
+		{% endfor %}
+	    </div>
+	    <!-- CONTENT -->
+	    <div class="row">
+		  {% block content %}{% endblock %}
+	    </div>
+	</div>
+    </div>
+
+</div>
+
+<!-- jQuery and Bootstrap JS -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+
    </body>
 </html>

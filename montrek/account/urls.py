@@ -27,4 +27,34 @@ urlpatterns = [
         views.bank_account_view,
         name="bank_account_view",
     ),
+    path(
+        "<int:account_id>/bank_account_view",
+        views.bank_account_view,
+        name="bank_account_view",
+    ),
+    path(
+        "<int:account_id>/bank_account_view/overview",
+        views.bank_account_view_overview,
+        name="bank_account_view_overview",
+    ),
+    path(
+        "<int:account_id>/bank_account_view/transactions",
+        views.bank_account_view_transactions,
+        name="bank_account_view_transactions",
+    ),
+    path(
+        "<int:account_id>/bank_account_view/graphs",
+        views.bank_account_view_graphs,
+        name="bank_account_view_graphs",
+    ),
+    path(
+        "<int:account_id>/bank_account_view/uploads",
+        views.bank_account_view_uploads,
+        name="bank_account_view_uploads",
+    ),
+    path(
+        "<int:account_id>/bank_account_view/transaction_category_map",
+        views.bank_account_view_transaction_category_map,
+        name="bank_account_view_transaction_category_map",
+    ),
 ]
