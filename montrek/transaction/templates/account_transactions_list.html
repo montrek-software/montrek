@@ -1,3 +1,4 @@
+{% load data_table_filters %}
 <div id="id_transaction_list">
 <table class="table">
     <tr>
@@ -11,7 +12,7 @@
     </tr>
      {% for transaction in transactions %}
         <tr>
-            <td>{{ transaction.transaction_description }}</td>
+            <td>{{ transaction|show_item:"transaction_description" }}</td>
             <td>{{ transaction.transaction_date }}</td>
             <td>{{ transaction.transaction_amount }}</td>
             <td>{{ transaction.transaction_price }}</td>
