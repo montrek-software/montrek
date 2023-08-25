@@ -2,6 +2,6 @@
 {% block content %}
 <div class="container">
     <h2 id="id_transaction_list_title">Transactions</h2>
-     {% include 'account_transactions_list.html' with transactions=transactions_page %}
+     {% include 'account_transactions_list.html' with columns=columns items=items table_objects=table_objects %}
 </div>
 {% endblock %}
