@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Dict
+
 from django.shortcuts import render, redirect
-from django.db import models
 from django.core.paginator import Paginator
 from django_pandas.io import read_frame
 
@@ -9,16 +9,16 @@ from account.models import AccountHub
 from account.models import AccountStaticSatellite
 from account.models import BankAccountPropertySatellite
 from account.models import BankAccountStaticSatellite
-from transaction.repositories.transaction_model_queries import (
-    get_transaction_category_by_transaction,
-)
+from account.repositories.account_model_queries import new_account
+from account.repositories.account_model_queries import account_view_data
+
 from transaction.repositories.transaction_account_queries import (
     get_transactions_by_account_id,
 )
-from account.repositories.account_model_queries import new_account
-from account.repositories.account_model_queries import account_view_data
 from transaction.repositories.transaction_account_queries import get_paginated_transactions
+
 from file_upload.repositories.upload_registry_account_queries import get_paginated_upload_registries
+
 from credit_institution.repositories.credit_institution_model_queries import (
     get_credit_institution_satellite_by_account_hub_id,
 )
@@ -26,15 +26,13 @@ from credit_institution.repositories.credit_institution_model_queries import (
     new_credit_institution_to_account,
 )
 from credit_institution.models import CreditInstitutionStaticSatellite
-from credit_institution.models import CreditInstitutionHub
-from baseclasses.repositories.db_helper import new_link_entry
+
 from baseclasses.repositories.db_helper import new_satellite_entry
+
 from reporting.managers.account_transaction_plots import (
     draw_monthly_income_expanses_plot,
 )
-
 # Create your views here.
-
 #### Account Views ####
 def account_new(request):
     account_type = request.POST.get("account_type", "Other")
@@ -42,10 +40,9 @@ def account_new(request):
     if account_type == "Other":
         new_account(request.POST["account_name"])
         return redirect("/account/list")
-    elif account_type == "Bank Account":
+    if account_type == "Bank Account":
         return redirect(f"/account/bank_account/new_form/{account_name}")
-    else:
-        return render(request, "under_construction.html")
+    return render(request, "under_construction.html")
 
 
 def account_new_form(request):
@@ -187,7 +184,9 @@ def bank_account_view_graphs(request, account_id: int):
 def bank_account_view_uploads(request, account_id: int):
     account_data = account_view_data(account_id)
     page_number = request.GET.get('page', 1)
-    account_data['upload_registries_page'] = get_paginated_upload_registries(account_id, page_number)
+    account_data['upload_registries_page'] = (
+        get_paginated_upload_registries(account_id, page_number)
+    )
     return render(request, "bank_account_view_uploads.html", account_data)
 
 def bank_account_view_transaction_category_map(request, account_id: int):
