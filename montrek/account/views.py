@@ -1,8 +1,4 @@
-from dataclasses import dataclass
-from typing import Dict
-
 from django.shortcuts import render, redirect
-from django.core.paginator import Paginator
 from django_pandas.io import read_frame
 
 from account.models import AccountHub
@@ -143,11 +139,6 @@ def bank_account_view_overview(request, account_id: int):
     ] = get_credit_institution_satellite_by_account_hub_id(account_id)
     return render(request, "bank_account_view_overview.html", account_data)
 
-@dataclass
-class MontrekDataTable:
-    fields: Dict[str,str]
-    table_objects: Paginator
-
 def bank_account_view_transactions(request, account_id: int):
     account_data = account_view_data(account_id)
     # Get the paginated transactions
@@ -159,14 +150,9 @@ def bank_account_view_transactions(request, account_id: int):
                           'Value': 'transaction_value',
                           'Category': 'transaction_category.typename',
                          }
-    data_table = MontrekDataTable(
-        fields = transaction_fields,
-        table_objects = get_paginated_transactions(account_id, page_number)
-    )
-    account_data.update({'columns': data_table.fields.keys(),
-                         'items': data_table.fields.values(),
-                         'table_objects': data_table.table_objects,
-                        })
+    account_data['columns'] = transaction_fields.keys()
+    account_data['items'] = transaction_fields.values()
+    account_data['table_objects'] = get_paginated_transactions(account_id, page_number)
     return render(request, "bank_account_view_transactions.html", account_data)
 
 def bank_account_view_graphs(request, account_id: int):
