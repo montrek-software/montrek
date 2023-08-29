@@ -153,7 +153,7 @@ def bank_account_view_transactions(request, account_id: int):
     account_data['columns'] = transaction_fields.keys()
     account_data['items'] = transaction_fields.values()
     account_data['table_objects'] = get_paginated_transactions(account_id, page_number)
-    return render(request, "bank_account_view_transactions.html", account_data)
+    return render(request, "bank_account_view_table.html", account_data)
 
 def bank_account_view_graphs(request, account_id: int):
     account_data = account_view_data(account_id)
