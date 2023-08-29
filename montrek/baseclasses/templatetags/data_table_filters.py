@@ -11,13 +11,13 @@ def get_attribute(obj, field_descriptor):
     if 'attr' in field_descriptor: 
         attrs = field_descriptor['attr'].split('.')
         for attr in attrs:
-            obj = getattr(obj, attr, None)
+            obj = _get_dotted_attr(obj, attr)
             if obj is None:
                 return ""
         return obj
     if 'link' in field_descriptor:
         kwargs = field_descriptor['link']['kwargs']
-        kwargs = {key: getattr(obj, value) for key, value in kwargs.items()}
+        kwargs = {key: _get_dotted_attr(obj, value) for key, value in kwargs.items()}
         url = reverse(field_descriptor['link']['url'], 
                       kwargs=kwargs,
                      )
@@ -27,3 +27,12 @@ def get_attribute(obj, field_descriptor):
                    'icon': icon,}
         return template.render(Context(context))
     return ""
+
+def _get_dotted_attr(obj, attr):
+    """Gets an attribute of an object dynamically from a string name"""
+    attrs = attr.split('.')
+    for attr in attrs:
+        obj = getattr(obj, attr, None)
+        if obj is None:
+            return ""
+    return obj

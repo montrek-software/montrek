@@ -177,10 +177,21 @@ def bank_account_view_graphs(request, account_id: int):
 def bank_account_view_uploads(request, account_id: int):
     account_data = account_view_data(account_id)
     page_number = request.GET.get('page', 1)
-    account_data['upload_registries_page'] = (
-        get_paginated_upload_registries(account_id, page_number)
-    )
-    return render(request, "bank_account_view_uploads.html", account_data)
+    upload_fields = {
+        'File Name': {'attr': 'file_name'},
+        'Upload Status': {'attr': 'upload_status'},
+        'Upload Message': {'attr': 'upload_message'},
+        'Upload Date': {'attr': 'created_at'},
+        'File': {'link': {'url': 'download_upload_file',
+                          'kwargs': {'upload_registry_id':'hub_entity.id'},
+                          'icon': 'download',
+                         }
+                 }
+    }
+    account_data['columns'] = upload_fields.keys()
+    account_data['items'] = upload_fields.values()
+    account_data['table_objects'] = get_paginated_upload_registries(account_id, page_number)
+    return render(request, "bank_account_view_table.html", account_data)
 
 def bank_account_view_transaction_category_map(request, account_id: int):
     account_data = account_view_data(account_id)
