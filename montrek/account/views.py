@@ -143,12 +143,19 @@ def bank_account_view_transactions(request, account_id: int):
     account_data = account_view_data(account_id)
     # Get the paginated transactions
     page_number = request.GET.get('page', 1)
-    transaction_fields = {'Description': 'transaction_description',
-                          'Date': 'transaction_date',
-                          'Amount': 'transaction_amount',
-                          'Price': 'transaction_price',
-                          'Value': 'transaction_value',
-                          'Category': 'transaction_category.typename',
+    transaction_fields = {
+        'Counterparty': {'attr': 'transaction_party'},
+        'IBAN': {'attr': 'transaction_party_iban'},
+        'Description': {'attr': 'transaction_description'},
+        'Date': {'attr': 'transaction_date'},
+        'Value': {'attr': 'transaction_value'},
+        'Category': {'attr': 'transaction_category.typename'},
+        'Actions': {
+            'link': {'url': 'transaction_view',
+                     'kwargs': {'pk':'id'},
+                     'icon': 'eye-open', 
+                   },
+        },
                          }
     account_data['columns'] = transaction_fields.keys()
     account_data['items'] = transaction_fields.values()
