@@ -1,6 +1,5 @@
-from django.test import TestCase
-import datetime
 from decimal import Decimal
+from django.test import TestCase
 from account.models import AccountHub
 from account.models import AccountStaticSatellite
 from account.models import BankAccountPropertySatellite
@@ -17,9 +16,6 @@ from transaction.tests.factories.transaction_factories import (
 )
 from credit_institution.tests.factories.credit_institution_factories import (
     CreditInstitutionStaticSatelliteFactory,
-)
-from transaction.repositories.transaction_account_queries import (
-    get_transactions_by_account_id,
 )
 from credit_institution.repositories.credit_institution_model_queries import (
     get_credit_institution_satellite_by_account_hub,
@@ -65,7 +61,7 @@ class TestAccountViews(TestCase):
         for acc_no in [
             acc_sat.hub_entity.id for acc_sat in AccountStaticSatellite.objects.all()
         ]:
-            response = self.client.post(f"/account/{acc_no}/delete")
+            self.client.post(f"/account/{acc_no}/delete")
             accounts_under_test -= 1
             self.assertEqual(AccountHub.objects.count(), accounts_under_test)
             self.assertEqual(
@@ -84,21 +80,13 @@ class TestBankAccountViews(TestCase):
     @classmethod
     def setUpTestData(cls):
         account_hub = AccountHubFactory()
-        account_static_satellite = AccountStaticSatelliteFactory(hub_entity=account_hub)
+        AccountStaticSatelliteFactory(hub_entity=account_hub)
         transaction_hub = TransactionHubFactory()
-        transaction_satellite_1 = TransactionSatelliteFactory(
-            hub_entity=transaction_hub
-        )
-        transaction_satellite_2 = TransactionSatelliteFactory(
-            hub_entity=transaction_hub
-        )
+        TransactionSatelliteFactory(hub_entity=transaction_hub)
+        TransactionSatelliteFactory(hub_entity=transaction_hub)
         account_hub.link_account_transaction.add(transaction_hub)
-        bank_account_property_satellite = BankAccountPropertySatelliteFactory(
-            hub_entity=account_hub
-        )
-        bank_account_static_satellite = BankAccountStaticSatelliteFactory(
-            hub_entity=account_hub
-        )
+        BankAccountPropertySatelliteFactory(hub_entity=account_hub)
+        BankAccountStaticSatelliteFactory(hub_entity=account_hub)
         credit_institution_factory = CreditInstitutionStaticSatelliteFactory()
         account_hub.link_account_credit_institution.add(
             credit_institution_factory.hub_entity
@@ -151,10 +139,12 @@ class TestBankAccountViews(TestCase):
             response = self.client.post(f"/account/{acc_no}/bank_account_view/overview")
             self.assertTemplateUsed(response, "bank_account_view_overview.html")
             response = self.client.post(f"/account/{acc_no}/bank_account_view/transactions")
-            self.assertTemplateUsed(response, "bank_account_view_transactions.html")
+            self.assertTemplateUsed(response, "bank_account_view_table.html")
             response = self.client.post(f"/account/{acc_no}/bank_account_view/graphs")
             self.assertTemplateUsed(response, "bank_account_view_graphs.html")
             response = self.client.post(f"/account/{acc_no}/bank_account_view/uploads")
-            self.assertTemplateUsed(response, "bank_account_view_uploads.html")
-            response = self.client.post(f"/account/{acc_no}/bank_account_view/transaction_category_map")
-            self.assertTemplateUsed(response, "bank_account_view_transaction_category_map.html")
+            self.assertTemplateUsed(response, "bank_account_view_table.html")
+            response = self.client.post(
+                f"/account/{acc_no}/bank_account_view/transaction_category_map"
+            )
+            self.assertTemplateUsed(response, "bank_account_view_table.html")

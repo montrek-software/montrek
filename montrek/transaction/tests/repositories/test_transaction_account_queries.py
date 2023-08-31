@@ -76,9 +76,7 @@ class TestModelUtils(TestCase):
             )
         self.assertEqual(
             str(err.exception),
-            """
-'Wrong columns in transaction_df\\n\\tGot: wrong_column\\n\\tExpected: transaction_date, transaction_amount, transaction_price, transaction_description, transaction_party, transaction_party_iban'
-            """,
+            "'Wrong columns in transaction_df\\n\\tGot: wrong_column\\n\\tExpected: transaction_date, transaction_amount, transaction_price, transaction_description, transaction_party, transaction_party_iban'",
         )
 
     def test_new_transactions_to_account_from_df(self):
