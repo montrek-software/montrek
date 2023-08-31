@@ -11,7 +11,12 @@ from account.repositories.account_model_queries import account_view_data
 from transaction.repositories.transaction_account_queries import (
     get_transactions_by_account_id,
 )
-from transaction.repositories.transaction_account_queries import get_paginated_transactions
+from transaction.repositories.transaction_account_queries import (
+    get_paginated_transactions
+)
+from transaction.repositories.transaction_account_queries import (
+    get_paginated_transactions_category_map
+)
 
 from file_upload.repositories.upload_registry_account_queries import get_paginated_upload_registries
 
@@ -195,4 +200,13 @@ def bank_account_view_uploads(request, account_id: int):
 
 def bank_account_view_transaction_category_map(request, account_id: int):
     account_data = account_view_data(account_id)
-    return render(request, "bank_account_view_transaction_category_map.html", account_data)
+    page_number = request.GET.get('page', 1)
+    trans_cat_map_fields = {
+        'Field' : {'attr': 'field'},
+        'Value' : {'attr': 'value'},
+        'Category' : {'attr': 'category'},
+    }
+    account_data['columns'] = trans_cat_map_fields.keys()
+    account_data['items'] = trans_cat_map_fields.values()
+    account_data['table_objects'] = get_paginated_transactions_category_map(account_id, page_number)
+    return render(request, "bank_account_view_table.html", account_data)
