@@ -52,7 +52,7 @@
 		    <!-- Use Bootstrap's tab component or just styled links/buttons -->
 		    <ul class="nav nav-tabs">
 			{% for tab in tab_elements %}
-			<li><a href="{{ tab.link }}">{{ tab.name }}</a></li>
+            <li><a id="{{ tab.html_id }}" href="{{ tab.link }}">{{ tab.name }}</a></li>
 			{% endfor %}
 		    </ul>
 	    </div>

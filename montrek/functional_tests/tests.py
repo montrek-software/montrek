@@ -194,9 +194,11 @@ class TransactionFunctionalTest(MontrekFunctionalTest):
             By.ID, "id_transaction_list_title"
         ).text
         self.assertIn("Transactions", transaction_list_title)
+        self.browser.find_element(By.ID, "tab_transactions").click()
         self.check_for_row_in_table(
-            ["Billy's transaction", "100.00", "3", "300.00", "Jan. 1, 2022, midnight"],
-            "id_transaction_list",
+            ['NONE', 'XX00000000000000000000', "Billy's transaction", 'Jan. 1, 2022, midnight', '300.00', 'UNKNOWN',
+             ''],
+            "id_montrek_table_list",
         )
 
 
@@ -315,7 +317,8 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
         header_text = self.browser.find_element(By.TAG_NAME, "h1").text
         self.assertIn("Billy's DKB account", header_text)
         # He has two transactions listed
-        transactions_list = self.browser.find_element(By.ID, "id_transaction_list")
+        self.browser.find_element(By.ID, "tab_transactions").click()
+        transactions_list = self.browser.find_element(By.ID, "id_montrek_table_list")
         rows_count = len(transactions_list.find_elements(By.TAG_NAME, "tr"))
         assert rows_count - 1 == 2
         # Here he finds a link to upload DKB transactions
