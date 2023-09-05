@@ -1,19 +1,16 @@
-import pandas as pd
 import datetime
+from decimal import Decimal
+import pandas as pd
 
 # Tests for model_utils.py
 from django.test import TestCase
 from django.utils import timezone
 from django.db.models import F, Sum
 
-from decimal import Decimal
 
 from account.models import AccountHub
 from account.tests.factories import account_factories
-from transaction.tests.factories.transaction_factories import (
-    TransactionSatelliteFactory,
-)
-from transaction.models import TransactionTypeSatellite
+from transaction.tests.factories import transaction_factories
 from transaction.repositories.transaction_account_queries import (
     new_transaction_to_account,
 )
@@ -29,7 +26,15 @@ from transaction.repositories.transaction_account_queries import (
 from transaction.repositories.transaction_model_queries import (
     get_transaction_type_by_transaction,
 )
-from baseclasses.repositories.db_helper import select_satellite
+from transaction.repositories.transaction_account_queries import (
+    get_transaction_category_map_by_account_hub
+)
+from transaction.repositories.transaction_account_queries import (
+    get_transaction_category_map_by_account_id
+)
+from transaction.repositories.transaction_account_queries import (
+    get_paginated_transactions_category_map
+)
 
 ACCOUNTS_UNDER_TEST = 1
 
@@ -61,18 +66,16 @@ class TestModelUtils(TestCase):
         self.assertEqual(new_transaction.transaction_description, "Test transaction")
         transaction_type_sat = get_transaction_type_by_transaction(new_transaction)
         self.assertEqual(transaction_type_sat.typename, "INCOME")
-        # transaction_cat_sat = get_transaction_category_by_transaction(new_transaction)
-        # self.assertEqual(transaction_cat_sat.typename, 'TRANSFER')
 
     def test_new_transactions_to_account_from_df_wrong_columns(self):
         account_hub = AccountHub.objects.last()
         test_df = pd.DataFrame({"wrong_column": [1, 2, 3]})
-        with self.assertRaises(KeyError) as e:
+        with self.assertRaises(KeyError) as err:
             new_transactions_to_account_from_df(
                 account_hub_object=account_hub, transaction_df=test_df
             )
         self.assertEqual(
-            str(e.exception),
+            str(err.exception),
             "'Wrong columns in transaction_df\\n\\tGot: wrong_column\\n\\tExpected: transaction_date, transaction_amount, transaction_price, transaction_description, transaction_party, transaction_party_iban'",
         )
 
@@ -142,26 +145,26 @@ class TestModelUtils(TestCase):
 
     def test_get_transactions_by_account_hub_for_state_date(self):
         account_hub = AccountHub.objects.create()
-        transaction_1 = TransactionSatelliteFactory.create(
+        transaction_1 = transaction_factories.TransactionSatelliteFactory.create(
             transaction_amount=100,
             transaction_price=1.0,
             state_date_start=timezone.datetime(2023, 6, 1),
             state_date_end=timezone.datetime(2023, 7, 1),
         )
-        transaction_2 = TransactionSatelliteFactory.create(
+        transaction_factories.TransactionSatelliteFactory.create(
             transaction_amount=200,
             transaction_price=1.0,
             state_date_start=timezone.datetime(2023, 7, 1),
             state_date_end=timezone.datetime.max,
             hub_entity=transaction_1.hub_entity,
         )
-        transaction_3 = TransactionSatelliteFactory.create(
+        transaction_3 = transaction_factories.TransactionSatelliteFactory.create(
             transaction_amount=100,
             transaction_price=1.0,
             state_date_start=timezone.datetime(2023, 6, 15),
             state_date_end=timezone.datetime(2023, 7, 9),
         )
-        transaction_4 = TransactionSatelliteFactory.create(
+        transaction_factories.TransactionSatelliteFactory.create(
             transaction_amount=200,
             transaction_price=1.0,
             state_date_start=timezone.datetime(2023, 7, 9),
@@ -216,3 +219,39 @@ class TestModelUtils(TestCase):
             account_hub, reference_date=timezone.datetime(2023, 5, 10)
         )
         self.assertEqual(len(account_transactions), 0)
+
+class TestAccountTransactionCategoryMap(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.account = account_factories.AccountHubFactory.create()
+        cls.transaction_category_map = (
+            transaction_factories.TransactionCategoryMapSatelliteFactory.create(
+            field='transaction_party',
+            value='Test Party 1',
+            category='TRANSFER',
+            )
+        )
+        cls.account.link_account_transaction_category_map.add(
+            cls.transaction_category_map.hub_entity
+        )
+
+    def _check_transaction_category_map(self, test_transaction_category_map):
+        self.assertEqual(len(test_transaction_category_map), 1)
+        self.assertEqual(test_transaction_category_map[0].field, 'transaction_party')
+        self.assertEqual(test_transaction_category_map[0].value, 'Test Party 1')
+        self.assertEqual(test_transaction_category_map[0].category, 'TRANSFER')
+
+    def test_get_transaction_category_map_by_account_hub(self):
+        test_transaction_category_map = get_transaction_category_map_by_account_hub(self.account)
+        self._check_transaction_category_map(test_transaction_category_map)
+
+    def test_get_transaction_category_map_by_account_id(self):
+        test_transaction_category_map = (
+            get_transaction_category_map_by_account_id(self.account.id)
+        )
+        self._check_transaction_category_map(test_transaction_category_map)
+
+    def test_get_paginated_transactions_category_map(self):
+        test_page = get_paginated_transactions_category_map(self.account.id)
+        test_transaction_category_map = test_page.object_list
+        self._check_transaction_category_map(test_transaction_category_map)

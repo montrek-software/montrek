@@ -36,30 +36,35 @@ def new_account(
     return account_hub_object
 
 
-def account_view_data(account_id: int):
+def account_view_data(account_id: int, active_sheet: str = ""):
     tabs = (
         TabElement(
             name="Overview", 
             link=reverse('bank_account_view_overview', kwargs={'account_id': account_id}),
-            active=True
+            html_id="tab_overview",
         ),
         TabElement(
             name="Transactions", 
             link=reverse('bank_account_view_transactions', kwargs={'account_id': account_id}),
+            html_id="tab_transactions",
         ),
         TabElement(
             name="Graphs", 
             link=reverse('bank_account_view_graphs', kwargs={'account_id': account_id}),
+            html_id="tab_graphs",
         ),
         TabElement(
             name="Uploads", 
             link=reverse('bank_account_view_uploads', kwargs={'account_id': account_id}),
+            html_id="tab_uploads",
         ),
         TabElement(
             name="Transaction Category Map", 
             link=reverse('bank_account_view_transaction_category_map', kwargs={'account_id': account_id}),
+            html_id="tab_transaction_category_map",
         ),
     )
+    _set_active_tab(tabs, active_sheet)
     actions = (
         ActionElement(
             icon="chevron-left",
@@ -89,3 +94,11 @@ def account_view_data(account_id: int):
         "action_elements": actions,
         "account_statics": account_statics,
     }
+
+
+def _set_active_tab(tabs: List[TabElement], active_sheet: str):
+    for tab in tabs:
+        if tab.html_id == active_sheet:
+            tab.active = "active"
+        else:
+            tab.active = ""

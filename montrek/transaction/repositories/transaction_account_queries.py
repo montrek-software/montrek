@@ -25,6 +25,8 @@ def transaction_hub():
 def transaction_satellite():
     return apps.get_model("transaction", "TransactionSatellite")
 
+def transaction_category_map_satellite():
+    return apps.get_model("transaction", "TransactionCategoryMapSatellite")
 
 def new_transaction_to_account(
     account_id: int,
@@ -96,7 +98,6 @@ def get_transactions_by_account_hub(
         & Q(state_date_start__lte=reference_date)
         & Q(state_date_end__gt=reference_date)
     )
-
     return transaction_satellites
 
 def get_paginated_transactions(account_id, page_number=1, paginate_by=10):
@@ -104,4 +105,24 @@ def get_paginated_transactions(account_id, page_number=1, paginate_by=10):
     paginator = Paginator(transactions.order_by("-transaction_date").all(), paginate_by)
     page = paginator.get_page(page_number)
     return page
+
+def get_transaction_category_map_by_account_id(account_id):
+    account_hub_object = account_hub().objects.get(id=account_id)
+    return get_transaction_category_map_by_account_hub(account_hub_object)
+
+def get_transaction_category_map_by_account_hub(account_hub_object, reference_date = datetime.datetime.now()):
+    transaction_category_map_hubs = account_hub_object.link_account_transaction_category_map.all()
+    transaction_category_map_satellites = transaction_category_map_satellite().objects.filter( 
+        Q(hub_entity__in=transaction_category_map_hubs)
+        & Q(state_date_start__lte=reference_date)
+        & Q(state_date_end__gt=reference_date)
+    )
+    return transaction_category_map_satellites
+
+
+def get_paginated_transactions_category_map(account_id, page_number=1, paginate_by=10):
+   transaction_category_map = get_transaction_category_map_by_account_id(account_id) 
+   paginator = Paginator(transaction_category_map.order_by("category").all(), paginate_by)
+   page = paginator.get_page(page_number)
+   return page
 

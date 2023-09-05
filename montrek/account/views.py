@@ -1,21 +1,25 @@
 from django.shortcuts import render, redirect
-from django.db import models
 from django_pandas.io import read_frame
 
 from account.models import AccountHub
 from account.models import AccountStaticSatellite
 from account.models import BankAccountPropertySatellite
 from account.models import BankAccountStaticSatellite
-from transaction.repositories.transaction_model_queries import (
-    get_transaction_category_by_transaction,
-)
+from account.repositories.account_model_queries import new_account
+from account.repositories.account_model_queries import account_view_data
+
 from transaction.repositories.transaction_account_queries import (
     get_transactions_by_account_id,
 )
-from account.repositories.account_model_queries import new_account
-from account.repositories.account_model_queries import account_view_data
-from transaction.repositories.transaction_account_queries import get_paginated_transactions
+from transaction.repositories.transaction_account_queries import (
+    get_paginated_transactions
+)
+from transaction.repositories.transaction_account_queries import (
+    get_paginated_transactions_category_map
+)
+
 from file_upload.repositories.upload_registry_account_queries import get_paginated_upload_registries
+
 from credit_institution.repositories.credit_institution_model_queries import (
     get_credit_institution_satellite_by_account_hub_id,
 )
@@ -23,15 +27,13 @@ from credit_institution.repositories.credit_institution_model_queries import (
     new_credit_institution_to_account,
 )
 from credit_institution.models import CreditInstitutionStaticSatellite
-from credit_institution.models import CreditInstitutionHub
-from baseclasses.repositories.db_helper import new_link_entry
+
 from baseclasses.repositories.db_helper import new_satellite_entry
+
 from reporting.managers.account_transaction_plots import (
     draw_monthly_income_expanses_plot,
 )
-
 # Create your views here.
-
 #### Account Views ####
 def account_new(request):
     account_type = request.POST.get("account_type", "Other")
@@ -39,10 +41,9 @@ def account_new(request):
     if account_type == "Other":
         new_account(request.POST["account_name"])
         return redirect("/account/list")
-    elif account_type == "Bank Account":
+    if account_type == "Bank Account":
         return redirect(f"/account/bank_account/new_form/{account_name}")
-    else:
-        return render(request, "under_construction.html")
+    return render(request, "under_construction.html")
 
 
 def account_new_form(request):
@@ -129,7 +130,7 @@ def bank_account_view(request, account_id: int):
     return bank_account_view_overview(request, account_id)
 
 def bank_account_view_overview(request, account_id: int):
-    account_data = account_view_data(account_id)
+    account_data = account_view_data(account_id, "tab_overview")
     bank_account_static_satellite = BankAccountStaticSatellite.objects.get(
         hub_entity=account_id
     )
@@ -144,14 +145,30 @@ def bank_account_view_overview(request, account_id: int):
     return render(request, "bank_account_view_overview.html", account_data)
 
 def bank_account_view_transactions(request, account_id: int):
-    account_data = account_view_data(account_id)
+    account_data = account_view_data(account_id, "tab_transactions")
     # Get the paginated transactions
     page_number = request.GET.get('page', 1)
-    account_data['transactions_page'] = get_paginated_transactions(account_id, page_number)
-    return render(request, "bank_account_view_transactions.html", account_data)
+    transaction_fields = {
+        'Counterparty': {'attr': 'transaction_party'},
+        'IBAN': {'attr': 'transaction_party_iban'},
+        'Description': {'attr': 'transaction_description'},
+        'Date': {'attr': 'transaction_date'},
+        'Value': {'attr': 'transaction_value'},
+        'Category': {'attr': 'transaction_category.typename'},
+        'Actions': {
+            'link': {'url': 'transaction_view',
+                     'kwargs': {'pk':'id'},
+                     'icon': 'eye-open', 
+                   },
+        },
+                         }
+    account_data['columns'] = transaction_fields.keys()
+    account_data['items'] = transaction_fields.values()
+    account_data['table_objects'] = get_paginated_transactions(account_id, page_number)
+    return render(request, "bank_account_view_table.html", account_data)
 
 def bank_account_view_graphs(request, account_id: int):
-    account_data = account_view_data(account_id)
+    account_data = account_view_data(account_id, "tab_graphs")
     account_transactions = (
         get_transactions_by_account_id(account_id).order_by("-transaction_date").all()
     )
@@ -163,11 +180,33 @@ def bank_account_view_graphs(request, account_id: int):
     return render(request, "bank_account_view_graphs.html", account_data)
 
 def bank_account_view_uploads(request, account_id: int):
-    account_data = account_view_data(account_id)
+    account_data = account_view_data(account_id, "tab_uploads")
     page_number = request.GET.get('page', 1)
-    account_data['upload_registries_page'] = get_paginated_upload_registries(account_id, page_number)
-    return render(request, "bank_account_view_uploads.html", account_data)
+    upload_fields = {
+        'File Name': {'attr': 'file_name'},
+        'Upload Status': {'attr': 'upload_status'},
+        'Upload Message': {'attr': 'upload_message'},
+        'Upload Date': {'attr': 'created_at'},
+        'File': {'link': {'url': 'download_upload_file',
+                          'kwargs': {'upload_registry_id':'hub_entity.id'},
+                          'icon': 'download',
+                         }
+                 }
+    }
+    account_data['columns'] = upload_fields.keys()
+    account_data['items'] = upload_fields.values()
+    account_data['table_objects'] = get_paginated_upload_registries(account_id, page_number)
+    return render(request, "bank_account_view_table.html", account_data)
 
 def bank_account_view_transaction_category_map(request, account_id: int):
-    account_data = account_view_data(account_id)
-    return render(request, "bank_account_view_transaction_category_map.html", account_data)
+    account_data = account_view_data(account_id, "tab_transaction_category_map")
+    page_number = request.GET.get('page', 1)
+    trans_cat_map_fields = {
+        'Field' : {'attr': 'field'},
+        'Value' : {'attr': 'value'},
+        'Category' : {'attr': 'category'},
+    }
+    account_data['columns'] = trans_cat_map_fields.keys()
+    account_data['items'] = trans_cat_map_fields.values()
+    account_data['table_objects'] = get_paginated_transactions_category_map(account_id, page_number)
+    return render(request, "bank_account_view_table.html", account_data)

@@ -1,11 +1,11 @@
 {% load data_table_filters %}
-<div id="id_transaction_list">
+<h2 id="id_montrek_table_title">{{ title }}</h2>
+<div id="id_montrek_table_list">
 <table class="table">
     <tr>
       {% for column in columns %}
         <th>{{ column }}</th>
       {% endfor %}
-      <th>Actions</th>
     </tr>
      {% for table_object in table_objects %}
         <tr>

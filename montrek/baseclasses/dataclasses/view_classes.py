@@ -4,7 +4,8 @@ from dataclasses import dataclass
 class TabElement:
     name: str
     link: str
-    active: bool = False
+    html_id: str 
+    active: str = ""
 
 @dataclass
 class ActionElement:

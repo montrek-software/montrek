@@ -1,0 +1,6 @@
+{% extends 'bank_account_view.html' %}
+{% block content %}
+<div class="container">
+     {% include 'montrek_table.html' with title=title columns=columns items=items table_objects=table_objects %}
+</div>
+{% endblock %}
