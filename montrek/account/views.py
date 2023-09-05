@@ -130,7 +130,7 @@ def bank_account_view(request, account_id: int):
     return bank_account_view_overview(request, account_id)
 
 def bank_account_view_overview(request, account_id: int):
-    account_data = account_view_data(account_id)
+    account_data = account_view_data(account_id, "tab_overview")
     bank_account_static_satellite = BankAccountStaticSatellite.objects.get(
         hub_entity=account_id
     )
@@ -145,7 +145,7 @@ def bank_account_view_overview(request, account_id: int):
     return render(request, "bank_account_view_overview.html", account_data)
 
 def bank_account_view_transactions(request, account_id: int):
-    account_data = account_view_data(account_id)
+    account_data = account_view_data(account_id, "tab_transactions")
     # Get the paginated transactions
     page_number = request.GET.get('page', 1)
     transaction_fields = {
@@ -168,7 +168,7 @@ def bank_account_view_transactions(request, account_id: int):
     return render(request, "bank_account_view_table.html", account_data)
 
 def bank_account_view_graphs(request, account_id: int):
-    account_data = account_view_data(account_id)
+    account_data = account_view_data(account_id, "tab_graphs")
     account_transactions = (
         get_transactions_by_account_id(account_id).order_by("-transaction_date").all()
     )
@@ -180,7 +180,7 @@ def bank_account_view_graphs(request, account_id: int):
     return render(request, "bank_account_view_graphs.html", account_data)
 
 def bank_account_view_uploads(request, account_id: int):
-    account_data = account_view_data(account_id)
+    account_data = account_view_data(account_id, "tab_uploads")
     page_number = request.GET.get('page', 1)
     upload_fields = {
         'File Name': {'attr': 'file_name'},
@@ -199,7 +199,7 @@ def bank_account_view_uploads(request, account_id: int):
     return render(request, "bank_account_view_table.html", account_data)
 
 def bank_account_view_transaction_category_map(request, account_id: int):
-    account_data = account_view_data(account_id)
+    account_data = account_view_data(account_id, "tab_transaction_category_map")
     page_number = request.GET.get('page', 1)
     trans_cat_map_fields = {
         'Field' : {'attr': 'field'},
