@@ -305,6 +305,24 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
         #Steve looks at his account and navigates to the transaction view
         self.browser.get(self.live_server_url + f"/account/{self.account_hub.id}/bank_account_view")
         self.browser.find_element(By.ID, "tab_transactions").click()
+        # At first he does not see any transactions, since the last ones were in 2019
+        # (The header row does not count)
+        transactions_list = self.browser.find_element(By.ID, "id_montrek_table_list")
+        rows_count = len(transactions_list.find_elements(By.TAG_NAME, "tr")) - 1
+        self.assertEquals(rows_count, 0)
+        # He then sets the time frame to January 2019
+        new_transaction_date_box = self.browser.find_element(
+            By.ID, "id_transaction_start_date"
+        )
+        new_transaction_date_box.send_keys("01/01/2019")
+        new_transaction_date_box = self.browser.find_element(
+            By.ID, "id_transaction_end_date"
+        )
+        new_transaction_date_box.send_keys("01/02/2019")
+        # He now finds two transactions listed
+        transactions_list = self.browser.find_element(By.ID, "id_montrek_table_list")
+        rows_count = len(transactions_list.find_elements(By.TAG_NAME, "tr")) - 1
+        self.assertEquals(rows_count, 2)
         # He clicks on the transaction view of the first transaction
         self.browser.find_element(
             By.ID,
