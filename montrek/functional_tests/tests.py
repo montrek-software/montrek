@@ -1,6 +1,7 @@
 import os
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.test import tag
+from django.utils import timezone
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
@@ -219,7 +220,8 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
         )
         transaction_hub = TransactionHubFactory()
         cls.transaction_satellite_1 = TransactionSatelliteFactory(
-            hub_entity=transaction_hub
+            hub_entity=transaction_hub,
+            transaction_date=timezone.datetime(2019, 1, 1),
         )
         cls.transaction_satellite_2 = TransactionSatelliteFactory(
             hub_entity=transaction_hub
@@ -293,13 +295,13 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
 
     @tag("functional")
     def test_transaction_view(self):
-        #Steve looks at his account
+        #Steve looks at his account and navigates to the transaction view
         self.browser.get(self.live_server_url + f"/account/{self.account_hub.id}/bank_account_view")
-        return
+        self.browser.find_element(By.ID, f"tab_transactions").click()
         # He clicks on the transaction view of the first transaction
-        self.browser.find_element(By.ID, f"id_transaction_view_{self.transaction_satellite_1.hub_entity.id}").click()
+        self.browser.find_element(By.ID, f"id__transaction_{self.transaction_satellite_1.hub_entity.id}_view_").click()
         # He finds all the necessary information
-        self.assertEqual(self.browser.find_element(By.ID, "id_transaction_date").text, "2019-01-01")
+        self.assertEqual(self.browser.find_element(By.ID, "id_transaction_date").get_attribute('value'), "2019-01-01")
         self.assertEqual(self.browser.find_element(By.ID, "id_transaction_details__amount").text, "100.00")
         self.assertEqual(self.browser.find_element(By.ID, "id_transaction_details__price").text, "1.00")
         self.assertEqual(self.browser.find_element(By.ID, "id_transaction_details__party").text, "Testonia")
@@ -353,3 +355,6 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
         self.browser.find_element(By.ID, "id_back_button").click()
         header_text = self.browser.find_element(By.TAG_NAME, "h1").text
         self.assertIn("Billy's DKB account", header_text)
+
+        
+

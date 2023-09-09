@@ -18,13 +18,18 @@ def get_attribute(obj, field_descriptor):
     if 'link' in field_descriptor:
         kwargs = field_descriptor['link']['kwargs']
         kwargs = {key: _get_dotted_attr(obj, value) for key, value in kwargs.items()}
-        url = reverse(field_descriptor['link']['url'], 
+        url_target = field_descriptor['link']['url']
+        url = reverse(url_target, 
                       kwargs=kwargs,
                      )
         icon = field_descriptor['link']['icon'] 
-        template = Template('<a id="id_transaction_view_" href="{{ url }}"><span class="glyphicon glyphicon-{{ icon }}"></span></a>')
+        id_tag = url.replace('/', '_')
+        template = Template('<a id="id_{{ id_tag }}" href="{{ url }}"><span class="glyphicon glyphicon-{{ icon }}"></span></a>')
         context = {'url': url,
-                   'icon': icon,}
+                   'icon': icon,
+                   'url_target': url_target,
+                   'id_tag': id_tag,
+                  }
         return template.render(Context(context))
     return ""
 
