@@ -100,8 +100,12 @@ def get_transactions_by_account_hub(
     )
     return transaction_satellites
 
-def get_paginated_transactions(account_id, page_number=1, paginate_by=10):
+def get_paginated_transactions(account_id, start_date, end_date, page_number=1, paginate_by=10):
     transactions = get_transactions_by_account_id(account_id)
+    transactions = transactions.filter(
+        Q(transaction_date__gte=start_date)
+        & Q(transaction_date__lte=end_date)
+    )
     paginator = Paginator(transactions.order_by("-transaction_date").all(), paginate_by)
     page = paginator.get_page(page_number)
     return page
