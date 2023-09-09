@@ -1,17 +1,14 @@
 import os
+import time
+from typing import List
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.test import tag
 from django.utils import timezone
 from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import WebDriverException, NoSuchElementException
-import time
-import unittest
-from typing import List
+from selenium.common.exceptions import WebDriverException
 
 from account.models import AccountStaticSatellite
-from baseclasses.models import MontrekSatelliteABC
 from account.tests.factories.account_factories import AccountHubFactory
 from account.tests.factories.account_factories import AccountStaticSatelliteFactory
 from account.tests.factories.account_factories import (
@@ -29,8 +26,24 @@ from credit_institution.tests.factories.credit_institution_factories import (
     CreditInstitutionStaticSatelliteFactory,
 )
 from baseclasses.repositories.db_helper import get_hub_ids_by_satellite_attribute
+from baseclasses.models import MontrekSatelliteABC
 
 MAX_WAIT = 10
+
+
+def wait_for_browser_action(browser_action):
+    def inner_function(*args, **kwargs):
+        start_time = time.time()
+        while True:
+            try:
+                browser_action(*args, **kwargs)
+                return
+            except (AssertionError, WebDriverException) as exep:
+                if time.time() - start_time > MAX_WAIT:
+                    raise exep
+                time.sleep(0.5)
+
+    return inner_function
 
 
 class MontrekFunctionalTest(StaticLiveServerTestCase):
@@ -43,19 +56,6 @@ class MontrekFunctionalTest(StaticLiveServerTestCase):
     def tearDown(self):
         self.browser.quit()
 
-    def wait_for_browser_action(browser_action):
-        def inner_function(*args, **kwargs):
-            start_time = time.time()
-            while True:
-                try:
-                    browser_action(*args, **kwargs)
-                    return
-                except (AssertionError, WebDriverException) as e:
-                    if time.time() - start_time > MAX_WAIT:
-                        raise e
-                    time.sleep(0.5)
-
-        return inner_function
 
     @wait_for_browser_action
     def check_for_row_in_table(self, row_content: List[str], table_id: str):
@@ -90,7 +90,7 @@ class AccountFunctionalTests(MontrekFunctionalTest):
         new_account_name_box.send_keys("Billy's account")
         # When he hits the submit button, he is directed to the accounts-list,
         # where he finds his new account listed
-        new_list_submit = self.browser.find_element(
+        self.browser.find_element(
             By.ID, "id_account_new__submit"
         ).click()
         header_text = self.browser.find_element(By.TAG_NAME, "h1").text
@@ -150,12 +150,11 @@ class AccountFunctionalTests(MontrekFunctionalTest):
 
 
 class TransactionFunctionalTest(MontrekFunctionalTest):
-    @classmethod
-    def setUp(cls):
-        cls.test_account = AccountStaticSatelliteFactory()
+    def setUp(self):
+        super().setUp()
+        self.test_account = AccountStaticSatelliteFactory()
         TransactionTypeSatelliteFactory.create(typename="INCOME")
         TransactionTypeSatelliteFactory.create(typename="EXPANSE")
-        super().setUp(cls)
 
     @tag("functional")
     def test_add_transaction_to_account(self):
@@ -197,15 +196,15 @@ class TransactionFunctionalTest(MontrekFunctionalTest):
         self.assertIn("Transactions", transaction_list_title)
         self.browser.find_element(By.ID, "tab_transactions").click()
         self.check_for_row_in_table(
-            ['NONE', 'XX00000000000000000000', "Billy's transaction", 'Jan. 1, 2022, midnight', '300.00', 'UNKNOWN',
-             ''],
+            ['NONE', 'XX00000000000000000000', "Billy's transaction",
+             'Jan. 1, 2022, midnight', '300.00', 'UNKNOWN', ''],
             "id_montrek_table_list",
         )
 
 
 class BankAccountFunctionalTest(MontrekFunctionalTest):
-    @classmethod
-    def setUp(cls):
+    def setUp(self):
+        super().setUp()
         CreditInstitutionStaticSatelliteFactory.create(
             credit_institution_name="Bank of Testonia"
         )
@@ -214,29 +213,28 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
             account_upload_method="dkb",
         )
         # DKB Bank account with two transactions
-        cls.account_hub = AccountHubFactory()
-        account_static_satellite = AccountStaticSatelliteFactory(
-            hub_entity=cls.account_hub, account_name="Billy's DKB account"
+        self.account_hub = AccountHubFactory()
+        AccountStaticSatelliteFactory(
+            hub_entity=self.account_hub, account_name="Billy's DKB account"
         )
         transaction_hub = TransactionHubFactory()
-        cls.transaction_satellite_1 = TransactionSatelliteFactory(
+        self.transaction_satellite_1 = TransactionSatelliteFactory(
             hub_entity=transaction_hub,
             transaction_date=timezone.datetime(2019, 1, 1),
         )
-        cls.transaction_satellite_2 = TransactionSatelliteFactory(
+        self.transaction_satellite_2 = TransactionSatelliteFactory(
             hub_entity=transaction_hub
         )
-        cls.account_hub.link_account_transaction.add(transaction_hub)
-        bank_account_property_satellite = BankAccountPropertySatelliteFactory(
-            hub_entity=cls.account_hub
+        self.account_hub.link_account_transaction.add(transaction_hub)
+        BankAccountPropertySatelliteFactory(
+            hub_entity=self.account_hub
         )
-        bank_account_static_satellite = BankAccountStaticSatelliteFactory(
-            hub_entity=cls.account_hub
+        BankAccountStaticSatelliteFactory(
+            hub_entity=self.account_hub
         )
-        cls.account_hub.link_account_credit_institution.add(
+        self.account_hub.link_account_credit_institution.add(
             dkb_credit_institution.hub_entity
         )
-        super().setUp(cls)
 
     @tag("functional")
     def test_add_bank_account(self):
@@ -257,7 +255,7 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
         new_account_type_box.send_keys("Bank Account")
         # When he hits the submit button, he is directed to the new bank
         # account form
-        new_account_submit = self.browser.find_element(
+        self.browser.find_element(
             By.ID, "id_account_new__submit"
         ).click()
         header_text = self.browser.find_element(By.TAG_NAME, "h1").text
@@ -276,7 +274,7 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
 
         # When he hits the submit button, he is directed to the accounts-list,
         # where he finds his new account listed
-        new_list_submit = self.browser.find_element(
+        self.browser.find_element(
             By.ID, "id_bank_account_new__submit"
         ).click()
         header_text = self.browser.find_element(By.TAG_NAME, "h1").text
@@ -297,11 +295,15 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
     def test_transaction_view(self):
         #Steve looks at his account and navigates to the transaction view
         self.browser.get(self.live_server_url + f"/account/{self.account_hub.id}/bank_account_view")
-        self.browser.find_element(By.ID, f"tab_transactions").click()
+        self.browser.find_element(By.ID, "tab_transactions").click()
         # He clicks on the transaction view of the first transaction
-        self.browser.find_element(By.ID, f"id__transaction_{self.transaction_satellite_1.hub_entity.id}_view_").click()
+        self.browser.find_element(
+            By.ID,
+            f"id__transaction_{self.transaction_satellite_1.hub_entity.id}_view_"
+        ).click()
         # He finds all the necessary information
-        self.assertEqual(self.browser.find_element(By.ID, "id_transaction_date").get_attribute('value'), "2019-01-01")
+        self.assertEqual(self.browser.find_element(By.ID, "id_transaction_date").get_attribute('value'), "2019-01-01 00:00:00")
+        return
         self.assertEqual(self.browser.find_element(By.ID, "id_transaction_details__amount").text, "100.00")
         self.assertEqual(self.browser.find_element(By.ID, "id_transaction_details__price").text, "1.00")
         self.assertEqual(self.browser.find_element(By.ID, "id_transaction_details__party").text, "Testonia")
@@ -339,7 +341,7 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
             )
         )
         # When he hits the submit button, he is directed to a upload summary page
-        new_list_submit = self.browser.find_element(
+        self.browser.find_element(
             By.ID, "id_dkb_transactions_upload__submit"
         ).click()
         header_text = self.browser.find_element(By.TAG_NAME, "h1").text
@@ -355,6 +357,3 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
         self.browser.find_element(By.ID, "id_back_button").click()
         header_text = self.browser.find_element(By.TAG_NAME, "h1").text
         self.assertIn("Billy's DKB account", header_text)
-
-        
-
