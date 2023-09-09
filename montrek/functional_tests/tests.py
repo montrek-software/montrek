@@ -221,9 +221,18 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
         self.transaction_satellite_1 = TransactionSatelliteFactory(
             hub_entity=transaction_hub,
             transaction_date=timezone.datetime(2019, 1, 1),
+            transaction_amount=7051,
+            transaction_price=101.2,
+            transaction_party="Testonia",
+            transaction_description="Test transaction 1",
         )
         self.transaction_satellite_2 = TransactionSatelliteFactory(
-            hub_entity=transaction_hub
+            hub_entity=transaction_hub,
+            transaction_date=timezone.datetime(2019, 1, 15),
+            transaction_amount=2000,
+            transaction_price=98.2,
+            transaction_party="Testosteria",
+            transaction_description="Test transaction 2",
         )
         self.account_hub.link_account_transaction.add(transaction_hub)
         BankAccountPropertySatelliteFactory(
@@ -299,15 +308,29 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
         # He clicks on the transaction view of the first transaction
         self.browser.find_element(
             By.ID,
-            f"id__transaction_{self.transaction_satellite_1.hub_entity.id}_view_"
+            f"id__transaction_{self.transaction_satellite_1.id}_view_"
         ).click()
         # He finds all the necessary information
-        self.assertEqual(self.browser.find_element(By.ID, "id_transaction_date").get_attribute('value'), "2019-01-01 00:00:00")
-        return
-        self.assertEqual(self.browser.find_element(By.ID, "id_transaction_details__amount").text, "100.00")
-        self.assertEqual(self.browser.find_element(By.ID, "id_transaction_details__price").text, "1.00")
-        self.assertEqual(self.browser.find_element(By.ID, "id_transaction_details__party").text, "Testonia")
-        self.assertEqual(self.browser.find_element(By.ID, "id_transaction_details__description").text, "Test transaction 1")
+        self.assertEqual(
+            self.browser.find_element(By.ID, "id_transaction_date").get_attribute('value'),
+            "2019-01-01 00:00:00"
+        )
+        self.assertEqual(
+            self.browser.find_element(By.ID, "id_transaction_amount").get_attribute('value'),
+            "7051"
+        )
+        self.assertEqual(
+            self.browser.find_element(By.ID, "id_transaction_price").get_attribute('value'),
+            "101.20"
+        )
+        self.assertEqual(
+            self.browser.find_element(By.ID, "id_transaction_party").get_attribute('value'),
+            "Testonia"
+        )
+        self.assertEqual(
+            self.browser.find_element(By.ID, "id_transaction_description").get_attribute('value'),
+            "Test transaction 1"
+        )
 
     @tag("functional")
     def test_dkb_transactions_upload(self):
