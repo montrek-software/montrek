@@ -309,8 +309,8 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
         # (The header row does not count)
         transactions_list = self.browser.find_element(By.ID, "id_montrek_table_list")
         rows_count = len(transactions_list.find_elements(By.TAG_NAME, "tr")) - 1
-        self.assertEquals(rows_count, 0)
-        # He then sets the time frame to January 2019
+        self.assertEqual(rows_count, 0)
+        # He then sets the time window to January 2019
         new_transaction_date_box = self.browser.find_element(
             By.ID, "id_transaction_start_date"
         )
@@ -322,7 +322,7 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
         # He now finds two transactions listed
         transactions_list = self.browser.find_element(By.ID, "id_montrek_table_list")
         rows_count = len(transactions_list.find_elements(By.TAG_NAME, "tr")) - 1
-        self.assertEquals(rows_count, 2)
+        self.assertEqual(rows_count, 2)
         # He clicks on the transaction view of the first transaction
         self.browser.find_element(
             By.ID,
