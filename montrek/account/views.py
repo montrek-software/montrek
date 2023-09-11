@@ -175,8 +175,13 @@ def bank_account_view_transactions(request, account_id: int):
 
 def bank_account_view_graphs(request, account_id: int):
     account_data = account_view_data(account_id, "tab_graphs")
+    account_data.update(_handle_date_range_form(request))
     account_transactions = (
         get_transactions_by_account_id(account_id).order_by("-transaction_date").all()
+    )
+    start_date, end_date = _get_date_range_dates(request)
+    account_transactions = account_transactions.filter(
+        transaction_date__gte=start_date, transaction_date__lte=end_date
     )
     account_transactions_df = read_frame(account_transactions)
     income_expanse_plot = draw_monthly_income_expanses_plot(
@@ -187,6 +192,7 @@ def bank_account_view_graphs(request, account_id: int):
 
 def bank_account_view_uploads(request, account_id: int):
     account_data = account_view_data(account_id, "tab_uploads")
+    account_data.update(_handle_date_range_form(request))
     page_number = request.GET.get('page', 1)
     upload_fields = {
         'File Name': {'attr': 'file_name'},
@@ -206,6 +212,7 @@ def bank_account_view_uploads(request, account_id: int):
 
 def bank_account_view_transaction_category_map(request, account_id: int):
     account_data = account_view_data(account_id, "tab_transaction_category_map")
+    account_data.update(_handle_date_range_form(request))
     page_number = request.GET.get('page', 1)
     trans_cat_map_fields = {
         'Field' : {'attr': 'field'},
