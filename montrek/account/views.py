@@ -168,8 +168,7 @@ def bank_account_view_transactions(request, account_id: int):
                          }
     account_data['columns'] = transaction_fields.keys()
     account_data['items'] = transaction_fields.values()
-    start_date = account_data['date_range_form'].cleaned_data['start_date']
-    end_date = account_data['date_range_form'].cleaned_data['end_date']
+    start_date, end_date = _get_date_range_dates(request)
     account_data['table_objects'] = get_paginated_transactions(
         account_id, start_date, end_date, page_number)
     return render(request, "bank_account_view_table.html", account_data)
@@ -219,10 +218,22 @@ def bank_account_view_transaction_category_map(request, account_id: int):
     return render(request, "bank_account_view_table.html", account_data)
 
 def _handle_date_range_form(request):
-    end_date = datetime.today().date()
-    start_date = end_date - timedelta(days=30)
-    date_range_form = DateRangeForm(request.GET or {'start_date': start_date, 'end_date': end_date})
+    start_date, end_date = _get_date_range_dates(request)
+    request_get = request.GET.copy()
+    request_get = request_get if 'start_date' in request_get and 'end_date' in request_get else None
+    date_range_form = DateRangeForm(request_get or {'start_date': start_date, 'end_date': end_date})
     if date_range_form.is_valid():
         start_date = date_range_form.cleaned_data['start_date']
         end_date = date_range_form.cleaned_data['end_date']
-    return {'start_date': start_date, 'end_date': end_date, 'date_range_form': date_range_form}
+        request.session['start_date'] = start_date.strftime('%Y-%m-%d')
+        request.session['end_date'] = end_date.strftime('%Y-%m-%d')
+    return {'date_range_form': date_range_form}
+
+def _get_date_range_dates(request):
+    end_date_default = datetime.today().date()
+    start_date_default = end_date_default - timedelta(days=30)
+    start_date = datetime.strptime(request.session.get('start_date', start_date_default),
+                                   '%Y-%m-%d').date()
+    end_date = datetime.strptime(request.session.get('end_date', end_date_default),
+                                 '%Y-%m-%d').date()
+    return start_date, end_date
