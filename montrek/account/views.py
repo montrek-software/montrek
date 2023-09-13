@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+from typing import Tuple
 from django.shortcuts import render, redirect
 from django_pandas.io import read_frame
 
@@ -29,6 +31,7 @@ from credit_institution.repositories.credit_institution_model_queries import (
 from credit_institution.models import CreditInstitutionStaticSatellite
 
 from baseclasses.repositories.db_helper import new_satellite_entry
+from baseclasses.forms import DateRangeForm
 
 from reporting.managers.account_transaction_plots import (
     draw_monthly_income_expanses_plot,
@@ -61,8 +64,12 @@ def account_list(request):
 
 def account_view(request, account_id: int):
     account_data = account_view_data(account_id)
+    account_data.update(_handle_date_range_form(request))
     page_number = request.GET.get('page', 1)
-    account_data['transactions_page'] = get_paginated_transactions(account_id, page_number)
+    start_date, end_date = _get_date_range_dates(request)
+    account_data['transactions_page'] = get_paginated_transactions(
+        account_id, start_date, end_date, page_number
+    )
     return render(request, "account_view.html", account_data)
 
 
@@ -131,6 +138,7 @@ def bank_account_view(request, account_id: int):
 
 def bank_account_view_overview(request, account_id: int):
     account_data = account_view_data(account_id, "tab_overview")
+    account_data.update(_handle_date_range_form(request))
     bank_account_static_satellite = BankAccountStaticSatellite.objects.get(
         hub_entity=account_id
     )
@@ -146,6 +154,7 @@ def bank_account_view_overview(request, account_id: int):
 
 def bank_account_view_transactions(request, account_id: int):
     account_data = account_view_data(account_id, "tab_transactions")
+    account_data.update(_handle_date_range_form(request))
     # Get the paginated transactions
     page_number = request.GET.get('page', 1)
     transaction_fields = {
@@ -164,13 +173,20 @@ def bank_account_view_transactions(request, account_id: int):
                          }
     account_data['columns'] = transaction_fields.keys()
     account_data['items'] = transaction_fields.values()
-    account_data['table_objects'] = get_paginated_transactions(account_id, page_number)
+    start_date, end_date = _get_date_range_dates(request)
+    account_data['table_objects'] = get_paginated_transactions(
+        account_id, start_date, end_date, page_number)
     return render(request, "bank_account_view_table.html", account_data)
 
 def bank_account_view_graphs(request, account_id: int):
     account_data = account_view_data(account_id, "tab_graphs")
+    account_data.update(_handle_date_range_form(request))
     account_transactions = (
         get_transactions_by_account_id(account_id).order_by("-transaction_date").all()
+    )
+    start_date, end_date = _get_date_range_dates(request)
+    account_transactions = account_transactions.filter(
+        transaction_date__gte=start_date, transaction_date__lte=end_date
     )
     account_transactions_df = read_frame(account_transactions)
     income_expanse_plot = draw_monthly_income_expanses_plot(
@@ -181,6 +197,7 @@ def bank_account_view_graphs(request, account_id: int):
 
 def bank_account_view_uploads(request, account_id: int):
     account_data = account_view_data(account_id, "tab_uploads")
+    account_data.update(_handle_date_range_form(request))
     page_number = request.GET.get('page', 1)
     upload_fields = {
         'File Name': {'attr': 'file_name'},
@@ -200,6 +217,7 @@ def bank_account_view_uploads(request, account_id: int):
 
 def bank_account_view_transaction_category_map(request, account_id: int):
     account_data = account_view_data(account_id, "tab_transaction_category_map")
+    account_data.update(_handle_date_range_form(request))
     page_number = request.GET.get('page', 1)
     trans_cat_map_fields = {
         'Field' : {'attr': 'field'},
@@ -210,3 +228,34 @@ def bank_account_view_transaction_category_map(request, account_id: int):
     account_data['items'] = trans_cat_map_fields.values()
     account_data['table_objects'] = get_paginated_transactions_category_map(account_id, page_number)
     return render(request, "bank_account_view_table.html", account_data)
+
+def _handle_date_range_form(request):
+    start_date, end_date = _get_date_range_dates(request)
+    request_get = request.GET.copy()
+    request_get = request_get if 'start_date' in request_get and 'end_date' in request_get else None
+    date_range_form = DateRangeForm(request_get or {'start_date': start_date, 'end_date': end_date})
+    if date_range_form.is_valid():
+        start_date = date_range_form.cleaned_data['start_date']
+        end_date = date_range_form.cleaned_data['end_date']
+        request.session['start_date'] = start_date.strftime('%Y-%m-%d')
+        request.session['end_date'] = end_date.strftime('%Y-%m-%d')
+    return {'date_range_form': date_range_form}
+
+def _get_date_range_dates(request) -> Tuple[str, str]:
+    today = datetime.today().date()
+    default_start_date = today - timedelta(days=30)
+    default_end_date = today
+    default_start_date = default_start_date.strftime('%Y-%m-%d')
+    default_end_date = default_end_date.strftime('%Y-%m-%d')
+
+    try:
+        start_date_str = request.session.get('start_date', default_start_date)
+    except ValueError:
+        start_date_str = default_start_date
+
+    try:
+        end_date_str = request.session.get('end_date', default_end_date)
+    except ValueError:
+        end_date_str = default_end_date
+
+    return start_date_str, end_date_str

@@ -47,6 +47,14 @@
 	    <div class="row">
 		    <h1 id="page_title">{% block title %}{% endblock %}</h1>
 	    </div>
+        <!-- DATE RANGE SELECTOR -->
+        {% if show_date_range_selector %}
+            <form method="get">
+                {{ date_range_form.start_date.label_tag }}: {{ date_range_form.start_date }}
+                {{ date_range_form.end_date.label_tag }}: {{ date_range_form.end_date }}
+                <input id="id_date_range_filter" type="submit" value="Filter">
+            </form>
+        {% endif %}
 	    <!-- TABS -->
 	    <div class="row">
 		    <!-- Use Bootstrap's tab component or just styled links/buttons -->
