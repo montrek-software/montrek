@@ -194,6 +194,7 @@ class TransactionFunctionalTest(MontrekFunctionalTest):
             By.ID, "id_transaction_list_title"
         ).text
         self.assertIn("Transactions", transaction_list_title)
+        self._set_transaction_date_range()
         self.browser.find_element(By.ID, "tab_transactions").click()
         self.check_for_row_in_table(
             ['NONE', 'XX00000000000000000000', "Billy's transaction",
@@ -201,6 +202,17 @@ class TransactionFunctionalTest(MontrekFunctionalTest):
             "id_montrek_table_list",
         )
 
+    def _set_transaction_date_range(self):
+        # He then sets the time window to January 2019
+        new_transaction_date_box = self.browser.find_element(
+            By.ID, "id_date_range_start"
+        )
+        new_transaction_date_box.send_keys("01/01/2022")
+        new_transaction_date_box = self.browser.find_element(
+            By.ID, "id_date_range_end"
+        )
+        new_transaction_date_box.send_keys("02/01/2022")
+        self.browser.find_element(By.ID, "id_date_range_filter").click()
 
 class BankAccountFunctionalTest(MontrekFunctionalTest):
     def setUp(self):
@@ -217,9 +229,10 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
         AccountStaticSatelliteFactory(
             hub_entity=self.account_hub, account_name="Billy's DKB account"
         )
-        transaction_hub = TransactionHubFactory()
+        transaction_hub_1 = TransactionHubFactory()
+        transaction_hub_2 = TransactionHubFactory()
         self.transaction_satellite_1 = TransactionSatelliteFactory(
-            hub_entity=transaction_hub,
+            hub_entity=transaction_hub_1,
             transaction_date=timezone.datetime(2019, 1, 1),
             transaction_amount=7051,
             transaction_price=101.2,
@@ -227,14 +240,15 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
             transaction_description="Test transaction 1",
         )
         self.transaction_satellite_2 = TransactionSatelliteFactory(
-            hub_entity=transaction_hub,
+            hub_entity=transaction_hub_2,
             transaction_date=timezone.datetime(2019, 1, 15),
             transaction_amount=2000,
             transaction_price=98.2,
             transaction_party="Testosteria",
             transaction_description="Test transaction 2",
         )
-        self.account_hub.link_account_transaction.add(transaction_hub)
+        self.account_hub.link_account_transaction.add(transaction_hub_1)
+        self.account_hub.link_account_transaction.add(transaction_hub_2)
         BankAccountPropertySatelliteFactory(
             hub_entity=self.account_hub
         )
@@ -310,15 +324,7 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
         transactions_list = self.browser.find_element(By.ID, "id_montrek_table_list")
         rows_count = len(transactions_list.find_elements(By.TAG_NAME, "tr")) - 1
         self.assertEqual(rows_count, 0)
-        # He then sets the time window to January 2019
-        new_transaction_date_box = self.browser.find_element(
-            By.ID, "id_transaction_start_date"
-        )
-        new_transaction_date_box.send_keys("01/01/2019")
-        new_transaction_date_box = self.browser.find_element(
-            By.ID, "id_transaction_end_date"
-        )
-        new_transaction_date_box.send_keys("01/02/2019")
+        self._set_transaction_date_range()
         # He now finds two transactions listed
         transactions_list = self.browser.find_element(By.ID, "id_montrek_table_list")
         rows_count = len(transactions_list.find_elements(By.TAG_NAME, "tr")) - 1
@@ -363,6 +369,7 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
         self.assertIn("Billy's DKB account", header_text)
         # He has two transactions listed
         self.browser.find_element(By.ID, "tab_transactions").click()
+        self._set_transaction_date_range()
         transactions_list = self.browser.find_element(By.ID, "id_montrek_table_list")
         rows_count = len(transactions_list.find_elements(By.TAG_NAME, "tr"))
         assert rows_count - 1 == 2
@@ -398,3 +405,15 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
         self.browser.find_element(By.ID, "id_back_button").click()
         header_text = self.browser.find_element(By.TAG_NAME, "h1").text
         self.assertIn("Billy's DKB account", header_text)
+
+    def _set_transaction_date_range(self):
+        # He then sets the time window to January 2019
+        new_transaction_date_box = self.browser.find_element(
+            By.ID, "id_date_range_start"
+        )
+        new_transaction_date_box.send_keys("01/01/2019")
+        new_transaction_date_box = self.browser.find_element(
+            By.ID, "id_date_range_end"
+        )
+        new_transaction_date_box.send_keys("02/01/2019")
+        self.browser.find_element(By.ID, "id_date_range_filter").click()

@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from typing import Tuple
 from django.shortcuts import render, redirect
 from django_pandas.io import read_frame
 
@@ -63,8 +64,12 @@ def account_list(request):
 
 def account_view(request, account_id: int):
     account_data = account_view_data(account_id)
+    account_data.update(_handle_date_range_form(request))
     page_number = request.GET.get('page', 1)
-    account_data['transactions_page'] = get_paginated_transactions(account_id, page_number)
+    start_date, end_date = _get_date_range_dates(request)
+    account_data['transactions_page'] = get_paginated_transactions(
+        account_id, start_date, end_date, page_number
+    )
     return render(request, "account_view.html", account_data)
 
 
@@ -236,11 +241,21 @@ def _handle_date_range_form(request):
         request.session['end_date'] = end_date.strftime('%Y-%m-%d')
     return {'date_range_form': date_range_form}
 
-def _get_date_range_dates(request):
-    end_date_default = datetime.today().date()
-    start_date_default = end_date_default - timedelta(days=30)
-    start_date = datetime.strptime(request.session.get('start_date', start_date_default),
-                                   '%Y-%m-%d').date()
-    end_date = datetime.strptime(request.session.get('end_date', end_date_default),
-                                 '%Y-%m-%d').date()
-    return start_date, end_date
+def _get_date_range_dates(request) -> Tuple[str, str]:
+    today = datetime.today().date()
+    default_start_date = today - timedelta(days=30)
+    default_end_date = today
+    default_start_date = default_start_date.strftime('%Y-%m-%d')
+    default_end_date = default_end_date.strftime('%Y-%m-%d')
+
+    try:
+        start_date_str = request.session.get('start_date', default_start_date)
+    except ValueError:
+        start_date_str = default_start_date
+
+    try:
+        end_date_str = request.session.get('end_date', default_end_date)
+    except ValueError:
+        end_date_str = default_end_date
+
+    return start_date_str, end_date_str
