@@ -91,7 +91,6 @@ def account_view_data(account_id: int, active_sheet: str = ""):
 
     return {
         "tab_elements": tabs,
-        "action_elements": actions,
         "account_statics": account_statics,
         "show_date_range_selector": True,
     }
