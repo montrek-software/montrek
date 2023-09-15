@@ -71,7 +71,7 @@
             {% for tab in tab_elements %}
             {% if tab.active == "active" %}
             {% for action in tab.actions %}
-                <a id="{{ action.action_id }}" href="{{ action.link }}" class="btn btn-primary">
+            <a id="{{ action.action_id }}" href="{{ action.link }}" class="btn" title="{{ action.hover_text }}">
                     <span class="glyphicon glyphicon-{{ action.icon }}"/></a>
             {% endfor %}
             {% endif %}

@@ -6,6 +6,7 @@ class ActionElement:
     icon: str
     link: str
     action_id: str
+    hover_text: str
 
 @dataclass
 class TabElement:

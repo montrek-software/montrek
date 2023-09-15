@@ -38,24 +38,28 @@ def new_account(
 
 def account_view_data(account_id: int, active_sheet: str = ""):
     action_back = ActionElement(
-            icon="chevron-left",
-            link=reverse('account_list'),
-            action_id="list_back",
+        icon="chevron-left",
+        link=reverse('account_list'),
+        action_id="list_back",
+        hover_text="Back to account list",
         )
     action_delete = ActionElement(
-            icon="trash",
-            link=reverse('account_delete_form', kwargs={'account_id': account_id}),
-            action_id="delete_account",
+        icon="trash",
+        link=reverse('account_delete_form', kwargs={'account_id': account_id}),
+        action_id="delete_account",
+        hover_text="Delete account",
         )
     action_new_transaction = ActionElement(
-            icon="plus",
-            link=reverse('transaction_add_form', kwargs={'account_id': account_id}),
-            action_id="add_transaction",
+        icon="plus",
+        link=reverse('transaction_add_form', kwargs={'account_id': account_id}),
+        action_id="add_transaction",
+        hover_text="Add transaction",
         )
     action_upload_csv = ActionElement( 
-            icon="upload",
-            link=reverse('upload_transaction_to_account_file', kwargs={'account_id': account_id}),
-            action_id="id_transactions_upload",
+        icon="upload",
+        link=reverse('upload_transaction_to_account_file', kwargs={'account_id': account_id}),
+        action_id="id_transactions_upload",
+        hover_text="Upload transactions from csv file",
         )
 
 
