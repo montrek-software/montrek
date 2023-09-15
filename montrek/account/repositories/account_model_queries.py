@@ -37,67 +37,80 @@ def new_account(
 
 
 def account_view_data(account_id: int, active_sheet: str = ""):
+    action_back = ActionElement(
+        icon="chevron-left",
+        link=reverse('account_list'),
+        action_id="list_back",
+        hover_text="Back to account list",
+        )
+    action_delete = ActionElement(
+        icon="trash",
+        link=reverse('account_delete_form', kwargs={'account_id': account_id}),
+        action_id="delete_account",
+        hover_text="Delete account",
+        )
+    action_new_transaction = ActionElement(
+        icon="plus",
+        link=reverse('transaction_add_form', kwargs={'account_id': account_id}),
+        action_id="add_transaction",
+        hover_text="Add transaction",
+        )
+    action_upload_csv = ActionElement( 
+        icon="upload",
+        link=reverse('upload_transaction_to_account_file', kwargs={'account_id': account_id}),
+        action_id="id_transactions_upload",
+        hover_text="Upload transactions from csv file",
+        )
+
+
     tabs = (
         TabElement(
             name="Overview", 
             link=reverse('bank_account_view_overview', kwargs={'account_id': account_id}),
             html_id="tab_overview",
+            actions = (action_back, action_delete)
+
         ),
         TabElement(
             name="Transactions", 
             link=reverse('bank_account_view_transactions', kwargs={'account_id': account_id}),
             html_id="tab_transactions",
+            actions = (action_back, action_new_transaction)
         ),
         TabElement(
             name="Graphs", 
             link=reverse('bank_account_view_graphs', kwargs={'account_id': account_id}),
             html_id="tab_graphs",
+            actions = (action_back,)
         ),
         TabElement(
             name="Uploads", 
             link=reverse('bank_account_view_uploads', kwargs={'account_id': account_id}),
             html_id="tab_uploads",
+            actions = (action_back, action_upload_csv)
         ),
         TabElement(
             name="Transaction Category Map", 
             link=reverse('bank_account_view_transaction_category_map', kwargs={'account_id': account_id}),
             html_id="tab_transaction_category_map",
+            actions = (action_back,)
         ),
     )
     _set_active_tab(tabs, active_sheet)
-    actions = (
-        ActionElement(
-            icon="chevron-left",
-            link=reverse('account_list'),
-            action_id="list_back",
-        ),
-        ActionElement(
-            icon="trash",
-            link=reverse('account_delete_form', kwargs={'account_id': account_id}),
-            action_id="delete_account",
-        ),
-        ActionElement(
-            icon="plus",
-            link=reverse('transaction_add_form', kwargs={'account_id': account_id}),
-            action_id="add_transaction",
-        ),
-        ActionElement(
-            icon="upload",
-            link=reverse('upload_transaction_to_account_file', kwargs={'account_id': account_id}),
-            action_id="id_transactions_upload",
-        ),
-    )
     account_statics = account_static_satellite().objects.get(hub_entity=account_id)
 
     return {
         "tab_elements": tabs,
-        "action_elements": actions,
         "account_statics": account_statics,
         "show_date_range_selector": True,
     }
 
 
 def _set_active_tab(tabs: List[TabElement], active_sheet: str):
+    """
+    If the tab is active, set the active attribute to active, otherwise set it to empty string.
+    This is directly used as bootstrap nav-tabs nav-item class.
+    """
     for tab in tabs:
         if tab.html_id == active_sheet:
             tab.active = "active"
