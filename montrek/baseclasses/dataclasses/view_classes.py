@@ -12,6 +12,6 @@ class TabElement:
     name: str
     link: str
     html_id: str 
-    #actions: List[ActionElement]
+    actions: List[ActionElement]
     active: str = ""
 
