@@ -383,6 +383,8 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
         transactions_list = self.browser.find_element(By.ID, "id_montrek_table_list")
         rows_count = len(transactions_list.find_elements(By.TAG_NAME, "tr"))
         assert rows_count - 1 == 3
+        # He goes to the upload tab
+        self.browser.find_element(By.ID, "tab_uploads").click()
         # Here he finds a link to upload DKB transactions
         self.browser.find_element(By.ID, "id_transactions_upload").click()
         # He is directed to the upload form
