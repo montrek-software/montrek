@@ -418,6 +418,52 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
         header_text = self.browser.find_element(By.TAG_NAME, "h1").text
         self.assertIn("Billy's DKB account", header_text)
 
+    def test_add_transaction_cateogry_via_table(self):
+        # The user visits the bank account transaction category map page
+        account_id = get_hub_ids_by_satellite_attribute(
+            AccountStaticSatellite, "account_name", "Billy's DKB account"
+        )[0]
+        self.browser.get(
+            self.live_server_url +
+            f"/account/{account_id}/bank_account_view/transaction_category_map"
+        )
+        # He hits the add button
+        self.browser.find_element(By.ID, "id_add_transaction_category").click()
+        # He fills in the form
+        self.browser.find_element(By.ID, "id_transaction_category_new__field").send_keys(
+            'transaction_iban'
+        )
+        self.browser.find_element(By.ID, "id_transaction_category_new__value").send_keys(
+            'XY754372638'
+        )
+        self.browser.find_element(By.ID, "id_transaction_category_new__category").send_keys(
+            'TESTCATEGORY'
+        )
+        # He hits the submit button
+        self.browser.find_element(
+            By.ID, "id_transaction_category_new__submit"
+        ).click()
+        transactions_category_map_list = self.browser.find_element(By.ID, "id_montrek_table_list")
+        rows_count = len(transactions_category_map_list.find_elements(By.TAG_NAME, "tr"))
+        assert rows_count - 1 == 1
+        self.check_for_row_in_table(
+            ["transaction_iban", "XY754372638", "TESTCATEGORY"],
+            "id_account_details",
+        )
+        # He checks the transaction view and sees that the category is set
+        self.browser.find_element(By.ID, "tab_transactions").click()
+        self._set_transaction_date_range()
+        self.browser.find_element(
+            By.ID,
+            f"id__transaction_{self.transaction_satellite_3.id}_view_"
+        ).click()
+        self.assertEqual(
+            self.browser.find_element(By.ID, "id_transaction_category").get_attribute('value'),
+            "TESTCATEGORY"
+        )
+
+
+
     def _set_transaction_date_range(self):
         # He then sets the time window to January 2019
         new_transaction_date_box = self.browser.find_element(
