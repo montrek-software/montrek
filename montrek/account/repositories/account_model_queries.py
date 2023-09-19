@@ -55,12 +55,18 @@ def account_view_data(account_id: int, active_sheet: str = ""):
         action_id="add_transaction",
         hover_text="Add transaction",
         )
-    action_upload_csv = ActionElement( 
+    action_upload_csv = ActionElement(
         icon="upload",
         link=reverse('upload_transaction_to_account_file', kwargs={'account_id': account_id}),
         action_id="id_transactions_upload",
         hover_text="Upload transactions from csv file",
         )
+    action_add_transaction_category = ActionElement(
+        icon="plus",
+        link=reverse('transaction_category_add_form', kwargs={'account_id': account_id}),
+        action_id="id_add_transaction_category",
+        hover_text="Add transaction category",
+    )
 
 
     tabs = (
@@ -93,7 +99,7 @@ def account_view_data(account_id: int, active_sheet: str = ""):
             name="Transaction Category Map", 
             link=reverse('bank_account_view_transaction_category_map', kwargs={'account_id': account_id}),
             html_id="tab_transaction_category_map",
-            actions = (action_back,)
+            actions = (action_back,action_add_transaction_category )
         ),
     )
     _set_active_tab(tabs, active_sheet)

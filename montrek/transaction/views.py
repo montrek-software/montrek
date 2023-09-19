@@ -1,8 +1,9 @@
 from django.shortcuts import render
 from django.shortcuts import redirect
 from django.views.generic import DetailView
-from django.views.generic import ListView
-from .forms import TransactionSatelliteForm
+from django.views.generic.edit import CreateView
+from transaction.forms import TransactionSatelliteForm
+from transaction.forms import TransactionCategoryMapSatelliteForm
 from transaction.repositories.transaction_account_queries import (
     new_transaction_to_account,
 )
@@ -10,6 +11,7 @@ from transaction.repositories.transaction_account_queries import (
     get_transactions_by_account_id
 )
 from transaction.models import TransactionSatellite
+from transaction.models import TransactionCategoryMapSatellite
 from account.models import AccountStaticSatellite
 from account.models import AccountHub
 from baseclasses.repositories import db_helper 
@@ -24,6 +26,12 @@ class TransactionSatelliteDetailView(DetailView):
         context['form'] = TransactionSatelliteForm(instance=self.object)
         context['category'] = self.object.transaction_category
         return context
+
+class TransactionCategoryMapCreateView(CreateView):
+    model = TransactionCategoryMapSatellite
+    form_class = TransactionCategoryMapSatelliteForm
+    template_name = 'transaction_category_map_form.html'  # The name of your HTML template
+    context_object_name = 'transaction_category_map'
 
 
 def _get_account_statics(account_id: int):

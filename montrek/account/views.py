@@ -229,6 +229,7 @@ def bank_account_view_transaction_category_map(request, account_id: int):
     account_data['table_objects'] = get_paginated_transactions_category_map(account_id, page_number)
     return render(request, "bank_account_view_table.html", account_data)
 
+
 def _handle_date_range_form(request):
     start_date, end_date = _get_date_range_dates(request)
     request_get = request.GET.copy()

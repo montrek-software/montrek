@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-6">
+            <h1>Add Transaction Category Map</h1>
+        </div>
+    </div>
+    <div class="table">
+        <table>
+            <tr><td>{{ form.field.label }} </td><td>{{ form.field }}</td></tr>
+            <tr><td>{{ form.value.label }} </td><td>{{ form.value }}</td></tr>
+            <tr><td>{{ form.category.label }} </td><td>{{ form.category }}</td></tr>
+        </table>
+    </div>
+</div>
+{% endblock %}

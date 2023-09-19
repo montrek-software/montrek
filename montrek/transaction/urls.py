@@ -17,4 +17,9 @@ urlpatterns = [
         views.TransactionSatelliteDetailView.as_view(),
         name="transaction_view",
     ),
+    path(
+        "add_transaction_category/<int:account_id>",
+        views.TransactionCategoryMapCreateView.as_view(),
+        name="transaction_category_add_form",
+    )
 ]
