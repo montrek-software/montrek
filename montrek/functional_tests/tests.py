@@ -229,26 +229,36 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
         AccountStaticSatelliteFactory(
             hub_entity=self.account_hub, account_name="Billy's DKB account"
         )
-        transaction_hub_1 = TransactionHubFactory()
-        transaction_hub_2 = TransactionHubFactory()
+        transaction_hubs = [TransactionHubFactory() for _ in range(3)]
         self.transaction_satellite_1 = TransactionSatelliteFactory(
-            hub_entity=transaction_hub_1,
+            hub_entity=transaction_hubs[0],
             transaction_date=timezone.datetime(2019, 1, 1),
             transaction_amount=7051,
             transaction_price=101.2,
             transaction_party="Testonia",
+            transaction_party_iban="XX123456789",
             transaction_description="Test transaction 1",
         )
         self.transaction_satellite_2 = TransactionSatelliteFactory(
-            hub_entity=transaction_hub_2,
+            hub_entity=transaction_hubs[1],
             transaction_date=timezone.datetime(2019, 1, 15),
             transaction_amount=2000,
             transaction_price=98.2,
             transaction_party="Testosteria",
+            transaction_party_iban="XY987654321",
             transaction_description="Test transaction 2",
         )
-        self.account_hub.link_account_transaction.add(transaction_hub_1)
-        self.account_hub.link_account_transaction.add(transaction_hub_2)
+        self.transaction_satellite_3 = TransactionSatelliteFactory(
+            hub_entity=transaction_hubs[2],
+            transaction_date=timezone.datetime(2019, 1, 17),
+            transaction_amount=1,
+            transaction_price=78.2,
+            transaction_party="Another Company",
+            transaction_party_iban="XY754372638",
+            transaction_description="Test transaction 3",
+        )
+        for transaction_hub in transaction_hubs:
+            self.account_hub.link_account_transaction.add(transaction_hub)
         BankAccountPropertySatelliteFactory(
             hub_entity=self.account_hub
         )
@@ -328,7 +338,7 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
         # He now finds two transactions listed
         transactions_list = self.browser.find_element(By.ID, "id_montrek_table_list")
         rows_count = len(transactions_list.find_elements(By.TAG_NAME, "tr")) - 1
-        self.assertEqual(rows_count, 2)
+        self.assertEqual(rows_count, 3)
         # He clicks on the transaction view of the first transaction
         self.browser.find_element(
             By.ID,
@@ -372,7 +382,7 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
         self._set_transaction_date_range()
         transactions_list = self.browser.find_element(By.ID, "id_montrek_table_list")
         rows_count = len(transactions_list.find_elements(By.TAG_NAME, "tr"))
-        assert rows_count - 1 == 2
+        assert rows_count - 1 == 3
         # Here he finds a link to upload DKB transactions
         self.browser.find_element(By.ID, "id_transactions_upload").click()
         # He is directed to the upload form
