@@ -78,7 +78,7 @@ class TransactionCategoryMapHub(baseclass_models.MontrekHubABC):
 
 
 class TransactionCategoryMapSatellite(baseclass_models.MontrekSatelliteABC):
-    identifier_fields = ["field", "value", "category"]
+    identifier_fields = ["field", "value"]
     hub_entity = models.ForeignKey(TransactionCategoryMapHub, on_delete=models.CASCADE)
     field = models.CharField(max_length=250, default="NONE")
     value = models.CharField(max_length=250, default="NONE")

@@ -2,19 +2,19 @@ from django.shortcuts import render
 from django.shortcuts import redirect
 from django.views.generic import DetailView
 from django.views.generic.edit import CreateView
+from django.urls import reverse
+from django.http import HttpResponseRedirect
 from transaction.forms import TransactionSatelliteForm
 from transaction.forms import TransactionCategoryMapSatelliteForm
 from transaction.repositories.transaction_account_queries import (
     new_transaction_to_account,
 )
-from transaction.repositories.transaction_account_queries import (
-    get_transactions_by_account_id
-)
 from transaction.models import TransactionSatellite
 from transaction.models import TransactionCategoryMapSatellite
+from transaction.models import TransactionCategoryHub
 from account.models import AccountStaticSatellite
 from account.models import AccountHub
-from baseclasses.repositories import db_helper 
+from baseclasses.repositories import db_helper
 
 class TransactionSatelliteDetailView(DetailView):
     model = TransactionSatellite
@@ -33,6 +33,30 @@ class TransactionCategoryMapCreateView(CreateView):
     template_name = 'transaction_category_map_form.html'  # The name of your HTML template
     context_object_name = 'transaction_category_map'
 
+    def get_success_url(self):
+        account_id = self.kwargs['account_id']
+        return reverse('bank_account_view_transaction_category_map',
+                       kwargs={'account_id': account_id})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['account_id'] = self.kwargs['account_id']
+        return context
+
+    def form_valid(self, form):
+        #TODO Move this to repository
+        account_id = self.kwargs['account_id']
+        account_hub = db_helper.get_hub_by_id(account_id, AccountHub)
+        transaction_category_map = db_helper.new_satellite_entry(
+            TransactionCategoryMapSatellite,
+            **form.cleaned_data,
+        )
+        account_hub.link_account_transaction_category_map.add(transaction_category_map.hub_entity)
+        return HttpResponseRedirect(self.get_success_url())
+
+    def form_invalid(self, form):
+        print(form.errors)
+        return super().form_invalid(form)
 
 def _get_account_statics(account_id: int):
     account_hub = db_helper.get_hub_by_id(account_id, AccountHub)
@@ -55,8 +79,7 @@ def transaction_add(request, account_id: int):
         transaction_type=None,
         transaction_category="",
     )
-    account_statics = _get_account_statics(account_id) 
+    account_statics = _get_account_statics(account_id)
     if account_statics.account_type == "BankAccount":
         return redirect(f"/account/{account_id}/bank_account_view/transactions")
     return redirect(f"/account/{account_id}/view")
-

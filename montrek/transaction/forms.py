@@ -16,4 +16,4 @@ class TransactionSatelliteForm(forms.ModelForm):
 class TransactionCategoryMapSatelliteForm(forms.ModelForm):
     class Meta:
         model = TransactionCategoryMapSatellite
-        fields = '__all__'
+        fields = ('field', 'value', 'category')
