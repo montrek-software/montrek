@@ -2,7 +2,7 @@ import hashlib
 from django.db import models
 from baseclasses import models as baseclass_models
 from account.managers.validators import montrek_iban_validator
-from transaction.repositories.transaction_model_queries import (
+from transaction.repositories.transaction_category_queries import (
     set_transaction_category_by_map,
 )
 
