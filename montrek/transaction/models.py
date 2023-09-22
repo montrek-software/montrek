@@ -14,7 +14,7 @@ class TransactionHub(baseclass_models.MontrekHubABC):
     )
     link_transaction_transaction_type = models.ManyToManyField(
         "TransactionTypeHub", 
-        related_name = "link_transaction_type_transaction",
+        related_name = "link_transaction_transaction_type",
     )
 
 

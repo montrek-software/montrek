@@ -11,7 +11,7 @@ from baseclasses.repositories.db_helper import new_satellite_entry
 from baseclasses.repositories.db_helper import (
     new_satellites_bunch_from_df_and_from_hub_link,
 )
-from transaction.repositories.transaction_model_queries import set_transaction_type
+from transaction.repositories.transaction_type_queries import set_transaction_type
 
 
 def account_hub():
