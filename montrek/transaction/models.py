@@ -45,10 +45,7 @@ class TransactionSatellite(baseclass_models.MontrekSatelliteABC):
         transactioncategory_hub = (
             self.hub_entity.link_transaction_transaction_category.all()
         )
-        if len(transactioncategory_hub) == 0:
-            transactioncategory_hub = set_transaction_category_by_map(self)
-        else:
-            transactioncategory_hub = transactioncategory_hub[0]
+        transactioncategory_hub = set_transaction_category_by_map(self)
         return transactioncategory_hub.transactioncategorysatellite_set.all()[0]
 
 
@@ -93,8 +90,8 @@ class TransactionCategoryMapSatellite(baseclass_models.MontrekSatelliteABC):
         choices=FIELD_CHOICES,
         default=TRANSACTION_PARTY
     )
-    value = models.CharField(max_length=250, default="NONE")
-    category = models.CharField(max_length=250, default="NONE")
+    value = models.CharField(max_length=250, default="")
+    category = models.CharField(max_length=250, default="")
     hash_searchfield = models.CharField(max_length=64, default="")
 
     def save(self, *args, **kwargs):
