@@ -80,7 +80,19 @@ class TransactionCategoryMapHub(baseclass_models.MontrekHubABC):
 class TransactionCategoryMapSatellite(baseclass_models.MontrekSatelliteABC):
     identifier_fields = ["field", "value"]
     hub_entity = models.ForeignKey(TransactionCategoryMapHub, on_delete=models.CASCADE)
-    field = models.CharField(max_length=250, default="NONE")
+    TRANSACTION_PARTY = 'transaction_party'
+    TRANSACTION_PARTY_IBAN = 'transaction_party_iban'
+
+    FIELD_CHOICES = [
+        (TRANSACTION_PARTY, 'Transaction Party'),
+        (TRANSACTION_PARTY_IBAN, 'Transaction Party IBAN'),
+    ]
+
+    field = models.CharField(
+        max_length=25,
+        choices=FIELD_CHOICES,
+        default=TRANSACTION_PARTY
+    )
     value = models.CharField(max_length=250, default="NONE")
     category = models.CharField(max_length=250, default="NONE")
     hash_searchfield = models.CharField(max_length=64, default="")

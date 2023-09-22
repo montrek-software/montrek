@@ -48,7 +48,7 @@ class TransactionCategoryMapCreateView(CreateView):
     def form_valid(self, form):
         account_id = self.kwargs['account_id']
         account_hub = db_helper.get_hub_by_id(account_id, AccountHub)
-        add_transaction_category_map_entry(account_hub, **form.cleaned_data)
+        add_transaction_category_map_entry(account_hub, form.cleaned_data)
         return HttpResponseRedirect(self.get_success_url())
 
     def form_invalid(self, form):
