@@ -1,4 +1,5 @@
 from django.apps import apps
+from typing import Dict
 import hashlib
 from baseclasses import models as baseclass_models
 from baseclasses.repositories.db_helper import new_satellite_entry
@@ -71,3 +72,13 @@ def set_transaction_category_by_map(
         related_field="link_transaction_transaction_category",
     )
     return transaction_category_sat.hub_entity
+
+def add_transaction_category_map_entry(
+    account_hub: baseclass_models.MontrekHubABC,
+    data_entries: Dict
+) -> None:
+    transaction_category_map = new_satellite_entry(
+        transaction_category_map_satellite(),
+        **data_entries,
+    )
+    account_hub.link_account_transaction_category_map.add(transaction_category_map.hub_entity)

@@ -9,6 +9,9 @@ from transaction.forms import TransactionCategoryMapSatelliteForm
 from transaction.repositories.transaction_account_queries import (
     new_transaction_to_account,
 )
+from transaction.repositories.transaction_category_queries import (
+    add_transaction_category_map_entry,
+)
 from transaction.models import TransactionSatellite
 from transaction.models import TransactionCategoryMapSatellite
 from account.models import AccountStaticSatellite
@@ -43,14 +46,9 @@ class TransactionCategoryMapCreateView(CreateView):
         return context
 
     def form_valid(self, form):
-        #TODO Move this to repository
         account_id = self.kwargs['account_id']
         account_hub = db_helper.get_hub_by_id(account_id, AccountHub)
-        transaction_category_map = db_helper.new_satellite_entry(
-            TransactionCategoryMapSatellite,
-            **form.cleaned_data,
-        )
-        account_hub.link_account_transaction_category_map.add(transaction_category_map.hub_entity)
+        add_transaction_category_map_entry(account_hub, **form.cleaned_data)
         return HttpResponseRedirect(self.get_success_url())
 
     def form_invalid(self, form):
