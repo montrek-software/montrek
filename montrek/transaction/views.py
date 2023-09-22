@@ -11,7 +11,6 @@ from transaction.repositories.transaction_account_queries import (
 )
 from transaction.models import TransactionSatellite
 from transaction.models import TransactionCategoryMapSatellite
-from transaction.models import TransactionCategoryHub
 from account.models import AccountStaticSatellite
 from account.models import AccountHub
 from baseclasses.repositories import db_helper

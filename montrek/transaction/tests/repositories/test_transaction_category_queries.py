@@ -14,8 +14,8 @@ from transaction.tests.factories.transaction_factories import (
 from transaction.tests.factories.transaction_factories import (
     TransactionCategoryMapSatelliteFactory,
 )
-from account.tests.factories.account_factories import AccountHubFactory
 from transaction.models import TransactionCategoryHub
+from account.tests.factories.account_factories import AccountHubFactory
 
 
 
@@ -84,4 +84,3 @@ class TestTransactionCategoryModelQueries(TestCase):
         set_transaction_category_by_map(transaction1)
         transcat_1 = get_transaction_category_by_transaction(transaction1)
         self.assertEqual(transcat_1.typename, "AMUSEMENT")
-
