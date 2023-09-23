@@ -223,11 +223,18 @@ def bank_account_view_transaction_category_map(request, account_id: int):
         'Field' : {'attr': 'field'},
         'Value' : {'attr': 'value'},
         'Category' : {'attr': 'category'},
-        'Actions': {
+        'Edit': {
             'link': {'url': 'transaction_category_map_edit',
                      'kwargs': {'pk':'id',
                                 'account_id': str(account_id)},
                      'icon': 'edit', 
+                   },
+        },
+        'Delete': {
+            'link': {'url': 'transaction_category_map_delete',
+                     'kwargs': {'pk':'id',
+                                'account_id': str(account_id)},
+                     'icon': 'trash', 
                    },
         },
     }

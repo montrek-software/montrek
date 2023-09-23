@@ -51,13 +51,10 @@ class TransactionCategoryMapTemplateView(CreateView):
         add_transaction_category_map_entry(account_hub, form.cleaned_data)
         return HttpResponseRedirect(self.get_success_url())
 
-
-class TransactionCategoryMapCreateView(TransactionCategoryMapTemplateView):
-    pass
-
-class TransactionCategoryMapUpdateView(TransactionCategoryMapTemplateView):
+class TransactionCategoryMapShowEntriesView(TransactionCategoryMapTemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context['pk'] = self.kwargs['pk']
         transaction_category_entry = TransactionCategoryMapSatellite.objects.get(
             pk=self.kwargs['pk']
         )
@@ -65,6 +62,24 @@ class TransactionCategoryMapUpdateView(TransactionCategoryMapTemplateView):
             instance=transaction_category_entry
         )
         return context
+
+class TransactionCategoryMapCreateView(TransactionCategoryMapTemplateView):
+    pass
+
+
+class TransactionCategoryMapUpdateView(TransactionCategoryMapShowEntriesView):
+    pass
+
+class TransactionCategoryMapDeleteView(TransactionCategoryMapShowEntriesView):
+    template_name = 'transaction_category_map_delete_form.html'  # The name of your HTML template
+
+    def form_valid(self, form):
+        transaction_category_entry = TransactionCategoryMapSatellite.objects.get(
+            pk=self.kwargs['pk']
+        )
+        transaction_category_entry.hub_entity.is_deleted = True
+        transaction_category_entry.hub_entity.save()
+        return HttpResponseRedirect(self.get_success_url())
 
 
 def _get_account_statics(account_id: int):

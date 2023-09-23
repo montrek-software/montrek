@@ -1,4 +1,3 @@
-import datetime
 import hashlib
 from django.db import models
 from django.utils import timezone
@@ -34,6 +33,7 @@ class MontrekHubABC(TimeStampMixin):
         abstract = True
 
     identifier = models.CharField(max_length=12, default="")
+    is_deleted = models.BooleanField(default=False)
 
 
 # Base Static Satellite Model ABC

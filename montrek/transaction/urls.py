@@ -27,4 +27,9 @@ urlpatterns = [
         views.TransactionCategoryMapUpdateView.as_view(),
         name="transaction_category_map_edit",
     ),
+    path(
+        "delete_transcation_category_map/<int:account_id>/<int:pk>",
+        views.TransactionCategoryMapDeleteView.as_view(),
+        name="transaction_category_map_delete",
+    ),
 ]
