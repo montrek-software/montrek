@@ -223,6 +223,13 @@ def bank_account_view_transaction_category_map(request, account_id: int):
         'Field' : {'attr': 'field'},
         'Value' : {'attr': 'value'},
         'Category' : {'attr': 'category'},
+        'Actions': {
+            'link': {'url': 'transaction_category_map_edit',
+                     'kwargs': {'pk':'id',
+                                'account_id': str(account_id)},
+                     'icon': 'edit', 
+                   },
+        },
     }
     account_data['columns'] = trans_cat_map_fields.keys()
     account_data['items'] = trans_cat_map_fields.values()

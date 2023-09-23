@@ -29,7 +29,7 @@ class TransactionSatelliteDetailView(DetailView):
         context['category'] = self.object.transaction_category
         return context
 
-class TransactionCategoryMapCreateView(CreateView):
+class TransactionCategoryMapTemplateView(CreateView):
     model = TransactionCategoryMapSatellite
     form_class = TransactionCategoryMapSatelliteForm
     template_name = 'transaction_category_map_form.html'  # The name of your HTML template
@@ -51,9 +51,21 @@ class TransactionCategoryMapCreateView(CreateView):
         add_transaction_category_map_entry(account_hub, form.cleaned_data)
         return HttpResponseRedirect(self.get_success_url())
 
-    def form_invalid(self, form):
-        print(form.errors)
-        return super().form_invalid(form)
+
+class TransactionCategoryMapCreateView(TransactionCategoryMapTemplateView):
+    pass
+
+class TransactionCategoryMapUpdateView(TransactionCategoryMapTemplateView):
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        transaction_category_entry = TransactionCategoryMapSatellite.objects.get(
+            pk=self.kwargs['pk']
+        )
+        context['form'] = TransactionCategoryMapSatelliteForm(
+            instance=transaction_category_entry
+        )
+        return context
+
 
 def _get_account_statics(account_id: int):
     account_hub = db_helper.get_hub_by_id(account_id, AccountHub)

@@ -21,5 +21,10 @@ urlpatterns = [
         "add_transaction_category/<int:account_id>",
         views.TransactionCategoryMapCreateView.as_view(),
         name="transaction_category_add_form",
-    )
+    ),
+    path(
+        "edit_transcation_category_map/<int:account_id>/<int:pk>",
+        views.TransactionCategoryMapUpdateView.as_view(),
+        name="transaction_category_map_edit",
+    ),
 ]
