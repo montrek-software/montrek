@@ -55,11 +55,16 @@ def set_transaction_category_by_map(
             continue
         field_value = field+str(field_value).replace(' ','').upper()
         field_value_hash = hashlib.sha256(field_value.encode()).hexdigest()
-        transaction_category_map = transaction_category_map_satellite().objects.filter(
+        transaction_category_maps = transaction_category_map_satellite().objects.filter(
             hash_searchfield=field_value_hash
         )
-        if len(transaction_category_map) > 0:
-            cat_typename = transaction_category_map[0].category.replace(' ','').upper()
+        if len(transaction_category_maps) > 0:
+            transaction_category_map_hub = transaction_category_maps[0].hub_entity
+            transaction_category = select_satellite(
+                transaction_category_map_hub,
+                transaction_category_map_satellite(),
+            )
+            cat_typename = transaction_category.category.replace(' ','').upper()
             break
 
     transaction_category_sat = new_satellite_entry(

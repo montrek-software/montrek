@@ -42,11 +42,11 @@ class TransactionSatellite(baseclass_models.MontrekSatelliteABC):
 
     @property
     def transaction_category(self):
-        transactioncategory_hub = (
-            self.hub_entity.link_transaction_transaction_category.all()
-        )
+        #transactioncategory_hub = (
+        #    self.hub_entity.link_transaction_transaction_category.all()
+        #)
         transactioncategory_hub = set_transaction_category_by_map(self)
-        return transactioncategory_hub.transactioncategorysatellite_set.all()[0]
+        return transactioncategory_hub.transactioncategorysatellite_set.last()
 
 
 class TransactionTypeHub(baseclass_models.MontrekHubABC):
