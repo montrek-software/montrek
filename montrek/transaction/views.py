@@ -40,6 +40,20 @@ class TransactionCategoryMapTemplateView(CreateView):
         return reverse('bank_account_view_transaction_category_map',
                        kwargs={'account_id': account_id})
 
+    def get_initial(self):
+        initial = super().get_initial()
+
+        counterparty = self.kwargs.get('counterparty', None)
+        if counterparty:
+            initial['value'] = counterparty
+            initial['field'] = 'Transaction Party'
+
+        iban = self.kwargs.get('iban', None)
+        if iban:
+            initial['value'] = iban
+            initial['field'] = TransactionCategoryMapSatellite.TRANSACTION_PARTY_IBAN
+        return initial
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['account_id'] = self.kwargs['account_id']
