@@ -164,10 +164,11 @@ def bank_account_view_transactions(request, account_id: int):
         'Date': {'attr': 'transaction_date'},
         'Value': {'attr': 'transaction_value'},
         'Category': {'attr': 'transaction_category.typename'},
-        'Actions': {
+        'View': {
             'link': {'url': 'transaction_view',
                      'kwargs': {'pk':'id'},
                      'icon': 'eye-open', 
+                     'hover_text': 'View',
                    },
         },
                          }
@@ -207,6 +208,7 @@ def bank_account_view_uploads(request, account_id: int):
         'File': {'link': {'url': 'download_upload_file',
                           'kwargs': {'upload_registry_id':'hub_entity.id'},
                           'icon': 'download',
+                          'hover_text': 'Download',
                          }
                  }
     }
@@ -228,6 +230,7 @@ def bank_account_view_transaction_category_map(request, account_id: int):
                      'kwargs': {'pk':'id',
                                 'account_id': str(account_id)},
                      'icon': 'edit', 
+                     'hover_text': 'Edit',
                    },
         },
         'Delete': {
@@ -235,6 +238,7 @@ def bank_account_view_transaction_category_map(request, account_id: int):
                      'kwargs': {'pk':'id',
                                 'account_id': str(account_id)},
                      'icon': 'trash', 
+                     'hover_text': 'Delete',
                    },
         },
     }

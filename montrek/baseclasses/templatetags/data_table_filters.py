@@ -22,11 +22,13 @@ def get_attribute(obj, field_descriptor):
                      )
         icon = field_descriptor['link']['icon'] 
         id_tag = url.replace('/', '_')
-        template = Template('<a id="id_{{ id_tag }}" href="{{ url }}"><span class="glyphicon glyphicon-{{ icon }}"></span></a>')
+        hover_text = field_descriptor['link']['hover_text']
+        template = Template('<a id="id_{{ id_tag }}" href="{{ url }}" title="{{ hover_text }}"><span class="glyphicon glyphicon-{{ icon }}"></span></a>')
         context = {'url': url,
                    'icon': icon,
                    'url_target': url_target,
                    'id_tag': id_tag,
+                   'hover_text': hover_text,
                   }
         return template.render(Context(context))
     return ""
