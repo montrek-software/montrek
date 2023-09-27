@@ -93,11 +93,14 @@ class TransactionCategoryMapCreateView(
     TransactionCategoryMapTemplateView,
     SuccessURLTransactionCategoryMapMixin
 ):
-    pass
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['tag'] = 'Add'
+        return context
 
 
 class TransactionCategoryMapCreateFromTransactionView(
-    TransactionCategoryMapTemplateView,
+    TransactionCategoryMapCreateView,
     SuccessURLTransactionTableMixin,
 ):
     pass
@@ -106,13 +109,20 @@ class TransactionCategoryMapUpdateView(
     TransactionCategoryMapShowEntriesView,
     SuccessURLTransactionCategoryMapMixin
 ):
-    pass
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['tag'] = 'Edit'
+        return context
 
 class TransactionCategoryMapDeleteView(
     TransactionCategoryMapShowEntriesView,
     SuccessURLTransactionCategoryMapMixin
 ):
-    template_name = 'transaction_category_map_delete_form.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['tag'] = 'Delete'
+        return context
 
     def form_valid(self, form):
         transaction_category_entry = TransactionCategoryMapSatellite.objects.get(

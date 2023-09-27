@@ -3,13 +3,15 @@
 <div class="container">
     <div class="row">
         <div class="col-lg-6">
-            <h1>Add Transaction Category Map</h1>
+            <h1>{{ tag }} Transaction Category Map</h1>
         </div>
     </div>
     {% if iban %}
         <form method="post" action="{% url 'transaction_category_add_form_with_iban' account_id=account_id iban=iban %}">
     {% elif counterparty %}
         <form method="post" action="{% url 'transaction_category_add_form_with_counterparty' account_id=account_id counterparty=counterparty %}">
+    {% elif tag == "Delete" %}
+        <form method="post" action="{% url 'transaction_category_map_delete' account_id=account_id pk=pk %}">
     {% else %}
         <form method="post" action="{% url 'transaction_category_add_form' account_id=account_id %}">
     {% endif %}
@@ -20,7 +22,7 @@
             <tr><td>{{ form.value.label }} </td><td>{{ form.value }}</td></tr>
             <tr><td>{{ form.category.label }} </td><td>{{ form.category }}</td></tr>
 	    <tr><td colspan="2">
-                    <input type="submit" value="Save" class="btn btn-primary">  {# Here's the submit button #}
+                <input type="submit" value="{{ tag }}" class="btn btn-primary">  {# Here's the submit button #}
 	    </td></tr>
         </table>
     </div>
