@@ -16,6 +16,7 @@ def get_attribute(obj, field_descriptor):
     if 'link' in field_descriptor:
         kwargs = field_descriptor['link']['kwargs']
         kwargs = {key: _get_dotted_attr_or_arg(obj, value) for key, value in kwargs.items()}
+        kwargs = {key: str(value).replace('/', '_') for key, value in kwargs.items()}
         url_target = field_descriptor['link']['url']
         url = reverse(url_target, 
                       kwargs=kwargs,

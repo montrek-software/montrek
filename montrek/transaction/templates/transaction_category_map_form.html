@@ -6,7 +6,13 @@
             <h1>Add Transaction Category Map</h1>
         </div>
     </div>
-    <form method="post" action="{% url 'transaction_category_add_form' account_id=account_id %}">
+    {% if iban %}
+        <form method="post" action="{% url 'transaction_category_add_form_with_iban' account_id=account_id iban=iban %}">
+    {% elif counterparty %}
+        <form method="post" action="{% url 'transaction_category_add_form_with_counterparty' account_id=account_id counterparty=counterparty %}">
+    {% else %}
+        <form method="post" action="{% url 'transaction_category_add_form' account_id=account_id %}">
+    {% endif %}
 	{% csrf_token %}
     <div class="table">
         <table>

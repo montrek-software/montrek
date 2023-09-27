@@ -19,12 +19,12 @@ urlpatterns = [
     ),
     path(
         "add_transaction_category/<int:account_id>/cp/<str:counterparty>",
-        views.TransactionCategoryMapCreateView.as_view(),
+        views.TransactionCategoryMapCreateFromTransactionView.as_view(),
         name="transaction_category_add_form_with_counterparty",
     ),
     path(
         "add_transaction_category/<int:account_id>/iban/<str:iban>",
-        views.TransactionCategoryMapCreateView.as_view(),
+        views.TransactionCategoryMapCreateFromTransactionView.as_view(),
         name="transaction_category_add_form_with_iban",
     ),
     path(
