@@ -418,6 +418,7 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
         header_text = self.browser.find_element(By.TAG_NAME, "h1").text
         self.assertIn("Billy's DKB account", header_text)
 
+    @tag("functional")
     def test_add_transaction_cateogry_via_table(self):
         # The user visits the bank account transaction category map page
         account_id = get_hub_ids_by_satellite_attribute(
@@ -447,8 +448,8 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
         rows_count = len(transactions_category_map_list.find_elements(By.TAG_NAME, "tr"))
         assert rows_count - 1 == 1
         self.check_for_row_in_table(
-            ["transaction_iban", "XY754372638", "TESTCATEGORY"],
-            "id_account_details",
+            ["transaction_party_iban", "XY754372638", "TESTCATEGORY"],
+            "id_montrek_table_list",
         )
         # He checks the transaction view and sees that the category is set
         self.browser.find_element(By.ID, "tab_transactions").click()
@@ -458,9 +459,83 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
             f"id__transaction_{self.transaction_satellite_3.id}_view_"
         ).click()
         self.assertEqual(
-            self.browser.find_element(By.ID, "id_transaction_category").get_attribute('value'),
+            self.browser.find_element(By.ID, "id_transaction_category").text,
             "TESTCATEGORY"
         )
+
+    @tag("functional")
+    def test_change_transaction_category_from_transaction_table(self):
+        # The user visits the bank account transaction page
+        account_id = get_hub_ids_by_satellite_attribute(
+            AccountStaticSatellite, "account_name", "Billy's DKB account"
+        )[0]
+        self.browser.get(
+            self.live_server_url +
+            f"/account/{account_id}/bank_account_view/transactions"
+        )
+        self._set_transaction_date_range()
+        # He clicks on the category edit for counterparty botton
+        self.browser.find_element(
+            By.ID,
+            f"id__transaction_add_transaction_category_{account_id}_cp_Another%20Company",
+        ).click()
+        # He sets the category to 'TESTCATEGORY'
+        self.browser.find_element(By.ID, "id_transaction_category_new__category").send_keys(
+            'TESTCATEGORY'
+        )
+        self.browser.find_element(
+            By.ID, "id_transaction_category_new__submit"
+        ).click()
+        # He finds the category in the table
+        self.check_for_row_in_table(
+            ["transaction_party", "Another Company", "TESTCATEGORY"],
+            "id_montrek_table_list",
+        )
+        self.browser.find_element(By.ID, "tab_transactions").click()
+        # He checks the transaction view and sees that the category is set
+        self.browser.find_element(
+            By.ID,
+            f"id__transaction_{self.transaction_satellite_3.id}_view_"
+        ).click()
+        self.assertEqual(
+            self.browser.find_element(By.ID, "id_transaction_category").text,
+            "TESTCATEGORY"
+        )
+
+        # He goes back to the transactio table
+        self.browser.find_element(By.ID, "id_back").click()
+
+        # Now he changes the category for the second transaction based on the IBAN
+        self.browser.find_element(
+            By.ID,
+            f"id__transaction_add_transaction_category_{account_id}_iban_XY987654321",
+        ).click()
+        # He sets the category to 'TESTCATEGORY'
+        self.browser.find_element(By.ID, "id_transaction_category_new__category").send_keys(
+            'TESTCATEGORY 2'
+        )
+        self.browser.find_element(
+            By.ID, "id_transaction_category_new__submit"
+        ).click()
+        # He finds the category in the table
+        self.check_for_row_in_table(
+            ["transaction_party_iban", "XY987654321", "TESTCATEGORY 2"],
+            "id_montrek_table_list",
+        )
+        self.browser.find_element(By.ID, "tab_transactions").click()
+        # He checks the transaction view and sees that the category is set
+        self.browser.find_element(
+            By.ID,
+            f"id__transaction_{self.transaction_satellite_2.id}_view_"
+        ).click()
+        self.assertEqual(
+            self.browser.find_element(By.ID, "id_transaction_category").text,
+            "TESTCATEGORY2"
+        )
+
+        # He goes back to the transactio table
+        self.browser.find_element(By.ID, "id_back").click()
+
 
 
 

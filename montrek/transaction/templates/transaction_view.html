@@ -6,6 +6,9 @@
             <h1>Transaction</h1>
         </div>
     </div>
+    <div>
+        <a href="{% url "bank_account_view_transactions" account_id=account_id  %}" id="id_back"><span class="glyphicon glyphicon-chevron-left"></span></a>
+    </div>
     <h3>Transaction data</h3>
     <div class="table">
         <table>
@@ -16,7 +19,7 @@
 	  <tr><td>{{ form.transaction_description.label }}</td><td>{{ form.transaction_description }}</td></tr>
 	  <tr><td>{{ form.transaction_party.label }}</td><td>{{ form.transaction_party }}</td></tr>
 	  <tr><td>{{ form.transaction_party_iban.label }}</td><td>{{ form.transaction_party_iban }}</td></tr>
-	  <tr><td>Category</td><td>{{ category.typename }}</td></tr>
+	  <tr><td>Category</td><td id="id_transaction_category">{{ category.typename }}</td></tr>
         </table>
     </div>
     <h3>Meta Data</h3>
@@ -28,7 +31,7 @@
 	  <tr><td>{{ form.state_date_end.label }}</td><td>{{ form.state_date_end }}</td></tr>
 	  <tr><td>{{ form.hub_entity.label }}</td><td>{{ form.hub_entity }}</td></tr>
 	  <tr><td>{{ form.created_at.label }}</td><td>{{ form.created_at }}</td></tr>
-	  
+    </table>
 	
 </div>
 {% endblock %}

@@ -27,6 +27,7 @@ class TransactionSatelliteDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         context['form'] = TransactionSatelliteForm(instance=self.object)
         context['category'] = self.object.transaction_category
+        context['account_id'] = self.object.hub_entity.link_transaction_account.first().id
         return context
 
 class SuccessURLTransactionCategoryMapMixin(CreateView): # pylint: disable=too-few-public-methods
