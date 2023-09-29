@@ -159,15 +159,30 @@ def bank_account_view_transactions(request, account_id: int):
     page_number = request.GET.get('page', 1)
     transaction_fields = {
         'Counterparty': {'attr': 'transaction_party'},
+        'CP Cat': {'link': {'url': 'transaction_category_add_form_with_counterparty',
+                            'kwargs': {'account_id': str(account_id),
+                                       'counterparty': 'transaction_party'},
+                            'icon': 'tag',
+                            'hover_text': 'Set Category based on Counterparty',
+                           },
+                  },
         'IBAN': {'attr': 'transaction_party_iban'},
+        'IBAN Cat': {'link': {'url': 'transaction_category_add_form_with_iban',
+                            'kwargs': {'account_id': str(account_id),
+                                       'iban': 'transaction_party_iban'},
+                            'icon': 'tag',
+                            'hover_text': 'Set Category based on IBAN',
+                           },
+                  },
         'Description': {'attr': 'transaction_description'},
         'Date': {'attr': 'transaction_date'},
         'Value': {'attr': 'transaction_value'},
         'Category': {'attr': 'transaction_category.typename'},
-        'Actions': {
+        'View': {
             'link': {'url': 'transaction_view',
                      'kwargs': {'pk':'id'},
                      'icon': 'eye-open', 
+                     'hover_text': 'View',
                    },
         },
                          }
@@ -207,6 +222,7 @@ def bank_account_view_uploads(request, account_id: int):
         'File': {'link': {'url': 'download_upload_file',
                           'kwargs': {'upload_registry_id':'hub_entity.id'},
                           'icon': 'download',
+                          'hover_text': 'Download',
                          }
                  }
     }
@@ -223,11 +239,28 @@ def bank_account_view_transaction_category_map(request, account_id: int):
         'Field' : {'attr': 'field'},
         'Value' : {'attr': 'value'},
         'Category' : {'attr': 'category'},
+        'Edit': {
+            'link': {'url': 'transaction_category_map_edit',
+                     'kwargs': {'pk':'id',
+                                'account_id': str(account_id)},
+                     'icon': 'edit', 
+                     'hover_text': 'Edit',
+                   },
+        },
+        'Delete': {
+            'link': {'url': 'transaction_category_map_delete',
+                     'kwargs': {'pk':'id',
+                                'account_id': str(account_id)},
+                     'icon': 'trash', 
+                     'hover_text': 'Delete',
+                   },
+        },
     }
     account_data['columns'] = trans_cat_map_fields.keys()
     account_data['items'] = trans_cat_map_fields.values()
     account_data['table_objects'] = get_paginated_transactions_category_map(account_id, page_number)
     return render(request, "bank_account_view_table.html", account_data)
+
 
 def _handle_date_range_form(request):
     start_date, end_date = _get_date_range_dates(request)

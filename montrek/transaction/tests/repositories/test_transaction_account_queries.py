@@ -23,9 +23,6 @@ from transaction.repositories.transaction_account_queries import (
 from transaction.repositories.transaction_account_queries import (
     get_transactions_by_account_hub,
 )
-from transaction.repositories.transaction_model_queries import (
-    get_transaction_type_by_transaction,
-)
 from transaction.repositories.transaction_account_queries import (
     get_transaction_category_map_by_account_hub
 )
@@ -34,6 +31,9 @@ from transaction.repositories.transaction_account_queries import (
 )
 from transaction.repositories.transaction_account_queries import (
     get_paginated_transactions_category_map
+)
+from transaction.repositories.transaction_type_queries import (
+    get_transaction_type_by_transaction,
 )
 
 ACCOUNTS_UNDER_TEST = 1

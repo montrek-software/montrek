@@ -28,11 +28,6 @@ urlpatterns = [
         name="bank_account_view",
     ),
     path(
-        "<int:account_id>/bank_account_view",
-        views.bank_account_view,
-        name="bank_account_view",
-    ),
-    path(
         "<int:account_id>/bank_account_view/overview",
         views.bank_account_view_overview,
         name="bank_account_view_overview",

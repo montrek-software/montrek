@@ -11,7 +11,7 @@ from baseclasses.repositories.db_helper import new_satellite_entry
 from baseclasses.repositories.db_helper import (
     new_satellites_bunch_from_df_and_from_hub_link,
 )
-from transaction.repositories.transaction_model_queries import set_transaction_type
+from transaction.repositories.transaction_type_queries import set_transaction_type
 
 
 def account_hub():
@@ -115,7 +115,9 @@ def get_transaction_category_map_by_account_id(account_id):
     return get_transaction_category_map_by_account_hub(account_hub_object)
 
 def get_transaction_category_map_by_account_hub(account_hub_object, reference_date = datetime.datetime.now()):
-    transaction_category_map_hubs = account_hub_object.link_account_transaction_category_map.all()
+    transaction_category_map_hubs = account_hub_object.link_account_transaction_category_map.filter(
+        is_deleted=False
+    )
     transaction_category_map_satellites = transaction_category_map_satellite().objects.filter( 
         Q(hub_entity__in=transaction_category_map_hubs)
         & Q(state_date_start__lte=reference_date)

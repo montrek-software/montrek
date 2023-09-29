@@ -1,9 +1,8 @@
-from django.db import models
 import hashlib
+from django.db import models
 from baseclasses import models as baseclass_models
-from account import models as account_models
 from account.managers.validators import montrek_iban_validator
-from transaction.repositories.transaction_model_queries import (
+from transaction.repositories.transaction_category_queries import (
     set_transaction_category_by_map,
 )
 
@@ -15,7 +14,7 @@ class TransactionHub(baseclass_models.MontrekHubABC):
     )
     link_transaction_transaction_type = models.ManyToManyField(
         "TransactionTypeHub", 
-        related_name = "link_transaction_type_transaction",
+        related_name = "link_transaction_transaction_type",
     )
 
 
@@ -43,14 +42,11 @@ class TransactionSatellite(baseclass_models.MontrekSatelliteABC):
 
     @property
     def transaction_category(self):
-        transactioncategory_hub = (
-            self.hub_entity.link_transaction_transaction_category.all()
-        )
-        if len(transactioncategory_hub) == 0:
-            transactioncategory_hub = set_transaction_category_by_map(self)
-        else:
-            transactioncategory_hub = transactioncategory_hub[0]
-        return transactioncategory_hub.transactioncategorysatellite_set.all()[0]
+        #transactioncategory_hub = (
+        #    self.hub_entity.link_transaction_transaction_category.all()
+        #)
+        transactioncategory_hub = set_transaction_category_by_map(self)
+        return transactioncategory_hub.transactioncategorysatellite_set.last()
 
 
 class TransactionTypeHub(baseclass_models.MontrekHubABC):
@@ -79,11 +75,23 @@ class TransactionCategoryMapHub(baseclass_models.MontrekHubABC):
 
 
 class TransactionCategoryMapSatellite(baseclass_models.MontrekSatelliteABC):
-    identifier_fields = ["field", "value", "category"]
+    identifier_fields = ["field", "value"]
     hub_entity = models.ForeignKey(TransactionCategoryMapHub, on_delete=models.CASCADE)
-    field = models.CharField(max_length=250, default="NONE")
-    value = models.CharField(max_length=250, default="NONE")
-    category = models.CharField(max_length=250, default="NONE")
+    TRANSACTION_PARTY = 'transaction_party'
+    TRANSACTION_PARTY_IBAN = 'transaction_party_iban'
+
+    FIELD_CHOICES = [
+        (TRANSACTION_PARTY, 'Transaction Party'),
+        (TRANSACTION_PARTY_IBAN, 'Transaction Party IBAN'),
+    ]
+
+    field = models.CharField(
+        max_length=25,
+        choices=FIELD_CHOICES,
+        default=TRANSACTION_PARTY
+    )
+    value = models.CharField(max_length=250, default="")
+    category = models.CharField(max_length=250, default="")
     hash_searchfield = models.CharField(max_length=64, default="")
 
     def save(self, *args, **kwargs):

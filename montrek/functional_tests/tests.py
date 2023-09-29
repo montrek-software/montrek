@@ -229,26 +229,36 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
         AccountStaticSatelliteFactory(
             hub_entity=self.account_hub, account_name="Billy's DKB account"
         )
-        transaction_hub_1 = TransactionHubFactory()
-        transaction_hub_2 = TransactionHubFactory()
+        transaction_hubs = [TransactionHubFactory() for _ in range(3)]
         self.transaction_satellite_1 = TransactionSatelliteFactory(
-            hub_entity=transaction_hub_1,
+            hub_entity=transaction_hubs[0],
             transaction_date=timezone.datetime(2019, 1, 1),
             transaction_amount=7051,
             transaction_price=101.2,
             transaction_party="Testonia",
+            transaction_party_iban="XX123456789",
             transaction_description="Test transaction 1",
         )
         self.transaction_satellite_2 = TransactionSatelliteFactory(
-            hub_entity=transaction_hub_2,
+            hub_entity=transaction_hubs[1],
             transaction_date=timezone.datetime(2019, 1, 15),
             transaction_amount=2000,
             transaction_price=98.2,
             transaction_party="Testosteria",
+            transaction_party_iban="XY987654321",
             transaction_description="Test transaction 2",
         )
-        self.account_hub.link_account_transaction.add(transaction_hub_1)
-        self.account_hub.link_account_transaction.add(transaction_hub_2)
+        self.transaction_satellite_3 = TransactionSatelliteFactory(
+            hub_entity=transaction_hubs[2],
+            transaction_date=timezone.datetime(2019, 1, 17),
+            transaction_amount=1,
+            transaction_price=78.2,
+            transaction_party="Another Company",
+            transaction_party_iban="XY754372638",
+            transaction_description="Test transaction 3",
+        )
+        for transaction_hub in transaction_hubs:
+            self.account_hub.link_account_transaction.add(transaction_hub)
         BankAccountPropertySatelliteFactory(
             hub_entity=self.account_hub
         )
@@ -328,7 +338,7 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
         # He now finds two transactions listed
         transactions_list = self.browser.find_element(By.ID, "id_montrek_table_list")
         rows_count = len(transactions_list.find_elements(By.TAG_NAME, "tr")) - 1
-        self.assertEqual(rows_count, 2)
+        self.assertEqual(rows_count, 3)
         # He clicks on the transaction view of the first transaction
         self.browser.find_element(
             By.ID,
@@ -372,7 +382,7 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
         self._set_transaction_date_range()
         transactions_list = self.browser.find_element(By.ID, "id_montrek_table_list")
         rows_count = len(transactions_list.find_elements(By.TAG_NAME, "tr"))
-        assert rows_count - 1 == 2
+        assert rows_count - 1 == 3
         # He goes to the upload tab
         self.browser.find_element(By.ID, "tab_uploads").click()
         # Here he finds a link to upload DKB transactions
@@ -407,6 +417,127 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
         self.browser.find_element(By.ID, "id_back_button").click()
         header_text = self.browser.find_element(By.TAG_NAME, "h1").text
         self.assertIn("Billy's DKB account", header_text)
+
+    @tag("functional")
+    def test_add_transaction_cateogry_via_table(self):
+        # The user visits the bank account transaction category map page
+        account_id = get_hub_ids_by_satellite_attribute(
+            AccountStaticSatellite, "account_name", "Billy's DKB account"
+        )[0]
+        self.browser.get(
+            self.live_server_url +
+            f"/account/{account_id}/bank_account_view/transaction_category_map"
+        )
+        # He hits the add button
+        self.browser.find_element(By.ID, "id_add_transaction_category").click()
+        # He fills in the form
+        self.browser.find_element(By.ID, "id_transaction_category_new__field").send_keys(
+            'transaction_iban'
+        )
+        self.browser.find_element(By.ID, "id_transaction_category_new__value").send_keys(
+            'XY754372638'
+        )
+        self.browser.find_element(By.ID, "id_transaction_category_new__category").send_keys(
+            'TESTCATEGORY'
+        )
+        # He hits the submit button
+        self.browser.find_element(
+            By.ID, "id_transaction_category_new__submit"
+        ).click()
+        transactions_category_map_list = self.browser.find_element(By.ID, "id_montrek_table_list")
+        rows_count = len(transactions_category_map_list.find_elements(By.TAG_NAME, "tr"))
+        assert rows_count - 1 == 1
+        self.check_for_row_in_table(
+            ["transaction_party_iban", "XY754372638", "TESTCATEGORY"],
+            "id_montrek_table_list",
+        )
+        # He checks the transaction view and sees that the category is set
+        self.browser.find_element(By.ID, "tab_transactions").click()
+        self._set_transaction_date_range()
+        self.browser.find_element(
+            By.ID,
+            f"id__transaction_{self.transaction_satellite_3.id}_view_"
+        ).click()
+        self.assertEqual(
+            self.browser.find_element(By.ID, "id_transaction_category").text,
+            "TESTCATEGORY"
+        )
+
+    @tag("functional")
+    def test_change_transaction_category_from_transaction_table(self):
+        # The user visits the bank account transaction page
+        account_id = get_hub_ids_by_satellite_attribute(
+            AccountStaticSatellite, "account_name", "Billy's DKB account"
+        )[0]
+        self.browser.get(
+            self.live_server_url +
+            f"/account/{account_id}/bank_account_view/transactions"
+        )
+        self._set_transaction_date_range()
+        # He clicks on the category edit for counterparty botton
+        self.browser.find_element(
+            By.ID,
+            f"id__transaction_add_transaction_category_{account_id}_cp_Another%20Company",
+        ).click()
+        # He sets the category to 'TESTCATEGORY'
+        self.browser.find_element(By.ID, "id_transaction_category_new__category").send_keys(
+            'TESTCATEGORY'
+        )
+        self.browser.find_element(
+            By.ID, "id_transaction_category_new__submit"
+        ).click()
+        # He finds the category in the table
+        self.check_for_row_in_table(
+            ["transaction_party", "Another Company", "TESTCATEGORY"],
+            "id_montrek_table_list",
+        )
+        self.browser.find_element(By.ID, "tab_transactions").click()
+        # He checks the transaction view and sees that the category is set
+        self.browser.find_element(
+            By.ID,
+            f"id__transaction_{self.transaction_satellite_3.id}_view_"
+        ).click()
+        self.assertEqual(
+            self.browser.find_element(By.ID, "id_transaction_category").text,
+            "TESTCATEGORY"
+        )
+
+        # He goes back to the transactio table
+        self.browser.find_element(By.ID, "id_back").click()
+
+        # Now he changes the category for the second transaction based on the IBAN
+        self.browser.find_element(
+            By.ID,
+            f"id__transaction_add_transaction_category_{account_id}_iban_XY987654321",
+        ).click()
+        # He sets the category to 'TESTCATEGORY'
+        self.browser.find_element(By.ID, "id_transaction_category_new__category").send_keys(
+            'TESTCATEGORY 2'
+        )
+        self.browser.find_element(
+            By.ID, "id_transaction_category_new__submit"
+        ).click()
+        # He finds the category in the table
+        self.check_for_row_in_table(
+            ["transaction_party_iban", "XY987654321", "TESTCATEGORY 2"],
+            "id_montrek_table_list",
+        )
+        self.browser.find_element(By.ID, "tab_transactions").click()
+        # He checks the transaction view and sees that the category is set
+        self.browser.find_element(
+            By.ID,
+            f"id__transaction_{self.transaction_satellite_2.id}_view_"
+        ).click()
+        self.assertEqual(
+            self.browser.find_element(By.ID, "id_transaction_category").text,
+            "TESTCATEGORY2"
+        )
+
+        # He goes back to the transactio table
+        self.browser.find_element(By.ID, "id_back").click()
+
+
+
 
     def _set_transaction_date_range(self):
         # He then sets the time window to January 2019
