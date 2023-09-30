@@ -18,7 +18,7 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
         )
         self.figure = go.Figure(data=figure_data)
         self.figure.update_layout(
-            title_text='Customized Color Scheme',
+            title_text=reporting_data.title,  # Adding Title
             title_font_color=ReportingColors.BLUE,  # Customizing Title Color
             font=dict(
                 family="Arial, sans-serif",

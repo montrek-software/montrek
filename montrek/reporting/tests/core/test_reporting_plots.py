@@ -23,6 +23,7 @@ class TestReportingPlots(TestCase):
             x_axis_column="Category",
             y_axis_columns=["Value", "ValueLine"],
             plot_types=[ReportingPlotType.BAR],
+            title="Test Plot",
         )
         with self.assertRaises(ValueError) as e:
             ReportingPlot().generate(reporting_data)
@@ -36,6 +37,7 @@ class TestReportingPlots(TestCase):
             x_axis_column="Category",
             y_axis_columns=["Value"],
             plot_types=[ReportingPlotType.NONE],
+            title="Test Plot",
         )
         with self.assertRaises(ValueError) as e:
             ReportingPlot().generate(reporting_data)
@@ -48,6 +50,7 @@ class TestReportingPlots(TestCase):
             data_df=self.test_df,
             y_axis_columns=["Value"],
             plot_types=[ReportingPlotType.BAR],
+            title="Test Plot",
         )
         with self.assertRaises(ValueError) as e:
             ReportingPlot().generate(reporting_data)
@@ -62,6 +65,7 @@ class TestReportingPlots(TestCase):
             x_axis_column="Category",
             y_axis_columns=["Value", "ValueLine"],
             plot_types=[ReportingPlotType.BAR, ReportingPlotType.LINE],
+            title="Test Plot",
         )
         reporting_plot = ReportingPlot()
         reporting_plot.generate(reporting_data)
@@ -91,6 +95,7 @@ class TestReportingPlots(TestCase):
             x_axis_column="Category",
             y_axis_columns=["Value"],
             plot_types=[ReportingPlotType.BAR],
+            title="Test Plot",
         )
         reporting_plot = ReportingPlot()
         test_x = reporting_plot._set_x_axis(reporting_data)
@@ -108,6 +113,7 @@ class TestReportingPlots(TestCase):
             x_axis_is_index=True,
             y_axis_columns=["Value"],
             plot_types=[ReportingPlotType.BAR],
+            title="Test Plot",
         )
         reporting_plot = ReportingPlot()
         test_x = reporting_plot._set_x_axis(reporting_data)
@@ -122,7 +128,9 @@ class TestReportingPlots(TestCase):
             ReportingPlotType.LINE,
         ]
         reporting_data = ReportingData(
-            data_df=pd.DataFrame(), plot_types=test_plot_types
+            data_df=pd.DataFrame(),
+            plot_types=test_plot_types,
+            title="Test Plot",
         )
         reporting_plot = ReportingPlot()
         result_plot_types = reporting_plot._set_plot_types(reporting_data)

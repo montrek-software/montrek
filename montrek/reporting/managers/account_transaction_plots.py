@@ -31,6 +31,7 @@ def draw_monthly_income_expanses_plot(transactions_data: pd.DataFrame) -> go.Fig
     )
     report_data = ReportingData(
         data_df=transactions_data,
+        title="Monthly Income and Expanses",
         x_axis_is_index=True,
         y_axis_columns=[
             "income",
