@@ -1,21 +1,120 @@
-.footer {
-    position: fixed;
-    left: 0;
-    bottom: 0;
-    width: 100%;
-    background-color: #333;
-    color: #fff;
-    padding: 10px;
-    text-align: center;
+/* Basic Reset */
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-/* Styling for the arrow left symbol */
-.btn-arrow-left {
-    background-color: #fff;
-    color: #333;
-    border: none;
-    padding: 10px 20px;
-    font-size: 16px;
-    border-radius: 4px;
-    cursor: pointer;
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f4f4f4; /* Light grey background */
+}
+
+.container-fluid {
+    padding: 20px;
+}
+
+/* Navigation Bar Styling */
+.navbar {
+    background-color: #004767; /* Dark blue background */
+}
+
+.navbar a {
+    color: #ffffff; /* White text */
+}
+
+/* Overview and Links Styling */
+.col-md-2 {
+    background-color: #ffffff; /* White background */
+    padding: 20px;
+}
+
+.col-md-2 h2 {
+    color: #004767; /* Dark blue text */
+}
+
+.col-md-2 a {
+    color: #BE0D3E; /* Red text */
+    text-decoration: none;
+}
+
+.col-md-2 a:hover {
+    text-decoration: underline;
+}
+
+/* Main Content Styling */
+.col-md-8 {
+    padding: 20px;
+}
+
+#page_title {
+    color: #004767; /* Dark blue text */
+    margin-bottom: 20px;
+}
+
+/* Tab Styling */
+.nav-tabs {
+    border-bottom: 2px solid #004767; /* Dark blue border */
+}
+
+.nav-item {
+    margin-right: 5px;
+}
+
+.nav-link {
+    color: #004767; /* Dark blue text */
+    border: 1px solid #004767; /* Dark blue border */
+}
+
+.nav-item.active .nav-link, 
+.nav-link:hover {
+    background-color: #004767; /* Dark blue background */
+    color: #ffffff; /* White text */
+}
+
+/* Buttons */
+.btn {
+    background-color: #BE0D3E; /* Red background */
+    color: #ffffff; /* White text */
+}
+
+.btn:hover {
+    background-color: #9e0b36; /* Darker red on hover */
+}
+
+.row {
+    padding: 5px;
+}
+
+/* Table Styling */
+table {
+    width: 100%; /* Make table use full width of the parent */
+    border-collapse: collapse; /* Collapse borders */
+    margin-top: 10px; /* Add some top margin for spacing */
+}
+
+/* Table Row Styling */
+tr {
+    border-bottom: 1px solid #e0e0e0; /* Add a light border at the bottom of each row */
+}
+
+/* Table Data/Cell Styling */
+td {
+    padding: 10px; /* Add padding to each cell */
+    text-align: left; /* Align text to the left */
+}
+/* Every even row will have a pale blue background */
+tr:nth-child(even) {
+    background-color: #E6F2F8; /* Pale blue */
+}
+
+/* Every odd row will have a white background */
+tr:nth-child(odd) {
+    background-color: #FFFFFF; /* White */
+}
+th {
+    background-color: #004767; /* Dark blue */
+    color: #ffffff; /* White */
+    padding: 10px; /* Add some padding */
+    text-align: left; /* Align text to the left */
 }
