@@ -1,11 +1,9 @@
-import pandas as pd
 from decimal import Decimal
+import pandas as pd
 import factory
 import numpy as np
-from faker import Faker
-from django.test import TestCase
 import plotly.graph_objects as go
-from django.utils import timezone
+from django.test import TestCase
 from django_pandas.io import read_frame
 from reporting.managers.account_transaction_plots import (
     draw_monthly_income_expanses_plot,
@@ -45,7 +43,7 @@ class TestAccountTransactionPlots(TestCase):
             transaction_date=factory.Sequence(lambda _: next(trans_date_range_iter)),
             transaction_amount=factory.Sequence(lambda _: Decimal(1)),
         )
-        for transaction in transactions: 
+        for transaction in transactions:
             cls.account_hub.link_account_transaction.add(transaction.hub_entity)
 
     def test_get_monthly_income_expanses_plot(self):
@@ -53,3 +51,8 @@ class TestAccountTransactionPlots(TestCase):
         transactions_data = read_frame(transactions)
         test_plot = draw_monthly_income_expanses_plot(transactions_data)
         self.assertTrue(isinstance(test_plot.figure, go.Figure))
+
+    def test_get_income_by_category_pie_chart(self):
+        transactions = get_transactions_by_account_hub(self.account_hub)
+        transactions_data = read_frame(transactions)
+        raise NotImplementedError("Hier weiter machen")
