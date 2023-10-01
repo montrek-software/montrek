@@ -1,7 +1,7 @@
 from decimal import Decimal
-import pandas as pd
 import factory
 import numpy as np
+import pandas as pd
 import plotly.graph_objects as go
 from django.test import TestCase
 from django_pandas.io import read_frame
@@ -55,4 +55,9 @@ class TestAccountTransactionPlots(TestCase):
     def test_get_income_by_category_pie_chart(self):
         transactions = get_transactions_by_account_hub(self.account_hub)
         transactions_data = read_frame(transactions)
-        raise NotImplementedError("Hier weiter machen")
+        trans_category_df = pd.DataFrame(
+            {'transaction_category': 
+             [transaction.transaction_category for transaction in transactions],
+            })
+        raise NotImplementedError('Hier weiter machen!')
+
