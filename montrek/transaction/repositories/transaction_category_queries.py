@@ -17,20 +17,6 @@ def transaction_category_map_satellite():
 def transaction_satellite():
     return apps.get_model("transaction", "TransactionSatellite")
 
-def set_transaction_category_by_value(
-    transaction_satellite_object: baseclass_models.MontrekSatelliteABC, value: str
-) -> None:
-    transaction_category_hub = get_hubs_by_satellite_attribute(
-        transaction_category_satellite(), "typename", value
-    )[0]
-    new_link_entry(
-        from_hub=transaction_satellite_object.hub_entity,
-        to_hub=transaction_category_hub,
-        link_table=transaction_transaction_type_link(),
-    )
-
-
-
 
 def get_transaction_category_by_transaction(
     transaction_satellite_object: baseclass_models.MontrekSatelliteABC,
@@ -41,12 +27,8 @@ def get_transaction_category_by_transaction(
         transaction_category_hub = set_transaction_category_by_map(
             transaction_satellite_object
         )
-    elif len(transaction_category_hub) == 1:
-        transaction_category_hub = transaction_category_hub[0]
     else:
-        raise Exception(
-            "Transaction {} has multiple categories".format(transaction_hub.typename)
-        )
+        transaction_category_hub = transaction_category_hub.last()
     return select_satellite(
         hub_entity=transaction_category_hub,
         satellite_class=transaction_category_satellite(),
@@ -118,6 +100,7 @@ def _set_transaction_category_to_transaction(
         to_hub=transaction_category_sat.hub_entity,
         related_field="link_transaction_transaction_category",
     )
+    return transaction_category_sat
 
 def add_transaction_category_map_entry(
     account_hub: baseclass_models.MontrekHubABC,
