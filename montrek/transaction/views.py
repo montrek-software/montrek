@@ -12,6 +12,9 @@ from transaction.repositories.transaction_account_queries import (
 from transaction.repositories.transaction_category_queries import (
     add_transaction_category_map_entry,
 )
+from transaction.repositories.transaction_category_queries import (
+    set_transaction_category_by_map_entry
+)
 from transaction.models import TransactionSatellite
 from transaction.models import TransactionCategoryMapSatellite
 from account.models import AccountStaticSatellite
@@ -72,7 +75,10 @@ class TransactionCategoryMapTemplateView(CreateView):
     def form_valid(self, form):
         account_id = self.kwargs['account_id']
         account_hub = db_helper.get_hub_by_id(account_id, AccountHub)
-        add_transaction_category_map_entry(account_hub, form.cleaned_data)
+        transaction_category_map_entry = add_transaction_category_map_entry(account_hub, form.cleaned_data)
+        set_transaction_category_by_map_entry(
+            transaction_category_map_entry,
+        )
         return HttpResponseRedirect(self.get_success_url())
 
 class TransactionCategoryMapShowEntriesView(

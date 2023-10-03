@@ -1,10 +1,25 @@
 import factory
 from transaction.models import TransactionHub
+from account.tests.factories.account_factories import AccountHubFactory
 
 
 class TransactionHubFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = TransactionHub
+
+    @factory.post_generation
+    def accounts(self, create, extracted, **kwargs):
+        if not create:
+            return
+
+        if extracted:
+            # A list of AccountHub instances were passed in, link them
+            for account in extracted:
+                self.link_transaction_account.add(account)
+        else:
+            # Link a default AccountHub for this TransactionCategoryMapHub
+            account = AccountHubFactory()
+            self.link_transaction_account.add(account)
 
 
 class TransactionSatelliteFactory(factory.django.DjangoModelFactory):
@@ -47,6 +62,20 @@ class TransactionCategorySatelliteFactory(factory.django.DjangoModelFactory):
 class TransactionCategoryMapHubFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = "transaction.TransactionCategoryMapHub"
+
+    @factory.post_generation
+    def accounts(self, create, extracted, **kwargs):
+        if not create:
+            return
+
+        if extracted:
+            # A list of AccountHub instances were passed in, link them
+            for account in extracted:
+                self.link_transaction_category_map_account.add(account)
+        else:
+            # Link a default AccountHub for this TransactionCategoryMapHub
+            account = AccountHubFactory()
+            self.link_transaction_category_map_account.add(account)
 
 
 class TransactionCategoryMapSatelliteFactory(factory.django.DjangoModelFactory):
