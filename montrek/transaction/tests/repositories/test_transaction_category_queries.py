@@ -152,8 +152,8 @@ class TestTransactionCategoryModelQueries(TestCase):
     def test_transaction_category_workflow_regex(self):
         # Setup
         transaction_cat_map_entry = TransactionCategoryMapSatelliteFactory(
-            field="transaction_party", 
-            value="%Party%", 
+            field="transaction_party",
+            value="Party",
             category="Amusement",
             is_regex=True,
         )
@@ -173,7 +173,6 @@ class TestTransactionCategoryModelQueries(TestCase):
 
         # Set the categories
         set_transaction_category_by_map_entry(transaction_cat_map_entry)
-        
         # Both transaction have the category AMUSEMENT
 
         self.assertEqual(transaction.transaction_category.typename, "AMUSEMENT")

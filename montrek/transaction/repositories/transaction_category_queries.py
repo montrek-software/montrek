@@ -83,9 +83,17 @@ def set_transaction_category_by_map_entry(
     account_hub = transaction_category_map_entry.hub_entity.link_transaction_category_map_account.first()
     transaction_satellites = transaction_satellite().objects.filter( 
         Q(hub_entity__link_transaction_account=account_hub) & 
-        Q(hub_entity__is_deleted=False) &
-        Q(**{transaction_category_map_entry.field: transaction_category_map_entry.value})
+        Q(hub_entity__is_deleted=False) 
     )
+    if transaction_category_map_entry.is_regex:
+        transaction_satellites = transaction_satellites.filter(
+            Q(**{transaction_category_map_entry.field+'__iregex': transaction_category_map_entry.value})
+        )
+    else:
+        transaction_satellites = transaction_satellites.filter(
+            Q(**{transaction_category_map_entry.field: transaction_category_map_entry.value})
+        )
+
     for transaction_satellite_object in transaction_satellites:
         _set_transaction_category_to_transaction(
             transaction_satellite_object, transaction_category_map_entry.category
