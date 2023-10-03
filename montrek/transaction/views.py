@@ -35,9 +35,6 @@ class TransactionSatelliteDetailView(DetailView):
 
 class SuccessURLTransactionCategoryMapMixin(CreateView): # pylint: disable=too-few-public-methods
     def get_success_url(self):
-        set_transaction_category_by_map_entry(
-            self.object
-        )
         account_id = self.kwargs['account_id']
         return reverse('bank_account_view_transaction_category_map',
                        kwargs={'account_id': account_id})
@@ -78,7 +75,10 @@ class TransactionCategoryMapTemplateView(CreateView):
     def form_valid(self, form):
         account_id = self.kwargs['account_id']
         account_hub = db_helper.get_hub_by_id(account_id, AccountHub)
-        add_transaction_category_map_entry(account_hub, form.cleaned_data)
+        transaction_category_map_entry = add_transaction_category_map_entry(account_hub, form.cleaned_data)
+        set_transaction_category_by_map_entry(
+            transaction_category_map_entry,
+        )
         return HttpResponseRedirect(self.get_success_url())
 
 class TransactionCategoryMapShowEntriesView(
