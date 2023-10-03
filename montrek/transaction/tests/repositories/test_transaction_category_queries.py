@@ -148,3 +148,33 @@ class TestTransactionCategoryModelQueries(TestCase):
         self.assertEqual(transaction.transaction_category.typename, "AMUSEMENT")
         # The second transaction is not affected
         self.assertEqual(transaction2.transaction_category.typename, "UNKNOWN")
+
+    def test_transaction_category_workflow_regex(self):
+        # Setup
+        transaction_cat_map_entry = TransactionCategoryMapSatelliteFactory(
+            field="transaction_party", 
+            value="%Party%", 
+            category="Amusement",
+            is_regex=True,
+        )
+        account = (
+            transaction_cat_map_entry
+            .hub_entity
+            .link_transaction_category_map_account.all()[0]
+        )
+        transaction = TransactionSatelliteFactory(
+            transaction_party="SuperParty",
+            hub_entity__accounts = [account],
+        )
+        transaction2 = TransactionSatelliteFactory(
+            transaction_party="DuperParty",
+            hub_entity__accounts = [account],
+        )
+
+        # Set the categories
+        set_transaction_category_by_map_entry(transaction_cat_map_entry)
+        
+        # Both transaction have the category AMUSEMENT
+
+        self.assertEqual(transaction.transaction_category.typename, "AMUSEMENT")
+        self.assertEqual(transaction2.transaction_category.typename, "AMUSEMENT")

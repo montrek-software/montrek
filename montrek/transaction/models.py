@@ -89,6 +89,7 @@ class TransactionCategoryMapSatellite(baseclass_models.MontrekSatelliteABC):
     value = models.CharField(max_length=250, default="")
     category = models.CharField(max_length=250, default="")
     hash_searchfield = models.CharField(max_length=64, default="")
+    is_regex = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         self.hash_searchfield = hashlib.sha256(
