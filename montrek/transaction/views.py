@@ -12,6 +12,9 @@ from transaction.repositories.transaction_account_queries import (
 from transaction.repositories.transaction_category_queries import (
     add_transaction_category_map_entry,
 )
+from transaction.repositories.transaction_category_queries import (
+    set_transaction_category_by_map_entry
+)
 from transaction.models import TransactionSatellite
 from transaction.models import TransactionCategoryMapSatellite
 from account.models import AccountStaticSatellite
@@ -32,6 +35,9 @@ class TransactionSatelliteDetailView(DetailView):
 
 class SuccessURLTransactionCategoryMapMixin(CreateView): # pylint: disable=too-few-public-methods
     def get_success_url(self):
+        set_transaction_category_by_map_entry(
+            self.object
+        )
         account_id = self.kwargs['account_id']
         return reverse('bank_account_view_transaction_category_map',
                        kwargs={'account_id': account_id})
