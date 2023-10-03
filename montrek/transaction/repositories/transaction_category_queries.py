@@ -80,6 +80,11 @@ def set_transaction_category_by_map(
     )
     return transaction_category_sat.hub_entity
 
+def set_transaction_category_by_map_entry(
+    transaction_category_map_entry: baseclass_models.MontrekSatelliteABC,
+) -> None:
+    pass
+
 def add_transaction_category_map_entry(
     account_hub: baseclass_models.MontrekHubABC,
     data_entries: Dict

@@ -6,6 +6,9 @@ from transaction.repositories.transaction_category_queries import (
     set_transaction_category_by_map,
 )
 from transaction.repositories.transaction_category_queries import (
+    set_transaction_category_by_map_entry,
+)
+from transaction.repositories.transaction_category_queries import (
     add_transaction_category_map_entry,
 )
 from transaction.tests.factories.transaction_factories import (
@@ -18,8 +21,10 @@ from transaction.tests.factories.transaction_factories import (
     TransactionCategoryMapSatelliteFactory,
 )
 from transaction.models import TransactionCategoryHub
+from transaction.models import TransactionCategorySatellite
 from transaction.models import TransactionCategoryMapSatellite
 from account.tests.factories.account_factories import AccountHubFactory
+from baseclasses.repositories.db_helper import select_satellite
 
 
 
@@ -95,10 +100,41 @@ class TestTransactionCategoryModelQueries(TestCase):
             account_hub,
             {'field': 'transaction_party', 'value': 'Super PartY', 'category': 'Amusement'}
         )
-        new_transaction_category_map_hub = account_hub.link_account_transaction_category_map.all()[0]
-        new_transaction_category_map_sat = TransactionCategoryMapSatellite.objects.filter(hub_entity=new_transaction_category_map_hub)[0]
+        new_transaction_category_map_hub = (
+            account_hub.link_account_transaction_category_map.all()[0]
+        )
+        new_transaction_category_map_sat = (
+            TransactionCategoryMapSatellite.objects.filter(
+                hub_entity=new_transaction_category_map_hub
+            )[0]
+        )
         self.assertEqual(new_transaction_category_map_sat.field, 'transaction_party')
         self.assertEqual(new_transaction_category_map_sat.value, 'Super PartY')
         self.assertEqual(new_transaction_category_map_sat.category, 'Amusement')
 
 
+    def test_transaction_category_workflow(self):
+        # Setup
+        transaction_cat_map_entry = TransactionCategoryMapSatelliteFactory(
+            field="transaction_party", value="Super PartY", category="Amusement"
+        )
+        transaction = TransactionSatelliteFactory(
+            transaction_party="SuperParty",
+            hub_entity__accounts = [
+                transaction_cat_map_entry.hub_entity.link_transaction_category_map_account.all()[0]
+            ],
+        )
+        breakpoint()
+
+        # Transaction has no category by now
+        transaction_category = transaction.hub_entity.link_transaction_transaction_category
+        self.assertEqual(len(transaction_category.all()), 0)
+
+        # Set category by map
+        set_transaction_category_by_map_entry(transaction_cat_map_entry)
+
+        # Transaction has category now
+        transaction_category_hub = transaction_category.all()[0]
+        transaction_category_satellite = select_satellite(transaction_category_hub,
+            TransactionCategorySatellite)
+        self.assertEqual(transaction_category_satellite.typename, "AMUSEMENT")
