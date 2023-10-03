@@ -18,3 +18,7 @@ class TestMontrekSatelliteFactory(factory.django.DjangoModelFactory):
 class TestLinkHubFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = "baseclasses.TestLinkHub"
+
+class TestTimestampLinkHubFactroy(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "baseclasses.TestTimestampLinkHub"

@@ -18,6 +18,7 @@ from baseclasses.tests.factories.baseclass_factories import (
     TestMontrekHubFactory,
     TestMontrekSatelliteFactory,
     TestLinkHubFactory,
+    TestTimestampLinkHubFactory,
 )
 from baseclasses.models import TestMontrekSatellite
 from baseclasses.models import TestMontrekHub
@@ -332,6 +333,7 @@ class TestNewLinkEntry(TestCase):
         cls.test_hub = TestMontrekHubFactory()
         cls.test_link_hub = TestLinkHubFactory()
         cls.test_link_hub2 = TestLinkHubFactory()
+        clas.test_timestamp_link_hub = TestTimestampLinkHubFactory()
 
 
     def test_new_link_entry(self):
@@ -344,3 +346,12 @@ class TestNewLinkEntry(TestCase):
                        related_field='test_link_hub')
         self.assertEqual(self.test_hub.test_link_hub.last(), self.test_link_hub2)
         self.assertEqual(len(self.test_hub.test_link_hub.all()), 2)
+
+    def test_new_timestamp_link_entry(self):
+        new_link_entry(from_hub=self.test_new_timestamp_link_hub,
+                       to_hub=self.test_hub,
+                       related_field='link_test_timestamp_test')
+        self.assertEqual(self.test_timestamp_link_hub.link_test_timestamp_test.last(), self.test_hub)
+
+        
+

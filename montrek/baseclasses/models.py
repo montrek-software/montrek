@@ -98,7 +98,8 @@ class MontrekSatelliteABC(TimeStampMixin):
     def get_hash_value(self) -> str:
         return self._get_hash_value()
 
-
+class MontrekTimestampLink(TimeStampMixin):
+    pass
 # Montrek Test Models
 
 class TestMontrekHub(MontrekHubABC):
@@ -122,3 +123,11 @@ class TestLinkSatelitte(MontrekSatelliteABC):
     hub_entity = models.ForeignKey(TestLinkHub, on_delete=models.CASCADE)
     test_id = models.IntegerField(default=0)
     identifier_fields = ["test_id"]
+
+class TestTimestampLink(MontrekTimestampLink):
+    pass
+
+class TestTimestampLinkHub(MontrekHubABC):
+    link_test_timestamp_test = models.ManyToManyField(TestMontrekHub,
+                                      related_name='link_test_timestamp_link_hub',
+                                      through='TestTimestampLink')
