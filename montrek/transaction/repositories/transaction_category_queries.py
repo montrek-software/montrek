@@ -29,6 +29,7 @@ def get_transaction_category_by_transaction(
         )
     else:
         transaction_category_hub = transaction_category_hub.last()
+    #TODO: Add logic to handle multiple categories
     return select_satellite(
         hub_entity=transaction_category_hub,
         satellite_class=transaction_category_satellite(),

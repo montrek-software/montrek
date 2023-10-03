@@ -462,6 +462,45 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
         )
 
     @tag("functional")
+    def test_add_transaction_cateogry_via_table_regex(self):
+        # The user visits the bank account transaction category map page
+        account_id = get_hub_ids_by_satellite_attribute(
+            AccountStaticSatellite, "account_name", "Billy's DKB account"
+        )[0]
+        self.browser.get(
+            self.live_server_url +
+            f"/account/{account_id}/bank_account_view/transaction_category_map"
+        )
+        # He hits the add button
+        self.browser.find_element(By.ID, "id_add_transaction_category").click()
+        self.browser.find_element(By.ID, "id_transaction_category_new__value").send_keys(
+            'Test'
+        )
+        self.browser.find_element(By.ID, "id_transaction_category_new__category").send_keys(
+            'SUPERTESTCATEGORY'
+        )
+        self.browser.find_element(By.ID, "id_transaction_category_new__regex").click()
+        # He hits the submit button
+        self.browser.find_element(
+            By.ID, "id_transaction_category_new__submit"
+        ).click()
+        self.check_for_row_in_table(
+            ["transaction_party", "Test", "SUPERTESTCATEGORY", 'True'],
+            "id_montrek_table_list",
+        )
+        self.browser.find_element(By.ID, "tab_transactions").click()
+        self._set_transaction_date_range()
+        self.check_for_row_in_table(
+            ["Testonia", "SUPERTESTCATEGORY"],
+            "id_montrek_table_list",
+        )
+        self.check_for_row_in_table(
+            ["Testosteria", "SUPERTESTCATEGORY"],
+            "id_montrek_table_list",
+        )
+
+
+    @tag("functional")
     def test_change_transaction_category_from_transaction_table(self):
         # The user visits the bank account transaction page
         account_id = get_hub_ids_by_satellite_attribute(
