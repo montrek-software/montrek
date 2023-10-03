@@ -87,7 +87,7 @@ def set_transaction_category_by_map_entry(
     )
     if transaction_category_map_entry.is_regex:
         transaction_satellites = transaction_satellites.filter(
-            Q(**{transaction_category_map_entry.field+'__iregex': transaction_category_map_entry.value})
+            Q(**{transaction_category_map_entry.field+'__regex': transaction_category_map_entry.value})
         )
     else:
         transaction_satellites = transaction_satellites.filter(
