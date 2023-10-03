@@ -118,11 +118,18 @@ class TestTransactionCategoryModelQueries(TestCase):
         transaction_cat_map_entry = TransactionCategoryMapSatelliteFactory(
             field="transaction_party", value="SuperParty", category="Amusement"
         )
+        account = (
+            transaction_cat_map_entry
+            .hub_entity
+            .link_transaction_category_map_account.all()[0]
+        )
         transaction = TransactionSatelliteFactory(
             transaction_party="SuperParty",
-            hub_entity__accounts = [
-                transaction_cat_map_entry.hub_entity.link_transaction_category_map_account.all()[0]
-            ],
+            hub_entity__accounts = [account],
+        )
+        transaction2 = TransactionSatelliteFactory(
+            transaction_party="DuperParty",
+            hub_entity__accounts = [account],
         )
 
         # Transaction has no category by now
@@ -137,3 +144,7 @@ class TestTransactionCategoryModelQueries(TestCase):
         transaction_category_satellite = select_satellite(transaction_category_hub,
             TransactionCategorySatellite)
         self.assertEqual(transaction_category_satellite.typename, "AMUSEMENT")
+        # The proerty is also affected:
+        self.assertEqual(transaction.transaction_category.typename, "AMUSEMENT")
+        # The second transaction is not affected
+        self.assertEqual(transaction2.transaction_category.typename, "UNKNOWN")

@@ -106,7 +106,7 @@ def _set_transaction_category_to_transaction(
         to_hub=transaction_category_sat.hub_entity,
         related_field="link_transaction_transaction_category",
     )
-    return transaction_category_sat.hub_entity
+    return transaction_category_sat
 
 def add_transaction_category_map_entry(
     account_hub: baseclass_models.MontrekHubABC,
