@@ -116,7 +116,7 @@ class TestTransactionCategoryModelQueries(TestCase):
     def test_transaction_category_workflow(self):
         # Setup
         transaction_cat_map_entry = TransactionCategoryMapSatelliteFactory(
-            field="transaction_party", value="Super PartY", category="Amusement"
+            field="transaction_party", value="SuperParty", category="Amusement"
         )
         transaction = TransactionSatelliteFactory(
             transaction_party="SuperParty",
@@ -124,7 +124,6 @@ class TestTransactionCategoryModelQueries(TestCase):
                 transaction_cat_map_entry.hub_entity.link_transaction_category_map_account.all()[0]
             ],
         )
-        breakpoint()
 
         # Transaction has no category by now
         transaction_category = transaction.hub_entity.link_transaction_transaction_category
