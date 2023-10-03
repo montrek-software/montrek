@@ -229,7 +229,7 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
         AccountStaticSatelliteFactory(
             hub_entity=self.account_hub, account_name="Billy's DKB account"
         )
-        transaction_hubs = [TransactionHubFactory() for _ in range(3)]
+        transaction_hubs = [TransactionHubFactory(accounts=[self.account_hub]) for _ in range(3)]
         self.transaction_satellite_1 = TransactionSatelliteFactory(
             hub_entity=transaction_hubs[0],
             transaction_date=timezone.datetime(2019, 1, 1),
@@ -257,8 +257,6 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
             transaction_party_iban="XY754372638",
             transaction_description="Test transaction 3",
         )
-        for transaction_hub in transaction_hubs:
-            self.account_hub.link_account_transaction.add(transaction_hub)
         BankAccountPropertySatelliteFactory(
             hub_entity=self.account_hub
         )
