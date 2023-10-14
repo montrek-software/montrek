@@ -7,6 +7,7 @@ from django.test import TestCase
 from django_pandas.io import read_frame
 from reporting.managers.account_transaction_plots import (
     draw_monthly_income_expanses_plot,
+    draw_income_expenses_category_pie_plot,
 )
 from account.tests.factories.account_factories import AccountHubFactory
 from transaction.tests.factories.transaction_factories import (
@@ -54,10 +55,7 @@ class TestAccountTransactionPlots(TestCase):
 
     def test_get_income_by_category_pie_chart(self):
         transactions = get_transactions_by_account_hub(self.account_hub)
-        transactions_data = read_frame(transactions)
-        trans_category_df = pd.DataFrame(
-            {'transaction_category': 
-             [transaction.transaction_category for transaction in transactions],
-            })
-        raise NotImplementedError('Hier weiter machen!')
+        test_plot_income, test_plot_expense = draw_income_expenses_category_pie_plot(transactions)
+        self.assertTrue(isinstance(test_plot_income.figure, go.Figure))
+        self.assertTrue(isinstance(test_plot_expense.figure, go.Figure))
 

@@ -3,6 +3,7 @@ import plotly.graph_objects as go
 from transaction.models import TransactionSatellite
 from reporting.core.reporting_data import ReportingData
 from reporting.core.reporting_plots import ReportingPlot
+from baseclasses import models as baseclass_models
 
 
 def draw_monthly_income_expanses_plot(transactions_data: pd.DataFrame) -> go.Figure:
@@ -31,7 +32,7 @@ def draw_monthly_income_expanses_plot(transactions_data: pd.DataFrame) -> go.Fig
     )
     report_data = ReportingData(
         data_df=transactions_data,
-        title="Monthly Income and Expanses",
+        title="Monthly Income and Expenses",
         x_axis_is_index=True,
         y_axis_columns=[
             "income",
@@ -45,3 +46,16 @@ def draw_monthly_income_expanses_plot(transactions_data: pd.DataFrame) -> go.Fig
     plot = ReportingPlot()
     plot.generate(report_data)
     return plot
+
+def draw_income_expenses_category_pie_plot(transactions: baseclass_models.MontrekSatelliteABC):
+    transaction_category_df = pd.DataFrame(
+        {
+            'transaction_category': [transaction.transaction_category.typename for transaction in transactions],
+            'transaction_value': [transaction.transaction_value for transaction in transactions],
+        })
+    transaction_category_income_df = transaction_category_df.loc[transaction_category_df['transaction_value'] >= 0.]
+    transaction_category_expense_df = transaction_category_df.loc[transaction_category_df['transaction_value'] < 0.]
+    output_plots = []
+    #for data_df in (transaction_category_income_df, transaction_category_expense_df):
+        
+
