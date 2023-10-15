@@ -120,12 +120,13 @@ class TestReportingPlots(TestCase):
         self.assertEqual(test_x.tolist(), ["A", "B", "C", "D"])
 
     def test_set_plot_types_valid(self):
-        test_plot_types = [ReportingPlotType.BAR, ReportingPlotType.LINE, "bar", "liNE"]
+        test_plot_types = [ReportingPlotType.BAR, ReportingPlotType.LINE, "bar", "liNE", "pie"]
         expected_plot_types = [
             ReportingPlotType.BAR,
             ReportingPlotType.LINE,
             ReportingPlotType.BAR,
             ReportingPlotType.LINE,
+            ReportingPlotType.PIE,
         ]
         reporting_data = ReportingData(
             data_df=pd.DataFrame(),
