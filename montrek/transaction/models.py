@@ -45,6 +45,7 @@ class TransactionSatellite(baseclass_models.MontrekSatelliteABC):
         return get_transaction_category_by_transaction(self)
 
 
+
 class TransactionTypeHub(baseclass_models.MontrekHubABC):
     pass
 

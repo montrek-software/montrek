@@ -23,11 +23,12 @@ class TestReportingPlots(TestCase):
             x_axis_column="Category",
             y_axis_columns=["Value", "ValueLine"],
             plot_types=[ReportingPlotType.BAR],
+            title="Test Plot",
         )
-        with self.assertRaises(ValueError) as e:
+        with self.assertRaises(ValueError) as error:
             ReportingPlot().generate(reporting_data)
         self.assertEqual(
-            str(e.exception), "Number of y_axis_columns and plot_types must match"
+            str(error.exception), "Number of y_axis_columns and plot_types must match"
         )
 
     def test_reporting_plots_none_type_not_supported(self):
@@ -36,11 +37,12 @@ class TestReportingPlots(TestCase):
             x_axis_column="Category",
             y_axis_columns=["Value"],
             plot_types=[ReportingPlotType.NONE],
+            title="Test Plot",
         )
-        with self.assertRaises(ValueError) as e:
+        with self.assertRaises(ValueError) as error:
             ReportingPlot().generate(reporting_data)
         self.assertEqual(
-            str(e.exception), "Plot type ReportingPlotType.NONE not supported"
+            str(error.exception), "Plot type ReportingPlotType.NONE not supported"
         )
 
     def test_reporting_plots_neither_index_nor_xaxis(self):
@@ -48,11 +50,12 @@ class TestReportingPlots(TestCase):
             data_df=self.test_df,
             y_axis_columns=["Value"],
             plot_types=[ReportingPlotType.BAR],
+            title="Test Plot",
         )
-        with self.assertRaises(ValueError) as e:
+        with self.assertRaises(ValueError) as error:
             ReportingPlot().generate(reporting_data)
         self.assertEqual(
-            str(e.exception),
+            str(error.exception),
             "x_axis_column must be provided if x_axis_is_index is False",
         )
 
@@ -62,6 +65,7 @@ class TestReportingPlots(TestCase):
             x_axis_column="Category",
             y_axis_columns=["Value", "ValueLine"],
             plot_types=[ReportingPlotType.BAR, ReportingPlotType.LINE],
+            title="Test Plot",
         )
         reporting_plot = ReportingPlot()
         reporting_plot.generate(reporting_data)
@@ -91,6 +95,7 @@ class TestReportingPlots(TestCase):
             x_axis_column="Category",
             y_axis_columns=["Value"],
             plot_types=[ReportingPlotType.BAR],
+            title="Test Plot",
         )
         reporting_plot = ReportingPlot()
         test_x = reporting_plot._set_x_axis(reporting_data)
@@ -108,22 +113,53 @@ class TestReportingPlots(TestCase):
             x_axis_is_index=True,
             y_axis_columns=["Value"],
             plot_types=[ReportingPlotType.BAR],
+            title="Test Plot",
         )
         reporting_plot = ReportingPlot()
         test_x = reporting_plot._set_x_axis(reporting_data)
         self.assertEqual(test_x.tolist(), ["A", "B", "C", "D"])
 
     def test_set_plot_types_valid(self):
-        test_plot_types = [ReportingPlotType.BAR, ReportingPlotType.LINE, "bar", "liNE"]
+        test_plot_types = [ReportingPlotType.BAR, ReportingPlotType.LINE, "bar", "liNE", "pie"]
         expected_plot_types = [
             ReportingPlotType.BAR,
             ReportingPlotType.LINE,
             ReportingPlotType.BAR,
             ReportingPlotType.LINE,
+            ReportingPlotType.PIE,
         ]
         reporting_data = ReportingData(
-            data_df=pd.DataFrame(), plot_types=test_plot_types
+            data_df=pd.DataFrame(),
+            plot_types=test_plot_types,
+            title="Test Plot",
         )
         reporting_plot = ReportingPlot()
         result_plot_types = reporting_plot._set_plot_types(reporting_data)
         self.assertEqual(result_plot_types, expected_plot_types)
+
+class TestReportingPiePlots(TestCase):
+    def test_pie_plots(self):
+        test_df = pd.DataFrame(
+            {
+                "Category": ["A", "B", "C", "D"],
+                "Value": [10, 25, 15, 30],
+            },
+        )
+        reporting_data = ReportingData(
+            data_df=test_df,
+            x_axis_column="Category",
+            y_axis_columns=["Value"],
+            plot_types=[ReportingPlotType.PIE],
+            title="Test Plot",
+        )
+        reporting_plot = ReportingPlot()
+        reporting_plot.generate(reporting_data)
+        self.assertTrue(isinstance(reporting_plot.figure, go.Figure))
+        self.assertEqual(len(reporting_plot.figure.data), 1)
+        self.assertEqual(reporting_plot.figure.data[0].type, "pie")
+        self.assertTrue(isinstance(reporting_plot.figure.data[0], go.Pie))
+        self.assertEqual(reporting_plot.figure.data[0].labels.tolist(), ["A", "B", "C", "D"])
+        self.assertEqual(reporting_plot.figure.data[0].values.tolist(), [10, 25, 15, 30])
+        reporting_plot_html = reporting_plot.format_html()
+        self.assertTrue(reporting_plot_html.startswith("<div>"))
+        self.assertTrue(reporting_plot_html.endswith("</div>"))

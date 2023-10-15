@@ -1,14 +1,13 @@
-import pandas as pd
 from decimal import Decimal
 import factory
 import numpy as np
-from faker import Faker
-from django.test import TestCase
+import pandas as pd
 import plotly.graph_objects as go
-from django.utils import timezone
+from django.test import TestCase
 from django_pandas.io import read_frame
 from reporting.managers.account_transaction_plots import (
     draw_monthly_income_expanses_plot,
+    draw_income_expenses_category_pie_plot,
 )
 from account.tests.factories.account_factories import AccountHubFactory
 from transaction.tests.factories.transaction_factories import (
@@ -45,7 +44,7 @@ class TestAccountTransactionPlots(TestCase):
             transaction_date=factory.Sequence(lambda _: next(trans_date_range_iter)),
             transaction_amount=factory.Sequence(lambda _: Decimal(1)),
         )
-        for transaction in transactions: 
+        for transaction in transactions:
             cls.account_hub.link_account_transaction.add(transaction.hub_entity)
 
     def test_get_monthly_income_expanses_plot(self):
@@ -53,3 +52,9 @@ class TestAccountTransactionPlots(TestCase):
         transactions_data = read_frame(transactions)
         test_plot = draw_monthly_income_expanses_plot(transactions_data)
         self.assertTrue(isinstance(test_plot.figure, go.Figure))
+
+    def test_get_income_by_category_pie_plot(self):
+        transactions = get_transactions_by_account_hub(self.account_hub)
+        test_plots = draw_income_expenses_category_pie_plot(transactions)
+        self.assertTrue(isinstance(test_plots['income'].figure, go.Figure))
+        self.assertTrue(isinstance(test_plots['expense'].figure, go.Figure))

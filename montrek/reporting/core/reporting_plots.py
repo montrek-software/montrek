@@ -18,7 +18,7 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
         )
         self.figure = go.Figure(data=figure_data)
         self.figure.update_layout(
-            title_text='Customized Color Scheme',
+            title_text=reporting_data.title,  # Adding Title
             title_font_color=ReportingColors.BLUE,  # Customizing Title Color
             font=dict(
                 family="Arial, sans-serif",
@@ -63,6 +63,13 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
                                               y=_y,
                                               marker_color=ReportingColors().COLOR_PALETTE[i],
                                              ))
+            elif plot_type == ReportingPlotType.PIE:
+                figure_data.append(go.Pie(labels=_x, 
+                                          values=_y,
+                                          marker_colors=ReportingColors().COLOR_PALETTE,
+                                          direction='clockwise',
+                                          sort=True,
+                                         ))
             else:
                 raise ValueError(f"Plot type {plot_type} not supported")
         return figure_data
