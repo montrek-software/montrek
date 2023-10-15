@@ -63,6 +63,11 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
                                               y=_y,
                                               marker_color=ReportingColors().COLOR_PALETTE[i],
                                              ))
+            elif plot_type == ReportingPlotType.PIE:
+                figure_data.append(go.Pie(labels=_x, 
+                                          values=_y,
+                                          marker_colors=ReportingColors().COLOR_PALETTE,
+                                         ))
             else:
                 raise ValueError(f"Plot type {plot_type} not supported")
         return figure_data

@@ -239,6 +239,7 @@ def bank_account_view_transaction_category_map(request, account_id: int):
         'Field' : {'attr': 'field'},
         'Value' : {'attr': 'value'},
         'Category' : {'attr': 'category'},
+        'Is Regex' : {'attr': 'is_regex'},
         'Edit': {
             'link': {'url': 'transaction_category_map_edit',
                      'kwargs': {'pk':'id',

@@ -229,7 +229,7 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
         AccountStaticSatelliteFactory(
             hub_entity=self.account_hub, account_name="Billy's DKB account"
         )
-        transaction_hubs = [TransactionHubFactory() for _ in range(3)]
+        transaction_hubs = [TransactionHubFactory(accounts=[self.account_hub]) for _ in range(3)]
         self.transaction_satellite_1 = TransactionSatelliteFactory(
             hub_entity=transaction_hubs[0],
             transaction_date=timezone.datetime(2019, 1, 1),
@@ -257,8 +257,6 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
             transaction_party_iban="XY754372638",
             transaction_description="Test transaction 3",
         )
-        for transaction_hub in transaction_hubs:
-            self.account_hub.link_account_transaction.add(transaction_hub)
         BankAccountPropertySatelliteFactory(
             hub_entity=self.account_hub
         )
@@ -462,6 +460,45 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
             self.browser.find_element(By.ID, "id_transaction_category").text,
             "TESTCATEGORY"
         )
+
+    @tag("functional")
+    def test_add_transaction_cateogry_via_table_regex(self):
+        # The user visits the bank account transaction category map page
+        account_id = get_hub_ids_by_satellite_attribute(
+            AccountStaticSatellite, "account_name", "Billy's DKB account"
+        )[0]
+        self.browser.get(
+            self.live_server_url +
+            f"/account/{account_id}/bank_account_view/transaction_category_map"
+        )
+        # He hits the add button
+        self.browser.find_element(By.ID, "id_add_transaction_category").click()
+        self.browser.find_element(By.ID, "id_transaction_category_new__value").send_keys(
+            'Test'
+        )
+        self.browser.find_element(By.ID, "id_transaction_category_new__category").send_keys(
+            'SUPERTESTCATEGORY'
+        )
+        self.browser.find_element(By.ID, "id_transaction_category_new__regex").click()
+        # He hits the submit button
+        self.browser.find_element(
+            By.ID, "id_transaction_category_new__submit"
+        ).click()
+        self.check_for_row_in_table(
+            ["transaction_party", "Test", "SUPERTESTCATEGORY", 'True'],
+            "id_montrek_table_list",
+        )
+        self.browser.find_element(By.ID, "tab_transactions").click()
+        self._set_transaction_date_range()
+        self.check_for_row_in_table(
+            ["Testonia", "SUPERTESTCATEGORY"],
+            "id_montrek_table_list",
+        )
+        self.check_for_row_in_table(
+            ["Testosteria", "SUPERTESTCATEGORY"],
+            "id_montrek_table_list",
+        )
+
 
     @tag("functional")
     def test_change_transaction_category_from_transaction_table(self):

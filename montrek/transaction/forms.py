@@ -16,10 +16,11 @@ class TransactionSatelliteForm(forms.ModelForm):
 class TransactionCategoryMapSatelliteForm(forms.ModelForm):
     class Meta:
         model = TransactionCategoryMapSatellite
-        fields = ('field', 'value', 'category')
+        fields = ('field', 'value', 'category', 'is_regex')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['field'].widget.attrs.update({'id': 'id_transaction_category_new__field'})
         self.fields['value'].widget.attrs.update({'id': 'id_transaction_category_new__value'})
         self.fields['category'].widget.attrs.update({'id': 'id_transaction_category_new__category'})
+        self.fields['is_regex'].widget.attrs.update({'id': 'id_transaction_category_new__regex'})
