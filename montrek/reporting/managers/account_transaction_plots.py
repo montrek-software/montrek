@@ -57,6 +57,7 @@ def draw_income_expenses_category_pie_plot(transactions: baseclass_models.Montre
     transaction_category_expense_df = transaction_category_df.loc[transaction_category_df['transaction_value'] < 0.]
     output_plots = []
     for data_df in (transaction_category_income_df, transaction_category_expense_df):
+        data_df['transaction_value'] = data_df['transaction_value'].abs()
         report_data = ReportingData(
             data_df=data_df,
             title="Income and Expenses by Category",

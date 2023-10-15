@@ -53,9 +53,10 @@ class TestAccountTransactionPlots(TestCase):
         test_plot = draw_monthly_income_expanses_plot(transactions_data)
         self.assertTrue(isinstance(test_plot.figure, go.Figure))
 
-    def test_get_income_by_category_pie_chart(self):
+    def test_get_income_by_category_pie_plot(self):
         transactions = get_transactions_by_account_hub(self.account_hub)
         test_plot_income, test_plot_expense = draw_income_expenses_category_pie_plot(transactions)
         self.assertTrue(isinstance(test_plot_income.figure, go.Figure))
         self.assertTrue(isinstance(test_plot_expense.figure, go.Figure))
+        breakpoint()
 

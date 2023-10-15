@@ -137,8 +137,8 @@ class TestReportingPlots(TestCase):
         result_plot_types = reporting_plot._set_plot_types(reporting_data)
         self.assertEqual(result_plot_types, expected_plot_types)
 
-class TestReportingPieCharts(TestCase):
-    def test_pie_chart(self):
+class TestReportingPiePlots(TestCase):
+    def test_pie_plots(self):
         test_df = pd.DataFrame(
             {
                 "Category": ["A", "B", "C", "D"],
