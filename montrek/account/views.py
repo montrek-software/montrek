@@ -209,13 +209,13 @@ def bank_account_view_graphs(request, account_id: int):
         account_transactions_df
     ).format_html()
     account_data["income_expanse_plot"] = income_expanse_plot
-    income_category_pie_plot, expense_category_pie_plot = (
+    category_pie_plots = (
         draw_income_expenses_category_pie_plot(
             account_transactions
         )
     )
-    account_data["income_category_pie_plot"] = income_category_pie_plot.format_html()
-    account_data["expense_category_pie_plot"] = expense_category_pie_plot.format_html()
+    account_data["income_category_pie_plot"] = category_pie_plots['income'].format_html()
+    account_data["expense_category_pie_plot"] = category_pie_plots['expense'].format_html()
     return render(request, "bank_account_view_graphs.html", account_data)
 
 def bank_account_view_uploads(request, account_id: int):

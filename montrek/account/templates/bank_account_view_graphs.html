@@ -1,15 +1,24 @@
 {% extends 'bank_account_view.html' %}
 {% block content %}
 <div class="container">
-    <h2 id="id_graphs_title">Graphs</h2>
-    <div id='id_income_expanse_plot'>
-        {{ income_expanse_plot|safe }}
+        <h2 id="id_graphs_title">Graphs</h2>
+    <div class="row">
+        <!-- Income-Expense Plot -->
+        <div class="col-md-12" id='id_income_expanse_plot'>
+            {{ income_expanse_plot|safe }}
+        </div>
     </div>
-    <div id="id_income_category_pie_plot">
-        {{ income_category_pie_plot|safe }}
-    </div>
-    <div id="id_expense_category_pie_plot">
-        {{ expense_category_pie_plot|safe }}
+    <div class="row">
+
+        <!-- Income Category Pie Plot -->
+        <div class="col-md-6" id="id_income_category_pie_plot">
+            {{ income_category_pie_plot|safe }}
+        </div>
+
+        <!-- Expense Category Pie Plot -->
+        <div class="col-md-6" id="id_expense_category_pie_plot">
+            {{ expense_category_pie_plot|safe }}
+        </div>
     </div>
 </div>
 {% endblock %}

@@ -67,6 +67,8 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
                 figure_data.append(go.Pie(labels=_x, 
                                           values=_y,
                                           marker_colors=ReportingColors().COLOR_PALETTE,
+                                          direction='clockwise',
+                                          sort=True,
                                          ))
             else:
                 raise ValueError(f"Plot type {plot_type} not supported")
