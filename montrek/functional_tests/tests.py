@@ -587,3 +587,46 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
         )
         new_transaction_date_box.send_keys("02/01/2019")
         self.browser.find_element(By.ID, "id_date_range_filter").click()
+
+class TestDepotAccount(MontrekFunctionalTest):
+    def setUp(self):
+        super().setUp()
+        CreditInstitutionStaticSatelliteFactory.create(
+            credit_institution_name="Bank of Testonia"
+        )
+
+    def test_add_depot_and_add_asset_transactions(self):
+        # The user visits the new account form
+        self.browser.get(self.live_server_url + "/account/new_form")
+        # He enters 'Billy's Depot account' into the Account Name Box
+        new_account_name_box = self.browser.find_element(By.ID, "id_account_new__name")
+        new_account_name_box.send_keys("Billy's Depot account")
+        # he selects 'Depot' from the Account Type dropdown
+        new_account_type_box = self.browser.find_element(By.ID, "id_account_new__account_type")
+        new_account_type_box.send_keys("Depot")
+        self.browser.find_element(
+            By.ID, "id_account_new__submit"
+        ).click()
+        header_text = self.browser.find_element(By.TAG_NAME, "h1").text
+        self.assertIn("Add new Depot", header_text)
+        # He enters the bank account data
+        # He selects 'Bank of Testonia' from the credit institution dropdown
+        new_account_credit_institution_box = self.browser.find_element(
+            By.ID, "id_new__credit_institution"
+        )
+        new_account_credit_institution_box.send_keys("Bank of Testonia")
+        # He enters his IBAN in the IBAN box
+        new_account_iban_box = self.browser.find_element(
+            By.ID, "id_new__iban"
+        )
+        new_account_iban_box.send_keys("DE12345678901234567890")
+
+        # When he hits the submit button, he is directed to the accounts-list,
+        # where he finds his new account listed
+        self.browser.find_element(
+            By.ID, "id_bank_account_new__submit"
+        ).click()
+        header_text = self.browser.find_element(By.TAG_NAME, "h1").text
+        self.assertIn("Account List", header_text)
+        self.check_for_row_in_table(["Billy's Depot"], "id_list")
+
