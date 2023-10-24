@@ -270,7 +270,7 @@ class TestAssetTransactions(TestCase):
             transaction_date="2020-01-01",
             transaction_amount=201,
             transaction_price=14.0,
-            transaction_type="EXPENSE",
+            transaction_type=None,
             transaction_category="STOCK",
             transaction_description="Buy apple stocks",
             asset_isin="US0378331005",
@@ -282,4 +282,3 @@ class TestAssetTransactions(TestCase):
         self.assertEqual(asset_satellite.asset_isin, "US0378331005")
         self.assertEqual(asset_satellite.asset_wkn, "851399")
         self.assertEqual(asset_satellite.asset_name, "APPLE INC.")
-

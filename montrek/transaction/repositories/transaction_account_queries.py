@@ -84,14 +84,14 @@ def new_transaction_to_account_with_asset(
     )
     asset_hub, created = find_asset_hub_by_isin_or_create(asset_isin)
     if created:
-        asset_static_satellite = select_satellite(
+        created_asset_static_satellite = select_satellite(
             asset_hub, asset_static_satellite()
         )
-        asset_static_satellite.asset_name = asset_name
-        asset_static_satellite.asset_wkn = asset_wkn
-        asset_static_satellite.asset_type = asset_type
-        asset_static_satellite.save()
-    add_asset_to_transaction(transaction_hub, asset_hub)
+        created_asset_static_satellite.asset_name = asset_name
+        created_asset_static_satellite.asset_wkn = asset_wkn
+        created_asset_static_satellite.asset_type = asset_type
+        created_asset_static_satellite.save()
+    add_asset_to_transaction(asset_hub, transaction_hub)
     return transaction_hub
 
 

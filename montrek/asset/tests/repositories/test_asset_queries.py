@@ -7,7 +7,7 @@ class TestAssetQueries(TestCase):
     def setUp(self):
         self.isin = "US0378331005"
         self.asset = asset_factories.AssetStaticSatelliteFactory(
-            isin=self.isin
+            asset_isin=self.isin
         )
 
     def test_find_asset_hub_by_isin_or_create(self):
@@ -19,4 +19,4 @@ class TestAssetQueries(TestCase):
         new_asset, created = asset_queries.find_asset_hub_by_isin_or_create(isin="US0378331006")
         self.assertEqual(created, True)
         new_asset_sat = AssetStaticSatellite.objects.get(hub_entity=new_asset)
-        self.assertEqual(new_asset_sat.isin, "US0378331006")
+        self.assertEqual(new_asset_sat.asset_isin, "US0378331006")

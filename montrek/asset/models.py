@@ -7,11 +7,11 @@ class AssetHub(baseclass_models.MontrekHubABC): pass
 
 class AssetStaticSatellite(baseclass_models.MontrekSatelliteABC): 
     hub_entity = models.ForeignKey(AssetHub, on_delete=models.CASCADE, related_name="static_satellites")
-    identifier_fields = ["isin", "wkn"]
-    name = models.CharField(max_length=100)
+    identifier_fields = ["asset_isin", "asset_wkn"]
+    asset_name = models.CharField(max_length=100)
     #TODO ISIN Validator
-    isin = models.CharField(max_length=100)
-    wkn = models.CharField(max_length=100)
+    asset_isin = models.CharField(max_length=100)
+    asset_wkn = models.CharField(max_length=100)
     #TODO Add asset Type
     asset_type = models.CharField(max_length=100)
 
