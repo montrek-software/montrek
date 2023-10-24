@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "transaction",
     "credit_institution",
     "file_upload",
+    "depot",
 ]
 
 MIDDLEWARE = [
@@ -134,4 +135,3 @@ STATIC_ROOT = os.path.join(BASE_DIR, "baseclasses/static")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 CSRF_TRUSTED_ORIGINS = ["http://localhost:1339"]
-
