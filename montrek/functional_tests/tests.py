@@ -93,7 +93,7 @@ class AccountFunctionalTests(MontrekFunctionalTest):
         self.browser.find_element(
             By.ID, "id_account_new__submit"
         ).click()
-        header_text = self.browser.find_element(By.TAG_NAME, "h1").text
+        header_text = self.browser.find_element(By.ID, "id_tab_account_list").text
         self.assertIn("Account List", header_text)
         self.check_for_row_in_table(["Billy's account"], "id_list")
 
@@ -119,7 +119,7 @@ class AccountFunctionalTests(MontrekFunctionalTest):
         self.assertIn("Billy's account", header_text)
         # After clicking on the back button he is back at the list
         self.browser.find_element(By.ID, "list_back").click()
-        header_text = self.browser.find_element(By.TAG_NAME, "h1").text
+        header_text = self.browser.find_element(By.ID, "id_new_account").text
         self.assertIn("Account List", header_text)
         # He clicks on the second link and finds the account's name
         second_id = self.find_object_hub_id(
@@ -131,7 +131,7 @@ class AccountFunctionalTests(MontrekFunctionalTest):
         self.assertIn("Billy's second account", header_text)
         # After clicking on the back button he is back at the list
         self.browser.find_element(By.ID, "list_back").click()
-        header_text = self.browser.find_element(By.TAG_NAME, "h1").text
+        header_text = self.browser.find_element(By.ID, "id_tab_account_list").text
         self.assertIn("Account List", header_text)
         # He now wants to delete the first account
         self.browser.find_element(By.ID, f"link_{first_id}").click()
@@ -308,7 +308,7 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
         self.browser.find_element(
             By.ID, "id_bank_account_new__submit"
         ).click()
-        header_text = self.browser.find_element(By.TAG_NAME, "h1").text
+        header_text = self.browser.find_element(By.ID, "id_tab_account_list").text
         self.assertIn("Account List", header_text)
         self.check_for_row_in_table(["Billy's Bank account"], "id_list")
         first_id = self.find_object_hub_id(

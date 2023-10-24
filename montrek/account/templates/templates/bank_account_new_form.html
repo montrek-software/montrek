@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Add new Bank Account{% endblock %}
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-6">
+            <h1>Add new Bank Account</h1>
+        </div>
+    </div>
+    <div class="row">
+        <form class="form-horizontal" 
+              role="form" 
+              method="POST"
+              action='/account/bank_account/new/{{ account_name }}'>
+            <div name="acccount_name">{{ account_name }}</div>
+            <div class="form-group">
+                <label for="item-name">IBAN</label>
+                <input class="form-control" 
+                       type="text" 
+                       name="bank_account_iban"
+                       placeholder="IBAN of new Account"
+                       id="id_bank_account_new__iban" />
+                <label for="item-account-type">Credit Institution</label>
+                <select class="form-control" 
+                        name="credit_institution_name"
+                        id="id_bank_account_new__credit_institution">
+                    {% for credit_institution in credit_institutions %}
+                    <option value="{{ credit_institution.credit_institution_name }}">{{ credit_institution.credit_institution_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <input type="submit" 
+            class="btn btn-warning" 
+            value="Submit"
+            id="id_bank_account_new__submit"/>
+            {% csrf_token %}
+        </form>
+    </div>
+</div>
+{% endblock %}

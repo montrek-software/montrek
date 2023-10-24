@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Tuple
 from django.shortcuts import render, redirect
+from django.urls import reverse
 from django_pandas.io import read_frame
 
 from account.models import AccountHub
@@ -32,6 +33,7 @@ from credit_institution.models import CreditInstitutionStaticSatellite
 
 from baseclasses.repositories.db_helper import new_satellite_entry
 from baseclasses.forms import DateRangeForm
+from baseclasses.dataclasses.view_classes import TabElement, ActionElement
 
 from reporting.managers.account_transaction_plots import (
     draw_monthly_income_expanses_plot,
@@ -59,7 +61,39 @@ def account_list(request):
     accounts_statics = AccountHub.objects.all().prefetch_related(
         "accountstaticsatellite_set", "bankaccountpropertysatellite_set"
     )
-    return render(request, "account_list.html", {"items": accounts_statics})
+    account_list_map_fields = {
+        "Name": {"attr": "accountstaticsatellite_set.account_name"},
+        "Link": {"link": 
+                 { "url": "account_view",
+                  "kwargs": {"account_id": "id"},
+                  "icon": "chevron-right",
+                  "hover_text": "Goto Account",
+                 }
+                },
+        "Value": {"attr": "bankaccountpropertysatellite_set.account_value"},
+        "Type": {"attr": "accountstaticsatellite_set.account_type"},
+    }
+    action_new_account = ActionElement(
+        icon="plus",
+        link=reverse('account_new_form'),
+        action_id="id_new_account",
+        hover_text="Add new Account",
+    )
+    tab = TabElement(
+        name = "Account List",
+        link = reverse('account_list'),
+        html_id="id_tab_account_list",
+        active="active",
+        actions=(action_new_account,),
+    )
+    return render(request, "account_list.html", 
+                  {
+                   "title": "Accounts",
+                   "columns": account_list_map_fields.keys(),
+                   "items": account_list_map_fields.values(),
+                   "table_objects": accounts_statics,
+                   "tab_elements": (tab,),
+                  })
 
 
 

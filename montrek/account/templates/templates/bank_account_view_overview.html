@@ -1,0 +1,14 @@
+{% extends 'bank_account_view.html' %}
+{% block content %}
+<div class="container">
+    <h2 id="id_account_details_title">Bank Account Details</h2>
+    <div id="id_account_details">
+        <table class="table">
+            <tr> <th>Account Name</th><td>{{ account_statics.account_name }}</td></tr></tr>
+        <tr>  <th>IBAN</th><td>{{ bank_account_statics.bank_account_iban }}</td></tr>
+        <tr>  <th>Credit Institution</th><td>{{ credit_institution.credit_institution_name }}</td></tr>
+            <tr>  <th>Value</th><td>{{ bank_account_properties.account_value }}</td> </tr>
+        </table>
+    </div>
+</div>
+{% endblock %}

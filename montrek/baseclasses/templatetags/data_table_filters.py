@@ -39,7 +39,10 @@ def _get_dotted_attr_or_arg(obj, attr):
     """If the attribute is not found, then it is assumed to be an argument"""
     attrs = attr.split('.')
     for attr in attrs:
-        obj = getattr(obj, attr, None)
+        if attr.endswith('_set'):
+            obj = getattr(obj, attr).first()
+        else:
+            obj = getattr(obj, attr, None)
         if obj is None:
             return attr
     return obj
