@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "credit_institution",
     "file_upload",
     "depot",
+    "asset",
 ]
 
 MIDDLEWARE = [
