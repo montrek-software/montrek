@@ -14,7 +14,11 @@ class TestTransactionModelQueries(TestCase):
             asset_hub=asset.hub_entity,
             transaction_hub=transaction.hub_entity,
         )
-        transaction_asset = transaction_model_queries.get_transaction_asset(
+        transaction_asset = transaction_model_queries.get_transaction_asset_hub(
             transaction_hub=transaction.hub_entity,
         )
-        self.assertEquals(transaction_asset, asset.hub_entity)
+        self.assertEqual(transaction_asset, asset.hub_entity)
+        transaction_asset = transaction_model_queries.get_transaction_asset_satellite(
+            transaction_hub=transaction.hub_entity,
+        )
+        self.assertEqual(transaction_asset, asset)
