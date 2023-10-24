@@ -33,6 +33,9 @@ def transaction_category_map_satellite():
 def asset_static_satellite():
     return apps.get_model("asset", "AssetStaticSatellite")
 
+def asset_liquid_satellite():
+    return apps.get_model("asset", "AssetLiquidSatellite")
+
 def new_transaction_to_account(
     account_id: int,
     transaction_date: datetime.date,
@@ -88,9 +91,13 @@ def new_transaction_to_account_with_asset(
             asset_hub, asset_static_satellite()
         )
         created_asset_static_satellite.asset_name = asset_name
-        created_asset_static_satellite.asset_wkn = asset_wkn
-        created_asset_static_satellite.asset_type = asset_type
         created_asset_static_satellite.save()
+        created_asset_liquid_satellite = select_satellite(
+            asset_hub, asset_liquid_satellite()
+        )
+        created_asset_liquid_satellite.asset_wkn = asset_wkn
+        created_asset_liquid_satellite.asset_type = asset_type
+        created_asset_liquid_satellite.save()
     add_asset_to_transaction(asset_hub, transaction_hub)
     return transaction_hub
 

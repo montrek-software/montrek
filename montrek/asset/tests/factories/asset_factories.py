@@ -10,6 +10,11 @@ class AssetStaticSatelliteFactory(factory.django.DjangoModelFactory):
     hub_entity = factory.SubFactory(AssetHubFactory)
     asset_name = factory.Sequence(lambda n: f"AssetStaticSatellite {n}")
 
+class AssetLiquidSatelliteFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "asset.AssetLiquidSatellite"
+    hub_entity = factory.SubFactory(AssetHubFactory)
+
 class AssetTimeSeriesSatelliteFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = "asset.AssetTimeSeriesSatellite"

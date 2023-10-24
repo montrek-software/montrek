@@ -39,7 +39,10 @@ from transaction.repositories.transaction_type_queries import (
     get_transaction_type_by_transaction,
 )
 from transaction.repositories.transaction_model_queries import (
-    get_transaction_asset_satellite
+    get_transaction_asset_liquid_satellite
+)
+from transaction.repositories.transaction_model_queries import (
+    get_transaction_asset_static_satellite
 )
 
 ACCOUNTS_UNDER_TEST = 1
@@ -278,7 +281,8 @@ class TestAssetTransactions(TestCase):
             asset_name="APPLE INC.",
             asset_type="STOCK",
         )
-        asset_satellite = get_transaction_asset_satellite(transaction_hub)
-        self.assertEqual(asset_satellite.asset_isin, "US0378331005")
-        self.assertEqual(asset_satellite.asset_wkn, "851399")
-        self.assertEqual(asset_satellite.asset_name, "APPLE INC.")
+        asset_liquid_satellite = get_transaction_asset_liquid_satellite(transaction_hub)
+        self.assertEqual(asset_liquid_satellite.asset_isin, "US0378331005")
+        self.assertEqual(asset_liquid_satellite.asset_wkn, "851399")
+        asset_static_satellite = get_transaction_asset_static_satellite(transaction_hub)
+        self.assertEqual(asset_static_satellite.asset_name, "APPLE INC.")

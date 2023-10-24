@@ -7,14 +7,17 @@ class AssetHub(baseclass_models.MontrekHubABC): pass
 
 class AssetStaticSatellite(baseclass_models.MontrekSatelliteABC): 
     hub_entity = models.ForeignKey(AssetHub, on_delete=models.CASCADE, related_name="static_satellites")
-    identifier_fields = ["asset_isin", "asset_wkn"]
+    identifier_fields = ['asset_name']
     asset_name = models.CharField(max_length=100)
-    #TODO ISIN Validator
-    asset_isin = models.CharField(max_length=100)
-    asset_wkn = models.CharField(max_length=100)
-    #TODO Add asset Type
     asset_type = models.CharField(max_length=100)
 
+class AssetLiquidSatellite(baseclass_models.MontrekSatelliteABC):
+    hub_entity = models.ForeignKey(AssetHub, on_delete=models.CASCADE, related_name="liquid_satellites")
+    identifier_fields = ["asset_isin", "asset_wkn"]
+    #TODO ISIN Validator
+    asset_isin = models.CharField(max_length=100)
+    #TODO Add asset Type
+    asset_wkn = models.CharField(max_length=100)
 
 class AssetTimeSeriesSatellite(baseclass_models.MontrekSatelliteABC):
     hub_entity = models.ForeignKey(AssetHub, on_delete=models.CASCADE, related_name="time_series_satellites")

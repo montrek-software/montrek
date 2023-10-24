@@ -24,6 +24,8 @@ def asset_hub():
 def asset_static_satellite():
     return apps.get_model("asset", "AssetStaticSatellite")
 
+def asset_liquid_satellite():
+    return apps.get_model("asset", "AssetLiquidSatellite")
 
 
 
@@ -42,10 +44,16 @@ def get_transaction_asset_hub(
 ) -> baseclass_models.MontrekHubABC:
     return transaction_hub.link_transaction_asset.first()
 
-def get_transaction_asset_satellite(
+def get_transaction_asset_static_satellite(
     transaction_hub: baseclass_models.MontrekHubABC,
 ) -> baseclass_models.MontrekHubABC:
     asset_hub = get_transaction_asset_hub(transaction_hub)
     return select_satellite(asset_hub, asset_static_satellite())
+
+def get_transaction_asset_liquid_satellite(
+    transaction_hub: baseclass_models.MontrekHubABC,
+) -> baseclass_models.MontrekHubABC:
+    asset_hub = get_transaction_asset_hub(transaction_hub)
+    return select_satellite(asset_hub, asset_liquid_satellite())
 
 
