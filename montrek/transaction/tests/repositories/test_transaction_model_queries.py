@@ -1,0 +1,20 @@
+from django.test import TestCase
+
+from transaction.repositories import transaction_model_queries
+from transaction.tests.factories import transaction_factories
+from asset.tests.factories import asset_factories
+
+class TestTransactionModelQueries(TestCase):
+    def test_add_asset_to_transaction(self):
+        asset = asset_factories.AssetStaticSatelliteFactory(
+            isin = 'US0378331005',
+        )
+        transaction = transaction_factories.TransactionSatelliteFactory()
+        transaction_model_queries.add_asset_to_transaction(
+            asset_hub=asset.hub_entity,
+            transaction_hub=transaction.hub_entity,
+        )
+        transaction_asset = transaction_model_queries.get_transaction_asset(
+            transaction_hub=transaction.hub_entity,
+        )
+        self.assertEquals(transaction_asset, asset.hub_entity)

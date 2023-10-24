@@ -16,6 +16,10 @@ class TransactionHub(baseclass_models.MontrekHubABC):
         "TransactionTypeHub", 
         related_name = "link_transaction_transaction_type",
     )
+    link_transaction_asset = models.ManyToManyField(
+        "asset.AssetHub",
+        related_name = "link_asset_transaction",
+    )
 
 
 class TransactionSatellite(baseclass_models.MontrekSatelliteABC):
