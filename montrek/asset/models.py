@@ -6,7 +6,7 @@ from baseclasses import models as baseclass_models
 class AssetHub(baseclass_models.MontrekHubABC): pass
 
 class AssetStaticSatellite(baseclass_models.MontrekSatelliteABC): 
-    hub_entity = models.ForeignKey(AssetHub, on_delete=models.CASCADE, related_name="static_satellites"))
+    hub_entity = models.ForeignKey(AssetHub, on_delete=models.CASCADE, related_name="static_satellites")
     identifier_fields = ["isin", "wkn"]
     name = models.CharField(max_length=100)
     #TODO ISIN Validator
@@ -17,5 +17,5 @@ class AssetStaticSatellite(baseclass_models.MontrekSatelliteABC):
 
 
 class AssetTimeSeriesSatellite(baseclass_models.MontrekSatelliteABC):
-    hub_entity = models.ForeignKey(AssetHub, on_delete=models.CASCADE, related_name="time_series_satellites"))
+    hub_entity = models.ForeignKey(AssetHub, on_delete=models.CASCADE, related_name="time_series_satellites")
     price = models.DecimalField(max_digits=10, decimal_places=2)
