@@ -20,6 +20,7 @@ from transaction.models import TransactionCategoryMapSatellite
 from account.models import AccountStaticSatellite
 from account.models import AccountHub
 from baseclasses.repositories import db_helper
+from asset.models import AssetStaticSatellite
 
 class TransactionSatelliteDetailView(DetailView):
     model = TransactionSatellite
@@ -147,7 +148,10 @@ def _get_account_statics(account_id: int):
 def transaction_add_form(request, account_id: int):
     account_statics = _get_account_statics(account_id)
     return render(
-        request, "transaction_add_form.html", {"account_statics": account_statics}
+        request, "transaction_add_form.html", {
+            "account_statics": account_statics,
+            "assets": AssetStaticSatellite.objects.all(), 
+        }
     )
 
 

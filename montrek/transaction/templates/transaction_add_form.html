@@ -17,7 +17,7 @@
                        name="transaction_description"
                        placeholder="Description"
                        id="id_transaction_new__name" />
-                        </td></tr>
+                    </td><td></td></tr>
                     <tr><td>
                     <label for="item-name">Transaction Amount</label>
                     </td><td>
@@ -26,7 +26,7 @@
                        name="transaction_amount"
                        placeholder="X"
                        id="id_transaction_new__amount" />
-                    </td></tr>
+                    </td><td></td></tr>
                     <tr><td>
                     <label for="item-name">Transaction Price</label>
                     </td><td>
@@ -36,7 +36,7 @@
                        name="transaction_price"
                        placeholder="X.XX"
                        id="id_transaction_new__price" />
-                    </td></tr>
+                    </td><td></td></tr>
                     <tr><td>
                     <label for="item-name">Transaction Date</label>
                     </td><td>
@@ -45,7 +45,17 @@
                        name="transaction_date"
                        placeholder="YYYY-MM-DD"
                        id="id_transaction_new__date" />
-                    </td></tr>
+                    </td><td></td></tr>
+                    <tr><td>
+                    <label for="item-name">Transaction Asset</label>
+                    </td><td>
+                    {% for asset in assets %}
+                        <option value="{{ asset }}">{{ asset }}</option>
+                    {% endfor %}
+                    </td>
+                    <td> <a id="id_add_new_asset" href="/asset/new_form" class="btn" title="Add new Asset">
+                        <span class="glyphicon glyphicon-plus"/></a></td>
+                    </tr>
                 </table>
             </div>
             <input type="submit" 

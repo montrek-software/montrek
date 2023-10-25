@@ -666,7 +666,7 @@ class TestDepotAccount(MontrekFunctionalTest):
         )
         new_transaction_date_box.send_keys("01/01/2022")
         # Since there are not assets yet, he adds one
-        self.browser.find_element(By.ID, "add_asset").click()
+        self.browser.find_element(By.ID, "id_add_new_asset").click()
         header_text = self.browser.find_element(By.TAG_NAME, "h1").text
         self.assertIn("Add Asset", header_text)
         # He enters the asset data
