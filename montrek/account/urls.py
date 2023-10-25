@@ -13,12 +13,12 @@ urlpatterns = [
         name="account_delete_form",
     ),
     path(
-        "bank_account/new_form/<str:account_name>/<int:has_depot>",
+        "bank_account/new_form/<str:account_name>/<str:account_type>",
         views.bank_account_new_form,
         name="bank_account_new_form",
     ),
     path(
-        "bank_account/new/<str:account_name>",
+        "bank_account/new/<str:account_name>/<str:account_type>",
         views.bank_account_new,
         name="bank_account_new",
     ),
@@ -51,5 +51,10 @@ urlpatterns = [
         "<int:account_id>/bank_account_view/transaction_category_map",
         views.bank_account_view_transaction_category_map,
         name="bank_account_view_transaction_category_map",
+    ),
+    path(
+        "<int:account_id>/bank_account_view/depot",
+        views.bank_account_view_depot,
+        name="bank_account_view_depot",
     ),
 ]

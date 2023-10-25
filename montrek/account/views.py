@@ -47,11 +47,10 @@ def account_new(request):
     if account_type == "Other":
         new_account(request.POST["account_name"])
         return redirect("/account/list")
-    if account_type == "Bank Account":
-        return redirect(reverse('bank_account_new_form', kwargs={'account_name': account_name, 'has_depot': 0}))
-    if account_type == "Depot":
-        return redirect(reverse('bank_account_new_form', kwargs={'account_name': account_name, 'has_depot': 1}))
-
+    if account_type in ["Bank Account", "Depot"]:
+        return redirect(reverse('bank_account_new_form',
+                                kwargs={'account_name': account_name,
+                                        'account_type': account_type}))
     return render(request, "under_construction.html")
 
 
@@ -131,20 +130,20 @@ def account_delete_form(request, account_id: int):
 #### Bank Account Views ####
 
 
-def bank_account_new_form(request, account_name: str, has_depot: int):
+def bank_account_new_form(request, account_name: str, account_type: str):
     return render(
         request,
         "bank_account_new_form.html",
         {
             "credit_institutions": CreditInstitutionStaticSatellite.objects.all(),
             "account_name": account_name,
-            "has_depot": has_depot,
+            "account_type": account_type,
         },
     )
 
 
-def bank_account_new(request, account_name: str):
-    account_hub = new_account(account_name, "BankAccount")
+def bank_account_new(request, account_name: str, account_type: str):
+    account_hub = new_account(account_name, account_type.replace(' ',''))
     BankAccountPropertySatellite.objects.create(
         hub_entity=account_hub,
     )
@@ -308,6 +307,14 @@ def bank_account_view_transaction_category_map(request, account_id: int):
     account_data['columns'] = trans_cat_map_fields.keys()
     account_data['items'] = trans_cat_map_fields.values()
     account_data['table_objects'] = get_paginated_transactions_category_map(account_id, page_number)
+    return render(request, "bank_account_view_table.html", account_data)
+
+def bank_account_view_depot(request, account_id: int):
+    account_data = account_view_data(account_id, "tab_depot")
+    account_data.update(_handle_date_range_form(request))
+    account_data['columns'] = []
+    account_data['items']= []
+    account_data['table_objects'] = []
     return render(request, "bank_account_view_table.html", account_data)
 
 

@@ -630,3 +630,71 @@ class TestDepotAccount(MontrekFunctionalTest):
         header_text = self.browser.find_element(By.ID, "id_tab_account_list").text
         self.assertIn("Account List", header_text)
         self.check_for_row_in_table(["Billy's Depot"], "id_montrek_table_list")
+
+        # He clicks on the account link in the list
+        account_id = self.find_object_hub_id(
+            AccountStaticSatellite, "Billy's Depot", "account_name"
+        )
+        self.browser.find_element(By.ID, f"id__account_{account_id}_view").click()
+
+        # He finds the depot tab and clicks on it
+        header_text = self.browser.find_element(By.ID, "tab_depot").text
+        self.assertIn("Depot", header_text)
+        self.browser.find_element(By.ID, "tab_depot").click()
+        # There he finds an empty list of assets
+        asset_list = self.browser.find_element(By.ID, "id_montrek_table_list")
+        rows_count = len(asset_list.find_elements(By.TAG_NAME, "tr")) - 1
+        self.assertEqual(rows_count, 0)
+        # He adds an transaction with an asset
+        self.browser.find_element(By.ID, "tab_transactions").click()
+        self.browser.find_element(By.ID, "add_transaction").click()
+        # He enters the transaction data
+        new_transaction_name_box = self.browser.find_element(
+            By.ID, "id_transaction_new__name"
+        )
+        new_transaction_name_box.send_keys("Billy's transaction")
+        new_transaction_amount_box = self.browser.find_element(
+            By.ID, "id_transaction_new__amount"
+        )
+        new_transaction_amount_box.send_keys("3")
+        new_transaction_price_box = self.browser.find_element(
+            By.ID, "id_transaction_new__price"
+        )
+        new_transaction_price_box.send_keys("100.00")
+        new_transaction_date_box = self.browser.find_element(
+            By.ID, "id_transaction_new__date"
+        )
+        new_transaction_date_box.send_keys("01/01/2022")
+        # Since there are not assets yet, he adds one
+        self.browser.find_element(By.ID, "add_asset").click()
+        header_text = self.browser.find_element(By.TAG_NAME, "h1").text
+        self.assertIn("Add Asset", header_text)
+        # He enters the asset data
+        for page_id, value in [
+            ('id_asset_new__name', 'Test Asset'),
+            ('id_asset_new__type', 'ETF')] :
+            self.browser.find_element(By.ID, page_id).send_keys(value)
+        # He hits the submit button and is asked to enter liquid asset data
+        self.browser.find_element(By.ID, "id_transaction_new__submit").click()
+        header_text = self.browser.find_element(By.TAG_NAME, "h1").text
+        self.assertIn("Add Liquid Asset", header_text)
+        for page_id, value in [
+            ('id_asset_liquid_new__isin', 'DE12345678910'),
+            ('id_asset_liquid_new__wkn', 'ETF001')
+        ]:
+            self.browser.find_element(By.ID, page_id).send_keys(value)
+        self.browser.find_element(By.ID, "id_asset_liquid_new__submit").click()
+        # He is directed back to the transaction form and finds his asset in the selection box
+        asset_name = self.browser.find_element(By.ID, 'id_transaction_new__asset').text
+        self.assertIn('Test Asset', asset_name)
+        # He submits and finds himself in the depot view
+        self.browser.find_element(By.ID, "id_transaction_new__submit").click()
+        asset_list = self.browser.find_element(By.ID, "id_montrek_table_list")
+        rows_count = len(asset_list.find_elements(By.TAG_NAME, "tr")) - 1
+        self.assertEqual(rows_count, 1)
+        self.check_for_row_in_table(
+            ["Test Asset", "ETF", "DE12345678910", "ETF001"],
+            "id_montrek_table_list",
+        )
+
+

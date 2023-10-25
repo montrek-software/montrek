@@ -1,10 +1,6 @@
 {% extends 'base.html' %}
 {% block title %}
-    {% if has_depot == 1 %}
-        Add new  Depot
-    {% else %}
-        Add new Bank Account  
-    {% endif %}
+    Add new {{ account_type }}
 {% endblock %}
 {% block content %}
 <div class="container">
@@ -17,7 +13,7 @@
         <form class="form-horizontal" 
               role="form" 
               method="POST"
-              action='/account/bank_account/new/{{ account_name }}'>
+              action='/account/bank_account/new/{{ account_name }}/{{ account_type }}'>
             <div class="form-group">
                 <label for="item-name">IBAN</label>
                 <input class="form-control" 
