@@ -95,7 +95,7 @@ class AccountFunctionalTests(MontrekFunctionalTest):
         ).click()
         header_text = self.browser.find_element(By.ID, "id_tab_account_list").text
         self.assertIn("Account List", header_text)
-        self.check_for_row_in_table(["Billy's account"], "id_list")
+        self.check_for_row_in_table(["Billy's account"], "id_montrek_table_list")
 
     @tag("functional")
     def test_access_account_in_list(self):
@@ -113,19 +113,19 @@ class AccountFunctionalTests(MontrekFunctionalTest):
         first_id = self.find_object_hub_id(
             AccountStaticSatellite, "Billy's account", "account_name"
         )
-        self.browser.find_element(By.ID, f"link_{first_id}").click()
+        self.browser.find_element(By.ID, f"id__account_{first_id}_view").click()
         # The name of the Account is shown in the header
         header_text = self.browser.find_element(By.ID, "page_title").text
         self.assertIn("Billy's account", header_text)
         # After clicking on the back button he is back at the list
         self.browser.find_element(By.ID, "list_back").click()
-        header_text = self.browser.find_element(By.ID, "id_new_account").text
+        header_text = self.browser.find_element(By.ID, "id_tab_account_list").text
         self.assertIn("Account List", header_text)
         # He clicks on the second link and finds the account's name
         second_id = self.find_object_hub_id(
             AccountStaticSatellite, "Billy's second account", "account_name"
         )
-        self.browser.find_element(By.ID, f"link_{second_id}").click()
+        self.browser.find_element(By.ID, f"id__account_{second_id}_view").click()
         # The name of the Account is shown in the header
         header_text = self.browser.find_element(By.TAG_NAME, "h1").text
         self.assertIn("Billy's second account", header_text)
@@ -134,7 +134,7 @@ class AccountFunctionalTests(MontrekFunctionalTest):
         header_text = self.browser.find_element(By.ID, "id_tab_account_list").text
         self.assertIn("Account List", header_text)
         # He now wants to delete the first account
-        self.browser.find_element(By.ID, f"link_{first_id}").click()
+        self.browser.find_element(By.ID, f"id__account_{first_id}_view").click()
         # He clicks on the delete button
         self.browser.find_element(By.ID, "delete_account").click()
         # He is asked to confirm the deletion
@@ -143,9 +143,9 @@ class AccountFunctionalTests(MontrekFunctionalTest):
         # He clicks on the delete button
         self.browser.find_element(By.ID, "delete_account").click()
         # He is back at the list and the first account is gone
-        header_text = self.browser.find_element(By.TAG_NAME, "h1").text
+        header_text = self.browser.find_element(By.ID, "id_tab_account_list").text
         self.assertIn("Account List", header_text)
-        self.check_for_row_in_table(["Billy's second account"], "id_list")
+        self.check_for_row_in_table(["Billy's second account"], "id_montrek_table_list")
         self.assertNotIn("Billy's account", self.browser.page_source)
 
 
@@ -310,11 +310,11 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
         ).click()
         header_text = self.browser.find_element(By.ID, "id_tab_account_list").text
         self.assertIn("Account List", header_text)
-        self.check_for_row_in_table(["Billy's Bank account"], "id_list")
+        self.check_for_row_in_table(["Billy's Bank account"], "id_montrek_table_list")
         first_id = self.find_object_hub_id(
             AccountStaticSatellite, "Billy's Bank account", "account_name"
         )
-        self.browser.find_element(By.ID, f"link_{first_id}").click()
+        self.browser.find_element(By.ID, f"id__account_{first_id}_view").click()
         header_text = self.browser.find_element(By.ID, "id_account_details_title").text
         self.assertIn("Bank Account Details", header_text)
         self.check_for_row_in_table(

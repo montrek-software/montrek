@@ -99,6 +99,8 @@ def account_list(request):
 
 def account_view(request, account_id: int):
     account_data = account_view_data(account_id)
+    if account_data['account_statics'].account_type == 'BankAccount':
+        return bank_account_view(request, account_id)
     account_data.update(_handle_date_range_form(request))
     page_number = request.GET.get('page', 1)
     start_date, end_date = _get_date_range_dates(request)
