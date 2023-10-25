@@ -49,11 +49,16 @@
                     <tr><td>
                     <label for="item-name">Transaction Asset</label>
                     </td><td>
-                    {% for asset in assets %}
-                        <option value="{{ asset }}">{{ asset }}</option>
-                    {% endfor %}
+                    <select class="form-control" 
+                            name="asset"
+                            id="id_transaction_new__asset">
+                        <option value="None">None</option>
+                        {% for asset in assets %}
+                            <option value="{{ asset }}">{{ asset }}</option>
+                        {% endfor %}
+                    </select>
                     </td>
-                    <td> <a id="id_add_new_asset" href="/asset/new_form" class="btn" title="Add new Asset">
+                    <td> <a id="id_add_new_asset" href="/asset/create/{{ account_statics.hub_entity.id }}" class="btn" title="Add new Asset">
                         <span class="glyphicon glyphicon-plus"/></a></td>
                     </tr>
                 </table>

@@ -25,4 +25,5 @@ urlpatterns = [
     path("account/", include("account.urls")),
     path("transaction/", include("transaction.urls")),
     path("file_upload/", include("file_upload.urls")),
+    path("asset/", include("asset.urls")),
 ]

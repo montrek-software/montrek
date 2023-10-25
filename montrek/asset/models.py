@@ -8,10 +8,25 @@ from asset.managers.validators import montrek_wkn_validator
 class AssetHub(baseclass_models.MontrekHubABC): pass
 
 class AssetStaticSatellite(baseclass_models.MontrekSatelliteABC): 
+    class AssetType(models.TextChoices):
+        ETF = 'ETF'
+        STOCK = 'STOCK'
+        BOND = 'BOND'
+        REAL_ESTATE = 'REAL_ESTATE'
+
     hub_entity = models.ForeignKey(AssetHub, on_delete=models.CASCADE, related_name="static_satellites")
     identifier_fields = ['asset_name']
-    asset_name = models.CharField(max_length=100)
-    asset_type = models.CharField(max_length=100)
+    asset_name = models.CharField(max_length=20)
+    asset_type = models.CharField(max_length=100, choices=AssetType.choices)
+
+    def __str__(self):
+        return f'{self.asset_name} ({self.asset_type})'
+
+    @property
+    def is_liquid(self):
+        if self.asset_type in ['ETF', 'STOCK', 'BOND']:
+            return True
+        return False
 
 class AssetLiquidSatellite(baseclass_models.MontrekSatelliteABC):
     hub_entity = models.ForeignKey(AssetHub, on_delete=models.CASCADE, related_name="liquid_satellites")
