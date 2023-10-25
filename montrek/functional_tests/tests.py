@@ -79,7 +79,8 @@ class AccountFunctionalTests(MontrekFunctionalTest):
     @tag("functional")
     def test_add_new_account(self):
         # The user visits the new account form
-        self.browser.get(self.live_server_url + "/account/new_form")
+        self.browser.get(self.live_server_url + "/account/list")
+        self.browser.find_element(By.ID, "id_new_account").click()
         # The page title is 'Montrek'
         self.assertIn("Montrek", self.browser.title)
         # The header line says 'Add new Account'
