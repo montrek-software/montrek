@@ -48,7 +48,7 @@ def account_new(request):
         new_account(request.POST["account_name"])
         return redirect("/account/list")
     if account_type == "Bank Account":
-        return redirect(f"/account/bank_account/new_form/{account_name}")
+        return redirect(reverse('bank_account_new_form', kwargs={'account_name': account_name, 'has_depot': 0}))
     return render(request, "under_construction.html")
 
 
@@ -128,7 +128,7 @@ def account_delete_form(request, account_id: int):
 #### Bank Account Views ####
 
 
-def bank_account_new_form(request, account_name: str):
+def bank_account_new_form(request, account_name: str, has_depot: bool):
     return render(
         request,
         "bank_account_new_form.html",

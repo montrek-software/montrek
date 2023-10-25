@@ -13,7 +13,7 @@ urlpatterns = [
         name="account_delete_form",
     ),
     path(
-        "bank_account/new_form/<str:account_name>",
+        "bank_account/new_form/<str:account_name>/<int:has_depot>",
         views.bank_account_new_form,
         name="bank_account_new_form",
     ),
