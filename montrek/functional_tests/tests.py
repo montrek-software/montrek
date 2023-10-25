@@ -601,7 +601,7 @@ class TestDepotAccount(MontrekFunctionalTest):
         self.browser.get(self.live_server_url + "/account/new_form")
         # He enters 'Billy's Depot account' into the Account Name Box
         new_account_name_box = self.browser.find_element(By.ID, "id_account_new__name")
-        new_account_name_box.send_keys("Billy's Depot account")
+        new_account_name_box.send_keys("Billy's Depot")
         # he selects 'Depot' from the Account Type dropdown
         new_account_type_box = self.browser.find_element(By.ID, "id_account_new__account_type")
         new_account_type_box.send_keys("Depot")
@@ -613,12 +613,12 @@ class TestDepotAccount(MontrekFunctionalTest):
         # He enters the bank account data
         # He selects 'Bank of Testonia' from the credit institution dropdown
         new_account_credit_institution_box = self.browser.find_element(
-            By.ID, "id_new__credit_institution"
+            By.ID, "id_bank_account_new__credit_institution"
         )
         new_account_credit_institution_box.send_keys("Bank of Testonia")
         # He enters his IBAN in the IBAN box
         new_account_iban_box = self.browser.find_element(
-            By.ID, "id_new__iban"
+            By.ID, "id_bank_account_new__iban"
         )
         new_account_iban_box.send_keys("DE12345678901234567890")
 
@@ -627,7 +627,6 @@ class TestDepotAccount(MontrekFunctionalTest):
         self.browser.find_element(
             By.ID, "id_bank_account_new__submit"
         ).click()
-        header_text = self.browser.find_element(By.TAG_NAME, "h1").text
+        header_text = self.browser.find_element(By.ID, "id_tab_account_list").text
         self.assertIn("Account List", header_text)
-        self.check_for_row_in_table(["Billy's Depot"], "id_list")
-
+        self.check_for_row_in_table(["Billy's Depot"], "id_montrek_table_list")

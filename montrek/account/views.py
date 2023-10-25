@@ -49,6 +49,9 @@ def account_new(request):
         return redirect("/account/list")
     if account_type == "Bank Account":
         return redirect(reverse('bank_account_new_form', kwargs={'account_name': account_name, 'has_depot': 0}))
+    if account_type == "Depot":
+        return redirect(reverse('bank_account_new_form', kwargs={'account_name': account_name, 'has_depot': 1}))
+
     return render(request, "under_construction.html")
 
 
@@ -128,13 +131,14 @@ def account_delete_form(request, account_id: int):
 #### Bank Account Views ####
 
 
-def bank_account_new_form(request, account_name: str, has_depot: bool):
+def bank_account_new_form(request, account_name: str, has_depot: int):
     return render(
         request,
         "bank_account_new_form.html",
         {
             "credit_institutions": CreditInstitutionStaticSatellite.objects.all(),
             "account_name": account_name,
+            "has_depot": has_depot,
         },
     )
 
