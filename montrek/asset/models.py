@@ -16,7 +16,7 @@ class AssetStaticSatellite(baseclass_models.MontrekSatelliteABC):
 
     hub_entity = models.ForeignKey(AssetHub, on_delete=models.CASCADE, related_name="asset_static_satellite")
     identifier_fields = ['asset_name']
-    asset_name = models.CharField(max_length=20)
+    asset_name = models.CharField(max_length=50)
     asset_type = models.CharField(max_length=100, choices=AssetType.choices)
 
     def __str__(self):

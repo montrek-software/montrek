@@ -52,7 +52,7 @@ class TestDepotTable(TestCase):
         trans2_1.hub_entity.link_transaction_asset.add(asset_2.hub_entity)
 
     def test_get_depot_asset_table(self):
-        depot_asset_table_data = get_depot_asset_table(self.account)
+        depot_asset_table_data = get_depot_asset_table(self.account.id)
         self.assertEqual(len(depot_asset_table_data), 2)
         self.assertEqual(depot_asset_table_data[0].asset_name, 'Test Asset 1')
         self.assertEqual(depot_asset_table_data[0].asset_isin, 'DE1234567891')
@@ -62,3 +62,4 @@ class TestDepotTable(TestCase):
         self.assertEqual(depot_asset_table_data[1].asset_isin, 'DE4564567891')
         self.assertEqual(depot_asset_table_data[1].asset_wkn, 'TEST45')
         self.assertEqual(depot_asset_table_data[1].total_nominal, 50)
+

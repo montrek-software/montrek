@@ -39,6 +39,7 @@ from reporting.managers.account_transaction_plots import (
     draw_monthly_income_expanses_plot,
     draw_income_expenses_category_pie_plot,
 )
+from depot.repositories.depot_table_queries import get_depot_asset_table
 # Create your views here.
 #### Account Views ####
 def account_new(request):
@@ -312,9 +313,15 @@ def bank_account_view_transaction_category_map(request, account_id: int):
 def bank_account_view_depot(request, account_id: int):
     account_data = account_view_data(account_id, "tab_depot")
     account_data.update(_handle_date_range_form(request))
-    account_data['columns'] = []
-    account_data['items']= []
-    account_data['table_objects'] = []
+    depot_table_map_fields = {
+        'Asset Name': {'attr': 'asset_name'},
+        'ISIN': {'attr': 'asset_isin'},
+        'WKN': {'attr': 'asset_wkn'},
+        'Nominal': {'attr': 'total_nominal'},
+    }
+    account_data['columns'] = depot_table_map_fields.keys()
+    account_data['items']= depot_table_map_fields.values()
+    account_data['table_objects'] = get_depot_asset_table( account_id )
     return render(request, "bank_account_view_table.html", account_data)
 
 

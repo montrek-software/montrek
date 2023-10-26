@@ -43,6 +43,7 @@ def new_transaction_to_account(
     transaction_price: float,
     transaction_category: str,
     transaction_description: str,
+    transaction_party: str,
     transaction_type: str = None,
 ) -> baseclass_models.MontrekHubABC:
     account_hub_object = account_hub().objects.get(id=account_id)
@@ -54,6 +55,7 @@ def new_transaction_to_account(
         transaction_amount=float(transaction_amount),
         transaction_price=float(transaction_price),
         transaction_description=transaction_description,
+        transaction_party=transaction_party,
     )
     new_link_entry(
         account_hub_object,

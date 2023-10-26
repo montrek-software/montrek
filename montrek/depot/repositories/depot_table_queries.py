@@ -4,9 +4,9 @@ from account.models import AccountHub
 from asset.models import AssetHub
 
 
-def get_depot_asset_table(account_hub: AccountHub) -> QuerySet:
+def get_depot_asset_table(account_hub_id: int) -> QuerySet:
     assets_linked_to_account = AssetHub.objects.filter(
-        link_asset_transaction__link_transaction_account__id=account_hub.id
+        link_asset_transaction__link_transaction_account__id=account_hub_id
     ).annotate(
         asset_name=F('asset_static_satellite__asset_name'),
         asset_isin=F('asset_liquid_satellite__asset_isin'),
