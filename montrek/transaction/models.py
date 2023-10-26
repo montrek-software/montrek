@@ -23,7 +23,7 @@ class TransactionHub(baseclass_models.MontrekHubABC):
 
 
 class TransactionSatellite(baseclass_models.MontrekSatelliteABC):
-    hub_entity = models.ForeignKey(TransactionHub, on_delete=models.CASCADE)
+    hub_entity = models.ForeignKey(TransactionHub, on_delete=models.CASCADE, related_name='transaction_satellite')
     identifier_fields = [
         "transaction_date",
         "transaction_party",

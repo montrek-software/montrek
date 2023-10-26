@@ -14,7 +14,7 @@ class AssetStaticSatellite(baseclass_models.MontrekSatelliteABC):
         BOND = 'BOND'
         REAL_ESTATE = 'REAL_ESTATE'
 
-    hub_entity = models.ForeignKey(AssetHub, on_delete=models.CASCADE, related_name="static_satellites")
+    hub_entity = models.ForeignKey(AssetHub, on_delete=models.CASCADE, related_name="asset_static_satellite")
     identifier_fields = ['asset_name']
     asset_name = models.CharField(max_length=20)
     asset_type = models.CharField(max_length=100, choices=AssetType.choices)
@@ -29,11 +29,11 @@ class AssetStaticSatellite(baseclass_models.MontrekSatelliteABC):
         return False
 
 class AssetLiquidSatellite(baseclass_models.MontrekSatelliteABC):
-    hub_entity = models.ForeignKey(AssetHub, on_delete=models.CASCADE, related_name="liquid_satellites")
+    hub_entity = models.ForeignKey(AssetHub, on_delete=models.CASCADE, related_name="asset_liquid_satellite")
     identifier_fields = ["asset_isin", "asset_wkn"]
     asset_isin = models.CharField(max_length=12,validators=[montrek_isin_validator])
     asset_wkn = models.CharField(max_length=6, validators=[montrek_wkn_validator])
 
 class AssetTimeSeriesSatellite(baseclass_models.MontrekSatelliteABC):
-    hub_entity = models.ForeignKey(AssetHub, on_delete=models.CASCADE, related_name="time_series_satellites")
+    hub_entity = models.ForeignKey(AssetHub, on_delete=models.CASCADE, related_name="asset_time_series_satellite")
     price = models.DecimalField(max_digits=10, decimal_places=2)
