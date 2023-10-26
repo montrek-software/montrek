@@ -1,9 +1,10 @@
 from django.db.models import F, Sum, DecimalField
+from django.db.models import QuerySet
 from account.models import AccountHub
 from asset.models import AssetHub
 
 
-def get_depot_asset_table(account_hub: AccountHub):
+def get_depot_asset_table(account_hub: AccountHub) -> QuerySet:
     assets_linked_to_account = AssetHub.objects.filter(
         link_asset_transaction__link_transaction_account__id=account_hub.id
     ).annotate(
