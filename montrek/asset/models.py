@@ -20,7 +20,7 @@ class AssetStaticSatellite(baseclass_models.MontrekSatelliteABC):
     asset_type = models.CharField(max_length=100, choices=AssetType.choices)
 
     def __str__(self):
-        return f'{self.asset_name} ({self.asset_type})'
+        return f'{self.asset_name} ({self.asset_type}) <{self.hub_entity.id}>'
 
     @property
     def is_liquid(self):
