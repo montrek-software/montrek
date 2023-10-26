@@ -89,7 +89,7 @@ def account_list(request):
         active="active",
         actions=(action_new_account,),
     )
-    return render(request, "account_list.html", 
+    return render(request, "account_list.html",
                   {
                    "title": "Accounts",
                    "columns": account_list_map_fields.keys(),
@@ -317,7 +317,12 @@ def bank_account_view_depot(request, account_id: int):
         'Asset Name': {'attr': 'asset_name'},
         'ISIN': {'attr': 'asset_isin'},
         'WKN': {'attr': 'asset_wkn'},
-        'Nominal': {'attr': 'total_nominal'},
+        'Nominal': {'attr': 'total_nominal',
+                    'format': '{:,.2f}'},
+        'Book Price': {'divid': ('book_value', 'total_nominal'),
+                       'format': '{:.2f}'},
+        'Book Value': {'attr': 'book_value',
+                      'format': '{:,.2f}'},
     }
     account_data['columns'] = depot_table_map_fields.keys()
     account_data['items']= depot_table_map_fields.values()

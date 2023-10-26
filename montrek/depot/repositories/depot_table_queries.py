@@ -12,5 +12,10 @@ def get_depot_asset_table(account_hub_id: int) -> QuerySet:
         asset_isin=F('asset_liquid_satellite__asset_isin'),
         asset_wkn=F('asset_liquid_satellite__asset_wkn'),
         total_nominal=Sum('link_asset_transaction__transaction_satellite__transaction_amount'),
+        book_value=Sum(
+            F('link_asset_transaction__transaction_satellite__transaction_amount') *
+            F('link_asset_transaction__transaction_satellite__transaction_price'),
+            output_field=DecimalField()
+        ),
     )
     return assets_linked_to_account

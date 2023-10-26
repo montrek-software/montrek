@@ -10,7 +10,7 @@
      {% for table_object in table_objects %}
         <tr>
           {% for item in items %}
-            <td>{{ table_object|show_item:item }}</td>
+            {{ table_object|show_item:item|safe }}
           {% endfor %}
         </tr>
      {% endfor %}
