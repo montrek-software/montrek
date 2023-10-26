@@ -30,7 +30,7 @@ class TransactionSatellite(baseclass_models.MontrekSatelliteABC):
         "transaction_party_iban",
     ]
     transaction_date = models.DateTimeField()
-    transaction_amount = models.IntegerField()
+    transaction_amount = models.DecimalField(max_digits=20, decimal_places=5)
     transaction_price = models.DecimalField(max_digits=15, decimal_places=2)
     transaction_description = models.TextField()
     transaction_party = models.CharField(max_length=250, default="NONE")
