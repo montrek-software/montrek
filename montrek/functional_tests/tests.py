@@ -596,6 +596,7 @@ class TestDepotAccount(MontrekFunctionalTest):
             credit_institution_name="Bank of Testonia"
         )
 
+    @tag("functional")
     def test_add_depot_and_add_asset_transactions(self):
         # The user visits the new account form
         self.browser.get(self.live_server_url + "/account/new_form")
