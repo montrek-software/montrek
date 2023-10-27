@@ -7,14 +7,18 @@ from asset.managers.validators import montrek_wkn_validator
 
 class AssetHub(baseclass_models.MontrekHubABC): pass
 
-class AssetStaticSatellite(baseclass_models.MontrekSatelliteABC): 
+class AssetStaticSatellite(baseclass_models.MontrekSatelliteABC):
     class AssetType(models.TextChoices):
         ETF = 'ETF'
         STOCK = 'STOCK'
         BOND = 'BOND'
         REAL_ESTATE = 'REAL_ESTATE'
 
-    hub_entity = models.ForeignKey(AssetHub, on_delete=models.CASCADE, related_name="asset_static_satellite")
+    hub_entity = models.ForeignKey(
+        AssetHub,
+        on_delete=models.CASCADE,
+        related_name="asset_static_satellite"
+    )
     identifier_fields = ['asset_name']
     asset_name = models.CharField(max_length=50)
     asset_type = models.CharField(max_length=100, choices=AssetType.choices)
@@ -29,11 +33,21 @@ class AssetStaticSatellite(baseclass_models.MontrekSatelliteABC):
         return False
 
 class AssetLiquidSatellite(baseclass_models.MontrekSatelliteABC):
-    hub_entity = models.ForeignKey(AssetHub, on_delete=models.CASCADE, related_name="asset_liquid_satellite")
+    hub_entity = models.ForeignKey(
+        AssetHub,
+        on_delete=models.CASCADE,
+        related_name="asset_liquid_satellite"
+    )
     identifier_fields = ["asset_isin", "asset_wkn"]
     asset_isin = models.CharField(max_length=12,validators=[montrek_isin_validator])
     asset_wkn = models.CharField(max_length=6, validators=[montrek_wkn_validator])
 
 class AssetTimeSeriesSatellite(baseclass_models.MontrekSatelliteABC):
-    hub_entity = models.ForeignKey(AssetHub, on_delete=models.CASCADE, related_name="asset_time_series_satellite")
+    hub_entity = models.ForeignKey(
+        AssetHub,
+        on_delete=models.CASCADE,
+        related_name="asset_time_series_satellite"
+    )
+    identifier_fields=["price", "value_date"]
     price = models.DecimalField(max_digits=10, decimal_places=2)
+    value_date = models.DateField()
