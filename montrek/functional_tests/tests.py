@@ -667,27 +667,28 @@ class TestDepotAccount(MontrekFunctionalTest):
         new_transaction_date_box.send_keys("01/01/2022")
         # Since there are not assets yet, he adds one
         self.browser.find_element(By.ID, "id_add_new_asset").click()
-        header_text = self.browser.find_element(By.TAG_NAME, "h1").text
-        self.assertIn("Add Asset", header_text)
+        header_text = self.browser.find_element(By.ID, "id_title").text
+        self.assertIn("Create Asset Static", header_text)
         # He enters the asset data
         for page_id, value in [
-            ('id_asset_new__name', 'Test Asset'),
-            ('id_asset_new__type', 'ETF')] :
+            ('id_asset_name', 'Test Asset'),
+            ('id_asset_type', 'ETF')] :
             self.browser.find_element(By.ID, page_id).send_keys(value)
         # He hits the submit button and is asked to enter liquid asset data
-        self.browser.find_element(By.ID, "id_transaction_new__submit").click()
-        header_text = self.browser.find_element(By.TAG_NAME, "h1").text
-        self.assertIn("Add Liquid Asset", header_text)
+        self.browser.find_element(By.ID, "id_submit").click()
+        header_text = self.browser.find_element(By.ID, "id_title").text
+        self.assertIn("Create Asset Liquid", header_text)
         for page_id, value in [
-            ('id_asset_liquid_new__isin', 'DE12345678910'),
-            ('id_asset_liquid_new__wkn', 'ETF001')
+            ('id_asset_isin', 'DE12345678910'),
+            ('id_asset_wkn', 'ETF001')
         ]:
             self.browser.find_element(By.ID, page_id).send_keys(value)
-        self.browser.find_element(By.ID, "id_asset_liquid_new__submit").click()
+        self.browser.find_element(By.ID, "id_submit").click()
         # He is directed back to the transaction form and finds his asset in the selection box
         asset_name = self.browser.find_element(By.ID, 'id_transaction_new__asset').text
         self.assertIn('Test Asset', asset_name)
         # He submits and finds himself in the depot view
+        raise NotImplementedError('TODO: implement the rest of the test')
         self.browser.find_element(By.ID, "id_transaction_new__submit").click()
         asset_list = self.browser.find_element(By.ID, "id_montrek_table_list")
         rows_count = len(asset_list.find_elements(By.TAG_NAME, "tr")) - 1
