@@ -85,6 +85,7 @@ def new_transaction_to_account_with_asset(
         transaction_price,
         transaction_category,
         transaction_description,
+        asset_name,
         transaction_type,
     )
     asset_hub, created = find_asset_hub_by_isin_or_create(asset_isin)

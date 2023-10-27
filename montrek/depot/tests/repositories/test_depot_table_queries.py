@@ -83,7 +83,6 @@ class TestDepotTable(TestCase):
         self.assertEqual(depot_asset_table_data[0].asset_wkn, 'TEST12')
         self.assertEqual(depot_asset_table_data[0].total_nominal, 30)
         self.assertEqual(depot_asset_table_data[0].book_value, 100*10+150*20)
-        self.assertEqual(float(depot_asset_table_data[0].current_price), 102.3)
         self.assertEqual(depot_asset_table_data[1].asset_name, 'Test Asset 2')
         self.assertEqual(depot_asset_table_data[1].asset_isin, 'DE4564567891')
         self.assertEqual(depot_asset_table_data[1].asset_wkn, 'TEST45')

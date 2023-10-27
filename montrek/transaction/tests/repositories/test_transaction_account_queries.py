@@ -64,6 +64,7 @@ class TestModelUtils(TestCase):
             transaction_price=251.35,
             transaction_type="INCOME",
             transaction_category="TRANSFER",
+            transaction_party="Test Party",
             transaction_description="Test transaction",
         )
         new_transaction = get_transactions_by_account_id(account_id=account_id).last()

@@ -198,8 +198,8 @@ class TransactionFunctionalTest(MontrekFunctionalTest):
         self._set_transaction_date_range()
         self.browser.find_element(By.ID, "tab_transactions").click()
         self.check_for_row_in_table(
-            ['NONE', 'XX00000000000000000000', "Billy's transaction",
-             'Jan. 1, 2022, midnight', '300.00', 'UNKNOWN', ''],
+            ['UNKNOWN', 'XX00000000000000000000', "Billy's transaction",
+             '2022-01-01 00:00:00+00:00', '300.0000000', 'UNKNOWN', ''],
             "id_montrek_table_list",
         )
 
@@ -350,7 +350,7 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
         )
         self.assertEqual(
             self.browser.find_element(By.ID, "id_transaction_amount").get_attribute('value'),
-            "7051"
+            "7051.00000"
         )
         self.assertEqual(
             self.browser.find_element(By.ID, "id_transaction_price").get_attribute('value'),
