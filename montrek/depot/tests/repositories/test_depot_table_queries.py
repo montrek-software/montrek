@@ -20,6 +20,21 @@ class TestDepotTable(TestCase):
             asset_isin = 'DE1234567891',
             asset_wkn = 'TEST12',
         )
+        asset_factories.AssetTimeSeriesSatelliteFactory(
+            hub_entity = cls.asset_1.hub_entity,
+            price = 102.3,
+            value_date = datetime.date(2023,10,15),
+        )
+        asset_factories.AssetTimeSeriesSatelliteFactory(
+            hub_entity = cls.asset_1.hub_entity,
+            price = 101.4,
+            value_date = datetime.date(2023,10,12),
+        )
+        asset_factories.AssetTimeSeriesSatelliteFactory(
+            hub_entity = cls.asset_1.hub_entity,
+            price = 105.4,
+            value_date = datetime.date(2023,10,16),
+        )
         asset_2 = asset_factories.AssetStaticSatelliteFactory(
             asset_name='Test Asset 2',
             asset_type='ETF',
@@ -68,6 +83,7 @@ class TestDepotTable(TestCase):
         self.assertEqual(depot_asset_table_data[0].asset_wkn, 'TEST12')
         self.assertEqual(depot_asset_table_data[0].total_nominal, 30)
         self.assertEqual(depot_asset_table_data[0].book_value, 100*10+150*20)
+        self.assertEqual(float(depot_asset_table_data[0].current_price), 102.3)
         self.assertEqual(depot_asset_table_data[1].asset_name, 'Test Asset 2')
         self.assertEqual(depot_asset_table_data[1].asset_isin, 'DE4564567891')
         self.assertEqual(depot_asset_table_data[1].asset_wkn, 'TEST45')

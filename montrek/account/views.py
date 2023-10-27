@@ -40,6 +40,7 @@ from reporting.managers.account_transaction_plots import (
     draw_income_expenses_category_pie_plot,
 )
 from depot.repositories.depot_table_queries import get_depot_asset_table
+from asset.managers.market_data import update_asset_prices_from_yf
 # Create your views here.
 #### Account Views ####
 def account_new(request):
@@ -311,6 +312,7 @@ def bank_account_view_transaction_category_map(request, account_id: int):
     return render(request, "bank_account_view_table.html", account_data)
 
 def bank_account_view_depot(request, account_id: int):
+    #update_asset_prices_from_yf()
     account_data = account_view_data(account_id, "tab_depot")
     account_data.update(_handle_date_range_form(request))
     depot_table_map_fields = {
@@ -323,10 +325,13 @@ def bank_account_view_depot(request, account_id: int):
                        'format': '{:.2f}'},
         'Book Value': {'attr': 'book_value',
                       'format': '{:,.2f}'},
+        'Current Price': {'attr': 'current_price'},
+        'Current Value': {'multipl': ('current_price', 'total_nominal'),},
+        'Value Date': {'attr': 'value_date'},
     }
     account_data['columns'] = depot_table_map_fields.keys()
     account_data['items']= depot_table_map_fields.values()
-    start_date, end_date = _get_date_range_dates(request)
+    _, end_date = _get_date_range_dates(request)
     account_data['table_objects'] = get_depot_asset_table( account_id, end_date )
     return render(request, "bank_account_view_table.html", account_data)
 

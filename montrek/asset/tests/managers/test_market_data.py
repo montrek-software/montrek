@@ -51,6 +51,22 @@ class TestMarketData(TestCase):
         expected_df = self._dummy_yf_prices_df()
         pd.testing.assert_frame_equal(prices_df, expected_df)
 
+    def test_get_yf_prices_per_isin_no_assets(self):
+        isins_list = []
+        prices_df = get_yf_prices_per_isin(isins_list)
+        self.assertTrue(prices_df.empty)
+        self.assertTrue(
+            prices_df.columns.tolist() == ['Ticker', 'Close']
+        )
+
+    def test_get_yf_prices_per_isin_one_assets(self):
+        isins_list = ['IE00BYZK4669']
+        prices_df = get_yf_prices_per_isin(isins_list)
+        self.assertEqual(len(prices_df), 1)
+        self.assertTrue(
+            prices_df.columns.tolist() == ['Ticker', 'Close']
+        )
+
 
     def test_get_market_data(self):
         isin_asset_map = get_isin_asset_map()
