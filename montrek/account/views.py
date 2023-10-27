@@ -326,7 +326,8 @@ def bank_account_view_depot(request, account_id: int):
     }
     account_data['columns'] = depot_table_map_fields.keys()
     account_data['items']= depot_table_map_fields.values()
-    account_data['table_objects'] = get_depot_asset_table( account_id )
+    start_date, end_date = _get_date_range_dates(request)
+    account_data['table_objects'] = get_depot_asset_table( account_id, end_date )
     return render(request, "bank_account_view_table.html", account_data)
 
 
