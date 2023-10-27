@@ -6,6 +6,7 @@ from asset.models import AssetLiquidSatellite
 from asset.models import AssetHub
 from asset.forms import AssetStaticSatelliteForm
 from asset.forms import AssetLiquidSatelliteForm
+from asset.managers.market_data import update_asset_prices_from_yf
 
 # Create your views here.
 
@@ -61,3 +62,9 @@ class AssetLiquidCreateView(CreateView):
         form.instance.hub_entity = asset_hub
         form.save()
         return HttpResponseRedirect(self.get_success_url())
+
+def view_update_asset_prices(request, account_id: int):
+    update_asset_prices_from_yf()
+    return HttpResponseRedirect(
+        reverse('bank_account_view_depot',
+                kwargs={'account_id': account_id}))

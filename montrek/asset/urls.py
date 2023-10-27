@@ -11,5 +11,10 @@ urlpatterns = [
         "create_liquid/<int:account_id>/<int:asset_hub_id>",
         views.AssetLiquidCreateView.as_view(),
         name="asset_liquid_create_form",
-    )
+    ),
+    path(
+        "update_asset_prices/<int:account_id>",
+        views.view_update_asset_prices,
+        name="update_asset_prices",
+    ),
 ]

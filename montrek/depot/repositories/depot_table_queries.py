@@ -34,6 +34,18 @@ def get_depot_asset_table(account_hub_id: int, reference_date: datetime.date) ->
             output_field=DecimalField()
         ),
         current_price=Subquery(closest_date_difference.values('price')[:1]),
-        value_date=Subquery(closest_date_difference.values('value_date')[:1])
+        value_date=Subquery(closest_date_difference.values('value_date')[:1]),
+        book_price=ExpressionWrapper(
+            F('book_value') / F('total_nominal'),
+            output_field=DecimalField()
+        ),
+        current_value=ExpressionWrapper(
+            F('total_nominal') * F('current_price'),
+            output_field=DecimalField()
+        ),
+        performance=ExpressionWrapper(
+            (F('current_value') - F('book_value')) / F('book_value'),
+            output_field=DecimalField()
+        ),
     ).filter(~Q(total_nominal=0))
     return assets_linked_to_account

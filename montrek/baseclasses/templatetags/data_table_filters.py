@@ -13,23 +13,6 @@ def get_attribute(obj, field_descriptor):
         value = _get_dotted_attr_or_arg(obj, attr)
         return _return_value(value, field_descriptor)
 
-    if 'divid' in field_descriptor:
-        values = []
-        for attr in field_descriptor['divid']:
-            values.append(_get_dotted_attr_or_arg(obj, attr))
-        value = values[0]/values[1]
-        return _return_value(value, field_descriptor)
-
-    if 'multipl' in field_descriptor:
-        values = []
-        for attr in field_descriptor['multipl']:
-            values.append(_get_dotted_attr_or_arg(obj, attr))
-        try:
-            value = values[0]*values[1]
-        except TypeError:
-            value = '-'
-        return _return_value(value, field_descriptor)
-
     if 'link' in field_descriptor:
         kwargs = field_descriptor['link']['kwargs']
         kwargs = {key: _get_dotted_attr_or_arg(obj, value) for key, value in kwargs.items()}
@@ -65,7 +48,7 @@ def _get_dotted_attr_or_arg(obj, attr):
 
 def _return_value(value, field_descriptor):
     """Returns a value based on the field descriptor"""
-    align = 'right' if str(value).replace('.','').isdecimal() else 'left'
+    align = 'right' if str(value).replace('.','').replace('-','').isdecimal() else 'left'
     if 'format' in field_descriptor:
         iformat = field_descriptor['format']
         value = iformat.format(value)
