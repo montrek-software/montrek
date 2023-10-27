@@ -48,8 +48,9 @@ def _get_dotted_attr_or_arg(obj, attr):
 
 def _return_value(value, field_descriptor):
     """Returns a value based on the field descriptor"""
-    align = 'right' if str(value).replace('.','').replace('-','').isdecimal() else 'left'
-    if 'format' in field_descriptor:
+    is_number = str(value).replace('.','').replace('-','').isdecimal()
+    align = 'right' if is_number  else 'left'
+    if 'format' in field_descriptor and is_number:
         iformat = field_descriptor['format']
         value = iformat.format(value)
     return f"<td style=\"text-align: {align}\">{value}</td>"
