@@ -48,8 +48,12 @@ class MontrekSatelliteABC(TimeStampMixin):
     hub_entity = models.ForeignKey(MontrekHubABC, on_delete=models.CASCADE)
     hash_identifier = models.CharField(max_length=64, default="")
     hash_value = models.CharField(max_length=64, default="")
-    state_date_start = models.DateTimeField(default=timezone.datetime.min)
-    state_date_end = models.DateTimeField(default=timezone.datetime.max)
+    state_date_start = models.DateTimeField(
+        default=timezone.make_aware(timezone.datetime.min)
+    )
+    state_date_end = models.DateTimeField(
+        default=timezone.make_aware(timezone.datetime.max)
+    )
 
     def save(self, *args, **kwargs):
         if self.hash_identifier == "":
@@ -101,6 +105,7 @@ class MontrekSatelliteABC(TimeStampMixin):
 
 # Montrek Test Models
 
+
 class TestMontrekHub(MontrekHubABC):
     pass
 
@@ -115,8 +120,10 @@ class TestMontrekSatellite(MontrekSatelliteABC):
 class TestMontrekSatelliteNoIdFields(MontrekSatelliteABC):
     hub_entity = models.ForeignKey(TestMontrekHub, on_delete=models.CASCADE)
 
+
 class TestLinkHub(MontrekHubABC):
-    test_hub = models.ManyToManyField(TestMontrekHub, related_name='test_link_hub')
+    test_hub = models.ManyToManyField(TestMontrekHub, related_name="test_link_hub")
+
 
 class TestLinkSatelitte(MontrekSatelliteABC):
     hub_entity = models.ForeignKey(TestLinkHub, on_delete=models.CASCADE)
