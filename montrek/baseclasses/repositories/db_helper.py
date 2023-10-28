@@ -173,7 +173,7 @@ def select_satellite(
     satellite_instance = satellite_class.objects.filter(
         Q(hub_entity=hub_entity)
         & Q(state_date_start__lte=reference_date)
-        & Q(state_date_end__gte=reference_date)
+        & Q(state_date_end__gt=reference_date)
     ).first()
     return satellite_instance
 

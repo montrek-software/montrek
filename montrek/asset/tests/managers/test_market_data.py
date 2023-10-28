@@ -1,52 +1,61 @@
 from unittest.mock import patch
 import pandas as pd
+from django.utils import timezone
 from django.test import TestCase
 from asset.tests.factories.asset_factories import (
     AssetStaticSatelliteFactory,
     AssetLiquidSatelliteFactory,
 )
 from asset.models import AssetHub
+from asset.models import AssetTimeSeriesSatellite
 from asset.managers.market_data import update_asset_prices
 from asset.managers.market_data import get_isin_asset_map
 from asset.managers.market_data import get_yf_prices_per_isin
+from baseclasses.repositories.db_helper import select_satellite
+from freezegun import freeze_time
+
 
 class TestMarketData(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.asset_1 = AssetStaticSatelliteFactory(
-            asset_name='Test ETF 1',
-            asset_type='ETF',
+            asset_name="Test ETF 1",
+            asset_type="ETF",
         )
         AssetLiquidSatelliteFactory(
             hub_entity=cls.asset_1.hub_entity,
-            asset_isin='IE00BYZK4669',
-            asset_wkn='A2ANH1',
+            asset_isin="IE00BYZK4669",
+            asset_wkn="A2ANH1",
         )
         cls.asset_2 = AssetStaticSatelliteFactory(
-            asset_name='Test Stock 1',
-            asset_type='STOCK',
+            asset_name="Test Stock 1",
+            asset_type="STOCK",
         )
         AssetLiquidSatelliteFactory(
             hub_entity=cls.asset_2.hub_entity,
-            asset_isin='US0378331005',
-            asset_wkn='865985',
+            asset_isin="US0378331005",
+            asset_wkn="865985",
         )
         AssetStaticSatelliteFactory(
-            asset_name='Test REAL_ESTATE',
-            asset_type='REAL_ESTATE',
+            asset_name="Test REAL_ESTATE",
+            asset_type="REAL_ESTATE",
         )
 
     def test_get_isin_asset_map(self):
         test_dict = get_isin_asset_map()
-        self.assertDictEqual(test_dict,
-                             {'IE00BYZK4669': self.asset_1.hub_entity.id,
-                              'US0378331005': self.asset_2.hub_entity.id})
+        self.assertDictEqual(
+            test_dict,
+            {
+                "IE00BYZK4669": self.asset_1.hub_entity.id,
+                "US0378331005": self.asset_2.hub_entity.id,
+            },
+        )
 
-    @patch('asset.managers.market_data.yf.download')
+    @patch("asset.managers.market_data.yf.download")
     def test_get_yf_prices_per_isin(self, mock_download):
         mock_data_df = self._get_yf_prices_mock_data()
         mock_download.return_value = mock_data_df
-        isins_list = ['IE00BYZK4669', 'US0378331005']
+        isins_list = ["IE00BYZK4669", "US0378331005"]
         prices_df = get_yf_prices_per_isin(isins_list)
         expected_df = self._dummy_yf_prices_df()
         pd.testing.assert_frame_equal(prices_df, expected_df)
@@ -55,20 +64,15 @@ class TestMarketData(TestCase):
         isins_list = []
         prices_df = get_yf_prices_per_isin(isins_list)
         self.assertTrue(prices_df.empty)
-        self.assertTrue(
-            prices_df.columns.tolist() == ['Ticker', 'Close']
-        )
+        self.assertTrue(prices_df.columns.tolist() == ["Ticker", "Close"])
 
     def test_get_yf_prices_per_isin_one_assets(self):
-        isins_list = ['IE00BYZK4669']
+        isins_list = ["IE00BYZK4669"]
         prices_df = get_yf_prices_per_isin(isins_list)
         self.assertEqual(len(prices_df), 1)
-        self.assertTrue(
-            prices_df.columns.tolist() == ['Ticker', 'Close']
-        )
+        self.assertTrue(prices_df.columns.tolist() == ["Ticker", "Close"])
 
-
-    def test_get_market_data(self):
+    def test_update_asset_prices(self):
         isin_asset_map = get_isin_asset_map()
         prices_df = self._dummy_yf_prices_df()
         update_asset_prices(isin_asset_map, prices_df)
@@ -83,28 +87,66 @@ class TestMarketData(TestCase):
             asset_ts = asset_ts.first()
             self.assertAlmostEqual(float(asset_ts.price), prices[i])
 
+    @freeze_time("2023-10-26")
+    def test_update_asset_prices_multiple(self):
+        reference_date = timezone.datetime(2023, 10, 26, tzinfo=timezone.utc)
+        asset = AssetStaticSatelliteFactory(
+            asset_name="Test ETF 2",
+            asset_type="ETF",
+        )
+        asset_liquid = AssetLiquidSatelliteFactory(
+            hub_entity=asset.hub_entity,
+            asset_isin="IE00BYZK4669",
+            asset_wkn="A2ANH1",
+        )
+        isin_asset_map = {asset_liquid.asset_isin: asset.hub_entity.id}
+        prices_df_1 = pd.DataFrame(
+            {"Ticker": ["IE00BYZK4669"], "Close": [166.89]},
+            index=pd.DatetimeIndex(["2023-10-26"], name="Date"),
+        )
+        update_asset_prices(isin_asset_map, prices_df_1)
+        last_satellite_1 = select_satellite(
+            asset.hub_entity, AssetTimeSeriesSatellite, reference_date
+        )
+        self.assertAlmostEqual(float(last_satellite_1.price), 166.89)
+        self.assertGreater(last_satellite_1.state_date_end, reference_date)
+        self.assertLess(last_satellite_1.state_date_start, reference_date)
+        prices_df_2 = pd.DataFrame(
+            {"Ticker": ["IE00BYZK4669"], "Close": [176.89]},
+            index=pd.DatetimeIndex(["2023-10-26"], name="Date"),
+        )
+        update_asset_prices(isin_asset_map, prices_df_2)
+        last_satellite_2 = select_satellite(
+            asset.hub_entity, AssetTimeSeriesSatellite, reference_date
+        )
+        self.assertAlmostEqual(float(last_satellite_2.price), 176.89)
+        self.assertGreater(last_satellite_2.state_date_end, reference_date)
+        self.assertEqual(last_satellite_2.state_date_start, reference_date)
+
     def _get_yf_prices_mock_data(self):
         data = {
-            ('Adj Close', 'IE00BYZK4669'): [None, 5.9425],
-            ('Adj Close', 'US0378331005'): [166.889999, None],
-            ('Close', 'IE00BYZK4669'): [None, 5.9425],
-            ('Close', 'US0378331005'): [166.889999, None],
-            ('High', 'IE00BYZK4669'): [None, 5.9575],
-            ('High', 'US0378331005'): [171.380005, None],
-            ('Low', 'IE00BYZK4669'): [None, 5.905],
-            ('Low', 'US0378331005'): [165.669998, None],
-            ('Open', 'IE00BYZK4669'): [None, 5.905],
-            ('Open', 'US0378331005'): [170.369995, None],
-            ('Volume', 'IE00BYZK4669'): [None, 9316.0],
-            ('Volume', 'US0378331005'): [70345400.0, None]
+            ("Adj Close", "IE00BYZK4669"): [None, 5.9425],
+            ("Adj Close", "US0378331005"): [166.889999, None],
+            ("Close", "IE00BYZK4669"): [None, 5.9425],
+            ("Close", "US0378331005"): [166.889999, None],
+            ("High", "IE00BYZK4669"): [None, 5.9575],
+            ("High", "US0378331005"): [171.380005, None],
+            ("Low", "IE00BYZK4669"): [None, 5.905],
+            ("Low", "US0378331005"): [165.669998, None],
+            ("Open", "IE00BYZK4669"): [None, 5.905],
+            ("Open", "US0378331005"): [170.369995, None],
+            ("Volume", "IE00BYZK4669"): [None, 9316.0],
+            ("Volume", "US0378331005"): [70345400.0, None],
         }
 
-        index = pd.DatetimeIndex(['2023-10-26', '2023-10-27'], name='Date')
+        index = pd.DatetimeIndex(["2023-10-26", "2023-10-27"], name="Date")
         return pd.DataFrame(data, index=index)
 
     def _dummy_yf_prices_df(self):
         return pd.DataFrame(
-            {'Ticker': ['US0378331005','IE00BYZK4669'],
-             'Close': [166.889999, 5.942500]},
-            index=pd.DatetimeIndex(['2023-10-26', '2023-10-27'], name='Date')
+            {
+                "Ticker": ["US0378331005", "IE00BYZK4669"],
+                "Close": [166.889999, 5.942500],
+            },
+            index=pd.DatetimeIndex(["2023-10-26", "2023-10-27"], name="Date"),
         )

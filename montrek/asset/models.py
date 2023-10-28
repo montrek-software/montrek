@@ -48,6 +48,6 @@ class AssetTimeSeriesSatellite(baseclass_models.MontrekSatelliteABC):
         on_delete=models.CASCADE,
         related_name="asset_time_series_satellite"
     )
-    identifier_fields=["price", "value_date"]
+    identifier_fields=["value_date"]
     price = models.DecimalField(max_digits=10, decimal_places=2)
     value_date = models.DateField()
