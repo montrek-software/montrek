@@ -128,8 +128,8 @@ def new_transactions_to_account_from_df(
     transaction_satellites = new_satellites_bunch_from_df_and_from_hub_link(
         satellite_class=transaction_satellite(),
         import_df=transaction_df,
-        from_hub=account_hub_object,
-        related_field="link_account_transaction",
+        to_hub=account_hub_object,
+        related_field="link_transaction_account",
     )
     return transaction_satellites
 
