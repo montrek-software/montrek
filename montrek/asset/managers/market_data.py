@@ -31,10 +31,12 @@ def get_yf_prices_per_isin(isins_list: list) -> pd.DataFrame:
 def update_asset_prices(isin_asset_map: Dict[str, int], price_data: pd.DataFrame):
     for per_date, row in price_data.iterrows():
         asset_hub = AssetHub.objects.get(id=isin_asset_map[row['Ticker']])
-        db_helper.new_satellite_entry(
-            AssetTimeSeriesSatellite,
-            asset_hub,
-            price = row['Close'],
-            value_date = per_date
-        )
+        add_single_price_to_asset(asset_hub, row['Close'], per_date)
 
+def add_single_price_to_asset(asset_hub: AssetHub, price: float, value_date: str):
+    db_helper.new_satellite_entry(
+        AssetTimeSeriesSatellite,
+        asset_hub,
+        price = price,
+        value_date = value_date
+    )

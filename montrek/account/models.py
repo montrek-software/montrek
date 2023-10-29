@@ -1,7 +1,6 @@
 import re
 from django.db import models
 from django.db.models import Sum, F
-from typing import List
 from baseclasses import models as baseclass_models
 from transaction.repositories.transaction_account_queries import (
     get_transactions_by_account_hub,
@@ -17,8 +16,7 @@ class AccountHub(baseclass_models.MontrekHubABC):
         related_name="link_credit_institution_account",
     )
     link_account_transaction = models.ManyToManyField(
-        "transaction.TransactionHub", 
-        related_name="link_transaction_account"
+        "transaction.TransactionHub", related_name="link_transaction_account"
     )
     link_account_file_upload_registry = models.ManyToManyField(
         "file_upload.FileUploadRegistryHub",
@@ -49,10 +47,9 @@ class AccountStaticSatellite(baseclass_models.MontrekSatelliteABC):
     def view_name(self):
         if self.account_type == self.AccountType.OTHER:
             return "account_view"
-        else:
-            # https://stackoverflow.com/questions/1175208/elegant-python-function-to-convert-camelcase-to-snake-case
-            view_rep = re.sub(r"(?<!^)(?=[A-Z])", "_", self.account_type).lower()
-            return f"{view_rep}_view"
+        # https://stackoverflow.com/questions/1175208/elegant-python-function-to-convert-camelcase-to-snake-case
+        view_rep = re.sub(r"(?<!^)(?=[A-Z])", "_", self.account_type).lower()
+        return f"{view_rep}_view"
 
 
 class BankAccountPropertySatellite(baseclass_models.MontrekSatelliteABC):

@@ -2,6 +2,7 @@ from unittest.mock import patch
 import pandas as pd
 from django.utils import timezone
 from django.test import TestCase
+from freezegun import freeze_time
 from asset.tests.factories.asset_factories import (
     AssetStaticSatelliteFactory,
     AssetLiquidSatelliteFactory,
@@ -11,8 +12,8 @@ from asset.models import AssetTimeSeriesSatellite
 from asset.managers.market_data import update_asset_prices
 from asset.managers.market_data import get_isin_asset_map
 from asset.managers.market_data import get_yf_prices_per_isin
+from asset.managers.market_data import add_single_price_to_asset
 from baseclasses.repositories.db_helper import select_satellite
-from freezegun import freeze_time
 
 
 class TestMarketData(TestCase):
@@ -122,6 +123,15 @@ class TestMarketData(TestCase):
         self.assertAlmostEqual(float(last_satellite_2.price), 176.89)
         self.assertGreater(last_satellite_2.state_date_end, reference_date)
         self.assertEqual(last_satellite_2.state_date_start, reference_date)
+
+    def test_add_single_price_to_asset(self):
+        test_date = timezone.make_aware(timezone.datetime(2023, 10, 26))
+        add_single_price_to_asset(self.asset_1.hub_entity, 8.94, test_date)
+        price_satellite = select_satellite(
+            self.asset_1.hub_entity, AssetTimeSeriesSatellite
+        )
+        self.assertEqual(float(price_satellite.price), 8.94)
+        self.assertEqual(price_satellite.value_date, test_date.date())
 
     def _get_yf_prices_mock_data(self):
         data = {
