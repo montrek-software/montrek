@@ -17,4 +17,9 @@ urlpatterns = [
         views.view_update_asset_prices,
         name="update_asset_prices",
     ),
+    path(
+        "add_single_price_to_asset/<int:account_id>/<int:asset_id>",
+        views.AssetTimeSeriesCreateView.as_view(),
+        name="add_single_price_to_asset",
+    ),
 ]

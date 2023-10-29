@@ -330,6 +330,13 @@ def bank_account_view_depot(request, account_id: int):
         'Value Date': {'attr': 'value_date'},
         'Performance:': {'attr': 'performance',
                          'format': '{:,.2%}'},
+        'Price': {'link': {'url': 'add_single_price_to_asset',
+                           'kwargs': {'account_id': str(account_id),
+                                      'asset_id': 'id'},
+                           'icon': 'plus',
+                           'hover_text': 'Add Price',
+                          }
+                 },
     }
     account_data['columns'] = depot_table_map_fields.keys()
     account_data['items']= depot_table_map_fields.values()
