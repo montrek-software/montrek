@@ -16,7 +16,7 @@ def get_depot_asset_table(account_hub_id: int, reference_date: datetime.date) ->
         date_difference=ExpressionWrapper(
             F('value_date') - reference_date, output_field=DurationField()
         )
-    ).order_by('date_difference')
+    ).order_by('-date_difference')
 
 
     # Step 2: Your main query

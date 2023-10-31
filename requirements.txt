@@ -11,6 +11,7 @@ coverage==7.3.0
 dataclasses==0.6
 dill==0.3.7
 Django==4.2
+django-extensions==3.2.3
 django-nose==1.4.7
 django-pandas==0.6.6
 exceptiongroup==1.1.1
