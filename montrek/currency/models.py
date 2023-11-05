@@ -18,6 +18,6 @@ class CurrencyStaticSatellite(baseclass_models.MontrekSatelliteABC):
 
 class CurrencyTimeSeriesSatellite(baseclass_models.MontrekSatelliteABC):
     hub_entity = models.ForeignKey(CurrencyHub, on_delete=models.CASCADE)
-    value_date = models.DateField(default=timezone.now)
+    value_date = models.DateField()
     fx_rate = models.DecimalField(max_digits=10, decimal_places=4, default=0.0)
     identifier_fields = ["value_date", "hub_entity"]
