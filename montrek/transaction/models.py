@@ -100,3 +100,6 @@ class TransactionCategoryMapSatellite(baseclass_models.MontrekSatelliteABC):
             (self.field + str(self.value).replace(" ", "").upper()).encode()
         ).hexdigest()
         super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"TransactionCategoryMapSatellite: {self.field} - {self.value} - {self.category}"

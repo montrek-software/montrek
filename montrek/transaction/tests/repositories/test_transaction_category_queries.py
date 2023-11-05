@@ -75,7 +75,6 @@ class TestTransactionCategoryModelQueries(TestCase):
             field="transaction_party_iban",
             value="DE123456543",
             category="WORK",
-            hub_entity=transaction_cat_map.hub_entity,
         )
         account.link_account_transaction_category_map.add(
             transaction_cat_map.hub_entity
