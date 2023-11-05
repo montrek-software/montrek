@@ -67,9 +67,16 @@ def account_view_data(account_id: int, active_sheet: str = ""):
         action_id="id_add_transaction_category",
         hover_text="Add transaction category",
     )
+    action_update_asset_prices = ActionElement(
+        icon="refresh",
+        link=reverse('update_asset_prices',
+                    kwargs={'account_id': account_id}),
+        action_id="id_update_asset_prices",
+        hover_text="Update asset prices",
+    )
 
 
-    tabs = (
+    tabs = [
         TabElement(
             name="Overview", 
             link=reverse('bank_account_view_overview', kwargs={'account_id': account_id}),
@@ -101,9 +108,18 @@ def account_view_data(account_id: int, active_sheet: str = ""):
             html_id="tab_transaction_category_map",
             actions = (action_back,action_add_transaction_category )
         ),
-    )
-    _set_active_tab(tabs, active_sheet)
+    ]
     account_statics = account_static_satellite().objects.get(hub_entity=account_id)
+    if account_statics.account_type in ['Depot']:
+        tabs.insert(1,
+            TabElement(
+                name="Depot", 
+                link=reverse('bank_account_view_depot', kwargs={'account_id': account_id}),
+                html_id="tab_depot",
+                actions = (action_back, action_update_asset_prices)
+            )
+        )
+    _set_active_tab(tabs, active_sheet)
 
     return {
         "tab_elements": tabs,

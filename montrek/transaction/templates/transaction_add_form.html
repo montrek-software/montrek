@@ -17,16 +17,17 @@
                        name="transaction_description"
                        placeholder="Description"
                        id="id_transaction_new__name" />
-                        </td></tr>
+                    </td><td></td></tr>
                     <tr><td>
                     <label for="item-name">Transaction Amount</label>
                     </td><td>
                     <input class="form-control" 
                        type="number" 
+                       step=".0001"
                        name="transaction_amount"
-                       placeholder="X"
+                       placeholder="X.XX"
                        id="id_transaction_new__amount" />
-                    </td></tr>
+                    </td><td></td></tr>
                     <tr><td>
                     <label for="item-name">Transaction Price</label>
                     </td><td>
@@ -36,7 +37,7 @@
                        name="transaction_price"
                        placeholder="X.XX"
                        id="id_transaction_new__price" />
-                    </td></tr>
+                    </td><td></td></tr>
                     <tr><td>
                     <label for="item-name">Transaction Date</label>
                     </td><td>
@@ -45,7 +46,22 @@
                        name="transaction_date"
                        placeholder="YYYY-MM-DD"
                        id="id_transaction_new__date" />
-                    </td></tr>
+                    </td><td></td></tr>
+                    <tr><td>
+                    <label for="item-name">Transaction Asset</label>
+                    </td><td>
+                    <select class="form-control" 
+                            name="asset"
+                            id="id_transaction_new__asset">
+                        <option value="None">None</option>
+                        {% for asset in assets %}
+                            <option>{{ asset }}</option>
+                        {% endfor %}
+                    </select>
+                    </td>
+                    <td> <a id="id_add_new_asset" href="/asset/create/{{ account_statics.hub_entity.id }}" class="btn" title="Add new Asset">
+                        <span class="glyphicon glyphicon-plus"/></a></td>
+                    </tr>
                 </table>
             </div>
             <input type="submit" 

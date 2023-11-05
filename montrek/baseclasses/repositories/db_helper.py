@@ -35,26 +35,18 @@ def new_satellite_entry(
 def new_satellites_bunch_from_df_and_from_hub_link(
     satellite_class: MontrekSatelliteABC,
     import_df: pd.DataFrame,
-    from_hub: MontrekHubABC,
-    related_field: str = None,
-    use_realted_field_from_hub: bool = True,
+    to_hub: MontrekHubABC,
+    related_field: str,
 ) -> List[MontrekSatelliteABC]:
     satellites = new_satellites_bunch_from_df(
         satellite_class=satellite_class, import_df=import_df
     )
     for satellite in satellites:
-        if use_realted_field_from_hub:
-            new_link_entry(
-                from_hub=from_hub, 
-                to_hub=satellite.hub_entity, 
-                related_field=related_field,
-            )
-        else:
-            new_link_entry(
-                from_hub=satellite.hub_entity,
-                to_hub=from_hub,
-                related_field=related_field,
-            )
+        new_link_entry(
+            from_hub=satellite.hub_entity,
+            to_hub=to_hub,
+            related_field=related_field,
+        )
     return satellites
 
 
@@ -173,7 +165,7 @@ def select_satellite(
     satellite_instance = satellite_class.objects.filter(
         Q(hub_entity=hub_entity)
         & Q(state_date_start__lte=reference_date)
-        & Q(state_date_end__gte=reference_date)
+        & Q(state_date_end__gt=reference_date)
     ).first()
     return satellite_instance
 

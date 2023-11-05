@@ -20,6 +20,8 @@ from transaction.models import TransactionCategoryMapSatellite
 from account.models import AccountStaticSatellite
 from account.models import AccountHub
 from baseclasses.repositories import db_helper
+from asset.models import AssetStaticSatellite
+from asset.models import AssetHub
 
 class TransactionSatelliteDetailView(DetailView):
     model = TransactionSatellite
@@ -147,21 +149,34 @@ def _get_account_statics(account_id: int):
 def transaction_add_form(request, account_id: int):
     account_statics = _get_account_statics(account_id)
     return render(
-        request, "transaction_add_form.html", {"account_statics": account_statics}
+        request, "transaction_add_form.html", {
+            "account_statics": account_statics,
+            "assets": AssetStaticSatellite.objects.all(), 
+        }
     )
 
 
 def transaction_add(request, account_id: int):
-    new_transaction_to_account(
+    asset_name = request.POST["asset"]
+    if asset_name != "None":
+        asset_hub_id = int(asset_name[asset_name.find("<")+1:asset_name.find(">")])
+        asset_hub = db_helper.get_hub_by_id(asset_hub_id, AssetHub)
+        transaction_party = asset_hub.asset_static_satellite.last().asset_name
+    else:
+        transaction_party = 'UNKNOWN'
+    transaction_hub = new_transaction_to_account(
         account_id=account_id,
         transaction_date=request.POST["transaction_date"],
         transaction_amount=request.POST["transaction_amount"],
         transaction_price=request.POST["transaction_price"],
         transaction_description=request.POST["transaction_description"],
+        transaction_party=transaction_party,
         transaction_type=None,
         transaction_category="",
     )
     account_statics = _get_account_statics(account_id)
-    if account_statics.account_type == "BankAccount":
+    if asset_name != "None":
+        transaction_hub.link_transaction_asset.add(asset_hub)
+    if account_statics.account_type in ["BankAccount", "Depot"]:
         return redirect(f"/account/{account_id}/bank_account_view/transactions")
     return redirect(f"/account/{account_id}/view")

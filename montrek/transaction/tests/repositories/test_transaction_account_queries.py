@@ -15,6 +15,9 @@ from transaction.repositories.transaction_account_queries import (
     new_transaction_to_account,
 )
 from transaction.repositories.transaction_account_queries import (
+    new_transaction_to_account_with_asset,
+)
+from transaction.repositories.transaction_account_queries import (
     new_transactions_to_account_from_df,
 )
 from transaction.repositories.transaction_account_queries import (
@@ -34,6 +37,12 @@ from transaction.repositories.transaction_account_queries import (
 )
 from transaction.repositories.transaction_type_queries import (
     get_transaction_type_by_transaction,
+)
+from transaction.repositories.transaction_model_queries import (
+    get_transaction_asset_liquid_satellite
+)
+from transaction.repositories.transaction_model_queries import (
+    get_transaction_asset_static_satellite
 )
 
 ACCOUNTS_UNDER_TEST = 1
@@ -55,6 +64,7 @@ class TestModelUtils(TestCase):
             transaction_price=251.35,
             transaction_type="INCOME",
             transaction_category="TRANSFER",
+            transaction_party="Test Party",
             transaction_description="Test transaction",
         )
         new_transaction = get_transactions_by_account_id(account_id=account_id).last()
@@ -255,3 +265,25 @@ class TestAccountTransactionCategoryMap(TestCase):
         test_page = get_paginated_transactions_category_map(self.account.id)
         test_transaction_category_map = test_page.object_list
         self._check_transaction_category_map(test_transaction_category_map)
+
+class TestAssetTransactions(TestCase):
+    def test_new_transaction_with_asset(self):
+        account_hub = account_factories.AccountHubFactory()
+        transaction_hub = new_transaction_to_account_with_asset(
+            account_id=account_hub.id,
+            transaction_date="2020-01-01",
+            transaction_amount=201,
+            transaction_price=14.0,
+            transaction_type=None,
+            transaction_category="STOCK",
+            transaction_description="Buy apple stocks",
+            asset_isin="US0378331005",
+            asset_wkn="851399",
+            asset_name="APPLE INC.",
+            asset_type="STOCK",
+        )
+        asset_liquid_satellite = get_transaction_asset_liquid_satellite(transaction_hub)
+        self.assertEqual(asset_liquid_satellite.asset_isin, "US0378331005")
+        self.assertEqual(asset_liquid_satellite.asset_wkn, "851399")
+        asset_static_satellite = get_transaction_asset_static_satellite(transaction_hub)
+        self.assertEqual(asset_static_satellite.asset_name, "APPLE INC.")

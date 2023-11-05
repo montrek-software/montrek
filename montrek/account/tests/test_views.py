@@ -104,7 +104,7 @@ class TestBankAccountViews(TestCase):
     def test_new_bank_account(self):
         accounts_under_test = len(AccountHub.objects.all())
         self.client.post(
-            "/account/bank_account/new/New%20Bank%20Account",
+            "/account/bank_account/new/New%20Bank%20Account/BankAccount",
             data={
                 "credit_institution_name": "Test Bank",
                 "bank_account_iban": "DE12345678901234567890",

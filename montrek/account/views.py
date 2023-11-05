@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Tuple
 from django.shortcuts import render, redirect
+from django.urls import reverse
 from django_pandas.io import read_frame
 
 from account.models import AccountHub
@@ -32,11 +33,13 @@ from credit_institution.models import CreditInstitutionStaticSatellite
 
 from baseclasses.repositories.db_helper import new_satellite_entry
 from baseclasses.forms import DateRangeForm
+from baseclasses.dataclasses.view_classes import TabElement, ActionElement
 
 from reporting.managers.account_transaction_plots import (
     draw_monthly_income_expanses_plot,
     draw_income_expenses_category_pie_plot,
 )
+from depot.repositories.depot_table_queries import get_depot_asset_table
 # Create your views here.
 #### Account Views ####
 def account_new(request):
@@ -45,8 +48,10 @@ def account_new(request):
     if account_type == "Other":
         new_account(request.POST["account_name"])
         return redirect("/account/list")
-    if account_type == "Bank Account":
-        return redirect(f"/account/bank_account/new_form/{account_name}")
+    if account_type in ["Bank Account", "Depot"]:
+        return redirect(reverse('bank_account_new_form',
+                                kwargs={'account_name': account_name,
+                                        'account_type': account_type}))
     return render(request, "under_construction.html")
 
 
@@ -59,12 +64,46 @@ def account_list(request):
     accounts_statics = AccountHub.objects.all().prefetch_related(
         "accountstaticsatellite_set", "bankaccountpropertysatellite_set"
     )
-    return render(request, "account_list.html", {"items": accounts_statics})
+    account_list_map_fields = {
+        "Name": {"attr": "accountstaticsatellite_set.account_name"},
+        "Link": {"link": 
+                 { "url": "account_view",
+                  "kwargs": {"account_id": "id"},
+                  "icon": "chevron-right",
+                  "hover_text": "Goto Account",
+                 }
+                },
+        "Value": {"attr": "bankaccountpropertysatellite_set.account_value"},
+        "Type": {"attr": "accountstaticsatellite_set.account_type"},
+    }
+    action_new_account = ActionElement(
+        icon="plus",
+        link=reverse('account_new_form'),
+        action_id="id_new_account",
+        hover_text="Add new Account",
+    )
+    tab = TabElement(
+        name = "Account List",
+        link = reverse('account_list'),
+        html_id="id_tab_account_list",
+        active="active",
+        actions=(action_new_account,),
+    )
+    return render(request, "account_list.html",
+                  {
+                   "title": "Accounts",
+                   "columns": account_list_map_fields.keys(),
+                   "items": account_list_map_fields.values(),
+                   "table_objects": accounts_statics,
+                   "tab_elements": (tab,),
+                  })
 
 
 
 def account_view(request, account_id: int):
     account_data = account_view_data(account_id)
+    if account_data['account_statics'].account_type == 'BankAccount':
+        return bank_account_view(request, account_id)
     account_data.update(_handle_date_range_form(request))
     page_number = request.GET.get('page', 1)
     start_date, end_date = _get_date_range_dates(request)
@@ -92,19 +131,20 @@ def account_delete_form(request, account_id: int):
 #### Bank Account Views ####
 
 
-def bank_account_new_form(request, account_name: str):
+def bank_account_new_form(request, account_name: str, account_type: str):
     return render(
         request,
         "bank_account_new_form.html",
         {
             "credit_institutions": CreditInstitutionStaticSatellite.objects.all(),
             "account_name": account_name,
+            "account_type": account_type,
         },
     )
 
 
-def bank_account_new(request, account_name: str):
-    account_hub = new_account(account_name, "BankAccount")
+def bank_account_new(request, account_name: str, account_type: str):
+    account_hub = new_account(account_name, account_type.replace(' ',''))
     BankAccountPropertySatellite.objects.create(
         hub_entity=account_hub,
     )
@@ -268,6 +308,40 @@ def bank_account_view_transaction_category_map(request, account_id: int):
     account_data['columns'] = trans_cat_map_fields.keys()
     account_data['items'] = trans_cat_map_fields.values()
     account_data['table_objects'] = get_paginated_transactions_category_map(account_id, page_number)
+    return render(request, "bank_account_view_table.html", account_data)
+
+def bank_account_view_depot(request, account_id: int):
+    account_data = account_view_data(account_id, "tab_depot")
+    account_data.update(_handle_date_range_form(request))
+    depot_table_map_fields = {
+        'Asset Name': {'attr': 'asset_name'},
+        'ISIN': {'attr': 'asset_isin'},
+        'WKN': {'attr': 'asset_wkn'},
+        'Nominal': {'attr': 'total_nominal',
+                    'format': '{:,.2f}'},
+        'Book Price': {'attr': 'book_price',
+                       'format': '{:.2f}'},
+        'Book Value': {'attr': 'book_value',
+                      'format': '{:,.2f}'},
+        'Current Price': {'attr': 'current_price',
+                         'format': '{:,.2f}'},
+        'Current Value': {'attr': 'current_value',
+                         'format': '{:,.2f}'},
+        'Value Date': {'attr': 'value_date'},
+        'Performance:': {'attr': 'performance',
+                         'format': '{:,.2%}'},
+        'Price': {'link': {'url': 'add_single_price_to_asset',
+                           'kwargs': {'account_id': str(account_id),
+                                      'asset_id': 'id'},
+                           'icon': 'plus',
+                           'hover_text': 'Add Price',
+                          }
+                 },
+    }
+    account_data['columns'] = depot_table_map_fields.keys()
+    account_data['items']= depot_table_map_fields.values()
+    _, end_date = _get_date_range_dates(request)
+    account_data['table_objects'] = get_depot_asset_table( account_id, end_date )
     return render(request, "bank_account_view_table.html", account_data)
 
 

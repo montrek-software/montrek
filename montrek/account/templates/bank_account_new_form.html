@@ -1,18 +1,19 @@
 {% extends 'base.html' %}
-{% block title %}Add new Bank Account{% endblock %}
+{% block title %}
+    Add new {{ account_type }}
+{% endblock %}
 {% block content %}
 <div class="container">
     <div class="row">
         <div class="col-lg-6">
-            <h1>Add new Bank Account</h1>
+            <div name="acccount_name"><h2>{{ account_name }}</h2></div>
         </div>
     </div>
     <div class="row">
         <form class="form-horizontal" 
               role="form" 
               method="POST"
-              action='/account/bank_account/new/{{ account_name }}'>
-            <div name="acccount_name">{{ account_name }}</div>
+              action='/account/bank_account/new/{{ account_name }}/{{ account_type }}'>
             <div class="form-group">
                 <label for="item-name">IBAN</label>
                 <input class="form-control" 

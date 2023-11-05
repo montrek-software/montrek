@@ -9,10 +9,10 @@ register = template.Library()
 def get_attribute(obj, field_descriptor):
     """Gets an attribute of an object dynamically from a string name"""
     if 'attr' in field_descriptor: 
-        attrs = field_descriptor['attr'].split('.')
-        for attr in attrs:
-            obj = _get_dotted_attr_or_arg(obj, attr)
-        return obj
+        attr = field_descriptor['attr']
+        value = _get_dotted_attr_or_arg(obj, attr)
+        return _return_value(value, field_descriptor)
+
     if 'link' in field_descriptor:
         kwargs = field_descriptor['link']['kwargs']
         kwargs = {key: _get_dotted_attr_or_arg(obj, value) for key, value in kwargs.items()}
@@ -24,7 +24,7 @@ def get_attribute(obj, field_descriptor):
         icon = field_descriptor['link']['icon'] 
         id_tag = url.replace('/', '_')
         hover_text = field_descriptor['link']['hover_text']
-        template = Template('<a id="id_{{ id_tag }}" href="{{ url }}" title="{{ hover_text }}"><span class="glyphicon glyphicon-{{ icon }}"></span></a>')
+        template = Template('<td><a id="id_{{ id_tag }}" href="{{ url }}" title="{{ hover_text }}"><span class="glyphicon glyphicon-{{ icon }}"></span></a></td>')
         context = {'url': url,
                    'icon': icon,
                    'url_target': url_target,
@@ -32,14 +32,25 @@ def get_attribute(obj, field_descriptor):
                    'hover_text': hover_text,
                   }
         return template.render(Context(context))
-    return ""
 
 def _get_dotted_attr_or_arg(obj, attr):
     """Gets an attribute of an object dynamically from a string name"""
     """If the attribute is not found, then it is assumed to be an argument"""
     attrs = attr.split('.')
     for attr in attrs:
-        obj = getattr(obj, attr, None)
+        if attr.endswith('_set'):
+            obj = getattr(obj, attr).first()
+        else:
+            obj = getattr(obj, attr, None)
         if obj is None:
             return attr
     return obj
+
+def _return_value(value, field_descriptor):
+    """Returns a value based on the field descriptor"""
+    is_number = str(value).replace('.','').replace('-','').isdecimal()
+    align = 'right' if is_number  else 'left'
+    if 'format' in field_descriptor and is_number:
+        iformat = field_descriptor['format']
+        value = iformat.format(value)
+    return f"<td style=\"text-align: {align}\">{value}</td>"

@@ -39,11 +39,14 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django_extensions",
     "account",
     "baseclasses",
     "transaction",
     "credit_institution",
     "file_upload",
+    "depot",
+    "asset",
 ]
 
 MIDDLEWARE = [
@@ -134,4 +137,3 @@ STATIC_ROOT = os.path.join(BASE_DIR, "baseclasses/static")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 CSRF_TRUSTED_ORIGINS = ["http://localhost:1339"]
-

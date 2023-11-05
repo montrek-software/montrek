@@ -1,4 +1,5 @@
 import factory
+from django.utils import timezone
 from transaction.models import TransactionHub
 from account.tests.factories.account_factories import AccountHubFactory
 
@@ -27,7 +28,7 @@ class TransactionSatelliteFactory(factory.django.DjangoModelFactory):
         model = "transaction.TransactionSatellite"
 
     hub_entity = factory.SubFactory(TransactionHubFactory)
-    transaction_date = factory.Faker("date_time")
+    transaction_date = factory.Faker("date_time", tzinfo=timezone.utc)
     transaction_amount = factory.Faker("pyint")
     transaction_price = factory.Faker("pydecimal", left_digits=13, right_digits=2)
     transaction_description = factory.Faker("word")
