@@ -55,6 +55,8 @@ class MontrekFunctionalTest(StaticLiveServerTestCase):
             self.browser = webdriver.Chrome()
         except WebDriverException:
             self.browser = webdriver.Chrome("/usr/bin/chromedriver")
+        TransactionTypeSatelliteFactory.create(typename="INCOME")
+        TransactionTypeSatelliteFactory.create(typename="EXPANSE")
 
     def tearDown(self):
         self.browser.quit()
