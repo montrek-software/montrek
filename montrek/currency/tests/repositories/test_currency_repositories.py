@@ -22,17 +22,30 @@ class TestCurrencyRepositoroes(TestCase):
             currency_time_series_satellite.value_date, timezone.now().date()
         )
 
-    def test_add_fx_rate_now_update_value_date(self):
-        fx_rate_1 = 1.23
+    def _setup_update_fx_rate(
+        self, fx_rate_1: float, fx_rate_2: float
+    ) -> CurrencyTimeSeriesSatelliteFactory:
         currency_time_series_factory = CurrencyTimeSeriesSatelliteFactory.create(
             fx_rate=fx_rate_1,
             value_date=timezone.now().date(),
         )
-        fx_rate_2 = 2.56
         currency_repo = CurrencyRepositories(currency_time_series_factory.hub_entity)
         currency_repo.add_fx_rate_now(fx_rate_2)
+        return currency_time_series_factory
+
+    def test_add_fx_rate_now_update_value_date(self):
+        fx_rate_1 = 1.23
+        fx_rate_2 = 2.34
+        currency_time_series_factory = self._setup_update_fx_rate(fx_rate_1, fx_rate_2)
         currency_time_series_satellite = CurrencyTimeSeriesSatellite.objects.get(
             Q(hub_entity=currency_time_series_factory.hub_entity)
             & Q(state_date_end__gt=timezone.now())
         )
         self.assertEqual(float(currency_time_series_satellite.fx_rate), fx_rate_2)
+
+    def test_get_fx_rate(self):
+        fx_rate_1 = 1.23
+        fx_rate_2 = 2.34
+        currency_time_series_factory = self._setup_update_fx_rate(fx_rate_1, fx_rate_2)
+        currency_repo = CurrencyRepositories(currency_time_series_factory.hub_entity)
+        self.assertEqual(float(currency_repo.get_fx_rate(timezone.now())), fx_rate_2)

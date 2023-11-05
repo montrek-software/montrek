@@ -1,4 +1,5 @@
 import factory
+from django.utils import timezone
 
 class CurrencyHubFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -13,3 +14,4 @@ class CurrencyTimeSeriesSatelliteFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = "currency.CurrencyTimeSeriesSatellite"
     hub_entity = factory.SubFactory(CurrencyHubFactory)
+    value_date = timezone.now().date()

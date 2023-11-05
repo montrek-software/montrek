@@ -159,14 +159,17 @@ def select_satellite(
     hub_entity: MontrekHubABC,
     satellite_class: MontrekSatelliteABC,
     reference_date: timezone = None,
+    applied_filter: Q = None,
 ):
     # TODO: Rename to better name
     reference_date = timezone.now() if reference_date is None else reference_date
-    satellite_instance = satellite_class.objects.filter(
+    applied_filter = Q() if applied_filter is None else applied_filter
+    satellite_instance = satellite_class.objects.get(
         Q(hub_entity=hub_entity)
         & Q(state_date_start__lte=reference_date)
         & Q(state_date_end__gt=reference_date)
-    ).first()
+        & applied_filter
+    )
     return satellite_instance
 
 

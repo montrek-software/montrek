@@ -1,8 +1,11 @@
 from django.utils import timezone
+from django.apps import apps
 from currency.models import CurrencyHub
 from currency.models import CurrencyTimeSeriesSatellite
-from baseclasses.repositories.db_helper import new_satellite_entry
+from baseclasses.repositories.db_helper import new_satellite_entry, select_satellite
 
+def currency_time_series_satellite():
+    return apps.get_model("currency", "CurrencyTimeSeriesSatellite")
 
 class CurrencyRepositories:
     def __init__(self, currency_hub: CurrencyHub):
@@ -17,4 +20,7 @@ class CurrencyRepositories:
         )
 
     def get_fx_rate(self, value_date: timezone.datetime) -> float:
-        pass
+        currency_time_series = select_satellite(
+            self.currency_hub, currency_time_series_satellite(), value_date
+        )
+        return currency_time_series.fx_rate
