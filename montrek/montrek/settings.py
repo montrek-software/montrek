@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "file_upload",
     "depot",
     "asset",
+    "currency",
 ]
 
 MIDDLEWARE = [
