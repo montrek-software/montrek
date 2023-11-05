@@ -1,3 +1,4 @@
+import datetime
 from django.test import TestCase
 from django.utils import timezone
 from django.db.models import Q
@@ -49,3 +50,23 @@ class TestCurrencyRepositoroes(TestCase):
         currency_time_series_factory = self._setup_update_fx_rate(fx_rate_1, fx_rate_2)
         currency_repo = CurrencyRepositories(currency_time_series_factory.hub_entity)
         self.assertEqual(float(currency_repo.get_fx_rate(timezone.now())), fx_rate_2)
+
+    def test_get_fx_multiple_days(self):
+        fx_rate_1 = 1.23
+        fx_rate_2 = 2.34
+        date_1 = timezone.datetime(2023, 11, 1)
+        date_2 = timezone.datetime(2023, 10, 11)
+        currency_hub = CurrencyHubFactory()
+        CurrencyTimeSeriesSatelliteFactory.create(
+            hub_entity=currency_hub,
+            fx_rate=fx_rate_1,
+            value_date=date_1,
+        )
+        CurrencyTimeSeriesSatelliteFactory.create(
+            hub_entity=currency_hub,
+            fx_rate=fx_rate_2,
+            value_date=date_2,
+        )
+        currency_repo = CurrencyRepositories(currency_hub)
+        self.assertEqual(float(currency_repo.get_fx_rate(date_1)), fx_rate_1)
+        self.assertEqual(float(currency_repo.get_fx_rate(date_2)), fx_rate_2)
