@@ -1,17 +1,21 @@
-
+from typing import List, Dict
 
 class FxRateUpdateStrategy:
-    def __init__(self):
-        self.currencies = []
-
-    def get_all_currencies_from_db(self):
-        # Load all currencies currently present in the database
-        # and store them in self.currencies
-        pass
     def update_fx_rates(self):
-        raise NotImplementedError("Subclasses should implement this")
+        currency_code_list = ["USD", "EUR", "GBP"]
+        fx_rates = self._get_fx_rates_from_source(currency_code_list)
+
+    def _get_fx_rates_from_source(
+        self, currency_code_list: List[str]
+    ) -> Dict[str, float]:
+        raise NotImplementedError(
+            f"{self.__class__.__name__} must implement _get_fx_rates_from_source()"
+        )
+
 
 class YahooFxRateUpdateStrategy(FxRateUpdateStrategy):
-    def update_fx_rates(self):
+    def _get_fx_rates_from_source(
+        self, currency_code_list: List[str]
+    ) -> Dict[str, float]:
         # Code to get fx rates from yahoo and stored them in the database
         pass
