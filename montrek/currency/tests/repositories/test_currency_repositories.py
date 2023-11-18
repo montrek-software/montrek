@@ -9,7 +9,7 @@ from currency.models import CurrencyTimeSeriesSatellite
 from currency.repositories.currency_repository import CurrencyRepositories
 
 
-class TestCurrencyRepositoroes(TestCase):
+class TestCurrencyRepositories(TestCase):
     def test_add_fx_rate_now(self):
         currency_hub = CurrencyHubFactory()
         currency_repo = CurrencyRepositories(currency_hub)

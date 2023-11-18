@@ -10,11 +10,6 @@ def currency_time_series_satellite():
     return apps.get_model("currency", "CurrencyTimeSeriesSatellite")
 
 
-def add_fx_rate_to_ccy(ccy:str, value_date: timezone.datetime, fx_rate: float):
-    currency_hub = CurrencyHub.objects.get(ccy_code=ccy)
-    currency_repo = CurrencyRepositories(currency_hub)
-    fx_rate = 1.23
-    currency_repo.add_fx_rate(fx_rate, value_date)
 
 class CurrencyRepositories:
     def __init__(self, currency_hub: CurrencyHub):
