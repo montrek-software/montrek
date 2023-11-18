@@ -11,7 +11,7 @@ def currency_select_satellite():
     return apps.get_model("currency", "CurrencyStaticSatellite")
 
 
-def get_all_currency_codes() -> List[str]:
+def get_all_currency_codes_from_db() -> List[str]:
     currency_hubs = currency_hub().objects.all()
     currency_codes = [
         select_satellite(hub, currency_select_satellite()).ccy_code
