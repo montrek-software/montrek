@@ -2,7 +2,7 @@ import datetime
 from django.db.models import F, Q, Sum, DecimalField
 from django.db.models import OuterRef, Subquery, Min
 from django.db.models import QuerySet, DurationField, ExpressionWrapper
-from account.models import AccountHub
+from django.utils import timezone
 from asset.models import AssetHub
 from asset.models import AssetTimeSeriesSatellite
 from currency.models import CurrencyStaticSatellite
@@ -10,7 +10,7 @@ from currency.models import CurrencyTimeSeriesSatellite
 
 
 def get_depot_asset_table(
-    account_hub_id: int, reference_date: datetime.date
+    account_hub_id: int, reference_date: timezone.datetime
 ) -> QuerySet:
     # Step 1: Subquery to get the closest date difference
     closest_date_difference = (
@@ -83,3 +83,15 @@ def get_depot_asset_table(
         .filter(~Q(total_nominal=0))
     )
     return assets_linked_to_account
+
+def get_depot_stats(account_hub_id: int, reference_date: timezone.datetime):
+    table = get_depot_asset_table(account_hub_id, reference_date)
+    return table.aggregate(
+        current_value=Sum("current_value"),
+        book_value=Sum("book_value"),
+        performance=ExpressionWrapper(
+            (Sum("current_value") - Sum("book_value")) / Sum("book_value"),
+            output_field=DecimalField(),
+        ),
+    )
+

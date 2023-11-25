@@ -1,4 +1,5 @@
 import factory
+from currency.tests.factories.currency_factories import CurrencyHubFactory
 
 class AssetHubFactory(factory.django.DjangoModelFactory):
     class Meta:

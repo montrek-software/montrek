@@ -1,7 +1,9 @@
+from decimal import Decimal
 from django.test import TestCase
 
 from depot.repositories.depot_table_queries import get_depot_asset_table
 from account.tests.factories import account_factories
+from currency.tests.factories import currency_factories
 from asset.tests.factories import asset_factories
 from transaction.tests.factories import transaction_factories
 from baseclasses.utils import montrek_time
@@ -44,6 +46,11 @@ class TestDepotTable(TestCase):
             asset_isin = 'DE4564567891',
             asset_wkn = 'TEST45',
         )
+        asset_factories.AssetTimeSeriesSatelliteFactory(
+            hub_entity = asset_2.hub_entity,
+            price = 99.4,
+            value_date = montrek_time(2023,10,12),
+        )
         trans1_1 = transaction_factories.TransactionSatelliteFactory(
             transaction_price = 100,
             transaction_amount = 10,
@@ -73,6 +80,17 @@ class TestDepotTable(TestCase):
         )
         cls.account.link_account_transaction.add(trans_nn.hub_entity)
         cls.reference_date = montrek_time(2023,10,15)
+        usd_ccy_static_sat = currency_factories.CurrencyStaticSatelliteFactory(
+            ccy_name="USD", 
+            ccy_code="USD",
+        )
+        usd_ccy_liquid_sat = currency_factories.CurrencyTimeSeriesSatelliteFactory(
+            hub_entity = usd_ccy_static_sat.hub_entity,
+            value_date = cls.reference_date,
+            fx_rate=0.9,
+        )
+        cls.asset_1.hub_entity.link_asset_currency.add(usd_ccy_static_sat.hub_entity)
+        asset_2.hub_entity.link_asset_currency.add(usd_ccy_static_sat.hub_entity)
 
     def test_get_depot_asset_table(self):
         depot_asset_table_data = get_depot_asset_table(
@@ -83,11 +101,15 @@ class TestDepotTable(TestCase):
         self.assertEqual(depot_asset_table_data[0].asset_wkn, 'TEST12')
         self.assertEqual(depot_asset_table_data[0].total_nominal, 30)
         self.assertEqual(depot_asset_table_data[0].book_value, 100*10+150*20)
+        self.assertAlmostEqual(depot_asset_table_data[0].current_value, Decimal(2762.1))
+        self.assertAlmostEqual(depot_asset_table_data[0].performance, Decimal(-0.309475))
         self.assertEqual(depot_asset_table_data[1].asset_name, 'Test Asset 2')
         self.assertEqual(depot_asset_table_data[1].asset_isin, 'DE4564567891')
         self.assertEqual(depot_asset_table_data[1].asset_wkn, 'TEST45')
         self.assertEqual(depot_asset_table_data[1].total_nominal, 50)
         self.assertEqual(depot_asset_table_data[1].book_value, 90*50)
+        self.assertAlmostEqual(depot_asset_table_data[1].current_value, Decimal(4473.0))
+        self.assertAlmostEqual(depot_asset_table_data[1].performance, Decimal(-0.006))
 
     def test_get_depot_asset_table_account_dependency(self):
         second_account = account_factories.AccountHubFactory()
