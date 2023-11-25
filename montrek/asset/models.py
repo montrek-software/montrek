@@ -7,7 +7,9 @@ from asset.managers.validators import montrek_wkn_validator
 
 
 class AssetHub(baseclass_models.MontrekHubABC):
-    pass
+    link_asset_currency = models.ManyToManyField(
+        "currency.CurrencyHub", related_name="link_asset_currency"
+    )
 
 
 class AssetStaticSatellite(baseclass_models.MontrekSatelliteABC):
