@@ -1,6 +1,7 @@
 from django.urls import reverse
 from django.http import HttpResponseRedirect
 from django.views.generic.edit import CreateView
+from django.utils import timezone
 from asset.models import AssetStaticSatellite
 from asset.models import AssetLiquidSatellite
 from asset.models import AssetTimeSeriesSatellite
@@ -10,6 +11,7 @@ from asset.forms import AssetLiquidSatelliteForm
 from asset.forms import AssetTimeSeriesSatelliteForm
 from asset.managers.market_data import update_asset_prices_from_yf
 from asset.managers.market_data import add_single_price_to_asset
+from currency.managers.fx_rate_update_factory import FxRateUpdateFactory
 
 # Create your views here.
 
@@ -89,6 +91,8 @@ class AssetTimeSeriesCreateView(CreateView):
 
 def view_update_asset_prices(request, account_id: int):
     update_asset_prices_from_yf()
+    fx_update_strategy = FxRateUpdateFactory.get_fx_rate_update_strategy('yahoo')
+    fx_update_strategy.update_fx_rates(timezone.now())
     return HttpResponseRedirect(
         reverse('bank_account_view_depot',
                 kwargs={'account_id': account_id}))

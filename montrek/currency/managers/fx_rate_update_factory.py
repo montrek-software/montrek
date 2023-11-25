@@ -9,7 +9,7 @@ class FxRateUpdateFactory:
     def get_fx_rate_update_strategy(
         fx_rate_update_strategy: str,
     ) -> FxRateUpdateStrategy:
-        if fx_rate_update_strategy == "Yahoo":
+        if fx_rate_update_strategy.upper() == "YAHOO":
             return YahooFxRateUpdateStrategy()
         else:
             raise ValueError(

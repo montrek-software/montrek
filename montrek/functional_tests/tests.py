@@ -667,7 +667,6 @@ class TestDepotAccount(MontrekFunctionalTest):
         for page_id, value in [
             ("id_asset_isin", "DE12345678910"),
             ("id_asset_wkn", "ETF001"),
-            ("id_asset_ccy!", "USD"),
         ]:
             self.browser.find_element(By.ID, page_id).send_keys(value)
         self.browser.find_element(By.ID, "id_submit").click()
