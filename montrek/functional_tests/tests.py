@@ -28,6 +28,10 @@ from transaction.tests.factories.transaction_factories import (
 from credit_institution.tests.factories.credit_institution_factories import (
     CreditInstitutionStaticSatelliteFactory,
 )
+from currency.tests.factories.currency_factories import (
+    CurrencyStaticSatelliteFactory,
+    CurrencyTimeSeriesSatelliteFactory,
+)
 from baseclasses.repositories.db_helper import get_hub_ids_by_satellite_attribute
 from baseclasses.models import MontrekSatelliteABC
 
@@ -595,6 +599,12 @@ class TestDepotAccount(MontrekFunctionalTest):
         CreditInstitutionStaticSatelliteFactory.create(
             credit_institution_name="Bank of Testonia"
         )
+        ccy_usd = CurrencyStaticSatelliteFactory.create(ccy_code="USD",
+                                                        ccy_name="US Dollar")
+        CurrencyTimeSeriesSatelliteFactory.create(hub_entity=ccy_usd.hub_entity,
+                                           value_date=timezone.datetime(2021, 1, 1),
+                                           fx_rate=0.9
+                                          )
 
     @tag("functional")
     @patch("asset.managers.market_data.yf.download")
@@ -658,6 +668,7 @@ class TestDepotAccount(MontrekFunctionalTest):
         for page_id, value in [
             ("id_asset_name", "Test Asset"),
             ("id_asset_type", "ETF"),
+            ("id_asset_ccy", "US Dollar (USD)"),
         ]:
             self.browser.find_element(By.ID, page_id).send_keys(value)
         # He hits the submit button and is asked to enter liquid asset data
@@ -709,7 +720,7 @@ class TestDepotAccount(MontrekFunctionalTest):
         # Check the Depot Table
         self.browser.find_element(By.ID, "tab_depot").click()
         self.check_for_row_in_table(
-            ["Test Asset", "DE1234567891", "ETF001", "3.00", "100.00", "300.00"],
+            ["Test Asset", "DE1234567891", "ETF001", "3.00", "90.00", "300.00"],
             "id_montrek_table_list",
         )
         # Refresh the prices
@@ -720,12 +731,12 @@ class TestDepotAccount(MontrekFunctionalTest):
                 "DE1234567891",
                 "ETF001",
                 "3.00",
-                "100.00",
+                "90.00",
                 "300.00",
                 "5.94",
-                "17.82",
+                "16.04",
                 "2022-02-01",
-                "-94.06%",
+                "-94.65%",
             ],
             "id_montrek_table_list",
         )

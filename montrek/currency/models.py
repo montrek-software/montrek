@@ -16,6 +16,9 @@ class CurrencyStaticSatellite(baseclass_models.MontrekSatelliteABC):
     ccy_code = models.CharField(max_length=3)
     identifier_fields = ["ccy_code"]
 
+    def __str__(self):
+        return f"{self.ccy_name} ({self.ccy_code})"
+
 
 class CurrencyTimeSeriesSatellite(baseclass_models.MontrekSatelliteABC):
     hub_entity = models.ForeignKey(
