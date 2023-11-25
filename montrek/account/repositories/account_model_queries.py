@@ -1,5 +1,4 @@
 from django.apps import apps
-import datetime
 from typing import List
 from django.urls import reverse
 

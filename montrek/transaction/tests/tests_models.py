@@ -1,13 +1,14 @@
 import hashlib
 from django.utils import timezone
 from django.test import TestCase
+from baseclasses.utils import montrek_time
 from transaction.models import TransactionSatellite
 from transaction.tests.factories.transaction_factories import TransactionHubFactory
 
 
 class TestAccountIdentifier(TestCase):
     def test_account_identifier(self):
-        transaction_date = timezone.datetime(2023, 1, 1, 13, 3, 0)
+        transaction_date = montrek_time(2023, 1, 1, 13, 3)
         transaction_party = "testparty"
         transaction_party_iban = "DE12345678901234567890"
         account_sat = TransactionSatellite.objects.create(
@@ -33,12 +34,12 @@ class TestAccountIdentifier(TestCase):
         self.assertEqual(account_sat.hash_identifier, test_hash)
 
     def test_account_identifier_not_equal(self):
-        transaction_date = timezone.datetime(2023, 1, 1, 13, 3, 0)
+        transaction_date = montrek_time(2023, 1, 1, 13, 3)
         transaction_party = "testparty"
         transaction_party_iban = "DE12345678901234567890"
         account_sat = TransactionSatellite.objects.create(
             hub_entity=TransactionHubFactory(),
-            transaction_date=timezone.datetime(2023, 1, 1, 13, 4, 0),
+            transaction_date=montrek_time(2023, 1, 1, 13, 4),
             transaction_party=transaction_party,
             transaction_party_iban=transaction_party_iban,
             transaction_amount=100,
