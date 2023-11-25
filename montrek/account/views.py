@@ -1,7 +1,8 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import Tuple
 from django.shortcuts import render, redirect
 from django.urls import reverse
+from django.utils import timezone
 from django_pandas.io import read_frame
 
 from account.models import AccountHub
@@ -361,7 +362,7 @@ def _handle_date_range_form(request):
     return {'date_range_form': date_range_form}
 
 def _get_date_range_dates(request) -> Tuple[str, str]:
-    today = datetime.today().date()
+    today = timezone.now().date()
     default_start_date = today - timedelta(days=30)
     default_end_date = today
     default_start_date = default_start_date.strftime('%Y-%m-%d')

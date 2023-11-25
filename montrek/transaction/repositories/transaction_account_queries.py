@@ -2,8 +2,8 @@ import pandas as pd
 from django.apps import apps
 from django.db.models import Q
 from django.core.paginator import Paginator
+from django.utils import timezone
 from typing import List
-import datetime
 
 from baseclasses import models as baseclass_models
 from baseclasses.repositories.db_helper import new_link_entry
@@ -16,6 +16,7 @@ from transaction.repositories.transaction_type_queries import set_transaction_ty
 from transaction.repositories.transaction_model_queries import add_asset_to_transaction
 from asset.repositories.asset_queries import find_asset_hub_by_isin_or_create
 
+
 def account_hub():
     return apps.get_model("account", "AccountHub")
 
@@ -27,18 +28,22 @@ def transaction_hub():
 def transaction_satellite():
     return apps.get_model("transaction", "TransactionSatellite")
 
+
 def transaction_category_map_satellite():
     return apps.get_model("transaction", "TransactionCategoryMapSatellite")
+
 
 def asset_static_satellite():
     return apps.get_model("asset", "AssetStaticSatellite")
 
+
 def asset_liquid_satellite():
     return apps.get_model("asset", "AssetLiquidSatellite")
 
+
 def new_transaction_to_account(
     account_id: int,
-    transaction_date: datetime.date,
+    transaction_date: timezone.datetime,
     transaction_amount: int,
     transaction_price: float,
     transaction_category: str,
@@ -65,9 +70,10 @@ def new_transaction_to_account(
     set_transaction_type(transaction_satellite_object, transaction_type)
     return transaction_hub_object
 
+
 def new_transaction_to_account_with_asset(
     account_id: int,
-    transaction_date: datetime.date,
+    transaction_date: timezone.datetime,
     transaction_amount: int,
     transaction_price: float,
     transaction_category: str,
@@ -105,8 +111,6 @@ def new_transaction_to_account_with_asset(
     return transaction_hub
 
 
-
-
 def new_transactions_to_account_from_df(
     account_hub_object: baseclass_models.MontrekSatelliteABC,
     transaction_df: pd.DataFrame,
@@ -142,7 +146,7 @@ def get_transactions_by_account_id(
 
 
 def get_transactions_by_account_hub(
-    account_hub_object, reference_date: datetime.datetime = datetime.datetime.now()
+    account_hub_object, reference_date: timezone.datetime = timezone.now()
 ) -> List[baseclass_models.MontrekSatelliteABC]:
     transaction_hubs = account_hub_object.link_account_transaction.all()
     transaction_satellites = transaction_satellite().objects.filter(
@@ -152,35 +156,46 @@ def get_transactions_by_account_hub(
     )
     return transaction_satellites
 
-def get_paginated_transactions(account_id, start_date, end_date, page_number=1, paginate_by=10):
+
+def get_paginated_transactions(
+    account_id, start_date, end_date, page_number=1, paginate_by=10
+):
     transactions = get_transactions_by_account_id(account_id)
     transactions = transactions.filter(
-        Q(transaction_date__gte=start_date)
-        & Q(transaction_date__lte=end_date)
+        Q(transaction_date__gte=start_date) & Q(transaction_date__lte=end_date)
     )
     paginator = Paginator(transactions.order_by("-transaction_date").all(), paginate_by)
     page = paginator.get_page(page_number)
     return page
 
+
 def get_transaction_category_map_by_account_id(account_id):
     account_hub_object = account_hub().objects.get(id=account_id)
     return get_transaction_category_map_by_account_hub(account_hub_object)
 
-def get_transaction_category_map_by_account_hub(account_hub_object, reference_date = datetime.datetime.now()):
-    transaction_category_map_hubs = account_hub_object.link_account_transaction_category_map.filter(
-        is_deleted=False
+
+def get_transaction_category_map_by_account_hub(
+    account_hub_object, reference_date=timezone.now()
+):
+    transaction_category_map_hubs = (
+        account_hub_object.link_account_transaction_category_map.filter(
+            is_deleted=False
+        )
     )
-    transaction_category_map_satellites = transaction_category_map_satellite().objects.filter( 
-        Q(hub_entity__in=transaction_category_map_hubs)
-        & Q(state_date_start__lte=reference_date)
-        & Q(state_date_end__gt=reference_date)
+    transaction_category_map_satellites = (
+        transaction_category_map_satellite().objects.filter(
+            Q(hub_entity__in=transaction_category_map_hubs)
+            & Q(state_date_start__lte=reference_date)
+            & Q(state_date_end__gt=reference_date)
+        )
     )
     return transaction_category_map_satellites
 
 
 def get_paginated_transactions_category_map(account_id, page_number=1, paginate_by=10):
-   transaction_category_map = get_transaction_category_map_by_account_id(account_id) 
-   paginator = Paginator(transaction_category_map.order_by("category").all(), paginate_by)
-   page = paginator.get_page(page_number)
-   return page
-
+    transaction_category_map = get_transaction_category_map_by_account_id(account_id)
+    paginator = Paginator(
+        transaction_category_map.order_by("category").all(), paginate_by
+    )
+    page = paginator.get_page(page_number)
+    return page

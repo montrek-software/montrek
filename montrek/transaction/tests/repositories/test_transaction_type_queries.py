@@ -13,7 +13,8 @@ class TestTransactionTypeModelQueries(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.transaction = TransactionSatelliteFactory()
-        cls.transaction_type = TransactionTypeSatelliteFactory()
+        cls.transaction_type = TransactionTypeSatelliteFactory(typename="INCOME")
+        TransactionTypeSatelliteFactory(typename="EXPANSE")
         cls.transaction.hub_entity.link_transaction_transaction_type.add(
             cls.transaction_type.hub_entity
         )

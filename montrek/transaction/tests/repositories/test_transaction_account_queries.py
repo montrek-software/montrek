@@ -1,4 +1,3 @@
-import datetime
 from decimal import Decimal
 import pandas as pd
 
@@ -10,6 +9,7 @@ from django.db.models import F, Sum
 
 from account.models import AccountHub
 from account.tests.factories import account_factories
+from baseclasses.utils import montrek_time
 from transaction.tests.factories import transaction_factories
 from transaction.repositories.transaction_account_queries import (
     new_transaction_to_account,
@@ -27,22 +27,22 @@ from transaction.repositories.transaction_account_queries import (
     get_transactions_by_account_hub,
 )
 from transaction.repositories.transaction_account_queries import (
-    get_transaction_category_map_by_account_hub
+    get_transaction_category_map_by_account_hub,
 )
 from transaction.repositories.transaction_account_queries import (
-    get_transaction_category_map_by_account_id
+    get_transaction_category_map_by_account_id,
 )
 from transaction.repositories.transaction_account_queries import (
-    get_paginated_transactions_category_map
+    get_paginated_transactions_category_map,
 )
 from transaction.repositories.transaction_type_queries import (
     get_transaction_type_by_transaction,
 )
 from transaction.repositories.transaction_model_queries import (
-    get_transaction_asset_liquid_satellite
+    get_transaction_asset_liquid_satellite,
 )
 from transaction.repositories.transaction_model_queries import (
-    get_transaction_asset_static_satellite
+    get_transaction_asset_static_satellite,
 )
 
 ACCOUNTS_UNDER_TEST = 1
@@ -54,12 +54,14 @@ class TestModelUtils(TestCase):
         account_factories.AccountStaticSatelliteFactory.create_batch(
             ACCOUNTS_UNDER_TEST
         )
+        transaction_factories.TransactionTypeSatelliteFactory.create(typename="INCOME")
+        transaction_factories.TransactionTypeSatelliteFactory.create(typename="EXPANSE")
 
     def test_new_transaction(self):
         account_id = AccountHub.objects.last().id
         new_transaction_to_account(
             account_id=account_id,
-            transaction_date=datetime.date(2022, 1, 1),
+            transaction_date=montrek_time(2022, 1, 1),
             transaction_amount=1,
             transaction_price=251.35,
             transaction_type="INCOME",
@@ -69,7 +71,7 @@ class TestModelUtils(TestCase):
         )
         new_transaction = get_transactions_by_account_id(account_id=account_id).last()
         self.assertEqual(
-            new_transaction.transaction_date.date(), datetime.date(2022, 1, 1)
+            new_transaction.transaction_date, montrek_time(2022, 1, 1)
         )
         self.assertEqual(new_transaction.transaction_amount, 1)
         self.assertAlmostEqual(new_transaction.transaction_price, Decimal(251.35))
@@ -94,9 +96,9 @@ class TestModelUtils(TestCase):
         test_df = pd.DataFrame(
             {
                 "transaction_date": [
-                    datetime.date(2022, 1, 1),
-                    datetime.date(2022, 1, 2),
-                    datetime.date(2022, 1, 3),
+                    montrek_time(2022, 1, 1),
+                    montrek_time(2022, 1, 2),
+                    montrek_time(2022, 1, 3),
                 ],
                 "transaction_amount": [1, 2, 3],
                 "transaction_price": [251.35, 252.35, -253.35],
@@ -120,7 +122,7 @@ class TestModelUtils(TestCase):
             account_hub_object=account_hub
         )
         self.assertEqual(
-            new_transactions[0].transaction_date.date(), datetime.date(2022, 1, 1)
+            new_transactions[0].transaction_date, montrek_time(2022, 1, 1)
         )
         self.assertEqual(new_transactions[0].transaction_amount, 1)
         self.assertAlmostEqual(new_transactions[0].transaction_price, Decimal(251.35))
@@ -131,7 +133,7 @@ class TestModelUtils(TestCase):
             new_transactions[0].transaction_description, "Test transaction 1"
         )
         self.assertEqual(
-            new_transactions[1].transaction_date.date(), datetime.date(2022, 1, 2)
+            new_transactions[1].transaction_date, montrek_time(2022, 1, 2)
         )
         self.assertEqual(new_transactions[1].transaction_amount, 2)
         self.assertAlmostEqual(new_transactions[1].transaction_price, Decimal(252.35))
@@ -142,7 +144,7 @@ class TestModelUtils(TestCase):
             new_transactions[1].transaction_description, "Test transaction 2"
         )
         self.assertEqual(
-            new_transactions[2].transaction_date.date(), datetime.date(2022, 1, 3)
+            new_transactions[2].transaction_date, montrek_time(2022, 1, 3)
         )
         self.assertEqual(new_transactions[2].transaction_amount, 3)
         self.assertAlmostEqual(new_transactions[2].transaction_price, Decimal(-253.35))
@@ -158,26 +160,26 @@ class TestModelUtils(TestCase):
         transaction_1 = transaction_factories.TransactionSatelliteFactory.create(
             transaction_amount=100,
             transaction_price=1.0,
-            state_date_start=timezone.datetime(2023, 6, 1),
-            state_date_end=timezone.datetime(2023, 7, 1),
+            state_date_start=montrek_time(2023, 6, 1),
+            state_date_end=montrek_time(2023, 7, 1),
         )
         transaction_factories.TransactionSatelliteFactory.create(
             transaction_amount=200,
             transaction_price=1.0,
-            state_date_start=timezone.datetime(2023, 7, 1),
+            state_date_start=montrek_time(2023, 7, 1),
             state_date_end=timezone.datetime.max,
             hub_entity=transaction_1.hub_entity,
         )
         transaction_3 = transaction_factories.TransactionSatelliteFactory.create(
             transaction_amount=100,
             transaction_price=1.0,
-            state_date_start=timezone.datetime(2023, 6, 15),
-            state_date_end=timezone.datetime(2023, 7, 9),
+            state_date_start=montrek_time(2023, 6, 15),
+            state_date_end=montrek_time(2023, 7, 9),
         )
         transaction_factories.TransactionSatelliteFactory.create(
             transaction_amount=200,
             transaction_price=1.0,
-            state_date_start=timezone.datetime(2023, 7, 9),
+            state_date_start=montrek_time(2023, 7, 9),
             state_date_end=timezone.datetime.max,
             hub_entity=transaction_3.hub_entity,
         )
@@ -193,7 +195,7 @@ class TestModelUtils(TestCase):
         )
         self.assertEqual(account_value, 400)
         account_transactions = get_transactions_by_account_hub(
-            account_hub, reference_date=timezone.datetime(2023, 7, 1)
+            account_hub, reference_date=montrek_time(2023, 7, 1)
         )
         self.assertEqual(len(account_transactions), 2)
         account_value = (
@@ -204,7 +206,7 @@ class TestModelUtils(TestCase):
         )
         self.assertEqual(account_value, 300)
         account_transactions = get_transactions_by_account_hub(
-            account_hub, reference_date=timezone.datetime(2023, 6, 1)
+            account_hub, reference_date=montrek_time(2023, 6, 1)
         )
         self.assertEqual(len(account_transactions), 1)
         account_value = (
@@ -215,7 +217,7 @@ class TestModelUtils(TestCase):
         )
         self.assertEqual(account_value, 100)
         account_transactions = get_transactions_by_account_hub(
-            account_hub, reference_date=timezone.datetime(2023, 7, 9)
+            account_hub, reference_date=montrek_time(2023, 7, 9)
         )
         self.assertEqual(len(account_transactions), 2)
         account_value = (
@@ -226,9 +228,10 @@ class TestModelUtils(TestCase):
         )
         self.assertEqual(account_value, 400)
         account_transactions = get_transactions_by_account_hub(
-            account_hub, reference_date=timezone.datetime(2023, 5, 10)
+            account_hub, reference_date=montrek_time(2023, 5, 10)
         )
         self.assertEqual(len(account_transactions), 0)
+
 
 class TestAccountTransactionCategoryMap(TestCase):
     @classmethod
@@ -236,9 +239,9 @@ class TestAccountTransactionCategoryMap(TestCase):
         cls.account = account_factories.AccountHubFactory.create()
         cls.transaction_category_map = (
             transaction_factories.TransactionCategoryMapSatelliteFactory.create(
-            field='transaction_party',
-            value='Test Party 1',
-            category='TRANSFER',
+                field="transaction_party",
+                value="Test Party 1",
+                category="TRANSFER",
             )
         )
         cls.account.link_account_transaction_category_map.add(
@@ -247,17 +250,19 @@ class TestAccountTransactionCategoryMap(TestCase):
 
     def _check_transaction_category_map(self, test_transaction_category_map):
         self.assertEqual(len(test_transaction_category_map), 1)
-        self.assertEqual(test_transaction_category_map[0].field, 'transaction_party')
-        self.assertEqual(test_transaction_category_map[0].value, 'Test Party 1')
-        self.assertEqual(test_transaction_category_map[0].category, 'TRANSFER')
+        self.assertEqual(test_transaction_category_map[0].field, "transaction_party")
+        self.assertEqual(test_transaction_category_map[0].value, "Test Party 1")
+        self.assertEqual(test_transaction_category_map[0].category, "TRANSFER")
 
     def test_get_transaction_category_map_by_account_hub(self):
-        test_transaction_category_map = get_transaction_category_map_by_account_hub(self.account)
+        test_transaction_category_map = get_transaction_category_map_by_account_hub(
+            self.account
+        )
         self._check_transaction_category_map(test_transaction_category_map)
 
     def test_get_transaction_category_map_by_account_id(self):
-        test_transaction_category_map = (
-            get_transaction_category_map_by_account_id(self.account.id)
+        test_transaction_category_map = get_transaction_category_map_by_account_id(
+            self.account.id
         )
         self._check_transaction_category_map(test_transaction_category_map)
 
@@ -266,12 +271,18 @@ class TestAccountTransactionCategoryMap(TestCase):
         test_transaction_category_map = test_page.object_list
         self._check_transaction_category_map(test_transaction_category_map)
 
+
 class TestAssetTransactions(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        transaction_factories.TransactionTypeSatelliteFactory.create(typename="INCOME")
+        transaction_factories.TransactionTypeSatelliteFactory.create(typename="EXPANSE")
+
     def test_new_transaction_with_asset(self):
         account_hub = account_factories.AccountHubFactory()
         transaction_hub = new_transaction_to_account_with_asset(
             account_id=account_hub.id,
-            transaction_date="2020-01-01",
+            transaction_date=montrek_time(2022, 1, 1),
             transaction_amount=201,
             transaction_price=14.0,
             transaction_type=None,
