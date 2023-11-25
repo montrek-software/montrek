@@ -1,8 +1,9 @@
 from django import forms
 
-from .models import AssetStaticSatellite
-from .models import AssetLiquidSatellite
-from .models import AssetTimeSeriesSatellite
+from asset.models import AssetStaticSatellite
+from asset.models import AssetLiquidSatellite
+from asset.models import AssetTimeSeriesSatellite
+from currency.models import CurrencyStaticSatellite
 
 
 class AssetTemplateForm(forms.ModelForm):
@@ -13,9 +14,17 @@ class AssetTemplateForm(forms.ModelForm):
 
 
 class AssetStaticSatelliteForm(AssetTemplateForm):
+    asset_ccy = forms.ModelChoiceField(
+        queryset=CurrencyStaticSatellite.objects.all(),
+        label="Currency",
+        to_field_name="ccy_name",
+        required=True,
+        empty_label="Select Currency"
+    )
+
     class Meta:
         model = AssetStaticSatellite
-        fields = ("asset_name", "asset_type")
+        fields = ("asset_name", "asset_type", "asset_ccy")
 
 
 class AssetLiquidSatelliteForm(AssetTemplateForm):

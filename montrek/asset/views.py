@@ -42,6 +42,12 @@ class AssetStaticCreateView(CreateView):
     def form_valid(self, form):
         asset_hub = AssetHub()
         asset_hub.save()
+        # Get selected currency
+        selected_currency = form.cleaned_data.get('asset_ccy')
+        if selected_currency:
+            # Link the CurrencyHub of the selected currency to the AssetHub
+            currency_hub = selected_currency.hub_entity
+            asset_hub.link_asset_currency.add(currency_hub)
         form.instance.hub_entity = asset_hub
         self.object = form.save()
         return HttpResponseRedirect(self.get_success_url())
