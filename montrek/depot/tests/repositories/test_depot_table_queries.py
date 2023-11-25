@@ -1,10 +1,10 @@
-import datetime
 from django.test import TestCase
 
 from depot.repositories.depot_table_queries import get_depot_asset_table
 from account.tests.factories import account_factories
 from asset.tests.factories import asset_factories
 from transaction.tests.factories import transaction_factories
+from baseclasses.utils import montrek_time
 
 class TestDepotTable(TestCase):
 
@@ -23,17 +23,17 @@ class TestDepotTable(TestCase):
         asset_factories.AssetTimeSeriesSatelliteFactory(
             hub_entity = cls.asset_1.hub_entity,
             price = 102.3,
-            value_date = datetime.date(2023,10,15),
+            value_date = montrek_time(2023,10,15),
         )
         asset_factories.AssetTimeSeriesSatelliteFactory(
             hub_entity = cls.asset_1.hub_entity,
             price = 101.4,
-            value_date = datetime.date(2023,10,12),
+            value_date = montrek_time(2023,10,12),
         )
         asset_factories.AssetTimeSeriesSatelliteFactory(
             hub_entity = cls.asset_1.hub_entity,
             price = 105.4,
-            value_date = datetime.date(2023,10,16),
+            value_date = montrek_time(2023,10,16),
         )
         asset_2 = asset_factories.AssetStaticSatelliteFactory(
             asset_name='Test Asset 2',
@@ -47,21 +47,21 @@ class TestDepotTable(TestCase):
         trans1_1 = transaction_factories.TransactionSatelliteFactory(
             transaction_price = 100,
             transaction_amount = 10,
-            transaction_date = datetime.date(2023,10,10),
+            transaction_date = montrek_time(2023,10,10),
         )
         cls.account.link_account_transaction.add(trans1_1.hub_entity)
         trans1_1.hub_entity.link_transaction_asset.add(cls.asset_1.hub_entity)
         trans1_2 = transaction_factories.TransactionSatelliteFactory(
             transaction_price = 150,
             transaction_amount = 20,
-            transaction_date = datetime.date(2023,10,1),
+            transaction_date = montrek_time(2023,10,1),
         )
         cls.account.link_account_transaction.add(trans1_2.hub_entity)
         trans1_2.hub_entity.link_transaction_asset.add(cls.asset_1.hub_entity)
         trans2_1 = transaction_factories.TransactionSatelliteFactory(
             transaction_price = 90,
             transaction_amount = 50,
-            transaction_date = datetime.date(2023,10,5),
+            transaction_date = montrek_time(2023,10,5),
         )
         cls.account.link_account_transaction.add(trans2_1.hub_entity)
         trans2_1.hub_entity.link_transaction_asset.add(asset_2.hub_entity)
@@ -69,10 +69,10 @@ class TestDepotTable(TestCase):
         trans_nn = transaction_factories.TransactionSatelliteFactory(
             transaction_price = 90,
             transaction_amount = 50,
-            transaction_date = datetime.date(2023,10,5),
+            transaction_date = montrek_time(2023,10,5),
         )
         cls.account.link_account_transaction.add(trans_nn.hub_entity)
-        cls.reference_date = datetime.date(2023,10,15)
+        cls.reference_date = montrek_time(2023,10,15)
 
     def test_get_depot_asset_table(self):
         depot_asset_table_data = get_depot_asset_table(
@@ -94,7 +94,7 @@ class TestDepotTable(TestCase):
         trans = transaction_factories.TransactionSatelliteFactory(
             transaction_price = 20,
             transaction_amount = 10,
-            transaction_date = datetime.date(2023,10,10),
+            transaction_date = montrek_time(2023,10,10),
         )
         trans.hub_entity.link_transaction_account.add(second_account)
         trans.hub_entity.link_transaction_asset.add(self.asset_1.hub_entity)
@@ -108,7 +108,7 @@ class TestDepotTable(TestCase):
         trans_sell = transaction_factories.TransactionSatelliteFactory(
             transaction_price = 100,
             transaction_amount = -30,
-            transaction_date = datetime.date(2023,10,15),
+            transaction_date = montrek_time(2023,10,15),
         )
         self.account.link_account_transaction.add(trans_sell.hub_entity)
         trans_sell.hub_entity.link_transaction_asset.add(self.asset_1.hub_entity)
@@ -118,18 +118,18 @@ class TestDepotTable(TestCase):
         self.assertEqual(len(depot_asset_table_data), 1)
 
     def test_get_depot_asset_table_time_dependencies(self):
-        ref_date_1 = datetime.date(2023,10,9)
+        ref_date_1 = montrek_time(2023,10,9)
         depot_asset_table_data = get_depot_asset_table(self.account.id, ref_date_1)
         self.assertEqual(len(depot_asset_table_data), 2)
         self.assertEqual(depot_asset_table_data[0].total_nominal, 20)
         self.assertEqual(depot_asset_table_data[0].book_value, 150*20)
 
-        ref_date_2 = datetime.date(2023,10,1)
+        ref_date_2 = montrek_time(2023,10,1)
         depot_asset_table_data = get_depot_asset_table(self.account.id, ref_date_2)
         self.assertEqual(len(depot_asset_table_data), 1)
         self.assertEqual(depot_asset_table_data[0].total_nominal, 20)
         self.assertEqual(depot_asset_table_data[0].book_value, 150*20)
 
-        ref_date_3 = datetime.date(2023,9,30)
+        ref_date_3 = montrek_time(2023,9,30)
         depot_asset_table_data = get_depot_asset_table(self.account.id, ref_date_3)
         self.assertEqual(len(depot_asset_table_data), 0)
