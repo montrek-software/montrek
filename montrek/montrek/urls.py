@@ -20,6 +20,7 @@ from baseclasses import views as base_views
 
 urlpatterns = [
     path("", base_views.home, name="home"),
+    path("navbar", base_views.navbar, name="navbar"),
     path("under_construction", base_views.under_construction, name="under_construction"),
     path("admin/", admin.site.urls),
     path("account/", include("account.urls")),
