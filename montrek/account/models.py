@@ -1,11 +1,14 @@
 import re
 from django.db import models
 from django.db.models import Sum, F
+from django.utils import timezone
 from baseclasses import models as baseclass_models
+from baseclasses.repositories.db_helper import select_satellite
 from transaction.repositories.transaction_account_queries import (
     get_transactions_by_account_hub,
 )
 from account.managers.validators import montrek_iban_validator
+from depot.managers.depot_stats import DepotStats
 
 # Create your models here.
 
@@ -58,6 +61,16 @@ class BankAccountPropertySatellite(baseclass_models.MontrekSatelliteABC):
 
     @property
     def account_value(self):
+        account_statics = select_satellite(
+            self.hub_entity, AccountStaticSatellite 
+        )
+        
+        if account_statics.account_type == AccountStaticSatellite.AccountType.BANK_ACCOUNT:
+            return self._get_bank_account_value()
+        elif account_statics.account_type == AccountStaticSatellite.AccountType.DEPOT:
+            return self._get_depot_account_value()
+    
+    def _get_bank_account_value(self):
         transactions = get_transactions_by_account_hub(self.hub_entity)
         return (
             transactions.aggregate(
@@ -65,6 +78,10 @@ class BankAccountPropertySatellite(baseclass_models.MontrekSatelliteABC):
             )["total_value"]
             or 0
         )
+
+    def _get_depot_account_value(self):
+        return DepotStats(self.hub_entity.id, timezone.now()).current_value
+
 
 
 class BankAccountStaticSatellite(baseclass_models.MontrekSatelliteABC):

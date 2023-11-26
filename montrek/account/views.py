@@ -74,7 +74,8 @@ def account_list(request):
                   "hover_text": "Goto Account",
                  }
                 },
-        "Value": {"attr": "bankaccountpropertysatellite_set.account_value"},
+        "Value": {"attr": "bankaccountpropertysatellite_set.account_value",
+                  "format": "{:,.2f}"},
         "Type": {"attr": "accountstaticsatellite_set.account_type"},
     }
     action_new_account = ActionElement(
