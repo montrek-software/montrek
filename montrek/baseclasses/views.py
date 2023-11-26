@@ -9,5 +9,4 @@ def under_construction(request):
     return render(request, "under_construction.html")
 
 def navbar(request):
-    breakpoint()
     return render(request, "navbar.html")
