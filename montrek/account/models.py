@@ -1,6 +1,7 @@
 import re
 from django.db import models
 from django.db.models import Sum, F
+from django.utils import timezone
 from baseclasses import models as baseclass_models
 from baseclasses.repositories.db_helper import select_satellite
 from transaction.repositories.transaction_account_queries import (
@@ -79,7 +80,7 @@ class BankAccountPropertySatellite(baseclass_models.MontrekSatelliteABC):
         )
 
     def _get_depot_account_value(self):
-        return DepotStats(self.hub_entity, timezone.now()).current_value
+        return DepotStats(self.hub_entity.id, timezone.now()).current_value
 
 
 
