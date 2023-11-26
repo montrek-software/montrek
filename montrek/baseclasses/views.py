@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from baseclasses.dataclasses.nav_bar_model import NavBarModel
 
 # Create your views here.
 
@@ -9,4 +10,5 @@ def under_construction(request):
     return render(request, "under_construction.html")
 
 def navbar(request):
-    return render(request, "navbar.html")
+    nav_apps = [NavBarModel('account')]
+    return render(request, "navbar.html", {"nav_apps": nav_apps})

@@ -38,7 +38,7 @@ def new_account(
 def account_view_data(account_id: int, active_sheet: str = ""):
     action_back = ActionElement(
         icon="chevron-left",
-        link=reverse('account_list'),
+        link=reverse('account'),
         action_id="list_back",
         hover_text="Back to account list",
         )

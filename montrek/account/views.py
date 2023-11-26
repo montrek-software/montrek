@@ -86,7 +86,7 @@ def account_list(request):
     )
     tab = TabElement(
         name = "Account List",
-        link = reverse('account_list'),
+        link = reverse('account'),
         html_id="id_tab_account_list",
         active="active",
         actions=(action_new_account,),

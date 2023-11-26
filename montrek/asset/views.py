@@ -1,6 +1,7 @@
 from django.urls import reverse
 from django.http import HttpResponseRedirect
 from django.views.generic.edit import CreateView
+from django.views.generic.list import ListView
 from django.utils import timezone
 from asset.models import AssetStaticSatellite
 from asset.models import AssetLiquidSatellite
@@ -14,6 +15,15 @@ from asset.managers.market_data import add_single_price_to_asset
 from currency.managers.fx_rate_update_factory import FxRateUpdateFactory
 
 # Create your views here.
+
+class AssetListView(ListView):
+    model = AssetHub
+    template_name = 'asset_list.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Asset List'
+        return context
 
 class AssetStaticCreateView(CreateView):
     model = AssetStaticSatellite
