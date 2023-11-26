@@ -80,7 +80,7 @@ class TestBankAccountViews(TestCase):
     @classmethod
     def setUpTestData(cls):
         account_hub = AccountHubFactory()
-        AccountStaticSatelliteFactory(hub_entity=account_hub)
+        AccountStaticSatelliteFactory(hub_entity=account_hub, account_type="BankAccount")
         transaction_hub = TransactionHubFactory(
             accounts = [account_hub]
         )
