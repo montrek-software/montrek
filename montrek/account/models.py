@@ -61,15 +61,18 @@ class BankAccountPropertySatellite(baseclass_models.MontrekSatelliteABC):
 
     @property
     def account_value(self):
-        account_statics = select_satellite(
-            self.hub_entity, AccountStaticSatellite 
-        )
-        
-        if account_statics.account_type == AccountStaticSatellite.AccountType.BANK_ACCOUNT:
+        account_statics = select_satellite(self.hub_entity, AccountStaticSatellite)
+        if (
+            account_statics.account_type
+            == AccountStaticSatellite.AccountType.BANK_ACCOUNT
+        ):
             return self._get_bank_account_value()
-        elif account_statics.account_type == AccountStaticSatellite.AccountType.DEPOT:
+        if account_statics.account_type == AccountStaticSatellite.AccountType.DEPOT:
             return self._get_depot_account_value()
-    
+        raise NotImplementedError(
+            f"Account type {account_statics.account_type} not implemented"
+        )
+
     def _get_bank_account_value(self):
         transactions = get_transactions_by_account_hub(self.hub_entity)
         return (
@@ -81,7 +84,6 @@ class BankAccountPropertySatellite(baseclass_models.MontrekSatelliteABC):
 
     def _get_depot_account_value(self):
         return DepotStats(self.hub_entity.id, timezone.now()).current_value
-
 
 
 class BankAccountStaticSatellite(baseclass_models.MontrekSatelliteABC):
