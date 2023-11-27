@@ -39,8 +39,9 @@ from baseclasses.repositories.db_helper import new_satellite_entry
 from baseclasses.forms import DateRangeForm
 from baseclasses.dataclasses.view_classes import TabElement, ActionElement
 from baseclasses.views import MontrekListView
-from baseclasses.dataclasses.view_classes import StringTableElement
-from baseclasses.dataclasses.view_classes import LinkTableElement
+from baseclasses.dataclasses.table_elements import StringTableElement
+from baseclasses.dataclasses.table_elements import LinkTableElement
+from baseclasses.dataclasses.table_elements import EuroTableElement
 
 from reporting.managers.account_transaction_plots import (
     draw_monthly_income_expanses_plot,
@@ -92,6 +93,10 @@ class AccountOverview(MontrekListView):
                 kwargs={"account_id": "id"},
                 icon="chevron-right",
                 hover_text="Goto Account",
+            ),
+            EuroTableElement(
+                name="Value",
+                attr="bankaccountpropertysatellite_set.account_value",
             ),
             StringTableElement(
                 name="Type", attr="accountstaticsatellite_set.account_type"

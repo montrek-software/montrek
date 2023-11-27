@@ -1,7 +1,7 @@
 from django.shortcuts import render
 
 from baseclasses.views import MontrekListView
-from baseclasses.dataclasses.view_classes import StringTableElement
+from baseclasses.dataclasses.table_elements import StringTableElement
 from credit_institution.models import CreditInstitutionStaticSatellite
 from credit_institution.pages import CreditInstitutionAppPage
 
