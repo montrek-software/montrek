@@ -19,4 +19,7 @@ class TabElement:
 @dataclass
 class TableElement:
     name: str
+
+@dataclass
+class StringTableElement(TableElement):
     attr: str

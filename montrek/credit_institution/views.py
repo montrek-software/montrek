@@ -1,7 +1,7 @@
 from django.shortcuts import render
 
 from baseclasses.views import MontrekListView
-from baseclasses.dataclasses.view_classes import TableElement
+from baseclasses.dataclasses.view_classes import StringTableElement
 from credit_institution.models import CreditInstitutionStaticSatellite
 from credit_institution.pages import CreditInstitutionAppPage
 
@@ -17,7 +17,7 @@ class CreditInstitutionOverview(MontrekListView):
     @property
     def table_elements(self) -> dict:
         return (
-            TableElement(name='Name', attr='credit_institution_name'),
-            TableElement(name='BIC', attr='credit_institution_bic'),
-            TableElement(name='Upload Method', attr= 'account_upload_method'),
+            StringTableElement(name='Name', attr='credit_institution_name'),
+            StringTableElement(name='BIC', attr='credit_institution_bic'),
+            StringTableElement(name='Upload Method', attr= 'account_upload_method'),
         )
