@@ -35,7 +35,5 @@ class MontrekListView(ListView):
         self.page.set_active_tab(self.tab)
         context["tab_elements"] = self.page.tabs
         context["table_elements"] = self.table_elements
-        #TODO Change template to use object_list in the first place
-        context['table_objects'] = context['object_list']
         context['title'] = self.title
         return context

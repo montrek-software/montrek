@@ -1,8 +1,17 @@
 class MontrekPage:
     page_title = "page_title not set!"
+    def __init__(self):
+        self._tabs = None
+
+
+    def get_tabs(self):
+        raise NotImplementedError("MontrekPage needs tabs!")
+
     @property
     def tabs(self):
-        raise NotImplementedError("MontrekPage needs tabs!")
+        if self._tabs is None:
+            self._tabs = self.get_tabs()
+        return self._tabs
 
     def set_active_tab(self, active_tab: str):
         for tab in self.tabs:

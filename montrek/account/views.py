@@ -104,52 +104,6 @@ class AccountOverview(MontrekListView):
         )
 
 
-def account_list(request):
-    accounts_statics = AccountHub.objects.all().prefetch_related(
-        "accountstaticsatellite_set", "bankaccountpropertysatellite_set"
-    )
-    account_list_map_fields = {
-        "Name": {"attr": "accountstaticsatellite_set.account_name"},
-        "Link": {
-            "link": {
-                "url": "account_view",
-                "kwargs": {"account_id": "id"},
-                "icon": "chevron-right",
-                "hover_text": "Goto Account",
-            }
-        },
-        "Value": {
-            "attr": "bankaccountpropertysatellite_set.account_value",
-            "format": "{:,.2f}",
-        },
-        "Type": {"attr": "accountstaticsatellite_set.account_type"},
-    }
-    action_new_account = ActionElement(
-        icon="plus",
-        link=reverse("account_new_form"),
-        action_id="id_new_account",
-        hover_text="Add new Account",
-    )
-    tab = TabElement(
-        name="Account List",
-        link=reverse("account"),
-        html_id="id_tab_account_list",
-        active="active",
-        actions=(action_new_account,),
-    )
-    return render(
-        request,
-        "account_list.html",
-        {
-            "title": "Accounts",
-            "columns": account_list_map_fields.keys(),
-            "items": account_list_map_fields.values(),
-            "table_objects": accounts_statics,
-            "tab_elements": (tab,),
-        },
-    )
-
-
 def account_view(request, account_id: int):
     account_data = account_view_data(account_id)
     if account_data["account_statics"].account_type == "BankAccount":
