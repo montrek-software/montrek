@@ -22,6 +22,10 @@ class MontrekPage:
 
 
 class NoAppPage(MontrekPage):
-    @property
-    def tabs(self):
+    def get_tabs(self):
+        raise NotImplementedError("MontrekView needs a Page!")
+
+class NoPage(MontrekPage):
+    def __init__(self, hub_entity_id:int):
+        super.__init__(self)
         raise NotImplementedError("MontrekView needs a Page!")

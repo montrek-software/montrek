@@ -31,3 +31,14 @@ class CreditInstitutionPage(MontrekPage):
         super().__init__()
         self.page_title = credit_instition_repository.static_satellite.name
         self.credit_institution_hub = credit_instition_repository.hub
+
+    def get_tabs(self):
+        view_tab = TabElement(
+            name="View",
+            link=reverse(
+                "credit_institution_view", args=[self.credit_institution_hub.id]
+            ),
+            html_id="tab_view",
+            actions=(),
+        )
+        return (view_tab,)

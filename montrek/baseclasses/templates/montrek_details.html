@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% load data_table_filters_new %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block content %}
+    <h2 id="id_montrek_table_title">{{ title }}</h2>
+    <div id="id_montrek_table_list">
+    <table class="table">
+        <tr>
+          {% for detail_element in detail_elements %}
+            <th>{{ detail_element.name }}</th>
+            {{ row|show_item:table_element|safe }}
+          {% endfor %}
+        </tr>
+    </table>
+    </div>
+{% endblock %}
