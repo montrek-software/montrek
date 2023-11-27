@@ -16,3 +16,7 @@ class TabElement:
     actions: List[ActionElement]
     active: str = ""
 
+@dataclass
+class TableElement:
+    name: str
+    attr: str

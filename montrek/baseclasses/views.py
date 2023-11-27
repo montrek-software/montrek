@@ -26,16 +26,15 @@ class MontrekListView(ListView):
     title = "No Title set!"
 
     @property
-    def table_map_fields(self) -> dict:
-        return {}
+    def table_elements(self) -> list:
+        return []
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['page_title'] = self.page.page_title
         self.page.set_active_tab(self.tab)
         context["tab_elements"] = self.page.tabs
-        context["columns"] = self.table_map_fields.keys()
-        context['items'] = self.table_map_fields.values()
+        context["table_elements"] = self.table_elements
         #TODO Change template to use object_list in the first place
         context['table_objects'] = context['object_list']
         context['title'] = self.title

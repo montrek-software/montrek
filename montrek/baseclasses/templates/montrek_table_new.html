@@ -1,22 +1,22 @@
 {% extends 'base.html' %}
-{% load data_table_filters %}
+{% load data_table_filters_new %}
 {% block title %}{{ page_title }}{% endblock %}
 {% block content %}
     <h2 id="id_montrek_table_title">{{ title }}</h2>
     <div id="id_montrek_table_list">
     <table class="table">
         <tr>
-          {% for column in columns %}
-            <th>{{ column }}</th>
+          {% for table_element in table_elements %}
+            <th>{{ table_element.name }}</th>
           {% endfor %}
         </tr>
-         {% for table_object in table_objects %}
-            <tr>
-              {% for item in items %}
-                {{ table_object|show_item:item|safe }}
-              {% endfor %}
-            </tr>
-         {% endfor %}
+        {% for row in object_list %}
+          <tr>
+           {% for table_element in table_elements %}
+            {{ row|show_item:table_element|safe }}
+           {% endfor %}
+          </tr> 
+        {% endfor %}
     </table>
     </div>
      <div class="pagination">
