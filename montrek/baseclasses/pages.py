@@ -1,4 +1,5 @@
 class MontrekPage:
+    page_title = "page_title not set!"
     @property
     def tabs(self):
         raise NotImplementedError("MontrekPage needs tabs!")
@@ -9,3 +10,9 @@ class MontrekPage:
                 tab.active = "active"
             else:
                 tab.active = ""
+
+
+class NoAppPage(MontrekPage):
+    @property
+    def tabs(self):
+        raise NotImplementedError("MontrekView needs a Page!")

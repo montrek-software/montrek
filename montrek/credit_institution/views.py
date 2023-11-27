@@ -1,20 +1,22 @@
 from django.shortcuts import render
 
-from django.views.generic.list import ListView
+from baseclasses.views import MontrekListView
 from credit_institution.models import CreditInstitutionStaticSatellite
 from credit_institution.pages import CreditInstitutionAppPage
 
 # Create your views here.
 
 
-class CreditInstitutionOverview(ListView):
+class CreditInstitutionOverview(MontrekListView):
     model = CreditInstitutionStaticSatellite
-    template_name = "base.html"
     page = CreditInstitutionAppPage()
     tab = "tab_overview"
+    title = "Overview Table"
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        self.page.set_active_tab(self.tab)
-        context["tab_elements"] = self.page.tabs
-        return context
+    @property
+    def table_map_fields(self) -> dict:
+        return {
+            'Name' : {'attr': 'credit_institution_name'},
+            'BIC' : {'attr': 'credit_institution_bic'},
+            'Upload Method': {'attr': 'account_upload_method'},
+        }

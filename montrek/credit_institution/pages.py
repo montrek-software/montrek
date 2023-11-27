@@ -20,6 +20,7 @@ overview_tab = TabElement(
 
 
 class CreditInstitutionAppPage(MontrekPage):
+    page_title = "Credit Institutions"
     @property
     def tabs(self):
         return [overview_tab]
