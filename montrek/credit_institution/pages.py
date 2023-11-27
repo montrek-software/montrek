@@ -1,5 +1,6 @@
 from django.urls import reverse
 from baseclasses.dataclasses.view_classes import TabElement, ActionElement
+from baseclasses.pages import MontrekPage
 
 #action_create = ActionElement(
 #    icon="plus",
@@ -18,7 +19,7 @@ overview_tab = TabElement(
 )
 
 
-class CreditInstitutionAppPage:
+class CreditInstitutionAppPage(MontrekPage):
     @property
     def tabs(self):
         return [overview_tab]
