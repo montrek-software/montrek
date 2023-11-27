@@ -8,4 +8,4 @@ class NavBarModel:
     @property
     def display_name(self) -> str:
         """Display name for the app"""
-        return self.app_name.capitalize()
+        return self.app_name.replace("_", " ").title()
