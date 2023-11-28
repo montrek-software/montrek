@@ -50,7 +50,8 @@ class MontrekDetailView(DetailView, MontrekPageViewMixin):
     template_name = "montrek_details.html"
     page_class = NoPage
     tab = "empty_tab"
-    title = "No Title set!"
+    title = "Details"
+    repository = None # TODO: Add repository
 
     @property
     def detail_elements(self) -> list:
@@ -58,6 +59,7 @@ class MontrekDetailView(DetailView, MontrekPageViewMixin):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context['object'] = self.repository(self.get_object())
         self.page = self.page_class(context["object"])
         context = self.get_page_context(context, **kwargs)
         context["detail_elements"] = self.detail_elements

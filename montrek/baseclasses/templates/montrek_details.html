@@ -5,12 +5,12 @@
     <h2 id="id_montrek_table_title">{{ title }}</h2>
     <div id="id_montrek_table_list">
     <table class="table">
-        <tr>
           {% for detail_element in detail_elements %}
+            <tr>
             <th>{{ detail_element.name }}</th>
-            {{ row|show_item:table_element|safe }}
+            {{ object|show_item:detail_element|safe }}
+            </tr>
           {% endfor %}
-        </tr>
     </table>
     </div>
 {% endblock %}

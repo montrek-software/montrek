@@ -1,8 +1,9 @@
 from baseclasses.views import MontrekListView, MontrekDetailView
-from baseclasses.dataclasses.table_elements import StringTableElement
+from baseclasses.dataclasses.table_elements import StringTableElement, LinkTableElement
 from credit_institution.models import CreditInstitutionStaticSatellite
 from credit_institution.models import CreditInstitutionHub
 from credit_institution.pages import CreditInstitutionAppPage, CreditInstitutionPage 
+from credit_institution.repositories.credit_institution_repository import CreditInstitutionRepository
 
 # Create your views here.
 
@@ -17,6 +18,13 @@ class CreditInstitutionOverview(MontrekListView):
     def table_elements(self) -> dict:
         return (
             StringTableElement(name='Name', attr='credit_institution_name'),
+            LinkTableElement(
+                name="Link",
+                url="credit_institution_details",
+                kwargs={"pk": "id"},
+                icon="chevron-right",
+                hover_text="Goto Account",
+            ),
             StringTableElement(name='BIC', attr='credit_institution_bic'),
             StringTableElement(name='Upload Method', attr= 'account_upload_method'),
         )
@@ -25,13 +33,13 @@ class CreditIntitutionDetailView(MontrekDetailView):
     model = CreditInstitutionHub
     page_class = CreditInstitutionPage
     tab = "tab_details"
-    title = "Credit Institution Details"
+    repository = CreditInstitutionRepository
 
 
     @property
     def detail_elements(self) -> dict:
         return (
-            StringTableElement(name='Name', attr='credit_institution_name'),
-            StringTableElement(name='BIC', attr='credit_institution_bic'),
-            StringTableElement(name='Upload Method', attr= 'account_upload_method'),
+            StringTableElement(name='Name', attr='static_satellite.credit_institution_name'),
+            StringTableElement(name='BIC', attr='static_satellite.credit_institution_bic'),
+            StringTableElement(name='Upload Method', attr= 'static_satellite.account_upload_method'),
         )

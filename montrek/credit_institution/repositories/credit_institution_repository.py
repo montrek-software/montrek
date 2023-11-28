@@ -6,8 +6,8 @@ from baseclasses.repositories.db_helper import select_satellite
 
 
 class CreditInstitutionRepository:
-    def __init__(self, hub_entity_id):
-        self._hub_entity = CreditInstitutionHub.objects.get(id=hub_entity_id)
+    def __init__(self, hub_entity):
+        self._hub_entity = hub_entity
         self._static_satellite = select_satellite(
             self._hub_entity, CreditInstitutionStaticSatellite
         )
