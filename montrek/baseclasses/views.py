@@ -26,6 +26,7 @@ class MontrekPageViewMixin:
         self.page.set_active_tab(self.tab)
         context["tab_elements"] = self.page.tabs
         context["title"] = self.title
+        context["show_date_range_selector"] = self.page.show_date_range_selector
         return context
 
 

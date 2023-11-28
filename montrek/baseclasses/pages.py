@@ -1,5 +1,6 @@
 class MontrekPage:
     page_title = "page_title not set!"
+    show_date_range_selector = False
     def __init__(self):
         self._tabs = None
 
