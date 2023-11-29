@@ -30,16 +30,19 @@ class CreditInstitutionOverview(MontrekListView):
         )
 
 class CreditIntitutionDetailView(MontrekDetailView):
-    model = CreditInstitutionHub
     page_class = CreditInstitutionPage
     tab = "tab_details"
     repository = CreditInstitutionRepository
 
+    def get_queryset(self):
+        private_key = self.kwargs.get('pk')
+        hub_entity = CreditInstitutionHub.objects.get(pk=private_key)
+        return self.repository(hub_entity).detail_queryset()
 
     @property
     def detail_elements(self) -> dict:
         return (
-            StringTableElement(name='Name', attr='static_satellite.credit_institution_name'),
-            StringTableElement(name='BIC', attr='static_satellite.credit_institution_bic'),
-            StringTableElement(name='Upload Method', attr= 'static_satellite.account_upload_method'),
+            StringTableElement(name='Name', attr='credit_institution_name'),
+            StringTableElement(name='BIC', attr='credit_institution_bic'),
+            StringTableElement(name='Upload Method', attr= 'account_upload_method'),
         )

@@ -8,7 +8,6 @@ from credit_institution.repositories.credit_institution_repository import (
 
 class CreditInstitutionAppPage(MontrekPage):
     page_title = "Credit Institutions"
-    show_date_range_selector = True
 
     def get_tabs(self):
         action_create = ActionElement(
@@ -27,10 +26,10 @@ class CreditInstitutionAppPage(MontrekPage):
 
 
 class CreditInstitutionPage(MontrekPage):
-    def __init__(self, credit_instition_repository: CreditInstitutionRepository):
+    def __init__(self, queryset):
         super().__init__()
-        self.page_title = credit_instition_repository.static_satellite.credit_institution_name
-        self.credit_institution_hub = credit_instition_repository.hub_entity
+        self.page_title = queryset.credit_institution_name
+        self.credit_institution_hub = queryset.hub_entity
 
     def get_tabs(self):
         action_back = ActionElement(

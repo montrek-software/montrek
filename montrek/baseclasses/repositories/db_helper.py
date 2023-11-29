@@ -164,7 +164,7 @@ def select_satellite(
     # TODO: Rename to better name
     reference_date = timezone.now() if reference_date is None else reference_date
     applied_filter = Q() if applied_filter is None else applied_filter
-    satellite_instance = satellite_class.objects.get(
+    satellite_instance = satellite_class.objects.filter(
         Q(hub_entity=hub_entity)
         & Q(state_date_start__lte=reference_date)
         & Q(state_date_end__gt=reference_date)

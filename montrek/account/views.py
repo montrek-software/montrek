@@ -39,6 +39,7 @@ from baseclasses.repositories.db_helper import new_satellite_entry
 from baseclasses.forms import DateRangeForm
 from baseclasses.dataclasses.view_classes import TabElement, ActionElement
 from baseclasses.views import MontrekListView
+from baseclasses.views import MontrekDetailView
 from baseclasses.dataclasses.table_elements import StringTableElement
 from baseclasses.dataclasses.table_elements import LinkTableElement
 from baseclasses.dataclasses.table_elements import EuroTableElement
@@ -74,6 +75,7 @@ def account_new_form(request):
 
 
 class AccountOverview(MontrekListView):
+    #TODO Call Queryset with repository
     queryset = AccountHub.objects.all().prefetch_related(
         "accountstaticsatellite_set", "bankaccountpropertysatellite_set"
     )
@@ -103,6 +105,7 @@ class AccountOverview(MontrekListView):
             ),
         )
 
+class AccountDetailView(MontrekDetailView): pass
 
 def account_view(request, account_id: int):
     account_data = account_view_data(account_id)
@@ -115,6 +118,8 @@ def account_view(request, account_id: int):
         account_id, start_date, end_date, page_number
     )
     return render(request, "account_view.html", account_data)
+
+
 
 
 def account_delete(request, account_id: int):
