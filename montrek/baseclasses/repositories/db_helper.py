@@ -155,7 +155,7 @@ def get_hubs_by_satellite_attribute(
     return [instance.hub_entity for instance in satellite_instance]
 
 
-def select_satellite(
+def get_satellite_from_hub_query(
     hub_entity: MontrekHubABC,
     satellite_class: MontrekSatelliteABC,
     reference_date: timezone = None,
@@ -171,6 +171,19 @@ def select_satellite(
         & applied_filter
     )
     return satellite_instance
+
+def select_satellite(
+    hub_entity: MontrekHubABC,
+    satellite_class: MontrekSatelliteABC,
+    reference_date: timezone = None,
+    applied_filter: Q = None,
+):
+    return get_satellite_from_hub_query(
+        hub_entity=hub_entity,
+        satellite_class=satellite_class,
+        reference_date=reference_date,
+        applied_filter=applied_filter,
+    ).get()
 
 
 def get_hub_by_id(
