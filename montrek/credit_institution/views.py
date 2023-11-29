@@ -36,8 +36,7 @@ class CreditIntitutionDetailView(MontrekDetailView):
 
     def get_queryset(self):
         private_key = self.kwargs.get('pk')
-        hub_entity = CreditInstitutionHub.objects.get(pk=private_key)
-        return self.repository(hub_entity).detail_queryset()
+        return self.repository(private_key).detail_queryset()
 
     @property
     def detail_elements(self) -> dict:

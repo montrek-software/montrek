@@ -11,7 +11,9 @@ from account.models import BankAccountPropertySatellite
 from account.models import BankAccountStaticSatellite
 from account.repositories.account_model_queries import new_account
 from account.repositories.account_model_queries import account_view_data
+from account.repositories.account_repository import AccountRepository
 from account.pages import AccountOverviewPage
+from account.pages import AccountPage
 
 from transaction.repositories.transaction_account_queries import (
     get_transactions_by_account_id,
@@ -37,7 +39,6 @@ from credit_institution.models import CreditInstitutionStaticSatellite
 
 from baseclasses.repositories.db_helper import new_satellite_entry
 from baseclasses.forms import DateRangeForm
-from baseclasses.dataclasses.view_classes import TabElement, ActionElement
 from baseclasses.views import MontrekListView
 from baseclasses.views import MontrekDetailView
 from baseclasses.dataclasses.table_elements import StringTableElement
@@ -105,7 +106,13 @@ class AccountOverview(MontrekListView):
             ),
         )
 
-class AccountDetailView(MontrekDetailView): pass
+class AccountDetailView(MontrekDetailView):
+    page_class= AccountPage
+    tab = "tab_details"
+    repository=AccountRepository
+    def get_queryset(self):
+        private_key = self.kwargs.get('pk')
+        return self.repository(private_key).detail_queryset()
 
 def account_view(request, account_id: int):
     account_data = account_view_data(account_id)

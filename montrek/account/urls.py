@@ -5,7 +5,7 @@ urlpatterns = [
     path("new", views.account_new, name="account_new"),
     path("new_form", views.account_new_form, name="account_new_form"),
     path("list", views.AccountOverview.as_view(), name="account"),
-    path("<int:account_id>/view", views.account_view, name="account_view"),
+    path("<int:pk>/view", views.AccountDetailView.as_view(), name="account_view"),
     path("<int:account_id>/delete", views.account_delete, name="account_delete"),
     path(
         "<int:account_id>/delete_form",

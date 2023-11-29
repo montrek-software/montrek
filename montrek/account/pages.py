@@ -21,3 +21,11 @@ class AccountOverviewPage(MontrekPage):
             actions=(action_new_account,),
         )
         return (overview_tab,)
+
+class AccountPage(MontrekPage):
+    def __init__(self, queryset):
+        super().__init__()
+        self.page_name = queryset.account_name
+
+    def get_tabs(self):
+        return ()
