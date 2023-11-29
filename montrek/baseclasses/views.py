@@ -3,6 +3,8 @@ from django.views.generic.list import ListView
 from django.views.generic import DetailView
 from baseclasses.dataclasses.nav_bar_model import NavBarModel
 from baseclasses.pages import NoAppPage, NoPage
+from baseclasses.forms import DateRangeForm
+from baseclasses import utils
 
 # Create your views here.
 
@@ -27,7 +29,29 @@ class MontrekPageViewMixin:
         context["tab_elements"] = self.page.tabs
         context["title"] = self.title
         context["show_date_range_selector"] = self.page.show_date_range_selector
+        context.update(self._handle_date_range_form())
         return context
+
+    def _handle_date_range_form(self):
+        start_date, end_date = utils.get_date_range_dates(self.request)
+        # Get dates from form if new were submitted or take from session
+        request_get = self.request.GET.copy()
+        request_get = (
+            request_get
+            if "start_date" in request_get and "end_date" in request_get
+            else None
+        )
+        date_range_form = DateRangeForm(
+            request_get or {"start_date": start_date, "end_date": end_date}
+        )
+        if date_range_form.is_valid():
+            start_date = date_range_form.cleaned_data["start_date"]
+            end_date = date_range_form.cleaned_data["end_date"]
+            self.request.session["start_date"] = start_date.strftime("%Y-%m-%d")
+            self.request.session["end_date"] = end_date.strftime("%Y-%m-%d")
+        return {"date_range_form": date_range_form}
+
+
 
 
 class MontrekListView(ListView, MontrekPageViewMixin):
