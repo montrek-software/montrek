@@ -85,15 +85,15 @@ class AccountOverview(MontrekListView):
     title = "Overview Table"
 
     @property
-    def table_elements(self) -> dict:
+    def table_elements(self) -> list:
         return (
             StringTableElement(
                 name="Name", attr="accountstaticsatellite_set.account_name"
             ),
             LinkTableElement(
                 name="Link",
-                url="account_view",
-                kwargs={"account_id": "id"},
+                url="account_details",
+                kwargs={"pk": "id"},
                 icon="chevron-right",
                 hover_text="Goto Account",
             ),
@@ -110,9 +110,18 @@ class AccountDetailView(MontrekDetailView):
     page_class= AccountPage
     tab = "tab_details"
     repository=AccountRepository
-    def get_queryset(self):
-        private_key = self.kwargs.get('pk')
-        return self.repository(private_key).detail_queryset()
+
+    @property
+    def detail_elements(self) -> list:
+        return (
+            StringTableElement(
+                name="Name", attr="account_name"
+            ),
+            StringTableElement(
+                name="Iban",
+                attr="bank_account_iban",
+            ),
+        )
 
 def account_view(request, account_id: int):
     account_data = account_view_data(account_id)

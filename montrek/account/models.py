@@ -61,6 +61,7 @@ class BankAccountPropertySatellite(baseclass_models.MontrekSatelliteABC):
 
     @property
     def account_value(self):
+        #TODO: Move to account repository
         account_statics = select_satellite(self.hub_entity, AccountStaticSatellite)
         if (
             account_statics.account_type

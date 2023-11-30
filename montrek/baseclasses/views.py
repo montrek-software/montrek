@@ -4,6 +4,7 @@ from django.views.generic import DetailView
 from baseclasses.dataclasses.nav_bar_model import NavBarModel
 from baseclasses.pages import NoAppPage, NoPage
 from baseclasses.forms import DateRangeForm
+from baseclasses.repositories.montrek_repository import MontrekRepository
 from baseclasses import utils
 
 # Create your views here.
@@ -76,10 +77,15 @@ class MontrekDetailView(DetailView, MontrekPageViewMixin):
     page_class = NoPage
     tab = "empty_tab"
     title = "Details"
+    repository = MontrekRepository
 
     @property
     def detail_elements(self) -> list:
         return []
+
+    def get_queryset(self):
+        private_key = self.kwargs.get('pk')
+        return self.repository(private_key).detail_queryset()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

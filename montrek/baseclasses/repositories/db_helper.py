@@ -1,11 +1,11 @@
 # Purpose: Utility functions for the model package
 import pandas as pd
 import copy
-from typing import Any, List, Dict
+from typing import Any, List, Dict, Type
 from baseclasses.models import MontrekSatelliteABC
 from baseclasses.models import MontrekHubABC
 from django.db.models.base import ModelBase
-from django.db.models import Q
+from django.db.models import Q, Subquery, OuterRef
 from django.utils import timezone
 
 
@@ -161,7 +161,6 @@ def get_satellite_from_hub_query(
     reference_date: timezone = None,
     applied_filter: Q = None,
 ):
-    # TODO: Rename to better name
     reference_date = timezone.now() if reference_date is None else reference_date
     applied_filter = Q() if applied_filter is None else applied_filter
     satellite_instance = satellite_class.objects.filter(
@@ -178,6 +177,7 @@ def select_satellite(
     reference_date: timezone = None,
     applied_filter: Q = None,
 ):
+    # TODO: Rename to better name
     return get_satellite_from_hub_query(
         hub_entity=hub_entity,
         satellite_class=satellite_class,
@@ -185,6 +185,23 @@ def select_satellite(
         applied_filter=applied_filter,
     ).get()
 
+
+def get_satellite_field_subqueries(
+    satellite_class: Type[MontrekSatelliteABC],
+    field_names: List[str],
+    reference_date: timezone
+) -> Dict[str, Subquery]:
+    subqueries = {}
+    for field_name in field_names:
+        subquery = Subquery(
+            satellite_class.objects.filter(
+                hub_entity=OuterRef('pk'),
+                state_date_start__lte=reference_date,
+                state_date_end__gt=reference_date
+            ).values(field_name)[:1]
+        )
+        subqueries[field_name] = subquery
+    return subqueries
 
 def get_hub_by_id(
     hub_id: int,
