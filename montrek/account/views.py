@@ -118,8 +118,15 @@ class AccountDetailView(MontrekDetailView):
                 name="Name", attr="account_name"
             ),
             StringTableElement(
+                name="Type", attr="account_type"
+            ),
+            StringTableElement(
                 name="Iban",
                 attr="bank_account_iban",
+            ),
+            EuroTableElement(
+                name="Value",
+                attr="account_value",
             ),
         )
 
