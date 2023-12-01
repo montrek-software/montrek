@@ -128,6 +128,14 @@ class AccountDetailView(MontrekDetailView):
                 name="Value",
                 attr="account_value",
             ),
+            StringTableElement(
+                name="Credit Institution",
+                attr="credit_institution_name",
+            ),
+            StringTableElement(
+                name="BIC",
+                attr="credit_institution_bic",
+            ),
         )
 
 def account_view(request, account_id: int):

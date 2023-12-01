@@ -1,15 +1,15 @@
 from django.utils import timezone
-from django.db.models import Sum, F
+from django.db.models import Sum, F, Prefetch
 from account.models import (
     AccountHub,
     AccountStaticSatellite,
     BankAccountPropertySatellite,
     BankAccountStaticSatellite,
 )
+from credit_institution.models import CreditInstitutionStaticSatellite
 
 
 from baseclasses.repositories.db_helper import get_satellite_from_hub_query
-from baseclasses.repositories.db_helper import get_satellite_field_subqueries
 from baseclasses.repositories.db_helper import select_satellite
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from depot.managers.depot_stats import DepotStats
@@ -34,15 +34,27 @@ class AccountRepository(MontrekRepository):
 
     def detail_queryset(self, **kwargs):
         reference_date = timezone.now()
-        account_static_fields = get_satellite_field_subqueries(
+        account_static_fields = self.get_satellite_field_subqueries(
             AccountStaticSatellite, ["account_name", "account_type"], reference_date
         )
-        bank_account_static_fields = get_satellite_field_subqueries(
+        bank_account_static_fields = self.get_satellite_field_subqueries(
             BankAccountStaticSatellite, ["bank_account_iban"], reference_date
         )
         account_value = Sum(self._account_value())
-        annotations = {**account_static_fields, **bank_account_static_fields, 'account_value': account_value}
-        return AccountHub.objects.filter(pk=self._hub_entity_id).annotate(**annotations)
+        credit_institution_fields = self.get_linked_satellite_field_subqueries(
+            CreditInstitutionStaticSatellite,
+            "link_account_credit_institution",
+            ["credit_institution_name", "credit_institution_bic"],
+            reference_date,
+        )
+        annotations = {
+            **account_static_fields,
+            **bank_account_static_fields,
+            "account_value": account_value,
+            **credit_institution_fields,
+        }
+
+        return AccountHub.objects.annotate( **annotations)
 
     def table_queryset(self, **kwargs):
         return AccountStaticSatellite.objects.all()

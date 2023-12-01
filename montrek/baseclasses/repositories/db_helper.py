@@ -186,22 +186,6 @@ def select_satellite(
     ).get()
 
 
-def get_satellite_field_subqueries(
-    satellite_class: Type[MontrekSatelliteABC],
-    field_names: List[str],
-    reference_date: timezone
-) -> Dict[str, Subquery]:
-    subqueries = {}
-    for field_name in field_names:
-        subquery = Subquery(
-            satellite_class.objects.filter(
-                hub_entity=OuterRef('pk'),
-                state_date_start__lte=reference_date,
-                state_date_end__gt=reference_date
-            ).values(field_name)[:1]
-        )
-        subqueries[field_name] = subquery
-    return subqueries
 
 def get_hub_by_id(
     hub_id: int,
