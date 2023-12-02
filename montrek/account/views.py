@@ -124,10 +124,10 @@ class AccountDetailView(MontrekDetailView):
                 name="Iban",
                 attr="bank_account_iban",
             ),
-            #EuroTableElement(
-            #    name="Value",
-            #    attr="account_value",
-            #),
+            EuroTableElement(
+                name="Value",
+                attr="account_value",
+            ),
             StringTableElement(
                 name="Credit Institution",
                 attr="credit_institution_name",

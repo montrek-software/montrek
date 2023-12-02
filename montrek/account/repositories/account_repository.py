@@ -1,5 +1,5 @@
 from django.utils import timezone
-from django.db.models import Sum, F, Prefetch
+from django.db.models import Sum, F, Prefetch, FloatField
 from account.models import (
     AccountHub,
     AccountStaticSatellite,
@@ -16,6 +16,7 @@ from depot.managers.depot_stats import DepotStats
 from transaction.repositories.transaction_account_queries import (
     get_transactions_by_account_hub,
 )
+from transaction.models import TransactionSatellite
 
 
 class AccountRepository(MontrekRepository):
@@ -24,18 +25,37 @@ class AccountRepository(MontrekRepository):
 
     def detail_queryset(self, **kwargs):
         reference_date = timezone.now()
-        account_static_fields = self.add_satellite_fields_annotations(
+        self.add_satellite_fields_annotations(
             AccountStaticSatellite, ["account_name", "account_type"], reference_date
         )
-        bank_account_static_fields = self.add_satellite_fields_annotations(
+        self.add_satellite_fields_annotations(
             BankAccountStaticSatellite, ["bank_account_iban"], reference_date
         )
-        #account_value = Sum(self._account_value())
-        credit_institution_fields = self.add_linked_satellites_field_annotations(
+        # account_value = Sum(self._account_value())
+        self.add_linked_satellites_field_annotations(
             CreditInstitutionStaticSatellite,
             "link_account_credit_institution",
             ["credit_institution_name", "credit_institution_bic"],
             reference_date,
+        )
+        transaction_amount_sq = self.get_satellite_subquery(
+            TransactionSatellite,
+            reference_date,
+            "link_account_transaction",
+            "transaction_amount",
+        )
+        transaction_price_sq = self.get_satellite_subquery(
+            TransactionSatellite,
+            reference_date,
+            "link_account_transaction",
+            "transaction_price",
+        )
+        self.annotations.update(
+            {
+                "account_value": Sum(
+                    transaction_amount_sq * transaction_price_sq, output_field=FloatField()
+                )
+            }
         )
         queryset = self.build_queryset()
         return queryset
