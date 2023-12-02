@@ -28,6 +28,7 @@ class TestMontrekRepository(TestCase):
         self.assertEqual(test_queryset.count(), 1)
         self.assertEqual(test_queryset.first().test_name, self.test_sat_1.test_name)
         self.assertEqual(test_queryset.first().test_value, self.test_sat_1.test_value)
+
         test_montrek_repository = MontrekRepository(TestMontrekHub)
         test_montrek_repository.add_satellite_fields_annotations(
             TestMontrekSatellite, ["test_name", "test_value"], montrek_time(2023, 8, 30)
@@ -36,3 +37,12 @@ class TestMontrekRepository(TestCase):
         self.assertEqual(test_queryset.count(), 1)
         self.assertEqual(test_queryset.first().test_name, 'test_sat_2')
         self.assertEqual(test_queryset.first().test_value, '2')
+
+        test_montrek_repository = MontrekRepository(TestMontrekHub)
+        test_montrek_repository.add_satellite_fields_annotations(
+            TestMontrekSatellite, ["test_name", "test_value"], montrek_time(2022, 8, 30)
+        )
+        test_queryset = test_montrek_repository.build_queryset()
+        self.assertEqual(test_queryset.count(), 1)
+        self.assertIsNone(test_queryset.first().test_name)
+        self.assertIsNone(test_queryset.first().test_value)
