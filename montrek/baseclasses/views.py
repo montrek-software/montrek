@@ -84,8 +84,7 @@ class MontrekDetailView(DetailView, MontrekPageViewMixin):
         return []
 
     def get_queryset(self):
-        private_key = self.kwargs.get('pk')
-        return self.repository(private_key).detail_queryset()
+        return self.repository().detail_queryset()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

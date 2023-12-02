@@ -19,42 +19,26 @@ from transaction.repositories.transaction_account_queries import (
 
 
 class AccountRepository(MontrekRepository):
-    def __init__(self, hub_entity_id):
-        self._hub_entity_id = hub_entity_id
-        self._hub_entity = AccountHub.objects.get(pk=hub_entity_id)
-        self._static_satellite = select_satellite(
-            self._hub_entity, AccountStaticSatellite
-        )
-        self._property_satellite = get_satellite_from_hub_query(
-            self._hub_entity, BankAccountPropertySatellite
-        )
-        self._bank_account_satellite = get_satellite_from_hub_query(
-            self._hub_entity, BankAccountStaticSatellite
-        )
+    def __init__(self):
+        super().__init__(AccountHub)
 
     def detail_queryset(self, **kwargs):
         reference_date = timezone.now()
-        account_static_fields = self.get_satellite_field_subqueries(
+        account_static_fields = self.add_satellite_fields_annotations(
             AccountStaticSatellite, ["account_name", "account_type"], reference_date
         )
-        bank_account_static_fields = self.get_satellite_field_subqueries(
+        bank_account_static_fields = self.add_satellite_fields_annotations(
             BankAccountStaticSatellite, ["bank_account_iban"], reference_date
         )
-        account_value = Sum(self._account_value())
-        credit_institution_fields = self.get_linked_satellite_field_subqueries(
+        #account_value = Sum(self._account_value())
+        credit_institution_fields = self.add_linked_satellites_field_annotations(
             CreditInstitutionStaticSatellite,
             "link_account_credit_institution",
             ["credit_institution_name", "credit_institution_bic"],
             reference_date,
         )
-        annotations = {
-            **account_static_fields,
-            **bank_account_static_fields,
-            "account_value": account_value,
-            **credit_institution_fields,
-        }
-
-        return AccountHub.objects.annotate( **annotations)
+        queryset = self.build_queryset()
+        return queryset
 
     def table_queryset(self, **kwargs):
         return AccountStaticSatellite.objects.all()
