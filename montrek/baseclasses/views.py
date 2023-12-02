@@ -53,42 +53,43 @@ class MontrekPageViewMixin:
         return {"date_range_form": date_range_form}
 
 
+class StdQuerysetMixin:
+    @property
+    def elements(self) -> list:
+        return []
 
 
-class MontrekListView(ListView, MontrekPageViewMixin):
+
+class MontrekListView(ListView, MontrekPageViewMixin, StdQuerysetMixin):
     template_name = "montrek_table_new.html"
     page = NoAppPage()
     tab = "empty_tab"
     title = "No Title set!"
 
-    @property
-    def table_elements(self) -> list:
-        return []
+    def get_queryset(self):
+        return self.repository().std_queryset()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context = self.get_page_context(context, **kwargs)
-        context["table_elements"] = self.table_elements
+        context["table_elements"] = self.elements
         return context
 
 
-class MontrekDetailView(DetailView, MontrekPageViewMixin):
+class MontrekDetailView(DetailView, MontrekPageViewMixin, StdQuerysetMixin):
     template_name = "montrek_details.html"
     page_class = NoPage
     tab = "empty_tab"
     title = "Details"
     repository = MontrekRepository
 
-    @property
-    def detail_elements(self) -> list:
-        return []
-
     def get_queryset(self):
-        return self.repository().detail_queryset()
+        return self.repository().std_queryset()
+
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         self.page = self.page_class(context["object"])
         context = self.get_page_context(context, **kwargs)
-        context["detail_elements"] = self.detail_elements
+        context["detail_elements"] = self.elements
         return context

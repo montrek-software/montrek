@@ -76,19 +76,16 @@ def account_new_form(request):
 
 
 class AccountOverview(MontrekListView):
-    #TODO Call Queryset with repository
-    queryset = AccountHub.objects.all().prefetch_related(
-        "accountstaticsatellite_set", "bankaccountpropertysatellite_set"
-    )
     page = AccountOverviewPage()
     tab = "tab_account_list"
     title = "Overview Table"
+    repository = AccountRepository
 
     @property
-    def table_elements(self) -> list:
+    def elements(self) -> list:
         return (
             StringTableElement(
-                name="Name", attr="accountstaticsatellite_set.account_name"
+                name="Name", attr="account_name"
             ),
             LinkTableElement(
                 name="Link",
@@ -99,10 +96,10 @@ class AccountOverview(MontrekListView):
             ),
             EuroTableElement(
                 name="Value",
-                attr="bankaccountpropertysatellite_set.account_value",
+                attr="account_value",
             ),
             StringTableElement(
-                name="Type", attr="accountstaticsatellite_set.account_type"
+                name="Type", attr="account_type"
             ),
         )
 
@@ -112,7 +109,7 @@ class AccountDetailView(MontrekDetailView):
     repository=AccountRepository
 
     @property
-    def detail_elements(self) -> list:
+    def elements(self) -> list:
         return (
             StringTableElement(
                 name="Name", attr="account_name"

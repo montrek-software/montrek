@@ -6,19 +6,16 @@ from django.utils import timezone
 
 
 class MontrekRepository:
-    def __init__(self, hub_class: Type[MontrekHubABC]):
-        self.hub_class = hub_class
+    hub_class = MontrekHubABC
+    def __init__(self):
         self._annotations = {}
 
     @property
     def annotations(self):
         return self._annotations
 
-    def detail_queryset(self, **kwargs):
-        raise NotImplementedError("MontrekRepository has no detail_queryset method!")
-
-    def table_queryset(self, **kwargs):
-        raise NotImplementedError("MontrekRepository has no table_queryset method!")
+    def std_queryset(self, **kwargs):
+        raise NotImplementedError("MontrekRepository has no std_queryset method!")
 
     def add_satellite_fields_annotations(
         self,
