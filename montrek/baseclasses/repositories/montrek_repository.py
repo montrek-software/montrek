@@ -36,7 +36,7 @@ class MontrekRepository():
             )
             self._annotations[field_name] = subquery
 
-    def get_linked_satellite_field_subqueries(
+    def add_linked_satellites_field_annotations(
         self,
         satellite_class: Type[MontrekSatelliteABC],
         link_lookup_string: str,
@@ -50,10 +50,9 @@ class MontrekRepository():
                     hub_entity=OuterRef(link_lookup_string),
                     state_date_start__lte=reference_date,
                     state_date_end__gt=reference_date
-                ).values(field_name)[:1]
+                ).values(field_name)
             )
-            subqueries[field_name] = subquery
-        return subqueries
+            self._annotations[field_name] = subquery
 
     def build_queryset(self) -> QuerySet:
         return self.hub_class.objects.annotate(**self.annotations)
