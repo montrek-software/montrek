@@ -49,6 +49,13 @@ class AccountRepository(MontrekRepository):
         queryset = self.build_queryset()
         return queryset
 
+    def transaction_table_queryset(self, **kwargs):
+        return (
+            TransactionRepository()
+            .std_queryset()
+            .filter(link_transaction_account=OuterRef("pk"))
+        )
+
     def _account_value(self):
         return Case(
             When(
@@ -60,14 +67,14 @@ class AccountRepository(MontrekRepository):
 
     def _get_bank_account_value(self):
         transaction_amount_sq = Subquery(
-            TransactionRepository()
-            .std_queryset()
-            .filter(link_transaction_account=OuterRef("pk"))
+            self.transaction_table_queryset()
             .values("link_transaction_account")
-            .annotate(account_value=Sum(F('transaction_amount') * F('transaction_price')))
+            .annotate(
+                account_value=Sum(F("transaction_amount") * F("transaction_price"))
+            )
             .values("account_value")
         )
-        
+
         return Sum(transaction_amount_sq, output_field=FloatField())
 
     def _get_depot_account_value(self):
