@@ -5,6 +5,7 @@ from baseclasses.pages import MontrekPage
 
 class AccountOverviewPage(MontrekPage):
     page_title = "Accounts"
+    show_date_range_selector = True
 
     def get_tabs(self):
         action_new_account = ActionElement(
@@ -24,6 +25,8 @@ class AccountOverviewPage(MontrekPage):
 
 
 class AccountPage(MontrekPage):
+    show_date_range_selector = True
+
     def __init__(self, obj):
         super().__init__()
         self.obj = obj

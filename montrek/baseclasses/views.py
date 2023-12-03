@@ -67,7 +67,7 @@ class MontrekListView(ListView, MontrekPageViewMixin, StdQuerysetMixin):
     title = "No Title set!"
 
     def get_queryset(self):
-        return self.repository().std_queryset()
+        return self.repository(self.request).std_queryset()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -84,7 +84,7 @@ class MontrekDetailView(DetailView, MontrekPageViewMixin, StdQuerysetMixin):
     repository = MontrekRepository
 
     def get_queryset(self):
-        return self.repository().std_queryset()
+        return self.repository(self.request).std_queryset()
 
 
     def get_context_data(self, **kwargs):

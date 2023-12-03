@@ -51,9 +51,10 @@ class AccountRepository(MontrekRepository):
 
     def transaction_table_queryset(self, **kwargs):
         return (
-            TransactionRepository()
+            TransactionRepository(self.request)
             .std_queryset()
-            .filter(link_transaction_account=OuterRef("pk"))
+            .filter(link_transaction_account=OuterRef("pk"),
+                    transaction_date__lte=self.session_end_date)
         )
 
     def _account_value(self):

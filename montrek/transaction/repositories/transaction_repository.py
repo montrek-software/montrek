@@ -11,7 +11,7 @@ class TransactionRepository(MontrekRepository):
         reference_date = timezone.now()
         self.add_satellite_fields_annotations(
             TransactionSatellite,
-            ["transaction_amount", "transaction_price"],
+            ["transaction_amount", "transaction_price", "transaction_date"],
             reference_date,
         )
         return self.build_queryset()

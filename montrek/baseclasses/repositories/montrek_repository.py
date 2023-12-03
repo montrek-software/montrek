@@ -1,4 +1,4 @@
-from typing import Any, List, Dict, Type
+from typing import Any, List, Dict, Type, Tuple
 from baseclasses.models import MontrekSatelliteABC
 from baseclasses.models import MontrekHubABC
 from django.db.models import Q, Subquery, OuterRef, QuerySet
@@ -7,12 +7,17 @@ from django.utils import timezone
 
 class MontrekRepository:
     hub_class = MontrekHubABC
-    def __init__(self):
+    def __init__(self, request):
         self._annotations = {}
+        self.request = request
 
     @property
     def annotations(self):
         return self._annotations
+
+    @property
+    def session_end_date(self):
+        return self.request.session.get("end_date", timezone.now())
 
     def std_queryset(self, **kwargs):
         raise NotImplementedError("MontrekRepository has no std_queryset method!")
@@ -57,3 +62,22 @@ class MontrekRepository:
 
     def build_queryset(self) -> QuerySet:
         return self.hub_class.objects.annotate(**self.annotations)
+
+    #def _get_date_range_dates(self) -> Tuple[str, str]:
+    #    today = timezone.now().date()
+    #    default_start_date = today - timedelta(days=30)
+    #    default_end_date = today
+    #    default_start_date = default_start_date.strftime("%Y-%m-%d")
+    #    default_end_date = default_end_date.strftime("%Y-%m-%d")
+
+    #    try:
+    #        start_date_str = request.session.get("start_date", default_start_date)
+    #    except ValueError:
+    #        start_date_str = default_start_date
+
+    #    try:
+    #        end_date_str = request.session.get("end_date", default_end_date)
+    #    except ValueError:
+    #        end_date_str = default_end_date
+
+    #    return start_date_str, end_date_str
