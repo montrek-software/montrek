@@ -1,6 +1,7 @@
 from django.urls import reverse
 from baseclasses.dataclasses.view_classes import TabElement, ActionElement
 from baseclasses.pages import MontrekPage
+from account.repositories.account_repository import AccountRepository
 
 
 class AccountOverviewPage(MontrekPage):
@@ -27,10 +28,12 @@ class AccountOverviewPage(MontrekPage):
 class AccountPage(MontrekPage):
     show_date_range_selector = True
 
-    def __init__(self, obj):
-        super().__init__()
-        self.obj = obj
-        self.page_title = obj.account_name
+    def __init__(self, request, **kwargs):
+        super().__init__(request, **kwargs)
+        if 'pk' not in kwargs:
+            raise ValueError("AccountPage needs pk specified in url!")
+        self.obj = AccountRepository(self.request).std_queryset().get(pk=kwargs['pk'])
+        self.page_title = self.obj.account_name
 
     def get_tabs(self):
         account_id = self.obj.pk
@@ -77,7 +80,7 @@ class AccountPage(MontrekPage):
 
         tabs = [
             TabElement(
-                name="Overview",
+                name="Details",
                 link=reverse(
                     "account_details", kwargs={"pk": account_id}
                 ),
@@ -87,7 +90,7 @@ class AccountPage(MontrekPage):
             TabElement(
                 name="Transactions",
                 link=reverse(
-                    "bank_account_view_transactions", kwargs={"account_id": account_id}
+                    "bank_account_view_transactions", kwargs={"pk": account_id}
                 ),
                 html_id="tab_transactions",
                 actions=(action_back, action_new_transaction),

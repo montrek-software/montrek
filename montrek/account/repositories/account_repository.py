@@ -49,7 +49,15 @@ class AccountRepository(MontrekRepository):
         queryset = self.build_queryset()
         return queryset
 
-    def transaction_table_queryset(self, **kwargs):
+    def get_transaction_table_by_account(self, account_hub_id):
+        hub_entity = self.hub_class.objects.get(pk=account_hub_id)
+        return TransactionRepository(self.request).std_queryset().filter(
+            link_transaction_account=hub_entity,
+            transaction_date__lte=self.session_end_date,
+            transaction_date__gte=self.session_start_date,
+        )
+
+    def transaction_table_subquery(self, **kwargs):
         return (
             TransactionRepository(self.request)
             .std_queryset()
@@ -68,7 +76,7 @@ class AccountRepository(MontrekRepository):
 
     def _get_bank_account_value(self):
         transaction_amount_sq = Subquery(
-            self.transaction_table_queryset()
+            self.transaction_table_subquery()
             .values("link_transaction_account")
             .annotate(
                 account_value=Sum(F("transaction_amount") * F("transaction_price"))

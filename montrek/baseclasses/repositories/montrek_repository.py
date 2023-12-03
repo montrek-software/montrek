@@ -11,6 +11,10 @@ class MontrekRepository:
         self._annotations = {}
         self.request = request
 
+    @classmethod
+    def get_hub_by_id(cls, pk: int) -> MontrekHubABC:
+        return cls.hub_class.objects.get(pk=pk)
+
     @property
     def annotations(self):
         return self._annotations
@@ -18,6 +22,10 @@ class MontrekRepository:
     @property
     def session_end_date(self):
         return self.request.session.get("end_date", timezone.now())
+
+    @property
+    def session_start_date(self):
+        return self.request.session.get("start_date", timezone.now())
 
     def std_queryset(self, **kwargs):
         raise NotImplementedError("MontrekRepository has no std_queryset method!")

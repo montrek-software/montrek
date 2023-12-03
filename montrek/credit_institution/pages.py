@@ -26,10 +26,6 @@ class CreditInstitutionAppPage(MontrekPage):
 
 
 class CreditInstitutionPage(MontrekPage):
-    def __init__(self, queryset):
-        super().__init__()
-        self.page_title = queryset.credit_institution_name
-        self.credit_institution_hub = queryset.hub_entity
 
     def get_tabs(self):
         action_back = ActionElement(

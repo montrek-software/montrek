@@ -23,18 +23,8 @@ urlpatterns = [
         name="bank_account_new",
     ),
     path(
-        "<int:account_id>/bank_account_view",
-        views.bank_account_view,
-        name="bank_account_view",
-    ),
-    path(
-        "<int:account_id>/bank_account_view/overview",
-        views.bank_account_view_overview,
-        name="bank_account_view_overview",
-    ),
-    path(
-        "<int:account_id>/bank_account_view/transactions",
-        views.bank_account_view_transactions,
+        "<int:pk>/bank_account_view/transactions",
+        views.AccountTransactionsView.as_view(),
         name="bank_account_view_transactions",
     ),
     path(

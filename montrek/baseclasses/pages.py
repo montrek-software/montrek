@@ -1,8 +1,9 @@
 class MontrekPage:
     page_title = "page_title not set!"
     show_date_range_selector = False
-    def __init__(self):
+    def __init__(self, request, **kwargs):
         self._tabs = None
+        self.request = request
 
 
     def get_tabs(self):
@@ -22,11 +23,6 @@ class MontrekPage:
                 tab.active = ""
 
 
-class NoAppPage(MontrekPage):
-    def get_tabs(self):
-        raise NotImplementedError("MontrekView needs a Page!")
-
 class NoPage(MontrekPage):
-    def __init__(self, hub_entity_id:int):
-        super.__init__(self)
+    def get_tabs(self):
         raise NotImplementedError("MontrekView needs a Page!")

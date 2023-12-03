@@ -76,7 +76,7 @@ def account_new_form(request):
 
 
 class AccountOverview(MontrekListView):
-    page = AccountOverviewPage()
+    page_class = AccountOverviewPage
     tab = "tab_account_list"
     title = "Overview Table"
     repository = AccountRepository
@@ -104,9 +104,10 @@ class AccountOverview(MontrekListView):
         )
 
 class AccountDetailView(MontrekDetailView):
-    page_class= AccountPage
+    page_class = AccountPage
     tab = "tab_details"
     repository=AccountRepository
+    title = "Account Details"
 
     @property
     def elements(self) -> list:
@@ -211,26 +212,40 @@ def bank_account_view_data(account_id: int):
     return account_data
 
 
-def bank_account_view(request, account_id: int):
-    return bank_account_view_overview(request, account_id)
 
 
-def bank_account_view_overview(request, account_id: int):
-    account_data = account_view_data(account_id, "tab_overview")
-    account_data.update(_handle_date_range_form(request))
-    bank_account_static_satellite = BankAccountStaticSatellite.objects.get(
-        hub_entity=account_id
-    )
-    bank_account_property_satellite = BankAccountPropertySatellite.objects.get(
-        hub_entity=account_id
-    )
-    account_data["bank_account_statics"] = bank_account_static_satellite
-    account_data["bank_account_properties"] = bank_account_property_satellite
-    account_data[
-        "credit_institution"
-    ] = get_credit_institution_satellite_by_account_hub_id(account_id)
-    return render(request, "bank_account_view_overview.html", account_data)
+class AccountTransactionsView(MontrekListView):
+    page_class = AccountPage
+    tab = "tab_transactions"
+    title = "Account Transactions"
+    repository = AccountRepository
 
+    def get_queryset(self):
+        return self.repository(self.request).get_transaction_table_by_account(
+            self.kwargs["pk"]
+        )
+
+    @property
+    def elements(self) -> list:
+        return (
+            StringTableElement(
+                name="Counterparty", attr="transaction_party"
+            ),
+    #        LinkTableElement(
+    #            name="Link",
+    #            url="account_details",
+    #            kwargs={"pk": "id"},
+    #            icon="chevron-right",
+    #            hover_text="Goto Account",
+    #        ),
+    #        EuroTableElement(
+    #            name="Value",
+    #            attr="account_value",
+    #        ),
+    #        StringTableElement(
+    #            name="Type", attr="account_type"
+    #        ),
+        )
 
 def bank_account_view_transactions(request, account_id: int):
     account_data = account_view_data(account_id, "tab_transactions")

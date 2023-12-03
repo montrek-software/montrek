@@ -12,7 +12,7 @@ from credit_institution.repositories.credit_institution_repository import (
 class CreditInstitutionOverview(MontrekListView):
     #TODO: Use repository
     model = CreditInstitutionStaticSatellite
-    page = CreditInstitutionAppPage()
+    page_class = CreditInstitutionAppPage
     tab = "tab_overview"
     title = "Overview Table"
 

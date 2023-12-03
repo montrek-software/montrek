@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.views.generic.list import ListView
 from django.views.generic import DetailView
 from baseclasses.dataclasses.nav_bar_model import NavBarModel
-from baseclasses.pages import NoAppPage, NoPage
+from baseclasses.pages import NoPage
 from baseclasses.forms import DateRangeForm
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from baseclasses import utils
@@ -24,12 +24,16 @@ def navbar(request):
 
 
 class MontrekPageViewMixin:
+    page_class = NoPage
+    tab = "empty_tab"
+    title = "No Title set!"
     def get_page_context(self, context, **kwargs):
-        context["page_title"] = self.page.page_title
-        self.page.set_active_tab(self.tab)
-        context["tab_elements"] = self.page.tabs
+        page = self.page_class(self.request, **self.kwargs)
+        context["page_title"] = page.page_title
+        page.set_active_tab(self.tab)
+        context["tab_elements"] = page.tabs
         context["title"] = self.title
-        context["show_date_range_selector"] = self.page.show_date_range_selector
+        context["show_date_range_selector"] = page.show_date_range_selector
         context.update(self._handle_date_range_form())
         return context
 
@@ -62,9 +66,7 @@ class StdQuerysetMixin:
 
 class MontrekListView(ListView, MontrekPageViewMixin, StdQuerysetMixin):
     template_name = "montrek_table_new.html"
-    page = NoAppPage()
-    tab = "empty_tab"
-    title = "No Title set!"
+    repository = MontrekRepository
 
     def get_queryset(self):
         return self.repository(self.request).std_queryset()
@@ -78,9 +80,6 @@ class MontrekListView(ListView, MontrekPageViewMixin, StdQuerysetMixin):
 
 class MontrekDetailView(DetailView, MontrekPageViewMixin, StdQuerysetMixin):
     template_name = "montrek_details.html"
-    page_class = NoPage
-    tab = "empty_tab"
-    title = "Details"
     repository = MontrekRepository
 
     def get_queryset(self):
@@ -89,7 +88,6 @@ class MontrekDetailView(DetailView, MontrekPageViewMixin, StdQuerysetMixin):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        self.page = self.page_class(context["object"])
         context = self.get_page_context(context, **kwargs)
         context["detail_elements"] = self.elements
         return context
