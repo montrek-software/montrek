@@ -21,18 +21,18 @@
     </div>
      <div class="pagination">
         <span class="step-links">
-            {% if table_objects.has_previous %}
-                <a href="?page=1">&laquo; first</a>
-                <a href="?page={{ table_objects.previous_page_number }}">previous</a>
+            {% if object_list.has_previous %}
+            <a href="?page=1"><span class="glyphicon glyphicon-fast-backward"/></a>
+                <a href="?page={{ object_list.previous_page_number }}"><span class="glyphicon glyphicon-step-backward"/></a>
             {% endif %}
 
             <span class="current">
-                Page {{ table_objects.number }} of {{ table_objects.paginator.num_pages }}.
+                Page {{ object_list.number }} of {{ object_list.paginator.num_pages }}.
             </span>
 
-            {% if table_objects.has_next %}
-                <a href="?page={{ table_objects.next_page_number }}">next</a>
-                <a href="?page={{ table_objects.paginator.num_pages }}">last &raquo;</a>
+            {% if object_list.has_next %}
+                <a href="?page={{ object_list.next_page_number }}"><span class="glyphicon glyphicon-step-forward"/></a>
+                <a href="?page={{ object_list.paginator.num_pages }}"><span class="glyphicon glyphicon-fast-forward"/></a>
             {% endif %}
         </span>
     </div>

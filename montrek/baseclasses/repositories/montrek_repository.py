@@ -3,6 +3,8 @@ from baseclasses.models import MontrekSatelliteABC
 from baseclasses.models import MontrekHubABC
 from django.db.models import Q, Subquery, OuterRef, QuerySet
 from django.utils import timezone
+from django.core.paginator import Paginator
+from functools import wraps
 
 
 class MontrekRepository:
@@ -36,8 +38,8 @@ class MontrekRepository:
         fields: List[str],
         reference_date: timezone,
     ):
-        self.add_linked_satellites_field_annotations(
-            satellite_class, "pk", fields, reference_date
+        self._query_to_annotations(
+            satellite_class, "pk", fields, reference_date, False
         )
 
     def add_linked_satellites_field_annotations(
@@ -46,11 +48,25 @@ class MontrekRepository:
         link_lookup_string: str,
         fields: List[str],
         reference_date: timezone,
-    ) -> Dict[str, Subquery]:
+    ):
+        self._query_to_annotations(
+            satellite_class, link_lookup_string, fields, reference_date, True
+        )
+
+    def _query_to_annotations(
+        self,
+        satellite_class: Type[MontrekSatelliteABC],
+        link_lookup_string: str,
+        fields: List[str],
+        reference_date: timezone,
+        add_class_to_field: bool,
+    ):
         for field in fields:
             subquery = self.get_satellite_subquery(
                 satellite_class, reference_date, link_lookup_string, field
             )
+            if add_class_to_field:
+                field = f"{satellite_class.__name__.lower()}.{field}" 
             self._annotations[field] = subquery
 
     def get_satellite_subquery(
@@ -71,21 +87,21 @@ class MontrekRepository:
     def build_queryset(self) -> QuerySet:
         return self.hub_class.objects.annotate(**self.annotations)
 
-    #def _get_date_range_dates(self) -> Tuple[str, str]:
-    #    today = timezone.now().date()
-    #    default_start_date = today - timedelta(days=30)
-    #    default_end_date = today
-    #    default_start_date = default_start_date.strftime("%Y-%m-%d")
-    #    default_end_date = default_end_date.strftime("%Y-%m-%d")
+def paginated_table(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        # Call the original function
+        result = func(*args, **kwargs)
 
-    #    try:
-    #        start_date_str = request.session.get("start_date", default_start_date)
-    #    except ValueError:
-    #        start_date_str = default_start_date
+        # Extract request and queryset from result
+        request = args[0].request  # Assuming the first argument is 'self' and has 'request'
+        queryset = result  # Assuming the original function returns a queryset
 
-    #    try:
-    #        end_date_str = request.session.get("end_date", default_end_date)
-    #    except ValueError:
-    #        end_date_str = default_end_date
+        # Pagination logic
+        page_number = request.GET.get('page', 1)
+        paginate_by = 10  # or you can make this customizable
+        paginator = Paginator(queryset, paginate_by)
+        page = paginator.get_page(page_number)
 
-    #    return start_date_str, end_date_str
+        return page
+    return wrapper

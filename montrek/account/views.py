@@ -44,6 +44,7 @@ from baseclasses.views import MontrekDetailView
 from baseclasses.dataclasses.table_elements import StringTableElement
 from baseclasses.dataclasses.table_elements import LinkTableElement
 from baseclasses.dataclasses.table_elements import EuroTableElement
+from baseclasses.dataclasses.table_elements import DateTableElement
 
 from reporting.managers.account_transaction_plots import (
     draw_monthly_income_expanses_plot,
@@ -84,9 +85,7 @@ class AccountOverview(MontrekListView):
     @property
     def elements(self) -> list:
         return (
-            StringTableElement(
-                name="Name", attr="account_name"
-            ),
+            StringTableElement(name="Name", attr="account_name"),
             LinkTableElement(
                 name="Link",
                 url="account_details",
@@ -98,26 +97,21 @@ class AccountOverview(MontrekListView):
                 name="Value",
                 attr="account_value",
             ),
-            StringTableElement(
-                name="Type", attr="account_type"
-            ),
+            StringTableElement(name="Type", attr="account_type"),
         )
+
 
 class AccountDetailView(MontrekDetailView):
     page_class = AccountPage
     tab = "tab_details"
-    repository=AccountRepository
+    repository = AccountRepository
     title = "Account Details"
 
     @property
     def elements(self) -> list:
         return (
-            StringTableElement(
-                name="Name", attr="account_name"
-            ),
-            StringTableElement(
-                name="Type", attr="account_type"
-            ),
+            StringTableElement(name="Name", attr="account_name"),
+            StringTableElement(name="Type", attr="account_type"),
             StringTableElement(
                 name="Iban",
                 attr="bank_account_iban",
@@ -128,13 +122,14 @@ class AccountDetailView(MontrekDetailView):
             ),
             StringTableElement(
                 name="Credit Institution",
-                attr="credit_institution_name",
+                attr="creditinstitutionstaticsatellite.credit_institution_name",
             ),
             StringTableElement(
                 name="BIC",
-                attr="credit_institution_bic",
+                attr="creditinstitutionstaticsatellite.credit_institution_bic",
             ),
         )
+
 
 def account_view(request, account_id: int):
     account_data = account_view_data(account_id)
@@ -147,8 +142,6 @@ def account_view(request, account_id: int):
         account_id, start_date, end_date, page_number
     )
     return render(request, "account_view.html", account_data)
-
-
 
 
 def account_delete(request, account_id: int):
@@ -212,8 +205,6 @@ def bank_account_view_data(account_id: int):
     return account_data
 
 
-
-
 class AccountTransactionsView(MontrekListView):
     page_class = AccountPage
     tab = "tab_transactions"
@@ -228,75 +219,42 @@ class AccountTransactionsView(MontrekListView):
     @property
     def elements(self) -> list:
         return (
-            StringTableElement(
-                name="Counterparty", attr="transaction_party"
-            ),
-    #        LinkTableElement(
-    #            name="Link",
-    #            url="account_details",
-    #            kwargs={"pk": "id"},
-    #            icon="chevron-right",
-    #            hover_text="Goto Account",
-    #        ),
-    #        EuroTableElement(
-    #            name="Value",
-    #            attr="account_value",
-    #        ),
-    #        StringTableElement(
-    #            name="Type", attr="account_type"
-    #        ),
-        )
-
-def bank_account_view_transactions(request, account_id: int):
-    account_data = account_view_data(account_id, "tab_transactions")
-    account_data.update(_handle_date_range_form(request))
-    # Get the paginated transactions
-    page_number = request.GET.get("page", 1)
-    transaction_fields = {
-        "Counterparty": {"attr": "transaction_party"},
-        "CP Cat": {
-            "link": {
-                "url": "transaction_category_add_form_with_counterparty",
-                "kwargs": {
-                    "account_id": str(account_id),
+            StringTableElement(name="Counterparty", attr="transaction_party"),
+            LinkTableElement(
+                name="CP Cat",
+                url="transaction_category_add_form_with_counterparty",
+                kwargs={
+                    "account_id": str(self.kwargs["pk"]),
                     "counterparty": "transaction_party",
                 },
-                "icon": "tag",
-                "hover_text": "Set Category based on Counterparty",
-            },
-        },
-        "IBAN": {"attr": "transaction_party_iban"},
-        "IBAN Cat": {
-            "link": {
-                "url": "transaction_category_add_form_with_iban",
-                "kwargs": {
-                    "account_id": str(account_id),
+                icon="tag",
+                hover_text="Set Category based on Counterparty",
+            ),
+            StringTableElement(name="IBAN", attr="transaction_party_iban"),
+            LinkTableElement(
+                name="IBAN Cat",
+                url="transaction_category_add_form_with_iban",
+                kwargs={
+                    "account_id": str(self.kwargs["pk"]),
                     "iban": "transaction_party_iban",
                 },
-                "icon": "tag",
-                "hover_text": "Set Category based on IBAN",
-            },
-        },
-        "Description": {"attr": "transaction_description"},
-        "Date": {"attr": "transaction_date"},
-        "Value": {"attr": "transaction_value"},
-        "Category": {"attr": "transaction_category.typename"},
-        "View": {
-            "link": {
-                "url": "transaction_view",
-                "kwargs": {"pk": "id"},
-                "icon": "eye-open",
-                "hover_text": "View",
-            },
-        },
-    }
-    account_data["columns"] = transaction_fields.keys()
-    account_data["items"] = transaction_fields.values()
-    start_date, end_date = _get_date_range_dates(request)
-    account_data["table_objects"] = get_paginated_transactions(
-        account_id, start_date, end_date, page_number
-    )
-    return render(request, "bank_account_view_table.html", account_data)
+                icon="tag",
+                hover_text="Set Category based on IBAN",
+            ),
+            StringTableElement(name="Description", attr="transaction_description"),
+            DateTableElement(name="Date", attr="transaction_date"),
+            EuroTableElement(name="Value", attr="transaction_value"),
+            StringTableElement(
+                name="Category", attr="transactioncategorysatellite.typename"
+            ),
+            LinkTableElement(
+                name="View",
+                url="transaction_view",
+                kwargs={"pk": "id"},
+                icon="eye-open",
+                hover_text="View",
+            ),
+        )
 
 
 def bank_account_view_graphs(request, account_id: int):

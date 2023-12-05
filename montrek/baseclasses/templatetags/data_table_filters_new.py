@@ -12,7 +12,7 @@ def get_attribute(obj, table_element):
     if isinstance(table_element, table_elements.LinkTableElement):
         return _get_link(obj, table_element)
     attr = table_element.attr
-    value = _get_dotted_attr_or_arg(obj, attr)
+    value = getattr(obj, attr)
     return table_element.format(value)
 
 
@@ -31,6 +31,7 @@ def _get_dotted_attr_or_arg(obj, attr):
 
 
 def _get_link(obj, table_element):
+    #TODO Update this such that _get_dotted_attr_or_arg is not used anymore
     kwargs = {
         key: _get_dotted_attr_or_arg(obj, value)
         for key, value in table_element.kwargs.items()
