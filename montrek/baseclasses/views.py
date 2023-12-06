@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.views.generic.list import ListView
 from django.views.generic import DetailView
+from django.views.generic.base import TemplateView
 from baseclasses.dataclasses.nav_bar_model import NavBarModel
 from baseclasses.pages import NoPage
 from baseclasses.forms import DateRangeForm
@@ -63,6 +64,19 @@ class StdQuerysetMixin:
         return []
 
 
+class MontrekTemplateView(TemplateView, MontrekPageViewMixin):
+    template_name = "montrek.html"
+    repository = MontrekRepository
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context = self.get_page_context(context, **kwargs)
+        template_context = self.get_template_context()
+        context.update(template_context)
+        return context
+
+    def get_template_context(self) -> dict:
+        raise NotImplementedError("Please implement this method in your subclass!")
 
 class MontrekListView(ListView, MontrekPageViewMixin, StdQuerysetMixin):
     template_name = "montrek_table_new.html"

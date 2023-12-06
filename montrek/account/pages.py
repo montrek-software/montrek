@@ -98,7 +98,7 @@ class AccountPage(MontrekPage):
             TabElement(
                 name="Graphs",
                 link=reverse(
-                    "bank_account_view_graphs", kwargs={"account_id": account_id}
+                    "account_view_graphs", kwargs={"pk": account_id}
                 ),
                 html_id="tab_graphs",
                 actions=(action_back,),
@@ -106,7 +106,7 @@ class AccountPage(MontrekPage):
             TabElement(
                 name="Uploads",
                 link=reverse(
-                    "bank_account_view_uploads", kwargs={"account_id": account_id}
+                    "account_view_uploads", kwargs={"pk": account_id}
                 ),
                 html_id="tab_uploads",
                 actions=(action_back, action_upload_csv),

@@ -87,6 +87,9 @@ class MontrekRepository:
     def build_queryset(self) -> QuerySet:
         return self.hub_class.objects.annotate(**self.annotations)
 
+    def rename_field(self, field: str, new_name: str):
+        self.annotations[new_name] = self.annotations[field]
+
 def paginated_table(func):
     @wraps(func)
     def wrapper(*args, **kwargs):

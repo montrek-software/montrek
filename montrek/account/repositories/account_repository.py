@@ -27,6 +27,9 @@ from transaction.repositories.transaction_account_queries import (
     get_transactions_by_account_hub,
 )
 from transaction.repositories.transaction_repository import TransactionRepository
+from file_upload.repositories.file_upload_registry_repository import (
+    FileUploadRegistryRepository,
+)
 
 
 class AccountRepository(MontrekRepository):
@@ -46,26 +49,36 @@ class AccountRepository(MontrekRepository):
             ["credit_institution_name", "credit_institution_bic"],
             reference_date,
         )
-        self.annotations.update({"account_value": self._account_value()})
+        self._account_value()
         queryset = self.build_queryset()
         return queryset
 
     @paginated_table
+    def get_transaction_table_by_account_paginated(self, account_hub_id):
+        return self.get_transaction_table_by_account(account_hub_id)
+
     def get_transaction_table_by_account(self, account_hub_id):
         hub_entity = self.hub_class.objects.get(pk=account_hub_id)
-        transactions = TransactionRepository(self.request).std_queryset().filter(
-            link_transaction_account=hub_entity,
-            transaction_date__lte=self.session_end_date,
-            transaction_date__gte=self.session_start_date,
-        ).order_by("-transaction_date")
+        transactions = (
+            TransactionRepository(self.request)
+            .std_queryset()
+            .filter(
+                link_transaction_account=hub_entity,
+                transaction_date__lte=self.session_end_date,
+                transaction_date__gte=self.session_start_date,
+            )
+            .order_by("-transaction_date")
+        )
         return transactions
 
     def transaction_table_subquery(self, **kwargs):
         return (
             TransactionRepository(self.request)
             .std_queryset()
-            .filter(link_transaction_account=OuterRef("pk"),
-                    transaction_date__lte=self.session_end_date)
+            .filter(
+                link_transaction_account=OuterRef("pk"),
+                transaction_date__lte=self.session_end_date,
+            )
         )
 
     def _account_value(self):
@@ -81,13 +94,17 @@ class AccountRepository(MontrekRepository):
         transaction_amount_sq = Subquery(
             self.transaction_table_subquery()
             .values("link_transaction_account")
-            .annotate(
-                account_value=Sum(F("transaction_value"))
-            )
+            .annotate(account_value=Sum(F("transaction_price")))
             .values("account_value")
         )
-
-        return Sum(transaction_amount_sq, output_field=FloatField())
+        self.annotations["account_value"] = transaction_amount_sq
 
     def _get_depot_account_value(self):
         return DepotStats(self._hub_entity_id, timezone.now()).current_value
+
+    @paginated_table
+    def get_upload_registry_table_by_account_paginated(self, account_hub_id: int):
+        hub_entity = self.hub_class.objects.get(pk=account_hub_id)
+        return FileUploadRegistryRepository(self.request).std_queryset().filter(
+            link_file_upload_registry_account=hub_entity
+        ).order_by('-created_at')

@@ -58,6 +58,7 @@ def read_dkb_transactions_from_csv(file_path: str) -> pd.DataFrame:
         "transaction_description": lambda x: " ".join(x),
         "transaction_price": lambda x: x.sum(),
     }
+    transaction_df['transaction_description'] = transaction_df['transaction_description'].astype(str)
     transaction_df = (
         transaction_df.groupby(
             ["transaction_date", "transaction_party", "transaction_party_iban"]

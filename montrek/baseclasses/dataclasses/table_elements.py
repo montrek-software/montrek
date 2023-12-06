@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from decimal import Decimal
 from reporting.core.reporting_colors import ReportingColors
 
 
@@ -35,6 +36,8 @@ class EuroTableElement(TableElement):
     attr: str
 
     def format(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            return f'<td style="text-align:right;">{value}</td>'
         color = _get_value_color(value)
         return f'<td style="text-align:right;color:{color};">{value:,.2f}&#x20AC;</td>'
 

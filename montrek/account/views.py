@@ -16,12 +16,6 @@ from account.pages import AccountOverviewPage
 from account.pages import AccountPage
 
 from transaction.repositories.transaction_account_queries import (
-    get_transactions_by_account_id,
-)
-from transaction.repositories.transaction_account_queries import (
-    get_paginated_transactions,
-)
-from transaction.repositories.transaction_account_queries import (
     get_paginated_transactions_category_map,
 )
 
@@ -41,6 +35,7 @@ from baseclasses.repositories.db_helper import new_satellite_entry
 from baseclasses.forms import DateRangeForm
 from baseclasses.views import MontrekListView
 from baseclasses.views import MontrekDetailView
+from baseclasses.views import MontrekTemplateView
 from baseclasses.dataclasses.table_elements import StringTableElement
 from baseclasses.dataclasses.table_elements import LinkTableElement
 from baseclasses.dataclasses.table_elements import EuroTableElement
@@ -131,19 +126,6 @@ class AccountDetailView(MontrekDetailView):
         )
 
 
-def account_view(request, account_id: int):
-    account_data = account_view_data(account_id)
-    if account_data["account_statics"].account_type == "BankAccount":
-        return bank_account_view(request, account_id)
-    account_data.update(_handle_date_range_form(request))
-    page_number = request.GET.get("page", 1)
-    start_date, end_date = _get_date_range_dates(request)
-    account_data["transactions_page"] = get_paginated_transactions(
-        account_id, start_date, end_date, page_number
-    )
-    return render(request, "account_view.html", account_data)
-
-
 def account_delete(request, account_id: int):
     account_statics = AccountStaticSatellite.objects.get(hub_entity=account_id)
     account_statics.delete()
@@ -212,7 +194,7 @@ class AccountTransactionsView(MontrekListView):
     repository = AccountRepository
 
     def get_queryset(self):
-        return self.repository(self.request).get_transaction_table_by_account(
+        return self.repository(self.request).get_transaction_table_by_account_paginated(
             self.kwargs["pk"]
         )
 
@@ -244,9 +226,7 @@ class AccountTransactionsView(MontrekListView):
             StringTableElement(name="Description", attr="transaction_description"),
             DateTableElement(name="Date", attr="transaction_date"),
             EuroTableElement(name="Value", attr="transaction_value"),
-            StringTableElement(
-                name="Category", attr="transactioncategorysatellite.typename"
-            ),
+            StringTableElement(name="Category", attr="transaction_category"),
             LinkTableElement(
                 name="View",
                 url="transaction_view",
@@ -257,30 +237,63 @@ class AccountTransactionsView(MontrekListView):
         )
 
 
-def bank_account_view_graphs(request, account_id: int):
-    account_data = account_view_data(account_id, "tab_graphs")
-    account_data.update(_handle_date_range_form(request))
-    account_transactions = (
-        get_transactions_by_account_id(account_id).order_by("-transaction_date").all()
-    )
-    start_date, end_date = _get_date_range_dates(request)
-    account_transactions = account_transactions.filter(
-        transaction_date__gte=start_date, transaction_date__lte=end_date
-    )
-    account_transactions_df = read_frame(account_transactions)
-    income_expanse_plot = draw_monthly_income_expanses_plot(
-        account_transactions_df
-    ).format_html()
-    account_data["income_expanse_plot"] = income_expanse_plot
-    category_pie_plots = draw_income_expenses_category_pie_plot(account_transactions)
-    account_data["income_category_pie_plot"] = category_pie_plots[
-        "income"
-    ].format_html()
-    account_data["expense_category_pie_plot"] = category_pie_plots[
-        "expense"
-    ].format_html()
-    return render(request, "bank_account_view_graphs.html", account_data)
+class AccountGraphsView(MontrekTemplateView):
+    page_class = AccountPage
+    tab = "tab_graphs"
+    title = "Account Graphs"
+    repository = AccountRepository
+    template_name = "account_graphs.html"
 
+    def get_queryset(self):
+        return self.repository(self.request).get_transaction_table_by_account(
+            self.kwargs["pk"]
+        )
+
+    def get_template_context(self) -> dict:
+        account_transactions = self.get_queryset().all()
+        account_transactions_df = read_frame(account_transactions)
+        account_data = {}
+        income_expanse_plot = draw_monthly_income_expanses_plot(
+            account_transactions_df
+        ).format_html()
+        account_data["income_expanse_plot"] = income_expanse_plot
+        category_pie_plots = draw_income_expenses_category_pie_plot(
+            account_transactions
+        )
+        account_data["income_category_pie_plot"] = category_pie_plots[
+            "income"
+        ].format_html()
+        account_data["expense_category_pie_plot"] = category_pie_plots[
+            "expense"
+        ].format_html()
+        return account_data
+
+class AccountUploadView(MontrekListView):
+    page_class = AccountPage
+    tab = "tab_uploads"
+    title = "Account Uploads"
+    repository = AccountRepository
+
+    def get_queryset(self):
+        return self.repository(self.request).get_upload_registry_table_by_account_paginated(
+            self.kwargs["pk"]
+        )
+
+    @property
+    def elements(self) -> list:
+        return (
+            StringTableElement(name="File Name", attr="file_name"),
+            StringTableElement(name="Upload Status", attr="upload_status"),
+            StringTableElement(name="Upload Message", attr="upload_message"),
+            DateTableElement(name="Upload Date", attr="created_at"),
+            LinkTableElement(
+                name="File",
+                url="download_upload_file",
+                kwargs={"upload_registry_id": "id"},
+                icon="download",
+                hover_text="Download",
+            ),
+        )
 
 def bank_account_view_uploads(request, account_id: int):
     account_data = account_view_data(account_id, "tab_uploads")

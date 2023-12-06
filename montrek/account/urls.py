@@ -28,14 +28,14 @@ urlpatterns = [
         name="bank_account_view_transactions",
     ),
     path(
-        "<int:account_id>/bank_account_view/graphs",
-        views.bank_account_view_graphs,
-        name="bank_account_view_graphs",
+        "<int:pk>/account_view/graphs",
+        views.AccountGraphsView.as_view(),
+        name="account_view_graphs",
     ),
     path(
-        "<int:account_id>/bank_account_view/uploads",
-        views.bank_account_view_uploads,
-        name="bank_account_view_uploads",
+        "<int:pk>/account_view/uploads",
+        views.AccountUploadView.as_view(),
+        name="account_view_uploads",
     ),
     path(
         "<int:account_id>/bank_account_view/transaction_category_map",
