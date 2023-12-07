@@ -214,7 +214,7 @@ class AccountTransactionsView(MontrekListView):
             StringTableElement(name="Category", attr="transaction_category"),
             LinkTableElement(
                 name="View",
-                url="transaction_view",
+                url="transaction_details",
                 kwargs={"pk": "id"},
                 icon="eye-open",
                 hover_text="View",

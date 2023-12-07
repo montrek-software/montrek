@@ -27,6 +27,13 @@ class CreditInstitutionAppPage(MontrekPage):
 
 class CreditInstitutionPage(MontrekPage):
 
+    def __init__(self, request, **kwargs):
+        super().__init__(request, **kwargs)
+        if 'pk' not in kwargs:
+            raise ValueError("AccountPage needs pk specified in url!")
+        self.obj = CreditInstitutionRepository(self.request).std_queryset().get(pk=kwargs['pk'])
+        self.page_title = self.obj.credit_institution_name
+
     def get_tabs(self):
         action_back = ActionElement(
             icon="arrow-left",
@@ -37,7 +44,7 @@ class CreditInstitutionPage(MontrekPage):
         view_tab = TabElement(
             name="Details",
             link=reverse(
-                "credit_institution_details", args=[self.credit_institution_hub.id]
+                "credit_institution_details", args=[self.obj.id]
             ),
             html_id="tab_details",
             actions=(action_back,),

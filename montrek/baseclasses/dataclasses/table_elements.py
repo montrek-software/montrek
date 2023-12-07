@@ -31,6 +31,13 @@ class LinkTableElement(TableElement):
     hover_text: str
 
 @dataclass
+class LinkTextTableElement(TableElement):
+    url: str
+    kwargs: dict
+    text: str
+    hover_text: str
+
+@dataclass
 class FloatTableElement(TableElement):
     attr: str
 

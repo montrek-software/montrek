@@ -9,7 +9,10 @@ register = template.Library()
 
 @register.filter(name="show_item")
 def get_attribute(obj, table_element):
-    if isinstance(table_element, table_elements.LinkTableElement):
+    if isinstance(
+        table_element,
+        (table_elements.LinkTableElement, table_elements.LinkTextTableElement),
+    ):
         return _get_link(obj, table_element)
     attr = table_element.attr
     value = getattr(obj, attr)
@@ -31,7 +34,7 @@ def _get_dotted_attr_or_arg(obj, attr):
 
 
 def _get_link(obj, table_element):
-    #TODO Update this such that _get_dotted_attr_or_arg is not used anymore
+    # TODO Update this such that _get_dotted_attr_or_arg is not used anymore
     kwargs = {
         key: _get_dotted_attr_or_arg(obj, value)
         for key, value in table_element.kwargs.items()
@@ -42,15 +45,19 @@ def _get_link(obj, table_element):
         url_target,
         kwargs=kwargs,
     )
-    icon = table_element.icon
+    if isinstance(table_element, table_elements.LinkTextTableElement):
+        link_text = _get_dotted_attr_or_arg(obj, table_element.text)
+    else:
+        link_text = Template(
+            '<span class="glyphicon glyphicon-{{ icon }}"></span>'
+        ).render(Context({"icon": table_element.icon}))
     id_tag = url.replace("/", "_")
     hover_text = table_element.hover_text
-    template = Template(
-        '<td><a id="id_{{ id_tag }}" href="{{ url }}" title="{{ hover_text }}"><span class="glyphicon glyphicon-{{ icon }}"></span></a></td>'
-    )
+    template_str = '<td><a id="id_{{ id_tag }}" href="{{ url }}" title="{{ hover_text }}">{{ link_text }}</a></td>'
+    template = Template(template_str)
     context = {
         "url": url,
-        "icon": icon,
+        "link_text": link_text,
         "url_target": url_target,
         "id_tag": id_tag,
         "hover_text": hover_text,

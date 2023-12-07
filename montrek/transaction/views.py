@@ -27,6 +27,7 @@ from baseclasses.dataclasses.table_elements import StringTableElement
 from baseclasses.dataclasses.table_elements import DateTableElement
 from baseclasses.dataclasses.table_elements import EuroTableElement
 from baseclasses.dataclasses.table_elements import FloatTableElement
+from baseclasses.dataclasses.table_elements import LinkTextTableElement
 from asset.models import AssetStaticSatellite
 from asset.models import AssetHub
 
@@ -36,6 +37,9 @@ class TransactionSatelliteDetailView(MontrekDetailView):
     page_class = TransactionPage
     tab = "tab_details"
     title = "Transaction Details"
+
+    def get_queryset(self):
+        return self.repository(self.request).get_queryset_with_account()
 
     @property
     def elements(self) -> list:
@@ -67,6 +71,13 @@ class TransactionSatelliteDetailView(MontrekDetailView):
             StringTableElement(
                 attr="transaction_category",
                 name="Category",
+            ),
+            LinkTextTableElement(
+                name="Account",
+                url="account_view_transactions",
+                kwargs={"pk": "account_id"},
+                text="account_name",
+                hover_text="View Account",
             ),
         ]
 

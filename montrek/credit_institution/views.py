@@ -10,14 +10,13 @@ from credit_institution.repositories.credit_institution_repository import (
 
 
 class CreditInstitutionOverview(MontrekListView):
-    #TODO: Use repository
-    model = CreditInstitutionStaticSatellite
     page_class = CreditInstitutionAppPage
     tab = "tab_overview"
     title = "Overview Table"
+    repository = CreditInstitutionRepository
 
     @property
-    def table_elements(self) -> dict:
+    def elements(self) -> dict:
         return (
             StringTableElement(name="Name", attr="credit_institution_name"),
             LinkTableElement(
@@ -36,9 +35,10 @@ class CreditIntitutionDetailView(MontrekDetailView):
     page_class = CreditInstitutionPage
     tab = "tab_details"
     repository = CreditInstitutionRepository
+    title = "Details"
 
     @property
-    def detail_elements(self) -> dict:
+    def elements(self) -> dict:
         return (
             StringTableElement(name="Name", attr="credit_institution_name"),
             StringTableElement(name="BIC", attr="credit_institution_bic"),

@@ -14,7 +14,7 @@ class TransactionPage(MontrekPage):
         view_tab = TabElement(
             name="Details",
             link=reverse(
-                "transaction_view", kwargs={"pk": self.obj.pk}
+                "transaction_details", kwargs={"pk": self.obj.pk}
             ),
             html_id="tab_details",
             actions=(),
