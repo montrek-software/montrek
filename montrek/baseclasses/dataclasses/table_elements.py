@@ -49,3 +49,12 @@ class DateTableElement(TableElement):
     def format(self, value):
         value = value.strftime("%d/%m/%Y")
         return f'<td style="text-align:left;">{value}</td>'
+
+@dataclass
+class BooleanTableElement(TableElement):
+    attr: str
+
+    def format(self, value):
+        if value:
+            return f'<td style="text-align:left;">&#x2713;</td>'
+        return f'<td style="text-align:left;">&#x2717;</td>'

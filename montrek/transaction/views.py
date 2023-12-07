@@ -38,8 +38,8 @@ class TransactionSatelliteDetailView(DetailView):
 class SuccessURLTransactionCategoryMapMixin(CreateView): # pylint: disable=too-few-public-methods
     def get_success_url(self):
         account_id = self.kwargs['account_id']
-        return reverse('bank_account_view_transaction_category_map',
-                       kwargs={'account_id': account_id})
+        return reverse('account_view_transaction_category_map',
+                       kwargs={'pk': account_id})
 
 class SuccessURLTransactionTableMixin(CreateView): # pylint: disable=too-few-public-methods
     def get_success_url(self):
@@ -178,5 +178,5 @@ def transaction_add(request, account_id: int):
     if asset_name != "None":
         transaction_hub.link_transaction_asset.add(asset_hub)
     if account_statics.account_type in ["BankAccount", "Depot"]:
-        return redirect(f"/account/{account_id}/bank_account_view/transactions")
+        return redirect(f"/account/{account_id}/account_view/transactions")
     return redirect(f"/account/{account_id}/view")

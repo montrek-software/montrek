@@ -114,8 +114,8 @@ class AccountPage(MontrekPage):
             TabElement(
                 name="Transaction Category Map",
                 link=reverse(
-                    "bank_account_view_transaction_category_map",
-                    kwargs={"account_id": account_id},
+                    "account_view_transaction_category_map",
+                    kwargs={"pk": account_id},
                 ),
                 html_id="tab_transaction_category_map",
                 actions=(action_back, action_add_transaction_category),

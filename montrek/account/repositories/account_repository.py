@@ -27,6 +27,7 @@ from transaction.repositories.transaction_account_queries import (
     get_transactions_by_account_hub,
 )
 from transaction.repositories.transaction_repository import TransactionRepository
+from transaction.repositories.transaction_category_repository import TransactionCategoryMapRepository
 from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepository,
 )
@@ -108,4 +109,11 @@ class AccountRepository(MontrekRepository):
         hub_entity = self.hub_class.objects.get(pk=account_hub_id)
         return FileUploadRegistryRepository(self.request).std_queryset().filter(
             link_file_upload_registry_account=hub_entity
+        ).order_by('-created_at')
+
+    @paginated_table
+    def get_transaction_category_map_table_by_account_paginated(self, account_hub_id:int):
+        hub_entity = self.hub_class.objects.get(pk=account_hub_id)
+        return TransactionCategoryMapRepository(self.request).std_queryset().filter(
+            link_transaction_category_map_account=hub_entity
         ).order_by('-created_at')

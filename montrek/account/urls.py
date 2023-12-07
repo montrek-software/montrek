@@ -38,9 +38,9 @@ urlpatterns = [
         name="account_view_uploads",
     ),
     path(
-        "<int:account_id>/bank_account_view/transaction_category_map",
-        views.bank_account_view_transaction_category_map,
-        name="bank_account_view_transaction_category_map",
+        "<int:pk>/account_view/transaction_category_map",
+        views.AccountTransactionCategoryMap.as_view(),
+        name="account_view_transaction_category_map",
     ),
     path(
         "<int:account_id>/bank_account_view/depot",

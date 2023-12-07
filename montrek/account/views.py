@@ -10,7 +10,6 @@ from account.models import AccountStaticSatellite
 from account.models import BankAccountPropertySatellite
 from account.models import BankAccountStaticSatellite
 from account.repositories.account_model_queries import new_account
-from account.repositories.account_model_queries import account_view_data
 from account.repositories.account_repository import AccountRepository
 from account.pages import AccountOverviewPage
 from account.pages import AccountPage
@@ -40,6 +39,7 @@ from baseclasses.dataclasses.table_elements import StringTableElement
 from baseclasses.dataclasses.table_elements import LinkTableElement
 from baseclasses.dataclasses.table_elements import EuroTableElement
 from baseclasses.dataclasses.table_elements import DateTableElement
+from baseclasses.dataclasses.table_elements import BooleanTableElement
 
 from reporting.managers.account_transaction_plots import (
     draw_monthly_income_expanses_plot,
@@ -171,21 +171,6 @@ def bank_account_new(request, account_name: str, account_type: str):
     return redirect("/account/list")
 
 
-def bank_account_view_data(account_id: int):
-    account_data = account_view_data(account_id)
-    bank_account_static_satellite = BankAccountStaticSatellite.objects.get(
-        hub_entity=account_id
-    )
-    bank_account_property_satellite = BankAccountPropertySatellite.objects.get(
-        hub_entity=account_id
-    )
-    account_data["bank_account_statics"] = bank_account_static_satellite
-    account_data["bank_account_properties"] = bank_account_property_satellite
-    account_data[
-        "credit_institution"
-    ] = get_credit_institution_satellite_by_account_hub_id(account_id)
-    return account_data
-
 
 class AccountTransactionsView(MontrekListView):
     page_class = AccountPage
@@ -295,132 +280,67 @@ class AccountUploadView(MontrekListView):
             ),
         )
 
-def bank_account_view_uploads(request, account_id: int):
-    account_data = account_view_data(account_id, "tab_uploads")
-    account_data.update(_handle_date_range_form(request))
-    page_number = request.GET.get("page", 1)
-    upload_fields = {
-        "File Name": {"attr": "file_name"},
-        "Upload Status": {"attr": "upload_status"},
-        "Upload Message": {"attr": "upload_message"},
-        "Upload Date": {"attr": "created_at"},
-        "File": {
-            "link": {
-                "url": "download_upload_file",
-                "kwargs": {"upload_registry_id": "hub_entity.id"},
-                "icon": "download",
-                "hover_text": "Download",
-            }
-        },
-    }
-    account_data["columns"] = upload_fields.keys()
-    account_data["items"] = upload_fields.values()
-    account_data["table_objects"] = get_paginated_upload_registries(
-        account_id, page_number
-    )
-    return render(request, "bank_account_view_table.html", account_data)
 
+class AccountTransactionCategoryMap(MontrekListView):
+    page_class = AccountPage
+    tab = "tab_transaction_category_map"
+    title = "Transaction Category Map"
+    repository = AccountRepository
 
-def bank_account_view_transaction_category_map(request, account_id: int):
-    account_data = account_view_data(account_id, "tab_transaction_category_map")
-    account_data.update(_handle_date_range_form(request))
-    page_number = request.GET.get("page", 1)
-    trans_cat_map_fields = {
-        "Field": {"attr": "field"},
-        "Value": {"attr": "value"},
-        "Category": {"attr": "category"},
-        "Is Regex": {"attr": "is_regex"},
-        "Edit": {
-            "link": {
-                "url": "transaction_category_map_edit",
-                "kwargs": {"pk": "id", "account_id": str(account_id)},
-                "icon": "edit",
-                "hover_text": "Edit",
-            },
-        },
-        "Delete": {
-            "link": {
-                "url": "transaction_category_map_delete",
-                "kwargs": {"pk": "id", "account_id": str(account_id)},
-                "icon": "trash",
-                "hover_text": "Delete",
-            },
-        },
-    }
-    account_data["columns"] = trans_cat_map_fields.keys()
-    account_data["items"] = trans_cat_map_fields.values()
-    account_data["table_objects"] = get_paginated_transactions_category_map(
-        account_id, page_number
-    )
-    return render(request, "bank_account_view_table.html", account_data)
+    def get_queryset(self):
+        return self.repository(self.request).get_transaction_category_map_table_by_account_paginated(
+            self.kwargs["pk"]
+        )
 
-
-def bank_account_view_depot(request, account_id: int):
-    account_data = account_view_data(account_id, "tab_depot")
-    account_data.update(_handle_date_range_form(request))
-    depot_table_map_fields = {
-        "Asset Name": {"attr": "asset_name"},
-        "ISIN": {"attr": "asset_isin"},
-        "WKN": {"attr": "asset_wkn"},
-        "Ccy": {"attr": "asset_ccy"},
-        "Nominal": {"attr": "total_nominal", "format": "{:,.2f}"},
-        "FX": {"attr": "fx_rate", "format": "{:,.2f}"},
-        "Book Price": {"attr": "book_price", "format": "{:.2f}"},
-        "Book Value": {"attr": "book_value", "format": "{:,.2f}"},
-        "Current Price": {"attr": "current_price", "format": "{:,.2f}"},
-        "Current Value": {"attr": "current_value", "format": "{:,.2f}"},
-        "Value Date": {"attr": "value_date"},
-        "Performance:": {"attr": "performance", "format": "{:,.2%}"},
-        "Price": {
-            "link": {
-                "url": "add_single_price_to_asset",
-                "kwargs": {"account_id": str(account_id), "asset_id": "id"},
-                "icon": "plus",
-                "hover_text": "Add Price",
-            }
-        },
-    }
-    account_data["columns"] = depot_table_map_fields.keys()
-    account_data["items"] = depot_table_map_fields.values()
-    _, end_date = _get_date_range_dates(request)
-    account_data["table_objects"] = get_depot_asset_table(account_id, end_date)
-    return render(request, "bank_account_view_table.html", account_data)
-
-
-def _handle_date_range_form(request):
-    start_date, end_date = _get_date_range_dates(request)
-    request_get = request.GET.copy()
-    request_get = (
-        request_get
-        if "start_date" in request_get and "end_date" in request_get
-        else None
-    )
-    date_range_form = DateRangeForm(
-        request_get or {"start_date": start_date, "end_date": end_date}
-    )
-    if date_range_form.is_valid():
-        start_date = date_range_form.cleaned_data["start_date"]
-        end_date = date_range_form.cleaned_data["end_date"]
-        request.session["start_date"] = start_date.strftime("%Y-%m-%d")
-        request.session["end_date"] = end_date.strftime("%Y-%m-%d")
-    return {"date_range_form": date_range_form}
-
-
-def _get_date_range_dates(request) -> Tuple[str, str]:
-    today = timezone.now().date()
-    default_start_date = today - timedelta(days=30)
-    default_end_date = today
-    default_start_date = default_start_date.strftime("%Y-%m-%d")
-    default_end_date = default_end_date.strftime("%Y-%m-%d")
-
-    try:
-        start_date_str = request.session.get("start_date", default_start_date)
-    except ValueError:
-        start_date_str = default_start_date
-
-    try:
-        end_date_str = request.session.get("end_date", default_end_date)
-    except ValueError:
-        end_date_str = default_end_date
-
-    return start_date_str, end_date_str
+    @property
+    def elements(self) -> list:
+        return (
+            StringTableElement(name="Field", attr="field"),
+            StringTableElement(name="Value", attr="value"),
+            StringTableElement(name="Category", attr="category"),
+            BooleanTableElement(name="Is Regex", attr="is_regex"),
+            LinkTableElement(
+                name="Edit",
+                url="transaction_category_map_edit",
+                kwargs={"pk": "id", "account_id": str(self.kwargs["pk"])},
+                icon="edit",
+                hover_text="Edit",
+            ),
+            LinkTableElement(
+                name="Delete",
+                url="transaction_category_map_delete",
+                kwargs={"pk": "id", "account_id": str(self.kwargs["pk"])},
+                icon="trash",
+                hover_text="Delete",
+            ),
+        )
+def bank_account_view_depot(request, account_id: int): pass
+#    account_data = account_view_data(account_id, "tab_depot")
+#    #account_data.update(_handle_date_range_form(request))
+#    depot_table_map_fields = {
+#        "Asset Name": {"attr": "asset_name"},
+#        "ISIN": {"attr": "asset_isin"},
+#        "WKN": {"attr": "asset_wkn"},
+#        "Ccy": {"attr": "asset_ccy"},
+#        "Nominal": {"attr": "total_nominal", "format": "{:,.2f}"},
+#        "FX": {"attr": "fx_rate", "format": "{:,.2f}"},
+#        "Book Price": {"attr": "book_price", "format": "{:.2f}"},
+#        "Book Value": {"attr": "book_value", "format": "{:,.2f}"},
+#        "Current Price": {"attr": "current_price", "format": "{:,.2f}"},
+#        "Current Value": {"attr": "current_value", "format": "{:,.2f}"},
+#        "Value Date": {"attr": "value_date"},
+#        "Performance:": {"attr": "performance", "format": "{:,.2%}"},
+#        "Price": {
+#            "link": {
+#                "url": "add_single_price_to_asset",
+#                "kwargs": {"account_id": str(account_id), "asset_id": "id"},
+#                "icon": "plus",
+#                "hover_text": "Add Price",
+#            }
+#        },
+#    }
+#    account_data["columns"] = depot_table_map_fields.keys()
+#    account_data["items"] = depot_table_map_fields.values()
+#    #_, end_date = _get_date_range_dates(request)
+#    #account_data["table_objects"] = get_depot_asset_table(account_id, end_date)
+#    return render(request, "bank_account_view_table.html", account_data)
