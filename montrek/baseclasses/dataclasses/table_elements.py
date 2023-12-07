@@ -30,6 +30,15 @@ class LinkTableElement(TableElement):
     icon: str
     hover_text: str
 
+@dataclass
+class FloatTableElement(TableElement):
+    attr: str
+
+    def format(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            return f'<td style="text-align:right;">{value}</td>'
+        color = _get_value_color(value)
+        return f'<td style="text-align:right;color:{color};">{value:,.3f}</td>'
 
 @dataclass
 class EuroTableElement(TableElement):
