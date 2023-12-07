@@ -85,7 +85,7 @@ class AccountRepository(MontrekRepository):
         return Case(
             When(
                 account_type=AccountStaticSatellite.AccountType.DEPOT,
-                then=Value(100, output_field=FloatField()),
+                then=self._get_depot_account_value(),
             ),
             default=self._get_bank_account_value(),
         )
@@ -100,7 +100,8 @@ class AccountRepository(MontrekRepository):
         self.annotations["account_value"] = transaction_amount_sq
 
     def _get_depot_account_value(self):
-        return DepotStats(self._hub_entity_id, timezone.now()).current_value
+        #TODO: Set to Depot Value
+        return self._get_bank_account_value()
 
     @paginated_table
     def get_upload_registry_table_by_account_paginated(self, account_hub_id: int):
