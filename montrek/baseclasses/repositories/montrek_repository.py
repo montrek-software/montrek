@@ -1,6 +1,15 @@
 from typing import Any, List, Dict, Type, Tuple
 from baseclasses.models import MontrekSatelliteABC
 from baseclasses.models import MontrekHubABC
+from baseclasses.repositories.annotation_manager import (
+    AnnotationsManager,
+    SatelliteAnnotationsManager,
+    LinkAnnotationsManager,
+)
+from baseclasses.repositories.subquery_builder import (
+    SatelliteSubqueryBuilder,
+    LastTSSatelliteSubqueryBuilder,
+)
 from django.db.models import Q, Subquery, OuterRef, QuerySet
 from django.utils import timezone
 from django.core.paginator import Paginator
@@ -9,6 +18,7 @@ from functools import wraps
 
 class MontrekRepository:
     hub_class = MontrekHubABC
+
     def __init__(self, request):
         self._annotations = {}
         self.request = request
@@ -33,7 +43,6 @@ class MontrekRepository:
     def reference_date(self):
         return timezone.datetime.now()
 
-
     def std_queryset(self, **kwargs):
         raise NotImplementedError("MontrekRepository has no std_queryset method!")
 
@@ -43,9 +52,11 @@ class MontrekRepository:
         fields: List[str],
         reference_date: timezone,
     ):
-        self._query_to_annotations(
-            satellite_class, "pk", fields, reference_date, False, self.get_satellite_subquery
+        subquery_builder = SatelliteSubqueryBuilder(
+            satellite_class, "pk", reference_date
         )
+        annotations_manager = SatelliteAnnotationsManager(subquery_builder)
+        self._add_to_annotations(fields, annotations_manager)
 
     def add_last_ts_satellite_fields_annotations(
         self,
@@ -53,9 +64,12 @@ class MontrekRepository:
         fields: List[str],
         reference_date: timezone,
     ):
-        self._query_to_annotations(
-            satellite_class, "pk", fields, reference_date, False, self.get_last_ts_satellite_subquery
+        subquery_builder = LastTSSatelliteSubqueryBuilder(
+            satellite_class, "pk", reference_date, end_date=self.session_end_date
         )
+        annotations_manager = SatelliteAnnotationsManager(subquery_builder)
+        self._add_to_annotations(fields, annotations_manager)
+
     def add_linked_satellites_field_annotations(
         self,
         satellite_class: Type[MontrekSatelliteABC],
@@ -63,63 +77,25 @@ class MontrekRepository:
         fields: List[str],
         reference_date: timezone,
     ):
-        self._query_to_annotations(
-            satellite_class, link_lookup_string, fields, reference_date, True, self.get_satellite_subquery
+        subquery_builder = SatelliteSubqueryBuilder(
+            satellite_class, link_lookup_string, reference_date
         )
-
-    def _query_to_annotations(
-        self,
-        satellite_class: Type[MontrekSatelliteABC],
-        link_lookup_string: str,
-        fields: List[str],
-        reference_date: timezone,
-        add_class_to_field: bool,
-        subquery_function: Any,
-    ):
-        for field in fields:
-            subquery = subquery_function(
-                satellite_class, reference_date, link_lookup_string, field
-            )
-            if add_class_to_field:
-                field = f"{satellite_class.__name__.lower()}.{field}" 
-            self._annotations[field] = subquery
-
-    def get_satellite_subquery(
-        self,
-        satellite_class: Type[MontrekSatelliteABC],
-        reference_date: timezone,
-        lookup_string: str,
-        field: str,
-    ) -> Subquery:
-        return Subquery(
-            satellite_class.objects.filter(
-                hub_entity=OuterRef(lookup_string),
-                state_date_start__lte=reference_date,
-                state_date_end__gt=reference_date,
-            ).values(field)
-        )
-
-    def get_last_ts_satellite_subquery(
-        self,
-        satellite_class: Type[MontrekSatelliteABC],
-        reference_date: timezone,
-        lookup_string: str,
-        field: str,
-    ) -> Subquery:
-        return Subquery(
-            satellite_class.objects.filter(
-                hub_entity=OuterRef(lookup_string),
-                state_date_start__lte=reference_date,
-                state_date_end__gt=reference_date,
-                value_date__lte=self.session_end_date,
-            ).order_by("-value_date").values(field)[:1]
-        )
+        annotations_manager = LinkAnnotationsManager(subquery_builder, satellite_class.__name__)
+        self._add_to_annotations(fields, annotations_manager)
 
     def build_queryset(self) -> QuerySet:
         return self.hub_class.objects.annotate(**self.annotations)
 
     def rename_field(self, field: str, new_name: str):
         self.annotations[new_name] = self.annotations[field]
+
+    def _add_to_annotations(self, fields: List[str], annotations_manager:AnnotationsManager):
+        annotations_manager.query_to_annotations(fields)
+        self.annotations.update(annotations_manager.annotations)
+
+
+
+
 
 def paginated_table(func):
     @wraps(func)
@@ -128,14 +104,17 @@ def paginated_table(func):
         result = func(*args, **kwargs)
 
         # Extract request and queryset from result
-        request = args[0].request  # Assuming the first argument is 'self' and has 'request'
+        request = args[
+            0
+        ].request  # Assuming the first argument is 'self' and has 'request'
         queryset = result  # Assuming the original function returns a queryset
 
         # Pagination logic
-        page_number = request.GET.get('page', 1)
+        page_number = request.GET.get("page", 1)
         paginate_by = 10  # or you can make this customizable
         paginator = Paginator(queryset, paginate_by)
         page = paginator.get_page(page_number)
 
         return page
+
     return wrapper
