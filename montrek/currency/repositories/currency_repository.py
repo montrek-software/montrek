@@ -3,14 +3,31 @@ from django.apps import apps
 from django.db.models import Q
 from currency.models import CurrencyHub
 from currency.models import CurrencyTimeSeriesSatellite
+from currency.models import CurrencyStaticSatellite
 from baseclasses.repositories.db_helper import new_satellite_entry, select_satellite
-
+from baseclasses.repositories.montrek_repository import MontrekRepository
 
 def currency_time_series_satellite():
     return apps.get_model("currency", "CurrencyTimeSeriesSatellite")
 
+class CurrencyRepository(MontrekRepository):
+    hub_class = CurrencyHub
+
+    def std_queryset(self, **kwargs):
+        #self.add_satellite_fields_annotations(
+        #    CurrencyTimeSeriesSatellite,
+        #    ["fx_rate", "value_date"],
+        #    self.reference_date,
+        #)
+        self.add_satellite_fields_annotations(
+            CurrencyStaticSatellite,
+            ["ccy_name", "ccy_code"],
+            self.reference_date,
+        )
+        return self.build_queryset()
 
 
+#TODO: Move to CurrencyRepository
 class CurrencyRepositories:
     def __init__(self, currency_hub: CurrencyHub):
         self.currency_hub = currency_hub

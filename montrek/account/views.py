@@ -333,6 +333,7 @@ class AccountDepotView(MontrekListView):
             StringTableElement(name="Type", attr="asset_type"),
             StringTableElement(name="ISIN", attr="asset_isin"),
             StringTableElement(name="WKN", attr="asset_wkn"),
+            StringTableElement(name="CCY", attr="ccy_code"),
             FloatTableElement(name="Nominal", attr="total_nominal"),
         )
 
