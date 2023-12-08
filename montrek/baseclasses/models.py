@@ -102,6 +102,11 @@ class MontrekSatelliteABC(TimeStampMixin):
     def get_hash_value(self) -> str:
         return self._get_hash_value()
 
+class MontrekTimeSeriesSatelliteABC(MontrekSatelliteABC):
+    class Meta:
+        abstract = True
+    value_date = models.DateField()
+
 
 # Montrek Test Models
 

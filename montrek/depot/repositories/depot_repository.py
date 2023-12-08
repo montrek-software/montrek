@@ -35,7 +35,7 @@ class DepotRepository(MontrekRepository):
 
     def currency_table_subquery(self):
         return (
-            CurrencyRepository(self.request).std_queryset()
+            CurrencyRepository(self.request).last_fx_rate_queryset()
             .filter(
                 link_currency_asset=OuterRef("pk"),
             )
@@ -51,7 +51,7 @@ class DepotRepository(MontrekRepository):
         self.annotations["total_nominal"] = transaction_sq
 
     def _currency_values(self):
-        for currency_field in ['ccy_code']:
+        for currency_field in ['ccy_code', 'fx_rate']:
             currency_sq = Subquery(
                 self.currency_table_subquery()
                 .values(currency_field)

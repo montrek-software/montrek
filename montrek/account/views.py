@@ -335,6 +335,7 @@ class AccountDepotView(MontrekListView):
             StringTableElement(name="WKN", attr="asset_wkn"),
             StringTableElement(name="CCY", attr="ccy_code"),
             FloatTableElement(name="Nominal", attr="total_nominal"),
+            FloatTableElement(name="FX-Rate", attr="fx_rate"),
         )
 
 def bank_account_view_depot(request, account_id: int): pass

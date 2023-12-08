@@ -44,9 +44,18 @@ class MontrekRepository:
         reference_date: timezone,
     ):
         self._query_to_annotations(
-            satellite_class, "pk", fields, reference_date, False
+            satellite_class, "pk", fields, reference_date, False, self.get_satellite_subquery
         )
 
+    def add_last_ts_satellite_fields_annotations(
+        self,
+        satellite_class: Type[MontrekSatelliteABC],
+        fields: List[str],
+        reference_date: timezone,
+    ):
+        self._query_to_annotations(
+            satellite_class, "pk", fields, reference_date, False, self.get_last_ts_satellite_subquery
+        )
     def add_linked_satellites_field_annotations(
         self,
         satellite_class: Type[MontrekSatelliteABC],
@@ -55,7 +64,7 @@ class MontrekRepository:
         reference_date: timezone,
     ):
         self._query_to_annotations(
-            satellite_class, link_lookup_string, fields, reference_date, True
+            satellite_class, link_lookup_string, fields, reference_date, True, self.get_satellite_subquery
         )
 
     def _query_to_annotations(
@@ -65,9 +74,10 @@ class MontrekRepository:
         fields: List[str],
         reference_date: timezone,
         add_class_to_field: bool,
+        subquery_function: Any,
     ):
         for field in fields:
-            subquery = self.get_satellite_subquery(
+            subquery = subquery_function(
                 satellite_class, reference_date, link_lookup_string, field
             )
             if add_class_to_field:
@@ -87,6 +97,22 @@ class MontrekRepository:
                 state_date_start__lte=reference_date,
                 state_date_end__gt=reference_date,
             ).values(field)
+        )
+
+    def get_last_ts_satellite_subquery(
+        self,
+        satellite_class: Type[MontrekSatelliteABC],
+        reference_date: timezone,
+        lookup_string: str,
+        field: str,
+    ) -> Subquery:
+        return Subquery(
+            satellite_class.objects.filter(
+                hub_entity=OuterRef(lookup_string),
+                state_date_start__lte=reference_date,
+                state_date_end__gt=reference_date,
+                value_date__lte=self.session_end_date,
+            ).order_by("-value_date").values(field)[:1]
         )
 
     def build_queryset(self) -> QuerySet:

@@ -1,6 +1,7 @@
 from django.utils import timezone
 from django.apps import apps
-from django.db.models import Q
+from django.db.models import Q, F, OuterRef, Subquery
+from django.db.models import QuerySet, DurationField, ExpressionWrapper
 from currency.models import CurrencyHub
 from currency.models import CurrencyTimeSeriesSatellite
 from currency.models import CurrencyStaticSatellite
@@ -13,18 +14,21 @@ def currency_time_series_satellite():
 class CurrencyRepository(MontrekRepository):
     hub_class = CurrencyHub
 
-    def std_queryset(self, **kwargs):
-        #self.add_satellite_fields_annotations(
-        #    CurrencyTimeSeriesSatellite,
-        #    ["fx_rate", "value_date"],
-        #    self.reference_date,
-        #)
+    def std_queryset(self, **kwargs) -> QuerySet:
         self.add_satellite_fields_annotations(
             CurrencyStaticSatellite,
             ["ccy_name", "ccy_code"],
             self.reference_date,
         )
         return self.build_queryset()
+
+    def last_fx_rate_queryset(self, **kwargs) -> QuerySet:
+        self.add_last_ts_satellite_fields_annotations(
+            CurrencyTimeSeriesSatellite,
+            ["fx_rate"],
+            self.reference_date,
+        )
+        return self.std_queryset(**kwargs)
 
 
 #TODO: Move to CurrencyRepository

@@ -20,12 +20,11 @@ class CurrencyStaticSatellite(baseclass_models.MontrekSatelliteABC):
         return f"{self.ccy_name} ({self.ccy_code})"
 
 
-class CurrencyTimeSeriesSatellite(baseclass_models.MontrekSatelliteABC):
+class CurrencyTimeSeriesSatellite(baseclass_models.MontrekTimeSeriesSatelliteABC):
     hub_entity = models.ForeignKey(
         CurrencyHub,
         on_delete=models.CASCADE,
         related_name="currency_time_series_satellites",
     )
-    value_date = models.DateField()
     fx_rate = models.DecimalField(max_digits=10, decimal_places=4, default=0.0)
     identifier_fields = ["value_date", "hub_entity"]
