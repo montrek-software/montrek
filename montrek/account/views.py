@@ -40,6 +40,7 @@ from baseclasses.dataclasses.table_elements import LinkTableElement
 from baseclasses.dataclasses.table_elements import EuroTableElement
 from baseclasses.dataclasses.table_elements import DateTableElement
 from baseclasses.dataclasses.table_elements import BooleanTableElement
+from baseclasses.dataclasses.table_elements import FloatTableElement
 
 from reporting.managers.account_transaction_plots import (
     draw_monthly_income_expanses_plot,
@@ -332,6 +333,7 @@ class AccountDepotView(MontrekListView):
             StringTableElement(name="Type", attr="asset_type"),
             StringTableElement(name="ISIN", attr="asset_isin"),
             StringTableElement(name="WKN", attr="asset_wkn"),
+            FloatTableElement(name="Nominal", attr="total_nominal"),
         )
 
 def bank_account_view_depot(request, account_id: int): pass

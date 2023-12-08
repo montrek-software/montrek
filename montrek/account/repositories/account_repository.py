@@ -96,7 +96,7 @@ class AccountRepository(MontrekRepository):
         transaction_amount_sq = Subquery(
             self.transaction_table_subquery()
             .values("link_transaction_account")
-            .annotate(account_value=Sum(F("transaction_price")))
+            .annotate(account_value=Sum(F("transaction_value")))
             .values("account_value")
         )
         self.annotations["account_value"] = transaction_amount_sq
