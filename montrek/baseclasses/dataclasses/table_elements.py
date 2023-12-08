@@ -57,6 +57,15 @@ class EuroTableElement(TableElement):
         color = _get_value_color(value)
         return f'<td style="text-align:right;color:{color};">{value:,.2f}&#x20AC;</td>'
 
+@dataclass
+class PercentTableElement(TableElement):
+    attr: str
+
+    def format(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            return f'<td style="text-align:right;">{value}</td>'
+        color = _get_value_color(value)
+        return f'<td style="text-align:right;color:{color};">{value:,.2%}</td>'
 
 @dataclass
 class DateTableElement(TableElement):

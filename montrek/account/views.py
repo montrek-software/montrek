@@ -41,6 +41,7 @@ from baseclasses.dataclasses.table_elements import EuroTableElement
 from baseclasses.dataclasses.table_elements import DateTableElement
 from baseclasses.dataclasses.table_elements import BooleanTableElement
 from baseclasses.dataclasses.table_elements import FloatTableElement
+from baseclasses.dataclasses.table_elements import PercentTableElement
 
 from reporting.managers.account_transaction_plots import (
     draw_monthly_income_expanses_plot,
@@ -336,6 +337,20 @@ class AccountDepotView(MontrekListView):
             StringTableElement(name="CCY", attr="ccy_code"),
             FloatTableElement(name="Nominal", attr="total_nominal"),
             FloatTableElement(name="FX-Rate", attr="fx_rate"),
+            FloatTableElement(name="Book Price", attr="book_price"),
+            EuroTableElement(name="Book Value", attr="book_value"),
+            FloatTableElement(name="Current Price", attr="price"),
+            EuroTableElement(name="Current Value", attr="value"),
+            EuroTableElement(name="PnL", attr="profit_loss"),
+            PercentTableElement(name="Performance", attr="performance"),
+            DateTableElement(name="Value Date", attr="value_date"),
+            LinkTableElement(
+                name="",
+                url="add_single_price_to_asset",
+                kwargs={"account_id": str(self.kwargs["pk"]), "asset_id": "id"},
+                icon="plus",
+                hover_text="Add Price",
+            ),
         )
 
 def bank_account_view_depot(request, account_id: int): pass
