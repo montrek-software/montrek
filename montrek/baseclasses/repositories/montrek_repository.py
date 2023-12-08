@@ -29,6 +29,11 @@ class MontrekRepository:
     def session_start_date(self):
         return self.request.session.get("start_date", timezone.now())
 
+    @property
+    def reference_date(self):
+        return timezone.datetime.now()
+
+
     def std_queryset(self, **kwargs):
         raise NotImplementedError("MontrekRepository has no std_queryset method!")
 

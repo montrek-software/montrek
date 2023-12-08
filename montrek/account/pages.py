@@ -121,4 +121,13 @@ class AccountPage(MontrekPage):
                 actions=(action_back, action_add_transaction_category),
             ),
         ]
+        if self.obj.account_type in ["Depot"]:
+            tabs.insert(1,
+                TabElement(
+                    name="Depot",
+                    link=reverse('account_view_depot', kwargs={'pk': account_id}),
+                    html_id="tab_depot",
+                    actions = (action_back, action_update_asset_prices)
+                )
+            )
         return tabs

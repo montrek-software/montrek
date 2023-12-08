@@ -23,6 +23,7 @@ from transaction.models import TransactionSatellite
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from baseclasses.repositories.montrek_repository import paginated_table
 from depot.managers.depot_stats import DepotStats
+from depot.repositories.depot_repository import DepotRepository
 from transaction.repositories.transaction_account_queries import (
     get_transactions_by_account_hub,
 )
@@ -117,3 +118,8 @@ class AccountRepository(MontrekRepository):
         return TransactionCategoryMapRepository(self.request).std_queryset().filter(
             link_transaction_category_map_account=hub_entity
         ).order_by('-created_at')
+
+    @paginated_table
+    def get_depot_stats_table_by_account_paginated(self, account_hub_id: int):
+        hub_entity = self.hub_class.objects.get(pk=account_hub_id)
+        return DepotRepository(self.request).std_queryset()

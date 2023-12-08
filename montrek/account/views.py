@@ -314,6 +314,26 @@ class AccountTransactionCategoryMap(MontrekListView):
                 hover_text="Delete",
             ),
         )
+
+class AccountDepotView(MontrekListView):
+    page_class = AccountPage
+    tab = "tab_depot"
+    title = "Depot"
+    repository = AccountRepository
+
+    def get_queryset(self):
+        return self.repository(self.request).get_depot_stats_table_by_account_paginated(
+            self.kwargs["pk"]
+        )
+
+    def elements(self) -> list:
+        return (
+            StringTableElement(name="Asset Name", attr="asset_name"),
+            StringTableElement(name="Type", attr="asset_type"),
+            StringTableElement(name="ISIN", attr="asset_isin"),
+            StringTableElement(name="WKN", attr="asset_wkn"),
+        )
+
 def bank_account_view_depot(request, account_id: int): pass
 #    account_data = account_view_data(account_id, "tab_depot")
 #    #account_data.update(_handle_date_range_form(request))

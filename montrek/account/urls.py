@@ -48,8 +48,8 @@ urlpatterns = [
         name="account_view_transaction_category_map",
     ),
     path(
-        "<int:account_id>/bank_account_view/depot",
-        views.bank_account_view_depot,
-        name="bank_account_view_depot",
+        "<int:pk>/account_view/depot",
+        views.AccountDepotView.as_view(),
+        name="account_view_depot",
     ),
 ]
