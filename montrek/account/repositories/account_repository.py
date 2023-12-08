@@ -122,4 +122,8 @@ class AccountRepository(MontrekRepository):
     @paginated_table
     def get_depot_stats_table_by_account_paginated(self, account_hub_id: int):
         hub_entity = self.hub_class.objects.get(pk=account_hub_id)
-        return DepotRepository(self.request).std_queryset()
+        return (
+            DepotRepository(self.request)
+            .std_queryset()
+            .filter(link_asset_transaction__link_transaction_account=hub_entity)
+        )
