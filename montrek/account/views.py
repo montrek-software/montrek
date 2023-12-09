@@ -352,34 +352,3 @@ class AccountDepotView(MontrekListView):
                 hover_text="Add Price",
             ),
         )
-
-def bank_account_view_depot(request, account_id: int): pass
-#    account_data = account_view_data(account_id, "tab_depot")
-#    #account_data.update(_handle_date_range_form(request))
-#    depot_table_map_fields = {
-#        "Asset Name": {"attr": "asset_name"},
-#        "ISIN": {"attr": "asset_isin"},
-#        "WKN": {"attr": "asset_wkn"},
-#        "Ccy": {"attr": "asset_ccy"},
-#        "Nominal": {"attr": "total_nominal", "format": "{:,.2f}"},
-#        "FX": {"attr": "fx_rate", "format": "{:,.2f}"},
-#        "Book Price": {"attr": "book_price", "format": "{:.2f}"},
-#        "Book Value": {"attr": "book_value", "format": "{:,.2f}"},
-#        "Current Price": {"attr": "current_price", "format": "{:,.2f}"},
-#        "Current Value": {"attr": "current_value", "format": "{:,.2f}"},
-#        "Value Date": {"attr": "value_date"},
-#        "Performance:": {"attr": "performance", "format": "{:,.2%}"},
-#        "Price": {
-#            "link": {
-#                "url": "add_single_price_to_asset",
-#                "kwargs": {"account_id": str(account_id), "asset_id": "id"},
-#                "icon": "plus",
-#                "hover_text": "Add Price",
-#            }
-#        },
-#    }
-#    account_data["columns"] = depot_table_map_fields.keys()
-#    account_data["items"] = depot_table_map_fields.values()
-#    #_, end_date = _get_date_range_dates(request)
-#    #account_data["table_objects"] = get_depot_asset_table(account_id, end_date)
-#    return render(request, "bank_account_view_table.html", account_data)

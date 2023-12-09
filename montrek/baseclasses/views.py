@@ -79,7 +79,7 @@ class MontrekTemplateView(TemplateView, MontrekPageViewMixin):
         raise NotImplementedError("Please implement this method in your subclass!")
 
 class MontrekListView(ListView, MontrekPageViewMixin, StdQuerysetMixin):
-    template_name = "montrek_table_new.html"
+    template_name = "montrek_table.html"
     repository = MontrekRepository
 
     def get_queryset(self):

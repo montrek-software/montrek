@@ -110,5 +110,5 @@ def view_update_asset_prices(request, account_id: int):
     fx_update_strategy = FxRateUpdateFactory.get_fx_rate_update_strategy('yahoo')
     fx_update_strategy.update_fx_rates(timezone.now())
     return HttpResponseRedirect(
-        reverse('bank_account_view_depot',
-                kwargs={'account_id': account_id}))
+        reverse('account_view_depot',
+                kwargs={'pk': account_id}))
