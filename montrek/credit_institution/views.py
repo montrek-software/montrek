@@ -24,7 +24,7 @@ class CreditInstitutionOverview(MontrekListView):
                 url="credit_institution_details",
                 kwargs={"pk": "id"},
                 icon="chevron-right",
-                hover_text="Goto Account",
+                hover_text="Goto Credit Institution",
             ),
             StringTableElement(name="BIC", attr="credit_institution_bic"),
             StringTableElement(name="Upload Method", attr="account_upload_method"),

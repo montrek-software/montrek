@@ -37,6 +37,7 @@ from baseclasses.views import MontrekDetailView
 from baseclasses.views import MontrekTemplateView
 from baseclasses.dataclasses.table_elements import StringTableElement
 from baseclasses.dataclasses.table_elements import LinkTableElement
+from baseclasses.dataclasses.table_elements import LinkTextTableElement
 from baseclasses.dataclasses.table_elements import EuroTableElement
 from baseclasses.dataclasses.table_elements import DateTableElement
 from baseclasses.dataclasses.table_elements import BooleanTableElement
@@ -334,6 +335,13 @@ class AccountDepotView(MontrekListView):
             StringTableElement(name="Type", attr="asset_type"),
             StringTableElement(name="ISIN", attr="asset_isin"),
             StringTableElement(name="WKN", attr="asset_wkn"),
+            LinkTextTableElement(
+                name="CCY",
+                url="currency_details",
+                kwargs={"pk": "ccy_id"},
+                text="ccy_code",
+                hover_text="View Currency",
+            ),
             StringTableElement(name="CCY", attr="ccy_code"),
             FloatTableElement(name="Nominal", attr="total_nominal"),
             FloatTableElement(name="FX-Rate", attr="fx_rate"),

@@ -42,7 +42,7 @@ class DepotRepository(MontrekRepository):
     def currency_table_subquery(self):
         return (
             CurrencyRepository(self.request)
-            .last_fx_rate_queryset()
+            .std_queryset()
             .filter(
                 link_currency_asset=OuterRef("pk"),
             )
@@ -70,6 +70,10 @@ class DepotRepository(MontrekRepository):
                 self.currency_table_subquery().values(currency_field)
             )
             self.annotations[currency_field] = currency_sq
+        currency_sq = Subquery(
+            self.currency_table_subquery().values("id")
+        )
+        self.annotations["ccy_id"] = currency_sq
 
     def _calculated_fields(self):
         self.annotations['book_price'] = ExpressionWrapper(
