@@ -120,11 +120,11 @@ class AccountDetailView(MontrekDetailView):
             ),
             StringTableElement(
                 name="Credit Institution",
-                attr="creditinstitutionstaticsatellite.credit_institution_name",
+                attr="creditinstitutionstaticsatellite__credit_institution_name",
             ),
             StringTableElement(
                 name="BIC",
-                attr="creditinstitutionstaticsatellite.credit_institution_bic",
+                attr="creditinstitutionstaticsatellite__credit_institution_bic",
             ),
         )
 

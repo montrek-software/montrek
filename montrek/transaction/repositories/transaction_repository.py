@@ -29,7 +29,7 @@ class TransactionRepository(MontrekRepository):
             ["typename"],
             reference_date,
         )
-        self.rename_field("transactioncategorysatellite.typename", "transaction_category" )
+        self.rename_field("transactioncategorysatellite__typename", "transaction_category" )
 
         self.annotations["transaction_value"] = (
             self.annotations["transaction_amount"]

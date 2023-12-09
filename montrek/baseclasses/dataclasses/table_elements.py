@@ -1,3 +1,4 @@
+from django.utils import timezone
 from dataclasses import dataclass
 from decimal import Decimal
 from reporting.core.reporting_colors import ReportingColors
@@ -43,7 +44,7 @@ class FloatTableElement(TableElement):
 
     def format(self, value):
         if not isinstance(value, (int, float, Decimal)):
-            return f'<td style="text-align:right;">{value}</td>'
+            return f'<td style="text-align:left;">{value}</td>'
         color = _get_value_color(value)
         return f'<td style="text-align:right;color:{color};">{value:,.3f}</td>'
 
@@ -53,7 +54,7 @@ class EuroTableElement(TableElement):
 
     def format(self, value):
         if not isinstance(value, (int, float, Decimal)):
-            return f'<td style="text-align:right;">{value}</td>'
+            return f'<td style="text-align:left;">{value}</td>'
         color = _get_value_color(value)
         return f'<td style="text-align:right;color:{color};">{value:,.2f}&#x20AC;</td>'
 
@@ -63,7 +64,7 @@ class PercentTableElement(TableElement):
 
     def format(self, value):
         if not isinstance(value, (int, float, Decimal)):
-            return f'<td style="text-align:right;">{value}</td>'
+            return f'<td style="text-align:left;">{value}</td>'
         color = _get_value_color(value)
         return f'<td style="text-align:right;color:{color};">{value:,.2%}</td>'
 
@@ -72,6 +73,8 @@ class DateTableElement(TableElement):
     attr: str
 
     def format(self, value):
+        if not isinstance(value, timezone.datetime):
+            return f'<td style="text-align:left;">{value}</td>'
         value = value.strftime("%d/%m/%Y")
         return f'<td style="text-align:left;">{value}</td>'
 
