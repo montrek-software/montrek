@@ -28,6 +28,6 @@ class LinkAnnotationsManager(AnnotationsManager):
     def query_to_annotations(self, fields: List[str], **kwargs) -> dict:
         for field in fields:
             subquery = self.subquery_builder.get_subquery(field)
-            field = f"{self.satellite_class_name.lower()}.{field}"
+            field = f"{self.satellite_class_name.lower()}__{field}"
             self.annotations[field] = subquery
 
