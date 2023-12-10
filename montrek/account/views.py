@@ -48,7 +48,6 @@ from reporting.managers.account_transaction_plots import (
     draw_monthly_income_expanses_plot,
     draw_income_expenses_category_pie_plot,
 )
-from depot.repositories.depot_table_queries import get_depot_asset_table
 
 
 # Create your views here.
@@ -284,7 +283,7 @@ class AccountUploadView(MontrekListView):
         )
 
 
-class AccountTransactionCategoryMap(MontrekListView):
+class AccountTransactionCategoryMapView(MontrekListView):
     page_class = AccountPage
     tab = "tab_transaction_category_map"
     title = "Transaction Category Map"

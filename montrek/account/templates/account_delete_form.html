@@ -8,7 +8,7 @@
         >
         {% csrf_token %}
         <input id="delete_account" type="submit" value="Delete" class="btn btn-danger">
-        <a href="{% url 'account_view' account_id=account_statics.hub_entity.id%}" class="btn btn-secondary">Cancel</a>
+        <a href="{% url 'account_details' pk=account_statics.hub_entity.id%}" class="btn btn-secondary">Cancel</a>
     </form>
 {% endblock %}
 ```

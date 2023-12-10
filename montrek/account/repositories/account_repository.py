@@ -22,7 +22,6 @@ from transaction.models import TransactionSatellite
 
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from baseclasses.repositories.montrek_repository import paginated_table
-from depot.managers.depot_stats import DepotStats
 from depot.repositories.depot_repository import DepotRepository
 from transaction.repositories.transaction_account_queries import (
     get_transactions_by_account_hub,
@@ -70,6 +69,7 @@ class AccountRepository(MontrekRepository):
                 transaction_date__gte=self.session_start_date,
             )
             .order_by("-transaction_date")
+
         )
         return transactions
 
@@ -125,5 +125,5 @@ class AccountRepository(MontrekRepository):
         return (
             DepotRepository(self.request)
             .std_queryset()
-            .filter(link_asset_transaction__link_transaction_account=hub_entity)
+            #.filter(link_asset_transaction__link_transaction_account=hub_entity)
         )

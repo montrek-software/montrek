@@ -11,6 +11,7 @@ class FileUploadRegistryStaticSatelliteFactory(factory.django.DjangoModelFactory
         model = "file_upload.FileUploadRegistryStaticSatellite"
 
     hub_entity = factory.SubFactory(FileUploadRegistryHubFactory)
+    file_name = factory.Faker("file_name", extension="csv")
 
 
 class FileUploadFileHubFactory(factory.django.DjangoModelFactory):

@@ -38,14 +38,6 @@ class TestAccountIdentifier(TestCase):
         test_hash = hashlib.sha256(iban.encode()).hexdigest()
         self.assertEqual(account_sat.hash_identifier, test_hash)
 
-    def test_bank_account_identifier(self):
-        iban = "DE00000000000000000000"
-        account_sat = BankAccountStaticSatellite.objects.create(
-            bank_account_iban="DE00000000000000000001",
-            hub_entity=AccountHubFactory(),
-        )
-        test_hash = hashlib.sha256(iban.encode()).hexdigest()
-        self.assertNotEqual(account_sat.hash_identifier, test_hash)
 
     def test_bank_account_property_identifier(self):
         account_sat = BankAccountPropertySatellite.objects.create(

@@ -10,6 +10,13 @@ class AssetStaticSatelliteFactory(factory.django.DjangoModelFactory):
         model = "asset.AssetStaticSatellite"
     hub_entity = factory.SubFactory(AssetHubFactory)
     asset_name = factory.Sequence(lambda n: f"AssetStaticSatellite {n}")
+    
+    @factory.post_generation
+    def currency(self, create, extracted, **kwargs):
+        if not create:
+            return
+        if extracted:
+            self.hub_entity.link_asset_currency.add(extracted)
 
 class AssetLiquidSatelliteFactory(factory.django.DjangoModelFactory):
     class Meta:

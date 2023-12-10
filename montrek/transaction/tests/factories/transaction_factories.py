@@ -1,7 +1,7 @@
 import factory
 from django.utils import timezone
 from transaction.models import TransactionHub
-from account.tests.factories.account_factories import AccountHubFactory
+from account.tests.factories.account_factories import AccountStaticSatelliteFactory
 
 
 class TransactionHubFactory(factory.django.DjangoModelFactory):
@@ -19,8 +19,8 @@ class TransactionHubFactory(factory.django.DjangoModelFactory):
                 self.link_transaction_account.add(account)
         else:
             # Link a default AccountHub for this TransactionCategoryMapHub
-            account = AccountHubFactory()
-            self.link_transaction_account.add(account)
+            account = AccountStaticSatelliteFactory.create()
+            self.link_transaction_account.add(account.hub_entity)
 
 
 class TransactionSatelliteFactory(factory.django.DjangoModelFactory):
@@ -75,8 +75,8 @@ class TransactionCategoryMapHubFactory(factory.django.DjangoModelFactory):
                 self.link_transaction_category_map_account.add(account)
         else:
             # Link a default AccountHub for this TransactionCategoryMapHub
-            account = AccountHubFactory()
-            self.link_transaction_category_map_account.add(account)
+            account = AccountStaticSatelliteFactory.create()
+            self.link_transaction_category_map_account.add(account.hub_entity)
 
 
 class TransactionCategoryMapSatelliteFactory(factory.django.DjangoModelFactory):

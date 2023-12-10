@@ -4,7 +4,7 @@ from account import views
 urlpatterns = [
     path("new", views.account_new, name="account_new"),
     path("new_form", views.account_new_form, name="account_new_form"),
-    path("list", views.AccountOverview.as_view(), name="account"),
+    path("overview", views.AccountOverview.as_view(), name="account"),
     path("<int:pk>/details", views.AccountDetailView.as_view(), name="account_details"),
     path("<int:account_id>/delete", views.account_delete, name="account_delete"),
     path(
@@ -28,27 +28,27 @@ urlpatterns = [
         name="bank_account_view_transactions",
     ),
     path(
-        "<int:pk>/account_view/transactions",
+        "<int:pk>/transactions",
         views.AccountTransactionsView.as_view(),
         name="account_view_transactions",
     ),
     path(
-        "<int:pk>/account_view/graphs",
+        "<int:pk>/graphs",
         views.AccountGraphsView.as_view(),
         name="account_view_graphs",
     ),
     path(
-        "<int:pk>/account_view/uploads",
+        "<int:pk>/uploads",
         views.AccountUploadView.as_view(),
         name="account_view_uploads",
     ),
     path(
-        "<int:pk>/account_view/transaction_category_map",
-        views.AccountTransactionCategoryMap.as_view(),
+        "<int:pk>/transaction_category_map",
+        views.AccountTransactionCategoryMapView.as_view(),
         name="account_view_transaction_category_map",
     ),
     path(
-        "<int:pk>/account_view/depot",
+        "<int:pk>/depot",
         views.AccountDepotView.as_view(),
         name="account_view_depot",
     ),
