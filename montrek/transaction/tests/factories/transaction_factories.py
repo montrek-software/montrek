@@ -9,14 +9,13 @@ class TransactionHubFactory(factory.django.DjangoModelFactory):
         model = TransactionHub
 
     @factory.post_generation
-    def accounts(self, create, extracted, **kwargs):
+    def account(self, create, extracted, **kwargs):
         if not create:
             return
 
         if extracted:
             # A list of AccountHub instances were passed in, link them
-            for account in extracted:
-                self.link_transaction_account.add(account)
+            self.link_transaction_account.add(extracted)
         else:
             # Link a default AccountHub for this TransactionCategoryMapHub
             account = AccountStaticSatelliteFactory.create()

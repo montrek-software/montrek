@@ -27,12 +27,13 @@ class DepotRepository(MontrekRepository):
         self._currency_values()
         self._total_nominal_and_book_value()
         self._calculated_fields()
+        self._account_fields()
         return self.build_queryset()
 
     def transaction_table_subquery(self):
         return (
             TransactionRepository(self.request)
-            .std_queryset()
+            .get_queryset_with_account()
             .filter(
                 link_transaction_asset=OuterRef("pk"),
                 transaction_date__lte=self.session_end_date,
@@ -63,6 +64,14 @@ class DepotRepository(MontrekRepository):
                 .values(dp_field)
             )
             self.annotations[dp_field] = transaction_sq
+
+    def _account_fields(self):
+        account_sq = Subquery(
+            self.transaction_table_subquery()
+            .values("account_id")[:1]
+        )
+        self.annotations["account_id"] = account_sq
+
 
     def _currency_values(self):
         for currency_field in ["ccy_code", "fx_rate"]:

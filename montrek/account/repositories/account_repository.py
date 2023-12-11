@@ -125,5 +125,5 @@ class AccountRepository(MontrekRepository):
         return (
             DepotRepository(self.request)
             .std_queryset()
-            #.filter(link_asset_transaction__link_transaction_account=hub_entity)
+            .filter(account_id=hub_entity.id)
         )
