@@ -13,9 +13,9 @@ urlpatterns = [
         name="transaction_add",
     ),
     path(
-        "<int:pk>/view/",
+        "<int:pk>/details/",
         views.TransactionSatelliteDetailView.as_view(),
-        name="transaction_view",
+        name="transaction_details",
     ),
     path(
         "add_transaction_category/<int:account_id>/cp/<str:counterparty>",

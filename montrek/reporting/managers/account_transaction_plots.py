@@ -50,7 +50,7 @@ def draw_monthly_income_expanses_plot(transactions_data: pd.DataFrame) -> go.Fig
 def draw_income_expenses_category_pie_plot(transactions: baseclass_models.MontrekSatelliteABC):
     transaction_category_df = pd.DataFrame(
         {
-            'transaction_category': [transaction.transaction_category.typename for transaction in transactions],
+            'transaction_category': [transaction.transaction_category for transaction in transactions],
             'transaction_value': [transaction.transaction_value for transaction in transactions],
         })
     transaction_dfs = {

@@ -102,6 +102,11 @@ class MontrekSatelliteABC(TimeStampMixin):
     def get_hash_value(self) -> str:
         return self._get_hash_value()
 
+class MontrekTimeSeriesSatelliteABC(MontrekSatelliteABC):
+    class Meta:
+        abstract = True
+    value_date = models.DateField()
+
 
 # Montrek Test Models
 
@@ -122,10 +127,12 @@ class TestMontrekSatelliteNoIdFields(MontrekSatelliteABC):
 
 
 class TestLinkHub(MontrekHubABC):
-    test_hub = models.ManyToManyField(TestMontrekHub, related_name="test_link_hub")
+    link_link_hub_test_montrek_hub = models.ManyToManyField(
+        TestMontrekHub, related_name="link_test_montrek_hub_link_hub"
+    )
 
 
-class TestLinkSatelitte(MontrekSatelliteABC):
+class TestLinkSatellite(MontrekSatelliteABC):
     hub_entity = models.ForeignKey(TestLinkHub, on_delete=models.CASCADE)
     test_id = models.IntegerField(default=0)
     identifier_fields = ["test_id"]

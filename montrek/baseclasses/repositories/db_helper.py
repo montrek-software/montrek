@@ -1,11 +1,11 @@
 # Purpose: Utility functions for the model package
 import pandas as pd
 import copy
-from typing import Any, List, Dict
+from typing import Any, List, Dict, Type
 from baseclasses.models import MontrekSatelliteABC
 from baseclasses.models import MontrekHubABC
 from django.db.models.base import ModelBase
-from django.db.models import Q
+from django.db.models import Q, Subquery, OuterRef
 from django.utils import timezone
 
 
@@ -155,6 +155,22 @@ def get_hubs_by_satellite_attribute(
     return [instance.hub_entity for instance in satellite_instance]
 
 
+def get_satellite_from_hub_query(
+    hub_entity: MontrekHubABC,
+    satellite_class: MontrekSatelliteABC,
+    reference_date: timezone = None,
+    applied_filter: Q = None,
+):
+    reference_date = timezone.now() if reference_date is None else reference_date
+    applied_filter = Q() if applied_filter is None else applied_filter
+    satellite_instance = satellite_class.objects.filter(
+        Q(hub_entity=hub_entity)
+        & Q(state_date_start__lte=reference_date)
+        & Q(state_date_end__gt=reference_date)
+        & applied_filter
+    )
+    return satellite_instance
+
 def select_satellite(
     hub_entity: MontrekHubABC,
     satellite_class: MontrekSatelliteABC,
@@ -162,15 +178,13 @@ def select_satellite(
     applied_filter: Q = None,
 ):
     # TODO: Rename to better name
-    reference_date = timezone.now() if reference_date is None else reference_date
-    applied_filter = Q() if applied_filter is None else applied_filter
-    satellite_instance = satellite_class.objects.get(
-        Q(hub_entity=hub_entity)
-        & Q(state_date_start__lte=reference_date)
-        & Q(state_date_end__gt=reference_date)
-        & applied_filter
-    )
-    return satellite_instance
+    return get_satellite_from_hub_query(
+        hub_entity=hub_entity,
+        satellite_class=satellite_class,
+        reference_date=reference_date,
+        applied_filter=applied_filter,
+    ).get()
+
 
 
 def get_hub_by_id(

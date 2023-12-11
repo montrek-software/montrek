@@ -10,19 +10,17 @@ from account.models import AccountStaticSatellite
 from account.models import BankAccountPropertySatellite
 from account.models import BankAccountStaticSatellite
 from account.repositories.account_model_queries import new_account
-from account.repositories.account_model_queries import account_view_data
+from account.repositories.account_repository import AccountRepository
+from account.pages import AccountOverviewPage
+from account.pages import AccountPage
 
 from transaction.repositories.transaction_account_queries import (
-    get_transactions_by_account_id,
-)
-from transaction.repositories.transaction_account_queries import (
-    get_paginated_transactions
-)
-from transaction.repositories.transaction_account_queries import (
-    get_paginated_transactions_category_map
+    get_paginated_transactions_category_map,
 )
 
-from file_upload.repositories.upload_registry_account_queries import get_paginated_upload_registries
+from file_upload.repositories.upload_registry_account_queries import (
+    get_paginated_upload_registries,
+)
 
 from credit_institution.repositories.credit_institution_model_queries import (
     get_credit_institution_satellite_by_account_hub_id,
@@ -34,13 +32,24 @@ from credit_institution.models import CreditInstitutionStaticSatellite
 
 from baseclasses.repositories.db_helper import new_satellite_entry
 from baseclasses.forms import DateRangeForm
-from baseclasses.dataclasses.view_classes import TabElement, ActionElement
+from baseclasses.views import MontrekListView
+from baseclasses.views import MontrekDetailView
+from baseclasses.views import MontrekTemplateView
+from baseclasses.dataclasses.table_elements import StringTableElement
+from baseclasses.dataclasses.table_elements import LinkTableElement
+from baseclasses.dataclasses.table_elements import LinkTextTableElement
+from baseclasses.dataclasses.table_elements import EuroTableElement
+from baseclasses.dataclasses.table_elements import DateTableElement
+from baseclasses.dataclasses.table_elements import BooleanTableElement
+from baseclasses.dataclasses.table_elements import FloatTableElement
+from baseclasses.dataclasses.table_elements import PercentTableElement
 
 from reporting.managers.account_transaction_plots import (
     draw_monthly_income_expanses_plot,
     draw_income_expenses_category_pie_plot,
 )
-from depot.repositories.depot_table_queries import get_depot_asset_table
+
+
 # Create your views here.
 #### Account Views ####
 def account_new(request):
@@ -50,9 +59,12 @@ def account_new(request):
         new_account(request.POST["account_name"])
         return redirect("/account/list")
     if account_type in ["Bank Account", "Depot"]:
-        return redirect(reverse('bank_account_new_form',
-                                kwargs={'account_name': account_name,
-                                        'account_type': account_type}))
+        return redirect(
+            reverse(
+                "bank_account_new_form",
+                kwargs={"account_name": account_name, "account_type": account_type},
+            )
+        )
     return render(request, "under_construction.html")
 
 
@@ -61,58 +73,59 @@ def account_new_form(request):
     return render(request, "new_account_form.html", {"account_types": account_types})
 
 
-def account_list(request):
-    accounts_statics = AccountHub.objects.all().prefetch_related(
-        "accountstaticsatellite_set", "bankaccountpropertysatellite_set"
-    )
-    account_list_map_fields = {
-        "Name": {"attr": "accountstaticsatellite_set.account_name"},
-        "Link": {"link": 
-                 { "url": "account_view",
-                  "kwargs": {"account_id": "id"},
-                  "icon": "chevron-right",
-                  "hover_text": "Goto Account",
-                 }
-                },
-        "Value": {"attr": "bankaccountpropertysatellite_set.account_value",
-                  "format": "{:,.2f}"},
-        "Type": {"attr": "accountstaticsatellite_set.account_type"},
-    }
-    action_new_account = ActionElement(
-        icon="plus",
-        link=reverse('account_new_form'),
-        action_id="id_new_account",
-        hover_text="Add new Account",
-    )
-    tab = TabElement(
-        name = "Account List",
-        link = reverse('account_list'),
-        html_id="id_tab_account_list",
-        active="active",
-        actions=(action_new_account,),
-    )
-    return render(request, "account_list.html",
-                  {
-                   "title": "Accounts",
-                   "columns": account_list_map_fields.keys(),
-                   "items": account_list_map_fields.values(),
-                   "table_objects": accounts_statics,
-                   "tab_elements": (tab,),
-                  })
+class AccountOverview(MontrekListView):
+    page_class = AccountOverviewPage
+    tab = "tab_account_list"
+    title = "Overview Table"
+    repository = AccountRepository
+
+    @property
+    def elements(self) -> list:
+        return (
+            StringTableElement(name="Name", attr="account_name"),
+            LinkTableElement(
+                name="Link",
+                url="account_details",
+                kwargs={"pk": "id"},
+                icon="chevron-right",
+                hover_text="Goto Account",
+            ),
+            EuroTableElement(
+                name="Value",
+                attr="account_value",
+            ),
+            StringTableElement(name="Type", attr="account_type"),
+        )
 
 
+class AccountDetailView(MontrekDetailView):
+    page_class = AccountPage
+    tab = "tab_details"
+    repository = AccountRepository
+    title = "Account Details"
 
-def account_view(request, account_id: int):
-    account_data = account_view_data(account_id)
-    if account_data['account_statics'].account_type == 'BankAccount':
-        return bank_account_view(request, account_id)
-    account_data.update(_handle_date_range_form(request))
-    page_number = request.GET.get('page', 1)
-    start_date, end_date = _get_date_range_dates(request)
-    account_data['transactions_page'] = get_paginated_transactions(
-        account_id, start_date, end_date, page_number
-    )
-    return render(request, "account_view.html", account_data)
+    @property
+    def elements(self) -> list:
+        return (
+            StringTableElement(name="Name", attr="account_name"),
+            StringTableElement(name="Type", attr="account_type"),
+            StringTableElement(
+                name="Iban",
+                attr="bank_account_iban",
+            ),
+            EuroTableElement(
+                name="Value",
+                attr="account_value",
+            ),
+            StringTableElement(
+                name="Credit Institution",
+                attr="creditinstitutionstaticsatellite__credit_institution_name",
+            ),
+            StringTableElement(
+                name="BIC",
+                attr="creditinstitutionstaticsatellite__credit_institution_bic",
+            ),
+        )
 
 
 def account_delete(request, account_id: int):
@@ -146,7 +159,7 @@ def bank_account_new_form(request, account_name: str, account_type: str):
 
 
 def bank_account_new(request, account_name: str, account_type: str):
-    account_hub = new_account(account_name, account_type.replace(' ',''))
+    account_hub = new_account(account_name, account_type.replace(" ", ""))
     BankAccountPropertySatellite.objects.create(
         hub_entity=account_hub,
     )
@@ -160,223 +173,189 @@ def bank_account_new(request, account_name: str, account_type: str):
     return redirect("/account/list")
 
 
-def bank_account_view_data(account_id: int):
-    account_data = account_view_data(account_id)
-    bank_account_static_satellite = BankAccountStaticSatellite.objects.get(
-        hub_entity=account_id
-    )
-    bank_account_property_satellite = BankAccountPropertySatellite.objects.get(
-        hub_entity=account_id
-    )
-    account_data["bank_account_statics"] = bank_account_static_satellite
-    account_data["bank_account_properties"] = bank_account_property_satellite
-    account_data[
-        "credit_institution"
-    ] = get_credit_institution_satellite_by_account_hub_id(account_id)
-    return account_data
+
+class AccountTransactionsView(MontrekListView):
+    page_class = AccountPage
+    tab = "tab_transactions"
+    title = "Account Transactions"
+    repository = AccountRepository
+
+    def get_queryset(self):
+        return self.repository(self.request).get_transaction_table_by_account_paginated(
+            self.kwargs["pk"]
+        )
+
+    @property
+    def elements(self) -> list:
+        return (
+            StringTableElement(name="Counterparty", attr="transaction_party"),
+            LinkTableElement(
+                name="CP Cat",
+                url="transaction_category_add_form_with_counterparty",
+                kwargs={
+                    "account_id": str(self.kwargs["pk"]),
+                    "counterparty": "transaction_party",
+                },
+                icon="tag",
+                hover_text="Set Category based on Counterparty",
+            ),
+            StringTableElement(name="IBAN", attr="transaction_party_iban"),
+            LinkTableElement(
+                name="IBAN Cat",
+                url="transaction_category_add_form_with_iban",
+                kwargs={
+                    "account_id": str(self.kwargs["pk"]),
+                    "iban": "transaction_party_iban",
+                },
+                icon="tag",
+                hover_text="Set Category based on IBAN",
+            ),
+            StringTableElement(name="Description", attr="transaction_description"),
+            DateTableElement(name="Date", attr="transaction_date"),
+            EuroTableElement(name="Value", attr="transaction_value"),
+            StringTableElement(name="Category", attr="transaction_category"),
+            LinkTableElement(
+                name="View",
+                url="transaction_details",
+                kwargs={"pk": "id"},
+                icon="eye-open",
+                hover_text="View",
+            ),
+        )
 
 
-def bank_account_view(request, account_id: int):
-    return bank_account_view_overview(request, account_id)
+class AccountGraphsView(MontrekTemplateView):
+    page_class = AccountPage
+    tab = "tab_graphs"
+    title = "Account Graphs"
+    repository = AccountRepository
+    template_name = "account_graphs.html"
 
-def bank_account_view_overview(request, account_id: int):
-    account_data = account_view_data(account_id, "tab_overview")
-    account_data.update(_handle_date_range_form(request))
-    bank_account_static_satellite = BankAccountStaticSatellite.objects.get(
-        hub_entity=account_id
-    )
-    bank_account_property_satellite = BankAccountPropertySatellite.objects.get(
-        hub_entity=account_id
-    )
-    account_data["bank_account_statics"] = bank_account_static_satellite
-    account_data["bank_account_properties"] = bank_account_property_satellite
-    account_data[
-        "credit_institution"
-    ] = get_credit_institution_satellite_by_account_hub_id(account_id)
-    return render(request, "bank_account_view_overview.html", account_data)
+    def get_queryset(self):
+        return self.repository(self.request).get_transaction_table_by_account(
+            self.kwargs["pk"]
+        )
 
-def bank_account_view_transactions(request, account_id: int):
-    account_data = account_view_data(account_id, "tab_transactions")
-    account_data.update(_handle_date_range_form(request))
-    # Get the paginated transactions
-    page_number = request.GET.get('page', 1)
-    transaction_fields = {
-        'Counterparty': {'attr': 'transaction_party'},
-        'CP Cat': {'link': {'url': 'transaction_category_add_form_with_counterparty',
-                            'kwargs': {'account_id': str(account_id),
-                                       'counterparty': 'transaction_party'},
-                            'icon': 'tag',
-                            'hover_text': 'Set Category based on Counterparty',
-                           },
-                  },
-        'IBAN': {'attr': 'transaction_party_iban'},
-        'IBAN Cat': {'link': {'url': 'transaction_category_add_form_with_iban',
-                            'kwargs': {'account_id': str(account_id),
-                                       'iban': 'transaction_party_iban'},
-                            'icon': 'tag',
-                            'hover_text': 'Set Category based on IBAN',
-                           },
-                  },
-        'Description': {'attr': 'transaction_description'},
-        'Date': {'attr': 'transaction_date'},
-        'Value': {'attr': 'transaction_value'},
-        'Category': {'attr': 'transaction_category.typename'},
-        'View': {
-            'link': {'url': 'transaction_view',
-                     'kwargs': {'pk':'id'},
-                     'icon': 'eye-open', 
-                     'hover_text': 'View',
-                   },
-        },
-                         }
-    account_data['columns'] = transaction_fields.keys()
-    account_data['items'] = transaction_fields.values()
-    start_date, end_date = _get_date_range_dates(request)
-    account_data['table_objects'] = get_paginated_transactions(
-        account_id, start_date, end_date, page_number)
-    return render(request, "bank_account_view_table.html", account_data)
-
-def bank_account_view_graphs(request, account_id: int):
-    account_data = account_view_data(account_id, "tab_graphs")
-    account_data.update(_handle_date_range_form(request))
-    account_transactions = (
-        get_transactions_by_account_id(account_id).order_by("-transaction_date").all()
-    )
-    start_date, end_date = _get_date_range_dates(request)
-    account_transactions = account_transactions.filter(
-        transaction_date__gte=start_date, transaction_date__lte=end_date
-    )
-    account_transactions_df = read_frame(account_transactions)
-    income_expanse_plot = draw_monthly_income_expanses_plot(
-        account_transactions_df
-    ).format_html()
-    account_data["income_expanse_plot"] = income_expanse_plot
-    category_pie_plots = (
-        draw_income_expenses_category_pie_plot(
+    def get_template_context(self) -> dict:
+        account_transactions = self.get_queryset().all()
+        account_transactions_df = read_frame(account_transactions)
+        account_data = {}
+        income_expanse_plot = draw_monthly_income_expanses_plot(
+            account_transactions_df
+        ).format_html()
+        account_data["income_expanse_plot"] = income_expanse_plot
+        category_pie_plots = draw_income_expenses_category_pie_plot(
             account_transactions
         )
-    )
-    account_data["income_category_pie_plot"] = category_pie_plots['income'].format_html()
-    account_data["expense_category_pie_plot"] = category_pie_plots['expense'].format_html()
-    return render(request, "bank_account_view_graphs.html", account_data)
+        account_data["income_category_pie_plot"] = category_pie_plots[
+            "income"
+        ].format_html()
+        account_data["expense_category_pie_plot"] = category_pie_plots[
+            "expense"
+        ].format_html()
+        return account_data
 
-def bank_account_view_uploads(request, account_id: int):
-    account_data = account_view_data(account_id, "tab_uploads")
-    account_data.update(_handle_date_range_form(request))
-    page_number = request.GET.get('page', 1)
-    upload_fields = {
-        'File Name': {'attr': 'file_name'},
-        'Upload Status': {'attr': 'upload_status'},
-        'Upload Message': {'attr': 'upload_message'},
-        'Upload Date': {'attr': 'created_at'},
-        'File': {'link': {'url': 'download_upload_file',
-                          'kwargs': {'upload_registry_id':'hub_entity.id'},
-                          'icon': 'download',
-                          'hover_text': 'Download',
-                         }
-                 }
-    }
-    account_data['columns'] = upload_fields.keys()
-    account_data['items'] = upload_fields.values()
-    account_data['table_objects'] = get_paginated_upload_registries(account_id, page_number)
-    return render(request, "bank_account_view_table.html", account_data)
+class AccountUploadView(MontrekListView):
+    page_class = AccountPage
+    tab = "tab_uploads"
+    title = "Account Uploads"
+    repository = AccountRepository
 
-def bank_account_view_transaction_category_map(request, account_id: int):
-    account_data = account_view_data(account_id, "tab_transaction_category_map")
-    account_data.update(_handle_date_range_form(request))
-    page_number = request.GET.get('page', 1)
-    trans_cat_map_fields = {
-        'Field' : {'attr': 'field'},
-        'Value' : {'attr': 'value'},
-        'Category' : {'attr': 'category'},
-        'Is Regex' : {'attr': 'is_regex'},
-        'Edit': {
-            'link': {'url': 'transaction_category_map_edit',
-                     'kwargs': {'pk':'id',
-                                'account_id': str(account_id)},
-                     'icon': 'edit', 
-                     'hover_text': 'Edit',
-                   },
-        },
-        'Delete': {
-            'link': {'url': 'transaction_category_map_delete',
-                     'kwargs': {'pk':'id',
-                                'account_id': str(account_id)},
-                     'icon': 'trash', 
-                     'hover_text': 'Delete',
-                   },
-        },
-    }
-    account_data['columns'] = trans_cat_map_fields.keys()
-    account_data['items'] = trans_cat_map_fields.values()
-    account_data['table_objects'] = get_paginated_transactions_category_map(account_id, page_number)
-    return render(request, "bank_account_view_table.html", account_data)
+    def get_queryset(self):
+        return self.repository(self.request).get_upload_registry_table_by_account_paginated(
+            self.kwargs["pk"]
+        )
 
-def bank_account_view_depot(request, account_id: int):
-    account_data = account_view_data(account_id, "tab_depot")
-    account_data.update(_handle_date_range_form(request))
-    depot_table_map_fields = {
-        'Asset Name': {'attr': 'asset_name'},
-        'ISIN': {'attr': 'asset_isin'},
-        'WKN': {'attr': 'asset_wkn'},
-        'Ccy': {'attr': 'asset_ccy'},
-        'Nominal': {'attr': 'total_nominal',
-                    'format': '{:,.2f}'},
-        'FX': {'attr': 'fx_rate',
-                    'format': '{:,.2f}'},
-        'Book Price': {'attr': 'book_price',
-                       'format': '{:.2f}'},
-        'Book Value': {'attr': 'book_value',
-                      'format': '{:,.2f}'},
-        'Current Price': {'attr': 'current_price',
-                         'format': '{:,.2f}'},
-        'Current Value': {'attr': 'current_value',
-                         'format': '{:,.2f}'},
-        'Value Date': {'attr': 'value_date'},
-        'Performance:': {'attr': 'performance',
-                         'format': '{:,.2%}'},
-        'Price': {'link': {'url': 'add_single_price_to_asset',
-                           'kwargs': {'account_id': str(account_id),
-                                      'asset_id': 'id'},
-                           'icon': 'plus',
-                           'hover_text': 'Add Price',
-                          }
-                 },
-    }
-    account_data['columns'] = depot_table_map_fields.keys()
-    account_data['items']= depot_table_map_fields.values()
-    _, end_date = _get_date_range_dates(request)
-    account_data['table_objects'] = get_depot_asset_table( account_id, end_date )
-    return render(request, "bank_account_view_table.html", account_data)
+    @property
+    def elements(self) -> list:
+        return (
+            StringTableElement(name="File Name", attr="file_name"),
+            StringTableElement(name="Upload Status", attr="upload_status"),
+            StringTableElement(name="Upload Message", attr="upload_message"),
+            DateTableElement(name="Upload Date", attr="created_at"),
+            LinkTableElement(
+                name="File",
+                url="download_upload_file",
+                kwargs={"upload_registry_id": "id"},
+                icon="download",
+                hover_text="Download",
+            ),
+        )
 
 
-def _handle_date_range_form(request):
-    start_date, end_date = _get_date_range_dates(request)
-    request_get = request.GET.copy()
-    request_get = request_get if 'start_date' in request_get and 'end_date' in request_get else None
-    date_range_form = DateRangeForm(request_get or {'start_date': start_date, 'end_date': end_date})
-    if date_range_form.is_valid():
-        start_date = date_range_form.cleaned_data['start_date']
-        end_date = date_range_form.cleaned_data['end_date']
-        request.session['start_date'] = start_date.strftime('%Y-%m-%d')
-        request.session['end_date'] = end_date.strftime('%Y-%m-%d')
-    return {'date_range_form': date_range_form}
+class AccountTransactionCategoryMapView(MontrekListView):
+    page_class = AccountPage
+    tab = "tab_transaction_category_map"
+    title = "Transaction Category Map"
+    repository = AccountRepository
 
-def _get_date_range_dates(request) -> Tuple[str, str]:
-    today = timezone.now().date()
-    default_start_date = today - timedelta(days=30)
-    default_end_date = today
-    default_start_date = default_start_date.strftime('%Y-%m-%d')
-    default_end_date = default_end_date.strftime('%Y-%m-%d')
+    def get_queryset(self):
+        return self.repository(self.request).get_transaction_category_map_table_by_account_paginated(
+            self.kwargs["pk"]
+        )
 
-    try:
-        start_date_str = request.session.get('start_date', default_start_date)
-    except ValueError:
-        start_date_str = default_start_date
+    @property
+    def elements(self) -> list:
+        return (
+            StringTableElement(name="Field", attr="field"),
+            StringTableElement(name="Value", attr="value"),
+            StringTableElement(name="Category", attr="category"),
+            BooleanTableElement(name="Is Regex", attr="is_regex"),
+            LinkTableElement(
+                name="Edit",
+                url="transaction_category_map_edit",
+                kwargs={"pk": "id", "account_id": str(self.kwargs["pk"])},
+                icon="edit",
+                hover_text="Edit",
+            ),
+            LinkTableElement(
+                name="Delete",
+                url="transaction_category_map_delete",
+                kwargs={"pk": "id", "account_id": str(self.kwargs["pk"])},
+                icon="trash",
+                hover_text="Delete",
+            ),
+        )
 
-    try:
-        end_date_str = request.session.get('end_date', default_end_date)
-    except ValueError:
-        end_date_str = default_end_date
+class AccountDepotView(MontrekListView):
+    page_class = AccountPage
+    tab = "tab_depot"
+    title = "Depot"
+    repository = AccountRepository
 
-    return start_date_str, end_date_str
+    def get_queryset(self):
+        return self.repository(self.request).get_depot_stats_table_by_account_paginated(
+            self.kwargs["pk"]
+        )
+
+    def elements(self) -> list:
+        return (
+            StringTableElement(name="Asset Name", attr="asset_name"),
+            StringTableElement(name="Type", attr="asset_type"),
+            StringTableElement(name="ISIN", attr="asset_isin"),
+            StringTableElement(name="WKN", attr="asset_wkn"),
+            LinkTextTableElement(
+                name="CCY",
+                url="currency_details",
+                kwargs={"pk": "ccy_id"},
+                text="ccy_code",
+                hover_text="View Currency",
+            ),
+            StringTableElement(name="CCY", attr="ccy_code"),
+            FloatTableElement(name="Nominal", attr="total_nominal"),
+            FloatTableElement(name="FX-Rate", attr="fx_rate"),
+            FloatTableElement(name="Book Price", attr="book_price"),
+            EuroTableElement(name="Book Value", attr="book_value"),
+            FloatTableElement(name="Current Price", attr="price"),
+            EuroTableElement(name="Current Value", attr="value"),
+            EuroTableElement(name="PnL", attr="profit_loss"),
+            PercentTableElement(name="Performance", attr="performance"),
+            DateTableElement(name="Value Date", attr="value_date"),
+            LinkTableElement(
+                name="",
+                url="add_single_price_to_asset",
+                kwargs={"account_id": str(self.kwargs["pk"]), "asset_id": "id"},
+                icon="plus",
+                hover_text="Add Price",
+            ),
+        )

@@ -1,4 +1,5 @@
 {% load static %}
+{% load nav_tags %}
 <!DOCTYPE html>
 <html lang="en">
  <head>
@@ -18,8 +19,7 @@
 
     <!-- NAVBAR -->
     <div class="row">
-	  {% include 'navbar.html' %}
-            <!-- ... Your Navbar Code ... -->
+        {% include_navbar %}
     </div>
 
     <div class="row">
@@ -45,7 +45,7 @@
 	<div class="col-md-8">
 	    <!-- TITLE -->
 	    <div class="row">
-		    <h1 id="page_title">{% block title %}{% endblock %}</h1>
+            <h1 id="page_title">{{ page_title }}</h1>
 	    </div>
         <!-- DATE RANGE SELECTOR -->
         {% if show_date_range_selector %}

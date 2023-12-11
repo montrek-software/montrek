@@ -12,11 +12,11 @@
 
 	<div class="collapse navbar-collapse">
 		<ul class="nav navbar-nav">
-      <li><a href={% url "home"  %}>Home</a></li>
-      <li><a href={% url "account_list" %}>Accounts</a></li>
-      <li><a href={% url "under_construction" %}>Assets</a></li>
-      <li><a href={% url "under_construction" %}>Credit Institutions</a></li>
-		</ul>
+          <li><a href={% url "home"  %}>Home</a></li>
+          {% for nav_app in nav_apps %}
+            <li><a href={% url nav_app.app_name %}>{{ nav_app.display_name }}</a></li>
+          {% endfor %}
+        </ul>
 		<ul class="nav navbar-nav navbar-right">
 			<li><a href={% url "under_construction" %}>Login</a></li>
 			<li><a href={% url "under_construction" %}>Sign Up</a></li>

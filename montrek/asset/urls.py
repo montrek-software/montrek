@@ -3,6 +3,11 @@ from asset import views
 
 urlpatterns = [
     path(
+        "asset_list",
+        views.AssetListView.as_view(),
+        name="asset",
+    ),
+    path(
         "create/<int:account_id>",
         views.AssetStaticCreateView.as_view(),
         name="asset_create_form",

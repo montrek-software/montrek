@@ -1,32 +1,179 @@
-from decimal import Decimal
 from django.test import TestCase
+from account import views
 from account.models import AccountHub
 from account.models import AccountStaticSatellite
-from account.models import BankAccountPropertySatellite
-from account.models import BankAccountStaticSatellite
-from account.tests.factories.account_factories import AccountHubFactory
 from account.tests.factories.account_factories import AccountStaticSatelliteFactory
-from account.tests.factories.account_factories import (
-    BankAccountPropertySatelliteFactory,
-)
-from account.tests.factories.account_factories import BankAccountStaticSatelliteFactory
-from transaction.tests.factories.transaction_factories import TransactionHubFactory
 from transaction.tests.factories.transaction_factories import (
-    TransactionSatelliteFactory,
+    TransactionSatelliteFactory, TransactionCategoryMapSatelliteFactory
 )
-from credit_institution.tests.factories.credit_institution_factories import (
-    CreditInstitutionStaticSatelliteFactory,
-)
-from credit_institution.repositories.credit_institution_model_queries import (
-    get_credit_institution_satellite_by_account_hub,
-)
+from file_upload.tests.factories.file_upload_factories import FileUploadRegistryStaticSatelliteFactory
+from asset.tests.factories.asset_factories import AssetStaticSatelliteFactory
+from currency.tests.factories.currency_factories import CurrencyStaticSatelliteFactory
+
+from baseclasses.utils import montrek_time
+
+
+class TestAccountOverview(TestCase):
+    def setUp(self):
+        AccountStaticSatelliteFactory.create_batch(3)
+
+    def test_account_overview_returns_correct_html(self):
+        response = self.client.get("/account/overview")
+        self.assertTemplateUsed(response, "montrek_table.html")
+
+    def test_account_overview_context_data(self):
+        response = self.client.get("/account/overview")
+        context = response.context
+        self.assertFalse(context["is_paginated"])
+        object_list = context["object_list"]
+        self.assertEqual(len(object_list), 3)
+        self.assertIsInstance(context["view"], views.AccountOverview)
+        self.assertEqual(context["page_title"], "Accounts")
+
+
+class TestAccountDetailView(TestCase):
+    def setUp(self):
+        self.acc_sat1 = AccountStaticSatelliteFactory.create()
+
+    def test_account_detail_view_returns_correct_html(self):
+        response = self.client.get(f"/account/{self.acc_sat1.hub_entity.id}/details")
+        self.assertTemplateUsed(response, "montrek_details.html")
+
+    def test_account_detail_view_context_data(self):
+        response = self.client.get(f"/account/{self.acc_sat1.hub_entity.id}/details")
+        context = response.context
+        self.assertEqual(context["title"], "Account Details")
+        self.assertEqual(context["object"], self.acc_sat1.hub_entity)
+        self.assertIsInstance(context["view"], views.AccountDetailView)
+
+
+class TestAccountTransactionsView(TestCase):
+    def setUp(self):
+        test_session = self.client.session
+        test_session["end_date"] = "2023-12-11"
+        test_session["start_date"] = "2023-12-09"
+        test_session.save()
+        self.acc = AccountStaticSatelliteFactory.create()
+        for transaction in TransactionSatelliteFactory.create_batch(
+            3, transaction_date=montrek_time(2023, 12, 10)
+        ):
+            transaction.hub_entity.link_transaction_account.add(self.acc.hub_entity)
+            transaction.hub_entity.save()
+
+    def test_account_transactions_view_returns_correct_html(self):
+        response = self.client.get(f"/account/{self.acc.hub_entity.id}/transactions")
+        self.assertTemplateUsed(response, "montrek_table.html")
+
+    def test_account_transactions_view_context_data(self):
+        response = self.client.get(f"/account/{self.acc.hub_entity.id}/transactions")
+        context = response.context
+        self.assertFalse(context["is_paginated"])
+        object_list = context["object_list"]
+        self.assertEqual(len(object_list), 3)
+        self.assertIsInstance(context["view"], views.AccountTransactionsView)
+        self.assertEqual(context["page_title"], self.acc.account_name)
+
+class TestAccountGraphView(TestCase):
+    def setUp(self):
+        test_session = self.client.session
+        test_session["end_date"] = "2023-12-11"
+        test_session["start_date"] = "2023-12-09"
+        test_session.save()
+        self.acc = AccountStaticSatelliteFactory.create()
+        for transaction in TransactionSatelliteFactory.create_batch(
+            3, transaction_date=montrek_time(2023, 12, 10)
+        ):
+            transaction.hub_entity.link_transaction_account.add(self.acc.hub_entity)
+            transaction.hub_entity.save()
+
+    def test_account_graphs_view_returns_correct_html(self):
+        response = self.client.get(f"/account/{self.acc.hub_entity.id}/graphs")
+        self.assertTemplateUsed(response, "account_graphs.html")
+
+    def test_account_graphs_view_context_data(self):
+        response = self.client.get(f"/account/{self.acc.hub_entity.id}/graphs")
+        context = response.context
+        self.assertIsInstance(context["view"], views.AccountGraphsView)
+        self.assertEqual(context["page_title"], self.acc.account_name)
+        # Check that graphs are generated divs
+        for plot in ["income_expanse_plot", "income_category_pie_plot", "expense_category_pie_plot"]:
+            self.assertInHTML(context[plot], response.content.decode())
+            plot.startswith('<div>')
+            plot.endswith('</div>')
+
+class TestAccountUploadView(TestCase):
+    def setUp(self):
+        self.acc = AccountStaticSatelliteFactory.create()
+        fl_upld_reg = FileUploadRegistryStaticSatelliteFactory.create()
+        fl_upld_reg.hub_entity.link_file_upload_registry_account.add(self.acc.hub_entity)
+
+    def test_account_upload_view_returns_correct_html(self):
+        response = self.client.get(f"/account/{self.acc.hub_entity.id}/uploads")
+        self.assertTemplateUsed(response, "montrek_table.html")
+
+    def test_account_upload_view_context_data(self):
+        response = self.client.get(f"/account/{self.acc.hub_entity.id}/uploads")
+        context = response.context
+        self.assertIsInstance(context["view"], views.AccountUploadView)
+        self.assertEqual(context["page_title"], self.acc.account_name)
+        self.assertEqual(len(context['object_list']), 1)
+        self.assertEqual(context["object_list"][0], self.acc.hub_entity.link_account_file_upload_registry.first())
+
+class TestAccountTransactionCategoryMapView(TestCase):
+    def setUp(self):
+        self.acc = AccountStaticSatelliteFactory.create()
+        tr_cat_map= TransactionCategoryMapSatelliteFactory.create()
+        tr_cat_map.hub_entity.link_transaction_category_map_account.add(self.acc.hub_entity)
+
+    def test_account_transaction_category_map_view_returns_correct_html(self):
+        response = self.client.get(f"/account/{self.acc.hub_entity.id}/transaction_category_map")
+        self.assertTemplateUsed(response, "montrek_table.html")
+
+    def test_account_transaction_category_map_view_context_data(self):
+        response = self.client.get(f"/account/{self.acc.hub_entity.id}/transaction_category_map")
+        context = response.context
+        self.assertIsInstance(context["view"], views.AccountTransactionCategoryMapView)
+        self.assertEqual(context["page_title"], self.acc.account_name)
+        self.assertEqual(len(context['object_list']), 1)
+        self.assertEqual(context["object_list"][0], self.acc.hub_entity.link_account_transaction_category_map.first())
+
+class TestAccountDepotView(TestCase):
+    def setUp(self):
+        test_session = self.client.session
+        test_session["end_date"] = "2023-12-11"
+        test_session["start_date"] = "2023-12-09"
+        test_session.save()
+        self.acc = AccountStaticSatelliteFactory.create()
+        ccy = CurrencyStaticSatelliteFactory.create()
+        asset = AssetStaticSatelliteFactory.create(currency=ccy.hub_entity)
+        for transaction in TransactionSatelliteFactory.create_batch(
+            3, transaction_date=montrek_time(2023, 12, 10)
+        ):
+            transaction.hub_entity.link_transaction_account.add(self.acc.hub_entity)
+            transaction.hub_entity.link_transaction_asset.add(asset.hub_entity)
+            transaction.hub_entity.save()
+
+    def test_account_depot_view_returns_correct_html(self):
+        response = self.client.get(f"/account/{self.acc.hub_entity.id}/depot")
+        self.assertTemplateUsed(response, "montrek_table.html")
+
+    def test_account_depot_view_context_data(self):
+        response = self.client.get(f"/account/{self.acc.hub_entity.id}/depot")
+        context = response.context
+        self.assertFalse(context["is_paginated"])
+        object_list = context["object_list"]
+        self.assertEqual(len(object_list), 1)
+        self.assertIsInstance(context["view"], views.AccountDepotView)
+        self.assertEqual(context["page_title"], self.acc.account_name)
 
 
 # Create your tests here.
 class TestAccountViews(TestCase):
     @classmethod
     def setUpTestData(cls):
-        AccountStaticSatelliteFactory.create_batch(3)
+        cls.acc_sat1 = AccountStaticSatelliteFactory.create()
+        cls.acc_sat2 = AccountStaticSatelliteFactory.create()
+        cls.acc_sat3 = AccountStaticSatelliteFactory.create()
 
     def test_new_list_form_returns_correct_html(self):
         response = self.client.get("/account/new_form")
@@ -44,17 +191,6 @@ class TestAccountViews(TestCase):
         self.assertEqual(account_static_satellite.account_name, "New Account")
         self.assertEqual(account_static_satellite.hub_entity.id, account_hub.id)
         self.assertEqual(account_static_satellite.account_type, "Other")
-
-    def test_account_list_returns_correct_html(self):
-        response = self.client.post("/account/list")
-        self.assertTemplateUsed(response, "account_list.html")
-
-    def test_account_view_return_correct_html(self):
-        for acc_no in [
-            acc_sat.hub_entity.id for acc_sat in AccountStaticSatellite.objects.all()
-        ]:
-            response = self.client.post(f"/account/{acc_no}/view")
-            self.assertTemplateUsed(response, "account_view.html")
 
     def test_account_delete(self):
         accounts_under_test = len(AccountHub.objects.all())
@@ -74,78 +210,3 @@ class TestAccountViews(TestCase):
         ]:
             response = self.client.post(f"/account/{acc_no}/delete_form")
             self.assertTemplateUsed(response, "account_delete_form.html")
-
-
-class TestBankAccountViews(TestCase):
-    @classmethod
-    def setUpTestData(cls):
-        account_hub = AccountHubFactory()
-        AccountStaticSatelliteFactory(hub_entity=account_hub, account_type="BankAccount")
-        transaction_hub = TransactionHubFactory(
-            accounts = [account_hub]
-        )
-        TransactionSatelliteFactory(hub_entity=transaction_hub)
-        TransactionSatelliteFactory(hub_entity=transaction_hub)
-        BankAccountPropertySatelliteFactory(hub_entity=account_hub)
-        BankAccountStaticSatelliteFactory(hub_entity=account_hub)
-        credit_institution_factory = CreditInstitutionStaticSatelliteFactory()
-        account_hub.link_account_credit_institution.add(
-            credit_institution_factory.hub_entity
-        )
-
-    def test_bank_account_account_value(self):
-        bank_account_satellite = BankAccountPropertySatellite.objects.last()
-        self.assertTrue(isinstance(bank_account_satellite.account_value, Decimal))
-
-    def test_bank_account_list_returns_correct_html(self):
-        response = self.client.post("/account/list")
-        self.assertTemplateUsed(response, "account_list.html")
-
-    def test_new_bank_account(self):
-        accounts_under_test = len(AccountHub.objects.all())
-        self.client.post(
-            "/account/bank_account/new/New%20Bank%20Account/BankAccount",
-            data={
-                "credit_institution_name": "Test Bank",
-                "bank_account_iban": "DE12345678901234567890",
-            },
-        )
-        self.assertEqual(AccountHub.objects.count(), accounts_under_test + 1)
-        self.assertEqual(
-            AccountStaticSatellite.objects.count(), accounts_under_test + 1
-        )
-        account_hub = AccountHub.objects.last()
-        account_static_satellite = AccountStaticSatellite.objects.last()
-        self.assertEqual(account_static_satellite.account_name, "New Bank Account")
-        self.assertEqual(account_static_satellite.hub_entity.id, account_hub.id)
-        self.assertEqual(account_static_satellite.account_type, "BankAccount")
-        bank_account_property_satellite = BankAccountPropertySatellite.objects.last()
-        self.assertEqual(bank_account_property_satellite.hub_entity.id, account_hub.id)
-        bank_account_static_satellite = BankAccountStaticSatellite.objects.last()
-        self.assertEqual(
-            bank_account_static_satellite.bank_account_iban, "DE12345678901234567890"
-        )
-        credit_institution = get_credit_institution_satellite_by_account_hub(
-            account_hub
-        )
-        self.assertEqual(credit_institution.credit_institution_name, "Test Bank")
-
-    def test_bank_account_returns_correct_html(self):
-        for acc_no in [
-            acc_sat.hub_entity.id
-            for acc_sat in BankAccountStaticSatellite.objects.all()
-        ]:
-            response = self.client.post(f"/account/{acc_no}/bank_account_view")
-            self.assertTemplateUsed(response, "bank_account_view_overview.html")
-            response = self.client.post(f"/account/{acc_no}/bank_account_view/overview")
-            self.assertTemplateUsed(response, "bank_account_view_overview.html")
-            response = self.client.post(f"/account/{acc_no}/bank_account_view/transactions")
-            self.assertTemplateUsed(response, "bank_account_view_table.html")
-            response = self.client.post(f"/account/{acc_no}/bank_account_view/graphs")
-            self.assertTemplateUsed(response, "bank_account_view_graphs.html")
-            response = self.client.post(f"/account/{acc_no}/bank_account_view/uploads")
-            self.assertTemplateUsed(response, "bank_account_view_table.html")
-            response = self.client.post(
-                f"/account/{acc_no}/bank_account_view/transaction_category_map"
-            )
-            self.assertTemplateUsed(response, "bank_account_view_table.html")

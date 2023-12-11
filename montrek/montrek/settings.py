@@ -42,12 +42,12 @@ INSTALLED_APPS = [
     "django_extensions",
     "account",
     "baseclasses",
+    "currency",
     "transaction",
     "credit_institution",
     "file_upload",
     "depot",
     "asset",
-    "currency",
 ]
 
 MIDDLEWARE = [
