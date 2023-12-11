@@ -4,9 +4,12 @@ from account.models import AccountHub
 from account.models import AccountStaticSatellite
 from account.tests.factories.account_factories import AccountStaticSatelliteFactory
 from transaction.tests.factories.transaction_factories import (
-    TransactionSatelliteFactory, TransactionCategoryMapSatelliteFactory
+    TransactionSatelliteFactory,
+    TransactionCategoryMapSatelliteFactory,
 )
-from file_upload.tests.factories.file_upload_factories import FileUploadRegistryStaticSatelliteFactory
+from file_upload.tests.factories.file_upload_factories import (
+    FileUploadRegistryStaticSatelliteFactory,
+)
 from asset.tests.factories.asset_factories import AssetStaticSatelliteFactory
 from currency.tests.factories.currency_factories import CurrencyStaticSatelliteFactory
 
@@ -73,6 +76,7 @@ class TestAccountTransactionsView(TestCase):
         self.assertIsInstance(context["view"], views.AccountTransactionsView)
         self.assertEqual(context["page_title"], self.acc.account_name)
 
+
 class TestAccountGraphView(TestCase):
     def setUp(self):
         test_session = self.client.session
@@ -96,16 +100,23 @@ class TestAccountGraphView(TestCase):
         self.assertIsInstance(context["view"], views.AccountGraphsView)
         self.assertEqual(context["page_title"], self.acc.account_name)
         # Check that graphs are generated divs
-        for plot in ["income_expanse_plot", "income_category_pie_plot", "expense_category_pie_plot"]:
+        for plot in [
+            "income_expanse_plot",
+            "income_category_pie_plot",
+            "expense_category_pie_plot",
+        ]:
             self.assertInHTML(context[plot], response.content.decode())
-            plot.startswith('<div>')
-            plot.endswith('</div>')
+            plot.startswith("<div>")
+            plot.endswith("</div>")
+
 
 class TestAccountUploadView(TestCase):
     def setUp(self):
         self.acc = AccountStaticSatelliteFactory.create()
         fl_upld_reg = FileUploadRegistryStaticSatelliteFactory.create()
-        fl_upld_reg.hub_entity.link_file_upload_registry_account.add(self.acc.hub_entity)
+        fl_upld_reg.hub_entity.link_file_upload_registry_account.add(
+            self.acc.hub_entity
+        )
 
     def test_account_upload_view_returns_correct_html(self):
         response = self.client.get(f"/account/{self.acc.hub_entity.id}/uploads")
@@ -116,26 +127,40 @@ class TestAccountUploadView(TestCase):
         context = response.context
         self.assertIsInstance(context["view"], views.AccountUploadView)
         self.assertEqual(context["page_title"], self.acc.account_name)
-        self.assertEqual(len(context['object_list']), 1)
-        self.assertEqual(context["object_list"][0], self.acc.hub_entity.link_account_file_upload_registry.first())
+        self.assertEqual(len(context["object_list"]), 1)
+        self.assertEqual(
+            context["object_list"][0],
+            self.acc.hub_entity.link_account_file_upload_registry.first(),
+        )
+
 
 class TestAccountTransactionCategoryMapView(TestCase):
     def setUp(self):
         self.acc = AccountStaticSatelliteFactory.create()
-        tr_cat_map= TransactionCategoryMapSatelliteFactory.create()
-        tr_cat_map.hub_entity.link_transaction_category_map_account.add(self.acc.hub_entity)
+        tr_cat_map = TransactionCategoryMapSatelliteFactory.create()
+        tr_cat_map.hub_entity.link_transaction_category_map_account.add(
+            self.acc.hub_entity
+        )
 
     def test_account_transaction_category_map_view_returns_correct_html(self):
-        response = self.client.get(f"/account/{self.acc.hub_entity.id}/transaction_category_map")
+        response = self.client.get(
+            f"/account/{self.acc.hub_entity.id}/transaction_category_map"
+        )
         self.assertTemplateUsed(response, "montrek_table.html")
 
     def test_account_transaction_category_map_view_context_data(self):
-        response = self.client.get(f"/account/{self.acc.hub_entity.id}/transaction_category_map")
+        response = self.client.get(
+            f"/account/{self.acc.hub_entity.id}/transaction_category_map"
+        )
         context = response.context
         self.assertIsInstance(context["view"], views.AccountTransactionCategoryMapView)
         self.assertEqual(context["page_title"], self.acc.account_name)
-        self.assertEqual(len(context['object_list']), 1)
-        self.assertEqual(context["object_list"][0], self.acc.hub_entity.link_account_transaction_category_map.first())
+        self.assertEqual(len(context["object_list"]), 1)
+        self.assertEqual(
+            context["object_list"][0],
+            self.acc.hub_entity.link_account_transaction_category_map.first(),
+        )
+
 
 class TestAccountDepotView(TestCase):
     def setUp(self):
@@ -146,8 +171,9 @@ class TestAccountDepotView(TestCase):
         self.acc = AccountStaticSatelliteFactory.create()
         ccy = CurrencyStaticSatelliteFactory.create()
         asset = AssetStaticSatelliteFactory.create(currency=ccy.hub_entity)
+        transaction_date = montrek_time(2023, 12, 10)
         for transaction in TransactionSatelliteFactory.create_batch(
-            3, transaction_date=montrek_time(2023, 12, 10)
+            3, transaction_date=transaction_date, hub_entity__account=self.acc.hub_entity
         ):
             transaction.hub_entity.link_transaction_account.add(self.acc.hub_entity)
             transaction.hub_entity.link_transaction_asset.add(asset.hub_entity)

@@ -124,11 +124,11 @@ class TestTransactionCategoryModelQueries(TestCase):
         )
         transaction = TransactionSatelliteFactory(
             transaction_party="SuperParty",
-            hub_entity__accounts = [account],
+            hub_entity__account = account,
         )
         transaction2 = TransactionSatelliteFactory(
             transaction_party="DuperParty",
-            hub_entity__accounts = [account],
+            hub_entity__account = account,
         )
 
         # Transaction has no category by now
@@ -163,11 +163,11 @@ class TestTransactionCategoryModelQueries(TestCase):
         )
         transaction = TransactionSatelliteFactory(
             transaction_party="SuperParty",
-            hub_entity__accounts = [account],
+            hub_entity__account = account,
         )
         transaction2 = TransactionSatelliteFactory(
             transaction_party="DuperParty",
-            hub_entity__accounts = [account],
+            hub_entity__account = account,
         )
 
         # Set the categories
