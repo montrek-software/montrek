@@ -24,13 +24,17 @@ class TestMontrekRepository(TestCase):
             test_name="test_sat_2",
             test_value=2,
         )
-        self.test_linkes_sat_1 = TestLinkSatelliteFactory.create()
-        self.test_linkes_sat_2 = TestLinkSatelliteFactory.create(
-            hub_entity=self.test_linkes_sat_1.hub_entity,
-            state_date_start=self.test_linkes_sat_1.state_date_end,
+        self.test_linkes_sat_1_1 = TestLinkSatelliteFactory.create()
+        self.test_linkes_sat_1_2 = TestLinkSatelliteFactory.create(
+            hub_entity=self.test_linkes_sat_1_1.hub_entity,
+            state_date_start=self.test_linkes_sat_1_1.state_date_end,
             state_date_end=timezone.datetime.max,
         )
-        self.test_linkes_sat_1.hub_entity.link_link_hub_test_montrek_hub.add(
+        self.test_linkes_sat_1_1.hub_entity.link_link_hub_test_montrek_hub.add(
+            self.test_sat_1.hub_entity
+        )
+        self.test_linkes_sat_2 = TestLinkSatelliteFactory.create()
+        self.test_linkes_sat_2.hub_entity.link_link_hub_test_montrek_hub.add(
             self.test_sat_1.hub_entity
         )
 
@@ -95,3 +99,5 @@ class TestMontrekRepository(TestCase):
             test_queryset.first().testlinksatellite__test_id,
             self.test_linkes_sat_2.test_id,
         )
+
+

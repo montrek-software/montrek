@@ -12,15 +12,30 @@ class TransactionHub(baseclass_models.MontrekHubABC):
     link_transaction_transaction_category = models.ManyToManyField(
         "TransactionCategoryHub",
         related_name="link_transaction_category_transaction",
+        through="LinkTransactionTransactionCategory",
     )
     link_transaction_transaction_type = models.ManyToManyField(
         "TransactionTypeHub",
         related_name="link_transaction_transaction_type",
+        through="LinkTransactionTransactionType",
     )
     link_transaction_asset = models.ManyToManyField(
         "asset.AssetHub",
         related_name="link_asset_transaction",
+        through="LinkTransactionAsset",
     )
+
+class LinkTransactionTransactionCategory(baseclass_models.MontrekLinkABC):
+    in_hub=models.ForeignKey("transaction.TransactionHub", on_delete=models.CASCADE)
+    out_hub=models.ForeignKey("transaction.TransactionCategoryHub", on_delete=models.CASCADE)
+
+class LinkTransactionTransactionType(baseclass_models.MontrekLinkABC):
+    in_hub=models.ForeignKey("transaction.TransactionHub", on_delete=models.CASCADE)
+    out_hub=models.ForeignKey("transaction.TransactionTypeHub", on_delete=models.CASCADE)
+
+class LinkTransactionAsset(baseclass_models.MontrekLinkABC):
+    in_hub=models.ForeignKey("transaction.TransactionHub", on_delete=models.CASCADE)
+    out_hub=models.ForeignKey("asset.AssetHub", on_delete=models.CASCADE)
 
 
 class TransactionSatellite(baseclass_models.MontrekSatelliteABC):

@@ -13,6 +13,10 @@ class FileUploadRegistryHub(baseclass_models.MontrekHubABC):
         related_name="link_file_upload_file_file_upload_registry",
     )
 
+class LinkFileUploadRegistryFileUploadFile(baseclass_models.MontrekLinkABC):
+    in_hub= models.ForeignKey("file_upload.FileUploadRegistryHub", on_delete=models.CASCADE)
+    out_hub = models.ForeignKey("file_upload.FileUploadFileHub", on_delete=models.CASCADE)
+
 
 class FileUploadRegistryStaticSatellite(baseclass_models.MontrekSatelliteABC):
     class FileTypes(models.TextChoices):

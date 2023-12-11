@@ -107,6 +107,11 @@ class MontrekTimeSeriesSatelliteABC(MontrekSatelliteABC):
         abstract = True
     value_date = models.DateField()
 
+class MontrekLinkABC(TimeStampMixin):
+    class Meta:
+        abstract = True
+    in_hub = models.ForeignKey(MontrekHubABC, on_delete=models.CASCADE, related_name="in_hub")
+    out_hub = models.ForeignKey(MontrekHubABC, on_delete=models.CASCADE, related_name="out_hub")
 
 # Montrek Test Models
 
@@ -128,7 +133,7 @@ class TestMontrekSatelliteNoIdFields(MontrekSatelliteABC):
 
 class TestLinkHub(MontrekHubABC):
     link_link_hub_test_montrek_hub = models.ManyToManyField(
-        TestMontrekHub, related_name="link_test_montrek_hub_link_hub"
+        TestMontrekHub, related_name="link_test_montrek_hub_link_hub", through="LinkTestMontrekTestLink"
     )
 
 
@@ -136,3 +141,7 @@ class TestLinkSatellite(MontrekSatelliteABC):
     hub_entity = models.ForeignKey(TestLinkHub, on_delete=models.CASCADE)
     test_id = models.IntegerField(default=0)
     identifier_fields = ["test_id"]
+
+class LinkTestMontrekTestLink(MontrekLinkABC):
+    in_hub= models.ForeignKey(TestMontrekHub, on_delete=models.CASCADE)
+    out_hub= models.ForeignKey(TestLinkHub, on_delete=models.CASCADE)

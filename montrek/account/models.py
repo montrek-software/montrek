@@ -12,18 +12,39 @@ class AccountHub(baseclass_models.MontrekHubABC):
     link_account_credit_institution = models.ManyToManyField(
         "credit_institution.CreditInstitutionHub",
         related_name="link_credit_institution_account",
+        through="LinkAccountCreditInstitution",
     )
     link_account_transaction = models.ManyToManyField(
-        "transaction.TransactionHub", related_name="link_transaction_account"
+        "transaction.TransactionHub", 
+        related_name="link_transaction_account",
+        through="LinkAccountTransaction",
     )
     link_account_file_upload_registry = models.ManyToManyField(
         "file_upload.FileUploadRegistryHub",
         related_name="link_file_upload_registry_account",
+        through="LinkAccountFileUploadRegistry",
     )
     link_account_transaction_category_map = models.ManyToManyField(
         "transaction.TransactionCategoryMapHub",
         related_name="link_transaction_category_map_account",
+        through="LinkAccountTransactionCategoryMap",
     )
+
+class LinkAccountCreditInstitution(baseclass_models.MontrekLinkABC):
+    in_hub = models.ForeignKey( "account.AccountHub", on_delete=models.CASCADE)
+    out_hub = models.ForeignKey( "credit_institution.CreditInstitutionHub", on_delete=models.CASCADE)
+
+class LinkAccountTransaction(baseclass_models.MontrekLinkABC):
+    in_hub = models.ForeignKey( "account.AccountHub", on_delete=models.CASCADE)
+    out_hub = models.ForeignKey( "transaction.TransactionHub", on_delete=models.CASCADE)
+
+class LinkAccountFileUploadRegistry(baseclass_models.MontrekLinkABC):
+    in_hub = models.ForeignKey( "account.AccountHub", on_delete=models.CASCADE)
+    out_hub = models.ForeignKey( "file_upload.FileUploadRegistryHub", on_delete=models.CASCADE)
+
+class LinkAccountTransactionCategoryMap(baseclass_models.MontrekLinkABC):
+    in_hub = models.ForeignKey( "account.AccountHub", on_delete=models.CASCADE)
+    out_hub = models.ForeignKey( "transaction.TransactionCategoryMapHub", on_delete=models.CASCADE)
 
 
 class AccountStaticSatellite(baseclass_models.MontrekSatelliteABC):

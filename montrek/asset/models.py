@@ -8,8 +8,15 @@ from asset.managers.validators import montrek_wkn_validator
 
 class AssetHub(baseclass_models.MontrekHubABC):
     link_asset_currency = models.ManyToManyField(
-        "currency.CurrencyHub", related_name="link_currency_asset"
+        "currency.CurrencyHub",
+        related_name="link_currency_asset",
+        through="LinkAssetCurrency",
     )
+
+
+class LinkAssetCurrency(baseclass_models.MontrekLinkABC):
+    in_hub = models.ForeignKey("asset.AssetHub", on_delete=models.CASCADE)
+    out_hub = models.ForeignKey("currency.CurrencyHub", on_delete=models.CASCADE)
 
 
 class AssetStaticSatellite(baseclass_models.MontrekSatelliteABC):
