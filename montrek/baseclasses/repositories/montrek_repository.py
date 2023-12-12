@@ -1,6 +1,7 @@
 from typing import Any, List, Dict, Type, Tuple
 from baseclasses.models import MontrekSatelliteABC
 from baseclasses.models import MontrekHubABC
+from baseclasses.models import MontrekLinkABC
 from baseclasses.repositories.annotation_manager import (
     AnnotationsManager,
     SatelliteAnnotationsManager,
@@ -9,6 +10,7 @@ from baseclasses.repositories.annotation_manager import (
 from baseclasses.repositories.subquery_builder import (
     SatelliteSubqueryBuilder,
     LastTSSatelliteSubqueryBuilder,
+    LinkedSatelliteSubqueryBuilder,
 )
 from django.db.models import Q, Subquery, OuterRef, QuerySet
 from django.utils import timezone
@@ -73,11 +75,11 @@ class MontrekRepository:
     def add_linked_satellites_field_annotations(
         self,
         satellite_class: Type[MontrekSatelliteABC],
-        link_lookup_string: str,
+        link_class: Type[MontrekLinkABC],
         fields: List[str],
         reference_date: timezone,
     ):
-        subquery_builder = SatelliteSubqueryBuilder(
+        subquery_builder = LinkedSatelliteSubqueryBuilder(
             satellite_class, link_lookup_string, reference_date
         )
         annotations_manager = LinkAnnotationsManager(subquery_builder, satellite_class.__name__)
