@@ -1,5 +1,6 @@
 from typing import Type, List
 from baseclasses.models import MontrekSatelliteABC
+from baseclasses.models import MontrekLinkABC
 from django.db.models import Subquery, OuterRef
 from django.utils import timezone
 class SubqueryBuilder:
@@ -54,3 +55,28 @@ class LastTSSatelliteSubqueryBuilder(SubqueryBuilder):
             .order_by("-value_date")
             .values(field)[:1]
         )
+
+class LinkedSatelliteSubqueryBuilder(SubqueryBuilder):
+    def __init__(
+        self,
+        satellite_class: Type[MontrekSatelliteABC],
+        link_class: Type[MontrekLinkABC],
+        reference_date: timezone,
+    ):
+        self.satellite_class = satellite_class
+        self.link_class = link_class
+        self.reference_date = reference_date
+        super().__init__()
+
+    def get_subquery(self, field: str) -> Subquery:
+        hub_out_query = self.link_class.objects.filter(
+            state_date_start__lte=self.reference_date,
+            state_date_end__gt=self.reference_date,
+        ).values("out_hub")
+        satellite_field_query = self.satellite_class.objects.filter(
+            hub_entity__in=Subquery(hub_out_query),
+            state_date_start__lte=self.reference_date,
+            state_date_end__gt=self.reference_date,
+            hub_entity__linktestmontrektestlink__in_hub=OuterRef("pk"),
+        ).values(field)
+        return Subquery(satellite_field_query)

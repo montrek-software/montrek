@@ -112,6 +112,12 @@ class MontrekLinkABC(TimeStampMixin):
         abstract = True
     in_hub = models.ForeignKey(MontrekHubABC, on_delete=models.CASCADE, related_name="in_hub")
     out_hub = models.ForeignKey(MontrekHubABC, on_delete=models.CASCADE, related_name="out_hub")
+    state_date_start = models.DateTimeField(
+        default=timezone.make_aware(timezone.datetime.min)
+    )
+    state_date_end = models.DateTimeField(
+        default=timezone.make_aware(timezone.datetime.max)
+    )
 
 # Montrek Test Models
 
