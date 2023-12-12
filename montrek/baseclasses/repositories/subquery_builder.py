@@ -77,6 +77,6 @@ class LinkedSatelliteSubqueryBuilder(SubqueryBuilder):
             hub_entity__in=Subquery(hub_out_query),
             state_date_start__lte=self.reference_date,
             state_date_end__gt=self.reference_date,
-            hub_entity__linktestmontrektestlink__in_hub=OuterRef("pk"),
+            **{f'hub_entity__{self.link_class.__name__.lower()}__in_hub':OuterRef("pk")},
         ).values(field)
         return Subquery(satellite_field_query)
