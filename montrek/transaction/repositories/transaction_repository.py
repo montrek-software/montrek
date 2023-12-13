@@ -3,7 +3,9 @@ from baseclasses.repositories.montrek_repository import MontrekRepository
 from transaction.models import TransactionSatellite
 from transaction.models import TransactionHub
 from transaction.models import TransactionCategorySatellite
+from transaction.models import LinkTransactionTransactionCategory
 from account.models import AccountStaticSatellite
+from account.models import LinkAccountTransaction
 
 
 class TransactionRepository(MontrekRepository):
@@ -25,7 +27,7 @@ class TransactionRepository(MontrekRepository):
         )
         self.add_linked_satellites_field_annotations(
             TransactionCategorySatellite,
-            "link_transaction_transaction_category",
+            LinkTransactionTransactionCategory,
             ["typename"],
             reference_date,
         )
@@ -41,7 +43,7 @@ class TransactionRepository(MontrekRepository):
     def get_queryset_with_account(self):
         self.add_linked_satellites_field_annotations(
             AccountStaticSatellite,
-            "link_transaction_account",
+            LinkAccountTransaction,
             ["account_name", "hub_entity_id"],
             self.reference_date,
         )

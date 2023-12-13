@@ -107,6 +107,8 @@ class TestMontrekRepositoryLinks(TestCase):
         huba2 = bc_factories.HubAFactory()
         hubb1 = bc_factories.HubBFactory()
         hubb2 = bc_factories.HubBFactory()
+        hubc1 = bc_factories.HubCFactory()
+        hubc2 = bc_factories.HubCFactory()
 
         bc_factories.LinkHubAHubBFactory(
             hub_in=huba1,
@@ -136,8 +138,26 @@ class TestMontrekRepositoryLinks(TestCase):
             hub_entity=hubb2,
             field_b1_str="Third",
         )
+        
+        bc_factories.LinkHubAHubCFactory(
+            hub_in=huba1,
+            hub_out=hubc1,
+        )
+        bc_factories.LinkHubAHubCFactory(
+            hub_in=huba1,
+            hub_out=hubc2,
+            state_date_end=montrek_time(2023, 7, 12),
+        )
+        bc_factories.SatC1Factory(
+            hub_entity=hubc1,
+            field_c1_str="Multi1",
+        )
+        bc_factories.SatC1Factory(
+            hub_entity=hubc2,
+            field_c1_str="Multi2",
+        )
 
-    def test_many_to_one_link_one_link(self):
+    def test_many_to_one_link(self):
         repository = HubAMontrekRepository(None)
         repository.reference_date = montrek_time(2023, 7, 8)
         queryset = repository.test_queryset_2()
@@ -161,5 +181,5 @@ class TestMontrekRepositoryLinks(TestCase):
         self.assertEqual(queryset[1].satb1__field_b1_str, "Third")
 
 
-    def test_build_queryset_with_linked_satellite_fields(self):
+    def test_many_to_many(self):
         ...
