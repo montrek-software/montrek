@@ -80,7 +80,7 @@ class MontrekRepository:
         reference_date: timezone,
     ):
         subquery_builder = LinkedSatelliteSubqueryBuilder(
-            satellite_class, link_lookup_string, reference_date
+            satellite_class, link_class, reference_date
         )
         annotations_manager = LinkAnnotationsManager(subquery_builder, satellite_class.__name__)
         self._add_to_annotations(fields, annotations_manager)

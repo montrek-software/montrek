@@ -7,6 +7,7 @@ from baseclasses.models import TestMontrekHub
 from baseclasses.models import TestMontrekSatellite
 from baseclasses.models import TestLinkHub
 from baseclasses.models import TestLinkSatellite
+from baseclasses.models import LinkTestMontrekTestLink
 from baseclasses.repositories.montrek_repository import MontrekRepository
 
 
@@ -76,25 +77,25 @@ class TestMontrekRepository(TestCase):
         test_montrek_repository = DummyMontrekRepository(None)
         test_montrek_repository.add_linked_satellites_field_annotations(
             TestLinkSatellite,
-            "link_test_montrek_hub_link_hub__testlinksatellite",
+            LinkTestMontrekTestLink,
             ["test_id"],
             montrek_time(2023, 6, 30),
         )
         test_queryset = test_montrek_repository.build_queryset()
-        self.assertEqual(test_queryset.count(), 2)
+        self.assertEqual(test_queryset.count(), 1)
         self.assertEqual(
-            test_queryset.first().testlinksatellite__test_id,
+            test_queryset.first().test_id,
             self.test_linkes_sat_1.test_id,
         )
         test_montrek_repository = DummyMontrekRepository(None)
         test_montrek_repository.add_linked_satellites_field_annotations(
             TestLinkSatellite,
-            "link_test_montrek_hub_link_hub__testlinksatellite",
+            LinkTestMontrekTestLink,
             ["test_id"],
             montrek_time(2023, 8, 30),
         )
         test_queryset = test_montrek_repository.build_queryset()
-        self.assertEqual(test_queryset.count(), 2)
+        self.assertEqual(test_queryset.count(), 1)
         self.assertEqual(
             test_queryset.first().testlinksatellite__test_id,
             self.test_linkes_sat_2.test_id,
