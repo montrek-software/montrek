@@ -23,6 +23,7 @@ class MontrekRepository:
 
     def __init__(self, request):
         self._annotations = {}
+        self._reference_date = None
         self.request = request
 
     @classmethod
@@ -43,7 +44,13 @@ class MontrekRepository:
 
     @property
     def reference_date(self):
-        return timezone.datetime.now()
+        if self._reference_date is None:
+            return timezone.datetime.now()
+        return self._reference_date
+
+    @reference_date.setter
+    def reference_date(self, value):
+        self._reference_date = value
 
     def std_queryset(self, **kwargs):
         raise NotImplementedError("MontrekRepository has no std_queryset method!")
