@@ -72,11 +72,14 @@ class LinkedSatelliteSubqueryBuilder(SubqueryBuilder):
         hub_out_query = self.link_class.objects.filter(
             state_date_start__lte=self.reference_date,
             state_date_end__gt=self.reference_date,
-        ).values("out_hub")
+        ).values("hub_out")
         satellite_field_query = self.satellite_class.objects.filter(
             hub_entity__in=Subquery(hub_out_query),
             state_date_start__lte=self.reference_date,
             state_date_end__gt=self.reference_date,
-            **{f'hub_entity__{self.link_class.__name__.lower()}__in_hub':OuterRef("pk")},
+            **{f'hub_entity__{self.link_class.__name__.lower()}__hub_in':OuterRef("pk"),
+               f"hub_entity__{self.link_class.__name__.lower()}__state_date_start__lte":self.reference_date,
+               f"hub_entity__{self.link_class.__name__.lower()}__state_date_end__gt":self.reference_date,
+              }
         ).values(field)
         return Subquery(satellite_field_query)

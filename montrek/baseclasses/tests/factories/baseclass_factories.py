@@ -97,14 +97,14 @@ class LinkHubAHubBFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = "baseclasses.LinkHubAHubB"
 
-    in_hub = factory.SubFactory(HubAFactory)
-    out_hub = factory.SubFactory(HubBFactory)
+    hub_in = factory.SubFactory(HubAFactory)
+    hub_out = factory.SubFactory(HubBFactory)
 
 class LinkHubAHubCFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = "baseclasses.LinkHubAHubC"
 
-    in_hub = factory.SubFactory(HubAFactory)
-    out_hub = factory.SubFactory(HubCFactory)
+    hub_in = factory.SubFactory(HubAFactory)
+    hub_out = factory.SubFactory(HubCFactory)
         
 
