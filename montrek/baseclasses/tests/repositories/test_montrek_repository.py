@@ -17,7 +17,13 @@ class HubAMontrekRepository(MontrekRepository):
             ],
             self.reference_date,
         )
-
+        self.add_satellite_fields_annotations(
+            bc_models.SatA2,
+            [
+                "field_a2_float",
+            ],
+            self.reference_date,
+        )
         return super().build_queryset()
 
 
@@ -25,9 +31,8 @@ class HubBMontrekRepository(MontrekRepository):
     hub_class = bc_models.HubB
 
 
-class TestMontrekRepository(TestCase):
-    def test_build_queryset_with_satellite_fields(self):
-        # Setup
+class TestMontrekRepositorySatellite(TestCase):
+    def setUp(self):
         sat_a11 = bc_factories.SatA1Factory(
             state_date_end=montrek_time(2023, 7, 10),
             field_a1_int=5,
@@ -51,6 +56,8 @@ class TestMontrekRepository(TestCase):
             state_date_end=montrek_time(2023, 7, 10),
             field_a2_float=9,
         )
+    def test_build_queryset_with_satellite_fields(self):
+        # Setup
         # Execute & test
         repository = HubAMontrekRepository(None)
         repository.reference_date = montrek_time(2023, 7, 8)
@@ -59,6 +66,33 @@ class TestMontrekRepository(TestCase):
         self.assertEqual(queryset.count(), 2)
         self.assertEqual(queryset[0].field_a1_int, 5)
         self.assertEqual(queryset[1].field_a1_int, None)
+        self.assertEqual(queryset[0].field_a2_float, 8.0)
+        self.assertEqual(queryset[1].field_a2_float, 9.0)
+
+        repository.reference_date = montrek_time(2023, 7, 10)
+        queryset = repository.test_queryset_1()
+
+        self.assertEqual(queryset.count(), 2)
+        self.assertEqual(queryset[0].field_a1_int, 6)
+        self.assertEqual(queryset[1].field_a1_int, None)
+        self.assertEqual(queryset[0].field_a2_float, 8.0)
+        self.assertEqual(queryset[1].field_a2_float, None)
+
+        repository.reference_date = montrek_time(2023, 7, 15)
+        queryset = repository.test_queryset_1()
+
+        self.assertEqual(queryset[0].field_a1_int, 6)
+        self.assertEqual(queryset[1].field_a1_int, None)
+        self.assertEqual(queryset[0].field_a2_float, 8.0)
+        self.assertEqual(queryset[1].field_a2_float, None)
+
+        repository.reference_date = montrek_time(2023, 7, 20)
+        queryset = repository.test_queryset_1()
+
+        self.assertEqual(queryset[0].field_a1_int, 7)
+        self.assertEqual(queryset[1].field_a1_int, None)
+        self.assertEqual(queryset[0].field_a2_float, 8.0)
+        self.assertEqual(queryset[1].field_a2_float, None)
 
     def test_build_queryset_with_linked_satellite_fields(self):
         ...
