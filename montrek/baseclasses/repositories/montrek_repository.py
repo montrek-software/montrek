@@ -11,6 +11,7 @@ from baseclasses.repositories.subquery_builder import (
     SatelliteSubqueryBuilder,
     LastTSSatelliteSubqueryBuilder,
     LinkedSatelliteSubqueryBuilder,
+    ReverseLinkedSatelliteSubqueryBuilder,
 )
 from django.db.models import Q, Subquery, OuterRef, QuerySet
 from django.utils import timezone
@@ -85,10 +86,16 @@ class MontrekRepository:
         link_class: Type[MontrekLinkABC],
         fields: List[str],
         reference_date: timezone,
+        reversed_link: bool = False,
     ):
-        subquery_builder = LinkedSatelliteSubqueryBuilder(
-            satellite_class, link_class, reference_date
-        )
+        if reversed_link:
+            subquery_builder = ReverseLinkedSatelliteSubqueryBuilder(
+                satellite_class, link_class, reference_date
+            )
+        else:
+            subquery_builder = LinkedSatelliteSubqueryBuilder(
+                satellite_class, link_class, reference_date
+            )
         annotations_manager = LinkAnnotationsManager(subquery_builder, satellite_class.__name__)
         self._add_to_annotations(fields, annotations_manager)
 

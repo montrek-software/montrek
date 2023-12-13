@@ -46,6 +46,7 @@ class TransactionRepository(MontrekRepository):
             LinkAccountTransaction,
             ["account_name", "hub_entity_id"],
             self.reference_date,
+            reversed_link=True,
         )
         self.rename_field("accountstaticsatellite__account_name", "account_name" )
         self.rename_field("accountstaticsatellite__hub_entity_id", "account_id" )

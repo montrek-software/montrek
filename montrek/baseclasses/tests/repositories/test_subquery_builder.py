@@ -18,16 +18,16 @@ class TestLinkedSatelliteSubqueryBuilder(TestCase):
             state_date_end=self.reference_date
         )
         link_entry_2_2 = LinkTestMontrekTestLinkFactory(
-            in_hub=link_entry_2_1.in_hub, state_date_start=self.reference_date
+            hub_in=link_entry_2_1.hub_in, state_date_start=self.reference_date
         )
         self.sat_1 = TestLinkSatelliteFactory(
-            hub_entity=link_entry_1.out_hub,
+            hub_entity=link_entry_1.hub_out,
         )
         self.sat_2_1 = TestLinkSatelliteFactory(
-            hub_entity=link_entry_2_1.out_hub,
+            hub_entity=link_entry_2_1.hub_out,
         )
         self.sat_2_2 = TestLinkSatelliteFactory(
-            hub_entity=link_entry_2_2.out_hub,
+            hub_entity=link_entry_2_2.hub_out,
         )
 
     def test_get_subquery(self):

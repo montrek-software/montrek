@@ -39,6 +39,15 @@ class HubAMontrekRepository(MontrekRepository):
 class HubBMontrekRepository(MontrekRepository):
     hub_class = bc_models.HubB
 
+    def test_queryset_1(self):
+        self.add_linked_satellites_field_annotations(
+            bc_models.SatA1,
+            bc_models.LinkHubAHubB,
+            ['field_a1_int'],
+            self.reference_date,
+        )
+        return self.build_queryset()
+
 
 class TestMontrekRepositorySatellite(TestCase):
     def setUp(self):
@@ -156,6 +165,10 @@ class TestMontrekRepositoryLinks(TestCase):
             hub_entity=hubc2,
             field_c1_str="Multi2",
         )
+        bc_factories.SatA1Factory(
+            hub_entity=huba1,
+            field_a1_int=5,
+        )
 
     def test_many_to_one_link(self):
         repository = HubAMontrekRepository(None)
@@ -180,6 +193,15 @@ class TestMontrekRepositoryLinks(TestCase):
         self.assertEqual(queryset[0].satb1__field_b1_str, "Second")
         self.assertEqual(queryset[1].satb1__field_b1_str, "Third")
 
-
-    def test_many_to_many(self):
-        ...
+    def test_link_reversed(self):
+        repository = HubBMontrekRepository(None)
+        repository.reference_date = montrek_time(2023, 7, 8)
+        queryset = repository.test_queryset_1()
+        self.assertEqual(queryset.count(), 2)
+        self.assertEqual(queryset[0].sata1__field_a1_int, 5)
+        self.assertEqual(queryset[1].sata1__field_a1_int, None)
+        repository.reference_date = montrek_time(2023, 7, 15)
+        queryset = repository.test_queryset_1()
+        self.assertEqual(queryset.count(), 2)
+        self.assertEqual(queryset[0].sata1__field_a1_int, 5)
+        self.assertEqual(queryset[1].sata1__field_a1_int, None)

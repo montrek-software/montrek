@@ -36,8 +36,8 @@ class LinkTestMontrekTestLinkFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = "baseclasses.LinkTestMontrekTestLink"
 
-    in_hub = factory.SubFactory(TestMontrekHubFactory)
-    out_hub = factory.SubFactory(TestLinkHubFactory)
+    hub_in = factory.SubFactory(TestMontrekHubFactory)
+    hub_out = factory.SubFactory(TestLinkHubFactory)
 
 
 class HubAFactory(factory.django.DjangoModelFactory):
