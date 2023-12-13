@@ -26,16 +26,16 @@ class TransactionHub(baseclass_models.MontrekHubABC):
     )
 
 class LinkTransactionTransactionCategory(baseclass_models.MontrekLinkABC):
-    in_hub=models.ForeignKey("transaction.TransactionHub", on_delete=models.CASCADE)
-    out_hub=models.ForeignKey("transaction.TransactionCategoryHub", on_delete=models.CASCADE)
+    hub_in=models.ForeignKey("transaction.TransactionHub", on_delete=models.CASCADE)
+    hub_out=models.ForeignKey("transaction.TransactionCategoryHub", on_delete=models.CASCADE)
 
 class LinkTransactionTransactionType(baseclass_models.MontrekLinkABC):
-    in_hub=models.ForeignKey("transaction.TransactionHub", on_delete=models.CASCADE)
-    out_hub=models.ForeignKey("transaction.TransactionTypeHub", on_delete=models.CASCADE)
+    hub_in=models.ForeignKey("transaction.TransactionHub", on_delete=models.CASCADE)
+    hub_out=models.ForeignKey("transaction.TransactionTypeHub", on_delete=models.CASCADE)
 
 class LinkTransactionAsset(baseclass_models.MontrekLinkABC):
-    in_hub=models.ForeignKey("transaction.TransactionHub", on_delete=models.CASCADE)
-    out_hub=models.ForeignKey("asset.AssetHub", on_delete=models.CASCADE)
+    hub_in=models.ForeignKey("transaction.TransactionHub", on_delete=models.CASCADE)
+    hub_out=models.ForeignKey("asset.AssetHub", on_delete=models.CASCADE)
 
 
 class TransactionSatellite(baseclass_models.MontrekSatelliteABC):

@@ -31,20 +31,20 @@ class AccountHub(baseclass_models.MontrekHubABC):
     )
 
 class LinkAccountCreditInstitution(baseclass_models.MontrekLinkABC):
-    in_hub = models.ForeignKey( "account.AccountHub", on_delete=models.CASCADE)
-    out_hub = models.ForeignKey( "credit_institution.CreditInstitutionHub", on_delete=models.CASCADE)
+    hub_in = models.ForeignKey( "account.AccountHub", on_delete=models.CASCADE)
+    hub_out = models.ForeignKey( "credit_institution.CreditInstitutionHub", on_delete=models.CASCADE)
 
 class LinkAccountTransaction(baseclass_models.MontrekLinkABC):
-    in_hub = models.ForeignKey( "account.AccountHub", on_delete=models.CASCADE)
-    out_hub = models.ForeignKey( "transaction.TransactionHub", on_delete=models.CASCADE)
+    hub_in = models.ForeignKey( "account.AccountHub", on_delete=models.CASCADE)
+    hub_out = models.ForeignKey( "transaction.TransactionHub", on_delete=models.CASCADE)
 
 class LinkAccountFileUploadRegistry(baseclass_models.MontrekLinkABC):
-    in_hub = models.ForeignKey( "account.AccountHub", on_delete=models.CASCADE)
-    out_hub = models.ForeignKey( "file_upload.FileUploadRegistryHub", on_delete=models.CASCADE)
+    hub_in = models.ForeignKey( "account.AccountHub", on_delete=models.CASCADE)
+    hub_out = models.ForeignKey( "file_upload.FileUploadRegistryHub", on_delete=models.CASCADE)
 
 class LinkAccountTransactionCategoryMap(baseclass_models.MontrekLinkABC):
-    in_hub = models.ForeignKey( "account.AccountHub", on_delete=models.CASCADE)
-    out_hub = models.ForeignKey( "transaction.TransactionCategoryMapHub", on_delete=models.CASCADE)
+    hub_in = models.ForeignKey( "account.AccountHub", on_delete=models.CASCADE)
+    hub_out = models.ForeignKey( "transaction.TransactionCategoryMapHub", on_delete=models.CASCADE)
 
 
 class AccountStaticSatellite(baseclass_models.MontrekSatelliteABC):
