@@ -1,6 +1,7 @@
 from typing import Any, List, Dict, Type, Tuple
 from baseclasses.models import MontrekSatelliteABC
 from baseclasses.models import MontrekHubABC
+from baseclasses.models import MontrekLinkABC
 from baseclasses.repositories.annotation_manager import (
     AnnotationsManager,
     SatelliteAnnotationsManager,
@@ -9,6 +10,8 @@ from baseclasses.repositories.annotation_manager import (
 from baseclasses.repositories.subquery_builder import (
     SatelliteSubqueryBuilder,
     LastTSSatelliteSubqueryBuilder,
+    LinkedSatelliteSubqueryBuilder,
+    ReverseLinkedSatelliteSubqueryBuilder,
 )
 from django.db.models import Q, Subquery, OuterRef, QuerySet
 from django.utils import timezone
@@ -21,6 +24,7 @@ class MontrekRepository:
 
     def __init__(self, request):
         self._annotations = {}
+        self._reference_date = None
         self.request = request
 
     @classmethod
@@ -41,7 +45,13 @@ class MontrekRepository:
 
     @property
     def reference_date(self):
-        return timezone.datetime.now()
+        if self._reference_date is None:
+            return timezone.datetime.now()
+        return self._reference_date
+
+    @reference_date.setter
+    def reference_date(self, value):
+        self._reference_date = value
 
     def std_queryset(self, **kwargs):
         raise NotImplementedError("MontrekRepository has no std_queryset method!")
@@ -73,13 +83,19 @@ class MontrekRepository:
     def add_linked_satellites_field_annotations(
         self,
         satellite_class: Type[MontrekSatelliteABC],
-        link_lookup_string: str,
+        link_class: Type[MontrekLinkABC],
         fields: List[str],
         reference_date: timezone,
+        reversed_link: bool = False,
     ):
-        subquery_builder = SatelliteSubqueryBuilder(
-            satellite_class, link_lookup_string, reference_date
-        )
+        if reversed_link:
+            subquery_builder = ReverseLinkedSatelliteSubqueryBuilder(
+                satellite_class, link_class, reference_date
+            )
+        else:
+            subquery_builder = LinkedSatelliteSubqueryBuilder(
+                satellite_class, link_class, reference_date
+            )
         annotations_manager = LinkAnnotationsManager(subquery_builder, satellite_class.__name__)
         self._add_to_annotations(fields, annotations_manager)
 

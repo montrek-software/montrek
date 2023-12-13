@@ -1,5 +1,3 @@
-import re
-
 from django.db import models
 
 from baseclasses import models as baseclass_models
@@ -12,6 +10,10 @@ class FileUploadRegistryHub(baseclass_models.MontrekHubABC):
         "FileUploadFileHub",
         related_name="link_file_upload_file_file_upload_registry",
     )
+
+class LinkFileUploadRegistryFileUploadFile(baseclass_models.MontrekLinkABC):
+    hub_in= models.ForeignKey("file_upload.FileUploadRegistryHub", on_delete=models.CASCADE)
+    hub_out = models.ForeignKey("file_upload.FileUploadFileHub", on_delete=models.CASCADE)
 
 
 class FileUploadRegistryStaticSatellite(baseclass_models.MontrekSatelliteABC):

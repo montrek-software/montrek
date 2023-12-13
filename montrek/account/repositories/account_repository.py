@@ -15,6 +15,7 @@ from account.models import (
     AccountStaticSatellite,
     BankAccountPropertySatellite,
     BankAccountStaticSatellite,
+    LinkAccountCreditInstitution,
 )
 from credit_institution.models import CreditInstitutionStaticSatellite
 from transaction.models import TransactionSatellite
@@ -46,7 +47,7 @@ class AccountRepository(MontrekRepository):
         )
         self.add_linked_satellites_field_annotations(
             CreditInstitutionStaticSatellite,
-            "link_account_credit_institution",
+            LinkAccountCreditInstitution,
             ["credit_institution_name", "credit_institution_bic"],
             reference_date,
         )

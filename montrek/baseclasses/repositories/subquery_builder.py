@@ -1,5 +1,6 @@
 from typing import Type, List
 from baseclasses.models import MontrekSatelliteABC
+from baseclasses.models import MontrekLinkABC
 from django.db.models import Subquery, OuterRef
 from django.utils import timezone
 class SubqueryBuilder:
@@ -54,3 +55,55 @@ class LastTSSatelliteSubqueryBuilder(SubqueryBuilder):
             .order_by("-value_date")
             .values(field)[:1]
         )
+
+class LinkedSatelliteSubqueryBuilderBase(SubqueryBuilder):
+    def __init__(
+        self,
+        satellite_class: Type[MontrekSatelliteABC],
+        link_class: Type[MontrekLinkABC],
+        reference_date: timezone,
+    ):
+        self.satellite_class = satellite_class
+        self.link_class = link_class
+        self.reference_date = reference_date
+        super().__init__()
+
+    def get_subquery(self, field: str, hub_field_a, hub_field_b) -> Subquery:
+        hub_out_query = self.link_class.objects.filter(
+            state_date_start__lte=self.reference_date,
+            state_date_end__gt=self.reference_date,
+        ).values(hub_field_a)
+        satellite_field_query = self.satellite_class.objects.filter(
+            hub_entity__in=Subquery(hub_out_query),
+            state_date_start__lte=self.reference_date,
+            state_date_end__gt=self.reference_date,
+            **{f'hub_entity__{self.link_class.__name__.lower()}__{hub_field_b}':OuterRef("pk"),
+               f"hub_entity__{self.link_class.__name__.lower()}__state_date_start__lte":self.reference_date,
+               f"hub_entity__{self.link_class.__name__.lower()}__state_date_end__gt":self.reference_date,
+              }
+        ).values(field)
+        return Subquery(satellite_field_query)
+
+class LinkedSatelliteSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
+    def __init__(
+        self,
+        satellite_class: Type[MontrekSatelliteABC],
+        link_class: Type[MontrekLinkABC],
+        reference_date: timezone,
+    ):
+        super().__init__(satellite_class, link_class, reference_date)
+
+    def get_subquery(self, field: str) -> Subquery:
+        return super().get_subquery(field, "hub_out", "hub_in")
+
+class ReverseLinkedSatelliteSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
+    def __init__(
+        self,
+        satellite_class: Type[MontrekSatelliteABC],
+        link_class: Type[MontrekLinkABC],
+        reference_date: timezone,
+    ):
+        super().__init__(satellite_class, link_class, reference_date)
+
+    def get_subquery(self, field: str) -> Subquery:
+        return super().get_subquery(field, "hub_in", "hub_out")

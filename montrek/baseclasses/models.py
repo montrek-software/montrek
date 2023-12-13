@@ -102,13 +102,36 @@ class MontrekSatelliteABC(TimeStampMixin):
     def get_hash_value(self) -> str:
         return self._get_hash_value()
 
+
 class MontrekTimeSeriesSatelliteABC(MontrekSatelliteABC):
     class Meta:
         abstract = True
+
     value_date = models.DateField()
+    identifier_fields = ["value_date"]
+
+
+class MontrekLinkABC(TimeStampMixin):
+    class Meta:
+        abstract = True
+
+    hub_in = models.ForeignKey(
+        MontrekHubABC, on_delete=models.CASCADE, related_name="in_hub"
+    )
+    hub_out = models.ForeignKey(
+        MontrekHubABC, on_delete=models.CASCADE, related_name="out_hub"
+    )
+    state_date_start = models.DateTimeField(
+        default=timezone.make_aware(timezone.datetime.min)
+    )
+    state_date_end = models.DateTimeField(
+        default=timezone.make_aware(timezone.datetime.max)
+    )
 
 
 # Montrek Test Models
+
+# TODO: Remove these models and factories and rewrite tests to use the new models
 
 
 class TestMontrekHub(MontrekHubABC):
@@ -128,7 +151,9 @@ class TestMontrekSatelliteNoIdFields(MontrekSatelliteABC):
 
 class TestLinkHub(MontrekHubABC):
     link_link_hub_test_montrek_hub = models.ManyToManyField(
-        TestMontrekHub, related_name="link_test_montrek_hub_link_hub"
+        TestMontrekHub,
+        related_name="link_test_montrek_hub_link_hub",
+        through="LinkTestMontrekTestLink",
     )
 
 
@@ -136,3 +161,92 @@ class TestLinkSatellite(MontrekSatelliteABC):
     hub_entity = models.ForeignKey(TestLinkHub, on_delete=models.CASCADE)
     test_id = models.IntegerField(default=0)
     identifier_fields = ["test_id"]
+
+
+class LinkTestMontrekTestLink(MontrekLinkABC):
+    hub_in = models.ForeignKey(TestMontrekHub, on_delete=models.CASCADE)
+    hub_out = models.ForeignKey(TestLinkHub, on_delete=models.CASCADE)
+
+
+####################################################################################################
+# Test classes
+#
+#    SatA1 -- HubA -- LinkHubAHubB -- HubB -- SatB1
+#    SatA2 -/   \                          \- SatB2
+#                \ -- LinkHubAHubC -- HubC -- SatC1
+#                                          \- SatTSC2
+####################################################################################################
+
+
+class HubA(MontrekHubABC):
+    link_hub_a_hub_b = models.ManyToManyField(
+        "HubB", related_name="link_hub_b_hub_a", through="LinkHubAHubB"
+    )
+    link_hub_a_hub_c = models.ManyToManyField(
+        "HubC", related_name="link_hub_c_hub_a", through="LinkHubAHubC"
+    )
+
+
+class HubB(MontrekHubABC):
+    pass
+
+
+class HubC(MontrekHubABC):
+    pass
+
+
+class SatA1(MontrekSatelliteABC):
+    hub_entity = models.ForeignKey(HubA, on_delete=models.CASCADE)
+    field_a1_str = models.CharField(max_length=50, default="DEFAULT")
+    field_a1_int = models.IntegerField(default=0)
+    identifier_fields = ["field_a1_str"]
+
+
+class SatA2(MontrekSatelliteABC):
+    hub_entity = models.ForeignKey(HubA, on_delete=models.CASCADE)
+    field_a2_str = models.CharField(max_length=50, default="DEFAULT")
+    field_a2_float = models.FloatField(default=0.0)
+    identifier_fields = ["field_a2_str"]
+
+
+class SatB1(MontrekSatelliteABC):
+    hub_entity = models.ForeignKey(HubB, on_delete=models.CASCADE)
+    field_b1_str = models.CharField(max_length=50, default="DEFAULT")
+    field_b1_date = models.DateField(default=timezone.now)
+    identifier_fields = ["field_b1_str", "field_b1_date"]
+
+
+class SatB2(MontrekSatelliteABC):
+    class ChoiceEnum(models.TextChoices):
+        CHOICE1 = "CHOICE1"
+        CHOICE2 = "CHOICE2"
+        CHOICE3 = "CHOICE3"
+
+    hub_entity = models.ForeignKey(HubB, on_delete=models.CASCADE)
+    field_b2_str = models.CharField(max_length=50, default="DEFAULT")
+    field_b2_choice = models.CharField(
+        max_length=10, choices=ChoiceEnum.choices, default=ChoiceEnum.CHOICE1
+    )
+    identifier_fields = ["field_b2_str"]
+
+
+class SatC1(MontrekSatelliteABC):
+    hub_entity = models.ForeignKey(HubC, on_delete=models.CASCADE)
+    field_c1_str = models.CharField(max_length=50, default="DEFAULT")
+    field_c1_bool = models.BooleanField(default=False)
+    identifier_fields = ["field_c1_str"]
+
+
+class SatTSC2(MontrekTimeSeriesSatelliteABC):
+    hub_entity = models.ForeignKey(HubC, on_delete=models.CASCADE)
+    field_tsc2_float = models.FloatField(default=0.0)
+
+
+class LinkHubAHubB(MontrekLinkABC):
+    hub_in = models.ForeignKey(HubA, on_delete=models.CASCADE)
+    hub_out = models.ForeignKey(HubB, on_delete=models.CASCADE)
+
+
+class LinkHubAHubC(MontrekLinkABC):
+    hub_in = models.ForeignKey(HubA, on_delete=models.CASCADE)
+    hub_out = models.ForeignKey(HubC, on_delete=models.CASCADE)
