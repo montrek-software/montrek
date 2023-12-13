@@ -38,3 +38,73 @@ class LinkTestMontrekTestLinkFactory(factory.django.DjangoModelFactory):
 
     in_hub = factory.SubFactory(TestMontrekHubFactory)
     out_hub = factory.SubFactory(TestLinkHubFactory)
+
+
+class HubAFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "baseclasses.HubA"
+
+
+class HubBFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "baseclasses.HubB"
+
+
+class HubCFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "baseclasses.HubC"
+
+
+class SatA1Factory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "baseclasses.SatA1"
+
+    hub_entity = factory.SubFactory(HubAFactory)
+
+
+class SatA2Factory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "baseclasses.SatA2"
+
+    hub_entity = factory.SubFactory(HubAFactory)
+
+
+class SatB1Factory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "baseclasses.SatB1"
+
+    hub_entity = factory.SubFactory(HubBFactory)
+
+
+class SatB2Factory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "baseclasses.SatB2"
+
+    hub_entity = factory.SubFactory(HubBFactory)
+
+class SatC1Factory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "baseclasses.SatC1"
+
+    hub_entity = factory.SubFactory(HubCFactory)
+
+class SatTSC2Factory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "baseclasses.SatTSC2"
+    hub_entity=factory.SubFactory(HubCFactory)
+
+class LinkHubAHubBFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "baseclasses.LinkHubAHubB"
+
+    in_hub = factory.SubFactory(HubAFactory)
+    out_hub = factory.SubFactory(HubBFactory)
+
+class LinkHubAHubCFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "baseclasses.LinkHubAHubC"
+
+    in_hub = factory.SubFactory(HubAFactory)
+    out_hub = factory.SubFactory(HubCFactory)
+        
+

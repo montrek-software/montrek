@@ -131,6 +131,8 @@ class MontrekLinkABC(TimeStampMixin):
 
 # Montrek Test Models
 
+# TODO: Remove these models and factories and rewrite tests to use the new models
+
 
 class TestMontrekHub(MontrekHubABC):
     pass
