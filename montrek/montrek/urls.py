@@ -30,4 +30,5 @@ urlpatterns = [
     path("asset/", include("asset.urls")),
     path("credit_institution/", include("credit_institution.urls")),
     path("currency/", include("currency.urls")),
+    path("montrek_example/", include("montrek_example.urls")),
 ]

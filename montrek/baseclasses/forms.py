@@ -4,3 +4,10 @@ class DateRangeForm(forms.Form):
     start_date = forms.DateField(
         widget=forms.DateInput(attrs={'type': 'date','id':'id_date_range_start'}))
     end_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date', 'id':'id_date_range_end'}))
+
+class MontrekCreateForm(forms.Form):
+    ...
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields:
+            self.fields[field].widget.attrs.update({"id": f"id_{field}"})

@@ -2,9 +2,11 @@ from django.shortcuts import render
 from django.views.generic.list import ListView
 from django.views.generic import DetailView
 from django.views.generic.base import TemplateView
+from django.views.generic.edit import CreateView
 from baseclasses.dataclasses.nav_bar_model import NavBarModel
 from baseclasses.pages import NoPage
 from baseclasses.forms import DateRangeForm
+from baseclasses.forms import MontrekCreateForm
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from baseclasses import utils
 
@@ -63,6 +65,9 @@ class StdQuerysetMixin:
     def elements(self) -> list:
         return []
 
+    def _get_std_queryset(self):
+        return self.repository(self.request).std_queryset()
+
 
 class MontrekTemplateView(TemplateView, MontrekPageViewMixin):
     template_name = "montrek.html"
@@ -83,7 +88,7 @@ class MontrekListView(ListView, MontrekPageViewMixin, StdQuerysetMixin):
     repository = MontrekRepository
 
     def get_queryset(self):
-        return self.repository(self.request).std_queryset()
+        return self._get_std_queryset()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -97,7 +102,7 @@ class MontrekDetailView(DetailView, MontrekPageViewMixin, StdQuerysetMixin):
     repository = MontrekRepository
 
     def get_queryset(self):
-        return self.repository(self.request).std_queryset()
+        return self._get_std_queryset()
 
 
     def get_context_data(self, **kwargs):
@@ -105,3 +110,10 @@ class MontrekDetailView(DetailView, MontrekPageViewMixin, StdQuerysetMixin):
         context = self.get_page_context(context, **kwargs)
         context["detail_elements"] = self.elements
         return context
+
+class MontrekCreateView(CreateView, StdQuerysetMixin):
+    repository = MontrekRepository
+    form_class = MontrekCreateForm
+
+    def get_queryset(self):
+        return self._get_std_queryset()
