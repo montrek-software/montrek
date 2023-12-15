@@ -114,6 +114,10 @@ class MontrekDetailView(DetailView, MontrekPageViewMixin, StdQuerysetMixin):
 class MontrekCreateView(CreateView, StdQuerysetMixin):
     repository = MontrekRepository
     form_class = MontrekCreateForm
+    template_name = "montrek_create.html"
 
     def get_queryset(self):
         return self._get_std_queryset()
+
+    def form_valid(self, form):
+        self.repository._std_create(form.cleaned_data)

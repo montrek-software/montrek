@@ -56,6 +56,10 @@ class MontrekRepository:
     def std_queryset(self, **kwargs):
         raise NotImplementedError("MontrekRepository has no std_queryset method!")
 
+    def std_create_objects(self, data: Dict):
+        raise NotImplementedError("MontrekRepository has no std_create_objects method!")
+
+
     def add_satellite_fields_annotations(
         self,
         satellite_class: Type[MontrekSatelliteABC],
