@@ -60,7 +60,6 @@ class MontrekRepository:
     def std_create_object(self, data: Dict[str, Any]):
         query = self.std_queryset()
         hub_entity = self.hub_class()
-        hub_entity.save()
         for satellite_class in self._primary_satellites:
             sat_data = {
                 k: v for k, v in data.items() if k in satellite_class.get_value_fields()
@@ -68,7 +67,7 @@ class MontrekRepository:
             if len(sat_data) == 0:
                 continue
             sat = satellite_class(hub_entity=hub_entity, **sat_data)
-            sat.save()
+            sat = self.update_satellite(sat, satellite_class)
 
     def add_satellite_fields_annotations(
         self,
@@ -133,6 +132,31 @@ class MontrekRepository:
         if satellite_class not in self._primary_satellites:
             self._primary_satellites.append(satellite_class)
 
+    def update_satellite(
+        self,
+        satellite: MontrekSatelliteABC,
+        satellite_class: Type[MontrekSatelliteABC],
+    ) -> MontrekSatelliteABC:
+        sat_hash_identifier = satellite.get_hash_identifier
+        satellite_updates_or_none = (
+            satellite_class.objects.filter(hash_identifier=sat_hash_identifier)
+            .order_by("-state_date_start")
+            .first()
+        )
+        if satellite_updates_or_none is None:
+            satellite.hub_entity.save()
+            satellite.save()
+            return satellite
+        sat_hash_value = satellite.get_hash_value
+        if satellite_updates_or_none.hash_value == sat_hash_value:
+            return satellite_updates_or_none
+        satellite.hub_entity = satellite_updates_or_none.hub_entity
+        state_date = timezone.now()
+        new_state_date = state_date
+        satellite_updates_or_none.state_date_end = new_state_date
+        satellite_updates_or_none.save()
+        satellite.state_date_start = state_date
+        return satellite
 
 def paginated_table(func):
     @wraps(func)

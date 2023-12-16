@@ -80,6 +80,33 @@ class TestMontrekCreatObject(TestCase):
         self.assertEqual(me_models.HubA.objects.count(), 1)
         self.assertEqual(me_models.SatA2.objects.count(), 0)
 
+    def test_std_create_object_multi_satellites(self):
+        repository = HubARepository(None)
+        repository.std_create_object(
+            {'field_a1_int': 5, 'field_a1_str': 'test', 'field_a2_float': 6.0, 'field_a2_str': 'test2'}
+        )
+        self.assertEqual(me_models.SatA1.objects.count(), 1)
+        self.assertEqual(me_models.SatA1.objects.first().field_a1_int, 5)
+        self.assertEqual(me_models.SatA1.objects.first().field_a1_str, 'test')
+        self.assertEqual(me_models.HubA.objects.count(), 1)
+        self.assertEqual(me_models.SatA2.objects.count(), 1)
+        self.assertEqual(me_models.SatA2.objects.first().field_a2_float, 6.0)
+        self.assertEqual(me_models.SatA2.objects.first().field_a2_str, 'test2')
+
+    def test_std_create_object_existing_object(self):
+        repository = HubARepository(None)
+        for _ in range(2):
+            repository.std_create_object(
+                {'field_a1_int': 5, 'field_a1_str': 'test', 'field_a2_float': 6.0, 'field_a2_str': 'test2'}
+            )
+            self.assertEqual(me_models.SatA1.objects.count(), 1)
+            self.assertEqual(me_models.SatA1.objects.first().field_a1_int, 5)
+            self.assertEqual(me_models.SatA1.objects.first().field_a1_str, 'test')
+            self.assertEqual(me_models.HubA.objects.count(), 1)
+            self.assertEqual(me_models.SatA2.objects.count(), 1)
+            self.assertEqual(me_models.SatA2.objects.first().field_a2_float, 6.0)
+            self.assertEqual(me_models.SatA2.objects.first().field_a2_str, 'test2')
+
 
 
 class TestMontrekRepositoryLinks(TestCase):
