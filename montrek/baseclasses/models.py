@@ -1,4 +1,5 @@
 import hashlib
+from typing import List
 from django.db import models
 from django.utils import timezone
 
@@ -75,6 +76,14 @@ class MontrekSatelliteABC(TimeStampMixin):
         return sha256_hash
 
     def _get_hash_value(self) -> str:
+        value_fields = self.get_value_fields()
+        value_string = "".join(str(getattr(self, field)) for field in value_fields)
+        sha256_hash = hashlib.sha256(value_string.encode()).hexdigest()
+        self.hash_value = sha256_hash
+        return sha256_hash
+
+    @classmethod
+    def get_value_fields(self) -> List[str]:
         exclude_fields = [
             "id",
             "hash_identifier",
@@ -89,11 +98,7 @@ class MontrekSatelliteABC(TimeStampMixin):
             for field in self._meta.get_fields()
             if field.name not in exclude_fields and not field.is_relation
         ]
-        value_string = "".join(str(getattr(self, field)) for field in value_fields)
-        sha256_hash = hashlib.sha256(value_string.encode()).hexdigest()
-        self.hash_value = sha256_hash
-        return sha256_hash
-
+        return value_fields
     @property
     def get_hash_identifier(self) -> str:
         return self._get_hash_identifier()

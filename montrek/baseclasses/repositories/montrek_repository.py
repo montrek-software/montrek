@@ -24,6 +24,7 @@ class MontrekRepository:
 
     def __init__(self, request):
         self._annotations = {}
+        self._primary_satellites = []
         self._reference_date = None
         self.request = request
 
@@ -56,9 +57,18 @@ class MontrekRepository:
     def std_queryset(self, **kwargs):
         raise NotImplementedError("MontrekRepository has no std_queryset method!")
 
-    def std_create_objects(self, data: Dict):
-        raise NotImplementedError("MontrekRepository has no std_create_objects method!")
-
+    def std_create_object(self, data: Dict[str, Any]):
+        query = self.std_queryset()
+        hub_entity = self.hub_class()
+        hub_entity.save()
+        for satellite_class in self._primary_satellites:
+            sat_data = {
+                k: v for k, v in data.items() if k in satellite_class.get_value_fields()
+            }
+            if len(sat_data) == 0:
+                continue
+            sat = satellite_class(hub_entity=hub_entity, **sat_data)
+            sat.save()
 
     def add_satellite_fields_annotations(
         self,
@@ -71,6 +81,7 @@ class MontrekRepository:
         )
         annotations_manager = SatelliteAnnotationsManager(subquery_builder)
         self._add_to_annotations(fields, annotations_manager)
+        self._add_to_field_container(satellite_class)
 
     def add_last_ts_satellite_fields_annotations(
         self,
@@ -83,6 +94,7 @@ class MontrekRepository:
         )
         annotations_manager = SatelliteAnnotationsManager(subquery_builder)
         self._add_to_annotations(fields, annotations_manager)
+        self._add_to_field_container(satellite_class)
 
     def add_linked_satellites_field_annotations(
         self,
@@ -100,7 +112,9 @@ class MontrekRepository:
             subquery_builder = LinkedSatelliteSubqueryBuilder(
                 satellite_class, link_class, reference_date
             )
-        annotations_manager = LinkAnnotationsManager(subquery_builder, satellite_class.__name__)
+        annotations_manager = LinkAnnotationsManager(
+            subquery_builder, satellite_class.__name__
+        )
         self._add_to_annotations(fields, annotations_manager)
 
     def build_queryset(self) -> QuerySet:
@@ -109,12 +123,15 @@ class MontrekRepository:
     def rename_field(self, field: str, new_name: str):
         self.annotations[new_name] = self.annotations[field]
 
-    def _add_to_annotations(self, fields: List[str], annotations_manager:AnnotationsManager):
+    def _add_to_annotations(
+        self, fields: List[str], annotations_manager: AnnotationsManager
+    ):
         annotations_manager.query_to_annotations(fields)
         self.annotations.update(annotations_manager.annotations)
 
-
-
+    def _add_to_field_container(self, satellite_class: Type[MontrekSatelliteABC]):
+        if satellite_class not in self._primary_satellites:
+            self._primary_satellites.append(satellite_class)
 
 
 def paginated_table(func):

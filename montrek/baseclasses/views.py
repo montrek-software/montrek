@@ -61,12 +61,20 @@ class MontrekPageViewMixin:
 
 
 class StdQuerysetMixin:
+    _repository_object = None
+
+    @property
+    def repository_object(self):
+        if self._repository_object is None:
+            self._repository_object = self.repository(self.request)
+        return self._repository_object
+
     @property
     def elements(self) -> list:
         return []
 
     def _get_std_queryset(self):
-        return self.repository(self.request).std_queryset()
+        return self.repository_object.std_queryset()
 
 
 class MontrekTemplateView(TemplateView, MontrekPageViewMixin):
@@ -120,4 +128,5 @@ class MontrekCreateView(CreateView, StdQuerysetMixin):
         return self._get_std_queryset()
 
     def form_valid(self, form):
-        self.repository._std_create(form.cleaned_data)
+        self.repository_object.std_create_object(data=form.cleaned_data)
+

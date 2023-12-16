@@ -2,8 +2,9 @@ from django.test import TestCase
 from baseclasses.utils import montrek_time
 from montrek_example.tests.factories import montrek_example_factories as me_factories
 from baseclasses import models as me_models
-from montrek_example.repositories.hub_a_repository import HubAMontrekRepository
-from montrek_example.repositories.hub_b_repository import HubBMontrekRepository
+from montrek_example.repositories.hub_a_repository import HubARepository
+from montrek_example.repositories.hub_b_repository import HubBRepository
+from montrek_example import models as me_models
 
 
 class TestMontrekRepositorySatellite(TestCase):
@@ -12,27 +13,27 @@ class TestMontrekRepositorySatellite(TestCase):
             state_date_end=montrek_time(2023, 7, 10),
             field_a1_int=5,
         )
-        sat_a12 = me_factories.SatA1Factory(
+        me_factories.SatA1Factory(
             hub_entity=sat_a11.hub_entity,
             state_date_start=montrek_time(2023, 7, 10),
             state_date_end=montrek_time(2023, 7, 20),
             field_a1_int=6,
         )
-        sat_a13 = me_factories.SatA1Factory(
+        me_factories.SatA1Factory(
             hub_entity=sat_a11.hub_entity,
             state_date_start=montrek_time(2023, 7, 20),
             field_a1_int=7,
         )
-        sat_a21 = me_factories.SatA2Factory(
+        me_factories.SatA2Factory(
             hub_entity=sat_a11.hub_entity,
             field_a2_float=8.0,
         )
-        sat_a22 = me_factories.SatA2Factory(
+        me_factories.SatA2Factory(
             state_date_end=montrek_time(2023, 7, 10),
             field_a2_float=9,
         )
     def test_build_queryset_with_satellite_fields(self):
-        repository = HubAMontrekRepository(None)
+        repository = HubARepository(None)
         repository.reference_date = montrek_time(2023, 7, 8)
         queryset = repository.test_queryset_1()
 
@@ -66,6 +67,20 @@ class TestMontrekRepositorySatellite(TestCase):
         self.assertEqual(queryset[1].field_a1_int, None)
         self.assertEqual(queryset[0].field_a2_float, 8.0)
         self.assertEqual(queryset[1].field_a2_float, None)
+
+class TestMontrekCreatObject(TestCase):
+    def test_std_create_object_single_satellite(self):
+        repository = HubARepository(None)
+        repository.std_create_object(
+            {'field_a1_int': 5, 'field_a1_str': 'test'}
+        )
+        self.assertEqual(me_models.SatA1.objects.count(), 1)
+        self.assertEqual(me_models.SatA1.objects.first().field_a1_int, 5)
+        self.assertEqual(me_models.SatA1.objects.first().field_a1_str, 'test')
+        self.assertEqual(me_models.HubA.objects.count(), 1)
+        self.assertEqual(me_models.SatA2.objects.count(), 0)
+
+
 
 class TestMontrekRepositoryLinks(TestCase):
     def setUp(self):
@@ -128,7 +143,7 @@ class TestMontrekRepositoryLinks(TestCase):
         )
 
     def test_many_to_one_link(self):
-        repository = HubAMontrekRepository(None)
+        repository = HubARepository(None)
         repository.reference_date = montrek_time(2023, 7, 8)
         queryset = repository.test_queryset_2()
 
@@ -151,7 +166,7 @@ class TestMontrekRepositoryLinks(TestCase):
         self.assertEqual(queryset[1].satb1__field_b1_str, "Third")
 
     def test_link_reversed(self):
-        repository = HubBMontrekRepository(None)
+        repository = HubBRepository(None)
         repository.reference_date = montrek_time(2023, 7, 8)
         queryset = repository.test_queryset_1()
         self.assertEqual(queryset.count(), 2)

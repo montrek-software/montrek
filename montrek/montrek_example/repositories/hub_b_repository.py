@@ -1,7 +1,7 @@
 from montrek_example import models as me_models
 from baseclasses.repositories.montrek_repository import MontrekRepository
 
-class HubBMontrekRepository(MontrekRepository):
+class HubBRepository(MontrekRepository):
     hub_class = me_models.HubB
 
     def test_queryset_1(self):
