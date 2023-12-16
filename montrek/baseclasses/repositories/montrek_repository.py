@@ -156,6 +156,7 @@ class MontrekRepository:
         satellite_updates_or_none.state_date_end = new_state_date
         satellite_updates_or_none.save()
         satellite.state_date_start = state_date
+        satellite.save()
         return satellite
 
 def paginated_table(func):

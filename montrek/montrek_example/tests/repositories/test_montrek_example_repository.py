@@ -1,4 +1,6 @@
 from django.test import TestCase
+from django.utils import timezone
+from django.utils import timezone
 from baseclasses.utils import montrek_time
 from montrek_example.tests.factories import montrek_example_factories as me_factories
 from baseclasses import models as me_models
@@ -107,6 +109,34 @@ class TestMontrekCreatObject(TestCase):
             self.assertEqual(me_models.SatA2.objects.first().field_a2_float, 6.0)
             self.assertEqual(me_models.SatA2.objects.first().field_a2_str, 'test2')
 
+    def test_std_create_object_update_satellite(self):
+        snapshot_time = timezone.now()
+        repository = HubARepository(None)
+        repository.std_create_object(
+            {'field_a1_int': 5, 'field_a1_str': 'test', 'field_a2_float': 6.0, 'field_a2_str': 'test2'}
+        )
+        self.assertEqual(me_models.SatA1.objects.count(), 1)
+        self.assertEqual(me_models.SatA1.objects.first().field_a1_int, 5)
+        self.assertEqual(me_models.SatA1.objects.first().field_a1_str, 'test')
+        self.assertEqual(me_models.HubA.objects.count(), 1)
+        self.assertEqual(me_models.SatA2.objects.count(), 1)
+        self.assertEqual(me_models.SatA2.objects.first().field_a2_float, 6.0)
+        self.assertEqual(me_models.SatA2.objects.first().field_a2_str, 'test2')
+
+        repository.std_create_object(
+            {'field_a1_int': 5, 'field_a1_str': 'test', 'field_a2_float': 7.0, 'field_a2_str': 'test2'}
+        )
+        self.assertEqual(me_models.SatA1.objects.count(), 1)
+        self.assertEqual(me_models.SatA1.objects.first().field_a1_int, 5)
+        self.assertEqual(me_models.SatA1.objects.first().field_a1_str, 'test')
+        self.assertEqual(me_models.HubA.objects.count(), 1)
+        self.assertEqual(me_models.SatA2.objects.count(), 2)
+        updated_sat = me_models.SatA2.objects.last()
+        self.assertEqual(updated_sat.field_a2_float, 7.0)
+        self.assertEqual(updated_sat.field_a2_str, 'test2')
+        updated_sat.hub_entity = me_models.HubA.objects.first()
+        updated_sat.state_date_start > snapshot_time
+        me_models.SatA2.objects.first().state_date_end < timezone.make_aware(timezone.datetime.max)
 
 
 class TestMontrekRepositoryLinks(TestCase):
