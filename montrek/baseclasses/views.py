@@ -3,6 +3,8 @@ from django.views.generic.list import ListView
 from django.views.generic import DetailView
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import CreateView
+from django.http import HttpResponseRedirect
+from django.urls import reverse
 from baseclasses.dataclasses.nav_bar_model import NavBarModel
 from baseclasses.pages import NoPage
 from baseclasses.forms import DateRangeForm
@@ -30,6 +32,7 @@ class MontrekPageViewMixin:
     page_class = NoPage
     tab = "empty_tab"
     title = "No Title set!"
+
     def get_page_context(self, context, **kwargs):
         page = self.page_class(self.request, **self.kwargs)
         context["page_title"] = page.page_title
@@ -91,6 +94,7 @@ class MontrekTemplateView(TemplateView, MontrekPageViewMixin):
     def get_template_context(self) -> dict:
         raise NotImplementedError("Please implement this method in your subclass!")
 
+
 class MontrekListView(ListView, MontrekPageViewMixin, StdQuerysetMixin):
     template_name = "montrek_table.html"
     repository = MontrekRepository
@@ -112,21 +116,46 @@ class MontrekDetailView(DetailView, MontrekPageViewMixin, StdQuerysetMixin):
     def get_queryset(self):
         return self._get_std_queryset()
 
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context = self.get_page_context(context, **kwargs)
         context["detail_elements"] = self.elements
         return context
 
+
 class MontrekCreateView(CreateView, StdQuerysetMixin):
     repository = MontrekRepository
     form_class = MontrekCreateForm
     template_name = "montrek_create.html"
+    success_url = "under_construction"
+    form_classes = []
 
     def get_queryset(self):
         return self._get_std_queryset()
 
-    def form_valid(self, form):
-        self.repository_object.std_create_object(data=form.cleaned_data)
+    def get_success_url(self):
+        return reverse(self.success_url)
 
+    def form_valid(self, forms):
+        cleaned_data = {}
+        for form in forms:
+            cleaned_data.update(form.cleaned_data)
+        self.repository_object.std_create_object(data=cleaned_data)
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get_context_data(self, **kwargs):
+        self.form_class = self.form_classes[0]
+        context = super().get_context_data(**kwargs)
+        context["tag"] = "Create"
+        if "forms" not in context:
+            context["forms"] = [
+                form_class(self.request.GET) for form_class in self.form_classes
+            ]
+        return context
+
+    def post(self, request, *args, **kwargs):
+        forms = [form_class(request.POST) for form_class in self.form_classes]
+        if all([form.is_valid() for form in forms]):
+            return self.form_valid(forms)
+        else:
+            return self.form_invalid(forms)

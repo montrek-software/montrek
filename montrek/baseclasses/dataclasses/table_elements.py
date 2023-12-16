@@ -39,34 +39,47 @@ class LinkTextTableElement(TableElement):
     hover_text: str
 
 @dataclass
-class FloatTableElement(TableElement):
+class NumberTableElement(TableElement):
     attr: str
 
     def format(self, value):
         if not isinstance(value, (int, float, Decimal)):
             return f'<td style="text-align:left;">{value}</td>'
         color = _get_value_color(value)
-        return f'<td style="text-align:right;color:{color};">{value:,.3f}</td>'
+        formatted_value = self._format_value(value)
+        return f'<td style="text-align:right;color:{color};">{formatted_value}</td>'
+
+    def _format_value(self, value) -> str:
+        return value
 
 @dataclass
-class EuroTableElement(TableElement):
+class FloatTableElement(NumberTableElement):
     attr: str
 
-    def format(self, value):
-        if not isinstance(value, (int, float, Decimal)):
-            return f'<td style="text-align:left;">{value}</td>'
-        color = _get_value_color(value)
-        return f'<td style="text-align:right;color:{color};">{value:,.2f}&#x20AC;</td>'
+    def _format_value(self, value) -> str:
+        return f"{value:,.3f}"
 
 @dataclass
-class PercentTableElement(TableElement):
+class IntTableElement(NumberTableElement):
     attr: str
 
-    def format(self, value):
-        if not isinstance(value, (int, float, Decimal)):
-            return f'<td style="text-align:left;">{value}</td>'
-        color = _get_value_color(value)
-        return f'<td style="text-align:right;color:{color};">{value:,.2%}</td>'
+    def _format_value(self, value) -> str:
+        value = round(value)
+        return f"{value:,.0f}"
+
+@dataclass
+class EuroTableElement(NumberTableElement):
+    attr: str
+
+    def _format_value(self, value) -> str:
+        return f"{value:,.2f}&#x20AC;"
+
+@dataclass
+class PercentTableElement(NumberTableElement):
+    attr: str
+
+    def _format_value(self, value) -> str:
+        return f"{value:,.2%}"
 
 @dataclass
 class DateTableElement(TableElement):

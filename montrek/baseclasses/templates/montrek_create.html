@@ -10,8 +10,10 @@
 	{% csrf_token %}
     <div class="table">
         <table>
-            {% for field in form %}
-                <tr><td>{{ field.label_tag }} </td><td>{{ field }}</td></tr>
+            {% for form in forms %}
+             {% for field in form %}
+                 <tr><td>{{ field.label_tag }} </td><td>{{ field }}</td></tr>
+             {% endfor %}
             {% endfor %}
 	    <tr><td colspan="2">
                 <input type="submit" value="{{ tag }}" class="btn btn-primary" id="id_submit">  {# Here's the submit button #}
