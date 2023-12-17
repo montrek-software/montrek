@@ -144,6 +144,10 @@ class MontrekCreateView(CreateView, StdQuerysetMixin):
         return HttpResponseRedirect(self.get_success_url())
 
     def get_context_data(self, **kwargs):
+        if not isinstance(self.form_classes, list):
+            raise ValueError("form_classes must be a list!")
+        if len(self.form_classes) == 0:
+            raise ValueError("No form classes specified!")
         self.form_class = self.form_classes[0]
         context = super().get_context_data(**kwargs)
         context["tag"] = "Create"

@@ -12,7 +12,7 @@ class CreditInstitutionAppPage(MontrekPage):
     def get_tabs(self):
         action_create = ActionElement(
             icon="plus",
-            link=reverse("credit_institution"),
+            link=reverse("credit_institution_create"),
             action_id="create_credit_institution",
             hover_text="Create Credit Institution",
         )

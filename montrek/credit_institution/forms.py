@@ -1,6 +1,13 @@
 from django import forms
 
-from credit_institution.models import CreditInstitutionHub
 from credit_institution.models import CreditInstitutionStaticSatellite
-from baseclasses.repositories.db_helper import select_satellite
 
+
+class CreditInstitutionCreateForm(forms.ModelForm):
+    class Meta:
+        model = CreditInstitutionStaticSatellite
+        fields = [
+            "credit_institution_name",
+            "credit_institution_bic",
+            "account_upload_method",
+        ]
