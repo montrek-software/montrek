@@ -62,7 +62,7 @@ class AccountRepository(MontrekRepository):
     def get_transaction_table_by_account(self, account_hub_id):
         hub_entity = self.hub_class.objects.get(pk=account_hub_id)
         transactions = (
-            TransactionRepository(self.request)
+            TransactionRepository(self.session_data)
             .std_queryset()
             .filter(
                 link_transaction_account=hub_entity,
@@ -76,7 +76,7 @@ class AccountRepository(MontrekRepository):
 
     def transaction_table_subquery(self, **kwargs):
         return (
-            TransactionRepository(self.request)
+            TransactionRepository(self.session_data)
             .std_queryset()
             .filter(
                 link_transaction_account=OuterRef("pk"),
@@ -109,14 +109,14 @@ class AccountRepository(MontrekRepository):
     @paginated_table
     def get_upload_registry_table_by_account_paginated(self, account_hub_id: int):
         hub_entity = self.hub_class.objects.get(pk=account_hub_id)
-        return FileUploadRegistryRepository(self.request).std_queryset().filter(
+        return FileUploadRegistryRepository(self.session_data).std_queryset().filter(
             link_file_upload_registry_account=hub_entity
         ).order_by('-created_at')
 
     @paginated_table
     def get_transaction_category_map_table_by_account_paginated(self, account_hub_id:int):
         hub_entity = self.hub_class.objects.get(pk=account_hub_id)
-        return TransactionCategoryMapRepository(self.request).std_queryset().filter(
+        return TransactionCategoryMapRepository(self.session_data).std_queryset().filter(
             link_transaction_category_map_account=hub_entity
         ).order_by('-created_at')
 
@@ -124,7 +124,7 @@ class AccountRepository(MontrekRepository):
     def get_depot_stats_table_by_account_paginated(self, account_hub_id: int):
         hub_entity = self.hub_class.objects.get(pk=account_hub_id)
         return (
-            DepotRepository(self.request)
+            DepotRepository(self.session_data)
             .std_queryset()
             .filter(account_id=hub_entity.id)
         )

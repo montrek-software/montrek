@@ -28,11 +28,11 @@ class AccountOverviewPage(MontrekPage):
 class AccountPage(MontrekPage):
     show_date_range_selector = True
 
-    def __init__(self, request, **kwargs):
-        super().__init__(request, **kwargs)
+    def __init__(self, repository, **kwargs):
+        super().__init__(repository, **kwargs)
         if 'pk' not in kwargs:
             raise ValueError("AccountPage needs pk specified in url!")
-        self.obj = AccountRepository(self.request).std_queryset().get(pk=kwargs['pk'])
+        self.obj = self.repository.std_queryset().get(pk=kwargs['pk'])
         self.page_title = self.obj.account_name
 
     def get_tabs(self):

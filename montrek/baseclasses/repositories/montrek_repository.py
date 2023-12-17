@@ -22,9 +22,10 @@ from functools import wraps
 class MontrekRepository:
     hub_class = MontrekHubABC
 
-    def __init__(self ):
+    def __init__(self, session_data: Dict[str, Any] = None):
         self._annotations = {}
         self._primary_satellites = []
+        self.session_data = session_data
         self._reference_date = None
 
     @classmethod
@@ -41,6 +42,14 @@ class MontrekRepository:
         if self._reference_date is None:
             return timezone.datetime.now()
         return self._reference_date
+
+    @property
+    def session_end_date(self):
+        return self.session_data.get("end_date", timezone.datetime.max)
+
+    @property
+    def session_start_date(self):
+        return self.session_data.get("start_date", timezone.datetime.min)
 
     @reference_date.setter
     def reference_date(self, value):
@@ -151,12 +160,6 @@ class MontrekRepository:
         satellite.save()
         return satellite
 
-class MontrekSessionDateRepository(MontrekRepository):
-    def __init__(self, session_end_date: timezone, session_start_date: timezone):
-        super().__init__()
-        self.session_start_date = session_start_date
-        self.session_end_date = session_end_date
-
 def paginated_table(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -164,13 +167,11 @@ def paginated_table(func):
         result = func(*args, **kwargs)
 
         # Extract request and queryset from result
-        request = args[
-            0
-        ].request  # Assuming the first argument is 'self' and has 'request'
+        session_data = args[0].session_data  # Assuming the first argument is 'self' and has 'request'
         queryset = result  # Assuming the original function returns a queryset
 
         # Pagination logic
-        page_number = request.GET.get("page", 1)
+        page_number = session_data.get("page", [1])[0]
         paginate_by = 10  # or you can make this customizable
         paginator = Paginator(queryset, paginate_by)
         page = paginator.get_page(page_number)

@@ -32,7 +32,7 @@ class DepotRepository(MontrekRepository):
 
     def transaction_table_subquery(self):
         return (
-            TransactionRepository(self.request)
+            TransactionRepository(self.session_data)
             .get_queryset_with_account()
             .filter(
                 link_transaction_asset=OuterRef("pk"),
@@ -42,7 +42,7 @@ class DepotRepository(MontrekRepository):
 
     def currency_table_subquery(self):
         return (
-            CurrencyRepository(self.request)
+            CurrencyRepository(self.session_data)
             .std_queryset()
             .filter(
                 link_currency_asset=OuterRef("pk"),

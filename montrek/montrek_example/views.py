@@ -17,6 +17,7 @@ from baseclasses.dataclasses.table_elements import IntTableElement
 
 class MontrekExampleACreate(MontrekCreateView):
     repository = HubARepository
+    page_class = MontrekExampleAAppPage
     form_classes = [SatelliteA1CreateForm, SatelliteA2CreateForm]
     success_url = "montrek_example_a_list"
 

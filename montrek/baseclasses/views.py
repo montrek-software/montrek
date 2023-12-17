@@ -34,7 +34,7 @@ class MontrekPageViewMixin:
     title = "No Title set!"
 
     def get_page_context(self, context, **kwargs):
-        page = self.page_class(self.request, **self.kwargs)
+        page = self.page_class(self.repository_object, **self.kwargs)
         context["page_title"] = page.page_title
         page.set_active_tab(self.tab)
         context["tab_elements"] = page.tabs
@@ -63,24 +63,26 @@ class MontrekPageViewMixin:
         return {"date_range_form": date_range_form}
 
 
-class StdQuerysetMixin:
-    _repository_object = None
-
+class MontrekViewMixin:
     @property
     def repository_object(self):
-        if self._repository_object is None:
-            self._repository_object = self.repository(self.request)
-        return self._repository_object
+        return self.repository(self.session_data)
 
     @property
     def elements(self) -> list:
         return []
 
+    @property
+    def session_data(self) -> dict:
+        session_data = dict(self.request.GET)
+        session_data.update(dict(self.request.session))
+        return session_data
+
     def _get_std_queryset(self):
         return self.repository_object.std_queryset()
 
 
-class MontrekTemplateView(TemplateView, MontrekPageViewMixin):
+class MontrekTemplateView(TemplateView, MontrekPageViewMixin, MontrekViewMixin ):
     template_name = "montrek.html"
     repository = MontrekRepository
 
@@ -95,7 +97,7 @@ class MontrekTemplateView(TemplateView, MontrekPageViewMixin):
         raise NotImplementedError("Please implement this method in your subclass!")
 
 
-class MontrekListView(ListView, MontrekPageViewMixin, StdQuerysetMixin):
+class MontrekListView(ListView, MontrekPageViewMixin, MontrekViewMixin):
     template_name = "montrek_table.html"
     repository = MontrekRepository
 
@@ -109,7 +111,7 @@ class MontrekListView(ListView, MontrekPageViewMixin, StdQuerysetMixin):
         return context
 
 
-class MontrekDetailView(DetailView, MontrekPageViewMixin, StdQuerysetMixin):
+class MontrekDetailView(DetailView, MontrekPageViewMixin, MontrekViewMixin):
     template_name = "montrek_details.html"
     repository = MontrekRepository
 
@@ -123,7 +125,7 @@ class MontrekDetailView(DetailView, MontrekPageViewMixin, StdQuerysetMixin):
         return context
 
 
-class MontrekCreateView(CreateView, StdQuerysetMixin):
+class MontrekCreateView(CreateView, MontrekPageViewMixin, MontrekViewMixin):
     repository = MontrekRepository
     form_class = MontrekCreateForm
     template_name = "montrek_create.html"
@@ -155,11 +157,11 @@ class MontrekCreateView(CreateView, StdQuerysetMixin):
             context["forms"] = [
                 form_class(self.request.GET) for form_class in self.form_classes
             ]
+        context = self.get_page_context(context, **kwargs)
         return context
 
     def post(self, request, *args, **kwargs):
         forms = [form_class(request.POST) for form_class in self.form_classes]
         if all([form.is_valid() for form in forms]):
             return self.form_valid(forms)
-        else:
-            return self.form_invalid(forms)
+        return self.form_invalid(forms)

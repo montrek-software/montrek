@@ -166,7 +166,7 @@ class AccountTransactionsView(MontrekListView):
     repository = AccountRepository
 
     def get_queryset(self):
-        return self.repository(self.request).get_transaction_table_by_account_paginated(
+        return self.repository_object.get_transaction_table_by_account_paginated(
             self.kwargs["pk"]
         )
 
@@ -217,7 +217,7 @@ class AccountGraphsView(MontrekTemplateView):
     template_name = "account_graphs.html"
 
     def get_queryset(self):
-        return self.repository(self.request).get_transaction_table_by_account(
+        return self.repository_object.get_transaction_table_by_account(
             self.kwargs["pk"]
         )
 
@@ -248,9 +248,9 @@ class AccountUploadView(MontrekListView):
     repository = AccountRepository
 
     def get_queryset(self):
-        return self.repository(
-            self.request
-        ).get_upload_registry_table_by_account_paginated(self.kwargs["pk"])
+        return self.repository_object.get_upload_registry_table_by_account_paginated(
+            self.kwargs["pk"]
+        )
 
     @property
     def elements(self) -> list:
@@ -276,9 +276,9 @@ class AccountTransactionCategoryMapView(MontrekListView):
     repository = AccountRepository
 
     def get_queryset(self):
-        return self.repository(
-            self.request
-        ).get_transaction_category_map_table_by_account_paginated(self.kwargs["pk"])
+        return self.repository_object.get_transaction_category_map_table_by_account_paginated(
+            self.kwargs["pk"]
+        )
 
     @property
     def elements(self) -> list:
@@ -311,9 +311,7 @@ class AccountDepotView(MontrekListView):
     repository = AccountRepository
 
     def get_queryset(self):
-        return self.repository(self.request).get_depot_stats_table_by_account_paginated(
-            self.kwargs["pk"]
-        )
+        return self.repository_object.get_depot_stats_table_by_account_paginated(self.kwargs["pk"])
 
     def elements(self) -> list:
         return (
