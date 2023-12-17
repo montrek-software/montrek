@@ -22,11 +22,10 @@ from functools import wraps
 class MontrekRepository:
     hub_class = MontrekHubABC
 
-    def __init__(self, request):
+    def __init__(self ):
         self._annotations = {}
         self._primary_satellites = []
         self._reference_date = None
-        self.request = request
 
     @classmethod
     def get_hub_by_id(cls, pk: int) -> MontrekHubABC:
@@ -36,13 +35,6 @@ class MontrekRepository:
     def annotations(self):
         return self._annotations
 
-    @property
-    def session_end_date(self):
-        return self.request.session.get("end_date", timezone.now())
-
-    @property
-    def session_start_date(self):
-        return self.request.session.get("start_date", timezone.now())
 
     @property
     def reference_date(self):
@@ -158,6 +150,12 @@ class MontrekRepository:
         satellite.state_date_start = state_date
         satellite.save()
         return satellite
+
+class MontrekSessionDateRepository(MontrekRepository):
+    def __init__(self, session_end_date: timezone, session_start_date: timezone):
+        super().__init__()
+        self.session_start_date = session_start_date
+        self.session_end_date = session_end_date
 
 def paginated_table(func):
     @wraps(func)
