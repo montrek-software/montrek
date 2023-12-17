@@ -11,12 +11,10 @@ from file_upload.repositories.file_upload_queries import new_file_upload_file
 from file_upload.repositories.file_upload_queries import (
     get_file_satellite_from_registry_satellite,
 )
-from credit_institution.repositories.credit_institution_model_queries import (
-    get_credit_institution_satellite_by_account_hub,
-)
 from baseclasses.repositories.db_helper import update_satellite_from_satellite
 from baseclasses.repositories.db_helper import get_hub_by_id
 from account.managers.transaction_upload_methods import upload_dkb_transactions
+from account.repositories.account_repository import AccountRepository
 
 
 def process_upload_transaction_file(account_id: int, file: TextIO):
@@ -44,15 +42,13 @@ def _upload_transactions_to_account_manager(
     account_hub = get_account_hub_from_file_upload_registry_satellite(
         upload_registry_sat
     )
-    credit_institution_satellite = get_credit_institution_satellite_by_account_hub(
-        account_hub
-    )
-    credit_institution_upload_method = (
-        credit_institution_satellite.account_upload_method
-    )
+    account_traits = AccountRepository(None).std_queryset().get(pk=account_hub.pk)
+    credit_institution_upload_method = account_traits.account_upload_method
+    credit_institution_name = account_traits.credit_institution_name
+
     if credit_institution_upload_method == "none":
         return _upload_error_account_upload_method_none(
-            upload_registry_sat, credit_institution_satellite
+            upload_registry_sat, credit_institution_name
         )
     if credit_institution_upload_method == "test":
         return update_satellite_from_satellite(
@@ -101,9 +97,8 @@ def _upload_error_file_not_uploaded_registry(upload_registry_sat):
 
 
 def _upload_error_account_upload_method_none(
-    upload_registry_sat, credit_institution_satellite
+    upload_registry_sat, credit_institution_name
 ):
-    credit_institution_name = credit_institution_satellite.credit_institution_name
     fileuploadregistry_failed = update_satellite_from_satellite(
         upload_registry_sat,
         upload_status="failed",

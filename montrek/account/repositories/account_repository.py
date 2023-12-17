@@ -48,7 +48,7 @@ class AccountRepository(MontrekRepository):
         self.add_linked_satellites_field_annotations(
             CreditInstitutionStaticSatellite,
             LinkAccountCreditInstitution,
-            ["credit_institution_name", "credit_institution_bic"],
+            ["credit_institution_name", "credit_institution_bic", "account_upload_method"],
             reference_date,
         )
         self._account_value()

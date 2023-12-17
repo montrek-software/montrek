@@ -14,20 +14,7 @@ from account.repositories.account_repository import AccountRepository
 from account.pages import AccountOverviewPage
 from account.pages import AccountPage
 
-from transaction.repositories.transaction_account_queries import (
-    get_paginated_transactions_category_map,
-)
 
-from file_upload.repositories.upload_registry_account_queries import (
-    get_paginated_upload_registries,
-)
-
-from credit_institution.repositories.credit_institution_model_queries import (
-    get_credit_institution_satellite_by_account_hub_id,
-)
-from credit_institution.repositories.credit_institution_model_queries import (
-    new_credit_institution_to_account,
-)
 from credit_institution.models import CreditInstitutionStaticSatellite
 
 from baseclasses.repositories.db_helper import new_satellite_entry
@@ -169,9 +156,7 @@ def bank_account_new(request, account_name: str, account_type: str):
         bank_account_iban=request.POST["bank_account_iban"],
     )
     credit_institution_name = request.POST["credit_institution_name"]
-    new_credit_institution_to_account(credit_institution_name, account_hub)
     return redirect("/account/list")
-
 
 
 class AccountTransactionsView(MontrekListView):
@@ -255,6 +240,7 @@ class AccountGraphsView(MontrekTemplateView):
         ].format_html()
         return account_data
 
+
 class AccountUploadView(MontrekListView):
     page_class = AccountPage
     tab = "tab_uploads"
@@ -262,9 +248,9 @@ class AccountUploadView(MontrekListView):
     repository = AccountRepository
 
     def get_queryset(self):
-        return self.repository(self.request).get_upload_registry_table_by_account_paginated(
-            self.kwargs["pk"]
-        )
+        return self.repository(
+            self.request
+        ).get_upload_registry_table_by_account_paginated(self.kwargs["pk"])
 
     @property
     def elements(self) -> list:
@@ -290,9 +276,9 @@ class AccountTransactionCategoryMapView(MontrekListView):
     repository = AccountRepository
 
     def get_queryset(self):
-        return self.repository(self.request).get_transaction_category_map_table_by_account_paginated(
-            self.kwargs["pk"]
-        )
+        return self.repository(
+            self.request
+        ).get_transaction_category_map_table_by_account_paginated(self.kwargs["pk"])
 
     @property
     def elements(self) -> list:
@@ -316,6 +302,7 @@ class AccountTransactionCategoryMapView(MontrekListView):
                 hover_text="Delete",
             ),
         )
+
 
 class AccountDepotView(MontrekListView):
     page_class = AccountPage

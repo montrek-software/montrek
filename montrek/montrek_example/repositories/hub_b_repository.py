@@ -10,5 +10,6 @@ class HubBRepository(MontrekRepository):
             me_models.LinkHubAHubB,
             ['field_a1_int'],
             self.reference_date,
+            reversed_link=True
         )
         return self.build_queryset()

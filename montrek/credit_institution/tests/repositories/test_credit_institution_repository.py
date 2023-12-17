@@ -15,5 +15,11 @@ class TestCreditInstitutionRepository(TestCase):
         )
 
     def test_get_credit_institution_repository_elements(self):
-        # TODO implement test
-        pass
+        credit_institution_repository = CreditInstitutionRepository(None)
+        queries_objects = credit_institution_repository.std_queryset()
+        self.assertEqual(queries_objects.count(), 1)
+        for field in ('credit_institution_name', 'credit_institution_bic', 'account_upload_method'):
+            self.assertEqual(
+                queries_objects.first()[field],
+                self.credit_institution_static_satellite[field],
+            )
