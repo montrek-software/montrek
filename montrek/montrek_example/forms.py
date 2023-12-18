@@ -1,3 +1,4 @@
+from django import forms
 from baseclasses.forms import MontrekCreateForm
 from montrek_example import models as me_models
 
@@ -8,6 +9,13 @@ class SatelliteA1CreateForm(MontrekCreateForm):
         fields = (
             "field_a1_str",
             "field_a1_int",
+        )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["hubb_link"] = forms.ModelChoiceField(
+            queryset=me_models.HubB.objects.all(),
+            widget=forms.Select(attrs={"id": "id_hubb"}),
         )
 
 

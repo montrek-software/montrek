@@ -155,13 +155,13 @@ class MontrekCreateView(CreateView, MontrekPageViewMixin, MontrekViewMixin):
         context["tag"] = "Create"
         if "forms" not in context:
             context["forms"] = [
-                form_class(self.request.GET) for form_class in self.form_classes
+                form_class(self.request.GET, repository=self.repository_object) for form_class in self.form_classes
             ]
         context = self.get_page_context(context, **kwargs)
         return context
 
     def post(self, request, *args, **kwargs):
-        forms = [form_class(request.POST) for form_class in self.form_classes]
+        forms = [form_class(request.POST, repository=self.repository_object) for form_class in self.form_classes]
         if all([form.is_valid() for form in forms]):
             return self.form_valid(forms)
         return self.form_invalid(forms)

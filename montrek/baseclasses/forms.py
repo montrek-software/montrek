@@ -7,6 +7,7 @@ class DateRangeForm(forms.Form):
 
 class MontrekCreateForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
+        repository = kwargs.pop("repository",None)
         super().__init__(*args, **kwargs)
         for field in self.fields:
             self.fields[field].widget.attrs.update({"id": f"id_{field}"})
