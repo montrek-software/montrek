@@ -20,3 +20,22 @@ class MontrekExampleAAppPage(MontrekPage):
             actions=(action_new_example_a,),
         )
         return (overview_tab,)
+
+class MontrekExampleBAppPage(MontrekPage):
+    page_title='Montrek Example B'
+
+    def get_tabs(self):
+        action_new_example_b = ActionElement(
+            icon="plus",
+            link=reverse("montrek_example_b_create"),
+            action_id="id_new_example_b",
+            hover_text="Add new B Example",
+        )
+        overview_tab = TabElement(
+            name="Example B List",
+            link=reverse("montrek_example_b_list"),
+            html_id="tab_example_b_list",
+            active="active",
+            actions=(action_new_example_b,),
+        )
+        return (overview_tab,)

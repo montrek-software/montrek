@@ -1,16 +1,18 @@
-from django.shortcuts import render
-from django.urls import reverse
 from baseclasses.views import MontrekCreateView
 from baseclasses.views import MontrekListView
-from montrek_example.repositories.hub_a_repository import HubARepository
-from montrek_example.forms import SatelliteA1CreateForm
-from montrek_example.forms import SatelliteA2CreateForm
-from montrek_example.models import SatA1
-from montrek_example.pages import MontrekExampleAAppPage
-
 from baseclasses.dataclasses.table_elements import StringTableElement
 from baseclasses.dataclasses.table_elements import FloatTableElement
 from baseclasses.dataclasses.table_elements import IntTableElement
+
+from montrek_example.repositories.hub_a_repository import HubARepository
+from montrek_example.repositories.hub_b_repository import HubBRepository
+from montrek_example.forms import SatelliteA1CreateForm
+from montrek_example.forms import SatelliteA2CreateForm
+from montrek_example.forms import SatelliteB1CreateForm
+from montrek_example.forms import SatelliteB2CreateForm
+from montrek_example.pages import MontrekExampleAAppPage
+from montrek_example.pages import MontrekExampleBAppPage
+
 
 # Create your views here.
 
@@ -34,4 +36,26 @@ class MontrekExampleAList(MontrekListView):
             IntTableElement(name="A1 Int", attr="field_a1_int"),
             StringTableElement(name="A2 String", attr="field_a2_str"),
             FloatTableElement(name="A2 Float", attr="field_a2_float"),
+        )
+
+
+class MontrekExampleBCreate(MontrekCreateView):
+    repository = HubBRepository
+    page_class = MontrekExampleBAppPage
+    form_classes = [SatelliteB1CreateForm, SatelliteB2CreateForm]
+    success_url = "montrek_example_b_list"
+
+
+class MontrekExampleBList(MontrekListView):
+    repository = HubBRepository
+    page_class = MontrekExampleBAppPage
+    tab = "tab_example_b_list"
+
+    @property
+    def elements(self) -> list:
+        return (
+            StringTableElement(name="B1 String", attr="field_b1_str"),
+            IntTableElement(name="B1 Date", attr="field_b1_date"),
+            StringTableElement(name="B2 String", attr="field_b2_str"),
+            StringTableElement(name="B2 Choice", attr="field_b2_choice"),
         )
