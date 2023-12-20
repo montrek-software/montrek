@@ -137,16 +137,20 @@ class MontrekCreateView(CreateView, MontrekPageViewMixin, MontrekViewMixin):
     def get_success_url(self):
         return reverse(self.success_url)
 
-    def form_valid(self, forms):
-        cleaned_data = {}
-        for form in forms:
-            cleaned_data.update(form.cleaned_data)
-        self.repository_object.std_create_object(data=cleaned_data)
+    def form_valid(self, form):
+        self.repository_object.std_create_object(data=form.cleaned_data)
         return HttpResponseRedirect(self.get_success_url())
 
     def get_context_data(self, **kwargs):
-        form = self.form_class(self.request.GET, repository=self.repository_object)
-        context = super().get_context_data(form=form, **kwargs)
+        context = super().get_context_data(form=None, **kwargs)
+        context['form'] = self.form_class(repository=self.repository_object)
         context["tag"] = "Create"
         context = self.get_page_context(context, **kwargs)
         return context
+
+    def post(self, request, *args, **kwargs):
+        form = self.form_class(self.request.POST, repository=self.repository_object)
+        if form.is_valid():
+            return self.form_valid(form)
+        return self.form_invalid(form)
+

@@ -1,4 +1,5 @@
 from montrek_example import models as me_models
+from montrek_example.repositories.hub_b_repository import HubBRepository
 from baseclasses.repositories.montrek_repository import MontrekRepository
 
 
@@ -22,10 +23,16 @@ class HubARepository(MontrekRepository):
             ],
             self.reference_date,
         )
+        self.add_linked_satellites_field_annotations(
+            me_models.SatB1,
+            me_models.LinkHubAHubB,
+            ["field_b1_str"],
+            self.reference_date,
+        )
         return self.build_queryset()
 
     def get_hub_b_objects(self):
-        return me_models.HubB.objects.all()
+        return HubBRepository().std_queryset()
 
     def test_queryset_1(self):
         self.add_satellite_fields_annotations(

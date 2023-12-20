@@ -68,14 +68,22 @@ class MontrekRepository:
     def std_create_object(self, data: Dict[str, Any]):
         query = self.std_queryset()
         hub_entity = self.hub_class()
+        created_or_selected_satalites = [] 
         for satellite_class in self._primary_satellites:
             sat_data = {
-                k: v for k, v in data.items() if k in satellite_class.get_value_fields()
+                k: v for k, v in data.items() if k in satellite_class.get_value_field_names()
             }
             if len(sat_data) == 0:
                 continue
             sat = satellite_class(hub_entity=hub_entity, **sat_data)
             sat = self.update_satellite(sat, satellite_class)
+            created_or_selected_satalites.append(sat)
+            hub_entity = sat.hub_entity
+        for satellite in created_or_selected_satalites:
+            satellite.hub_entity = hub_entity
+            satellite.save()
+
+        #TODO: add links
 
     def add_satellite_fields_annotations(
         self,
@@ -164,7 +172,6 @@ class MontrekRepository:
         satellite_updates_or_none.state_date_end = new_state_date
         satellite_updates_or_none.save()
         satellite.state_date_start = state_date
-        satellite.save()
         return satellite
 
 def paginated_table(func):

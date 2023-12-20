@@ -137,6 +137,9 @@ class TestMontrekCreatObject(TestCase):
         updated_sat.hub_entity = me_models.HubA.objects.first()
         updated_sat.state_date_start > snapshot_time
         me_models.SatA2.objects.first().state_date_end < timezone.make_aware(timezone.datetime.max)
+        repository.std_create_object(
+            {'field_a1_int': 5, 'field_a1_str': 'test_new', 'field_a2_float': 7.0, 'field_a2_str': 'test2'}
+        )
 
 
 class TestMontrekRepositoryLinks(TestCase):
@@ -205,32 +208,32 @@ class TestMontrekRepositoryLinks(TestCase):
         queryset = repository.test_queryset_2()
 
         self.assertEqual(queryset.count(), 2)
-        self.assertEqual(queryset[0].satb1__field_b1_str, "First")
-        self.assertEqual(queryset[1].satb1__field_b1_str, "First")
+        self.assertEqual(queryset[0].field_b1_str, "First")
+        self.assertEqual(queryset[1].field_b1_str, "First")
 
         repository.reference_date = montrek_time(2023, 7, 10)
         queryset = repository.test_queryset_2()
 
         self.assertEqual(queryset.count(), 2)
-        self.assertEqual(queryset[0].satb1__field_b1_str, "Second")
-        self.assertEqual(queryset[1].satb1__field_b1_str, "Second")
+        self.assertEqual(queryset[0].field_b1_str, "Second")
+        self.assertEqual(queryset[1].field_b1_str, "Second")
 
         repository.reference_date = montrek_time(2023, 7, 12)
         queryset = repository.test_queryset_2()
 
         self.assertEqual(queryset.count(), 2)
-        self.assertEqual(queryset[0].satb1__field_b1_str, "Second")
-        self.assertEqual(queryset[1].satb1__field_b1_str, "Third")
+        self.assertEqual(queryset[0].field_b1_str, "Second")
+        self.assertEqual(queryset[1].field_b1_str, "Third")
 
     def test_link_reversed(self):
         repository = HubBRepository(None)
         repository.reference_date = montrek_time(2023, 7, 8)
         queryset = repository.test_queryset_1()
         self.assertEqual(queryset.count(), 2)
-        self.assertEqual(queryset[0].sata1__field_a1_int, 5)
-        self.assertEqual(queryset[1].sata1__field_a1_int, None)
+        self.assertEqual(queryset[0].field_a1_int, 5)
+        self.assertEqual(queryset[1].field_a1_int, None)
         repository.reference_date = montrek_time(2023, 7, 15)
         queryset = repository.test_queryset_1()
         self.assertEqual(queryset.count(), 2)
-        self.assertEqual(queryset[0].sata1__field_a1_int, 5)
-        self.assertEqual(queryset[1].sata1__field_a1_int, None)
+        self.assertEqual(queryset[0].field_a1_int, 5)
+        self.assertEqual(queryset[1].field_a1_int, None)

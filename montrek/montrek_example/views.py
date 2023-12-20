@@ -33,6 +33,7 @@ class MontrekExampleAList(MontrekListView):
             IntTableElement(name="A1 Int", attr="field_a1_int"),
             StringTableElement(name="A2 String", attr="field_a2_str"),
             FloatTableElement(name="A2 Float", attr="field_a2_float"),
+            StringTableElement(name="B1 String", attr="field_b1_str"),
         )
 
 
