@@ -17,7 +17,7 @@ from montrek_example.pages import MontrekExampleBAppPage
 class MontrekExampleACreate(MontrekCreateView):
     repository = HubARepository
     page_class = MontrekExampleAAppPage
-    form_classes = [ExampleACreateForm]
+    form_class = ExampleACreateForm
     success_url = "montrek_example_a_list"
 
 
@@ -39,7 +39,6 @@ class MontrekExampleAList(MontrekListView):
 class MontrekExampleBCreate(MontrekCreateView):
     repository = HubBRepository
     page_class = MontrekExampleBAppPage
-    form_classes = [SatelliteB1CreateForm, SatelliteB2CreateForm]
     success_url = "montrek_example_b_list"
 
 
