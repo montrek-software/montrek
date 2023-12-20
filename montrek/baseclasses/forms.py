@@ -6,9 +6,18 @@ class DateRangeForm(forms.Form):
     end_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date', 'id':'id_date_range_end'}))
 
 class MontrekCreateForm(forms.ModelForm):
+    class Meta:
+        exclude = ()
+
     def __init__(self, *args, **kwargs):
-        repository = kwargs.pop("repository",None)
+        self.repository = kwargs.pop("repository",None)
+        self._meta.model = self.repository.hub_class
         super().__init__(*args, **kwargs)
-        for field in self.fields:
-            self.fields[field].widget.attrs.update({"id": f"id_{field}"})
+
+        fields = self.repository.std_satellite_fields()
+        for field in fields:
+            form_field = field.formfield()
+            if form_field:
+                self.fields[field.name] = form_field
+                self.fields[field.name].widget.attrs.update({"id": f"id_{field.name}"})
 

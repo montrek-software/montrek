@@ -24,6 +24,9 @@ class HubARepository(MontrekRepository):
         )
         return self.build_queryset()
 
+    def get_hub_b_objects(self):
+        return me_models.HubB.objects.all()
+
     def test_queryset_1(self):
         self.add_satellite_fields_annotations(
             me_models.SatA1,

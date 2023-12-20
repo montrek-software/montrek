@@ -6,10 +6,7 @@ from baseclasses.dataclasses.table_elements import IntTableElement
 
 from montrek_example.repositories.hub_a_repository import HubARepository
 from montrek_example.repositories.hub_b_repository import HubBRepository
-from montrek_example.forms import SatelliteA1CreateForm
-from montrek_example.forms import SatelliteA2CreateForm
-from montrek_example.forms import SatelliteB1CreateForm
-from montrek_example.forms import SatelliteB2CreateForm
+from montrek_example.forms import ExampleACreateForm
 from montrek_example.pages import MontrekExampleAAppPage
 from montrek_example.pages import MontrekExampleBAppPage
 
@@ -20,7 +17,7 @@ from montrek_example.pages import MontrekExampleBAppPage
 class MontrekExampleACreate(MontrekCreateView):
     repository = HubARepository
     page_class = MontrekExampleAAppPage
-    form_classes = [SatelliteA1CreateForm, SatelliteA2CreateForm]
+    form_classes = [ExampleACreateForm]
     success_url = "montrek_example_a_list"
 
 

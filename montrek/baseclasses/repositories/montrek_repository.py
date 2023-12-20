@@ -58,6 +58,13 @@ class MontrekRepository:
     def std_queryset(self, **kwargs):
         raise NotImplementedError("MontrekRepository has no std_queryset method!")
 
+    def std_satellite_fields(self):
+        self.std_queryset()
+        fields = []
+        for satellite_class in self._primary_satellites:
+            fields.extend(satellite_class.get_value_fields())
+        return fields
+
     def std_create_object(self, data: Dict[str, Any]):
         query = self.std_queryset()
         hub_entity = self.hub_class()

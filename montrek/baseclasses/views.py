@@ -82,7 +82,7 @@ class MontrekViewMixin:
         return self.repository_object.std_queryset()
 
 
-class MontrekTemplateView(TemplateView, MontrekPageViewMixin, MontrekViewMixin ):
+class MontrekTemplateView(TemplateView, MontrekPageViewMixin, MontrekViewMixin):
     template_name = "montrek.html"
     repository = MontrekRepository
 
@@ -150,18 +150,21 @@ class MontrekCreateView(CreateView, MontrekPageViewMixin, MontrekViewMixin):
             raise ValueError("form_classes must be a list!")
         if len(self.form_classes) == 0:
             raise ValueError("No form classes specified!")
-        self.form_class = self.form_classes[0]
-        context = super().get_context_data(**kwargs)
+        context = super().get_context_data(form=None, **kwargs)
         context["tag"] = "Create"
         if "forms" not in context:
             context["forms"] = [
-                form_class(self.request.GET, repository=self.repository_object) for form_class in self.form_classes
+                form_class(self.request.GET, repository=self.repository_object)
+                for form_class in self.form_classes
             ]
         context = self.get_page_context(context, **kwargs)
         return context
 
     def post(self, request, *args, **kwargs):
-        forms = [form_class(request.POST, repository=self.repository_object) for form_class in self.form_classes]
+        forms = [
+            form_class(request.POST, repository=self.repository_object)
+            for form_class in self.form_classes
+        ]
         if all([form.is_valid() for form in forms]):
             return self.form_valid(forms)
         return self.form_invalid(forms)

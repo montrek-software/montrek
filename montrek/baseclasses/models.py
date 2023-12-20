@@ -76,14 +76,14 @@ class MontrekSatelliteABC(TimeStampMixin):
         return sha256_hash
 
     def _get_hash_value(self) -> str:
-        value_fields = self.get_value_fields()
+        value_fields = self.get_value_field_names()
         value_string = "".join(str(getattr(self, field)) for field in value_fields)
         sha256_hash = hashlib.sha256(value_string.encode()).hexdigest()
         self.hash_value = sha256_hash
         return sha256_hash
 
     @classmethod
-    def get_value_fields(self) -> List[str]:
+    def exclude_fields(self) -> List[str]:
         exclude_fields = [
             "id",
             "hash_identifier",
@@ -93,10 +93,22 @@ class MontrekSatelliteABC(TimeStampMixin):
             "state_date_start",
             "state_date_end",
         ]
+        return exclude_fields
+
+    @classmethod
+    def get_value_field_names(cls) -> List[str]:
         value_fields = [
             field.name
-            for field in self._meta.get_fields()
-            if field.name not in exclude_fields and not field.is_relation
+            for field in cls.get_value_fields()
+        ]
+        return value_fields
+
+    @classmethod
+    def get_value_fields(cls) -> List[str]:
+        value_fields = [
+            field
+            for field in cls._meta.get_fields()
+            if field.name not in cls.exclude_fields() and not field.is_relation
         ]
         return value_fields
     @property
