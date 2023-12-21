@@ -1,5 +1,4 @@
 from typing import Any, List, Dict, Type, Tuple
-from dataclasses import dataclass
 from baseclasses.models import MontrekSatelliteABC
 from baseclasses.models import MontrekHubABC
 from baseclasses.models import MontrekLinkABC
@@ -14,31 +13,11 @@ from baseclasses.repositories.subquery_builder import (
     LinkedSatelliteSubqueryBuilder,
     ReverseLinkedSatelliteSubqueryBuilder,
 )
+from baseclasses.repositories.db_creator import DbCreator
 from django.db.models import Q, Subquery, OuterRef, QuerySet
 from django.utils import timezone
 from django.core.paginator import Paginator
 from functools import wraps
-
-
-@dataclass
-class SatelliteCreationState:
-    satellite: MontrekSatelliteABC
-
-
-@dataclass
-class UpdatedSatelliteCreationState(SatelliteCreationState):
-    updated_sat: MontrekSatelliteABC
-    state: str = "updated"
-
-
-@dataclass
-class NewSatelliteCreationState(SatelliteCreationState):
-    state: str = "new"
-
-
-@dataclass
-class ExistingSatelliteCreationState(SatelliteCreationState):
-    state: str = "existing"
 
 
 class MontrekRepository:
@@ -87,22 +66,10 @@ class MontrekRepository:
         return fields
 
     def std_create_object(self, data: Dict[str, Any]):
-        query = self.std_queryset()
+        self.std_queryset()
         hub_entity = self.hub_class()
-        selected_satellites = {"new": [], "existing": [], "updated": []}
-        for satellite_class in self._primary_satellites:
-            sat_data = {
-                k: v
-                for k, v in data.items()
-                if k in satellite_class.get_value_field_names()
-            }
-            if len(sat_data) == 0:
-                continue
-            sat = satellite_class(hub_entity=hub_entity, **sat_data)
-            sat = self._process_new_satellite(sat, satellite_class)
-            selected_satellites[sat.state].append(sat)
-        self._save_satellites(selected_satellites)
-        # TODO: add links
+        db_creator = DbCreator(hub_entity, self._primary_satellites)
+        db_creator.create(data)
 
     def add_satellite_fields_annotations(
         self,
@@ -169,103 +136,6 @@ class MontrekRepository:
     def _add_to_field_container(self, satellite_class: Type[MontrekSatelliteABC]):
         if satellite_class not in self._primary_satellites:
             self._primary_satellites.append(satellite_class)
-
-    def _process_new_satellite(
-        self,
-        satellite: MontrekSatelliteABC,
-        satellite_class: Type[MontrekSatelliteABC],
-    ) -> SatelliteCreationState:
-        # Check if satellite already exists, if it is updating or if it is new
-        sat_hash_identifier = satellite.get_hash_identifier
-        # TODO: Revisit thsi filter and if it does not work if more Satellite have the same values
-        satellite_updates_or_none = (
-            satellite_class.objects.filter(hash_identifier=sat_hash_identifier)
-            .order_by("-state_date_start")
-            .first()
-        )
-        if satellite_updates_or_none is None:
-            return NewSatelliteCreationState(satellite=satellite)
-        sat_hash_value = satellite.get_hash_value
-        if satellite_updates_or_none.hash_value == sat_hash_value:
-            return ExistingSatelliteCreationState(satellite=satellite_updates_or_none)
-        return UpdatedSatelliteCreationState(
-            satellite=satellite, updated_sat=satellite_updates_or_none
-        )
-
-    def _save_satellites(
-        self, selected_satellites: Dict[str, List[SatelliteCreationState]]
-    ):
-        creation_date = timezone.datetime.now()
-        reference_hub = self._get_reference_hub(selected_satellites, creation_date)
-
-        self._save_new_satellites(selected_satellites["new"], reference_hub)
-        self._update_existing_satellites(
-            selected_satellites["existing"], reference_hub, creation_date
-        )
-        self._update_satellites(
-            selected_satellites["updated"], reference_hub, creation_date
-        )
-
-    def _get_reference_hub(self, selected_satellites, creation_date):
-        if selected_satellites["new"]:
-            reference_hub = selected_satellites["new"][0].satellite.hub_entity
-            reference_hub.save()
-            return reference_hub
-        elif selected_satellites["existing"]:
-            return selected_satellites["existing"][0].satellite.hub_entity
-        elif selected_satellites["updated"]:
-            return selected_satellites["updated"][0].satellite.hub_entity
-
-    def _save_new_satellites(self, new_satellites, reference_hub):
-        for satellite_create_state in new_satellites:
-            satellite = satellite_create_state.satellite
-            satellite.hub_entity = reference_hub
-            satellite.save()
-
-    def _update_existing_satellites(
-        self, existing_satellites, reference_hub, creation_date
-    ):
-        if not existing_satellites:
-            return
-
-        old_hub = existing_satellites[0].satellite.hub_entity
-        if old_hub == reference_hub:
-            return
-        self._update_hubs(old_hub, reference_hub, creation_date)
-
-        for satellite_create_state in existing_satellites:
-            self._copy_satellite_for_hub(
-                satellite_create_state.satellite, reference_hub, creation_date
-            )
-
-    def _update_satellites(self, updated_satellites, reference_hub, creation_date):
-        for satellite_create_state in updated_satellites:
-            self._update_satellite_for_hub(satellite_create_state, reference_hub, creation_date)
-
-    def _update_hubs(self, old_hub, new_hub, creation_date):
-        old_hub.state_date_end = creation_date
-        old_hub.save()
-        new_hub.state_date_start = creation_date
-        new_hub.save()
-
-    def _copy_satellite_for_hub(self, satellite, hub, creation_date):
-        satellite.state_date_end = creation_date
-        satellite.save()
-        satellite.hub_entity = hub
-        satellite.state_date_start = creation_date
-        satellite.state_date_end = timezone.datetime.max
-        satellite.pk = None
-        satellite.id = None
-        satellite.save()
-
-    def _update_satellite_for_hub(self, satellite_create_state, reference_hub, created_at):
-        old_sat = satellite_create_state.updated_sat
-        new_sat = satellite_create_state.satellite
-        old_sat.state_date_end = created_at
-        old_sat.save()
-        new_sat.hub_entity = reference_hub
-        new_sat.state_date_start = created_at
-        new_sat.save()
 
 
 def paginated_table(func):
