@@ -23,13 +23,16 @@ from functools import wraps
 class SatelliteCreationState():
     satellite: MontrekSatelliteABC
 
+@dataclass
 class UpdatedSatelliteCreationState(SatelliteCreationState):
     updated_sat: MontrekSatelliteABC
     state: str = "updated"
 
+@dataclass
 class NewSatelliteCreationState(SatelliteCreationState):
     state: str = "new"
 
+@dataclass
 class ExistingSatelliteCreationState(SatelliteCreationState):
     state: str = "existing"
 
