@@ -34,6 +34,7 @@ class TestMontrekRepositorySatellite(TestCase):
             state_date_end=montrek_time(2023, 7, 10),
             field_a2_float=9,
         )
+
     def test_build_queryset_with_satellite_fields(self):
         repository = HubARepository(None)
         repository.reference_date = montrek_time(2023, 7, 8)
@@ -70,75 +71,144 @@ class TestMontrekRepositorySatellite(TestCase):
         self.assertEqual(queryset[0].field_a2_float, 8.0)
         self.assertEqual(queryset[1].field_a2_float, None)
 
+
 class TestMontrekCreatObject(TestCase):
     def test_std_create_object_single_satellite(self):
         repository = HubARepository(None)
-        repository.std_create_object(
-            {'field_a1_int': 5, 'field_a1_str': 'test'}
-        )
+        repository.std_create_object({"field_a1_int": 5, "field_a1_str": "test"})
         self.assertEqual(me_models.SatA1.objects.count(), 1)
         self.assertEqual(me_models.SatA1.objects.first().field_a1_int, 5)
-        self.assertEqual(me_models.SatA1.objects.first().field_a1_str, 'test')
+        self.assertEqual(me_models.SatA1.objects.first().field_a1_str, "test")
         self.assertEqual(me_models.HubA.objects.count(), 1)
         self.assertEqual(me_models.SatA2.objects.count(), 0)
 
     def test_std_create_object_multi_satellites(self):
         repository = HubARepository(None)
         repository.std_create_object(
-            {'field_a1_int': 5, 'field_a1_str': 'test', 'field_a2_float': 6.0, 'field_a2_str': 'test2'}
+            {
+                "field_a1_int": 5,
+                "field_a1_str": "test",
+                "field_a2_float": 6.0,
+                "field_a2_str": "test2",
+            }
         )
         self.assertEqual(me_models.SatA1.objects.count(), 1)
         self.assertEqual(me_models.SatA1.objects.first().field_a1_int, 5)
-        self.assertEqual(me_models.SatA1.objects.first().field_a1_str, 'test')
+        self.assertEqual(me_models.SatA1.objects.first().field_a1_str, "test")
         self.assertEqual(me_models.HubA.objects.count(), 1)
         self.assertEqual(me_models.SatA2.objects.count(), 1)
         self.assertEqual(me_models.SatA2.objects.first().field_a2_float, 6.0)
-        self.assertEqual(me_models.SatA2.objects.first().field_a2_str, 'test2')
+        self.assertEqual(me_models.SatA2.objects.first().field_a2_str, "test2")
 
     def test_std_create_object_existing_object(self):
         repository = HubARepository(None)
         for _ in range(2):
             repository.std_create_object(
-                {'field_a1_int': 5, 'field_a1_str': 'test', 'field_a2_float': 6.0, 'field_a2_str': 'test2'}
+                {
+                    "field_a1_int": 5,
+                    "field_a1_str": "test",
+                    "field_a2_float": 6.0,
+                    "field_a2_str": "test2",
+                }
             )
             self.assertEqual(me_models.SatA1.objects.count(), 1)
             self.assertEqual(me_models.SatA1.objects.first().field_a1_int, 5)
-            self.assertEqual(me_models.SatA1.objects.first().field_a1_str, 'test')
+            self.assertEqual(me_models.SatA1.objects.first().field_a1_str, "test")
             self.assertEqual(me_models.HubA.objects.count(), 1)
             self.assertEqual(me_models.SatA2.objects.count(), 1)
             self.assertEqual(me_models.SatA2.objects.first().field_a2_float, 6.0)
-            self.assertEqual(me_models.SatA2.objects.first().field_a2_str, 'test2')
+            self.assertEqual(me_models.SatA2.objects.first().field_a2_str, "test2")
 
-    def test_std_create_object_update_satellite(self):
+    def test_std_create_object_update_satellite_value_field(self):
         snapshot_time = timezone.now()
         repository = HubARepository(None)
         repository.std_create_object(
-            {'field_a1_int': 5, 'field_a1_str': 'test', 'field_a2_float': 6.0, 'field_a2_str': 'test2'}
+            {
+                "field_a1_int": 5,
+                "field_a1_str": "test",
+                "field_a2_float": 6.0,
+                "field_a2_str": "test2",
+            }
         )
         self.assertEqual(me_models.SatA1.objects.count(), 1)
         self.assertEqual(me_models.SatA1.objects.first().field_a1_int, 5)
-        self.assertEqual(me_models.SatA1.objects.first().field_a1_str, 'test')
+        self.assertEqual(me_models.SatA1.objects.first().field_a1_str, "test")
         self.assertEqual(me_models.HubA.objects.count(), 1)
         self.assertEqual(me_models.SatA2.objects.count(), 1)
         self.assertEqual(me_models.SatA2.objects.first().field_a2_float, 6.0)
-        self.assertEqual(me_models.SatA2.objects.first().field_a2_str, 'test2')
+        self.assertEqual(me_models.SatA2.objects.first().field_a2_str, "test2")
 
         repository.std_create_object(
-            {'field_a1_int': 5, 'field_a1_str': 'test', 'field_a2_float': 7.0, 'field_a2_str': 'test2'}
+            {
+                "field_a1_int": 5,
+                "field_a1_str": "test",
+                "field_a2_float": 7.0,
+                "field_a2_str": "test2",
+            }
         )
         self.assertEqual(me_models.SatA1.objects.count(), 1)
         self.assertEqual(me_models.SatA1.objects.first().field_a1_int, 5)
-        self.assertEqual(me_models.SatA1.objects.first().field_a1_str, 'test')
+        self.assertEqual(me_models.SatA1.objects.first().field_a1_str, "test")
         self.assertEqual(me_models.HubA.objects.count(), 1)
         self.assertEqual(me_models.SatA2.objects.count(), 2)
         updated_sat = me_models.SatA2.objects.last()
         self.assertEqual(updated_sat.field_a2_float, 7.0)
-        self.assertEqual(updated_sat.field_a2_str, 'test2')
+        self.assertEqual(updated_sat.field_a2_str, "test2")
         updated_sat.hub_entity = me_models.HubA.objects.first()
-        updated_sat.state_date_start > snapshot_time
-        me_models.SatA2.objects.first().state_date_end < timezone.make_aware(timezone.datetime.max)
+        self.assertGreater(updated_sat.state_date_start, snapshot_time)
+        self.assertLess(
+            me_models.SatA2.objects.first().state_date_end,
+            timezone.make_aware(timezone.datetime.max),
+        )
+
+    def test_std_create_object_update_satellite_id_field(self):
+        # Make sure there are no existings Hubs and Satellites
+        self.assertEqual(me_models.SatA1.objects.count(), 0)
+        self.assertEqual(me_models.SatA2.objects.count(), 0)
+        self.assertEqual(me_models.HubA.objects.count(), 0)
+        # Create one object
+        repository = HubARepository(None)
         repository.std_create_object(
-            {'field_a1_int': 5, 'field_a1_str': 'test_new', 'field_a2_float': 7.0, 'field_a2_str': 'test2'}
+            {
+                "field_a1_int": 5,
+                "field_a1_str": "test",
+                "field_a2_float": 6.0,
+                "field_a2_str": "test2",
+            }
+        )
+        # Make sure there is one Hub and two Satellites
+        self.assertEqual(me_models.SatA1.objects.count(), 1)
+        self.assertEqual(me_models.SatA2.objects.count(), 1)
+        self.assertEqual(me_models.HubA.objects.count(), 1)
+        # Change the id of the first Satellite
+        repository.std_create_object(
+            {
+                "field_a1_int": 5,
+                "field_a1_str": "test_new",
+                "field_a2_float": 6.0,
+                "field_a2_str": "test2",
+            }
+        )
+        # The std_queryset should return the adjusted object
+        a_object = repository.std_queryset().get()
+        self.assertEqual(a_object.field_a1_str, "test_new")
+        self.assertEqual(a_object.field_a1_int, 5)
+        self.assertEqual(a_object.field_a2_str, "test2")
+        self.assertEqual(a_object.field_a2_float, 6.0)
+
+        # Now we have two hubs with different state_date_start and state_date_end:
+        self.assertEqual(me_models.HubA.objects.count(), 2)
+        self.assertEqual(
+            me_models.HubA.objects.first().state_date_start,
+            timezone.make_aware(timezone.datetime.min),
+        )
+        self.assertEqual(
+            me_models.HubA.objects.last().state_date_end,
+            timezone.make_aware(timezone.datetime.max),
+        )
+        self.assertEqual(
+            me_models.HubA.objects.last().state_date_start,
+            me_models.HubA.objects.first().state_date_end,
         )
 
 
@@ -179,7 +249,7 @@ class TestMontrekRepositoryLinks(TestCase):
             hub_entity=hubb2,
             field_b1_str="Third",
         )
-        
+
         me_factories.LinkHubAHubCFactory(
             hub_in=huba1,
             hub_out=hubc1,

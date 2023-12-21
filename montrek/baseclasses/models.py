@@ -28,8 +28,20 @@ class TypeMixin(models.Model):
         super().save(*args, **kwargs)
 
 
+class StateDateMixin(models.Model):
+    class Meta:
+        abstract = True
+
+    state_date_start = models.DateTimeField(
+        default=timezone.make_aware(timezone.datetime.min)
+    )
+    state_date_end = models.DateTimeField(
+        default=timezone.make_aware(timezone.datetime.max)
+    )
+
+
 # Base Hub Model ABC
-class MontrekHubABC(TimeStampMixin):
+class MontrekHubABC(TimeStampMixin, StateDateMixin):
     class Meta:
         abstract = True
 
@@ -38,7 +50,7 @@ class MontrekHubABC(TimeStampMixin):
 
 
 # Base Static Satellite Model ABC
-class MontrekSatelliteABC(TimeStampMixin):
+class MontrekSatelliteABC(TimeStampMixin, StateDateMixin):
     class Meta:
         abstract = True
         indexes = [
@@ -49,12 +61,6 @@ class MontrekSatelliteABC(TimeStampMixin):
     hub_entity = models.ForeignKey(MontrekHubABC, on_delete=models.CASCADE)
     hash_identifier = models.CharField(max_length=64, default="")
     hash_value = models.CharField(max_length=64, default="")
-    state_date_start = models.DateTimeField(
-        default=timezone.make_aware(timezone.datetime.min)
-    )
-    state_date_end = models.DateTimeField(
-        default=timezone.make_aware(timezone.datetime.max)
-    )
 
     def save(self, *args, **kwargs):
         if self.hash_identifier == "":
@@ -97,10 +103,7 @@ class MontrekSatelliteABC(TimeStampMixin):
 
     @classmethod
     def get_value_field_names(cls) -> List[str]:
-        value_fields = [
-            field.name
-            for field in cls.get_value_fields()
-        ]
+        value_fields = [field.name for field in cls.get_value_fields()]
         return value_fields
 
     @classmethod
@@ -111,6 +114,7 @@ class MontrekSatelliteABC(TimeStampMixin):
             if field.name not in cls.exclude_fields() and not field.is_relation
         ]
         return value_fields
+
     @property
     def get_hash_identifier(self) -> str:
         return self._get_hash_identifier()
@@ -128,7 +132,7 @@ class MontrekTimeSeriesSatelliteABC(MontrekSatelliteABC):
     identifier_fields = ["value_date"]
 
 
-class MontrekLinkABC(TimeStampMixin):
+class MontrekLinkABC(TimeStampMixin, StateDateMixin):
     class Meta:
         abstract = True
 
@@ -137,12 +141,6 @@ class MontrekLinkABC(TimeStampMixin):
     )
     hub_out = models.ForeignKey(
         MontrekHubABC, on_delete=models.CASCADE, related_name="out_hub"
-    )
-    state_date_start = models.DateTimeField(
-        default=timezone.make_aware(timezone.datetime.min)
-    )
-    state_date_end = models.DateTimeField(
-        default=timezone.make_aware(timezone.datetime.max)
     )
 
 
