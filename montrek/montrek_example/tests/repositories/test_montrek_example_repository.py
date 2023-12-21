@@ -190,7 +190,7 @@ class TestMontrekCreatObject(TestCase):
             }
         )
         # The std_queryset should return the adjusted object
-        a_object = repository.std_queryset().get()
+        a_object = HubARepository().std_queryset().get()
         self.assertEqual(a_object.field_a1_str, "test_new")
         self.assertEqual(a_object.field_a1_int, 5)
         self.assertEqual(a_object.field_a2_str, "test2")

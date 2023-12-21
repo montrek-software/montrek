@@ -1,4 +1,5 @@
 from typing import Any, List, Dict, Type, Tuple
+from dataclasses import dataclass
 from baseclasses.models import MontrekSatelliteABC
 from baseclasses.models import MontrekHubABC
 from baseclasses.models import MontrekLinkABC
@@ -18,6 +19,19 @@ from django.utils import timezone
 from django.core.paginator import Paginator
 from functools import wraps
 
+@dataclass
+class SatelliteCreationState():
+    satellite: MontrekSatelliteABC
+
+class UpdatedSatelliteCreationState(SatelliteCreationState):
+    updated_sat: MontrekSatelliteABC
+    state: str = "updated"
+
+class NewSatelliteCreationState(SatelliteCreationState):
+    state: str = "new"
+
+class ExistingSatelliteCreationState(SatelliteCreationState):
+    state: str = "existing"
 
 class MontrekRepository:
     hub_class = MontrekHubABC
@@ -68,7 +82,7 @@ class MontrekRepository:
     def std_create_object(self, data: Dict[str, Any]):
         query = self.std_queryset()
         hub_entity = self.hub_class()
-        created_or_selected_satalites = [] 
+        selected_satellites = {'new': [], 'existing': [], 'updated': []}
         for satellite_class in self._primary_satellites:
             sat_data = {
                 k: v for k, v in data.items() if k in satellite_class.get_value_field_names()
@@ -76,13 +90,9 @@ class MontrekRepository:
             if len(sat_data) == 0:
                 continue
             sat = satellite_class(hub_entity=hub_entity, **sat_data)
-            sat = self.update_satellite(sat, satellite_class)
-            created_or_selected_satalites.append(sat)
-            hub_entity = sat.hub_entity
-        for satellite in created_or_selected_satalites:
-            satellite.hub_entity = hub_entity
-            satellite.save()
-
+            sat = self._process_new_satellite(sat, satellite_class)
+            selected_satellites[sat.state].append(sat.satellite)
+        self._save_satellites(selected_satellites)
         #TODO: add links
 
     def add_satellite_fields_annotations(
@@ -133,7 +143,7 @@ class MontrekRepository:
         self._add_to_annotations(fields, annotations_manager)
 
     def build_queryset(self) -> QuerySet:
-        return self.hub_class.objects.annotate(**self.annotations)
+        return self.hub_class.objects.annotate(**self.annotations).filter(state_date_start__lte=self.reference_date, state_date_end__gt=self.reference_date)
 
     def rename_field(self, field: str, new_name: str):
         self.annotations[new_name] = self.annotations[field]
@@ -148,31 +158,56 @@ class MontrekRepository:
         if satellite_class not in self._primary_satellites:
             self._primary_satellites.append(satellite_class)
 
-    def update_satellite(
+    def _process_new_satellite(
         self,
         satellite: MontrekSatelliteABC,
         satellite_class: Type[MontrekSatelliteABC],
-    ) -> MontrekSatelliteABC:
+    ) -> SatelliteCreationState:
+        # Check if satellite already exists, if it is updating or if it is new
         sat_hash_identifier = satellite.get_hash_identifier
+        # TODO: Revisit thsi filter and if it does not work if more Satellite have the same values
         satellite_updates_or_none = (
             satellite_class.objects.filter(hash_identifier=sat_hash_identifier)
             .order_by("-state_date_start")
             .first()
         )
         if satellite_updates_or_none is None:
-            satellite.hub_entity.save()
-            satellite.save()
-            return satellite
+            return NewSatelliteCreationState(satellite=satellite)
         sat_hash_value = satellite.get_hash_value
         if satellite_updates_or_none.hash_value == sat_hash_value:
-            return satellite_updates_or_none
-        satellite.hub_entity = satellite_updates_or_none.hub_entity
-        state_date = timezone.now()
-        new_state_date = state_date
-        satellite_updates_or_none.state_date_end = new_state_date
-        satellite_updates_or_none.save()
-        satellite.state_date_start = state_date
-        return satellite
+            return ExistingSatelliteCreationState(satellite=satellite_updates_or_none)
+        return UpdatedSatelliteCreationState(satellite=satellite, updated_sat=satellite_updates_or_none)
+
+    def _save_satellites(self, selected_satellites: Dict[str, List[MontrekSatelliteABC]]):
+        creation_date = timezone.datetime.now()
+        reference_hub = None
+        if len(selected_satellites["new"]) > 0:
+            reference_hub = selected_satellites["new"][0].hub_entity
+            reference_hub.save()
+            for satellite in selected_satellites["new"]:
+                satellite.hub_entity = reference_hub
+                satellite.save()
+        if len(selected_satellites["existing"]) > 0:
+            if reference_hub is None:
+                # Since there are no new satellites, we store nothing and use the existing sats hub as reference
+                reference_hub = selected_satellites["existing"][0].hub_entity
+            else:
+                # Store copy of existing satellite with new hub
+                old_hub = selected_satellites["existing"][0].hub_entity
+                old_hub.state_date_end = creation_date
+                old_hub.save()
+                reference_hub.state_date_start = creation_date
+                reference_hub.save()
+                for satellite in selected_satellites["existing"]:
+                    satellite.state_date_end = creation_date
+                    satellite.save()
+                    satellite.hub_entity = reference_hub
+                    satellite.state_date_start = creation_date
+                    satellite.state_date_end = timezone.datetime.max
+                    satellite.pk = None
+                    satellite.id = None
+                    satellite.save()
+
 
 def paginated_table(func):
     @wraps(func)
@@ -193,3 +228,4 @@ def paginated_table(func):
         return page
 
     return wrapper
+
