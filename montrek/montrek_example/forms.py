@@ -13,6 +13,7 @@ class ExampleACreateForm(MontrekCreateForm):
         self.fields["hubb_link"] = MontrekModelChoiceField(
             queryset=self.repository.get_hub_b_objects(),
             widget=forms.Select(attrs={"id": "id_hubb"}),
+            required=False,
         )
 
 

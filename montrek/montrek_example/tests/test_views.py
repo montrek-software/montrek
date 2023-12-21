@@ -12,10 +12,12 @@ class TestMontrekExampleACreateView(TestCase):
 
     def test_view_post_success(self):
         url = reverse('montrek_example_a_create')
-        data = {'field_a1_str': 'test',
-                'field_a1_int': 1,
-                'field_a2_str': 'test2',
-                'field_a2_float': 2}
+        data = {
+            'field_a1_str': 'test',
+            'field_a1_int': 1,
+            'field_a2_str': 'test2',
+            'field_a2_float': 2.,
+               }
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, 302)
         # Check added data
