@@ -5,7 +5,6 @@ from credit_institution.pages import CreditInstitutionAppPage, CreditInstitution
 from credit_institution.repositories.credit_institution_repository import (
     CreditInstitutionRepository,
 )
-from credit_institution.forms import CreditInstitutionCreateForm
 
 # Create your views here.
 
@@ -35,7 +34,6 @@ class CreditInstitutionOverview(MontrekListView):
 class CreditInstitutionCreate(MontrekCreateView):
     page_class = CreditInstitutionAppPage
     repository = CreditInstitutionRepository
-    form_classes = [CreditInstitutionCreateForm]
     success_url = "credit_institution"
 
 
