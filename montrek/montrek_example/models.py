@@ -54,7 +54,7 @@ class SatB1(MontrekSatelliteABC):
     hub_entity = models.ForeignKey(HubB, on_delete=models.CASCADE)
     field_b1_str = models.CharField(max_length=50, default="DEFAULT")
     field_b1_date = models.DateField(default=timezone.now)
-    identifier_fields = ["field_b1_str", "field_b1_date"]
+    identifier_fields = ["field_b1_str", "field_b1_date", "hub_entity"]
 
 
 class SatB2(MontrekSatelliteABC):
@@ -68,7 +68,7 @@ class SatB2(MontrekSatelliteABC):
     field_b2_choice = models.CharField(
         max_length=10, choices=ChoiceEnum.choices, default=ChoiceEnum.CHOICE1
     )
-    identifier_fields = ["field_b2_str"]
+    identifier_fields = ["field_b2_str", "hub_entity"]
 
 
 class SatC1(MontrekSatelliteABC):
