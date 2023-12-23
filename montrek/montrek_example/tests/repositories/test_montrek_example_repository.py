@@ -350,3 +350,4 @@ class TestMontrekRepositoryLinks(TestCase):
         self.assertEqual(queryset.count(), 2)
         self.assertEqual(queryset[0].field_a1_int, 5)
         self.assertEqual(queryset[1].field_a1_int, None)
+

@@ -2,6 +2,7 @@ import hashlib
 from typing import List
 from django.db import models
 from django.utils import timezone
+from enum import Enum
 
 # Create your models here.
 
@@ -132,16 +133,45 @@ class MontrekTimeSeriesSatelliteABC(MontrekSatelliteABC):
     identifier_fields = ["value_date"]
 
 
+class LinkTypeEnum(Enum):
+    NONE = 0
+    ONE_TO_ONE = 1
+    ONE_TO_MANY = 2
+    MANY_TO_MANY = 3
+
+
 class MontrekLinkABC(TimeStampMixin, StateDateMixin):
     class Meta:
         abstract = True
 
+    link_type = LinkTypeEnum.NONE
     hub_in = models.ForeignKey(
         MontrekHubABC, on_delete=models.CASCADE, related_name="in_hub"
     )
     hub_out = models.ForeignKey(
         MontrekHubABC, on_delete=models.CASCADE, related_name="out_hub"
     )
+
+
+class MontrekOneToOneLinkABC(MontrekLinkABC):
+    class Meta:
+        abstract = True
+
+    link_type = LinkTypeEnum.ONE_TO_ONE
+
+
+class MontrekOneToManyLinkABC(MontrekLinkABC):
+    class Meta:
+        abstract = True
+
+    link_type = LinkTypeEnum.ONE_TO_MANY
+
+
+class MontrekManyToManyLinkABC(MontrekLinkABC):
+    class Meta:
+        abstract = True
+
+    link_type = LinkTypeEnum.MANY_TO_MANY
 
 
 # Montrek Test Models
@@ -178,6 +208,6 @@ class TestLinkSatellite(MontrekSatelliteABC):
     identifier_fields = ["test_id"]
 
 
-class LinkTestMontrekTestLink(MontrekLinkABC):
+class LinkTestMontrekTestLink(MontrekOneToOneLinkABC):
     hub_in = models.ForeignKey(TestMontrekHub, on_delete=models.CASCADE)
     hub_out = models.ForeignKey(TestLinkHub, on_delete=models.CASCADE)

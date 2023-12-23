@@ -1,6 +1,7 @@
 from typing import Type, List
 from baseclasses.models import MontrekSatelliteABC
 from baseclasses.models import MontrekLinkABC
+from baseclasses.models import LinkTypeEnum
 from django.db.models import Subquery, OuterRef
 from django.utils import timezone
 class SubqueryBuilder:
@@ -64,6 +65,8 @@ class LinkedSatelliteSubqueryBuilderBase(SubqueryBuilder):
         reference_date: timezone,
     ):
         self.satellite_class = satellite_class
+        if link_class.link_type == LinkTypeEnum.NONE:
+            raise TypeError("LinkTable must inherit from valid LinkClass!")
         self.link_class = link_class
         self.reference_date = reference_date
         super().__init__()
