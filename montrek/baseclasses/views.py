@@ -5,6 +5,7 @@ from django.views.generic.base import TemplateView
 from django.views.generic.edit import CreateView
 from django.http import HttpResponseRedirect
 from django.urls import reverse
+from django.forms.models import model_to_dict
 from baseclasses.dataclasses.nav_bar_model import NavBarModel
 from baseclasses.pages import NoPage
 from baseclasses.forms import DateRangeForm
@@ -125,7 +126,7 @@ class MontrekDetailView(DetailView, MontrekPageViewMixin, MontrekViewMixin):
         return context
 
 
-class MontrekCreateView(CreateView, MontrekPageViewMixin, MontrekViewMixin):
+class MontrekCreateEditView(CreateView, MontrekPageViewMixin, MontrekViewMixin):
     repository = MontrekRepository
     form_class = MontrekCreateForm
     template_name = "montrek_create.html"
@@ -141,10 +142,11 @@ class MontrekCreateView(CreateView, MontrekPageViewMixin, MontrekViewMixin):
         self.repository_object.std_create_object(data=form.cleaned_data)
         return HttpResponseRedirect(self.get_success_url())
 
+    def get_form(self):
+        return self.form_class(repository=self.repository_object)
+
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(form=None, **kwargs)
-        context['form'] = self.form_class(repository=self.repository_object)
-        context["tag"] = "Create"
+        context = super().get_context_data(**kwargs)
         context = self.get_page_context(context, **kwargs)
         return context
 
@@ -154,3 +156,21 @@ class MontrekCreateView(CreateView, MontrekPageViewMixin, MontrekViewMixin):
             return self.form_valid(form)
         return self.form_invalid(form)
 
+
+class MontrekCreateView(MontrekCreateEditView):
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["tag"] = "Create"
+        return context
+
+
+class MontrekEditView(MontrekCreateEditView):
+    def get_form(self):
+        edit_object = self.repository_object.std_queryset().get(pk=self.kwargs["pk"])
+        initial = self.repository_object.object_to_dict(edit_object)
+        return self.form_class(repository=self.repository_object, initial=initial)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["tag"] = "Edit"
+        return context

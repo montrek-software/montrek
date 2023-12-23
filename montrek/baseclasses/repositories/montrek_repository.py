@@ -15,6 +15,7 @@ from baseclasses.repositories.subquery_builder import (
 )
 from baseclasses.repositories.db_creator import DbCreator
 from django.db.models import Q, Subquery, OuterRef, QuerySet
+from django.db.models import ManyToManyField
 from django.utils import timezone
 from django.core.paginator import Paginator
 from functools import wraps
@@ -58,6 +59,20 @@ class MontrekRepository:
 
     def std_queryset(self, **kwargs):
         raise NotImplementedError("MontrekRepository has no std_queryset method!")
+
+    def object_to_dict(self, obj: MontrekHubABC) -> Dict[str, Any]:
+        object_dict = {
+            field.name: getattr(obj, field.name)
+            for field in self.std_satellite_fields()
+        }
+        for field in obj._meta.get_fields():
+            if isinstance(field, ManyToManyField):
+                value = getattr(obj, field.name).filter(
+                    Q(state_date_start__lte=self.reference_date),
+                    Q(state_date_end__gt=self.reference_date),
+                ).first()
+                object_dict[field.name] = value
+        return object_dict
 
     def std_satellite_fields(self):
         self.std_queryset()
@@ -143,11 +158,10 @@ class MontrekRepository:
         if satellite_class not in self._primary_satellite_classes:
             self._primary_satellite_classes.append(satellite_class)
 
-    def _add_to_primary_link_classes(
-        self, link_class: Type[MontrekLinkABC]
-    ):
+    def _add_to_primary_link_classes(self, link_class: Type[MontrekLinkABC]):
         if link_class not in self._primary_link_classes:
             self._primary_link_classes.append(link_class)
+
 
 def paginated_table(func):
     @wraps(func)
