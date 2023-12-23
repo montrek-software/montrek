@@ -66,7 +66,7 @@ class LinkedSatelliteSubqueryBuilderBase(SubqueryBuilder):
     ):
         self.satellite_class = satellite_class
         if link_class.link_type == LinkTypeEnum.NONE:
-            raise TypeError("LinkTable must inherit from valid LinkClass!")
+            raise TypeError(f"{link_class.__name__} must inherit from valid LinkClass!")
         self.link_class = link_class
         self.reference_date = reference_date
         super().__init__()

@@ -14,7 +14,7 @@ class AssetHub(baseclass_models.MontrekHubABC):
     )
 
 
-class LinkAssetCurrency(baseclass_models.MontrekLinkABC):
+class LinkAssetCurrency(baseclass_models.MontrekOneToManyLinkABC):
     hub_in = models.ForeignKey("asset.AssetHub", on_delete=models.CASCADE)
     hub_out = models.ForeignKey("currency.CurrencyHub", on_delete=models.CASCADE)
 

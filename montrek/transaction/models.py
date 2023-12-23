@@ -25,15 +25,15 @@ class TransactionHub(baseclass_models.MontrekHubABC):
         through="LinkTransactionAsset",
     )
 
-class LinkTransactionTransactionCategory(baseclass_models.MontrekLinkABC):
+class LinkTransactionTransactionCategory(baseclass_models.MontrekOneToManyLinkABC):
     hub_in=models.ForeignKey("transaction.TransactionHub", on_delete=models.CASCADE)
     hub_out=models.ForeignKey("transaction.TransactionCategoryHub", on_delete=models.CASCADE)
 
-class LinkTransactionTransactionType(baseclass_models.MontrekLinkABC):
+class LinkTransactionTransactionType(baseclass_models.MontrekOneToManyLinkABC):
     hub_in=models.ForeignKey("transaction.TransactionHub", on_delete=models.CASCADE)
     hub_out=models.ForeignKey("transaction.TransactionTypeHub", on_delete=models.CASCADE)
 
-class LinkTransactionAsset(baseclass_models.MontrekLinkABC):
+class LinkTransactionAsset(baseclass_models.MontrekOneToManyLinkABC):
     hub_in=models.ForeignKey("transaction.TransactionHub", on_delete=models.CASCADE)
     hub_out=models.ForeignKey("asset.AssetHub", on_delete=models.CASCADE)
 

@@ -67,7 +67,9 @@ class TestLinkedSatelliteSubqueryBuilder(TestCase):
         class DummyLinkClass(bc_models.MontrekLinkABC):
             pass
 
-        with self.assertRaisesMessage(TypeError, "LinkTable must inherit from valid LinkClass!"):
+        with self.assertRaisesMessage(
+            TypeError, "DummyLinkClass must inherit from valid LinkClass!"
+        ):
             LinkedSatelliteSubqueryBuilder(
                 bc_models.TestLinkSatellite,
                 DummyLinkClass,

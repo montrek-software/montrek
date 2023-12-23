@@ -98,7 +98,7 @@ class MontrekRepository:
         )
         annotations_manager = SatelliteAnnotationsManager(subquery_builder)
         self._add_to_annotations(fields, annotations_manager)
-        self._add_to_field_container(satellite_class)
+        self._add_to_primary_satellite_classes(satellite_class)
 
     def add_linked_satellites_field_annotations(
         self,

@@ -43,8 +43,8 @@ def _upload_transactions_to_account_manager(
         upload_registry_sat
     )
     account_traits = AccountRepository({}).std_queryset().get(pk=account_hub.pk)
-    credit_institution_upload_method = account_traits.creditinstitutionstaticsatellite__account_upload_method
-    credit_institution_name = account_traits.creditinstitutionstaticsatellite__credit_institution_name
+    credit_institution_upload_method = account_traits.account_upload_method
+    credit_institution_name = account_traits.credit_institution_name
 
     if credit_institution_upload_method == "none":
         return _upload_error_account_upload_method_none(

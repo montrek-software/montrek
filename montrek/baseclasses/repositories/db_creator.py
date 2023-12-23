@@ -168,6 +168,8 @@ class DbCreator:
 
     def _create_links(self, data, reference_hub, creation_date):
         for field, value in data.items():
+            if value is None:
+                continue
             if hasattr(reference_hub, field):
                 link_class = getattr(reference_hub, field).through
                 new_link = link_class(hub_in=reference_hub, hub_out=value)
