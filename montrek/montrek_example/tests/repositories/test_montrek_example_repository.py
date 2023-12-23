@@ -1,9 +1,8 @@
 from django.test import TestCase
 from django.utils import timezone
-from django.utils import timezone
 from baseclasses.utils import montrek_time
-from montrek_example.tests.factories import montrek_example_factories as me_factories
 from baseclasses import models as me_models
+from montrek_example.tests.factories import montrek_example_factories as me_factories
 from montrek_example.repositories.hub_a_repository import HubARepository
 from montrek_example.repositories.hub_b_repository import HubBRepository
 from montrek_example import models as me_models
@@ -118,6 +117,30 @@ class TestMontrekCreatObject(TestCase):
             self.assertEqual(me_models.SatA2.objects.count(), 1)
             self.assertEqual(me_models.SatA2.objects.first().field_a2_float, 6.0)
             self.assertEqual(me_models.SatA2.objects.first().field_a2_str, "test2")
+
+    def test_std_create_object_existing_object_make_copy(self):
+        # Since hub_entity_id is a identifier field for the HubB satellites, any entry with the same attributes will
+        # create a copy rather than leaving the old one in place.
+        repository = HubBRepository(None)
+        for i in range(2):
+            repository.std_create_object(
+                {
+                    "field_b1_date": "2023-12-23",
+                    "field_b1_str": "test",
+                    "field_b2_choice": "CHOICE1",
+                    "field_b2_str": "test2",
+                }
+            )
+            self.assertEqual(me_models.SatB1.objects.count(), i + 1)
+            self.assertEqual(
+                me_models.SatB1.objects.last().field_b1_date,
+                montrek_time(2023, 12, 23).date()
+            )
+            self.assertEqual(me_models.SatB1.objects.last().field_b1_str, "test")
+            self.assertEqual(me_models.HubB.objects.count(), i + 1)
+            self.assertEqual(me_models.SatB2.objects.count(), i + 1)
+            self.assertEqual(me_models.SatB2.objects.last().field_b2_choice, "CHOICE1")
+            self.assertEqual(me_models.SatB2.objects.last().field_b2_str, "test2")
 
     def test_std_create_object_update_satellite_value_field(self):
         snapshot_time = timezone.now()

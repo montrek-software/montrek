@@ -37,6 +37,7 @@ class DbCreator:
 
     def create(self, data: Dict[str, Any]) -> None:
         selected_satellites = {"new": [], "existing": [], "updated": []}
+        self.hub_entity.save()
         for satellite_class in self.satellite_classes:
             sat_data = {
                 k: v
@@ -78,6 +79,7 @@ class DbCreator:
     ):
         creation_date = timezone.datetime.now()
         reference_hub = self._get_reference_hub(selected_satellites, creation_date)
+        self._remove_not_used_hub(reference_hub)
 
         self._save_new_satellites(selected_satellites["new"], reference_hub)
         self._update_existing_satellites(
@@ -96,6 +98,10 @@ class DbCreator:
             return selected_satellites["existing"][0].satellite.hub_entity
         elif selected_satellites["updated"]:
             return selected_satellites["updated"][0].satellite.hub_entity
+
+    def _remove_not_used_hub(self, reference_hub):
+        if self.hub_entity != reference_hub:
+            self.hub_entity.delete()
 
     def _save_new_satellites(self, new_satellites, reference_hub):
         for satellite_create_state in new_satellites:
