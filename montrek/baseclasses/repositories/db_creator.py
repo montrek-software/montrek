@@ -2,7 +2,8 @@ from typing import List, Type, Dict, Any
 from dataclasses import dataclass
 from django.db.models import QuerySet
 from django.utils import timezone
-from baseclasses.models import MontrekSatelliteABC, MontrekHubABC
+from baseclasses.models import MontrekSatelliteABC, MontrekHubABC, MontrekLinkABC
+
 
 @dataclass
 class SatelliteCreationState:
@@ -25,15 +26,16 @@ class ExistingSatelliteCreationState(SatelliteCreationState):
     state: str = "existing"
 
 
-
 class DbCreator:
     def __init__(
         self,
         hub_entity: MontrekHubABC,
         satellite_classes: List[Type[MontrekSatelliteABC]],
+        link_classes: List[Type[MontrekLinkABC]],
     ):
         self.hub_entity = hub_entity
         self.satellite_classes = satellite_classes
+        self.link_classes = link_classes
 
     def create(self, data: Dict[str, Any]) -> None:
         selected_satellites = {"new": [], "existing": [], "updated": []}
@@ -49,8 +51,10 @@ class DbCreator:
             sat = satellite_class(hub_entity=self.hub_entity, **sat_data)
             sat = self._process_new_satellite(sat, satellite_class)
             selected_satellites[sat.state].append(sat)
-        self._save_satellites(selected_satellites)
-        # TODO: add links
+        reference_hub = self._save_satellites_and_return_reference_hub(
+            selected_satellites
+        )
+        self._create_links(data, reference_hub)
 
     def _process_new_satellite(
         self,
@@ -74,7 +78,7 @@ class DbCreator:
             satellite=satellite, updated_sat=satellite_updates_or_none
         )
 
-    def _save_satellites(
+    def _save_satellites_and_return_reference_hub(
         self, selected_satellites: Dict[str, List[SatelliteCreationState]]
     ):
         creation_date = timezone.datetime.now()
@@ -88,6 +92,7 @@ class DbCreator:
         self._update_satellites(
             selected_satellites["updated"], reference_hub, creation_date
         )
+        return reference_hub
 
     def _get_reference_hub(self, selected_satellites, creation_date):
         if selected_satellites["new"]:
@@ -157,3 +162,8 @@ class DbCreator:
         new_sat.hub_entity = reference_hub
         new_sat.state_date_start = created_at
         new_sat.save()
+
+    def _create_links(self, data, reference_hub):
+        for field, value in data.items():
+            if hasattr(reference_hub, field): 
+                getattr(reference_hub, field).add(value)

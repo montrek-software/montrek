@@ -10,7 +10,7 @@ class MontrekModelChoiceField(forms.ModelChoiceField):
 class ExampleACreateForm(MontrekCreateForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["hubb_link"] = MontrekModelChoiceField(
+        self.fields["link_hub_a_hub_b"] = MontrekModelChoiceField(
             queryset=self.repository.get_hub_b_objects(),
             widget=forms.Select(attrs={"id": "id_hubb"}),
             required=False,

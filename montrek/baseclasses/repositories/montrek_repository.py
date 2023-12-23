@@ -25,7 +25,8 @@ class MontrekRepository:
 
     def __init__(self, session_data: Dict[str, Any] = None):
         self._annotations = {}
-        self._primary_satellites = []
+        self._primary_satellite_classes = []
+        self._primary_link_classes = []
         self.session_data = session_data
         self._reference_date = None
 
@@ -61,14 +62,16 @@ class MontrekRepository:
     def std_satellite_fields(self):
         self.std_queryset()
         fields = []
-        for satellite_class in self._primary_satellites:
+        for satellite_class in self._primary_satellite_classes:
             fields.extend(satellite_class.get_value_fields())
         return fields
 
     def std_create_object(self, data: Dict[str, Any]):
         self.std_queryset()
         hub_entity = self.hub_class()
-        db_creator = DbCreator(hub_entity, self._primary_satellites)
+        db_creator = DbCreator(
+            hub_entity, self._primary_satellite_classes, self._primary_link_classes
+        )
         db_creator.create(data)
 
     def add_satellite_fields_annotations(
@@ -82,7 +85,7 @@ class MontrekRepository:
         )
         annotations_manager = SatelliteAnnotationsManager(subquery_builder)
         self._add_to_annotations(fields, annotations_manager)
-        self._add_to_field_container(satellite_class)
+        self._add_to_primary_satellite_classes(satellite_class)
 
     def add_last_ts_satellite_fields_annotations(
         self,
@@ -117,6 +120,7 @@ class MontrekRepository:
             subquery_builder, satellite_class.__name__
         )
         self._add_to_annotations(fields, annotations_manager)
+        self._add_to_primary_link_classes(link_class)
 
     def build_queryset(self) -> QuerySet:
         return self.hub_class.objects.annotate(**self.annotations).filter(
@@ -133,10 +137,17 @@ class MontrekRepository:
         annotations_manager.query_to_annotations(fields)
         self.annotations.update(annotations_manager.annotations)
 
-    def _add_to_field_container(self, satellite_class: Type[MontrekSatelliteABC]):
-        if satellite_class not in self._primary_satellites:
-            self._primary_satellites.append(satellite_class)
+    def _add_to_primary_satellite_classes(
+        self, satellite_class: Type[MontrekSatelliteABC]
+    ):
+        if satellite_class not in self._primary_satellite_classes:
+            self._primary_satellite_classes.append(satellite_class)
 
+    def _add_to_primary_link_classes(
+        self, link_class: Type[MontrekLinkABC]
+    ):
+        if link_class not in self._primary_link_classes:
+            self._primary_link_classes.append(link_class)
 
 def paginated_table(func):
     @wraps(func)

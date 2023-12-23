@@ -134,7 +134,7 @@ class TestMontrekCreatObject(TestCase):
             self.assertEqual(me_models.SatB1.objects.count(), i + 1)
             self.assertEqual(
                 me_models.SatB1.objects.last().field_b1_date,
-                montrek_time(2023, 12, 23).date()
+                montrek_time(2023, 12, 23).date(),
             )
             self.assertEqual(me_models.SatB1.objects.last().field_b1_str, "test")
             self.assertEqual(me_models.HubB.objects.count(), i + 1)
@@ -232,6 +232,26 @@ class TestMontrekCreatObject(TestCase):
         self.assertEqual(
             me_models.HubA.objects.last().state_date_start,
             me_models.HubA.objects.first().state_date_end,
+        )
+
+    def test_create_hub_a_with_link_to_hub_b(self):
+        hub_b = me_factories.SatB1Factory().hub_entity
+        self.assertEqual(me_models.HubB.objects.count(), 1)
+        repository = HubARepository(None)
+        repository.std_create_object(
+            {
+                "field_a1_int": 5,
+                "field_a1_str": "test",
+                "field_a2_float": 6.0,
+                "field_a2_str": "test2",
+                "link_hub_a_hub_b": hub_b,
+            }
+        )
+        self.assertEqual(me_models.HubB.objects.count(), 1)
+        self.assertEqual(me_models.HubA.objects.count(), 1)
+        self.assertEqual(me_models.LinkHubAHubB.objects.count(), 1)
+        self.assertEqual(
+            me_models.HubA.objects.first().link_hub_a_hub_b.first(), hub_b
         )
 
 
