@@ -254,6 +254,68 @@ class TestMontrekCreatObject(TestCase):
             me_models.HubA.objects.first().link_hub_a_hub_b.first(), hub_b
         )
 
+    def test_create_hub_a_with_link_to_hub_b_update(self):
+        sat_b_1 = me_factories.SatB1Factory()
+        sat_b_2 = me_factories.SatB1Factory(field_b1_str="TEST")
+        hub_b_1 = sat_b_1.hub_entity
+        hub_b_2 = sat_b_2.hub_entity
+        repository = HubARepository(None)
+        repository.std_create_object(
+            {
+                "field_a1_int": 5,
+                "field_a1_str": "test",
+                "field_a2_float": 6.0,
+                "field_a2_str": "test2",
+                "link_hub_a_hub_b": hub_b_1,
+            }
+        )
+        queried_object = repository.std_queryset().get()
+        self.assertEqual(queried_object.field_b1_str, sat_b_1.field_b1_str)
+        repository.std_create_object(
+            {
+                "field_a1_int": 5,
+                "field_a1_str": "test",
+                "field_a2_float": 6.0,
+                "field_a2_str": "test2",
+                "link_hub_a_hub_b": hub_b_2,
+            }
+        )
+        self.assertEqual(me_models.LinkHubAHubB.objects.count(), 2)
+        first_linked_hub = me_models.LinkHubAHubB.objects.first()
+        last_linked_hub = me_models.LinkHubAHubB.objects.last()
+        self.assertEqual(first_linked_hub.hub_out, hub_b_1)
+        self.assertEqual(last_linked_hub.hub_out, hub_b_2)
+        self.assertEqual(first_linked_hub.state_date_end, last_linked_hub.state_date_start)
+        queried_object = repository.std_queryset().get()
+        self.assertEqual(queried_object.field_b1_str, sat_b_2.field_b1_str)
+
+    def test_create_hub_a_with_link_to_hub_b_existing(self):
+        sat_b_1 = me_factories.SatB1Factory()
+        hub_b_1 = sat_b_1.hub_entity
+        repository = HubARepository(None)
+        repository.std_create_object(
+            {
+                "field_a1_int": 5,
+                "field_a1_str": "test",
+                "field_a2_float": 6.0,
+                "field_a2_str": "test2",
+                "link_hub_a_hub_b": hub_b_1,
+            }
+        )
+        queried_object = repository.std_queryset().get()
+        self.assertEqual(queried_object.field_b1_str, sat_b_1.field_b1_str)
+        repository.std_create_object(
+            {
+                "field_a1_int": 5,
+                "field_a1_str": "test",
+                "field_a2_float": 6.0,
+                "field_a2_str": "test2",
+                "link_hub_a_hub_b": hub_b_1,
+            }
+        )
+        self.assertEqual(me_models.LinkHubAHubB.objects.count(), 1)
+        queried_object = repository.std_queryset().get()
+        self.assertEqual(queried_object.field_b1_str, sat_b_1.field_b1_str)
 
 class TestMontrekRepositoryLinks(TestCase):
     def setUp(self):

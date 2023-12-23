@@ -3,7 +3,8 @@ from django.utils import timezone
 from baseclasses.models import (
     MontrekHubABC,
     MontrekSatelliteABC,
-    MontrekLinkABC,
+    MontrekOneToManyLinkABC,
+    MontrekOneToOneLinkABC,
     MontrekTimeSeriesSatelliteABC,
 )
 
@@ -83,11 +84,11 @@ class SatTSC2(MontrekTimeSeriesSatelliteABC):
     field_tsc2_float = models.FloatField(default=0.0)
 
 
-class LinkHubAHubB(MontrekLinkABC):
+class LinkHubAHubB(MontrekOneToOneLinkABC):
     hub_in = models.ForeignKey(HubA, on_delete=models.CASCADE)
     hub_out = models.ForeignKey(HubB, on_delete=models.CASCADE)
 
 
-class LinkHubAHubC(MontrekLinkABC):
+class LinkHubAHubC(MontrekOneToManyLinkABC):
     hub_in = models.ForeignKey(HubA, on_delete=models.CASCADE)
     hub_out = models.ForeignKey(HubC, on_delete=models.CASCADE)

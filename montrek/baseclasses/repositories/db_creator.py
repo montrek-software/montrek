@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from django.db.models import QuerySet
 from django.utils import timezone
 from baseclasses.models import MontrekSatelliteABC, MontrekHubABC, MontrekLinkABC
+from baseclasses.models import LinkTypeEnum
 
 
 @dataclass
@@ -39,6 +40,7 @@ class DbCreator:
 
     def create(self, data: Dict[str, Any]) -> None:
         selected_satellites = {"new": [], "existing": [], "updated": []}
+        creation_date = timezone.datetime.now()
         self.hub_entity.save()
         for satellite_class in self.satellite_classes:
             sat_data = {
@@ -52,9 +54,9 @@ class DbCreator:
             sat = self._process_new_satellite(sat, satellite_class)
             selected_satellites[sat.state].append(sat)
         reference_hub = self._save_satellites_and_return_reference_hub(
-            selected_satellites
+            selected_satellites, creation_date
         )
-        self._create_links(data, reference_hub)
+        self._create_links(data, reference_hub, creation_date)
 
     def _process_new_satellite(
         self,
@@ -79,9 +81,10 @@ class DbCreator:
         )
 
     def _save_satellites_and_return_reference_hub(
-        self, selected_satellites: Dict[str, List[SatelliteCreationState]]
+        self,
+        selected_satellites: Dict[str, List[SatelliteCreationState]],
+        creation_date: timezone.datetime,
     ):
-        creation_date = timezone.datetime.now()
         reference_hub = self._get_reference_hub(selected_satellites, creation_date)
         self._remove_not_used_hub(reference_hub)
 
@@ -163,7 +166,27 @@ class DbCreator:
         new_sat.state_date_start = created_at
         new_sat.save()
 
-    def _create_links(self, data, reference_hub):
+    def _create_links(self, data, reference_hub, creation_date):
         for field, value in data.items():
-            if hasattr(reference_hub, field): 
-                getattr(reference_hub, field).add(value)
+            if hasattr(reference_hub, field):
+                link_class = getattr(reference_hub, field).through
+                new_link = link_class(hub_in=reference_hub, hub_out=value)
+                if new_link.link_type == LinkTypeEnum.ONE_TO_ONE:
+                    new_link = self._get_one_to_one_link(new_link, creation_date)
+                new_link.save()
+
+    def _get_one_to_one_link(self, link, creation_date):
+        link_class = link.__class__
+        existing_link = link_class.objects.filter(
+            hub_in=link.hub_in,
+            state_date_end__gt=creation_date,
+            state_date_start__lte=creation_date,
+        ).first()
+        if not existing_link:
+            return link
+        if existing_link.hub_out == link.hub_out:
+            return existing_link
+        existing_link.state_date_end = creation_date
+        existing_link.save()
+        link.state_date_start = creation_date
+        return link
