@@ -3,6 +3,7 @@ from django.views.generic.list import ListView
 from django.views.generic import DetailView
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import CreateView
+from django.views import View
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.forms.models import model_to_dict
@@ -174,3 +175,20 @@ class MontrekEditView(MontrekCreateEditView):
         context = super().get_context_data(**kwargs)
         context["tag"] = "Edit"
         return context
+
+class MontrekDeleteView(View, MontrekViewMixin, MontrekPageViewMixin):
+    repository = MontrekRepository
+    success_url = "under_construction"
+    template_name = "montrek_delete.html"
+
+    def get_success_url(self):
+        return reverse(self.success_url)
+
+    def post(self, request, *args, **kwargs):
+        if 'action' in request.POST and request.POST['action'] == 'Delete':
+            delete_object = self.repository_object.std_queryset().get(pk=self.kwargs["pk"])
+            self.repository_object.std_delete_object(delete_object)
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get(self, request, *args, **kwargs):
+        return render(request, self.template_name, {"pk": self.kwargs["pk"]})

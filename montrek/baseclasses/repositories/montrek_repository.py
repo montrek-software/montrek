@@ -148,6 +148,10 @@ class MontrekRepository:
     def rename_field(self, field: str, new_name: str):
         self.annotations[new_name] = self.annotations[field]
 
+    def std_delete_object(self, obj: MontrekHubABC):
+        obj.state_date_end = timezone.datetime.now()
+        obj.save()
+
     def _add_to_annotations(
         self, fields: List[str], annotations_manager: AnnotationsManager
     ):
@@ -163,10 +167,6 @@ class MontrekRepository:
     def _add_to_primary_link_classes(self, link_class: Type[MontrekLinkABC]):
         if link_class not in self._primary_link_classes:
             self._primary_link_classes.append(link_class)
-
-    def std_delete_object(self, obj: MontrekHubABC):
-        obj.state_date_end = timezone.datetime.now()
-        obj.save()
 
 def paginated_table(func):
     @wraps(func)

@@ -1,6 +1,7 @@
 from baseclasses.views import MontrekCreateView
 from baseclasses.views import MontrekListView
 from baseclasses.views import MontrekDetailView
+from baseclasses.views import MontrekDeleteView
 from baseclasses.views import MontrekEditView
 from baseclasses.dataclasses.table_elements import StringTableElement
 from baseclasses.dataclasses.table_elements import FloatTableElement
@@ -57,7 +58,18 @@ class MontrekExampleAList(MontrekListView):
                 icon="pencil",
                 hover_text="View Example A",
             ),
+            LinkTableElement(
+                name="Delete",
+                url="montrek_example_a_delete",
+                kwargs={"pk": "id"},
+                icon="trash",
+                hover_text="Delete Example A",
+            ),
         )
+class MontrekExampleADelete(MontrekDeleteView):
+    repository = HubARepository
+    page_class = MontrekExampleAAppPage
+    success_url = "montrek_example_a_list"
 
 class MontrekExampleADetails(MontrekDetailView):
     repository = HubARepository
