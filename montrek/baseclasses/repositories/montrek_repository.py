@@ -68,6 +68,8 @@ class MontrekRepository:
         for field in obj._meta.get_fields():
             if isinstance(field, ManyToManyField):
                 value = getattr(obj, field.name).filter(
+                    Q(**{f"{field.name.replace('_','')}__state_date_start__lte": self.reference_date}),
+                    Q(**{f"{field.name.replace('_','')}__state_date_end__gt": self.reference_date}),
                     Q(state_date_start__lte=self.reference_date),
                     Q(state_date_end__gt=self.reference_date),
                 ).first()

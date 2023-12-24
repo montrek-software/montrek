@@ -1,7 +1,11 @@
 from django.contrib import admin
-from montrek_example.models import HubB, SatB1, SatB2
+from montrek_example import models as me_models
 
 # Register your models here.
-admin.site.register(HubB)
-admin.site.register(SatB1)
-admin.site.register(SatB2)
+admin.site.register(me_models.HubB)
+admin.site.register(me_models.SatB1)
+admin.site.register(me_models.SatB2)
+admin.site.register(me_models.HubA)
+admin.site.register(me_models.SatA1)
+admin.site.register(me_models.SatA2)
+admin.site.register(me_models.LinkHubAHubB)
