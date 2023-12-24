@@ -317,6 +317,18 @@ class TestMontrekCreatObject(TestCase):
         queried_object = repository.std_queryset().get()
         self.assertEqual(queried_object.field_b1_str, sat_b_1.field_b1_str)
 
+class TestDeleteObject(TestCase):
+    def test_delete_object(self):
+        repository = HubARepository(None)
+        repository.std_create_object({"field_a1_int": 5, "field_a1_str": "test"})
+        self.assertEqual(me_models.SatA1.objects.count(), 1)
+        self.assertEqual(me_models.HubA.objects.count(), 1)
+        deletion_object = repository.std_queryset().get()
+        repository.std_delete_object(deletion_object)
+        self.assertEqual(me_models.SatA1.objects.count(), 1)
+        self.assertEqual(me_models.HubA.objects.count(), 1)
+        self.assertEqual(len(repository.std_queryset()), 0)
+
 class TestMontrekRepositoryLinks(TestCase):
     def setUp(self):
         huba1 = me_factories.HubAFactory()
