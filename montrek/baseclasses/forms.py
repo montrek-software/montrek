@@ -21,3 +21,13 @@ class MontrekCreateForm(forms.ModelForm):
                 self.fields[field.name] = form_field
                 self.fields[field.name].widget.attrs.update({"id": f"id_{field.name}"})
 
+    def add_link_choice_field(self, field_name, queryset, required=False):
+        self.fields[field_name] = MontrekModelChoiceField(
+            queryset=queryset,
+            widget=forms.Select(attrs={"id": f"id_{field_name}"}),
+            required=required,
+        )
+
+class MontrekModelChoiceField(forms.ModelChoiceField):
+    def label_from_instance(self, obj):
+        return obj.field_b1_str
