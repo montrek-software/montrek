@@ -49,6 +49,12 @@ class AccountPage(MontrekPage):
             action_id="delete_account",
             hover_text="Delete account",
         )
+        action_update = ActionElement(
+            icon="pencil",
+            link=reverse("account_update", kwargs={"pk": account_id}),
+            action_id="update_account",
+            hover_text="Update account",
+        )
         action_new_transaction = ActionElement(
             icon="plus",
             link=reverse("transaction_add_form", kwargs={"account_id": account_id}),
@@ -85,7 +91,7 @@ class AccountPage(MontrekPage):
                     "account_details", kwargs={"pk": account_id}
                 ),
                 html_id="tab_details",
-                actions=(action_back, action_delete),
+                actions=(action_back, action_delete, action_update),
             ),
             TabElement(
                 name="Transactions",

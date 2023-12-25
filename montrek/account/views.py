@@ -1,20 +1,12 @@
-from django.shortcuts import render, redirect
 from django_pandas.io import read_frame
 
-from account.models import AccountHub
-from account.models import AccountStaticSatellite
-from account.models import BankAccountPropertySatellite
-from account.models import BankAccountStaticSatellite
-from account.repositories.account_model_queries import new_account
 from account.repositories.account_repository import AccountRepository
 from account.pages import AccountOverviewPage
 from account.pages import AccountPage
 from account.forms import AccountCreateForm
 
 
-from credit_institution.models import CreditInstitutionStaticSatellite
 
-from baseclasses.repositories.db_helper import new_satellite_entry
 from baseclasses.views import MontrekListView
 from baseclasses.views import MontrekDetailView
 from baseclasses.views import MontrekTemplateView
@@ -105,7 +97,11 @@ class AccountDeleteView(MontrekDeleteView):
     success_url = "account"
 
 
-class AccountUpdateView(MontrekUpdateView): pass
+class AccountUpdateView(MontrekUpdateView): 
+    repository = AccountRepository
+    page_class = AccountOverviewPage
+    form_class = AccountCreateForm
+    success_url = "account"
 
 
 class AccountTransactionsView(MontrekListView):
