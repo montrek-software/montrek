@@ -19,6 +19,7 @@ from baseclasses.views import MontrekListView
 from baseclasses.views import MontrekDetailView
 from baseclasses.views import MontrekTemplateView
 from baseclasses.views import MontrekCreateView
+from baseclasses.views import MontrekDeleteView
 from baseclasses.dataclasses.table_elements import StringTableElement
 from baseclasses.dataclasses.table_elements import LinkTableElement
 from baseclasses.dataclasses.table_elements import LinkTextTableElement
@@ -96,6 +97,12 @@ class AccountDetailView(MontrekDetailView):
                 attr="credit_institution_bic",
             ),
         )
+
+class AccountDeleteView(MontrekDeleteView):
+    repository = AccountRepository
+    page_class = AccountOverviewPage
+    success_url = "account"
+
 
 
 def account_delete(request, account_id: int):

@@ -45,7 +45,7 @@ class AccountPage(MontrekPage):
         )
         action_delete = ActionElement(
             icon="trash",
-            link=reverse("account_delete_form", kwargs={"account_id": account_id}),
+            link=reverse("account_delete", kwargs={"pk": account_id}),
             action_id="delete_account",
             hover_text="Delete account",
         )
@@ -90,7 +90,7 @@ class AccountPage(MontrekPage):
             TabElement(
                 name="Transactions",
                 link=reverse(
-                    "bank_account_view_transactions", kwargs={"pk": account_id}
+                    "account_view_transactions", kwargs={"pk": account_id}
                 ),
                 html_id="tab_transactions",
                 actions=(action_back, action_new_transaction),

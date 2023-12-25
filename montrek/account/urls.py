@@ -5,17 +5,7 @@ urlpatterns = [
     path("create", views.AccountCreateView.as_view(), name="account_create"),
     path("overview", views.AccountOverview.as_view(), name="account"),
     path("<int:pk>/details", views.AccountDetailView.as_view(), name="account_details"),
-    path("<int:account_id>/delete", views.account_delete, name="account_delete"),
-    path(
-        "<int:account_id>/delete_form",
-        views.account_delete_form,
-        name="account_delete_form",
-    ),
-    path(
-        "<int:pk>/bank_account_view/transactions",
-        views.AccountTransactionsView.as_view(),
-        name="bank_account_view_transactions",
-    ),
+    path("<int:pk>/delete", views.AccountDeleteView.as_view(), name="account_delete"),
     path(
         "<int:pk>/transactions",
         views.AccountTransactionsView.as_view(),
