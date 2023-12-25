@@ -113,35 +113,6 @@ def account_delete_form(request, account_id: int):
     )
 
 
-#### Bank Account Views ####
-
-
-def bank_account_new_form(request, account_name: str, account_type: str):
-    return render(
-        request,
-        "bank_account_new_form.html",
-        {
-            "credit_institutions": CreditInstitutionStaticSatellite.objects.all(),
-            "account_name": account_name,
-            "account_type": account_type,
-        },
-    )
-
-
-def bank_account_new(request, account_name: str, account_type: str):
-    account_hub = new_account(account_name, account_type.replace(" ", ""))
-    BankAccountPropertySatellite.objects.create(
-        hub_entity=account_hub,
-    )
-    new_satellite_entry(
-        hub_entity=account_hub,
-        satellite_class=BankAccountStaticSatellite,
-        bank_account_iban=request.POST["bank_account_iban"],
-    )
-    credit_institution_name = request.POST["credit_institution_name"]
-    return redirect("/account/list")
-
-
 class AccountTransactionsView(MontrekListView):
     page_class = AccountPage
     tab = "tab_transactions"
@@ -294,7 +265,9 @@ class AccountDepotView(MontrekListView):
     repository = AccountRepository
 
     def get_queryset(self):
-        return self.repository_object.get_depot_stats_table_by_account_paginated(self.kwargs["pk"])
+        return self.repository_object.get_depot_stats_table_by_account_paginated(
+            self.kwargs["pk"]
+        )
 
     def elements(self) -> list:
         return (
