@@ -15,9 +15,9 @@ urlpatterns = [
     ),
     path("b/list", views.MontrekExampleBList.as_view(), name="montrek_example_b_list"),
     path(
-        "a/<int:pk>/edit",
-        views.MontrekExampleAEdit.as_view(),
-        name="montrek_example_a_edit",
+        "a/<int:pk>/update",
+        views.MontrekExampleAUpdate.as_view(),
+        name="montrek_example_a_update",
     ),
     path(
         "a/<int:pk>/details",

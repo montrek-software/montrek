@@ -2,7 +2,7 @@ from baseclasses.views import MontrekCreateView
 from baseclasses.views import MontrekListView
 from baseclasses.views import MontrekDetailView
 from baseclasses.views import MontrekDeleteView
-from baseclasses.views import MontrekEditView
+from baseclasses.views import MontrekUpdateView
 from baseclasses.dataclasses.table_elements import StringTableElement
 from baseclasses.dataclasses.table_elements import FloatTableElement
 from baseclasses.dataclasses.table_elements import IntTableElement
@@ -24,7 +24,7 @@ class MontrekExampleACreate(MontrekCreateView):
     form_class = ExampleACreateForm
     success_url = "montrek_example_a_list"
 
-class MontrekExampleAEdit(MontrekEditView):
+class MontrekExampleAUpdate(MontrekUpdateView):
     repository = HubARepository
     page_class = MontrekExampleAAppPage
     form_class = ExampleACreateForm
@@ -52,8 +52,8 @@ class MontrekExampleAList(MontrekListView):
                 hover_text="View Example A",
             ),
             LinkTableElement(
-                name="Edit",
-                url="montrek_example_a_edit",
+                name="Update",
+                url="montrek_example_a_update",
                 kwargs={"pk": "id"},
                 icon="pencil",
                 hover_text="View Example A",

@@ -6,6 +6,7 @@ urlpatterns = [
     path("overview", views.AccountOverview.as_view(), name="account"),
     path("<int:pk>/details", views.AccountDetailView.as_view(), name="account_details"),
     path("<int:pk>/delete", views.AccountDeleteView.as_view(), name="account_delete"),
+    path("<int:pk>/update", views.AccountUpdateView.as_view(), name="account_update"),
     path(
         "<int:pk>/transactions",
         views.AccountTransactionsView.as_view(),

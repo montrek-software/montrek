@@ -20,6 +20,7 @@ from baseclasses.views import MontrekDetailView
 from baseclasses.views import MontrekTemplateView
 from baseclasses.views import MontrekCreateView
 from baseclasses.views import MontrekDeleteView
+from baseclasses.views import MontrekUpdateView
 from baseclasses.dataclasses.table_elements import StringTableElement
 from baseclasses.dataclasses.table_elements import LinkTableElement
 from baseclasses.dataclasses.table_elements import LinkTextTableElement
@@ -104,20 +105,7 @@ class AccountDeleteView(MontrekDeleteView):
     success_url = "account"
 
 
-
-def account_delete(request, account_id: int):
-    account_statics = AccountStaticSatellite.objects.get(hub_entity=account_id)
-    account_statics.delete()
-    account = AccountHub.objects.get(id=account_id)
-    account.delete()
-    return redirect("/account/list")
-
-
-def account_delete_form(request, account_id: int):
-    account_statics = AccountStaticSatellite.objects.get(hub_entity=account_id)
-    return render(
-        request, "account_delete_form.html", {"account_statics": account_statics}
-    )
+class AccountUpdateView(MontrekUpdateView): pass
 
 
 class AccountTransactionsView(MontrekListView):

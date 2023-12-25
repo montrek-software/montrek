@@ -127,7 +127,7 @@ class MontrekDetailView(DetailView, MontrekPageViewMixin, MontrekViewMixin):
         return context
 
 
-class MontrekCreateEditView(CreateView, MontrekPageViewMixin, MontrekViewMixin):
+class MontrekCreateUpdateView(CreateView, MontrekPageViewMixin, MontrekViewMixin):
     repository = MontrekRepository
     form_class = MontrekCreateForm
     template_name = "montrek_create.html"
@@ -158,14 +158,14 @@ class MontrekCreateEditView(CreateView, MontrekPageViewMixin, MontrekViewMixin):
         return self.form_invalid(form)
 
 
-class MontrekCreateView(MontrekCreateEditView):
+class MontrekCreateView(MontrekCreateUpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["tag"] = "Create"
         return context
 
 
-class MontrekEditView(MontrekCreateEditView):
+class MontrekUpdateView(MontrekCreateUpdateView):
     def get_form(self):
         edit_object = self.repository_object.std_queryset().get(pk=self.kwargs["pk"])
         initial = self.repository_object.object_to_dict(edit_object)
@@ -173,7 +173,7 @@ class MontrekEditView(MontrekCreateEditView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["tag"] = "Edit"
+        context["tag"] = "Update"
         return context
 
 class MontrekDeleteView(View, MontrekViewMixin, MontrekPageViewMixin):
