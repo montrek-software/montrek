@@ -9,6 +9,7 @@ from account.repositories.account_model_queries import new_account
 from account.repositories.account_repository import AccountRepository
 from account.pages import AccountOverviewPage
 from account.pages import AccountPage
+from account.forms import AccountCreateForm
 
 
 from credit_institution.models import CreditInstitutionStaticSatellite
@@ -38,6 +39,7 @@ from reporting.managers.account_transaction_plots import (
 class AccountCreateView(MontrekCreateView):
     repository = AccountRepository
     page_class = AccountOverviewPage
+    form_class = AccountCreateForm
     success_url = "account"
 
 
