@@ -1,8 +1,4 @@
-from datetime import timedelta
-from typing import Tuple
 from django.shortcuts import render, redirect
-from django.urls import reverse
-from django.utils import timezone
 from django_pandas.io import read_frame
 
 from account.models import AccountHub
@@ -18,10 +14,10 @@ from account.pages import AccountPage
 from credit_institution.models import CreditInstitutionStaticSatellite
 
 from baseclasses.repositories.db_helper import new_satellite_entry
-from baseclasses.forms import DateRangeForm
 from baseclasses.views import MontrekListView
 from baseclasses.views import MontrekDetailView
 from baseclasses.views import MontrekTemplateView
+from baseclasses.views import MontrekCreateView
 from baseclasses.dataclasses.table_elements import StringTableElement
 from baseclasses.dataclasses.table_elements import LinkTableElement
 from baseclasses.dataclasses.table_elements import LinkTextTableElement
@@ -39,25 +35,10 @@ from reporting.managers.account_transaction_plots import (
 
 # Create your views here.
 #### Account Views ####
-def account_new(request):
-    account_type = request.POST.get("account_type", "Other")
-    account_name = request.POST["account_name"]
-    if account_type == "Other":
-        new_account(request.POST["account_name"])
-        return redirect("/account/list")
-    if account_type in ["Bank Account", "Depot"]:
-        return redirect(
-            reverse(
-                "bank_account_new_form",
-                kwargs={"account_name": account_name, "account_type": account_type},
-            )
-        )
-    return render(request, "under_construction.html")
-
-
-def account_new_form(request):
-    account_types = AccountStaticSatellite.AccountType.choices
-    return render(request, "new_account_form.html", {"account_types": account_types})
+class AccountCreateView(MontrekCreateView):
+    repository = AccountRepository
+    page_class = AccountOverviewPage
+    success_url = "account"
 
 
 class AccountOverview(MontrekListView):

@@ -11,9 +11,9 @@ class AccountOverviewPage(MontrekPage):
     def get_tabs(self):
         action_new_account = ActionElement(
             icon="plus",
-            link=reverse("account_new_form"),
-            action_id="id_new_account",
-            hover_text="Add new Account",
+            link=reverse("account_create"),
+            action_id="id_create_account",
+            hover_text="Create Account",
         )
         overview_tab = TabElement(
             name="Account List",

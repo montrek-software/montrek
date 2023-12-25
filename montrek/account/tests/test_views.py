@@ -192,6 +192,11 @@ class TestAccountDepotView(TestCase):
         self.assertIsInstance(context["view"], views.AccountDepotView)
         self.assertEqual(context["page_title"], self.acc.account_name)
 
+class TestAccountCreateView(TestCase):
+    def test_account_create_view_returns_correct_html(self):
+        response = self.client.get("/account/create")
+        self.assertTemplateUsed(response, "montrek_create.html")
+
 
 # Create your tests here.
 class TestAccountViews(TestCase):
