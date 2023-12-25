@@ -36,7 +36,7 @@ class MontrekPageViewMixin:
     title = "No Title set!"
 
     def get_page_context(self, context, **kwargs):
-        page = self.page_class(self.repository_object, **self.kwargs)
+        page = self.page_class(**self.kwargs)
         context["page_title"] = page.page_title
         page.set_active_tab(self.tab)
         context["tab_elements"] = page.tabs

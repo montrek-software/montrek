@@ -27,12 +27,13 @@ class AccountOverviewPage(MontrekPage):
 
 class AccountPage(MontrekPage):
     show_date_range_selector = True
+    repository = AccountRepository({})
 
-    def __init__(self, repository, **kwargs):
-        super().__init__(repository, **kwargs)
-        if 'pk' not in kwargs:
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        if "pk" not in kwargs:
             raise ValueError("AccountPage needs pk specified in url!")
-        self.obj = self.repository.std_queryset().get(pk=kwargs['pk'])
+        self.obj = self.repository.std_queryset().get(pk=kwargs["pk"])
         self.page_title = self.obj.account_name
 
     def get_tabs(self):
@@ -57,7 +58,9 @@ class AccountPage(MontrekPage):
         )
         action_new_transaction = ActionElement(
             icon="plus",
-            link=reverse("transaction_add_form", kwargs={"account_id": account_id}),
+            link=reverse(
+                "transaction_create_from_account", kwargs={"account_id": account_id}
+            ),
             action_id="add_transaction",
             hover_text="Add transaction",
         )
@@ -87,33 +90,25 @@ class AccountPage(MontrekPage):
         tabs = [
             TabElement(
                 name="Details",
-                link=reverse(
-                    "account_details", kwargs={"pk": account_id}
-                ),
+                link=reverse("account_details", kwargs={"pk": account_id}),
                 html_id="tab_details",
                 actions=(action_back, action_delete, action_update),
             ),
             TabElement(
                 name="Transactions",
-                link=reverse(
-                    "account_view_transactions", kwargs={"pk": account_id}
-                ),
+                link=reverse("account_view_transactions", kwargs={"pk": account_id}),
                 html_id="tab_transactions",
                 actions=(action_back, action_new_transaction),
             ),
             TabElement(
                 name="Graphs",
-                link=reverse(
-                    "account_view_graphs", kwargs={"pk": account_id}
-                ),
+                link=reverse("account_view_graphs", kwargs={"pk": account_id}),
                 html_id="tab_graphs",
                 actions=(action_back,),
             ),
             TabElement(
                 name="Uploads",
-                link=reverse(
-                    "account_view_uploads", kwargs={"pk": account_id}
-                ),
+                link=reverse("account_view_uploads", kwargs={"pk": account_id}),
                 html_id="tab_uploads",
                 actions=(action_back, action_upload_csv),
             ),
@@ -128,12 +123,13 @@ class AccountPage(MontrekPage):
             ),
         ]
         if self.obj.account_type in ["Depot"]:
-            tabs.insert(1,
+            tabs.insert(
+                1,
                 TabElement(
                     name="Depot",
-                    link=reverse('account_view_depot', kwargs={'pk': account_id}),
+                    link=reverse("account_view_depot", kwargs={"pk": account_id}),
                     html_id="tab_depot",
-                    actions = (action_back, action_update_asset_prices)
-                )
+                    actions=(action_back, action_update_asset_prices),
+                ),
             )
         return tabs

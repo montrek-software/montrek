@@ -1,11 +1,13 @@
 from django.urls import reverse
 from baseclasses.dataclasses.view_classes import TabElement, ActionElement
 from baseclasses.pages import MontrekPage
+from transaction.repositories.transaction_repository import TransactionRepository
 
 class TransactionPage(MontrekPage):
+    repository = TransactionRepository({})
 
-    def __init__(self, repository, **kwargs):
-        super().__init__(repository, **kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.obj = self.repository.std_queryset().get(pk=kwargs["pk"])
         self.page_title = f"Transaction {self.obj.pk}"
 

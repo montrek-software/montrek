@@ -3,14 +3,9 @@ from transaction import views
 
 urlpatterns = [
     path(
-        "add_form/<int:account_id>",
-        views.transaction_add_form,
-        name="transaction_add_form",
-    ),
-    path(
-        "add/<int:account_id>",
-        views.transaction_add,
-        name="transaction_add",
+        "create/<int:account_id>",
+        views.TransactionCreateFromAccountView.as_view(),
+        name="transaction_create_from_account",
     ),
     path(
         "<int:pk>/details/",

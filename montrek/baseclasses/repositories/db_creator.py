@@ -172,7 +172,10 @@ class DbCreator:
                 continue
             if hasattr(reference_hub, field):
                 link_class = getattr(reference_hub, field).through
-                new_link = link_class(hub_in=reference_hub, hub_out=value)
+                if link_class.hub_in.field.related_model == reference_hub.__class__:
+                    new_link = link_class(hub_in=reference_hub, hub_out=value)
+                else:
+                    new_link = link_class(hub_in=value, hub_out=reference_hub)
                 if new_link.link_type == LinkTypeEnum.ONE_TO_ONE:
                     new_link = self._get_one_to_one_link(new_link, creation_date)
                 new_link.save()

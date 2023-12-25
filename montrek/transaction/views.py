@@ -4,8 +4,8 @@ from django.views.generic import DetailView
 from django.views.generic.edit import CreateView
 from django.urls import reverse
 from django.http import HttpResponseRedirect
-from transaction.forms import TransactionSatelliteForm
 from transaction.forms import TransactionCategoryMapSatelliteForm
+from transaction.forms import TransactionCreateForm
 from transaction.repositories.transaction_account_queries import (
     new_transaction_to_account,
 )
@@ -16,13 +16,14 @@ from transaction.repositories.transaction_category_queries import (
     set_transaction_category_by_map_entry,
 )
 from transaction.repositories.transaction_repository import TransactionRepository
-from transaction.models import TransactionSatellite
 from transaction.models import TransactionCategoryMapSatellite
 from transaction.pages import TransactionPage
 from account.models import AccountStaticSatellite
 from account.models import AccountHub
+from account.pages import AccountPage
 from baseclasses.repositories import db_helper
 from baseclasses.views import MontrekDetailView
+from baseclasses.views import MontrekCreateView
 from baseclasses.dataclasses.table_elements import StringTableElement
 from baseclasses.dataclasses.table_elements import DateTableElement
 from baseclasses.dataclasses.table_elements import EuroTableElement
@@ -30,10 +31,11 @@ from baseclasses.dataclasses.table_elements import FloatTableElement
 from baseclasses.dataclasses.table_elements import LinkTextTableElement
 from asset.models import AssetStaticSatellite
 from asset.models import AssetHub
+from account.repositories.account_repository import AccountRepository
 
 
 class TransactionSatelliteDetailView(MontrekDetailView):
-    repository=TransactionRepository
+    repository = TransactionRepository
     page_class = TransactionPage
     tab = "tab_details"
     title = "Transaction Details"
@@ -74,13 +76,38 @@ class TransactionSatelliteDetailView(MontrekDetailView):
             ),
             LinkTextTableElement(
                 name="Account",
-                url="account_view_transactions",
+                url="account_details",
                 kwargs={"pk": "account_id"},
                 text="account_name",
                 hover_text="View Account",
             ),
         ]
 
+
+class TransactionCreateFromAccountView(MontrekCreateView):
+    repository = TransactionRepository
+    page_class = AccountPage
+    form_class = TransactionCreateForm
+
+    def get_success_url(self):
+        account_id = self.kwargs["account_id"]
+        return reverse(
+            "account_details", kwargs={"pk": account_id}
+        )
+
+    def get_form(self):
+        form = super().get_form()
+        account_hub = (
+            AccountRepository({}).std_queryset().get(pk=self.kwargs["account_id"])
+        )
+        form['link_transaction_account'].initial = account_hub
+        return form
+
+    def get_context_data(self, **kwargs):
+        # Set pk to make account form work
+        self.kwargs["pk"] = self.kwargs["account_id"]
+        context = super().get_context_data(**kwargs)
+        return context
 
 
 class SuccessURLTransactionCategoryMapMixin(

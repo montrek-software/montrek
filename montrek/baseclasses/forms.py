@@ -33,12 +33,14 @@ class MontrekCreateForm(forms.ModelForm):
         queryset: QuerySet,
         display_field: str,
         required: bool = False,
+        **kwargs,
     ):
         self.fields[link_name] = MontrekModelChoiceField(
             display_field=display_field,
             queryset=queryset,
             widget=forms.Select(attrs={"id": f"id_{link_name}"}),
             required=required,
+            **kwargs,
         )
 
 

@@ -1,9 +1,8 @@
 class MontrekPage:
     page_title = "page_title not set!"
     show_date_range_selector = False
-    def __init__(self, repository, **kwargs):
+    def __init__(self, **kwargs):
         self._tabs = None
-        self.repository = repository
 
 
     def get_tabs(self):
