@@ -84,15 +84,15 @@ class TransactionDetailView(MontrekDetailView):
         ]
 
 
-class TransactionCreateUpdateMixin:
+class TransactionSuccessUrlMixin:
 
     def get_success_url(self):
-        account_id = self.kwargs["account_id"]
-        return reverse("account_details", kwargs={"pk": account_id})
+        transaction_pk = self.kwargs["pk"]
+        return reverse("transaction_details", kwargs={"pk": transaction_pk})
 
 
 
-class TransactionCreateFromAccountView(TransactionCreateUpdateMixin, MontrekCreateView ):
+class TransactionCreateFromAccountView(TransactionSuccessUrlMixin, MontrekCreateView ):
     repository = TransactionRepository
     page_class = AccountPage
     form_class = TransactionCreateForm
@@ -113,7 +113,7 @@ class TransactionCreateFromAccountView(TransactionCreateUpdateMixin, MontrekCrea
 
 
 
-class TransactionUpdateView(TransactionCreateUpdateMixin, MontrekUpdateView ):
+class TransactionUpdateView(TransactionSuccessUrlMixin, MontrekUpdateView ):
     repository = TransactionRepository
     page_class = TransactionPage
     form_class = TransactionCreateForm

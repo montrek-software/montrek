@@ -3,6 +3,7 @@ from account.repositories.account_repository import AccountRepository
 from baseclasses.forms import MontrekCreateForm
 from .models import TransactionSatellite
 from .models import TransactionCategoryMapSatellite
+from transaction.repositories.transaction_category_repository import TransactionCategoryRepository
 
 class TransactionCategoryMapSatelliteForm(forms.ModelForm):
     class Meta:
@@ -24,4 +25,9 @@ class TransactionCreateForm(MontrekCreateForm):
             display_field="account_name",
             link_name="link_transaction_account",
             queryset=AccountRepository({}).std_queryset(),
+        )
+        self.add_link_choice_field(
+            display_field="typename",
+            link_name="link_transaction_transaction_category",
+            queryset=TransactionCategoryRepository({}).std_queryset(),
         )

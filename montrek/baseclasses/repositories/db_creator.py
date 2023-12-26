@@ -176,7 +176,7 @@ class DbCreator:
                     new_link = link_class(hub_in=reference_hub, hub_out=value)
                 else:
                     new_link = link_class(hub_in=value, hub_out=reference_hub)
-                if new_link.link_type == LinkTypeEnum.ONE_TO_ONE:
+                if new_link.link_type in (LinkTypeEnum.ONE_TO_ONE, LinkTypeEnum.ONE_TO_MANY):
                     new_link = self._get_one_to_one_link(new_link, creation_date)
                 new_link.save()
 
