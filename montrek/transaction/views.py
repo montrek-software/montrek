@@ -1,6 +1,5 @@
 from django.shortcuts import render
 from django.shortcuts import redirect
-from django.views.generic import DetailView
 from django.views.generic.edit import CreateView
 from django.urls import reverse
 from django.http import HttpResponseRedirect
@@ -21,9 +20,11 @@ from transaction.pages import TransactionPage
 from account.models import AccountStaticSatellite
 from account.models import AccountHub
 from account.pages import AccountPage
+from account.repositories.account_repository import AccountRepository
 from baseclasses.repositories import db_helper
 from baseclasses.views import MontrekDetailView
 from baseclasses.views import MontrekCreateView
+from baseclasses.views import MontrekUpdateView
 from baseclasses.dataclasses.table_elements import StringTableElement
 from baseclasses.dataclasses.table_elements import DateTableElement
 from baseclasses.dataclasses.table_elements import EuroTableElement
@@ -31,10 +32,9 @@ from baseclasses.dataclasses.table_elements import FloatTableElement
 from baseclasses.dataclasses.table_elements import LinkTextTableElement
 from asset.models import AssetStaticSatellite
 from asset.models import AssetHub
-from account.repositories.account_repository import AccountRepository
 
 
-class TransactionSatelliteDetailView(MontrekDetailView):
+class TransactionDetailView(MontrekDetailView):
     repository = TransactionRepository
     page_class = TransactionPage
     tab = "tab_details"
@@ -84,23 +84,25 @@ class TransactionSatelliteDetailView(MontrekDetailView):
         ]
 
 
-class TransactionCreateFromAccountView(MontrekCreateView):
-    repository = TransactionRepository
-    page_class = AccountPage
-    form_class = TransactionCreateForm
+class TransactionCreateUpdateMixin:
 
     def get_success_url(self):
         account_id = self.kwargs["account_id"]
-        return reverse(
-            "account_details", kwargs={"pk": account_id}
-        )
+        return reverse("account_details", kwargs={"pk": account_id})
+
+
+
+class TransactionCreateFromAccountView(TransactionCreateUpdateMixin, MontrekCreateView ):
+    repository = TransactionRepository
+    page_class = AccountPage
+    form_class = TransactionCreateForm
 
     def get_form(self):
         form = super().get_form()
         account_hub = (
             AccountRepository({}).std_queryset().get(pk=self.kwargs["account_id"])
         )
-        form['link_transaction_account'].initial = account_hub
+        form["link_transaction_account"].initial = account_hub
         return form
 
     def get_context_data(self, **kwargs):
@@ -109,6 +111,25 @@ class TransactionCreateFromAccountView(MontrekCreateView):
         context = super().get_context_data(**kwargs)
         return context
 
+
+
+class TransactionUpdateView(TransactionCreateUpdateMixin, MontrekUpdateView ):
+    repository = TransactionRepository
+    page_class = TransactionPage
+    form_class = TransactionCreateForm
+
+    def get_form(self):
+        edit_object = (
+            self.repository({}).get_queryset_with_account().get(pk=self.kwargs["pk"])
+        )
+        initial = self.repository_object.object_to_dict(edit_object)
+        initial["link_transaction_account"] = edit_object.link_transaction_account.get()
+        return self.form_class(repository=self.repository_object, initial=initial)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['account_id'] = context['form'].initial['link_transaction_account'].id
+        return context
 
 class SuccessURLTransactionCategoryMapMixin(
     CreateView

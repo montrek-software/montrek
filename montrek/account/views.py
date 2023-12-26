@@ -149,7 +149,14 @@ class AccountTransactionsView(MontrekListView):
                 url="transaction_details",
                 kwargs={"pk": "id"},
                 icon="eye-open",
-                hover_text="View",
+                hover_text="View transaction",
+            ),
+            LinkTableElement(
+                name="Update",
+                url="transaction_update",
+                kwargs={"pk": "id"},
+                icon="pencil",
+                hover_text="Update transaction",
             ),
         )
 
