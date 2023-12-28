@@ -72,7 +72,7 @@ class DbCreator:
         if satellite_updates_or_none is None:
             return NewSatelliteCreationState(satellite=satellite)
         sat_hash_value = satellite.get_hash_value
-        if satellite_updates_or_none.hash_value == sat_hash_value:
+        if satellite_updates_or_none.get_hash_value == sat_hash_value:
             return ExistingSatelliteCreationState(satellite=satellite_updates_or_none)
         return UpdatedSatelliteCreationState(
             satellite=satellite, updated_sat=satellite_updates_or_none
@@ -103,7 +103,7 @@ class DbCreator:
         elif selected_satellites["existing"]:
             return selected_satellites["existing"][0].satellite.hub_entity
         elif selected_satellites["updated"]:
-            return selected_satellites["updated"][0].satellite.hub_entity
+            return selected_satellites["updated"][0].updated_sat.hub_entity
 
     def _remove_not_used_hub(self, reference_hub):
         if self.hub_entity != reference_hub:
@@ -166,30 +166,49 @@ class DbCreator:
 
     def _create_links(self, data, reference_hub, creation_date):
         for field, value in data.items():
-            if value is None:
+            if value is None or not hasattr(reference_hub, field):
                 continue
-            if hasattr(reference_hub, field):
-                link_class = getattr(reference_hub, field).through
-                if link_class.hub_in.field.related_model == reference_hub.__class__:
-                    new_link = link_class(hub_in=reference_hub, hub_out=value)
-                else:
-                    new_link = link_class(hub_in=value, hub_out=reference_hub)
-                if new_link.link_type in (LinkTypeEnum.ONE_TO_ONE, LinkTypeEnum.ONE_TO_MANY):
-                    new_link = self._get_one_to_one_link(new_link, creation_date)
-                new_link.save()
 
-    def _get_one_to_one_link(self, link, creation_date):
+            link_class = getattr(reference_hub, field).through
+            new_link = self._create_new_link(
+                link_class, reference_hub, value, creation_date
+            )
+            new_link.save()
+
+    def _create_new_link(self, link_class, reference_hub, value, creation_date):
+        if link_class.hub_in.field.related_model == reference_hub.__class__:
+            new_link = link_class(hub_in=reference_hub, hub_out=value)
+            return self._process_link(new_link, "hub_in", creation_date)
+        else:
+            new_link = link_class(hub_in=value, hub_out=reference_hub)
+            return self._process_link(new_link, "hub_out", creation_date)
+
+    def _process_link(self, link, hub_field, creation_date):
+        if link.link_type in (LinkTypeEnum.ONE_TO_ONE, LinkTypeEnum.ONE_TO_MANY):
+            return self._update_link_if_exists(link, hub_field, creation_date)
+        return link
+
+    def _update_link_if_exists(self, link, hub_field, creation_date):
         link_class = link.__class__
-        existing_link = link_class.objects.filter(
-            hub_in=link.hub_in,
-            state_date_end__gt=creation_date,
-            state_date_start__lte=creation_date,
-        ).first()
+        filter_args = {
+            f"{hub_field}": getattr(link, hub_field),
+            "state_date_end__gt": creation_date,
+            "state_date_start__lte": creation_date,
+        }
+        existing_link = link_class.objects.filter(**filter_args).first()
+
         if not existing_link:
             return link
-        if existing_link.hub_out == link.hub_out:
+
+        if getattr(existing_link, self._get_opposite_field(hub_field)) == getattr(
+            link, self._get_opposite_field(hub_field)
+        ):
             return existing_link
+
         existing_link.state_date_end = creation_date
         existing_link.save()
         link.state_date_start = creation_date
         return link
+
+    def _get_opposite_field(self, field):
+        return "hub_out" if field == "hub_in" else "hub_in"

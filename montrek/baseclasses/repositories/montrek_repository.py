@@ -87,7 +87,7 @@ class MontrekRepository:
         self.std_queryset()
         hub_entity = self.hub_class()
         db_creator = DbCreator(
-            hub_entity, self._primary_satellite_classes, self._primary_link_classes
+            hub_entity, self._primary_satellite_classes
         )
         db_creator.create(data)
 

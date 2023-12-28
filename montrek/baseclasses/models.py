@@ -1,8 +1,10 @@
 import hashlib
+import datetime
 from typing import List
+from enum import Enum
 from django.db import models
 from django.utils import timezone
-from enum import Enum
+from baseclasses.utils import datetime_to_montrek_time
 
 # Create your models here.
 
@@ -75,19 +77,36 @@ class MontrekSatelliteABC(TimeStampMixin, StateDateMixin):
             raise AttributeError(
                 f"Satellite {self.__class__.__name__} must have attribute identifier_fields"
             )
-        identifier_string = "".join(
-            str(getattr(self, field)) for field in self.identifier_fields
-        )
+        identifier_string = self._get_identifier_string()
         sha256_hash = hashlib.sha256(identifier_string.encode()).hexdigest()
         self.hash_identifier = sha256_hash
         return sha256_hash
 
     def _get_hash_value(self) -> str:
-        value_fields = self.get_value_field_names()
-        value_string = "".join(str(getattr(self, field)) for field in value_fields)
+        value_string = self._get_value_string()
         sha256_hash = hashlib.sha256(value_string.encode()).hexdigest()
         self.hash_value = sha256_hash
         return sha256_hash
+
+    def _get_identifier_string(self):
+        identifier_string = ""
+        for field in self.identifier_fields:
+            value = getattr(self, field)
+            if isinstance(value, (datetime.datetime)):
+                value = datetime_to_montrek_time(value)
+            identifier_string += str(value)
+        return identifier_string
+
+    def _get_value_string(self):
+        value_fields = self.get_value_field_names()
+        value_string = ""
+        for field in value_fields:
+            value = getattr(self, field)
+            if isinstance(value, (datetime.datetime)):
+                value = datetime_to_montrek_time(value)
+            value_string += str(value)
+        return value_string
+
 
     @classmethod
     def exclude_fields(self) -> List[str]:
