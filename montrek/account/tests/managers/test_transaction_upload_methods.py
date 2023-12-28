@@ -5,12 +5,13 @@ from django.test import TestCase
 
 from account.tests.factories.account_factories import BankAccountStaticSatelliteFactory
 from account.tests.factories.account_factories import AccountStaticSatelliteFactory
-from credit_institution.tests.factories.credit_institution_factories import (
-    CreditInstitutionStaticSatelliteFactory,
-)
 
 from account.managers.transaction_upload_methods import upload_dkb_transactions
 from account.managers.transaction_upload_methods import read_dkb_transactions_from_csv
+
+from credit_institution.tests.factories.credit_institution_factories import (
+    CreditInstitutionStaticSatelliteFactory,
+)
 
 
 class TestDKBTransactionUpload(TestCase):

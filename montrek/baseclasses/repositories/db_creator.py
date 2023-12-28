@@ -32,11 +32,9 @@ class DbCreator:
         self,
         hub_entity: MontrekHubABC,
         satellite_classes: List[Type[MontrekSatelliteABC]],
-        link_classes: List[Type[MontrekLinkABC]],
     ):
         self.hub_entity = hub_entity
         self.satellite_classes = satellite_classes
-        self.link_classes = link_classes
 
     def create(self, data: Dict[str, Any]) -> None:
         selected_satellites = {"new": [], "existing": [], "updated": []}
