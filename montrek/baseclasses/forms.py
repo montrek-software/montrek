@@ -32,7 +32,7 @@ class MontrekCreateForm(forms.ModelForm):
                 self.fields[field.name].widget.attrs.update({"id": f"id_{field.name}"})
 
     def _add_hub_entity_id_field(self):
-        self.fields["hub_entity_id"] = forms.IntegerField()
+        self.fields["hub_entity_id"] = forms.IntegerField(required=False)
         self.fields["hub_entity_id"].widget.attrs.update({"id": "id_hub_entity_id"})
         self.fields["hub_entity_id"].widget.attrs.update({"readonly": True})
 

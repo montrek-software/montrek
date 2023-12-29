@@ -76,7 +76,7 @@ class TransactionDetailView(MontrekDetailView):
             ),
             LinkTextTableElement(
                 name="Account",
-                url="account_details",
+                url="account_view_transactions",
                 kwargs={"pk": "account_id"},
                 text="account_name",
                 hover_text="View Account",
@@ -84,18 +84,17 @@ class TransactionDetailView(MontrekDetailView):
         ]
 
 
-class TransactionSuccessUrlMixin:
-
-    def get_success_url(self):
-        transaction_pk = self.kwargs["pk"]
-        return reverse("transaction_details", kwargs={"pk": transaction_pk})
 
 
 
-class TransactionCreateFromAccountView(TransactionSuccessUrlMixin, MontrekCreateView ):
+
+class TransactionCreateFromAccountView(MontrekCreateView ):
     repository = TransactionRepository
     page_class = AccountPage
     form_class = TransactionCreateForm
+    def get_success_url(self):
+        account_id = self.kwargs["account_id"]
+        return reverse("account_view_transactions", kwargs={"pk": account_id})
 
     def get_form(self):
         form = super().get_form()
@@ -113,10 +112,13 @@ class TransactionCreateFromAccountView(TransactionSuccessUrlMixin, MontrekCreate
 
 
 
-class TransactionUpdateView(TransactionSuccessUrlMixin, MontrekUpdateView ):
+class TransactionUpdateView(MontrekUpdateView ):
     repository = TransactionRepository
     page_class = TransactionPage
     form_class = TransactionCreateForm
+    def get_success_url(self):
+        transaction_pk = self.kwargs["pk"]
+        return reverse("transaction_details", kwargs={"pk": transaction_pk})
 
     def get_form(self):
         edit_object = (

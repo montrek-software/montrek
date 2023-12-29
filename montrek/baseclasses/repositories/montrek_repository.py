@@ -86,7 +86,7 @@ class MontrekRepository:
 
     def std_create_object(self, data: Dict[str, Any]):
         self.std_queryset()
-        if 'hub_entity_id' in data and data['hub_entity_id']:
+        if 'hub_entity_id' in data and data['hub_entity_id'] and data['hub_entity_id'] != '':
             hub_entity = self.hub_class.objects.get(pk=data['hub_entity_id'])
         else:
             hub_entity = self.hub_class()
