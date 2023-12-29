@@ -118,3 +118,9 @@ th {
     padding: 10px; /* Add some padding */
     text-align: left; /* Align text to the left */
 }
+
+input[readonly] {
+    background-color: #e0e0e0; /* Light grey */
+    color: #333;
+    cursor: not-allowed;
+}

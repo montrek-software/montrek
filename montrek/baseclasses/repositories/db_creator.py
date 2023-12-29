@@ -86,7 +86,9 @@ class DbCreator:
         reference_hub = self._get_reference_hub(selected_satellites, creation_date)
         self._remove_not_used_hub(reference_hub)
 
-        self._save_new_satellites(selected_satellites["new"], reference_hub)
+        self._save_new_satellites(
+            selected_satellites["new"], reference_hub, creation_date
+        )
         self._update_existing_satellites(
             selected_satellites["existing"], reference_hub, creation_date
         )
@@ -109,10 +111,20 @@ class DbCreator:
         if self.hub_entity != reference_hub:
             self.hub_entity.delete()
 
-    def _save_new_satellites(self, new_satellites, reference_hub):
+    def _save_new_satellites(self, new_satellites, reference_hub, creation_date):
         for satellite_create_state in new_satellites:
             satellite = satellite_create_state.satellite
             satellite.hub_entity = reference_hub
+            # Check if there is already another satellites for this hub and if so, set the state_date_end
+            existing_satellites = satellite.__class__.objects.filter(
+                hub_entity=reference_hub,
+                state_date_end__gte=creation_date,
+            ).order_by("created_at")
+            if existing_satellites.count() == 1:
+                updated_sat = existing_satellites.first()
+                updated_sat.state_date_end = creation_date
+                updated_sat.save()
+                satellite.state_date_start = creation_date
             satellite.save()
 
     def _update_existing_satellites(

@@ -20,12 +20,21 @@ class MontrekCreateForm(forms.ModelForm):
         self._meta.model = self.repository.hub_class
         super().__init__(*args, **kwargs)
 
+        self._add_satellite_fields()
+        self._add_hub_entity_id_field()
+
+    def _add_satellite_fields(self):
         fields = self.repository.std_satellite_fields()
         for field in fields:
             form_field = field.formfield()
             if form_field:
                 self.fields[field.name] = form_field
                 self.fields[field.name].widget.attrs.update({"id": f"id_{field.name}"})
+
+    def _add_hub_entity_id_field(self):
+        self.fields["hub_entity_id"] = forms.IntegerField()
+        self.fields["hub_entity_id"].widget.attrs.update({"id": "id_hub_entity_id"})
+        self.fields["hub_entity_id"].widget.attrs.update({"readonly": True})
 
     def add_link_choice_field(
         self,

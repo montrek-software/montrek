@@ -6,7 +6,6 @@ from django.views.generic.edit import CreateView
 from django.views import View
 from django.http import HttpResponseRedirect
 from django.urls import reverse
-from django.forms.models import model_to_dict
 from baseclasses.dataclasses.nav_bar_model import NavBarModel
 from baseclasses.pages import NoPage
 from baseclasses.forms import DateRangeForm
@@ -143,7 +142,7 @@ class MontrekCreateUpdateView(CreateView, MontrekPageViewMixin, MontrekViewMixin
         self.repository_object.std_create_object(data=form.cleaned_data)
         return HttpResponseRedirect(self.get_success_url())
 
-    def get_form(self):
+    def get_form(self, form_class=None):
         return self.form_class(repository=self.repository_object)
 
     def get_context_data(self, **kwargs):
@@ -166,7 +165,7 @@ class MontrekCreateView(MontrekCreateUpdateView):
 
 
 class MontrekUpdateView(MontrekCreateUpdateView):
-    def get_form(self):
+    def get_form(self, form_class=None):
         edit_object = self.repository_object.std_queryset().get(pk=self.kwargs["pk"])
         initial = self.repository_object.object_to_dict(edit_object)
         return self.form_class(repository=self.repository_object, initial=initial)

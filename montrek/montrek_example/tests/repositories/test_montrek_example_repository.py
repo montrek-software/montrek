@@ -234,6 +234,35 @@ class TestMontrekCreatObject(TestCase):
             me_models.HubA.objects.first().state_date_end,
         )
 
+    
+    def test_std_create_object_update_satellite_id_field_keep_hub(self):
+        # Create one object
+        repository = HubARepository(None)
+        repository.std_create_object(
+            {
+                "field_a1_int": 5,
+                "field_a1_str": "test",
+                "field_a2_float": 6.0,
+                "field_a2_str": "test2",
+            }
+        )
+        a_object = HubARepository().std_queryset().get()
+        repository.std_create_object(
+            {
+                "field_a1_int": 5,
+                "field_a1_str": "test_new",
+                "field_a2_float": 6.0,
+                "field_a2_str": "test2",
+                "hub_entity_id": a_object.id,
+            }
+        )
+        # We should still have one Hub
+        self.assertEqual(me_models.HubA.objects.count(), 1)
+
+        # The std_queryset should return the adjusted object
+        b_object = HubARepository().std_queryset().get()
+        self.assertEqual(b_object.field_a1_str, "test_new")
+
     def test_create_hub_a_with_link_to_hub_b(self):
         hub_b = me_factories.SatB1Factory().hub_entity
         self.assertEqual(me_models.HubB.objects.count(), 1)

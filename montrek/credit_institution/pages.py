@@ -26,9 +26,10 @@ class CreditInstitutionAppPage(MontrekPage):
 
 
 class CreditInstitutionPage(MontrekPage):
+    repository = CreditInstitutionRepository({})
 
-    def __init__(self, repository, **kwargs):
-        super().__init__(repository, **kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         if 'pk' not in kwargs:
             raise ValueError("AccountPage needs pk specified in url!")
         self.obj = self.repository.std_queryset().get(pk=kwargs['pk'])

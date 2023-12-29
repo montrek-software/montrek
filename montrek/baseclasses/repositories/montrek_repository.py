@@ -74,6 +74,7 @@ class MontrekRepository:
                     Q(state_date_end__gt=self.reference_date),
                 ).first()
                 object_dict[field.name] = value
+        object_dict['hub_entity_id'] = obj.pk
         return object_dict
 
     def std_satellite_fields(self):
@@ -85,7 +86,10 @@ class MontrekRepository:
 
     def std_create_object(self, data: Dict[str, Any]):
         self.std_queryset()
-        hub_entity = self.hub_class()
+        if 'hub_entity_id' in data and data['hub_entity_id']:
+            hub_entity = self.hub_class.objects.get(pk=data['hub_entity_id'])
+        else:
+            hub_entity = self.hub_class()
         db_creator = DbCreator(
             hub_entity, self._primary_satellite_classes
         )
