@@ -32,19 +32,19 @@ urlpatterns = [
         views.TransactionCategoryMapCreateView.as_view(),
         name="transaction_category_map_create",
     ),
-    #path(
-    #    "edit_transcation_category_map/<int:account_id>/<int:pk>",
-    #    views.TransactionCategoryMapUpdateView.as_view(),
-    #    name="transaction_category_map_edit",
-    #),
+    path(
+        "category/<int:pk>/update/<int:account_id>",
+        views.TransactionCategoryMapUpdateView.as_view(),
+        name="transaction_category_map_edit",
+    ),
     path(
         "category/<int:pk>/details/<int:account_id>",
         views.TransactionCategoryMapDetailView.as_view(),
         name="transaction_category_map_details",
     ),
-    #path(
-    #    "delete_transcation_category_map/<int:account_id>/<int:pk>",
-    #    views.TransactionCategoryMapDeleteView.as_view(),
-    #    name="transaction_category_map_delete",
-    #),
+    path(
+        "delete_transcation_category_map/<int:account_id>/<int:pk>",
+        views.TransactionCategoryMapDeleteView.as_view(),
+        name="transaction_category_map_delete",
+    ),
 ]

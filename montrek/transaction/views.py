@@ -29,6 +29,7 @@ from baseclasses.repositories import db_helper
 from baseclasses.views import MontrekDetailView
 from baseclasses.views import MontrekCreateView
 from baseclasses.views import MontrekUpdateView
+from baseclasses.views import MontrekDeleteView
 from baseclasses.dataclasses.table_elements import StringTableElement
 from baseclasses.dataclasses.table_elements import DateTableElement
 from baseclasses.dataclasses.table_elements import EuroTableElement
@@ -141,29 +142,6 @@ class TransactionUpdateView(MontrekUpdateView):
         return context
 
 
-class SuccessURLTransactionCategoryMapMixin(
-    CreateView
-):  # pylint: disable=too-few-public-methods
-    def get_success_url(self):
-        account_id = self.kwargs["account_id"]
-        return reverse(
-            "account_view_transaction_category_map", kwargs={"pk": account_id}
-        )
-
-
-class SuccessURLTransactionTableMixin(
-    CreateView
-):  # pylint: disable=too-few-public-methods
-    def get_success_url(self):
-        account_id = self.kwargs["account_id"]
-        return reverse(
-            "bank_account_view_transactions", kwargs={"account_id": account_id}
-        )
-
-
-
-
-
 class TransactionCategoryMapDetailView(MontrekDetailView):
     repository = TransactionCategoryMapRepository
     page_class = TransactionCategoryMapPage
@@ -224,18 +202,25 @@ class TransactionCategoryMapCreateView(FromAccountCreateViewMixin):
         return return_url
 
 
+class TransactionCategoryMapUpdateView(MontrekUpdateView):
+    repository = TransactionCategoryMapRepository
+    form_class = TransactionCategoryMapCreateForm
+    account_link_name = "link_transaction_category_map_account"
+    page_class = TransactionCategoryMapPage
 
+    def get_form(self):
+        form = super().get_form()
+        account_hub = (
+            AccountRepository({}).std_queryset().get(pk=self.kwargs["account_id"])
+        )
+        form[self.account_link_name].initial = account_hub
+        return form
 
-class TransactionCategoryMapUpdateView(
-):
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["tag"] = "Edit"
-        return context
+    def get_success_url(self):
+        account_id = self.kwargs["account_id"]
+        return reverse("account_view_transactions", kwargs={"pk": account_id})
 
-
-class TransactionCategoryMapDeleteView(
-):
+class TransactionCategoryMapDeleteView(MontrekDeleteView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["tag"] = "Delete"
