@@ -64,10 +64,7 @@ class TestTransactionUpdateView(TestCase):
 class TestTransactionCategoryMapDetailsView(TestCase):
     def setUp(self):
         self.test_transaction_category_map = TransactionCategoryMapSatelliteFactory()
-        self.account = AccountStaticSatelliteFactory().hub_entity
-        self.account.link_account_transaction_category_map.add(
-            self.test_transaction_category_map.hub_entity
-        )
+        self.account = self.test_transaction_category_map.hub_entity.link_transaction_category_map_account.first()
 
     def test_view_return_correct_html(self):
         url = reverse(
@@ -79,3 +76,33 @@ class TestTransactionCategoryMapDetailsView(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "montrek_details.html")
+
+class TestTransactionCategoryMapCreateView(TestCase):
+    def setUp(self):
+        self.account = AccountStaticSatelliteFactory().hub_entity
+
+    def test_view_return_correct_html(self):
+        url = reverse(
+            "transaction_category_map_create",
+            kwargs={"account_id": self.account.id},
+        )
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "montrek_create.html")
+
+    def test_view_post_success(self):
+        url = reverse(
+            "transaction_category_map_create",
+            kwargs={"account_id": self.account.id},
+        )
+        data = {
+            "field": "transaction_party",
+            "value": "123",
+            "category": "TestCat",
+            "is_regex": False,
+            "link_transaction_category_map_account": self.account.id,
+        }
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(self.account.link_account_transaction_category_map.count(), 1)
+

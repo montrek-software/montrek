@@ -28,9 +28,9 @@ urlpatterns = [
         name="transaction_category_add_form_with_iban",
     ),
     path(
-        "add_transaction_category/<int:account_id>",
+        "category/create/<int:account_id>",
         views.TransactionCategoryMapCreateView.as_view(),
-        name="transaction_category_add_form",
+        name="transaction_category_map_create",
     ),
     path(
         "edit_transcation_category_map/<int:account_id>/<int:pk>",

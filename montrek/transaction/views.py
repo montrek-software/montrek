@@ -5,6 +5,7 @@ from django.urls import reverse
 from django.http import HttpResponseRedirect
 from transaction.forms import TransactionCategoryMapSatelliteForm
 from transaction.forms import TransactionCreateForm
+from transaction.forms import TransactionCategoryMapCreateForm
 from transaction.repositories.transaction_account_queries import (
     new_transaction_to_account,
 )
@@ -88,10 +89,9 @@ class TransactionDetailView(MontrekDetailView):
         ]
 
 
-class TransactionCreateFromAccountView(MontrekCreateView):
-    repository = TransactionRepository
+class FromAccountCreateViewMixin(MontrekCreateView):
     page_class = AccountPage
-    form_class = TransactionCreateForm
+    account_link_name = ""
 
     def get_success_url(self):
         account_id = self.kwargs["account_id"]
@@ -102,7 +102,7 @@ class TransactionCreateFromAccountView(MontrekCreateView):
         account_hub = (
             AccountRepository({}).std_queryset().get(pk=self.kwargs["account_id"])
         )
-        form["link_transaction_account"].initial = account_hub
+        form[self.account_link_name].initial = account_hub
         return form
 
     def get_context_data(self, **kwargs):
@@ -110,6 +110,12 @@ class TransactionCreateFromAccountView(MontrekCreateView):
         self.kwargs["pk"] = self.kwargs["account_id"]
         context = super().get_context_data(**kwargs)
         return context
+
+
+class TransactionCreateFromAccountView(FromAccountCreateViewMixin):
+    repository = TransactionRepository
+    form_class = TransactionCreateForm
+    account_link_name = "link_transaction_account"
 
 
 class TransactionUpdateView(MontrekUpdateView):
@@ -210,10 +216,12 @@ class TransactionCategoryMapShowEntriesView(
         )
         return context
 
+
 class TransactionCategoryMapDetailView(MontrekDetailView):
-    repository=TransactionCategoryMapRepository
+    repository = TransactionCategoryMapRepository
     page_class = TransactionCategoryMapPage
     title = "Transaction Category Map Details"
+
     @property
     def elements(self) -> list:
         return [
@@ -242,14 +250,11 @@ class TransactionCategoryMapDetailView(MontrekDetailView):
             ),
         ]
 
-class TransactionCategoryMapCreateView(
-    TransactionCategoryMapTemplateView, SuccessURLTransactionCategoryMapMixin
-):
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["tag"] = "Add"
-        return context
 
+class TransactionCategoryMapCreateView(FromAccountCreateViewMixin):
+    repository = TransactionCategoryMapRepository
+    account_link_name = "link_transaction_category_map_account"
+    form_class = TransactionCategoryMapCreateForm
 
 class TransactionCategoryMapCreateFromTransactionView(
     TransactionCategoryMapCreateView,

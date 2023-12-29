@@ -31,3 +31,15 @@ class TransactionCreateForm(MontrekCreateForm):
             link_name="link_transaction_transaction_category",
             queryset=TransactionCategoryRepository({}).std_queryset(),
         )
+
+class TransactionCategoryMapCreateForm(MontrekCreateForm):
+    class Meta:
+        exclude = ('hash_searchfield',)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.add_link_choice_field(
+            display_field="account_name",
+            link_name="link_transaction_category_map_account",
+            queryset=AccountRepository({}).std_queryset(),
+        )

@@ -75,7 +75,7 @@ class AccountPage(MontrekPage):
         action_add_transaction_category = ActionElement(
             icon="plus",
             link=reverse(
-                "transaction_category_add_form", kwargs={"account_id": account_id}
+                "transaction_category_map_create", kwargs={"account_id": account_id}
             ),
             action_id="id_add_transaction_category",
             hover_text="Add transaction category",
