@@ -84,14 +84,11 @@ class TransactionDetailView(MontrekDetailView):
         ]
 
 
-
-
-
-
-class TransactionCreateFromAccountView(MontrekCreateView ):
+class TransactionCreateFromAccountView(MontrekCreateView):
     repository = TransactionRepository
     page_class = AccountPage
     form_class = TransactionCreateForm
+
     def get_success_url(self):
         account_id = self.kwargs["account_id"]
         return reverse("account_view_transactions", kwargs={"pk": account_id})
@@ -111,11 +108,11 @@ class TransactionCreateFromAccountView(MontrekCreateView ):
         return context
 
 
-
-class TransactionUpdateView(MontrekUpdateView ):
+class TransactionUpdateView(MontrekUpdateView):
     repository = TransactionRepository
     page_class = TransactionPage
     form_class = TransactionCreateForm
+
     def get_success_url(self):
         transaction_pk = self.kwargs["pk"]
         return reverse("transaction_details", kwargs={"pk": transaction_pk})
@@ -130,8 +127,9 @@ class TransactionUpdateView(MontrekUpdateView ):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['account_id'] = context['form'].initial['link_transaction_account'].id
+        context["account_id"] = context["form"].initial["link_transaction_account"].id
         return context
+
 
 class SuccessURLTransactionCategoryMapMixin(
     CreateView
@@ -249,10 +247,3 @@ class TransactionCategoryMapDeleteView(
         transaction_category_entry.hub_entity.is_deleted = True
         transaction_category_entry.hub_entity.save()
         return HttpResponseRedirect(self.get_success_url())
-
-
-def _get_account_statics(account_id: int):
-    account_hub = db_helper.get_hub_by_id(account_id, AccountHub)
-    return db_helper.select_satellite(account_hub, AccountStaticSatellite)
-
-
