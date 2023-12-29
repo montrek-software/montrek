@@ -54,9 +54,14 @@ class TransactionCategoryMapRepository(MontrekRepository):
             state_date_end__gte=self.reference_date,
         )
         transaction_repository = TransactionRepository()
+        if data['is_regex']:
+            transaction_kwargs = {data["field"]+'__regex': data["value"]}
+        else:
+            transaction_kwargs = {data["field"]: data["value"]}
+            
         transactions = transaction_repository.get_queryset_with_account().filter(
             account_id=account_hub.id,
-            **{data["field"]: data["value"]},
+            **transaction_kwargs,
         )
         creation_date = timezone.now()
         for transaction in transactions:
