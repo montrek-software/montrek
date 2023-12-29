@@ -240,6 +240,13 @@ class AccountTransactionCategoryMapView(MontrekListView):
             StringTableElement(name="Category", attr="category"),
             BooleanTableElement(name="Is Regex", attr="is_regex"),
             LinkTableElement(
+                name="Details",
+                url="transaction_category_map_details",
+                kwargs={"pk": "id", "account_id": str(self.kwargs["pk"])},
+                icon="eye-open",
+                hover_text="Show Details",
+            ),
+            LinkTableElement(
                 name="Edit",
                 url="transaction_category_map_edit",
                 kwargs={"pk": "id", "account_id": str(self.kwargs["pk"])},

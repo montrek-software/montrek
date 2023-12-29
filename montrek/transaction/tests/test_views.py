@@ -2,6 +2,7 @@ from django.test import TestCase
 from django.urls import reverse
 from transaction.tests.factories.transaction_factories import (
     TransactionSatelliteFactory,
+    TransactionCategoryMapSatelliteFactory,
 )
 from account.tests.factories.account_factories import AccountStaticSatelliteFactory
 
@@ -59,3 +60,22 @@ class TestTransactionUpdateView(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "montrek_create.html")
+
+class TestTransactionCategoryMapDetailsView(TestCase):
+    def setUp(self):
+        self.test_transaction_category_map = TransactionCategoryMapSatelliteFactory()
+        self.account = AccountStaticSatelliteFactory().hub_entity
+        self.account.link_account_transaction_category_map.add(
+            self.test_transaction_category_map.hub_entity
+        )
+
+    def test_view_return_correct_html(self):
+        url = reverse(
+            "transaction_category_map_details",
+            kwargs={"pk": self.test_transaction_category_map.hub_entity.id,
+                    "account_id": self.account.id,
+                   },
+        )
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "montrek_details.html")

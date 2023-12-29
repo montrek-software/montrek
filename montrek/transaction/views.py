@@ -15,9 +15,12 @@ from transaction.repositories.transaction_category_queries import (
     set_transaction_category_by_map_entry,
 )
 from transaction.repositories.transaction_repository import TransactionRepository
+from transaction.repositories.transaction_category_repository import (
+    TransactionCategoryMapRepository,
+)
 from transaction.models import TransactionCategoryMapSatellite
 from transaction.pages import TransactionPage
-from account.models import AccountStaticSatellite
+from transaction.pages import TransactionCategoryMapPage
 from account.models import AccountHub
 from account.pages import AccountPage
 from account.repositories.account_repository import AccountRepository
@@ -29,6 +32,7 @@ from baseclasses.dataclasses.table_elements import StringTableElement
 from baseclasses.dataclasses.table_elements import DateTableElement
 from baseclasses.dataclasses.table_elements import EuroTableElement
 from baseclasses.dataclasses.table_elements import FloatTableElement
+from baseclasses.dataclasses.table_elements import BooleanTableElement
 from baseclasses.dataclasses.table_elements import LinkTextTableElement
 from asset.models import AssetStaticSatellite
 from asset.models import AssetHub
@@ -206,6 +210,37 @@ class TransactionCategoryMapShowEntriesView(
         )
         return context
 
+class TransactionCategoryMapDetailView(MontrekDetailView):
+    repository=TransactionCategoryMapRepository
+    page_class = TransactionCategoryMapPage
+    title = "Transaction Category Map Details"
+    @property
+    def elements(self) -> list:
+        return [
+            StringTableElement(
+                attr="value",
+                name="Value",
+            ),
+            StringTableElement(
+                attr="field",
+                name="Field",
+            ),
+            StringTableElement(
+                attr="category",
+                name="Category",
+            ),
+            BooleanTableElement(
+                attr="is_regex",
+                name="Is Regex",
+            ),
+            LinkTextTableElement(
+                name="Account",
+                url="account_view_transaction_category_map",
+                kwargs={"pk": "account_id"},
+                text="account_name",
+                hover_text="View Account",
+            ),
+        ]
 
 class TransactionCategoryMapCreateView(
     TransactionCategoryMapTemplateView, SuccessURLTransactionCategoryMapMixin

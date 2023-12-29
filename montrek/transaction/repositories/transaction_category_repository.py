@@ -4,6 +4,8 @@ from transaction.models import TransactionCategoryMapHub
 from transaction.models import TransactionCategoryMapSatellite
 from transaction.models import TransactionCategoryHub
 from transaction.models import TransactionCategorySatellite
+from account.models import AccountStaticSatellite
+from account.models import LinkAccountTransactionCategoryMap
 
 class TransactionCategoryMapRepository(MontrekRepository):
     hub_class = TransactionCategoryMapHub
@@ -19,6 +21,14 @@ class TransactionCategoryMapRepository(MontrekRepository):
                 'is_regex',
             ],
             reference_date)
+        self.add_linked_satellites_field_annotations(
+            AccountStaticSatellite,
+            LinkAccountTransactionCategoryMap,
+            ["account_name", "hub_entity_id"],
+            self.reference_date,
+            reversed_link=True,
+        )
+        self.rename_field("hub_entity_id", "account_id" )
         return self.build_queryset()
 
 class TransactionCategoryRepository(MontrekRepository):
