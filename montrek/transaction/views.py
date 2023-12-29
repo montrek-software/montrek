@@ -1,20 +1,6 @@
-from django.shortcuts import render
-from django.shortcuts import redirect
-from django.views.generic.edit import CreateView
 from django.urls import reverse
-from django.http import HttpResponseRedirect
-from transaction.forms import TransactionCategoryMapSatelliteForm
 from transaction.forms import TransactionCreateForm
 from transaction.forms import TransactionCategoryMapCreateForm
-from transaction.repositories.transaction_account_queries import (
-    new_transaction_to_account,
-)
-from transaction.repositories.transaction_category_queries import (
-    add_transaction_category_map_entry,
-)
-from transaction.repositories.transaction_category_queries import (
-    set_transaction_category_by_map_entry,
-)
 from transaction.repositories.transaction_repository import TransactionRepository
 from transaction.repositories.transaction_category_repository import (
     TransactionCategoryMapRepository,
@@ -22,10 +8,8 @@ from transaction.repositories.transaction_category_repository import (
 from transaction.models import TransactionCategoryMapSatellite
 from transaction.pages import TransactionPage
 from transaction.pages import TransactionCategoryMapPage
-from account.models import AccountHub
 from account.pages import AccountPage
 from account.repositories.account_repository import AccountRepository
-from baseclasses.repositories import db_helper
 from baseclasses.views import MontrekDetailView
 from baseclasses.views import MontrekCreateView
 from baseclasses.views import MontrekUpdateView
@@ -36,8 +20,6 @@ from baseclasses.dataclasses.table_elements import EuroTableElement
 from baseclasses.dataclasses.table_elements import FloatTableElement
 from baseclasses.dataclasses.table_elements import BooleanTableElement
 from baseclasses.dataclasses.table_elements import LinkTextTableElement
-from asset.models import AssetStaticSatellite
-from asset.models import AssetHub
 
 
 class TransactionDetailView(MontrekDetailView):
@@ -221,15 +203,7 @@ class TransactionCategoryMapUpdateView(MontrekUpdateView):
         return reverse("account_view_transactions", kwargs={"pk": account_id})
 
 class TransactionCategoryMapDeleteView(MontrekDeleteView):
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["tag"] = "Delete"
-        return context
-
-    def form_valid(self, form):
-        transaction_category_entry = TransactionCategoryMapSatellite.objects.get(
-            pk=self.kwargs["pk"]
-        )
-        transaction_category_entry.hub_entity.is_deleted = True
-        transaction_category_entry.hub_entity.save()
-        return HttpResponseRedirect(self.get_success_url())
+    repository = TransactionCategoryMapRepository
+    def get_success_url(self):
+        account_id = self.kwargs["account_id"]
+        return reverse("account_view_transactions", kwargs={"pk": account_id})
