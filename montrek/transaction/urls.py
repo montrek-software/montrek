@@ -19,12 +19,12 @@ urlpatterns = [
     ),
     path(
         "add_transaction_category/<int:account_id>/cp/<str:counterparty>",
-        views.TransactionCategoryMapCreateFromTransactionView.as_view(),
+        views.TransactionCategoryMapCreateView.as_view(),
         name="transaction_category_add_form_with_counterparty",
     ),
     path(
         "add_transaction_category/<int:account_id>/iban/<str:iban>",
-        views.TransactionCategoryMapCreateFromTransactionView.as_view(),
+        views.TransactionCategoryMapCreateView.as_view(),
         name="transaction_category_add_form_with_iban",
     ),
     path(
@@ -32,19 +32,19 @@ urlpatterns = [
         views.TransactionCategoryMapCreateView.as_view(),
         name="transaction_category_map_create",
     ),
-    path(
-        "edit_transcation_category_map/<int:account_id>/<int:pk>",
-        views.TransactionCategoryMapUpdateView.as_view(),
-        name="transaction_category_map_edit",
-    ),
+    #path(
+    #    "edit_transcation_category_map/<int:account_id>/<int:pk>",
+    #    views.TransactionCategoryMapUpdateView.as_view(),
+    #    name="transaction_category_map_edit",
+    #),
     path(
         "category/<int:pk>/details/<int:account_id>",
         views.TransactionCategoryMapDetailView.as_view(),
         name="transaction_category_map_details",
     ),
-    path(
-        "delete_transcation_category_map/<int:account_id>/<int:pk>",
-        views.TransactionCategoryMapDeleteView.as_view(),
-        name="transaction_category_map_delete",
-    ),
+    #path(
+    #    "delete_transcation_category_map/<int:account_id>/<int:pk>",
+    #    views.TransactionCategoryMapDeleteView.as_view(),
+    #    name="transaction_category_map_delete",
+    #),
 ]

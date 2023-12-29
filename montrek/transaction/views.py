@@ -161,60 +161,7 @@ class SuccessURLTransactionTableMixin(
         )
 
 
-class TransactionCategoryMapTemplateView(CreateView):
-    model = TransactionCategoryMapSatellite
-    form_class = TransactionCategoryMapSatelliteForm
-    template_name = (
-        "transaction_category_map_form.html"  # The name of your HTML template
-    )
-    context_object_name = "transaction_category_map"
 
-    def get_initial(self):
-        initial = super().get_initial()
-
-        counterparty = self.kwargs.get("counterparty", None)
-        if counterparty:
-            initial["value"] = counterparty
-            initial["field"] = "Transaction Party"
-
-        iban = self.kwargs.get("iban", None)
-        if iban:
-            initial["value"] = iban
-            initial["field"] = TransactionCategoryMapSatellite.TRANSACTION_PARTY_IBAN
-        return initial
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["account_id"] = self.kwargs["account_id"]
-        context["iban"] = self.kwargs.get("iban", None)
-        context["counterparty"] = self.kwargs.get("counterparty", None)
-        return context
-
-    def form_valid(self, form):
-        account_id = self.kwargs["account_id"]
-        account_hub = db_helper.get_hub_by_id(account_id, AccountHub)
-        transaction_category_map_entry = add_transaction_category_map_entry(
-            account_hub, form.cleaned_data
-        )
-        set_transaction_category_by_map_entry(
-            transaction_category_map_entry,
-        )
-        return HttpResponseRedirect(self.get_success_url())
-
-
-class TransactionCategoryMapShowEntriesView(
-    TransactionCategoryMapTemplateView, SuccessURLTransactionCategoryMapMixin
-):
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["pk"] = self.kwargs["pk"]
-        transaction_category_entry = TransactionCategoryMapSatellite.objects.get(
-            pk=self.kwargs["pk"]
-        )
-        context["form"] = TransactionCategoryMapSatelliteForm(
-            instance=transaction_category_entry
-        )
-        return context
 
 
 class TransactionCategoryMapDetailView(MontrekDetailView):
@@ -256,19 +203,30 @@ class TransactionCategoryMapCreateView(FromAccountCreateViewMixin):
     account_link_name = "link_transaction_category_map_account"
     form_class = TransactionCategoryMapCreateForm
 
+    def get_form(self):
+        form = super().get_form()
+        initial = {}
+        counterparty = self.kwargs.get("counterparty", None)
+        if counterparty:
+            initial["value"] = counterparty
+            initial["field"] = "Transaction Party"
+
+        iban = self.kwargs.get("iban", None)
+        if iban:
+            initial["value"] = iban
+            initial["field"] = TransactionCategoryMapSatellite.TRANSACTION_PARTY_IBAN
+        for key, value in initial.items():
+            form[key].initial = value
+        return form
+
     def form_valid(self, form):
         return_url = super().form_valid(form)
         return return_url
 
-class TransactionCategoryMapCreateFromTransactionView(
-    TransactionCategoryMapCreateView,
-    SuccessURLTransactionTableMixin,
-):
-    pass
+
 
 
 class TransactionCategoryMapUpdateView(
-    TransactionCategoryMapShowEntriesView, SuccessURLTransactionCategoryMapMixin
 ):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -277,7 +235,6 @@ class TransactionCategoryMapUpdateView(
 
 
 class TransactionCategoryMapDeleteView(
-    TransactionCategoryMapShowEntriesView, SuccessURLTransactionCategoryMapMixin
 ):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
