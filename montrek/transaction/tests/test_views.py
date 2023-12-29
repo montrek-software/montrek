@@ -80,6 +80,10 @@ class TestTransactionCategoryMapDetailsView(TestCase):
 class TestTransactionCategoryMapCreateView(TestCase):
     def setUp(self):
         self.account = AccountStaticSatelliteFactory().hub_entity
+        self.test_transaction = TransactionSatelliteFactory(
+            transaction_party="123"
+        )
+        self.account.link_account_transaction.add(self.test_transaction.hub_entity)
 
     def test_view_return_correct_html(self):
         url = reverse(
@@ -105,4 +109,5 @@ class TestTransactionCategoryMapCreateView(TestCase):
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(self.account.link_account_transaction_category_map.count(), 1)
+        self.assertEqual(self.test_transaction.hub_entity.link_transaction_transaction_category.count(), 1) 
 
