@@ -81,9 +81,9 @@ class TestTransactionCategoryMapCreateView(TestCase):
     def setUp(self):
         self.account = AccountStaticSatelliteFactory().hub_entity
         self.test_transaction = TransactionSatelliteFactory(
-            transaction_party="123"
+            transaction_party="123",
+            hub_entity__account=self.account,
         )
-        self.account.link_account_transaction.add(self.test_transaction.hub_entity)
 
     def test_view_return_correct_html(self):
         url = reverse(

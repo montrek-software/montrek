@@ -256,6 +256,10 @@ class TransactionCategoryMapCreateView(FromAccountCreateViewMixin):
     account_link_name = "link_transaction_category_map_account"
     form_class = TransactionCategoryMapCreateForm
 
+    def form_valid(self, form):
+        return_url = super().form_valid(form)
+        return return_url
+
 class TransactionCategoryMapCreateFromTransactionView(
     TransactionCategoryMapCreateView,
     SuccessURLTransactionTableMixin,

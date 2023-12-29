@@ -54,7 +54,7 @@ class DbCreator:
         reference_hub = self._save_satellites_and_return_reference_hub(
             selected_satellites, creation_date
         )
-        self._create_links(data, reference_hub, creation_date)
+        self.create_links(data, reference_hub, creation_date)
 
     def _process_new_satellite(
         self,
@@ -176,18 +176,18 @@ class DbCreator:
         new_sat.state_date_start = created_at
         new_sat.save()
 
-    def _create_links(self, data, reference_hub, creation_date):
+    def create_links(self, data, reference_hub, creation_date):
         for field, value in data.items():
             if value is None or not hasattr(reference_hub, field):
                 continue
 
             link_class = getattr(reference_hub, field).through
-            new_link = self._create_new_link(
+            new_link = self.create_new_link(
                 link_class, reference_hub, value, creation_date
             )
             new_link.save()
 
-    def _create_new_link(self, link_class, reference_hub, value, creation_date):
+    def create_new_link(self, link_class, reference_hub, value, creation_date):
         if link_class.hub_in.field.related_model == reference_hub.__class__:
             new_link = link_class(hub_in=reference_hub, hub_out=value)
             return self._process_link(new_link, "hub_in", creation_date)
