@@ -84,7 +84,7 @@ class MontrekRepository:
             fields.extend(satellite_class.get_value_fields())
         return fields
 
-    def std_create_object(self, data: Dict[str, Any]):
+    def std_create_object(self, data: Dict[str, Any]) -> MontrekHubABC:
         self.std_queryset()
         if 'hub_entity_id' in data and data['hub_entity_id'] and data['hub_entity_id'] != '':
             hub_entity = self.hub_class.objects.get(pk=data['hub_entity_id'])
@@ -93,7 +93,7 @@ class MontrekRepository:
         db_creator = DbCreator(
             hub_entity, self._primary_satellite_classes
         )
-        db_creator.create(data)
+        return db_creator.create(data)
 
     def add_satellite_fields_annotations(
         self,

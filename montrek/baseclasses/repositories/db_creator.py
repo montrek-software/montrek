@@ -55,6 +55,7 @@ class DbCreator:
             selected_satellites, creation_date
         )
         self.create_links(data, reference_hub, creation_date)
+        return reference_hub
 
     def _process_new_satellite(
         self,

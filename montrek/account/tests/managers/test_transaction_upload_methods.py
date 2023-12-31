@@ -65,5 +65,5 @@ class TestDKBTransactionUpload(TestCase):
         self.assertEqual(len(transactions), 14)
         transaction_price = 0
         for transaction in transactions:
-            transaction_price += transaction.transaction_price
+            transaction_price += float(transaction.transaction_price)
         self.assertAlmostEqual(transaction_price, -9197.15)

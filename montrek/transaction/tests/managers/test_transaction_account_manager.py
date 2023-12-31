@@ -20,6 +20,12 @@ from transaction.repositories.transaction_repository import TransactionRepositor
 class TestModelUtils(TestCase):
     def setUp(self):
         self.account = account_factories.AccountStaticSatelliteFactory.create()
+        transaction_factories.TransactionCategoryMapSatelliteFactory(
+            field="transaction_party",
+            value="Test Party 1",
+            category="Test Category 1",
+            hub_entity__accounts=[self.account.hub_entity],
+        )
 
     def test_new_transactions_to_account_from_df_wrong_columns(self):
         account_hub = AccountHub.objects.last()
@@ -34,7 +40,7 @@ class TestModelUtils(TestCase):
         )
 
     def test_new_transactions_to_account_from_df(self):
-        account_hub = account_factories.AccountHubFactory.create()
+        account_hub = self.account.hub_entity
         test_df = pd.DataFrame(
             {
                 "transaction_date": [
@@ -51,9 +57,9 @@ class TestModelUtils(TestCase):
                 ],
                 "transaction_party": ["Test Party 1", "Test Party 2", "Test Party 3"],
                 "transaction_party_iban": [
+                    "XX123456789012345678901234567891",
                     "XX123456789012345678901234567890",
-                    "XX123456789012345678901234567890",
-                    "XX123456789012345678901234567890",
+                    "XX123456789012345678901234567892",
                 ],
             }
         )
@@ -69,6 +75,7 @@ class TestModelUtils(TestCase):
         self.assertEqual(
             new_transactions[0].transaction_description, "Test transaction 1"
         )
+        self.assertEqual(new_transactions[0].transaction_category, "Test Category 1")
         self.assertEqual(new_transactions[1].transaction_date, montrek_time(2022, 1, 2))
         self.assertEqual(new_transactions[1].transaction_amount, 2)
         self.assertAlmostEqual(new_transactions[1].transaction_price, Decimal(252.35))
