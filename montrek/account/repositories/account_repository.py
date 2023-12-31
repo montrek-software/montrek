@@ -24,9 +24,6 @@ from transaction.models import TransactionSatellite
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from baseclasses.repositories.montrek_repository import paginated_table
 from depot.repositories.depot_repository import DepotRepository
-from transaction.repositories.transaction_account_queries import (
-    get_transactions_by_account_hub,
-)
 from transaction.repositories.transaction_repository import TransactionRepository
 from transaction.repositories.transaction_category_repository import TransactionCategoryMapRepository
 from file_upload.repositories.file_upload_registry_repository import (
