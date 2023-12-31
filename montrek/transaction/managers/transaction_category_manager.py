@@ -16,26 +16,12 @@ class TransactionCategoryManager:
         self, transactions_queryset: QuerySet, transaction_category_map_query: QuerySet
     ):
         for category_map in transaction_category_map_query:
-
             category = category_map.category
             transaction_category = self._get_transaction_category_or_create(category)
-            if category_map.is_regex:
-                transaction_kwargs = {category_map.field+'__regex': category_map.value}
-            else:
-                transaction_kwargs = {category_map.field: category_map.value}
-            transactions = transactions_queryset.filter(
-                **transaction_kwargs,
+            transactions = self._get_transactions_to_category(
+                category_map, transactions_queryset
             )
-            creation_date = timezone.now()
-            for transaction in transactions:
-                db_creator = DbCreator(transaction, [TransactionSatellite])
-                link = db_creator.create_new_link(
-                    LinkTransactionTransactionCategory,
-                    transaction,
-                    transaction_category,
-                    creation_date,
-                )
-                link.save()
+            self._create_transaction_category_links(transactions, transaction_category)
 
     def _get_transaction_category_or_create(self, category: str):
         transaction_category_or_none = (
@@ -51,3 +37,25 @@ class TransactionCategoryManager:
                 typename=category,
             )
         return transaction_category_or_none.get()
+
+    def _get_transactions_to_category(self, category_map, transactions_queryset):
+        if category_map.is_regex:
+            transaction_kwargs = {category_map.field + "__regex": category_map.value}
+        else:
+            transaction_kwargs = {category_map.field: category_map.value}
+        return transactions_queryset.filter(
+            **transaction_kwargs,
+        )
+
+    def _create_transaction_category_links(self, transactions, transaction_category):
+        for transaction in transactions:
+            creation_date = timezone.now()
+            for transaction in transactions:
+                db_creator = DbCreator(transaction, [TransactionSatellite])
+                link = db_creator.create_new_link(
+                    LinkTransactionTransactionCategory,
+                    transaction,
+                    transaction_category,
+                    creation_date,
+                )
+                link.save()
