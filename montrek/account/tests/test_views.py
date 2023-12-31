@@ -137,9 +137,8 @@ class TestAccountUploadView(TestCase):
 class TestAccountTransactionCategoryMapView(TestCase):
     def setUp(self):
         self.acc = AccountStaticSatelliteFactory.create()
-        tr_cat_map = TransactionCategoryMapSatelliteFactory.create()
-        tr_cat_map.hub_entity.link_transaction_category_map_account.add(
-            self.acc.hub_entity
+        tr_cat_map = TransactionCategoryMapSatelliteFactory.create(
+            hub_entity__accounts=(self.acc.hub_entity,)
         )
 
     def test_account_transaction_category_map_view_returns_correct_html(self):

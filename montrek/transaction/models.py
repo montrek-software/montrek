@@ -1,10 +1,6 @@
-import hashlib
 from django.db import models
 from baseclasses import models as baseclass_models
 from account.managers.validators import montrek_iban_validator
-from transaction.repositories.transaction_category_queries import (
-    get_transaction_category_by_transaction,
-)
 
 
 # Create your models here.
@@ -61,10 +57,6 @@ class TransactionSatellite(baseclass_models.MontrekSatelliteABC):
     @property
     def transaction_value(self):
         return self.transaction_amount * self.transaction_price
-
-    @property
-    def transaction_category(self):
-        return get_transaction_category_by_transaction(self)
 
 
 class TransactionTypeHub(baseclass_models.MontrekHubABC):
