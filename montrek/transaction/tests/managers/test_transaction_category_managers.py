@@ -1,7 +1,6 @@
 from django.test import TestCase
 from transaction.tests.factories.transaction_factories import TransactionSatelliteFactory
 from transaction.tests.factories.transaction_factories import TransactionCategoryMapSatelliteFactory
-from transaction.models import TransactionSatellite
 from transaction.models import TransactionCategoryMapSatellite
 from transaction.managers.transaction_category_manager import TransactionCategoryManager
 from transaction.repositories.transaction_repository import TransactionRepository
@@ -27,14 +26,15 @@ class TestTransactionCategoryManagers(TestCase):
         )
 
     def test_assign_transaction_categories_to_transactions(self):
-        transactions_queryset = TransactionSatellite.objects.all()
-        self.assertEqual(len(transactions_queryset), 2)
-        transaction_category_map_queryset = TransactionCategoryMapSatellite.objects.all()
-        tc_manager = TransactionCategoryManager()
-        tc_manager.assign_transaction_categories_to_transactions(transactions_queryset,
-                                                                 transaction_category_map_queryset)
         transactions = TransactionRepository().std_queryset()
         self.assertEqual(len(transactions), 2)
+        transaction_category_map_queryset = TransactionCategoryMapSatellite.objects.all()
+        tc_manager = TransactionCategoryManager()
+        tc_manager.assign_transaction_categories_to_transactions(transactions,
+                                                                 transaction_category_map_queryset)
+        transaction_categories = tc_manager.transaction_category_repository.std_queryset()
+        self.assertEqual(len(transaction_categories), 2)
+        transactions = TransactionRepository().std_queryset()
         self.assertEqual(transactions[0].transaction_category, 'Coffee')
         self.assertEqual(transactions[1].transaction_category, 'Tea')
 
