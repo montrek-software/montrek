@@ -8,6 +8,7 @@ from transaction.repositories.transaction_category_repository import (
 from transaction.models import TransactionCategoryMapSatellite
 from transaction.pages import TransactionPage
 from transaction.pages import TransactionCategoryMapPage
+from transaction.managers.transaction_category_manager import TransactionCategoryManager
 from account.pages import AccountPage
 from account.repositories.account_repository import AccountRepository
 from baseclasses.views import MontrekDetailView
@@ -181,6 +182,22 @@ class TransactionCategoryMapCreateView(FromAccountCreateViewMixin):
 
     def form_valid(self, form):
         return_url = super().form_valid(form)
+        # Pick up created transaction category map entry and create transaction category
+        data=form.cleaned_data
+        account_hub = data["link_transaction_category_map_account"]
+        data.pop("link_transaction_category_map_account")
+        data.pop("hub_entity_id")
+        transaction_category_map = TransactionCategoryMapRepository().std_queryset().filter(
+            **data
+        )
+        transaction_repository = TransactionRepository()
+        transactions = transaction_repository.get_queryset_with_account().filter(
+            account_id=account_hub.id,
+        )
+        TransactionCategoryManager().assign_transaction_categories_to_transactions(
+            transactions,
+            transaction_category_map,
+        )
         return return_url
 
 

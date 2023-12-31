@@ -38,42 +38,6 @@ class TransactionCategoryMapRepository(MontrekRepository):
         self.rename_field("hub_entity_id", "account_id")
         return self.build_queryset()
 
-    def std_create_object(self, data):
-        super().std_create_object(data)
-        account_hub = data["link_transaction_category_map_account"]
-        category = data["category"]
-        transaction_category_repository = TransactionCategoryRepository()
-        transaction_category_repository.std_create_object(
-            {
-                "typename": category,
-            }
-        )
-        transaction_category = transaction_category_repository.std_queryset().get(
-            typename=category,
-            state_date_start__lte=self.reference_date,
-            state_date_end__gte=self.reference_date,
-        )
-        transaction_repository = TransactionRepository()
-        if data['is_regex']:
-            transaction_kwargs = {data["field"]+'__regex': data["value"]}
-        else:
-            transaction_kwargs = {data["field"]: data["value"]}
-        transactions = transaction_repository.get_queryset_with_account().filter(
-            account_id=account_hub.id,
-            **transaction_kwargs,
-        )
-        creation_date = timezone.now()
-        for transaction in transactions:
-            db_creator = DbCreator(transaction, [TransactionSatellite])
-            link = db_creator.create_new_link(
-                LinkTransactionTransactionCategory,
-                transaction,
-                transaction_category,
-                creation_date,
-            )
-            link.save()
-
-
 
 class TransactionCategoryRepository(MontrekRepository):
     hub_class = TransactionCategoryHub
