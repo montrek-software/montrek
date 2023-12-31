@@ -58,7 +58,6 @@ class TransactionCategoryMapRepository(MontrekRepository):
             transaction_kwargs = {data["field"]+'__regex': data["value"]}
         else:
             transaction_kwargs = {data["field"]: data["value"]}
-            
         transactions = transaction_repository.get_queryset_with_account().filter(
             account_id=account_hub.id,
             **transaction_kwargs,
@@ -73,6 +72,7 @@ class TransactionCategoryMapRepository(MontrekRepository):
                 creation_date,
             )
             link.save()
+
 
 
 class TransactionCategoryRepository(MontrekRepository):
