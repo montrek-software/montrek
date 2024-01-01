@@ -35,7 +35,7 @@ urlpatterns = [
     path(
         "category/<int:pk>/update/<int:account_id>",
         views.TransactionCategoryMapUpdateView.as_view(),
-        name="transaction_category_map_edit",
+        name="transaction_category_map_update",
     ),
     path(
         "category/<int:pk>/details/<int:account_id>",

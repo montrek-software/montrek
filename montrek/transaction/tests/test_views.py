@@ -6,6 +6,7 @@ from transaction.tests.factories.transaction_factories import (
     TransactionCategorySatelliteFactory,
 )
 from transaction.repositories.transaction_repository import TransactionRepository
+from transaction.repositories.transaction_category_repository import TransactionCategoryMapRepository
 from account.tests.factories.account_factories import AccountStaticSatelliteFactory
 
 
@@ -145,3 +146,56 @@ class TestTransactionCategoryMapCreateView(TestCase):
             self.test_transaction.hub_entity.link_transaction_transaction_category.count(),
             1,
         )
+
+class TestTransactionCategoryMapUpdateView(TestCase):
+    def setUp(self):
+        self.account = AccountStaticSatelliteFactory().hub_entity
+        self.test_transaction = TransactionSatelliteFactory(
+            transaction_party="123",
+            hub_entity__account=self.account,
+        )
+        self.transaction_category_map = TransactionCategoryMapSatelliteFactory(
+            field="transaction_party",
+            value="123",
+            is_regex=False,
+            hub_entity__accounts=[self.account],
+        )
+
+    def test_view_return_correct_html(self):
+        url = reverse(
+            "transaction_category_map_update",
+            kwargs={
+                "pk": self.transaction_category_map.hub_entity.id,
+                "account_id": self.account.id,
+            },
+        )
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "montrek_create.html")
+
+    def test_view_post_success(self):
+        url = reverse(
+            "transaction_category_map_update",
+            kwargs={
+                "pk": self.transaction_category_map.hub_entity.id,
+                "account_id": self.account.id,
+            },
+        )
+        transaction_category_map_repository = TransactionCategoryMapRepository()
+        transaction_category_map = transaction_category_map_repository.std_queryset().first()
+        data = transaction_category_map_repository.object_to_dict(transaction_category_map)
+        data.update(
+            {
+                "category": "TestCat",
+                "link_transaction_category_map_account": self.account.id,
+            }
+        )
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(self.account.link_account_transaction_category_map.count(), 1)
+        self.assertEqual(
+            self.test_transaction.hub_entity.link_transaction_transaction_category.count(),
+            1,
+        )
+        transaction = TransactionRepository().std_queryset().first()
+        self.assertEqual(transaction.transaction_category, "TestCat")

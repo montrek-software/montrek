@@ -248,7 +248,7 @@ class AccountTransactionCategoryMapView(MontrekListView):
             ),
             LinkTableElement(
                 name="Edit",
-                url="transaction_category_map_edit",
+                url="transaction_category_map_update",
                 kwargs={"pk": "id", "account_id": str(self.kwargs["pk"])},
                 icon="edit",
                 hover_text="Edit",

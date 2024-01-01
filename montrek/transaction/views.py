@@ -159,7 +159,29 @@ class TransactionCategoryMapDetailView(MontrekDetailView):
         ]
 
 
-class TransactionCategoryMapCreateView(FromAccountCreateViewMixin):
+class CreateOrUpdateTransactionCategoryMapMixin:
+    def assign_transaction_categories_to_transactions(self, form):
+        # Pick up created transaction category map entry and create transaction category
+        data = form.cleaned_data
+        account_hub = data["link_transaction_category_map_account"]
+        data.pop("link_transaction_category_map_account")
+        data.pop("hub_entity_id")
+        transaction_category_map = (
+            TransactionCategoryMapRepository().std_queryset().filter(**data)
+        )
+        transaction_repository = TransactionRepository()
+        transactions = transaction_repository.get_queryset_with_account().filter(
+            account_id=account_hub.id,
+        )
+        TransactionCategoryManager().assign_transaction_categories_to_transactions(
+            transactions,
+            transaction_category_map,
+        )
+
+
+class TransactionCategoryMapCreateView(
+    FromAccountCreateViewMixin, CreateOrUpdateTransactionCategoryMapMixin
+):
     repository = TransactionCategoryMapRepository
     account_link_name = "link_transaction_category_map_account"
     form_class = TransactionCategoryMapCreateForm
@@ -182,26 +204,11 @@ class TransactionCategoryMapCreateView(FromAccountCreateViewMixin):
 
     def form_valid(self, form):
         return_url = super().form_valid(form)
-        # Pick up created transaction category map entry and create transaction category
-        data=form.cleaned_data
-        account_hub = data["link_transaction_category_map_account"]
-        data.pop("link_transaction_category_map_account")
-        data.pop("hub_entity_id")
-        transaction_category_map = TransactionCategoryMapRepository().std_queryset().filter(
-            **data
-        )
-        transaction_repository = TransactionRepository()
-        transactions = transaction_repository.get_queryset_with_account().filter(
-            account_id=account_hub.id,
-        )
-        TransactionCategoryManager().assign_transaction_categories_to_transactions(
-            transactions,
-            transaction_category_map,
-        )
+        self.assign_transaction_categories_to_transactions(form)
         return return_url
 
 
-class TransactionCategoryMapUpdateView(MontrekUpdateView):
+class TransactionCategoryMapUpdateView(MontrekUpdateView, CreateOrUpdateTransactionCategoryMapMixin):
     repository = TransactionCategoryMapRepository
     form_class = TransactionCategoryMapCreateForm
     account_link_name = "link_transaction_category_map_account"
@@ -219,8 +226,15 @@ class TransactionCategoryMapUpdateView(MontrekUpdateView):
         account_id = self.kwargs["account_id"]
         return reverse("account_view_transactions", kwargs={"pk": account_id})
 
+    def form_valid(self, form):
+        return_url = super().form_valid(form)
+        self.assign_transaction_categories_to_transactions(form)
+        return return_url
+
+
 class TransactionCategoryMapDeleteView(MontrekDeleteView):
     repository = TransactionCategoryMapRepository
+
     def get_success_url(self):
         account_id = self.kwargs["account_id"]
         return reverse("account_view_transactions", kwargs={"pk": account_id})
