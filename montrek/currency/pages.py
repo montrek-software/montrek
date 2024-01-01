@@ -9,21 +9,27 @@ class CurrencyAppPage(MontrekPage):
     page_title = "Currencies"
 
     def get_tabs(self):
+        action_new_currency = ActionElement(
+            icon="plus",
+            link=reverse("currency_create"),
+            action_id="id_create_currency",
+            hover_text="Create Currency",
+        )
         return [
             TabElement(
                 html_id="tab_overview",
                 name="Overview",
                 link=reverse("currency"),
-                actions=(),
+                actions=(action_new_currency, ),
             ),
         ]
 
 class CurrencyPage(MontrekPage):
-    def __init__(self, request, **kwargs):
-        super().__init__(request, **kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         if 'pk' not in kwargs:
             raise ValueError("AccountPage needs pk specified in url!")
-        self.obj = CurrencyRepository(self.request).std_queryset().get(pk=kwargs['pk'])
+        self.obj = CurrencyRepository().std_queryset().get(pk=kwargs['pk'])
         self.page_title = self.obj.ccy_name
 
     def get_tabs(self):

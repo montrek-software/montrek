@@ -1,10 +1,12 @@
 from django.shortcuts import render
 from baseclasses.views import MontrekListView
 from baseclasses.views import MontrekDetailView
+from baseclasses.views import MontrekCreateView
 from baseclasses.dataclasses.table_elements import StringTableElement, LinkTableElement, FloatTableElement
 from currency.repositories.currency_repository import CurrencyRepository
 from currency.pages import CurrencyAppPage
 from currency.pages import CurrencyPage
+from currency.forms import CurrencyCreateForm
 
 # Create your views here.
 
@@ -54,3 +56,10 @@ class CurrencyDetailView(MontrekDetailView):
                 name="FX Rate", attr="fx_rate"
             ),
         )
+
+class CurrencyCreateView(MontrekCreateView):
+    page_class = CurrencyAppPage
+    title = "Overview Table"
+    repository = CurrencyRepository
+    form_class = CurrencyCreateForm
+    success_url = "currency"

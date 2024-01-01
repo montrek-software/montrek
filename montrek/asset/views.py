@@ -4,8 +4,6 @@ from django.views.generic.edit import CreateView
 from django.utils import timezone
 from baseclasses.views import MontrekListView
 from baseclasses.views import MontrekCreateView
-from asset.models import AssetStaticSatellite
-from asset.models import AssetLiquidSatellite
 from asset.models import AssetTimeSeriesSatellite
 from asset.models import AssetHub
 from asset.forms import AssetTimeSeriesSatelliteForm
@@ -29,6 +27,7 @@ class AssetCreateView(MontrekCreateView):
     repository = AssetRepository
     title = "Asset"
     form_class = AssetCreateForm
+    success_url = "asset"
 
 class AssetTimeSeriesCreateView(CreateView):
     model = AssetTimeSeriesSatellite

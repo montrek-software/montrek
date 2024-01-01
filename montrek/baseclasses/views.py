@@ -25,7 +25,12 @@ def under_construction(request):
 
 
 def navbar(request):
-    nav_apps = [NavBarModel("account"), NavBarModel("credit_institution"), NavBarModel("asset"),]
+    nav_apps = [
+        NavBarModel("account"),
+        NavBarModel("credit_institution"),
+        NavBarModel("asset"),
+        NavBarModel("currency"),
+    ]
     return render(request, "navbar.html", {"nav_apps": nav_apps})
 
 
@@ -175,6 +180,7 @@ class MontrekUpdateView(MontrekCreateUpdateView):
         context["tag"] = "Update"
         return context
 
+
 class MontrekDeleteView(View, MontrekViewMixin, MontrekPageViewMixin):
     repository = MontrekRepository
     success_url = "under_construction"
@@ -184,8 +190,10 @@ class MontrekDeleteView(View, MontrekViewMixin, MontrekPageViewMixin):
         return reverse(self.success_url)
 
     def post(self, request, *args, **kwargs):
-        if 'action' in request.POST and request.POST['action'] == 'Delete':
-            delete_object = self.repository_object.std_queryset().get(pk=self.kwargs["pk"])
+        if "action" in request.POST and request.POST["action"] == "Delete":
+            delete_object = self.repository_object.std_queryset().get(
+                pk=self.kwargs["pk"]
+            )
             self.repository_object.std_delete_object(delete_object)
         return HttpResponseRedirect(self.get_success_url())
 
