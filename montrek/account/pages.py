@@ -27,7 +27,7 @@ class AccountOverviewPage(MontrekPage):
 
 class AccountPage(MontrekPage):
     show_date_range_selector = True
-    repository = AccountRepository({})
+    repository = AccountRepository()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

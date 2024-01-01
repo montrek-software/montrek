@@ -1,5 +1,6 @@
 from django import forms
 from account.repositories.account_repository import AccountRepository
+from asset.repositories.asset_repository import AssetRepository
 from baseclasses.forms import MontrekCreateForm
 from .models import TransactionSatellite
 from .models import TransactionCategoryMapSatellite
@@ -25,6 +26,11 @@ class TransactionCreateForm(MontrekCreateForm):
             display_field="account_name",
             link_name="link_transaction_account",
             queryset=AccountRepository({}).std_queryset(),
+        )
+        self.add_link_choice_field(
+            display_field="asset_name",
+            link_name="link_transaction_asset",
+            queryset=AssetRepository({}).std_queryset(),
         )
         self.add_link_choice_field(
             display_field="typename",
