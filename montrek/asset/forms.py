@@ -4,8 +4,17 @@ from asset.models import AssetStaticSatellite
 from asset.models import AssetLiquidSatellite
 from asset.models import AssetTimeSeriesSatellite
 from currency.models import CurrencyStaticSatellite
+from baseclasses.forms import MontrekCreateForm
+from currency.repositories.currency_repository import CurrencyRepository
 
-
+class AssetCreateForm(MontrekCreateForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.add_link_choice_field(
+            display_field="ccy_code",
+            link_name="link_asset_currency",
+            queryset=CurrencyRepository().std_queryset(),
+        )
 class AssetTemplateForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

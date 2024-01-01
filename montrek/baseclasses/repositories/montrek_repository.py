@@ -24,7 +24,7 @@ from functools import wraps
 class MontrekRepository:
     hub_class = MontrekHubABC
 
-    def __init__(self, session_data: Dict[str, Any] = None):
+    def __init__(self, session_data: Dict[str, Any] = {}):
         self._annotations = {}
         self._primary_satellite_classes = []
         self._primary_link_classes = []

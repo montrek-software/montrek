@@ -8,14 +8,9 @@ urlpatterns = [
         name="asset",
     ),
     path(
-        "create/<int:account_id>",
-        views.AssetStaticCreateView.as_view(),
-        name="asset_create_form",
-    ),
-    path(
-        "create_liquid/<int:account_id>/<int:asset_hub_id>",
-        views.AssetLiquidCreateView.as_view(),
-        name="asset_liquid_create_form",
+        "create",
+        views.AssetCreateView.as_view(),
+        name="asset_create",
     ),
     path(
         "update_asset_prices/<int:account_id>",
