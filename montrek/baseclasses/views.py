@@ -25,7 +25,7 @@ def under_construction(request):
 
 
 def navbar(request):
-    nav_apps = [NavBarModel("account"), NavBarModel("credit_institution")]
+    nav_apps = [NavBarModel("account"), NavBarModel("credit_institution"), NavBarModel("asset"),]
     return render(request, "navbar.html", {"nav_apps": nav_apps})
 
 

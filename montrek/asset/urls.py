@@ -3,8 +3,8 @@ from asset import views
 
 urlpatterns = [
     path(
-        "asset_list",
-        views.AssetListView.as_view(),
+        "overview",
+        views.AssetOverview.as_view(),
         name="asset",
     ),
     path(
