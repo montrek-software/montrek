@@ -4,6 +4,7 @@ from django.views.generic.edit import CreateView
 from django.utils import timezone
 from baseclasses.views import MontrekListView
 from baseclasses.views import MontrekCreateView
+from baseclasses.dataclasses import table_elements
 from asset.models import AssetTimeSeriesSatellite
 from asset.models import AssetHub
 from asset.forms import AssetTimeSeriesSatelliteForm
@@ -21,6 +22,31 @@ class AssetOverview(MontrekListView):
     tab = "tab_asset_list"
     title = "Asset Overview"
     repository = AssetRepository
+
+    @property
+    def elements(self) -> list:
+        return (
+            table_elements.StringTableElement(
+                name="Asset Name",
+                attr='asset_name',
+            ),
+            table_elements.StringTableElement(
+                name="Asset Type",
+                attr='asset_type',
+            ),
+            table_elements.StringTableElement(
+                name="Asset ISIN",
+                attr='asset_isin',
+            ),
+            table_elements.StringTableElement(
+                name="Asset WKN",
+                attr="asset_wkn",
+            ),
+            table_elements.StringTableElement(
+                name="Currency",
+                attr="ccy_code",
+            ),
+        )
 
 class AssetCreateView(MontrekCreateView):
     page_class = AssetOverviewPage

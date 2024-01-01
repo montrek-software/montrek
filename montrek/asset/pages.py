@@ -3,6 +3,7 @@ from baseclasses.dataclasses.view_classes import TabElement, ActionElement
 from baseclasses.pages import MontrekPage
 
 class AssetOverviewPage(MontrekPage):
+    page_title = "Assets"
 
     def get_tabs(self):
         action_new_asset = ActionElement(
