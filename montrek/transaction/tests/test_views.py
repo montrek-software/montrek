@@ -76,14 +76,17 @@ class TestTransactionUpdateView(TestCase):
         data = transaction_repository.object_to_dict(transaction)
         data.update(
             {
-                "link_transaction_transaction_category": self.test_transaction_category.hub_entity.id
+                "link_transaction_transaction_category": self.test_transaction_category.hub_entity.id,
+                "transaction_amount": 250,
             }
         )
         data.pop("link_transaction_transaction_type")
         data.pop("link_transaction_asset")
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, 302)
+        transaction = transaction_repository.std_queryset().first()
         self.assertEqual(transaction.transaction_category, "TestCat")
+        self.assertEqual(transaction.transaction_amount, 250)
 
 
 class TestTransactionCategoryMapDetailsView(TestCase):
