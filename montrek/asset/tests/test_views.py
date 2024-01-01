@@ -1,8 +1,8 @@
 from django.test import TestCase
 from django.urls import reverse
 
-from asset import views as asset_views
 from asset.repositories.asset_repository import AssetRepository
+from asset.tests.factories.asset_factories import AssetStaticSatelliteFactory
 from currency.tests.factories.currency_factories import CurrencyStaticSatelliteFactory
 
 
@@ -39,3 +39,10 @@ class TestAssetCreateView(TestCase):
         self.assertEqual(asset.asset_isin, "US1234567890")
         self.assertEqual(asset.asset_wkn, "123456")
         self.assertEqual(asset.ccy_code, "USD")
+
+class TestAssetDetailsView(TestCase):
+    def test_asset_details_returns_correct_html(self):
+        asset = AssetStaticSatelliteFactory()
+        url = reverse("asset_details", kwargs={"pk": asset.hub_entity.id})
+        response = self.client.get(url)
+        self.assertTemplateUsed(response, "montrek_details.html")

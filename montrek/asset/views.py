@@ -4,6 +4,7 @@ from django.views.generic.edit import CreateView
 from django.utils import timezone
 from baseclasses.views import MontrekListView
 from baseclasses.views import MontrekCreateView
+from baseclasses.views import MontrekDetailView
 from baseclasses.dataclasses import table_elements
 from asset.models import AssetTimeSeriesSatellite
 from asset.models import AssetHub
@@ -11,6 +12,7 @@ from asset.forms import AssetTimeSeriesSatelliteForm
 from asset.forms import AssetCreateForm
 from asset.repositories.asset_repository import AssetRepository
 from asset.pages import AssetOverviewPage
+from asset.pages import AssetPage
 from asset.managers.market_data import update_asset_prices_from_yf
 from asset.managers.market_data import add_single_price_to_asset
 from currency.managers.fx_rate_update_factory import FxRateUpdateFactory
@@ -26,9 +28,12 @@ class AssetOverview(MontrekListView):
     @property
     def elements(self) -> list:
         return (
-            table_elements.StringTableElement(
+            table_elements.LinkTextTableElement(
                 name="Asset Name",
-                attr='asset_name',
+                url="asset_details",
+                kwargs={"pk": "id"},
+                text="asset_name",
+                hover_text="View Asset",
             ),
             table_elements.StringTableElement(
                 name="Asset Type",
@@ -54,6 +59,33 @@ class AssetCreateView(MontrekCreateView):
     title = "Asset"
     form_class = AssetCreateForm
     success_url = "asset"
+
+class AssetDetailsView(MontrekDetailView):
+    page_class = AssetPage
+    repository = AssetRepository
+    tab = "tab_details" 
+    title = "Asset Details"
+
+    @property
+    def elements(self) -> list:
+        return (
+            table_elements.StringTableElement(
+                name="Asset Type",
+                attr='asset_type',
+            ),
+            table_elements.StringTableElement(
+                name="Asset ISIN",
+                attr='asset_isin',
+            ),
+            table_elements.StringTableElement(
+                name="Asset WKN",
+                attr="asset_wkn",
+            ),
+            table_elements.StringTableElement(
+                name="Currency",
+                attr="ccy_code",
+            ),
+        )
 
 class AssetTimeSeriesCreateView(CreateView):
     model = AssetTimeSeriesSatellite

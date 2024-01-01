@@ -1,4 +1,5 @@
 from django.urls import reverse
+from asset.repositories.asset_repository import AssetRepository
 from baseclasses.dataclasses.view_classes import TabElement, ActionElement
 from baseclasses.pages import MontrekPage
 
@@ -20,3 +21,28 @@ class AssetOverviewPage(MontrekPage):
             actions=(action_new_asset, ),
         )
         return (overview_tab,)
+
+class AssetPage(MontrekPage):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        if 'pk' not in kwargs:
+            raise ValueError("AssetPage needs pk specified in url!")
+        self.obj = AssetRepository().std_queryset().get(pk=kwargs['pk'])
+        self.page_title = self.obj.asset_name
+
+    def get_tabs(self):
+        action_back = ActionElement(
+            icon="arrow-left",
+            link=reverse("asset"),
+            action_id="back_to_overview",
+            hover_text="Back to Overview",
+        )
+        details_tab = TabElement(
+            name="Details",
+            link=reverse(
+                "asset_details", args=[self.obj.id]
+            ),
+            html_id="tab_details",
+            actions=(action_back,),
+        )
+        return [details_tab]
