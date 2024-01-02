@@ -3,6 +3,7 @@ from asset.models import AssetStaticSatellite
 from asset.models import AssetLiquidSatellite
 from asset.models import LinkAssetCurrency
 from currency.models import CurrencyStaticSatellite
+from currency.models import CurrencyTimeSeriesSatellite
 from baseclasses.repositories.montrek_repository import MontrekRepository
 
 
@@ -24,6 +25,12 @@ class AssetRepository(MontrekRepository):
             CurrencyStaticSatellite,
             LinkAssetCurrency,
             ["ccy_code"],
+            self.reference_date,
+        )
+        self.add_linked_satellites_field_annotations(
+            CurrencyTimeSeriesSatellite,
+            LinkAssetCurrency,
+            ["fx_rate"],
             self.reference_date,
         )
         return self.build_queryset()

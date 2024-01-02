@@ -18,6 +18,11 @@ urlpatterns = [
         name="asset_details",
     ),
     path(
+        "update/<int:pk>",
+        views.AssetUpdateView.as_view(),
+        name="asset_update",
+    ),
+    path(
         "update_asset_prices/<int:account_id>",
         views.view_update_asset_prices,
         name="update_asset_prices",

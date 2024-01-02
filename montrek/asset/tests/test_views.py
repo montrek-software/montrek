@@ -3,6 +3,7 @@ from django.urls import reverse
 
 from asset.repositories.asset_repository import AssetRepository
 from asset.tests.factories.asset_factories import AssetStaticSatelliteFactory
+from asset.models import AssetHub
 from currency.tests.factories.currency_factories import CurrencyStaticSatelliteFactory
 
 
@@ -46,3 +47,29 @@ class TestAssetDetailsView(TestCase):
         url = reverse("asset_details", kwargs={"pk": asset.hub_entity.id})
         response = self.client.get(url)
         self.assertTemplateUsed(response, "montrek_details.html")
+
+class TestAssetUpdateView(TestCase):
+    def test_asset_update_returns_correct_html(self):
+        asset = AssetStaticSatelliteFactory()
+        url = reverse("asset_update", kwargs={"pk": asset.hub_entity.id})
+        response = self.client.get(url)
+        self.assertTemplateUsed(response, "montrek_create.html")
+
+    def test_update_currency(self):
+        ccy_usd = CurrencyStaticSatelliteFactory(ccy_code="USD")
+        ccy_eur = CurrencyStaticSatelliteFactory(ccy_code="EUR")
+        asset = AssetStaticSatelliteFactory.create()
+        asset.hub_entity.link_asset_currency.add(ccy_eur.hub_entity)
+        asset_repository = AssetRepository()
+        asset = asset_repository.std_queryset().first()
+        url = reverse("asset_update", kwargs={"pk": asset.id})
+        data = asset_repository.object_to_dict(asset)
+        data["link_asset_currency"] = ccy_usd.hub_entity.id
+        data["asset_isin"] = "A"
+        data["asset_wkn"] = "B"
+        data["asset_type"] = "ETF"
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 302)
+        assets = AssetRepository().std_queryset()
+        self.assertEqual(assets.count(), 1)
+        self.assertEqual(assets.first().ccy_code, "USD")

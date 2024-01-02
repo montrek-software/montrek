@@ -52,7 +52,7 @@ class AssetLiquidSatellite(baseclass_models.MontrekSatelliteABC):
     asset_wkn = models.CharField(max_length=6, validators=[montrek_wkn_validator])
 
 
-class AssetTimeSeriesSatellite(baseclass_models.MontrekSatelliteABC):
+class AssetTimeSeriesSatellite(baseclass_models.MontrekTimeSeriesSatelliteABC):
     hub_entity = models.ForeignKey(
         AssetHub, on_delete=models.CASCADE, related_name="asset_time_series_satellite"
     )

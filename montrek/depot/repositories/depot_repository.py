@@ -1,6 +1,13 @@
 from django.db.models import OuterRef, Subquery, Sum, ExpressionWrapper, F, DecimalField
 from baseclasses.repositories.montrek_repository import MontrekRepository
-from asset.models import AssetHub, AssetStaticSatellite, AssetLiquidSatellite, AssetTimeSeriesSatellite
+from asset.models import (
+    AssetHub,
+    AssetStaticSatellite,
+    AssetLiquidSatellite,
+    AssetTimeSeriesSatellite,
+    LinkAssetCurrency,
+)
+from currency.models import CurrencyStaticSatellite, CurrencyTimeSeriesSatellite
 from transaction.repositories.transaction_repository import TransactionRepository
 from currency.repositories.currency_repository import CurrencyRepository
 
@@ -24,7 +31,19 @@ class DepotRepository(MontrekRepository):
             ["price", "value_date"],
             self.reference_date,
         )
-        self._currency_values()
+        # self._currency_values()
+        self.add_linked_satellites_field_annotations(
+            CurrencyStaticSatellite,
+            LinkAssetCurrency,
+            ["ccy_code"],
+            self.reference_date,
+        )
+        self.add_linked_satellites_field_annotations(
+            CurrencyTimeSeriesSatellite,
+            LinkAssetCurrency,
+            ["fx_rate"],
+            self.reference_date,
+        )
         self._total_nominal_and_book_value()
         self._calculated_fields()
         self._account_fields()
@@ -46,6 +65,8 @@ class DepotRepository(MontrekRepository):
             .std_queryset()
             .filter(
                 link_currency_asset=OuterRef("pk"),
+                link_currency_asset__state_date_start__lte=self.reference_date,
+                link_currency_asset__state_date_end__gt=self.reference_date,
             )
         )
 
@@ -67,11 +88,9 @@ class DepotRepository(MontrekRepository):
 
     def _account_fields(self):
         account_sq = Subquery(
-            self.transaction_table_subquery()
-            .values("account_id")[:1]
+            self.transaction_table_subquery().values("account_id")[:1]
         )
         self.annotations["account_id"] = account_sq
-
 
     def _currency_values(self):
         for currency_field in ["ccy_code", "fx_rate"]:
@@ -79,21 +98,20 @@ class DepotRepository(MontrekRepository):
                 self.currency_table_subquery().values(currency_field)
             )
             self.annotations[currency_field] = currency_sq
-        currency_sq = Subquery(
-            self.currency_table_subquery().values("id")
-        )
+        currency_sq = Subquery(self.currency_table_subquery().values("id"))
         self.annotations["ccy_id"] = currency_sq
 
     def _calculated_fields(self):
-        self.annotations['book_price'] = ExpressionWrapper(
-                F("book_value") / F("total_nominal") * F("fx_rate"), output_field=DecimalField()
-            )
-        self.annotations['value'] = ExpressionWrapper(
-                F("price") * F("total_nominal") * F("fx_rate"), output_field=DecimalField()
-            )
-        self.annotations['profit_loss'] = ExpressionWrapper(
-                F("value") - F("book_value"), output_field=DecimalField()
-            )
-        self.annotations['performance'] = ExpressionWrapper(
-                F("profit_loss") / F("book_value"), output_field=DecimalField()
-            )
+        self.annotations["book_price"] = ExpressionWrapper(
+            F("book_value") / F("total_nominal") * F("fx_rate"),
+            output_field=DecimalField(),
+        )
+        self.annotations["value"] = ExpressionWrapper(
+            F("price") * F("total_nominal") * F("fx_rate"), output_field=DecimalField()
+        )
+        self.annotations["profit_loss"] = ExpressionWrapper(
+            F("value") - F("book_value"), output_field=DecimalField()
+        )
+        self.annotations["performance"] = ExpressionWrapper(
+            F("profit_loss") / F("book_value"), output_field=DecimalField()
+        )

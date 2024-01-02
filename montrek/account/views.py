@@ -276,7 +276,13 @@ class AccountDepotView(MontrekListView):
 
     def elements(self) -> list:
         return (
-            StringTableElement(name="Asset Name", attr="asset_name"),
+            LinkTextTableElement(
+                name="Asset",
+                url="asset_details",
+                kwargs={"pk": "id"},
+                text="asset_name",
+                hover_text="View Asset",
+            ),
             StringTableElement(name="Type", attr="asset_type"),
             StringTableElement(name="ISIN", attr="asset_isin"),
             StringTableElement(name="WKN", attr="asset_wkn"),
