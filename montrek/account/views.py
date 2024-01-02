@@ -293,7 +293,6 @@ class AccountDepotView(MontrekListView):
                 text="ccy_code",
                 hover_text="View Currency",
             ),
-            StringTableElement(name="CCY", attr="ccy_code"),
             FloatTableElement(name="Nominal", attr="total_nominal"),
             FloatTableElement(name="FX-Rate", attr="fx_rate"),
             FloatTableElement(name="Book Price", attr="book_price"),

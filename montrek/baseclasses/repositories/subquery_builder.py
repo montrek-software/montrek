@@ -89,8 +89,12 @@ class LinkedSatelliteSubqueryBuilderBase(SubqueryBuilder):
             **link_filter_dict
         ).values(field)
         if isinstance(self.satellite_class(), MontrekTimeSeriesSatelliteABC): 
-            satellite_field_query = satellite_field_query.filter(value_date__lte=self.reference_date)
-        breakpoint()
+            satellite_field_query = (
+                satellite_field_query
+                .filter(value_date__lte=self.reference_date)
+                .order_by("-value_date")
+                .values(field)[:1]
+            )
         return Subquery(satellite_field_query)
 
 class LinkedSatelliteSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):

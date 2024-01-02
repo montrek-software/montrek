@@ -53,6 +53,14 @@ class AssetOverview(MontrekListView):
                 name="Currency",
                 attr="ccy_code",
             ),
+            table_elements.FloatTableElement(
+                name="Price",
+                attr="price",
+            ),
+            table_elements.DateTableElement(
+                name="Value Date",
+                attr="value_date",
+            ),
         )
 
 
@@ -88,6 +96,14 @@ class AssetDetailsView(MontrekDetailView):
             table_elements.StringTableElement(
                 name="Currency",
                 attr="ccy_code",
+            ),
+            table_elements.FloatTableElement(
+                name="Price",
+                attr="price",
+            ),
+            table_elements.DateTableElement(
+                name="Value Date",
+                attr="value_date",
             ),
         )
 

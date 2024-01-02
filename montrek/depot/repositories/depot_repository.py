@@ -1,5 +1,6 @@
 from django.db.models import OuterRef, Subquery, Sum, ExpressionWrapper, F, DecimalField
 from baseclasses.repositories.montrek_repository import MontrekRepository
+from asset.repositories.asset_repository import AssetRepository
 from asset.models import (
     AssetHub,
     AssetStaticSatellite,
@@ -12,38 +13,12 @@ from transaction.repositories.transaction_repository import TransactionRepositor
 from currency.repositories.currency_repository import CurrencyRepository
 
 
-class DepotRepository(MontrekRepository):
+class DepotRepository(AssetRepository):
     hub_class = AssetHub
 
     def std_queryset(self):
-        self.add_satellite_fields_annotations(
-            AssetStaticSatellite,
-            ["asset_name", "asset_type"],
-            self.reference_date,
-        )
-        self.add_satellite_fields_annotations(
-            AssetLiquidSatellite,
-            ["asset_isin", "asset_wkn"],
-            self.reference_date,
-        )
-        self.add_last_ts_satellite_fields_annotations(
-            AssetTimeSeriesSatellite,
-            ["price", "value_date"],
-            self.reference_date,
-        )
+        super().std_queryset()
         # self._currency_values()
-        self.add_linked_satellites_field_annotations(
-            CurrencyStaticSatellite,
-            LinkAssetCurrency,
-            ["ccy_code"],
-            self.reference_date,
-        )
-        self.add_linked_satellites_field_annotations(
-            CurrencyTimeSeriesSatellite,
-            LinkAssetCurrency,
-            ["fx_rate"],
-            self.reference_date,
-        )
         self._total_nominal_and_book_value()
         self._calculated_fields()
         self._account_fields()

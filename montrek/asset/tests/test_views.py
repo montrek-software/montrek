@@ -67,6 +67,8 @@ class TestAssetUpdateView(TestCase):
         data["link_asset_currency"] = ccy_usd.hub_entity.id
         data["asset_isin"] = "A"
         data["asset_wkn"] = "B"
+        data["price"] = 1
+        data["value_date"] = "2020-01-01"
         data["asset_type"] = "ETF"
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, 302)
