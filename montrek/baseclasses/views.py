@@ -2,9 +2,14 @@ from django.shortcuts import render
 from django.views.generic.list import ListView
 from django.views.generic import DetailView
 from django.views.generic.base import TemplateView
+from django.views.generic.edit import CreateView
+from django.views import View
+from django.http import HttpResponseRedirect
+from django.urls import reverse
 from baseclasses.dataclasses.nav_bar_model import NavBarModel
 from baseclasses.pages import NoPage
 from baseclasses.forms import DateRangeForm
+from baseclasses.forms import MontrekCreateForm
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from baseclasses import utils
 
@@ -20,7 +25,12 @@ def under_construction(request):
 
 
 def navbar(request):
-    nav_apps = [NavBarModel("account"), NavBarModel("credit_institution")]
+    nav_apps = [
+        NavBarModel("account"),
+        NavBarModel("credit_institution"),
+        NavBarModel("asset"),
+        NavBarModel("currency"),
+    ]
     return render(request, "navbar.html", {"nav_apps": nav_apps})
 
 
@@ -28,8 +38,9 @@ class MontrekPageViewMixin:
     page_class = NoPage
     tab = "empty_tab"
     title = "No Title set!"
+
     def get_page_context(self, context, **kwargs):
-        page = self.page_class(self.request, **self.kwargs)
+        page = self.page_class(**self.kwargs)
         context["page_title"] = page.page_title
         page.set_active_tab(self.tab)
         context["tab_elements"] = page.tabs
@@ -58,13 +69,26 @@ class MontrekPageViewMixin:
         return {"date_range_form": date_range_form}
 
 
-class StdQuerysetMixin:
+class MontrekViewMixin:
+    @property
+    def repository_object(self):
+        return self.repository(self.session_data)
+
     @property
     def elements(self) -> list:
         return []
 
+    @property
+    def session_data(self) -> dict:
+        session_data = dict(self.request.GET)
+        session_data.update(dict(self.request.session))
+        return session_data
 
-class MontrekTemplateView(TemplateView, MontrekPageViewMixin):
+    def _get_std_queryset(self):
+        return self.repository_object.std_queryset()
+
+
+class MontrekTemplateView(TemplateView, MontrekPageViewMixin, MontrekViewMixin):
     template_name = "montrek.html"
     repository = MontrekRepository
 
@@ -78,12 +102,13 @@ class MontrekTemplateView(TemplateView, MontrekPageViewMixin):
     def get_template_context(self) -> dict:
         raise NotImplementedError("Please implement this method in your subclass!")
 
-class MontrekListView(ListView, MontrekPageViewMixin, StdQuerysetMixin):
+
+class MontrekListView(ListView, MontrekPageViewMixin, MontrekViewMixin):
     template_name = "montrek_table.html"
     repository = MontrekRepository
 
     def get_queryset(self):
-        return self.repository(self.request).std_queryset()
+        return self._get_std_queryset()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -92,16 +117,85 @@ class MontrekListView(ListView, MontrekPageViewMixin, StdQuerysetMixin):
         return context
 
 
-class MontrekDetailView(DetailView, MontrekPageViewMixin, StdQuerysetMixin):
+class MontrekDetailView(DetailView, MontrekPageViewMixin, MontrekViewMixin):
     template_name = "montrek_details.html"
     repository = MontrekRepository
 
     def get_queryset(self):
-        return self.repository(self.request).std_queryset()
-
+        return self._get_std_queryset()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context = self.get_page_context(context, **kwargs)
         context["detail_elements"] = self.elements
         return context
+
+
+class MontrekCreateUpdateView(CreateView, MontrekPageViewMixin, MontrekViewMixin):
+    repository = MontrekRepository
+    form_class = MontrekCreateForm
+    template_name = "montrek_create.html"
+    success_url = "under_construction"
+
+    def get_queryset(self):
+        return self._get_std_queryset()
+
+    def get_success_url(self):
+        return reverse(self.success_url)
+
+    def form_valid(self, form):
+        self.repository_object.std_create_object(data=form.cleaned_data)
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get_form(self, form_class=None):
+        return self.form_class(repository=self.repository_object)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context = self.get_page_context(context, **kwargs)
+        return context
+
+    def post(self, request, *args, **kwargs):
+        form = self.form_class(self.request.POST, repository=self.repository_object)
+        if form.is_valid():
+            return self.form_valid(form)
+        return self.form_invalid(form)
+
+
+class MontrekCreateView(MontrekCreateUpdateView):
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["tag"] = "Create"
+        return context
+
+
+class MontrekUpdateView(MontrekCreateUpdateView):
+    def get_form(self, form_class=None):
+        edit_object = self.repository_object.std_queryset().get(pk=self.kwargs["pk"])
+        initial = self.repository_object.object_to_dict(edit_object)
+        return self.form_class(repository=self.repository_object, initial=initial)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["tag"] = "Update"
+        return context
+
+
+class MontrekDeleteView(View, MontrekViewMixin, MontrekPageViewMixin):
+    repository = MontrekRepository
+    success_url = "under_construction"
+    template_name = "montrek_delete.html"
+
+    def get_success_url(self):
+        return reverse(self.success_url)
+
+    def post(self, request, *args, **kwargs):
+        if "action" in request.POST and request.POST["action"] == "Delete":
+            delete_object = self.repository_object.std_queryset().get(
+                pk=self.kwargs["pk"]
+            )
+            self.repository_object.std_delete_object(delete_object)
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get(self, request, *args, **kwargs):
+        return render(request, self.template_name, {"pk": self.kwargs["pk"]})

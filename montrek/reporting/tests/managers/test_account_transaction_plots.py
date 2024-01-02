@@ -13,8 +13,8 @@ from account.tests.factories.account_factories import AccountHubFactory
 from transaction.tests.factories.transaction_factories import (
     TransactionSatelliteFactory,
 )
-from transaction.repositories.transaction_account_queries import (
-    get_transactions_by_account_hub,
+from transaction.repositories.transaction_repository import (
+    TransactionRepository,
 )
 
 
@@ -48,13 +48,13 @@ class TestAccountTransactionPlots(TestCase):
             cls.account_hub.link_account_transaction.add(transaction.hub_entity)
 
     def test_get_monthly_income_expanses_plot(self):
-        transactions = get_transactions_by_account_hub(self.account_hub)
+        transactions = TransactionRepository({}).get_queryset_with_account().filter(account_id=self.account_hub.id)
         transactions_data = read_frame(transactions)
         test_plot = draw_monthly_income_expanses_plot(transactions_data)
         self.assertTrue(isinstance(test_plot.figure, go.Figure))
 
     def test_get_income_by_category_pie_plot(self):
-        transactions = get_transactions_by_account_hub(self.account_hub)
+        transactions = TransactionRepository({}).get_queryset_with_account().filter(account_id=self.account_hub.id)
         test_plots = draw_income_expenses_category_pie_plot(transactions)
         self.assertTrue(isinstance(test_plots['income'].figure, go.Figure))
         self.assertTrue(isinstance(test_plots['expense'].figure, go.Figure))

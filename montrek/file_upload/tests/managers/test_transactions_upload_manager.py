@@ -37,7 +37,9 @@ class TestTransactionsUploadManager(TestCase):
     def setUpTestData(cls):
         cls.credit_institution_satellite = CreditInstitutionStaticSatelliteFactory()
         cls.account_satellite = AccountStaticSatelliteFactory()
-        cls.account_satellite.hub_entity.link_account_credit_institution.add(cls.credit_institution_satellite.hub_entity)
+        cls.account_satellite.hub_entity.link_account_credit_institution.add(
+            cls.credit_institution_satellite.hub_entity
+        )
         # Create a file to upload
         txt_file_content = b"Test file content"
         cls.txt_file = SimpleUploadedFile("test_file.txt", txt_file_content)
@@ -136,7 +138,8 @@ class TestTransactionsUploadManager(TestCase):
 
     def test_upload_error_account_upload_method_none(self):
         file_registry_sat_failed = _upload_error_account_upload_method_none(
-            self.file_registry_sat_factory, self.credit_institution_satellite
+            self.file_registry_sat_factory,
+            self.credit_institution_satellite.credit_institution_name,
         )
         self.assertEqual(file_registry_sat_failed.upload_status, "failed")
         self.assertEqual(

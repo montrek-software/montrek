@@ -15,7 +15,7 @@ def get_attribute(obj, table_element):
     ):
         return _get_link(obj, table_element)
     attr = table_element.attr
-    value = getattr(obj, attr)
+    value = getattr(obj, attr, attr)
     return table_element.format(value)
 
 

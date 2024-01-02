@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "django_extensions",
     "account",
     "baseclasses",
+    "montrek_example",
     "currency",
     "transaction",
     "credit_institution",

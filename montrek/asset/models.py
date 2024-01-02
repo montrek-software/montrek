@@ -14,7 +14,7 @@ class AssetHub(baseclass_models.MontrekHubABC):
     )
 
 
-class LinkAssetCurrency(baseclass_models.MontrekLinkABC):
+class LinkAssetCurrency(baseclass_models.MontrekOneToManyLinkABC):
     hub_in = models.ForeignKey("asset.AssetHub", on_delete=models.CASCADE)
     hub_out = models.ForeignKey("currency.CurrencyHub", on_delete=models.CASCADE)
 
@@ -52,7 +52,7 @@ class AssetLiquidSatellite(baseclass_models.MontrekSatelliteABC):
     asset_wkn = models.CharField(max_length=6, validators=[montrek_wkn_validator])
 
 
-class AssetTimeSeriesSatellite(baseclass_models.MontrekSatelliteABC):
+class AssetTimeSeriesSatellite(baseclass_models.MontrekTimeSeriesSatelliteABC):
     hub_entity = models.ForeignKey(
         AssetHub, on_delete=models.CASCADE, related_name="asset_time_series_satellite"
     )

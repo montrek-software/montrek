@@ -1,40 +1,18 @@
-from datetime import timedelta
-from typing import Tuple
-from django.shortcuts import render, redirect
-from django.urls import reverse
-from django.utils import timezone
 from django_pandas.io import read_frame
 
-from account.models import AccountHub
-from account.models import AccountStaticSatellite
-from account.models import BankAccountPropertySatellite
-from account.models import BankAccountStaticSatellite
-from account.repositories.account_model_queries import new_account
 from account.repositories.account_repository import AccountRepository
 from account.pages import AccountOverviewPage
 from account.pages import AccountPage
+from account.forms import AccountCreateForm
 
-from transaction.repositories.transaction_account_queries import (
-    get_paginated_transactions_category_map,
-)
 
-from file_upload.repositories.upload_registry_account_queries import (
-    get_paginated_upload_registries,
-)
 
-from credit_institution.repositories.credit_institution_model_queries import (
-    get_credit_institution_satellite_by_account_hub_id,
-)
-from credit_institution.repositories.credit_institution_model_queries import (
-    new_credit_institution_to_account,
-)
-from credit_institution.models import CreditInstitutionStaticSatellite
-
-from baseclasses.repositories.db_helper import new_satellite_entry
-from baseclasses.forms import DateRangeForm
 from baseclasses.views import MontrekListView
 from baseclasses.views import MontrekDetailView
 from baseclasses.views import MontrekTemplateView
+from baseclasses.views import MontrekCreateView
+from baseclasses.views import MontrekDeleteView
+from baseclasses.views import MontrekUpdateView
 from baseclasses.dataclasses.table_elements import StringTableElement
 from baseclasses.dataclasses.table_elements import LinkTableElement
 from baseclasses.dataclasses.table_elements import LinkTextTableElement
@@ -52,25 +30,11 @@ from reporting.managers.account_transaction_plots import (
 
 # Create your views here.
 #### Account Views ####
-def account_new(request):
-    account_type = request.POST.get("account_type", "Other")
-    account_name = request.POST["account_name"]
-    if account_type == "Other":
-        new_account(request.POST["account_name"])
-        return redirect("/account/list")
-    if account_type in ["Bank Account", "Depot"]:
-        return redirect(
-            reverse(
-                "bank_account_new_form",
-                kwargs={"account_name": account_name, "account_type": account_type},
-            )
-        )
-    return render(request, "under_construction.html")
-
-
-def account_new_form(request):
-    account_types = AccountStaticSatellite.AccountType.choices
-    return render(request, "new_account_form.html", {"account_types": account_types})
+class AccountCreateView(MontrekCreateView):
+    repository = AccountRepository
+    page_class = AccountOverviewPage
+    form_class = AccountCreateForm
+    success_url = "account"
 
 
 class AccountOverview(MontrekListView):
@@ -119,59 +83,25 @@ class AccountDetailView(MontrekDetailView):
             ),
             StringTableElement(
                 name="Credit Institution",
-                attr="creditinstitutionstaticsatellite__credit_institution_name",
+                attr="credit_institution_name",
             ),
             StringTableElement(
                 name="BIC",
-                attr="creditinstitutionstaticsatellite__credit_institution_bic",
+                attr="credit_institution_bic",
             ),
         )
 
-
-def account_delete(request, account_id: int):
-    account_statics = AccountStaticSatellite.objects.get(hub_entity=account_id)
-    account_statics.delete()
-    account = AccountHub.objects.get(id=account_id)
-    account.delete()
-    return redirect("/account/list")
+class AccountDeleteView(MontrekDeleteView):
+    repository = AccountRepository
+    page_class = AccountOverviewPage
+    success_url = "account"
 
 
-def account_delete_form(request, account_id: int):
-    account_statics = AccountStaticSatellite.objects.get(hub_entity=account_id)
-    return render(
-        request, "account_delete_form.html", {"account_statics": account_statics}
-    )
-
-
-#### Bank Account Views ####
-
-
-def bank_account_new_form(request, account_name: str, account_type: str):
-    return render(
-        request,
-        "bank_account_new_form.html",
-        {
-            "credit_institutions": CreditInstitutionStaticSatellite.objects.all(),
-            "account_name": account_name,
-            "account_type": account_type,
-        },
-    )
-
-
-def bank_account_new(request, account_name: str, account_type: str):
-    account_hub = new_account(account_name, account_type.replace(" ", ""))
-    BankAccountPropertySatellite.objects.create(
-        hub_entity=account_hub,
-    )
-    new_satellite_entry(
-        hub_entity=account_hub,
-        satellite_class=BankAccountStaticSatellite,
-        bank_account_iban=request.POST["bank_account_iban"],
-    )
-    credit_institution_name = request.POST["credit_institution_name"]
-    new_credit_institution_to_account(credit_institution_name, account_hub)
-    return redirect("/account/list")
-
+class AccountUpdateView(MontrekUpdateView): 
+    repository = AccountRepository
+    page_class = AccountOverviewPage
+    form_class = AccountCreateForm
+    success_url = "account"
 
 
 class AccountTransactionsView(MontrekListView):
@@ -181,7 +111,7 @@ class AccountTransactionsView(MontrekListView):
     repository = AccountRepository
 
     def get_queryset(self):
-        return self.repository(self.request).get_transaction_table_by_account_paginated(
+        return self.repository_object.get_transaction_table_by_account_paginated(
             self.kwargs["pk"]
         )
 
@@ -219,7 +149,14 @@ class AccountTransactionsView(MontrekListView):
                 url="transaction_details",
                 kwargs={"pk": "id"},
                 icon="eye-open",
-                hover_text="View",
+                hover_text="View transaction",
+            ),
+            LinkTableElement(
+                name="Update",
+                url="transaction_update",
+                kwargs={"pk": "id"},
+                icon="pencil",
+                hover_text="Update transaction",
             ),
         )
 
@@ -232,7 +169,7 @@ class AccountGraphsView(MontrekTemplateView):
     template_name = "account_graphs.html"
 
     def get_queryset(self):
-        return self.repository(self.request).get_transaction_table_by_account(
+        return self.repository_object.get_transaction_table_by_account(
             self.kwargs["pk"]
         )
 
@@ -255,6 +192,7 @@ class AccountGraphsView(MontrekTemplateView):
         ].format_html()
         return account_data
 
+
 class AccountUploadView(MontrekListView):
     page_class = AccountPage
     tab = "tab_uploads"
@@ -262,7 +200,7 @@ class AccountUploadView(MontrekListView):
     repository = AccountRepository
 
     def get_queryset(self):
-        return self.repository(self.request).get_upload_registry_table_by_account_paginated(
+        return self.repository_object.get_upload_registry_table_by_account_paginated(
             self.kwargs["pk"]
         )
 
@@ -290,7 +228,7 @@ class AccountTransactionCategoryMapView(MontrekListView):
     repository = AccountRepository
 
     def get_queryset(self):
-        return self.repository(self.request).get_transaction_category_map_table_by_account_paginated(
+        return self.repository_object.get_transaction_category_map_table_by_account_paginated(
             self.kwargs["pk"]
         )
 
@@ -302,8 +240,15 @@ class AccountTransactionCategoryMapView(MontrekListView):
             StringTableElement(name="Category", attr="category"),
             BooleanTableElement(name="Is Regex", attr="is_regex"),
             LinkTableElement(
+                name="Details",
+                url="transaction_category_map_details",
+                kwargs={"pk": "id", "account_id": str(self.kwargs["pk"])},
+                icon="eye-open",
+                hover_text="Show Details",
+            ),
+            LinkTableElement(
                 name="Edit",
-                url="transaction_category_map_edit",
+                url="transaction_category_map_update",
                 kwargs={"pk": "id", "account_id": str(self.kwargs["pk"])},
                 icon="edit",
                 hover_text="Edit",
@@ -317,6 +262,7 @@ class AccountTransactionCategoryMapView(MontrekListView):
             ),
         )
 
+
 class AccountDepotView(MontrekListView):
     page_class = AccountPage
     tab = "tab_depot"
@@ -324,13 +270,19 @@ class AccountDepotView(MontrekListView):
     repository = AccountRepository
 
     def get_queryset(self):
-        return self.repository(self.request).get_depot_stats_table_by_account_paginated(
+        return self.repository_object.get_depot_stats_table_by_account_paginated(
             self.kwargs["pk"]
         )
 
     def elements(self) -> list:
         return (
-            StringTableElement(name="Asset Name", attr="asset_name"),
+            LinkTextTableElement(
+                name="Asset",
+                url="asset_details",
+                kwargs={"pk": "id"},
+                text="asset_name",
+                hover_text="View Asset",
+            ),
             StringTableElement(name="Type", attr="asset_type"),
             StringTableElement(name="ISIN", attr="asset_isin"),
             StringTableElement(name="WKN", attr="asset_wkn"),
@@ -341,7 +293,6 @@ class AccountDepotView(MontrekListView):
                 text="ccy_code",
                 hover_text="View Currency",
             ),
-            StringTableElement(name="CCY", attr="ccy_code"),
             FloatTableElement(name="Nominal", attr="total_nominal"),
             FloatTableElement(name="FX-Rate", attr="fx_rate"),
             FloatTableElement(name="Book Price", attr="book_price"),

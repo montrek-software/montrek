@@ -1,0 +1,43 @@
+from asset.models import AssetHub
+from asset.models import AssetStaticSatellite
+from asset.models import AssetLiquidSatellite
+from asset.models import AssetTimeSeriesSatellite
+from asset.models import LinkAssetCurrency
+from currency.models import CurrencyStaticSatellite
+from currency.models import CurrencyTimeSeriesSatellite
+from baseclasses.repositories.montrek_repository import MontrekRepository
+
+
+class AssetRepository(MontrekRepository):
+    hub_class = AssetHub
+
+    def std_queryset(self):
+        self.add_satellite_fields_annotations(
+            AssetStaticSatellite,
+            ["asset_name", "asset_type"],
+            self.reference_date,
+        )
+        self.add_last_ts_satellite_fields_annotations(
+            AssetTimeSeriesSatellite,
+            ["price", "value_date"],
+            self.reference_date,
+        )
+        self.add_satellite_fields_annotations(
+            AssetLiquidSatellite,
+            ["asset_isin", "asset_wkn"],
+            self.reference_date,
+        )
+        self.add_linked_satellites_field_annotations(
+            CurrencyStaticSatellite,
+            LinkAssetCurrency,
+            ["ccy_code", "hub_entity_id"],
+            self.reference_date,
+        )
+        self.rename_field("hub_entity_id", "ccy_id")
+        self.add_linked_satellites_field_annotations(
+            CurrencyTimeSeriesSatellite,
+            LinkAssetCurrency,
+            ["fx_rate"],
+            self.reference_date,
+        )
+        return self.build_queryset()

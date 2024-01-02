@@ -2,31 +2,11 @@ from django.urls import path
 from account import views
 
 urlpatterns = [
-    path("new", views.account_new, name="account_new"),
-    path("new_form", views.account_new_form, name="account_new_form"),
+    path("create", views.AccountCreateView.as_view(), name="account_create"),
     path("overview", views.AccountOverview.as_view(), name="account"),
     path("<int:pk>/details", views.AccountDetailView.as_view(), name="account_details"),
-    path("<int:account_id>/delete", views.account_delete, name="account_delete"),
-    path(
-        "<int:account_id>/delete_form",
-        views.account_delete_form,
-        name="account_delete_form",
-    ),
-    path(
-        "bank_account/new_form/<str:account_name>/<str:account_type>",
-        views.bank_account_new_form,
-        name="bank_account_new_form",
-    ),
-    path(
-        "bank_account/new/<str:account_name>/<str:account_type>",
-        views.bank_account_new,
-        name="bank_account_new",
-    ),
-    path(
-        "<int:pk>/bank_account_view/transactions",
-        views.AccountTransactionsView.as_view(),
-        name="bank_account_view_transactions",
-    ),
+    path("<int:pk>/delete", views.AccountDeleteView.as_view(), name="account_delete"),
+    path("<int:pk>/update", views.AccountUpdateView.as_view(), name="account_update"),
     path(
         "<int:pk>/transactions",
         views.AccountTransactionsView.as_view(),

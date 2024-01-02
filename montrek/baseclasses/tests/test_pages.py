@@ -19,12 +19,12 @@ class MockMontrekPage(MontrekPage):
 
 class TestMontrekPage(TestCase):
     def test_montrek_page_not_implemented(self):
-        page = MontrekPage(None)
+        page = MontrekPage()
         with self.assertRaises(NotImplementedError):
             page.tabs()
 
     def test_montrek_page_get_tabs(self):
-        page = MockMontrekPage(None)
+        page = MockMontrekPage()
         self.assertEqual(page.page_title, "Mock Montrek Page")
         page.set_active_tab("id_test")
         self.assertEqual(page.tabs[0].active , "active")
@@ -33,7 +33,7 @@ class TestMontrekPage(TestCase):
         self.assertEqual(page.tabs[0].active , "")
 
     def test_no_page(self):
-        page = NoPage(None)
+        page = NoPage()
         with self.assertRaises(NotImplementedError):
             page.get_tabs()
 

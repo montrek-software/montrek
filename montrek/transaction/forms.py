@@ -1,17 +1,10 @@
 from django import forms
+from account.repositories.account_repository import AccountRepository
+from asset.repositories.asset_repository import AssetRepository
+from baseclasses.forms import MontrekCreateForm
 from .models import TransactionSatellite
 from .models import TransactionCategoryMapSatellite
-
-class TransactionSatelliteForm(forms.ModelForm):
-    class Meta:
-        model = TransactionSatellite
-        fields = '__all__'
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        for field in self.fields.values():
-            field.disabled = True
-
+from transaction.repositories.transaction_category_repository import TransactionCategoryRepository
 
 class TransactionCategoryMapSatelliteForm(forms.ModelForm):
     class Meta:
@@ -24,3 +17,35 @@ class TransactionCategoryMapSatelliteForm(forms.ModelForm):
         self.fields['value'].widget.attrs.update({'id': 'id_transaction_category_new__value'})
         self.fields['category'].widget.attrs.update({'id': 'id_transaction_category_new__category'})
         self.fields['is_regex'].widget.attrs.update({'id': 'id_transaction_category_new__regex'})
+
+
+class TransactionCreateForm(MontrekCreateForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.add_link_choice_field(
+            display_field="account_name",
+            link_name="link_transaction_account",
+            queryset=AccountRepository({}).std_queryset(),
+        )
+        self.add_link_choice_field(
+            display_field="asset_name",
+            link_name="link_transaction_asset",
+            queryset=AssetRepository({}).std_queryset(),
+        )
+        self.add_link_choice_field(
+            display_field="typename",
+            link_name="link_transaction_transaction_category",
+            queryset=TransactionCategoryRepository({}).std_queryset(),
+        )
+
+class TransactionCategoryMapCreateForm(MontrekCreateForm):
+    class Meta:
+        exclude = ('hash_searchfield',)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.add_link_choice_field(
+            display_field="account_name",
+            link_name="link_transaction_category_map_account",
+            queryset=AccountRepository({}).std_queryset(),
+        )

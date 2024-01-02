@@ -13,7 +13,9 @@ from baseclasses.repositories.subquery_builder import (
     LinkedSatelliteSubqueryBuilder,
     ReverseLinkedSatelliteSubqueryBuilder,
 )
+from baseclasses.repositories.db_creator import DbCreator
 from django.db.models import Q, Subquery, OuterRef, QuerySet
+from django.db.models import ManyToManyField
 from django.utils import timezone
 from django.core.paginator import Paginator
 from functools import wraps
@@ -22,10 +24,12 @@ from functools import wraps
 class MontrekRepository:
     hub_class = MontrekHubABC
 
-    def __init__(self, request):
+    def __init__(self, session_data: Dict[str, Any] = {}):
         self._annotations = {}
+        self._primary_satellite_classes = []
+        self._primary_link_classes = []
+        self.session_data = session_data
         self._reference_date = None
-        self.request = request
 
     @classmethod
     def get_hub_by_id(cls, pk: int) -> MontrekHubABC:
@@ -36,18 +40,18 @@ class MontrekRepository:
         return self._annotations
 
     @property
-    def session_end_date(self):
-        return self.request.session.get("end_date", timezone.now())
-
-    @property
-    def session_start_date(self):
-        return self.request.session.get("start_date", timezone.now())
-
-    @property
     def reference_date(self):
         if self._reference_date is None:
             return timezone.datetime.now()
         return self._reference_date
+
+    @property
+    def session_end_date(self):
+        return self.session_data.get("end_date", timezone.datetime.max)
+
+    @property
+    def session_start_date(self):
+        return self.session_data.get("start_date", timezone.datetime.min)
 
     @reference_date.setter
     def reference_date(self, value):
@@ -55,6 +59,41 @@ class MontrekRepository:
 
     def std_queryset(self, **kwargs):
         raise NotImplementedError("MontrekRepository has no std_queryset method!")
+
+    def object_to_dict(self, obj: MontrekHubABC) -> Dict[str, Any]:
+        object_dict = {
+            field.name: getattr(obj, field.name)
+            for field in self.std_satellite_fields()
+        }
+        for field in obj._meta.get_fields():
+            if isinstance(field, ManyToManyField):
+                value = getattr(obj, field.name).filter(
+                    Q(**{f"{field.name.replace('_','')}__state_date_start__lte": self.reference_date}),
+                    Q(**{f"{field.name.replace('_','')}__state_date_end__gt": self.reference_date}),
+                    Q(state_date_start__lte=self.reference_date),
+                    Q(state_date_end__gt=self.reference_date),
+                ).first()
+                object_dict[field.name] = value
+        object_dict['hub_entity_id'] = obj.pk
+        return object_dict
+
+    def std_satellite_fields(self):
+        self.std_queryset()
+        fields = []
+        for satellite_class in self._primary_satellite_classes:
+            fields.extend(satellite_class.get_value_fields())
+        return fields
+
+    def std_create_object(self, data: Dict[str, Any]) -> MontrekHubABC:
+        self.std_queryset()
+        if 'hub_entity_id' in data and data['hub_entity_id'] and data['hub_entity_id'] != '':
+            hub_entity = self.hub_class.objects.get(pk=data['hub_entity_id'])
+        else:
+            hub_entity = self.hub_class()
+        db_creator = DbCreator(
+            hub_entity, self._primary_satellite_classes
+        )
+        return db_creator.create(data)
 
     def add_satellite_fields_annotations(
         self,
@@ -67,6 +106,7 @@ class MontrekRepository:
         )
         annotations_manager = SatelliteAnnotationsManager(subquery_builder)
         self._add_to_annotations(fields, annotations_manager)
+        self._add_to_primary_satellite_classes(satellite_class)
 
     def add_last_ts_satellite_fields_annotations(
         self,
@@ -79,6 +119,7 @@ class MontrekRepository:
         )
         annotations_manager = SatelliteAnnotationsManager(subquery_builder)
         self._add_to_annotations(fields, annotations_manager)
+        self._add_to_primary_satellite_classes(satellite_class)
 
     def add_linked_satellites_field_annotations(
         self,
@@ -96,22 +137,40 @@ class MontrekRepository:
             subquery_builder = LinkedSatelliteSubqueryBuilder(
                 satellite_class, link_class, reference_date
             )
-        annotations_manager = LinkAnnotationsManager(subquery_builder, satellite_class.__name__)
+        annotations_manager = LinkAnnotationsManager(
+            subquery_builder, satellite_class.__name__
+        )
         self._add_to_annotations(fields, annotations_manager)
+        self._add_to_primary_link_classes(link_class)
 
     def build_queryset(self) -> QuerySet:
-        return self.hub_class.objects.annotate(**self.annotations)
+        return self.hub_class.objects.annotate(**self.annotations).filter(
+            state_date_start__lte=self.reference_date,
+            state_date_end__gt=self.reference_date,
+        )
 
     def rename_field(self, field: str, new_name: str):
         self.annotations[new_name] = self.annotations[field]
 
-    def _add_to_annotations(self, fields: List[str], annotations_manager:AnnotationsManager):
+    def std_delete_object(self, obj: MontrekHubABC):
+        obj.state_date_end = timezone.datetime.now()
+        obj.save()
+
+    def _add_to_annotations(
+        self, fields: List[str], annotations_manager: AnnotationsManager
+    ):
         annotations_manager.query_to_annotations(fields)
         self.annotations.update(annotations_manager.annotations)
 
+    def _add_to_primary_satellite_classes(
+        self, satellite_class: Type[MontrekSatelliteABC]
+    ):
+        if satellite_class not in self._primary_satellite_classes:
+            self._primary_satellite_classes.append(satellite_class)
 
-
-
+    def _add_to_primary_link_classes(self, link_class: Type[MontrekLinkABC]):
+        if link_class not in self._primary_link_classes:
+            self._primary_link_classes.append(link_class)
 
 def paginated_table(func):
     @wraps(func)
@@ -120,13 +179,13 @@ def paginated_table(func):
         result = func(*args, **kwargs)
 
         # Extract request and queryset from result
-        request = args[
+        session_data = args[
             0
-        ].request  # Assuming the first argument is 'self' and has 'request'
+        ].session_data  # Assuming the first argument is 'self' and has 'request'
         queryset = result  # Assuming the original function returns a queryset
 
         # Pagination logic
-        page_number = request.GET.get("page", 1)
+        page_number = session_data.get("page", [1])[0]
         paginate_by = 10  # or you can make this customizable
         paginator = Paginator(queryset, paginate_by)
         page = paginator.get_page(page_number)

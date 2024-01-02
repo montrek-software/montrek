@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block title %}Delete Account{% endblock %}
+{% block content %}
+<h1>Delete Object</i></h1>
+    <p>Are you sure you want to delete this object?</p>
+    <form method="post">
+        {% csrf_token %}
+        <input id="delete_button" type="submit" name="action" value="Delete" class="btn btn-danger">
+        <input id="cancel_button" type="submit" name="action" value="Cancel" class="btn btn-secondary">
+    </form>
+{% endblock %}
+```

@@ -24,9 +24,6 @@ from transaction.models import TransactionSatellite
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from baseclasses.repositories.montrek_repository import paginated_table
 from depot.repositories.depot_repository import DepotRepository
-from transaction.repositories.transaction_account_queries import (
-    get_transactions_by_account_hub,
-)
 from transaction.repositories.transaction_repository import TransactionRepository
 from transaction.repositories.transaction_category_repository import TransactionCategoryMapRepository
 from file_upload.repositories.file_upload_registry_repository import (
@@ -48,7 +45,7 @@ class AccountRepository(MontrekRepository):
         self.add_linked_satellites_field_annotations(
             CreditInstitutionStaticSatellite,
             LinkAccountCreditInstitution,
-            ["credit_institution_name", "credit_institution_bic"],
+            ["credit_institution_name", "credit_institution_bic", "account_upload_method"],
             reference_date,
         )
         self._account_value()
@@ -62,7 +59,7 @@ class AccountRepository(MontrekRepository):
     def get_transaction_table_by_account(self, account_hub_id):
         hub_entity = self.hub_class.objects.get(pk=account_hub_id)
         transactions = (
-            TransactionRepository(self.request)
+            TransactionRepository(self.session_data)
             .std_queryset()
             .filter(
                 link_transaction_account=hub_entity,
@@ -76,7 +73,7 @@ class AccountRepository(MontrekRepository):
 
     def transaction_table_subquery(self, **kwargs):
         return (
-            TransactionRepository(self.request)
+            TransactionRepository(self.session_data)
             .std_queryset()
             .filter(
                 link_transaction_account=OuterRef("pk"),
@@ -109,14 +106,14 @@ class AccountRepository(MontrekRepository):
     @paginated_table
     def get_upload_registry_table_by_account_paginated(self, account_hub_id: int):
         hub_entity = self.hub_class.objects.get(pk=account_hub_id)
-        return FileUploadRegistryRepository(self.request).std_queryset().filter(
+        return FileUploadRegistryRepository(self.session_data).std_queryset().filter(
             link_file_upload_registry_account=hub_entity
         ).order_by('-created_at')
 
     @paginated_table
     def get_transaction_category_map_table_by_account_paginated(self, account_hub_id:int):
         hub_entity = self.hub_class.objects.get(pk=account_hub_id)
-        return TransactionCategoryMapRepository(self.request).std_queryset().filter(
+        return TransactionCategoryMapRepository(self.session_data).std_queryset().filter(
             link_transaction_category_map_account=hub_entity
         ).order_by('-created_at')
 
@@ -124,7 +121,7 @@ class AccountRepository(MontrekRepository):
     def get_depot_stats_table_by_account_paginated(self, account_hub_id: int):
         hub_entity = self.hub_class.objects.get(pk=account_hub_id)
         return (
-            DepotRepository(self.request)
+            DepotRepository(self.session_data)
             .std_queryset()
             .filter(account_id=hub_entity.id)
         )

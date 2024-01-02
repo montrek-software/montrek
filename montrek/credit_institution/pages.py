@@ -12,7 +12,7 @@ class CreditInstitutionAppPage(MontrekPage):
     def get_tabs(self):
         action_create = ActionElement(
             icon="plus",
-            link=reverse("credit_institution"),
+            link=reverse("credit_institution_create"),
             action_id="create_credit_institution",
             hover_text="Create Credit Institution",
         )
@@ -26,12 +26,13 @@ class CreditInstitutionAppPage(MontrekPage):
 
 
 class CreditInstitutionPage(MontrekPage):
+    repository = CreditInstitutionRepository({})
 
-    def __init__(self, request, **kwargs):
-        super().__init__(request, **kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         if 'pk' not in kwargs:
             raise ValueError("AccountPage needs pk specified in url!")
-        self.obj = CreditInstitutionRepository(self.request).std_queryset().get(pk=kwargs['pk'])
+        self.obj = self.repository.std_queryset().get(pk=kwargs['pk'])
         self.page_title = self.obj.credit_institution_name
 
     def get_tabs(self):

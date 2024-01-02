@@ -12,6 +12,8 @@ class CreditInstitutionStaticSatellite(baseclass_models.MontrekSatelliteABC):
     class UploadMethod(models.TextChoices):
         NONE = "none"
         DKB = "dkb"
+        ONVISTA = "onvis"
+        TRADE_REPUBLIC = "trrep"
 
     hub_entity = models.ForeignKey(CreditInstitutionHub, on_delete=models.CASCADE)
     identifier_fields = ["credit_institution_name", "credit_institution_bic"]

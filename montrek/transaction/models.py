@@ -1,10 +1,6 @@
-import hashlib
 from django.db import models
 from baseclasses import models as baseclass_models
 from account.managers.validators import montrek_iban_validator
-from transaction.repositories.transaction_category_queries import (
-    get_transaction_category_by_transaction,
-)
 
 
 # Create your models here.
@@ -25,15 +21,15 @@ class TransactionHub(baseclass_models.MontrekHubABC):
         through="LinkTransactionAsset",
     )
 
-class LinkTransactionTransactionCategory(baseclass_models.MontrekLinkABC):
+class LinkTransactionTransactionCategory(baseclass_models.MontrekOneToManyLinkABC):
     hub_in=models.ForeignKey("transaction.TransactionHub", on_delete=models.CASCADE)
     hub_out=models.ForeignKey("transaction.TransactionCategoryHub", on_delete=models.CASCADE)
 
-class LinkTransactionTransactionType(baseclass_models.MontrekLinkABC):
+class LinkTransactionTransactionType(baseclass_models.MontrekOneToManyLinkABC):
     hub_in=models.ForeignKey("transaction.TransactionHub", on_delete=models.CASCADE)
     hub_out=models.ForeignKey("transaction.TransactionTypeHub", on_delete=models.CASCADE)
 
-class LinkTransactionAsset(baseclass_models.MontrekLinkABC):
+class LinkTransactionAsset(baseclass_models.MontrekOneToManyLinkABC):
     hub_in=models.ForeignKey("transaction.TransactionHub", on_delete=models.CASCADE)
     hub_out=models.ForeignKey("asset.AssetHub", on_delete=models.CASCADE)
 
@@ -61,10 +57,6 @@ class TransactionSatellite(baseclass_models.MontrekSatelliteABC):
     @property
     def transaction_value(self):
         return self.transaction_amount * self.transaction_price
-
-    @property
-    def transaction_category(self):
-        return get_transaction_category_by_transaction(self)
 
 
 class TransactionTypeHub(baseclass_models.MontrekHubABC):
@@ -107,14 +99,7 @@ class TransactionCategoryMapSatellite(baseclass_models.MontrekSatelliteABC):
     )
     value = models.CharField(max_length=250, default="")
     category = models.CharField(max_length=250, default="")
-    hash_searchfield = models.CharField(max_length=64, default="")
     is_regex = models.BooleanField(default=False)
-
-    def save(self, *args, **kwargs):
-        self.hash_searchfield = hashlib.sha256(
-            (self.field + str(self.value).replace(" ", "").upper()).encode()
-        ).hexdigest()
-        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"TransactionCategoryMapSatellite: {self.field} - {self.value} - {self.category}"

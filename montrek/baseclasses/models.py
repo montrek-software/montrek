@@ -1,6 +1,10 @@
 import hashlib
+import datetime
+from typing import List
+from enum import Enum
 from django.db import models
 from django.utils import timezone
+from baseclasses.utils import datetime_to_montrek_time
 
 # Create your models here.
 
@@ -27,8 +31,20 @@ class TypeMixin(models.Model):
         super().save(*args, **kwargs)
 
 
+class StateDateMixin(models.Model):
+    class Meta:
+        abstract = True
+
+    state_date_start = models.DateTimeField(
+        default=timezone.make_aware(timezone.datetime.min)
+    )
+    state_date_end = models.DateTimeField(
+        default=timezone.make_aware(timezone.datetime.max)
+    )
+
+
 # Base Hub Model ABC
-class MontrekHubABC(TimeStampMixin):
+class MontrekHubABC(TimeStampMixin, StateDateMixin):
     class Meta:
         abstract = True
 
@@ -37,7 +53,7 @@ class MontrekHubABC(TimeStampMixin):
 
 
 # Base Static Satellite Model ABC
-class MontrekSatelliteABC(TimeStampMixin):
+class MontrekSatelliteABC(TimeStampMixin, StateDateMixin):
     class Meta:
         abstract = True
         indexes = [
@@ -48,12 +64,6 @@ class MontrekSatelliteABC(TimeStampMixin):
     hub_entity = models.ForeignKey(MontrekHubABC, on_delete=models.CASCADE)
     hash_identifier = models.CharField(max_length=64, default="")
     hash_value = models.CharField(max_length=64, default="")
-    state_date_start = models.DateTimeField(
-        default=timezone.make_aware(timezone.datetime.min)
-    )
-    state_date_end = models.DateTimeField(
-        default=timezone.make_aware(timezone.datetime.max)
-    )
 
     def save(self, *args, **kwargs):
         if self.hash_identifier == "":
@@ -67,14 +77,39 @@ class MontrekSatelliteABC(TimeStampMixin):
             raise AttributeError(
                 f"Satellite {self.__class__.__name__} must have attribute identifier_fields"
             )
-        identifier_string = "".join(
-            str(getattr(self, field)) for field in self.identifier_fields
-        )
+        identifier_string = self._get_identifier_string()
         sha256_hash = hashlib.sha256(identifier_string.encode()).hexdigest()
         self.hash_identifier = sha256_hash
         return sha256_hash
 
     def _get_hash_value(self) -> str:
+        value_string = self._get_value_string()
+        sha256_hash = hashlib.sha256(value_string.encode()).hexdigest()
+        self.hash_value = sha256_hash
+        return sha256_hash
+
+    def _get_identifier_string(self):
+        identifier_string = ""
+        for field in self.identifier_fields:
+            value = getattr(self, field)
+            if isinstance(value, (datetime.datetime)):
+                value = datetime_to_montrek_time(value)
+            identifier_string += str(value)
+        return identifier_string
+
+    def _get_value_string(self):
+        value_fields = self.get_value_field_names()
+        value_string = ""
+        for field in value_fields:
+            value = getattr(self, field)
+            if isinstance(value, (datetime.datetime)):
+                value = datetime_to_montrek_time(value)
+            value_string += str(value)
+        return value_string
+
+
+    @classmethod
+    def exclude_fields(self) -> List[str]:
         exclude_fields = [
             "id",
             "hash_identifier",
@@ -84,15 +119,21 @@ class MontrekSatelliteABC(TimeStampMixin):
             "state_date_start",
             "state_date_end",
         ]
+        return exclude_fields
+
+    @classmethod
+    def get_value_field_names(cls) -> List[str]:
+        value_fields = [field.name for field in cls.get_value_fields()]
+        return value_fields
+
+    @classmethod
+    def get_value_fields(cls) -> List[str]:
         value_fields = [
-            field.name
-            for field in self._meta.get_fields()
-            if field.name not in exclude_fields and not field.is_relation
+            field
+            for field in cls._meta.get_fields()
+            if field.name not in cls.exclude_fields() and not field.is_relation
         ]
-        value_string = "".join(str(getattr(self, field)) for field in value_fields)
-        sha256_hash = hashlib.sha256(value_string.encode()).hexdigest()
-        self.hash_value = sha256_hash
-        return sha256_hash
+        return value_fields
 
     @property
     def get_hash_identifier(self) -> str:
@@ -111,22 +152,45 @@ class MontrekTimeSeriesSatelliteABC(MontrekSatelliteABC):
     identifier_fields = ["value_date"]
 
 
-class MontrekLinkABC(TimeStampMixin):
+class LinkTypeEnum(Enum):
+    NONE = 0
+    ONE_TO_ONE = 1
+    ONE_TO_MANY = 2
+    MANY_TO_MANY = 3
+
+
+class MontrekLinkABC(TimeStampMixin, StateDateMixin):
     class Meta:
         abstract = True
 
+    link_type = LinkTypeEnum.NONE
     hub_in = models.ForeignKey(
         MontrekHubABC, on_delete=models.CASCADE, related_name="in_hub"
     )
     hub_out = models.ForeignKey(
         MontrekHubABC, on_delete=models.CASCADE, related_name="out_hub"
     )
-    state_date_start = models.DateTimeField(
-        default=timezone.make_aware(timezone.datetime.min)
-    )
-    state_date_end = models.DateTimeField(
-        default=timezone.make_aware(timezone.datetime.max)
-    )
+
+
+class MontrekOneToOneLinkABC(MontrekLinkABC):
+    class Meta:
+        abstract = True
+
+    link_type = LinkTypeEnum.ONE_TO_ONE
+
+
+class MontrekOneToManyLinkABC(MontrekLinkABC):
+    class Meta:
+        abstract = True
+
+    link_type = LinkTypeEnum.ONE_TO_MANY
+
+
+class MontrekManyToManyLinkABC(MontrekLinkABC):
+    class Meta:
+        abstract = True
+
+    link_type = LinkTypeEnum.MANY_TO_MANY
 
 
 # Montrek Test Models
@@ -163,90 +227,6 @@ class TestLinkSatellite(MontrekSatelliteABC):
     identifier_fields = ["test_id"]
 
 
-class LinkTestMontrekTestLink(MontrekLinkABC):
+class LinkTestMontrekTestLink(MontrekOneToOneLinkABC):
     hub_in = models.ForeignKey(TestMontrekHub, on_delete=models.CASCADE)
     hub_out = models.ForeignKey(TestLinkHub, on_delete=models.CASCADE)
-
-
-####################################################################################################
-# Test classes
-#
-#    SatA1 -- HubA -- LinkHubAHubB -- HubB -- SatB1
-#    SatA2 -/   \                          \- SatB2
-#                \ -- LinkHubAHubC -- HubC -- SatC1
-#                                          \- SatTSC2
-####################################################################################################
-
-
-class HubA(MontrekHubABC):
-    link_hub_a_hub_b = models.ManyToManyField(
-        "HubB", related_name="link_hub_b_hub_a", through="LinkHubAHubB"
-    )
-    link_hub_a_hub_c = models.ManyToManyField(
-        "HubC", related_name="link_hub_c_hub_a", through="LinkHubAHubC"
-    )
-
-
-class HubB(MontrekHubABC):
-    pass
-
-
-class HubC(MontrekHubABC):
-    pass
-
-
-class SatA1(MontrekSatelliteABC):
-    hub_entity = models.ForeignKey(HubA, on_delete=models.CASCADE)
-    field_a1_str = models.CharField(max_length=50, default="DEFAULT")
-    field_a1_int = models.IntegerField(default=0)
-    identifier_fields = ["field_a1_str"]
-
-
-class SatA2(MontrekSatelliteABC):
-    hub_entity = models.ForeignKey(HubA, on_delete=models.CASCADE)
-    field_a2_str = models.CharField(max_length=50, default="DEFAULT")
-    field_a2_float = models.FloatField(default=0.0)
-    identifier_fields = ["field_a2_str"]
-
-
-class SatB1(MontrekSatelliteABC):
-    hub_entity = models.ForeignKey(HubB, on_delete=models.CASCADE)
-    field_b1_str = models.CharField(max_length=50, default="DEFAULT")
-    field_b1_date = models.DateField(default=timezone.now)
-    identifier_fields = ["field_b1_str", "field_b1_date"]
-
-
-class SatB2(MontrekSatelliteABC):
-    class ChoiceEnum(models.TextChoices):
-        CHOICE1 = "CHOICE1"
-        CHOICE2 = "CHOICE2"
-        CHOICE3 = "CHOICE3"
-
-    hub_entity = models.ForeignKey(HubB, on_delete=models.CASCADE)
-    field_b2_str = models.CharField(max_length=50, default="DEFAULT")
-    field_b2_choice = models.CharField(
-        max_length=10, choices=ChoiceEnum.choices, default=ChoiceEnum.CHOICE1
-    )
-    identifier_fields = ["field_b2_str"]
-
-
-class SatC1(MontrekSatelliteABC):
-    hub_entity = models.ForeignKey(HubC, on_delete=models.CASCADE)
-    field_c1_str = models.CharField(max_length=50, default="DEFAULT")
-    field_c1_bool = models.BooleanField(default=False)
-    identifier_fields = ["field_c1_str"]
-
-
-class SatTSC2(MontrekTimeSeriesSatelliteABC):
-    hub_entity = models.ForeignKey(HubC, on_delete=models.CASCADE)
-    field_tsc2_float = models.FloatField(default=0.0)
-
-
-class LinkHubAHubB(MontrekLinkABC):
-    hub_in = models.ForeignKey(HubA, on_delete=models.CASCADE)
-    hub_out = models.ForeignKey(HubB, on_delete=models.CASCADE)
-
-
-class LinkHubAHubC(MontrekLinkABC):
-    hub_in = models.ForeignKey(HubA, on_delete=models.CASCADE)
-    hub_out = models.ForeignKey(HubC, on_delete=models.CASCADE)

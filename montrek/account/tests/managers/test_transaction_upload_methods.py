@@ -5,12 +5,13 @@ from django.test import TestCase
 
 from account.tests.factories.account_factories import BankAccountStaticSatelliteFactory
 from account.tests.factories.account_factories import AccountStaticSatelliteFactory
-from credit_institution.tests.factories.credit_institution_factories import (
-    CreditInstitutionStaticSatelliteFactory,
-)
 
 from account.managers.transaction_upload_methods import upload_dkb_transactions
 from account.managers.transaction_upload_methods import read_dkb_transactions_from_csv
+
+from credit_institution.tests.factories.credit_institution_factories import (
+    CreditInstitutionStaticSatelliteFactory,
+)
 
 
 class TestDKBTransactionUpload(TestCase):
@@ -64,5 +65,5 @@ class TestDKBTransactionUpload(TestCase):
         self.assertEqual(len(transactions), 14)
         transaction_price = 0
         for transaction in transactions:
-            transaction_price += transaction.transaction_price
+            transaction_price += float(transaction.transaction_price)
         self.assertAlmostEqual(transaction_price, -9197.15)

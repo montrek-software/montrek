@@ -3,39 +3,44 @@ from transaction import views
 
 urlpatterns = [
     path(
-        "add_form/<int:account_id>",
-        views.transaction_add_form,
-        name="transaction_add_form",
-    ),
-    path(
-        "add/<int:account_id>",
-        views.transaction_add,
-        name="transaction_add",
+        "create/<int:account_id>",
+        views.TransactionCreateFromAccountView.as_view(),
+        name="transaction_create_from_account",
     ),
     path(
         "<int:pk>/details/",
-        views.TransactionSatelliteDetailView.as_view(),
+        views.TransactionDetailView.as_view(),
         name="transaction_details",
     ),
     path(
+        "<int:pk>/update/",
+        views.TransactionUpdateView.as_view(),
+        name="transaction_update",
+    ),
+    path(
         "add_transaction_category/<int:account_id>/cp/<str:counterparty>",
-        views.TransactionCategoryMapCreateFromTransactionView.as_view(),
+        views.TransactionCategoryMapCreateView.as_view(),
         name="transaction_category_add_form_with_counterparty",
     ),
     path(
         "add_transaction_category/<int:account_id>/iban/<str:iban>",
-        views.TransactionCategoryMapCreateFromTransactionView.as_view(),
+        views.TransactionCategoryMapCreateView.as_view(),
         name="transaction_category_add_form_with_iban",
     ),
     path(
-        "add_transaction_category/<int:account_id>",
+        "category/create/<int:account_id>",
         views.TransactionCategoryMapCreateView.as_view(),
-        name="transaction_category_add_form",
+        name="transaction_category_map_create",
     ),
     path(
-        "edit_transcation_category_map/<int:account_id>/<int:pk>",
+        "category/<int:pk>/update/<int:account_id>",
         views.TransactionCategoryMapUpdateView.as_view(),
-        name="transaction_category_map_edit",
+        name="transaction_category_map_update",
+    ),
+    path(
+        "category/<int:pk>/details/<int:account_id>",
+        views.TransactionCategoryMapDetailView.as_view(),
+        name="transaction_category_map_details",
     ),
     path(
         "delete_transcation_category_map/<int:account_id>/<int:pk>",

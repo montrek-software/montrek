@@ -3,19 +3,24 @@ from asset import views
 
 urlpatterns = [
     path(
-        "asset_list",
-        views.AssetListView.as_view(),
+        "overview",
+        views.AssetOverview.as_view(),
         name="asset",
     ),
     path(
-        "create/<int:account_id>",
-        views.AssetStaticCreateView.as_view(),
-        name="asset_create_form",
+        "create",
+        views.AssetCreateView.as_view(),
+        name="asset_create",
     ),
     path(
-        "create_liquid/<int:account_id>/<int:asset_hub_id>",
-        views.AssetLiquidCreateView.as_view(),
-        name="asset_liquid_create_form",
+        "details/<int:pk>",
+        views.AssetDetailsView.as_view(),
+        name="asset_details",
+    ),
+    path(
+        "update/<int:pk>",
+        views.AssetUpdateView.as_view(),
+        name="asset_update",
     ),
     path(
         "update_asset_prices/<int:account_id>",

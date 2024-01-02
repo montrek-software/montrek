@@ -4,6 +4,21 @@ from asset.models import AssetStaticSatellite
 from asset.models import AssetLiquidSatellite
 from asset.models import AssetTimeSeriesSatellite
 from currency.models import CurrencyStaticSatellite
+from currency.repositories.currency_repository import CurrencyRepository
+from baseclasses.forms import MontrekCreateForm
+
+
+class AssetCreateForm(MontrekCreateForm):
+    class Meta:
+        exclude = ("value_date", "price")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.add_link_choice_field(
+            display_field="ccy_code",
+            link_name="link_asset_currency",
+            queryset=CurrencyRepository().std_queryset(),
+        )
 
 
 class AssetTemplateForm(forms.ModelForm):
@@ -19,7 +34,7 @@ class AssetStaticSatelliteForm(AssetTemplateForm):
         label="Currency",
         to_field_name="ccy_name",
         required=True,
-        empty_label="Select Currency"
+        empty_label="Select Currency",
     )
 
     class Meta:
@@ -37,6 +52,7 @@ class AssetTimeSeriesSatelliteForm(AssetTemplateForm):
     value_date = forms.DateField(
         widget=forms.DateInput(attrs={"type": "date"}), required=True
     )
+
     class Meta:
         model = AssetTimeSeriesSatellite
         fields = ("price", "value_date")

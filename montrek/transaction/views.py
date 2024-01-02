@@ -1,39 +1,30 @@
-from django.shortcuts import render
-from django.shortcuts import redirect
-from django.views.generic import DetailView
-from django.views.generic.edit import CreateView
 from django.urls import reverse
-from django.http import HttpResponseRedirect
-from transaction.forms import TransactionSatelliteForm
-from transaction.forms import TransactionCategoryMapSatelliteForm
-from transaction.repositories.transaction_account_queries import (
-    new_transaction_to_account,
-)
-from transaction.repositories.transaction_category_queries import (
-    add_transaction_category_map_entry,
-)
-from transaction.repositories.transaction_category_queries import (
-    set_transaction_category_by_map_entry,
-)
+from transaction.forms import TransactionCreateForm
+from transaction.forms import TransactionCategoryMapCreateForm
 from transaction.repositories.transaction_repository import TransactionRepository
-from transaction.models import TransactionSatellite
+from transaction.repositories.transaction_category_repository import (
+    TransactionCategoryMapRepository,
+)
 from transaction.models import TransactionCategoryMapSatellite
 from transaction.pages import TransactionPage
-from account.models import AccountStaticSatellite
-from account.models import AccountHub
-from baseclasses.repositories import db_helper
+from transaction.pages import TransactionCategoryMapPage
+from transaction.managers.transaction_category_manager import TransactionCategoryManager
+from account.pages import AccountPage
+from account.repositories.account_repository import AccountRepository
 from baseclasses.views import MontrekDetailView
+from baseclasses.views import MontrekCreateView
+from baseclasses.views import MontrekUpdateView
+from baseclasses.views import MontrekDeleteView
 from baseclasses.dataclasses.table_elements import StringTableElement
 from baseclasses.dataclasses.table_elements import DateTableElement
 from baseclasses.dataclasses.table_elements import EuroTableElement
 from baseclasses.dataclasses.table_elements import FloatTableElement
+from baseclasses.dataclasses.table_elements import BooleanTableElement
 from baseclasses.dataclasses.table_elements import LinkTextTableElement
-from asset.models import AssetStaticSatellite
-from asset.models import AssetHub
 
 
-class TransactionSatelliteDetailView(MontrekDetailView):
-    repository=TransactionRepository
+class TransactionDetailView(MontrekDetailView):
+    repository = TransactionRepository
     page_class = TransactionPage
     tab = "tab_details"
     title = "Transaction Details"
@@ -82,38 +73,122 @@ class TransactionSatelliteDetailView(MontrekDetailView):
         ]
 
 
+class FromAccountCreateViewMixin(MontrekCreateView):
+    page_class = AccountPage
+    account_link_name = ""
 
-class SuccessURLTransactionCategoryMapMixin(
-    CreateView
-):  # pylint: disable=too-few-public-methods
     def get_success_url(self):
         account_id = self.kwargs["account_id"]
-        return reverse(
-            "account_view_transaction_category_map", kwargs={"pk": account_id}
+        return reverse("account_view_transactions", kwargs={"pk": account_id})
+
+    def get_form(self):
+        form = super().get_form()
+        account_hub = (
+            AccountRepository({}).std_queryset().get(pk=self.kwargs["account_id"])
+        )
+        form[self.account_link_name].initial = account_hub
+        return form
+
+    def get_context_data(self, **kwargs):
+        # Set pk to make account form work
+        self.kwargs["pk"] = self.kwargs["account_id"]
+        context = super().get_context_data(**kwargs)
+        return context
+
+
+class TransactionCreateFromAccountView(FromAccountCreateViewMixin):
+    repository = TransactionRepository
+    form_class = TransactionCreateForm
+    account_link_name = "link_transaction_account"
+
+
+class TransactionUpdateView(MontrekUpdateView):
+    repository = TransactionRepository
+    page_class = TransactionPage
+    form_class = TransactionCreateForm
+
+    def get_success_url(self):
+        transaction_pk = self.kwargs["pk"]
+        return reverse("transaction_details", kwargs={"pk": transaction_pk})
+
+    def get_form(self):
+        edit_object = (
+            self.repository({}).get_queryset_with_account().get(pk=self.kwargs["pk"])
+        )
+        initial = self.repository_object.object_to_dict(edit_object)
+        initial["link_transaction_account"] = edit_object.link_transaction_account.get()
+        return self.form_class(repository=self.repository_object, initial=initial)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["account_id"] = context["form"].initial["link_transaction_account"].id
+        return context
+
+
+class TransactionCategoryMapDetailView(MontrekDetailView):
+    repository = TransactionCategoryMapRepository
+    page_class = TransactionCategoryMapPage
+    title = "Transaction Category Map Details"
+
+    @property
+    def elements(self) -> list:
+        return [
+            StringTableElement(
+                attr="value",
+                name="Value",
+            ),
+            StringTableElement(
+                attr="field",
+                name="Field",
+            ),
+            StringTableElement(
+                attr="category",
+                name="Category",
+            ),
+            BooleanTableElement(
+                attr="is_regex",
+                name="Is Regex",
+            ),
+            LinkTextTableElement(
+                name="Account",
+                url="account_view_transaction_category_map",
+                kwargs={"pk": "account_id"},
+                text="account_name",
+                hover_text="View Account",
+            ),
+        ]
+
+
+class CreateOrUpdateTransactionCategoryMapMixin:
+    def assign_transaction_categories_to_transactions(self, form):
+        # Pick up created transaction category map entry and create transaction category
+        data = form.cleaned_data
+        account_hub = data["link_transaction_category_map_account"]
+        data.pop("link_transaction_category_map_account")
+        data.pop("hub_entity_id")
+        transaction_category_map = (
+            TransactionCategoryMapRepository().std_queryset().filter(**data)
+        )
+        transaction_repository = TransactionRepository()
+        transactions = transaction_repository.get_queryset_with_account().filter(
+            account_id=account_hub.id,
+        )
+        TransactionCategoryManager().assign_transaction_categories_to_transactions(
+            transactions,
+            transaction_category_map,
         )
 
 
-class SuccessURLTransactionTableMixin(
-    CreateView
-):  # pylint: disable=too-few-public-methods
-    def get_success_url(self):
-        account_id = self.kwargs["account_id"]
-        return reverse(
-            "bank_account_view_transactions", kwargs={"account_id": account_id}
-        )
+class TransactionCategoryMapCreateView(
+    FromAccountCreateViewMixin, CreateOrUpdateTransactionCategoryMapMixin
+):
+    repository = TransactionCategoryMapRepository
+    account_link_name = "link_transaction_category_map_account"
+    form_class = TransactionCategoryMapCreateForm
 
-
-class TransactionCategoryMapTemplateView(CreateView):
-    model = TransactionCategoryMapSatellite
-    form_class = TransactionCategoryMapSatelliteForm
-    template_name = (
-        "transaction_category_map_form.html"  # The name of your HTML template
-    )
-    context_object_name = "transaction_category_map"
-
-    def get_initial(self):
-        initial = super().get_initial()
-
+    def get_form(self):
+        form = super().get_form()
+        initial = {}
         counterparty = self.kwargs.get("counterparty", None)
         if counterparty:
             initial["value"] = counterparty
@@ -123,122 +198,43 @@ class TransactionCategoryMapTemplateView(CreateView):
         if iban:
             initial["value"] = iban
             initial["field"] = TransactionCategoryMapSatellite.TRANSACTION_PARTY_IBAN
-        return initial
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["account_id"] = self.kwargs["account_id"]
-        context["iban"] = self.kwargs.get("iban", None)
-        context["counterparty"] = self.kwargs.get("counterparty", None)
-        return context
+        for key, value in initial.items():
+            form[key].initial = value
+        return form
 
     def form_valid(self, form):
+        return_url = super().form_valid(form)
+        self.assign_transaction_categories_to_transactions(form)
+        return return_url
+
+
+class TransactionCategoryMapUpdateView(MontrekUpdateView, CreateOrUpdateTransactionCategoryMapMixin):
+    repository = TransactionCategoryMapRepository
+    form_class = TransactionCategoryMapCreateForm
+    account_link_name = "link_transaction_category_map_account"
+    page_class = TransactionCategoryMapPage
+
+    def get_form(self):
+        form = super().get_form()
+        account_hub = (
+            AccountRepository({}).std_queryset().get(pk=self.kwargs["account_id"])
+        )
+        form[self.account_link_name].initial = account_hub
+        return form
+
+    def get_success_url(self):
         account_id = self.kwargs["account_id"]
-        account_hub = db_helper.get_hub_by_id(account_id, AccountHub)
-        transaction_category_map_entry = add_transaction_category_map_entry(
-            account_hub, form.cleaned_data
-        )
-        set_transaction_category_by_map_entry(
-            transaction_category_map_entry,
-        )
-        return HttpResponseRedirect(self.get_success_url())
-
-
-class TransactionCategoryMapShowEntriesView(
-    TransactionCategoryMapTemplateView, SuccessURLTransactionCategoryMapMixin
-):
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["pk"] = self.kwargs["pk"]
-        transaction_category_entry = TransactionCategoryMapSatellite.objects.get(
-            pk=self.kwargs["pk"]
-        )
-        context["form"] = TransactionCategoryMapSatelliteForm(
-            instance=transaction_category_entry
-        )
-        return context
-
-
-class TransactionCategoryMapCreateView(
-    TransactionCategoryMapTemplateView, SuccessURLTransactionCategoryMapMixin
-):
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["tag"] = "Add"
-        return context
-
-
-class TransactionCategoryMapCreateFromTransactionView(
-    TransactionCategoryMapCreateView,
-    SuccessURLTransactionTableMixin,
-):
-    pass
-
-
-class TransactionCategoryMapUpdateView(
-    TransactionCategoryMapShowEntriesView, SuccessURLTransactionCategoryMapMixin
-):
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["tag"] = "Edit"
-        return context
-
-
-class TransactionCategoryMapDeleteView(
-    TransactionCategoryMapShowEntriesView, SuccessURLTransactionCategoryMapMixin
-):
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["tag"] = "Delete"
-        return context
+        return reverse("account_view_transactions", kwargs={"pk": account_id})
 
     def form_valid(self, form):
-        transaction_category_entry = TransactionCategoryMapSatellite.objects.get(
-            pk=self.kwargs["pk"]
-        )
-        transaction_category_entry.hub_entity.is_deleted = True
-        transaction_category_entry.hub_entity.save()
-        return HttpResponseRedirect(self.get_success_url())
+        return_url = super().form_valid(form)
+        self.assign_transaction_categories_to_transactions(form)
+        return return_url
 
 
-def _get_account_statics(account_id: int):
-    account_hub = db_helper.get_hub_by_id(account_id, AccountHub)
-    return db_helper.select_satellite(account_hub, AccountStaticSatellite)
+class TransactionCategoryMapDeleteView(MontrekDeleteView):
+    repository = TransactionCategoryMapRepository
 
-
-def transaction_add_form(request, account_id: int):
-    account_statics = _get_account_statics(account_id)
-    return render(
-        request,
-        "transaction_add_form.html",
-        {
-            "account_statics": account_statics,
-            "assets": AssetStaticSatellite.objects.all(),
-        },
-    )
-
-
-def transaction_add(request, account_id: int):
-    asset_name = request.POST["asset"]
-    if asset_name != "None":
-        asset_hub_id = int(asset_name[asset_name.find("<") + 1 : asset_name.find(">")])
-        asset_hub = db_helper.get_hub_by_id(asset_hub_id, AssetHub)
-        transaction_party = asset_hub.asset_static_satellite.last().asset_name
-    else:
-        transaction_party = "UNKNOWN"
-    transaction_hub = new_transaction_to_account(
-        account_id=account_id,
-        transaction_date=request.POST["transaction_date"],
-        transaction_amount=request.POST["transaction_amount"],
-        transaction_price=request.POST["transaction_price"],
-        transaction_description=request.POST["transaction_description"],
-        transaction_party=transaction_party,
-        transaction_type=None,
-        transaction_category="",
-    )
-    account_statics = _get_account_statics(account_id)
-    if asset_name != "None":
-        transaction_hub.link_transaction_asset.add(asset_hub)
-    if account_statics.account_type in ["BankAccount", "Depot"]:
-        return redirect(f"/account/{account_id}/account_view/transactions")
-    return redirect(f"/account/{account_id}/view")
+    def get_success_url(self):
+        account_id = self.kwargs["account_id"]
+        return reverse("account_view_transactions", kwargs={"pk": account_id})

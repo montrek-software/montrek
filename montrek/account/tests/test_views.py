@@ -137,9 +137,8 @@ class TestAccountUploadView(TestCase):
 class TestAccountTransactionCategoryMapView(TestCase):
     def setUp(self):
         self.acc = AccountStaticSatelliteFactory.create()
-        tr_cat_map = TransactionCategoryMapSatelliteFactory.create()
-        tr_cat_map.hub_entity.link_transaction_category_map_account.add(
-            self.acc.hub_entity
+        tr_cat_map = TransactionCategoryMapSatelliteFactory.create(
+            hub_entity__accounts=(self.acc.hub_entity,)
         )
 
     def test_account_transaction_category_map_view_returns_correct_html(self):
@@ -192,47 +191,8 @@ class TestAccountDepotView(TestCase):
         self.assertIsInstance(context["view"], views.AccountDepotView)
         self.assertEqual(context["page_title"], self.acc.account_name)
 
+class TestAccountCreateView(TestCase):
+    def test_account_create_view_returns_correct_html(self):
+        response = self.client.get("/account/create")
+        self.assertTemplateUsed(response, "montrek_create.html")
 
-# Create your tests here.
-class TestAccountViews(TestCase):
-    @classmethod
-    def setUpTestData(cls):
-        cls.acc_sat1 = AccountStaticSatelliteFactory.create()
-        cls.acc_sat2 = AccountStaticSatelliteFactory.create()
-        cls.acc_sat3 = AccountStaticSatelliteFactory.create()
-
-    def test_new_list_form_returns_correct_html(self):
-        response = self.client.get("/account/new_form")
-        self.assertTemplateUsed(response, "new_account_form.html")
-
-    def test_can_create_new_account(self):
-        accounts_under_test = len(AccountHub.objects.all())
-        self.client.post("/account/new", data={"account_name": "New Account"})
-        self.assertEqual(AccountHub.objects.count(), accounts_under_test + 1)
-        self.assertEqual(
-            AccountStaticSatellite.objects.count(), accounts_under_test + 1
-        )
-        account_hub = AccountHub.objects.last()
-        account_static_satellite = AccountStaticSatellite.objects.last()
-        self.assertEqual(account_static_satellite.account_name, "New Account")
-        self.assertEqual(account_static_satellite.hub_entity.id, account_hub.id)
-        self.assertEqual(account_static_satellite.account_type, "Other")
-
-    def test_account_delete(self):
-        accounts_under_test = len(AccountHub.objects.all())
-        for acc_no in [
-            acc_sat.hub_entity.id for acc_sat in AccountStaticSatellite.objects.all()
-        ]:
-            self.client.post(f"/account/{acc_no}/delete")
-            accounts_under_test -= 1
-            self.assertEqual(AccountHub.objects.count(), accounts_under_test)
-            self.assertEqual(
-                AccountStaticSatellite.objects.count(), accounts_under_test
-            )
-
-    def test_account_delete_form(self):
-        for acc_no in [
-            acc_sat.hub_entity.id for acc_sat in AccountStaticSatellite.objects.all()
-        ]:
-            response = self.client.post(f"/account/{acc_no}/delete_form")
-            self.assertTemplateUsed(response, "account_delete_form.html")

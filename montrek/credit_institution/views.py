@@ -1,4 +1,4 @@
-from baseclasses.views import MontrekListView, MontrekDetailView
+from baseclasses.views import MontrekListView, MontrekDetailView, MontrekCreateView
 from baseclasses.dataclasses.table_elements import StringTableElement, LinkTableElement
 from credit_institution.models import CreditInstitutionStaticSatellite
 from credit_institution.pages import CreditInstitutionAppPage, CreditInstitutionPage
@@ -29,6 +29,12 @@ class CreditInstitutionOverview(MontrekListView):
             StringTableElement(name="BIC", attr="credit_institution_bic"),
             StringTableElement(name="Upload Method", attr="account_upload_method"),
         )
+
+
+class CreditInstitutionCreate(MontrekCreateView):
+    page_class = CreditInstitutionAppPage
+    repository = CreditInstitutionRepository
+    success_url = "credit_institution"
 
 
 class CreditIntitutionDetailView(MontrekDetailView):
