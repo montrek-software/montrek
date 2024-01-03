@@ -80,8 +80,15 @@ class TransactionCategorySatellite(
 
 
 class TransactionCategoryMapHub(baseclass_models.MontrekHubABC):
-    pass
+    link_transaction_category_map_counter_transaction_account = models.ManyToManyField(
+        "account.AccountHub",
+        related_name="link_counter_transaction_account_transaction_category_map",
+        through="LinkTransactionCategoryMapCounterTransactionAccount",
+    )
 
+class LinkTransactionCategoryMapCounterTransactionAccount(baseclass_models.MontrekOneToManyLinkABC):
+    hub_in=models.ForeignKey("transaction.TransactionCategoryMapHub", on_delete=models.CASCADE)
+    hub_out=models.ForeignKey("account.AccountHub", on_delete=models.CASCADE)
 
 class TransactionCategoryMapSatellite(baseclass_models.MontrekSatelliteABC):
     identifier_fields = ["field", "value"]

@@ -4,25 +4,33 @@ from transaction.tests.factories.transaction_factories import TransactionCategor
 from transaction.models import TransactionCategoryMapSatellite
 from transaction.managers.transaction_category_manager import TransactionCategoryManager
 from transaction.repositories.transaction_repository import TransactionRepository
+from account.tests.factories.account_factories import AccountHubFactory
 
 
 class TestTransactionCategoryManagers(TestCase):
     def setUp(self):
+        base_account = AccountHubFactory.create()
+        secondary_account = AccountHubFactory.create()
         TransactionSatelliteFactory.create(
             transaction_party='Starbucks',
+            hub_entity__account=base_account,
         )
         TransactionSatelliteFactory.create(
             transaction_party_iban='NL12ABCD34567890',
+            hub_entity__account=base_account,
         )
         TransactionCategoryMapSatelliteFactory.create(
             field='transaction_party',
             value='Starbucks',
             category='Coffee',
+            hub_entity__accounts=[base_account],
         )
         TransactionCategoryMapSatelliteFactory.create(
             field='transaction_party_iban',
             value='NL12ABCD34567890',
             category='Tea',
+            hub_entity__accounts=[base_account],
+            hub_entity__counter_transaction_accounts=[secondary_account],
         )
 
     def test_assign_transaction_categories_to_transactions(self):

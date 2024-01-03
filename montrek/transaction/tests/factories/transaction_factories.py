@@ -77,6 +77,18 @@ class TransactionCategoryMapHubFactory(factory.django.DjangoModelFactory):
             account = AccountStaticSatelliteFactory.create()
             self.link_transaction_category_map_account.add(account.hub_entity)
 
+    @factory.post_generation
+    def counter_transaction_accounts(self, create, extracted, **kwargs):
+        if not create:
+            return
+
+        if extracted:
+            # A list of AccountHub instances were passed in, link them
+            for account in extracted:
+                self.link_transaction_category_map_counter_transaction_account.add(
+                    account
+                )
+
 
 class TransactionCategoryMapSatelliteFactory(factory.django.DjangoModelFactory):
     class Meta:
