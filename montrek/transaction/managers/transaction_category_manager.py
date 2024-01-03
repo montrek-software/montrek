@@ -59,3 +59,12 @@ class TransactionCategoryManager:
                     creation_date,
                 )
                 link.save()
+                self._create_counter_transaction(transaction_category, transaction)
+
+    def _create_counter_transaction(self, transaction_category, transaction):
+        """
+            If the transaction category map has a counter transaction account linked to it, create a  transaction with
+            the same traits, but inversed amount.
+        """
+        raise NotImplementedError("Hier weiter machen")
+        counter_transaction_accounts = self.transaction_category_repository
