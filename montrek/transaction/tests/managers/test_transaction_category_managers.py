@@ -4,13 +4,14 @@ from transaction.tests.factories.transaction_factories import TransactionCategor
 from transaction.models import TransactionCategoryMapSatellite
 from transaction.managers.transaction_category_manager import TransactionCategoryManager
 from transaction.repositories.transaction_repository import TransactionRepository
-from account.tests.factories.account_factories import AccountHubFactory
+from transaction.repositories.transaction_category_repository import TransactionCategoryMapRepository
+from account.tests.factories.account_factories import AccountStaticSatelliteFactory
 
 
 class TestTransactionCategoryManagers(TestCase):
     def setUp(self):
-        self.base_account = AccountHubFactory.create()
-        self.secondary_account = AccountHubFactory.create()
+        self.base_account = AccountStaticSatelliteFactory.create().hub_entity
+        self.secondary_account = AccountStaticSatelliteFactory.create().hub_entity
         TransactionSatelliteFactory.create(
             transaction_party='Starbucks',
             hub_entity__account=self.base_account,
@@ -36,7 +37,7 @@ class TestTransactionCategoryManagers(TestCase):
     def test_assign_transaction_categories_to_transactions(self):
         transactions = TransactionRepository().std_queryset()
         self.assertEqual(len(transactions), 2)
-        transaction_category_map_queryset = TransactionCategoryMapSatellite.objects.all()
+        transaction_category_map_queryset = TransactionCategoryMapRepository().std_queryset()
         tc_manager = TransactionCategoryManager()
         tc_manager.assign_transaction_categories_to_transactions(transactions,
                                                                  transaction_category_map_queryset)
@@ -46,13 +47,13 @@ class TestTransactionCategoryManagers(TestCase):
         self.assertEqual(len(transactions), 3)
         transactions_queryset = TransactionRepository().get_queryset_with_account()
         base_transactions = transactions_queryset.filter(
-            account=self.base_account
+            account_id=self.base_account.id
         )
         self.assertEqual(base_transactions[0].transaction_category, 'Coffee')
         self.assertEqual(base_transactions[1].transaction_category, 'Tea')
         secondary_transactions = transactions_queryset.filter(
-            account=self.secondary_account
+            account_id=self.secondary_account.id
         )
         self.assertEqual(secondary_transactions[0].transaction_category, 'Tea')
-        self.assertEqual(secondary_transactions[0].amount, (-1) * base_transactions[1].amount)
+        self.assertEqual(secondary_transactions[0].transaction_amount, (-1) * base_transactions[1].transaction_amount)
 

@@ -39,7 +39,7 @@ class TransactionCategoryMapRepository(MontrekRepository):
         self.rename_field("hub_entity_id", "account_id")
         self.add_linked_satellites_field_annotations(
             AccountStaticSatellite,
-            LinkTransactionCategoryMapCounter,
+            LinkTransactionCategoryMapCounterTransactionAccount,
             ["hub_entity_id"],
             self.reference_date,
         )
