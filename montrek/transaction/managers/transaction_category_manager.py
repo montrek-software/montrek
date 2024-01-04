@@ -81,6 +81,8 @@ class TransactionCategoryManager:
             transaction_traits = self.transaction_repository.object_to_dict(transaction)
             transaction_traits["transaction_amount"] = transaction_traits["transaction_amount"] * -1
             transaction_traits["transaction_party"] = category_map.account_name
+            if category_map.bank_account_iban:
+                transaction_traits["transaction_party_iban"] = category_map.bank_account_iban
             transaction_traits["link_transaction_account"] = counter_transaction_account
             transaction_traits.pop("hub_entity_id")
             counter_transaction = TransactionRepository().std_create_object(

@@ -156,6 +156,17 @@ class TransactionCategoryMapDetailView(MontrekDetailView):
                 text="account_name",
                 hover_text="View Account",
             ),
+            StringTableElement(
+                attr="counter_transaction_account_id",
+                name="Counter Transaction Account",
+            ),
+            # LinkTextTableElement(
+            #    name="Counter Transaction Account",
+            #    url="account_view_transaction_category_map",
+            #    kwargs={"pk": "counter_transaction_account_id"},
+            #    text="account_name",
+            #    hover_text="View Counter Transaction Account",
+            # ),
         ]
 
 
@@ -165,6 +176,7 @@ class CreateOrUpdateTransactionCategoryMapMixin:
         data = form.cleaned_data
         account_hub = data["link_transaction_category_map_account"]
         data.pop("link_transaction_category_map_account")
+        data.pop("link_transaction_category_map_counter_transaction_account")
         data.pop("hub_entity_id")
         transaction_category_map = (
             TransactionCategoryMapRepository().std_queryset().filter(**data)
@@ -208,7 +220,9 @@ class TransactionCategoryMapCreateView(
         return return_url
 
 
-class TransactionCategoryMapUpdateView(MontrekUpdateView, CreateOrUpdateTransactionCategoryMapMixin):
+class TransactionCategoryMapUpdateView(
+    MontrekUpdateView, CreateOrUpdateTransactionCategoryMapMixin
+):
     repository = TransactionCategoryMapRepository
     form_class = TransactionCategoryMapCreateForm
     account_link_name = "link_transaction_category_map_account"
