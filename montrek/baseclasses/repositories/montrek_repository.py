@@ -57,6 +57,10 @@ class MontrekRepository:
     def reference_date(self, value):
         self._reference_date = value
 
+    @property
+    def query_filter(self):
+        return self.session_data.get("filter", {})
+
     def std_queryset(self, **kwargs):
         raise NotImplementedError("MontrekRepository has no std_queryset method!")
 
@@ -147,7 +151,7 @@ class MontrekRepository:
         return (self.hub_class.objects
                 .annotate(**self.annotations)
                 .filter(
-                    Q(**filter_kwargs),
+                    Q(**self.query_filter),
                     Q(state_date_start__lte=self.reference_date),
                     Q(state_date_end__gt=self.reference_date),
                     )

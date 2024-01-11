@@ -38,7 +38,7 @@ class TransactionRepository(MontrekRepository):
             * self.annotations["transaction_price"]
         )
 
-        return self.build_queryset(**self.session_data.get('filter', {}))
+        return self.build_queryset()
 
     def get_queryset_with_account(self, **kwargs):
         self.add_linked_satellites_field_annotations(
