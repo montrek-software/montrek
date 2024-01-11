@@ -13,6 +13,11 @@ urlpatterns = [
         name="account_view_transactions",
     ),
     path(
+        "<int:pk>/transactions/<str:transaction_category_filter>",
+        views.AccountTransactionsView.as_view(),
+        name="account_view_transactions",
+    ),
+    path(
         "<int:pk>/graphs",
         views.AccountGraphsView.as_view(),
         name="account_view_graphs",

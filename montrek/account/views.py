@@ -116,6 +116,15 @@ class AccountTransactionsView(MontrekListView):
         )
 
     @property
+    def repository_object(self):
+        session_data = self.session_data
+        if 'transaction_category_filter' in self.kwargs:
+            session_data['filter'] = {
+                'transaction_category': self.kwargs['transaction_category_filter']
+            }
+        return self.repository(session_data)
+
+    @property
     def elements(self) -> list:
         return (
             StringTableElement(name="Counterparty", attr="transaction_party"),
