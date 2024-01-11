@@ -33,6 +33,7 @@ class DbCreator:
         hub_entity: MontrekHubABC,
         satellite_classes: List[Type[MontrekSatelliteABC]],
     ):
+        # TODO: remove hub_entity
         self.hub_entity = hub_entity
         self.satellite_classes = satellite_classes
 

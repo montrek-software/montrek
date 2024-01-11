@@ -8,8 +8,10 @@ from transaction.models import TransactionCategorySatellite
 from transaction.models import TransactionHub
 from transaction.models import TransactionSatellite
 from transaction.models import LinkTransactionTransactionCategory
+from transaction.models import LinkTransactionCategoryMapCounterTransactionAccount
 from transaction.repositories.transaction_repository import TransactionRepository
 from account.models import AccountStaticSatellite
+from account.models import BankAccountStaticSatellite
 from account.models import LinkAccountTransactionCategoryMap
 
 
@@ -36,6 +38,20 @@ class TransactionCategoryMapRepository(MontrekRepository):
             reversed_link=True,
         )
         self.rename_field("hub_entity_id", "account_id")
+        self.add_linked_satellites_field_annotations(
+            BankAccountStaticSatellite,
+            LinkAccountTransactionCategoryMap,
+            ["bank_account_iban"],
+            self.reference_date,
+            reversed_link=True,
+        )
+        self.add_linked_satellites_field_annotations(
+            AccountStaticSatellite,
+            LinkTransactionCategoryMapCounterTransactionAccount,
+            ["hub_entity_id"],
+            self.reference_date,
+        )
+        self.rename_field("hub_entity_id", "counter_transaction_account_id")
         return self.build_queryset()
 
 
