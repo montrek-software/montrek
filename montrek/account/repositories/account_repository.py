@@ -69,6 +69,8 @@ class AccountRepository(MontrekRepository):
             .order_by("-transaction_date")
 
         )
+        if "sort_field" in self.session_data:
+            transactions = transactions.order_by(self.session_data["sort_field"][0])
         return transactions
 
     def transaction_table_subquery(self, **kwargs):

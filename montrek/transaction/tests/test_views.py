@@ -6,7 +6,9 @@ from transaction.tests.factories.transaction_factories import (
     TransactionCategorySatelliteFactory,
 )
 from transaction.repositories.transaction_repository import TransactionRepository
-from transaction.repositories.transaction_category_repository import TransactionCategoryMapRepository
+from transaction.repositories.transaction_category_repository import (
+    TransactionCategoryMapRepository,
+)
 from account.tests.factories.account_factories import AccountStaticSatelliteFactory
 
 
@@ -147,6 +149,7 @@ class TestTransactionCategoryMapCreateView(TestCase):
             1,
         )
 
+
 class TestTransactionCategoryMapUpdateView(TestCase):
     def setUp(self):
         self.account = AccountStaticSatelliteFactory().hub_entity
@@ -182,12 +185,17 @@ class TestTransactionCategoryMapUpdateView(TestCase):
             },
         )
         transaction_category_map_repository = TransactionCategoryMapRepository()
-        transaction_category_map = transaction_category_map_repository.std_queryset().first()
-        data = transaction_category_map_repository.object_to_dict(transaction_category_map)
+        transaction_category_map = (
+            transaction_category_map_repository.std_queryset().first()
+        )
+        data = transaction_category_map_repository.object_to_dict(
+            transaction_category_map
+        )
         data.update(
             {
                 "category": "TestCat",
                 "link_transaction_category_map_account": self.account.id,
+                "link_transaction_category_map_counter_transaction_account": "",
             }
         )
         response = self.client.post(url, data)
