@@ -143,11 +143,16 @@ class MontrekRepository:
         self._add_to_annotations(fields, annotations_manager)
         self._add_to_primary_link_classes(link_class)
 
-    def build_queryset(self) -> QuerySet:
-        return self.hub_class.objects.annotate(**self.annotations).filter(
-            state_date_start__lte=self.reference_date,
-            state_date_end__gt=self.reference_date,
-        )
+    def build_queryset(self, **filter_kwargs) -> QuerySet:
+        return (self.hub_class.objects
+                .annotate(**self.annotations)
+                .filter(
+                    Q(**filter_kwargs),
+                    Q(state_date_start__lte=self.reference_date),
+                    Q(state_date_end__gt=self.reference_date),
+                    )
+               )
+
 
     def rename_field(self, field: str, new_name: str):
         self.annotations[new_name] = self.annotations[field]
