@@ -11,7 +11,7 @@ from account.models import LinkAccountTransaction
 class TransactionRepository(MontrekRepository):
     hub_class = TransactionHub
 
-    def std_queryset(self, **filter_kwargs):
+    def std_queryset(self, **kwargs):
         reference_date = timezone.now()
         self.add_satellite_fields_annotations(
             TransactionSatellite,
@@ -38,9 +38,9 @@ class TransactionRepository(MontrekRepository):
             * self.annotations["transaction_price"]
         )
 
-        return self.build_queryset(**filter_kwargs)
+        return self.build_queryset(**self.session_data.get('filter', {}))
 
-    def get_queryset_with_account(self, **filter_kwargs):
+    def get_queryset_with_account(self, **kwargs):
         self.add_linked_satellites_field_annotations(
             AccountStaticSatellite,
             LinkAccountTransaction,
@@ -49,4 +49,4 @@ class TransactionRepository(MontrekRepository):
             reversed_link=True,
         )
         self.rename_field("hub_entity_id", "account_id" )
-        return self.std_queryset(**filter_kwargs)
+        return self.std_queryset(**kwargs)

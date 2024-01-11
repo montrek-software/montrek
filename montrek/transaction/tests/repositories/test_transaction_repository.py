@@ -8,7 +8,6 @@ from transaction.tests.factories.transaction_factories import (
 
 class TestTransactionRepository(TestCase):
     def setUp(self):
-        self.repository = TransactionRepository()
         self.trans_1 = TransactionSatelliteFactory.create()
         self.trans_2 = TransactionSatelliteFactory.create()
         self.trans_cat_1 = TransactionCategorySatelliteFactory.create(typename="Cat1")
@@ -22,8 +21,9 @@ class TestTransactionRepository(TestCase):
 
     def test_transaction_query_with_filter(self):
         for trans_cat in (self.trans_cat_1, self.trans_cat_2):
-            queryset = self.repository.std_queryset(
-                transaction_category=trans_cat.typename
+            repository = TransactionRepository(
+                {"filter": {"transaction_category": trans_cat.typename}}
             )
+            queryset = repository.std_queryset()
             self.assertEqual(queryset.count(), 1)
             self.assertEqual(queryset.first().transaction_category, trans_cat.typename)
