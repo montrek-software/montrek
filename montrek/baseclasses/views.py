@@ -6,6 +6,7 @@ from django.views.generic.edit import CreateView
 from django.views import View
 from django.http import HttpResponseRedirect
 from django.urls import reverse
+from django.contrib import messages
 from baseclasses.dataclasses.nav_bar_model import NavBarModel
 from baseclasses.pages import NoPage
 from baseclasses.forms import DateRangeForm, FilterForm
@@ -72,7 +73,7 @@ class MontrekPageViewMixin:
 class MontrekViewMixin:
     @property
     def repository_object(self):
-        # TODO add filter from form here
+        #messages.error("Halte mal Waldemar!")
         return self.repository(self.session_data)
 
     @property
@@ -83,7 +84,21 @@ class MontrekViewMixin:
     def session_data(self) -> dict:
         session_data = dict(self.request.GET)
         session_data.update(dict(self.request.session))
+        session_data.update(self._get_filters(session_data))
         return session_data
+
+    def _get_filters(self, session_data):
+        filter_field = session_data.get("filter_field", [])
+        filter_value = session_data.get("filter_value", [])
+        filter_data = {
+            "filter_field": ",".join(filter_field),
+            "filter_value": ",".join(filter_value),
+        }
+        if filter_field and filter_value:
+            filter_data["filter"] = {
+                filter_field[0]: filter_value[0]
+            }
+        return filter_data
 
     def _get_std_queryset(self):
         return self.repository_object.std_queryset()

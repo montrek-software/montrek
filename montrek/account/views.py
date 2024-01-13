@@ -117,12 +117,11 @@ class AccountTransactionsView(MontrekListView):
 
     @property
     def repository_object(self):
-        session_data = self.session_data
         if 'transaction_category_filter' in self.kwargs:
-            session_data['filter'] = {
+            self.session_data['filter'] = {
                 'transaction_category': self.kwargs['transaction_category_filter']
             }
-        return self.repository(session_data)
+        return super().repository_object
 
     @property
     def elements(self) -> list:

@@ -12,10 +12,12 @@ class DateRangeForm(forms.Form):
 
 class FilterForm(forms.Form):
     filter_field = forms.CharField(
-        widget=forms.TextInput(attrs={"id": "id_filter"})
+        widget=forms.TextInput(attrs={"id": "id_filter"}),
+        required=False
     )
     filter_value = forms.CharField(
-        widget=forms.TextInput(attrs={"id": "id_value"})
+        widget=forms.TextInput(attrs={"id": "id_value"}),
+        required=False
     )
 
 
