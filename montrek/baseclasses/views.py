@@ -8,7 +8,7 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse
 from baseclasses.dataclasses.nav_bar_model import NavBarModel
 from baseclasses.pages import NoPage
-from baseclasses.forms import DateRangeForm
+from baseclasses.forms import DateRangeForm, FilterForm
 from baseclasses.forms import MontrekCreateForm
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from baseclasses import utils
@@ -72,6 +72,7 @@ class MontrekPageViewMixin:
 class MontrekViewMixin:
     @property
     def repository_object(self):
+        # TODO add filter from form here
         return self.repository(self.session_data)
 
     @property
@@ -114,6 +115,8 @@ class MontrekListView(ListView, MontrekPageViewMixin, MontrekViewMixin):
         context = super().get_context_data(**kwargs)
         context = self.get_page_context(context, **kwargs)
         context["table_elements"] = self.elements
+        context["filter_form"] = FilterForm(self.session_data)
+
         return context
 
 
