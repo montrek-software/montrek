@@ -14,9 +14,11 @@ from baseclasses.repositories.subquery_builder import (
     ReverseLinkedSatelliteSubqueryBuilder,
 )
 from baseclasses.repositories.db_creator import DbCreator
+from baseclasses.dataclasses.montrek_message import MontrekMessageError
 from django.db.models import Q, Subquery, OuterRef, QuerySet
 from django.db.models import ManyToManyField
 from django.utils import timezone
+from django.core.exceptions import FieldError
 from django.core.paginator import Paginator
 from functools import wraps
 
@@ -30,6 +32,7 @@ class MontrekRepository:
         self._primary_link_classes = []
         self.session_data = session_data
         self._reference_date = None
+        self.messages = []
 
     @classmethod
     def get_hub_by_id(cls, pk: int) -> MontrekHubABC:
@@ -59,7 +62,11 @@ class MontrekRepository:
 
     @property
     def query_filter(self):
-        return self.session_data.get("filter", {})
+        query_filter = self.session_data.get("filter", {})
+        for key, value in query_filter.items():
+            if key.split("__")[-1] in ("isnull",):
+                query_filter[key] = True if value in ("True", "1") else False
+        return query_filter 
 
     def std_queryset(self, **kwargs):
         raise NotImplementedError("MontrekRepository has no std_queryset method!")
@@ -148,15 +155,18 @@ class MontrekRepository:
         self._add_to_primary_link_classes(link_class)
 
     def build_queryset(self, **filter_kwargs) -> QuerySet:
-        return (self.hub_class.objects
+        queryset = (self.hub_class.objects
                 .annotate(**self.annotations)
                 .filter(
-                    Q(**self.query_filter),
                     Q(state_date_start__lte=self.reference_date),
                     Q(state_date_end__gt=self.reference_date),
                     )
                )
-
+        try:
+            queryset = queryset.filter(**self.query_filter)
+        except FieldError as e:
+            self.messages.append(MontrekMessageError(e))
+        return queryset
 
     def rename_field(self, field: str, new_name: str):
         self.annotations[new_name] = self.annotations[field]

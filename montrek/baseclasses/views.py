@@ -71,10 +71,13 @@ class MontrekPageViewMixin:
 
 
 class MontrekViewMixin:
+    _repository_object = None
+
     @property
     def repository_object(self):
-        messages.error(self.request,"Halte mal Waldemar!")
-        return self.repository(self.session_data)
+        if self._repository_object is None:
+            self._repository_object = self.repository(self.session_data)
+        return self._repository_object
 
     @property
     def elements(self) -> list:
@@ -82,11 +85,17 @@ class MontrekViewMixin:
 
     @property
     def session_data(self) -> dict:
-        messages.info(self.request, "Alles OK")
         session_data = dict(self.request.GET)
         session_data.update(dict(self.request.session))
         session_data.update(self._get_filters(session_data))
         return session_data
+
+    def show_repository_messages(self):
+        for message in self.repository_object.messages:
+            if message.message_type == "error":
+                messages.error(self.request, message.message)
+            elif message.message_type == "info":
+                messages.info(self.request, message.message)
 
     def _get_filters(self, session_data):
         filter_field = session_data.get("filter_field", [])
@@ -96,9 +105,7 @@ class MontrekViewMixin:
             "filter_value": ",".join(filter_value),
         }
         if filter_field and filter_value:
-            filter_data["filter"] = {
-                filter_field[0]: filter_value[0]
-            }
+            filter_data["filter"] = {filter_field[0]: filter_value[0]}
         return filter_data
 
     def _get_std_queryset(self):
@@ -130,6 +137,7 @@ class MontrekListView(ListView, MontrekPageViewMixin, MontrekViewMixin):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context = self.get_page_context(context, **kwargs)
+        self.show_repository_messages()
         context["table_elements"] = self.elements
         context["filter_form"] = FilterForm(self.session_data)
 
