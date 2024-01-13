@@ -21,6 +21,15 @@
     <div class="row">
         {% include_navbar %}
     </div>
+    {% if messages %}
+	<ul class="messages">
+	    {% for message in messages %}
+	    <div class="alert alert-danger">
+		    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+	    </div>
+	    {% endfor %}
+	</ul>
+    {% endif %}
 
     <div class="row">
 	<div class="col-md-2">

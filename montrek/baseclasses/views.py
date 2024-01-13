@@ -73,7 +73,7 @@ class MontrekPageViewMixin:
 class MontrekViewMixin:
     @property
     def repository_object(self):
-        #messages.error("Halte mal Waldemar!")
+        messages.error(self.request,"Halte mal Waldemar!")
         return self.repository(self.session_data)
 
     @property
@@ -82,6 +82,7 @@ class MontrekViewMixin:
 
     @property
     def session_data(self) -> dict:
+        messages.info(self.request, "Alles OK")
         session_data = dict(self.request.GET)
         session_data.update(dict(self.request.session))
         session_data.update(self._get_filters(session_data))
