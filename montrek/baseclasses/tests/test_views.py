@@ -11,7 +11,6 @@ class MockRepository:
         self.session_data = session_data
         self.messages = []
 
-    @property
     def std_queryset(self):
         return ["item1", "item2", "item3"]  # Dummy data for testing
 
@@ -83,3 +82,7 @@ class TestMontrekViewMixin(TestCase):
     def test_elements_property(self):
         mock_view = MockMontrekView('/')
         self.assertEqual(mock_view.elements, [])
+
+    def test_get_std_queryset(self):
+        mock_view = MockMontrekView('/')
+        self.assertEqual(mock_view._get_std_queryset(), ["item1", "item2", "item3"])

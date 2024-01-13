@@ -21,7 +21,7 @@ class TestMontrekExampleACreateView(TestCase):
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, 302)
         # Check added data
-        std_query = HubARepository(None).std_queryset()
+        std_query = HubARepository().std_queryset()
         self.assertEqual(std_query.count(), 1)
         created_object = std_query.first()
         self.assertEqual(created_object.field_a1_str, 'test')
