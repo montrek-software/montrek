@@ -34,6 +34,8 @@ class YahooFxRateUpdateStrategy(FxRateUpdateStrategy):
         value_date: timezone.datetime,
     ) -> Dict[str, float]:
         fx_rates = {}
+        
+        #value_date = value_date + timezone.timedelta(days=-2)
         for ccy in currency_code_list:
             if ccy  == "EUR":
                 fx_rates[ccy] = 1.0
