@@ -51,6 +51,7 @@ class TestFxRateUpdateStrategy(TestCase):
 
 
 class TestYahooFxRateUpdateStrategy(TestFxRateUpdateStrategy):
+    @tag("functional")
     def test_get_fx_rates_from_source(self):
         strategy = YahooFxRateUpdateStrategy()
         strategy.update_fx_rates(self.test_time)
