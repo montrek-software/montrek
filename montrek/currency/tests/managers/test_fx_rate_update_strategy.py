@@ -2,6 +2,7 @@ from typing import List, Dict
 import decimal
 import datetime
 from django.test import TestCase
+from django.test import tag
 from django.utils import timezone
 from currency.managers.fx_rate_update_strategy import (
     FxRateUpdateStrategy,
