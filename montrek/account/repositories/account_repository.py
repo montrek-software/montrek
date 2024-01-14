@@ -58,8 +58,9 @@ class AccountRepository(MontrekRepository):
 
     def get_transaction_table_by_account(self, account_hub_id):
         hub_entity = self.hub_class.objects.get(pk=account_hub_id)
+        transaction_repository = TransactionRepository(self.session_data)
         transactions = (
-            TransactionRepository(self.session_data)
+            transaction_repository
             .std_queryset()
             .filter(
                 link_transaction_account=hub_entity,
@@ -69,6 +70,7 @@ class AccountRepository(MontrekRepository):
             .order_by("-transaction_date")
 
         )
+        self.messages += transaction_repository.messages
         if "sort_field" in self.session_data:
             transactions = transactions.order_by(self.session_data["sort_field"][0])
         return transactions

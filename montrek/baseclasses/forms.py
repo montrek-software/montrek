@@ -10,6 +10,17 @@ class DateRangeForm(forms.Form):
         widget=forms.DateInput(attrs={"type": "date", "id": "id_date_range_end"})
     )
 
+class FilterForm(forms.Form):
+    filter_field = forms.CharField(
+        widget=forms.TextInput(attrs={"id": "id_filter"}),
+        required=False
+    )
+    filter_value = forms.CharField(
+        widget=forms.TextInput(attrs={"id": "id_value"}),
+        required=False
+    )
+
+
 
 class MontrekCreateForm(forms.ModelForm):
     class Meta:

@@ -40,7 +40,7 @@ class TransactionRepository(MontrekRepository):
 
         return self.build_queryset()
 
-    def get_queryset_with_account(self):
+    def get_queryset_with_account(self, **kwargs):
         self.add_linked_satellites_field_annotations(
             AccountStaticSatellite,
             LinkAccountTransaction,
@@ -49,4 +49,4 @@ class TransactionRepository(MontrekRepository):
             reversed_link=True,
         )
         self.rename_field("hub_entity_id", "account_id" )
-        return self.std_queryset()
+        return self.std_queryset(**kwargs)

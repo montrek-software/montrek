@@ -30,7 +30,7 @@ class TransactionDetailView(MontrekDetailView):
     title = "Transaction Details"
 
     def get_queryset(self):
-        return self.repository(self.request).get_queryset_with_account()
+        return self.repository_object.get_queryset_with_account()
 
     @property
     def elements(self) -> list:

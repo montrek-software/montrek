@@ -35,7 +35,7 @@ class TestMontrekRepositorySatellite(TestCase):
         )
 
     def test_build_queryset_with_satellite_fields(self):
-        repository = HubARepository(None)
+        repository = HubARepository()
         repository.reference_date = montrek_time(2023, 7, 8)
         queryset = repository.test_queryset_1()
 
@@ -73,7 +73,7 @@ class TestMontrekRepositorySatellite(TestCase):
 
 class TestMontrekCreatObject(TestCase):
     def test_std_create_object_single_satellite(self):
-        repository = HubARepository(None)
+        repository = HubARepository()
         repository.std_create_object({"field_a1_int": 5, "field_a1_str": "test"})
         self.assertEqual(me_models.SatA1.objects.count(), 1)
         self.assertEqual(me_models.SatA1.objects.first().field_a1_int, 5)
@@ -82,7 +82,7 @@ class TestMontrekCreatObject(TestCase):
         self.assertEqual(me_models.SatA2.objects.count(), 0)
 
     def test_std_create_object_multi_satellites(self):
-        repository = HubARepository(None)
+        repository = HubARepository()
         repository.std_create_object(
             {
                 "field_a1_int": 5,
@@ -100,7 +100,7 @@ class TestMontrekCreatObject(TestCase):
         self.assertEqual(me_models.SatA2.objects.first().field_a2_str, "test2")
 
     def test_std_create_object_existing_object(self):
-        repository = HubARepository(None)
+        repository = HubARepository()
         for _ in range(2):
             repository.std_create_object(
                 {
@@ -121,7 +121,7 @@ class TestMontrekCreatObject(TestCase):
     def test_std_create_object_existing_object_make_copy(self):
         # Since hub_entity_id is a identifier field for the HubB satellites, any entry with the same attributes will
         # create a copy rather than leaving the old one in place.
-        repository = HubBRepository(None)
+        repository = HubBRepository()
         for i in range(2):
             repository.std_create_object(
                 {
@@ -144,7 +144,7 @@ class TestMontrekCreatObject(TestCase):
 
     def test_std_create_object_update_satellite_value_field(self):
         snapshot_time = timezone.now()
-        repository = HubARepository(None)
+        repository = HubARepository()
         repository.std_create_object(
             {
                 "field_a1_int": 5,
@@ -190,7 +190,7 @@ class TestMontrekCreatObject(TestCase):
         self.assertEqual(me_models.SatA2.objects.count(), 0)
         self.assertEqual(me_models.HubA.objects.count(), 0)
         # Create one object
-        repository = HubARepository(None)
+        repository = HubARepository()
         repository.std_create_object(
             {
                 "field_a1_int": 5,
@@ -237,7 +237,7 @@ class TestMontrekCreatObject(TestCase):
     
     def test_std_create_object_update_satellite_id_field_keep_hub(self):
         # Create one object
-        repository = HubARepository(None)
+        repository = HubARepository()
         repository.std_create_object(
             {
                 "field_a1_int": 5,
@@ -266,7 +266,7 @@ class TestMontrekCreatObject(TestCase):
     def test_create_hub_a_with_link_to_hub_b(self):
         hub_b = me_factories.SatB1Factory().hub_entity
         self.assertEqual(me_models.HubB.objects.count(), 1)
-        repository = HubARepository(None)
+        repository = HubARepository()
         repository.std_create_object(
             {
                 "field_a1_int": 5,
@@ -288,7 +288,7 @@ class TestMontrekCreatObject(TestCase):
         sat_b_2 = me_factories.SatB1Factory(field_b1_str="TEST")
         hub_b_1 = sat_b_1.hub_entity
         hub_b_2 = sat_b_2.hub_entity
-        repository = HubARepository(None)
+        repository = HubARepository()
         repository.std_create_object(
             {
                 "field_a1_int": 5,
@@ -321,7 +321,7 @@ class TestMontrekCreatObject(TestCase):
     def test_create_hub_a_with_link_to_hub_b_existing(self):
         sat_b_1 = me_factories.SatB1Factory()
         hub_b_1 = sat_b_1.hub_entity
-        repository = HubARepository(None)
+        repository = HubARepository()
         repository.std_create_object(
             {
                 "field_a1_int": 5,
@@ -348,7 +348,7 @@ class TestMontrekCreatObject(TestCase):
 
 class TestDeleteObject(TestCase):
     def test_delete_object(self):
-        repository = HubARepository(None)
+        repository = HubARepository()
         repository.std_create_object({"field_a1_int": 5, "field_a1_str": "test"})
         self.assertEqual(me_models.SatA1.objects.count(), 1)
         self.assertEqual(me_models.HubA.objects.count(), 1)
@@ -419,7 +419,7 @@ class TestMontrekRepositoryLinks(TestCase):
         )
 
     def test_many_to_one_link(self):
-        repository = HubARepository(None)
+        repository = HubARepository()
         repository.reference_date = montrek_time(2023, 7, 8)
         queryset = repository.test_queryset_2()
 
@@ -442,7 +442,7 @@ class TestMontrekRepositoryLinks(TestCase):
         self.assertEqual(queryset[1].field_b1_str, "Third")
 
     def test_link_reversed(self):
-        repository = HubBRepository(None)
+        repository = HubBRepository()
         repository.reference_date = montrek_time(2023, 7, 8)
         queryset = repository.test_queryset_1()
         self.assertEqual(queryset.count(), 2)
