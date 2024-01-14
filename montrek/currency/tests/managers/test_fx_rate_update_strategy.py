@@ -1,3 +1,4 @@
+import pandas as pd
 from typing import List, Dict
 import decimal
 from django.test import TestCase
@@ -18,8 +19,8 @@ class FxRateUpdateStrategyTestClass(FxRateUpdateStrategy):
         self,
         currency_code_list: List[str],
         value_date: timezone.datetime,
-    ) -> Dict[str, float]:
-        return {ccy: 1.0 for ccy in currency_code_list}
+    ):
+        self.fx_rates = {ccy: 1.0 for ccy in currency_code_list}
 
 
 class TestFxRateUpdateStrategy(TestCase):
@@ -62,11 +63,11 @@ class TestYahooFxRateUpdateStrategy(TestFxRateUpdateStrategy):
     #def test_get_fx_rates_on_weekends(self):
     #    strategy = YahooFxRateUpdateStrategy()
     #    strategy.update_fx_rates(montrek_time(2024,1,14)) # Sunday
-    #    for currency_hub in CurrencyHub.objects.all():
-    #        ccy_code = select_satellite(currency_hub, CurrencyStaticSatellite).ccy_code
+    #    for currency_hub in CurrencyRepository().std_queryset().all():
+    #        ccy_code = currency_hub.ccy_code
     #        ccy_code.value_date.weekday() == 5
 
-    #    strategy.update_fx_rates(montrek_time(2024,1,13)) # Saturday
+    ##    strategy.update_fx_rates(montrek_time(2024,1,13)) # Saturday
     #    for currency_hub in CurrencyHub.objects.all():
     #        ccy_code = select_satellite(currency_hub, CurrencyStaticSatellite).ccy_code
     #        ccy_code.value_date.weekday() == 5
@@ -75,3 +76,17 @@ class TestYahooFxRateUpdateStrategy(TestFxRateUpdateStrategy):
     #    for currency_hub in CurrencyHub.objects.all():
     #        ccy_code = select_satellite(currency_hub, CurrencyStaticSatellite).ccy_code
     #        ccy_code.value_date.weekday() == 4
+
+    def test_receive_no_data_message(self):
+        strategy = YahooFxRateUpdateStrategy()
+        strategy.handle_hist_data_and_return_fx_rates(pd.DataFrame(), '', 'bli', 'blubb')
+        self.assertEqual(len(strategy.fx_rates), 0)
+        self.assertEqual(len(strategy.messages), 1)
+        self.assertEqual(
+            strategy.messages[0].message,
+            "YahooFxRateUpdateStrategy: bli has no data for blubb",
+        )
+        strategy.handle_hist_data_and_return_fx_rates(pd.DataFrame({'Close': [1.2]}), 'EUR', 'bli', 'blubb')
+        self.assertEqual(len(strategy.fx_rates), 1)
+        self.assertEqual(strategy.fx_rates['EUR'], 1.2)
+
