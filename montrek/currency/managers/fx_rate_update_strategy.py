@@ -35,12 +35,16 @@ class YahooFxRateUpdateStrategy(FxRateUpdateStrategy):
     ) -> Dict[str, float]:
         fx_rates = {}
         for ccy in currency_code_list:
+            if ccy  == "EUR":
+                fx_rates[ccy] = 1.0
+                continue
             pair_code = f"{ccy}EUR=X"
             data = yf.Ticker(pair_code)
             date_str = value_date.strftime("%Y-%m-%d")
             hist = data.history(
                 start=date_str,
                 end=(value_date + timezone.timedelta(days=1)).strftime("%Y-%m-%d"),
+                period="1d",
             )
             fx_rates[ccy] = hist["Close"].iloc[-1]
         return fx_rates
