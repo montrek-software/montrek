@@ -2,6 +2,7 @@ from django.urls import reverse
 from django.http import HttpResponseRedirect
 from django.views.generic.edit import CreateView
 from django.utils import timezone
+from django.contrib import messages
 from baseclasses.views import MontrekListView
 from baseclasses.views import MontrekCreateView
 from baseclasses.views import MontrekDetailView
@@ -141,6 +142,11 @@ def view_update_asset_prices(request, account_id: int):
     update_asset_prices_from_yf()
     fx_update_strategy = FxRateUpdateFactory.get_fx_rate_update_strategy("yahoo")
     fx_update_strategy.update_fx_rates(timezone.now())
+    for message in fx_update_strategy.messages:
+        if message.message_type == "error":
+            messages.error(request, message.message)
+        elif message.message_type == "info":
+            messages.info(request, message.message)
     return HttpResponseRedirect(
         reverse("account_view_depot", kwargs={"pk": account_id})
     )
