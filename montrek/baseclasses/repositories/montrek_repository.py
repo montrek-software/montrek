@@ -104,7 +104,9 @@ class MontrekRepository:
         db_creator = DbCreator(
             hub_entity, self._primary_satellite_classes
         )
-        return db_creator.create(data)
+        created_hub = db_creator.create(data)
+        db_creator.save_stalled_objects()
+        return created_hub
 
     def add_satellite_fields_annotations(
         self,
