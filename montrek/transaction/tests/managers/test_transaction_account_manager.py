@@ -12,7 +12,7 @@ from account.tests.factories import account_factories
 from baseclasses.utils import montrek_time
 from transaction.tests.factories import transaction_factories
 from transaction.managers.transaction_account_manager import (
-    new_transactions_to_account_from_df,
+    TransactionAccountManager,
 )
 from transaction.repositories.transaction_repository import TransactionRepository
 
@@ -31,9 +31,9 @@ class TestModelUtils(TestCase):
         account_hub = AccountHub.objects.last()
         test_df = pd.DataFrame({"wrong_column": [1, 2, 3]})
         with self.assertRaises(KeyError) as err:
-            new_transactions_to_account_from_df(
+            TransactionAccountManager(
                 account_hub_object=account_hub, transaction_df=test_df
-            )
+            ).new_transactions_to_account_from_df()
         self.assertEqual(
             str(err.exception),
             "'Wrong columns in transaction_df\\n\\tGot: wrong_column\\n\\tExpected: transaction_date, transaction_amount, transaction_price, transaction_description, transaction_party, transaction_party_iban'",
@@ -63,9 +63,9 @@ class TestModelUtils(TestCase):
                 ],
             }
         )
-        new_transactions_to_account_from_df(
+        TransactionAccountManager(
             account_hub_object=account_hub, transaction_df=test_df
-        )
+        ).new_transactions_to_account_from_df()
         new_transactions = TransactionRepository().get_queryset_with_account().filter(
             link_transaction_account=account_hub
         )

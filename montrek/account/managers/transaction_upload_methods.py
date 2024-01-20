@@ -5,7 +5,7 @@ from credit_institution.models import CreditInstitutionStaticSatellite
 from transaction.models import TransactionSatellite
 from baseclasses.repositories.db_helper import select_satellite
 from transaction.managers.transaction_account_manager import (
-    new_transactions_to_account_from_df,
+    TransactionAccountManager
 )
 
 
@@ -19,7 +19,10 @@ def upload_dkb_transactions(
     if credit_institution.account_upload_method != "dkb":
         raise AttributeError("Account Upload Method is not of type dkb")
     transactions_df = read_dkb_transactions_from_csv(file_path)
-    return new_transactions_to_account_from_df(account_hub, transactions_df)
+    transaction_account_manager = TransactionAccountManager(
+        account_hub, transactions_df
+    )
+    return transaction_account_manager.new_transactions_to_account_from_df()
 
 
 def read_dkb_transactions_from_csv(file_path: str) -> pd.DataFrame:

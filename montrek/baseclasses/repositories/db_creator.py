@@ -33,9 +33,14 @@ class DbCreator:
         hub_entity: MontrekHubABC,
         satellite_classes: List[Type[MontrekSatelliteABC]],
     ):
-        # TODO: remove hub_entity
         self.hub_entity = hub_entity
         self.satellite_classes = satellite_classes
+        self.objects_to_save: Dict[Type[MontrekSatelliteABC], List[MontrekSatelliteABC]] = {
+            satellite_class: [] for satellite_class in satellite_classes
+        }
+        self.objects_to_save.update(
+            {MontrekHubABC: []}
+        )
 
     def create(self, data: Dict[str, Any]) -> None:
         selected_satellites = {"new": [], "existing": [], "updated": []}
@@ -57,6 +62,8 @@ class DbCreator:
         )
         self.create_links(data, reference_hub, creation_date)
         return reference_hub
+
+
 
     def _process_new_satellite(
         self,
