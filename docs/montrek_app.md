@@ -5,15 +5,15 @@ In Montrek, every logical enitiy should be self contained in a app. These entiti
 
 ## Graph
 
+```mermaid
 graph TD
     Models -->|Used by| Repositories
     Repositories -->|Data handling for| MontrekView
 
-    MontrekView -->|Renders| Pages
-    MontrekView -->|Uses| Forms
-    MontrekView -->|May use| Manager
+    
 
-    subgraph MontrekViewGroup [MontrekView]
+    subgraph MontrekView [MontrekView]
+        direction TB
         MontrekDetailView[DetailView]
         MontrekListView[ListView]
         MontrekCreateView[CreateView]
@@ -22,10 +22,19 @@ graph TD
         MontrekTemplateView[TemplateView]
     end
 
+    MontrekView -->|Renders| Pages
+    MontrekView -->|Uses| Forms
+    MontrekView -->|May use| Manager
+
     Pages -->|Includes| TabElements
     Manager -->|Interacts with| Repositories
     Tests -->|Verifies| Models
+    Tests -->|Verifies| MontrekView
+    Tests -->|Verifies| Manager
+    Tests -->|Verifies| Repositories
 
+    MontrekView --> |Pass Data| Template
+```
 
 ## models
 
