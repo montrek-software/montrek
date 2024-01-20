@@ -36,7 +36,7 @@ class AccountRegressionTests(TestCase):
 
         test_category = TransactionCategorySatelliteFactory.create(typename="TestCat")
         test_data['link_transaction_transaction_category'] = test_category.hub_entity
-        creator = DbCreator(hub_entity = TransactionHub(), satellite_classes=[TransactionSatellite])
-        creator.create(test_data)
+        creator = DbCreator(hub_entity_class = TransactionHub, satellite_classes=[TransactionSatellite])
+        creator.create(test_data, TransactionHub())
         self.assertEqual(len(transactions), 14)
         self.assertEqual(query.first().typename, "TestCat")

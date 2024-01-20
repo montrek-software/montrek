@@ -66,7 +66,7 @@ class MontrekRepository:
         for key, value in query_filter.items():
             if key.split("__")[-1] in ("isnull",):
                 query_filter[key] = True if value in ("True", "1") else False
-        return query_filter 
+        return query_filter
 
     def std_queryset(self, **kwargs):
         raise NotImplementedError("MontrekRepository has no std_queryset method!")
@@ -78,14 +78,26 @@ class MontrekRepository:
         }
         for field in obj._meta.get_fields():
             if isinstance(field, ManyToManyField):
-                value = getattr(obj, field.name).filter(
-                    Q(**{f"{field.name.replace('_','')}__state_date_start__lte": self.reference_date}),
-                    Q(**{f"{field.name.replace('_','')}__state_date_end__gt": self.reference_date}),
-                    Q(state_date_start__lte=self.reference_date),
-                    Q(state_date_end__gt=self.reference_date),
-                ).first()
+                value = (
+                    getattr(obj, field.name)
+                    .filter(
+                        Q(
+                            **{
+                                f"{field.name.replace('_','')}__state_date_start__lte": self.reference_date
+                            }
+                        ),
+                        Q(
+                            **{
+                                f"{field.name.replace('_','')}__state_date_end__gt": self.reference_date
+                            }
+                        ),
+                        Q(state_date_start__lte=self.reference_date),
+                        Q(state_date_end__gt=self.reference_date),
+                    )
+                    .first()
+                )
                 object_dict[field.name] = value
-        object_dict['hub_entity_id'] = obj.pk
+        object_dict["hub_entity_id"] = obj.pk
         return object_dict
 
     def std_satellite_fields(self):
@@ -97,14 +109,16 @@ class MontrekRepository:
 
     def std_create_object(self, data: Dict[str, Any]) -> MontrekHubABC:
         self.std_queryset()
-        if 'hub_entity_id' in data and data['hub_entity_id'] and data['hub_entity_id'] != '':
-            hub_entity = self.hub_class.objects.get(pk=data['hub_entity_id'])
+        if (
+            "hub_entity_id" in data
+            and data["hub_entity_id"]
+            and data["hub_entity_id"] != ""
+        ):
+            hub_entity = self.hub_class.objects.get(pk=data["hub_entity_id"])
         else:
             hub_entity = self.hub_class()
-        db_creator = DbCreator(
-            hub_entity, self._primary_satellite_classes
-        )
-        created_hub = db_creator.create(data)
+        db_creator = DbCreator(self.hub_class, self._primary_satellite_classes)
+        created_hub = db_creator.create(data, hub_entity)
         db_creator.save_stalled_objects()
         return created_hub
 
@@ -157,13 +171,10 @@ class MontrekRepository:
         self._add_to_primary_link_classes(link_class)
 
     def build_queryset(self, **filter_kwargs) -> QuerySet:
-        queryset = (self.hub_class.objects
-                .annotate(**self.annotations)
-                .filter(
-                    Q(state_date_start__lte=self.reference_date),
-                    Q(state_date_end__gt=self.reference_date),
-                    )
-               )
+        queryset = self.hub_class.objects.annotate(**self.annotations).filter(
+            Q(state_date_start__lte=self.reference_date),
+            Q(state_date_end__gt=self.reference_date),
+        )
         try:
             queryset = queryset.filter(**self.query_filter)
         except FieldError as e:
@@ -192,6 +203,7 @@ class MontrekRepository:
     def _add_to_primary_link_classes(self, link_class: Type[MontrekLinkABC]):
         if link_class not in self._primary_link_classes:
             self._primary_link_classes.append(link_class)
+
 
 def paginated_table(func):
     @wraps(func)

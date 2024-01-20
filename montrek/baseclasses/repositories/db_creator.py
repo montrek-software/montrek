@@ -30,19 +30,20 @@ class ExistingSatelliteCreationState(SatelliteCreationState):
 class DbCreator:
     def __init__(
         self,
-        hub_entity: MontrekHubABC,
+        hub_entity_class: Type[MontrekHubABC],
         satellite_classes: List[Type[MontrekSatelliteABC]],
     ):
-        self.hub_entity = hub_entity
+        self.hub_entity = None
         self.satellite_classes = satellite_classes
         self.stalled_objects: Dict[
             Type[MontrekSatelliteABC], List[MontrekSatelliteABC]
         ] = {satellite_class: [] for satellite_class in satellite_classes}
-        self.stalled_objects.update({hub_entity.__class__: []})
+        self.stalled_objects.update({hub_entity_class: []})
 
-    def create(self, data: Dict[str, Any]) -> None:
+    def create(self, data: Dict[str, Any], hub_entity: MontrekHubABC) -> None:
         selected_satellites = {"new": [], "existing": [], "updated": []}
         creation_date = timezone.datetime.now()
+        self.hub_entity = hub_entity
         self.hub_entity.save()
         for satellite_class in self.satellite_classes:
             sat_data = {
