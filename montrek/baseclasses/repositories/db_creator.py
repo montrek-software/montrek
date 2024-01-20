@@ -37,14 +37,15 @@ class DbCreator:
         self.satellite_classes = satellite_classes
         self.stalled_objects: Dict[
             Type[MontrekSatelliteABC], List[MontrekSatelliteABC]
-        ] = {satellite_class: [] for satellite_class in satellite_classes}
-        self.stalled_objects.update({hub_entity_class: []})
+        ] = {hub_entity_class: []}
+        self.stalled_objects.update(
+            {satellite_class: [] for satellite_class in satellite_classes}
+        )
 
     def create(self, data: Dict[str, Any], hub_entity: MontrekHubABC) -> None:
         selected_satellites = {"new": [], "existing": [], "updated": []}
         creation_date = timezone.datetime.now()
         self.hub_entity = hub_entity
-        self.hub_entity.save()
         for satellite_class in self.satellite_classes:
             sat_data = {
                 k: v
@@ -59,6 +60,8 @@ class DbCreator:
         reference_hub = self._stall_satellites_and_return_reference_hub(
             selected_satellites, creation_date
         )
+        self._stall_model_object(reference_hub)
+        self.save_stalled_objects()
         self.create_links(data, reference_hub, creation_date)
         return reference_hub
 
@@ -117,7 +120,7 @@ class DbCreator:
     def _get_reference_hub(self, selected_satellites, creation_date):
         if selected_satellites["new"]:
             reference_hub = selected_satellites["new"][0].satellite.hub_entity
-            reference_hub.save()
+            self._stall_model_object(reference_hub)
             return reference_hub
         elif selected_satellites["existing"]:
             return selected_satellites["existing"][0].satellite.hub_entity
@@ -168,9 +171,9 @@ class DbCreator:
 
     def _update_hubs(self, old_hub, new_hub, creation_date):
         old_hub.state_date_end = creation_date
-        old_hub.save()
+        self._stall_model_object(old_hub)
         new_hub.state_date_start = creation_date
-        new_hub.save()
+        self._stall_model_object(new_hub)
 
     def _copy_satellite_for_hub(self, satellite, hub, creation_date):
         satellite.state_date_end = creation_date
@@ -242,4 +245,5 @@ class DbCreator:
         return "hub_out" if field == "hub_in" else "hub_in"
 
     def _stall_model_object(self, stalled_object):
-        self.stalled_objects[stalled_object.__class__].append(stalled_object)
+        if not stalled_object in self.stalled_objects[stalled_object.__class__]:
+            self.stalled_objects[stalled_object.__class__].append(stalled_object)
