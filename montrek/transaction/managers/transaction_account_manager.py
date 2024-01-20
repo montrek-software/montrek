@@ -48,17 +48,12 @@ class TransactionAccountManager:
             raise KeyError(
                 f"Wrong columns in transaction_df\n\tGot: {got_columns_str}\n\tExpected: {expected_columns_str}"
             )
+        self.transaction_df['link_transaction_account'] = self.account_hub_object
 
     def _import_transactions_to_account_from_df(
         self,
     ):
-        imported_transactions = []
-        for i, row in self.transaction_df.iterrows():
-            row["link_transaction_account"] = self.account_hub_object
-            imported_transactions.append(
-                self.transaction_repository.std_create_object(row.to_dict())
-            )
-        return imported_transactions
+        return self.transaction_repository.create_objects_from_data_frame(self.transaction_df)
 
     def _assign_transaction_categories_to_transactions(
         self,
