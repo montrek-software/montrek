@@ -35,12 +35,11 @@ class DbCreator:
     ):
         self.hub_entity = None
         self.satellite_classes = satellite_classes
-        self.stalled_objects: Dict[
-            Type[MontrekSatelliteABC], List[MontrekSatelliteABC]
-        ] = {hub_entity_class: []}
-        self.stalled_objects.update(
-            {satellite_class: [] for satellite_class in satellite_classes}
-        )
+        self.stalled_hubs = {hub_entity_class: []}
+        self.stalled_satellites = {
+            satellite_class: [] for satellite_class in satellite_classes
+        }
+        self.stalled_links = {}
 
     def create(self, data: Dict[str, Any], hub_entity: MontrekHubABC) -> None:
         selected_satellites = {"new": [], "existing": [], "updated": []}
@@ -60,23 +59,41 @@ class DbCreator:
         reference_hub = self._stall_satellites_and_return_reference_hub(
             selected_satellites, creation_date
         )
-        self._stall_model_object(reference_hub)
-        self.save_stalled_objects()
-        self.create_links(data, reference_hub, creation_date)
+        self._stall_hub(reference_hub)
+        self.stall_links(data, reference_hub, creation_date)
         return reference_hub
 
     def save_stalled_objects(self):
-        for satellite_class, stalled_objects in self.stalled_objects.items():
-            create_objects = [so for so in stalled_objects if so.pk is None]
-            satellite_class.objects.bulk_create(create_objects)
-            update_objects = [so for so in stalled_objects if so.pk is not None]
-            satellite_class.objects.bulk_update(
-                update_objects,
-                fields=(
-                    "state_date_end",
-                    "state_date_start",
-                ),
+        for hub_class, stalled_hubs in self.stalled_hubs.items():
+            self._bulk_create_and_update_stalled_objects(
+                stalled_hubs, hub_class
             )
+        for satellite_class, stalled_satellites in self.stalled_satellites.items():
+            if 'hub_entity_id' in satellite_class.identifier_fields:
+                for stalled_satellite in stalled_satellites:
+                    stalled_satellite.hub_entity_id = stalled_satellite.hub_entity.id
+                    stalled_satellite.get_hash_identifier
+                    stalled_satellite.get_hash_value
+
+            self._bulk_create_and_update_stalled_objects(
+                stalled_satellites, satellite_class
+            )
+        for link_class, stalled_links in self.stalled_links.items():
+            self._bulk_create_and_update_stalled_objects(stalled_links, link_class)
+
+    def _bulk_create_and_update_stalled_objects(
+        self, stalled_objects, stalled_object_class
+    ):
+        create_objects = [so for so in stalled_objects if so.pk is None]
+        stalled_object_class.objects.bulk_create(create_objects)
+        update_objects = [so for so in stalled_objects if so.pk is not None]
+        stalled_object_class.objects.bulk_update(
+            update_objects,
+            fields=(
+                "state_date_end",
+                "state_date_start",
+            ),
+        )
 
     def _process_new_satellite(
         self,
@@ -106,7 +123,6 @@ class DbCreator:
         creation_date: timezone.datetime,
     ):
         reference_hub = self._get_reference_hub(selected_satellites, creation_date)
-        self._remove_not_used_hub(reference_hub)
 
         self._new_satellites(selected_satellites["new"], reference_hub, creation_date)
         self._update_existing_satellites(
@@ -120,16 +136,12 @@ class DbCreator:
     def _get_reference_hub(self, selected_satellites, creation_date):
         if selected_satellites["new"]:
             reference_hub = selected_satellites["new"][0].satellite.hub_entity
-            self._stall_model_object(reference_hub)
+            self._stall_hub(reference_hub)
             return reference_hub
         elif selected_satellites["existing"]:
             return selected_satellites["existing"][0].satellite.hub_entity
         elif selected_satellites["updated"]:
             return selected_satellites["updated"][0].updated_sat.hub_entity
-
-    def _remove_not_used_hub(self, reference_hub):
-        if self.hub_entity != reference_hub:
-            self.hub_entity.delete()
 
     def _new_satellites(self, new_satellites, reference_hub, creation_date):
         for satellite_create_state in new_satellites:
@@ -143,9 +155,9 @@ class DbCreator:
             if existing_satellites.count() == 1:
                 updated_sat = existing_satellites.first()
                 updated_sat.state_date_end = creation_date
-                self._stall_model_object(updated_sat)
+                self._stall_satellite(updated_sat)
                 satellite.state_date_start = creation_date
-            self._stall_model_object(satellite)
+            self._stall_satellite(satellite)
 
     def _update_existing_satellites(
         self, existing_satellites, reference_hub, creation_date
@@ -171,9 +183,9 @@ class DbCreator:
 
     def _update_hubs(self, old_hub, new_hub, creation_date):
         old_hub.state_date_end = creation_date
-        self._stall_model_object(old_hub)
+        self._stall_hub(old_hub)
         new_hub.state_date_start = creation_date
-        self._stall_model_object(new_hub)
+        self._stall_hub(new_hub)
 
     def _copy_satellite_for_hub(self, satellite, hub, creation_date):
         satellite.state_date_end = creation_date
@@ -182,7 +194,7 @@ class DbCreator:
         satellite.state_date_end = timezone.datetime.max
         satellite.pk = None
         satellite.id = None
-        self._stall_model_object(satellite)
+        self._stall_satellite(satellite)
 
     def _update_satellite_for_hub(
         self, satellite_create_state, reference_hub, created_at
@@ -190,21 +202,22 @@ class DbCreator:
         old_sat = satellite_create_state.updated_sat
         new_sat = satellite_create_state.satellite
         old_sat.state_date_end = created_at
-        self._stall_model_object(old_sat)
+        self._stall_satellite(old_sat)
         new_sat.hub_entity = reference_hub
         new_sat.state_date_start = created_at
-        self._stall_model_object(new_sat)
+        self._stall_satellite(new_sat)
 
-    def create_links(self, data, reference_hub, creation_date):
-        for field, value in data.items():
-            if value is None or not hasattr(reference_hub, field):
+    def stall_links(self, data, reference_hub, creation_date):
+        # Filter all data that are Hubs, as they can only be linked to other Hubs
+        link_data = {k: v for k, v in data.items() if isinstance(v, MontrekHubABC)}
+        for field, value in link_data.items():
+            if value is None:
                 continue
-
-            link_class = getattr(reference_hub, field).through
+            link_class = getattr(reference_hub.__class__, field).through
             new_link = self.create_new_link(
                 link_class, reference_hub, value, creation_date
             )
-            new_link.save()
+            self._stall_link_object(new_link)
 
     def create_new_link(self, link_class, reference_hub, value, creation_date):
         if link_class.hub_in.field.related_model == reference_hub.__class__:
@@ -244,6 +257,16 @@ class DbCreator:
     def _get_opposite_field(self, field):
         return "hub_out" if field == "hub_in" else "hub_in"
 
-    def _stall_model_object(self, stalled_object):
-        if not stalled_object in self.stalled_objects[stalled_object.__class__]:
-            self.stalled_objects[stalled_object.__class__].append(stalled_object)
+    def _stall_hub(self, stalled_hub):
+        if not stalled_hub in self.stalled_hubs[stalled_hub.__class__]:
+            self.stalled_hubs[stalled_hub.__class__].append(stalled_hub)
+
+    def _stall_satellite(self, stalled_satellite):
+        if not stalled_satellite in self.stalled_satellites[stalled_satellite.__class__]:
+            self.stalled_satellites[stalled_satellite.__class__].append(stalled_satellite)
+
+    def _stall_link_object(self, stalled_link):
+        if stalled_link.__class__ not in self.stalled_links:
+            self.stalled_links[stalled_link.__class__] = [stalled_link]
+        else:
+            self.stalled_links[stalled_link.__class__].append(stalled_link)
