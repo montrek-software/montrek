@@ -28,6 +28,8 @@ services:
     image: montrek_app
     expose:
       - ${APP_PORT}
+    ports:
+      - 8000:8000
     restart: "on-failure"
     depends_on:
       - db
