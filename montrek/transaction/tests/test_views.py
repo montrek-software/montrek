@@ -1,5 +1,6 @@
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 from transaction.tests.factories.transaction_factories import (
     TransactionSatelliteFactory,
     TransactionCategoryMapSatelliteFactory,
@@ -91,6 +92,7 @@ class TestTransactionUpdateView(TestCase):
         self.assertEqual(transaction.transaction_category, "TestCat")
         self.assertEqual(transaction.transaction_amount, 250)
 
+
 class TestTransactionDeleteView(TestCase):
     def setUp(self):
         self.test_transaction = TransactionSatelliteFactory.create()
@@ -103,15 +105,13 @@ class TestTransactionDeleteView(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "montrek_delete.html")
-        csrf_token = response.context['csrf_token']
-        post_data = {
-            'csrfmiddlewaretoken': csrf_token,
-            'action': 'Delete'
-        }
+        csrf_token = response.context["csrf_token"]
+        post_data = {"csrfmiddlewaretoken": csrf_token, "action": "Delete"}
         response = self.client.post(url, post_data)
         self.assertEqual(response.status_code, 302)
 
         self.assertEqual(TransactionRepository().std_queryset().count(), 0)
+        self.test_transaction.state_date_end < timezone.make_aware(timezone.datetime.max)
 
 class TestTransactionCategoryMapDetailsView(TestCase):
     def setUp(self):
