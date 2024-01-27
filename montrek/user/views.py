@@ -10,8 +10,9 @@ class SignUpView(CreateView):
     success_url = reverse_lazy('home')
 
     def form_valid(self, form):
+        response = super().form_valid(form)
         login(self.request, self.object)
-        return super().form_valid(form)
+        return response
 
 
 class LoginView(FormView):
