@@ -91,6 +91,27 @@ class TestTransactionUpdateView(TestCase):
         self.assertEqual(transaction.transaction_category, "TestCat")
         self.assertEqual(transaction.transaction_amount, 250)
 
+class TestTransactionDeleteView(TestCase):
+    def setUp(self):
+        self.test_transaction = TransactionSatelliteFactory.create()
+
+    def test_view_return_correct_html(self):
+        url = reverse(
+            "transaction_delete",
+            kwargs={"pk": self.test_transaction.hub_entity.id},
+        )
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "montrek_delete.html")
+        csrf_token = response.context['csrf_token']
+        post_data = {
+            'csrfmiddlewaretoken': csrf_token,
+            'action': 'Delete'
+        }
+        response = self.client.post(url, post_data)
+        self.assertEqual(response.status_code, 302)
+
+        self.assertEqual(TransactionRepository().std_queryset().count(), 0)
 
 class TestTransactionCategoryMapDetailsView(TestCase):
     def setUp(self):
