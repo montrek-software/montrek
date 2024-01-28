@@ -1,4 +1,3 @@
-import re
 from django.test import TestCase
 from django.core.files.uploadedfile import SimpleUploadedFile
 from file_upload.managers.file_upload_manager import FileUploadManager

@@ -1,3 +1,4 @@
+from typing import TextIO
 from django.utils import timezone
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from file_upload.models import FileUploadRegistryHub
@@ -22,3 +23,7 @@ class FileUploadRegistryRepository(MontrekRepository):
         )
         queryset = self.build_queryset()
         return queryset
+
+    def get_file_from_registry(self, file_upload_registry_id: int) -> TextIO:
+        file_upload_registry = self.std_queryset().get(pk=file_upload_registry_id)
+        return file_upload_registry.file
