@@ -7,7 +7,7 @@ from baseclasses import models as baseclass_models
 
 class FileUploadRegistryHub(baseclass_models.MontrekHubABC):
     link_file_upload_registry_file_upload_file = models.ManyToManyField(
-        "FileUploadFileHub",
+        "file_upload.FileUploadFileHub",
         related_name="link_file_upload_file_file_upload_registry",
         through="LinkFileUploadRegistryFileUploadFile",
     )
