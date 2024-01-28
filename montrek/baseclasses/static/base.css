@@ -130,3 +130,6 @@ input[readonly] {
     padding: 30px;
 }
 
+#login-form-container {
+    padding: 30px;
+}
