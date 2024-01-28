@@ -18,6 +18,11 @@ urlpatterns = [
         name="transaction_update",
     ),
     path(
+        "<int:pk>/delete/",
+        views.TransactionDeleteView.as_view(),
+        name="transaction_delete",
+    ),
+    path(
         "add_transaction_category/<int:account_id>/cp/<str:counterparty>",
         views.TransactionCategoryMapCreateView.as_view(),
         name="transaction_category_add_form_with_counterparty",
