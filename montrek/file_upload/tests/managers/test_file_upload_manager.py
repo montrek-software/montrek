@@ -5,9 +5,12 @@ from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepository,
 )
 
+
 class MockFileUploadProcessor:
+    message = "File processed"
     def process(self, file):
         return True
+
 
 class TestFileUploadManager(TestCase):
     def setUp(self):
@@ -28,3 +31,27 @@ class TestFileUploadManager(TestCase):
         self.assertEqual(file_upload_registry.file_name, "test_file.txt")
         self.assertEqual(file_upload_registry.file_type, "txt")
         self.assertEqual(file_upload_registry.upload_status, "pending")
+        self.assertEqual(file_upload_registry.upload_message, "Upload is pending")
+
+    def test_fum_upload_no_registry(self):
+        fum = FileUploadManager(
+            file_upload_processor=MockFileUploadProcessor(), file=self.test_file
+        )
+        self.assertRaisesRegex(
+            AttributeError,
+            "FileUploadRegistry is not initialized",
+            fum.upload_and_process,
+        )
+
+    def test_fum_upload_success(self):
+        upload_processor = MockFileUploadProcessor()
+        fum = FileUploadManager(
+            file_upload_processor=upload_processor, file=self.test_file
+        )
+        fum.init_upload()
+        fum.upload_and_process()
+        file_upload_registry_query = FileUploadRegistryRepository().std_queryset()
+        self.assertEqual(file_upload_registry_query.count(), 1)
+        file_upload_registry = file_upload_registry_query.first()
+        self.assertEqual(file_upload_registry.upload_status, "processed")
+        self.assertEqual(file_upload_registry.upload_message, upload_processor.message )
