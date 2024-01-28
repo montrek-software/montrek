@@ -110,7 +110,6 @@ class MontrekRepository:
 
     def std_create_object(self, data: Dict[str, Any]) -> MontrekHubABC:
         self.std_queryset()
-        breakpoint()
         hub_entity = self._get_hub_from_data(data)
         db_creator = DbCreator(self.hub_class, self._primary_satellite_classes)
         created_hub = db_creator.create(data, hub_entity)

@@ -21,8 +21,6 @@ class FileUploadManager:
         self.file = file
         self.file_upload_registry = None
 
-    # def upload(self, file: TextIO) -> None:
-    #    self.file_upload_processor.process(file)
 
     def init_upload(self) -> None:
         file_name = self.file.name
@@ -45,6 +43,10 @@ class FileUploadManager:
         if self.file_upload_processor.process(self.file):
             self._update_file_upload_registry(
                 "processed", self.file_upload_processor.message
+            )
+        else:
+            self._update_file_upload_registry(
+                "failed", self.file_upload_processor.message
             )
 
     def _update_file_upload_registry(
