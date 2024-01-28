@@ -27,7 +27,7 @@ class TestAccountFileUploadManager(TestCase):
         )
         result = account_file_upload_processor.process(self.test_csv_path, self.upload_registry.hub_entity)
         self.assertEqual(
-            account_file_upload_processor.message, "DKB upload was successful"
+            account_file_upload_processor.message, "DKB upload was successful (15 transactions)"
         )
         self.assertEqual(result, True)
         file_upload_registries = self.account_hub.link_account_file_upload_registry.first()
