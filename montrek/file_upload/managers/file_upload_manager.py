@@ -25,6 +25,16 @@ class FileUploadManager:
         self.file = file
         self.file_upload_registry = None
 
+    def upload_and_process(self) -> None:
+        self.init_upload()
+        if self.file_upload_processor.process(self.file):
+            self._update_file_upload_registry(
+                "processed", self.file_upload_processor.message
+            )
+        else:
+            self._update_file_upload_registry(
+                "failed", self.file_upload_processor.message
+            )
 
     def init_upload(self) -> None:
         file_name = self.file.name
@@ -45,17 +55,6 @@ class FileUploadManager:
             pk=file_upload_registry_hub.pk
         )
 
-    def upload_and_process(self) -> None:
-        if not self.file_upload_registry:
-            raise AttributeError("FileUploadRegistry is not initialized")
-        if self.file_upload_processor.process(self.file):
-            self._update_file_upload_registry(
-                "processed", self.file_upload_processor.message
-            )
-        else:
-            self._update_file_upload_registry(
-                "failed", self.file_upload_processor.message
-            )
 
     def _update_file_upload_registry(
         self, upload_status: str, upload_message: str
