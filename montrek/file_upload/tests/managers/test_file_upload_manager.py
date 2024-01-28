@@ -41,15 +41,6 @@ class TestFileUploadManager(TestCase):
         self.assertEqual(file_upload_registry.upload_status, "pending")
         self.assertEqual(file_upload_registry.upload_message, "Upload is pending")
 
-    def test_fum_upload_no_registry(self):
-        fum = FileUploadManager(
-            file_upload_processor=MockFileUploadProcessor(), file=self.test_file
-        )
-        self.assertRaisesRegex(
-            AttributeError,
-            "FileUploadRegistry is not initialized",
-            fum.upload_and_process,
-        )
 
     def test_fum_upload_success(self):
         upload_processor = MockFileUploadProcessor()

@@ -24,10 +24,11 @@ class FileUploadManager:
         self.file_repository = FileUploadFileRepository()
         self.file = file
         self.file_upload_registry = None
+        self.file_path = ""
 
     def upload_and_process(self) -> None:
         self.init_upload()
-        if self.file_upload_processor.process(self.file):
+        if self.file_upload_processor.process(self.file_path):
             self._update_file_upload_registry(
                 "processed", self.file_upload_processor.message
             )
@@ -42,6 +43,7 @@ class FileUploadManager:
         upload_file_hub = self.file_repository.std_create_object(
             {"file": self.file}
         )
+        self.file_path = self.file_repository.std_queryset().get(pk=upload_file_hub.pk).file
         file_upload_registry_hub = self.registry_repository.std_create_object(
             {
                 "file_name": file_name,
