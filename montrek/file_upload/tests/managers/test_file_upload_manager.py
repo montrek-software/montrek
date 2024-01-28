@@ -8,13 +8,13 @@ from file_upload.repositories.file_upload_registry_repository import (
 
 class MockFileUploadProcessor:
     message = "File processed"
-    def process(self, file):
+    def process(self, file, registry):
         return True
 
 
 class MockFileUploadProcessorFail:
     message = "File not processed"
-    def process(self, file):
+    def process(self, file, registry):
         return False
 
 

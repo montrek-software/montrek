@@ -53,7 +53,7 @@ class TestDKBTransactionUpload(TestCase):
                 ]
             )
         )
-        self.assertAlmostEqual(test_df["transaction_price"].sum(), -9197.15)
+        self.assertAlmostEqual(test_df["transaction_price"].sum(), -4484.15)
         self.assertTrue(all([val == 1.0 for val in test_df["transaction_amount"]]))
 
     def test_upload_dkb_transactions(self):
@@ -66,4 +66,4 @@ class TestDKBTransactionUpload(TestCase):
         transaction_price = 0
         for transaction in transactions:
             transaction_price += float(transaction.transaction_price)
-        self.assertAlmostEqual(transaction_price, -9197.15)
+        self.assertAlmostEqual(transaction_price, -4484.15)

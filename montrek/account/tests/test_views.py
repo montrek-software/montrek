@@ -196,3 +196,18 @@ class TestAccountCreateView(TestCase):
         response = self.client.get("/account/create")
         self.assertTemplateUsed(response, "montrek_create.html")
 
+class TestAccountUploadFileView(TestCase):
+    def setUp(self):
+        self.acc = AccountStaticSatelliteFactory.create()
+
+    def test_account_upload_file_view_returns_correct_html(self):
+        response = self.client.get(f"/account/{self.acc.hub_entity.id}/upload_file")
+        self.assertTemplateUsed(response, "upload_form.html")
+
+    def test_account_upload_file_view_enter_file(self):
+        response = self.client.post(
+            f"/account/{self.acc.hub_entity.id}/upload_file",
+            {"file": "test"},
+            follow=True,
+        )
+        self.assertTemplateUsed(response, "upload_form.html")

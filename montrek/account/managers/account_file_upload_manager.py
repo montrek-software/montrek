@@ -6,7 +6,8 @@ class AccountFileUploadProcessor:
     def __init__(self, **kwargs):
         self.account_hub = AccountRepository().std_queryset().get(pk=kwargs["pk"])
 
-    def process(self, file_path: str):
+    def process(self, file_path: str, file_upload_registry_hub ):
         upload_dkb_transactions(self.account_hub, file_path)
+        self.account_hub.link_account_file_upload_registry.add(file_upload_registry_hub)
         self.message = "DKB upload was successful"
         return True

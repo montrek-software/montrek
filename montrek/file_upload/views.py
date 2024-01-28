@@ -17,7 +17,7 @@ class NotDefinedFileUploadProcessor:
 
 
 class MontrekUploadFileView(MontrekTemplateView):
-    template_name = "upload_transaction_to_account_form.html"
+    template_name = "upload_form.html"
     file_upload_processor_class = NotDefinedFileUploadProcessor
 
     def get_template_context(self, **kwargs):

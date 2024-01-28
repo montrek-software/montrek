@@ -11,7 +11,7 @@ from file_upload.repositories.file_upload_file_repository import (
 class FileUploadProcessorProtocol(Protocol):
     message: str
 
-    def process(self, file: TextIO) -> bool:
+    def process(self, file: TextIO, file_upload_registry) -> bool:
         ...
 
 
@@ -28,7 +28,9 @@ class FileUploadManager:
 
     def upload_and_process(self) -> None:
         self.init_upload()
-        if self.file_upload_processor.process(self.file_path):
+        if self.file_upload_processor.process(
+            self.file_path, self.file_upload_registry
+        ):
             self._update_file_upload_registry(
                 "processed", self.file_upload_processor.message
             )
@@ -40,10 +42,10 @@ class FileUploadManager:
     def init_upload(self) -> None:
         file_name = self.file.name
         file_type = file_name.split(".")[-1]
-        upload_file_hub = self.file_repository.std_create_object(
-            {"file": self.file}
+        upload_file_hub = self.file_repository.std_create_object({"file": self.file})
+        self.file_path = (
+            self.file_repository.std_queryset().get(pk=upload_file_hub.pk).file
         )
-        self.file_path = self.file_repository.std_queryset().get(pk=upload_file_hub.pk).file
         file_upload_registry_hub = self.registry_repository.std_create_object(
             {
                 "file_name": file_name,
@@ -56,7 +58,6 @@ class FileUploadManager:
         self.file_upload_registry = self.registry_repository.std_queryset().get(
             pk=file_upload_registry_hub.pk
         )
-
 
     def _update_file_upload_registry(
         self, upload_status: str, upload_message: str
