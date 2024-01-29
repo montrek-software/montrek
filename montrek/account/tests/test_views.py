@@ -1,3 +1,5 @@
+import os
+from django.conf import settings
 from django.test import TestCase
 from account import views
 from account.models import AccountHub
@@ -203,11 +205,16 @@ class TestAccountUploadFileView(TestCase):
     def test_account_upload_file_view_returns_correct_html(self):
         response = self.client.get(f"/account/{self.acc.hub_entity.id}/upload_file")
         self.assertTemplateUsed(response, "upload_form.html")
+        self.assertEqual(response.status_code, 200)
 
     def test_account_upload_file_view_enter_file(self):
-        response = self.client.post(
-            f"/account/{self.acc.hub_entity.id}/upload_file",
-            {"file": "test"},
-            follow=True,
-        )
-        self.assertTemplateUsed(response, "upload_form.html")
+        url = f"/account/{self.acc.hub_entity.id}/upload_file"
+        test_csv_path = os.path.join(settings.BASE_DIR, "account/tests/managers/data", "dkb_test.csv")
+        with open(test_csv_path, "rb") as test_csv:
+            response = self.client.post(
+                url,
+                {"file": test_csv},
+                follow=True,
+            )
+            self.assertTemplateUsed(response, "montrek_table.html")
+            self.assertEqual(response.status_code, 200)

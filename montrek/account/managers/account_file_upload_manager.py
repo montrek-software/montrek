@@ -12,3 +12,9 @@ class AccountFileUploadProcessor:
             self.account_hub.link_account_file_upload_registry.add(file_upload_registry_hub)
             self.message = f"DKB upload was successful ({len(updated_transactions)} transactions)"
         return True
+
+    def pre_check(self, file_path: str):
+        return True
+
+    def post_check(self, file_path: str):
+        return True
