@@ -36,6 +36,7 @@ class DKBFileUploadProcessor(AccountFileUploadProcessor):
     def process(self, file_path: str, file_upload_registry_hub):
         updated_transactions = upload_dkb_transactions(self.account_hub, file_path)
         self.account_hub.link_account_file_upload_registry.add(file_upload_registry_hub)
+        self.account_hub = AccountRepository().std_queryset().get(pk=self.account_hub.pk)
         self.message = (
             f"DKB upload was successful ({len(updated_transactions)} transactions)"
         )
@@ -49,6 +50,12 @@ class DKBFileUploadProcessor(AccountFileUploadProcessor):
         return True
 
     def post_check(self, file_path: str):
+        self._get_meta_data(file_path)
+        account_value = float(self.account_hub.account_value)
+        diff_values = account_value - self.meta_data['value']
+        if abs(diff_values) > 0.02:
+            self.message = f"Bank account value and value from file differ by {diff_values:,.2f} EUR"
+            return False
         return True
 
     def _get_meta_data(self, file_path: str):

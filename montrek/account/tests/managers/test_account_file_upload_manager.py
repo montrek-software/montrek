@@ -59,3 +59,20 @@ class TestDKBAccountFileUploadManager(TestCase):
             account_file_upload_processor.message,
             "IBAN in file (DE12345643) does not match account iban (DE12345678901234567890)",
         )
+
+    def test_post_check_fails(self):
+        account_file_upload_processor = AccountFileUploadProcessor(
+            **{"pk": self.account_hub.pk}
+        )
+        result = account_file_upload_processor.process(
+            self.test_csv_path, self.upload_registry.hub_entity
+        )
+        result = account_file_upload_processor.post_check(
+            self.test_csv_path
+        )
+        self.assertEqual(result, False)
+        self.assertEqual(
+            account_file_upload_processor.message,
+            "Bank account value and value from file differ by -5,276.30 EUR"
+        )
+
