@@ -1,14 +1,18 @@
 from account.managers.transaction_upload_methods import upload_dkb_transactions
+from account.managers.transaction_upload_methods import get_dkb_iban_from_file
 from account.repositories.account_repository import AccountRepository
+import csv
+
 
 class AccountFileUploadProcessor:
     message = "Not implemented"
+
     def __init__(self, **kwargs):
         account_hub = AccountRepository().std_queryset().get(pk=kwargs["pk"])
-        if account_hub.account_upload_method == 'dkb':
+        if account_hub.account_upload_method == "dkb":
             self.sub_processor = DKBFileUploadProcessor(account_hub)
 
-    def process(self, file_path: str, file_upload_registry_hub ):
+    def process(self, file_path: str, file_upload_registry_hub):
         result = self.sub_processor.process(file_path, file_upload_registry_hub)
         self.message = self.sub_processor.message
         return result
@@ -23,18 +27,43 @@ class AccountFileUploadProcessor:
         self.message = self.sub_processor.message
         return result
 
+
 class DKBFileUploadProcessor(AccountFileUploadProcessor):
     def __init__(self, account_hub):
         self.account_hub = account_hub
+        self.meta_data = None
 
-    def process(self, file_path: str, file_upload_registry_hub ):
+    def process(self, file_path: str, file_upload_registry_hub):
         updated_transactions = upload_dkb_transactions(self.account_hub, file_path)
         self.account_hub.link_account_file_upload_registry.add(file_upload_registry_hub)
-        self.message = f"DKB upload was successful ({len(updated_transactions)} transactions)"
+        self.message = (
+            f"DKB upload was successful ({len(updated_transactions)} transactions)"
+        )
         return True
 
     def pre_check(self, file_path: str):
+        self._get_meta_data(file_path)
+        if self.meta_data["iban"] != self.account_hub.bank_account_iban:
+            self.message = f"IBAN in file ({self.meta_data['iban']}) does not match account iban ({self.account_hub.bank_account_iban})"
+            return False
         return True
 
     def post_check(self, file_path: str):
         return True
+
+    def _get_meta_data(self, file_path: str):
+        if self.meta_data:
+            return
+        with open(file_path, newline="", encoding="iso-8859-1") as csvfile:
+            reader = csv.reader(csvfile, delimiter=";", quotechar='"')
+            iban = next(reader)[1].split("/")[0].replace(" ", "")
+            for _ in range(3):
+                next(reader)
+            value = (
+                next(reader)[1].replace(" EUR", "").replace(".", "").replace(",", ".")
+            )
+            value = float(value)
+            self.meta_data = {
+                "iban": iban,
+                "value": value,
+            }
