@@ -1,5 +1,6 @@
 from typing import TextIO
 from django.shortcuts import render
+from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.http import FileResponse
 from file_upload.forms import UploadFileForm
@@ -30,7 +31,11 @@ class MontrekUploadFileView(MontrekTemplateView):
             file_upload_manager = FileUploadManager(
                 file_upload_processor, request.FILES["file"]
             )
-            file_upload_manager = file_upload_manager.upload_and_process()
+            result = file_upload_manager.upload_and_process()
+            if result:
+                messages.success(request, file_upload_processor.message)
+            else:
+                messages.error(request, file_upload_processor.message)
             return HttpResponseRedirect(self.get_success_url())
         else:
             return self.render_to_response(self.get_context_data())
