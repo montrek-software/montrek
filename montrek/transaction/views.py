@@ -124,7 +124,12 @@ class TransactionUpdateView(MontrekUpdateView):
         context["account_id"] = context["form"].initial["link_transaction_account"].id
         return context
 
+class TransactionDeleteView(MontrekDeleteView):
+    repository = TransactionRepository
+    page_class = TransactionPage
+    success_url = "account"
 
+    
 class TransactionCategoryMapDetailView(MontrekDetailView):
     repository = TransactionCategoryMapRepository
     page_class = TransactionCategoryMapPage
