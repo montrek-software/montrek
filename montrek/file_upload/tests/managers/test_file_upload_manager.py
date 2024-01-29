@@ -8,16 +8,40 @@ from file_upload.repositories.file_upload_registry_repository import (
 
 class MockFileUploadProcessor:
     message = "File processed"
+    def pre_check(self, file_path):
+        return True
     def process(self, file, registry):
+        return True
+    def post_check(self, file_path):
         return True
 
 
 class MockFileUploadProcessorFail:
     message = "File not processed"
+    def pre_check(self, file_path):
+        return True
     def process(self, file, registry):
         return False
+    def post_check(self, file_path):
+        return True
 
+class MockFileUploadProcessorPreCheckFail:
+    message = "Pre Cheeck failed"
+    def pre_check(self, file_path):
+        return False
+    def process(self, file, registry):
+        return True
+    def post_check(self, file_path):
+        return True
 
+class MockFileUploadProcessorPostCheckFail:
+    message = "Pre Cheeck failed"
+    def pre_check(self, file_path):
+        return True
+    def process(self, file, registry):
+        return True
+    def post_check(self, file_path):
+        return False
 class TestFileUploadManager(TestCase):
     def setUp(self):
         self.test_file = SimpleUploadedFile(
@@ -57,6 +81,32 @@ class TestFileUploadManager(TestCase):
         
     def test_fum_upload_failure(self):
         upload_processor = MockFileUploadProcessorFail()
+        fum = FileUploadManager(
+            file_upload_processor=upload_processor, file=self.test_file
+        )
+        fum.init_upload()
+        fum.upload_and_process()
+        file_upload_registry_query = FileUploadRegistryRepository().std_queryset()
+        self.assertEqual(file_upload_registry_query.count(), 1)
+        file_upload_registry = file_upload_registry_query.first()
+        self.assertEqual(file_upload_registry.upload_status, "failed")
+        self.assertEqual(file_upload_registry.upload_message, upload_processor.message )
+
+    def test_fum_pre_check_fails(self):
+        upload_processor = MockFileUploadProcessorPreCheckFail()
+        fum = FileUploadManager(
+            file_upload_processor=upload_processor, file=self.test_file
+        )
+        fum.init_upload()
+        fum.upload_and_process()
+        file_upload_registry_query = FileUploadRegistryRepository().std_queryset()
+        self.assertEqual(file_upload_registry_query.count(), 1)
+        file_upload_registry = file_upload_registry_query.first()
+        self.assertEqual(file_upload_registry.upload_status, "failed")
+        self.assertEqual(file_upload_registry.upload_message, upload_processor.message )
+
+    def test_fum_post_check_fails(self):
+        upload_processor = MockFileUploadProcessorPostCheckFail()
         fum = FileUploadManager(
             file_upload_processor=upload_processor, file=self.test_file
         )

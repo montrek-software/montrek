@@ -11,7 +11,13 @@ from file_upload.repositories.file_upload_file_repository import (
 class FileUploadProcessorProtocol(Protocol):
     message: str
 
-    def process(self, file: TextIO, file_upload_registry) -> bool:
+    def pre_check(self, file_path: str) -> bool:
+        ...
+
+    def process(self, file_path: str, file_upload_registry) -> bool:
+        ...
+
+    def post_check(self, file_path: str) -> bool:
         ...
 
 
@@ -26,18 +32,30 @@ class FileUploadManager:
         self.file_upload_registry = None
         self.file_path = ""
 
-    def upload_and_process(self) -> None:
+    def upload_and_process(self) -> bool:
         self.init_upload()
+        if not self.file_upload_processor.pre_check(self.file_path):
+            self._update_file_upload_registry(
+                "failed", self.file_upload_processor.message
+            )
+            return False
         if self.file_upload_processor.process(
             self.file_path, self.file_upload_registry
         ):
+            if not self.file_upload_processor.post_check(self.file_path):
+                self._update_file_upload_registry(
+                    "failed", self.file_upload_processor.message
+                )
+                return False
             self._update_file_upload_registry(
                 "processed", self.file_upload_processor.message
             )
+            return True
         else:
             self._update_file_upload_registry(
                 "failed", self.file_upload_processor.message
             )
+            return False
 
     def init_upload(self) -> None:
         file_name = self.file.name
