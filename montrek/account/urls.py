@@ -37,4 +37,9 @@ urlpatterns = [
         views.AccountDepotView.as_view(),
         name="account_view_depot",
     ),
+    path(
+        "<int:pk>/upload_file",
+        views.AccountUploadFileView.as_view(),
+        name="account_upload_file",
+    ),
 ]

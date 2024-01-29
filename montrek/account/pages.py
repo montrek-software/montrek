@@ -67,7 +67,7 @@ class AccountPage(MontrekPage):
         action_upload_csv = ActionElement(
             icon="upload",
             link=reverse(
-                "upload_transaction_to_account_file", kwargs={"account_id": account_id}
+                "account_upload_file", kwargs={"pk": account_id}
             ),
             action_id="id_transactions_upload",
             hover_text="Upload transactions from csv file",

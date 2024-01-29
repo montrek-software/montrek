@@ -7,11 +7,12 @@ from baseclasses import models as baseclass_models
 
 class FileUploadRegistryHub(baseclass_models.MontrekHubABC):
     link_file_upload_registry_file_upload_file = models.ManyToManyField(
-        "FileUploadFileHub",
+        "file_upload.FileUploadFileHub",
         related_name="link_file_upload_file_file_upload_registry",
+        through="LinkFileUploadRegistryFileUploadFile",
     )
 
-class LinkFileUploadRegistryFileUploadFile(baseclass_models.MontrekLinkABC):
+class LinkFileUploadRegistryFileUploadFile(baseclass_models.MontrekOneToOneLinkABC):
     hub_in= models.ForeignKey("file_upload.FileUploadRegistryHub", on_delete=models.CASCADE)
     hub_out = models.ForeignKey("file_upload.FileUploadFileHub", on_delete=models.CASCADE)
 
