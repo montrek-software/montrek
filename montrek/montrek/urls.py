@@ -25,6 +25,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("account/", include("account.urls")),
     path("baseclasses/", include("baseclasses.urls")),
+    path("file_upload/", include("file_upload.urls")),
     path("transaction/", include("transaction.urls")),
     path("asset/", include("asset.urls")),
     path("credit_institution/", include("credit_institution.urls")),

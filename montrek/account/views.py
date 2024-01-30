@@ -222,13 +222,13 @@ class AccountUploadView(MontrekListView):
             StringTableElement(name="Upload Status", attr="upload_status"),
             StringTableElement(name="Upload Message", attr="upload_message"),
             DateTableElement(name="Upload Date", attr="created_at"),
-            #LinkTableElement(
-            #    name="File",
-            #    url="download_upload_file",
-            #    kwargs={"upload_registry_id": "id"},
-            #    icon="download",
-            #    hover_text="Download",
-            #),
+            LinkTableElement(
+                name="File",
+                url="montrek_download_file",
+                kwargs={"pk": "id"},
+                icon="download",
+                hover_text="Download",
+            ),
         )
 
 

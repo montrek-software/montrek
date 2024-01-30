@@ -1,10 +1,12 @@
 from typing import TextIO
 from django.shortcuts import render
+from django.shortcuts import redirect
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.http import FileResponse
 from file_upload.forms import UploadFileForm
 from file_upload.managers.file_upload_manager import FileUploadManager
+from file_upload.repositories.file_upload_registry_repository import FileUploadRegistryRepository
 from baseclasses.views import MontrekTemplateView
 
 # Create your views here.
@@ -44,8 +46,11 @@ class MontrekUploadFileView(MontrekTemplateView):
         raise NotImplementedError("get_success_url not implemented")
 
 
-# def download_upload_file(
-#    request, upload_registry_id: int
-# ):
-#    upload_file_file_sat = get_file_satellite_from_registry_hub_id(upload_registry_id)
-#    return FileResponse(upload_file_file_sat.file, as_attachment=True)
+class MontrekDownloadFileView(MontrekTemplateView):
+    repository = FileUploadRegistryRepository
+
+    def get(self, request, *args, **kwargs):
+        upload_file = self.repository_object.get_file_from_registry(self.kwargs['pk'], self.request)
+        if upload_file is None:
+            return redirect(request.META.get('HTTP_REFERER'))
+        return FileResponse(upload_file, as_attachment=True)
