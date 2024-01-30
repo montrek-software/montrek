@@ -25,5 +25,5 @@ class FileUploadRegistryRepository(MontrekRepository):
         return queryset
 
     def get_file_from_registry(self, file_upload_registry_id: int) -> TextIO:
-        file_upload_registry = self.std_queryset().get(pk=file_upload_registry_id)
+        file_upload_registry_path = self.std_queryset().get(pk=file_upload_registry_id).file
         return file_upload_registry.file
