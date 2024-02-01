@@ -7,8 +7,8 @@ from django.contrib import messages
 
 class SignUpView(CreateView):
     form_class = UserCreationForm
-    template_name = 'user/signup.html'
-    success_url = reverse_lazy('home')
+    template_name = "user/signup.html"
+    success_url = reverse_lazy("home")
 
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -21,14 +21,14 @@ class SignUpView(CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['page_title'] = 'Sign Up'
+        context["page_title"] = "Sign Up"
         return context
 
 
 class LoginView(FormView):
     form_class = AuthenticationForm
-    template_name = 'user/login.html'
-    success_url = reverse_lazy('home')
+    template_name = "user/login.html"
+    success_url = reverse_lazy("home")
 
     def form_valid(self, form):
         login(self.request, form.get_user())
@@ -40,5 +40,5 @@ class LoginView(FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['page_title'] = 'Login'
+        context["page_title"] = "Login"
         return context
