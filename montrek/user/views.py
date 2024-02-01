@@ -3,7 +3,6 @@ from django.contrib.auth import login
 from django.urls import reverse_lazy
 from django.views.generic.edit import CreateView, FormView
 from django.contrib import messages
-from bs4 import BeautifulSoup
 
 
 class SignUpView(CreateView):
@@ -17,16 +16,14 @@ class SignUpView(CreateView):
         return response
 
     def form_invalid(self, form):
-        soup = BeautifulSoup(form.errors.as_ul(), 'html.parser')
-        error_list = soup.find_all('li')
-        for error in error_list:
-            messages.error(self.request, error.text)
+        messages.error(self.request, form.errors)
         return super().form_invalid(form)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['page_title'] = 'Sign Up'
         return context
+
 
 class LoginView(FormView):
     form_class = AuthenticationForm
@@ -36,3 +33,12 @@ class LoginView(FormView):
     def form_valid(self, form):
         login(self.request, form.get_user())
         return super().form_valid(form)
+
+    def form_invalid(self, form):
+        messages.error(self.request, form.errors)
+        return super().form_invalid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = 'Login'
+        return context

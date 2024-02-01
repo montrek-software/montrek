@@ -35,10 +35,22 @@ class SignUpViewTests(TestCase):
         }
 
         response = self.client.post(url, data)
+        messages = list(response.context['messages'])
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'user/signup.html')
         self.assertContains(response, 'Enter a valid username.')
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(
+            str(messages[0]),
+            '<ul class="errorlist">'
+            '<li>username'
+            '<ul class="errorlist">'
+            '<li>Enter a valid username. This value may contain only letters, numbers, and @/./+/-/_ characters.</li>'
+            '</ul>'
+            '</li>'
+            '</ul>'
+        )
 
 
 class LoginViewTests(TestCase):
@@ -75,7 +87,19 @@ class LoginViewTests(TestCase):
         }
 
         response = self.client.post(url, data)
+        messages = list(response.context['messages'])
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'user/login.html')
         self.assertContains(response, 'Please enter a correct username and password.')
+        self.assertEqual(
+            str(messages[0]),
+            '<ul class="errorlist">'
+            '<li>__all__'
+            '<ul class="errorlist nonfield">'
+            '<li>Please enter a correct username and password. Note that both fields may be case-sensitive.'
+            '</li>'
+            '</ul>'
+            '</li>'
+            '</ul>'
+        )

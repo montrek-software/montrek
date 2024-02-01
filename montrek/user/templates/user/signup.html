@@ -2,10 +2,20 @@
 
 {% block content %}
     <div class="col-md-12">
-      <form method="post">
-          {% csrf_token %}
-          {{ form.as_p }}
-          <button type="submit">Sign Up</button>
+      <form method="post" novalidate>
+        {% csrf_token %}
+
+        {% for field in form.visible_fields %}
+          <div class="form-group">
+            {{ field.label_tag }}
+            {{ field }}
+            {% if field.help_text %}
+              <small class="form-text text-muted">{{ field.help_text }}</small>
+            {% endif %}
+          </div>
+        {% endfor %}
+
+        <button type="submit" class="btn btn-primary">Submit</button>
       </form>
     </div>
 {% endblock %}
