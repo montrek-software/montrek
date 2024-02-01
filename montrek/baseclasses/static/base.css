@@ -124,12 +124,3 @@ input[readonly] {
     color: #333;
     cursor: not-allowed;
 }
-
-
-#signup-form-container {
-    padding: 30px;
-}
-
-#login-form-container {
-    padding: 30px;
-}
