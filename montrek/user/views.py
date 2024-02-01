@@ -7,7 +7,7 @@ from django.contrib import messages
 
 class SignUpView(CreateView):
     form_class = UserCreationForm
-    template_name = "user/signup.html"
+    template_name = "user/user_base.html"
     success_url = reverse_lazy("home")
 
     def form_valid(self, form):
@@ -27,7 +27,7 @@ class SignUpView(CreateView):
 
 class LoginView(FormView):
     form_class = AuthenticationForm
-    template_name = "user/login.html"
+    template_name = "user/user_base.html"
     success_url = reverse_lazy("home")
 
     def form_valid(self, form):

@@ -10,7 +10,7 @@ class SignUpViewTests(TestCase):
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "user/signup.html")
+        self.assertTemplateUsed(response, "user/user_base.html")
 
     def test_signup_form_submission(self):
         url = reverse("signup")
@@ -39,7 +39,7 @@ class SignUpViewTests(TestCase):
         messages = list(response.context["messages"])
 
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "user/signup.html")
+        self.assertTemplateUsed(response, "user/user_base.html")
         self.assertContains(response, "Enter a valid username.")
         self.assertEqual(len(messages), 1)
         self.assertEqual(
@@ -66,7 +66,7 @@ class LoginViewTests(TestCase):
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "user/login.html")
+        self.assertTemplateUsed(response, "user/user_base.html")
 
     def test_login_form_submission(self):
         url = reverse("login")
@@ -91,7 +91,7 @@ class LoginViewTests(TestCase):
         messages = list(response.context["messages"])
 
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "user/login.html")
+        self.assertTemplateUsed(response, "user/user_base.html")
         self.assertContains(response, "Please enter a correct username and password.")
         self.assertEqual(
             str(messages[0]),
