@@ -3,7 +3,6 @@ asgiref==3.6.0
 astroid==2.15.6
 async-generator==1.10
 attrs==22.2.0
-backports.zoneinfo==0.2.1
 beautifulsoup4==4.12.2
 certifi==2022.12.7
 charset-normalizer==3.2.0

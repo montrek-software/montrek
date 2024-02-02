@@ -1,8 +1,11 @@
+import os
+from django.conf import settings
 from django.test import TestCase
 from account import views
 from account.models import AccountHub
 from account.models import AccountStaticSatellite
 from account.tests.factories.account_factories import AccountStaticSatelliteFactory
+from account.tests.factories.account_factories import BankAccountStaticSatelliteFactory
 from transaction.tests.factories.transaction_factories import (
     TransactionSatelliteFactory,
     TransactionCategoryMapSatelliteFactory,
@@ -12,6 +15,7 @@ from file_upload.tests.factories.file_upload_factories import (
 )
 from asset.tests.factories.asset_factories import AssetStaticSatelliteFactory
 from currency.tests.factories.currency_factories import CurrencyStaticSatelliteFactory
+from credit_institution.tests.factories.credit_institution_factories import CreditInstitutionStaticSatelliteFactory
 
 from baseclasses.utils import montrek_time
 
@@ -196,3 +200,31 @@ class TestAccountCreateView(TestCase):
         response = self.client.get("/account/create")
         self.assertTemplateUsed(response, "montrek_create.html")
 
+class TestDKBAccountUploadFileView(TestCase):
+    def setUp(self):
+        self.acc = AccountStaticSatelliteFactory.create()
+        ci_fac = CreditInstitutionStaticSatelliteFactory.create(
+            account_upload_method="dkb",
+        )
+        self.acc.hub_entity.link_account_credit_institution.add(ci_fac.hub_entity)
+        self.bcc = BankAccountStaticSatelliteFactory.create(
+            hub_entity=self.acc.hub_entity,
+        )
+
+
+    def test_account_upload_file_view_returns_correct_html(self):
+        response = self.client.get(f"/account/{self.acc.hub_entity.id}/upload_file")
+        self.assertTemplateUsed(response, "upload_form.html")
+        self.assertEqual(response.status_code, 200)
+
+    def test_account_upload_file_view_enter_file(self):
+        url = f"/account/{self.acc.hub_entity.id}/upload_file"
+        test_csv_path = os.path.join(settings.BASE_DIR, "account/tests/managers/data", "dkb_test.csv")
+        with open(test_csv_path, "rb") as test_csv:
+            response = self.client.post(
+                url,
+                {"file": test_csv},
+                follow=True,
+            )
+            self.assertTemplateUsed(response, "montrek_table.html")
+            self.assertEqual(response.status_code, 200)

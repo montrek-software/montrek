@@ -62,6 +62,7 @@ def read_dkb_transactions_from_csv(file_path: str) -> pd.DataFrame:
         "transaction_price": lambda x: x.sum(),
     }
     transaction_df['transaction_description'] = transaction_df['transaction_description'].astype(str)
+    transaction_df['transaction_party'] = transaction_df['transaction_party'].fillna("UNKNOWN")
     transaction_df = (
         transaction_df.groupby(
             ["transaction_date", "transaction_party", "transaction_party_iban"]
@@ -71,3 +72,15 @@ def read_dkb_transactions_from_csv(file_path: str) -> pd.DataFrame:
     )
     transaction_df["transaction_amount"] = 1
     return transaction_df
+
+def get_dkb_iban_from_file(file_path: str) -> str:
+    meta_df = pd.read_csv(
+        file_path,
+        sep=";",
+        decimal=",",
+        thousands=".",
+        encoding="iso-8859-1",
+        engine="python",
+    )
+    breakpoint()
+    return transactions_df["Kontonummer"].iloc[0]

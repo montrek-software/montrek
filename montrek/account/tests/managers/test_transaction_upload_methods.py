@@ -37,7 +37,7 @@ class TestDKBTransactionUpload(TestCase):
     def test_read_dkb_transactions(self):
         test_df = read_dkb_transactions_from_csv(self.test_csv_path)
         self.assertTrue(isinstance(test_df, pd.DataFrame))
-        self.assertEqual(test_df.shape, (14, 6))
+        self.assertEqual(test_df.shape, (15, 6))
         self.assertTrue(
             all(
                 [
@@ -53,7 +53,7 @@ class TestDKBTransactionUpload(TestCase):
                 ]
             )
         )
-        self.assertAlmostEqual(test_df["transaction_price"].sum(), -9197.15)
+        self.assertAlmostEqual(test_df["transaction_price"].sum(), -4484.15)
         self.assertTrue(all([val == 1.0 for val in test_df["transaction_amount"]]))
 
     def test_upload_dkb_transactions(self):
@@ -62,8 +62,8 @@ class TestDKBTransactionUpload(TestCase):
         transactions = upload_dkb_transactions(
             self.bank_account.hub_entity, self.test_csv_path
         )
-        self.assertEqual(len(transactions), 14)
+        self.assertEqual(len(transactions), 15)
         transaction_price = 0
         for transaction in transactions:
             transaction_price += float(transaction.transaction_price)
-        self.assertAlmostEqual(transaction_price, -9197.15)
+        self.assertAlmostEqual(transaction_price, -4484.15)

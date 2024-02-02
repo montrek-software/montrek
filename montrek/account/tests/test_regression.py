@@ -37,7 +37,7 @@ class AccountRegressionTests(TestCase):
         transactions = upload_dkb_transactions(
             self.bank_account.hub_entity, self.test_csv_path
         )
-        self.assertEqual(len(transactions), 14)
+        self.assertEqual(len(transactions), 15)
 
         repository = TransactionRepository({})
         query = repository.std_queryset()
@@ -50,5 +50,14 @@ class AccountRegressionTests(TestCase):
         )
         creator.create(test_data, TransactionHub())
         creator.save_stalled_objects()
-        self.assertEqual(len(transactions), 14)
+        self.assertEqual(len(transactions), 15)
         self.assertEqual(query.first().typename, "TestCat")
+
+    def test_upload_dkb_transaction_with_empty_auftraggeber(self):
+        empty_csv_path = os.path.join(
+            os.path.dirname(__file__), "managers/data/dkb_empty_auftraggeber.csv"
+        )
+        transactions = upload_dkb_transactions(
+            self.bank_account.hub_entity, empty_csv_path
+        )
+        self.assertEqual(len(transactions), 2)

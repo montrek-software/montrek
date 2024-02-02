@@ -126,6 +126,9 @@ class MontrekTemplateView(TemplateView, MontrekPageViewMixin, MontrekViewMixin):
     def get_template_context(self) -> dict:
         raise NotImplementedError("Please implement this method in your subclass!")
 
+    def get_queryset(self):
+        return self._get_std_queryset()
+
 
 class MontrekListView(ListView, MontrekPageViewMixin, MontrekViewMixin):
     template_name = "montrek_table.html"

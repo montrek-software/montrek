@@ -1,10 +1,11 @@
 from django_pandas.io import read_frame
+from django.urls import reverse
 
 from account.repositories.account_repository import AccountRepository
 from account.pages import AccountOverviewPage
 from account.pages import AccountPage
 from account.forms import AccountCreateForm
-
+from account.managers.account_file_upload_manager import AccountFileUploadProcessor
 
 
 from baseclasses.views import MontrekListView
@@ -26,6 +27,8 @@ from reporting.managers.account_transaction_plots import (
     draw_monthly_income_expanses_plot,
     draw_income_expenses_category_pie_plot,
 )
+
+from file_upload.views import MontrekUploadFileView
 
 
 # Create your views here.
@@ -221,8 +224,8 @@ class AccountUploadView(MontrekListView):
             DateTableElement(name="Upload Date", attr="created_at"),
             LinkTableElement(
                 name="File",
-                url="download_upload_file",
-                kwargs={"upload_registry_id": "id"},
+                url="montrek_download_file",
+                kwargs={"pk": "id"},
                 icon="download",
                 hover_text="Download",
             ),
@@ -318,3 +321,12 @@ class AccountDepotView(MontrekListView):
                 hover_text="Add Price",
             ),
         )
+
+class AccountUploadFileView(MontrekUploadFileView):
+    page_class = AccountPage
+    title = "Upload Account File"
+    repository = AccountRepository
+    file_upload_processor_class = AccountFileUploadProcessor
+
+    def get_success_url(self):
+        return reverse("account_view_uploads", kwargs={"pk": self.kwargs["pk"]})

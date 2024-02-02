@@ -13,13 +13,19 @@ class TransactionPage(MontrekPage):
         self.page_title = f"Transaction {self.obj.pk}"
 
     def get_tabs(self):
+        action_delete = ActionElement(
+            icon="trash",
+            link=reverse("transaction_delete", kwargs={"pk": self.obj.pk}),
+            action_id="delete_transaction",
+            hover_text="Delete transaction",
+        )
         view_tab = TabElement(
             name="Details",
             link=reverse(
                 "transaction_details", kwargs={"pk": self.obj.pk}
             ),
             html_id="tab_details",
-            actions=(),
+            actions=(action_delete,),
         )
         return (view_tab,)
 

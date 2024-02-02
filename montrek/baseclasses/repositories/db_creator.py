@@ -102,6 +102,7 @@ class DbCreator:
     ) -> SatelliteCreationState:
         # Check if satellite already exists, if it is updating or if it is new
         sat_hash_identifier = satellite.get_hash_identifier
+        sat_hash_value = satellite.get_hash_value
         # TODO: Revisit thsi filter and if it does not work if more Satellite have the same values
         satellite_updates_or_none = (
             satellite_class.objects.filter(hash_identifier=sat_hash_identifier)
@@ -110,7 +111,6 @@ class DbCreator:
         )
         if satellite_updates_or_none is None:
             return NewSatelliteCreationState(satellite=satellite)
-        sat_hash_value = satellite.get_hash_value
         if satellite_updates_or_none.get_hash_value == sat_hash_value:
             return ExistingSatelliteCreationState(satellite=satellite_updates_or_none)
         return UpdatedSatelliteCreationState(
