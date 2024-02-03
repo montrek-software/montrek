@@ -7,7 +7,7 @@ from file_upload.repositories.file_upload_registry_repository import (
 from file_upload.repositories.file_upload_file_repository import (
     FileUploadFileRepository,
 )
-from montrek.baseclasses.models import MontrekHubABC
+from baseclasses.models import MontrekHubABC
 
 
 class FileUploadProcessorProtocol(Protocol):
