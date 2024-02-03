@@ -1,6 +1,6 @@
-from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django.contrib.auth.models import AbstractUser, UserManager
 
-class MontrekUserManager(BaseUserManager):
+class MontrekUserManager(UserManager):
     pass
 
 

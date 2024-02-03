@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from user.models import MontrekUser, MontrekUserManager
-from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django.contrib.auth.models import AbstractUser, UserManager
 
 class TestMontrekUser(TestCase):
 
@@ -12,4 +12,4 @@ class TestMontrekUser(TestCase):
         self.assertTrue(issubclass(MontrekUser, AbstractUser))
 
     def test_montrek_user_manager_is_base_user_manager(self):
-        self.assertTrue(issubclass(MontrekUserManager, BaseUserManager))
+        self.assertTrue(issubclass(MontrekUserManager, UserManager))
