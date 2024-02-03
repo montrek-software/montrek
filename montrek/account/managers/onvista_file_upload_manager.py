@@ -1,5 +1,6 @@
 import pandas as pd
 from account.managers.not_implemented_processor import NotImplementedFileUploadProcessor
+from asset.reposotories.asset_repository import AssetRepository
 
 
 class OnvistaFileUploadProcessor:
@@ -34,8 +35,28 @@ class OnvistaFileUploadDepotProcessor:
 
     def process(self, file_path: str, file_upload_registry_hub) -> bool:
         self._get_input_data_df(file_path)
+        account_hub = self.get_account_hub(file_upload_registry_hub)
+        self._create_assets()
         return True
 
     def _get_input_data_df(self, file_path: str):
         self.input_data_df = pd.read_csv(file_path, sep=";", skiprows=5, decimal=",")
         self.input_data_df = self.input_data_df.dropna(subset=["Datum"])
+
+    def _create_assets(self):
+        for _, row in self.input_data_df.iterrows():
+            AssetRepository().std_create_object(
+                {
+                    "account": account_hub,
+                    "date": row["Datum"],
+                    "isin": row["ISIN"],
+                    "name": row["Bezeichnung"],
+                    "amount": row["Stück"],
+                    "price": row["Kurs"],
+                }
+            )
+        self.message = f"Created {self.input_data_df.shape[0]} assets"
+        return True
+
+    def get_account_hub(self, file_upload_registry_hub):
+        return file_upload_registry_hub.account
