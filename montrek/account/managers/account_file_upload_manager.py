@@ -1,6 +1,6 @@
 from account.managers.dkb_file_upload_manager import DkbFileUploadProcessor
 from account.managers.onvista_file_upload_manager import OnvistaFileUploadProcessor
-from account.managers.not_implemented_file_upload_manager import (
+from account.managers.not_implemented_processor import (
     NotImplementedFileUploadProcessor,
 )
 from account.repositories.account_repository import AccountRepository
@@ -21,7 +21,6 @@ class AccountFileUploadProcessor:
                 self.sub_processor.message = f"Account upload method {account_hub.account_upload_method} not implemented"
 
     def process(self, file_path: str, file_upload_registry_hub):
-
         result = self.sub_processor.process(file_path, file_upload_registry_hub)
         self.message = self.sub_processor.message
         return result

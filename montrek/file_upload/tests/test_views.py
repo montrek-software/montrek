@@ -1,18 +1,18 @@
 from django.test import TestCase, RequestFactory
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.contrib.messages.middleware import MessageMiddleware
-from django.http import QueryDict
 from file_upload.views import MontrekUploadFileView
-from file_upload.forms import UploadFileForm
 from baseclasses.pages import MontrekPage
-from io import BytesIO
+
 
 class MockPage(MontrekPage):
     def get_tabs(self):
         return []
 
+
 class MockFileUploadView(MontrekUploadFileView):
     page_class = MockPage
+
     def __init__(self, url: str):
         super().__init__()
         self.add_mock_request(url)
@@ -25,18 +25,19 @@ class MockFileUploadView(MontrekUploadFileView):
         message_middleware = MessageMiddleware(lambda request: None)
         message_middleware.process_request(self.request)
 
+
 class TestMontrekUploadFileView(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
-        self.view = MockFileUploadView('/fake-url/')
+        self.view = MockFileUploadView("/fake-url/")
 
     # TODO Write tests after implementation
-    #def test_get_context_data(self):
+    # def test_get_context_data(self):
     #    self.assertEqual(self.view.response.status_code, 200)
     #    self.assertIn('form', response.context_data)
     #    self.assertIsInstance(response.context_data['form'], UploadFileForm)
 
-    #def test_post_with_valid_form(self):
+    # def test_post_with_valid_form(self):
     #    file = BytesIO(b"My file contents")
     #    file.name = 'test.txt'
     #    data = {'file': file}
@@ -46,7 +47,7 @@ class TestMontrekUploadFileView(TestCase):
     #    self.assertEqual(response.status_code, 200)
     #    # Add more assertions here to validate the response
 
-    #def test_post_with_invalid_form(self):
+    # def test_post_with_invalid_form(self):
     #    data = QueryDict('')
     #    request = self.factory.post('/fake-url/', data)
     #    response = self.view(request)
