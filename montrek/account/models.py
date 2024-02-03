@@ -1,7 +1,5 @@
 import re
 from django.db import models
-from django.db.models import Sum, F
-from django.utils import timezone
 from baseclasses import models as baseclass_models
 from account.managers.validators import montrek_iban_validator
 
@@ -15,7 +13,7 @@ class AccountHub(baseclass_models.MontrekHubABC):
         through="LinkAccountCreditInstitution",
     )
     link_account_transaction = models.ManyToManyField(
-        "transaction.TransactionHub", 
+        "transaction.TransactionHub",
         related_name="link_transaction_account",
         through="LinkAccountTransaction",
     )
@@ -30,21 +28,31 @@ class AccountHub(baseclass_models.MontrekHubABC):
         through="LinkAccountTransactionCategoryMap",
     )
 
+
 class LinkAccountCreditInstitution(baseclass_models.MontrekOneToManyLinkABC):
-    hub_in = models.ForeignKey( "account.AccountHub", on_delete=models.CASCADE)
-    hub_out = models.ForeignKey( "credit_institution.CreditInstitutionHub", on_delete=models.CASCADE)
+    hub_in = models.ForeignKey("account.AccountHub", on_delete=models.CASCADE)
+    hub_out = models.ForeignKey(
+        "credit_institution.CreditInstitutionHub", on_delete=models.CASCADE
+    )
+
 
 class LinkAccountTransaction(baseclass_models.MontrekOneToOneLinkABC):
-    hub_in = models.ForeignKey( "account.AccountHub", on_delete=models.CASCADE)
-    hub_out = models.ForeignKey( "transaction.TransactionHub", on_delete=models.CASCADE)
+    hub_in = models.ForeignKey("account.AccountHub", on_delete=models.CASCADE)
+    hub_out = models.ForeignKey("transaction.TransactionHub", on_delete=models.CASCADE)
+
 
 class LinkAccountFileUploadRegistry(baseclass_models.MontrekOneToOneLinkABC):
-    hub_in = models.ForeignKey( "account.AccountHub", on_delete=models.CASCADE)
-    hub_out = models.ForeignKey( "file_upload.FileUploadRegistryHub", on_delete=models.CASCADE)
+    hub_in = models.ForeignKey("account.AccountHub", on_delete=models.CASCADE)
+    hub_out = models.ForeignKey(
+        "file_upload.FileUploadRegistryHub", on_delete=models.CASCADE
+    )
+
 
 class LinkAccountTransactionCategoryMap(baseclass_models.MontrekOneToManyLinkABC):
-    hub_in = models.ForeignKey( "account.AccountHub", on_delete=models.CASCADE)
-    hub_out = models.ForeignKey( "transaction.TransactionCategoryMapHub", on_delete=models.CASCADE)
+    hub_in = models.ForeignKey("account.AccountHub", on_delete=models.CASCADE)
+    hub_out = models.ForeignKey(
+        "transaction.TransactionCategoryMapHub", on_delete=models.CASCADE
+    )
 
 
 class AccountStaticSatellite(baseclass_models.MontrekSatelliteABC):

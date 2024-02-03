@@ -8,6 +8,7 @@ from account.tests.factories.account_factories import AccountStaticSatelliteFact
 
 from account.managers.transaction_upload_methods import upload_dkb_transactions
 from account.managers.transaction_upload_methods import read_dkb_transactions_from_csv
+from account.repositories.account_repository import AccountRepository
 
 from credit_institution.tests.factories.credit_institution_factories import (
     CreditInstitutionStaticSatelliteFactory,
@@ -29,9 +30,14 @@ class TestDKBTransactionUpload(TestCase):
             cls.credit_institution.hub_entity
         )
 
+    def account(self):
+        return (
+            AccountRepository().std_queryset().get(pk=self.bank_account.hub_entity.pk)
+        )
+
     def test_check_if_upload_method_is_dkb(self):
         with self.assertRaises(AttributeError) as e:
-            upload_dkb_transactions(self.bank_account.hub_entity, "")
+            upload_dkb_transactions(self.account(), "")
         self.assertEqual(str(e.exception), "Account Upload Method is not of type dkb")
 
     def test_read_dkb_transactions(self):
@@ -59,9 +65,7 @@ class TestDKBTransactionUpload(TestCase):
     def test_upload_dkb_transactions(self):
         self.credit_institution.account_upload_method = "dkb"
         self.credit_institution.save()
-        transactions = upload_dkb_transactions(
-            self.bank_account.hub_entity, self.test_csv_path
-        )
+        transactions = upload_dkb_transactions(self.account(), self.test_csv_path)
         self.assertEqual(len(transactions), 15)
         transaction_price = 0
         for transaction in transactions:

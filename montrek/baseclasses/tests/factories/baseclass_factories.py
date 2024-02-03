@@ -38,3 +38,10 @@ class LinkTestMontrekTestLinkFactory(factory.django.DjangoModelFactory):
 
     hub_in = factory.SubFactory(TestMontrekHubFactory)
     hub_out = factory.SubFactory(TestLinkHubFactory)
+
+
+class TestMontrekSatelliteNoIdFieldsFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "baseclasses.TestMontrekSatelliteNoIdFields"
+
+    hub_entity = factory.SubFactory(TestMontrekHubFactory)
