@@ -5,11 +5,11 @@ from django.contrib.auth.models import AbstractUser, UserManager
 
 class TestMontrekUser(TestCase):
 
-    def test_montrek_user_is_active_auth_user_model(self):
+    def test_is_active_auth_user_model(self):
         self.assertEqual(get_user_model(), MontrekUser)
 
-    def test_montrek_user_is_abstract_base_user(self):
+    def test_is_abstract_base_user(self):
         self.assertTrue(issubclass(MontrekUser, AbstractUser))
 
-    def test_montrek_user_manager_is_base_user_manager(self):
+    def test_manager_is_base_user_manager(self):
         self.assertTrue(issubclass(MontrekUserManager, UserManager))
