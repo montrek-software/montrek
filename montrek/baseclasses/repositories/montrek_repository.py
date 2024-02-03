@@ -146,7 +146,7 @@ class MontrekRepository:
         self,
         satellite_class: Type[MontrekSatelliteABC],
         fields: List[str],
-        reference_date: timezone,
+        reference_date: timezone.datetime,
     ):
         subquery_builder = LastTSSatelliteSubqueryBuilder(
             satellite_class, "pk", reference_date, end_date=self.session_end_date
@@ -160,7 +160,7 @@ class MontrekRepository:
         satellite_class: Type[MontrekSatelliteABC],
         link_class: Type[MontrekLinkABC],
         fields: List[str],
-        reference_date: timezone,
+        reference_date: timezone.datetime,
         reversed_link: bool = False,
     ):
         if reversed_link:
