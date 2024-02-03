@@ -64,12 +64,11 @@ class TestModelUtils(TestCase):
 class TestSatelliteIdentifier(TestCase):
     def test_satellite_has_no_identifier_fields(self):
         with self.assertRaises(AttributeError) as e:
-            test_satellite = TestMontrekSatelliteNoIdFields.objects.create(
-                hub_entity=TestMontrekHubFactory()
-            )
+            test_object = TestMontrekSatelliteNoIdFields()
+            test_object.save()
         self.assertEqual(
             str(e.exception),
-            "Satellite TestMontrekSatelliteNoIdFields must have attribute identifier_fields",
+            "Satellite TestMontrekSatelliteNoIdFields must have property identifier_fields",
         )
 
     def test_new_satellite_has_correct_identifier_hash(self):
@@ -79,7 +78,7 @@ class TestSatelliteIdentifier(TestCase):
         )
         self.assertEqual(test_satellite.hash_identifier, test_hash)
 
-    def test_new_satellite_has_correct_identifier_hash(self):
+    def test_new_satellite_has_incorrect_identifier_hash(self):
         test_hash = hashlib.sha256(b"test_name").hexdigest()
         test_satellite = TestMontrekSatelliteFactory(
             test_name="test_name_2", hub_entity=TestMontrekHubFactory()

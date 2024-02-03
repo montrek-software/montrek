@@ -1,37 +1,39 @@
-from typing import List, Type, Dict, Any
+from typing import Any, Protocol
 from dataclasses import dataclass
-from django.db.models import QuerySet
 from django.utils import timezone
-from baseclasses.models import MontrekSatelliteABC, MontrekHubABC, MontrekLinkABC
+from baseclasses.models import MontrekSatelliteABC, MontrekHubABC
 from baseclasses.models import LinkTypeEnum
 
 
-@dataclass
-class SatelliteCreationState:
+class SatelliteCreationState(Protocol):
     satellite: MontrekSatelliteABC
+    state: str
 
 
 @dataclass
-class UpdatedSatelliteCreationState(SatelliteCreationState):
+class UpdatedSatelliteCreationState:
+    satellite: MontrekSatelliteABC
     updated_sat: MontrekSatelliteABC
     state: str = "updated"
 
 
 @dataclass
-class NewSatelliteCreationState(SatelliteCreationState):
+class NewSatelliteCreationState:
+    satellite: MontrekSatelliteABC
     state: str = "new"
 
 
 @dataclass
-class ExistingSatelliteCreationState(SatelliteCreationState):
+class ExistingSatelliteCreationState:
+    satellite: MontrekSatelliteABC
     state: str = "existing"
 
 
 class DbCreator:
     def __init__(
         self,
-        hub_entity_class: Type[MontrekHubABC],
-        satellite_classes: List[Type[MontrekSatelliteABC]],
+        hub_entity_class: type[MontrekHubABC],
+        satellite_classes: list[type[MontrekSatelliteABC]],
     ):
         self.hub_entity = None
         self.satellite_classes = satellite_classes
@@ -41,7 +43,7 @@ class DbCreator:
         }
         self.stalled_links = {}
 
-    def create(self, data: Dict[str, Any], hub_entity: MontrekHubABC) -> None:
+    def create(self, data: dict[str, Any], hub_entity: MontrekHubABC) -> None:
         selected_satellites = {"new": [], "existing": [], "updated": []}
         creation_date = timezone.datetime.now()
         self.hub_entity = hub_entity
@@ -65,11 +67,9 @@ class DbCreator:
 
     def save_stalled_objects(self):
         for hub_class, stalled_hubs in self.stalled_hubs.items():
-            self._bulk_create_and_update_stalled_objects(
-                stalled_hubs, hub_class
-            )
+            self._bulk_create_and_update_stalled_objects(stalled_hubs, hub_class)
         for satellite_class, stalled_satellites in self.stalled_satellites.items():
-            if 'hub_entity_id' in satellite_class.identifier_fields:
+            if "hub_entity_id" in satellite_class.identifier_fields:
                 for stalled_satellite in stalled_satellites:
                     stalled_satellite.hub_entity_id = stalled_satellite.hub_entity.id
                     stalled_satellite.get_hash_identifier
@@ -98,7 +98,7 @@ class DbCreator:
     def _process_new_satellite(
         self,
         satellite: MontrekSatelliteABC,
-        satellite_class: Type[MontrekSatelliteABC],
+        satellite_class: type[MontrekSatelliteABC],
     ) -> SatelliteCreationState:
         # Check if satellite already exists, if it is updating or if it is new
         sat_hash_identifier = satellite.get_hash_identifier
@@ -119,7 +119,7 @@ class DbCreator:
 
     def _stall_satellites_and_return_reference_hub(
         self,
-        selected_satellites: Dict[str, List[SatelliteCreationState]],
+        selected_satellites: dict[str, list[SatelliteCreationState]],
         creation_date: timezone.datetime,
     ):
         reference_hub = self._get_reference_hub(selected_satellites, creation_date)
@@ -262,8 +262,13 @@ class DbCreator:
             self.stalled_hubs[stalled_hub.__class__].append(stalled_hub)
 
     def _stall_satellite(self, stalled_satellite):
-        if not stalled_satellite in self.stalled_satellites[stalled_satellite.__class__]:
-            self.stalled_satellites[stalled_satellite.__class__].append(stalled_satellite)
+        if (
+            not stalled_satellite
+            in self.stalled_satellites[stalled_satellite.__class__]
+        ):
+            self.stalled_satellites[stalled_satellite.__class__].append(
+                stalled_satellite
+            )
 
     def _stall_link_object(self, stalled_link):
         if stalled_link.__class__ not in self.stalled_links:

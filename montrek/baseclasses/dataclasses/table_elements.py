@@ -31,12 +31,14 @@ class LinkTableElement(TableElement):
     icon: str
     hover_text: str
 
+
 @dataclass
 class LinkTextTableElement(TableElement):
     url: str
     kwargs: dict
     text: str
     hover_text: str
+
 
 @dataclass
 class NumberTableElement(TableElement):
@@ -52,12 +54,14 @@ class NumberTableElement(TableElement):
     def _format_value(self, value) -> str:
         return value
 
+
 @dataclass
 class FloatTableElement(NumberTableElement):
     attr: str
 
     def _format_value(self, value) -> str:
         return f"{value:,.3f}"
+
 
 @dataclass
 class IntTableElement(NumberTableElement):
@@ -67,6 +71,7 @@ class IntTableElement(NumberTableElement):
         value = round(value)
         return f"{value:,.0f}"
 
+
 @dataclass
 class EuroTableElement(NumberTableElement):
     attr: str
@@ -74,12 +79,14 @@ class EuroTableElement(NumberTableElement):
     def _format_value(self, value) -> str:
         return f"{value:,.2f}&#x20AC;"
 
+
 @dataclass
 class PercentTableElement(NumberTableElement):
     attr: str
 
     def _format_value(self, value) -> str:
         return f"{value:,.2%}"
+
 
 @dataclass
 class DateTableElement(TableElement):
@@ -91,11 +98,12 @@ class DateTableElement(TableElement):
         value = value.strftime("%d/%m/%Y")
         return f'<td style="text-align:left;">{value}</td>'
 
+
 @dataclass
 class BooleanTableElement(TableElement):
     attr: str
 
     def format(self, value):
         if value:
-            return f'<td style="text-align:left;">&#x2713;</td>'
-        return f'<td style="text-align:left;">&#x2717;</td>'
+            return '<td style="text-align:left;">&#x2713;</td>'
+        return '<td style="text-align:left;">&#x2717;</td>'

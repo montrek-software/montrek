@@ -1,6 +1,6 @@
 import hashlib
+import uuid
 import datetime
-from typing import List
 from enum import Enum
 from django.db import models
 from django.utils import timezone
@@ -15,17 +15,6 @@ class TimeStampMixin(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-
-
-class TypeMixin(models.Model):
-    class Meta:
-        abstract = True
-
-    identifier_fields = ["typename"]
-    typename = models.CharField(max_length=50, default="NONE")
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
@@ -49,7 +38,6 @@ class MontrekHubABC(TimeStampMixin, StateDateMixin):
         abstract = True
 
     identifier = models.CharField(max_length=12, default="")
-    is_deleted = models.BooleanField(default=False)
 
 
 # Base Static Satellite Model ABC
@@ -65,6 +53,8 @@ class MontrekSatelliteABC(TimeStampMixin, StateDateMixin):
     hash_identifier = models.CharField(max_length=64, default="")
     hash_value = models.CharField(max_length=64, default="")
 
+    identifier_fields = []
+
     def save(self, *args, **kwargs):
         if self.hash_identifier == "":
             self._get_hash_identifier()
@@ -73,9 +63,9 @@ class MontrekSatelliteABC(TimeStampMixin, StateDateMixin):
         super().save(*args, **kwargs)
 
     def _get_hash_identifier(self) -> str:
-        if not hasattr(self, "identifier_fields"):
+        if len(self.identifier_fields) == 0:
             raise AttributeError(
-                f"Satellite {self.__class__.__name__} must have attribute identifier_fields"
+                f"Satellite {self.__class__.__name__} must have property identifier_fields"
             )
         identifier_string = self._get_identifier_string()
         sha256_hash = hashlib.sha256(identifier_string.encode()).hexdigest()
@@ -107,9 +97,8 @@ class MontrekSatelliteABC(TimeStampMixin, StateDateMixin):
             value_string += str(value)
         return value_string
 
-
     @classmethod
-    def exclude_fields(self) -> List[str]:
+    def exclude_fields(cls) -> list[str]:
         exclude_fields = [
             "id",
             "hash_identifier",
@@ -122,12 +111,12 @@ class MontrekSatelliteABC(TimeStampMixin, StateDateMixin):
         return exclude_fields
 
     @classmethod
-    def get_value_field_names(cls) -> List[str]:
+    def get_value_field_names(cls) -> list[str]:
         value_fields = [field.name for field in cls.get_value_fields()]
         return value_fields
 
     @classmethod
-    def get_value_fields(cls) -> List[str]:
+    def get_value_fields(cls) -> list[str]:
         value_fields = [
             field
             for field in cls._meta.get_fields()
@@ -150,6 +139,17 @@ class MontrekTimeSeriesSatelliteABC(MontrekSatelliteABC):
 
     value_date = models.DateField()
     identifier_fields = ["value_date"]
+
+
+class MontrekTypeSatelliteABC(MontrekSatelliteABC):
+    class Meta:
+        abstract = True
+
+    typename = models.CharField(max_length=50, default="NONE")
+    identifier_fields = ["typename"]
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
 
 
 class LinkTypeEnum(Enum):
