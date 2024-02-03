@@ -1,5 +1,9 @@
+import pandas as pd
+
+
 class NotImplementedFileUploadProcessor:
     message = "Not implemented"
+    input_data_df = pd.DataFrame()
 
     def process(self, file_path: str, file_upload_registry_hub) -> bool:
         return False

@@ -1,3 +1,4 @@
+import os
 from django.test import TestCase
 from account.managers.onvista_file_upload_manager import (
     OnvistaFileUploadDepotProcessor,
@@ -33,9 +34,10 @@ class TestOnvistaFileUploadManager(TestCase):
 
     def test_depotuebersicht_processor(self):
         processor = OnvistaFileUploadProcessor(None)
-        test_path = "/tmp/test_file.csv"
-        with open(test_path, "w") as f:
-            f.write("Depotuebersicht Wertpapiere")
+        test_path = os.path.join(os.path.dirname(__file__), "data", "onvista_test.csv")
         result = processor.pre_check(test_path)
         self.assertEqual(result, True)
         self.assertIsInstance(processor.subprocessor, OnvistaFileUploadDepotProcessor)
+        result = processor.process(test_path, None)
+        self.assertEqual(result, True)
+        self.assertEqual(processor.subprocessor.input_data_df.shape, (3, 24))
