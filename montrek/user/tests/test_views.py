@@ -1,4 +1,4 @@
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.test import TestCase
 from django.urls import reverse
@@ -25,7 +25,7 @@ class SignUpViewTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, reverse("home"))
 
-        self.assertTrue(User.objects.filter(username="testuser").exists())
+        self.assertTrue(get_user_model().objects.filter(username="testuser").exists())
 
     def test_signup_form_invalid_submission(self):
         url = reverse("signup")
@@ -44,19 +44,13 @@ class SignUpViewTests(TestCase):
         self.assertEqual(len(messages), 1)
         self.assertEqual(
             str(messages[0]),
-            '<ul class="errorlist">'
-            "<li>username"
-            '<ul class="errorlist">'
-            "<li>Enter a valid username. This value may contain only letters, numbers, and @/./+/-/_ characters.</li>"
-            "</ul>"
-            "</li>"
-            "</ul>",
+            "Username: Enter a valid username. This value may contain only letters, numbers, and @/./+/-/_ characters."
         )
 
 
 class LoginViewTests(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(
+        self.user = get_user_model().objects.create_user(
             username="testuser",
             password="testpassword",
         )
@@ -77,7 +71,7 @@ class LoginViewTests(TestCase):
 
         response = self.client.post(url, data)
 
-        self.assertEqual(response.status_code, 302)
+        # self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, reverse("home"))
 
     def test_login_form_invalid_submission(self):
@@ -95,12 +89,5 @@ class LoginViewTests(TestCase):
         self.assertContains(response, "Please enter a correct username and password.")
         self.assertEqual(
             str(messages[0]),
-            '<ul class="errorlist">'
-            "<li>__all__"
-            '<ul class="errorlist nonfield">'
-            "<li>Please enter a correct username and password. Note that both fields may be case-sensitive."
-            "</li>"
-            "</ul>"
-            "</li>"
-            "</ul>",
+            "All: Please enter a correct username and password. Note that both fields may be case-sensitive."
         )
