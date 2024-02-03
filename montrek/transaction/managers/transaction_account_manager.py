@@ -2,9 +2,6 @@ import pandas as pd
 from typing import List
 from datetime import datetime
 from baseclasses import models as baseclass_models
-from baseclasses.repositories.db_helper import (
-    new_satellites_bunch_from_df_and_from_hub_link,
-)
 from transaction.models import TransactionSatellite
 from transaction.repositories.transaction_repository import TransactionRepository
 from transaction.repositories.transaction_category_repository import (
@@ -25,10 +22,12 @@ class TransactionAccountManager:
 
     def new_transactions_to_account_from_df(
         self,
-    ) -> List[baseclass_models.MontrekSatelliteABC]:
+    ) -> List[TransactionSatellite]:
         self._validate_transaction_df()
         imported_transactions = self._import_transactions_to_account_from_df()
-        transaction_queryset = self._assign_transaction_categories_to_transactions(imported_transactions)
+        transaction_queryset = self._assign_transaction_categories_to_transactions(
+            imported_transactions
+        )
         return transaction_queryset
 
     def _validate_transaction_df(self):
@@ -48,24 +47,26 @@ class TransactionAccountManager:
             raise KeyError(
                 f"Wrong columns in transaction_df\n\tGot: {got_columns_str}\n\tExpected: {expected_columns_str}"
             )
-        self.transaction_df['link_transaction_account'] = self.account_hub_object
+        self.transaction_df["link_transaction_account"] = self.account_hub_object
 
     def _import_transactions_to_account_from_df(
         self,
     ):
-        return self.transaction_repository.create_objects_from_data_frame(self.transaction_df)
+        return self.transaction_repository.create_objects_from_data_frame(
+            self.transaction_df
+        )
 
     def _assign_transaction_categories_to_transactions(
         self,
         imported_transactions: List[baseclass_models.MontrekHubABC],
     ):
         transaction_queryset = self.transaction_repository.std_queryset().filter(
-            id__in=[transaction.id for transaction in imported_transactions]
+            id__in=[transaction.pk for transaction in imported_transactions]
         )
         transaction_category_map = (
             TransactionCategoryMapRepository()
             .std_queryset()
-            .filter(account_id=self.account_hub_object.id)
+            .filter(account_id=self.account_hub_object.pk)
         )
         TransactionCategoryManager().assign_transaction_categories_to_transactions(
             transaction_queryset,

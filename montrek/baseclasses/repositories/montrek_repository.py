@@ -116,7 +116,9 @@ class MontrekRepository:
         db_creator.save_stalled_objects()
         return created_hub
 
-    def create_objects_from_data_frame(self, data_frame: pd.DataFrame) -> List[MontrekHubABC]:
+    def create_objects_from_data_frame(
+        self, data_frame: pd.DataFrame
+    ) -> List[MontrekHubABC]:
         self.std_queryset()
         db_creator = DbCreator(self.hub_class, self._primary_satellite_classes)
         created_hubs = []
@@ -131,7 +133,7 @@ class MontrekRepository:
         self,
         satellite_class: Type[MontrekSatelliteABC],
         fields: List[str],
-        reference_date: timezone,
+        reference_date: timezone.datetime,
     ):
         subquery_builder = SatelliteSubqueryBuilder(
             satellite_class, "pk", reference_date
@@ -219,6 +221,7 @@ class MontrekRepository:
         else:
             hub_entity = self.hub_class()
         return hub_entity
+
 
 def paginated_table(func):
     @wraps(func)
