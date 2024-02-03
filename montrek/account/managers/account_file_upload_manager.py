@@ -21,6 +21,7 @@ class AccountFileUploadProcessor:
                 self.sub_processor.message = f"Account upload method {account_hub.account_upload_method} not implemented"
 
     def process(self, file_path: str, file_upload_registry_hub):
+
         result = self.sub_processor.process(file_path, file_upload_registry_hub)
         self.message = self.sub_processor.message
         return result

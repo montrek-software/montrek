@@ -6,7 +6,9 @@ from account.managers.transaction_upload_methods import upload_dkb_transactions
 from credit_institution.tests.factories.credit_institution_factories import (
     CreditInstitutionStaticSatelliteFactory,
 )
+
 from baseclasses.repositories.db_creator import DbCreator
+from account.repositories.account_repository import AccountRepository
 from transaction.models import TransactionHub, TransactionSatellite
 from transaction.repositories.transaction_repository import TransactionRepository
 from transaction.tests.factories.transaction_factories import (
@@ -32,11 +34,12 @@ class AccountRegressionTests(TestCase):
         cls.bank_account.hub_entity.link_account_credit_institution.add(
             cls.credit_institution.hub_entity
         )
+        cls.account = (
+            AccountRepository().std_queryset().get(pk=cls.bank_account.hub_entity.pk)
+        )
 
     def test_upload_dkb_transactions_and_change_transaction_category(self):
-        transactions = upload_dkb_transactions(
-            self.bank_account.hub_entity, self.test_csv_path
-        )
+        transactions = upload_dkb_transactions(self.account, self.test_csv_path)
         self.assertEqual(len(transactions), 15)
 
         repository = TransactionRepository({})
@@ -57,7 +60,5 @@ class AccountRegressionTests(TestCase):
         empty_csv_path = os.path.join(
             os.path.dirname(__file__), "managers/data/dkb_empty_auftraggeber.csv"
         )
-        transactions = upload_dkb_transactions(
-            self.bank_account.hub_entity, empty_csv_path
-        )
+        transactions = upload_dkb_transactions(self.account, empty_csv_path)
         self.assertEqual(len(transactions), 2)

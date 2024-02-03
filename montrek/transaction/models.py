@@ -21,17 +21,24 @@ class TransactionHub(baseclass_models.MontrekHubABC):
         through="LinkTransactionAsset",
     )
 
+
 class LinkTransactionTransactionCategory(baseclass_models.MontrekOneToManyLinkABC):
-    hub_in=models.ForeignKey("transaction.TransactionHub", on_delete=models.CASCADE)
-    hub_out=models.ForeignKey("transaction.TransactionCategoryHub", on_delete=models.CASCADE)
+    hub_in = models.ForeignKey("transaction.TransactionHub", on_delete=models.CASCADE)
+    hub_out = models.ForeignKey(
+        "transaction.TransactionCategoryHub", on_delete=models.CASCADE
+    )
+
 
 class LinkTransactionTransactionType(baseclass_models.MontrekOneToManyLinkABC):
-    hub_in=models.ForeignKey("transaction.TransactionHub", on_delete=models.CASCADE)
-    hub_out=models.ForeignKey("transaction.TransactionTypeHub", on_delete=models.CASCADE)
+    hub_in = models.ForeignKey("transaction.TransactionHub", on_delete=models.CASCADE)
+    hub_out = models.ForeignKey(
+        "transaction.TransactionTypeHub", on_delete=models.CASCADE
+    )
+
 
 class LinkTransactionAsset(baseclass_models.MontrekOneToManyLinkABC):
-    hub_in=models.ForeignKey("transaction.TransactionHub", on_delete=models.CASCADE)
-    hub_out=models.ForeignKey("asset.AssetHub", on_delete=models.CASCADE)
+    hub_in = models.ForeignKey("transaction.TransactionHub", on_delete=models.CASCADE)
+    hub_out = models.ForeignKey("asset.AssetHub", on_delete=models.CASCADE)
 
 
 class TransactionSatellite(baseclass_models.MontrekSatelliteABC):
@@ -63,9 +70,7 @@ class TransactionTypeHub(baseclass_models.MontrekHubABC):
     pass
 
 
-class TransactionTypeSatellite(
-    baseclass_models.MontrekSatelliteABC, baseclass_models.TypeMixin
-):
+class TransactionTypeSatellite(baseclass_models.MontrekTypeSatelliteABC):
     hub_entity = models.ForeignKey(TransactionTypeHub, on_delete=models.CASCADE)
 
 
@@ -73,9 +78,7 @@ class TransactionCategoryHub(baseclass_models.MontrekHubABC):
     pass
 
 
-class TransactionCategorySatellite(
-    baseclass_models.MontrekSatelliteABC, baseclass_models.TypeMixin
-):
+class TransactionCategorySatellite(baseclass_models.MontrekTypeSatelliteABC):
     hub_entity = models.ForeignKey(TransactionCategoryHub, on_delete=models.CASCADE)
 
 
@@ -86,9 +89,15 @@ class TransactionCategoryMapHub(baseclass_models.MontrekHubABC):
         through="LinkTransactionCategoryMapCounterTransactionAccount",
     )
 
-class LinkTransactionCategoryMapCounterTransactionAccount(baseclass_models.MontrekOneToManyLinkABC):
-    hub_in=models.ForeignKey("transaction.TransactionCategoryMapHub", on_delete=models.CASCADE)
-    hub_out=models.ForeignKey("account.AccountHub", on_delete=models.CASCADE)
+
+class LinkTransactionCategoryMapCounterTransactionAccount(
+    baseclass_models.MontrekOneToManyLinkABC
+):
+    hub_in = models.ForeignKey(
+        "transaction.TransactionCategoryMapHub", on_delete=models.CASCADE
+    )
+    hub_out = models.ForeignKey("account.AccountHub", on_delete=models.CASCADE)
+
 
 class TransactionCategoryMapSatellite(baseclass_models.MontrekSatelliteABC):
     identifier_fields = ["field", "value"]

@@ -1,20 +1,15 @@
+from django.db.models import QuerySet
 import pandas as pd
 from typing import List
-from account.models import AccountHub
-from credit_institution.models import CreditInstitutionStaticSatellite
 from transaction.models import TransactionSatellite
 from baseclasses.repositories.db_helper import select_satellite
 from transaction.managers.transaction_account_manager import TransactionAccountManager
 
 
 def upload_dkb_transactions(
-    account_hub: AccountHub, file_path: str
+    account_hub: QuerySet, file_path: str
 ) -> List[TransactionSatellite]:
-    credit_institution_hub = account_hub.link_account_credit_institution.all().first()
-    credit_institution = select_satellite(
-        credit_institution_hub, CreditInstitutionStaticSatellite
-    )
-    if credit_institution.account_upload_method != "dkb":
+    if account_hub.account_upload_method != "dkb":
         raise AttributeError("Account Upload Method is not of type dkb")
     transactions_df = read_dkb_transactions_from_csv(file_path)
     transaction_account_manager = TransactionAccountManager(
