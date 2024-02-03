@@ -1,11 +1,13 @@
-from typing import TextIO
+from typing import Any, TextIO
 from typing import Protocol
+
 from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepository,
 )
 from file_upload.repositories.file_upload_file_repository import (
     FileUploadFileRepository,
 )
+from montrek.baseclasses.models import MontrekHubABC
 
 
 class FileUploadProcessorProtocol(Protocol):
@@ -14,7 +16,7 @@ class FileUploadProcessorProtocol(Protocol):
     def pre_check(self, file_path: str) -> bool:
         ...
 
-    def process(self, file_path: str, file_upload_registry) -> bool:
+    def process(self, file_path: str, file_upload_registry: MontrekHubABC) -> bool:
         ...
 
     def post_check(self, file_path: str) -> bool:
@@ -29,7 +31,7 @@ class FileUploadManager:
         self.registry_repository = FileUploadRegistryRepository()
         self.file_repository = FileUploadFileRepository()
         self.file = file
-        self.file_upload_registry = None
+        self.file_upload_registry: MontrekHubABC | Any = None
         self.file_path = ""
 
     def upload_and_process(self) -> bool:

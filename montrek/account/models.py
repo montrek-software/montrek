@@ -1,7 +1,5 @@
 import re
 from django.db import models
-from django.db.models import Sum, F
-from django.utils import timezone
 from baseclasses import models as baseclass_models
 from account.managers.validators import montrek_iban_validator
 

@@ -1,12 +1,14 @@
 from typing import TextIO
-from django.shortcuts import render
 from django.shortcuts import redirect
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.http import FileResponse
 from file_upload.forms import UploadFileForm
 from file_upload.managers.file_upload_manager import FileUploadManager
-from file_upload.repositories.file_upload_registry_repository import FileUploadRegistryRepository
+from file_upload.managers.file_upload_manager import FileUploadProcessorProtocol
+from file_upload.repositories.file_upload_registry_repository import (
+    FileUploadRegistryRepository,
+)
 from baseclasses.views import MontrekTemplateView
 
 # Create your views here.
@@ -15,13 +17,21 @@ from baseclasses.views import MontrekTemplateView
 class NotDefinedFileUploadProcessor:
     message = "File upload processor not defined"
 
-    def process(self, file: TextIO):
+    def process(self, file: TextIO, file_upload_registry):
+        raise NotImplementedError(self.message)
+
+    def pre_check(self, file: TextIO):
+        raise NotImplementedError(self.message)
+
+    def post_check(self, file: TextIO):
         raise NotImplementedError(self.message)
 
 
 class MontrekUploadFileView(MontrekTemplateView):
     template_name = "upload_form.html"
-    file_upload_processor_class = NotDefinedFileUploadProcessor
+    file_upload_processor_class: FileUploadProcessorProtocol = (
+        NotDefinedFileUploadProcessor
+    )
 
     def get_template_context(self, **kwargs):
         return {"form": UploadFileForm()}
@@ -50,7 +60,9 @@ class MontrekDownloadFileView(MontrekTemplateView):
     repository = FileUploadRegistryRepository
 
     def get(self, request, *args, **kwargs):
-        upload_file = self.repository_object.get_file_from_registry(self.kwargs['pk'], self.request)
+        upload_file = self.repository_object.get_file_from_registry(
+            self.kwargs["pk"], self.request
+        )
         if upload_file is None:
-            return redirect(request.META.get('HTTP_REFERER'))
+            return redirect(request.META.get("HTTP_REFERER"))
         return FileResponse(upload_file, as_attachment=True)

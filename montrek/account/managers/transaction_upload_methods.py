@@ -4,19 +4,13 @@ from account.models import AccountHub
 from credit_institution.models import CreditInstitutionStaticSatellite
 from transaction.models import TransactionSatellite
 from baseclasses.repositories.db_helper import select_satellite
-from transaction.managers.transaction_account_manager import (
-    TransactionAccountManager
-)
+from transaction.managers.transaction_account_manager import TransactionAccountManager
 
 
 def upload_dkb_transactions(
     account_hub: AccountHub, file_path: str
 ) -> List[TransactionSatellite]:
-    credit_institution_hub = account_hub.link_account_credit_institution.all().first()
-    credit_institution = select_satellite(
-        credit_institution_hub, CreditInstitutionStaticSatellite
-    )
-    if credit_institution.account_upload_method != "dkb":
+    if account_hub.account_upload_method != "dkb":
         raise AttributeError("Account Upload Method is not of type dkb")
     transactions_df = read_dkb_transactions_from_csv(file_path)
     transaction_account_manager = TransactionAccountManager(
@@ -61,8 +55,12 @@ def read_dkb_transactions_from_csv(file_path: str) -> pd.DataFrame:
         "transaction_description": lambda x: " ".join(x),
         "transaction_price": lambda x: x.sum(),
     }
-    transaction_df['transaction_description'] = transaction_df['transaction_description'].astype(str)
-    transaction_df['transaction_party'] = transaction_df['transaction_party'].fillna("UNKNOWN")
+    transaction_df["transaction_description"] = transaction_df[
+        "transaction_description"
+    ].astype(str)
+    transaction_df["transaction_party"] = transaction_df["transaction_party"].fillna(
+        "UNKNOWN"
+    )
     transaction_df = (
         transaction_df.groupby(
             ["transaction_date", "transaction_party", "transaction_party_iban"]
@@ -72,6 +70,7 @@ def read_dkb_transactions_from_csv(file_path: str) -> pd.DataFrame:
     )
     transaction_df["transaction_amount"] = 1
     return transaction_df
+
 
 def get_dkb_iban_from_file(file_path: str) -> str:
     meta_df = pd.read_csv(
