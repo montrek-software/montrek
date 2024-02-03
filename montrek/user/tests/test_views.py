@@ -4,6 +4,9 @@ from django.test import TestCase
 from django.urls import reverse
 
 
+def _get_messages_from_response(response):
+    return list(response.context["messages"])
+
 class SignUpViewTests(TestCase):
     def test_signup_view(self):
         url = reverse("signup")
@@ -20,12 +23,17 @@ class SignUpViewTests(TestCase):
             "password2": "testpassword",
         }
 
-        response = self.client.post(url, data)
+        response = self.client.post(url, data, follow=True)
+        messages = list(response.context["messages"])
 
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 200)
         self.assertRedirects(response, reverse("home"))
 
         self.assertTrue(get_user_model().objects.filter(username="testuser").exists())
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(
+            str(messages[0]), "You have logged in as testuser!"
+        )
 
     def test_signup_form_invalid_submission(self):
         url = reverse("signup")
@@ -36,7 +44,7 @@ class SignUpViewTests(TestCase):
         }
 
         response = self.client.post(url, data)
-        messages = list(response.context["messages"])
+        messages = _get_messages_from_response(response)
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "user/user_base.html")
@@ -69,10 +77,15 @@ class LoginViewTests(TestCase):
             "password": "testpassword",
         }
 
-        response = self.client.post(url, data)
+        response = self.client.post(url, data, follow=True)
+        messages = _get_messages_from_response(response)
 
-        # self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 200)
         self.assertRedirects(response, reverse("home"))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(
+            str(messages[0]), "You have logged in as testuser!"
+        )
 
     def test_login_form_invalid_submission(self):
         url = reverse("login")
@@ -82,7 +95,7 @@ class LoginViewTests(TestCase):
         }
 
         response = self.client.post(url, data)
-        messages = list(response.context["messages"])
+        messages = _get_messages_from_response(response)
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "user/user_base.html")
