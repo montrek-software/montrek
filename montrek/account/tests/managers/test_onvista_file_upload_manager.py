@@ -5,6 +5,7 @@ from account.managers.onvista_file_upload_manager import (
     OnvistaFileUploadProcessor,
 )
 from account.managers.not_implemented_processor import NotImplementedFileUploadProcessor
+from asset.reposotories.asset_repository import AssetRepository
 
 
 class TestOnvistaFileUploadManager(TestCase):
