@@ -10,6 +10,6 @@ class TestMontrekUserAdmin(TestCase):
         self.assertTrue(issubclass(MontrekUserAdmin, UserAdmin))
 
     def test_model_is_montrek_user(self):
-        self.assertTrue(
-            MontrekUserAdmin.model == MontrekUser
+        self.assertEqual(
+            MontrekUserAdmin.model, MontrekUser
         )
