@@ -31,7 +31,7 @@ class TransactionRepository(MontrekRepository):
             ["typename"],
             reference_date,
         )
-        self.rename_field("typename", "transaction_category" )
+        self.rename_field("typename", "transaction_category")
 
         self.annotations["transaction_value"] = (
             self.annotations["transaction_amount"]
@@ -48,5 +48,5 @@ class TransactionRepository(MontrekRepository):
             self.reference_date,
             reversed_link=True,
         )
-        self.rename_field("hub_entity_id", "account_id" )
+        self.rename_field("hub_entity_id", "account_id")
         return self.std_queryset(**kwargs)

@@ -134,11 +134,14 @@ class AccountRepository(MontrekRepository):
             .order_by("-created_at")
         )
 
-    @paginated_table
-    def get_depot_stats_table_by_account_paginated(self, account_hub_id: int):
+    def get_depot_data(self, account_hub_id: int):
         hub_entity = self.hub_class.objects.get(pk=account_hub_id)
         return (
             DepotRepository(self.session_data)
             .std_queryset()
             .filter(account_id=hub_entity.id)
         )
+
+    @paginated_table
+    def get_depot_stats_table_by_account_paginated(self, account_hub_id: int):
+        return self.get_depot_data(account_hub_id)

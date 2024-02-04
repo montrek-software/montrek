@@ -5,15 +5,24 @@ from account.managers.onvista_file_upload_manager import (
     OnvistaFileUploadProcessor,
 )
 from account.managers.not_implemented_processor import NotImplementedFileUploadProcessor
-from account.tests.factories.account_factories import AccountHubFactory
+from account.tests.factories.account_factories import (
+    AccountHubFactory,
+    AccountStaticSatelliteFactory,
+)
 from account.repositories.account_repository import AccountRepository
 from asset.repositories.asset_repository import AssetRepository
-from currency.tests.factories.currency_factories import CurrencyStaticSatelliteFactory
+from transaction.tests.factories.transaction_factories import (
+    TransactionSatelliteFactory,
+    TransactionHubFactory,
+)
 
 
 class TestOnvistaFileUploadManager(TestCase):
     def setUp(self):
-        account_hub = AccountHubFactory()
+        account_hub = AccountHubFactory.create()
+        AccountStaticSatelliteFactory.create(
+            hub_entity=account_hub, account_name="Test Account"
+        )
         self.account = AccountRepository().std_queryset().get(pk=account_hub.pk)
 
     def test_default_processor(self):
@@ -50,6 +59,7 @@ class TestOnvistaFileUploadManager(TestCase):
         self.assertEqual(result, True)
         self.assertEqual(processor.subprocessor.input_data_df.shape, (3, 24))
         assets = AssetRepository().std_queryset()
+        # Compare created assets to input data
         self.assertEqual(assets.count(), 3)
         for _, row in processor.subprocessor.input_data_df.iterrows():
             asset = assets.get(asset_isin=row.asset_isin)
@@ -59,3 +69,25 @@ class TestOnvistaFileUploadManager(TestCase):
             self.assertEqual(asset.asset_type, row.asset_type)
             self.assertEqual(asset.asset_wkn, row.asset_wkn)
             self.assertEqual(asset.asset_isin, row.asset_isin)
+        # post_check does not agree with the number of shares the account holds
+        result = processor.post_check(test_path)
+        self.assertFalse(result)
+        self.assertTrue(
+            processor.subprocessor.message.startswith(
+                "Mismatch between input data and depot data"
+            )
+        )
+        # add transactions in accordance to input data
+        for _, row in processor.subprocessor.input_data_df.iterrows():
+            asset = assets.get(asset_name=row["asset_name"])
+            transaction_hub = TransactionHubFactory.create(
+                account=self.account, asset=asset
+            )
+            TransactionSatelliteFactory.create(
+                hub_entity=transaction_hub,
+                transaction_amount=row["quantity"],
+                transaction_price=row["price"],
+                transaction_date=row["value_date"],
+            )
+        result = processor.post_check(test_path)
+        self.assertTrue(result)

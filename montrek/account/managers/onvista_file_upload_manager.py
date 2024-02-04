@@ -2,6 +2,7 @@ from django.db.models import QuerySet
 import pandas as pd
 from account.managers.not_implemented_processor import NotImplementedFileUploadProcessor
 from asset.repositories.asset_repository import AssetRepository
+from account.repositories.account_repository import AccountRepository
 
 
 class OnvistaFileUploadProcessor:
@@ -13,13 +14,19 @@ class OnvistaFileUploadProcessor:
 
     def pre_check(self, file_path: str) -> bool:
         self._get_subprocessor(file_path)
-        return self.subprocessor.pre_check(file_path)
+        result = self.subprocessor.pre_check(file_path)
+        self.message = self.subprocessor.message
+        return result
 
     def process(self, file_path: str) -> bool:
-        return self.subprocessor.process(file_path)
+        result = self.subprocessor.process(file_path)
+        self.message = self.subprocessor.message
+        return result
 
     def post_check(self, file_path: str) -> bool:
-        return True
+        result = self.subprocessor.post_check(file_path)
+        self.message = self.subprocessor.message
+        return result
 
     def _get_subprocessor(self, file_path: str):
         index_tag = open(file_path, encoding="utf-8-sig").readline().strip()
@@ -45,14 +52,38 @@ class OnvistaFileUploadDepotProcessor:
         self._create_assets()
         return True
 
+    def post_check(self, file_path: str) -> bool:
+        depot = AccountRepository().get_depot_data(self.account_hub.pk)
+        self.input_data_df["account_shares"] = self.input_data_df.apply(
+            lambda x: self._get_depot_quantity(x, depot), axis=1
+        )
+        mismatch_df = self.input_data_df.loc[
+            (self.input_data_df["account_shares"] - self.input_data_df["quantity"])
+            != 0,
+            ["asset_name", "account_shares", "quantity"],
+        ]
+        if mismatch_df.empty:
+            return True
+        mismatch_html = mismatch_df.to_html(index=False)
+        self.message = f"Mismatch between input data and depot data:\n{mismatch_html}"
+        return False
+
     def _get_input_data_df(self, file_path: str):
-        self.input_data_df = pd.read_csv(file_path, sep=";", skiprows=5, decimal=",")
+        self.input_data_df = pd.read_csv(
+            file_path,
+            sep=";",
+            skiprows=5,
+            decimal=",",
+            thousands=".",
+            parse_dates=["Datum"],
+            dayfirst=True,
+        )
         self.input_data_df = self.input_data_df.dropna(subset=["Datum"])
         self.input_data_df = self.input_data_df.rename(
             columns={
                 "Datum": "value_date",
                 "Name": "asset_name",
-                "Stück": "quantity",
+                "Bestand": "quantity",
                 "Typ": "asset_type",
                 "Akt. Geldkurs": "price",
                 "ISIN": "asset_isin",
@@ -69,3 +100,9 @@ class OnvistaFileUploadDepotProcessor:
         )
         self.message = f"Created {self.input_data_df.shape[0]} assets"
         return True
+
+    def _get_depot_quantity(self, x: pd.Series, depot: QuerySet) -> float:
+        asset = depot.filter(asset_name=x.asset_name)
+        if len(asset) == 0:
+            return 0
+        return float(asset.first().total_nominal)
