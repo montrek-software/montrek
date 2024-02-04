@@ -1,5 +1,6 @@
 from user.models import MontrekUser
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm, PasswordResetForm
+
 
 class MontrekUserCreationForm(UserCreationForm):
 
@@ -7,3 +8,6 @@ class MontrekUserCreationForm(UserCreationForm):
         model = MontrekUser
         fields = UserCreationForm.Meta.fields
 
+
+class MontrekPasswordResetForm(PasswordResetForm):
+    pass

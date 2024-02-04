@@ -4,7 +4,7 @@ from django.views.generic.edit import CreateView, FormView
 from django.contrib import messages
 
 from django.contrib.auth.forms import AuthenticationForm
-from user.forms import MontrekUserCreationForm
+from user.forms import MontrekPasswordResetForm, MontrekUserCreationForm
 
 class MessageHandlerMixin:
     def add_form_error_messages(self, form):
@@ -57,4 +57,21 @@ class LoginView(FormView, MessageHandlerMixin):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["page_title"] = "Login"
+        context["link_text"] = "Lost password?"
+        context["link"] = reverse_lazy("password_reset")
         return context
+
+
+class PasswordResetView(FormView, MessageHandlerMixin):
+    form_class = MontrekPasswordResetForm
+    template_name = "user/user_base.html"
+
+    def form_valid(self, form):
+        user = form.get_user()
+        login(self.request, user)
+        self.add_successfull_login_message(user.username)
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        self.add_form_error_messages(form)
+        return super().form_invalid(form)
