@@ -18,6 +18,9 @@ class OnvistaFileUploadProcessor:
     def process(self, file_path: str) -> bool:
         return self.subprocessor.process(file_path)
 
+    def post_check(self, file_path: str) -> bool:
+        return True
+
     def _get_subprocessor(self, file_path: str):
         index_tag = open(file_path, encoding="utf-8-sig").readline().strip()
         if index_tag.startswith("Depotuebersicht"):
