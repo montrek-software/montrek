@@ -102,3 +102,6 @@ class TestOnvistaFileUploadManager(TestCase):
         self.assertIsInstance(
             processor.subprocessor, OnvistaFileUploadTransactionProcessor
         )
+        self.assertEqual(
+            processor.subprocessor.input_data_dfs["asset_purchase"].shape, (5, 5)
+        )

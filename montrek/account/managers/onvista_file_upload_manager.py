@@ -112,9 +112,26 @@ class OnvistaFileUploadDepotProcessor:
 
 class OnvistaFileUploadTransactionProcessor:
     message = "Not implemented"
+    input_data_dfs: dict[str, pd.DataFrame] = {}
 
     def __init__(self, account_hub: QuerySet):
         self.account_hub = account_hub
 
     def pre_check(self, file_path: str) -> bool:
+        input_df = pd.read_csv(
+            file_path,
+            sep=";",
+            skiprows=5,
+            decimal=",",
+            thousands=".",
+            parse_dates=["Valuta"],
+            dayfirst=True,
+        )
+        input_df["transaction_value"] = input_df["Betrag"].apply(
+            lambda x: float(x.replace(".", "").replace(",", ".").replace("EUR", ""))
+        )
+        self.input_data_dfs["asset_purchase"] = input_df[
+            input_df["Verwendungszweck"].str.startswith("Wertpapierkauf")
+        ]
+
         return True
