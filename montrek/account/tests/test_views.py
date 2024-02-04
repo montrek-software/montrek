@@ -185,14 +185,12 @@ class TestAccountDepotView(TestCase):
         )
         asset = AssetStaticSatelliteFactory.create(currency=ccy.hub_entity)
         transaction_date = montrek_time(2023, 12, 10)
-        for transaction in TransactionSatelliteFactory.create_batch(
+        TransactionSatelliteFactory.create_batch(
             3,
             transaction_date=transaction_date,
             hub_entity__account=self.acc.hub_entity,
-        ):
-            transaction.hub_entity.link_transaction_account.add(self.acc.hub_entity)
-            transaction.hub_entity.link_transaction_asset.add(asset.hub_entity)
-            transaction.hub_entity.save()
+            hub_entity__asset=asset.hub_entity,
+        )
 
     def test_account_depot_view_returns_correct_html(self):
         response = self.client.get(f"/account/{self.acc.hub_entity.id}/depot")

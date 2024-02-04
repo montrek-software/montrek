@@ -36,7 +36,7 @@ class TestOnvistaFileUploadManager(TestCase):
             f.write("UNKNOWN")
         result = processor.pre_check(test_path)
         self.assertEqual(result, False)
-        self.assertEqual(processor.message, "File cannot be processed")
+        self.assertEqual(processor.message, "Not implemented")
         self.assertIsInstance(processor.subprocessor, NotImplementedFileUploadProcessor)
 
     def test_empty_file(self):
@@ -46,7 +46,7 @@ class TestOnvistaFileUploadManager(TestCase):
             ...
         result = processor.pre_check(test_path)
         self.assertEqual(result, False)
-        self.assertEqual(processor.message, "File cannot be processed")
+        self.assertEqual(processor.message, "Not implemented")
         self.assertIsInstance(processor.subprocessor, NotImplementedFileUploadProcessor)
 
     def test_depotuebersicht_processor(self):
