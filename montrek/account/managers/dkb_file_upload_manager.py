@@ -4,6 +4,8 @@ import csv
 
 
 class DkbFileUploadProcessor:
+    message = ""
+
     def __init__(self, account_hub):
         self.account_hub = account_hub
         self.meta_data = {}
