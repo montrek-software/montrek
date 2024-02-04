@@ -45,18 +45,24 @@ class OnvistaFileUploadDepotProcessor:
     def _get_input_data_df(self, file_path: str):
         self.input_data_df = pd.read_csv(file_path, sep=";", skiprows=5, decimal=",")
         self.input_data_df = self.input_data_df.dropna(subset=["Datum"])
+        self.input_data_df = self.input_data_df.rename(
+            columns={
+                "Datum": "value_date",
+                "Name": "asset_name",
+                "Stück": "quantity",
+                "Typ": "asset_type",
+                "Akt. Geldkurs": "price",
+                "ISIN": "asset_isin",
+                "WKN": "asset_wkn",
+            }
+        )
+        self.input_data_df["value_date"] = pd.to_datetime(
+            self.input_data_df["value_date"], format="%d.%m.%Y"
+        )
 
     def _create_assets(self):
-        for _, row in self.input_data_df.iterrows():
-            AssetRepository().std_create_object(
-                {
-                    "account": self.account_hub,
-                    "date": row["Datum"],
-                    "isin": row["ISIN"],
-                    "name": row["Bezeichnung"],
-                    "amount": row["Stück"],
-                    "price": row["Kurs"],
-                }
-            )
+        AssetRepository().create_objects_from_data_frame(
+            self.input_data_df,
+        )
         self.message = f"Created {self.input_data_df.shape[0]} assets"
         return True

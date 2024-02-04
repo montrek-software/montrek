@@ -7,6 +7,8 @@ from account.managers.onvista_file_upload_manager import (
 from account.managers.not_implemented_processor import NotImplementedFileUploadProcessor
 from account.tests.factories.account_factories import AccountHubFactory
 from account.repositories.account_repository import AccountRepository
+from asset.repositories.asset_repository import AssetRepository
+from currency.tests.factories.currency_factories import CurrencyStaticSatelliteFactory
 
 
 class TestOnvistaFileUploadManager(TestCase):
@@ -47,3 +49,13 @@ class TestOnvistaFileUploadManager(TestCase):
         result = processor.process(test_path)
         self.assertEqual(result, True)
         self.assertEqual(processor.subprocessor.input_data_df.shape, (3, 24))
+        assets = AssetRepository().std_queryset()
+        self.assertEqual(assets.count(), 3)
+        for _, row in processor.subprocessor.input_data_df.iterrows():
+            asset = assets.get(asset_isin=row.asset_isin)
+            self.assertEqual(asset.asset_name, row.asset_name)
+            self.assertEqual(float(asset.price), round(row.price, 4))
+            self.assertEqual(asset.value_date, row.value_date.date())
+            self.assertEqual(asset.asset_type, row.asset_type)
+            self.assertEqual(asset.asset_wkn, row.asset_wkn)
+            self.assertEqual(asset.asset_isin, row.asset_isin)

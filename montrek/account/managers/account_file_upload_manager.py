@@ -1,4 +1,3 @@
-from django.db.models import QuerySet
 from account.managers.dkb_file_upload_manager import DkbFileUploadProcessor
 from account.managers.onvista_file_upload_manager import OnvistaFileUploadProcessor
 from account.managers.not_implemented_processor import (

@@ -77,7 +77,7 @@ class TestMarketData(TestCase):
         isin_asset_map = get_isin_asset_map()
         prices_df = self._dummy_yf_prices_df()
         update_asset_prices(isin_asset_map, prices_df)
-        prices = [5.94, 166.89]
+        prices = [5.9425, 166.89]
         for i, asset in enumerate(AssetHub.objects.all()):
             asset_static = asset.asset_static_satellite.last()
             asset_ts = asset.asset_time_series_satellite.all()
