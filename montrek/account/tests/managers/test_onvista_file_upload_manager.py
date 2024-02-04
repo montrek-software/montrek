@@ -2,6 +2,7 @@ import os
 from django.test import TestCase
 from account.managers.onvista_file_upload_manager import (
     OnvistaFileUploadDepotProcessor,
+    OnvistaFileUploadTransactionProcessor,
     OnvistaFileUploadProcessor,
 )
 from account.managers.not_implemented_processor import NotImplementedFileUploadProcessor
@@ -19,11 +20,10 @@ from transaction.tests.factories.transaction_factories import (
 
 class TestOnvistaFileUploadManager(TestCase):
     def setUp(self):
-        account_hub = AccountHubFactory.create()
-        AccountStaticSatelliteFactory.create(
-            hub_entity=account_hub, account_name="Test Account"
+        account_sat = AccountStaticSatelliteFactory.create(account_name="Test Account")
+        self.account = (
+            AccountRepository().std_queryset().get(pk=account_sat.hub_entity.pk)
         )
-        self.account = AccountRepository().std_queryset().get(pk=account_hub.pk)
 
     def test_default_processor(self):
         processor = OnvistaFileUploadProcessor(self.account)
@@ -91,3 +91,14 @@ class TestOnvistaFileUploadManager(TestCase):
             )
         result = processor.post_check(test_path)
         self.assertTrue(result)
+
+    def test_transaction_processor(self):
+        processor = OnvistaFileUploadProcessor(self.account)
+        test_path = os.path.join(
+            os.path.dirname(__file__), "data", "onvista_transaction_test.csv"
+        )
+        result = processor.pre_check(test_path)
+        self.assertEqual(result, True)
+        self.assertIsInstance(
+            processor.subprocessor, OnvistaFileUploadTransactionProcessor
+        )

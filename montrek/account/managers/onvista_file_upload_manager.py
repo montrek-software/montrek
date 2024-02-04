@@ -32,6 +32,8 @@ class OnvistaFileUploadProcessor:
         index_tag = open(file_path, encoding="utf-8-sig").readline().strip()
         if index_tag.startswith("Depotuebersicht"):
             self.subprocessor = OnvistaFileUploadDepotProcessor(self.account_hub)
+        elif index_tag.startswith("Kontouebersicht"):
+            self.subprocessor = OnvistaFileUploadTransactionProcessor(self.account_hub)
         else:
             self.subprocessor = NotImplementedFileUploadProcessor()
             self.message = "File cannot be processed"
@@ -58,8 +60,8 @@ class OnvistaFileUploadDepotProcessor:
             lambda x: self._get_depot_quantity(x, depot), axis=1
         )
         mismatch_df = self.input_data_df.loc[
-            (self.input_data_df["account_shares"] - self.input_data_df["quantity"])
-            != 0,
+            abs(self.input_data_df["account_shares"] - self.input_data_df["quantity"])
+            >= 0.0001,
             ["asset_name", "account_shares", "quantity"],
         ]
         if mismatch_df.empty:
@@ -106,3 +108,13 @@ class OnvistaFileUploadDepotProcessor:
         if len(asset) == 0:
             return 0
         return float(asset.first().total_nominal)
+
+
+class OnvistaFileUploadTransactionProcessor:
+    message = "Not implemented"
+
+    def __init__(self, account_hub: QuerySet):
+        self.account_hub = account_hub
+
+    def pre_check(self, file_path: str) -> bool:
+        return True
