@@ -1,8 +1,10 @@
 from django.db.models import QuerySet
+from numpy import who
 import pandas as pd
 from account.managers.not_implemented_processor import NotImplementedFileUploadProcessor
 from asset.repositories.asset_repository import AssetRepository
 from account.repositories.account_repository import AccountRepository
+from transaction.managers.transaction_account_manager import TransactionAccountManager
 
 
 class OnvistaFileUploadProcessor:
@@ -130,8 +132,72 @@ class OnvistaFileUploadTransactionProcessor:
         input_df["transaction_value"] = input_df["Betrag"].apply(
             lambda x: float(x.replace(".", "").replace(",", ".").replace("EUR", ""))
         )
+        input_df["Verwendungszweck"] = input_df["Verwendungszweck"].str.replace(
+            ",", "."
+        )
         self.input_data_dfs["asset_purchase"] = input_df[
             input_df["Verwendungszweck"].str.startswith("Wertpapierkauf")
         ]
 
+        return True
+
+    def process(self, file_path: str) -> bool:
+        self._create_asset_transactions()
+        return True
+
+    def post_check(self, file_path: str) -> bool:
+        return True
+
+    def _create_asset_transactions(self):
+        input_df = self.input_data_dfs["asset_purchase"].copy()
+        input_df["isin"] = input_df["Verwendungszweck"].str.extract(r"ISIN\s(\w+)")
+        input_df["transaction_amount"] = input_df["Verwendungszweck"].apply(
+            lambda x: float(x.split(" ")[2])
+        )
+        input_df["transaction_price"] = (
+            input_df["transaction_value"] / input_df["transaction_amount"]
+        )
+        input_df["transaction_date"] = input_df["Valuta"]
+        input_df["transaction_description"] = input_df["isin"].apply(
+            lambda x: f"Purchase {x}"
+        )
+        input_df["transaction_party"] = input_df["isin"]
+        asset_input_df = (
+            input_df.groupby(["transaction_party", "transaction_date"])
+            .agg(
+                transaction_amount=("transaction_amount", "sum"),
+                transaction_price=(
+                    "transaction_amount",
+                    lambda x: (input_df.loc[x.index, "transaction_price"] * x).sum()
+                    / x.sum(),
+                ),
+                transaction_description=("transaction_description", "first"),
+            )
+            .reset_index()
+        )
+        asset_input_df["transaction_party_iban"] = ""
+
+        transaction_account_manager = TransactionAccountManager(
+            self.account_hub, asset_input_df
+        )
+        transactions = transaction_account_manager.new_transactions_to_account_from_df()
+        counter_transaction_df = (
+            input_df.groupby(["transaction_date", "transaction_party"])
+            .agg(
+                transaction_value=("transaction_value", "sum"),
+                transaction_description=("transaction_description", "first"),
+            )
+            .reset_index()
+        )
+        counter_transaction_df["transaction_party"] += " COUNTER BOOKING"
+        counter_transaction_df["transaction_party_iban"] = ""
+        counter_transaction_df["transaction_amount"] = (
+            2 * counter_transaction_df["transaction_value"]
+        )
+        counter_transaction_df["transaction_price"] = 1
+        counter_transaction_account_manager = TransactionAccountManager(
+            self.account_hub, counter_transaction_df
+        )
+        counter_transaction_account_manager.new_transactions_to_account_from_df()
+        self.message = f"Created {len(transactions)} transactions"
         return True

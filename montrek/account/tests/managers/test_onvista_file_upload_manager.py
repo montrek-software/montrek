@@ -105,3 +105,11 @@ class TestOnvistaFileUploadManager(TestCase):
         self.assertEqual(
             processor.subprocessor.input_data_dfs["asset_purchase"].shape, (5, 5)
         )
+        result = processor.process(test_path)
+        self.assertEqual(result, True)
+        transactions = AccountRepository().get_transaction_table_by_account(
+            self.account.pk
+        )
+        self.assertEqual(transactions.count(), 6)
+        assets = AccountRepository().get_depot_data(self.account.pk)
+        self.assertEqual(assets.count(), 3)
