@@ -16,7 +16,7 @@ class FileUploadProcessorProtocol(Protocol):
     def pre_check(self, file_path: str) -> bool:
         ...
 
-    def process(self, file_path: str, file_upload_registry: MontrekHubABC) -> bool:
+    def process(self, file_path: str) -> bool:
         ...
 
     def post_check(self, file_path: str) -> bool:
@@ -25,38 +25,33 @@ class FileUploadProcessorProtocol(Protocol):
 
 class FileUploadManager:
     def __init__(
-        self, file_upload_processor: FileUploadProcessorProtocol, file: TextIO
+        self,
+        file_upload_processor_class: type[FileUploadProcessorProtocol],
+        file: TextIO,
+        **kwargs,
     ) -> None:
-        self.file_upload_processor = file_upload_processor
         self.registry_repository = FileUploadRegistryRepository()
-        self.file_repository = FileUploadFileRepository()
         self.file = file
+        self.file_repository = FileUploadFileRepository()
         self.file_upload_registry: MontrekHubABC | Any = None
         self.file_path = ""
+        self.init_upload()
+        self.processor = file_upload_processor_class(
+            self.file_upload_registry.pk, **kwargs
+        )
 
     def upload_and_process(self) -> bool:
-        self.init_upload()
-        if not self.file_upload_processor.pre_check(self.file_path):
-            self._update_file_upload_registry(
-                "failed", self.file_upload_processor.message
-            )
+        if not self.processor.pre_check(self.file_path):
+            self._update_file_upload_registry("failed", self.processor.message)
             return False
-        if self.file_upload_processor.process(
-            self.file_path, self.file_upload_registry
-        ):
-            if not self.file_upload_processor.post_check(self.file_path):
-                self._update_file_upload_registry(
-                    "failed", self.file_upload_processor.message
-                )
+        if self.processor.process(self.file_path):
+            if not self.processor.post_check(self.file_path):
+                self._update_file_upload_registry("failed", self.processor.message)
                 return False
-            self._update_file_upload_registry(
-                "processed", self.file_upload_processor.message
-            )
+            self._update_file_upload_registry("processed", self.processor.message)
             return True
         else:
-            self._update_file_upload_registry(
-                "failed", self.file_upload_processor.message
-            )
+            self._update_file_upload_registry("failed", self.processor.message)
             return False
 
     def init_upload(self) -> None:

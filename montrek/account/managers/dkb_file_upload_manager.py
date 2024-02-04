@@ -6,16 +6,15 @@ import csv
 class DkbFileUploadProcessor:
     def __init__(self, account_hub):
         self.account_hub = account_hub
-        self.meta_data = None
+        self.meta_data = {}
 
-    def process(self, file_path: str, file_upload_registry_hub):
+    def process(self, file_path: str):
         updated_transactions = upload_dkb_transactions(self.account_hub, file_path)
-        self.account_hub.link_account_file_upload_registry.add(file_upload_registry_hub)
-        self.account_hub = (
-            AccountRepository().std_queryset().get(pk=self.account_hub.pk)
-        )
         self.message = (
             f"DKB upload was successful ({len(updated_transactions)} transactions)"
+        )
+        self.account_hub = (
+            AccountRepository().std_queryset().get(pk=self.account_hub.pk)
         )
         return True
 
