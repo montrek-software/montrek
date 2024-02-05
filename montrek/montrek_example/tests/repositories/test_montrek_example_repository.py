@@ -454,3 +454,16 @@ class TestMontrekRepositoryLinks(TestCase):
         self.assertEqual(queryset[0].field_a1_int, 5)
         self.assertEqual(queryset[1].field_a1_int, None)
 
+
+class TestTimeSeries(TestCase):
+
+    def setUp(self) -> None:
+        ts_satellite_c1 = me_factories.SatC1Factory.create(
+            field_c1_str = "Hallo",
+            field_c1_bool = True,
+        )
+        me_factories.SatTSC2Factory.create(
+            hub_entity = ts_satellite_c1.hub_entity,
+            field_tsc2_float = 1.0
+            field_tsc2_date = montrek_time(2024,2,5)
+        )

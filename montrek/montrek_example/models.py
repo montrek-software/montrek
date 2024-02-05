@@ -82,6 +82,8 @@ class SatC1(MontrekSatelliteABC):
 class SatTSC2(MontrekTimeSeriesSatelliteABC):
     hub_entity = models.ForeignKey(HubC, on_delete=models.CASCADE)
     field_tsc2_float = models.FloatField(default=0.0)
+    field_tsc2_date = models.DateField()
+    identifier_fields = ["field_tsc1_date", "hub_entity_id"]
 
 
 class LinkHubAHubB(MontrekOneToOneLinkABC):
