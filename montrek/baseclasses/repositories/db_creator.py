@@ -111,7 +111,8 @@ class DbCreator:
         )
         if satellite_updates_or_none is None:
             return NewSatelliteCreationState(satellite=satellite)
-        if satellite_updates_or_none.get_hash_value == sat_hash_value:
+        self.hub_entity = satellite_updates_or_none.hub_entity
+        if satellite_updates_or_none.hash_value == sat_hash_value:
             return ExistingSatelliteCreationState(satellite=satellite_updates_or_none)
         return UpdatedSatelliteCreationState(
             satellite=satellite, updated_sat=satellite_updates_or_none
@@ -151,6 +152,7 @@ class DbCreator:
             existing_satellites = satellite.__class__.objects.filter(
                 hub_entity=reference_hub,
                 state_date_end__gte=creation_date,
+                hash_identifier=satellite.hash_identifier,
             ).order_by("created_at")
             if existing_satellites.count() == 1:
                 updated_sat = existing_satellites.first()
