@@ -128,12 +128,10 @@ class OnvistaFileUploadTransactionProcessor:
             thousands=".",
             parse_dates=["Valuta"],
             dayfirst=True,
+            converters={"Verwendungszweck": str},
         )
         input_df["transaction_value"] = input_df["Betrag"].apply(
             lambda x: float(x.replace(".", "").replace(",", ".").replace("EUR", ""))
-        )
-        input_df["Verwendungszweck"] = input_df["Verwendungszweck"].str.replace(
-            ",", "."
         )
         self.input_data_dfs["asset_purchase"] = input_df[
             input_df["Verwendungszweck"].str.startswith("Wertpapierkauf")
@@ -152,7 +150,7 @@ class OnvistaFileUploadTransactionProcessor:
         input_df = self.input_data_dfs["asset_purchase"].copy()
         input_df["isin"] = input_df["Verwendungszweck"].str.extract(r"ISIN\s(\w+)")
         input_df["transaction_amount"] = input_df["Verwendungszweck"].apply(
-            lambda x: float(x.split(" ")[2])
+            lambda x: float(x.split(" ")[2].replace(".", "").replace(",", "."))
         )
         input_df["transaction_price"] = (
             (-1) * input_df["transaction_value"] / input_df["transaction_amount"]
