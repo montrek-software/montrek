@@ -152,10 +152,10 @@ class OnvistaFileUploadTransactionProcessor:
         input_df = self.input_data_dfs["asset_purchase"].copy()
         input_df["isin"] = input_df["Verwendungszweck"].str.extract(r"ISIN\s(\w+)")
         input_df["transaction_amount"] = input_df["Verwendungszweck"].apply(
-            lambda x: float(x.split(" ")[2]) * (-1)
+            lambda x: float(x.split(" ")[2])
         )
         input_df["transaction_price"] = (
-            input_df["transaction_value"] / input_df["transaction_amount"]
+            (-1) * input_df["transaction_value"] / input_df["transaction_amount"]
         )
         input_df["transaction_date"] = input_df["Valuta"]
         input_df["transaction_description"] = input_df["isin"].apply(
