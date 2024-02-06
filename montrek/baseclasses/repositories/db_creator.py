@@ -1,6 +1,7 @@
 from typing import Any, Protocol
 from dataclasses import dataclass
 from django.utils import timezone
+from django.db.models import Q
 from baseclasses.models import MontrekSatelliteABC, MontrekHubABC
 from baseclasses.models import LinkTypeEnum
 
@@ -111,7 +112,8 @@ class DbCreator:
         )
         if satellite_updates_or_none is None:
             return NewSatelliteCreationState(satellite=satellite)
-        if satellite_updates_or_none.get_hash_value == sat_hash_value:
+        self.hub_entity = satellite_updates_or_none.hub_entity
+        if satellite_updates_or_none.hash_value == sat_hash_value:
             return ExistingSatelliteCreationState(satellite=satellite_updates_or_none)
         return UpdatedSatelliteCreationState(
             satellite=satellite, updated_sat=satellite_updates_or_none
@@ -148,6 +150,9 @@ class DbCreator:
             satellite = satellite_create_state.satellite
             satellite.hub_entity = reference_hub
             # Check if there is already another satellites for this hub and if so, set the state_date_end
+            if satellite.allow_multiple:
+                self._stall_satellite(satellite)
+                return
             existing_satellites = satellite.__class__.objects.filter(
                 hub_entity=reference_hub,
                 state_date_end__gte=creation_date,

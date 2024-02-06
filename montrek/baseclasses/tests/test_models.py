@@ -85,10 +85,22 @@ class TestSatelliteIdentifier(TestCase):
         )
         self.assertNotEqual(test_satellite.hash_identifier, test_hash)
 
+    def test_satellite_hash_identifier_with_decimal(self):
+        test_satellite = TestMontrekSatelliteFactory(
+            test_name="test_name",
+            test_decimal=1234.56,
+            hub_entity=TestMontrekHubFactory.create(),
+        )
+        hash_unsaved = test_satellite.hash_identifier
+        test_satellite.save()
+        satellite_from_db = TestMontrekSatellite.objects.get(pk=test_satellite.pk)
+        hash_saved = satellite_from_db.hash_identifier
+        self.assertEqual(hash_unsaved, hash_saved)
+
 
 class TestSatelliteValueHash(TestCase):
     def test_new_satellite_has_correct_value_hash(self):
-        test_hash = hashlib.sha256(b"test_nameDEFAULT").hexdigest()
+        test_hash = hashlib.sha256(b"test_nameDEFAULT0").hexdigest()
         test_satellite = TestMontrekSatelliteFactory(
             test_name="test_name", hub_entity=TestMontrekHubFactory()
         )

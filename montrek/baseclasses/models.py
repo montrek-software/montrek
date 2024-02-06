@@ -2,6 +2,7 @@ import hashlib
 import datetime
 from enum import Enum
 from django.db import models
+from django.db.models.fields import decimal
 from django.utils import timezone
 from baseclasses.utils import datetime_to_montrek_time
 
@@ -54,6 +55,9 @@ class MontrekSatelliteABC(TimeStampMixin, StateDateMixin):
 
     identifier_fields = []
 
+    # Some hubs can have multiple satellites (e.g. timeseries).
+    allow_multiple = False
+
     def save(self, *args, **kwargs):
         if self.hash_identifier == "":
             self._get_hash_identifier()
@@ -94,6 +98,7 @@ class MontrekSatelliteABC(TimeStampMixin, StateDateMixin):
             if isinstance(value, (datetime.datetime)):
                 value = datetime_to_montrek_time(value)
             value_string += str(value)
+            # TODO: Handle decimal here
         return value_string
 
     @classmethod
@@ -136,8 +141,9 @@ class MontrekTimeSeriesSatelliteABC(MontrekSatelliteABC):
     class Meta:
         abstract = True
 
+    allow_multiple = True
     value_date = models.DateField()
-    identifier_fields = ["value_date"]
+    identifier_fields = ["value_date", "hub_entity_id"]
 
 
 class MontrekTypeSatelliteABC(MontrekSatelliteABC):
@@ -206,6 +212,7 @@ class TestMontrekSatellite(MontrekSatelliteABC):
     identifier_fields = ["test_name"]
     test_name = models.CharField(max_length=12)
     test_value = models.CharField(max_length=50, default="DEFAULT")
+    test_decimal = models.DecimalField(max_digits=10, decimal_places=4, default=0)
 
 
 class TestMontrekSatelliteNoIdFields(MontrekSatelliteABC):
