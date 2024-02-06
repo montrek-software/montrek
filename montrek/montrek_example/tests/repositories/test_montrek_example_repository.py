@@ -1,10 +1,10 @@
 from django.test import TestCase
 from django.utils import timezone
 from baseclasses.utils import montrek_time
-from baseclasses import models as me_models
 from montrek_example.tests.factories import montrek_example_factories as me_factories
 from montrek_example.repositories.hub_a_repository import HubARepository
 from montrek_example.repositories.hub_b_repository import HubBRepository
+from montrek_example.repositories.hub_c_repository import HubCRepository
 from montrek_example import models as me_models
 
 
@@ -234,7 +234,6 @@ class TestMontrekCreatObject(TestCase):
             me_models.HubA.objects.first().state_date_end,
         )
 
-    
     def test_std_create_object_update_satellite_id_field_keep_hub(self):
         # Create one object
         repository = HubARepository()
@@ -279,9 +278,7 @@ class TestMontrekCreatObject(TestCase):
         self.assertEqual(me_models.HubB.objects.count(), 1)
         self.assertEqual(me_models.HubA.objects.count(), 1)
         self.assertEqual(me_models.LinkHubAHubB.objects.count(), 1)
-        self.assertEqual(
-            me_models.HubA.objects.first().link_hub_a_hub_b.first(), hub_b
-        )
+        self.assertEqual(me_models.HubA.objects.first().link_hub_a_hub_b.first(), hub_b)
 
     def test_create_hub_a_with_link_to_hub_b_update(self):
         sat_b_1 = me_factories.SatB1Factory()
@@ -314,7 +311,9 @@ class TestMontrekCreatObject(TestCase):
         last_linked_hub = me_models.LinkHubAHubB.objects.last()
         self.assertEqual(first_linked_hub.hub_out, hub_b_1)
         self.assertEqual(last_linked_hub.hub_out, hub_b_2)
-        self.assertEqual(first_linked_hub.state_date_end, last_linked_hub.state_date_start)
+        self.assertEqual(
+            first_linked_hub.state_date_end, last_linked_hub.state_date_start
+        )
         queried_object = repository.std_queryset().get()
         self.assertEqual(queried_object.field_b1_str, sat_b_2.field_b1_str)
 
@@ -346,6 +345,7 @@ class TestMontrekCreatObject(TestCase):
         queried_object = repository.std_queryset().get()
         self.assertEqual(queried_object.field_b1_str, sat_b_1.field_b1_str)
 
+
 class TestDeleteObject(TestCase):
     def test_delete_object(self):
         repository = HubARepository()
@@ -357,6 +357,7 @@ class TestDeleteObject(TestCase):
         self.assertEqual(me_models.SatA1.objects.count(), 1)
         self.assertEqual(me_models.HubA.objects.count(), 1)
         self.assertEqual(len(repository.std_queryset()), 0)
+
 
 class TestMontrekRepositoryLinks(TestCase):
     def setUp(self):
@@ -456,14 +457,30 @@ class TestMontrekRepositoryLinks(TestCase):
 
 
 class TestTimeSeries(TestCase):
-
     def setUp(self) -> None:
         ts_satellite_c1 = me_factories.SatC1Factory.create(
-            field_c1_str = "Hallo",
-            field_c1_bool = True,
+            field_c1_str="Hallo",
+            field_c1_bool=True,
         )
         me_factories.SatTSC2Factory.create(
-            hub_entity = ts_satellite_c1.hub_entity,
-            field_tsc2_float = 1.0
-            field_tsc2_date = montrek_time(2024,2,5)
+            hub_entity=ts_satellite_c1.hub_entity,
+            field_tsc2_float=1.0,
+            value_date=montrek_time(2024, 2, 5),
         )
+
+    def test_existing_satellite(self):
+        repository = HubCRepository()
+        repository.std_create_object(
+            {
+                "field_c1_str": "Hallo",
+                "field_c1_bool": True,
+                "field_tsc2_float": 1.0,
+                "value_date": montrek_time(2024, 2, 5),
+            }
+        )
+        queryset = repository.std_queryset()
+        self.assertEqual(queryset.count(), 1)
+        self.assertEqual(queryset[0].field_c1_str, "Hallo")
+        self.assertEqual(queryset[0].field_c1_bool, True)
+        self.assertEqual(queryset[0].field_tsc2_float, 1.0)
+        self.assertEqual(queryset[0].value_date, montrek_time(2024, 2, 5).date())
