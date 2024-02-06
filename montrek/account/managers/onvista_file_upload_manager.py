@@ -162,6 +162,7 @@ class OnvistaFileUploadTransactionProcessor:
             lambda x: f"Purchase {x}"
         )
         input_df["transaction_party"] = input_df["isin"]
+        self._attach_assets(input_df)
         asset_input_df = (
             input_df.groupby(["transaction_party", "transaction_date"])
             .agg(
@@ -172,6 +173,7 @@ class OnvistaFileUploadTransactionProcessor:
                     / x.sum(),
                 ),
                 transaction_description=("transaction_description", "first"),
+                link_transaction_asset=("link_transaction_asset", "first"),
             )
             .reset_index()
         )
@@ -201,3 +203,16 @@ class OnvistaFileUploadTransactionProcessor:
         counter_transaction_account_manager.new_transactions_to_account_from_df()
         self.message = f"Created {len(transactions)} transactions"
         return True
+
+    def _attach_assets(self, input_df: pd.DataFrame) -> pd.DataFrame:
+        assets = AssetRepository().std_queryset()
+        input_df["link_transaction_asset"] = input_df["isin"].apply(
+            self._get_or_create_asset, args=(assets,)
+        )
+        return input_df
+
+    def _get_or_create_asset(self, isin: str, assets: QuerySet) -> int:
+        asset = assets.filter(asset_isin=isin)
+        if len(asset) == 0:
+            return AssetRepository().std_create_object({"asset_isin": isin})
+        return asset.first()
