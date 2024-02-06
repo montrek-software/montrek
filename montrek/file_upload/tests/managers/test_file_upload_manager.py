@@ -9,10 +9,13 @@ from file_upload.repositories.file_upload_registry_repository import (
 class MockFileUploadProcessor:
     message = "File processed"
 
+    def __init__(self, file_upload_registry_id, **kwargs):
+        pass
+
     def pre_check(self, file_path):
         return True
 
-    def process(self, file, registry):
+    def process(self, file_path):
         return True
 
     def post_check(self, file_path):
@@ -22,10 +25,13 @@ class MockFileUploadProcessor:
 class MockFileUploadProcessorFail:
     message = "File not processed"
 
+    def __init__(self, file_upload_registry_id, **kwargs):
+        pass
+
     def pre_check(self, file_path):
         return True
 
-    def process(self, file, registry):
+    def process(self, file_path):
         return False
 
     def post_check(self, file_path):
@@ -35,10 +41,13 @@ class MockFileUploadProcessorFail:
 class MockFileUploadProcessorPreCheckFail:
     message = "Pre Cheeck failed"
 
+    def __init__(self, file_upload_registry_id, **kwargs):
+        pass
+
     def pre_check(self, file_path):
         return False
 
-    def process(self, file, registry):
+    def process(self, file_path):
         return True
 
     def post_check(self, file_path):
@@ -48,10 +57,13 @@ class MockFileUploadProcessorPreCheckFail:
 class MockFileUploadProcessorPostCheckFail:
     message = "Pre Cheeck failed"
 
+    def __init__(self, file_upload_registry_id, **kwargs):
+        pass
+
     def pre_check(self, file_path):
         return True
 
-    def process(self, file, registry):
+    def process(self, file_path):
         return True
 
     def post_check(self, file_path):
@@ -68,7 +80,7 @@ class TestFileUploadManager(TestCase):
 
     def test_fum_init(self):
         fum = FileUploadManager(
-            file_upload_processor=MockFileUploadProcessor(), file=self.test_file
+            file_upload_processor_class=MockFileUploadProcessor, file=self.test_file
         )
         fum.init_upload()
         file_upload_registry_query = FileUploadRegistryRepository().std_queryset()
@@ -82,9 +94,9 @@ class TestFileUploadManager(TestCase):
         self.assertEqual(file_upload_registry.upload_message, "Upload is pending")
 
     def test_fum_upload_success(self):
-        upload_processor = MockFileUploadProcessor()
+        upload_processor = MockFileUploadProcessor
         fum = FileUploadManager(
-            file_upload_processor=upload_processor, file=self.test_file
+            file_upload_processor_class=upload_processor, file=self.test_file
         )
         fum.init_upload()
         fum.upload_and_process()
@@ -95,9 +107,9 @@ class TestFileUploadManager(TestCase):
         self.assertEqual(file_upload_registry.upload_message, upload_processor.message)
 
     def test_fum_upload_failure(self):
-        upload_processor = MockFileUploadProcessorFail()
+        upload_processor = MockFileUploadProcessorFail
         fum = FileUploadManager(
-            file_upload_processor=upload_processor, file=self.test_file
+            file_upload_processor_class=upload_processor, file=self.test_file
         )
         fum.init_upload()
         fum.upload_and_process()
@@ -108,9 +120,9 @@ class TestFileUploadManager(TestCase):
         self.assertEqual(file_upload_registry.upload_message, upload_processor.message)
 
     def test_fum_pre_check_fails(self):
-        upload_processor = MockFileUploadProcessorPreCheckFail()
+        upload_processor = MockFileUploadProcessorPreCheckFail
         fum = FileUploadManager(
-            file_upload_processor=upload_processor, file=self.test_file
+            file_upload_processor_class=upload_processor, file=self.test_file
         )
         fum.init_upload()
         fum.upload_and_process()
@@ -121,9 +133,9 @@ class TestFileUploadManager(TestCase):
         self.assertEqual(file_upload_registry.upload_message, upload_processor.message)
 
     def test_fum_post_check_fails(self):
-        upload_processor = MockFileUploadProcessorPostCheckFail()
+        upload_processor = MockFileUploadProcessorPostCheckFail
         fum = FileUploadManager(
-            file_upload_processor=upload_processor, file=self.test_file
+            file_upload_processor_class=upload_processor, file=self.test_file
         )
         fum.init_upload()
         fum.upload_and_process()

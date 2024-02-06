@@ -1,0 +1,11 @@
+﻿Depotuebersicht Wertpapiere
+Shortcode;264295
+User;CH264295
+Datum;01.02.24 05:36:51
+
+Bestand;Name;ISIN;WKN;Typ;Datum;Zeit;Akt. Geldkurs;Akt. Geldkurs Currency;Boerse;Kaufkurs;Kaufkurs Currency;Kaufwert;Kaufwert Currency;Gesamtperformance;Gesamtperformance Currency;%;Tagesperformance;Tagesperformance Currency;%;Aktueller Wert;Aktueller Wert Currency;Wert;Wert Currency
+92,4428;DUMMY1;LU261123435;ETF214;ETF;31.01.2024;21:56:36;13,0800;EUR;Stuttgart;120,9222;EUR;111,39;EUR;10,46;EUR;9,23 %;-114,629 ;EUR;-0,93 %;12.209,85;EUR;12.209,85;EUR
+34,1679;DUMMY2;LU257255443;ETF013;ETF;31.01.2024;21:57:00;41,9000;EUR;Stuttgart;301,3931;EUR;102,97;EUR;38,12;EUR;37,33 %;-47,835 ;EUR;-0,34 %;14.142,09;EUR;14.142,09;EUR
+64,1847;DUMMY3;IE00BYZK4343;A2ANH2;ETF;31.01.2024;21:56:33;6,3680;EUR;Stuttgart;6,1074;EUR;392,00;EUR;16,73;EUR;4,27 %;0,385 ;EUR;0,09 %;408,73;EUR;408,73;EUR
+;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;GESAMTSUMME;;128,00;EUR;;;569,32;EUR;0,444 %;-375,24;EUR;-0,291 %;128,32;EUR;;

@@ -1,5 +1,6 @@
 import factory
 from django.utils import timezone
+from asset.tests.factories.asset_factories import AssetStaticSatelliteFactory
 from transaction.models import TransactionHub
 from account.tests.factories.account_factories import AccountStaticSatelliteFactory
 
@@ -20,6 +21,18 @@ class TransactionHubFactory(factory.django.DjangoModelFactory):
             # Link a default AccountHub for this TransactionCategoryMapHub
             account = AccountStaticSatelliteFactory.create()
             self.link_transaction_account.add(account.hub_entity)
+
+    @factory.post_generation
+    def asset(self, create, extracted, **kwargs):
+        if not create:
+            return
+        if extracted:
+            # A list of AccountHub instances were passed in, link them
+            self.link_transaction_asset.add(extracted)
+        else:
+            # Link a default AccountHub for this TransactionCategoryMapHub
+            asset = AssetStaticSatelliteFactory.create()
+            self.link_transaction_asset.add(asset.hub_entity)
 
 
 class TransactionSatelliteFactory(factory.django.DjangoModelFactory):

@@ -1,19 +1,34 @@
-from account.managers.transaction_upload_methods import upload_dkb_transactions
-from account.managers.transaction_upload_methods import get_dkb_iban_from_file
+from account.managers.dkb_file_upload_manager import DkbFileUploadProcessor
+from account.managers.onvista_file_upload_manager import OnvistaFileUploadProcessor
+from account.managers.not_implemented_processor import (
+    NotImplementedFileUploadProcessor,
+)
 from account.repositories.account_repository import AccountRepository
-import csv
+from file_upload.repositories.file_upload_registry_repository import (
+    FileUploadRegistryRepository,
+)
 
 
 class AccountFileUploadProcessor:
     message = "Not implemented"
+    file_upload_registry = None
 
-    def __init__(self, **kwargs):
-        account_hub = AccountRepository().std_queryset().get(pk=kwargs["pk"])
-        if account_hub.account_upload_method == "dkb":
-            self.sub_processor = DKBFileUploadProcessor(account_hub)
+    def __init__(self, file_upload_registry_id: int, **kwargs):
+        account_hub_id = kwargs.get("pk")
+        account_hub = self._set_registry_to_account(
+            account_hub_id, file_upload_registry_id
+        )
+        match account_hub.account_upload_method:
+            case "dkb":
+                self.sub_processor = DkbFileUploadProcessor(account_hub)
+            case "onvis":
+                self.sub_processor = OnvistaFileUploadProcessor(account_hub)
+            case _:
+                self.sub_processor = NotImplementedFileUploadProcessor()
+                self.sub_processor.message = f"Account upload method {account_hub.account_upload_method} not implemented"
 
-    def process(self, file_path: str, file_upload_registry_hub):
-        result = self.sub_processor.process(file_path, file_upload_registry_hub)
+    def process(self, file_path: str):
+        result = self.sub_processor.process(file_path)
         self.message = self.sub_processor.message
         return result
 
@@ -27,52 +42,14 @@ class AccountFileUploadProcessor:
         self.message = self.sub_processor.message
         return result
 
-
-class DKBFileUploadProcessor(AccountFileUploadProcessor):
-    def __init__(self, account_hub):
-        self.account_hub = account_hub
-        self.meta_data = {}
-
-    def process(self, file_path: str, file_upload_registry_hub):
-        updated_transactions = upload_dkb_transactions(self.account_hub, file_path)
-        self.account_hub.link_account_file_upload_registry.add(file_upload_registry_hub)
-        self.account_hub = (
-            AccountRepository().std_queryset().get(pk=self.account_hub.pk)
+    def _set_registry_to_account(
+        self, account_hub_id: int, file_upload_registry_id: int
+    ):
+        file_upload_registry_hub = (
+            FileUploadRegistryRepository()
+            .std_queryset()
+            .get(pk=file_upload_registry_id)
         )
-        self.message = (
-            f"DKB upload was successful ({len(updated_transactions)} transactions)"
-        )
-        return True
-
-    def pre_check(self, file_path: str):
-        self._get_meta_data(file_path)
-        if self.meta_data["iban"] != self.account_hub.bank_account_iban:
-            self.message = f"IBAN in file ({self.meta_data['iban']}) does not match account iban ({self.account_hub.bank_account_iban})"
-            return False
-        return True
-
-    def post_check(self, file_path: str):
-        self._get_meta_data(file_path)
-        account_value = float(self.account_hub.account_value)
-        diff_values = account_value - self.meta_data["value"]
-        if abs(diff_values) > 0.02:
-            self.message = f"Bank account value and value from file differ by {diff_values:,.2f} EUR"
-            return False
-        return True
-
-    def _get_meta_data(self, file_path: str):
-        if self.meta_data:
-            return
-        with open(file_path, newline="", encoding="iso-8859-1") as csvfile:
-            reader = csv.reader(csvfile, delimiter=";", quotechar='"')
-            iban = next(reader)[1].split("/")[0].replace(" ", "")
-            for _ in range(3):
-                next(reader)
-            value = (
-                next(reader)[1].replace(" EUR", "").replace(".", "").replace(",", ".")
-            )
-            value = float(value)
-            self.meta_data = {
-                "iban": iban,
-                "value": value,
-            }
+        account_hub = AccountRepository().std_queryset().get(pk=account_hub_id)
+        account_hub.link_account_file_upload_registry.add(file_upload_registry_hub)
+        return account_hub

@@ -1,6 +1,6 @@
 from typing import Any
 from django import template
-from django.urls import reverse
+from django.urls import NoReverseMatch, reverse
 from django.template import Template, Context
 from baseclasses.dataclasses import table_elements
 
@@ -38,10 +38,13 @@ def _get_link(obj, table_element):
     }
     kwargs = {key: str(value).replace("/", "_") for key, value in kwargs.items()}
     url_target = table_element.url
-    url = reverse(
-        url_target,
-        kwargs=kwargs,
-    )
+    try:
+        url = reverse(
+            url_target,
+            kwargs=kwargs,
+        )
+    except NoReverseMatch:
+        return "<td></td>"
     if isinstance(table_element, table_elements.LinkTextTableElement):
         link_text = _get_dotted_attr_or_arg(obj, table_element.text)
     else:

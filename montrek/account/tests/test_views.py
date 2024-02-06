@@ -14,8 +14,13 @@ from file_upload.tests.factories.file_upload_factories import (
     FileUploadRegistryStaticSatelliteFactory,
 )
 from asset.tests.factories.asset_factories import AssetStaticSatelliteFactory
-from currency.tests.factories.currency_factories import CurrencyStaticSatelliteFactory
-from credit_institution.tests.factories.credit_institution_factories import CreditInstitutionStaticSatelliteFactory
+from currency.tests.factories.currency_factories import (
+    CurrencyStaticSatelliteFactory,
+    CurrencyTimeSeriesSatelliteFactory,
+)
+from credit_institution.tests.factories.credit_institution_factories import (
+    CreditInstitutionStaticSatelliteFactory,
+)
 
 from baseclasses.utils import montrek_time
 
@@ -172,15 +177,20 @@ class TestAccountDepotView(TestCase):
         test_session["start_date"] = "2023-12-09"
         test_session.save()
         self.acc = AccountStaticSatelliteFactory.create()
-        ccy = CurrencyStaticSatelliteFactory.create()
+        ccy = CurrencyStaticSatelliteFactory.create(ccy_code="EUR")
+        CurrencyTimeSeriesSatelliteFactory.create(
+            hub_entity=ccy.hub_entity,
+            fx_rate=1.0,
+            value_date=montrek_time(2023, 12, 10),
+        )
         asset = AssetStaticSatelliteFactory.create(currency=ccy.hub_entity)
         transaction_date = montrek_time(2023, 12, 10)
-        for transaction in TransactionSatelliteFactory.create_batch(
-            3, transaction_date=transaction_date, hub_entity__account=self.acc.hub_entity
-        ):
-            transaction.hub_entity.link_transaction_account.add(self.acc.hub_entity)
-            transaction.hub_entity.link_transaction_asset.add(asset.hub_entity)
-            transaction.hub_entity.save()
+        TransactionSatelliteFactory.create_batch(
+            3,
+            transaction_date=transaction_date,
+            hub_entity__account=self.acc.hub_entity,
+            hub_entity__asset=asset.hub_entity,
+        )
 
     def test_account_depot_view_returns_correct_html(self):
         response = self.client.get(f"/account/{self.acc.hub_entity.id}/depot")
@@ -195,10 +205,12 @@ class TestAccountDepotView(TestCase):
         self.assertIsInstance(context["view"], views.AccountDepotView)
         self.assertEqual(context["page_title"], self.acc.account_name)
 
+
 class TestAccountCreateView(TestCase):
     def test_account_create_view_returns_correct_html(self):
         response = self.client.get("/account/create")
         self.assertTemplateUsed(response, "montrek_create.html")
+
 
 class TestDKBAccountUploadFileView(TestCase):
     def setUp(self):
@@ -211,7 +223,6 @@ class TestDKBAccountUploadFileView(TestCase):
             hub_entity=self.acc.hub_entity,
         )
 
-
     def test_account_upload_file_view_returns_correct_html(self):
         response = self.client.get(f"/account/{self.acc.hub_entity.id}/upload_file")
         self.assertTemplateUsed(response, "upload_form.html")
@@ -219,7 +230,9 @@ class TestDKBAccountUploadFileView(TestCase):
 
     def test_account_upload_file_view_enter_file(self):
         url = f"/account/{self.acc.hub_entity.id}/upload_file"
-        test_csv_path = os.path.join(settings.BASE_DIR, "account/tests/managers/data", "dkb_test.csv")
+        test_csv_path = os.path.join(
+            settings.BASE_DIR, "account/tests/managers/data", "dkb_test.csv"
+        )
         with open(test_csv_path, "rb") as test_csv:
             response = self.client.post(
                 url,

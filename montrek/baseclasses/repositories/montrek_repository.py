@@ -122,7 +122,7 @@ class MontrekRepository:
         self.std_queryset()
         db_creator = DbCreator(self.hub_class, self._primary_satellite_classes)
         created_hubs = []
-        for index, row in data_frame.iterrows():
+        for _, row in data_frame.iterrows():
             hub_entity = self._get_hub_from_data(row)
             created_hub = db_creator.create(row, hub_entity)
             created_hubs.append(created_hub)

@@ -1,5 +1,6 @@
 from django.utils import timezone
 from django.db.models import (
+    QuerySet,
     Sum,
     F,
     Prefetch,
@@ -25,7 +26,9 @@ from baseclasses.repositories.montrek_repository import MontrekRepository
 from baseclasses.repositories.montrek_repository import paginated_table
 from depot.repositories.depot_repository import DepotRepository
 from transaction.repositories.transaction_repository import TransactionRepository
-from transaction.repositories.transaction_category_repository import TransactionCategoryMapRepository
+from transaction.repositories.transaction_category_repository import (
+    TransactionCategoryMapRepository,
+)
 from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepository,
 )
@@ -34,7 +37,7 @@ from file_upload.repositories.file_upload_registry_repository import (
 class AccountRepository(MontrekRepository):
     hub_class = AccountHub
 
-    def std_queryset(self, **kwargs):
+    def std_queryset(self, **kwargs) -> QuerySet:
         reference_date = timezone.now()
         self.add_satellite_fields_annotations(
             AccountStaticSatellite, ["account_name", "account_type"], reference_date
@@ -45,7 +48,11 @@ class AccountRepository(MontrekRepository):
         self.add_linked_satellites_field_annotations(
             CreditInstitutionStaticSatellite,
             LinkAccountCreditInstitution,
-            ["credit_institution_name", "credit_institution_bic", "account_upload_method"],
+            [
+                "credit_institution_name",
+                "credit_institution_bic",
+                "account_upload_method",
+            ],
             reference_date,
         )
         self._account_value()
@@ -60,15 +67,13 @@ class AccountRepository(MontrekRepository):
         hub_entity = self.hub_class.objects.get(pk=account_hub_id)
         transaction_repository = TransactionRepository(self.session_data)
         transactions = (
-            transaction_repository
-            .std_queryset()
+            transaction_repository.std_queryset()
             .filter(
                 link_transaction_account=hub_entity,
                 transaction_date__lte=self.session_end_date,
                 transaction_date__gte=self.session_start_date,
             )
             .order_by("-transaction_date")
-
         )
         self.messages += transaction_repository.messages
         if "sort_field" in self.session_data:
@@ -104,28 +109,39 @@ class AccountRepository(MontrekRepository):
         self.annotations["account_value"] = transaction_amount_sq
 
     def _get_depot_account_value(self):
-        #TODO: Set to Depot Value
+        # TODO: Set to Depot Value
         return self._get_bank_account_value()
 
     @paginated_table
     def get_upload_registry_table_by_account_paginated(self, account_hub_id: int):
         hub_entity = self.hub_class.objects.get(pk=account_hub_id)
-        return FileUploadRegistryRepository(self.session_data).std_queryset().filter(
-            link_file_upload_registry_account=hub_entity
-        ).order_by('-created_at')
+        return (
+            FileUploadRegistryRepository(self.session_data)
+            .std_queryset()
+            .filter(link_file_upload_registry_account=hub_entity)
+            .order_by("-created_at")
+        )
 
     @paginated_table
-    def get_transaction_category_map_table_by_account_paginated(self, account_hub_id:int):
+    def get_transaction_category_map_table_by_account_paginated(
+        self, account_hub_id: int
+    ):
         hub_entity = self.hub_class.objects.get(pk=account_hub_id)
-        return TransactionCategoryMapRepository(self.session_data).std_queryset().filter(
-            link_transaction_category_map_account=hub_entity
-        ).order_by('-created_at')
+        return (
+            TransactionCategoryMapRepository(self.session_data)
+            .std_queryset()
+            .filter(link_transaction_category_map_account=hub_entity)
+            .order_by("-created_at")
+        )
 
-    @paginated_table
-    def get_depot_stats_table_by_account_paginated(self, account_hub_id: int):
+    def get_depot_data(self, account_hub_id: int):
         hub_entity = self.hub_class.objects.get(pk=account_hub_id)
         return (
             DepotRepository(self.session_data)
             .std_queryset()
             .filter(account_id=hub_entity.id)
         )
+
+    @paginated_table
+    def get_depot_stats_table_by_account_paginated(self, account_hub_id: int):
+        return self.get_depot_data(account_hub_id)

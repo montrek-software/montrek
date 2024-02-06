@@ -1,7 +1,12 @@
 from typing import Any, Protocol
 from dataclasses import dataclass
 from django.utils import timezone
-from baseclasses.models import MontrekSatelliteABC, MontrekHubABC
+from django.db.models import Q
+from baseclasses.models import (
+    MontrekSatelliteABC,
+    MontrekHubABC,
+    MontrekTimeSeriesSatelliteABC,
+)
 from baseclasses.models import LinkTypeEnum
 
 
@@ -36,7 +41,8 @@ class DbCreator:
         satellite_classes: list[type[MontrekSatelliteABC]],
     ):
         self.hub_entity = None
-        self.satellite_classes = satellite_classes
+        self.satellite_classes = self._sorted_satellite_classes(satellite_classes)
+
         self.stalled_hubs = {hub_entity_class: []}
         self.stalled_satellites = {
             satellite_class: [] for satellite_class in satellite_classes
@@ -81,6 +87,21 @@ class DbCreator:
         for link_class, stalled_links in self.stalled_links.items():
             self._bulk_create_and_update_stalled_objects(stalled_links, link_class)
 
+    def _sorted_satellite_classes(
+        self, satellite_classes: list[type[MontrekSatelliteABC]]
+    ) -> list[type[MontrekSatelliteABC]]:
+        time_series_classes = [
+            sat_class
+            for sat_class in satellite_classes
+            if isinstance(sat_class(), MontrekTimeSeriesSatelliteABC)
+        ]
+        other_classes = [
+            sat_class
+            for sat_class in satellite_classes
+            if sat_class not in time_series_classes
+        ]
+        return other_classes + time_series_classes
+
     def _bulk_create_and_update_stalled_objects(
         self, stalled_objects, stalled_object_class
     ):
@@ -111,7 +132,8 @@ class DbCreator:
         )
         if satellite_updates_or_none is None:
             return NewSatelliteCreationState(satellite=satellite)
-        if satellite_updates_or_none.get_hash_value == sat_hash_value:
+        self.hub_entity = satellite_updates_or_none.hub_entity
+        if satellite_updates_or_none.hash_value == sat_hash_value:
             return ExistingSatelliteCreationState(satellite=satellite_updates_or_none)
         return UpdatedSatelliteCreationState(
             satellite=satellite, updated_sat=satellite_updates_or_none
@@ -148,6 +170,9 @@ class DbCreator:
             satellite = satellite_create_state.satellite
             satellite.hub_entity = reference_hub
             # Check if there is already another satellites for this hub and if so, set the state_date_end
+            if satellite.allow_multiple:
+                self._stall_satellite(satellite)
+                return
             existing_satellites = satellite.__class__.objects.filter(
                 hub_entity=reference_hub,
                 state_date_end__gte=creation_date,
