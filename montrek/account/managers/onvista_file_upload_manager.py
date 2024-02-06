@@ -148,7 +148,7 @@ class OnvistaFileUploadTransactionProcessor:
     def post_check(self, file_path: str) -> bool:
         return True
 
-    def _create_asset_transactions(self):
+    def _extract_transaction_details(self):
         input_df = self.input_data_dfs["asset_purchase"].copy()
         input_df["isin"] = input_df["Verwendungszweck"].str.extract(r"ISIN\s(\w+)")
         input_df["transaction_amount"] = input_df["Verwendungszweck"].apply(
@@ -162,8 +162,10 @@ class OnvistaFileUploadTransactionProcessor:
             lambda x: f"Purchase {x}"
         )
         input_df["transaction_party"] = input_df["isin"]
-        self._attach_assets(input_df)
-        asset_input_df = (
+        return input_df
+
+    def _aggregate_asset_transactions(self, input_df):
+        return (
             input_df.groupby(["transaction_party", "transaction_date"])
             .agg(
                 transaction_amount=("transaction_amount", "sum"),
@@ -176,14 +178,14 @@ class OnvistaFileUploadTransactionProcessor:
                 link_transaction_asset=("link_transaction_asset", "first"),
             )
             .reset_index()
+            .assign(transaction_party_iban="")
         )
-        asset_input_df["transaction_party_iban"] = ""
 
-        transaction_account_manager = TransactionAccountManager(
-            self.account_hub, asset_input_df
-        )
-        transactions = transaction_account_manager.new_transactions_to_account_from_df()
-        counter_transaction_df = (
+    def _init_transactions_manager(self, transactions_df):
+        return TransactionAccountManager(self.account_hub, transactions_df)
+
+    def _prepare_counter_transactions(self, input_df):
+        counter_df = (
             input_df.groupby(["transaction_date", "transaction_party"])
             .agg(
                 transaction_value=("transaction_value", "sum"),
@@ -191,14 +193,21 @@ class OnvistaFileUploadTransactionProcessor:
             )
             .reset_index()
         )
-        counter_transaction_df["transaction_party"] += " COUNTER BOOKING"
-        counter_transaction_df["transaction_party_iban"] = ""
-        counter_transaction_df["transaction_amount"] = (
-            2 * counter_transaction_df["transaction_value"]
-        )
-        counter_transaction_df["transaction_price"] = 1
-        counter_transaction_account_manager = TransactionAccountManager(
-            self.account_hub, counter_transaction_df
+        counter_df["transaction_party"] += " COUNTER BOOKING"
+        counter_df["transaction_party_iban"] = ""
+        counter_df["transaction_amount"] = 2 * counter_df["transaction_value"]
+        counter_df["transaction_price"] = 1
+        return counter_df
+
+    def _create_asset_transactions(self):
+        input_df = self._extract_transaction_details()
+        self._attach_assets(input_df)
+        asset_input_df = self._aggregate_asset_transactions(input_df)
+        transaction_account_manager = self._init_transactions_manager(asset_input_df)
+        transactions = transaction_account_manager.new_transactions_to_account_from_df()
+        counter_transaction_df = self._prepare_counter_transactions(input_df)
+        counter_transaction_account_manager = self._init_transactions_manager(
+            counter_transaction_df
         )
         counter_transaction_account_manager.new_transactions_to_account_from_df()
         self.message = f"Created {len(transactions)} transactions"
