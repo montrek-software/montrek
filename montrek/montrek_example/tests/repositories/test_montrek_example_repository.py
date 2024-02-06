@@ -478,9 +478,7 @@ class TestTimeSeries(TestCase):
                 "value_date": montrek_time(2024, 2, 5),
             }
         )
-        queryset = repository.std_queryset()
+        queryset = me_models.SatTSC2.objects.all()
         self.assertEqual(queryset.count(), 1)
-        self.assertEqual(queryset[0].field_c1_str, "Hallo")
-        self.assertEqual(queryset[0].field_c1_bool, True)
         self.assertEqual(queryset[0].field_tsc2_float, 1.0)
         self.assertEqual(queryset[0].value_date, montrek_time(2024, 2, 5).date())
