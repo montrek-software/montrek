@@ -7,18 +7,18 @@ class HubCRepository(MontrekRepository):
 
     def std_queryset(self):
         self.add_satellite_fields_annotations(
-            me_models.SatC1,
-            [
-                "field_c1_bool",
-                "field_c1_str",
-            ],
-            self.reference_date,
-        )
-        self.add_satellite_fields_annotations(
             me_models.SatTSC2,
             [
                 "field_tsc2_float",
                 "value_date",
+            ],
+            self.reference_date,
+        )
+        self.add_satellite_fields_annotations(
+            me_models.SatC1,
+            [
+                "field_c1_bool",
+                "field_c1_str",
             ],
             self.reference_date,
         )

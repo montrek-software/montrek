@@ -2,7 +2,11 @@ from typing import Any, Protocol
 from dataclasses import dataclass
 from django.utils import timezone
 from django.db.models import Q
-from baseclasses.models import MontrekSatelliteABC, MontrekHubABC
+from baseclasses.models import (
+    MontrekSatelliteABC,
+    MontrekHubABC,
+    MontrekTimeSeriesSatelliteABC,
+)
 from baseclasses.models import LinkTypeEnum
 
 
@@ -37,7 +41,8 @@ class DbCreator:
         satellite_classes: list[type[MontrekSatelliteABC]],
     ):
         self.hub_entity = None
-        self.satellite_classes = satellite_classes
+        self.satellite_classes = self._sorted_satellite_classes(satellite_classes)
+
         self.stalled_hubs = {hub_entity_class: []}
         self.stalled_satellites = {
             satellite_class: [] for satellite_class in satellite_classes
@@ -81,6 +86,21 @@ class DbCreator:
             )
         for link_class, stalled_links in self.stalled_links.items():
             self._bulk_create_and_update_stalled_objects(stalled_links, link_class)
+
+    def _sorted_satellite_classes(
+        self, satellite_classes: list[type[MontrekSatelliteABC]]
+    ) -> list[type[MontrekSatelliteABC]]:
+        time_series_classes = [
+            sat_class
+            for sat_class in satellite_classes
+            if isinstance(sat_class(), MontrekTimeSeriesSatelliteABC)
+        ]
+        other_classes = [
+            sat_class
+            for sat_class in satellite_classes
+            if sat_class not in time_series_classes
+        ]
+        return other_classes + time_series_classes
 
     def _bulk_create_and_update_stalled_objects(
         self, stalled_objects, stalled_object_class
