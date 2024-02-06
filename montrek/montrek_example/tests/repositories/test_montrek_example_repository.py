@@ -482,3 +482,47 @@ class TestTimeSeries(TestCase):
         self.assertEqual(queryset.count(), 1)
         self.assertEqual(queryset[0].field_tsc2_float, 1.0)
         self.assertEqual(queryset[0].value_date, montrek_time(2024, 2, 5).date())
+
+    def test_update_satellite(self):
+        repository = HubCRepository()
+        repository.std_create_object(
+            {
+                "field_c1_str": "Hallo",
+                "field_c1_bool": True,
+                "field_tsc2_float": 2.0,
+                "value_date": montrek_time(2024, 2, 5),
+            }
+        )
+        queryset = me_models.SatTSC2.objects.all()
+        self.assertEqual(queryset.count(), 2)
+        self.assertEqual(queryset[0].field_tsc2_float, 1.0)
+        self.assertEqual(queryset[0].value_date, montrek_time(2024, 2, 5).date())
+        self.assertEqual(queryset[1].field_tsc2_float, 2.0)
+        self.assertEqual(queryset[1].value_date, montrek_time(2024, 2, 5).date())
+        self.assertEqual(queryset[0].state_date_end, queryset[1].state_date_start)
+
+    def test_new_satellite(self):
+        repository = HubCRepository()
+        repository.std_create_object(
+            {
+                "field_c1_str": "Hallo",
+                "field_c1_bool": True,
+                "field_tsc2_float": 3.0,
+                "value_date": montrek_time(2024, 2, 6),
+            }
+        )
+        queryset = me_models.SatTSC2.objects.all()
+        self.assertEqual(queryset.count(), 2)
+        self.assertEqual(queryset[0].field_tsc2_float, 1.0)
+        self.assertEqual(queryset[0].value_date, montrek_time(2024, 2, 5).date())
+        self.assertEqual(queryset[1].field_tsc2_float, 3.0)
+        self.assertEqual(queryset[1].value_date, montrek_time(2024, 2, 6).date())
+        for i in range(2):
+            self.assertEqual(
+                queryset[i].state_date_end,
+                timezone.make_aware(timezone.datetime.max),
+            )
+            self.assertEqual(
+                queryset[i].state_date_start,
+                timezone.make_aware(timezone.datetime.min),
+            )
