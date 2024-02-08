@@ -5,7 +5,11 @@ from baseclasses import models as baseclass_models
 
 
 class CreditInstitutionHub(baseclass_models.MontrekHubABC):
-    pass
+    link_credit_institution_country = models.ManyToManyField(
+        "country.CountryHub",
+        related_name="link_country_credit_institution",
+        through="LinkCreditInstitutionCountry",
+    )
 
 
 class CreditInstitutionStaticSatellite(baseclass_models.MontrekSatelliteABC):
@@ -22,3 +26,8 @@ class CreditInstitutionStaticSatellite(baseclass_models.MontrekSatelliteABC):
     account_upload_method = models.CharField(
         max_length=5, choices=UploadMethod.choices, default=UploadMethod.NONE
     )
+
+
+class LinkCreditInstitutionCountry(baseclass_models.MontrekOneToManyLinkABC):
+    hub_in = models.ForeignKey("credit_institution.CreditInstitutionHub", on_delete=models.CASCADE)
+    hub_out = models.ForeignKey("country.CountryHub", on_delete=models.CASCADE)

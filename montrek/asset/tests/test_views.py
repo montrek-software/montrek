@@ -3,7 +3,6 @@ from django.urls import reverse
 
 from asset.repositories.asset_repository import AssetRepository
 from asset.tests.factories.asset_factories import AssetStaticSatelliteFactory
-from asset.models import AssetHub
 from currency.tests.factories.currency_factories import CurrencyStaticSatelliteFactory
 
 

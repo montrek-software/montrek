@@ -1,3 +1,6 @@
 from django.contrib import admin
+from .models import CountryHub
+from .models import CountryStaticSatellite
 
-# Register your models here.
+admin.site.register(CountryHub)
+admin.site.register(CountryStaticSatellite)
