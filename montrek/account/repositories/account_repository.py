@@ -1,3 +1,5 @@
+from decimal import Decimal
+from django.db.models.fields import decimal
 from django.utils import timezone
 from django.db.models import (
     QuerySet,
@@ -92,7 +94,7 @@ class AccountRepository(MontrekRepository):
         )
 
     def _account_value(self):
-        return Case(
+        self.annotations["account_value"] = Case(
             When(
                 account_type=AccountStaticSatellite.AccountType.BANK_ACCOUNT,
                 then=self._get_bank_account_value(),
@@ -110,7 +112,7 @@ class AccountRepository(MontrekRepository):
             .annotate(account_value=Sum(F("transaction_value")))
             .values("account_value")
         )
-        self.annotations["account_value"] = transaction_amount_sq
+        return transaction_amount_sq
 
     def _get_depot_account_value(self):
         transaction_amount_sq = Subquery(
@@ -120,6 +122,7 @@ class AccountRepository(MontrekRepository):
             .values("account_cash")
         )
         self.annotations["account_cash"] = transaction_amount_sq
+        return Value(Decimal(0.0))
 
     @paginated_table
     def get_upload_registry_table_by_account_paginated(self, account_hub_id: int):
