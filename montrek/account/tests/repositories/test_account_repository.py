@@ -18,3 +18,6 @@ class TestDepotAccountRepository(TestCase):
         self.assertEqual(account.account_cash, 1)
         self.assertAlmostEqual(account.account_value, Decimal(4.6))
         self.assertAlmostEqual(account.account_depot_value, Decimal(3.6))
+        self.assertAlmostEqual(account.account_depot_book_value, Decimal(3.0))
+        self.assertAlmostEqual(account.account_depot_pnl, Decimal(0.6))
+        self.assertAlmostEqual(account.account_depot_performance, Decimal(0.2))

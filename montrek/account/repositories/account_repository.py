@@ -104,6 +104,27 @@ class AccountRepository(MontrekRepository):
             ),
             default=Value(Decimal(0.0)),
         )
+        self.annotations["account_depot_book_value"] = Case(
+            When(
+                account_type=AccountStaticSatellite.AccountType.DEPOT,
+                then=self._get_depot_book_value(),
+            ),
+            default=Value(Decimal(0.0)),
+        )
+        self.annotations["account_depot_pnl"] = Case(
+            When(
+                account_type=AccountStaticSatellite.AccountType.DEPOT,
+                then=self._get_depot_pnl(),
+            ),
+            default=Value(Decimal(0.0)),
+        )
+        self.annotations["account_depot_performance"] = Case(
+            When(
+                account_type=AccountStaticSatellite.AccountType.DEPOT,
+                then=self._get_depot_performance(),
+            ),
+            default=Value(Decimal(0.0)),
+        )
         self.annotations["account_value"] = Case(
             When(
                 account_type=AccountStaticSatellite.AccountType.BANK_ACCOUNT,
@@ -129,17 +150,31 @@ class AccountRepository(MontrekRepository):
         return transaction_amount_sq
 
     def _get_depot_value(self):
-        depot_value_sq = Subquery(
-            self.get_depot_data(OuterRef("pk"))
-            .values("account_id")
-            .annotate(value=Sum(F("value")))
-            .values("value")
+        return self._get_depot_subquery("value")
+
+    def _get_depot_book_value(self):
+        return self._get_depot_subquery("book_value")
+
+    def _get_depot_pnl(self):
+        return self._get_depot_subquery("profit_loss")
+
+    def _get_depot_performance(self):
+        return ExpressionWrapper(
+            F("account_depot_pnl") / F("account_depot_book_value"),
+            output_field=DecimalField(),
         )
-        return depot_value_sq
 
     def _get_depot_account_value(self):
         return ExpressionWrapper(
             F("account_cash") + F("account_depot_value"), output_field=DecimalField()
+        )
+
+    def _get_depot_subquery(self, field):
+        return Subquery(
+            self.get_depot_data(OuterRef("pk"))
+            .values("account_id")
+            .annotate(**{field: Sum(F(field))})
+            .values(field)
         )
 
     @paginated_table
