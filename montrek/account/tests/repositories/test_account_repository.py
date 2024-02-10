@@ -8,5 +8,9 @@ class TestDepotAccountRepository(TestCase):
         self.depot_account = DepotAccountFactory.create()
 
     def test_depot_account_std_query(self):
-        accounts = AccountRepository().std_queryset()
+        repository = AccountRepository()
+        accounts = repository.std_queryset()
         self.assertEqual(accounts.count(), 1)
+        account = accounts.first()
+        assets = repository.get_depot_data(accounts.first().pk)
+        self.assertEqual(assets.count(), 3)

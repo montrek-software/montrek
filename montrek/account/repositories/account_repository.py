@@ -11,6 +11,7 @@ from django.db.models import (
     Subquery,
     OuterRef,
 )
+from numpy import who
 from account.models import (
     AccountHub,
     AccountStaticSatellite,
@@ -93,10 +94,13 @@ class AccountRepository(MontrekRepository):
     def _account_value(self):
         return Case(
             When(
+                account_type=AccountStaticSatellite.AccountType.BANK_ACCOUNT,
+                then=self._get_bank_account_value(),
+            ),
+            When(
                 account_type=AccountStaticSatellite.AccountType.DEPOT,
                 then=self._get_depot_account_value(),
             ),
-            default=self._get_bank_account_value(),
         )
 
     def _get_bank_account_value(self):
@@ -109,8 +113,13 @@ class AccountRepository(MontrekRepository):
         self.annotations["account_value"] = transaction_amount_sq
 
     def _get_depot_account_value(self):
-        # TODO: Set to Depot Value
-        return self._get_bank_account_value()
+        transaction_amount_sq = Subquery(
+            self.transaction_table_subquery()
+            .values("link_transaction_account")
+            .annotate(account_cash=Sum(F("transaction_value")))
+            .values("account_cash")
+        )
+        self.annotations["account_cash"] = transaction_amount_sq
 
     @paginated_table
     def get_upload_registry_table_by_account_paginated(self, account_hub_id: int):

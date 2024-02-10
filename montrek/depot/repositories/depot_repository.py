@@ -67,14 +67,15 @@ class DepotRepository(AssetRepository):
         )
         self.annotations["account_id"] = account_sq
 
-    def _currency_values(self):
-        for currency_field in ["ccy_code", "fx_rate"]:
-            currency_sq = Subquery(
-                self.currency_table_subquery().values(currency_field)
-            )
-            self.annotations[currency_field] = currency_sq
-        currency_sq = Subquery(self.currency_table_subquery().values("id"))
-        self.annotations["ccy_id"] = currency_sq
+    # def _currency_values(self):
+    #    # TODO: Remove???
+    #    for currency_field in ["ccy_code", "fx_rate"]:
+    #        currency_sq = Subquery(
+    #            self.currency_table_subquery().values(currency_field)
+    #        )
+    #        self.annotations[currency_field] = currency_sq
+    #    currency_sq = Subquery(self.currency_table_subquery().values("id"))
+    #    self.annotations["ccy_id"] = currency_sq
 
     def _calculated_fields(self):
         self.annotations["book_price"] = ExpressionWrapper(
