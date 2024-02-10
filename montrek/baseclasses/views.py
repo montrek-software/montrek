@@ -31,6 +31,7 @@ def navbar(request):
         NavBarModel("credit_institution"),
         NavBarModel("asset"),
         NavBarModel("currency"),
+        NavBarModel("country"),
     ]
     return render(request, "navbar.html", {"nav_apps": nav_apps})
 

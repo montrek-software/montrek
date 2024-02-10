@@ -21,7 +21,9 @@ from baseclasses import views as base_views
 urlpatterns = [
     path("", base_views.home, name="home"),
     path("navbar", base_views.navbar, name="navbar"),
-    path("under_construction", base_views.under_construction, name="under_construction"),
+    path(
+        "under_construction", base_views.under_construction, name="under_construction"
+    ),
     path("admin/", admin.site.urls),
     path("account/", include("account.urls")),
     path("baseclasses/", include("baseclasses.urls")),
@@ -30,6 +32,7 @@ urlpatterns = [
     path("asset/", include("asset.urls")),
     path("credit_institution/", include("credit_institution.urls")),
     path("currency/", include("currency.urls")),
+    path("country/", include("country.urls")),
     path("montrek_example/", include("montrek_example.urls")),
     path("user/", include("user.urls")),
 ]

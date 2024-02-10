@@ -19,7 +19,7 @@
         </ul>
 		<ul class="nav navbar-nav navbar-right">
       {% if request.user.is_authenticated %}
-        <li><a>Logged in as {{ request.user.username }}</a></li>
+        <li><a>Logged in as {{ request.user.email }}</a></li>
         <li><a href={% url "logout" %}>Logout</a></li>
       {% else %}
         <li><a href={% url "login" %}>Login</a></li>

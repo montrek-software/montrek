@@ -2,9 +2,11 @@ from django.utils import timezone
 from credit_institution.models import (
     CreditInstitutionHub,
     CreditInstitutionStaticSatellite,
+    LinkCreditInstitutionCountry,
 )
 from baseclasses.repositories.db_helper import get_satellite_from_hub_query
 from baseclasses.repositories.montrek_repository import MontrekRepository
+from country.models import CountryStaticSatellite
 
 
 class CreditInstitutionRepository(MontrekRepository):
@@ -21,6 +23,16 @@ class CreditInstitutionRepository(MontrekRepository):
             ],
             reference_date,
         )
+        self.add_linked_satellites_field_annotations(
+            CountryStaticSatellite,
+            LinkCreditInstitutionCountry,
+            [
+                "country_name",
+                "hub_entity_id",
+            ],
+            reference_date,
+        )
+        self.rename_field("hub_entity_id", "country_id")
         return self.build_queryset()
 
     def get_queryset_with_account(self):
