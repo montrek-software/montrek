@@ -1,6 +1,9 @@
 import os
 from django.test import TestCase
-from account.tests.factories.account_factories import AccountHubFactory
+from account.tests.factories.account_factories import (
+    AccountHubFactory,
+    AccountStaticSatelliteFactory,
+)
 from account.tests.factories.account_factories import BankAccountStaticSatelliteFactory
 from account.managers.dkb_file_upload_manager import DkbFileUploadProcessor
 from account.repositories.account_repository import AccountRepository
@@ -10,13 +13,17 @@ from credit_institution.tests.factories.credit_institution_factories import (
 from file_upload.tests.factories.file_upload_factories import (
     FileUploadRegistryStaticSatelliteFactory,
 )
+from account.models import AccountStaticSatellite
 
 
 class TestDkbAccountFileUploadManager(TestCase):
     test_csv_path = os.path.join(os.path.dirname(__file__), "data/dkb_test.csv")
 
     def setUp(self):
-        account_hub = AccountHubFactory()
+        account_hub_sat = AccountStaticSatelliteFactory(
+            account_type=AccountStaticSatellite.AccountType.BANK_ACCOUNT
+        )
+        account_hub = account_hub_sat.hub_entity
         self.credit_institution_sat = CreditInstitutionStaticSatelliteFactory(
             account_upload_method="dkb",
         )
