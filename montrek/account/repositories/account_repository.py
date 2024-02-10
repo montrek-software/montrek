@@ -2,6 +2,8 @@ from decimal import Decimal
 from django.db.models.fields import decimal
 from django.utils import timezone
 from django.db.models import (
+    DecimalField,
+    ExpressionWrapper,
     QuerySet,
     Sum,
     F,
@@ -94,18 +96,30 @@ class AccountRepository(MontrekRepository):
         )
 
     def _account_value(self):
+        self.annotations["account_cash"] = self._get_bank_account_cash()
+        self.annotations["account_depot_value"] = Case(
+            When(
+                account_type=AccountStaticSatellite.AccountType.DEPOT,
+                then=self._get_depot_value(),
+            ),
+            default=Value(Decimal(0.0)),
+        )
         self.annotations["account_value"] = Case(
             When(
                 account_type=AccountStaticSatellite.AccountType.BANK_ACCOUNT,
-                then=self._get_bank_account_value(),
+                then=F("account_cash"),
             ),
             When(
                 account_type=AccountStaticSatellite.AccountType.DEPOT,
                 then=self._get_depot_account_value(),
             ),
+            When(
+                account_type=AccountStaticSatellite.AccountType.OTHER,
+                then=Value(Decimal(0.0)),
+            ),
         )
 
-    def _get_bank_account_value(self):
+    def _get_bank_account_cash(self):
         transaction_amount_sq = Subquery(
             self.transaction_table_subquery()
             .values("link_transaction_account")
@@ -114,15 +128,19 @@ class AccountRepository(MontrekRepository):
         )
         return transaction_amount_sq
 
-    def _get_depot_account_value(self):
-        transaction_amount_sq = Subquery(
-            self.transaction_table_subquery()
-            .values("link_transaction_account")
-            .annotate(account_cash=Sum(F("transaction_value")))
-            .values("account_cash")
+    def _get_depot_value(self):
+        depot_value_sq = Subquery(
+            self.get_depot_data(OuterRef("pk"))
+            .values("account_id")
+            .annotate(value=Sum(F("value")))
+            .values("value")
         )
-        self.annotations["account_cash"] = transaction_amount_sq
-        return Value(Decimal(0.0))
+        return depot_value_sq
+
+    def _get_depot_account_value(self):
+        return ExpressionWrapper(
+            F("account_cash") + F("account_depot_value"), output_field=DecimalField()
+        )
 
     @paginated_table
     def get_upload_registry_table_by_account_paginated(self, account_hub_id: int):
@@ -147,11 +165,10 @@ class AccountRepository(MontrekRepository):
         )
 
     def get_depot_data(self, account_hub_id: int):
-        hub_entity = self.hub_class.objects.get(pk=account_hub_id)
         return (
             DepotRepository(self.session_data)
             .std_queryset()
-            .filter(account_id=hub_entity.id)
+            .filter(account_id=account_hub_id)
         )
 
     @paginated_table

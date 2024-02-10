@@ -30,9 +30,7 @@ class TransactionHubFactory(factory.django.DjangoModelFactory):
             # A list of AccountHub instances were passed in, link them
             self.link_transaction_asset.add(extracted)
         else:
-            # Link a default AccountHub for this TransactionCategoryMapHub
-            asset = AssetStaticSatelliteFactory.create()
-            self.link_transaction_asset.add(asset.hub_entity)
+            return
 
 
 class TransactionSatelliteFactory(factory.django.DjangoModelFactory):
