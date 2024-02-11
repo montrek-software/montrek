@@ -46,7 +46,7 @@ class MontrekRepository:
     @property
     def reference_date(self):
         if self._reference_date is None:
-            return timezone.datetime.now()
+            return timezone.now()
         return self._reference_date
 
     @property
@@ -192,7 +192,7 @@ class MontrekRepository:
         self.annotations[new_name] = self.annotations[field]
 
     def std_delete_object(self, obj: MontrekHubABC):
-        obj.state_date_end = timezone.datetime.now()
+        obj.state_date_end = timezone.now()
         obj.save()
 
     def _add_to_annotations(
