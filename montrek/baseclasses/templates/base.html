@@ -26,15 +26,15 @@
        {% for message in messages %}
 	    {% if message.tags == 'error' %}
 		<div class="alert alert-danger" role="alert">
-		    {{ message }}
+      {{ message | safe }}
 		</div>
 	    {% elif message.tags == 'info' %}
 		<div class="alert alert-success" role="alert">
-		    {{ message }}
+      {{ message | safe  }}
 		</div>
 	    {% else %}
 		<div class="alert {{ message.tags }}" role="alert">
-		    {{ message }}
+      {{ message | safe  }}
 		</div>
 	    {% endif %}
        {% endfor %}

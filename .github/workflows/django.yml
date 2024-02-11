@@ -47,7 +47,15 @@ jobs:
         echo $DB_NAME
         python manage.py makemigrations
 
-    - name: Run Tests
+    - name: Run Tests and Coverage
       run: |
         cd montrek
-        python manage.py test --exclude-tag=functional
+        coverage run manage.py test --exclude-tag=functional
+        coverage report
+        coverage html -d coverage_html
+
+    - name: Upload coverage HTML report
+      uses: actions/upload-artifact@v2
+      with:
+        name: coverage-report
+        path: montrek/coverage_html

@@ -12,9 +12,14 @@ class FileUploadRegistryHub(baseclass_models.MontrekHubABC):
         through="LinkFileUploadRegistryFileUploadFile",
     )
 
+
 class LinkFileUploadRegistryFileUploadFile(baseclass_models.MontrekOneToOneLinkABC):
-    hub_in= models.ForeignKey("file_upload.FileUploadRegistryHub", on_delete=models.CASCADE)
-    hub_out = models.ForeignKey("file_upload.FileUploadFileHub", on_delete=models.CASCADE)
+    hub_in = models.ForeignKey(
+        "file_upload.FileUploadRegistryHub", on_delete=models.CASCADE
+    )
+    hub_out = models.ForeignKey(
+        "file_upload.FileUploadFileHub", on_delete=models.CASCADE
+    )
 
 
 class FileUploadRegistryStaticSatellite(baseclass_models.MontrekSatelliteABC):
@@ -43,7 +48,7 @@ class FileUploadRegistryStaticSatellite(baseclass_models.MontrekSatelliteABC):
     upload_status = models.CharField(
         max_length=20, choices=UploadStatus.choices, default=UploadStatus.PENDING
     )
-    upload_message = models.CharField(max_length=255, default="")
+    upload_message = models.TextField(default="")
 
     def clean(self):
         super().clean()

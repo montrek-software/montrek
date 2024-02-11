@@ -1,7 +1,12 @@
+import datetime
 from typing import Any, Protocol
 from dataclasses import dataclass
 from django.utils import timezone
-from baseclasses.models import MontrekSatelliteABC, MontrekHubABC
+from baseclasses.models import (
+    MontrekSatelliteABC,
+    MontrekHubABC,
+    MontrekTimeSeriesSatelliteABC,
+)
 from baseclasses.models import LinkTypeEnum
 
 
@@ -36,7 +41,8 @@ class DbCreator:
         satellite_classes: list[type[MontrekSatelliteABC]],
     ):
         self.hub_entity = None
-        self.satellite_classes = satellite_classes
+        self.satellite_classes = self._sorted_satellite_classes(satellite_classes)
+
         self.stalled_hubs = {hub_entity_class: []}
         self.stalled_satellites = {
             satellite_class: [] for satellite_class in satellite_classes
@@ -45,7 +51,7 @@ class DbCreator:
 
     def create(self, data: dict[str, Any], hub_entity: MontrekHubABC) -> None:
         selected_satellites = {"new": [], "existing": [], "updated": []}
-        creation_date = timezone.datetime.now()
+        creation_date = timezone.now()
         self.hub_entity = hub_entity
         for satellite_class in self.satellite_classes:
             sat_data = {
@@ -55,6 +61,7 @@ class DbCreator:
             }
             if len(sat_data) == 0:
                 continue
+            sat_data = self._make_timezone_aware(sat_data)
             sat = satellite_class(hub_entity=self.hub_entity, **sat_data)
             sat = self._process_new_satellite(sat, satellite_class)
             selected_satellites[sat.state].append(sat)
@@ -64,6 +71,15 @@ class DbCreator:
         self._stall_hub(reference_hub)
         self.stall_links(data, reference_hub, creation_date)
         return reference_hub
+
+    def _make_timezone_aware(self, sat_data: dict) -> dict:
+        for key, value in sat_data.items():
+            if isinstance(value, (datetime.date, datetime.datetime)):
+                if value.tzinfo is None:
+                    sat_data[key] = timezone.make_aware(
+                        value, timezone.get_default_timezone()
+                    )
+        return sat_data
 
     def save_stalled_objects(self):
         for hub_class, stalled_hubs in self.stalled_hubs.items():
@@ -80,6 +96,21 @@ class DbCreator:
             )
         for link_class, stalled_links in self.stalled_links.items():
             self._bulk_create_and_update_stalled_objects(stalled_links, link_class)
+
+    def _sorted_satellite_classes(
+        self, satellite_classes: list[type[MontrekSatelliteABC]]
+    ) -> list[type[MontrekSatelliteABC]]:
+        time_series_classes = [
+            sat_class
+            for sat_class in satellite_classes
+            if isinstance(sat_class(), MontrekTimeSeriesSatelliteABC)
+        ]
+        other_classes = [
+            sat_class
+            for sat_class in satellite_classes
+            if sat_class not in time_series_classes
+        ]
+        return other_classes + time_series_classes
 
     def _bulk_create_and_update_stalled_objects(
         self, stalled_objects, stalled_object_class
@@ -111,7 +142,8 @@ class DbCreator:
         )
         if satellite_updates_or_none is None:
             return NewSatelliteCreationState(satellite=satellite)
-        if satellite_updates_or_none.get_hash_value == sat_hash_value:
+        self.hub_entity = satellite_updates_or_none.hub_entity
+        if satellite_updates_or_none.hash_value == sat_hash_value:
             return ExistingSatelliteCreationState(satellite=satellite_updates_or_none)
         return UpdatedSatelliteCreationState(
             satellite=satellite, updated_sat=satellite_updates_or_none
@@ -148,6 +180,9 @@ class DbCreator:
             satellite = satellite_create_state.satellite
             satellite.hub_entity = reference_hub
             # Check if there is already another satellites for this hub and if so, set the state_date_end
+            if satellite.allow_multiple:
+                self._stall_satellite(satellite)
+                return
             existing_satellites = satellite.__class__.objects.filter(
                 hub_entity=reference_hub,
                 state_date_end__gte=creation_date,
@@ -191,7 +226,9 @@ class DbCreator:
         satellite.state_date_end = creation_date
         satellite.hub_entity = hub
         satellite.state_date_start = creation_date
-        satellite.state_date_end = timezone.datetime.max
+        satellite.state_date_end = timezone.make_aware(
+            timezone.datetime.max, timezone.get_default_timezone()
+        )
         satellite.pk = None
         satellite.id = None
         self._stall_satellite(satellite)

@@ -18,7 +18,7 @@ class SignUpViewTests(TestCase):
     def test_signup_form_submission(self):
         url = reverse("signup")
         data = {
-            "username": "testuser",
+            "email": "test@example.com",
             "password1": "testpassword",
             "password2": "testpassword",
         }
@@ -29,16 +29,16 @@ class SignUpViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertRedirects(response, reverse("home"))
 
-        self.assertTrue(get_user_model().objects.filter(username="testuser").exists())
+        self.assertTrue(get_user_model().objects.filter(email="test@example.com").exists())
         self.assertEqual(len(messages), 1)
         self.assertEqual(
-            str(messages[0]), "You have logged in as testuser!"
+            str(messages[0]), "You have logged in as test@example.com!"
         )
 
     def test_signup_form_invalid_submission(self):
         url = reverse("signup")
         data = {
-            "username": "invalid-username!",
+            "email": "invalid-email",
             "password1": "testpassword",
             "password2": "testpassword",
         }
@@ -48,18 +48,17 @@ class SignUpViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "user/user_base.html")
-        self.assertContains(response, "Enter a valid username.")
         self.assertEqual(len(messages), 1)
         self.assertEqual(
             str(messages[0]),
-            "Username: Enter a valid username. This value may contain only letters, numbers, and @/./+/-/_ characters."
+            "Email: Enter a valid email address."
         )
 
 
 class LoginViewTests(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(
-            username="testuser",
+            email="test@example.com",
             password="testpassword",
         )
 
@@ -73,7 +72,7 @@ class LoginViewTests(TestCase):
     def test_login_form_submission(self):
         url = reverse("login")
         data = {
-            "username": "testuser",
+            "username": "test@example.com",
             "password": "testpassword",
         }
 
@@ -84,13 +83,13 @@ class LoginViewTests(TestCase):
         self.assertRedirects(response, reverse("home"))
         self.assertEqual(len(messages), 1)
         self.assertEqual(
-            str(messages[0]), "You have logged in as testuser!"
+            str(messages[0]), "You have logged in as test@example.com!"
         )
 
     def test_login_form_invalid_submission(self):
         url = reverse("login")
         data = {
-            "username": "nonexistent-user",
+            "username": "nonexistent",
             "password": "testpassword",
         }
 
@@ -99,8 +98,8 @@ class LoginViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "user/user_base.html")
-        self.assertContains(response, "Please enter a correct username and password.")
+        self.assertContains(response, "Please enter a correct email address and password.")
         self.assertEqual(
             str(messages[0]),
-            "All: Please enter a correct username and password. Note that both fields may be case-sensitive."
+            "All: Please enter a correct email address and password. Note that both fields may be case-sensitive."
         )

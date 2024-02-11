@@ -1,4 +1,5 @@
 from django.db.models import OuterRef, Subquery, Sum, ExpressionWrapper, F, DecimalField
+from numpy import who
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from asset.repositories.asset_repository import AssetRepository
 from asset.models import (
@@ -18,7 +19,6 @@ class DepotRepository(AssetRepository):
 
     def std_queryset(self):
         super().std_queryset()
-        # self._currency_values()
         self._total_nominal_and_book_value()
         self._calculated_fields()
         self._account_fields()
@@ -66,15 +66,6 @@ class DepotRepository(AssetRepository):
             self.transaction_table_subquery().values("account_id")[:1]
         )
         self.annotations["account_id"] = account_sq
-
-    def _currency_values(self):
-        for currency_field in ["ccy_code", "fx_rate"]:
-            currency_sq = Subquery(
-                self.currency_table_subquery().values(currency_field)
-            )
-            self.annotations[currency_field] = currency_sq
-        currency_sq = Subquery(self.currency_table_subquery().values("id"))
-        self.annotations["ccy_id"] = currency_sq
 
     def _calculated_fields(self):
         self.annotations["book_price"] = ExpressionWrapper(

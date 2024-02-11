@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "baseclasses",
     "montrek_example",
     "currency",
+    "country",
     "transaction",
     "credit_institution",
     "file_upload",
@@ -141,4 +142,4 @@ STATIC_ROOT = os.path.join(BASE_DIR, "baseclasses/static")
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 CSRF_TRUSTED_ORIGINS = ["http://localhost:1339"]
 
-AUTH_USER_MODEL = 'user.MontrekUser'
+AUTH_USER_MODEL = "user.MontrekUser"

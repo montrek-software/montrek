@@ -1,11 +1,12 @@
 from django.utils import timezone
 from baseclasses.repositories.montrek_repository import MontrekRepository
-from transaction.models import TransactionSatellite
+from transaction.models import LinkTransactionAsset, TransactionSatellite
 from transaction.models import TransactionHub
 from transaction.models import TransactionCategorySatellite
 from transaction.models import LinkTransactionTransactionCategory
 from account.models import AccountStaticSatellite
 from account.models import LinkAccountTransaction
+from asset.models import AssetLiquidSatellite
 
 
 class TransactionRepository(MontrekRepository):
@@ -31,7 +32,13 @@ class TransactionRepository(MontrekRepository):
             ["typename"],
             reference_date,
         )
-        self.rename_field("typename", "transaction_category" )
+        self.rename_field("typename", "transaction_category")
+        self.add_linked_satellites_field_annotations(
+            AssetLiquidSatellite,
+            LinkTransactionAsset,
+            ["asset_isin"],
+            reference_date,
+        )
 
         self.annotations["transaction_value"] = (
             self.annotations["transaction_amount"]
@@ -48,5 +55,5 @@ class TransactionRepository(MontrekRepository):
             self.reference_date,
             reversed_link=True,
         )
-        self.rename_field("hub_entity_id", "account_id" )
+        self.rename_field("hub_entity_id", "account_id")
         return self.std_queryset(**kwargs)

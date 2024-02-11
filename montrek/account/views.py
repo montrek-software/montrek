@@ -14,7 +14,7 @@ from baseclasses.views import MontrekTemplateView
 from baseclasses.views import MontrekCreateView
 from baseclasses.views import MontrekDeleteView
 from baseclasses.views import MontrekUpdateView
-from baseclasses.dataclasses.table_elements import StringTableElement
+from baseclasses.dataclasses.table_elements import StringTableElement, TableElement
 from baseclasses.dataclasses.table_elements import LinkTableElement
 from baseclasses.dataclasses.table_elements import LinkTextTableElement
 from baseclasses.dataclasses.table_elements import EuroTableElement
@@ -22,6 +22,7 @@ from baseclasses.dataclasses.table_elements import DateTableElement
 from baseclasses.dataclasses.table_elements import BooleanTableElement
 from baseclasses.dataclasses.table_elements import FloatTableElement
 from baseclasses.dataclasses.table_elements import PercentTableElement
+from account.models import AccountStaticSatellite
 
 from reporting.managers.account_transaction_plots import (
     draw_monthly_income_expanses_plot,
@@ -73,7 +74,7 @@ class AccountDetailView(MontrekDetailView):
 
     @property
     def elements(self) -> list:
-        return (
+        elements = [
             StringTableElement(name="Name", attr="account_name"),
             StringTableElement(name="Type", attr="account_type"),
             StringTableElement(
@@ -92,7 +93,32 @@ class AccountDetailView(MontrekDetailView):
                 name="BIC",
                 attr="credit_institution_bic",
             ),
-        )
+        ]
+        if self.object.account_type == AccountStaticSatellite.AccountType.DEPOT:
+            elements += [
+                EuroTableElement(
+                    name="Depot Value",
+                    attr="account_depot_value",
+                ),
+                EuroTableElement(
+                    name="Depot Book Value",
+                    attr="account_depot_book_value",
+                ),
+                EuroTableElement(
+                    name="Depot PnL",
+                    attr="account_depot_pnl",
+                ),
+                PercentTableElement(
+                    name="Depot Performance",
+                    attr="account_depot_performance",
+                ),
+                EuroTableElement(
+                    name="Depot Cash",
+                    attr="account_cash",
+                ),
+            ]
+        return elements
+
 
 class AccountDeleteView(MontrekDeleteView):
     repository = AccountRepository
@@ -100,7 +126,7 @@ class AccountDeleteView(MontrekDeleteView):
     success_url = "account"
 
 
-class AccountUpdateView(MontrekUpdateView): 
+class AccountUpdateView(MontrekUpdateView):
     repository = AccountRepository
     page_class = AccountOverviewPage
     form_class = AccountCreateForm
@@ -120,9 +146,9 @@ class AccountTransactionsView(MontrekListView):
 
     @property
     def repository_object(self):
-        if 'transaction_category_filter' in self.kwargs:
-            self.session_data['filter'] = {
-                'transaction_category': self.kwargs['transaction_category_filter']
+        if "transaction_category_filter" in self.kwargs:
+            self.session_data["filter"] = {
+                "transaction_category": self.kwargs["transaction_category_filter"]
             }
         return super().repository_object
 
@@ -321,6 +347,7 @@ class AccountDepotView(MontrekListView):
                 hover_text="Add Price",
             ),
         )
+
 
 class AccountUploadFileView(MontrekUploadFileView):
     page_class = AccountPage

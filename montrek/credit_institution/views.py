@@ -1,10 +1,11 @@
 from baseclasses.views import MontrekListView, MontrekDetailView, MontrekCreateView
-from baseclasses.dataclasses.table_elements import StringTableElement, LinkTableElement
+from baseclasses.dataclasses.table_elements import StringTableElement, LinkTableElement, LinkTextTableElement
 from credit_institution.models import CreditInstitutionStaticSatellite
 from credit_institution.pages import CreditInstitutionAppPage, CreditInstitutionPage
 from credit_institution.repositories.credit_institution_repository import (
     CreditInstitutionRepository,
 )
+from credit_institution.forms import CreditInstitutionCreateForm
 
 # Create your views here.
 
@@ -28,6 +29,13 @@ class CreditInstitutionOverview(MontrekListView):
             ),
             StringTableElement(name="BIC", attr="credit_institution_bic"),
             StringTableElement(name="Upload Method", attr="account_upload_method"),
+            LinkTextTableElement(
+                name="Country",
+                url="country_details",
+                kwargs={"pk": "country_id"},
+                text="country_name",
+                hover_text="Goto Country",
+            )
         )
 
 
@@ -35,6 +43,7 @@ class CreditInstitutionCreate(MontrekCreateView):
     page_class = CreditInstitutionAppPage
     repository = CreditInstitutionRepository
     success_url = "credit_institution"
+    form_class = CreditInstitutionCreateForm
 
 
 class CreditIntitutionDetailView(MontrekDetailView):

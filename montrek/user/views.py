@@ -2,9 +2,8 @@ from django.contrib.auth import login
 from django.urls import reverse_lazy
 from django.views.generic.edit import CreateView, FormView
 from django.contrib import messages
-
-from django.contrib.auth.forms import AuthenticationForm
 from user.forms import MontrekPasswordResetForm, MontrekUserCreationForm
+from user.forms import MontrekAuthenticationForm
 
 class MessageHandlerMixin:
     def add_form_error_messages(self, form):
@@ -13,8 +12,8 @@ class MessageHandlerMixin:
             for error in errors:
                 messages.error(self.request, f"{field}: {error}")
 
-    def add_successfull_login_message(self, username):
-        messages.info(self.request, f"You have logged in as {username}!")
+    def add_successfull_login_message(self, email):
+        messages.info(self.request, f"You have logged in as {email}!")
 
 
 class SignUpView(CreateView, MessageHandlerMixin):
@@ -26,7 +25,7 @@ class SignUpView(CreateView, MessageHandlerMixin):
         response = super().form_valid(form)
         user = self.object
         login(self.request, user)
-        self.add_successfull_login_message(user.username)
+        self.add_successfull_login_message(user.email)
         return response
 
     def form_invalid(self, form):
@@ -40,14 +39,14 @@ class SignUpView(CreateView, MessageHandlerMixin):
 
 
 class LoginView(FormView, MessageHandlerMixin):
-    form_class = AuthenticationForm
+    form_class = MontrekAuthenticationForm
     template_name = "user/user_base.html"
     success_url = reverse_lazy("home")
 
     def form_valid(self, form):
         user = form.get_user()
         login(self.request, user)
-        self.add_successfull_login_message(user.username)
+        self.add_successfull_login_message(user.email)
         return super().form_valid(form)
 
     def form_invalid(self, form):
