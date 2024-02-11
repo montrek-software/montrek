@@ -1,7 +1,7 @@
+import datetime
 from typing import Any, Protocol
 from dataclasses import dataclass
 from django.utils import timezone
-from django.db.models import Q
 from baseclasses.models import (
     MontrekSatelliteABC,
     MontrekHubABC,
@@ -51,7 +51,7 @@ class DbCreator:
 
     def create(self, data: dict[str, Any], hub_entity: MontrekHubABC) -> None:
         selected_satellites = {"new": [], "existing": [], "updated": []}
-        creation_date = timezone.datetime.now()
+        creation_date = timezone.now()
         self.hub_entity = hub_entity
         for satellite_class in self.satellite_classes:
             sat_data = {
@@ -61,6 +61,7 @@ class DbCreator:
             }
             if len(sat_data) == 0:
                 continue
+            sat_data = self._make_timezone_aware(sat_data)
             sat = satellite_class(hub_entity=self.hub_entity, **sat_data)
             sat = self._process_new_satellite(sat, satellite_class)
             selected_satellites[sat.state].append(sat)
@@ -70,6 +71,15 @@ class DbCreator:
         self._stall_hub(reference_hub)
         self.stall_links(data, reference_hub, creation_date)
         return reference_hub
+
+    def _make_timezone_aware(self, sat_data: dict) -> dict:
+        for key, value in sat_data.items():
+            if isinstance(value, (datetime.date, datetime.datetime)):
+                if value.tzinfo is None:
+                    sat_data[key] = timezone.make_aware(
+                        value, timezone.get_default_timezone()
+                    )
+        return sat_data
 
     def save_stalled_objects(self):
         for hub_class, stalled_hubs in self.stalled_hubs.items():
@@ -216,7 +226,9 @@ class DbCreator:
         satellite.state_date_end = creation_date
         satellite.hub_entity = hub
         satellite.state_date_start = creation_date
-        satellite.state_date_end = timezone.datetime.max
+        satellite.state_date_end = timezone.make_aware(
+            timezone.datetime.max, timezone.get_default_timezone()
+        )
         satellite.pk = None
         satellite.id = None
         self._stall_satellite(satellite)

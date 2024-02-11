@@ -47,19 +47,31 @@ def draw_monthly_income_expanses_plot(transactions_data: pd.DataFrame) -> go.Fig
     plot.generate(report_data)
     return plot
 
-def draw_income_expenses_category_pie_plot(transactions: baseclass_models.MontrekSatelliteABC):
+
+def draw_income_expenses_category_pie_plot(
+    transactions: baseclass_models.MontrekSatelliteABC,
+):
     transaction_category_df = pd.DataFrame(
         {
-            'transaction_category': [transaction.transaction_category for transaction in transactions],
-            'transaction_value': [transaction.transaction_value for transaction in transactions],
-        })
+            "transaction_category": [
+                transaction.transaction_category for transaction in transactions
+            ],
+            "transaction_value": [
+                transaction.transaction_value for transaction in transactions
+            ],
+        }
+    )
     transaction_dfs = {
-        'income': transaction_category_df.loc[transaction_category_df['transaction_value'] >= 0.],
-        'expense': transaction_category_df.loc[transaction_category_df['transaction_value'] < 0.],
+        "income": transaction_category_df.loc[
+            transaction_category_df["transaction_value"] >= 0.0
+        ],
+        "expense": transaction_category_df.loc[
+            transaction_category_df["transaction_value"] < 0.0
+        ],
     }
     output_plots = {}
     for title, data_df in transaction_dfs.items():
-        data_df['transaction_value'] = data_df['transaction_value'].abs()
+        data_df.loc[:, "transaction_value"] = data_df.loc[:, "transaction_value"].abs()
         report_data = ReportingData(
             data_df=data_df,
             title=f"{title.title()} by Category",
@@ -71,5 +83,3 @@ def draw_income_expenses_category_pie_plot(transactions: baseclass_models.Montre
         plot.generate(report_data)
         output_plots[title] = plot
     return output_plots
-        
-
