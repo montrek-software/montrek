@@ -29,7 +29,7 @@ class TestAssetCreateView(TestCase):
                 "asset_type": "ETF",
                 "asset_isin": "US1234567890",
                 "asset_wkn": "123456",
-                "link_asset_currency": ccy_code.id,
+                "link_asset_currency": ccy_code.hub_entity.id,
             },
         )
         self.assertEqual(response.status_code, 302)
@@ -40,12 +40,14 @@ class TestAssetCreateView(TestCase):
         self.assertEqual(asset.asset_wkn, "123456")
         self.assertEqual(asset.ccy_code, "USD")
 
+
 class TestAssetDetailsView(TestCase):
     def test_asset_details_returns_correct_html(self):
         asset = AssetStaticSatelliteFactory()
         url = reverse("asset_details", kwargs={"pk": asset.hub_entity.id})
         response = self.client.get(url)
         self.assertTemplateUsed(response, "montrek_details.html")
+
 
 class TestAssetUpdateView(TestCase):
     def test_asset_update_returns_correct_html(self):
