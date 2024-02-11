@@ -1,3 +1,4 @@
+from datetime import datetime
 import pandas as pd
 from typing import Any, List, Dict, Type, Tuple
 from baseclasses.models import MontrekSatelliteABC
@@ -51,11 +52,19 @@ class MontrekRepository:
 
     @property
     def session_end_date(self):
-        return self.session_data.get("end_date", timezone.datetime.max)
+        return self._get_session_date("end_date", timezone.datetime.max)
 
     @property
     def session_start_date(self):
-        return self.session_data.get("start_date", timezone.datetime.min)
+        return self._get_session_date("start_date", timezone.datetime.min)
+
+    def _get_session_date(
+        self, date_type: str, default: timezone.datetime
+    ) -> timezone.datetime:
+        date_value = self.session_data.get(date_type, default)
+        if isinstance(date_value, str):
+            date_value = timezone.datetime.strptime(date_value, "%Y-%m-%d")
+        return timezone.make_aware(date_value, timezone.get_current_timezone())
 
     @reference_date.setter
     def reference_date(self, value):
