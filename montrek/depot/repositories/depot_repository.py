@@ -1,4 +1,5 @@
 from django.db.models import OuterRef, Subquery, Sum, ExpressionWrapper, F, DecimalField
+from numpy import who
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from asset.repositories.asset_repository import AssetRepository
 from asset.models import (

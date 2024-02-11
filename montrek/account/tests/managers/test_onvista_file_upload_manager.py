@@ -1,5 +1,6 @@
 import os
 from django.test import TestCase
+from django.utils import timezone
 from account.managers.onvista_file_upload_manager import (
     OnvistaFileUploadDepotProcessor,
     OnvistaFileUploadTransactionProcessor,
@@ -7,7 +8,6 @@ from account.managers.onvista_file_upload_manager import (
 )
 from account.managers.not_implemented_processor import NotImplementedFileUploadProcessor
 from account.tests.factories.account_factories import (
-    AccountHubFactory,
     AccountStaticSatelliteFactory,
 )
 from account.repositories.account_repository import AccountRepository
@@ -83,11 +83,14 @@ class TestOnvistaFileUploadManager(TestCase):
             transaction_hub = TransactionHubFactory.create(
                 account=self.account, asset=asset
             )
+            transaction_date = timezone.make_aware(
+                timezone.datetime.strptime(str(row["value_date"])[:10], "%Y-%m-%d")
+            )
             TransactionSatelliteFactory.create(
                 hub_entity=transaction_hub,
                 transaction_amount=row["quantity"],
                 transaction_price=row["price"],
-                transaction_date=row["value_date"],
+                transaction_date=transaction_date,
             )
         result = processor.post_check(test_path)
         self.assertTrue(result)

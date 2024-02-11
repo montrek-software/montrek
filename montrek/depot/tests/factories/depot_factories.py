@@ -11,6 +11,7 @@ from asset.tests.factories.asset_factories import (
     AssetTimeSeriesSatelliteFactory,
 )
 from account.tests.factories.account_factories import AccountStaticSatelliteFactory
+from baseclasses.utils import montrek_time
 
 
 class DepotAccountFactory(AccountStaticSatelliteFactory):
@@ -29,13 +30,13 @@ class DepotAccountFactory(AccountStaticSatelliteFactory):
                 hub_entity__account=self.hub_entity,
                 transaction_amount=4,
                 transaction_price=1,
-                transaction_date="2020-12-31",
+                transaction_date=montrek_time(2020, 12, 31),
             )
             assets = AssetTimeSeriesSatelliteFactory.create_batch(
-                3, price=1.2, value_date="2021-01-01"
+                3, price=1.2, value_date=montrek_time(2021, 1, 1)
             )
             currency = CurrencyTimeSeriesSatelliteFactory.create(
-                fx_rate=1, value_date="2021-01-01"
+                fx_rate=1, value_date=montrek_time(2021, 1, 1)
             )
             for asset in assets:
                 AssetStaticSatelliteFactory.create(
@@ -47,11 +48,11 @@ class DepotAccountFactory(AccountStaticSatelliteFactory):
                     hub_entity__account=self.hub_entity,
                     transaction_amount=1,
                     transaction_price=1,
-                    transaction_date="2021-01-01",
+                    transaction_date=montrek_time(2021, 1, 1),
                 )
                 TransactionSatelliteFactory.create(
                     hub_entity__account=self.hub_entity,
                     transaction_amount=1,
                     transaction_price=-2,
-                    transaction_date="2021-01-01",
+                    transaction_date=montrek_time(2021, 1, 1),
                 )
