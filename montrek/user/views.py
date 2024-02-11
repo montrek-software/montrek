@@ -1,7 +1,9 @@
 from django.contrib.auth import login
+from django.contrib.auth.views import PasswordResetView
 from django.urls import reverse_lazy
 from django.views.generic.edit import CreateView, FormView
 from django.contrib import messages
+from django.contrib.auth.views import LogoutView
 from user.forms import MontrekPasswordResetForm, MontrekUserCreationForm
 from user.forms import MontrekAuthenticationForm
 
@@ -16,7 +18,7 @@ class MessageHandlerMixin:
         messages.info(self.request, f"You have logged in as {email}!")
 
 
-class SignUpView(CreateView, MessageHandlerMixin):
+class MontrekSignUpView(CreateView, MessageHandlerMixin):
     form_class = MontrekUserCreationForm
     template_name = "user/user_base.html"
     success_url = reverse_lazy("home")
@@ -38,7 +40,7 @@ class SignUpView(CreateView, MessageHandlerMixin):
         return context
 
 
-class LoginView(FormView, MessageHandlerMixin):
+class MontrekLoginView(FormView, MessageHandlerMixin):
     form_class = MontrekAuthenticationForm
     template_name = "user/user_base.html"
     success_url = reverse_lazy("home")
@@ -61,14 +63,17 @@ class LoginView(FormView, MessageHandlerMixin):
         return context
 
 
-class PasswordResetView(FormView, MessageHandlerMixin):
+class MontrekLogoutView(LogoutView):
+    pass
+
+
+class MontrekPasswordResetView(PasswordResetView, MessageHandlerMixin):
     form_class = MontrekPasswordResetForm
     template_name = "user/user_base.html"
+    success_url = reverse_lazy("home")
 
     def form_valid(self, form):
-        user = form.get_user()
-        login(self.request, user)
-        self.add_successfull_login_message(user.username)
+        messages.info(self.request, "We've emailed you instructions for setting your password. You should receive the email shortly!")
         return super().form_valid(form)
 
     def form_invalid(self, form):

@@ -142,4 +142,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, "baseclasses/static")
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 CSRF_TRUSTED_ORIGINS = ["http://localhost:1339"]
 
-AUTH_USER_MODEL = "user.MontrekUser"
+AUTH_USER_MODEL = 'user.MontrekUser'
+
+EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
+EMAIL_FILE_PATH = BASE_DIR / "sent_emails"
