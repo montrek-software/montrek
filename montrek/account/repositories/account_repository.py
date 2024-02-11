@@ -156,7 +156,10 @@ class AccountRepository(MontrekRepository):
         return self._get_depot_subquery("book_value")
 
     def _get_depot_pnl(self):
-        return self._get_depot_subquery("profit_loss")
+        return ExpressionWrapper(
+            F("account_depot_value") - F("account_depot_book_value"),
+            output_field=DecimalField(),
+        )
 
     def _get_depot_performance(self):
         return ExpressionWrapper(
