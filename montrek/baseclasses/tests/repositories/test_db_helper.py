@@ -82,8 +82,8 @@ class TestDBHelpers(TestCase):
         self.assertEqual(selected_satellite.hub_entity, test_hub)
         TestMontrekSatelliteFactory.create(
             hub_entity=self.hub1,
-            state_date_start=timezone.datetime(2023, 5, 1),
-            state_date_end=timezone.datetime(2023, 6, 20),
+            state_date_start=timezone.datetime(2023, 5, 1, tzinfo=timezone.utc),
+            state_date_end=timezone.datetime(2023, 6, 20, tzinfo=timezone.utc),
         )
 
         selected_satellite = select_satellite(
@@ -98,7 +98,7 @@ class TestDBHelpers(TestCase):
         selected_satellite = select_satellite(
             satellite_class=TestMontrekSatellite,
             hub_entity=test_hub,
-            reference_date=timezone.datetime(2023, 5, 20),
+            reference_date=timezone.datetime(2023, 5, 20, tzinfo=timezone.utc),
         )
         self.assertEqual(
             selected_satellite.state_date_start,
