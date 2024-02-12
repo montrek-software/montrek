@@ -1,3 +1,4 @@
+from django.db.models import QuerySet
 from asset.models import AssetHub
 from asset.models import AssetStaticSatellite
 from asset.models import AssetLiquidSatellite
@@ -41,3 +42,11 @@ class AssetRepository(MontrekRepository):
             self.reference_date,
         )
         return self.build_queryset()
+
+    def get_asset_prices(self, asset_id: int) -> QuerySet:
+        queryset = AssetTimeSeriesSatellite.objects.filter(
+            hub_entity_id=asset_id,
+            state_date_start__lte=self.reference_date,
+            state_date_end__gte=self.reference_date,
+        ).order_by("value_date")
+        return queryset

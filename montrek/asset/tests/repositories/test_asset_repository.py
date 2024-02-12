@@ -25,10 +25,21 @@ class TestAssetPricesQuery(TestCase):
     def test_get_asset_prices(self):
         asset_repository = AssetRepository()
         asset_prices = asset_repository.get_asset_prices(asset_id=self.asset_hub.pk)
-        self.assertEqual(len(asset_prices), 3)
-        self.assertEqual(asset_prices[0].asset_id, 1)
+        self.assertEqual(len(asset_prices), 4)
         self.assertEqual(asset_prices[0].price, 100)
-        self.assertEqual(asset_prices[1].asset_id, 2)
-        self.assertEqual(asset_prices[1].price, 200)
-        self.assertEqual(asset_prices[2].asset_id, 3)
-        self.assertEqual(asset_prices[2].price, 300)
+        self.assertEqual(asset_prices[1].price, 101)
+        self.assertEqual(asset_prices[2].price, 102)
+        self.assertEqual(asset_prices[3].price, 103)
+
+    def test_update_asset_price(self):
+        asset_repository = AssetRepository()
+        asset_repository.std_create_object(
+            {
+                "price": 104,
+                "value_date": "2024-02-02",
+                "hub_entity_id": self.asset_hub.id,
+            }
+        )
+        asset_prices = asset_repository.get_asset_prices(asset_id=self.asset_hub.pk)
+        self.assertEqual(len(asset_prices), 4)
+        self.assertEqual(asset_prices[1].price, 104)
