@@ -54,4 +54,10 @@ class AssetPage(MontrekPage):
             html_id="tab_details",
             actions=(action_back, action_update_asset),
         )
-        return [details_tab]
+        prices_tab = TabElement(
+            name="Prices",
+            link=reverse("asset_price_ts_table", args=[self.obj.id]),
+            html_id="tab_asset_price_list",
+            actions=(action_back,),
+        )
+        return [details_tab, prices_tab]
