@@ -3,8 +3,8 @@ from user.models import MontrekUser
 from user.forms import MontrekUserCreationForm
 from django.contrib.auth.forms import UserCreationForm
 
-class TestMontrekUserCreationForm:
 
+class TestMontrekUserCreationForm:
     def test_is_user_creation_form(self):
         self.assertTrue(issubclass(MontrekUserCreationForm, UserCreationForm))
 
@@ -12,4 +12,6 @@ class TestMontrekUserCreationForm:
         self.assertEqual(MontrekUserCreationForm.Meta.model, MontrekUser)
 
     def test_model_fields(self):
-        self.assertEqual(MontrekUserCreationForm.Meta.fields, UserCreationForm.Meta.fields)
+        self.assertEqual(
+            MontrekUserCreationForm.Meta.fields, UserCreationForm.Meta.fields
+        )

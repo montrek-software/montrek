@@ -1,5 +1,11 @@
 from django.contrib.auth import login
-from django.contrib.auth.views import PasswordResetCompleteView, PasswordResetConfirmView, PasswordResetDoneView, PasswordResetView, RedirectURLMixin
+from django.contrib.auth.views import (
+    PasswordResetCompleteView,
+    PasswordResetConfirmView,
+    PasswordResetDoneView,
+    PasswordResetView,
+    RedirectURLMixin,
+)
 from django.urls import reverse_lazy
 from django.views.generic.base import RedirectView
 from django.views.generic.edit import CreateView, FormView
@@ -7,6 +13,7 @@ from django.contrib import messages
 from django.contrib.auth.views import LogoutView
 from user.forms import MontrekPasswordResetForm, MontrekUserCreationForm
 from user.forms import MontrekAuthenticationForm
+
 
 class MessageHandlerMixin:
     def add_form_error_messages(self, form):
@@ -82,16 +89,22 @@ class MontrekPasswordResetView(PasswordResetView, MessageHandlerMixin):
     success_url = reverse_lazy("home")
 
     def form_valid(self, form):
-        messages.info(self.request, "We've emailed you instructions for setting your password. You should receive the email shortly!")
+        messages.info(
+            self.request,
+            "We've emailed you instructions for setting your password. You should receive the email shortly!",
+        )
         return super().form_valid(form)
 
     def form_invalid(self, form):
         self.add_form_error_messages(form)
         return super().form_invalid(form)
 
+
 class MontrekPasswordResetCompleteView(RedirectView):
     url = reverse_lazy("login")
 
     def get(self, request, *args, **kwargs):
-        messages.info(request, "Your password has been set. You may go ahead and login.")
+        messages.info(
+            request, "Your password has been set. You may go ahead and login."
+        )
         return super().get(request, *args, **kwargs)
