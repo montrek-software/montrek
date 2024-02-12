@@ -6,6 +6,7 @@ from baseclasses.pages import MontrekPage
 
 class AssetOverviewPage(MontrekPage):
     page_title = "Assets"
+    show_date_range_selector = True
 
     def get_tabs(self):
         action_new_asset = ActionElement(
@@ -25,6 +26,8 @@ class AssetOverviewPage(MontrekPage):
 
 
 class AssetPage(MontrekPage):
+    show_date_range_selector = True
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         if "pk" not in kwargs:
