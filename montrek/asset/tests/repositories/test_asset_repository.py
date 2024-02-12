@@ -43,3 +43,12 @@ class TestAssetPricesQuery(TestCase):
         asset_prices = asset_repository.get_asset_prices(asset_id=self.asset_hub.pk)
         self.assertEqual(len(asset_prices), 4)
         self.assertEqual(asset_prices[1].price, 104)
+
+    def test_filter_for_session_data(self):
+        asset_repository = AssetRepository(
+            session_data={"start_date": "2024-02-02", "end_date": "2024-02-03"}
+        )
+        asset_prices = asset_repository.get_asset_prices(asset_id=self.asset_hub.pk)
+        self.assertEqual(len(asset_prices), 2)
+        self.assertEqual(asset_prices[0].price, 101)
+        self.assertEqual(asset_prices[1].price, 102)

@@ -48,5 +48,7 @@ class AssetRepository(MontrekRepository):
             hub_entity_id=asset_id,
             state_date_start__lte=self.reference_date,
             state_date_end__gte=self.reference_date,
+            value_date__lte=self.session_end_date,
+            value_date__gte=self.session_start_date,
         ).order_by("value_date")
         return queryset
