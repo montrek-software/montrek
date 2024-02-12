@@ -44,6 +44,7 @@ class AssetRepository(MontrekRepository):
         return self.build_queryset()
 
     def get_asset_prices(self, asset_id: int) -> QuerySet:
+        # TODO: Move general time series query to montrek_repository
         queryset = AssetTimeSeriesSatellite.objects.filter(
             hub_entity_id=asset_id,
             state_date_start__lte=self.reference_date,
