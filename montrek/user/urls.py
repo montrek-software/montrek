@@ -21,4 +21,5 @@ urlpatterns = [
         views.MontrekPasswordResetCompleteView.as_view(),
         name="password_reset_complete",
     ),
+    path("password_change", views.MontrekPasswordChangeView.as_view(), name="password_change"),
 ]

@@ -1,18 +1,9 @@
 from django.contrib.auth import login
-from django.contrib.auth.views import (
-    PasswordResetCompleteView,
-    PasswordResetConfirmView,
-    PasswordResetDoneView,
-    PasswordResetView,
-    RedirectURLMixin,
-)
 from django.urls import reverse_lazy
-from django.views.generic.base import RedirectView
-from django.views.generic.edit import CreateView, FormView
+from django.contrib.auth import views as auth_views
+from django.views import generic as generic_views
 from django.contrib import messages
-from django.contrib.auth.views import LogoutView
-from user.forms import MontrekPasswordResetForm, MontrekUserCreationForm
-from user.forms import MontrekAuthenticationForm
+from user import forms
 
 
 class MessageHandlerMixin:
@@ -26,8 +17,8 @@ class MessageHandlerMixin:
         messages.info(self.request, f"You have logged in as {email}!")
 
 
-class MontrekSignUpView(CreateView, MessageHandlerMixin):
-    form_class = MontrekUserCreationForm
+class MontrekSignUpView(generic_views.CreateView, MessageHandlerMixin):
+    form_class = forms.MontrekUserCreationForm
     template_name = "user/user_base.html"
     success_url = reverse_lazy("home")
 
@@ -48,8 +39,8 @@ class MontrekSignUpView(CreateView, MessageHandlerMixin):
         return context
 
 
-class MontrekLoginView(FormView, MessageHandlerMixin):
-    form_class = MontrekAuthenticationForm
+class MontrekLoginView(generic_views.FormView, MessageHandlerMixin):
+    form_class = forms.MontrekAuthenticationForm
     template_name = "user/user_base.html"
     success_url = reverse_lazy("home")
 
@@ -71,7 +62,7 @@ class MontrekLoginView(FormView, MessageHandlerMixin):
         return context
 
 
-class MontrekLogoutView(RedirectView):
+class MontrekLogoutView(generic_views.RedirectView):
     url = reverse_lazy("login")
 
     def get(self, request, *args, **kwargs):
@@ -79,12 +70,12 @@ class MontrekLogoutView(RedirectView):
         return super().get(request, *args, **kwargs)
 
 
-class MontrekPasswordResetConfirmView(PasswordResetConfirmView):
+class MontrekPasswordResetConfirmView(auth_views.PasswordResetConfirmView):
     template_name = "user/user_base.html"
 
 
-class MontrekPasswordResetView(PasswordResetView, MessageHandlerMixin):
-    form_class = MontrekPasswordResetForm
+class MontrekPasswordResetView(auth_views.PasswordResetView, MessageHandlerMixin):
+    form_class = forms.MontrekPasswordResetForm
     template_name = "user/user_base.html"
     success_url = reverse_lazy("home")
 
@@ -100,7 +91,7 @@ class MontrekPasswordResetView(PasswordResetView, MessageHandlerMixin):
         return super().form_invalid(form)
 
 
-class MontrekPasswordResetCompleteView(RedirectView):
+class MontrekPasswordResetCompleteView(generic_views.RedirectView):
     url = reverse_lazy("login")
 
     def get(self, request, *args, **kwargs):
@@ -108,3 +99,18 @@ class MontrekPasswordResetCompleteView(RedirectView):
             request, "Your password has been set. You may go ahead and login."
         )
         return super().get(request, *args, **kwargs)
+
+
+class MontrekPasswordChangeView(auth_views.PasswordChangeView, MessageHandlerMixin):
+    form_class = forms.MontrekPasswordChangeForm
+    template_name = "user/user_base.html"
+    success_url = reverse_lazy("home")
+
+    def form_valid(self, form):
+        messages.info(self.request, "Your password has been changed.")
+        return super().form_valid(form)
+
+
+    def form_invalid(self, form):
+        self.add_form_error_messages(form)
+        return super().form_invalid(form)
