@@ -1,29 +1,23 @@
-from user.models import MontrekUser
 from django import forms
-from django.contrib.auth import forms as auth_forms
+from django.contrib.auth import forms as auth_forms, get_user_model
 
 
-class MontrekAuthFormMixin:
-    class Meta:
-        model = MontrekUser
+class MontrekUserCreationForm(auth_forms.BaseUserCreationForm):
+
+    class Meta(auth_forms.BaseUserCreationForm.Meta):
+        model = get_user_model()
         fields = ("email",)
         field_classes = {"email": forms.EmailField}
 
 
-class MontrekUserCreationForm(auth_forms.BaseUserCreationForm, MontrekAuthFormMixin):
+class MontrekPasswordResetForm(auth_forms.PasswordResetForm):
     pass
 
-
-class MontrekPasswordResetForm(auth_forms.PasswordResetForm, MontrekAuthFormMixin):
+class MontrekUserChangeForm(auth_forms.UserChangeForm):
     pass
 
-
-class MontrekUserChangeForm(auth_forms.UserChangeForm, MontrekAuthFormMixin):
+class MontrekAuthenticationForm(auth_forms.AuthenticationForm):
     pass
 
-
-class MontrekAuthenticationForm(auth_forms.AuthenticationForm, MontrekAuthFormMixin):
-    pass
-
-class MontrekPasswordChangeForm(auth_forms.PasswordChangeForm, MontrekAuthFormMixin):
+class MontrekPasswordChangeForm(auth_forms.PasswordChangeForm):
     pass
