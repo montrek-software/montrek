@@ -44,12 +44,12 @@ class AssetRepository(MontrekRepository):
         return self.build_queryset()
 
     def get_asset_prices(self, asset_id: int) -> QuerySet:
-        # TODO: Move general time series query to montrek_repository
-        queryset = AssetTimeSeriesSatellite.objects.filter(
-            hub_entity_id=asset_id,
-            state_date_start__lte=self.reference_date,
-            state_date_end__gte=self.reference_date,
-            value_date__lte=self.session_end_date,
-            value_date__gte=self.session_start_date,
-        ).order_by("value_date")
+        queryset = self.build_time_series_queryset(
+            AssetTimeSeriesSatellite, self.reference_date
+        ).filter(hub_entity_id=asset_id)
+        # TODO: Add performance calculation
+        # - [ ] Get queryset as DataFrame
+        # - [ ] Do DataFrame operations
+        # - [ ] Extend ListView to accept DataFrames
+
         return queryset
