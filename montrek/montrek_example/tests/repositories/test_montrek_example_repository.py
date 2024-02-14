@@ -526,3 +526,22 @@ class TestTimeSeries(TestCase):
                 queryset[i].state_date_start,
                 timezone.make_aware(timezone.datetime.min),
             )
+
+    def test_build_time_series_queryset_wrong_satellite_class(self):
+        repository = HubCRepository()
+        with self.assertRaisesRegex(
+            ValueError,
+            "SatC1 is not a subclass of MontrekTimeSeriesSatelliteABC",
+        ):
+            repository.build_time_series_queryset(
+                me_models.SatC1,
+                montrek_time(2024, 2, 5),
+            )
+
+    def test_build_time_series_queryset(self):
+        me_factories.SatTSC2Factory.create_batch(3)
+        test_query = HubCRepository().build_time_series_queryset(
+            me_models.SatTSC2,
+            montrek_time(2024, 2, 5),
+        )
+        self.assertEqual(test_query.count(), 4)
