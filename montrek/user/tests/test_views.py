@@ -10,7 +10,7 @@ def _get_messages_from_response(response):
     return list(response.context["messages"])
 
 
-class MontrekSignUpViewTests(TestCase):
+class TestMontrekSignUpView(TestCase):
     def test_signup_view(self):
         url = reverse("signup")
         response = self.client.get(url)
@@ -32,11 +32,11 @@ class MontrekSignUpViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertRedirects(response, reverse("home"))
 
-        self.assertTrue(get_user_model().objects.filter(email="test@example.com").exists())
-        self.assertEqual(len(messages), 1)
-        self.assertEqual(
-            str(messages[0]), "You have logged in as test@example.com!"
+        self.assertTrue(
+            get_user_model().objects.filter(email="test@example.com").exists()
         )
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]), "You have logged in as test@example.com!")
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]), "You have logged in as test@example.com!")
 
@@ -54,13 +54,10 @@ class MontrekSignUpViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "user/user_base.html")
         self.assertEqual(len(messages), 1)
-        self.assertEqual(
-            str(messages[0]),
-            "Email: Enter a valid email address."
-        )
+        self.assertEqual(str(messages[0]), "Email: Enter a valid email address.")
 
 
-class MontrekLoginViewTests(TestCase):
+class TestMontrekLoginView(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(
             email="test@example.com",
@@ -87,9 +84,7 @@ class MontrekLoginViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertRedirects(response, reverse("home"))
         self.assertEqual(len(messages), 1)
-        self.assertEqual(
-            str(messages[0]), "You have logged in as test@example.com!"
-        )
+        self.assertEqual(str(messages[0]), "You have logged in as test@example.com!")
 
     def test_login_form_invalid_submission(self):
         url = reverse("login")
@@ -112,7 +107,7 @@ class MontrekLoginViewTests(TestCase):
         )
 
 
-class MontrekLogoutViewTests(TestCase):
+class TestMontrekLogoutView(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(
             email="test@example.com",
@@ -126,7 +121,7 @@ class MontrekLogoutViewTests(TestCase):
         self.assertRedirects(response, reverse("login"))
 
 
-class MontrekPasswordResetViewTests(TestCase):
+class TestMontrekPasswordResetView(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(
             email="test@example.com",
@@ -161,14 +156,14 @@ class MontrekPasswordResetViewTests(TestCase):
         self.assertEqual(mail.outbox[0].subject, "Password reset on testserver")
 
 
-class MontrekPasswordResetCompleteViewTests(TestCase):
+class TestMontrekPasswordResetCompleteView(TestCase):
     def test_password_reset_complete_view(self):
         url = reverse("password_reset_complete")
         response = self.client.get(url)
         self.assertRedirects(response, reverse("login"))
 
 
-class MontrekPasswordChangeViewTests(TestCase):
+class TestMontrekPasswordChangeView(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(
             email="test@example.com",
