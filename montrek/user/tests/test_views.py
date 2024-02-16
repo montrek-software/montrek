@@ -32,8 +32,10 @@ class MontrekSignUpViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertRedirects(response, reverse("home"))
 
-        self.assertTrue(
-            get_user_model().objects.filter(email="test@example.com").exists()
+        self.assertTrue(get_user_model().objects.filter(email="test@example.com").exists())
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(
+            str(messages[0]), "You have logged in as test@example.com!"
         )
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]), "You have logged in as test@example.com!")
@@ -52,7 +54,10 @@ class MontrekSignUpViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "user/user_base.html")
         self.assertEqual(len(messages), 1)
-        self.assertEqual(str(messages[0]), "Email: Enter a valid email address.")
+        self.assertEqual(
+            str(messages[0]),
+            "Email: Enter a valid email address."
+        )
 
 
 class MontrekLoginViewTests(TestCase):
@@ -82,7 +87,9 @@ class MontrekLoginViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertRedirects(response, reverse("home"))
         self.assertEqual(len(messages), 1)
-        self.assertEqual(str(messages[0]), "You have logged in as test@example.com!")
+        self.assertEqual(
+            str(messages[0]), "You have logged in as test@example.com!"
+        )
 
     def test_login_form_invalid_submission(self):
         url = reverse("login")

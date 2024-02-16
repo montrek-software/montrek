@@ -5,6 +5,7 @@ from django.views import generic as generic_views
 from django.contrib import messages
 from user import forms
 
+from user.forms import MontrekUserCreationForm, MontrekAuthenticationForm
 
 class MessageHandlerMixin:
     def add_form_error_messages(self, form):

@@ -3,7 +3,6 @@ from django.contrib.auth import get_user_model
 from user.models import MontrekUser, MontrekUserManager
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 
-
 class TestMontrekUser(TestCase):
     def test_is_active_auth_user_model(self):
         self.assertEqual(get_user_model(), MontrekUser)

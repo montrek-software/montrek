@@ -46,5 +46,4 @@ class MontrekUserAdmin(UserAdmin):
     search_fields = ("email",)
     ordering = ("email",)
 
-
 admin.site.register(MontrekUser, MontrekUserAdmin)
