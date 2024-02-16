@@ -155,6 +155,19 @@ class TestMontrekPasswordResetView(TestCase):
         self.assertEqual(mail.outbox[0].to, ["test@example.com"])
         self.assertEqual(mail.outbox[0].subject, "Password reset on testserver")
 
+    def test_password_reset_form_invalid_submission(self):
+        url = reverse("password_reset")
+        data = {
+            "email": "test",
+        }
+        response = self.client.post(url, data)
+        messages = _get_messages_from_response(response)
+        message = str(messages[0])
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(message, "Email: Enter a valid email address.")
+
 
 class TestMontrekPasswordResetCompleteView(TestCase):
     def test_password_reset_complete_view(self):
@@ -194,6 +207,25 @@ class TestMontrekPasswordChangeView(TestCase):
         self.assertEqual(len(messages), 1)
         self.assertEqual(message, "Your password has been changed.")
         self.assertTrue(self.user.check_password("!@#$hardt0guess"))
+
+    def test_password_change_form_invalid_submission(self):
+        self.client.login(email="test@example.com", password="testpassword")
+        url = reverse("password_change")
+        data = {
+            "old_password": "invalid",
+            "new_password1": "!@#$hardt0guess",
+            "new_password2": "!@#$hardt0guess",
+        }
+        response = self.client.post(url, data)
+        messages = _get_messages_from_response(response)
+        message = str(messages[0])
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(
+            message,
+            "Oldpassword: Your old password was entered incorrectly. Please enter it again.",
+        )
 
     def test_password_change_view_anonymous(self):
         url = reverse("password_change")

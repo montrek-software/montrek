@@ -7,6 +7,7 @@ from user import forms
 
 from user.forms import MontrekUserCreationForm, MontrekAuthenticationForm
 
+
 class MessageHandlerMixin:
     def add_form_error_messages(self, form):
         for field, errors in form.errors.items():
@@ -110,7 +111,6 @@ class MontrekPasswordChangeView(auth_views.PasswordChangeView, MessageHandlerMix
     def form_valid(self, form):
         messages.info(self.request, "Your password has been changed.")
         return super().form_valid(form)
-
 
     def form_invalid(self, form):
         self.add_form_error_messages(form)
