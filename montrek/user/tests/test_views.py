@@ -1,5 +1,7 @@
+from decouple import RepositoryIni
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.core import mail
 from django.test import TestCase
 from django.urls import reverse
 
@@ -114,7 +116,7 @@ class MontrekLogoutViewTests(TestCase):
         url = reverse("logout")
         response = self.client.get(url)
 
-        self.assertRedirects(response, reverse("home"))
+        self.assertRedirects(response, reverse("login"))
 
 
 class MontrekPasswordResetViewTests(TestCase):
@@ -130,3 +132,84 @@ class MontrekPasswordResetViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "user/user_base.html")
+
+    def test_password_reset_form_submission(self):
+        url = reverse("password_reset")
+        data = {
+            "email": "test@example.com",
+        }
+        response = self.client.post(url, data, follow=True)
+        messages = _get_messages_from_response(response)
+        message = str(messages[0])
+
+        self.assertEqual(response.status_code, 200)
+        self.assertRedirects(response, reverse("home"))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(
+            message,
+            "We've emailed you instructions for setting your password. You should receive the email shortly!",
+        )
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ["test@example.com"])
+        self.assertEqual(mail.outbox[0].subject, "Password reset on testserver")
+
+
+class MontrekPasswordResetCompleteViewTests(TestCase):
+    def test_password_reset_complete_view(self):
+        url = reverse("password_reset_complete")
+        response = self.client.get(url)
+        self.assertRedirects(response, reverse("login"))
+
+
+class MontrekPasswordChangeViewTests(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            email="test@example.com",
+            password="testpassword",
+        )
+
+    def test_password_change_view(self):
+        self.client.login(email="test@example.com", password="testpassword")
+        url = reverse("password_change")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "user/user_base.html")
+
+    def test_password_change_form_submission(self):
+        self.client.login(email="test@example.com", password="testpassword")
+        url = reverse("password_change")
+        data = {
+            "old_password": "testpassword",
+            "new_password1": "!@#$hardt0guess",
+            "new_password2": "!@#$hardt0guess",
+        }
+        response = self.client.post(url, data, follow=True)
+        messages = _get_messages_from_response(response)
+        message = str(messages[0])
+        self.user.refresh_from_db()
+
+        self.assertRedirects(response, reverse("home"))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(message, "Your password has been changed.")
+        self.assertTrue(self.user.check_password("!@#$hardt0guess"))
+
+    def test_password_change_view_anonymous(self):
+        url = reverse("password_change")
+        response = self.client.get(url)
+        self.assertRedirects(
+            response,
+            f"{reverse('login')}?next={reverse('password_change')}",
+        )
+
+    def test_password_change_form_submission_anonymous(self):
+        url = reverse("password_change")
+        data = {
+            "old_password": "testpassword",
+            "new_password1": "!@#$hardt0guess",
+            "new_password2": "!@#$hardt0guess",
+        }
+        response = self.client.post(url, data)
+
+        self.assertRedirects(
+            response, f"{reverse('login')}?next={reverse('password_change')}"
+        )
