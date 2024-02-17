@@ -37,7 +37,7 @@ class TestMontrekRepositorySatellite(TestCase):
         self.user = MontrekUserFactory()
 
     def test_build_queryset_with_satellite_fields(self):
-        repository = HubARepository(session_data={"user_id": self.user.id})
+        repository = HubARepository()
         repository.reference_date = montrek_time(2023, 7, 8)
         queryset = repository.test_queryset_1()
 
@@ -435,7 +435,7 @@ class TestMontrekRepositoryLinks(TestCase):
         self.user = MontrekUserFactory()
 
     def test_many_to_one_link(self):
-        repository = HubARepository(session_data={"user_id": self.user.id})
+        repository = HubARepository()
         repository.reference_date = montrek_time(2023, 7, 8)
         queryset = repository.test_queryset_2()
 
@@ -458,7 +458,7 @@ class TestMontrekRepositoryLinks(TestCase):
         self.assertEqual(queryset[1].field_b1_str, "Third")
 
     def test_link_reversed(self):
-        repository = HubBRepository(session_data={"user_id": self.user.id})
+        repository = HubBRepository()
         repository.reference_date = montrek_time(2023, 7, 8)
         queryset = repository.test_queryset_1()
         self.assertEqual(queryset.count(), 2)
@@ -544,7 +544,7 @@ class TestTimeSeries(TestCase):
             )
 
     def test_build_time_series_queryset_wrong_satellite_class(self):
-        repository = HubCRepository(session_data={"user_id": self.user.id})
+        repository = HubCRepository()
         with self.assertRaisesRegex(
             ValueError,
             "SatC1 is not a subclass of MontrekTimeSeriesSatelliteABC",
@@ -556,9 +556,7 @@ class TestTimeSeries(TestCase):
 
     def test_build_time_series_queryset(self):
         me_factories.SatTSC2Factory.create_batch(3)
-        test_query = HubCRepository(
-            session_data={"user_id": self.user.id}
-        ).build_time_series_queryset(
+        test_query = HubCRepository().build_time_series_queryset(
             me_models.SatTSC2,
             montrek_time(2024, 2, 5),
         )
