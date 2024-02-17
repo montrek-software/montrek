@@ -81,6 +81,9 @@ class MontrekRepository:
     def std_queryset(self, **kwargs):
         raise NotImplementedError("MontrekRepository has no std_queryset method!")
 
+    def get_history_queryset(self, **kwargs):
+        pass
+
     def object_to_dict(self, obj: MontrekHubABC) -> Dict[str, Any]:
         object_dict = {
             field.name: getattr(obj, field.name)

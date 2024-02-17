@@ -526,3 +526,29 @@ class TestTimeSeries(TestCase):
                 queryset[i].state_date_start,
                 timezone.make_aware(timezone.datetime.min),
             )
+
+
+class TestHistory(TestCase):
+    def test_history_one_satellite(self):
+        huba = me_factories.HubAFactory()
+        sat_a1 = me_factories.SatA1Factory(
+            hub_entity=huba,
+            field_a1_str="TestFeld",
+            field_a1_int=5,
+            state_date_end="2024-02-17",
+        )
+        sat_a2 = me_factories.SatA1Factory(
+            hub_entity=huba,
+            field_a1_str="TestFeld",
+            field_a1_int=6,
+            state_date_start="2024-02-17",
+        )
+        repository = HubARepository()
+        test_queryset = repository.get_history_queryset()
+        self.assertEqual(test_queryset.count(), 2)
+        self.assertEqual(test_queryset[0].field_a1_int, 5)
+        self.assertEqual(test_queryset[1].field_a1_int, 6)
+        self.assertEqual(
+            test_queryset[0].state_date_end, test_queryset[1].state_date_start
+        )
+        self.assertEqual(test_queryset[0].field_a1_str, test_queryset[1].field_a1_str)
