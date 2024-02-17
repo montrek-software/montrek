@@ -89,6 +89,8 @@ class MontrekViewMixin:
         session_data = dict(self.request.GET)
         session_data.update(dict(self.request.session))
         session_data.update(self._get_filters(session_data))
+        if self.request.user.is_authenticated:
+            session_data["user_id"] = self.request.user.id
         return session_data
 
     def show_repository_messages(self):
