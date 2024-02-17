@@ -554,13 +554,13 @@ class TestHistory(TestCase):
             hub_entity=huba,
             field_a1_str="TestFeld",
             field_a1_int=5,
-            state_date_end="2024-02-17",
+            state_date_end=montrek_time(2024, 2, 17),
         )
         me_factories.SatA1Factory(
             hub_entity=huba,
             field_a1_str="TestFeld",
             field_a1_int=6,
-            state_date_start="2024-02-17",
+            state_date_start=montrek_time(2024, 2, 17),
         )
         me_factories.SatA2Factory(
             hub_entity=huba,

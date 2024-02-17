@@ -214,7 +214,7 @@ class MontrekRepository:
             raise ValueError(
                 f"{time_series_satellite_class.__name__} is not a subclass of MontrekTimeSeriesSatelliteABC"
             )
-        queryset = time_series_satellite_class.objects.filter(
+        return time_series_satellite_class.objects.filter(
             state_date_start__lte=reference_date,
             state_date_end__gte=reference_date,
             value_date__lte=self.session_end_date,
