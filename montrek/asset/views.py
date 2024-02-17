@@ -108,6 +108,7 @@ class AssetDetailsView(MontrekDetailView):
             ),
         )
 
+
 class AssetUpdateView(MontrekUpdateView):
     page_class = AssetPage
     repository = AssetRepository
@@ -150,3 +151,27 @@ def view_update_asset_prices(request, account_id: int):
     return HttpResponseRedirect(
         reverse("account_view_depot", kwargs={"pk": account_id})
     )
+
+
+class AssetPriceTSTableView(MontrekListView):
+    page_class = AssetPage
+    tab = "tab_asset_price_list"
+    title = "Asset Prices"
+    repository = AssetRepository
+
+    def get_queryset(self, **kwargs):
+        asset_id = self.kwargs["pk"]
+        return self.repository_object.get_asset_prices(asset_id)
+
+    @property
+    def elements(self) -> tuple:
+        return (
+            table_elements.DateTableElement(
+                name="Value Date",
+                attr="value_date",
+            ),
+            table_elements.FloatTableElement(
+                name="Price",
+                attr="price",
+            ),
+        )

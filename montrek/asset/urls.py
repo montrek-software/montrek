@@ -32,4 +32,9 @@ urlpatterns = [
         views.AssetTimeSeriesCreateView.as_view(),
         name="add_single_price_to_asset",
     ),
+    path(
+        "asset_price_ts_table/<int:pk>",
+        views.AssetPriceTSTableView.as_view(),
+        name="asset_price_ts_table",
+    ),
 ]

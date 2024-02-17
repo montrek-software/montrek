@@ -527,28 +527,56 @@ class TestTimeSeries(TestCase):
                 timezone.make_aware(timezone.datetime.min),
             )
 
+    def test_build_time_series_queryset_wrong_satellite_class(self):
+        repository = HubCRepository()
+        with self.assertRaisesRegex(
+            ValueError,
+            "SatC1 is not a subclass of MontrekTimeSeriesSatelliteABC",
+        ):
+            repository.build_time_series_queryset(
+                me_models.SatC1,
+                montrek_time(2024, 2, 5),
+            )
+
+    def test_build_time_series_queryset(self):
+        me_factories.SatTSC2Factory.create_batch(3)
+        test_query = HubCRepository().build_time_series_queryset(
+            me_models.SatTSC2,
+            montrek_time(2024, 2, 5),
+        )
+        self.assertEqual(test_query.count(), 4)
+
 
 class TestHistory(TestCase):
     def test_history_one_satellite(self):
         huba = me_factories.HubAFactory()
-        sat_a1 = me_factories.SatA1Factory(
+        me_factories.SatA1Factory(
             hub_entity=huba,
             field_a1_str="TestFeld",
             field_a1_int=5,
             state_date_end="2024-02-17",
         )
-        sat_a2 = me_factories.SatA1Factory(
+        me_factories.SatA1Factory(
             hub_entity=huba,
             field_a1_str="TestFeld",
             field_a1_int=6,
             state_date_start="2024-02-17",
         )
+        me_factories.SatA2Factory(
+            hub_entity=huba,
+            field_a2_str="ConstantTestFeld",
+            field_a2_float=6.0,
+        )
         repository = HubARepository()
-        test_queryset = repository.get_history_queryset()
+        test_queryset = repository.get_history_queryset(huba.id)
         self.assertEqual(test_queryset.count(), 2)
         self.assertEqual(test_queryset[0].field_a1_int, 5)
         self.assertEqual(test_queryset[1].field_a1_int, 6)
-        self.assertEqual(
-            test_queryset[0].state_date_end, test_queryset[1].state_date_start
-        )
+        self.assertEqual(test_queryset[0].change_date[:10], "0001-01-01")
+        self.assertEqual(test_queryset[1].change_date[:10], "2024-02-17")
+
         self.assertEqual(test_queryset[0].field_a1_str, test_queryset[1].field_a1_str)
+        self.assertEqual(test_queryset[0].field_a2_str, test_queryset[1].field_a2_str)
+        self.assertEqual(
+            test_queryset[0].field_a2_float, test_queryset[1].field_a2_float
+        )

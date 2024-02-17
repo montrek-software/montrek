@@ -1,7 +1,7 @@
 from datetime import datetime
 import pandas as pd
 from typing import Any, List, Dict, Type, Tuple
-from baseclasses.models import MontrekSatelliteABC
+from baseclasses.models import MontrekSatelliteABC, MontrekTimeSeriesSatelliteABC
 from baseclasses.models import MontrekHubABC
 from baseclasses.models import MontrekLinkABC
 from baseclasses.repositories.annotation_manager import (
@@ -17,7 +17,15 @@ from baseclasses.repositories.subquery_builder import (
 )
 from baseclasses.repositories.db_creator import DbCreator
 from baseclasses.dataclasses.montrek_message import MontrekMessageError
-from django.db.models import Q, Subquery, OuterRef, QuerySet
+from django.db.models import (
+    Q,
+    DateTimeField,
+    CharField,
+    Subquery,
+    OuterRef,
+    QuerySet,
+    Value,
+)
 from django.db.models import ManyToManyField
 from django.utils import timezone
 from django.core.exceptions import FieldError
@@ -80,9 +88,6 @@ class MontrekRepository:
 
     def std_queryset(self, **kwargs):
         raise NotImplementedError("MontrekRepository has no std_queryset method!")
-
-    def get_history_queryset(self, **kwargs):
-        pass
 
     def object_to_dict(self, obj: MontrekHubABC) -> Dict[str, Any]:
         object_dict = {
@@ -199,6 +204,57 @@ class MontrekRepository:
         except FieldError as e:
             self.messages.append(MontrekMessageError(e))
         return queryset
+
+    def build_time_series_queryset(
+        self,
+        time_series_satellite_class: type[MontrekSatelliteABC],
+        reference_date: timezone.datetime,
+    ):
+        if not issubclass(time_series_satellite_class, MontrekTimeSeriesSatelliteABC):
+            raise ValueError(
+                f"{time_series_satellite_class.__name__} is not a subclass of MontrekTimeSeriesSatelliteABC"
+            )
+        queryset = time_series_satellite_class.objects.filter(
+            state_date_start__lte=reference_date,
+            state_date_end__gte=reference_date,
+            value_date__lte=self.session_end_date,
+            value_date__gte=self.session_start_date,
+        ).order_by("value_date")
+
+    def get_history_queryset(self, pk: int, **kwargs):
+        # WARNING: This method is not optimized for large databases
+        # Get all state_date changes for the satellitesof the hub and return the std_queryset to the single dates
+        dates = self._get_satellites_change_dates(pk)
+        queryset = self._get_queryset_per_change_date(dates[0], pk)
+        for change_date in dates[1:]:
+            self.reference_date = change_date
+            queryset = queryset.union(
+                self._get_queryset_per_change_date(change_date, pk)
+            )
+        return queryset
+
+    def _get_satellites_change_dates(self, pk: int) -> List[datetime]:
+        self.std_queryset()
+        dates = []
+        for sat_class in self._primary_satellite_classes:
+            dates_list = sat_class.objects.filter(hub_entity_id=pk).values_list(
+                "state_date_start", "state_date_end"
+            )
+            for dd in dates_list:
+                dates += dd
+        return sorted(set(dates))
+
+    def _get_queryset_per_change_date(self, change_date: datetime, pk: int) -> QuerySet:
+        self.reference_date = change_date
+        return (
+            self.std_queryset()
+            .filter(id=pk)
+            .annotate(
+                change_date=Value(
+                    str(self.reference_date), output_field=CharField(max_length=23)
+                )
+            )
+        )
 
     def rename_field(self, field: str, new_name: str):
         self.annotations[new_name] = self.annotations[field]
