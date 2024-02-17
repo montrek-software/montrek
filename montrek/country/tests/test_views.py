@@ -3,6 +3,7 @@ from django.urls import reverse
 
 from country.repositories.country_repository import CountryRepository
 from country.tests.factories.country_factories import CountryStaticSatelliteFactory
+from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
 
 class TestCountryOverview(TestCase):
@@ -13,6 +14,10 @@ class TestCountryOverview(TestCase):
 
 
 class TestCountryCreateView(TestCase):
+    def setUp(self):
+        self.user = MontrekUserFactory()
+        self.client.force_login(self.user)
+
     def test_country_create_returns_correct_html(self):
         url = reverse("country_create")
         response = self.client.get(url)
@@ -32,12 +37,14 @@ class TestCountryCreateView(TestCase):
         self.assertEqual(country.country_name, "Germany")
         self.assertEqual(country.country_code, "DE")
 
+
 class TestCountryDetailsView(TestCase):
     def test_country_details_returns_correct_html(self):
         country = CountryStaticSatelliteFactory()
         url = reverse("country_details", kwargs={"pk": country.hub_entity.id})
         response = self.client.get(url)
         self.assertTemplateUsed(response, "montrek_details.html")
+
 
 class TestCountryUpdateView(TestCase):
     def test_country_update_returns_correct_html(self):

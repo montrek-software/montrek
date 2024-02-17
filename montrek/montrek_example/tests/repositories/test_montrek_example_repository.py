@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django.utils import timezone
 from baseclasses.utils import montrek_time
+from user.tests.factories.montrek_user_factories import MontrekUserFactory
 from montrek_example.tests.factories import montrek_example_factories as me_factories
 from montrek_example.repositories.hub_a_repository import HubARepository
 from montrek_example.repositories.hub_b_repository import HubBRepository
@@ -33,9 +34,10 @@ class TestMontrekRepositorySatellite(TestCase):
             state_date_end=montrek_time(2023, 7, 10),
             field_a2_float=9,
         )
+        self.user = MontrekUserFactory()
 
     def test_build_queryset_with_satellite_fields(self):
-        repository = HubARepository()
+        repository = HubARepository(session_data={"user_id": self.user.id})
         repository.reference_date = montrek_time(2023, 7, 8)
         queryset = repository.test_queryset_1()
 
@@ -72,8 +74,11 @@ class TestMontrekRepositorySatellite(TestCase):
 
 
 class TestMontrekCreatObject(TestCase):
+    def setUp(self):
+        self.user = MontrekUserFactory()
+
     def test_std_create_object_single_satellite(self):
-        repository = HubARepository()
+        repository = HubARepository(session_data={"user_id": self.user.id})
         repository.std_create_object({"field_a1_int": 5, "field_a1_str": "test"})
         self.assertEqual(me_models.SatA1.objects.count(), 1)
         self.assertEqual(me_models.SatA1.objects.first().field_a1_int, 5)
@@ -82,7 +87,7 @@ class TestMontrekCreatObject(TestCase):
         self.assertEqual(me_models.SatA2.objects.count(), 0)
 
     def test_std_create_object_multi_satellites(self):
-        repository = HubARepository()
+        repository = HubARepository(session_data={"user_id": self.user.id})
         repository.std_create_object(
             {
                 "field_a1_int": 5,
@@ -100,7 +105,7 @@ class TestMontrekCreatObject(TestCase):
         self.assertEqual(me_models.SatA2.objects.first().field_a2_str, "test2")
 
     def test_std_create_object_existing_object(self):
-        repository = HubARepository()
+        repository = HubARepository(session_data={"user_id": self.user.id})
         for _ in range(2):
             repository.std_create_object(
                 {
@@ -121,7 +126,7 @@ class TestMontrekCreatObject(TestCase):
     def test_std_create_object_existing_object_make_copy(self):
         # Since hub_entity_id is a identifier field for the HubB satellites, any entry with the same attributes will
         # create a copy rather than leaving the old one in place.
-        repository = HubBRepository()
+        repository = HubBRepository(session_data={"user_id": self.user.id})
         for i in range(2):
             repository.std_create_object(
                 {
@@ -144,7 +149,7 @@ class TestMontrekCreatObject(TestCase):
 
     def test_std_create_object_update_satellite_value_field(self):
         snapshot_time = timezone.now()
-        repository = HubARepository()
+        repository = HubARepository(session_data={"user_id": self.user.id})
         repository.std_create_object(
             {
                 "field_a1_int": 5,
@@ -190,7 +195,7 @@ class TestMontrekCreatObject(TestCase):
         self.assertEqual(me_models.SatA2.objects.count(), 0)
         self.assertEqual(me_models.HubA.objects.count(), 0)
         # Create one object
-        repository = HubARepository()
+        repository = HubARepository(session_data={"user_id": self.user.id})
         repository.std_create_object(
             {
                 "field_a1_int": 5,
@@ -213,7 +218,9 @@ class TestMontrekCreatObject(TestCase):
             }
         )
         # The std_queryset should return the adjusted object
-        a_object = HubARepository().std_queryset().get()
+        a_object = (
+            HubARepository(session_data={"user_id": self.user.id}).std_queryset().get()
+        )
         self.assertEqual(a_object.field_a1_str, "test_new")
         self.assertEqual(a_object.field_a1_int, 5)
         self.assertEqual(a_object.field_a2_str, "test2")
@@ -236,7 +243,7 @@ class TestMontrekCreatObject(TestCase):
 
     def test_std_create_object_update_satellite_id_field_keep_hub(self):
         # Create one object
-        repository = HubARepository()
+        repository = HubARepository(session_data={"user_id": self.user.id})
         repository.std_create_object(
             {
                 "field_a1_int": 5,
@@ -245,7 +252,9 @@ class TestMontrekCreatObject(TestCase):
                 "field_a2_str": "test2",
             }
         )
-        a_object = HubARepository().std_queryset().get()
+        a_object = (
+            HubARepository(session_data={"user_id": self.user.id}).std_queryset().get()
+        )
         repository.std_create_object(
             {
                 "field_a1_int": 5,
@@ -259,13 +268,15 @@ class TestMontrekCreatObject(TestCase):
         self.assertEqual(me_models.HubA.objects.count(), 1)
 
         # The std_queryset should return the adjusted object
-        b_object = HubARepository().std_queryset().get()
+        b_object = (
+            HubARepository(session_data={"user_id": self.user.id}).std_queryset().get()
+        )
         self.assertEqual(b_object.field_a1_str, "test_new")
 
     def test_create_hub_a_with_link_to_hub_b(self):
         hub_b = me_factories.SatB1Factory().hub_entity
         self.assertEqual(me_models.HubB.objects.count(), 1)
-        repository = HubARepository()
+        repository = HubARepository(session_data={"user_id": self.user.id})
         repository.std_create_object(
             {
                 "field_a1_int": 5,
@@ -285,7 +296,7 @@ class TestMontrekCreatObject(TestCase):
         sat_b_2 = me_factories.SatB1Factory(field_b1_str="TEST")
         hub_b_1 = sat_b_1.hub_entity
         hub_b_2 = sat_b_2.hub_entity
-        repository = HubARepository()
+        repository = HubARepository(session_data={"user_id": self.user.id})
         repository.std_create_object(
             {
                 "field_a1_int": 5,
@@ -320,7 +331,7 @@ class TestMontrekCreatObject(TestCase):
     def test_create_hub_a_with_link_to_hub_b_existing(self):
         sat_b_1 = me_factories.SatB1Factory()
         hub_b_1 = sat_b_1.hub_entity
-        repository = HubARepository()
+        repository = HubARepository(session_data={"user_id": self.user.id})
         repository.std_create_object(
             {
                 "field_a1_int": 5,
@@ -347,8 +358,11 @@ class TestMontrekCreatObject(TestCase):
 
 
 class TestDeleteObject(TestCase):
+    def setUp(self):
+        self.user = MontrekUserFactory()
+
     def test_delete_object(self):
-        repository = HubARepository()
+        repository = HubARepository(session_data={"user_id": self.user.id})
         repository.std_create_object({"field_a1_int": 5, "field_a1_str": "test"})
         self.assertEqual(me_models.SatA1.objects.count(), 1)
         self.assertEqual(me_models.HubA.objects.count(), 1)
@@ -418,9 +432,10 @@ class TestMontrekRepositoryLinks(TestCase):
             hub_entity=huba1,
             field_a1_int=5,
         )
+        self.user = MontrekUserFactory()
 
     def test_many_to_one_link(self):
-        repository = HubARepository()
+        repository = HubARepository(session_data={"user_id": self.user.id})
         repository.reference_date = montrek_time(2023, 7, 8)
         queryset = repository.test_queryset_2()
 
@@ -443,7 +458,7 @@ class TestMontrekRepositoryLinks(TestCase):
         self.assertEqual(queryset[1].field_b1_str, "Third")
 
     def test_link_reversed(self):
-        repository = HubBRepository()
+        repository = HubBRepository(session_data={"user_id": self.user.id})
         repository.reference_date = montrek_time(2023, 7, 8)
         queryset = repository.test_queryset_1()
         self.assertEqual(queryset.count(), 2)
@@ -467,9 +482,10 @@ class TestTimeSeries(TestCase):
             field_tsc2_float=1.0,
             value_date=montrek_time(2024, 2, 5),
         )
+        self.user = MontrekUserFactory()
 
     def test_existing_satellite(self):
-        repository = HubCRepository()
+        repository = HubCRepository(session_data={"user_id": self.user.id})
         repository.std_create_object(
             {
                 "field_c1_str": "Hallo",
@@ -484,7 +500,7 @@ class TestTimeSeries(TestCase):
         self.assertEqual(queryset[0].value_date, montrek_time(2024, 2, 5).date())
 
     def test_update_satellite(self):
-        repository = HubCRepository()
+        repository = HubCRepository(session_data={"user_id": self.user.id})
         repository.std_create_object(
             {
                 "field_c1_str": "Hallo",
@@ -502,7 +518,7 @@ class TestTimeSeries(TestCase):
         self.assertEqual(queryset[0].state_date_end, queryset[1].state_date_start)
 
     def test_new_satellite(self):
-        repository = HubCRepository()
+        repository = HubCRepository(session_data={"user_id": self.user.id})
         repository.std_create_object(
             {
                 "field_c1_str": "Hallo",
@@ -528,7 +544,7 @@ class TestTimeSeries(TestCase):
             )
 
     def test_build_time_series_queryset_wrong_satellite_class(self):
-        repository = HubCRepository()
+        repository = HubCRepository(session_data={"user_id": self.user.id})
         with self.assertRaisesRegex(
             ValueError,
             "SatC1 is not a subclass of MontrekTimeSeriesSatelliteABC",
@@ -540,7 +556,9 @@ class TestTimeSeries(TestCase):
 
     def test_build_time_series_queryset(self):
         me_factories.SatTSC2Factory.create_batch(3)
-        test_query = HubCRepository().build_time_series_queryset(
+        test_query = HubCRepository(
+            session_data={"user_id": self.user.id}
+        ).build_time_series_queryset(
             me_models.SatTSC2,
             montrek_time(2024, 2, 5),
         )

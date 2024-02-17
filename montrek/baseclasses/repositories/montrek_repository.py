@@ -20,7 +20,7 @@ from baseclasses.dataclasses.montrek_message import MontrekMessageError
 from django.db.models import Q, Subquery, OuterRef, QuerySet
 from django.db.models import ManyToManyField
 from django.utils import timezone
-from django.core.exceptions import FieldError
+from django.core.exceptions import FieldError, PermissionDenied
 from django.core.paginator import Paginator
 from functools import wraps
 
@@ -118,6 +118,8 @@ class MontrekRepository:
         return fields
 
     def std_create_object(self, data: Dict[str, Any]) -> MontrekHubABC:
+        if not self.session_data.get("user_id"):
+            raise PermissionDenied("User not authenticated!")
         self.std_queryset()
         hub_entity = self._get_hub_from_data(data)
         db_creator = DbCreator(self.hub_class, self._primary_satellite_classes)
