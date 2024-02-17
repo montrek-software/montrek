@@ -1,15 +1,50 @@
 from django.test import TestCase
 from user.models import MontrekUser
-from user.forms import MontrekUserCreationForm
-from django.contrib.auth.forms import UserCreationForm
+from user import forms as user_forms
+from django.contrib.auth import forms as auth_forms
 
-class TestMontrekUserCreationForm:
 
+class TestMontrekUserCreationForm(TestCase):
     def test_is_user_creation_form(self):
-        self.assertTrue(issubclass(MontrekUserCreationForm, UserCreationForm))
+        self.assertTrue(
+            issubclass(
+                user_forms.MontrekUserCreationForm, auth_forms.BaseUserCreationForm
+            )
+        )
 
     def test_model_is_montrek_user(self):
-        self.assertEqual(MontrekUserCreationForm.Meta.model, MontrekUser)
+        self.assertEqual(user_forms.MontrekUserCreationForm.Meta.model, MontrekUser)
 
-    def test_model_fields(self):
-        self.assertEqual(MontrekUserCreationForm.Meta.fields, UserCreationForm.Meta.fields)
+
+class TestMontrekPasswordResetForm(TestCase):
+    def test_is_user_creation_form(self):
+        self.assertTrue(
+            issubclass(
+                user_forms.MontrekPasswordResetForm, auth_forms.PasswordResetForm
+            )
+        )
+
+
+class TestMontrekUserChangeForm(TestCase):
+    def test_is_user_creation_form(self):
+        self.assertTrue(
+            issubclass(user_forms.MontrekUserChangeForm, auth_forms.UserChangeForm)
+        )
+
+
+class TestMontrekAuthenticationForm(TestCase):
+    def test_is_user_creation_form(self):
+        self.assertTrue(
+            issubclass(
+                user_forms.MontrekAuthenticationForm, auth_forms.AuthenticationForm
+            )
+        )
+
+
+class TestMontrekPasswordChangeForm(TestCase):
+    def test_is_user_creation_form(self):
+        self.assertTrue(
+            issubclass(
+                user_forms.MontrekPasswordChangeForm, auth_forms.PasswordChangeForm
+            )
+        )
