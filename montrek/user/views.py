@@ -1,4 +1,4 @@
-from django.contrib.auth import login
+from django.contrib.auth import get_user_model, login
 from django.urls import reverse_lazy
 from django.contrib.auth import views as auth_views
 from django.views import generic as generic_views

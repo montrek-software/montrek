@@ -2,6 +2,7 @@ from decouple import RepositoryIni
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.core import mail
+from django.core.mail import message
 from django.test import TestCase
 from django.urls import reverse
 
@@ -167,6 +168,22 @@ class TestMontrekPasswordResetView(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(messages), 1)
         self.assertEqual(message, "Email: Enter a valid email address.")
+
+    def test_password_reset_form_unknown_email(self):
+        url = reverse("password_reset")
+        data = {
+            "email": "foo@bar.com",
+        }
+        response = self.client.post(url, data)
+        messages = _get_messages_from_response(response)
+        message = str(messages[0])
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(
+            message,
+            "Email: This email address doesn't have an associated user account.",
+        )
 
 
 class TestMontrekPasswordResetCompleteView(TestCase):
