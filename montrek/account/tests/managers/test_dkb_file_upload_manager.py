@@ -36,7 +36,7 @@ class TestDkbAccountFileUploadManager(TestCase):
 
     def test_process(self):
         account_file_upload_processor = DkbFileUploadProcessor(
-            account_hub=self.account_hub
+            account_hub=self.account_hub, session_data={}
         )
         result = account_file_upload_processor.process(self.test_csv_path)
         self.assertEqual(
@@ -55,7 +55,7 @@ class TestDkbAccountFileUploadManager(TestCase):
         )
         acount_hub_instance = AccountRepository().std_queryset().get(pk=acc_no_iban.pk)
         account_file_upload_processor = DkbFileUploadProcessor(
-            account_hub=acount_hub_instance
+            account_hub=acount_hub_instance, session_data={}
         )
         result = account_file_upload_processor.pre_check(self.test_csv_path)
         self.assertEqual(result, False)
@@ -66,7 +66,7 @@ class TestDkbAccountFileUploadManager(TestCase):
 
     def test_post_check_fails(self):
         account_file_upload_processor = DkbFileUploadProcessor(
-            account_hub=self.account_hub
+            account_hub=self.account_hub, session_data={}
         )
         result = account_file_upload_processor.process(self.test_csv_path)
         result = account_file_upload_processor.post_check(self.test_csv_path)

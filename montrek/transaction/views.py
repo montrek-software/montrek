@@ -124,12 +124,13 @@ class TransactionUpdateView(MontrekUpdateView):
         context["account_id"] = context["form"].initial["link_transaction_account"].id
         return context
 
+
 class TransactionDeleteView(MontrekDeleteView):
     repository = TransactionRepository
     page_class = TransactionPage
     success_url = "account"
 
-    
+
 class TransactionCategoryMapDetailView(MontrekDetailView):
     repository = TransactionCategoryMapRepository
     page_class = TransactionCategoryMapPage
@@ -190,7 +191,9 @@ class CreateOrUpdateTransactionCategoryMapMixin:
         transactions = transaction_repository.get_queryset_with_account().filter(
             account_id=account_hub.id,
         )
-        TransactionCategoryManager().assign_transaction_categories_to_transactions(
+        TransactionCategoryManager(
+            session_data=self.session_data,
+        ).assign_transaction_categories_to_transactions(
             transactions,
             transaction_category_map,
         )

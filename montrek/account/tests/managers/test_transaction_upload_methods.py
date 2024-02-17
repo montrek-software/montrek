@@ -13,6 +13,7 @@ from account.repositories.account_repository import AccountRepository
 from credit_institution.tests.factories.credit_institution_factories import (
     CreditInstitutionStaticSatelliteFactory,
 )
+from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
 
 class TestDKBTransactionUpload(TestCase):
@@ -29,6 +30,8 @@ class TestDKBTransactionUpload(TestCase):
         cls.bank_account.hub_entity.link_account_credit_institution.add(
             cls.credit_institution.hub_entity
         )
+        cls.user = MontrekUserFactory()
+        cls.session_data = {"user_id": cls.user.id}
 
     def account(self):
         return (
@@ -37,7 +40,7 @@ class TestDKBTransactionUpload(TestCase):
 
     def test_check_if_upload_method_is_dkb(self):
         with self.assertRaises(AttributeError) as e:
-            upload_dkb_transactions(self.account(), "")
+            upload_dkb_transactions(self.account(), "", self.session_data)
         self.assertEqual(str(e.exception), "Account Upload Method is not of type dkb")
 
     def test_read_dkb_transactions(self):
@@ -65,7 +68,9 @@ class TestDKBTransactionUpload(TestCase):
     def test_upload_dkb_transactions(self):
         self.credit_institution.account_upload_method = "dkb"
         self.credit_institution.save()
-        transactions = upload_dkb_transactions(self.account(), self.test_csv_path)
+        transactions = upload_dkb_transactions(
+            self.account(), self.test_csv_path, self.session_data
+        )
         self.assertEqual(len(transactions), 15)
         transaction_price = 0
         for transaction in transactions:

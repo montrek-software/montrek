@@ -1,3 +1,4 @@
+from typing import Any
 from django.db.models import QuerySet
 from numpy import who
 import pandas as pd
@@ -10,9 +11,10 @@ from transaction.managers.transaction_account_manager import TransactionAccountM
 class OnvistaFileUploadProcessor:
     message = "Not implemented"
 
-    def __init__(self, account_hub: QuerySet):
+    def __init__(self, account_hub: QuerySet, session_data: dict[str, Any]):
         self.account_hub = account_hub
         self.subprocessor = NotImplementedFileUploadProcessor()
+        self.session_data = session_data
 
     def pre_check(self, file_path: str) -> bool:
         self._get_subprocessor(file_path)
@@ -35,7 +37,9 @@ class OnvistaFileUploadProcessor:
         if index_tag.startswith("Depotuebersicht"):
             self.subprocessor = OnvistaFileUploadDepotProcessor(self.account_hub)
         elif index_tag.startswith("Kontouebersicht"):
-            self.subprocessor = OnvistaFileUploadTransactionProcessor(self.account_hub)
+            self.subprocessor = OnvistaFileUploadTransactionProcessor(
+                self.account_hub, session_data=self.session_data
+            )
         else:
             self.subprocessor = NotImplementedFileUploadProcessor()
             self.message = "File cannot be processed"
@@ -116,8 +120,9 @@ class OnvistaFileUploadTransactionProcessor:
     message = "Not implemented"
     input_data_dfs: dict[str, pd.DataFrame] = {}
 
-    def __init__(self, account_hub: QuerySet):
+    def __init__(self, account_hub: QuerySet, session_data: dict[str, Any]):
         self.account_hub = account_hub
+        self.session_data = session_data
 
     def pre_check(self, file_path: str) -> bool:
         input_df = pd.read_csv(
@@ -180,7 +185,9 @@ class OnvistaFileUploadTransactionProcessor:
         )
 
     def _init_transactions_manager(self, transactions_df):
-        return TransactionAccountManager(self.account_hub, transactions_df)
+        return TransactionAccountManager(
+            self.account_hub, transactions_df, self.session_data
+        )
 
     def _prepare_counter_transactions(self, input_df):
         counter_df = (
@@ -221,5 +228,7 @@ class OnvistaFileUploadTransactionProcessor:
     def _get_or_create_asset(self, isin: str, assets: QuerySet) -> int:
         asset = assets.filter(asset_isin=isin)
         if len(asset) == 0:
-            return AssetRepository().std_create_object({"asset_isin": isin})
+            return AssetRepository(session_data=self.session_data).std_create_object(
+                {"asset_isin": isin}
+            )
         return asset.first()

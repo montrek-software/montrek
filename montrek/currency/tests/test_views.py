@@ -2,8 +2,14 @@ from django.test import TestCase
 from django.urls import reverse
 from currency.repositories.currency_repository import CurrencyRepository
 from currency.tests.factories.currency_factories import CurrencyStaticSatelliteFactory
+from user.tests.factories.montrek_user_factories import MontrekUserFactory
+
 
 class TestCurrencyCreate(TestCase):
+    def setUp(self):
+        self.user = MontrekUserFactory()
+        self.client.force_login(self.user)
+
     def test_currency_create_returns_correct_html(self):
         url = reverse("currency_create")
         response = self.client.get(url)
@@ -23,9 +29,11 @@ class TestCurrencyCreate(TestCase):
         self.assertEqual(currency.ccy_name, "test_currency")
         self.assertEqual(currency.ccy_code, "USD")
 
+
 class TestCurrencyDetails(TestCase):
     def setUp(self):
         self.ccy = CurrencyStaticSatelliteFactory()
+
     def test_currency_details_returns_correct_html(self):
         url = reverse("currency_details", kwargs={"pk": self.ccy.hub_entity.id})
         response = self.client.get(url)

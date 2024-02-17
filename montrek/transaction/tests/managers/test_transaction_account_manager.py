@@ -10,6 +10,7 @@ from django.db.models import F, Sum
 from account.models import AccountHub
 from account.tests.factories import account_factories
 from baseclasses.utils import montrek_time
+from user.tests.factories.montrek_user_factories import MontrekUserFactory
 from transaction.tests.factories import transaction_factories
 from transaction.managers.transaction_account_manager import (
     TransactionAccountManager,
@@ -26,13 +27,16 @@ class TestModelUtils(TestCase):
             category="Test Category 1",
             hub_entity__accounts=[self.account.hub_entity],
         )
+        self.session_data = {"user_id": MontrekUserFactory().id}
 
     def test_new_transactions_to_account_from_df_wrong_columns(self):
         account_hub = AccountHub.objects.last()
         test_df = pd.DataFrame({"wrong_column": [1, 2, 3]})
         with self.assertRaises(KeyError) as err:
             TransactionAccountManager(
-                account_hub_object=account_hub, transaction_df=test_df
+                account_hub_object=account_hub,
+                transaction_df=test_df,
+                session_data=self.session_data,
             ).new_transactions_to_account_from_df()
         self.assertEqual(
             str(err.exception),
@@ -64,10 +68,14 @@ class TestModelUtils(TestCase):
             }
         )
         TransactionAccountManager(
-            account_hub_object=account_hub, transaction_df=test_df
+            account_hub_object=account_hub,
+            transaction_df=test_df,
+            session_data=self.session_data,
         ).new_transactions_to_account_from_df()
-        new_transactions = TransactionRepository().get_queryset_with_account().filter(
-            link_transaction_account=account_hub
+        new_transactions = (
+            TransactionRepository()
+            .get_queryset_with_account()
+            .filter(link_transaction_account=account_hub)
         )
         self.assertEqual(new_transactions[0].transaction_date, montrek_time(2022, 1, 1))
         self.assertEqual(new_transactions[0].transaction_amount, 1)

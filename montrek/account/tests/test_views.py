@@ -6,6 +6,7 @@ from account.models import AccountHub
 from account.models import AccountStaticSatellite
 from account.tests.factories.account_factories import AccountStaticSatelliteFactory
 from account.tests.factories.account_factories import BankAccountStaticSatelliteFactory
+from user.tests.factories.montrek_user_factories import MontrekUserFactory
 from transaction.tests.factories.transaction_factories import (
     TransactionSatelliteFactory,
     TransactionCategoryMapSatelliteFactory,
@@ -222,6 +223,8 @@ class TestDKBAccountUploadFileView(TestCase):
         self.bcc = BankAccountStaticSatelliteFactory.create(
             hub_entity=self.acc.hub_entity,
         )
+        self.user = MontrekUserFactory()
+        self.client.force_login(self.user)
 
     def test_account_upload_file_view_returns_correct_html(self):
         response = self.client.get(f"/account/{self.acc.hub_entity.id}/upload_file")

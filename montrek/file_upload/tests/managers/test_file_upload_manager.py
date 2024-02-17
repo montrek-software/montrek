@@ -4,12 +4,13 @@ from file_upload.managers.file_upload_manager import FileUploadManager
 from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepository,
 )
+from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
 
 class MockFileUploadProcessor:
     message = "File processed"
 
-    def __init__(self, file_upload_registry_id, **kwargs):
+    def __init__(self, file_upload_registry_id, session_data, **kwargs):
         pass
 
     def pre_check(self, file_path):
@@ -22,49 +23,22 @@ class MockFileUploadProcessor:
         return True
 
 
-class MockFileUploadProcessorFail:
+class MockFileUploadProcessorFail(MockFileUploadProcessor):
     message = "File not processed"
 
-    def __init__(self, file_upload_registry_id, **kwargs):
-        pass
-
-    def pre_check(self, file_path):
-        return True
-
     def process(self, file_path):
         return False
 
-    def post_check(self, file_path):
-        return True
 
-
-class MockFileUploadProcessorPreCheckFail:
-    message = "Pre Cheeck failed"
-
-    def __init__(self, file_upload_registry_id, **kwargs):
-        pass
+class MockFileUploadProcessorPreCheckFail(MockFileUploadProcessor):
+    message = "Pre Check failed"
 
     def pre_check(self, file_path):
         return False
 
-    def process(self, file_path):
-        return True
 
-    def post_check(self, file_path):
-        return True
-
-
-class MockFileUploadProcessorPostCheckFail:
-    message = "Pre Cheeck failed"
-
-    def __init__(self, file_upload_registry_id, **kwargs):
-        pass
-
-    def pre_check(self, file_path):
-        return True
-
-    def process(self, file_path):
-        return True
+class MockFileUploadProcessorPostCheckFail(MockFileUploadProcessor):
+    message = "Pre Check failed"
 
     def post_check(self, file_path):
         return False
@@ -77,10 +51,15 @@ class TestFileUploadManager(TestCase):
             content="test".encode("utf-8"),
             content_type="text/plain",
         )
+        self.user = MontrekUserFactory()
+        self.session_data = {"user_id": self.user.id}
 
     def test_fum_init(self):
+        upload_processor = MockFileUploadProcessor
         fum = FileUploadManager(
-            file_upload_processor_class=MockFileUploadProcessor, file=self.test_file
+            file_upload_processor_class=upload_processor,
+            file=self.test_file,
+            session_data=self.session_data,
         )
         fum.init_upload()
         file_upload_registry_query = FileUploadRegistryRepository().std_queryset()
@@ -96,7 +75,9 @@ class TestFileUploadManager(TestCase):
     def test_fum_upload_success(self):
         upload_processor = MockFileUploadProcessor
         fum = FileUploadManager(
-            file_upload_processor_class=upload_processor, file=self.test_file
+            file_upload_processor_class=upload_processor,
+            file=self.test_file,
+            session_data=self.session_data,
         )
         fum.init_upload()
         fum.upload_and_process()
@@ -109,7 +90,9 @@ class TestFileUploadManager(TestCase):
     def test_fum_upload_failure(self):
         upload_processor = MockFileUploadProcessorFail
         fum = FileUploadManager(
-            file_upload_processor_class=upload_processor, file=self.test_file
+            file_upload_processor_class=upload_processor,
+            file=self.test_file,
+            session_data=self.session_data,
         )
         fum.init_upload()
         fum.upload_and_process()
@@ -122,7 +105,9 @@ class TestFileUploadManager(TestCase):
     def test_fum_pre_check_fails(self):
         upload_processor = MockFileUploadProcessorPreCheckFail
         fum = FileUploadManager(
-            file_upload_processor_class=upload_processor, file=self.test_file
+            file_upload_processor_class=upload_processor,
+            file=self.test_file,
+            session_data=self.session_data,
         )
         fum.init_upload()
         fum.upload_and_process()
@@ -135,7 +120,9 @@ class TestFileUploadManager(TestCase):
     def test_fum_post_check_fails(self):
         upload_processor = MockFileUploadProcessorPostCheckFail
         fum = FileUploadManager(
-            file_upload_processor_class=upload_processor, file=self.test_file
+            file_upload_processor_class=upload_processor,
+            file=self.test_file,
+            session_data=self.session_data,
         )
         fum.init_upload()
         fum.upload_and_process()
