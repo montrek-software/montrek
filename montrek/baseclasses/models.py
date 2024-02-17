@@ -1,6 +1,7 @@
 import hashlib
 import datetime
 from enum import Enum
+from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models.fields import decimal
 from django.utils import timezone
@@ -32,8 +33,20 @@ class StateDateMixin(models.Model):
     )
 
 
+class UserMixin(models.Model):
+    class Meta:
+        abstract = True
+
+    created_by = models.ForeignKey(
+        get_user_model(),
+        on_delete=models.RESTRICT,
+        related_name="%(class)s",
+        null=True,
+    )
+
+
 # Base Hub Model ABC
-class MontrekHubABC(TimeStampMixin, StateDateMixin):
+class MontrekHubABC(TimeStampMixin, StateDateMixin, UserMixin):
     class Meta:
         abstract = True
 
@@ -41,7 +54,7 @@ class MontrekHubABC(TimeStampMixin, StateDateMixin):
 
 
 # Base Static Satellite Model ABC
-class MontrekSatelliteABC(TimeStampMixin, StateDateMixin):
+class MontrekSatelliteABC(TimeStampMixin, StateDateMixin, UserMixin):
     class Meta:
         abstract = True
         indexes = [
