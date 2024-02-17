@@ -5,10 +5,7 @@ from user import views
 urlpatterns = [
     path("signup/", views.MontrekSignUpView.as_view(), name="signup"),
     path("login/", views.MontrekLoginView.as_view(), name="login"),
-    # todo: get this to work with montrek view
-    path(
-        "logout/", views.auth_views.LogoutView.as_view(next_page="login"), name="logout"
-    ),
+    path("logout/", views.MontrekLogoutView.as_view(next_page="login"), name="logout"),
     path(
         "password_reset/",
         views.MontrekPasswordResetView.as_view(),

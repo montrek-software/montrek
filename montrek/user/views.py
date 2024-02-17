@@ -64,12 +64,8 @@ class MontrekLoginView(generic_views.FormView, MessageHandlerMixin):
         return context
 
 
-class MontrekLogoutView(generic_views.RedirectView):
-    url = reverse_lazy("login")
-
-    def get(self, request, *args, **kwargs):
-        messages.info(request, "Goodbye!")
-        return super().get(request, *args, **kwargs)
+class MontrekLogoutView(auth_views.LogoutView):
+    pass
 
 
 class MontrekPasswordResetConfirmView(auth_views.PasswordResetConfirmView):
