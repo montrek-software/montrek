@@ -6,6 +6,7 @@ from baseclasses.pages import MontrekPage
 
 class AssetOverviewPage(MontrekPage):
     page_title = "Assets"
+    show_date_range_selector = True
 
     def get_tabs(self):
         action_new_asset = ActionElement(
@@ -25,6 +26,8 @@ class AssetOverviewPage(MontrekPage):
 
 
 class AssetPage(MontrekPage):
+    show_date_range_selector = True
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         if "pk" not in kwargs:
@@ -51,4 +54,10 @@ class AssetPage(MontrekPage):
             html_id="tab_details",
             actions=(action_back, action_update_asset),
         )
-        return [details_tab]
+        prices_tab = TabElement(
+            name="Prices",
+            link=reverse("asset_price_ts_table", args=[self.obj.id]),
+            html_id="tab_asset_price_list",
+            actions=(action_back,),
+        )
+        return [details_tab, prices_tab]

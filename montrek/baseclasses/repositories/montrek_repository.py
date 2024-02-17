@@ -1,7 +1,7 @@
 from datetime import datetime
 import pandas as pd
 from typing import Any, List, Dict, Type, Tuple
-from baseclasses.models import MontrekSatelliteABC
+from baseclasses.models import MontrekSatelliteABC, MontrekTimeSeriesSatelliteABC
 from baseclasses.models import MontrekHubABC
 from baseclasses.models import MontrekLinkABC
 from baseclasses.repositories.annotation_manager import (
@@ -195,6 +195,23 @@ class MontrekRepository:
             queryset = queryset.filter(**self.query_filter)
         except FieldError as e:
             self.messages.append(MontrekMessageError(e))
+        return queryset
+
+    def build_time_series_queryset(
+        self,
+        time_series_satellite_class: type[MontrekSatelliteABC],
+        reference_date: timezone.datetime,
+    ):
+        if not issubclass(time_series_satellite_class, MontrekTimeSeriesSatelliteABC):
+            raise ValueError(
+                f"{time_series_satellite_class.__name__} is not a subclass of MontrekTimeSeriesSatelliteABC"
+            )
+        queryset = time_series_satellite_class.objects.filter(
+            state_date_start__lte=reference_date,
+            state_date_end__gte=reference_date,
+            value_date__lte=self.session_end_date,
+            value_date__gte=self.session_start_date,
+        ).order_by("value_date")
         return queryset
 
     def rename_field(self, field: str, new_name: str):

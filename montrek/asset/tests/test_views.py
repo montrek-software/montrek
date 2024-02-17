@@ -2,7 +2,11 @@ from django.test import TestCase
 from django.urls import reverse
 
 from asset.repositories.asset_repository import AssetRepository
-from asset.tests.factories.asset_factories import AssetStaticSatelliteFactory
+from asset.tests.factories.asset_factories import (
+    AssetStaticSatelliteFactory,
+    AssetHubFactory,
+    AssetTimeSeriesSatelliteFactory,
+)
 from currency.tests.factories.currency_factories import CurrencyStaticSatelliteFactory
 
 
@@ -47,6 +51,26 @@ class TestAssetDetailsView(TestCase):
         url = reverse("asset_details", kwargs={"pk": asset.hub_entity.id})
         response = self.client.get(url)
         self.assertTemplateUsed(response, "montrek_details.html")
+
+
+class TestAssetPriceTSTableView(TestCase):
+    def test_asset_details_returns_correct_html(self):
+        asset_hub = AssetHubFactory.create()
+        AssetTimeSeriesSatelliteFactory.create(
+            hub_entity=asset_hub, price=102, value_date="2024-02-03"
+        )
+        AssetTimeSeriesSatelliteFactory.create(
+            hub_entity=asset_hub, price=100, value_date="2024-02-01"
+        )
+        AssetTimeSeriesSatelliteFactory.create(
+            hub_entity=asset_hub, price=103, value_date="2024-02-04"
+        )
+        AssetTimeSeriesSatelliteFactory.create(
+            hub_entity=asset_hub, price=101, value_date="2024-02-02"
+        )
+        url = reverse("asset_price_ts_table", kwargs={"pk": asset_hub.id})
+        response = self.client.get(url)
+        self.assertTemplateUsed(response, "montrek_table.html")
 
 
 class TestAssetUpdateView(TestCase):

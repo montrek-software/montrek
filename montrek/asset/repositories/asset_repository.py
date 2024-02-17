@@ -1,3 +1,4 @@
+from django.db.models import QuerySet
 from asset.models import AssetHub
 from asset.models import AssetStaticSatellite
 from asset.models import AssetLiquidSatellite
@@ -41,3 +42,14 @@ class AssetRepository(MontrekRepository):
             self.reference_date,
         )
         return self.build_queryset()
+
+    def get_asset_prices(self, asset_id: int) -> QuerySet:
+        queryset = self.build_time_series_queryset(
+            AssetTimeSeriesSatellite, self.reference_date
+        ).filter(hub_entity_id=asset_id)
+        # TODO: Add performance calculation
+        # - [ ] Get queryset as DataFrame
+        # - [ ] Do DataFrame operations
+        # - [ ] Extend ListView to accept DataFrames
+
+        return queryset
