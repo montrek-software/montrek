@@ -6,7 +6,9 @@ urlpatterns = [
     path("signup/", views.MontrekSignUpView.as_view(), name="signup"),
     path("login/", views.MontrekLoginView.as_view(), name="login"),
     # todo: get this to work with montrek view
-    path("logout/", views.auth_views.LogoutView.as_view(next_page="login"), name="logout"),
+    path(
+        "logout/", views.auth_views.LogoutView.as_view(next_page="login"), name="logout"
+    ),
     path(
         "password_reset/",
         views.MontrekPasswordResetView.as_view(),
@@ -22,5 +24,9 @@ urlpatterns = [
         views.MontrekPasswordResetCompleteView.as_view(),
         name="password_reset_complete",
     ),
-    path("password_change", views.MontrekPasswordChangeView.as_view(), name="password_change"),
+    path(
+        "password_change",
+        views.MontrekPasswordChangeView.as_view(),
+        name="password_change",
+    ),
 ]
