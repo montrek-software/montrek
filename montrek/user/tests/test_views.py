@@ -86,6 +86,7 @@ class TestMontrekLoginView(TestCase):
         self.assertRedirects(response, reverse("home"))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]), "You have logged in as test@example.com!")
+        self.assertEqual(int(self.client.session["_auth_user_id"]), self.user.pk)
 
     def test_login_form_invalid_submission(self):
         url = reverse("login")
