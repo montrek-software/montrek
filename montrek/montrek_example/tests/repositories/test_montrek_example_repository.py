@@ -73,7 +73,7 @@ class TestMontrekRepositorySatellite(TestCase):
         self.assertEqual(queryset[1].field_a2_float, None)
 
 
-class TestMontrekCreatObject(TestCase):
+class TestMontrekCreateObject(TestCase):
     def setUp(self):
         self.user = MontrekUserFactory()
 
@@ -83,6 +83,7 @@ class TestMontrekCreatObject(TestCase):
         self.assertEqual(me_models.SatA1.objects.count(), 1)
         self.assertEqual(me_models.SatA1.objects.first().field_a1_int, 5)
         self.assertEqual(me_models.SatA1.objects.first().field_a1_str, "test")
+        self.assertEqual(me_models.SatA1.objects.first().created_by_id, self.user.id)
         self.assertEqual(me_models.HubA.objects.count(), 1)
         self.assertEqual(me_models.SatA2.objects.count(), 0)
 
@@ -99,10 +100,12 @@ class TestMontrekCreatObject(TestCase):
         self.assertEqual(me_models.SatA1.objects.count(), 1)
         self.assertEqual(me_models.SatA1.objects.first().field_a1_int, 5)
         self.assertEqual(me_models.SatA1.objects.first().field_a1_str, "test")
+        self.assertEqual(me_models.SatA1.objects.first().created_by_id, self.user.id)
         self.assertEqual(me_models.HubA.objects.count(), 1)
         self.assertEqual(me_models.SatA2.objects.count(), 1)
         self.assertEqual(me_models.SatA2.objects.first().field_a2_float, 6.0)
         self.assertEqual(me_models.SatA2.objects.first().field_a2_str, "test2")
+        self.assertEqual(me_models.SatA2.objects.first().created_by_id, self.user.id)
 
     def test_std_create_object_existing_object(self):
         repository = HubARepository(session_data={"user_id": self.user.id})
@@ -118,10 +121,32 @@ class TestMontrekCreatObject(TestCase):
             self.assertEqual(me_models.SatA1.objects.count(), 1)
             self.assertEqual(me_models.SatA1.objects.first().field_a1_int, 5)
             self.assertEqual(me_models.SatA1.objects.first().field_a1_str, "test")
+            self.assertEqual(
+                me_models.SatA1.objects.first().created_by_id, self.user.id
+            )
             self.assertEqual(me_models.HubA.objects.count(), 1)
             self.assertEqual(me_models.SatA2.objects.count(), 1)
             self.assertEqual(me_models.SatA2.objects.first().field_a2_float, 6.0)
             self.assertEqual(me_models.SatA2.objects.first().field_a2_str, "test2")
+            self.assertEqual(
+                me_models.SatA2.objects.first().created_by_id, self.user.id
+            )
+
+    def test_std_create_object_existing_object_different_user(self):
+        users = MontrekUserFactory.create_batch(2)
+        for i in range(2):
+            repository = HubARepository(session_data={"user_id": users[i].id})
+            repository.std_create_object(
+                {
+                    "field_a1_int": 5,
+                    "field_a1_str": "test",
+                }
+            )
+            self.assertEqual(me_models.SatA1.objects.count(), 1)
+            self.assertEqual(me_models.SatA1.objects.last().field_a1_int, 5)
+            self.assertEqual(me_models.SatA1.objects.last().field_a1_str, "test")
+            self.assertEqual(me_models.SatA1.objects.last().created_by_id, users[0].id)
+            self.assertEqual(me_models.HubA.objects.count(), 1)
 
     def test_std_create_object_existing_object_make_copy(self):
         # Since hub_entity_id is a identifier field for the HubB satellites, any entry with the same attributes will
@@ -218,9 +243,7 @@ class TestMontrekCreatObject(TestCase):
             }
         )
         # The std_queryset should return the adjusted object
-        a_object = (
-            HubARepository(session_data={"user_id": self.user.id}).std_queryset().get()
-        )
+        a_object = HubARepository().std_queryset().get()
         self.assertEqual(a_object.field_a1_str, "test_new")
         self.assertEqual(a_object.field_a1_int, 5)
         self.assertEqual(a_object.field_a2_str, "test2")

@@ -118,12 +118,13 @@ class MontrekRepository:
         return fields
 
     def std_create_object(self, data: Dict[str, Any]) -> MontrekHubABC:
-        if not self.session_data.get("user_id"):
+        user_id = self.session_data.get("user_id")
+        if not user_id:
             raise PermissionDenied("User not authenticated!")
         self.std_queryset()
-        hub_entity = self._get_hub_from_data(data)
+        hub_entity = self._get_hub_from_data(data, user_id)
         db_creator = DbCreator(self.hub_class, self._primary_satellite_classes)
-        created_hub = db_creator.create(data, hub_entity)
+        created_hub = db_creator.create(data, hub_entity, user_id)
         db_creator.save_stalled_objects()
         return created_hub
 
@@ -239,7 +240,7 @@ class MontrekRepository:
         if link_class not in self._primary_link_classes:
             self._primary_link_classes.append(link_class)
 
-    def _get_hub_from_data(self, data: Dict[str, Any]) -> MontrekHubABC:
+    def _get_hub_from_data(self, data: Dict[str, Any], user_id: int) -> MontrekHubABC:
         if (
             "hub_entity_id" in data
             and data["hub_entity_id"]
@@ -247,7 +248,7 @@ class MontrekRepository:
         ):
             hub_entity = self.hub_class.objects.get(pk=data["hub_entity_id"])
         else:
-            hub_entity = self.hub_class()
+            hub_entity = self.hub_class(created_by_id=user_id)
         return hub_entity
 
 

@@ -1,6 +1,7 @@
 import hashlib
 import datetime
 from enum import Enum
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models.fields import decimal
@@ -38,7 +39,7 @@ class UserMixin(models.Model):
         abstract = True
 
     created_by = models.ForeignKey(
-        get_user_model(),
+        settings.AUTH_USER_MODEL,
         on_delete=models.RESTRICT,
         related_name="%(class)s",
         null=True,

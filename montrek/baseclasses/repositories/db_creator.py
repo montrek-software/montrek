@@ -1,6 +1,7 @@
 import datetime
-from typing import Any, Protocol
+from typing import Any, List, Protocol
 from dataclasses import dataclass
+from django.contrib.auth import get_user_model
 from django.utils import timezone
 from baseclasses.models import (
     MontrekSatelliteABC,
@@ -49,7 +50,9 @@ class DbCreator:
         }
         self.stalled_links = {}
 
-    def create(self, data: dict[str, Any], hub_entity: MontrekHubABC) -> None:
+    def create(
+        self, data: dict[str, Any], hub_entity: MontrekHubABC, user_id: int
+    ) -> None:
         selected_satellites = {"new": [], "existing": [], "updated": []}
         creation_date = timezone.now()
         self.hub_entity = hub_entity
@@ -62,6 +65,7 @@ class DbCreator:
             if len(sat_data) == 0:
                 continue
             sat_data = self._make_timezone_aware(sat_data)
+            sat_data["created_by_id"] = user_id
             sat = satellite_class(hub_entity=self.hub_entity, **sat_data)
             sat = self._process_new_satellite(sat, satellite_class)
             selected_satellites[sat.state].append(sat)
@@ -131,10 +135,10 @@ class DbCreator:
         satellite: MontrekSatelliteABC,
         satellite_class: type[MontrekSatelliteABC],
     ) -> SatelliteCreationState:
-        # Check if satellite already exists, if it is updating or if it is new
+        # Check if satellite already exists, if it is updated or if it is new
         sat_hash_identifier = satellite.get_hash_identifier
         sat_hash_value = satellite.get_hash_value
-        # TODO: Revisit thsi filter and if it does not work if more Satellite have the same values
+        # TODO: Revisit this filter and check if it does not work if more Satellite have the same values
         satellite_updates_or_none = (
             satellite_class.objects.filter(hash_identifier=sat_hash_identifier)
             .order_by("-state_date_start")
@@ -195,7 +199,10 @@ class DbCreator:
             self._stall_satellite(satellite)
 
     def _update_existing_satellites(
-        self, existing_satellites, reference_hub, creation_date
+        self,
+        existing_satellites: List[MontrekSatelliteABC],
+        reference_hub: MontrekHubABC,
+        creation_date: timezone.datetime,
     ):
         if not existing_satellites:
             return
