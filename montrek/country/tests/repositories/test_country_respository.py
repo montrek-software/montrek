@@ -30,7 +30,6 @@ class CountryRepositoryTest(TestCase):
         self.assertEqual(test_countries[3].country_name, "TestCountry")
         self.assertEqual(test_countries[3].country_code, "TST")
         input_data = {"country_name": "UnitedTestCountry", "country_code": "TST"}
-        repository = CountryRepository(session_data={"user_id": self.user.id})
         repository.std_create_object(input_data)
         test_countries = repository.std_queryset()
         self.assertEqual(len(test_countries), 4)
