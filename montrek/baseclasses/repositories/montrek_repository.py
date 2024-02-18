@@ -131,12 +131,15 @@ class MontrekRepository:
     def create_objects_from_data_frame(
         self, data_frame: pd.DataFrame
     ) -> List[MontrekHubABC]:
+        user_id = self.session_data.get("user_id")
+        if not user_id:
+            raise PermissionDenied("User not authenticated!")
         self.std_queryset()
         db_creator = DbCreator(self.hub_class, self._primary_satellite_classes)
         created_hubs = []
         for _, row in data_frame.iterrows():
-            hub_entity = self._get_hub_from_data(row)
-            created_hub = db_creator.create(row, hub_entity)
+            hub_entity = self._get_hub_from_data(row, user_id)
+            created_hub = db_creator.create(row, hub_entity, user_id)
             created_hubs.append(created_hub)
         db_creator.save_stalled_objects()
         return created_hubs
