@@ -149,7 +149,8 @@ class MontrekListView(ListView, MontrekPageViewMixin, MontrekViewMixin):
 
 
 class MontrekHistoryListView(MontrekListView):
-    pass
+    def get_queryset(self):
+        return self.repository_object.get_history_queryset(pk=self.kwargs["pk"])
 
 
 class MontrekDetailView(DetailView, MontrekPageViewMixin, MontrekViewMixin):
