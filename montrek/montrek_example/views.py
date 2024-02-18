@@ -1,5 +1,6 @@
 from baseclasses.views import MontrekCreateView
 from baseclasses.views import MontrekListView
+from baseclasses.views import MontrekHistoryListView
 from baseclasses.views import MontrekDetailView
 from baseclasses.views import MontrekDeleteView
 from baseclasses.views import MontrekUpdateView
@@ -24,11 +25,13 @@ class MontrekExampleACreate(MontrekCreateView):
     form_class = ExampleACreateForm
     success_url = "montrek_example_a_list"
 
+
 class MontrekExampleAUpdate(MontrekUpdateView):
     repository = HubARepository
     page_class = MontrekExampleAAppPage
     form_class = ExampleACreateForm
     success_url = "montrek_example_a_list"
+
 
 class MontrekExampleAList(MontrekListView):
     repository = HubARepository
@@ -66,10 +69,13 @@ class MontrekExampleAList(MontrekListView):
                 hover_text="Delete Example A",
             ),
         )
+
+
 class MontrekExampleADelete(MontrekDeleteView):
     repository = HubARepository
     page_class = MontrekExampleAAppPage
     success_url = "montrek_example_a_list"
+
 
 class MontrekExampleADetails(MontrekDetailView):
     repository = HubARepository
@@ -84,6 +90,7 @@ class MontrekExampleADetails(MontrekDetailView):
             FloatTableElement(name="A2 Float", attr="field_a2_float"),
             StringTableElement(name="B1 String", attr="field_b1_str"),
         )
+
 
 class MontrekExampleBCreate(MontrekCreateView):
     repository = HubBRepository
@@ -103,4 +110,23 @@ class MontrekExampleBList(MontrekListView):
             IntTableElement(name="B1 Date", attr="field_b1_date"),
             StringTableElement(name="B2 String", attr="field_b2_str"),
             StringTableElement(name="B2 Choice", attr="field_b2_choice"),
+        )
+
+    success_url = "montrek_example_b_list"
+
+
+class MontrekExampleAHistory(MontrekHistoryListView):
+    repository = HubARepository
+    page_class = MontrekExampleAAppPage
+    tab = "tab_example_a_history"
+    title = "Example A History"
+
+    @property
+    def elements(self) -> tuple:
+        return (
+            StringTableElement(name="A1 String", attr="field_a1_str"),
+            IntTableElement(name="A1 Int", attr="field_a1_int"),
+            StringTableElement(name="A2 String", attr="field_a2_str"),
+            FloatTableElement(name="A2 Float", attr="field_a2_float"),
+            StringTableElement(name="B1 String", attr="field_b1_str"),
         )

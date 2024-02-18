@@ -29,4 +29,9 @@ urlpatterns = [
         views.MontrekExampleADelete.as_view(),
         name="montrek_example_a_delete",
     ),
+    path(
+        "a/<int:pk>/history",
+        views.MontrekExampleAHistory.as_view(),
+        name="montrek_example_a_history",
+    ),
 ]

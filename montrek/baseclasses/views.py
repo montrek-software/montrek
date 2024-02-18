@@ -148,6 +148,10 @@ class MontrekListView(ListView, MontrekPageViewMixin, MontrekViewMixin):
         return context
 
 
+class MontrekHistoryListView(MontrekListView):
+    pass
+
+
 class MontrekDetailView(DetailView, MontrekPageViewMixin, MontrekViewMixin):
     template_name = "montrek_details.html"
     repository = MontrekRepository
