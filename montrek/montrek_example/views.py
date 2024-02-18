@@ -12,7 +12,7 @@ from baseclasses.dataclasses.table_elements import LinkTableElement
 from montrek_example.repositories.hub_a_repository import HubARepository
 from montrek_example.repositories.hub_b_repository import HubBRepository
 from montrek_example.forms import ExampleACreateForm
-from montrek_example.pages import MontrekExampleAAppPage
+from montrek_example.pages import ExampleAPage, MontrekExampleAAppPage
 from montrek_example.pages import MontrekExampleBAppPage
 
 
@@ -79,7 +79,9 @@ class MontrekExampleADelete(MontrekDeleteView):
 
 class MontrekExampleADetails(MontrekDetailView):
     repository = HubARepository
-    page_class = MontrekExampleAAppPage
+    page_class = ExampleAPage
+    tab = "tab_details"
+    title = "Example A Details"
 
     @property
     def elements(self) -> list:
