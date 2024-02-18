@@ -4,7 +4,7 @@ from baseclasses.views import MontrekHistoryListView
 from baseclasses.views import MontrekDetailView
 from baseclasses.views import MontrekDeleteView
 from baseclasses.views import MontrekUpdateView
-from baseclasses.dataclasses.table_elements import StringTableElement
+from baseclasses.dataclasses.table_elements import DateTableElement, StringTableElement
 from baseclasses.dataclasses.table_elements import FloatTableElement
 from baseclasses.dataclasses.table_elements import IntTableElement
 from baseclasses.dataclasses.table_elements import LinkTableElement
@@ -131,4 +131,5 @@ class MontrekExampleAHistory(MontrekHistoryListView):
             StringTableElement(name="A2 String", attr="field_a2_str"),
             FloatTableElement(name="A2 Float", attr="field_a2_float"),
             StringTableElement(name="B1 String", attr="field_b1_str"),
+            DateTableElement(name="Change Date", attr="change_date"),
         )
