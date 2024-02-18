@@ -545,3 +545,38 @@ class TestTimeSeries(TestCase):
             montrek_time(2024, 2, 5),
         )
         self.assertEqual(test_query.count(), 4)
+
+
+class TestHistory(TestCase):
+    def test_history_one_satellite(self):
+        huba = me_factories.HubAFactory()
+        me_factories.SatA1Factory(
+            hub_entity=huba,
+            field_a1_str="TestFeld",
+            field_a1_int=5,
+            state_date_end=montrek_time(2024, 2, 17),
+        )
+        me_factories.SatA1Factory(
+            hub_entity=huba,
+            field_a1_str="TestFeld",
+            field_a1_int=6,
+            state_date_start=montrek_time(2024, 2, 17),
+        )
+        me_factories.SatA2Factory(
+            hub_entity=huba,
+            field_a2_str="ConstantTestFeld",
+            field_a2_float=6.0,
+        )
+        repository = HubARepository()
+        test_queryset = repository.get_history_queryset(huba.id)
+        self.assertEqual(test_queryset.count(), 2)
+        self.assertEqual(test_queryset[0].field_a1_int, 5)
+        self.assertEqual(test_queryset[1].field_a1_int, 6)
+        self.assertEqual(test_queryset[0].change_date[:10], "0001-01-01")
+        self.assertEqual(test_queryset[1].change_date[:10], "2024-02-17")
+
+        self.assertEqual(test_queryset[0].field_a1_str, test_queryset[1].field_a1_str)
+        self.assertEqual(test_queryset[0].field_a2_str, test_queryset[1].field_a2_str)
+        self.assertEqual(
+            test_queryset[0].field_a2_float, test_queryset[1].field_a2_float
+        )
