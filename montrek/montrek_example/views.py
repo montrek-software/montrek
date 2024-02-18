@@ -28,7 +28,7 @@ class MontrekExampleACreate(MontrekCreateView):
 
 class MontrekExampleAUpdate(MontrekUpdateView):
     repository = HubARepository
-    page_class = MontrekExampleAAppPage
+    page_class = ExampleAPage
     form_class = ExampleACreateForm
     success_url = "montrek_example_a_list"
 
@@ -73,7 +73,7 @@ class MontrekExampleAList(MontrekListView):
 
 class MontrekExampleADelete(MontrekDeleteView):
     repository = HubARepository
-    page_class = MontrekExampleAAppPage
+    page_class = ExampleAPage
     success_url = "montrek_example_a_list"
 
 
@@ -119,8 +119,8 @@ class MontrekExampleBList(MontrekListView):
 
 class MontrekExampleAHistory(MontrekHistoryListView):
     repository = HubARepository
-    page_class = MontrekExampleAAppPage
-    tab = "tab_example_a_history"
+    page_class = ExampleAPage
+    tab = "tab_history"
     title = "Example A History"
 
     @property

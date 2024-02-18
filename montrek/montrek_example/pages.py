@@ -51,7 +51,13 @@ class ExampleAPage(MontrekPage):
             html_id="tab_details",
             actions=(action_back, action_update_example_a),
         )
-        return [details_tab]
+        history_tab = TabElement(
+            name="History",
+            link=reverse("montrek_example_a_history", args=[self.obj.id]),
+            html_id="tab_history",
+            actions=(action_back,),
+        )
+        return [details_tab, history_tab]
 
 
 class MontrekExampleBAppPage(MontrekPage):
