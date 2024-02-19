@@ -1,6 +1,5 @@
 from typing import Any
 from django.db.models import QuerySet
-from numpy import who
 import pandas as pd
 from account.managers.not_implemented_processor import NotImplementedFileUploadProcessor
 from asset.repositories.asset_repository import AssetRepository
@@ -35,10 +34,12 @@ class OnvistaFileUploadProcessor:
     def _get_subprocessor(self, file_path: str):
         index_tag = open(file_path, encoding="utf-8-sig").readline().strip()
         if index_tag.startswith("Depotuebersicht"):
-            self.subprocessor = OnvistaFileUploadDepotProcessor(self.account_hub)
+            self.subprocessor = OnvistaFileUploadDepotProcessor(
+                self.account_hub, self.session_data
+            )
         elif index_tag.startswith("Kontouebersicht"):
             self.subprocessor = OnvistaFileUploadTransactionProcessor(
-                self.account_hub, session_data=self.session_data
+                self.account_hub, self.session_data
             )
         else:
             self.subprocessor = NotImplementedFileUploadProcessor()
@@ -49,8 +50,9 @@ class OnvistaFileUploadDepotProcessor:
     message = "Not implemented"
     input_data_df = pd.DataFrame()
 
-    def __init__(self, account_hub: QuerySet):
+    def __init__(self, account_hub: QuerySet, session_data: dict[str, Any]):
         self.account_hub = account_hub
+        self.session_data = session_data
 
     def pre_check(self, file_path: str) -> bool:
         return True
@@ -61,7 +63,7 @@ class OnvistaFileUploadDepotProcessor:
         return True
 
     def post_check(self, file_path: str) -> bool:
-        depot = AccountRepository().get_depot_data(self.account_hub.pk)
+        depot = AccountRepository(self.session_data).get_depot_data(self.account_hub.pk)
         self.input_data_df["account_shares"] = self.input_data_df.apply(
             lambda x: self._get_depot_quantity(x, depot), axis=1
         )
@@ -103,7 +105,7 @@ class OnvistaFileUploadDepotProcessor:
         )
 
     def _create_assets(self):
-        AssetRepository().create_objects_from_data_frame(
+        AssetRepository(self.session_data).create_objects_from_data_frame(
             self.input_data_df,
         )
         self.message = f"Created {self.input_data_df.shape[0]} assets"

@@ -56,7 +56,7 @@ class AccountRegressionTests(TestCase):
         creator = DbCreator(
             hub_entity_class=TransactionHub, satellite_classes=[TransactionSatellite]
         )
-        creator.create(test_data, TransactionHub())
+        creator.create(test_data, TransactionHub(), self.user.id)
         creator.save_stalled_objects()
         self.assertEqual(len(transactions), 15)
         self.assertEqual(query.first().typename, "TestCat")

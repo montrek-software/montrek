@@ -1,4 +1,5 @@
 import os
+from user.tests.factories.montrek_user_factories import MontrekUserFactory
 from django.test import TestCase
 from account.tests.factories.account_factories import (
     AccountHubFactory,
@@ -33,10 +34,11 @@ class TestDkbAccountFileUploadManager(TestCase):
         upload_registry = FileUploadRegistryStaticSatelliteFactory()
         account_hub.link_account_file_upload_registry.add(upload_registry.hub_entity)
         self.account_hub = AccountRepository().std_queryset().get(pk=account_hub.pk)
+        self.user = MontrekUserFactory()
 
     def test_process(self):
         account_file_upload_processor = DkbFileUploadProcessor(
-            account_hub=self.account_hub, session_data={}
+            account_hub=self.account_hub, session_data={"user_id": self.user.id}
         )
         result = account_file_upload_processor.process(self.test_csv_path)
         self.assertEqual(
@@ -66,7 +68,7 @@ class TestDkbAccountFileUploadManager(TestCase):
 
     def test_post_check_fails(self):
         account_file_upload_processor = DkbFileUploadProcessor(
-            account_hub=self.account_hub, session_data={}
+            account_hub=self.account_hub, session_data={"user_id": self.user.id}
         )
         result = account_file_upload_processor.process(self.test_csv_path)
         result = account_file_upload_processor.post_check(self.test_csv_path)

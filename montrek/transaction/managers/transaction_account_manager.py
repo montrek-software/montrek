@@ -19,8 +19,8 @@ class TransactionAccountManager:
     ):
         self.account_hub_object = account_hub_object
         self.transaction_df = transaction_df
-        self.transaction_repository = TransactionRepository()
         self.session_data = session_data
+        self.transaction_repository = TransactionRepository(self.session_data)
 
     def new_transactions_to_account_from_df(
         self,
