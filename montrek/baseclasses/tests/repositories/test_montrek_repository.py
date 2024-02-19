@@ -1,9 +1,10 @@
+from django.core.exceptions import PermissionDenied
 from django.test import TestCase
 from django.utils import timezone
 from baseclasses.repositories.montrek_repository import MontrekRepository
 
 
-class TestSessionDate(TestCase):
+class TestMontrekRepository(TestCase):
     def test_session_date_default(self):
         montrek_repo = MontrekRepository()
         session_start_date = montrek_repo.session_start_date
@@ -29,3 +30,7 @@ class TestSessionDate(TestCase):
     def test_session_user_id(self):
         self.assertIsNone(MontrekRepository().session_user_id)
         self.assertEqual(MontrekRepository({"user_id": 1}).session_user_id, 1)
+
+    def test_std_create_object_raises_error_for_missing_user_id(self):
+        with self.assertRaises(PermissionDenied):
+            MontrekRepository().std_create_object({})
