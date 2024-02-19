@@ -30,7 +30,3 @@ class TestMontrekRepository(TestCase):
     def test_session_user_id(self):
         self.assertIsNone(MontrekRepository().session_user_id)
         self.assertEqual(MontrekRepository({"user_id": 1}).session_user_id, 1)
-
-    def test_std_create_object_raises_error_for_missing_user_id(self):
-        with self.assertRaises(PermissionDenied):
-            MontrekRepository().std_create_object({})

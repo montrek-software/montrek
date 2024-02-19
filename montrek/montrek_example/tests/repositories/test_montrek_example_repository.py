@@ -1,3 +1,4 @@
+from django.core.exceptions import PermissionDenied
 from django.test import TestCase
 from django.utils import timezone
 from baseclasses.utils import montrek_time
@@ -303,6 +304,10 @@ class TestMontrekCreateObject(TestCase):
         # The std_queryset should return the adjusted object
         b_object = HubARepository().std_queryset().get()
         self.assertEqual(b_object.field_a1_str, "test_new")
+
+    def test_std_create_object_raises_error_for_missing_user_id(self):
+        with self.assertRaises(PermissionDenied):
+            HubARepository().std_create_object({})
 
     def test_create_hub_a_with_link_to_hub_b(self):
         hub_b = me_factories.SatB1Factory().hub_entity
