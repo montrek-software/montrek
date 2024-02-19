@@ -231,14 +231,14 @@ class MontrekRepository:
             queryset = queryset.union(
                 self._get_queryset_per_change_date(change_date, pk)
             )
-        return queryset
+        return queryset.order_by("-change_date")
 
     def _get_satellites_change_dates(self, pk: int) -> List[datetime]:
         self.std_queryset()
         dates = []
         for sat_class in self._primary_satellite_classes:
             dates_list = sat_class.objects.filter(hub_entity_id=pk).values_list(
-                "state_date_start", "state_date_end"
+                "state_date_start"
             )
             for dd in dates_list:
                 dates += dd

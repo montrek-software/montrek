@@ -148,6 +148,11 @@ class MontrekListView(ListView, MontrekPageViewMixin, MontrekViewMixin):
         return context
 
 
+class MontrekHistoryListView(MontrekListView):
+    def get_queryset(self):
+        return self.repository_object.get_history_queryset(pk=self.kwargs["pk"])
+
+
 class MontrekDetailView(DetailView, MontrekPageViewMixin, MontrekViewMixin):
     template_name = "montrek_details.html"
     repository = MontrekRepository
