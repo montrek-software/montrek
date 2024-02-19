@@ -110,8 +110,8 @@ class MontrekRepository:
                     )
                     .first()
                 )
-                object_Dict[field.name] = value
-        object_Dict["hub_entity_id"] = obj.pk
+                object_dict[field.name] = value
+        object_dict["hub_entity_id"] = obj.pk
         return object_dict
 
     def std_satellite_fields(self):
@@ -122,7 +122,8 @@ class MontrekRepository:
         return fields
 
     def _get_db_creator(self) -> DbCreator:
-        self._raise_for_anonymous_user()
+        if not self.session_user_id:
+            raise PermissionDenied("User not authenticated!")
         return DbCreator(
             self.hub_class, self._primary_satellite_classes, self.session_user_id
         )
@@ -257,10 +258,6 @@ class MontrekRepository:
         else:
             hub_entity = self.hub_class(created_by_id=self.session_user_id)
         return hub_entity
-
-    def _raise_for_anonymous_user(self):
-        if not self.session_user_id:
-            raise PermissionDenied("User not authenticated!")
 
 
 def paginated_table(func):
