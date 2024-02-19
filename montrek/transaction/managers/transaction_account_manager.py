@@ -15,7 +15,7 @@ class TransactionAccountManager:
         self,
         account_hub_object: baseclass_models.MontrekSatelliteABC,
         transaction_df: pd.DataFrame,
-        session_data: dict[str, Any],
+        session_data: Dict[str, Any],
     ):
         self.account_hub_object = account_hub_object
         self.transaction_df = transaction_df

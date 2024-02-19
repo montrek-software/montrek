@@ -10,7 +10,7 @@ from transaction.managers.transaction_account_manager import TransactionAccountM
 class OnvistaFileUploadProcessor:
     message = "Not implemented"
 
-    def __init__(self, account_hub: QuerySet, session_data: dict[str, Any]):
+    def __init__(self, account_hub: QuerySet, session_data: Dict[str, Any]):
         self.account_hub = account_hub
         self.subprocessor = NotImplementedFileUploadProcessor()
         self.session_data = session_data
@@ -50,7 +50,7 @@ class OnvistaFileUploadDepotProcessor:
     message = "Not implemented"
     input_data_df = pd.DataFrame()
 
-    def __init__(self, account_hub: QuerySet, session_data: dict[str, Any]):
+    def __init__(self, account_hub: QuerySet, session_data: Dict[str, Any]):
         self.account_hub = account_hub
         self.session_data = session_data
 
@@ -120,9 +120,9 @@ class OnvistaFileUploadDepotProcessor:
 
 class OnvistaFileUploadTransactionProcessor:
     message = "Not implemented"
-    input_data_dfs: dict[str, pd.DataFrame] = {}
+    input_data_dfs: Dict[str, pd.DataFrame] = {}
 
-    def __init__(self, account_hub: QuerySet, session_data: dict[str, Any]):
+    def __init__(self, account_hub: QuerySet, session_data: Dict[str, Any]):
         self.account_hub = account_hub
         self.session_data = session_data
 

@@ -110,8 +110,8 @@ class MontrekRepository:
                     )
                     .first()
                 )
-                object_dict[field.name] = value
-        object_dict["hub_entity_id"] = obj.pk
+                object_Dict[field.name] = value
+        object_Dict["hub_entity_id"] = obj.pk
         return object_dict
 
     def std_satellite_fields(self):
@@ -125,8 +125,10 @@ class MontrekRepository:
         self._raise_for_anonymous_user()
         self.std_queryset()
         hub_entity = self._get_hub_from_data(data)
-        db_creator = DbCreator(self.hub_class, self._primary_satellite_classes)
-        created_hub = db_creator.create(data, hub_entity, self.session_user_id)
+        db_creator = DbCreator(
+            self.hub_class, self._primary_satellite_classes, self.session_user_id
+        )
+        created_hub = db_creator.create(data, hub_entity)
         db_creator.save_stalled_objects()
         return created_hub
 
@@ -135,11 +137,13 @@ class MontrekRepository:
     ) -> List[MontrekHubABC]:
         self._raise_for_anonymous_user()
         self.std_queryset()
-        db_creator = DbCreator(self.hub_class, self._primary_satellite_classes)
+        db_creator = DbCreator(
+            self.hub_class, self._primary_satellite_classes, self.session_user_id
+        )
         created_hubs = []
         for _, row in data_frame.iterrows():
-            hub_entity = self._get_hub_from_data(row, self.session_user_id)
-            created_hub = db_creator.create(row, hub_entity, self.session_user_id)
+            hub_entity = self._get_hub_from_data(row)
+            created_hub = db_creator.create(row, hub_entity)
             created_hubs.append(created_hub)
         db_creator.save_stalled_objects()
         return created_hubs

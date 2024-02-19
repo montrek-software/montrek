@@ -2268,7 +2268,7 @@ S2.define('select2/translation',[
   };
 
   Translation.prototype.get = function (key) {
-    return this.dict[key];
+    return this.Dict[key];
   };
 
   Translation.prototype.extend = function (translation) {

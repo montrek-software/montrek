@@ -7,7 +7,7 @@ import csv
 class DkbFileUploadProcessor:
     message = ""
 
-    def __init__(self, account_hub, session_data: dict[str, Any]):
+    def __init__(self, account_hub, session_data: Dict[str, Any]):
         self.session_data = session_data
         self.account_hub = account_hub
         self.meta_data = {}

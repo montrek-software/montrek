@@ -15,7 +15,7 @@ class AccountFileUploadProcessor:
     file_upload_registry = None
 
     def __init__(
-        self, file_upload_registry_id: int, session_data: dict[str, Any], **kwargs
+        self, file_upload_registry_id: int, session_data: Dict[str, Any], **kwargs
     ):
         account_hub_id = kwargs.get("pk")
         account_hub = self._set_registry_to_account(

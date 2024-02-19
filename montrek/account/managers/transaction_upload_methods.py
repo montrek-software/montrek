@@ -6,7 +6,7 @@ from transaction.managers.transaction_account_manager import TransactionAccountM
 
 
 def upload_dkb_transactions(
-    account_hub: QuerySet, file_path: str, session_data: dict[str, Any]
+    account_hub: QuerySet, file_path: str, session_data: Dict[str, Any]
 ) -> List[TransactionSatellite]:
     if account_hub.account_upload_method != "dkb":
         raise AttributeError("Account Upload Method is not of type dkb")

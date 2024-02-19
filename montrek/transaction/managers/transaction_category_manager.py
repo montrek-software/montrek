@@ -12,7 +12,7 @@ from account.repositories.account_repository import AccountRepository
 
 
 class TransactionCategoryManager:
-    def __init__(self, session_data: dict[str, Any]):
+    def __init__(self, session_data: Dict[str, Any]):
         self.session_data = session_data
         self.transaction_category_repository = TransactionCategoryRepository(
             self.session_data

@@ -28,7 +28,7 @@ class FileUploadManager:
         self,
         file_upload_processor_class: type[FileUploadProcessorProtocol],
         file: TextIO,
-        session_data: dict[str, Any],
+        session_data: Dict[str, Any],
         **kwargs,
     ) -> None:
         self.session_data = session_data
