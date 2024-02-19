@@ -39,7 +39,6 @@ class DbCreator:
         self,
         hub_entity_class: type[MontrekHubABC],
         satellite_classes: list[type[MontrekSatelliteABC]],
-        user_id: int,
     ):
         self.hub_entity = None
         self.satellite_classes = self._sorted_satellite_classes(satellite_classes)
@@ -49,9 +48,10 @@ class DbCreator:
             satellite_class: [] for satellite_class in satellite_classes
         }
         self.stalled_links = {}
-        self.user_id = user_id
 
-    def create(self, data: Dict[str, Any], hub_entity: MontrekHubABC) -> None:
+    def create(
+        self, data: Dict[str, Any], hub_entity: MontrekHubABC, user_id: int
+    ) -> None:
         selected_satellites = {"new": [], "existing": [], "updated": []}
         creation_date = timezone.now()
         self.hub_entity = hub_entity
@@ -64,7 +64,7 @@ class DbCreator:
             if len(sat_data) == 0:
                 continue
             sat_data = self._make_timezone_aware(sat_data)
-            sat_data["created_by_id"] = self.user_id
+            sat_data["created_by_id"] = user_id
             sat = satellite_class(hub_entity=self.hub_entity, **sat_data)
             sat = self._process_new_satellite(sat, satellite_class)
             selected_satellites[sat.state].append(sat)

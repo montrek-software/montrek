@@ -1,6 +1,6 @@
 from datetime import datetime
 import pandas as pd
-from typing import Any, List, Dict, Type, Tuple
+from typing import Any, List, Dict, Optional, Type, Tuple
 from baseclasses.models import MontrekSatelliteABC, MontrekTimeSeriesSatelliteABC
 from baseclasses.models import MontrekHubABC
 from baseclasses.models import MontrekLinkABC
@@ -45,21 +45,21 @@ class MontrekRepository:
         return self._annotations
 
     @property
-    def reference_date(self):
+    def reference_date(self) -> timezone.datetime:
         if self._reference_date is None:
             return timezone.now()
         return self._reference_date
 
     @property
-    def session_end_date(self):
+    def session_end_date(self) -> timezone.datetime:
         return self._get_session_date("end_date", timezone.datetime.max)
 
     @property
-    def session_start_date(self):
+    def session_start_date(self) -> timezone.datetime:
         return self._get_session_date("start_date", timezone.datetime.min)
 
     @property
-    def session_user_id(self):
+    def session_user_id(self) -> Optional[int]:
         return self.session_data.get("user_id")
 
     def _get_session_date(
@@ -121,30 +121,25 @@ class MontrekRepository:
             fields.extend(satellite_class.get_value_fields())
         return fields
 
-    def _get_db_creator(self) -> DbCreator:
-        if not self.session_user_id:
-            raise PermissionDenied("User not authenticated!")
-        return DbCreator(
-            self.hub_class, self._primary_satellite_classes, self.session_user_id
-        )
-
     def std_create_object(self, data: Dict[str, Any]) -> MontrekHubABC:
+        self._raise_for_anonymous_user()
         self.std_queryset()
         hub_entity = self._get_hub_from_data(data)
-        db_creator = self._get_db_creator()
-        created_hub = db_creator.create(data, hub_entity)
+        db_creator = DbCreator(self.hub_class, self._primary_satellite_classes)
+        created_hub = db_creator.create(data, hub_entity, self.session_user_id)
         db_creator.save_stalled_objects()
         return created_hub
 
     def create_objects_from_data_frame(
         self, data_frame: pd.DataFrame
     ) -> List[MontrekHubABC]:
+        self._raise_for_anonymous_user()
         self.std_queryset()
-        db_creator = self._get_db_creator()
+        db_creator = DbCreator(self.hub_class, self._primary_satellite_classes)
         created_hubs = []
         for _, row in data_frame.iterrows():
             hub_entity = self._get_hub_from_data(row)
-            created_hub = db_creator.create(row, hub_entity)
+            created_hub = db_creator.create(row, hub_entity, self.session_user_id)
             created_hubs.append(created_hub)
         db_creator.save_stalled_objects()
         return created_hubs
@@ -258,6 +253,10 @@ class MontrekRepository:
         else:
             hub_entity = self.hub_class(created_by_id=self.session_user_id)
         return hub_entity
+
+    def _raise_for_anonymous_user(self):
+        if not self.session_user_id:
+            raise PermissionDenied("User not authenticated!")
 
 
 def paginated_table(func):
