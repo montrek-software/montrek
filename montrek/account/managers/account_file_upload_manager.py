@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Dict
 from account.managers.dkb_file_upload_manager import DkbFileUploadProcessor
 from account.managers.onvista_file_upload_manager import OnvistaFileUploadProcessor
 from account.managers.not_implemented_processor import (

@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Dict
 from account.managers.transaction_upload_methods import upload_dkb_transactions
 from account.repositories.account_repository import AccountRepository
 import csv

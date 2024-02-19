@@ -1,6 +1,6 @@
 from django.db.models import QuerySet
 import pandas as pd
-from typing import Any, List
+from typing import Any, List, Dict
 from transaction.models import TransactionSatellite
 from transaction.managers.transaction_account_manager import TransactionAccountManager
 

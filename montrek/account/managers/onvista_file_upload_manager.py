@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Dict
 from django.db.models import QuerySet
 import pandas as pd
 from account.managers.not_implemented_processor import NotImplementedFileUploadProcessor

@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Dict
 from django.db.models import QuerySet
 from django.utils import timezone
 from transaction.repositories.transaction_category_repository import (

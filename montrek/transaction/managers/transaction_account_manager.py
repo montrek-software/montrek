@@ -1,6 +1,5 @@
 import pandas as pd
-from typing import Any, List
-from datetime import datetime
+from typing import Any, List, Dict
 from baseclasses import models as baseclass_models
 from transaction.models import TransactionSatellite
 from transaction.repositories.transaction_repository import TransactionRepository

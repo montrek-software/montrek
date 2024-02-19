@@ -121,13 +121,16 @@ class MontrekRepository:
             fields.extend(satellite_class.get_value_fields())
         return fields
 
-    def std_create_object(self, data: Dict[str, Any]) -> MontrekHubABC:
+    def _get_db_creator(self) -> DbCreator:
         self._raise_for_anonymous_user()
-        self.std_queryset()
-        hub_entity = self._get_hub_from_data(data)
-        db_creator = DbCreator(
+        return DbCreator(
             self.hub_class, self._primary_satellite_classes, self.session_user_id
         )
+
+    def std_create_object(self, data: Dict[str, Any]) -> MontrekHubABC:
+        self.std_queryset()
+        hub_entity = self._get_hub_from_data(data)
+        db_creator = self._get_db_creator()
         created_hub = db_creator.create(data, hub_entity)
         db_creator.save_stalled_objects()
         return created_hub
@@ -135,11 +138,8 @@ class MontrekRepository:
     def create_objects_from_data_frame(
         self, data_frame: pd.DataFrame
     ) -> List[MontrekHubABC]:
-        self._raise_for_anonymous_user()
         self.std_queryset()
-        db_creator = DbCreator(
-            self.hub_class, self._primary_satellite_classes, self.session_user_id
-        )
+        db_creator = self._get_db_creator()
         created_hubs = []
         for _, row in data_frame.iterrows():
             hub_entity = self._get_hub_from_data(row)

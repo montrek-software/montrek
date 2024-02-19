@@ -1,4 +1,4 @@
-from typing import Any, TextIO
+from typing import Any, TextIO, Dict
 from typing import Protocol
 
 from file_upload.repositories.file_upload_registry_repository import (

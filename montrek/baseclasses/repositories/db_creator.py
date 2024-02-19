@@ -1,5 +1,5 @@
 import datetime
-from typing import Any, List, Protocol
+from typing import Any, Dict, List, Protocol
 from dataclasses import dataclass
 from django.utils import timezone
 from baseclasses.models import (
