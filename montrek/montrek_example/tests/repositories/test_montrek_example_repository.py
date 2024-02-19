@@ -8,6 +8,7 @@ from montrek_example.repositories.hub_a_repository import HubARepository
 from montrek_example.repositories.hub_b_repository import HubBRepository
 from montrek_example.repositories.hub_c_repository import HubCRepository
 from montrek_example import models as me_models
+import pandas as pd
 
 
 class TestMontrekRepositorySatellite(TestCase):
@@ -308,6 +309,31 @@ class TestMontrekCreateObject(TestCase):
     def test_std_create_object_raises_error_for_missing_user_id(self):
         with self.assertRaises(PermissionDenied):
             HubARepository().std_create_object({})
+
+    def test_create_objects_from_data_frame(self):
+        repository = HubARepository(session_data={"user_id": self.user.id})
+        data_frame = pd.DataFrame(
+            {
+                "field_a1_int": [5, 6],
+                "field_a1_str": ["test", "test2"],
+                "field_a2_float": [6.0, 7.0],
+                "field_a2_str": ["test2", "test3"],
+            }
+        )
+        repository.create_objects_from_data_frame(data_frame)
+        self.assertEqual(me_models.HubA.objects.count(), 2)
+        self.assertEqual(me_models.SatA1.objects.count(), 2)
+        self.assertEqual(me_models.SatA2.objects.count(), 2)
+        self.assertEqual(me_models.SatA1.objects.first().field_a1_int, 5)
+        self.assertEqual(me_models.SatA1.objects.last().field_a1_int, 6)
+        self.assertEqual(me_models.SatA1.objects.first().field_a1_str, "test")
+        self.assertEqual(me_models.SatA1.objects.last().field_a1_str, "test2")
+        self.assertEqual(me_models.SatA2.objects.first().field_a2_float, 6.0)
+        self.assertEqual(me_models.SatA2.objects.last().field_a2_float, 7.0)
+        self.assertEqual(me_models.SatA2.objects.first().field_a2_str, "test2")
+        self.assertEqual(me_models.SatA2.objects.last().field_a2_str, "test3")
+        self.assertEqual(me_models.HubA.objects.first().created_by_id, self.user.id)
+        self.assertEqual(me_models.HubA.objects.last().created_by_id, self.user.id)
 
     def test_create_hub_a_with_link_to_hub_b(self):
         hub_b = me_factories.SatB1Factory().hub_entity
