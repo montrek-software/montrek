@@ -1,7 +1,6 @@
 import datetime
 from typing import Any, List, Protocol
 from dataclasses import dataclass
-from django.contrib.auth import get_user_model
 from django.utils import timezone
 from baseclasses.models import (
     MontrekSatelliteABC,

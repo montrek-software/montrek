@@ -25,3 +25,7 @@ class TestSessionDate(TestCase):
         self.assertTrue(session_start_date.tzinfo is not None)
         self.assertEqual(session_end_date.date(), timezone.datetime(2020, 2, 1).date())
         self.assertTrue(session_end_date.tzinfo is not None)
+
+    def test_session_user_id(self):
+        self.assertIsNone(MontrekRepository().session_user_id)
+        self.assertEqual(MontrekRepository({"user_id": 1}).session_user_id, 1)
