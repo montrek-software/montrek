@@ -77,7 +77,7 @@ class DbCreator:
 
     def _make_timezone_aware(self, sat_data: dict) -> dict:
         for key, value in sat_data.items():
-            if isinstance(value, (datetime.date, datetime.datetime)):
+            if isinstance(value, datetime.datetime):
                 if value.tzinfo is None:
                     sat_data[key] = timezone.make_aware(
                         value, timezone.get_default_timezone()
