@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 import pandas as pd
-from typing import Any, List, Dict, Optional, Type, Tuple
+from typing import Any, List, Dict, Optional, Type
 from baseclasses.models import MontrekSatelliteABC, MontrekTimeSeriesSatelliteABC
 from baseclasses.models import MontrekHubABC
 from baseclasses.models import MontrekLinkABC
@@ -20,10 +20,7 @@ from baseclasses.repositories.db_creator import DbCreator
 from baseclasses.dataclasses.montrek_message import MontrekMessageError
 from django.db.models import (
     Q,
-    DateTimeField,
     CharField,
-    Subquery,
-    OuterRef,
     QuerySet,
     Value,
 )
@@ -32,6 +29,10 @@ from django.utils import timezone
 from django.core.exceptions import FieldError, PermissionDenied
 from django.core.paginator import Paginator
 from functools import wraps
+
+from baseclasses.dataclasses.history_data_tags import (
+    HistoryDataTagSet,
+)
 
 
 class MontrekRepository:
@@ -231,7 +232,7 @@ class MontrekRepository:
     def get_history_queryset(self, pk: int, **kwargs):
         # WARNING: This method is not optimized for large databases
         # Get all state_date changes for the satellitesof the hub and return the std_queryset to the single dates
-        dates = self._get_satellites_change_dates_and_user(pk)
+        dates = self._get_satellites_history_tags(pk)
         queryset = self._get_queryset_per_change_date(dates[0], pk)
         for change_date_and_user in dates[1:]:
             queryset = queryset.union(
@@ -239,15 +240,16 @@ class MontrekRepository:
             )
         return queryset.order_by("-change_date")
 
-    def _get_satellites_change_dates_and_user(self, pk: int):
+    def _get_satellites_history_tags(self, pk: int) -> HistoryDataTagSet:
         self.std_queryset()
-        dates_and_user = []
+        history_data_tags = HistoryDataTagSet()
         for sat_class in self._primary_satellite_classes:
-            dates_list = sat_class.objects.filter(hub_entity_id=pk).values_list(
-                "state_date_start", "created_by"
-            )
-            dates_and_user += dates_list
-        return dates_and_user
+            history_satellite_data = sat_class.objects.filter(
+                hub_entity_id=pk
+            ).values_list("state_date_start", "created_by")
+            for hdata in history_satellite_data:
+                history_data_tags.append(*hdata)
+        return history_data_tags
 
     def _get_queryset_per_change_date(
         self, change_date_and_user: datetime, pk: int

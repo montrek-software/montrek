@@ -44,6 +44,7 @@ class HistoryDataTagSetTestCase(TestCase):
     def test_history_data_tag_update(self):
         history_data_tag_set = HistoryDataTagSet()
         history_data_tag_set.append(datetime.datetime(2020, 1, 1), 1)
+        history_data_tag_set.append(datetime.datetime(2020, 1, 1), 1)
         history_data_tag_set.append(datetime.datetime(2020, 1, 2), 2)
         history_data_tag_set.append(datetime.datetime(2020, 1, 1), 3)
         self.assertEqual(len(history_data_tag_set), 2)

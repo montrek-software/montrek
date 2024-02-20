@@ -17,7 +17,8 @@ class HistoryDataTagSet:
 
     def append(self, change_date: datetime.datetime, user_id: int):
         if (index := self._date_index(change_date)) != -1:
-            self._data[index].user_ids.append(user_id)
+            if user_id not in self._data[index].user_ids:
+                self._data[index].user_ids.append(user_id)
         else:
             self._data.append(HistoryDataTag(change_date, [user_id]))
 
