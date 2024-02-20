@@ -57,3 +57,8 @@ class HistoryDataTagSetTestCase(TestCase):
             history_data_tag_set[1].change_date, datetime.datetime(2020, 1, 2)
         )
         self.assertEqual(history_data_tag_set[1].user_emails, ["2"])
+
+    def test_handle_non_enmails(self):
+        history_data_tag_set = HistoryDataTagSet()
+        history_data_tag_set.append(datetime.datetime(2020, 1, 1), None)
+        self.assertEqual(history_data_tag_set[0].get_user_string(), "")

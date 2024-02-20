@@ -15,7 +15,8 @@ class HistoryDataTagSet:
     def __init__(self):
         self._data = []
 
-    def append(self, change_date: datetime.datetime, user_email: str):
+    def append(self, change_date: datetime.datetime, user_email: str | None):
+        user_email = user_email or ""
         if (index := self._date_index(change_date)) != -1:
             if user_email not in self._data[index].user_emails:
                 self._data[index].user_emails.append(user_email)
