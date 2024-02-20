@@ -7,7 +7,6 @@ from montrek_example.repositories.hub_a_repository import HubARepository
 from baseclasses.utils import montrek_time
 
 
-
 class TestMontrekExampleACreateView(TestCase):
     def setUp(self):
         self.user = MontrekUserFactory()
@@ -49,22 +48,27 @@ class TestMontrekExampleAHistoryView(TestCase):
 
     def test_view_with_history_data(self):
         huba = me_factories.HubAFactory()
+        user1 = MontrekUserFactory()
+        user2 = MontrekUserFactory()
         me_factories.SatA1Factory(
             hub_entity=huba,
             field_a1_str="TestFeld",
             field_a1_int=5,
             state_date_end=montrek_time(2024, 2, 17),
+            created_by=user1,
         )
         me_factories.SatA1Factory(
             hub_entity=huba,
             field_a1_str="TestFeld",
             field_a1_int=6,
             state_date_start=montrek_time(2024, 2, 17),
+            created_by=user2,
         )
         me_factories.SatA2Factory(
             hub_entity=huba,
             field_a2_str="ConstantTestFeld",
             field_a2_float=6.0,
+            created_by=user2,
         )
         url = reverse("montrek_example_a_history", kwargs={"pk": huba.id})
         response = self.client.get(url)
@@ -80,3 +84,5 @@ class TestMontrekExampleAHistoryView(TestCase):
         self.assertEqual(
             test_queryset[0].field_a2_float, test_queryset[1].field_a2_float
         )
+        self.assertEqual(test_queryset[0].changed_by, user2.email)
+        self.assertEqual(test_queryset[1].changed_by, f"{user1.email},{user2.email}")
