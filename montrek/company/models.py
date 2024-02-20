@@ -14,3 +14,12 @@ class CompanyStaticSatellite(baseclass_models.MontrekSatelliteABC):
 
     def __str__(self):
         return self.bloomberg_ticker
+
+
+class CompanyTimeSeriesSatellite(baseclass_models.MontrekTimeSeriesSatelliteABC):
+    hub_entity = models.ForeignKey(
+        CompanyHub, on_delete=models.CASCADE, related_name="asset_time_series_satellite"
+    )
+    identifier_fields = ["value_date", "hub_entity_id"]
+    revenue = models.DecimalField(max_digits=20, decimal_places=2)
+    value_date = models.DateField()
