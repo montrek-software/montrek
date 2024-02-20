@@ -31,6 +31,7 @@ from django.core.paginator import Paginator
 from functools import wraps
 
 from baseclasses.dataclasses.history_data_tags import (
+    HistoryDataTag,
     HistoryDataTagSet,
 )
 
@@ -232,11 +233,11 @@ class MontrekRepository:
     def get_history_queryset(self, pk: int, **kwargs):
         # WARNING: This method is not optimized for large databases
         # Get all state_date changes for the satellitesof the hub and return the std_queryset to the single dates
-        dates = self._get_satellites_history_tags(pk)
-        queryset = self._get_queryset_per_change_date(dates[0], pk)
-        for change_date_and_user in dates[1:]:
+        history_tags = self._get_satellites_history_tags(pk)
+        queryset = self._get_queryset_per_change_date(history_tags[0], pk)
+        for history_tag in history_tags[1:]:
             queryset = queryset.union(
-                self._get_queryset_per_change_date(change_date_and_user, pk)
+                self._get_queryset_per_change_date(history_tag, pk)
             )
         return queryset.order_by("-change_date")
 
@@ -252,15 +253,18 @@ class MontrekRepository:
         return history_data_tags
 
     def _get_queryset_per_change_date(
-        self, change_date_and_user: datetime, pk: int
+        self, history_tag: HistoryDataTag, pk: int
     ) -> QuerySet:
-        self.reference_date = change_date[0]
+        self.reference_date = history_tag.change_date
         return (
             self.std_queryset()
             .filter(id=pk)
             .annotate(
                 change_date=Value(
                     str(self.reference_date), output_field=CharField(max_length=23)
+                ),
+                changed_by=Value(
+                    history_tag.get_user_string(), output_field=CharField()
                 ),
             )
         )
