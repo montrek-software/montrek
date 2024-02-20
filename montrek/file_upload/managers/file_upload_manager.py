@@ -1,4 +1,4 @@
-from typing import Any, TextIO
+from typing import Any, TextIO, Dict
 from typing import Protocol
 
 from file_upload.repositories.file_upload_registry_repository import (
@@ -28,16 +28,20 @@ class FileUploadManager:
         self,
         file_upload_processor_class: type[FileUploadProcessorProtocol],
         file: TextIO,
+        session_data: Dict[str, Any],
         **kwargs,
     ) -> None:
-        self.registry_repository = FileUploadRegistryRepository()
+        self.session_data = session_data
+        self.registry_repository = FileUploadRegistryRepository(
+            session_data=self.session_data
+        )
         self.file = file
-        self.file_repository = FileUploadFileRepository()
+        self.file_repository = FileUploadFileRepository(self.session_data)
         self.file_upload_registry: MontrekHubABC | Any = None
         self.file_path = ""
         self.init_upload()
         self.processor = file_upload_processor_class(
-            self.file_upload_registry.pk, **kwargs
+            self.file_upload_registry.pk, session_data, **kwargs
         )
 
     def upload_and_process(self) -> bool:

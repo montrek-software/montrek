@@ -16,6 +16,7 @@ from transaction.tests.factories.transaction_factories import (
     TransactionSatelliteFactory,
     TransactionHubFactory,
 )
+from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
 
 class TestOnvistaFileUploadManager(TestCase):
@@ -24,44 +25,50 @@ class TestOnvistaFileUploadManager(TestCase):
         self.account = (
             AccountRepository().std_queryset().get(pk=account_sat.hub_entity.pk)
         )
+        self.user = MontrekUserFactory()
+        self.processor = OnvistaFileUploadProcessor(
+            self.account, session_data={"user_id": self.user.id}
+        )
 
     def test_default_processor(self):
-        processor = OnvistaFileUploadProcessor(self.account)
-        self.assertEqual(processor.message, "Not implemented")
+        self.assertEqual(self.processor.message, "Not implemented")
 
     def test_no_type_detectable(self):
-        processor = OnvistaFileUploadProcessor(self.account)
         test_path = "/tmp/test_file.csv"
         with open(test_path, "w") as f:
             f.write("UNKNOWN")
-        result = processor.pre_check(test_path)
+        result = self.processor.pre_check(test_path)
         self.assertEqual(result, False)
-        self.assertEqual(processor.message, "Not implemented")
-        self.assertIsInstance(processor.subprocessor, NotImplementedFileUploadProcessor)
+        self.assertEqual(self.processor.message, "Not implemented")
+        self.assertIsInstance(
+            self.processor.subprocessor, NotImplementedFileUploadProcessor
+        )
 
     def test_empty_file(self):
-        processor = OnvistaFileUploadProcessor(self.account)
         test_path = "/tmp/test_file.csv"
         with open(test_path, "w"):
             ...
-        result = processor.pre_check(test_path)
+        result = self.processor.pre_check(test_path)
         self.assertEqual(result, False)
-        self.assertEqual(processor.message, "Not implemented")
-        self.assertIsInstance(processor.subprocessor, NotImplementedFileUploadProcessor)
+        self.assertEqual(self.processor.message, "Not implemented")
+        self.assertIsInstance(
+            self.processor.subprocessor, NotImplementedFileUploadProcessor
+        )
 
     def test_depotuebersicht_processor(self):
-        processor = OnvistaFileUploadProcessor(self.account)
         test_path = os.path.join(os.path.dirname(__file__), "data", "onvista_test.csv")
-        result = processor.pre_check(test_path)
+        result = self.processor.pre_check(test_path)
         self.assertEqual(result, True)
-        self.assertIsInstance(processor.subprocessor, OnvistaFileUploadDepotProcessor)
-        result = processor.process(test_path)
+        self.assertIsInstance(
+            self.processor.subprocessor, OnvistaFileUploadDepotProcessor
+        )
+        result = self.processor.process(test_path)
         self.assertEqual(result, True)
-        self.assertEqual(processor.subprocessor.input_data_df.shape, (3, 24))
+        self.assertEqual(self.processor.subprocessor.input_data_df.shape, (3, 24))
         assets = AssetRepository().std_queryset()
         # Compare created assets to input data
         self.assertEqual(assets.count(), 3)
-        for _, row in processor.subprocessor.input_data_df.iterrows():
+        for _, row in self.processor.subprocessor.input_data_df.iterrows():
             asset = assets.get(asset_isin=row.asset_isin)
             self.assertEqual(asset.asset_name, row.asset_name)
             self.assertEqual(float(asset.price), round(row.price, 4))
@@ -70,15 +77,15 @@ class TestOnvistaFileUploadManager(TestCase):
             self.assertEqual(asset.asset_wkn, row.asset_wkn)
             self.assertEqual(asset.asset_isin, row.asset_isin)
         # post_check does not agree with the number of shares the account holds
-        result = processor.post_check(test_path)
+        result = self.processor.post_check(test_path)
         self.assertFalse(result)
         self.assertTrue(
-            processor.subprocessor.message.startswith(
+            self.processor.subprocessor.message.startswith(
                 "Mismatch between input data and depot data"
             )
         )
         # add transactions in accordance to input data
-        for _, row in processor.subprocessor.input_data_df.iterrows():
+        for _, row in self.processor.subprocessor.input_data_df.iterrows():
             asset = assets.get(asset_name=row["asset_name"])
             transaction_hub = TransactionHubFactory.create(
                 account=self.account, asset=asset
@@ -92,23 +99,22 @@ class TestOnvistaFileUploadManager(TestCase):
                 transaction_price=row["price"],
                 transaction_date=transaction_date,
             )
-        result = processor.post_check(test_path)
+        result = self.processor.post_check(test_path)
         self.assertTrue(result)
 
     def test_transaction_processor(self):
-        processor = OnvistaFileUploadProcessor(self.account)
         test_path = os.path.join(
             os.path.dirname(__file__), "data", "onvista_transaction_test.csv"
         )
-        result = processor.pre_check(test_path)
+        result = self.processor.pre_check(test_path)
         self.assertEqual(result, True)
         self.assertIsInstance(
-            processor.subprocessor, OnvistaFileUploadTransactionProcessor
+            self.processor.subprocessor, OnvistaFileUploadTransactionProcessor
         )
         self.assertEqual(
-            processor.subprocessor.input_data_dfs["asset_purchase"].shape, (5, 5)
+            self.processor.subprocessor.input_data_dfs["asset_purchase"].shape, (5, 5)
         )
-        result = processor.process(test_path)
+        result = self.processor.process(test_path)
         self.assertEqual(result, True)
         transactions = AccountRepository().get_transaction_table_by_account(
             self.account.pk

@@ -9,6 +9,7 @@ from credit_institution.tests.factories.credit_institution_factories import (
 from file_upload.tests.factories.file_upload_factories import (
     FileUploadRegistryStaticSatelliteFactory,
 )
+from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
 
 class TestNoCreditInstitutionAccountFileUploadManager(TestCase):
@@ -17,6 +18,7 @@ class TestNoCreditInstitutionAccountFileUploadManager(TestCase):
         file_upload_registry = FileUploadRegistryStaticSatelliteFactory()
         account_file_upload_processor = AccountFileUploadProcessor(
             file_upload_registry_id=file_upload_registry.pk,
+            session_data={},
             **{"pk": account_hub.pk},
         )
         self.assertEqual(
@@ -41,10 +43,12 @@ class TestDKBAccountFileUploadManager(TestCase):
         self.account_hub.link_account_file_upload_registry.add(
             self.upload_registry.hub_entity
         )
+        self.user = MontrekUserFactory()
 
     def test_right_processor(self):
         account_file_upload_processor = AccountFileUploadProcessor(
             file_upload_registry_id=self.upload_registry.pk,
+            session_data={},
             **{"pk": self.account_hub.pk},
         )
         self.assertIsInstance(
@@ -69,6 +73,7 @@ class TestOnvistaAccountFileUploadManagerDepot(TestCase):
     def test_right_processor(self):
         account_file_upload_processor = AccountFileUploadProcessor(
             file_upload_registry_id=self.upload_registry.pk,
+            session_data={},
             **{"pk": self.account_hub.pk},
         )
         self.assertIsInstance(

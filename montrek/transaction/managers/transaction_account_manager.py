@@ -1,6 +1,5 @@
 import pandas as pd
-from typing import List
-from datetime import datetime
+from typing import Any, List, Dict
 from baseclasses import models as baseclass_models
 from transaction.models import TransactionSatellite
 from transaction.repositories.transaction_repository import TransactionRepository
@@ -15,10 +14,12 @@ class TransactionAccountManager:
         self,
         account_hub_object: baseclass_models.MontrekSatelliteABC,
         transaction_df: pd.DataFrame,
+        session_data: Dict[str, Any],
     ):
         self.account_hub_object = account_hub_object
         self.transaction_df = transaction_df
-        self.transaction_repository = TransactionRepository()
+        self.session_data = session_data
+        self.transaction_repository = TransactionRepository(self.session_data)
 
     def new_transactions_to_account_from_df(
         self,
@@ -68,7 +69,9 @@ class TransactionAccountManager:
             .std_queryset()
             .filter(account_id=self.account_hub_object.pk)
         )
-        TransactionCategoryManager().assign_transaction_categories_to_transactions(
+        TransactionCategoryManager(
+            session_data=self.session_data
+        ).assign_transaction_categories_to_transactions(
             transaction_queryset,
             transaction_category_map,
         )

@@ -1,3 +1,4 @@
+from typing import Any, Dict
 from account.managers.transaction_upload_methods import upload_dkb_transactions
 from account.repositories.account_repository import AccountRepository
 import csv
@@ -6,12 +7,15 @@ import csv
 class DkbFileUploadProcessor:
     message = ""
 
-    def __init__(self, account_hub):
+    def __init__(self, account_hub, session_data: Dict[str, Any]):
+        self.session_data = session_data
         self.account_hub = account_hub
         self.meta_data = {}
 
     def process(self, file_path: str):
-        updated_transactions = upload_dkb_transactions(self.account_hub, file_path)
+        updated_transactions = upload_dkb_transactions(
+            self.account_hub, file_path, self.session_data
+        )
         self.message = (
             f"DKB upload was successful ({len(updated_transactions)} transactions)"
         )

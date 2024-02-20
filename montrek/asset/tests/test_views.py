@@ -8,6 +8,7 @@ from asset.tests.factories.asset_factories import (
     AssetTimeSeriesSatelliteFactory,
 )
 from currency.tests.factories.currency_factories import CurrencyStaticSatelliteFactory
+from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
 
 class TestAssetOverview(TestCase):
@@ -18,6 +19,10 @@ class TestAssetOverview(TestCase):
 
 
 class TestAssetCreateView(TestCase):
+    def setUp(self):
+        self.user = MontrekUserFactory()
+        self.client.force_login(self.user)
+
     def test_asset_create_returns_correct_html(self):
         url = reverse("asset_create")
         response = self.client.get(url)
@@ -74,6 +79,10 @@ class TestAssetPriceTSTableView(TestCase):
 
 
 class TestAssetUpdateView(TestCase):
+    def setUp(self):
+        self.user = MontrekUserFactory()
+        self.client.force_login(self.user)
+
     def test_asset_update_returns_correct_html(self):
         asset = AssetStaticSatelliteFactory()
         url = reverse("asset_update", kwargs={"pk": asset.hub_entity.id})

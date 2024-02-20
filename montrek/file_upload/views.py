@@ -43,7 +43,10 @@ class MontrekUploadFileView(MontrekTemplateView):
             if not self._check_file_type(request.FILES["file"], form):
                 return self.render_to_response(self.get_context_data())
             file_upload_manager = FileUploadManager(
-                self.file_upload_processor_class, request.FILES["file"], **self.kwargs
+                self.file_upload_processor_class,
+                request.FILES["file"],
+                session_data=self.session_data,
+                **self.kwargs,
             )
             result = file_upload_manager.upload_and_process()
             if result:

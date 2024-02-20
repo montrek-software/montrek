@@ -1,3 +1,4 @@
+from typing import Any, Dict
 from account.managers.dkb_file_upload_manager import DkbFileUploadProcessor
 from account.managers.onvista_file_upload_manager import OnvistaFileUploadProcessor
 from account.managers.not_implemented_processor import (
@@ -13,16 +14,20 @@ class AccountFileUploadProcessor:
     message = "Not implemented"
     file_upload_registry = None
 
-    def __init__(self, file_upload_registry_id: int, **kwargs):
+    def __init__(
+        self, file_upload_registry_id: int, session_data: Dict[str, Any], **kwargs
+    ):
         account_hub_id = kwargs.get("pk")
         account_hub = self._set_registry_to_account(
             account_hub_id, file_upload_registry_id
         )
         match account_hub.account_upload_method:
             case "dkb":
-                self.sub_processor = DkbFileUploadProcessor(account_hub)
+                self.sub_processor = DkbFileUploadProcessor(account_hub, session_data)
             case "onvis":
-                self.sub_processor = OnvistaFileUploadProcessor(account_hub)
+                self.sub_processor = OnvistaFileUploadProcessor(
+                    account_hub, session_data
+                )
             case _:
                 self.sub_processor = NotImplementedFileUploadProcessor()
                 self.sub_processor.message = f"Account upload method {account_hub.account_upload_method} not implemented"

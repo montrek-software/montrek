@@ -1,3 +1,4 @@
+from typing import Any, Dict
 from django.db.models import QuerySet
 from django.utils import timezone
 from transaction.repositories.transaction_category_repository import (
@@ -11,9 +12,12 @@ from account.repositories.account_repository import AccountRepository
 
 
 class TransactionCategoryManager:
-    def __init__(self):
-        self.transaction_category_repository = TransactionCategoryRepository({})
-        self.transaction_repository = TransactionRepository()
+    def __init__(self, session_data: Dict[str, Any]):
+        self.session_data = session_data
+        self.transaction_category_repository = TransactionCategoryRepository(
+            self.session_data
+        )
+        self.transaction_repository = TransactionRepository(self.session_data)
         self.account_std_queryset = AccountRepository().std_queryset()
 
     def assign_transaction_categories_to_transactions(
@@ -27,9 +31,7 @@ class TransactionCategoryManager:
             )
             self._create_transaction_category_links(transactions, transaction_category)
             if category_map.counter_transaction_account_id:
-                self._create_counter_transaction(
-                    transactions, category_map
-                )
+                self._create_counter_transaction(transactions, category_map)
 
     def _get_transaction_category_or_create(self, category: str):
         transaction_category_or_none = (
@@ -67,9 +69,7 @@ class TransactionCategoryManager:
             )
             link.save()
 
-    def _create_counter_transaction(
-        self, transactions, category_map
-    ):
+    def _create_counter_transaction(self, transactions, category_map):
         """
         If the transaction category map has a counter transaction account linked to it, create a  transaction with
         the same traits, but inversed amount.
@@ -79,12 +79,16 @@ class TransactionCategoryManager:
         )
         for transaction in transactions:
             transaction_traits = self.transaction_repository.object_to_dict(transaction)
-            transaction_traits["transaction_amount"] = transaction_traits["transaction_amount"] * -1
+            transaction_traits["transaction_amount"] = (
+                transaction_traits["transaction_amount"] * -1
+            )
             transaction_traits["transaction_party"] = category_map.account_name
             if category_map.bank_account_iban:
-                transaction_traits["transaction_party_iban"] = category_map.bank_account_iban
+                transaction_traits[
+                    "transaction_party_iban"
+                ] = category_map.bank_account_iban
             transaction_traits["link_transaction_account"] = counter_transaction_account
             transaction_traits.pop("hub_entity_id")
-            counter_transaction = TransactionRepository().std_create_object(
-                transaction_traits
-            )
+            counter_transaction = TransactionRepository(
+                self.session_data
+            ).std_create_object(transaction_traits)

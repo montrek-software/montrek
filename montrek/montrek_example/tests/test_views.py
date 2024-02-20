@@ -1,12 +1,18 @@
 from django.test import TestCase
 from django.urls import reverse
+from user.tests.factories.montrek_user_factories import MontrekUserFactory
 from montrek_example import views
 from montrek_example.tests.factories import montrek_example_factories as me_factories
 from montrek_example.repositories.hub_a_repository import HubARepository
 from baseclasses.utils import montrek_time
 
 
+
 class TestMontrekExampleACreateView(TestCase):
+    def setUp(self):
+        self.user = MontrekUserFactory()
+        self.client.force_login(self.user)
+
     def test_view_return_correct_html(self):
         url = reverse("montrek_example_a_create")
         response = self.client.get(url)

@@ -1,11 +1,14 @@
+from django.core.exceptions import PermissionDenied
 from django.test import TestCase
 from django.utils import timezone
 from baseclasses.utils import montrek_time
+from user.tests.factories.montrek_user_factories import MontrekUserFactory
 from montrek_example.tests.factories import montrek_example_factories as me_factories
 from montrek_example.repositories.hub_a_repository import HubARepository
 from montrek_example.repositories.hub_b_repository import HubBRepository
 from montrek_example.repositories.hub_c_repository import HubCRepository
 from montrek_example import models as me_models
+import pandas as pd
 
 
 class TestMontrekRepositorySatellite(TestCase):
@@ -71,18 +74,22 @@ class TestMontrekRepositorySatellite(TestCase):
         self.assertEqual(queryset[1].field_a2_float, None)
 
 
-class TestMontrekCreatObject(TestCase):
+class TestMontrekCreateObject(TestCase):
+    def setUp(self):
+        self.user = MontrekUserFactory()
+
     def test_std_create_object_single_satellite(self):
-        repository = HubARepository()
+        repository = HubARepository(session_data={"user_id": self.user.id})
         repository.std_create_object({"field_a1_int": 5, "field_a1_str": "test"})
         self.assertEqual(me_models.SatA1.objects.count(), 1)
         self.assertEqual(me_models.SatA1.objects.first().field_a1_int, 5)
         self.assertEqual(me_models.SatA1.objects.first().field_a1_str, "test")
+        self.assertEqual(me_models.SatA1.objects.first().created_by_id, self.user.id)
         self.assertEqual(me_models.HubA.objects.count(), 1)
         self.assertEqual(me_models.SatA2.objects.count(), 0)
 
     def test_std_create_object_multi_satellites(self):
-        repository = HubARepository()
+        repository = HubARepository(session_data={"user_id": self.user.id})
         repository.std_create_object(
             {
                 "field_a1_int": 5,
@@ -94,13 +101,15 @@ class TestMontrekCreatObject(TestCase):
         self.assertEqual(me_models.SatA1.objects.count(), 1)
         self.assertEqual(me_models.SatA1.objects.first().field_a1_int, 5)
         self.assertEqual(me_models.SatA1.objects.first().field_a1_str, "test")
+        self.assertEqual(me_models.SatA1.objects.first().created_by_id, self.user.id)
         self.assertEqual(me_models.HubA.objects.count(), 1)
         self.assertEqual(me_models.SatA2.objects.count(), 1)
         self.assertEqual(me_models.SatA2.objects.first().field_a2_float, 6.0)
         self.assertEqual(me_models.SatA2.objects.first().field_a2_str, "test2")
+        self.assertEqual(me_models.SatA2.objects.first().created_by_id, self.user.id)
 
     def test_std_create_object_existing_object(self):
-        repository = HubARepository()
+        repository = HubARepository(session_data={"user_id": self.user.id})
         for _ in range(2):
             repository.std_create_object(
                 {
@@ -113,15 +122,39 @@ class TestMontrekCreatObject(TestCase):
             self.assertEqual(me_models.SatA1.objects.count(), 1)
             self.assertEqual(me_models.SatA1.objects.first().field_a1_int, 5)
             self.assertEqual(me_models.SatA1.objects.first().field_a1_str, "test")
+            self.assertEqual(
+                me_models.SatA1.objects.first().created_by_id, self.user.id
+            )
             self.assertEqual(me_models.HubA.objects.count(), 1)
+            self.assertEqual(me_models.HubA.objects.first().created_by_id, self.user.id)
             self.assertEqual(me_models.SatA2.objects.count(), 1)
             self.assertEqual(me_models.SatA2.objects.first().field_a2_float, 6.0)
             self.assertEqual(me_models.SatA2.objects.first().field_a2_str, "test2")
+            self.assertEqual(
+                me_models.SatA2.objects.first().created_by_id, self.user.id
+            )
+
+    def test_std_create_object_existing_object_different_user(self):
+        users = MontrekUserFactory.create_batch(2)
+        for i in range(2):
+            repository = HubARepository(session_data={"user_id": users[i].id})
+            repository.std_create_object(
+                {
+                    "field_a1_int": 5,
+                    "field_a1_str": "test",
+                }
+            )
+            self.assertEqual(me_models.SatA1.objects.count(), 1)
+            self.assertEqual(me_models.SatA1.objects.last().field_a1_int, 5)
+            self.assertEqual(me_models.SatA1.objects.last().field_a1_str, "test")
+            self.assertEqual(me_models.SatA1.objects.last().created_by_id, users[0].id)
+            self.assertEqual(me_models.HubA.objects.count(), 1)
+            self.assertEqual(me_models.HubA.objects.first().created_by_id, users[0].id)
 
     def test_std_create_object_existing_object_make_copy(self):
         # Since hub_entity_id is a identifier field for the HubB satellites, any entry with the same attributes will
         # create a copy rather than leaving the old one in place.
-        repository = HubBRepository()
+        repository = HubBRepository(session_data={"user_id": self.user.id})
         for i in range(2):
             repository.std_create_object(
                 {
@@ -138,13 +171,15 @@ class TestMontrekCreatObject(TestCase):
             )
             self.assertEqual(me_models.SatB1.objects.last().field_b1_str, "test")
             self.assertEqual(me_models.HubB.objects.count(), i + 1)
+            self.assertEqual(me_models.HubB.objects.last().created_by_id, self.user.id)
             self.assertEqual(me_models.SatB2.objects.count(), i + 1)
             self.assertEqual(me_models.SatB2.objects.last().field_b2_choice, "CHOICE1")
             self.assertEqual(me_models.SatB2.objects.last().field_b2_str, "test2")
+            self.assertEqual(me_models.SatB1.objects.last().created_by_id, self.user.id)
 
     def test_std_create_object_update_satellite_value_field(self):
         snapshot_time = timezone.now()
-        repository = HubARepository()
+        repository = HubARepository(session_data={"user_id": self.user.id})
         repository.std_create_object(
             {
                 "field_a1_int": 5,
@@ -156,10 +191,13 @@ class TestMontrekCreatObject(TestCase):
         self.assertEqual(me_models.SatA1.objects.count(), 1)
         self.assertEqual(me_models.SatA1.objects.first().field_a1_int, 5)
         self.assertEqual(me_models.SatA1.objects.first().field_a1_str, "test")
+        self.assertEqual(me_models.SatA1.objects.first().created_by_id, self.user.id)
         self.assertEqual(me_models.HubA.objects.count(), 1)
+        self.assertEqual(me_models.HubA.objects.first().created_by_id, self.user.id)
         self.assertEqual(me_models.SatA2.objects.count(), 1)
         self.assertEqual(me_models.SatA2.objects.first().field_a2_float, 6.0)
         self.assertEqual(me_models.SatA2.objects.first().field_a2_str, "test2")
+        self.assertEqual(me_models.SatA1.objects.first().created_by_id, self.user.id)
 
         repository.std_create_object(
             {
@@ -172,11 +210,14 @@ class TestMontrekCreatObject(TestCase):
         self.assertEqual(me_models.SatA1.objects.count(), 1)
         self.assertEqual(me_models.SatA1.objects.first().field_a1_int, 5)
         self.assertEqual(me_models.SatA1.objects.first().field_a1_str, "test")
+        self.assertEqual(me_models.SatA1.objects.first().created_by_id, self.user.id)
         self.assertEqual(me_models.HubA.objects.count(), 1)
+        self.assertEqual(me_models.HubA.objects.first().created_by_id, self.user.id)
         self.assertEqual(me_models.SatA2.objects.count(), 2)
         updated_sat = me_models.SatA2.objects.last()
         self.assertEqual(updated_sat.field_a2_float, 7.0)
         self.assertEqual(updated_sat.field_a2_str, "test2")
+        self.assertEqual(updated_sat.created_by_id, self.user.id)
         updated_sat.hub_entity = me_models.HubA.objects.first()
         self.assertGreater(updated_sat.state_date_start, snapshot_time)
         self.assertLess(
@@ -190,7 +231,7 @@ class TestMontrekCreatObject(TestCase):
         self.assertEqual(me_models.SatA2.objects.count(), 0)
         self.assertEqual(me_models.HubA.objects.count(), 0)
         # Create one object
-        repository = HubARepository()
+        repository = HubARepository(session_data={"user_id": self.user.id})
         repository.std_create_object(
             {
                 "field_a1_int": 5,
@@ -218,6 +259,7 @@ class TestMontrekCreatObject(TestCase):
         self.assertEqual(a_object.field_a1_int, 5)
         self.assertEqual(a_object.field_a2_str, "test2")
         self.assertEqual(a_object.field_a2_float, 6.0)
+        self.assertEqual(a_object.created_by_id, self.user.id)
 
         # Now we have two hubs with different state_date_start and state_date_end:
         self.assertEqual(me_models.HubA.objects.count(), 2)
@@ -236,7 +278,7 @@ class TestMontrekCreatObject(TestCase):
 
     def test_std_create_object_update_satellite_id_field_keep_hub(self):
         # Create one object
-        repository = HubARepository()
+        repository = HubARepository(session_data={"user_id": self.user.id})
         repository.std_create_object(
             {
                 "field_a1_int": 5,
@@ -245,7 +287,9 @@ class TestMontrekCreatObject(TestCase):
                 "field_a2_str": "test2",
             }
         )
-        a_object = HubARepository().std_queryset().get()
+        a_object = (
+            HubARepository(session_data={"user_id": self.user.id}).std_queryset().get()
+        )
         repository.std_create_object(
             {
                 "field_a1_int": 5,
@@ -262,10 +306,39 @@ class TestMontrekCreatObject(TestCase):
         b_object = HubARepository().std_queryset().get()
         self.assertEqual(b_object.field_a1_str, "test_new")
 
+    def test_std_create_object_raises_error_for_missing_user_id(self):
+        with self.assertRaises(PermissionDenied):
+            HubARepository().std_create_object({})
+
+    def test_create_objects_from_data_frame(self):
+        repository = HubARepository(session_data={"user_id": self.user.id})
+        data_frame = pd.DataFrame(
+            {
+                "field_a1_int": [5, 6],
+                "field_a1_str": ["test", "test2"],
+                "field_a2_float": [6.0, 7.0],
+                "field_a2_str": ["test2", "test3"],
+            }
+        )
+        repository.create_objects_from_data_frame(data_frame)
+        self.assertEqual(me_models.HubA.objects.count(), 2)
+        self.assertEqual(me_models.SatA1.objects.count(), 2)
+        self.assertEqual(me_models.SatA2.objects.count(), 2)
+        self.assertEqual(me_models.SatA1.objects.first().field_a1_int, 5)
+        self.assertEqual(me_models.SatA1.objects.last().field_a1_int, 6)
+        self.assertEqual(me_models.SatA1.objects.first().field_a1_str, "test")
+        self.assertEqual(me_models.SatA1.objects.last().field_a1_str, "test2")
+        self.assertEqual(me_models.SatA2.objects.first().field_a2_float, 6.0)
+        self.assertEqual(me_models.SatA2.objects.last().field_a2_float, 7.0)
+        self.assertEqual(me_models.SatA2.objects.first().field_a2_str, "test2")
+        self.assertEqual(me_models.SatA2.objects.last().field_a2_str, "test3")
+        self.assertEqual(me_models.HubA.objects.first().created_by_id, self.user.id)
+        self.assertEqual(me_models.HubA.objects.last().created_by_id, self.user.id)
+
     def test_create_hub_a_with_link_to_hub_b(self):
         hub_b = me_factories.SatB1Factory().hub_entity
         self.assertEqual(me_models.HubB.objects.count(), 1)
-        repository = HubARepository()
+        repository = HubARepository(session_data={"user_id": self.user.id})
         repository.std_create_object(
             {
                 "field_a1_int": 5,
@@ -285,7 +358,7 @@ class TestMontrekCreatObject(TestCase):
         sat_b_2 = me_factories.SatB1Factory(field_b1_str="TEST")
         hub_b_1 = sat_b_1.hub_entity
         hub_b_2 = sat_b_2.hub_entity
-        repository = HubARepository()
+        repository = HubARepository(session_data={"user_id": self.user.id})
         repository.std_create_object(
             {
                 "field_a1_int": 5,
@@ -320,7 +393,7 @@ class TestMontrekCreatObject(TestCase):
     def test_create_hub_a_with_link_to_hub_b_existing(self):
         sat_b_1 = me_factories.SatB1Factory()
         hub_b_1 = sat_b_1.hub_entity
-        repository = HubARepository()
+        repository = HubARepository(session_data={"user_id": self.user.id})
         repository.std_create_object(
             {
                 "field_a1_int": 5,
@@ -347,8 +420,11 @@ class TestMontrekCreatObject(TestCase):
 
 
 class TestDeleteObject(TestCase):
+    def setUp(self):
+        self.user = MontrekUserFactory()
+
     def test_delete_object(self):
-        repository = HubARepository()
+        repository = HubARepository(session_data={"user_id": self.user.id})
         repository.std_create_object({"field_a1_int": 5, "field_a1_str": "test"})
         self.assertEqual(me_models.SatA1.objects.count(), 1)
         self.assertEqual(me_models.HubA.objects.count(), 1)
@@ -467,9 +543,10 @@ class TestTimeSeries(TestCase):
             field_tsc2_float=1.0,
             value_date=montrek_time(2024, 2, 5),
         )
+        self.user = MontrekUserFactory()
 
     def test_existing_satellite(self):
-        repository = HubCRepository()
+        repository = HubCRepository(session_data={"user_id": self.user.id})
         repository.std_create_object(
             {
                 "field_c1_str": "Hallo",
@@ -484,7 +561,7 @@ class TestTimeSeries(TestCase):
         self.assertEqual(queryset[0].value_date, montrek_time(2024, 2, 5).date())
 
     def test_update_satellite(self):
-        repository = HubCRepository()
+        repository = HubCRepository(session_data={"user_id": self.user.id})
         repository.std_create_object(
             {
                 "field_c1_str": "Hallo",
@@ -502,7 +579,7 @@ class TestTimeSeries(TestCase):
         self.assertEqual(queryset[0].state_date_end, queryset[1].state_date_start)
 
     def test_new_satellite(self):
-        repository = HubCRepository()
+        repository = HubCRepository(session_data={"user_id": self.user.id})
         repository.std_create_object(
             {
                 "field_c1_str": "Hallo",
@@ -517,6 +594,7 @@ class TestTimeSeries(TestCase):
         self.assertEqual(queryset[0].value_date, montrek_time(2024, 2, 5).date())
         self.assertEqual(queryset[1].field_tsc2_float, 3.0)
         self.assertEqual(queryset[1].value_date, montrek_time(2024, 2, 6).date())
+        self.assertEqual(queryset[1].created_by_id, self.user.id)
         for i in range(2):
             self.assertEqual(
                 queryset[i].state_date_end,

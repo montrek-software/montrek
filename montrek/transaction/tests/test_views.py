@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
+from user.tests.factories.montrek_user_factories import MontrekUserFactory
 from transaction.tests.factories.transaction_factories import (
     TransactionSatelliteFactory,
     TransactionCategoryMapSatelliteFactory,
@@ -28,6 +29,8 @@ class TestTransactionView(TestCase):
 class TestTransactionCreateFromAccount(TestCase):
     def setUp(self):
         self.account = AccountStaticSatelliteFactory().hub_entity
+        self.user = MontrekUserFactory()
+        self.client.force_login(self.user)
 
     def test_view_return_correct_html(self):
         url = reverse(
@@ -60,6 +63,8 @@ class TestTransactionUpdateView(TestCase):
         self.test_transaction_category = TransactionCategorySatelliteFactory.create(
             typename="TestCat"
         )
+        self.user = MontrekUserFactory()
+        self.client.force_login(self.user)
 
     def test_view_return_correct_html(self):
         url = reverse(
@@ -111,14 +116,15 @@ class TestTransactionDeleteView(TestCase):
         self.assertEqual(response.status_code, 302)
 
         self.assertEqual(TransactionRepository().std_queryset().count(), 0)
-        self.test_transaction.state_date_end < timezone.make_aware(timezone.datetime.max)
+        self.test_transaction.state_date_end < timezone.make_aware(
+            timezone.datetime.max
+        )
+
 
 class TestTransactionCategoryMapDetailsView(TestCase):
     def setUp(self):
         self.test_transaction_category_map = TransactionCategoryMapSatelliteFactory()
-        self.account = (
-            self.test_transaction_category_map.hub_entity.link_transaction_category_map_account.first()
-        )
+        self.account = self.test_transaction_category_map.hub_entity.link_transaction_category_map_account.first()
 
     def test_view_return_correct_html(self):
         url = reverse(
@@ -140,6 +146,8 @@ class TestTransactionCategoryMapCreateView(TestCase):
             transaction_party="123",
             hub_entity__account=self.account,
         )
+        self.user = MontrekUserFactory()
+        self.client.force_login(self.user)
 
     def test_view_return_correct_html(self):
         url = reverse(
@@ -184,6 +192,8 @@ class TestTransactionCategoryMapUpdateView(TestCase):
             is_regex=False,
             hub_entity__accounts=[self.account],
         )
+        self.user = MontrekUserFactory()
+        self.client.force_login(self.user)
 
     def test_view_return_correct_html(self):
         url = reverse(
