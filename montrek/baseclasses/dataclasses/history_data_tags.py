@@ -7,6 +7,9 @@ class HistoryDataTag:
     change_date: datetime.datetime
     user_ids: list[int]
 
+    def get_user_string(self) -> str:
+        return ",".join([str(user_id) for user_id in self.user_ids])
+
 
 class HistoryDataTagSet:
     def __init__(self):
