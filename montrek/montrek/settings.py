@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     "depot",
     "asset",
     "user",
+    "company",
 ]
 
 MIDDLEWARE = [

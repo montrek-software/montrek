@@ -35,4 +35,5 @@ urlpatterns = [
     path("country/", include("country.urls")),
     path("montrek_example/", include("montrek_example.urls")),
     path("user/", include("user.urls")),
+    path("company/", include("company.urls")),
 ]
