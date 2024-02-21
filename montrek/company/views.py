@@ -1,7 +1,6 @@
-from django.shortcuts import render
-
 from baseclasses.views import (
     MontrekCreateView,
+    MontrekDeleteView,
     MontrekListView,
     MontrekDetailView,
     MontrekUpdateView,
@@ -29,9 +28,12 @@ class CompanyOverview(MontrekListView):
     @property
     def elements(self) -> tuple:
         return (
-            table_elements.StringTableElement(
+            table_elements.LinkTextTableElement(
                 name="Company Name",
-                attr="company_name",
+                url="company_details",
+                kwargs={"pk": "id"},
+                text="company_name",
+                hover_text="View Company",
             ),
             table_elements.StringTableElement(
                 name="Bloomberg Ticker",
@@ -66,3 +68,33 @@ class CompanyUpdateView(MontrekUpdateView):
     title = "Company Update"
     form_class = CompanyCreateForm
     success_url = "company"
+
+
+class CompanyDeleteView(MontrekDeleteView):
+    repository = CompanyRepository
+    page_class = CompanyOverviewPage
+    success_url = "company"
+
+
+class CompanyTSTableView(MontrekListView):
+    page_class = CompanyPage
+    tab = "tab_company_ts_table"
+    title = "Company Time Series"
+    repository = CompanyRepository
+
+    def get_queryset(self):
+        company_id = self.kwargs["pk"]
+        return self.repository_object.get_all_time_series(company_id)
+
+    @property
+    def elements(self) -> tuple:
+        return (
+            table_elements.DateTableElement(
+                name="Value Date",
+                attr="value_date",
+            ),
+            table_elements.FloatTableElement(
+                name="Revenue",
+                attr="revenue",
+            ),
+        )
