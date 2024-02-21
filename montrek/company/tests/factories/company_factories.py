@@ -17,6 +17,6 @@ class CompanyStaticSatelliteFactory(factory.django.DjangoModelFactory):
 
 class CompanyTimeSeriesSatelliteFactory(factory.django.DjangoModelFactory):
     class Meta:
-        model = "asset.CompanyTimeSeriesSatellite"
+        model = "company.CompanyTimeSeriesSatellite"
 
     hub_entity = factory.SubFactory(CompanyHubFactory)
