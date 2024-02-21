@@ -21,5 +21,5 @@ class CompanyTimeSeriesSatellite(baseclass_models.MontrekTimeSeriesSatelliteABC)
         CompanyHub, on_delete=models.CASCADE, related_name="asset_time_series_satellite"
     )
     identifier_fields = ["value_date", "hub_entity_id"]
-    revenue = models.DecimalField(max_digits=20, decimal_places=2)
+    total_revenue = models.DecimalField(max_digits=20, decimal_places=2)
     value_date = models.DateField()

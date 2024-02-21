@@ -94,7 +94,7 @@ class CompanyTSTableView(MontrekListView):
                 attr="value_date",
             ),
             table_elements.FloatTableElement(
-                name="Revenue",
-                attr="revenue",
+                name="Total Revenue",
+                attr="total_revenue",
             ),
         )

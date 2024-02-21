@@ -53,7 +53,7 @@ class Migration(migrations.Migration):
                 ),
                 ("hash_identifier", models.CharField(default="", max_length=64)),
                 ("hash_value", models.CharField(default="", max_length=64)),
-                ("revenue", models.DecimalField(decimal_places=2, max_digits=20)),
+                ("total_revenue", models.DecimalField(decimal_places=2, max_digits=20)),
                 ("value_date", models.DateField()),
                 (
                     "created_by",
