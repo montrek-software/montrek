@@ -9,6 +9,7 @@ from django.urls import reverse
 from django.contrib import messages
 from decouple import config
 from baseclasses.dataclasses.nav_bar_model import NavBarModel
+from baseclasses.dataclasses.link_model import LinkModel
 from baseclasses.pages import NoPage
 from baseclasses.forms import DateRangeForm, FilterForm
 from baseclasses.forms import MontrekCreateForm
@@ -30,6 +31,15 @@ def navbar(request):
     navbar_apps_config = config("NAVBAR_APPS", default="").split(" ")
     navbar_apps = [NavBarModel(app) for app in navbar_apps_config if app != ""]
     return render(request, "navbar.html", {"nav_apps": navbar_apps})
+
+
+def links(request):
+    links_config = config("LINKS", default="http://example.com,Example").split(" ")
+    links = []
+    for link in links_config:
+        link_constituents = link.split(",")
+        links.append(LinkModel(href=link_constituents[0], title=link_constituents[1]))
+    return render(request, "links.html", {"links": links})
 
 
 class MontrekPageViewMixin:
