@@ -28,13 +28,6 @@ def under_construction(request):
 
 def navbar(request):
     navbar_apps_config = config("NAVBAR_APPS", default="").split(" ")
-    # navbar_apps = [
-    #    NavBarModel("account"),
-    #    NavBarModel("credit_institution"),
-    #    NavBarModel("asset"),
-    #    NavBarModel("currency"),
-    #    NavBarModel("country"),
-    # ]
     navbar_apps = [NavBarModel(app) for app in navbar_apps_config if app != ""]
     return render(request, "navbar.html", {"nav_apps": navbar_apps})
 
