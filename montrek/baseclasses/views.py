@@ -34,7 +34,11 @@ def navbar(request):
 
 
 def links(request):
-    links = [LinkModel(href="https://github.com/chrishombach/montrek", title="Github")]
+    links_config = config("LINKS", default="http://example.com,Example").split(" ")
+    links = []
+    for link in links_config:
+        link_constituents = link.split(",")
+        links.append(LinkModel(href=link_constituents[0], title=link_constituents[1]))
     return render(request, "links.html", {"links": links})
 
 
