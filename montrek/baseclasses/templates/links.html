@@ -1,0 +1,15 @@
+
+<table>
+    <!-- <tr> -->
+    <!--     <td><a href="https://github.com/chrishombach/montrek" target="_blank">Github</a></td> -->
+    <!-- </tr> -->
+    <!-- <tr> -->
+    <!--     <td><a href="https://banking.dkb.de/login" target="_blank">DKB</a></td> -->
+    <!-- </tr> -->
+    <!-- <tr> -->
+    <!--     <td><a href="https://webtrading.onvista-bank.de/login" target="_blank">Onvista</a></td> -->
+    <!-- </tr> -->
+    {% for link in links %}
+      <tr><td><a href="{{ link.href }}" target="_blank">{{ link.title }}</a></td></tr>
+    {% endfor %}
+</table>
