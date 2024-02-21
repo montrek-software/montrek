@@ -7,6 +7,7 @@ from django.views import View
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.contrib import messages
+from decouple import config
 from baseclasses.dataclasses.nav_bar_model import NavBarModel
 from baseclasses.pages import NoPage
 from baseclasses.forms import DateRangeForm, FilterForm
@@ -26,14 +27,9 @@ def under_construction(request):
 
 
 def navbar(request):
-    nav_apps = [
-        NavBarModel("account"),
-        NavBarModel("credit_institution"),
-        NavBarModel("asset"),
-        NavBarModel("currency"),
-        NavBarModel("country"),
-    ]
-    return render(request, "navbar.html", {"nav_apps": nav_apps})
+    navbar_apps_config = config("NAVBAR_APPS", default="").split(" ")
+    navbar_apps = [NavBarModel(app) for app in navbar_apps_config if app != ""]
+    return render(request, "navbar.html", {"nav_apps": navbar_apps})
 
 
 class MontrekPageViewMixin:
