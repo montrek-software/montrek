@@ -28,16 +28,20 @@ class CompanyOverview(MontrekListView):
     @property
     def elements(self) -> tuple:
         return (
-            table_elements.LinkTextTableElement(
+            table_elements.StringTableElement(
                 name="Company Name",
-                url="company_details",
-                kwargs={"pk": "id"},
-                text="company_name",
-                hover_text="View Company",
+                attr="company_name",
             ),
             table_elements.StringTableElement(
                 name="Bloomberg Ticker",
                 attr="bloomberg_ticker",
+            ),
+            table_elements.LinkTableElement(
+                name="View",
+                url="company_details",
+                kwargs={"pk": "id"},
+                icon="eye-open",
+                hover_text="View Company",
             ),
         )
 
