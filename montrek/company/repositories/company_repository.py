@@ -1,0 +1,23 @@
+from django.utils import timezone
+from baseclasses.repositories.montrek_repository import MontrekRepository
+from company.models import (
+    CompanyHub,
+    CompanyStaticSatellite,
+    CompanyTimeSeriesSatellite,
+)
+
+
+class CompanyRepository(MontrekRepository):
+    hub_class = CompanyHub
+
+    def std_queryset(self):
+        reference_date = timezone.now()
+        self.add_satellite_fields_annotations(
+            CompanyStaticSatellite, ["company_name", "bloomberg_ticker"], reference_date
+        )
+        return self.build_queryset()
+
+    def get_all_time_series(self, company_id):
+        return self.build_time_series_queryset(
+            CompanyTimeSeriesSatellite, self.reference_date
+        )
