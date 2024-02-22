@@ -1,6 +1,7 @@
+from dataclasses import dataclass
 from datetime import datetime
 import pandas as pd
-from typing import Any, List, Dict, Optional, Type, Tuple
+from typing import Any, List, Dict, Optional, Type
 from baseclasses.models import MontrekSatelliteABC, MontrekTimeSeriesSatelliteABC
 from baseclasses.models import MontrekHubABC
 from baseclasses.models import MontrekLinkABC
@@ -19,10 +20,7 @@ from baseclasses.repositories.db_creator import DbCreator
 from baseclasses.dataclasses.montrek_message import MontrekMessageError
 from django.db.models import (
     Q,
-    DateTimeField,
     CharField,
-    Subquery,
-    OuterRef,
     QuerySet,
     Value,
 )
@@ -31,6 +29,11 @@ from django.utils import timezone
 from django.core.exceptions import FieldError, PermissionDenied
 from django.core.paginator import Paginator
 from functools import wraps
+
+from baseclasses.dataclasses.history_data_tags import (
+    HistoryDataTag,
+    HistoryDataTagSet,
+)
 
 
 class MontrekRepository:
@@ -230,35 +233,39 @@ class MontrekRepository:
     def get_history_queryset(self, pk: int, **kwargs):
         # WARNING: This method is not optimized for large databases
         # Get all state_date changes for the satellitesof the hub and return the std_queryset to the single dates
-        dates = self._get_satellites_change_dates(pk)
-        queryset = self._get_queryset_per_change_date(dates[0], pk)
-        for change_date in dates[1:]:
-            self.reference_date = change_date
+        history_tags = self._get_satellites_history_tags(pk)
+        queryset = self._get_queryset_per_change_date(history_tags[0], pk)
+        for history_tag in history_tags[1:]:
             queryset = queryset.union(
-                self._get_queryset_per_change_date(change_date, pk)
+                self._get_queryset_per_change_date(history_tag, pk)
             )
         return queryset.order_by("-change_date")
 
-    def _get_satellites_change_dates(self, pk: int) -> List[datetime]:
+    def _get_satellites_history_tags(self, pk: int) -> HistoryDataTagSet:
         self.std_queryset()
-        dates = []
+        history_data_tags = HistoryDataTagSet()
         for sat_class in self._primary_satellite_classes:
-            dates_list = sat_class.objects.filter(hub_entity_id=pk).values_list(
-                "state_date_start"
-            )
-            for dd in dates_list:
-                dates += dd
-        return sorted(set(dates))
+            history_satellite_data = sat_class.objects.filter(
+                hub_entity_id=pk
+            ).values_list("state_date_start", "created_by__email")
+            for hdata in history_satellite_data:
+                history_data_tags.append(*hdata)
+        return history_data_tags
 
-    def _get_queryset_per_change_date(self, change_date: datetime, pk: int) -> QuerySet:
-        self.reference_date = change_date
+    def _get_queryset_per_change_date(
+        self, history_tag: HistoryDataTag, pk: int
+    ) -> QuerySet:
+        self.reference_date = history_tag.change_date
         return (
             self.std_queryset()
             .filter(id=pk)
             .annotate(
                 change_date=Value(
                     str(self.reference_date), output_field=CharField(max_length=23)
-                )
+                ),
+                changed_by=Value(
+                    history_tag.get_user_string(), output_field=CharField()
+                ),
             )
         )
 
