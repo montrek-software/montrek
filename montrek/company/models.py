@@ -3,7 +3,11 @@ from baseclasses import models as baseclass_models
 
 
 class CompanyHub(baseclass_models.MontrekHubABC):
-    pass
+    link_company_file_upload_registry = models.ManyToManyField(
+        "file_upload.FileUploadRegistryHub",
+        related_name="link_file_upload_registry_company",
+        through="LinkCompanyFileUploadRegistry",
+    )
 
 
 class CompanyStaticSatellite(baseclass_models.MontrekSatelliteABC):
@@ -23,3 +27,10 @@ class CompanyTimeSeriesSatellite(baseclass_models.MontrekTimeSeriesSatelliteABC)
     identifier_fields = ["value_date", "hub_entity_id"]
     total_revenue = models.DecimalField(max_digits=20, decimal_places=2)
     value_date = models.DateField()
+
+
+class LinkCompanyFileUploadRegistry(baseclass_models.MontrekOneToManyLinkABC):
+    hub_in = models.ForeignKey("company.CompanyHub", on_delete=models.CASCADE)
+    hub_out = models.ForeignKey(
+        "file_upload.FileUploadRegistryHub", on_delete=models.CASCADE
+    )
