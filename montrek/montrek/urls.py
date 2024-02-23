@@ -26,17 +26,10 @@ urlpatterns = [
         "under_construction", base_views.under_construction, name="under_construction"
     ),
     path("admin/", admin.site.urls),
-    # path("account/", include("account.urls")),
+    path("user/", include("user.urls")),
     path("baseclasses/", include("baseclasses.urls")),
     path("file_upload/", include("file_upload.urls")),
-    # path("transaction/", include("transaction.urls")),
-    # path("asset/", include("asset.urls")),
-    # path("credit_institution/", include("credit_institution.urls")),
-    # path("currency/", include("currency.urls")),
-    # path("country/", include("country.urls")),
     path("montrek_example/", include("montrek_example.urls")),
-    path("user/", include("user.urls")),
-    # path("company/", include("company.urls")),
 ]
 
 urlpatterns += [
