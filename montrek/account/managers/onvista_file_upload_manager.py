@@ -4,7 +4,9 @@ import pandas as pd
 from account.managers.not_implemented_processor import NotImplementedFileUploadProcessor
 from asset.repositories.asset_repository import AssetRepository
 from account.repositories.account_repository import AccountRepository
-from transaction.managers.transaction_account_manager import TransactionAccountManager
+from mt_accounting.transaction.managers.transaction_account_manager import (
+    TransactionAccountManager,
+)
 
 
 class OnvistaFileUploadProcessor:

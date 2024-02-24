@@ -7,7 +7,7 @@ from account.models import AccountStaticSatellite
 from account.tests.factories.account_factories import AccountStaticSatelliteFactory
 from account.tests.factories.account_factories import BankAccountStaticSatelliteFactory
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
-from transaction.tests.factories.transaction_factories import (
+from mt_accounting.transaction.tests.factories.transaction_factories import (
     TransactionSatelliteFactory,
     TransactionCategoryMapSatelliteFactory,
 )

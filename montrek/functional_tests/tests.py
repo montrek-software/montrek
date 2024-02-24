@@ -18,11 +18,13 @@ from account.tests.factories.account_factories import (
 )
 from account.tests.factories.account_factories import BankAccountStaticSatelliteFactory
 from asset.models import AssetStaticSatellite
-from transaction.tests.factories.transaction_factories import TransactionHubFactory
-from transaction.tests.factories.transaction_factories import (
+from mt_accounting.transaction.tests.factories.transaction_factories import (
+    TransactionHubFactory,
+)
+from mt_accounting.transaction.tests.factories.transaction_factories import (
     TransactionSatelliteFactory,
 )
-from transaction.tests.factories.transaction_factories import (
+from mt_accounting.transaction.tests.factories.transaction_factories import (
     TransactionTypeSatelliteFactory,
 )
 from credit_institution.tests.factories.credit_institution_factories import (
@@ -599,12 +601,14 @@ class TestDepotAccount(MontrekFunctionalTest):
         CreditInstitutionStaticSatelliteFactory.create(
             credit_institution_name="Bank of Testonia"
         )
-        ccy_usd = CurrencyStaticSatelliteFactory.create(ccy_code="USD",
-                                                        ccy_name="US Dollar")
-        CurrencyTimeSeriesSatelliteFactory.create(hub_entity=ccy_usd.hub_entity,
-                                           value_date=timezone.datetime(2021, 1, 1),
-                                           fx_rate=0.9
-                                          )
+        ccy_usd = CurrencyStaticSatelliteFactory.create(
+            ccy_code="USD", ccy_name="US Dollar"
+        )
+        CurrencyTimeSeriesSatelliteFactory.create(
+            hub_entity=ccy_usd.hub_entity,
+            value_date=timezone.datetime(2021, 1, 1),
+            fx_rate=0.9,
+        )
 
     @tag("functional")
     @patch("asset.managers.market_data.yf.download")

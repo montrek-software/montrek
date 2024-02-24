@@ -32,7 +32,6 @@ urlpatterns = [
     path("montrek_example/", include("montrek_example.urls")),
 ]
 
-urlpatterns += [
-    path(f"{app}/", include(f"{app}.urls"))
-    for app in config("INSTALLED_APPS", default="").split(" ")
-]
+for app in config("INSTALLED_APPS", default="").split(" "):
+    app_path = app.replace(".", "/") + "/"
+    urlpatterns.append(path(app_path, include(f"{app}.urls")))

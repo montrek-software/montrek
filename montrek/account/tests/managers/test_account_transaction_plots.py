@@ -11,10 +11,10 @@ from account.managers.account_transaction_plots import (
     draw_income_expenses_category_pie_plot,
 )
 from account.tests.factories.account_factories import AccountHubFactory
-from transaction.tests.factories.transaction_factories import (
+from mt_accounting.transaction.tests.factories.transaction_factories import (
     TransactionSatelliteFactory,
 )
-from transaction.repositories.transaction_repository import (
+from mt_accounting.transaction.repositories.transaction_repository import (
     TransactionRepository,
 )
 

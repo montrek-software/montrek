@@ -1,6 +1,6 @@
 import pandas as pd
 import plotly.graph_objects as go
-from transaction.models import TransactionSatellite
+from mt_accounting.transaction.models import TransactionSatellite
 from reporting.core.reporting_data import ReportingData
 from reporting.core.reporting_plots import ReportingPlot
 from baseclasses import models as baseclass_models

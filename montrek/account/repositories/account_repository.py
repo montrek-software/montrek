@@ -24,14 +24,15 @@ from account.models import (
     LinkAccountCreditInstitution,
 )
 from credit_institution.models import CreditInstitutionStaticSatellite
-from transaction.models import TransactionSatellite
 
 
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from baseclasses.repositories.montrek_repository import paginated_table
 from depot.repositories.depot_repository import DepotRepository
-from transaction.repositories.transaction_repository import TransactionRepository
-from transaction.repositories.transaction_category_repository import (
+from mt_accounting.transaction.repositories.transaction_repository import (
+    TransactionRepository,
+)
+from mt_accounting.transaction.repositories.transaction_category_repository import (
     TransactionCategoryMapRepository,
 )
 from file_upload.repositories.file_upload_registry_repository import (

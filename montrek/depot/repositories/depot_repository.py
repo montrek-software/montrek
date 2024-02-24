@@ -10,7 +10,9 @@ from asset.models import (
     LinkAssetCurrency,
 )
 from currency.models import CurrencyStaticSatellite, CurrencyTimeSeriesSatellite
-from transaction.repositories.transaction_repository import TransactionRepository
+from mt_accounting.transaction.repositories.transaction_repository import (
+    TransactionRepository,
+)
 from currency.repositories.currency_repository import CurrencyRepository
 
 

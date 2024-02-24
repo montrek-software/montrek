@@ -10,9 +10,11 @@ from credit_institution.tests.factories.credit_institution_factories import (
 from baseclasses.repositories.db_creator import DbCreator
 from account.repositories.account_repository import AccountRepository
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
-from transaction.models import TransactionHub, TransactionSatellite
-from transaction.repositories.transaction_repository import TransactionRepository
-from transaction.tests.factories.transaction_factories import (
+from mt_accounting.transaction.models import TransactionHub, TransactionSatellite
+from mt_accounting.transaction.repositories.transaction_repository import (
+    TransactionRepository,
+)
+from mt_accounting.transaction.tests.factories.transaction_factories import (
     TransactionCategorySatelliteFactory,
 )
 

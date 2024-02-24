@@ -12,7 +12,7 @@ from account.tests.factories.account_factories import (
 )
 from account.repositories.account_repository import AccountRepository
 from asset.repositories.asset_repository import AssetRepository
-from transaction.tests.factories.transaction_factories import (
+from mt_accounting.transaction.tests.factories.transaction_factories import (
     TransactionSatelliteFactory,
     TransactionHubFactory,
 )

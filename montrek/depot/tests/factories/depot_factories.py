@@ -3,7 +3,7 @@ from account.models import AccountStaticSatellite
 from currency.tests.factories.currency_factories import (
     CurrencyTimeSeriesSatelliteFactory,
 )
-from transaction.tests.factories.transaction_factories import (
+from mt_accounting.transaction.tests.factories.transaction_factories import (
     TransactionSatelliteFactory,
 )
 from asset.tests.factories.asset_factories import (
