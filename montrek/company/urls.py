@@ -32,4 +32,14 @@ urlpatterns = [
         views.CompanyTSTableView.as_view(),
         name="company_ts_table",
     ),
+    path(
+        "upload_file",
+        views.CompanyUploadFileView.as_view(),
+        name="company_upload_file",
+    ),
+    path(
+        "uploads",
+        views.CompanyUploadView.as_view(),
+        name="company_view_uploads",
+    ),
 ]

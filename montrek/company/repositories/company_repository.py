@@ -1,5 +1,8 @@
 from django.utils import timezone
-from baseclasses.repositories.montrek_repository import MontrekRepository
+from baseclasses.repositories.montrek_repository import (
+    MontrekRepository,
+    paginated_table,
+)
 from company.models import (
     CompanyHub,
     CompanyStaticSatellite,
@@ -16,6 +19,10 @@ class CompanyRepository(MontrekRepository):
             CompanyStaticSatellite, ["company_name", "bloomberg_ticker"], reference_date
         )
         return self.build_queryset()
+
+    @paginated_table
+    def get_company_table_paginated(self):
+        return self.std_queryset()
 
     def get_all_time_series(self, company_id):
         return self.build_time_series_queryset(

@@ -1,3 +1,5 @@
+from django.urls import reverse
+
 from baseclasses.views import (
     MontrekCreateView,
     MontrekDeleteView,
@@ -9,6 +11,8 @@ from baseclasses.dataclasses import table_elements
 from company.pages import CompanyOverviewPage, CompanyPage
 from company.repositories.company_repository import CompanyRepository
 from company.forms import CompanyCreateForm
+from file_upload.views import MontrekUploadFileView
+from company.managers.company_file_upload_manager import CompanyFileUploadProcessor
 
 
 class CompanyCreateView(MontrekCreateView):
@@ -24,6 +28,9 @@ class CompanyOverview(MontrekListView):
     tab = "tab_company_list"
     title = "Company Overview"
     repository = CompanyRepository
+
+    def get_queryset(self):
+        return self.repository_object.get_company_table_paginated()
 
     @property
     def elements(self) -> tuple:
@@ -100,5 +107,46 @@ class CompanyTSTableView(MontrekListView):
             table_elements.FloatTableElement(
                 name="Total Revenue",
                 attr="total_revenue",
+            ),
+        )
+
+
+class CompanyUploadFileView(MontrekUploadFileView):
+    page_class = CompanyOverviewPage
+    title = "Upload Company File"
+    repository = CompanyRepository
+    file_upload_processor_class = CompanyFileUploadProcessor
+    accept = ".xlsx"
+
+    def get_success_url(self):
+        return reverse("company_view_uploads")
+
+
+class CompanyUploadView(MontrekListView):
+    page_class = CompanyOverviewPage
+    tab = "tab_uploads"
+    title = "Company Uploads"
+    repository = CompanyRepository
+
+    def get_queryset(self):
+        return self.repository_object.std_queryset()
+
+    @property
+    def elements(self) -> list:
+        return (
+            table_elements.StringTableElement(name="File Name", attr="file_name"),
+            table_elements.StringTableElement(
+                name="Upload Status", attr="upload_status"
+            ),
+            table_elements.StringTableElement(
+                name="Upload Message", attr="upload_message"
+            ),
+            table_elements.DateTableElement(name="Upload Date", attr="created_at"),
+            table_elements.LinkTableElement(
+                name="File",
+                url="montrek_download_file",
+                kwargs={"pk": "id"},
+                icon="download",
+                hover_text="Download",
             ),
         )

@@ -21,7 +21,19 @@ class CompanyOverviewPage(MontrekPage):
             active="active",
             actions=(action_new_company,),
         )
-        return (overview_tab,)
+        action_upload_file = ActionElement(
+            icon="upload",
+            link=reverse("company_upload_file"),
+            action_id="id_company_upload",
+            hover_text="Upload company data from file",
+        )
+        file_upload_tab = TabElement(
+            name="Uploads",
+            link=reverse("company_view_uploads"),
+            html_id="tab_uploads",
+            actions=(action_upload_file,),
+        )
+        return (overview_tab, file_upload_tab)
 
 
 class CompanyPage(MontrekPage):
@@ -46,8 +58,8 @@ class CompanyPage(MontrekPage):
         action_delete_company = ActionElement(
             icon="trash",
             link=reverse("company_delete", kwargs={"pk": company_id}),
-            action_id="delete_account",
-            hover_text="Delete account",
+            action_id="delete_company",
+            hover_text="Delete Company",
         )
         action_update_company = ActionElement(
             icon="pencil",
@@ -57,14 +69,15 @@ class CompanyPage(MontrekPage):
         )
         details_tab = TabElement(
             name="Details",
-            link=reverse("company_details", args=[self.obj.id]),
+            link=reverse("company_details", kwargs={"pk": self.obj.id}),
             html_id="tab_details",
             actions=(action_back, action_delete_company, action_update_company),
         )
         time_series_tab = TabElement(
             name="Time Series",
-            link=reverse("company_ts_table", args=[self.obj.id]),
+            link=reverse("company_ts_table", kwargs={"pk": self.obj.id}),
             html_id="tab_company_ts_table",
             actions=(action_back,),
         )
+
         return [details_tab, time_series_tab]
