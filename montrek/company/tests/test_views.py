@@ -66,7 +66,7 @@ class TestRgsCompanyUploadFileView(TestCase):
         self.client.force_login(self.user)
 
     def test_company_upload_file_returns_correct_html(self):
-        url = reverse("company_upload_file", kwargs={"pk": self.company.hub_entity.id})
+        url = reverse("company_upload_file")
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "upload_form.html")
