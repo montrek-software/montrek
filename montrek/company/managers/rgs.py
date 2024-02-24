@@ -24,6 +24,7 @@ class RgsFileProcessor:
         )
         self.company_repository.create_objects_from_data_frame(df)
         self.message = f"RGS upload was successfull (uploaded {df.shape[0]} rows.)"
+        return True
 
     def _create_or_update_company_hubs(self, bloomberg_tickers: pd.Series) -> pd.Series:
         ticker_hub_entity_id_map = {}
