@@ -29,7 +29,7 @@ class CompanyRepository(MontrekRepository):
 
     @paginated_table
     def get_upload_registry_table_paginated(self):
-        return FileUploadRegistryRepository().std_queryset()
+        return FileUploadRegistryRepository().std_queryset().order_by("-created_at")
 
     def get_all_time_series(self, company_id):
         return self.build_time_series_queryset(
