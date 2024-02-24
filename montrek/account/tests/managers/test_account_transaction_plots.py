@@ -6,7 +6,7 @@ import plotly.graph_objects as go
 from django.test import TestCase
 from django_pandas.io import read_frame
 from django.utils import timezone
-from reporting.managers.account_transaction_plots import (
+from account.managers.account_transaction_plots import (
     draw_monthly_income_expanses_plot,
     draw_income_expenses_category_pie_plot,
 )
