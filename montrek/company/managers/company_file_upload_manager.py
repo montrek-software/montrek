@@ -14,9 +14,19 @@ class CompanyFileUploadProcessor:
         self, file_upload_registry_id: int, session_data: Dict[str, Any], **kwargs
     ):
         self.company_repository = CompanyRepository(session_data)
+        self.file_upload_registry_repository = FileUploadRegistryRepository(
+            session_data
+        )
+        self.file_upload_registry_hub = (
+            self.file_upload_registry_repository.std_queryset().get(
+                pk=file_upload_registry_id
+            )
+        )
 
     def process(self, file_path: str):
-        processor = RgsFileProcessor(self.company_repository)
+        processor = RgsFileProcessor(
+            self.company_repository, self.file_upload_registry_hub
+        )
         result = processor.process(file_path)
         self.message = processor.message
         return result
@@ -26,15 +36,3 @@ class CompanyFileUploadProcessor:
 
     def post_check(self, file_path: str):
         return True
-
-    def _set_registry_to_company(
-        self, company_hub_id: int, file_upload_registry_id: int
-    ):
-        file_upload_registry_hub = (
-            FileUploadRegistryRepository()
-            .std_queryset()
-            .get(pk=file_upload_registry_id)
-        )
-        company_hub = CompanyRepository().std_queryset().get(pk=company_hub_id)
-        company_hub.link_company_file_upload_registry.add(file_upload_registry_hub)
-        return company_hub
