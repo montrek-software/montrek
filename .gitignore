@@ -1,0 +1,13 @@
+venv_montrek/*
+*.swp
+*.pyc
+montrek/*/migrations/__pycache__/*
+.env*
+.coverage
+montrek/.coverage
+montrek/htmlcov/*
+montrek/uploads/*
+montrek/sent_emails/*
+montrek/mt_economic_common/*
+montrek/mt_economic_common/
+start_montrek.sh
