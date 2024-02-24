@@ -28,7 +28,7 @@ from credit_institution.models import CreditInstitutionStaticSatellite
 
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from baseclasses.repositories.montrek_repository import paginated_table
-from depot.repositories.depot_repository import DepotRepository
+from mt_accounting.depot.repositories.depot_repository import DepotRepository
 from mt_accounting.transaction.repositories.transaction_repository import (
     TransactionRepository,
 )

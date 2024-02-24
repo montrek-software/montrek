@@ -1,6 +1,6 @@
 from decimal import Decimal
 from django.test import TestCase
-from depot.tests.factories.depot_factories import DepotAccountFactory
+from mt_accounting.depot.tests.factories.depot_factories import DepotAccountFactory
 from account.repositories.account_repository import AccountRepository
 
 
