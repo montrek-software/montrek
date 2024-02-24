@@ -354,6 +354,7 @@ class AccountUploadFileView(MontrekUploadFileView):
     title = "Upload Account File"
     repository = AccountRepository
     file_upload_processor_class = AccountFileUploadProcessor
+    accept = ".csv"
 
     def get_success_url(self):
         return reverse("account_view_uploads", kwargs={"pk": self.kwargs["pk"]})

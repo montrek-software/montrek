@@ -33,12 +33,13 @@ class MontrekUploadFileView(MontrekTemplateView):
     file_upload_processor_class: type[
         FileUploadProcessorProtocol
     ] = NotDefinedFileUploadProcessor
+    accept = ""
 
     def get_template_context(self, **kwargs):
-        return {"form": UploadFileForm()}
+        return {"form": UploadFileForm(self.accept)}
 
     def post(self, request, *args, **kwargs):
-        form = UploadFileForm(request.POST, request.FILES)
+        form = UploadFileForm(self.accept, request.POST, request.FILES)
         if form.is_valid():
             if not self._check_file_type(request.FILES["file"], form):
                 return self.render_to_response(self.get_context_data())
