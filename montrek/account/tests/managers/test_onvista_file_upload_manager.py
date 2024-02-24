@@ -11,7 +11,7 @@ from account.tests.factories.account_factories import (
     AccountStaticSatelliteFactory,
 )
 from account.repositories.account_repository import AccountRepository
-from asset.repositories.asset_repository import AssetRepository
+from mt_accounting.asset.repositories.asset_repository import AssetRepository
 from mt_accounting.transaction.tests.factories.transaction_factories import (
     TransactionSatelliteFactory,
     TransactionHubFactory,

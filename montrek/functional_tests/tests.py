@@ -17,7 +17,7 @@ from account.tests.factories.account_factories import (
     BankAccountPropertySatelliteFactory,
 )
 from account.tests.factories.account_factories import BankAccountStaticSatelliteFactory
-from asset.models import AssetStaticSatellite
+from mt_accounting.asset.models import AssetStaticSatellite
 from mt_accounting.transaction.tests.factories.transaction_factories import (
     TransactionHubFactory,
 )

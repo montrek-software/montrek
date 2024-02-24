@@ -14,7 +14,9 @@ from mt_accounting.transaction.tests.factories.transaction_factories import (
 from file_upload.tests.factories.file_upload_factories import (
     FileUploadRegistryStaticSatelliteFactory,
 )
-from asset.tests.factories.asset_factories import AssetStaticSatelliteFactory
+from mt_accounting.asset.tests.factories.asset_factories import (
+    AssetStaticSatelliteFactory,
+)
 from currency.tests.factories.currency_factories import (
     CurrencyStaticSatelliteFactory,
     CurrencyTimeSeriesSatelliteFactory,
