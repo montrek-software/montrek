@@ -8,6 +8,9 @@ from company.models import (
     CompanyStaticSatellite,
     CompanyTimeSeriesSatellite,
 )
+from file_upload.repositories.file_upload_registry_repository import (
+    FileUploadRegistryRepository,
+)
 
 
 class CompanyRepository(MontrekRepository):
@@ -23,6 +26,10 @@ class CompanyRepository(MontrekRepository):
     @paginated_table
     def get_company_table_paginated(self):
         return self.std_queryset()
+
+    @paginated_table
+    def get_upload_registry_table_paginated(self):
+        return FileUploadRegistryRepository().std_queryset()
 
     def get_all_time_series(self, company_id):
         return self.build_time_series_queryset(

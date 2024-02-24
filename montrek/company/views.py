@@ -129,7 +129,7 @@ class CompanyUploadView(MontrekListView):
     repository = CompanyRepository
 
     def get_queryset(self):
-        return self.repository_object.std_queryset()
+        return self.repository().get_upload_registry_table_paginated()
 
     @property
     def elements(self) -> list:
