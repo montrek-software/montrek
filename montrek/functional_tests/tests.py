@@ -10,13 +10,17 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import WebDriverException
 
-from account.models import AccountStaticSatellite
-from account.tests.factories.account_factories import AccountHubFactory
-from account.tests.factories.account_factories import AccountStaticSatelliteFactory
-from account.tests.factories.account_factories import (
+from mt_accounting.account.models import AccountStaticSatellite
+from mt_accounting.account.tests.factories.account_factories import AccountHubFactory
+from mt_accounting.account.tests.factories.account_factories import (
+    AccountStaticSatelliteFactory,
+)
+from mt_accounting.account.tests.factories.account_factories import (
     BankAccountPropertySatelliteFactory,
 )
-from account.tests.factories.account_factories import BankAccountStaticSatelliteFactory
+from mt_accounting.account.tests.factories.account_factories import (
+    BankAccountStaticSatelliteFactory,
+)
 from mt_accounting.asset.models import AssetStaticSatellite
 from mt_accounting.transaction.tests.factories.transaction_factories import (
     TransactionHubFactory,
