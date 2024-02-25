@@ -34,14 +34,16 @@ class TestCompanyCreateView(TestCase):
         response = self.client.post(
             url,
             {
-                "company_name": "Germany",
-                "bloomberg_ticker": "DE",
+                "company_name": "Apple",
+                "bloomberg_ticker": "APPL",
+                "value_date": "2023-01-01",
+                "total_revenue": 100.0,
             },
         )
         self.assertEqual(response.status_code, 302)
         company = CompanyRepository().std_queryset().first()
-        self.assertEqual(company.company_name, "Germany")
-        self.assertEqual(company.bloomberg_ticker, "DE")
+        self.assertEqual(company.company_name, "Apple")
+        self.assertEqual(company.bloomberg_ticker, "APPL")
 
 
 class TestCompanyDetailsView(TestCase):
