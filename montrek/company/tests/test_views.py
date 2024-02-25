@@ -1,4 +1,5 @@
 import os
+import pandas as pd
 
 from django.conf import settings
 from django.test import TestCase
@@ -61,7 +62,6 @@ class TestCompanyUpdateView(TestCase):
 
 class TestRgsCompanyUploadFileView(TestCase):
     def setUp(self):
-        self.company = CompanyStaticSatelliteFactory()
         self.user = MontrekUserFactory()
         self.client.force_login(self.user)
 
@@ -76,6 +76,9 @@ class TestRgsCompanyUploadFileView(TestCase):
         test_file_path = os.path.join(
             settings.BASE_DIR, "company", "tests", "data", "rgs_test_small.xlsx"
         )
+        test_file_df = pd.read_excel(test_file_path)
+        test_file_df = test_file_df.set_index(["ticker", "Year"], drop=False)
+
         with open(test_file_path, "rb") as f:
             data = {"file": f}
             response = self.client.post(
@@ -87,4 +90,4 @@ class TestRgsCompanyUploadFileView(TestCase):
         companies = CompanyRepository().std_queryset()
 
         self.assertRedirects(response, reverse("company_view_uploads"))
-        self.assertEqual(len(companies), 8)
+        self.assertEqual(len(companies), len(test_file_df["ticker"].unique()))
