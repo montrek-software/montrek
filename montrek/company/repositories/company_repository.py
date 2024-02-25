@@ -21,6 +21,9 @@ class CompanyRepository(MontrekRepository):
         self.add_satellite_fields_annotations(
             CompanyStaticSatellite, ["company_name", "bloomberg_ticker"], reference_date
         )
+        self.add_last_ts_satellite_fields_annotations(
+            CompanyTimeSeriesSatellite, ["total_revenue", "value_date"], reference_date
+        )
         return self.build_queryset()
 
     @paginated_table

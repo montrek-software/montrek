@@ -28,7 +28,7 @@ class RgsFileProcessor:
 
     def _create_or_update_company_hubs(self, bloomberg_tickers: pd.Series) -> pd.Series:
         ticker_hub_entity_id_map = {}
-        for bloomberg_ticker in bloomberg_tickers:
+        for bloomberg_ticker in bloomberg_tickers.unique():
             company_hub = self.company_repository.std_create_object(
                 {"bloomberg_ticker": bloomberg_ticker}
             )
