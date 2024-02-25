@@ -43,6 +43,10 @@ class CompanyOverview(MontrekListView):
                 name="Bloomberg Ticker",
                 attr="bloomberg_ticker",
             ),
+            table_elements.StringTableElement(
+                name="Effectual Identifier",
+                attr="effectual_identifier",
+            ),
             table_elements.LinkTableElement(
                 name="View",
                 url="company_details",
@@ -69,6 +73,10 @@ class CompanyDetailsView(MontrekDetailView):
             table_elements.StringTableElement(
                 name="Bloomberg Ticker",
                 attr="bloomberg_ticker",
+            ),
+            table_elements.StringTableElement(
+                name="Effectual Identifier",
+                attr="effectual_identifier",
             ),
         )
 

@@ -36,6 +36,7 @@ class TestCompanyCreateView(TestCase):
             {
                 "company_name": "Apple",
                 "bloomberg_ticker": "APPL",
+                "effectual_identifier": "APPL:XNYS",
                 "value_date": "2023-01-01",
                 "total_revenue": 100.0,
             },
@@ -44,6 +45,10 @@ class TestCompanyCreateView(TestCase):
         company = CompanyRepository().std_queryset().first()
         self.assertEqual(company.company_name, "Apple")
         self.assertEqual(company.bloomberg_ticker, "APPL")
+        self.assertEqual(company.effectual_identifier, "APPL:XNYS")
+        self.assertEqual(
+            company.asset_time_series_satellite.first().total_revenue, 100.0
+        )
 
 
 class TestCompanyDetailsView(TestCase):
@@ -92,4 +97,6 @@ class TestRgsCompanyUploadFileView(TestCase):
         companies = CompanyRepository().std_queryset()
 
         self.assertRedirects(response, reverse("company_view_uploads"))
-        self.assertEqual(len(companies), len(test_file_df["ticker"].unique()))
+        self.assertEqual(
+            len(companies), len(test_file_df["Company_identifier"].unique())
+        )

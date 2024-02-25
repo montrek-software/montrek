@@ -14,10 +14,11 @@ class CompanyStaticSatellite(baseclass_models.MontrekSatelliteABC):
     hub_entity = models.ForeignKey(CompanyHub, on_delete=models.CASCADE)
     company_name = models.CharField(max_length=255)
     bloomberg_ticker = models.CharField(max_length=20)
-    identifier_fields = ["bloomberg_ticker"]
+    effectual_identifier = models.CharField(max_length=255)
+    identifier_fields = ["effectual_identifier"]
 
     def __str__(self):
-        return self.bloomberg_ticker
+        return self.effectual_identifier
 
 
 class CompanyTimeSeriesSatellite(baseclass_models.MontrekTimeSeriesSatelliteABC):

@@ -7,31 +7,39 @@ from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
 class CompanyRepositoryTest(TestCase):
     def setUp(self):
-        self.test_countries = CompanyStaticSatelliteFactory.create_batch(3)
+        self.test_companies = CompanyStaticSatelliteFactory.create_batch(3)
         self.user = MontrekUserFactory()
 
     def test_std_queryset(self):
-        test_countries = CompanyRepository().std_queryset()
-        self.assertEqual(len(test_countries), 3)
+        test_companies = CompanyRepository().std_queryset()
+        self.assertEqual(len(test_companies), 3)
         for i in range(3):
             self.assertEqual(
-                test_countries[i].company_name, self.test_countries[i].company_name
+                test_companies[i].company_name, self.test_companies[i].company_name
             )
             self.assertEqual(
-                test_countries[i].bloomberg_ticker, self.test_countries[i].bloomberg_ticker
+                test_companies[i].bloomberg_ticker,
+                self.test_companies[i].bloomberg_ticker,
+            )
+            self.assertEqual(
+                test_companies[i].effectual_identifier,
+                self.test_companies[i].effectual_identifier,
             )
 
     def test_create_and_update_data(self):
-        input_data = {"company_name": "TestCompany", "bloomberg_ticker": "TST"}
+        input_data = {"company_name": "TestCompany", "effectual_identifier": "TST"}
         repository = CompanyRepository(session_data={"user_id": self.user.id})
         repository.std_create_object(input_data)
-        test_countries = repository.std_queryset()
-        self.assertEqual(len(test_countries), 4)
-        self.assertEqual(test_countries[3].company_name, "TestCompany")
-        self.assertEqual(test_countries[3].bloomberg_ticker, "TST")
-        input_data = {"company_name": "UnitedTestCompany", "bloomberg_ticker": "TST"}
+        test_companies = repository.std_queryset()
+        self.assertEqual(len(test_companies), 4)
+        self.assertEqual(test_companies[3].company_name, "TestCompany")
+        self.assertEqual(test_companies[3].effectual_identifier, "TST")
+        input_data = {
+            "company_name": "UnitedTestCompany",
+            "effectual_identifier": "TST",
+        }
         repository.std_create_object(input_data)
-        test_countries = repository.std_queryset()
-        self.assertEqual(len(test_countries), 4)
-        self.assertEqual(test_countries[3].company_name, "UnitedTestCompany")
-        self.assertEqual(test_countries[3].bloomberg_ticker, "TST")
+        test_companies = repository.std_queryset()
+        self.assertEqual(len(test_companies), 4)
+        self.assertEqual(test_companies[3].company_name, "UnitedTestCompany")
+        self.assertEqual(test_companies[3].effectual_identifier, "TST")

@@ -19,7 +19,9 @@ class CompanyRepository(MontrekRepository):
     def std_queryset(self):
         reference_date = timezone.now()
         self.add_satellite_fields_annotations(
-            CompanyStaticSatellite, ["company_name", "bloomberg_ticker"], reference_date
+            CompanyStaticSatellite,
+            ["effectual_identifier", "company_name", "bloomberg_ticker"],
+            reference_date,
         )
         self.add_last_ts_satellite_fields_annotations(
             CompanyTimeSeriesSatellite, ["total_revenue", "value_date"], reference_date
