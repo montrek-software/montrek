@@ -37,4 +37,4 @@ class CompanyRepository(MontrekRepository):
     def get_all_time_series(self, company_id):
         return self.build_time_series_queryset(
             CompanyTimeSeriesSatellite, self.reference_date
-        )
+        ).filter(hub_entity_id=company_id)
