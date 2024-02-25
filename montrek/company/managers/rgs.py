@@ -44,22 +44,28 @@ class RgsFileProcessor:
                 "bloomberg_ticker",
             ]
         ].drop_duplicates()
-        for row in df_static.to_dict(orient="records"):
-            hub_entity = identifier_hub_entity_map[row["effectual_identifier"]]
-            new_satellite_entry(
+        df_static.apply(
+            lambda row: new_satellite_entry(
                 CompanyStaticSatellite,
-                hub_entity,
-                **row,
-            )
+                identifier_hub_entity_map[row["effectual_identifier"]],
+                **row.to_dict(),
+            ),
+            axis=1,
+        )
 
         df_time_series = df[["effectual_identifier", "value_date", "total_revenue"]]
-        for row in df_time_series.to_dict(orient="records"):
-            hub_entity = identifier_hub_entity_map[row.pop("effectual_identifier")]
-            new_satellite_entry(
+        df_time_series.apply(
+            lambda row: new_satellite_entry(
                 CompanyTimeSeriesSatellite,
-                hub_entity,
-                **row,
-            )
+                identifier_hub_entity_map[row["effectual_identifier"]],
+                **{
+                    k: v
+                    for k, v in row.to_dict().items()
+                    if k != "effectual_identifier"
+                },
+            ),
+            axis=1,
+        )
 
         self.message = f"RGS upload was successfull (uploaded {df.shape[0]} rows)."
         return True
