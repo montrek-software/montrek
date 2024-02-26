@@ -408,9 +408,7 @@ class BankAccountFunctionalTest(MontrekFunctionalTest):
         header_text = self.browser.find_element(By.TAG_NAME, "h1").text
         self.assertIn("Upload Transaction File To Account", header_text)
         # He selects the file to upload
-        file_upload_box = self.browser.find_element(
-            By.ID, "id_dkb_transactions_upload__file"
-        )
+        file_upload_box = self.browser.find_element(By.ID, "id_upload__file")
         file_upload_box.send_keys(
             os.path.join(
                 os.path.dirname(__file__),
@@ -599,12 +597,14 @@ class TestDepotAccount(MontrekFunctionalTest):
         CreditInstitutionStaticSatelliteFactory.create(
             credit_institution_name="Bank of Testonia"
         )
-        ccy_usd = CurrencyStaticSatelliteFactory.create(ccy_code="USD",
-                                                        ccy_name="US Dollar")
-        CurrencyTimeSeriesSatelliteFactory.create(hub_entity=ccy_usd.hub_entity,
-                                           value_date=timezone.datetime(2021, 1, 1),
-                                           fx_rate=0.9
-                                          )
+        ccy_usd = CurrencyStaticSatelliteFactory.create(
+            ccy_code="USD", ccy_name="US Dollar"
+        )
+        CurrencyTimeSeriesSatelliteFactory.create(
+            hub_entity=ccy_usd.hub_entity,
+            value_date=timezone.datetime(2021, 1, 1),
+            fx_rate=0.9,
+        )
 
     @tag("functional")
     @patch("asset.managers.market_data.yf.download")
