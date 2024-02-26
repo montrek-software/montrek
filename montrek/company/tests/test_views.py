@@ -67,6 +67,29 @@ class TestCompanyUpdateView(TestCase):
         self.assertTemplateUsed(response, "montrek_create.html")
 
 
+class TestCompanyDeleteView(TestCase):
+    def test_company_delete_returns_correct_html(self):
+        company = CompanyStaticSatelliteFactory()
+        url = reverse("company_delete", kwargs={"pk": company.hub_entity.id})
+        response = self.client.get(url)
+        self.assertTemplateUsed(response, "montrek_delete.html")
+
+
+class TestCompanyTSTableView(TestCase):
+    def test_company_ts_table_returns_correct_html(self):
+        company = CompanyStaticSatelliteFactory()
+        url = reverse("company_ts_table", kwargs={"pk": company.hub_entity.id})
+        response = self.client.get(url)
+        self.assertTemplateUsed(response, "montrek_table.html")
+
+    def test_company_ts_table_returns_correct_data(self):
+        company = CompanyStaticSatelliteFactory()
+        url = reverse("company_ts_table", kwargs={"pk": company.hub_entity.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "montrek_table.html")
+
+
 class TestRgsCompanyUploadFileView(TestCase):
     def setUp(self):
         self.user = MontrekUserFactory()
@@ -107,3 +130,11 @@ class TestRgsCompanyUploadFileView(TestCase):
             self.assertEqual(c.company_name, expected["name"])
             self.assertEqual(c.bloomberg_ticker, str(expected["ticker"]))
             self.assertEqual(float(c.total_revenue), float(expected["total_revenue"]))
+
+
+class TestCompanyUploadView(TestCase):
+    def test_company_upload_returns_correct_html(self):
+        url = reverse("company_view_uploads")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "montrek_table.html")
