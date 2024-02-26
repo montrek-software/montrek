@@ -84,7 +84,10 @@ class TestRgsCompanyUploadFileView(TestCase):
             settings.BASE_DIR, "company", "tests", "data", "rgs_test_small.xlsx"
         )
         test_file_df = pd.read_excel(test_file_path)
-        test_file_df = test_file_df.set_index(["ticker", "Year"], drop=False)
+        test_file_df = test_file_df.sort_values("Year").drop_duplicates(
+            subset=["Company_identifier"], keep="last"
+        )
+        test_file_df = test_file_df.set_index("Company_identifier")
 
         with open(test_file_path, "rb") as f:
             data = {"file": f}
@@ -97,6 +100,10 @@ class TestRgsCompanyUploadFileView(TestCase):
         companies = CompanyRepository().std_queryset()
 
         self.assertRedirects(response, reverse("company_view_uploads"))
-        self.assertEqual(
-            len(companies), len(test_file_df["Company_identifier"].unique())
-        )
+        self.assertEqual(len(companies), test_file_df.shape[0])
+
+        for c in companies:
+            expected = test_file_df.loc[c.effectual_company_id].to_dict()
+            self.assertEqual(c.company_name, expected["name"])
+            self.assertEqual(c.bloomberg_ticker, str(expected["ticker"]))
+            self.assertEqual(float(c.total_revenue), float(expected["total_revenue"]))
