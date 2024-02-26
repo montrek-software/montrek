@@ -231,7 +231,7 @@ class Migration(migrations.Migration):
                 ("hash_value", models.CharField(default="", max_length=64)),
                 ("company_name", models.CharField(max_length=255)),
                 ("bloomberg_ticker", models.CharField(max_length=20)),
-                ("effectual_identifier", models.CharField(max_length=255)),
+                ("effectual_company_id", models.CharField(max_length=255)),
                 (
                     "created_by",
                     models.ForeignKey(

@@ -20,7 +20,7 @@ class CompanyRepository(MontrekRepository):
         reference_date = timezone.now()
         self.add_satellite_fields_annotations(
             CompanyStaticSatellite,
-            ["effectual_identifier", "company_name", "bloomberg_ticker"],
+            ["effectual_company_id", "company_name", "bloomberg_ticker"],
             reference_date,
         )
         self.add_last_ts_satellite_fields_annotations(

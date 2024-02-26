@@ -28,8 +28,8 @@ class RgsFileProcessor:
         df = self._pre_process_data(df)
 
         identifier_hub_entity_map = {
-            x: self.company_repository.std_create_object({"effectual_identifier": x})
-            for x in df["effectual_identifier"].unique()
+            x: self.company_repository.std_create_object({"effectual_company_id": x})
+            for x in df["effectual_company_id"].unique()
         }
 
         for hub_entity in identifier_hub_entity_map.values():
@@ -39,7 +39,7 @@ class RgsFileProcessor:
 
         df_static = df[
             [
-                "effectual_identifier",
+                "effectual_company_id",
                 "company_name",
                 "bloomberg_ticker",
             ]
@@ -47,21 +47,21 @@ class RgsFileProcessor:
         df_static.apply(
             lambda row: new_satellite_entry(
                 CompanyStaticSatellite,
-                identifier_hub_entity_map[row["effectual_identifier"]],
+                identifier_hub_entity_map[row["effectual_company_id"]],
                 **row.to_dict(),
             ),
             axis=1,
         )
 
-        df_time_series = df[["effectual_identifier", "value_date", "total_revenue"]]
+        df_time_series = df[["effectual_company_id", "value_date", "total_revenue"]]
         df_time_series.apply(
             lambda row: new_satellite_entry(
                 CompanyTimeSeriesSatellite,
-                identifier_hub_entity_map[row["effectual_identifier"]],
+                identifier_hub_entity_map[row["effectual_company_id"]],
                 **{
                     k: v
                     for k, v in row.to_dict().items()
-                    if k != "effectual_identifier"
+                    if k != "effectual_company_id"
                 },
             ),
             axis=1,
@@ -84,7 +84,7 @@ class RgsFileProcessor:
     def _pre_process_data(self, raw_df: pd.DataFrame):
         df = raw_df.copy()
         column_rename_map = {
-            "Company_identifier": "effectual_identifier",
+            "Company_identifier": "effectual_company_id",
             "Year": "year",
             "name": "company_name",
             "ticker": "bloomberg_ticker",

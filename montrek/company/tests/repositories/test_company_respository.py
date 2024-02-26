@@ -22,24 +22,24 @@ class CompanyRepositoryTest(TestCase):
                 self.test_companies[i].bloomberg_ticker,
             )
             self.assertEqual(
-                test_companies[i].effectual_identifier,
-                self.test_companies[i].effectual_identifier,
+                test_companies[i].effectual_company_id,
+                self.test_companies[i].effectual_company_id,
             )
 
     def test_create_and_update_data(self):
-        input_data = {"company_name": "TestCompany", "effectual_identifier": "TST"}
+        input_data = {"company_name": "TestCompany", "effectual_company_id": "TST"}
         repository = CompanyRepository(session_data={"user_id": self.user.id})
         repository.std_create_object(input_data)
         test_companies = repository.std_queryset()
         self.assertEqual(len(test_companies), 4)
         self.assertEqual(test_companies[3].company_name, "TestCompany")
-        self.assertEqual(test_companies[3].effectual_identifier, "TST")
+        self.assertEqual(test_companies[3].effectual_company_id, "TST")
         input_data = {
             "company_name": "UnitedTestCompany",
-            "effectual_identifier": "TST",
+            "effectual_company_id": "TST",
         }
         repository.std_create_object(input_data)
         test_companies = repository.std_queryset()
         self.assertEqual(len(test_companies), 4)
         self.assertEqual(test_companies[3].company_name, "UnitedTestCompany")
-        self.assertEqual(test_companies[3].effectual_identifier, "TST")
+        self.assertEqual(test_companies[3].effectual_company_id, "TST")
