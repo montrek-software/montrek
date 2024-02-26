@@ -21,3 +21,4 @@ class CompanyTimeSeriesSatelliteFactory(factory.django.DjangoModelFactory):
         model = "company.CompanyTimeSeriesSatellite"
 
     hub_entity = factory.SubFactory(CompanyHubFactory)
+    value_date = factory.Faker("date")
