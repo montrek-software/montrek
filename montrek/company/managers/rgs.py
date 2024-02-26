@@ -42,11 +42,8 @@ class RgsFileProcessor:
                 "effectual_company_id",
             ]
         ].drop_duplicates()
-
-        self.company_repository.create_objects_from_data_frame(df_static)
-
         df_time_series = df[["hub_entity_id", "value_date", "total_revenue"]]
-
+        self.company_repository.create_objects_from_data_frame(df_static)
         self.company_repository.create_objects_from_data_frame(df_time_series)
 
         self.message = f"RGS upload was successfull (uploaded {df.shape[0]} rows)."
