@@ -1,15 +1,8 @@
-from typing import Dict
 import pandas as pd
 import datetime
 
 from company.repositories.company_repository import CompanyRepository
 from file_upload.models import FileUploadRegistryHub
-from baseclasses.repositories.db_helper import new_satellite_entry
-from company.models import (
-    CompanyHub,
-    CompanyStaticSatellite,
-    CompanyTimeSeriesSatellite,
-)
 
 
 class RgsFileProcessor:
@@ -37,35 +30,24 @@ class RgsFileProcessor:
                 self.file_upload_registry_hub
             )
 
-        df_static = df[
-            [
-                "effectual_company_id",
-                "company_name",
-                "bloomberg_ticker",
-            ]
-        ].drop_duplicates()
-        df_static.apply(
-            lambda row: new_satellite_entry(
-                CompanyStaticSatellite,
-                identifier_hub_entity_map[row["effectual_company_id"]],
-                **row.to_dict(),
-            ),
-            axis=1,
+        df["hub_entity_id"] = df["effectual_company_id"].apply(
+            lambda x: identifier_hub_entity_map[x].id
         )
 
-        df_time_series = df[["effectual_company_id", "value_date", "total_revenue"]]
-        df_time_series.apply(
-            lambda row: new_satellite_entry(
-                CompanyTimeSeriesSatellite,
-                identifier_hub_entity_map[row["effectual_company_id"]],
-                **{
-                    k: v
-                    for k, v in row.to_dict().items()
-                    if k != "effectual_company_id"
-                },
-            ),
-            axis=1,
-        )
+        df_static = df[
+            [
+                "hub_entity_id",
+                "company_name",
+                "bloomberg_ticker",
+                "effectual_company_id",
+            ]
+        ].drop_duplicates()
+
+        self.company_repository.create_objects_from_data_frame(df_static)
+
+        df_time_series = df[["hub_entity_id", "value_date", "total_revenue"]]
+
+        self.company_repository.create_objects_from_data_frame(df_time_series)
 
         self.message = f"RGS upload was successfull (uploaded {df.shape[0]} rows)."
         return True
