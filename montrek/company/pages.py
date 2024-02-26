@@ -79,5 +79,11 @@ class CompanyPage(MontrekPage):
             html_id="tab_company_ts_table",
             actions=(action_back,),
         )
+        history_tab = TabElement(
+            name="History",
+            link=reverse("company_history", kwargs={"pk": self.obj.id}),
+            html_id="tab_history",
+            actions=(action_back,),
+        )
 
-        return [details_tab, time_series_tab]
+        return [details_tab, time_series_tab, history_tab]

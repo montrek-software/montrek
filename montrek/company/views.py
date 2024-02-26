@@ -3,6 +3,7 @@ from django.urls import reverse
 from baseclasses.views import (
     MontrekCreateView,
     MontrekDeleteView,
+    MontrekHistoryListView,
     MontrekListView,
     MontrekDetailView,
     MontrekUpdateView,
@@ -157,4 +158,30 @@ class CompanyUploadView(MontrekListView):
                 icon="download",
                 hover_text="Download",
             ),
+        )
+
+
+class CompanyHistoryView(MontrekHistoryListView):
+    repository = CompanyRepository
+    page_class = CompanyPage
+    tab = "tab_history"
+    title = "Company History"
+
+    @property
+    def elements(self) -> tuple:
+        return (
+            table_elements.StringTableElement(
+                name="Company Name",
+                attr="company_name",
+            ),
+            table_elements.StringTableElement(
+                name="Bloomberg Ticker",
+                attr="bloomberg_ticker",
+            ),
+            table_elements.StringTableElement(
+                name="Effectual Company Identifier",
+                attr="effectual_company_id",
+            ),
+            table_elements.DateTableElement(name="Change Date", attr="change_date"),
+            table_elements.StringTableElement(name="Changed By", attr="changed_by"),
         )

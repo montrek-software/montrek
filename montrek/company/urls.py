@@ -42,4 +42,9 @@ urlpatterns = [
         views.CompanyUploadView.as_view(),
         name="company_view_uploads",
     ),
+    path(
+        "<int:pk>/history",
+        views.CompanyHistoryView.as_view(),
+        name="company_history",
+    ),
 ]

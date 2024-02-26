@@ -138,3 +138,11 @@ class TestCompanyUploadView(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "montrek_table.html")
+
+
+class TestCompanyHistoryView(TestCase):
+    def test_company_history_returns_correct_html(self):
+        company = CompanyStaticSatelliteFactory()
+        url = reverse("company_history", kwargs={"pk": company.hub_entity.id})
+        response = self.client.get(url)
+        self.assertTemplateUsed(response, "montrek_table.html")
