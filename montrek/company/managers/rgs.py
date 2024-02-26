@@ -20,30 +20,22 @@ class RgsFileProcessor:
         df = self._read_file(file_path)
         df = self._pre_process_data(df)
 
-        identifier_hub_entity_map = {
-            x: self.company_repository.std_create_object({"effectual_company_id": x})
-            for x in df["effectual_company_id"].unique()
-        }
-
-        for hub_entity in identifier_hub_entity_map.values():
-            hub_entity.link_company_file_upload_registry.add(
-                self.file_upload_registry_hub
-            )
-
-        df["hub_entity_id"] = df["effectual_company_id"].apply(
-            lambda x: identifier_hub_entity_map[x].id
-        )
-
         df_static = df[
             [
-                "hub_entity_id",
                 "company_name",
                 "bloomberg_ticker",
                 "effectual_company_id",
             ]
         ].drop_duplicates()
+        company_hubs = self.company_repository.create_objects_from_data_frame(df_static)
+        df_static["hub_entity_id"] = [ch.id for ch in company_hubs]
+        for ch in company_hubs:
+            ch.link_company_file_upload_registry.add(self.file_upload_registry_hub)
+
+        df["hub_entity_id"] = df["effectual_company_id"].map(
+            df_static.set_index("effectual_company_id")["hub_entity_id"]
+        )
         df_time_series = df[["hub_entity_id", "value_date", "total_revenue"]]
-        self.company_repository.create_objects_from_data_frame(df_static)
         self.company_repository.create_objects_from_data_frame(df_time_series)
 
         self.message = f"RGS upload was successfull (uploaded {df.shape[0]} rows)."
