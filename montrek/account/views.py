@@ -24,7 +24,7 @@ from baseclasses.dataclasses.table_elements import FloatTableElement
 from baseclasses.dataclasses.table_elements import PercentTableElement
 from account.models import AccountStaticSatellite
 
-from reporting.managers.account_transaction_plots import (
+from account.managers.account_transaction_plots import (
     draw_monthly_income_expanses_plot,
     draw_income_expenses_category_pie_plot,
 )
