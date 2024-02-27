@@ -1,6 +1,9 @@
+from django.urls import reverse
+
 from baseclasses.views import (
     MontrekCreateView,
     MontrekDeleteView,
+    MontrekHistoryListView,
     MontrekListView,
     MontrekDetailView,
     MontrekUpdateView,
@@ -9,6 +12,8 @@ from baseclasses.dataclasses import table_elements
 from company.pages import CompanyOverviewPage, CompanyPage
 from company.repositories.company_repository import CompanyRepository
 from company.forms import CompanyCreateForm
+from file_upload.views import MontrekUploadFileView
+from company.managers.company_file_upload_manager import CompanyFileUploadProcessor
 
 
 class CompanyCreateView(MontrekCreateView):
@@ -25,6 +30,9 @@ class CompanyOverview(MontrekListView):
     title = "Company Overview"
     repository = CompanyRepository
 
+    def get_queryset(self):
+        return self.repository_object.get_company_table_paginated()
+
     @property
     def elements(self) -> tuple:
         return (
@@ -35,6 +43,10 @@ class CompanyOverview(MontrekListView):
             table_elements.StringTableElement(
                 name="Bloomberg Ticker",
                 attr="bloomberg_ticker",
+            ),
+            table_elements.StringTableElement(
+                name="Effectual Company Identifier",
+                attr="effectual_company_id",
             ),
             table_elements.LinkTableElement(
                 name="View",
@@ -62,6 +74,10 @@ class CompanyDetailsView(MontrekDetailView):
             table_elements.StringTableElement(
                 name="Bloomberg Ticker",
                 attr="bloomberg_ticker",
+            ),
+            table_elements.StringTableElement(
+                name="Effectual Company Identifier",
+                attr="effectual_company_id",
             ),
         )
 
@@ -101,4 +117,71 @@ class CompanyTSTableView(MontrekListView):
                 name="Total Revenue",
                 attr="total_revenue",
             ),
+        )
+
+
+class CompanyUploadFileView(MontrekUploadFileView):
+    page_class = CompanyOverviewPage
+    title = "Upload Company File"
+    repository = CompanyRepository
+    file_upload_processor_class = CompanyFileUploadProcessor
+    accept = ".xlsx"
+
+    def get_success_url(self):
+        return reverse("company_view_uploads")
+
+
+class CompanyUploadView(MontrekListView):
+    page_class = CompanyOverviewPage
+    tab = "tab_uploads"
+    title = "Company Uploads"
+    repository = CompanyRepository
+
+    def get_queryset(self):
+        return self.repository().get_upload_registry_table_paginated()
+
+    @property
+    def elements(self) -> list:
+        return (
+            table_elements.StringTableElement(name="File Name", attr="file_name"),
+            table_elements.StringTableElement(
+                name="Upload Status", attr="upload_status"
+            ),
+            table_elements.StringTableElement(
+                name="Upload Message", attr="upload_message"
+            ),
+            table_elements.DateTableElement(name="Upload Date", attr="created_at"),
+            table_elements.LinkTableElement(
+                name="File",
+                url="montrek_download_file",
+                kwargs={"pk": "id"},
+                icon="download",
+                hover_text="Download",
+            ),
+        )
+
+
+class CompanyHistoryView(MontrekHistoryListView):
+    repository = CompanyRepository
+    page_class = CompanyPage
+    tab = "tab_history"
+    title = "Company History"
+
+    @property
+    def elements(self) -> tuple:
+        return (
+            table_elements.StringTableElement(
+                name="Company Name",
+                attr="company_name",
+            ),
+            table_elements.StringTableElement(
+                name="Bloomberg Ticker",
+                attr="bloomberg_ticker",
+            ),
+            table_elements.StringTableElement(
+                name="Effectual Company Identifier",
+                attr="effectual_company_id",
+            ),
+            table_elements.DateTableElement(name="Change Date", attr="change_date"),
+            table_elements.StringTableElement(name="Changed By", attr="changed_by"),
         )

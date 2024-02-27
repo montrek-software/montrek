@@ -2,12 +2,15 @@ from django import forms
 
 
 class UploadFileForm(forms.Form):
-    file = forms.FileField(
-        widget=forms.FileInput(
-            attrs={
-                "id": "id_dkb_transactions_upload__file",
-                "class": "form-control-file",
-                "accept": ".csv",
-            }
+    def __init__(self, accept: str, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.accept = accept
+        self.fields["file"] = forms.FileField(
+            widget=forms.FileInput(
+                attrs={
+                    "id": "id_upload__file",
+                    "class": "form-control-file",
+                    "accept": self.accept,
+                }
+            )
         )
-    )
