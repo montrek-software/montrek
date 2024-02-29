@@ -1,2 +1,0 @@
-from django.test import TestCase
-from transaction.repositories.transaction_category_repository import TransactionCategoryMapRepository

@@ -42,6 +42,7 @@ def links(request):
     return render(request, "links.html", {"links": links})
 
 
+
 class MontrekPageViewMixin:
     page_class = NoPage
     tab = "empty_tab"

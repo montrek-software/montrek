@@ -1,4 +1,4 @@
-from typing import List
+from typing import Tuple
 from dataclasses import dataclass
 
 
@@ -15,5 +15,5 @@ class TabElement:
     name: str
     link: str
     html_id: str
-    actions: List[ActionElement]
+    actions: Tuple[ActionElement]
     active: str = ""

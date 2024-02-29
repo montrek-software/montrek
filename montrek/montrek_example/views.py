@@ -132,4 +132,5 @@ class MontrekExampleAHistory(MontrekHistoryListView):
             FloatTableElement(name="A2 Float", attr="field_a2_float"),
             StringTableElement(name="B1 String", attr="field_b1_str"),
             DateTableElement(name="Change Date", attr="change_date"),
+            StringTableElement(name="Changed By", attr="changed_by"),
         )

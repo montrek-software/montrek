@@ -41,18 +41,13 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django_extensions",
-    "account",
+    "user",
     "baseclasses",
     "montrek_example",
-    "currency",
-    "country",
-    "transaction",
-    "credit_institution",
     "file_upload",
-    "depot",
-    "asset",
-    "user",
 ]
+
+INSTALLED_APPS += config("INSTALLED_APPS", default="").split(" ")
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
