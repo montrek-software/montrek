@@ -80,8 +80,6 @@ exit
 
 ### Locally (For development)
 
-**Setup environment**
-
 Copy the following to `.env` file in the root directory of the project and adjust where needed:
 ```
 #montrek Config
