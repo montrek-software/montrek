@@ -67,8 +67,10 @@ Now, all we need to do is give our database user access rights to the database w
 
 ```sql
 GRANT ALL PRIVILEGES ON montrek_db.* TO montrekuser@localhost;
+GRANT ALL PRIVILEGES ON test_montrek_db.* TO 'montrekdbuser'@'localhost';
 ```
-Flush the changes so that they will be available during the current session:
+The second priviliged command is needed for the test suite.
+Then, we need to flush the privileges so that the current instance of the database knows about the recent changes we’ve made:
 
 ```sql
 FLUSH PRIVILEGES;
