@@ -1,5 +1,5 @@
 {% load static %}
-{% load nav_tags %}
+{% load base_tags %}
 <!DOCTYPE html>
 <html lang="en">
  <head>
@@ -48,17 +48,7 @@
 		</div>
 		<div class="row">
 		    <h2>LINKS</h2>
-            <table>
-                <tr>
-                    <td><a href="https://github.com/chrishombach/montrek" target="_blank">Github</a></td>
-                </tr>
-                <tr>
-                    <td><a href="https://banking.dkb.de/login" target="_blank">DKB</a></td>
-                </tr>
-                <tr>
-                    <td><a href="https://webtrading.onvista-bank.de/login" target="_blank">Onvista</a></td>
-                </tr>
-            </table>
+        {% include_links %}
 		</div>
 	</div>
 	<div class="col-md-8">
