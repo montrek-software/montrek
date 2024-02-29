@@ -18,9 +18,9 @@ You have to eventually sort out ssh keys.
 
 (Largely taken from [Django-Maria-DB Setup](https://www.digitalocean.com/community/tutorials/how-to-use-mysql-or-mariadb-with-your-django-application-on-ubuntu-14-04))
 
-- If your system has already MariaDB installed, you can skip this step
+If your system has already MariaDB installed, you can skip this step
 
-- Install the packages from the repositories b:willy typing:
+Install the packages from the repositories b:willy typing:
 
 ```
 sudo apt-get update
@@ -118,6 +118,13 @@ Now you should be able to open montrek in your webbrowser:
 ```
 http://127.0.0.1:8000/
 ```
+
+If you want to make sure that everything runs, you can run the test suite:
+
+```
+python manage.py test
+```
+
 ### In Docker container ###
 
 If you want to run montrek without developing it as the bases of your application or want to deploy it in you local network, you are encouraged to let it run in a docker container.
@@ -130,6 +137,7 @@ Change in the .env file:
 
 ```
 DB_HOST=db
+DEBUG=0
 ```
 
 And add the following line to the .env file:
