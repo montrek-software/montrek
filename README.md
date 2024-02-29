@@ -109,9 +109,14 @@ python -m venv venv_montrek
 . venv_montrek/bin/activate
 python -m pip install -r requirements.txt
 cd montrek
-python manage.py runserver
+python manage.py makemigrations
 ```
 
+Run the migrations and start the server:
+```
+python manage.py migrate
+python manage.py runserver
+```
 Now you should be able to open montrek in your webbrowser:
 ```
 http://127.0.0.1:8000/
