@@ -149,3 +149,6 @@ CSRF_TRUSTED_ORIGINS = [
 
 EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
 EMAIL_FILE_PATH = BASE_DIR / "sent_emails"
+
+CELERY_BROKER_URL = config("CELERY_BROKER_URL", default="redis://redis:6379")
+CELERY_RESULT_BACKEND = config("CELERY_RESULT_BACKEND", default="redis://redis:6379")
