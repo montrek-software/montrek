@@ -53,9 +53,10 @@ services:
 
   celery:
     # hostname: localhost
-    build: ./montrek
-    command: sh -c "cd montrek && 
-                    celery --app=montrek worker --loglevel=info"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: sh -c "celery --app=montrek worker --loglevel=info"
     volumes:
       - .:/montrek
       - static_volume:/home/app/montrek/montrek/baseclasses/static
