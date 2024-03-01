@@ -150,7 +150,6 @@ And add the following line to the .env file:
 ```
 DEPLOY_PORT=1339
 DEPLOY_HOST=<your-ip-address>
-```
 
 Run
 ```
@@ -166,3 +165,13 @@ Or from any browser in you network:
 ```
 <your-ip-address>:1339
 ```
+
+# background tasks
+
+Add the following to the .env file:
+```
+```
+CELERY_BROKER_URL=redis://redis:6379
+CELERY_RESULT_BACKEND=redis://redis:6379
+```
+
