@@ -52,7 +52,6 @@ services:
       - db_data:${DB_VOLUME}
 
   celery:
-    # hostname: localhost
     build:
       context: .
       dockerfile: Dockerfile
@@ -69,11 +68,9 @@ services:
       - redis
 
   redis:
-    # hostname: localhost
     image: redis:7-alpine
 
   flower:
-    # hostname: localhost
     build: ./montrek
     command: celery flower -A montrek.celery_app --port=5555 --broker={CELERY_BROKER}
     ports:
