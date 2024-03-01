@@ -26,6 +26,7 @@ services:
     volumes:
       - .:/montrek
       - static_volume:/home/app/montrek/montrek/baseclasses/static
+      - media_volume:/home/app/montrek/uploads
     env_file:
       - .env
     image: montrek_app
@@ -36,6 +37,7 @@ services:
     restart: "on-failure"
     depends_on:
       - db
+      - redis
 
   db:
     image: mariadb:latest
@@ -49,6 +51,39 @@ services:
     volumes:
       - db_data:${DB_VOLUME}
 
+  celery:
+    # hostname: localhost
+    build: ./montrek
+    command: sh -c "cd montrek && 
+                    celery --app=montrek worker --loglevel=info"
+    volumes:
+      - .:/montrek
+      - static_volume:/home/app/montrek/montrek/baseclasses/static
+      - media_volume:/home/app/montrek/uploads
+    env_file:
+      - .env
+    depends_on:
+      - web
+      - redis
+
+  redis:
+    # hostname: localhost
+    image: redis:7-alpine
+
+  flower:
+    # hostname: localhost
+    build: ./montrek
+    command: celery flower -A montrek --port=5555 --broker={CELERY_BROKER}
+    ports:
+      - 5555:5555
+    env_file:
+      - .env
+    depends_on:
+      - web
+      - redis
+      - celery
+
 volumes:
   db_data:
   static_volume:
+  media_volume:
