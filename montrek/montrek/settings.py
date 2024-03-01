@@ -26,9 +26,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-2@8w*43%w2=36x1y3#v8mlll#!3kw9)jnn&^i&xw-o8^br_od-"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config("DEBUG", default=False, cast=bool)
 
 ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="").split(" ")
+ALLOWED_HOSTS += [config("DEPLOY_HOST", default="127.0.0.1")]
 
 
 # Application definition
@@ -140,8 +141,11 @@ STATIC_ROOT = os.path.join(BASE_DIR, "baseclasses/static")
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-CSRF_TRUSTED_ORIGINS = ["http://localhost:1339"]
-
+DEPLOY_HOST = config("DEPLOY_HOST", default="1339")
+DEPLOY_PORT = config("DEPLOY_PORT", default="1339")
+CSRF_TRUSTED_ORIGINS = [
+    f"http://{host}:{DEPLOY_PORT}" for host in ["localhost", "127.0.0.1", DEPLOY_HOST]
+]
 
 EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
 EMAIL_FILE_PATH = BASE_DIR / "sent_emails"
