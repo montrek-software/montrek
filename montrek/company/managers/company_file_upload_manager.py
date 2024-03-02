@@ -18,7 +18,7 @@ class CompanyFileUploadProcessor:
             session_data=self.session_data,
             file_upload_registry_id=self.file_upload_registry_id,
         )
-        self.message = f"Upload backgroun task started with id {result.id}. You will receive an email when the task is finished."
+        self.message = f"Upload background task started with id {result.id}. You will receive an email when the task is finished."
         return True
 
     def pre_check(self, file_path: str):
