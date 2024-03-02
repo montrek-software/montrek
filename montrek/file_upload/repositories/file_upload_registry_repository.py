@@ -9,30 +9,31 @@ from file_upload.models import FileUploadRegistryStaticSatellite
 from file_upload.models import FileUploadFileStaticSatellite
 from file_upload.models import LinkFileUploadRegistryFileUploadFile
 
+
 class FileUploadRegistryRepository(MontrekRepository):
-    hub_class=FileUploadRegistryHub
+    hub_class = FileUploadRegistryHub
+
     def std_queryset(self, **kwargs):
-        reference_date=timezone.now()
         self.add_satellite_fields_annotations(
             FileUploadRegistryStaticSatellite,
-            ['file_name', 'file_type', 'upload_status', 'upload_message'],
-            reference_date=reference_date,
+            ["file_name", "file_type", "upload_status", "upload_message"],
         )
         self.add_linked_satellites_field_annotations(
             FileUploadFileStaticSatellite,
             LinkFileUploadRegistryFileUploadFile,
-            ['file'],
-            reference_date=reference_date,
+            ["file"],
         )
         queryset = self.build_queryset()
         return queryset
 
     def get_file_from_registry(self, file_upload_registry_id: int, request) -> TextIO:
-        file_upload_registry_path = self.std_queryset().get(pk=file_upload_registry_id).file
-        file_upload_registry_path = os.path.join(BASE_DIR,file_upload_registry_path)
+        file_upload_registry_path = (
+            self.std_queryset().get(pk=file_upload_registry_id).file
+        )
+        file_upload_registry_path = os.path.join(BASE_DIR, file_upload_registry_path)
         if not os.path.exists(file_upload_registry_path):
-            messages.error(request, f'File {file_upload_registry_path} not found')
+            messages.error(request, f"File {file_upload_registry_path} not found")
             return None
 
-        uploaded_file = open(file_upload_registry_path, 'rb')
+        uploaded_file = open(file_upload_registry_path, "rb")
         return uploaded_file

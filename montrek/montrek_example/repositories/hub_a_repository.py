@@ -13,7 +13,6 @@ class HubARepository(MontrekRepository):
                 "field_a1_int",
                 "field_a1_str",
             ],
-            self.reference_date,
         )
         self.add_satellite_fields_annotations(
             me_models.SatA2,
@@ -21,13 +20,11 @@ class HubARepository(MontrekRepository):
                 "field_a2_float",
                 "field_a2_str",
             ],
-            self.reference_date,
         )
         self.add_linked_satellites_field_annotations(
             me_models.SatB1,
             me_models.LinkHubAHubB,
             ["field_b1_str"],
-            self.reference_date,
         )
         return self.build_queryset()
 
@@ -40,14 +37,12 @@ class HubARepository(MontrekRepository):
             [
                 "field_a1_int",
             ],
-            self.reference_date,
         )
         self.add_satellite_fields_annotations(
             me_models.SatA2,
             [
                 "field_a2_float",
             ],
-            self.reference_date,
         )
         return self.build_queryset()
 
@@ -56,6 +51,5 @@ class HubARepository(MontrekRepository):
             me_models.SatB1,
             me_models.LinkHubAHubB,
             ["field_b1_str"],
-            self.reference_date,
         )
         return self.build_queryset()
