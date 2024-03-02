@@ -25,7 +25,7 @@ def process_rgs_file_task(
     processor.process(file_path)
     user = get_user_model().objects.get(pk=session_data["user_id"])
     send_mail(
-        "RGS Fil Upload Successfull",
+        "RGS Fil Upload Terminated",
         processor.message,
         settings.EMAIL_HOST_USER,
         [user.email],
