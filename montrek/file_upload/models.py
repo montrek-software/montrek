@@ -1,3 +1,5 @@
+import os
+from django.conf import settings
 from django.db import models
 
 from baseclasses import models as baseclass_models
@@ -71,4 +73,4 @@ class FileUploadFileHub(baseclass_models.MontrekHubABC):
 class FileUploadFileStaticSatellite(baseclass_models.MontrekSatelliteABC):
     hub_entity = models.ForeignKey(FileUploadFileHub, on_delete=models.CASCADE)
     identifier_fields = ["hub_entity_id"]
-    file = models.FileField(upload_to="uploads/")
+    file = models.FileField()
