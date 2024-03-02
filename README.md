@@ -144,6 +144,8 @@ Change in the .env file:
 DB_HOST=db
 DEBUG=0
 ```
+CELERY_BROKER_URL=redis://redis:6379
+CELERY_RESULT_BACKEND=redis://redis:6379
 
 And add the following line to the .env file:
 
@@ -166,6 +168,9 @@ Or from any browser in you network:
 ```
 <your-ip-address>:1339
 ```
+
+Background tasks can be monitored with the Flower app. It runs at http://localhost:5555.
+
 
 *Note for installation on windows*:
 
