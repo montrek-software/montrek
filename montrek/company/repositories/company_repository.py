@@ -17,14 +17,13 @@ class CompanyRepository(MontrekRepository):
     hub_class = CompanyHub
 
     def std_queryset(self):
-        reference_date = timezone.now()
         self.add_satellite_fields_annotations(
             CompanyStaticSatellite,
             ["effectual_company_id", "company_name", "bloomberg_ticker"],
-            reference_date,
+            self.reference_date,
         )
         self.add_last_ts_satellite_fields_annotations(
-            CompanyTimeSeriesSatellite, ["total_revenue", "value_date"], reference_date
+            CompanyTimeSeriesSatellite, ["total_revenue", "value_date"], self.reference_date
         )
         return self.build_queryset()
 
