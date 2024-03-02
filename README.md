@@ -177,8 +177,7 @@ wsl hostname -I
 (The first IP shown here should work.)
 
 Now you can access wsl and install montrek as described above with the wsl IP as DEPLOY_HOST. You can access montrek locally via the wsl IP and the port you defined in the .env file. If you want to make montrek public to your localhost, you can do this from the powershell with:
-```
+
 ```
 netsh interfact portproxy add v4t<F2><F2><F2>o4 listenaddress=0.0.0.0 listenport=1339 connectaddress=<your-wsl-ip> connectport=1339
-```
 ```
