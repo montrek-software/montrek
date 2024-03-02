@@ -44,11 +44,12 @@ class CompanyRepositoryTest(TestCase):
         self.assertEqual(len(companies), 4)
         self.assertEqual(companies[3].company_name, "UnitedTestCompany")
         self.assertEqual(companies[3].effectual_company_id, "TST")
+
         history_qs = repository.get_history_queryset(pk=companies[3].id)
-￼       self.assertEqual(len(history_qs), 2)
-￼       self.assertEqual(history_qs[1].company_name, "TestCompany")
-￼       self.assertEqual(history_qs[0].company_name, "UnitedTestCompany")
-￼       self.assertGreater(history_qs[0].change_date, history_qs[1].change_date)
+        self.assertEqual(len(history_qs), 2)
+        self.assertEqual(history_qs[1].company_name, "TestCompany")
+        self.assertEqual(history_qs[0].company_name, "UnitedTestCompany")
+        self.assertGreater(history_qs[0].change_date, history_qs[1].change_date)
 
     def test_get_all_time_series(self):
         for company in self.companies:
