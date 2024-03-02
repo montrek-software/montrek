@@ -20,7 +20,7 @@ You have to eventually sort out ssh keys.
 
 If your system has already MariaDB installed, you can skip this step
 
-Install the packages from the repositories b:willy typing:
+Install the packages from the repositories by typing:
 
 ```
 sudo apt-get update
@@ -67,9 +67,9 @@ Now, all we need to do is give our database user access rights to the database w
 
 ```sql
 GRANT ALL PRIVILEGES ON montrek_db.* TO montrekuser@localhost;
-GRANT ALL PRIVILEGES ON test_montrek_db.* TO 'montrekdbuser'@'localhost';
+GRANT ALL PRIVILEGES ON test_montrek_db.* TO 'montrekuser'@'localhost';
 ```
-The second priviliged command is needed for the test suite.
+The second privileged command is needed for the test suite.
 Then, we need to flush the privileges so that the current instance of the database knows about the recent changes we’ve made:
 
 ```sql
@@ -165,4 +165,20 @@ You can now access montrek in your webbrowser:
 Or from any browser in you network:
 ```
 <your-ip-address>:1339
+```
+
+*Note for installation on windows*:
+
+Montrek can be installed on Windows via wsl. For this open a Powershell as administrator and determine the IP address of the wsl connection:
+```
+wsl hostname -I
+```
+
+(The first IP shown here should work.)
+
+Now you can access wsl and install montrek as described above with the wsl IP as DEPLOY_HOST. You can access montrek locally via the wsl IP and the port you defined in the .env file. If you want to make montrek public to your localhost, you can do this from the powershell with:
+```
+```
+netsh interfact portproxy add v4t<F2><F2><F2>o4 listenaddress=0.0.0.0 listenport=1339 connectaddress=<your-wsl-ip> connectport=1339
+```
 ```
