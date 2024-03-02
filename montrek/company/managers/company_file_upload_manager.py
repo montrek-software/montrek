@@ -1,5 +1,5 @@
 from typing import Any, Dict
-from company.tasks import process_rgs_file_task
+from company.tasks.rgs import process_rgs_file_task
 
 
 class CompanyFileUploadProcessor:
@@ -18,7 +18,7 @@ class CompanyFileUploadProcessor:
             session_data=self.session_data,
             file_upload_registry_id=self.file_upload_registry_id,
         )
-        self.message = f"{result}"
+        self.message = f"Upload backgroun task started with id {result.id}. You will receive an email when the task is finished."
         return True
 
     def pre_check(self, file_path: str):
