@@ -6,7 +6,8 @@ services:
     ports:
       - ${DEPLOY_PORT}:80
     volumes: 
-      - static_volume:/home/app/montrek/montrek/baseclasses/static
+      - static_volume:/montrek/montrek/baseclasses/static
+      - uploads_volume:/montrek/uploads
     depends_on:
       - web
     environment:
@@ -25,8 +26,8 @@ services:
                     gunicorn --chdir montrek montrek.wsgi:application --bind 0.0.0.0:${APP_PORT}"
     volumes:
       - .:/montrek
-      - static_volume:/home/app/montrek/montrek/baseclasses/static
-      - media_volume:/home/app/montrek/uploads
+      - static_volume:/montrek/montrek/baseclasses/static
+      - uploads_volume:/montrek/uploads
     env_file:
       - .env
     image: montrek_app
@@ -59,8 +60,8 @@ services:
                     celery --app=montrek worker --loglevel=info"
     volumes:
       - .:/montrek
-      - static_volume:/home/app/montrek/montrek/baseclasses/static
-      - media_volume:/home/app/montrek/uploads
+      - static_volume:/montrek/montrek/baseclasses/static
+      - uploads_volume:/montrek/uploads
     env_file:
       - .env
     depends_on:
@@ -85,4 +86,4 @@ services:
 volumes:
   db_data:
   static_volume:
-  media_volume:
+  uploads_volume:
