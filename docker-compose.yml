@@ -41,16 +41,15 @@ services:
       - redis
 
   db:
-    image: mariadb:latest
+    image: postgres:latest
     environment:
-      MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
-      MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "3308:3306"
+      - "5432:5432"
     volumes:
-      - db_data:${DB_VOLUME}
+      - db_data:/var/lib/postgresql/data
 
   celery:
     build:
