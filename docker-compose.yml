@@ -73,7 +73,7 @@ services:
 
   flower:
     build: ./montrek
-    command: celery flower -A montrek.celery_app --port=5555 --broker={CELERY_BROKER}
+    command: celery flower -A montrek.celery_app --port=5555 --broker={CELERY_BROKER_URL}
     ports:
       - 5555:5555
     env_file:
