@@ -146,6 +146,9 @@ DEBUG=0
 ```
 CELERY_BROKER_URL=redis://redis:6379
 CELERY_RESULT_BACKEND=redis://redis:6379
+CELERY_TASK_ALWAYS_EAGER=1
+
+(Set CELERY_TASK_ALWAYS_EAGER to 0 if you want to run tasks asynchronously in the background using the celery worker.)
 
 And add the following line to the .env file:
 

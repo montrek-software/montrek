@@ -8,9 +8,5 @@ app = Celery(
     "montrek",
 )
 app.config_from_object("django.conf:settings", namespace="CELERY")
+app.conf.task_always_eager = settings.CELERY_TASK_ALWAYS_EAGER
 app.autodiscover_tasks()
-
-
-@app.task(bind=True)
-def debug_task(self):
-    print("Request: {0!r}".format(self.request))
