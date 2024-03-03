@@ -16,15 +16,15 @@ jobs:
         python-version: [3.11]
 
     services:
-  db:
-    image: postgres:16.2
-    env:
-      POSTGRES_USER: postgres  # Default user, unless you specify otherwise
-      POSTGRES_PASSWORD: ci_pipe_pssw
-      POSTGRES_DB: montrek_ci_pipe_db
-    ports:
-      - 5432:5432
-    options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+      db:
+        image: postgres:16.2
+        env:
+          POSTGRES_USER: postgres  # Default user, unless you specify otherwise
+          POSTGRES_PASSWORD: ci_pipe_pssw
+          POSTGRES_DB: montrek_ci_pipe_db
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
     steps:
     - uses: actions/checkout@v3
