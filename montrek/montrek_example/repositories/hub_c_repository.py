@@ -12,7 +12,6 @@ class HubCRepository(MontrekRepository):
                 "field_tsc2_float",
                 "value_date",
             ],
-            self.reference_date,
         )
         self.add_satellite_fields_annotations(
             me_models.SatC1,
@@ -20,6 +19,5 @@ class HubCRepository(MontrekRepository):
                 "field_c1_bool",
                 "field_c1_str",
             ],
-            self.reference_date,
         )
         return self.build_queryset()
