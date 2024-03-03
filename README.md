@@ -144,6 +144,7 @@ Change in the .env file:
 DB_HOST=db
 DEBUG=0
 ```
+
 And add the following line to the .env file:
 
 ```
