@@ -9,14 +9,6 @@ from company.managers.rgs import RgsFileProcessor
 from django.core.mail import send_mail
 
 
-@dataclasses.dataclass
-class ProcessRgsFileTaskResult:
-    file_path: str
-    session_data: dict[str, Any]
-    file_upload_registry_id: int
-    processor_message: str
-
-
 @shared_task
 def process_rgs_file_task(
     file_path: str, session_data: dict, file_upload_registry_id: int
