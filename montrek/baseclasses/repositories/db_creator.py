@@ -182,6 +182,7 @@ class DbCreator:
         for satellite_create_state in new_satellites:
             satellite = satellite_create_state.satellite
             satellite.hub_entity = reference_hub
+            satellite.state_date_start = creation_date
             # Check if there is already another satellites for this hub and if so, set the state_date_end
             if satellite.allow_multiple:
                 self._stall_satellite(satellite)
@@ -194,7 +195,6 @@ class DbCreator:
                 updated_sat = existing_satellites.first()
                 updated_sat.state_date_end = creation_date
                 self._stall_satellite(updated_sat)
-                satellite.state_date_start = creation_date
             self._stall_satellite(satellite)
 
     def _update_existing_satellites(
