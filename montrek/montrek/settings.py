@@ -157,3 +157,18 @@ EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
 CELERY_BROKER_URL = config("CELERY_BROKER_URL", default="redis://redis:6379")
 CELERY_RESULT_BACKEND = config("CELERY_RESULT_BACKEND", default="redis://redis:6379")
 CELERY_TASK_ALWAYS_EAGER = config("CELERY_TASK_ALWAYS_EAGER", default=True, cast=bool)
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "level": config("LOG_LEVEL", default="WARNING"),
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": config("LOG_LEVEL", default="WARNING"),
+    },
+}

@@ -1,5 +1,9 @@
+import logging
+
 from typing import Any, Dict
 from company.tasks.rgs import process_rgs_file_task
+
+logger = logging.getLogger(__name__)
 
 
 class CompanyFileUploadProcessor:
@@ -18,7 +22,8 @@ class CompanyFileUploadProcessor:
             session_data=self.session_data,
             file_upload_registry_id=self.file_upload_registry_id,
         )
-        self.message = f"Upload background task started with id {result.id}. You will receive an email when the task is finished."
+        logger.info(f"Upload task started with id {result.id}.")
+        self.message = "Upload background task started. You will receive an email when the task is finished."
         return True
 
     def pre_check(self, file_path: str):
