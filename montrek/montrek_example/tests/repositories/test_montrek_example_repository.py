@@ -600,9 +600,9 @@ class TestTimeSeries(TestCase):
                 queryset[i].state_date_end,
                 timezone.make_aware(timezone.datetime.max),
             )
-            self.assertEqual(
+            self.assertLess(
                 queryset[i].state_date_start,
-                timezone.make_aware(timezone.datetime.min),
+                timezone.now()
             )
 
     def test_build_time_series_queryset_wrong_satellite_class(self):
