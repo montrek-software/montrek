@@ -159,10 +159,9 @@ class MontrekRepository:
         self,
         satellite_class: Type[MontrekSatelliteABC],
         fields: List[str],
-        reference_date: timezone.datetime,
     ):
         subquery_builder = SatelliteSubqueryBuilder(
-            satellite_class, "pk", reference_date
+            satellite_class, "pk", self.reference_date
         )
         annotations_manager = SatelliteAnnotationsManager(subquery_builder)
         self._add_to_annotations(fields, annotations_manager)
@@ -172,10 +171,9 @@ class MontrekRepository:
         self,
         satellite_class: Type[MontrekSatelliteABC],
         fields: List[str],
-        reference_date: timezone.datetime,
     ):
         subquery_builder = LastTSSatelliteSubqueryBuilder(
-            satellite_class, "pk", reference_date, end_date=self.session_end_date
+            satellite_class, "pk", self.reference_date, end_date=self.session_end_date
         )
         annotations_manager = SatelliteAnnotationsManager(subquery_builder)
         self._add_to_annotations(fields, annotations_manager)
@@ -186,16 +184,15 @@ class MontrekRepository:
         satellite_class: Type[MontrekSatelliteABC],
         link_class: Type[MontrekLinkABC],
         fields: List[str],
-        reference_date: timezone.datetime,
         reversed_link: bool = False,
     ):
         if reversed_link:
             subquery_builder = ReverseLinkedSatelliteSubqueryBuilder(
-                satellite_class, link_class, reference_date
+                satellite_class, link_class, self.reference_date
             )
         else:
             subquery_builder = LinkedSatelliteSubqueryBuilder(
-                satellite_class, link_class, reference_date
+                satellite_class, link_class, self.reference_date
             )
         annotations_manager = LinkAnnotationsManager(
             subquery_builder, satellite_class.__name__

@@ -20,10 +20,10 @@ class CompanyRepository(MontrekRepository):
         self.add_satellite_fields_annotations(
             CompanyStaticSatellite,
             ["effectual_company_id", "company_name", "bloomberg_ticker"],
-            self.reference_date,
+
         )
         self.add_last_ts_satellite_fields_annotations(
-            CompanyTimeSeriesSatellite, ["total_revenue", "value_date"], self.reference_date
+            CompanyTimeSeriesSatellite, ["total_revenue", "value_date"]
         )
         return self.build_queryset()
 
