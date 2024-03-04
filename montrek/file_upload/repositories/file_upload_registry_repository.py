@@ -2,7 +2,7 @@ import os
 from typing import TextIO
 from django.utils import timezone
 from django.contrib import messages
-from montrek.settings import BASE_DIR
+from montrek.settings import MEDIA_ROOT
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from file_upload.models import FileUploadRegistryHub
 from file_upload.models import FileUploadRegistryStaticSatellite
@@ -30,7 +30,7 @@ class FileUploadRegistryRepository(MontrekRepository):
         file_upload_registry_path = (
             self.std_queryset().get(pk=file_upload_registry_id).file
         )
-        file_upload_registry_path = os.path.join(BASE_DIR, file_upload_registry_path)
+        file_upload_registry_path = os.path.join(MEDIA_ROOT, file_upload_registry_path)
         if not os.path.exists(file_upload_registry_path):
             messages.error(request, f"File {file_upload_registry_path} not found")
             return None

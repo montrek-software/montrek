@@ -1,8 +1,5 @@
-from decouple import RepositoryIni
 from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.core import mail
-from django.core.mail import message
 from django.test import TestCase
 from django.urls import reverse
 

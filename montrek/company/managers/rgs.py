@@ -1,3 +1,6 @@
+from file_upload.repositories.file_upload_registry_repository import (
+    FileUploadRegistryRepository,
+)
 import pandas as pd
 import datetime
 
@@ -10,11 +13,18 @@ class RgsFileProcessor:
 
     def __init__(
         self,
-        company_repository: CompanyRepository,
-        file_upload_registry_hub: FileUploadRegistryHub,
+        session_data: dict,
+        file_upload_registry_id: int,
     ):
-        self.company_repository = company_repository
-        self.file_upload_registry_hub = file_upload_registry_hub
+        self.company_repository = CompanyRepository(session_data)
+        self.file_upload_registry_repository = FileUploadRegistryRepository(
+            session_data
+        )
+        self.file_upload_registry_hub = (
+            self.file_upload_registry_repository.std_queryset().get(
+                pk=file_upload_registry_id
+            )
+        )
 
     def process(self, file_path: str):
         df = self._read_file(file_path)

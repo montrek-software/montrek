@@ -65,7 +65,7 @@ class TestFileUploadManager(TestCase):
         file_upload_registry_query = FileUploadRegistryRepository().std_queryset()
         self.assertEqual(file_upload_registry_query.count(), 1)
         file_upload_registry = file_upload_registry_query.first()
-        fname_pattern = r"uploads/test_file.*\.txt"
+        fname_pattern = r"test_file.*\.txt"
         self.assertRegex(file_upload_registry.file, fname_pattern)
         self.assertEqual(file_upload_registry.file_name, "test_file.txt")
         self.assertEqual(file_upload_registry.file_type, "txt")

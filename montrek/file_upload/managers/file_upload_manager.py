@@ -1,3 +1,5 @@
+import os
+from django.conf import settings
 from typing import Any, TextIO, Dict
 from typing import Protocol
 
@@ -62,8 +64,9 @@ class FileUploadManager:
         file_name = self.file.name
         file_type = file_name.split(".")[-1]
         upload_file_hub = self.file_repository.std_create_object({"file": self.file})
-        self.file_path = (
-            self.file_repository.std_queryset().get(pk=upload_file_hub.pk).file
+        self.file_path = os.path.join(
+            settings.MEDIA_ROOT,
+            self.file_repository.std_queryset().get(pk=upload_file_hub.pk).file,
         )
         file_upload_registry_hub = self.registry_repository.std_create_object(
             {

@@ -150,7 +150,14 @@ And add the following line to the .env file:
 ```
 DEPLOY_PORT=1339
 DEPLOY_HOST=<your-ip-address>
+
+CELERY_BROKER_URL=redis://redis:6379
+CELERY_RESULT_BACKEND=redis://redis:6379
+CELERY_TASK_ALWAYS_EAGER=1
+
 ```
+
+(Set `CELERY_TASK_ALWAYS_EAGER` to 0 if you want to run tasks asynchronously in the background using the celery worker.)
 
 Run
 ```
@@ -166,6 +173,9 @@ Or from any browser in you network:
 ```
 <your-ip-address>:1339
 ```
+
+Background tasks can be monitored with the Flower app. It runs at `<your-ip-address>:5555`.
+
 
 *Note for installation on windows*:
 

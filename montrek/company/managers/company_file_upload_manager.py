@@ -1,9 +1,9 @@
+import logging
+
 from typing import Any, Dict
-from company.repositories.company_repository import CompanyRepository
-from file_upload.repositories.file_upload_registry_repository import (
-    FileUploadRegistryRepository,
-)
-from company.managers.rgs import RgsFileProcessor
+from company.tasks.rgs import process_rgs_file_task
+
+logger = logging.getLogger(__name__)
 
 
 class CompanyFileUploadProcessor:
@@ -13,23 +13,18 @@ class CompanyFileUploadProcessor:
     def __init__(
         self, file_upload_registry_id: int, session_data: Dict[str, Any], **kwargs
     ):
-        self.company_repository = CompanyRepository(session_data)
-        self.file_upload_registry_repository = FileUploadRegistryRepository(
-            session_data
-        )
-        self.file_upload_registry_hub = (
-            self.file_upload_registry_repository.std_queryset().get(
-                pk=file_upload_registry_id
-            )
-        )
+        self.session_data = session_data
+        self.file_upload_registry_id = file_upload_registry_id
 
     def process(self, file_path: str):
-        processor = RgsFileProcessor(
-            self.company_repository, self.file_upload_registry_hub
+        result = process_rgs_file_task.delay(
+            file_path=file_path,
+            session_data=self.session_data,
+            file_upload_registry_id=self.file_upload_registry_id,
         )
-        result = processor.process(file_path)
-        self.message = processor.message
-        return result
+        logger.info(f"Upload task started with id {result.id}.")
+        self.message = "Upload background task started. You will receive an email when the task is finished."
+        return True
 
     def pre_check(self, file_path: str):
         return True
