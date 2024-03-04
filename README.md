@@ -100,7 +100,7 @@ DB_USER=montrekuser
 DB_PASSWORD=password
 DB_HOST=localhost
 DB_PORT=5432
-DB_VOLUME=/var/lib/mysql
+DB_VOLUME=/var/lib/postgresql/data
 APP_PORT=8000
 
 ```
