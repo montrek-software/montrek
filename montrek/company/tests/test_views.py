@@ -120,6 +120,7 @@ class TestRgsCompanyUploadFileView(TestCase):
                 data,
                 follow=True,
             )
+        messages = list(response.context["messages"])
 
         companies = CompanyRepository().std_queryset()
 
@@ -132,6 +133,11 @@ class TestRgsCompanyUploadFileView(TestCase):
             self.assertEqual(c.bloomberg_ticker, str(expected["ticker"]))
             self.assertEqual(float(c.total_revenue), float(expected["total_revenue"]))
 
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(
+            str(messages[0]),
+            "Upload background task started. You will receive an email when the task is finished.",
+        )
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to, [self.user.email])
         self.assertEqual(mail.outbox[0].subject, "RGS File Upload Terminated")

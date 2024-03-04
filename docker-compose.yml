@@ -64,6 +64,7 @@ services:
     env_file:
       - .env
     depends_on:
+      - web
       - db
       - redis
 
@@ -71,13 +72,16 @@ services:
     image: redis:7-alpine
 
   flower:
-    build: ./montrek
+    build:
+      context: .
+      dockerfile: Dockerfile
     command: celery flower -A montrek.celery_app --port=5555 --broker={CELERY_BROKER_URL}
     ports:
       - 5555:5555
     env_file:
       - .env
     depends_on:
+      - web
       - redis
       - celery
 
