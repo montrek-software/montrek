@@ -131,7 +131,7 @@ class CompanyTSTableView(MontrekListView):
                 name="Value Date",
                 attr="value_date",
             ),
-            table_elements.FloatTableElement(
+            table_elements.DollarTableElement(
                 name="Total Revenue",
                 attr="total_revenue",
             ),
@@ -208,7 +208,7 @@ class CompanyHistoryView(MontrekHistoryListView):
                 name="Value Date",
                 attr="value_date",
             ),
-            table_elements.FloatTableElement(
+            table_elements.DollarTableElement(
                 name="Total Revenue",
                 attr="total_revenue",
             ),
