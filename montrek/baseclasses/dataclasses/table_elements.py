@@ -73,14 +73,6 @@ class IntTableElement(NumberTableElement):
 
 
 @dataclass
-class EuroTableElement(NumberTableElement):
-    attr: str
-
-    def _format_value(self, value) -> str:
-        return f"{value:,.2f}&#x20AC;"
-
-
-@dataclass
 class PercentTableElement(NumberTableElement):
     attr: str
 
@@ -107,3 +99,21 @@ class BooleanTableElement(TableElement):
         if value:
             return '<td style="text-align:left;">&#x2713;</td>'
         return '<td style="text-align:left;">&#x2717;</td>'
+
+
+@dataclass
+class MoneyTableElement(NumberTableElement):
+    attr: str
+
+    @property
+    def ccy_symbol(self) -> str:
+        return ""
+
+    def _format_value(self, value) -> str:
+        return f"{value:,.2f}{self.ccy_symbol}"
+
+
+class EuroTableElement(MoneyTableElement):
+    @property
+    def ccy_symbol(self) -> str:
+        return "&#x20AC;"
