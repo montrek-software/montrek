@@ -14,6 +14,7 @@ class CompanyStaticSatellite(baseclass_models.MontrekSatelliteABC):
     hub_entity = models.ForeignKey(CompanyHub, on_delete=models.CASCADE)
     company_name = models.CharField(max_length=255)
     bloomberg_ticker = models.CharField(max_length=20)
+    share_class_figi = models.CharField(max_length=255)
     effectual_company_id = models.CharField(max_length=255)
     identifier_fields = ["effectual_company_id"]
 

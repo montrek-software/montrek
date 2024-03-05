@@ -37,6 +37,10 @@ class CompanyOverview(MontrekListView):
     def elements(self) -> tuple:
         return (
             table_elements.StringTableElement(
+                name="Effectual Company Identifier",
+                attr="effectual_company_id",
+            ),
+            table_elements.StringTableElement(
                 name="Company Name",
                 attr="company_name",
             ),
@@ -45,8 +49,8 @@ class CompanyOverview(MontrekListView):
                 attr="bloomberg_ticker",
             ),
             table_elements.StringTableElement(
-                name="Effectual Company Identifier",
-                attr="effectual_company_id",
+                name="Share Class FIGI",
+                attr="share_class_figi",
             ),
             table_elements.LinkTableElement(
                 name="View",
@@ -68,6 +72,10 @@ class CompanyDetailsView(MontrekDetailView):
     def elements(self) -> tuple:
         return (
             table_elements.StringTableElement(
+                name="Effectual Company Identifier",
+                attr="effectual_company_id",
+            ),
+            table_elements.StringTableElement(
                 name="Company Name",
                 attr="company_name",
             ),
@@ -76,8 +84,8 @@ class CompanyDetailsView(MontrekDetailView):
                 attr="bloomberg_ticker",
             ),
             table_elements.StringTableElement(
-                name="Effectual Company Identifier",
-                attr="effectual_company_id",
+                name="Share Class FIGI",
+                attr="share_class_figi",
             ),
         )
 
@@ -171,6 +179,10 @@ class CompanyHistoryView(MontrekHistoryListView):
     def elements(self) -> tuple:
         return (
             table_elements.StringTableElement(
+                name="Effectual Company Identifier",
+                attr="effectual_company_id",
+            ),
+            table_elements.StringTableElement(
                 name="Company Name",
                 attr="company_name",
             ),
@@ -179,8 +191,8 @@ class CompanyHistoryView(MontrekHistoryListView):
                 attr="bloomberg_ticker",
             ),
             table_elements.StringTableElement(
-                name="Effectual Company Identifier",
-                attr="effectual_company_id",
+                name="Share Class FIGI",
+                attr="share_class_figi",
             ),
             table_elements.DateTableElement(name="Change Date", attr="change_date"),
             table_elements.StringTableElement(name="Changed By", attr="changed_by"),

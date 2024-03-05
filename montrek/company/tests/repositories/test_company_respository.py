@@ -23,6 +23,10 @@ class CompanyRepositoryTest(TestCase):
                 self.companies[i].bloomberg_ticker,
             )
             self.assertEqual(
+                companies[i].share_class_figi,
+                self.companies[i].share_class_figi,
+            )
+            self.assertEqual(
                 companies[i].effectual_company_id,
                 self.companies[i].effectual_company_id,
             )
