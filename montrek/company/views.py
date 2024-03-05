@@ -9,6 +9,7 @@ from baseclasses.views import (
     MontrekUpdateView,
 )
 from baseclasses.dataclasses import table_elements
+from baseclasses.dataclasses.number_shortener import BillionShortening
 from company.pages import CompanyOverviewPage, CompanyPage
 from company.repositories.company_repository import CompanyRepository
 from company.forms import CompanyCreateForm
@@ -51,6 +52,7 @@ class CompanyOverview(MontrekListView):
             table_elements.DollarTableElement(
                 name="Total Revenue",
                 attr="total_revenue",
+                shortener=BillionShortening(),
             ),
             table_elements.LinkTableElement(
                 name="View",
@@ -82,6 +84,10 @@ class CompanyDetailsView(MontrekDetailView):
             table_elements.StringTableElement(
                 name="Effectual Company Identifier",
                 attr="effectual_company_id",
+            ),
+            table_elements.DollarTableElement(
+                name="Total Revenue",
+                attr="total_revenue",
             ),
         )
 

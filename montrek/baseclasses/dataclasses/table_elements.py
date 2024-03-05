@@ -1,6 +1,10 @@
 from django.utils import timezone
 from dataclasses import dataclass
 from decimal import Decimal
+from baseclasses.dataclasses.number_shortener import (
+    NoShortening,
+    NumberShortenerProtocol,
+)
 from reporting.core.reporting_colors import ReportingColors
 
 
@@ -43,6 +47,7 @@ class LinkTextTableElement(TableElement):
 @dataclass
 class NumberTableElement(TableElement):
     attr: str
+    shortener: NumberShortenerProtocol = NoShortening()
 
     def format(self, value):
         if not isinstance(value, (int, float, Decimal)):
@@ -52,24 +57,26 @@ class NumberTableElement(TableElement):
         return f'<td style="text-align:right;color:{color};">{formatted_value}</td>'
 
     def _format_value(self, value) -> str:
-        return value
+        return self.shortener.shorten(value, "")
 
 
 @dataclass
 class FloatTableElement(NumberTableElement):
     attr: str
+    shortener: NumberShortenerProtocol = NoShortening()
 
     def _format_value(self, value) -> str:
-        return f"{value:,.3f}"
+        return self.shortener.shorten(value, ",.3f")
 
 
 @dataclass
 class IntTableElement(NumberTableElement):
     attr: str
+    shortener: NumberShortenerProtocol = NoShortening()
 
     def _format_value(self, value) -> str:
         value = round(value)
-        return f"{value:,.0f}"
+        return self.shortener.shorten(value, ",.0f")
 
 
 @dataclass
@@ -104,13 +111,15 @@ class BooleanTableElement(TableElement):
 @dataclass
 class MoneyTableElement(NumberTableElement):
     attr: str
+    shortener: NumberShortenerProtocol = NoShortening()
 
     @property
     def ccy_symbol(self) -> str:
         return ""
 
     def _format_value(self, value) -> str:
-        return f"{value:,.2f}{self.ccy_symbol}"
+        value = self.shortener.shorten(value, ",.2f")
+        return f"{value}{self.ccy_symbol}"
 
 
 class EuroTableElement(MoneyTableElement):
