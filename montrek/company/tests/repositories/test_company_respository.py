@@ -6,6 +6,9 @@ from company.tests.factories.company_factories import (
 )
 from company.repositories.company_repository import CompanyRepository
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
+from file_upload.tests.factories.file_upload_factories import (
+    FileUploadRegistryStaticSatelliteFactory,
+)
 
 
 class CompanyRepositoryTest(TestCase):
@@ -65,3 +68,16 @@ class CompanyRepositoryTest(TestCase):
             )
 
             self.assertEqual(len(time_series), 5)
+
+    def test_get_upload_registry(self):
+        company_file_registry = FileUploadRegistryStaticSatelliteFactory.create()
+        # Add file regitsry to each company
+        for company in self.companies:
+            company.hub_entity.link_company_file_upload_registry.add(
+                company_file_registry.hub_entity
+            )
+        # Add one dummy file registry
+        FileUploadRegistryStaticSatelliteFactory.create()
+        test_query = CompanyRepository().get_upload_registry_table_paginated()
+        self.assertEqual(len(test_query), 1)
+        self.assertEqual(test_query[0].file_name, company_file_registry.file_name)
