@@ -13,6 +13,7 @@ class CompanyStaticSatelliteFactory(factory.django.DjangoModelFactory):
     hub_entity = factory.SubFactory(CompanyHubFactory)
     company_name = factory.Sequence(lambda n: f"company_name_{n}")
     bloomberg_ticker = factory.Sequence(lambda n: f"bloomberg_ticker_{n}")
+    share_class_figi = factory.Sequence(lambda n: f"share_class_figi_{n}")
     effectual_company_id = factory.Sequence(lambda n: f"effectual_company_id_{n}")
 
 
