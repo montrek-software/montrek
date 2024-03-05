@@ -117,3 +117,9 @@ class EuroTableElement(MoneyTableElement):
     @property
     def ccy_symbol(self) -> str:
         return "&#x20AC;"
+
+
+class DollarTableElement(MoneyTableElement):
+    @property
+    def ccy_symbol(self) -> str:
+        return "&#0036;"

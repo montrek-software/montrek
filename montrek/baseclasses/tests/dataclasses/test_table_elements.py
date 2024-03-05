@@ -51,6 +51,24 @@ class TestTableElements(TestCase):
             test_element.format("bla"), '<td style="text-align:left;">bla</td>'
         )
 
+    def test_dollar_table_elements(self):
+        test_element = te.DollarTableElement(name="test", attr="test_value")
+        self.assertEqual(
+            test_element.format(1234.5678),
+            '<td style="text-align:right;color:#002F6C;">1,234.57&#0036;</td>',
+        )
+        self.assertEqual(
+            test_element.format(1234),
+            '<td style="text-align:right;color:#002F6C;">1,234.00&#0036;</td>',
+        )
+        self.assertEqual(
+            test_element.format(-1234),
+            '<td style="text-align:right;color:#BE0D3E;">-1,234.00&#0036;</td>',
+        )
+        self.assertEqual(
+            test_element.format("bla"), '<td style="text-align:left;">bla</td>'
+        )
+
     def test_percent_table_elements(self):
         test_element = te.PercentTableElement(name="test", attr="test_value")
         self.assertEqual(
@@ -79,7 +97,7 @@ class TestTableElements(TestCase):
             test_element.format("bla"), '<td style="text-align:left;">bla</td>'
         )
         self.assertEqual(
-            test_element.format(timezone.datetime(2023,12,9)),
+            test_element.format(timezone.datetime(2023, 12, 9)),
             '<td style="text-align:left;">09/12/2023</td>',
         )
 

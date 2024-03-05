@@ -48,6 +48,10 @@ class CompanyOverview(MontrekListView):
                 name="Effectual Company Identifier",
                 attr="effectual_company_id",
             ),
+            table_elements.DollarTableElement(
+                name="Total Revenue",
+                attr="total_revenue",
+            ),
             table_elements.LinkTableElement(
                 name="View",
                 url="company_details",
