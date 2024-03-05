@@ -204,6 +204,14 @@ class CompanyHistoryView(MontrekHistoryListView):
                 name="Share Class FIGI",
                 attr="share_class_figi",
             ),
+            table_elements.DateTableElement(
+                name="Value Date",
+                attr="value_date",
+            ),
+            table_elements.FloatTableElement(
+                name="Total Revenue",
+                attr="total_revenue",
+            ),
             table_elements.DateTableElement(name="Change Date", attr="change_date"),
             table_elements.StringTableElement(name="Changed By", attr="changed_by"),
         )
