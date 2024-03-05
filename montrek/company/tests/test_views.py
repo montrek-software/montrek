@@ -37,6 +37,7 @@ class TestCompanyCreateView(TestCase):
             {
                 "company_name": "Apple",
                 "bloomberg_ticker": "APPL",
+                "share_class_figi": "BBG0087DLDP7",
                 "effectual_company_id": "APPL:XNYS",
                 "value_date": "2023-01-01",
                 "total_revenue": 100.0,
@@ -47,6 +48,7 @@ class TestCompanyCreateView(TestCase):
         self.assertEqual(company.company_name, "Apple")
         self.assertEqual(company.bloomberg_ticker, "APPL")
         self.assertEqual(company.effectual_company_id, "APPL:XNYS")
+        self.assertEqual(company.share_class_figi, "BBG0087DLDP7")
         self.assertEqual(
             company.asset_time_series_satellite.first().total_revenue, 100.0
         )
@@ -131,6 +133,7 @@ class TestRgsCompanyUploadFileView(TestCase):
             expected = test_file_df.loc[c.effectual_company_id].to_dict()
             self.assertEqual(c.company_name, expected["name"])
             self.assertEqual(c.bloomberg_ticker, str(expected["ticker"]))
+            self.assertEqual(c.share_class_figi, expected["figi"])
             self.assertEqual(float(c.total_revenue), float(expected["total_revenue"]))
 
         self.assertEqual(len(messages), 1)

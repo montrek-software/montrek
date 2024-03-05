@@ -35,6 +35,7 @@ class RgsFileProcessor:
                 "company_name",
                 "bloomberg_ticker",
                 "effectual_company_id",
+                "share_class_figi",
             ]
         ].drop_duplicates()
         company_hubs = self.company_repository.create_objects_from_data_frame(df_static)
@@ -58,6 +59,7 @@ class RgsFileProcessor:
             "name",
             "ticker",
             "total_revenue",
+            "figi",
         ]
         df = pd.read_excel(file_path, usecols=read_cols)
         return df
@@ -69,6 +71,7 @@ class RgsFileProcessor:
             "Year": "year",
             "name": "company_name",
             "ticker": "bloomberg_ticker",
+            "figi": "share_class_figi",
         }
         df = raw_df.rename(columns=column_rename_map)
         df["value_date"] = df["year"].apply(lambda x: datetime.date(x, 12, 31))
