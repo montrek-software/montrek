@@ -54,7 +54,7 @@ class MontrekUploadFileView(MontrekTemplateView):
             )
             result = file_upload_manager.upload_and_process()
             if result:
-                messages.success(request, file_upload_manager.processor.message)
+                messages.info(request, file_upload_manager.processor.message)
             else:
                 messages.error(request, file_upload_manager.processor.message)
             return HttpResponseRedirect(self.get_success_url())
