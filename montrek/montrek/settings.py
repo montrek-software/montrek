@@ -52,7 +52,7 @@ MONTREK_BASE_APPS = [
 ]
 
 MONTREK_EXTENSION_APPS = [
-    i for i in config("MONTREK_EXTENSION_APPS", default="").split(" ") if i
+    i for i in config("INSTALLED_APPS", default="").split(" ") if i
 ]
 
 INSTALLED_APPS = DJANGO_APPS + MONTREK_BASE_APPS + MONTREK_EXTENSION_APPS
