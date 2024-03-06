@@ -1,3 +1,5 @@
+from django.urls import reverse
+from baseclasses.dataclasses.view_classes import ActionElement
 from baseclasses.views import MontrekCreateView
 from baseclasses.views import MontrekListView
 from baseclasses.views import MontrekHistoryListView
@@ -14,6 +16,15 @@ from montrek_example.repositories.hub_b_repository import HubBRepository
 from montrek_example.forms import ExampleACreateForm
 from montrek_example.pages import ExampleAPage, MontrekExampleAAppPage
 from montrek_example.pages import MontrekExampleBAppPage
+
+
+def action_back_to_overview(exampl: str):
+    return ActionElement(
+        icon="arrow-left",
+        link=reverse(f"montrek_example_{exampl}_list"),
+        action_id="back_to_overview",
+        hover_text="Back to Overview",
+    )
 
 
 # Create your views here.
@@ -70,6 +81,16 @@ class MontrekExampleAList(MontrekListView):
             ),
         )
 
+    @property
+    def actions(self) -> tuple:
+        action_new_example_a = ActionElement(
+            icon="plus",
+            link=reverse("montrek_example_a_create"),
+            action_id="id_new_example_a",
+            hover_text="Add new A Example",
+        )
+        return (action_new_example_a,)
+
 
 class MontrekExampleADelete(MontrekDeleteView):
     repository = HubARepository
@@ -93,6 +114,16 @@ class MontrekExampleADetails(MontrekDetailView):
             StringTableElement(name="B1 String", attr="field_b1_str"),
         )
 
+    @property
+    def actions(self) -> tuple:
+        action_update_example_a = ActionElement(
+            icon="pencil",
+            link=reverse("montrek_example_a_update", self.kwargs),
+            action_id="id_update_example_a",
+            hover_text="Update ExampleA",
+        )
+        return (action_back_to_overview("a"), action_update_example_a)
+
 
 class MontrekExampleBCreate(MontrekCreateView):
     repository = HubBRepository
@@ -114,6 +145,16 @@ class MontrekExampleBList(MontrekListView):
             StringTableElement(name="B2 Choice", attr="field_b2_choice"),
         )
 
+    @property
+    def actions(self) -> tuple:
+        action_new_example_b = ActionElement(
+            icon="plus",
+            link=reverse("montrek_example_b_create"),
+            action_id="id_new_example_b",
+            hover_text="Add new B Example",
+        )
+        return (action_back_to_overview("b"), action_new_example_b)
+
     success_url = "montrek_example_b_list"
 
 
@@ -134,3 +175,7 @@ class MontrekExampleAHistory(MontrekHistoryListView):
             DateTableElement(name="Change Date", attr="change_date"),
             StringTableElement(name="Changed By", attr="changed_by"),
         )
+
+    @property
+    def actions(self) -> tuple:
+        return (action_back_to_overview("a"),)
