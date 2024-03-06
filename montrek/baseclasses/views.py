@@ -10,6 +10,8 @@ from django.contrib import messages
 from decouple import config
 from baseclasses.dataclasses.nav_bar_model import NavBarModel
 from baseclasses.dataclasses.link_model import LinkModel
+from baseclasses.dataclasses.table_elements import TableElement
+from baseclasses.dataclasses.view_classes import ActionElement
 from baseclasses.pages import NoPage
 from baseclasses.forms import DateRangeForm, FilterForm
 from baseclasses.forms import MontrekCreateForm
@@ -48,7 +50,7 @@ class MontrekPageViewMixin:
     title = "No Title set!"
 
     @property
-    def actions(self) -> tuple:
+    def actions(self) -> tuple[ActionElement] | tuple:
         return ()
 
     def get_page_context(self, context, **kwargs):
@@ -92,7 +94,7 @@ class MontrekViewMixin:
         return self._repository_object
 
     @property
-    def elements(self) -> tuple:
+    def elements(self) -> tuple[TableElement]:
         return ()
 
     @property
