@@ -41,7 +41,6 @@ jobs:
         echo "DB_PASSWORD=ci_pipe_pssw" >> .env
         echo "DB_NAME=montrek_ci_pipe_db" >> .env
         echo "DB_HOST=0.0.0.0" >> .env
-        echo "MONTREK_EXTENSION_APPS=" >> .env
     - name: Run migrations
       run: |
         cd montrek
