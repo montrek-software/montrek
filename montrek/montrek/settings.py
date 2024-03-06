@@ -34,7 +34,7 @@ ALLOWED_HOSTS += [config("DEPLOY_HOST", default="127.0.0.1")]
 
 # Application definition
 
-INSTALLED_APPS = [
+DJANGO_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -42,13 +42,20 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django_extensions",
+]
+
+MONTREK_BASE_APPS = [
     "user",
     "baseclasses",
     "montrek_example",
     "file_upload",
 ]
 
-INSTALLED_APPS += config("INSTALLED_APPS", default="").split(" ")
+MONTREK_EXTENSION_APPS = [
+    i for i in config("INSTALLED_APPS", default="").split(" ") if i
+]
+
+INSTALLED_APPS = DJANGO_APPS + MONTREK_BASE_APPS + MONTREK_EXTENSION_APPS
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
