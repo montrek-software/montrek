@@ -9,6 +9,7 @@ from baseclasses.views import (
     MontrekUpdateView,
 )
 from baseclasses.dataclasses import table_elements
+from baseclasses.dataclasses.number_shortener import BillionShortening
 from company.pages import CompanyOverviewPage, CompanyPage
 from company.repositories.company_repository import CompanyRepository
 from company.forms import CompanyCreateForm
@@ -52,6 +53,11 @@ class CompanyOverview(MontrekListView):
                 name="Share Class FIGI",
                 attr="share_class_figi",
             ),
+            table_elements.DollarTableElement(
+                name="Total Revenue",
+                attr="total_revenue",
+                shortener=BillionShortening(),
+            ),
             table_elements.LinkTableElement(
                 name="View",
                 url="company_details",
@@ -87,6 +93,10 @@ class CompanyDetailsView(MontrekDetailView):
                 name="Share Class FIGI",
                 attr="share_class_figi",
             ),
+            table_elements.DollarTableElement(
+                name="Total Revenue",
+                attr="total_revenue",
+            ),
         )
 
 
@@ -121,7 +131,7 @@ class CompanyTSTableView(MontrekListView):
                 name="Value Date",
                 attr="value_date",
             ),
-            table_elements.FloatTableElement(
+            table_elements.DollarTableElement(
                 name="Total Revenue",
                 attr="total_revenue",
             ),
@@ -193,6 +203,14 @@ class CompanyHistoryView(MontrekHistoryListView):
             table_elements.StringTableElement(
                 name="Share Class FIGI",
                 attr="share_class_figi",
+            ),
+            table_elements.DateTableElement(
+                name="Value Date",
+                attr="value_date",
+            ),
+            table_elements.DollarTableElement(
+                name="Total Revenue",
+                attr="total_revenue",
             ),
             table_elements.DateTableElement(name="Change Date", attr="change_date"),
             table_elements.StringTableElement(name="Changed By", attr="changed_by"),

@@ -76,9 +76,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: celery flower -A montrek.celery_app --port=5555 --broker={CELERY_BROKER_URL}
+    command: celery flower -A montrek.celery_app --port=5556 --broker={CELERY_BROKER_URL}
     ports:
-      - 5555:5555
+      - 5556:5556
     env_file:
       - .env
     depends_on:
