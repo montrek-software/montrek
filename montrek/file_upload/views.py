@@ -4,6 +4,8 @@ from django import forms
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.http import FileResponse
+from django.utils.decorators import method_decorator
+from django.contrib.auth.decorators import login_required
 from file_upload.forms import UploadFileForm
 from file_upload.managers.file_upload_manager import FileUploadManager
 from file_upload.managers.file_upload_manager import FileUploadProcessorProtocol
@@ -28,6 +30,7 @@ class NotDefinedFileUploadProcessor:
         raise NotImplementedError(self.message)
 
 
+@method_decorator(login_required, name="dispatch")
 class MontrekUploadFileView(MontrekTemplateView):
     template_name = "upload_form.html"
     file_upload_processor_class: type[
@@ -51,7 +54,7 @@ class MontrekUploadFileView(MontrekTemplateView):
             )
             result = file_upload_manager.upload_and_process()
             if result:
-                messages.info(request, file_upload_manager.processor.message)
+                messages.success(request, file_upload_manager.processor.message)
             else:
                 messages.error(request, file_upload_manager.processor.message)
             return HttpResponseRedirect(self.get_success_url())
