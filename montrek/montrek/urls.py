@@ -17,7 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from baseclasses import views as base_views
-from decouple import config
+from django.conf import settings
 
 urlpatterns = [
     path("", base_views.home, name="home"),
@@ -33,6 +33,6 @@ urlpatterns = [
     path("montrek_example/", include("montrek_example.urls")),
 ]
 
-for app in config("INSTALLED_APPS", default="").split(" "):
+for app in settings.MONTREK_EXTENSION_APPS:
     app_path = app.replace(".", "/") + "/"
     urlpatterns.append(path(app_path, include(f"{app}.urls")))
