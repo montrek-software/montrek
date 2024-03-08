@@ -12,7 +12,6 @@ class MockMontrekPage(MontrekPage):
                 name="TestName",
                 link="TestLink",
                 html_id="id_test",
-                actions=(),
             ),
         )
 
@@ -27,13 +26,12 @@ class TestMontrekPage(TestCase):
         page = MockMontrekPage()
         self.assertEqual(page.page_title, "Mock Montrek Page")
         page.set_active_tab("id_test")
-        self.assertEqual(page.tabs[0].active , "active")
+        self.assertEqual(page.tabs[0].active, "active")
 
         page.set_active_tab("")
-        self.assertEqual(page.tabs[0].active , "")
+        self.assertEqual(page.tabs[0].active, "")
 
     def test_no_page(self):
         page = NoPage()
         with self.assertRaises(NotImplementedError):
             page.get_tabs()
-

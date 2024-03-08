@@ -10,6 +10,8 @@ from django.contrib import messages
 from decouple import config
 from baseclasses.dataclasses.nav_bar_model import NavBarModel
 from baseclasses.dataclasses.link_model import LinkModel
+from baseclasses.dataclasses.table_elements import TableElement
+from baseclasses.dataclasses.view_classes import ActionElement
 from baseclasses.pages import NoPage
 from baseclasses.forms import DateRangeForm, FilterForm
 from baseclasses.forms import MontrekCreateForm
@@ -42,17 +44,21 @@ def links(request):
     return render(request, "links.html", {"links": links})
 
 
-
 class MontrekPageViewMixin:
     page_class = NoPage
     tab = "empty_tab"
     title = "No Title set!"
+
+    @property
+    def actions(self) -> tuple[ActionElement] | tuple:
+        return ()
 
     def get_page_context(self, context, **kwargs):
         page = self.page_class(**self.kwargs)
         context["page_title"] = page.page_title
         page.set_active_tab(self.tab)
         context["tab_elements"] = page.tabs
+        context["actions"] = self.actions
         context["title"] = self.title
         context["show_date_range_selector"] = page.show_date_range_selector
         context.update(self._handle_date_range_form())
@@ -88,8 +94,8 @@ class MontrekViewMixin:
         return self._repository_object
 
     @property
-    def elements(self) -> list:
-        return []
+    def elements(self) -> tuple[TableElement]:
+        return ()
 
     @property
     def session_data(self) -> dict:
