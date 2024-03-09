@@ -1,6 +1,7 @@
 from django.core.paginator import Page
 from django.shortcuts import render
 from django.views.generic.list import ListView
+from django.core.paginator import Paginator
 from django.views.generic import DetailView
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import CreateView
@@ -168,7 +169,12 @@ class MontrekListView(ListView, MontrekPageViewMixin, MontrekViewMixin):
         return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
-        return self._get_std_queryset()
+        queryset = self._get_std_queryset()
+        page_number = self.session_data.get("page", [1])[0]
+        paginate_by = 10  # or you can make this customizable
+        paginator = Paginator(queryset, paginate_by)
+        page = paginator.get_page(page_number)
+        return page
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
