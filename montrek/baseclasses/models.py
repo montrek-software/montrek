@@ -126,6 +126,7 @@ class MontrekSatelliteABC(TimeStampMixin, StateDateMixin, UserMixin):
             "updated_at",
             "state_date_start",
             "state_date_end",
+            "comment",
         ]
         return exclude_fields
 
