@@ -31,9 +31,6 @@ class BaseLinkTableElement(TableElement):
     kwargs: dict
     hover_text: str
 
-    def format(self, value):
-        return f'<td style="text-align: left"><a href="{self.url}" {self.kwargs}>{self.icon}</a></td>'
-
 
 @dataclass
 class LinkTableElement(BaseLinkTableElement):
