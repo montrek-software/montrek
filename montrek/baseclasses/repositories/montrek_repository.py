@@ -303,26 +303,3 @@ class MontrekRepository:
     def _raise_for_anonymous_user(self):
         if not self.session_user_id:
             raise PermissionDenied("User not authenticated!")
-
-
-def paginated_table(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        # Call the original function
-        result = func(*args, **kwargs)
-
-        # Extract request and queryset from result
-        session_data = args[
-            0
-        ].session_data  # Assuming the first argument is 'self' and has 'request'
-        queryset = result  # Assuming the original function returns a queryset
-
-        # Pagination logic
-        page_number = session_data.get("page", [1])[0]
-        paginate_by = 10  # or you can make this customizable
-        paginator = Paginator(queryset, paginate_by)
-        page = paginator.get_page(page_number)
-
-        return page
-
-    return wrapper
