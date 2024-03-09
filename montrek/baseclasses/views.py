@@ -1,3 +1,4 @@
+from django.core.paginator import Page
 from django.shortcuts import render
 from django.views.generic.list import ListView
 from django.views.generic import DetailView
@@ -180,8 +181,12 @@ class MontrekListView(ListView, MontrekPageViewMixin, MontrekViewMixin):
     def list_to_csv(self):
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = 'attachment; filename="export.csv"'
+        queryset = self.get_queryset()
+        # TODO: This only return the pages of the view in the csv, it would be desirable if all the data is returned
+        if isinstance(queryset, Page):
+            queryset = queryset.object_list
         MontrekListManager().export_queryset_to_csv(
-            self.get_queryset(), self.get_fields_from_elements(), response
+            queryset, self.get_fields_from_elements(), response
         )
         return response
 
