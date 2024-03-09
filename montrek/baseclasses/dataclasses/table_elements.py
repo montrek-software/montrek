@@ -1,5 +1,5 @@
 from django.utils import timezone
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from decimal import Decimal
 from baseclasses.dataclasses.number_shortener import (
     NoShortening,
@@ -19,13 +19,9 @@ class TableElement:
     def format(self, value):
         raise NotImplementedError
 
-
 @dataclass
-class StringTableElement(TableElement):
-    attr: str
-
-    def format(self, value):
-        return f'<td style="text-align: left">{value}</td>'
+class AttrTableElement(TableElement):
+    attr: str = field(default="")
 
 
 @dataclass
@@ -37,15 +33,19 @@ class LinkTableElement(TableElement):
 
 
 @dataclass
-class LinkTextTableElement(TableElement):
-    url: str
-    kwargs: dict
-    text: str
-    hover_text: str
+class LinkTextTableElement(LinkTableElement):
+    pass
+
+@dataclass
+class StringTableElement(AttrTableElement):
+    attr: str
+
+    def format(self, value):
+        return f'<td style="text-align: left">{value}</td>'
 
 
 @dataclass
-class NumberTableElement(TableElement):
+class NumberTableElement(AttrTableElement):
     attr: str
     shortener: NumberShortenerProtocol = NoShortening()
 
@@ -87,8 +87,7 @@ class PercentTableElement(NumberTableElement):
         return f"{value:,.2%}"
 
 
-@dataclass
-class DateTableElement(TableElement):
+@dataclasclass StringTableElement(AttrTableElement):):
     attr: str
 
     def format(self, value):
@@ -99,7 +98,7 @@ class DateTableElement(TableElement):
 
 
 @dataclass
-class BooleanTableElement(TableElement):
+cclass StringTableElement(AttrTableElement):):
     attr: str
 
     def format(self, value):

@@ -18,6 +18,7 @@ from baseclasses.forms import DateRangeForm, FilterForm
 from baseclasses.forms import MontrekCreateForm
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from baseclasses import utils
+from baseclasses.managers.montrek_list_manager import MontrekListManager
 
 # Create your views here.
 
@@ -98,6 +99,9 @@ class MontrekViewMixin:
     def elements(self) -> tuple[TableElement]:
         return ()
 
+    def get_fields_from_elements(self):
+        return [element.field for element in self.elements]
+
     @property
     def session_data(self) -> dict:
         session_data = dict(self.request.GET)
@@ -170,6 +174,9 @@ class MontrekListView(ListView, MontrekPageViewMixin, MontrekViewMixin):
     def list_to_csv(self):
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = 'attachment; filename="export.csv"'
+        MontrekListManager().export_queryset_to_csv(
+            self.get_queryset(), self.get_fields_from_elements(), response
+        )
         return response
 
 
