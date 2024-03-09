@@ -1,5 +1,5 @@
 from django.utils import timezone
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from decimal import Decimal
 from baseclasses.dataclasses.number_shortener import (
     NoShortening,
@@ -21,7 +21,32 @@ class TableElement:
 
 
 @dataclass
-class StringTableElement(TableElement):
+class AttrTableElement(TableElement):
+    attr: str = field(default="")
+
+
+@dataclass  # noqa
+class BaseLinkTableElement(TableElement):
+    url: str
+    kwargs: dict
+    hover_text: str
+
+    def format(self, value):
+        return f'<td style="text-align: left"><a href="{self.url}" {self.kwargs}>{self.icon}</a></td>'
+
+
+@dataclass
+class LinkTableElement(BaseLinkTableElement):
+    icon: str
+
+
+@dataclass
+class LinkTextTableElement(BaseLinkTableElement):
+    text: str
+
+
+@dataclass
+class StringTableElement(AttrTableElement):
     attr: str
 
     def format(self, value):
@@ -29,23 +54,7 @@ class StringTableElement(TableElement):
 
 
 @dataclass
-class LinkTableElement(TableElement):
-    url: str
-    kwargs: dict
-    icon: str
-    hover_text: str
-
-
-@dataclass
-class LinkTextTableElement(TableElement):
-    url: str
-    kwargs: dict
-    text: str
-    hover_text: str
-
-
-@dataclass
-class NumberTableElement(TableElement):
+class NumberTableElement(AttrTableElement):
     attr: str
     shortener: NumberShortenerProtocol = NoShortening()
 
@@ -88,7 +97,7 @@ class PercentTableElement(NumberTableElement):
 
 
 @dataclass
-class DateTableElement(TableElement):
+class DateTableElement(AttrTableElement):
     attr: str
 
     def format(self, value):
@@ -99,7 +108,7 @@ class DateTableElement(TableElement):
 
 
 @dataclass
-class BooleanTableElement(TableElement):
+class BooleanTableElement(AttrTableElement):
     attr: str
 
     def format(self, value):
