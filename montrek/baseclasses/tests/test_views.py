@@ -119,6 +119,6 @@ class TestMontrekViewMixin(TestCase):
         mock_view = MockMontrekView("/")
         self.assertEqual(mock_view.elements, ())
 
-    def test_get_std_queryset(self):
+    def test_get_view_queryset(self):
         mock_view = MockMontrekView("/")
-        self.assertEqual(mock_view._get_std_queryset(), ["item1", "item2", "item3"])
+        self.assertEqual(mock_view.get_view_queryset(), ["item1", "item2", "item3"])
