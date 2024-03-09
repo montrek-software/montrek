@@ -5,6 +5,7 @@ from django.views.generic.base import TemplateView
 from django.views.generic.edit import CreateView
 from django.views import View
 from django.http import HttpResponseRedirect
+from django.http import HttpResponse
 from django.urls import reverse
 from django.contrib import messages
 from decouple import config
@@ -150,6 +151,11 @@ class MontrekListView(ListView, MontrekPageViewMixin, MontrekViewMixin):
     template_name = "montrek_table.html"
     repository = MontrekRepository
 
+    def get(self, request, *args, **kwargs):
+        if self.request.GET.get("gen_csv") == "true":
+            return self.list_to_csv()
+        return super().get(request, *args, **kwargs)
+
     def get_queryset(self):
         return self._get_std_queryset()
 
@@ -159,8 +165,12 @@ class MontrekListView(ListView, MontrekPageViewMixin, MontrekViewMixin):
         self.show_repository_messages()
         context["table_elements"] = self.elements
         context["filter_form"] = FilterForm(self.session_data)
-
         return context
+
+    def list_to_csv(self):
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="export.csv"'
+        return response
 
 
 class MontrekHistoryListView(MontrekListView):
