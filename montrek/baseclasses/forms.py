@@ -10,16 +10,14 @@ class DateRangeForm(forms.Form):
         widget=forms.DateInput(attrs={"type": "date", "id": "id_date_range_end"})
     )
 
+
 class FilterForm(forms.Form):
     filter_field = forms.CharField(
-        widget=forms.TextInput(attrs={"id": "id_filter"}),
-        required=False
+        widget=forms.TextInput(attrs={"id": "id_filter"}), required=False
     )
     filter_value = forms.CharField(
-        widget=forms.TextInput(attrs={"id": "id_value"}),
-        required=False
+        widget=forms.TextInput(attrs={"id": "id_value"}), required=False
     )
-
 
 
 class MontrekCreateForm(forms.ModelForm):
@@ -41,6 +39,7 @@ class MontrekCreateForm(forms.ModelForm):
             if form_field and field.name not in self._meta.exclude:
                 self.fields[field.name] = form_field
                 self.fields[field.name].widget.attrs.update({"id": f"id_{field.name}"})
+        self.fields["comment"] = forms.CharField()
 
     def _add_hub_entity_id_field(self):
         self.fields["hub_entity_id"] = forms.IntegerField(required=False)
