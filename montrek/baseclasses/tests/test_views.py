@@ -1,6 +1,6 @@
-from os import walk
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
+from django.db.models import QuerySet
 from django.test import TestCase, RequestFactory
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.contrib.messages.middleware import MessageMiddleware
@@ -14,13 +14,35 @@ from baseclasses.dataclasses.montrek_message import (
 from baseclasses.pages import MontrekPage
 
 
+class MockQuerySet:
+    def __init__(self, *args):
+        self.items = args
+
+    def __iter__(self):
+        return iter(self.items)
+
+    def __len__(self):
+        return len(self.items)
+
+    def __getitem__(self, index):
+        return self.items[index]
+
+    def __eq__(self, other):
+        if isinstance(other, list):
+            return list(self.items) == other
+        return NotImplemented
+
+    def values(self):
+        return {item: item for item in self.items}
+
+
 class MockRepository:
     def __init__(self, session_data):
         self.session_data = session_data
         self.messages = []
 
     def std_queryset(self):
-        return ["item1", "item2", "item3"]  # Dummy data for testing
+        return MockQuerySet("item1", "item2", "item3")  # Dummy data for testing
 
 
 class MockRequester:
