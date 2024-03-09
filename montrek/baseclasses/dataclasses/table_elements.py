@@ -25,17 +25,24 @@ class AttrTableElement(TableElement):
     attr: str = field(default="")
 
 
-@dataclass
-class LinkTableElement(TableElement):
+@dataclass  # noqa
+class BaseLinkTableElement(TableElement):
     url: str
     kwargs: dict
-    icon: str
     hover_text: str
+
+    def format(self, value):
+        return f'<td style="text-align: left"><a href="{self.url}" {self.kwargs}>{self.icon}</a></td>'
 
 
 @dataclass
-class LinkTextTableElement(LinkTableElement):
-    pass
+class LinkTableElement(BaseLinkTableElement):
+    icon: str
+
+
+@dataclass
+class LinkTextTableElement(BaseLinkTableElement):
+    text: str
 
 
 @dataclass
