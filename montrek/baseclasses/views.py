@@ -11,7 +11,7 @@ from django.contrib import messages
 from decouple import config
 from baseclasses.dataclasses.nav_bar_model import NavBarModel
 from baseclasses.dataclasses.link_model import LinkModel
-from baseclasses.dataclasses.table_elements import TableElement
+from baseclasses.dataclasses.table_elements import AttrTableElement, TableElement
 from baseclasses.dataclasses.view_classes import ActionElement
 from baseclasses.pages import NoPage
 from baseclasses.forms import DateRangeForm, FilterForm
@@ -96,11 +96,17 @@ class MontrekViewMixin:
         return self._repository_object
 
     @property
-    def elements(self) -> tuple[TableElement]:
-        return ()
+    def elements(self) -> list[TableElement]:
+        return []
 
-    def get_fields_from_elements(self):
-        return [element.field for element in self.elements]
+    def get_fields_from_elements(self) -> list[str]:
+        elements = self.get_attr_table_elements(self.elements)
+        return [element.attr for element in elements]
+
+    def get_attr_table_elements(self, elements) -> list[AttrTableElement]:
+        return [
+            element for element in elements if isinstance(element, AttrTableElement)
+        ]
 
     @property
     def session_data(self) -> dict:

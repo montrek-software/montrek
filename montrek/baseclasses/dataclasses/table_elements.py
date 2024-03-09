@@ -19,6 +19,7 @@ class TableElement:
     def format(self, value):
         raise NotImplementedError
 
+
 @dataclass
 class AttrTableElement(TableElement):
     attr: str = field(default="")
@@ -35,6 +36,7 @@ class LinkTableElement(TableElement):
 @dataclass
 class LinkTextTableElement(LinkTableElement):
     pass
+
 
 @dataclass
 class StringTableElement(AttrTableElement):
@@ -87,7 +89,8 @@ class PercentTableElement(NumberTableElement):
         return f"{value:,.2%}"
 
 
-@dataclasclass StringTableElement(AttrTableElement):):
+@dataclass
+class DateTableElement(AttrTableElement):
     attr: str
 
     def format(self, value):
@@ -98,7 +101,7 @@ class PercentTableElement(NumberTableElement):
 
 
 @dataclass
-cclass StringTableElement(AttrTableElement):):
+class BooleanTableElement(AttrTableElement):
     attr: str
 
     def format(self, value):
