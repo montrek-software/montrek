@@ -72,8 +72,8 @@ class TestMontrekExampleAHistoryView(TestCase):
         )
         url = reverse("montrek_example_a_history", kwargs={"pk": huba.id})
         response = self.client.get(url)
-        test_queryset = response.context_data["object_list"]
-        self.assertEqual(test_queryset.count(), 2)
+        test_queryset = response.context_data["object_list"].object_list
+        self.assertEqual(len(test_queryset), 2)
         self.assertEqual(test_queryset[1].field_a1_int, 5)
         self.assertEqual(test_queryset[0].field_a1_int, 6)
         self.assertEqual(test_queryset[1].change_date[:10], "0001-01-01")
