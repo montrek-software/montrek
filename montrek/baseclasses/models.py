@@ -66,6 +66,7 @@ class MontrekSatelliteABC(TimeStampMixin, StateDateMixin, UserMixin):
     hub_entity = models.ForeignKey(MontrekHubABC, on_delete=models.CASCADE)
     hash_identifier = models.CharField(max_length=64, default="")
     hash_value = models.CharField(max_length=64, default="")
+    comment = models.TextField(blank=True, default="")
 
     identifier_fields = []
 
