@@ -324,6 +324,18 @@ class TestMontrekCreateObject(TestCase):
         self.assertEqual(me_models.SatA1.objects.first().comment, "some comment")
         self.assertEqual(me_models.SatA2.objects.first().comment, "some comment")
 
+        repository.std_create_object(
+            {
+                "field_a1_int": 5,
+                "field_a1_str": "test",
+                "field_a2_float": 6.0,
+                "field_a2_str": "test2",
+                "comment": "some new comment",
+            }
+        )
+        self.assertEqual(me_models.SatA1.objects.first().comment, "some new comment")
+        self.assertEqual(me_models.SatA2.objects.first().comment, "some new comment")
+
     def test_create_objects_from_data_frame(self):
         repository = HubARepository(session_data={"user_id": self.user.id})
         data_frame = pd.DataFrame(

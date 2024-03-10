@@ -54,7 +54,6 @@ class DbCreator:
     ) -> None:
         selected_satellites = {"new": [], "existing": [], "updated": []}
         creation_date = timezone.now()
-        comment = data.get("comment", "")
         self.hub_entity = hub_entity
         for satellite_class in self.satellite_classes:
             sat_data = {
@@ -66,7 +65,6 @@ class DbCreator:
                 continue
             sat_data = self._make_timezone_aware(sat_data)
             sat_data["created_by_id"] = user_id
-            sat_data["comment"] = comment
             sat = satellite_class(hub_entity=self.hub_entity, **sat_data)
             sat = self._process_new_satellite(sat, satellite_class)
             selected_satellites[sat.state].append(sat)
