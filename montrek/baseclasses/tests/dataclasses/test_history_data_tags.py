@@ -23,6 +23,7 @@ class HistoryDataTagTestCase(TestCase):
         history_data_tag = HistoryDataTag(
             change_date=datetime.datetime(2020, 1, 1),
             user_emails=[user1.email, user2.email, user3.email],
+            comments=["comment1", "comment2"],
         )
         self.assertEqual(
             history_data_tag.get_user_string(),
@@ -32,6 +33,7 @@ class HistoryDataTagTestCase(TestCase):
     def test_history_data_tag_get_comment_string(self):
         history_data_tag = HistoryDataTag(
             change_date=datetime.datetime(2020, 1, 1),
+            user_emails=["1", "2", "3"],
             comments=["comment1", "comment2"],
         )
         self.assertEqual(history_data_tag.get_comment_string(), "comment1,comment2")
