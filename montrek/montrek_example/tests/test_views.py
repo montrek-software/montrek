@@ -44,7 +44,7 @@ class TestMontrekExampleADetailView(TestCase):
         url = reverse("montrek_example_a_details", kwargs={"pk": sat_a.hub_entity.id})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "montrek_table.html")
+        self.assertTemplateUsed(response, "montrek_details.html")
 
 
 class TestMontrekExampleAHistoryView(TestCase):

@@ -118,7 +118,7 @@ class MontrekExampleADetails(MontrekDetailView):
     def actions(self) -> tuple:
         action_update_example_a = ActionElement(
             icon="pencil",
-            link=reverse("montrek_example_a_update", self.kwargs),
+            link=reverse("montrek_example_a_update", kwargs=self.kwargs),
             action_id="id_update_example_a",
             hover_text="Update ExampleA",
         )
