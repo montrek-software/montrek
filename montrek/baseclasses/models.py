@@ -32,7 +32,7 @@ class StateMixin(models.Model):
     state_date_end = models.DateTimeField(
         default=timezone.make_aware(timezone.datetime.max)
     )
-    comment = models.CharField(max_length=255, default="")
+    comment = models.CharField(max_length=255, default="", blank=True)
 
 
 class UserMixin(models.Model):
