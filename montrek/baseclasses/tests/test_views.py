@@ -1,14 +1,39 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
+from django.db.models import QuerySet
 from django.test import TestCase, RequestFactory
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.contrib.messages.middleware import MessageMiddleware
 from django.contrib.messages import get_messages
 from baseclasses.views import MontrekViewMixin
+from baseclasses.views import MontrekListView
 from baseclasses.dataclasses.montrek_message import (
     MontrekMessageError,
     MontrekMessageInfo,
 )
+from baseclasses.pages import MontrekPage
+
+
+class MockQuerySet:
+    def __init__(self, *args):
+        self.items = args
+
+    def __iter__(self):
+        return iter(self.items)
+
+    def __len__(self):
+        return len(self.items)
+
+    def __getitem__(self, index):
+        return self.items[index]
+
+    def __eq__(self, other):
+        if isinstance(other, list):
+            return list(self.items) == other
+        return NotImplemented
+
+    def values(self):
+        return {item: item for item in self.items}
 
 
 class MockRepository:
@@ -17,16 +42,10 @@ class MockRepository:
         self.messages = []
 
     def std_queryset(self):
-        return ["item1", "item2", "item3"]  # Dummy data for testing
+        return MockQuerySet("item1", "item2", "item3")  # Dummy data for testing
 
 
-class MockMontrekView(MontrekViewMixin):
-    repository = MockRepository
-
-    def __init__(self, url: str):
-        super().__init__()
-        self.add_mock_request(url)
-
+class MockRequester:
     def add_mock_request(self, url: str):
         self.request = RequestFactory().get(url)
         self.request.user = AnonymousUser()
@@ -35,6 +54,20 @@ class MockMontrekView(MontrekViewMixin):
         self.request.session.save()
         message_middleware = MessageMiddleware(lambda request: None)
         message_middleware.process_request(self.request)
+
+
+class MockMontrekView(MontrekViewMixin, MockRequester):
+    repository = MockRepository
+
+    def __init__(self, url: str):
+        super().__init__()
+        self.add_mock_request(url)
+
+
+class MockPage(MontrekPage):
+    @property
+    def tabs(self):
+        return []
 
 
 class TestUnderConstruction(TestCase):
@@ -117,8 +150,39 @@ class TestMontrekViewMixin(TestCase):
 
     def test_elements_property(self):
         mock_view = MockMontrekView("/")
-        self.assertEqual(mock_view.elements, ())
+        self.assertEqual(mock_view.elements, [])
 
     def test_get_view_queryset(self):
         mock_view = MockMontrekView("/")
         self.assertEqual(mock_view.get_view_queryset(), ["item1", "item2", "item3"])
+
+
+class MockMontrekListView(MontrekListView, MockRequester):
+    repository = MockRepository
+    page_class = MockPage
+    kwargs = {}
+
+    def __init__(self, url: str):
+        super().__init__()
+        self.add_mock_request(url)
+
+
+class TestMontrekListView(TestCase):
+    def test_list_view_base_normal_load(self):
+        """
+        Test that the page loads normally without the `gen_csv` query parameter.
+        """
+        test_list_view = MockMontrekListView("dummy")
+        response = test_list_view.get(test_list_view.request)
+        self.assertEqual(response.status_code, 200)
+
+    def test_list_view_base_csv_generation(self):
+        test_list_view = MockMontrekListView("dummy?gen_csv=true")
+        response = test_list_view.get(test_list_view.request)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "text/csv")
+        self.assertTrue(
+            response["Content-Disposition"].startswith(
+                'attachment; filename="export.csv"'
+            )
+        )

@@ -1,3 +1,4 @@
+from django.core.paginator import Page
 from django.shortcuts import render
 from django.views.generic.list import ListView
 from django.core.paginator import Paginator
@@ -6,18 +7,20 @@ from django.views.generic.base import TemplateView
 from django.views.generic.edit import CreateView
 from django.views import View
 from django.http import HttpResponseRedirect
+from django.http import HttpResponse
 from django.urls import reverse
 from django.contrib import messages
 from decouple import config
 from baseclasses.dataclasses.nav_bar_model import NavBarModel
 from baseclasses.dataclasses.link_model import LinkModel
-from baseclasses.dataclasses.table_elements import TableElement
+from baseclasses.dataclasses.table_elements import AttrTableElement, TableElement
 from baseclasses.dataclasses.view_classes import ActionElement
 from baseclasses.pages import NoPage
 from baseclasses.forms import DateRangeForm, FilterForm
 from baseclasses.forms import MontrekCreateForm
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from baseclasses import utils
+from baseclasses.managers.montrek_list_manager import MontrekListManager
 
 # Create your views here.
 
@@ -95,8 +98,17 @@ class MontrekViewMixin:
         return self._repository_object
 
     @property
-    def elements(self) -> tuple[TableElement]:
-        return ()
+    def elements(self) -> list[TableElement]:
+        return []
+
+    def get_fields_from_elements(self) -> list[str]:
+        elements = self.get_attr_table_elements(self.elements)
+        return [element.attr for element in elements]
+
+    def get_attr_table_elements(self, elements) -> list[AttrTableElement]:
+        return [
+            element for element in elements if isinstance(element, AttrTableElement)
+        ]
 
     @property
     def session_data(self) -> dict:
@@ -151,6 +163,11 @@ class MontrekListView(ListView, MontrekPageViewMixin, MontrekViewMixin):
     template_name = "montrek_table.html"
     repository = MontrekRepository
 
+    def get(self, request, *args, **kwargs):
+        if self.request.GET.get("gen_csv") == "true":
+            return self.list_to_csv()
+        return super().get(request, *args, **kwargs)
+
     def get_queryset(self):
         queryset = self.get_view_queryset()
         page_number = self.session_data.get("page", [1])[0]
@@ -165,8 +182,16 @@ class MontrekListView(ListView, MontrekPageViewMixin, MontrekViewMixin):
         self.show_repository_messages()
         context["table_elements"] = self.elements
         context["filter_form"] = FilterForm(self.session_data)
-
         return context
+
+    def list_to_csv(self):
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="export.csv"'
+        queryset = self.get_view_queryset()
+        MontrekListManager().export_queryset_to_csv(
+            queryset, self.get_fields_from_elements(), response
+        )
+        return response
 
 
 class MontrekHistoryListView(MontrekListView):
