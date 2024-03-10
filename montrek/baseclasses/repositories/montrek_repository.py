@@ -244,7 +244,7 @@ class MontrekRepository:
         for sat_class in self._primary_satellite_classes:
             history_satellite_data = sat_class.objects.filter(
                 hub_entity_id=pk
-            ).values_list("state_date_start", "created_by__email")
+            ).values_list("state_date_start", "created_by__email", "comment")
             for hdata in history_satellite_data:
                 history_data_tags.append(*hdata)
         return history_data_tags
@@ -262,6 +262,9 @@ class MontrekRepository:
                 ),
                 changed_by=Value(
                     history_tag.get_user_string(), output_field=CharField()
+                ),
+                change_comment=Value(
+                    history_tag.get_comment_string(), output_field=CharField()
                 ),
             )
         )
