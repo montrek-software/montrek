@@ -684,6 +684,7 @@ class TestHistory(TestCase):
             field_a1_int=6,
             state_date_start=montrek_time(2024, 2, 17),
             created_by=self.user,
+            comment="some comment",
         )
         me_factories.SatA2Factory(
             hub_entity=huba,
@@ -701,6 +702,7 @@ class TestHistory(TestCase):
         self.assertEqual(test_queryset[0].change_date[:10], "2024-02-17")
         self.assertEqual(test_queryset[0].changed_by, self.user.email)
         self.assertEqual(test_queryset[1].changed_by, self.user.email)
+        self.assertEqual(test_queryset[0].change_comment, "some comment")
 
         self.assertEqual(test_queryset[0].field_a1_str, test_queryset[1].field_a1_str)
         self.assertEqual(test_queryset[0].field_a2_str, test_queryset[1].field_a2_str)
