@@ -56,6 +56,7 @@ class TestMontrekExampleAHistoryView(TestCase):
             field_a1_int=5,
             state_date_end=montrek_time(2024, 2, 17),
             created_by=user1,
+            comment="initial comment",
         )
         me_factories.SatA1Factory(
             hub_entity=huba,
@@ -63,12 +64,14 @@ class TestMontrekExampleAHistoryView(TestCase):
             field_a1_int=6,
             state_date_start=montrek_time(2024, 2, 17),
             created_by=user2,
+            comment="change comment",
         )
         me_factories.SatA2Factory(
             hub_entity=huba,
             field_a2_str="ConstantTestFeld",
             field_a2_float=6.0,
             created_by=user2,
+            comment="another comment",
         )
         url = reverse("montrek_example_a_history", kwargs={"pk": huba.id})
         response = self.client.get(url)
@@ -78,6 +81,10 @@ class TestMontrekExampleAHistoryView(TestCase):
         self.assertEqual(test_queryset[0].field_a1_int, 6)
         self.assertEqual(test_queryset[1].change_date[:10], "0001-01-01")
         self.assertEqual(test_queryset[0].change_date[:10], "2024-02-17")
+        self.assertEqual(test_queryset[0].change_comment, "change comment")
+        self.assertEqual(
+            test_queryset[1].change_comment, "initial comment,another comment"
+        )
 
         self.assertEqual(test_queryset[0].field_a1_str, test_queryset[1].field_a1_str)
         self.assertEqual(test_queryset[0].field_a2_str, test_queryset[1].field_a2_str)
