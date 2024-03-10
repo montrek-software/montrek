@@ -38,6 +38,15 @@ class TestMontrekExampleACreateView(TestCase):
         self.assertEqual(created_object.field_a2_float, 2)
 
 
+class TestMontrekExampleADetailView(TestCase):
+    def test_view_return_correct_html(self):
+        sat_a = me_factories.SatA1Factory()
+        url = reverse("montrek_example_a_details", kwargs={"pk": sat_a.hub_entity.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "montrek_details.html")
+
+
 class TestMontrekExampleAHistoryView(TestCase):
     def test_view_return_correct_html(self):
         sat_a = me_factories.SatA1Factory()
