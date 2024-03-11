@@ -310,6 +310,32 @@ class TestMontrekCreateObject(TestCase):
         with self.assertRaises(PermissionDenied):
             HubARepository().std_create_object({})
 
+    def test_std_create_object_comment(self):
+        repository = HubARepository(session_data={"user_id": self.user.id})
+        repository.std_create_object(
+            {
+                "field_a1_int": 5,
+                "field_a1_str": "test",
+                "field_a2_float": 6.0,
+                "field_a2_str": "test2",
+                "comment": "some comment",
+            }
+        )
+        self.assertEqual(me_models.SatA1.objects.first().comment, "some comment")
+        self.assertEqual(me_models.SatA2.objects.first().comment, "some comment")
+
+        repository.std_create_object(
+            {
+                "field_a1_int": 5,
+                "field_a1_str": "test",
+                "field_a2_float": 6.0,
+                "field_a2_str": "test2",
+                "comment": "some new comment",
+            }
+        )
+        self.assertEqual(me_models.SatA1.objects.last().comment, "some new comment")
+        self.assertEqual(me_models.SatA2.objects.last().comment, "some new comment")
+
     def test_create_objects_from_data_frame(self):
         repository = HubARepository(session_data={"user_id": self.user.id})
         data_frame = pd.DataFrame(
@@ -334,6 +360,23 @@ class TestMontrekCreateObject(TestCase):
         self.assertEqual(me_models.SatA2.objects.last().field_a2_str, "test3")
         self.assertEqual(me_models.HubA.objects.first().created_by_id, self.user.id)
         self.assertEqual(me_models.HubA.objects.last().created_by_id, self.user.id)
+
+    def test_create_objects_from_data_frame_comment(self):
+        repository = HubARepository(session_data={"user_id": self.user.id})
+        data_frame = pd.DataFrame(
+            {
+                "field_a1_int": [5, 6],
+                "field_a1_str": ["test", "test2"],
+                "field_a2_float": [6.0, 7.0],
+                "field_a2_str": ["test2", "test3"],
+                "comment": "some_comment",
+            }
+        )
+        repository.create_objects_from_data_frame(data_frame)
+        for sat1 in me_models.SatA1.objects.all():
+            self.assertEqual(sat1.comment, "some_comment")
+        for sat2 in me_models.SatA2.objects.all():
+            self.assertEqual(sat2.comment, "some_comment")
 
     def test_create_hub_a_with_link_to_hub_b(self):
         hub_b = me_factories.SatB1Factory().hub_entity
@@ -600,10 +643,7 @@ class TestTimeSeries(TestCase):
                 queryset[i].state_date_end,
                 timezone.make_aware(timezone.datetime.max),
             )
-            self.assertLess(
-                queryset[i].state_date_start,
-                timezone.now()
-            )
+            self.assertLess(queryset[i].state_date_start, timezone.now())
 
     def test_build_time_series_queryset_wrong_satellite_class(self):
         repository = HubCRepository()

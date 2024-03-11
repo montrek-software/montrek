@@ -22,7 +22,7 @@ class TimeStampMixin(models.Model):
         super().save(*args, **kwargs)
 
 
-class StateDateMixin(models.Model):
+class StateMixin(models.Model):
     class Meta:
         abstract = True
 
@@ -32,6 +32,7 @@ class StateDateMixin(models.Model):
     state_date_end = models.DateTimeField(
         default=timezone.make_aware(timezone.datetime.max)
     )
+    comment = models.CharField(max_length=255, default="", blank=True)
 
 
 class UserMixin(models.Model):
@@ -47,7 +48,7 @@ class UserMixin(models.Model):
 
 
 # Base Hub Model ABC
-class MontrekHubABC(TimeStampMixin, StateDateMixin, UserMixin):
+class MontrekHubABC(TimeStampMixin, StateMixin, UserMixin):
     class Meta:
         abstract = True
 
@@ -55,7 +56,7 @@ class MontrekHubABC(TimeStampMixin, StateDateMixin, UserMixin):
 
 
 # Base Static Satellite Model ABC
-class MontrekSatelliteABC(TimeStampMixin, StateDateMixin, UserMixin):
+class MontrekSatelliteABC(TimeStampMixin, StateMixin, UserMixin):
     class Meta:
         abstract = True
         indexes = [
@@ -178,7 +179,7 @@ class LinkTypeEnum(Enum):
     MANY_TO_MANY = 3
 
 
-class MontrekLinkABC(TimeStampMixin, StateDateMixin):
+class MontrekLinkABC(TimeStampMixin, StateMixin):
     class Meta:
         abstract = True
 
