@@ -18,10 +18,10 @@ from montrek_example.pages import ExampleAPage, MontrekExampleAAppPage
 from montrek_example.pages import MontrekExampleBAppPage
 
 
-def action_back_to_overview(exampl: str):
+def action_back_to_overview(example: str):
     return ActionElement(
         icon="arrow-left",
-        link=reverse(f"montrek_example_{exampl}_list"),
+        link=reverse(f"montrek_example_{example}_list"),
         action_id="back_to_overview",
         hover_text="Back to Overview",
     )
@@ -174,6 +174,7 @@ class MontrekExampleAHistory(MontrekHistoryListView):
             StringTableElement(name="B1 String", attr="field_b1_str"),
             DateTableElement(name="Change Date", attr="change_date"),
             StringTableElement(name="Changed By", attr="changed_by"),
+            StringTableElement(name="Change Comment", attr="change_comment"),
         )
 
     @property
