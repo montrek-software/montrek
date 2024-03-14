@@ -1,16 +1,25 @@
 import requests
-from dataclasses import dataclass
+from base64 import b64encode
 
 
-@dataclass
 class RequestAuthenticator:
-    user: str
-    password: str
+    def get_headers(self):
+        return {}
+
+
+class RequestUserPasswordAuthenticator:
+    def __init__(self, user: str, password: str):
+        self.user = user
+        self.password = password
+
+    def get_headers(self):
+        credentials = b64encode(f"{self.user}:{self.password}".encode()).decode()
+        return {"Authorization": f"Basic {credentials}"}
 
 
 class RequestManager:
     base_url = "NONESET"
-    authenticator = RequestAuthenticator(user="nouser", password="")
+    authenticator = RequestAuthenticator()
 
     def __init__(self):
         self.status_code = 0
@@ -18,9 +27,7 @@ class RequestManager:
 
     def get_json(self, endpoint: str) -> dict:
         endpoint_url = f"{self.base_url}{endpoint}"
-        request = requests.get(
-            endpoint_url, auth=(self.authenticator.user, self.authenticator.password)
-        )
+        request = requests.get(endpoint_url, headers=self.authenticator.get_headers())
         self.status_code = request.status_code
         if request.ok:
             self.message = "OK"

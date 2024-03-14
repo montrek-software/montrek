@@ -1,14 +1,18 @@
 from django.test import TestCase
-from baseclasses.managers.request_manager import RequestManager, RequestAuthenticator
+from baseclasses.managers.request_manager import (
+    RequestManager,
+    RequestUserPasswordAuthenticator,
+)
 
 
 class MockRequestManager(RequestManager):
     base_url = "https://httpbin.org/"
-    authenticator = RequestAuthenticator(user="user", password="pass")
+    authenticator = RequestUserPasswordAuthenticator(user="user", password="pass")
 
 
 class MockRequestManagerNoAuth(RequestManager):
     base_url = "https://httpbin.org/"
+    authenticator = RequestUserPasswordAuthenticator(user="user", password="wrongpass")
 
 
 class TestRequestManager(TestCase):
@@ -24,6 +28,7 @@ class TestRequestManager(TestCase):
         manager = MockRequestManagerNoAuth()
         response_json = manager.get_json("basic-auth/user/pass")
         self.assertEqual(manager.status_code, 401)
+        self.assertEqual(response_json, {})
         self.assertEqual(
             manager.message,
             "401 Client Error: UNAUTHORIZED for url: https://httpbin.org/basic-auth/user/pass",
