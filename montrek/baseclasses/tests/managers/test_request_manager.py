@@ -1,16 +1,16 @@
 from django.test import TestCase
-from baseclasses.managers.request_manager import RequestManager
+from baseclasses.managers.request_manager import RequestManager, RequestAuthenticator
 
 
 class MockRequestManager(RequestManager):
     base_url = "https://httpbin.org/"
+    authenticator = RequestAuthenticator(user="user", password="pass")
 
 
 class TestRequestManager(TestCase):
-    def test_get(self):
+    def test_get_json(self):
         manager = MockRequestManager()
-        response = manager.get("basic-auth/user/pass")
-        self.assertEqual(response.status_code, 200)
-        response_json = response.json()
+        response_json = manager.get_json("basic-auth/user/pass")
+        self.assertEqual(manager.status_code, 200)
         self.assertEqual(response_json["authenticated"], True)
         self.assertEqual(response_json["user"], "user")
