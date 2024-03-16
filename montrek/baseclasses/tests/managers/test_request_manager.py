@@ -2,6 +2,7 @@ from django.test import TestCase
 from baseclasses.managers.request_manager import (
     RequestManager,
     RequestUserPasswordAuthenticator,
+    RequestBearerAuthenticator,
 )
 
 
@@ -13,6 +14,11 @@ class MockRequestManager(RequestManager):
 class MockRequestManagerNoAuth(RequestManager):
     base_url = "https://httpbin.org/"
     authenticator = RequestUserPasswordAuthenticator(user="user", password="wrongpass")
+
+
+class MockRequestManagerToken(RequestManager):
+    base_url = "https://httpbin.org/"
+    authenticator = RequestBearerAuthenticator(token="testtoken123")
 
 
 class TestRequestManager(TestCase):
@@ -47,3 +53,11 @@ class TestRequestManager(TestCase):
         self.assertEqual(manager.status_code, 0)
         self.assertEqual(manager.message, "No valid json returned")
         self.assertEqual(response_json, {})
+
+    def test_bearer_authenticator(self):
+        manager = MockRequestManagerToken()
+        response_json = manager.get_json("bearer")
+        self.assertEqual(manager.status_code, 200)
+        self.assertEqual(manager.message, "OK")
+        self.assertEqual(response_json["authenticated"], True)
+        self.assertEqual(response_json["token"], "testtoken123")

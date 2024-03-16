@@ -17,6 +17,14 @@ class RequestUserPasswordAuthenticator:
         return {"Authorization": f"Basic {credentials}"}
 
 
+class RequestBearerAuthenticator:
+    def __init__(self, token: str):
+        self.token = token
+
+    def get_headers(self):
+        return {"Authorization": f"Bearer {self.token}"}
+
+
 class RequestManager:
     base_url = "NONESET"
     authenticator = RequestAuthenticator()
