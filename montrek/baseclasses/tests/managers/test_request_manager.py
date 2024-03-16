@@ -1,6 +1,7 @@
 from django.test import TestCase
 from baseclasses.managers.request_manager import (
     RequestManager,
+    RequestSlugAuthenticator,
     RequestUserPasswordAuthenticator,
     RequestBearerAuthenticator,
 )
@@ -61,3 +62,30 @@ class TestRequestManager(TestCase):
         self.assertEqual(manager.message, "OK")
         self.assertEqual(response_json["authenticated"], True)
         self.assertEqual(response_json["token"], "testtoken123")
+
+    def test_wrong_authenticator(self):
+        manager = MockRequestManagerToken()
+        response_json = manager.get_json("basic-auth/user/pass")
+        self.assertEqual(manager.status_code, 401)
+        self.assertEqual(response_json, {})
+        self.assertEqual(
+            manager.message,
+            "401 Client Error: UNAUTHORIZED for url: https://httpbin.org/basic-auth/user/pass",
+        )
+
+
+class TestRequestAuthenticators(TestCase):
+    def test_user_password_authenticator(self):
+        authenticator = RequestUserPasswordAuthenticator(user="user", password="pass")
+        headers = authenticator.get_headers()
+        self.assertEqual(headers["Authorization"], "Basic dXNlcjpwYXNz")
+
+    def test_bearer_authenticator(self):
+        authenticator = RequestBearerAuthenticator(token="testtoken123")
+        headers = authenticator.get_headers()
+        self.assertEqual(headers["Authorization"], "Bearer testtoken123")
+
+    def test_slug_authenticator(self):
+        authenticator = RequestSlugAuthenticator(slug="testslug", token="12456")
+        headers = authenticator.get_headers()
+        self.assertEqual(headers["Authorization"], "testslug:12456")

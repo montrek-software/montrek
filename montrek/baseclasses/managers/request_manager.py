@@ -25,6 +25,15 @@ class RequestBearerAuthenticator:
         return {"Authorization": f"Bearer {self.token}"}
 
 
+class RequestSlugAuthenticator:
+    def __init__(self, slug: str, token: str):
+        self.slug = slug
+        self.token = token
+
+    def get_headers(self):
+        return {"Authorization": f"{self.slug}:{self.token}"}
+
+
 class RequestManager:
     base_url = "NONESET"
     authenticator = RequestAuthenticator()
