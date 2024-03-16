@@ -38,8 +38,14 @@ class RequestManager:
         request = requests.get(endpoint_url, headers=self.authenticator.get_headers())
         self.status_code = request.status_code
         if request.ok:
+            try:
+                json_response = request.json()
+            except requests.exceptions.JSONDecodeError:
+                self.message = "No valid json returned"
+                self.status_code = 0
+                return {}
             self.message = "OK"
-            return request.json()
+            return json_response
         try:
             request.raise_for_status()
         except requests.exceptions.HTTPError as e:
