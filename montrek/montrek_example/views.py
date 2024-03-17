@@ -15,6 +15,7 @@ from montrek_example.repositories.hub_a_repository import HubARepository
 from montrek_example.repositories.hub_b_repository import HubBRepository
 from montrek_example.repositories.hub_c_repository import HubCRepository
 from montrek_example.forms import ExampleACreateForm
+from montrek_example.forms import ExampleCCreateForm
 from montrek_example.pages import ExampleAPage, MontrekExampleAAppPage
 from montrek_example.pages import MontrekExampleBAppPage
 from montrek_example.pages import MontrekExampleCAppPage
@@ -215,3 +216,4 @@ class MontrekExampleCCreate(MontrekCreateView):
     repository = HubCRepository
     page_class = MontrekExampleCAppPage
     success_url = "montrek_example_c_list"
+    form_class = ExampleCCreateForm

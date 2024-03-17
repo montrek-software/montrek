@@ -116,3 +116,30 @@ class TestMontrekExampleCListView(TestCase):
         self.assertTemplateUsed(response, "montrek_table.html")
         test_queryset = response.context_data["object_list"].object_list
         self.assertEqual(len(test_queryset), 1)
+
+
+class TestMontrelExampleCCreate(TestCase):
+    def setUp(self):
+        self.user = MontrekUserFactory()
+        self.client.force_login(self.user)
+
+    def test_view_return_correct_html(self):
+        url = reverse("montrek_example_c_create")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "montrek_create.html")
+
+    def test_view_post_success(self):
+        url = reverse("montrek_example_c_create")
+        data = {
+            "field_c1_str": "test",
+            "field_c1_bool": True,
+        }
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 302)
+        # Check added data
+        std_query = me_factories.HubCFactory().std_queryset()
+        self.assertEqual(std_query.count(), 1)
+        created_object = std_query.first()
+        self.assertEqual(created_object.field_c1_str, "test")
+        self.assertEqual(created_object.field_c1_int, 1)
