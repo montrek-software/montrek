@@ -4,6 +4,7 @@ from user.tests.factories.montrek_user_factories import MontrekUserFactory
 from montrek_example import views
 from montrek_example.tests.factories import montrek_example_factories as me_factories
 from montrek_example.repositories.hub_a_repository import HubARepository
+from montrek_example.repositories.hub_c_repository import HubCRepository
 from baseclasses.utils import montrek_time
 
 
@@ -138,8 +139,8 @@ class TestMontrelExampleCCreate(TestCase):
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, 302)
         # Check added data
-        std_query = me_factories.HubCFactory().std_queryset()
+        std_query = HubCRepository().std_queryset()
         self.assertEqual(std_query.count(), 1)
         created_object = std_query.first()
         self.assertEqual(created_object.field_c1_str, "test")
-        self.assertEqual(created_object.field_c1_int, 1)
+        self.assertEqual(created_object.field_c1_bool, 1)

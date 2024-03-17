@@ -61,7 +61,7 @@ class DbCreator:
                 for k, v in data.items()
                 if k in satellite_class.get_value_field_names()
             }
-            if len(sat_data) == 0:
+            if self._is_empty(sat_data):
                 continue
             sat_data = self._make_timezone_aware(sat_data)
             sat_data["created_by_id"] = user_id
@@ -318,3 +318,8 @@ class DbCreator:
             self.stalled_links[stalled_link.__class__] = [stalled_link]
         else:
             self.stalled_links[stalled_link.__class__].append(stalled_link)
+
+    def _is_empty(self, data: Dict[str, Any]) -> bool:
+        data = data.copy()
+        data.pop("comment", None)
+        return not any(data.values())
