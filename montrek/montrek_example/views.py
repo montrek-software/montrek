@@ -13,9 +13,11 @@ from baseclasses.dataclasses.table_elements import LinkTableElement
 
 from montrek_example.repositories.hub_a_repository import HubARepository
 from montrek_example.repositories.hub_b_repository import HubBRepository
+from montrek_example.repositories.hub_c_repository import HubCRepository
 from montrek_example.forms import ExampleACreateForm
 from montrek_example.pages import ExampleAPage, MontrekExampleAAppPage
 from montrek_example.pages import MontrekExampleBAppPage
+from montrek_example.pages import MontrekExampleCAppPage
 
 
 def action_back_to_overview(example: str):
@@ -180,3 +182,36 @@ class MontrekExampleAHistory(MontrekHistoryListView):
     @property
     def actions(self) -> tuple:
         return (action_back_to_overview("a"),)
+
+
+class MontrekExampleCList(MontrekListView):
+    repository = HubCRepository
+    page_class = MontrekExampleCAppPage
+    tab = "tab_example_c_list"
+
+    @property
+    def elements(self) -> list:
+        return (
+            StringTableElement(name="B1 String", attr="field_b1_str"),
+            IntTableElement(name="B1 Date", attr="field_b1_date"),
+            StringTableElement(name="B2 String", attr="field_b2_str"),
+            StringTableElement(name="B2 Choice", attr="field_b2_choice"),
+        )
+
+    @property
+    def actions(self) -> tuple:
+        action_new_example_c = ActionElement(
+            icon="plus",
+            link=reverse("montrek_example_c_create"),
+            action_id="id_new_example_c",
+            hover_text="Add new C Example",
+        )
+        return (action_back_to_overview("b"), action_new_example_c)
+
+    success_url = "montrek_example_c_list"
+
+
+class MontrekExampleCCreate(MontrekCreateView):
+    repository = HubCRepository
+    page_class = MontrekExampleCAppPage
+    success_url = "montrek_example_c_list"

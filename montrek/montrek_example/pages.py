@@ -50,3 +50,16 @@ class MontrekExampleBAppPage(MontrekPage):
             active="active",
         )
         return (overview_tab,)
+
+
+class MontrekExampleCAppPage(MontrekPage):
+    page_title = "Montrek Example C"
+
+    def get_tabs(self):
+        overview_tab = TabElement(
+            name="Example C List",
+            link=reverse("montrek_example_c_list"),
+            html_id="tab_example_c_list",
+            active="active",
+        )
+        return (overview_tab,)

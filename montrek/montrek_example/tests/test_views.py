@@ -102,3 +102,17 @@ class TestMontrekExampleAHistoryView(TestCase):
         )
         self.assertEqual(test_queryset[0].changed_by, user2.email)
         self.assertEqual(test_queryset[1].changed_by, f"{user1.email},{user2.email}")
+
+
+class TestMontrekExampleCListView(TestCase):
+    def setUp(self):
+        satc1fac = me_factories.SatC1Factory()
+        me_factories.SatTSC2Factory(hub_entity=satc1fac.hub_entity)
+
+    def test_view_return_correct_html(self):
+        url = reverse("montrek_example_c_list")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "montrek_table.html")
+        test_queryset = response.context_data["object_list"].object_list
+        self.assertEqual(len(test_queryset), 1)
