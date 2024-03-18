@@ -4,6 +4,7 @@ from user.tests.factories.montrek_user_factories import MontrekUserFactory
 from montrek_example import views
 from montrek_example.tests.factories import montrek_example_factories as me_factories
 from montrek_example.repositories.hub_a_repository import HubARepository
+from montrek_example.repositories.hub_c_repository import HubCRepository
 from baseclasses.utils import montrek_time
 
 
@@ -102,3 +103,44 @@ class TestMontrekExampleAHistoryView(TestCase):
         )
         self.assertEqual(test_queryset[0].changed_by, user2.email)
         self.assertEqual(test_queryset[1].changed_by, f"{user1.email},{user2.email}")
+
+
+class TestMontrekExampleCListView(TestCase):
+    def setUp(self):
+        satc1fac = me_factories.SatC1Factory()
+        me_factories.SatTSC2Factory(hub_entity=satc1fac.hub_entity)
+
+    def test_view_return_correct_html(self):
+        url = reverse("montrek_example_c_list")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "montrek_table.html")
+        test_queryset = response.context_data["object_list"].object_list
+        self.assertEqual(len(test_queryset), 1)
+
+
+class TestMontrelExampleCCreate(TestCase):
+    def setUp(self):
+        self.user = MontrekUserFactory()
+        self.client.force_login(self.user)
+
+    def test_view_return_correct_html(self):
+        url = reverse("montrek_example_c_create")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "montrek_create.html")
+
+    def test_view_post_success(self):
+        url = reverse("montrek_example_c_create")
+        data = {
+            "field_c1_str": "test",
+            "field_c1_bool": True,
+        }
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 302)
+        # Check added data
+        std_query = HubCRepository().std_queryset()
+        self.assertEqual(std_query.count(), 1)
+        created_object = std_query.first()
+        self.assertEqual(created_object.field_c1_str, "test")
+        self.assertEqual(created_object.field_c1_bool, 1)

@@ -9,3 +9,8 @@ class ExampleACreateForm(MontrekCreateForm):
             link_name="link_hub_a_hub_b",
             queryset=self.repository.get_hub_b_objects(),
         )
+
+
+class ExampleCCreateForm(MontrekCreateForm):
+    class Meta:
+        exclude = ["value_date", "field_tsc2_float"]
