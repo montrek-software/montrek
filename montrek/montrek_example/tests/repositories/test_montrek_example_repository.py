@@ -333,8 +333,20 @@ class TestMontrekCreateObject(TestCase):
                 "comment": "some new comment",
             }
         )
+        # Comment change only when data changes
+        self.assertEqual(me_models.SatA1.objects.last().comment, "some comment")
+        self.assertEqual(me_models.SatA2.objects.last().comment, "some comment")
+        repository.std_create_object(
+            {
+                "field_a1_int": 4,
+                "field_a1_str": "test",
+                "field_a2_float": 6.0,
+                "field_a2_str": "test2",
+                "comment": "some new comment",
+            }
+        )
         self.assertEqual(me_models.SatA1.objects.last().comment, "some new comment")
-        self.assertEqual(me_models.SatA2.objects.last().comment, "some new comment")
+        self.assertEqual(me_models.SatA2.objects.last().comment, "some comment")
 
     def test_create_objects_from_data_frame(self):
         repository = HubARepository(session_data={"user_id": self.user.id})
