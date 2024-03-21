@@ -109,6 +109,8 @@ class MontrekSatelliteABC(TimeStampMixin, StateMixin, UserMixin):
         value_fields = self.get_value_field_names()
         value_string = ""
         for field in value_fields:
+            if field in self.exclude_from_hash_value():
+                continue
             value = getattr(self, field)
             if isinstance(value, (datetime.datetime)):
                 value = datetime_to_montrek_time(value)
@@ -128,6 +130,10 @@ class MontrekSatelliteABC(TimeStampMixin, StateMixin, UserMixin):
             "state_date_end",
         ]
         return exclude_fields
+
+    @classmethod
+    def exclude_from_hash_value(cls) -> list[str]:
+        return ["comment"]
 
     @classmethod
     def get_value_field_names(cls) -> list[str]:
