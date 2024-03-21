@@ -42,6 +42,7 @@ services:
 
   db:
     image: mariadb:latest
+    command: --max_allowed_packet=64M
     environment:
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
