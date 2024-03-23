@@ -23,20 +23,22 @@
       </table>
     </div>
     <div id="id_montrek_table_list" class="row">
-        <table class="table">
-            <tr>
-              {% for table_element in table_elements %}
-                <th>{{ table_element.name }}</th>
-              {% endfor %}
-            </tr>
-            {% for row in object_list %}
+      <div class="table-responsive">.
+          <table class="table">
               <tr>
-               {% for table_element in table_elements %}
-                {{ row|show_item:table_element|safe }}
-               {% endfor %}
-              </tr> 
-            {% endfor %}
-        </table>
+                {% for table_element in table_elements %}
+                  <th>{{ table_element.name }}</th>
+                {% endfor %}
+              </tr>
+              {% for row in object_list %}
+                <tr>
+                {% for table_element in table_elements %}
+                  {{ row|show_item:table_element|safe }}
+                {% endfor %}
+                </tr> 
+              {% endfor %}
+          </table>
+        </div>
     </div>
      <div class="pagination">
         <span class="step-links">
