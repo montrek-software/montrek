@@ -31,7 +31,7 @@
                 {% endfor %}
               </tr>
               {% for row in object_list %}
-                <tr>
+                <tr style="white-space:nowrap;">
                 {% for table_element in table_elements %}
                   {{ row|show_item:table_element|safe }}
                 {% endfor %}
