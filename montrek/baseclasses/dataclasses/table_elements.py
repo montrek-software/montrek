@@ -42,6 +42,11 @@ class LinkTextTableElement(BaseLinkTableElement):
     text: str
 
 
+class NoneTableElement:
+    def format(self):
+        return '<td style="text-align: center">-</td>'
+
+
 @dataclass
 class StringTableElement(AttrTableElement):
     attr: str

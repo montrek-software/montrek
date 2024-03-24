@@ -232,7 +232,7 @@ class TestMontrekSatellite(MontrekSatelliteABC):
     hub_entity = models.ForeignKey(TestMontrekHub, on_delete=models.CASCADE)
     identifier_fields = ["test_name"]
     test_name = models.CharField(max_length=12)
-    test_value = models.CharField(max_length=50, default="DEFAULT")
+    test_value = models.CharField(max_length=50, null=True)
     test_decimal = models.DecimalField(max_digits=10, decimal_places=4, default=0)
 
 
