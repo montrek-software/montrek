@@ -42,7 +42,7 @@ class RequestManager:
         self.status_code = 0
         self.message = "No get request made"
 
-    def get_json(self, endpoint: str) -> dict:
+    def get_json(self, endpoint: str) -> dict | list:
         endpoint_url = f"{self.base_url}{endpoint}"
         request = requests.get(endpoint_url, headers=self.authenticator.get_headers())
         self.status_code = request.status_code
