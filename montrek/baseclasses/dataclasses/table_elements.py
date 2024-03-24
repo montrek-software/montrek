@@ -143,3 +143,12 @@ class DollarTableElement(MoneyTableElement):
     @property
     def ccy_symbol(self) -> str:
         return "&#0036;"
+
+
+@dataclass
+class ImageTableElement(AttrTableElement):
+    attr: str
+    alt: str = "image"
+
+    def format(self, value):
+        return f'<td style="text-align:left;"><img src="{value}" alt="{self.alt}" style="width:100px;height:100px;"></td>'
