@@ -17,6 +17,11 @@ class HubCFactory(factory.django.DjangoModelFactory):
         model = "montrek_example.HubC"
 
 
+class HubDFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "montrek_example.HubD"
+
+
 class SatA1Factory(factory.django.DjangoModelFactory):
     class Meta:
         model = "montrek_example.SatA1"
@@ -60,6 +65,13 @@ class SatTSC2Factory(factory.django.DjangoModelFactory):
     value_date = factory.Faker("date_time", tzinfo=timezone.utc)
 
 
+class SatD1Factory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "montrek_example.SatD1"
+
+    hub_entity = factory.SubFactory(HubDFactory)
+
+
 class LinkHubAHubBFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = "montrek_example.LinkHubAHubB"
@@ -74,3 +86,11 @@ class LinkHubAHubCFactory(factory.django.DjangoModelFactory):
 
     hub_in = factory.SubFactory(HubAFactory)
     hub_out = factory.SubFactory(HubCFactory)
+
+
+class LinkHubBHubDFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "montrek_example.LinkHubBHubD"
+
+    hub_in = factory.SubFactory(HubBFactory)
+    hub_out = factory.SubFactory(HubDFactory)

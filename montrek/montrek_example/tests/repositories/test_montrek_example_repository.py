@@ -721,3 +721,35 @@ class TestHistory(TestCase):
         self.assertEqual(
             test_queryset[0].field_a2_float, test_queryset[1].field_a2_float
         )
+
+
+class TestMontrekManyToManyRelations(TestCase):
+    def setUp(self) -> None:
+        self.satb1 = me_factories.SatB1Factory()
+        self.satb2 = me_factories.SatB1Factory()
+
+        self.satd1 = me_factories.SatD1Factory()
+        self.satd2 = me_factories.SatD1Factory()
+        me_factories.LinkHubBHubDFactory.create(
+            hub_in=self.satb1.hub_entity,
+            hub_out=self.satd1.hub_entity,
+        )
+        me_factories.LinkHubBHubDFactory.create(
+            hub_in=self.satb1.hub_entity,
+            hub_out=self.satd2.hub_entity,
+        )
+        me_factories.LinkHubBHubDFactory.create(
+            hub_in=self.satb2.hub_entity,
+            hub_out=self.satd1.hub_entity,
+        )
+
+    def test_many_to_many_link(self):
+        repository = HubBRepository()
+        queryset = repository.std_queryset()
+        self.assertEqual(queryset.count(), 2)
+        breakpoint()
+        self.assertEqual(
+            queryset[0].field_d1_str,
+            f"{self.satb1.field_d1_str}, {self.satb2.field_d2_str}",
+        )
+        # TODO: Add test the other way around
