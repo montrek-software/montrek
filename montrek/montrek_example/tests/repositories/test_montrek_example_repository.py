@@ -747,7 +747,6 @@ class TestMontrekManyToManyRelations(TestCase):
         repository = HubBRepository()
         queryset = repository.std_queryset()
         self.assertEqual(queryset.count(), 2)
-        breakpoint()
         self.assertEqual(
             queryset[0].field_d1_str,
             f"{self.satb1.field_d1_str}, {self.satb2.field_d2_str}",
