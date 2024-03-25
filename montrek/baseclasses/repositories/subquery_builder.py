@@ -3,7 +3,7 @@ from baseclasses.models import MontrekSatelliteABC
 from baseclasses.models import MontrekTimeSeriesSatelliteABC
 from baseclasses.models import MontrekLinkABC
 from baseclasses.models import LinkTypeEnum
-from django.db.models import Subquery, OuterRef
+from django.db.models import F, Count, Func, Subquery, OuterRef, Value
 from django.utils import timezone
 
 
@@ -61,6 +61,11 @@ class LastTSSatelliteSubqueryBuilder(SubqueryBuilder):
         )
 
 
+class GroupConcat(Func):
+    function = "GROUP_CONCAT"
+    template = "%(function)s(%(expressions)s SEPARATOR ', ')"
+
+
 class LinkedSatelliteSubqueryBuilderBase(SubqueryBuilder):
     def __init__(
         self,
@@ -90,12 +95,16 @@ class LinkedSatelliteSubqueryBuilderBase(SubqueryBuilder):
             f"hub_entity__{self.link_class.__name__.lower()}__state_date_end__gt": self.reference_date,
         }
 
-        satellite_field_query = self.satellite_class.objects.filter(
-            hub_entity__in=Subquery(hub_out_query),
-            state_date_start__lte=self.reference_date,
-            state_date_end__gt=self.reference_date,
-            **link_filter_dict,
-        ).values(field)
+        satellite_field_query = (
+            self.satellite_class.objects.filter(
+                hub_entity__in=Subquery(hub_out_query),
+                state_date_start__lte=self.reference_date,
+                state_date_end__gt=self.reference_date,
+                **link_filter_dict,
+            )
+            .annotate(**{field + "agg": GroupConcat(field)})
+            .values(field + "agg")
+        )
         if isinstance(self.satellite_class(), MontrekTimeSeriesSatelliteABC):
             satellite_field_query = (
                 satellite_field_query.filter(value_date__lte=self.reference_date)

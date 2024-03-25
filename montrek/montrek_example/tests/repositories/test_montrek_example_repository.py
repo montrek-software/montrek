@@ -749,6 +749,6 @@ class TestMontrekManyToManyRelations(TestCase):
         self.assertEqual(queryset.count(), 2)
         self.assertEqual(
             queryset[0].field_d1_str,
-            f"{self.satb1.field_d1_str}, {self.satb2.field_d2_str}",
+            f"{self.satd1.field_d1_str}, {self.satd2.field_d1_str}",
         )
         # TODO: Add test the other way around
