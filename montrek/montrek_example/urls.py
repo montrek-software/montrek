@@ -44,4 +44,14 @@ urlpatterns = [
         views.MontrekExampleCCreate.as_view(),
         name="montrek_example_c_create",
     ),
+    path(
+        "d/list",
+        views.MontrekExampleDList.as_view(),
+        name="montrek_example_d_list",
+    ),
+    path(
+        "d/create",
+        views.MontrekExampleDCreate.as_view(),
+        name="montrek_example_d_create",
+    ),
 ]

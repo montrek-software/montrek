@@ -5,6 +5,7 @@ from montrek_example import views
 from montrek_example.tests.factories import montrek_example_factories as me_factories
 from montrek_example.repositories.hub_a_repository import HubARepository
 from montrek_example.repositories.hub_c_repository import HubCRepository
+from montrek_example.repositories.hub_d_repository import HubDRepository
 from baseclasses.utils import montrek_time
 
 
@@ -144,3 +145,43 @@ class TestMontrelExampleCCreate(TestCase):
         created_object = std_query.first()
         self.assertEqual(created_object.field_c1_str, "test")
         self.assertEqual(created_object.field_c1_bool, 1)
+
+
+class TestMontrekExampleDListView(TestCase):
+    def setUp(self):
+        me_factories.SatD1Factory.create()
+
+    def test_view_return_correct_html(self):
+        url = reverse("montrek_example_d_list")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "montrek_table.html")
+        test_queryset = response.context_data["object_list"].object_list
+        self.assertEqual(len(test_queryset), 1)
+
+
+class TestMontrelExampleDCreate(TestCase):
+    def setUp(self):
+        self.user = MontrekUserFactory()
+        self.client.force_login(self.user)
+
+    def test_view_return_correct_html(self):
+        url = reverse("montrek_example_d_create")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "montrek_create.html")
+
+    def test_view_post_success(self):
+        url = reverse("montrek_example_d_create")
+        data = {
+            "field_d1_str": "test",
+            "field_d1_int": 13,
+        }
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 302)
+        # Check added data
+        std_query = HubDRepository().std_queryset()
+        self.assertEqual(std_query.count(), 1)
+        created_object = std_query.first()
+        self.assertEqual(created_object.field_d1_str, "test")
+        self.assertEqual(created_object.field_d1_int, 13)
