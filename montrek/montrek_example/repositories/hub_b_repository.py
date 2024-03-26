@@ -1,4 +1,5 @@
 from montrek_example import models as me_models
+from montrek_example.repositories.hub_d_repository import HubDRepository
 from baseclasses.repositories.montrek_repository import MontrekRepository
 
 
@@ -29,3 +30,6 @@ class HubBRepository(MontrekRepository):
             reversed_link=True,
         )
         return self.build_queryset()
+
+    def get_hub_d_objects(self):
+        return HubDRepository().std_queryset()

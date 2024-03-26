@@ -17,6 +17,7 @@ from montrek_example.repositories.hub_c_repository import HubCRepository
 from montrek_example.repositories.hub_d_repository import HubDRepository
 from montrek_example.forms import ExampleACreateForm
 from montrek_example.forms import ExampleCCreateForm
+from montrek_example.forms import ExampleBCreateForm
 from montrek_example.pages import ExampleAPage, MontrekExampleAAppPage
 from montrek_example.pages import MontrekExampleBAppPage
 from montrek_example.pages import MontrekExampleCAppPage
@@ -134,6 +135,7 @@ class MontrekExampleBCreate(MontrekCreateView):
     repository = HubBRepository
     page_class = MontrekExampleBAppPage
     success_url = "montrek_example_b_list"
+    form_class = ExampleBCreateForm
 
 
 class MontrekExampleBList(MontrekListView):
@@ -148,6 +150,8 @@ class MontrekExampleBList(MontrekListView):
             IntTableElement(name="B1 Date", attr="field_b1_date"),
             StringTableElement(name="B2 String", attr="field_b2_str"),
             StringTableElement(name="B2 Choice", attr="field_b2_choice"),
+            StringTableElement(name="D2 String", attr="field_d1_str"),
+            StringTableElement(name="D2 Int", attr="field_d1_int"),
         )
 
     @property
