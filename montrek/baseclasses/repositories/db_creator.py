@@ -251,16 +251,17 @@ class DbCreator:
         self._stall_satellite(new_sat)
 
     def stall_links(self, data, reference_hub, creation_date):
-        # Filter all data that are Hubs, as they can only be linked to other Hubs
-        link_data = {k: v for k, v in data.items() if isinstance(v, MontrekHubABC)}
-        for field, value in link_data.items():
-            if value is None:
-                continue
-            link_class = getattr(reference_hub.__class__, field).through
-            new_link = self.create_new_link(
-                link_class, reference_hub, value, creation_date
-            )
-            self._stall_link_object(new_link)
+        # Filter all data that are Hubs or lists of Hubs, as they can only be linked to other Hubs
+        link_data = self._get_link_data(data)
+        for field, values in link_data.items():
+            for value in values:
+                if value is None:
+                    continue
+                link_class = getattr(reference_hub.__class__, field).through
+                new_link = self.create_new_link(
+                    link_class, reference_hub, value, creation_date
+                )
+                self._stall_link_object(new_link)
 
     def create_new_link(self, link_class, reference_hub, value, creation_date):
         if link_class.hub_in.field.related_model == reference_hub.__class__:
@@ -269,6 +270,17 @@ class DbCreator:
         else:
             new_link = link_class(hub_in=value, hub_out=reference_hub)
             return self._process_link(new_link, "hub_out", creation_date)
+
+    def _get_link_data(self, data: dict) -> dict[str, list[MontrekHubABC]]:
+        link_data = {}
+        for key, value in data.items():
+            if isinstance(value, MontrekHubABC):
+                link_data[key] = [value]
+            elif isinstance(value, list):
+                many_links = [item for item in value if isinstance(item, MontrekHubABC)]
+                if many_links:
+                    link_data[key] = many_links
+        return link_data
 
     def _process_link(self, link, hub_field, creation_date):
         if link.link_type in (LinkTypeEnum.ONE_TO_ONE, LinkTypeEnum.ONE_TO_MANY):

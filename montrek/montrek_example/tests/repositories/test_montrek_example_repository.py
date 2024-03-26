@@ -782,9 +782,11 @@ class TestMontrekManyToManyRelations(TestCase):
         input_data = {
             "field_b1_str": "Hallo",
             "field_b1_str": montrek_time(2024, 3, 26),
-            "link_hub_b_hub_d": [self.satd1.hub_entity.id, self.satd2.hub_entity.id],
+            "link_hub_b_hub_d": [self.satd1.hub_entity, self.satd2.hub_entity],
         }
         repository_b = HubBRepository(session_data={"user_id": self.user.id})
         new_sat_b = repository_b.std_create_object(input_data)
         links = new_sat_b.link_hub_b_hub_d.all()
         self.assertEqual(links.count(), 2)
+        self.assertEqual(links[0], self.satd1.hub_entity)
+        self.assertEqual(links[1], self.satd2.hub_entity)
