@@ -7,6 +7,7 @@ from montrek_example.tests.factories import montrek_example_factories as me_fact
 from montrek_example.repositories.hub_a_repository import HubARepository
 from montrek_example.repositories.hub_b_repository import HubBRepository
 from montrek_example.repositories.hub_c_repository import HubCRepository
+from montrek_example.repositories.hub_d_repository import HubDRepository
 from montrek_example import models as me_models
 import pandas as pd
 
@@ -725,11 +726,21 @@ class TestHistory(TestCase):
 
 class TestMontrekManyToManyRelations(TestCase):
     def setUp(self) -> None:
-        self.satb1 = me_factories.SatB1Factory()
-        self.satb2 = me_factories.SatB1Factory()
+        self.satb1 = me_factories.SatB1Factory(
+            field_b1_str="First",
+        )
+        self.satb2 = me_factories.SatB1Factory(
+            field_b1_str="Second",
+        )
 
-        self.satd1 = me_factories.SatD1Factory()
-        self.satd2 = me_factories.SatD1Factory()
+        self.satd1 = me_factories.SatD1Factory(
+            field_d1_str="erster",
+            field_d1_int=1,
+        )
+        self.satd2 = me_factories.SatD1Factory(
+            field_d1_str="zwoter",
+            field_d1_int=2,
+        )
         me_factories.LinkHubBHubDFactory.create(
             hub_in=self.satb1.hub_entity,
             hub_out=self.satd1.hub_entity,
@@ -744,11 +755,23 @@ class TestMontrekManyToManyRelations(TestCase):
         )
 
     def test_many_to_many_link(self):
-        repository = HubBRepository()
-        queryset = repository.std_queryset()
-        self.assertEqual(queryset.count(), 2)
+        repository_b = HubBRepository()
+        satb_queryset = repository_b.std_queryset()
+        self.assertEqual(satb_queryset.count(), 2)
         self.assertEqual(
-            queryset[0].field_d1_str,
+            satb_queryset[0].field_d1_str,
             f"{self.satd1.field_d1_str}, {self.satd2.field_d1_str}",
         )
-        # TODO: Add test the other way around
+        self.assertEqual(
+            satb_queryset[0].field_d1_int,
+            f"{self.satd1.field_d1_int}, {self.satd2.field_d1_int}",
+        )
+        self.assertEqual(satb_queryset[1].field_d1_str, self.satd1.field_d1_str)
+        repository_d = HubDRepository()
+        satd_queryset = repository_d.std_queryset()
+        self.assertEqual(satd_queryset.count(), 2)
+        self.assertEqual(
+            satd_queryset[0].field_b1_str,
+            f"{self.satb1.field_b1_str}, {self.satb2.field_b1_str}",
+        )
+        self.assertEqual(satd_queryset[1].field_b1_str, self.satb1.field_b1_str)

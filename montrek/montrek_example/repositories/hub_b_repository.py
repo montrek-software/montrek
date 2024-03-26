@@ -17,7 +17,7 @@ class HubBRepository(MontrekRepository):
         self.add_linked_satellites_field_annotations(
             me_models.SatD1,
             me_models.LinkHubBHubD,
-            ["field_d1_str"],
+            ["field_d1_str", "field_d1_int"],
         )
         return self.build_queryset()
 
