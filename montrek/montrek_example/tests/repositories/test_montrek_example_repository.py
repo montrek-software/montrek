@@ -726,6 +726,7 @@ class TestHistory(TestCase):
 
 class TestMontrekManyToManyRelations(TestCase):
     def setUp(self) -> None:
+        self.user = MontrekUserFactory()
         self.satb1 = me_factories.SatB1Factory(
             field_b1_str="First",
         )
@@ -754,10 +755,11 @@ class TestMontrekManyToManyRelations(TestCase):
             hub_out=self.satd1.hub_entity,
         )
 
-    def test_many_to_many_link(self):
+    def test_return_many_to_many_relation(self):
         repository_b = HubBRepository()
         satb_queryset = repository_b.std_queryset()
         self.assertEqual(satb_queryset.count(), 2)
+        satb_queryset = satb_queryset.order_by("field_b1_str")
         self.assertEqual(
             satb_queryset[0].field_d1_str,
             f"{self.satd1.field_d1_str}, {self.satd2.field_d1_str}",
@@ -775,3 +777,14 @@ class TestMontrekManyToManyRelations(TestCase):
             f"{self.satb1.field_b1_str}, {self.satb2.field_b1_str}",
         )
         self.assertEqual(satd_queryset[1].field_b1_str, self.satb1.field_b1_str)
+
+    def test_add_new_many_to_many_relation(self):
+        input_data = {
+            "field_b1_str": "Hallo",
+            "field_b1_str": montrek_time(2024, 3, 26),
+            "link_hub_b_hub_d": [self.satd1.hub_entity.id, self.satd2.hub_entity.id],
+        }
+        repository_b = HubBRepository(session_data={"user_id": self.user.id})
+        new_sat_b = repository_b.std_create_object(input_data)
+        links = new_sat_b.link_hub_b_hub_d.all()
+        self.assertEqual(links.count(), 2)
