@@ -226,6 +226,7 @@ class MontrekCreateUpdateView(CreateView, MontrekPageViewMixin, MontrekViewMixin
         return reverse(self.success_url)
 
     def form_valid(self, form):
+        breakpoint()
         self.repository_object.std_create_object(data=form.cleaned_data)
         return HttpResponseRedirect(self.get_success_url())
 
