@@ -6,7 +6,11 @@ from baseclasses.views import MontrekHistoryListView
 from baseclasses.views import MontrekDetailView
 from baseclasses.views import MontrekDeleteView
 from baseclasses.views import MontrekUpdateView
-from baseclasses.dataclasses.table_elements import DateTableElement, StringTableElement
+from baseclasses.dataclasses.table_elements import (
+    DateTableElement,
+    LinkTextTableElement,
+    StringTableElement,
+)
 from baseclasses.dataclasses.table_elements import FloatTableElement
 from baseclasses.dataclasses.table_elements import IntTableElement
 from baseclasses.dataclasses.table_elements import LinkTableElement
@@ -145,14 +149,20 @@ class MontrekExampleBList(MontrekListView):
 
     @property
     def elements(self) -> list:
-        return (
+        return [
             StringTableElement(name="B1 String", attr="field_b1_str"),
             IntTableElement(name="B1 Date", attr="field_b1_date"),
             StringTableElement(name="B2 String", attr="field_b2_str"),
             StringTableElement(name="B2 Choice", attr="field_b2_choice"),
-            StringTableElement(name="D2 String", attr="field_d1_str"),
+            LinkTextTableElement(
+                name="D2 String",
+                text="field_d1_str",
+                url="montrek_example_d_list",
+                hover_text="View D Example",
+                kwargs={"filter": "field_d1_str"},
+            ),
             StringTableElement(name="D2 Int", attr="field_d1_int"),
-        )
+        ]
 
     @property
     def actions(self) -> tuple:

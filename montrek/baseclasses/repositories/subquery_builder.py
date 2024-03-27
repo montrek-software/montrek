@@ -65,7 +65,7 @@ class LastTSSatelliteSubqueryBuilder(SubqueryBuilder):
 
 class GroupConcat(Func):
     function = "GROUP_CONCAT"
-    template = "%(function)s(%(expressions)s SEPARATOR ', ')"
+    template = "%(function)s(%(expressions)s SEPARATOR ',')"
 
 
 class LinkedSatelliteSubqueryBuilderBase(SubqueryBuilder):
