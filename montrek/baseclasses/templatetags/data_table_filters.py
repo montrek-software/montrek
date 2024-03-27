@@ -27,8 +27,8 @@ def _get_dotted_attr_or_arg(obj, attr):
     attrs = attr.split(".")
     for attr in attrs:
         obj = getattr(obj, attr, None)
-        if obj is None:
-            return attr
+        # if obj is None:
+        #     return attr
     return obj
 
 
@@ -54,6 +54,7 @@ def _get_link(obj, table_element):
         url += filter_str
     if isinstance(table_element, table_elements.LinkTextTableElement):
         link_text = _get_dotted_attr_or_arg(obj, table_element.text)
+        link_text = "" if link_text is None else link_text
     else:
         link_text = Template(
             '<span class="glyphicon glyphicon-{{ icon }}"></span>'

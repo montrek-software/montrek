@@ -762,11 +762,11 @@ class TestMontrekManyToManyRelations(TestCase):
         satb_queryset = satb_queryset.order_by("field_b1_str")
         self.assertEqual(
             satb_queryset[0].field_d1_str,
-            f"{self.satd1.field_d1_str}, {self.satd2.field_d1_str}",
+            f"{self.satd1.field_d1_str},{self.satd2.field_d1_str}",
         )
         self.assertEqual(
             satb_queryset[0].field_d1_int,
-            f"{self.satd1.field_d1_int}, {self.satd2.field_d1_int}",
+            f"{self.satd1.field_d1_int},{self.satd2.field_d1_int}",
         )
         self.assertEqual(satb_queryset[1].field_d1_str, self.satd1.field_d1_str)
         repository_d = HubDRepository()
@@ -774,7 +774,7 @@ class TestMontrekManyToManyRelations(TestCase):
         self.assertEqual(satd_queryset.count(), 2)
         self.assertEqual(
             satd_queryset[0].field_b1_str,
-            f"{self.satb1.field_b1_str}, {self.satb2.field_b1_str}",
+            f"{self.satb1.field_b1_str},{self.satb2.field_b1_str}",
         )
         self.assertEqual(satd_queryset[1].field_b1_str, self.satb1.field_b1_str)
 
