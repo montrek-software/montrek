@@ -1,6 +1,7 @@
 import datetime
 from typing import Any, Dict, List, Protocol
 from dataclasses import dataclass
+from django.db.models import QuerySet
 from django.utils import timezone
 from baseclasses.models import (
     MontrekSatelliteABC,
@@ -276,7 +277,7 @@ class DbCreator:
         for key, value in data.items():
             if isinstance(value, MontrekHubABC):
                 link_data[key] = [value]
-            elif isinstance(value, list):
+            elif isinstance(value, (list, QuerySet)):
                 many_links = [item for item in value if isinstance(item, MontrekHubABC)]
                 if many_links:
                     link_data[key] = many_links
