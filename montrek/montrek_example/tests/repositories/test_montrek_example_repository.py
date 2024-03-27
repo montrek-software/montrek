@@ -781,7 +781,7 @@ class TestMontrekManyToManyRelations(TestCase):
     def test_add_new_many_to_many_relation(self):
         input_data = {
             "field_b1_str": "Hallo",
-            "field_b1_str": montrek_time(2024, 3, 26),
+            "field_b1_date": montrek_time(2024, 3, 26),
             "link_hub_b_hub_d": [self.satd1.hub_entity, self.satd2.hub_entity],
         }
         repository_b = HubBRepository(session_data={"user_id": self.user.id})
