@@ -27,8 +27,6 @@ def _get_dotted_attr_or_arg(obj, attr):
     attrs = attr.split(".")
     for attr in attrs:
         obj = getattr(obj, attr, None)
-        if obj is None:
-            return attr
     return obj
 
 
@@ -37,6 +35,7 @@ def _get_link(obj, table_element):
     kwargs = {
         key: _get_dotted_attr_or_arg(obj, value)
         for key, value in table_element.kwargs.items()
+        if key != "filter"
     }
     kwargs = {key: str(value).replace("/", "_") for key, value in kwargs.items()}
     url_target = table_element.url
@@ -47,8 +46,13 @@ def _get_link(obj, table_element):
         )
     except NoReverseMatch:
         return "<td></td>"
+    filter_field = table_element.kwargs.get("filter")
+    if filter_field:
+        filter_str = f"?filter_field={filter_field}__in&filter_value={_get_dotted_attr_or_arg(obj, filter_field)}"
+        url += filter_str
     if isinstance(table_element, table_elements.LinkTextTableElement):
         link_text = _get_dotted_attr_or_arg(obj, table_element.text)
+        link_text = "" if link_text is None else link_text
     else:
         link_text = Template(
             '<span class="glyphicon glyphicon-{{ icon }}"></span>'

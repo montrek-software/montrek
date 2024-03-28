@@ -1,4 +1,5 @@
 from montrek_example import models as me_models
+from montrek_example.repositories.hub_d_repository import HubDRepository
 from baseclasses.repositories.montrek_repository import MontrekRepository
 
 
@@ -14,6 +15,11 @@ class HubBRepository(MontrekRepository):
             me_models.SatB2,
             ["field_b2_str", "field_b2_choice"],
         )
+        self.add_linked_satellites_field_annotations(
+            me_models.SatD1,
+            me_models.LinkHubBHubD,
+            ["field_d1_str", "field_d1_int"],
+        )
         return self.build_queryset()
 
     def test_queryset_1(self):
@@ -24,3 +30,6 @@ class HubBRepository(MontrekRepository):
             reversed_link=True,
         )
         return self.build_queryset()
+
+    def get_hub_d_objects(self):
+        return HubDRepository().std_queryset()

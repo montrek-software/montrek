@@ -7,6 +7,7 @@ from montrek_example.tests.factories import montrek_example_factories as me_fact
 from montrek_example.repositories.hub_a_repository import HubARepository
 from montrek_example.repositories.hub_b_repository import HubBRepository
 from montrek_example.repositories.hub_c_repository import HubCRepository
+from montrek_example.repositories.hub_d_repository import HubDRepository
 from montrek_example import models as me_models
 import pandas as pd
 
@@ -721,3 +722,71 @@ class TestHistory(TestCase):
         self.assertEqual(
             test_queryset[0].field_a2_float, test_queryset[1].field_a2_float
         )
+
+
+class TestMontrekManyToManyRelations(TestCase):
+    def setUp(self) -> None:
+        self.user = MontrekUserFactory()
+        self.satb1 = me_factories.SatB1Factory(
+            field_b1_str="First",
+        )
+        self.satb2 = me_factories.SatB1Factory(
+            field_b1_str="Second",
+        )
+
+        self.satd1 = me_factories.SatD1Factory(
+            field_d1_str="erster",
+            field_d1_int=1,
+        )
+        self.satd2 = me_factories.SatD1Factory(
+            field_d1_str="zwoter",
+            field_d1_int=2,
+        )
+        me_factories.LinkHubBHubDFactory.create(
+            hub_in=self.satb1.hub_entity,
+            hub_out=self.satd1.hub_entity,
+        )
+        me_factories.LinkHubBHubDFactory.create(
+            hub_in=self.satb1.hub_entity,
+            hub_out=self.satd2.hub_entity,
+        )
+        me_factories.LinkHubBHubDFactory.create(
+            hub_in=self.satb2.hub_entity,
+            hub_out=self.satd1.hub_entity,
+        )
+
+    def test_return_many_to_many_relation(self):
+        repository_b = HubBRepository()
+        satb_queryset = repository_b.std_queryset()
+        self.assertEqual(satb_queryset.count(), 2)
+        satb_queryset = satb_queryset.order_by("field_b1_str")
+        self.assertEqual(
+            satb_queryset[0].field_d1_str,
+            f"{self.satd1.field_d1_str},{self.satd2.field_d1_str}",
+        )
+        self.assertEqual(
+            satb_queryset[0].field_d1_int,
+            f"{self.satd1.field_d1_int},{self.satd2.field_d1_int}",
+        )
+        self.assertEqual(satb_queryset[1].field_d1_str, self.satd1.field_d1_str)
+        repository_d = HubDRepository()
+        satd_queryset = repository_d.std_queryset()
+        self.assertEqual(satd_queryset.count(), 2)
+        self.assertEqual(
+            satd_queryset[0].field_b1_str,
+            f"{self.satb1.field_b1_str},{self.satb2.field_b1_str}",
+        )
+        self.assertEqual(satd_queryset[1].field_b1_str, self.satb1.field_b1_str)
+
+    def test_add_new_many_to_many_relation(self):
+        input_data = {
+            "field_b1_str": "Hallo",
+            "field_b1_date": montrek_time(2024, 3, 26),
+            "link_hub_b_hub_d": [self.satd1.hub_entity, self.satd2.hub_entity],
+        }
+        repository_b = HubBRepository(session_data={"user_id": self.user.id})
+        new_sat_b = repository_b.std_create_object(input_data)
+        links = new_sat_b.link_hub_b_hub_d.all()
+        self.assertEqual(links.count(), 2)
+        self.assertEqual(links[0], self.satd1.hub_entity)
+        self.assertEqual(links[1], self.satd2.hub_entity)
