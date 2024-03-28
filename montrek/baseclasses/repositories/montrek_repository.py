@@ -89,11 +89,8 @@ class MontrekRepository:
     def query_filter(self):
         query_filter = self.session_data.get("filter", {})
         for key, value in query_filter.items():
-            filter_task = key.split("__")[-1]
-            if filter_task in ("isnull",):
+            if key.split("__")[-1] in ("isnull",):
                 query_filter[key] = True if value in ("True", "1") else False
-            elif filter_task in ("in"):
-                query_filter[key] = value.split(",")
         return query_filter
 
     def std_queryset(self, **kwargs):

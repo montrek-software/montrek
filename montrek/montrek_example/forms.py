@@ -11,16 +11,6 @@ class ExampleACreateForm(MontrekCreateForm):
         )
 
 
-class ExampleBCreateForm(MontrekCreateForm):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.add_link_choice_field(
-            display_field="field_d1_str",
-            link_name="link_hub_b_hub_d",
-            queryset=self.repository.get_hub_d_objects(),
-        )
-
-
 class ExampleCCreateForm(MontrekCreateForm):
     class Meta:
         exclude = ["value_date", "field_tsc2_float"]

@@ -5,15 +5,14 @@ from baseclasses.models import (
     MontrekSatelliteABC,
     MontrekOneToManyLinkABC,
     MontrekOneToOneLinkABC,
-    MontrekManyToManyLinkABC,
     MontrekTimeSeriesSatelliteABC,
 )
 
 # Create your models here.
 
 ####################################################################################################
-# Test classes                              / -- LinkHubBHubD -- HubD -- SatD1
-#                                          /
+# Test classes
+#
 #    SatA1 -- HubA -- LinkHubAHubB -- HubB -- SatB1
 #    SatA2 -/   \                          \- SatB2
 #                \ -- LinkHubAHubC -- HubC -- SatC1
@@ -31,16 +30,10 @@ class HubA(MontrekHubABC):
 
 
 class HubB(MontrekHubABC):
-    link_hub_b_hub_d = models.ManyToManyField(
-        "HubD", related_name="link_hub_d_hub_b", through="LinkHubBHubD"
-    )
-
-
-class HubC(MontrekHubABC):
     pass
 
 
-class HubD(MontrekHubABC):
+class HubC(MontrekHubABC):
     pass
 
 
@@ -91,13 +84,6 @@ class SatTSC2(MontrekTimeSeriesSatelliteABC):
     field_tsc2_float = models.FloatField(default=0.0)
 
 
-class SatD1(MontrekSatelliteABC):
-    hub_entity = models.ForeignKey(HubD, on_delete=models.CASCADE)
-    field_d1_str = models.CharField(max_length=50, default="DEFAULT")
-    field_d1_int = models.IntegerField(default=0)
-    identifier_fields = ["field_d1_str"]
-
-
 class LinkHubAHubB(MontrekOneToOneLinkABC):
     hub_in = models.ForeignKey(HubA, on_delete=models.CASCADE)
     hub_out = models.ForeignKey(HubB, on_delete=models.CASCADE)
@@ -106,8 +92,3 @@ class LinkHubAHubB(MontrekOneToOneLinkABC):
 class LinkHubAHubC(MontrekOneToManyLinkABC):
     hub_in = models.ForeignKey(HubA, on_delete=models.CASCADE)
     hub_out = models.ForeignKey(HubC, on_delete=models.CASCADE)
-
-
-class LinkHubBHubD(MontrekManyToManyLinkABC):
-    hub_in = models.ForeignKey(HubB, on_delete=models.CASCADE)
-    hub_out = models.ForeignKey(HubD, on_delete=models.CASCADE)

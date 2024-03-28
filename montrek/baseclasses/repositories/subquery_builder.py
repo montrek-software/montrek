@@ -1,11 +1,9 @@
 from typing import Type, List
-
-from django.db.models.functions import Cast
-from baseclasses.models import MontrekManyToManyLinkABC, MontrekSatelliteABC
+from baseclasses.models import MontrekSatelliteABC
 from baseclasses.models import MontrekTimeSeriesSatelliteABC
 from baseclasses.models import MontrekLinkABC
 from baseclasses.models import LinkTypeEnum
-from django.db.models import F, CharField, Count, Func, Subquery, OuterRef, Value
+from django.db.models import Subquery, OuterRef
 from django.utils import timezone
 
 
@@ -63,11 +61,6 @@ class LastTSSatelliteSubqueryBuilder(SubqueryBuilder):
         )
 
 
-class GroupConcat(Func):
-    function = "GROUP_CONCAT"
-    template = "%(function)s(%(expressions)s SEPARATOR ',')"
-
-
 class LinkedSatelliteSubqueryBuilderBase(SubqueryBuilder):
     def __init__(
         self,
@@ -103,11 +96,6 @@ class LinkedSatelliteSubqueryBuilderBase(SubqueryBuilder):
             state_date_end__gt=self.reference_date,
             **link_filter_dict,
         ).values(field)
-        if isinstance(self.link_class(), MontrekManyToManyLinkABC):
-            # In case of many-to-may links we return the return values concatenated as characters by default
-            satellite_field_query = satellite_field_query.annotate(
-                **{field + "agg": Cast(GroupConcat(field), CharField())}
-            ).values(field + "agg")
         if isinstance(self.satellite_class(), MontrekTimeSeriesSatelliteABC):
             satellite_field_query = (
                 satellite_field_query.filter(value_date__lte=self.reference_date)
