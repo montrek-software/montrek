@@ -74,6 +74,7 @@ class MontrekCreateForm(forms.ModelForm):
 
 class BaseMontrekChoiceField:
     def __init__(self, display_field: str, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.display_field = display_field
 
     def label_from_instance(self, obj):
