@@ -30,10 +30,7 @@ class FieldMapCreateForm(MontrekCreateForm):
     @classmethod
     def _get_database_field_choices(cls):
         satellite_classes = MontrekSatelliteABC.__subclasses__()
-        exclude = ["comment"]
         value_fields = []
         for satellite_class in satellite_classes:
-            value_fields += list(
-                {f for f in satellite_class.get_value_field_names() if f not in exclude}
-            )
-        return value_fields
+            value_fields += satellite_class.get_value_field_names()
+        return sorted(list(set(value_fields)))
