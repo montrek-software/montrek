@@ -103,7 +103,7 @@ class MontrekFieldMapList(MontrekListView):
     repository = FieldMapRepository
     page_class = FieldMapPage
     tab = "tab_field_map_list"
-    title = "Field Overview"
+    title = "Field Map Overview"
 
     @property
     def elements(self) -> list:
