@@ -50,9 +50,11 @@ jobs:
     - name: Run Tests and Coverage
       run: |
         cd montrek
-        coverage run manage.py test --exclude-tag=functional
-        coverage report
-        coverage html -d coverage_html
+        python manage.py test --exclude-tag=functional
+
+        # coverage run manage.py test --exclude-tag=functional
+        # coverage report
+        # coverage html -d coverage_html
 
     - name: Upload coverage HTML report
       uses: actions/upload-artifact@v2

@@ -27,8 +27,6 @@ def _get_dotted_attr_or_arg(obj, attr):
     attrs = attr.split(".")
     for attr in attrs:
         obj = getattr(obj, attr, None)
-        # if obj is None:
-        #     return attr
     return obj
 
 
