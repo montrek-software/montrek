@@ -54,4 +54,14 @@ urlpatterns = [
         views.MontrekExampleDCreate.as_view(),
         name="montrek_example_d_create",
     ),
+    path(
+        "field_map/list",
+        views.MontrekExampleFieldMapList.as_view(),
+        name="montrek_example_field_map_list",
+    ),
+    path(
+        "field_map/create",
+        views.MontrekExampleFieldMapCreate.as_view(),
+        name="montrek_example_field_map_create",
+    ),
 ]

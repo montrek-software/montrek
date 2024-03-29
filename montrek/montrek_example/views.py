@@ -1,31 +1,15 @@
 from django.urls import reverse
 from baseclasses.dataclasses.view_classes import ActionElement
-from baseclasses.views import MontrekCreateView
-from baseclasses.views import MontrekListView
-from baseclasses.views import MontrekHistoryListView
-from baseclasses.views import MontrekDetailView
-from baseclasses.views import MontrekDeleteView
-from baseclasses.views import MontrekUpdateView
-from baseclasses.dataclasses.table_elements import (
-    DateTableElement,
-    LinkTextTableElement,
-    StringTableElement,
-)
-from baseclasses.dataclasses.table_elements import FloatTableElement
-from baseclasses.dataclasses.table_elements import IntTableElement
-from baseclasses.dataclasses.table_elements import LinkTableElement
+from baseclasses import views
+from baseclasses.dataclasses import table_elements as te
+from file_upload.repositories.field_map_repository import FieldMapRepository
 
 from montrek_example.repositories.hub_a_repository import HubARepository
 from montrek_example.repositories.hub_b_repository import HubBRepository
 from montrek_example.repositories.hub_c_repository import HubCRepository
 from montrek_example.repositories.hub_d_repository import HubDRepository
-from montrek_example.forms import ExampleACreateForm
-from montrek_example.forms import ExampleCCreateForm
-from montrek_example.forms import ExampleBCreateForm
-from montrek_example.pages import ExampleAPage, MontrekExampleAAppPage
-from montrek_example.pages import MontrekExampleBAppPage
-from montrek_example.pages import MontrekExampleCAppPage
-from montrek_example.pages import MontrekExampleDAppPage
+from montrek_example import forms
+from montrek_example import pages
 
 
 def action_back_to_overview(example: str):
@@ -40,49 +24,49 @@ def action_back_to_overview(example: str):
 # Create your views here.
 
 
-class MontrekExampleACreate(MontrekCreateView):
+class MontrekExampleACreate(views.MontrekCreateView):
     repository = HubARepository
-    page_class = MontrekExampleAAppPage
-    form_class = ExampleACreateForm
+    page_class = pages.MontrekExampleAAppPage
+    form_class = forms.ExampleACreateForm
     success_url = "montrek_example_a_list"
 
 
-class MontrekExampleAUpdate(MontrekUpdateView):
+class MontrekExampleAUpdate(views.MontrekUpdateView):
     repository = HubARepository
-    page_class = ExampleAPage
-    form_class = ExampleACreateForm
+    page_class = pages.ExampleAPage
+    form_class = forms.ExampleACreateForm
     success_url = "montrek_example_a_list"
 
 
-class MontrekExampleAList(MontrekListView):
+class MontrekExampleAList(views.MontrekListView):
     repository = HubARepository
-    page_class = MontrekExampleAAppPage
+    page_class = pages.MontrekExampleAAppPage
     tab = "tab_example_a_list"
     title = "Example A List"
 
     @property
     def elements(self) -> list:
         return (
-            StringTableElement(name="A1 String", attr="field_a1_str"),
-            IntTableElement(name="A1 Int", attr="field_a1_int"),
-            StringTableElement(name="A2 String", attr="field_a2_str"),
-            FloatTableElement(name="A2 Float", attr="field_a2_float"),
-            StringTableElement(name="B1 String", attr="field_b1_str"),
-            LinkTableElement(
+            te.StringTableElement(name="A1 String", attr="field_a1_str"),
+            te.IntTableElement(name="A1 Int", attr="field_a1_int"),
+            te.StringTableElement(name="A2 String", attr="field_a2_str"),
+            te.FloatTableElement(name="A2 Float", attr="field_a2_float"),
+            te.StringTableElement(name="B1 String", attr="field_b1_str"),
+            te.LinkTableElement(
                 name="View",
                 url="montrek_example_a_details",
                 kwargs={"pk": "id"},
                 icon="eye-open",
                 hover_text="View Example A",
             ),
-            LinkTableElement(
+            te.LinkTableElement(
                 name="Update",
                 url="montrek_example_a_update",
                 kwargs={"pk": "id"},
                 icon="pencil",
                 hover_text="View Example A",
             ),
-            LinkTableElement(
+            te.LinkTableElement(
                 name="Delete",
                 url="montrek_example_a_delete",
                 kwargs={"pk": "id"},
@@ -102,26 +86,26 @@ class MontrekExampleAList(MontrekListView):
         return (action_new_example_a,)
 
 
-class MontrekExampleADelete(MontrekDeleteView):
+class MontrekExampleADelete(views.MontrekDeleteView):
     repository = HubARepository
-    page_class = ExampleAPage
+    page_class = pages.ExampleAPage
     success_url = "montrek_example_a_list"
 
 
-class MontrekExampleADetails(MontrekDetailView):
+class MontrekExampleADetails(views.MontrekDetailView):
     repository = HubARepository
-    page_class = ExampleAPage
+    page_class = pages.ExampleAPage
     tab = "tab_details"
     title = "Example A Details"
 
     @property
     def elements(self) -> list:
         return (
-            StringTableElement(name="A1 String", attr="field_a1_str"),
-            IntTableElement(name="A1 Int", attr="field_a1_int"),
-            StringTableElement(name="A2 String", attr="field_a2_str"),
-            FloatTableElement(name="A2 Float", attr="field_a2_float"),
-            StringTableElement(name="B1 String", attr="field_b1_str"),
+            te.StringTableElement(name="A1 String", attr="field_a1_str"),
+            te.IntTableElement(name="A1 Int", attr="field_a1_int"),
+            te.StringTableElement(name="A2 String", attr="field_a2_str"),
+            te.FloatTableElement(name="A2 Float", attr="field_a2_float"),
+            te.StringTableElement(name="B1 String", attr="field_b1_str"),
         )
 
     @property
@@ -135,33 +119,33 @@ class MontrekExampleADetails(MontrekDetailView):
         return (action_back_to_overview("a"), action_update_example_a)
 
 
-class MontrekExampleBCreate(MontrekCreateView):
+class MontrekExampleBCreate(views.MontrekCreateView):
     repository = HubBRepository
-    page_class = MontrekExampleBAppPage
+    page_class = pages.MontrekExampleBAppPage
     success_url = "montrek_example_b_list"
-    form_class = ExampleBCreateForm
+    form_class = forms.ExampleBCreateForm
 
 
-class MontrekExampleBList(MontrekListView):
+class MontrekExampleBList(views.MontrekListView):
     repository = HubBRepository
-    page_class = MontrekExampleBAppPage
+    page_class = pages.MontrekExampleBAppPage
     tab = "tab_example_b_list"
 
     @property
     def elements(self) -> list:
         return [
-            StringTableElement(name="B1 String", attr="field_b1_str"),
-            IntTableElement(name="B1 Date", attr="field_b1_date"),
-            StringTableElement(name="B2 String", attr="field_b2_str"),
-            StringTableElement(name="B2 Choice", attr="field_b2_choice"),
-            LinkTextTableElement(
+            te.StringTableElement(name="B1 String", attr="field_b1_str"),
+            te.IntTableElement(name="B1 Date", attr="field_b1_date"),
+            te.StringTableElement(name="B2 String", attr="field_b2_str"),
+            te.StringTableElement(name="B2 Choice", attr="field_b2_choice"),
+            te.LinkTextTableElement(
                 name="D2 String",
                 text="field_d1_str",
                 url="montrek_example_d_list",
                 hover_text="View D Example",
                 kwargs={"filter": "field_d1_str"},
             ),
-            StringTableElement(name="D2 Int", attr="field_d1_int"),
+            te.StringTableElement(name="D2 Int", attr="field_d1_int"),
         ]
 
     @property
@@ -177,23 +161,23 @@ class MontrekExampleBList(MontrekListView):
     success_url = "montrek_example_b_list"
 
 
-class MontrekExampleAHistory(MontrekHistoryListView):
+class MontrekExampleAHistory(views.MontrekHistoryListView):
     repository = HubARepository
-    page_class = ExampleAPage
+    page_class = pages.ExampleAPage
     tab = "tab_history"
     title = "Example A History"
 
     @property
     def elements(self) -> tuple:
         return (
-            StringTableElement(name="A1 String", attr="field_a1_str"),
-            IntTableElement(name="A1 Int", attr="field_a1_int"),
-            StringTableElement(name="A2 String", attr="field_a2_str"),
-            FloatTableElement(name="A2 Float", attr="field_a2_float"),
-            StringTableElement(name="B1 String", attr="field_b1_str"),
-            DateTableElement(name="Change Date", attr="change_date"),
-            StringTableElement(name="Changed By", attr="changed_by"),
-            StringTableElement(name="Change Comment", attr="change_comment"),
+            te.StringTableElement(name="A1 String", attr="field_a1_str"),
+            te.IntTableElement(name="A1 Int", attr="field_a1_int"),
+            te.StringTableElement(name="A2 String", attr="field_a2_str"),
+            te.FloatTableElement(name="A2 Float", attr="field_a2_float"),
+            te.StringTableElement(name="B1 String", attr="field_b1_str"),
+            te.DateTableElement(name="Change Date", attr="change_date"),
+            te.StringTableElement(name="Changed By", attr="changed_by"),
+            te.StringTableElement(name="Change Comment", attr="change_comment"),
         )
 
     @property
@@ -201,18 +185,18 @@ class MontrekExampleAHistory(MontrekHistoryListView):
         return (action_back_to_overview("a"),)
 
 
-class MontrekExampleCList(MontrekListView):
+class MontrekExampleCList(views.MontrekListView):
     repository = HubCRepository
-    page_class = MontrekExampleCAppPage
+    page_class = pages.MontrekExampleCAppPage
     tab = "tab_example_c_list"
 
     @property
     def elements(self) -> list:
         return (
-            StringTableElement(name="B1 String", attr="field_b1_str"),
-            IntTableElement(name="B1 Date", attr="field_b1_date"),
-            StringTableElement(name="B2 String", attr="field_b2_str"),
-            StringTableElement(name="B2 Choice", attr="field_b2_choice"),
+            te.StringTableElement(name="B1 String", attr="field_b1_str"),
+            te.IntTableElement(name="B1 Date", attr="field_b1_date"),
+            te.StringTableElement(name="B2 String", attr="field_b2_str"),
+            te.StringTableElement(name="B2 Choice", attr="field_b2_choice"),
         )
 
     @property
@@ -228,23 +212,23 @@ class MontrekExampleCList(MontrekListView):
     success_url = "montrek_example_c_list"
 
 
-class MontrekExampleCCreate(MontrekCreateView):
+class MontrekExampleCCreate(views.MontrekCreateView):
     repository = HubCRepository
-    page_class = MontrekExampleCAppPage
+    page_class = pages.MontrekExampleCAppPage
     success_url = "montrek_example_c_list"
-    form_class = ExampleCCreateForm
+    form_class = forms.ExampleCCreateForm
 
 
-class MontrekExampleDList(MontrekListView):
+class MontrekExampleDList(views.MontrekListView):
     repository = HubDRepository
-    page_class = MontrekExampleDAppPage
+    page_class = pages.MontrekExampleDAppPage
     tab = "tab_example_d_list"
 
     @property
     def elements(self) -> list:
         return [
-            StringTableElement(name="D1 String", attr="field_d1_str"),
-            IntTableElement(name="D1 Int", attr="field_d1_int"),
+            te.StringTableElement(name="D1 String", attr="field_d1_str"),
+            te.IntTableElement(name="D1 Int", attr="field_d1_int"),
         ]
 
     @property
@@ -260,7 +244,39 @@ class MontrekExampleDList(MontrekListView):
     success_url = "montrek_example_d_list"
 
 
-class MontrekExampleDCreate(MontrekCreateView):
+class MontrekExampleDCreate(views.MontrekCreateView):
     repository = HubDRepository
-    page_class = MontrekExampleDAppPage
+    page_class = pages.MontrekExampleDAppPage
     success_url = "montrek_example_d_list"
+
+
+class MontrekExampleFieldMapCreate(views.MontrekCreateView):
+    repository = FieldMapRepository
+    page_class = pages.MontrekExampleFieldMapPage
+    success_url = "montrek_example_field_map_list"
+    form_class = forms.ExampleFieldMapCreateForm
+
+
+class MontrekExampleFieldMapList(views.MontrekListView):
+    repository = FieldMapRepository
+    page_class = pages.MontrekExampleFieldMapPage
+    tab = "tab_field_map_list"
+
+    @property
+    def elements(self) -> list:
+        return [
+            te.StringTableElement(name="Source Field", attr="source_field"),
+            te.StringTableElement(name="Database Field", attr="database_field"),
+        ]
+
+    @property
+    def actions(self) -> tuple:
+        action_new_field_map = ActionElement(
+            icon="plus",
+            link=reverse("montrek_example_field_map_create"),
+            action_id="id_new_field_map",
+            hover_text="Add new Field Map",
+        )
+        return (action_new_field_map,)
+
+    success_url = "montrek_example_field_map_list"

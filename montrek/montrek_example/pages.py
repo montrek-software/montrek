@@ -76,3 +76,16 @@ class MontrekExampleDAppPage(MontrekPage):
             active="active",
         )
         return (overview_tab,)
+
+
+class MontrekExampleFieldMapPage(MontrekPage):
+    page_title = "Field Map"
+
+    def get_tabs(self):
+        overview_tab = TabElement(
+            name="Field Map List",
+            link=reverse("montrek_example_field_map_list"),
+            html_id="tab_field_map_list",
+            active="active",
+        )
+        return (overview_tab,)
