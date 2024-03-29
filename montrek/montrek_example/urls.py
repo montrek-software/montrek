@@ -1,4 +1,5 @@
 from django.urls import path
+from file_upload.views import MontrekFieldMapCreate, MontrekFieldMapList
 from montrek_example import views
 
 urlpatterns = [
@@ -56,12 +57,12 @@ urlpatterns = [
     ),
     path(
         "field_map/list",
-        views.MontrekExampleFieldMapList.as_view(),
+        MontrekFieldMapList.as_view(),
         name="montrek_example_field_map_list",
     ),
     path(
         "field_map/create",
-        views.MontrekExampleFieldMapCreate.as_view(),
+        MontrekFieldMapCreate.as_view(),
         name="montrek_example_field_map_create",
     ),
 ]

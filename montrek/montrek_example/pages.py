@@ -1,5 +1,5 @@
 from django.urls import reverse
-from baseclasses.dataclasses.view_classes import TabElement, ActionElement
+from baseclasses.dataclasses.view_classes import TabElement
 from baseclasses.pages import MontrekPage
 from montrek_example.repositories.hub_a_repository import HubARepository
 
@@ -73,19 +73,6 @@ class MontrekExampleDAppPage(MontrekPage):
             name="Example D List",
             link=reverse("montrek_example_d_list"),
             html_id="tab_example_d_list",
-            active="active",
-        )
-        return (overview_tab,)
-
-
-class MontrekExampleFieldMapPage(MontrekPage):
-    page_title = "Field Map"
-
-    def get_tabs(self):
-        overview_tab = TabElement(
-            name="Field Map List",
-            link=reverse("montrek_example_field_map_list"),
-            html_id="tab_field_map_list",
             active="active",
         )
         return (overview_tab,)

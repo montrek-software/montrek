@@ -2,7 +2,6 @@ from django.urls import reverse
 from baseclasses.dataclasses.view_classes import ActionElement
 from baseclasses import views
 from baseclasses.dataclasses import table_elements as te
-from file_upload.repositories.field_map_repository import FieldMapRepository
 
 from montrek_example.repositories.hub_a_repository import HubARepository
 from montrek_example.repositories.hub_b_repository import HubBRepository
@@ -248,35 +247,3 @@ class MontrekExampleDCreate(views.MontrekCreateView):
     repository = HubDRepository
     page_class = pages.MontrekExampleDAppPage
     success_url = "montrek_example_d_list"
-
-
-class MontrekExampleFieldMapCreate(views.MontrekCreateView):
-    repository = FieldMapRepository
-    page_class = pages.MontrekExampleFieldMapPage
-    success_url = "montrek_example_field_map_list"
-    form_class = forms.ExampleFieldMapCreateForm
-
-
-class MontrekExampleFieldMapList(views.MontrekListView):
-    repository = FieldMapRepository
-    page_class = pages.MontrekExampleFieldMapPage
-    tab = "tab_field_map_list"
-
-    @property
-    def elements(self) -> list:
-        return [
-            te.StringTableElement(name="Source Field", attr="source_field"),
-            te.StringTableElement(name="Database Field", attr="database_field"),
-        ]
-
-    @property
-    def actions(self) -> tuple:
-        action_new_field_map = ActionElement(
-            icon="plus",
-            link=reverse("montrek_example_field_map_create"),
-            action_id="id_new_field_map",
-            hover_text="Add new Field Map",
-        )
-        return (action_new_field_map,)
-
-    success_url = "montrek_example_field_map_list"

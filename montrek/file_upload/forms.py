@@ -1,5 +1,7 @@
 from django import forms
 
+from baseclasses.forms import MontrekCreateForm
+
 
 class UploadFileForm(forms.Form):
     def __init__(self, accept: str, *args, **kwargs):
@@ -14,3 +16,7 @@ class UploadFileForm(forms.Form):
                 }
             )
         )
+
+
+class FieldMapCreateForm(MontrekCreateForm):
+    pass
