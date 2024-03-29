@@ -84,5 +84,5 @@ class FieldMapStaticSatellite(baseclass_models.MontrekSatelliteABC):
     hub_entity = models.ForeignKey(FieldMapHub, on_delete=models.CASCADE)
     identifier_fields = ["hub_entity_id"]
 
-    source_field = models.CharField(max_length=255)
+    source_field = models.CharField(max_length=255, unique=True)
     database_field = models.CharField(max_length=255)
