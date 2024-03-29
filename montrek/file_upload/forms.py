@@ -24,11 +24,11 @@ class FieldMapCreateForm(MontrekCreateForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["database_field"] = ChoiceField(
-            choices=[(f, f) for f in self.get_database_field_choices()],
+            choices=[(f, f) for f in self._get_database_field_choices()],
         )
 
     @classmethod
-    def get_database_field_choices(cls):
+    def _get_database_field_choices(cls):
         satellite_classes = MontrekSatelliteABC.__subclasses__()
         exclude = ["comment"]
         value_fields = []

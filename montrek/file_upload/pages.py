@@ -5,7 +5,6 @@ from baseclasses.pages import MontrekPage
 
 class FieldMapPage(MontrekPage):
     page_title = "Field Map"
-    title = "Field Map"
 
     def get_tabs(self):
         overview_tab = TabElement(
