@@ -57,7 +57,7 @@ class TestMontrekExampleAHistoryView(TestCase):
         url = reverse("montrek_example_a_history", kwargs={"pk": sat_a.hub_entity.id})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "montrek_table.html")
+        self.assertTemplateUsed(response, "montrek_history.html")
 
     def test_view_with_history_data(self):
         huba = me_factories.HubAFactory()
