@@ -21,20 +21,11 @@ from baseclasses.dataclasses.montrek_message import MontrekMessageError
 from django.db.models import (
     F,
     Q,
-    CharField,
     QuerySet,
-    Value,
 )
 from django.db.models import ManyToManyField
 from django.utils import timezone
 from django.core.exceptions import FieldError, PermissionDenied
-from django.core.paginator import Paginator
-from functools import wraps
-
-from baseclasses.dataclasses.history_data_tags import (
-    HistoryDataTag,
-    HistoryDataTagSet,
-)
 
 
 class MontrekRepository:
@@ -242,47 +233,6 @@ class MontrekRepository:
             )
             satellite_querys[sat.__name__] = sat_query
         return satellite_querys
-
-    #     # WARNING: This method is not optimized for large databases
-    #     # Get all state_date changes for the satellitesof the hub and return the std_queryset to the single dates
-    #     history_tags = self._get_satellites_history_tags(pk)
-    #     queryset = self._get_queryset_per_change_date(history_tags[0], pk)
-    #     for history_tag in history_tags[1:]:
-    #         queryset = queryset.union(
-    #             self._get_queryset_per_change_date(history_tag, pk)
-    #         )
-    #     return queryset.order_by("-change_date")
-    #
-    # def _get_satellites_history_tags(self, pk: int) -> HistoryDataTagSet:
-    #     self.std_queryset()
-    #     history_data_tags = HistoryDataTagSet()
-    #     for sat_class in self._primary_satellite_classes:
-    #         history_satellite_data = sat_class.objects.filter(
-    #             hub_entity_id=pk
-    #         ).values_list("state_date_start", "created_by__email", "comment")
-    #         for hdata in history_satellite_data:
-    #             history_data_tags.append(*hdata)
-    #     return history_data_tags
-    #
-    # def _get_queryset_per_change_date(
-    #     self, history_tag: HistoryDataTag, pk: int
-    # ) -> QuerySet:
-    #     self.reference_date = history_tag.change_date
-    #     return (
-    #         self.std_queryset()
-    #         .filter(id=pk)
-    #         .annotate(
-    #             change_date=Value(
-    #                 str(self.reference_date), output_field=CharField(max_length=23)
-    #             ),
-    #             changed_by=Value(
-    #                 history_tag.get_user_string(), output_field=CharField()
-    #             ),
-    #             change_comment=Value(
-    #                 history_tag.get_comment_string(), output_field=CharField()
-    #             ),
-    #         )
-    #     )
 
     def rename_field(self, field: str, new_name: str):
         self.annotations[new_name] = self.annotations[field]
