@@ -37,7 +37,7 @@ class AFileUploadProcessor:
         mapped_df["comment"] = self.file_upload_registry_hub.file_name
         mapped_df["link_hub_a_file_upload_registry"] = self.file_upload_registry_hub
         self.hub_a_repository.create_objects_from_data_frame(mapped_df)
-        self.message = "great success"
+        self.message = f"Successfully uploaded {mapped_df.shape[0]} rows."
         return True
 
     def pre_check(self, file_path: str):
