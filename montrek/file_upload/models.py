@@ -74,3 +74,15 @@ class FileUploadFileStaticSatellite(baseclass_models.MontrekSatelliteABC):
     hub_entity = models.ForeignKey(FileUploadFileHub, on_delete=models.CASCADE)
     identifier_fields = ["hub_entity_id"]
     file = models.FileField()
+
+
+class FieldMapHub(baseclass_models.MontrekHubABC):
+    pass
+
+
+class FieldMapStaticSatellite(baseclass_models.MontrekSatelliteABC):
+    hub_entity = models.ForeignKey(FieldMapHub, on_delete=models.CASCADE)
+    identifier_fields = ["hub_entity_id"]
+
+    source_field = models.CharField(max_length=255, unique=True)
+    database_field = models.CharField(max_length=255)

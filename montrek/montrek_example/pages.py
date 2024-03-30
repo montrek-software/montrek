@@ -1,5 +1,5 @@
 from django.urls import reverse
-from baseclasses.dataclasses.view_classes import TabElement, ActionElement
+from baseclasses.dataclasses.view_classes import TabElement
 from baseclasses.pages import MontrekPage
 from montrek_example.repositories.hub_a_repository import HubARepository
 
