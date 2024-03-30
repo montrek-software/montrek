@@ -14,7 +14,13 @@ class MontrekExampleAAppPage(MontrekPage):
             html_id="tab_example_a_list",
             active="active",
         )
-        return (overview_tab,)
+        file_upload_tab = TabElement(
+            name="Uploads",
+            link=reverse("a_view_uploads"),
+            html_id="tab_uploads",
+        )
+
+        return (overview_tab, file_upload_tab)
 
 
 class ExampleAPage(MontrekPage):

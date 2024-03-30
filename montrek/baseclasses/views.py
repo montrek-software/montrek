@@ -13,7 +13,7 @@ from django.contrib import messages
 from decouple import config
 from baseclasses.dataclasses.nav_bar_model import NavBarModel
 from baseclasses.dataclasses.link_model import LinkModel
-from baseclasses.dataclasses.table_elements import AttrTableElement, TableElement
+from baseclasses.dataclasses import table_elements as te
 from baseclasses.dataclasses.view_classes import ActionElement
 from baseclasses.pages import NoPage
 from baseclasses.forms import DateRangeForm, FilterForm
@@ -98,16 +98,16 @@ class MontrekViewMixin:
         return self._repository_object
 
     @property
-    def elements(self) -> list[TableElement]:
+    def elements(self) -> list[te.TableElement]:
         return []
 
     def get_fields_from_elements(self) -> list[str]:
         elements = self.get_attr_table_elements(self.elements)
         return [element.attr for element in elements]
 
-    def get_attr_table_elements(self, elements) -> list[AttrTableElement]:
+    def get_attr_table_elements(self, elements) -> list[te.AttrTableElement]:
         return [
-            element for element in elements if isinstance(element, AttrTableElement)
+            element for element in elements if isinstance(element, te.AttrTableElement)
         ]
 
     @property
@@ -281,3 +281,24 @@ class MontrekDeleteView(View, MontrekViewMixin, MontrekPageViewMixin):
 
     def get(self, request, *args, **kwargs):
         return render(request, self.template_name, {"pk": self.kwargs["pk"]})
+
+
+class MontrekUploadView(MontrekListView):
+    title = "Uploads"
+    tab = "tab_uploads"
+
+    @property
+    def elements(self) -> tuple:
+        return (
+            te.StringTableElement(name="File Name", attr="file_name"),
+            te.StringTableElement(name="Upload Status", attr="upload_status"),
+            te.StringTableElement(name="Upload Message", attr="upload_message"),
+            te.DateTableElement(name="Upload Date", attr="created_at"),
+            te.LinkTableElement(
+                name="File",
+                url="montrek_download_file",
+                kwargs={"pk": "id"},
+                icon="download",
+                hover_text="Download",
+            ),
+        )

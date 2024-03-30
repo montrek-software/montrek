@@ -65,4 +65,14 @@ urlpatterns = [
         MontrekFieldMapCreate.as_view(),
         name="montrek_example_field_map_create",
     ),
+    path(
+        "a_upload_file",
+        views.MontrekExampleAUploadFileView.as_view(),
+        name="a_upload_file",
+    ),
+    path(
+        "a_view_uploads",
+        views.MontrekExampleAUploadView.as_view(),
+        name="a_view_uploads",
+    ),
 ]

@@ -1,14 +1,14 @@
-from django.urls import reverse
-from baseclasses.dataclasses.view_classes import ActionElement
 from baseclasses import views
 from baseclasses.dataclasses import table_elements as te
+from baseclasses.dataclasses.view_classes import ActionElement
+from django.urls import reverse
+from file_upload.views import MontrekUploadFileView
 
+from montrek_example import forms, pages
 from montrek_example.repositories.hub_a_repository import HubARepository
 from montrek_example.repositories.hub_b_repository import HubBRepository
 from montrek_example.repositories.hub_c_repository import HubCRepository
 from montrek_example.repositories.hub_d_repository import HubDRepository
-from montrek_example import forms
-from montrek_example import pages
 
 
 def action_back_to_overview(example: str):
@@ -247,3 +247,32 @@ class MontrekExampleDCreate(views.MontrekCreateView):
     repository = HubDRepository
     page_class = pages.MontrekExampleDAppPage
     success_url = "montrek_example_d_list"
+
+
+class MontrekExampleAUploadFileView(MontrekUploadFileView):
+    page_class = pages.MontrekExampleAAppPage
+    title = "Upload A File"
+    repository = HubARepository
+    file_upload_processor_class = ...
+    accept = ".csv"
+
+    def get_success_url(self):
+        return reverse("montrek_example_a_list")
+
+
+class MontrekExampleAUploadView(views.MontrekUploadView):
+    page_class = pages.MontrekExampleAAppPage
+    repository = HubARepository
+
+    # def get_view_queryset(self):
+    # return self.repository().get_upload_registry_table()
+
+    @property
+    def actions(self) -> tuple:
+        action_upload_file = ActionElement(
+            icon="upload",
+            link=reverse("a_upload_file"),
+            action_id="id_a_upload",
+            hover_text="Upload A data from file",
+        )
+        return (action_upload_file,)
