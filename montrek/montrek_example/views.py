@@ -264,8 +264,8 @@ class MontrekExampleAUploadView(views.MontrekUploadView):
     page_class = pages.MontrekExampleAAppPage
     repository = HubARepository
 
-    # def get_view_queryset(self):
-    # return self.repository().get_upload_registry_table()
+    def get_view_queryset(self):
+        return self.repository().get_upload_registry_table()
 
     @property
     def actions(self) -> tuple:

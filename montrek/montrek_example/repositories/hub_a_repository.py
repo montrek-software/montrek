@@ -1,6 +1,9 @@
+from baseclasses.repositories.montrek_repository import MontrekRepository
+from file_upload.repositories.file_upload_registry_repository import (
+    FileUploadRegistryRepository,
+)
 from montrek_example import models as me_models
 from montrek_example.repositories.hub_b_repository import HubBRepository
-from baseclasses.repositories.montrek_repository import MontrekRepository
 
 
 class HubARepository(MontrekRepository):
@@ -53,3 +56,12 @@ class HubARepository(MontrekRepository):
             ["field_b1_str"],
         )
         return self.build_queryset()
+
+    def get_upload_registry_table(self):
+        return (
+            FileUploadRegistryRepository()
+            .std_queryset()
+            .filter(link_file_upload_registry_hub_a__in=self.std_queryset())
+            .distinct()
+            .order_by("-created_at")
+        )
