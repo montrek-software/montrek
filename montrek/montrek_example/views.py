@@ -3,6 +3,7 @@ from baseclasses.dataclasses import table_elements as te
 from baseclasses.dataclasses.view_classes import ActionElement
 from django.urls import reverse
 from file_upload.views import MontrekUploadFileView
+from montrek_example.managers.a_file_upload_manager import AFileUploadProcessor
 
 from montrek_example import forms, pages
 from montrek_example.repositories.hub_a_repository import HubARepository
@@ -253,7 +254,7 @@ class MontrekExampleAUploadFileView(MontrekUploadFileView):
     page_class = pages.MontrekExampleAAppPage
     title = "Upload A File"
     repository = HubARepository
-    file_upload_processor_class = ...
+    file_upload_processor_class = AFileUploadProcessor
     accept = ".csv"
 
     def get_success_url(self):
