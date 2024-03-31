@@ -2,7 +2,7 @@ from baseclasses import views
 from baseclasses.dataclasses import table_elements as te
 from baseclasses.dataclasses.view_classes import ActionElement
 from django.urls import reverse
-from file_upload.views import MontrekUploadFileView
+from file_upload.views import MontrekUploadFileView, MontrekUploadView
 from montrek_example.managers.a_file_upload_manager import AFileUploadProcessor
 
 from montrek_example import forms, pages
@@ -261,7 +261,7 @@ class MontrekExampleAUploadFileView(MontrekUploadFileView):
         return reverse("montrek_example_a_list")
 
 
-class MontrekExampleAUploadView(views.MontrekUploadView):
+class MontrekExampleAUploadView(MontrekUploadView):
     page_class = pages.MontrekExampleAAppPage
     repository = HubARepository
 

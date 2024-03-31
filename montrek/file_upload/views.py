@@ -123,3 +123,24 @@ class MontrekFieldMapList(MontrekListView):
         return (action_new_field_map,)
 
     success_url = "montrek_example_field_map_list"
+
+
+class MontrekUploadView(MontrekListView):
+    title = "Uploads"
+    tab = "tab_uploads"
+
+    @property
+    def elements(self) -> tuple:
+        return (
+            te.StringTableElement(name="File Name", attr="file_name"),
+            te.StringTableElement(name="Upload Status", attr="upload_status"),
+            te.StringTableElement(name="Upload Message", attr="upload_message"),
+            te.DateTableElement(name="Upload Date", attr="created_at"),
+            te.LinkTableElement(
+                name="File",
+                url="montrek_download_file",
+                kwargs={"pk": "id"},
+                icon="download",
+                hover_text="Download",
+            ),
+        )

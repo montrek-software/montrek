@@ -281,24 +281,3 @@ class MontrekDeleteView(View, MontrekViewMixin, MontrekPageViewMixin):
 
     def get(self, request, *args, **kwargs):
         return render(request, self.template_name, {"pk": self.kwargs["pk"]})
-
-
-class MontrekUploadView(MontrekListView):
-    title = "Uploads"
-    tab = "tab_uploads"
-
-    @property
-    def elements(self) -> tuple:
-        return (
-            te.StringTableElement(name="File Name", attr="file_name"),
-            te.StringTableElement(name="Upload Status", attr="upload_status"),
-            te.StringTableElement(name="Upload Message", attr="upload_message"),
-            te.DateTableElement(name="Upload Date", attr="created_at"),
-            te.LinkTableElement(
-                name="File",
-                url="montrek_download_file",
-                kwargs={"pk": "id"},
-                icon="download",
-                hover_text="Download",
-            ),
-        )
