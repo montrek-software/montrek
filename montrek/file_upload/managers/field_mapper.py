@@ -15,10 +15,9 @@ class FieldMapper:
     def apply_field_maps(self):
         mapped_df = pd.DataFrame()
         for field_map in self.field_maps:
-            func_name = "no_change"
-            func = getattr(self, func_name)
+            func = getattr(self, field_map.function_name)
             mapped_df[field_map.database_field] = func(field_map.source_field)
         return mapped_df
 
-    def no_change(self, source_field: str) -> pd.Series:
+    def fn_no_change(self, source_field: str) -> pd.Series:
         return self.source_df[source_field]
