@@ -89,7 +89,7 @@ class TestMontrekExampleAHistoryView(TestCase):
         url = reverse("montrek_example_a_history", kwargs={"pk": huba.id})
         response = self.client.get(url)
         test_history_data_tables = response.context_data["history_data_tables"]
-        self.assertEqual(len(test_history_data_tables), 2)
+        self.assertEqual(len(test_history_data_tables), 3)
         sat_a1_queryset = test_history_data_tables[0].queryset
         self.assertEqual(len(sat_a1_queryset), 2)
         self.assertEqual(sat_a1_queryset[1].field_a1_int, 5)

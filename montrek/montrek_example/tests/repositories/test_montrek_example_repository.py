@@ -705,10 +705,13 @@ class TestHistory(TestCase):
             field_a2_float=6.0,
             created_by=self.user,
         )
+        hubb = me_factories.HubBFactory()
+        huba.link_hub_a_hub_b.add(hubb)
         repository = HubARepository()
+
         test_querysets_dict = repository.get_history_queryset(huba.id)
 
-        self.assertEqual(len(test_querysets_dict), 2)
+        self.assertEqual(len(test_querysets_dict), 3)
         sata1_queryset = test_querysets_dict["SatA1"]
         self.assertEqual(sata1_queryset.count(), 2)
         self.assertEqual(sata1_queryset[1].field_a1_int, 5)
@@ -721,6 +724,10 @@ class TestHistory(TestCase):
         self.assertEqual(sat_a2_queryset[0].field_a2_float, 6.0)
         self.assertEqual(sat_a2_queryset[0].field_a2_str, "ConstantTestFeld")
         self.assertEqual(sat_a2_queryset[0].changed_by, self.user.email)
+
+        link_queryset = test_querysets_dict["LinkHubAHubB"]
+        self.assertEqual(link_queryset.count(), 1)
+        self.assertEqual(link_queryset[0].hub_out, hubb)
 
 
 class TestMontrekManyToManyRelations(TestCase):

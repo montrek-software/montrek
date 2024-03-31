@@ -232,6 +232,9 @@ class MontrekRepository:
                 changed_by=F("created_by__email"),
             )
             satellite_querys[sat.__name__] = sat_query
+        for link in self._primary_link_classes:
+            link_query = link.objects.filter(hub_in=hub).order_by("-created_at")
+            satellite_querys[link.__name__] = link_query
         return satellite_querys
 
     def rename_field(self, field: str, new_name: str):
