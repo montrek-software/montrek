@@ -114,6 +114,7 @@ class MontrekFieldMapList(MontrekListView):
         return [
             StringTableElement(name="Source Field", attr="source_field"),
             StringTableElement(name="Database Field", attr="database_field"),
+            StringTableElement(name="Function Name", attr="function_name"),
         ]
 
     @property
