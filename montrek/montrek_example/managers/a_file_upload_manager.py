@@ -1,15 +1,27 @@
-import logging
 import pandas as pd
+import datetime
+import logging
 
-from typing import Any, Dict
+from typing import Dict, Any
 
+
+from file_upload.managers.field_mapper import FieldMapper
 from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepository,
 )
-from file_upload.managers.field_mapper import FieldMapper
 from montrek_example.repositories.hub_a_repository import HubARepository
 
 logger = logging.getLogger(__name__)
+
+
+class AFieldMapper(FieldMapper):
+    def fn_append_source_field_1(self, source_field: str):
+        return self.source_df[source_field] + self.source_df["source_field_1"].astype(
+            str
+        )
+
+    def fn_multiply_by_1000(self, source_field: str):
+        return self.source_df[source_field] * 1000
 
 
 class AFileUploadProcessor:
@@ -33,7 +45,7 @@ class AFileUploadProcessor:
 
     def process(self, file_path: str):
         source_df = pd.read_csv(file_path)
-        mapped_df = FieldMapper(source_df).apply_field_maps()
+        mapped_df = AFieldMapper(source_df).apply_field_maps()
         mapped_df["comment"] = self.file_upload_registry_hub.file_name
         mapped_df["link_hub_a_file_upload_registry"] = self.file_upload_registry_hub
         self.hub_a_repository.create_objects_from_data_frame(mapped_df)

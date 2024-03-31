@@ -259,9 +259,12 @@ class TestMontrekExampleAUploadFileView(TestCase):
         self.assertTemplateUsed(response, "upload_form.html")
 
     def test_view_post_success(self):
-        FieldMapStaticSatelliteFactory(database_field="field_a1_str")
-        FieldMapStaticSatelliteFactory(database_field="field_a1_int")
-        FieldMapStaticSatelliteFactory(database_field="field_a2_float")
+        FieldMapStaticSatelliteFactory(
+            database_field="field_a1_str", function_name="fn_append_source_field_1"
+        )
+        FieldMapStaticSatelliteFactory(
+            database_field="field_a1_int", function_name="fn_multiply_by_1000"
+        )
         test_file_path = os.path.join(os.path.dirname(__file__), "data", "a_file.csv")
 
         with open(test_file_path, "rb") as f:
@@ -275,10 +278,10 @@ class TestMontrekExampleAUploadFileView(TestCase):
         self.assertRedirects(response, reverse("a_view_uploads"))
         self.assertEqual(len(a_hubs), 3)
 
-        self.assertEqual(a_hubs[0].field_a1_str, "a")
-        self.assertEqual(a_hubs[1].field_a1_str, "b")
-        self.assertEqual(a_hubs[2].field_a1_str, "c")
+        self.assertEqual(a_hubs[0].field_a1_str, "a1")
+        self.assertEqual(a_hubs[1].field_a1_str, "b2")
+        self.assertEqual(a_hubs[2].field_a1_str, "c3")
 
-        self.assertEqual(a_hubs[0].field_a1_int, 1)
-        self.assertEqual(a_hubs[1].field_a1_int, 2)
-        self.assertEqual(a_hubs[2].field_a1_int, 3)
+        self.assertEqual(a_hubs[0].field_a1_int, 1000)
+        self.assertEqual(a_hubs[1].field_a1_int, 2000)
+        self.assertEqual(a_hubs[2].field_a1_int, 3000)
