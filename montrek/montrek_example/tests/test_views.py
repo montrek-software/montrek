@@ -276,6 +276,12 @@ class TestMontrekExampleAUploadFileView(TestCase):
         a_hubs = HubARepository().std_queryset()
 
         self.assertRedirects(response, reverse("a_view_uploads"))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(
+            str(messages[0]),
+            "Successfully uploaded 3 rows.",
+        )
+
         self.assertEqual(len(a_hubs), 3)
 
         self.assertEqual(a_hubs[0].field_a1_str, "a1")
