@@ -204,7 +204,7 @@ class MontrekHistoryListView(MontrekTemplateView):
         )
 
         return {
-            "history_querysets": [
+            "history_data_tables": [
                 HistoryDataTable(title=queryset, queryset=history_querysets[queryset])
                 for queryset in history_querysets
             ]
