@@ -9,7 +9,7 @@ class FieldMapper:
         self.field_maps = (
             FieldMapRepository()
             .std_queryset()
-            .filter(source_field__in=self.source_df.columns)
+            .filter(source_field__in=self.source_df.columns.to_list())
         )
 
     def apply_field_maps(self):

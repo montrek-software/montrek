@@ -260,8 +260,8 @@ class TestMontrekExampleAUploadFileView(TestCase):
 
     def test_view_post_success(self):
         FieldMapStaticSatelliteFactory(database_field="field_a1_str")
-        FieldMapStaticSatelliteFactory()
-        FieldMapStaticSatelliteFactory()
+        FieldMapStaticSatelliteFactory(database_field="field_a1_int")
+        FieldMapStaticSatelliteFactory(database_field="field_a2_float")
         test_file_path = os.path.join(os.path.dirname(__file__), "data", "a_file.csv")
 
         with open(test_file_path, "rb") as f:
@@ -276,3 +276,9 @@ class TestMontrekExampleAUploadFileView(TestCase):
         self.assertEqual(len(a_hubs), 3)
 
         self.assertEqual(a_hubs[0].field_a1_str, "a")
+        self.assertEqual(a_hubs[1].field_a1_str, "b")
+        self.assertEqual(a_hubs[2].field_a1_str, "c")
+
+        self.assertEqual(a_hubs[0].field_a1_int, 1)
+        self.assertEqual(a_hubs[1].field_a1_int, 2)
+        self.assertEqual(a_hubs[2].field_a1_int, 3)
