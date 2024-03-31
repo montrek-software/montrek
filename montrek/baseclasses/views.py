@@ -21,6 +21,7 @@ from baseclasses.forms import MontrekCreateForm
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from baseclasses import utils
 from baseclasses.managers.montrek_list_manager import MontrekListManager
+from baseclasses.dataclasses.history_data_table import HistoryDataTable
 
 # Create your views here.
 
@@ -194,9 +195,20 @@ class MontrekListView(ListView, MontrekPageViewMixin, MontrekViewMixin):
         return response
 
 
-class MontrekHistoryListView(MontrekListView):
-    def get_view_queryset(self):
-        return self.repository_object.get_history_queryset(pk=self.kwargs["pk"])
+class MontrekHistoryListView(MontrekTemplateView):
+    template_name = "montrek_history.html"
+
+    def get_template_context(self) -> dict:
+        history_querysets = self.repository_object.get_history_queryset(
+            pk=self.kwargs["pk"]
+        )
+
+        return {
+            "history_data_tables": [
+                HistoryDataTable(title=queryset, queryset=history_querysets[queryset])
+                for queryset in history_querysets
+            ]
+        }
 
 
 class MontrekDetailView(DetailView, MontrekPageViewMixin, MontrekViewMixin):
