@@ -14,7 +14,11 @@ from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepository,
 )
 from baseclasses.views import MontrekCreateView, MontrekTemplateView, MontrekListView
-from baseclasses.dataclasses.table_elements import StringTableElement
+from baseclasses.dataclasses.table_elements import (
+    DateTableElement,
+    LinkTableElement,
+    StringTableElement,
+)
 from baseclasses.dataclasses.view_classes import ActionElement
 from file_upload.repositories.field_map_repository import FieldMapRepository
 from file_upload.pages import FieldMapPage
@@ -132,11 +136,11 @@ class MontrekUploadView(MontrekListView):
     @property
     def elements(self) -> tuple:
         return (
-            te.StringTableElement(name="File Name", attr="file_name"),
-            te.StringTableElement(name="Upload Status", attr="upload_status"),
-            te.StringTableElement(name="Upload Message", attr="upload_message"),
-            te.DateTableElement(name="Upload Date", attr="created_at"),
-            te.LinkTableElement(
+            StringTableElement(name="File Name", attr="file_name"),
+            StringTableElement(name="Upload Status", attr="upload_status"),
+            StringTableElement(name="Upload Message", attr="upload_message"),
+            DateTableElement(name="Upload Date", attr="created_at"),
+            LinkTableElement(
                 name="File",
                 url="montrek_download_file",
                 kwargs={"pk": "id"},

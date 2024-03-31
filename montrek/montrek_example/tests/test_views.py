@@ -1,6 +1,10 @@
+import os
 import datetime
 from django.test import TestCase
 from django.urls import reverse
+from file_upload.tests.factories.field_map_factories import (
+    FieldMapStaticSatelliteFactory,
+)
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 from montrek_example import views
 from montrek_example.tests.factories import montrek_example_factories as me_factories
@@ -241,3 +245,34 @@ class TestMontrelExampleDCreate(TestCase):
         created_object = std_query.first()
         self.assertEqual(created_object.field_d1_str, "test")
         self.assertEqual(created_object.field_d1_int, 13)
+
+
+class TestMontrekExampleAUploadFileView(TestCase):
+    def setUp(self):
+        self.user = MontrekUserFactory()
+        self.client.force_login(self.user)
+        self.url = reverse("a_upload_file")
+
+    def test_view_return_correct_html(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "upload_form.html")
+
+    def test_view_post_success(self):
+        FieldMapStaticSatelliteFactory(database_field="field_a1_str")
+        FieldMapStaticSatelliteFactory()
+        FieldMapStaticSatelliteFactory()
+        test_file_path = os.path.join(os.path.dirname(__file__), "data", "a_file.csv")
+
+        with open(test_file_path, "rb") as f:
+            data = {"file": f}
+            response = self.client.post(self.url, data, follow=True)
+
+        messages = list(response.context["messages"])
+
+        a_hubs = HubARepository().std_queryset()
+
+        self.assertRedirects(response, reverse("a_view_uploads"))
+        self.assertEqual(len(a_hubs), 3)
+
+        self.assertEqual(a_hubs[0].field_a1_str, "a")

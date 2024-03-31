@@ -258,7 +258,7 @@ class MontrekExampleAUploadFileView(MontrekUploadFileView):
     accept = ".csv"
 
     def get_success_url(self):
-        return reverse("montrek_example_a_list")
+        return reverse("a_view_uploads")
 
 
 class MontrekExampleAUploadView(MontrekUploadView):
