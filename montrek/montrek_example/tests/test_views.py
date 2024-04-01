@@ -1,6 +1,10 @@
+import os
 import datetime
 from django.test import TestCase
 from django.urls import reverse
+from file_upload.tests.factories.field_map_factories import (
+    FieldMapStaticSatelliteFactory,
+)
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 from montrek_example import views
 from montrek_example.tests.factories import montrek_example_factories as me_factories
@@ -239,3 +243,115 @@ class TestMontrelExampleDCreate(TestCase):
         created_object = std_query.first()
         self.assertEqual(created_object.field_d1_str, "test")
         self.assertEqual(created_object.field_d1_int, 13)
+
+
+class TestMontrekExampleA1UploadFileView(TestCase):
+    def setUp(self):
+        self.user = MontrekUserFactory()
+        self.client.force_login(self.user)
+        self.url = reverse("a1_upload_file")
+
+    def test_view_return_correct_html(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "upload_form.html")
+
+    def test_view_post_success(self):
+        FieldMapStaticSatelliteFactory(
+            source_field="source_field_0",
+            database_field="field_a1_str",
+            function_name="append_source_field_1",
+        )
+        FieldMapStaticSatelliteFactory(
+            source_field="source_field_1",
+            database_field="field_a1_int",
+            function_name="multiply_by_1000",
+        )
+        test_file_path = os.path.join(os.path.dirname(__file__), "data", "a_file.csv")
+
+        with open(test_file_path, "rb") as f:
+            data = {"file": f}
+            response = self.client.post(self.url, data, follow=True)
+
+        messages = list(response.context["messages"])
+
+        a_hubs = HubARepository().std_queryset()
+
+        self.assertRedirects(response, reverse("a1_view_uploads"))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(
+            str(messages[0]),
+            "Successfully uploaded 3 rows.",
+        )
+
+        self.assertEqual(len(a_hubs), 3)
+
+        self.assertEqual(a_hubs[0].field_a1_str, "a1")
+        self.assertEqual(a_hubs[1].field_a1_str, "b2")
+        self.assertEqual(a_hubs[2].field_a1_str, "c3")
+
+        self.assertEqual(a_hubs[0].field_a1_int, 1000)
+        self.assertEqual(a_hubs[1].field_a1_int, 2000)
+        self.assertEqual(a_hubs[2].field_a1_int, 3000)
+
+
+class TestMontrekExampleA1UploadView(TestCase):
+    def setUp(self):
+        self.user = MontrekUserFactory()
+        self.client.force_login(self.user)
+        self.url = reverse("a1_view_uploads")
+
+    def test_view_return_correct_html(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "montrek_table.html")
+
+
+class TestMontrekExampleA1FieldMapCreateView(TestCase):
+    def setUp(self):
+        self.user = MontrekUserFactory()
+        self.client.force_login(self.user)
+        self.url = reverse("montrek_example_a1_field_map_create")
+
+    def test_view_return_correct_html(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "montrek_create.html")
+
+    def test_form_database_field_choices(self):
+        response = self.client.get(self.url)
+        form = response.context["form"]
+
+        self.assertEqual(
+            form.fields["database_field"].choices,
+            [
+                ("comment", "comment"),
+                ("field_a1_int", "field_a1_int"),
+                ("field_a1_str", "field_a1_str"),
+            ],
+        )
+
+    def test_form_function_name_choices(self):
+        response = self.client.get(self.url)
+        form = response.context["form"]
+        self.assertEqual(
+            form.fields["function_name"].choices,
+            [
+                ("append_source_field_1", "append_source_field_1"),
+                ("multiply_by_1000", "multiply_by_1000"),
+                ("no_change", "no_change"),
+            ],
+        )
+        self.assertEqual(form.initial["function_name"], "no_change")
+
+
+class TestMontrekExampleA1FieldMapListView(TestCase):
+    def setUp(self):
+        self.user = MontrekUserFactory()
+        self.client.force_login(self.user)
+        self.url = reverse("montrek_example_a1_field_map_list")
+
+    def test_view_return_correct_html(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "montrek_table.html")

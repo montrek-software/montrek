@@ -1,14 +1,24 @@
-from django.urls import reverse
-from baseclasses.dataclasses.view_classes import ActionElement
 from baseclasses import views
 from baseclasses.dataclasses import table_elements as te
+from baseclasses.dataclasses.view_classes import ActionElement
+from django.urls import reverse
+from file_upload.views import (
+    MontrekFieldMapCreateView,
+    MontrekFieldMapListView,
+    MontrekUploadFileView,
+    MontrekUploadView,
+)
+from montrek_example.repositories.sat_a1_repository import SatA1Repository
+from montrek_example.managers.a1_file_upload_manager import (
+    A1FieldMapManager,
+    A1FileUploadProcessor,
+)
 
+from montrek_example import forms, pages
 from montrek_example.repositories.hub_a_repository import HubARepository
 from montrek_example.repositories.hub_b_repository import HubBRepository
 from montrek_example.repositories.hub_c_repository import HubCRepository
 from montrek_example.repositories.hub_d_repository import HubDRepository
-from montrek_example import forms
-from montrek_example import pages
 
 
 def action_back_to_overview(example: str):
@@ -247,3 +257,56 @@ class MontrekExampleDCreate(views.MontrekCreateView):
     repository = HubDRepository
     page_class = pages.MontrekExampleDAppPage
     success_url = "montrek_example_d_list"
+
+
+class MontrekExampleA1UploadFileView(MontrekUploadFileView):
+    page_class = pages.MontrekExampleAAppPage
+    title = "Upload A1 File"
+    repository = HubARepository
+    file_upload_processor_class = A1FileUploadProcessor
+    accept = ".csv"
+
+    def get_success_url(self):
+        return reverse("a1_view_uploads")
+
+
+class MontrekExampleA1UploadView(MontrekUploadView):
+    title = 'A1 Uploads'
+    page_class = pages.MontrekExampleAAppPage
+    repository = SatA1Repository
+
+    def get_view_queryset(self):
+        return self.repository().get_upload_registry_table()
+
+    @property
+    def actions(self) -> tuple:
+        action_upload_file = ActionElement(
+            icon="upload",
+            link=reverse("a1_upload_file"),
+            action_id="id_a_upload",
+            hover_text="Upload A1 data from file",
+        )
+        return (action_upload_file,)
+
+
+class MontrekExampleA1FieldMapCreateView(MontrekFieldMapCreateView):
+    success_url = "montrek_example_a1_field_map_list"
+    page_class = pages.MontrekExampleAAppPage
+    field_map_manager_class = A1FieldMapManager
+    related_repository_class = SatA1Repository
+
+class MontrekExampleA1FieldMapListView(MontrekFieldMapListView):
+    page_class = pages.MontrekExampleAAppPage
+    tab = "tab_a1_field_map_list"
+
+    @property
+    def actions(self) -> tuple:
+        action_new_field_map = ActionElement(
+            icon="plus",
+            link=reverse("montrek_example_a1_field_map_create"),
+            action_id="id_new_a1_field_map",
+            hover_text="Add new A1 Field Map",
+        )
+        return (action_new_field_map,)
+
+    success_url = "montrek_example_a1_field_map_list"

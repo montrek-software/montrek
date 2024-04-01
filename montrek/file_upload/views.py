@@ -14,10 +14,14 @@ from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepository,
 )
 from baseclasses.views import MontrekCreateView, MontrekTemplateView, MontrekListView
-from baseclasses.dataclasses.table_elements import StringTableElement
-from baseclasses.dataclasses.view_classes import ActionElement
+from baseclasses.dataclasses.table_elements import (
+    DateTableElement,
+    LinkTableElement,
+    StringTableElement,
+)
 from file_upload.repositories.field_map_repository import FieldMapRepository
-from file_upload.pages import FieldMapPage
+from baseclasses.repositories.montrek_repository import MontrekRepository
+from file_upload.managers.field_map_manager import FieldMapManager
 
 # Create your views here.
 
@@ -92,16 +96,34 @@ class MontrekDownloadFileView(MontrekTemplateView):
         return FileResponse(upload_file, as_attachment=True)
 
 
-class MontrekFieldMapCreate(MontrekCreateView):
+class MontrekFieldMapCreateView(MontrekCreateView):
     repository = FieldMapRepository
-    page_class = FieldMapPage
-    success_url = "montrek_example_field_map_list"
+    success_url = "under_construction"
     form_class = FieldMapCreateForm
+    field_map_manager_class = FieldMapManager
+    related_repository_class = MontrekRepository
+
+    def get_form(self, form_class=None):
+        return self.form_class(
+            repository=self.repository_object,
+            field_map_manager=self.field_map_manager_class(),
+            related_repository=self.related_repository_class(),
+        )
+
+    def post(self, request, *args, **kwargs):
+        form = self.form_class(
+            self.request.POST,
+            repository=self.repository_object,
+            field_map_manager=self.field_map_manager_class(),
+            related_repository=self.related_repository_class(),
+        )
+        if form.is_valid():
+            return self.form_valid(form)
+        return self.form_invalid(form)
 
 
-class MontrekFieldMapList(MontrekListView):
+class MontrekFieldMapListView(MontrekListView):
     repository = FieldMapRepository
-    page_class = FieldMapPage
     tab = "tab_field_map_list"
     title = "Field Map Overview"
 
@@ -110,16 +132,28 @@ class MontrekFieldMapList(MontrekListView):
         return [
             StringTableElement(name="Source Field", attr="source_field"),
             StringTableElement(name="Database Field", attr="database_field"),
+            StringTableElement(name="Function Name", attr="function_name"),
         ]
 
-    @property
-    def actions(self) -> tuple:
-        action_new_field_map = ActionElement(
-            icon="plus",
-            link=reverse("montrek_example_field_map_create"),
-            action_id="id_new_field_map",
-            hover_text="Add new Field Map",
-        )
-        return (action_new_field_map,)
+    success_url = "under_construction"
 
-    success_url = "montrek_example_field_map_list"
+
+class MontrekUploadView(MontrekListView):
+    title = "Uploads"
+    tab = "tab_uploads"
+
+    @property
+    def elements(self) -> tuple:
+        return (
+            StringTableElement(name="File Name", attr="file_name"),
+            StringTableElement(name="Upload Status", attr="upload_status"),
+            StringTableElement(name="Upload Message", attr="upload_message"),
+            DateTableElement(name="Upload Date", attr="created_at"),
+            LinkTableElement(
+                name="File",
+                url="montrek_download_file",
+                kwargs={"pk": "id"},
+                icon="download",
+                hover_text="Download",
+            ),
+        )

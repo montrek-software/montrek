@@ -28,6 +28,11 @@ class HubA(MontrekHubABC):
     link_hub_a_hub_c = models.ManyToManyField(
         "HubC", related_name="link_hub_c_hub_a", through="LinkHubAHubC"
     )
+    link_hub_a_file_upload_registry = models.ManyToManyField(
+        "file_upload.FileUploadRegistryHub",
+        related_name="link_file_upload_registry_hub_a",
+        through="LinkHubAFileUploadRegistry",
+    )
 
 
 class HubB(MontrekHubABC):
@@ -111,3 +116,10 @@ class LinkHubAHubC(MontrekOneToManyLinkABC):
 class LinkHubBHubD(MontrekManyToManyLinkABC):
     hub_in = models.ForeignKey(HubB, on_delete=models.CASCADE)
     hub_out = models.ForeignKey(HubD, on_delete=models.CASCADE)
+
+
+class LinkHubAFileUploadRegistry(MontrekManyToManyLinkABC):
+    hub_in = models.ForeignKey(HubA, on_delete=models.CASCADE)
+    hub_out = models.ForeignKey(
+        "file_upload.FileUploadRegistryHub", on_delete=models.CASCADE
+    )

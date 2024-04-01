@@ -1,8 +1,10 @@
+import inspect
 from django import forms
 from django.forms.fields import ChoiceField
 
 from baseclasses.forms import MontrekCreateForm
 from baseclasses.models import MontrekSatelliteABC
+from file_upload.managers.field_map_manager import FieldMapManager
 
 
 class UploadFileForm(forms.Form):
@@ -22,15 +24,26 @@ class UploadFileForm(forms.Form):
 
 class FieldMapCreateForm(MontrekCreateForm):
     def __init__(self, *args, **kwargs):
+        self.field_map_manager = kwargs.pop("field_map_manager")
+        self.related_repository = kwargs.pop("related_repository")
         super().__init__(*args, **kwargs)
         self.fields["database_field"] = ChoiceField(
             choices=[(f, f) for f in self._get_database_field_choices()],
         )
+        self.fields["function_name"] = ChoiceField(
+            choices=[(f, f) for f in self._get_function_name_choices()],
+        )
+        self.initial["function_name"] = "no_change"
 
-    @classmethod
-    def _get_database_field_choices(cls):
-        satellite_classes = MontrekSatelliteABC.__subclasses__()
-        value_fields = []
-        for satellite_class in satellite_classes:
-            value_fields += satellite_class.get_value_field_names()
-        return sorted(list(set(value_fields)))
+    def _get_database_field_choices(self):
+        return sorted(
+            list(set([f.name for f in self.related_repository.std_satellite_fields()]))
+        )
+
+    def _get_function_name_choices(self):
+        function_names = []
+        for name, _ in inspect.getmembers(
+            self.field_map_manager.field_map_function_manager_class, inspect.isfunction
+        ):
+            function_names.append(name)
+        return sorted(list(set(function_names)))
