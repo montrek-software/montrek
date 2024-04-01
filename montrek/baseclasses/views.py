@@ -13,7 +13,7 @@ from django.contrib import messages
 from decouple import config
 from baseclasses.dataclasses.nav_bar_model import NavBarModel
 from baseclasses.dataclasses.link_model import LinkModel
-from baseclasses.dataclasses.table_elements import AttrTableElement, TableElement
+from baseclasses.dataclasses import table_elements as te
 from baseclasses.dataclasses.view_classes import ActionElement
 from baseclasses.pages import NoPage
 from baseclasses.forms import DateRangeForm, FilterForm
@@ -21,7 +21,6 @@ from baseclasses.forms import MontrekCreateForm
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from baseclasses import utils
 from baseclasses.managers.montrek_list_manager import MontrekListManager
-from baseclasses.dataclasses.history_data_table import HistoryDataTable
 
 # Create your views here.
 
@@ -99,16 +98,16 @@ class MontrekViewMixin:
         return self._repository_object
 
     @property
-    def elements(self) -> list[TableElement]:
+    def elements(self) -> list[te.TableElement]:
         return []
 
     def get_fields_from_elements(self) -> list[str]:
         elements = self.get_attr_table_elements(self.elements)
         return [element.attr for element in elements]
 
-    def get_attr_table_elements(self, elements) -> list[AttrTableElement]:
+    def get_attr_table_elements(self, elements) -> list[te.AttrTableElement]:
         return [
-            element for element in elements if isinstance(element, AttrTableElement)
+            element for element in elements if isinstance(element, te.AttrTableElement)
         ]
 
     @property
@@ -195,20 +194,9 @@ class MontrekListView(ListView, MontrekPageViewMixin, MontrekViewMixin):
         return response
 
 
-class MontrekHistoryListView(MontrekTemplateView):
-    template_name = "montrek_history.html"
-
-    def get_template_context(self) -> dict:
-        history_querysets = self.repository_object.get_history_queryset(
-            pk=self.kwargs["pk"]
-        )
-
-        return {
-            "history_data_tables": [
-                HistoryDataTable(title=queryset, queryset=history_querysets[queryset])
-                for queryset in history_querysets
-            ]
-        }
+class MontrekHistoryListView(MontrekListView):
+    def get_view_queryset(self):
+        return self.repository_object.get_history_queryset(pk=self.kwargs["pk"])
 
 
 class MontrekDetailView(DetailView, MontrekPageViewMixin, MontrekViewMixin):

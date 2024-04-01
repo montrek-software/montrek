@@ -1,3 +1,4 @@
+import inspect
 from django import forms
 from django.forms.fields import ChoiceField
 
@@ -40,9 +41,11 @@ class FieldMapCreateForm(MontrekCreateForm):
         )
 
     def _get_function_name_choices(self):
-        function_names = [
-            f
-            for f in dir(self.field_map_manager.field_map_function_manager_class)
-            if not f.startswith("_")
-        ]
+        function_names = []
+        for name, _ in inspect.getmembers(
+            self.field_map_manager.field_map_function_manager_class, inspect.isfunction
+        ):
+            if name.startswith("_"):
+                continue
+            function_names.append(name)
         return sorted(list(set(function_names)))
