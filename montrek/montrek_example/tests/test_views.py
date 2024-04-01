@@ -247,7 +247,7 @@ class TestMontrelExampleDCreate(TestCase):
         self.assertEqual(created_object.field_d1_int, 13)
 
 
-class TestMontrekExampleAUploadFileView(TestCase):
+class TestMontrekExampleA1UploadFileView(TestCase):
     def setUp(self):
         self.user = MontrekUserFactory()
         self.client.force_login(self.user)
@@ -279,7 +279,7 @@ class TestMontrekExampleAUploadFileView(TestCase):
 
         a_hubs = HubARepository().std_queryset()
 
-        self.assertRedirects(response, reverse("a_view_uploads"))
+        self.assertRedirects(response, reverse("a1_view_uploads"))
         self.assertEqual(len(messages), 1)
         self.assertEqual(
             str(messages[0]),

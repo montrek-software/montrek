@@ -1,3 +1,4 @@
+from os import link
 from django.urls import reverse
 from baseclasses.dataclasses.view_classes import TabElement
 from baseclasses.pages import MontrekPage
@@ -15,12 +16,17 @@ class MontrekExampleAAppPage(MontrekPage):
             active="active",
         )
         file_upload_tab = TabElement(
-            name="Uploads",
-            link=reverse("a_view_uploads"),
+            name="A1 Uploads",
+            link=reverse("a1_view_uploads"),
             html_id="tab_uploads",
         )
+        a1_field_map_tab = TabElement(
+            name="A1 Field Map",
+            link=reverse("montrek_example_a1_field_map_list"),
+            html_id="tab_a1_field_map_list",
+        )
 
-        return (overview_tab, file_upload_tab)
+        return (overview_tab, file_upload_tab, a1_field_map_tab)
 
 
 class ExampleAPage(MontrekPage):
@@ -79,19 +85,6 @@ class MontrekExampleDAppPage(MontrekPage):
             name="Example D List",
             link=reverse("montrek_example_d_list"),
             html_id="tab_example_d_list",
-            active="active",
-        )
-        return (overview_tab,)
-
-
-class MontrekExampleAFieldMapPage(MontrekPage):
-    page_title = "A Field Map"
-
-    def get_tabs(self):
-        overview_tab = TabElement(
-            name="A Field Map List",
-            link=reverse("montrek_example_a_field_map_create"),
-            html_id="tab_field_map_list",
             active="active",
         )
         return (overview_tab,)

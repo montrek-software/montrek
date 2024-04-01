@@ -8,7 +8,6 @@ from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepository,
 )
 from montrek_example.managers.a1_field_map_manager import AFieldMapManager
-from montrek_example.models import SatA1
 from montrek_example.repositories.hub_a_repository import HubARepository
 
 logger = logging.getLogger(__name__)
