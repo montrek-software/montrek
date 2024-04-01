@@ -2,7 +2,7 @@ import pandas as pd
 from file_upload.repositories.field_map_repository import FieldMapRepository
 
 
-class FieldMapper:
+class FieldMapManager:
     def __init__(self, source_df: pd.DataFrame):
         self.source_df = source_df
 

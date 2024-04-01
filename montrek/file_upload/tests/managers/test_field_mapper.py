@@ -4,10 +4,10 @@ from django.test import TestCase
 from file_upload.tests.factories.field_map_factories import (
     FieldMapStaticSatelliteFactory,
 )
-from file_upload.managers.field_mapper import FieldMapper
+from file_upload.managers.field_mapper import FieldMapManager
 
 
-class MyFieldMapper(FieldMapper):
+class MyFieldMapManager(FieldMapManager):
     def fn_multiply_by_2(self, source_field: str) -> pd.Series:
         return self.source_df[source_field] * 2
 
@@ -17,7 +17,7 @@ class MyFieldMapper(FieldMapper):
         )
 
 
-class TestFieldMapper(TestCase):
+class TestFieldMapManager(TestCase):
     def test_apply_field_maps(self):
         FieldMapStaticSatelliteFactory(source_field="source_field_0")
         FieldMapStaticSatelliteFactory(source_field="source_field_1")
@@ -37,7 +37,7 @@ class TestFieldMapper(TestCase):
             }
         )
 
-        field_mapper = MyFieldMapper(source_df)
+        field_mapper = MyFieldMapManager(source_df)
         mapped_df = field_mapper.apply_field_maps()
 
         self.assertEqual(

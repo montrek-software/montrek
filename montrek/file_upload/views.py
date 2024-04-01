@@ -96,14 +96,14 @@ class MontrekDownloadFileView(MontrekTemplateView):
         return FileResponse(upload_file, as_attachment=True)
 
 
-class MontrekFieldMapCreate(MontrekCreateView):
+class MontrekFieldMapCreateView(MontrekCreateView):
     repository = FieldMapRepository
     page_class = FieldMapPage
     success_url = "montrek_example_field_map_list"
     form_class = FieldMapCreateForm
 
 
-class MontrekFieldMapList(MontrekListView):
+class MontrekFieldMapListView(MontrekListView):
     repository = FieldMapRepository
     page_class = FieldMapPage
     tab = "tab_field_map_list"
