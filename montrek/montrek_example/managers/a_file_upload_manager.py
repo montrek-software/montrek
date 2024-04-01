@@ -11,6 +11,7 @@ from file_upload.managers.field_map_manager import (
 from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepository,
 )
+from montrek_example.models import SatA1
 from montrek_example.repositories.hub_a_repository import HubARepository
 
 logger = logging.getLogger(__name__)
@@ -29,6 +30,7 @@ class AFieldMapFunctionManager(FieldMapFunctionManager):
 
 
 class AFieldMapManager(FieldMapManager):
+    satellite_class = SatA1
     field_map_function_manager_class = AFieldMapFunctionManager
 
 

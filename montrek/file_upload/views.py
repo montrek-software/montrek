@@ -104,14 +104,14 @@ class MontrekFieldMapCreateView(MontrekCreateView):
     def get_form(self, form_class=None):
         return self.form_class(
             repository=self.repository_object,
-            field_map_manager_class=self.field_map_manager_class,
+            field_map_manager=self.field_map_manager_class(),
         )
 
     def post(self, request, *args, **kwargs):
         form = self.form_class(
             self.request.POST,
             repository=self.repository_object,
-            field_map_manager_class=self.field_map_manager_class,
+            field_map_manager=self.field_map_manager_class(),
         )
         if form.is_valid():
             return self.form_valid(form)

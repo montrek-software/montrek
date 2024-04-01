@@ -11,6 +11,7 @@ class FieldMapFunctionManager:
 class FieldMapManager:
     field_map_function_manager_class = FieldMapFunctionManager
     field_map_repository_class = FieldMapRepository
+    satellite_class = None
 
     @classmethod
     def apply_field_maps(cls, source_df: pd.DataFrame) -> pd.DataFrame:

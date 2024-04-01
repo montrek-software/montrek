@@ -23,7 +23,7 @@ class UploadFileForm(forms.Form):
 
 class FieldMapCreateForm(MontrekCreateForm):
     def __init__(self, *args, **kwargs):
-        self.field_map_manager_class = kwargs.pop("field_map_manager_class")
+        self.field_map_manager = kwargs.pop("field_map_manager")
         super().__init__(*args, **kwargs)
         self.fields["database_field"] = ChoiceField(
             choices=[(f, f) for f in self._get_database_field_choices()],
@@ -33,18 +33,13 @@ class FieldMapCreateForm(MontrekCreateForm):
         )
         self.initial["function_name"] = "no_change"
 
-    @classmethod
-    def _get_database_field_choices(cls):
-        satellite_classes = MontrekSatelliteABC.__subclasses__()
-        value_fields = []
-        for satellite_class in satellite_classes:
-            value_fields += satellite_class.get_value_field_names()
-        return sorted(list(set(value_fields)))
+    def _get_database_field_choices(self):
+        return sorted(list(set(self.field_map_manager.satellite_class.get_value_field_names())))
 
     def _get_function_name_choices(self):
         function_names = [
             f
-            for f in dir(self.field_map_manager_class.field_map_function_manager_class)
+            for f in dir(self.field_map_manager.field_map_function_manager_class)
             if not f.startswith("_")
         ]
         return sorted(list(set(function_names)))
