@@ -4,17 +4,20 @@ from django.test import TestCase
 from file_upload.tests.factories.field_map_factories import (
     FieldMapStaticSatelliteFactory,
 )
-from file_upload.managers.field_map_manager import FieldMapManager
+from file_upload.managers.field_map_manager import (
+    FieldMapFunctionManager,
+    FieldMapManager,
+)
 
 
-class MyFieldMapManager(FieldMapManager):
-    def fn_multiply_by_2(self, source_field: str) -> pd.Series:
-        return self.source_df[source_field] * 2
+class MyFieldMapFunctionManager(FieldMapFunctionManager):
+    @staticmethod
+    def multiply_by_2(source_df: pd.DataFrame, source_field: str) -> pd.Series:
+        return source_df[source_field] * 2
 
-    def fn_append_source_field_1(self, source_field: str) -> pd.Series:
-        return (
-            self.source_df[source_field].astype(str) + self.source_df["source_field_1"]
-        )
+    @staticmethod
+    def append_source_field_1(source_df: pd.DataFrame, source_field: str) -> pd.Series:
+        return source_df[source_field].astype(str) + source_df["source_field_1"]
 
 
 class TestFieldMapManager(TestCase):
@@ -22,10 +25,10 @@ class TestFieldMapManager(TestCase):
         FieldMapStaticSatelliteFactory(source_field="source_field_0")
         FieldMapStaticSatelliteFactory(source_field="source_field_1")
         FieldMapStaticSatelliteFactory(
-            source_field="source_field_2", function_name="fn_multiply_by_2"
+            source_field="source_field_2", function_name="multiply_by_2"
         )
         FieldMapStaticSatelliteFactory(
-            source_field="source_field_3", function_name="fn_append_source_field_1"
+            source_field="source_field_3", function_name="append_source_field_1"
         )
 
         source_df = pd.DataFrame(
@@ -37,7 +40,7 @@ class TestFieldMapManager(TestCase):
             }
         )
 
-        field_map_manager = MyFieldMapManager(source_df)
+        field_map_manager = FieldMapManager(source_df, MyFieldMapFunctionManager())
         mapped_df = field_map_manager.apply_field_maps()
 
         self.assertEqual(

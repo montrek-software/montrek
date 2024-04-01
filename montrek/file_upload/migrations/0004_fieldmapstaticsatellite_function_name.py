@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="fieldmapstaticsatellite",
             name="function_name",
-            field=models.CharField(default="fn_no_change", max_length=255),
+            field=models.CharField(default="no_change", max_length=255),
         ),
     ]

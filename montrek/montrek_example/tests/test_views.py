@@ -262,12 +262,12 @@ class TestMontrekExampleAUploadFileView(TestCase):
         FieldMapStaticSatelliteFactory(
             source_field="source_field_0",
             database_field="field_a1_str",
-            function_name="fn_append_source_field_1",
+            function_name="append_source_field_1",
         )
         FieldMapStaticSatelliteFactory(
             source_field="source_field_1",
             database_field="field_a1_int",
-            function_name="fn_multiply_by_1000",
+            function_name="multiply_by_1000",
         )
         test_file_path = os.path.join(os.path.dirname(__file__), "data", "a_file.csv")
 
