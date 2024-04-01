@@ -295,3 +295,65 @@ class TestMontrekExampleA1UploadFileView(TestCase):
         self.assertEqual(a_hubs[0].field_a1_int, 1000)
         self.assertEqual(a_hubs[1].field_a1_int, 2000)
         self.assertEqual(a_hubs[2].field_a1_int, 3000)
+
+
+class TestMontrekExampleA1UploadView(TestCase):
+    def setUp(self):
+        self.user = MontrekUserFactory()
+        self.client.force_login(self.user)
+        self.url = reverse("a1_view_uploads")
+
+    def test_view_return_correct_html(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "montrek_table.html")
+
+
+class TestMontrekExampleA1FieldMapCreateView(TestCase):
+    def setUp(self):
+        self.user = MontrekUserFactory()
+        self.client.force_login(self.user)
+        self.url = reverse("montrek_example_a1_field_map_create")
+
+    def test_view_return_correct_html(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "montrek_create.html")
+
+    def test_form_database_field_choices(self):
+        response = self.client.get(self.url)
+        form = response.context["form"]
+
+        self.assertEqual(
+            form.fields["database_field"].choices,
+            [
+                ("comment", "comment"),
+                ("field_a1_int", "field_a1_int"),
+                ("field_a1_str", "field_a1_str"),
+            ],
+        )
+
+    def test_form_function_name_choices(self):
+        response = self.client.get(self.url)
+        form = response.context["form"]
+        self.assertEqual(
+            form.fields["function_name"].choices,
+            [
+                ("append_source_field_1", "append_source_field_1"),
+                ("multiply_by_1000", "multiply_by_1000"),
+                ("no_change", "no_change"),
+            ],
+        )
+        self.assertEqual(form.initial["function_name"], "no_change")
+
+
+class TestMontrekExampleA1FieldMapListView(TestCase):
+    def setUp(self):
+        self.user = MontrekUserFactory()
+        self.client.force_login(self.user)
+        self.url = reverse("montrek_example_a1_field_map_list")
+
+    def test_view_return_correct_html(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "montrek_table.html")
