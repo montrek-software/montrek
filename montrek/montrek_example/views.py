@@ -8,7 +8,7 @@ from file_upload.views import (
     MontrekUploadFileView,
     MontrekUploadView,
 )
-from montrek_example.managers.a_file_upload_manager import (
+from montrek_example.managers.a1_file_upload_manager import (
     AFieldMapManager,
     AFileUploadProcessor,
 )
