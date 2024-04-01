@@ -1,5 +1,4 @@
 import pandas as pd
-import datetime
 import logging
 
 from typing import Dict, Any
@@ -15,10 +14,10 @@ logger = logging.getLogger(__name__)
 
 
 class AFieldMapper(FieldMapper):
-    def fn_append_source_field_1(self, source_field: str):
-        return self.source_df[source_field] + self.source_df["source_field_1"].astype(
-            str
-        )
+    def fn_append_source_field_1(self, source_field: str) -> pd.Series:
+        return self.source_df[source_field].astype(str) + self.source_df[
+            "source_field_1"
+        ].astype(str)
 
     def fn_multiply_by_1000(self, source_field: str):
         return self.source_df[source_field] * 1000

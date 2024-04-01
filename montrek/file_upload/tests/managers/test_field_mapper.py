@@ -19,10 +19,14 @@ class MyFieldMapper(FieldMapper):
 
 class TestFieldMapper(TestCase):
     def test_apply_field_maps(self):
-        FieldMapStaticSatelliteFactory()
-        FieldMapStaticSatelliteFactory()
-        FieldMapStaticSatelliteFactory(function_name="fn_multiply_by_2")
-        FieldMapStaticSatelliteFactory(function_name="fn_append_source_field_1")
+        FieldMapStaticSatelliteFactory(source_field="source_field_0")
+        FieldMapStaticSatelliteFactory(source_field="source_field_1")
+        FieldMapStaticSatelliteFactory(
+            source_field="source_field_2", function_name="fn_multiply_by_2"
+        )
+        FieldMapStaticSatelliteFactory(
+            source_field="source_field_3", function_name="fn_append_source_field_1"
+        )
 
         source_df = pd.DataFrame(
             {

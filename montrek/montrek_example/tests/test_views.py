@@ -260,10 +260,14 @@ class TestMontrekExampleAUploadFileView(TestCase):
 
     def test_view_post_success(self):
         FieldMapStaticSatelliteFactory(
-            database_field="field_a1_str", function_name="fn_append_source_field_1"
+            source_field="source_field_0",
+            database_field="field_a1_str",
+            function_name="fn_append_source_field_1",
         )
         FieldMapStaticSatelliteFactory(
-            database_field="field_a1_int", function_name="fn_multiply_by_1000"
+            source_field="source_field_1",
+            database_field="field_a1_int",
+            function_name="fn_multiply_by_1000",
         )
         test_file_path = os.path.join(os.path.dirname(__file__), "data", "a_file.csv")
 
