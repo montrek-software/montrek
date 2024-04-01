@@ -288,7 +288,7 @@ class MontrekExampleAUploadView(MontrekUploadView):
 
 
 class MontrekExampleAFieldMapCreateView(MontrekFieldMapCreateView):
-    success_url = "montrek_example_field_map_list"
+    success_url = "montrek_example_a_field_map_list"
     page_class = pages.MontrekExampleAFieldMapPage
     field_map_manager_class = AFieldMapManager
 
@@ -306,4 +306,4 @@ class MontrekExampleAFieldMapListView(MontrekFieldMapListView):
         )
         return (action_new_field_map,)
 
-    success_url = "montrek_example_field_map_list"
+    success_url = "montrek_example_a_field_map_list"
