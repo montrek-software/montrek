@@ -13,7 +13,7 @@ from montrek_example.repositories.hub_a_repository import HubARepository
 logger = logging.getLogger(__name__)
 
 
-class AFileUploadProcessor:
+class A1FileUploadProcessor:
     message = "Not implemented"
     file_upload_registry = None
 

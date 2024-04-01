@@ -11,7 +11,7 @@ from file_upload.views import (
 from montrek_example.repositories.sat_a1_repository import SatA1Repository
 from montrek_example.managers.a1_file_upload_manager import (
     A1FieldMapManager,
-    AFileUploadProcessor,
+    A1FileUploadProcessor,
 )
 
 from montrek_example import forms, pages
@@ -263,7 +263,7 @@ class MontrekExampleA1UploadFileView(MontrekUploadFileView):
     page_class = pages.MontrekExampleAAppPage
     title = "Upload A1 File"
     repository = HubARepository
-    file_upload_processor_class = AFileUploadProcessor
+    file_upload_processor_class = A1FileUploadProcessor
     accept = ".csv"
 
     def get_success_url(self):
