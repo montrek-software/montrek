@@ -19,9 +19,8 @@ from baseclasses.dataclasses.table_elements import (
     LinkTableElement,
     StringTableElement,
 )
-from baseclasses.dataclasses.view_classes import ActionElement
 from file_upload.repositories.field_map_repository import FieldMapRepository
-from file_upload.pages import FieldMapPage
+from file_upload.managers.field_map_manager import FieldMapManager
 
 # Create your views here.
 
@@ -98,14 +97,29 @@ class MontrekDownloadFileView(MontrekTemplateView):
 
 class MontrekFieldMapCreateView(MontrekCreateView):
     repository = FieldMapRepository
-    page_class = FieldMapPage
-    success_url = "montrek_example_field_map_list"
+    success_url = "under_construction"
     form_class = FieldMapCreateForm
+    field_map_manager_class = FieldMapManager
+
+    def get_form(self, form_class=None):
+        return self.form_class(
+            repository=self.repository_object,
+            field_map_manager_class=self.field_map_manager_class,
+        )
+
+    def post(self, request, *args, **kwargs):
+        form = self.form_class(
+            self.request.POST,
+            repository=self.repository_object,
+            field_map_manager_class=self.field_map_manager_class,
+        )
+        if form.is_valid():
+            return self.form_valid(form)
+        return self.form_invalid(form)
 
 
 class MontrekFieldMapListView(MontrekListView):
     repository = FieldMapRepository
-    page_class = FieldMapPage
     tab = "tab_field_map_list"
     title = "Field Map Overview"
 
@@ -117,17 +131,7 @@ class MontrekFieldMapListView(MontrekListView):
             StringTableElement(name="Function Name", attr="function_name"),
         ]
 
-    @property
-    def actions(self) -> tuple:
-        action_new_field_map = ActionElement(
-            icon="plus",
-            link=reverse("montrek_example_field_map_create"),
-            action_id="id_new_field_map",
-            hover_text="Add new Field Map",
-        )
-        return (action_new_field_map,)
-
-    success_url = "montrek_example_field_map_list"
+    success_url = "under_construction"
 
 
 class MontrekUploadView(MontrekListView):

@@ -57,13 +57,13 @@ urlpatterns = [
     ),
     path(
         "field_map/list",
-        MontrekFieldMapListView.as_view(),
+        views.MontrekExampleAFieldMapListView.as_view(),
         name="montrek_example_field_map_list",
     ),
     path(
         "field_map/create",
-        MontrekFieldMapCreateView.as_view(),
-        name="montrek_example_field_map_create",
+        views.MontrekExampleAFieldMapCreateView.as_view(),
+        name="montrek_example_a_field_map_create",
     ),
     path(
         "a_upload_file",

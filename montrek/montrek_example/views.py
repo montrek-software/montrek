@@ -2,8 +2,16 @@ from baseclasses import views
 from baseclasses.dataclasses import table_elements as te
 from baseclasses.dataclasses.view_classes import ActionElement
 from django.urls import reverse
-from file_upload.views import MontrekUploadFileView, MontrekUploadView
-from montrek_example.managers.a_file_upload_manager import AFileUploadProcessor
+from file_upload.views import (
+    MontrekFieldMapCreateView,
+    MontrekFieldMapListView,
+    MontrekUploadFileView,
+    MontrekUploadView,
+)
+from montrek_example.managers.a_file_upload_manager import (
+    AFieldMapManager,
+    AFileUploadProcessor,
+)
 
 from montrek_example import forms, pages
 from montrek_example.repositories.hub_a_repository import HubARepository
@@ -277,3 +285,25 @@ class MontrekExampleAUploadView(MontrekUploadView):
             hover_text="Upload A data from file",
         )
         return (action_upload_file,)
+
+
+class MontrekExampleAFieldMapCreateView(MontrekFieldMapCreateView):
+    success_url = "montrek_example_field_map_list"
+    page_class = pages.MontrekExampleAFieldMapPage
+    field_map_manager_class = AFieldMapManager
+
+
+class MontrekExampleAFieldMapListView(MontrekFieldMapListView):
+    page_class = pages.MontrekExampleAFieldMapPage
+
+    @property
+    def actions(self) -> tuple:
+        action_new_field_map = ActionElement(
+            icon="plus",
+            link=reverse("montrek_example_a_field_map_create"),
+            action_id="id_new_a_field_map",
+            hover_text="Add new A Field Map",
+        )
+        return (action_new_field_map,)
+
+    success_url = "montrek_example_field_map_list"
