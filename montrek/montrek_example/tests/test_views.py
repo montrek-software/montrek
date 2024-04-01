@@ -61,7 +61,7 @@ class TestMontrekExampleAHistoryView(TestCase):
         url = reverse("montrek_example_a_history", kwargs={"pk": sat_a.hub_entity.id})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "montrek_table.html")
+        self.assertTemplateUsed(response, "montrek_history.html")
 
     def test_view_with_history_data(self):
         huba = me_factories.HubAFactory()
@@ -92,24 +92,22 @@ class TestMontrekExampleAHistoryView(TestCase):
         )
         url = reverse("montrek_example_a_history", kwargs={"pk": huba.id})
         response = self.client.get(url)
-        test_queryset = response.context_data["object_list"].object_list
-        self.assertEqual(len(test_queryset), 2)
-        self.assertEqual(test_queryset[1].field_a1_int, 5)
-        self.assertEqual(test_queryset[0].field_a1_int, 6)
-        self.assertEqual(test_queryset[1].change_date[:10], "0001-01-01")
-        self.assertEqual(test_queryset[0].change_date[:10], "2024-02-17")
-        self.assertEqual(test_queryset[0].change_comment, "change comment")
-        self.assertEqual(
-            test_queryset[1].change_comment, "initial comment,another comment"
-        )
+        test_history_data_tables = response.context_data["history_data_tables"]
+        self.assertEqual(len(test_history_data_tables), 3)
+        sat_a1_queryset = test_history_data_tables[0].queryset
+        self.assertEqual(len(sat_a1_queryset), 2)
+        self.assertEqual(sat_a1_queryset[1].field_a1_int, 5)
+        self.assertEqual(sat_a1_queryset[0].field_a1_int, 6)
+        self.assertEqual(sat_a1_queryset[0].comment, "change comment")
+        self.assertEqual(sat_a1_queryset[1].comment, "initial comment")
 
-        self.assertEqual(test_queryset[0].field_a1_str, test_queryset[1].field_a1_str)
-        self.assertEqual(test_queryset[0].field_a2_str, test_queryset[1].field_a2_str)
-        self.assertEqual(
-            test_queryset[0].field_a2_float, test_queryset[1].field_a2_float
-        )
-        self.assertEqual(test_queryset[0].changed_by, user2.email)
-        self.assertEqual(test_queryset[1].changed_by, f"{user1.email},{user2.email}")
+        self.assertEqual(sat_a1_queryset[0].changed_by, user2.email)
+        self.assertEqual(sat_a1_queryset[1].changed_by, user1.email)
+        sat_a2_queryset = test_history_data_tables[1].queryset
+        self.assertEqual(len(sat_a2_queryset), 1)
+        self.assertEqual(sat_a2_queryset[0].field_a2_float, 6.0)
+        self.assertEqual(sat_a2_queryset[0].comment, "another comment")
+        self.assertEqual(sat_a2_queryset[0].changed_by, user2.email)
 
 
 class TestMontrekExampleBListView(TestCase):
