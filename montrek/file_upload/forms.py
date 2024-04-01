@@ -45,7 +45,5 @@ class FieldMapCreateForm(MontrekCreateForm):
         for name, _ in inspect.getmembers(
             self.field_map_manager.field_map_function_manager_class, inspect.isfunction
         ):
-            if name.startswith("_"):
-                continue
             function_names.append(name)
         return sorted(list(set(function_names)))
