@@ -20,6 +20,7 @@ from baseclasses.dataclasses.table_elements import (
     StringTableElement,
 )
 from file_upload.repositories.field_map_repository import FieldMapRepository
+from baseclasses.repositories.montrek_repository import MontrekRepository
 from file_upload.managers.field_map_manager import FieldMapManager
 
 # Create your views here.
@@ -100,11 +101,13 @@ class MontrekFieldMapCreateView(MontrekCreateView):
     success_url = "under_construction"
     form_class = FieldMapCreateForm
     field_map_manager_class = FieldMapManager
+    related_repository_class = MontrekRepository
 
     def get_form(self, form_class=None):
         return self.form_class(
             repository=self.repository_object,
             field_map_manager=self.field_map_manager_class(),
+            related_repository=self.related_repository_class(),
         )
 
     def post(self, request, *args, **kwargs):
@@ -112,6 +115,7 @@ class MontrekFieldMapCreateView(MontrekCreateView):
             self.request.POST,
             repository=self.repository_object,
             field_map_manager=self.field_map_manager_class(),
+            related_repository=self.related_repository_class(),
         )
         if form.is_valid():
             return self.form_valid(form)

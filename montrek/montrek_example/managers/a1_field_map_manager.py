@@ -24,5 +24,4 @@ class AFieldMapFunctionManager(FieldMapFunctionManager):
 
 
 class AFieldMapManager(FieldMapManager):
-    satellite_class = SatA1
     field_map_function_manager_class = AFieldMapFunctionManager
