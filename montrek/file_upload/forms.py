@@ -3,7 +3,7 @@ from django.forms.fields import ChoiceField
 
 from baseclasses.forms import MontrekCreateForm
 from baseclasses.models import MontrekSatelliteABC
-from file_upload.managers.field_mapper import FieldMapManager
+from file_upload.managers.field_map_manager import FieldMapManager
 
 
 class UploadFileForm(forms.Form):
@@ -42,10 +42,10 @@ class FieldMapCreateForm(MontrekCreateForm):
 
     @classmethod
     def _get_function_name_choices(cls):
-        field_mapper_classes = FieldMapManager.__subclasses__()
+        field_map_manager_classes = FieldMapManager.__subclasses__()
         function_names = []
-        for field_mapper_class in field_mapper_classes:
+        for field_map_manager_class in field_map_manager_classes:
             function_names += [
-                f for f in dir(field_mapper_class) if f.startswith("fn_")
+                f for f in dir(field_map_manager_class) if f.startswith("fn_")
             ]
         return sorted(list(set(function_names)))

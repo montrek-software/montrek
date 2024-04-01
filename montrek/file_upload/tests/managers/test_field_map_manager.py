@@ -4,7 +4,7 @@ from django.test import TestCase
 from file_upload.tests.factories.field_map_factories import (
     FieldMapStaticSatelliteFactory,
 )
-from file_upload.managers.field_mapper import FieldMapManager
+from file_upload.managers.field_map_manager import FieldMapManager
 
 
 class MyFieldMapManager(FieldMapManager):
@@ -37,8 +37,8 @@ class TestFieldMapManager(TestCase):
             }
         )
 
-        field_mapper = MyFieldMapManager(source_df)
-        mapped_df = field_mapper.apply_field_maps()
+        field_map_manager = MyFieldMapManager(source_df)
+        mapped_df = field_map_manager.apply_field_maps()
 
         self.assertEqual(
             mapped_df.columns.to_list(),

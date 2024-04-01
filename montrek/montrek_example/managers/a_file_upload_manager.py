@@ -4,7 +4,7 @@ import logging
 from typing import Dict, Any
 
 
-from file_upload.managers.field_mapper import FieldMapManager
+from file_upload.managers.field_map_manager import FieldMapManager
 from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepository,
 )
