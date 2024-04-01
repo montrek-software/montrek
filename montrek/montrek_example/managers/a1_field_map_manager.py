@@ -11,7 +11,7 @@ from montrek_example.models import SatA1
 logger = logging.getLogger(__name__)
 
 
-class AFieldMapFunctionManager(FieldMapFunctionManager):
+class A1FieldMapFunctionManager(FieldMapFunctionManager):
     @staticmethod
     def append_source_field_1(source_df: pd.DataFrame, source_field: str) -> pd.Series:
         return source_df[source_field].astype(str) + source_df["source_field_1"].astype(
@@ -23,5 +23,5 @@ class AFieldMapFunctionManager(FieldMapFunctionManager):
         return source_df[source_field] * 1000
 
 
-class AFieldMapManager(FieldMapManager):
-    field_map_function_manager_class = AFieldMapFunctionManager
+class A1FieldMapManager(FieldMapManager):
+    field_map_function_manager_class = A1FieldMapFunctionManager

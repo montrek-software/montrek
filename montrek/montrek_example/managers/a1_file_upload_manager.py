@@ -7,7 +7,7 @@ from typing import Dict, Any
 from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepository,
 )
-from montrek_example.managers.a1_field_map_manager import AFieldMapManager
+from montrek_example.managers.a1_field_map_manager import A1FieldMapManager
 from montrek_example.repositories.hub_a_repository import HubARepository
 
 logger = logging.getLogger(__name__)
@@ -34,7 +34,7 @@ class AFileUploadProcessor:
 
     def process(self, file_path: str):
         source_df = pd.read_csv(file_path)
-        mapped_df = AFieldMapManager.apply_field_maps(source_df)
+        mapped_df = A1FieldMapManager.apply_field_maps(source_df)
         mapped_df["comment"] = self.file_upload_registry_hub.file_name
         mapped_df["link_hub_a_file_upload_registry"] = self.file_upload_registry_hub
         self.hub_a_repository.create_objects_from_data_frame(mapped_df)
