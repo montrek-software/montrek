@@ -251,7 +251,7 @@ class TestMontrekExampleA1UploadFileView(TestCase):
     def setUp(self):
         self.user = MontrekUserFactory()
         self.client.force_login(self.user)
-        self.url = reverse("a_upload_file")
+        self.url = reverse("a1_upload_file")
 
     def test_view_return_correct_html(self):
         response = self.client.get(self.url)
