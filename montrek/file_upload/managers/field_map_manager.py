@@ -9,23 +9,22 @@ class FieldMapFunctionManager:
 
 
 class FieldMapManager:
-    def __init__(
-        self,
-        source_df: pd.DataFrame,
-        field_map_function_manager: FieldMapFunctionManager,
-    ):
-        self.source_df = source_df
-        self.field_map_function_manager = field_map_function_manager
-        self.field_map_repository = FieldMapRepository()
-        self.field_maps = self.field_map_repository.std_queryset().filter(
-            source_field__in=self.source_df.columns.to_list()
-        )
+    field_map_function_manager_class = FieldMapFunctionManager
+    field_map_repository_class = FieldMapRepository
 
-    def apply_field_maps(self):
+    @classmethod
+    def apply_field_maps(cls, source_df: pd.DataFrame) -> pd.DataFrame:
+        field_maps = (
+            cls.field_map_repository_class()
+            .std_queryset()
+            .filter(source_field__in=source_df.columns.to_list())
+        )
         mapped_df = pd.DataFrame()
-        for field_map in self.field_maps:
-            func = getattr(self.field_map_function_manager, field_map.function_name)
+        for field_map in field_maps:
+            func = getattr(
+                cls.field_map_function_manager_class, field_map.function_name
+            )
             mapped_df[field_map.database_field] = func(
-                self.source_df, field_map.source_field
+                source_df, field_map.source_field
             )
         return mapped_df

@@ -20,6 +20,10 @@ class MyFieldMapFunctionManager(FieldMapFunctionManager):
         return source_df[source_field].astype(str) + source_df["source_field_1"]
 
 
+class MyFieldMapManager(FieldMapManager):
+    field_map_function_manager_class = MyFieldMapFunctionManager
+
+
 class TestFieldMapManager(TestCase):
     def test_apply_field_maps(self):
         FieldMapStaticSatelliteFactory(source_field="source_field_0")
@@ -40,8 +44,7 @@ class TestFieldMapManager(TestCase):
             }
         )
 
-        field_map_manager = FieldMapManager(source_df, MyFieldMapFunctionManager())
-        mapped_df = field_map_manager.apply_field_maps()
+        mapped_df = MyFieldMapManager.apply_field_maps(source_df)
 
         self.assertEqual(
             mapped_df.columns.to_list(),

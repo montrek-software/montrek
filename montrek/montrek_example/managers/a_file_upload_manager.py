@@ -28,6 +28,10 @@ class AFieldMapFunctionManager(FieldMapFunctionManager):
         return source_df[source_field] * 1000
 
 
+class AFieldMapManager(FieldMapManager):
+    field_map_function_manager_class = AFieldMapFunctionManager
+
+
 class AFileUploadProcessor:
     message = "Not implemented"
     file_upload_registry = None
@@ -49,9 +53,7 @@ class AFileUploadProcessor:
 
     def process(self, file_path: str):
         source_df = pd.read_csv(file_path)
-        mapped_df = FieldMapManager(
-            source_df, AFieldMapFunctionManager()
-        ).apply_field_maps()
+        mapped_df = AFieldMapManager.apply_field_maps(source_df)
         mapped_df["comment"] = self.file_upload_registry_hub.file_name
         mapped_df["link_hub_a_file_upload_registry"] = self.file_upload_registry_hub
         self.hub_a_repository.create_objects_from_data_frame(mapped_df)
