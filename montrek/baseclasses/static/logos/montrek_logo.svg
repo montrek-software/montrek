@@ -1,17 +1,19 @@
-<svg width="400" height="100" xmlns="http://www.w3.org/2000/svg">
-  <!-- Ellipses on the corners of the left rectangle -->
-  <ellipse cx="25" cy="25" rx="25" ry="10" fill="#004767" />
-  <ellipse cx="25" cy="75" rx="25" ry="10" fill="#004767" />
-  <!-- Left Rectangle -->
-  <rect x="50" y="25" width="75" height="50" fill="#004767" />
+<svg width="289.8" height="84.525" xmlns="http://www.w3.org/2000/svg">
+  <!-- Ellipses on the corners of the left rectangle, scaled down -->
+  <ellipse cx="21.785" cy="21.785" rx="21.785" ry="6.727" fill="#004767" />
+  <ellipse cx="21.785" cy="65.347" rx="21.785" ry="6.727" fill="#004767" />
+  
+  <!-- Left Rectangle, scaled down -->
+  <rect x="43.571" y="21.785" width="70.474" height="43.571" fill="#004767" />
 
+  <!-- Central Diamond (Rotated Square), scaled down -->
+  <rect x="114.045" y="21.785" width="43.571" height="43.571" fill="#004767" transform="rotate(45 145.0 52.6)" />
 
-  <!-- Central Diamond (Rotated Square) -->
-  <rect x="135.71" y="25" width="50" height="50" fill="#004767" transform="rotate(45 160 50)" />
-
-  <!-- Right Rectangle -->
-  <rect x="195.71" y="25" width="75" height="50" fill="#004767" />
-  <!-- Ellipses on the corners of the right rectangle -->
-  <ellipse cx="295.71" cy="25" rx="25" ry="10" fill="#004767" />
-  <ellipse cx="295.71" cy="75" rx="25" ry="10" fill="#004767" />
+  <!-- Right Rectangle, scaled down -->
+  <rect x="175.527" y="21.785" width="70.474" height="43.571" fill="#004767" />
+  
+  <!-- Ellipses on the corners of the right rectangle, scaled down -->
+  <ellipse cx="268.006" cy="21.785" rx="21.785" ry="6.727" fill="#004767" />
+  <ellipse cx="268.006" cy="65.347" rx="21.785" ry="6.727" fill="#004767" />
+  <text x="50%" y="83" fill="#004767" font-family="Arial" font-size="17" text-anchor="middle">montrek</text>
 </svg>

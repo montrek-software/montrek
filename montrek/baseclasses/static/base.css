@@ -84,7 +84,7 @@ body {
 
 .row {
     padding: 2px;
-    margin-left: 2px;
+    margin-left: 1px;
 }
 
 /* Table Styling */
@@ -101,7 +101,7 @@ tr {
 
 /* Table Data/Cell Styling */
 td {
-    padding: 5px; /* Add padding to each cell */
+    padding: 2px; /* Add padding to each cell */
     text-align: left; /* Align text to the left */
 }
 /* Every even row will have a pale blue background */
