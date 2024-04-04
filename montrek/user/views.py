@@ -1,7 +1,4 @@
 from django.contrib.auth import login
-from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.core.exceptions import PermissionDenied
-from django.http.response import HttpResponseRedirect
 from django.urls import reverse_lazy
 from django.contrib.auth import views as auth_views
 from django.views import generic as generic_views
