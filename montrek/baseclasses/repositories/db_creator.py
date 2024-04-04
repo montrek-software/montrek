@@ -1,6 +1,8 @@
 import datetime
 from typing import Any, Dict, List, Protocol
 from dataclasses import dataclass
+from django.contrib.auth import get_user_model
+from django.core.exceptions import PermissionDenied
 from django.db.models import QuerySet
 from django.utils import timezone
 from baseclasses.models import (
@@ -55,8 +57,12 @@ class DbCreator:
     ) -> None:
         selected_satellites = {"new": [], "existing": [], "updated": []}
         creation_date = timezone.now()
+        user = get_user_model().objects.get(id=user_id)
         self.hub_entity = hub_entity
         for satellite_class in self.satellite_classes:
+            permission = f"{satellite_class._meta.app_label}.add_{satellite_class.__name__.lower()}"
+            if not user.has_perm(permission):
+                raise PermissionDenied(f"Missing permission: {permission}")
             sat_data = {
                 k: v
                 for k, v in data.items()
