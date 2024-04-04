@@ -117,8 +117,7 @@ class MontrekPasswordChangeView(auth_views.PasswordChangeView, MessageHandlerMix
 
 
 class MontrekPermissionRequiredMixin(PermissionRequiredMixin):
-    # login_url = reverse("login")
-    login_url = "/user/login/"
+    login_url = reverse_lazy("login")
 
     def get_permission_denied_message(self):
         msg = "You do not have the required permissions to access this page."
@@ -129,5 +128,6 @@ class MontrekPermissionRequiredMixin(PermissionRequiredMixin):
             return super().handle_no_permission()
         except PermissionDenied as e:
             messages.error(self.request, e)
-        prev_url = self.request.META.get("HTTP_REFERER")
-        return redirect(prev_url)
+        previous_url = self.request.META.get("HTTP_REFERER")
+        previous_url = previous_url or self.login_url
+        return redirect(previous_url)
