@@ -1,15 +1,12 @@
-from django.contrib.auth import get_user_model, login
+from django.contrib.auth import login
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.http.response import HttpResponseRedirect
-from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.contrib.auth import views as auth_views
 from django.views import generic as generic_views
 from django.contrib import messages
 from user import forms
-
-from user.forms import MontrekUserCreationForm, MontrekAuthenticationForm
 
 
 class MessageHandlerMixin:
@@ -115,20 +112,3 @@ class MontrekPasswordChangeView(auth_views.PasswordChangeView, MessageHandlerMix
     def form_invalid(self, form):
         self.add_form_error_messages(form)
         return super().form_invalid(form)
-
-
-class MontrekPermissionRequiredMixin(PermissionRequiredMixin):
-    login_url = reverse_lazy("login")
-
-    def get_permission_denied_message(self):
-        msg = "You do not have the required permissions to access this page."
-        return msg
-
-    def handle_no_permission(self):
-        try:
-            return super().handle_no_permission()
-        except PermissionDenied as e:
-            messages.error(self.request, e)
-        previous_url = self.request.META.get("HTTP_REFERER")
-        previous_url = previous_url or self.login_url
-        return HttpResponseRedirect(previous_url)

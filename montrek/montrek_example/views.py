@@ -8,7 +8,6 @@ from file_upload.views import (
     MontrekUploadFileView,
     MontrekUploadView,
 )
-from user.views import MontrekPermissionRequiredMixin
 from montrek_example.repositories.sat_a1_repository import SatA1Repository
 from montrek_example.managers.a1_file_upload_manager import (
     A1FieldMapManager,
@@ -254,7 +253,7 @@ class MontrekExampleDList(views.MontrekListView):
     success_url = "montrek_example_d_list"
 
 
-class MontrekExampleDCreate(MontrekPermissionRequiredMixin, views.MontrekCreateView):
+class MontrekExampleDCreate(views.MontrekCreateView):
     repository = HubDRepository
     page_class = pages.MontrekExampleDAppPage
     success_url = "montrek_example_d_list"

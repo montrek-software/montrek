@@ -1,3 +1,5 @@
+from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.core.exceptions import PermissionDenied
 from django.core.paginator import Page
 from django.shortcuts import render
 from django.views.generic.list import ListView
@@ -8,7 +10,7 @@ from django.views.generic.edit import CreateView
 from django.views import View
 from django.http import HttpResponseRedirect
 from django.http import HttpResponse
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.contrib import messages
 from decouple import config
 from baseclasses.dataclasses.nav_bar_model import NavBarModel
@@ -142,6 +144,24 @@ class MontrekViewMixin:
         return self.repository_object.std_queryset()
 
 
+class MontrekPermissionRequiredMixin(PermissionRequiredMixin):
+    login_url = reverse_lazy("login")
+    permission_required = []
+
+    def get_permission_denied_message(self):
+        msg = "You do not have the required permissions to access this page."
+        return msg
+
+    def handle_no_permission(self):
+        try:
+            return super().handle_no_permission()
+        except PermissionDenied as e:
+            messages.error(self.request, e)
+        previous_url = self.request.META.get("HTTP_REFERER")
+        previous_url = previous_url or self.login_url
+        return HttpResponseRedirect(previous_url)
+
+
 class MontrekTemplateView(TemplateView, MontrekPageViewMixin, MontrekViewMixin):
     template_name = "montrek.html"
     repository = MontrekRepository
@@ -225,7 +245,7 @@ class MontrekDetailView(DetailView, MontrekPageViewMixin, MontrekViewMixin):
         return context
 
 
-class MontrekCreateUpdateView(CreateView, MontrekPageViewMixin, MontrekViewMixin):
+class MontrekCreateUpdateView(MontrekPermissionRequiredMixin, CreateView, MontrekPageViewMixin, MontrekViewMixin):
     repository = MontrekRepository
     form_class = MontrekCreateForm
     template_name = "montrek_create.html"
@@ -275,7 +295,7 @@ class MontrekUpdateView(MontrekCreateUpdateView):
         return context
 
 
-class MontrekDeleteView(View, MontrekViewMixin, MontrekPageViewMixin):
+class MontrekDeleteView(View, MontrekPermissionRequiredMixin, MontrekViewMixin, MontrekPageViewMixin):
     repository = MontrekRepository
     success_url = "under_construction"
     template_name = "montrek_delete.html"
@@ -293,3 +313,5 @@ class MontrekDeleteView(View, MontrekViewMixin, MontrekPageViewMixin):
 
     def get(self, request, *args, **kwargs):
         return render(request, self.template_name, {"pk": self.kwargs["pk"]})
+
+
