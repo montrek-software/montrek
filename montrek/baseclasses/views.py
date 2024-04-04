@@ -1,6 +1,5 @@
 from django.core.exceptions import PermissionDenied
-from django.core.paginator import Page
-from django.shortcuts import redirect, render
+from django.shortcuts import render
 from django.views.generic.list import ListView
 from django.core.paginator import Paginator
 from django.views.generic import DetailView
@@ -245,7 +244,7 @@ class MontrekCreateUpdateView(CreateView, MontrekPageViewMixin, MontrekViewMixin
             messages.error(self.request, e)
             previous_url = self.request.META.get("HTTP_REFERER")
             previous_url = previous_url or reverse("login")
-            return redirect(previous_url)
+            return HttpResponseRedirect(previous_url)
         return HttpResponseRedirect(self.get_success_url())
 
     def get_form(self, form_class=None):
