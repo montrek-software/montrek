@@ -1,3 +1,4 @@
+from django.contrib.auth.models import Permission
 from django.test import TestCase
 from django.core.files.uploadedfile import SimpleUploadedFile
 from file_upload.managers.file_upload_manager import FileUploadManager
@@ -52,6 +53,13 @@ class TestFileUploadManager(TestCase):
             content_type="text/plain",
         )
         self.user = MontrekUserFactory()
+        permissions = Permission.objects.filter(
+            codename__in=[
+                "add_fileuploadfilestaticsatellite",
+                "add_fileuploadregistrystaticsatellite",
+            ]
+        )
+        self.user.user_permissions.add(*permissions)
         self.session_data = {"user_id": self.user.id}
 
     def test_fum_init(self):
