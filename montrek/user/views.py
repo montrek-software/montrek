@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model, login
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied
+from django.http.response import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.contrib.auth import views as auth_views
@@ -130,4 +131,4 @@ class MontrekPermissionRequiredMixin(PermissionRequiredMixin):
             messages.error(self.request, e)
         previous_url = self.request.META.get("HTTP_REFERER")
         previous_url = previous_url or self.login_url
-        return redirect(previous_url)
+        return HttpResponseRedirect(previous_url)
