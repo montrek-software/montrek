@@ -60,9 +60,6 @@ class DbCreator:
         user = get_user_model().objects.get(id=user_id)
         self.hub_entity = hub_entity
         for satellite_class in self.satellite_classes:
-            permission = f"{satellite_class._meta.app_label}.add_{satellite_class.__name__.lower()}"
-            if not user.has_perm(permission):
-                raise PermissionDenied(f"Missing permission: {permission}")
             sat_data = {
                 k: v
                 for k, v in data.items()
@@ -70,6 +67,9 @@ class DbCreator:
             }
             if self._is_empty(sat_data):
                 continue
+            permission = f"{satellite_class._meta.app_label}.add_{satellite_class.__name__.lower()}"
+            if not user.has_perm(permission):
+                raise PermissionDenied(f"Missing permission: {permission}")
             sat_data = self._make_timezone_aware(sat_data)
             sat_data["created_by_id"] = user_id
             sat = satellite_class(hub_entity=self.hub_entity, **sat_data)
