@@ -162,7 +162,9 @@ class MontrekPermissionRequiredMixin(PermissionRequiredMixin):
         return HttpResponseRedirect(previous_url)
 
 
-class MontrekTemplateView(TemplateView, MontrekPageViewMixin, MontrekViewMixin):
+class MontrekTemplateView(
+    MontrekPermissionRequiredMixin, TemplateView, MontrekPageViewMixin, MontrekViewMixin
+):
     template_name = "montrek.html"
     repository = MontrekRepository
 
@@ -231,7 +233,9 @@ class MontrekHistoryListView(MontrekTemplateView):
         }
 
 
-class MontrekDetailView(DetailView, MontrekPageViewMixin, MontrekViewMixin):
+class MontrekDetailView(
+    MontrekPermissionRequiredMixin, DetailView, MontrekPageViewMixin, MontrekViewMixin
+):
     template_name = "montrek_details.html"
     repository = MontrekRepository
 
@@ -245,7 +249,9 @@ class MontrekDetailView(DetailView, MontrekPageViewMixin, MontrekViewMixin):
         return context
 
 
-class MontrekCreateUpdateView(MontrekPermissionRequiredMixin, CreateView, MontrekPageViewMixin, MontrekViewMixin):
+class MontrekCreateUpdateView(
+    MontrekPermissionRequiredMixin, CreateView, MontrekPageViewMixin, MontrekViewMixin
+):
     repository = MontrekRepository
     form_class = MontrekCreateForm
     template_name = "montrek_create.html"
@@ -295,7 +301,9 @@ class MontrekUpdateView(MontrekCreateUpdateView):
         return context
 
 
-class MontrekDeleteView(View, MontrekPermissionRequiredMixin, MontrekViewMixin, MontrekPageViewMixin):
+class MontrekDeleteView(
+    View, MontrekPermissionRequiredMixin, MontrekViewMixin, MontrekPageViewMixin
+):
     repository = MontrekRepository
     success_url = "under_construction"
     template_name = "montrek_delete.html"
@@ -313,5 +321,3 @@ class MontrekDeleteView(View, MontrekPermissionRequiredMixin, MontrekViewMixin, 
 
     def get(self, request, *args, **kwargs):
         return render(request, self.template_name, {"pk": self.kwargs["pk"]})
-
-
