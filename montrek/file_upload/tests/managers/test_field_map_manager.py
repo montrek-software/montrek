@@ -18,7 +18,7 @@ class MyFieldMapFunctionManager(FieldMapFunctionManager):
 
     @staticmethod
     def raise_error(source_df: pd.DataFrame, source_field: str) -> pd.Series:
-        raise RuntimeError("bad_error")
+        raise RuntimeError("bad error")
 
 
 class MyFieldMapManager(FieldMapManager):
@@ -47,7 +47,8 @@ class TestFieldMapManager(TestCase):
         )
 
 
-        mapped_df = MyFieldMapManager.apply_field_maps(self.source_df)
+        field_map_manager = MyFieldMapManager()
+        mapped_df = field_map_manager.apply_field_maps(self.source_df)
 
         self.assertEqual(
             mapped_df.columns.to_list(),
@@ -62,6 +63,7 @@ class TestFieldMapManager(TestCase):
         self.assertEqual(mapped_df["database_field_1"].to_list(), ["a", "b", "c"])
         self.assertEqual(mapped_df["database_field_2"].to_list(), [8, 10, 12])
         self.assertEqual(mapped_df["database_field_3"].to_list(), ["7a", "8b", "9c"])
+        self.assertEqual(field_map_manager.exceptions, [])
 
     def test_apply_field_maps_exception(self):
         FieldMapStaticSatelliteFactory(
@@ -78,27 +80,19 @@ class TestFieldMapManager(TestCase):
         field_map_manager = MyFieldMapManager()
         mapped_df = field_map_manager.apply_field_maps(self.source_df)
 
-        self.assertEqual(len(field_map_manager.exceptions), 2)
-        self.assertEqual(
-            field_map_manager.exceptions[0],
-            FieldMapExceptionInfo(
-                function_name='raise_error',
-                source_field='source_field_0',
-                database_field='database_field_0',
-                exception_message='RuntimeError: bad_error',
-                function_parameters={},
-            )
-        )
-        self.assertEqual(
-            field_map_manager.exceptions[1],
-            FieldMapExceptionInfo(
-                function_name='raise_error',
-                source_field='source_field_2',
-                database_field='database_field_2',
-                exception_message='RuntimeError: bad_error',
-                function_parameters={},
-            )
-        )
+        exceptions = field_map_manager.exceptions
+        self.assertEqual(len(exceptions), 2)
+        self.assertEqual(exceptions[0].function_name, 'raise_error')
+        self.assertEqual(exceptions[0].source_field, 'source_field_0')
+        self.assertEqual(exceptions[0].database_field, 'database_field_0')
+        self.assertEqual(exceptions[0].function_parameters, {})
+        self.assertEqual(exceptions[0].exception_message, 'RuntimeError: bad error')
+        self.assertEqual(exceptions[1].function_name, 'raise_error')
+        self.assertEqual(exceptions[1].source_field, 'source_field_2')
+        self.assertEqual(exceptions[1].database_field, 'database_field_2')
+        self.assertEqual(exceptions[1].function_parameters, {})
+        self.assertEqual(exceptions[1].exception_message, 'RuntimeError: bad error')
+
 
 
         self.assertEqual(
