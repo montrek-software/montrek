@@ -1,19 +1,23 @@
-<svg width="289.8" height="84.525" xmlns="http://www.w3.org/2000/svg">
-  <!-- Ellipses on the corners of the left rectangle, scaled down -->
-  <ellipse cx="21.785" cy="21.785" rx="21.785" ry="6.727" fill="#004767" />
-  <ellipse cx="21.785" cy="65.347" rx="21.785" ry="6.727" fill="#004767" />
+<svg width="295" height="90" xmlns="http://www.w3.org/2000/svg">
+  <!-- Border around the entire SVG -->
+  <rect x="1" y="1" width="293" height="88" fill="none" stroke="#004767" stroke-width="2"/>
+  <svg width="289.8" height="84.525" x="2.5">
+    <!-- Ellipses on the corners of the left rectangle, scaled down -->
+    <ellipse cx="21.785" cy="21.785" rx="21.785" ry="6.727" fill="#004767" />
+    <ellipse cx="21.785" cy="65.347" rx="21.785" ry="6.727" fill="#004767" />
+    
+    <!-- Left Rectangle, scaled down -->
+    <rect x="43.571" y="21.785" width="70.474" height="43.571" fill="#004767" />
   
-  <!-- Left Rectangle, scaled down -->
-  <rect x="43.571" y="21.785" width="70.474" height="43.571" fill="#004767" />
-
-  <!-- Central Diamond (Rotated Square), scaled down -->
-  <rect x="114.045" y="21.785" width="43.571" height="43.571" fill="#004767" transform="rotate(45 145.0 52.6)" />
-
-  <!-- Right Rectangle, scaled down -->
-  <rect x="175.527" y="21.785" width="70.474" height="43.571" fill="#004767" />
+    <!-- Central Diamond (Rotated Square), scaled down -->
+    <rect x="114.045" y="21.785" width="43.571" height="43.571" fill="#BE0D3E" transform="rotate(45 145.0 52.6)" />
   
-  <!-- Ellipses on the corners of the right rectangle, scaled down -->
-  <ellipse cx="268.006" cy="21.785" rx="21.785" ry="6.727" fill="#004767" />
-  <ellipse cx="268.006" cy="65.347" rx="21.785" ry="6.727" fill="#004767" />
-  <text x="50%" y="83" fill="#004767" font-family="Arial" font-size="17" text-anchor="middle">montrek</text>
+    <!-- Right Rectangle, scaled down -->
+    <rect x="175.527" y="21.785" width="70.474" height="43.571" fill="#004767" />
+    
+    <!-- Ellipses on the corners of the right rectangle, scaled down -->
+    <ellipse cx="268.006" cy="21.785" rx="21.785" ry="6.727" fill="#004767" />
+    <ellipse cx="268.006" cy="65.347" rx="21.785" ry="6.727" fill="#004767" />
+    <text x="50%" y="83" fill="#004767" font-family="Arial" font-size="17" text-anchor="middle">montrek</text>
+  </svg>
 </svg>
