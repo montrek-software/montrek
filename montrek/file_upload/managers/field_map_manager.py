@@ -5,10 +5,11 @@ from file_upload.repositories.field_map_repository import FieldMapRepository
 
 @dataclass
 class FieldMapExceptionInfo:
-    function_name: str
-    source_field: str
     database_field: str
     exception_message: str
+    function_name: str
+    function_parameters: dict
+    source_field: str
 
 
 class FieldMapFunctionManager:
@@ -52,10 +53,11 @@ class FieldMapManager:
                 )
             except Exception as e:
                 exception_info = FieldMapExceptionInfo(
-                    source_field=field_map.source_field,
                     database_field=field_map.database_field,
-                    function_name=field_map.function_name,
                     exception_message=f"{e.__class__.__name__}: {e}",
+                    function_name=field_map.function_name,
+                    function_parameters=function_parameters,
+                    source_field=field_map.source_field,
                 )
                 self.exceptions.append(exception_info)
 

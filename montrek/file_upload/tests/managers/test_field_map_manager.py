@@ -85,7 +85,8 @@ class TestFieldMapManager(TestCase):
                 function_name='raise_error',
                 source_field='source_field_0',
                 database_field='database_field_0',
-                exception_message='RuntimeError: bad_error'
+                exception_message='RuntimeError: bad_error',
+                function_parameters={},
             )
         )
         self.assertEqual(
@@ -94,7 +95,8 @@ class TestFieldMapManager(TestCase):
                 function_name='raise_error',
                 source_field='source_field_2',
                 database_field='database_field_2',
-                exception_message='RuntimeError: bad_error'
+                exception_message='RuntimeError: bad_error',
+                function_parameters={},
             )
         )
 

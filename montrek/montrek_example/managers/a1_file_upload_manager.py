@@ -34,12 +34,19 @@ class A1FileUploadProcessor:
 
     def process(self, file_path: str):
         source_df = pd.read_csv(file_path)
-        mapped_df = A1FieldMapManager.apply_field_maps(source_df)
-        mapped_df["comment"] = self.file_upload_registry_hub.file_name
-        mapped_df["link_hub_a_file_upload_registry"] = self.file_upload_registry_hub
-        self.hub_a_repository.create_objects_from_data_frame(mapped_df)
-        self.message = f"Successfully uploaded {mapped_df.shape[0]} rows."
-        return True
+        field_map_manager = A1FieldMapManager()
+        mapped_df = field_map_manager.apply_field_maps(source_df)
+        if field_map_manager.exceptions:
+            self.message = f"Errors raised during field mapping:"
+            for e in field_map_manager.exceptions:
+                self.message += f"<br>{e.source_field, e.database_field, e.function_name, e.function_parameters, e.exception_message}"
+            return False
+        else:
+            mapped_df["comment"] = self.file_upload_registry_hub.file_name
+            mapped_df["link_hub_a_file_upload_registry"] = self.file_upload_registry_hub
+            self.hub_a_repository.create_objects_from_data_frame(mapped_df)
+            self.message = f"Successfully uploaded {mapped_df.shape[0]} rows."
+            return True
 
     def pre_check(self, file_path: str):
         return True
