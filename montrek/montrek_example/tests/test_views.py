@@ -250,7 +250,9 @@ class TestMontrekExampleA1UploadFileView(TestCase):
         self.user = MontrekUserFactory()
         self.client.force_login(self.user)
         self.url = reverse("a1_upload_file")
-        self.test_file_path = os.path.join(os.path.dirname(__file__), "data", "a_file.csv")
+        self.test_file_path = os.path.join(
+            os.path.dirname(__file__), "data", "a_file.csv"
+        )
 
     def test_view_return_correct_html(self):
         response = self.client.get(self.url)
@@ -294,13 +296,12 @@ class TestMontrekExampleA1UploadFileView(TestCase):
         self.assertEqual(a_hubs[1].field_a1_int, 2000)
         self.assertEqual(a_hubs[2].field_a1_int, 3000)
 
-
     def test_view_post_field_map_exception(self):
         FieldMapStaticSatelliteFactory(
             source_field="source_field_0",
             database_field="field_a1_str",
             function_name="multiply_by_value",
-            function_parameters={'value': 'a'}
+            function_parameters={"value": "a"},
         )
         FieldMapStaticSatelliteFactory(
             source_field="source_field_1",
@@ -321,10 +322,10 @@ class TestMontrekExampleA1UploadFileView(TestCase):
         self.assertEqual(
             str(messages[0]),
             (
-                'Errors raised during field mapping:'
-                '<br>(\'source_field_0\', \'field_a1_str\', \'multiply_by_value\', {\'value\': \'a\'}, "TypeError: can\'t multiply sequence by non-int of type \'str\'")'
-                '<br>(\'source_field_1\', \'field_a1_int\', \'multiply_by_value\', {}, "TypeError: FieldMapFunctionManager.multiply_by_value() missing 1 required positional argument: \'value\'")'
-            )
+                "Errors raised during field mapping:"
+                "<br>('source_field_0', 'field_a1_str', 'multiply_by_value', {'value': 'a'}, \"TypeError: can't multiply sequence by non-int of type 'str'\")"
+                "<br>('source_field_1', 'field_a1_int', 'multiply_by_value', {}, \"TypeError: FieldMapFunctionManager.multiply_by_value() missing 1 required positional argument: 'value'\")"
+            ),
         )
 
         self.assertEqual(len(a_hubs), 0)
@@ -374,6 +375,7 @@ class TestMontrekExampleA1FieldMapCreateView(TestCase):
             [
                 ("append_source_field_1", "append_source_field_1"),
                 ("multiply_by_1000", "multiply_by_1000"),
+                ("multiply_by_value", "multiply_by_value"),
                 ("no_change", "no_change"),
             ],
         )
