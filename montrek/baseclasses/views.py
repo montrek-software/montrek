@@ -182,7 +182,9 @@ class MontrekTemplateView(
         return self.get_view_queryset()
 
 
-class MontrekListView(ListView, MontrekPageViewMixin, MontrekViewMixin):
+class MontrekListView(
+    MontrekPermissionRequiredMixin, ListView, MontrekPageViewMixin, MontrekViewMixin
+):
     template_name = "montrek_table.html"
     repository = MontrekRepository
 
