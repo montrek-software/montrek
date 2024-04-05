@@ -1,3 +1,4 @@
+import os
 from django.core.paginator import Page
 from django.shortcuts import render
 from django.views.generic.list import ListView
@@ -47,6 +48,11 @@ def links(request):
         link_constituents = link.split(",")
         links.append(LinkModel(href=link_constituents[0], title=link_constituents[1]))
     return render(request, "links.html", {"links": links})
+
+
+def client_logo(request):
+    client_logo_path = config("CLIENT_LOGO_PATH", default="")
+    return render(request, "client_logo.html", {"client_logo_path": client_logo_path})
 
 
 class MontrekPageViewMixin:
