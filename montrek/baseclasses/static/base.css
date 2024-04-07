@@ -10,9 +10,15 @@ body {
     background-color: #f4f4f4; /* Light grey background */
 }
 
-.container-fluid {
-    padding: 20px;
+label {
+    font-weight: bold;
+    text-align: left;
 }
+
+input {
+  height: 25px;
+}
+
 
 /* Navigation Bar Styling */
 .navbar {
@@ -23,38 +29,48 @@ body {
     color: #ffffff; /* White text */
 }
 
-/* Overview and Links Styling */
-.col-md-2 {
-    background-color: #ffffff; /* White background */
-    padding: 10px;
+.box {
+  /* border: 1px solid #004767; */
 }
 
-.col-md-2 h2 {
+/* /* /* Overview and Links Styling */ */ */
+/* .col-lg-2 { */
+/*     background-color: #ffffff; /* White background */ */
+/*     padding: 10px; */
+/* } */
+/**/
+.sidebox {
+    background-color: #ffffff; /* White background */
+}
+.sidebox h2 {
     color: #004767; /* Dark blue text */
 }
 
-.col-md-2 a {
-    color: #BE0D3E; /* Red text */
-    text-decoration: none;
-}
-
-.col-md-2 a:hover {
-    text-decoration: underline;
-}
+/* .col-lg-2 a { */
+/*     color: #BE0D3E; /* Red text */ */
+/*     text-decoration: none; */
+/* } */
+/**/
+/* .col-lg-2 a:hover { */
+/*     text-decoration: underline; */
+/* } */
 
 /* Main Content Styling */
-.col-md-8 {
-    padding: 20px;
-}
+/* .col-lg-8 { */
+/*     padding: 20px; */
+/* } */
 
-#page_title {
+.page_title {
+}
+.page_title h1 {
+  text-align: center;
     color: #004767; /* Dark blue text */
-    margin-bottom: 20px;
 }
 
 /* Tab Styling */
 .nav-tabs {
     border-bottom: 2px solid #004767; /* Dark blue border */
+    margin-top: 10px; /* Add some top margin for spacing */
 }
 
 .nav-item {
@@ -76,15 +92,26 @@ body {
 .btn {
     background-color: #BE0D3E; /* Red background */
     color: #ffffff; /* White text */
+    margin: 5px; /* Add some top margin for spacing */
 }
 
 .btn:hover {
     background-color: #9e0b36; /* Darker red on hover */
 }
 
+/* Buttons */
+.input {
+    background-color: #BE0D3E; /* Red background */
+    color: #ffffff; /* White text */
+    width: 100px;
+}
+
+.input:hover {
+    background-color: #9e0b36; /* Darker red on hover */
+}
 .row {
-    padding: 2px;
-    margin-left: 1px;
+    /* padding: 2px; */
+    /* margin-left: 1px; */
 }
 
 /* Table Styling */
@@ -124,4 +151,9 @@ input[readonly] {
     background-color: #e0e0e0; /* Light grey */
     color: #333;
     cursor: not-allowed;
+}
+
+.scrollable-content {
+  max-height: 100vh; /* Set the maximum height to be 100% of the viewport height */
+  overflow-y: auto; /* Enables vertical scrolling if the content overflows */
 }
