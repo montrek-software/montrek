@@ -30,35 +30,9 @@ h2 {
 }
 
 .box {
-  /* border: 1px solid #004767; */
+  border: 1px solid #004767;
 }
 
-/* /* /* Overview and Links Styling */ */ */
-/* .col-lg-2 { */
-/*     background-color: #ffffff; /* White background */ */
-/*     padding: 10px; */
-/* } */
-/**/
-.sidebox {
-    background-color: #ffffff; /* White background */
-}
-.sidebox h2 {
-    color: #004767; /* Dark blue text */
-}
-
-/* .col-lg-2 a { */
-/*     color: #BE0D3E; /* Red text */ */
-/*     text-decoration: none; */
-/* } */
-/**/
-/* .col-lg-2 a:hover { */
-/*     text-decoration: underline; */
-/* } */
-
-/* Main Content Styling */
-/* .col-lg-8 { */
-/*     padding: 20px; */
-/* } */
 
 .page_title {
 }
@@ -108,10 +82,6 @@ h2 {
 
 .input:hover {
     background-color: #9e0b36; /* Darker red on hover */
-}
-.row {
-    /* padding: 2px; */
-    /* margin-left: 1px; */
 }
 
 /* Table Styling */
