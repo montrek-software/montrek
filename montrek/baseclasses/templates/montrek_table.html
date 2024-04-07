@@ -1,61 +1,65 @@
 {% extends 'base.html' %}
 {% load data_table_filters %}
 {% block content %}
-	<div class="col-md-12">
+  <div class="container-fluid">
     <div class="row">
+      <div class="col-md-12">
         <h2 id="id_montrek_table_title">{{ title }}</h2>
+      </div>
     </div>
     <div class="row">
-      <table class="table">
-        <tr>
-          <td>
+      <div class="col-md-6">
         <form method="get">
-            {{ filter_form.filter_field }} = {{ filter_form.filter_value }}
-            <input type="submit" value="Filter" />
+          {{ filter_form.filter_field }} = {{ filter_form.filter_value }}
+          <input type="submit" value="Filter" class="btn" />
         </form>
-        </td>
-        <td>
-          <form action="" method="get">
-              <input type="hidden" name="gen_csv" value="true" />
-              <button type="submit" class="btn btn-default" title="Export to csv"><span class="glyphicon glyphicon-download"</span></button>
-          </form>
-        </tr>
-      </table>
+      </div>
+      <div class="col-md-4"></div>
+      <div class="col-md-2">
+        <form action="" method="get">
+          <input type="hidden" name="gen_csv" value="true" />
+          <button type="submit" class="btn btn-default" title="Export to csv"><span class="glyphicon glyphicon-download"</span></button>
+        </form>
+      </div>
     </div>
     <div id="id_montrek_table_list" class="row">
-      <div class="table-responsive">
+      <div class="col-md-12">
+        <div class="table-responsive">
           <table class="table table-bordered table-hover">
-              <tr>
-                {% for table_element in table_elements %}
-                  <th>{{ table_element.name }}</th>
-                {% endfor %}
-              </tr>
-              {% for row in object_list %}
-                <tr style="white-space:nowrap;">
+            <tr>
+              {% for table_element in table_elements %}
+                <th>{{ table_element.name }}</th>
+              {% endfor %}
+            </tr>
+            {% for row in object_list %}
+              <tr style="white-space:nowrap;">
                 {% for table_element in table_elements %}
                   {{ row|show_item:table_element|safe }}
                 {% endfor %}
-                </tr> 
-              {% endfor %}
+              </tr> 
+            {% endfor %}
           </table>
         </div>
+      </div>
     </div>
-     <div class="pagination">
-        <span class="step-links">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="pagination">
+          <span class="step-links">
             {% if object_list.has_previous %}
-            <a href="?page=1"><span class="glyphicon glyphicon-fast-backward"/></a>
-                <a href="?page={{ object_list.previous_page_number }}"><span class="glyphicon glyphicon-step-backward"/></a>
+              <a href="?page=1"><span class="glyphicon glyphicon-fast-backward"/></a>
+              <a href="?page={{ object_list.previous_page_number }}"><span class="glyphicon glyphicon-step-backward"/></a>
             {% endif %}
-
             <span class="current">
-                Page {{ object_list.number }} of {{ object_list.paginator.num_pages }}.
+              Page {{ object_list.number }} of {{ object_list.paginator.num_pages }}.
             </span>
-
             {% if object_list.has_next %}
                 <a href="?page={{ object_list.next_page_number }}"><span class="glyphicon glyphicon-step-forward"/></a>
                 <a href="?page={{ object_list.paginator.num_pages }}"><span class="glyphicon glyphicon-fast-forward"/></a>
             {% endif %}
-        </span>
+          </span>
         </div>
+      </div>
     </div>
+  </div>
 {% endblock %}

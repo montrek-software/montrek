@@ -15,10 +15,10 @@ label {
     text-align: left;
 }
 
-input {
-  height: 25px;
-}
 
+h2 {
+    color: #004767; /* Dark blue text */
+}
 
 /* Navigation Bar Styling */
 .navbar {
@@ -99,7 +99,7 @@ input {
     background-color: #9e0b36; /* Darker red on hover */
 }
 
-/* Buttons */
+/* Input */
 .input {
     background-color: #BE0D3E; /* Red background */
     color: #ffffff; /* White text */
