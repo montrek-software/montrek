@@ -22,6 +22,7 @@ from baseclasses.repositories.montrek_repository import MontrekRepository
 from baseclasses import utils
 from baseclasses.managers.montrek_list_manager import MontrekListManager
 from baseclasses.dataclasses.history_data_table import HistoryDataTable
+from baseclasses.managers.montrek_manager import MontrekManager
 
 # Create your views here.
 
@@ -90,13 +91,13 @@ class MontrekPageViewMixin:
 
 
 class MontrekViewMixin:
-    _repository_object = None
+    _manager_object = None
 
     @property
-    def repository_object(self):
-        if self._repository_object is None:
-            self._repository_object = self.repository(self.session_data)
-        return self._repository_object
+    def manager_object(self):
+        if self._manager_object is None:
+            self._manager_object = MontrekManager(self.session_data)
+        return self._manager_object
 
     @property
     def elements(self) -> list[TableElement]:
@@ -119,13 +120,6 @@ class MontrekViewMixin:
         if self.request.user.is_authenticated:
             session_data["user_id"] = self.request.user.id
         return session_data
-
-    def show_repository_messages(self):
-        for message in self.repository_object.messages:
-            if message.message_type == "error":
-                messages.error(self.request, message.message)
-            elif message.message_type == "info":
-                messages.info(self.request, message.message)
 
     def _get_filters(self, session_data):
         filter_field = session_data.get("filter_field", [])
