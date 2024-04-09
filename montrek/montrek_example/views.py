@@ -259,6 +259,7 @@ class MontrekExampleDCreate(views.MontrekCreateView):
     repository = HubDRepository
     page_class = pages.MontrekExampleDAppPage
     success_url = "montrek_example_d_list"
+    permission_required = ["montrek_example.add_hubd"]
 
 
 class MontrekExampleA1UploadFileView(MontrekUploadFileView):
