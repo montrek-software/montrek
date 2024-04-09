@@ -257,6 +257,7 @@ class MontrekExampleDCreate(views.MontrekCreateView):
     repository = HubDRepository
     page_class = pages.MontrekExampleDAppPage
     success_url = "montrek_example_d_list"
+    permission_required = ["montrek_example.add_hubd"]
 
 
 class MontrekExampleA1UploadFileView(MontrekUploadFileView):
@@ -271,7 +272,7 @@ class MontrekExampleA1UploadFileView(MontrekUploadFileView):
 
 
 class MontrekExampleA1UploadView(MontrekUploadView):
-    title = 'A1 Uploads'
+    title = "A1 Uploads"
     page_class = pages.MontrekExampleAAppPage
     repository = SatA1Repository
 
@@ -294,6 +295,7 @@ class MontrekExampleA1FieldMapCreateView(MontrekFieldMapCreateView):
     page_class = pages.MontrekExampleAAppPage
     field_map_manager_class = A1FieldMapManager
     related_repository_class = SatA1Repository
+
 
 class MontrekExampleA1FieldMapListView(MontrekFieldMapListView):
     page_class = pages.MontrekExampleAAppPage
