@@ -1,5 +1,6 @@
 import os
 import datetime
+from django.contrib.auth.models import Permission
 from django.test import TestCase
 from django.urls import reverse
 from file_upload.tests.factories.field_map_factories import (
@@ -221,21 +222,22 @@ class TestMontrekExampleDListView(TestCase):
 class TestMontrelExampleDCreate(TestCase):
     def setUp(self):
         self.user = MontrekUserFactory()
+        self.permission = Permission.objects.get(codename="add_hubd")
+        self.user.user_permissions.add(self.permission)
         self.client.force_login(self.user)
+        self.url = reverse("montrek_example_d_create")
 
     def test_view_return_correct_html(self):
-        url = reverse("montrek_example_d_create")
-        response = self.client.get(url)
+        response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "montrek_create.html")
 
     def test_view_post_success(self):
-        url = reverse("montrek_example_d_create")
         data = {
             "field_d1_str": "test",
             "field_d1_int": 13,
         }
-        response = self.client.post(url, data)
+        response = self.client.post(self.url, data)
         self.assertEqual(response.status_code, 302)
         # Check added data
         std_query = HubDRepository().std_queryset()
@@ -243,6 +245,18 @@ class TestMontrelExampleDCreate(TestCase):
         created_object = std_query.first()
         self.assertEqual(created_object.field_d1_str, "test")
         self.assertEqual(created_object.field_d1_int, 13)
+
+    def test_view_without_permission(self):
+        self.user.user_permissions.remove(self.permission)
+        previous_url = reverse("montrek_example_d_list")
+        response = self.client.get(self.url, HTTP_REFERER=previous_url, follow=True)
+        messages = list(response.context["messages"])
+        self.assertRedirects(response, previous_url)
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(
+            messages[0].message,
+            "You do not have the required permissions to access this page.",
+        )
 
 
 class TestMontrekExampleA1UploadFileView(TestCase):
