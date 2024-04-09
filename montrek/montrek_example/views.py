@@ -8,11 +8,13 @@ from file_upload.views import (
     MontrekUploadFileView,
     MontrekUploadView,
 )
-from montrek_example.repositories.sat_a1_repository import SatA1Repository
 from montrek_example.managers.a1_file_upload_manager import (
-    A1FieldMapManager,
     A1FileUploadProcessor,
 )
+from montrek_example.managers.a1_field_map_manager import (
+    A1FieldMapFunctionManager,
+)
+from montrek_example.repositories.sat_a1_repository import SatA1Repository
 
 from montrek_example import forms, pages
 from montrek_example.repositories.hub_a_repository import HubARepository
@@ -271,7 +273,7 @@ class MontrekExampleA1UploadFileView(MontrekUploadFileView):
 
 
 class MontrekExampleA1UploadView(MontrekUploadView):
-    title = 'A1 Uploads'
+    title = "A1 Uploads"
     page_class = pages.MontrekExampleAAppPage
     repository = SatA1Repository
 
@@ -292,8 +294,9 @@ class MontrekExampleA1UploadView(MontrekUploadView):
 class MontrekExampleA1FieldMapCreateView(MontrekFieldMapCreateView):
     success_url = "montrek_example_a1_field_map_list"
     page_class = pages.MontrekExampleAAppPage
-    field_map_manager_class = A1FieldMapManager
+    field_map_manager_class = A1FieldMapFunctionManager
     related_repository_class = SatA1Repository
+
 
 class MontrekExampleA1FieldMapListView(MontrekFieldMapListView):
     page_class = pages.MontrekExampleAAppPage
