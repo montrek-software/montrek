@@ -48,7 +48,9 @@ class FieldMapFileUploadProcessor:
             mapped_df["link_hub_a_file_upload_registry"] = self.file_upload_registry_hub
             self.repository.create_objects_from_data_frame(mapped_df)
         except Exception as e:
-            self.message = f"Error raised during object creation: {e}"
+            self.message = (
+                f"Error raised during object creation: <br>{e.__class__.__name__}: {e}"
+            )
             return False
         self.message = f"Successfully uploaded {mapped_df.shape[0]} rows."
         return True
