@@ -1,6 +1,6 @@
 import os
 import datetime
-from django.test import TestCase
+from django.test import TestCase, TransactionTestCase
 from django.urls import reverse
 from file_upload.tests.factories.field_map_factories import (
     FieldMapStaticSatelliteFactory,
@@ -245,7 +245,7 @@ class TestMontrelExampleDCreate(TestCase):
         self.assertEqual(created_object.field_d1_int, 13)
 
 
-class TestMontrekExampleA1UploadFileView(TestCase):
+class TestMontrekExampleA1UploadFileView(TransactionTestCase):
     def setUp(self):
         self.user = MontrekUserFactory()
         self.client.force_login(self.user)
@@ -329,6 +329,29 @@ class TestMontrekExampleA1UploadFileView(TestCase):
         )
 
         self.assertEqual(len(a_hubs), 0)
+
+    def test_view_post_db_creator_exception(self):
+        FieldMapStaticSatelliteFactory(
+            source_field="source_field_0",
+            database_field="field_a1_int",
+            function_name="multiply_by_value",
+            function_parameters={"value": 10},
+        )
+
+        with open(self.test_file_path, "rb") as f:
+            data = {"file": f}
+            response = self.client.post(self.url, data, follow=True)
+
+        messages = list(response.context["messages"])
+
+        a_hubs = HubARepository().std_queryset()
+
+        self.assertRedirects(response, reverse("a1_view_uploads"))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(
+            str(messages[0]),
+            "Error raised during object creation: <br>ValueError: Field 'field_a1_int' expected a number but got 'aaaaaaaaaa'.",
+        )
 
 
 class TestMontrekExampleA1UploadView(TestCase):
