@@ -1,3 +1,4 @@
+import os
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Page
@@ -49,6 +50,11 @@ def links(request):
         link_constituents = link.split(",")
         links.append(LinkModel(href=link_constituents[0], title=link_constituents[1]))
     return render(request, "links.html", {"links": links})
+
+
+def client_logo(request):
+    client_logo_path = config("CLIENT_LOGO_PATH", default="")
+    return render(request, "client_logo.html", {"client_logo_path": client_logo_path})
 
 
 class MontrekPageViewMixin:

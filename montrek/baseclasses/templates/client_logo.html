@@ -1,0 +1,4 @@
+{% load static %}
+{% with 'logos/'|add:client_logo_path as logo_path %}
+    <img src="{% static logo_path %}" class="img-responsive" alt="Client Logo"/>
+{% endwith %}
