@@ -8,11 +8,13 @@ from file_upload.views import (
     MontrekUploadFileView,
     MontrekUploadView,
 )
-from montrek_example.repositories.sat_a1_repository import SatA1Repository
 from montrek_example.managers.a1_file_upload_manager import (
-    A1FieldMapManager,
     A1FileUploadProcessor,
 )
+from montrek_example.managers.a1_field_map_manager import (
+    A1FieldMapManager,
+)
+from montrek_example.repositories.sat_a1_repository import SatA1Repository
 
 from montrek_example import forms, pages
 from montrek_example.repositories.hub_a_repository import HubARepository

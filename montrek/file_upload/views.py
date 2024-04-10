@@ -133,6 +133,10 @@ class MontrekFieldMapListView(MontrekListView):
             StringTableElement(name="Source Field", attr="source_field"),
             StringTableElement(name="Database Field", attr="database_field"),
             StringTableElement(name="Function Name", attr="function_name"),
+            StringTableElement(name="Function Parameters", attr="function_parameters"),
+            StringTableElement(
+                name="Comment", attr="field_map_static_satellite_comment"
+            ),
         ]
 
     success_url = "under_construction"

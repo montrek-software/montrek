@@ -8,7 +8,15 @@ class FieldMapRepository(MontrekRepository):
     def std_queryset(self, **kwargs):
         self.add_satellite_fields_annotations(
             FieldMapStaticSatellite,
-            ["source_field", "database_field", "function_name"],
+            [
+                "source_field",
+                "database_field",
+                "function_name",
+                "function_parameters",
+                "comment",
+            ],
         )
+        self.rename_field("comment", "field_map_static_satellite_comment")
+        self.annotations.pop("comment")
         queryset = self.build_queryset()
         return queryset
