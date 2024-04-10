@@ -18,7 +18,6 @@ from baseclasses.dataclasses.view_classes import ActionElement
 from baseclasses.pages import NoPage
 from baseclasses.forms import DateRangeForm, FilterForm
 from baseclasses.forms import MontrekCreateForm
-from baseclasses.repositories.montrek_repository import MontrekRepository
 from baseclasses import utils
 from baseclasses.managers.montrek_list_manager import MontrekListManager
 from baseclasses.dataclasses.history_data_table import HistoryDataTable
@@ -91,14 +90,16 @@ class MontrekPageViewMixin:
 
 
 class MontrekViewMixin:
-    _manager_object = None
+    _manager = None
 
     @property
-    def manager_object(self):
-        if self._manager_object is None:
-            self._manager_object = MontrekManager(self.session_data)
-        return self._manager_object
+    def manager(self):
+        if self._manager is None:
+            self._manager = self.manager_class(self.session_data)
+        return self._manager
 
+    # TODO:
+    ##Should go to manager
     @property
     def elements(self) -> list[TableElement]:
         return []
@@ -111,6 +112,8 @@ class MontrekViewMixin:
         return [
             element for element in elements if isinstance(element, AttrTableElement)
         ]
+
+    ##
 
     @property
     def session_data(self) -> dict:
@@ -133,12 +136,12 @@ class MontrekViewMixin:
         return filter_data
 
     def get_view_queryset(self):
-        return self.repository_object.std_queryset()
+        return self.manager.repository_object.std_queryset()
 
 
 class MontrekTemplateView(TemplateView, MontrekPageViewMixin, MontrekViewMixin):
     template_name = "montrek.html"
-    repository = MontrekRepository
+    manager_class = MontrekManager
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -156,7 +159,7 @@ class MontrekTemplateView(TemplateView, MontrekPageViewMixin, MontrekViewMixin):
 
 class MontrekListView(ListView, MontrekPageViewMixin, MontrekViewMixin):
     template_name = "montrek_table.html"
-    repository = MontrekRepository
+    manager_class = MontrekListManager
 
     def get(self, request, *args, **kwargs):
         if self.request.GET.get("gen_csv") == "true":
@@ -174,7 +177,7 @@ class MontrekListView(ListView, MontrekPageViewMixin, MontrekViewMixin):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context = self.get_page_context(context, **kwargs)
-        self.show_repository_messages()
+        self.show_messages()
         context["table_elements"] = self.elements
         context["filter_form"] = FilterForm(self.session_data)
         return context
@@ -187,6 +190,13 @@ class MontrekListView(ListView, MontrekPageViewMixin, MontrekViewMixin):
             queryset, self.get_fields_from_elements(), response
         )
         return response
+
+    def show_messages(self):
+        for message in self.manager.messages:
+            if message.message_type == "error":
+                messages.error(self.request, message.message)
+            elif message.message_type == "info":
+                messages.info(self.request, message.message)
 
 
 class MontrekHistoryListView(MontrekTemplateView):
@@ -207,7 +217,7 @@ class MontrekHistoryListView(MontrekTemplateView):
 
 class MontrekDetailView(DetailView, MontrekPageViewMixin, MontrekViewMixin):
     template_name = "montrek_details.html"
-    repository = MontrekRepository
+    manager_class = MontrekManager
 
     def get_queryset(self):
         return self.get_view_queryset()
@@ -220,7 +230,7 @@ class MontrekDetailView(DetailView, MontrekPageViewMixin, MontrekViewMixin):
 
 
 class MontrekCreateUpdateView(CreateView, MontrekPageViewMixin, MontrekViewMixin):
-    repository = MontrekRepository
+    manager_class = MontrekManager
     form_class = MontrekCreateForm
     template_name = "montrek_create.html"
     success_url = "under_construction"
@@ -232,11 +242,12 @@ class MontrekCreateUpdateView(CreateView, MontrekPageViewMixin, MontrekViewMixin
         return reverse(self.success_url)
 
     def form_valid(self, form):
-        self.repository_object.std_create_object(data=form.cleaned_data)
+        self.manager.create_object(data=form.cleaned_data)
         return HttpResponseRedirect(self.get_success_url())
 
     def get_form(self, form_class=None):
-        return self.form_class(repository=self.repository_object)
+        # TODO: Form should receive manager
+        return self.form_class(repository=self.manager.repository_object)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -244,7 +255,10 @@ class MontrekCreateUpdateView(CreateView, MontrekPageViewMixin, MontrekViewMixin
         return context
 
     def post(self, request, *args, **kwargs):
-        form = self.form_class(self.request.POST, repository=self.repository_object)
+        # TODO: Form should receive manager
+        form = self.form_class(
+            self.request.POST, repository=self.manager.repository_object
+        )
         if form.is_valid():
             return self.form_valid(form)
         return self.form_invalid(form)
@@ -259,9 +273,11 @@ class MontrekCreateView(MontrekCreateUpdateView):
 
 class MontrekUpdateView(MontrekCreateUpdateView):
     def get_form(self, form_class=None):
-        edit_object = self.repository_object.std_queryset().get(pk=self.kwargs["pk"])
-        initial = self.repository_object.object_to_dict(edit_object)
-        return self.form_class(repository=self.repository_object, initial=initial)
+        initial = self.manager.get_object_from_pk_as_dict(self.kwargs["pk"])
+
+        return self.form_class(
+            repository=self.manager.repository_object, initial=initial
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -270,7 +286,7 @@ class MontrekUpdateView(MontrekCreateUpdateView):
 
 
 class MontrekDeleteView(View, MontrekViewMixin, MontrekPageViewMixin):
-    repository = MontrekRepository
+    manager_class = MontrekManager
     success_url = "under_construction"
     template_name = "montrek_delete.html"
 
@@ -279,10 +295,7 @@ class MontrekDeleteView(View, MontrekViewMixin, MontrekPageViewMixin):
 
     def post(self, request, *args, **kwargs):
         if "action" in request.POST and request.POST["action"] == "Delete":
-            delete_object = self.repository_object.std_queryset().get(
-                pk=self.kwargs["pk"]
-            )
-            self.repository_object.std_delete_object(delete_object)
+            self.manager.delete_object(pk=self.kwargs["pk"])
         return HttpResponseRedirect(self.get_success_url())
 
     def get(self, request, *args, **kwargs):

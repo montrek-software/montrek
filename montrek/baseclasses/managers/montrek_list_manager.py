@@ -2,9 +2,10 @@ import csv
 from django.views.generic.base import HttpResponse
 
 from django.views.generic.list import QuerySet
+from baseclasses.managers.montrek_manager import MontrekManager
 
 
-class MontrekListManager:
+class MontrekListManager(MontrekManager):
     def export_queryset_to_csv(
         self, queryset: QuerySet, fields: list[str], response: HttpResponse
     ):

@@ -1,19 +1,35 @@
 from baseclasses.repositories.montrek_repository import MontrekRepository
+from typing import Any
+from baseclasses.dataclasses.montrek_message import MontrekMessage
 
 
 class MontrekManager:
-    repository = MontrekRepository
-    _repository_object = None
+    repository_class = MontrekRepository
+    _repository = None
+
+    def __init__(self, session_data: dict[str, Any] = {}):
+        self.session_data = session_data
+        self.messages: list[MontrekMessage] = []
 
     @property
-    def repository_object(self):
-        if self._repository_object is None:
-            self._repository_object = self.repository(self.session_data)
-        return self._repository_object
+    def repository(self):
+        if self._repository is None:
+            self._repository = self.repository_class(self.session_data)
+        return self._repository
 
-    def show_repository_messages(self):
-        for message in self.repository_object.messages:
-            if message.message_type == "error":
-                messages.error(self.request, message.message)
-            elif message.message_type == "info":
-                messages.info(self.request, message.message)
+    def create_object(self, **kwargs) -> Any:
+        return self.repository.std_create_object(**kwargs)
+
+    def delete_object(self, pk: int):
+        object_query = self.get_object_from_pk(pk)
+        return self.repository.std_delete_object(object_query)
+
+    def get_object_from_pk(self, pk: int):
+        return self.repository.std_queryset().get(pk=pk)
+
+    def get_object_from_pk_as_dict(self, pk: int) -> dict:
+        object_query = self.get_object_from_pk(pk)
+        return self.repository.object_to_dict(object_query)
+
+    def collect_messages(self):
+        self.messages += self.repository.messages
