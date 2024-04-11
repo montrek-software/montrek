@@ -4,6 +4,14 @@ from baseclasses.dataclasses import table_elements
 from baseclasses.tests.factories.baseclass_factories import TestMontrekSatelliteFactory
 
 
+class MockTableElement:
+    def __init__(self, attr: str) -> None:
+        self.attr = attr
+
+    def format(self, value: str) -> str:
+        return value
+
+
 class TestDataTableFilters(TestCase):
     def test__get_dotted_attr_or_arg(self):
         """
@@ -107,3 +115,19 @@ class TestDataTableFilters(TestCase):
             )
             test_str = dtf.get_attribute(test_obj, table_element)
             self.assertEqual(str(test_str), '<td style="text-align: center">-</td>')
+
+    def test_get_attibute__object_is_dict(self):
+        test_obj = {"test_name": "Test Name"}
+        table_element = MockTableElement(
+            attr="test_name",
+        )
+        test_str = dtf.get_attribute(test_obj, table_element)
+        self.assertEqual(test_str, "Test Name")
+
+    def test_get_attibute__object_is_dict_no_col(self):
+        test_obj = {}
+        table_element = MockTableElement(
+            attr="test_name",
+        )
+        test_str = dtf.get_attribute(test_obj, table_element)
+        self.assertEqual(test_str, "test_name")
