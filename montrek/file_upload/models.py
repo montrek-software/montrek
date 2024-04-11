@@ -87,3 +87,4 @@ class FieldMapStaticSatellite(baseclass_models.MontrekSatelliteABC):
     source_field = models.CharField(max_length=255)
     database_field = models.CharField(max_length=255)
     function_name = models.CharField(max_length=255, default="no_change")
+    function_parameters = models.JSONField(null=True, blank=True)

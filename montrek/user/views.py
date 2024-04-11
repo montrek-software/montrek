@@ -1,11 +1,9 @@
-from django.contrib.auth import get_user_model, login
+from django.contrib.auth import login
 from django.urls import reverse_lazy
 from django.contrib.auth import views as auth_views
 from django.views import generic as generic_views
 from django.contrib import messages
 from user import forms
-
-from user.forms import MontrekUserCreationForm, MontrekAuthenticationForm
 
 
 class MessageHandlerMixin:

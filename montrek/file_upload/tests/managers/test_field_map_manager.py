@@ -5,6 +5,7 @@ from file_upload.tests.factories.field_map_factories import (
     FieldMapStaticSatelliteFactory,
 )
 from file_upload.managers.field_map_manager import (
+    FieldMapExceptionInfo,
     FieldMapFunctionManager,
     FieldMapManager,
 )
@@ -12,30 +13,20 @@ from file_upload.managers.field_map_manager import (
 
 class MyFieldMapFunctionManager(FieldMapFunctionManager):
     @staticmethod
-    def multiply_by_2(source_df: pd.DataFrame, source_field: str) -> pd.Series:
-        return source_df[source_field] * 2
-
-    @staticmethod
     def append_source_field_1(source_df: pd.DataFrame, source_field: str) -> pd.Series:
         return source_df[source_field].astype(str) + source_df["source_field_1"]
+
+    @staticmethod
+    def raise_error(source_df: pd.DataFrame, source_field: str) -> pd.Series:
+        raise RuntimeError("bad error")
 
 
 class MyFieldMapManager(FieldMapManager):
     field_map_function_manager_class = MyFieldMapFunctionManager
 
-
 class TestFieldMapManager(TestCase):
-    def test_apply_field_maps(self):
-        FieldMapStaticSatelliteFactory(source_field="source_field_0")
-        FieldMapStaticSatelliteFactory(source_field="source_field_1")
-        FieldMapStaticSatelliteFactory(
-            source_field="source_field_2", function_name="multiply_by_2"
-        )
-        FieldMapStaticSatelliteFactory(
-            source_field="source_field_3", function_name="append_source_field_1"
-        )
-
-        source_df = pd.DataFrame(
+    def setUp(self):
+        self.source_df = pd.DataFrame(
             {
                 "source_field_0": [1, 2, 3],
                 "source_field_1": ["a", "b", "c"],
@@ -43,8 +34,21 @@ class TestFieldMapManager(TestCase):
                 "source_field_3": [7, 8, 9],
             }
         )
+    def test_apply_field_maps(self):
+        FieldMapStaticSatelliteFactory(source_field="source_field_0", database_field='database_field_0')
+        FieldMapStaticSatelliteFactory(source_field="source_field_1", database_field='database_field_1')
+        FieldMapStaticSatelliteFactory(
+            source_field="source_field_2", database_field='database_field_2',
+            function_name="multiply_by_value",
+            function_parameters={"value": 2},
+        )
+        FieldMapStaticSatelliteFactory(
+            source_field="source_field_3", database_field='database_field_3', function_name="append_source_field_1"
+        )
 
-        mapped_df = MyFieldMapManager.apply_field_maps(source_df)
+
+        field_map_manager = MyFieldMapManager()
+        mapped_df = field_map_manager.apply_field_maps(self.source_df)
 
         self.assertEqual(
             mapped_df.columns.to_list(),
@@ -58,4 +62,45 @@ class TestFieldMapManager(TestCase):
         self.assertEqual(mapped_df["database_field_0"].to_list(), [1, 2, 3])
         self.assertEqual(mapped_df["database_field_1"].to_list(), ["a", "b", "c"])
         self.assertEqual(mapped_df["database_field_2"].to_list(), [8, 10, 12])
+        self.assertEqual(mapped_df["database_field_3"].to_list(), ["7a", "8b", "9c"])
+        self.assertEqual(field_map_manager.exceptions, [])
+
+    def test_apply_field_maps_exception(self):
+        FieldMapStaticSatelliteFactory(
+            source_field="source_field_0", database_field='database_field_0', function_name="raise_error"
+        )
+        FieldMapStaticSatelliteFactory(source_field="source_field_1", database_field='database_field_1')
+        FieldMapStaticSatelliteFactory(
+            source_field="source_field_2", database_field='database_field_2', function_name="raise_error"
+        )
+        FieldMapStaticSatelliteFactory(
+            source_field="source_field_3", database_field='database_field_3', function_name="append_source_field_1"
+        )
+
+        field_map_manager = MyFieldMapManager()
+        mapped_df = field_map_manager.apply_field_maps(self.source_df)
+
+        exceptions = field_map_manager.exceptions
+        self.assertEqual(len(exceptions), 2)
+        self.assertEqual(exceptions[0].function_name, 'raise_error')
+        self.assertEqual(exceptions[0].source_field, 'source_field_0')
+        self.assertEqual(exceptions[0].database_field, 'database_field_0')
+        self.assertEqual(exceptions[0].function_parameters, {})
+        self.assertEqual(exceptions[0].exception_message, 'RuntimeError: bad error')
+        self.assertEqual(exceptions[1].function_name, 'raise_error')
+        self.assertEqual(exceptions[1].source_field, 'source_field_2')
+        self.assertEqual(exceptions[1].database_field, 'database_field_2')
+        self.assertEqual(exceptions[1].function_parameters, {})
+        self.assertEqual(exceptions[1].exception_message, 'RuntimeError: bad error')
+
+
+
+        self.assertEqual(
+            mapped_df.columns.to_list(),
+            [
+                "database_field_1",
+                "database_field_3",
+            ],
+        )
+        self.assertEqual(mapped_df["database_field_1"].to_list(), ["a", "b", "c"])
         self.assertEqual(mapped_df["database_field_3"].to_list(), ["7a", "8b", "9c"])

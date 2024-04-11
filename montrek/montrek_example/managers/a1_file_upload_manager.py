@@ -1,20 +1,18 @@
-import pandas as pd
 import logging
-
-from typing import Dict, Any
-
-
-from file_upload.repositories.file_upload_registry_repository import (
-    FileUploadRegistryRepository,
+import pandas as pd
+from file_upload.managers.field_map_file_upload_processor import (
+    FieldMapFileUploadProcessor,
 )
-from montrek_example.managers.a1_field_map_manager import A1FieldMapManager
+
+
 from montrek_example.repositories.hub_a_repository import HubARepository
 
 logger = logging.getLogger(__name__)
 
 
-class A1FileUploadProcessor:
+class A1FileUploadProcessor(FieldMapFileUploadProcessor):
     message = "Not implemented"
+    repository_class = HubARepository
     file_upload_registry = None
 
     def __init__(
@@ -44,5 +42,7 @@ class A1FileUploadProcessor:
     def pre_check(self, file_path: str):
         return True
 
-    def post_check(self, file_path: str):
-        return True
+
+    @classmethod
+    def _get_source_df_from_file(cls, file_path):
+        return pd.read_csv(file_path)
