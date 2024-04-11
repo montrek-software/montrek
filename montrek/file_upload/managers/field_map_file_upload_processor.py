@@ -9,7 +9,9 @@ from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepository,
 )
 from baseclasses.managers.montrek_manager import MontrekManager
-from montrek_example.managers.a1_field_map_manager import A1FieldMapManager
+from file_upload.managers.field_map_manager import (
+    FieldMapManager,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +19,7 @@ logger = logging.getLogger(__name__)
 class FieldMapFileUploadProcessor:
     message = "Not implemented"
     manager_class: type[MontrekManager] | None = None
+    field_map_manager_class: type[FieldMapManager] | None = None
 
     def __init__(
         self, file_upload_registry_id: int, session_data: Dict[str, Any], **kwargs
@@ -41,7 +44,7 @@ class FieldMapFileUploadProcessor:
 
     def process(self, file_path: str):
         source_df = self._get_source_df_from_file(file_path)
-        field_map_manager = A1FieldMapManager(self.session_data)
+        field_map_manager = self.field_map_manager_class(self.session_data)
         mapped_df = field_map_manager.apply_field_maps(source_df)
         if field_map_manager.exceptions:
             self.message = "Errors raised during field mapping:"
