@@ -1,5 +1,6 @@
 from numpy import who
 import pandas as pd
+import numpy as np
 import logging
 
 from typing import Dict, Any
@@ -58,6 +59,7 @@ class FieldMapFileUploadProcessor:
         try:
             mapped_df["comment"] = self.file_upload_registry_hub.file_name
             mapped_df = self.add_file_upload_registry_link_column(mapped_df)
+            mapped_df = mapped_df.replace({np.nan: None})
             self.manager.repository.create_objects_from_data_frame(mapped_df)
         except Exception as e:
             self.message = (
