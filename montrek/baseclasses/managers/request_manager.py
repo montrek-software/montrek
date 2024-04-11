@@ -1,6 +1,8 @@
 import requests
 from base64 import b64encode
 
+from baseclasses.managers.montrek_manager import MontrekManager
+
 
 class RequestAuthenticator:
     def get_headers(self):
@@ -34,7 +36,7 @@ class RequestSlugAuthenticator:
         return {"Authorization": f"{self.slug}:{self.token}"}
 
 
-class RequestManager:
+class RequestManager(MontrekManager):
     base_url = "NONESET"
     authenticator = RequestAuthenticator()
 
