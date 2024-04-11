@@ -1,4 +1,3 @@
-from os import link
 from django.urls import reverse
 from baseclasses.dataclasses.view_classes import TabElement
 from baseclasses.pages import MontrekPage

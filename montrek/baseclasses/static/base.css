@@ -10,8 +10,14 @@ body {
     background-color: #f4f4f4; /* Light grey background */
 }
 
-.container-fluid {
-    padding: 20px;
+label {
+    font-weight: bold;
+    text-align: left;
+}
+
+
+h2 {
+    color: #004767; /* Dark blue text */
 }
 
 /* Navigation Bar Styling */
@@ -23,38 +29,22 @@ body {
     color: #ffffff; /* White text */
 }
 
-/* Overview and Links Styling */
-.col-md-2 {
-    background-color: #ffffff; /* White background */
-    padding: 10px;
+.box {
+  border: 1px solid #004767;
 }
 
-.col-md-2 h2 {
+
+.page_title {
+}
+.page_title h1 {
+  text-align: center;
     color: #004767; /* Dark blue text */
-}
-
-.col-md-2 a {
-    color: #BE0D3E; /* Red text */
-    text-decoration: none;
-}
-
-.col-md-2 a:hover {
-    text-decoration: underline;
-}
-
-/* Main Content Styling */
-.col-md-8 {
-    padding: 20px;
-}
-
-#page_title {
-    color: #004767; /* Dark blue text */
-    margin-bottom: 20px;
 }
 
 /* Tab Styling */
 .nav-tabs {
     border-bottom: 2px solid #004767; /* Dark blue border */
+    margin-top: 10px; /* Add some top margin for spacing */
 }
 
 .nav-item {
@@ -76,14 +66,22 @@ body {
 .btn {
     background-color: #BE0D3E; /* Red background */
     color: #ffffff; /* White text */
+    margin: 5px; /* Add some top margin for spacing */
 }
 
 .btn:hover {
     background-color: #9e0b36; /* Darker red on hover */
 }
 
-.row {
-    padding: 2px;
+/* Input */
+.input {
+    background-color: #BE0D3E; /* Red background */
+    color: #ffffff; /* White text */
+    width: 100px;
+}
+
+.input:hover {
+    background-color: #9e0b36; /* Darker red on hover */
 }
 
 /* Table Styling */
@@ -100,7 +98,7 @@ tr {
 
 /* Table Data/Cell Styling */
 td {
-    padding: 5px; /* Add padding to each cell */
+    padding: 2px; /* Add padding to each cell */
     text-align: left; /* Align text to the left */
 }
 /* Every even row will have a pale blue background */
@@ -123,4 +121,9 @@ input[readonly] {
     background-color: #e0e0e0; /* Light grey */
     color: #333;
     cursor: not-allowed;
+}
+
+.scrollable-content {
+  max-height: 100vh; /* Set the maximum height to be 100% of the viewport height */
+  overflow-y: auto; /* Enables vertical scrolling if the content overflows */
 }

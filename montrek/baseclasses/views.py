@@ -1,3 +1,6 @@
+import os
+from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.core.exceptions import PermissionDenied
 from django.core.paginator import Page
 from django.shortcuts import render
 from django.views.generic.list import ListView
@@ -8,7 +11,7 @@ from django.views.generic.edit import CreateView
 from django.views import View
 from django.http import HttpResponseRedirect
 from django.http import HttpResponse
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.contrib import messages
 from decouple import config
 from baseclasses.dataclasses.nav_bar_model import NavBarModel
@@ -47,6 +50,11 @@ def links(request):
         link_constituents = link.split(",")
         links.append(LinkModel(href=link_constituents[0], title=link_constituents[1]))
     return render(request, "links.html", {"links": links})
+
+
+def client_logo(request):
+    client_logo_path = config("CLIENT_LOGO_PATH", default="")
+    return render(request, "client_logo.html", {"client_logo_path": client_logo_path})
 
 
 class MontrekPageViewMixin:
@@ -146,7 +154,27 @@ class MontrekViewMixin:
         return self.manager.repository.std_queryset()
 
 
-class MontrekTemplateView(TemplateView, MontrekPageViewMixin, MontrekViewMixin):
+class MontrekPermissionRequiredMixin(PermissionRequiredMixin):
+    login_url = reverse_lazy("login")
+    permission_required = []
+
+    def get_permission_denied_message(self):
+        msg = "You do not have the required permissions to access this page."
+        return msg
+
+    def handle_no_permission(self):
+        try:
+            return super().handle_no_permission()
+        except PermissionDenied as e:
+            messages.error(self.request, e)
+        previous_url = self.request.META.get("HTTP_REFERER")
+        previous_url = previous_url or self.login_url
+        return HttpResponseRedirect(previous_url)
+
+
+class MontrekTemplateView(
+    MontrekPermissionRequiredMixin, TemplateView, MontrekPageViewMixin, MontrekViewMixin
+):
     template_name = "montrek.html"
     manager_class = MontrekManager
 
@@ -166,7 +194,9 @@ class MontrekTemplateView(TemplateView, MontrekPageViewMixin, MontrekViewMixin):
         return self.get_view_queryset()
 
 
-class MontrekListView(ListView, MontrekPageViewMixin, MontrekViewMixin):
+class MontrekListView(
+    MontrekPermissionRequiredMixin, ListView, MontrekPageViewMixin, MontrekViewMixin
+):
     template_name = "montrek_table.html"
     manager_class = MontrekListManager
 
@@ -217,7 +247,9 @@ class MontrekHistoryListView(MontrekTemplateView):
         }
 
 
-class MontrekDetailView(DetailView, MontrekPageViewMixin, MontrekViewMixin):
+class MontrekDetailView(
+    MontrekPermissionRequiredMixin, DetailView, MontrekPageViewMixin, MontrekViewMixin
+):
     template_name = "montrek_details.html"
     manager_class = MontrekManager
 
@@ -231,7 +263,10 @@ class MontrekDetailView(DetailView, MontrekPageViewMixin, MontrekViewMixin):
         return context
 
 
-class MontrekCreateUpdateView(CreateView, MontrekPageViewMixin, MontrekViewMixin):
+
+class MontrekCreateUpdateView(
+    MontrekPermissionRequiredMixin, CreateView, MontrekPageViewMixin, MontrekViewMixin
+):
     manager_class = MontrekManager
     form_class = MontrekCreateForm
     template_name = "montrek_create.html"
@@ -283,7 +318,9 @@ class MontrekUpdateView(MontrekCreateUpdateView):
         return context
 
 
-class MontrekDeleteView(View, MontrekViewMixin, MontrekPageViewMixin):
+class MontrekDeleteView(
+    View, MontrekPermissionRequiredMixin, MontrekViewMixin, MontrekPageViewMixin
+):
     manager_class = MontrekManager
     success_url = "under_construction"
     template_name = "montrek_delete.html"

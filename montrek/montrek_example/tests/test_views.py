@@ -1,5 +1,7 @@
 import os
 import datetime
+from django.test import TestCase, TransactionTestCase
+from django.contrib.auth.models import Permission
 from django.test import TestCase
 from django.urls import reverse
 from file_upload.tests.factories.field_map_factories import (
@@ -221,21 +223,22 @@ class TestMontrekExampleDListView(TestCase):
 class TestMontrekExampleDCreate(TestCase):
     def setUp(self):
         self.user = MontrekUserFactory()
+        self.permission = Permission.objects.get(codename="add_hubd")
+        self.user.user_permissions.add(self.permission)
         self.client.force_login(self.user)
+        self.url = reverse("montrek_example_d_create")
 
     def test_view_return_correct_html(self):
-        url = reverse("montrek_example_d_create")
-        response = self.client.get(url)
+        response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "montrek_create.html")
 
     def test_view_post_success(self):
-        url = reverse("montrek_example_d_create")
         data = {
             "field_d1_str": "test",
             "field_d1_int": 13,
         }
-        response = self.client.post(url, data)
+        response = self.client.post(self.url, data)
         self.assertEqual(response.status_code, 302)
         # Check added data
         std_query = HubDRepository().std_queryset()
@@ -244,12 +247,27 @@ class TestMontrekExampleDCreate(TestCase):
         self.assertEqual(created_object.field_d1_str, "test")
         self.assertEqual(created_object.field_d1_int, 13)
 
+    def test_view_without_permission(self):
+        self.user.user_permissions.remove(self.permission)
+        previous_url = reverse("montrek_example_d_list")
+        response = self.client.get(self.url, HTTP_REFERER=previous_url, follow=True)
+        messages = list(response.context["messages"])
+        self.assertRedirects(response, previous_url)
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(
+            messages[0].message,
+            "You do not have the required permissions to access this page.",
+        )
 
-class TestMontrekExampleA1UploadFileView(TestCase):
+
+class TestMontrekExampleA1UploadFileView(TransactionTestCase):
     def setUp(self):
         self.user = MontrekUserFactory()
         self.client.force_login(self.user)
         self.url = reverse("a1_upload_file")
+        self.test_file_path = os.path.join(
+            os.path.dirname(__file__), "data", "a_file.csv"
+        )
 
     def test_view_return_correct_html(self):
         response = self.client.get(self.url)
@@ -267,9 +285,8 @@ class TestMontrekExampleA1UploadFileView(TestCase):
             database_field="field_a1_int",
             function_name="multiply_by_1000",
         )
-        test_file_path = os.path.join(os.path.dirname(__file__), "data", "a_file.csv")
 
-        with open(test_file_path, "rb") as f:
+        with open(self.test_file_path, "rb") as f:
             data = {"file": f}
             response = self.client.post(self.url, data, follow=True)
 
@@ -293,6 +310,63 @@ class TestMontrekExampleA1UploadFileView(TestCase):
         self.assertEqual(a_hubs[0].field_a1_int, 1000)
         self.assertEqual(a_hubs[1].field_a1_int, 2000)
         self.assertEqual(a_hubs[2].field_a1_int, 3000)
+
+    def test_view_post_field_map_exception(self):
+        FieldMapStaticSatelliteFactory(
+            source_field="source_field_0",
+            database_field="field_a1_str",
+            function_name="multiply_by_value",
+            function_parameters={"value": "a"},
+        )
+        FieldMapStaticSatelliteFactory(
+            source_field="source_field_1",
+            database_field="field_a1_int",
+            function_name="multiply_by_value",
+        )
+
+        with open(self.test_file_path, "rb") as f:
+            data = {"file": f}
+            response = self.client.post(self.url, data, follow=True)
+
+        messages = list(response.context["messages"])
+
+        a_hubs = HubARepository().std_queryset()
+
+        self.assertRedirects(response, reverse("a1_view_uploads"))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(
+            str(messages[0]),
+            (
+                "Errors raised during field mapping:"
+                "<br>('source_field_0', 'field_a1_str', 'multiply_by_value', {'value': 'a'}, \"TypeError: can't multiply sequence by non-int of type 'str'\")"
+                "<br>('source_field_1', 'field_a1_int', 'multiply_by_value', {}, \"TypeError: FieldMapFunctionManager.multiply_by_value() missing 1 required positional argument: 'value'\")"
+            ),
+        )
+
+        self.assertEqual(len(a_hubs), 0)
+
+    def test_view_post_db_creator_exception(self):
+        FieldMapStaticSatelliteFactory(
+            source_field="source_field_0",
+            database_field="field_a1_int",
+            function_name="multiply_by_value",
+            function_parameters={"value": 10},
+        )
+
+        with open(self.test_file_path, "rb") as f:
+            data = {"file": f}
+            response = self.client.post(self.url, data, follow=True)
+
+        messages = list(response.context["messages"])
+
+        a_hubs = HubARepository().std_queryset()
+
+        self.assertRedirects(response, reverse("a1_view_uploads"))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(
+            str(messages[0]),
+            "Error raised during object creation: <br>ValueError: Field 'field_a1_int' expected a number but got 'aaaaaaaaaa'.",
+        )
 
 
 class TestMontrekExampleA1UploadView(TestCase):
@@ -339,6 +413,7 @@ class TestMontrekExampleA1FieldMapCreateView(TestCase):
             [
                 ("append_source_field_1", "append_source_field_1"),
                 ("multiply_by_1000", "multiply_by_1000"),
+                ("multiply_by_value", "multiply_by_value"),
                 ("no_change", "no_change"),
             ],
         )
