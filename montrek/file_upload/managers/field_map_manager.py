@@ -29,18 +29,17 @@ class FieldMapManager(MontrekManager):
     field_map_function_manager_class = FieldMapFunctionManager
     repository_class = FieldMapRepository
 
-    def __init__(self):
+    def __init__(self, session_data: dict):
         self._reset_exceptions()
+        super().__init__(session_data=session_data)
 
     def _reset_exceptions(self):
         self.exceptions = []
 
     def apply_field_maps(self, source_df: pd.DataFrame) -> pd.DataFrame:
         self._reset_exceptions()
-        field_maps = (
-            self.repository
-            .std_queryset()
-            .filter(source_field__in=source_df.columns.to_list())
+        field_maps = self.repository.std_queryset().filter(
+            source_field__in=source_df.columns.to_list()
         )
         mapped_df = pd.DataFrame()
         for field_map in field_maps:
