@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 class FieldMapFileUploadProcessor:
     message = "Not implemented"
     manager_class: type[MontrekManager] | None = None
-    field_map_manager_class: type[FieldMapManager] | None = None
+    field_map_manager_class: type[FieldMapManager] = FieldMapManager
 
     def __init__(
         self, file_upload_registry_id: int, session_data: Dict[str, Any], **kwargs
