@@ -3,16 +3,15 @@ import pandas as pd
 from file_upload.managers.field_map_file_upload_processor import (
     FieldMapFileUploadProcessor,
 )
+from montrek_example.managers.montrek_example_managers import HubAManager
 
-
-from montrek_example.repositories.hub_a_repository import HubARepository
 
 logger = logging.getLogger(__name__)
 
 
 class A1FileUploadProcessor(FieldMapFileUploadProcessor):
     message = "Not implemented"
-    repository_class = HubARepository
+    manager_class = HubAManager
 
     @classmethod
     def _get_source_df_from_file(cls, file_path):

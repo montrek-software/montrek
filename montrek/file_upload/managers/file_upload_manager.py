@@ -9,7 +9,9 @@ from file_upload.repositories.file_upload_registry_repository import (
 from file_upload.repositories.file_upload_file_repository import (
     FileUploadFileRepository,
 )
+from file_upload.repositories.file_upload_repository import FileUploadRepository
 from baseclasses.models import MontrekHubABC
+from baseclasses.managers.montrek_manager import MontrekManager
 
 
 class FileUploadProcessorProtocol(Protocol):
@@ -25,7 +27,9 @@ class FileUploadProcessorProtocol(Protocol):
         ...
 
 
-class FileUploadManager:
+class FileUploadManager(MontrekManager):
+    repository_class = FileUploadRepository
+
     def __init__(
         self,
         file_upload_processor_class: type[FileUploadProcessorProtocol],
@@ -45,6 +49,7 @@ class FileUploadManager:
         self.processor = file_upload_processor_class(
             self.file_upload_registry.pk, session_data, **kwargs
         )
+        super().__init__(session_data=self.session_data)
 
     def upload_and_process(self) -> bool:
         if not self.processor.pre_check(self.file_path):

@@ -12,6 +12,7 @@ from baseclasses.dataclasses.montrek_message import (
     MontrekMessageInfo,
 )
 from baseclasses.pages import MontrekPage
+from baseclasses.managers.montrek_manager import MontrekManager
 
 
 class MockQuerySet:
@@ -56,8 +57,12 @@ class MockRequester:
         message_middleware.process_request(self.request)
 
 
+class MockManager(MontrekManager):
+    repository_class = MockRepository
+
+
 class MockMontrekView(MontrekViewMixin, MockRequester):
-    repository = MockRepository
+    manager_class = MockManager
 
     def __init__(self, url: str):
         super().__init__()
@@ -122,15 +127,15 @@ class TestMontrekViewMixin(TestCase):
 
     def test_repository_object_creation(self):
         mock_view = MockMontrekView("/")
-        self.assertIsInstance(mock_view.repository_object, MockRepository)
+        self.assertIsInstance(mock_view.manager.repository, MockRepository)
 
     def test_show_repository_messages(self):
         mock_view = MockMontrekView("/")
-        mock_view.repository_object.messages = [
+        mock_view.manager.messages = [
             MontrekMessageError("Error message"),
             MontrekMessageInfo("Info message"),
         ]
-        mock_view.show_repository_messages()
+        mock_view.show_messages()
         # Retrieve messages from the request
         messages = list(get_messages(mock_view.request))
 
@@ -158,7 +163,7 @@ class TestMontrekViewMixin(TestCase):
 
 
 class MockMontrekListView(MontrekListView, MockRequester):
-    repository = MockRepository
+    manager_class = MockManager
     page_class = MockPage
     kwargs = {}
 

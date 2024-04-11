@@ -8,7 +8,7 @@ In Montrek, every logical enitiy should be self contained in a app. These entiti
 ```mermaid
 graph TD
     Models -->|Used by| Repositories
-    Repositories -->|Data handling for| MontrekView
+   
 
     
 
@@ -24,14 +24,14 @@ graph TD
 
     MontrekView -->|Renders| Pages
     MontrekView -->|Uses| Forms
-    MontrekView -->|May use| Manager
+    MontrekView -->|Taks To| Manager
 
-    Pages -->|Includes| TabElements
-    Manager -->|Interacts with| Repositories
-    Tests -->|Verifies| Models
-    Tests -->|Verifies| MontrekView
-    Tests -->|Verifies| Manager
-    Tests -->|Verifies| Repositories
+    Manager -->|Includes| TabElements
+    Manager <-->|Interacts with| Repositories
+    Pages --> Template
+    Forms --> Template
+    TabElements --> Template
+    Template --> HTMLOutput
 
     MontrekView --> |Pass Data| Template
 ```
@@ -50,7 +50,7 @@ The querysets from other repositories can be called from here in case access to 
 
 At the core of every request is a view. The purpose of this class is to collect all the data that is necessary to pass on to the template, such that the desired outcome is displayed correctly. It is connected to a repository object, which handles the communication to the database. Multiple views have a page attributed it, if the purpose of the view is to input data, it can have a form attached. If the view is supposed to trigger business logic, it can have a manager class attached to it.
 
-Montrek comes with a number of pre-defined which are optimised for the Montrek Data Model:
+Montrek comes with a number of pre-defined views which are optimised for the Montrek Data Model:
 
 ### MontrekDetailView
 

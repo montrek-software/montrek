@@ -220,7 +220,7 @@ class TestMontrekExampleDListView(TestCase):
         self.assertEqual(len(test_queryset), 1)
 
 
-class TestMontrelExampleDCreate(TestCase):
+class TestMontrekExampleDCreate(TestCase):
     def setUp(self):
         self.user = MontrekUserFactory()
         self.permission = Permission.objects.get(codename="add_hubd")
