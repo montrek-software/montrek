@@ -27,17 +27,16 @@ class FieldMapFileUploadProcessor:
         self.session_data = session_data
         self.file_upload_registry_id = file_upload_registry_id
         self.file_upload_registry_repository = FileUploadRegistryRepository(
-            session_data
+            self.session_data
         )
         if not self.manager_class:
             raise ValueError("manager_class must be set in subclass.")
-        self.manager = self.manager_class(session_data)
+        self.manager = self.manager_class(self.session_data)
         self.file_upload_registry_hub = (
             self.file_upload_registry_repository.std_queryset().get(
                 pk=file_upload_registry_id
             )
         )
-        self.session_data = session_data
 
     def get_source_df_from_file(self, file_path: str) -> pd.DataFrame:
         NotImplementedError("Please implement this method in a subclass.")
