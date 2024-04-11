@@ -135,8 +135,15 @@ class MontrekViewMixin:
             filter_data["filter"] = {filter_field[0]: filter_value[0]}
         return filter_data
 
+    def show_messages(self):
+        for message in self.manager.messages:
+            if message.message_type == "error":
+                messages.error(self.request, message.message)
+            elif message.message_type == "info":
+                messages.info(self.request, message.message)
+
     def get_view_queryset(self):
-        return self.manager.repository_object.std_queryset()
+        return self.manager.repository.std_queryset()
 
 
 class MontrekTemplateView(TemplateView, MontrekPageViewMixin, MontrekViewMixin):
@@ -190,13 +197,6 @@ class MontrekListView(ListView, MontrekPageViewMixin, MontrekViewMixin):
             queryset, self.get_fields_from_elements(), response
         )
         return response
-
-    def show_messages(self):
-        for message in self.manager.messages:
-            if message.message_type == "error":
-                messages.error(self.request, message.message)
-            elif message.message_type == "info":
-                messages.info(self.request, message.message)
 
 
 class MontrekHistoryListView(MontrekTemplateView):
