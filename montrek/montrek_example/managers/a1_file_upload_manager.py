@@ -34,7 +34,7 @@ class A1FileUploadProcessor:
 
     def process(self, file_path: str):
         source_df = pd.read_csv(file_path)
-        mapped_df = A1FieldMapManager.apply_field_maps(source_df)
+        mapped_df = A1FieldMapManager({}).apply_field_maps(source_df)
         mapped_df["comment"] = self.file_upload_registry_hub.file_name
         mapped_df["link_hub_a_file_upload_registry"] = self.file_upload_registry_hub
         self.hub_a_repository.create_objects_from_data_frame(mapped_df)

@@ -99,7 +99,7 @@ class MontrekDownloadFileView(MontrekTemplateView):
 
 
 class MontrekFieldMapCreateView(MontrekCreateView):
-    repository = FieldMapRepository
+    manager_class = FieldMapManager
     success_url = "under_construction"
     form_class = FieldMapCreateForm
     field_map_manager_class = FieldMapManager
@@ -107,7 +107,7 @@ class MontrekFieldMapCreateView(MontrekCreateView):
 
     def get_form(self, form_class=None):
         return self.form_class(
-            repository=self.repository_object,
+            repository=self.manager.repository,
             field_map_manager=self.field_map_manager_class(),
             related_repository=self.related_repository_class(),
         )
@@ -115,7 +115,7 @@ class MontrekFieldMapCreateView(MontrekCreateView):
     def post(self, request, *args, **kwargs):
         form = self.form_class(
             self.request.POST,
-            repository=self.repository_object,
+            repository=self.manager.repository,
             field_map_manager=self.field_map_manager_class(),
             related_repository=self.related_repository_class(),
         )
@@ -125,7 +125,7 @@ class MontrekFieldMapCreateView(MontrekCreateView):
 
 
 class MontrekFieldMapListView(MontrekListView):
-    repository = FieldMapRepository
+    manager_class = FieldMapManager
     tab = "tab_field_map_list"
     title = "Field Map Overview"
 
