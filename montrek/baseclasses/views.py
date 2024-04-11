@@ -152,6 +152,8 @@ class MontrekTemplateView(TemplateView, MontrekPageViewMixin, MontrekViewMixin):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        if not hasattr(self, "kwargs"):
+            self.kwargs = kwargs
         context = self.get_page_context(context, **kwargs)
         template_context = self.get_template_context()
         context.update(template_context)
@@ -203,7 +205,7 @@ class MontrekHistoryListView(MontrekTemplateView):
     template_name = "montrek_history.html"
 
     def get_template_context(self) -> dict:
-        history_querysets = self.repository_object.get_history_queryset(
+        history_querysets = self.manager.repository.get_history_queryset(
             pk=self.kwargs["pk"]
         )
 
@@ -247,7 +249,7 @@ class MontrekCreateUpdateView(CreateView, MontrekPageViewMixin, MontrekViewMixin
 
     def get_form(self, form_class=None):
         # TODO: Form should receive manager
-        return self.form_class(repository=self.manager.repository_object)
+        return self.form_class(repository=self.manager.repository)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -256,9 +258,7 @@ class MontrekCreateUpdateView(CreateView, MontrekPageViewMixin, MontrekViewMixin
 
     def post(self, request, *args, **kwargs):
         # TODO: Form should receive manager
-        form = self.form_class(
-            self.request.POST, repository=self.manager.repository_object
-        )
+        form = self.form_class(self.request.POST, repository=self.manager.repository)
         if form.is_valid():
             return self.form_valid(form)
         return self.form_invalid(form)
@@ -275,9 +275,7 @@ class MontrekUpdateView(MontrekCreateUpdateView):
     def get_form(self, form_class=None):
         initial = self.manager.get_object_from_pk_as_dict(self.kwargs["pk"])
 
-        return self.form_class(
-            repository=self.manager.repository_object, initial=initial
-        )
+        return self.form_class(repository=self.manager.repository, initial=initial)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

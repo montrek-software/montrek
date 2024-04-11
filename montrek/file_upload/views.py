@@ -41,6 +41,7 @@ class NotDefinedFileUploadProcessor:
 
 @method_decorator(login_required, name="dispatch")
 class MontrekUploadFileView(MontrekTemplateView):
+    manager_class = FileUploadManager
     template_name = "upload_form.html"
     file_upload_processor_class: type[
         FileUploadProcessorProtocol
@@ -55,6 +56,7 @@ class MontrekUploadFileView(MontrekTemplateView):
         if form.is_valid():
             if not self._check_file_type(request.FILES["file"], form):
                 return self.render_to_response(self.get_context_data())
+            # TODO: Remodel with self.manager
             file_upload_manager = FileUploadManager(
                 self.file_upload_processor_class,
                 request.FILES["file"],

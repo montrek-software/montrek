@@ -15,10 +15,7 @@ from montrek_example.managers.a1_file_upload_manager import (
 )
 
 from montrek_example import forms, pages
-from montrek_example.repositories.hub_a_repository import HubARepository
-from montrek_example.repositories.hub_b_repository import HubBRepository
-from montrek_example.repositories.hub_c_repository import HubCRepository
-from montrek_example.repositories.hub_d_repository import HubDRepository
+from montrek_example.managers import montrek_example_managers as mem
 
 
 def action_back_to_overview(example: str):
@@ -34,21 +31,21 @@ def action_back_to_overview(example: str):
 
 
 class MontrekExampleACreate(views.MontrekCreateView):
-    repository = HubARepository
+    manager_class = mem.HubAManager
     page_class = pages.MontrekExampleAAppPage
     form_class = forms.ExampleACreateForm
     success_url = "montrek_example_a_list"
 
 
 class MontrekExampleAUpdate(views.MontrekUpdateView):
-    repository = HubARepository
+    manager_class = mem.HubAManager
     page_class = pages.ExampleAPage
     form_class = forms.ExampleACreateForm
     success_url = "montrek_example_a_list"
 
 
 class MontrekExampleAList(views.MontrekListView):
-    repository = HubARepository
+    manager_class = mem.HubAManager
     page_class = pages.MontrekExampleAAppPage
     tab = "tab_example_a_list"
     title = "Example A List"
@@ -96,13 +93,13 @@ class MontrekExampleAList(views.MontrekListView):
 
 
 class MontrekExampleADelete(views.MontrekDeleteView):
-    repository = HubARepository
+    manager_class = mem.HubAManager
     page_class = pages.ExampleAPage
     success_url = "montrek_example_a_list"
 
 
 class MontrekExampleADetails(views.MontrekDetailView):
-    repository = HubARepository
+    manager_class = mem.HubAManager
     page_class = pages.ExampleAPage
     tab = "tab_details"
     title = "Example A Details"
@@ -129,14 +126,14 @@ class MontrekExampleADetails(views.MontrekDetailView):
 
 
 class MontrekExampleBCreate(views.MontrekCreateView):
-    repository = HubBRepository
+    manager_class = mem.HubBManager
     page_class = pages.MontrekExampleBAppPage
     success_url = "montrek_example_b_list"
     form_class = forms.ExampleBCreateForm
 
 
 class MontrekExampleBList(views.MontrekListView):
-    repository = HubBRepository
+    manager_class = mem.HubBManager
     page_class = pages.MontrekExampleBAppPage
     tab = "tab_example_b_list"
 
@@ -171,7 +168,7 @@ class MontrekExampleBList(views.MontrekListView):
 
 
 class MontrekExampleAHistory(views.MontrekHistoryListView):
-    repository = HubARepository
+    manager_class = mem.HubAManager
     page_class = pages.ExampleAPage
     tab = "tab_history"
     title = "Example A History"
@@ -195,7 +192,7 @@ class MontrekExampleAHistory(views.MontrekHistoryListView):
 
 
 class MontrekExampleCList(views.MontrekListView):
-    repository = HubCRepository
+    manager_class = mem.HubCManager
     page_class = pages.MontrekExampleCAppPage
     tab = "tab_example_c_list"
 
@@ -222,14 +219,14 @@ class MontrekExampleCList(views.MontrekListView):
 
 
 class MontrekExampleCCreate(views.MontrekCreateView):
-    repository = HubCRepository
+    manager_class = mem.HubCManager
     page_class = pages.MontrekExampleCAppPage
     success_url = "montrek_example_c_list"
     form_class = forms.ExampleCCreateForm
 
 
 class MontrekExampleDList(views.MontrekListView):
-    repository = HubDRepository
+    manager_class = mem.HubDManager
     page_class = pages.MontrekExampleDAppPage
     tab = "tab_example_d_list"
 
@@ -254,7 +251,7 @@ class MontrekExampleDList(views.MontrekListView):
 
 
 class MontrekExampleDCreate(views.MontrekCreateView):
-    repository = HubDRepository
+    manager_class = mem.HubDManager
     page_class = pages.MontrekExampleDAppPage
     success_url = "montrek_example_d_list"
 
@@ -262,7 +259,7 @@ class MontrekExampleDCreate(views.MontrekCreateView):
 class MontrekExampleA1UploadFileView(MontrekUploadFileView):
     page_class = pages.MontrekExampleAAppPage
     title = "Upload A1 File"
-    repository = HubARepository
+    manager_class = mem.HubAManager
     file_upload_processor_class = A1FileUploadProcessor
     accept = ".csv"
 
@@ -271,7 +268,7 @@ class MontrekExampleA1UploadFileView(MontrekUploadFileView):
 
 
 class MontrekExampleA1UploadView(MontrekUploadView):
-    title = 'A1 Uploads'
+    title = "A1 Uploads"
     page_class = pages.MontrekExampleAAppPage
     repository = SatA1Repository
 
@@ -294,6 +291,7 @@ class MontrekExampleA1FieldMapCreateView(MontrekFieldMapCreateView):
     page_class = pages.MontrekExampleAAppPage
     field_map_manager_class = A1FieldMapManager
     related_repository_class = SatA1Repository
+
 
 class MontrekExampleA1FieldMapListView(MontrekFieldMapListView):
     page_class = pages.MontrekExampleAAppPage

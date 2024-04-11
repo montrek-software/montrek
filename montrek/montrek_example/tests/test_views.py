@@ -218,7 +218,7 @@ class TestMontrekExampleDListView(TestCase):
         self.assertEqual(len(test_queryset), 1)
 
 
-class TestMontrelExampleDCreate(TestCase):
+class TestMontrekExampleDCreate(TestCase):
     def setUp(self):
         self.user = MontrekUserFactory()
         self.client.force_login(self.user)

@@ -31,6 +31,11 @@ class TestMontrekUploadFileView(TestCase):
         self.factory = RequestFactory()
         self.view = MockFileUploadView("/fake-url/")
 
+    def test_show_correct_url(self):
+        test_file_upload_view = self.view
+        response = test_file_upload_view.get(self.view.request)
+        self.assertEqual(response.status_code, 200)
+
     # TODO Write tests after implementation
     # def test_get_context_data(self):
     #    self.assertEqual(self.view.response.status_code, 200)
