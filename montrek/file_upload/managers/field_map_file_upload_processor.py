@@ -1,5 +1,6 @@
 from numpy import who
 import pandas as pd
+import numpy as np
 import logging
 
 from typing import Dict, Any
@@ -27,17 +28,16 @@ class FieldMapFileUploadProcessor:
         self.session_data = session_data
         self.file_upload_registry_id = file_upload_registry_id
         self.file_upload_registry_repository = FileUploadRegistryRepository(
-            session_data
+            self.session_data
         )
         if not self.manager_class:
             raise ValueError("manager_class must be set in subclass.")
-        self.manager = self.manager_class(session_data)
+        self.manager = self.manager_class(self.session_data)
         self.file_upload_registry_hub = (
             self.file_upload_registry_repository.std_queryset().get(
                 pk=file_upload_registry_id
             )
         )
-        self.session_data = session_data
 
     def get_source_df_from_file(self, file_path: str) -> pd.DataFrame:
         NotImplementedError("Please implement this method in a subclass.")
@@ -59,6 +59,7 @@ class FieldMapFileUploadProcessor:
         try:
             mapped_df["comment"] = self.file_upload_registry_hub.file_name
             mapped_df = self.add_file_upload_registry_link_column(mapped_df)
+            mapped_df = mapped_df.replace({np.nan: None})
             self.manager.repository.create_objects_from_data_frame(mapped_df)
         except Exception as e:
             self.message = (
