@@ -152,15 +152,22 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "uploads")
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-DEPLOY_HOST = config("DEPLOY_HOST", default="1339")
+DEPLOY_HOST = config("DEPLOY_HOST", default="127.0.0.1")
 DEPLOY_PORT = config("DEPLOY_PORT", default="1339")
 CSRF_TRUSTED_ORIGINS = [
     f"http://{host}:{DEPLOY_PORT}" for host in ["localhost", "127.0.0.1", DEPLOY_HOST]
 ]
 
-EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
-EMAIL_FILE_PATH = BASE_DIR / "sent_emails"
+EMAIL_HOST = config("EMAIL_HOST", default=None)
+if not EMAIL_HOST:
+    EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
+    EMAIL_FILE_PATH = BASE_DIR / "sent_emails"
+else:
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+    EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=True, cast=bool)
+    EMAIL_PORT = config("EMAIL_PORT", default=587, cast=int)
 EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
 
 CELERY_BROKER_URL = config("CELERY_BROKER_URL", default="redis://redis:6379")
 CELERY_RESULT_BACKEND = config("CELERY_RESULT_BACKEND", default="redis://redis:6379")
