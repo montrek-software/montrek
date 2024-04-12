@@ -56,7 +56,7 @@ class FieldMapFileUploadProcessor:
             return False
         try:
             mapped_df["comment"] = self.file_upload_registry_hub.file_name
-            mapped_df = self.add_link_columns((mapped_df)
+            mapped_df = self.add_link_columns(mapped_df)
             mapped_df = mapped_df.replace({np.nan: None})
             self.manager.repository.create_objects_from_data_frame(mapped_df)
         except Exception as e:
