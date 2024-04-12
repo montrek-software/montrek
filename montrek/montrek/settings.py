@@ -49,6 +49,7 @@ MONTREK_BASE_APPS = [
     "baseclasses",
     "montrek_example",
     "file_upload",
+    "mailing",
 ]
 
 MONTREK_EXTENSION_APPS = [
