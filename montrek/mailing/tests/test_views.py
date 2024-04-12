@@ -8,9 +8,15 @@ class MailsOverview(TestCase):
         MailSatelliteFactory.create_batch(3)
 
     def test_view_and_query(self):
-        view = views.MailOverviewListView()
+        view = views.MailOverviewListView.as_view()
         object_list = view.get_view_queryset()
         self.assertEqual(len(object_list), 3)
+
+    def test_view_page(self):
+        view = views.MailOverviewListView()
+        view.kwargs = {}
+        page_conext = view.get_page_context({})
+        breakpoint()
 
     def test_account_overview_returns_correct_html(self):
         response = self.client.get("mailing/overview")
