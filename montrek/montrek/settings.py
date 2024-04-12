@@ -187,3 +187,5 @@ LOGGING = {
         "level": config("LOG_LEVEL", default="WARNING"),
     },
 }
+# Testing
+TEST_RUNNER = "montrek.testing.test_runner.MontrekTestRunner"
