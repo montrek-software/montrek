@@ -1,6 +1,6 @@
 from django.shortcuts import render
 
-from baseclasses.views import MontrekListView
+from baseclasses.views import MontrekListView, MontrekCreateView
 from baseclasses.dataclasses import table_elements as te
 from mailing.managers.mailing_manager import MailingManager
 from mailing.pages import MailingPage
@@ -21,3 +21,10 @@ class MailOverviewListView(MontrekListView):
             te.StringTableElement(name="Recipients", attr="mail_recipients"),
             te.StringTableElement(name="State", attr="mail_state"),
         ]
+
+
+class SendMailView(MontrekCreateView):
+    manager_class = MailingManager
+    page_class = MailingPage
+    title = "Send mail"
+    tab = "tab_send_mail"
