@@ -33,3 +33,10 @@ class MontrekManager:
 
     def collect_messages(self):
         self.messages += self.repository.messages
+
+
+class MontrekManagerNotImplemented(MontrekManager):
+    def __init__(self, session_data: dict[str, Any] = {}):
+        raise NotImplementedError(
+            "Assign valid MontrekManager class to views manager_class attribute"
+        )
