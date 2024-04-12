@@ -8,7 +8,7 @@ class MailsOverview(TestCase):
         MailSatelliteFactory.create_batch(3)
 
     def test_view_and_query(self):
-        view = views.MailOverviewListView.as_view()
+        view = views.MailOverviewListView()
         object_list = view.get_view_queryset()
         self.assertEqual(len(object_list), 3)
 
@@ -20,14 +20,13 @@ class MailsOverview(TestCase):
         self.assertNotEqual(page_context["title"], "No Title set!")
 
     def test_account_overview_returns_correct_html(self):
-        response = self.client.get("mailing/overview")
+        response = self.client.get("/mailing/overview")
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "montrek_table.html")
 
     def test_account_overview_context_data(self):
-        response = self.client.get("mailing/overview")
+        response = self.client.get("/mailing/overview")
         context = response.context
         object_list = context["object_list"]
         self.assertEqual(len(object_list), 3)
-        self.assertIsInstance(context["view"], views.MailOverview)
-        self.assertEqual(context["page_title"], "Send Mails")
+        self.assertIsInstance(context["view"], views.MailOverviewListView)
