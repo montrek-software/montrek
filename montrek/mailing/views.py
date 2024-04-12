@@ -52,7 +52,7 @@ class SendMailView(MontrekCreateUpdateView):
 
     def form_valid(self, form):
         mail_data = form.cleaned_data
-        self.manager.send_mail(
+        self.manager.send_montrek_mail(
             recipients=mail_data["mail_recipients"],
             subject=mail_data["mail_subject"],
             message=mail_data["mail_message"],

@@ -31,4 +31,5 @@ class MailStateSatellite(baseclass_models.MontrekSatelliteABC):
     mail_state = models.CharField(
         max_length=10, choices=MailStates.choices, default=MailStates.PENDING
     )
+    mail_comment = models.TextField(null=True, blank=True)
     identifier_fields = ["hub_entity_id"]

@@ -38,7 +38,7 @@ class MockManager:
     def __init__(self, session_data: dict):
         pass
 
-    def send_mail(self, data: dict):
+    def send_montrek_mail(self, recipients: str, subject: str, message: str):
         pass
 
 
@@ -60,7 +60,11 @@ class TestSendMailView(TestCase):
 
     def test_send_mail(self):
         class MockForm:
-            cleaned_data: dict = {}
+            cleaned_data: dict = {
+                "mail_recipients": "a@b.de",
+                "mail_subject": "Test",
+                "mail_message": "This is a test",
+            }
 
         view = MockSendMailView()
         mock_form = MockForm()
