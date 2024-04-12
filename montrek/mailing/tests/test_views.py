@@ -15,8 +15,9 @@ class MailsOverview(TestCase):
     def test_view_page(self):
         view = views.MailOverviewListView()
         view.kwargs = {}
-        page_conext = view.get_page_context({})
-        breakpoint()
+        page_context = view.get_page_context({})
+        self.assertNotEqual(page_context["page_title"], "page_title not set!")
+        self.assertNotEqual(page_context["title"], "No Title set!")
 
     def test_account_overview_returns_correct_html(self):
         response = self.client.get("mailing/overview")

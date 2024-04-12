@@ -61,6 +61,7 @@ class MontrekPageViewMixin:
     page_class = NoPage
     tab = "empty_tab"
     title = "No Title set!"
+    request = None
 
     @property
     def actions(self) -> tuple[ActionElement] | tuple:
@@ -78,6 +79,8 @@ class MontrekPageViewMixin:
         return context
 
     def _handle_date_range_form(self):
+        if not self.request:
+            return {}
         start_date, end_date = utils.get_date_range_dates(self.request)
         # Get dates from form if new were submitted or take from session
         request_get = self.request.GET.copy()
@@ -99,6 +102,7 @@ class MontrekPageViewMixin:
 
 class MontrekViewMixin:
     _manager = None
+    request = None
 
     @property
     def manager(self):
@@ -125,8 +129,7 @@ class MontrekViewMixin:
 
     @property
     def session_data(self) -> dict:
-        # For testing purposes
-        if not hasattr(self, "request"):
+        if not self.request:
             return {}
         session_data = dict(self.request.GET)
         session_data.update(dict(self.request.session))
