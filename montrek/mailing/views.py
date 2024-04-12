@@ -11,3 +11,4 @@ class MailOverviewListView(MontrekListView):
     manager_class = MailingManager
     page_class = MailingPage
     title = "Mail Overview"
+    tab = "tab_overview"
