@@ -51,5 +51,10 @@ class SendMailView(MontrekCreateUpdateView):
         return context
 
     def form_valid(self, form):
-        self.manager.send_mail(form.cleaned_data)
+        mail_data = form.cleaned_data
+        self.manager.send_mail(
+            recipients=mail_data["mail_recipients"],
+            subject=mail_data["mail_subject"],
+            message=mail_data["mail_message"],
+        )
         return HttpResponseRedirect(self.get_success_url())
