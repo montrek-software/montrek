@@ -61,8 +61,8 @@ class DataQualityStatusTableElement(AttrTableElement):
     attr: str
 
     def format(self, value):
-        color = DataQualityStatusEnum.get_color_by_level(value)
-        return f'<td style="text-align: left;color:{color};">{value}</td>'
+        status = DataQualityStatusEnum.get_by_description(value)
+        return f'<td style="text-align: left;color:{status.color};">{value}</td>'
 
 
 @dataclass

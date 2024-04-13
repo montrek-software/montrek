@@ -53,13 +53,14 @@ class DataQualityMixin(models.Model):
         abstract = True
 
     DATA_QUALITY_CHOICES = [
-        (status.value.level, status.name.title()) for status in DataQualityStatusEnum
+        (status.value.description, status.value.description)
+        for status in DataQualityStatusEnum
     ]
 
     data_quality_status = models.CharField(
         max_length=10,
         choices=DATA_QUALITY_CHOICES,
-        default=DataQualityStatusEnum.OK.value.level,
+        default=DataQualityStatusEnum.OK.value.description,
     )
     data_quality_message = models.CharField(max_length=255, null=True, blank=True)
 
