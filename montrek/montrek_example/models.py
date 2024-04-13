@@ -87,6 +87,7 @@ class SatB2(MontrekSatelliteABC):
 
 class DataQualitySatB(MontrekDataQualitySatelliteABC):
     hub_entity = models.ForeignKey(HubB, on_delete=models.CASCADE)
+    identifier_fields = ["hub_entity_id"]
 
 
 class SatC1(MontrekSatelliteABC):

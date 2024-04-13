@@ -194,7 +194,6 @@ class MontrekDataQualitySatelliteABC(MontrekSatelliteABC):
         default=DataQualityStatusEnum.OK.value.description,
     )
     data_quality_message = models.CharField(max_length=255, null=True, blank=True)
-    identifier_fields = ["hub_entity_id"]
 
 
 class LinkTypeEnum(Enum):
