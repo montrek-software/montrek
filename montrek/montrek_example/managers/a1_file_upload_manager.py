@@ -19,8 +19,6 @@ class A1FileUploadProcessor(FieldMapFileUploadProcessor):
     def get_source_df_from_file(cls, file_path):
         return pd.read_csv(file_path)
 
-    def add_file_upload_registry_link_column(
-        self, mapped_df: pd.DataFrame
-    ) -> pd.DataFrame:
+    def add_link_columns(self, mapped_df: pd.DataFrame) -> pd.DataFrame:
         mapped_df["link_hub_a_file_upload_registry"] = self.file_upload_registry_hub
         return mapped_df
