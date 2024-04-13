@@ -59,6 +59,7 @@ class DataQualityMixin(models.Model):
     data_quality_status = models.CharField(
         max_length=10,
         choices=DATA_QUALITY_CHOICES,
+        default=DataQualityStatusEnum.OK.value.level,
     )
     data_quality_message = models.CharField(max_length=255, null=True, blank=True)
 

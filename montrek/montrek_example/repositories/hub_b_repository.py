@@ -9,7 +9,12 @@ class HubBRepository(MontrekRepository):
     def std_queryset(self):
         self.add_satellite_fields_annotations(
             me_models.SatB1,
-            ["field_b1_str", "field_b1_date"],
+            [
+                "field_b1_str",
+                "field_b1_date",
+                "data_quality_status",
+                "data_quality_message",
+            ],
         )
         self.add_satellite_fields_annotations(
             me_models.SatB2,
