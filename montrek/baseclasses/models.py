@@ -48,23 +48,6 @@ class UserMixin(models.Model):
     )
 
 
-class DataQualityMixin(models.Model):
-    class Meta:
-        abstract = True
-
-    DATA_QUALITY_CHOICES = [
-        (status.value.description, status.value.description)
-        for status in DataQualityStatusEnum
-    ]
-
-    data_quality_status = models.CharField(
-        max_length=10,
-        choices=DATA_QUALITY_CHOICES,
-        default=DataQualityStatusEnum.OK.value.description,
-    )
-    data_quality_message = models.CharField(max_length=255, null=True, blank=True)
-
-
 # Base Hub Model ABC
 class MontrekHubABC(TimeStampMixin, StateMixin, UserMixin):
     class Meta:
@@ -194,6 +177,23 @@ class MontrekTypeSatelliteABC(MontrekSatelliteABC):
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
+
+
+class MontrekDataQualitySatelliteABC(MontrekSatelliteABC):
+    class Meta:
+        abstract = True
+
+    DATA_QUALITY_CHOICES = [
+        (status.value.description, status.value.description)
+        for status in DataQualityStatusEnum
+    ]
+
+    data_quality_status = models.CharField(
+        max_length=10,
+        choices=DATA_QUALITY_CHOICES,
+        default=DataQualityStatusEnum.OK.value.description,
+    )
+    data_quality_message = models.CharField(max_length=255, null=True, blank=True)
 
 
 class LinkTypeEnum(Enum):

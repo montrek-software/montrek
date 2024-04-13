@@ -1,7 +1,7 @@
 from django.db import models
 from django.utils import timezone
 from baseclasses.models import (
-    DataQualityMixin,
+    MontrekDataQualitySatelliteABC,
     MontrekHubABC,
     MontrekSatelliteABC,
     MontrekOneToManyLinkABC,
@@ -64,7 +64,7 @@ class SatA2(MontrekSatelliteABC):
     identifier_fields = ["field_a2_str"]
 
 
-class SatB1(MontrekSatelliteABC, DataQualityMixin):
+class SatB1(MontrekSatelliteABC):
     hub_entity = models.ForeignKey(HubB, on_delete=models.CASCADE)
     field_b1_str = models.CharField(max_length=50, default="DEFAULT")
     field_b1_date = models.DateField(default=timezone.now)
@@ -83,6 +83,11 @@ class SatB2(MontrekSatelliteABC):
         max_length=10, choices=ChoiceEnum.choices, default=ChoiceEnum.CHOICE1
     )
     identifier_fields = ["field_b2_str", "hub_entity_id"]
+
+
+class DataQualitySatB(MontrekDataQualitySatelliteABC):
+    hub_entity = models.ForeignKey(HubB, on_delete=models.CASCADE)
+    identifier_fields = ["hub_entity_id"]
 
 
 class SatC1(MontrekSatelliteABC):

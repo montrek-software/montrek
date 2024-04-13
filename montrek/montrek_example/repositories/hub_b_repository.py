@@ -12,8 +12,6 @@ class HubBRepository(MontrekRepository):
             [
                 "field_b1_str",
                 "field_b1_date",
-                "data_quality_status",
-                "data_quality_message",
             ],
         )
         self.add_satellite_fields_annotations(
@@ -24,6 +22,13 @@ class HubBRepository(MontrekRepository):
             me_models.SatD1,
             me_models.LinkHubBHubD,
             ["field_d1_str", "field_d1_int"],
+        )
+        self.add_satellite_fields_annotations(
+            me_models.DataQualitySatB,
+            [
+                "data_quality_status",
+                "data_quality_message",
+            ],
         )
         return self.build_queryset()
 
