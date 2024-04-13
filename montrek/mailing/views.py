@@ -1,6 +1,6 @@
 from django.http import HttpResponseRedirect
-from django.shortcuts import render
 from django.urls import reverse
+from django.contrib import messages
 
 from baseclasses.views import MontrekCreateUpdateView, MontrekListView
 from baseclasses.dataclasses import table_elements as te
@@ -57,4 +57,5 @@ class SendMailView(MontrekCreateUpdateView):
             subject=mail_data["mail_subject"],
             message=mail_data["mail_message"],
         )
+        self.show_messages()
         return HttpResponseRedirect(self.get_success_url())
