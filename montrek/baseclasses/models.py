@@ -7,6 +7,7 @@ from django.db import models
 from django.db.models.fields import decimal
 from django.utils import timezone
 from baseclasses.utils import datetime_to_montrek_time
+from baseclasses.dataclasses.data_quality import DataQualityStatusEnum
 
 # Create your models here.
 
@@ -45,6 +46,21 @@ class UserMixin(models.Model):
         related_name="%(class)s",
         null=True,
     )
+
+
+class DataQualityMixin(models.Model):
+    class Meta:
+        abstract = True
+
+    DATA_QUALITY_CHOICES = [
+        (status.value.level, status.name.title()) for status in DataQualityStatusEnum
+    ]
+
+    data_quality_status = models.CharField(
+        max_length=10,
+        choices=DATA_QUALITY_CHOICES,
+    )
+    data_quality_message = models.CharField(max_length=255, null=True, blank=True)
 
 
 # Base Hub Model ABC

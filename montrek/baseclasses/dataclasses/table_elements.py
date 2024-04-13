@@ -1,3 +1,4 @@
+from baseclasses.dataclasses.data_quality import DataQualityStatusEnum
 from django.utils import timezone
 from dataclasses import dataclass, field
 from decimal import Decimal
@@ -53,6 +54,15 @@ class StringTableElement(AttrTableElement):
 
     def format(self, value):
         return f'<td style="text-align: left">{value}</td>'
+
+
+@dataclass
+class DataQualityStatusTableElement(AttrTableElement):
+    attr: str
+
+    def format(self, value):
+        color = DataQualityStatusEnum.get_color_by_level(value)
+        return f'<td style="text-align: left;color:{color};">{value}</td>'
 
 
 @dataclass
