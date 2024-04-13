@@ -79,3 +79,26 @@ class TestSendMailView(TestCase):
         response = self.client.get("/mailing/send")
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "montrek_create.html")
+
+
+class TestMailDetailsView(TestCase):
+    def setUp(self):
+        self.mail = MailSatelliteFactory()
+
+    def test_view_page(self):
+        view = views.MailDetailView()
+        view.kwargs = {"pk": self.mail.pk}
+        page_context = view.get_page_context({})
+        self.assertNotEqual(page_context["page_title"], "page_title not set!")
+        self.assertNotEqual(page_context["title"], "No Title set!")
+
+    def test_account_overview_returns_correct_html(self):
+        response = self.client.get(f"/mailing/{self.mail.pk}/details")
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "montrek_details.html")
+
+    def test_account_overview_context_data(self):
+        response = self.client.get(f"/mailing/{self.mail.pk}/details")
+        context = response.context
+        self.assertEqual(context["object"], self.mail.hub_entity)
+        self.assertIsInstance(context["view"], views.MailDetailView)
