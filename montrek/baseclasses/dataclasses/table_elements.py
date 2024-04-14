@@ -1,3 +1,4 @@
+from baseclasses.dataclasses.alert import AlertEnum
 from django.utils import timezone
 from dataclasses import dataclass, field
 from decimal import Decimal
@@ -53,6 +54,15 @@ class StringTableElement(AttrTableElement):
 
     def format(self, value):
         return f'<td style="text-align: left">{value}</td>'
+
+
+@dataclass
+class AlertTableElement(AttrTableElement):
+    attr: str
+
+    def format(self, value):
+        status = AlertEnum.get_by_description(value)
+        return f'<td style="text-align: left;color:{status.color};">{value}</td>'
 
 
 @dataclass
