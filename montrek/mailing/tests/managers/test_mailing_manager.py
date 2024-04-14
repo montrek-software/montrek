@@ -21,10 +21,12 @@ class TestMailingManager(TestCase):
             subject=self.subject,
             message=self.message,
         )
-        sent_emails = mail.outbox[0]
-        self.assertEqual(sent_emails.subject, self.subject)
-        self.assertEqual(sent_emails.body, self.message)
-        self.assertEqual(sent_emails.to, ["a@b.de", "c@e.f"])
+        sent_email = mail.outbox[0]
+        self.assertEqual(sent_email.subject, self.subject)
+        self.assertEqual(sent_email.body, self.message)
+        self.assertEqual(sent_email.to, ["a@b.de", "c@e.f"])
+        self.assertTrue(sent_email.body.startswith("<html>"))
+        self.assertTrue(sent_email.body.endswith("</html>"))
         mail_object = MailingRepository({}).std_queryset().first()
         self.assertEqual(mail_object.mail_subject, self.subject)
         self.assertEqual(mail_object.mail_recipients, self.recipients)
