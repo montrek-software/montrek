@@ -12,7 +12,7 @@ class HubBRepository(MontrekRepository):
             [
                 "field_b1_str",
                 "field_b1_date",
-                "alert_status",
+                "alert_level",
                 "alert_message",
             ],
         )

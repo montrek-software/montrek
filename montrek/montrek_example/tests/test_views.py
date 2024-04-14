@@ -152,7 +152,7 @@ class TestMontrekExampleBCreate(TestCase):
             "field_b2_str": "test2",
             "field_b2_choice": "CHOICE2",
             "link_hub_b_hub_d": [self.d_fac1.id, self.d_fac2.id],
-            "alert_status": AlertEnum.OK.value.description,
+            "alert_level": AlertEnum.OK.value.description,
         }
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, 302)

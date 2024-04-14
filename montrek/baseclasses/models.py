@@ -57,7 +57,7 @@ class AlertMixin(models.Model):
         for status in AlertEnum
     ]
 
-    alert_status = models.CharField(
+    alert_level = models.CharField(
         max_length=10,
         choices=ALERT_CHOICES,
         default=AlertEnum.OK.value.description,
