@@ -154,12 +154,8 @@ class MontrekExampleBList(views.MontrekListView):
                 kwargs={"filter": "field_d1_str"},
             ),
             te.StringTableElement(name="D2 Int", attr="field_d1_int"),
-            te.DataQualityStatusTableElement(
-                name="Data Quality Status", attr="data_quality_status"
-            ),
-            te.StringTableElement(
-                name="Data Quality Message", attr="data_quality_message"
-            ),
+            te.AlertTableElement(name="Alert Status", attr="alert_status"),
+            te.StringTableElement(name="Alert Message", attr="alert_message"),
         ]
 
     @property

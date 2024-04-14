@@ -12,8 +12,8 @@ class HubBRepository(MontrekRepository):
             [
                 "field_b1_str",
                 "field_b1_date",
-                "data_quality_status",
-                "data_quality_message",
+                "alert_status",
+                "alert_message",
             ],
         )
         self.add_satellite_fields_annotations(
