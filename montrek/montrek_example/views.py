@@ -154,7 +154,7 @@ class MontrekExampleBList(views.MontrekListView):
                 kwargs={"filter": "field_d1_str"},
             ),
             te.StringTableElement(name="D2 Int", attr="field_d1_int"),
-            te.AlertTableElement(name="Alert Status", attr="alert_status"),
+            te.AlertTableElement(name="Alert Level", attr="alert_level"),
             te.StringTableElement(name="Alert Message", attr="alert_message"),
         ]
 
