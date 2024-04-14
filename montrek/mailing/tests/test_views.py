@@ -2,6 +2,7 @@ from django.test import TestCase
 from mailing.tests.factories.mailing_factories import MailSatelliteFactory
 from mailing import views
 from mailing.forms import MailingSendForm
+from baseclasses.managers.montrek_manager import MontrekManager
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
 
@@ -34,10 +35,7 @@ class TestMailsOverview(TestCase):
         self.assertIsInstance(context["view"], views.MailOverviewListView)
 
 
-class MockManager:
-    def __init__(self, session_data: dict):
-        pass
-
+class MockManager(MontrekManager):
     def send_montrek_mail(self, recipients: str, subject: str, message: str):
         pass
 
