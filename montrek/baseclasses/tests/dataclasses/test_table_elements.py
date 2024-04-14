@@ -125,7 +125,7 @@ class TestTableElements(TestCase):
         self.assertEqual(te._get_value_color(0), ReportingColors.DARK_BLUE)
         self.assertEqual(te._get_value_color(-2), ReportingColors.RED)
 
-    def test_alert_level_table_element(self):
+    def test_alert_table_element(self):
         test_element = te.AlertTableElement(name="test", attr="test_value")
         self.assertEqual(
             test_element.format("ok"),
