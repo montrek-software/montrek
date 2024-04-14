@@ -262,9 +262,9 @@ class MontrekExampleDCreate(views.MontrekCreateView):
 
 
 class MontrekExampleA1UploadFileView(MontrekUploadFileView):
+    manager_class = mem.HubAManager
     page_class = pages.MontrekExampleAAppPage
     title = "Upload A1 File"
-    manager_class = mem.HubAManager
     file_upload_processor_class = A1FileUploadProcessor
     accept = ".csv"
 
@@ -273,6 +273,7 @@ class MontrekExampleA1UploadFileView(MontrekUploadFileView):
 
 
 class MontrekExampleA1UploadView(MontrekUploadView):
+    manager_class = mem.HubAManager
     title = "A1 Uploads"
     page_class = pages.MontrekExampleAAppPage
     repository = SatA1Repository
@@ -292,6 +293,7 @@ class MontrekExampleA1UploadView(MontrekUploadView):
 
 
 class MontrekExampleA1FieldMapCreateView(MontrekFieldMapCreateView):
+    manager_class = mem.HubAManager
     success_url = "montrek_example_a1_field_map_list"
     page_class = pages.MontrekExampleAAppPage
     field_map_manager_class = A1FieldMapManager
@@ -299,6 +301,7 @@ class MontrekExampleA1FieldMapCreateView(MontrekFieldMapCreateView):
 
 
 class MontrekExampleA1FieldMapListView(MontrekFieldMapListView):
+    manager_class = mem.HubAManager
     page_class = pages.MontrekExampleAAppPage
     tab = "tab_a1_field_map_list"
 

@@ -49,6 +49,7 @@ MONTREK_BASE_APPS = [
     "baseclasses",
     "montrek_example",
     "file_upload",
+    "mailing",
 ]
 
 MONTREK_EXTENSION_APPS = [
@@ -186,3 +187,5 @@ LOGGING = {
         "level": config("LOG_LEVEL", default="WARNING"),
     },
 }
+# Testing
+TEST_RUNNER = "montrek.testing.test_runner.MontrekTestRunner"
