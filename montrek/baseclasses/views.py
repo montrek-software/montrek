@@ -24,7 +24,7 @@ from baseclasses.forms import MontrekCreateForm
 from baseclasses import utils
 from baseclasses.managers.montrek_list_manager import MontrekListManager
 from baseclasses.dataclasses.history_data_table import HistoryDataTable
-from baseclasses.managers.montrek_manager import MontrekManager
+from baseclasses.managers.montrek_manager import MontrekManagerNotImplemented
 
 # Create your views here.
 
@@ -176,7 +176,7 @@ class MontrekTemplateView(
     MontrekPermissionRequiredMixin, TemplateView, MontrekPageViewMixin, MontrekViewMixin
 ):
     template_name = "montrek.html"
-    manager_class = MontrekManager
+    manager_class = MontrekManagerNotImplemented
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -251,7 +251,7 @@ class MontrekDetailView(
     MontrekPermissionRequiredMixin, DetailView, MontrekPageViewMixin, MontrekViewMixin
 ):
     template_name = "montrek_details.html"
-    manager_class = MontrekManager
+    manager_class = MontrekManagerNotImplemented
 
     def get_queryset(self):
         return self.get_view_queryset()
@@ -263,11 +263,10 @@ class MontrekDetailView(
         return context
 
 
-
 class MontrekCreateUpdateView(
     MontrekPermissionRequiredMixin, CreateView, MontrekPageViewMixin, MontrekViewMixin
 ):
-    manager_class = MontrekManager
+    manager_class = MontrekManagerNotImplemented
     form_class = MontrekCreateForm
     template_name = "montrek_create.html"
     success_url = "under_construction"
@@ -321,7 +320,7 @@ class MontrekUpdateView(MontrekCreateUpdateView):
 class MontrekDeleteView(
     View, MontrekPermissionRequiredMixin, MontrekViewMixin, MontrekPageViewMixin
 ):
-    manager_class = MontrekManager
+    manager_class = MontrekManagerNotImplemented
     success_url = "under_construction"
     template_name = "montrek_delete.html"
 
