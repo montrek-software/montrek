@@ -23,10 +23,10 @@ class TestMailingManager(TestCase):
         )
         sent_email = mail.outbox[0]
         self.assertEqual(sent_email.subject, self.subject)
-        self.assertEqual(sent_email.body, self.message)
         self.assertEqual(sent_email.to, ["a@b.de", "c@e.f"])
         self.assertTrue(sent_email.body.startswith("<html>"))
-        self.assertTrue(sent_email.body.endswith("</html>"))
+        self.assertTrue(sent_email.body.endswith("</html>\n"))
+        self.assertTrue(self.message in sent_email.body)
         mail_object = MailingRepository({}).std_queryset().first()
         self.assertEqual(mail_object.mail_subject, self.subject)
         self.assertEqual(mail_object.mail_recipients, self.recipients)
@@ -34,7 +34,9 @@ class TestMailingManager(TestCase):
         self.assertEqual(mail_object.mail_state, "Sent")
         self.assertEqual(mail_object.mail_comment, "Successfully send")
 
-    @mock.patch("mailing.managers.mailing_manager.send_mail", side_effect=SMTPException)
+    @mock.patch(
+        "mailing.managers.mailing_manager.EmailMessage.send", side_effect=SMTPException
+    )
     def test_send_mail_fail(self, mock_send_mail):
         mailing_manager = MailingManager({"user_id": self.user.id})
         mailing_manager.send_montrek_mail(
