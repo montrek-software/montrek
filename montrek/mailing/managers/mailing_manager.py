@@ -1,3 +1,6 @@
+import base64
+from PIL import Image
+from io import BytesIO
 from django.conf import settings
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
@@ -29,6 +32,7 @@ class MailingManager(MontrekManager):
         }
         mail_hub = self.repository.std_create_object(mail_params)
         body = self.get_mail_body(message, additional_parms)
+
         try:
             email = EmailMessage(
                 subject,
@@ -58,10 +62,6 @@ class MailingManager(MontrekManager):
                 MontrekMessageError(message=f"Mail failed to send to {recipients}")
             )
 
-    def get_context_data(self, message: str, additional_parms: dict):
-        style_txt = str(open(settings.STATIC_ROOT + "/base.css", "r").read())
-        return {"message": message, "style": style_txt, **additional_parms}
-
     def get_mail_body(
         self,
         message: str,
@@ -70,3 +70,6 @@ class MailingManager(MontrekManager):
         return render_to_string(
             self.template_path, self.get_context_data(message, additional_parms)
         )
+
+    def get_context_data(self, message: str, additional_parms: dict):
+        return {"message": message, **additional_parms}
