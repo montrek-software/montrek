@@ -1,6 +1,3 @@
-import base64
-from PIL import Image
-from io import BytesIO
 from django.conf import settings
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
