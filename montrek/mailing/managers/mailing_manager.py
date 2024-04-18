@@ -12,31 +12,31 @@ from smtplib import SMTPException
 
 class MailingManager(MontrekManager):
     repository_class = MailingRepository
-    template_path = settings.EMAIL_TEMPLATE
 
-    def __init__(self, recipients: str, subject: str, message: str, **kwargs):
-        self.recipients = recipients
-        self.subject = subject
-        self.message = message
-        self.context = self.get_context(message, kwargs)
+    @property
+    def template_path(self):
+        return settings.EMAIL_TEMPLATE
 
-    def send_montrek_mail(self):
-        recipient_list = self.recipients.replace(" ", "").split(",")
+    def send_montrek_mail(
+        self, recipients: str, subject: str, message: str, additional_parms: dict = {}
+    ):
+        recipient_list = recipients.replace(" ", "").split(",")
         mail_params: dict = {
-            "mail_subject": self.subject,
-            "mail_recipients": self.recipients,
-            "mail_message": self.message,
+            "mail_subject": subject,
+            "mail_recipients": recipients,
+            "mail_message": message,
             "mail_state": "Pending",
         }
         mail_hub = self.repository.std_create_object(mail_params)
-        body = self.get_mail_body()
+        body = self.get_mail_body(message, additional_parms)
         try:
             email = EmailMessage(
-                self.subject,
+                subject,
                 body,
                 settings.EMAIL_BACKEND,
                 recipient_list,
             )
+            email.content_subtype = "html"
             email.send()
             mail_success_params = {
                 "mail_state": "Sent",
@@ -58,8 +58,15 @@ class MailingManager(MontrekManager):
                 MontrekMessageError(message=f"Mail failed to send to {recipients}")
             )
 
-    def get_context(self, message, kwargs):
-        return kwargs.update(message=message)
+    def get_context_data(self, message: str, additional_parms: dict):
+        style_txt = str(open(settings.STATIC_ROOT + "/base.css", "r").read())
+        return {"message": message, "style": style_txt, **additional_parms}
 
-    def get_mail_body(self):
-        return render_to_string(self.template_path, self.context)
+    def get_mail_body(
+        self,
+        message: str,
+        additional_parms: dict,
+    ):
+        return render_to_string(
+            self.template_path, self.get_context_data(message, additional_parms)
+        )

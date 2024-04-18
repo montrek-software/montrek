@@ -1,0 +1,50 @@
+<html>
+  <head>
+    <style>
+
+      body {
+          font-family: 'Arial', sans-serif;
+          background-color: #f4f4f4; /* Light grey background */
+      }
+      h2 {
+          color: #004767; /* Dark blue text */
+      }
+      /* Table Styling */
+      table {
+          width: 100%; /* Make table use full width of the parent */
+          border-collapse: collapse; /* Collapse borders */
+          margin-top: 10px; /* Add some top margin for spacing */
+      }
+
+      /* Table Row Styling */
+      tr {
+          border-bottom: 1px solid #e0e0e0; /* Add a light border at the bottom of each row */
+      }
+
+      /* Table Data/Cell Styling */
+      td {
+          padding: 2px; /* Add padding to each cell */
+          text-align: left; /* Align text to the left */
+      }
+      /* Every even row will have a pale blue background */
+      tr:nth-child(even) {
+          background-color: #E6F2F8; /* Pale blue */
+      }
+
+      /* Every odd row will have a white background */
+      tr:nth-child(odd) {
+          background-color: #FFFFFF; /* White */
+      }
+      th {
+          background-color: #004767; /* Dark blue */
+          color: #ffffff; /* White */
+          padding: 10px; /* Add some padding */
+          text-align: left; /* Align text to the left */
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Say Whatto?</h2>
+    {{ message }}
+  </body>
+</html>
