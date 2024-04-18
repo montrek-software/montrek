@@ -124,3 +124,18 @@ class TestTableElements(TestCase):
         self.assertEqual(te._get_value_color(1), ReportingColors.DARK_BLUE)
         self.assertEqual(te._get_value_color(0), ReportingColors.DARK_BLUE)
         self.assertEqual(te._get_value_color(-2), ReportingColors.RED)
+
+    def test_alert_table_element(self):
+        test_element = te.AlertTableElement(name="test", attr="test_value")
+        self.assertEqual(
+            test_element.format("ok"),
+            '<td style="text-align: left;color:#388E3C;">ok</td>',
+        )
+        self.assertEqual(
+            test_element.format("warning"),
+            '<td style="text-align: left;color:#FDD835;">warning</td>',
+        )
+        self.assertEqual(
+            test_element.format("error"),
+            '<td style="text-align: left;color:#BE0D3E;">error</td>',
+        )

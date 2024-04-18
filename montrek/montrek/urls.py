@@ -30,6 +30,7 @@ urlpatterns = [
     path("user/", include("user.urls")),
     path("baseclasses/", include("baseclasses.urls")),
     path("file_upload/", include("file_upload.urls")),
+    path("mailing/", include("mailing.urls")),
     path("montrek_example/", include("montrek_example.urls")),
 ]
 

@@ -1,12 +1,12 @@
 class MontrekPage:
     page_title = "page_title not set!"
     show_date_range_selector = False
+
     def __init__(self, **kwargs):
         self._tabs = None
 
-
     def get_tabs(self):
-        raise NotImplementedError("MontrekPage needs tabs!")
+        raise NotImplementedError("MontrekPage needs get_tabs method!")
 
     @property
     def tabs(self):

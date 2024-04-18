@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
 from baseclasses.models import (
+    AlertMixin,
     MontrekHubABC,
     MontrekSatelliteABC,
     MontrekOneToManyLinkABC,
@@ -63,7 +64,7 @@ class SatA2(MontrekSatelliteABC):
     identifier_fields = ["field_a2_str"]
 
 
-class SatB1(MontrekSatelliteABC):
+class SatB1(MontrekSatelliteABC, AlertMixin):
     hub_entity = models.ForeignKey(HubB, on_delete=models.CASCADE)
     field_b1_str = models.CharField(max_length=50, default="DEFAULT")
     field_b1_date = models.DateField(default=timezone.now)

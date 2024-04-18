@@ -7,6 +7,7 @@ from django.db import models
 from django.db.models.fields import decimal
 from django.utils import timezone
 from baseclasses.utils import datetime_to_montrek_time
+from baseclasses.dataclasses.alert import AlertEnum
 
 # Create your models here.
 
@@ -45,6 +46,23 @@ class UserMixin(models.Model):
         related_name="%(class)s",
         null=True,
     )
+
+
+class AlertMixin(models.Model):
+    class Meta:
+        abstract = True
+
+    ALERT_CHOICES = [
+        (status.value.description, status.value.description)
+        for status in AlertEnum
+    ]
+
+    alert_level = models.CharField(
+        max_length=10,
+        choices=ALERT_CHOICES,
+        default=AlertEnum.OK.value.description,
+    )
+    alert_message = models.CharField(max_length=255, null=True, blank=True)
 
 
 # Base Hub Model ABC

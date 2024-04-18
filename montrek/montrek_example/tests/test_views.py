@@ -7,6 +7,7 @@ from django.urls import reverse
 from file_upload.tests.factories.field_map_factories import (
     FieldMapStaticSatelliteFactory,
 )
+from baseclasses.dataclasses.alert import AlertEnum
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 from montrek_example import views
 from montrek_example.tests.factories import montrek_example_factories as me_factories
@@ -151,6 +152,7 @@ class TestMontrekExampleBCreate(TestCase):
             "field_b2_str": "test2",
             "field_b2_choice": "CHOICE2",
             "link_hub_b_hub_d": [self.d_fac1.id, self.d_fac2.id],
+            "alert_level": AlertEnum.OK.value.description,
         }
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, 302)
