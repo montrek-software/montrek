@@ -474,6 +474,19 @@ class TestMontrekCreateObject(TestCase):
         queried_object = repository.std_queryset().get()
         self.assertEqual(queried_object.field_b1_str, sat_b_1.field_b1_str)
 
+    def test_write_zeros_to_db(self):
+        repository = HubARepository(session_data={"user_id": self.user.id})
+        repository.std_create_object(
+            {
+                "field_a1_int": 5,
+                "field_a1_str": "test",
+                "field_a2_float": 0.0,
+                "field_a2_str": "test2",
+            }
+        )
+        queried_object = repository.std_queryset().get()
+        self.assertEqual(queried_object.field_a2_float, 0.0)
+
 
 class TestDeleteObject(TestCase):
     def setUp(self):

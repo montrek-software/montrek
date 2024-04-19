@@ -19,7 +19,7 @@ def get_attribute(obj, table_element):
         value = obj.get(attr, attr)
     else:
         value = getattr(obj, attr, attr)
-    if not value:
+    if value is None:
         return table_elements.NoneTableElement().format()
     return table_element.format(value)
 
