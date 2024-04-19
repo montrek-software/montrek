@@ -16,7 +16,12 @@ from django.contrib import messages
 from decouple import config
 from baseclasses.dataclasses.nav_bar_model import NavBarModel
 from baseclasses.dataclasses.link_model import LinkModel
-from baseclasses.dataclasses.table_elements import AttrTableElement, TableElement
+from baseclasses.dataclasses.table_elements import (
+    AttrTableElement,
+    LinkTextTableElement,
+    TableElement,
+    BaseLinkTableElement,
+)
 from baseclasses.dataclasses.view_classes import ActionElement
 from baseclasses.pages import NoPage
 from baseclasses.forms import DateRangeForm, FilterForm
@@ -117,12 +122,20 @@ class MontrekViewMixin:
         return []
 
     def get_fields_from_elements(self) -> list[str]:
-        elements = self.get_attr_table_elements(self.elements)
-        return [element.attr for element in elements]
+        link_elements = self.get_link_table_elements(self.elements)
+        att_elements = self.get_attr_table_elements(self.elements)
+        return [element.text for element in link_elements] + [
+            element.attr for element in att_elements
+        ]
 
     def get_attr_table_elements(self, elements) -> list[AttrTableElement]:
         return [
             element for element in elements if isinstance(element, AttrTableElement)
+        ]
+
+    def get_link_table_elements(self, elements) -> list[LinkTextTableElement]:
+        return [
+            element for element in elements if isinstance(element, LinkTextTableElement)
         ]
 
     ##
