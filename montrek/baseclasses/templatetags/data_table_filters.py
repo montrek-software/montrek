@@ -30,9 +30,9 @@ def _get_dotted_attr_or_arg(obj, attr):
     attrs = attr.split(".")
     for attr in attrs:
         if isinstance(obj, dict):
-            obj = obj.get(attr, attr)
+            obj = obj.get(attr, None)
         else:
-            obj = getattr(obj, attr, attr)
+            obj = getattr(obj, attr, None)
     return obj
 
 
