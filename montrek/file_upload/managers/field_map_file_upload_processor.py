@@ -47,6 +47,7 @@ class FieldMapFileUploadProcessor:
 
     def process(self, file_path: str):
         source_df = self.get_source_df_from_file(file_path)
+
         field_map_manager = self.field_map_manager_class(self.session_data)
         mapped_df = field_map_manager.apply_field_maps(source_df)
         if field_map_manager.exceptions:
