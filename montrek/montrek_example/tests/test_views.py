@@ -2,14 +2,13 @@ import os
 import datetime
 from django.test import TestCase, TransactionTestCase
 from django.contrib.auth.models import Permission
-from django.test import TestCase
 from django.urls import reverse
 from file_upload.tests.factories.field_map_factories import (
     FieldMapStaticSatelliteFactory,
 )
 from baseclasses.dataclasses.alert import AlertEnum
+from testing.test_cases.view_test_cases import MontrekViewTestCase
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
-from montrek_example import views
 from montrek_example.tests.factories import montrek_example_factories as me_factories
 from montrek_example.repositories.hub_a_repository import HubARepository
 from montrek_example.repositories.hub_b_repository import HubBRepository
@@ -127,22 +126,15 @@ class TestMontrekExampleBListView(TestCase):
         self.assertEqual(len(test_queryset), 1)
 
 
-class TestMontrekExampleBCreate(TestCase):
+class TestMontrekExampleBCreate(MontrekViewTestCase):
     def setUp(self):
-        self.user = MontrekUserFactory()
-        self.client.force_login(self.user)
+        super().setUp()
         self.d_fac1 = me_factories.SatD1Factory.create(
             field_d1_str="test1",
         )
         self.d_fac2 = me_factories.SatD1Factory.create(
             field_d1_str="test2",
         )
-
-    def test_view_return_correct_html(self):
-        url = reverse("montrek_example_b_create")
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "montrek_create.html")
 
     def test_view_post_success(self):
         url = reverse("montrek_example_b_create")
