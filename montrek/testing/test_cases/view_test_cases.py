@@ -1,6 +1,9 @@
+import datetime
+import pandas as pd
 from django.test import TestCase
 from django.views import View
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
+from django.urls import reverse
 
 
 class NotImplementedView(View):
@@ -31,5 +34,33 @@ class MontrekViewTestCase(TestCase):
         self.assertTemplateUsed(response, self.view_class.template_name)
 
 
-class ListViewTestCase(MontrekViewTestCase):
+class MontrekListViewTestCase(MontrekViewTestCase):
     pass
+
+
+class MontrekCreateViewTestCase(MontrekViewTestCase):
+    def creation_data(self) -> dict:
+        # Method to be overwritten
+        return {}
+
+    def additional_assertions(self, created_object):
+        # Method to be overwritten
+        pass
+
+    def test_view_post_success(self):
+        url = reverse(self.viewname)
+        data = self.creation_data()
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 302)
+        # Check added data
+        std_query = self.view_class().manager.repository.std_queryset()
+        self.assertEqual(std_query.count(), 1)
+        created_object = std_query.last()
+        for key, value in data.items():
+            if key.startswith("link_"):
+                continue
+            created_value = getattr(created_object, key)
+            if isinstance(created_value, (datetime.datetime, datetime.date)):
+                value = pd.to_datetime(value).date()
+            self.assertEqual(created_value, value)
+        self.additional_assertions(created_object)

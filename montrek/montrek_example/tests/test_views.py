@@ -7,7 +7,11 @@ from file_upload.tests.factories.field_map_factories import (
     FieldMapStaticSatelliteFactory,
 )
 from baseclasses.dataclasses.alert import AlertEnum
-from testing.test_cases.view_test_cases import MontrekViewTestCase
+from montrek_example.views import MontrekExampleBCreate
+from testing.test_cases.view_test_cases import (
+    MontrekCreateViewTestCase,
+    MontrekViewTestCase,
+)
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 from montrek_example.tests.factories import montrek_example_factories as me_factories
 from montrek_example.repositories.hub_a_repository import HubARepository
@@ -126,9 +130,11 @@ class TestMontrekExampleBListView(TestCase):
         self.assertEqual(len(test_queryset), 1)
 
 
-class TestMontrekExampleBCreate(MontrekViewTestCase):
-    def setUp(self):
-        super().setUp()
+class TestMontrekExampleBCreate(MontrekCreateViewTestCase):
+    viewname = "montrek_example_b_create"
+    view_class = MontrekExampleBCreate
+
+    def build_factories(self):
         self.d_fac1 = me_factories.SatD1Factory.create(
             field_d1_str="test1",
         )
@@ -136,9 +142,8 @@ class TestMontrekExampleBCreate(MontrekViewTestCase):
             field_d1_str="test2",
         )
 
-    def test_view_post_success(self):
-        url = reverse("montrek_example_b_create")
-        data = {
+    def creation_data(self):
+        return {
             "field_b1_str": "test",
             "field_b1_date": "2024-02-17",
             "field_b2_str": "test2",
@@ -146,18 +151,9 @@ class TestMontrekExampleBCreate(MontrekViewTestCase):
             "link_hub_b_hub_d": [self.d_fac1.id, self.d_fac2.id],
             "alert_level": AlertEnum.OK.value.description,
         }
-        response = self.client.post(url, data)
-        self.assertEqual(response.status_code, 302)
-        # Check added data
-        std_query = HubBRepository().std_queryset()
-        self.assertEqual(std_query.count(), 1)
-        created_object = std_query.first()
-        self.assertEqual(created_object.field_b1_str, "test")
-        self.assertEqual(created_object.field_b1_date, datetime.date(2024, 2, 17))
-        self.assertEqual(created_object.field_b2_str, "test2")
-        self.assertEqual(created_object.field_b2_choice, "CHOICE2")
-        # TODO Fix test
-        # self.assertEqual(created_object.field_d1_str, "test1, test2")
+
+    def additional_assertions(self, created_object):
+        self.assertEqual(created_object.field_d1_str, "test1,test2")
 
 
 class TestMontrekExampleCListView(TestCase):
