@@ -371,7 +371,7 @@ class TestMontrekExampleA1FieldMapCreateView(MontrekCreateViewTestCase):
 class TestMontrekExampleA1FieldMapListView(MontrekListViewTestCase):
     viewname = "montrek_example_a1_field_map_list"
     view_class = MontrekExampleA1FieldMapListView
-    expected_no_of_rows = 2
+    expected_no_of_rows = 10
 
     def build_factories(self):
-        FieldMapStaticSatelliteFactory.create_batch(2)
+        FieldMapStaticSatelliteFactory.create_batch(12)
