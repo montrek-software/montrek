@@ -17,6 +17,8 @@ from montrek_example.views import (
     MontrekExampleCList,
     MontrekExampleDList,
     MontrekExampleDCreate,
+    MontrekExampleA1UploadView,
+    MontrekExampleA1FieldMapCreateView,
 )
 from testing.test_cases.view_test_cases import (
     MontrekCreateViewTestCase,
@@ -321,28 +323,22 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
         )
 
 
-class TestMontrekExampleA1UploadView(TestCase):
-    def setUp(self):
-        self.user = MontrekUserFactory()
-        self.client.force_login(self.user)
-        self.url = reverse("a1_view_uploads")
-
-    def test_view_return_correct_html(self):
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "montrek_table.html")
+class TestMontrekExampleA1UploadView(MontrekViewTestCase):
+    viewname = "a1_view_uploads"
+    view_class = MontrekExampleA1UploadView
 
 
-class TestMontrekExampleA1FieldMapCreateView(TestCase):
-    def setUp(self):
-        self.user = MontrekUserFactory()
-        self.client.force_login(self.user)
-        self.url = reverse("montrek_example_a1_field_map_create")
+class TestMontrekExampleA1FieldMapCreateView(MontrekCreateViewTestCase):
+    viewname = "montrek_example_a1_field_map_create"
+    view_class = MontrekExampleA1FieldMapCreateView
 
-    def test_view_return_correct_html(self):
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "montrek_create.html")
+    def creation_data(self):
+        return {
+            "source_field": "source_field_1",
+            "database_field": "field_a1_str",
+            "function_name": "append_source_field_1",
+            "function_parameters": "",
+        }
 
     def test_form_database_field_choices(self):
         response = self.client.get(self.url)

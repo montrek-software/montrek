@@ -68,7 +68,12 @@ class MontrekCreateViewTestCase(MontrekViewTestCase):
 
     def test_view_post_success(self):
         data = self.creation_data()
-        post_response = self.client.post(self.url, data)
+        try:
+            post_response = self.client.post(self.url, data)
+        except AttributeError:
+            raise NotImplementedError(
+                "MontrekCreateViewTestCase: Please set the creation_data method in the subclass"
+            )
         self.assertEqual(post_response.status_code, 302)
         # Check added data
         std_query = self.view_class().manager.repository.std_queryset()
@@ -78,6 +83,9 @@ class MontrekCreateViewTestCase(MontrekViewTestCase):
             if key.startswith("link_"):
                 continue
             created_value = getattr(created_object, key)
+            if created_value is None:
+                self.assertEqual(value, "")
+                continue
             if isinstance(created_value, (datetime.datetime, datetime.date)):
                 value = pd.to_datetime(value).date()
             self.assertEqual(created_value, value)
