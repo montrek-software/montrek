@@ -300,7 +300,6 @@ class MontrekExampleA1FieldMapCreateView(MontrekFieldMapCreateView):
 
 
 class MontrekExampleA1FieldMapListView(MontrekFieldMapListView):
-    manager_class = mem.HubAManager
     page_class = pages.MontrekExampleAAppPage
     tab = "tab_a1_field_map_list"
 

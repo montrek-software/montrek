@@ -17,6 +17,8 @@ class MontrekViewTestCase(TestCase):
     user_permissions: list[str] = []
 
     def setUp(self):
+        if self._is_base_test_class():
+            return
         self._check_view_class()
         self.user = MontrekUserFactory()
         for perm in self.user_permissions:
@@ -27,7 +29,13 @@ class MontrekViewTestCase(TestCase):
 
     def _check_view_class(self):
         if self.view_class == NotImplementedView:
-            raise NotImplementedError("Please set the view_class in the subclass")
+            raise NotImplementedError(
+                f"{self.__class__.__name__}: Please set the view_class"
+            )
+
+    def _is_base_test_class(self):
+        # Django runs all tests within these base classes here individually. This is not wanted and hence we skip the tests if django attempts to do this.
+        return self.__class__.__name__ == "MontrekViewTestCase"
 
     def build_factories(self):
         pass
@@ -44,6 +52,8 @@ class MontrekViewTestCase(TestCase):
         return self.client.get(self.url)
 
     def test_view_return_correct_html(self):
+        if self._is_base_test_class():
+            return
         self.assertEqual(self.response.status_code, 200)
         self.assertTemplateUsed(self.response, self.view_class.template_name)
 
@@ -51,10 +61,18 @@ class MontrekViewTestCase(TestCase):
 class MontrekListViewTestCase(MontrekViewTestCase):
     expected_no_of_rows: int = 0
 
+    def _is_base_test_class(self):
+        return self.__class__.__name__ == "MontrekListViewTestCase"
+
     def test_view_get_success(self):
-        self.assertEqual(
-            len(self.response.context["object_list"]), self.expected_no_of_rows
-        )
+        if self._is_base_test_class():
+            return
+        len_object_list = len(self.response.context["object_list"])
+        if len_object_list == 0:
+            raise NotImplementedError(
+                "Define objects to show in 'build_factories()' method and set 'expected_no_of_rows' attribute"
+            )
+        self.assertEqual(len_object_list, self.expected_no_of_rows)
 
 
 class MontrekCreateViewTestCase(MontrekViewTestCase):
@@ -66,7 +84,12 @@ class MontrekCreateViewTestCase(MontrekViewTestCase):
         # Method to be overwritten
         pass
 
+    def _is_base_test_class(self):
+        return self.__class__.__name__ == "MontrekCreateViewTestCase"
+
     def test_view_post_success(self):
+        if self._is_base_test_class():
+            return
         data = self.creation_data()
         try:
             post_response = self.client.post(self.url, data)

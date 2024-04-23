@@ -1,6 +1,5 @@
 import os
-from django.test import TestCase, TransactionTestCase
-from django.contrib.auth.models import Permission
+from django.test import TransactionTestCase
 from django.urls import reverse
 from file_upload.tests.factories.field_map_factories import (
     FieldMapStaticSatelliteFactory,
@@ -19,6 +18,7 @@ from montrek_example.views import (
     MontrekExampleDCreate,
     MontrekExampleA1UploadView,
     MontrekExampleA1FieldMapCreateView,
+    MontrekExampleA1FieldMapListView,
 )
 from testing.test_cases.view_test_cases import (
     MontrekCreateViewTestCase,
@@ -67,7 +67,7 @@ class TestMontrekExampleADetailView(MontrekViewTestCase):
         return {"pk": self.sat_a.hub_entity.id}
 
 
-class TestMontrekExampleAHistoryView(TestCase):
+class TestMontrekExampleAHistoryView(MontrekViewTestCase):
     viewname = "montrek_example_a_history"
     view_class = MontrekExampleAHistory
 
@@ -368,13 +368,10 @@ class TestMontrekExampleA1FieldMapCreateView(MontrekCreateViewTestCase):
         self.assertEqual(form.initial["function_name"], "no_change")
 
 
-class TestMontrekExampleA1FieldMapListView(TestCase):
-    def setUp(self):
-        self.user = MontrekUserFactory()
-        self.client.force_login(self.user)
-        self.url = reverse("montrek_example_a1_field_map_list")
+class TestMontrekExampleA1FieldMapListView(MontrekListViewTestCase):
+    viewname = "montrek_example_a1_field_map_list"
+    view_class = MontrekExampleA1FieldMapListView
+    expected_no_of_rows = 2
 
-    def test_view_return_correct_html(self):
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "montrek_table.html")
+    def build_factories(self):
+        FieldMapStaticSatelliteFactory.create_batch(2)
