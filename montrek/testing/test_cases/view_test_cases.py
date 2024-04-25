@@ -1,4 +1,5 @@
 import datetime
+from django.db.models import QuerySet
 import pandas as pd
 from django.test import TestCase
 from django.views import View
@@ -34,7 +35,7 @@ class MontrekViewTestCase(TestCase):
                 f"{self.__class__.__name__}: Please set the view_class"
             )
 
-    def _is_base_test_class(self):
+    def _is_base_test_class(self) -> bool:
         # Django runs all tests within these base classes here individually. This is not wanted and hence we skip the tests if django attempts to do this.
         return self.__class__.__name__ == "MontrekViewTestCase"
 
@@ -81,10 +82,10 @@ class MontrekObjectViewBaseTestCase(MontrekViewTestCase):
         # Method to be overwritten
         pass
 
-    def _get_std_queryset(self):
+    def _get_std_queryset(self) -> QuerySet:
         return self.view.manager.repository.std_queryset()
 
-    def _pre_test_view_post_success(self):
+    def _pre_test_view_post_success(self) -> bool:
         if self._is_base_test_class():
             return False
         data = self.creation_data()
@@ -103,7 +104,7 @@ class MontrekCreateUpdateViewTestCase(MontrekObjectViewBaseTestCase):
         # Method to be overwritten
         return {}
 
-    def _is_base_test_class(self):
+    def _is_base_test_class(self) -> bool:
         return self.__class__.__name__ == "MontrekCreateUpdateViewTestCase"
 
     def test_view_post_success(self):
@@ -128,19 +129,19 @@ class MontrekCreateUpdateViewTestCase(MontrekObjectViewBaseTestCase):
 
 
 class GetObjectLastMixin:
-    def _get_object(self):
+    def _get_object(self) -> QuerySet:
         std_query = self._get_std_queryset()
         return std_query.last()
 
 
 class GetObjectPkMixin:
-    def _get_object(self):
+    def _get_object(self) -> QuerySet:
         std_query = self._get_std_queryset()
         return std_query.get(pk=self.url_kwargs()["pk"])
 
 
 class MontrekCreateViewTestCase(MontrekCreateUpdateViewTestCase, GetObjectLastMixin):
-    def _is_base_test_class(self):
+    def _is_base_test_class(self) -> bool:
         return self.__class__.__name__ == "MontrekCreateViewTestCase"
 
 
@@ -154,7 +155,7 @@ class MontrekUpdateViewTestCase(MontrekCreateUpdateViewTestCase, GetObjectPkMixi
         data_dict.update(self.update_data())
         return data_dict
 
-    def _is_base_test_class(self):
+    def _is_base_test_class(self) -> bool:
         return self.__class__.__name__ == "MontrekUpdateViewTestCase"
 
     def update_data(self) -> dict:
@@ -165,9 +166,6 @@ class MontrekUpdateViewTestCase(MontrekCreateUpdateViewTestCase, GetObjectPkMixi
 class MontrekDeleteViewTestCase(MontrekObjectViewBaseTestCase, GetObjectPkMixin):
     def _is_base_test_class(self):
         return self.__class__.__name__ == "MontrekDeleteViewTestCase"
-
-    def _get_std_queryset(self):
-        return self.view.manager.repository.std_queryset()
 
     def _get_object(self):
         std_query = self._get_std_queryset()
