@@ -103,6 +103,7 @@ class MontrekFieldMapCreateView(MontrekCreateView):
     success_url = "under_construction"
     form_class = FieldMapCreateForm
     field_map_manager_class = FieldMapManager
+    # TODO: Change to manager
     related_repository_class = MontrekRepository
 
     def get_form(self, form_class=None):
