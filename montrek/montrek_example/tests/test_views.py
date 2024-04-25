@@ -5,28 +5,13 @@ from file_upload.tests.factories.field_map_factories import (
     FieldMapStaticSatelliteFactory,
 )
 from baseclasses.dataclasses.alert import AlertEnum
-from montrek_example.views import (
-    MontrekExampleAHistory,
-    MontrekExampleBCreate,
-    MontrekExampleACreate,
-    MontrekExampleAUpdate,
-    MontrekExampleADetails,
-    MontrekExampleADelete,
-    MontrekExampleAList,
-    MontrekExampleBList,
-    MontrekExampleCCreate,
-    MontrekExampleCList,
-    MontrekExampleDList,
-    MontrekExampleDCreate,
-    MontrekExampleA1UploadView,
-    MontrekExampleA1FieldMapCreateView,
-    MontrekExampleA1FieldMapListView,
-)
+from montrek_example import views as me_views
 from testing.test_cases.view_test_cases import (
     MontrekCreateViewTestCase,
     MontrekUpdateViewTestCase,
     MontrekViewTestCase,
     MontrekListViewTestCase,
+    MontrekDeleteViewTestCase,
 )
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 from montrek_example.tests.factories import montrek_example_factories as me_factories
@@ -36,7 +21,7 @@ from baseclasses.utils import montrek_time
 
 class TestMontrekExampleAListView(MontrekListViewTestCase):
     viewname = "montrek_example_a_list"
-    view_class = MontrekExampleAList
+    view_class = me_views.MontrekExampleAList
     expected_no_of_rows = 1
 
     def build_factories(self):
@@ -46,7 +31,7 @@ class TestMontrekExampleAListView(MontrekListViewTestCase):
 
 class TestMontrekExampleACreateView(MontrekCreateViewTestCase):
     viewname = "montrek_example_a_create"
-    view_class = MontrekExampleACreate
+    view_class = me_views.MontrekExampleACreate
 
     def creation_data(self):
         return {
@@ -59,7 +44,7 @@ class TestMontrekExampleACreateView(MontrekCreateViewTestCase):
 
 class TestMontrekExampleAUpdateView(MontrekUpdateViewTestCase):
     viewname = "montrek_example_a_update"
-    view_class = MontrekExampleAUpdate
+    view_class = me_views.MontrekExampleAUpdate
 
     def build_factories(self):
         self.sat_a1 = me_factories.SatA1Factory()
@@ -79,7 +64,7 @@ class TestMontrekExampleAUpdateView(MontrekUpdateViewTestCase):
 
 class TestMontrekExampleADetailView(MontrekViewTestCase):
     viewname = "montrek_example_a_details"
-    view_class = MontrekExampleADetails
+    view_class = me_views.MontrekExampleADetails
 
     def build_factories(self):
         self.sat_a = me_factories.SatA1Factory()
@@ -88,9 +73,9 @@ class TestMontrekExampleADetailView(MontrekViewTestCase):
         return {"pk": self.sat_a.hub_entity.id}
 
 
-class TestMontrekExampleADelete(MontrekViewTestCase):
+class TestMontrekExampleADelete(MontrekDeleteViewTestCase):
     viewname = "montrek_example_a_delete"
-    view_class = MontrekExampleADelete
+    view_class = me_views.MontrekExampleADelete
 
     def build_factories(self):
         self.sat_a1 = me_factories.SatA1Factory()
@@ -102,7 +87,7 @@ class TestMontrekExampleADelete(MontrekViewTestCase):
 
 class TestMontrekExampleAHistoryView(MontrekViewTestCase):
     viewname = "montrek_example_a_history"
-    view_class = MontrekExampleAHistory
+    view_class = me_views.MontrekExampleAHistory
 
     def build_factories(self):
         self.sat_a = me_factories.SatA1Factory()
@@ -159,7 +144,7 @@ class TestMontrekExampleAHistoryView(MontrekViewTestCase):
 
 class TestMontrekExampleBListView(MontrekListViewTestCase):
     viewname = "montrek_example_b_list"
-    view_class = MontrekExampleBList
+    view_class = me_views.MontrekExampleBList
     expected_no_of_rows = 1
 
     def build_factories(self):
@@ -169,7 +154,7 @@ class TestMontrekExampleBListView(MontrekListViewTestCase):
 
 class TestMontrekExampleBCreate(MontrekCreateViewTestCase):
     viewname = "montrek_example_b_create"
-    view_class = MontrekExampleBCreate
+    view_class = me_views.MontrekExampleBCreate
 
     def build_factories(self):
         self.d_fac1 = me_factories.SatD1Factory.create(
@@ -195,7 +180,7 @@ class TestMontrekExampleBCreate(MontrekCreateViewTestCase):
 
 class TestMontrekExampleCListView(MontrekListViewTestCase):
     viewname = "montrek_example_c_list"
-    view_class = MontrekExampleCList
+    view_class = me_views.MontrekExampleCList
     expected_no_of_rows = 1
 
     def build_factories(self):
@@ -203,9 +188,9 @@ class TestMontrekExampleCListView(MontrekListViewTestCase):
         me_factories.SatTSC2Factory(hub_entity=satc1fac.hub_entity)
 
 
-class TestMontrelExampleCCreate(MontrekCreateViewTestCase):
+class TestMontrekExampleCCreate(MontrekCreateViewTestCase):
     viewname = "montrek_example_c_create"
-    view_class = MontrekExampleCCreate
+    view_class = me_views.MontrekExampleCCreate
 
     def creation_data(self):
         return {
@@ -216,7 +201,7 @@ class TestMontrelExampleCCreate(MontrekCreateViewTestCase):
 
 class TestMontrekExampleDListView(MontrekListViewTestCase):
     viewname = "montrek_example_d_list"
-    view_class = MontrekExampleDList
+    view_class = me_views.MontrekExampleDList
     expected_no_of_rows = 1
 
     def build_factories(self):
@@ -225,7 +210,7 @@ class TestMontrekExampleDListView(MontrekListViewTestCase):
 
 class TestMontrekExampleDCreate(MontrekCreateViewTestCase):
     viewname = "montrek_example_d_create"
-    view_class = MontrekExampleDCreate
+    view_class = me_views.MontrekExampleDCreate
     user_permissions = ["add_hubd"]
 
     def creation_data(self):
@@ -358,12 +343,12 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
 
 class TestMontrekExampleA1UploadView(MontrekViewTestCase):
     viewname = "a1_view_uploads"
-    view_class = MontrekExampleA1UploadView
+    view_class = me_views.MontrekExampleA1UploadView
 
 
 class TestMontrekExampleA1FieldMapCreateView(MontrekCreateViewTestCase):
     viewname = "montrek_example_a1_field_map_create"
-    view_class = MontrekExampleA1FieldMapCreateView
+    view_class = me_views.MontrekExampleA1FieldMapCreateView
 
     def creation_data(self):
         return {
@@ -403,7 +388,7 @@ class TestMontrekExampleA1FieldMapCreateView(MontrekCreateViewTestCase):
 
 class TestMontrekExampleA1FieldMapListView(MontrekListViewTestCase):
     viewname = "montrek_example_a1_field_map_list"
-    view_class = MontrekExampleA1FieldMapListView
+    view_class = me_views.MontrekExampleA1FieldMapListView
     expected_no_of_rows = 10
 
     def build_factories(self):

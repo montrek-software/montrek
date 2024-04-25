@@ -78,6 +78,10 @@ class MontrekListViewTestCase(MontrekViewTestCase):
 
 
 class MontrekObjectViewBaseTestCase(MontrekViewTestCase):
+    def creation_data(self) -> dict:
+        # Method to be overwritten
+        return {}
+
     def additional_assertions(self, created_object):
         # Method to be overwritten
         pass
@@ -100,10 +104,6 @@ class MontrekObjectViewBaseTestCase(MontrekViewTestCase):
 
 
 class MontrekCreateUpdateViewTestCase(MontrekObjectViewBaseTestCase):
-    def creation_data(self) -> dict:
-        # Method to be overwritten
-        return {}
-
     def _is_base_test_class(self) -> bool:
         return self.__class__.__name__ == "MontrekCreateUpdateViewTestCase"
 
@@ -172,7 +172,8 @@ class MontrekDeleteViewTestCase(MontrekObjectViewBaseTestCase, GetObjectPkMixin)
         return std_query.last()
 
     def test_view_post_success(self):
-        self._pre_test_view_post_success()
+        if not self._pre_test_view_post_success():
+            return
         # Check deleted data has an end date
         object = self._get_object()
         self.assertTrue(object.state_date_end is not None)
