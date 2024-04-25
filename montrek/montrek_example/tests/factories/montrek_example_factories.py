@@ -1,5 +1,5 @@
 import factory
-from datetime import timezone
+import datetime
 
 
 class HubAFactory(factory.django.DjangoModelFactory):
@@ -62,7 +62,7 @@ class SatTSC2Factory(factory.django.DjangoModelFactory):
         model = "montrek_example.SatTSC2"
 
     hub_entity = factory.SubFactory(HubCFactory)
-    value_date = factory.Faker("date_time", tzinfo=timezone.utc)
+    value_date = factory.Faker("date_time", tzinfo=datetime.timezone.utc)
 
 
 class SatD1Factory(factory.django.DjangoModelFactory):
