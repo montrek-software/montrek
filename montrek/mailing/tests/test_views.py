@@ -4,35 +4,16 @@ from mailing import views
 from mailing.forms import MailingSendForm
 from baseclasses.managers.montrek_manager import MontrekManager
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
+from testing.test_cases import view_test_cases as vtc
 
 
-class TestMailsOverview(TestCase):
-    def setUp(self):
+class TestMailsOverview(vtc.MontrekListViewTestCase):
+    viewname = "mailing"
+    view_class = views.MailOverviewListView
+    expected_no_of_rows = 3
+
+    def build_factories(self):
         MailSatelliteFactory.create_batch(3)
-
-    def test_view_and_query(self):
-        view = views.MailOverviewListView()
-        object_list = view.get_view_queryset()
-        self.assertEqual(len(object_list), 3)
-
-    def test_view_page(self):
-        view = views.MailOverviewListView()
-        view.kwargs = {}
-        page_context = view.get_page_context({})
-        self.assertNotEqual(page_context["page_title"], "page_title not set!")
-        self.assertNotEqual(page_context["title"], "No Title set!")
-
-    def test_account_overview_returns_correct_html(self):
-        response = self.client.get("/mailing/overview")
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "montrek_table.html")
-
-    def test_account_overview_context_data(self):
-        response = self.client.get("/mailing/overview")
-        context = response.context
-        object_list = context["object_list"]
-        self.assertEqual(len(object_list), 3)
-        self.assertIsInstance(context["view"], views.MailOverviewListView)
 
 
 class MockManager(MontrekManager):

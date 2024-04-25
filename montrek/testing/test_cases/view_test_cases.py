@@ -67,6 +67,12 @@ class MontrekViewTestCase(TestCase):
         self.assertNotEqual(page_context["page_title"], "page_title not set!")
         self.assertNotEqual(page_context["title"], "No Title set!")
 
+    def test_context_data(self):
+        if self._is_base_test_class():
+            return
+        context_data = self.response.context
+        self.assertIsInstance(context_data["view"], self.view_class)
+
 
 class MontrekListViewTestCase(MontrekViewTestCase):
     expected_no_of_rows: int = 0
