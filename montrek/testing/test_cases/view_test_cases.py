@@ -21,13 +21,14 @@ class MontrekViewTestCase(TestCase):
         if self._is_base_test_class():
             return
         self._check_view_class()
+        self.build_factories()
         self.view = self.view_class()
+        self.view.kwargs = self.url_kwargs()
         self.user = MontrekUserFactory()
         for perm in self.user_permissions:
             self.permission = Permission.objects.get(codename=perm)
             self.user.user_permissions.add(self.permission)
         self.client.force_login(self.user)
-        self.build_factories()
 
     def _check_view_class(self):
         if self.view_class == NotImplementedView:
@@ -58,6 +59,13 @@ class MontrekViewTestCase(TestCase):
             return
         self.assertEqual(self.response.status_code, 200)
         self.assertTemplateUsed(self.response, self.view_class.template_name)
+
+    def test_view_page(self):
+        if self._is_base_test_class():
+            return
+        page_context = self.view.get_page_context({})
+        self.assertNotEqual(page_context["page_title"], "page_title not set!")
+        self.assertNotEqual(page_context["title"], "No Title set!")
 
 
 class MontrekListViewTestCase(MontrekViewTestCase):

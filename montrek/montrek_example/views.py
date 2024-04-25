@@ -37,6 +37,7 @@ class MontrekExampleACreate(views.MontrekCreateView):
     page_class = pages.MontrekExampleAAppPage
     form_class = forms.ExampleACreateForm
     success_url = "montrek_example_a_list"
+    title = "Create Example A"
 
 
 class MontrekExampleAUpdate(views.MontrekUpdateView):
@@ -44,6 +45,7 @@ class MontrekExampleAUpdate(views.MontrekUpdateView):
     page_class = pages.ExampleAPage
     form_class = forms.ExampleACreateForm
     success_url = "montrek_example_a_list"
+    title = "Update Example A"
 
 
 class MontrekExampleAList(views.MontrekListView):
@@ -98,6 +100,7 @@ class MontrekExampleADelete(views.MontrekDeleteView):
     manager_class = mem.HubAManager
     page_class = pages.ExampleAPage
     success_url = "montrek_example_a_list"
+    title = "Delete Example A"
 
 
 class MontrekExampleADetails(views.MontrekDetailView):
@@ -132,12 +135,14 @@ class MontrekExampleBCreate(views.MontrekCreateView):
     page_class = pages.MontrekExampleBAppPage
     success_url = "montrek_example_b_list"
     form_class = forms.ExampleBCreateForm
+    title = "Create Example B"
 
 
 class MontrekExampleBList(views.MontrekListView):
     manager_class = mem.HubBManager
     page_class = pages.MontrekExampleBAppPage
     tab = "tab_example_b_list"
+    title = "Example B List"
 
     @property
     def elements(self) -> list:
@@ -199,6 +204,7 @@ class MontrekExampleCList(views.MontrekListView):
     manager_class = mem.HubCManager
     page_class = pages.MontrekExampleCAppPage
     tab = "tab_example_c_list"
+    title = "Example C List"
 
     @property
     def elements(self) -> list:
@@ -227,12 +233,14 @@ class MontrekExampleCCreate(views.MontrekCreateView):
     page_class = pages.MontrekExampleCAppPage
     success_url = "montrek_example_c_list"
     form_class = forms.ExampleCCreateForm
+    title = "Create Example C"
 
 
 class MontrekExampleDList(views.MontrekListView):
     manager_class = mem.HubDManager
     page_class = pages.MontrekExampleDAppPage
     tab = "tab_example_d_list"
+    title = "Example D List"
 
     @property
     def elements(self) -> list:
@@ -259,6 +267,7 @@ class MontrekExampleDCreate(views.MontrekCreateView):
     page_class = pages.MontrekExampleDAppPage
     success_url = "montrek_example_d_list"
     permission_required = ["montrek_example.add_hubd"]
+    title = "Create Example D"
 
 
 class MontrekExampleA1UploadFileView(MontrekUploadFileView):
@@ -297,6 +306,7 @@ class MontrekExampleA1FieldMapCreateView(MontrekFieldMapCreateView):
     page_class = pages.MontrekExampleAAppPage
     field_map_manager_class = A1FieldMapManager
     related_repository_class = SatA1Repository
+    title = "Create A1 Field Map"
 
 
 class MontrekExampleA1FieldMapListView(MontrekFieldMapListView):
