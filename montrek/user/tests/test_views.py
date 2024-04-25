@@ -115,7 +115,7 @@ class TestMontrekLogoutView(TestCase):
 
     def test_logout_view(self):
         url = reverse("logout")
-        response = self.client.get(url)
+        response = self.client.post(url)
 
         self.assertRedirects(response, reverse("login"))
 
