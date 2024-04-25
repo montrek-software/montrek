@@ -25,17 +25,9 @@ class MockSendMailView(views.SendMailView):
     manager_class = MockManager
 
 
-class TestSendMailView(TestCase):
-    def setUp(self) -> None:
-        self.user = MontrekUserFactory()
-        self.client.force_login(self.user)
-
-    def test_view_page(self):
-        view = views.SendMailView()
-        view.kwargs = {}
-        page_context = view.get_page_context({})
-        self.assertNotEqual(page_context["page_title"], "page_title not set!")
-        self.assertNotEqual(page_context["title"], "No Title set!")
+class TestSendMailView(vtc.MontrekViewTestCase):
+    viewname = "send_mail"
+    view_class = views.SendMailView
 
     def test_send_mail(self):
         class MockForm:
@@ -54,30 +46,13 @@ class TestSendMailView(TestCase):
         view = views.SendMailView()
         self.assertEqual(view.form_class, MailingSendForm)
 
-    def test_account_overview_returns_correct_html(self):
-        response = self.client.get("/mailing/send")
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "montrek_create.html")
 
+class TestMailDetailsView(vtc.MontrekDetailViewTestCase):
+    viewname = "mail_detail"
+    view_class = views.MailDetailView
 
-class TestMailDetailsView(TestCase):
-    def setUp(self):
+    def build_factories(self):
         self.mail = MailSatelliteFactory()
 
-    def test_view_page(self):
-        view = views.MailDetailView()
-        view.kwargs = {"pk": self.mail.pk}
-        page_context = view.get_page_context({})
-        self.assertNotEqual(page_context["page_title"], "page_title not set!")
-        self.assertNotEqual(page_context["title"], "No Title set!")
-
-    def test_account_overview_returns_correct_html(self):
-        response = self.client.get(f"/mailing/{self.mail.pk}/details")
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "montrek_details.html")
-
-    def test_account_overview_context_data(self):
-        response = self.client.get(f"/mailing/{self.mail.pk}/details")
-        context = response.context
-        self.assertEqual(context["object"], self.mail.hub_entity)
-        self.assertIsInstance(context["view"], views.MailDetailView)
+    def url_kwargs(self):
+        return {"pk": self.mail.hub_entity.pk}

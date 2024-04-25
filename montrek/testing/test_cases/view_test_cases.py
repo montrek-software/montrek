@@ -154,6 +154,14 @@ class GetObjectPkMixin:
         return std_query.get(pk=self.url_kwargs()["pk"])
 
 
+class MontrekDetailViewTestCase(MontrekObjectViewBaseTestCase, GetObjectPkMixin):
+    def test_view_get_success(self):
+        if self._is_base_test_class():
+            return
+        context_data = self.response.context
+        self.assertIsNotNone(context_data["object"])
+
+
 class MontrekCreateViewTestCase(MontrekCreateUpdateViewTestCase, GetObjectLastMixin):
     def _is_base_test_class(self) -> bool:
         return self.__class__.__name__ == "MontrekCreateViewTestCase"
