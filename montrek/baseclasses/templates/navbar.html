@@ -27,7 +27,7 @@
               <span class="caret"></span>
             </a>
             <ul class="dropdown-menu">
-              <li><a href="{% url 'logout' %}">Logout</a></li>
+              <li><a href="#" onclick="logout(event)">Logout</a></li> <!-- logout via POST -->
               <li><a href="{% url 'password_change' %}">Change Password</a></li>
             </ul>
           </li>
@@ -39,3 +39,24 @@
     </div>
   </div>
 </div>
+
+<script>
+function logout(event) {
+    event.preventDefault(); // Prevent the default action of the link
+
+    // Create a hidden form
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.action = "{% url 'logout' %}";
+    document.body.appendChild(form);
+
+    // Add CSRF token
+    var csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'csrfmiddlewaretoken';
+    csrfInput.value = '{{ csrf_token }}';
+    form.appendChild(csrfInput);
+
+    form.submit();
+}
+</script>
