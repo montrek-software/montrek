@@ -289,6 +289,7 @@ class MontrekCreateUpdateView(
     form_class = MontrekCreateForm
     template_name = "montrek_create.html"
     success_url = "under_construction"
+    title = ""
 
     def get_queryset(self):
         return self.get_view_queryset()

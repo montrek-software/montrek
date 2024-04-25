@@ -1,70 +1,99 @@
 import os
-import datetime
-from django.test import TestCase, TransactionTestCase
-from django.contrib.auth.models import Permission
-from django.test import TestCase
+from django.test import TransactionTestCase
 from django.urls import reverse
 from file_upload.tests.factories.field_map_factories import (
     FieldMapStaticSatelliteFactory,
 )
 from baseclasses.dataclasses.alert import AlertEnum
+from montrek_example import views as me_views
+from testing.test_cases.view_test_cases import (
+    MontrekCreateViewTestCase,
+    MontrekUpdateViewTestCase,
+    MontrekViewTestCase,
+    MontrekListViewTestCase,
+    MontrekDeleteViewTestCase,
+)
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
-from montrek_example import views
 from montrek_example.tests.factories import montrek_example_factories as me_factories
 from montrek_example.repositories.hub_a_repository import HubARepository
-from montrek_example.repositories.hub_b_repository import HubBRepository
-from montrek_example.repositories.hub_c_repository import HubCRepository
-from montrek_example.repositories.hub_d_repository import HubDRepository
 from baseclasses.utils import montrek_time
 
 
-class TestMontrekExampleACreateView(TestCase):
-    def setUp(self):
-        self.user = MontrekUserFactory()
-        self.client.force_login(self.user)
+class TestMontrekExampleAListView(MontrekListViewTestCase):
+    viewname = "montrek_example_a_list"
+    view_class = me_views.MontrekExampleAList
+    expected_no_of_rows = 1
 
-    def test_view_return_correct_html(self):
-        url = reverse("montrek_example_a_create")
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "montrek_create.html")
+    def build_factories(self):
+        sata1fac = me_factories.SatA1Factory()
+        me_factories.SatA2Factory(hub_entity=sata1fac.hub_entity)
 
-    def test_view_post_success(self):
-        url = reverse("montrek_example_a_create")
-        data = {
+
+class TestMontrekExampleACreateView(MontrekCreateViewTestCase):
+    viewname = "montrek_example_a_create"
+    view_class = me_views.MontrekExampleACreate
+
+    def creation_data(self):
+        return {
             "field_a1_str": "test",
             "field_a1_int": 1,
             "field_a2_str": "test2",
             "field_a2_float": 2.0,
         }
-        response = self.client.post(url, data)
-        self.assertEqual(response.status_code, 302)
-        # Check added data
-        std_query = HubARepository().std_queryset()
-        self.assertEqual(std_query.count(), 1)
-        created_object = std_query.first()
-        self.assertEqual(created_object.field_a1_str, "test")
-        self.assertEqual(created_object.field_a1_int, 1)
-        self.assertEqual(created_object.field_a2_str, "test2")
-        self.assertEqual(created_object.field_a2_float, 2)
 
 
-class TestMontrekExampleADetailView(TestCase):
-    def test_view_return_correct_html(self):
-        sat_a = me_factories.SatA1Factory()
-        url = reverse("montrek_example_a_details", kwargs={"pk": sat_a.hub_entity.id})
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "montrek_details.html")
+class TestMontrekExampleAUpdateView(MontrekUpdateViewTestCase):
+    viewname = "montrek_example_a_update"
+    view_class = me_views.MontrekExampleAUpdate
+
+    def build_factories(self):
+        self.sat_a1 = me_factories.SatA1Factory()
+        me_factories.SatA2Factory(hub_entity=self.sat_a1.hub_entity)
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.sat_a1.hub_entity.id}
+
+    def update_data(self):
+        return {
+            "field_a1_str": "test_update",
+            "field_a1_int": 2,
+            "field_a2_str": "test2_update",
+            "field_a2_float": 3.0,
+        }
 
 
-class TestMontrekExampleAHistoryView(TestCase):
-    def test_view_return_correct_html(self):
-        sat_a = me_factories.SatA1Factory()
-        url = reverse("montrek_example_a_history", kwargs={"pk": sat_a.hub_entity.id})
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "montrek_history.html")
+class TestMontrekExampleADetailView(MontrekViewTestCase):
+    viewname = "montrek_example_a_details"
+    view_class = me_views.MontrekExampleADetails
+
+    def build_factories(self):
+        self.sat_a = me_factories.SatA1Factory()
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.sat_a.hub_entity.id}
+
+
+class TestMontrekExampleADelete(MontrekDeleteViewTestCase):
+    viewname = "montrek_example_a_delete"
+    view_class = me_views.MontrekExampleADelete
+
+    def build_factories(self):
+        self.sat_a1 = me_factories.SatA1Factory()
+        me_factories.SatA2Factory(hub_entity=self.sat_a1.hub_entity)
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.sat_a1.hub_entity.id}
+
+
+class TestMontrekExampleAHistoryView(MontrekViewTestCase):
+    viewname = "montrek_example_a_history"
+    view_class = me_views.MontrekExampleAHistory
+
+    def build_factories(self):
+        self.sat_a = me_factories.SatA1Factory()
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.sat_a.hub_entity.id}
 
     def test_view_with_history_data(self):
         huba = me_factories.HubAFactory()
@@ -113,24 +142,21 @@ class TestMontrekExampleAHistoryView(TestCase):
         self.assertEqual(sat_a2_queryset[0].changed_by, user2.email)
 
 
-class TestMontrekExampleBListView(TestCase):
-    def setUp(self):
+class TestMontrekExampleBListView(MontrekListViewTestCase):
+    viewname = "montrek_example_b_list"
+    view_class = me_views.MontrekExampleBList
+    expected_no_of_rows = 1
+
+    def build_factories(self):
         satb1fac = me_factories.SatB1Factory()
         me_factories.SatB2Factory(hub_entity=satb1fac.hub_entity)
 
-    def test_view_return_correct_html(self):
-        url = reverse("montrek_example_b_list")
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "montrek_table.html")
-        test_queryset = response.context_data["object_list"].object_list
-        self.assertEqual(len(test_queryset), 1)
 
+class TestMontrekExampleBCreate(MontrekCreateViewTestCase):
+    viewname = "montrek_example_b_create"
+    view_class = me_views.MontrekExampleBCreate
 
-class TestMontrekExampleBCreate(TestCase):
-    def setUp(self):
-        self.user = MontrekUserFactory()
-        self.client.force_login(self.user)
+    def build_factories(self):
         self.d_fac1 = me_factories.SatD1Factory.create(
             field_d1_str="test1",
         )
@@ -138,15 +164,8 @@ class TestMontrekExampleBCreate(TestCase):
             field_d1_str="test2",
         )
 
-    def test_view_return_correct_html(self):
-        url = reverse("montrek_example_b_create")
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "montrek_create.html")
-
-    def test_view_post_success(self):
-        url = reverse("montrek_example_b_create")
-        data = {
+    def creation_data(self):
+        return {
             "field_b1_str": "test",
             "field_b1_date": "2024-02-17",
             "field_b2_str": "test2",
@@ -154,100 +173,51 @@ class TestMontrekExampleBCreate(TestCase):
             "link_hub_b_hub_d": [self.d_fac1.id, self.d_fac2.id],
             "alert_level": AlertEnum.OK.value.description,
         }
-        response = self.client.post(url, data)
-        self.assertEqual(response.status_code, 302)
-        # Check added data
-        std_query = HubBRepository().std_queryset()
-        self.assertEqual(std_query.count(), 1)
-        created_object = std_query.first()
-        self.assertEqual(created_object.field_b1_str, "test")
-        self.assertEqual(created_object.field_b1_date, datetime.date(2024, 2, 17))
-        self.assertEqual(created_object.field_b2_str, "test2")
-        self.assertEqual(created_object.field_b2_choice, "CHOICE2")
-        # TODO Fix test
-        # self.assertEqual(created_object.field_d1_str, "test1, test2")
+
+    def additional_assertions(self, created_object):
+        self.assertEqual(created_object.field_d1_str, "test1,test2")
 
 
-class TestMontrekExampleCListView(TestCase):
-    def setUp(self):
+class TestMontrekExampleCListView(MontrekListViewTestCase):
+    viewname = "montrek_example_c_list"
+    view_class = me_views.MontrekExampleCList
+    expected_no_of_rows = 1
+
+    def build_factories(self):
         satc1fac = me_factories.SatC1Factory()
         me_factories.SatTSC2Factory(hub_entity=satc1fac.hub_entity)
 
-    def test_view_return_correct_html(self):
-        url = reverse("montrek_example_c_list")
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "montrek_table.html")
-        test_queryset = response.context_data["object_list"].object_list
-        self.assertEqual(len(test_queryset), 1)
 
+class TestMontrekExampleCCreate(MontrekCreateViewTestCase):
+    viewname = "montrek_example_c_create"
+    view_class = me_views.MontrekExampleCCreate
 
-class TestMontrelExampleCCreate(TestCase):
-    def setUp(self):
-        self.user = MontrekUserFactory()
-        self.client.force_login(self.user)
-
-    def test_view_return_correct_html(self):
-        url = reverse("montrek_example_c_create")
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "montrek_create.html")
-
-    def test_view_post_success(self):
-        url = reverse("montrek_example_c_create")
-        data = {
+    def creation_data(self):
+        return {
             "field_c1_str": "test",
             "field_c1_bool": True,
         }
-        response = self.client.post(url, data)
-        self.assertEqual(response.status_code, 302)
-        # Check added data
-        std_query = HubCRepository().std_queryset()
-        self.assertEqual(std_query.count(), 1)
-        created_object = std_query.first()
-        self.assertEqual(created_object.field_c1_str, "test")
-        self.assertEqual(created_object.field_c1_bool, 1)
 
 
-class TestMontrekExampleDListView(TestCase):
-    def setUp(self):
+class TestMontrekExampleDListView(MontrekListViewTestCase):
+    viewname = "montrek_example_d_list"
+    view_class = me_views.MontrekExampleDList
+    expected_no_of_rows = 1
+
+    def build_factories(self):
         me_factories.SatD1Factory.create()
 
-    def test_view_return_correct_html(self):
-        url = reverse("montrek_example_d_list")
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "montrek_table.html")
-        test_queryset = response.context_data["object_list"].object_list
-        self.assertEqual(len(test_queryset), 1)
 
+class TestMontrekExampleDCreate(MontrekCreateViewTestCase):
+    viewname = "montrek_example_d_create"
+    view_class = me_views.MontrekExampleDCreate
+    user_permissions = ["add_hubd"]
 
-class TestMontrekExampleDCreate(TestCase):
-    def setUp(self):
-        self.user = MontrekUserFactory()
-        self.permission = Permission.objects.get(codename="add_hubd")
-        self.user.user_permissions.add(self.permission)
-        self.client.force_login(self.user)
-        self.url = reverse("montrek_example_d_create")
-
-    def test_view_return_correct_html(self):
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "montrek_create.html")
-
-    def test_view_post_success(self):
-        data = {
+    def creation_data(self):
+        return {
             "field_d1_str": "test",
             "field_d1_int": 13,
         }
-        response = self.client.post(self.url, data)
-        self.assertEqual(response.status_code, 302)
-        # Check added data
-        std_query = HubDRepository().std_queryset()
-        self.assertEqual(std_query.count(), 1)
-        created_object = std_query.first()
-        self.assertEqual(created_object.field_d1_str, "test")
-        self.assertEqual(created_object.field_d1_int, 13)
 
     def test_view_without_permission(self):
         self.user.user_permissions.remove(self.permission)
@@ -371,28 +341,22 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
         )
 
 
-class TestMontrekExampleA1UploadView(TestCase):
-    def setUp(self):
-        self.user = MontrekUserFactory()
-        self.client.force_login(self.user)
-        self.url = reverse("a1_view_uploads")
-
-    def test_view_return_correct_html(self):
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "montrek_table.html")
+class TestMontrekExampleA1UploadView(MontrekViewTestCase):
+    viewname = "a1_view_uploads"
+    view_class = me_views.MontrekExampleA1UploadView
 
 
-class TestMontrekExampleA1FieldMapCreateView(TestCase):
-    def setUp(self):
-        self.user = MontrekUserFactory()
-        self.client.force_login(self.user)
-        self.url = reverse("montrek_example_a1_field_map_create")
+class TestMontrekExampleA1FieldMapCreateView(MontrekCreateViewTestCase):
+    viewname = "montrek_example_a1_field_map_create"
+    view_class = me_views.MontrekExampleA1FieldMapCreateView
 
-    def test_view_return_correct_html(self):
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "montrek_create.html")
+    def creation_data(self):
+        return {
+            "source_field": "source_field_1",
+            "database_field": "field_a1_str",
+            "function_name": "append_source_field_1",
+            "function_parameters": "",
+        }
 
     def test_form_database_field_choices(self):
         response = self.client.get(self.url)
@@ -422,13 +386,10 @@ class TestMontrekExampleA1FieldMapCreateView(TestCase):
         self.assertEqual(form.initial["function_name"], "no_change")
 
 
-class TestMontrekExampleA1FieldMapListView(TestCase):
-    def setUp(self):
-        self.user = MontrekUserFactory()
-        self.client.force_login(self.user)
-        self.url = reverse("montrek_example_a1_field_map_list")
+class TestMontrekExampleA1FieldMapListView(MontrekListViewTestCase):
+    viewname = "montrek_example_a1_field_map_list"
+    view_class = me_views.MontrekExampleA1FieldMapListView
+    expected_no_of_rows = 10
 
-    def test_view_return_correct_html(self):
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "montrek_table.html")
+    def build_factories(self):
+        FieldMapStaticSatelliteFactory.create_batch(12)
