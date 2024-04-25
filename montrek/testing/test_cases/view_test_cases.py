@@ -76,28 +76,17 @@ class MontrekListViewTestCase(MontrekViewTestCase):
         self.assertEqual(len_object_list, self.expected_no_of_rows)
 
 
-class MontrekCreateViewTestCase(MontrekViewTestCase):
-    def creation_data(self) -> dict:
-        # Method to be overwritten
-        return {}
-
+class MontrekObjectViewBaseTestCase(MontrekViewTestCase):
     def additional_assertions(self, created_object):
         # Method to be overwritten
         pass
 
-    def _is_base_test_class(self):
-        return self.__class__.__name__ == "MontrekCreateViewTestCase"
-
     def _get_std_queryset(self):
         return self.view.manager.repository.std_queryset()
 
-    def _get_object(self):
-        std_query = self._get_std_queryset()
-        return std_query.last()
-
-    def test_view_post_success(self):
+    def _pre_test_view_post_success(self):
         if self._is_base_test_class():
-            return
+            return False
         data = self.creation_data()
         try:
             post_response = self.client.post(self.url, data)
@@ -106,8 +95,23 @@ class MontrekCreateViewTestCase(MontrekViewTestCase):
                 "MontrekCreateViewTestCase: Please set the creation_data method in the subclass"
             )
         self.assertEqual(post_response.status_code, 302)
+        return True
+
+
+class MontrekCreateUpdateViewTestCase(MontrekObjectViewBaseTestCase):
+    def creation_data(self) -> dict:
+        # Method to be overwritten
+        return {}
+
+    def _is_base_test_class(self):
+        return self.__class__.__name__ == "MontrekCreateUpdateViewTestCase"
+
+    def test_view_post_success(self):
+        if not self._pre_test_view_post_success():
+            return
         # Check added data
         created_object = self._get_object()
+        data = self.creation_data()
         for key, value in data.items():
             if key.startswith("link_"):
                 continue
@@ -123,7 +127,24 @@ class MontrekCreateViewTestCase(MontrekViewTestCase):
         self.additional_assertions(created_object)
 
 
-class MontrekUpdateViewTestCase(MontrekCreateViewTestCase):
+class GetObjectLastMixin:
+    def _get_object(self):
+        std_query = self._get_std_queryset()
+        return std_query.last()
+
+
+class GetObjectPkMixin:
+    def _get_object(self):
+        std_query = self._get_std_queryset()
+        return std_query.get(pk=self.url_kwargs()["pk"])
+
+
+class MontrekCreateViewTestCase(MontrekCreateUpdateViewTestCase, GetObjectLastMixin):
+    def _is_base_test_class(self):
+        return self.__class__.__name__ == "MontrekCreateViewTestCase"
+
+
+class MontrekUpdateViewTestCase(MontrekCreateUpdateViewTestCase, GetObjectPkMixin):
     def creation_data(self) -> dict:
         obj = self._get_object()
         data_dict = self.view.manager.repository.object_to_dict(obj)
@@ -140,6 +161,20 @@ class MontrekUpdateViewTestCase(MontrekCreateViewTestCase):
         # Method to be overwritten
         return {}
 
+
+class MontrekDeleteViewTestCase(MontrekObjectViewBaseTestCase, GetObjectPkMixin):
+    def _is_base_test_class(self):
+        return self.__class__.__name__ == "MontrekDeleteViewTestCase"
+
+    def _get_std_queryset(self):
+        return self.view.manager.repository.std_queryset()
+
     def _get_object(self):
         std_query = self._get_std_queryset()
-        return std_query.get(pk=self.url_kwargs()["pk"])
+        return std_query.last()
+
+    def test_view_post_success(self):
+        self._pre_test_view_post_success()
+        # Check deleted data has an end date
+        object = self._get_object()
+        self.assertTrue(object.state_date_end is not None)

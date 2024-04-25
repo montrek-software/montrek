@@ -11,6 +11,7 @@ from montrek_example.views import (
     MontrekExampleACreate,
     MontrekExampleAUpdate,
     MontrekExampleADetails,
+    MontrekExampleADelete,
     MontrekExampleAList,
     MontrekExampleBList,
     MontrekExampleCCreate,
@@ -85,6 +86,18 @@ class TestMontrekExampleADetailView(MontrekViewTestCase):
 
     def url_kwargs(self) -> dict:
         return {"pk": self.sat_a.hub_entity.id}
+
+
+class TestMontrekExampleADelete(MontrekViewTestCase):
+    viewname = "montrek_example_a_delete"
+    view_class = MontrekExampleADelete
+
+    def build_factories(self):
+        self.sat_a1 = me_factories.SatA1Factory()
+        me_factories.SatA2Factory(hub_entity=self.sat_a1.hub_entity)
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.sat_a1.hub_entity.id}
 
 
 class TestMontrekExampleAHistoryView(MontrekViewTestCase):
