@@ -9,6 +9,7 @@ from montrek_example.views import (
     MontrekExampleAHistory,
     MontrekExampleBCreate,
     MontrekExampleACreate,
+    MontrekExampleAUpdate,
     MontrekExampleADetails,
     MontrekExampleAList,
     MontrekExampleBList,
@@ -22,14 +23,13 @@ from montrek_example.views import (
 )
 from testing.test_cases.view_test_cases import (
     MontrekCreateViewTestCase,
+    MontrekUpdateViewTestCase,
     MontrekViewTestCase,
     MontrekListViewTestCase,
 )
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 from montrek_example.tests.factories import montrek_example_factories as me_factories
 from montrek_example.repositories.hub_a_repository import HubARepository
-from montrek_example.repositories.hub_c_repository import HubCRepository
-from montrek_example.repositories.hub_d_repository import HubDRepository
 from baseclasses.utils import montrek_time
 
 
@@ -53,6 +53,26 @@ class TestMontrekExampleACreateView(MontrekCreateViewTestCase):
             "field_a1_int": 1,
             "field_a2_str": "test2",
             "field_a2_float": 2.0,
+        }
+
+
+class TestMontrekExampleAUpdateView(MontrekUpdateViewTestCase):
+    viewname = "montrek_example_a_update"
+    view_class = MontrekExampleAUpdate
+
+    def build_factories(self):
+        self.sat_a1 = me_factories.SatA1Factory()
+        me_factories.SatA2Factory(hub_entity=self.sat_a1.hub_entity)
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.sat_a1.hub_entity.id}
+
+    def update_data(self):
+        return {
+            "field_a1_str": "test_update",
+            "field_a1_int": 2,
+            "field_a2_str": "test2_update",
+            "field_a2_float": 3.0,
         }
 
 

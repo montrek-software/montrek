@@ -20,6 +20,7 @@ class MontrekViewTestCase(TestCase):
         if self._is_base_test_class():
             return
         self._check_view_class()
+        self.view = self.view_class()
         self.user = MontrekUserFactory()
         for perm in self.user_permissions:
             self.permission = Permission.objects.get(codename=perm)
@@ -87,6 +88,13 @@ class MontrekCreateViewTestCase(MontrekViewTestCase):
     def _is_base_test_class(self):
         return self.__class__.__name__ == "MontrekCreateViewTestCase"
 
+    def _get_std_queryset(self):
+        return self.view.manager.repository.std_queryset()
+
+    def _get_object(self):
+        std_query = self._get_std_queryset()
+        return std_query.last()
+
     def test_view_post_success(self):
         if self._is_base_test_class():
             return
@@ -99,12 +107,12 @@ class MontrekCreateViewTestCase(MontrekViewTestCase):
             )
         self.assertEqual(post_response.status_code, 302)
         # Check added data
-        std_query = self.view_class().manager.repository.std_queryset()
-        self.assertEqual(std_query.count(), 1)
-        created_object = std_query.last()
+        created_object = self._get_object()
         for key, value in data.items():
             if key.startswith("link_"):
                 continue
+            if key == "hub_entity_id":
+                key = "id"
             created_value = getattr(created_object, key)
             if created_value is None:
                 self.assertEqual(value, "")
@@ -113,3 +121,22 @@ class MontrekCreateViewTestCase(MontrekViewTestCase):
                 value = pd.to_datetime(value).date()
             self.assertEqual(created_value, value)
         self.additional_assertions(created_object)
+
+
+class MontrekUpdateViewTestCase(MontrekCreateViewTestCase):
+    def creation_data(self) -> dict:
+        obj = self._get_object()
+        data_dict = self.view.manager.repository.object_to_dict(obj)
+        data_dict = {
+            key: value for key, value in data_dict.items() if value is not None
+        }
+        data_dict.update(self.update_data())
+        return data_dict
+
+    def update_data(self) -> dict:
+        # Method to be overwritten
+        return {}
+
+    def _get_object(self):
+        std_query = self._get_std_queryset()
+        return std_query.get(pk=self.url_kwargs()["pk"])
