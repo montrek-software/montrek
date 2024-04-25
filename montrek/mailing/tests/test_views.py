@@ -7,7 +7,7 @@ from user.tests.factories.montrek_user_factories import MontrekUserFactory
 from testing.test_cases import view_test_cases as vtc
 
 
-class TestMailsOverview(vtc.MontrekListViewTestCase):
+class TestMailListViewOverview(vtc.MontrekListViewTestCase):
     viewname = "mailing"
     view_class = views.MailOverviewListView
     expected_no_of_rows = 3
