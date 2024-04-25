@@ -1,5 +1,5 @@
 import factory
-from django.utils import timezone
+from datetime import timezone
 
 
 class HubAFactory(factory.django.DjangoModelFactory):
