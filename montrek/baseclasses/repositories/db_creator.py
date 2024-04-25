@@ -185,7 +185,7 @@ class DbCreator:
             satellite.hub_entity = reference_hub
             satellite.state_date_start = creation_date
             # Check if there is already another satellites for this hub and if so, set the state_date_end
-            if satellite.allow_multiple:
+            if not reference_hub.pk or satellite.allow_multiple:
                 self._stall_satellite(satellite)
                 return
             existing_satellites = satellite.__class__.objects.filter(
@@ -289,6 +289,9 @@ class DbCreator:
         return link
 
     def _update_link_if_exists(self, link, hub_field, creation_date):
+        hub = getattr(link, hub_field)
+        if not hub.pk:
+            return link
         link_class = link.__class__
         filter_args = {
             f"{hub_field}": getattr(link, hub_field),
