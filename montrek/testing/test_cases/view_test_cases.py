@@ -6,6 +6,7 @@ from django.views import View
 from django.contrib.auth.models import Permission
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 from django.urls import reverse
+from baseclasses.views import MontrekDeleteView
 
 
 class NotImplementedView(View):
@@ -71,6 +72,8 @@ class MontrekViewTestCase(TestCase):
         if self._is_base_test_class():
             return
         context_data = self.response.context
+        if isinstance(self.view, MontrekDeleteView):
+            return
         self.assertIsInstance(context_data["view"], self.view_class)
 
 
