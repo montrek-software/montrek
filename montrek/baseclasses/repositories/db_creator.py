@@ -187,7 +187,7 @@ class DbCreator:
             # Check if there is already another satellites for this hub and if so, set the state_date_end
             if not reference_hub.pk or satellite.allow_multiple:
                 self._stall_satellite(satellite)
-                return
+                continue
             existing_satellites = satellite.__class__.objects.filter(
                 hub_entity=reference_hub,
                 state_date_end__gte=creation_date,
