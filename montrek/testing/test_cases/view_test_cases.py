@@ -133,6 +133,9 @@ class MontrekUpdateViewTestCase(MontrekCreateViewTestCase):
         data_dict.update(self.update_data())
         return data_dict
 
+    def _is_base_test_class(self):
+        return self.__class__.__name__ == "MontrekUpdateViewTestCase"
+
     def update_data(self) -> dict:
         # Method to be overwritten
         return {}
