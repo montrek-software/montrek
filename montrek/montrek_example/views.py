@@ -1,3 +1,5 @@
+from django.contrib import messages
+from django.http import HttpResponseRedirect
 from baseclasses import views
 from baseclasses.dataclasses import table_elements as te
 from baseclasses.dataclasses.view_classes import ActionElement
@@ -8,6 +10,11 @@ from file_upload.views import (
     MontrekUploadFileView,
     MontrekUploadView,
 )
+from api_upload.views import MontrekApiUploadView
+from api_upload.managers.api_upload_manager import ApiUploadManager
+from montrek_example.managers.a2_api_upload_manager import A2ApiUploadManager
+from montrek_example.managers.a2_api_upload_processor import A2ApiUploadProcessor
+from montrek_example.managers.a2_request_manager import A2RequestManager
 from montrek_example.managers.a1_file_upload_manager import (
     A1FileUploadProcessor,
 )
@@ -324,3 +331,31 @@ class MontrekExampleA1FieldMapListView(MontrekFieldMapListView):
         return (action_new_field_map,)
 
     success_url = "montrek_example_a1_field_map_list"
+
+
+class MontrekExampleA2ApiUploadView(MontrekApiUploadView):
+    manager_class = A2ApiUploadManager
+    page_class = pages.MontrekExampleAAppPage
+    tab = "tab_a2_uploads"
+
+    @property
+    def actions(self) -> tuple:
+        action_do_a2_upload = ActionElement(
+            icon="upload",
+            link=reverse("do_a2_upload"),
+            action_id="id_do_a2_upload",
+            hover_text="Upload A2 data from API",
+        )
+        return (action_do_a2_upload,)
+
+
+def do_a2_upload(request):
+    manager = A2ApiUploadManager(
+        session_data={"user_id": request.user.id},
+    )
+    result = manager.upload_and_process()
+    if result:
+        messages.info(request, manager.processor.message)
+    else:
+        messages.error(request, manager.processor.message)
+    return HttpResponseRedirect(reverse("a2_view_api_uploads"))
