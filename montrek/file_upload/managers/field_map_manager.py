@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import pandas as pd
 from file_upload.repositories.field_map_repository import FieldMapRepository
-from baseclasses.managers.montrek_manager import MontrekManager
+from reporting.managers.montrek_table_manager import MontrekTableManager
 
 
 @dataclass
@@ -25,7 +25,7 @@ class FieldMapFunctionManager:
         return source_df[source_field].multiply(value)
 
 
-class FieldMapManager(MontrekManager):
+class FieldMapManager(MontrekTableManager):
     field_map_function_manager_class = FieldMapFunctionManager
     repository_class = FieldMapRepository
 
