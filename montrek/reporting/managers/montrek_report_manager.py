@@ -3,6 +3,9 @@ import os
 from typing import Protocol
 from baseclasses.managers.montrek_manager import MontrekManager
 from django.template import Template, Context
+import subprocess
+import tempfile
+import shutil
 
 
 class ReportElementProtocol(Protocol):
@@ -32,6 +35,10 @@ class MontrekReportManager(MontrekManager):
 class LatexReportManager(MontrekReportManager):
     latex_template = "montrek_base_template.tex"
 
+    @property
+    def document_name(self):
+        return "document"
+
     def generate_report(self) -> str:
         context = Context(self.get_context())
         template = Template(self.read_template())
@@ -49,6 +56,37 @@ class LatexReportManager(MontrekReportManager):
             raise FileNotFoundError(f"Template {self.latex_template} not found")
         with open(template_path, "r") as file:
             return file.read()
+
+    def compile_report(self):
+        report_str = self.generate_report()
+        output_dir = settings.MEDIA_ROOT
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            # Path to the temporary LaTeX file
+            latex_file_path = os.path.join(tmpdirname, "document.tex")
+
+            # Write the LaTeX code to a file
+            with open(latex_file_path, "w") as f:
+                f.write(report_str)
+
+            # Compile the LaTeX file into a PDF using pdflatex
+            # You can change 'pdflatex' to 'xelatex' or 'lualatex' if needed
+            subprocess.run(
+                ["xelatex", "-output-directory", tmpdirname, latex_file_path],
+                capture_output=True,
+                check=True,
+            )
+
+            # Define the source PDF path (assuming the output PDF has the same name as the .tex file, but with .pdf extension)
+            pdf_file_path = os.path.join(tmpdirname, "document.pdf")
+
+            # Define the destination PDF path
+            output_pdf_path = os.path.join(output_dir, "document.pdf")
+
+            # Move the PDF to the output directory
+            shutil.move(pdf_file_path, output_pdf_path)
+
+            # Return the path to the output PDF file
+            return output_pdf_path
 
     def _get_template_path(self):
         for template_dir in settings.TEMPLATES[0]["DIRS"]:

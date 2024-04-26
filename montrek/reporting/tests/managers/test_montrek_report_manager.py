@@ -62,3 +62,11 @@ class TestLatexReportManager(TestCase):
         manager.append_report_element(MockReportElement())
         self.assertIn("latexlatex", manager.generate_report())
         report = manager.generate_report()
+
+    def test_compile_report(self):
+        session_data = {}
+        manager = LatexReportManager(session_data=session_data)
+        manager.append_report_element(MockReportElement())
+        manager.append_report_element(MockReportElement())
+        outpath = manager.compile_report()
+        self.assertIn("document.pdf", outpath)
