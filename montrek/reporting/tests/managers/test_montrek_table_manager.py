@@ -12,7 +12,10 @@ class MockData:
 
 
 class MockRepository:
-    def get_std_queryset(self):
+    def __init__(self, session_data: dict):
+        self.session_data = session_data
+
+    def std_queryset(self):
         return [MockData("a", 1, 1.0), MockData("b", 2, 2.0), MockData("c", 3, 3.0)]
 
 
@@ -22,11 +25,25 @@ class MockMontrekTableManager(MontrekTableManager):
     @property
     def table_elements(
         self,
-    ) -> tuple[te.StringTableElement, te.IntTableElement, te.FloatTableElement]:
+    ) -> tuple[te.TableElement]:
         return (
-            te.StringTableElement("field_a", "Field A"),
-            te.IntTableElement("field_b", "Field B"),
-            te.FloatTableElement("field_c", "Field C"),
+            te.StringTableElement(attr="field_a", name="Field A"),
+            te.IntTableElement(attr="field_b", name="Field B"),
+            te.FloatTableElement(attr="field_c", name="Field C"),
+            te.LinkTableElement(
+                name="Link",
+                url="home",
+                kwargs={},
+                hover_text="Link",
+                icon="icon",
+            ),
+            te.LinkTextTableElement(
+                name="Link Text",
+                url="home",
+                kwargs={},
+                hover_text="Link Text",
+                text="field_a",
+            ),
         )
 
 
