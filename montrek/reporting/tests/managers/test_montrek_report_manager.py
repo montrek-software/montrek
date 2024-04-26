@@ -1,9 +1,12 @@
 from django.test import TestCase
-from reporting.managers.montrek_report_manager import MontrekReportManager
+from reporting.managers.montrek_report_manager import (
+    MontrekReportManager,
+    LatexReportManager,
+)
 
 
 class MockMontrekReportManager(MontrekReportManager):
-    def compile_report(self) -> str:
+    def generate_report(self) -> str:
         report = ""
         for report_element in self.report_elements:
             report += report_element.to_html()
@@ -33,10 +36,21 @@ class TestMontrekReportManager(TestCase):
         manager.append_report_element(report_element)
         assert manager.report_elements == [report_element]
 
-    def test_compile_report(self):
+    def test_generate_report(self):
         session_data = {}
         manager = MockMontrekReportManager(session_data=session_data)
         report_element = MockReportElement()
         manager.append_report_element(report_element)
         manager.append_report_element(report_element)
-        assert manager.compile_report() == "htmllatexhtmllatex"
+        assert manager.generate_report() == "htmllatexhtmllatex"
+
+
+class MockLatexReportManagerNoTemplate(LatexReportManager):
+    latex_template = "no_template.tex"
+
+
+class TestLatexReportManager(TestCase):
+    def test_generate_report(self):
+        session_data = {}
+        manager = MockLatexReportManagerNoTemplate(session_data=session_data)
+        self.assertRaises(FileNotFoundError, manager.generate_report)
