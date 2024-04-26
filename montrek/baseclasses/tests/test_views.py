@@ -5,6 +5,7 @@ from django.test import TestCase, RequestFactory
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.contrib.messages.middleware import MessageMiddleware
 from django.contrib.messages import get_messages
+from dataclasses import dataclass
 from baseclasses.views import MontrekViewMixin
 from baseclasses.views import MontrekListView
 from baseclasses.dataclasses.montrek_message import (
@@ -14,6 +15,7 @@ from baseclasses.dataclasses.montrek_message import (
 from baseclasses.pages import MontrekPage
 from baseclasses.managers.montrek_manager import MontrekManager
 from reporting.managers.montrek_table_manager import MontrekTableManager
+from reporting.dataclasses import table_elements as te
 
 
 class MockQuerySet:
@@ -34,8 +36,13 @@ class MockQuerySet:
             return list(self.items) == other
         return NotImplemented
 
-    def values(self):
-        return {item: item for item in self.items}
+    def all(self):
+        return self.items
+
+
+@dataclass
+class MockData:
+    field: str
 
 
 class MockRepository:
@@ -44,7 +51,9 @@ class MockRepository:
         self.messages = []
 
     def std_queryset(self):
-        return MockQuerySet("item1", "item2", "item3")  # Dummy data for testing
+        return MockQuerySet(
+            MockData("item1"), MockData("item2"), MockData("item3")
+        )  # Dummy data for testing
 
 
 class MockRequester:
@@ -60,6 +69,10 @@ class MockRequester:
 
 class MockManager(MontrekTableManager):
     repository_class = MockRepository
+
+    @property
+    def table_elements(self):
+        return [te.StringTableElement(attr="field", name="Field")]
 
 
 class MockMontrekView(MontrekViewMixin, MockRequester):
@@ -160,7 +173,10 @@ class TestMontrekViewMixin(TestCase):
 
     def test_get_view_queryset(self):
         mock_view = MockMontrekView("/")
-        self.assertEqual(mock_view.get_view_queryset(), ["item1", "item2", "item3"])
+        mock_queryset = mock_view.get_view_queryset()
+        self.assertEqual(
+            [mqe.field for mqe in mock_queryset], ["item1", "item2", "item3"]
+        )
 
 
 class MockMontrekListView(MontrekListView, MockRequester):
