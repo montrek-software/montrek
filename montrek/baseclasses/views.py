@@ -20,14 +20,12 @@ from reporting.dataclasses.table_elements import (
     AttrTableElement,
     LinkTextTableElement,
     TableElement,
-    BaseLinkTableElement,
 )
 from baseclasses.dataclasses.view_classes import ActionElement
 from baseclasses.pages import NoPage
 from baseclasses.forms import DateRangeForm, FilterForm
 from baseclasses.forms import MontrekCreateForm
 from baseclasses import utils
-from baseclasses.managers.montrek_list_manager import MontrekListManager
 from baseclasses.dataclasses.history_data_table import HistoryDataTable
 from baseclasses.managers.montrek_manager import MontrekManagerNotImplemented
 from reporting.managers.montrek_table_manager import MontrekTableManager
