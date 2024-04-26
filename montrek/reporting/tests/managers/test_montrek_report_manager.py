@@ -50,7 +50,15 @@ class MockLatexReportManagerNoTemplate(LatexReportManager):
 
 
 class TestLatexReportManager(TestCase):
-    def test_generate_report(self):
+    def test_generate_report_no_template(self):
         session_data = {}
         manager = MockLatexReportManagerNoTemplate(session_data=session_data)
         self.assertRaises(FileNotFoundError, manager.generate_report)
+
+    def test_generate_report(self):
+        session_data = {}
+        manager = LatexReportManager(session_data=session_data)
+        manager.append_report_element(MockReportElement())
+        manager.append_report_element(MockReportElement())
+        self.assertIn("latexlatex", manager.generate_report())
+        report = manager.generate_report()

@@ -50,6 +50,7 @@ MONTREK_BASE_APPS = [
     "montrek_example",
     "file_upload",
     "mailing",
+    "reporting",
 ]
 
 MONTREK_EXTENSION_APPS = [
@@ -84,6 +85,11 @@ TEMPLATES = [
             ],
         },
     },
+]
+
+TEMPLATES[0]["DIRS"] += [
+    app.replace(".", "/") + "/templates"
+    for app in MONTREK_BASE_APPS + MONTREK_EXTENSION_APPS
 ]
 
 WSGI_APPLICATION = "montrek.wsgi.application"

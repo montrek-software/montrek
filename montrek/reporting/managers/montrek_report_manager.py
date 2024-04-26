@@ -2,6 +2,7 @@ from django.conf import settings
 import os
 from typing import Protocol
 from baseclasses.managers.montrek_manager import MontrekManager
+from django.template import Template, Context
 
 
 class ReportElementProtocol(Protocol):
@@ -32,12 +33,15 @@ class LatexReportManager(MontrekReportManager):
     latex_template = "montrek_base_template.tex"
 
     def generate_report(self) -> str:
+        context = Context(self.get_context())
+        template = Template(self.read_template())
+        return template.render(context)
+
+    def get_context(self) -> dict:
         content = ""
         for report_element in self.report_elements:
             content += report_element.to_latex()
-        template = self.read_template()
-        report = template.format(content=content)
-        return report
+        return {"content": content}
 
     def read_template(self) -> str:
         template_path = self._get_template_path()
@@ -48,7 +52,9 @@ class LatexReportManager(MontrekReportManager):
 
     def _get_template_path(self):
         for template_dir in settings.TEMPLATES[0]["DIRS"]:
-            potential_path = os.path.join(template_dir, self.latex_template)
+            potential_path = os.path.join(
+                template_dir, "latex_templates", self.latex_template
+            )
             if os.path.exists(potential_path):
                 return potential_path
         return None
