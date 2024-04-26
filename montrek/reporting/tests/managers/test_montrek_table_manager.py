@@ -1,4 +1,5 @@
 from django.test import TestCase
+from bs4 import BeautifulSoup
 from baseclasses.dataclasses import table_elements as te
 from reporting.managers.montrek_table_manager import MontrekTableManager
 from dataclasses import dataclass
@@ -50,4 +51,11 @@ class MockMontrekTableManager(MontrekTableManager):
 class TestMontrekTableManager(TestCase):
     def test_to_html(self):
         test_html = MockMontrekTableManager().to_html()
-        self.assertEqual(test_html, "<table></table>")
+        soup = BeautifulSoup(test_html, "html.parser")
+        table = soup.find("table")
+        rows = table.find_all("tr")
+        self.assertEqual(len(rows), 4)
+        headers = soup.find_all("th")
+        expected_headers = ["Field A", "Field B", "Field C", "Link", "Link Text"]
+        header_texts = [th.get_text() for th in headers]
+        self.assertEqual(header_texts, expected_headers)
