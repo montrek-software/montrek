@@ -246,11 +246,7 @@ class MontrekListView(
     def list_to_csv(self):
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = 'attachment; filename="export.csv"'
-        queryset = self.get_view_queryset()
-        MontrekListManager().export_queryset_to_csv(
-            queryset, self.get_fields_from_elements(), response
-        )
-        return response
+        return self.manager.download_csv(response)
 
 
 class MontrekHistoryListView(MontrekTemplateView):
