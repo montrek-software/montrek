@@ -30,6 +30,7 @@ from baseclasses import utils
 from baseclasses.managers.montrek_list_manager import MontrekListManager
 from baseclasses.dataclasses.history_data_table import HistoryDataTable
 from baseclasses.managers.montrek_manager import MontrekManagerNotImplemented
+from reporting.managers.montrek_table_manager import MontrekTableManager
 
 # Create your views here.
 
@@ -236,7 +237,9 @@ class MontrekListView(
         context = super().get_context_data(**kwargs)
         context = self.get_page_context(context, **kwargs)
         self.show_messages()
-        context["table_elements"] = self.elements
+        if not isinstance(self.manager, MontrekTableManager):
+            raise ValueError("Manager must be of type MontrekTableManager")
+        context["table"] = self.manager.to_html()
         context["filter_form"] = FilterForm(self.session_data)
         return context
 

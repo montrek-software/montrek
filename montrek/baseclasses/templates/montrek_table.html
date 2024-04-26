@@ -24,22 +24,23 @@
     </div>
     <div id="id_montrek_table_list" class="row">
       <div class="col-md-12">
-        <div class="table-responsive">
-          <table class="table table-bordered table-hover">
-            <tr>
-              {% for table_element in table_elements %}
-                <th>{{ table_element.name }}</th>
-              {% endfor %}
-            </tr>
-            {% for row in object_list %}
-              <tr style="white-space:nowrap;">
-                {% for table_element in table_elements %}
-                  {{ row|show_item:table_element|safe }}
-                {% endfor %}
-              </tr> 
-            {% endfor %}
-          </table>
-        </div>
+        {{ table|safe }}
+        <!-- <div class="table-responsive"> -->
+        <!--   <table class="table table-bordered table-hover"> -->
+        <!--     <tr> -->
+        <!--       {% for table_element in table_elements %} -->
+        <!--         <th>{{ table_element.name }}</th> -->
+        <!--       {% endfor %} -->
+        <!--     </tr> -->
+        <!--     {% for row in object_list %} -->
+        <!--       <tr style="white-space:nowrap;"> -->
+        <!--         {% for table_element in table_elements %} -->
+        <!--           {{ row|show_item:table_element|safe }} -->
+        <!--         {% endfor %} -->
+        <!--       </tr>  -->
+        <!--     {% endfor %} -->
+        <!--   </table> -->
+        <!-- </div> -->
       </div>
     </div>
     <div class="row">

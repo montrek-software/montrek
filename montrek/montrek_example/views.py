@@ -55,37 +55,6 @@ class MontrekExampleAList(views.MontrekListView):
     title = "Example A List"
 
     @property
-    def elements(self) -> list:
-        return (
-            te.StringTableElement(name="A1 String", attr="field_a1_str"),
-            te.IntTableElement(name="A1 Int", attr="field_a1_int"),
-            te.StringTableElement(name="A2 String", attr="field_a2_str"),
-            te.FloatTableElement(name="A2 Float", attr="field_a2_float"),
-            te.StringTableElement(name="B1 String", attr="field_b1_str"),
-            te.LinkTableElement(
-                name="View",
-                url="montrek_example_a_details",
-                kwargs={"pk": "id"},
-                icon="eye-open",
-                hover_text="View Example A",
-            ),
-            te.LinkTableElement(
-                name="Update",
-                url="montrek_example_a_update",
-                kwargs={"pk": "id"},
-                icon="pencil",
-                hover_text="View Example A",
-            ),
-            te.LinkTableElement(
-                name="Delete",
-                url="montrek_example_a_delete",
-                kwargs={"pk": "id"},
-                icon="trash",
-                hover_text="Delete Example A",
-            ),
-        )
-
-    @property
     def actions(self) -> tuple:
         action_new_example_a = ActionElement(
             icon="plus",

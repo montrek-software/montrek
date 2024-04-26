@@ -8,6 +8,7 @@ class MontrekTableManager(MontrekManager):
         return ()
 
     def to_html(self):
+        breakpoint()
         html_str = "<table><tr>"
         for table_element in self.table_elements:
             html_str += f"<th>{table_element.name}</th>"
