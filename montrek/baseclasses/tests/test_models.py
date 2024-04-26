@@ -53,11 +53,11 @@ class TestModelUtils(TestCase):
         for test_satellite in test_satellites:
             self.assertEqual(
                 test_satellite.state_date_start,
-                timezone.datetime(2023, 6, 20, tzinfo=timezone.utc),
+                timezone.datetime(2023, 6, 20, tzinfo=datetime.timezone.utc),
             )
             self.assertEqual(
                 test_satellite.state_date_end,
-                timezone.datetime(2023, 7, 10, tzinfo=timezone.utc),
+                timezone.datetime(2023, 7, 10, tzinfo=datetime.timezone.utc),
             )
 
 
