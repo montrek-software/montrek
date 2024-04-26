@@ -5,8 +5,9 @@ from montrek_example.repositories.hub_a_repository import HubARepository
 class A2ApiUploadProcessor:
     message = "Not implemented"
 
-    def __init__(self, file_upload_registry_id: int, session_data: dict, **kwargs):
+    def __init__(self, file_upload_registry: int, session_data: dict, **kwargs):
         self.session_data = session_data
+        self.file_upload_registry = file_upload_registry
 
     def pre_check(self, json_response: dict | list) -> bool:
         return True
@@ -14,6 +15,7 @@ class A2ApiUploadProcessor:
     def process(self, json_response: dict | list) -> bool:
         try:
             df = pd.DataFrame(json_response)
+            df['link_hub_a_api_upload_registry'] = self.file_upload_registry
             HubARepository(self.session_data).create_objects_from_data_frame(df)
             self.message = f"Successfully saved {df.shape[0]} rows."
         except Exception as e:

@@ -20,7 +20,7 @@ class ApiUploadProcessorProtocol(Protocol):
 
 class ApiUploadManager(MontrekManager):
     repository_class = ApiUploadRegistryRepository
-    request_manager_class = type[RequestManager]
+    request_manager_class: type[RequestManager]
     api_upload_processor_class: type[ApiUploadProcessorProtocol]
     endpoint: str
 
@@ -34,7 +34,7 @@ class ApiUploadManager(MontrekManager):
         self.registry_repository = self.repository_class(session_data)
         self.init_upload()
         self.processor = self.api_upload_processor_class(
-            self.api_upload_registry.pk, session_data
+            self.api_upload_registry, session_data
         )
         super().__init__(session_data=self.session_data)
 

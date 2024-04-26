@@ -348,6 +348,9 @@ class MontrekExampleA2ApiUploadView(MontrekApiUploadView):
         )
         return (action_do_a2_upload,)
 
+    def get_view_queryset(self):
+        return mem.HubAManager.repository_class().get_api_upload_registry_table()
+
 
 def do_a2_upload(request):
     manager = A2ApiUploadManager(
