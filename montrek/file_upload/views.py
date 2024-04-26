@@ -99,7 +99,6 @@ class MontrekDownloadFileView(MontrekTemplateView):
 
 
 class MontrekFieldMapCreateView(MontrekCreateView):
-    manager_class = FieldMapManager
     success_url = "under_construction"
     form_class = FieldMapCreateForm
     field_map_manager_class = FieldMapManager
