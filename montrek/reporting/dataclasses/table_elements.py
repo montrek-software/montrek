@@ -47,7 +47,8 @@ class BaseLinkTableElement(TableElement):
     kwargs: dict
     hover_text: str
 
-    def _get_dotted_attr_or_arg(self, obj, value):
+    @staticmethod
+    def get_dotted_attr_or_arg(obj, value):
         """Gets an attribute of an object dynamically from a string name"""
         """If the attribute is not found, then it is assumed to be an argument"""
         attrs = value.split(".")
@@ -61,7 +62,7 @@ class BaseLinkTableElement(TableElement):
     def get_attribute(self, obj):
         # TODO Update this such that _get_dotted_attr_or_arg is not used anymore
         kwargs = {
-            key: self._get_dotted_attr_or_arg(obj, value)
+            key: BaseLinkTableElement.get_dotted_attr_or_arg(obj, value)
             for key, value in self.kwargs.items()
             if key != "filter"
         }
@@ -76,7 +77,7 @@ class BaseLinkTableElement(TableElement):
             return "<td></td>"
         filter_field = self.kwargs.get("filter")
         if filter_field:
-            filter_str = f"?filter_field={filter_field}__in&filter_value={self._get_dotted_attr_or_arg(obj, filter_field)}"
+            filter_str = f"?filter_field={filter_field}__in&filter_value={BaseLinkTableElement.get_dotted_attr_or_arg(obj, filter_field)}"
             url += filter_str
         link_text = self._get_link_text(obj)
         id_tag = url.replace("/", "_")
@@ -111,7 +112,7 @@ class LinkTextTableElement(BaseLinkTableElement):
     text: str
 
     def _get_link_text(self, obj):
-        return self._get_dotted_attr_or_arg(obj, self.text)
+        return BaseLinkTableElement.get_dotted_attr_or_arg(obj, self.text)
 
 
 class NoneTableElement:

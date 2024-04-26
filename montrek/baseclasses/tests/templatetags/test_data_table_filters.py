@@ -4,14 +4,6 @@ from reporting.dataclasses import table_elements
 from baseclasses.tests.factories.baseclass_factories import TestMontrekSatelliteFactory
 
 
-class MockTableElement:
-    def __init__(self, attr: str) -> None:
-        self.attr = attr
-
-    def format(self, value: str) -> str:
-        return value
-
-
 class TestDataTableFilters(TestCase):
     def test__get_dotted_attr_or_arg(self):
         """
