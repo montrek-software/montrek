@@ -106,12 +106,14 @@ class MontrekObjectViewBaseTestCase(MontrekViewTestCase):
     def _get_std_queryset(self) -> QuerySet:
         return self.view.manager.repository.std_queryset()
 
+    def get_post_response(self):
+        return self.client.post(self.url, self.creation_data())
+
     def _pre_test_view_post_success(self) -> bool:
         if self._is_base_test_class():
             return False
-        data = self.creation_data()
         try:
-            post_response = self.client.post(self.url, data)
+            post_response = self.get_post_response()
         except AttributeError:
             raise NotImplementedError(
                 "MontrekCreateViewTestCase: Please set the creation_data method in the subclass"
