@@ -1,10 +1,14 @@
+from django.views.generic.base import HttpResponse
+from django.core.paginator import Paginator
 from baseclasses.managers.montrek_manager import MontrekManager
 from reporting.dataclasses import table_elements as te
 import csv
-from django.views.generic.base import HttpResponse
 
 
 class MontrekTableManager(MontrekManager):
+    is_paginated = True
+    paginate_by = 10
+
     @property
     def table_elements(self) -> tuple[te.TableElement, ...]:
         return ()
@@ -14,7 +18,7 @@ class MontrekTableManager(MontrekManager):
         for table_element in self.table_elements:
             html_str += f"<th>{table_element.name}</th>"
         html_str += "</tr>"
-        queryset = self.repository.std_queryset()
+        queryset = self.get_paginated_queryset()
         for query_object in queryset:
             html_str += '<tr style="white-space:nowrap;">'
             for table_element in self.table_elements:
@@ -22,6 +26,18 @@ class MontrekTableManager(MontrekManager):
             html_str += "</tr>"
         html_str += "</table>"
         return html_str
+
+    def get_paginated_queryset(self):
+        queryset = self.repository.std_queryset()
+        if self.is_paginated:
+            return self._paginate_queryset(queryset)
+        return queryset
+
+    def _paginate_queryset(self, queryset):
+        page_number = self.session_data.get("page", [1])[0]
+        paginator = Paginator(queryset, self.paginate_by)
+        page = paginator.get_page(page_number)
+        return page
 
     def download_csv(self, response: HttpResponse) -> HttpResponse:
         queryset = self.repository.std_queryset()
