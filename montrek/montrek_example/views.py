@@ -356,9 +356,7 @@ def do_a2_upload(request):
     manager = A2ApiUploadManager(
         session_data={"user_id": request.user.id},
     )
-    result = manager.upload_and_process()
-    if result:
-        messages.info(request, manager.processor.message)
-    else:
-        messages.error(request, manager.processor.message)
+    manager.upload_and_process()
+    for m in manager.messages:
+        getattr(messages, m.message_type)(request, m.message)
     return HttpResponseRedirect(reverse("a2_view_api_uploads"))

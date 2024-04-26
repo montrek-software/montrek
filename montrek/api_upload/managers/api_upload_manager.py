@@ -6,6 +6,7 @@ from api_upload.repositories.api_upload_registry_repository import (
 from baseclasses.models import MontrekHubABC
 from baseclasses.managers.montrek_manager import MontrekManager
 from api_upload.managers.request_manager import RequestManager
+from baseclasses.dataclasses.montrek_message import MontrekMessageError, MontrekMessageInfo
 
 
 class ApiUploadProcessorProtocol(Protocol):
@@ -85,3 +86,8 @@ class ApiUploadManager(MontrekManager):
             },
         )
         self.api_upload_registry = self.registry_repository.std_create_object(att_dict)
+
+        if upload_status == self.registry_repository.upload_status.FAILED.value:
+            self.messages.append(MontrekMessageError(upload_message))
+        else:
+            self.messages.append(MontrekMessageInfo(upload_message))
