@@ -1,5 +1,5 @@
 from baseclasses import views
-from baseclasses.dataclasses import table_elements as te
+from reporting.dataclasses import table_elements as te
 from baseclasses.dataclasses.view_classes import ActionElement
 from django.urls import reverse
 from file_upload.views import (

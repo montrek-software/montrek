@@ -1,7 +1,7 @@
 import dataclasses
 
 from django.db.models import QuerySet
-from baseclasses.dataclasses.table_elements import StringTableElement
+from reporting.dataclasses.table_elements import StringTableElement
 
 
 @dataclasses.dataclass

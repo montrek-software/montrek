@@ -7,7 +7,7 @@ from baseclasses.views import (
     MontrekListView,
     MontrekDetailView,
 )
-from baseclasses.dataclasses import table_elements as te
+from reporting.dataclasses import table_elements as te
 from mailing.managers.mailing_manager import MailingManager
 from mailing.pages import MailingPage
 from baseclasses.dataclasses.view_classes import ActionElement
