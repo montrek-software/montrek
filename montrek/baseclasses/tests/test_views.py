@@ -13,6 +13,7 @@ from baseclasses.dataclasses.montrek_message import (
 )
 from baseclasses.pages import MontrekPage
 from baseclasses.managers.montrek_manager import MontrekManager
+from reporting.managers.montrek_table_manager import MontrekTableManager
 
 
 class MockQuerySet:
@@ -57,7 +58,7 @@ class MockRequester:
         message_middleware.process_request(self.request)
 
 
-class MockManager(MontrekManager):
+class MockManager(MontrekTableManager):
     repository_class = MockRepository
 
 
