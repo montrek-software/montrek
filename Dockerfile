@@ -1,5 +1,5 @@
 # base image
-FROM python:3.11
+FROM python:3.12.0
 # setup environment variable
 ENV DOCKERHOME=/montrek
 
