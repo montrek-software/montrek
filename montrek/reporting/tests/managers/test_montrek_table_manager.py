@@ -1,6 +1,6 @@
 from django.test import TestCase
 from bs4 import BeautifulSoup
-from baseclasses.dataclasses import table_elements as te
+from reporting.dataclasses import table_elements as te
 from reporting.managers.montrek_table_manager import MontrekTableManager
 from dataclasses import dataclass
 

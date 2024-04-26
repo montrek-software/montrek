@@ -1,5 +1,5 @@
 from baseclasses.managers.montrek_manager import MontrekManager
-from baseclasses.dataclasses.table_elements import TableElement
+from reporting.dataclasses.table_elements import TableElement
 
 
 class MontrekTableManager(MontrekManager):

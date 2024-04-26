@@ -16,7 +16,7 @@ from django.contrib import messages
 from decouple import config
 from baseclasses.dataclasses.nav_bar_model import NavBarModel
 from baseclasses.dataclasses.link_model import LinkModel
-from baseclasses.dataclasses.table_elements import (
+from reporting.dataclasses.table_elements import (
     AttrTableElement,
     LinkTextTableElement,
     TableElement,

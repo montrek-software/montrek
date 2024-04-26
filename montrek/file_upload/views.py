@@ -14,7 +14,7 @@ from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepository,
 )
 from baseclasses.views import MontrekCreateView, MontrekTemplateView, MontrekListView
-from baseclasses.dataclasses.table_elements import (
+from reporting.dataclasses.table_elements import (
     DateTableElement,
     LinkTableElement,
     StringTableElement,
