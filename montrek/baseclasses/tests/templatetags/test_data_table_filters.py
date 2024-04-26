@@ -1,6 +1,6 @@
 from django.test import TestCase
 from baseclasses.templatetags import data_table_filters as dtf
-from baseclasses.dataclasses import table_elements
+from reporting.dataclasses import table_elements
 from baseclasses.tests.factories.baseclass_factories import TestMontrekSatelliteFactory
 
 
