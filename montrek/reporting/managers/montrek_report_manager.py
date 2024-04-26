@@ -21,3 +21,6 @@ class MontrekReportManager(MontrekManager):
 
     def append_report_element(self, report_element: ReportElementProtocol) -> None:
         self._report_elements.append(report_element)
+
+    def compile_report(self) -> str:
+        return "MontrekReportManager: No report compiled!!"

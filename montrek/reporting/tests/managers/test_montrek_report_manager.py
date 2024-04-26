@@ -3,7 +3,12 @@ from reporting.managers.montrek_report_manager import MontrekReportManager
 
 
 class MockMontrekReportManager(MontrekReportManager):
-    pass
+    def compile_report(self) -> str:
+        report = ""
+        for report_element in self.report_elements:
+            report += report_element.to_html()
+            report += report_element.to_latex()
+        return report
 
 
 class MockReportElement:
@@ -27,3 +32,11 @@ class TestMontrekReportManager(TestCase):
         report_element = MockReportElement()
         manager.append_report_element(report_element)
         assert manager.report_elements == [report_element]
+
+    def test_compile_report(self):
+        session_data = {}
+        manager = MockMontrekReportManager(session_data=session_data)
+        report_element = MockReportElement()
+        manager.append_report_element(report_element)
+        manager.append_report_element(report_element)
+        assert manager.compile_report() == "htmllatexhtmllatex"
