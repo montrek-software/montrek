@@ -8,6 +8,8 @@ import subprocess
 import tempfile
 import shutil
 
+from baseclasses.dataclasses.montrek_message import MontrekMessageError
+
 
 class ReportElementProtocol(Protocol):
     def to_html(self) -> str:
@@ -30,7 +32,7 @@ class MontrekReportManager(MontrekManager):
         self._report_elements.append(report_element)
 
     def generate_report(self) -> str:
-        return "MontrekReportManager: No report compiled!!"
+        return "MontrekReportManager: No report generated!!"
 
 
 class LatexReportManager(MontrekReportManager):
@@ -61,25 +63,35 @@ class LatexReportManager(MontrekReportManager):
         with open(template_path, "r") as file:
             return file.read()
 
-    def compile_report(self) -> str:
+    def compile_report(self) -> str | None:
         report_str = self.generate_report()
         output_dir = settings.MEDIA_ROOT
         with tempfile.TemporaryDirectory() as tmpdirname:
             # Path to the temporary LaTeX file
             latex_file_path = os.path.join(tmpdirname, "document.tex")
-            print(report_str)
 
             # Write the LaTeX code to a file
             with open(latex_file_path, "w") as f:
                 f.write(report_str)
 
-            # Compile the LaTeX file into a PDF using pdflatex
-            # You can change 'pdflatex' to 'xelatex' or 'lualatex' if needed
-            subprocess.run(
-                ["xelatex", "-output-directory", tmpdirname, latex_file_path],
-                # capture_output=True,
-                check=True,
-            )
+            # Compile the LaTeX file into a PDF using xelatex
+            try:
+                result = subprocess.run(
+                    [
+                        "xelatex",
+                        "-output-directory",
+                        tmpdirname,
+                        "-interaction=nonstopmode",
+                        latex_file_path,
+                    ],
+                    capture_output=True,
+                    check=True,
+                    text=True,
+                )
+            except subprocess.CalledProcessError as e:
+                error_message = self.get_xelatex_error_message(e.stdout)
+                self.messages.append(MontrekMessageError(message=error_message))
+                return None
 
             # Define the source PDF path (assuming the output PDF has the same name as the .tex file, but with .pdf extension)
             pdf_file_path = os.path.join(tmpdirname, "document.pdf")
@@ -93,7 +105,7 @@ class LatexReportManager(MontrekReportManager):
             # Return the path to the output PDF file
             return output_pdf_path
 
-    def _get_template_path(self):
+    def _get_template_path(self) -> str | None:
         for template_dir in settings.TEMPLATES[0]["DIRS"]:
             potential_path = os.path.join(
                 template_dir, "latex_templates", self.latex_template
@@ -101,3 +113,9 @@ class LatexReportManager(MontrekReportManager):
             if os.path.exists(potential_path):
                 return potential_path
         return None
+
+    def get_xelatex_error_message(self, stdout: str) -> str:
+        for line in stdout.split("\n"):
+            if "LaTeX Error:" in line:
+                return line
+        return stdout

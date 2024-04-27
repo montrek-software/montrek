@@ -255,14 +255,17 @@ class MontrekListView(
         report_manager = LatexReportManager(self.session_data)
         report_manager.append_report_element(self.manager)
         pdf_path = report_manager.compile_report()
-        if os.path.exists(pdf_path):
+        self.manager.messages += report_manager.messages
+        self.show_messages()
+        if pdf_path and os.path.exists(pdf_path):
             with open(pdf_path, "rb") as pdf_file:
                 response = HttpResponse(pdf_file.read(), content_type="application/pdf")
                 response["Content-Disposition"] = (
                     "inline; filename=" + os.path.basename(pdf_path)
                 )
                 return response
-        raise Http404("PDF file not found")
+        previous_url = self.request.META.get("HTTP_REFERER")
+        return HttpResponseRedirect(previous_url)
 
 
 class MontrekHistoryListView(MontrekTemplateView):

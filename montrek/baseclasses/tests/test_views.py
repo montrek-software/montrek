@@ -200,6 +200,21 @@ class MockMontrekListView(MontrekListView, MockRequester):
         self.add_mock_request(url)
 
 
+class MockManagerPdfFails(MontrekTableManager):
+    def to_latex(self):
+        return "\\textbf{This is a bold text with a missing closing brace."
+
+
+class MockMontrekListViewPdfFails(MontrekListView, MockRequester):
+    manager_class = MockManagerPdfFails
+    page_class = MockPage
+    kwargs = {}
+
+    def __init__(self, url: str):
+        super().__init__()
+        self.add_mock_request(url)
+
+
 class TestMontrekListView(TestCase):
     def test_list_view_base_normal_load(self):
         """
@@ -225,3 +240,9 @@ class TestMontrekListView(TestCase):
         response = test_list_view.get(test_list_view.request)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Content-Type"], "application/pdf")
+
+    def test_list_view_base_pdf_generation__fails(self):
+        test_list_view = MockMontrekListView("dummy?gen_pdf=true")
+        response = test_list_view.get(test_list_view.request)
+        self.assertEqual(response.status_code, 302)
+        self.assertGreater(len(test_list_view.manager.messages), 0)
