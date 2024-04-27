@@ -31,7 +31,7 @@ jobs:
       run: |
         wget http://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz
         tar -xzf install-tl-unx.tar.gz
-        cd install-tl-*
+        cd  $(ls -d install-tl-*/ | head -n 1)
         echo "selected_scheme scheme-basic" > profile
         ./install-tl --profile=profile --repository http://mirror.ctan.org/systems/texlive/tlnet
         export PATH=/usr/local/texlive/2024/bin/x86_64-linux:$PATH
