@@ -57,7 +57,7 @@ class LatexReportManager(MontrekReportManager):
         with open(template_path, "r") as file:
             return file.read()
 
-    def compile_report(self):
+    def compile_report(self) -> str:
         report_str = self.generate_report()
         output_dir = settings.MEDIA_ROOT
         with tempfile.TemporaryDirectory() as tmpdirname:
@@ -67,12 +67,13 @@ class LatexReportManager(MontrekReportManager):
             # Write the LaTeX code to a file
             with open(latex_file_path, "w") as f:
                 f.write(report_str)
+            print(report_str)
 
             # Compile the LaTeX file into a PDF using pdflatex
             # You can change 'pdflatex' to 'xelatex' or 'lualatex' if needed
             subprocess.run(
                 ["xelatex", "-output-directory", tmpdirname, latex_file_path],
-                capture_output=True,
+                # capture_output=True,
                 check=True,
             )
 

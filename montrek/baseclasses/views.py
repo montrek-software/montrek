@@ -10,7 +10,7 @@ from django.views.generic.base import TemplateView
 from django.views.generic.edit import CreateView
 from django.views import View
 from django.http import HttpResponseRedirect
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from django.urls import reverse, reverse_lazy
 from django.contrib import messages
 from decouple import config
@@ -255,7 +255,14 @@ class MontrekListView(
         report_manager = LatexReportManager(self.session_data)
         report_manager.append_report_element(self.manager)
         pdf_path = report_manager.compile_report()
-        return self.manager.download_pdf(response)
+        if os.path.exists(pdf_path):
+            with open(pdf_path, "rb") as pdf_file:
+                response = HttpResponse(pdf_file.read(), content_type="application/pdf")
+                response["Content-Disposition"] = (
+                    "inline; filename=" + os.path.basename(pdf_path)
+                )
+                return response
+        raise Http404("PDF file not found")
 
 
 class MontrekHistoryListView(MontrekTemplateView):

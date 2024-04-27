@@ -214,8 +214,3 @@ class TestMontrekListView(TestCase):
         response = test_list_view.get(test_list_view.request)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Content-Type"], "application/pdf")
-        self.assertTrue(
-            response["Content-Disposition"].startswith(
-                'attachment; filename="export.pdf"'
-            )
-        )

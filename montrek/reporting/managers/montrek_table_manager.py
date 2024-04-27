@@ -28,17 +28,19 @@ class MontrekTableManager(MontrekManager):
         return html_str
 
     def to_latex(self):
-        latex_str = "\\begin{table}[H]\n\\centering\n\\begin{tabular}{|"
+        latex_str = "\\begin{table}\n\\centering\n\\begin{tabular}{|"
         for _ in self.table_elements:
             latex_str += "l|"
         latex_str += "}\n\\hline\n"
         for table_element in self.table_elements:
             latex_str += f"{table_element.name} & "
         latex_str = latex_str[:-2] + "\\\\\n\\hline\n"
-        queryset = self.get_paginated_queryset()
+        queryset = self.repository.std_queryset()
         for query_object in queryset:
-            for table_element in self.table_elements:
-                latex_str += table_element.get_attribute(query_object, "latex") + " & "
+            for i, table_element in enumerate(self.table_elements):
+                latex_str += table_element.get_attribute(query_object, "latex")
+                if i > 0:
+                    latex_str += " & "
             latex_str = latex_str[:-2] + "\\\\\n"
         latex_str += "\\hline\n\\end{tabular}\n\\end{table}"
         return latex_str

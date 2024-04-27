@@ -26,7 +26,7 @@ class TableElement:
     def format_latex(self, value):
         return f" {value} &"
 
-    def get_attribute(self, obj):
+    def get_attribute(self, obj: Any, tag: str) -> str:
         raise NotImplementedError
 
 
