@@ -41,6 +41,9 @@ jobs:
         echo "DB_PASSWORD=ci_pipe_pssw" >> .env
         echo "DB_NAME=montrek_ci_pipe_db" >> .env
         echo "DB_HOST=0.0.0.0" >> .env
+    - name: Install Xelatex
+      run: |
+          apt-get install texlive-xetex
 
     - name: Run Tests and Coverage
       run: |
