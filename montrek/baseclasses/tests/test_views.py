@@ -43,6 +43,7 @@ class MockQuerySet:
 @dataclass
 class MockData:
     field: str
+    value: int
 
 
 class MockRepository:
@@ -52,7 +53,7 @@ class MockRepository:
 
     def std_queryset(self):
         return MockQuerySet(
-            MockData("item1"), MockData("item2"), MockData("item3")
+            MockData("item1", 1), MockData("item2", 2), MockData("item3", 3)
         )  # Dummy data for testing
 
 
@@ -72,7 +73,17 @@ class MockManager(MontrekTableManager):
 
     @property
     def table_elements(self):
-        return [te.StringTableElement(attr="field", name="Field")]
+        return [
+            te.StringTableElement(attr="field", name="Field"),
+            te.IntTableElement(attr="value", name="Value"),
+            te.LinkTableElement(
+                name="Link",
+                url="home",
+                kwargs={},
+                hover_text="Link",
+                icon="icon",
+            ),
+        ]
 
 
 class MockMontrekView(MontrekViewMixin, MockRequester):

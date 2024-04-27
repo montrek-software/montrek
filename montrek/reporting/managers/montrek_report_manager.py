@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.utils.safestring import mark_safe
 import os
 from typing import Protocol
 from baseclasses.managers.montrek_manager import MontrekManager
@@ -40,7 +41,10 @@ class LatexReportManager(MontrekReportManager):
         return "document"
 
     def generate_report(self) -> str:
-        context = Context(self.get_context())
+        context_data = self.get_context()
+        for key, value in context_data.items():
+            context_data[key] = mark_safe(value)
+        context = Context(context_data)
         template = Template(self.read_template())
         return template.render(context)
 
@@ -63,11 +67,11 @@ class LatexReportManager(MontrekReportManager):
         with tempfile.TemporaryDirectory() as tmpdirname:
             # Path to the temporary LaTeX file
             latex_file_path = os.path.join(tmpdirname, "document.tex")
+            print(report_str)
 
             # Write the LaTeX code to a file
             with open(latex_file_path, "w") as f:
                 f.write(report_str)
-            print(report_str)
 
             # Compile the LaTeX file into a PDF using pdflatex
             # You can change 'pdflatex' to 'xelatex' or 'lualatex' if needed

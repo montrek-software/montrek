@@ -33,14 +33,16 @@ class MontrekTableManager(MontrekManager):
             latex_str += "l|"
         latex_str += "}\n\\hline\n"
         for table_element in self.table_elements:
+            if isinstance(table_element, te.LinkTableElement):
+                continue
             latex_str += f"{table_element.name} & "
         latex_str = latex_str[:-2] + "\\\\\n\\hline\n"
         queryset = self.repository.std_queryset()
         for query_object in queryset:
             for i, table_element in enumerate(self.table_elements):
+                if isinstance(table_element, te.LinkTableElement):
+                    continue
                 latex_str += table_element.get_attribute(query_object, "latex")
-                if i > 0:
-                    latex_str += " & "
             latex_str = latex_str[:-2] + "\\\\\n"
         latex_str += "\\hline\n\\end{tabular}\n\\end{table}"
         return latex_str
