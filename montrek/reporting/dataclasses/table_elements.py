@@ -1,3 +1,4 @@
+from typing import Any
 from baseclasses.dataclasses.alert import AlertEnum
 from django.urls import NoReverseMatch, reverse
 from django.template import Template, Context
@@ -22,6 +23,9 @@ class TableElement:
     def format(self, value):
         raise NotImplementedError
 
+    def format_latex(self, value):
+        return f" {value} &"
+
     def get_attribute(self, obj):
         raise NotImplementedError
 
@@ -30,15 +34,21 @@ class TableElement:
 class AttrTableElement(TableElement):
     attr: str = field(default="")
 
-    def get_attribute(self, obj):
+    def get_attribute(self, obj: Any, tag: str) -> str:
         attr = self.attr
         if isinstance(obj, dict):
             value = obj.get(attr, attr)
         else:
             value = getattr(obj, attr, attr)
-        if value is None:
-            return NoneTableElement().format()
-        return self.format(value)
+        if tag == "html":
+            if value is None:
+                return NoneTableElement().format()
+            return self.format(value)
+        elif tag == "latex":
+            if value is None:
+                return "- &"
+            return self.format_latex(value)
+        return str(value)
 
 
 @dataclass  # noqa
@@ -59,7 +69,10 @@ class BaseLinkTableElement(TableElement):
                 obj = getattr(obj, attr, None)
         return obj
 
-    def get_attribute(self, obj):
+    def get_attribute(self, obj: Any, tag: str) -> str:
+        if tag == "latex":
+            value = self._get_link_text(obj)
+            return self.format_latex(value)
         # TODO Update this such that _get_dotted_attr_or_arg is not used anymore
         kwargs = {
             key: BaseLinkTableElement.get_dotted_attr_or_arg(obj, value)

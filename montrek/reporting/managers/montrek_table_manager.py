@@ -22,10 +22,26 @@ class MontrekTableManager(MontrekManager):
         for query_object in queryset:
             html_str += '<tr style="white-space:nowrap;">'
             for table_element in self.table_elements:
-                html_str += table_element.get_attribute(query_object)
+                html_str += table_element.get_attribute(query_object, "html")
             html_str += "</tr>"
         html_str += "</table>"
         return html_str
+
+    def to_latex(self):
+        latex_str = "\\begin{table}[H]\n\\centering\n\\begin{tabular}{|"
+        for _ in self.table_elements:
+            latex_str += "l|"
+        latex_str += "}\n\\hline\n"
+        for table_element in self.table_elements:
+            latex_str += f"{table_element.name} & "
+        latex_str = latex_str[:-2] + "\\\\\n\\hline\n"
+        queryset = self.get_paginated_queryset()
+        for query_object in queryset:
+            for table_element in self.table_elements:
+                latex_str += table_element.get_attribute(query_object, "latex") + " & "
+            latex_str = latex_str[:-2] + "\\\\\n"
+        latex_str += "\\hline\n\\end{tabular}\n\\end{table}"
+        return latex_str
 
     def get_paginated_queryset(self):
         queryset = self.repository.std_queryset()

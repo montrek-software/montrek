@@ -94,6 +94,11 @@ class TestMontrekTableManager(TestCase):
         header_texts = [th.get_text() for th in headers]
         self.assertEqual(header_texts, expected_headers)
 
+    def test_to_latex(self):
+        test_latex = MockMontrekTableManager().to_latex()
+        self.assertTrue(test_latex.startswith("\\begin{table}[H]"))
+        self.assertTrue(test_latex.endswith("\\end{table}"))
+
     def test_download_csv(self):
         manager = MockMontrekTableManager()
         response = manager.download_csv(MockHttpResponse())
