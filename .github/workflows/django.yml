@@ -31,25 +31,7 @@ jobs:
       run: sudo apt-get update && sudo apt-get install -y perl
     - name: Install Tex Live
       run: |
-        wget http://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz
-        tar -xzf install-tl-unx.tar.gz
-        cd $(ls -d install-tl-*/ | head -n 1)
-        echo "selected_scheme scheme-minimal" > profile
-        echo "TEXMFCONFIG \$SELFAUTOPARENT/texmf-config" >> profile
-        echo "TEXMFHOME \$SELFAUTOPARENT/texmf-home" >> profile
-        echo "TEXMFLOCAL \$SELFAUTOPARENT/texmf-local" >> profile
-        echo "TEXMFSYSCONFIG \$SELFAUTOPARENT/texmf-config" >> profile
-        echo "TEXMFSYSVAR \$SELFAUTOPARENT/texmf-var" >> profile
-        echo "TEXMFVAR \$SELFAUTOPARENT/texmf-var" >> profile
-        echo "binary_x86_64-linux 1" >> profile
-        echo "collection-basic 1" >> profile
-        echo "collection-latex 1" >> profile
-        echo "collection-fontsrecommended 1" >> profile
-        echo "collection-xetex 1" >> profile
-        sudo ./install-tl --profile=profile --repository http://mirror.ctan.org/systems/texlive/tlnet
-        echo "PATH=/usr/local/texlive/2024/bin/x86_64-linux:$PATH" >> $GITHUB_ENV
-    - name: Generate xelatex format files
-      run: fmtutil-sys --byfmt xelatex
+        sudo apt-get install texlive-xetex
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
       with:
@@ -66,8 +48,6 @@ jobs:
         echo "DB_HOST=0.0.0.0" >> .env
 
     - name: Run Tests and Coverage
-      env:
-        PATH: /usr/local/texlive/2024/bin/x86_64-linux:$PATH
       run: |
         cd montrek
         python manage.py test --exclude-tag=functional
