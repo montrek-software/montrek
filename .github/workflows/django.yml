@@ -43,7 +43,7 @@ jobs:
         echo "DB_HOST=0.0.0.0" >> .env
     - name: Install Xelatex
       run: |
-          apt-get install texlive-xetex
+        sudo apt-get install texlive-xetex
 
     - name: Run Tests and Coverage
       run: |
