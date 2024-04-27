@@ -1,0 +1,72 @@
+
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{colortbl}
+
+% Define colors
+\definecolor{darkblue}{HTML}{004767}
+\definecolor{lightgrey}{HTML}{f4f4f4}
+\definecolor{white}{HTML}{FFFFFF}
+\definecolor{lightblue}{HTML}{E6F2F8}
+\definecolor{red}{HTML}{BE0D3E}
+\definecolor{darkerred}{HTML}{9e0b36}
+\definecolor{lightborder}{HTML}{e0e0e0}
+
+% Page geometry
+\geometry{left=1in, right=1in, top=1in, bottom=1in}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[C]{\color{white}\textbf{Header Title}}
+\fancyfoot[C]{\color{darkblue}\thepage}
+\renewcommand{\headrulewidth}{2pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{darkblue}\leaders\hrule height \headrulewidth\hfill}}
+\renewcommand{\footrulewidth}{0pt}
+
+% Fonts and colors
+\usepackage{fontspec}
+\setmainfont{Arial}
+\pagecolor{lightgrey}
+\color{darkblue}
+
+\color{darkblue}
+
+% Title formats
+\titleformat*{\section}{\large\bfseries\color{darkblue}}
+\titleformat*{\subsection}{\bfseries\color{darkblue}}
+
+% Table settings
+\renewcommand{\arraystretch}{1.5}
+
+\begin{document}
+
+\title{\color{darkblue}Document Title}
+\author{\color{darkblue}Author Name}
+\date{\color{darkblue}\today}
+\maketitle
+
+\section*{Introduction}
+This is an example section.
+
+\subsection*{Background}
+This is a subsection.
+
+% Table example
+\begin{tabularx}{\textwidth}{|>{\columncolor{white}}X|>{\columncolor{lightblue}}X|}
+\hline
+\rowcolor{darkblue} \color{white}Header 1 & \color{white}Header 2 \\
+\hline
+Example 1 & Data 1 \\
+\hline
+Example 2 & Data 2 \\
+\hline
+\end{tabularx}
+
+{{ content }}
+\end{document}
+
