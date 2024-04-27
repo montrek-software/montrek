@@ -6,14 +6,28 @@ from api_upload.repositories.api_upload_registry_repository import (
     ApiUploadRegistryRepository,
 )
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
+from baseclasses.dataclasses.montrek_message import (
+    MontrekMessageError,
+    MontrekMessageInfo,
+)
 
 
 class MockRequestManager(RequestManager):
     base_url = "https://api.mock.com/v1/"
 
+
+class MockRequestManagerOk(MockRequestManager):
     def get_json(self, endpoint):
         self.status_code = 200
-        return {"data": "mock data"}
+        self.message = "request ok"
+        return {"some": "data"}
+
+
+class MockRequestManagerError(MockRequestManager):
+    def get_json(self, endpoint):
+        self.status_code = 0
+        self.message = "request error"
+        return {}
 
 
 class MockApiUploadProcessor:
@@ -24,18 +38,20 @@ class MockApiUploadProcessor:
         self.session_data = session_data
 
     def pre_check(self, json_response):
+        self.message = "pre check ok"
         return True
 
     def process(self, json_response):
+        self.message = "proccess ok"
         return True
 
     def post_check(self, json_response):
+        self.message = "post check ok"
         return True
 
 
 class MockApiUploadManager(ApiUploadManager):
     endpoint = "endpoint"
-    request_manager_class = MockRequestManager
     api_upload_processor_class = MockApiUploadProcessor
 
 
@@ -44,9 +60,10 @@ class TestApiUploadManager(TestCase):
         self.user = MontrekUserFactory()
         self.session_data = {"user_id": self.user.id}
 
-    def test_upload_and_process(self):
-        # todo: extend test
-        manager = MockApiUploadManager(session_data=self.session_data)
+    def test_upload_and_process_request_ok(self):
+        manager_class = MockApiUploadManager
+        manager_class.request_manager_class = MockRequestManagerOk
+        manager = manager_class(session_data=self.session_data)
 
         self.assertEqual(
             manager.api_upload_registry.upload_status,
@@ -57,4 +74,32 @@ class TestApiUploadManager(TestCase):
         self.assertEqual(
             manager.api_upload_registry.upload_status,
             ApiUploadRegistryRepository.upload_status.PROCESSED.value,
+        )
+        self.assertEqual(
+            manager.messages,
+            [
+                MontrekMessageInfo("post check ok"),
+            ],
+        )
+
+    def test_upload_and_process_request_error(self):
+        manager_class = MockApiUploadManager
+        manager_class.request_manager_class = MockRequestManagerError
+        manager = manager_class(session_data=self.session_data)
+
+        self.assertEqual(
+            manager.api_upload_registry.upload_status,
+            ApiUploadRegistryRepository.upload_status.PENDING.value,
+        )
+        upload_result = manager.upload_and_process()
+        self.assertFalse(upload_result)
+        self.assertEqual(
+            manager.api_upload_registry.upload_status,
+            ApiUploadRegistryRepository.upload_status.FAILED.value,
+        )
+        self.assertEqual(
+            manager.messages,
+            [
+                MontrekMessageError("request error"),
+            ],
         )
