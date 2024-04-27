@@ -30,7 +30,7 @@ jobs:
     - name: Install Tex Live
       run: |
         sudo wget http://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz
-        sudo tar -xzf install-tl-unx.tar.gz
+        tar -xzf install-tl-unx.tar.gz
         sudo rm install-tl-unx.tar.gz 
         sudo mv $(find . -type d -name "install-tl-*") install-tl 
         sudo /install-tl/install-tl -profile=/texlive.profile 
