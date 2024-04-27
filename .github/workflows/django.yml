@@ -30,8 +30,6 @@ jobs:
     - name: Install Tex Live
       run: |
         sudo apt-get install texlive-xetex texlive-fonts-recommended
-        sudo apt install ttf-mscorefonts-installer
-        sudo fc-cache -f
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
       with:
@@ -49,6 +47,8 @@ jobs:
 
     - name: Run Tests and Coverage
       run: |
+        sudo apt install ttf-mscorefonts-installer
+        sudo fc-cache -f
         cd montrek
         python manage.py test --exclude-tag=functional
 
