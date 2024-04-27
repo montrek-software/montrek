@@ -1,6 +1,5 @@
 from baseclasses.views import MontrekListView
-from baseclasses.dataclasses.table_elements import (
-    DateTableElement,
+from reporting.dataclasses.table_elements import (
     DateTimeTableElement,
     StringTableElement,
 )
