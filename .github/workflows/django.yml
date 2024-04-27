@@ -47,7 +47,9 @@ jobs:
         echo "collection-fontsrecommended 1" >> profile
         echo "collection-xetex 1" >> profile
         sudo ./install-tl --profile=profile --repository http://mirror.ctan.org/systems/texlive/tlnet
-        export PATH=/usr/local/texlive/2024/bin/x86_64-linux:$PATH
+        echo "PATH=/usr/local/texlive/2024/bin/x86_64-linux:$PATH" >> $GITHUB_ENV
+      env:
+        PATH: /usr/local/texlive/2024/bin/x86_64-linux:$PATH
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
       with:
