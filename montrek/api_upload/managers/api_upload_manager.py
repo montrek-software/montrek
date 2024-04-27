@@ -3,13 +3,13 @@ from typing import Protocol
 from api_upload.repositories.api_upload_registry_repository import (
     ApiUploadRegistryRepository,
 )
-from baseclasses.models import MontrekHubABC
 from baseclasses.managers.montrek_manager import MontrekManager
 from api_upload.managers.request_manager import RequestManager
 from baseclasses.dataclasses.montrek_message import (
     MontrekMessageError,
     MontrekMessageInfo,
 )
+from api_upload.models import ApiUploadRegistryHub
 
 
 # todo: should this be an ABC?
@@ -17,7 +17,7 @@ class ApiUploadProcessorProtocol(Protocol):
     message: str
 
     def __init__(
-        self, api_upload_registry: MontrekHubABC, session_data: dict
+        self, api_upload_registry: ApiUploadRegistryHub, session_data: dict
     ) -> None: ...
 
     def pre_check(self, json_response: dict | list) -> bool: ...
@@ -93,7 +93,10 @@ class ApiUploadManager(MontrekManager):
                 "upload_message": upload_message,
             },
         )
-        self.api_upload_registry = self.registry_repository.std_create_object(att_dict)
+        api_upload_registry_hub = self.registry_repository.std_create_object(att_dict)
+        self.api_upload_registry = self.registry_repository.std_queryset().get(
+            pk=api_upload_registry_hub.pk
+        )
 
         if upload_status == self.registry_repository.upload_status.FAILED.value:
             self.messages.append(MontrekMessageError(upload_message))

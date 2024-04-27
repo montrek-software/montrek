@@ -2,6 +2,9 @@ from django.test import TestCase
 
 from api_upload.managers.request_manager import RequestManager
 from api_upload.managers.api_upload_manager import ApiUploadManager
+from api_upload.repositories.api_upload_registry_repository import (
+    ApiUploadRegistryRepository,
+)
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
 
@@ -44,4 +47,14 @@ class TestApiUploadManager(TestCase):
     def test_upload_and_process(self):
         # todo: extend test
         manager = MockApiUploadManager(session_data=self.session_data)
-        self.assertTrue(manager.upload_and_process())
+
+        self.assertEqual(
+            manager.api_upload_registry.upload_status,
+            ApiUploadRegistryRepository.upload_status.PENDING.value,
+        )
+        upload_result = manager.upload_and_process()
+        self.assertTrue(upload_result)
+        self.assertEqual(
+            manager.api_upload_registry.upload_status,
+            ApiUploadRegistryRepository.upload_status.PROCESSED.value,
+        )
