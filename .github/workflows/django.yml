@@ -44,6 +44,7 @@ jobs:
     - name: Install Xelatex
       run: |
         sudo apt-get install texlive-xetex
+        sudo apt-get install ttf-mscorefonts-installer
 
     - name: Run Tests and Coverage
       run: |
