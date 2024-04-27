@@ -28,16 +28,20 @@ class MontrekTableManager(MontrekManager):
         return html_str
 
     def to_latex(self):
-        latex_str = "\\begin{table}\n\\centering\n\\\begin{tabularx}{\\textwidth}{|>{\\columncolor{white}}X|>{\\columncolor{lightblue}}X|}"
+        latex_str = "\\begin{table}\n\\centering\n\\begin{tabularx}{\\textwidth}{|"
 
-        for _ in self.table_elements:
-            latex_str += "l|"
-        latex_str += "}\n\\hline\n"
+        column_def_str = ""
+        column_header_str = "\\rowcolor{darkblue}"
+
         for table_element in self.table_elements:
             if isinstance(table_element, te.LinkTableElement):
                 continue
-            latex_str += f"{table_element.name} & "
-        latex_str = latex_str[:-2] + "\\\\\n\\hline\n"
+            column_def_str += "X"
+            column_header_str += f"\color{{white}}{table_element.name} & "
+        latex_str += column_def_str
+        latex_str += "|}\n\\hline\n"
+        latex_str += column_header_str[:-2] + "\\\\\n\\hline\n"
+
         queryset = self.repository.std_queryset()
         for query_object in queryset:
             for table_element in self.table_elements:
@@ -46,6 +50,7 @@ class MontrekTableManager(MontrekManager):
                 latex_str += table_element.get_attribute(query_object, "latex")
             latex_str = latex_str[:-2] + "\\\\\n"
         latex_str += "\\hline\n\\end{tabularx}\n\\end{table}"
+        print(latex_str)
         return latex_str
 
     def get_paginated_queryset(self):

@@ -91,6 +91,7 @@ class LatexReportManager(MontrekReportManager):
             except subprocess.CalledProcessError as e:
                 error_message = self.get_xelatex_error_message(e.stdout)
                 self.messages.append(MontrekMessageError(message=error_message))
+                self.messages.append(MontrekMessageError(message=report_str))
                 return None
 
             # Define the source PDF path (assuming the output PDF has the same name as the .tex file, but with .pdf extension)
