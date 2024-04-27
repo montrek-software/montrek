@@ -46,6 +46,7 @@ jobs:
         sudo apt-get install texlive-xetex
         sudo apt-get install ttf-mscorefonts-installer
         sudo tlmgr init-usertree
+        sudo tlmgr update --self
         sudo tlmgr install collection-fontsrecommended
 
     - name: Run Tests and Coverage
