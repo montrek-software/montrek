@@ -6,11 +6,19 @@ from api_upload.repositories.api_upload_registry_repository import (
 from baseclasses.models import MontrekHubABC
 from baseclasses.managers.montrek_manager import MontrekManager
 from api_upload.managers.request_manager import RequestManager
-from baseclasses.dataclasses.montrek_message import MontrekMessageError, MontrekMessageInfo
+from baseclasses.dataclasses.montrek_message import (
+    MontrekMessageError,
+    MontrekMessageInfo,
+)
 
 
+# todo: should this be an ABC?
 class ApiUploadProcessorProtocol(Protocol):
     message: str
+
+    def __init__(
+        self, api_upload_registry: MontrekHubABC, session_data: dict
+    ) -> None: ...
 
     def pre_check(self, json_response: dict | list) -> bool: ...
 

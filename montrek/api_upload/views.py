@@ -3,7 +3,6 @@ from reporting.dataclasses.table_elements import (
     DateTimeTableElement,
     StringTableElement,
 )
-from api_upload.managers.api_upload_manager import ApiUploadManager
 
 
 class MontrekApiUploadView(MontrekListView):
