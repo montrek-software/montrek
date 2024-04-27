@@ -24,11 +24,17 @@ jobs:
         ports:
           - 3306:3306
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
-    container: 
-      image: dxjoke/tectonic-docker
 
     steps:
     - uses: actions/checkout@v3
+    - name: Install Tex Live
+      run: |
+        wget http://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz
+        tar -xzf install-tl-unx.tar.gz
+        cd install-tl-*
+        echo "selected_scheme scheme-basic" > profile
+        ./install-tl --profile=profile --repository http://mirror.ctan.org/systems/texlive/tlnet
+        export PATH=/usr/local/texlive/2024/bin/x86_64-linux:$PATH
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
       with:
