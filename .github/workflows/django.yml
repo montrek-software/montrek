@@ -45,10 +45,18 @@ jobs:
         echo "DB_NAME=montrek_ci_pipe_db" >> .env
         echo "DB_HOST=0.0.0.0" >> .env
 
+    - name: Install Arial font
+      run: |
+        sudo apt-get update
+        echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true | sudo debconf-set-selections
+        sudo apt-get install -y ttf-mscorefonts-installer
+        sudo fc-cache -f -v
+
+    - name: Verify Arial font installation
+      run: |
+        fc-list | grep -i arial
     - name: Run Tests and Coverage
       run: |
-        sudo apt install ttf-mscorefonts-installer
-        sudo fc-cache -f
         cd montrek
         python manage.py test --exclude-tag=functional
 
