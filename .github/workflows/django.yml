@@ -33,7 +33,7 @@ jobs:
         tar -xzf install-tl-unx.tar.gz
         cd  $(ls -d install-tl-*/ | head -n 1)
         echo "selected_scheme scheme-basic" > profile
-        ./install-tl --profile=profile --repository http://mirror.ctan.org/systems/texlive/tlnet
+        sudo ./install-tl --profile=profile --repository http://mirror.ctan.org/systems/texlive/tlnet
         export PATH=/usr/local/texlive/2024/bin/x86_64-linux:$PATH
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
