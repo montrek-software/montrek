@@ -52,6 +52,7 @@ class MockApiUploadProcessor:
 
 class MockApiUploadManager(ApiUploadManager):
     endpoint = "endpoint"
+    request_manager_class = MockRequestManagerOk
     api_upload_processor_class = MockApiUploadProcessor
 
 
@@ -60,16 +61,21 @@ class TestApiUploadManager(TestCase):
         self.user = MontrekUserFactory()
         self.session_data = {"user_id": self.user.id}
 
-    def test_upload_and_process_request_ok(self):
-        manager_class = MockApiUploadManager
-        manager_class.request_manager_class = MockRequestManagerOk
-        manager = manager_class(session_data=self.session_data)
+    def test_init_upload(self):
+        manager = MockApiUploadManager(self.session_data)
+        manager.init_upload()
 
         self.assertEqual(
             manager.api_upload_registry.upload_status,
             ApiUploadRegistryRepository.upload_status.PENDING.value,
         )
+
+    def test_upload_and_process_request_ok(self):
+        manager_class = MockApiUploadManager
+        manager_class.request_manager_class = MockRequestManagerOk
+        manager = manager_class(session_data=self.session_data)
         upload_result = manager.upload_and_process()
+
         self.assertTrue(upload_result)
         self.assertEqual(
             manager.api_upload_registry.upload_status,
@@ -86,12 +92,8 @@ class TestApiUploadManager(TestCase):
         manager_class = MockApiUploadManager
         manager_class.request_manager_class = MockRequestManagerError
         manager = manager_class(session_data=self.session_data)
-
-        self.assertEqual(
-            manager.api_upload_registry.upload_status,
-            ApiUploadRegistryRepository.upload_status.PENDING.value,
-        )
         upload_result = manager.upload_and_process()
+
         self.assertFalse(upload_result)
         self.assertEqual(
             manager.api_upload_registry.upload_status,
