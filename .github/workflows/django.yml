@@ -31,8 +31,8 @@ jobs:
       run: |
         sudo wget http://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz
         tar -xzf install-tl-unx.tar.gz
-        sudo rm install-tl-unx.tar.gz 
-        sudo mv $(find . -type d -name "install-tl-*") install-tl 
+        rm install-tl-unx.tar.gz 
+        mv $(find . -type d -name "install-tl-*") install-tl 
         sudo /install-tl/install-tl -profile=/texlive.profile 
         sudo rm -r install-tl texlive.profile 
         sudo tlmgr update --self 
