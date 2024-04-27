@@ -16,6 +16,10 @@ def _get_value_color(value):
     return ReportingColors.RED if value < 0 else ReportingColors.DARK_BLUE
 
 
+def _get_value_color_latex(value):
+    return "\\color{red}" if value < 0 else "\\color{darkblue}"
+
+
 @dataclass
 class TableElement:
     name: str
@@ -162,6 +166,13 @@ class NumberTableElement(AttrTableElement):
         formatted_value = self._format_value(value)
         return f'<td style="text-align:right;color:{color};">{formatted_value}</td>'
 
+    def format_latex(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            return f"{value} &"
+        color = _get_value_color_latex(value)
+        formatted_value = self._format_value(value)
+        return f"{color} {formatted_value} &"
+
     def _format_value(self, value) -> str:
         return self.shortener.shorten(value, "")
 
@@ -223,9 +234,20 @@ class MoneyTableElement(NumberTableElement):
     def ccy_symbol(self) -> str:
         return ""
 
+    @property
+    def ccy_symbol_latex(self) -> str:
+        return ""
+
     def _format_value(self, value) -> str:
         value = self.shortener.shorten(value, ",.2f")
         return f"{value}{self.ccy_symbol}"
+
+    def format_latex(self, value):
+        formatted_value = super().format_latex(value)
+        formatted_value = formatted_value.replace(
+            self.ccy_symbol, self.ccy_symbol_latex
+        )
+        return formatted_value
 
 
 class EuroTableElement(MoneyTableElement):
@@ -233,11 +255,19 @@ class EuroTableElement(MoneyTableElement):
     def ccy_symbol(self) -> str:
         return "&#x20AC;"
 
+    @property
+    def ccy_symbol_latex(self) -> str:
+        return "\\euro"
+
 
 class DollarTableElement(MoneyTableElement):
     @property
     def ccy_symbol(self) -> str:
         return "&#0036;"
+
+    @property
+    def ccy_symbol_latex(self) -> str:
+        return "\\$"
 
 
 @dataclass
