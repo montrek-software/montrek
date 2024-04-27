@@ -62,6 +62,8 @@ jobs:
         echo "DB_HOST=0.0.0.0" >> .env
 
     - name: Run Tests and Coverage
+      env:
+        PATH: /usr/local/texlive/2024/bin/x86_64-linux:$PATH
       run: |
         cd montrek
         python manage.py test --exclude-tag=functional
