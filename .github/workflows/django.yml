@@ -24,6 +24,8 @@ jobs:
         ports:
           - 3306:3306
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+    container: 
+      image: dxjoke/tectonic-docker
 
     steps:
     - uses: actions/checkout@v3
@@ -41,13 +43,6 @@ jobs:
         echo "DB_PASSWORD=ci_pipe_pssw" >> .env
         echo "DB_NAME=montrek_ci_pipe_db" >> .env
         echo "DB_HOST=0.0.0.0" >> .env
-    - name: Install Xelatex
-      run: |
-        sudo apt-get install texlive-xetex
-        sudo apt-get install ttf-mscorefonts-installer
-        sudo tlmgr init-usertree
-        sudo tlmgr update --self
-        sudo tlmgr install collection-fontsrecommended
 
     - name: Run Tests and Coverage
       run: |
