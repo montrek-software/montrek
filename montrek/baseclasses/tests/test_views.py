@@ -208,3 +208,14 @@ class TestMontrekListView(TestCase):
                 'attachment; filename="export.csv"'
             )
         )
+
+    def test_list_view_base_pdf_generation(self):
+        test_list_view = MockMontrekListView("dummy?gen_pdf=true")
+        response = test_list_view.get(test_list_view.request)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/pdf")
+        self.assertTrue(
+            response["Content-Disposition"].startswith(
+                'attachment; filename="export.pdf"'
+            )
+        )
