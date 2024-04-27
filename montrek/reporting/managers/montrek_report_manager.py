@@ -84,7 +84,7 @@ class LatexReportManager(MontrekReportManager):
                         "-interaction=nonstopmode",
                         latex_file_path,
                     ],
-                    capture_output=True,
+                    # capture_output=True,
                     check=True,
                     text=True,
                 )
