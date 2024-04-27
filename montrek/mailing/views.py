@@ -7,8 +7,12 @@ from baseclasses.views import (
     MontrekListView,
     MontrekDetailView,
 )
-from baseclasses.dataclasses import table_elements as te
-from mailing.managers.mailing_manager import MailingManager
+from reporting.dataclasses import table_elements as te
+from mailing.managers.mailing_manager import (
+    MailingManager,
+    MailingTableManager,
+    MailingDetailsManager,
+)
 from mailing.pages import MailingPage
 from baseclasses.dataclasses.view_classes import ActionElement
 from mailing.forms import MailingSendForm
@@ -17,25 +21,10 @@ from mailing.forms import MailingSendForm
 # Create your views here.
 #
 class MailOverviewListView(MontrekListView):
-    manager_class = MailingManager
+    manager_class = MailingTableManager
     page_class = MailingPage
     title = "Mail Overview"
     tab = "tab_overview"
-
-    @property
-    def elements(self) -> list[te.TableElement]:
-        return [
-            te.StringTableElement(name="Subject", attr="mail_subject"),
-            te.StringTableElement(name="Recipients", attr="mail_recipients"),
-            te.StringTableElement(name="State", attr="mail_state"),
-            te.LinkTableElement(
-                name="View",
-                url="mail_detail",
-                kwargs={"pk": "id"},
-                hover_text="View Details",
-                icon="chevron-right",
-            ),
-        ]
 
     @property
     def actions(self) -> tuple[ActionElement]:
@@ -73,7 +62,7 @@ class SendMailView(MontrekCreateUpdateView):
 
 
 class MailDetailView(MontrekDetailView):
-    manager_class = MailingManager
+    manager_class = MailingDetailsManager
     page_class = MailingPage
     title = "Mail Details"
     tab = "tab_mail_details"

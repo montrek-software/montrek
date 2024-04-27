@@ -2,7 +2,7 @@ from typing import Any
 from django import template
 from django.urls import NoReverseMatch, reverse
 from django.template import Template, Context
-from baseclasses.dataclasses import table_elements
+from reporting.dataclasses import table_elements
 
 register = template.Library()
 

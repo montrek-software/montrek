@@ -1,7 +1,7 @@
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 from baseclasses import views
-from baseclasses.dataclasses import table_elements as te
+from reporting.dataclasses import table_elements as te
 from baseclasses.dataclasses.view_classes import ActionElement
 from django.urls import reverse
 from file_upload.views import (
@@ -62,37 +62,6 @@ class MontrekExampleAList(views.MontrekListView):
     title = "Example A List"
 
     @property
-    def elements(self) -> list:
-        return (
-            te.StringTableElement(name="A1 String", attr="field_a1_str"),
-            te.IntTableElement(name="A1 Int", attr="field_a1_int"),
-            te.StringTableElement(name="A2 String", attr="field_a2_str"),
-            te.FloatTableElement(name="A2 Float", attr="field_a2_float"),
-            te.StringTableElement(name="B1 String", attr="field_b1_str"),
-            te.LinkTableElement(
-                name="View",
-                url="montrek_example_a_details",
-                kwargs={"pk": "id"},
-                icon="eye-open",
-                hover_text="View Example A",
-            ),
-            te.LinkTableElement(
-                name="Update",
-                url="montrek_example_a_update",
-                kwargs={"pk": "id"},
-                icon="pencil",
-                hover_text="View Example A",
-            ),
-            te.LinkTableElement(
-                name="Delete",
-                url="montrek_example_a_delete",
-                kwargs={"pk": "id"},
-                icon="trash",
-                hover_text="Delete Example A",
-            ),
-        )
-
-    @property
     def actions(self) -> tuple:
         action_new_example_a = ActionElement(
             icon="plus",
@@ -115,16 +84,6 @@ class MontrekExampleADetails(views.MontrekDetailView):
     page_class = pages.ExampleAPage
     tab = "tab_details"
     title = "Example A Details"
-
-    @property
-    def elements(self) -> list:
-        return (
-            te.StringTableElement(name="A1 String", attr="field_a1_str"),
-            te.IntTableElement(name="A1 Int", attr="field_a1_int"),
-            te.StringTableElement(name="A2 String", attr="field_a2_str"),
-            te.FloatTableElement(name="A2 Float", attr="field_a2_float"),
-            te.StringTableElement(name="B1 String", attr="field_b1_str"),
-        )
 
     @property
     def actions(self) -> tuple:
@@ -152,25 +111,6 @@ class MontrekExampleBList(views.MontrekListView):
     title = "Example B List"
 
     @property
-    def elements(self) -> list:
-        return [
-            te.StringTableElement(name="B1 String", attr="field_b1_str"),
-            te.IntTableElement(name="B1 Date", attr="field_b1_date"),
-            te.StringTableElement(name="B2 String", attr="field_b2_str"),
-            te.StringTableElement(name="B2 Choice", attr="field_b2_choice"),
-            te.LinkTextTableElement(
-                name="D2 String",
-                text="field_d1_str",
-                url="montrek_example_d_list",
-                hover_text="View D Example",
-                kwargs={"filter": "field_d1_str"},
-            ),
-            te.StringTableElement(name="D2 Int", attr="field_d1_int"),
-            te.AlertTableElement(name="Alert Level", attr="alert_level"),
-            te.StringTableElement(name="Alert Message", attr="alert_message"),
-        ]
-
-    @property
     def actions(self) -> tuple:
         action_new_example_b = ActionElement(
             icon="plus",
@@ -190,19 +130,6 @@ class MontrekExampleAHistory(views.MontrekHistoryListView):
     title = "Example A History"
 
     @property
-    def elements(self) -> tuple:
-        return (
-            te.StringTableElement(name="A1 String", attr="field_a1_str"),
-            te.IntTableElement(name="A1 Int", attr="field_a1_int"),
-            te.StringTableElement(name="A2 String", attr="field_a2_str"),
-            te.FloatTableElement(name="A2 Float", attr="field_a2_float"),
-            te.StringTableElement(name="B1 String", attr="field_b1_str"),
-            te.DateTableElement(name="Change Date", attr="change_date"),
-            te.StringTableElement(name="Changed By", attr="changed_by"),
-            te.StringTableElement(name="Change Comment", attr="change_comment"),
-        )
-
-    @property
     def actions(self) -> tuple:
         return (action_back_to_overview("a"),)
 
@@ -212,15 +139,6 @@ class MontrekExampleCList(views.MontrekListView):
     page_class = pages.MontrekExampleCAppPage
     tab = "tab_example_c_list"
     title = "Example C List"
-
-    @property
-    def elements(self) -> list:
-        return (
-            te.StringTableElement(name="B1 String", attr="field_b1_str"),
-            te.IntTableElement(name="B1 Date", attr="field_b1_date"),
-            te.StringTableElement(name="B2 String", attr="field_b2_str"),
-            te.StringTableElement(name="B2 Choice", attr="field_b2_choice"),
-        )
 
     @property
     def actions(self) -> tuple:
@@ -248,13 +166,6 @@ class MontrekExampleDList(views.MontrekListView):
     page_class = pages.MontrekExampleDAppPage
     tab = "tab_example_d_list"
     title = "Example D List"
-
-    @property
-    def elements(self) -> list:
-        return [
-            te.StringTableElement(name="D1 String", attr="field_d1_str"),
-            te.IntTableElement(name="D1 Int", attr="field_d1_int"),
-        ]
 
     @property
     def actions(self) -> tuple:
