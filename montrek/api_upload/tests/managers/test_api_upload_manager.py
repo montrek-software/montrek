@@ -3,7 +3,7 @@ from django.test import TestCase
 from api_upload.managers.request_manager import RequestManager
 from api_upload.managers.api_upload_manager import ApiUploadManager
 from api_upload.repositories.api_upload_registry_repository import (
-    ApiUploadRegistryRepository,
+    ApiUploadRepository,
 )
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 from baseclasses.dataclasses.montrek_message import (
@@ -58,7 +58,7 @@ class TestApiUploadManager(TestCase):
 
         self.assertEqual(
             manager.api_upload_registry.upload_status,
-            ApiUploadRegistryRepository.upload_status.PENDING.value,
+            ApiUploadRepository.upload_status.PENDING.value,
         )
 
     def test_upload_and_process_request_ok(self):
@@ -68,7 +68,7 @@ class TestApiUploadManager(TestCase):
         self.assertTrue(upload_result)
         self.assertEqual(
             manager.api_upload_registry.upload_status,
-            ApiUploadRegistryRepository.upload_status.PROCESSED.value,
+            ApiUploadRepository.upload_status.PROCESSED.value,
         )
         self.assertEqual(
             manager.messages,
@@ -89,7 +89,7 @@ class TestApiUploadManager(TestCase):
 
         upload_result = manager.upload_and_process()
         api_upload_registry = (
-            ApiUploadRegistryRepository()
+            ApiUploadRepository()
             .std_queryset()
             .filter(pk=manager.api_upload_registry.pk)
             .first()
@@ -98,7 +98,7 @@ class TestApiUploadManager(TestCase):
         self.assertFalse(upload_result)
         self.assertEqual(
             api_upload_registry.upload_status,
-            ApiUploadRegistryRepository.upload_status.FAILED.value,
+            ApiUploadRepository.upload_status.FAILED.value,
         )
         self.assertEqual(
             manager.messages,
@@ -120,7 +120,7 @@ class TestApiUploadManager(TestCase):
 
             upload_result = manager.upload_and_process()
             api_upload_registry = (
-                ApiUploadRegistryRepository()
+                ApiUploadRepository()
                 .std_queryset()
                 .filter(pk=manager.api_upload_registry.pk)
                 .first()
@@ -128,7 +128,7 @@ class TestApiUploadManager(TestCase):
             self.assertFalse(upload_result)
             self.assertEqual(
                 api_upload_registry.upload_status,
-                ApiUploadRegistryRepository.upload_status.FAILED.value,
+                ApiUploadRepository.upload_status.FAILED.value,
             )
             self.assertEqual(
                 manager.messages,

@@ -1,7 +1,7 @@
 from typing import Protocol
 
 from api_upload.repositories.api_upload_registry_repository import (
-    ApiUploadRegistryRepository,
+    ApiUploadRepository,
 )
 from baseclasses.managers.montrek_manager import MontrekManager
 from api_upload.managers.request_manager import RequestManager
@@ -28,7 +28,7 @@ class ApiUploadProcessorProtocol(Protocol):
 
 
 class ApiUploadManager(MontrekManager):
-    repository_class = ApiUploadRegistryRepository
+    repository_class = ApiUploadRepository
     request_manager_class: type[RequestManager]
     api_upload_processor_class: type[ApiUploadProcessorProtocol]
     endpoint: str

@@ -5,7 +5,7 @@ from file_upload.repositories.file_upload_registry_repository import (
 from montrek_example import models as me_models
 from montrek_example.repositories.hub_b_repository import HubBRepository
 from api_upload.repositories.api_upload_registry_repository import (
-    ApiUploadRegistryRepository,
+    ApiUploadRepository,
 )
 
 
@@ -75,7 +75,7 @@ class HubAUploadRepository(MontrekRepository):
 
     def std_queryset(self):
         return (
-            ApiUploadRegistryRepository()
+            ApiUploadRepository()
             .std_queryset()
             .filter(link_api_upload_registry_hub_a__in=HubARepository().std_queryset())
             .distinct()

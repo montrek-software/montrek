@@ -5,7 +5,7 @@ from api_upload.models import (
 )
 
 
-class ApiUploadRegistryRepository(MontrekRepository):
+class ApiUploadRepository(MontrekRepository):
     hub_class = ApiUploadRegistryHub
 
     upload_status = ApiUploadRegistryStaticSatellite.UploadStatus

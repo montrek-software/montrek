@@ -4,7 +4,6 @@ from baseclasses import views
 from montrek_example.managers.a_upload_table_manager import (
     HubAUploadTableManager,
 )
-from reporting.dataclasses import table_elements as te
 from baseclasses.dataclasses.view_classes import ActionElement
 from django.urls import reverse
 from file_upload.views import (
@@ -13,11 +12,7 @@ from file_upload.views import (
     MontrekUploadFileView,
     MontrekUploadView,
 )
-from api_upload.views import MontrekApiUploadView
-from api_upload.managers.api_upload_manager import ApiUploadManager
 from montrek_example.managers.a2_api_upload_manager import A2ApiUploadManager
-from montrek_example.managers.a2_api_upload_processor import A2ApiUploadProcessor
-from montrek_example.managers.a2_request_manager import A2RequestManager
 from montrek_example.managers.a1_file_upload_manager import (
     A1FileUploadProcessor,
 )
@@ -247,7 +242,7 @@ class MontrekExampleA1FieldMapListView(MontrekFieldMapListView):
     success_url = "montrek_example_a1_field_map_list"
 
 
-class MontrekExampleHubAApiUploadView(MontrekApiUploadView):
+class MontrekExampleHubAApiUploadView(views.MontrekListView):
     manager_class = HubAUploadTableManager
     page_class = pages.MontrekExampleAAppPage
     tab = "tab_hub_a_uploads"

@@ -1,8 +1,8 @@
 from api_upload.repositories.api_upload_registry_repository import (
-    ApiUploadRegistryRepository,
+    ApiUploadRepository,
 )
 from reporting.managers.montrek_table_manager import MontrekTableManager
 
 
 class ApiUploadTableManager(MontrekTableManager):
-    repository_class = ApiUploadRegistryRepository
+    repository_class = ApiUploadRepository
