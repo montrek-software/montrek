@@ -65,7 +65,9 @@ class LatexReportManager(MontrekReportManager):
 
     def compile_report(self) -> str | None:
         report_str = self.generate_report()
-        output_dir = settings.MEDIA_ROOT
+        output_dir = os.path.join(settings.MEDIA_ROOT, "latex")
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
         with tempfile.TemporaryDirectory() as tmpdirname:
             # Path to the temporary LaTeX file
             latex_file_path = os.path.join(tmpdirname, "document.tex")
@@ -76,7 +78,6 @@ class LatexReportManager(MontrekReportManager):
 
             # Compile the LaTeX file into a PDF using xelatex
             try:
-                os.environ["TMPDIR"] = tmpdirname
                 result = subprocess.run(
                     [
                         "xelatex",
@@ -88,7 +89,6 @@ class LatexReportManager(MontrekReportManager):
                     # capture_output=True,
                     check=True,
                     text=True,
-                    env=os.environ.copy(),
                 )
             except subprocess.CalledProcessError as e:
                 error_message = self.get_xelatex_error_message(e.stdout)
