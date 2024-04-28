@@ -242,7 +242,7 @@ class TestMontrekListView(TestCase):
         self.assertEqual(response["Content-Type"], "application/pdf")
 
     def test_list_view_base_pdf_generation__fails(self):
-        test_list_view = MockMontrekListView("dummy?gen_pdf=true")
+        test_list_view = MockMontrekListViewPdfFails("dummy?gen_pdf=true")
         response = test_list_view.get(test_list_view.request)
         self.assertEqual(response.status_code, 302)
         self.assertGreater(len(test_list_view.manager.messages), 0)

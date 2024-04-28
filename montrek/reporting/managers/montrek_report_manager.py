@@ -78,7 +78,7 @@ class LatexReportManager(MontrekReportManager):
 
             # Compile the LaTeX file into a PDF using xelatex
             try:
-                result = subprocess.run(
+                subprocess.run(
                     [
                         "xelatex",
                         "-output-directory",
@@ -86,7 +86,7 @@ class LatexReportManager(MontrekReportManager):
                         "-interaction=nonstopmode",
                         latex_file_path,
                     ],
-                    # capture_output=True,
+                    capture_output=True,
                     check=True,
                     text=True,
                 )
