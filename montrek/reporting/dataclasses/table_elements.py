@@ -277,3 +277,13 @@ class ImageTableElement(AttrTableElement):
 
     def format(self, value):
         return f'<td style="text-align:left;"><img src="{value}" alt="{self.alt}" style="width:100px;height:100px;"></td>'
+
+
+class DateTimeTableElement(AttrTableElement):
+    attr: str
+
+    def format(self, value):
+        if not isinstance(value, timezone.datetime):
+            return f'<td style="text-align:left;">{value}</td>'
+        value = value.strftime("%d/%m/%Y %H:%M:%S")
+        return f'<td style="text-align:left;">{value}</td>'

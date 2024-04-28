@@ -45,7 +45,7 @@ class RequestManager(MontrekManager):
         self.message = "No get request made"
 
     def get_json(self, endpoint: str) -> dict | list:
-        endpoint_url = f"{self.base_url}{endpoint}"
+        endpoint_url = self.get_endpoint_url(endpoint)
         request = requests.get(endpoint_url, headers=self.authenticator.get_headers())
         self.status_code = request.status_code
         if request.ok:
@@ -62,3 +62,6 @@ class RequestManager(MontrekManager):
         except requests.exceptions.HTTPError as e:
             self.message = str(e)
         return {}
+
+    def get_endpoint_url(self, endpoint: str) -> str:
+        return f"{self.base_url}{endpoint}"
