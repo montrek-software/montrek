@@ -69,11 +69,15 @@ class HubARepository(MontrekRepository):
             .order_by("-created_at")
         )
 
-    def get_api_upload_registry_table(self):
+
+class HubAUploadRepository(MontrekRepository):
+    hub_class = me_models.HubA
+
+    def std_queryset(self):
         return (
             ApiUploadRegistryRepository()
             .std_queryset()
-            .filter(link_api_upload_registry_hub_a__in=self.std_queryset())
+            .filter(link_api_upload_registry_hub_a__in=HubARepository().std_queryset())
             .distinct()
             .order_by("-created_at")
         )

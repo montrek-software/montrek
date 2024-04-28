@@ -26,7 +26,7 @@ class MontrekExampleAAppPage(MontrekPage):
         )
         a2_api_upload_tab = TabElement(
             name="A2 API Uploads",
-            link=reverse("a2_view_api_uploads"),
+            link=reverse("hub_a_view_api_uploads"),
             html_id="tab_a2_uploads",
         )
 

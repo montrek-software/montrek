@@ -393,3 +393,12 @@ class TestMontrekExampleA1FieldMapListView(MontrekListViewTestCase):
 
     def build_factories(self):
         FieldMapStaticSatelliteFactory.create_batch(12)
+
+
+class TestMontrekExampleHubAApiUploadView(MontrekListViewTestCase):
+    viewname = "hub_a_view_api_uploads"
+    view_class = me_views.MontrekExampleHubAApiUploadView
+    expected_no_of_rows = 3
+
+    def build_factories(self):
+        me_factories.LinkHubAApiUploadRegistryFactory.create_batch(3)

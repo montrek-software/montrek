@@ -1,6 +1,9 @@
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 from baseclasses import views
+from montrek_example.managers.a_upload_table_manager import (
+    HubAUploadTableManager,
+)
 from reporting.dataclasses import table_elements as te
 from baseclasses.dataclasses.view_classes import ActionElement
 from django.urls import reverse
@@ -244,10 +247,10 @@ class MontrekExampleA1FieldMapListView(MontrekFieldMapListView):
     success_url = "montrek_example_a1_field_map_list"
 
 
-class MontrekExampleA2ApiUploadView(MontrekApiUploadView):
-    manager_class = A2ApiUploadManager
+class MontrekExampleHubAApiUploadView(MontrekApiUploadView):
+    manager_class = HubAUploadTableManager
     page_class = pages.MontrekExampleAAppPage
-    tab = "tab_a2_uploads"
+    tab = "tab_hub_a_uploads"
 
     @property
     def actions(self) -> tuple:
@@ -259,9 +262,6 @@ class MontrekExampleA2ApiUploadView(MontrekApiUploadView):
         )
         return (action_do_a2_upload,)
 
-    def get_view_queryset(self):
-        return mem.HubAManager.repository_class().get_api_upload_registry_table()
-
 
 def do_a2_upload(request):
     manager = A2ApiUploadManager(
@@ -270,4 +270,4 @@ def do_a2_upload(request):
     manager.upload_and_process()
     for m in manager.messages:
         getattr(messages, m.message_type)(request, m.message)
-    return HttpResponseRedirect(reverse("a2_view_api_uploads"))
+    return HttpResponseRedirect(reverse("hub_a_view_api_uploads"))

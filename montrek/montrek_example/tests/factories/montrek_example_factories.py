@@ -1,6 +1,8 @@
 import factory
 import datetime
 
+from api_upload.tests.factories import ApiUploadRegistryHubFactory
+
 
 class HubAFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -94,3 +96,11 @@ class LinkHubBHubDFactory(factory.django.DjangoModelFactory):
 
     hub_in = factory.SubFactory(HubBFactory)
     hub_out = factory.SubFactory(HubDFactory)
+
+
+class LinkHubAApiUploadRegistryFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "montrek_example.LinkHubAApiUploadRegistry"
+
+    hub_in = factory.SubFactory(HubAFactory)
+    hub_out = factory.SubFactory(ApiUploadRegistryHubFactory)
