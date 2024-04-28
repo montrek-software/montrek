@@ -246,6 +246,7 @@ class MontrekExampleHubAApiUploadView(views.MontrekListView):
     manager_class = HubAUploadTableManager
     page_class = pages.MontrekExampleAAppPage
     tab = "tab_hub_a_uploads"
+    title = "A API Uploads"
 
     @property
     def actions(self) -> tuple:
