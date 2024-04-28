@@ -43,6 +43,7 @@ class MockQuerySet:
 @dataclass
 class MockData:
     field: str
+    value: int
 
 
 class MockRepository:
@@ -52,7 +53,7 @@ class MockRepository:
 
     def std_queryset(self):
         return MockQuerySet(
-            MockData("item1"), MockData("item2"), MockData("item3")
+            MockData("item1", 1), MockData("item2", 2), MockData("item3", 3)
         )  # Dummy data for testing
 
 
@@ -72,7 +73,17 @@ class MockManager(MontrekTableManager):
 
     @property
     def table_elements(self):
-        return [te.StringTableElement(attr="field", name="Field")]
+        return [
+            te.StringTableElement(attr="field", name="Field"),
+            te.IntTableElement(attr="value", name="Value"),
+            te.LinkTableElement(
+                name="Link",
+                url="home",
+                kwargs={},
+                hover_text="Link",
+                icon="icon",
+            ),
+        ]
 
 
 class MockMontrekView(MontrekViewMixin, MockRequester):
@@ -189,6 +200,21 @@ class MockMontrekListView(MontrekListView, MockRequester):
         self.add_mock_request(url)
 
 
+class MockManagerPdfFails(MontrekTableManager):
+    def to_latex(self):
+        return "\\textbf{This is a bold text with a missing closing brace."
+
+
+class MockMontrekListViewPdfFails(MontrekListView, MockRequester):
+    manager_class = MockManagerPdfFails
+    page_class = MockPage
+    kwargs = {}
+
+    def __init__(self, url: str):
+        super().__init__()
+        self.add_mock_request(url)
+
+
 class TestMontrekListView(TestCase):
     def test_list_view_base_normal_load(self):
         """
@@ -208,3 +234,15 @@ class TestMontrekListView(TestCase):
                 'attachment; filename="export.csv"'
             )
         )
+
+    def test_list_view_base_pdf_generation(self):
+        test_list_view = MockMontrekListView("dummy?gen_pdf=true")
+        response = test_list_view.get(test_list_view.request)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/pdf")
+
+    def test_list_view_base_pdf_generation__fails(self):
+        test_list_view = MockMontrekListViewPdfFails("dummy?gen_pdf=true")
+        response = test_list_view.get(test_list_view.request)
+        self.assertEqual(response.status_code, 302)
+        self.assertGreater(len(test_list_view.manager.messages), 0)

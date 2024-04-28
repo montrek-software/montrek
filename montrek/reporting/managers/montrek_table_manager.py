@@ -22,10 +22,42 @@ class MontrekTableManager(MontrekManager):
         for query_object in queryset:
             html_str += '<tr style="white-space:nowrap;">'
             for table_element in self.table_elements:
-                html_str += table_element.get_attribute(query_object)
+                html_str += table_element.get_attribute(query_object, "html")
             html_str += "</tr>"
         html_str += "</table>"
         return html_str
+
+    def to_latex(self):
+        table_start_str = "\\begin{table}\n\\centering\n\\arrayrulecolor{lightgrey}\n\\begin{tabularx}{\\textwidth}{|"
+        table_end_str = "\\end{tabularx}\n\\end{table}"
+
+        column_def_str = ""
+        column_header_str = "\\rowcolor{darkblue}"
+
+        for table_element in self.table_elements:
+            if isinstance(table_element, te.LinkTableElement):
+                continue
+            column_def_str += "X|"
+            column_header_str += f"\\color{{white}}\\textbf{{{table_element.name}}} & "
+        table_start_str += column_def_str
+        table_start_str += "}\n\\hline\n"
+        table_start_str += column_header_str[:-2] + "\\\\\n\\hline\n"
+        latex_str = table_start_str
+
+        queryset = self.repository.std_queryset()
+        for i, query_object in enumerate(queryset):
+            if i % 2 == 0:
+                latex_str += "\\rowcolor{lightblue}"
+            for table_element in self.table_elements:
+                if isinstance(table_element, te.LinkTableElement):
+                    continue
+                latex_str += table_element.get_attribute(query_object, "latex")
+            latex_str = latex_str[:-2] + "\\\\\n\\hline\n"
+            if (i + 1) % 30 == 0:
+                latex_str += table_end_str
+                latex_str += table_start_str
+        latex_str += table_end_str
+        return latex_str
 
     def get_paginated_queryset(self):
         queryset = self.repository.std_queryset()
