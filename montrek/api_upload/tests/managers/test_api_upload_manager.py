@@ -15,19 +15,10 @@ from baseclasses.dataclasses.montrek_message import (
 class MockRequestManager(RequestManager):
     base_url = "https://api.mock.com/v1/"
 
-
-class MockRequestManagerOk(MockRequestManager):
-    def get_json(self, endpoint):
+    def get_json(self, endpoint: str) -> dict:
         self.status_code = 200
         self.message = "request ok"
         return {"some": "data"}
-
-
-class MockRequestManagerError(MockRequestManager):
-    def get_json(self, endpoint):
-        self.status_code = 0
-        self.message = "request error"
-        return {}
 
 
 class MockApiUploadProcessor:
@@ -37,22 +28,22 @@ class MockApiUploadProcessor:
         self.upload_registry = upload_registry
         self.session_data = session_data
 
-    def pre_check(self, json_response):
+    def pre_check(self, json_response) -> bool:
         self.message = "pre check ok"
         return True
 
-    def process(self, json_response):
+    def process(self, json_response) -> bool:
         self.message = "proccess ok"
         return True
 
-    def post_check(self, json_response):
+    def post_check(self, json_response) -> bool:
         self.message = "post check ok"
         return True
 
 
 class MockApiUploadManager(ApiUploadManager):
     endpoint = "endpoint"
-    request_manager_class = MockRequestManagerOk
+    request_manager_class = MockRequestManager
     api_upload_processor_class = MockApiUploadProcessor
 
 
@@ -71,9 +62,7 @@ class TestApiUploadManager(TestCase):
         )
 
     def test_upload_and_process_request_ok(self):
-        manager_class = MockApiUploadManager
-        manager_class.request_manager_class = MockRequestManagerOk
-        manager = manager_class(session_data=self.session_data)
+        manager = MockApiUploadManager(session_data=self.session_data)
         upload_result = manager.upload_and_process()
 
         self.assertTrue(upload_result)
@@ -89,14 +78,26 @@ class TestApiUploadManager(TestCase):
         )
 
     def test_upload_and_process_request_error(self):
-        manager_class = MockApiUploadManager
-        manager_class.request_manager_class = MockRequestManagerError
-        manager = manager_class(session_data=self.session_data)
+        manager = MockApiUploadManager(session_data=self.session_data)
+
+        def get_json_error(endpoint: str) -> dict:
+            manager.request_manager.status_code = 0
+            manager.request_manager.message = "request error"
+            return {}
+
+        manager.request_manager.get_json = get_json_error
+
         upload_result = manager.upload_and_process()
+        api_upload_registry = (
+            ApiUploadRegistryRepository()
+            .std_queryset()
+            .filter(pk=manager.api_upload_registry.pk)
+            .first()
+        )
 
         self.assertFalse(upload_result)
         self.assertEqual(
-            manager.api_upload_registry.upload_status,
+            api_upload_registry.upload_status,
             ApiUploadRegistryRepository.upload_status.FAILED.value,
         )
         self.assertEqual(
@@ -105,3 +106,33 @@ class TestApiUploadManager(TestCase):
                 MontrekMessageError("request error"),
             ],
         )
+
+    def test_upload_and_processor_errors(self):
+        for method_name in ("pre_check", "process", "post_check"):
+            manager = MockApiUploadManager(session_data=self.session_data)
+            message = f"{method_name} error"
+
+            def error_method(json_response) -> bool:
+                manager.processor.message = message
+                return False
+
+            setattr(manager.processor, method_name, error_method)
+
+            upload_result = manager.upload_and_process()
+            api_upload_registry = (
+                ApiUploadRegistryRepository()
+                .std_queryset()
+                .filter(pk=manager.api_upload_registry.pk)
+                .first()
+            )
+            self.assertFalse(upload_result)
+            self.assertEqual(
+                api_upload_registry.upload_status,
+                ApiUploadRegistryRepository.upload_status.FAILED.value,
+            )
+            self.assertEqual(
+                manager.messages,
+                [
+                    MontrekMessageError(message),
+                ],
+            )
