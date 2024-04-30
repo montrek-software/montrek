@@ -1,5 +1,6 @@
 from django.shortcuts import redirect
 from django.urls import reverse
+from django.core.exceptions import PermissionDenied
 
 
 class PermissionErrorMiddleware:
@@ -11,8 +12,6 @@ class PermissionErrorMiddleware:
         return response
 
     def process_exception(self, request, exception):
-        from django.core.exceptions import PermissionDenied
-
         if isinstance(exception, PermissionDenied):
             # Redirect to the login page
             return redirect(reverse("login"))
