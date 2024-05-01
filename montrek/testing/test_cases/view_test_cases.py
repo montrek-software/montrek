@@ -112,12 +112,7 @@ class MontrekObjectViewBaseTestCase(MontrekViewTestCase):
     def _pre_test_view_post_success(self) -> bool:
         if self._is_base_test_class():
             return False
-        try:
-            post_response = self.get_post_response()
-        except AttributeError:
-            raise NotImplementedError(
-                "MontrekCreateViewTestCase: Please set the creation_data method in the subclass"
-            )
+        post_response = self.get_post_response()
         self.assertEqual(post_response.status_code, 302)
         return True
 

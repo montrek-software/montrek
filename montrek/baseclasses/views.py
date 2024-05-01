@@ -145,6 +145,8 @@ class MontrekViewMixin:
         if not self.request:
             return {}
         session_data = dict(self.request.GET)
+        kwargs = getattr(self, "kwargs", {})
+        session_data.update(kwargs)
         session_data.update(dict(self.request.session))
         session_data.update(self._get_filters(session_data))
         if self.request.user.is_authenticated:
