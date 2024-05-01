@@ -175,6 +175,10 @@ class MontrekViewMixin:
 class MontrekPermissionRequiredMixin(PermissionRequiredMixin):
     permission_required = []
 
+    def handle_no_permission(self):
+        # handled by PermissionErrorMiddleware
+        raise PermissionDenied
+
 
 class MontrekTemplateView(
     MontrekPermissionRequiredMixin, TemplateView, MontrekPageViewMixin, MontrekViewMixin

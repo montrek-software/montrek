@@ -17,7 +17,7 @@ class PermissionErrorMiddleware:
         if isinstance(exception, PermissionDenied):
             messages.error(request, "You do not have permission to access this page.")
             if request.user.is_authenticated:
-                redirect_url = request.META.get("HTTP_REFERER") or reverse("login")
+                redirect_url = request.META.get("HTTP_REFERER") or reverse("home")
             else:
                 redirect_url = reverse("login")
             return HttpResponseRedirect(redirect_url)
