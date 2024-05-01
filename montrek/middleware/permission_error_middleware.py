@@ -1,3 +1,5 @@
+from django.contrib import messages
+from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.core.exceptions import PermissionDenied
@@ -13,5 +15,9 @@ class PermissionErrorMiddleware:
 
     def process_exception(self, request, exception):
         if isinstance(exception, PermissionDenied):
-            # Redirect to the login page
-            return redirect(reverse("login"))
+            messages.error(request, "You do not have permission to access this page.")
+            if request.user.is_authenticated:
+                redirect_url = request.META.get("HTTP_REFERER") or reverse("login")
+            else:
+                redirect_url = reverse("login")
+            return HttpResponseRedirect(redirect_url)
