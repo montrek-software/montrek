@@ -51,6 +51,7 @@ MONTREK_BASE_APPS = [
     "file_upload",
     "mailing",
     "reporting",
+    "api_upload",
 ]
 
 MONTREK_EXTENSION_APPS = [

@@ -75,4 +75,10 @@ urlpatterns = [
         views.MontrekExampleA1UploadView.as_view(),
         name="a1_view_uploads",
     ),
+    path(
+        "hub_a_view_api_uploads",
+        views.MontrekExampleHubAApiUploadView.as_view(),
+        name="hub_a_view_api_uploads",
+    ),
+    path("do_a2_upload", views.do_a2_upload, name="do_a2_upload"),
 ]
