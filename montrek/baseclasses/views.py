@@ -10,7 +10,7 @@ from django.views.generic.base import TemplateView
 from django.views.generic.edit import CreateView
 from django.views import View
 from django.http import HttpResponseRedirect
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from django.urls import reverse, reverse_lazy
 from django.contrib import messages
 from decouple import config
@@ -29,6 +29,7 @@ from baseclasses import utils
 from baseclasses.dataclasses.history_data_table import HistoryDataTable
 from baseclasses.managers.montrek_manager import MontrekManagerNotImplemented
 from reporting.managers.montrek_table_manager import MontrekTableManager
+from reporting.managers.montrek_report_manager import LatexReportManager
 
 # Create your views here.
 
@@ -221,6 +222,8 @@ class MontrekListView(
     def get(self, request, *args, **kwargs):
         if self.request.GET.get("gen_csv") == "true":
             return self.list_to_csv()
+        if self.request.GET.get("gen_pdf") == "true":
+            return self.list_to_pdf()
         return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -245,6 +248,24 @@ class MontrekListView(
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = 'attachment; filename="export.csv"'
         return self.manager.download_csv(response)
+
+    def list_to_pdf(self):
+        response = HttpResponse(content_type="application/pdf")
+        response["Content-Disposition"] = 'attachment; filename="export.pdf"'
+        report_manager = LatexReportManager(self.session_data)
+        report_manager.append_report_element(self.manager)
+        pdf_path = report_manager.compile_report()
+        self.manager.messages += report_manager.messages
+        self.show_messages()
+        if pdf_path and os.path.exists(pdf_path):
+            with open(pdf_path, "rb") as pdf_file:
+                response = HttpResponse(pdf_file.read(), content_type="application/pdf")
+                response["Content-Disposition"] = (
+                    "inline; filename=" + os.path.basename(pdf_path)
+                )
+                return response
+        previous_url = self.request.META.get("HTTP_REFERER")
+        return HttpResponseRedirect(previous_url)
 
 
 class MontrekHistoryListView(MontrekTemplateView):

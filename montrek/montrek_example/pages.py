@@ -24,8 +24,13 @@ class MontrekExampleAAppPage(MontrekPage):
             link=reverse("montrek_example_a1_field_map_list"),
             html_id="tab_a1_field_map_list",
         )
+        a2_api_upload_tab = TabElement(
+            name="A2 API Uploads",
+            link=reverse("hub_a_view_api_uploads"),
+            html_id="tab_a2_uploads",
+        )
 
-        return (overview_tab, file_upload_tab, a1_field_map_tab)
+        return (overview_tab, file_upload_tab, a1_field_map_tab, a2_api_upload_tab)
 
 
 class ExampleAPage(MontrekPage):

@@ -1,3 +1,4 @@
+from typing import Any
 from baseclasses.dataclasses.alert import AlertEnum
 from django.urls import NoReverseMatch, reverse
 from django.template import Template, Context
@@ -15,6 +16,10 @@ def _get_value_color(value):
     return ReportingColors.RED if value < 0 else ReportingColors.DARK_BLUE
 
 
+def _get_value_color_latex(value):
+    return "\\color{red}" if value < 0 else "\\color{darkblue}"
+
+
 @dataclass
 class TableElement:
     name: str
@@ -22,7 +27,10 @@ class TableElement:
     def format(self, value):
         raise NotImplementedError
 
-    def get_attribute(self, obj):
+    def format_latex(self, value):
+        return f" {value} &"
+
+    def get_attribute(self, obj: Any, tag: str) -> str:
         raise NotImplementedError
 
 
@@ -30,15 +38,21 @@ class TableElement:
 class AttrTableElement(TableElement):
     attr: str = field(default="")
 
-    def get_attribute(self, obj):
+    def get_attribute(self, obj: Any, tag: str) -> str:
         attr = self.attr
         if isinstance(obj, dict):
             value = obj.get(attr, attr)
         else:
             value = getattr(obj, attr, attr)
-        if value is None:
-            return NoneTableElement().format()
-        return self.format(value)
+        if tag == "html":
+            if value is None:
+                return NoneTableElement().format()
+            return self.format(value)
+        elif tag == "latex":
+            if value is None:
+                return "- &"
+            return self.format_latex(value)
+        return str(value)
 
 
 @dataclass  # noqa
@@ -59,7 +73,10 @@ class BaseLinkTableElement(TableElement):
                 obj = getattr(obj, attr, None)
         return obj
 
-    def get_attribute(self, obj):
+    def get_attribute(self, obj: Any, tag: str) -> str:
+        if tag == "latex":
+            value = self._get_link_text(obj)
+            return self.format_latex(value)
         # TODO Update this such that _get_dotted_attr_or_arg is not used anymore
         kwargs = {
             key: BaseLinkTableElement.get_dotted_attr_or_arg(obj, value)
@@ -149,6 +166,13 @@ class NumberTableElement(AttrTableElement):
         formatted_value = self._format_value(value)
         return f'<td style="text-align:right;color:{color};">{formatted_value}</td>'
 
+    def format_latex(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            return f"{value} &"
+        color = _get_value_color_latex(value)
+        formatted_value = self._format_value(value)
+        return f"{color} {formatted_value} &"
+
     def _format_value(self, value) -> str:
         return self.shortener.shorten(value, "")
 
@@ -210,9 +234,20 @@ class MoneyTableElement(NumberTableElement):
     def ccy_symbol(self) -> str:
         return ""
 
+    @property
+    def ccy_symbol_latex(self) -> str:
+        return ""
+
     def _format_value(self, value) -> str:
         value = self.shortener.shorten(value, ",.2f")
         return f"{value}{self.ccy_symbol}"
+
+    def format_latex(self, value):
+        formatted_value = super().format_latex(value)
+        formatted_value = formatted_value.replace(
+            self.ccy_symbol, self.ccy_symbol_latex
+        )
+        return formatted_value
 
 
 class EuroTableElement(MoneyTableElement):
@@ -220,11 +255,19 @@ class EuroTableElement(MoneyTableElement):
     def ccy_symbol(self) -> str:
         return "&#x20AC;"
 
+    @property
+    def ccy_symbol_latex(self) -> str:
+        return "\\euro"
+
 
 class DollarTableElement(MoneyTableElement):
     @property
     def ccy_symbol(self) -> str:
         return "&#0036;"
+
+    @property
+    def ccy_symbol_latex(self) -> str:
+        return "\\$"
 
 
 @dataclass
@@ -234,3 +277,13 @@ class ImageTableElement(AttrTableElement):
 
     def format(self, value):
         return f'<td style="text-align:left;"><img src="{value}" alt="{self.alt}" style="width:100px;height:100px;"></td>'
+
+
+class DateTimeTableElement(AttrTableElement):
+    attr: str
+
+    def format(self, value):
+        if not isinstance(value, timezone.datetime):
+            return f'<td style="text-align:left;">{value}</td>'
+        value = value.strftime("%d/%m/%Y %H:%M:%S")
+        return f'<td style="text-align:left;">{value}</td>'
