@@ -176,21 +176,11 @@ class MontrekViewMixin:
 
 
 class MontrekPermissionRequiredMixin(PermissionRequiredMixin):
-    login_url = reverse_lazy("login")
     permission_required = []
 
-    def get_permission_denied_message(self):
-        msg = "You do not have the required permissions to access this page."
-        return msg
-
     def handle_no_permission(self):
-        try:
-            return super().handle_no_permission()
-        except PermissionDenied as e:
-            messages.error(self.request, e)
-        previous_url = self.request.META.get("HTTP_REFERER")
-        previous_url = previous_url or self.login_url
-        return HttpResponseRedirect(previous_url)
+        # handled by PermissionErrorMiddleware
+        raise PermissionDenied
 
 
 class MontrekTemplateView(

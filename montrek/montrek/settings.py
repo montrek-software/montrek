@@ -60,7 +60,7 @@ MONTREK_EXTENSION_APPS = [
 
 INSTALLED_APPS = DJANGO_APPS + MONTREK_BASE_APPS + MONTREK_EXTENSION_APPS
 
-MIDDLEWARE = [
+DJANGO_MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -69,6 +69,10 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+MONTREK_MIDDLEWARE = ["middleware.PermissionErrorMiddleware"]
+
+MIDDLEWARE = DJANGO_MIDDLEWARE + MONTREK_MIDDLEWARE
 
 ROOT_URLCONF = "montrek.urls"
 
