@@ -9,6 +9,7 @@
 \usepackage{array}
 \usepackage{colortbl}
 \usepackage{graphicx}
+\usepackage{subcaption}
 
 % Define colors
 {{ colors }}
@@ -36,6 +37,12 @@
 % Table settings
 \renewcommand{\arraystretch}{1.5}
 
+% Captions
+\DeclareCaptionFormat{custom}
+{%
+  \textbf{\color{blue} \large #3}
+}
+\captionsetup{format=custom}
 \begin{document}
 
 
