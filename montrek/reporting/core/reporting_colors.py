@@ -69,3 +69,6 @@ class ReportingColors:
         LIGHT_SKY,
         BRIGHTER_RED,
     ]
+
+    def hex_color_palette(self):
+        return [color.hex for color in self.COLOR_PALETTE]
