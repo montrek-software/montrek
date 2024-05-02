@@ -35,8 +35,12 @@ class MontrekReportManager(MontrekManager):
     def generate_report(self) -> str:
         return "MontrekReportManager: No report generated!!"
 
+    def collect_report_elements(self) -> None:
+        ...
+
     def to_html(self) -> str:
         html_str = ""
+        self.collect_report_elements()
         for report_element in self.report_elements:
             html_str += report_element.to_html()
         return html_str

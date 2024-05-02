@@ -34,6 +34,12 @@ def action_back_to_overview(example: str):
     )
 
 
+class MontrekExampleReport(views.MontrekReportView):
+    page_class = pages.MontrekExampleAAppPage
+    manager_class = mem.ExampleReportManager
+    title = "Montrek Example Report"
+
+
 # Create your views here.
 
 
@@ -92,11 +98,6 @@ class MontrekExampleADetails(views.MontrekDetailView):
             hover_text="Update ExampleA",
         )
         return (action_back_to_overview("a"), action_update_example_a)
-
-
-class MontrekExampleAReport(views.MontrekReportView):
-    page_class = pages.MontrekExampleAAppPage
-    title = "Montrek Example A Report"
 
 
 class MontrekExampleBCreate(views.MontrekCreateView):
