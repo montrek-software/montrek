@@ -18,7 +18,7 @@ class MockView(View):
         return HttpResponse()
 
 
-def get_messages_from_storage(request):
+def _get_messages_from_storage(request):
     return [m for m in get_messages(request)]
 
 
@@ -35,7 +35,7 @@ class PermissionErrorMiddlewareTestCase(MessagesTestMixin, TestCase):
         )
         exception = PermissionDenied()
         response = self.middleware.process_exception(self.request, exception)
-        messages = get_messages_from_storage(self.request)
+        messages = _get_messages_from_storage(self.request)
 
         self.assertIsInstance(response, HttpResponseRedirect)
         self.assertEqual(response.url, reverse("home"))
@@ -56,7 +56,7 @@ class PermissionErrorMiddlewareTestCase(MessagesTestMixin, TestCase):
         self.request.user = AnonymousUser()
         exception = PermissionDenied()
         response = self.middleware.process_exception(self.request, exception)
-        messages = get_messages_from_storage(self.request)
+        messages = _get_messages_from_storage(self.request)
 
         self.assertIsInstance(response, HttpResponseRedirect)
         self.assertEqual(response.url, reverse("login"))
