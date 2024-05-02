@@ -284,7 +284,11 @@ class DbCreator:
         return link_data
 
     def _process_link(self, link, hub_field, creation_date):
-        if link.link_type in (LinkTypeEnum.ONE_TO_ONE, LinkTypeEnum.ONE_TO_MANY):
+        if link.link_type in (
+            LinkTypeEnum.ONE_TO_ONE,
+            LinkTypeEnum.ONE_TO_MANY,
+            LinkTypeEnum.MANY_TO_MANY,
+        ):
             return self._update_link_if_exists(link, hub_field, creation_date)
         return link
 
