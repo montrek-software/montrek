@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from django.db.models import QuerySet
 from django.utils import timezone
 from baseclasses.models import (
+    MontrekLinkABC,
     MontrekSatelliteABC,
     MontrekHubABC,
     MontrekTimeSeriesSatelliteABC,
@@ -286,7 +287,25 @@ class DbCreator:
     def _process_link(self, link, hub_field, creation_date):
         if link.link_type in (LinkTypeEnum.ONE_TO_ONE, LinkTypeEnum.ONE_TO_MANY):
             return self._update_link_if_exists(link, hub_field, creation_date)
+        elif link.link_type == LinkTypeEnum.MANY_TO_MANY:
+            return self._get_link_if_exists(link, hub_field, creation_date)
         return link
+
+    def _get_link_if_exists(
+        self, link: MontrekLinkABC, hub_field: str, creation_date: datetime.datetime
+        ) -> MontrekLinkABC:
+        hub = getattr(link, hub_field)
+        opposite_hub = getattr(link, self._get_opposite_field(hub_field))
+        if not hub.pk or not opposite_hub.pk:
+            return link
+        filter_args = {
+            f"{hub_field}": hub,
+            f"{self._get_opposite_field(hub_field)}": opposite_hub,
+            "state_date_end__gt": creation_date,
+            "state_date_start__lte": creation_date,
+        }
+        existing_link = link.__class__.objects.filter(**filter_args).first()
+        return existing_link or link
 
     def _update_link_if_exists(self, link, hub_field, creation_date):
         hub = getattr(link, hub_field)
