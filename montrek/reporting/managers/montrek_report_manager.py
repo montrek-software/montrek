@@ -9,6 +9,7 @@ import tempfile
 import shutil
 
 from baseclasses.dataclasses.montrek_message import MontrekMessageError
+from reporting.core.reporting_colors import ReportingColors
 
 
 class ReportElementProtocol(Protocol):
@@ -42,8 +43,17 @@ class LatexReportManager(MontrekReportManager):
     def document_name(self):
         return "document"
 
+    @property
+    def document_title(self):
+        return "Montrek Report"
+
+    @property
+    def footer_text(self):
+        return "Internal Report"
+
     def generate_report(self) -> str:
         context_data = self.get_context()
+        context_data.update(self.get_layout_data())
         for key, value in context_data.items():
             context_data[key] = mark_safe(value)
         context = Context(context_data)
@@ -55,6 +65,22 @@ class LatexReportManager(MontrekReportManager):
         for report_element in self.report_elements:
             content += report_element.to_latex()
         return {"content": content}
+
+    def get_layout_data(self) -> dict:
+        return {
+            "montrek_logo": os.path.join(
+                settings.STATIC_ROOT, "logos", "montrek_logo_variant.png"
+            ),
+            "document_title": self.document_title,
+            "footer_text": self.footer_text,
+            "colors": self.get_colors(),
+        }
+
+    def get_colors(self) -> str:
+        colorstr = ""
+        for color in ReportingColors.COLOR_PALETTE:
+            colorstr += f"\\definecolor{{{color.name}}}{{HTML}}{{{color.hex.replace("#",'')}}}\n"
+        return colorstr
 
     def read_template(self) -> str:
         template_path = self._get_template_path()

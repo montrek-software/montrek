@@ -8,24 +8,21 @@
 \usepackage{tabularx}
 \usepackage{array}
 \usepackage{colortbl}
+\usepackage{graphicx}
 
 % Define colors
-\definecolor{darkblue}{HTML}{004767}
-\definecolor{lightgrey}{HTML}{f4f4f4}
-\definecolor{white}{HTML}{FFFFFF}
-\definecolor{lightblue}{HTML}{E6F2F8}
-\definecolor{red}{HTML}{BE0D3E}
-\definecolor{darkerred}{HTML}{9e0b36}
-\definecolor{lightborder}{HTML}{e0e0e0}
+{{ colors }}
 
 % Page geometry
 \geometry{left=1in, right=1in, top=1in, bottom=1in}
 \pagestyle{fancy}
 \fancyhf{}
-\fancyhead[C]{\color{white}\textbf{Header Title}}
-\fancyfoot[C]{\color{darkblue}\thepage}
+\fancyhead[L]{\includegraphics[height=1cm]{ {{ montrek_logo }}  } }
+\fancyhead[C]{\color{blue}\textbf{ {{document_title}} }}
+\fancyfoot[R]{\color{blue}\thepage}
+\fancyfoot[L]{\color{grey} footer text }
 \renewcommand{\headrulewidth}{2pt}
-\renewcommand{\headrule}{\hbox to\headwidth{\color{darkblue}\leaders\hrule height \headrulewidth\hfill}}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{blue}\leaders\hrule height \headrulewidth\hfill}}
 \renewcommand{\footrulewidth}{0pt}
 
 % Fonts and colors
@@ -33,8 +30,8 @@
 \setmainfont{Arial}
 
 % Title formats
-\titleformat*{\section}{\large\bfseries\color{darkblue}}
-\titleformat*{\subsection}{\bfseries\color{darkblue}}
+\titleformat*{\section}{\large\bfseries\color{blue}}
+\titleformat*{\subsection}{\bfseries\color{blue}}
 
 % Table settings
 \renewcommand{\arraystretch}{1.5}
