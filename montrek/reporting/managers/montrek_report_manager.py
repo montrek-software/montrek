@@ -45,6 +45,13 @@ class MontrekReportManager(MontrekManager):
             html_str += report_element.to_html()
         return html_str
 
+    def to_latex(self) -> str:
+        latex_str = ""
+        self.collect_report_elements()
+        for report_element in self.report_elements:
+            latex_str += report_element.to_latex()
+        return latex_str
+
 
 class LatexReportManager(MontrekReportManager):
     latex_template = "montrek_base_template.tex"

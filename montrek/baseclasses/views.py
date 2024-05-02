@@ -206,8 +206,32 @@ class MontrekTemplateView(
         return self.get_view_queryset()
 
 
+class ToPdfMixin:
+    def list_to_pdf(self):
+        response = HttpResponse(content_type="application/pdf")
+        response["Content-Disposition"] = 'attachment; filename="export.pdf"'
+        report_manager = LatexReportManager(self.session_data)
+        report_manager.append_report_element(self.manager)
+        pdf_path = report_manager.compile_report()
+        self.manager.messages += report_manager.messages
+        self.show_messages()
+        if pdf_path and os.path.exists(pdf_path):
+            with open(pdf_path, "rb") as pdf_file:
+                response = HttpResponse(pdf_file.read(), content_type="application/pdf")
+                response["Content-Disposition"] = (
+                    "inline; filename=" + os.path.basename(pdf_path)
+                )
+                return response
+        previous_url = self.request.META.get("HTTP_REFERER")
+        return HttpResponseRedirect(previous_url)
+
+
 class MontrekListView(
-    MontrekPermissionRequiredMixin, ListView, MontrekPageViewMixin, MontrekViewMixin
+    MontrekPermissionRequiredMixin,
+    ListView,
+    MontrekPageViewMixin,
+    MontrekViewMixin,
+    ToPdfMixin,
 ):
     template_name = "montrek_table.html"
     manager_class = MontrekManagerNotImplemented
@@ -241,24 +265,6 @@ class MontrekListView(
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = 'attachment; filename="export.csv"'
         return self.manager.download_csv(response)
-
-    def list_to_pdf(self):
-        response = HttpResponse(content_type="application/pdf")
-        response["Content-Disposition"] = 'attachment; filename="export.pdf"'
-        report_manager = LatexReportManager(self.session_data)
-        report_manager.append_report_element(self.manager)
-        pdf_path = report_manager.compile_report()
-        self.manager.messages += report_manager.messages
-        self.show_messages()
-        if pdf_path and os.path.exists(pdf_path):
-            with open(pdf_path, "rb") as pdf_file:
-                response = HttpResponse(pdf_file.read(), content_type="application/pdf")
-                response["Content-Disposition"] = (
-                    "inline; filename=" + os.path.basename(pdf_path)
-                )
-                return response
-        previous_url = self.request.META.get("HTTP_REFERER")
-        return HttpResponseRedirect(previous_url)
 
 
 class MontrekHistoryListView(MontrekTemplateView):
@@ -367,9 +373,14 @@ class MontrekDeleteView(
         return render(request, self.template_name, {"pk": self.kwargs["pk"]})
 
 
-class MontrekReportView(MontrekTemplateView):
+class MontrekReportView(MontrekTemplateView, ToPdfMixin):
     manager_class = MontrekReportManager
     template_name = "montrek_report.html"
 
     def get_template_context(self) -> dict:
         return {"report": self.manager.to_html()}
+
+    def get(self, request, *args, **kwargs):
+        if self.request.GET.get("gen_pdf") == "true":
+            return self.list_to_pdf()
+        return super().get(request, *args, **kwargs)
