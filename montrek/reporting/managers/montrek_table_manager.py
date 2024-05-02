@@ -32,7 +32,7 @@ class MontrekTableManager(MontrekManager):
         table_end_str = "\\end{tabularx}\n\\end{table}"
 
         column_def_str = ""
-        column_header_str = "\\rowcolor{darkblue}"
+        column_header_str = "\\rowcolor{blue}"
 
         for table_element in self.table_elements:
             if isinstance(table_element, te.LinkTableElement):
