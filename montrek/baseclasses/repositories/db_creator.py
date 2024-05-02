@@ -294,7 +294,7 @@ class DbCreator:
             return link
         link_class = link.__class__
         filter_args = {
-            f"{hub_field}": getattr(link, hub_field),
+            f"{hub_field}": hub,
             "state_date_end__gt": creation_date,
             "state_date_start__lte": creation_date,
         }
@@ -303,9 +303,8 @@ class DbCreator:
         if not existing_link:
             return link
 
-        if getattr(existing_link, self._get_opposite_field(hub_field)) == getattr(
-            link, self._get_opposite_field(hub_field)
-        ):
+        opposite_hub = getattr(link, self._get_opposite_field(hub_field))
+        if getattr(existing_link, self._get_opposite_field(hub_field)) == opposite_hub:
             return existing_link
 
         existing_link.state_date_end = creation_date
