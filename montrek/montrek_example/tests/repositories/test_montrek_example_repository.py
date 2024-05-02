@@ -810,7 +810,7 @@ class TestMontrekManyToManyRelations(TestCase):
         self.assertEqual(links[0], self.satd1.hub_entity)
         self.assertEqual(links[1], self.satd2.hub_entity)
 
-    def test_add_new_many_to_many_relation_updates_existing_link(self):
+    def test_no_new_link_is_added_if_it_already_exists(self):
         input_data = {
             "field_b1_str": "Hallo",
             "field_b1_date": montrek_time(2024, 3, 26),
@@ -831,4 +831,4 @@ class TestMontrekManyToManyRelations(TestCase):
 
         self.assertEqual(links.count(), 2)
         self.assertEqual(links[0], self.satd1.hub_entity)
-        self.assertEqual(links[0], self.satd2.hub_entity)
+        self.assertEqual(links[1], self.satd2.hub_entity)
