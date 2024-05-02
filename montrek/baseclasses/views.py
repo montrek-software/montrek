@@ -29,6 +29,7 @@ from baseclasses import utils
 from baseclasses.dataclasses.history_data_table import HistoryDataTable
 from baseclasses.managers.montrek_manager import MontrekManagerNotImplemented
 from reporting.managers.montrek_table_manager import MontrekTableManager
+from reporting.managers.montrek_report_manager import MontrekReportManager
 from reporting.managers.montrek_report_manager import LatexReportManager
 
 # Create your views here.
@@ -364,3 +365,11 @@ class MontrekDeleteView(
 
     def get(self, request, *args, **kwargs):
         return render(request, self.template_name, {"pk": self.kwargs["pk"]})
+
+
+class MontrekReportView(MontrekTemplateView):
+    manager_class = MontrekReportManager
+    template_name = "montrek_report.html"
+
+    def get_template_context(self) -> dict:
+        return {"report": self.manager.to_html()}

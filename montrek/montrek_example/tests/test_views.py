@@ -62,6 +62,11 @@ class TestMontrekExampleAUpdateView(MontrekUpdateViewTestCase):
         }
 
 
+class TestMontrekExampleAReportView(MontrekViewTestCase):
+    viewname = "montrek_example_a_report"
+    view_class = me_views.MontrekExampleAReport
+
+
 class TestMontrekExampleADetailView(MontrekViewTestCase):
     viewname = "montrek_example_a_details"
     view_class = me_views.MontrekExampleADetails

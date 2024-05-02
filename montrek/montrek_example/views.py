@@ -94,6 +94,11 @@ class MontrekExampleADetails(views.MontrekDetailView):
         return (action_back_to_overview("a"), action_update_example_a)
 
 
+class MontrekExampleAReport(views.MontrekReportView):
+    page_class = pages.MontrekExampleAAppPage
+    title = "Montrek Example A Report"
+
+
 class MontrekExampleBCreate(views.MontrekCreateView):
     manager_class = mem.HubBManager
     page_class = pages.MontrekExampleBAppPage
