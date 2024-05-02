@@ -8,14 +8,14 @@ import csv
 class MontrekTableManager(MontrekManager):
     is_paginated = True
     paginate_by = 10
-    title = "MontrekTable"
+    title = ""
 
     @property
     def table_elements(self) -> tuple[te.TableElement, ...]:
         return ()
 
     def to_html(self):
-        html_str = f"<h2>{self.title}</h2>"
+        html_str = f"<h3>{self.title}</h3>"
         html_str += '<table class="table table-bordered table-hover"><tr>'
         for table_element in self.table_elements:
             html_str += f"<th>{table_element.name}</th>"
