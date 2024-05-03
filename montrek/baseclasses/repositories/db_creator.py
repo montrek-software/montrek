@@ -74,7 +74,7 @@ class DbCreator:
             selected_satellites, creation_date
         )
         self._stall_hub(reference_hub)
-        self.stall_links(data, reference_hub, creation_date)
+        self._stall_links(data, reference_hub, creation_date)
         return reference_hub
 
     def _make_timezone_aware(self, sat_data: dict) -> dict:
@@ -253,19 +253,19 @@ class DbCreator:
         new_sat.state_date_start = created_at
         self._stall_satellite(new_sat)
 
-    def stall_links(self, data, reference_hub, creation_date):
+    def _stall_links(self, data, reference_hub, creation_date):
         # Filter all data that are Hubs or lists of Hubs, as they can only be linked to other Hubs
         link_data = self._get_link_data(data)
         for field, values in link_data.items():
             link_class = getattr(reference_hub.__class__, field).through
             values = [v for v in values if v]
-            new_links = self.create_new_links(
+            new_links = self._create_new_links(
                 link_class, reference_hub, values, creation_date
             )
             for new_link in new_links:
                 self._stall_link_object(new_link)
 
-    def create_new_links(self, link_class, reference_hub, values, creation_date):
+    def _create_new_links(self, link_class, reference_hub, values, creation_date):
         if link_class.hub_in.field.related_model == reference_hub.__class__:
             new_links = [
                 link_class(hub_in=reference_hub, hub_out=value) for value in values
