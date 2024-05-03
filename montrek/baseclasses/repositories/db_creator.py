@@ -299,10 +299,8 @@ class DbCreator:
             "state_date_start__lte": creation_date,
         }
         existing_links = link_class.objects.filter(**filter_args).all()
-
         if not existing_links:
             return links
-
         opposite_field = self._get_opposite_field(hub_field)
         opposite_hubs = [getattr(link, opposite_field) for link in links]
         continued_links = existing_links.filter(
@@ -312,20 +310,18 @@ class DbCreator:
             if existing_link not in continued_links:
                 existing_link.state_date_end = creation_date
                 existing_link.save()
-
         continued_opposite_hubs = [
             getattr(link, opposite_field) for link in continued_links
         ]
-        links = [
+        new_links = [
             link
             for link in links
             if getattr(link, opposite_field) not in continued_opposite_hubs
         ]
 
-        for link in links:
+        for link in new_links:
             link.state_date_start = creation_date
-
-        return links + list(continued_links)
+        return new_links + list(continued_links)
 
     def _get_opposite_field(self, field):
         return "hub_out" if field == "hub_in" else "hub_in"
