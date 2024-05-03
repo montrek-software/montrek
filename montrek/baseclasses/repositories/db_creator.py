@@ -270,12 +270,12 @@ class DbCreator:
             new_links = [
                 link_class(hub_in=reference_hub, hub_out=value) for value in values
             ]
-            return self._update_links_if_exists(new_links, "hub_in", creation_date)
+            return self._update_links_if_exist(new_links, "hub_in", creation_date)
         else:
             new_links = [
                 link_class(hub_in=value, hub_out=reference_hub) for value in values
             ]
-            return self._update_links_if_exists(new_links, "hub_out", creation_date)
+            return self._update_links_if_exist(new_links, "hub_out", creation_date)
 
     def _get_link_data(self, data: dict) -> dict[str, list[MontrekHubABC]]:
         link_data = {}
@@ -288,7 +288,7 @@ class DbCreator:
                     link_data[key] = many_links
         return link_data
 
-    def _update_links_if_exists(self, links, hub_field, creation_date):
+    def _update_links_if_exist(self, links, hub_field, creation_date):
         hub = getattr(links[0], hub_field)
         if not hub.pk:
             return links

@@ -853,4 +853,3 @@ class TestMontrekManyToManyRelations(TestCase):
         self.assertEqual(new_1.state_date_start, new_2.state_date_start)
         self.assertEqual(new_1.state_date_end, MAX_DATE)
         self.assertEqual(new_2.state_date_end, MAX_DATE)
-
