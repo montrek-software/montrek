@@ -810,25 +810,29 @@ class TestMontrekManyToManyRelations(TestCase):
         self.assertEqual(links[0], self.satd1.hub_entity)
         self.assertEqual(links[1], self.satd2.hub_entity)
 
-    def test_no_new_link_is_added_if_it_already_exists(self):
+    def test_update_existing_links(self):
+        snapshot_time = timezone.now()
+        satd3 = me_factories.SatD1Factory(
+            field_d1_str="dritter",
+            field_d1_int=3,
+        )
+        satd4 = me_factories.SatD1Factory(
+            field_d1_str="vierter",
+            field_d1_int=4,
+        )
+
+        # one existing, two new links
+        hub_entity_id = self.satb1.hub_entity_id
         input_data = {
-            "field_b1_str": "Hallo",
-            "field_b1_date": montrek_time(2024, 3, 26),
-            "link_hub_b_hub_d": [self.satd1.hub_entity, self.satd2.hub_entity],
+            "hub_entity_id": hub_entity_id,
+            "link_hub_b_hub_d": [
+                self.satd1.hub_entity,
+                satd3.hub_entity,
+                satd4.hub_entity,
+            ],
         }
         repository_b = HubBRepository(session_data={"user_id": self.user.id})
-        sat_b = repository_b.std_create_object(input_data)
-        links = sat_b.link_hub_b_hub_d.all()
+        repository_b.std_create_object(input_data)
 
-        self.assertEqual(links.count(), 2)
-        self.assertEqual(links[0], self.satd1.hub_entity)
-        self.assertEqual(links[1], self.satd2.hub_entity)
-
-        input_data["hub_entity_id"] = sat_b.id
-        sat_b = repository_b.std_create_object(input_data)
-
-        links = sat_b.link_hub_b_hub_d.all()
-
-        self.assertEqual(links.count(), 2)
-        self.assertEqual(links[0], self.satd1.hub_entity)
-        self.assertEqual(links[1], self.satd2.hub_entity)
+        hub_b = repository_b.std_queryset().filter(id=hub_entity_id).first()
+        self.assertEqual(hub_b.field_d1_str, "erster,dritter,vierter")
