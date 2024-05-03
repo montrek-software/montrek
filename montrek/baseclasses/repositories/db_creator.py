@@ -1,3 +1,4 @@
+from django.db import transaction
 import datetime
 from typing import Any, Dict, List, Protocol
 from dataclasses import dataclass
@@ -86,6 +87,7 @@ class DbCreator:
                     )
         return sat_data
 
+    @transaction.atomic
     def save_stalled_objects(self):
         for hub_class, stalled_hubs in self.stalled_hubs.items():
             self._bulk_create_and_update_stalled_objects(stalled_hubs, hub_class)
