@@ -11,6 +11,9 @@ from montrek_example.repositories.hub_d_repository import HubDRepository
 from montrek_example import models as me_models
 import pandas as pd
 
+MIN_DATE = timezone.make_aware(timezone.datetime.min)
+MAX_DATE = timezone.make_aware(timezone.datetime.max)
+
 
 class TestMontrekRepositorySatellite(TestCase):
     def setUp(self):
@@ -266,11 +269,11 @@ class TestMontrekCreateObject(TestCase):
         self.assertEqual(me_models.HubA.objects.count(), 2)
         self.assertEqual(
             me_models.HubA.objects.first().state_date_start,
-            timezone.make_aware(timezone.datetime.min),
+            MIN_DATE,
         )
         self.assertEqual(
             me_models.HubA.objects.last().state_date_end,
-            timezone.make_aware(timezone.datetime.max),
+            MAX_DATE,
         )
         self.assertEqual(
             me_models.HubA.objects.last().state_date_start,
@@ -811,7 +814,6 @@ class TestMontrekManyToManyRelations(TestCase):
         self.assertEqual(links[1], self.satd2.hub_entity)
 
     def test_update_existing_links(self):
-        snapshot_time = timezone.now()
         satd3 = me_factories.SatD1Factory(
             field_d1_str="dritter",
             field_d1_int=3,
@@ -820,9 +822,9 @@ class TestMontrekManyToManyRelations(TestCase):
             field_d1_str="vierter",
             field_d1_int=4,
         )
+        hub_entity_id = self.satb1.hub_entity_id
 
         # one existing, two new links
-        hub_entity_id = self.satb1.hub_entity_id
         input_data = {
             "hub_entity_id": hub_entity_id,
             "link_hub_b_hub_d": [
@@ -835,4 +837,20 @@ class TestMontrekManyToManyRelations(TestCase):
         repository_b.std_create_object(input_data)
 
         hub_b = repository_b.std_queryset().filter(id=hub_entity_id).first()
+
+        links = me_models.LinkHubBHubD.objects.filter(hub_in=hub_b.id).all()
+        continued = links.filter(hub_out=self.satd1.hub_entity).get()
+        discontinued = links.filter(hub_out=self.satd2.hub_entity).get()
+        new_1 = links.filter(hub_out=satd3.hub_entity).get()
+        new_2 = links.filter(hub_out=satd4.hub_entity).get()
+
         self.assertEqual(hub_b.field_d1_str, "erster,dritter,vierter")
+
+        self.assertEqual(continued.state_date_start, MIN_DATE)
+        self.assertEqual(continued.state_date_end, MAX_DATE)
+        self.assertEqual(discontinued.state_date_start, MIN_DATE)
+        self.assertEqual(discontinued.state_date_end, new_1.state_date_start)
+        self.assertEqual(new_1.state_date_start, new_2.state_date_start)
+        self.assertEqual(new_1.state_date_end, MAX_DATE)
+        self.assertEqual(new_2.state_date_end, MAX_DATE)
+
