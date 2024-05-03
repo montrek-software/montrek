@@ -306,9 +306,9 @@ class DbCreator:
         continued_links = existing_links.filter(
             **{f"{opposite_field}__in": opposite_hubs}
         ).all()
-        discontinued_links = [
-            link for link in existing_links if link not in continued_links
-        ]
+        discontinued_links = existing_links.exclude(
+            **{f"{opposite_field}__in": opposite_hubs}
+        ).all()
         for link in discontinued_links:
             link.state_date_end = creation_date
             link.save()
