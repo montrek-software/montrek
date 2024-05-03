@@ -77,6 +77,15 @@ class TestMontrekRepositorySatellite(TestCase):
         self.assertEqual(queryset[0].field_a2_float, 8.0)
         self.assertEqual(queryset[1].field_a2_float, None)
 
+    def test_query_filter(self):
+        self.assertEqual(HubARepository().query_filter, {})
+        self.assertEqual(HubARepository(session_data={'filter': {'field_a1_int__isnull': '1'}}).query_filter, {'field_a1_int__isnull': True})
+        self.assertEqual(HubARepository(session_data={'filter': {'field_a1_int__isnull': 'True'}}).query_filter, {'field_a1_int__isnull': True})
+        self.assertEqual(HubARepository(session_data={'filter': {'field_a1_int__isnull': 'foo'}}).query_filter, {'field_a1_int__isnull': False})
+        self.assertEqual(HubARepository(session_data={'filter': {'field_a1_int__in': 'foo'}}).query_filter, {'field_a1_int__in': ['foo']})
+        self.assertEqual(HubARepository(session_data={'filter': {'field_a1_int__in': 'foo,bar'}}).query_filter, {'field_a1_int__in': ['foo','bar']})
+        self.assertEqual(HubARepository(session_data={'filter': {'field_a1_int__in': ['foo', 'bar']}}).query_filter, {'field_a1_int__in': ['foo','bar']})
+
 
 class TestMontrekCreateObject(TestCase):
     def setUp(self):
@@ -853,3 +862,4 @@ class TestMontrekManyToManyRelations(TestCase):
         self.assertEqual(new_1.state_date_start, new_2.state_date_start)
         self.assertEqual(new_1.state_date_end, MAX_DATE)
         self.assertEqual(new_2.state_date_end, MAX_DATE)
+
