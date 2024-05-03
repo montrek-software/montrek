@@ -159,7 +159,7 @@ class DbCreator:
         selected_satellites: Dict[str, list[SatelliteCreationState]],
         creation_date: timezone.datetime,
     ):
-        reference_hub = self._get_reference_hub(selected_satellites, creation_date)
+        reference_hub = self._get_reference_hub(selected_satellites)
 
         self._new_satellites(selected_satellites["new"], reference_hub, creation_date)
         self._update_existing_satellites(
@@ -170,7 +170,7 @@ class DbCreator:
         )
         return reference_hub
 
-    def _get_reference_hub(self, selected_satellites, creation_date):
+    def _get_reference_hub(self, selected_satellites):
         if selected_satellites["new"]:
             reference_hub = selected_satellites["new"][0].satellite.hub_entity
             self._stall_hub(reference_hub)
