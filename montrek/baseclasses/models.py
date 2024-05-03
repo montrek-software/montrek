@@ -53,8 +53,7 @@ class AlertMixin(models.Model):
         abstract = True
 
     ALERT_CHOICES = [
-        (status.value.description, status.value.description)
-        for status in AlertEnum
+        (status.value.description, status.value.description) for status in AlertEnum
     ]
 
     alert_level = models.CharField(
@@ -214,6 +213,9 @@ class MontrekLinkABC(TimeStampMixin, StateMixin):
     hub_out = models.ForeignKey(
         MontrekHubABC, on_delete=models.CASCADE, related_name="out_hub"
     )
+
+    def __str__(self) -> str:
+        return f"{self.hub_in.identifier or self.hub_in.pk} -> {self.hub_out.identifier or self.hub_out.pk}"
 
 
 class MontrekOneToOneLinkABC(MontrekLinkABC):

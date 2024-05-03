@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from django.db.models import QuerySet
 from django.utils import timezone
 from baseclasses.models import (
+    MontrekLinkABC,
     MontrekSatelliteABC,
     MontrekHubABC,
     MontrekTimeSeriesSatelliteABC,
@@ -158,7 +159,7 @@ class DbCreator:
         selected_satellites: Dict[str, list[SatelliteCreationState]],
         creation_date: timezone.datetime,
     ):
-        reference_hub = self._get_reference_hub(selected_satellites, creation_date)
+        reference_hub = self._get_reference_hub(selected_satellites)
 
         self._new_satellites(selected_satellites["new"], reference_hub, creation_date)
         self._update_existing_satellites(
@@ -169,7 +170,7 @@ class DbCreator:
         )
         return reference_hub
 
-    def _get_reference_hub(self, selected_satellites, creation_date):
+    def _get_reference_hub(self, selected_satellites):
         if selected_satellites["new"]:
             reference_hub = selected_satellites["new"][0].satellite.hub_entity
             self._stall_hub(reference_hub)
@@ -178,6 +179,7 @@ class DbCreator:
             return selected_satellites["existing"][0].satellite.hub_entity
         elif selected_satellites["updated"]:
             return selected_satellites["updated"][0].updated_sat.hub_entity
+        return self.hub_entity
 
     def _new_satellites(self, new_satellites, reference_hub, creation_date):
         for satellite_create_state in new_satellites:
@@ -255,22 +257,25 @@ class DbCreator:
         # Filter all data that are Hubs or lists of Hubs, as they can only be linked to other Hubs
         link_data = self._get_link_data(data)
         for field, values in link_data.items():
-            for value in values:
-                if value is None:
-                    continue
-                link_class = getattr(reference_hub.__class__, field).through
-                new_link = self.create_new_link(
-                    link_class, reference_hub, value, creation_date
-                )
+            link_class = getattr(reference_hub.__class__, field).through
+            values = [v for v in values if v]
+            new_links = self.create_new_links(
+                link_class, reference_hub, values, creation_date
+            )
+            for new_link in new_links:
                 self._stall_link_object(new_link)
 
-    def create_new_link(self, link_class, reference_hub, value, creation_date):
+    def create_new_links(self, link_class, reference_hub, values, creation_date):
         if link_class.hub_in.field.related_model == reference_hub.__class__:
-            new_link = link_class(hub_in=reference_hub, hub_out=value)
-            return self._process_link(new_link, "hub_in", creation_date)
+            new_links = [
+                link_class(hub_in=reference_hub, hub_out=value) for value in values
+            ]
+            return self._update_links_if_exist(new_links, "hub_in", creation_date)
         else:
-            new_link = link_class(hub_in=value, hub_out=reference_hub)
-            return self._process_link(new_link, "hub_out", creation_date)
+            new_links = [
+                link_class(hub_in=value, hub_out=reference_hub) for value in values
+            ]
+            return self._update_links_if_exist(new_links, "hub_out", creation_date)
 
     def _get_link_data(self, data: dict) -> dict[str, list[MontrekHubABC]]:
         link_data = {}
@@ -283,35 +288,38 @@ class DbCreator:
                     link_data[key] = many_links
         return link_data
 
-    def _process_link(self, link, hub_field, creation_date):
-        if link.link_type in (LinkTypeEnum.ONE_TO_ONE, LinkTypeEnum.ONE_TO_MANY):
-            return self._update_link_if_exists(link, hub_field, creation_date)
-        return link
-
-    def _update_link_if_exists(self, link, hub_field, creation_date):
-        hub = getattr(link, hub_field)
+    def _update_links_if_exist(self, links, hub_field, creation_date):
+        hub = getattr(links[0], hub_field)
         if not hub.pk:
-            return link
-        link_class = link.__class__
+            return links
+        link_class = links[0].__class__
         filter_args = {
-            f"{hub_field}": getattr(link, hub_field),
+            f"{hub_field}": hub,
             "state_date_end__gt": creation_date,
             "state_date_start__lte": creation_date,
         }
-        existing_link = link_class.objects.filter(**filter_args).first()
-
-        if not existing_link:
-            return link
-
-        if getattr(existing_link, self._get_opposite_field(hub_field)) == getattr(
-            link, self._get_opposite_field(hub_field)
-        ):
-            return existing_link
-
-        existing_link.state_date_end = creation_date
-        existing_link.save()
-        link.state_date_start = creation_date
-        return link
+        existing_links = link_class.objects.filter(**filter_args).all()
+        if not existing_links:
+            return links
+        opposite_field = self._get_opposite_field(hub_field)
+        opposite_hubs = [getattr(link, opposite_field) for link in links]
+        filter_kwargs = {f"{opposite_field}__in": opposite_hubs}
+        continued_links = existing_links.filter(**filter_kwargs).all()
+        discontinued_links = existing_links.exclude(**filter_kwargs).all()
+        for link in discontinued_links:
+            link.state_date_end = creation_date
+            link.save()
+        continued_opposite_hubs = [
+            getattr(link, opposite_field) for link in continued_links
+        ]
+        new_links = [
+            link
+            for link in links
+            if getattr(link, opposite_field) not in continued_opposite_hubs
+        ]
+        for link in new_links:
+            link.state_date_start = creation_date
+        return new_links + list(continued_links)
 
     def _get_opposite_field(self, field):
         return "hub_out" if field == "hub_in" else "hub_in"
