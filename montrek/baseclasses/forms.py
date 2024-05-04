@@ -3,15 +3,6 @@ from django import forms
 from django.db.models import QuerySet
 
 from baseclasses.models import LinkTypeEnum
-from django.db.models import lookups
-
-# Get all lookup classes from the django.db.models.lookups module
-lookup_classes = [cls for cls in vars(lookups).values() if isinstance(cls, type)]
-
-# Get the lookup names from lookup classes
-lookup_names = [
-    cls.lookup_name for cls in lookup_classes if hasattr(cls, "lookup_name")
-]
 
 
 class DateRangeForm(forms.Form):
@@ -24,6 +15,18 @@ class DateRangeForm(forms.Form):
 
 
 class FilterForm(forms.Form):
+    class LookupChoices(TextChoices):
+        EQUAL = "exact", "equal"
+        GREATER_THAN = "gt", ">"
+        GREATER_THAN_OR_EQUAL = "gte", ">="
+        LESS_THAN = "lt", "<"
+        LESS_THAN_OR_EQUAL = "lte", "<="
+        CONTAINS = "contains", "contains"
+        STARTS_WITH = "startswith", "starts with"
+        ENDS_WITH = "endswith", "ends with"
+        IS_NULL = "isnull", "is null"
+        IN = "in", "in"
+
     def __init__(self, *args, **kwargs):
         self.filter_field_choices = kwargs.pop("filter_field_choices", [])
         super().__init__(*args, **kwargs)
@@ -35,6 +38,7 @@ class FilterForm(forms.Form):
         )
         self.fields["filter_lookup"] = forms.ChoiceField(
             choices=[(lookup, lookup) for lookup in lookup_names],
+            choices=self.LookupChoices,
             widget=forms.Select(attrs={"id": "id_field"}),
             required=False,
         )
