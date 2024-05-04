@@ -155,13 +155,17 @@ class MontrekViewMixin:
 
     def _get_filters(self, session_data):
         filter_field = session_data.get("filter_field", [])
+        filter_operator = session_data.get("filter_operator", [])
         filter_value = session_data.get("filter_value", [])
         filter_data = {
-            "filter_field": ",".join(filter_field),
+            "filter_field": filter_field,
+            "filter_operator": filter_operator,
             "filter_value": ",".join(filter_value),
         }
-        if filter_field and filter_value:
-            filter_data["filter"] = {filter_field[0]: filter_value[0]}
+        if filter_field and filter_operator and filter_value:
+            filter_data["filter"] = {
+                filter_field[0] + filter_operator[0]: filter_value[0]
+            }
         return filter_data
 
     def show_messages(self):
