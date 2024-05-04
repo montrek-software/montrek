@@ -3,6 +3,15 @@ from django import forms
 from django.db.models import QuerySet
 
 from baseclasses.models import LinkTypeEnum
+from django.db.models import lookups
+
+# Get all lookup classes from the django.db.models.lookups module
+lookup_classes = [cls for cls in vars(lookups).values() if isinstance(cls, type)]
+
+# Get the lookup names from lookup classes
+lookup_names = [
+    cls.lookup_name for cls in lookup_classes if hasattr(cls, "lookup_name")
+]
 
 
 class DateRangeForm(forms.Form):
@@ -12,12 +21,6 @@ class DateRangeForm(forms.Form):
     end_date = forms.DateField(
         widget=forms.DateInput(attrs={"type": "date", "id": "id_date_range_end"})
     )
-
-
-# todo: find a better place for this
-class FilterOperatorChoices(TextChoices):
-    IN = "__in", "in"
-    NOTNULL = "__not", "not"
 
 
 class FilterForm(forms.Form):
@@ -30,8 +33,8 @@ class FilterForm(forms.Form):
             widget=forms.Select(attrs={"id": "id_field"}),
             required=False,
         )
-        self.fields["filter_operator"] = forms.ChoiceField(
-            choices=FilterOperatorChoices,
+        self.fields["filter_lookup"] = forms.ChoiceField(
+            choices=[(lookup, lookup) for lookup in lookup_names],
             widget=forms.Select(attrs={"id": "id_field"}),
             required=False,
         )
