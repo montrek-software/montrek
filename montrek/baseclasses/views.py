@@ -233,7 +233,10 @@ class MontrekListView(
         if not isinstance(self.manager, MontrekTableManager):
             raise ValueError("Manager must be of type MontrekTableManager")
         context["table"] = self.manager.to_html()
-        context["filter_form"] = FilterForm(self.session_data)
+        context["filter_form"] = FilterForm(
+            self.session_data,
+            filter_field_choices=self.manager.get_satellite_field_choices(),
+        )
         return context
 
     def list_to_csv(self):

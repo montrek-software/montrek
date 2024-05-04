@@ -1,3 +1,4 @@
+from django.db.models import TextChoices
 from django import forms
 from django.db.models import QuerySet
 
@@ -13,13 +14,26 @@ class DateRangeForm(forms.Form):
     )
 
 
+# todo: find a better place for this
+class FilterOperatorChoices(TextChoices):
+    IN = '__in', 'in'
+
 class FilterForm(forms.Form):
-    filter_field = forms.CharField(
-        widget=forms.TextInput(attrs={"id": "id_filter"}), required=False
-    )
-    filter_value = forms.CharField(
-        widget=forms.TextInput(attrs={"id": "id_value"}), required=False
-    )
+    def __init__(self, *args, **kwargs):
+        self.filter_field_choices = kwargs.pop("filter_field_choices", [])
+        super().__init__(*args, **kwargs)
+
+        self.fields['filter_field'] = forms.ChoiceField(
+            choices=self.filter_field_choices, widget=forms.Select(attrs={"id": "id_field"}), 
+            required=False
+        )
+        self.fields['filter_operator'] = forms.ChoiceField(
+            choices=FilterOperatorChoices, widget=forms.Select(attrs={"id": "id_field"}), 
+            required=False
+        )
+        self.fields['filter_value'] = forms.CharField(
+            widget=forms.TextInput(attrs={"id": "id_value"}), required=False
+        )
 
 
 class MontrekCreateForm(forms.ModelForm):
