@@ -85,7 +85,9 @@ class MontrekRepository:
             if filter_task in ("isnull",):
                 query_filter[key] = True if value in ("True", "1") else False
             elif filter_task in ("in"):
-                query_filter[key] = value.split(",")
+                query_filter[key] = (
+                    value if isinstance(value, list) else value.split(",")
+                )
         return query_filter
 
     def std_queryset(self, **kwargs):
