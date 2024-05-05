@@ -165,8 +165,8 @@ class MontrekViewMixin:
             "filter_value": ",".join(filter_value),
         }
         if filter_field and filter_lookup and filter_value:
-            true_values = ("True", "true", True, 1, "1")
-            false_values = ("False", "false", False, 0, "0")
+            true_values = ("True", "true", True)
+            false_values = ("False", "false", False)
             filter_negate = filter_negate[0] in true_values
             filter_lookup = filter_lookup[0]
             filter_value = filter_value[0]
