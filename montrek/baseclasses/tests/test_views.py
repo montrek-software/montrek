@@ -46,6 +46,11 @@ class MockData:
     value: int
 
 
+@dataclass
+class MockField:
+    name: str
+
+
 class MockRepository:
     def __init__(self, session_data):
         self.session_data = session_data
@@ -55,6 +60,9 @@ class MockRepository:
         return MockQuerySet(
             MockData("item1", 1), MockData("item2", 2), MockData("item3", 3)
         )  # Dummy data for testing
+
+    def std_satellite_fields(self):
+        return [MockField("item1"), MockField("item2"), MockField("item3")]
 
 
 class MockRequester:
