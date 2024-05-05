@@ -154,10 +154,10 @@ class MontrekViewMixin:
         return session_data
 
     def _get_filters(self, session_data):
-        filter_field = session_data.pop("filter_field", [])
-        filter_negate = session_data.pop("filter_negate", [])
-        filter_lookup = session_data.pop("filter_lookup", [])
-        filter_value = session_data.pop("filter_value", [])
+        filter_field = session_data.get("filter_field", [])
+        filter_negate = session_data.get("filter_negate", [])
+        filter_lookup = session_data.get("filter_lookup", [])
+        filter_value = session_data.get("filter_value", [])
         filter_data = {
             "filter_field": filter_field,
             "filter_negate": filter_negate,
@@ -165,18 +165,21 @@ class MontrekViewMixin:
             "filter_value": ",".join(filter_value),
         }
         if filter_field and filter_lookup and filter_value:
-            true_values = ("True", True, 1, "1")
-            false_values = ("False", False, 0, "0")
+            true_values = ("True", "true", True, 1, "1")
+            false_values = ("False", "false", False, 0, "0")
             filter_negate = filter_negate[0] in true_values
-            filter_field = f"{filter_field[0]}__{filter_lookup[0]}"
+            filter_lookup = filter_lookup[0]
+            filter_value = filter_value[0]
+            filter_field = f"{filter_field[0]}__{filter_lookup}"
             if filter_value in true_values:
                 filter_value = True
             elif filter_value in false_values:
                 filter_value = False
-            else:
-                filter_value = filter_value[0]
-            filter_data["filter_negate"] = filter_negate
-            filter_data["filter"] = {filter_field: filter_value}
+            if filter_lookup == "in":
+                filter_value = filter_value.split(",")
+            filter_data["filter"] = {
+                filter_field: {"negate": filter_negate, "value": filter_value}
+            }
         return filter_data
 
     def show_messages(self):

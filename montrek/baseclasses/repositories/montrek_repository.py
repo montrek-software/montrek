@@ -82,16 +82,8 @@ class MontrekRepository:
         query_filter = self.session_data.get("filter", {})
         q_objects = []
         for key, value in query_filter.items():
-            filter_lookup = key.split("__")[-1]
-            if filter_lookup in ("isnull",):
-                query_filter[key] = True if value in ("True", "1") else False
-            elif filter_lookup in ("in"):
-                query_filter[key] = (
-                    value if isinstance(value, list) else value.split(",")
-                )
-            q = Q(**{key: query_filter[key]})
-            filter_negate = self.session_data.get("filter_negate", False)
-            q = ~q if filter_negate else q
+            q = Q(**{key: value["value"]})
+            q = ~q if value["negate"] else q
             q_objects.append(q)
         return q_objects
 
