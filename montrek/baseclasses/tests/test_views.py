@@ -119,7 +119,13 @@ class TestMontrekViewMixin(TestCase):
     def test_session_data(self):
         mock_view = MockMontrekView("/")
         self.assertEqual(
-            mock_view.session_data, {"filter_field": "", "filter_value": ""}
+            mock_view.session_data,
+            {
+                "filter_field": [],
+                "filter_negate": [],
+                "filter_lookup": [],
+                "filter_value": "",
+            },
         )
 
     def test_session_data_with_query_params(self):
@@ -127,7 +133,9 @@ class TestMontrekViewMixin(TestCase):
         expected_data = {
             "param1": ["value1"],
             "param2": ["value2"],
-            "filter_field": "",
+            "filter_field": [],
+            "filter_negate": [],
+            "filter_lookup": [],
             "filter_value": "",
         }
         self.assertEqual(mock_view.session_data, expected_data)
