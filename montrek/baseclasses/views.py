@@ -177,6 +177,8 @@ class MontrekViewMixin:
                 filter_value = False
             if filter_lookup == "in":
                 filter_value = filter_value.split(",")
+            if filter_lookup == "isnull":
+                filter_value = True or filter_value
             filter_data["filter"] = {
                 filter_field: {"negate": filter_negate, "value": filter_value}
             }
@@ -253,7 +255,7 @@ class MontrekListView(
         context["table"] = self.manager.to_html()
         context["filter_form"] = FilterForm(
             self.session_data,
-            filter_field_choices=self.manager.get_satellite_field_choices(),
+            filter_field_choices=self.manager.get_std_queryset_field_choices(),
         )
         return context
 
