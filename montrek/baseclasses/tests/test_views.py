@@ -150,11 +150,15 @@ class TestMontrekViewMixin(TestCase):
         self.assertNotIn("user_id", mock_view.session_data)
 
     def test_filter_data_handling(self):
-        mock_view = MockMontrekView("/?filter_field=field1&filter_value=value1")
+        mock_view = MockMontrekView(
+            "/?filter_field=field1&filter_negate=False&filter_lookup=equal&filter_value=value1"
+        )
         expected_filter_data = {
-            "filter_field": "field1",
+            "filter_field": ["field1"],
+            "filter_negate": ["False"],
+            "filter_lookup": ["equal"],
             "filter_value": "value1",
-            "filter": {"field1": "value1"},
+            "filter": {"field1__equal": {"negate": False, "value": "value1"}},
         }
         self.assertEqual(mock_view.session_data, expected_filter_data)
 
