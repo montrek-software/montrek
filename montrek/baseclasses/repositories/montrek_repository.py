@@ -80,7 +80,6 @@ class MontrekRepository:
     @property
     def query_filter(self):
         query_filter = self.session_data.get("filter", {})
-        filter_negate = self.session_data.get("filter_negate", "") == "yes"
         q_objects = []
         for key, value in query_filter.items():
             filter_lookup = key.split("__")[-1]
@@ -90,10 +89,10 @@ class MontrekRepository:
                 query_filter[key] = (
                     value if isinstance(value, list) else value.split(",")
                 )
-            if filter_negate:
-                q_objects.append(~Q(**{key: query_filter[key]}))
-            else:
-                q_objects.append(Q(**{key: query_filter[key]}))
+            q = Q(**{key: query_filter[key]})
+            filter_negate = self.session_data.get("filter_negate", False)
+            q = ~q if filter_negate else q
+            q_objects.append(q)
         return q_objects
 
     def std_queryset(self, **kwargs):

@@ -38,8 +38,8 @@ class FilterForm(forms.Form):
         )
         self.fields["filter_negate"] = forms.ChoiceField(
             choices=[
-                ("no", ""),
-                ("yes", "not"),
+                (False, ""),
+                (True, "not"),
             ],
             required=False,
             widget=forms.Select(attrs={"id": "id_negate"}),
