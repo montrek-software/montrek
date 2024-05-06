@@ -38,10 +38,7 @@ class LatexReportManager:
         return template.render(context)
 
     def get_context(self) -> dict:
-        content = ""
-        for report_element in self.report_manager.report_elements:
-            content += report_element.to_latex()
-        return {"content": content}
+        return {"content": self.report_manager.to_latex()}
 
     def get_layout_data(self) -> dict:
         return {
@@ -95,8 +92,12 @@ class LatexReportManager:
                 )
             except subprocess.CalledProcessError as e:
                 error_message = self.get_xelatex_error_message(e.stdout)
-                self.messages.append(MontrekMessageError(message=error_message))
-                self.messages.append(MontrekMessageError(message=report_str))
+                self.report_manager.messages.append(
+                    MontrekMessageError(message=error_message)
+                )
+                self.report_manager.messages.append(
+                    MontrekMessageError(message=report_str)
+                )
                 return None
 
             # Define the source PDF path (assuming the output PDF has the same name as the .tex file, but with .pdf extension)

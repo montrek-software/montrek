@@ -210,10 +210,8 @@ class ToPdfMixin:
     def list_to_pdf(self):
         response = HttpResponse(content_type="application/pdf")
         response["Content-Disposition"] = 'attachment; filename="export.pdf"'
-        report_manager = LatexReportManager(self.session_data)
-        report_manager.append_report_element(self.manager)
+        report_manager = LatexReportManager(self.manager)
         pdf_path = report_manager.compile_report()
-        self.manager.messages += report_manager.messages
         self.show_messages()
         if pdf_path and os.path.exists(pdf_path):
             with open(pdf_path, "rb") as pdf_file:
