@@ -30,7 +30,7 @@ from baseclasses.dataclasses.history_data_table import HistoryDataTable
 from baseclasses.managers.montrek_manager import MontrekManagerNotImplemented
 from reporting.managers.montrek_table_manager import MontrekTableManager
 from reporting.managers.montrek_report_manager import MontrekReportManager
-from reporting.managers.montrek_report_manager import LatexReportManager
+from reporting.managers.latex_report_manager import LatexReportManager
 
 # Create your views here.
 
