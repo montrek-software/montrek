@@ -80,15 +80,12 @@ class MontrekRepository:
     @property
     def query_filter(self):
         query_filter = self.session_data.get("filter", {})
+        q_objects = []
         for key, value in query_filter.items():
-            filter_task = key.split("__")[-1]
-            if filter_task in ("isnull",):
-                query_filter[key] = True if value in ("True", "1") else False
-            elif filter_task in ("in"):
-                query_filter[key] = (
-                    value if isinstance(value, list) else value.split(",")
-                )
-        return query_filter
+            q = Q(**{key: value["value"]})
+            q = ~q if value["negate"] else q
+            q_objects.append(q)
+        return q_objects
 
     def std_queryset(self, **kwargs):
         raise NotImplementedError("MontrekRepository has no std_queryset method!")
@@ -203,7 +200,7 @@ class MontrekRepository:
             Q(state_date_end__gt=self.reference_date),
         )
         try:
-            queryset = queryset.filter(**self.query_filter)
+            queryset = queryset.filter(*self.query_filter)
         except FieldError as e:
             self.messages.append(MontrekMessageError(e))
         return queryset

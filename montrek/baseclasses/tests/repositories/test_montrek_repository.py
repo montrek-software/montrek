@@ -1,4 +1,5 @@
 from django.core.exceptions import PermissionDenied
+from django.db.models import Q
 from django.test import TestCase
 from django.utils import timezone
 from baseclasses.repositories.montrek_repository import MontrekRepository
@@ -30,3 +31,28 @@ class TestMontrekRepository(TestCase):
     def test_session_user_id(self):
         self.assertIsNone(MontrekRepository().session_user_id)
         self.assertEqual(MontrekRepository({"user_id": 1}).session_user_id, 1)
+
+    def test_query_filter(self):
+        montrek_repo = MontrekRepository(
+            session_data={
+                "filter": {"field1__equal": {"negate": False, "value": "value1"}},
+            }
+        )
+        q_list = montrek_repo.query_filter
+
+        self.assertTrue(isinstance(q_list, list))
+        self.assertEqual(len(q_list), 1)
+        self.assertTrue(isinstance(q_list[0], Q))
+        self.assertEqual(q_list[0].__dict__, Q(field1__equal="value1").__dict__)
+
+        montrek_repo = MontrekRepository(
+            session_data={
+                "filter": {"field1__equal": {"negate": True, "value": "value1"}},
+            }
+        )
+        q_list = montrek_repo.query_filter
+
+        self.assertTrue(isinstance(q_list, list))
+        self.assertEqual(len(q_list), 1)
+        self.assertTrue(isinstance(q_list[0], Q))
+        self.assertEqual(q_list[0].__dict__, (~Q(field1__equal="value1")).__dict__)

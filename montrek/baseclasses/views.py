@@ -155,13 +155,33 @@ class MontrekViewMixin:
 
     def _get_filters(self, session_data):
         filter_field = session_data.get("filter_field", [])
+        filter_negate = session_data.get("filter_negate", [])
+        filter_lookup = session_data.get("filter_lookup", [])
         filter_value = session_data.get("filter_value", [])
         filter_data = {
-            "filter_field": ",".join(filter_field),
+            "filter_field": filter_field,
+            "filter_negate": filter_negate,
+            "filter_lookup": filter_lookup,
             "filter_value": ",".join(filter_value),
         }
-        if filter_field and filter_value:
-            filter_data["filter"] = {filter_field[0]: filter_value[0]}
+        if filter_field and filter_lookup and filter_value:
+            true_values = ("True", "true", True)
+            false_values = ("False", "false", False)
+            filter_negate = filter_negate[0] in true_values
+            filter_lookup = filter_lookup[0]
+            filter_value = filter_value[0]
+            filter_field = f"{filter_field[0]}__{filter_lookup}"
+            if filter_value in true_values:
+                filter_value = True
+            elif filter_value in false_values:
+                filter_value = False
+            if filter_lookup == "in":
+                filter_value = filter_value.split(",")
+            if filter_lookup == "isnull":
+                filter_value = True or filter_value
+            filter_data["filter"] = {
+                filter_field: {"negate": filter_negate, "value": filter_value}
+            }
         return filter_data
 
     def show_messages(self):
@@ -233,7 +253,10 @@ class MontrekListView(
         if not isinstance(self.manager, MontrekTableManager):
             raise ValueError("Manager must be of type MontrekTableManager")
         context["table"] = self.manager.to_html()
-        context["filter_form"] = FilterForm(self.session_data)
+        context["filter_form"] = FilterForm(
+            self.session_data,
+            filter_field_choices=self.manager.get_std_queryset_field_choices(),
+        )
         return context
 
     def list_to_csv(self):
