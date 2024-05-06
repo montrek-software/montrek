@@ -1,3 +1,4 @@
+from collections.abc import Iterable
 from django.conf import settings
 from django.utils.safestring import mark_safe
 import os
@@ -29,8 +30,13 @@ class MontrekReportManager(MontrekManager):
     def report_elements(self) -> list[ReportElementProtocol, ...]:
         return self._report_elements
 
-    def append_report_element(self, report_element: ReportElementProtocol) -> None:
-        self._report_elements.append(report_element)
+    def append_report_element(
+        self, report_element: ReportElementProtocol | list[ReportElementProtocol]
+    ) -> None:
+        if isinstance(report_element, Iterable):
+            self._report_elements.extend(report_element)
+        else:
+            self._report_elements.append(report_element)
 
     def generate_report(self) -> str:
         return "MontrekReportManager: No report generated!!"

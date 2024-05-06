@@ -36,6 +36,18 @@ class TestMontrekReportManager(TestCase):
         manager.append_report_element(report_element)
         assert manager.report_elements == [report_element]
 
+    def test_append_report_element_list(self):
+        session_data = {}
+        manager = MockMontrekReportManager(session_data=session_data)
+        report_element = MockReportElement()
+        manager.append_report_element(report_element)
+        manager.append_report_element([report_element, report_element])
+        assert manager.report_elements == [
+            report_element,
+            report_element,
+            report_element,
+        ]
+
     def test_generate_report(self):
         session_data = {}
         manager = MockMontrekReportManager(session_data=session_data)
