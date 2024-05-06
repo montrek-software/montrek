@@ -5,6 +5,8 @@ from reporting.managers.latex_report_manager import LatexReportManager
 
 
 class MockMontrekReportManager(MontrekReportManager):
+    document_title = "Mock Report"
+
     def generate_report(self) -> str:
         report = ""
         for report_element in self.report_elements:

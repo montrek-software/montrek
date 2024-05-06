@@ -15,8 +15,9 @@ class TestLatexReportManager(TestCase):
         manager.append_report_element(mocks.MockReportElement())
         manager.append_report_element(mocks.MockReportElement())
         latex_manager = LatexReportManager(manager)
-        self.assertIn("latexlatex", latex_manager.generate_report())
-        report = manager.generate_report()
+        generated_report_tex = latex_manager.generate_report()
+        self.assertIn("latexlatex", generated_report_tex)
+        self.assertIn("Mock Report", generated_report_tex)
 
     def test_compile_report(self):
         session_data = {}

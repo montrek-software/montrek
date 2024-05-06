@@ -16,18 +16,6 @@ class LatexReportManager:
     def __init__(self, report_manager: MontrekReportManager):
         self.report_manager = report_manager
 
-    @property
-    def document_name(self):
-        return "document"
-
-    @property
-    def document_title(self):
-        return "Montrek Report"
-
-    @property
-    def footer_text(self):
-        return "Internal Report"
-
     def generate_report(self) -> str:
         context_data = self.get_context()
         context_data.update(self.get_layout_data())
@@ -45,8 +33,8 @@ class LatexReportManager:
             "montrek_logo": os.path.join(
                 settings.STATIC_ROOT, "logos", "montrek_logo_variant.png"
             ),
-            "document_title": self.document_title,
-            "footer_text": self.footer_text,
+            "document_title": self.report_manager.document_title,
+            "footer_text": self.report_manager.footer_text,
             "colors": self.get_colors(),
         }
 
@@ -70,7 +58,9 @@ class LatexReportManager:
             os.makedirs(output_dir)
         with tempfile.TemporaryDirectory() as tmpdirname:
             # Path to the temporary LaTeX file
-            latex_file_path = os.path.join(tmpdirname, "document.tex")
+            latex_file_path = os.path.join(
+                tmpdirname, f"{self.report_manager.document_name}.tex"
+            )
 
             # Write the LaTeX code to a file
             with open(latex_file_path, "w") as f:
@@ -101,11 +91,14 @@ class LatexReportManager:
                 return None
 
             # Define the source PDF path (assuming the output PDF has the same name as the .tex file, but with .pdf extension)
-            pdf_file_path = os.path.join(tmpdirname, "document.pdf")
+            pdf_file_path = os.path.join(
+                tmpdirname, f"{self.report_manager.document_name}.pdf"
+            )
 
             # Define the destination PDF path
-            output_pdf_path = os.path.join(output_dir, "document.pdf")
-
+            output_pdf_path = os.path.join(
+                output_dir, f"{self.report_manager.document_name}.pdf"
+            )
             # Move the PDF to the output directory
             shutil.move(pdf_file_path, output_pdf_path)
 

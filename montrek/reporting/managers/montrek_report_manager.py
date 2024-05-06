@@ -12,6 +12,10 @@ class ReportElementProtocol(Protocol):
 
 
 class MontrekReportManager(MontrekManager):
+    document_name = "document"
+    document_title = "Montrek Report"
+    footer_text = "Internal Report"
+
     def __init__(self, session_data: dict[str, str], **kwargs) -> None:
         super().__init__(session_data=session_data, **kwargs)
         self._report_elements = []
