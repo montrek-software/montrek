@@ -382,3 +382,7 @@ class MontrekReportView(MontrekTemplateView, ToPdfMixin):
         if self.request.GET.get("gen_pdf") == "true":
             return self.list_to_pdf()
         return super().get(request, *args, **kwargs)
+
+    @property
+    def title(self):
+        return self.manager.document_title
