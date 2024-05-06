@@ -1,6 +1,6 @@
 from django.core.exceptions import PermissionDenied
+from django.test import TestCase, TransactionTestCase
 from django.db.models import Q
-from django.test import TestCase
 from django.utils import timezone
 from baseclasses.utils import montrek_time
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
@@ -490,6 +490,18 @@ class TestMontrekCreateObject(TestCase):
         )
         queried_object = repository.std_queryset().get()
         self.assertEqual(queried_object.field_a2_float, 0.0)
+
+
+class TestMontrekCreateObjectTransaction(TransactionTestCase):
+    def setUp(self):
+        self.user = MontrekUserFactory()
+
+    def test_std_create_object_is_atomic(self):
+        repository = HubARepository(session_data={"user_id": self.user.id})
+        with self.assertRaises(ValueError):
+            repository.std_create_object({"field_a1_int": "test"})
+        self.assertEqual(me_models.SatA1.objects.count(), 0)
+        self.assertEqual(me_models.HubA.objects.count(), 0)
 
 
 class TestDeleteObject(TestCase):
