@@ -162,6 +162,9 @@ class TestMontrekViewMixin(TestCase):
             "filter": {"field1__equal": {"negate": False, "value": "value1"}},
         }
         self.assertEqual(mock_view.session_data, expected_filter_data)
+        self.assertEqual(
+            mock_view.request.session["filter"], expected_filter_data["filter"]
+        )
 
     def test_repository_object_creation(self):
         mock_view = MockMontrekView("/")
