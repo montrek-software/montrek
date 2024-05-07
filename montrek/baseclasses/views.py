@@ -1,7 +1,6 @@
 import os
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied
-from django.core.paginator import Page
 from django.shortcuts import render
 from django.views.generic.list import ListView
 from django.core.paginator import Paginator
@@ -9,9 +8,8 @@ from django.views.generic import DetailView
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import CreateView
 from django.views import View
-from django.http import HttpResponseRedirect
-from django.http import HttpResponse, Http404
-from django.urls import reverse, reverse_lazy
+from django.http import HttpResponse, HttpResponseRedirect
+from django.urls import reverse
 from django.contrib import messages
 from decouple import config
 from baseclasses.dataclasses.nav_bar_model import NavBarModel
@@ -30,8 +28,6 @@ from baseclasses.dataclasses.history_data_table import HistoryDataTable
 from baseclasses.managers.montrek_manager import MontrekManagerNotImplemented
 from reporting.managers.montrek_table_manager import MontrekTableManager
 from reporting.managers.montrek_report_manager import LatexReportManager
-
-# Create your views here.
 
 
 def home(request):
@@ -151,6 +147,7 @@ class MontrekViewMixin:
         session_data.update(self._get_filters(session_data))
         if self.request.user.is_authenticated:
             session_data["user_id"] = self.request.user.id
+        self.request.session["filter"] = session_data.get("filter", {})
         return session_data
 
     def _get_filters(self, session_data):
