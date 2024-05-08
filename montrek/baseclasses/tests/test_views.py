@@ -126,6 +126,7 @@ class TestMontrekViewMixin(TestCase):
         expected_data = {
             "param1": ["value1"],
             "param2": ["value2"],
+            "filter": {},
             "filter_field": [],
             "filter_negate": [],
             "filter_lookup": [],
