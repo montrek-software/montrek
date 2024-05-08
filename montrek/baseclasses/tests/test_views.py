@@ -114,6 +114,7 @@ class TestMontrekViewMixin(TestCase):
         self.assertEqual(
             mock_view.session_data,
             {
+                "filter": {},
                 "filter_field": [],
                 "filter_negate": [],
                 "filter_lookup": [],
