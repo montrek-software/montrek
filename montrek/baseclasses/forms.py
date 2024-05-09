@@ -27,10 +27,9 @@ class FilterForm(forms.Form):
         IS_NULL = "isnull", "is null"
         IN = "in", "in"
 
-    def __init__(self, *args, **kwargs):
-        self.filter = kwargs.pop("filter", {})
-        if self.filter:
-            filter_key, value = list(self.filter.items())[0]
+    def __init__(self, filter: dict | None = None, *args, **kwargs):
+        if filter:
+            filter_key, value = list(filter.items())[0]
             filter_field, filter_lookup = filter_key.split("__")
             filter_negate = value["filter_negate"]
             filter_value = value["filter_value"]

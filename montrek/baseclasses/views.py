@@ -153,16 +153,11 @@ class MontrekViewMixin:
 
     def _get_filters(self, session_data):
         request_path = self.request.path
-        filter_field = session_data.get("filter_field", [])
-        filter_negate = session_data.get("filter_negate", [])
-        filter_lookup = session_data.get("filter_lookup", [])
-        filter_value = session_data.get("filter_value", [])
-        filter_data = {
-            "filter_field": filter_field,
-            "filter_negate": filter_negate,
-            "filter_lookup": filter_lookup,
-            "filter_value": ",".join(filter_value),
-        }
+        filter_field = session_data.pop("filter_field", [])
+        filter_negate = session_data.pop("filter_negate", [])
+        filter_lookup = session_data.pop("filter_lookup", [])
+        filter_value = session_data.pop("filter_value", [])
+        filter_data = {}
         if filter_field and filter_lookup and filter_value:
             true_values = ("True", "true", True)
             false_values = ("False", "false", False)
@@ -174,12 +169,11 @@ class MontrekViewMixin:
                 filter_value = filter_value.split(",")
             if filter_lookup == "isnull":
                 filter_value = True
-            if "filter" not in filter_data:
-                filter_data["filter"] = {}
             if filter_value in true_values:
                 filter_value = True
             elif filter_value in false_values:
                 filter_value = False
+            filter_data["filter"] = {}
             filter_data["filter"][request_path] = {
                 filter_key: {
                     "filter_negate": filter_negate,
