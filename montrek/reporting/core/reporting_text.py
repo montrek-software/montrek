@@ -28,3 +28,25 @@ class ReportingTextParagraph(ReportingElement, ReportingChecksMixin):
         if self.text_type == ReportingTextType.PLAIN:
             return f"<p>{self.text}</p>"
         return self.text
+
+
+class ReportingHeader1:
+    def __init__(self, text: str):
+        self.text = text
+
+    def to_html(self) -> str:
+        return f"<h1>{self.text}</h1>"
+
+    def to_latex(self) -> str:
+        return f"\\section{{{self.text}}}"
+
+
+class ReportingHeader2:
+    def __init__(self, text: str):
+        self.text = text
+
+    def to_html(self) -> str:
+        return f"<h2>{self.text}</h2>"
+
+    def to_latex(self) -> str:
+        return f"\\textbf{{\\color{{blue}} { self.text } }}\\newline"

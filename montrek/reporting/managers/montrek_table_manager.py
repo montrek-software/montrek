@@ -8,13 +8,18 @@ import csv
 class MontrekTableManager(MontrekManager):
     is_paginated = True
     paginate_by = 10
+    table_title = ""
+    document_title = "Montrek Table"
+    footer_text = "Internal Table"
+    document_name = "table"
 
     @property
     def table_elements(self) -> tuple[te.TableElement, ...]:
         return ()
 
     def to_html(self):
-        html_str = '<table class="table table-bordered table-hover"><tr>'
+        html_str = f"<h3>{self.table_title}</h3>"
+        html_str += '<table class="table table-bordered table-hover"><tr>'
         for table_element in self.table_elements:
             html_str += f"<th>{table_element.name}</th>"
         html_str += "</tr>"
@@ -28,7 +33,9 @@ class MontrekTableManager(MontrekManager):
         return html_str
 
     def to_latex(self):
-        table_start_str = "\\begin{table}\n\\centering\n\\arrayrulecolor{lightgrey}\n\\begin{tabularx}{\\textwidth}{|"
+        table_start_str = "\\begin{table}\n\\centering\n\\arrayrulecolor{lightgrey}\n"
+        table_start_str += f"\\caption{{{self.table_title}}}\n"
+        table_start_str += "\\begin{tabularx}{\\textwidth}{|"
         table_end_str = "\\end{tabularx}\n\\end{table}"
 
         column_def_str = ""

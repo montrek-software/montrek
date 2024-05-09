@@ -1,9 +1,24 @@
 from reporting.managers.montrek_table_manager import MontrekTableManager
+from reporting.managers.montrek_report_manager import MontrekReportManager
 from reporting.dataclasses import table_elements as te
+from reporting.core.reporting_text import ReportingHeader2
 from montrek_example.repositories.hub_a_repository import HubARepository
 from montrek_example.repositories.hub_b_repository import HubBRepository
 from montrek_example.repositories.hub_c_repository import HubCRepository
 from montrek_example.repositories.hub_d_repository import HubDRepository
+
+
+class ExampleReportManager(MontrekReportManager):
+    report_name = "Example Report"
+
+    def collect_report_elements(self) -> None:
+        table_managers = [
+            HubAManager(self.session_data),
+            HubBManager(self.session_data),
+            HubCManager(self.session_data),
+        ]
+        for table_manager in table_managers:
+            self.append_report_element(table_manager)
 
 
 class HubAManager(MontrekTableManager):
