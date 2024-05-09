@@ -82,8 +82,13 @@ class HtmlLatexConverter:
     @staticmethod
     def convert(text: str) -> str:
         text = HtmlLatexConverter.bold(text)
+        text = HtmlLatexConverter.italic(text)
         return text
 
     @staticmethod
     def bold(text: str) -> str:
         return text.replace("<b>", "\\textbf{").replace("</b>", "}")
+
+    @staticmethod
+    def italic(text: str) -> str:
+        return text.replace("<i>", "\\textit{").replace("</i>", "}")

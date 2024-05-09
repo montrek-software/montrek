@@ -68,3 +68,18 @@ class TestReportingParagraph(TestCase):
         self.assertEqual(
             test_bold_to_latex, "This is a \\textbf{bold} text\\newline\\newline"
         )
+
+    def test_italic_text(self):
+        paragraph = ReportingParagraph(
+            "This is a <i>italic</i> text", reporting_text_type=ReportingTextType.HTML
+        )
+        self.assertEqual(paragraph.text, "This is a <i>italic</i> text")
+        self.assertEqual(paragraph.reporting_text_type.name, "HTML")
+        test_italic_to_html = paragraph.to_html()
+        self.assertEqual(
+            test_italic_to_html, "<div><p>This is a <i>italic</i> text</p></div>"
+        )
+        test_italic_to_latex = paragraph.to_latex()
+        self.assertEqual(
+            test_italic_to_latex, "This is a \\textit{italic} text\\newline\\newline"
+        )
