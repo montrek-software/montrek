@@ -1,6 +1,9 @@
 from reporting.constants import ReportingTextType
 from reporting.core.reporting_protocols import ReportingElement
 from reporting.core.reporting_mixins import ReportingChecksMixin
+from reporting.managers.montrek_report_manager import (
+    ReportElementProtocol,
+)
 
 
 class ReportingTextParagraph(ReportingElement, ReportingChecksMixin):
@@ -28,6 +31,17 @@ class ReportingTextParagraph(ReportingElement, ReportingChecksMixin):
         if self.text_type == ReportingTextType.PLAIN:
             return f"<p>{self.text}</p>"
         return self.text
+
+
+class ReportingParagraph(ReportElementProtocol):
+    def __init__(self, text: str):
+        self.text = text
+
+    def to_latex(self) -> str:
+        return f"{self.text}\\newline"
+
+    def to_html(self) -> str:
+        return f"<p>{self.text}</p>"
 
 
 class ReportingHeader1:
