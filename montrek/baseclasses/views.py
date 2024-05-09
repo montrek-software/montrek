@@ -141,11 +141,10 @@ class MontrekViewMixin:
         if not self.request:
             return {}
         session_data = dict(self.request.GET)
-        if not ('page' in session_data or 'gen_pdf' in session_data or 'gen_csv' in session_data):
-            self.request.session['filter'] = {}
         kwargs = getattr(self, "kwargs", {})
         session_data.update(kwargs)
         session_data.update(dict(self.request.session))
+        session_data["request_path"] = self.request.path
         session_data.update(self._get_filters(session_data))
         if self.request.user.is_authenticated:
             session_data["user_id"] = self.request.user.id
@@ -153,6 +152,7 @@ class MontrekViewMixin:
         return session_data
 
     def _get_filters(self, session_data):
+        request_path = self.request.path
         filter_field = session_data.get("filter_field", [])
         filter_negate = session_data.get("filter_negate", [])
         filter_lookup = session_data.get("filter_lookup", [])
@@ -169,17 +169,22 @@ class MontrekViewMixin:
             filter_negate = filter_negate[0] in true_values
             filter_lookup = filter_lookup[0]
             filter_value = filter_value[0]
-            filter_field = f"{filter_field[0]}__{filter_lookup}"
+            filter_key = f"{filter_field[0]}__{filter_lookup}"
+            if filter_lookup == "in":
+                filter_value = filter_value.split(",")
+            if filter_lookup == "isnull":
+                filter_value = True
+            if "filter" not in filter_data:
+                filter_data["filter"] = {}
             if filter_value in true_values:
                 filter_value = True
             elif filter_value in false_values:
                 filter_value = False
-            if filter_lookup == "in":
-                filter_value = filter_value.split(",")
-            if filter_lookup == "isnull":
-                filter_value = True or filter_value
-            filter_data["filter"] = {
-                filter_field: {"negate": filter_negate, "value": filter_value}
+            filter_data["filter"][request_path] = {
+                filter_key: {
+                    "filter_negate": filter_negate,
+                    "filter_value": filter_value,
+                }
             }
         return filter_data
 
@@ -252,8 +257,11 @@ class MontrekListView(
         if not isinstance(self.manager, MontrekTableManager):
             raise ValueError("Manager must be of type MontrekTableManager")
         context["table"] = self.manager.to_html()
+        filter = self.session_data.get("filter", {}).get(
+            self.session_data["request_path"], {}
+        )
         context["filter_form"] = FilterForm(
-            self.session_data,
+            filter=filter,
             filter_field_choices=self.manager.get_std_queryset_field_choices(),
         )
         return context

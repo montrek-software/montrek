@@ -80,10 +80,11 @@ class MontrekRepository:
     @property
     def query_filter(self):
         query_filter = self.session_data.get("filter", {})
+        query_filter = query_filter.get(self.session_data["request_path"], {})
         q_objects = []
         for key, value in query_filter.items():
-            q = Q(**{key: value["value"]})
-            q = ~q if value["negate"] else q
+            q = Q(**{key: value["filter_value"]})
+            q = ~q if value["filter_negate"] else q
             q_objects.append(q)
         return q_objects
 

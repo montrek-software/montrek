@@ -28,15 +28,28 @@ class FilterForm(forms.Form):
         IN = "in", "in"
 
     def __init__(self, *args, **kwargs):
+        self.filter = kwargs.pop("filter", {})
+        if self.filter:
+            filter_key, value = list(self.filter.items())[0]
+            filter_field, filter_lookup = filter_key.split("__")
+            filter_negate = value["filter_negate"]
+            filter_value = value["filter_value"]
+        else:
+            filter_field = ""
+            filter_lookup = ""
+            filter_negate = False
+            filter_value = ""
         self.filter_field_choices = kwargs.pop("filter_field_choices", [])
         super().__init__(*args, **kwargs)
 
         self.fields["filter_field"] = forms.ChoiceField(
+            initial=filter_field,
             choices=self.filter_field_choices,
             widget=forms.Select(attrs={"id": "id_field"}),
             required=False,
         )
         self.fields["filter_negate"] = forms.ChoiceField(
+            initial=filter_negate,
             choices=[
                 (False, ""),
                 (True, "not"),
@@ -45,12 +58,15 @@ class FilterForm(forms.Form):
             widget=forms.Select(attrs={"id": "id_negate"}),
         )
         self.fields["filter_lookup"] = forms.ChoiceField(
+            initial=filter_lookup,
             choices=self.LookupChoices,
             widget=forms.Select(attrs={"id": "id_lookup"}),
             required=False,
         )
         self.fields["filter_value"] = forms.CharField(
-            widget=forms.TextInput(attrs={"id": "id_value"}), required=False
+            initial=filter_value,
+            widget=forms.TextInput(attrs={"id": "id_value"}),
+            required=False,
         )
 
 
