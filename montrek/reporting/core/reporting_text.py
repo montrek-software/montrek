@@ -4,6 +4,7 @@ from reporting.core.reporting_mixins import ReportingChecksMixin
 from reporting.managers.montrek_report_manager import (
     ReportElementProtocol,
 )
+from reporting.core.text_converter import HtmlLatexConverter
 
 
 class ReportingTextParagraph(ReportingElement, ReportingChecksMixin):
@@ -50,7 +51,7 @@ class ReportingParagraph(ReportElementProtocol):
                 text = HtmlLatexConverter.convert(self.text)
             case _:
                 text = f"\\textbf{{\\color{{red}} Unknown Text Type {self.reporting_text_type}"
-        return f"{text}\\newline\\newline"
+        return text
 
     def to_html(self) -> str:
         return f"<div><p>{self.text}</p></div>"
