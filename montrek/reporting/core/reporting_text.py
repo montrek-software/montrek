@@ -51,7 +51,7 @@ class ReportingParagraph(ReportElementProtocol):
                 text = HtmlLatexConverter.convert(self.text)
             case _:
                 text = f"\\textbf{{\\color{{red}} Unknown Text Type {self.reporting_text_type}"
-        return text
+        return text + "\\newline\\newline"
 
     def to_html(self) -> str:
         return f"<div><p>{self.text}</p></div>"
