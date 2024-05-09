@@ -251,9 +251,8 @@ class MontrekListView(
         if not isinstance(self.manager, MontrekTableManager):
             raise ValueError("Manager must be of type MontrekTableManager")
         context["table"] = self.manager.to_html()
-        filter = self.session_data.get("filter", {}).get(
-            self.session_data["request_path"], {}
-        )
+        filter = self.session_data.get("filter", {})
+        filter = filter.get(self.session_data["request_path"], {})
         context["filter_form"] = FilterForm(
             filter=filter,
             filter_field_choices=self.manager.get_std_queryset_field_choices(),
