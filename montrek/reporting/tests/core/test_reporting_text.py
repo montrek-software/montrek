@@ -1,6 +1,10 @@
 from django.test import TestCase
 
-from reporting.core.reporting_text import ReportingParagraph, ReportingTextParagraph
+from reporting.core.reporting_text import (
+    HtmlLatexConverter,
+    ReportingParagraph,
+    ReportingTextParagraph,
+)
 from reporting.constants import ReportingTextType
 
 
