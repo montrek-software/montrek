@@ -1,4 +1,4 @@
-from reporting.constants import ReportingTextType
+from reporting.constants import ReportingTextType, TextType
 from reporting.core.reporting_protocols import ReportingElement
 from reporting.core.reporting_mixins import ReportingChecksMixin
 from reporting.managers.montrek_report_manager import (
@@ -34,14 +34,26 @@ class ReportingTextParagraph(ReportingElement, ReportingChecksMixin):
 
 
 class ReportingParagraph(ReportElementProtocol):
-    def __init__(self, text: str):
+    def __init__(
+        self,
+        text: str,
+        reporting_text_type: ReportingTextType = ReportingTextType.HTML,
+    ):
         self.text = text
+        self.reporting_text_type = reporting_text_type
 
     def to_latex(self) -> str:
-        return f"{self.text}\\newline"
+        match self.reporting_text_type:
+            case ReportingTextType.PLAIN:
+                text = self.text
+            case ReportingTextType.HTML:
+                text = HtmlLatexConverter.convert(self.text)
+            case _:
+                text = f"\\textbf{{\\color{{red}} Unknown Text Type {self.reporting_text_type}"
+        return f"{text}\\newline\\newline"
 
     def to_html(self) -> str:
-        return f"<p>{self.text}</p>"
+        return f"<div><p>{self.text}</p></div>"
 
 
 class ReportingHeader1:
@@ -64,3 +76,14 @@ class ReportingHeader2:
 
     def to_latex(self) -> str:
         return f"\\textbf{{\\color{{blue}} { self.text } }}\\newline"
+
+
+class HtmlLatexConverter:
+    @staticmethod
+    def convert(text: str) -> str:
+        text = HtmlLatexConverter.bold(text)
+        return text
+
+    @staticmethod
+    def bold(text: str) -> str:
+        return text.replace("<b>", "\\textbf{").replace("</b>", "}")
