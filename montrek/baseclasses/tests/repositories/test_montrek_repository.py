@@ -35,7 +35,15 @@ class TestMontrekRepository(TestCase):
     def test_query_filter(self):
         montrek_repo = MontrekRepository(
             session_data={
-                "filter": {"field1__equal": {"negate": False, "value": "value1"}},
+                "request_path": "/path/",
+                "filter": {
+                    "/path/": {
+                        "field1__equal": {
+                            "filter_negate": False,
+                            "filter_value": "value1",
+                        }
+                    }
+                },
             }
         )
         q_list = montrek_repo.query_filter
@@ -47,7 +55,15 @@ class TestMontrekRepository(TestCase):
 
         montrek_repo = MontrekRepository(
             session_data={
-                "filter": {"field1__equal": {"negate": True, "value": "value1"}},
+                "request_path": "/path/",
+                "filter": {
+                    "/path/": {
+                        "field1__equal": {
+                            "filter_negate": True,
+                            "filter_value": "value1",
+                        }
+                    }
+                },
             }
         )
         q_list = montrek_repo.query_filter

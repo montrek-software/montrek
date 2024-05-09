@@ -114,11 +114,7 @@ class TestMontrekViewMixin(TestCase):
         self.assertEqual(
             mock_view.session_data,
             {
-                "filter": {},
-                "filter_field": [],
-                "filter_negate": [],
-                "filter_lookup": [],
-                "filter_value": "",
+                "request_path": "/",
             },
         )
 
@@ -127,11 +123,7 @@ class TestMontrekViewMixin(TestCase):
         expected_data = {
             "param1": ["value1"],
             "param2": ["value2"],
-            "filter": {},
-            "filter_field": [],
-            "filter_negate": [],
-            "filter_lookup": [],
-            "filter_value": "",
+            "request_path": "/",
         }
         self.assertEqual(mock_view.session_data, expected_data)
 
@@ -157,13 +149,17 @@ class TestMontrekViewMixin(TestCase):
             "/?filter_field=field1&filter_negate=False&filter_lookup=equal&filter_value=value1"
         )
         expected_filter_data = {
-            "filter_field": ["field1"],
-            "filter_negate": ["False"],
-            "filter_lookup": ["equal"],
-            "filter_value": "value1",
-            "filter": {"field1__equal": {"negate": False, "value": "value1"}},
+            "filter": {
+                "/": {
+                    "field1__equal": {"filter_negate": False, "filter_value": "value1"}
+                }
+            },
         }
-        self.assertEqual(mock_view.session_data, expected_filter_data)
+        expected_session_data = {
+            "request_path": "/",
+        }
+        expected_session_data.update(expected_filter_data)
+        self.assertEqual(mock_view.session_data, expected_session_data)
         self.assertEqual(
             mock_view.request.session["filter"], expected_filter_data["filter"]
         )
