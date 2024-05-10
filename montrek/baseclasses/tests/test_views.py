@@ -146,17 +146,17 @@ class TestMontrekViewMixin(TestCase):
 
     def test_filter_data_handling(self):
         mock_view = MockMontrekView(
-            "/?filter_field=field1&filter_negate=False&filter_lookup=equal&filter_value=value1"
+            "/some/path?filter_field=field1&filter_negate=False&filter_lookup=equal&filter_value=value1"
         )
         expected_filter_data = {
             "filter": {
-                "/": {
+                "/some/path": {
                     "field1__equal": {"filter_negate": False, "filter_value": "value1"}
                 }
             },
         }
         expected_session_data = {
-            "request_path": "/",
+            "request_path": "/some/path",
         }
         expected_session_data.update(expected_filter_data)
         self.assertEqual(mock_view.session_data, expected_session_data)
@@ -260,3 +260,11 @@ class TestMontrekListView(TestCase):
         response = test_list_view.get(test_list_view.request)
         self.assertEqual(response.status_code, 302)
         self.assertGreater(len(test_list_view.manager.messages), 0)
+
+    def test_list_view_base_filter_reset(self):
+        test_list_view = MockMontrekListView("dummy?filter_reset=true")
+        response = test_list_view.get(test_list_view.request)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(test_list_view.request.session.get("filter"), {})
+        self.assertEqual(test_list_view.session_data.get("filter"), {})
