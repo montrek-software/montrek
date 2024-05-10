@@ -3,24 +3,22 @@ from reporting.managers.montrek_report_manager import ReportElementProtocol
 
 
 class ReportGridElements:
-    report_grid_elements_containter = []
+    def __init__(self, no_of_rows: int, no_of_cols: int):
+        self.report_grid_elements_container = []
+        for _ in range(no_of_rows):
+            self.report_grid_elements_container.append(
+                [EmptyReportGridElement() for _ in range(no_of_cols)]
+            )
 
     def add_report_grid_element(
         self, report_element: ReportElementProtocol, row: int, col: int
     ):
-        if row + 1 >= len(self.report_grid_elements_containter):
-            for _ in range(row + 1):
-                self.report_grid_elements_containter.append([])
-        if col + 1 >= len(self.report_grid_elements_containter[row]):
-            for _ in range(col + 1):
-                self.report_grid_elements_containter[row].append(
-                    EmptyReportGridElement()
-                )
-        self.report_grid_elements_containter[row][col] = report_element
+        self.report_grid_elements_container[row][col] = report_element
 
 
 class ReportGridLayout:
-    report_grid_elements = ReportGridElements()
+    def __init__(self, no_of_rows: int, no_of_cols: int):
+        self.report_grid_elements = ReportGridElements(no_of_rows, no_of_cols)
 
     def add_report_grid_element(
         self, report_element: ReportElementProtocol, row: int, col: int
@@ -29,7 +27,7 @@ class ReportGridLayout:
 
     def to_html(self):
         html_str = "<div><table>"
-        for row in self.report_grid_elements.report_grid_elements_containter:
+        for row in self.report_grid_elements.report_grid_elements_container:
             html_str += "<tr>"
             for element in row:
                 html_str += f"<td>{element.to_html()}</td>"
@@ -38,7 +36,17 @@ class ReportGridLayout:
         return html_str
 
     def to_latex(self):
-        ...
+        col_str = "l" * len(
+            max(self.report_grid_elements.report_grid_elements_container, key=len)
+        )
+        latex_str = f"\n\\begin{{tabular}}{{ {col_str} }}"
+        for row in self.report_grid_elements.report_grid_elements_container:
+            latex_str += "\n"
+            for element in row:
+                latex_str += f"{element.to_latex()} & "
+            latex_str = latex_str[:-3] + " \\\\\n"
+        latex_str += "\n\\end{tabular}"
+        return latex_str
 
 
 class EmptyReportGridElement:

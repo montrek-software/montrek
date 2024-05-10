@@ -1,18 +1,37 @@
 from django.test import TestCase
 from reporting.core.reporting_grid_layout import ReportGridLayout
-from reporting.core.reporting_text import ReportingParagraph
+from reporting.core.reporting_text import ReportingParagraph, ReportingText
 
 
 class TestReportGridLayout(TestCase):
-    def test_report_grid_layout(self):
-        grid = ReportGridLayout()
-        grid.add_report_grid_element(ReportingParagraph("One"), 0, 0)
-        grid.add_report_grid_element(ReportingParagraph("Two"), 0, 1)
-        grid.add_report_grid_element(ReportingParagraph("Three"), 1, 0)
-        grid.add_report_grid_element(ReportingParagraph("Four"), 1, 1)
+    def setUp(self):
+        self.grid = ReportGridLayout(2, 2)
+        self.grid.add_report_grid_element(ReportingParagraph("One"), 0, 0)
+        self.grid.add_report_grid_element(ReportingParagraph("Two"), 0, 1)
+        self.grid.add_report_grid_element(ReportingParagraph("Three"), 1, 0)
+        self.grid.add_report_grid_element(ReportingParagraph("Four"), 1, 1)
 
-        html = grid.to_html()
+    def test_report_grid_layout__html(self):
+        html = self.grid.to_html()
         self.assertEqual(
             html,
-            "<div><table><tr><td><div><p>One</p></div></td><td><div><p>Two</p></div></td><td></td></tr><tr><td><div><p>Three</p></div></td><td><div><p>Four</p></div></td><td></td></tr><tr></tr><tr></tr></table></div>",
+            "<div><table><tr><td><div><p>One</p></div></td><td><div><p>Two</p></div></td></tr><tr><td><div><p>Three</p></div></td><td><div><p>Four</p></div></td></tr></table></div>",
+        )
+
+    def test_report_grid_layout__latex(self):
+        latex = self.grid.to_latex()
+        self.assertEqual(
+            latex.replace("\n", ""),
+            r"\begin{tabular}{ ll }One\newline\newline & Two\newline\newline \\Three\newline\newline & Four\newline\newline \\\end{tabular}",
+        )
+
+    def test_nested_grids(self):
+        nested_grid = ReportGridLayout(1, 1)
+        nested_grid.add_report_grid_element(ReportingText("Nested One"), 0, 0)
+        nested_grid.add_report_grid_element(ReportingText("Nested Two"), 0, 0)
+        self.grid.add_report_grid_element(nested_grid, 1, 0)
+        html = self.grid.to_html()
+        self.assertEqual(
+            html,
+            "<div><table><tr><td><div><p>One</p></div></td><td><div><p>Two</p></div></td></tr><tr><td><div><table><tr><td>Nested Two</td></tr></table></div></td><td><div><p>Four</p></div></td></tr></table></div>",
         )

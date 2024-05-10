@@ -34,7 +34,7 @@ class ReportingTextParagraph(ReportingElement, ReportingChecksMixin):
         return self.text
 
 
-class ReportingParagraph(ReportElementProtocol):
+class ReportingText(ReportElementProtocol):
     def __init__(
         self,
         text: str,
@@ -51,6 +51,15 @@ class ReportingParagraph(ReportElementProtocol):
                 text = HtmlLatexConverter.convert(self.text)
             case _:
                 text = f"\\textbf{{\\color{{red}} Unknown Text Type {self.reporting_text_type}"
+        return text
+
+    def to_html(self) -> str:
+        return self.text
+
+
+class ReportingParagraph(ReportingText):
+    def to_latex(self) -> str:
+        text = super().to_latex()
         return text + "\\newline\\newline"
 
     def to_html(self) -> str:
