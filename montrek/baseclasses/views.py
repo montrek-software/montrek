@@ -153,10 +153,10 @@ class MontrekViewMixin:
 
     def _get_filters(self, session_data):
         request_path = self.request.path
-        filter_field = session_data.pop("filter_field", [''])[0]
-        filter_negate = session_data.pop("filter_negate", [''])[0]
-        filter_lookup = session_data.pop("filter_lookup", [''])[0]
-        filter_value = session_data.pop("filter_value", [''])[0]
+        filter_field = session_data.pop("filter_field", [""])[0]
+        filter_negate = session_data.pop("filter_negate", [""])[0]
+        filter_lookup = session_data.pop("filter_lookup", [""])[0]
+        filter_value = session_data.pop("filter_value", [""])[0]
         filter_data = {}
         if filter_field and filter_lookup and filter_value:
             true_values = ("True", "true", True)
@@ -234,6 +234,8 @@ class MontrekListView(
             return self.list_to_csv()
         if self.request.GET.get("gen_pdf") == "true":
             return self.list_to_pdf()
+        if self.request.GET.get("reset_filter") == "true":
+            return self.reset_filter()
         return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -281,6 +283,9 @@ class MontrekListView(
                 return response
         previous_url = self.request.META.get("HTTP_REFERER")
         return HttpResponseRedirect(previous_url)
+    def reset_filter(self):
+        self.request.session["filter"] = {}
+        return HttpResponseRedirect(self.request.path)
 
 
 class MontrekHistoryListView(MontrekTemplateView):
