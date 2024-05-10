@@ -127,3 +127,8 @@ input[readonly] {
   max-height: 100vh; /* Set the maximum height to be 100% of the viewport height */
   overflow-y: auto; /* Enables vertical scrolling if the content overflows */
 }
+
+#noStyleTable, #noStyleTable th, #noStyleTable td, #noStyleTable tr {
+  background-color: initial;
+  border-bottom: initial;
+}
