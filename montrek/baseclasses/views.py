@@ -158,6 +158,8 @@ class MontrekViewMixin:
         filter_lookup = session_data.pop("filter_lookup", [""])[0]
         filter_value = session_data.pop("filter_value", [""])[0]
         filter_data = {}
+        if filter_lookup == "isnull":
+            filter_value = True
         if filter_field and filter_lookup and filter_value:
             true_values = ("True", "true", True)
             false_values = ("False", "false", False)
@@ -167,8 +169,6 @@ class MontrekViewMixin:
             filter_key = f"{filter_field}__{filter_lookup}"
             if filter_lookup == "in":
                 filter_value = filter_value.split(",")
-            if filter_lookup == "isnull":
-                filter_value = True
             if filter_value in true_values:
                 filter_value = True
             elif filter_value in false_values:
@@ -284,6 +284,7 @@ class MontrekListView(
                 return response
         previous_url = self.request.META.get("HTTP_REFERER")
         return HttpResponseRedirect(previous_url)
+
     def reset_filter(self):
         self.request.session["filter"] = {}
         return HttpResponseRedirect(self.request.path)

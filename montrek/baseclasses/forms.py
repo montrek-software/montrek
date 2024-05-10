@@ -16,18 +16,26 @@ class DateRangeForm(forms.Form):
 
 class FilterForm(forms.Form):
     class LookupChoices(TextChoices):
-        EQUAL = "exact", "equal"
+        CONTAINS = "contains", "contains"
+        CONTAINS_CI = "icontains", "contains (i)"
+        ENDS_WITH = "endswith", "ends with"
+        EXACT = "exact", "exact"
+        EXACT_CI = "iexact", "exact (i)"
         GREATER_THAN = "gt", ">"
         GREATER_THAN_OR_EQUAL = "gte", ">="
+        IN = "in", "in"
+        IS_NULL = "isnull", "is null"
         LESS_THAN = "lt", "<"
         LESS_THAN_OR_EQUAL = "lte", "<="
-        CONTAINS = "contains", "contains"
         STARTS_WITH = "startswith", "starts with"
-        ENDS_WITH = "endswith", "ends with"
-        IS_NULL = "isnull", "is null"
-        IN = "in", "in"
 
-    def __init__(self, filter: dict | None = None, *args, **kwargs):
+    def __init__(
+        self,
+        filter_field_choices: list[tuple] | None = None,
+        filter: dict | None = None,
+        *args,
+        **kwargs,
+    ):
         if filter:
             filter_key, value = list(filter.items())[0]
             filter_field, filter_lookup = filter_key.split("__")
@@ -37,15 +45,15 @@ class FilterForm(forms.Form):
                 filter_value = ",".join(filter_value)
         else:
             filter_field = ""
-            filter_lookup = ""
+            filter_lookup = "exact"
             filter_negate = False
             filter_value = ""
-        self.filter_field_choices = kwargs.pop("filter_field_choices", [])
+        filter_field_choices = filter_field_choices or []
         super().__init__(*args, **kwargs)
 
         self.fields["filter_field"] = forms.ChoiceField(
             initial=filter_field,
-            choices=self.filter_field_choices,
+            choices=filter_field_choices,
             widget=forms.Select(attrs={"id": "id_field"}),
             required=False,
         )
