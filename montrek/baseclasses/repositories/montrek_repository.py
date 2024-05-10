@@ -203,8 +203,8 @@ class MontrekRepository:
         )
         try:
             queryset = queryset.filter(*self.query_filter)
-        except FieldError as e:
-            self.messages.append(MontrekMessageError(e))
+        except (FieldError, ValueError) as e:
+            self.messages.append(MontrekMessageError(str(e)))
         return queryset
 
     def build_time_series_queryset(

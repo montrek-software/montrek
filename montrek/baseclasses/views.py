@@ -183,6 +183,7 @@ class MontrekViewMixin:
         return filter_data
 
     def show_messages(self):
+        self.manager.collect_messages()
         for message in self.manager.messages:
             if message.message_type == "error":
                 messages.error(self.request, message.message)
