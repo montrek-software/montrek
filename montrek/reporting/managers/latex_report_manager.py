@@ -23,7 +23,6 @@ class LatexReportManager:
             context_data[key] = mark_safe(value)
         context = Context(context_data)
         template = Template(self.read_template())
-        print(template.render(context))
         return template.render(context)
 
     def get_context(self) -> dict:
