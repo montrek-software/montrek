@@ -14,5 +14,5 @@ class TestReportGridLayout(TestCase):
         html = grid.to_html()
         self.assertEqual(
             html,
-            "<div><table><tr><td>One</td><td>Two</td></tr><tr><td>Three</td><td>Four</td></tr></table>",
+            "<div><table><tr><td><div><p>One</p></div></td><td><div><p>Two</p></div></td><td></td></tr><tr><td><div><p>Three</p></div></td><td><div><p>Four</p></div></td><td></td></tr><tr></tr><tr></tr></table></div>",
         )

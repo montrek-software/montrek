@@ -28,7 +28,14 @@ class ReportGridLayout:
         self.report_grid_elements.add_report_grid_element(report_element, row, col)
 
     def to_html(self):
-        ...
+        html_str = "<div><table>"
+        for row in self.report_grid_elements.report_grid_elements_containter:
+            html_str += "<tr>"
+            for element in row:
+                html_str += f"<td>{element.to_html()}</td>"
+            html_str += "</tr>"
+        html_str += "</table></div>"
+        return html_str
 
     def to_latex(self):
         ...
