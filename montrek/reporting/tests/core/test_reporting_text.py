@@ -54,9 +54,12 @@ class TestReportingParagraph(TestCase):
         self.assertEqual(paragraph.text, "This is a plain text")
         self.assertEqual(paragraph.reporting_text_type.name, "HTML")
         test_plain_to_html = paragraph.to_html()
-        self.assertEqual(test_plain_to_html, "<div><p>This is a plain text</p></div>")
+        self.assertEqual(test_plain_to_html, "<p>This is a plain text</p>")
         test_plain_to_latex = paragraph.to_latex()
-        self.assertEqual(test_plain_to_latex, "This is a plain text\\newline\\newline")
+        self.assertEqual(
+            test_plain_to_latex,
+            "\\begin{flushleft}This is a plain text\\end{flushleft}",
+        )
 
     def test_bold_text(self):
         paragraph = ReportingParagraph(
@@ -65,12 +68,11 @@ class TestReportingParagraph(TestCase):
         self.assertEqual(paragraph.text, "This is a <b>bold</b> text")
         self.assertEqual(paragraph.reporting_text_type.name, "HTML")
         test_bold_to_html = paragraph.to_html()
-        self.assertEqual(
-            test_bold_to_html, "<div><p>This is a <b>bold</b> text</p></div>"
-        )
+        self.assertEqual(test_bold_to_html, "<p>This is a <b>bold</b> text</p>")
         test_bold_to_latex = paragraph.to_latex()
         self.assertEqual(
-            test_bold_to_latex, "This is a \\textbf{bold} text\\newline\\newline"
+            test_bold_to_latex,
+            "\\begin{flushleft}This is a \\textbf{bold} text\\end{flushleft}",
         )
 
     def test_italic_text(self):
@@ -80,10 +82,9 @@ class TestReportingParagraph(TestCase):
         self.assertEqual(paragraph.text, "This is a <i>italic</i> text")
         self.assertEqual(paragraph.reporting_text_type.name, "HTML")
         test_italic_to_html = paragraph.to_html()
-        self.assertEqual(
-            test_italic_to_html, "<div><p>This is a <i>italic</i> text</p></div>"
-        )
+        self.assertEqual(test_italic_to_html, "<p>This is a <i>italic</i> text</p>")
         test_italic_to_latex = paragraph.to_latex()
         self.assertEqual(
-            test_italic_to_latex, "This is a \\textit{italic} text\\newline\\newline"
+            test_italic_to_latex,
+            "\\begin{flushleft}This is a \\textit{italic} text\\end{flushleft}",
         )
