@@ -86,3 +86,14 @@ class ReportingHeader2:
 
     def to_latex(self) -> str:
         return f"\\textbf{{\\color{{blue}} { self.text } }}\\newline"
+
+
+class Vspace:
+    def __init__(self, space: int):
+        self.space = space
+
+    def to_latex(self) -> str:
+        return f"\\vspace{{{self.space}mm}}"
+
+    def to_html(self) -> str:
+        return f'<div style="height:{self.space}mm;"></div>'
