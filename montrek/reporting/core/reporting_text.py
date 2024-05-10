@@ -60,7 +60,7 @@ class ReportingText(ReportElementProtocol):
 class ReportingParagraph(ReportingText):
     def to_latex(self) -> str:
         text = super().to_latex()
-        return text + "\\newline\\newline"
+        return f"\\begin{{flushleft}}{text}\\end{{flushleft}}"
 
     def to_html(self) -> str:
         return f"<div><p>{self.text}</p></div>"

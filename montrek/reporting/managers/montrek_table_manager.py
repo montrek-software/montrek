@@ -33,7 +33,9 @@ class MontrekTableManager(MontrekManager):
         return html_str
 
     def to_latex(self):
-        table_start_str = "\\begin{table}\n\\centering\n\\arrayrulecolor{lightgrey}\n"
+        table_start_str = (
+            "\\begin{table}[H]\n\\centering\n\\arrayrulecolor{lightgrey}\n"
+        )
         table_start_str += f"\\caption{{{self.table_title}}}\n"
         table_start_str += "\\begin{tabularx}{\\textwidth}{|"
         table_end_str = "\\end{tabularx}\n\\end{table}"
