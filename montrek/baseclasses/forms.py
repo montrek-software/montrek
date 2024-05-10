@@ -16,9 +16,9 @@ class DateRangeForm(forms.Form):
 
 class FilterForm(forms.Form):
     class LookupChoices(TextChoices):
-        # with MariaDB collation utf9mb4_general_ci all lookups are case-insensitive
         CONTAINS = "contains", "contains"
         ENDS_WITH = "endswith", "ends with"
+        # With MariaDB collation utf9mb4_general_ci 'exact' is case-insensitive.
         EQUALS = "exact", "equals"
         GREATER_THAN = "gt", ">"
         GREATER_THAN_OR_EQUAL = "gte", ">="
