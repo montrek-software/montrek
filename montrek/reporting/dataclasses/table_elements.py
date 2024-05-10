@@ -94,7 +94,7 @@ class BaseLinkTableElement(TableElement):
             return "<td></td>"
         filter_field = self.kwargs.get("filter")
         if filter_field:
-            filter_str = f"?filter_field={filter_field}__in&filter_value={BaseLinkTableElement.get_dotted_attr_or_arg(obj, filter_field)}"
+            filter_str = f"?filter_field={filter_field}&filter_lookup=in&filter_value={BaseLinkTableElement.get_dotted_attr_or_arg(obj, filter_field)}"
             url += filter_str
         link_text = self._get_link_text(obj)
         id_tag = url.replace("/", "_")

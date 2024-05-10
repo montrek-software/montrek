@@ -223,7 +223,7 @@ class TestDataTableFilters(TestCase):
         )
         test_link = table_element.get_attribute(test_obj)
         self.assertTrue(
-            f"?filter_field=test_name__in&amp;filter_value={test_obj.test_name}"
+            f"?filter_field=test_name&filter_lookup=in&filter_value={test_obj.test_name}"
             in test_link
         )
 

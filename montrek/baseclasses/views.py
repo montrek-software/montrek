@@ -160,7 +160,7 @@ class MontrekViewMixin:
         filter_data = {}
         if filter_lookup == "isnull":
             filter_value = True
-        if filter_field and filter_lookup and filter_value:
+        if filter_field:
             true_values = ("True", "true", True)
             false_values = ("False", "false", False)
             filter_negate = filter_negate in true_values
