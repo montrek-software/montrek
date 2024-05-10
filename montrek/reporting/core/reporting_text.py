@@ -63,7 +63,7 @@ class ReportingParagraph(ReportingText):
         return f"\\begin{{flushleft}}{text}\\end{{flushleft}}"
 
     def to_html(self) -> str:
-        return f"<div><p>{self.text}</p></div>"
+        return f"<p>{self.text}</p>"
 
 
 class ReportingHeader1:
