@@ -47,7 +47,9 @@ class ReportGridLayout:
             for element in row:
                 latex_str += f"{element.to_latex()} & "
             latex_str = latex_str[:-3] + " \\\\\n"
-        latex_str += "\n\\end{tabular}\n\n"
+        latex_str += "\n\\end{tabular}"
+        if not self.is_nested:
+            latex_str += "\\\\\n"
         return latex_str
 
     def _get_latex_column_definition(self) -> str:
