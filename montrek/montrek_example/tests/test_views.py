@@ -25,8 +25,44 @@ class TestMontrekExampleAListView(MontrekListViewTestCase):
     expected_no_of_rows = 1
 
     def build_factories(self):
-        sata1fac = me_factories.SatA1Factory()
-        me_factories.SatA2Factory(hub_entity=sata1fac.hub_entity)
+        sata1 = me_factories.SatA1Factory()
+        me_factories.SatA2Factory(hub_entity=sata1.hub_entity)
+
+    def test_filter(self):
+        other_sata1 = me_factories.SatA1Factory()
+        me_factories.SatA2Factory(
+            hub_entity=other_sata1.hub_entity, field_a2_str="test"
+        )
+        self.assertEqual(len(HubARepository().std_queryset()), 2)
+
+        url = reverse(
+            "montrek_example_a_list",
+        )
+        response = self.client.get(url)
+        obj_list = response.context_data["object_list"]
+        self.assertEqual(len(obj_list), 2)
+
+        query_params = {
+            "filter_field": "field_a2_str",
+            "filter_lookup": "in",
+            "filter_negate": False,
+            "filter_value": "test,foo,bar",
+        }
+        response = self.client.get(url, data=query_params)
+        obj_list = response.context_data["object_list"]
+        self.assertEqual(len(obj_list), 1)
+        self.assertEqual(obj_list[0].id, other_sata1.hub_entity.id)
+
+        # The filter should persist for this path until reset
+        response = self.client.get(url)
+        obj_list = response.context_data["object_list"]
+        self.assertEqual(len(obj_list), 1)
+        self.assertEqual(obj_list[0].id, other_sata1.hub_entity.id)
+
+        response = self.client.get(url, data={"reset_filter": "true"}, follow=True)
+        obj_list = response.context_data["object_list"]
+        self.assertRedirects(response, url)
+        self.assertEqual(len(obj_list), 2)
 
 
 class TestMontrekExampleACreateView(MontrekCreateViewTestCase):
