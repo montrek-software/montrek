@@ -40,16 +40,19 @@ class ReportGridLayout:
 
     def to_latex(self):
         col_str = self._get_latex_column_definition()
+        latex_str = "\n\n" if self.is_nested else "\n\n\\begin{table}[H]"
 
-        latex_str = f"\n\\begin{{tabular}}{{ {col_str} }}"
+        latex_str += f"\n\\begin{{tabular}}{{ {col_str} }}"
         for row in self.report_grid_elements.report_grid_elements_container:
             latex_str += "\n"
             for element in row:
                 latex_str += f"{element.to_latex()} & "
             latex_str = latex_str[:-3] + " \\\\\n"
         latex_str += "\n\\end{tabular}"
-        if not self.is_nested:
-            latex_str += "\\\\\n"
+        if self.is_nested:
+            latex_str += "\n"
+        else:
+            latex_str += "\n\\end{table}\n\n"
         return latex_str
 
     def _get_latex_column_definition(self) -> str:
@@ -59,7 +62,7 @@ class ReportGridLayout:
         col_tag = (
             "l"
             if self.is_nested
-            else f">{{\\raggedright\\arraybackslash}}p{{ {(1/no_of_columns):.5f}\\textwidth}}"
+            else f">{{\\raggedright\\arraybackslash}}p{{ {(0.97/no_of_columns):.5f}\\textwidth}}"
         )
         col_str = ""
         for i in range(no_of_columns):

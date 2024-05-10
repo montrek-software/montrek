@@ -1,7 +1,7 @@
 from reporting.constants import ReportingTextType, TextType
 from reporting.core.reporting_protocols import ReportingElement
 from reporting.core.reporting_mixins import ReportingChecksMixin
-from reporting.managers.montrek_report_manager import (
+from reporting.lib.protocols import (
     ReportElementProtocol,
 )
 from reporting.core.text_converter import HtmlLatexConverter
