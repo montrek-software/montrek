@@ -79,11 +79,13 @@ class MontrekRepository:
 
     @property
     def query_filter(self):
-        query_filter = self.session_data.get("filter", {})
+        request_path = self.session_data.get("request_path", "")
+        filter = self.session_data.get("filter", {})
+        filter = filter.get(request_path, {})
         q_objects = []
-        for key, value in query_filter.items():
-            q = Q(**{key: value["value"]})
-            q = ~q if value["negate"] else q
+        for key, value in filter.items():
+            q = Q(**{key: value["filter_value"]})
+            q = ~q if value["filter_negate"] else q
             q_objects.append(q)
         return q_objects
 
@@ -201,8 +203,8 @@ class MontrekRepository:
         )
         try:
             queryset = queryset.filter(*self.query_filter)
-        except FieldError as e:
-            self.messages.append(MontrekMessageError(e))
+        except (FieldError, ValueError) as e:
+            self.messages.append(MontrekMessageError(str(e)))
         return queryset
 
     def build_time_series_queryset(

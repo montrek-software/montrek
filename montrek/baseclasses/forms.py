@@ -16,27 +16,48 @@ class DateRangeForm(forms.Form):
 
 class FilterForm(forms.Form):
     class LookupChoices(TextChoices):
-        EQUAL = "exact", "equal"
+        CONTAINS = "contains", "contains"
+        ENDS_WITH = "endswith", "ends with"
+        # With MariaDB collation utf9mb4_general_ci 'exact' is case-insensitive.
+        EQUALS = "exact", "equals"
         GREATER_THAN = "gt", ">"
         GREATER_THAN_OR_EQUAL = "gte", ">="
+        IN = "in", "in"
+        IS_NULL = "isnull", "is null"
         LESS_THAN = "lt", "<"
         LESS_THAN_OR_EQUAL = "lte", "<="
-        CONTAINS = "contains", "contains"
         STARTS_WITH = "startswith", "starts with"
-        ENDS_WITH = "endswith", "ends with"
-        IS_NULL = "isnull", "is null"
-        IN = "in", "in"
 
-    def __init__(self, *args, **kwargs):
-        self.filter_field_choices = kwargs.pop("filter_field_choices", [])
+    def __init__(
+        self,
+        filter_field_choices: list[tuple] | None = None,
+        filter: dict | None = None,
+        *args,
+        **kwargs,
+    ):
+        if filter:
+            filter_key, value = list(filter.items())[0]
+            filter_field, filter_lookup = filter_key.split("__")
+            filter_negate = value["filter_negate"]
+            filter_value = value["filter_value"]
+            if isinstance(filter_value, list):
+                filter_value = ",".join(filter_value)
+        else:
+            filter_field = ""
+            filter_lookup = "exact"
+            filter_negate = False
+            filter_value = ""
+        filter_field_choices = filter_field_choices or []
         super().__init__(*args, **kwargs)
 
         self.fields["filter_field"] = forms.ChoiceField(
-            choices=self.filter_field_choices,
+            initial=filter_field,
+            choices=filter_field_choices,
             widget=forms.Select(attrs={"id": "id_field"}),
             required=False,
         )
         self.fields["filter_negate"] = forms.ChoiceField(
+            initial=filter_negate,
             choices=[
                 (False, ""),
                 (True, "not"),
@@ -45,12 +66,15 @@ class FilterForm(forms.Form):
             widget=forms.Select(attrs={"id": "id_negate"}),
         )
         self.fields["filter_lookup"] = forms.ChoiceField(
+            initial=filter_lookup,
             choices=self.LookupChoices,
             widget=forms.Select(attrs={"id": "id_lookup"}),
             required=False,
         )
         self.fields["filter_value"] = forms.CharField(
-            widget=forms.TextInput(attrs={"id": "id_value"}), required=False
+            initial=filter_value,
+            widget=forms.TextInput(attrs={"id": "id_value"}),
+            required=False,
         )
 
 

@@ -114,10 +114,7 @@ class TestMontrekViewMixin(TestCase):
         self.assertEqual(
             mock_view.session_data,
             {
-                "filter_field": [],
-                "filter_negate": [],
-                "filter_lookup": [],
-                "filter_value": "",
+                "request_path": "/",
             },
         )
 
@@ -126,10 +123,7 @@ class TestMontrekViewMixin(TestCase):
         expected_data = {
             "param1": ["value1"],
             "param2": ["value2"],
-            "filter_field": [],
-            "filter_negate": [],
-            "filter_lookup": [],
-            "filter_value": "",
+            "request_path": "/",
         }
         self.assertEqual(mock_view.session_data, expected_data)
 
@@ -152,16 +146,25 @@ class TestMontrekViewMixin(TestCase):
 
     def test_filter_data_handling(self):
         mock_view = MockMontrekView(
-            "/?filter_field=field1&filter_negate=False&filter_lookup=equal&filter_value=value1"
+            "/some/path?filter_field=field1&filter_negate=false&filter_lookup=in&filter_value=value1,value2"
         )
         expected_filter_data = {
-            "filter_field": ["field1"],
-            "filter_negate": ["False"],
-            "filter_lookup": ["equal"],
-            "filter_value": "value1",
-            "filter": {"field1__equal": {"negate": False, "value": "value1"}},
+            "filter": {
+                "/some/path": {
+                    "field1__in": {
+                        "filter_negate": False,
+                        "filter_value": ["value1", "value2"],
+                    }
+                }
+            },
         }
-        self.assertEqual(mock_view.session_data, expected_filter_data)
+        expected_session_data = expected_filter_data.copy()
+        expected_session_data["request_path"] = "/some/path"
+
+        self.assertEqual(mock_view.session_data, expected_session_data)
+        self.assertEqual(
+            mock_view.request.session["filter"], expected_filter_data["filter"]
+        )
 
     def test_repository_object_creation(self):
         mock_view = MockMontrekView("/")
@@ -169,8 +172,10 @@ class TestMontrekViewMixin(TestCase):
 
     def test_show_repository_messages(self):
         mock_view = MockMontrekView("/")
-        mock_view.manager.messages = [
+        mock_view.manager.repository.messages = [
             MontrekMessageError("Error message"),
+        ]
+        mock_view.manager.messages = [
             MontrekMessageInfo("Info message"),
         ]
         mock_view.show_messages()
@@ -259,3 +264,11 @@ class TestMontrekListView(TestCase):
         response = test_list_view.get(test_list_view.request)
         self.assertEqual(response.status_code, 302)
         self.assertGreater(len(test_list_view.manager.messages), 0)
+
+    def test_list_view_base_filter_reset(self):
+        test_list_view = MockMontrekListView("dummy?filter_reset=true")
+        response = test_list_view.get(test_list_view.request)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(test_list_view.request.session.get("filter"), {})
+        self.assertEqual(test_list_view.session_data.get("filter"), {})

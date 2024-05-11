@@ -54,7 +54,7 @@ def _get_link(obj, table_element):
         return "<td></td>"
     filter_field = table_element.kwargs.get("filter")
     if filter_field:
-        filter_str = f"?filter_field={filter_field}__in&filter_value={_get_dotted_attr_or_arg(obj, filter_field)}"
+        filter_str = f"?filter_field={filter_field}&filter_lookup=in&filter_value={_get_dotted_attr_or_arg(obj, filter_field)}"
         url += filter_str
     if isinstance(table_element, table_elements.LinkTextTableElement):
         link_text = _get_dotted_attr_or_arg(obj, table_element.text)
