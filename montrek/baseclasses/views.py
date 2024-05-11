@@ -151,6 +151,7 @@ class MontrekViewMixin:
         kwargs = getattr(self, "kwargs", {})
         session_data.update(kwargs)
         session_data.update(dict(self.request.session))
+        session_data["request_path"] = self.request.path
         session_data.update(self._get_filters(session_data))
         if self.request.user.is_authenticated:
             session_data["user_id"] = self.request.user.id
@@ -158,37 +159,38 @@ class MontrekViewMixin:
         return session_data
 
     def _get_filters(self, session_data):
-        filter_field = session_data.get("filter_field", [])
-        filter_negate = session_data.get("filter_negate", [])
-        filter_lookup = session_data.get("filter_lookup", [])
-        filter_value = session_data.get("filter_value", [])
-        filter_data = {
-            "filter_field": filter_field,
-            "filter_negate": filter_negate,
-            "filter_lookup": filter_lookup,
-            "filter_value": ",".join(filter_value),
-        }
-        if filter_field and filter_lookup and filter_value:
+        request_path = self.request.path
+        filter_field = session_data.pop("filter_field", [""])[0]
+        filter_negate = session_data.pop("filter_negate", [""])[0]
+        filter_lookup = session_data.pop("filter_lookup", [""])[0]
+        filter_value = session_data.pop("filter_value", [""])[0]
+        filter_data = {}
+        if filter_lookup == "isnull":
+            filter_value = True
+        if filter_field:
             true_values = ("True", "true", True)
             false_values = ("False", "false", False)
-            filter_negate = filter_negate[0] in true_values
-            filter_lookup = filter_lookup[0]
-            filter_value = filter_value[0]
-            filter_field = f"{filter_field[0]}__{filter_lookup}"
+            filter_negate = filter_negate in true_values
+            filter_lookup = filter_lookup
+            filter_value = filter_value
+            filter_key = f"{filter_field}__{filter_lookup}"
+            if filter_lookup == "in":
+                filter_value = filter_value.split(",")
             if filter_value in true_values:
                 filter_value = True
             elif filter_value in false_values:
                 filter_value = False
-            if filter_lookup == "in":
-                filter_value = filter_value.split(",")
-            if filter_lookup == "isnull":
-                filter_value = True or filter_value
-            filter_data["filter"] = {
-                filter_field: {"negate": filter_negate, "value": filter_value}
+            filter_data["filter"] = {}
+            filter_data["filter"][request_path] = {
+                filter_key: {
+                    "filter_negate": filter_negate,
+                    "filter_value": filter_value,
+                }
             }
         return filter_data
 
     def show_messages(self):
+        self.manager.collect_messages()
         for message in self.manager.messages:
             if message.message_type == "error":
                 messages.error(self.request, message.message)
@@ -262,6 +264,8 @@ class MontrekListView(
             return self.list_to_csv()
         if self.request.GET.get("gen_pdf") == "true":
             return self.list_to_pdf()
+        if self.request.GET.get("reset_filter") == "true":
+            return self.reset_filter()
         return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -279,8 +283,10 @@ class MontrekListView(
         if not isinstance(self.manager, MontrekTableManager):
             raise ValueError("Manager must be of type MontrekTableManager")
         context["table"] = self.manager.to_html()
+        filter = self.session_data.get("filter", {})
+        filter = filter.get(self.session_data["request_path"], {})
         context["filter_form"] = FilterForm(
-            self.session_data,
+            filter=filter,
             filter_field_choices=self.manager.get_std_queryset_field_choices(),
         )
         return context
@@ -289,6 +295,28 @@ class MontrekListView(
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = 'attachment; filename="export.csv"'
         return self.manager.download_csv(response)
+
+    def list_to_pdf(self):
+        response = HttpResponse(content_type="application/pdf")
+        response["Content-Disposition"] = 'attachment; filename="export.pdf"'
+        report_manager = LatexReportManager(self.session_data)
+        report_manager.append_report_element(self.manager)
+        pdf_path = report_manager.compile_report()
+        self.manager.messages += report_manager.messages
+        self.show_messages()
+        if pdf_path and os.path.exists(pdf_path):
+            with open(pdf_path, "rb") as pdf_file:
+                response = HttpResponse(pdf_file.read(), content_type="application/pdf")
+                response["Content-Disposition"] = (
+                    "inline; filename=" + os.path.basename(pdf_path)
+                )
+                return response
+        previous_url = self.request.META.get("HTTP_REFERER")
+        return HttpResponseRedirect(previous_url)
+
+    def reset_filter(self):
+        self.request.session["filter"] = {}
+        return HttpResponseRedirect(self.request.path)
 
 
 class MontrekHistoryListView(MontrekTemplateView):
