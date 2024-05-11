@@ -21,12 +21,15 @@ class LatexReportManager:
         context_data.update(self.get_layout_data())
         for key, value in context_data.items():
             context_data[key] = mark_safe(value)
+        context_data["footer_text"] = self.report_manager.footer_text.to_latex()
         context = Context(context_data)
         template = Template(self.read_template())
         return template.render(context)
 
     def get_context(self) -> dict:
-        return {"content": self.report_manager.to_latex()}
+        return {
+            "content": self.report_manager.to_latex(),
+        }
 
     def get_layout_data(self) -> dict:
         return {

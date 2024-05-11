@@ -1,20 +1,19 @@
 from collections.abc import Iterable
-from typing import Protocol
+from os import walk
 from baseclasses.managers.montrek_manager import MontrekManager
-
-
-class ReportElementProtocol(Protocol):
-    def to_html(self) -> str:
-        ...
-
-    def to_latex(self) -> str:
-        ...
+from reporting.core import reporting_text as rt
+from reporting.lib.protocols import (
+    ReportElementProtocol,
+)
 
 
 class MontrekReportManager(MontrekManager):
     document_name = "document"
     document_title = "Montrek Report"
-    footer_text = "Internal Report"
+
+    @property
+    def footer_text(self) -> ReportElementProtocol:
+        return rt.ReportingText("Internal Report")
 
     def __init__(self, session_data: dict[str, str], **kwargs) -> None:
         super().__init__(session_data=session_data, **kwargs)
@@ -40,6 +39,7 @@ class MontrekReportManager(MontrekManager):
         self.collect_report_elements()
         for report_element in self.report_elements:
             html_str += report_element.to_html()
+        html_str += self._get_footer()
         return html_str
 
     def to_latex(self) -> str:
@@ -48,3 +48,7 @@ class MontrekReportManager(MontrekManager):
         for report_element in self.report_elements:
             latex_str += report_element.to_latex()
         return latex_str
+
+    def _get_footer(self) -> str:
+        footer = f'<div style="height:2cm"></div><hr><div style="color:grey">{self.footer_text.to_html()}</div>'
+        return footer

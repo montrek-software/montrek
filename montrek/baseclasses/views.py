@@ -142,8 +142,12 @@ class MontrekViewMixin:
         if not self.request:
             return {}
         session_data = dict(self.request.GET)
-        if not ('page' in session_data or 'gen_pdf' in session_data or 'gen_csv' in session_data):
-            self.request.session['filter'] = {}
+        if not (
+            "page" in session_data
+            or "gen_pdf" in session_data
+            or "gen_csv" in session_data
+        ):
+            self.request.session["filter"] = {}
         kwargs = getattr(self, "kwargs", {})
         session_data.update(kwargs)
         session_data.update(dict(self.request.session))

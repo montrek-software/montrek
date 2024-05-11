@@ -3,6 +3,10 @@ from django.core.paginator import Paginator
 from baseclasses.managers.montrek_manager import MontrekManager
 from reporting.dataclasses import table_elements as te
 import csv
+from reporting.core import reporting_text as rt
+from reporting.lib.protocols import (
+    ReportElementProtocol,
+)
 
 
 class MontrekTableManager(MontrekManager):
@@ -10,8 +14,11 @@ class MontrekTableManager(MontrekManager):
     paginate_by = 10
     table_title = ""
     document_title = "Montrek Table"
-    footer_text = "Internal Table"
     document_name = "table"
+
+    @property
+    def footer_text(self) -> ReportElementProtocol:
+        return rt.ReportingText("Internal Report")
 
     @property
     def table_elements(self) -> tuple[te.TableElement, ...]:
@@ -33,7 +40,9 @@ class MontrekTableManager(MontrekManager):
         return html_str
 
     def to_latex(self):
-        table_start_str = "\\begin{table}\n\\centering\n\\arrayrulecolor{lightgrey}\n"
+        table_start_str = (
+            "\\begin{table}[H]\n\\centering\n\\arrayrulecolor{lightgrey}\n"
+        )
         table_start_str += f"\\caption{{{self.table_title}}}\n"
         table_start_str += "\\begin{tabularx}{\\textwidth}{|"
         table_end_str = "\\end{tabularx}\n\\end{table}"
@@ -44,7 +53,7 @@ class MontrekTableManager(MontrekManager):
         for table_element in self.table_elements:
             if isinstance(table_element, te.LinkTableElement):
                 continue
-            column_def_str += "X|"
+            column_def_str += "l|"
             column_header_str += f"\\color{{white}}\\textbf{{{table_element.name}}} & "
         table_start_str += column_def_str
         table_start_str += "}\n\\hline\n"

@@ -17,3 +17,12 @@ class ReportingPlotType(Enum):
     HISTOGRAM = 5
     BOXPLOT = 6
     HEATMAP = 7
+
+
+class TextType(Enum):
+    PLAIN = 0
+    BOLD = 1
+    ITALIC = 2
+    UNDERLINE = 3
+    STRIKETHROUGH = 4
+    CODE = 5
