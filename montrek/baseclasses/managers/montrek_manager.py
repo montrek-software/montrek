@@ -31,6 +31,11 @@ class MontrekManager:
         object_query = self.get_object_from_pk(pk)
         return self.repository.object_to_dict(object_query)
 
+    def get_std_queryset_field_choices(self) -> list[tuple]:
+        field_names = sorted(list(self.repository.annotations.keys()))
+        field_descriptions = [name.replace("_", " ").title() for name in field_names]
+        return list(zip(field_names, field_descriptions))
+
     def collect_messages(self):
         self.messages += self.repository.messages
 

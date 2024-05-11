@@ -50,6 +50,7 @@ class MockRepository:
     def __init__(self, session_data):
         self.session_data = session_data
         self.messages = []
+        self.annotations = {}
 
     def std_queryset(self):
         return MockQuerySet(
@@ -111,7 +112,13 @@ class TestMontrekViewMixin(TestCase):
     def test_session_data(self):
         mock_view = MockMontrekView("/")
         self.assertEqual(
-            mock_view.session_data, {"filter_field": "", "filter_value": ""}
+            mock_view.session_data,
+            {
+                "filter_field": [],
+                "filter_negate": [],
+                "filter_lookup": [],
+                "filter_value": "",
+            },
         )
 
     def test_session_data_with_query_params(self):
@@ -119,7 +126,9 @@ class TestMontrekViewMixin(TestCase):
         expected_data = {
             "param1": ["value1"],
             "param2": ["value2"],
-            "filter_field": "",
+            "filter_field": [],
+            "filter_negate": [],
+            "filter_lookup": [],
             "filter_value": "",
         }
         self.assertEqual(mock_view.session_data, expected_data)
@@ -142,11 +151,15 @@ class TestMontrekViewMixin(TestCase):
         self.assertNotIn("user_id", mock_view.session_data)
 
     def test_filter_data_handling(self):
-        mock_view = MockMontrekView("/?filter_field=field1&filter_value=value1")
+        mock_view = MockMontrekView(
+            "/?filter_field=field1&filter_negate=False&filter_lookup=equal&filter_value=value1"
+        )
         expected_filter_data = {
-            "filter_field": "field1",
+            "filter_field": ["field1"],
+            "filter_negate": ["False"],
+            "filter_lookup": ["equal"],
             "filter_value": "value1",
-            "filter": {"field1": "value1"},
+            "filter": {"field1__equal": {"negate": False, "value": "value1"}},
         }
         self.assertEqual(mock_view.session_data, expected_filter_data)
 

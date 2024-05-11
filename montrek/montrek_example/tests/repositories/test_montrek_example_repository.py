@@ -1,5 +1,6 @@
 from django.core.exceptions import PermissionDenied
-from django.test import TestCase
+from django.test import TestCase, TransactionTestCase
+from django.db.models import Q
 from django.utils import timezone
 from baseclasses.utils import montrek_time
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
@@ -10,6 +11,9 @@ from montrek_example.repositories.hub_c_repository import HubCRepository
 from montrek_example.repositories.hub_d_repository import HubDRepository
 from montrek_example import models as me_models
 import pandas as pd
+
+MIN_DATE = timezone.make_aware(timezone.datetime.min)
+MAX_DATE = timezone.make_aware(timezone.datetime.max)
 
 
 class TestMontrekRepositorySatellite(TestCase):
@@ -266,11 +270,11 @@ class TestMontrekCreateObject(TestCase):
         self.assertEqual(me_models.HubA.objects.count(), 2)
         self.assertEqual(
             me_models.HubA.objects.first().state_date_start,
-            timezone.make_aware(timezone.datetime.min),
+            MIN_DATE,
         )
         self.assertEqual(
             me_models.HubA.objects.last().state_date_end,
-            timezone.make_aware(timezone.datetime.max),
+            MAX_DATE,
         )
         self.assertEqual(
             me_models.HubA.objects.last().state_date_start,
@@ -486,6 +490,18 @@ class TestMontrekCreateObject(TestCase):
         )
         queried_object = repository.std_queryset().get()
         self.assertEqual(queried_object.field_a2_float, 0.0)
+
+
+class TestMontrekCreateObjectTransaction(TransactionTestCase):
+    def setUp(self):
+        self.user = MontrekUserFactory()
+
+    def test_std_create_object_is_atomic(self):
+        repository = HubARepository(session_data={"user_id": self.user.id})
+        with self.assertRaises(ValueError):
+            repository.std_create_object({"field_a1_int": "test"})
+        self.assertEqual(me_models.SatA1.objects.count(), 0)
+        self.assertEqual(me_models.HubA.objects.count(), 0)
 
 
 class TestDeleteObject(TestCase):
@@ -809,3 +825,44 @@ class TestMontrekManyToManyRelations(TestCase):
         self.assertEqual(links.count(), 2)
         self.assertEqual(links[0], self.satd1.hub_entity)
         self.assertEqual(links[1], self.satd2.hub_entity)
+
+    def test_update_existing_links(self):
+        satd3 = me_factories.SatD1Factory(
+            field_d1_str="dritter",
+            field_d1_int=3,
+        )
+        satd4 = me_factories.SatD1Factory(
+            field_d1_str="vierter",
+            field_d1_int=4,
+        )
+        hub_entity_id = self.satb1.hub_entity_id
+
+        # one existing, two new links
+        input_data = {
+            "hub_entity_id": hub_entity_id,
+            "link_hub_b_hub_d": [
+                self.satd1.hub_entity,
+                satd3.hub_entity,
+                satd4.hub_entity,
+            ],
+        }
+        repository_b = HubBRepository(session_data={"user_id": self.user.id})
+        repository_b.std_create_object(input_data)
+
+        hub_b = repository_b.std_queryset().filter(id=hub_entity_id).first()
+
+        links = me_models.LinkHubBHubD.objects.filter(hub_in=hub_b.id).all()
+        continued = links.filter(hub_out=self.satd1.hub_entity).get()
+        discontinued = links.filter(hub_out=self.satd2.hub_entity).get()
+        new_1 = links.filter(hub_out=satd3.hub_entity).get()
+        new_2 = links.filter(hub_out=satd4.hub_entity).get()
+
+        self.assertEqual(hub_b.field_d1_str, "erster,dritter,vierter")
+
+        self.assertEqual(continued.state_date_start, MIN_DATE)
+        self.assertEqual(continued.state_date_end, MAX_DATE)
+        self.assertEqual(discontinued.state_date_start, MIN_DATE)
+        self.assertEqual(discontinued.state_date_end, new_1.state_date_start)
+        self.assertEqual(new_1.state_date_start, new_2.state_date_start)
+        self.assertEqual(new_1.state_date_end, MAX_DATE)
+        self.assertEqual(new_2.state_date_end, MAX_DATE)

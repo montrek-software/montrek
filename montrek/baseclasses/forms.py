@@ -1,3 +1,4 @@
+from django.db.models import TextChoices
 from django import forms
 from django.db.models import QuerySet
 
@@ -14,12 +15,43 @@ class DateRangeForm(forms.Form):
 
 
 class FilterForm(forms.Form):
-    filter_field = forms.CharField(
-        widget=forms.TextInput(attrs={"id": "id_filter"}), required=False
-    )
-    filter_value = forms.CharField(
-        widget=forms.TextInput(attrs={"id": "id_value"}), required=False
-    )
+    class LookupChoices(TextChoices):
+        EQUAL = "exact", "equal"
+        GREATER_THAN = "gt", ">"
+        GREATER_THAN_OR_EQUAL = "gte", ">="
+        LESS_THAN = "lt", "<"
+        LESS_THAN_OR_EQUAL = "lte", "<="
+        CONTAINS = "contains", "contains"
+        STARTS_WITH = "startswith", "starts with"
+        ENDS_WITH = "endswith", "ends with"
+        IS_NULL = "isnull", "is null"
+        IN = "in", "in"
+
+    def __init__(self, *args, **kwargs):
+        self.filter_field_choices = kwargs.pop("filter_field_choices", [])
+        super().__init__(*args, **kwargs)
+
+        self.fields["filter_field"] = forms.ChoiceField(
+            choices=self.filter_field_choices,
+            widget=forms.Select(attrs={"id": "id_field"}),
+            required=False,
+        )
+        self.fields["filter_negate"] = forms.ChoiceField(
+            choices=[
+                (False, ""),
+                (True, "not"),
+            ],
+            required=False,
+            widget=forms.Select(attrs={"id": "id_negate"}),
+        )
+        self.fields["filter_lookup"] = forms.ChoiceField(
+            choices=self.LookupChoices,
+            widget=forms.Select(attrs={"id": "id_lookup"}),
+            required=False,
+        )
+        self.fields["filter_value"] = forms.CharField(
+            widget=forms.TextInput(attrs={"id": "id_value"}), required=False
+        )
 
 
 class MontrekCreateForm(forms.ModelForm):
