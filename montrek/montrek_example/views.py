@@ -34,6 +34,12 @@ def action_back_to_overview(example: str):
     )
 
 
+class MontrekExampleReport(views.MontrekReportView):
+    page_class = pages.MontrekExampleAAppPage
+    manager_class = mem.ExampleReportManager
+    title = "Montrek Example Report"
+
+
 # Create your views here.
 
 

@@ -203,6 +203,10 @@ class PercentTableElement(NumberTableElement):
     def _format_value(self, value) -> str:
         return f"{value:,.2%}"
 
+    def format_latex(self, value) -> str:
+        value = super().format_latex(value)
+        return value.replace("%", "\\%")
+
 
 @dataclass
 class DateTableElement(AttrTableElement):
@@ -257,7 +261,7 @@ class EuroTableElement(MoneyTableElement):
 
     @property
     def ccy_symbol_latex(self) -> str:
-        return "\\euro"
+        return "€"
 
 
 class DollarTableElement(MoneyTableElement):

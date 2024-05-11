@@ -1,6 +1,11 @@
 from django.test import TestCase
 
-from reporting.core.reporting_text import ReportingTextParagraph
+from reporting.core.reporting_text import (
+    HtmlLatexConverter,
+    ReportingParagraph,
+    ReportingTextParagraph,
+)
+from reporting.constants import ReportingTextType
 
 
 class TestReportText(TestCase):
@@ -41,3 +46,45 @@ class TestReportText(TestCase):
         self.assertEqual(test_plain_to_html, self.plain_html_text)
         test_plain_to_latex = paragraph.format_latex()
         self.assertEqual(test_plain_to_latex, self.plain_latex_text)
+
+
+class TestReportingParagraph(TestCase):
+    def test_plain_text(self):
+        paragraph = ReportingParagraph("This is a plain text")
+        self.assertEqual(paragraph.text, "This is a plain text")
+        self.assertEqual(paragraph.reporting_text_type.name, "HTML")
+        test_plain_to_html = paragraph.to_html()
+        self.assertEqual(test_plain_to_html, "<p>This is a plain text</p>")
+        test_plain_to_latex = paragraph.to_latex()
+        self.assertEqual(
+            test_plain_to_latex,
+            "\\begin{flushleft}This is a plain text\\end{flushleft}",
+        )
+
+    def test_bold_text(self):
+        paragraph = ReportingParagraph(
+            "This is a <b>bold</b> text", reporting_text_type=ReportingTextType.HTML
+        )
+        self.assertEqual(paragraph.text, "This is a <b>bold</b> text")
+        self.assertEqual(paragraph.reporting_text_type.name, "HTML")
+        test_bold_to_html = paragraph.to_html()
+        self.assertEqual(test_bold_to_html, "<p>This is a <b>bold</b> text</p>")
+        test_bold_to_latex = paragraph.to_latex()
+        self.assertEqual(
+            test_bold_to_latex,
+            "\\begin{flushleft}This is a \\textbf{bold} text\\end{flushleft}",
+        )
+
+    def test_italic_text(self):
+        paragraph = ReportingParagraph(
+            "This is a <i>italic</i> text", reporting_text_type=ReportingTextType.HTML
+        )
+        self.assertEqual(paragraph.text, "This is a <i>italic</i> text")
+        self.assertEqual(paragraph.reporting_text_type.name, "HTML")
+        test_italic_to_html = paragraph.to_html()
+        self.assertEqual(test_italic_to_html, "<p>This is a <i>italic</i> text</p>")
+        test_italic_to_latex = paragraph.to_latex()
+        self.assertEqual(
+            test_italic_to_latex,
+            "\\begin{flushleft}This is a \\textit{italic} text\\end{flushleft}",
+        )

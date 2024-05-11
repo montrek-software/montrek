@@ -4,6 +4,11 @@ from montrek_example import views
 
 urlpatterns = [
     path(
+        "",
+        views.MontrekExampleReport.as_view(),
+        name="montrek_example_report",
+    ),
+    path(
         "a/create",
         views.MontrekExampleACreate.as_view(),
         name="montrek_example_a_create",
