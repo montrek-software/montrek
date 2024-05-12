@@ -27,6 +27,7 @@ from baseclasses import utils
 from baseclasses.dataclasses.history_data_table import HistoryDataTable
 from baseclasses.managers.montrek_manager import MontrekManagerNotImplemented
 from reporting.managers.montrek_table_manager import MontrekTableManager
+from reporting.managers.montrek_details_manager import MontrekDetailsManager
 from reporting.managers.montrek_report_manager import MontrekReportManager
 from reporting.managers.latex_report_manager import LatexReportManager
 
@@ -308,7 +309,11 @@ class MontrekHistoryListView(MontrekTemplateView):
 
 
 class MontrekDetailView(
-    MontrekPermissionRequiredMixin, DetailView, MontrekPageViewMixin, MontrekViewMixin
+    MontrekPermissionRequiredMixin,
+    DetailView,
+    MontrekPageViewMixin,
+    MontrekViewMixin,
+    ToPdfMixin,
 ):
     template_name = "montrek_details.html"
     manager_class = MontrekManagerNotImplemented
@@ -318,9 +323,16 @@ class MontrekDetailView(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        if not isinstance(self.manager, MontrekDetailsManager):
+            raise ValueError("Manager must be of type MontrekDetailsManager")
         context = self.get_page_context(context, **kwargs)
-        context["detail_elements"] = self.elements
+        context["table"] = self.manager.to_html()
         return context
+
+    def get(self, request, *args, **kwargs):
+        if self.request.GET.get("gen_pdf") == "true":
+            return self.list_to_pdf()
+        return super().get(request, *args, **kwargs)
 
 
 class MontrekCreateUpdateView(

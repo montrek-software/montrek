@@ -66,13 +66,3 @@ class MailDetailView(MontrekDetailView):
     page_class = MailingPage
     title = "Mail Details"
     tab = "tab_mail_details"
-
-    @property
-    def elements(self) -> list[te.TableElement]:
-        return [
-            te.StringTableElement(name="Subject", attr="mail_subject"),
-            te.StringTableElement(name="Recipients", attr="mail_recipients"),
-            te.StringTableElement(name="State", attr="mail_state"),
-            te.StringTableElement(name="Message", attr="mail_message"),
-            te.StringTableElement(name="Comment", attr="mail_comment"),
-        ]

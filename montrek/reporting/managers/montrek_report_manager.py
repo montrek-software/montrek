@@ -11,13 +11,13 @@ class MontrekReportManager(MontrekManager):
     document_name = "document"
     document_title = "Montrek Report"
 
-    @property
-    def footer_text(self) -> ReportElementProtocol:
-        return rt.ReportingText("Internal Report")
-
     def __init__(self, session_data: dict[str, str], **kwargs) -> None:
         super().__init__(session_data=session_data, **kwargs)
         self._report_elements = []
+
+    @property
+    def footer_text(self) -> ReportElementProtocol:
+        return rt.ReportingText("Internal Report")
 
     @property
     def report_elements(self) -> list[ReportElementProtocol, ...]:

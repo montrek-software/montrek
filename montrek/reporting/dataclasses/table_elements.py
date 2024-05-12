@@ -28,7 +28,7 @@ class TableElement:
         raise NotImplementedError
 
     def format_latex(self, value):
-        return f" {value} &"
+        return f" \\color{{black}} {value} &"
 
     def get_attribute(self, obj: Any, tag: str) -> str:
         raise NotImplementedError
@@ -50,7 +50,7 @@ class AttrTableElement(TableElement):
             return self.format(value)
         elif tag == "latex":
             if value is None:
-                return "- &"
+                return " \\color{black} - &"
             return self.format_latex(value)
         return str(value)
 

@@ -53,7 +53,7 @@ class MontrekTableManager(MontrekManager):
         for table_element in self.table_elements:
             if isinstance(table_element, te.LinkTableElement):
                 continue
-            column_def_str += "l|"
+            column_def_str += "X|"
             column_header_str += f"\\color{{white}}\\textbf{{{table_element.name}}} & "
         table_start_str += column_def_str
         table_start_str += "}\n\\hline\n"
