@@ -17,6 +17,7 @@ class MontrekViewTestCase(TestCase):
     viewname: str = "Please set the viewname in the subclass"
     view_class: type[View] = NotImplementedView
     user_permissions: list[str] = []
+    expected_status_code: int = 200
 
     def setUp(self):
         if self._is_base_test_class():
@@ -24,8 +25,10 @@ class MontrekViewTestCase(TestCase):
         self._check_view_class()
         self.build_factories()
         self.response = self.get_response()
-        self.view = self.response.context["view"]
-        self.view.kwargs = self.url_kwargs()
+        if self.response.context:
+            self.view = self.response.context.get("view", self.view_class())
+        else:
+            self.view = self.view_class()
         self.user = MontrekUserFactory()
         for perm in self.user_permissions:
             self.permission = Permission.objects.get(codename=perm)
@@ -58,7 +61,7 @@ class MontrekViewTestCase(TestCase):
     def test_view_return_correct_html(self):
         if self._is_base_test_class():
             return
-        self.assertEqual(self.response.status_code, 200)
+        self.assertEqual(self.response.status_code, self.expected_status_code)
         self.assertTemplateUsed(self.response, self.view_class.template_name)
 
     def test_view_page(self):
@@ -162,6 +165,8 @@ class MontrekDetailViewTestCase(MontrekObjectViewBaseTestCase, GetObjectPkMixin)
 
 
 class MontrekCreateViewTestCase(MontrekCreateUpdateViewTestCase, GetObjectLastMixin):
+    expected_status_code: int = 302
+
     def _is_base_test_class(self) -> bool:
         return self.__class__.__name__ == "MontrekCreateViewTestCase"
 
