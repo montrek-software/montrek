@@ -135,12 +135,8 @@ class MontrekViewMixin:
             element for element in elements if isinstance(element, LinkTextTableElement)
         ]
 
-    ##
-
     @property
     def session_data(self) -> dict:
-        if not self.request:
-            return {}
         session_data = dict(self.request.GET)
         kwargs = getattr(self, "kwargs", {})
         session_data.update(kwargs)

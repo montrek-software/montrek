@@ -23,7 +23,8 @@ class MontrekViewTestCase(TestCase):
             return
         self._check_view_class()
         self.build_factories()
-        self.view = self.view_class()
+        self.response = self.get_response()
+        self.view = self.response.context["view"]
         self.view.kwargs = self.url_kwargs()
         self.user = MontrekUserFactory()
         for perm in self.user_permissions:
@@ -51,8 +52,7 @@ class MontrekViewTestCase(TestCase):
     def url(self):
         return reverse(self.viewname, kwargs=self.url_kwargs())
 
-    @property
-    def response(self):
+    def get_response(self):
         return self.client.get(self.url)
 
     def test_view_return_correct_html(self):
@@ -71,10 +71,9 @@ class MontrekViewTestCase(TestCase):
     def test_context_data(self):
         if self._is_base_test_class():
             return
-        context_data = self.response.context
         if isinstance(self.view, MontrekDeleteView):
             return
-        self.assertIsInstance(context_data["view"], self.view_class)
+        self.assertIsInstance(self.view, self.view_class)
 
 
 class MontrekListViewTestCase(MontrekViewTestCase):
