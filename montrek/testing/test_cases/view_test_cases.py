@@ -24,22 +24,22 @@ class MontrekViewTestCase(TestCase):
             return
         self._check_view_class()
         self.build_factories()
+        self._login_user()
         self.response = self.get_response()
-        if self.response.context:
-            self.view = self.response.context.get("view", self.view_class())
-        else:
-            self.view = self.view_class()
-        self.user = MontrekUserFactory()
-        for perm in self.user_permissions:
-            self.permission = Permission.objects.get(codename=perm)
-            self.user.user_permissions.add(self.permission)
-        self.client.force_login(self.user)
+        self.view = self.response.context.get("view")
 
     def _check_view_class(self):
         if self.view_class == NotImplementedView:
             raise NotImplementedError(
                 f"{self.__class__.__name__}: Please set the view_class"
             )
+
+    def _login_user(self):
+        self.user = MontrekUserFactory()
+        for perm in self.user_permissions:
+            self.permission = Permission.objects.get(codename=perm)
+            self.user.user_permissions.add(self.permission)
+        self.client.force_login(self.user)
 
     def _is_base_test_class(self) -> bool:
         # Django runs all tests within these base classes here individually. This is not wanted and hence we skip the tests if django attempts to do this.
@@ -165,8 +165,6 @@ class MontrekDetailViewTestCase(MontrekObjectViewBaseTestCase, GetObjectPkMixin)
 
 
 class MontrekCreateViewTestCase(MontrekCreateUpdateViewTestCase, GetObjectLastMixin):
-    expected_status_code: int = 302
-
     def _is_base_test_class(self) -> bool:
         return self.__class__.__name__ == "MontrekCreateViewTestCase"
 
