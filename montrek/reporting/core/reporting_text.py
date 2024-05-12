@@ -85,7 +85,8 @@ class ReportingHeader2:
         return f"<h2>{self.text}</h2>"
 
     def to_latex(self) -> str:
-        return f"\\textbf{{\\color{{blue}} { self.text } }}\\newline"
+        # return f"\\textbf{{\\color{{blue}} { self.text } }}\\newline"
+        return f"\\subsection*{{{self.text}}}"
 
 
 class Vspace:

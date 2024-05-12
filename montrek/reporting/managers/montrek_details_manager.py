@@ -12,6 +12,7 @@ class MontrekDetailsManager(MontrekManager):
     table_title = ""
     document_title = "Montrek Details"
     document_name = "details"
+    draft = False
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

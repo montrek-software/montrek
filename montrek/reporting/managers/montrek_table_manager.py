@@ -15,6 +15,7 @@ class MontrekTableManager(MontrekManager):
     table_title = ""
     document_title = "Montrek Table"
     document_name = "table"
+    draft = False
 
     @property
     def footer_text(self) -> ReportElementProtocol:
@@ -45,7 +46,7 @@ class MontrekTableManager(MontrekManager):
         )
         table_start_str += f"\\caption{{{self.table_title}}}\n"
         table_start_str += "\\begin{tabularx}{\\textwidth}{|"
-        table_end_str = "\\end{tabularx}\n\\end{table}"
+        table_end_str = "\\end{tabularx}\n\\end{table}\n\n"
 
         column_def_str = ""
         column_header_str = "\\rowcolor{blue}"
