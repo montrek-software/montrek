@@ -17,25 +17,29 @@ class MontrekViewTestCase(TestCase):
     viewname: str = "Please set the viewname in the subclass"
     view_class: type[View] = NotImplementedView
     user_permissions: list[str] = []
+    expected_status_code: int = 200
 
     def setUp(self):
         if self._is_base_test_class():
             return
         self._check_view_class()
         self.build_factories()
-        self.view = self.view_class()
-        self.view.kwargs = self.url_kwargs()
-        self.user = MontrekUserFactory()
-        for perm in self.user_permissions:
-            self.permission = Permission.objects.get(codename=perm)
-            self.user.user_permissions.add(self.permission)
-        self.client.force_login(self.user)
+        self._login_user()
+        self.response = self.get_response()
+        self.view = self.response.context.get("view")
 
     def _check_view_class(self):
         if self.view_class == NotImplementedView:
             raise NotImplementedError(
                 f"{self.__class__.__name__}: Please set the view_class"
             )
+
+    def _login_user(self):
+        self.user = MontrekUserFactory()
+        for perm in self.user_permissions:
+            self.permission = Permission.objects.get(codename=perm)
+            self.user.user_permissions.add(self.permission)
+        self.client.force_login(self.user)
 
     def _is_base_test_class(self) -> bool:
         # Django runs all tests within these base classes here individually. This is not wanted and hence we skip the tests if django attempts to do this.
@@ -51,14 +55,13 @@ class MontrekViewTestCase(TestCase):
     def url(self):
         return reverse(self.viewname, kwargs=self.url_kwargs())
 
-    @property
-    def response(self):
+    def get_response(self):
         return self.client.get(self.url)
 
     def test_view_return_correct_html(self):
         if self._is_base_test_class():
             return
-        self.assertEqual(self.response.status_code, 200)
+        self.assertEqual(self.response.status_code, self.expected_status_code)
         self.assertTemplateUsed(self.response, self.view_class.template_name)
 
     def test_view_page(self):
@@ -71,10 +74,9 @@ class MontrekViewTestCase(TestCase):
     def test_context_data(self):
         if self._is_base_test_class():
             return
-        context_data = self.response.context
         if isinstance(self.view, MontrekDeleteView):
             return
-        self.assertIsInstance(context_data["view"], self.view_class)
+        self.assertIsInstance(self.view, self.view_class)
 
 
 class MontrekListViewTestCase(MontrekViewTestCase):
@@ -197,5 +199,5 @@ class MontrekDeleteViewTestCase(MontrekObjectViewBaseTestCase, GetObjectPkMixin)
         if not self._pre_test_view_post_success():
             return
         # Check deleted data has an end date
-        object = self._get_object()
-        self.assertTrue(object.state_date_end is not None)
+        obj = self._get_object()
+        self.assertTrue(obj.state_date_end is not None)

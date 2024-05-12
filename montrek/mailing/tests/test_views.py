@@ -37,9 +37,8 @@ class TestSendMailView(vtc.MontrekViewTestCase):
                 "mail_message": "This is a test",
             }
 
-        view = MockSendMailView()
         mock_form = MockForm()
-        response = view.form_valid(mock_form)
+        response = self.view.form_valid(mock_form)
         self.assertEqual(response.url, "/mailing/overview")
 
     def test_view_form(self):

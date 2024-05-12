@@ -135,12 +135,8 @@ class MontrekViewMixin:
             element for element in elements if isinstance(element, LinkTextTableElement)
         ]
 
-    ##
-
     @property
     def session_data(self) -> dict:
-        if not self.request:
-            return {}
         session_data = dict(self.request.GET)
         kwargs = getattr(self, "kwargs", {})
         session_data.update(kwargs)
@@ -383,7 +379,7 @@ class MontrekUpdateView(MontrekCreateUpdateView):
 
 
 class MontrekDeleteView(
-    View, MontrekPermissionRequiredMixin, MontrekViewMixin, MontrekPageViewMixin
+    MontrekPermissionRequiredMixin, TemplateView, MontrekViewMixin, MontrekPageViewMixin
 ):
     manager_class = MontrekManagerNotImplemented
     success_url = "under_construction"
@@ -396,9 +392,6 @@ class MontrekDeleteView(
         if "action" in request.POST and request.POST["action"] == "Delete":
             self.manager.delete_object(pk=self.kwargs["pk"])
         return HttpResponseRedirect(self.get_success_url())
-
-    def get(self, request, *args, **kwargs):
-        return render(request, self.template_name, {"pk": self.kwargs["pk"]})
 
 
 class MontrekReportView(MontrekTemplateView, ToPdfMixin):
