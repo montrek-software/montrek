@@ -309,7 +309,11 @@ class MontrekHistoryListView(MontrekTemplateView):
 
 
 class MontrekDetailView(
-    MontrekPermissionRequiredMixin, DetailView, MontrekPageViewMixin, MontrekViewMixin
+    MontrekPermissionRequiredMixin,
+    DetailView,
+    MontrekPageViewMixin,
+    MontrekViewMixin,
+    ToPdfMixin,
 ):
     template_name = "montrek_details.html"
     manager_class = MontrekManagerNotImplemented
@@ -324,6 +328,11 @@ class MontrekDetailView(
         context = self.get_page_context(context, **kwargs)
         context["table"] = self.manager.to_html()
         return context
+
+    def get(self, request, *args, **kwargs):
+        if self.request.GET.get("gen_pdf") == "true":
+            return self.list_to_pdf()
+        return super().get(request, *args, **kwargs)
 
 
 class MontrekCreateUpdateView(
