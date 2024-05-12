@@ -7,6 +7,7 @@ from baseclasses.dataclasses.montrek_message import (
     MontrekMessageInfo,
     MontrekMessageError,
 )
+from reporting.managers.montrek_details_manager import MontrekDetailsManager
 from reporting.dataclasses import table_elements as te
 from reporting.managers.montrek_table_manager import MontrekTableManager
 from smtplib import SMTPException
@@ -31,7 +32,7 @@ class MailingTableManager(MontrekTableManager):
         ]
 
 
-class MailingDetailsManager(MontrekManager):
+class MailingDetailsManager(MontrekDetailsManager):
     repository_class = MailingRepository
 
     @property
