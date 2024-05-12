@@ -1,3 +1,4 @@
+from reporting.managers.montrek_details_manager import MontrekDetailsManager
 from reporting.managers.montrek_table_manager import MontrekTableManager
 from reporting.managers.montrek_report_manager import MontrekReportManager
 from reporting.dataclasses import table_elements as te
@@ -53,6 +54,20 @@ class HubAManager(MontrekTableManager):
                 icon="trash",
                 hover_text="Delete Example A",
             ),
+        )
+
+
+class HubADetailsManager(MontrekDetailsManager):
+    repository_class = HubARepository
+
+    @property
+    def table_elements(self) -> list:
+        return (
+            te.StringTableElement(name="A1 String", attr="field_a1_str"),
+            te.IntTableElement(name="A1 Int", attr="field_a1_int"),
+            te.StringTableElement(name="A2 String", attr="field_a2_str"),
+            te.FloatTableElement(name="A2 Float", attr="field_a2_float"),
+            te.StringTableElement(name="B1 String", attr="field_b1_str"),
         )
 
 

@@ -84,7 +84,7 @@ class MontrekExampleADelete(views.MontrekDeleteView):
 
 
 class MontrekExampleADetails(views.MontrekDetailView):
-    manager_class = mem.HubAManager
+    manager_class = mem.HubADetailsManager
     page_class = pages.ExampleAPage
     tab = "tab_details"
     title = "Example A Details"

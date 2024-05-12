@@ -8,15 +8,8 @@
       </div>
     </div>
     <div id="id_montrek_table_list" class="row">
-      <div class="col-lg-6">
-        <table class="table table-bordered table-hover">
-          {% for detail_element in detail_elements %}
-            <tr>
-            <th>{{ detail_element.name }}</th>
-            {{ object|show_item:detail_element|safe }}
-            </tr>
-          {% endfor %}
-        </table>
+      <div class="col-md-12">
+        {{ table  | safe }}
       </div>
     </div>
   </div>
