@@ -199,5 +199,5 @@ class MontrekDeleteViewTestCase(MontrekObjectViewBaseTestCase, GetObjectPkMixin)
         if not self._pre_test_view_post_success():
             return
         # Check deleted data has an end date
-        object = self._get_object()
-        self.assertTrue(object.state_date_end is not None)
+        obj = self._get_object()
+        self.assertTrue(obj.state_date_end is not None)

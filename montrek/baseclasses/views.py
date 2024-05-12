@@ -379,7 +379,7 @@ class MontrekUpdateView(MontrekCreateUpdateView):
 
 
 class MontrekDeleteView(
-    View, MontrekPermissionRequiredMixin, MontrekViewMixin, MontrekPageViewMixin
+    MontrekPermissionRequiredMixin, TemplateView, MontrekViewMixin, MontrekPageViewMixin
 ):
     manager_class = MontrekManagerNotImplemented
     success_url = "under_construction"
@@ -392,9 +392,6 @@ class MontrekDeleteView(
         if "action" in request.POST and request.POST["action"] == "Delete":
             self.manager.delete_object(pk=self.kwargs["pk"])
         return HttpResponseRedirect(self.get_success_url())
-
-    def get(self, request, *args, **kwargs):
-        return render(request, self.template_name, {"pk": self.kwargs["pk"]})
 
 
 class MontrekReportView(MontrekTemplateView, ToPdfMixin):
