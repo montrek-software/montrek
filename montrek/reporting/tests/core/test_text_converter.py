@@ -14,7 +14,7 @@ class TestHtmlLatexConverter(TestCase):
     def test_headers(self):
         test_text = "<h1>Header 1</h1><h2>Header 2</h2>"
         converted_text = HtmlLatexConverter.convert(test_text)
-        expected_text = "\\section{Header 1}\\subsection{Header 2}"
+        expected_text = "\\section*{Header 1}\\subsection*{Header 2}"
         self.assertEqual(converted_text, expected_text)
 
     def test_links(self):
