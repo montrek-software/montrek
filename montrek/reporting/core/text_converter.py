@@ -4,6 +4,7 @@ import re
 class HtmlLatexConverter:
     @staticmethod
     def convert(text: str) -> str:
+        text = HtmlLatexConverter.paragraphs(text)
         text = HtmlLatexConverter.bold(text)
         text = HtmlLatexConverter.italic(text)
         text = HtmlLatexConverter.headers(text)
@@ -18,6 +19,12 @@ class HtmlLatexConverter:
         return text
 
     @staticmethod
+    def paragraphs(text: str) -> str:
+        return text.replace("<p>", "\\begin{justify}").replace(
+            "</p>", "\\end{justify}\n\n"
+        )
+
+    @staticmethod
     def bold(text: str) -> str:
         return text.replace("<b>", "\\textbf{").replace("</b>", "}")
 
@@ -28,12 +35,12 @@ class HtmlLatexConverter:
     @staticmethod
     def headers(text: str) -> str:
         patterns = {
-            "<h1>": "\\section{",
+            "<h1>": "\\section*{",
             "</h1>": "}",
-            "<h2>": "\\subsection{",
+            "<h2>": "\\subsection*{",
             "</h2>": "}",
-            "<h3>": "\\large{\\textbf{",
-            "</h3>": "}}",
+            "<h3>": "\\textbf{",
+            "</h3>": "}\\\\",
             "<h4>": "\\paragraph{",
             "</h4>": "}",
             "<h5>": "\\subparagraph{",
