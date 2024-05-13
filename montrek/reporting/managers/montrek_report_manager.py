@@ -10,6 +10,7 @@ from reporting.lib.protocols import (
 class MontrekReportManager(MontrekManager):
     document_name = "document"
     document_title = "Montrek Report"
+    draft = False
 
     def __init__(self, session_data: dict[str, str], **kwargs) -> None:
         super().__init__(session_data=session_data, **kwargs)

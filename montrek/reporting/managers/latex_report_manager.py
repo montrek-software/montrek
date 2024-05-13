@@ -22,6 +22,7 @@ class LatexReportManager:
         for key, value in context_data.items():
             context_data[key] = mark_safe(value)
         context_data["footer_text"] = self.report_manager.footer_text.to_latex()
+        context_data["watermark_text"] = "Draft" if self.report_manager.draft else ""
         context = Context(context_data)
         template = Template(self.read_template())
         return template.render(context)

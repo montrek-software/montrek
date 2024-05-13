@@ -60,7 +60,7 @@ class ReportingText(ReportElementProtocol):
 class ReportingParagraph(ReportingText):
     def to_latex(self) -> str:
         text = super().to_latex()
-        return f"\\begin{{flushleft}}{text}\\end{{flushleft}}"
+        return f"\\begin{{justify}}{text}\\end{{justify}}"
 
     def to_html(self) -> str:
         return f"<p>{self.text}</p>"
@@ -74,7 +74,7 @@ class ReportingHeader1:
         return f"<h1>{self.text}</h1>"
 
     def to_latex(self) -> str:
-        return f"\\section{{{self.text}}}"
+        return f"\\section*{{{self.text}}}"
 
 
 class ReportingHeader2:
@@ -85,7 +85,7 @@ class ReportingHeader2:
         return f"<h2>{self.text}</h2>"
 
     def to_latex(self) -> str:
-        return f"\\textbf{{\\color{{blue}} { self.text } }}\\newline"
+        return f"\\subsection*{{{self.text}}}"
 
 
 class Vspace:

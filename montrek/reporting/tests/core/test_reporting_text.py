@@ -58,7 +58,7 @@ class TestReportingParagraph(TestCase):
         test_plain_to_latex = paragraph.to_latex()
         self.assertEqual(
             test_plain_to_latex,
-            "\\begin{flushleft}This is a plain text\\end{flushleft}",
+            "\\begin{justify}This is a plain text\\end{justify}",
         )
 
     def test_bold_text(self):
@@ -72,7 +72,7 @@ class TestReportingParagraph(TestCase):
         test_bold_to_latex = paragraph.to_latex()
         self.assertEqual(
             test_bold_to_latex,
-            "\\begin{flushleft}This is a \\textbf{bold} text\\end{flushleft}",
+            "\\begin{justify}This is a \\textbf{bold} text\\end{justify}",
         )
 
     def test_italic_text(self):
@@ -86,5 +86,5 @@ class TestReportingParagraph(TestCase):
         test_italic_to_latex = paragraph.to_latex()
         self.assertEqual(
             test_italic_to_latex,
-            "\\begin{flushleft}This is a \\textit{italic} text\\end{flushleft}",
+            "\\begin{justify}This is a \\textit{italic} text\\end{justify}",
         )
