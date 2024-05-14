@@ -41,9 +41,10 @@ class MontrekTableManager(MontrekManager):
         return html_str
 
     def to_latex(self):
-        table_start_str = (
-            "\\begin{table}[H]\n\\centering\n\\arrayrulecolor{lightgrey}\n"
-        )
+        table_start_str = "\n\\begin{table}[H]\n\\centering\n"
+        table_start_str += "\\arrayrulecolor{lightgrey}\n"
+        table_start_str += "\\setlength{\\tabcolsep}{2pt}\n"
+        table_start_str += "\\renewcommand{\\arraystretch}{1.0}\n"
         table_start_str += f"\\caption{{{self.table_title}}}\n"
         table_start_str += "\\begin{tabularx}{\\textwidth}{|"
         table_end_str = "\\end{tabularx}\n\\end{table}\n\n"
@@ -70,7 +71,7 @@ class MontrekTableManager(MontrekManager):
                     continue
                 latex_str += table_element.get_attribute(query_object, "latex")
             latex_str = latex_str[:-2] + "\\\\\n\\hline\n"
-            if (i + 1) % 30 == 0:
+            if (i + 1) % 25 == 0:
                 latex_str += table_end_str
                 latex_str += table_start_str
         latex_str += table_end_str
