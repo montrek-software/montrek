@@ -112,7 +112,7 @@ class LatexReportManager:
     def _get_template_path(self) -> str | None:
         for template_dir in settings.TEMPLATES[0]["DIRS"]:
             potential_path = os.path.join(
-                template_dir, "latex_templates", self.latex_template
+                settings.BASE_DIR, template_dir, "latex_templates", self.latex_template
             )
             if os.path.exists(potential_path):
                 return potential_path
