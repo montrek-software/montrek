@@ -48,6 +48,9 @@ class MontrekDetailsManager(MontrekManager):
         for i in range(self.table_cols):
             latex_str += f"\\begin{{minipage}}[t]{{{minipage_width}\\textwidth}}\n"
             latex_str += "\\begin{table}[H]\n\\centering\n"
+            latex_str += "\\arrayrulecolor{lightgrey}\n"
+            latex_str += "\\setlength{\\tabcolsep}{2pt}\n"
+            latex_str += "\\renewcommand{\\arraystretch}{1.0}\n"
             latex_str += f"\\caption{{{self.table_title}}}\n"
             latex_str += "\\begin{tabularx}{\\textwidth}{"
 
