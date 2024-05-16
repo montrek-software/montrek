@@ -96,7 +96,7 @@ class TestMontrekTableManager(TestCase):
 
     def test_to_latex(self):
         test_latex = MockMontrekTableManager().to_latex()
-        self.assertTrue(test_latex.startswith("\\begin{table}"))
+        self.assertTrue(test_latex.startswith("\n\\begin{table}"))
         self.assertTrue(test_latex.endswith("\\end{table}\n\n"))
 
     def test_download_csv(self):
