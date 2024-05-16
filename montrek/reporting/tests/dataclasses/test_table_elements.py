@@ -149,7 +149,7 @@ class TestTableElements(TestCase):
         test_str_html = table_element.format("https://www.google.com")
         self.assertEqual(
             str(test_str_html),
-            '<td style="text-align:left;"><a href="https://www.google.com" title="https://www.google.com">https://www.google.com</a></td>',
+            '<td style="text-align:left;"><a href="https://www.google.com" target="_blank" title="https://www.google.com">https://www.google.com</a></td>',
         )
 
     def test_external_link_table_element__latex(self):

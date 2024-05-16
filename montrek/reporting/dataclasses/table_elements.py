@@ -58,7 +58,7 @@ class AttrTableElement(TableElement):
 @dataclass
 class ExternalLinkTableElement(AttrTableElement):
     def format(self, value):
-        return f'<td style="text-align:left;"><a href="{value}" title="{value}">{value}</a></td>'
+        return f'<td style="text-align:left;"><a href="{value}" target="_blank" title="{value}">{value}</a></td>'
 
     def format_latex(self, value):
         return f" \\url{{{value}}} &"
