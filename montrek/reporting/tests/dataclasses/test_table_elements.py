@@ -141,6 +141,17 @@ class TestTableElements(TestCase):
             '<td style="text-align: left;color:#BE0D3E;">error</td>',
         )
 
+    def test_external_link_table_element(self):
+        table_element = te.ExternalLinkTableElement(
+            name="name",
+            attr="test_attr",
+        )
+        test_str_html = table_element.format("https://www.google.com")
+        self.assertEqual(
+            str(test_str_html),
+            '<td style="text-align:left;"><a href="https://www.google.com" title="https://www.google.com">https://www.google.com</a></td>',
+        )
+
 
 class MockTableElement(te.AttrTableElement):
     def __init__(self, attr: str) -> None:

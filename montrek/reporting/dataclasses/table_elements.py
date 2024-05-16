@@ -55,6 +55,12 @@ class AttrTableElement(TableElement):
         return str(value)
 
 
+@dataclass
+class ExternalLinkTableElement(AttrTableElement):
+    def format(self, value):
+        return f'<td style="text-align:left;"><a href="{value}" title="{value}">{value}</a></td>'
+
+
 @dataclass  # noqa
 class BaseLinkTableElement(TableElement):
     url: str
