@@ -272,7 +272,9 @@ class MontrekListView(
         context = self.get_page_context(context, **kwargs)
         self.show_messages()
         if not isinstance(self.manager, MontrekTableManager):
-            raise ValueError("Manager must be of type MontrekTableManager")
+            raise ValueError(
+                f"Manager {self.manager.__class__.__name__} must be of type MontrekTableManager"
+            )
         context["table"] = self.manager.to_html()
         filter = self.session_data.get("filter", {})
         filter = filter.get(self.session_data["request_path"], {})
@@ -324,7 +326,9 @@ class MontrekDetailView(
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         if not isinstance(self.manager, MontrekDetailsManager):
-            raise ValueError("Manager must be of type MontrekDetailsManager")
+            raise ValueError(
+                f"Manager {self.manager.__class__.__name__} must be of type MontrekDetailsManager"
+            )
         context = self.get_page_context(context, **kwargs)
         context["table"] = self.manager.to_html()
         return context
