@@ -24,12 +24,10 @@ class HtmlLatexConverter:
     def ignored(text):
         for tag in ["html", "body"]:
             text = text.replace(f"<{tag}>", "").replace(f"</{tag}>", "")
-        while 'col-md-' in text:
+        # Using loop to catch nested tags
+        while "col-md-" in text:
             text = re.sub(
-                r'<div class="col-md-[0-9]+">(.*?)</div>',
-                r"\1",
-                text,
-                flags=re.DOTALL
+                r'<div class="col-md-[0-9]+">(.*?)</div>', r"\1", text, flags=re.DOTALL
             )
         return text
 
@@ -124,7 +122,7 @@ class HtmlLatexConverter:
 
     @staticmethod
     def lists(text: str) -> str:
-        # Convert lists
+        # Using loop to catch nested tags
         while "<ul>" in text or "<ol>" in text:
             text = re.sub(
                 r"<ul>(.*?)</ul>",
