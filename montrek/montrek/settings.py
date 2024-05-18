@@ -201,3 +201,5 @@ LOGGING = {
 }
 # Testing
 TEST_RUNNER = "montrek.testing.test_runner.MontrekTestRunner"
+
+MONTREK_GITHUB_TOKEN = config("MONTREK_GITHUB_TOKEN", default="")
