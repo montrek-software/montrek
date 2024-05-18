@@ -123,13 +123,15 @@ class HtmlLatexConverter:
     @staticmethod
     def lists(text: str) -> str:
         # Using loop to catch nested tags
-        while "<ul>" in text or "<ol>" in text:
+        while "<ul>" in text:
             text = re.sub(
                 r"<ul>(.*?)</ul>",
                 r"\\begin{itemize} \1 \\end{itemize}",
                 text,
                 flags=re.DOTALL,
             )
+        # Using loop to catch nested tags
+        while "<ol>" in text:
             text = re.sub(
                 r"<ol>(.*?)</ol>",
                 r"\\begin{enumerate} \1 \\end{enumerate}",
