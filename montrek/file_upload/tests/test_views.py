@@ -1,8 +1,12 @@
 from django.test import TestCase, RequestFactory
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.contrib.messages.middleware import MessageMiddleware
-from file_upload.views import MontrekUploadFileView
+from file_upload.views import MontrekUploadFileView, FileUploadRegistryView
 from baseclasses.pages import MontrekPage
+from file_upload.tests.factories.file_upload_factories import (
+    FileUploadRegistryStaticSatelliteFactory,
+)
+from testing.test_cases.view_test_cases import MontrekListViewTestCase
 
 
 class MockPage(MontrekPage):
@@ -35,3 +39,12 @@ class TestMontrekUploadFileView(TestCase):
         test_file_upload_view = self.view
         response = test_file_upload_view.get(self.view.request)
         self.assertEqual(response.status_code, 200)
+
+
+class TestFileUploadRegistryView(MontrekListViewTestCase):
+    view_class = FileUploadRegistryView
+    viewname = "montrek_upload_file"
+    expected_no_of_rows = 3
+
+    def build_factories(self):
+        file_factories = FileUploadRegistryStaticSatelliteFactory.create_batch(3)

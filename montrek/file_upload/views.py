@@ -9,13 +9,13 @@ from django.contrib.auth.decorators import login_required
 from file_upload.forms import FieldMapCreateForm, UploadFileForm
 from file_upload.managers.file_upload_manager import (
     FileUploadManager,
-    UploadedFilesManager,
 )
 from file_upload.managers.file_upload_manager import FileUploadProcessorProtocol
 from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepository,
 )
 from baseclasses.views import MontrekCreateView, MontrekTemplateView, MontrekListView
+from file_upload.managers.file_upload_registry_manager import FileUploadRegistryManager
 from reporting.dataclasses.table_elements import (
     DateTableElement,
     LinkTableElement,
@@ -23,6 +23,7 @@ from reporting.dataclasses.table_elements import (
 )
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from file_upload.managers.field_map_manager import FieldMapManager
+from file_upload.pages import FileUploadPage
 
 # Create your views here.
 
@@ -146,10 +147,11 @@ class MontrekFieldMapListView(MontrekListView):
     success_url = "under_construction"
 
 
-class MontrekUploadView(MontrekListView):
-    manager_class = UploadedFilesManager
+class FileUploadRegistryView(MontrekListView):
+    manager_class = FileUploadRegistryManager
     title = "Uploads"
     tab = "tab_uploads"
+    page_class = FileUploadPage
 
     @property
     def elements(self) -> tuple:
@@ -166,3 +168,8 @@ class MontrekUploadView(MontrekListView):
                 hover_text="Download",
             ),
         )
+
+
+# TODO: Remove after refactor
+class MontrekUploadView(FileUploadRegistryView):
+    pass
