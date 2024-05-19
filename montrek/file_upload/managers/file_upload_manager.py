@@ -12,6 +12,7 @@ from file_upload.repositories.file_upload_file_repository import (
 from file_upload.repositories.file_upload_repository import FileUploadRepository
 from baseclasses.models import MontrekHubABC
 from baseclasses.managers.montrek_manager import MontrekManager
+from reporting.managers.montrek_table_manager import MontrekTableManager
 
 
 class FileUploadProcessorProtocol(Protocol):
@@ -97,3 +98,7 @@ class FileUploadManager(MontrekManager):
             },
         )
         self.file_upload_registry = self.registry_repository.std_create_object(att_dict)
+
+
+class UploadedFilesManager(MontrekTableManager):
+    repository_class = FileUploadRepository

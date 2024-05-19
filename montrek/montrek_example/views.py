@@ -204,13 +204,9 @@ class MontrekExampleA1UploadFileView(MontrekUploadFileView):
 
 
 class MontrekExampleA1UploadView(MontrekUploadView):
-    manager_class = mem.HubAManager
     title = "A1 Uploads"
     page_class = pages.MontrekExampleAAppPage
     repository = SatA1Repository
-
-    def get_view_queryset(self):
-        return self.repository().get_upload_registry_table()
 
     @property
     def actions(self) -> tuple:

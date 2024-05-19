@@ -4,11 +4,13 @@ from django import forms
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.http import FileResponse
-from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
 from file_upload.forms import FieldMapCreateForm, UploadFileForm
-from file_upload.managers.file_upload_manager import FileUploadManager
+from file_upload.managers.file_upload_manager import (
+    FileUploadManager,
+    UploadedFilesManager,
+)
 from file_upload.managers.file_upload_manager import FileUploadProcessorProtocol
 from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepository,
@@ -19,7 +21,6 @@ from reporting.dataclasses.table_elements import (
     LinkTableElement,
     StringTableElement,
 )
-from file_upload.repositories.field_map_repository import FieldMapRepository
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from file_upload.managers.field_map_manager import FieldMapManager
 
@@ -146,6 +147,7 @@ class MontrekFieldMapListView(MontrekListView):
 
 
 class MontrekUploadView(MontrekListView):
+    manager_class = UploadedFilesManager
     title = "Uploads"
     tab = "tab_uploads"
 

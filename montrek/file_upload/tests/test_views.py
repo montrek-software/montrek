@@ -35,26 +35,3 @@ class TestMontrekUploadFileView(TestCase):
         test_file_upload_view = self.view
         response = test_file_upload_view.get(self.view.request)
         self.assertEqual(response.status_code, 200)
-
-    # TODO Write tests after implementation
-    # def test_get_context_data(self):
-    #    self.assertEqual(self.view.response.status_code, 200)
-    #    self.assertIn('form', response.context_data)
-    #    self.assertIsInstance(response.context_data['form'], UploadFileForm)
-
-    # def test_post_with_valid_form(self):
-    #    file = BytesIO(b"My file contents")
-    #    file.name = 'test.txt'
-    #    data = {'file': file}
-
-    #    request = self.factory.post('/fake-url/', data)
-    #    response = self.view(request)
-    #    self.assertEqual(response.status_code, 200)
-    #    # Add more assertions here to validate the response
-
-    # def test_post_with_invalid_form(self):
-    #    data = QueryDict('')
-    #    request = self.factory.post('/fake-url/', data)
-    #    response = self.view(request)
-    #    self.assertEqual(response.status_code, 200)  # Assuming the view returns 200 with the form errors
-    #    self.assertFalse(response.context_data['form'].is_valid())
