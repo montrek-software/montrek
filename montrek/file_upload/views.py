@@ -153,22 +153,6 @@ class FileUploadRegistryView(MontrekListView):
     tab = "tab_uploads"
     page_class = FileUploadPage
 
-    @property
-    def elements(self) -> tuple:
-        return (
-            StringTableElement(name="File Name", attr="file_name"),
-            StringTableElement(name="Upload Status", attr="upload_status"),
-            StringTableElement(name="Upload Message", attr="upload_message"),
-            DateTableElement(name="Upload Date", attr="created_at"),
-            LinkTableElement(
-                name="File",
-                url="montrek_download_file",
-                kwargs={"pk": "id"},
-                icon="download",
-                hover_text="Download",
-            ),
-        )
-
 
 # TODO: Remove after refactor
 class MontrekUploadView(FileUploadRegistryView):

@@ -45,6 +45,14 @@ class TestFileUploadRegistryView(MontrekListViewTestCase):
     view_class = FileUploadRegistryView
     viewname = "montrek_upload_file"
     expected_no_of_rows = 3
+    expected_columns = [
+        "File Name",
+        "Upload Status",
+        "Upload Message",
+        "Upload Date",
+        "Uploaded By",
+        "File",
+    ]
 
     def build_factories(self):
-        file_factories = FileUploadRegistryStaticSatelliteFactory.create_batch(3)
+        FileUploadRegistryStaticSatelliteFactory.create_batch(3)
