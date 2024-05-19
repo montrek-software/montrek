@@ -8,7 +8,7 @@ urlpatterns = [
         name="montrek_download_file",
     ),
     path(
-        "uploads",
+        "",
         views.FileUploadRegistryView.as_view(),
         name="montrek_upload_file",
     ),

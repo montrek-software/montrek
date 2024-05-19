@@ -23,7 +23,7 @@ class FileUploadRegistryRepository(MontrekRepository):
             LinkFileUploadRegistryFileUploadFile,
             ["file"],
         )
-        queryset = self.build_queryset()
+        queryset = self.build_queryset().order_by("-created_at")
         return queryset
 
     def get_file_from_registry(self, file_upload_registry_id: int, request) -> TextIO:
