@@ -60,15 +60,6 @@ class HubARepository(MontrekRepository):
         )
         return self.build_queryset()
 
-    def get_upload_registry_table(self):
-        return (
-            FileUploadRegistryRepository()
-            .std_queryset()
-            .filter(link_file_upload_registry_hub_a__in=self.std_queryset())
-            .distinct()
-            .order_by("-created_at")
-        )
-
 
 class HubAUploadRepository(MontrekRepository):
     hub_class = me_models.HubA
@@ -81,3 +72,7 @@ class HubAUploadRepository(MontrekRepository):
             .distinct()
             .order_by("-created_at")
         )
+
+
+class HubAFileUploadRegistryRepository(FileUploadRegistryRepository):
+    hub_link = "link_file_upload_registry_hub_a"

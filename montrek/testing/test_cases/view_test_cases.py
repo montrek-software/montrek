@@ -96,7 +96,7 @@ class MontrekListViewTestCase(MontrekViewTestCase):
                 "Define objects to show in 'build_factories()' method and set 'expected_no_of_rows' attribute"
             )
         self.assertEqual(len_object_list, self.expected_no_of_rows)
-        bs = BeautifulSoup(self.response.context["table"])
+        bs = BeautifulSoup(self.response.context["table"], features="html.parser")
         columns = bs.find_all("th")
         for expected_column in self.expected_columns:
             self.assertIn(expected_column, [column.text for column in columns])

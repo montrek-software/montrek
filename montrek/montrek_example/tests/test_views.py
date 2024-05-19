@@ -391,10 +391,12 @@ class TestMontrekExampleA1UploadView(MontrekListViewTestCase):
     expected_no_of_rows = 2
 
     def build_factories(self):
-        hub_a = me_factories.HubAFactory.create()
+        self.hub_a = me_factories.HubAFactory.create()
         file_factories = FileUploadRegistryStaticSatelliteFactory.create_batch(3)
-        for file_factory in file_factories[:-2]:
-            file_factory.link_file_upload_registry_hub_a = hub_a
+        for file_factory in file_factories[:-1]:
+            me_factories.LinkHubAFileUploadRegistryFactory.create(
+                hub_in=self.hub_a, hub_out=file_factory.hub_entity
+            )
 
 
 class TestMontrekExampleA1FieldMapCreateView(MontrekCreateViewTestCase):

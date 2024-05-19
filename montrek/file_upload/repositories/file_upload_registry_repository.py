@@ -12,6 +12,7 @@ from file_upload.models import LinkFileUploadRegistryFileUploadFile
 
 class FileUploadRegistryRepository(MontrekRepository):
     hub_class = FileUploadRegistryHub
+    hub_link = ""
 
     def std_queryset(self, **kwargs):
         self.add_satellite_fields_annotations(
@@ -24,6 +25,13 @@ class FileUploadRegistryRepository(MontrekRepository):
             ["file"],
         )
         queryset = self.build_queryset().order_by("-created_at")
+        if self.hub_link != "":
+            if "pk" in self.session_data:
+                queryset = queryset.filter(
+                    **{f"{self.hub_link}__hub_in__pk": self.session_data["pk"]}
+                )
+            else:
+                queryset = queryset.filter(**{f"{self.hub_link}__isnull": False})
         return queryset
 
     def get_file_from_registry(self, file_upload_registry_id: int, request) -> TextIO:

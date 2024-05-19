@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.http import HttpResponseRedirect
 from baseclasses import views
 from montrek_example.managers.a_upload_table_manager import (
+    HubAFileUploadRegistryManager,
     HubAUploadTableManager,
 )
 from baseclasses.dataclasses.view_classes import ActionElement
@@ -203,11 +204,10 @@ class MontrekExampleA1UploadFileView(MontrekUploadFileView):
         return reverse("a1_view_uploads")
 
 
-# TODO: Rename
 class MontrekExampleA1UploadView(FileUploadRegistryView):
     title = "A1 Uploads"
     page_class = pages.MontrekExampleAAppPage
-    repository = SatA1Repository
+    manager_class = HubAFileUploadRegistryManager
 
     @property
     def actions(self) -> tuple:
