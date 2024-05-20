@@ -89,10 +89,10 @@ class MontrekUploadFileView(MontrekTemplateView):
 
 
 class MontrekDownloadFileView(MontrekTemplateView):
-    repository = FileUploadRegistryRepository
+    manager_class = FileUploadRegistryManager
 
     def get(self, request, *args, **kwargs):
-        upload_file = self.repository_object.get_file_from_registry(
+        upload_file = self.manager.repository.get_file_from_registry(
             self.kwargs["pk"], self.request
         )
         if upload_file is None:
