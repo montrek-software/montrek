@@ -85,3 +85,7 @@ class TestMontrekDownloadFielView(MontrekViewTestCase):
 
     def url_kwargs(self) -> dict:
         return {"pk": self.registrysat.hub_entity.pk}
+
+    def test_return_file(self):
+        file = self.response
+        breakpoint()
