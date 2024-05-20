@@ -28,7 +28,7 @@ class FileUploadRegistryRepository(MontrekRepository):
         if self.hub_link != "":
             if "pk" in self.session_data:
                 queryset = queryset.filter(
-                    **{f"{self.hub_link}__hub_in__pk": self.session_data["pk"]}
+                    **{f"{self.hub_link}__pk": self.session_data["pk"]}
                 )
             else:
                 queryset = queryset.filter(**{f"{self.hub_link}__isnull": False})

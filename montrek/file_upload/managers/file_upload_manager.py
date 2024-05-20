@@ -98,7 +98,3 @@ class FileUploadManager(MontrekManager):
             },
         )
         self.file_upload_registry = self.registry_repository.std_create_object(att_dict)
-
-
-class UploadedFilesManager(MontrekTableManager):
-    repository_class = FileUploadRepository
