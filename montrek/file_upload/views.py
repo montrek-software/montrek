@@ -93,7 +93,7 @@ class MontrekDownloadFileView(MontrekTemplateView):
     page_class = FileUploadPage
 
     def get(self, request, *args, **kwargs):
-        super().get(request, *args, **kwargs)
+        context = super().get(request, *args, **kwargs)
         upload_file = self.manager.repository.get_file_from_registry(
             self.kwargs["pk"], self.request
         )

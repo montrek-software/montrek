@@ -14,7 +14,7 @@ from file_upload.tests.factories.file_upload_factories import (
 )
 from testing.test_cases.view_test_cases import (
     MontrekListViewTestCase,
-    MontrekViewTestCase,
+    MontrekFileResponseTestCase,
 )
 
 
@@ -67,18 +67,18 @@ class TestFileUploadRegistryView(MontrekListViewTestCase):
         FileUploadRegistryStaticSatelliteFactory.create_batch(3)
 
 
-class TestMontrekDownloadFielView(MontrekViewTestCase):
+class TestMontrekDownloadFileView(MontrekFileResponseTestCase):
     view_class = MontrekDownloadFileView
     viewname = "montrek_download_file"
     is_redirected = True
 
     def build_factories(self):
-        test_file = SimpleUploadedFile(
+        self.test_file = SimpleUploadedFile(
             name="test_file.txt",
             content="test".encode("utf-8"),
             content_type="text/plain",
         )
-        upload_file = FileUploadFileStaticSatelliteFactory.create(file=test_file)
+        upload_file = FileUploadFileStaticSatelliteFactory.create(file=self.test_file)
         self.registrysat = FileUploadRegistryStaticSatelliteFactory.create(
             file_upload_file=upload_file.hub_entity
         )
@@ -87,5 +87,5 @@ class TestMontrekDownloadFielView(MontrekViewTestCase):
         return {"pk": self.registrysat.hub_entity.pk}
 
     def test_return_file(self):
-        file = self.response
-        breakpoint()
+        content = b"".join(self.response.streaming_content)
+        self.assertEqual(content, b"test")
