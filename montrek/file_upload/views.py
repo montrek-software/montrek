@@ -90,14 +90,19 @@ class MontrekUploadFileView(MontrekTemplateView):
 
 class MontrekDownloadFileView(MontrekTemplateView):
     manager_class = FileUploadRegistryManager
+    page_class = FileUploadPage
 
     def get(self, request, *args, **kwargs):
+        super().get(request, *args, **kwargs)
         upload_file = self.manager.repository.get_file_from_registry(
             self.kwargs["pk"], self.request
         )
         if upload_file is None:
             return redirect(request.META.get("HTTP_REFERER"))
         return FileResponse(upload_file, as_attachment=True)
+
+    def get_template_context(self, **kwargs):
+        return {}
 
 
 class MontrekFieldMapCreateView(MontrekCreateView):

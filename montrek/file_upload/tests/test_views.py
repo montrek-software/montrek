@@ -1,3 +1,4 @@
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, RequestFactory
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.contrib.messages.middleware import MessageMiddleware
@@ -9,6 +10,7 @@ from file_upload.views import (
 from baseclasses.pages import MontrekPage
 from file_upload.tests.factories.file_upload_factories import (
     FileUploadRegistryStaticSatelliteFactory,
+    FileUploadFileStaticSatelliteFactory,
 )
 from testing.test_cases.view_test_cases import (
     MontrekListViewTestCase,
@@ -68,9 +70,18 @@ class TestFileUploadRegistryView(MontrekListViewTestCase):
 class TestMontrekDownloadFielView(MontrekViewTestCase):
     view_class = MontrekDownloadFileView
     viewname = "montrek_download_file"
+    is_redirected = True
 
     def build_factories(self):
-        self.registrysat = FileUploadRegistryStaticSatelliteFactory.create()
+        test_file = SimpleUploadedFile(
+            name="test_file.txt",
+            content="test".encode("utf-8"),
+            content_type="text/plain",
+        )
+        upload_file = FileUploadFileStaticSatelliteFactory.create(file=test_file)
+        self.registrysat = FileUploadRegistryStaticSatelliteFactory.create(
+            file_upload_file=upload_file.hub_entity
+        )
 
     def url_kwargs(self) -> dict:
         return {"pk": self.registrysat.hub_entity.pk}

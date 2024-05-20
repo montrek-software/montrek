@@ -19,6 +19,7 @@ class MontrekViewTestCase(TestCase):
     view_class: type[View] = NotImplementedView
     user_permissions: list[str] = []
     expected_status_code: int = 200
+    is_redirected: bool = False
 
     def setUp(self):
         if self._is_base_test_class():
@@ -27,7 +28,8 @@ class MontrekViewTestCase(TestCase):
         self.build_factories()
         self._login_user()
         self.response = self.get_response()
-        self.view = self.response.context.get("view")
+        if not self.is_redirected:
+            self.view = self.response.context.get("view")
 
     def _check_view_class(self):
         if self.view_class == NotImplementedView:
@@ -63,10 +65,13 @@ class MontrekViewTestCase(TestCase):
         if self._is_base_test_class():
             return
         self.assertEqual(self.response.status_code, self.expected_status_code)
-        self.assertTemplateUsed(self.response, self.view_class.template_name)
+        if not self.is_redirected:
+            self.assertTemplateUsed(self.response, self.view_class.template_name)
 
     def test_view_page(self):
         if self._is_base_test_class():
+            return
+        if self.is_redirected:
             return
         page_context = self.view.get_page_context({})
         self.assertNotEqual(page_context["page_title"], "page_title not set!")
@@ -74,6 +79,8 @@ class MontrekViewTestCase(TestCase):
 
     def test_context_data(self):
         if self._is_base_test_class():
+            return
+        if self.is_redirected:
             return
         if isinstance(self.view, MontrekDeleteView):
             return
