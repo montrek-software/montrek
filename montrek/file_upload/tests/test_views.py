@@ -1,12 +1,19 @@
 from django.test import TestCase, RequestFactory
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.contrib.messages.middleware import MessageMiddleware
-from file_upload.views import MontrekUploadFileView, FileUploadRegistryView
+from file_upload.views import (
+    MontrekUploadFileView,
+    FileUploadRegistryView,
+    MontrekDownloadFileView,
+)
 from baseclasses.pages import MontrekPage
 from file_upload.tests.factories.file_upload_factories import (
     FileUploadRegistryStaticSatelliteFactory,
 )
-from testing.test_cases.view_test_cases import MontrekListViewTestCase
+from testing.test_cases.view_test_cases import (
+    MontrekListViewTestCase,
+    MontrekViewTestCase,
+)
 
 
 class MockPage(MontrekPage):
@@ -56,3 +63,14 @@ class TestFileUploadRegistryView(MontrekListViewTestCase):
 
     def build_factories(self):
         FileUploadRegistryStaticSatelliteFactory.create_batch(3)
+
+
+class TestMontrekDownloadFielView(MontrekViewTestCase):
+    view_class = MontrekDownloadFileView
+    viewname = "montrek_download_file"
+
+    def build_factories(self):
+        self.registrysat = FileUploadRegistryStaticSatelliteFactory.create()
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.registrysat.hub_entity.pk}
