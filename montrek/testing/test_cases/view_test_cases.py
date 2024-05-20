@@ -211,6 +211,10 @@ class MontrekDeleteViewTestCase(MontrekObjectViewBaseTestCase, GetObjectPkMixin)
 
 
 class MontrekFileResponseTestCase(MontrekViewTestCase):
+    def _is_base_test_class(self) -> bool:
+        # Django runs all tests within these base classes here individually. This is not wanted and hence we skip the tests if django attempts to do this.
+        return self.__class__.__name__ == "MontrekFileResponseTestCase"
+
     def get_response(self):
         response = self.client.get(self.url, follow=True)
         response.context = {"view": None}
