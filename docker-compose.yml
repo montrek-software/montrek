@@ -52,8 +52,7 @@ services:
     ports:
       - "${DB_PORT}:3306"
     volumes:
-      - db_data:${DB_VOLUME}
-
+      - db_data:/var/lib/mysql
   celery:
     build:
       context: .
