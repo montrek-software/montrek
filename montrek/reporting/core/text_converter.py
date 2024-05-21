@@ -25,10 +25,9 @@ class HtmlLatexConverter:
         for tag in ["html", "body"]:
             text = text.replace(f"<{tag}>", "").replace(f"</{tag}>", "")
         # Using loop to catch nested tags
-        while "col-md-" in text:
-            text = re.sub(
-                r'<div class="col-md-[0-9]+">(.*?)</div>', r"\1", text, flags=re.DOTALL
-            )
+        pattern = r'<div class="col-md-[0-9]+">(.*?)</div>'
+        while re.search(pattern, text):
+            text = re.sub(pattern, r"\1", text, flags=re.DOTALL)
         return text
 
     @staticmethod
@@ -121,22 +120,25 @@ class HtmlLatexConverter:
         return text
 
     @staticmethod
+    # Using loops to catch nested tags
     def lists(text: str) -> str:
-        # Using loop to catch nested tags
-        while "<ul>" in text:
+        ul_pattern = r"<ul>(.*?)</ul>"
+        while re.search(ul_pattern, text):
             text = re.sub(
-                r"<ul>(.*?)</ul>",
+                ul_pattern,
                 r"\\begin{itemize} \1 \\end{itemize}",
                 text,
                 flags=re.DOTALL,
             )
-        # Using loop to catch nested tags
-        while "<ol>" in text:
+        ol_pattern = r"<ol>(.*?)</ol>"
+        while re.search(ol_pattern, text):
             text = re.sub(
-                r"<ol>(.*?)</ol>",
+                ol_pattern,
                 r"\\begin{enumerate} \1 \\end{enumerate}",
                 text,
                 flags=re.DOTALL,
             )
-            text = re.sub(r"<li>(.*?)</li>", r"\\item \1", text, flags=re.DOTALL)
+        li_pattern = r"<li>(.*?)</li>"
+        while re.search(li_pattern, text):
+            text = re.sub(li_pattern, r"\\item \1", text, flags=re.DOTALL)
         return text

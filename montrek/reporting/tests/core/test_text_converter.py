@@ -12,7 +12,7 @@ class TestHtmlLatexConverter(TestCase):
         self.assertEqual(converted_text, expected_text)
 
     def test_ignored(self):
-        test_text = "<html><body><div class='col-md-6'><div class='col-md-6'>Text</div></div></body></html>"
+        test_text = '<html><body><div class="col-md-9"><div class="col-md-6">Text</div></div></body></html>'
         converted_text = HtmlLatexConverter.convert(test_text)
         expected_text = "Text"
         self.assertEqual(converted_text, expected_text)
