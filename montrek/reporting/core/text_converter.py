@@ -26,7 +26,7 @@ class HtmlLatexConverter:
             text = text.replace(f"<{tag}>", "").replace(f"</{tag}>", "")
         # Using loop to catch nested tags
         pattern = r'<div class="col-md-[0-9]+">(.*?)</div>'
-        while re.search(pattern, text):
+        while re.search(pattern, text, flags=re.DOTALL):
             text = re.sub(pattern, r"\1", text, flags=re.DOTALL)
         return text
 
@@ -128,6 +128,6 @@ class HtmlLatexConverter:
         }
         # Using loop to catch nested tags
         for pattern, replacement in patterns.items():
-            while re.search(pattern, text):
+            while re.search(pattern, text, flags=re.DOTALL):
                 text = re.sub(pattern, replacement, text, flags=re.DOTALL)
         return text
