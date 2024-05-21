@@ -11,6 +11,12 @@ class TestHtmlLatexConverter(TestCase):
         expected_text = "This is a \\textbf{html} text. \\newline  This is a new \\textit{line} and a $\\cdot$"
         self.assertEqual(converted_text, expected_text)
 
+    def test_ignored(self):
+        test_text = '<html><body><div class="col-md-9"><div class="col-md-6">Text</div></div></body></html>'
+        converted_text = HtmlLatexConverter.convert(test_text)
+        expected_text = "Text"
+        self.assertEqual(converted_text, expected_text)
+
     def test_headers(self):
         test_text = "<h1>Header 1</h1><h2>Header 2</h2>"
         converted_text = HtmlLatexConverter.convert(test_text)
@@ -33,6 +39,12 @@ class TestHtmlLatexConverter(TestCase):
         test_text = "<ul><li>Item 1</li><li>Item 2</li></ul><ol><li>First</li><li>Second</li></ol>"
         converted_text = HtmlLatexConverter.convert(test_text)
         expected_text = "\\begin{itemize} \\item Item 1\\item Item 2 \\end{itemize}\\begin{enumerate} \\item First\\item Second \\end{enumerate}"
+        self.assertEqual(converted_text, expected_text)
+
+    def test_lists_nested(self):
+        test_text = "<ul><li>Item 1</li><li>Item 2<ul><li>Subitem 2.1</li><li>Subitem 2.2</li></ul></li></ul>"
+        converted_text = HtmlLatexConverter.convert(test_text)
+        expected_text = "\\begin{itemize} \\item Item 1\\item Item 2\\begin{itemize} \\item Subitem 2.1\\item Subitem 2.2 \\end{itemize} \\end{itemize}"
         self.assertEqual(converted_text, expected_text)
 
     def test_tables(self):

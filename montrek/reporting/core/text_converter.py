@@ -4,6 +4,7 @@ import re
 class HtmlLatexConverter:
     @staticmethod
     def convert(text: str) -> str:
+        text = HtmlLatexConverter.ignored(text)
         text = HtmlLatexConverter.paragraphs(text)
         text = HtmlLatexConverter.bold(text)
         text = HtmlLatexConverter.italic(text)
@@ -16,6 +17,16 @@ class HtmlLatexConverter:
         text = HtmlLatexConverter.newline(text)
         text = HtmlLatexConverter.special_characters(text)
         text = HtmlLatexConverter.sub_sup_script(text)
+        return text
+
+    @staticmethod
+    def ignored(text):
+        for tag in ["html", "body"]:
+            text = text.replace(f"<{tag}>", "").replace(f"</{tag}>", "")
+        # Using loop to catch nested tags
+        pattern = r'<div class="col-md-[0-9]+">(.*?)</div>'
+        while re.search(pattern, text, flags=re.DOTALL):
+            text = re.sub(pattern, r"\1", text, flags=re.DOTALL)
         return text
 
     @staticmethod
@@ -109,18 +120,13 @@ class HtmlLatexConverter:
 
     @staticmethod
     def lists(text: str) -> str:
-        # Convert lists
-        text = re.sub(
-            r"<ul>(.*?)</ul>",
-            r"\\begin{itemize} \1 \\end{itemize}",
-            text,
-            flags=re.DOTALL,
-        )
-        text = re.sub(
-            r"<ol>(.*?)</ol>",
-            r"\\begin{enumerate} \1 \\end{enumerate}",
-            text,
-            flags=re.DOTALL,
-        )
-        text = re.sub(r"<li>(.*?)</li>", r"\\item \1", text)
+        patterns = {
+            r"<ul>(.*?)</ul>": r"\\begin{itemize} \1 \\end{itemize}",
+            r"<ol>(.*?)</ol>": r"\\begin{enumerate} \1 \\end{enumerate}",
+            r"<li>(.*?)</li>": r"\\item \1",
+        }
+        # Using loop to catch nested tags
+        for pattern, replacement in patterns.items():
+            while re.search(pattern, text, flags=re.DOTALL):
+                text = re.sub(pattern, replacement, text, flags=re.DOTALL)
         return text
