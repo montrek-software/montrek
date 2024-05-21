@@ -17,7 +17,6 @@ class HtmlLatexConverter:
         text = HtmlLatexConverter.newline(text)
         text = HtmlLatexConverter.special_characters(text)
         text = HtmlLatexConverter.sub_sup_script(text)
-        print(text)
         return text
 
     @staticmethod
