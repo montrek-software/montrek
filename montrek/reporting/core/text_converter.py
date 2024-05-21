@@ -120,25 +120,14 @@ class HtmlLatexConverter:
         return text
 
     @staticmethod
-    # Using loops to catch nested tags
     def lists(text: str) -> str:
-        ul_pattern = r"<ul>(.*?)</ul>"
-        while re.search(ul_pattern, text):
-            text = re.sub(
-                ul_pattern,
-                r"\\begin{itemize} \1 \\end{itemize}",
-                text,
-                flags=re.DOTALL,
-            )
-        ol_pattern = r"<ol>(.*?)</ol>"
-        while re.search(ol_pattern, text):
-            text = re.sub(
-                ol_pattern,
-                r"\\begin{enumerate} \1 \\end{enumerate}",
-                text,
-                flags=re.DOTALL,
-            )
-        li_pattern = r"<li>(.*?)</li>"
-        while re.search(li_pattern, text):
-            text = re.sub(li_pattern, r"\\item \1", text, flags=re.DOTALL)
+        patterns = {
+            r"<ul>(.*?)</ul>": r"\\begin{itemize} \1 \\end{itemize}",
+            r"<ol>(.*?)</ol>": r"\\begin{enumerate} \1 \\end{enumerate}",
+            r"<li>(.*?)</li>": r"\\item \1",
+        }
+        # Using loop to catch nested tags
+        for pattern, replacement in patterns.items():
+            while re.search(pattern, text):
+                text = re.sub(pattern, replacement, text, flags=re.DOTALL)
         return text
