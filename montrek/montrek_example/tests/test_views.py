@@ -5,6 +5,9 @@ from file_upload.tests.factories.field_map_factories import (
     FieldMapStaticSatelliteFactory,
 )
 from baseclasses.dataclasses.alert import AlertEnum
+from file_upload.tests.factories.file_upload_factories import (
+    FileUploadRegistryStaticSatelliteFactory,
+)
 from montrek_example import views as me_views
 from testing.test_cases.view_test_cases import (
     MontrekCreateViewTestCase,
@@ -382,9 +385,18 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
         )
 
 
-class TestMontrekExampleA1UploadView(MontrekViewTestCase):
+class TestMontrekExampleA1UploadView(MontrekListViewTestCase):
     viewname = "a1_view_uploads"
     view_class = me_views.MontrekExampleA1UploadView
+    expected_no_of_rows = 2
+
+    def build_factories(self):
+        self.hub_a = me_factories.HubAFactory.create()
+        file_factories = FileUploadRegistryStaticSatelliteFactory.create_batch(3)
+        for file_factory in file_factories[:-1]:
+            me_factories.LinkHubAFileUploadRegistryFactory.create(
+                hub_in=self.hub_a, hub_out=file_factory.hub_entity
+            )
 
 
 class TestMontrekExampleA1FieldMapCreateView(MontrekCreateViewTestCase):

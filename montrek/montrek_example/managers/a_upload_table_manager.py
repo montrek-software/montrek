@@ -1,8 +1,14 @@
+from file_upload.managers.file_upload_registry_manager import (
+    FileUploadRegistryManager,
+)
 from reporting.dataclasses.table_elements import (
     DateTimeTableElement,
     StringTableElement,
 )
-from montrek_example.repositories.hub_a_repository import HubAUploadRepository
+from montrek_example.repositories.hub_a_repository import (
+    HubAUploadRepository,
+    HubAFileUploadRegistryRepository,
+)
 from reporting.managers.montrek_table_manager import MontrekTableManager
 
 
@@ -17,3 +23,7 @@ class HubAUploadTableManager(MontrekTableManager):
             StringTableElement(name="upload_message", attr="upload_message"),
             DateTimeTableElement(name="created_at", attr="created_at"),
         )
+
+
+class HubAFileUploadRegistryManager(FileUploadRegistryManager):
+    repository_class = HubAFileUploadRegistryRepository

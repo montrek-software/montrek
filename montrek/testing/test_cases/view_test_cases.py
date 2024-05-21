@@ -1,11 +1,13 @@
 import datetime
 from django.db.models import QuerySet
+from django.http import FileResponse
 import pandas as pd
 from django.test import TestCase
 from django.views import View
 from django.contrib.auth.models import Permission
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 from django.urls import reverse
+from bs4 import BeautifulSoup
 from baseclasses.views import MontrekDeleteView
 
 
@@ -81,6 +83,7 @@ class MontrekViewTestCase(TestCase):
 
 class MontrekListViewTestCase(MontrekViewTestCase):
     expected_no_of_rows: int = 0
+    expected_columns = []
 
     def _is_base_test_class(self):
         return self.__class__.__name__ == "MontrekListViewTestCase"
@@ -94,6 +97,10 @@ class MontrekListViewTestCase(MontrekViewTestCase):
                 "Define objects to show in 'build_factories()' method and set 'expected_no_of_rows' attribute"
             )
         self.assertEqual(len_object_list, self.expected_no_of_rows)
+        bs = BeautifulSoup(self.response.context["table"], features="html.parser")
+        columns = bs.find_all("th")
+        for expected_column in self.expected_columns:
+            self.assertIn(expected_column, [column.text for column in columns])
 
 
 class MontrekObjectViewBaseTestCase(MontrekViewTestCase):
@@ -201,3 +208,26 @@ class MontrekDeleteViewTestCase(MontrekObjectViewBaseTestCase, GetObjectPkMixin)
         # Check deleted data has an end date
         obj = self._get_object()
         self.assertTrue(obj.state_date_end is not None)
+
+
+class MontrekFileResponseTestCase(MontrekViewTestCase):
+    def _is_base_test_class(self) -> bool:
+        # Django runs all tests within these base classes here individually. This is not wanted and hence we skip the tests if django attempts to do this.
+        return self.__class__.__name__ == "MontrekFileResponseTestCase"
+
+    def get_response(self):
+        response = self.client.get(self.url, follow=True)
+        response.context = {"view": None}
+        return response
+
+    def test_view_return_correct_html(self):
+        if self._is_base_test_class():
+            return
+        self.assertEqual(self.response.status_code, self.expected_status_code)
+        self.assertIsInstance(self.response, FileResponse)
+
+    def test_context_data(self):
+        return
+
+    def test_view_page(self):
+        return

@@ -1,8 +1,21 @@
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, RequestFactory
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.contrib.messages.middleware import MessageMiddleware
-from file_upload.views import MontrekUploadFileView
+from file_upload.views import (
+    MontrekUploadFileView,
+    FileUploadRegistryView,
+    MontrekDownloadFileView,
+)
 from baseclasses.pages import MontrekPage
+from file_upload.tests.factories.file_upload_factories import (
+    FileUploadRegistryStaticSatelliteFactory,
+    FileUploadFileStaticSatelliteFactory,
+)
+from testing.test_cases.view_test_cases import (
+    MontrekListViewTestCase,
+    MontrekFileResponseTestCase,
+)
 
 
 class MockPage(MontrekPage):
@@ -36,25 +49,43 @@ class TestMontrekUploadFileView(TestCase):
         response = test_file_upload_view.get(self.view.request)
         self.assertEqual(response.status_code, 200)
 
-    # TODO Write tests after implementation
-    # def test_get_context_data(self):
-    #    self.assertEqual(self.view.response.status_code, 200)
-    #    self.assertIn('form', response.context_data)
-    #    self.assertIsInstance(response.context_data['form'], UploadFileForm)
 
-    # def test_post_with_valid_form(self):
-    #    file = BytesIO(b"My file contents")
-    #    file.name = 'test.txt'
-    #    data = {'file': file}
+class TestFileUploadRegistryView(MontrekListViewTestCase):
+    view_class = FileUploadRegistryView
+    viewname = "montrek_upload_file"
+    expected_no_of_rows = 3
+    expected_columns = [
+        "File Name",
+        "Upload Status",
+        "Upload Message",
+        "Upload Date",
+        "Uploaded By",
+        "File",
+    ]
 
-    #    request = self.factory.post('/fake-url/', data)
-    #    response = self.view(request)
-    #    self.assertEqual(response.status_code, 200)
-    #    # Add more assertions here to validate the response
+    def build_factories(self):
+        FileUploadRegistryStaticSatelliteFactory.create_batch(3)
 
-    # def test_post_with_invalid_form(self):
-    #    data = QueryDict('')
-    #    request = self.factory.post('/fake-url/', data)
-    #    response = self.view(request)
-    #    self.assertEqual(response.status_code, 200)  # Assuming the view returns 200 with the form errors
-    #    self.assertFalse(response.context_data['form'].is_valid())
+
+class TestMontrekDownloadFileView(MontrekFileResponseTestCase):
+    view_class = MontrekDownloadFileView
+    viewname = "montrek_download_file"
+    is_redirected = True
+
+    def build_factories(self):
+        self.test_file = SimpleUploadedFile(
+            name="test_file.txt",
+            content="test".encode("utf-8"),
+            content_type="text/plain",
+        )
+        upload_file = FileUploadFileStaticSatelliteFactory.create(file=self.test_file)
+        self.registrysat = FileUploadRegistryStaticSatelliteFactory.create(
+            file_upload_file=upload_file.hub_entity
+        )
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.registrysat.hub_entity.pk}
+
+    def test_return_file(self):
+        content = b"".join(self.response.streaming_content)
+        self.assertEqual(content, b"test")

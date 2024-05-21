@@ -4,24 +4,26 @@ from django import forms
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.http import FileResponse
-from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
 from file_upload.forms import FieldMapCreateForm, UploadFileForm
-from file_upload.managers.file_upload_manager import FileUploadManager
+from file_upload.managers.file_upload_manager import (
+    FileUploadManager,
+)
 from file_upload.managers.file_upload_manager import FileUploadProcessorProtocol
 from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepository,
 )
 from baseclasses.views import MontrekCreateView, MontrekTemplateView, MontrekListView
+from file_upload.managers.file_upload_registry_manager import FileUploadRegistryManager
 from reporting.dataclasses.table_elements import (
     DateTableElement,
     LinkTableElement,
     StringTableElement,
 )
-from file_upload.repositories.field_map_repository import FieldMapRepository
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from file_upload.managers.field_map_manager import FieldMapManager
+from file_upload.pages import FileUploadPage
 
 # Create your views here.
 
@@ -87,15 +89,19 @@ class MontrekUploadFileView(MontrekTemplateView):
 
 
 class MontrekDownloadFileView(MontrekTemplateView):
-    repository = FileUploadRegistryRepository
+    manager_class = FileUploadRegistryManager
+    page_class = FileUploadPage
 
     def get(self, request, *args, **kwargs):
-        upload_file = self.repository_object.get_file_from_registry(
+        upload_file = self.manager.repository.get_file_from_registry(
             self.kwargs["pk"], self.request
         )
         if upload_file is None:
             return redirect(request.META.get("HTTP_REFERER"))
         return FileResponse(upload_file, as_attachment=True)
+
+    def get_template_context(self, **kwargs):
+        return {}
 
 
 class MontrekFieldMapCreateView(MontrekCreateView):
@@ -145,22 +151,13 @@ class MontrekFieldMapListView(MontrekListView):
     success_url = "under_construction"
 
 
-class MontrekUploadView(MontrekListView):
+class FileUploadRegistryView(MontrekListView):
+    manager_class = FileUploadRegistryManager
     title = "Uploads"
     tab = "tab_uploads"
+    page_class = FileUploadPage
 
-    @property
-    def elements(self) -> tuple:
-        return (
-            StringTableElement(name="File Name", attr="file_name"),
-            StringTableElement(name="Upload Status", attr="upload_status"),
-            StringTableElement(name="Upload Message", attr="upload_message"),
-            DateTableElement(name="Upload Date", attr="created_at"),
-            LinkTableElement(
-                name="File",
-                url="montrek_download_file",
-                kwargs={"pk": "id"},
-                icon="download",
-                hover_text="Download",
-            ),
-        )
+
+# TODO: Remove after refactor
+class MontrekUploadView(FileUploadRegistryView):
+    pass
