@@ -16,6 +16,7 @@ from file_upload.repositories.file_upload_registry_repository import (
 )
 from baseclasses.views import MontrekCreateView, MontrekTemplateView, MontrekListView
 from file_upload.managers.file_upload_registry_manager import FileUploadRegistryManager
+from baseclasses.managers.montrek_manager import MontrekManagerNotImplemented
 from reporting.dataclasses.table_elements import (
     DateTableElement,
     LinkTableElement,
@@ -45,9 +46,9 @@ class NotDefinedFileUploadProcessor:
 class MontrekUploadFileView(MontrekTemplateView):
     manager_class = FileUploadManager
     template_name = "upload_form.html"
-    file_upload_processor_class: type[
-        FileUploadProcessorProtocol
-    ] = NotDefinedFileUploadProcessor
+    file_upload_processor_class: type[FileUploadProcessorProtocol] = (
+        NotDefinedFileUploadProcessor
+    )
     accept = ""
 
     def get_template_context(self, **kwargs):
@@ -110,13 +111,13 @@ class MontrekFieldMapCreateView(MontrekCreateView):
     form_class = FieldMapCreateForm
     field_map_manager_class = FieldMapManager
     # TODO: Change to manager
-    related_repository_class = MontrekRepository
+    related_manager_class = MontrekManagerNotImplemented
 
     def get_form(self, form_class=None):
         return self.form_class(
             repository=self.manager.repository,
             field_map_manager=self.field_map_manager_class(self.session_data),
-            related_repository=self.related_repository_class(),
+            related_manager=self.related_manager_class(),
         )
 
     def post(self, request, *args, **kwargs):
@@ -124,7 +125,7 @@ class MontrekFieldMapCreateView(MontrekCreateView):
             self.request.POST,
             repository=self.manager.repository,
             field_map_manager=self.field_map_manager_class(self.session_data),
-            related_repository=self.related_repository_class(),
+            related_managjer=self.related_manager_class(),
         )
         if form.is_valid():
             return self.form_valid(form)
