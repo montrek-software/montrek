@@ -36,16 +36,8 @@ class FieldMapCreateForm(MontrekCreateForm):
         self.initial["function_name"] = "no_change"
 
     def _get_database_field_choices(self):
-        return sorted(
-            list(
-                set(
-                    [
-                        f.name
-                        for f in self.related_manager.repository.std_satellite_fields()
-                    ]
-                )
-            )
-        )
+        repository = self.related_manager.repository
+        return sorted(list(set([f.name for f in repository.std_satellite_fields()])))
 
     def _get_function_name_choices(self):
         function_names = []
