@@ -3,8 +3,6 @@ from django import forms
 from django.forms.fields import ChoiceField
 
 from baseclasses.forms import MontrekCreateForm
-from baseclasses.models import MontrekSatelliteABC
-from file_upload.managers.field_map_manager import FieldMapManager
 
 
 class UploadFileForm(forms.Form):

@@ -1,13 +1,11 @@
 from django.http import HttpResponseRedirect
 from django.urls import reverse
-from django.contrib import messages
 
 from baseclasses.views import (
     MontrekCreateUpdateView,
     MontrekListView,
     MontrekDetailView,
 )
-from reporting.dataclasses import table_elements as te
 from mailing.managers.mailing_manager import (
     MailingManager,
     MailingTableManager,

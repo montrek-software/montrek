@@ -1,4 +1,3 @@
-from typing import Any
 from django import template
 from django.urls import NoReverseMatch, reverse
 from django.template import Template, Context

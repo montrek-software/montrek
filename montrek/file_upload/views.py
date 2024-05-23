@@ -11,18 +11,9 @@ from file_upload.managers.file_upload_manager import (
     FileUploadManager,
 )
 from file_upload.managers.file_upload_manager import FileUploadProcessorProtocol
-from file_upload.repositories.file_upload_registry_repository import (
-    FileUploadRegistryRepository,
-)
 from baseclasses.views import MontrekCreateView, MontrekTemplateView, MontrekListView
 from file_upload.managers.file_upload_registry_manager import FileUploadRegistryManager
 from baseclasses.managers.montrek_manager import MontrekManagerNotImplemented
-from reporting.dataclasses.table_elements import (
-    DateTableElement,
-    LinkTableElement,
-    StringTableElement,
-)
-from baseclasses.repositories.montrek_repository import MontrekRepository
 from file_upload.managers.field_map_manager import FieldMapManager
 from file_upload.pages import FileUploadPage
 

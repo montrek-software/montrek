@@ -1,9 +1,7 @@
-from django.test import TestCase
 from mailing.tests.factories.mailing_factories import MailSatelliteFactory
 from mailing import views
 from mailing.forms import MailingSendForm
 from baseclasses.managers.montrek_manager import MontrekManager
-from user.tests.factories.montrek_user_factories import MontrekUserFactory
 from testing.test_cases import view_test_cases as vtc
 
 

@@ -2,9 +2,7 @@ import hashlib
 import datetime
 from enum import Enum
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.db import models
-from django.db.models.fields import decimal
 from django.utils import timezone
 from baseclasses.utils import datetime_to_montrek_time
 from baseclasses.dataclasses.alert import AlertEnum

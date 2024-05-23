@@ -1,4 +1,3 @@
-from os import walk
 from django.test import TestCase
 
 from reporting.tests import mocks

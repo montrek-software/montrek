@@ -1,11 +1,10 @@
 # Purpose: Utility functions for the model package
 import pandas as pd
 import copy
-from typing import Any, List, Dict, Type
+from typing import Any, List
 from baseclasses.models import MontrekSatelliteABC
 from baseclasses.models import MontrekHubABC
-from django.db.models.base import ModelBase
-from django.db.models import Q, Subquery, OuterRef
+from django.db.models import Q
 from django.utils import timezone
 
 
@@ -121,7 +120,7 @@ def update_satellite(
 def update_satellite_from_satellite(
     satellite_instance: MontrekSatelliteABC, **kwargs
 ) -> MontrekSatelliteABC:
-    satellite_class = satellite_instance.__class__
+    satellite_instance.__class__
     updated_satellite_entry = copy.copy(satellite_instance)
     updated_satellite_entry.pk = None
     updated_state_date = timezone.now()

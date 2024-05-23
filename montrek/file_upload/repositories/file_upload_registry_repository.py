@@ -1,6 +1,5 @@
 import os
 from typing import TextIO
-from django.utils import timezone
 from django.contrib import messages
 from montrek.settings import MEDIA_ROOT
 from baseclasses.repositories.montrek_repository import MontrekRepository

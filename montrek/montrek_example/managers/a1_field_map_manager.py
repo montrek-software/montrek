@@ -6,7 +6,6 @@ from file_upload.managers.field_map_manager import (
     FieldMapFunctionManager,
     FieldMapManager,
 )
-from montrek_example.models import SatA1
 
 logger = logging.getLogger(__name__)
 

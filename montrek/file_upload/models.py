@@ -1,5 +1,3 @@
-import os
-from django.conf import settings
 from django.db import models
 
 from baseclasses import models as baseclass_models
