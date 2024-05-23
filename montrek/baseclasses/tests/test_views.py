@@ -1,6 +1,5 @@
-from django.contrib.auth import get_user_model
+from user.tests.factories.montrek_user_factories import MontrekUserFactory
 from django.contrib.auth.models import AnonymousUser
-from django.db.models import QuerySet
 from django.test import TestCase, RequestFactory
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.contrib.messages.middleware import MessageMiddleware
@@ -13,7 +12,6 @@ from baseclasses.dataclasses.montrek_message import (
     MontrekMessageInfo,
 )
 from baseclasses.pages import MontrekPage
-from baseclasses.managers.montrek_manager import MontrekManager
 from reporting.managers.montrek_table_manager import MontrekTableManager
 from reporting.dataclasses import table_elements as te
 
@@ -103,6 +101,8 @@ class MockPage(MontrekPage):
 
 class TestUnderConstruction(TestCase):
     def test_under_construction(self):
+        user = MontrekUserFactory()
+        self.client.force_login(user)
         response = self.client.get("/under_construction")
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "under_construction.html")
@@ -133,9 +133,7 @@ class TestMontrekViewMixin(TestCase):
         self.assertEqual(mock_view.session_data["test_key"], "test_value")
 
     def test_session_data_contains_user_id_for_authenticated_user(self):
-        user = get_user_model().objects.create_user(
-            email="test@example.com", password="test"
-        )
+        user = MontrekUserFactory()
         mock_view = MockMontrekView("/")
         mock_view.request.user = user
         self.assertEqual(mock_view.session_data["user_id"], user.id)

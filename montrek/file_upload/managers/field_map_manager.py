@@ -2,6 +2,7 @@ from dataclasses import dataclass
 import pandas as pd
 from file_upload.repositories.field_map_repository import FieldMapRepository
 from reporting.managers.montrek_table_manager import MontrekTableManager
+from reporting.dataclasses.table_elements import StringTableElement
 
 
 @dataclass
@@ -28,6 +29,18 @@ class FieldMapFunctionManager:
 class FieldMapManager(MontrekTableManager):
     field_map_function_manager_class = FieldMapFunctionManager
     repository_class = FieldMapRepository
+
+    @property
+    def table_elements(self) -> list:
+        return [
+            StringTableElement(name="Source Field", attr="source_field"),
+            StringTableElement(name="Database Field", attr="database_field"),
+            StringTableElement(name="Function Name", attr="function_name"),
+            StringTableElement(name="Function Parameters", attr="function_parameters"),
+            StringTableElement(
+                name="Comment", attr="field_map_static_satellite_comment"
+            ),
+        ]
 
     def __init__(self, session_data: dict):
         self._reset_exceptions()

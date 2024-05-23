@@ -136,18 +136,6 @@ class MontrekFieldMapListView(MontrekListView):
     tab = "tab_field_map_list"
     title = "Field Map Overview"
 
-    @property
-    def elements(self) -> list:
-        return [
-            StringTableElement(name="Source Field", attr="source_field"),
-            StringTableElement(name="Database Field", attr="database_field"),
-            StringTableElement(name="Function Name", attr="function_name"),
-            StringTableElement(name="Function Parameters", attr="function_parameters"),
-            StringTableElement(
-                name="Comment", attr="field_map_static_satellite_comment"
-            ),
-        ]
-
     success_url = "under_construction"
 
 
