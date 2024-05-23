@@ -144,7 +144,7 @@ class TestMontrekPasswordResetView(TestCase):
         message = str(messages[0])
 
         self.assertEqual(response.status_code, 200)
-        self.assertRedirects(response, reverse("home"))
+        self.assertRedirects(response, reverse("login"))
         self.assertEqual(len(messages), 1)
         self.assertEqual(
             message,

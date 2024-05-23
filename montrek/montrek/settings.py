@@ -70,7 +70,10 @@ DJANGO_MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-MONTREK_MIDDLEWARE = ["middleware.PermissionErrorMiddleware"]
+MONTREK_MIDDLEWARE = [
+    "middleware.LoginRequiredMiddleware",
+    "middleware.PermissionErrorMiddleware",
+]
 
 MIDDLEWARE = DJANGO_MIDDLEWARE + MONTREK_MIDDLEWARE
 
@@ -203,3 +206,5 @@ LOGGING = {
 TEST_RUNNER = "montrek.testing.test_runner.MontrekTestRunner"
 
 MONTREK_GITHUB_TOKEN = config("MONTREK_GITHUB_TOKEN", default="")
+
+LOGIN_EXEMPT_PATHS = ["/user", "/admin"]
