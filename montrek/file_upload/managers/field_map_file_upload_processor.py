@@ -45,6 +45,9 @@ class FieldMapFileUploadProcessor:
     def add_link_columns(self, mapped_df: pd.DataFrame) -> pd.DataFrame:
         NotImplementedError("Please implement this method in a subclass.")
 
+    def post_map_processing(self, mapped_df: pd.DataFrame) -> pd.DataFrame:
+        return mapped_df
+
     def process(self, file_path: str):
         source_df = self.get_source_df_from_file(file_path)
 
@@ -59,6 +62,7 @@ class FieldMapFileUploadProcessor:
             mapped_df["comment"] = self.file_upload_registry_hub.file_name
             mapped_df = self.add_link_columns(mapped_df)
             mapped_df = mapped_df.replace({np.nan: None})
+            mapped_df = self.post_map_processing(mapped_df)
             self.manager.repository.create_objects_from_data_frame(mapped_df)
         except Exception as e:
             self.message = (
