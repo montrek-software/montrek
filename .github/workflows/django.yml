@@ -24,6 +24,9 @@ jobs:
         echo "DB_NAME=montrek_ci_pipe_db" >> .env
         echo "DB_HOST=db" >> .env
         echo "DB_PORT=3306" >> .env
+        echo "DEPLOY_PORT=1339" >> .env
+        echo "FLOWER_PORT=5555" >> .env
+        echo "APP_PORT=8000" >> .env
     - name: Print current directory and list files
       run: |
         echo "Current directory:"
