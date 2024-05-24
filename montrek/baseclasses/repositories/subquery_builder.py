@@ -1,11 +1,11 @@
-from typing import Type, List
+from typing import Type
 
 from django.db.models.functions import Cast
 from baseclasses.models import MontrekManyToManyLinkABC, MontrekSatelliteABC
 from baseclasses.models import MontrekTimeSeriesSatelliteABC
 from baseclasses.models import MontrekLinkABC
 from baseclasses.models import LinkTypeEnum
-from django.db.models import F, CharField, Count, Func, Subquery, OuterRef, Value
+from django.db.models import CharField, Func, Subquery, OuterRef
 from django.utils import timezone
 
 

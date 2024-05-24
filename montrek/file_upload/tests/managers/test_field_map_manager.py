@@ -5,7 +5,6 @@ from file_upload.tests.factories.field_map_factories import (
     FieldMapStaticSatelliteFactory,
 )
 from file_upload.managers.field_map_manager import (
-    FieldMapExceptionInfo,
     FieldMapFunctionManager,
     FieldMapManager,
 )

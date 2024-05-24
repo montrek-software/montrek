@@ -5,12 +5,10 @@ from dataclasses import dataclass
 from django.db.models import QuerySet
 from django.utils import timezone
 from baseclasses.models import (
-    MontrekLinkABC,
     MontrekSatelliteABC,
     MontrekHubABC,
     MontrekTimeSeriesSatelliteABC,
 )
-from baseclasses.models import LinkTypeEnum
 
 
 class SatelliteCreationState(Protocol):

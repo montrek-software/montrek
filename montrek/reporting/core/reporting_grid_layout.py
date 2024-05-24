@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from reporting.managers.montrek_report_manager import ReportElementProtocol
 
 

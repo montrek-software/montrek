@@ -1,6 +1,5 @@
 from django.core.exceptions import PermissionDenied
 from django.test import TestCase, TransactionTestCase
-from django.db.models import Q
 from django.utils import timezone
 from baseclasses.utils import montrek_time
 from user.tests.factories.montrek_user_factories import MontrekUserFactory

@@ -1,5 +1,4 @@
 from collections.abc import Iterable
-from os import walk
 from baseclasses.managers.montrek_manager import MontrekManager
 from reporting.core import reporting_text as rt
 from reporting.lib.protocols import (

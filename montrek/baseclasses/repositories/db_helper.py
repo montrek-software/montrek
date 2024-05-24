@@ -1,20 +1,20 @@
 # Purpose: Utility functions for the model package
 import pandas as pd
 import copy
-from typing import Any, List, Dict, Type
+from typing import Any, List
 from baseclasses.models import MontrekSatelliteABC
 from baseclasses.models import MontrekHubABC
-from django.db.models.base import ModelBase
-from django.db.models import Q, Subquery, OuterRef
+from django.db.models import Q
 from django.utils import timezone
 
 
 def new_link_entry(
-    from_hub: MontrekHubABC, 
-    to_hub: MontrekHubABC, 
+    from_hub: MontrekHubABC,
+    to_hub: MontrekHubABC,
     related_field: str,
 ) -> None:
     getattr(from_hub, related_field).add(to_hub)
+
 
 def new_satellite_entry(
     satellite_class: MontrekSatelliteABC, hub_entity: MontrekHubABC = None, **kwargs
@@ -121,7 +121,6 @@ def update_satellite(
 def update_satellite_from_satellite(
     satellite_instance: MontrekSatelliteABC, **kwargs
 ) -> MontrekSatelliteABC:
-    satellite_class = satellite_instance.__class__
     updated_satellite_entry = copy.copy(satellite_instance)
     updated_satellite_entry.pk = None
     updated_state_date = timezone.now()
@@ -171,6 +170,7 @@ def get_satellite_from_hub_query(
     )
     return satellite_instance
 
+
 def select_satellite(
     hub_entity: MontrekHubABC,
     satellite_class: MontrekSatelliteABC,
@@ -184,7 +184,6 @@ def select_satellite(
         reference_date=reference_date,
         applied_filter=applied_filter,
     ).get()
-
 
 
 def get_hub_by_id(

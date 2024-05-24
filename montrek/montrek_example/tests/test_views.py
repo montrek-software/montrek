@@ -375,7 +375,7 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
 
         messages = list(response.context["messages"])
 
-        a_hubs = HubARepository().std_queryset()
+        HubARepository().std_queryset()
 
         self.assertRedirects(response, reverse("a1_view_uploads"))
         self.assertEqual(len(messages), 1)

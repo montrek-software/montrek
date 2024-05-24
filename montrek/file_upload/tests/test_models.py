@@ -3,9 +3,6 @@ from django.test import TestCase
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from file_upload.tests.factories.file_upload_factories import (
-    FileUploadRegistryStaticSatelliteFactory,
-)
-from file_upload.tests.factories.file_upload_factories import (
     FileUploadRegistryHubFactory,
 )
 from file_upload.tests.factories.file_upload_factories import FileUploadFileHubFactory

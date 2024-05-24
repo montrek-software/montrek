@@ -11,9 +11,6 @@ from file_upload.managers.file_upload_manager import (
     FileUploadManager,
 )
 from file_upload.managers.file_upload_manager import FileUploadProcessorProtocol
-from file_upload.repositories.file_upload_registry_repository import (
-    FileUploadRegistryRepository,
-)
 from baseclasses.views import MontrekCreateView, MontrekTemplateView, MontrekListView
 from file_upload.managers.file_upload_registry_manager import FileUploadRegistryManager
 from baseclasses.managers.montrek_manager import MontrekManagerNotImplemented
