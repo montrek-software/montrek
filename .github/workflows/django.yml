@@ -42,4 +42,5 @@ jobs:
     - name: Run Tests
       working-directory: .
       run: |
+        cd montrek
         python manage.py test --exclude-tag=functional
