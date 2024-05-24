@@ -35,4 +35,4 @@ jobs:
         ls -la
     - name: Run Tests
       run: |
-        docker-compose run --rm app sh -c "python manage.py test --exclude-tag=functional"
+        docker-compose run --rm web sh -c "python manage.py test --exclude-tag=functional"
