@@ -27,7 +27,16 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: Cache APT packages
+      id: cache-apt
+      uses: actions/cache@v3
+      with:
+        path: /var/cache/apt
+        key: ${{ runner.os }}-apt-${{ hashFiles('**/*.tex') }}
+        restore-keys: |
+          ${{ runner.os }}-apt-
     - name: Install Tex Live
+      if: steps.cache-apt.outputs.cache-hit != 'true'
       run: |
         sudo apt-get install texlive-xetex texlive-fonts-recommended
     - name: Verify Tex Live Installation
