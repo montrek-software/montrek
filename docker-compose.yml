@@ -16,9 +16,7 @@ services:
 
 
   web:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: vimsnt/montrek_app:latest
     command: sh -c "cd montrek &&
                     python manage.py migrate &&
                     python manage.py collectstatic --noinput &&
@@ -29,7 +27,6 @@ services:
       - uploads_volume:/montrek/uploads
     env_file:
       - .env
-    image: montrek_app
     expose:
       - ${APP_PORT}
     ports:
