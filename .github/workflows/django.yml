@@ -11,9 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: vimsnt/montrek_ci:latest
-      credentials:
-        user: ${{ secrets.DOCKERHUB_USER }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
+    credentials:
+      user: ${{ secrets.DOCKERHUB_USER }}
+      password: ${{ secrets.DOCKERHUB_TOKEN }}
 
     services:
       mariadb:
