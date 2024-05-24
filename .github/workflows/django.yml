@@ -29,4 +29,4 @@ jobs:
         echo "APP_PORT=8000" >> .env
     - name: Run Tests
       run: |
-        docker-compose run --rm web sh -c "python manage.py test --exclude-tag=functional"
+        docker-compose run --rm web sh -c "python montrek/manage.py test --exclude-tag=functional"
