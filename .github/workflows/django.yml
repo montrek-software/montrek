@@ -32,6 +32,13 @@ jobs:
         echo "DB_PASSWORD=ci_pipe_pssw" >> .env
         echo "DB_NAME=montrek_ci_pipe_db" >> .env
         echo "DB_HOST=0.0.0.0" >> .env
+    - name: Print current directory and list files
+      run: |
+        echo "Current directory:"
+        pwd
+        echo "Files in current directory:"
+        ls -la
     - name: Run Tests
+      working-directory: .
       run: |
         python manage.py test --exclude-tag=functional
