@@ -12,8 +12,8 @@ jobs:
     container:
       image: vimsnt/montrek_ci:latest
       credentials:
-        user: ${{ secrets.DOCKERHUB_USER }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
+        username: ${{ secrets.DOCKERHUB_USER }}
+        password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
     services:
       mariadb:
