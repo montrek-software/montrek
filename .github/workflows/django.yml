@@ -9,30 +9,21 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container:
-      image: vimsnt/montrek_app:latest
-      credentials:
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Login to Docker Hub
+      uses: docker/login-action@v1
+      with:
         username: ${{ secrets.DOCKERHUB_USER }}
         password: ${{ secrets.DOCKERHUB_PASSWORD }}
-
-    services:
-      mariadb:
-        image: mariadb:10.9
-        env:
-          MYSQL_ROOT_PASSWORD: ci_pipe_pssw
-          MYSQL_DATABASE: montrek_ci_pipe_db
-        ports:
-          - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
-
-    steps:
-    - uses: actions/checkout@v3
     - name: Setup env
       run: |
         echo "DB_USER=root" >> .env
         echo "DB_PASSWORD=ci_pipe_pssw" >> .env
         echo "DB_NAME=montrek_ci_pipe_db" >> .env
-        echo "DB_HOST=0.0.0.0" >> .env
+        echo "DB_HOST=db" >> .env
+        echo "DB_PORT=3306" >> .env
     - name: Print current directory and list files
       run: |
         echo "Current directory:"
@@ -40,7 +31,5 @@ jobs:
         echo "Files in current directory:"
         ls -la
     - name: Run Tests
-      working-directory: .
       run: |
-        cd montrek
-        python manage.py test --exclude-tag=functional
+        docker-compose run --rm app sh -c "python manage.py test --exclude-tag=functional"

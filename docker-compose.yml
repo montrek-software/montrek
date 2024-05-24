@@ -39,7 +39,7 @@ services:
       - db
       - redis
     environment:
-      - DB_HOST=${DEPLOY_HOST}
+      - DB_HOST=${DB_HOST}
 
   db:
     image: mariadb:latest
