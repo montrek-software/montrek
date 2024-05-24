@@ -39,14 +39,6 @@ jobs:
       if: steps.cache-apt.outputs.cache-hit != 'true'
       run: |
         sudo apt-get install texlive-xetex texlive-fonts-recommended
-    - name: Verify Tex Live Installation
-      run: |
-        if [ -d "/usr/local/texlive" ]; then
-          echo "Tex Live is installed at /usr/local/texlive."
-        else
-          echo "Tex Live is not installed at /usr/local/texlive."
-          exit 1
-        fi
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
       with:
