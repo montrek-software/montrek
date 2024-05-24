@@ -1,3 +1,4 @@
+from montrek_example.repositories.sat_a1_repository import SatA1Repository
 from reporting.managers.montrek_details_manager import MontrekDetailsManager
 from reporting.managers.montrek_table_manager import MontrekTableManager
 from reporting.managers.montrek_report_manager import MontrekReportManager
@@ -54,6 +55,17 @@ class HubAManager(MontrekTableManager):
                 icon="trash",
                 hover_text="Delete Example A",
             ),
+        )
+
+
+class SatA1Manager(MontrekTableManager):
+    repository_class = SatA1Repository
+
+    @property
+    def table_elements(self) -> list:
+        return (
+            te.StringTableElement(name="A1 String", attr="field_a1_str"),
+            te.IntTableElement(name="A1 Int", attr="field_a1_int"),
         )
 
 
