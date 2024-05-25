@@ -5,9 +5,6 @@ from file_upload.tests.factories.field_map_factories import (
     FieldMapStaticSatelliteFactory,
 )
 from baseclasses.dataclasses.alert import AlertEnum
-from file_upload.tests.factories.file_upload_factories import (
-    FileUploadRegistryStaticSatelliteFactory,
-)
 from montrek_example import views as me_views
 from testing.test_cases.view_test_cases import (
     MontrekCreateViewTestCase,
