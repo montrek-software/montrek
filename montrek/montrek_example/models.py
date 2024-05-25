@@ -9,6 +9,10 @@ from baseclasses.models import (
     MontrekManyToManyLinkABC,
     MontrekTimeSeriesSatelliteABC,
 )
+from file_upload.models import (
+    FileUploadRegistryHubABC,
+    FileUploadRegistryStaticSatelliteABC,
+)
 
 # Create your models here.
 
@@ -30,7 +34,7 @@ class HubA(MontrekHubABC):
         "HubC", related_name="link_hub_c_hub_a", through="LinkHubAHubC"
     )
     link_hub_a_file_upload_registry = models.ManyToManyField(
-        "file_upload.FileUploadRegistryHub",
+        "montrek_example.HubAFileUploadRegistryHub",
         related_name="link_file_upload_registry_hub_a",
         through="LinkHubAFileUploadRegistry",
     )
@@ -127,7 +131,7 @@ class LinkHubBHubD(MontrekManyToManyLinkABC):
 class LinkHubAFileUploadRegistry(MontrekManyToManyLinkABC):
     hub_in = models.ForeignKey(HubA, on_delete=models.CASCADE)
     hub_out = models.ForeignKey(
-        "file_upload.FileUploadRegistryHub", on_delete=models.CASCADE
+        "montrek_example.HubAFileUploadRegistryHub", on_delete=models.CASCADE
     )
 
 
@@ -136,3 +140,24 @@ class LinkHubAApiUploadRegistry(MontrekManyToManyLinkABC):
     hub_out = models.ForeignKey(
         "api_upload.ApiUploadRegistryHub", on_delete=models.CASCADE
     )
+
+
+class HubAFileUploadRegistryHub(MontrekHubABC):
+    link_file_upload_registry_file_upload_file = models.ManyToManyField(
+        "file_upload.FileUploadFileHub",
+        related_name="link_file_upload_file_hub_a_file_upload_registry",
+        through="LinkHubAFileUploadRegistryFileUploadFile",
+    )
+
+
+class LinkHubAFileUploadRegistryFileUploadFile(MontrekOneToOneLinkABC):
+    hub_in = models.ForeignKey(
+        "montrek_example.HubAFileUploadRegistryHub", on_delete=models.CASCADE
+    )
+    hub_out = models.ForeignKey(
+        "file_upload.FileUploadFileHub", on_delete=models.CASCADE
+    )
+
+
+class HubAFileUploadRegistryStaticSatellite(MontrekSatelliteABC):
+    hub_entity = models.ForeignKey(HubAFileUploadRegistryHub, on_delete=models.CASCADE)
