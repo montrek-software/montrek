@@ -1,4 +1,8 @@
 import logging
+from file_upload.managers.file_upload_manager import FileUploadManagerABC
+from montrek_example.managers.a_upload_table_manager import (
+    HubAFileUploadRegistryManager,
+)
 import pandas as pd
 from file_upload.managers.field_map_file_upload_processor import (
     FieldMapFileUploadProcessor,
@@ -14,6 +18,7 @@ class A1FileUploadProcessor(FieldMapFileUploadProcessor):
     message = "Not implemented"
     manager_class = HubAManager
     field_map_manager_class = A1FieldMapManager
+    file_upload_registry_manager_class = HubAFileUploadRegistryManager
 
     @classmethod
     def get_source_df_from_file(cls, file_path):
@@ -22,3 +27,8 @@ class A1FileUploadProcessor(FieldMapFileUploadProcessor):
     def add_link_columns(self, mapped_df: pd.DataFrame) -> pd.DataFrame:
         mapped_df["link_hub_a_file_upload_registry"] = self.file_upload_registry_hub
         return mapped_df
+
+
+class A1FileUploadManager(FileUploadManagerABC):
+    file_upload_processor_class = A1FileUploadProcessor
+    file_registry_manager_class = HubAFileUploadRegistryManager

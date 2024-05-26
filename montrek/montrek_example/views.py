@@ -15,7 +15,7 @@ from file_upload.views import (
 )
 from montrek_example.managers.a2_api_upload_manager import A2ApiUploadManager
 from montrek_example.managers.a1_file_upload_manager import (
-    A1FileUploadProcessor,
+    A1FileUploadManager,
 )
 from montrek_example.managers.a1_field_map_manager import (
     A1FieldMapManager,
@@ -193,10 +193,9 @@ class MontrekExampleDCreate(views.MontrekCreateView):
 
 
 class MontrekExampleA1UploadFileView(MontrekUploadFileView):
-    manager_class = HubAFileUploadRegistryManager
     page_class = pages.MontrekExampleAAppPage
     title = "Upload A1 File"
-    file_upload_processor_class = A1FileUploadProcessor
+    file_upload_manager_class = A1FileUploadManager
     accept = ".csv"
 
     def get_success_url(self):

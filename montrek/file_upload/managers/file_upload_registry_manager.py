@@ -1,5 +1,5 @@
 from file_upload.repositories.file_upload_registry_repository import (
-    FileUploadRegistryRepository,
+    FileUploadRegistryRepositoryABC,
 )
 from reporting.managers.montrek_table_manager import MontrekTableManager
 from reporting.dataclasses.table_elements import (
@@ -10,7 +10,7 @@ from reporting.dataclasses.table_elements import (
 
 
 class FileUploadRegistryManager(MontrekTableManager):
-    repository_class = FileUploadRegistryRepository
+    repository_class = FileUploadRegistryRepositoryABC
 
     @property
     def table_elements(self) -> tuple:

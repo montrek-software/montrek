@@ -142,7 +142,7 @@ class LinkHubAApiUploadRegistry(MontrekManyToManyLinkABC):
     )
 
 
-class HubAFileUploadRegistryHub(MontrekHubABC):
+class HubAFileUploadRegistryHub(FileUploadRegistryHubABC):
     link_file_upload_registry_file_upload_file = models.ManyToManyField(
         "file_upload.FileUploadFileHub",
         related_name="link_file_upload_file_hub_a_file_upload_registry",
@@ -159,5 +159,5 @@ class LinkHubAFileUploadRegistryFileUploadFile(MontrekOneToOneLinkABC):
     )
 
 
-class HubAFileUploadRegistryStaticSatellite(MontrekSatelliteABC):
+class HubAFileUploadRegistryStaticSatellite(FileUploadRegistryStaticSatelliteABC):
     hub_entity = models.ForeignKey(HubAFileUploadRegistryHub, on_delete=models.CASCADE)
