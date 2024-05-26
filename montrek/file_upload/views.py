@@ -81,13 +81,12 @@ class MontrekFieldMapCreateView(MontrekCreateView):
     manager_class = FieldMapManagerABC
     success_url = "under_construction"
     form_class = FieldMapCreateForm
-    field_map_manager_class = FieldMapManagerABC
     related_manager_class = MontrekManagerNotImplemented
 
     def get_form(self, form_class=None):
         return self.form_class(
             repository=self.manager.repository,
-            field_map_manager=self.field_map_manager_class(self.session_data),
+            field_map_manager=self.manager_class(self.session_data),
             related_manager=self.related_manager_class(),
         )
 
@@ -95,7 +94,7 @@ class MontrekFieldMapCreateView(MontrekCreateView):
         form = self.form_class(
             self.request.POST,
             repository=self.manager.repository,
-            field_map_manager=self.field_map_manager_class(self.session_data),
+            field_map_manager=self.manager_class(self.session_data),
             related_manager=self.related_manager_class(),
         )
         if form.is_valid():

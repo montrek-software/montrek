@@ -6,6 +6,9 @@ from file_upload.managers.field_map_manager import (
     FieldMapFunctionManager,
     FieldMapManagerABC,
 )
+from montrek_example.repositories.sat_a1_repository import (
+    SatA1FieldMapRepository,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -24,3 +27,4 @@ class A1FieldMapFunctionManager(FieldMapFunctionManager):
 
 class A1FieldMapManager(FieldMapManagerABC):
     field_map_function_manager_class = A1FieldMapFunctionManager
+    repository_class = SatA1FieldMapRepository
