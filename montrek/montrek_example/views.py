@@ -193,7 +193,7 @@ class MontrekExampleDCreate(views.MontrekCreateView):
 
 
 class MontrekExampleA1UploadFileView(MontrekUploadFileView):
-    manager_class = mem.HubAManager
+    manager_class = HubAFileUploadRegistryManager
     page_class = pages.MontrekExampleAAppPage
     title = "Upload A1 File"
     file_upload_processor_class = A1FileUploadProcessor
