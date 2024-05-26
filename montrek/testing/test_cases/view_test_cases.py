@@ -1,6 +1,7 @@
 import datetime
 from django.db.models import QuerySet
 from django.http import FileResponse
+from django.utils import timezone
 import pandas as pd
 from django.test import TestCase
 from django.views import View
@@ -200,14 +201,17 @@ class MontrekDeleteViewTestCase(MontrekObjectViewBaseTestCase, GetObjectPkMixin)
 
     def _get_object(self):
         std_query = self._get_std_queryset()
-        return std_query.last()
+        return std_query.filter(pk=self.url_kwargs()["pk"])
+
+    def creation_data(self) -> dict:
+        return {"action": "Delete"}
 
     def test_view_post_success(self):
         if not self._pre_test_view_post_success():
             return
         # Check deleted data has an end date
-        obj = self._get_object()
-        self.assertTrue(obj.state_date_end is not None)
+        query = self._get_object()
+        self.assertEqual(query.count(), 0)
 
 
 class MontrekFileResponseTestCase(MontrekViewTestCase):
