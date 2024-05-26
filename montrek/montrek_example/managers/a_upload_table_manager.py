@@ -6,14 +6,14 @@ from reporting.dataclasses.table_elements import (
     StringTableElement,
 )
 from montrek_example.repositories.hub_a_repository import (
-    HubAUploadRepository,
+    HubAApiUploadRepository,
     HubAFileUploadRegistryRepository,
 )
 from reporting.managers.montrek_table_manager import MontrekTableManager
 
 
 class HubAUploadTableManager(MontrekTableManager):
-    repository_class = HubAUploadRepository
+    repository_class = HubAApiUploadRepository
 
     @property
     def table_elements(self):
