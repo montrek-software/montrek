@@ -1,6 +1,8 @@
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from file_upload.models import (
+    FieldMapHub,
     FieldMapHubABC,
+    FieldMapStaticSatellite,
     FieldMapStaticSatelliteABC,
 )
 
@@ -40,3 +42,8 @@ class FieldMapRepositoryABC(MontrekRepository):
             raise NotImplementedError(
                 "FieldMapRepository class must have static_satellite_class that is derived from FieldMapStaticSatelliteABC"
             )
+
+
+class FieldMapRepository(FieldMapRepositoryABC):
+    hub_class = FieldMapHub
+    static_satellite_class = FieldMapStaticSatellite

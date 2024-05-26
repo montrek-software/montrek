@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import pandas as pd
 from file_upload.repositories.field_map_repository import (
+    FieldMapRepository,
     FieldMapRepositoryABC,
 )
 from reporting.managers.montrek_table_manager import MontrekTableManager
@@ -77,3 +78,7 @@ class FieldMapManagerABC(MontrekTableManager):
                 self.exceptions.append(exception_info)
 
         return mapped_df
+
+
+class FieldMapManager(FieldMapManagerABC):
+    repository_class = FieldMapRepository
