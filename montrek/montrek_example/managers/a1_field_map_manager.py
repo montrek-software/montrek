@@ -4,7 +4,7 @@ import logging
 
 from file_upload.managers.field_map_manager import (
     FieldMapFunctionManager,
-    FieldMapManager,
+    FieldMapManagerABC,
 )
 
 logger = logging.getLogger(__name__)
@@ -22,5 +22,5 @@ class A1FieldMapFunctionManager(FieldMapFunctionManager):
         return source_df[source_field] * 1000
 
 
-class A1FieldMapManager(FieldMapManager):
+class A1FieldMapManager(FieldMapManagerABC):
     field_map_function_manager_class = A1FieldMapFunctionManager

@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 import pandas as pd
-from file_upload.repositories.field_map_repository import FieldMapRepository
+from file_upload.repositories.field_map_repository import (
+    FieldMapRepositoryABC,
+)
 from reporting.managers.montrek_table_manager import MontrekTableManager
 from reporting.dataclasses.table_elements import StringTableElement
 
@@ -26,9 +28,9 @@ class FieldMapFunctionManager:
         return source_df[source_field].multiply(value)
 
 
-class FieldMapManager(MontrekTableManager):
+class FieldMapManagerABC(MontrekTableManager):
     field_map_function_manager_class = FieldMapFunctionManager
-    repository_class = FieldMapRepository
+    repository_class = FieldMapRepositoryABC
 
     @property
     def table_elements(self) -> list:
