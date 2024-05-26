@@ -1,4 +1,5 @@
 import os
+from file_upload.models import FileUploadRegistryHubABC
 from django.conf import settings
 from typing import Any, TextIO, Dict
 from typing import Protocol
@@ -16,21 +17,21 @@ from baseclasses.managers.montrek_manager import MontrekManager
 class FileUploadProcessorProtocol(Protocol):
     message: str
 
-    def pre_check(self, file_path: str) -> bool:
-        ...
+    def pre_check(self, file_path: str) -> bool: ...
 
-    def process(self, file_path: str) -> bool:
-        ...
+    def process(self, file_path: str) -> bool: ...
 
-    def post_check(self, file_path: str) -> bool:
-        ...
+    def post_check(self, file_path: str) -> bool: ...
 
 
 class NotDefinedFileUploadProcessor:
     message = "FileUploadManager needs proper FileUploadProcessor assigned to file_upload_processor_class"
 
     def __init__(
-        self, file_upload_registry_pk: int, session_data: Dict[str, Any], **kwargs
+        self,
+        file_upload_registry_hub: FileUploadRegistryHubABC,
+        session_data: Dict[str, Any],
+        **kwargs,
     ) -> None:
         raise NotImplementedError(self.message)
 
@@ -46,9 +47,9 @@ class NotDefinedFileUploadProcessor:
 
 class FileUploadManagerABC(MontrekManager):
     repository_class = FileUploadFileRepository
-    file_upload_processor_class: type[
-        FileUploadProcessorProtocol
-    ] = NotDefinedFileUploadProcessor
+    file_upload_processor_class: type[FileUploadProcessorProtocol] = (
+        NotDefinedFileUploadProcessor
+    )
     file_registry_manager_class = FileUploadRegistryManager
 
     def __init__(
@@ -64,7 +65,7 @@ class FileUploadManagerABC(MontrekManager):
         self.file_path = ""
         self.init_upload()
         self.processor = self.file_upload_processor_class(
-            self.file_upload_registry.pk, session_data, **kwargs
+            self.file_upload_registry, session_data, **kwargs
         )
 
     def upload_and_process(self) -> bool:
