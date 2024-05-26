@@ -8,7 +8,7 @@ from typing import Dict, Any
 from file_upload.models import FileUploadRegistryHubABC
 from baseclasses.managers.montrek_manager import MontrekManager
 from file_upload.managers.field_map_manager import (
-    FieldMapManager,
+    FieldMapManagerABC,
 )
 
 logger = logging.getLogger(__name__)
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 class FieldMapFileUploadProcessor:
     message = "Not implemented"
     manager_class: type[MontrekManager] | None = None
-    field_map_manager_class: type[FieldMapManager] = FieldMapManager
+    field_map_manager_class: type[FieldMapManagerABC] = FieldMapManagerABC
 
     def __init__(
         self,

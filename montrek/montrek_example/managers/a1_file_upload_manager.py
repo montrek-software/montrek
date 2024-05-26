@@ -18,7 +18,6 @@ class A1FileUploadProcessor(FieldMapFileUploadProcessor):
     message = "Not implemented"
     manager_class = HubAManager
     field_map_manager_class = A1FieldMapManager
-    file_upload_registry_manager_class = HubAFileUploadRegistryManager
 
     @classmethod
     def get_source_df_from_file(cls, file_path):

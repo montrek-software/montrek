@@ -86,15 +86,26 @@ class FileUploadFileStaticSatellite(baseclass_models.MontrekSatelliteABC):
     file = models.FileField()
 
 
-class FieldMapHub(baseclass_models.MontrekHubABC):
-    pass
+class FieldMapHubABC(baseclass_models.MontrekHubABC):
+    class Meta:
+        abstract = True
 
 
-class FieldMapStaticSatellite(baseclass_models.MontrekSatelliteABC):
-    hub_entity = models.ForeignKey(FieldMapHub, on_delete=models.CASCADE)
-    identifier_fields = ["source_field"]
+class FieldMapStaticSatelliteABC(baseclass_models.MontrekSatelliteABC):
+    class Meta:
+        abstract = True
 
+    hub_entity = models.ForeignKey(FieldMapHubABC, on_delete=models.CASCADE)
     source_field = models.CharField(max_length=255)
     database_field = models.CharField(max_length=255)
     function_name = models.CharField(max_length=255, default="no_change")
     function_parameters = models.JSONField(null=True, blank=True)
+    identifier_fields = ["source_field"]
+
+
+class FieldMapHub(FieldMapHubABC):
+    pass
+
+
+class FieldMapStaticSatellite(FieldMapStaticSatelliteABC):
+    hub_entity = models.ForeignKey(FieldMapHub, on_delete=models.CASCADE)

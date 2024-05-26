@@ -1,9 +1,6 @@
 import os
 from django.test import TransactionTestCase
 from django.urls import reverse
-from file_upload.tests.factories.field_map_factories import (
-    FieldMapStaticSatelliteFactory,
-)
 from baseclasses.dataclasses.alert import AlertEnum
 from montrek_example import views as me_views
 from testing.test_cases.view_test_cases import (
@@ -288,12 +285,12 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
         self.assertTemplateUsed(response, "upload_form.html")
 
     def test_view_post_success(self):
-        FieldMapStaticSatelliteFactory(
+        me_factories.SatA1FieldMapStaticSatelliteFactory(
             source_field="source_field_0",
             database_field="field_a1_str",
             function_name="append_source_field_1",
         )
-        FieldMapStaticSatelliteFactory(
+        me_factories.SatA1FieldMapStaticSatelliteFactory(
             source_field="source_field_1",
             database_field="field_a1_int",
             function_name="multiply_by_1000",
@@ -325,13 +322,13 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
         self.assertEqual(a_hubs[2].field_a1_int, 3000)
 
     def test_view_post_field_map_exception(self):
-        FieldMapStaticSatelliteFactory(
+        me_factories.SatA1FieldMapStaticSatelliteFactory(
             source_field="source_field_0",
             database_field="field_a1_str",
             function_name="multiply_by_value",
             function_parameters={"value": "a"},
         )
-        FieldMapStaticSatelliteFactory(
+        me_factories.SatA1FieldMapStaticSatelliteFactory(
             source_field="source_field_1",
             database_field="field_a1_int",
             function_name="multiply_by_value",
@@ -359,7 +356,7 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
         self.assertEqual(len(a_hubs), 0)
 
     def test_view_post_db_creator_exception(self):
-        FieldMapStaticSatelliteFactory(
+        me_factories.SatA1FieldMapStaticSatelliteFactory(
             source_field="source_field_0",
             database_field="field_a1_int",
             function_name="multiply_by_value",
@@ -438,7 +435,7 @@ class TestMontrekExampleA1FieldMapListView(MontrekListViewTestCase):
     expected_no_of_rows = 10
 
     def build_factories(self):
-        FieldMapStaticSatelliteFactory.create_batch(12)
+        me_factories.SatA1FieldMapStaticSatelliteFactory.create_batch(10)
 
 
 class TestMontrekExampleHubAApiUploadView(MontrekListViewTestCase):
