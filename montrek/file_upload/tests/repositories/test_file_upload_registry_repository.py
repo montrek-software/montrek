@@ -6,9 +6,13 @@ from file_upload.tests.factories.file_upload_factories import (
     FileUploadRegistryStaticSatelliteFactory,
     FileUploadFileStaticSatelliteFactory,
 )
-from file_upload.repositories.file_upload_registry_repository import (
-    FileUploadRegistryRepository,
+from file_upload.tests.mocks import (
+    MockFileUploadRegistryRepository,
+    MockWrongHubClassFileUploadRegistryRepository,
+    MockWrongStaticSatelliteClassFileUploadRegistryRepository,
+    MockWrongLinkFileUploadRegistryRepository,
 )
+
 
 class TestFileUploadRegistryRepository(TestCase):
     def setUp(self):
@@ -34,9 +38,24 @@ class TestFileUploadRegistryRepository(TestCase):
         message_middleware.process_request(self.request)
 
     def test_get_file_from_registry(self):
-        repository = FileUploadRegistryRepository()
+        repository = MockFileUploadRegistryRepository()
         file_upload_registry = repository.std_queryset().first()
-        test_file = repository.get_file_from_registry(file_upload_registry.id, self.request)
+        test_file = repository.get_file_from_registry(
+            file_upload_registry.id, self.request
+        )
         expected_file = self.file_file_sat_factory.file
         self.assertEqual(test_file.read(), expected_file.read())
 
+
+class TestFileUploadRegistryRepositorySetUp(TestCase):
+    def test_wrong_hub_class(self):
+        with self.assertRaises(NotImplementedError):
+            MockWrongHubClassFileUploadRegistryRepository()
+
+    def test_wrong_static_satellite_class(self):
+        with self.assertRaises(NotImplementedError):
+            MockWrongStaticSatelliteClassFileUploadRegistryRepository()
+
+    def test_wrong_link_file_upload_registry_file_upload_file_class(self):
+        with self.assertRaises(NotImplementedError):
+            MockWrongLinkFileUploadRegistryRepository()

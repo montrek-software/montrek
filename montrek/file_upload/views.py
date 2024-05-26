@@ -8,17 +8,12 @@ from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
 from file_upload.forms import FieldMapCreateForm, UploadFileForm
 from file_upload.managers.file_upload_manager import (
-    FileUploadManager,
+    FileUploadManagerABC,
 )
 from file_upload.managers.file_upload_manager import FileUploadProcessorProtocol
 from baseclasses.views import MontrekCreateView, MontrekTemplateView, MontrekListView
 from file_upload.managers.file_upload_registry_manager import FileUploadRegistryManager
 from baseclasses.managers.montrek_manager import MontrekManagerNotImplemented
-from reporting.dataclasses.table_elements import (
-    DateTableElement,
-    LinkTableElement,
-    StringTableElement,
-)
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from file_upload.managers.field_map_manager import FieldMapManager
 from file_upload.pages import FileUploadPage
@@ -26,26 +21,10 @@ from file_upload.pages import FileUploadPage
 # Create your views here.
 
 
-class NotDefinedFileUploadProcessor:
-    message = "File upload processor not defined"
-
-    def process(self, file: TextIO):
-        raise NotImplementedError(self.message)
-
-    def pre_check(self, file: TextIO):
-        raise NotImplementedError(self.message)
-
-    def post_check(self, file: TextIO):
-        raise NotImplementedError(self.message)
-
-
 @method_decorator(login_required, name="dispatch")
 class MontrekUploadFileView(MontrekTemplateView):
-    manager_class = FileUploadManager
     template_name = "upload_form.html"
-    file_upload_processor_class: type[FileUploadProcessorProtocol] = (
-        NotDefinedFileUploadProcessor
-    )
+    file_upload_manager_class = FileUploadManagerABC
     accept = ""
 
     def get_template_context(self, **kwargs):
@@ -56,9 +35,7 @@ class MontrekUploadFileView(MontrekTemplateView):
         if form.is_valid():
             if not self._check_file_type(request.FILES["file"], form):
                 return self.render_to_response(self.get_context_data())
-            # TODO: Remodel with self.manager
-            file_upload_manager = FileUploadManager(
-                self.file_upload_processor_class,
+            file_upload_manager = self.file_upload_manager_class(
                 request.FILES["file"],
                 session_data=self.session_data,
                 **self.kwargs,

@@ -1,5 +1,5 @@
 from file_upload.managers.file_upload_registry_manager import (
-    FileUploadRegistryManager,
+    FileUploadRegistryManagerABC,
 )
 from reporting.dataclasses.table_elements import (
     DateTimeTableElement,
@@ -25,5 +25,5 @@ class HubAUploadTableManager(MontrekTableManager):
         )
 
 
-class HubAFileUploadRegistryManager(FileUploadRegistryManager):
+class HubAFileUploadRegistryManager(FileUploadRegistryManagerABC):
     repository_class = HubAFileUploadRegistryRepository

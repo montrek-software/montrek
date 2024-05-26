@@ -5,24 +5,15 @@ from baseclasses import models as baseclass_models
 # Create your models here.
 
 
-class FileUploadRegistryHub(baseclass_models.MontrekHubABC):
-    link_file_upload_registry_file_upload_file = models.ManyToManyField(
-        "file_upload.FileUploadFileHub",
-        related_name="link_file_upload_file_file_upload_registry",
-        through="LinkFileUploadRegistryFileUploadFile",
-    )
+class FileUploadRegistryHubABC(baseclass_models.MontrekHubABC):
+    class Meta:
+        abstract = True
 
 
-class LinkFileUploadRegistryFileUploadFile(baseclass_models.MontrekOneToOneLinkABC):
-    hub_in = models.ForeignKey(
-        "file_upload.FileUploadRegistryHub", on_delete=models.CASCADE
-    )
-    hub_out = models.ForeignKey(
-        "file_upload.FileUploadFileHub", on_delete=models.CASCADE
-    )
+class FileUploadRegistryStaticSatelliteABC(baseclass_models.MontrekSatelliteABC):
+    class Meta:
+        abstract = True
 
-
-class FileUploadRegistryStaticSatellite(baseclass_models.MontrekSatelliteABC):
     class FileTypes(models.TextChoices):
         CSV = "csv"
         JSON = "json"
@@ -39,7 +30,7 @@ class FileUploadRegistryStaticSatellite(baseclass_models.MontrekSatelliteABC):
         PROCESSED = "processed"
         FAILED = "failed"
 
-    hub_entity = models.ForeignKey(FileUploadRegistryHub, on_delete=models.CASCADE)
+    hub_entity = models.ForeignKey(FileUploadRegistryHubABC, on_delete=models.CASCADE)
     identifier_fields = ["file_name", "file_type"]
     file_name = models.CharField(max_length=255)
     file_type = models.CharField(
@@ -62,6 +53,27 @@ class FileUploadRegistryStaticSatellite(baseclass_models.MontrekSatelliteABC):
             self.file_type = self.file_name.split(".")[-1]
         self.clean()
         super().save(*args, **kwargs)
+
+
+class FileUploadRegistryHub(FileUploadRegistryHubABC):
+    link_file_upload_registry_file_upload_file = models.ManyToManyField(
+        "file_upload.FileUploadFileHub",
+        related_name="link_file_upload_file_file_upload_registry",
+        through="LinkFileUploadRegistryFileUploadFile",
+    )
+
+
+class LinkFileUploadRegistryFileUploadFile(baseclass_models.MontrekOneToOneLinkABC):
+    hub_in = models.ForeignKey(
+        "file_upload.FileUploadRegistryHub", on_delete=models.CASCADE
+    )
+    hub_out = models.ForeignKey(
+        "file_upload.FileUploadFileHub", on_delete=models.CASCADE
+    )
+
+
+class FileUploadRegistryStaticSatellite(FileUploadRegistryStaticSatelliteABC):
+    hub_entity = models.ForeignKey(FileUploadRegistryHub, on_delete=models.CASCADE)
 
 
 class FileUploadFileHub(baseclass_models.MontrekHubABC):

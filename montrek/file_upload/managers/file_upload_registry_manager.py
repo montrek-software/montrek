@@ -1,4 +1,5 @@
 from file_upload.repositories.file_upload_registry_repository import (
+    FileUploadRegistryRepositoryABC,
     FileUploadRegistryRepository,
 )
 from reporting.managers.montrek_table_manager import MontrekTableManager
@@ -9,8 +10,8 @@ from reporting.dataclasses.table_elements import (
 )
 
 
-class FileUploadRegistryManager(MontrekTableManager):
-    repository_class = FileUploadRegistryRepository
+class FileUploadRegistryManagerABC(MontrekTableManager):
+    repository_class = FileUploadRegistryRepositoryABC
 
     @property
     def table_elements(self) -> tuple:
@@ -28,3 +29,7 @@ class FileUploadRegistryManager(MontrekTableManager):
                 hover_text="Download",
             ),
         )
+
+
+class FileUploadRegistryManager(FileUploadRegistryManagerABC):
+    repository_class = FileUploadRegistryRepository

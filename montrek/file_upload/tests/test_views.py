@@ -12,6 +12,9 @@ from file_upload.tests.factories.file_upload_factories import (
     FileUploadRegistryStaticSatelliteFactory,
     FileUploadFileStaticSatelliteFactory,
 )
+from file_upload.repositories.file_upload_registry_repository import (
+    FileUploadRegistryRepositoryABC,
+)
 from testing.test_cases.view_test_cases import (
     MontrekListViewTestCase,
     MontrekFileResponseTestCase,
@@ -23,8 +26,24 @@ class MockPage(MontrekPage):
         return []
 
 
+class MockFileUploadProcessor:
+    def process(self, file):
+        ...
+
+    def pre_check(self, file):
+        ...
+
+    def post_check(self, file):
+        ...
+
+
+class MockFileUploadManager(FileUploadRegistryRepositoryABC):
+    file_upload_processor_class = MockFileUploadProcessor
+
+
 class MockFileUploadView(MontrekUploadFileView):
     page_class = MockPage
+    file_upload_manager_class = MockFileUploadManager
 
     def __init__(self, url: str):
         super().__init__()

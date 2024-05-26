@@ -4,6 +4,7 @@ import datetime
 from api_upload.tests.factories import ApiUploadRegistryHubFactory
 from file_upload.tests.factories.file_upload_factories import (
     FileUploadRegistryHubFactory,
+    FileUploadRegistryStaticSatelliteFactory,
 )
 
 
@@ -75,6 +76,20 @@ class SatD1Factory(factory.django.DjangoModelFactory):
         model = "montrek_example.SatD1"
 
     hub_entity = factory.SubFactory(HubDFactory)
+
+
+class HubAFileUploadRegistryHubFactory(FileUploadRegistryHubFactory):
+    class Meta:
+        model = "montrek_example.HubAFileUploadRegistryHub"
+
+
+class HubAFileUploadRegistryStaticSatelliteFactory(
+    FileUploadRegistryStaticSatelliteFactory
+):
+    class Meta:
+        model = "montrek_example.HubAFileUploadRegistryStaticSatellite"
+
+    hub_entity = factory.SubFactory(HubAFileUploadRegistryHubFactory)
 
 
 class LinkHubAHubBFactory(factory.django.DjangoModelFactory):

@@ -5,9 +5,7 @@ import logging
 from typing import Dict, Any
 
 
-from file_upload.repositories.file_upload_registry_repository import (
-    FileUploadRegistryRepository,
-)
+from file_upload.managers.file_upload_registry_manager import FileUploadRegistryManager
 from baseclasses.managers.montrek_manager import MontrekManager
 from file_upload.managers.field_map_manager import (
     FieldMapManager,
@@ -20,15 +18,17 @@ class FieldMapFileUploadProcessor:
     message = "Not implemented"
     manager_class: type[MontrekManager] | None = None
     field_map_manager_class: type[FieldMapManager] = FieldMapManager
+    file_upload_registry_manager_class = FileUploadRegistryManager
 
     def __init__(
         self, file_upload_registry_id: int, session_data: Dict[str, Any], **kwargs
     ):
         self.session_data = session_data
         self.file_upload_registry_id = file_upload_registry_id
-        self.file_upload_registry_repository = FileUploadRegistryRepository(
+
+        self.file_upload_registry_repository = self.file_upload_registry_manager_class(
             self.session_data
-        )
+        ).repository
         if not self.manager_class:
             raise ValueError("manager_class must be set in subclass.")
         self.manager = self.manager_class(self.session_data)
