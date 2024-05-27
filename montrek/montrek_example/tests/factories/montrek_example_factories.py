@@ -1,7 +1,10 @@
 import factory
 import datetime
 
-from api_upload.tests.factories import ApiUploadRegistryHubFactory
+from api_upload.tests.factories import (
+    ApiUploadRegistryHubFactory,
+    ApiUploadRegistryStaticSatelliteFactory,
+)
 from file_upload.tests.factories.file_upload_factories import (
     FileUploadRegistryHubFactory,
     FileUploadRegistryStaticSatelliteFactory,
@@ -120,12 +123,26 @@ class LinkHubBHubDFactory(factory.django.DjangoModelFactory):
     hub_out = factory.SubFactory(HubDFactory)
 
 
+class HubAApiUploadRegistryHubFactory(ApiUploadRegistryHubFactory):
+    class Meta:
+        model = "montrek_example.HubAApiUploadRegistryHub"
+
+
+class HubAApiUploadRegistryStaticSatelliteFactory(
+    ApiUploadRegistryStaticSatelliteFactory
+):
+    class Meta:
+        model = "montrek_example.HubAApiUploadRegistryStaticSatellite"
+
+    hub_entity = factory.SubFactory(HubAApiUploadRegistryHubFactory)
+
+
 class LinkHubAApiUploadRegistryFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = "montrek_example.LinkHubAApiUploadRegistry"
 
     hub_in = factory.SubFactory(HubAFactory)
-    hub_out = factory.SubFactory(ApiUploadRegistryHubFactory)
+    hub_out = factory.SubFactory(HubAApiUploadRegistryHubFactory)
 
 
 class LinkHubAFileUploadRegistryFactory(factory.django.DjangoModelFactory):
