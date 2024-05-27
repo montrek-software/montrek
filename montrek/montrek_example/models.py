@@ -10,6 +10,8 @@ from baseclasses.models import (
     MontrekTimeSeriesSatelliteABC,
 )
 from file_upload.models import (
+    FieldMapHubABC,
+    FieldMapStaticSatelliteABC,
     FileUploadRegistryHubABC,
     FileUploadRegistryStaticSatelliteABC,
 )
@@ -161,6 +163,7 @@ class HubAFileUploadRegistryStaticSatellite(FileUploadRegistryStaticSatelliteABC
     hub_entity = models.ForeignKey(HubAFileUploadRegistryHub, on_delete=models.CASCADE)
 
 
+
 class HubAApiUploadRegistryHub(ApiUploadRegistryHubABC):
     pass
 
@@ -172,3 +175,11 @@ class HubAApiUploadRegistryStaticSatellite(ApiUploadRegistryStaticSatelliteABC):
 class LinkHubAApiUploadRegistry(MontrekManyToManyLinkABC):
     hub_in = models.ForeignKey(HubA, on_delete=models.CASCADE)
     hub_out = models.ForeignKey(HubAApiUploadRegistryHub, on_delete=models.CASCADE)
+
+class SatA1FieldMapHub(FieldMapHubABC):
+    pass
+
+
+class SatA1FieldMapStaticSatellite(FieldMapStaticSatelliteABC):
+    hub_entity = models.ForeignKey(SatA1FieldMapHub, on_delete=models.CASCADE)
+

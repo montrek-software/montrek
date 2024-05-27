@@ -221,12 +221,13 @@ class MontrekExampleA1UploadView(FileUploadRegistryView):
 class MontrekExampleA1FieldMapCreateView(MontrekFieldMapCreateView):
     success_url = "montrek_example_a1_field_map_list"
     page_class = pages.MontrekExampleAAppPage
-    field_map_manager_class = A1FieldMapManager
+    manager_class = A1FieldMapManager
     related_manager_class = mem.SatA1Manager
     title = "Create A1 Field Map"
 
 
 class MontrekExampleA1FieldMapListView(MontrekFieldMapListView):
+    manager_class = A1FieldMapManager
     page_class = pages.MontrekExampleAAppPage
     tab = "tab_a1_field_map_list"
 

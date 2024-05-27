@@ -2,6 +2,7 @@ from baseclasses.repositories.montrek_repository import MontrekRepository
 from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepository,
 )
+from file_upload.repositories.field_map_repository import FieldMapRepositoryABC
 from montrek_example import models as me_models
 
 
@@ -26,3 +27,8 @@ class SatA1Repository(MontrekRepository):
             .distinct()
             .order_by("-created_at")
         )
+
+
+class SatA1FieldMapRepository(FieldMapRepositoryABC):
+    hub_class = me_models.SatA1FieldMapHub
+    static_satellite_class = me_models.SatA1FieldMapStaticSatellite

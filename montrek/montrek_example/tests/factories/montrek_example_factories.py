@@ -9,6 +9,10 @@ from file_upload.tests.factories.file_upload_factories import (
     FileUploadRegistryHubFactory,
     FileUploadRegistryStaticSatelliteFactory,
 )
+from file_upload.tests.factories.field_map_factories import (
+    FieldMapHubFactory,
+    FieldMapStaticSatelliteFactory,
+)
 
 
 class HubAFactory(factory.django.DjangoModelFactory):
@@ -147,3 +151,15 @@ class LinkHubAFileUploadRegistryFactory(factory.django.DjangoModelFactory):
 
     hub_in = factory.SubFactory(HubAFactory)
     hub_out = factory.SubFactory(FileUploadRegistryHubFactory)
+
+
+class SatA1FieldMapHubFactory(FieldMapHubFactory):
+    class Meta:
+        model = "montrek_example.SatA1FieldMapHub"
+
+
+class SatA1FieldMapStaticSatelliteFactory(FieldMapStaticSatelliteFactory):
+    class Meta:
+        model = "montrek_example.SatA1FieldMapStaticSatellite"
+
+    hub_entity = factory.SubFactory(SatA1FieldMapHubFactory)

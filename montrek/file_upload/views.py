@@ -10,12 +10,10 @@ from file_upload.forms import FieldMapCreateForm, UploadFileForm
 from file_upload.managers.file_upload_manager import (
     FileUploadManagerABC,
 )
-from file_upload.managers.file_upload_manager import FileUploadProcessorProtocol
 from baseclasses.views import MontrekCreateView, MontrekTemplateView, MontrekListView
 from file_upload.managers.file_upload_registry_manager import FileUploadRegistryManager
 from baseclasses.managers.montrek_manager import MontrekManagerNotImplemented
-from baseclasses.repositories.montrek_repository import MontrekRepository
-from file_upload.managers.field_map_manager import FieldMapManager
+from file_upload.managers.field_map_manager import FieldMapManagerABC
 from file_upload.pages import FileUploadPage
 
 # Create your views here.
@@ -80,16 +78,15 @@ class MontrekDownloadFileView(MontrekTemplateView):
 
 
 class MontrekFieldMapCreateView(MontrekCreateView):
-    manager_class = FieldMapManager
+    manager_class = FieldMapManagerABC
     success_url = "under_construction"
     form_class = FieldMapCreateForm
-    field_map_manager_class = FieldMapManager
     related_manager_class = MontrekManagerNotImplemented
 
     def get_form(self, form_class=None):
         return self.form_class(
             repository=self.manager.repository,
-            field_map_manager=self.field_map_manager_class(self.session_data),
+            field_map_manager=self.manager_class(self.session_data),
             related_manager=self.related_manager_class(),
         )
 
@@ -97,7 +94,7 @@ class MontrekFieldMapCreateView(MontrekCreateView):
         form = self.form_class(
             self.request.POST,
             repository=self.manager.repository,
-            field_map_manager=self.field_map_manager_class(self.session_data),
+            field_map_manager=self.manager_class(self.session_data),
             related_manager=self.related_manager_class(),
         )
         if form.is_valid():
@@ -106,7 +103,7 @@ class MontrekFieldMapCreateView(MontrekCreateView):
 
 
 class MontrekFieldMapListView(MontrekListView):
-    manager_class = FieldMapManager
+    manager_class = FieldMapManagerABC
     tab = "tab_field_map_list"
     title = "Field Map Overview"
 
