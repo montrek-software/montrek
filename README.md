@@ -138,6 +138,11 @@ Install docker (e.g. like here: [Django installation Linux](https://www.simplile
 
 Install docker-compose.
 
+You have to create a certificate for the https connection. For unix systems you can find instructions here: [Django SSL](https://medium.com/@eng.fadishaar/step-by-step-guide-configuring-nginx-with-https-on-localhost-for-secure-web-application-testing-c78febc26c78)
+Or you have to ask your system administrator to provide a certificate.
+
+Copy those as *cert.crt* and *cert.key* to `nginx/certs`
+
 Change in the .env file:
 
 ```

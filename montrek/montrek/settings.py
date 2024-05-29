@@ -28,8 +28,9 @@ SECRET_KEY = "django-insecure-2@8w*43%w2=36x1y3#v8mlll#!3kw9)jnn&^i&xw-o8^br_od-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config("DEBUG", default=False, cast=bool)
 
-ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="").split(" ")
-ALLOWED_HOSTS += [config("DEPLOY_HOST", default="127.0.0.1")]
+PROJECT_NAME = config("PROJECT_NAME", default="default")
+DEPLOY_HOST = config("DEPLOY_HOST", default="127.0.0.1")
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", f"montrek.{PROJECT_NAME}", DEPLOY_HOST]
 
 
 # Application definition
@@ -166,10 +167,14 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "uploads")
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-DEPLOY_HOST = config("DEPLOY_HOST", default="127.0.0.1")
 DEPLOY_PORT = config("DEPLOY_PORT", default="1339")
 CSRF_TRUSTED_ORIGINS = [
-    f"http://{host}:{DEPLOY_PORT}" for host in ["localhost", "127.0.0.1", DEPLOY_HOST]
+    f"http://{host}:{DEPLOY_PORT}"
+    for host in ["localhost", "127.0.0.1", DEPLOY_HOST, f"montrek.{PROJECT_NAME}"]
+]
+CSRF_TRUSTED_ORIGINS += [
+    f"https://montrek.{PROJECT_NAME}:{DEPLOY_PORT}",
+    f"https://{DEPLOY_HOST}:{DEPLOY_PORT}",
 ]
 
 EMAIL_HOST = config("EMAIL_HOST", default=None)
