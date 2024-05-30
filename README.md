@@ -178,7 +178,7 @@ docker-compose up --build
 
 You can now access montrek in your webbrowser:
 ```
-127.0.0.1:<DEPLOY_PORT>
+https://127.0.0.1:<DEPLOY_PORT>
 ```
 
 Or from any browser in you network:
