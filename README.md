@@ -138,10 +138,22 @@ Install docker (e.g. like here: [Django installation Linux](https://www.simplile
 
 Install docker-compose.
 
+Set in your .env file:
+```
+PROJECT_NAME=<your-project-name>
+```
+The name of your server will be `montrek.<PROJECT_NAME>`
+
+You have to create a certificate for the https connection. For unix systems you can find instructions here: [Django SSL](https://medium.com/@eng.fadishaar/step-by-step-guide-configuring-nginx-with-https-on-localhost-for-secure-web-application-testing-c78febc26c78),using the server name `montrek.<PROJECT_NAME>`. 
+Or you have to ask your system administrator to provide a certificate.
+
+Copy those as *cert.crt* and *cert.key* to `nginx/certs`
+
+On you local machine you can add `<Server's IP> montrek.<PROJECT_NAME>` to */etc/hosts/* or ask your system administrator to add this to the networks DNS list.
+
 Change in the .env file:
 
 ```
-DB_HOST=db
 DEBUG=0
 ```
 
@@ -166,14 +178,18 @@ docker-compose up --build
 
 You can now access montrek in your webbrowser:
 ```
-127.0.0.1:1339
+https://127.0.0.1:<DEPLOY_PORT>
 ```
 
 Or from any browser in you network:
 ```
-<your-ip-address>:1339
+https://<your-ip-address>:<DEPLOY_PORT>
 ```
 
+Or if it set up:
+```
+https://montrek.<PROJECT_NAME>:<DEPLOY_PORT>
+```
 Background tasks can be monitored with the Flower app. It runs at `<your-ip-address>:5555`.
 
 

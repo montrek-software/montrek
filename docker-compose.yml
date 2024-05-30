@@ -12,7 +12,10 @@ services:
       - web
     environment:
       - APP_PORT=${APP_PORT}
+      - PROJECT_NAME=${PROJECT_NAME}
     restart: "on-failure"
+    networks:
+      - montrek_network
 
 
   web:
@@ -40,6 +43,8 @@ services:
       - redis
     environment:
       - DB_HOST=${DEPLOY_HOST}
+    networks:
+      - montrek_network
 
   db:
     image: mariadb:latest
@@ -53,6 +58,8 @@ services:
       - "${DB_PORT}:3306"
     volumes:
       - db_data:/var/lib/mysql
+    networks:
+      - montrek_network
   celery:
     build:
       context: .
@@ -69,9 +76,13 @@ services:
       - web
       - db
       - redis
+    networks:
+      - montrek_network
 
   redis:
     image: redis:7-alpine
+    networks:
+      - montrek_network
 
   flower:
     build:
@@ -86,8 +97,14 @@ services:
       - web
       - redis
       - celery
+    networks:
+      - montrek_network
 
 volumes:
   db_data:
   static_volume:
   uploads_volume:
+
+networks:
+  montrek_network:
+    driver: bridge
