@@ -54,6 +54,12 @@ def links(request):
     return render(request, "links.html", {"links": links})
 
 
+def test_banner(request):
+    test_tag = config("DEBUG", default=0)
+    test_tag = True if test_tag == "1" else False
+    return render(request, "test_banner.html", {"test_tag": test_tag})
+
+
 def client_logo(request):
     client_logo_path = config("CLIENT_LOGO_PATH", default="")
     return render(request, "client_logo.html", {"client_logo_path": client_logo_path})

@@ -1,6 +1,6 @@
 from django import template
 from django.utils.safestring import mark_safe
-from baseclasses.views import navbar, links, client_logo
+from baseclasses.views import navbar, links, client_logo, test_banner
 
 register = template.Library()
 
@@ -23,4 +23,11 @@ def include_links(context):
 def include_client_logo(context):
     request = context["request"]
     response = client_logo(request)
+    return mark_safe(response.content.decode("utf-8"))
+
+
+@register.simple_tag(takes_context=True)
+def include_test_banner(context):
+    request = context["request"]
+    response = test_banner(request)
     return mark_safe(response.content.decode("utf-8"))
