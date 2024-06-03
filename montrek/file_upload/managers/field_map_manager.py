@@ -52,12 +52,16 @@ class FieldMapManagerABC(MontrekTableManager):
     def _reset_exceptions(self):
         self.exceptions = []
 
-    def apply_field_maps(self, source_df: pd.DataFrame) -> pd.DataFrame:
-        self._reset_exceptions()
+    def get_field_map(self, source_df: pd.DataFrame) -> pd.DataFrame:
         field_maps = self.repository.std_queryset().filter(
             source_field__in=source_df.columns.to_list()
         )
+        return field_maps
+
+    def apply_field_maps(self, source_df: pd.DataFrame) -> pd.DataFrame:
+        self._reset_exceptions()
         mapped_df = pd.DataFrame()
+        field_maps = self.get_field_map(source_df)
         for field_map in field_maps:
             func = getattr(
                 self.field_map_function_manager_class, field_map.function_name
