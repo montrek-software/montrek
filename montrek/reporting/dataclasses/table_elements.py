@@ -35,24 +35,37 @@ class TableElement:
 
 
 @dataclass
+class NoneTableElement(TableElement):
+    attr: str = field(default="")
+
+    def format(self):
+        return '<td style="text-align: center">-</td>'
+
+
+@dataclass
 class AttrTableElement(TableElement):
     attr: str = field(default="")
+    obj: Any = None
 
     def get_attribute(self, obj: Any, tag: str) -> str:
         attr = self.attr
+        self.obj = obj
         if isinstance(obj, dict):
             value = obj.get(attr, attr)
         else:
             value = getattr(obj, attr, attr)
         if tag == "html":
             if value is None:
-                return NoneTableElement().format()
+                return self.none_return_html(obj)
             return self.format(value)
         elif tag == "latex":
             if value is None:
                 return " \\color{black} - &"
             return self.format_latex(value)
         return str(value)
+
+    def none_return_html(self, obj: Any) -> str:
+        return NoneTableElement(name=self.name, attr=self.attr).format()
 
 
 @dataclass
@@ -139,11 +152,6 @@ class LinkTextTableElement(BaseLinkTableElement):
 
     def _get_link_text(self, obj):
         return BaseLinkTableElement.get_dotted_attr_or_arg(obj, self.text)
-
-
-class NoneTableElement:
-    def format(self):
-        return '<td style="text-align: center">-</td>'
 
 
 @dataclass
