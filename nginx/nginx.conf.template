@@ -10,6 +10,7 @@ server {
     ssl_certificate /etc/ssl/cert.crt;
     ssl_certificate_key /etc/ssl/cert.key;
 
+    client_max_body_size 100M;
 
     location / {
         proxy_pass http://backend;
