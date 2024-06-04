@@ -32,7 +32,8 @@ class MontrekManager:
         return self.repository.object_to_dict(object_query)
 
     def get_std_queryset_field_choices(self) -> list[tuple]:
-        field_names = sorted(list(self.repository.annotations.keys()))
+        fields = self.repository.std_satellite_fields()
+        field_names = sorted([field.name for field in fields])
         field_descriptions = [name.replace("_", " ").title() for name in field_names]
         return list(zip(field_names, field_descriptions))
 

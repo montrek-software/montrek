@@ -19,7 +19,9 @@ from baseclasses.dataclasses.montrek_message import MontrekMessageError
 from django.db.models import (
     F,
     Q,
+    OuterRef,
     QuerySet,
+    Subquery,
 )
 from django.db.models import ManyToManyField
 from django.utils import timezone
@@ -199,27 +201,35 @@ class MontrekRepository:
             Q(state_date_start__lte=self.reference_date),
             Q(state_date_end__gt=self.reference_date),
         )
-        try:
-            queryset = queryset.filter(*self.query_filter)
-        except (FieldError, ValueError) as e:
-            self.messages.append(MontrekMessageError(str(e)))
+        queryset = self._apply_filter(queryset)
         return queryset
 
     def build_time_series_queryset(
         self,
         time_series_satellite_class: type[MontrekSatelliteABC],
-        reference_date: timezone.datetime,
+        reference_date: timezone.datetime = None,  # Needs to be removed
     ):
         if not issubclass(time_series_satellite_class, MontrekTimeSeriesSatelliteABC):
             raise ValueError(
                 f"{time_series_satellite_class.__name__} is not a subclass of MontrekTimeSeriesSatelliteABC"
             )
-        return time_series_satellite_class.objects.filter(
-            state_date_start__lte=reference_date,
-            state_date_end__gte=reference_date,
-            value_date__lte=self.session_end_date,
-            value_date__gte=self.session_start_date,
-        ).order_by("value_date")
+        hub_sub_query = Subquery(
+            self.hub_class.objects.filter(pk=OuterRef("hub_entity_id")).values("pk")
+        )
+        queryset = (
+            time_series_satellite_class.objects.annotate(pk=hub_sub_query)
+            .filter(
+                state_date_start__lte=self.reference_date,
+                state_date_end__gte=self.reference_date,
+                value_date__lte=self.session_end_date,
+                value_date__gte=self.session_start_date,
+            )
+            .order_by("-value_date")
+            .annotate(**self.annotations)
+        )
+        queryset = self._apply_filter(queryset)
+        self._add_to_primary_satellite_classes(time_series_satellite_class)
+        return queryset
 
     def get_history_queryset(self, pk: int, **kwargs) -> dict[str, QuerySet]:
         self.std_queryset()
@@ -235,6 +245,13 @@ class MontrekRepository:
             link_query = link.objects.filter(hub_in=hub).order_by("-created_at")
             satellite_querys[link.__name__] = link_query
         return satellite_querys
+
+    def _apply_filter(self, queryset: QuerySet) -> QuerySet:
+        try:
+            queryset = queryset.filter(*self.query_filter)
+        except (FieldError, ValueError) as e:
+            self.messages.append(MontrekMessageError(str(e)))
+        return queryset
 
     def rename_field(self, field: str, new_name: str):
         self.annotations[new_name] = self.annotations[field]
