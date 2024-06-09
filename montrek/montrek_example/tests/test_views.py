@@ -9,6 +9,7 @@ from testing.test_cases.view_test_cases import (
     MontrekViewTestCase,
     MontrekListViewTestCase,
     MontrekDeleteViewTestCase,
+    MontrekFileResponseTestCase,
 )
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 from montrek_example.tests.factories import montrek_example_factories as me_factories
@@ -379,17 +380,24 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
         )
 
 
-class TestMontrekA1RepositoryDownloadView(MontrekViewTestCase):
+class TestMontrekA1RepositoryDownloadView(MontrekFileResponseTestCase):
     viewname = "a1_download_file"
     view_class = me_views.MontrekExampleA1DownloadFileView
+    is_redirected = True
 
     def build_factories(self):
         self.reg_factory = (
-            me_factories.HubAFileUploadRegistryStaticSatelliteFactory.create()
+            me_factories.HubAFileUploadRegistryStaticSatelliteFactory.create(
+                generate_file_upload_file=True
+            )
         )
 
     def url_kwargs(self) -> dict:
         return {"pk": self.reg_factory.hub_entity.pk}
+
+    def test_return_file(self):
+        content = b"".join(self.response.streaming_content)
+        self.assertEqual(content, b"test")
 
 
 class TestMontrekExampleA1UploadView(MontrekListViewTestCase):

@@ -1,3 +1,4 @@
+from django.core.files.uploadedfile import SimpleUploadedFile
 import factory
 
 
@@ -19,6 +20,23 @@ class FileUploadRegistryStaticSatelliteFactory(factory.django.DjangoModelFactory
             return
         if extracted:
             self.hub_entity.link_file_upload_registry_file_upload_file.add(extracted)
+
+    @factory.post_generation
+    def generate_file_upload_file(self, create, extracted, **kwargs):
+        if not create:
+            return
+        if extracted:
+            self.test_file = SimpleUploadedFile(
+                name="test_file.txt",
+                content="test".encode("utf-8"),
+                content_type="text/plain",
+            )
+            upload_file = FileUploadFileStaticSatelliteFactory.create(
+                file=self.test_file
+            )
+            self.hub_entity.link_file_upload_registry_file_upload_file.add(
+                upload_file.hub_entity
+            )
 
 
 class FileUploadFileHubFactory(factory.django.DjangoModelFactory):
