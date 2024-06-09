@@ -80,6 +80,11 @@ urlpatterns = [
         name="a1_view_uploads",
     ),
     path(
+        "a1_download_file/<int:pk>",
+        views.MontrekExampleA1DownloadFileView.as_view(),
+        name="a1_download_file",
+    ),
+    path(
         "hub_a_view_api_uploads",
         views.MontrekExampleHubAApiUploadView.as_view(),
         name="hub_a_view_api_uploads",
