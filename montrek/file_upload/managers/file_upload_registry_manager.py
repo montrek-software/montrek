@@ -12,6 +12,7 @@ from reporting.dataclasses.table_elements import (
 
 class FileUploadRegistryManagerABC(MontrekTableManager):
     repository_class = FileUploadRegistryRepositoryABC
+    download_url = "please define download_url in subclass"
 
     @property
     def table_elements(self) -> tuple:
@@ -23,7 +24,7 @@ class FileUploadRegistryManagerABC(MontrekTableManager):
             StringTableElement(name="Uploaded By", attr="created_by"),
             LinkTableElement(
                 name="File",
-                url="montrek_download_file",
+                url=self.download_url,
                 kwargs={"pk": "id"},
                 icon="download",
                 hover_text="Download",
