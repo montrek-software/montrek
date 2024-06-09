@@ -141,6 +141,7 @@ class MontrekRepository:
         self, data_frame: pd.DataFrame
     ) -> List[MontrekHubABC]:
         self._raise_for_anonymous_user()
+        self._raise_for_duplicated_entries(data_frame)
         self.std_queryset()
         db_creator = DbCreator(self.hub_class, self._primary_satellite_classes)
         created_hubs = []
@@ -290,3 +291,15 @@ class MontrekRepository:
     def _raise_for_anonymous_user(self):
         if not self.session_user_id:
             raise PermissionDenied("User not authenticated!")
+
+    def _raise_for_duplicated_entries(self, data_frame: pd.DataFrame):
+        raise_error = False
+        error_message = ""
+        for satellite_class in self._primary_satellite_classes:
+            identifier_fields = satellite_class.identifier_fields
+            duplicated_entries = data_frame.duplicated(subset=identifier_fields)
+            if duplicated_entries.any():
+                raise_error = True
+                error_message += f"Duplicated entries found for {satellite_class.__name__} with fields {identifier_fields}\n"
+        if raise_error:
+            raise ValueError(error_message)
