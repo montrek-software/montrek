@@ -33,6 +33,7 @@ class FieldMapManagerABC(MontrekTableManager):
     field_map_function_manager_class = FieldMapFunctionManager
     repository_class = FieldMapRepositoryABC
     update_url = ""
+    delete_url = ""
 
     @property
     def table_elements(self) -> list:
@@ -50,6 +51,13 @@ class FieldMapManagerABC(MontrekTableManager):
                 icon="edit",
                 kwargs={"pk": "id"},
                 hover_text="Edit Field Map",
+            ),
+            LinkTableElement(
+                name="Delete",
+                url=self.delete_url,
+                icon="trash",
+                kwargs={"pk": "id"},
+                hover_text="Delete Field Map",
             ),
         ]
 

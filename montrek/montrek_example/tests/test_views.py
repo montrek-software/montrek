@@ -471,6 +471,19 @@ class TestMontrekExampleA1FieldMapUpdateView(MontrekCreateViewTestCase):
         }
 
 
+class TestMontrekExampleA1FieldMapDeleteView(MontrekDeleteViewTestCase):
+    viewname = "montrek_example_a1_field_map_delete"
+    view_class = me_views.MontrekExampleA1FieldMapDeleteView
+
+    def build_factories(self):
+        self.field_map_factory = (
+            me_factories.SatA1FieldMapStaticSatelliteFactory.create()
+        )
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.field_map_factory.hub_entity.pk}
+
+
 class TestMontrekExampleA1FieldMapListView(MontrekListViewTestCase):
     viewname = "montrek_example_a1_field_map_list"
     view_class = me_views.MontrekExampleA1FieldMapListView

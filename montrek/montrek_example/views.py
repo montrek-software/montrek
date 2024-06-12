@@ -236,6 +236,14 @@ class MontrekExampleA1FieldMapUpdateView(MontrekFieldMapUpdateView):
     title = "Update A1 Field Map"
 
 
+class MontrekExampleA1FieldMapDeleteView(views.MontrekDeleteView):
+    success_url = "montrek_example_a1_field_map_list"
+    page_class = pages.MontrekExampleAAppPage
+    manager_class = A1FieldMapManager
+    related_manager_class = mem.SatA1Manager
+    title = "Delete A1 Field Map"
+
+
 class MontrekExampleA1FieldMapListView(MontrekFieldMapListView):
     manager_class = A1FieldMapManager
     page_class = pages.MontrekExampleAAppPage

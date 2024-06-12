@@ -29,3 +29,4 @@ class A1FieldMapManager(FieldMapManagerABC):
     field_map_function_manager_class = A1FieldMapFunctionManager
     repository_class = SatA1FieldMapRepository
     update_url = "montrek_example_a1_field_map_update"
+    delete_url = "montrek_example_a1_field_map_delete"
