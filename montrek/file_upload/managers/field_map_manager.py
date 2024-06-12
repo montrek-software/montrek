@@ -32,6 +32,7 @@ class FieldMapFunctionManager:
 class FieldMapManagerABC(MontrekTableManager):
     field_map_function_manager_class = FieldMapFunctionManager
     repository_class = FieldMapRepositoryABC
+    update_url = ""
 
     @property
     def table_elements(self) -> list:
@@ -45,7 +46,7 @@ class FieldMapManagerABC(MontrekTableManager):
             ),
             LinkTableElement(
                 name="Edit",
-                url="montrek_download_file",
+                url=self.update_url,
                 icon="edit",
                 kwargs={"pk": "id"},
                 hover_text="Edit Field Map",

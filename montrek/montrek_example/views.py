@@ -10,6 +10,7 @@ from django.urls import reverse
 from file_upload.views import (
     FileUploadRegistryView,
     MontrekFieldMapCreateView,
+    MontrekFieldMapUpdateView,
     MontrekFieldMapListView,
     MontrekUploadFileView,
     MontrekDownloadFileView,
@@ -227,7 +228,7 @@ class MontrekExampleA1FieldMapCreateView(MontrekFieldMapCreateView):
     title = "Create A1 Field Map"
 
 
-class MontrekExampleA1FieldMapUpdateView(MontrekFieldMapCreateView):
+class MontrekExampleA1FieldMapUpdateView(MontrekFieldMapUpdateView):
     success_url = "montrek_example_a1_field_map_list"
     page_class = pages.MontrekExampleAAppPage
     manager_class = A1FieldMapManager
