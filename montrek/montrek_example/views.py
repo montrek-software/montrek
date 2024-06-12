@@ -227,6 +227,14 @@ class MontrekExampleA1FieldMapCreateView(MontrekFieldMapCreateView):
     title = "Create A1 Field Map"
 
 
+class MontrekExampleA1FieldMapUpdateView(MontrekFieldMapCreateView):
+    success_url = "montrek_example_a1_field_map_list"
+    page_class = pages.MontrekExampleAAppPage
+    manager_class = A1FieldMapManager
+    related_manager_class = mem.SatA1Manager
+    title = "Update A1 Field Map"
+
+
 class MontrekExampleA1FieldMapListView(MontrekFieldMapListView):
     manager_class = A1FieldMapManager
     page_class = pages.MontrekExampleAAppPage

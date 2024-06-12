@@ -450,6 +450,27 @@ class TestMontrekExampleA1FieldMapCreateView(MontrekCreateViewTestCase):
         self.assertEqual(form.initial["function_name"], "no_change")
 
 
+class TestMontrekExampleA1FieldMapUpdateView(MontrekCreateViewTestCase):
+    viewname = "montrek_example_a1_field_map_update"
+    view_class = me_views.MontrekExampleA1FieldMapUpdateView
+
+    def build_factories(self):
+        self.field_map_factory = (
+            me_factories.SatA1FieldMapStaticSatelliteFactory.create()
+        )
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.field_map_factory.hub_entity.pk}
+
+    def creation_data(self):
+        return {
+            "source_field": "source_field_1",
+            "database_field": "field_a1_str",
+            "function_name": "append_source_field_1",
+            "function_parameters": "",
+        }
+
+
 class TestMontrekExampleA1FieldMapListView(MontrekListViewTestCase):
     viewname = "montrek_example_a1_field_map_list"
     view_class = me_views.MontrekExampleA1FieldMapListView

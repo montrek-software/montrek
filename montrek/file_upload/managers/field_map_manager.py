@@ -5,7 +5,7 @@ from file_upload.repositories.field_map_repository import (
     FieldMapRepositoryABC,
 )
 from reporting.managers.montrek_table_manager import MontrekTableManager
-from reporting.dataclasses.table_elements import StringTableElement
+from reporting.dataclasses.table_elements import LinkTableElement, StringTableElement
 
 
 @dataclass
@@ -42,6 +42,13 @@ class FieldMapManagerABC(MontrekTableManager):
             StringTableElement(name="Function Parameters", attr="function_parameters"),
             StringTableElement(
                 name="Comment", attr="field_map_static_satellite_comment"
+            ),
+            LinkTableElement(
+                name="Edit",
+                url="montrek_download_file",
+                icon="edit",
+                kwargs={"pk": "id"},
+                hover_text="Edit Field Map",
             ),
         ]
 

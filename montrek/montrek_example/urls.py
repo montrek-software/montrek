@@ -70,6 +70,11 @@ urlpatterns = [
         name="montrek_example_a1_field_map_create",
     ),
     path(
+        "a1_field_map/update/<int:pk>",
+        views.MontrekExampleA1FieldMapUpdateView.as_view(),
+        name="montrek_example_a1_field_map_update",
+    ),
+    path(
         "a1_upload_file",
         views.MontrekExampleA1UploadFileView.as_view(),
         name="a1_upload_file",
