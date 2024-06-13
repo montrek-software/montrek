@@ -37,11 +37,15 @@ class HtmlLatexConverter:
 
     @staticmethod
     def bold(text: str) -> str:
-        return text.replace("<b>", "\\textbf{").replace("</b>", "}")
+        text = text.replace("<strong>", "\\textbf{").replace("</strong>", "}")
+        text = text.replace("<b>", "\\textbf{").replace("</b>", "}")
+        return text
 
     @staticmethod
     def italic(text: str) -> str:
-        return text.replace("<i>", "\\textit{").replace("</i>", "}")
+        text = text.replace("<em>", "\\textit{").replace("</em>", "}")
+        text = text.replace("<i>", "\\textit{").replace("</i>", "}")
+        return text
 
     @staticmethod
     def headers(text: str) -> str:
@@ -73,6 +77,7 @@ class HtmlLatexConverter:
             "&lt;": "$<$",
             "&gt;": "$>$",
             "%": "\\%",
+            "&lowbar;": "\\_",
         }
         for key, value in characters.items():
             text = text.replace(key, value)
