@@ -111,6 +111,10 @@ class HtmlLatexConverter:
         text = text.replace("</tr>", " \\\\ \\hline ")
         text = text.replace("<td>", "")
         text = text.replace("</td>", " & ")
+        text = text.replace("<thead>", "")
+        text = text.replace("</thead>", "")
+        text = text.replace("<tbody>", "")
+        text = text.replace("</tbody>", "")
         return text
 
     @staticmethod
