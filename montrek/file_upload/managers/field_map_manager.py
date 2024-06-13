@@ -5,7 +5,7 @@ from file_upload.repositories.field_map_repository import (
     FieldMapRepositoryABC,
 )
 from reporting.managers.montrek_table_manager import MontrekTableManager
-from reporting.dataclasses.table_elements import StringTableElement
+from reporting.dataclasses.table_elements import LinkTableElement, StringTableElement
 
 
 @dataclass
@@ -32,6 +32,8 @@ class FieldMapFunctionManager:
 class FieldMapManagerABC(MontrekTableManager):
     field_map_function_manager_class = FieldMapFunctionManager
     repository_class = FieldMapRepositoryABC
+    update_url = ""
+    delete_url = ""
 
     @property
     def table_elements(self) -> list:
@@ -42,6 +44,20 @@ class FieldMapManagerABC(MontrekTableManager):
             StringTableElement(name="Function Parameters", attr="function_parameters"),
             StringTableElement(
                 name="Comment", attr="field_map_static_satellite_comment"
+            ),
+            LinkTableElement(
+                name="Edit",
+                url=self.update_url,
+                icon="edit",
+                kwargs={"pk": "id"},
+                hover_text="Edit Field Map",
+            ),
+            LinkTableElement(
+                name="Delete",
+                url=self.delete_url,
+                icon="trash",
+                kwargs={"pk": "id"},
+                hover_text="Delete Field Map",
             ),
         ]
 

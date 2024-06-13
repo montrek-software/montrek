@@ -10,7 +10,12 @@ from file_upload.forms import FieldMapCreateForm, UploadFileForm
 from file_upload.managers.file_upload_manager import (
     FileUploadManagerABC,
 )
-from baseclasses.views import MontrekCreateView, MontrekTemplateView, MontrekListView
+from baseclasses.views import (
+    MontrekCreateView,
+    MontrekTemplateView,
+    MontrekListView,
+    MontrekUpdateView,
+)
 from file_upload.managers.file_upload_registry_manager import FileUploadRegistryManager
 from baseclasses.managers.montrek_manager import MontrekManagerNotImplemented
 from file_upload.managers.field_map_manager import FieldMapManagerABC
@@ -88,6 +93,34 @@ class MontrekFieldMapCreateView(MontrekCreateView):
             repository=self.manager.repository,
             field_map_manager=self.manager_class(self.session_data),
             related_manager=self.related_manager_class(),
+        )
+
+    def post(self, request, *args, **kwargs):
+        form = self.form_class(
+            self.request.POST,
+            repository=self.manager.repository,
+            field_map_manager=self.manager_class(self.session_data),
+            related_manager=self.related_manager_class(),
+        )
+        if form.is_valid():
+            return self.form_valid(form)
+        return self.form_invalid(form)
+
+
+class MontrekFieldMapUpdateView(MontrekUpdateView):
+    manager_class = FieldMapManagerABC
+    success_url = "under_construction"
+    form_class = FieldMapCreateForm
+    related_manager_class = MontrekManagerNotImplemented
+
+    def get_form(self, form_class=None):
+        initial = self.manager.get_object_from_pk_as_dict(self.kwargs["pk"])
+
+        return self.form_class(
+            repository=self.manager.repository,
+            field_map_manager=self.manager_class(self.session_data),
+            related_manager=self.related_manager_class(),
+            initial=initial,
         )
 
     def post(self, request, *args, **kwargs):
