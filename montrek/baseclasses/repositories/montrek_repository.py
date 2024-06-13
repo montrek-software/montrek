@@ -297,10 +297,10 @@ class MontrekRepository:
         error_message = ""
         for satellite_class in self._primary_satellite_classes:
             identifier_fields = satellite_class.identifier_fields
-            try:
-                duplicated_entries = data_frame.duplicated(subset=identifier_fields)
-            except KeyError:
+            subset = [col for col in identifier_fields if col in data_frame.columns]
+            if not subset:
                 continue
+            duplicated_entries = data_frame.duplicated(subset=subset)
             if duplicated_entries.any():
                 raise_error = True
                 error_message += f"Duplicated entries found for {satellite_class.__name__} with fields {identifier_fields}\n"
