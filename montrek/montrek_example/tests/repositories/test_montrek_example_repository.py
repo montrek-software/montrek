@@ -392,6 +392,22 @@ class TestMontrekCreateObject(TestCase):
             ValueError, repository.create_objects_from_data_frame, data_frame
         )
 
+    def test_create_objects_from_data_frame_missing_primary_satellite_identifier_column(
+        self,
+    ):
+        repository = HubARepository(session_data={"user_id": self.user.id})
+        repository.std_queryset()
+        # A missing field_a1_str column should hot raise an error.
+        data_frame = pd.DataFrame(
+            {
+                "field_a2_float": [6.0, 7.0, 8.0],
+                "field_a2_str": ["test2", "test3", "test4"],
+            }
+        )
+        repository.create_objects_from_data_frame(data_frame)
+        queryset = repository.std_queryset()
+        self.assertEqual(queryset.count(), 3)
+
     def test_create_objects_from_data_frame_comment(self):
         repository = HubARepository(session_data={"user_id": self.user.id})
         data_frame = pd.DataFrame(
