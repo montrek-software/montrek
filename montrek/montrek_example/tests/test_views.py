@@ -456,7 +456,9 @@ class TestMontrekExampleA1FieldMapUpdateView(MontrekCreateViewTestCase):
 
     def build_factories(self):
         self.field_map_factory = (
-            me_factories.SatA1FieldMapStaticSatelliteFactory.create()
+            me_factories.SatA1FieldMapStaticSatelliteFactory.create(
+                source_field="source_field_1"
+            )
         )
 
     def url_kwargs(self) -> dict:
