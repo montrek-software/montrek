@@ -107,35 +107,47 @@ class HtmlLatexConverter:
     def tables(text: str) -> str:
         # Parse the HTML
         soup = BeautifulSoup(text, "html.parser")
-        table = soup.find("table")
+        tables = soup.find_all("table")
 
-        if not table:
-            return "No table found in the HTML."
+        if len(tables) == 0:
+            return text
+        for table in tables:
+            # Extract table headers
+            headers = [th.get_text() for th in table.find_all("th")]
 
-        # Extract table headers
-        headers = [th.get_text() for th in table.find_all("th")]
+            # Extract table rows
+            rows = []
+            for tr in table.find_all("tr"):
+                cols = tr.find_all("td")
+                if cols:
+                    rows.append([td.get_text() for td in cols])
 
-        # Extract table rows
-        rows = []
-        for tr in table.find_all("tr"):
-            cols = tr.find_all("td")
-            if cols:
-                rows.append([td.get_text() for td in cols])
+            # Start building the LaTeX table string
+            latex_table = "\\begin{table}[h!]\n\\centering\n"
+            latex_table += "\\arrayrulecolor{lightgrey}\n"
+            latex_table += "\\setlength{\\tabcolsep}{2pt}\n"
+            latex_table += "\\renewcommand{\\arraystretch}{1.0}\n"
 
-        # Start building the LaTeX table string
-        latex_table = "\\begin{table}[h!]\n\\centering\n\\begin{tabular}{|"
-        latex_table += " | ".join(["c" for _ in headers]) + "|}\n\\hline\n"
+            latex_table += "\\begin{tabularx}{\\textwidth}{|"
+            latex_table += " | ".join(["X" for _ in headers]) + "|}\n\\hline\n"
 
-        # Add the headers to the LaTeX table
-        latex_table += " & ".join(headers) + " \\\\\n\\hline\n"
+            # Add the headers to the LaTeX table
+            latex_table += "\\rowcolor{blue}"
+            latex_table += (
+                " & ".join([f"\\color{{white}}\\textbf{{{head}}}" for head in headers])
+                + " \\\\\n\\hline\n"
+            )
 
-        # Add the rows to the LaTeX table
-        for row in rows:
-            latex_table += " & ".join(row) + " \\\\\n\\hline\n"
+            # Add the rows to the LaTeX table
+            for i, row in enumerate(rows):
+                if i % 2 == 1:
+                    latex_table += "\\rowcolor{lightblue}"
+                latex_table += " & ".join(row) + " \\\\\n\\hline\n"
 
-        # End the LaTeX table string
-        latex_table += "\\end{tabular}\n\\end{table}"
-        return text.replace(str(table), latex_table)
+            # End the LaTeX table string
+            latex_table += "\\end{tabularx}\n\\end{table}"
+            text = text.replace(str(table), latex_table)
+        return text
 
     @staticmethod
     def alignments(text: str) -> str:
