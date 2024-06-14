@@ -46,10 +46,12 @@ class TestHtmlLatexConverter(TestCase):
         self.assertEqual(converted_text, expected_text)
 
     def test_tables(self):
-        test_text = "<table><tr><td>Cell 1</td><td>Cell 2</td></tr></table>"
+        test_text = (
+            "<div>TextBlock</div><table><tr><td>Cell 1</td><td>Cell 2</td></tr></table>"
+        )
         converted_text = HtmlLatexConverter.convert(test_text)
-        expected_text = "\\begin{tabular}{|c|} \\hline Cell 1 & Cell 2 &  \\\\ \\hline \\end{tabular} "
-        self.assertEqual(converted_text, expected_text)
+        expected_text = "<div>TextBlock</div>\\begin{table}[h!]\\centering\\begin{tabular}{||}\\hline \\\\\\hlineCell 1 & Cell 2 \\\\\\hline\\end{tabular}\\end{table}"
+        self.assertEqual(converted_text.replace("\n", ""), expected_text)
 
     def test_special_characters(self):
         test_text = "Special characters: &lt;, &gt;, &amp;"

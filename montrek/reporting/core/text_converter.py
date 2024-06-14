@@ -1,4 +1,5 @@
 import re
+from bs4 import BeautifulSoup
 
 
 class HtmlLatexConverter:
@@ -104,18 +105,37 @@ class HtmlLatexConverter:
 
     @staticmethod
     def tables(text: str) -> str:
-        # Simplified table replacement, complex tables might need more specific handling
-        text = text.replace("<table>", "\\begin{tabular}{|c|} \\hline ")
-        text = text.replace("</table>", "\\end{tabular} ")
-        text = text.replace("<tr>", "")
-        text = text.replace("</tr>", " \\\\ \\hline ")
-        text = text.replace("<td>", "")
-        text = text.replace("</td>", " & ")
-        text = text.replace("<thead>", "")
-        text = text.replace("</thead>", "")
-        text = text.replace("<tbody>", "")
-        text = text.replace("</tbody>", "")
-        return text
+        # Parse the HTML
+        soup = BeautifulSoup(text, "html.parser")
+        table = soup.find("table")
+
+        if not table:
+            return "No table found in the HTML."
+
+        # Extract table headers
+        headers = [th.get_text() for th in table.find_all("th")]
+
+        # Extract table rows
+        rows = []
+        for tr in table.find_all("tr"):
+            cols = tr.find_all("td")
+            if cols:
+                rows.append([td.get_text() for td in cols])
+
+        # Start building the LaTeX table string
+        latex_table = "\\begin{table}[h!]\n\\centering\n\\begin{tabular}{|"
+        latex_table += " | ".join(["c" for _ in headers]) + "|}\n\\hline\n"
+
+        # Add the headers to the LaTeX table
+        latex_table += " & ".join(headers) + " \\\\\n\\hline\n"
+
+        # Add the rows to the LaTeX table
+        for row in rows:
+            latex_table += " & ".join(row) + " \\\\\n\\hline\n"
+
+        # End the LaTeX table string
+        latex_table += "\\end{tabular}\n\\end{table}"
+        return text.replace(str(table), latex_table)
 
     @staticmethod
     def alignments(text: str) -> str:
