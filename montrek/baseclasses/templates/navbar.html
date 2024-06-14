@@ -13,6 +13,19 @@
     <div class="collapse navbar-collapse">
       <ul class="nav navbar-nav">
         <li><a href="{% url 'home' %}">Home</a></li>
+        {% for nav_dd in navbar_dropdowns %}
+          <li class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+              {{nav_dd.display_name}}
+              <span class="caret"></span>
+            </a>
+            <ul class="dropdown-menu">
+              {% for nav_app in nav_dd.dropdown_items %}
+                <li><a href="{% url nav_app.app_name %}">{{ nav_app.display_name }}</a></li>
+              {% endfor %}
+            </ul>
+          </li>
+        {% endfor %}
         {% for nav_app in nav_apps %}
           <li><a href="{% url nav_app.app_name %}">{{ nav_app.display_name }}</a></li>
         {% endfor %}

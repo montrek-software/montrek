@@ -1,11 +1,26 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+
 
 @dataclass
 class NavBarModel:
     """Model for the navigation bar"""
+
     app_name: str
 
     @property
     def display_name(self) -> str:
         """Display name for the app"""
         return self.app_name.replace("_", " ").title()
+
+
+@dataclass
+class NavBarDropdownModel:
+    """Model for the navigation bar dropdown"""
+
+    dropdown_name: str
+    dropdown_items: list[NavBarModel] = field(default_factory=list)
+
+    @property
+    def display_name(self) -> str:
+        """Display name for the dropdown"""
+        return self.dropdown_name.replace("mt_", "").replace("_", " ").title()

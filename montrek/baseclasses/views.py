@@ -11,7 +11,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.contrib import messages
 from decouple import config
-from baseclasses.dataclasses.nav_bar_model import NavBarModel
+from baseclasses.dataclasses.nav_bar_model import NavBarModel, NavBarDropdownModel
 from baseclasses.dataclasses.link_model import LinkModel
 from reporting.dataclasses.table_elements import (
     AttrTableElement,
@@ -40,9 +40,27 @@ def under_construction(request):
 
 
 def navbar(request):
-    navbar_apps_config = config("NAVBAR_APPS", default="").split(" ")
-    navbar_apps = [NavBarModel(app) for app in navbar_apps_config if app != ""]
-    return render(request, "navbar.html", {"nav_apps": navbar_apps})
+    navbar_apps_config = config("NAVBAR_APPS", default="").split(",")
+    navbar_apps = []
+    navbar_dropdowns = {}
+    for app in navbar_apps_config:
+        if app == "":
+            continue
+        app_structure = app.split(".")
+        if len(app_structure) > 1:
+            repo_name = app_structure[0]
+            app_name = app_structure[1]
+            if repo_name not in navbar_dropdowns:
+                navbar_dropdowns[repo_name] = NavBarDropdownModel(repo_name)
+            dropdown = navbar_dropdowns[repo_name]
+            dropdown.dropdown_items.append(NavBarModel(app_name))
+        else:
+            navbar_apps.append(NavBarModel(app))
+    return render(
+        request,
+        "navbar.html",
+        {"nav_apps": navbar_apps, "navbar_dropdowns": navbar_dropdowns.values()},
+    )
 
 
 def links(request):
