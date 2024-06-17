@@ -36,9 +36,15 @@ class RequestSlugAuthenticator:
         return {"Authorization": f"{self.slug}:{self.token}"}
 
 
+class JsonReader:
+    def get_json_response(self, request):
+        return request.json()
+
+
 class RequestManager(MontrekManager):
     base_url = "NONESET"
     authenticator = RequestAuthenticator()
+    json_reader = JsonReader()
 
     def __init__(self):
         self.status_code = 0
@@ -50,7 +56,7 @@ class RequestManager(MontrekManager):
         self.status_code = request.status_code
         if request.ok:
             try:
-                json_response = request.json()
+                json_response = self.json_reader.get_json_response(request)
             except requests.exceptions.JSONDecodeError:
                 self.message = "No valid json returned"
                 self.status_code = 0
@@ -65,3 +71,6 @@ class RequestManager(MontrekManager):
 
     def get_endpoint_url(self, endpoint: str) -> str:
         return f"{self.base_url}{endpoint}"
+
+    def get_json_response(self, request):
+        return request.json()
