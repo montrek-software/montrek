@@ -1,23 +1,23 @@
 from django.test import TestCase
 from api_upload.managers.request_manager import (
-    RequestManager,
+    RequestJsonManager,
     RequestSlugAuthenticator,
     RequestUserPasswordAuthenticator,
     RequestBearerAuthenticator,
 )
 
 
-class MockRequestManager(RequestManager):
+class MockRequestManager(RequestJsonManager):
     base_url = "https://httpbin.org/"
     authenticator = RequestUserPasswordAuthenticator(user="user", password="pass")
 
 
-class MockRequestManagerNoAuth(RequestManager):
+class MockRequestManagerNoAuth(RequestJsonManager):
     base_url = "https://httpbin.org/"
     authenticator = RequestUserPasswordAuthenticator(user="user", password="wrongpass")
 
 
-class MockRequestManagerToken(RequestManager):
+class MockRequestManagerToken(RequestJsonManager):
     base_url = "https://httpbin.org/"
     authenticator = RequestBearerAuthenticator(token="testtoken123")
 
@@ -25,7 +25,7 @@ class MockRequestManagerToken(RequestManager):
 class TestRequestManager(TestCase):
     def test_get_json(self):
         manager = MockRequestManager()
-        response_json = manager.get_json("basic-auth/user/pass")
+        response_json = manager.get_response("basic-auth/user/pass")
         self.assertEqual(manager.status_code, 200)
         self.assertEqual(manager.message, "OK")
         self.assertEqual(response_json["authenticated"], True)
@@ -33,7 +33,7 @@ class TestRequestManager(TestCase):
 
     def test_get_json_unauthorized(self):
         manager = MockRequestManagerNoAuth()
-        response_json = manager.get_json("basic-auth/user/pass")
+        response_json = manager.get_response("basic-auth/user/pass")
         self.assertEqual(manager.status_code, 401)
         self.assertEqual(response_json, {})
         self.assertEqual(
@@ -43,21 +43,21 @@ class TestRequestManager(TestCase):
 
     def test_get_json_dummy(self):
         manager = MockRequestManager()
-        response_json = manager.get_json("json")
+        response_json = manager.get_response("json")
         self.assertEqual(manager.status_code, 200)
         self.assertEqual(manager.message, "OK")
         self.assertNotEqual(response_json, {})
 
     def test_get_json_no_valid_json(self):
         manager = MockRequestManagerNoAuth()
-        response_json = manager.get_json("html")
+        response_json = manager.get_response("html")
         self.assertEqual(manager.status_code, 0)
         self.assertEqual(manager.message, "No valid json returned")
         self.assertEqual(response_json, {})
 
     def test_bearer_authenticator(self):
         manager = MockRequestManagerToken()
-        response_json = manager.get_json("bearer")
+        response_json = manager.get_response("bearer")
         self.assertEqual(manager.status_code, 200)
         self.assertEqual(manager.message, "OK")
         self.assertEqual(response_json["authenticated"], True)
@@ -65,7 +65,7 @@ class TestRequestManager(TestCase):
 
     def test_wrong_authenticator(self):
         manager = MockRequestManagerToken()
-        response_json = manager.get_json("basic-auth/user/pass")
+        response_json = manager.get_response("basic-auth/user/pass")
         self.assertEqual(manager.status_code, 401)
         self.assertEqual(response_json, {})
         self.assertEqual(

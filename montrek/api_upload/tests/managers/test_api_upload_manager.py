@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from api_upload.managers.request_manager import RequestManager
+from api_upload.managers.request_manager import RequestJsonManager
 from api_upload.managers.api_upload_manager import ApiUploadManager
 from api_upload.repositories.api_upload_registry_repository import (
     ApiUploadRepository,
@@ -12,10 +12,10 @@ from baseclasses.dataclasses.montrek_message import (
 )
 
 
-class MockRequestManager(RequestManager):
+class MockRequestManager(RequestJsonManager):
     base_url = "https://api.mock.com/v1/"
 
-    def get_json(self, endpoint: str) -> dict:
+    def get_response(self, endpoint: str) -> dict:
         self.status_code = 200
         self.message = "request ok"
         return {"some": "data"}
@@ -85,7 +85,7 @@ class TestApiUploadManager(TestCase):
             manager.request_manager.message = "request error"
             return {}
 
-        manager.request_manager.get_json = get_json_error
+        manager.request_manager.get_response = get_json_error
 
         upload_result = manager.upload_and_process()
         api_upload_registry = (

@@ -1,8 +1,8 @@
 import datetime
-from api_upload.managers.request_manager import RequestManager
+from api_upload.managers.request_manager import RequestJsonManager
 
 
-class A2RequestManager(RequestManager):
+class A2RequestManager(RequestJsonManager):
     base_url = "http://example.com/api/v1/"
 
     def get_json(self, endpoint: str) -> dict | list:

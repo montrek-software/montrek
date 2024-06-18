@@ -20,7 +20,7 @@ class ApiUploadRepositoryABC(MontrekRepository):
         self.add_satellite_fields_annotations(
             self.static_satellite_class, ["url", "upload_status", "upload_message"]
         )
-        return self.build_queryset()
+        return self.build_queryset().order_by("-created_at")
 
     def _setup_checks(self):
         if self.hub_class is ApiUploadRegistryHubABC:
