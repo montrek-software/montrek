@@ -1,4 +1,6 @@
+from abc import abstractmethod
 import requests
+import pandas as pd
 from base64 import b64encode
 
 from baseclasses.managers.montrek_manager import MontrekManager
@@ -41,18 +43,31 @@ class JsonReader:
         return request.json()
 
 
-class RequestManager(MontrekManager):
+class RequestManagerABC(MontrekManager):
     base_url = "NONESET"
-    authenticator = RequestAuthenticator()
-    json_reader = JsonReader()
 
     def __init__(self):
         self.status_code = 0
         self.message = "No get request made"
 
-    def get_json(self, endpoint: str) -> dict | list:
+    @abstractmethod
+    def get_response(self, endpoint: str) -> dict | list | pd.DataFrame:
+        ...
+
+    def get_endpoint_url(self, endpoint: str) -> str:
+        return f"{self.base_url}{endpoint}"
+
+
+class RequestJsonManager(RequestManagerABC):
+    authenticator = RequestAuthenticator()
+    json_reader = JsonReader()
+
+    def get_response(self, endpoint: str) -> dict | list:
         endpoint_url = self.get_endpoint_url(endpoint)
-        request = requests.get(endpoint_url, headers=self.authenticator.get_headers())
+        headers = {"User-Agent": "Chrome/128.0.6537.2"}
+        headers.update(self.authenticator.get_headers())
+
+        request = requests.get(endpoint_url, headers=headers)
         self.status_code = request.status_code
         if request.ok:
             try:
@@ -68,9 +83,3 @@ class RequestManager(MontrekManager):
         except requests.exceptions.HTTPError as e:
             self.message = str(e)
         return {}
-
-    def get_endpoint_url(self, endpoint: str) -> str:
-        return f"{self.base_url}{endpoint}"
-
-    def get_json_response(self, request):
-        return request.json()

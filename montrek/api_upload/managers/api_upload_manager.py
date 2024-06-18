@@ -4,7 +4,7 @@ from api_upload.repositories.api_upload_registry_repository import (
     ApiUploadRepository,
 )
 from baseclasses.managers.montrek_manager import MontrekManager
-from api_upload.managers.request_manager import RequestManager
+from api_upload.managers.request_manager import RequestManagerABC
 from baseclasses.dataclasses.montrek_message import (
     MontrekMessageError,
     MontrekMessageInfo,
@@ -18,18 +18,22 @@ class ApiUploadProcessorProtocol(Protocol):
 
     def __init__(
         self, api_upload_registry: ApiUploadRegistryHub, session_data: dict
-    ) -> None: ...
+    ) -> None:
+        ...
 
-    def pre_check(self, json_response: dict | list) -> bool: ...
+    def pre_check(self, json_response: dict | list) -> bool:
+        ...
 
-    def process(self, json_response: dict | list) -> bool: ...
+    def process(self, json_response: dict | list) -> bool:
+        ...
 
-    def post_check(self, json_response: dict | list) -> bool: ...
+    def post_check(self, json_response: dict | list) -> bool:
+        ...
 
 
 class ApiUploadManager(MontrekManager):
     repository_class = ApiUploadRepository
-    request_manager_class: type[RequestManager]
+    request_manager_class: type[RequestManagerABC]
     api_upload_processor_class: type[ApiUploadProcessorProtocol]
     endpoint: str
 
@@ -48,7 +52,7 @@ class ApiUploadManager(MontrekManager):
         super().__init__(session_data=self.session_data)
 
     def upload_and_process(self) -> bool:
-        json_response = self.request_manager.get_json(self.endpoint)
+        response = self.request_manager.get_response(self.endpoint)
         us = self.registry_repository.upload_status
         if self.request_manager.status_code == 0:
             self._update_api_upload_registry(
@@ -56,11 +60,11 @@ class ApiUploadManager(MontrekManager):
                 self.request_manager.message,
             )
             return False
-        if not self.processor.pre_check(json_response):
+        if not self.processor.pre_check(response):
             self._update_api_upload_registry(us.FAILED.value, self.processor.message)
             return False
-        if self.processor.process(json_response):
-            if not self.processor.post_check(json_response):
+        if self.processor.process(response):
+            if not self.processor.post_check(response):
                 self._update_api_upload_registry(
                     us.FAILED.value, self.processor.message
                 )
