@@ -37,7 +37,7 @@ kaleido==0.2.1
 kombu==5.3.7
 lazy-object-proxy==1.10.0
 lxml==5.2.1
-markdown==3.6.0
+Markdown==3.6
 mccabe==0.7.0
 multitasking==0.0.11
 mysqlclient==2.2.4
@@ -61,6 +61,8 @@ python-decouple==3.8
 pytz==2024.1
 redis==5.0.4
 requests==2.31.0
+sdmx==0.2.10
+sdmx1==2.15.0
 selenium==4.20.0
 setuptools==69.5.1
 six==1.16.0
