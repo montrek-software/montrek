@@ -1,7 +1,9 @@
 import io
 import pandas as pd
+import numpy as np
 from django.test import TestCase
 from django.http import HttpResponse
+from django.utils import timezone
 from bs4 import BeautifulSoup
 from reporting.dataclasses import table_elements as te
 from reporting.managers.montrek_table_manager import MontrekTableManager
@@ -13,6 +15,7 @@ class MockData:
     field_a: str
     field_b: int
     field_c: float
+    field_d: timezone.datetime | None
 
 
 class MockQuerySet:
@@ -42,8 +45,11 @@ class MockRepository:
         self.session_data = session_data
 
     def std_queryset(self):
+        dummy_date = timezone.make_aware(timezone.datetime(2024, 1, 2))
         return MockQuerySet(
-            MockData("a", 1, 1.0), MockData("b", 2, 2.0), MockData("c", 3, 3.0)
+            MockData("a", 1, 1.0, dummy_date),
+            MockData("b", 2, 2.0, dummy_date),
+            MockData("c", 3, 3.0, None),
         )
 
 
@@ -58,6 +64,7 @@ class MockMontrekTableManager(MontrekTableManager):
             te.StringTableElement(attr="field_a", name="Field A"),
             te.IntTableElement(attr="field_b", name="Field B"),
             te.FloatTableElement(attr="field_c", name="Field C"),
+            te.DateTimeTableElement(attr="field_d", name="Field D"),
             te.LinkTableElement(
                 name="Link",
                 url="home",
@@ -93,7 +100,14 @@ class TestMontrekTableManager(TestCase):
         rows = table.find_all("tr")
         self.assertEqual(len(rows), 4)
         headers = soup.find_all("th")
-        expected_headers = ["Field A", "Field B", "Field C", "Link", "Link Text"]
+        expected_headers = [
+            "Field A",
+            "Field B",
+            "Field C",
+            "Field D",
+            "Link",
+            "Link Text",
+        ]
         header_texts = [th.get_text() for th in headers]
         self.assertEqual(header_texts, expected_headers)
 
@@ -116,7 +130,7 @@ class TestMontrekTableManager(TestCase):
         self.assertRegex(content_disposition, filename_pattern)
         self.assertEqual(
             response.getvalue(),
-            b"Field A,Field B,Field C,Link Text\na,1,1.0,a\nb,2,2.0,b\nc,3,3.0,c\n",
+            b"Field A,Field B,Field C,Field D,Link Text\na,1,1.0,2024-01-02,a\nb,2,2.0,2024-01-02,b\nc,3,3.0,,c\n",
         )
 
     def test_download_excel(self):
@@ -133,11 +147,17 @@ class TestMontrekTableManager(TestCase):
         self.assertRegex(content_disposition, filename_pattern)
         with io.BytesIO(response.content) as f:
             excel_file = pd.read_excel(f)
+            dummy_date = timezone.datetime(2024, 1, 2)
             expected_df = pd.DataFrame(
                 {
                     "Field A": ["a", "b", "c"],
-                    "Field B": [1, 2, 3],
+                    "Field B": [
+                        1,
+                        2,
+                        3,
+                    ],
                     "Field C": [1.0, 2.0, 3.0],
+                    "Field D": [dummy_date, dummy_date, np.NaN],
                     "Link Text": ["a", "b", "c"],
                 }
             )
