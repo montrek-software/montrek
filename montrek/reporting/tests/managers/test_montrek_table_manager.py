@@ -1,3 +1,5 @@
+import io
+import pandas as pd
 from django.test import TestCase
 from django.http import HttpResponse
 from bs4 import BeautifulSoup
@@ -116,3 +118,14 @@ class TestMontrekTableManager(TestCase):
         response["Content-Disposition"] = 'attachment; filename="export.xlsx"'
         response = manager.download_excel(response)
         self.assertEqual(response.status_code, 200)
+        with io.BytesIO(response.content) as f:
+            excel_file = pd.read_excel(f)
+            expected_df = pd.DataFrame(
+                {
+                    "Field A": ["a", "b", "c"],
+                    "Field B": [1, 2, 3],
+                    "Field C": [1.0, 2.0, 3.0],
+                    "Link Text": ["a", "b", "c"],
+                }
+            )
+            pd.testing.assert_frame_equal(excel_file, expected_df, check_dtype=False)

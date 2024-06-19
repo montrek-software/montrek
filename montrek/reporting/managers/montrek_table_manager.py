@@ -111,8 +111,25 @@ class MontrekTableManager(MontrekManager):
         return response
 
     def download_excel(self, response: HttpResponse) -> HttpResponse:
-        queryset = self.repository.std_queryset()
-        table_df = pd.DataFrame()
+        table_df = self.get_queryset_as_dataframe()
         with pd.ExcelWriter(response) as excel_writer:
             table_df.to_excel(excel_writer, index=False)
         return response
+
+    def get_queryset_as_dataframe(self):
+        queryset = self.repository.std_queryset()
+        table_data = {}
+        table_elements = [
+            table_element
+            for table_element in self.table_elements
+            if not isinstance(table_element, te.LinkTableElement)
+        ]
+        for element in table_elements:
+            values = []
+            for row in queryset.all():
+                if hasattr(element, "attr"):
+                    values.append(getattr(row, element.attr))
+                else:
+                    values.append(getattr(row, element.text))
+            table_data[element.name] = values
+        return pd.DataFrame(table_data)
