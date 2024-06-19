@@ -104,19 +104,15 @@ class TestMontrekTableManager(TestCase):
 
     def test_download_csv(self):
         manager = MockMontrekTableManager()
-        response = manager.download_csv(MockHttpResponse())
+        response = manager.download_csv(HttpResponse())
         self.assertEqual(
             response.getvalue(),
-            "Field A,Field B,Field C,Link Text\r\na,1,1.0,a\r\nb,2,2.0,b\r\nc,3,3.0,c\r\n",
+            b"Field A,Field B,Field C,Link Text\na,1,1.0,a\nb,2,2.0,b\nc,3,3.0,c\n",
         )
 
     def test_download_excel(self):
         manager = MockMontrekTableManager()
-        response = HttpResponse(
-            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
-        response["Content-Disposition"] = 'attachment; filename="export.xlsx"'
-        response = manager.download_excel(response)
+        response = manager.download_excel(HttpResponse())
         self.assertEqual(response.status_code, 200)
         with io.BytesIO(response.content) as f:
             excel_file = pd.read_excel(f)

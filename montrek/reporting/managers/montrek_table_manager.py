@@ -91,26 +91,20 @@ class MontrekTableManager(MontrekManager):
         return page
 
     def download_csv(self, response: HttpResponse) -> HttpResponse:
-        queryset = self.repository.std_queryset()
-        writer = csv.writer(response)
-        csv_elements = [
-            table_element
-            for table_element in self.table_elements
-            if not isinstance(table_element, te.LinkTableElement)
-        ]
-        writer.writerow([table_element.name for table_element in csv_elements])
-        for row in queryset.all():
-            values = []
-            for element in csv_elements:
-                if hasattr(element, "attr"):
-                    values.append(getattr(row, element.attr))
-                else:
-                    values.append(getattr(row, element.text))
-
-            writer.writerow(values)
+        table_df = self.get_queryset_as_dataframe()
+        response["Content-Type"] = "text/csv"
+        response[
+            "Content-Disposition"
+        ] = f'attachment; filename="{self.document_name}.csv"'
+        table_df.to_csv(response, index=False)
         return response
 
     def download_excel(self, response: HttpResponse) -> HttpResponse:
+        response[
+            "Content-Type"
+        ] = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        response["Content-Disposition"] = 'attachment; filename="export.xlsx"'
+
         table_df = self.get_queryset_as_dataframe()
         with pd.ExcelWriter(response) as excel_writer:
             table_df.to_excel(excel_writer, index=False)
