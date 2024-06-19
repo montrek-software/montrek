@@ -276,6 +276,8 @@ class MontrekListView(
     def get(self, request, *args, **kwargs):
         if self.request.GET.get("gen_csv") == "true":
             return self.list_to_csv()
+        if self.request.GET.get("gen_excel") == "true":
+            return self.list_to_excel()
         if self.request.GET.get("gen_pdf") == "true":
             return self.list_to_pdf()
         if self.request.GET.get("reset_filter") == "true":
@@ -309,6 +311,9 @@ class MontrekListView(
 
     def list_to_csv(self):
         return self.manager.download_csv(HttpResponse())
+
+    def list_to_excel(self):
+        return self.manager.download_excel(HttpResponse())
 
     def reset_filter(self):
         self.request.session["filter"] = {}
