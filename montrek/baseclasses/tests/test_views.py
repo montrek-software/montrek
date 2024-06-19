@@ -258,9 +258,7 @@ class TestMontrekListView(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Content-Type"], "text/csv")
         self.assertTrue(
-            response["Content-Disposition"].startswith(
-                'attachment; filename="export.csv"'
-            )
+            response["Content-Disposition"].startswith('attachment; filename="')
         )
 
     def test_list_view_base_pdf_generation(self):

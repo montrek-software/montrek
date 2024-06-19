@@ -17,6 +17,10 @@ class MontrekTableManager(MontrekManager):
     document_title = "Montrek Table"
     draft = False
 
+    def __init__(self, session_data: dict[str, any] = {}):
+        super().__init__(session_data)
+        self._document_name: None | str = None
+
     @property
     def footer_text(self) -> ReportElementProtocol:
         return rt.ReportingText("Internal Report")
@@ -27,8 +31,12 @@ class MontrekTableManager(MontrekManager):
 
     @property
     def document_name(self) -> str:
-        repo_name = self.repository.__class__.__name__.lower()
-        return f"{repo_name}_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
+        if not self._document_name:
+            repo_name = self.repository.__class__.__name__.lower()
+            self._document_name = (
+                f"{repo_name}_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
+            )
+        return self._document_name
 
     def to_html(self):
         html_str = f"<h3>{self.table_title}</h3>"
