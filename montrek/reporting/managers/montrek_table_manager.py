@@ -1,3 +1,4 @@
+import pandas as pd
 from django.views.generic.base import HttpResponse
 from django.core.paginator import Paginator
 from baseclasses.managers.montrek_manager import MontrekManager
@@ -107,4 +108,11 @@ class MontrekTableManager(MontrekManager):
                     values.append(getattr(row, element.text))
 
             writer.writerow(values)
+        return response
+
+    def download_excel(self, response: HttpResponse) -> HttpResponse:
+        queryset = self.repository.std_queryset()
+        table_df = pd.DataFrame()
+        with pd.ExcelWriter(response) as excel_writer:
+            table_df.to_excel(excel_writer, index=False)
         return response

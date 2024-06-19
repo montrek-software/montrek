@@ -1,4 +1,5 @@
 from django.test import TestCase
+from django.http import HttpResponse
 from bs4 import BeautifulSoup
 from reporting.dataclasses import table_elements as te
 from reporting.managers.montrek_table_manager import MontrekTableManager
@@ -106,3 +107,12 @@ class TestMontrekTableManager(TestCase):
             response.getvalue(),
             "Field A,Field B,Field C,Link Text\r\na,1,1.0,a\r\nb,2,2.0,b\r\nc,3,3.0,c\r\n",
         )
+
+    def test_download_excel(self):
+        manager = MockMontrekTableManager()
+        response = HttpResponse(
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        response["Content-Disposition"] = 'attachment; filename="export.xlsx"'
+        response = manager.download_excel(response)
+        self.assertEqual(response.status_code, 200)
