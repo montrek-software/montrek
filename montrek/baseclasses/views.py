@@ -308,9 +308,7 @@ class MontrekListView(
         return context
 
     def list_to_csv(self):
-        response = HttpResponse(content_type="text/csv")
-        response["Content-Disposition"] = 'attachment; filename="export.csv"'
-        return self.manager.download_csv(response)
+        return self.manager.download_csv(HttpResponse())
 
     def reset_filter(self):
         self.request.session["filter"] = {}

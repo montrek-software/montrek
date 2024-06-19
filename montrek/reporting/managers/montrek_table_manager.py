@@ -1,9 +1,9 @@
 import pandas as pd
+import datetime
 from django.views.generic.base import HttpResponse
 from django.core.paginator import Paginator
 from baseclasses.managers.montrek_manager import MontrekManager
 from reporting.dataclasses import table_elements as te
-import csv
 from reporting.core import reporting_text as rt
 from reporting.lib.protocols import (
     ReportElementProtocol,
@@ -15,7 +15,6 @@ class MontrekTableManager(MontrekManager):
     paginate_by = 10
     table_title = ""
     document_title = "Montrek Table"
-    document_name = "table"
     draft = False
 
     @property
@@ -25,6 +24,11 @@ class MontrekTableManager(MontrekManager):
     @property
     def table_elements(self) -> tuple[te.TableElement, ...]:
         return ()
+
+    @property
+    def document_name(self) -> str:
+        repo_name = self.repository.__class__.__name__.lower()
+        return f"{repo_name}_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
 
     def to_html(self):
         html_str = f"<h3>{self.table_title}</h3>"
@@ -103,7 +107,9 @@ class MontrekTableManager(MontrekManager):
         response[
             "Content-Type"
         ] = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        response["Content-Disposition"] = 'attachment; filename="export.xlsx"'
+        response[
+            "Content-Disposition"
+        ] = f'attachment; filename="{self.document_name}.xlsx"'
 
         table_df = self.get_queryset_as_dataframe()
         with pd.ExcelWriter(response) as excel_writer:
