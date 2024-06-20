@@ -316,7 +316,7 @@ class MontrekRepository:
         if no_of_duplicated_entries == 0:
             return data_frame
         self.messages.append(
-            MontrekMessageError(
+            MontrekMessageWarning(
                 f"{no_of_duplicated_entries} duplicated entries not uploaded!"
             )
         )
