@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 class FieldMapFileUploadProcessor:
     message = "Not implemented"
+    detailed_message = ""
     manager_class: type[MontrekManager] | None = None
     field_map_manager_class: type[FieldMapManagerABC] = FieldMapManagerABC
 
@@ -62,7 +63,9 @@ class FieldMapFileUploadProcessor:
                 f"Error raised during object creation: <br>{e.__class__.__name__}: {e}"
             )
             return False
-        self.message = f"Successfully uploaded {mapped_df.shape[0]} rows."
+        self.message = (
+            f"Successfully uploaded {mapped_df.shape[0]} rows.{self.detailed_message}"
+        )
         return True
 
     def pre_check(self, file_path: str):
