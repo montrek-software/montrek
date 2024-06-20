@@ -258,9 +258,19 @@ class TestMontrekListView(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Content-Type"], "text/csv")
         self.assertTrue(
-            response["Content-Disposition"].startswith(
-                'attachment; filename="export.csv"'
-            )
+            response["Content-Disposition"].startswith('attachment; filename="')
+        )
+
+    def test_list_view_base_excel_generation(self):
+        test_list_view = MockMontrekListView("dummy?gen_excel=true")
+        response = test_list_view.get(test_list_view.request)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response["Content-Type"],
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        self.assertTrue(
+            response["Content-Disposition"].startswith('attachment; filename="')
         )
 
     def test_list_view_base_pdf_generation(self):

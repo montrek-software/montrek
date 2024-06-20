@@ -1,4 +1,7 @@
+import io
+import pandas as pd
 from django.test import TestCase
+from django.http import HttpResponse
 from bs4 import BeautifulSoup
 from reporting.dataclasses import table_elements as te
 from reporting.managers.montrek_table_manager import MontrekTableManager
@@ -101,8 +104,41 @@ class TestMontrekTableManager(TestCase):
 
     def test_download_csv(self):
         manager = MockMontrekTableManager()
-        response = manager.download_csv(MockHttpResponse())
+        response = manager.download_csv(HttpResponse())
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response["Content-Type"],
+            "text/csv",
+        )
+        # Check the Content-Disposition header using regex
+        content_disposition = response["Content-Disposition"]
+        filename_pattern = r'attachment; filename="mockrepository_\d{14}\.csv"'
+        self.assertRegex(content_disposition, filename_pattern)
         self.assertEqual(
             response.getvalue(),
-            "Field A,Field B,Field C,Link Text\r\na,1,1.0,a\r\nb,2,2.0,b\r\nc,3,3.0,c\r\n",
+            b"Field A,Field B,Field C,Link Text\na,1,1.0,a\nb,2,2.0,b\nc,3,3.0,c\n",
         )
+
+    def test_download_excel(self):
+        manager = MockMontrekTableManager()
+        response = manager.download_excel(HttpResponse())
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response["Content-Type"],
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        # Check the Content-Disposition header using regex
+        content_disposition = response["Content-Disposition"]
+        filename_pattern = r'attachment; filename="mockrepository_\d{14}\.xlsx"'
+        self.assertRegex(content_disposition, filename_pattern)
+        with io.BytesIO(response.content) as f:
+            excel_file = pd.read_excel(f)
+            expected_df = pd.DataFrame(
+                {
+                    "Field A": ["a", "b", "c"],
+                    "Field B": [1, 2, 3],
+                    "Field C": [1.0, 2.0, 3.0],
+                    "Link Text": ["a", "b", "c"],
+                }
+            )
+            pd.testing.assert_frame_equal(excel_file, expected_df, check_dtype=False)

@@ -1,8 +1,9 @@
+import pandas as pd
+import datetime
 from django.views.generic.base import HttpResponse
 from django.core.paginator import Paginator
 from baseclasses.managers.montrek_manager import MontrekManager
 from reporting.dataclasses import table_elements as te
-import csv
 from reporting.core import reporting_text as rt
 from reporting.lib.protocols import (
     ReportElementProtocol,
@@ -14,8 +15,11 @@ class MontrekTableManager(MontrekManager):
     paginate_by = 10
     table_title = ""
     document_title = "Montrek Table"
-    document_name = "table"
     draft = False
+
+    def __init__(self, session_data: dict[str, any] = {}):
+        super().__init__(session_data)
+        self._document_name: None | str = None
 
     @property
     def footer_text(self) -> ReportElementProtocol:
@@ -24,6 +28,15 @@ class MontrekTableManager(MontrekManager):
     @property
     def table_elements(self) -> tuple[te.TableElement, ...]:
         return ()
+
+    @property
+    def document_name(self) -> str:
+        if not self._document_name:
+            repo_name = self.repository.__class__.__name__.lower()
+            self._document_name = (
+                f"{repo_name}_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
+            )
+        return self._document_name
 
     def to_html(self):
         html_str = f"<h3>{self.table_title}</h3>"
@@ -90,21 +103,41 @@ class MontrekTableManager(MontrekManager):
         return page
 
     def download_csv(self, response: HttpResponse) -> HttpResponse:
+        table_df = self.get_queryset_as_dataframe()
+        response["Content-Type"] = "text/csv"
+        response[
+            "Content-Disposition"
+        ] = f'attachment; filename="{self.document_name}.csv"'
+        table_df.to_csv(response, index=False)
+        return response
+
+    def download_excel(self, response: HttpResponse) -> HttpResponse:
+        response[
+            "Content-Type"
+        ] = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        response[
+            "Content-Disposition"
+        ] = f'attachment; filename="{self.document_name}.xlsx"'
+
+        table_df = self.get_queryset_as_dataframe()
+        with pd.ExcelWriter(response) as excel_writer:
+            table_df.to_excel(excel_writer, index=False)
+        return response
+
+    def get_queryset_as_dataframe(self):
         queryset = self.repository.std_queryset()
-        writer = csv.writer(response)
-        csv_elements = [
+        table_data = {}
+        table_elements = [
             table_element
             for table_element in self.table_elements
             if not isinstance(table_element, te.LinkTableElement)
         ]
-        writer.writerow([table_element.name for table_element in csv_elements])
-        for row in queryset.all():
+        for element in table_elements:
             values = []
-            for element in csv_elements:
+            for row in queryset.all():
                 if hasattr(element, "attr"):
                     values.append(getattr(row, element.attr))
                 else:
                     values.append(getattr(row, element.text))
-
-            writer.writerow(values)
-        return response
+            table_data[element.name] = values
+        return pd.DataFrame(table_data)
