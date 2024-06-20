@@ -15,7 +15,10 @@ from baseclasses.repositories.subquery_builder import (
     ReverseLinkedSatelliteSubqueryBuilder,
 )
 from baseclasses.repositories.db_creator import DbCreator
-from baseclasses.dataclasses.montrek_message import MontrekMessageError
+from baseclasses.dataclasses.montrek_message import (
+    MontrekMessageError,
+    MontrekMessageWarning,
+)
 from django.db.models import (
     F,
     Q,
@@ -309,4 +312,12 @@ class MontrekRepository:
             raise ValueError(error_message)
 
     def _drop_duplicates(self, data_frame: pd.DataFrame) -> pd.DataFrame:
+        no_of_duplicated_entries = data_frame.duplicated().sum()
+        if no_of_duplicated_entries == 0:
+            return data_frame
+        self.messages.append(
+            MontrekMessageError(
+                f"{no_of_duplicated_entries} duplicated entries not uploaded!"
+            )
+        )
         return data_frame.drop_duplicates()
