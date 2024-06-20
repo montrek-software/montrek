@@ -64,7 +64,7 @@ class FieldMapFileUploadProcessor:
             )
             return False
         self.message = (
-            f"Successfully uploaded {mapped_df.shape[0]} rows. {self.detailed_message}"
+            f"Successfully uploaded {mapped_df.shape[0]} rows.{self.detailed_message}"
         )
         return True
 
