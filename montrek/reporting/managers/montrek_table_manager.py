@@ -1,3 +1,4 @@
+from django.template.base import localize
 import pandas as pd
 import datetime
 from django.views.generic.base import HttpResponse
@@ -140,4 +141,12 @@ class MontrekTableManager(MontrekManager):
                 else:
                     values.append(getattr(row, element.text))
             table_data[element.name] = values
-        return pd.DataFrame(table_data)
+        dataframe = pd.DataFrame(table_data)
+        dataframe = self._convert_dataframe(dataframe)
+        return dataframe
+
+    def _convert_dataframe(self, dataframe: pd.DataFrame):
+        date_columns = dataframe.select_dtypes(include=["datetime64[ns, UTC]"]).columns
+        for date_column in date_columns:
+            dataframe[date_column] = dataframe[date_column].dt.tz_localize(None)
+        return dataframe
