@@ -141,6 +141,7 @@ class MontrekRepository:
         self, data_frame: pd.DataFrame
     ) -> List[MontrekHubABC]:
         self._raise_for_anonymous_user()
+        data_frame = self._drop_duplicates(data_frame)
         self._raise_for_duplicated_entries(data_frame)
         self.std_queryset()
         db_creator = DbCreator(self.hub_class, self._primary_satellite_classes)
@@ -306,3 +307,6 @@ class MontrekRepository:
                 error_message += f"Duplicated entries found for {satellite_class.__name__} with fields {identifier_fields}\n"
         if raise_error:
             raise ValueError(error_message)
+
+    def _drop_duplicates(self, data_frame: pd.DataFrame) -> pd.DataFrame:
+        return data_frame.drop_duplicates()
