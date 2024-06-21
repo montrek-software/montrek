@@ -53,10 +53,13 @@ class LogFileMixin(LogFileChecksMixin):
         return excel_log_file
 
     def _add_log_file_link(self, file: File):
-        file_log_hub = FileUploadFileRepository(self.session_data).std_create_object(
-            {"file": file}
-        )
         registry_log_file_link = (
             self.file_upload_registry_hub.link_file_upload_registry_file_log_file
         )
+        file_log_hub = FileUploadFileRepository(self.session_data).std_create_object(
+            {"file": file}
+        )
+        # TDOO: This is not nice and should be handeled by a repository. But only the hubt is passed to the Processor.
+        #  A refactor that would allow the processor to pass the repository would be nice.
+        registry_log_file_link.all().delete()
         registry_log_file_link.add(file_log_hub)
