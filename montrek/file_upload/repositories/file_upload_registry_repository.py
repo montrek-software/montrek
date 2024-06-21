@@ -92,7 +92,11 @@ class FileUploadRegistryRepositoryABC(MontrekRepository):
 
         return self._get_file_from_registry(file_log_registry_path, request)
 
-    def _get_file_from_registry(self, file_registry_path: str, request) -> File | None:
+    def _get_file_from_registry(
+        self, file_registry_path: str | None, request
+    ) -> File | None:
+        if not file_registry_path:
+            return None
         file_registry_path = os.path.join(MEDIA_ROOT, file_registry_path)
         if not os.path.exists(file_registry_path):
             messages.error(request, f"File {file_registry_path} not found")
