@@ -10,9 +10,9 @@ class ClassDefinitionCommandBase(BaseCommand):
     class_suffix: str = "undefined"
 
     def get_output_path(self, app_path: str, prefix: str) -> str:
-        return os.path.join(app_path, self.get_path_within_app(prefix))
+        return os.path.join(app_path, self.get_file_path_within_app(prefix))
 
-    def get_path_within_app(self, prefix: str) -> str:
+    def get_file_path_within_app(self, prefix: str) -> str:
         NotImplementedError("Subclasses must implement this method.")
 
     def add_arguments(self, parser):

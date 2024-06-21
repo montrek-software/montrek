@@ -6,8 +6,8 @@ from code_generation.management.base.class_definition_command import (
 
 
 class Command(ClassDefinitionCommandBase):
-    template_file: str = "hub_models.py.j2"
-    class_suffix: str = "hub"
+    template_file: str = "satellite_models.py.j2"
+    class_suffix: str = "satellite"
 
     def get_file_path_within_app(self, prefix: str) -> str:
         file_name = f"{prefix}_{self.class_suffix}_models.py"
