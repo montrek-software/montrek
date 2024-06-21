@@ -24,12 +24,16 @@ class LogFileChecksMixin:
 
 
 class LogFileMixin(LogFileChecksMixin):
-    def generate_log_file_excel(self, message: str):
+    def generate_log_file_excel(
+        self, message: str, *, additional_data: pd.DataFrame | None = None
+    ):
         self._check_attributes()
-        excel_log_file = self._generate_excel_file(message)
+        excel_log_file = self._generate_excel_file(message, additional_data)
         self._add_log_file_link(excel_log_file)
 
-    def _generate_excel_file(self, message: str) -> File:
+    def _generate_excel_file(
+        self, message: str, additional_data: pd.DataFrame | None
+    ) -> File:
         file_name = "upload_log.xlsx"
         log_sr = pd.Series(
             {
@@ -44,7 +48,9 @@ class LogFileMixin(LogFileChecksMixin):
         log_sr.index.name = "Param"
         buffer = BytesIO()
         with pd.ExcelWriter(buffer, engine="openpyxl") as excel_writer:
-            log_sr.to_excel(excel_writer)
+            log_sr.to_excel(excel_writer, "meta_data")
+            if isinstance(additional_data, pd.DataFrame):
+                additional_data.to_excel(excel_writer, "additional_data", index=False)
         excel_log_file = File(buffer, name=file_name)
         return excel_log_file
 

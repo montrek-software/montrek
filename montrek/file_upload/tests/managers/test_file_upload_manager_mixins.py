@@ -95,3 +95,42 @@ class TestExcelLogFileMixin(TestCase):
         ).T.reset_index()
         expected_df = expected_df.rename(columns={"index": "Param"})
         pd.testing.assert_frame_equal(test_data_frame, expected_df, check_dtype=False)
+
+    def test_log_excel_file__additional_data(self):
+        processor = MockDataProcessor()
+        now_timestamp = timezone.now()
+        processor.session_data = {"user_id": self.user.id}
+        processor.file_upload_registry_hub.created_by = self.user
+        processor.file_upload_registry_hub.created_at = now_timestamp
+        test_message = "Test with additional data sheet"
+        test_additional_data = pd.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
+        processor.generate_log_file_excel(
+            test_message, additional_data=test_additional_data
+        )
+        file_links = (
+            processor.file_upload_registry_hub.link_file_upload_registry_log_file
+        )
+        self.assertEqual(
+            file_links.count(),
+            1,
+        )
+        log_file_hub = file_links.first()
+        excel_file = FileUploadFileStaticSatellite.objects.get(
+            hub_entity=log_file_hub
+        ).file
+        self.assertTrue(excel_file)
+        test_data_frame = pd.read_excel(excel_file, "meta_data")
+        expected_df = pd.DataFrame(
+            {
+                "Upload Message": [test_message],
+                "Upload Date": [now_timestamp.strftime("%Y-%m-%d %H:%M:%S")],
+                "Uploaded By": [self.user.email],
+            },
+            index=["Log Meta Data"],
+        ).T.reset_index()
+        expected_df = expected_df.rename(columns={"index": "Param"})
+        pd.testing.assert_frame_equal(test_data_frame, expected_df, check_dtype=False)
+        result_additional_data = pd.read_excel(excel_file, "additional_data")
+        pd.testing.assert_frame_equal(
+            test_additional_data, result_additional_data, check_dtype=False
+        )
