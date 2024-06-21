@@ -14,6 +14,9 @@ from file_upload.tests.mocks import (
     MockWrongStaticSatelliteClassFileUploadRegistryRepository,
     MockWrongLinkFileUploadRegistryRepository,
 )
+from file_upload.repositories.file_upload_file_repository import (
+    FileUploadFileRepository,
+)
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
 
@@ -27,7 +30,7 @@ class TestFileUploadRegistryRepository(TestCase):
             content_type="text/plain",
         )
         self.file_registry_sat_factory = FileUploadRegistryStaticSatelliteFactory(
-            file_name=self.test_file.name, upload_status="pending"
+            file_name=self.test_file.name
         )
         self.file_file_sat_factory = FileUploadFileStaticSatelliteFactory(
             file=self.test_file
@@ -56,18 +59,23 @@ class TestFileUploadRegistryRepository(TestCase):
         queryset = repository.std_queryset()
         first_upload_date = queryset.first().upload_date
 
-        assert first_upload_date == self.file_registry_sat_factory.created_at
+        assert first_upload_date == self.file_file_sat_factory.created_at
 
+        second_file_file_sat_factory = FileUploadFileStaticSatelliteFactory(
+            file=self.test_file
+        )
         repository.std_create_object(
             {
                 "hub_entity_id": self.file_registry_sat_factory.hub_entity.id,
-                "upload_status": "processed",
+                "link_file_upload_registry_file_upload_file": second_file_file_sat_factory.hub_entity,
             }
         )
+
         queryset = repository.std_queryset()
         second_upload_date = queryset.first().upload_date
 
         assert second_upload_date > first_upload_date
+        assert second_upload_date == second_file_file_sat_factory.created_at
 
 
 class TestFileUploadRegistryRepositorySetUp(TestCase):
