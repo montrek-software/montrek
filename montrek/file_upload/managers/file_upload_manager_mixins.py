@@ -13,10 +13,6 @@ class LogFileChecksMixin:
             raise AttributeError(
                 "ExcelLogFileMixin has no file_upload_registry_hub attribute.",
             )
-        if not hasattr(self, "log_link_name"):
-            raise AttributeError(
-                "ExcelLogFileMixin has no log_link_name attribute.",
-            )
         if not hasattr(self, "session_data"):
             raise AttributeError(
                 "ExcelLogFileMixin has no session_data attribute.",
@@ -60,7 +56,7 @@ class LogFileMixin(LogFileChecksMixin):
         file_log_hub = FileUploadFileRepository(self.session_data).std_create_object(
             {"file": file}
         )
-        registry_log_file_link = getattr(
-            self.file_upload_registry_hub, self.log_link_name
+        registry_log_file_link = (
+            self.file_upload_registry_hub.link_file_upload_registry_file_log_file
         )
         registry_log_file_link.add(file_log_hub)

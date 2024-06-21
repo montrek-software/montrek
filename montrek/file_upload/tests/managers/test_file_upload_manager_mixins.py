@@ -29,8 +29,6 @@ class MockNoSessionDataProcessor(LogFileMixin):
 
 
 class MockDataProcessor(LogFileMixin):
-    log_link_name = "link_file_upload_registry_log_file"
-
     def __init__(self):
         self.file_upload_registry_hub = FileUploadRegistryHubFactory.create()
 
@@ -46,14 +44,6 @@ class TestExcelLogFileMixin(TestCase):
         self.assertEqual(
             str(e.exception),
             "ExcelLogFileMixin has no file_upload_registry_hub attribute.",
-        )
-
-    def test_log_excel_file__no_log_link_name(self):
-        with self.assertRaises(AttributeError) as e:
-            MockNoLinkNameProcessor().generate_log_file_excel("Fails")
-        self.assertEqual(
-            str(e.exception),
-            "ExcelLogFileMixin has no log_link_name attribute.",
         )
 
     def test_log_excel_file__no_session_data(self):
@@ -73,7 +63,7 @@ class TestExcelLogFileMixin(TestCase):
         test_message = "Some message"
         processor.generate_log_file_excel(test_message)
         file_links = (
-            processor.file_upload_registry_hub.link_file_upload_registry_log_file
+            processor.file_upload_registry_hub.link_file_upload_registry_file_log_file
         )
         self.assertEqual(
             file_links.count(),
@@ -108,7 +98,7 @@ class TestExcelLogFileMixin(TestCase):
             test_message, additional_data=test_additional_data
         )
         file_links = (
-            processor.file_upload_registry_hub.link_file_upload_registry_log_file
+            processor.file_upload_registry_hub.link_file_upload_registry_file_log_file
         )
         self.assertEqual(
             file_links.count(),

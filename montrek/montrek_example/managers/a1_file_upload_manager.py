@@ -19,7 +19,6 @@ class A1FileUploadProcessor(FieldMapFileUploadProcessor, LogFileMixin):
     message = "Not implemented"
     manager_class = HubAManager
     field_map_manager_class = A1FieldMapManager
-    log_link_name = "link_file_upload_registry_file_log_file"
 
     @classmethod
     def get_source_df_from_file(cls, file_path):

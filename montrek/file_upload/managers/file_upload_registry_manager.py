@@ -41,6 +41,7 @@ class FileUploadRegistryManagerABC(MontrekTableManager):
                     hover_text="Download Log",
                 )
             )
+        return tuple(table_elements)
 
 
 class FileUploadRegistryManager(FileUploadRegistryManagerABC):
