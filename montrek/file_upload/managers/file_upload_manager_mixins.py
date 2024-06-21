@@ -1,3 +1,11 @@
+from django.core.files import File
+import pandas as pd
+from io import BytesIO
+from file_upload.repositories.file_upload_file_repository import (
+    FileUploadFileRepository,
+)
+
+
 class LogFileChecksMixin:
     def _check_attributes(self):
         if not hasattr(self, "file_upload_registry_hub"):
@@ -14,6 +22,34 @@ class LogFileChecksMixin:
             )
 
 
-class ExcelLogFileMixin(LogFileChecksMixin):
+class LogFileMixin(LogFileChecksMixin):
     def generate_log_file_excel(self, message: str):
         self._check_attributes()
+        excel_log_file = self._generate_excel_file(message)
+        self._add_log_file_link(excel_log_file)
+
+    def _generate_excel_file(self, message: str) -> File:
+        file_name = "upload_log.xlsx"
+        log_sr = pd.Series(
+            {
+                # "Upload File Name": [self.file_upload_registry_hub.file_name],
+                "Upload Status": "Failed",
+                "Upload Message": message,
+                "Upload Date": pd.Timestamp.now(),
+                "Uploaded By": self.session_data["user_id"],
+            }
+        )
+        buffer = BytesIO()
+        with pd.ExcelWriter(buffer, engine="openpyxl") as excel_writer:
+            log_sr.to_excel(excel_writer)
+        excel_log_file = File(buffer, name=file_name)
+        return excel_log_file
+
+    def _add_log_file_link(self, file: File):
+        file_log_hub = FileUploadFileRepository(self.session_data).std_create_object(
+            {"file": file}
+        )
+        registry_log_file_link = getattr(
+            self.file_upload_registry_hub, self.log_link_name
+        )
+        registry_log_file_link.add(file_log_hub)

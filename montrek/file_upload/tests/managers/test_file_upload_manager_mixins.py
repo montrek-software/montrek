@@ -1,3 +1,4 @@
+import pandas as pd
 from django.test import TestCase
 from file_upload.managers.file_upload_manager_mixins import (
     LogFileMixin,
@@ -6,6 +7,7 @@ from file_upload.tests.factories.file_upload_factories import (
     FileUploadRegistryHubFactory,
 )
 from file_upload.models import FileUploadFileStaticSatellite
+from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
 
 class MockUploadRegistryHub:
@@ -25,14 +27,17 @@ class MockNoSessionDataProcessor(LogFileMixin):
 
 
 class MockDataProcessor(LogFileMixin):
-    log_link_name = "link_file_upload_registry_log_excel_file"
+    log_link_name = "link_file_upload_registry_log_file"
 
     def __init__(self):
         self.file_upload_registry_hub = FileUploadRegistryHubFactory.create()
-        self.session_data = {"user": "TestUser"}
 
 
 class TestExcelLogFileMixin(TestCase):
+    def setUp(self):
+        self.user = MontrekUserFactory()
+        self.client.force_login(self.user)
+
     def test_log_excel_file__no_registry(self):
         with self.assertRaises(AttributeError) as e:
             LogFileMixin().generate_log_file_excel("Fails")
@@ -59,9 +64,10 @@ class TestExcelLogFileMixin(TestCase):
 
     def test_log_excel_file__generate_file(self):
         processor = MockDataProcessor()
+        processor.session_data = {"user_id": self.user.id}
         processor.generate_log_file_excel("Passes")
         file_links = (
-            processor.file_upload_registry_hub.link_file_upload_registry_log_excel_file
+            processor.file_upload_registry_hub.link_file_upload_registry_log_file
         )
         self.assertEqual(
             file_links.count(),
@@ -72,3 +78,5 @@ class TestExcelLogFileMixin(TestCase):
             hub_entity=log_file_hub
         ).file
         self.assertTrue(excel_file)
+        test_data_frame = pd.read_excel(excel_file)
+        breakpoint()
