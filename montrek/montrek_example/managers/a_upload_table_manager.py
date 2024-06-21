@@ -28,4 +28,4 @@ class HubAUploadTableManager(MontrekTableManager):
 class HubAFileUploadRegistryManager(FileUploadRegistryManagerABC):
     repository_class = HubAFileUploadRegistryRepository
     download_url = "a1_download_file"
-    download_log_url = "a1_download_log"
+    download_log_url = "a1_download_log_file"
