@@ -1,4 +1,5 @@
 from django.core.files import File
+from django.utils import timezone
 import pandas as pd
 from io import BytesIO
 from file_upload.repositories.file_upload_file_repository import (
@@ -32,13 +33,15 @@ class LogFileMixin(LogFileChecksMixin):
         file_name = "upload_log.xlsx"
         log_sr = pd.Series(
             {
-                # "Upload File Name": [self.file_upload_registry_hub.file_name],
-                "Upload Status": "Failed",
                 "Upload Message": message,
-                "Upload Date": pd.Timestamp.now(),
-                "Uploaded By": self.session_data["user_id"],
-            }
+                "Upload Date": self.file_upload_registry_hub.created_at.strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                ),
+                "Uploaded By": self.file_upload_registry_hub.created_by,
+            },
+            name="Log Meta Data",
         )
+        log_sr.index.name = "Param"
         buffer = BytesIO()
         with pd.ExcelWriter(buffer, engine="openpyxl") as excel_writer:
             log_sr.to_excel(excel_writer)
