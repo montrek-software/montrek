@@ -36,8 +36,10 @@ class FileUploadRegistryRepositoryABC(MontrekRepository):
         self.add_linked_satellites_field_annotations(
             FileUploadFileStaticSatellite,
             self.link_file_upload_registry_file_upload_file_class,
-            ["file"],
+            ["file", "created_at"],
         )
+        self.rename_field("created_at", "upload_date")
+        self.annotations.pop("created_at")
         queryset = self.build_queryset().order_by("-created_at")
         return queryset
 
