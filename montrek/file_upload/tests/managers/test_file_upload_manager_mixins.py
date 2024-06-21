@@ -1,29 +1,41 @@
 from django.test import TestCase
 from file_upload.managers.file_upload_manager_mixins import (
-    ExcelLogFileMixin,
+    LogFileMixin,
 )
+from file_upload.tests.factories.file_upload_factories import (
+    FileUploadRegistryHubFactory,
+)
+from file_upload.models import FileUploadFileStaticSatellite
 
 
 class MockUploadRegistryHub:
     ...
 
 
-class MockNoLinkNameProcessor(ExcelLogFileMixin):
+class MockNoLinkNameProcessor(LogFileMixin):
     def __init__(self):
         self.file_upload_registry_hub = MockUploadRegistryHub()
 
 
-class MockNoSessionDataProcessor(ExcelLogFileMixin):
+class MockNoSessionDataProcessor(LogFileMixin):
     log_link_name = "Test"
 
     def __init__(self):
         self.file_upload_registry_hub = MockUploadRegistryHub()
 
 
+class MockDataProcessor(LogFileMixin):
+    log_link_name = "link_file_upload_registry_log_excel_file"
+
+    def __init__(self):
+        self.file_upload_registry_hub = FileUploadRegistryHubFactory.create()
+        self.session_data = {"user": "TestUser"}
+
+
 class TestExcelLogFileMixin(TestCase):
     def test_log_excel_file__no_registry(self):
         with self.assertRaises(AttributeError) as e:
-            ExcelLogFileMixin().generate_log_file_excel("Fails")
+            LogFileMixin().generate_log_file_excel("Fails")
         self.assertEqual(
             str(e.exception),
             "ExcelLogFileMixin has no file_upload_registry_hub attribute.",
@@ -44,3 +56,19 @@ class TestExcelLogFileMixin(TestCase):
             str(e.exception),
             "ExcelLogFileMixin has no session_data attribute.",
         )
+
+    def test_log_excel_file__generate_file(self):
+        processor = MockDataProcessor()
+        processor.generate_log_file_excel("Passes")
+        file_links = (
+            processor.file_upload_registry_hub.link_file_upload_registry_log_excel_file
+        )
+        self.assertEqual(
+            file_links.count(),
+            1,
+        )
+        log_file_hub = file_links.first()
+        excel_file = FileUploadFileStaticSatellite.objects.get(
+            hub_entity=log_file_hub
+        ).file
+        self.assertTrue(excel_file)
