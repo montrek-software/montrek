@@ -19,8 +19,7 @@ class StdArgumentsMixin:
 
 
 class ClassDefinitionCommandBase(StdArgumentsMixin, BaseCommand):
-    template_file: str = "undefined"
-    help: str = f"Generate class definitions based on '{template_file}' code template."
+    help: str = "Generate class definitions based on code template."
 
     def get_output_path(self, app_path: str, prefix: str) -> str:
         return os.path.join(app_path, self.get_file_path_within_app(prefix))
