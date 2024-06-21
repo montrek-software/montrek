@@ -297,7 +297,8 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
         me_factories.SatA1FieldMapStaticSatelliteFactory(
             source_field="source_field_1",
             database_field="field_a1_int",
-            function_name="multiply_by_1000",
+            function_name="multiply_by_value",
+            function_parameters={"value": 1000},
         )
 
         with open(self.test_file_path, "rb") as f:
@@ -324,6 +325,9 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
         self.assertEqual(a_hubs[0].field_a1_int, 1000)
         self.assertEqual(a_hubs[1].field_a1_int, 2000)
         self.assertEqual(a_hubs[2].field_a1_int, 3000)
+        upload_registry = HubAFileUploadRegistryRepository({}).std_queryset().last()
+        log_file = upload_registry.log_file
+        self.assertTrue(log_file)
 
     def test_view_post_field_map_exception(self):
         me_factories.SatA1FieldMapStaticSatelliteFactory(
@@ -358,9 +362,6 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
         )
 
         self.assertEqual(len(a_hubs), 0)
-        upload_registry = HubAFileUploadRegistryRepository({}).std_queryset().last()
-        log_file = upload_registry.log_file
-        self.assertTrue(log_file)
 
     def test_view_post_db_creator_exception(self):
         me_factories.SatA1FieldMapStaticSatelliteFactory(
