@@ -1,4 +1,3 @@
-import os
 from django.core.management.base import BaseCommand
 from jinja2 import Environment, FileSystemLoader
 from code_generation import CODE_TEMPLATE_DIR
