@@ -6,6 +6,7 @@ from file_upload.views import (
     MontrekUploadFileView,
     FileUploadRegistryView,
     MontrekDownloadFileView,
+    MontrekDownloadLogFileView,
 )
 from baseclasses.pages import MontrekPage
 from file_upload.tests.factories.file_upload_factories import (
@@ -92,14 +93,26 @@ class TestMontrekDownloadFileView(MontrekFileResponseTestCase):
     is_redirected = True
 
     def build_factories(self):
-        self.test_file = SimpleUploadedFile(
-            name="test_file.txt",
-            content="test".encode("utf-8"),
-            content_type="text/plain",
-        )
-        upload_file = FileUploadFileStaticSatelliteFactory.create(file=self.test_file)
         self.registrysat = FileUploadRegistryStaticSatelliteFactory.create(
-            file_upload_file=upload_file.hub_entity
+            generate_file_upload_file=True
+        )
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.registrysat.hub_entity.pk}
+
+    def test_return_file(self):
+        content = b"".join(self.response.streaming_content)
+        self.assertEqual(content, b"test")
+
+
+class TestMontrekDownloadLogFileView(MontrekFileResponseTestCase):
+    view_class = MontrekDownloadLogFileView
+    viewname = "montrek_download_log_file"
+    is_redirected = True
+
+    def build_factories(self):
+        self.registrysat = FileUploadRegistryStaticSatelliteFactory.create(
+            generate_file_log_file=True
         )
 
     def url_kwargs(self) -> dict:

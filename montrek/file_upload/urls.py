@@ -8,6 +8,11 @@ urlpatterns = [
         name="montrek_download_file",
     ),
     path(
+        "<int:pk>/download/log",
+        views.MontrekDownloadLogFileView.as_view(),
+        name="montrek_download_log_file",
+    ),
+    path(
         "",
         views.FileUploadRegistryView.as_view(),
         name="montrek_upload_file",

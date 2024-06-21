@@ -407,6 +407,26 @@ class TestMontrekA1RepositoryDownloadView(MontrekFileResponseTestCase):
         self.assertEqual(content, b"test")
 
 
+class TestMontrekA1RepositoryDownloadLogView(MontrekFileResponseTestCase):
+    viewname = "a1_download_log_file"
+    view_class = me_views.MontrekExampleA1DownloadFileView
+    is_redirected = True
+
+    def build_factories(self):
+        self.reg_factory = (
+            me_factories.HubAFileUploadRegistryStaticSatelliteFactory.create(
+                generate_file_log_file=True
+            )
+        )
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.reg_factory.hub_entity.pk}
+
+    def test_return_file(self):
+        content = b"".join(self.response.streaming_content)
+        self.assertEqual(content, b"test")
+
+
 class TestMontrekExampleA1UploadView(MontrekListViewTestCase):
     viewname = "a1_view_uploads"
     view_class = me_views.MontrekExampleA1UploadView

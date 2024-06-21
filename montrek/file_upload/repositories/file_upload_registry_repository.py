@@ -1,6 +1,7 @@
 import os
 from typing import TextIO
 from django.contrib import messages
+from django.core.files import File
 from montrek.settings import MEDIA_ROOT
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from file_upload.models import FileUploadRegistryHubABC
@@ -10,6 +11,7 @@ from file_upload.models import (
     FileUploadRegistryHub,
     FileUploadRegistryStaticSatellite,
     LinkFileUploadRegistryFileUploadFile,
+    LinkFileUploadRegistryFileLogFile,
 )
 
 
@@ -71,17 +73,29 @@ class FileUploadRegistryRepositoryABC(MontrekRepository):
                 "FileUploadRegistryRepository class must have link_file_upload_registry_file_upload_file that is not NotImplementedLinkFileUploadRegistryFileUploadFile"
             )
 
-    def get_file_from_registry(self, file_upload_registry_id: int, request) -> TextIO:
+    def get_upload_file_from_registry(
+        self, file_upload_registry_id: int, request
+    ) -> File | None:
         file_upload_registry_path = (
             self.std_queryset().get(pk=file_upload_registry_id).file
         )
-        file_upload_registry_path = os.path.join(MEDIA_ROOT, file_upload_registry_path)
-        if not os.path.exists(file_upload_registry_path):
-            messages.error(request, f"File {file_upload_registry_path} not found")
-            return None
+        return self._get_file_from_registry(file_upload_registry_path, request)
 
-        uploaded_file = open(file_upload_registry_path, "rb")
-        return uploaded_file
+    def get_log_file_from_registry(
+        self, file_log_registry_id: int, request
+    ) -> File | None:
+        file_log_registry_path = (
+            self.std_queryset().get(pk=file_log_registry_id).log_file
+        )
+
+        return self._get_file_from_registry(file_log_registry_path, request)
+
+    def _get_file_from_registry(self, file_registry_path: str, request) -> File | None:
+        file_registry_path = os.path.join(MEDIA_ROOT, file_registry_path)
+        if not os.path.exists(file_registry_path):
+            messages.error(request, f"File {file_registry_path} not found")
+            return None
+        return open(file_registry_path, "rb")
 
 
 class FileUploadRegistryRepository(FileUploadRegistryRepositoryABC):
@@ -90,3 +104,4 @@ class FileUploadRegistryRepository(FileUploadRegistryRepositoryABC):
     link_file_upload_registry_file_upload_file_class = (
         LinkFileUploadRegistryFileUploadFile
     )
+    link_file_upload_registry_file_log_file_class = LinkFileUploadRegistryFileLogFile

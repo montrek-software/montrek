@@ -38,6 +38,21 @@ class FileUploadRegistryStaticSatelliteFactory(factory.django.DjangoModelFactory
                 upload_file.hub_entity
             )
 
+    @factory.post_generation
+    def generate_file_log_file(self, create, extracted, **kwargs):
+        if not create:
+            return
+        if extracted:
+            self.test_file = SimpleUploadedFile(
+                name="test_file.txt",
+                content="test".encode("utf-8"),
+                content_type="text/plain",
+            )
+            log_file = FileUploadFileStaticSatelliteFactory.create(file=self.test_file)
+            self.hub_entity.link_file_upload_registry_file_log_file.add(
+                log_file.hub_entity
+            )
+
 
 class FileUploadFileHubFactory(factory.django.DjangoModelFactory):
     class Meta:
