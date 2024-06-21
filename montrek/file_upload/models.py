@@ -61,9 +61,23 @@ class FileUploadRegistryHub(FileUploadRegistryHubABC):
         related_name="link_file_upload_file_file_upload_registry",
         through="LinkFileUploadRegistryFileUploadFile",
     )
+    link_file_upload_registry_log_excel_file = models.ManyToManyField(
+        "file_upload.FileUploadFileHub",
+        related_name="link_log_excel_file_file_upload_registry",
+        through="LinkFileUploadRegistryLogExcelFile",
+    )
 
 
 class LinkFileUploadRegistryFileUploadFile(baseclass_models.MontrekOneToOneLinkABC):
+    hub_in = models.ForeignKey(
+        "file_upload.FileUploadRegistryHub", on_delete=models.CASCADE
+    )
+    hub_out = models.ForeignKey(
+        "file_upload.FileUploadFileHub", on_delete=models.CASCADE
+    )
+
+
+class LinkFileUploadRegistryLogExcelFile(baseclass_models.MontrekOneToOneLinkABC):
     hub_in = models.ForeignKey(
         "file_upload.FileUploadRegistryHub", on_delete=models.CASCADE
     )
