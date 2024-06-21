@@ -1,6 +1,6 @@
 from baseclasses.models import MontrekHubABC
 
 
-class {{ class_name }}(MontrekHubABC):
+class {{ prefix | capitalize ~ 'Hub' }}(MontrekHubABC):
     pass
 
