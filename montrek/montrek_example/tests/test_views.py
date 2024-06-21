@@ -13,7 +13,10 @@ from testing.test_cases.view_test_cases import (
 )
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 from montrek_example.tests.factories import montrek_example_factories as me_factories
-from montrek_example.repositories.hub_a_repository import HubARepository
+from montrek_example.repositories.hub_a_repository import (
+    HubAFileUploadRegistryRepository,
+    HubARepository,
+)
 from baseclasses.utils import montrek_time
 
 
@@ -355,6 +358,9 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
         )
 
         self.assertEqual(len(a_hubs), 0)
+        upload_registry = HubAFileUploadRegistryRepository({}).std_queryset().last()
+        log_file = upload_registry.log_file
+        self.assertTrue(log_file)
 
     def test_view_post_db_creator_exception(self):
         me_factories.SatA1FieldMapStaticSatelliteFactory(

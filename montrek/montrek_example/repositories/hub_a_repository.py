@@ -72,3 +72,6 @@ class HubAFileUploadRegistryRepository(FileUploadRegistryRepositoryABC):
     link_file_upload_registry_file_upload_file_class = (
         me_models.LinkHubAFileUploadRegistryFileUploadFile
     )
+    link_file_upload_registry_file_log_file_class = (
+        me_models.LinkHubAFileUploadRegistryFileLogFile
+    )

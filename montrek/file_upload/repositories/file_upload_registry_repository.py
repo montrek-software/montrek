@@ -13,7 +13,7 @@ from file_upload.models import (
 )
 
 
-class NotImplementedLinkFileUploadRegistryFileUploadFile:
+class NotImplementedLinkFileUploadRegistryFile:
     pass
 
 
@@ -21,7 +21,10 @@ class FileUploadRegistryRepositoryABC(MontrekRepository):
     hub_class = FileUploadRegistryHubABC
     static_satellite_class = FileUploadRegistryStaticSatelliteABC
     link_file_upload_registry_file_upload_file_class = (
-        NotImplementedLinkFileUploadRegistryFileUploadFile
+        NotImplementedLinkFileUploadRegistryFile
+    )
+    link_file_upload_registry_file_log_file_class = (
+        NotImplementedLinkFileUploadRegistryFile
     )
 
     def __init__(self, session_data={}):
@@ -33,6 +36,16 @@ class FileUploadRegistryRepositoryABC(MontrekRepository):
             self.static_satellite_class,
             ["file_name", "file_type", "upload_status", "upload_message"],
         )
+        if (
+            self.link_file_upload_registry_file_log_file_class
+            is not NotImplementedLinkFileUploadRegistryFile
+        ):
+            self.add_linked_satellites_field_annotations(
+                FileUploadFileStaticSatellite,
+                self.link_file_upload_registry_file_log_file_class,
+                ["file"],
+            )
+            self.rename_field("file", "log_file")
         self.add_linked_satellites_field_annotations(
             FileUploadFileStaticSatellite,
             self.link_file_upload_registry_file_upload_file_class,
@@ -52,7 +65,7 @@ class FileUploadRegistryRepositoryABC(MontrekRepository):
             )
         if (
             self.link_file_upload_registry_file_upload_file_class
-            is NotImplementedLinkFileUploadRegistryFileUploadFile
+            is NotImplementedLinkFileUploadRegistryFile
         ):
             raise NotImplementedError(
                 "FileUploadRegistryRepository class must have link_file_upload_registry_file_upload_file that is not NotImplementedLinkFileUploadRegistryFileUploadFile"
