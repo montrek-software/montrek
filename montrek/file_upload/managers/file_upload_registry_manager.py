@@ -20,7 +20,7 @@ class FileUploadRegistryManagerABC(MontrekTableManager):
             StringTableElement(name="File Name", attr="file_name"),
             StringTableElement(name="Upload Status", attr="upload_status"),
             StringTableElement(name="Upload Message", attr="upload_message"),
-            DateTableElement(name="Upload Date", attr="created_at"),
+            DateTableElement(name="Upload Date", attr="static_satellite_created_at"),
             StringTableElement(name="Uploaded By", attr="created_by"),
             LinkTableElement(
                 name="File",
