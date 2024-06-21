@@ -29,14 +29,12 @@ class TestFileUploadRegistryRepository(TestCase):
             content="test".encode("utf-8"),
             content_type="text/plain",
         )
-        self.file_registry_sat_factory = FileUploadRegistryStaticSatelliteFactory(
+        self.registry_sat = FileUploadRegistryStaticSatelliteFactory(
             file_name=self.test_file.name
         )
-        self.file_file_sat_factory = FileUploadFileStaticSatelliteFactory(
-            file=self.test_file
-        )
-        self.file_registry_sat_factory.hub_entity.link_file_upload_registry_file_upload_file.add(
-            self.file_file_sat_factory.hub_entity
+        self.file_sat = FileUploadFileStaticSatelliteFactory(file=self.test_file)
+        self.registry_sat.hub_entity.link_file_upload_registry_file_upload_file.add(
+            self.file_sat.hub_entity
         )
         self.request = RequestFactory().get("/fake/")
         session_middleware = SessionMiddleware(lambda request: None)
@@ -51,7 +49,7 @@ class TestFileUploadRegistryRepository(TestCase):
         test_file = repository.get_file_from_registry(
             file_upload_registry.id, self.request
         )
-        expected_file = self.file_file_sat_factory.file
+        expected_file = self.file_sat.file
         self.assertEqual(test_file.read(), expected_file.read())
 
     def test_std_queryset_upload_date(self):
@@ -59,15 +57,14 @@ class TestFileUploadRegistryRepository(TestCase):
         queryset = repository.std_queryset()
         first_upload_date = queryset.first().upload_date
 
-        assert first_upload_date == self.file_file_sat_factory.created_at
+        assert first_upload_date == self.file_sat.created_at
+        assert queryset.count() == 1
 
-        second_file_file_sat_factory = FileUploadFileStaticSatelliteFactory(
-            file=self.test_file
-        )
+        second_file_sat = FileUploadFileStaticSatelliteFactory(file=self.test_file)
         repository.std_create_object(
             {
-                "hub_entity_id": self.file_registry_sat_factory.hub_entity.id,
-                "link_file_upload_registry_file_upload_file": second_file_file_sat_factory.hub_entity,
+                "hub_entity_id": self.registry_sat.hub_entity.id,
+                "link_file_upload_registry_file_upload_file": second_file_sat.hub_entity,
             }
         )
 
@@ -75,7 +72,8 @@ class TestFileUploadRegistryRepository(TestCase):
         second_upload_date = queryset.first().upload_date
 
         assert second_upload_date > first_upload_date
-        assert second_upload_date == second_file_file_sat_factory.created_at
+        assert second_upload_date == second_file_sat.created_at
+        assert queryset.count() == 1
 
 
 class TestFileUploadRegistryRepositorySetUp(TestCase):
