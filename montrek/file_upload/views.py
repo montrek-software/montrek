@@ -76,6 +76,7 @@ class MontrekDownloadFileBaseView(MontrekTemplateView):
             self.kwargs["pk"], self.request
         )
         if upload_file is None:
+            messages.info(request, "No download file available!")
             return redirect(request.META.get("HTTP_REFERER"))
         return FileResponse(upload_file, as_attachment=True)
 
