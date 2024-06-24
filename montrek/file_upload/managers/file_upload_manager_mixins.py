@@ -46,6 +46,9 @@ class LogFileMixin(LogFileChecksMixin):
         with pd.ExcelWriter(buffer, engine="openpyxl") as excel_writer:
             log_sr.to_excel(excel_writer, sheet_name="meta_data")
             if isinstance(additional_data, pd.DataFrame):
+                for dtype in additional_data.dtypes:
+                    if dtype == "object":
+                        additional_data = additional_data.astype(str)
                 additional_data.to_excel(
                     excel_writer, sheet_name="additional_data", index=False
                 )
