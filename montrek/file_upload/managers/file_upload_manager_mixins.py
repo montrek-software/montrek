@@ -1,10 +1,11 @@
+import datetime
 from django.core.files import File
-from django.utils import timezone
 import pandas as pd
 from io import BytesIO
 from file_upload.repositories.file_upload_file_repository import (
     FileUploadFileRepository,
 )
+from user.repositories.user_repository import MontrekUserRepository
 
 
 class LogFileChecksMixin:
@@ -31,13 +32,17 @@ class LogFileMixin(LogFileChecksMixin):
         self, message: str, additional_data: pd.DataFrame | None
     ) -> File:
         file_name = "upload_log.xlsx"
+        user_mail = (
+            MontrekUserRepository()
+            .std_queryset()
+            .get(id=self.session_data["user_id"])
+            .email
+        )
         log_sr = pd.Series(
             {
                 "Upload Message": message,
-                "Upload Date": self.file_upload_registry_hub.created_at.strftime(
-                    "%Y-%m-%d %H:%M:%S"
-                ),
-                "Uploaded By": self.file_upload_registry_hub.created_by,
+                "Upload Date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "Uploaded By": user_mail,
             },
             name="Log Meta Data",
         )
