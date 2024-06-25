@@ -63,6 +63,9 @@ class FieldMapFileUploadProcessor:
                 f"Error raised during object creation: <br>{e.__class__.__name__}: {e}"
             )
             return False
+        for message in self.manager.repository.messages:
+            self.detailed_message += f"<br>{message.message}<br>"
+
         self.message = (
             f"Successfully uploaded {mapped_df.shape[0]} rows.{self.detailed_message}"
         )
