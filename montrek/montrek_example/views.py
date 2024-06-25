@@ -14,6 +14,7 @@ from file_upload.views import (
     MontrekFieldMapListView,
     MontrekUploadFileView,
     MontrekDownloadFileView,
+    MontrekDownloadLogFileView,
 )
 from montrek_example.managers.a2_api_upload_manager import A2ApiUploadManager
 from montrek_example.managers.a1_file_upload_manager import (
@@ -290,6 +291,12 @@ def do_a2_upload(request):
 
 
 class MontrekExampleA1DownloadFileView(MontrekDownloadFileView):
+    manager_class = HubAFileUploadRegistryManager
+    page_class = pages.MontrekExampleAAppPage
+    title = "Download A1 File"
+
+
+class MontrekExampleA1DownloadLogFileView(MontrekDownloadLogFileView):
     manager_class = HubAFileUploadRegistryManager
     page_class = pages.MontrekExampleAAppPage
     title = "Download A1 File"

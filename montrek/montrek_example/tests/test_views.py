@@ -13,7 +13,10 @@ from testing.test_cases.view_test_cases import (
 )
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 from montrek_example.tests.factories import montrek_example_factories as me_factories
-from montrek_example.repositories.hub_a_repository import HubARepository
+from montrek_example.repositories.hub_a_repository import (
+    HubAFileUploadRegistryRepository,
+    HubARepository,
+)
 from baseclasses.utils import montrek_time
 
 
@@ -294,7 +297,8 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
         me_factories.SatA1FieldMapStaticSatelliteFactory(
             source_field="source_field_1",
             database_field="field_a1_int",
-            function_name="multiply_by_1000",
+            function_name="multiply_by_value",
+            function_parameters={"value": 1000},
         )
 
         with open(self.test_file_path, "rb") as f:
@@ -321,6 +325,9 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
         self.assertEqual(a_hubs[0].field_a1_int, 1000)
         self.assertEqual(a_hubs[1].field_a1_int, 2000)
         self.assertEqual(a_hubs[2].field_a1_int, 3000)
+        upload_registry = HubAFileUploadRegistryRepository({}).std_queryset().last()
+        log_file = upload_registry.log_file
+        self.assertTrue(log_file)
 
     def test_view_post_field_map_exception(self):
         me_factories.SatA1FieldMapStaticSatelliteFactory(
@@ -400,6 +407,26 @@ class TestMontrekA1RepositoryDownloadView(MontrekFileResponseTestCase):
         self.assertEqual(content, b"test")
 
 
+class TestMontrekA1RepositoryDownloadLogView(MontrekFileResponseTestCase):
+    viewname = "a1_download_log_file"
+    view_class = me_views.MontrekExampleA1DownloadFileView
+    is_redirected = True
+
+    def build_factories(self):
+        self.reg_factory = (
+            me_factories.HubAFileUploadRegistryStaticSatelliteFactory.create(
+                generate_file_log_file=True
+            )
+        )
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.reg_factory.hub_entity.pk}
+
+    def test_return_file(self):
+        content = b"".join(self.response.streaming_content)
+        self.assertEqual(content, b"test")
+
+
 class TestMontrekExampleA1UploadView(MontrekListViewTestCase):
     viewname = "a1_view_uploads"
     view_class = me_views.MontrekExampleA1UploadView
@@ -442,7 +469,6 @@ class TestMontrekExampleA1FieldMapCreateView(MontrekCreateViewTestCase):
             form.fields["function_name"].choices,
             [
                 ("append_source_field_1", "append_source_field_1"),
-                ("multiply_by_1000", "multiply_by_1000"),
                 ("multiply_by_value", "multiply_by_value"),
                 ("no_change", "no_change"),
             ],

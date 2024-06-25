@@ -20,10 +20,6 @@ class A1FieldMapFunctionManager(FieldMapFunctionManager):
             str
         )
 
-    @staticmethod
-    def multiply_by_1000(source_df: pd.DataFrame, source_field: str) -> pd.Series:
-        return source_df[source_field] * 1000
-
 
 class A1FieldMapManager(FieldMapManagerABC):
     field_map_function_manager_class = A1FieldMapFunctionManager

@@ -95,6 +95,11 @@ urlpatterns = [
         name="a1_download_file",
     ),
     path(
+        "a1_download_file/<int:pk>/log",
+        views.MontrekExampleA1DownloadLogFileView.as_view(),
+        name="a1_download_log_file",
+    ),
+    path(
         "hub_a_view_api_uploads",
         views.MontrekExampleHubAApiUploadView.as_view(),
         name="hub_a_view_api_uploads",

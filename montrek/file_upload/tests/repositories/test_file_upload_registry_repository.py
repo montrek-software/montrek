@@ -43,10 +43,10 @@ class TestFileUploadRegistryRepository(TestCase):
         message_middleware = MessageMiddleware(lambda request: None)
         message_middleware.process_request(self.request)
 
-    def test_get_file_from_registry(self):
+    def test_get_upload_file_from_registry(self):
         repository = MockFileUploadRegistryRepository(self.session_data)
         file_upload_registry = repository.std_queryset().first()
-        test_file = repository.get_file_from_registry(
+        test_file = repository.get_upload_file_from_registry(
             file_upload_registry.id, self.request
         )
         expected_file = self.file_sat.file

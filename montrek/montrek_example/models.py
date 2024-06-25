@@ -148,6 +148,11 @@ class HubAFileUploadRegistryHub(FileUploadRegistryHubABC):
         related_name="link_file_upload_file_hub_a_file_upload_registry",
         through="LinkHubAFileUploadRegistryFileUploadFile",
     )
+    link_file_upload_registry_file_log_file = models.ManyToManyField(
+        "file_upload.FileUploadFileHub",
+        related_name="link_file_log_file_hub_a_file_upload_registry",
+        through="LinkHubAFileUploadRegistryFileLogFile",
+    )
 
 
 class LinkHubAFileUploadRegistryFileUploadFile(MontrekOneToOneLinkABC):
@@ -159,9 +164,17 @@ class LinkHubAFileUploadRegistryFileUploadFile(MontrekOneToOneLinkABC):
     )
 
 
+class LinkHubAFileUploadRegistryFileLogFile(MontrekOneToOneLinkABC):
+    hub_in = models.ForeignKey(
+        "montrek_example.HubAFileUploadRegistryHub", on_delete=models.CASCADE
+    )
+    hub_out = models.ForeignKey(
+        "file_upload.FileUploadFileHub", on_delete=models.CASCADE
+    )
+
+
 class HubAFileUploadRegistryStaticSatellite(FileUploadRegistryStaticSatelliteABC):
     hub_entity = models.ForeignKey(HubAFileUploadRegistryHub, on_delete=models.CASCADE)
-
 
 
 class HubAApiUploadRegistryHub(ApiUploadRegistryHubABC):
@@ -176,10 +189,10 @@ class LinkHubAApiUploadRegistry(MontrekManyToManyLinkABC):
     hub_in = models.ForeignKey(HubA, on_delete=models.CASCADE)
     hub_out = models.ForeignKey(HubAApiUploadRegistryHub, on_delete=models.CASCADE)
 
+
 class SatA1FieldMapHub(FieldMapHubABC):
     pass
 
 
 class SatA1FieldMapStaticSatellite(FieldMapStaticSatelliteABC):
     hub_entity = models.ForeignKey(SatA1FieldMapHub, on_delete=models.CASCADE)
-

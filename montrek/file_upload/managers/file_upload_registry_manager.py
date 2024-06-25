@@ -13,10 +13,11 @@ from reporting.dataclasses.table_elements import (
 class FileUploadRegistryManagerABC(MontrekTableManager):
     repository_class = FileUploadRegistryRepositoryABC
     download_url = "please define download_url in subclass"
+    download_log_url = ""
 
     @property
     def table_elements(self) -> tuple:
-        return (
+        table_elements = [
             StringTableElement(name="File Name", attr="file_name"),
             StringTableElement(name="Upload Status", attr="upload_status"),
             StringTableElement(name="Upload Message", attr="upload_message"),
@@ -29,7 +30,18 @@ class FileUploadRegistryManagerABC(MontrekTableManager):
                 icon="download",
                 hover_text="Download",
             ),
-        )
+        ]
+        if self.download_log_url != "":
+            table_elements.append(
+                LinkTableElement(
+                    name="Log",
+                    url=self.download_log_url,
+                    kwargs={"pk": "id"},
+                    icon="download",
+                    hover_text="Download Log",
+                )
+            )
+        return tuple(table_elements)
 
 
 class FileUploadRegistryManager(FileUploadRegistryManagerABC):
