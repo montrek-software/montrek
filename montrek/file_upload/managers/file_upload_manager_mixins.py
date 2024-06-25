@@ -1,5 +1,6 @@
 import datetime
 from django.core.files import File
+from django.utils import timezone
 import pandas as pd
 from io import BytesIO
 from file_upload.repositories.file_upload_file_repository import (
@@ -69,5 +70,12 @@ class LogFileMixin(LogFileChecksMixin):
         )
         # TDOO: This is not nice and should be handeled by a repository. But only the hubt is passed to the Processor.
         #  A refactor that would allow the processor to pass the repository would be nice.
-        registry_log_file_link.all().delete()
+        now = timezone.make_aware(datetime.datetime.now())
+        existing_log_file = registry_log_file_link.filter(
+            state_date_end__gt=now, state_date_start__lt=now
+        )
+        if existing_log_file.exists():
+            existing_log_file.update(state_date_end=now)
+        file_log_hub.state_date_start = now
+        file_log_hub.save()
         registry_log_file_link.add(file_log_hub)

@@ -37,6 +37,11 @@ class TestExcelLogFileMixin(TestCase):
     def setUp(self):
         self.user = MontrekUserFactory()
         self.client.force_login(self.user)
+        self.processor = MockDataProcessor()
+        self.now_timestamp = timezone.now()
+        self.processor.session_data = {"user_id": self.user.id}
+        self.processor.file_upload_registry_hub.created_by = self.user
+        self.processor.file_upload_registry_hub.created_at = self.now_timestamp
 
     def test_log_excel_file__no_registry(self):
         with self.assertRaises(AttributeError) as e:
@@ -55,16 +60,9 @@ class TestExcelLogFileMixin(TestCase):
         )
 
     def test_log_excel_file__generate_file(self):
-        processor = MockDataProcessor()
-        now_timestamp = timezone.now()
-        processor.session_data = {"user_id": self.user.id}
-        processor.file_upload_registry_hub.created_by = self.user
-        processor.file_upload_registry_hub.created_at = now_timestamp
         test_message = "Some message"
-        processor.generate_log_file_excel(test_message)
-        file_links = (
-            processor.file_upload_registry_hub.link_file_upload_registry_file_log_file
-        )
+        self.processor.generate_log_file_excel(test_message)
+        file_links = self.processor.file_upload_registry_hub.link_file_upload_registry_file_log_file
         self.assertEqual(
             file_links.count(),
             1,
@@ -78,7 +76,7 @@ class TestExcelLogFileMixin(TestCase):
         expected_df = pd.DataFrame(
             {
                 "Upload Message": [test_message],
-                "Upload Date": [now_timestamp.strftime("%Y-%m-%d %H:%M:%S")],
+                "Upload Date": [self.now_timestamp.strftime("%Y-%m-%d %H:%M:%S")],
                 "Uploaded By": [self.user.email],
             },
             index=["Log Meta Data"],
@@ -87,19 +85,12 @@ class TestExcelLogFileMixin(TestCase):
         pd.testing.assert_frame_equal(test_data_frame, expected_df, check_dtype=False)
 
     def test_log_excel_file__additional_data(self):
-        processor = MockDataProcessor()
-        now_timestamp = timezone.now()
-        processor.session_data = {"user_id": self.user.id}
-        processor.file_upload_registry_hub.created_by = self.user
-        processor.file_upload_registry_hub.created_at = now_timestamp
         test_message = "Test with additional data sheet"
         test_additional_data = pd.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
-        processor.generate_log_file_excel(
+        self.processor.generate_log_file_excel(
             test_message, additional_data=test_additional_data
         )
-        file_links = (
-            processor.file_upload_registry_hub.link_file_upload_registry_file_log_file
-        )
+        file_links = self.processor.file_upload_registry_hub.link_file_upload_registry_file_log_file
         self.assertEqual(
             file_links.count(),
             1,
@@ -113,7 +104,7 @@ class TestExcelLogFileMixin(TestCase):
         expected_df = pd.DataFrame(
             {
                 "Upload Message": [test_message],
-                "Upload Date": [now_timestamp.strftime("%Y-%m-%d %H:%M:%S")],
+                "Upload Date": [self.now_timestamp.strftime("%Y-%m-%d %H:%M:%S")],
                 "Uploaded By": [self.user.email],
             },
             index=["Log Meta Data"],
@@ -124,3 +115,24 @@ class TestExcelLogFileMixin(TestCase):
         pd.testing.assert_frame_equal(
             test_additional_data, result_additional_data, check_dtype=False
         )
+
+    def test_muktiple_log_files(self):
+        test_message = "Some message"
+        self.processor.generate_log_file_excel(test_message)
+        test_message_2 = "Another message"
+        self.processor.generate_log_file_excel(test_message_2)
+        file_links = self.processor.file_upload_registry_hub.link_file_upload_registry_file_log_file
+        self.assertEqual(
+            file_links.count(),
+            2,
+        )
+        log_file_hub = file_links.last()
+        excel_file = FileUploadFileStaticSatellite.objects.get(
+            hub_entity=log_file_hub
+        ).file
+        result_df = pd.read_excel(excel_file)
+        self.assertEqual(
+            result_df.set_index("Param").loc["Upload Message"].iloc[0], test_message_2
+        )
+        first_log_file = file_links.first()
+        self.assertEqual(first_log_file.state_date_end, log_file_hub.state_date_start)
