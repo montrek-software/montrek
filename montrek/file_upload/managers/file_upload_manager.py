@@ -17,11 +17,14 @@ from baseclasses.managers.montrek_manager import MontrekManager
 class FileUploadProcessorProtocol(Protocol):
     message: str
 
-    def pre_check(self, file_path: str) -> bool: ...
+    def pre_check(self, file_path: str) -> bool:
+        ...
 
-    def process(self, file_path: str) -> bool: ...
+    def process(self, file_path: str) -> bool:
+        ...
 
-    def post_check(self, file_path: str) -> bool: ...
+    def post_check(self, file_path: str) -> bool:
+        ...
 
 
 class NotDefinedFileUploadProcessor:
@@ -47,9 +50,9 @@ class NotDefinedFileUploadProcessor:
 
 class FileUploadManagerABC(MontrekManager):
     repository_class = FileUploadFileRepository
-    file_upload_processor_class: type[FileUploadProcessorProtocol] = (
-        NotDefinedFileUploadProcessor
-    )
+    file_upload_processor_class: type[
+        FileUploadProcessorProtocol
+    ] = NotDefinedFileUploadProcessor
     file_registry_manager_class = FileUploadRegistryManager
 
     def __init__(

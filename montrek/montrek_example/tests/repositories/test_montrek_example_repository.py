@@ -392,6 +392,21 @@ class TestMontrekCreateObject(TestCase):
             ValueError, repository.create_objects_from_data_frame, data_frame
         )
 
+    def test_create_objects_from_data_frame_duplicate_drop(self):
+        # If rows in the data frame are duplicates, they should be dropped.
+        repository = HubARepository(session_data={"user_id": self.user.id})
+        data_frame = pd.DataFrame(
+            {
+                "field_a1_int": [5, 6, 5],
+                "field_a1_str": ["test", "test2", "test"],
+                "field_a2_float": [6.0, 7.0, 6.0],
+                "field_a2_str": ["test4", "test3", "test4"],
+            }
+        )
+        repository.create_objects_from_data_frame(data_frame)
+        test_query = repository.std_queryset()
+        self.assertEqual(test_query.count(), 2)
+
     def test_create_objects_from_data_frame_missing_primary_satellite_identifier_column(
         self,
     ):
