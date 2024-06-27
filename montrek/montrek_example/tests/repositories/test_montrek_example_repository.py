@@ -871,6 +871,22 @@ class TestMontrekManyToManyRelations(TestCase):
         self.assertEqual(links[0], self.satd1.hub_entity)
         self.assertEqual(links[1], self.satd2.hub_entity)
 
+    def test_add_new_many_to_many_relation_via_data_frame(self):
+        input_df = pd.DataFrame(
+            {
+                "field_b1_str": ["Hallo"],
+                "field_b1_date": [montrek_time(2024, 3, 26)],
+                "link_hub_b_hub_d": [[self.satd1.hub_entity, self.satd2.hub_entity]],
+            }
+        )
+        repository_b = HubBRepository(session_data={"user_id": self.user.id})
+        repository_b.create_objects_from_data_frame(input_df)
+        new_sat_b = repository_b.std_queryset().last()
+        links = new_sat_b.link_hub_b_hub_d.all()
+        self.assertEqual(links.count(), 2)
+        self.assertEqual(links[0], self.satd1.hub_entity)
+        self.assertEqual(links[1], self.satd2.hub_entity)
+
     def test_update_existing_links(self):
         satd3 = me_factories.SatD1Factory(
             field_d1_str="dritter",
