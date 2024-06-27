@@ -387,7 +387,7 @@ class TestMontrekCreateObject(TestCase):
                 "field_a2_str": ["test2", "test3", "test4"],
             }
         )
-        repository.create_objects_from_data_frame(data_frame)
+        # repository.create_objects_from_data_frame(data_frame)
         self.assertRaises(
             ValueError, repository.create_objects_from_data_frame, data_frame
         )

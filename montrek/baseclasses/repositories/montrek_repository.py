@@ -324,4 +324,5 @@ class MontrekRepository:
                 f"{no_of_duplicated_entries} duplicated entries not uploaded!"
             )
         )
-        return data_frame.loc[~(data_frame.index.isin(duplicated_data_frame.index))]
+
+        return data_frame.loc[~(duplicated_data_frame)]
