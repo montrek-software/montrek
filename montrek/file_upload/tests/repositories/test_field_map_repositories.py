@@ -18,3 +18,10 @@ class TestFieldMapRepository(TestCase):
         self.assertEqual(queryset.count(), 1)
         self.assertEqual(queryset.first().source_field, field_map_hub.source_field)
         self.assertEqual(queryset.first().database_field, field_map_hub.database_field)
+
+    def test_get_source_field(self):
+        FieldMapStaticSatelliteFactory(
+            source_field="source_field", database_field="database_field"
+        )
+        source_field = self.repository.get_source_field("database_field")
+        self.assertEqual(source_field, "source_field")
