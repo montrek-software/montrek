@@ -1,11 +1,11 @@
 import os
 
 from code_generation.management.base.class_definition_command import (
-    ClassDefinitionCommandBase,
+    CodeGenerationCommandBase,
 )
 
 
-class Command(ClassDefinitionCommandBase):
+class Command(CodeGenerationCommandBase):
     template_file: str = "satellite_models.py.j2"
 
     def get_output_path_in_app(self, prefix: str) -> str:

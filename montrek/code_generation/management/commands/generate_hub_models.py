@@ -1,13 +1,8 @@
-import os
-
 from code_generation.management.base.class_definition_command import (
-    ClassDefinitionCommandBase,
+    CodeGenerationCommandBase,
 )
+from code_generation.config.hub_models_config import HubModelsConfig
 
 
-class Command(ClassDefinitionCommandBase):
-    template_file: str = "hub_models.py.j2"
-
-    def get_output_path_in_app(self, prefix: str) -> str:
-        file_name = f"{prefix}_hub_models.py"
-        return os.path.join("models", file_name)
+class Command(CodeGenerationCommandBase):
+    config_class = HubModelsConfig

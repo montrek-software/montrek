@@ -1,0 +1,11 @@
+from reporting.dataclasses import table_elements as te
+from reporting.managers.montrek_table_manager import MontrekTableManager
+{{ repository_import }}
+
+class {{ table_manager_class_name }}(MontrekTableManager):
+    repository_class = {{ repository_class_name }}
+
+    @property
+    def table_elements(self):
+        return ()
+

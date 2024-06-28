@@ -1,8 +1,8 @@
 from code_generation.management.base.class_definition_command import (
     CodeGenerationCommandBase,
 )
-from code_generation.config.repositories_config import RepositoriesConfig
+from code_generation.config.managers_config import ManagersConfig
 
 
 class Command(CodeGenerationCommandBase):
-    config_class = RepositoriesConfig
+    config_class = ManagersConfig
