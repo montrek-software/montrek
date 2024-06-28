@@ -9,7 +9,6 @@ from file_upload.tests.factories.file_upload_factories import (
 )
 from file_upload.models import FileUploadFileStaticSatellite
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
-import freezegun
 
 
 class MockUploadRegistryHub:
@@ -122,17 +121,26 @@ class TestExcelLogFileMixin(TestCase):
         test_message_2 = "Another message"
         self.processor.generate_log_file_excel(test_message_2)
         file_links = self.processor.file_upload_registry_hub.link_file_upload_registry_file_log_file
+        # One file is linked
         self.assertEqual(
             file_links.count(),
-            2,
+            1,
         )
         log_file_hub = file_links.last()
-        excel_file = FileUploadFileStaticSatellite.objects.get(
+        # Two files were generated
+        file_sats = FileUploadFileStaticSatellite.objects.filter(
             hub_entity=log_file_hub
-        ).file
+        )
+
+        self.assertEqual(file_sats.all().count(), 2)
+
+        excel_file = file_sats.first().file
+        result_df = pd.read_excel(excel_file)
+        self.assertEqual(
+            result_df.set_index("Param").loc["Upload Message"].iloc[0], test_message
+        )
+        excel_file = file_sats.last().file
         result_df = pd.read_excel(excel_file)
         self.assertEqual(
             result_df.set_index("Param").loc["Upload Message"].iloc[0], test_message_2
         )
-        first_log_file = file_links.first()
-        self.assertEqual(first_log_file.state_date_end, log_file_hub.state_date_start)

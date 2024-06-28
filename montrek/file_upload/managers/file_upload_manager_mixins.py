@@ -1,4 +1,5 @@
 import datetime
+import re
 from django.core.files import File
 from django.utils import timezone
 import pandas as pd
@@ -65,17 +66,28 @@ class LogFileMixin(LogFileChecksMixin):
         registry_log_file_link = (
             self.file_upload_registry_hub.link_file_upload_registry_file_log_file
         )
-        file_log_hub = FileUploadFileRepository(self.session_data).std_create_object(
-            {"file": file}
-        )
-        # TDOO: This is not nice and should be handeled by a repository. But only the hubt is passed to the Processor.
-        #  A refactor that would allow the processor to pass the repository would be nice.
+        create_data = {"file": file}
         now = timezone.make_aware(datetime.datetime.now())
         existing_log_file = registry_log_file_link.filter(
             state_date_end__gt=now, state_date_start__lt=now
         )
         if existing_log_file.exists():
-            existing_log_file.update(state_date_end=now)
-        file_log_hub.state_date_start = now
-        file_log_hub.save()
+            create_data["hub_entity_id"] = existing_log_file.first().pk
+            file.name = LogFileMixin._add_suffix_before_extension(
+                str(file.name), f"_{now}"
+            )
+
+        file_log_hub = FileUploadFileRepository(self.session_data).std_create_object(
+            create_data
+        )
+        # TDOO: This is not nice and should be handeled by a repository. But only the hubt is passed to the Processor.
+        #  A refactor that would allow the processor to pass the repository would be nice.
         registry_log_file_link.add(file_log_hub)
+
+    @staticmethod
+    def _add_suffix_before_extension(filename: str, suffix: str) -> str:
+        # Define the regex pattern to find the last period in the filename
+        pattern = r"(?=\.[^.]+$)"
+        # Substitute the matched pattern with _xxx before the last period
+        new_filename = re.sub(pattern, f"{suffix}", filename)
+        return new_filename
