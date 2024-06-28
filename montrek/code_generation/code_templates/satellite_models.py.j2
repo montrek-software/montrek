@@ -5,5 +5,4 @@ from baseclasses.models import MontrekSatelliteABC
 
 class {{ prefix | capitalize ~ 'Satellite' }}(MontrekSatelliteABC):
     hub_entity = models.ForeignKey({{ prefix | capitalize ~ 'Hub' }}, on_delete=models.CASCADE)
-    ...
-    identifier_fields = [...]
+    identifier_fields = []
