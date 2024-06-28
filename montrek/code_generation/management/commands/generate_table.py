@@ -16,3 +16,4 @@ class Command(StdArgumentsMixin, BaseCommand):
         call_command("generate_managers", app_path, prefix)
         call_command("generate_pages", app_path, prefix)
         call_command("generate_views", app_path, prefix)
+        call_command("generate_urls", app_path, prefix)
