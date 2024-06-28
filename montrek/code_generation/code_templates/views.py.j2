@@ -3,7 +3,7 @@ from baseclasses.views import MontrekListView
 {{ page_cls_import }}
 
 
-class {{ list_view_class_name }}(MontrekListView):
+class {{ list_view_cls_name }}(MontrekListView):
     manager_class = {{ manager_cls_name }}
     page_class = {{ page_cls_name }}
     tab = "{{ list_tab_id }}"

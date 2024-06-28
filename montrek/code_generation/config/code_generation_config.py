@@ -29,7 +29,7 @@ class CodeGenerationConfig:
             "models_init": os.path.join("models", "__init__.py"),
             "repositories": os.path.join("repositories", f"{prefix}_repositories.py"),
             "managers": os.path.join("managers", f"{prefix}_managers.py"),
-            "pages": os.path.join("views", f"{prefix}_pages.py"),
+            "pages": os.path.join("pages", f"{prefix}_pages.py"),
             "urls": os.path.join("urls", f"{prefix}_urls.py"),
             "views": os.path.join("views", f"{prefix}_views.py"),
         }
@@ -47,6 +47,7 @@ class CodeGenerationConfig:
 
         self.context = {
             "hub_cls_import": self._get_import("hub_models", hub_cls_name),
+            "hub_cls_import_rel": f"from .{prefix}_hub_models import {hub_cls_name}",
             "hub_cls_name": hub_cls_name,
             "list_tab_id": f"tab_{prefix}_list",
             "list_tab_name": f"{c_prefix} List",
@@ -63,6 +64,7 @@ class CodeGenerationConfig:
             "repo_cls_import": self._get_import("repositories", repo_cls_name),
             "repo_cls_name": repo_cls_name,
             "sat_cls_import": self._get_import("sat_models", sat_cls_name),
+            "sat_cls_import_rel": f"from .{prefix}_sat_models import {sat_cls_name}",
             "sat_cls_name": sat_cls_name,
         }
 
