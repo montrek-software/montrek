@@ -14,24 +14,28 @@ class CodeGenerationConfig:
 
         self.template_files = {
             "hub_models": "hub_models.py.j2",
-            "sat_models": "sat_models.py.j2",
-            "models_init": "models_init.py.j2",
-            "repositories": "repositories.py.j2",
             "managers": "managers.py.j2",
+            "models_init": "models_init.py.j2",
             "pages": "pages.py.j2",
+            "repositories": "repositories.py.j2",
+            "sat_models": "sat_models.py.j2",
             "urls": "urls.py.j2",
+            "urls_init": "urls_init.py.j2",
             "views": "views.py.j2",
+            "views_init": "views_init.py.j2",
         }
 
         self.output_paths = {
             "hub_models": os.path.join("models", f"{prefix}_hub_models.py"),
-            "sat_models": os.path.join("models", f"{prefix}_sat_models.py"),
-            "models_init": os.path.join("models", "__init__.py"),
-            "repositories": os.path.join("repositories", f"{prefix}_repositories.py"),
             "managers": os.path.join("managers", f"{prefix}_managers.py"),
+            "models_init": os.path.join("models", "__init__.py"),
             "pages": os.path.join("pages", f"{prefix}_pages.py"),
+            "repositories": os.path.join("repositories", f"{prefix}_repositories.py"),
+            "sat_models": os.path.join("models", f"{prefix}_sat_models.py"),
             "urls": os.path.join("urls", f"{prefix}_urls.py"),
+            "urls_init": os.path.join("urls", "__init__.py"),
             "views": os.path.join("views", f"{prefix}_views.py"),
+            "views_init": os.path.join("views", "__init__.py"),
         }
         self.output_paths = {
             k: os.path.join(self.app_path, v) for k, v in self.output_paths.items()
@@ -52,6 +56,7 @@ class CodeGenerationConfig:
             "list_tab_id": f"tab_{prefix}_list",
             "list_tab_name": f"{c_prefix}",
             "list_view_cls_import": self._get_import("views", list_view_cls_name),
+            "list_view_cls_import_rel": f"from .{prefix}_views import {list_view_cls_name}",
             "list_view_cls_name": list_view_cls_name,
             "list_view_title": f"{c_prefix} List",
             "list_view_url": f"{prefix}/list",
@@ -66,6 +71,7 @@ class CodeGenerationConfig:
             "sat_cls_import": self._get_import("sat_models", sat_cls_name),
             "sat_cls_import_rel": f"from .{prefix}_sat_models import {sat_cls_name}",
             "sat_cls_name": sat_cls_name,
+            "urlpatterns_import_rel": f"from .{prefix}_urls import urlpatterns",
         }
 
     def _get_import(self, key: str, class_name: str) -> str:
