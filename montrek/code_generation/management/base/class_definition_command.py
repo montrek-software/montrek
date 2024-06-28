@@ -34,9 +34,16 @@ class ClassDefinitionCommandBase(StdArgumentsMixin, BaseCommand):
         output_path = self.get_output_path(app_path, prefix)
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
+        context = {
+            "hub_class_name": f"{prefix.capitalize()}Hub",
+            "satellite_class_name": f"{prefix.capitalize()}Satellite",
+            "repository_class_name": f"{prefix.capitalize()}Repository",
+            "manager_class_name": f"{prefix.capitalize()}Manager",
+        }
+
         env = Environment(loader=FileSystemLoader(CODE_TEMPLATE_DIR))
         template = env.get_template(self.template_file)
-        rendered_content = template.render(prefix=prefix)
+        rendered_content = template.render(**context)
 
         with open(output_path, "w") as f:
             f.write(rendered_content)

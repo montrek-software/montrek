@@ -3,6 +3,6 @@ from django.db import models
 from baseclasses.models import MontrekSatelliteABC
 
 
-class {{ prefix | capitalize ~ 'Satellite' }}(MontrekSatelliteABC):
-    hub_entity = models.ForeignKey({{ prefix | capitalize ~ 'Hub' }}, on_delete=models.CASCADE)
+class {{ satellite_class_name }}(MontrekSatelliteABC):
+    hub_entity = models.ForeignKey({{ hub_class_name }}, on_delete=models.CASCADE)
     identifier_fields = []
