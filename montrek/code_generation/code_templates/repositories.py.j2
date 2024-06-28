@@ -1,0 +1,7 @@
+from baseclasses.repositories.montrek_repository import MontrekRepository
+
+class {{ repository_class_name }}(MontrekRepository):
+    hub_class = {{ hub_class_name }}
+
+    def std_queryset(self):
+        return self.build_queryset()

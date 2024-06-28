@@ -12,3 +12,4 @@ class Command(StdArgumentsMixin, BaseCommand):
         prefix = kwargs["prefix"]
         call_command("generate_hub_models", app_path, prefix)
         call_command("generate_satellite_models", app_path, prefix)
+        call_command("generate_repositories", app_path, prefix)
