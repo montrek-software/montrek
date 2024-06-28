@@ -312,7 +312,11 @@ class MontrekRepository:
             raise ValueError(error_message)
 
     def _drop_duplicates(self, data_frame: pd.DataFrame) -> pd.DataFrame:
-        no_of_duplicated_entries = data_frame.duplicated().sum()
+        satellite_columns = [
+            c.name for c in self.std_satellite_fields() if c.name in data_frame.columns
+        ]
+        duplicated_data_frame = data_frame.loc[:, satellite_columns].duplicated()
+        no_of_duplicated_entries = duplicated_data_frame.sum()
         if no_of_duplicated_entries == 0:
             return data_frame
         self.messages.append(
@@ -320,4 +324,5 @@ class MontrekRepository:
                 f"{no_of_duplicated_entries} duplicated entries not uploaded!"
             )
         )
-        return data_frame.drop_duplicates()
+
+        return data_frame.loc[~(duplicated_data_frame)]
