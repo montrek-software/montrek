@@ -2,7 +2,7 @@ import os
 from typing import TextIO
 from django.contrib import messages
 from django.core.files import File
-from montrek.settings import MEDIA_ROOT
+from django.conf import settings
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from file_upload.models import FileUploadRegistryHubABC
 from file_upload.models import FileUploadRegistryStaticSatelliteABC
@@ -97,7 +97,7 @@ class FileUploadRegistryRepositoryABC(MontrekRepository):
     ) -> File | None:
         if not file_registry_path:
             return None
-        file_registry_path = os.path.join(MEDIA_ROOT, file_registry_path)
+        file_registry_path = os.path.join(settings.MEDIA_ROOT, file_registry_path)
         if not os.path.exists(file_registry_path):
             messages.error(request, f"File {file_registry_path} not found")
             return None
