@@ -5,12 +5,13 @@ from baseclasses.pages import MontrekPage
 
 class {{ page_cls_name }}(MontrekPage):
     page_title = "{{ page_title }}"
-    def get_tabs(self):
-        list_tab = TabElement(
-            name="{{ list_tab_name }}",
-            link=reverse("{{ list_view_url_name }}"),
-            html_id="{{ list_tab_id }}",
-            active="active",
-        )
-        return (list_tab,)
 
+    def get_tabs(self):
+        return (
+            TabElement(
+                name="{{ list_tab_name }}",
+                link=reverse("{{ list_view_url_name }}"),
+                html_id="{{ list_tab_id }}",
+                active="active",
+            ),
+        )
