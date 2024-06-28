@@ -50,7 +50,7 @@ class CodeGenerationConfig:
             "hub_cls_import_rel": f"from .{prefix}_hub_models import {hub_cls_name}",
             "hub_cls_name": hub_cls_name,
             "list_tab_id": f"tab_{prefix}_list",
-            "list_tab_name": f"{c_prefix} List",
+            "list_tab_name": f"{c_prefix}",
             "list_view_cls_import": self._get_import("views", list_view_cls_name),
             "list_view_cls_name": list_view_cls_name,
             "list_view_title": f"{c_prefix} List",
