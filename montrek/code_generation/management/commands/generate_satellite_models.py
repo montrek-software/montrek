@@ -1,8 +1,7 @@
-from code_generation.management.base.class_definition_command import (
+from code_generation.management.base.code_generation_command import (
     CodeGenerationCommandBase,
 )
-from code_generation.config.satellite_models_config import SatelliteModelsConfig
 
 
 class Command(CodeGenerationCommandBase):
-    config_class = SatelliteModelsConfig
+    key = "sat_models"

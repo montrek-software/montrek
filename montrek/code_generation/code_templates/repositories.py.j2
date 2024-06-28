@@ -1,9 +1,9 @@
 from baseclasses.repositories.montrek_repository import MontrekRepository
-{{ satellite_model_import }}
-{{ hub_model_import }}
+{{ sat_cls_import }}
+{{ hub_cls_import }}
 
 class {{ repository_class_name }}(MontrekRepository):
-    hub_class = {{ hub_class_name }}
+    hub_class = {{ hub_cls_name }}
 
     def std_queryset(self):
         return self.build_queryset()

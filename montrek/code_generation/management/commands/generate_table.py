@@ -1,7 +1,7 @@
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
 
-from code_generation.management.base.class_definition_command import (
+from code_generation.management.base.code_generation_command import (
     StdArgumentsMixin,
 )
 

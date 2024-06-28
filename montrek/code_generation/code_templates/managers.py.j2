@@ -1,9 +1,9 @@
 from reporting.dataclasses import table_elements as te
 from reporting.managers.montrek_table_manager import MontrekTableManager
-{{ repository_import }}
+{{ repo_cls_import }}
 
-class {{ table_manager_class_name }}(MontrekTableManager):
-    repository_class = {{ repository_class_name }}
+class {{ manager_cls_name }}(MontrekTableManager):
+    repository_class = {{ repo_cls_name }}
 
     @property
     def table_elements(self):

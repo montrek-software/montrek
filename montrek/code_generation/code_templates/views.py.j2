@@ -1,11 +1,11 @@
 from baseclasses.views import MontrekListView
-{{ manager_import }}
-{{ page_import }}
+{{ manager_cls_import }}
+{{ page_cls_import }}
 
 
 class {{ list_view_class_name }}(MontrekListView):
-    manager_class = {{ manager_class_name }}
-    page_class = {{ page_class_name }}
+    manager_class = {{ manager_cls_name }}
+    page_class = {{ page_cls_name }}
     tab = "{{ list_tab_id }}"
     title = "{{ list_view_title }}"
 
