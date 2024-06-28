@@ -17,6 +17,11 @@ class StdArgumentsMixin:
             type=str,
             help="Prefix for the class name (e.g. 'Company').",
         )
+        parser.add_argument(
+            "--replace",
+            action="store_true",
+            help="Replace existing files with generated code instead of appending.",
+        )
 
 
 class CodeGenerationCommandBase(StdArgumentsMixin, BaseCommand):
@@ -34,6 +39,9 @@ class CodeGenerationCommandBase(StdArgumentsMixin, BaseCommand):
         rendered_content = template.render(**config.context)
         self.stdout.write(self.style.SUCCESS(msg))
 
-        with open(output_path, "w") as f:
+        # TODO: check why flag is not working
+        mode = "w" if kwargs["replace"] else "a"
+
+        with open(output_path, mode) as f:
             f.write(rendered_content)
             print(rendered_content)

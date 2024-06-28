@@ -15,6 +15,7 @@ class CodeGenerationConfig:
         self.template_files = {
             "hub_models": "hub_models.py.j2",
             "sat_models": "sat_models.py.j2",
+            "models_init": "models_init.py.j2",
             "repositories": "repositories.py.j2",
             "managers": "managers.py.j2",
             "pages": "pages.py.j2",
@@ -25,6 +26,7 @@ class CodeGenerationConfig:
         self.output_paths = {
             "hub_models": os.path.join("models", f"{prefix}_hub_models.py"),
             "sat_models": os.path.join("models", f"{prefix}_sat_models.py"),
+            "models_init": os.path.join("models", "__init__.py"),
             "repositories": os.path.join("repositories", f"{prefix}_repositories.py"),
             "managers": os.path.join("managers", f"{prefix}_managers.py"),
             "pages": os.path.join("views", f"{prefix}_pages.py"),
