@@ -111,6 +111,14 @@ class MontrekExampleBCreate(views.MontrekCreateView):
     title = "Create Example B"
 
 
+class MontrekExampleBUpdate(views.MontrekUpdateView):
+    manager_class = mem.HubBManager
+    page_class = pages.MontrekExampleBAppPage
+    success_url = "montrek_example_b_list"
+    form_class = forms.ExampleBCreateForm
+    title = "Update Example B"
+
+
 class MontrekExampleBList(views.MontrekListView):
     manager_class = mem.HubBManager
     page_class = pages.MontrekExampleBAppPage

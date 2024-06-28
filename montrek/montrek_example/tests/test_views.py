@@ -220,6 +220,27 @@ class TestMontrekExampleBCreate(MontrekCreateViewTestCase):
         self.assertEqual(created_object.field_d1_str, "test1,test2")
 
 
+class TestMontrekExampleBUpdate(MontrekUpdateViewTestCase):
+    viewname = "montrek_example_b_update"
+    view_class = me_views.MontrekExampleBUpdate
+
+    def build_factories(self):
+        self.satb1 = me_factories.SatB1Factory()
+        me_factories.SatB2Factory(hub_entity=self.satb1.hub_entity)
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.satb1.hub_entity.id}
+
+    def update_data(self) -> dict:
+        return {
+            "field_b1_str": "test",
+            "field_b1_date": "2024-02-17",
+            "field_b2_str": "test2",
+            "field_b2_choice": "CHOICE2",
+            "alert_level": AlertEnum.OK.value.description,
+        }
+
+
 class TestMontrekExampleCListView(MontrekListViewTestCase):
     viewname = "montrek_example_c_list"
     view_class = me_views.MontrekExampleCList
