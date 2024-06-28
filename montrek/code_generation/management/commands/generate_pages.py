@@ -1,8 +1,8 @@
 from code_generation.management.base.class_definition_command import (
     CodeGenerationCommandBase,
 )
-from code_generation.config.satellite_models_config import SatelliteModelsConfig
+from code_generation.config.pages_config import PagesConfig
 
 
 class Command(CodeGenerationCommandBase):
-    config_class = SatelliteModelsConfig
+    config_class = PagesConfig

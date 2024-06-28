@@ -1,0 +1,15 @@
+from baseclasses.views import MontrekListView
+{{ manager_import }}
+{{ page_import }}
+
+
+class {{ list_view_class_name }}(MontrekListView):
+    manager_class = {{ manager_class_name }}
+    page_class = {{ page_class_name }}
+    tab = "{{ list_tab_id }}"
+    title = "{{ list_view_title }}"
+
+    @property
+    def actions(self) -> tuple:
+        return ()
+

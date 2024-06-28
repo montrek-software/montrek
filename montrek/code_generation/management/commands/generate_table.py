@@ -13,3 +13,6 @@ class Command(StdArgumentsMixin, BaseCommand):
         call_command("generate_hub_models", app_path, prefix)
         call_command("generate_satellite_models", app_path, prefix)
         call_command("generate_repositories", app_path, prefix)
+        call_command("generate_managers", app_path, prefix)
+        call_command("generate_pages", app_path, prefix)
+        call_command("generate_views", app_path, prefix)

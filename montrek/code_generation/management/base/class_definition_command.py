@@ -28,27 +28,11 @@ class CodeGenerationCommandBase(StdArgumentsMixin, BaseCommand):
         prefix = kwargs["prefix"].lower()
         config = self.config_class(app_path, prefix)
         output_path = config.get_output_file_path()
+        msg = f"Generating code at '{output_path}'."
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
-
-        # dotted_app_path = app_path.replace("/", ".")
-        #
-        # context = {
-        #     "dotted_app_path": dotted_app_path,
-        #     'hub_model_path': os.path.join(app_path, 'models', f'{prefix}_hub_models.py'),
-        #     "hub_class_name": f"{prefix.capitalize()}Hub",
-        #     "satellite_class_name": f"{prefix.capitalize()}Satellite",
-        #     "repository_class_name": f"{prefix.capitalize()}Repository",
-        #     "manager_class_name": f"{prefix.capitalize()}Manager",
-        #     "page_class_name": f"{prefix.capitalize()}Page",
-        #     "list_tab_id": f"tab_{prefix.lower()}_list",
-        #     "list_tab_title": f"{prefix.capitalize()} List",
-        # }
-
         env = Environment(loader=FileSystemLoader(CODE_TEMPLATE_DIR))
         template = env.get_template(config.template_file)
         rendered_content = template.render(**config.get_template_context())
-
-        msg = f"Generating code at '{output_path}'."
         self.stdout.write(self.style.SUCCESS(msg))
 
         with open(output_path, "w") as f:
