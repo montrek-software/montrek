@@ -4,3 +4,4 @@ from .settings import *  # Import base settings from settings.py
 
 EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 EMAIL_TEMPLATE = "mail_templates/montrek_mail_template.html"
+MEDIA_ROOT = "Blummi"
