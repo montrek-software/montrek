@@ -55,7 +55,7 @@ class CodeGenerationConfig:
             "list_view_cls_name": list_view_cls_name,
             "list_view_title": f"{c_prefix} List",
             "list_view_url": f"{prefix}/list",
-            "list_view_url_name": f"{prefix}_list",
+            "list_view_url_name": f"{prefix}",
             "manager_cls_import": self._get_import("managers", manager_cls_name),
             "manager_cls_name": manager_cls_name,
             "page_cls_import": self._get_import("pages", page_cls_name),
