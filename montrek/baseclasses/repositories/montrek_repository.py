@@ -314,7 +314,8 @@ class MontrekRepository:
     def _drop_duplicates(self, data_frame: pd.DataFrame) -> pd.DataFrame:
         satellite_columns = [
             c.name for c in self.std_satellite_fields() if c.name in data_frame.columns
-        ]
+        ] + ["hub_entity_id"]
+
         duplicated_data_frame = data_frame.loc[:, satellite_columns].duplicated()
         no_of_duplicated_entries = duplicated_data_frame.sum()
         if no_of_duplicated_entries == 0:
