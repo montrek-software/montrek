@@ -13,6 +13,7 @@ class CodeGenerationConfig:
         self.prefix = prefix
 
         self.template_files = {
+            "forms": "forms.py.j2",
             "hub_models": "hub_models.py.j2",
             "managers": "managers.py.j2",
             "models_init": "models_init.py.j2",
@@ -26,33 +27,62 @@ class CodeGenerationConfig:
         }
 
         self.output_paths = {
-            "hub_models": os.path.join("models", f"{prefix}_hub_models.py"),
-            "managers": os.path.join("managers", f"{prefix}_managers.py"),
-            "models_init": os.path.join("models", "__init__.py"),
-            "pages": os.path.join("pages", f"{prefix}_pages.py"),
-            "repositories": os.path.join("repositories", f"{prefix}_repositories.py"),
-            "sat_models": os.path.join("models", f"{prefix}_sat_models.py"),
-            "urls": os.path.join("urls", f"{prefix}_urls.py"),
-            "urls_init": os.path.join("urls", "__init__.py"),
-            "views": os.path.join("views", f"{prefix}_views.py"),
-            "views_init": os.path.join("views", "__init__.py"),
+            "forms": ["forms", f"{prefix}_forms.py"],
+            "hub_models": ["models", f"{prefix}_hub_models.py"],
+            "managers": ["managers", f"{prefix}_managers.py"],
+            "models_init": ["models", "__init__.py"],
+            "pages": ["pages", f"{prefix}_pages.py"],
+            "repositories": ["repositories", f"{prefix}_repositories.py"],
+            "sat_models": ["models", f"{prefix}_sat_models.py"],
+            "urls": ["urls", f"{prefix}_urls.py"],
+            "urls_init": ["urls", "__init__.py"],
+            "views": ["views", f"{prefix}_views.py"],
+            "views_init": ["views", "__init__.py"],
         }
         self.output_paths = {
-            k: os.path.join(self.app_path, v) for k, v in self.output_paths.items()
+            k: os.path.join(self.app_path, *v) for k, v in self.output_paths.items()
         }
         c_prefix = prefix.capitalize()
 
         hub_cls_name = f"{c_prefix}Hub"
         list_view_cls_name = f"{c_prefix}ListView"
+        create_view_cls_name = f"{c_prefix}CreateView"
+        create_form_cls_name = f"{c_prefix}CreateForm"
+        update_view_cls_name = f"{c_prefix}UpdateView"
+        delete_view_cls_name = f"{c_prefix}DeleteView"
         manager_cls_name = f"{c_prefix}TableManager"
         page_cls_name = f"{c_prefix}Page"
         repo_cls_name = f"{c_prefix}Repository"
         sat_cls_name = f"{c_prefix}Satellite"
 
         self.context = {
+            "create_action_hover": f"Create new {c_prefix}",
+            "create_action_id": f"id_create_{prefix}",
+            "create_form_cls_import": self._get_import("views", create_form_cls_name),
+            "create_form_cls_name": create_form_cls_name,
+            "create_tab_id": f"tab_{prefix}_create",
+            "create_tab_name": f"{c_prefix}",
+            "create_view_cls_import": self._get_import("views", create_view_cls_name),
+            "create_view_cls_import_rel": f"from .{prefix}_views import {create_view_cls_name}",
+            "create_view_cls_name": create_view_cls_name,
+            "create_view_title": f"{c_prefix} Create",
+            "create_view_url": f"{prefix}/create",
+            "create_view_url_name": f"{prefix}",
+            "delete_action_hover": f"Delete {c_prefix}",
+            "delete_action_id": f"id_delete_{prefix}",
+            "delete_tab_id": f"tab_{prefix}_delete",
+            "delete_tab_name": f"{c_prefix}",
+            "delete_view_cls_import": self._get_import("views", delete_view_cls_name),
+            "delete_view_cls_import_rel": f"from .{prefix}_views import {delete_view_cls_name}",
+            "delete_view_cls_name": delete_view_cls_name,
+            "delete_view_title": f"{c_prefix} Delete",
+            "delete_view_url": f"{prefix}/delete",
+            "delete_view_url_name": f"{prefix}",
             "hub_cls_import": self._get_import("hub_models", hub_cls_name),
             "hub_cls_import_rel": f"from .{prefix}_hub_models import {hub_cls_name}",
             "hub_cls_name": hub_cls_name,
+            "list_action_hover": f"List {c_prefix}",
+            "list_action_id": f"id_list_{prefix}",
             "list_tab_id": f"tab_{prefix}_list",
             "list_tab_name": f"{c_prefix}",
             "list_view_cls_import": self._get_import("views", list_view_cls_name),
@@ -71,6 +101,16 @@ class CodeGenerationConfig:
             "sat_cls_import": self._get_import("sat_models", sat_cls_name),
             "sat_cls_import_rel": f"from .{prefix}_sat_models import {sat_cls_name}",
             "sat_cls_name": sat_cls_name,
+            "update_action_hover": f"Update {c_prefix}",
+            "update_action_id": f"id_update_{prefix}",
+            "update_tab_id": f"tab_{prefix}_update",
+            "update_tab_name": f"{c_prefix}",
+            "update_view_cls_import": self._get_import("views", update_view_cls_name),
+            "update_view_cls_import_rel": f"from .{prefix}_views import {update_view_cls_name}",
+            "update_view_cls_name": update_view_cls_name,
+            "update_view_title": f"{c_prefix} Update",
+            "update_view_url": f"{prefix}/update",
+            "update_view_url_name": f"{prefix}",
             "urlpatterns_import_rel": f"from .{prefix}_urls import urlpatterns",
         }
 

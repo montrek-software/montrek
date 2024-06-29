@@ -1,6 +1,33 @@
 from baseclasses.views import MontrekListView
+from baseclasses.views import MontrekCreateView
+from baseclasses.views import MontrekUpdateView
+from baseclasses.views import MontrekDeleteView
 {{ manager_cls_import }}
 {{ page_cls_import }}
+{{ create_form_cls_import }}
+
+
+class {{ create_view_cls_name }}Create(MontrekCreateView):
+    manager_class = {{ manager_cls_name }}
+    page_class = {{ page_cls_name }}
+    form_class = {{ create_form_cls_name }}
+    success_url = "{{ list_view_url_name }}"
+    title = "{{ create_view_title }}"
+
+
+class {{ update_view_cls_name }}Update(MontrekUpdateView):
+    manager_class = {{ manager_cls_name }}
+    page_class = {{ page_cls_name }}
+    form_class = {{ create_form_cls_name }}
+    success_url = "{{ list_view_url_name }}"
+    title = "{{ update_view_title }}"
+
+
+class {{ delete_view_cls_name }}Delete(MontrekDeleteView):
+    manager_class = {{ manager_cls_name }}
+    page_class = {{ page_cls_name }}
+    success_url = "{{ list_view_url_name }}"
+    title = "{{ delete_view_title }}"
 
 
 class {{ list_view_cls_name }}(MontrekListView):
@@ -9,7 +36,14 @@ class {{ list_view_cls_name }}(MontrekListView):
     tab = "{{ list_tab_id }}"
     title = "{{ list_view_title }}"
 
+    action_new = ActionElement(
+        icon="plus",
+        link=reverse("{{ create_view_url }}"),
+        action_id="{{ create_action_id }}",
+        hover_text="{{ create_action_hover }}",
+    )
+
     @property
     def actions(self) -> tuple:
-        return ()
+        return (action_new,)
 
