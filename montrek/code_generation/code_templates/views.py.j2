@@ -1,3 +1,5 @@
+from django.urls import reverse
+from baseclasses.dataclasses.view_classes import ActionElement
 from baseclasses.views import MontrekListView
 from baseclasses.views import MontrekCreateView
 from baseclasses.views import MontrekUpdateView
@@ -7,7 +9,7 @@ from baseclasses.views import MontrekDeleteView
 {{ create_form_cls_import }}
 
 
-class {{ create_view_cls_name }}Create(MontrekCreateView):
+class {{ create_view_cls_name }}(MontrekCreateView):
     manager_class = {{ manager_cls_name }}
     page_class = {{ page_cls_name }}
     form_class = {{ create_form_cls_name }}
@@ -15,7 +17,7 @@ class {{ create_view_cls_name }}Create(MontrekCreateView):
     title = "{{ create_view_title }}"
 
 
-class {{ update_view_cls_name }}Update(MontrekUpdateView):
+class {{ update_view_cls_name }}(MontrekUpdateView):
     manager_class = {{ manager_cls_name }}
     page_class = {{ page_cls_name }}
     form_class = {{ create_form_cls_name }}
@@ -23,7 +25,7 @@ class {{ update_view_cls_name }}Update(MontrekUpdateView):
     title = "{{ update_view_title }}"
 
 
-class {{ delete_view_cls_name }}Delete(MontrekDeleteView):
+class {{ delete_view_cls_name }}(MontrekDeleteView):
     manager_class = {{ manager_cls_name }}
     page_class = {{ page_cls_name }}
     success_url = "{{ list_view_url_name }}"
@@ -36,14 +38,13 @@ class {{ list_view_cls_name }}(MontrekListView):
     tab = "{{ list_tab_id }}"
     title = "{{ list_view_title }}"
 
-    action_new = ActionElement(
-        icon="plus",
-        link=reverse("{{ create_view_url }}"),
-        action_id="{{ create_action_id }}",
-        hover_text="{{ create_action_hover }}",
-    )
-
     @property
     def actions(self) -> tuple:
+        action_new = ActionElement(
+            icon="plus",
+            link=reverse("{{ create_view_url_name }}"),
+            action_id="{{ create_action_id }}",
+            hover_text="{{ create_action_hover }}",
+        )
         return (action_new,)
 

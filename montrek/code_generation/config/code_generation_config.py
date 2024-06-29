@@ -58,7 +58,7 @@ class CodeGenerationConfig:
         self.context = {
             "create_action_hover": f"Create new {c_prefix}",
             "create_action_id": f"id_create_{prefix}",
-            "create_form_cls_import": self._get_import("views", create_form_cls_name),
+            "create_form_cls_import": self._get_import("forms", create_form_cls_name),
             "create_form_cls_name": create_form_cls_name,
             "create_tab_id": f"tab_{prefix}_create",
             "create_tab_name": f"{c_prefix}",
@@ -67,7 +67,7 @@ class CodeGenerationConfig:
             "create_view_cls_name": create_view_cls_name,
             "create_view_title": f"{c_prefix} Create",
             "create_view_url": f"{prefix}/create",
-            "create_view_url_name": f"{prefix}",
+            "create_view_url_name": f"{prefix}_create",
             "delete_action_hover": f"Delete {c_prefix}",
             "delete_action_id": f"id_delete_{prefix}",
             "delete_tab_id": f"tab_{prefix}_delete",
@@ -77,7 +77,7 @@ class CodeGenerationConfig:
             "delete_view_cls_name": delete_view_cls_name,
             "delete_view_title": f"{c_prefix} Delete",
             "delete_view_url": f"{prefix}/delete",
-            "delete_view_url_name": f"{prefix}",
+            "delete_view_url_name": f"{prefix}_delete",
             "hub_cls_import": self._get_import("hub_models", hub_cls_name),
             "hub_cls_import_rel": f"from .{prefix}_hub_models import {hub_cls_name}",
             "hub_cls_name": hub_cls_name,
@@ -110,7 +110,7 @@ class CodeGenerationConfig:
             "update_view_cls_name": update_view_cls_name,
             "update_view_title": f"{c_prefix} Update",
             "update_view_url": f"{prefix}/update",
-            "update_view_url_name": f"{prefix}",
+            "update_view_url_name": f"{prefix}_update",
             "urlpatterns_import_rel": f"from .{prefix}_urls import urlpatterns",
         }
 
