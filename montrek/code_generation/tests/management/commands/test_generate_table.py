@@ -4,7 +4,7 @@ from django.test import TestCase
 from django.core.management import call_command
 
 
-class GenerateHubModelsCommandTest(TestCase):
+class GenerateTableCommandTest(TestCase):
     def test_generate_hub_models(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             call_command("generate_table", temp_dir, "company")
