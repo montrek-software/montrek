@@ -76,7 +76,7 @@ class CodeGenerationConfig:
             "delete_view_cls_import_rel": f"from .{prefix}_views import {delete_view_cls_name}",
             "delete_view_cls_name": delete_view_cls_name,
             "delete_view_title": f"{c_prefix} Delete",
-            "delete_view_url": f"{prefix}/delete",
+            "delete_view_url": f"{prefix}/<int:pk>/delete",
             "delete_view_url_name": f"{prefix}_delete",
             "hub_cls_import": self._get_import("hub_models", hub_cls_name),
             "hub_cls_import_rel": f"from .{prefix}_hub_models import {hub_cls_name}",
@@ -109,7 +109,7 @@ class CodeGenerationConfig:
             "update_view_cls_import_rel": f"from .{prefix}_views import {update_view_cls_name}",
             "update_view_cls_name": update_view_cls_name,
             "update_view_title": f"{c_prefix} Update",
-            "update_view_url": f"{prefix}/update",
+            "update_view_url": f"{prefix}/<int:pk>/update",
             "update_view_url_name": f"{prefix}_update",
             "urlpatterns_import_rel": f"from .{prefix}_urls import urlpatterns",
         }
