@@ -38,3 +38,12 @@ class {{ update_view_test_cls_name }}(MontrekUpdateViewTestCase):
 
     def update_data(self):
         return {}
+
+
+class {{ list_view_test_cls_name }}(MontrekListViewTestCase):
+    viewname = "{{ list_view_url_name }}"
+    view_class = {{ list_view_cls_name }}
+    expected_no_of_rows = 1
+
+    def build_factories(self):
+        self.sat_obj = {{ sat_factory_cls_name }}()
