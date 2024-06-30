@@ -9,3 +9,4 @@ class {{ sat_factory_cls_name }}(factory.django.DjangoModelFactory):
         model = {{ sat_cls_name }}
 
     hub_entity = factory.SubFactory({{ hub_factory_cls_name }})
+
