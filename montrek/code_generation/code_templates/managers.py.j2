@@ -10,14 +10,14 @@ class {{ manager_cls_name }}(MontrekTableManager):
         return [
             te.LinkTableElement(
                 name="Edit",
-                url="{{ update_url }}",
+                url="{{ update_view_url_name }}",
                 icon="edit",
                 kwargs={"pk": "id"},
                 hover_text="{{ update_action_hover }}",
             ),
             te.LinkTableElement(
                 name="Delete",
-                url="{{ delete_url }}",
+                url="{{ delete_view_url_name }}",
                 icon="trash",
                 kwargs={"pk": "id"},
                 hover_text="{{ delete_action_hover }}",
