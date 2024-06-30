@@ -47,3 +47,14 @@ class {{ list_view_test_cls_name }}(MontrekListViewTestCase):
 
     def build_factories(self):
         self.sat_obj = {{ sat_factory_cls_name }}()
+
+
+class {{ delete_view_test_cls_name }}(MontrekDeleteViewTestCase):
+    viewname = "{{ delete_view_url_name }}"
+    view_class = {{ delete_view_cls_name }}
+
+    def build_factories(self):
+        self.sat_obj = {{ sat_factory_cls_name }}()
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.sat_obj.hub_entity.id}
