@@ -26,3 +26,15 @@ class {{ create_view_test_cls_name }}(MontrekCreateViewTestCase):
         return {}
 
 
+class {{ update_view_test_cls_name }}(MontrekUpdateViewTestCase):
+    viewname = "{{ update_view_url_name }}"
+    view_class = {{ update_view_cls_name }}
+
+    def build_factories(self):
+        self.sat_obj = {{ sat_factory_cls_name }}()
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.sat_obj.hub_entity.id}
+
+    def update_data(self):
+        return {}

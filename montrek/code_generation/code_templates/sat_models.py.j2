@@ -6,5 +6,5 @@ from baseclasses.models import MontrekSatelliteABC
 
 class {{ sat_cls_name }}(MontrekSatelliteABC):
     hub_entity = models.ForeignKey({{ hub_cls_name }}, on_delete=models.CASCADE)
-    identifier_fields = []
+    identifier_fields = ["hub_entity_id"]
 
