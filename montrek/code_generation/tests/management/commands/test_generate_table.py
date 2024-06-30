@@ -5,7 +5,7 @@ from django.core.management import call_command
 
 
 class GenerateTableCommandTest(TestCase):
-    def test_generate_hub_models(self):
+    def test_files_are_created(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             call_command("generate_table", temp_dir, "company")
 

@@ -58,8 +58,13 @@ class CodeGenerationCommandBase(StdArgumentsMixin, BaseCommand):
                 self._generate_empty_init_file(init_file_path)
 
     def _generate_empty_init_file(self, output_path):
-        self.stdout.write(
-            self.style.SUCCESS(f"Generating empty __init__.py at '{output_path}'.")
-        )
-        with open(output_path, "w") as f:
-            f.write("")
+        try:
+            with open(output_path, "w") as f:
+                self.stdout.write(
+                    self.style.SUCCESS(
+                        f"Generating empty __init__.py at '{output_path}'."
+                    )
+                )
+                f.write("")
+        except Exception as e:
+            self.stdout.write(self.style.ERROR(f"Failed to generate __init__.py: {e}"))
