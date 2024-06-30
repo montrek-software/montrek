@@ -1,0 +1,28 @@
+import os
+from django.test import TransactionTestCase
+from django.urls import reverse
+from testing.test_cases.view_test_cases import (
+    MontrekCreateViewTestCase,
+    MontrekUpdateViewTestCase,
+    MontrekViewTestCase,
+    MontrekListViewTestCase,
+    MontrekDeleteViewTestCase,
+    MontrekFileResponseTestCase,
+)
+from user.tests.factories.montrek_user_factories import MontrekUserFactory
+{{ sat_factory_cls_import }}
+{{ create_view_cls_import }}
+{{ update_view_cls_import }}
+{{ list_view_cls_import }}
+{{ delete_view_cls_import }}
+{{ view_cls_import }}
+
+
+class {{ create_view_test_cls_name }}(MontrekCreateViewTestCase):
+    viewname = "{{ create_view_url_name }}"
+    view_class = {{ create_view_cls_name }}
+
+    def creation_data(self):
+        return {}
+
+

@@ -45,3 +45,21 @@ class CodeGenerationCommandBase(StdArgumentsMixin, BaseCommand):
         with open(output_path, mode) as f:
             f.write(rendered_content)
             print(rendered_content)
+
+        self._generate_init_files(output_path)
+
+    def _generate_init_files(self, output_path):
+        parts = output_path.split("/")
+        current_path = ""
+        for part in parts[:-1]:  # Exclude the last part because it's a file
+            current_path = f"{current_path}/{part}" if current_path else part
+            init_file_path = f"{current_path}/__init__.py"
+            if not os.path.exists(init_file_path):
+                self._generate_empty_init_file(init_file_path)
+
+    def _generate_empty_init_file(self, output_path):
+        self.stdout.write(
+            self.style.SUCCESS(f"Generating empty __init__.py at '{output_path}'.")
+        )
+        with open(output_path, "w") as f:
+            f.write("")
