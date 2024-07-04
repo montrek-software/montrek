@@ -99,7 +99,7 @@ DB_NAME=montrek_db
 DB_USER=montrekuser
 DB_PASSWORD=password
 DB_HOST=localhost
-DB_PORT=3306
+DB_PORT=5432
 DB_VOLUME=/var/lib/mysql
 APP_PORT=8000
 
