@@ -27,7 +27,7 @@ RUN apt-get update && apt-get install -y \
     wget \
     software-properties-common \
     pkg-config \
-    libmysqlclient-dev \
+    libpq-dev gcc \ # for psycopg2 (PostgreSQL python adapter)
     && apt-get clean
 
 # Enable the multiverse repository

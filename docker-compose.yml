@@ -47,15 +47,13 @@ services:
       - montrek_network
 
   db:
-    image: mariadb:latest
-    command: --max_allowed_packet=64M
+    image: postgres:latest
     environment:
-      MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
-      MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_USER: ${DB_USER}
     ports:
-      - "${DB_PORT}:3306"
+      - "${DB_PORT}:5432"
     volumes:
       - db_data:/var/lib/mysql
     networks:
