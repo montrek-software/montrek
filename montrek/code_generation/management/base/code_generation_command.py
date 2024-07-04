@@ -22,6 +22,11 @@ class StdArgumentsMixin:
             action="store_true",
             help="Replace existing files with generated code instead of appending.",
         )
+        parser.add_argument(
+            "--verbose",
+            action="store_true",
+            help="Print verbose output.",
+        )
 
 
 class CodeGenerationCommandBase(StdArgumentsMixin, BaseCommand):
@@ -30,22 +35,20 @@ class CodeGenerationCommandBase(StdArgumentsMixin, BaseCommand):
     def handle(self, *args, **kwargs):
         app_path = kwargs["app_path"].lower()
         prefix = kwargs["prefix"].lower()
+        verbose = kwargs["verbose"]
         config = CodeGenerationConfig(app_path, prefix)
         output_path = config.output_paths[self.key]
-        msg = f"Generating code at '{output_path}'."
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         env = Environment(loader=FileSystemLoader(CODE_TEMPLATE_DIR))
         template = env.get_template(config.template_files[self.key])
         rendered_content = template.render(**config.context)
+        msg = f"Generating code at '{output_path}'."
         self.stdout.write(self.style.SUCCESS(msg))
-
-        # TODO: check why flag is not working
         mode = "w" if kwargs["replace"] else "a"
-
         with open(output_path, mode) as f:
             f.write(rendered_content)
-            print(rendered_content)
-
+            if verbose:
+                self.stdout.write(rendered_content)
         self._generate_init_files(output_path)
 
     def _generate_init_files(self, output_path):

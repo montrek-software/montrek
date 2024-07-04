@@ -8,19 +8,25 @@ from code_generation.management.base.code_generation_command import (
 
 class Command(StdArgumentsMixin, BaseCommand):
     def handle(self, *args, **kwargs):
-        app_path = kwargs["app_path"]
-        prefix = kwargs["prefix"]
-        call_command("generate_hub_models", app_path, prefix)
-        call_command("generate_satellite_models", app_path, prefix)
-        call_command("generate_models_init", app_path, prefix)
-        call_command("generate_repositories", app_path, prefix)
-        call_command("generate_managers", app_path, prefix)
-        call_command("generate_pages", app_path, prefix)
-        call_command("generate_forms", app_path, prefix)
-        call_command("generate_views_init", app_path, prefix)
-        call_command("generate_views", app_path, prefix)
-        call_command("generate_urls_init", app_path, prefix)
-        call_command("generate_urls", app_path, prefix)
-        call_command("generate_hub_factories", app_path, prefix)
-        call_command("generate_sat_factories", app_path, prefix)
-        call_command("generate_view_tests", app_path, prefix)
+        std_args = [
+            kwargs["app_path"],
+            kwargs["prefix"],
+        ]
+        std_kwargs = {
+            "replace": kwargs["replace"],
+            "verbose": kwargs["verbose"],
+        }
+        call_command("generate_hub_models", *std_args, **std_kwargs)
+        call_command("generate_satellite_models", *std_args, **std_kwargs)
+        call_command("generate_models_init", *std_args, **std_kwargs)
+        call_command("generate_repositories", *std_args, **std_kwargs)
+        call_command("generate_managers", *std_args, **std_kwargs)
+        call_command("generate_pages", *std_args, **std_kwargs)
+        call_command("generate_forms", *std_args, **std_kwargs)
+        call_command("generate_views_init", *std_args, **std_kwargs)
+        call_command("generate_views", *std_args, **std_kwargs)
+        call_command("generate_urls_init", *std_args, **std_kwargs)
+        call_command("generate_urls", *std_args, **std_kwargs)
+        call_command("generate_hub_factories", *std_args, **std_kwargs)
+        call_command("generate_sat_factories", *std_args, **std_kwargs)
+        call_command("generate_view_tests", *std_args, **std_kwargs)
