@@ -14,7 +14,16 @@ You have to eventually sort out ssh keys.
 
 ### DB Setup
 
-1) Install MariaDB 
+1a) Install PostgreSQL
+
+- Follow installation for your OS at https://www.postgresql.org/download/
+- Initalise data directory `initdb /usr/local/var/postgres`
+- Start server `pg_ctl -D /usr/local/var/postgres start`
+- Create a database `createdb montrek_db`
+- Create a user `createuser root`
+- Login to database `psql montrek_db`
+
+1b) Install MariaDB 
 
 (Largely taken from [Django-Maria-DB Setup](https://www.digitalocean.com/community/tutorials/how-to-use-mysql-or-mariadb-with-your-django-application-on-ubuntu-14-04))
 
