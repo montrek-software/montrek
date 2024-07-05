@@ -76,9 +76,9 @@ class GroupConcat(Func):
 
 def get_string_concat_function():
     engine = settings.DATABASES["default"]["ENGINE"]
-    if engine == "django.db.backends.mysql":
+    if engine.contains("mysql"):
         return GroupConcat
-    elif engine == "django.db.backends.postgresql":
+    elif engine.contains("postgresql"):
         return StringAgg
     else:
         raise NotImplementedError(
