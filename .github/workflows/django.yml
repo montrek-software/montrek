@@ -17,7 +17,7 @@ jobs:
         python-version: [3.12.0]
 
     services:
-      mariadb:
+      postgres:
         image: postgres:latest
         env:
           POSTGRES_USER: postgres
