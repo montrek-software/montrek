@@ -1,3 +1,4 @@
+from django.conf import settings
 from typing import Type
 
 from django.db.models.functions import Cast
@@ -68,6 +69,23 @@ class StringAgg(Func):
     template = "%(function)s(%(expressions)s, ',')"
 
 
+class GroupConcat(Func):
+    function = "GROUP_CONCAT"
+    template = "%(function)s(%(expressions)s SEPARATOR ',')"
+
+
+def get_string_concat_function():
+    engine = settings.DATABASES["default"]["ENGINE"]
+    if engine == "django.db.backends.mysql":
+        return GroupConcat
+    elif engine == "django.db.backends.postgresql":
+        return StringAgg
+    else:
+        raise NotImplementedError(
+            f"No function for concatenating list of strings defined for {engine}!"
+        )
+
+
 class LinkedSatelliteSubqueryBuilderBase(SubqueryBuilder):
     def __init__(
         self,
@@ -105,6 +123,7 @@ class LinkedSatelliteSubqueryBuilderBase(SubqueryBuilder):
         ).values(field)
         if isinstance(self.link_class(), MontrekManyToManyLinkABC):
             # In case of many-to-may links we return the return values concatenated as characters by default
+
             satellite_field_query = satellite_field_query.annotate(
                 **{
                     field + "agg": Cast(
