@@ -7,7 +7,6 @@ from baseclasses.models import MontrekLinkABC
 from baseclasses.models import LinkTypeEnum
 from django.db.models import CharField, Subquery, OuterRef, Func
 from django.utils import timezone
-from django.contrib.postgres.aggregates import StringAgg
 
 
 class SubqueryBuilder:
