@@ -5,7 +5,7 @@ from baseclasses.models import MontrekManyToManyLinkABC, MontrekSatelliteABC
 from baseclasses.models import MontrekTimeSeriesSatelliteABC
 from baseclasses.models import MontrekLinkABC
 from baseclasses.models import LinkTypeEnum
-from django.db.models import CharField, Subquery, OuterRef
+from django.db.models import CharField, Subquery, OuterRef, Func
 from django.utils import timezone
 from django.contrib.postgres.aggregates import StringAgg
 
@@ -64,6 +64,11 @@ class LastTSSatelliteSubqueryBuilder(SubqueryBuilder):
         )
 
 
+class StringAgg(Func):
+    function = "STRING_AGG"
+    template = "%(function)s(%(expressions)s, ',')"
+
+
 class LinkedSatelliteSubqueryBuilderBase(SubqueryBuilder):
     def __init__(
         self,
@@ -102,7 +107,11 @@ class LinkedSatelliteSubqueryBuilderBase(SubqueryBuilder):
         if isinstance(self.link_class(), MontrekManyToManyLinkABC):
             # In case of many-to-may links we return the return values concatenated as characters by default
             satellite_field_query = satellite_field_query.annotate(
-                **{field + "agg": StringAgg(Cast(field, CharField()), delimiter=",")}
+                **{
+                    field + "agg": Cast(
+                        StringAgg(Cast(field, CharField())), CharField()
+                    )
+                }
             ).values(field + "agg")
         if isinstance(self.satellite_class(), MontrekTimeSeriesSatelliteABC):
             satellite_field_query = (
