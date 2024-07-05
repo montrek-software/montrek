@@ -123,11 +123,12 @@ class LinkedSatelliteSubqueryBuilderBase(SubqueryBuilder):
         ).values(field)
         if isinstance(self.link_class(), MontrekManyToManyLinkABC):
             # In case of many-to-may links we return the return values concatenated as characters by default
-
+            func = get_string_concat_function()
             satellite_field_query = satellite_field_query.annotate(
                 **{
                     field + "agg": Cast(
-                        StringAgg(Cast(field, CharField())), CharField()
+                        func(Cast(field, CharField())),
+                        CharField(),
                     )
                 }
             ).values(field + "agg")
