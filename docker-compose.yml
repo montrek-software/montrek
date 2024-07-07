@@ -53,7 +53,7 @@ services:
     ports:
       - "${DB_PORT}:5432"
     volumes:
-      - db_data:/var/lib/mysql
+      - db_data:/var/lib/postgresql
     networks:
       - montrek_network
   celery:
