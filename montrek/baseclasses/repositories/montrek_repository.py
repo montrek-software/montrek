@@ -144,6 +144,7 @@ class MontrekRepository:
         self, data_frame: pd.DataFrame
     ) -> List[MontrekHubABC]:
         self._raise_for_anonymous_user()
+        data_frame = self._drop_empty_rows(data_frame)
         data_frame = self._drop_duplicates(data_frame)
         self._raise_for_duplicated_entries(data_frame)
         self.std_queryset()
@@ -328,3 +329,7 @@ class MontrekRepository:
         )
 
         return data_frame.loc[~(duplicated_data_frame)]
+
+    def _drop_empty_rows(self, data_frame: pd.DataFrame) -> pd.DataFrame:
+        data_frame = data_frame.dropna(how="all")
+        return data_frame
