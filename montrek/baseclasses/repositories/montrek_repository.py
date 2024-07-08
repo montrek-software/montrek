@@ -327,9 +327,14 @@ class MontrekRepository:
                 f"{no_of_duplicated_entries} duplicated entries not uploaded!"
             )
         )
-
         return data_frame.loc[~(duplicated_data_frame)]
 
     def _drop_empty_rows(self, data_frame: pd.DataFrame) -> pd.DataFrame:
-        data_frame = data_frame.dropna(how="all")
-        return data_frame
+        dropped_data_frame = data_frame.dropna(how="all")
+        dropped_data_frame = dropped_data_frame.convert_dtypes()
+        dropped_rows = len(data_frame) - len(dropped_data_frame)
+        if dropped_rows > 0:
+            self.messages.append(
+                MontrekMessageWarning(f"{dropped_rows} empty rows not uploaded!")
+            )
+        return dropped_data_frame

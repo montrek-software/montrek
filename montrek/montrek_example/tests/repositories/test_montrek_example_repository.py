@@ -420,6 +420,8 @@ class TestMontrekCreateObject(TestCase):
         repository.create_objects_from_data_frame(data_frame)
         test_query = repository.std_queryset()
         self.assertEqual(test_query.count(), 2)
+        self.assertEqual(test_query[0].field_a1_int, 5)
+        self.assertEqual(repository.messages[0].message, "1 empty rows not uploaded!")
 
     def test_create_objects_from_data_frame_missing_primary_satellite_identifier_column(
         self,
