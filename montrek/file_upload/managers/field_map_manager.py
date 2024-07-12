@@ -100,8 +100,12 @@ class FieldMapManagerABC(MontrekTableManager):
         return mapped_df
 
     def get_source_field_from_database_field(self, database_field: str) -> str:
-        field_map = self.repository.std_queryset().get(database_field=database_field)
-        return field_map.source_field
+        field_map = self.repository.std_queryset().filter(database_field=database_field)
+        if len(field_map) == 0:
+            raise ValueError(
+                f"No source field found for database field {database_field}"
+            )
+        return field_map.first().source_field
 
 
 class FieldMapManager(FieldMapManagerABC):

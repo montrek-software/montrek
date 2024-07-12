@@ -127,7 +127,7 @@ class TestFieldMapManager(TestCase):
             "database_field_0"
         )
         self.assertEqual(test_source_field, "source_field_0")
-        # with self.assertRaises(ValueError):
-        #     test_source_field = field_map_manager.get_source_field_from_database_field(
-        #         "database_field_1"
-        #     )
+        with self.assertRaises(ValueError):
+            test_source_field = field_map_manager.get_source_field_from_database_field(
+                "database_field_1"
+            )
