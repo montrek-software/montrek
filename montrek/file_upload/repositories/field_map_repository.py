@@ -34,8 +34,12 @@ class FieldMapRepositoryABC(MontrekRepository):
         return queryset.order_by("source_field")
 
     def get_source_field(self, database_field: str) -> str:
-        obj = self.std_queryset().filter(database_field=database_field).get()
-        return obj.source_field
+        objs = self.std_queryset().filter(database_field=database_field)
+        if len(objs) == 0:
+            raise ValueError(
+                f"No source field found for database field {database_field}"
+            )
+        return objs.first().source_field
 
     def _setup_checks(self):
         if self.hub_class is FieldMapHubABC:
