@@ -337,4 +337,5 @@ class MontrekRepository:
             self.messages.append(
                 MontrekMessageWarning(f"{dropped_rows} empty rows not uploaded!")
             )
-        return dropped_data_frame
+            return dropped_data_frame
+        return data_frame
