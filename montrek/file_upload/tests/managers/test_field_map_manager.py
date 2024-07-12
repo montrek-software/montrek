@@ -117,3 +117,17 @@ class TestFieldMapManager(TestCase):
         )
         self.assertEqual(mapped_df["database_field_1"].to_list(), ["a", "b", "c"])
         self.assertEqual(mapped_df["database_field_3"].to_list(), ["7a", "8b", "9c"])
+
+    def test_get_source_field_from_database_field(self):
+        FieldMapStaticSatelliteFactory(
+            source_field="source_field_0", database_field="database_field_0"
+        )
+        field_map_manager = MyFieldMapManager({})
+        test_source_field = field_map_manager.get_source_field_from_database_field(
+            "database_field_0"
+        )
+        self.assertEqual(test_source_field, "source_field_0")
+        # with self.assertRaises(ValueError):
+        #     test_source_field = field_map_manager.get_source_field_from_database_field(
+        #         "database_field_1"
+        #     )
