@@ -408,6 +408,18 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
         )
 
 
+class TestMontrekExampleA1UploadHistoryView(MontrekViewTestCase):
+    viewname = "a1_file_upload_history"
+    view_class = me_views.MontrekExampleA1UploadHistoryView
+
+    def build_factories(self):
+        self.huba = me_factories.HubAFileUploadRegistryHubFactory()
+        # me_factories.HubAFileUploadRegistryStaticSatelliteFactory.create(hub_entity=huba)
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.huba.pk}
+
+
 class TestMontrekA1RepositoryDownloadView(MontrekFileResponseTestCase):
     viewname = "a1_download_file"
     view_class = me_views.MontrekExampleA1DownloadFileView

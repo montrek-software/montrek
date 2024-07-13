@@ -14,6 +14,7 @@ class FileUploadRegistryManagerABC(MontrekTableManager):
     repository_class = FileUploadRegistryRepositoryABC
     download_url = "please define download_url in subclass"
     download_log_url = ""
+    history_url = ""
 
     @property
     def table_elements(self) -> tuple:
@@ -39,6 +40,16 @@ class FileUploadRegistryManagerABC(MontrekTableManager):
                     kwargs={"pk": "id"},
                     icon="download",
                     hover_text="Download Log",
+                )
+            )
+        if self.history_url != "":
+            table_elements.append(
+                LinkTableElement(
+                    name="History",
+                    url=self.history_url,
+                    kwargs={"pk": "id"},
+                    icon="download",
+                    hover_text="History",
                 )
             )
         return tuple(table_elements)

@@ -110,4 +110,9 @@ urlpatterns = [
         name="hub_a_view_api_uploads",
     ),
     path("do_a2_upload", views.do_a2_upload, name="do_a2_upload"),
+    path(
+        "a1_file_upload_history/<int:pk>",
+        views.MontrekExampleA1UploadHistoryView.as_view(),
+        name="a1_file_upload_history",
+    ),
 ]
