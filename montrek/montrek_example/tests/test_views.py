@@ -413,11 +413,32 @@ class TestMontrekExampleA1UploadHistoryView(MontrekViewTestCase):
     view_class = me_views.MontrekExampleA1UploadHistoryView
 
     def build_factories(self):
+        user1 = MontrekUserFactory()
+        user2 = MontrekUserFactory()
         self.huba = me_factories.HubAFileUploadRegistryHubFactory()
-        # me_factories.HubAFileUploadRegistryStaticSatelliteFactory.create(hub_entity=huba)
+        me_factories.HubAFileUploadRegistryStaticSatelliteFactory.create(
+            hub_entity=self.huba,
+            state_date_end=montrek_time(2024, 2, 17),
+            created_by=user1,
+            comment="initial comment",
+        )
+        me_factories.HubAFileUploadRegistryStaticSatelliteFactory.create(
+            hub_entity=self.huba,
+            state_date_start=montrek_time(2024, 2, 17),
+            created_by=user2,
+            comment="change comment",
+        )
+        me_factories.SatA2Factory(
+            hub_entity=self.huba,
+            created_by=user2,
+            comment="another comment",
+        )
 
     def url_kwargs(self) -> dict:
         return {"pk": self.huba.pk}
+
+    def test_view_with_history_data(self):
+        return
 
 
 class TestMontrekA1RepositoryDownloadView(MontrekFileResponseTestCase):
