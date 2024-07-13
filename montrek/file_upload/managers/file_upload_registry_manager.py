@@ -48,7 +48,7 @@ class FileUploadRegistryManagerABC(MontrekTableManager):
                     name="History",
                     url=self.history_url,
                     kwargs={"pk": "id"},
-                    icon="download",
+                    icon="road",
                     hover_text="History",
                 )
             )
