@@ -413,24 +413,26 @@ class TestMontrekExampleA1UploadHistoryView(MontrekViewTestCase):
     view_class = me_views.MontrekExampleA1UploadHistoryView
 
     def build_factories(self):
-        user1 = MontrekUserFactory()
-        user2 = MontrekUserFactory()
+        self.user1 = MontrekUserFactory()
+        self.user2 = MontrekUserFactory()
         self.huba = me_factories.HubAFileUploadRegistryHubFactory()
         me_factories.HubAFileUploadRegistryStaticSatelliteFactory.create(
             hub_entity=self.huba,
             state_date_end=montrek_time(2024, 2, 17),
-            created_by=user1,
+            created_by=self.user1,
             comment="initial comment",
         )
         me_factories.HubAFileUploadRegistryStaticSatelliteFactory.create(
             hub_entity=self.huba,
             state_date_start=montrek_time(2024, 2, 17),
-            created_by=user2,
+            state_date_end=montrek_time(2024, 3, 17),
+            created_by=self.user2,
             comment="change comment",
         )
-        me_factories.SatA2Factory(
+        me_factories.HubAFileUploadRegistryStaticSatelliteFactory.create(
+            state_date_start=montrek_time(2024, 3, 17),
             hub_entity=self.huba,
-            created_by=user2,
+            created_by=self.user2,
             comment="another comment",
         )
 
@@ -438,7 +440,17 @@ class TestMontrekExampleA1UploadHistoryView(MontrekViewTestCase):
         return {"pk": self.huba.pk}
 
     def test_view_with_history_data(self):
-        return
+        test_history_data_tables = self.response.context_data["history_data_tables"]
+        self.assertEqual(len(test_history_data_tables), 3)
+        sat_a1_queryset = test_history_data_tables[0].queryset
+        self.assertEqual(len(sat_a1_queryset), 3)
+        self.assertEqual(sat_a1_queryset[2].comment, "initial comment")
+        self.assertEqual(sat_a1_queryset[1].comment, "change comment")
+        self.assertEqual(sat_a1_queryset[0].comment, "another comment")
+
+        self.assertEqual(sat_a1_queryset[2].changed_by, self.user1.email)
+        self.assertEqual(sat_a1_queryset[1].changed_by, self.user2.email)
+        self.assertEqual(sat_a1_queryset[0].changed_by, self.user2.email)
 
 
 class TestMontrekA1RepositoryDownloadView(MontrekFileResponseTestCase):
