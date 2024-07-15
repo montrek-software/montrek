@@ -99,7 +99,14 @@ class TestMontrekTableManager(TestCase):
         rows = table.find_all("tr")
         self.assertEqual(len(rows), 4)
         headers = soup.find_all("th")
-        expected_headers = ["Field A", "Field B", "Field C", "Link", "Link Text"]
+        expected_headers = [
+            "Field A",
+            "Field B",
+            "Field C",
+            "Field D",
+            "Link",
+            "Link Text",
+        ]
         header_texts = [th.get_text() for th in headers]
         self.assertEqual(header_texts, expected_headers)
 
@@ -122,7 +129,7 @@ class TestMontrekTableManager(TestCase):
         self.assertRegex(content_disposition, filename_pattern)
         self.assertEqual(
             response.getvalue(),
-            b"Field A,Field B,Field C,Link Text\na,1,1.0,a\nb,2,2.0,b\nc,3,3.0,c\n",
+            b"Field A,Field B,Field C,Field D,Link Text\na,1,1.0,2024-07-13,a\nb,2,2.0,2024-07-13,b\nc,3,3.0,2024-07-13,c\n",
         )
 
     def test_download_excel(self):
