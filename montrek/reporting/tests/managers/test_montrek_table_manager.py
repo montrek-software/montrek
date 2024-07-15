@@ -144,6 +144,11 @@ class TestMontrekTableManager(TestCase):
                     "Field A": ["a", "b", "c"],
                     "Field B": [1, 2, 3],
                     "Field C": [1.0, 2.0, 3.0],
+                    "Field D": [
+                        datetime.datetime(2024, 7, 13),
+                        datetime.datetime(2024, 7, 13),
+                        timezone.datetime(2024, 7, 13),
+                    ],
                     "Link Text": ["a", "b", "c"],
                 }
             )

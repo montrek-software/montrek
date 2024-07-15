@@ -1,4 +1,5 @@
 import pandas as pd
+from django.utils import timezone
 import datetime
 from django.views.generic.base import HttpResponse
 from django.core.paginator import Paginator
@@ -136,8 +137,18 @@ class MontrekTableManager(MontrekManager):
             values = []
             for row in queryset.all():
                 if hasattr(element, "attr"):
-                    values.append(getattr(row, element.attr))
+                    attr = getattr(row, element.attr)
+                    attr = self._make_datetime_naive(attr)
+
+                    values.append(attr)
                 else:
                     values.append(getattr(row, element.text))
             table_data[element.name] = values
         return pd.DataFrame(table_data)
+
+    def _make_datetime_naive(self, value):
+        if isinstance(
+            value, (datetime.datetime, datetime.date)
+        ) and not timezone.is_naive(value):
+            value = timezone.make_naive(value)
+        return value
