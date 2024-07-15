@@ -2,6 +2,8 @@ import io
 import pandas as pd
 from django.test import TestCase
 from django.http import HttpResponse
+from django.utils import timezone
+import datetime
 from bs4 import BeautifulSoup
 from reporting.dataclasses import table_elements as te
 from reporting.managers.montrek_table_manager import MontrekTableManager
@@ -13,6 +15,7 @@ class MockData:
     field_a: str
     field_b: int
     field_c: float
+    field_d: datetime.datetime | datetime.date | timezone.datetime
 
 
 class MockQuerySet:
@@ -43,7 +46,9 @@ class MockRepository:
 
     def std_queryset(self):
         return MockQuerySet(
-            MockData("a", 1, 1.0), MockData("b", 2, 2.0), MockData("c", 3, 3.0)
+            MockData("a", 1, 1.0, timezone.make_aware(datetime.datetime(2024, 7, 13))),
+            MockData("b", 2, 2.0, datetime.datetime(2024, 7, 13)),
+            MockData("c", 3, 3.0, timezone.datetime(2024, 7, 13)),
         )
 
 
@@ -58,6 +63,7 @@ class MockMontrekTableManager(MontrekTableManager):
             te.StringTableElement(attr="field_a", name="Field A"),
             te.IntTableElement(attr="field_b", name="Field B"),
             te.FloatTableElement(attr="field_c", name="Field C"),
+            te.DateTimeTableElement(attr="field_d", name="Field D"),
             te.LinkTableElement(
                 name="Link",
                 url="home",
