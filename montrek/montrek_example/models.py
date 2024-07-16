@@ -75,7 +75,9 @@ class SatA1(MontrekSatelliteABC):
 
 class SatA2(MontrekSatelliteABC):
     hub_entity = models.ForeignKey(HubA, on_delete=models.CASCADE)
-    field_a2_str = models.CharField(max_length=50, default="DEFAULT")
+    field_a2_str = models.CharField(
+        max_length=50, default="DEFAULT", null=True, blank=True
+    )
     field_a2_float = models.FloatField(default=0.0)
     identifier_fields = ["field_a2_str"]
 

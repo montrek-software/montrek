@@ -407,6 +407,22 @@ class TestMontrekCreateObject(TestCase):
         test_query = repository.std_queryset()
         self.assertEqual(test_query.count(), 2)
 
+    def test_create_objects_from_data_frame_drop_empty_rows(self):
+        repository = HubARepository(session_data={"user_id": self.user.id})
+        data_frame = pd.DataFrame(
+            {
+                "field_a1_int": [5, None, 5],
+                "field_a1_str": ["test", None, "test2"],
+                "field_a2_float": [6.0, None, 6.0],
+                "field_a2_str": ["test4", None, None],
+            }
+        )
+        repository.create_objects_from_data_frame(data_frame)
+        test_query = repository.std_queryset()
+        self.assertEqual(test_query.count(), 2)
+        self.assertEqual(test_query[0].field_a1_int, 5)
+        self.assertEqual(repository.messages[0].message, "1 empty rows not uploaded!")
+
     def test_create_objects_from_data_frame_missing_primary_satellite_identifier_column(
         self,
     ):

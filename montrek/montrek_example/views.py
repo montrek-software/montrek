@@ -308,3 +308,15 @@ class MontrekExampleA1DownloadLogFileView(MontrekDownloadLogFileView):
     manager_class = HubAFileUploadRegistryManager
     page_class = pages.MontrekExampleAAppPage
     title = "Download A1 File"
+
+
+class MontrekExampleA1UploadHistoryView(views.MontrekHistoryListView):
+    manager_class = HubAFileUploadRegistryManager
+    page_class = pages.MontrekExampleAAppPage
+    title = "A1 Upload History"
+
+    @property
+    def actions(self) -> tuple:
+        return (action_back_to_overview("a"),)
+
+    success_url = "montrek_example_a1_upload_history"
