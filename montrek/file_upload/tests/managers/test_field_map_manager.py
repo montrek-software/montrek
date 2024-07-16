@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from django.test import TestCase
 
 from file_upload.tests.factories.field_map_factories import (
@@ -156,4 +157,18 @@ class TestFieldMapFunctionManager(TestCase):
         result = FieldMapFunctionManager.extract_number(
             self.source_df, "source_field_0"
         )
-        expected = [1, 2, 3, 4, 5, 67, None, 8.5, None, -3.14159]
+        expected = pd.Series(
+            [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                np.nan,
+                8.5,
+                np.nan,
+                -3.14159,
+            ]
+        )
+        assert result.equals(expected)
