@@ -28,6 +28,10 @@ class FieldMapFunctionManager:
     ) -> pd.Series:
         return source_df[source_field].multiply(value)
 
+    @staticmethod
+    def extract_number(source_df: pd.DataFrame, source_field: str) -> pd.Series:
+        return source_df[source_field].str.extract(r"(\d+)").astype(float)
+
 
 class FieldMapManagerABC(MontrekTableManager):
     field_map_function_manager_class = FieldMapFunctionManager

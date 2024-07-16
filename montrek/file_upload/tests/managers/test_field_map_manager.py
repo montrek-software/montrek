@@ -131,3 +131,27 @@ class TestFieldMapManager(TestCase):
             test_source_field = field_map_manager.get_source_field_from_database_field(
                 "database_field_1"
             )
+
+
+class TestFieldMapFunctionManager(TestCase):
+    def setUp(self):
+        self.source_df = pd.DataFrame(
+            {
+                "source_field_0": [
+                    1,
+                    "2",
+                    "a3",
+                    "4b",
+                    "c5d",
+                    "6e7f",
+                    "g",
+                    "h8.5",
+                ],
+            }
+        )
+
+    def test_extract_number(self):
+        result = FieldMapFunctionManager.extract_number(
+            self.source_df, "source_field_0"
+        )
+        expected = [1, 2, 3, 4, 5, 67, None, 8.5]
