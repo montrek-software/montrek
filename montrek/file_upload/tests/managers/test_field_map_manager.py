@@ -146,6 +146,8 @@ class TestFieldMapFunctionManager(TestCase):
                     "6e7f",
                     "g",
                     "h8.5",
+                    None,
+                    "asdj-3.14159akcjnb",
                 ],
             }
         )
@@ -154,4 +156,4 @@ class TestFieldMapFunctionManager(TestCase):
         result = FieldMapFunctionManager.extract_number(
             self.source_df, "source_field_0"
         )
-        expected = [1, 2, 3, 4, 5, 67, None, 8.5]
+        expected = [1, 2, 3, 4, 5, 67, None, 8.5, None, -3.14159]
