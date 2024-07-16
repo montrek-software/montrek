@@ -4,4 +4,4 @@ from code_generation.management.base.code_generation_command import (
 
 
 class Command(CodeGenerationCommandBase):
-    key = "sat_models"
+    key = "urls"

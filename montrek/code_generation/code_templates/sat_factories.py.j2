@@ -1,0 +1,12 @@
+import factory
+
+{{ hub_factory_cls_import }}
+{{ sat_cls_import }}
+
+
+class {{ sat_factory_cls_name }}(factory.django.DjangoModelFactory):
+    class Meta:
+        model = {{ sat_cls_name }}
+
+    hub_entity = factory.SubFactory({{ hub_factory_cls_name }})
+

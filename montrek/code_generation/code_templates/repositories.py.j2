@@ -1,0 +1,11 @@
+from baseclasses.repositories.montrek_repository import MontrekRepository
+{{ sat_cls_import }}
+{{ hub_cls_import }}
+
+
+class {{ repo_cls_name }}(MontrekRepository):
+    hub_class = {{ hub_cls_name }}
+
+    def std_queryset(self):
+        return self.build_queryset()
+

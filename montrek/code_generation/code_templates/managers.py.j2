@@ -1,0 +1,27 @@
+from reporting.dataclasses import table_elements as te
+from reporting.managers.montrek_table_manager import MontrekTableManager
+{{ repo_cls_import }}
+
+
+class {{ manager_cls_name }}(MontrekTableManager):
+    repository_class = {{ repo_cls_name }}
+
+    @property
+    def table_elements(self):
+        return [
+            te.LinkTableElement(
+                name="Edit",
+                url="{{ update_view_url_name }}",
+                icon="edit",
+                kwargs={"pk": "id"},
+                hover_text="{{ update_action_hover }}",
+            ),
+            te.LinkTableElement(
+                name="Delete",
+                url="{{ delete_view_url_name }}",
+                icon="trash",
+                kwargs={"pk": "id"},
+                hover_text="{{ delete_action_hover }}",
+            ),
+        ]
+
