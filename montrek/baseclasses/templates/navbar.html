@@ -1,8 +1,13 @@
-<div class="navbar navbar-inverse">
+<nav class="navbar navbar-inverse navbar-fixed-top">
   <div class="container">
     <div class="navbar-header">
       <a href="{% url 'home' %}" class="navbar-brand">montrek</a>
-      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+      <button
+        type="button"
+        class="navbar-toggle"
+        data-toggle="collapse"
+        data-target=".navbar-collapse"
+      >
         <span class="sr-only">Toggle Navigation</span>
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
@@ -14,62 +19,83 @@
       <ul class="nav navbar-nav">
         <li><a href="{% url 'home' %}">Home</a></li>
         {% for nav_dd in navbar_dropdowns %}
-          <li class="dropdown">
-            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-              {{nav_dd.display_name}}
-              <span class="caret"></span>
-            </a>
-            <ul class="dropdown-menu">
-              {% for nav_app in nav_dd.dropdown_items %}
-                <li><a href="{% url nav_app.app_name %}">{{ nav_app.display_name }}</a></li>
-              {% endfor %}
-            </ul>
-          </li>
-        {% endfor %}
-        {% for nav_app in nav_apps %}
-          <li><a href="{% url nav_app.app_name %}">{{ nav_app.display_name }}</a></li>
+        <li class="dropdown">
+          <a
+            href="#"
+            class="dropdown-toggle"
+            data-toggle="dropdown"
+            role="button"
+            aria-haspopup="true"
+            aria-expanded="false"
+          >
+            {{nav_dd.display_name}}
+            <span class="caret"></span>
+          </a>
+          <ul class="dropdown-menu">
+            {% for nav_app in nav_dd.dropdown_items %}
+            <li>
+              <a href="{% url nav_app.app_name %}"
+                >{{ nav_app.display_name }}</a
+              >
+            </li>
+            {% endfor %}
+          </ul>
+        </li>
+        {% endfor %} {% for nav_app in nav_apps %}
+        <li>
+          <a href="{% url nav_app.app_name %}">{{ nav_app.display_name }}</a>
+        </li>
         {% endfor %}
       </ul>
 
       <ul class="nav navbar-nav navbar-right">
         {% if request.user.is_authenticated %}
-          <li><a>Logged in as {{ request.user.email }}</a></li>
-          <li class="dropdown">
-            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-              <span class="glyphicon glyphicon-cog"></span> <!-- Settings wheel icon -->
-              <span class="caret"></span>
-            </a>
-            <ul class="dropdown-menu">
-              <li><a href="#" onclick="logout(event)">Logout</a></li> <!-- logout via POST -->
-              <li><a href="{% url 'password_change' %}">Change Password</a></li>
-            </ul>
-          </li>
+        <li><a>Logged in as {{ request.user.email }}</a></li>
+        <li class="dropdown">
+          <a
+            href="#"
+            class="dropdown-toggle"
+            data-toggle="dropdown"
+            role="button"
+            aria-haspopup="true"
+            aria-expanded="false"
+          >
+            <span class="glyphicon glyphicon-cog"></span>
+            <!-- Settings wheel icon -->
+            <span class="caret"></span>
+          </a>
+          <ul class="dropdown-menu">
+            <li><a href="#" onclick="logout(event)">Logout</a></li>
+            <!-- logout via POST -->
+            <li><a href="{% url 'password_change' %}">Change Password</a></li>
+          </ul>
+        </li>
         {% else %}
-          <li><a href="{% url 'login' %}">Login</a></li>
-          <li><a href="{% url 'signup' %}">Sign Up</a></li>
+        <li><a href="{% url 'login' %}">Login</a></li>
+        <li><a href="{% url 'signup' %}">Sign Up</a></li>
         {% endif %}
       </ul>
     </div>
   </div>
-</div>
+</nav>
 
 <script>
-function logout(event) {
+  function logout(event) {
     event.preventDefault(); // Prevent the default action of the link
 
     // Create a hidden form
-    var form = document.createElement('form');
-    form.method = 'POST';
+    var form = document.createElement("form");
+    form.method = "POST";
     form.action = "{% url 'logout' %}";
     document.body.appendChild(form);
 
     // Add CSRF token
-    var csrfInput = document.createElement('input');
-    csrfInput.type = 'hidden';
-    csrfInput.name = 'csrfmiddlewaretoken';
-    csrfInput.value = '{{ csrf_token }}';
+    var csrfInput = document.createElement("input");
+    csrfInput.type = "hidden";
+    csrfInput.name = "csrfmiddlewaretoken";
+    csrfInput.value = "{{ csrf_token }}";
     form.appendChild(csrfInput);
 
     form.submit();
-}
+  }
 </script>
