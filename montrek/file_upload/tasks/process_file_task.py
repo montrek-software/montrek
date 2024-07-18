@@ -1,3 +1,4 @@
+from montrek.celery_app import app as celery_app
 from celery import Task
 
 
@@ -13,6 +14,10 @@ from file_upload.managers.file_upload_manager import (
 class ProcessFileTaskBase(Task):
     file_upload_processor_class: type[FileUploadProcessorProtocol]
     file_registry_manager_class: type[MontrekManager]
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__()
+        celery_app.register_task(self)
 
     def run(
         self,
