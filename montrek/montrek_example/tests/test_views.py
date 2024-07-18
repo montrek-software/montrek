@@ -535,6 +535,7 @@ class TestMontrekExampleA1FieldMapCreateView(MontrekCreateViewTestCase):
             form.fields["function_name"].choices,
             [
                 ("append_source_field_1", "append_source_field_1"),
+                ("extract_number", "extract_number"),
                 ("multiply_by_value", "multiply_by_value"),
                 ("no_change", "no_change"),
             ],

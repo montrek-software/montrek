@@ -28,6 +28,15 @@ class FieldMapFunctionManager:
     ) -> pd.Series:
         return source_df[source_field].multiply(value)
 
+    @staticmethod
+    def extract_number(source_df: pd.DataFrame, source_field: str) -> pd.Series:
+        """Extracts the first number found in a string"""
+        str_series = source_df[source_field].astype(str)
+        pattern = r"(-?\d+\.\d+|-?\d+)"
+        group_match_df = str_series.str.extract(pattern)
+        result_series = group_match_df[0].astype(float)
+        return result_series
+
 
 class FieldMapManagerABC(MontrekTableManager):
     field_map_function_manager_class = FieldMapFunctionManager
