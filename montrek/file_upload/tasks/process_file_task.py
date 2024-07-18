@@ -1,5 +1,4 @@
 from celery import Task
-from montrek.celery_app import app
 
 
 from mailing.managers.mailing_manager import MailingManager
@@ -45,7 +44,3 @@ class ProcessFileTaskBase(Task):
         )
         registry = registry_manager.repository.std_create_object(att_dict)
         return processor.message
-
-
-# for subclass in ProcessFileTaskBase.__subclasses__():
-#     app.register_task(subclass)

@@ -14,10 +14,13 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from django.contrib import admin
 from django.urls import path, include
 from baseclasses import views as base_views
 from django.conf import settings
+from file_upload.tasks.process_file_task import ProcessFileTaskBase
+from montrek.celery_app import app as celery_app
 
 urlpatterns = [
     path("", base_views.home, name="home"),
@@ -37,3 +40,7 @@ urlpatterns = [
 for app in settings.MONTREK_EXTENSION_APPS:
     app_path = app.replace(".", "/") + "/"
     urlpatterns.append(path(app_path, include(f"{app}.urls")))
+
+
+for subclass in ProcessFileTaskBase.__subclasses__():
+    celery_app.register_task(subclass)
