@@ -85,7 +85,6 @@ class MockProcessFileTask(ProcessFileTaskABC):
 
 
 class MockBackgroundFileUploadManager(BackgroundFileUploadManagerABC):
-    repository_class = MockFileUploadRegistryRepository
     file_upload_processor_class = MockFileUploadProcessor
     task = MockProcessFileTask(
         file_upload_processor_class=MockFileUploadProcessor,

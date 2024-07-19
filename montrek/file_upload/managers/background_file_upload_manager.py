@@ -1,9 +1,9 @@
 from file_upload.managers.file_upload_manager import FileUploadManagerABC
-from file_upload.tasks.process_file_task import ProcessFileTaskBase
+from file_upload.tasks.process_file_task import ProcessFileTaskABC
 
 
 class BackgroundFileUploadManagerABC(FileUploadManagerABC):
-    task = type[ProcessFileTaskBase]
+    task = type[ProcessFileTaskABC]
 
     def upload_and_process(self) -> bool:
         if not self.processor.pre_check(self.file_path):
