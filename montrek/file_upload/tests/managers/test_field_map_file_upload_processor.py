@@ -26,4 +26,7 @@ class TestFieldMapFileUploadProcessor(TestCase):
         processor = ReadErrorFieldMapFileUploadProcessor(registry_sat.hub_entity, {})
 
         self.assertFalse(processor.process("file_path"))
-        self.assertIn("cannot read file", processor.message)
+        self.assertEqual(
+            "Error raised during file reading: <br>RuntimeError: cannot read file",
+            processor.message,
+        )
