@@ -4,44 +4,13 @@ from file_upload.managers.file_upload_manager import FileUploadManagerABC
 from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepository,
 )
+from file_upload.tests.mocks import (
+    MockFileUploadProcessor,
+    MockFileUploadProcessorFail,
+    MockFileUploadProcessorPostCheckFail,
+    MockFileUploadProcessorPreCheckFail,
+)
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
-
-
-class MockFileUploadProcessor:
-    message = "File processed"
-
-    def __init__(self, file_upload_registry_id, session_data, **kwargs):
-        pass
-
-    def pre_check(self, file_path):
-        return True
-
-    def process(self, file_path):
-        return True
-
-    def post_check(self, file_path):
-        return True
-
-
-class MockFileUploadProcessorFail(MockFileUploadProcessor):
-    message = "File not processed"
-
-    def process(self, file_path):
-        return False
-
-
-class MockFileUploadProcessorPreCheckFail(MockFileUploadProcessor):
-    message = "Pre Check failed"
-
-    def pre_check(self, file_path):
-        return False
-
-
-class MockFileUploadProcessorPostCheckFail(MockFileUploadProcessor):
-    message = "Pre Check failed"
-
-    def post_check(self, file_path):
-        return False
 
 
 class MockFileUploadManager(FileUploadManagerABC):

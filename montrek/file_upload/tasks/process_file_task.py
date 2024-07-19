@@ -14,7 +14,7 @@ from file_upload.repositories.file_upload_registry_repository import (
 )
 
 
-class ProcessFileTaskBase(Task):
+class ProcessFileTaskABC(Task):
     def __init__(
         self,
         *args,
@@ -22,7 +22,7 @@ class ProcessFileTaskBase(Task):
         file_upload_registry_repository_class: type[FileUploadRegistryRepositoryABC],
         **kwargs,
     ) -> None:
-        super().__init__()
+        super().__init__(*args, **kwargs)
         self.file_upload_processor_class = file_upload_processor_class
         self.file_upload_registry_repository_class = (
             file_upload_registry_repository_class
