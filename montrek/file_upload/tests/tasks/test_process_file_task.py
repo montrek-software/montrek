@@ -55,7 +55,7 @@ class TestProcessFileTaskBase(TestCase):
         file_path = f"/dummy/path/{registry_sat_obj.file_name}"
         result = self.task.delay(
             file_path=file_path,
-            file_upload_registry_id=registry_sat_obj.id,
+            file_upload_registry_id=registry_sat_obj.hub_entity.id,
             session_data=self.session_data,
         )
         self.assertTrue(result.successful())
