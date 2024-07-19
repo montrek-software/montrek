@@ -43,21 +43,34 @@ class ProcessFileTaskABC(Task):
             session_data=session_data
         )
         registry_obj = registry_repo.std_queryset().get(pk=file_upload_registry_id)
-        processor = self.file_upload_processor_class(
-            file_upload_registry_hub=registry_obj, session_data=session_data
-        )
-        result = processor.process(file_path)
-        result = processor.post_check(file_path) if result else False
+        try:
+            processor = self.file_upload_processor_class(
+                file_upload_registry_hub=registry_obj, session_data=session_data
+            )
+            result = processor.process(file_path)
+            result = processor.post_check(file_path) if result else False
+            message = processor.message
+        except Exception as e:
+            result = False
+            message = (
+                f"Error raised during file processing: <br>{e.__class__.__name__}: {e}"
+            )
         user = get_user_model().objects.get(pk=session_data["user_id"])
+        file_name = registry_obj.file_name
+        if result:
+            subject = "Background file upload finished successfully."
+        else:
+            subject = "ERROR: Background file upload did not finish successfully!"
+        subject += f" ({file_name})"
         MailingManager(session_data=session_data).send_montrek_mail(
-            user.email, "Backgroud File Upload Finished", processor.message
+            user.email, subject, message
         )
         att_dict = registry_repo.object_to_dict(registry_obj)
         att_dict.update(
             {
                 "upload_status": "processed" if result else "failed",
-                "upload_message": processor.message,
+                "upload_message": message,
             },
         )
         registry_obj = registry_repo.std_create_object(att_dict)
-        return processor.message
+        return message
