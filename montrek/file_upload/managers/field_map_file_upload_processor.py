@@ -44,7 +44,13 @@ class FieldMapFileUploadProcessor:
         return mapped_df
 
     def process(self, file_path: str):
-        source_df = self.get_source_df_from_file(file_path)
+        try:
+            source_df = self.get_source_df_from_file(file_path)
+        except Exception as e:
+            self.message = (
+                f"Error raised during file reading: <br>{e.__class__.__name__}: {e}"
+            )
+            return False
 
         mapped_df = self.field_map_manager.apply_field_maps(source_df)
         if self.field_map_manager.exceptions:
