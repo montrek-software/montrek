@@ -47,8 +47,11 @@ class ProcessFileTaskABC(Task):
             processor = self.file_upload_processor_class(
                 file_upload_registry_hub=registry_obj, session_data=session_data
             )
-            result = processor.process(file_path)
-            result = processor.post_check(file_path) if result else False
+            result = processor.pre_check(file_path)
+            if result:
+                result = processor.process(file_path)
+                if result:
+                    result = processor.post_check(file_path) if result else False
             message = processor.message
         except Exception as e:
             result = False
