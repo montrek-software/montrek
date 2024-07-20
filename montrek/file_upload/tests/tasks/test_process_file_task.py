@@ -11,6 +11,7 @@ from file_upload.repositories.file_upload_registry_repository import (
 from file_upload.tests.mocks import (
     MockFileUploadProcessor,
     MockFileUploadProcessorPostCheckFail,
+    MockFileUploadProcessorPreCheckFail,
     MockFileUploadRegistryRepository,
     MockProcessFileTask,
 )
@@ -49,7 +50,31 @@ class TestProcessFileTaskABC(TestCase):
         registry_sat_obj = MockFileUploadRegistryRepository({}).std_queryset().last()
         self.assertEqual(registry_sat_obj.upload_status, "processed")
 
-    def test_run_handled_processor_error(self):
+    def test_run_pre_check_error(self):
+        self.task = ProcessFileTaskABC(
+            file_upload_processor_class=MockFileUploadProcessorPreCheckFail,
+            file_upload_registry_repository_class=FileUploadRegistryRepository,
+        )
+        result = self.task.delay(
+            file_path=self.file_path,
+            file_upload_registry_id=self.registry_sat_obj.hub_entity.id,
+            session_data=self.session_data,
+        )
+        self.assertTrue(result.successful())
+        self.assertEqual(len(mail.outbox), 1)
+        m = mail.outbox[0]
+        self.assertEqual(m.to, [self.user.email])
+        self.assertEqual(
+            m.subject,
+            f"ERROR: Background file upload did not finish successfully! ({self.file_name})",
+        )
+        self.assertTrue(
+            "Pre check failed" in m.body,
+        )
+        registry_sat_obj = FileUploadRegistryRepository({}).std_queryset().last()
+        self.assertEqual(registry_sat_obj.upload_status, "failed")
+
+    def test_run_post_check_error(self):
         self.task = ProcessFileTaskABC(
             file_upload_processor_class=MockFileUploadProcessorPostCheckFail,
             file_upload_registry_repository_class=FileUploadRegistryRepository,

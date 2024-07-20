@@ -55,29 +55,3 @@ class TestBackgroundFileUploadManagerABC(TestCase):
             manager.processor.message,
             "Upload background task scheduled. You will receive an email when the task is finished.",
         )
-
-    def test_upload_and_process_pre_check_error(self):
-        class MockBackgroundFileUploadManagerProcessorPreCheckFail(
-            MockBackgroundFileUploadManager
-        ):
-            file_upload_processor_class = MockFileUploadProcessorPreCheckFail
-
-        manager = MockBackgroundFileUploadManagerProcessorPreCheckFail(
-            file=self.test_file,
-            session_data=self.session_data,
-        )
-        result = manager.upload_and_process()
-        self.assertFalse(result)
-
-        registry_sat_objects = FileUploadRegistryStaticSatellite.objects.all()
-        upload_status = [
-            o.upload_status for o in registry_sat_objects.order_by("updated_at")
-        ]
-        self.assertEqual(upload_status, ["pending", "failed"])
-
-        registry_sat_obj = MockFileUploadRegistryRepository({}).std_queryset().last()
-        self.assertEqual(registry_sat_obj.upload_status, "failed")
-        self.assertEqual(
-            manager.processor.message,
-            "Pre check failed",
-        )
