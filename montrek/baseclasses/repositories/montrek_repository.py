@@ -219,37 +219,13 @@ class MontrekRepository:
             raise ValueError(
                 f"{time_series_satellite_class.__name__} is not a subclass of MontrekTimeSeriesSatelliteABC"
             )
-
-        hub_sub_query = Subquery(
-            self.hub_class.objects.filter(pk=OuterRef("hub_entity_id")).values("pk")
-        )
-        annotation_map = {field: F(field) for field in fields}
-        annotation_map["value_date"] = F("value_date")
-        queryset = (
-            time_series_satellite_class.objects.annotate(pk=hub_sub_query)
-            .filter(
-                state_date_start__lte=self.reference_date,
-                state_date_end__gte=self.reference_date,
-                value_date__lte=self.session_end_date,
-                value_date__gte=self.session_start_date,
-            )
-            .order_by("-value_date")
-            .annotate(**self.annotations)
-        )
-        queryset = self._apply_filter(queryset)
         satellite_class_name = time_series_satellite_class.__name__.lower()
         field_map = {field: F(f"{satellite_class_name}__{field}") for field in fields}
         field_map["value_date"] = F(f"{satellite_class_name}__value_date")
-        no_ts_hubs_queryset = (
-            self.hub_class.objects.exclude(id__in=queryset.values("hub_entity_id"))
-            .annotate(**field_map)
-            .annotate(**self.annotations)
-            .values(*fields, "value_date")
+        queryset = self.hub_class.objects.annotate(**field_map).annotate(
+            **self.annotations
         )
-        no_ts_hubs_queryset = self._apply_filter(no_ts_hubs_queryset)
-        breakpoint()
-        queryset = queryset.union(no_ts_hubs_queryset)
-        self._add_to_primary_satellite_classes(time_series_satellite_class)
+        queryset = self._apply_filter(queryset)
         return queryset
 
     def get_history_queryset(self, pk: int, **kwargs) -> dict[str, QuerySet]:
