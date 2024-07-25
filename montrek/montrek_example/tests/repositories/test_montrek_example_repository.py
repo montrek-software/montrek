@@ -760,12 +760,29 @@ class TestTimeSeries(TestCase):
             )
 
     def test_build_time_series_queryset(self):
-        me_factories.SatTSC2Factory.create_batch(3)
+        ts_facs = me_factories.SatTSC2Factory.create_batch(3)
+        me_factories.SatC1Factory.create()
         test_query = HubCRepository().build_time_series_queryset(
             me_models.SatTSC2,
-            montrek_time(2024, 2, 5),
+            ["field_tsc2_float"],
         )
+        self.assertEqual(test_query.count(), 5)
+        self.assertEqual(test_query[0].field_tsc2_float, ts_facs[0].field_tsc2_float)
+
+    def test_std_queryset_timeseries(self):
+        static_sats = me_factories.SatC1Factory.create_batch(3)
+        me_factories.SatTSC2Factory.create(
+            hub_entity=static_sats[0].hub_entity, value_date=montrek_time(2024, 2, 5)
+        )
+        me_factories.SatTSC2Factory.create(
+            hub_entity=static_sats[0].hub_entity, value_date=montrek_time(2024, 2, 6)
+        )
+        me_factories.SatTSC2Factory.create(
+            hub_entity=static_sats[1].hub_entity, value_date=montrek_time(2024, 2, 5)
+        )
+        test_query = HubCRepository().std_queryset()
         self.assertEqual(test_query.count(), 4)
+        self.assertEqual(test_query[1].field_c1_str, "Hallo")
 
 
 class TestHistory(TestCase):
