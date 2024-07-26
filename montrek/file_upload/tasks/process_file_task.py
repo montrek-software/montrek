@@ -5,7 +5,6 @@ from celery import Task
 from mailing.managers.mailing_manager import MailingManager
 from django.contrib.auth import get_user_model
 
-from baseclasses.managers.montrek_manager import MontrekManager
 from file_upload.managers.file_upload_manager import (
     FileUploadProcessorProtocol,
 )

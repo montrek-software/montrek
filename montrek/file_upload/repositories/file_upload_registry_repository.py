@@ -1,5 +1,4 @@
 import os
-from typing import TextIO
 from django.contrib import messages
 from django.core.files import File
 from django.conf import settings
