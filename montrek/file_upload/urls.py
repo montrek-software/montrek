@@ -14,7 +14,7 @@ urlpatterns = [
     ),
     path(
         "",
-        views.FileUploadRegistryView.as_view(),
+        views.FileUploadRegistryListView.as_view(),
         name="montrek_upload_file",
     ),
 ]

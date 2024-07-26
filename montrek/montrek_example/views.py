@@ -8,7 +8,7 @@ from montrek_example.managers.a_upload_table_manager import (
 from baseclasses.dataclasses.view_classes import ActionElement
 from django.urls import reverse
 from file_upload.views import (
-    FileUploadRegistryView,
+    FileUploadRegistryListView,
     MontrekFieldMapCreateView,
     MontrekFieldMapUpdateView,
     MontrekFieldMapListView,
@@ -213,7 +213,7 @@ class MontrekExampleA1UploadFileView(MontrekUploadFileView):
         return reverse("a1_view_uploads")
 
 
-class MontrekExampleA1UploadView(FileUploadRegistryView):
+class MontrekExampleA1UploadView(FileUploadRegistryListView):
     title = "A1 Uploads"
     page_class = pages.MontrekExampleAAppPage
     manager_class = HubAFileUploadRegistryManager

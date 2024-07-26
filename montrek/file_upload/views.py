@@ -153,13 +153,8 @@ class MontrekFieldMapListView(MontrekListView):
     success_url = "under_construction"
 
 
-class FileUploadRegistryView(MontrekListView):
+class FileUploadRegistryListView(MontrekListView):
     manager_class = FileUploadRegistryManager
     title = "Uploads"
     tab = "tab_uploads"
     page_class = FileUploadPage
-
-
-# TODO: Remove after refactor
-class MontrekUploadView(FileUploadRegistryView):
-    pass

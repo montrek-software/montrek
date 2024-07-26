@@ -3,7 +3,7 @@ from django.contrib.sessions.middleware import SessionMiddleware
 from django.contrib.messages.middleware import MessageMiddleware
 from file_upload.views import (
     MontrekUploadFileView,
-    FileUploadRegistryView,
+    FileUploadRegistryListView,
     MontrekDownloadFileView,
     MontrekDownloadLogFileView,
 )
@@ -68,8 +68,8 @@ class TestMontrekUploadFileView(TestCase):
         self.assertEqual(response.status_code, 200)
 
 
-class TestFileUploadRegistryView(MontrekListViewTestCase):
-    view_class = FileUploadRegistryView
+class TestFileUploadRegistryListView(MontrekListViewTestCase):
+    view_class = FileUploadRegistryListView
     viewname = "montrek_upload_file"
     expected_no_of_rows = 3
     expected_columns = [
