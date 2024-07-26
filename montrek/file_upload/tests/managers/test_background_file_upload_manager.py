@@ -1,24 +1,10 @@
-from django.core import mail
-from file_upload.tests.factories.file_upload_factories import (
-    FileUploadRegistryStaticSatelliteFactory,
-)
-from typing import Any
 from django.test import TestCase
 
-from file_upload.tasks.process_file_task import ProcessFileTaskABC
-from file_upload.repositories.file_upload_registry_repository import (
-    FileUploadRegistryRepository,
-)
 from file_upload.models import (
-    FileUploadRegistryHubABC,
     FileUploadRegistryStaticSatellite,
-)
-from file_upload.managers.background_file_upload_manager import (
-    BackgroundFileUploadManagerABC,
 )
 from file_upload.tests.mocks import (
     MockBackgroundFileUploadManager,
-    MockFileUploadProcessorPreCheckFail,
     MockFileUploadRegistryRepository,
 )
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
