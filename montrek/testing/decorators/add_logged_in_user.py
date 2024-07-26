@@ -1,4 +1,3 @@
-from user.models import MontrekUser
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
 
