@@ -263,7 +263,6 @@ class MontrekRepository:
             )
             | Q(value_date=None)
         )
-        queryset = self._apply_filter(queryset)
         return TSQueryContainer(queryset=queryset, fields=fields)
 
     def get_history_queryset(self, pk: int, **kwargs) -> dict[str, QuerySet]:
@@ -308,6 +307,7 @@ class MontrekRepository:
                 base_query = base_query.annotate(
                     **{field: Subquery(subquery.values(field))}
                 )
+        base_query = base_query.order_by("-value_date")
         return base_query
 
     def rename_field(self, field: str, new_name: str):
