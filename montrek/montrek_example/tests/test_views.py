@@ -259,6 +259,10 @@ class TestMontrekExampleCCreate(MontrekCreateViewTestCase):
         return {
             "field_c1_str": "test",
             "field_c1_bool": True,
+            "field_tsc2_float": 2.0,
+            "field_tsc3_int": 2,
+            "field_tsc3_str": "testsmest",
+            "value_date": "2024-02-17",
         }
 
 

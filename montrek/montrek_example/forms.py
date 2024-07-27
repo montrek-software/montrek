@@ -23,4 +23,4 @@ class ExampleBCreateForm(MontrekCreateForm):
 
 class ExampleCCreateForm(MontrekCreateForm):
     class Meta:
-        exclude = ["value_date", "field_tsc2_float"]
+        exclude = []
