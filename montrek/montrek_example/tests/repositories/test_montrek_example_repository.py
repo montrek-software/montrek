@@ -841,6 +841,50 @@ class TestTimeSeriesQuerySet(TestCase):
             self.assertEqual(test_query.count(), expected_count)
 
 
+class TestTimeSeriesStdQueryset(TestCase):
+    def setUp(self) -> None:
+        ts_satellite_c1 = me_factories.SatC1Factory.create(
+            field_c1_str="Hallo",
+            field_c1_bool=True,
+        )
+        me_factories.SatTSC2Factory.create(
+            hub_entity=ts_satellite_c1.hub_entity,
+            field_tsc2_float=1.0,
+            value_date=montrek_time(2024, 2, 5),
+        )
+        static_sats = me_factories.SatC1Factory.create_batch(3)
+        me_factories.SatTSC2Factory.create(
+            hub_entity=static_sats[0].hub_entity,
+            field_tsc2_float=1.0,
+            value_date=montrek_time(2024, 2, 5),
+            state_date_end=montrek_time(2024, 7, 6),
+        )
+        me_factories.SatTSC2Factory.create(
+            hub_entity=static_sats[0].hub_entity,
+            field_tsc2_float=3.0,
+            value_date=montrek_time(2024, 2, 5),
+            state_date_start=montrek_time(2024, 7, 6),
+        )
+        me_factories.SatTSC2Factory.create(
+            hub_entity=static_sats[0].hub_entity, value_date=montrek_time(2024, 2, 6)
+        )
+        me_factories.SatTSC2Factory.create(
+            hub_entity=static_sats[1].hub_entity, value_date=montrek_time(2024, 2, 5)
+        )
+        me_factories.SatTSC3Factory.create(
+            hub_entity=static_sats[0].hub_entity, value_date=montrek_time(2024, 2, 6)
+        )
+        me_factories.SatTSC3Factory.create(
+            hub_entity=static_sats[1].hub_entity, value_date=montrek_time(2024, 2, 5)
+        )
+        self.user = MontrekUserFactory()
+
+    def test_build_time_series_std_queryset(self):
+        repo = HubCRepository()
+        test_query = repo.std_queryset()
+        self.assertEqual(test_query[1].ts_field_tsc2_float, 3.0)
+
+
 class TestHistory(TestCase):
     def setUp(self) -> None:
         self.user = MontrekUserFactory()
