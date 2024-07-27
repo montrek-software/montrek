@@ -887,12 +887,17 @@ class TestTimeSeriesStdQueryset(TestCase):
             field_tsc3_int=7,
             field_tsc3_str="what2",
         )
+        me_factories.SatTSC3Factory.create(
+            value_date=montrek_time(2024, 2, 3),
+            field_tsc3_int=8,
+            field_tsc3_str="what3",
+        )
         self.user = MontrekUserFactory()
 
     def test_build_time_series_std_queryset(self):
         repo = HubCRepository()
         test_query = repo.std_queryset()
-        self.assertEqual(test_query.count(), 5)
+        self.assertEqual(test_query.count(), 6)
         test_obj_0 = test_query[1]
         self.assertEqual(test_obj_0.field_c1_str, "Hallo")
         self.assertEqual(test_obj_0.field_c1_bool, True)
