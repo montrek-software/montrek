@@ -1,5 +1,3 @@
-from django.utils import timezone
-import datetime
 from django.test import TestCase, RequestFactory
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.contrib.messages.middleware import MessageMiddleware
@@ -13,9 +11,6 @@ from file_upload.tests.mocks import (
     MockWrongHubClassFileUploadRegistryRepository,
     MockWrongStaticSatelliteClassFileUploadRegistryRepository,
     MockWrongLinkFileUploadRegistryRepository,
-)
-from file_upload.repositories.file_upload_file_repository import (
-    FileUploadFileRepository,
 )
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 

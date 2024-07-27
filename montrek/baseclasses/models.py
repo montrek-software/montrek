@@ -87,6 +87,7 @@ class MontrekSatelliteABC(TimeStampMixin, StateMixin, UserMixin):
 
     # Some hubs can have multiple satellites (e.g. timeseries).
     allow_multiple = False
+    is_timeseries = False
 
     def save(self, *args, **kwargs):
         if self.hash_identifier == "":
@@ -178,6 +179,7 @@ class MontrekTimeSeriesSatelliteABC(MontrekSatelliteABC):
         abstract = True
 
     allow_multiple = True
+    is_timeseries = True
     value_date = models.DateField()
     identifier_fields = ["value_date", "hub_entity_id"]
 

@@ -1,4 +1,3 @@
-from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, RequestFactory
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.contrib.messages.middleware import MessageMiddleware
@@ -11,7 +10,6 @@ from file_upload.views import (
 from baseclasses.pages import MontrekPage
 from file_upload.tests.factories.file_upload_factories import (
     FileUploadRegistryStaticSatelliteFactory,
-    FileUploadFileStaticSatelliteFactory,
 )
 from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepositoryABC,
