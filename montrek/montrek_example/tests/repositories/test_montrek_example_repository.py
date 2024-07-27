@@ -1,3 +1,4 @@
+import datetime
 from django.core.exceptions import PermissionDenied
 from django.test import TestCase, TransactionTestCase
 from django.utils import timezone
@@ -748,6 +749,39 @@ class TestTimeSeries(TestCase):
             )
             self.assertLess(queryset[i].state_date_start, timezone.now())
 
+
+class TestTimeSeriesQuerySet(TestCase):
+    def setUp(self) -> None:
+        ts_satellite_c1 = me_factories.SatC1Factory.create(
+            field_c1_str="Hallo",
+            field_c1_bool=True,
+        )
+        me_factories.SatTSC2Factory.create(
+            hub_entity=ts_satellite_c1.hub_entity,
+            field_tsc2_float=1.0,
+            value_date=montrek_time(2024, 2, 5),
+        )
+        static_sats = me_factories.SatC1Factory.create_batch(3)
+        self.ts_fact = me_factories.SatTSC2Factory.create(
+            hub_entity=static_sats[0].hub_entity,
+            field_tsc2_float=1.0,
+            value_date=montrek_time(2024, 2, 5),
+            state_date_end=montrek_time(2024, 7, 6),
+        )
+        self.ts_fact2 = me_factories.SatTSC2Factory.create(
+            hub_entity=static_sats[0].hub_entity,
+            field_tsc2_float=3.0,
+            value_date=montrek_time(2024, 2, 5),
+            state_date_start=montrek_time(2024, 7, 6),
+        )
+        me_factories.SatTSC2Factory.create(
+            hub_entity=static_sats[0].hub_entity, value_date=montrek_time(2024, 2, 6)
+        )
+        me_factories.SatTSC2Factory.create(
+            hub_entity=static_sats[1].hub_entity, value_date=montrek_time(2024, 2, 5)
+        )
+        self.user = MontrekUserFactory()
+
     def test_build_time_series_queryset_wrong_satellite_class(self):
         repository = HubCRepository()
         with self.assertRaisesRegex(
@@ -760,43 +794,51 @@ class TestTimeSeries(TestCase):
             )
 
     def test_build_time_series_queryset(self):
-        static_sats = me_factories.SatC1Factory.create_batch(3)
-        ts_fact = me_factories.SatTSC2Factory.create(
-            hub_entity=static_sats[0].hub_entity,
-            field_tsc2_float=1.0,
-            value_date=montrek_time(2024, 2, 5),
-            state_date_end=montrek_time(2024, 7, 6),
-        )
-        ts_fact2 = me_factories.SatTSC2Factory.create(
-            hub_entity=static_sats[0].hub_entity,
-            field_tsc2_float=3.0,
-            value_date=montrek_time(2024, 2, 5),
-            state_date_start=montrek_time(2024, 7, 6),
-        )
-        me_factories.SatTSC2Factory.create(
-            hub_entity=static_sats[0].hub_entity, value_date=montrek_time(2024, 2, 6)
-        )
-        me_factories.SatTSC2Factory.create(
-            hub_entity=static_sats[1].hub_entity, value_date=montrek_time(2024, 2, 5)
-        )
-        repo_1 = HubCRepository()
-        repo_1.reference_date = montrek_time(2024, 7, 1)
-        test_query = repo_1.build_time_series_queryset(
+        repo = HubCRepository()
+        test_query = repo.build_time_series_queryset(
             me_models.SatTSC2,
             ["field_tsc2_float"],
         )
         self.assertEqual(test_query.count(), 5)
-        self.assertEqual(test_query[1].field_tsc2_float, ts_fact.field_tsc2_float)
+        self.assertEqual(test_query[1].field_tsc2_float, self.ts_fact2.field_tsc2_float)
         self.assertEqual(test_query[4].field_tsc2_float, None)
-        repo_2 = HubCRepository()
-        repo_2.reference_date = montrek_time(2024, 7, 7)
-        test_query = repo_2.build_time_series_queryset(
+
+    def test_build_time_series_queryset__reference_date_filter(self):
+        repo = HubCRepository()
+        repo.reference_date = montrek_time(2024, 7, 1)
+        test_query = repo.build_time_series_queryset(
             me_models.SatTSC2,
             ["field_tsc2_float"],
         )
         self.assertEqual(test_query.count(), 5)
-        self.assertEqual(test_query[1].field_tsc2_float, ts_fact2.field_tsc2_float)
+        self.assertEqual(test_query[1].field_tsc2_float, self.ts_fact.field_tsc2_float)
         self.assertEqual(test_query[4].field_tsc2_float, None)
+
+    def test_build_time_series_queryset__session_dates(self):
+        for end_date, expected_count in [
+            (datetime.datetime(2024, 2, 1), 1),
+            (datetime.datetime(2024, 2, 5), 4),
+            (datetime.datetime(2024, 2, 6), 5),
+            (datetime.datetime(2024, 2, 7), 5),
+        ]:
+            repo = HubCRepository(session_data={"end_date": end_date})
+            test_query = repo.build_time_series_queryset(
+                me_models.SatTSC2,
+                ["field_tsc2_float"],
+            )
+            self.assertEqual(test_query.count(), expected_count)
+        for start_date, expected_count in [
+            (datetime.datetime(2024, 2, 1), 5),
+            (datetime.datetime(2024, 2, 5), 5),
+            (datetime.datetime(2024, 2, 6), 2),
+            (datetime.datetime(2024, 2, 7), 1),
+        ]:
+            repo = HubCRepository(session_data={"start_date": start_date})
+            test_query = repo.build_time_series_queryset(
+                me_models.SatTSC2,
+                ["field_tsc2_float"],
+            )
+            self.assertEqual(test_query.count(), expected_count)
 
 
 class TestHistory(TestCase):

@@ -241,6 +241,13 @@ class MontrekRepository:
             .annotate(**field_map)
             .annotate(**self.annotations)
         )
+        queryset = queryset.filter(
+            (
+                Q(value_date__lte=self.session_end_date)
+                & Q(value_date__gte=self.session_start_date)
+            )
+            | Q(value_date=None)
+        )
         queryset = self._apply_filter(queryset)
         return queryset
 
