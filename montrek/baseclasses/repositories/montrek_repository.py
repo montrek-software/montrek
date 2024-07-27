@@ -173,9 +173,11 @@ class MontrekRepository:
         fields: List[str],
     ):
         if satellite_class.is_timeseries:
-            self._ts_queryset_containers.append(
-                self.build_time_series_queryset_container(satellite_class, fields)
+            ts_container = self.build_time_series_queryset_container(
+                satellite_class, fields
             )
+            if ts_container.queryset.count() > 0:
+                self._ts_queryset_containers.append(ts_container)
         else:
             subquery_builder = SatelliteSubqueryBuilder(
                 satellite_class, "pk", self.reference_date
