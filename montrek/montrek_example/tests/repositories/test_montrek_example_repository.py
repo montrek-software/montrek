@@ -855,7 +855,7 @@ class TestTimeSeriesStdQueryset(TestCase):
         static_sats = me_factories.SatC1Factory.create_batch(3)
         me_factories.SatTSC2Factory.create(
             hub_entity=static_sats[0].hub_entity,
-            field_tsc2_float=1.0,
+            field_tsc2_float=2.0,
             value_date=montrek_time(2024, 2, 5),
             state_date_end=montrek_time(2024, 7, 6),
         )
@@ -866,16 +866,26 @@ class TestTimeSeriesStdQueryset(TestCase):
             state_date_start=montrek_time(2024, 7, 6),
         )
         me_factories.SatTSC2Factory.create(
-            hub_entity=static_sats[0].hub_entity, value_date=montrek_time(2024, 2, 6)
+            hub_entity=static_sats[0].hub_entity,
+            value_date=montrek_time(2024, 2, 6),
+            field_tsc2_float=2.5,
         )
         me_factories.SatTSC2Factory.create(
-            hub_entity=static_sats[1].hub_entity, value_date=montrek_time(2024, 2, 5)
+            hub_entity=static_sats[1].hub_entity,
+            value_date=montrek_time(2024, 2, 5),
+            field_tsc2_float=3.5,
         )
         me_factories.SatTSC3Factory.create(
-            hub_entity=static_sats[0].hub_entity, value_date=montrek_time(2024, 2, 6)
+            hub_entity=static_sats[0].hub_entity,
+            value_date=montrek_time(2024, 2, 6),
+            field_tsc3_int=5,
+            field_tsc3_str="what1",
         )
         me_factories.SatTSC3Factory.create(
-            hub_entity=static_sats[1].hub_entity, value_date=montrek_time(2024, 2, 5)
+            hub_entity=static_sats[1].hub_entity,
+            value_date=montrek_time(2024, 2, 5),
+            field_tsc3_int=7,
+            field_tsc3_str="what2",
         )
         self.user = MontrekUserFactory()
 
@@ -891,12 +901,33 @@ class TestTimeSeriesStdQueryset(TestCase):
         self.assertEqual(test_obj_0.field_tsc3_int, None)
         self.assertEqual(test_obj_0.field_tsc3_str, None)
         test_obj_1 = test_query[1]
-        self.assertEqual(test_obj_1.field_c1_str, "Hallo")
-        self.assertEqual(test_obj_1.field_c1_bool, True)
-        self.assertEqual(test_obj_1.field_tsc2_float, 1.0)
+        self.assertEqual(test_obj_1.field_c1_str, "DEFAULT")
+        self.assertEqual(test_obj_1.field_c1_bool, False)
+        self.assertEqual(test_obj_1.field_tsc2_float, 3.0)
         self.assertEqual(test_obj_1.value_date, montrek_time(2024, 2, 5).date())
         self.assertEqual(test_obj_1.field_tsc3_int, None)
         self.assertEqual(test_obj_1.field_tsc3_str, None)
+        test_obj_2 = test_query[2]
+        self.assertEqual(test_obj_2.field_c1_str, "DEFAULT")
+        self.assertEqual(test_obj_2.field_c1_bool, False)
+        self.assertEqual(test_obj_2.field_tsc2_float, 2.5)
+        self.assertEqual(test_obj_2.value_date, montrek_time(2024, 2, 6).date())
+        self.assertEqual(test_obj_2.field_tsc3_int, 5)
+        self.assertEqual(test_obj_2.field_tsc3_str, "what1")
+        test_obj_3 = test_query[3]
+        self.assertEqual(test_obj_3.field_c1_str, "DEFAULT")
+        self.assertEqual(test_obj_3.field_c1_bool, False)
+        self.assertEqual(test_obj_3.field_tsc2_float, 3.5)
+        self.assertEqual(test_obj_3.value_date, montrek_time(2024, 2, 5).date())
+        self.assertEqual(test_obj_3.field_tsc3_int, 7)
+        self.assertEqual(test_obj_3.field_tsc3_str, "what2")
+        test_obj_4 = test_query[4]
+        self.assertEqual(test_obj_4.field_c1_str, "DEFAULT")
+        self.assertEqual(test_obj_4.field_c1_bool, False)
+        self.assertEqual(test_obj_4.field_tsc2_float, None)
+        self.assertEqual(test_obj_4.value_date, None)
+        self.assertEqual(test_obj_4.field_tsc3_int, None)
+        self.assertEqual(test_obj_4.field_tsc3_str, None)
 
 
 class TestHistory(TestCase):
