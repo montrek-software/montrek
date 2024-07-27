@@ -762,7 +762,16 @@ class TestTimeSeries(TestCase):
     def test_build_time_series_queryset(self):
         static_sats = me_factories.SatC1Factory.create_batch(3)
         ts_fact = me_factories.SatTSC2Factory.create(
-            hub_entity=static_sats[0].hub_entity, value_date=montrek_time(2024, 2, 5)
+            hub_entity=static_sats[0].hub_entity,
+            field_tsc2_float=1.0,
+            value_date=montrek_time(2024, 2, 5),
+            state_date_end=montrek_time(2024, 7, 6),
+        )
+        ts_fact2 = me_factories.SatTSC2Factory.create(
+            hub_entity=static_sats[0].hub_entity,
+            field_tsc2_float=3.0,
+            value_date=montrek_time(2024, 2, 5),
+            state_date_start=montrek_time(2024, 7, 6),
         )
         me_factories.SatTSC2Factory.create(
             hub_entity=static_sats[0].hub_entity, value_date=montrek_time(2024, 2, 6)
@@ -770,12 +779,23 @@ class TestTimeSeries(TestCase):
         me_factories.SatTSC2Factory.create(
             hub_entity=static_sats[1].hub_entity, value_date=montrek_time(2024, 2, 5)
         )
-        test_query = HubCRepository().build_time_series_queryset(
+        repo_1 = HubCRepository()
+        repo_1.reference_date = montrek_time(2024, 7, 1)
+        test_query = repo_1.build_time_series_queryset(
             me_models.SatTSC2,
             ["field_tsc2_float"],
         )
         self.assertEqual(test_query.count(), 5)
         self.assertEqual(test_query[1].field_tsc2_float, ts_fact.field_tsc2_float)
+        self.assertEqual(test_query[4].field_tsc2_float, None)
+        repo_2 = HubCRepository()
+        repo_2.reference_date = montrek_time(2024, 7, 7)
+        test_query = repo_2.build_time_series_queryset(
+            me_models.SatTSC2,
+            ["field_tsc2_float"],
+        )
+        self.assertEqual(test_query.count(), 5)
+        self.assertEqual(test_query[1].field_tsc2_float, ts_fact2.field_tsc2_float)
         self.assertEqual(test_query[4].field_tsc2_float, None)
 
 

@@ -222,8 +222,24 @@ class MontrekRepository:
         satellite_class_name = time_series_satellite_class.__name__.lower()
         field_map = {field: F(f"{satellite_class_name}__{field}") for field in fields}
         field_map["value_date"] = F(f"{satellite_class_name}__value_date")
-        queryset = self.hub_class.objects.annotate(**field_map).annotate(
-            **self.annotations
+        queryset = (
+            self.hub_class.objects.filter(
+                (
+                    Q(
+                        **{
+                            f"{satellite_class_name}__state_date_start__lte": self.reference_date
+                        }
+                    )
+                    & Q(
+                        **{
+                            f"{satellite_class_name}__state_date_end__gt": self.reference_date
+                        }
+                    )
+                )
+                | Q(**{f"{satellite_class_name}__state_date_end": None})
+            )
+            .annotate(**field_map)
+            .annotate(**self.annotations)
         )
         queryset = self._apply_filter(queryset)
         return queryset
