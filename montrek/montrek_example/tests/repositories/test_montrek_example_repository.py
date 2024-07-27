@@ -882,6 +882,14 @@ class TestTimeSeriesStdQueryset(TestCase):
     def test_build_time_series_std_queryset(self):
         repo = HubCRepository()
         test_query = repo.std_queryset()
+        self.assertEqual(test_query.count(), 5)
+        test_obj_0 = test_query[0]
+        self.assertEqual(test_obj_0.field_c1_str, "Hallo")
+        self.assertEqual(test_obj_0.field_c1_bool, True)
+        self.assertEqual(test_obj_0.field_tsc2_float, 1.0)
+        self.assertEqual(test_obj_0.value_date, montrek_time(2024, 2, 5).date())
+        self.assertEqual(test_obj_0.field_tsc3_int, None)
+        self.assertEqual(test_obj_0.field_tsc3_str, None)
         self.assertEqual(test_query[1].field_tsc2_float, 3.0)
 
 

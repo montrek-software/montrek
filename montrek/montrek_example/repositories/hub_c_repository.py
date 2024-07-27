@@ -10,7 +10,6 @@ class HubCRepository(MontrekRepository):
             me_models.SatTSC2,
             [
                 "field_tsc2_float",
-                "value_date",
             ],
         )
         self.add_satellite_fields_annotations(

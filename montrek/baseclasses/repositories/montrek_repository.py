@@ -234,6 +234,7 @@ class MontrekRepository:
                 f"{time_series_satellite_class.__name__} is not a subclass of MontrekTimeSeriesSatelliteABC"
             )
         satellite_class_name = time_series_satellite_class.__name__.lower()
+        fields = [field for field in fields if field != "value_date"]
         field_map = {field: F(f"{satellite_class_name}__{field}") for field in fields}
         field_map["value_date"] = F(f"{satellite_class_name}__value_date")
         queryset = (
