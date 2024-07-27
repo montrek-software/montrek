@@ -12,6 +12,7 @@ from baseclasses.views import MontrekDeleteView
 class {{ create_view_cls_name }}(MontrekCreateView):
     manager_class = {{ manager_cls_name }}
     page_class = {{ page_cls_name }}
+    tab = "{{ list_tab_id }}"
     form_class = {{ create_form_cls_name }}
     success_url = "{{ list_view_url_name }}"
     title = "{{ create_view_title }}"
@@ -20,6 +21,7 @@ class {{ create_view_cls_name }}(MontrekCreateView):
 class {{ update_view_cls_name }}(MontrekUpdateView):
     manager_class = {{ manager_cls_name }}
     page_class = {{ page_cls_name }}
+    tab = "{{ list_tab_id }}"
     form_class = {{ create_form_cls_name }}
     success_url = "{{ list_view_url_name }}"
     title = "{{ update_view_title }}"
@@ -28,6 +30,7 @@ class {{ update_view_cls_name }}(MontrekUpdateView):
 class {{ delete_view_cls_name }}(MontrekDeleteView):
     manager_class = {{ manager_cls_name }}
     page_class = {{ page_cls_name }}
+    tab = "{{ list_tab_id }}"
     success_url = "{{ list_view_url_name }}"
     title = "{{ delete_view_title }}"
 
