@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import pandas as pd
 from typing import Any, List, Dict, Optional, Type
 from baseclasses.models import MontrekSatelliteABC, MontrekTimeSeriesSatelliteABC
@@ -31,6 +32,12 @@ from django.utils import timezone
 from django.core.exceptions import FieldError, PermissionDenied
 
 
+@dataclass
+class TSQueryContainer:
+    queryset: QuerySet
+    fields: List[str]
+
+
 class MontrekRepository:
     hub_class = MontrekHubABC
 
@@ -38,6 +45,7 @@ class MontrekRepository:
         self._annotations = {}
         self._primary_satellite_classes = []
         self._primary_link_classes = []
+        self._ts_queryset_containers = []
         self.session_data = session_data
         self._reference_date = None
         self.messages = []
@@ -162,11 +170,16 @@ class MontrekRepository:
         satellite_class: Type[MontrekSatelliteABC],
         fields: List[str],
     ):
-        subquery_builder = SatelliteSubqueryBuilder(
-            satellite_class, "pk", self.reference_date
-        )
-        annotations_manager = SatelliteAnnotationsManager(subquery_builder)
-        self._add_to_annotations(fields, annotations_manager)
+        if satellite_class.is_timeseries:
+            self._ts_queryset_containers.append(
+                self.build_time_series_queryset_container(satellite_class, fields)
+            )
+        else:
+            subquery_builder = SatelliteSubqueryBuilder(
+                satellite_class, "pk", self.reference_date
+            )
+            annotations_manager = SatelliteAnnotationsManager(subquery_builder)
+            self._add_to_annotations(fields, annotations_manager)
         self._add_to_primary_satellite_classes(satellite_class)
 
     def add_last_ts_satellite_fields_annotations(
@@ -203,18 +216,19 @@ class MontrekRepository:
         self._add_to_primary_link_classes(link_class)
 
     def build_queryset(self, **filter_kwargs) -> QuerySet:
-        queryset = self.hub_class.objects.annotate(**self.annotations).filter(
+        base_query = self._get_base_query()
+        queryset = base_query.annotate(**self.annotations).filter(
             Q(state_date_start__lte=self.reference_date),
             Q(state_date_end__gt=self.reference_date),
         )
         queryset = self._apply_filter(queryset)
         return queryset
 
-    def build_time_series_queryset(
+    def build_time_series_queryset_container(
         self,
         time_series_satellite_class: type[MontrekSatelliteABC],
         fields: list[str],
-    ):
+    ) -> TSQueryContainer:
         if not issubclass(time_series_satellite_class, MontrekTimeSeriesSatelliteABC):
             raise ValueError(
                 f"{time_series_satellite_class.__name__} is not a subclass of MontrekTimeSeriesSatelliteABC"
@@ -249,7 +263,7 @@ class MontrekRepository:
             | Q(value_date=None)
         )
         queryset = self._apply_filter(queryset)
-        return queryset
+        return TSQueryContainer(queryset=queryset, fields=fields)
 
     def get_history_queryset(self, pk: int, **kwargs) -> dict[str, QuerySet]:
         self.std_queryset()
@@ -272,6 +286,28 @@ class MontrekRepository:
         except (FieldError, ValueError) as e:
             self.messages.append(MontrekMessageError(str(e)))
         return queryset
+
+    def _get_base_query(self) -> QuerySet:
+        # Usually every query starts with all hubs of the repositories hub_class.
+        # If there is a time_series involved, the query is built from there.
+        if len(self._ts_queryset_containers) == 0:
+            return self.hub_class.objects.all()
+        return self._build_ts_base_query()
+
+    def _build_ts_base_query(self) -> QuerySet:
+        # If there are more than one base queries registered, we annotate them in the first step and return everything as base query
+        base_query = self._ts_queryset_containers[0].queryset
+        for ts_queryset_container in self._ts_queryset_containers[1:]:
+            container_query = ts_queryset_container.queryset
+            container_fields = ts_queryset_container.fields
+            subquery = container_query.filter(
+                value_date=OuterRef("value_date"), pk=OuterRef("pk")
+            )
+            for field in container_fields:
+                base_query = base_query.annotate(
+                    **{field: Subquery(subquery.values(field))}
+                )
+        return base_query
 
     def rename_field(self, field: str, new_name: str):
         self.annotations[new_name] = self.annotations[field]
