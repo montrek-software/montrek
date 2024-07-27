@@ -788,17 +788,17 @@ class TestTimeSeriesQuerySet(TestCase):
             ValueError,
             "SatC1 is not a subclass of MontrekTimeSeriesSatelliteABC",
         ):
-            repository.build_time_series_queryset(
+            repository.build_time_series_queryset_container(
                 me_models.SatC1,
                 montrek_time(2024, 2, 5),
-            )
+            ).queryset
 
     def test_build_time_series_queryset(self):
         repo = HubCRepository()
-        test_query = repo.build_time_series_queryset(
+        test_query = repo.build_time_series_queryset_container(
             me_models.SatTSC2,
             ["field_tsc2_float"],
-        )
+        ).queryset
         self.assertEqual(test_query.count(), 5)
         self.assertEqual(test_query[1].field_tsc2_float, self.ts_fact2.field_tsc2_float)
         self.assertEqual(test_query[4].field_tsc2_float, None)
@@ -806,10 +806,10 @@ class TestTimeSeriesQuerySet(TestCase):
     def test_build_time_series_queryset__reference_date_filter(self):
         repo = HubCRepository()
         repo.reference_date = montrek_time(2024, 7, 1)
-        test_query = repo.build_time_series_queryset(
+        test_query = repo.build_time_series_queryset_container(
             me_models.SatTSC2,
             ["field_tsc2_float"],
-        )
+        ).queryset
         self.assertEqual(test_query.count(), 5)
         self.assertEqual(test_query[1].field_tsc2_float, self.ts_fact.field_tsc2_float)
         self.assertEqual(test_query[4].field_tsc2_float, None)
@@ -822,10 +822,10 @@ class TestTimeSeriesQuerySet(TestCase):
             (datetime.datetime(2024, 2, 7), 5),
         ]:
             repo = HubCRepository(session_data={"end_date": end_date})
-            test_query = repo.build_time_series_queryset(
+            test_query = repo.build_time_series_queryset_container(
                 me_models.SatTSC2,
                 ["field_tsc2_float"],
-            )
+            ).queryset
             self.assertEqual(test_query.count(), expected_count)
         for start_date, expected_count in [
             (datetime.datetime(2024, 2, 1), 5),
@@ -834,10 +834,10 @@ class TestTimeSeriesQuerySet(TestCase):
             (datetime.datetime(2024, 2, 7), 1),
         ]:
             repo = HubCRepository(session_data={"start_date": start_date})
-            test_query = repo.build_time_series_queryset(
+            test_query = repo.build_time_series_queryset_container(
                 me_models.SatTSC2,
                 ["field_tsc2_float"],
-            )
+            ).queryset
             self.assertEqual(test_query.count(), expected_count)
 
 
