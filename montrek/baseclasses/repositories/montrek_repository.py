@@ -1,4 +1,6 @@
 from dataclasses import dataclass
+
+from django.db.models.functions import Coalesce
 import pandas as pd
 from typing import Any, List, Dict, Optional, Type
 from baseclasses.models import MontrekSatelliteABC, MontrekTimeSeriesSatelliteABC
@@ -237,25 +239,21 @@ class MontrekRepository:
         fields = [field for field in fields if field != "value_date"]
         field_map = {field: F(f"{satellite_class_name}__{field}") for field in fields}
         field_map["value_date"] = F(f"{satellite_class_name}__value_date")
-        queryset = (
-            self.hub_class.objects.filter(
-                (
-                    Q(
-                        **{
-                            f"{satellite_class_name}__state_date_start__lte": self.reference_date
-                        }
-                    )
-                    & Q(
-                        **{
-                            f"{satellite_class_name}__state_date_end__gt": self.reference_date
-                        }
-                    )
+        queryset = self.hub_class.objects.filter(
+            (
+                Q(
+                    **{
+                        f"{satellite_class_name}__state_date_start__lte": self.reference_date
+                    }
                 )
-                | Q(**{f"{satellite_class_name}__state_date_end": None})
+                & Q(
+                    **{
+                        f"{satellite_class_name}__state_date_end__gt": self.reference_date
+                    }
+                )
             )
-            .annotate(**field_map)
-            .annotate(**self.annotations)
-        )
+            | Q(**{f"{satellite_class_name}__state_date_end": None})
+        ).annotate(**field_map)
         queryset = queryset.filter(
             (
                 Q(value_date__lte=self.session_end_date)
@@ -296,10 +294,13 @@ class MontrekRepository:
 
     def _build_ts_base_query(self) -> QuerySet:
         # If there are more than one base queries registered, we annotate them in the first step and return everything as base query
+        # TODO: We start with the first query set and add all data from the other query sets.
+        # If there are entries in the other query sets, that are not in the first query set, they will be ignored.
         base_query = self._ts_queryset_containers[0].queryset
         for ts_queryset_container in self._ts_queryset_containers[1:]:
             container_query = ts_queryset_container.queryset
             container_fields = ts_queryset_container.fields
+
             subquery = container_query.filter(
                 value_date=OuterRef("value_date"), pk=OuterRef("pk")
             )
