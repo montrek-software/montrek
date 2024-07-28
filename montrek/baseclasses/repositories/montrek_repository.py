@@ -306,28 +306,10 @@ class MontrekRepository:
         base_query = self._ts_queryset_containers[0].queryset
         base_fields = self._ts_queryset_containers[0].fields
         for ts_queryset_container in self._ts_queryset_containers[1:]:
-            container_query = ts_queryset_container.queryset
+            container_query = self._get_extended_container_queryset(
+                ts_queryset_container, base_query
+            )
             container_fields = ts_queryset_container.fields
-
-            # Find any elements that are in the base query but not in the container_query
-
-            container_values = container_query.values_list("pk", "value_date")
-            exclude_condition = Q()
-            for pk, value_date in container_values:
-                exclude_condition |= Q(pk=pk, value_date=value_date)
-            missing_container_entries = base_query.exclude(
-                exclude_condition
-            ).values_list("pk", "value_date")
-            if len(missing_container_entries) > 0:
-                container_satellite_class = ts_queryset_container.satellite_class
-                for pk, value_date in missing_container_entries:
-                    missing_entry = container_satellite_class(
-                        hub_entity_id=pk, value_date=value_date
-                    )
-                    missing_entry.save()
-                container_query = self.build_time_series_queryset_container(
-                    container_satellite_class, container_fields
-                ).queryset
 
             subquery = base_query.filter(
                 value_date=OuterRef("value_date"), pk=OuterRef("pk")
@@ -337,9 +319,35 @@ class MontrekRepository:
                     **{field: Subquery(subquery.values(field))}
                 )
             base_fields += container_fields
-        base_query = base_query.order_by("-value_date")
         self._ts_queryset_containers = []
+        base_query = base_query.order_by("-value_date")
         return base_query
+
+    def _get_extended_container_queryset(
+        self, ts_queryset_container: TSQueryContainer, base_query: QuerySet
+    ) -> QuerySet:
+        # Find any elements that are in the base query but not in the container_query and add them to DB
+        container_query = ts_queryset_container.queryset
+        container_fields = ts_queryset_container.fields
+
+        container_values = container_query.values_list("pk", "value_date")
+        exclude_condition = Q()
+        for pk, value_date in container_values:
+            exclude_condition |= Q(pk=pk, value_date=value_date)
+        missing_container_entries = base_query.exclude(exclude_condition).values_list(
+            "pk", "value_date"
+        )
+        if len(missing_container_entries) == 0:
+            return container_query
+        container_satellite_class = ts_queryset_container.satellite_class
+        for pk, value_date in missing_container_entries:
+            missing_entry = container_satellite_class(
+                hub_entity_id=pk, value_date=value_date
+            )
+            missing_entry.save()
+        return self.build_time_series_queryset_container(
+            container_satellite_class, container_fields
+        ).queryset
 
     def rename_field(self, field: str, new_name: str):
         self.annotations[new_name] = self.annotations[field]
