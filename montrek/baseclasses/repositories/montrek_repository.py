@@ -38,6 +38,7 @@ from django.core.exceptions import FieldError, PermissionDenied
 class TSQueryContainer:
     queryset: QuerySet
     fields: List[str]
+    satellite_class: type[MontrekTimeSeriesSatelliteABC]
 
 
 class MontrekRepository:
@@ -263,7 +264,11 @@ class MontrekRepository:
             )
             | Q(value_date=None)
         )
-        return TSQueryContainer(queryset=queryset, fields=fields)
+        return TSQueryContainer(
+            queryset=queryset,
+            fields=fields,
+            satellite_class=time_series_satellite_class,
+        )
 
     def get_history_queryset(self, pk: int, **kwargs) -> dict[str, QuerySet]:
         self.std_queryset()
@@ -299,18 +304,41 @@ class MontrekRepository:
         # TODO: We start with the first query set and add all data from the other query sets.
         # If there are entries in the other query sets, that are not in the first query set, they will be ignored.
         base_query = self._ts_queryset_containers[0].queryset
+        base_fields = self._ts_queryset_containers[0].fields
         for ts_queryset_container in self._ts_queryset_containers[1:]:
             container_query = ts_queryset_container.queryset
             container_fields = ts_queryset_container.fields
 
-            subquery = container_query.filter(
+            # Find any elements that are in the base query but not in the container_query
+
+            container_values = container_query.values_list("pk", "value_date")
+            exclude_condition = Q()
+            for pk, value_date in container_values:
+                exclude_condition |= Q(pk=pk, value_date=value_date)
+            missing_container_entries = base_query.exclude(
+                exclude_condition
+            ).values_list("pk", "value_date")
+            if len(missing_container_entries) > 0:
+                container_satellite_class = ts_queryset_container.satellite_class
+                for pk, value_date in missing_container_entries:
+                    missing_entry = container_satellite_class(
+                        hub_entity_id=pk, value_date=value_date
+                    )
+                    missing_entry.save()
+                container_query = self.build_time_series_queryset_container(
+                    container_satellite_class, container_fields
+                ).queryset
+
+            subquery = base_query.filter(
                 value_date=OuterRef("value_date"), pk=OuterRef("pk")
             )
-            for field in container_fields:
-                base_query = base_query.annotate(
+            for field in base_fields:
+                base_query = container_query.annotate(
                     **{field: Subquery(subquery.values(field))}
                 )
+            base_fields += container_fields
         base_query = base_query.order_by("-value_date")
+        self._ts_queryset_containers = []
         return base_query
 
     def rename_field(self, field: str, new_name: str):
