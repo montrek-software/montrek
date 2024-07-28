@@ -340,11 +340,13 @@ class MontrekRepository:
         if len(missing_container_entries) == 0:
             return container_query
         container_satellite_class = ts_queryset_container.satellite_class
+        missing_entries = []
         for pk, value_date in missing_container_entries:
             missing_entry = container_satellite_class(
                 hub_entity_id=pk, value_date=value_date
             )
-            missing_entry.save()
+            missing_entries.append(missing_entry)
+        ts_queryset_container.satellite_class.objects.bulk_create(missing_entries)
         return self.build_time_series_queryset_container(
             container_satellite_class, container_fields
         ).queryset
