@@ -853,6 +853,8 @@ class TestTimeSeriesStdQueryset(TestCase):
             value_date=montrek_time(2024, 2, 5),
         )
         static_sats = me_factories.SatC1Factory.create_batch(3)
+        static_sats[0].field_c1_str = "Test"
+        static_sats[0].save()
         me_factories.SatTSC2Factory.create(
             hub_entity=static_sats[0].hub_entity,
             field_tsc2_float=2.0,
@@ -912,14 +914,14 @@ class TestTimeSeriesStdQueryset(TestCase):
             self.assertEqual(test_obj_1.field_tsc3_int, 7)
             self.assertEqual(test_obj_1.field_tsc3_str, "what2")
             test_obj_2 = test_query[0]
-            self.assertEqual(test_obj_2.field_c1_str, "DEFAULT")
+            self.assertEqual(test_obj_2.field_c1_str, "Test")
             self.assertEqual(test_obj_2.field_c1_bool, False)
             self.assertEqual(test_obj_2.field_tsc2_float, 2.5)
             self.assertEqual(test_obj_2.value_date, montrek_time(2024, 2, 6).date())
             self.assertEqual(test_obj_2.field_tsc3_int, 5)
             self.assertEqual(test_obj_2.field_tsc3_str, "what1")
             test_obj_3 = test_query[3]
-            self.assertEqual(test_obj_3.field_c1_str, "DEFAULT")
+            self.assertEqual(test_obj_3.field_c1_str, "Test")
             self.assertEqual(test_obj_3.field_c1_bool, False)
             self.assertEqual(test_obj_3.field_tsc2_float, 3.0)
             self.assertEqual(test_obj_3.value_date, montrek_time(2024, 2, 5).date())
