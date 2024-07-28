@@ -301,8 +301,6 @@ class MontrekRepository:
 
     def _build_ts_base_query(self) -> QuerySet:
         # If there are more than one base queries registered, we annotate them in the first step and return everything as base query
-        # TODO: We start with the first query set and add all data from the other query sets.
-        # If there are entries in the other query sets, that are not in the first query set, they will be ignored.
         base_query = self._ts_queryset_containers[0].queryset
         base_fields = self._ts_queryset_containers[0].fields
         for ts_queryset_container in self._ts_queryset_containers[1:]:
