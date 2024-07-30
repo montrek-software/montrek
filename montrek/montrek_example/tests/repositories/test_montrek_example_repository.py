@@ -853,6 +853,8 @@ class TestTimeSeriesStdQueryset(TestCase):
             value_date=montrek_time(2024, 2, 5),
         )
         static_sats = me_factories.SatC1Factory.create_batch(3)
+        static_sats[0].field_c1_str = "Test"
+        static_sats[0].save()
         me_factories.SatTSC2Factory.create(
             hub_entity=static_sats[0].hub_entity,
             field_tsc2_float=2.0,
@@ -895,52 +897,59 @@ class TestTimeSeriesStdQueryset(TestCase):
         self.user = MontrekUserFactory()
 
     def test_build_time_series_std_queryset(self):
+        def make_assertions(test_query):
+            self.assertEqual(test_query.count(), 6)
+            test_obj_0 = test_query[2]
+            self.assertEqual(test_obj_0.field_c1_str, "Hallo")
+            self.assertEqual(test_obj_0.field_c1_bool, True)
+            self.assertEqual(test_obj_0.field_tsc2_float, 1.0)
+            self.assertEqual(test_obj_0.value_date, montrek_time(2024, 2, 5).date())
+            self.assertEqual(test_obj_0.field_tsc3_int, None)
+            self.assertEqual(test_obj_0.field_tsc3_str, None)
+            test_obj_1 = test_query[1]
+            self.assertEqual(test_obj_1.field_c1_str, "DEFAULT")
+            self.assertEqual(test_obj_1.field_c1_bool, False)
+            self.assertEqual(test_obj_1.field_tsc2_float, 3.5)
+            self.assertEqual(test_obj_1.value_date, montrek_time(2024, 2, 5).date())
+            self.assertEqual(test_obj_1.field_tsc3_int, 7)
+            self.assertEqual(test_obj_1.field_tsc3_str, "what2")
+            test_obj_2 = test_query[0]
+            self.assertEqual(test_obj_2.field_c1_str, "Test")
+            self.assertEqual(test_obj_2.field_c1_bool, False)
+            self.assertEqual(test_obj_2.field_tsc2_float, 2.5)
+            self.assertEqual(test_obj_2.value_date, montrek_time(2024, 2, 6).date())
+            self.assertEqual(test_obj_2.field_tsc3_int, 5)
+            self.assertEqual(test_obj_2.field_tsc3_str, "what1")
+            test_obj_3 = test_query[3]
+            self.assertEqual(test_obj_3.field_c1_str, "Test")
+            self.assertEqual(test_obj_3.field_c1_bool, False)
+            self.assertEqual(test_obj_3.field_tsc2_float, 3.0)
+            self.assertEqual(test_obj_3.value_date, montrek_time(2024, 2, 5).date())
+            self.assertEqual(test_obj_3.field_tsc3_int, None)
+            self.assertEqual(test_obj_3.field_tsc3_str, None)
+            test_obj_4 = test_query[5]
+            self.assertEqual(test_obj_4.field_c1_str, "DEFAULT")
+            self.assertEqual(test_obj_4.field_c1_bool, False)
+            self.assertEqual(test_obj_4.field_tsc2_float, None)
+            self.assertEqual(test_obj_4.value_date, None)
+            self.assertEqual(test_obj_4.field_tsc3_int, None)
+            self.assertEqual(test_obj_4.field_tsc3_str, None)
+            # TODO: This is a bug so far: Since the query is based on the SatTSC2 table, entries that appear in SatTSC3, but not in SatTSC2 are not included in the queryset.
+            test_obj_5 = test_query[4]
+            self.assertEqual(test_obj_5.field_c1_str, None)
+            self.assertEqual(test_obj_5.field_c1_bool, None)
+            self.assertEqual(test_obj_5.field_tsc2_float, None)
+            self.assertEqual(test_obj_5.value_date, montrek_time(2024, 2, 3).date())
+            self.assertEqual(test_obj_5.field_tsc3_int, 8)
+            self.assertEqual(test_obj_5.field_tsc3_str, "what3")
+
         repo = HubCRepository()
+        # This query creates missing ts entries
         test_query = repo.std_queryset()
-        self.assertEqual(test_query.count(), 6)
-        test_obj_0 = test_query[1]
-        self.assertEqual(test_obj_0.field_c1_str, "Hallo")
-        self.assertEqual(test_obj_0.field_c1_bool, True)
-        self.assertEqual(test_obj_0.field_tsc2_float, 1.0)
-        self.assertEqual(test_obj_0.value_date, montrek_time(2024, 2, 5).date())
-        self.assertEqual(test_obj_0.field_tsc3_int, None)
-        self.assertEqual(test_obj_0.field_tsc3_str, None)
-        test_obj_1 = test_query[2]
-        self.assertEqual(test_obj_1.field_c1_str, "DEFAULT")
-        self.assertEqual(test_obj_1.field_c1_bool, False)
-        self.assertEqual(test_obj_1.field_tsc2_float, 3.0)
-        self.assertEqual(test_obj_1.value_date, montrek_time(2024, 2, 5).date())
-        self.assertEqual(test_obj_1.field_tsc3_int, None)
-        self.assertEqual(test_obj_1.field_tsc3_str, None)
-        test_obj_2 = test_query[0]
-        self.assertEqual(test_obj_2.field_c1_str, "DEFAULT")
-        self.assertEqual(test_obj_2.field_c1_bool, False)
-        self.assertEqual(test_obj_2.field_tsc2_float, 2.5)
-        self.assertEqual(test_obj_2.value_date, montrek_time(2024, 2, 6).date())
-        self.assertEqual(test_obj_2.field_tsc3_int, 5)
-        self.assertEqual(test_obj_2.field_tsc3_str, "what1")
-        test_obj_3 = test_query[3]
-        self.assertEqual(test_obj_3.field_c1_str, "DEFAULT")
-        self.assertEqual(test_obj_3.field_c1_bool, False)
-        self.assertEqual(test_obj_3.field_tsc2_float, 3.5)
-        self.assertEqual(test_obj_3.value_date, montrek_time(2024, 2, 5).date())
-        self.assertEqual(test_obj_3.field_tsc3_int, 7)
-        self.assertEqual(test_obj_3.field_tsc3_str, "what2")
-        test_obj_4 = test_query[4]
-        self.assertEqual(test_obj_4.field_c1_str, "DEFAULT")
-        self.assertEqual(test_obj_4.field_c1_bool, False)
-        self.assertEqual(test_obj_4.field_tsc2_float, None)
-        self.assertEqual(test_obj_4.value_date, None)
-        self.assertEqual(test_obj_4.field_tsc3_int, None)
-        self.assertEqual(test_obj_4.field_tsc3_str, None)
-        # TODO: This is a bug so far: Since the query is based on the SatTSC2 table, entries that appear in SatTSC3, but not in SatTSC2 are not included in the queryset.
-        test_obj_5 = test_query[5]
-        self.assertEqual(test_obj_5.field_c1_str, None)
-        self.assertEqual(test_obj_5.field_c1_bool, None)
-        self.assertEqual(test_obj_5.field_tsc2_float, None)
-        self.assertEqual(test_obj_5.value_date, None)
-        self.assertEqual(test_obj_5.field_tsc3_int, None)
-        self.assertEqual(test_obj_5.field_tsc3_str, None)
+        make_assertions(test_query)
+        # This catches all
+        test_query = repo.std_queryset()
+        make_assertions(test_query)
 
 
 class TestHistory(TestCase):
