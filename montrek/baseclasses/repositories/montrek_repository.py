@@ -341,7 +341,9 @@ class MontrekRepository:
         missing_entries = []
         for pk, value_date in missing_container_entries:
             missing_entry = container_satellite_class(
-                hub_entity_id=pk, value_date=value_date
+                hub_entity_id=pk,
+                value_date=value_date,
+                comment="Automatically added empty TS entry to align with other TS entries",
             )
             missing_entries.append(missing_entry)
         ts_queryset_container.satellite_class.objects.bulk_create(missing_entries)
