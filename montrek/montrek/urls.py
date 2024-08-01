@@ -35,6 +35,13 @@ urlpatterns = [
     path("montrek_example/", include("montrek_example.urls")),
 ]
 
+
 for app in settings.MONTREK_EXTENSION_APPS:
     app_path = app.replace(".", "/") + "/"
     urlpatterns.append(path(app_path, include(f"{app}.urls")))
+
+
+if settings.DEBUG:
+    from debug_toolbar.toolbar import debug_toolbar_urls
+
+    urlpatterns += debug_toolbar_urls()

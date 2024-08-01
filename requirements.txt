@@ -17,6 +17,7 @@ coverage==7.5.0
 dataclasses==0.6
 dill==0.3.8
 Django==5.0.4
+django-debug-toolbar==4.4.6
 django-extensions==3.2.3
 django-nose==1.4.7
 django-pandas==0.6.7
