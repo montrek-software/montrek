@@ -899,7 +899,7 @@ class TestTimeSeriesStdQueryset(TestCase):
     def test_build_time_series_std_queryset(self):
         def make_assertions(test_query):
             self.assertEqual(test_query.count(), 6)
-            test_obj_0 = test_query[2]
+            test_obj_0 = test_query[3]
             self.assertEqual(test_obj_0.field_c1_str, "Hallo")
             self.assertEqual(test_obj_0.field_c1_bool, True)
             self.assertEqual(test_obj_0.field_tsc2_float, 1.0)
@@ -920,7 +920,7 @@ class TestTimeSeriesStdQueryset(TestCase):
             self.assertEqual(test_obj_2.value_date, montrek_time(2024, 2, 6).date())
             self.assertEqual(test_obj_2.field_tsc3_int, 5)
             self.assertEqual(test_obj_2.field_tsc3_str, "what1")
-            test_obj_3 = test_query[3]
+            test_obj_3 = test_query[2]
             self.assertEqual(test_obj_3.field_c1_str, "Test")
             self.assertEqual(test_obj_3.field_c1_bool, False)
             self.assertEqual(test_obj_3.field_tsc2_float, 3.0)
@@ -934,7 +934,6 @@ class TestTimeSeriesStdQueryset(TestCase):
             self.assertEqual(test_obj_4.value_date, None)
             self.assertEqual(test_obj_4.field_tsc3_int, None)
             self.assertEqual(test_obj_4.field_tsc3_str, None)
-            # TODO: This is a bug so far: Since the query is based on the SatTSC2 table, entries that appear in SatTSC3, but not in SatTSC2 are not included in the queryset.
             test_obj_5 = test_query[4]
             self.assertEqual(test_obj_5.field_c1_str, None)
             self.assertEqual(test_obj_5.field_c1_bool, None)
