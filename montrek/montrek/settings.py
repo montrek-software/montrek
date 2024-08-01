@@ -37,6 +37,7 @@ ALLOWED_HOSTS = ["localhost", "127.0.0.1", f"montrek.{PROJECT_NAME}", DEPLOY_HOS
 
 DJANGO_APPS = [
     "django.contrib.admin",
+    "debug_toolbar",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
@@ -63,6 +64,7 @@ MONTREK_EXTENSION_APPS = [
 INSTALLED_APPS = DJANGO_APPS + MONTREK_BASE_APPS + MONTREK_EXTENSION_APPS
 
 DJANGO_MIDDLEWARE = [
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -214,3 +216,7 @@ TEST_RUNNER = "montrek.testing.test_runner.MontrekTestRunner"
 MONTREK_GITHUB_TOKEN = config("MONTREK_GITHUB_TOKEN", default="")
 
 LOGIN_EXEMPT_PATHS = ["/user", "/admin"]
+
+INTERNAL_IPS = [
+    "127.0.0.1",
+]
