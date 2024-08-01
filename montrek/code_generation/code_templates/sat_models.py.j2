@@ -1,0 +1,10 @@
+from django.db import models
+
+from baseclasses.models import MontrekSatelliteABC
+{{ hub_cls_import }}
+
+
+class {{ sat_cls_name }}(MontrekSatelliteABC):
+    hub_entity = models.ForeignKey({{ hub_cls_name }}, on_delete=models.CASCADE)
+    identifier_fields = ["hub_entity_id"]
+

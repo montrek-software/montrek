@@ -28,6 +28,15 @@ class FieldMapFunctionManager:
     ) -> pd.Series:
         return source_df[source_field].multiply(value)
 
+    @staticmethod
+    def extract_number(source_df: pd.DataFrame, source_field: str) -> pd.Series:
+        """Extracts the first number found in a string"""
+        str_series = source_df[source_field].astype(str)
+        pattern = r"(-?\d+\.\d+|-?\d+)"
+        group_match_df = str_series.str.extract(pattern)
+        result_series = group_match_df[0].astype(float)
+        return result_series
+
 
 class FieldMapManagerABC(MontrekTableManager):
     field_map_function_manager_class = FieldMapFunctionManager
@@ -98,6 +107,14 @@ class FieldMapManagerABC(MontrekTableManager):
                 self.exceptions.append(exception_info)
 
         return mapped_df
+
+    def get_source_field_from_database_field(self, database_field: str) -> str:
+        source_field = self.repository.get_source_field(database_field)
+        if not source_field:
+            raise ValueError(
+                f"No source field found for database field {database_field}"
+            )
+        return source_field
 
 
 class FieldMapManager(FieldMapManagerABC):

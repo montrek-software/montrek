@@ -2,6 +2,8 @@ import io
 import pandas as pd
 from django.test import TestCase
 from django.http import HttpResponse
+from django.utils import timezone
+import datetime
 from bs4 import BeautifulSoup
 from reporting.dataclasses import table_elements as te
 from reporting.managers.montrek_table_manager import MontrekTableManager
@@ -13,6 +15,7 @@ class MockData:
     field_a: str
     field_b: int
     field_c: float
+    field_d: datetime.datetime | datetime.date | timezone.datetime
 
 
 class MockQuerySet:
@@ -43,7 +46,9 @@ class MockRepository:
 
     def std_queryset(self):
         return MockQuerySet(
-            MockData("a", 1, 1.0), MockData("b", 2, 2.0), MockData("c", 3, 3.0)
+            MockData("a", 1, 1.0, timezone.make_aware(datetime.datetime(2024, 7, 13))),
+            MockData("b", 2, 2.0, datetime.datetime(2024, 7, 13)),
+            MockData("c", 3, 3.0, timezone.datetime(2024, 7, 13)),
         )
 
 
@@ -58,6 +63,7 @@ class MockMontrekTableManager(MontrekTableManager):
             te.StringTableElement(attr="field_a", name="Field A"),
             te.IntTableElement(attr="field_b", name="Field B"),
             te.FloatTableElement(attr="field_c", name="Field C"),
+            te.DateTimeTableElement(attr="field_d", name="Field D"),
             te.LinkTableElement(
                 name="Link",
                 url="home",
@@ -93,7 +99,14 @@ class TestMontrekTableManager(TestCase):
         rows = table.find_all("tr")
         self.assertEqual(len(rows), 4)
         headers = soup.find_all("th")
-        expected_headers = ["Field A", "Field B", "Field C", "Link", "Link Text"]
+        expected_headers = [
+            "Field A",
+            "Field B",
+            "Field C",
+            "Field D",
+            "Link",
+            "Link Text",
+        ]
         header_texts = [th.get_text() for th in headers]
         self.assertEqual(header_texts, expected_headers)
 
@@ -116,7 +129,7 @@ class TestMontrekTableManager(TestCase):
         self.assertRegex(content_disposition, filename_pattern)
         self.assertEqual(
             response.getvalue(),
-            b"Field A,Field B,Field C,Link Text\na,1,1.0,a\nb,2,2.0,b\nc,3,3.0,c\n",
+            b"Field A,Field B,Field C,Field D,Link Text\na,1,1.0,2024-07-13,a\nb,2,2.0,2024-07-13,b\nc,3,3.0,2024-07-13,c\n",
         )
 
     def test_download_excel(self):
@@ -138,6 +151,11 @@ class TestMontrekTableManager(TestCase):
                     "Field A": ["a", "b", "c"],
                     "Field B": [1, 2, 3],
                     "Field C": [1.0, 2.0, 3.0],
+                    "Field D": [
+                        datetime.datetime(2024, 7, 13),
+                        datetime.datetime(2024, 7, 13),
+                        timezone.datetime(2024, 7, 13),
+                    ],
                     "Link Text": ["a", "b", "c"],
                 }
             )

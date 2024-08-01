@@ -1,0 +1,9 @@
+import factory
+
+{{ hub_cls_import }}
+
+
+class {{ hub_factory_cls_name }}(factory.django.DjangoModelFactory):
+    class Meta:
+        model = {{ hub_cls_name }}
+

@@ -3,7 +3,7 @@ services:
     build: ./nginx
     ports:
       - ${DEPLOY_PORT}:80
-    volumes: 
+    volumes:
       - static_volume:/montrek/montrek/baseclasses/static
       - uploads_volume:/montrek/uploads
     depends_on:
@@ -15,15 +15,14 @@ services:
     networks:
       - montrek_network
 
-
   web:
     build:
       context: .
       dockerfile: Dockerfile
     command: sh -c "cd montrek &&
-                    python manage.py migrate &&
-                    python manage.py collectstatic --noinput &&
-                    gunicorn --chdir montrek montrek.wsgi:application --bind 0.0.0.0:${APP_PORT} --timeout 300"
+      python manage.py migrate &&
+      python manage.py collectstatic --noinput &&
+      gunicorn --chdir montrek montrek.wsgi:application --bind 0.0.0.0:${APP_PORT} --timeout 300"
     volumes:
       - .:/montrek
       - static_volume:/montrek/montrek/baseclasses/static
@@ -60,8 +59,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: sh -c "cd montrek && 
-                    celery --app=montrek worker --loglevel=info"
+    command: sh -c "cd montrek &&
+      celery --app=montrek worker --loglevel=info"
     volumes:
       - .:/montrek
       - static_volume:/montrek/montrek/baseclasses/static

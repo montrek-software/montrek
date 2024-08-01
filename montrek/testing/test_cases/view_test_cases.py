@@ -1,7 +1,6 @@
 import datetime
 from django.db.models import QuerySet
 from django.http import FileResponse
-from django.utils import timezone
 import pandas as pd
 from django.test import TestCase
 from django.views import View

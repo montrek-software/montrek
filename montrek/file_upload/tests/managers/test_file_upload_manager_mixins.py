@@ -8,6 +8,7 @@ from file_upload.tests.factories.file_upload_factories import (
     FileUploadRegistryHubFactory,
 )
 from file_upload.models import FileUploadFileStaticSatellite
+from file_upload.tests.utils import LogFileTestMixin
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
 
@@ -32,7 +33,40 @@ class MockDataProcessor(LogFileMixin):
         self.file_upload_registry_hub = FileUploadRegistryHubFactory.create()
 
 
-class TestExcelLogFileMixin(TestCase):
+class MockRegistryRepository:
+    def __init__(self, processor):
+        self.processor = processor
+
+    def std_queryset(self):
+        return MockFileSatellites(
+            self.processor.file_upload_registry_hub.link_file_upload_registry_file_log_file
+        )
+
+
+class MockFileSatellites:
+    def __init__(self, linked_files):
+        self.linked_files = linked_files
+
+    def first(self):
+        return MockFileSatellite(self.linked_files.first())
+
+    def count(self):
+        return self.linked_files.count()
+
+
+class MockFileSatellite:
+    def __init__(self, linked_file):
+        self.linked_file = linked_file
+
+    @property
+    def log_file(self):
+        excel_file = FileUploadFileStaticSatellite.objects.get(
+            hub_entity=self.linked_file
+        ).file
+        return excel_file.name
+
+
+class TestExcelLogFileMixin(TestCase, LogFileTestMixin):
     def setUp(self):
         self.user = MontrekUserFactory()
         self.client.force_login(self.user)
@@ -61,27 +95,10 @@ class TestExcelLogFileMixin(TestCase):
     def test_log_excel_file__generate_file(self):
         test_message = "Some message"
         self.processor.generate_log_file_excel(test_message)
-        file_links = self.processor.file_upload_registry_hub.link_file_upload_registry_file_log_file
-        self.assertEqual(
-            file_links.count(),
-            1,
+        self.assert_log_excel_file(MockRegistryRepository(self.processor), test_message)
+        self.assert_log_excel_file(
+            MockRegistryRepository(self.processor), test_message[:4], _startswith=True
         )
-        log_file_hub = file_links.first()
-        excel_file = FileUploadFileStaticSatellite.objects.get(
-            hub_entity=log_file_hub
-        ).file
-        self.assertTrue(excel_file)
-        test_data_frame = pd.read_excel(excel_file)
-        expected_df = pd.DataFrame(
-            {
-                "Upload Message": [test_message],
-                "Upload Date": [self.now_timestamp.strftime("%Y-%m-%d %H:%M:%S")],
-                "Uploaded By": [self.user.email],
-            },
-            index=["Log Meta Data"],
-        ).T.reset_index()
-        expected_df = expected_df.rename(columns={"index": "Param"})
-        pd.testing.assert_frame_equal(test_data_frame, expected_df, check_dtype=False)
 
     def test_log_excel_file__additional_data(self):
         test_message = "Test with additional data sheet"
@@ -89,30 +106,10 @@ class TestExcelLogFileMixin(TestCase):
         self.processor.generate_log_file_excel(
             test_message, additional_data=test_additional_data
         )
-        file_links = self.processor.file_upload_registry_hub.link_file_upload_registry_file_log_file
-        self.assertEqual(
-            file_links.count(),
-            1,
-        )
-        log_file_hub = file_links.first()
-        excel_file = FileUploadFileStaticSatellite.objects.get(
-            hub_entity=log_file_hub
-        ).file
-        self.assertTrue(excel_file)
-        test_data_frame = pd.read_excel(excel_file, "meta_data")
-        expected_df = pd.DataFrame(
-            {
-                "Upload Message": [test_message],
-                "Upload Date": [self.now_timestamp.strftime("%Y-%m-%d %H:%M:%S")],
-                "Uploaded By": [self.user.email],
-            },
-            index=["Log Meta Data"],
-        ).T.reset_index()
-        expected_df = expected_df.rename(columns={"index": "Param"})
-        pd.testing.assert_frame_equal(test_data_frame, expected_df, check_dtype=False)
-        result_additional_data = pd.read_excel(excel_file, "additional_data")
-        pd.testing.assert_frame_equal(
-            test_additional_data, result_additional_data, check_dtype=False
+        self.assert_log_excel_file(
+            MockRegistryRepository(self.processor),
+            test_message,
+            additional_data=test_additional_data,
         )
 
     def test_muktiple_log_files(self):

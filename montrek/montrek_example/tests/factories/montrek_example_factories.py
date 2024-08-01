@@ -78,6 +78,14 @@ class SatTSC2Factory(factory.django.DjangoModelFactory):
     value_date = factory.Faker("date_time", tzinfo=datetime.timezone.utc)
 
 
+class SatTSC3Factory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "montrek_example.SatTSC3"
+
+    hub_entity = factory.SubFactory(HubCFactory)
+    value_date = factory.Faker("date_time", tzinfo=datetime.timezone.utc)
+
+
 class SatD1Factory(factory.django.DjangoModelFactory):
     class Meta:
         model = "montrek_example.SatD1"

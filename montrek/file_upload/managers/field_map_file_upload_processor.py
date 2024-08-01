@@ -32,6 +32,7 @@ class FieldMapFileUploadProcessor:
             raise ValueError("manager_class must be set in subclass.")
         self.manager = self.manager_class(self.session_data)
         self.file_upload_registry_hub = file_upload_registry_hub
+        self.field_map_manager = self.field_map_manager_class(self.session_data)
 
     def get_source_df_from_file(self, file_path: str) -> pd.DataFrame:
         NotImplementedError("Please implement this method in a subclass.")
@@ -43,13 +44,18 @@ class FieldMapFileUploadProcessor:
         return mapped_df
 
     def process(self, file_path: str):
-        source_df = self.get_source_df_from_file(file_path)
+        try:
+            source_df = self.get_source_df_from_file(file_path)
+        except Exception as e:
+            self.message = (
+                f"Error raised during file reading: <br>{e.__class__.__name__}: {e}"
+            )
+            return False
 
-        field_map_manager = self.field_map_manager_class(self.session_data)
-        mapped_df = field_map_manager.apply_field_maps(source_df)
-        if field_map_manager.exceptions:
+        mapped_df = self.field_map_manager.apply_field_maps(source_df)
+        if self.field_map_manager.exceptions:
             self.message = "Errors raised during field mapping:"
-            for e in field_map_manager.exceptions:
+            for e in self.field_map_manager.exceptions:
                 self.message += f"<br>{e.source_field, e.database_field, e.function_name, e.function_parameters, e.exception_message}"
             return False
         try:
