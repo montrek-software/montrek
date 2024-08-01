@@ -77,6 +77,7 @@ DJANGO_MIDDLEWARE = [
 MONTREK_MIDDLEWARE = [
     "middleware.LoginRequiredMiddleware",
     "middleware.PermissionErrorMiddleware",
+    "middleware.MontrekErrorMiddleware",
 ]
 
 MIDDLEWARE = DJANGO_MIDDLEWARE + MONTREK_MIDDLEWARE
