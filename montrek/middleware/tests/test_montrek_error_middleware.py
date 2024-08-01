@@ -2,6 +2,7 @@ from django.contrib.messages.test import MessagesTestMixin
 from django.http import HttpResponseRedirect, HttpResponse
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
+from baseclasses.errors.montrek_user_error import MontrekError
 from middleware import MontrekErrorMiddleware
 from django.views import View
 from django.contrib.auth import get_user_model
@@ -31,7 +32,7 @@ class MontrekErrorMiddlewareTest(MessagesTestMixin, TestCase):
         self.request.user = get_user_model().objects.create_user(
             email="test@example.com", password="testpassword"
         )
-        exception = MontrekErrorMiddleware("test")
+        exception = MontrekError("test")
         response = self.middleware.process_exception(self.request, exception)
         messages = _get_messages_from_storage(self.request)
 
