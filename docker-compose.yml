@@ -1,3 +1,5 @@
+include:
+    - ${DB_ENGINE}.yml
 services:
   nginx:
     build: ./nginx
@@ -43,19 +45,6 @@ services:
     networks:
       - montrek_network
 
-  db:
-    image: postgres:latest
-    command: postgres -c jit=off
-    environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_USER: ${DB_USER}
-    ports:
-      - "${DB_PORT}:5432"
-    volumes:
-      - db_data:/var/lib/postgresql/data
-    networks:
-      - montrek_network
   celery:
     build:
       context: .

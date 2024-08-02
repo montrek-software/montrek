@@ -104,6 +104,7 @@ DEBUG=1
 ALLOWED_HOSTS=localhost 127.0.0.1
 
 # database access credentials
+DB_ENGINE=postgres
 DB_NAME=montrek_db
 DB_USER=montrekuser
 DB_PASSWORD=password
@@ -113,6 +114,8 @@ DB_VOLUME=/var/lib/mysql
 APP_PORT=8000
 
 ```
+Set `DB_ENGINE=mariadb` and `DB_PORT=3306` if you want to use MariaDB.
+
 Enter in your bash terminal
 
 ```
