@@ -312,10 +312,10 @@ class MontrekRepository:
             subquery = base_query.filter(
                 value_date=OuterRef("value_date"), pk=OuterRef("pk")
             )
-            for field in base_fields:
-                base_query = container_query.annotate(
-                    **{field: Subquery(subquery.values(field))}
-                )
+            annotation_dict = {
+                field: Subquery(subquery.values(field)) for field in base_fields
+            }
+            base_query = container_query.annotate(**annotation_dict)
             base_fields += container_fields
         self._ts_queryset_containers = []
         base_query = base_query.order_by("-value_date", "-pk")
