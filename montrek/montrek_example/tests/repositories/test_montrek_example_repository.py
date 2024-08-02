@@ -1,16 +1,18 @@
 import datetime
+
+import pandas as pd
+from baseclasses.utils import montrek_time
 from django.core.exceptions import PermissionDenied
 from django.test import TestCase, TransactionTestCase
 from django.utils import timezone
-from baseclasses.utils import montrek_time
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
-from montrek_example.tests.factories import montrek_example_factories as me_factories
+
+from montrek_example import models as me_models
 from montrek_example.repositories.hub_a_repository import HubARepository
 from montrek_example.repositories.hub_b_repository import HubBRepository
 from montrek_example.repositories.hub_c_repository import HubCRepository
 from montrek_example.repositories.hub_d_repository import HubDRepository
-from montrek_example import models as me_models
-import pandas as pd
+from montrek_example.tests.factories import montrek_example_factories as me_factories
 
 MIN_DATE = timezone.make_aware(timezone.datetime.min)
 MAX_DATE = timezone.make_aware(timezone.datetime.max)
@@ -552,6 +554,20 @@ class TestMontrekCreateObject(TestCase):
         )
         queried_object = repository.std_queryset().get()
         self.assertEqual(queried_object.field_a2_float, 0.0)
+
+    def test_create_with_nan_in_data_frame(self):
+        repository = HubARepository(session_data={"user_id": self.user.id})
+        data_frame = pd.DataFrame(
+            {
+                "field_a1_int": [5, 6, 7],
+                "field_a1_str": ["test", "test2", "test3"],
+                "field_a2_float": [6.0, 7.0, 8.0],
+                "field_a2_str": ["test2", "test3", pd.NA],
+            }
+        )
+        repository.create_objects_from_data_frame(data_frame)
+        test_query = repository.std_queryset()
+        self.assertEqual(test_query.count(), 3)
 
 
 class TestMontrekCreateObjectTransaction(TransactionTestCase):
