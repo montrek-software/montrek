@@ -19,6 +19,12 @@ class HubCRepository(MontrekRepository):
             ],
         )
         self.add_satellite_fields_annotations(
+            me_models.SatTSC4,
+            [
+                "field_tsc4_int",
+            ],
+        )
+        self.add_satellite_fields_annotations(
             me_models.SatC1,
             [
                 "field_c1_bool",

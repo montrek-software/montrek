@@ -121,6 +121,11 @@ class SatTSC3(MontrekTimeSeriesSatelliteABC):
     field_tsc3_str = models.CharField(max_length=50, null=True, blank=True)
 
 
+class SatTSC4(MontrekTimeSeriesSatelliteABC):
+    hub_entity = models.ForeignKey(HubC, on_delete=models.CASCADE)
+    field_tsc4_int = models.IntegerField(null=True, blank=True)
+
+
 class SatD1(MontrekSatelliteABC):
     hub_entity = models.ForeignKey(HubD, on_delete=models.CASCADE)
     field_d1_str = models.CharField(max_length=50, default="DEFAULT")
