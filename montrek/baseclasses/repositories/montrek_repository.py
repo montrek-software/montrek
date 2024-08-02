@@ -318,7 +318,7 @@ class MontrekRepository:
                 )
             base_fields += container_fields
         self._ts_queryset_containers = []
-        base_query = base_query.order_by("-value_date")
+        base_query = base_query.order_by("-value_date", "-pk")
         return base_query
 
     def _get_extended_container_queryset(
