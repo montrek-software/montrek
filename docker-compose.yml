@@ -45,6 +45,7 @@ services:
 
   db:
     image: postgres:latest
+    command: postgres -c jit=off
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
