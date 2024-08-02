@@ -162,6 +162,10 @@ class MontrekRepository:
         db_creator = DbCreator(self.hub_class, self._primary_satellite_classes)
         created_hubs = []
         for _, row in data_frame.iterrows():
+            row = row.to_dict()
+            for key, value in row.items():
+                if pd.isna(value):
+                    row[key] = None
             hub_entity = self._get_hub_from_data(row)
             created_hub = db_creator.create(row, hub_entity, self.session_user_id)
             created_hubs.append(created_hub)
