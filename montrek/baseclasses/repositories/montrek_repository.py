@@ -162,6 +162,10 @@ class MontrekRepository:
         db_creator = DbCreator(self.hub_class, self._primary_satellite_classes)
         created_hubs = []
         for _, row in data_frame.iterrows():
+            row = row.to_dict()
+            for key, value in row.items():
+                if not isinstance(value, (list, dict)) and pd.isna(value):
+                    row[key] = None
             hub_entity = self._get_hub_from_data(row)
             created_hub = db_creator.create(row, hub_entity, self.session_user_id)
             created_hubs.append(created_hub)
@@ -312,10 +316,10 @@ class MontrekRepository:
             subquery = base_query.filter(
                 value_date=OuterRef("value_date"), pk=OuterRef("pk")
             )
-            for field in base_fields:
-                base_query = container_query.annotate(
-                    **{field: Subquery(subquery.values(field))}
-                )
+            annotation_dict = {
+                field: Subquery(subquery.values(field)) for field in base_fields
+            }
+            base_query = container_query.annotate(**annotation_dict)
             base_fields += container_fields
         self._ts_queryset_containers = []
         base_query = base_query.order_by("-value_date", "-pk")
