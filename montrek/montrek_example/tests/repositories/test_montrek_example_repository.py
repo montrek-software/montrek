@@ -762,7 +762,8 @@ class TestLinkOneToOneUpates(TestCase):
 
     def test_more_than_one_link_is_created(self):
         hub_b2 = me_factories.HubBFactory()
-        # Adding two links
+        # Adding two links, only the first is considered the correct one
+        # Since the first one is the same as the existing one, it should not be changed
         import_df = pd.DataFrame(
             {
                 "hub_entity_id": [self.hub_a.id, self.hub_a.id],
@@ -771,14 +772,26 @@ class TestLinkOneToOneUpates(TestCase):
         )
         self.repository.create_objects_from_data_frame(import_df)
         links = me_models.LinkHubAHubB.objects.all()
-        self.assertEqual(links.count(), 3)
+        self.assertEqual(links.count(), 1)
         link_1 = links.first()
-        link_2 = links[1]
-        link_3 = links.last()
+        self.assertEqual(link_1.hub_out, self.hub_b)
+        # When a different link is added, the existing one should be replaced by the new one
+        import_df = pd.DataFrame(
+            {
+                "hub_entity_id": [self.hub_a.id, self.hub_a.id],
+                "link_hub_a_hub_b": [hub_b2, self.hub_b],
+            }
+        )
+        self.repository.create_objects_from_data_frame(import_df)
+        links = me_models.LinkHubAHubB.objects.all()
+        self.assertEqual(links.count(), 2)
+        link_1 = links.first()
+        link_2 = links.last()
         self.assertEqual(link_1.hub_out, self.hub_b)
         self.assertEqual(link_2.hub_out, hub_b2)
-        self.assertEqual(link_3.hub_out, hub_b2)
-        #
+        self.assertEqual(link_1.state_date_start, MIN_DATE)
+        self.assertEqual(link_1.state_date_end, link_2.state_date_start)
+        self.assertEqual(link_2.state_date_end, MAX_DATE)
 
     # def test_update_multiple_links(self):
     #     ## If an already existing link is reuploaded, it should stay unchanged
