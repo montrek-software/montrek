@@ -395,6 +395,20 @@ class TestMontrekCreateObject(TestCase):
             ValueError, repository.create_objects_from_data_frame, data_frame
         )
 
+    def test_raise_error_for_duplicates_with_hub_entity_id(self):
+        repository = HubARepository(session_data={"user_id": self.user.id})
+        test_hub = me_factories.HubAFactory()
+        data_frame = pd.DataFrame(
+            {
+                "hub_entity_id": [test_hub.id, test_hub.id],
+                "field_a1_str": ["test", "test2"],
+            }
+        )
+        # repository.create_objects_from_data_frame(data_frame)
+        self.assertRaises(
+            ValueError, repository.create_objects_from_data_frame, data_frame
+        )
+
     def test_create_objects_from_data_frame_duplicate_drop(self):
         # If rows in the data frame are duplicates, they should be dropped.
         repository = HubARepository(session_data={"user_id": self.user.id})
@@ -698,7 +712,8 @@ class TestMontrekRepositoryLinks(TestCase):
 class TestLinkOneToOneUpates(TestCase):
     def setUp(self):
         user = MontrekUserFactory()
-        self.session_data = {"user_id": user.id}
+        session_data = {"user_id": user.id}
+        self.repository = HubARepository(session_data=session_data)
         self.hub_a = me_factories.HubAFactory()
         self.hub_b = me_factories.HubBFactory()
         me_factories.LinkHubAHubBFactory(hub_in=self.hub_a, hub_out=self.hub_b)
@@ -713,8 +728,7 @@ class TestLinkOneToOneUpates(TestCase):
 
     def test_update_one_to_one_link_same(self):
         # Adding the same link should not change anything
-        repository = HubARepository(session_data=self.session_data)
-        repository.std_create_object(
+        self.repository.std_create_object(
             {
                 "hub_entity_id": self.hub_a.id,
                 "link_hub_a_hub_b": self.hub_b,
@@ -730,8 +744,7 @@ class TestLinkOneToOneUpates(TestCase):
     def test_update_one_to_one_link_different(self):
         hub_b2 = me_factories.HubBFactory()
         # Adding the a new link should create a new link with adjusted state dates
-        repository = HubARepository(session_data=self.session_data)
-        repository.std_create_object(
+        self.repository.std_create_object(
             {
                 "hub_entity_id": self.hub_a.id,
                 "link_hub_a_hub_b": hub_b2,
@@ -746,6 +759,26 @@ class TestLinkOneToOneUpates(TestCase):
         self.assertEqual(link_1.state_date_start, MIN_DATE)
         self.assertEqual(link_1.state_date_end, link_2.state_date_start)
         self.assertEqual(link_2.state_date_end, MAX_DATE)
+
+    def test_more_than_one_link_is_created(self):
+        hub_b2 = me_factories.HubBFactory()
+        # Adding two links
+        import_df = pd.DataFrame(
+            {
+                "hub_entity_id": [self.hub_a.id, self.hub_a.id],
+                "link_hub_a_hub_b": [self.hub_b, hub_b2],
+            }
+        )
+        self.repository.create_objects_from_data_frame(import_df)
+        links = me_models.LinkHubAHubB.objects.all()
+        self.assertEqual(links.count(), 3)
+        link_1 = links.first()
+        link_2 = links[1]
+        link_3 = links.last()
+        self.assertEqual(link_1.hub_out, self.hub_b)
+        self.assertEqual(link_2.hub_out, hub_b2)
+        self.assertEqual(link_3.hub_out, hub_b2)
+        #
 
     # def test_update_multiple_links(self):
     #     ## If an already existing link is reuploaded, it should stay unchanged

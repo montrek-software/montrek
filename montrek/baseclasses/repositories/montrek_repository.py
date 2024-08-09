@@ -398,6 +398,7 @@ class MontrekRepository:
         error_message = ""
         for satellite_class in self._primary_satellite_classes:
             identifier_fields = satellite_class.identifier_fields
+            identifier_fields += ["hub_entity_id"]
             subset = [col for col in identifier_fields if col in data_frame.columns]
             if not subset:
                 continue
