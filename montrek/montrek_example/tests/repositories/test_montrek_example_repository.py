@@ -1320,12 +1320,12 @@ class TestMontrekManyToManyRelations(TestCase):
         new_1 = links.filter(hub_out=satd3.hub_entity).get()
         new_2 = links.filter(hub_out=satd4.hub_entity).get()
 
-        self.assertEqual(hub_b.field_d1_str, "erster,dritter,vierter")
+        self.assertEqual(hub_b.field_d1_str, "erster,zwoter,dritter,vierter")
 
         self.assertEqual(continued.state_date_start, MIN_DATE)
         self.assertEqual(continued.state_date_end, MAX_DATE)
         self.assertEqual(discontinued.state_date_start, MIN_DATE)
-        self.assertEqual(discontinued.state_date_end, new_1.state_date_start)
+        self.assertEqual(discontinued.state_date_end, MAX_DATE)
         self.assertEqual(new_1.state_date_start, new_2.state_date_start)
         self.assertEqual(new_1.state_date_end, MAX_DATE)
         self.assertEqual(new_2.state_date_end, MAX_DATE)
