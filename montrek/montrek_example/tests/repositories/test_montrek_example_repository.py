@@ -645,7 +645,7 @@ class TestMontrekRepositoryLinks(TestCase):
             hub_out=hubc2,
             state_date_end=montrek_time(2023, 7, 12),
         )
-        self.hub_c_1 = me_factories.SatC1Factory(
+        self.sat_c_1 = me_factories.SatC1Factory(
             hub_entity=hubc1,
             field_c1_str="Multi1",
         )
@@ -694,21 +694,73 @@ class TestMontrekRepositoryLinks(TestCase):
         self.assertEqual(queryset[0].field_a1_int, 5)
         self.assertEqual(queryset[1].field_a1_int, None)
 
-    def test_update_multiple_links(self):
-        ## If an already existing link is reuploaded, it should stay unchanged
+
+class TestLinkOneToOneUpates(TestCase):
+    def setUp(self):
         user = MontrekUserFactory()
-        repository = HubARepository(session_data={"user_id": user.id})
-        start_query = repository.std_queryset()
-        start_hub = start_query.first()
+        self.session_data = {"user_id": user.id}
+        self.hub_a = me_factories.HubAFactory()
+        self.hub_b = me_factories.HubBFactory()
+        me_factories.LinkHubAHubBFactory(hub_in=self.hub_a, hub_out=self.hub_b)
+
+    def test_setup(self):
+        links = me_models.LinkHubAHubB.objects.all()
+        self.assertEqual(links.count(), 1)
+        link = links.first()
+        self.assertEqual(link.hub_out, self.hub_b)
+        self.assertEqual(link.state_date_start, MIN_DATE)
+        self.assertEqual(link.state_date_end, MAX_DATE)
+
+    def test_update_one_to_one_link_same(self):
+        # Adding the same link should not change anything
+        repository = HubARepository(session_data=self.session_data)
         repository.std_create_object(
             {
-                "hub_entity_id": start_hub.id,
-                "link_hub_a_hub_c": self.hub_c_1.id,
+                "hub_entity_id": self.hub_a.id,
+                "link_hub_a_hub_b": self.hub_b,
             }
         )
-        test_query = repository.std_queryset()
-        test_hub = test_query.first()
-        breakpoint()
+        links = me_models.LinkHubAHubB.objects.all()
+        self.assertEqual(links.count(), 1)
+        link = links.first()
+        self.assertEqual(link.hub_out, self.hub_b)
+        self.assertEqual(link.state_date_start, MIN_DATE)
+        self.assertEqual(link.state_date_end, MAX_DATE)
+
+    def test_update_one_to_one_link_different(self):
+        hub_b2 = me_factories.HubBFactory()
+        # Adding the a new link should create a new link with adjusted state dates
+        repository = HubARepository(session_data=self.session_data)
+        repository.std_create_object(
+            {
+                "hub_entity_id": self.hub_a.id,
+                "link_hub_a_hub_b": hub_b2,
+            }
+        )
+        links = me_models.LinkHubAHubB.objects.all()
+        self.assertEqual(links.count(), 2)
+        link_1 = links.first()
+        link_2 = links.last()
+        self.assertEqual(link_1.hub_out, self.hub_b)
+        self.assertEqual(link_2.hub_out, hub_b2)
+        self.assertEqual(link_1.state_date_start, MIN_DATE)
+        self.assertEqual(link_1.state_date_end, link_2.state_date_start)
+        self.assertEqual(link_2.state_date_end, MAX_DATE)
+
+    # def test_update_multiple_links(self):
+    #     ## If an already existing link is reuploaded, it should stay unchanged
+    #     user = MontrekUserFactory()
+    #     repository = HubARepository(session_data={"user_id": user.id})
+    #     start_query = repository.std_queryset()
+    #     start_hub = start_query.first()
+    #     repository.std_create_object(
+    #         {
+    #             "hub_entity_id": start_hub.id,
+    #             "link_hub_a_hub_c": self.sat_c_1.hub_entity,
+    #         }
+    #     )
+    #     test_query = repository.std_queryset()
+    #     test_hub = test_query.first()
 
 
 class TestTimeSeries(TestCase):
