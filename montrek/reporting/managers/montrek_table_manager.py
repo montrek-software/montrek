@@ -43,7 +43,7 @@ class MontrekTableManager(MontrekManager):
         html_str = f"<h3>{self.table_title}</h3>"
         html_str += '<table class="table table-bordered table-hover"><tr>'
         for table_element in self.table_elements:
-            html_str += f"<th>{table_element.name}</th>"
+            html_str += f"<th title={getattr(table_element, 'attr', '')}>{table_element.name}</th>"
         html_str += "</tr>"
         queryset = self.get_paginated_queryset()
         for query_object in queryset:
