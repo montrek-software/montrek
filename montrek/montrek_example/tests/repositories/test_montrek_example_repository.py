@@ -645,7 +645,7 @@ class TestMontrekRepositoryLinks(TestCase):
             hub_out=hubc2,
             state_date_end=montrek_time(2023, 7, 12),
         )
-        me_factories.SatC1Factory(
+        self.hub_c_1 = me_factories.SatC1Factory(
             hub_entity=hubc1,
             field_c1_str="Multi1",
         )
@@ -693,6 +693,22 @@ class TestMontrekRepositoryLinks(TestCase):
         self.assertEqual(queryset.count(), 2)
         self.assertEqual(queryset[0].field_a1_int, 5)
         self.assertEqual(queryset[1].field_a1_int, None)
+
+    def test_update_multiple_links(self):
+        ## If an already existing link is reuploaded, it should stay unchanged
+        user = MontrekUserFactory()
+        repository = HubARepository(session_data={"user_id": user.id})
+        start_query = repository.std_queryset()
+        start_hub = start_query.first()
+        repository.std_create_object(
+            {
+                "hub_entity_id": start_hub.id,
+                "link_hub_a_hub_c": self.hub_c_1.id,
+            }
+        )
+        test_query = repository.std_queryset()
+        test_hub = test_query.first()
+        breakpoint()
 
 
 class TestTimeSeries(TestCase):
