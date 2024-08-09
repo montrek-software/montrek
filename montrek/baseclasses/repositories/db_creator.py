@@ -5,10 +5,12 @@ from dataclasses import dataclass
 from django.db.models import QuerySet
 from django.utils import timezone
 from baseclasses.models import (
+    MontrekOneToOneLinkABC,
     MontrekSatelliteABC,
     MontrekHubABC,
     MontrekTimeSeriesSatelliteABC,
 )
+from baseclasses.errors.montrek_user_error import MontrekError
 
 
 class SatelliteCreationState(Protocol):
@@ -293,6 +295,11 @@ class DbCreator:
         if not hub.pk:
             return links
         link_class = links[0].__class__
+        is_one_to_one_link = isinstance(links[0], MontrekOneToOneLinkABC)
+        if is_one_to_one_link and len(links) > 1:
+            raise MontrekError(
+                f"Try to link mulitple items to OneToOne Link {link_class}"
+            )
         filter_args = {
             f"{hub_field}": hub,
             "state_date_end__gt": creation_date,
@@ -305,10 +312,11 @@ class DbCreator:
         opposite_hubs = [getattr(link, opposite_field) for link in links]
         filter_kwargs = {f"{opposite_field}__in": opposite_hubs}
         continued_links = existing_links.filter(**filter_kwargs).all()
-        discontinued_links = existing_links.exclude(**filter_kwargs).all()
-        for link in discontinued_links:
-            link.state_date_end = creation_date
-            link.save()
+        if is_one_to_one_link:
+            discontinued_links = existing_links.exclude(**filter_kwargs).all()
+            for link in discontinued_links:
+                link.state_date_end = creation_date
+                link.save()
         continued_opposite_hubs = [
             getattr(link, opposite_field) for link in continued_links
         ]

@@ -2,6 +2,7 @@ import datetime
 
 import pandas as pd
 from baseclasses.utils import montrek_time
+from baseclasses.errors.montrek_user_error import MontrekError
 from django.core.exceptions import PermissionDenied
 from django.test import TestCase, TransactionTestCase
 from django.utils import timezone
@@ -793,20 +794,92 @@ class TestLinkOneToOneUpates(TestCase):
         self.assertEqual(link_1.state_date_end, link_2.state_date_start)
         self.assertEqual(link_2.state_date_end, MAX_DATE)
 
-    # def test_update_multiple_links(self):
-    #     ## If an already existing link is reuploaded, it should stay unchanged
-    #     user = MontrekUserFactory()
-    #     repository = HubARepository(session_data={"user_id": user.id})
-    #     start_query = repository.std_queryset()
-    #     start_hub = start_query.first()
-    #     repository.std_create_object(
-    #         {
-    #             "hub_entity_id": start_hub.id,
-    #             "link_hub_a_hub_c": self.sat_c_1.hub_entity,
-    #         }
-    #     )
-    #     test_query = repository.std_queryset()
-    #     test_hub = test_query.first()
+    def test_more_than_one_link_is_created__raise_error_on_one_line(self):
+        hub_b2 = me_factories.HubBFactory()
+        # Adding two links, only the first is considered the correct one
+        # Since the first one is the same as the existing one, it should not be changed
+        import_df = pd.DataFrame(
+            {
+                "hub_entity_id": [self.hub_a.id],
+                "link_hub_a_hub_b": [[self.hub_b, hub_b2]],
+            }
+        )
+        with self.assertRaises(MontrekError):
+            self.repository.create_objects_from_data_frame(import_df)
+
+
+class TestLinkOneToManyUpates(TestCase):
+    def setUp(self):
+        user = MontrekUserFactory()
+        session_data = {"user_id": user.id}
+        self.repository = HubARepository(session_data=session_data)
+        self.hub_a = me_factories.HubAFactory()
+        self.hub_c = me_factories.HubCFactory()
+        me_factories.LinkHubAHubCFactory(hub_in=self.hub_a, hub_out=self.hub_c)
+
+    def test_setup(self):
+        links = me_models.LinkHubAHubC.objects.all()
+        self.assertEqual(links.count(), 1)
+        link = links.first()
+        self.assertEqual(link.hub_out, self.hub_c)
+        self.assertEqual(link.state_date_start, MIN_DATE)
+        self.assertEqual(link.state_date_end, MAX_DATE)
+
+    def test_update_one_to_many_link_same(self):
+        # Adding the same link should not change anything
+        self.repository.std_create_object(
+            {
+                "hub_entity_id": self.hub_a.id,
+                "link_hub_a_hub_c": self.hub_c,
+            }
+        )
+        links = me_models.LinkHubAHubC.objects.all()
+        self.assertEqual(links.count(), 1)
+        link = links.first()
+        self.assertEqual(link.hub_out, self.hub_c)
+        self.assertEqual(link.state_date_start, MIN_DATE)
+        self.assertEqual(link.state_date_end, MAX_DATE)
+
+    def test_update_one_to_many_link_different(self):
+        hub_c2 = me_factories.HubCFactory()
+        # Adding the a new link should create a new link with adjusted state dates
+        # Both links should exist at the same time
+        self.repository.std_create_object(
+            {
+                "hub_entity_id": self.hub_a.id,
+                "link_hub_a_hub_c": hub_c2,
+            }
+        )
+        links = me_models.LinkHubAHubC.objects.all()
+        self.assertEqual(links.count(), 2)
+        link_1 = links.first()
+        link_2 = links.last()
+        self.assertEqual(link_1.hub_out, self.hub_c)
+        self.assertEqual(link_2.hub_out, hub_c2)
+        self.assertEqual(link_1.state_date_start, MIN_DATE)
+        self.assertEqual(link_1.state_date_end, MAX_DATE)
+        self.assertEqual(link_2.state_date_end, MAX_DATE)
+        self.assertGreater(link_2.state_date_start, MIN_DATE)
+
+    def test_more_than_one_link_is_created_single_line(self):
+        hub_c2 = me_factories.HubCFactory()
+        import_df = pd.DataFrame(
+            {
+                "hub_entity_id": [self.hub_a.id],
+                "link_hub_a_hub_c": [[self.hub_c, hub_c2]],
+            }
+        )
+        self.repository.create_objects_from_data_frame(import_df)
+        links = me_models.LinkHubAHubC.objects.all()
+        self.assertEqual(links.count(), 2)
+        link_1 = links.first()
+        link_2 = links.last()
+        self.assertEqual(link_1.hub_out, self.hub_c)
+        self.assertEqual(link_2.hub_out, hub_c2)
+        self.assertEqual(link_1.state_date_start, MIN_DATE)
+        self.assertEqual(link_1.state_date_end, MAX_DATE)
+        self.assertEqual(link_2.state_date_end, MAX_DATE)
+        self.assertGreater(link_2.state_date_start, MIN_DATE)
 
 
 class TestTimeSeries(TestCase):
