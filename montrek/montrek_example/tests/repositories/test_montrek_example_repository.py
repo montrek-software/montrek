@@ -271,7 +271,7 @@ class TestMontrekCreateObject(TestCase):
 
         # Now we have two hubs with different state_date_start and state_date_end:
         self.assertEqual(me_models.HubA.objects.count(), 2)
-        self.assertEqual(
+        self.assertGreater(
             me_models.HubA.objects.first().state_date_start,
             MIN_DATE,
         )
@@ -635,6 +635,16 @@ class TestDeleteObject(TestCase):
         self.assertEqual(me_models.SatA1.objects.count(), 1)
         self.assertEqual(me_models.HubA.objects.count(), 1)
         self.assertEqual(len(repository.std_queryset()), 0)
+
+    def test_reintroduce_deleted_object(self):
+        repository = HubARepository(session_data={"user_id": self.user.id})
+        repository.std_create_object({"field_a1_int": 5, "field_a1_str": "test"})
+        deletion_object = repository.std_queryset().get()
+        repository.std_delete_object(deletion_object)
+        repository.std_create_object({"field_a1_int": 5, "field_a1_str": "test"})
+        self.assertEqual(me_models.SatA1.objects.count(), 2)
+        self.assertEqual(me_models.HubA.objects.count(), 2)
+        self.assertEqual(len(repository.std_queryset()), 1)
 
 
 class TestMontrekRepositoryLinks(TestCase):

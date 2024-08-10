@@ -386,7 +386,9 @@ class MontrekRepository:
         ):
             hub_entity = self.hub_class.objects.get(pk=data["hub_entity_id"])
         else:
-            hub_entity = self.hub_class(created_by_id=self.session_user_id)
+            hub_entity = self.hub_class(
+                created_by_id=self.session_user_id, state_date_start=timezone.now()
+            )
         return hub_entity
 
     def _raise_for_anonymous_user(self):
