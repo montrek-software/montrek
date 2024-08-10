@@ -401,6 +401,8 @@ class MontrekRepository:
             subset = [col for col in identifier_fields if col in data_frame.columns]
             if "hub_entity_id" in data_frame.columns:
                 subset = ["hub_entity_id"]
+                if "value_date" in data_frame.columns:
+                    subset.append("value_date")
             if not subset:
                 continue
             duplicated_entries = data_frame.duplicated(subset=subset)

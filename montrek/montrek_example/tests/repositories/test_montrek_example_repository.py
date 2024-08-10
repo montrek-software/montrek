@@ -391,7 +391,6 @@ class TestMontrekCreateObject(TestCase):
                 "field_a2_str": ["test2", "test3", "test4"],
             }
         )
-        # repository.create_objects_from_data_frame(data_frame)
         self.assertRaises(
             ValueError, repository.create_objects_from_data_frame, data_frame
         )
@@ -405,7 +404,32 @@ class TestMontrekCreateObject(TestCase):
                 "field_a1_str": ["test", "test2"],
             }
         )
-        # repository.create_objects_from_data_frame(data_frame)
+        self.assertRaises(
+            ValueError, repository.create_objects_from_data_frame, data_frame
+        )
+
+    def test_raise_no_error_for_duplicates_with_hub_entity_id_and_value_date(self):
+        repository = HubARepository(session_data={"user_id": self.user.id})
+        test_hub = me_factories.HubAFactory()
+        data_frame = pd.DataFrame(
+            {
+                "hub_entity_id": [test_hub.id, test_hub.id],
+                "field_a1_str": ["test", "test2"],
+                "value_date": [datetime.date(2023, 1, 1), datetime.date(2023, 1, 2)],
+            }
+        )
+        repository.create_objects_from_data_frame(data_frame)
+
+    def test_raise_error_for_duplicates_with_hub_entity_id_and_value_date(self):
+        repository = HubARepository(session_data={"user_id": self.user.id})
+        test_hub = me_factories.HubAFactory()
+        data_frame = pd.DataFrame(
+            {
+                "hub_entity_id": [test_hub.id, test_hub.id],
+                "field_a1_str": ["test", "test2"],
+                "value_date": [datetime.date(2023, 1, 1), datetime.date(2023, 1, 1)],
+            }
+        )
         self.assertRaises(
             ValueError, repository.create_objects_from_data_frame, data_frame
         )
