@@ -361,6 +361,10 @@ class MontrekRepository:
     def std_delete_object(self, obj: MontrekHubABC):
         obj.state_date_end = timezone.now()
         obj.save()
+        for satellite_class in self._primary_satellite_classes:
+            satellite_class.objects.filter(hub_entity=obj).update(
+                state_date_end=timezone.now()
+            )
 
     def _add_to_annotations(
         self, fields: List[str], annotations_manager: AnnotationsManager

@@ -633,6 +633,7 @@ class TestDeleteObject(TestCase):
         deletion_object = repository.std_queryset().get()
         repository.std_delete_object(deletion_object)
         self.assertEqual(me_models.SatA1.objects.count(), 1)
+        self.assertLess(me_models.SatA1.objects.first().state_date_end, timezone.now())
         self.assertEqual(me_models.HubA.objects.count(), 1)
         self.assertEqual(len(repository.std_queryset()), 0)
 
