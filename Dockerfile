@@ -27,6 +27,7 @@ RUN apt-get update && apt-get install -y \
     wget \
     software-properties-common \
     pkg-config \
+    libmysqlclient-dev \
     libpq-dev gcc \
     && apt-get clean
 
