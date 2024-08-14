@@ -143,7 +143,10 @@ class DbCreator:
         sat_hash_value = satellite.get_hash_value
         # TODO: Revisit this filter and check if it does not work if more Satellite have the same values
         satellite_updates_or_none = (
-            satellite_class.objects.filter(hash_identifier=sat_hash_identifier)
+            satellite_class.objects.filter(
+                hash_identifier=sat_hash_identifier,
+                hub_entity__state_date_end__gt=timezone.now(),
+            )
             .order_by("-state_date_start")
             .first()
         )
