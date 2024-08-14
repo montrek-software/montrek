@@ -110,10 +110,14 @@ WSGI_APPLICATION = "montrek.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
+DATABASE_ENGINE_MAP = {
+    'mariadb': 'django.db.backends.mysql',
+    'postgres': 'django.db.backends.postgresql',
+}
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.mysql",
+        "ENGINE": DATABASE_ENGINE_MAP[config('DB_ENGINE', default='mariadb')],
         "NAME": config("DB_NAME", default="montrek_db"),
         "USER": config("DB_USER", default="root"),
         "PASSWORD": config("DB_PASSWORD"),

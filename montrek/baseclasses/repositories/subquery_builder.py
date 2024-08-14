@@ -1,3 +1,4 @@
+from django.conf import settings
 from typing import Type
 
 from django.db.models.functions import Cast
@@ -5,7 +6,7 @@ from baseclasses.models import MontrekManyToManyLinkABC, MontrekSatelliteABC
 from baseclasses.models import MontrekTimeSeriesSatelliteABC
 from baseclasses.models import MontrekLinkABC
 from baseclasses.models import LinkTypeEnum
-from django.db.models import CharField, Func, Subquery, OuterRef
+from django.db.models import CharField, Subquery, OuterRef, Func
 from django.utils import timezone
 
 
@@ -63,9 +64,26 @@ class LastTSSatelliteSubqueryBuilder(SubqueryBuilder):
         )
 
 
+class StringAgg(Func):
+    function = "STRING_AGG"
+    template = "%(function)s(%(expressions)s, ',')"
+
+
 class GroupConcat(Func):
     function = "GROUP_CONCAT"
     template = "%(function)s(%(expressions)s SEPARATOR ',')"
+
+
+def get_string_concat_function():
+    engine = settings.DATABASES["default"]["ENGINE"]
+    if "mysql" in engine:
+        return GroupConcat
+    elif "postgresql" in engine:
+        return StringAgg
+    else:
+        raise NotImplementedError(
+            f"No function for concatenating list of strings defined for {engine}!"
+        )
 
 
 class LinkedSatelliteSubqueryBuilderBase(SubqueryBuilder):
@@ -105,8 +123,14 @@ class LinkedSatelliteSubqueryBuilderBase(SubqueryBuilder):
         ).values(field)
         if isinstance(self.link_class(), MontrekManyToManyLinkABC):
             # In case of many-to-may links we return the return values concatenated as characters by default
+            func = get_string_concat_function()
             satellite_field_query = satellite_field_query.annotate(
-                **{field + "agg": Cast(GroupConcat(field), CharField())}
+                **{
+                    field + "agg": Cast(
+                        func(Cast(field, CharField())),
+                        CharField(),
+                    )
+                }
             ).values(field + "agg")
         if isinstance(self.satellite_class(), MontrekTimeSeriesSatelliteABC):
             satellite_field_query = (

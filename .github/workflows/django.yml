@@ -17,14 +17,15 @@ jobs:
         python-version: [3.12.0]
 
     services:
-      mariadb:
-        image: mariadb:10.9
+      postgres:
+        image: postgres:latest
         env:
-          MYSQL_ROOT_PASSWORD: ci_pipe_pssw
-          MYSQL_DATABASE: montrek_ci_pipe_db
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ci_pipe_pssw
+          POSTGRES_DB: montrek_ci_pipe_db
         ports:
-          - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 3
 
     steps:
       - uses: actions/checkout@v3
@@ -42,7 +43,9 @@ jobs:
           pip install -r requirements.txt
       - name: Setup env
         run: |
-          echo "DB_USER=root" >> .env
+          echo "DB_ENGINE=postgres" >> .env
+          echo "DB_PORT=5432" >> .env
+          echo "DB_USER=postgres" >> .env
           echo "DB_PASSWORD=ci_pipe_pssw" >> .env
           echo "DB_NAME=montrek_ci_pipe_db" >> .env
           echo "DB_HOST=0.0.0.0" >> .env

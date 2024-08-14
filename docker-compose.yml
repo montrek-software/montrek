@@ -1,5 +1,5 @@
-version: "3.7"
-
+include:
+    - ${DB_ENGINE}.yml
 services:
   nginx:
     build: ./nginx
@@ -45,20 +45,6 @@ services:
     networks:
       - montrek_network
 
-  db:
-    image: mariadb:latest
-    command: --max_allowed_packet=64M
-    environment:
-      MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
-      MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-    ports:
-      - "${DB_PORT}:3306"
-    volumes:
-      - db_data:/var/lib/mysql
-    networks:
-      - montrek_network
   celery:
     build:
       context: .

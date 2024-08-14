@@ -28,6 +28,7 @@ RUN apt-get update && apt-get install -y \
     software-properties-common \
     pkg-config \
     libmysqlclient-dev \
+    libpq-dev gcc \
     && apt-get clean
 
 # Enable the multiverse repository
