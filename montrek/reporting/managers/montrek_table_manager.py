@@ -148,7 +148,7 @@ class MontrekTableManager(MontrekManager):
 
     def _make_datetime_naive(self, value):
         if isinstance(
-            value, (datetime.datetime, datetime.date)
+            value, datetime.datetime
         ) and not timezone.is_naive(value):
             value = timezone.make_naive(value)
         return value
