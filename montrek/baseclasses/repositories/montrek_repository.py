@@ -52,6 +52,7 @@ class MontrekRepository:
         self.session_data = session_data
         self._reference_date = None
         self.messages = []
+        self._is_build = False
 
     @classmethod
     def get_hub_by_id(cls, pk: int) -> MontrekHubABC:
@@ -231,6 +232,7 @@ class MontrekRepository:
             Q(state_date_end__gt=self.reference_date),
         )
         queryset = self._apply_filter(queryset)
+        self._is_build = True
         return queryset
 
     def build_time_series_queryset_container(
