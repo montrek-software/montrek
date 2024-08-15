@@ -608,11 +608,11 @@ class TestMontrekCreateObject(TestCase):
         test_query = repository.std_queryset()
         self.assertEqual(test_query.count(), 3)
 
-    def test__is_build(self):
+    def test__is_built(self):
         montrek_repo = HubARepository()
-        self.assertFalse(montrek_repo._is_build)
+        self.assertFalse(montrek_repo._is_built)
         montrek_repo.std_queryset()
-        self.assertTrue(montrek_repo._is_build)
+        self.assertTrue(montrek_repo._is_built)
 
 
 class TestMontrekCreateObjectTransaction(TransactionTestCase):
