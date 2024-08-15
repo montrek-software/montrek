@@ -56,6 +56,7 @@ platformdirs==4.2.1
 plotly==5.21.0
 prometheus_client==0.20.0
 prompt-toolkit==3.0.43
+psycopg==3.1.8
 pycountry==24.6.1
 pylint==3.1.0
 pylint-django==2.5.5
