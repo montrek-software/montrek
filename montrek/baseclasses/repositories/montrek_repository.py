@@ -52,6 +52,7 @@ class MontrekRepository:
         self.session_data = session_data
         self._reference_date = None
         self.messages = []
+        self._is_build = False
 
     @classmethod
     def get_hub_by_id(cls, pk: int) -> MontrekHubABC:
@@ -136,7 +137,8 @@ class MontrekRepository:
         return object_dict
 
     def std_satellite_fields(self):
-        self.std_queryset()
+        if not self._is_build:
+            self.std_queryset()
         fields = []
         for satellite_class in self._primary_satellite_classes:
             fields.extend(satellite_class.get_value_fields())
@@ -144,7 +146,8 @@ class MontrekRepository:
 
     def std_create_object(self, data: Dict[str, Any]) -> MontrekHubABC:
         self._raise_for_anonymous_user()
-        self.std_queryset()
+        if not self._is_build:
+            self.std_queryset()
         hub_entity = self._get_hub_from_data(data)
         db_creator = DbCreator(self.hub_class, self._primary_satellite_classes)
         created_hub = db_creator.create(data, hub_entity, self.session_user_id)
@@ -158,7 +161,8 @@ class MontrekRepository:
         data_frame = self._drop_empty_rows(data_frame)
         data_frame = self._drop_duplicates(data_frame)
         self._raise_for_duplicated_entries(data_frame)
-        self.std_queryset()
+        if not self._is_build:
+            self.std_queryset()
         db_creator = DbCreator(self.hub_class, self._primary_satellite_classes)
         created_hubs = []
         for _, row in data_frame.iterrows():
@@ -231,6 +235,7 @@ class MontrekRepository:
             Q(state_date_end__gt=self.reference_date),
         )
         queryset = self._apply_filter(queryset)
+        self._is_build = True
         return queryset
 
     def build_time_series_queryset_container(
@@ -275,7 +280,8 @@ class MontrekRepository:
         )
 
     def get_history_queryset(self, pk: int, **kwargs) -> dict[str, QuerySet]:
-        self.std_queryset()
+        if not self._is_build:
+            self.std_queryset()
         hub = self.hub_class.objects.get(pk=pk)
         satellite_querys = {}
         for sat in self._primary_satellite_classes:
