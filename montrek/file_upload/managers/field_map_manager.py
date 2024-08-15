@@ -5,7 +5,11 @@ from file_upload.repositories.field_map_repository import (
     FieldMapRepositoryABC,
 )
 from reporting.managers.montrek_table_manager import MontrekTableManager
-from reporting.dataclasses.table_elements import LinkTableElement, StringTableElement
+from reporting.dataclasses.table_elements import (
+    LinkTableElement,
+    StringTableElement,
+    TableElement,
+)
 
 
 @dataclass
@@ -45,8 +49,8 @@ class FieldMapManagerABC(MontrekTableManager):
     delete_url = ""
 
     @property
-    def table_elements(self) -> list:
-        return [
+    def table_elements(self) -> tuple[TableElement, ...]:
+        return (
             StringTableElement(name="Source Field", attr="source_field"),
             StringTableElement(name="Database Field", attr="database_field"),
             StringTableElement(name="Function Name", attr="function_name"),
@@ -68,7 +72,7 @@ class FieldMapManagerABC(MontrekTableManager):
                 kwargs={"pk": "id"},
                 hover_text="Delete Field Map",
             ),
-        ]
+        )
 
     def __init__(self, session_data: dict):
         self._reset_exceptions()
