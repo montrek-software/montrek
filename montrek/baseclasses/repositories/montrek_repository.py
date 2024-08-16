@@ -53,6 +53,7 @@ class MontrekRepository:
         self._reference_date = None
         self.messages = []
         self._is_built = False
+        self.calculated_fields: list[str] = []
 
     @classmethod
     def get_hub_by_id(cls, pk: int) -> MontrekHubABC:
@@ -143,6 +144,10 @@ class MontrekRepository:
         for satellite_class in self._primary_satellite_classes:
             fields.extend(satellite_class.get_value_fields())
         return fields
+
+    def get_all_fields(self):
+        satellite_fields = [field.name for field in self.std_satellite_fields()]
+        return satellite_fields + self.calculated_fields
 
     def std_create_object(self, data: Dict[str, Any]) -> MontrekHubABC:
         self._raise_for_anonymous_user()
