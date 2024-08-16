@@ -13,3 +13,4 @@ class FieldMapStaticSatelliteFactory(factory.django.DjangoModelFactory):
     hub_entity = factory.SubFactory(FieldMapHubFactory)
     source_field = factory.Sequence(lambda n: f"source_field_{n}")
     database_field = factory.Sequence(lambda n: f"database_field_{n}")
+    function_name = "no_change"
