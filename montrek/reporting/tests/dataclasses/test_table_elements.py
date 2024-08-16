@@ -163,6 +163,37 @@ class TestTableElements(TestCase):
             " \\url{https://www.google.com} &",
         )
 
+    def test_method_name_table_element(self):
+        class Functions:
+            def do_nothing(self):
+                pass
+
+            def return_one(self, arg1: str, arg2: int) -> int:
+                """
+                Returns 1.
+
+                Parameters:
+                arg1 (str): The first argument.
+                arg2 (int): The second argument.
+
+                Returns:
+                int: 1
+                """
+                return 1
+
+        table_element = te.MethodNameTableElement(
+            name="name", attr="function_name", class_=Functions
+        )
+        test_str = table_element.format("do_nothing")
+        self.assertEqual(
+            test_str, '<td style="text-align: left" title="">do_nothing</td>'
+        )
+        test_str = table_element.format("return_one")
+        self.assertEqual(
+            test_str,
+            '<td style="text-align: left" title="Returns 1.\n\nParameters:\narg1 (str): The first argument.\narg2 (int): The second argument.\n\nReturns:\nint: 1">return_one</td>',
+        )
+
 
 class MockTableElement(te.AttrTableElement):
     def __init__(self, attr: str) -> None:
