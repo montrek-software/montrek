@@ -45,6 +45,24 @@ class TestMontrekRepositorySatellite(TestCase):
             field_a2_float=9,
         )
 
+    def test_get_all_fields(self):
+        repo = HubARepository()
+        repo.calculated_fields += ["dummy1", "dummy2"]
+        test_fields = repo.get_all_fields()
+        self.assertEqual(
+            test_fields,
+            [
+                "comment",
+                "field_a1_str",
+                "field_a1_int",
+                "comment",
+                "field_a2_str",
+                "field_a2_float",
+                "dummy1",
+                "dummy2",
+            ],
+        )
+
     def test_build_queryset_with_satellite_fields(self):
         repository = HubARepository()
         repository.reference_date = montrek_time(2023, 7, 8)
