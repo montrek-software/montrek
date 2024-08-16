@@ -1,3 +1,4 @@
+from functools import wraps
 from django.utils import timezone
 from django.test import TestCase
 import reporting.dataclasses.table_elements as te
@@ -164,11 +165,19 @@ class TestTableElements(TestCase):
         )
 
     def test_method_name_table_element(self):
+        def my_decorator(func):
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+                return func(*args, **kwargs)
+
+            return wrapper
+
         class Functions:
             def do_nothing(self):
                 pass
 
-            def return_one(self, arg1: str, arg2: int) -> int:
+            @staticmethod
+            def return_one(arg1: str, arg2: int) -> int:
                 """
                 Returns 1.
 
@@ -181,6 +190,12 @@ class TestTableElements(TestCase):
                 """
                 return 1
 
+            @classmethod
+            @my_decorator
+            def return_two(cls) -> int:
+                """Returns 2."""
+                return 2
+
         table_element = te.MethodNameTableElement(
             name="name", attr="function_name", class_=Functions
         )
@@ -192,6 +207,10 @@ class TestTableElements(TestCase):
         self.assertEqual(
             test_str,
             '<td style="text-align: left" title="Returns 1.\n\nParameters:\narg1 (str): The first argument.\narg2 (int): The second argument.\n\nReturns:\nint: 1">return_one</td>',
+        )
+        test_str = table_element.format("return_two")
+        self.assertEqual(
+            test_str, '<td style="text-align: left" title="Returns 2.">return_two</td>'
         )
 
 
