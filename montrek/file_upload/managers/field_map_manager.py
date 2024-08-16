@@ -9,6 +9,7 @@ from reporting.dataclasses.table_elements import (
     LinkTableElement,
     StringTableElement,
     TableElement,
+    MethodNameTableElement
 )
 
 
@@ -24,22 +25,55 @@ class FieldMapExceptionInfo:
 class FieldMapFunctionManager:
     @staticmethod
     def no_change(source_df: pd.DataFrame, source_field: str) -> pd.Series:
+        """
+        Returns the data series from the source DataFrame without any changes.
+
+        Parameters:
+        source_df (pd.DataFrame): The source DataFrame.
+        source_field (str): The field to be returned.
+
+        Returns:
+        pd.Series: The data series corresponding to the source_field.
+        """
         return source_df[source_field]
 
     @staticmethod
     def multiply_by_value(
         source_df: pd.DataFrame, source_field: str, value: float
     ) -> pd.Series:
+        """
+        Returns a data series that is the result of multiplying the source_field
+        by a value.
+
+        Parameters:
+        source_df (pd.DataFrame): The source DataFrame.
+        source_field (str): The field to be multiplied.
+        value (float): The value to multiply by.
+
+        Returns:
+        pd.Series: The data series resulting from the multiplication.
+        """
         return source_df[source_field].multiply(value)
 
     @staticmethod
     def extract_number(source_df: pd.DataFrame, source_field: str) -> pd.Series:
-        """Extracts the first number found in a string"""
+        """
+        Returns a data series that is the result of extracting the first number
+        from each string in the source_field.
+
+        Parameters:
+        source_df (pd.DataFrame): The source DataFrame.
+        source_field (str): The string field from which to extract numbers.
+
+        Returns:
+        pd.Series: The series of extracted numbers as floats.
+        """
         str_series = source_df[source_field].astype(str)
         pattern = r"(-?\d+\.\d+|-?\d+)"
         group_match_df = str_series.str.extract(pattern)
         result_series = group_match_df[0].astype(float)
         return result_series
+
 
 
 class FieldMapManagerABC(MontrekTableManager):
@@ -53,7 +87,7 @@ class FieldMapManagerABC(MontrekTableManager):
         return (
             StringTableElement(name="Source Field", attr="source_field"),
             StringTableElement(name="Database Field", attr="database_field"),
-            StringTableElement(name="Function Name", attr="function_name"),
+            MethodNameTableElement(name="Function Name", attr="function_name", class_=self.field_map_function_manager_class),
             StringTableElement(name="Function Parameters", attr="function_parameters"),
             StringTableElement(
                 name="Comment", attr="field_map_static_satellite_comment"

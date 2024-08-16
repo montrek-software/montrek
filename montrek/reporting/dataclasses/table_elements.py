@@ -1,3 +1,4 @@
+import inspect
 from typing import Any
 from baseclasses.dataclasses.alert import AlertEnum
 from django.urls import NoReverseMatch, reverse
@@ -308,3 +309,18 @@ class DateTimeTableElement(AttrTableElement):
             return f'<td style="text-align:left;">{value}</td>'
         value = value.strftime("%d/%m/%Y %H:%M:%S")
         return f'<td style="text-align:left;">{value}</td>'
+
+
+@dataclass
+class MethodNameTableElement(AttrTableElement):
+    attr: str
+    class_: type = object
+
+    def format(self, value):
+        func = getattr(self.class_, value)
+        # Strip all decorator functions to get the to the original method.
+        while hasattr(func, "__wrapped__"):
+            func = func.__wrapped__
+        doc = inspect.getdoc(func)
+        doc = doc or ""
+        return f'<td style="text-align: left" title="{doc}">{value}</td>'
