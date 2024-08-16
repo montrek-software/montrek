@@ -1,7 +1,6 @@
 from copy import deepcopy
 from dataclasses import dataclass
 
-from django.db.models.functions import Coalesce
 import pandas as pd
 from typing import Any, List, Dict, Optional, Type
 from baseclasses.models import MontrekSatelliteABC, MontrekTimeSeriesSatelliteABC
@@ -26,12 +25,9 @@ from baseclasses.dataclasses.montrek_message import (
 from django.db.models import (
     F,
     Q,
-    CharField,
-    FloatField,
     OuterRef,
     QuerySet,
     Subquery,
-    Value,
 )
 from django.db.models import ManyToManyField
 from django.utils import timezone
