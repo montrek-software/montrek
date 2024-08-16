@@ -1151,14 +1151,14 @@ class TestTimeSeriesStdQueryset(TestCase):
             self.assertEqual(test_obj_0.value_date, montrek_time(2024, 2, 5).date())
             self.assertEqual(test_obj_0.field_tsc3_int, None)
             self.assertEqual(test_obj_0.field_tsc3_str, None)
-            test_obj_1 = test_query[1]
+            test_obj_1 = test_query[2]
             self.assertEqual(test_obj_1.field_c1_str, "Test")
             self.assertEqual(test_obj_1.field_c1_bool, False)
             self.assertEqual(test_obj_1.field_tsc2_float, 2.5)
             self.assertEqual(test_obj_1.value_date, montrek_time(2024, 2, 6).date())
             self.assertEqual(test_obj_1.field_tsc3_int, 5)
             self.assertEqual(test_obj_1.field_tsc3_str, "what1")
-            test_obj_2 = test_query[2]
+            test_obj_2 = test_query[1]
             self.assertEqual(test_obj_2.field_c1_str, "Test")
             self.assertEqual(test_obj_2.field_c1_bool, False)
             self.assertEqual(test_obj_2.field_tsc2_float, 3.0)
@@ -1182,7 +1182,7 @@ class TestTimeSeriesStdQueryset(TestCase):
             test_obj_5 = test_query[5]
             self.assertEqual(test_obj_5.field_c1_str, None)
             self.assertEqual(test_obj_5.field_c1_bool, None)
-            self.assertEqual(test_obj_5.field_tsc2_float, None)
+            self.assertEqual(test_obj_5.field_tsc2_float, 0.0)  # Default is 0.0
             self.assertEqual(test_obj_5.value_date, montrek_time(2024, 2, 3).date())
             self.assertEqual(test_obj_5.field_tsc3_int, 8)
             self.assertEqual(test_obj_5.field_tsc3_str, "what3")

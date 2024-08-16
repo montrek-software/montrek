@@ -1,3 +1,4 @@
+from copy import deepcopy
 from dataclasses import dataclass
 
 from django.db.models.functions import Coalesce
@@ -25,9 +26,12 @@ from baseclasses.dataclasses.montrek_message import (
 from django.db.models import (
     F,
     Q,
+    CharField,
+    FloatField,
     OuterRef,
     QuerySet,
     Subquery,
+    Value,
 )
 from django.db.models import ManyToManyField
 from django.utils import timezone
@@ -312,21 +316,24 @@ class MontrekRepository:
     def _build_ts_base_query(self) -> QuerySet:
         # If there are more than one base queries registered, we annotate them in the first step and return everything as base query
         base_query = self._ts_queryset_containers[0].queryset
-        base_fields = self._ts_queryset_containers[0].fields
+        base_annotation_dict = {}
+        base_container = self._ts_queryset_containers[0]
         for ts_queryset_container in self._ts_queryset_containers[1:]:
-            container_query = self._get_extended_container_queryset(
-                ts_queryset_container, base_query
+            container_query = ts_queryset_container.queryset
+            base_query = self._get_extended_container_queryset(
+                base_container, container_query
             )
             container_fields = ts_queryset_container.fields
 
-            subquery = base_query.filter(
+            subquery = container_query.filter(
                 value_date=OuterRef("value_date"), pk=OuterRef("pk")
             )
             annotation_dict = {
-                field: Subquery(subquery.values(field)) for field in base_fields
+                field: Subquery(subquery.values(field)[:1])
+                for field in container_fields
             }
-            base_query = container_query.annotate(**annotation_dict)
-            base_fields += container_fields
+            base_annotation_dict.update(annotation_dict)
+        base_query = base_query.annotate(**base_annotation_dict)
         self._ts_queryset_containers = []
         base_query = base_query.order_by("-value_date", "-pk")
         return base_query
