@@ -554,7 +554,8 @@ class TestMontrekExampleA1FieldMapUpdateView(MontrekCreateViewTestCase):
     def build_factories(self):
         self.field_map_factory = (
             me_factories.SatA1FieldMapStaticSatelliteFactory.create(
-                source_field="source_field_1"
+                source_field="source_field_1",
+                database_field="field_a1_str",
             )
         )
 
@@ -563,7 +564,7 @@ class TestMontrekExampleA1FieldMapUpdateView(MontrekCreateViewTestCase):
 
     def creation_data(self):
         return {
-            "source_field": "source_field_1",
+            "source_field": "source_field_2",
             "database_field": "field_a1_str",
             "function_name": "append_source_field_1",
             "function_parameters": "",
