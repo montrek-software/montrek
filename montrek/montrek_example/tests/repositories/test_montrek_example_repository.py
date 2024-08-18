@@ -1219,7 +1219,7 @@ class TestTimeSeriesStdQueryset(TestCase):
 class TestTimeSeriesQuerySetEmpty(TestCase):
     def test_empty_queryset(self):
         repo = HubCRepository()
-        test_query = repo.std_queryset().filter(field_ts3_int=42)
+        test_query = repo.std_queryset().filter(field_tsc3_int=42)
         self.assertEqual(test_query.count(), 0)
 
 

@@ -25,9 +25,11 @@ from baseclasses.dataclasses.montrek_message import (
 from django.db.models import (
     F,
     Q,
+    FloatField,
     OuterRef,
     QuerySet,
     Subquery,
+    Value,
 )
 from django.db.models import ManyToManyField
 from django.utils import timezone
@@ -278,6 +280,8 @@ class MontrekRepository:
             )
             | Q(value_date=None)
         )
+        if queryset.count() == 0:
+            self.annotations.update(field_map)
         return TSQueryContainer(
             queryset=queryset,
             fields=fields,
