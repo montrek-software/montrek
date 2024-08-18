@@ -1216,6 +1216,11 @@ class TestTimeSeriesStdQueryset(TestCase):
     def test_query_out_of_session_date(self):
         repo = HubCRepository(session_data={"end_date": datetime.datetime(2024, 1, 1)})
         test_query = repo.std_queryset()
+        for query_element in test_query:
+            self.assertEqual(query_element.value_date, None)
+            self.assertEqual(query_element.field_tsc2_float, None)
+            self.assertEqual(query_element.field_tsc3_int, None)
+            self.assertEqual(query_element.field_tsc3_str, None)
 
 
 class TestHistory(TestCase):
