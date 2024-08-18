@@ -1213,6 +1213,10 @@ class TestTimeSeriesStdQueryset(TestCase):
         test_query = repo.std_queryset()
         make_assertions(test_query)
 
+    def test_query_out_of_session_date(self):
+        repo = HubCRepository(session_data={"end_date": datetime.datetime(2024, 1, 1)})
+        test_query = repo.std_queryset()
+
 
 class TestHistory(TestCase):
     def setUp(self) -> None:
