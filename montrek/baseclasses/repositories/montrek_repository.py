@@ -190,8 +190,7 @@ class MontrekRepository:
             ts_container = self.build_time_series_queryset_container(
                 satellite_class, fields
             )
-            if ts_container.queryset.count() > 0:
-                self._ts_queryset_containers.append(ts_container)
+            self._ts_queryset_containers.append(ts_container)
         else:
             subquery_builder = SatelliteSubqueryBuilder(
                 satellite_class, "pk", self.reference_date
@@ -278,8 +277,6 @@ class MontrekRepository:
             )
             | Q(value_date=None)
         )
-        if queryset.count() == 0:
-            self.annotations.update(field_map)
         return TSQueryContainer(
             queryset=queryset,
             fields=fields,
