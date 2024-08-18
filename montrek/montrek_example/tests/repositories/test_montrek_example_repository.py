@@ -1216,6 +1216,13 @@ class TestTimeSeriesStdQueryset(TestCase):
             self.assertEqual(query_element.field_tsc3_str, None)
 
 
+class TestTimeSeriesQuerySetEmpty(TestCase):
+    def test_empty_queryset(self):
+        repo = HubCRepository()
+        test_query = repo.std_queryset().filter(field_tsc3_int=42)
+        self.assertEqual(test_query.count(), 0)
+
+
 class TestHistory(TestCase):
     def setUp(self) -> None:
         self.user = MontrekUserFactory()
