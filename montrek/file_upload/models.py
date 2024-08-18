@@ -114,7 +114,7 @@ class FieldMapStaticSatelliteABC(baseclass_models.MontrekSatelliteABC):
     database_field = models.CharField(max_length=255)
     function_name = models.CharField(max_length=255, default="no_change")
     function_parameters = models.JSONField(null=True, blank=True)
-    identifier_fields = ["source_field"]
+    identifier_fields = ["database_field"]
 
 
 class FieldMapHub(FieldMapHubABC):
