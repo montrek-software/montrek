@@ -94,16 +94,18 @@ class MontrekRepository:
         self._reference_date = value
 
     @property
-    def query_filter(self):
+    def query_filter(self) -> List[Q]:
         request_path = self.session_data.get("request_path", "")
         filter = self.session_data.get("filter", {})
         filter = filter.get(request_path, {})
-        q_objects = []
-        for key, value in filter.items():
-            q = Q(**{key: value["filter_value"]})
-            q = ~q if value["filter_negate"] else q
-            q_objects.append(q)
-        return q_objects
+        if isinstance(filter, dict):
+            q_objects = []
+            for key, value in filter.items():
+                q = Q(**{key: value["filter_value"]})
+                q = ~q if value["filter_negate"] else q
+                q_objects.append(q)
+            return q_objects
+        return [filter]
 
     def std_queryset(self, **kwargs):
         raise NotImplementedError("MontrekRepository has no std_queryset method!")
