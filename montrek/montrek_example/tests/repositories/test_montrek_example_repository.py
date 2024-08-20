@@ -1012,6 +1012,14 @@ class TestTimeSeries(TestCase):
             self.assertLess(queryset[i].state_date_start, timezone.now())
 
 
+class TestTimeSeriesRepositoryEmpty(TestCase):
+    def test_empty_time_series(self):
+        repository = HubCRepository()
+        queryset = repository.std_queryset()
+        self.assertEqual(queryset.count(), 0)
+        queryset.filter(field_tsc2_float__isnull=True)
+
+
 class TestTimeSeriesQuerySet(TestCase):
     def setUp(self) -> None:
         ts_satellite_c1 = me_factories.SatC1Factory.create(
