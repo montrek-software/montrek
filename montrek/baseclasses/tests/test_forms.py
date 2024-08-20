@@ -1,3 +1,4 @@
+from django.db.models import Q
 from django.test import TestCase
 
 from baseclasses.forms import FilterForm
@@ -34,3 +35,10 @@ class TestFilterForm(TestCase):
         self.assertTrue(form.fields["filter_lookup"].initial == "in")
         self.assertTrue(form.fields["filter_negate"].initial)
         self.assertTrue(form.fields["filter_value"].initial == "value1,value2")
+
+    def test_filter_form_direct(self):
+        form = FilterForm(filter=Q(field1__in=["value1", "value2"]))
+        self.assertFalse(form.fields["filter_field"].initial)
+        self.assertEqual(form.fields["filter_lookup"].initial, "exact")
+        self.assertFalse(form.fields["filter_negate"].initial)
+        self.assertFalse(form.fields["filter_value"].initial)

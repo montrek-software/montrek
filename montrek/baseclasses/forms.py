@@ -35,7 +35,7 @@ class FilterForm(forms.Form):
         *args,
         **kwargs,
     ):
-        if filter:
+        if filter and isinstance(filter, dict):
             filter_key, value = list(filter.items())[0]
             filter_field, filter_lookup = filter_key.split("__")
             filter_negate = value["filter_negate"]
