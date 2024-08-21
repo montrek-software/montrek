@@ -10,18 +10,18 @@ class FilterType(TypedDict):
 
 class FilterDecoder:
     @staticmethod
-    def decode_dict_to_query_list(
+    def decode_dict_to_query(
         filter_dict: dict[str, FilterType | dict[str, FilterType]],
-    ) -> list[Q]:
+    ) -> Q:
         q_objects = []
         for key, value in filter_dict.items():
             if key.upper() == "OR":
-                q_objects.append(FilterDecoder._append_or_dict(value)
+                q_objects.append(FilterDecoder._append_or_dict(value))
             else:
-                q = Q(**{key: value["filter_value"]})
+                q = Q((key, value["filter_value"]))
                 q = ~q if value["filter_negate"] else q
                 q_objects.append(q)
-        return q_objects
+        return Q(*q_objects)
 
     @staticmethod
     def _append_or_dict(filter_dict: dict[str, FilterType]) -> Q:
