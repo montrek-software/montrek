@@ -1,6 +1,7 @@
-from typing import TypedDict
+from typing import Any, TypedDict
 
 from django.db.models import Q
+from django.utils.tree import Node
 
 
 class FilterType(TypedDict):
@@ -18,16 +19,19 @@ class FilterDecoder:
             if key.upper() == "OR":
                 q_objects.append(FilterDecoder._append_or_dict(value))
             else:
-                q = Q((key, value["filter_value"]))
-                q = ~q if value["filter_negate"] else q
-                q_objects.append(q)
+                query = FilterDecoder._set_query(key, value)
+                q_objects.append(query)
         return Q(*q_objects)
 
     @staticmethod
     def _append_or_dict(filter_dict: dict[str, FilterType]) -> Q:
-        query = Q()
+        query_or = Q()
         for key, value in filter_dict.items():
-            q = Q(**{key: value["filter_value"]})
-            q = ~q if value["filter_negate"] else q
-            query |= q
-        return query
+            query = FilterDecoder._set_query(key, value)
+            query_or |= query
+        return query_or
+
+    @staticmethod
+    def _set_query(key: str, FilterType) -> Node | Q:
+        q = Q((key, FilterType["filter_value"]))
+        return ~q if FilterType["filter_negate"] else q
