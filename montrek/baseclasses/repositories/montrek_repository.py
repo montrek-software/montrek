@@ -298,7 +298,7 @@ class MontrekRepository:
 
     def _apply_filter(self, queryset: QuerySet) -> QuerySet:
         try:
-            queryset = queryset.filter(*self.query_filter)
+            queryset = queryset.filter(self.query_filter)
         except (FieldError, ValueError) as e:
             self.messages.append(MontrekMessageError(str(e)))
         return queryset
