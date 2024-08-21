@@ -37,11 +37,17 @@ class FilterForm(forms.Form):
     ):
         if filter and isinstance(filter, dict):
             filter_key, value = list(filter.items())[0]
-            filter_field, filter_lookup = filter_key.split("__")
-            filter_negate = value["filter_negate"]
-            filter_value = value["filter_value"]
-            if isinstance(filter_value, list):
-                filter_value = ",".join(filter_value)
+            if filter_key.upper() == "OR":
+                filter_field = ""
+                filter_lookup = "exact"
+                filter_negate = False
+                filter_value = ""
+            else:
+                filter_field, filter_lookup = filter_key.split("__")
+                filter_negate = value["filter_negate"]
+                filter_value = value["filter_value"]
+                if isinstance(filter_value, list):
+                    filter_value = ",".join(filter_value)
         else:
             filter_field = ""
             filter_lookup = "exact"

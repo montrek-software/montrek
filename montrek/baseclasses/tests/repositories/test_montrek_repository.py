@@ -45,36 +45,15 @@ class TestMontrekRepository(TestCase):
                 },
             }
         )
-        q_list = montrek_repo.query_filter
+        test_query = montrek_repo.query_filter
 
-        self.assertTrue(isinstance(q_list, list))
-        self.assertEqual(len(q_list), 1)
-        self.assertTrue(isinstance(q_list[0], Q))
-        self.assertEqual(q_list[0].__dict__, Q(field1__exact="value1").__dict__)
+        self.assertTrue(isinstance(test_query, Q))
+        self.assertEqual(test_query.__dict__, Q(Q(field1__exact="value1")).__dict__)
 
         montrek_repo.session_data["filter"]["/path/"]["field1__exact"][
             "filter_negate"
         ] = True
-        q_list = montrek_repo.query_filter
+        test_query = montrek_repo.query_filter
 
-        self.assertTrue(isinstance(q_list, list))
-        self.assertEqual(len(q_list), 1)
-        self.assertTrue(isinstance(q_list[0], Q))
-        self.assertEqual(q_list[0].__dict__, (~Q(field1__exact="value1")).__dict__)
-
-        montrek_repo.session_data["request_path"] = "/path2/"
-        q_list = montrek_repo.query_filter
-
-        self.assertEqual(q_list, [])
-
-    def test_query_filter__direct(self):
-        montrek_repo = MontrekRepository(
-            session_data={
-                "request_path": "/path/",
-                "filter": {"/path/": Q("field1__exact=value1")},
-            }
-        )
-        q_list = montrek_repo.query_filter
-        self.assertTrue(isinstance(q_list, list))
-        self.assertEqual(len(q_list), 1)
-        self.assertTrue(isinstance(q_list[0], Q))
+        self.assertTrue(isinstance(test_query, Q))
+        self.assertEqual(test_query.__dict__, (Q(~Q(field1__exact="value1"))).__dict__)
