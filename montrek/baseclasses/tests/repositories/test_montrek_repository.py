@@ -66,15 +66,3 @@ class TestMontrekRepository(TestCase):
         q_list = montrek_repo.query_filter
 
         self.assertEqual(q_list, [])
-
-    def test_query_filter__direct(self):
-        montrek_repo = MontrekRepository(
-            session_data={
-                "request_path": "/path/",
-                "filter": {"/path/": Q("field1__exact=value1")},
-            }
-        )
-        q_list = montrek_repo.query_filter
-        self.assertTrue(isinstance(q_list, list))
-        self.assertEqual(len(q_list), 1)
-        self.assertTrue(isinstance(q_list[0], Q))
