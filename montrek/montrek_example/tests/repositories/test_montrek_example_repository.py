@@ -516,6 +516,28 @@ class TestMontrekCreateObject(TestCase):
         for sat2 in me_models.SatA2.objects.all():
             self.assertEqual(sat2.comment, "some_comment")
 
+    def test_create_objects_from_data_frame__static_and_ts_data(self):
+        repository = HubCRepository(session_data={"user_id": self.user.id})
+        hub1 = me_factories.HubCFactory()
+        hub2 = me_factories.HubCFactory()
+        data_frame = pd.DataFrame(
+            {
+                "hub_entity_id": [hub1.id, hub1.id, hub2.id],
+                "field_c1_str": ["test_static", "test_static", "test_static2"],
+                "field_c1_bool": [True, True, False],
+                "value_date": ["2024-08-01", "2024-08-02", "2024-08-02"],
+                "field_tsc2_float": [6.0, 7.0, 8.0],
+                "field_tsc3_int": [1, 2, 3],
+                "field_tsc3_str": ["test", "test2", "test3"],
+                "field_tsc4_int": [4, 5, 6],
+            }
+        )
+        repository.create_objects_from_data_frame(data_frame)
+        test_query = repository.std_queryset()
+        self.assertEqual(test_query.count(), 3)
+        self.assertEqual(me_models.HubC.objects.count(), 2)
+        self.assertEqual(me_models.SatC1.objects.count(), 2)
+
     def test_create_hub_a_with_link_to_hub_b(self):
         hub_b = me_factories.SatB1Factory().hub_entity
         self.assertEqual(me_models.HubB.objects.count(), 1)
