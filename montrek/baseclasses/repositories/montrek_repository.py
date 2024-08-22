@@ -142,6 +142,15 @@ class MontrekRepository:
             fields.extend(satellite_class.get_value_fields())
         return fields
 
+    def get_static_satellite_field_names(self) -> list[str]:
+        if not self._is_built:
+            self.std_queryset()
+        fields = []
+        for satellite_class in self._primary_satellite_classes:
+            if not isinstance(satellite_class(), MontrekTimeSeriesSatelliteABC):
+                fields.extend(satellite_class.get_value_field_names())
+        return fields
+
     def get_all_fields(self):
         satellite_fields = [field.name for field in self.std_satellite_fields()]
         return satellite_fields + self.calculated_fields
@@ -160,6 +169,12 @@ class MontrekRepository:
         self, data_frame: pd.DataFrame
     ) -> List[MontrekHubABC]:
         self._raise_for_anonymous_user()
+        created_hubs = self._create_objects_from_data_frame(data_frame)
+        return created_hubs
+
+    def _create_objects_from_data_frame(
+        self, data_frame: pd.DataFrame
+    ) -> List[MontrekHubABC]:
         data_frame = self._drop_empty_rows(data_frame)
         data_frame = self._drop_duplicates(data_frame)
         self._raise_for_duplicated_entries(data_frame)

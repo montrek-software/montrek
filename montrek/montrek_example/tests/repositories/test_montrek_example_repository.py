@@ -1428,3 +1428,11 @@ class TestMontrekManyToManyRelations(TestCase):
         self.assertEqual(new_1.state_date_start, new_2.state_date_start)
         self.assertEqual(new_1.state_date_end, MAX_DATE)
         self.assertEqual(new_2.state_date_end, MAX_DATE)
+
+
+class TestRepositoryProperties(TestCase):
+    def test_static_satellites_fields(self):
+        repo = HubCRepository()
+        repo_c_static_satellite_fields = repo.get_static_satellite_field_names()
+        expected_values = ["comment", "field_c1_str", "field_c1_bool"]
+        self.assertEqual(repo_c_static_satellite_fields, expected_values)
