@@ -1434,5 +1434,35 @@ class TestRepositoryProperties(TestCase):
     def test_static_satellites_fields(self):
         repo = HubCRepository()
         repo_c_static_satellite_fields = repo.get_static_satellite_field_names()
-        expected_values = ["comment", "field_c1_str", "field_c1_bool"]
-        self.assertEqual(repo_c_static_satellite_fields, expected_values)
+        expected_values = ["comment", "field_c1_str", "field_c1_bool", "hub_entity_id"]
+        self.assertTrue(
+            all(
+                [
+                    expected_value in repo_c_static_satellite_fields
+                    for expected_value in expected_values
+                ]
+            )
+        )
+
+    def test_time_series_satellites_fields(self):
+        repo = HubCRepository()
+        repo_c_time_series_satellite_fields = (
+            repo.get_time_series_satellite_field_names()
+        )
+        expected_values = [
+            "field_tsc2_float",
+            "field_tsc4_int",
+            "field_tsc3_int",
+            "field_tsc3_str",
+            "comment",
+            "value_date",
+            "hub_entity_id",
+        ]
+        self.assertTrue(
+            all(
+                [
+                    expected_value in repo_c_time_series_satellite_fields
+                    for expected_value in expected_values
+                ]
+            )
+        )

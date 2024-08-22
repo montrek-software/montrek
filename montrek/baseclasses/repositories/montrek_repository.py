@@ -149,7 +149,16 @@ class MontrekRepository:
         for satellite_class in self._primary_satellite_classes:
             if not isinstance(satellite_class(), MontrekTimeSeriesSatelliteABC):
                 fields.extend(satellite_class.get_value_field_names())
-        return fields
+        return list(set(fields)) + ["hub_entity_id"]
+
+    def get_time_series_satellite_field_names(self) -> list[str]:
+        if not self._is_built:
+            self.std_queryset()
+        fields = []
+        for satellite_class in self._primary_satellite_classes:
+            if isinstance(satellite_class(), MontrekTimeSeriesSatelliteABC):
+                fields.extend(satellite_class.get_value_field_names())
+        return list(set(fields)) + ["value_date", "hub_entity_id"]
 
     def get_all_fields(self):
         satellite_fields = [field.name for field in self.std_satellite_fields()]
