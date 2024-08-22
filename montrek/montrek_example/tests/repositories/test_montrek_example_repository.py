@@ -427,24 +427,24 @@ class TestMontrekCreateObject(TestCase):
         )
 
     def test_raise_no_error_for_duplicates_with_hub_entity_id_and_value_date(self):
-        repository = HubARepository(session_data={"user_id": self.user.id})
-        test_hub = me_factories.HubAFactory()
+        repository = HubCRepository(session_data={"user_id": self.user.id})
+        test_hub = me_factories.HubCFactory()
         data_frame = pd.DataFrame(
             {
                 "hub_entity_id": [test_hub.id, test_hub.id],
-                "field_a1_str": ["test", "test2"],
+                "field_tsc3_str": ["test", "test2"],
                 "value_date": [datetime.date(2023, 1, 1), datetime.date(2023, 1, 2)],
             }
         )
         repository.create_objects_from_data_frame(data_frame)
 
     def test_raise_error_for_duplicates_with_hub_entity_id_and_value_date(self):
-        repository = HubARepository(session_data={"user_id": self.user.id})
-        test_hub = me_factories.HubAFactory()
+        repository = HubCRepository(session_data={"user_id": self.user.id})
+        test_hub = me_factories.HubCFactory()
         data_frame = pd.DataFrame(
             {
                 "hub_entity_id": [test_hub.id, test_hub.id],
-                "field_a1_str": ["test", "test2"],
+                "field_tsc3_str": ["test", "test2"],
                 "value_date": [datetime.date(2023, 1, 1), datetime.date(2023, 1, 1)],
             }
         )

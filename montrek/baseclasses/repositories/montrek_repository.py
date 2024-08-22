@@ -184,14 +184,23 @@ class MontrekRepository:
         self, data_frame: pd.DataFrame
     ) -> List[MontrekHubABC]:
         self._raise_for_anonymous_user()
+        link_columns = [col for col in data_frame.columns if col.startswith("link_")]
         static_fields = self.get_static_satellite_field_names()
         static_columns = [col for col in static_fields if col in data_frame.columns]
-        static_hubs = self._create_objects_from_data_frame(
-            data_frame.loc[:, static_columns]
-        )
+        if static_columns:
+            static_hubs = self._create_objects_from_data_frame(
+                data_frame.loc[:, static_columns + link_columns]
+            )
+        else:
+            static_hubs = []
         ts_fields = self.get_time_series_satellite_field_names()
         ts_columns = [col for col in ts_fields if col in data_frame.columns]
-        ts_hubs = self._create_objects_from_data_frame(data_frame.loc[:, ts_columns])
+        if ts_columns:
+            ts_hubs = self._create_objects_from_data_frame(
+                data_frame.loc[:, ts_columns + link_columns]
+            )
+        else:
+            ts_hubs = []
         return list(set(static_hubs + ts_hubs))
 
     def _create_objects_from_data_frame(
