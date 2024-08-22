@@ -60,14 +60,10 @@ jobs:
       - name: Verify Arial font installation
         run: |
           fc-list | grep -i arial
-      - name: Run Tests and Coverage
+      - name: Run Tests
         run: |
           cd montrek
-          python manage.py test --exclude-tag=functional
-
-          # coverage run manage.py test --exclude-tag=functional
-          # coverage report
-          # coverage html -d coverage_html
+          python manage.py test --exclude-tag=functional --parallel
 
       - name: Upload coverage HTML report
         uses: actions/upload-artifact@v2
