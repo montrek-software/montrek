@@ -142,6 +142,30 @@ class MontrekRepository:
             fields.extend(satellite_class.get_value_fields())
         return fields
 
+    def _get_satellite_field_names(self, is_time_series: bool) -> list[str]:
+        if not self._is_built:
+            self.std_queryset()
+
+        fields = []
+        for satellite_class in self._primary_satellite_classes:
+            if (
+                isinstance(satellite_class(), MontrekTimeSeriesSatelliteABC)
+                == is_time_series
+            ):
+                fields.extend(satellite_class.get_value_field_names())
+
+        common_fields = ["hub_entity_id"]
+        if is_time_series:
+            common_fields.append("value_date")
+
+        return list(set(fields)) + common_fields
+
+    def get_static_satellite_field_names(self) -> list[str]:
+        return self._get_satellite_field_names(is_time_series=False)
+
+    def get_time_series_satellite_field_names(self) -> list[str]:
+        return self._get_satellite_field_names(is_time_series=True)
+
     def get_all_fields(self):
         satellite_fields = [field.name for field in self.std_satellite_fields()]
         return satellite_fields + self.calculated_fields
@@ -160,6 +184,28 @@ class MontrekRepository:
         self, data_frame: pd.DataFrame
     ) -> List[MontrekHubABC]:
         self._raise_for_anonymous_user()
+        link_columns = [col for col in data_frame.columns if col.startswith("link_")]
+        static_fields = self.get_static_satellite_field_names()
+        static_columns = [col for col in static_fields if col in data_frame.columns]
+        if static_columns:
+            static_hubs = self._create_objects_from_data_frame(
+                data_frame.loc[:, static_columns + link_columns]
+            )
+        else:
+            static_hubs = []
+        ts_fields = self.get_time_series_satellite_field_names()
+        ts_columns = [col for col in ts_fields if col in data_frame.columns]
+        if ts_columns:
+            ts_hubs = self._create_objects_from_data_frame(
+                data_frame.loc[:, ts_columns + link_columns]
+            )
+        else:
+            ts_hubs = []
+        return list(set(static_hubs + ts_hubs))
+
+    def _create_objects_from_data_frame(
+        self, data_frame: pd.DataFrame
+    ) -> List[MontrekHubABC]:
         data_frame = self._drop_empty_rows(data_frame)
         data_frame = self._drop_duplicates(data_frame)
         self._raise_for_duplicated_entries(data_frame)
