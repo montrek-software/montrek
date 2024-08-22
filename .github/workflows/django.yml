@@ -63,7 +63,7 @@ jobs:
       - name: Run Tests
         run: |
           cd montrek
-          python manage.py test --exclude-tag=functional --parallel --keepdb
+          python manage.py test --exclude-tag=functional --parallel
 
       - name: Upload coverage HTML report
         uses: actions/upload-artifact@v2
