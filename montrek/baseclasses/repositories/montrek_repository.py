@@ -391,11 +391,7 @@ class MontrekRepository:
         self, ts_queryset_container: TSQueryContainer, base_query: QuerySet
     ) -> QuerySet:
         # Find any elements that are in the base query but not in the container_query and add them to DB
-        container_query = ts_queryset_container.queryset.filter(
-            value_date__isnull=False
-        )
-        if container_query.count() == 0:
-            return ts_queryset_container.queryset
+        container_query = ts_queryset_container.queryset
         container_fields = ts_queryset_container.fields
 
         container_values = container_query.values_list("pk", "value_date")

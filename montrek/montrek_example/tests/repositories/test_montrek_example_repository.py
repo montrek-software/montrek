@@ -1041,6 +1041,18 @@ class TestTimeSeriesRepositoryEmpty(TestCase):
         self.assertEqual(queryset.count(), 0)
         queryset.filter(field_tsc2_float__isnull=True)
 
+    def test_first_container_empty(self):
+        repository = HubCRepository()
+        me_factories.SatTSC3Factory.create(
+            field_tsc3_str="Test",
+            value_date=montrek_time(2024, 2, 5),
+            field_tsc3_int=5,
+        )
+        qs = repository.std_queryset()
+        self.assertEqual(qs.count(), 1)
+        self.assertEqual(qs[0].field_tsc3_str, "Test")
+        self.assertEqual(qs[0].field_tsc3_int, 5)
+
 
 class TestTimeSeriesQuerySet(TestCase):
     def setUp(self) -> None:
@@ -1191,7 +1203,7 @@ class TestTimeSeriesStdQueryset(TestCase):
     def test_build_time_series_std_queryset(self):
         def make_assertions(test_query):
             test_query = test_query.order_by("created_at")
-            self.assertEqual(test_query.count(), 5)
+            self.assertEqual(test_query.count(), 6)
             test_obj_0 = test_query[0]
             self.assertEqual(test_obj_0.field_c1_str, "Hallo")
             self.assertEqual(test_obj_0.field_c1_bool, True)
@@ -1220,7 +1232,15 @@ class TestTimeSeriesStdQueryset(TestCase):
             self.assertEqual(test_obj_3.value_date, montrek_time(2024, 2, 5).date())
             self.assertEqual(test_obj_3.field_tsc3_int, 7)
             self.assertEqual(test_obj_3.field_tsc3_str, "what2")
-            test_obj_5 = test_query[4]
+            test_obj_4 = test_query[4]
+            self.assertEqual(test_obj_4.field_c1_str, "DEFAULT")
+            self.assertEqual(test_obj_4.field_c1_bool, False)
+            self.assertEqual(test_obj_4.field_tsc2_float, None)
+            self.assertEqual(test_obj_4.value_date, None)
+            self.assertEqual(test_obj_4.field_tsc3_int, None)
+            self.assertEqual(test_obj_4.field_tsc3_str, None)
+
+            test_obj_5 = test_query[5]
             self.assertEqual(test_obj_5.field_c1_str, None)
             self.assertEqual(test_obj_5.field_c1_bool, None)
             self.assertEqual(test_obj_5.field_tsc2_float, 0.0)  # Default is 0.0
