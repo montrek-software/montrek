@@ -384,6 +384,9 @@ class MontrekRepository:
             base_annotation_dict.update(annotation_dict)
         base_query = base_query.annotate(**base_annotation_dict)
         self._ts_queryset_containers = []
+        base_query = base_query.filter(
+            value_date__isnull=False,
+        )
         base_query = base_query.order_by("-value_date", "-pk")
         return base_query
 
@@ -391,11 +394,7 @@ class MontrekRepository:
         self, ts_queryset_container: TSQueryContainer, base_query: QuerySet
     ) -> QuerySet:
         # Find any elements that are in the base query but not in the container_query and add them to DB
-        container_query = ts_queryset_container.queryset.filter(
-            value_date__isnull=False
-        )
-        if container_query.count() == 0:
-            return ts_queryset_container.queryset
+        container_query = ts_queryset_container.queryset
         container_fields = ts_queryset_container.fields
 
         container_values = container_query.values_list("pk", "value_date")
