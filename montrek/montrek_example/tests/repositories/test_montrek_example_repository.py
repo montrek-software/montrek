@@ -1041,6 +1041,18 @@ class TestTimeSeriesRepositoryEmpty(TestCase):
         self.assertEqual(queryset.count(), 0)
         queryset.filter(field_tsc2_float__isnull=True)
 
+    def test_first_container_empty(self):
+        repository = HubCRepository()
+        me_factories.SatTSC3Factory.create(
+            field_tsc3_str="Test",
+            value_date=montrek_time(2024, 2, 5),
+            field_tsc3_int=5,
+        )
+        qs = repository.std_queryset()
+        self.assertEqual(qs.count(), 1)
+        self.assertEqual(qs[0].field_tsc3_str, "Test")
+        self.assertEqual(qs[0].field_tsc3_int, 5)
+
 
 class TestTimeSeriesQuerySet(TestCase):
     def setUp(self) -> None:
