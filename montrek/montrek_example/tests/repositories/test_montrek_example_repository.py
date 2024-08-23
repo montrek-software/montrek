@@ -60,6 +60,7 @@ class TestMontrekRepositorySatellite(TestCase):
                 "field_a2_float",
                 "dummy1",
                 "dummy2",
+                "field_b1_str",
             ],
         )
 
