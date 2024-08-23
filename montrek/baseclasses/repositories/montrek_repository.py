@@ -188,9 +188,9 @@ class MontrekRepository:
         static_fields = self.get_static_satellite_field_names()
         static_columns = [col for col in static_fields if col in data_frame.columns]
         if static_columns:
-            static_hubs = self._create_objects_from_data_frame(
-                data_frame.loc[:, static_columns + link_columns]
-            )
+            static_df = data_frame.loc[:, static_columns + link_columns]
+            static_df = static_df.drop_duplicates()
+            static_hubs = self._create_objects_from_data_frame(static_df)
         else:
             static_hubs = []
         ts_fields = self.get_time_series_satellite_field_names()
