@@ -112,6 +112,7 @@ class FieldMapStaticSatelliteABC(baseclass_models.MontrekSatelliteABC):
     hub_entity = models.ForeignKey(FieldMapHubABC, on_delete=models.CASCADE)
     source_field = models.CharField(max_length=255)
     database_field = models.CharField(max_length=255)
+    step = models.IntegerField(default=1)
     function_name = models.CharField(max_length=255, default="no_change")
     function_parameters = models.JSONField(null=True, blank=True)
     identifier_fields = ["database_field"]
