@@ -13,13 +13,25 @@ class TestFieldMapRepository(TestCase):
         self.repository = FieldMapRepository({"user_id": self.user.id})
 
     def test_std_queryset(self):
-        field_map_hub = FieldMapStaticSatelliteFactory()
+        FieldMapStaticSatelliteFactory(step=3, source_field="d", database_field="D")
+        FieldMapStaticSatelliteFactory(step=2, source_field="c", database_field="C")
+        FieldMapStaticSatelliteFactory(step=1, source_field="b", database_field="B")
+        FieldMapStaticSatelliteFactory(step=1, source_field="a", database_field="A")
 
         queryset = self.repository.std_queryset()
 
-        self.assertEqual(queryset.count(), 1)
-        self.assertEqual(queryset.first().source_field, field_map_hub.source_field)
-        self.assertEqual(queryset.first().database_field, field_map_hub.database_field)
+        self.assertEqual(queryset.count(), 4)
+
+        # Expect orderinb by step and source_field
+        self.assertEqual(queryset[0].source_field, "a")
+        self.assertEqual(queryset[1].source_field, "b")
+        self.assertEqual(queryset[2].source_field, "c")
+        self.assertEqual(queryset[3].source_field, "d")
+
+        self.assertEqual(queryset[0].database_field, "A")
+        self.assertEqual(queryset[1].database_field, "B")
+        self.assertEqual(queryset[2].database_field, "C")
+        self.assertEqual(queryset[3].database_field, "D")
 
     def test_get_source_field(self):
         FieldMapStaticSatelliteFactory(
