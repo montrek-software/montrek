@@ -64,9 +64,3 @@ jobs:
         run: |
           cd montrek
           python manage.py test --exclude-tag=functional --parallel
-
-      - name: Upload coverage HTML report
-        uses: actions/upload-artifact@v2
-        with:
-          name: coverage-report
-          path: montrek/coverage_html
