@@ -1,5 +1,8 @@
 import inspect
+import pandas as pd
 from typing import Any
+
+from pandas.core.tools.datetimes import DateParseError
 from baseclasses.dataclasses.alert import AlertEnum
 from django.urls import NoReverseMatch, reverse
 from django.template import Template, Context
@@ -234,6 +237,22 @@ class DateTableElement(AttrTableElement):
         if not isinstance(value, timezone.datetime):
             return f'<td style="text-align:left;">{value}</td>'
         value = value.strftime("%d/%m/%Y")
+        return f'<td style="text-align:left;">{value}</td>'
+
+
+@dataclass
+class DateYearTableElement(AttrTableElement):
+    attr: str
+
+    def format(self, value):
+        try:
+            value = pd.to_datetime(value)
+            if pd.isnull(value):
+                return '<td style="text-align:center;">-</td>'
+            else:
+                value = value.strftime("%Y")
+        except DateParseError:
+            value = value
         return f'<td style="text-align:left;">{value}</td>'
 
 
