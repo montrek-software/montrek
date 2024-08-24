@@ -67,6 +67,9 @@ class MockRepository:
             MockField("item3"),
         ]  # Dummy data for testing
 
+    def get_all_fields(self):
+        return ["item1", "item2", "item3"]
+
 
 class MockRequester:
     def add_mock_request(self, url: str):
