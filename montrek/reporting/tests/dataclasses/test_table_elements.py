@@ -1,10 +1,11 @@
+import datetime
 from functools import wraps
-from django.utils import timezone
-from django.test import TestCase
-import reporting.dataclasses.table_elements as te
 
-from reporting.core.reporting_colors import ReportingColors
+import reporting.dataclasses.table_elements as te
 from baseclasses.tests.factories.baseclass_factories import TestMontrekSatelliteFactory
+from django.test import TestCase
+from django.utils import timezone
+from reporting.core.reporting_colors import ReportingColors
 
 
 class TestTableElements(TestCase):
@@ -163,6 +164,21 @@ class TestTableElements(TestCase):
             test_str_latex,
             " \\url{https://www.google.com} &",
         )
+
+    def test_date_year_table_element(self):
+        table_element = te.DateYearTableElement(name="name", attr="test_attr")
+        test_str = table_element.format("2021-01-01")
+        self.assertEqual(test_str, '<td style="text-align:left;">2021</td>')
+        test_str = table_element.format("bla")
+        self.assertEqual(test_str, '<td style="text-align:left;">bla</td>')
+        test_str = table_element.format(timezone.datetime(2023, 12, 9))
+        self.assertEqual(test_str, '<td style="text-align:left;">2023</td>')
+        test_str = table_element.format(None)
+        self.assertEqual(test_str, '<td style="text-align:center;">-</td>')
+        test_str = table_element.format("")
+        self.assertEqual(test_str, '<td style="text-align:center;">-</td>')
+        test_str = table_element.format(datetime.date(2023, 12, 9))
+        self.assertEqual(test_str, '<td style="text-align:left;">2023</td>')
 
     def test_method_name_table_element(self):
         def my_decorator(func):
