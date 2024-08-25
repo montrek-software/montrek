@@ -79,7 +79,7 @@ class TestReportingPlots(TestCase):
         self.assertEqual(reporting_plot.figure.data[0].y.tolist(), [10, 25, 15, 30])
         self.assertEqual(reporting_plot.figure.data[1].x.tolist(), ["A", "B", "C", "D"])
         self.assertEqual(reporting_plot.figure.data[1].y.tolist(), [15, 20, 10, 40])
-        reporting_plot_html = reporting_plot.format_html()
+        reporting_plot_html = reporting_plot.to_html()
         self.assertTrue(reporting_plot_html.startswith("<div>"))
         self.assertTrue(reporting_plot_html.endswith("</div>"))
 
@@ -120,7 +120,13 @@ class TestReportingPlots(TestCase):
         self.assertEqual(test_x.tolist(), ["A", "B", "C", "D"])
 
     def test_set_plot_types_valid(self):
-        test_plot_types = [ReportingPlotType.BAR, ReportingPlotType.LINE, "bar", "liNE", "pie"]
+        test_plot_types = [
+            ReportingPlotType.BAR,
+            ReportingPlotType.LINE,
+            "bar",
+            "liNE",
+            "pie",
+        ]
         expected_plot_types = [
             ReportingPlotType.BAR,
             ReportingPlotType.LINE,
@@ -136,6 +142,7 @@ class TestReportingPlots(TestCase):
         reporting_plot = ReportingPlot()
         result_plot_types = reporting_plot._set_plot_types(reporting_data)
         self.assertEqual(result_plot_types, expected_plot_types)
+
 
 class TestReportingPiePlots(TestCase):
     def test_pie_plots(self):
@@ -158,8 +165,15 @@ class TestReportingPiePlots(TestCase):
         self.assertEqual(len(reporting_plot.figure.data), 1)
         self.assertEqual(reporting_plot.figure.data[0].type, "pie")
         self.assertTrue(isinstance(reporting_plot.figure.data[0], go.Pie))
-        self.assertEqual(reporting_plot.figure.data[0].labels.tolist(), ["A", "B", "C", "D"])
-        self.assertEqual(reporting_plot.figure.data[0].values.tolist(), [10, 25, 15, 30])
-        reporting_plot_html = reporting_plot.format_html()
+        self.assertEqual(
+            reporting_plot.figure.data[0].labels.tolist(), ["A", "B", "C", "D"]
+        )
+        self.assertEqual(
+            reporting_plot.figure.data[0].values.tolist(), [10, 25, 15, 30]
+        )
+        reporting_plot_html = reporting_plot.to_html()
         self.assertTrue(reporting_plot_html.startswith("<div>"))
         self.assertTrue(reporting_plot_html.endswith("</div>"))
+        reporting_plot_latex = reporting_plot.to_latex()
+        self.assertTrue(reporting_plot_latex.startswith("\\begin{figure}"))
+        self.assertTrue(reporting_plot_latex.endswith("\\end{figure}"))

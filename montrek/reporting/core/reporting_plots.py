@@ -1,11 +1,12 @@
-from typing import Any, List
-from typing import Union
+import tempfile
+from typing import Any, List, Union
+
 import plotly.graph_objects as go
-from reporting.core.reporting_protocols import ReportingElement
+from reporting.constants import ReportingPlotType
+from reporting.core.reporting_colors import ReportingColors
 from reporting.core.reporting_data import ReportingData
 from reporting.core.reporting_mixins import ReportingChecksMixin
-from reporting.core.reporting_colors import ReportingColors
-from reporting.constants import ReportingPlotType
+from reporting.core.reporting_protocols import ReportingElement
 
 
 class ReportingPlot(ReportingElement, ReportingChecksMixin):
@@ -29,8 +30,13 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
             plot_bgcolor=ReportingColors.LIGHT_BLUE.hex,  # Customizing Plot Background Color
         )
 
-    def format_html(self) -> str:
+    def to_html(self) -> str:
         return self.figure.to_html(full_html=False, include_plotlyjs="cdn")
+
+    def to_latex(self) -> str:
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
+        self.figure.write_image(temp_file.name)
+        return f"\\begin{{figure}}\\includegraphics[width=\\textwidth]{{{temp_file.name}}}\\end{{figure}}"
 
     def _check_reporting_data(self, reporting_data: ReportingData) -> None:
         if len(reporting_data.y_axis_columns) != len(reporting_data.plot_types):
