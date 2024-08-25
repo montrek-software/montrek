@@ -1,6 +1,7 @@
 import datetime
 from functools import wraps
 
+
 import reporting.dataclasses.table_elements as te
 from baseclasses.tests.factories.baseclass_factories import TestMontrekSatelliteFactory
 from django.test import TestCase
@@ -163,6 +164,45 @@ class TestTableElements(TestCase):
         self.assertEqual(
             test_str_latex,
             " \\url{https://www.google.com} &",
+        )
+
+    def test_image_table_element__latex_image(self):
+        table_element = te.ImageTableElement(
+            name="name",
+            attr="test_attr",
+        )
+        test_str = table_element.format_latex("pic.png")
+        self.assertEqual(
+            test_str,
+            "\\includegraphics[width=0.5\\textwidth]{pic.png} &",
+        )
+
+    def test_image_table_element__latex_url(self):
+        table_element = te.ImageTableElement(
+            name="name",
+            attr="test_attr",
+        )
+        url = "https://upload.wikimedia.org/wikipedia/commons/7/70/Example.png"
+        test_str_latex = table_element.format_latex(url)
+        self.assertIn(
+            "\\includegraphics[width=0.5\\textwidth]{/tmp/",
+            test_str_latex,
+        )
+        self.assertIn(
+            ".png} &",
+            test_str_latex,
+        )
+
+    def test_image_table_element__latex_url_not_found(self):
+        table_element = te.ImageTableElement(
+            name="name",
+            attr="test_attr",
+        )
+        url = "https://upload.wikimedia.org/dummy.png"
+        test_str_latex = table_element.format_latex(url)
+        self.assertEqual(
+            test_str_latex,
+            f"Image not found: {url} &",
         )
 
     def test_date_year_table_element(self):
