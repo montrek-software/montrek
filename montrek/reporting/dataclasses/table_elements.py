@@ -324,7 +324,7 @@ class ImageTableElement(AttrTableElement):
 
     def format_latex(self, value):
         def _return_string(value):
-            return f"\\includegraphics[width=0.5\\textwidth]{{{value}}} &"
+            return f"\\includegraphics[width=0.3\\textwidth]{{{value}}} &"
 
         # Check if value is a valid URL. If so, download the image and include it in the latex document.
         try:

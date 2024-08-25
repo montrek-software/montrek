@@ -174,7 +174,7 @@ class TestTableElements(TestCase):
         test_str = table_element.format_latex("pic.png")
         self.assertEqual(
             test_str,
-            "\\includegraphics[width=0.5\\textwidth]{pic.png} &",
+            "\\includegraphics[width=0.3\\textwidth]{pic.png} &",
         )
 
     def test_image_table_element__latex_url(self):
@@ -185,7 +185,7 @@ class TestTableElements(TestCase):
         url = "https://upload.wikimedia.org/wikipedia/commons/7/70/Example.png"
         test_str_latex = table_element.format_latex(url)
         self.assertIn(
-            "\\includegraphics[width=0.5\\textwidth]{/tmp/",
+            "\\includegraphics[width=0.3\\textwidth]{/tmp/",
             test_str_latex,
         )
         self.assertIn(
