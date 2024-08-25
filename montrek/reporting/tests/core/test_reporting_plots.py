@@ -174,3 +174,6 @@ class TestReportingPiePlots(TestCase):
         reporting_plot_html = reporting_plot.to_html()
         self.assertTrue(reporting_plot_html.startswith("<div>"))
         self.assertTrue(reporting_plot_html.endswith("</div>"))
+        reporting_plot_latex = reporting_plot.to_latex()
+        self.assertTrue(reporting_plot_latex.startswith("\\begin{figure}"))
+        self.assertTrue(reporting_plot_latex.endswith("\\end{figure}"))
