@@ -29,7 +29,7 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
             plot_bgcolor=ReportingColors.LIGHT_BLUE.hex,  # Customizing Plot Background Color
         )
 
-    def format_html(self) -> str:
+    def to_html(self) -> str:
         return self.figure.to_html(full_html=False, include_plotlyjs="cdn")
 
     def _check_reporting_data(self, reporting_data: ReportingData) -> None:
