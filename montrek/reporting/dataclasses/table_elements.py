@@ -1,18 +1,21 @@
 import inspect
-import pandas as pd
-from typing import Any
-
-from pandas.core.tools.datetimes import DateParseError
-from baseclasses.dataclasses.alert import AlertEnum
-from django.urls import NoReverseMatch, reverse
-from django.template import Template, Context
-from django.utils import timezone
+import tempfile
 from dataclasses import dataclass, field
 from decimal import Decimal
+from typing import Any
+from urllib.parse import urlparse
+
+import pandas as pd
+import requests
+from baseclasses.dataclasses.alert import AlertEnum
 from baseclasses.dataclasses.number_shortener import (
     NoShortening,
     NumberShortenerProtocol,
 )
+from django.template import Context, Template
+from django.urls import NoReverseMatch, reverse
+from django.utils import timezone
+from pandas.core.tools.datetimes import DateParseError
 from reporting.core.reporting_colors import ReportingColors
 
 
@@ -318,6 +321,30 @@ class ImageTableElement(AttrTableElement):
 
     def format(self, value):
         return f'<td style="text-align:left;"><img src="{value}" alt="{self.alt}" style="width:100px;height:100px;"></td>'
+
+    def format_latex(self, value):
+        def _return_string(value):
+            return f"\\includegraphics[width=0.3\\textwidth]{{{value}}} &"
+
+        # Check if value is a valid URL. If so, download the image and include it in the latex document.
+        try:
+            urlparse(value)
+            is_url = True
+        except ValueError:
+            is_url = False
+        if not is_url:
+            return _return_string(value)
+        response = requests.get(value)
+        if response.status_code != 200:
+            return f"Image not found: {value} &"
+        temp_file = tempfile.NamedTemporaryFile(
+            delete=False, suffix="." + value.split(".")[-1]
+        )
+        temp_file.write(response.content)
+        temp_file_path = temp_file.name
+        temp_file.close()
+        value = temp_file_path
+        return _return_string(value)
 
 
 class DateTimeTableElement(AttrTableElement):
