@@ -23,6 +23,7 @@ class FieldMapRepositoryABC(MontrekRepository):
             [
                 "source_field",
                 "database_field",
+                "step",
                 "function_name",
                 "function_parameters",
                 "comment",
@@ -31,7 +32,7 @@ class FieldMapRepositoryABC(MontrekRepository):
         self.rename_field("comment", "field_map_static_satellite_comment")
         self.annotations.pop("comment")
         queryset = self.build_queryset()
-        return queryset.order_by("source_field")
+        return queryset.order_by("step", "source_field")
 
     def get_source_field(self, database_field: str) -> str | None:
         objs = self.std_queryset().filter(database_field=database_field)

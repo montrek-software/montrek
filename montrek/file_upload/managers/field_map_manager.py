@@ -6,10 +6,11 @@ from file_upload.repositories.field_map_repository import (
 )
 from reporting.managers.montrek_table_manager import MontrekTableManager
 from reporting.dataclasses.table_elements import (
+    IntTableElement,
     LinkTableElement,
     StringTableElement,
     TableElement,
-    MethodNameTableElement
+    MethodNameTableElement,
 )
 
 
@@ -75,7 +76,6 @@ class FieldMapFunctionManager:
         return result_series
 
 
-
 class FieldMapManagerABC(MontrekTableManager):
     field_map_function_manager_class = FieldMapFunctionManager
     repository_class = FieldMapRepositoryABC
@@ -87,7 +87,12 @@ class FieldMapManagerABC(MontrekTableManager):
         return (
             StringTableElement(name="Source Field", attr="source_field"),
             StringTableElement(name="Database Field", attr="database_field"),
-            MethodNameTableElement(name="Function Name", attr="function_name", class_=self.field_map_function_manager_class),
+            IntTableElement(name="Step", attr="step"),
+            MethodNameTableElement(
+                name="Function Name",
+                attr="function_name",
+                class_=self.field_map_function_manager_class,
+            ),
             StringTableElement(name="Function Parameters", attr="function_parameters"),
             StringTableElement(
                 name="Comment", attr="field_map_static_satellite_comment"

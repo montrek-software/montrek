@@ -515,6 +515,7 @@ class TestMontrekExampleA1FieldMapCreateView(MontrekCreateViewTestCase):
         return {
             "source_field": "source_field_1",
             "database_field": "field_a1_str",
+            "step": 1,
             "function_name": "append_source_field_1",
             "function_parameters": "",
         }
@@ -566,6 +567,7 @@ class TestMontrekExampleA1FieldMapUpdateView(MontrekCreateViewTestCase):
         return {
             "source_field": "source_field_2",
             "database_field": "field_a1_str",
+            "step": 1,
             "function_name": "append_source_field_1",
             "function_parameters": "",
         }
