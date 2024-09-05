@@ -106,6 +106,7 @@ class MontrekFieldMapCreateView(MontrekCreateView):
         )
 
     def post(self, request, *args, **kwargs):
+        self.object = None
         form = self.form_class(
             self.request.POST,
             repository=self.manager.repository,
@@ -134,6 +135,7 @@ class MontrekFieldMapUpdateView(MontrekUpdateView):
         )
 
     def post(self, request, *args, **kwargs):
+        self.object = None
         form = self.form_class(
             self.request.POST,
             repository=self.manager.repository,

@@ -395,10 +395,16 @@ class MontrekCreateUpdateView(
 
     def post(self, request, *args, **kwargs):
         # TODO: Form should receive manager
+        self.object = None
         form = self.form_class(self.request.POST, repository=self.manager.repository)
         if form.is_valid():
             return self.form_valid(form)
         return self.form_invalid(form)
+
+    def form_invalid(self, form):
+        msg = "\n".join([f"{k}: {', '.join(v)}" for k, v in form.errors.items()])
+        messages.error(self.request, msg)
+        return super().form_invalid(form)
 
 
 class MontrekCreateView(MontrekCreateUpdateView):
