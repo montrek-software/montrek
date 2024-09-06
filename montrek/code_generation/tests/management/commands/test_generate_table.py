@@ -50,3 +50,5 @@ class GenerateTableCommandTest(TestCase):
             }
             for path in expected_paths.values():
                 self.assertTrue(os.path.exists(path))
+                with open(path) as f:
+                    self.assertIn("TestCompany", f.read())
