@@ -1,4 +1,5 @@
 import os
+import re
 
 
 class CodeGenerationConfig:
@@ -48,7 +49,7 @@ class CodeGenerationConfig:
         self.output_paths = {
             k: os.path.join(self.app_path, *v) for k, v in self.output_paths.items()
         }
-        c_prefix = prefix.capitalize()
+        c_prefix = self._prefix_to_camel_case(prefix)
 
         hub_cls_name = f"{c_prefix}Hub"
         hub_factory_cls_name = f"{hub_cls_name}Factory"
@@ -139,3 +140,8 @@ class CodeGenerationConfig:
         dotted_path = path.replace("/", ".")
         dotted_path = dotted_path.replace(".py", "")
         return f"from {dotted_path} import {class_name}"
+
+    def _prefix_to_camel_case(self, prefix: str) -> str:
+        # Use regular expressions to find underscores followed by a letter and remove the underscore, capitalizing the letter
+        prefix = re.sub(r"_([a-z])", lambda match: match.group(1).upper(), prefix)
+        return prefix[0].upper() + prefix[1:]
