@@ -547,6 +547,18 @@ class TestMontrekExampleA1FieldMapCreateView(MontrekCreateViewTestCase):
         )
         self.assertEqual(form.initial["function_name"], "no_change")
 
+    def test_form_invalid_json(self):
+        creation_data = self.creation_data()
+        invalid_json_strings = ("abc", "{'a': 'b'}", "{1: 2}", "als;djf}")
+        for invalid_json in invalid_json_strings:
+            creation_data["function_parameters"] = invalid_json
+            response = self.client.post(self.url, creation_data)
+            messages = list(response.context["messages"])
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(len(messages), 1)
+            message = str(messages[0])
+            self.assertEqual(message, "function_parameters: Enter a valid JSON.")
+
 
 class TestMontrekExampleA1FieldMapUpdateView(MontrekCreateViewTestCase):
     viewname = "montrek_example_a1_field_map_update"
