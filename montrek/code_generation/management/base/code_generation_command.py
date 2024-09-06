@@ -1,4 +1,5 @@
 import os
+import re
 from django.core.management.base import BaseCommand
 from jinja2 import Environment, FileSystemLoader
 from code_generation import CODE_TEMPLATE_DIR
@@ -34,7 +35,7 @@ class CodeGenerationCommandBase(StdArgumentsMixin, BaseCommand):
 
     def handle(self, *args, **kwargs):
         app_path = kwargs["app_path"].lower()
-        prefix = kwargs["prefix"].lower()
+        prefix = self._convert_prefix_to_snake_case(kwargs["prefix"])
         verbose = kwargs["verbose"]
         config = CodeGenerationConfig(app_path, prefix)
         output_path = config.output_paths[self.key]
@@ -71,3 +72,7 @@ class CodeGenerationCommandBase(StdArgumentsMixin, BaseCommand):
                 f.write("")
         except Exception as e:
             self.stdout.write(self.style.ERROR(f"Failed to generate __init__.py: {e}"))
+
+    def _convert_prefix_to_snake_case(self, prefix: str) -> str:
+        # Use regular expressions to find all uppercase letters and replace them with an underscore followed by the lowercase letter
+        return re.sub(r"(?<!^)([A-Z])", r"_\1", prefix).lower()
