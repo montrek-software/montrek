@@ -27,6 +27,9 @@ class SimpleFileUploadProcessor:
         else:
             self.message = f"File type {file_type} not supported"
             return False
+        name_to_field_map = self.table_manager.get_table_elements_name_to_field_map()
+        input_df = input_df.rename(columns=name_to_field_map)
+        self.table_manager.repository.create_objects_from_data_frame(input_df)
 
         return True
 
