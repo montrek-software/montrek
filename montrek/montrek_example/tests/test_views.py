@@ -2,6 +2,7 @@ import os
 from django.test import TransactionTestCase
 from django.urls import reverse
 from baseclasses.dataclasses.alert import AlertEnum
+from montrek_example.repositories.hub_d_repository import HubDRepository
 from montrek_example import views as me_views
 from testing.test_cases.view_test_cases import (
     MontrekCreateViewTestCase,
@@ -273,6 +274,14 @@ class TestMontrekExampleDListView(MontrekListViewTestCase):
 
     def build_factories(self):
         me_factories.SatD1Factory.create()
+
+    def test_simple_file_upload(self):
+        test_file_path = os.path.join(os.path.dirname(__file__), "data", "d_file.csv")
+        with open(test_file_path, "rb") as f:
+            data = {"file": f}
+            self.client.post(self.url, data, follow=True)
+        queyset = HubDRepository().std_queryset()
+        self.assertEqual(len(queyset), 4)
 
 
 class TestMontrekExampleDCreate(MontrekCreateViewTestCase):
