@@ -276,6 +276,7 @@ class MontrekListView(
 ):
     template_name = "montrek_table.html"
     manager_class = MontrekManagerNotImplemented
+    do_simple_file_upload = False
 
     def get(self, request, *args, **kwargs):
         if self.request.GET.get("gen_csv") == "true":
@@ -311,6 +312,9 @@ class MontrekListView(
             filter=filter,
             filter_field_choices=self.manager.get_std_queryset_field_choices(),
         )
+        if self.do_simple_file_upload:
+            context["simple_upload_form"] = UploadFileForm(".xlsx,.csv")
+        context["do_simple_file_upload"] = self.do_simple_file_upload
         return context
 
     def list_to_csv(self):
