@@ -39,6 +39,12 @@ class MontrekTableManager(MontrekManager):
             )
         return self._document_name
 
+    def get_table_elements_name_to_field_map(self) -> dict[str, str]:
+        name_to_field_map = {}
+        for element in self.table_elements:
+            name_to_field_map[element.name] = getattr(element, "attr", "")
+        return name_to_field_map
+
     def to_html(self):
         html_str = f"<h3>{self.table_title}</h3>"
         html_str += '<table class="table table-bordered table-hover"><tr>'
@@ -147,8 +153,6 @@ class MontrekTableManager(MontrekManager):
         return pd.DataFrame(table_data)
 
     def _make_datetime_naive(self, value):
-        if isinstance(
-            value, datetime.datetime
-        ) and not timezone.is_naive(value):
+        if isinstance(value, datetime.datetime) and not timezone.is_naive(value):
             value = timezone.make_naive(value)
         return value

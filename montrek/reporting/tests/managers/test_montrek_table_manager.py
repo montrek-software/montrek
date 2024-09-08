@@ -160,3 +160,16 @@ class TestMontrekTableManager(TestCase):
                 }
             )
             pd.testing.assert_frame_equal(excel_file, expected_df, check_dtype=False)
+
+    def test_get_table_elements_name_to_field_map(self):
+        manager = MockMontrekTableManager()
+        name_to_field_map = manager.get_table_elements_name_to_field_map()
+        expected_map = {
+            "Field A": "field_a",
+            "Field B": "field_b",
+            "Field C": "field_c",
+            "Field D": "field_d",
+            "Link": "",
+            "Link Text": "",
+        }
+        self.assertEqual(name_to_field_map, expected_map)
