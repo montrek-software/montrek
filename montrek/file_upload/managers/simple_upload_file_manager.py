@@ -29,7 +29,11 @@ class SimpleFileUploadProcessor:
             return False
         name_to_field_map = self.table_manager.get_table_elements_name_to_field_map()
         input_df = input_df.rename(columns=name_to_field_map)
-        self.table_manager.repository.create_objects_from_data_frame(input_df)
+        try:
+            self.table_manager.repository.create_objects_from_data_frame(input_df)
+        except ValueError as e:
+            self.message = str(e)
+            return False
 
         return True
 
