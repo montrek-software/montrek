@@ -1,34 +1,38 @@
 import os
+
+from decouple import config
+from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied
-from django.shortcuts import render
-from django.views.generic.list import ListView
 from django.core.paginator import Paginator
+from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import render
+from django.urls import reverse
 from django.views.generic import DetailView
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import CreateView
-from django.http import HttpResponse, HttpResponseRedirect
-from django.urls import reverse
-from django.contrib import messages
-from decouple import config
-from baseclasses.dataclasses.nav_bar_model import NavBarModel, NavBarDropdownModel
-from baseclasses.dataclasses.link_model import LinkModel
+from django.views.generic.list import ListView
 from reporting.dataclasses.table_elements import (
     AttrTableElement,
     LinkTextTableElement,
     TableElement,
 )
-from baseclasses.dataclasses.view_classes import ActionElement
-from baseclasses.pages import NoPage
-from baseclasses.forms import DateRangeForm, FilterForm
-from baseclasses.forms import MontrekCreateForm
-from baseclasses import utils
-from baseclasses.dataclasses.history_data_table import HistoryDataTable
-from baseclasses.managers.montrek_manager import MontrekManagerNotImplemented
-from reporting.managers.montrek_table_manager import MontrekTableManager
+from reporting.managers.latex_report_manager import LatexReportManager
 from reporting.managers.montrek_details_manager import MontrekDetailsManager
 from reporting.managers.montrek_report_manager import MontrekReportManager
-from reporting.managers.latex_report_manager import LatexReportManager
+from reporting.managers.montrek_table_manager import MontrekTableManager
+
+from baseclasses import utils
+from baseclasses.dataclasses.history_data_table import HistoryDataTable
+from baseclasses.dataclasses.link_model import LinkModel
+from baseclasses.dataclasses.nav_bar_model import NavBarDropdownModel, NavBarModel
+from baseclasses.dataclasses.view_classes import ActionElement
+from baseclasses.forms import DateRangeForm, FilterForm, MontrekCreateForm
+from baseclasses.managers.montrek_manager import MontrekManagerNotImplemented
+from baseclasses.pages import NoPage
+
+from file_upload.forms import UploadFileForm
+from file_upload.managers.simple_upload_file_manager import SimpleUploadFileManager
 
 
 def home(request):
@@ -272,6 +276,7 @@ class MontrekListView(
 ):
     template_name = "montrek_table.html"
     manager_class = MontrekManagerNotImplemented
+    do_simple_file_upload = False
 
     def get(self, request, *args, **kwargs):
         if self.request.GET.get("gen_csv") == "true":
@@ -307,6 +312,9 @@ class MontrekListView(
             filter=filter,
             filter_field_choices=self.manager.get_std_queryset_field_choices(),
         )
+        if self.do_simple_file_upload:
+            context["simple_upload_form"] = UploadFileForm(".xlsx,.csv")
+        context["do_simple_file_upload"] = self.do_simple_file_upload
         return context
 
     def list_to_csv(self):
@@ -317,6 +325,23 @@ class MontrekListView(
 
     def reset_filter(self):
         self.request.session["filter"] = {}
+        return HttpResponseRedirect(self.request.path)
+
+    def post(self, request, *args, **kwargs):
+        form = UploadFileForm(".xlsx,.csv", request.POST, request.FILES)
+        if form.is_valid():
+            file_upload_manager = SimpleUploadFileManager(
+                request.FILES["file"],
+                session_data=self.session_data,
+                table_manager=self.manager,
+                **self.kwargs,
+            )
+            result = file_upload_manager.upload_and_process()
+            if result:
+                messages.info(request, file_upload_manager.processor.message)
+            else:
+                messages.error(request, file_upload_manager.processor.message)
+            return HttpResponseRedirect(self.request.path)
         return HttpResponseRedirect(self.request.path)
 
 

@@ -181,6 +181,7 @@ class MontrekExampleDList(views.MontrekListView):
     page_class = pages.MontrekExampleDAppPage
     tab = "tab_example_d_list"
     title = "Example D List"
+    do_simple_file_upload = True
 
     @property
     def actions(self) -> tuple:

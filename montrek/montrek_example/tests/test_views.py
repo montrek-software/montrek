@@ -1,23 +1,29 @@
 import os
+
+from baseclasses.dataclasses.alert import AlertEnum
+from baseclasses.utils import montrek_time
 from django.test import TransactionTestCase
 from django.urls import reverse
-from baseclasses.dataclasses.alert import AlertEnum
-from montrek_example import views as me_views
+from file_upload.repositories.file_upload_registry_repository import (
+    FileUploadRegistryRepository,
+)
 from testing.test_cases.view_test_cases import (
     MontrekCreateViewTestCase,
-    MontrekUpdateViewTestCase,
-    MontrekViewTestCase,
-    MontrekListViewTestCase,
     MontrekDeleteViewTestCase,
     MontrekFileResponseTestCase,
+    MontrekListViewTestCase,
+    MontrekUpdateViewTestCase,
+    MontrekViewTestCase,
 )
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
-from montrek_example.tests.factories import montrek_example_factories as me_factories
+
+from montrek_example import views as me_views
 from montrek_example.repositories.hub_a_repository import (
     HubAFileUploadRegistryRepository,
     HubARepository,
 )
-from baseclasses.utils import montrek_time
+from montrek_example.repositories.hub_d_repository import HubDRepository
+from montrek_example.tests.factories import montrek_example_factories as me_factories
 
 
 class TestMontrekExampleAListView(MontrekListViewTestCase):
@@ -273,6 +279,48 @@ class TestMontrekExampleDListView(MontrekListViewTestCase):
 
     def build_factories(self):
         me_factories.SatD1Factory.create()
+
+    def test_simple_file_upload_csv(self):
+        test_file_path = os.path.join(os.path.dirname(__file__), "data", "d_file.csv")
+        with open(test_file_path, "rb") as f:
+            data = {"file": f}
+            self.client.post(self.url, data, follow=True)
+        queyset = HubDRepository().std_queryset()
+        self.assertEqual(len(queyset), 4)
+        registry = FileUploadRegistryRepository().std_queryset().last()
+        self.assertEqual(registry.upload_status, "processed")
+
+    def test_simple_file_upload_excel(self):
+        test_file_path = os.path.join(os.path.dirname(__file__), "data", "d_file.xlsx")
+        with open(test_file_path, "rb") as f:
+            data = {"file": f}
+            self.client.post(self.url, data, follow=True)
+        queyset = HubDRepository().std_queryset()
+        self.assertEqual(len(queyset), 4)
+        registry = FileUploadRegistryRepository().std_queryset().last()
+        self.assertEqual(registry.upload_status, "processed")
+
+    def test_simple_file_upload_unknown(self):
+        test_file_path = os.path.join(os.path.dirname(__file__), "data", "d_file.unkwn")
+        with open(test_file_path, "rb") as f:
+            data = {"file": f}
+            self.client.post(self.url, data, follow=True)
+        queyset = HubDRepository().std_queryset()
+        self.assertEqual(len(queyset), 1)
+        registries = FileUploadRegistryRepository().std_queryset()
+        self.assertEqual(len(registries), 0)
+
+    def test_simple_file_upload_failure(self):
+        test_file_path = os.path.join(
+            os.path.dirname(__file__), "data", "d_file_fail.csv"
+        )
+        with open(test_file_path, "rb") as f:
+            data = {"file": f}
+            self.client.post(self.url, data, follow=True)
+        queyset = HubDRepository().std_queryset()
+        self.assertEqual(len(queyset), 1)
+        registry = FileUploadRegistryRepository().std_queryset().last()
+        self.assertEqual(registry.upload_status, "failed")
 
 
 class TestMontrekExampleDCreate(MontrekCreateViewTestCase):
