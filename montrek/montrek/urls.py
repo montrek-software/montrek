@@ -19,6 +19,7 @@ from django.contrib import admin
 from django.urls import path, include
 from baseclasses import views as base_views
 from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path("", base_views.home, name="home"),
@@ -33,7 +34,7 @@ urlpatterns = [
     path("file_upload/", include("file_upload.urls")),
     path("mailing/", include("mailing.urls")),
     path("montrek_example/", include("montrek_example.urls")),
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 
 for app in settings.MONTREK_EXTENSION_APPS:
