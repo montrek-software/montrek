@@ -73,12 +73,12 @@ class TestMontrekRepositorySatellite(TestCase):
             test_fields,
             [
                 "comment",
-                "my_field_a1_str",
                 "field_a1_int",
                 "comment",
                 "field_a2_str",
                 "field_a2_float",
                 "field_b1_str",
+                "my_field_a1_str",
             ],
         )
 
