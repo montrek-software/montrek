@@ -57,6 +57,7 @@ class MontrekRepository:
         self._is_built = False
         self.calculated_fields: list[str] = []
         self.linked_fields: list[str] = []
+        self.renamed_fields: list[tuple[str, str]] = []
 
     @classmethod
     def get_hub_by_id(cls, pk: int) -> MontrekHubABC:
@@ -169,7 +170,11 @@ class MontrekRepository:
 
     def get_all_fields(self):
         satellite_fields = [field.name for field in self.std_satellite_fields()]
-        return satellite_fields + self.calculated_fields + self.linked_fields
+        all_fields = satellite_fields + self.calculated_fields + self.linked_fields
+        for field, new_name in self.renamed_fields:
+            all_fields.remove(field)
+            all_fields.append(new_name)
+        return all_fields
 
     def std_create_object(self, data: Dict[str, Any]) -> MontrekHubABC:
         self._raise_for_anonymous_user()
@@ -423,6 +428,7 @@ class MontrekRepository:
 
     def rename_field(self, field: str, new_name: str):
         self.annotations[new_name] = self.annotations[field]
+        self.renamed_fields.append((field, new_name))
 
     def std_delete_object(self, obj: MontrekHubABC):
         obj.state_date_end = timezone.now()
