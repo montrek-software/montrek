@@ -55,9 +55,6 @@ class MontrekRepository:
         self._reference_date = None
         self.messages = []
         self._is_built = False
-        self.calculated_fields: list[str] = []
-        self.linked_fields: list[str] = []
-        self.renamed_fields: list[tuple[str, str]] = []
 
     @classmethod
     def get_hub_by_id(cls, pk: int) -> MontrekHubABC:
@@ -169,12 +166,9 @@ class MontrekRepository:
         return self._get_satellite_field_names(is_time_series=True)
 
     def get_all_fields(self):
-        satellite_fields = [field.name for field in self.std_satellite_fields()]
-        all_fields = satellite_fields + self.calculated_fields + self.linked_fields
-        for field, new_name in self.renamed_fields:
-            all_fields.remove(field)
-            all_fields.append(new_name)
-        return all_fields
+        if not self._is_built:
+            self.std_queryset()
+        return list(self.annotations.keys())
 
     def std_create_object(self, data: Dict[str, Any]) -> MontrekHubABC:
         self._raise_for_anonymous_user()
@@ -286,7 +280,6 @@ class MontrekRepository:
         )
         self._add_to_annotations(fields, annotations_manager)
         self._add_to_primary_link_classes(link_class)
-        self.linked_fields.extend(fields)
 
     def build_queryset(self, **filter_kwargs) -> QuerySet:
         base_query = self._get_base_query()
@@ -427,8 +420,7 @@ class MontrekRepository:
         ).queryset
 
     def rename_field(self, field: str, new_name: str):
-        self.annotations[new_name] = self.annotations[field]
-        self.renamed_fields.append((field, new_name))
+        self.annotations[new_name] = self.annotations.pop(field)
 
     def std_delete_object(self, obj: MontrekHubABC):
         obj.state_date_end = timezone.now()
