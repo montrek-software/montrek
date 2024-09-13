@@ -48,6 +48,7 @@ class MontrekRepository:
 
     def __init__(self, session_data: Dict[str, Any] = {}):
         self._annotations = {}
+        self._ts_annotations = {}
         self._primary_satellite_classes = []
         self._primary_link_classes = []
         self._ts_queryset_containers = []
@@ -65,6 +66,10 @@ class MontrekRepository:
     @property
     def annotations(self):
         return self._annotations
+
+    @property
+    def ts_annotations(self):
+        return self._ts_annotations
 
     @property
     def reference_date(self) -> timezone.datetime:
@@ -174,7 +179,9 @@ class MontrekRepository:
     def get_all_annotated_fields(self):
         if not self._is_built:
             self.std_queryset()
-        return list(self.annotations.keys())
+        annotation_fields = list(self.annotations.keys())
+        ts_annotation_fields = list(self.ts_annotations.keys())
+        return annotation_fields + ts_annotation_fields
 
     def std_create_object(self, data: Dict[str, Any]) -> MontrekHubABC:
         self._raise_for_anonymous_user()
@@ -390,6 +397,7 @@ class MontrekRepository:
             }
             base_annotation_dict.update(annotation_dict)
         base_query = base_query.annotate(**base_annotation_dict)
+        self._ts_annotations.update(base_query.query.annotations)
         self._ts_queryset_containers = []
         base_query = base_query.order_by("-value_date", "-pk")
         return base_query

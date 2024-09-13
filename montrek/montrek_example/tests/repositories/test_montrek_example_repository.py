@@ -66,18 +66,39 @@ class TestMontrekRepositorySatellite(TestCase):
 
     def test_get_all_annotated_fields(self):
         repo = HubARepository()
+        repo.add_linked_satellites_field_annotations(
+            me_models.SatTSC2,
+            me_models.LinkHubAHubC,
+            ["field_tsc2_float"],
+        )  # linked time series field
         repo.std_queryset()
-        repo.rename_field("field_a1_str", "my_field_a1_str")  # satellite field
+        repo.rename_field("field_a1_str", "my_field_a1_str")  # direct satellite field
         repo.rename_field("field_b1_str", "my_field_b1_str")  # linked field
         test_fields = repo.get_all_annotated_fields()
         self.assertEqual(
             test_fields,
             [
+                "field_tsc2_float",
                 "field_a1_int",
                 "field_a2_float",
                 "field_a2_str",
                 "my_field_a1_str",
                 "my_field_b1_str",
+            ],
+        )
+        # direct time series satellite fields
+        repo = HubCRepository()
+        test_fields = repo.get_all_annotated_fields()
+        self.assertEqual(
+            test_fields,
+            [
+                "field_c1_bool",
+                "field_c1_str",
+                "field_tsc2_float",
+                "value_date",
+                "field_tsc3_int",
+                "field_tsc3_str",
+                "field_tsc4_int",
             ],
         )
 
