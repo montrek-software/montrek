@@ -340,6 +340,8 @@ class MontrekRepository:
             )
             | Q(value_date=None)
         )
+        self._ts_annotations.update(field_map)
+
         return TSQueryContainer(
             queryset=queryset,
             fields=fields,
@@ -397,7 +399,6 @@ class MontrekRepository:
             }
             base_annotation_dict.update(annotation_dict)
         base_query = base_query.annotate(**base_annotation_dict)
-        self._ts_annotations.update(base_query.query.annotations)
         self._ts_queryset_containers = []
         base_query = base_query.order_by("-value_date", "-pk")
         return base_query
