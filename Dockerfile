@@ -29,6 +29,7 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     libmysqlclient-dev \
     libpq-dev gcc \
+    graphviz \
     && apt-get clean
 
 # Enable the multiverse repository
