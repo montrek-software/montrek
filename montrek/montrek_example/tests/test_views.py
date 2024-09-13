@@ -575,6 +575,7 @@ class TestMontrekExampleA1FieldMapCreateView(MontrekCreateViewTestCase):
         self.assertEqual(
             form.fields["database_field"].choices,
             [
+                ("comment", "comment"),
                 ("field_a1_int", "field_a1_int"),
                 ("field_a1_str", "field_a1_str"),
             ],
