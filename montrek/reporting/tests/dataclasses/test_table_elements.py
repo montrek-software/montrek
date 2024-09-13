@@ -19,6 +19,13 @@ class TestTableElements(TestCase):
             test_element.format(1234), '<td style="text-align: left">1234</td>'
         )
 
+    def test_text_table_element(self):
+        test_element = te.TextTableElement(name="test", attr="test_value")
+        self.assertEqual(
+            test_element.format("test"),
+            '<td style="text-align: left; white-space: pre-wrap;">test</td>',
+        )
+
     def test_float_table_elements(self):
         test_element = te.FloatTableElement(name="test", attr="test_value")
         self.assertEqual(

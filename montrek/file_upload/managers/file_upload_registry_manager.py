@@ -7,6 +7,7 @@ from reporting.dataclasses.table_elements import (
     DateTableElement,
     LinkTableElement,
     StringTableElement,
+    TextTableElement,
 )
 
 
@@ -21,7 +22,7 @@ class FileUploadRegistryManagerABC(MontrekTableManager):
         table_elements = [
             StringTableElement(name="File Name", attr="file_name"),
             StringTableElement(name="Upload Status", attr="upload_status"),
-            StringTableElement(name="Upload Message", attr="upload_message"),
+            TextTableElement(name="Upload Message", attr="upload_message"),
             DateTableElement(name="Upload Date", attr="upload_date"),
             StringTableElement(name="Uploaded By", attr="created_by"),
             LinkTableElement(
