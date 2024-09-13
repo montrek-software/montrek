@@ -47,10 +47,29 @@ class TestMontrekRepositorySatellite(TestCase):
 
     def test_get_all_fields(self):
         repo = HubARepository()
+        repo.calculated_fields += ["dummy1", "dummy2"]
+        test_fields = repo.get_all_fields()
+        self.assertEqual(
+            test_fields,
+            [
+                "comment",
+                "field_a1_str",
+                "field_a1_int",
+                "comment",
+                "field_a2_str",
+                "field_a2_float",
+                "dummy1",
+                "dummy2",
+                "field_b1_str",
+            ],
+        )
+
+    def test_get_all_annotated_fields(self):
+        repo = HubARepository()
         repo.std_queryset()
         repo.rename_field("field_a1_str", "my_field_a1_str")  # satellite field
         repo.rename_field("field_b1_str", "my_field_b1_str")  # linked field
-        test_fields = repo.get_all_fields()
+        test_fields = repo.get_all_annotated_fields()
         self.assertEqual(
             test_fields,
             [

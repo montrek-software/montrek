@@ -55,6 +55,8 @@ class MontrekRepository:
         self._reference_date = None
         self.messages = []
         self._is_built = False
+        self.calculated_fields: list[str] = []
+        self.linked_fields: list[str] = []
 
     @classmethod
     def get_hub_by_id(cls, pk: int) -> MontrekHubABC:
@@ -166,6 +168,10 @@ class MontrekRepository:
         return self._get_satellite_field_names(is_time_series=True)
 
     def get_all_fields(self):
+        satellite_fields = [field.name for field in self.std_satellite_fields()]
+        return satellite_fields + self.calculated_fields + self.linked_fields
+
+    def get_all_annotated_fields(self):
         if not self._is_built:
             self.std_queryset()
         return list(self.annotations.keys())
@@ -280,6 +286,7 @@ class MontrekRepository:
         )
         self._add_to_annotations(fields, annotations_manager)
         self._add_to_primary_link_classes(link_class)
+        self.linked_fields.extend(fields)
 
     def build_queryset(self, **filter_kwargs) -> QuerySet:
         base_query = self._get_base_query()
