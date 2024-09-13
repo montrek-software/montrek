@@ -30,7 +30,6 @@ class FieldMapRepositoryABC(MontrekRepository):
             ],
         )
         self.rename_field("comment", "field_map_static_satellite_comment")
-        self.annotations.pop("comment")
         queryset = self.build_queryset()
         return queryset.order_by("step", "source_field")
 

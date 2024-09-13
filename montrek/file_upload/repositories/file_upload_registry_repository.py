@@ -53,7 +53,6 @@ class FileUploadRegistryRepositoryABC(MontrekRepository):
             ["file", "created_at"],
         )
         self.rename_field("created_at", "upload_date")
-        self.annotations.pop("created_at")
         queryset = self.build_queryset().order_by("-created_at")
         return queryset
 

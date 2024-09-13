@@ -48,6 +48,7 @@ class MontrekRepository:
 
     def __init__(self, session_data: Dict[str, Any] = {}):
         self._annotations = {}
+        self._ts_annotations = {}
         self._primary_satellite_classes = []
         self._primary_link_classes = []
         self._ts_queryset_containers = []
@@ -65,6 +66,10 @@ class MontrekRepository:
     @property
     def annotations(self):
         return self._annotations
+
+    @property
+    def ts_annotations(self):
+        return self._ts_annotations
 
     @property
     def reference_date(self) -> timezone.datetime:
@@ -170,6 +175,13 @@ class MontrekRepository:
     def get_all_fields(self):
         satellite_fields = [field.name for field in self.std_satellite_fields()]
         return satellite_fields + self.calculated_fields + self.linked_fields
+
+    def get_all_annotated_fields(self):
+        if not self._is_built:
+            self.std_queryset()
+        annotation_fields = list(self.annotations.keys())
+        ts_annotation_fields = list(self.ts_annotations.keys())
+        return annotation_fields + ts_annotation_fields
 
     def std_create_object(self, data: Dict[str, Any]) -> MontrekHubABC:
         self._raise_for_anonymous_user()
@@ -328,6 +340,8 @@ class MontrekRepository:
             )
             | Q(value_date=None)
         )
+        self._ts_annotations.update(field_map)
+
         return TSQueryContainer(
             queryset=queryset,
             fields=fields,
@@ -422,7 +436,7 @@ class MontrekRepository:
         ).queryset
 
     def rename_field(self, field: str, new_name: str):
-        self.annotations[new_name] = self.annotations[field]
+        self.annotations[new_name] = self.annotations.pop(field)
 
     def std_delete_object(self, obj: MontrekHubABC):
         obj.state_date_end = timezone.now()
