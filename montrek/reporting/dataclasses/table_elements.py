@@ -170,6 +170,14 @@ class StringTableElement(AttrTableElement):
 
 
 @dataclass
+class TextTableElement(AttrTableElement):
+    attr: str
+
+    def format(self, value):
+        return f'<td style="text-align: left; white-space: pre-wrap;">{value}</td>'
+
+
+@dataclass
 class AlertTableElement(AttrTableElement):
     attr: str
 
