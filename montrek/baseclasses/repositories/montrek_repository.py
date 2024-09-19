@@ -278,15 +278,23 @@ class MontrekRepository:
         satellite_class: Type[MontrekSatelliteABC],
         link_class: Type[MontrekLinkABC],
         fields: List[str],
+        *,
         reversed_link: bool = False,
+        last_ts_value: bool = False,
     ):
         if reversed_link:
             subquery_builder = ReverseLinkedSatelliteSubqueryBuilder(
-                satellite_class, link_class, self.reference_date
+                satellite_class,
+                link_class,
+                self.reference_date,
+                last_ts_value=last_ts_value,
             )
         else:
             subquery_builder = LinkedSatelliteSubqueryBuilder(
-                satellite_class, link_class, self.reference_date
+                satellite_class,
+                link_class,
+                self.reference_date,
+                last_ts_value=last_ts_value,
             )
         annotations_manager = LinkAnnotationsManager(
             subquery_builder, satellite_class.__name__

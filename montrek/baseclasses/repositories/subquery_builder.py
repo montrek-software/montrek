@@ -1,5 +1,6 @@
 from django.conf import settings
 from typing import Type
+from django.core.exceptions import FieldError
 
 from django.db.models.functions import Cast
 from baseclasses.models import MontrekManyToManyLinkABC, MontrekSatelliteABC
@@ -92,12 +93,14 @@ class LinkedSatelliteSubqueryBuilderBase(SubqueryBuilder):
         satellite_class: Type[MontrekSatelliteABC],
         link_class: Type[MontrekLinkABC],
         reference_date: timezone.datetime,
+        last_ts_value: bool,
     ):
         self.satellite_class = satellite_class
         if link_class.link_type == LinkTypeEnum.NONE:
             raise TypeError(f"{link_class.__name__} must inherit from valid LinkClass!")
         self.link_class = link_class
         self.reference_date = reference_date
+        self._last_ts_value = last_ts_value
         super().__init__()
 
     def _link_hubs_and_get_subquery(
@@ -133,11 +136,17 @@ class LinkedSatelliteSubqueryBuilderBase(SubqueryBuilder):
                 }
             ).values(field + "agg")
         if isinstance(self.satellite_class(), MontrekTimeSeriesSatelliteABC):
-            satellite_field_query = (
-                satellite_field_query.filter(value_date=OuterRef("value_date"))
-                .order_by("-value_date")
-                .values(field)[:1]
-            )
+            if self._last_ts_value:
+                satellite_field_query = (
+                    satellite_field_query.filter(value_date__lte=self.reference_date)
+                    .order_by("-value_date")
+                    .values(field)[:1]
+                )
+            else:
+                satellite_field_query = satellite_field_query.filter(
+                    value_date=OuterRef("value_date")
+                ).values(field)[:1]
+
         return Subquery(satellite_field_query)
 
 
@@ -147,8 +156,9 @@ class LinkedSatelliteSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
         satellite_class: Type[MontrekSatelliteABC],
         link_class: Type[MontrekLinkABC],
         reference_date: timezone.datetime,
+        last_ts_value: bool,
     ):
-        super().__init__(satellite_class, link_class, reference_date)
+        super().__init__(satellite_class, link_class, reference_date, last_ts_value)
 
     def get_subquery(self, field: str) -> Subquery:
         return super()._link_hubs_and_get_subquery(field, "hub_out", "hub_in")
@@ -160,8 +170,9 @@ class ReverseLinkedSatelliteSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
         satellite_class: Type[MontrekSatelliteABC],
         link_class: Type[MontrekLinkABC],
         reference_date: timezone.datetime,
+        last_ts_value: bool,
     ):
-        super().__init__(satellite_class, link_class, reference_date)
+        super().__init__(satellite_class, link_class, reference_date, last_ts_value)
 
     def get_subquery(self, field: str) -> Subquery:
         return super()._link_hubs_and_get_subquery(field, "hub_in", "hub_out")

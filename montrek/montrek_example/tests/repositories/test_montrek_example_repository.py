@@ -70,6 +70,7 @@ class TestMontrekRepositorySatellite(TestCase):
             me_models.SatTSC2,
             me_models.LinkHubAHubC,
             ["field_tsc2_float"],
+            last_ts_value=True,
         )  # linked time series field
         repo.std_queryset()
         repo.rename_field("field_a1_str", "my_field_a1_str")  # direct satellite field
@@ -94,6 +95,8 @@ class TestMontrekRepositorySatellite(TestCase):
             [
                 "field_c1_bool",
                 "field_c1_str",
+                "field_tsd2_float",
+                "field_tsd2_int",
                 "field_tsc2_float",
                 "value_date",
                 "field_tsc3_int",
@@ -1089,7 +1092,7 @@ class TestTimeSeries(TestCase):
         test_query = repository.std_queryset().filter(value_date__in=value_dates)
         self.assertEqual(test_query.count(), 2)
         self.assertEqual(test_query[1].field_tsc2_float, 0.0)
-        self.assertEqual(test_query[1].field_tsd2_float, 0.0)
+        self.assertEqual(test_query[1].field_tsd2_float, 0)
         self.assertEqual(test_query[1].field_tsd2_int, 0)
         self.assertEqual(test_query[0].field_tsc2_float, 0.1)
         self.assertEqual(test_query[0].field_tsd2_float, 0.2)
