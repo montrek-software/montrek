@@ -162,6 +162,7 @@ class MontrekSatelliteABC(TimeStampMixin, StateMixin, UserMixin):
             field
             for field in cls._meta.get_fields()
             if field.name not in cls.exclude_fields() and not field.is_relation
+            # and not isinstance(field, models.GeneratedField)
         ]
         return value_fields
 
