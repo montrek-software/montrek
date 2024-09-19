@@ -1073,7 +1073,7 @@ class TestTimeSeries(TestCase):
             self.assertLess(queryset[i].state_date_start, timezone.now())
 
     def test_time_series_link_to_time_series(self):
-        value_dates = [montrek_time(2024, 9, 19), montrek_time(2024, 9, 20)]
+        value_dates = [montrek_time(2024, 9, 18), montrek_time(2024, 9, 19)]
         for i, value_date in enumerate(value_dates):
             sat_c = me_factories.SatTSC2Factory.create(
                 field_tsc2_float=i * 0.1,

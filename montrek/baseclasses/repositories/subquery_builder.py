@@ -134,7 +134,7 @@ class LinkedSatelliteSubqueryBuilderBase(SubqueryBuilder):
             ).values(field + "agg")
         if isinstance(self.satellite_class(), MontrekTimeSeriesSatelliteABC):
             satellite_field_query = (
-                satellite_field_query.filter(value_date__lte=self.reference_date)
+                satellite_field_query.filter(value_date=OuterRef("value_date"))
                 .order_by("-value_date")
                 .values(field)[:1]
             )
