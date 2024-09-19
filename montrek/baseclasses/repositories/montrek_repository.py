@@ -198,7 +198,7 @@ class MontrekRepository:
     ) -> List[MontrekHubABC]:
         self._raise_for_anonymous_user()
         link_columns = [col for col in data_frame.columns if col.startswith("link_")]
-        static_fields = self.get_static_satellite_field_names()
+        static_fields = self.get_static_satellite_field_names() + link_columns
         static_columns = [col for col in static_fields if col in data_frame.columns]
         ts_fields = self.get_time_series_satellite_field_names()
         ts_columns = [col for col in ts_fields if col in data_frame.columns]
@@ -208,15 +208,14 @@ class MontrekRepository:
                 # For cleaning purposes we drop duplicates here
                 static_df = data_frame.loc[:, static_columns]
                 static_df = static_df.drop_duplicates()
-                static_df = static_df.join(data_frame.loc[:, link_columns])
             else:
-                static_df = data_frame.loc[:, static_columns + link_columns]
+                static_df = data_frame.loc[:, static_columns]
             static_hubs = self._create_objects_from_data_frame(static_df)
         else:
             static_hubs = []
         if ts_columns:
             ts_hubs = self._create_objects_from_data_frame(
-                data_frame.loc[:, ts_columns + link_columns]
+                data_frame.loc[:, ts_columns]
             )
         else:
             ts_hubs = []
