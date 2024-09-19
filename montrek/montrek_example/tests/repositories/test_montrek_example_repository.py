@@ -1001,6 +1001,36 @@ class TestLinkOneToManyUpates(TestCase):
         self.assertEqual(link_2.state_date_end, MAX_DATE)
         self.assertGreater(link_2.state_date_start, MIN_DATE)
 
+    def test_duplicate_links_are_ignored(self):
+        hub_c2 = me_factories.HubCFactory()
+        linked_hubs = [self.hub_c, hub_c2]
+        original_row = {
+            "hub_entity_id": self.hub_a.id,
+            "link_hub_a_hub_c": linked_hubs,
+        }
+        different_link_order_row = {
+            "hub_entity_id": self.hub_a.id,
+            "link_hub_a_hub_c": list(reversed(linked_hubs)),
+        }
+        import_df = pd.DataFrame(
+            [
+                original_row,
+                different_link_order_row,
+                original_row,
+            ]
+        )
+        self.repository.create_objects_from_data_frame(import_df)
+        links = me_models.LinkHubAHubC.objects.all()
+        self.assertEqual(links.count(), 2)
+        link_1 = links.first()
+        link_2 = links.last()
+        self.assertEqual(link_1.hub_out, self.hub_c)
+        self.assertEqual(link_2.hub_out, hub_c2)
+        self.assertEqual(link_1.state_date_start, MIN_DATE)
+        self.assertEqual(link_1.state_date_end, MAX_DATE)
+        self.assertEqual(link_2.state_date_end, MAX_DATE)
+        self.assertGreater(link_2.state_date_start, MIN_DATE)
+
 
 class TestTimeSeries(TestCase):
     def setUp(self) -> None:

@@ -193,6 +193,18 @@ class MontrekRepository:
         db_creator.save_stalled_objects()
         return created_hub
 
+    @staticmethod
+    def _convert_lists_to_tuples(df: pd.DataFrame, columns: List[str]):
+        for col in columns:
+            df[col] = df[col].apply(lambda x: tuple(x) if isinstance(x, list) else x)
+        return df
+
+    @staticmethod
+    def _convert_tuples_to_lists(df: pd.DataFrame, columns: List[str]):
+        for col in columns:
+            df[col] = df[col].apply(lambda x: list(x) if isinstance(x, tuple) else x)
+        return df
+
     def create_objects_from_data_frame(
         self, data_frame: pd.DataFrame
     ) -> List[MontrekHubABC]:
@@ -207,7 +219,9 @@ class MontrekRepository:
                 # When static data and ts data is combined, the static data will be doubled in multiple lines
                 # For cleaning purposes we drop duplicates here
                 static_df = data_frame.loc[:, static_columns]
+                static_df = self._convert_lists_to_tuples(static_df, link_columns)
                 static_df = static_df.drop_duplicates()
+                static_df = self._convert_tuples_to_lists(static_df, link_columns)
             else:
                 static_df = data_frame.loc[:, static_columns]
             static_hubs = self._create_objects_from_data_frame(static_df)
