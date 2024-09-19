@@ -921,7 +921,7 @@ class TestLinkOneToOneUpates(TestCase):
         import_df = pd.DataFrame(
             {
                 "hub_entity_id": [self.hub_a.id],
-                "link_hub_a_hub_b": [[self.hub_b, hub_b2]],
+                "link_hub_a_hub_b": [(self.hub_b, hub_b2)],
             }
         )
         with self.assertRaises(MontrekError):
@@ -986,7 +986,7 @@ class TestLinkOneToManyUpates(TestCase):
         import_df = pd.DataFrame(
             {
                 "hub_entity_id": [self.hub_a.id],
-                "link_hub_a_hub_c": [[self.hub_c, hub_c2]],
+                "link_hub_a_hub_c": [(self.hub_c, hub_c2)],
             }
         )
         self.repository.create_objects_from_data_frame(import_df)
@@ -1422,7 +1422,7 @@ class TestMontrekManyToManyRelations(TestCase):
         input_data = {
             "field_b1_str": "Hallo",
             "field_b1_date": montrek_time(2024, 3, 26),
-            "link_hub_b_hub_d": [self.satd1.hub_entity, self.satd2.hub_entity],
+            "link_hub_b_hub_d": (self.satd1.hub_entity, self.satd2.hub_entity),
         }
         repository_b = HubBRepository(session_data={"user_id": self.user.id})
         new_sat_b = repository_b.std_create_object(input_data)
@@ -1436,7 +1436,7 @@ class TestMontrekManyToManyRelations(TestCase):
             {
                 "field_b1_str": ["Hallo"],
                 "field_b1_date": [montrek_time(2024, 3, 26)],
-                "link_hub_b_hub_d": [[self.satd1.hub_entity, self.satd2.hub_entity]],
+                "link_hub_b_hub_d": [(self.satd1.hub_entity, self.satd2.hub_entity)],
             }
         )
         repository_b = HubBRepository(session_data={"user_id": self.user.id})
@@ -1461,11 +1461,11 @@ class TestMontrekManyToManyRelations(TestCase):
         # one existing, two new links
         input_data = {
             "hub_entity_id": hub_entity_id,
-            "link_hub_b_hub_d": [
+            "link_hub_b_hub_d": (
                 self.satd1.hub_entity,
                 satd3.hub_entity,
                 satd4.hub_entity,
-            ],
+            ),
         }
         repository_b = HubBRepository(session_data={"user_id": self.user.id})
         repository_b.std_create_object(input_data)
