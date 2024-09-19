@@ -119,6 +119,11 @@ class SatTSC3(MontrekTimeSeriesSatelliteABC):
     hub_entity = models.ForeignKey(HubC, on_delete=models.CASCADE)
     field_tsc3_int = models.IntegerField(null=True, blank=True)
     field_tsc3_str = models.CharField(max_length=50, null=True, blank=True)
+    field_tsc3_int_times_two = models.GeneratedField(
+        expression=models.F("field_tsc3_int") * 2,
+        output_field=models.IntegerField(),
+        db_persist=True,
+    )
 
 
 class SatTSC4(MontrekTimeSeriesSatelliteABC):
