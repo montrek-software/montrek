@@ -1072,6 +1072,29 @@ class TestTimeSeries(TestCase):
             )
             self.assertLess(queryset[i].state_date_start, timezone.now())
 
+    def test_time_series_link_to_time_series(self):
+        value_dates = [montrek_time(2024, 9, 19), montrek_time(2024, 9, 20)]
+        for i, value_date in enumerate(value_dates):
+            sat_c = me_factories.SatTSC2Factory.create(
+                field_tsc2_float=i * 0.1,
+                value_date=value_date,
+            )
+            sat_d = me_factories.SatTSD2Factory.create(
+                field_tsd2_float=i * 0.2,
+                field_tsd2_int=i,
+                value_date=value_date,
+            )
+            sat_c.hub_entity.link_hub_c_hub_d.add(sat_d.hub_entity)
+        repository = HubCRepository(session_data={"user_id": self.user.id})
+        test_query = repository.std_queryset().filter(value_date__in=value_dates)
+        self.assertEqual(test_query.count(), 2)
+        self.assertEqual(test_query[1].field_tsc2_float, 0.0)
+        self.assertEqual(test_query[1].field_tsd2_float, 0.0)
+        self.assertEqual(test_query[1].field_tsd2_int, 0)
+        self.assertEqual(test_query[0].field_tsc2_float, 0.1)
+        self.assertEqual(test_query[0].field_tsd2_float, 0.2)
+        self.assertEqual(test_query[0].field_tsd2_int, 1)
+
 
 class TestTimeSeriesRepositoryEmpty(TestCase):
     def test_empty_time_series(self):

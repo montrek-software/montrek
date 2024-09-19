@@ -25,11 +25,12 @@ from api_upload.models import (
 
 ####################################################################################################
 # Test classes                              / -- LinkHubBHubD -- HubD -- SatD1
-#                                          /
-#    SatA1 -- HubA -- LinkHubAHubB -- HubB -- SatB1
-#    SatA2 -/   \                          \- SatB2
-#                \ -- LinkHubAHubC -- HubC -- SatC1
-#                                          \- SatTSC2
+#                                          /                      /   \- SatTSD2
+#    SatA1 -- HubA -- LinkHubAHubB -- HubB -- SatB1              /
+#    SatA2 -/   \                          \- SatB2    LinkHubCHubD
+#                \ -- LinkHubAHubC -- HubC -- SatC1   /
+#                                          \- SatTSC2/
+#                                          \--------/
 ####################################################################################################
 
 
@@ -59,7 +60,9 @@ class HubB(MontrekHubABC):
 
 
 class HubC(MontrekHubABC):
-    pass
+    link_hub_c_hub_d = models.ManyToManyField(
+        "HubD", related_name="link_hub_d_hub_c", through="LinkHubCHubD"
+    )
 
 
 class HubD(MontrekHubABC):
@@ -138,6 +141,12 @@ class SatD1(MontrekSatelliteABC):
     identifier_fields = ["field_d1_str"]
 
 
+class SatTSD2(MontrekTimeSeriesSatelliteABC):
+    hub_entity = models.ForeignKey(HubD, on_delete=models.CASCADE)
+    field_tsd2_float = models.FloatField(null=True)
+    field_tsd2_int = models.IntegerField(null=True)
+
+
 class LinkHubAHubB(MontrekOneToOneLinkABC):
     hub_in = models.ForeignKey(HubA, on_delete=models.CASCADE)
     hub_out = models.ForeignKey(HubB, on_delete=models.CASCADE)
@@ -158,6 +167,11 @@ class LinkHubAFileUploadRegistry(MontrekManyToManyLinkABC):
     hub_out = models.ForeignKey(
         "montrek_example.HubAFileUploadRegistryHub", on_delete=models.CASCADE
     )
+
+
+class LinkHubCHubD(MontrekManyToManyLinkABC):
+    hub_in = models.ForeignKey(HubC, on_delete=models.CASCADE)
+    hub_out = models.ForeignKey(HubD, on_delete=models.CASCADE)
 
 
 class HubAFileUploadRegistryHub(FileUploadRegistryHubABC):
