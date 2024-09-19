@@ -234,7 +234,7 @@ class MontrekRepository:
         for _, row in data_frame.iterrows():
             row = row.to_dict()
             for key, value in row.items():
-                if not isinstance(value, (tuple, dict)) and pd.isna(value):
+                if not isinstance(value, (list, dict)) and pd.isna(value):
                     row[key] = None
             hub_entity = self._get_hub_from_data(row)
             created_hub = db_creator.create(row, hub_entity, self.session_user_id)

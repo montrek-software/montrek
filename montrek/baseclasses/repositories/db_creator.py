@@ -287,7 +287,7 @@ class DbCreator:
         for key, value in data.items():
             if isinstance(value, MontrekHubABC):
                 link_data[key] = [value]
-            elif isinstance(value, (tuple, QuerySet)):
+            elif isinstance(value, (list, QuerySet)):
                 many_links = [item for item in value if isinstance(item, MontrekHubABC)]
                 if many_links:
                     link_data[key] = many_links
