@@ -10,10 +10,10 @@ from file_upload.managers.file_upload_manager import (
 from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepositoryABC,
 )
-from baseclasses.tasks.montrek_tasks import MontrekSequentialTask
+from baseclasses.tasks.montrek_tasks import MontrekSequentialTaskBase
 
 
-class ProcessFileTaskABC(MontrekSequentialTask):
+class ProcessFileTaskABC(MontrekSequentialTaskBase):
     def __init__(
         self,
         *args,

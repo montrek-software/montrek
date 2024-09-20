@@ -11,11 +11,11 @@ class QueueMixin:
         return super().apply_async(*args, **kwargs)
 
 
-class MontrekSequentialTask(Task, QueueMixin):
+class MontrekSequentialTaskBase(Task, QueueMixin):
     abstract = True
     queue = SEQUENTIAL_QUEUE_NAME
 
 
-class MontrekParallelTask(Task, QueueMixin):
+class MontrekParallelTaskBase(Task, QueueMixin):
     abstract = True
     queue = PARALLEL_QUEUE_NAME
