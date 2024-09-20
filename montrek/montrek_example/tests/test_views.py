@@ -218,7 +218,7 @@ class TestMontrekExampleBCreate(MontrekCreateViewTestCase):
             "field_b1_date": "2024-02-17",
             "field_b2_str": "test2",
             "field_b2_choice": "CHOICE2",
-            "link_hub_b_hub_d": [self.d_fac1.id, self.d_fac2.id],
+            "link_hub_b_hub_d": [self.d_fac1.hub_entity.id, self.d_fac2.hub_entity.id],
             "alert_level": AlertEnum.OK.value.description,
         }
 
