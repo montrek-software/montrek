@@ -70,6 +70,7 @@ class TestMontrekRepositorySatellite(TestCase):
             me_models.SatTSC2,
             me_models.LinkHubAHubC,
             ["field_tsc2_float"],
+            last_ts_value=True,
         )  # linked time series field
         repo.std_queryset()
         repo.rename_field("field_a1_str", "my_field_a1_str")  # direct satellite field
@@ -94,6 +95,8 @@ class TestMontrekRepositorySatellite(TestCase):
             [
                 "field_c1_bool",
                 "field_c1_str",
+                "field_tsd2_float",
+                "field_tsd2_int",
                 "field_tsc2_float",
                 "value_date",
                 "field_tsc3_int",
@@ -1071,6 +1074,29 @@ class TestTimeSeries(TestCase):
                 timezone.make_aware(timezone.datetime.max),
             )
             self.assertLess(queryset[i].state_date_start, timezone.now())
+
+    def test_time_series_link_to_time_series(self):
+        value_dates = [montrek_time(2024, 9, 18), montrek_time(2024, 9, 19)]
+        for i, value_date in enumerate(value_dates):
+            sat_c = me_factories.SatTSC2Factory.create(
+                field_tsc2_float=i * 0.1,
+                value_date=value_date,
+            )
+            sat_d = me_factories.SatTSD2Factory.create(
+                field_tsd2_float=i * 0.2,
+                field_tsd2_int=i,
+                value_date=value_date,
+            )
+            sat_c.hub_entity.link_hub_c_hub_d.add(sat_d.hub_entity)
+        repository = HubCRepository(session_data={"user_id": self.user.id})
+        test_query = repository.std_queryset().filter(value_date__in=value_dates)
+        self.assertEqual(test_query.count(), 2)
+        self.assertEqual(test_query[1].field_tsc2_float, 0.0)
+        self.assertEqual(test_query[1].field_tsd2_float, 0)
+        self.assertEqual(test_query[1].field_tsd2_int, 0)
+        self.assertEqual(test_query[0].field_tsc2_float, 0.1)
+        self.assertEqual(test_query[0].field_tsd2_float, 0.2)
+        self.assertEqual(test_query[0].field_tsd2_int, 1)
 
 
 class TestTimeSeriesRepositoryEmpty(TestCase):

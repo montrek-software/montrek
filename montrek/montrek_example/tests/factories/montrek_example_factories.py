@@ -93,6 +93,14 @@ class SatD1Factory(factory.django.DjangoModelFactory):
     hub_entity = factory.SubFactory(HubDFactory)
 
 
+class SatTSD2Factory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "montrek_example.SatTSD2"
+
+    hub_entity = factory.SubFactory(HubDFactory)
+    value_date = factory.Faker("date_time", tzinfo=datetime.timezone.utc)
+
+
 class HubAFileUploadRegistryHubFactory(FileUploadRegistryHubFactory):
     class Meta:
         model = "montrek_example.HubAFileUploadRegistryHub"
@@ -128,6 +136,14 @@ class LinkHubBHubDFactory(factory.django.DjangoModelFactory):
         model = "montrek_example.LinkHubBHubD"
 
     hub_in = factory.SubFactory(HubBFactory)
+    hub_out = factory.SubFactory(HubDFactory)
+
+
+class LinkHubCHubDFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "montrek_example.LinkHubCHubD"
+
+    hub_in = factory.SubFactory(HubCFactory)
     hub_out = factory.SubFactory(HubDFactory)
 
 
