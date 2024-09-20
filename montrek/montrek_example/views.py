@@ -2,11 +2,11 @@ import time
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 from baseclasses import views
-from baseclasses.tasks.montrek_tasks import (
-    MontrekParallelTaskBase,
-    MontrekSequentialTaskBase,
+from montrek.celery_app import (
+    PARALLEL_QUEUE_NAME,
+    SEQUENTIAL_QUEUE_NAME,
+    app as celery_app,
 )
-from montrek.celery_app import app as celery_app
 from montrek_example.managers.a_upload_table_manager import (
     HubAFileUploadRegistryManager,
     HubAUploadTableManager,
@@ -345,7 +345,7 @@ class MontrekExampleA1UploadHistoryView(views.MontrekHistoryListView):
     success_url = "montrek_example_a1_upload_history"
 
 
-@celery_app.task(base=MontrekParallelTaskBase)
+@celery_app.task(queue=PARALLEL_QUEUE_NAME)
 def example_parallel_task():
     time.sleep(10)
     return "Hello from parallel task!"
@@ -357,7 +357,7 @@ def do_run_example_parallel_task(request):
     return HttpResponseRedirect(reverse("montrek_example_a_list"))
 
 
-@celery_app.task(base=MontrekSequentialTaskBase)
+@celery_app.task(queue=SEQUENTIAL_QUEUE_NAME)
 def example_sequential_task():
     time.sleep(10)
     return "Hello from sequential task!"
