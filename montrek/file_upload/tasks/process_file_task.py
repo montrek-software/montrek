@@ -1,5 +1,4 @@
 from montrek.celery_app import app as celery_app
-from celery import Task
 
 
 from mailing.managers.mailing_manager import MailingManager
@@ -11,9 +10,10 @@ from file_upload.managers.file_upload_manager import (
 from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepositoryABC,
 )
+from baseclasses.tasks.montrek_tasks import MontrekSequentialTask
 
 
-class ProcessFileTaskABC(Task):
+class ProcessFileTaskABC(MontrekSequentialTask):
     def __init__(
         self,
         *args,

@@ -115,4 +115,14 @@ urlpatterns = [
         views.MontrekExampleA1UploadHistoryView.as_view(),
         name="a1_file_upload_history",
     ),
+    path(
+        "run_example_parallel_task",
+        views.do_run_example_parallel_task,
+        name="run_example_parallel_task",
+    ),
+    path(
+        "run_example_sequential_task",
+        views.do_run_example_sequential_task,
+        name="run_example_sequential_task",
+    ),
 ]

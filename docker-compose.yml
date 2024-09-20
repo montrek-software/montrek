@@ -45,12 +45,29 @@ services:
     networks:
       - montrek_network
 
-  celery:
+  sequential_worker:
     build:
       context: .
       dockerfile: Dockerfile
-    command: sh -c "cd montrek &&
-      celery --app=montrek worker --loglevel=info"
+    command: sh -c "cd montrek && celery --app=montrek worker --loglevel=info -Q sequential_queue --concurrency=1" -n sequential_worker@%h
+    volumes:
+      - .:/montrek
+      - static_volume:/montrek/montrek/baseclasses/static
+      - uploads_volume:/montrek/uploads
+    env_file:
+      - .env
+    depends_on:
+      - web
+      - db
+      - redis
+    networks:
+      - montrek_network
+
+  parallel_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: sh -c "cd montrek && celery --app=montrek worker --loglevel=info -Q parallel_queue --concurrency=4" -n parallel_worker@%h
     volumes:
       - .:/montrek
       - static_volume:/montrek/montrek/baseclasses/static
@@ -81,7 +98,8 @@ services:
     depends_on:
       - web
       - redis
-      - celery
+      - sequential_worker
+      - parallel_worker
     networks:
       - montrek_network
 

@@ -1,6 +1,9 @@
+import time
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 from baseclasses import views
+from baseclasses.tasks.montrek_tasks import MontrekParallelTask, MontrekSequentialTask
+from montrek.celery_app import app as celery_app
 from montrek_example.managers.a_upload_table_manager import (
     HubAFileUploadRegistryManager,
     HubAUploadTableManager,
@@ -76,7 +79,23 @@ class MontrekExampleAList(views.MontrekListView):
             action_id="id_new_example_a",
             hover_text="Add new A Example",
         )
-        return (action_new_example_a,)
+        action_run_sequential_task = ActionElement(
+            icon="option-horizontal",
+            link=reverse("run_example_sequential_task"),
+            action_id="id_run_sequential_task",
+            hover_text="Run sequential task",
+        )
+        action_run_parallel_task = ActionElement(
+            icon="option-vertical",
+            link=reverse("run_example_parallel_task"),
+            action_id="id_run_parallel_task",
+            hover_text="Run parallel task",
+        )
+        return (
+            action_new_example_a,
+            action_run_sequential_task,
+            action_run_parallel_task,
+        )
 
 
 class MontrekExampleADelete(views.MontrekDeleteView):
@@ -321,3 +340,27 @@ class MontrekExampleA1UploadHistoryView(views.MontrekHistoryListView):
         return (action_back_to_overview("a"),)
 
     success_url = "montrek_example_a1_upload_history"
+
+
+@celery_app.task(base=MontrekParallelTask)
+def example_parallel_task():
+    time.sleep(10)
+    return "Hello from parallel task!"
+
+
+def do_run_example_parallel_task(request):
+    example_parallel_task.delay()
+    messages.info(request, "Parallel task started")
+    return HttpResponseRedirect(reverse("montrek_example_a_list"))
+
+
+@celery_app.task(base=MontrekSequentialTask)
+def example_sequential_task():
+    time.sleep(10)
+    return "Hello from sequential task!"
+
+
+def do_run_example_sequential_task(request):
+    example_sequential_task.delay()
+    messages.info(request, "Sequential task started")
+    return HttpResponseRedirect(reverse("montrek_example_a_list"))
