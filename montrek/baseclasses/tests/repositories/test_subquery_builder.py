@@ -34,6 +34,7 @@ class TestLinkedSatelliteSubqueryBuilder(TestCase):
             satellite_class=bc_models.TestLinkSatellite,
             link_class=bc_models.LinkTestMontrekTestLink,
             reference_date=self.reference_date,
+            last_ts_value=True,
         )
         subquery = builder.get_subquery("test_id")
         query = bc_models.TestMontrekHub.objects.annotate(**{"test_id": subquery})
@@ -45,6 +46,7 @@ class TestLinkedSatelliteSubqueryBuilder(TestCase):
             satellite_class=bc_models.TestLinkSatellite,
             link_class=bc_models.LinkTestMontrekTestLink,
             reference_date=self.reference_date + timezone.timedelta(days=1),
+            last_ts_value=True,
         )
         subquery = builder.get_subquery("test_id")
         query = bc_models.TestMontrekHub.objects.annotate(**{"test_id": subquery})
@@ -56,6 +58,7 @@ class TestLinkedSatelliteSubqueryBuilder(TestCase):
             satellite_class=bc_models.TestLinkSatellite,
             link_class=bc_models.LinkTestMontrekTestLink,
             reference_date=self.reference_date + timezone.timedelta(days=-1),
+            last_ts_value=True,
         )
         subquery = builder.get_subquery("test_id")
         query = bc_models.TestMontrekHub.objects.annotate(**{"test_id": subquery})
@@ -74,4 +77,5 @@ class TestLinkedSatelliteSubqueryBuilder(TestCase):
                 bc_models.TestLinkSatellite,
                 DummyLinkClass,
                 self.reference_date,
+                last_ts_value=True,
             )
