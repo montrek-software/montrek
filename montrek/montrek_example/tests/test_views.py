@@ -2,7 +2,7 @@ import os
 
 from baseclasses.dataclasses.alert import AlertEnum
 from baseclasses.utils import montrek_time
-from django.test import TransactionTestCase
+from django.test import TestCase, TransactionTestCase
 from django.urls import reverse
 from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepository,
@@ -662,3 +662,17 @@ class TestMontrekExampleHubAApiUploadView(MontrekListViewTestCase):
 
     def build_factories(self):
         me_factories.LinkHubAApiUploadRegistryFactory.create_batch(3)
+
+
+class TestRunExampleSequentialTask(TestCase):
+    def test_run(self):
+        url = reverse("run_example_sequential_task")
+        response = self.client.get(url, follow=True)
+        self.assertEqual(response.status_code, 200)
+
+
+class TestRunExampleParallelTask(TestCase):
+    def test_run(self):
+        url = reverse("run_example_parallel_task")
+        response = self.client.get(url, follow=True)
+        self.assertEqual(response.status_code, 200)
