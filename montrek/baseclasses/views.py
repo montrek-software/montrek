@@ -492,6 +492,7 @@ class MontrekRestApiView(APIView, MontrekViewMixin):
     manager_class = MontrekManagerNotImplemented
 
     def get(self, request, *args, **kwargs):
-        std_query = self.manager.repository.std_queryset()
-        serializer = MontrekSerializer(std_query, many=True)
+        repository = self.manager.repository
+        query = repository.std_queryset()
+        serializer = MontrekSerializer(query, many=True, repository=repository)
         return Response(serializer.data, status=status.HTTP_200_OK)

@@ -1,6 +1,7 @@
 from django.urls import path
 from montrek_example import views
 
+
 urlpatterns = [
     path(
         "",

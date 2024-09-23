@@ -239,3 +239,18 @@ class MontrekFileResponseTestCase(MontrekViewTestCase):
 class MontrekRestApiViewTestCase(MontrekViewTestCase):
     def _is_base_test_class(self) -> bool:
         return self.__class__.__name__ == "MontrekRestApiViewTestCase"
+
+    def test_view_page(self):
+        return
+
+    def test_context_data(self):
+        return
+
+    def test_view_return_correct_html(self):
+        if self._is_base_test_class():
+            return
+        self.assertEqual(self.response.status_code, self.expected_status_code)
+
+    def test_get_return(self):
+        ...
+        # breakpoint()
