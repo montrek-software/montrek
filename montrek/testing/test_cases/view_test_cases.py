@@ -252,6 +252,8 @@ class MontrekRestApiViewTestCase(MontrekViewTestCase):
         self.assertEqual(self.response.status_code, self.expected_status_code)
 
     def test_get_return(self):
+        if self._is_base_test_class():
+            return
         return_json = self.response.json()
         self.assertIsInstance(return_json, list)
         self.assertEqual(return_json, self.expected_json())
