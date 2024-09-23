@@ -264,7 +264,7 @@ class ToPdfMixin:
             with open(pdf_path, "rb") as pdf_file:
                 response = HttpResponse(pdf_file.read(), content_type="application/pdf")
                 response[
-                    "inline; filename=" + os.path.basename(pdf_path)
+                    "Content-Disposition"
                 ] = "inline; filename=" + os.path.basename(pdf_path)
                 return response
         previous_url = self.request.META.get("HTTP_REFERER")
