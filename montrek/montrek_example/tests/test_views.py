@@ -697,11 +697,11 @@ class TestHubARestApiView(MontrekRestApiViewTestCase):
         expected_json = []
         for i in range(3):
             entry = {
-                "comment": "",
                 "field_a1_str": self.sat_a1s[i].field_a1_str,
                 "field_a1_int": self.sat_a1s[i].field_a1_int,
                 "field_a2_str": self.sat_a2s[i].field_a2_str,
                 "field_a2_float": self.sat_a2s[i].field_a2_float,
+                "field_b1_str": None,
             }
             expected_json.append(entry)
         return expected_json

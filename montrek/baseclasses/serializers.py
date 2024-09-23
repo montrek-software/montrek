@@ -17,4 +17,4 @@ class MontrekSerializer(serializers.Serializer):
         for element in table_elements:
             if isinstance(element, te.LinkTableElement):
                 continue
-            self.fields[element.attr] = element.serializer_field
+            self.fields[element.attr] = element.serializer_field_class()
