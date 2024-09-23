@@ -252,5 +252,9 @@ class MontrekRestApiViewTestCase(MontrekViewTestCase):
         self.assertEqual(self.response.status_code, self.expected_status_code)
 
     def test_get_return(self):
-        ...
-        # breakpoint()
+        return_json = self.response.json()
+        self.assertIsInstance(return_json, list)
+        self.assertEqual(return_json, self.expected_json())
+
+    def expected_json(self) -> list:
+        raise NotImplementedError("Please set the expected_json method in the subclass")

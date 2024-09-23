@@ -685,4 +685,23 @@ class TestHubARestApiView(MontrekRestApiViewTestCase):
     expected_no_of_rows = 3
 
     def build_factories(self):
-        me_factories.HubAFactory.create_batch(3)
+        hubs = me_factories.HubAFactory.create_batch(3)
+        self.sat_a1s = []
+        self.sat_a2s = []
+
+        for hub in hubs:
+            self.sat_a1s.append(me_factories.SatA1Factory(hub_entity=hub))
+            self.sat_a2s.append(me_factories.SatA2Factory(hub_entity=hub))
+
+    def expected_json(self) -> list:
+        expected_json = []
+        for i in range(3):
+            entry = {
+                "comment": "",
+                "field_a1_str": self.sat_a1s[i].field_a1_str,
+                "field_a1_int": self.sat_a1s[i].field_a1_int,
+                "field_a2_str": self.sat_a2s[i].field_a2_str,
+                "field_a2_float": self.sat_a2s[i].field_a2_float,
+            }
+            expected_json.append(entry)
+        return expected_json
