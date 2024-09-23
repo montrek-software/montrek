@@ -17,6 +17,7 @@ from reporting.dataclasses.table_elements import (
     LinkTextTableElement,
     TableElement,
 )
+from rest_framework.views import APIView
 from reporting.managers.latex_report_manager import LatexReportManager
 from reporting.managers.montrek_details_manager import MontrekDetailsManager
 from reporting.managers.montrek_report_manager import MontrekReportManager
@@ -259,9 +260,9 @@ class ToPdfMixin:
         if pdf_path and os.path.exists(pdf_path):
             with open(pdf_path, "rb") as pdf_file:
                 response = HttpResponse(pdf_file.read(), content_type="application/pdf")
-                response["Content-Disposition"] = (
-                    "inline; filename=" + os.path.basename(pdf_path)
-                )
+                response[
+                    "Content-Disposition"
+                ] = "inline; filename=" + os.path.basename(pdf_path)
                 return response
         previous_url = self.request.META.get("HTTP_REFERER")
         return HttpResponseRedirect(previous_url)
@@ -482,3 +483,7 @@ class MontrekReportView(MontrekTemplateView, ToPdfMixin):
     @property
     def title(self):
         return self.manager.document_title
+
+
+class MontrekRestApiView(APIView, MontrekViewMixin):
+    manager_class = MontrekManagerNotImplemented

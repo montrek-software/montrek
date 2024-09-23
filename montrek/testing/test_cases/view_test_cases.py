@@ -234,3 +234,8 @@ class MontrekFileResponseTestCase(MontrekViewTestCase):
 
     def test_view_page(self):
         return
+
+
+class MontrekRestApiViewTestCase(MontrekViewTestCase):
+    def _is_base_test_class(self) -> bool:
+        return self.__class__.__name__ == "MontrekRestApiViewTestCase"

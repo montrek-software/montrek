@@ -14,6 +14,7 @@ from testing.test_cases.view_test_cases import (
     MontrekListViewTestCase,
     MontrekUpdateViewTestCase,
     MontrekViewTestCase,
+    MontrekRestApiViewTestCase,
 )
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
@@ -676,3 +677,12 @@ class TestRunExampleParallelTask(TestCase):
         url = reverse("run_example_parallel_task")
         response = self.client.get(url, follow=True)
         self.assertEqual(response.status_code, 200)
+
+
+class TestHubARestApiView(MontrekRestApiViewTestCase):
+    viewname = "hub_a_rest_api"
+    view_class = me_views.HubARestApiView
+    expected_no_of_rows = 3
+
+    def build_factories(self):
+        me_factories.HubAFactory.create_batch(3)
