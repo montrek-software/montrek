@@ -14,6 +14,7 @@ from testing.test_cases.view_test_cases import (
     MontrekListViewTestCase,
     MontrekUpdateViewTestCase,
     MontrekViewTestCase,
+    MontrekRestApiViewTestCase,
 )
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
@@ -676,3 +677,31 @@ class TestRunExampleParallelTask(TestCase):
         url = reverse("run_example_parallel_task")
         response = self.client.get(url, follow=True)
         self.assertEqual(response.status_code, 200)
+
+
+class TestHubARestApiView(MontrekRestApiViewTestCase):
+    viewname = "hub_a_rest_api"
+    view_class = me_views.HubARestApiView
+    expected_no_of_rows = 3
+
+    def build_factories(self):
+        hubs = me_factories.HubAFactory.create_batch(3)
+        self.sat_a1s = []
+        self.sat_a2s = []
+
+        for hub in hubs:
+            self.sat_a1s.append(me_factories.SatA1Factory(hub_entity=hub))
+            self.sat_a2s.append(me_factories.SatA2Factory(hub_entity=hub))
+
+    def expected_json(self) -> list:
+        expected_json = []
+        for i in range(3):
+            entry = {
+                "field_a1_str": self.sat_a1s[i].field_a1_str,
+                "field_a1_int": self.sat_a1s[i].field_a1_int,
+                "field_a2_str": self.sat_a2s[i].field_a2_str,
+                "field_a2_float": self.sat_a2s[i].field_a2_float,
+                "field_b1_str": None,
+            }
+            expected_json.append(entry)
+        return expected_json

@@ -1,4 +1,3 @@
-from copy import deepcopy
 from dataclasses import dataclass
 
 import pandas as pd
@@ -211,7 +210,9 @@ class MontrekRepository:
         self._raise_for_anonymous_user()
         static_fields = self.get_static_satellite_field_names()
         link_columns = [col for col in data_frame.columns if col.startswith("link_")]
-        static_columns = [col for col in static_fields if col in data_frame.columns] + link_columns
+        static_columns = [
+            col for col in static_fields if col in data_frame.columns
+        ] + link_columns
         ts_fields = self.get_time_series_satellite_field_names()
         ts_columns = [col for col in ts_fields if col in data_frame.columns]
         if static_columns:

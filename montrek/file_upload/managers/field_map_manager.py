@@ -30,7 +30,7 @@ class FieldMapFunctionManager:
         Returns the data series from the source DataFrame without any changes.
 
         Parameters:
-        source_df (pd.DataFrame): The source DataFrame.
+        source_df (pd.DataFrame): The source DataFrame (passed automatically).
         source_field (str): The field to be returned.
 
         Returns:
@@ -47,9 +47,11 @@ class FieldMapFunctionManager:
         by a value.
 
         Parameters:
-        source_df (pd.DataFrame): The source DataFrame.
+        source_df (pd.DataFrame): The source DataFrame (passed automatically).
         source_field (str): The field to be multiplied.
         value (float): The value to multiply by.
+
+        example function_parameters: {"value": 2}
 
         Returns:
         pd.Series: The data series resulting from the multiplication.
@@ -63,7 +65,7 @@ class FieldMapFunctionManager:
         from each string in the source_field.
 
         Parameters:
-        source_df (pd.DataFrame): The source DataFrame.
+        source_df (pd.DataFrame): The source DataFrame (passed automatically).
         source_field (str): The string field from which to extract numbers.
 
         Returns:
