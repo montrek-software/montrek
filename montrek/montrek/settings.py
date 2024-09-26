@@ -221,7 +221,7 @@ TEST_RUNNER = "montrek.testing.test_runner.MontrekTestRunner"
 
 MONTREK_GITHUB_TOKEN = config("MONTREK_GITHUB_TOKEN", default="")
 
-LOGIN_EXEMPT_PATHS = ["/user", "/admin"]
+LOGIN_EXEMPT_PATHS = ["/user", "/admin", "/api"]
 
 INTERNAL_IPS = [
     "127.0.0.1",
