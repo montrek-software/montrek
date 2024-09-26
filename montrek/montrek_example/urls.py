@@ -1,6 +1,7 @@
 from django.urls import path
 from montrek_example import views
 
+
 urlpatterns = [
     path(
         "",
@@ -125,4 +126,5 @@ urlpatterns = [
         views.do_run_example_sequential_task,
         name="run_example_sequential_task",
     ),
+    path("hub_a/api", views.HubARestApiView.as_view(), name="hub_a_rest_api"),
 ]

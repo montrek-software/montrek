@@ -44,6 +44,7 @@ DJANGO_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django_extensions",
+    "rest_framework",
 ]
 
 MONTREK_BASE_APPS = [
@@ -111,13 +112,13 @@ WSGI_APPLICATION = "montrek.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 DATABASE_ENGINE_MAP = {
-    'mariadb': 'django.db.backends.mysql',
-    'postgres': 'django.db.backends.postgresql',
+    "mariadb": "django.db.backends.mysql",
+    "postgres": "django.db.backends.postgresql",
 }
 
 DATABASES = {
     "default": {
-        "ENGINE": DATABASE_ENGINE_MAP[config('DB_ENGINE', default='mariadb')],
+        "ENGINE": DATABASE_ENGINE_MAP[config("DB_ENGINE", default="mariadb")],
         "NAME": config("DB_NAME", default="montrek_db"),
         "USER": config("DB_USER", default="root"),
         "PASSWORD": config("DB_PASSWORD"),
@@ -220,7 +221,7 @@ TEST_RUNNER = "montrek.testing.test_runner.MontrekTestRunner"
 
 MONTREK_GITHUB_TOKEN = config("MONTREK_GITHUB_TOKEN", default="")
 
-LOGIN_EXEMPT_PATHS = ["/user", "/admin"]
+LOGIN_EXEMPT_PATHS = ["/user", "/admin", "/api"]
 
 INTERNAL_IPS = [
     "127.0.0.1",

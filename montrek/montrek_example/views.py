@@ -367,3 +367,7 @@ def do_run_example_sequential_task(request):
     example_sequential_task.delay()
     messages.info(request, "Sequential task started")
     return HttpResponseRedirect(reverse("montrek_example_a_list"))
+
+
+class HubARestApiView(views.MontrekRestApiView):
+    manager_class = mem.HubAManager

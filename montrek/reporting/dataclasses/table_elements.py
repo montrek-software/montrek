@@ -17,6 +17,7 @@ from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
 from pandas.core.tools.datetimes import DateParseError
 from reporting.core.reporting_colors import ReportingColors
+from rest_framework import serializers
 
 
 def _get_value_color(value):
@@ -43,6 +44,7 @@ class TableElement:
 
 @dataclass
 class NoneTableElement(TableElement):
+    serializer_field_class = serializers.CharField
     attr: str = field(default="")
 
     def format(self):
@@ -77,6 +79,8 @@ class AttrTableElement(TableElement):
 
 @dataclass
 class ExternalLinkTableElement(AttrTableElement):
+    serializer_field_class = serializers.CharField
+
     def format(self, value):
         return f'<td style="text-align:left;"><a href="{value}" target="_blank" title="{value}">{value}</a></td>'
 
@@ -163,6 +167,7 @@ class LinkTextTableElement(BaseLinkTableElement):
 
 @dataclass
 class StringTableElement(AttrTableElement):
+    serializer_field_class = serializers.CharField
     attr: str
 
     def format(self, value):
@@ -171,6 +176,7 @@ class StringTableElement(AttrTableElement):
 
 @dataclass
 class TextTableElement(AttrTableElement):
+    serializer_field_class = serializers.CharField
     attr: str
 
     def format(self, value):
@@ -179,6 +185,7 @@ class TextTableElement(AttrTableElement):
 
 @dataclass
 class AlertTableElement(AttrTableElement):
+    serializer_field_class = serializers.CharField
     attr: str
 
     def format(self, value):
@@ -211,6 +218,7 @@ class NumberTableElement(AttrTableElement):
 
 @dataclass
 class FloatTableElement(NumberTableElement):
+    serializer_field_class = serializers.FloatField
     attr: str
     shortener: NumberShortenerProtocol = NoShortening()
 
@@ -220,6 +228,7 @@ class FloatTableElement(NumberTableElement):
 
 @dataclass
 class IntTableElement(NumberTableElement):
+    serializer_field_class = serializers.IntegerField
     attr: str
     shortener: NumberShortenerProtocol = NoShortening()
 
@@ -230,6 +239,7 @@ class IntTableElement(NumberTableElement):
 
 @dataclass
 class PercentTableElement(NumberTableElement):
+    serializer_field_class = serializers.FloatField
     attr: str
 
     def _format_value(self, value) -> str:
@@ -242,6 +252,7 @@ class PercentTableElement(NumberTableElement):
 
 @dataclass
 class DateTableElement(AttrTableElement):
+    serializer_field_class = serializers.DateField
     attr: str
 
     def format(self, value):
@@ -253,6 +264,7 @@ class DateTableElement(AttrTableElement):
 
 @dataclass
 class DateYearTableElement(AttrTableElement):
+    serializer_field_class = serializers.DateField
     attr: str
 
     def format(self, value):
@@ -269,6 +281,7 @@ class DateYearTableElement(AttrTableElement):
 
 @dataclass
 class BooleanTableElement(AttrTableElement):
+    serializer_field_class = serializers.BooleanField
     attr: str
 
     def format(self, value):
@@ -279,6 +292,7 @@ class BooleanTableElement(AttrTableElement):
 
 @dataclass
 class MoneyTableElement(NumberTableElement):
+    serializer_field_class = serializers.FloatField
     attr: str
     shortener: NumberShortenerProtocol = NoShortening()
 
@@ -324,6 +338,7 @@ class DollarTableElement(MoneyTableElement):
 
 @dataclass
 class ImageTableElement(AttrTableElement):
+    serializer_field_class = serializers.CharField
     attr: str
     alt: str = "image"
 
@@ -356,6 +371,7 @@ class ImageTableElement(AttrTableElement):
 
 
 class DateTimeTableElement(AttrTableElement):
+    serializer_field_class = serializers.DateTimeField
     attr: str
 
     def format(self, value):

@@ -234,3 +234,29 @@ class MontrekFileResponseTestCase(MontrekViewTestCase):
 
     def test_view_page(self):
         return
+
+
+class MontrekRestApiViewTestCase(MontrekViewTestCase):
+    def _is_base_test_class(self) -> bool:
+        return self.__class__.__name__ == "MontrekRestApiViewTestCase"
+
+    def test_view_page(self):
+        return
+
+    def test_context_data(self):
+        return
+
+    def test_view_return_correct_html(self):
+        if self._is_base_test_class():
+            return
+        self.assertEqual(self.response.status_code, self.expected_status_code)
+
+    def test_get_return(self):
+        if self._is_base_test_class():
+            return
+        return_json = self.response.json()
+        self.assertIsInstance(return_json, list)
+        self.assertEqual(return_json, self.expected_json())
+
+    def expected_json(self) -> list:
+        raise NotImplementedError("Please set the expected_json method in the subclass")
