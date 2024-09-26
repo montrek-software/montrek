@@ -17,6 +17,9 @@ from reporting.dataclasses.table_elements import (
     LinkTextTableElement,
     TableElement,
 )
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
 from reporting.managers.latex_report_manager import LatexReportManager
 from reporting.managers.montrek_details_manager import MontrekDetailsManager
 from reporting.managers.montrek_report_manager import MontrekReportManager
@@ -33,6 +36,7 @@ from baseclasses.pages import NoPage
 
 from file_upload.forms import UploadFileForm
 from file_upload.managers.simple_upload_file_manager import SimpleUploadFileManager
+from baseclasses.serializers import MontrekSerializer
 
 
 def home(request):
@@ -259,9 +263,9 @@ class ToPdfMixin:
         if pdf_path and os.path.exists(pdf_path):
             with open(pdf_path, "rb") as pdf_file:
                 response = HttpResponse(pdf_file.read(), content_type="application/pdf")
-                response["Content-Disposition"] = (
+                response[
                     "inline; filename=" + os.path.basename(pdf_path)
-                )
+                ] = "inline; filename=" + os.path.basename(pdf_path)
                 return response
         previous_url = self.request.META.get("HTTP_REFERER")
         return HttpResponseRedirect(previous_url)
@@ -482,3 +486,12 @@ class MontrekReportView(MontrekTemplateView, ToPdfMixin):
     @property
     def title(self):
         return self.manager.document_title
+
+
+class MontrekRestApiView(APIView, MontrekViewMixin):
+    manager_class = MontrekManagerNotImplemented
+
+    def get(self, request, *args, **kwargs):
+        query = self.manager.repository.std_queryset()
+        serializer = MontrekSerializer(query, many=True, manager=self.manager)
+        return Response(serializer.data, status=status.HTTP_200_OK)
