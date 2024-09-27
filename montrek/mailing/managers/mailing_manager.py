@@ -55,7 +55,12 @@ class MailingManager(MontrekManager):
         return settings.EMAIL_TEMPLATE
 
     def send_montrek_mail(
-        self, recipients: str, subject: str, message: str, additional_parms: dict = {}
+        self,
+        recipients: str,
+        subject: str,
+        message: str,
+        additional_parms: dict = {},
+        attachments: list | None = None,
     ):
         recipient_list = recipients.replace(" ", "").split(",")
         mail_params: dict = {
@@ -73,6 +78,7 @@ class MailingManager(MontrekManager):
                 body,
                 settings.EMAIL_BACKEND,
                 recipient_list,
+                attachments=attachments,
             )
             email.content_subtype = "html"
             email.send()
