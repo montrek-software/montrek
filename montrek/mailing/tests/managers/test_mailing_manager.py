@@ -1,4 +1,5 @@
 from unittest import mock
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.core import mail
 from smtplib import SMTPException
@@ -47,3 +48,57 @@ class TestMailingManager(TestCase):
         mail_object = MailingRepository({}).std_queryset().first()
         self.assertEqual(mail_object.mail_state, "Failed")
         self.assertNotEqual(mail_object.mail_comment, "Successfully send")
+
+    def test_send_montrek_mail_to_user(self):
+        mailing_manager = MailingManager({"user_id": self.user.id})
+        mailing_manager.send_montrek_mail_to_user(
+            subject=self.subject,
+            message=self.message,
+        )
+        sent_email = mail.outbox[0]
+        self.assertEqual(sent_email.subject, self.subject)
+        self.assertEqual(sent_email.to, [self.user.email])
+        self.assertTrue(sent_email.body.startswith("<html>"))
+        self.assertTrue(sent_email.body.endswith("</html>\n"))
+        self.assertTrue(self.message in sent_email.body)
+        mail_object = MailingRepository({}).std_queryset().first()
+        self.assertEqual(mail_object.mail_subject, self.subject)
+        self.assertEqual(mail_object.mail_recipients, self.user.email)
+        self.assertEqual(mail_object.mail_message, self.message)
+        self.assertEqual(mail_object.mail_state, "Sent")
+        self.assertEqual(mail_object.mail_comment, "Successfully send")
+
+    def test_send_mail_with_attachment(self):
+        mailing_manager = MailingManager({"user_id": self.user.id})
+        test_file = SimpleUploadedFile(
+            name="test_file.txt",
+            content="test".encode("utf-8"),
+            content_type="text/plain",
+        )
+        mailing_manager.send_montrek_mail(
+            recipients=self.recipients,
+            subject=self.subject,
+            message=self.message,
+            attachments=[(test_file.name, test_file.read(), "text/plain")],
+        )
+        sent_email = mail.outbox[0]
+        self.assertEqual(
+            sent_email.attachments, [("test_file.txt", "test", "text/plain")]
+        )
+
+    def test_send_mail_to_user_with_attachment(self):
+        mailing_manager = MailingManager({"user_id": self.user.id})
+        test_file = SimpleUploadedFile(
+            name="test_file.txt",
+            content="test".encode("utf-8"),
+            content_type="text/plain",
+        )
+        mailing_manager.send_montrek_mail_to_user(
+            subject=self.subject,
+            message=self.message,
+            attachments=[(test_file.name, test_file.read(), "text/plain")],
+        )
+        sent_email = mail.outbox[0]
+        self.assertEqual(
+            sent_email.attachments, [("test_file.txt", "test", "text/plain")]
+        )
