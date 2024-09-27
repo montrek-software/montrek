@@ -1,11 +1,15 @@
-import pandas as pd
-from django.utils import timezone
 import datetime
-from django.views.generic.base import HttpResponse
-from django.core.paginator import Paginator
+
+import pandas as pd
+
 from baseclasses.managers.montrek_manager import MontrekManager
-from reporting.dataclasses import table_elements as te
+from django.conf import settings
+from django.core.paginator import Paginator
+from django.utils import timezone
+from django.views.generic.base import HttpResponse
+from mailing.managers.mailing_manager import MailingManager
 from reporting.core import reporting_text as rt
+from reporting.dataclasses import table_elements as te
 from reporting.lib.protocols import (
     ReportElementProtocol,
 )
@@ -119,13 +123,16 @@ class MontrekTableManager(MontrekManager):
         return response
 
     def download_excel(self, response: HttpResponse) -> HttpResponse:
+        table_dimensions = self._get_table_dimensions()
+        if table_dimensions > settings.SEND_TABLE_BY_MAIL_LIMIT:
+            self._send_table_excel_by_mail()
+            return response
         response[
             "Content-Type"
         ] = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         response[
             "Content-Disposition"
         ] = f'attachment; filename="{self.document_name}.xlsx"'
-
         table_df = self.get_queryset_as_dataframe()
         with pd.ExcelWriter(response) as excel_writer:
             table_df.to_excel(excel_writer, index=False)
@@ -156,3 +163,15 @@ class MontrekTableManager(MontrekManager):
         if isinstance(value, datetime.datetime) and not timezone.is_naive(value):
             value = timezone.make_naive(value)
         return value
+
+    def _get_table_dimensions(self) -> int:
+        rows = self.repository.std_queryset().count()
+        cols = len(self.table_elements)
+        return rows * cols
+
+    def _send_table_excel_by_mail(self):
+        mailing_manager = MailingManager(self.session_data)
+        mailing_manager.send_montrek_mail_to_user(
+            subject="Table is ready for download",
+            message="Please download the table from the link below",
+        )

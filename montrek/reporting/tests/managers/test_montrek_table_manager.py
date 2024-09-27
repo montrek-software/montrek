@@ -1,13 +1,16 @@
-import io
-import pandas as pd
-from django.test import TestCase
-from django.http import HttpResponse
-from django.utils import timezone
 import datetime
+import io
+from dataclasses import dataclass
+
+import pandas as pd
 from bs4 import BeautifulSoup
+from django.core import mail
+from django.http import HttpResponse
+from django.test import TestCase
+from django.utils import timezone
+
 from reporting.dataclasses import table_elements as te
 from reporting.managers.montrek_table_manager import MontrekTableManager
-from dataclasses import dataclass
 
 
 @dataclass
@@ -52,6 +55,20 @@ class MockRepository:
         )
 
 
+class MockLongRepository:
+    def __init__(self, session_data: dict):
+        self.session_data = session_data
+
+    def std_queryset(self):
+        mock_data = [
+            MockData(
+                str(i), i, 1.0, timezone.make_aware(datetime.datetime(2024, 7, 13))
+            )
+            for i in range(10000)
+        ]
+        return MockQuerySet(*mock_data)
+
+
 class MockMontrekTableManager(MontrekTableManager):
     repository_class = MockRepository
 
@@ -79,6 +96,10 @@ class MockMontrekTableManager(MontrekTableManager):
                 text="field_a",
             ),
         )
+
+
+class MockLongMontrekTableManager(MockMontrekTableManager):
+    repository_class = MockLongRepository
 
 
 class MockHttpResponse:
@@ -173,3 +194,9 @@ class TestMontrekTableManager(TestCase):
             "Link Text": "",
         }
         self.assertEqual(name_to_field_map, expected_map)
+
+    def test_large_download_excel(self):
+        manager = MockLongMontrekTableManager()
+        response = manager.download_excel(HttpResponse())
+        self.assertEqual(response.status_code, 200)
+        sent_email = mail.outbox[0]

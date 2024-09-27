@@ -226,3 +226,6 @@ LOGIN_EXEMPT_PATHS = ["/user", "/admin", "/api"]
 INTERNAL_IPS = [
     "127.0.0.1",
 ]
+
+# TABLE Generation
+SEND_TABLE_BY_MAIL_LIMIT = config("SEND_TABLE_BY_MAIL_LIMIT", default=10000, cast=int)
