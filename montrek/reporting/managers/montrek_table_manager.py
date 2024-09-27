@@ -115,9 +115,7 @@ class MontrekTableManager(MontrekManager):
             table_df.to_excel(excel_writer, index=False)
         return output
 
-    def to_csv(
-        self, output: HttpResponse | BytesIO | str
-    ) -> HttpResponse | BytesIO | str:
+    def to_csv(self, output: str) -> str:
         table_df = self.get_queryset_as_dataframe()
         table_df.to_csv(output, index=False)
         return output
@@ -213,15 +211,27 @@ class MontrekTableManager(MontrekManager):
         return rows * cols
 
     def _send_table_by_mail(self, filetype: str):
+        file_name = f"{self.document_name}.{filetype}"
+        if filetype == "xlsx":
+            self._send_table_excel_by_mail(file_name)
+        elif filetype == "csv":
+            self._send_table_csv_by_mail(file_name)
+
+    def _send_table_excel_by_mail(self, file_name: str):
         output = BytesIO()
         self.to_excel(output)
         output.seek(0)
-        file_name = f"{self.document_name}.{filetype}"
+        file_name = f"{self.document_name}.xlsx"
         temp_file_path = os.path.join("temp", file_name)
 
         # Save the file to the default storage (e.g., file system or cloud storage)
         saved_file = default_storage.save(temp_file_path, ContentFile(output.read()))
         self._send_mail_with_file(saved_file, file_name)
+
+    def _send_table_csv_by_mail(self, file_name: str):
+        temp_file_path = os.path.join(file_name)
+        self.to_csv(default_storage.path(temp_file_path))
+        self._send_mail_with_file(temp_file_path, file_name)
 
     def _send_mail_with_file(self, saved_file: str, file_name: str):
         # Return the URL of the stored file
