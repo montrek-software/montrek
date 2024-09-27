@@ -37,6 +37,9 @@ class MockQuerySet:
     def all(self):
         return self.items
 
+    def count(self):
+        return len(self.items)
+
 
 @dataclass
 class MockData:
@@ -130,6 +133,7 @@ class TestMontrekViewMixin(TestCase):
             mock_view.session_data,
             {
                 "request_path": "/",
+                "host_url": "http://testserver/",
             },
         )
 
@@ -139,6 +143,7 @@ class TestMontrekViewMixin(TestCase):
             "param1": ["value1"],
             "param2": ["value2"],
             "request_path": "/",
+            "host_url": "http://testserver/",
         }
         self.assertEqual(mock_view.session_data, expected_data)
 
@@ -173,6 +178,7 @@ class TestMontrekViewMixin(TestCase):
         }
         expected_session_data = expected_filter_data.copy()
         expected_session_data["request_path"] = "/some/path"
+        expected_session_data["host_url"] = "http://testserver/"
 
         self.assertEqual(mock_view.session_data, expected_session_data)
         self.assertEqual(

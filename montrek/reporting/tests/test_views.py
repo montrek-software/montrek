@@ -1,3 +1,4 @@
+from django.http import Http404
 from django.test import TestCase
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.files.storage import default_storage
@@ -33,5 +34,4 @@ class TestDownloadFileView(TestCase):
         )
 
     def test_download_view_file_not_found(self):
-        response = download_reporting_file_view(None, "Dummy.txt")
-        self.assertEqual(response.status_code, 404)
+        self.assertRaises(Http404, download_reporting_file_view, None, "Dummy.txt")

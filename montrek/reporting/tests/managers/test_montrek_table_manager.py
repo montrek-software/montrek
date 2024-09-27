@@ -162,7 +162,7 @@ class TestMontrekTableManager(TestCase):
 
     def test_download_excel(self):
         manager = MockMontrekTableManager()
-        response = manager.download_excel(HttpResponse())
+        response = manager.download_excel()
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             response["Content-Type"],
