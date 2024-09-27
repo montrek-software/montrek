@@ -131,6 +131,7 @@ class MontrekPageViewMixin:
             end_date = date_range_form.cleaned_data["end_date"]
             self.request.session["start_date"] = start_date.strftime("%Y-%m-%d")
             self.request.session["end_date"] = end_date.strftime("%Y-%m-%d")
+
         return {"date_range_form": date_range_form}
 
 
@@ -178,6 +179,7 @@ class MontrekViewMixin:
         if self.request.user.is_authenticated:
             session_data["user_id"] = self.request.user.id
         self.request.session["filter"] = session_data.get("filter", {})
+        session_data["host_url"] = self.request.build_absolute_uri("/")
         return session_data
 
     def _get_filters(self, session_data):
@@ -322,10 +324,14 @@ class MontrekListView(
         return context
 
     def list_to_csv(self):
-        return self.manager.download_csv(HttpResponse())
+        response = self.manager.download_or_mail_csv()
+        self.show_messages()
+        return response
 
     def list_to_excel(self):
-        return self.manager.download_excel(HttpResponse())
+        response = self.manager.download_or_mail_excel()
+        self.show_messages()
+        return response
 
     def reset_filter(self):
         self.request.session["filter"] = {}

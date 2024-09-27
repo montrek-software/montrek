@@ -1,13 +1,16 @@
-import io
-import pandas as pd
-from django.test import TestCase
-from django.http import HttpResponse
-from django.utils import timezone
 import datetime
+import io
+from dataclasses import dataclass
+
+import pandas as pd
 from bs4 import BeautifulSoup
+from django.core import mail
+from django.test import TestCase
+from django.utils import timezone
+
 from reporting.dataclasses import table_elements as te
 from reporting.managers.montrek_table_manager import MontrekTableManager
-from dataclasses import dataclass
+from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
 
 @dataclass
@@ -39,6 +42,9 @@ class MockQuerySet:
     def all(self):
         return self.items
 
+    def count(self) -> int:
+        return len(self.items)
+
 
 class MockRepository:
     def __init__(self, session_data: dict):
@@ -50,6 +56,20 @@ class MockRepository:
             MockData("b", 2, 2.0, datetime.datetime(2024, 7, 13)),
             MockData("c", 3, 3.0, timezone.datetime(2024, 7, 13)),
         )
+
+
+class MockLongRepository:
+    def __init__(self, session_data: dict):
+        self.session_data = session_data
+
+    def std_queryset(self):
+        mock_data = [
+            MockData(
+                str(i), i, 1.0, timezone.make_aware(datetime.datetime(2024, 7, 13))
+            )
+            for i in range(10000)
+        ]
+        return MockQuerySet(*mock_data)
 
 
 class MockMontrekTableManager(MontrekTableManager):
@@ -81,6 +101,10 @@ class MockMontrekTableManager(MontrekTableManager):
         )
 
 
+class MockLongMontrekTableManager(MockMontrekTableManager):
+    repository_class = MockLongRepository
+
+
 class MockHttpResponse:
     content: str = ""
 
@@ -92,6 +116,9 @@ class MockHttpResponse:
 
 
 class TestMontrekTableManager(TestCase):
+    def setUp(self):
+        self.user = MontrekUserFactory()
+
     def test_to_html(self):
         test_html = MockMontrekTableManager().to_html()
         soup = BeautifulSoup(test_html, "html.parser")
@@ -117,7 +144,7 @@ class TestMontrekTableManager(TestCase):
 
     def test_download_csv(self):
         manager = MockMontrekTableManager()
-        response = manager.download_csv(HttpResponse())
+        response = manager.download_or_mail_csv()
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             response["Content-Type"],
@@ -134,7 +161,7 @@ class TestMontrekTableManager(TestCase):
 
     def test_download_excel(self):
         manager = MockMontrekTableManager()
-        response = manager.download_excel(HttpResponse())
+        response = manager.download_or_mail_excel()
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             response["Content-Type"],
@@ -173,3 +200,39 @@ class TestMontrekTableManager(TestCase):
             "Link Text": "",
         }
         self.assertEqual(name_to_field_map, expected_map)
+
+    def test_large_download_excel(self):
+        manager = MockLongMontrekTableManager(
+            {"user_id": self.user.id, "host_url": "test_server"}
+        )
+        response = manager.download_or_mail_excel()
+        self.assertEqual(response.status_code, 302)
+        sent_email = mail.outbox[0]
+        self.assertTrue(sent_email.subject.endswith(".xlsx is ready for download"))
+        self.assertEqual(sent_email.to, [self.user.email])
+        self.assertTrue(
+            "Please download the table from the link below:"
+            in sent_email.message().as_string()
+        )
+        self.assertEqual(
+            manager.messages[-1].message,
+            "Table is too large to download. Sending it by mail.",
+        )
+
+    def test_large_download_csv(self):
+        manager = MockLongMontrekTableManager(
+            {"user_id": self.user.id, "host_url": "test_server"}
+        )
+        response = manager.download_or_mail_csv()
+        self.assertEqual(response.status_code, 302)
+        sent_email = mail.outbox[0]
+        self.assertTrue(sent_email.subject.endswith(".csv is ready for download"))
+        self.assertEqual(sent_email.to, [self.user.email])
+        self.assertTrue(
+            "Please download the table from the link below:"
+            in sent_email.message().as_string()
+        )
+        self.assertEqual(
+            manager.messages[-1].message,
+            "Table is too large to download. Sending it by mail.",
+        )

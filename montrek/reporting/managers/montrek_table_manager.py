@@ -1,11 +1,21 @@
-import pandas as pd
-from django.utils import timezone
 import datetime
-from django.views.generic.base import HttpResponse
-from django.core.paginator import Paginator
+import os
+from io import BytesIO
+
+import pandas as pd
+from baseclasses.dataclasses.montrek_message import MontrekMessageInfo
 from baseclasses.managers.montrek_manager import MontrekManager
-from reporting.dataclasses import table_elements as te
+from django.conf import settings
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
+from django.core.paginator import Paginator
+from django.http import HttpResponseRedirect
+from django.urls import reverse
+from django.utils import timezone
+from django.views.generic.base import HttpResponse
+from mailing.managers.mailing_manager import MailingManager
 from reporting.core import reporting_text as rt
+from reporting.dataclasses import table_elements as te
 from reporting.lib.protocols import (
     ReportElementProtocol,
 )
@@ -97,6 +107,19 @@ class MontrekTableManager(MontrekManager):
         latex_str += table_end_str
         return latex_str
 
+    def to_excel(
+        self, output: HttpResponse | BytesIO | str
+    ) -> HttpResponse | BytesIO | str:
+        table_df = self.get_queryset_as_dataframe()
+        with pd.ExcelWriter(output) as excel_writer:
+            table_df.to_excel(excel_writer, index=False)
+        return output
+
+    def to_csv(self, output: str) -> str:
+        table_df = self.get_queryset_as_dataframe()
+        table_df.to_csv(output, index=False)
+        return output
+
     def get_paginated_queryset(self):
         queryset = self.repository.std_queryset()
         if self.is_paginated:
@@ -109,26 +132,46 @@ class MontrekTableManager(MontrekManager):
         page = paginator.get_page(page_number)
         return page
 
-    def download_csv(self, response: HttpResponse) -> HttpResponse:
-        table_df = self.get_queryset_as_dataframe()
-        response["Content-Type"] = "text/csv"
-        response[
-            "Content-Disposition"
-        ] = f'attachment; filename="{self.document_name}.csv"'
-        table_df.to_csv(response, index=False)
+    def download_or_mail_csv(self) -> HttpResponse:
+        table_dimensions = self._get_table_dimensions()
+        if table_dimensions > settings.SEND_TABLE_BY_MAIL_LIMIT:
+            return self._handle_large_table("csv")
+        else:
+            return self._download_csv()
+
+    def download_or_mail_excel(self) -> HttpResponse:
+        table_dimensions = self._get_table_dimensions()
+        if table_dimensions > settings.SEND_TABLE_BY_MAIL_LIMIT:
+            return self._handle_large_table("xlsx")
+        else:
+            return self._download_excel()
+
+    def _handle_large_table(self, filetype: str) -> HttpResponse:
+        self.messages.append(
+            MontrekMessageInfo("Table is too large to download. Sending it by mail.")
+        )
+        self._send_table_by_mail(filetype)
+        request_path = self.session_data.get("request_path", "")
+        return HttpResponseRedirect(request_path)
+
+    def _download_excel(self):
+        response = HttpResponse()
+        self.to_excel(response)
+        response = self.do_download(
+            response=response,
+            filename=f"{self.document_name}.xlsx",
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
         return response
 
-    def download_excel(self, response: HttpResponse) -> HttpResponse:
-        response[
-            "Content-Type"
-        ] = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        response[
-            "Content-Disposition"
-        ] = f'attachment; filename="{self.document_name}.xlsx"'
-
-        table_df = self.get_queryset_as_dataframe()
-        with pd.ExcelWriter(response) as excel_writer:
-            table_df.to_excel(excel_writer, index=False)
+    def _download_csv(self):
+        response = HttpResponse()
+        self.to_csv(response)
+        response = self.do_download(
+            response=response,
+            filename=f"{self.document_name}.csv",
+            content_type="text/csv",
+        )
         return response
 
     def get_queryset_as_dataframe(self):
@@ -152,7 +195,51 @@ class MontrekTableManager(MontrekManager):
             table_data[element.name] = values
         return pd.DataFrame(table_data)
 
+    def do_download(self, response, filename, content_type):
+        response["Content-Type"] = content_type
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
+
     def _make_datetime_naive(self, value):
         if isinstance(value, datetime.datetime) and not timezone.is_naive(value):
             value = timezone.make_naive(value)
         return value
+
+    def _get_table_dimensions(self) -> int:
+        rows = self.repository.std_queryset().count()
+        cols = len(self.table_elements)
+        return rows * cols
+
+    def _send_table_by_mail(self, filetype: str):
+        file_name = f"{self.document_name}.{filetype}"
+        if filetype == "xlsx":
+            self._send_table_excel_by_mail(file_name)
+        elif filetype == "csv":
+            self._send_table_csv_by_mail(file_name)
+
+    def _send_table_excel_by_mail(self, file_name: str):
+        output = BytesIO()
+        self.to_excel(output)
+        output.seek(0)
+        file_name = f"{self.document_name}.xlsx"
+        temp_file_path = os.path.join("temp", file_name)
+
+        # Save the file to the default storage (e.g., file system or cloud storage)
+        saved_file = default_storage.save(temp_file_path, ContentFile(output.read()))
+        self._send_mail_with_file(saved_file, file_name)
+
+    def _send_table_csv_by_mail(self, file_name: str):
+        temp_file_path = os.path.join(file_name)
+        self.to_csv(default_storage.path(temp_file_path))
+        self._send_mail_with_file(temp_file_path, file_name)
+
+    def _send_mail_with_file(self, saved_file: str, file_name: str):
+        # Return the URL of the stored file
+        file_url = self.session_data.get("host_url", "/") + reverse(
+            "download_reporting_file", kwargs={"file_path": saved_file}
+        )
+        mailing_manager = MailingManager(self.session_data)
+        mailing_manager.send_montrek_mail_to_user(
+            subject=f"{file_name} is ready for download",
+            message=f"Please download the table from the link below:<br> <a href='{file_url}'>{file_name}</a>",
+        )

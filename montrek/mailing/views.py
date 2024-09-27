@@ -8,9 +8,12 @@ from baseclasses.views import (
 )
 from mailing.managers.mailing_manager import (
     MailingManager,
+)
+from mailing.managers.mailing_table_manager import (
     MailingTableManager,
     MailingDetailsManager,
 )
+
 from mailing.pages import MailingPage
 from baseclasses.dataclasses.view_classes import ActionElement
 from mailing.forms import MailingSendForm
