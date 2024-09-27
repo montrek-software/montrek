@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from baseclasses.managers.montrek_manager import MontrekManager
@@ -94,6 +95,13 @@ class MailingManager(MontrekManager):
             self.messages.append(
                 MontrekMessageError(message=f"Mail failed to send to {recipients}")
             )
+
+    def send_montrek_mail_to_user(
+        self, subject: str, message: str, additional_parms: dict = {}
+    ) -> None:
+        user_id = self.session_data["user_id"]
+        user = get_user_model().objects.get(pk=user_id)
+        self.send_montrek_mail(user.email, subject, message, additional_parms)
 
     def get_mail_body(
         self,
