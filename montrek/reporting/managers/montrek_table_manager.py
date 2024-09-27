@@ -135,13 +135,14 @@ class MontrekTableManager(MontrekManager):
         table_df.to_csv(response, index=False)
         return response
 
-    def download_excel(self, response: HttpResponse, request) -> HttpResponse:
+    def download_excel(self) -> HttpResponse:
         table_dimensions = self._get_table_dimensions()
         if table_dimensions > settings.SEND_TABLE_BY_MAIL_LIMIT:
-            self._send_table_excel_by_mail(request)
+            self._send_table_excel_by_mail()
             request_path = self.session_data.get("request_path", "")
             return HttpResponseRedirect(request_path)
         else:
+            response = HttpResponse()
             return self._download_excel(response)
 
     def _download_excel(self, response):
@@ -189,7 +190,7 @@ class MontrekTableManager(MontrekManager):
         cols = len(self.table_elements)
         return rows * cols
 
-    def _send_table_excel_by_mail(self, request):
+    def _send_table_excel_by_mail(self):
         output = BytesIO()
         self.to_excel(output)
         output.seek(0)
@@ -198,10 +199,12 @@ class MontrekTableManager(MontrekManager):
 
         # Save the file to the default storage (e.g., file system or cloud storage)
         saved_file = default_storage.save(temp_file_path, ContentFile(output.read()))
+        self._send_mail_with_file(saved_file, file_name)
 
+    def _send_mail_with_file(self, saved_file: str, file_name: str):
         # Return the URL of the stored file
-        file_url = request.build_absolute_uri(
-            reverse("download_reporting_file", kwargs={"file_path": saved_file})
+        file_url = self.session_data.get("host_url", "/") + reverse(
+            "download_reporting_file", kwargs={"file_path": saved_file}
         )
         mailing_manager = MailingManager(self.session_data)
         mailing_manager.send_montrek_mail_to_user(

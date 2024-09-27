@@ -203,7 +203,12 @@ class TestMontrekTableManager(TestCase):
         self.assertEqual(name_to_field_map, expected_map)
 
     def test_large_download_excel(self):
-        manager = MockLongMontrekTableManager({"user_id": self.user.id})
-        response = manager.download_excel(HttpResponse())
+        manager = MockLongMontrekTableManager(
+            {"user_id": self.user.id, "host_url": "test_server"}
+        )
+        response = manager.download_excel(HttpResponse(), None)
         self.assertEqual(response.status_code, 302)
         sent_email = mail.outbox[0]
+        self.assertEqual(sent_email.subject, "Table too large to download")
+        self.assertEqual(sent_email.to, [self.user.email])
+        self.assertEqual(sent_email.message().as_string(), "")
