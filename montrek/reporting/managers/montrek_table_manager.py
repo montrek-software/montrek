@@ -9,6 +9,7 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.core.paginator import Paginator
 from django.http import HttpResponseRedirect
+from django.urls import reverse
 from django.utils import timezone
 from django.views.generic.base import HttpResponse
 from mailing.managers.mailing_manager import MailingManager
@@ -134,10 +135,10 @@ class MontrekTableManager(MontrekManager):
         table_df.to_csv(response, index=False)
         return response
 
-    def download_excel(self, response: HttpResponse) -> HttpResponse:
+    def download_excel(self, response: HttpResponse, request) -> HttpResponse:
         table_dimensions = self._get_table_dimensions()
         if table_dimensions > settings.SEND_TABLE_BY_MAIL_LIMIT:
-            self._send_table_excel_by_mail()
+            self._send_table_excel_by_mail(request)
             request_path = self.session_data.get("request_path", "")
             return HttpResponseRedirect(request_path)
         else:
@@ -188,7 +189,7 @@ class MontrekTableManager(MontrekManager):
         cols = len(self.table_elements)
         return rows * cols
 
-    def _send_table_excel_by_mail(self):
+    def _send_table_excel_by_mail(self, request):
         output = BytesIO()
         self.to_excel(output)
         output.seek(0)
@@ -199,9 +200,11 @@ class MontrekTableManager(MontrekManager):
         saved_file = default_storage.save(temp_file_path, ContentFile(output.read()))
 
         # Return the URL of the stored file
-        file_url = default_storage.url(saved_file)
+        file_url = request.build_absolute_uri(
+            reverse("download_reporting_file", kwargs={"file_path": saved_file})
+        )
         mailing_manager = MailingManager(self.session_data)
         mailing_manager.send_montrek_mail_to_user(
-            subject="Table is ready for download",
-            message="Please download the table from the link below",
+            subject=f"{file_name} is ready for download",
+            message=f"Please download the table from the link below:<br> <a href='{file_url}'>{file_name}</a>",
         )
