@@ -1,11 +1,14 @@
 import datetime
-from django.http import HttpResponseRedirect
+import os
+from io import BytesIO
 
 import pandas as pd
-
 from baseclasses.managers.montrek_manager import MontrekManager
 from django.conf import settings
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 from django.core.paginator import Paginator
+from django.http import HttpResponseRedirect
 from django.utils import timezone
 from django.views.generic.base import HttpResponse
 from mailing.managers.mailing_manager import MailingManager
@@ -102,6 +105,14 @@ class MontrekTableManager(MontrekManager):
         latex_str += table_end_str
         return latex_str
 
+    def to_excel(
+        self, output: HttpResponse | BytesIO | str
+    ) -> HttpResponse | BytesIO | str:
+        table_df = self.get_queryset_as_dataframe()
+        with pd.ExcelWriter(output) as excel_writer:
+            table_df.to_excel(excel_writer, index=False)
+        return output
+
     def get_paginated_queryset(self):
         queryset = self.repository.std_queryset()
         if self.is_paginated:
@@ -129,15 +140,16 @@ class MontrekTableManager(MontrekManager):
             self._send_table_excel_by_mail()
             request_path = self.session_data.get("request_path", "")
             return HttpResponseRedirect(request_path)
-        response[
-            "Content-Type"
-        ] = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        response[
-            "Content-Disposition"
-        ] = f'attachment; filename="{self.document_name}.xlsx"'
-        table_df = self.get_queryset_as_dataframe()
-        with pd.ExcelWriter(response) as excel_writer:
-            table_df.to_excel(excel_writer, index=False)
+        else:
+            return self._download_excel(response)
+
+    def _download_excel(self, response):
+        self.to_excel(response)
+        response = self.do_download(
+            response=response,
+            filename=f"{self.document_name}.xlsx",
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
         return response
 
     def get_queryset_as_dataframe(self):
@@ -161,6 +173,11 @@ class MontrekTableManager(MontrekManager):
             table_data[element.name] = values
         return pd.DataFrame(table_data)
 
+    def do_download(self, response, filename, content_type):
+        response["Content-Type"] = content_type
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
+
     def _make_datetime_naive(self, value):
         if isinstance(value, datetime.datetime) and not timezone.is_naive(value):
             value = timezone.make_naive(value)
@@ -172,6 +189,17 @@ class MontrekTableManager(MontrekManager):
         return rows * cols
 
     def _send_table_excel_by_mail(self):
+        output = BytesIO()
+        self.to_excel(output)
+        output.seek(0)
+        file_name = f"{self.document_name}.xlsx"
+        temp_file_path = os.path.join("temp", file_name)
+
+        # Save the file to the default storage (e.g., file system or cloud storage)
+        saved_file = default_storage.save(temp_file_path, ContentFile(output.read()))
+
+        # Return the URL of the stored file
+        file_url = default_storage.url(saved_file)
         mailing_manager = MailingManager(self.session_data)
         mailing_manager.send_montrek_mail_to_user(
             subject="Table is ready for download",
