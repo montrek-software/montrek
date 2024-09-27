@@ -55,7 +55,12 @@ class MailingManager(MontrekManager):
         return settings.EMAIL_TEMPLATE
 
     def send_montrek_mail(
-        self, recipients: str, subject: str, message: str, additional_parms: dict = {}
+        self,
+        recipients: str,
+        subject: str,
+        message: str,
+        additional_parms: dict = {},
+        attachments: list | None = None,
     ):
         recipient_list = recipients.replace(" ", "").split(",")
         mail_params: dict = {
@@ -73,6 +78,7 @@ class MailingManager(MontrekManager):
                 body,
                 settings.EMAIL_BACKEND,
                 recipient_list,
+                attachments=attachments,
             )
             email.content_subtype = "html"
             email.send()
@@ -97,11 +103,17 @@ class MailingManager(MontrekManager):
             )
 
     def send_montrek_mail_to_user(
-        self, subject: str, message: str, additional_parms: dict = {}
+        self,
+        subject: str,
+        message: str,
+        additional_parms: dict = {},
+        attachments: list | None = None,
     ) -> None:
         user_id = self.session_data["user_id"]
         user = get_user_model().objects.get(pk=user_id)
-        self.send_montrek_mail(user.email, subject, message, additional_parms)
+        self.send_montrek_mail(
+            user.email, subject, message, additional_parms, attachments=attachments
+        )
 
     def get_mail_body(
         self,
