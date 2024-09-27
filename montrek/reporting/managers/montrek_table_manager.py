@@ -19,6 +19,7 @@ from reporting.dataclasses import table_elements as te
 from reporting.lib.protocols import (
     ReportElementProtocol,
 )
+from reporting.tasks.download_table_tasks import DownloadTableTask
 
 
 class MontrekTableManager(MontrekManager):
@@ -150,7 +151,7 @@ class MontrekTableManager(MontrekManager):
         self.messages.append(
             MontrekMessageInfo("Table is too large to download. Sending it by mail.")
         )
-        self._send_table_by_mail(filetype)
+        DownloadTableTask(self, filetype).delay()
         request_path = self.session_data.get("request_path", "")
         return HttpResponseRedirect(request_path)
 
@@ -210,7 +211,7 @@ class MontrekTableManager(MontrekManager):
         cols = len(self.table_elements)
         return rows * cols
 
-    def _send_table_by_mail(self, filetype: str):
+    def send_table_by_mail(self, filetype: str):
         file_name = f"{self.document_name}.{filetype}"
         if filetype == "xlsx":
             self._send_table_excel_by_mail(file_name)
