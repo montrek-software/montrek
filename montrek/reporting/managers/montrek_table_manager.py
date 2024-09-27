@@ -135,21 +135,26 @@ class MontrekTableManager(MontrekManager):
         return page
 
     def download_or_mail_csv(self) -> HttpResponse:
-        return self._download_csv()
+        table_dimensions = self._get_table_dimensions()
+        if table_dimensions > settings.SEND_TABLE_BY_MAIL_LIMIT:
+            return self._handle_large_table("csv")
+        else:
+            return self._download_csv()
 
     def download_or_mail_excel(self) -> HttpResponse:
         table_dimensions = self._get_table_dimensions()
         if table_dimensions > settings.SEND_TABLE_BY_MAIL_LIMIT:
-            self.messages.append(
-                MontrekMessageInfo(
-                    "Table is too large to download. Sending it by mail."
-                )
-            )
-            self._send_table_excel_by_mail()
-            request_path = self.session_data.get("request_path", "")
-            return HttpResponseRedirect(request_path)
+            return self._handle_large_table("xlsx")
         else:
             return self._download_excel()
+
+    def _handle_large_table(self, filetype: str) -> HttpResponse:
+        self.messages.append(
+            MontrekMessageInfo("Table is too large to download. Sending it by mail.")
+        )
+        self._send_table_by_mail(filetype)
+        request_path = self.session_data.get("request_path", "")
+        return HttpResponseRedirect(request_path)
 
     def _download_excel(self):
         response = HttpResponse()
@@ -207,11 +212,11 @@ class MontrekTableManager(MontrekManager):
         cols = len(self.table_elements)
         return rows * cols
 
-    def _send_table_excel_by_mail(self):
+    def _send_table_by_mail(self, filetype: str):
         output = BytesIO()
         self.to_excel(output)
         output.seek(0)
-        file_name = f"{self.document_name}.xlsx"
+        file_name = f"{self.document_name}.{filetype}"
         temp_file_path = os.path.join("temp", file_name)
 
         # Save the file to the default storage (e.g., file system or cloud storage)

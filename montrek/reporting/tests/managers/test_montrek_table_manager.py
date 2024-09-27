@@ -218,3 +218,21 @@ class TestMontrekTableManager(TestCase):
             manager.messages[-1].message,
             "Table is too large to download. Sending it by mail.",
         )
+
+    def test_large_download_csv(self):
+        manager = MockLongMontrekTableManager(
+            {"user_id": self.user.id, "host_url": "test_server"}
+        )
+        response = manager.download_or_mail_csv()
+        self.assertEqual(response.status_code, 302)
+        sent_email = mail.outbox[0]
+        self.assertTrue(sent_email.subject.endswith(".csv is ready for download"))
+        self.assertEqual(sent_email.to, [self.user.email])
+        self.assertTrue(
+            "Please download the table from the link below:"
+            in sent_email.message().as_string()
+        )
+        self.assertEqual(
+            manager.messages[-1].message,
+            "Table is too large to download. Sending it by mail.",
+        )
