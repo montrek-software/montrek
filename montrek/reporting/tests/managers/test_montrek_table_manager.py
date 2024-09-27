@@ -11,6 +11,7 @@ from django.utils import timezone
 
 from reporting.dataclasses import table_elements as te
 from reporting.managers.montrek_table_manager import MontrekTableManager
+from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
 
 @dataclass
@@ -41,6 +42,9 @@ class MockQuerySet:
 
     def all(self):
         return self.items
+
+    def count(self) -> int:
+        return len(self.items)
 
 
 class MockRepository:
@@ -113,6 +117,9 @@ class MockHttpResponse:
 
 
 class TestMontrekTableManager(TestCase):
+    def setUp(self):
+        self.user = MontrekUserFactory()
+
     def test_to_html(self):
         test_html = MockMontrekTableManager().to_html()
         soup = BeautifulSoup(test_html, "html.parser")
@@ -196,7 +203,7 @@ class TestMontrekTableManager(TestCase):
         self.assertEqual(name_to_field_map, expected_map)
 
     def test_large_download_excel(self):
-        manager = MockLongMontrekTableManager()
+        manager = MockLongMontrekTableManager({"user_id": self.user.id})
         response = manager.download_excel(HttpResponse())
         self.assertEqual(response.status_code, 200)
         sent_email = mail.outbox[0]
