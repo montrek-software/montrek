@@ -115,6 +115,13 @@ class MontrekTableManager(MontrekManager):
             table_df.to_excel(excel_writer, index=False)
         return output
 
+    def to_csv(
+        self, output: HttpResponse | BytesIO | str
+    ) -> HttpResponse | BytesIO | str:
+        table_df = self.get_queryset_as_dataframe()
+        table_df.to_csv(output, index=False)
+        return output
+
     def get_paginated_queryset(self):
         queryset = self.repository.std_queryset()
         if self.is_paginated:
@@ -127,14 +134,8 @@ class MontrekTableManager(MontrekManager):
         page = paginator.get_page(page_number)
         return page
 
-    def download_csv(self, response: HttpResponse) -> HttpResponse:
-        table_df = self.get_queryset_as_dataframe()
-        response["Content-Type"] = "text/csv"
-        response[
-            "Content-Disposition"
-        ] = f'attachment; filename="{self.document_name}.csv"'
-        table_df.to_csv(response, index=False)
-        return response
+    def download_csv(self) -> HttpResponse:
+        return self._download_csv()
 
     def download_excel(self) -> HttpResponse:
         table_dimensions = self._get_table_dimensions()
@@ -148,15 +149,25 @@ class MontrekTableManager(MontrekManager):
             request_path = self.session_data.get("request_path", "")
             return HttpResponseRedirect(request_path)
         else:
-            response = HttpResponse()
-            return self._download_excel(response)
+            return self._download_excel()
 
-    def _download_excel(self, response):
+    def _download_excel(self):
+        response = HttpResponse()
         self.to_excel(response)
         response = self.do_download(
             response=response,
             filename=f"{self.document_name}.xlsx",
             content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        return response
+
+    def _download_csv(self):
+        response = HttpResponse()
+        self.to_csv(response)
+        response = self.do_download(
+            response=response,
+            filename=f"{self.document_name}.csv",
+            content_type="text/csv",
         )
         return response
 

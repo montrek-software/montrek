@@ -5,7 +5,6 @@ from dataclasses import dataclass
 import pandas as pd
 from bs4 import BeautifulSoup
 from django.core import mail
-from django.http import HttpResponse
 from django.test import TestCase
 from django.utils import timezone
 
@@ -145,7 +144,7 @@ class TestMontrekTableManager(TestCase):
 
     def test_download_csv(self):
         manager = MockMontrekTableManager()
-        response = manager.download_csv(HttpResponse())
+        response = manager.download_csv()
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             response["Content-Type"],
