@@ -144,7 +144,7 @@ class TestMontrekTableManager(TestCase):
 
     def test_download_csv(self):
         manager = MockMontrekTableManager()
-        response = manager.download_csv()
+        response = manager.download_or_mail_csv()
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             response["Content-Type"],
@@ -161,7 +161,7 @@ class TestMontrekTableManager(TestCase):
 
     def test_download_excel(self):
         manager = MockMontrekTableManager()
-        response = manager.download_excel()
+        response = manager.download_or_mail_excel()
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             response["Content-Type"],
@@ -205,7 +205,7 @@ class TestMontrekTableManager(TestCase):
         manager = MockLongMontrekTableManager(
             {"user_id": self.user.id, "host_url": "test_server"}
         )
-        response = manager.download_excel()
+        response = manager.download_or_mail_excel()
         self.assertEqual(response.status_code, 302)
         sent_email = mail.outbox[0]
         self.assertTrue(sent_email.subject.endswith(".xlsx is ready for download"))

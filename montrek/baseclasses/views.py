@@ -324,10 +324,12 @@ class MontrekListView(
         return context
 
     def list_to_csv(self):
-        return self.manager.download_csv(HttpResponse())
+        response = self.manager.download_or_mail_csv()
+        self.show_messages()
+        return response
 
     def list_to_excel(self):
-        response = self.manager.download_excel()
+        response = self.manager.download_or_mail_excel()
         self.show_messages()
         return response
 

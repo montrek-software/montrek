@@ -134,10 +134,10 @@ class MontrekTableManager(MontrekManager):
         page = paginator.get_page(page_number)
         return page
 
-    def download_csv(self) -> HttpResponse:
+    def download_or_mail_csv(self) -> HttpResponse:
         return self._download_csv()
 
-    def download_excel(self) -> HttpResponse:
+    def download_or_mail_excel(self) -> HttpResponse:
         table_dimensions = self._get_table_dimensions()
         if table_dimensions > settings.SEND_TABLE_BY_MAIL_LIMIT:
             self.messages.append(
