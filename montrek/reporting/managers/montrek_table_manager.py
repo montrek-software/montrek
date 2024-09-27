@@ -1,4 +1,5 @@
 import datetime
+from django.http import HttpResponseRedirect
 
 import pandas as pd
 
@@ -126,7 +127,8 @@ class MontrekTableManager(MontrekManager):
         table_dimensions = self._get_table_dimensions()
         if table_dimensions > settings.SEND_TABLE_BY_MAIL_LIMIT:
             self._send_table_excel_by_mail()
-            return response
+            request_path = self.session_data.get("request_path", "")
+            return HttpResponseRedirect(request_path)
         response[
             "Content-Type"
         ] = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"

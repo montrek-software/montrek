@@ -205,5 +205,5 @@ class TestMontrekTableManager(TestCase):
     def test_large_download_excel(self):
         manager = MockLongMontrekTableManager({"user_id": self.user.id})
         response = manager.download_excel(HttpResponse())
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 302)
         sent_email = mail.outbox[0]
