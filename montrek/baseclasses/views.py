@@ -327,7 +327,9 @@ class MontrekListView(
         return self.manager.download_csv(HttpResponse())
 
     def list_to_excel(self):
-        return self.manager.download_excel()
+        response = self.manager.download_excel()
+        self.show_messages()
+        return response
 
     def reset_filter(self):
         self.request.session["filter"] = {}

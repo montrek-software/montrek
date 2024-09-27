@@ -206,9 +206,16 @@ class TestMontrekTableManager(TestCase):
         manager = MockLongMontrekTableManager(
             {"user_id": self.user.id, "host_url": "test_server"}
         )
-        response = manager.download_excel(HttpResponse(), None)
+        response = manager.download_excel()
         self.assertEqual(response.status_code, 302)
         sent_email = mail.outbox[0]
-        self.assertEqual(sent_email.subject, "Table too large to download")
+        self.assertTrue(sent_email.subject.endswith(".xlsx is ready for download"))
         self.assertEqual(sent_email.to, [self.user.email])
-        self.assertEqual(sent_email.message().as_string(), "")
+        self.assertTrue(
+            "Please download the table from the link below:"
+            in sent_email.message().as_string()
+        )
+        self.assertEqual(
+            manager.messages[-1].message,
+            "Table is too large to download. Sending it by mail.",
+        )

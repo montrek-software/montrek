@@ -3,6 +3,7 @@ import os
 from io import BytesIO
 
 import pandas as pd
+from baseclasses.dataclasses.montrek_message import MontrekMessageInfo
 from baseclasses.managers.montrek_manager import MontrekManager
 from django.conf import settings
 from django.core.files.base import ContentFile
@@ -138,6 +139,11 @@ class MontrekTableManager(MontrekManager):
     def download_excel(self) -> HttpResponse:
         table_dimensions = self._get_table_dimensions()
         if table_dimensions > settings.SEND_TABLE_BY_MAIL_LIMIT:
+            self.messages.append(
+                MontrekMessageInfo(
+                    "Table is too large to download. Sending it by mail."
+                )
+            )
             self._send_table_excel_by_mail()
             request_path = self.session_data.get("request_path", "")
             return HttpResponseRedirect(request_path)
