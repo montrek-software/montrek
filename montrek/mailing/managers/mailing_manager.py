@@ -103,11 +103,17 @@ class MailingManager(MontrekManager):
             )
 
     def send_montrek_mail_to_user(
-        self, subject: str, message: str, additional_parms: dict = {}
+        self,
+        subject: str,
+        message: str,
+        additional_parms: dict = {},
+        attachments: list | None = None,
     ) -> None:
         user_id = self.session_data["user_id"]
         user = get_user_model().objects.get(pk=user_id)
-        self.send_montrek_mail(user.email, subject, message, additional_parms)
+        self.send_montrek_mail(
+            user.email, subject, message, additional_parms, attachments=attachments
+        )
 
     def get_mail_body(
         self,

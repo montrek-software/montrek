@@ -85,3 +85,20 @@ class TestMailingManager(TestCase):
         self.assertEqual(
             sent_email.attachments, [("test_file.txt", "test", "text/plain")]
         )
+
+    def test_send_mail_to_user_with_attachment(self):
+        mailing_manager = MailingManager({"user_id": self.user.id})
+        test_file = SimpleUploadedFile(
+            name="test_file.txt",
+            content="test".encode("utf-8"),
+            content_type="text/plain",
+        )
+        mailing_manager.send_montrek_mail_to_user(
+            subject=self.subject,
+            message=self.message,
+            attachments=[(test_file.name, test_file.read(), "text/plain")],
+        )
+        sent_email = mail.outbox[0]
+        self.assertEqual(
+            sent_email.attachments, [("test_file.txt", "test", "text/plain")]
+        )
