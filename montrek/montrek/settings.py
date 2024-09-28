@@ -35,7 +35,8 @@ ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
     f"montrek.{PROJECT_NAME}",
-    f"DEPLOY_HOST:{DEPLOY_PORT}",
+    f"{DEPLOY_HOST}:{DEPLOY_PORT}",
+    DEPLOY_HOST,
 ]
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
