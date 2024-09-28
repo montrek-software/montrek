@@ -157,10 +157,7 @@ class MontrekTableManager(MontrekManager, metaclass=MontrekTableMetaClass):
         self.messages.append(
             MontrekMessageInfo("Table is too large to download. Sending it by mail.")
         )
-        self.download_task.delay(
-            filetype=filetype,
-            session_data=self.session_data,
-        )
+        self.download_task.delay(filetype=filetype, session_data=self.session_data)
         request_path = self.session_data.get("request_path", "")
         return HttpResponseRedirect(request_path)
 
