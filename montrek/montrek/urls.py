@@ -34,6 +34,7 @@ urlpatterns = [
     path("file_upload/", include("file_upload.urls")),
     path("mailing/", include("mailing.urls")),
     path("montrek_example/", include("montrek_example.urls")),
+    path("reporting/", include("reporting.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 
