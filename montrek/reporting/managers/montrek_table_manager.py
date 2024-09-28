@@ -19,10 +19,16 @@ from reporting.dataclasses import table_elements as te
 from reporting.lib.protocols import (
     ReportElementProtocol,
 )
-from reporting.tasks.download_table_tasks import DownloadTableTask
+from reporting.tasks.download_table_task import DownloadTableTask
 
 
-class MontrekTableManager(MontrekManager):
+class MontrekTableMetaClass(type):
+    def __init__(cls, name, bases, dct):
+        cls.download_task = DownloadTableTask(manager_class=cls)
+        super().__init__(name, bases, dct)
+
+
+class MontrekTableManager(MontrekManager, metaclass=MontrekTableMetaClass):
     is_paginated = True
     paginate_by = 10
     table_title = ""
@@ -151,7 +157,10 @@ class MontrekTableManager(MontrekManager):
         self.messages.append(
             MontrekMessageInfo("Table is too large to download. Sending it by mail.")
         )
-        DownloadTableTask(self, filetype).delay()
+        self.download_task.delay(
+            filetype=filetype,
+            session_data=self.session_data,
+        )
         request_path = self.session_data.get("request_path", "")
         return HttpResponseRedirect(request_path)
 

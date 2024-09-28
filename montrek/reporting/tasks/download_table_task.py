@@ -3,17 +3,14 @@ from celery import Task
 
 
 class DownloadTableTask(Task):
-    name = "reporting.tasks.download_table_tasks.DownloadTableTask"
-
-    def __init__(self, *args, manager, filetype: str, **kwargs):
+    def __init__(self, *args, manager_class, **kwargs):
         super().__init__(*args, **kwargs)
-        self.manager = manager
-        self.filetype = filetype
+        self.manager_class = manager_class
 
         celery_app.register_task(self)
 
-    def run(self, *args, **kwargs) -> str:
-        self.manager.send_table_by_mail(self.filetype)
+    def run(self, *args, filetype, session_data: dict, **kwargs) -> str:
+        self.manager_class(session_data).send_table_by_mail(filetype)
         return "Table sent by mail."
 
 
