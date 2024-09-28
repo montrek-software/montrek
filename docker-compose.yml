@@ -12,6 +12,7 @@ services:
       - web
     environment:
       - APP_PORT=${APP_PORT}
+      - DEPLOY_PORT=${DEPLOY_PORT}
       - PROJECT_NAME=${PROJECT_NAME}
     restart: "on-failure"
     networks:
