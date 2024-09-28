@@ -14,4 +14,5 @@ def download_reporting_file_view(request, file_path: str):
         response[
             "Content-Disposition"
         ] = f"attachment; filename={os.path.basename(file_path)}"
+
         return response

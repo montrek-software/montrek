@@ -1,3 +1,4 @@
+import os
 from django.http import Http404
 from django.test import TestCase
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -32,6 +33,7 @@ class TestDownloadFileView(TestCase):
         self.assertEqual(
             response.get("Content-Disposition"), "attachment; filename=test_file.txt"
         )
+        self.assertFalse(os.path.exists(default_storage.path(temp_file_path)))
 
     def test_download_view_file_not_found(self):
         self.assertRaises(Http404, download_reporting_file_view, None, "Dummy.txt")
