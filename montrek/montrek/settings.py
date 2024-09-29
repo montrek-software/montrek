@@ -30,8 +30,16 @@ DEBUG = config("DEBUG", default=False, cast=bool)
 
 PROJECT_NAME = config("PROJECT_NAME", default="default")
 DEPLOY_HOST = config("DEPLOY_HOST", default="127.0.0.1")
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", f"montrek.{PROJECT_NAME}", DEPLOY_HOST]
-
+DEPLOY_PORT = config("DEPLOY_PORT", default="1339")
+ALLOWED_HOSTS = [
+    "localhost",
+    "127.0.0.1",
+    f"montrek.{PROJECT_NAME}",
+    f"{DEPLOY_HOST}:{DEPLOY_PORT}",
+    DEPLOY_HOST,
+]
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # Application definition
 
@@ -176,7 +184,6 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "uploads")
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-DEPLOY_PORT = config("DEPLOY_PORT", default="1339")
 CSRF_TRUSTED_ORIGINS = [
     f"http://{host}:{DEPLOY_PORT}"
     for host in ["localhost", "127.0.0.1", DEPLOY_HOST, f"montrek.{PROJECT_NAME}"]
