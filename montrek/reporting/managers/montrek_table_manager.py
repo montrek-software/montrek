@@ -122,7 +122,7 @@ class MontrekTableManager(MontrekManager, metaclass=MontrekTableMetaClass):
             table_df.to_excel(excel_writer, index=False)
         return output
 
-    def to_csv(self, output: str) -> str:
+    def to_csv(self, output: HttpResponse | str) -> HttpResponse | str:
         table_df = self.get_queryset_as_dataframe()
         table_df.to_csv(output, index=False)
         return output
@@ -246,7 +246,14 @@ class MontrekTableManager(MontrekManager, metaclass=MontrekTableMetaClass):
             "download_reporting_file", kwargs={"file_path": saved_file}
         )
         mailing_manager = MailingManager(self.session_data)
+        message = "".join(
+            (
+                "Please download the table from the link below:<br>",
+                f"<a href='{file_url}'>{file_name}</a><br>",
+                "<i>Link will be invalid after first download</i>",
+            )
+        )
         mailing_manager.send_montrek_mail_to_user(
             subject=f"{file_name} is ready for download",
-            message=f"Please download the table from the link below:<br> <a href='{file_url}'>{file_name}</a>",
+            message=message,
         )
