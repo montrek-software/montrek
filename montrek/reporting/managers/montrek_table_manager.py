@@ -250,7 +250,7 @@ class MontrekTableManager(MontrekManager, metaclass=MontrekTableMetaClass):
             (
                 "Please download the table from the link below:<br>",
                 f"<a href='{file_url}'>{file_name}</a><br>",
-                "<i>File will be deleted after download</i>",
+                "<i>Link will be invalid after first download</i>",
             )
         )
         mailing_manager.send_montrek_mail_to_user(
