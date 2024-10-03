@@ -19,6 +19,7 @@ server {
         proxy_set_header X-Forwarded-Proto https;
         proxy_connect_timeout 60;
         proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-Host $host:${DEPLOY_PORT};
     }
     location /static/ {
         alias /montrek/montrek/baseclasses/static/; # where our static files are hosted
