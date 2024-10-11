@@ -208,12 +208,6 @@ EMAIL_TEMPLATE = config("EMAIL_TEMPLATE", "mail_templates/montrek_mail_template.
 CELERY_BROKER_URL = config("CELERY_BROKER_URL", default="redis://redis:6379")
 CELERY_RESULT_BACKEND = config("CELERY_RESULT_BACKEND", default="redis://redis:6379")
 CELERY_TASK_ALWAYS_EAGER = config("CELERY_TASK_ALWAYS_EAGER", default=True, cast=bool)
-# number of messages the worker can prefetch from the broker
-CELERY_WORKER_PREFETCH_MULTIPLIER = 1
-# time to wait for the worker to acknowledge the task before the message is re-queued
-CELERY_BROKER_TRANSPORT_OPTIONS = {
-    "visibility_timeout": 3600 * 10,  # 10 hours
-}
 
 LOGGING = {
     "version": 1,
