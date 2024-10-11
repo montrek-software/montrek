@@ -84,6 +84,10 @@ services:
 
   redis:
     image: redis:7-alpine
+    command: >
+      redis-server --save 900 1 --save 300 10 --save 60 10000 --appendonly yes --appendfilename "appendonly.aof"
+    volumes:
+      - ./redis-data:/data
     networks:
       - montrek_network
 
