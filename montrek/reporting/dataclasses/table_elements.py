@@ -159,6 +159,7 @@ class LinkTableElement(BaseLinkTableElement):
 
 @dataclass
 class LinkTextTableElement(BaseLinkTableElement):
+    serializer_field_class = serializers.CharField
     text: str
 
     def _get_link_text(self, obj):
