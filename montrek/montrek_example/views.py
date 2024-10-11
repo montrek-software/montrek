@@ -357,9 +357,9 @@ def do_run_example_parallel_task(request):
     return HttpResponseRedirect(reverse("montrek_example_a_list"))
 
 
-@celery_app.task(queue=SEQUENTIAL_QUEUE_NAME)
+@celery_app.task(queue=SEQUENTIAL_QUEUE_NAME, acks_late=True)
 def example_sequential_task():
-    time.sleep(10)
+    time.sleep(60 * 60)  # 1 hour
     return "Hello from sequential task!"
 
 
