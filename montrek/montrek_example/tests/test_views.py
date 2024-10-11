@@ -705,3 +705,34 @@ class TestHubARestApiView(MontrekRestApiViewTestCase):
             }
             expected_json.append(entry)
         return expected_json
+
+
+class TestHubBRestApiView(MontrekRestApiViewTestCase):
+    viewname = "hub_b_rest_api"
+    view_class = me_views.HubBRestApiView
+
+    def build_factories(self):
+        hubs = me_factories.HubBFactory.create_batch(3)
+        self.sat_b1s = []
+        self.sat_b2s = []
+        for hub in hubs:
+            self.sat_b1s.append(me_factories.SatB1Factory(hub_entity=hub))
+            self.sat_b2s.append(me_factories.SatB2Factory(hub_entity=hub))
+            satd = me_factories.SatD1Factory.create(field_d1_str="bla")
+            hub.link_hub_b_hub_d.add(satd.hub_entity)
+
+    def expected_json(self) -> list:
+        expected_json = []
+        for i in range(3):
+            entry = {
+                "field_b1_str": self.sat_b1s[i].field_b1_str,
+                "field_b1_date": self.sat_b1s[i].field_b1_date.strftime("%Y-%m-%d"),
+                "field_b2_str": self.sat_b2s[i].field_b2_str,
+                "field_b2_choice": self.sat_b2s[i].field_b2_choice.value,
+                "field_d1_str": "bla",
+                "field_d1_int": "0",
+                "alert_level": AlertEnum.OK.value.description,
+                "alert_message": None,
+            }
+            expected_json.append(entry)
+        return expected_json

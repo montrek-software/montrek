@@ -89,7 +89,7 @@ class HubBManager(MontrekTableManager):
     def table_elements(self) -> list:
         return [
             te.StringTableElement(name="B1 String", attr="field_b1_str"),
-            te.IntTableElement(name="B1 Date", attr="field_b1_date"),
+            te.DateTableElement(name="B1 Date", attr="field_b1_date"),
             te.StringTableElement(name="B2 String", attr="field_b2_str"),
             te.StringTableElement(name="B2 Choice", attr="field_b2_choice"),
             te.LinkTextTableElement(
