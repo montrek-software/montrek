@@ -127,4 +127,5 @@ urlpatterns = [
         name="run_example_sequential_task",
     ),
     path("hub_a/api", views.HubARestApiView.as_view(), name="hub_a_rest_api"),
+    path("hub_b/api", views.HubBRestApiView.as_view(), name="hub_b_rest_api"),
 ]

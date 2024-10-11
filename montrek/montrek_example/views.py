@@ -371,3 +371,7 @@ def do_run_example_sequential_task(request):
 
 class HubARestApiView(views.MontrekRestApiView):
     manager_class = mem.HubAManager
+
+
+class HubBRestApiView(views.MontrekRestApiView):
+    manager_class = mem.HubBManager
