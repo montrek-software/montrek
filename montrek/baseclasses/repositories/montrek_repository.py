@@ -229,9 +229,10 @@ class MontrekRepository:
         else:
             static_hubs = []
         if ts_columns:
-            ts_hubs = self._create_objects_from_data_frame(
-                data_frame.loc[:, ts_columns]
-            )
+            ts_df = data_frame.loc[:, ts_columns]
+            if static_hubs:
+                ts_df["hub_entity_id"] = [hub.pk for hub in static_hubs]
+            ts_hubs = self._create_objects_from_data_frame(ts_df)
         else:
             ts_hubs = []
         return list(set(static_hubs + ts_hubs))
