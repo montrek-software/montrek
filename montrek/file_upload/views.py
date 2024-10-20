@@ -29,25 +29,32 @@ class MontrekUploadFileView(MontrekTemplateView):
     template_name = "upload_form.html"
     file_upload_manager_class = FileUploadManagerABC
     accept = ""
+    upload_form_class = UploadFileForm
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.file_upload_manager = None
 
     def get_template_context(self, **kwargs):
-        return {"form": UploadFileForm(self.accept)}
+        return {"form": self.upload_form_class(self.accept)}
 
     def post(self, request, *args, **kwargs):
-        form = UploadFileForm(self.accept, request.POST, request.FILES)
+        form = self.get_post_form(request)
         if form.is_valid():
             if not self._check_file_type(request.FILES["file"], form):
                 return self.render_to_response(self.get_context_data())
-            file_upload_manager = self.file_upload_manager_class(
+            self.file_upload_manager = self.file_upload_manager_class(
                 request.FILES["file"],
                 session_data=self.session_data,
+                upload_form=form,
+                request=request,
                 **self.kwargs,
             )
-            result = file_upload_manager.upload_and_process()
+            result = self.file_upload_manager.upload_and_process()
             if result:
-                messages.info(request, file_upload_manager.processor.message)
+                messages.info(request, self.file_upload_manager.processor.message)
             else:
-                messages.error(request, file_upload_manager.processor.message)
+                messages.error(request, self.file_upload_manager.processor.message)
             return HttpResponseRedirect(self.get_success_url())
         else:
             return self.render_to_response(self.get_context_data())
@@ -64,6 +71,9 @@ class MontrekUploadFileView(MontrekTemplateView):
             )
             return False
         return True
+
+    def get_post_form(self, request):
+        return self.upload_form_class(self.accept, request.POST, request.FILES)
 
 
 class MontrekDownloadFileBaseView(MontrekTemplateView):

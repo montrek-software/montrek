@@ -16,7 +16,7 @@ class UploadFileForm(forms.Form):
                     "class": "form-control-file",
                     "accept": self.accept,
                 }
-            )
+            ),
         )
 
 

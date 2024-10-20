@@ -3,7 +3,17 @@
 {% block content %}
 <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
-    {{ form.as_div }}
-    <input id="id_dkb_transactions_upload__submit" type="submit" value="Upload" />
+  <div class="container-fluid" style="margin-top:15px;">
+  <div class="row">
+    <div class="col-lg-2">
+      <div>
+      {{ form.as_div }}
+      </div>
+      <div>
+      <input style="margin-top:15px;" type="submit" value="Upload" class="input" />
+      </div>
+    </div>
+  </div>
+  </div>
 </form>
 {% endblock %}
