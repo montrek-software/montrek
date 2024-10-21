@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 import pandas as pd
 from typing import Any, List, Dict, Optional, Type
+from baseclasses.errors.montrek_user_error import MontrekError
 from baseclasses.models import MontrekSatelliteABC, MontrekTimeSeriesSatelliteABC
 from baseclasses.models import MontrekHubABC
 from baseclasses.models import MontrekLinkABC
@@ -467,6 +468,35 @@ class MontrekRepository:
             satellite_class.objects.filter(hub_entity=obj).update(
                 state_date_end=timezone.now()
             )
+
+    def get_hubs_for_values(
+        self,
+        values: list[Any],
+        by_repository_field: str,
+        *,
+        raise_for_multiple_hubs: bool = True,
+        raise_for_unmapped_values: bool = True,
+    ) -> list[MontrekHubABC | None]:
+        queryset = self.std_queryset()
+        value_to_hub_map = {}
+        unmapped_values = []
+        multiple_hubs = []
+        for obj in queryset:
+            value = getattr(obj, by_repository_field)
+            if value in value_to_hub_map:
+                multiple_hubs.append(value)
+            value_to_hub_map[value] = obj
+        if multiple_hubs and raise_for_multiple_hubs:
+            multiple_hubs_str = ", ".join(multiple_hubs[:10])
+            err_msg = f"Multiple hubs found for values (truncated): {multiple_hubs_str}"
+            raise MontrekError(err_msg)
+        unmapped_values = [value for value in values if value not in value_to_hub_map]
+        if raise_for_unmapped_values and unmapped_values:
+            unmapped_values_str = ", ".join(unmapped_values[:10])
+            msg = f"Cannot find hub for values (truncated): {unmapped_values_str}"
+            raise MontrekError(msg)
+        hubs = [value_to_hub_map.get(value) for value in values]
+        return hubs
 
     def _add_to_annotations(
         self, fields: List[str], annotations_manager: AnnotationsManager
