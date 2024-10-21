@@ -482,6 +482,7 @@ class MontrekRepository:
         value_to_hub_map = {}
         unmapped_values = set()
         multiple_hub_values = set()
+        hub_class_name = self.hub_class.__name__
         for obj in queryset:
             value = getattr(obj, by_repository_field)
             if value in value_to_hub_map:
@@ -490,12 +491,12 @@ class MontrekRepository:
             value_to_hub_map[value] = obj
         if multiple_hub_values and raise_for_multiple_hubs:
             multiple_hubs_str = ", ".join(sorted(list(multiple_hub_values)[:10]))
-            err_msg = f"Multiple hubs found for values (truncated): {multiple_hubs_str}"
+            err_msg = f"Multiple {hub_class_name} objects found for values (truncated): {multiple_hubs_str}"
             raise MontrekError(err_msg)
         unmapped_values = set(values) - set(value_to_hub_map.keys())
         if raise_for_unmapped_values and unmapped_values:
             unmapped_values_str = ", ".join(sorted(list(unmapped_values)[:10]))
-            err_msg = f"Cannot find hub for values (truncated): {unmapped_values_str}"
+            err_msg = f"Cannot find {hub_class_name} objects for values (truncated): {unmapped_values_str}"
             raise MontrekError(err_msg)
         hubs = [value_to_hub_map.get(value) for value in values]
         return hubs
