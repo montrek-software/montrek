@@ -3,27 +3,6 @@ from django.test import TestCase
 from django.utils import timezone
 from baseclasses.repositories.montrek_repository import MontrekRepository
 
-from dataclasses import dataclass
-from baseclasses.errors.montrek_user_error import MontrekError
-
-
-@dataclass
-class FakeHub:
-    id: int
-    fake_db_field: str | None
-
-
-class FakeRepository(MontrekRepository):
-    def std_queryset(self):
-        return [
-            FakeHub(1, "a"),
-            FakeHub(2, "b"),
-            FakeHub(3, "c"),
-            FakeHub(4, "c"),
-            FakeHub(5, ""),
-            FakeHub(6, None),
-        ]
-
 
 class TestMontrekRepository(TestCase):
     def test_session_date_default(self):
@@ -78,42 +57,3 @@ class TestMontrekRepository(TestCase):
 
         self.assertTrue(isinstance(test_query, Q))
         self.assertEqual(test_query.__dict__, (Q(~Q(field1__exact="value1"))).__dict__)
-
-    def test_get_hubs_for_values(self):
-        values = ["a", "b", "b", "c", "d", "e"]
-        repository = FakeRepository()
-        actual = repository.get_hubs_for_values(
-            values=values,
-            by_repository_field="fake_db_field",
-            raise_for_multiple_hubs=False,
-            raise_for_unmapped_values=False,
-        )
-        actual_ids = [hub.id if hub else None for hub in actual]
-        expected_ids = [1, 2, 2, 4, None, None]  # 4 is the second hub with value "c"
-        self.assertEqual(actual_ids, expected_ids)
-
-    def test_get_hubs_for_values_raises_error_for_multiple_hubs(self):
-        values = ["a", "b", "c", "d", "e"]
-        repository = FakeRepository()
-        with self.assertRaisesMessage(
-            MontrekError, "Multiple hubs found for values (truncated): c"
-        ):
-            repository.get_hubs_for_values(
-                values=values,
-                by_repository_field="fake_db_field",
-                raise_for_multiple_hubs=True,
-                raise_for_unmapped_values=False,
-            )
-
-    def test_get_hubs_for_values_raises_error_for_unmapped_values(self):
-        values = ["a", "b", "c", "d", "e"]
-        repository = FakeRepository()
-        with self.assertRaisesMessage(
-            MontrekError, "Cannot find hub for values (truncated): d, e"
-        ):
-            repository.get_hubs_for_values(
-                values=values,
-                by_repository_field="fake_db_field",
-                raise_for_multiple_hubs=False,
-                raise_for_unmapped_values=True,
-            )

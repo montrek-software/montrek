@@ -477,7 +477,8 @@ class MontrekRepository:
         raise_for_multiple_hubs: bool = True,
         raise_for_unmapped_values: bool = True,
     ) -> list[MontrekHubABC | None]:
-        queryset = self.std_queryset()
+        filter_kwargs = {f"{by_repository_field}__in": values}
+        queryset = self.std_queryset().filter(**filter_kwargs)
         value_to_hub_map = {}
         unmapped_values = set()
         multiple_hub_values = set()
