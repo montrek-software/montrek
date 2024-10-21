@@ -80,7 +80,7 @@ class TestMontrekRepository(TestCase):
         self.assertEqual(test_query.__dict__, (Q(~Q(field1__exact="value1"))).__dict__)
 
     def test_get_hubs_for_values(self):
-        values = ["a", "b", "c", "d", "e"]
+        values = ["a", "b", "b", "c", "d", "e"]
         repository = FakeRepository()
         actual = repository.get_hubs_for_values(
             values=values,
@@ -89,7 +89,7 @@ class TestMontrekRepository(TestCase):
             raise_for_unmapped_values=False,
         )
         actual_ids = [hub.id if hub else None for hub in actual]
-        expected_ids = [1, 2, 4, None, None]  # 4 is the second hub with value "c"
+        expected_ids = [1, 2, 2, 4, None, None]  # 4 is the second hub with value "c"
         self.assertEqual(actual_ids, expected_ids)
 
     def test_get_hubs_for_values_raises_error_for_multiple_hubs(self):
