@@ -1604,7 +1604,7 @@ class TestGetHubsForValues(TestCase):
             raise_for_unmapped_values=False,
         )
         actual_ids = [hub.id if hub else None for hub in actual]
-        expected_ids = [0, 1, 1, 3, None, None]  # 3 is the second hub with value "c"
+        expected_ids = [0, 1, 1, 2, None, None]  # 2 is the first hub with value "c"
         self.assertEqual(actual_ids, expected_ids)
 
     def test_get_hubs_for_values_raises_error_for_multiple_hubs(self):

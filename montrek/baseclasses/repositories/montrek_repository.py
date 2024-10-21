@@ -486,6 +486,7 @@ class MontrekRepository:
             value = getattr(obj, by_repository_field)
             if value in value_to_hub_map:
                 multiple_hub_values.add(value)
+                continue
             value_to_hub_map[value] = obj
         if multiple_hub_values and raise_for_multiple_hubs:
             multiple_hubs_str = ", ".join(sorted(list(multiple_hub_values)[:10]))
