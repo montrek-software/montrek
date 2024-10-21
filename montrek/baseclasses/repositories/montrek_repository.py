@@ -480,14 +480,14 @@ class MontrekRepository:
         queryset = self.std_queryset()
         value_to_hub_map = {}
         unmapped_values = []
-        multiple_hubs = []
+        multiple_hub_values = []
         for obj in queryset:
             value = getattr(obj, by_repository_field)
             if value in value_to_hub_map:
-                multiple_hubs.append(value)
+                multiple_hub_values.append(value)
             value_to_hub_map[value] = obj
-        if multiple_hubs and raise_for_multiple_hubs:
-            multiple_hubs_str = ", ".join(multiple_hubs[:10])
+        if multiple_hub_values and raise_for_multiple_hubs:
+            multiple_hubs_str = ", ".join(multiple_hub_values[:10])
             err_msg = f"Multiple hubs found for values (truncated): {multiple_hubs_str}"
             raise MontrekError(err_msg)
         unmapped_values = [value for value in values if value not in value_to_hub_map]

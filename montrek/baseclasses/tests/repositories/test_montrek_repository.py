@@ -89,7 +89,7 @@ class TestMontrekRepository(TestCase):
             raise_for_unmapped_values=False,
         )
         actual_ids = [hub.id if hub else None for hub in actual]
-        expected_ids = [1, 2, 4, None, None]
+        expected_ids = [1, 2, 4, None, None]  # 4 is the second hub with value "c"
         self.assertEqual(actual_ids, expected_ids)
 
     def test_get_hubs_for_values_raises_error_for_multiple_hubs(self):
