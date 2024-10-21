@@ -1583,7 +1583,7 @@ class TestRepositoryProperties(TestCase):
         )
 
 
-class TestGetHubsForValues(TestCase):
+class TestGetHubsByFieldValues(TestCase):
     def setUp(self):
         a1_str_values = ["a", "b", "c", "c", "", "x", "y", "z"]
         for hub_id, a1_str_value in enumerate(a1_str_values):
