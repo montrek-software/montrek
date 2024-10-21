@@ -1611,7 +1611,8 @@ class TestGetHubsForValues(TestCase):
         values = ["a", "b", "c", "d", "e"]
         repository = HubARepository()
         with self.assertRaisesMessage(
-            MontrekError, "Multiple HubA objects found for values (truncated): c"
+            MontrekError,
+            "Multiple HubA objects found for field_a1_str values (truncated): c",
         ):
             repository.get_hubs_by_field_values(
                 values=values,
@@ -1624,7 +1625,8 @@ class TestGetHubsForValues(TestCase):
         values = ["a", "b", "c", "d", "e"]
         repository = HubARepository()
         with self.assertRaisesMessage(
-            MontrekError, "Cannot find HubA objects for values (truncated): d, e"
+            MontrekError,
+            "Cannot find HubA objects for field_a1_str values (truncated): d, e",
         ):
             repository.get_hubs_by_field_values(
                 values=values,
