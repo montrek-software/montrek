@@ -1594,10 +1594,10 @@ class TestGetHubsForValues(TestCase):
                 field_a1_str=a1_str_value,
             )
 
-    def test_get_hubs_for_values(self):
+    def test_get_hubs_by_satellite_field_values(self):
         values = ["a", "b", "b", "c", "d", "e"]
         repository = HubARepository()
-        actual = repository.get_hubs_for_values(
+        actual = repository.get_hubs_by_satellite_field_values(
             values=values,
             by_repository_field="field_a1_str",
             raise_for_multiple_hubs=False,
@@ -1607,26 +1607,26 @@ class TestGetHubsForValues(TestCase):
         expected_ids = [0, 1, 1, 2, None, None]  # 2 is the first hub with value "c"
         self.assertEqual(actual_ids, expected_ids)
 
-    def test_get_hubs_for_values_raises_error_for_multiple_hubs(self):
+    def test_get_hubs_by_satellite_field_values_raises_error_for_multiple_hubs(self):
         values = ["a", "b", "c", "d", "e"]
         repository = HubARepository()
         with self.assertRaisesMessage(
             MontrekError, "Multiple hubs found for values (truncated): c"
         ):
-            repository.get_hubs_for_values(
+            repository.get_hubs_by_satellite_field_values(
                 values=values,
                 by_repository_field="field_a1_str",
                 raise_for_multiple_hubs=True,
                 raise_for_unmapped_values=False,
             )
 
-    def test_get_hubs_for_values_raises_error_for_unmapped_values(self):
+    def test_get_hubs_by_satellite_field_values_raises_error_for_unmapped_values(self):
         values = ["a", "b", "c", "d", "e"]
         repository = HubARepository()
         with self.assertRaisesMessage(
             MontrekError, "Cannot find hub for values (truncated): d, e"
         ):
-            repository.get_hubs_for_values(
+            repository.get_hubs_by_satellite_field_values(
                 values=values,
                 by_repository_field="field_a1_str",
                 raise_for_multiple_hubs=False,

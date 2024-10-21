@@ -469,7 +469,7 @@ class MontrekRepository:
                 state_date_end=timezone.now()
             )
 
-    def get_hubs_for_values(
+    def get_hubs_by_satellite_field_values(
         self,
         values: list[Any],
         by_repository_field: str,
