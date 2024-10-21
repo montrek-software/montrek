@@ -167,6 +167,11 @@ class MontrekSatelliteABC(TimeStampMixin, StateMixin, UserMixin):
         ]
         return value_fields
 
+    @classmethod
+    def get_field_names(cls) -> list[str]:
+        field_names = [field.name for field in cls._meta.get_fields()]
+        return field_names
+
     @property
     def get_hash_identifier(self) -> str:
         return self._get_hash_identifier()
