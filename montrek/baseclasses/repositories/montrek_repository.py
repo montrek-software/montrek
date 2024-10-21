@@ -493,8 +493,8 @@ class MontrekRepository:
         unmapped_values = set(values) - set(value_to_hub_map.keys())
         if raise_for_unmapped_values and unmapped_values:
             unmapped_values_str = ", ".join(sorted(list(unmapped_values)[:10]))
-            msg = f"Cannot find hub for values (truncated): {unmapped_values_str}"
-            raise MontrekError(msg)
+            err_msg = f"Cannot find hub for values (truncated): {unmapped_values_str}"
+            raise MontrekError(err_msg)
         hubs = [value_to_hub_map.get(value) for value in values]
         return hubs
 
