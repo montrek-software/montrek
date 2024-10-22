@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 import pandas as pd
 from typing import Any, List, Dict, Optional, Type
+from baseclasses.errors.montrek_user_error import MontrekError
 from baseclasses.models import MontrekSatelliteABC, MontrekTimeSeriesSatelliteABC
 from baseclasses.models import MontrekHubABC
 from baseclasses.models import MontrekLinkABC
@@ -467,6 +468,38 @@ class MontrekRepository:
             satellite_class.objects.filter(hub_entity=obj).update(
                 state_date_end=timezone.now()
             )
+
+    def get_hubs_by_field_values(
+        self,
+        values: list[Any],
+        by_repository_field: str,
+        *,
+        raise_for_multiple_hubs: bool = True,
+        raise_for_unmapped_values: bool = True,
+    ) -> list[MontrekHubABC | None]:
+        filter_kwargs = {f"{by_repository_field}__in": values}
+        queryset = self.std_queryset().filter(**filter_kwargs)
+        value_to_hub_map = {}
+        unmapped_values = set()
+        multiple_hub_values = set()
+        hub_class_name = self.hub_class.__name__
+        for obj in queryset:
+            value = getattr(obj, by_repository_field)
+            if value in value_to_hub_map:
+                multiple_hub_values.add(value)
+                continue
+            value_to_hub_map[value] = obj
+        if multiple_hub_values and raise_for_multiple_hubs:
+            multiple_hubs_str = ", ".join(sorted(list(multiple_hub_values)[:10]))
+            err_msg = f"Multiple {hub_class_name} objects found for {by_repository_field} values (truncated): {multiple_hubs_str}"
+            raise MontrekError(err_msg)
+        unmapped_values = set(values) - set(value_to_hub_map.keys())
+        if raise_for_unmapped_values and unmapped_values:
+            unmapped_values_str = ", ".join(sorted(list(unmapped_values)[:10]))
+            err_msg = f"Cannot find {hub_class_name} objects for {by_repository_field} values (truncated): {unmapped_values_str}"
+            raise MontrekError(err_msg)
+        hubs = [value_to_hub_map.get(value) for value in values]
+        return hubs
 
     def _add_to_annotations(
         self, fields: List[str], annotations_manager: AnnotationsManager
