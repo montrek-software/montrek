@@ -1,6 +1,7 @@
 services:
   db:
     image: postgres:latest
+    shm_size: 256m
     command: postgres -c jit=off
     environment:
       POSTGRES_DB: ${DB_NAME}
