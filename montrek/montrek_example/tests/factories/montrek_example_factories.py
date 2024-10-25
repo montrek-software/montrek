@@ -68,8 +68,6 @@ class SatC1Factory(factory.django.DjangoModelFactory):
         model = "montrek_example.SatC1"
 
     hub_entity = factory.SubFactory(HubCFactory)
-    field_c1_str = factory.Faker("word")
-    field_c1_bool = factory.Faker("boolean")
 
 
 class SatTSC2Factory(factory.django.DjangoModelFactory):
