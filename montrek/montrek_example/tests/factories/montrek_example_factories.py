@@ -76,6 +76,7 @@ class SatTSC2Factory(factory.django.DjangoModelFactory):
 
     hub_entity = factory.SubFactory(HubCFactory)
     value_date = factory.Faker("date_time", tzinfo=datetime.timezone.utc)
+    field_tsc2_float = factory.Faker("random_int", min=0, max=100)
 
 
 class SatTSC3Factory(factory.django.DjangoModelFactory):
@@ -84,6 +85,8 @@ class SatTSC3Factory(factory.django.DjangoModelFactory):
 
     hub_entity = factory.SubFactory(HubCFactory)
     value_date = factory.Faker("date_time", tzinfo=datetime.timezone.utc)
+    field_tsc3_int = factory.Faker("random_int", min=0, max=100)
+    field_tsc3_str = factory.Faker("word")
 
 
 class SatD1Factory(factory.django.DjangoModelFactory):

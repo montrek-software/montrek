@@ -1361,6 +1361,40 @@ class TestTimeSeriesStdQueryset(TestCase):
             self.assertEqual(query_element.field_tsc3_str, None)
 
 
+class TestTimeSeriesPerformance(TestCase):
+    def test_large_datasets_with_filter__performance(self):
+        year_range = range(2010, 2021)
+        hubs = me_factories.HubCFactory.create_batch(1000)
+        for hub in hubs:
+            me_factories.SatC1Factory.create()
+            for year in year_range:
+                me_factories.SatTSC2Factory.create(
+                    hub_entity=hub,
+                    value_date=montrek_time(year, 1, 1),
+                )
+                me_factories.SatTSC3Factory.create(
+                    hub_entity=hub,
+                    value_date=montrek_time(year, 1, 1),
+                )
+        repository = HubCRepository()
+        filter_data = {
+            "request_path": "test_path",
+            "filter": {
+                "test_path": {
+                    "value_date__year": {
+                        "filter_value": year_range[0],
+                        "filter_negate": False,
+                    }
+                }
+            },
+        }
+        repository = HubCRepository(session_data=filter_data)
+        t1 = datetime.datetime.now()
+        test_query = repository.std_queryset()
+        t2 = datetime.datetime.now()
+        self.assertLess(t2 - t1, datetime.timedelta(seconds=1))
+
+
 class TestTimeSeriesQuerySetEmpty(TestCase):
     def test_empty_queryset(self):
         repo = HubCRepository()
