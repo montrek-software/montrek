@@ -363,6 +363,7 @@ class MontrekRepository:
             )
             | Q(value_date=None)
         )
+        queryset = self._apply_filter(queryset)
         self._ts_annotations.update(field_map)
 
         return TSQueryContainer(
