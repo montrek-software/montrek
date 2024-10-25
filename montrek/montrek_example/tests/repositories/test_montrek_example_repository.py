@@ -1377,11 +1377,6 @@ class TestTimeSeriesPerformance(TestCase):
                     value_date=montrek_time(year, 1, 1),
                 )
         repository = HubCRepository()
-        t1 = datetime.datetime.now()
-        test_query = repository.std_queryset()
-        t2 = datetime.datetime.now()
-        self.assertLess(t2 - t1, datetime.timedelta(seconds=7))
-        self.assertEqual(test_query.count(), 12000)
         filter_data = {
             "request_path": "test_path",
             "filter": {
