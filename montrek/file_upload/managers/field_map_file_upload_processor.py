@@ -77,8 +77,21 @@ class FieldMapFileUploadProcessor:
         )
         return True
 
+    def _check_database_fields_in_repository(self):
+        repository_fields = set(self.manager.repository.get_all_fields())
+        field_maps = self.field_map_manager.repository.std_queryset()
+        used_fields = set([fm.database_field for fm in field_maps])
+        not_in_repository_fields = used_fields - repository_fields
+        if not_in_repository_fields:
+            self.message = (
+                "The following database fields are defined in the field map but are not in the target repository: "
+                + ", ".join(not_in_repository_fields)
+            )
+            return False
+
     def pre_check(self, file_path: str):
-        return True
+        are_database_fields_ok = self._check_database_fields_in_repository()
+        return are_database_fields_ok
 
     def post_check(self, file_path: str):
         return True

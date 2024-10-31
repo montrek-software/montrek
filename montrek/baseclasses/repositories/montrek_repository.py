@@ -172,7 +172,7 @@ class MontrekRepository:
     def get_time_series_satellite_field_names(self) -> list[str]:
         return self._get_satellite_field_names(is_time_series=True)
 
-    def get_all_fields(self):
+    def get_all_fields(self) -> list[str]:
         satellite_fields = [field.name for field in self.std_satellite_fields()]
         return satellite_fields + self.calculated_fields + self.linked_fields
 

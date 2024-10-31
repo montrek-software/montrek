@@ -460,6 +460,24 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
             "Error raised during object creation: <br>ValueError: Field 'field_a1_int' expected a number but got 'aaaaaaaaaa'.",
         )
 
+    def test_unallowed_database_field_in_field_map(self):
+        me_factories.SatA1FieldMapStaticSatelliteFactory(
+            source_field="source_field_0",
+            database_field="foo",
+        )
+        with open(self.test_file_path, "rb") as f:
+            data = {"file": f}
+            response = self.client.post(self.url, data, follow=True)
+        messages = list(response.context["messages"])
+        a_hubs = HubARepository().std_queryset()
+        self.assertRedirects(response, reverse("a1_view_uploads"))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(
+            str(messages[0]),
+            "The following database fields are defined in the field map but are not in the target repository: foo",
+        )
+        self.assertEqual(len(a_hubs), 0)
+
 
 class TestMontrekExampleA1UploadHistoryView(MontrekViewTestCase):
     viewname = "a1_file_upload_history"
