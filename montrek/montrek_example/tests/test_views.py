@@ -465,6 +465,14 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
             source_field="source_field_0",
             database_field="foo",
         )
+        me_factories.SatA1FieldMapStaticSatelliteFactory(
+            source_field="source_field_1",
+            database_field="bar",
+        )
+        me_factories.SatA1FieldMapStaticSatelliteFactory(
+            source_field="bar",
+            database_field="baz",
+        )
         with open(self.test_file_path, "rb") as f:
             data = {"file": f}
             response = self.client.post(self.url, data, follow=True)
@@ -474,7 +482,7 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
         self.assertEqual(len(messages), 1)
         self.assertEqual(
             str(messages[0]),
-            "The following database fields are defined in the field map but are not in the target repository: foo",
+            "The following database fields are defined in the field map but are not in the target repository: baz, foo",
         )
         self.assertEqual(len(a_hubs), 0)
 

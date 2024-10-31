@@ -34,10 +34,6 @@ class FieldMapFileUploadProcessor:
         self.file_upload_registry_hub = file_upload_registry_hub
         self.field_map_manager = self.field_map_manager_class(self.session_data)
 
-    @property
-    def allowed_database_fields(self) -> list[str]:
-        return self.manager.repository.get_all_fields()
-
     def get_source_df_from_file(self, file_path: str) -> pd.DataFrame:
         NotImplementedError("Please implement this method in a subclass.")
 
@@ -82,14 +78,16 @@ class FieldMapFileUploadProcessor:
         return True
 
     def _check_all_database_fields_allowed(self):
-        allowed_fields = set(self.allowed_database_fields)
-        field_maps = self.field_map_manager.repository.std_queryset()
-        used_fields = set([fm.database_field for fm in field_maps])
-        unallowed_used_fields = used_fields - allowed_fields
+        repository_fields = set(self.manager.repository.get_all_fields())
+        field_map_repo = self.field_map_manager.repository
+        used_fields = set(field_map_repo.get_all_database_fields())
+        # ignore intermediate fields in the check
+        used_fields -= set(field_map_repo.get_all_source_fields())
+        unallowed_used_fields = used_fields - repository_fields
         if unallowed_used_fields:
             self.message = (
                 "The following database fields are defined in the field map but are not in the target repository: "
-                + ", ".join(unallowed_used_fields)
+                + ", ".join(sorted(list(unallowed_used_fields)))
             )
             return False
         return True

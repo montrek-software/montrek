@@ -39,6 +39,12 @@ class FieldMapRepositoryABC(MontrekRepository):
             return None
         return objs.first().source_field
 
+    def get_all_source_fields(self) -> list[str]:
+        return self.std_queryset().values_list("source_field", flat=True).distinct()
+
+    def get_all_database_fields(self) -> list[str]:
+        return self.std_queryset().values_list("database_field", flat=True).distinct()
+
     def _setup_checks(self):
         if self.hub_class is FieldMapHubABC:
             raise NotImplementedError(
