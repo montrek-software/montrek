@@ -15,10 +15,11 @@ logger = logging.getLogger(__name__)
 
 
 class FieldMapFileUploadProcessor:
-    message = "Not implemented"
-    detailed_message = ""
+    message: str = "Not implemented"
+    detailed_message: str = ""
     manager_class: type[MontrekManager] | None = None
     field_map_manager_class: type[FieldMapManagerABC] = FieldMapManagerABC
+    non_database_fields: list[str] = []
 
     def __init__(
         self,
@@ -81,9 +82,13 @@ class FieldMapFileUploadProcessor:
         repository_fields = set(self.manager.repository.get_all_fields())
         field_map_repo = self.field_map_manager.repository
         used_fields = set(field_map_repo.get_all_database_fields())
-        # ignore intermediate fields in the check
-        used_fields -= set(field_map_repo.get_all_source_fields())
-        unallowed_used_fields = used_fields - repository_fields
+        intermediate_fields = set(field_map_repo.get_all_intermediate_fields())
+        unallowed_used_fields = (
+            used_fields
+            - repository_fields
+            - intermediate_fields
+            - set(self.non_database_fields)
+        )
         if unallowed_used_fields:
             self.message = (
                 "The following database fields are defined in the field map but are not in the target repository: "

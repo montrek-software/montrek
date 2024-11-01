@@ -461,21 +461,31 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
         )
 
     def test_unallowed_database_field_in_field_map(self):
+        # foo is not available in the target repository and should raise an
+        # error
         me_factories.SatA1FieldMapStaticSatelliteFactory(
             source_field="source_field_0",
-            database_field="foo",
+            database_field="not_in_repository_field_0",
         )
+        # bar is an intermediate field and should not raise an error
         me_factories.SatA1FieldMapStaticSatelliteFactory(
             source_field="source_field_1",
-            database_field="bar",
+            database_field="intermediate_field",
         )
         me_factories.SatA1FieldMapStaticSatelliteFactory(
-            source_field="bar",
-            database_field="baz",
+            source_field="intermediate_field",
+            database_field="not_in_repository_field_1",
         )
+        # whitelisted fields should not raise an error
         me_factories.SatA1FieldMapStaticSatelliteFactory(
             source_field="source_field_2",
-            database_field="source_field_2",
+            database_field="whitelisted_field",
+        )
+        # make sure a map where source and target are the same is not falsely
+        # ignored as an intermediate field
+        me_factories.SatA1FieldMapStaticSatelliteFactory(
+            source_field="not_in_repository_field_2",
+            database_field="not_in_repository_field_2",
         )
         with open(self.test_file_path, "rb") as f:
             data = {"file": f}
@@ -486,7 +496,7 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
         self.assertEqual(len(messages), 1)
         self.assertEqual(
             str(messages[0]),
-            "The following database fields are defined in the field map but are not in the target repository: baz, foo, source_field_2",
+            "The following database fields are defined in the field map but are not in the target repository: not_in_repository_field_0, not_in_repository_field_1, not_in_repository_field_2",
         )
         self.assertEqual(len(a_hubs), 0)
 
