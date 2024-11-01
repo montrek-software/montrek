@@ -17,7 +17,6 @@ from baseclasses.views import (
     MontrekUpdateView,
 )
 from file_upload.managers.file_upload_registry_manager import FileUploadRegistryManager
-from baseclasses.managers.montrek_manager import MontrekManagerNotImplemented
 from file_upload.managers.field_map_manager import FieldMapManagerABC
 from file_upload.pages import FileUploadPage
 
@@ -106,13 +105,11 @@ class MontrekFieldMapCreateView(MontrekCreateView):
     manager_class = FieldMapManagerABC
     success_url = "under_construction"
     form_class = FieldMapCreateForm
-    related_manager_class = MontrekManagerNotImplemented
 
     def get_form(self, form_class=None):
         return self.form_class(
             repository=self.manager.repository,
             field_map_manager=self.manager_class(self.session_data),
-            related_manager=self.related_manager_class(),
         )
 
     def post(self, request, *args, **kwargs):
@@ -121,7 +118,6 @@ class MontrekFieldMapCreateView(MontrekCreateView):
             self.request.POST,
             repository=self.manager.repository,
             field_map_manager=self.manager_class(self.session_data),
-            related_manager=self.related_manager_class(),
         )
         if form.is_valid():
             return self.form_valid(form)
@@ -132,7 +128,6 @@ class MontrekFieldMapUpdateView(MontrekUpdateView):
     manager_class = FieldMapManagerABC
     success_url = "under_construction"
     form_class = FieldMapCreateForm
-    related_manager_class = MontrekManagerNotImplemented
 
     def get_form(self, form_class=None):
         initial = self.manager.get_object_from_pk_as_dict(self.kwargs["pk"])
@@ -140,7 +135,6 @@ class MontrekFieldMapUpdateView(MontrekUpdateView):
         return self.form_class(
             repository=self.manager.repository,
             field_map_manager=self.manager_class(self.session_data),
-            related_manager=self.related_manager_class(),
             initial=initial,
         )
 
@@ -150,7 +144,6 @@ class MontrekFieldMapUpdateView(MontrekUpdateView):
             self.request.POST,
             repository=self.manager.repository,
             field_map_manager=self.manager_class(self.session_data),
-            related_manager=self.related_manager_class(),
         )
         if form.is_valid():
             return self.form_valid(form)

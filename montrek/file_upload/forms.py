@@ -23,19 +23,11 @@ class UploadFileForm(forms.Form):
 class FieldMapCreateForm(MontrekCreateForm):
     def __init__(self, *args, **kwargs):
         self.field_map_manager = kwargs.pop("field_map_manager")
-        self.related_manager = kwargs.pop("related_manager")
         super().__init__(*args, **kwargs)
-        self.fields["database_field"] = ChoiceField(
-            choices=[(f, f) for f in self._get_database_field_choices()],
-        )
         self.fields["function_name"] = ChoiceField(
             choices=[(f, f) for f in self._get_function_name_choices()],
         )
         self.initial["function_name"] = "no_change"
-
-    def _get_database_field_choices(self):
-        field_names = self.related_manager.get_std_queryset_field_choices()
-        return [field_name[0] for field_name in field_names]
 
     def _get_function_name_choices(self):
         function_names = []
