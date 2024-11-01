@@ -163,6 +163,7 @@ class MontrekFieldMapListView(MontrekListView):
     title = "Field Map Overview"
 
     success_url = "under_construction"
+    do_simple_file_upload = True
 
 
 class FileUploadRegistryView(MontrekListView):
