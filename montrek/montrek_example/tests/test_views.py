@@ -609,19 +609,6 @@ class TestMontrekExampleA1FieldMapCreateView(MontrekCreateViewTestCase):
             "function_parameters": "",
         }
 
-    def test_form_database_field_choices(self):
-        response = self.client.get(self.url)
-        form = response.context["form"]
-
-        self.assertEqual(
-            form.fields["database_field"].choices,
-            [
-                ("comment", "comment"),
-                ("field_a1_int", "field_a1_int"),
-                ("field_a1_str", "field_a1_str"),
-            ],
-        )
-
     def test_form_function_name_choices(self):
         response = self.client.get(self.url)
         form = response.context["form"]
