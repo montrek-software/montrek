@@ -19,7 +19,7 @@ class FieldMapFileUploadProcessor:
     detailed_message: str = ""
     manager_class: type[MontrekManager] | None = None
     field_map_manager_class: type[FieldMapManagerABC] = FieldMapManagerABC
-    non_database_fields: list[str] = []
+    non_repository_fields: list[str] = []
 
     def __init__(
         self,
@@ -87,7 +87,7 @@ class FieldMapFileUploadProcessor:
             used_fields
             - repository_fields
             - intermediate_fields
-            - set(self.non_database_fields)
+            - set(self.non_repository_fields)
         )
         if unallowed_used_fields:
             self.message = (

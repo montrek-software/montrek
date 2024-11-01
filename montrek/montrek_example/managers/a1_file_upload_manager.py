@@ -19,7 +19,7 @@ class A1FileUploadProcessor(FieldMapFileUploadProcessor, LogFileMixin):
     message = "Not implemented"
     manager_class = HubAManager
     field_map_manager_class = A1FieldMapManager
-    non_database_fields = ["whitelisted_field"]
+    non_repository_fields = ["whitelisted_field"]
 
     @classmethod
     def get_source_df_from_file(cls, file_path):
