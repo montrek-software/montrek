@@ -5,6 +5,7 @@ from file_upload.models import (
     FieldMapStaticSatellite,
     FieldMapStaticSatelliteABC,
 )
+from django.db.models import Q, F
 
 
 class FieldMapRepositoryABC(MontrekRepository):
@@ -38,6 +39,22 @@ class FieldMapRepositoryABC(MontrekRepository):
         if len(objs) == 0:
             return None
         return objs.first().source_field
+
+    def get_all_source_fields(self) -> list[str]:
+        return self.std_queryset().values_list("source_field", flat=True).distinct()
+
+    def get_all_database_fields(self) -> list[str]:
+        return self.std_queryset().values_list("database_field", flat=True).distinct()
+
+    def get_all_intermediate_fields(self) -> list[str]:
+        source_fields = self.get_all_source_fields()
+        intermediate_fields = (
+            self.std_queryset()
+            .filter(database_field__in=(source_fields))
+            .filter(~Q(source_field=F("database_field")))
+            .values_list("database_field", flat=True)
+        )
+        return intermediate_fields
 
     def _setup_checks(self):
         if self.hub_class is FieldMapHubABC:

@@ -460,6 +460,46 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
             "Error raised during object creation: <br>ValueError: Field 'field_a1_int' expected a number but got 'aaaaaaaaaa'.",
         )
 
+    def test_unallowed_database_field_in_field_map(self):
+        # foo is not available in the target repository and should raise an
+        # error
+        me_factories.SatA1FieldMapStaticSatelliteFactory(
+            source_field="source_field_0",
+            database_field="not_in_repository_field_0",
+        )
+        # bar is an intermediate field and should not raise an error
+        me_factories.SatA1FieldMapStaticSatelliteFactory(
+            source_field="source_field_1",
+            database_field="intermediate_field",
+        )
+        me_factories.SatA1FieldMapStaticSatelliteFactory(
+            source_field="intermediate_field",
+            database_field="not_in_repository_field_1",
+        )
+        # whitelisted fields should not raise an error
+        me_factories.SatA1FieldMapStaticSatelliteFactory(
+            source_field="source_field_2",
+            database_field="whitelisted_field",
+        )
+        # make sure a map where source and target are the same is not falsely
+        # ignored as an intermediate field
+        me_factories.SatA1FieldMapStaticSatelliteFactory(
+            source_field="not_in_repository_field_2",
+            database_field="not_in_repository_field_2",
+        )
+        with open(self.test_file_path, "rb") as f:
+            data = {"file": f}
+            response = self.client.post(self.url, data, follow=True)
+        messages = list(response.context["messages"])
+        a_hubs = HubARepository().std_queryset()
+        self.assertRedirects(response, reverse("a1_view_uploads"))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(
+            str(messages[0]),
+            "The following database fields are defined in the field map but are not in the target repository: not_in_repository_field_0, not_in_repository_field_1, not_in_repository_field_2",
+        )
+        self.assertEqual(len(a_hubs), 0)
+
 
 class TestMontrekExampleA1UploadHistoryView(MontrekViewTestCase):
     viewname = "a1_file_upload_history"
@@ -568,19 +608,6 @@ class TestMontrekExampleA1FieldMapCreateView(MontrekCreateViewTestCase):
             "function_name": "append_source_field_1",
             "function_parameters": "",
         }
-
-    def test_form_database_field_choices(self):
-        response = self.client.get(self.url)
-        form = response.context["form"]
-
-        self.assertEqual(
-            form.fields["database_field"].choices,
-            [
-                ("comment", "comment"),
-                ("field_a1_int", "field_a1_int"),
-                ("field_a1_str", "field_a1_str"),
-            ],
-        )
 
     def test_form_function_name_choices(self):
         response = self.client.get(self.url)
