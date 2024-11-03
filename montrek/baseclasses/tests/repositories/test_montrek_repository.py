@@ -4,9 +4,14 @@ from django.utils import timezone
 from baseclasses.repositories.montrek_repository import MontrekRepository
 
 
+class MockMontrekRepository(MontrekRepository):
+    def std_queryset(self, **kwargs):
+        pass
+
+
 class TestMontrekRepository(TestCase):
     def test_session_date_default(self):
-        montrek_repo = MontrekRepository()
+        montrek_repo = MockMontrekRepository()
         session_start_date = montrek_repo.session_start_date
         session_end_date = montrek_repo.session_end_date
         self.assertEqual(session_start_date.date(), timezone.datetime.min.date())
@@ -15,7 +20,7 @@ class TestMontrekRepository(TestCase):
         self.assertTrue(session_end_date.tzinfo is not None)
 
     def test_session_date_set(self):
-        montrek_repo = MontrekRepository(
+        montrek_repo = MockMontrekRepository(
             session_data={"start_date": "2020-01-01", "end_date": "2020-02-01"}
         )
         session_start_date = montrek_repo.session_start_date
@@ -28,11 +33,11 @@ class TestMontrekRepository(TestCase):
         self.assertTrue(session_end_date.tzinfo is not None)
 
     def test_session_user_id(self):
-        self.assertIsNone(MontrekRepository().session_user_id)
-        self.assertEqual(MontrekRepository({"user_id": 1}).session_user_id, 1)
+        self.assertIsNone(MockMontrekRepository().session_user_id)
+        self.assertEqual(MockMontrekRepository({"user_id": 1}).session_user_id, 1)
 
     def test_query_filter(self):
-        montrek_repo = MontrekRepository(
+        montrek_repo = MockMontrekRepository(
             session_data={
                 "request_path": "/path/",
                 "filter": {
