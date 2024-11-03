@@ -79,10 +79,10 @@ class TestMontrekRepositorySatellite(TestCase):
         self.assertEqual(
             test_fields,
             [
-                "field_tsc2_float",
                 "field_a1_int",
                 "field_a2_float",
                 "field_a2_str",
+                "field_tsc2_float",
                 "my_field_a1_str",
                 "my_field_b1_str",
             ],
@@ -692,8 +692,6 @@ class TestMontrekCreateObject(TestCase):
 
     def test__is_built(self):
         montrek_repo = HubARepository()
-        self.assertFalse(montrek_repo._is_built)
-        montrek_repo.std_queryset()
         self.assertTrue(montrek_repo._is_built)
 
 
