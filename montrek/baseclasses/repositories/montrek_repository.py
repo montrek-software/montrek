@@ -583,8 +583,9 @@ class MontrekRepository(MontrekRepositoryOld):
     # New methods
 
     def set_annotations(self):
-        # This will be the main part of the annotation and will replace most of std_queryset
-        pass
+        if self.IS_REFACTORED:
+            raise NotImplementedError("set_annotations is not implemented yet")
+        self.std_queryset()
 
     def create_by_dict(self, data: Dict[str, Any]) -> MontrekHubABC:
         # Will replace std_create_object
