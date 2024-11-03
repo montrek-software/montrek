@@ -43,7 +43,7 @@ class TSQueryContainer:
     satellite_class: type[MontrekTimeSeriesSatelliteABC]
 
 
-class MontrekRepository:
+class MontrekRepositoryOld:
     hub_class = MontrekHubABC
 
     def __init__(self, session_data: Dict[str, Any] = {}):
@@ -581,3 +581,35 @@ class MontrekRepository:
             )
             return dropped_data_frame
         return data_frame
+
+
+class MontrekRepository(MontrekRepositoryOld):
+    # TODO: This is the facade for the repository refactor.
+    # During the refactoring the dependency on MontrekRepositoryOld will be removed
+    update: bool = True  # If this is true only the passed fields will be updated, otherwise empty fields will be set to None
+
+    def __init__(self, session_data: Dict[str, Any] = {}):
+        super().__init__(session_data)
+        self.set_annotations()
+
+    # New methods
+
+    def set_annotations(self):
+        # This will be the main part of the annotation and will replace most of std_queryset
+        pass
+
+    def create_by_dict(self, data: Dict[str, Any]) -> MontrekHubABC:
+        # Will replace std_create_object
+        pass
+
+    def create_by_data_frame(self, data_frame: pd.DataFrame) -> List[MontrekHubABC]:
+        # Will replace create_objects_from_data_frame
+        pass
+
+    def receive(self):
+        # Will replace std_queryset
+        pass
+
+    def delete(self, obj: MontrekHubABC):
+        # Will replace std_delete_object
+        pass
