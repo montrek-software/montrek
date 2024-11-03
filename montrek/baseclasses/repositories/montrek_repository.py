@@ -6,10 +6,8 @@ from baseclasses.errors.montrek_user_error import MontrekError
 from baseclasses.models import MontrekSatelliteABC, MontrekTimeSeriesSatelliteABC
 from baseclasses.models import MontrekHubABC
 from baseclasses.models import MontrekLinkABC
-from baseclasses.repositories.annotation_manager import (
-    AnnotationsManager,
-    SatelliteAnnotationsManager,
-    LinkAnnotationsManager,
+from baseclasses.repositories.annotator import (
+    Annotator,
 )
 from baseclasses.repositories.subquery_builder import (
     SatelliteSubqueryBuilder,
@@ -502,9 +500,7 @@ class MontrekRepositoryOld:
         hubs = [value_to_hub_map.get(value) for value in values]
         return hubs
 
-    def _add_to_annotations(
-        self, fields: List[str], annotations_manager: AnnotationsManager
-    ):
+    def _add_to_annotations(self, fields: List[str], annotations_manager: Annotator):
         annotations_manager.query_to_annotations(fields)
         self.annotations.update(annotations_manager.annotations)
 
@@ -586,6 +582,8 @@ class MontrekRepositoryOld:
 class MontrekRepository(MontrekRepositoryOld):
     # TODO: This is the facade for the repository refactor.
     # During the refactoring the dependency on MontrekRepositoryOld will be removed
+    IS_REFACTORED = False  # Handles new refactoreed code, if True
+    # TODO: Remove IS_REFACTORED
     update: bool = True  # If this is true only the passed fields will be updated, otherwise empty fields will be set to None
 
     def __init__(self, session_data: Dict[str, Any] = {}):
