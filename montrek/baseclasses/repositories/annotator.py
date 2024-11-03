@@ -7,6 +7,7 @@ from baseclasses.repositories.subquery_builder import (
 class Annotator:
     def __init__(self):
         self.annotations: dict[str, Subquery] = {}
+        self.ts_annotations: dict[str, Subquery] = {}
 
     def query_to_annotations(
         self, fields: list[str], subquery_builder: SubqueryBuilder
