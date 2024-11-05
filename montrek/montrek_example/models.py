@@ -19,6 +19,7 @@ from api_upload.models import (
     ApiUploadRegistryHubABC,
     ApiUploadRegistryStaticSatelliteABC,
 )
+from baseclasses.fields import MontrekJSONField
 
 
 # Create your models here.
@@ -83,6 +84,15 @@ class SatA2(MontrekSatelliteABC):
     )
     field_a2_float = models.FloatField(default=0.0)
     identifier_fields = ["field_a2_str"]
+
+
+class SatA3(MontrekSatelliteABC):
+    hub_entity = models.ForeignKey(HubA, on_delete=models.CASCADE)
+    field_a3_str = models.CharField(
+        max_length=50, default="DEFAULT", null=True, blank=True
+    )
+    field_a3_json = MontrekJSONField(default=dict)
+    identifier_fields = ["field_a3_str"]
 
 
 class SatB1(MontrekSatelliteABC, AlertMixin):
