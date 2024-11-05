@@ -1623,6 +1623,19 @@ class TestMontrekManyToManyRelations(TestCase):
         for to in test_objects:
             self.assertEqual(to.field_a3_json, {"key": "value"})
 
+    def test_json_field__from_str_single_quote(self):
+        test_str = "{'key': 'value'}"
+        test_hub = me_models.HubA.objects.create()
+        HubAJsonRepository(session_data={"user_id": self.user.id}).std_create_object(
+            {
+                "hub_entity_id": test_hub.id,
+                "field_a3_json": test_str,
+                "field_a3_str": "test",
+            }
+        )
+        test_object = me_models.SatA3.objects.get(hub_entity=test_hub)
+        self.assertEqual(test_object.field_a3_json, {"key": "value"})
+
 
 class TestRepositoryProperties(TestCase):
     def test_static_satellites_fields(self):

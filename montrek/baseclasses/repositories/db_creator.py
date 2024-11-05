@@ -94,7 +94,7 @@ class DbCreator:
             if field.name in sat_data and isinstance(field, JSONField):
                 value = sat_data[field.name]
                 if isinstance(value, str):
-                    sat_data[field.name] = json.loads(value)
+                    sat_data[field.name] = json.loads(value.replace("'", '"'))
         return sat_data
 
     @transaction.atomic
