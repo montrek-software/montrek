@@ -19,7 +19,6 @@ from api_upload.models import (
     ApiUploadRegistryHubABC,
     ApiUploadRegistryStaticSatelliteABC,
 )
-from baseclasses.fields import MontrekJSONField
 
 
 # Create your models here.
@@ -91,7 +90,7 @@ class SatA3(MontrekSatelliteABC):
     field_a3_str = models.CharField(
         max_length=50, default="DEFAULT", null=True, blank=True
     )
-    field_a3_json = MontrekJSONField(default=dict)
+    field_a3_json = models.JSONField(default=dict)
     identifier_fields = ["field_a3_str"]
 
 

@@ -9,7 +9,10 @@ from django.utils import timezone
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
 from montrek_example import models as me_models
-from montrek_example.repositories.hub_a_repository import HubARepository
+from montrek_example.repositories.hub_a_repository import (
+    HubAJsonRepository,
+    HubARepository,
+)
 from montrek_example.repositories.hub_b_repository import HubBRepository
 from montrek_example.repositories.hub_c_repository import HubCRepository
 from montrek_example.repositories.hub_d_repository import HubDRepository
@@ -1575,6 +1578,32 @@ class TestMontrekManyToManyRelations(TestCase):
         self.assertEqual(new_1.state_date_start, new_2.state_date_start)
         self.assertEqual(new_1.state_date_end, MAX_DATE)
         self.assertEqual(new_2.state_date_end, MAX_DATE)
+
+    def test_json_field__from_dict(self):
+        test_dict = {"key": "value"}
+        test_hub = me_models.HubA.objects.create()
+        HubAJsonRepository(session_data={"user_id": self.user.id}).std_create_object(
+            {
+                "hub_entity_id": test_hub.id,
+                "field_a3_json": test_dict,
+                "field_a3_str": "test",
+            }
+        )
+        test_object = me_models.SatA3.objects.get(hub_entity=test_hub)
+        self.assertEqual(test_object.field_a3_json, test_dict)
+
+    def test_json_field__from_str(self):
+        test_str = '{"key": "value"}'
+        test_hub = me_models.HubA.objects.create()
+        HubAJsonRepository(session_data={"user_id": self.user.id}).std_create_object(
+            {
+                "hub_entity_id": test_hub.id,
+                "field_a3_json": test_str,
+                "field_a3_str": "test",
+            }
+        )
+        test_object = me_models.SatA3.objects.get(hub_entity=test_hub)
+        self.assertEqual(test_object.field_a3_json, {"key": "value"})
 
 
 class TestRepositoryProperties(TestCase):
