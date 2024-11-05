@@ -1,39 +1,40 @@
 from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, Type
 
 import pandas as pd
-from typing import Any, List, Dict, Optional, Type
-from baseclasses.errors.montrek_user_error import MontrekError
-from baseclasses.models import MontrekSatelliteABC, MontrekTimeSeriesSatelliteABC
-from baseclasses.models import MontrekHubABC
-from baseclasses.models import MontrekLinkABC
-from baseclasses.repositories.annotation_manager import (
-    AnnotationsManager,
-    SatelliteAnnotationsManager,
-    LinkAnnotationsManager,
-)
-from baseclasses.repositories.subquery_builder import (
-    SatelliteSubqueryBuilder,
-    LastTSSatelliteSubqueryBuilder,
-    LinkedSatelliteSubqueryBuilder,
-    ReverseLinkedSatelliteSubqueryBuilder,
-)
-from baseclasses.repositories.db_creator import DbCreator
 from baseclasses.dataclasses.montrek_message import (
     MontrekMessageError,
     MontrekMessageWarning,
 )
+from baseclasses.errors.montrek_user_error import MontrekError
+from baseclasses.models import (
+    MontrekHubABC,
+    MontrekLinkABC,
+    MontrekSatelliteABC,
+    MontrekTimeSeriesSatelliteABC,
+)
+from baseclasses.repositories.annotator import (
+    Annotator,
+)
+from baseclasses.repositories.db_creator import DbCreator
+from baseclasses.repositories.filter_decoder import FilterDecoder
+from baseclasses.repositories.subquery_builder import (
+    LastTSSatelliteSubqueryBuilder,
+    LinkedSatelliteSubqueryBuilder,
+    ReverseLinkedSatelliteSubqueryBuilder,
+    SatelliteSubqueryBuilder,
+    SubqueryBuilder,
+)
+from django.core.exceptions import FieldError, PermissionDenied
 from django.db.models import (
     F,
-    Q,
+    ManyToManyField,
     OuterRef,
+    Q,
     QuerySet,
     Subquery,
 )
-from django.db.models import ManyToManyField
 from django.utils import timezone
-from django.core.exceptions import FieldError, PermissionDenied
-
-from baseclasses.repositories.filter_decoder import FilterDecoder
 
 
 @dataclass
@@ -47,8 +48,7 @@ class MontrekRepositoryOld:
     hub_class = MontrekHubABC
 
     def __init__(self, session_data: Dict[str, Any] = {}):
-        self._annotations = {}
-        self._ts_annotations = {}
+        self.annotator = Annotator()
         self._primary_satellite_classes = []
         self._primary_link_classes = []
         self._ts_queryset_containers = []
@@ -65,11 +65,7 @@ class MontrekRepositoryOld:
 
     @property
     def annotations(self):
-        return self._annotations
-
-    @property
-    def ts_annotations(self):
-        return self._ts_annotations
+        return self.annotator.annotations
 
     @property
     def reference_date(self) -> timezone.datetime:
@@ -179,9 +175,9 @@ class MontrekRepositoryOld:
     def get_all_annotated_fields(self):
         if not self._is_built:
             self.std_queryset()
-        annotation_fields = list(self.annotations.keys())
-        ts_annotation_fields = list(self.ts_annotations.keys())
-        return annotation_fields + ts_annotation_fields
+        return list(self.annotations.keys()) + list(
+            self.annotator.ts_annotations.keys()
+        )
 
     def std_create_object(self, data: Dict[str, Any]) -> MontrekHubABC:
         self._raise_for_anonymous_user()
@@ -272,8 +268,7 @@ class MontrekRepositoryOld:
             subquery_builder = SatelliteSubqueryBuilder(
                 satellite_class, "pk", self.reference_date
             )
-            annotations_manager = SatelliteAnnotationsManager(subquery_builder)
-            self._add_to_annotations(fields, annotations_manager)
+            self._add_to_annotations(fields, subquery_builder)
         self._add_to_primary_satellite_classes(satellite_class)
 
     def add_last_ts_satellite_fields_annotations(
@@ -281,11 +276,10 @@ class MontrekRepositoryOld:
         satellite_class: Type[MontrekSatelliteABC],
         fields: List[str],
     ):
-        subquery_builder = LastTSSatelliteSubqueryBuilder(
+        last_ts_sat_subquery_builder = LastTSSatelliteSubqueryBuilder(
             satellite_class, "pk", self.reference_date, end_date=self.session_end_date
         )
-        annotations_manager = SatelliteAnnotationsManager(subquery_builder)
-        self._add_to_annotations(fields, annotations_manager)
+        self._add_to_annotations(fields, last_ts_sat_subquery_builder)
         self._add_to_primary_satellite_classes(satellite_class)
 
     def add_linked_satellites_field_annotations(
@@ -298,23 +292,17 @@ class MontrekRepositoryOld:
         last_ts_value: bool = False,
     ):
         if reversed_link:
-            subquery_builder = ReverseLinkedSatelliteSubqueryBuilder(
-                satellite_class,
-                link_class,
-                self.reference_date,
-                last_ts_value=last_ts_value,
-            )
+            link_subquery_builder_class = ReverseLinkedSatelliteSubqueryBuilder
         else:
-            subquery_builder = LinkedSatelliteSubqueryBuilder(
-                satellite_class,
-                link_class,
-                self.reference_date,
-                last_ts_value=last_ts_value,
-            )
-        annotations_manager = LinkAnnotationsManager(
-            subquery_builder, satellite_class.__name__
+            link_subquery_builder_class = LinkedSatelliteSubqueryBuilder
+
+        link_subquery_builder = link_subquery_builder_class(
+            satellite_class,
+            link_class,
+            self.reference_date,
+            last_ts_value=last_ts_value,
         )
-        self._add_to_annotations(fields, annotations_manager)
+        self._add_to_annotations(fields, link_subquery_builder)
         self._add_to_primary_link_classes(link_class)
         self.linked_fields.extend(fields)
 
@@ -364,7 +352,8 @@ class MontrekRepositoryOld:
             | Q(value_date=None)
         )
         queryset = self._apply_filter(queryset)
-        self._ts_annotations.update(field_map)
+        # TODO: Add SubqueryBuilder for this when refactoring TS
+        self.annotator.ts_annotations.update(field_map)  # Not nice, rework!
 
         return TSQueryContainer(
             queryset=queryset,
@@ -502,11 +491,8 @@ class MontrekRepositoryOld:
         hubs = [value_to_hub_map.get(value) for value in values]
         return hubs
 
-    def _add_to_annotations(
-        self, fields: List[str], annotations_manager: AnnotationsManager
-    ):
-        annotations_manager.query_to_annotations(fields)
-        self.annotations.update(annotations_manager.annotations)
+    def _add_to_annotations(self, fields: List[str], subquery_builder: SubqueryBuilder):
+        self.annotator.query_to_annotations(fields, subquery_builder)
 
     def _add_to_primary_satellite_classes(
         self, satellite_class: Type[MontrekSatelliteABC]
@@ -586,6 +572,8 @@ class MontrekRepositoryOld:
 class MontrekRepository(MontrekRepositoryOld):
     # TODO: This is the facade for the repository refactor.
     # During the refactoring the dependency on MontrekRepositoryOld will be removed
+    IS_REFACTORED = False  # Handles new refactoreed code, if True
+    # TODO: Remove IS_REFACTORED
     update: bool = True  # If this is true only the passed fields will be updated, otherwise empty fields will be set to None
 
     def __init__(self, session_data: Dict[str, Any] = {}):
@@ -595,8 +583,9 @@ class MontrekRepository(MontrekRepositoryOld):
     # New methods
 
     def set_annotations(self):
-        # This will be the main part of the annotation and will replace most of std_queryset
-        pass
+        if self.IS_REFACTORED:
+            raise NotImplementedError("set_annotations is not implemented yet")
+        self.std_queryset()
 
     def create_by_dict(self, data: Dict[str, Any]) -> MontrekHubABC:
         # Will replace std_create_object

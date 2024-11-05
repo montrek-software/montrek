@@ -238,6 +238,8 @@ class MockMontrekListView(MontrekListView, MockRequester):
 
 
 class MockManagerPdfFails(MontrekTableManager):
+    repository_class = MockRepository
+
     def to_latex(self):
         return "\\textbf{This is a bold text with a missing closing brace."
 
