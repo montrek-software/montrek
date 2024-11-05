@@ -1,8 +1,9 @@
 from django.db import transaction
+import json
 import datetime
 from typing import Any, Dict, List, Protocol
 from dataclasses import dataclass
-from django.db.models import QuerySet
+from django.db.models import QuerySet, JSONField
 from django.utils import timezone
 from baseclasses.models import (
     MontrekOneToOneLinkABC,
@@ -67,6 +68,7 @@ class DbCreator:
             if self._is_empty(sat_data):
                 continue
             sat_data = self._make_timezone_aware(sat_data)
+            sat_data = self._convert_json(sat_data, satellite_class)
             sat_data["created_by_id"] = user_id
             sat = satellite_class(hub_entity=self.hub_entity, **sat_data)
             sat = self._process_new_satellite(sat, satellite_class)
@@ -85,6 +87,14 @@ class DbCreator:
                     sat_data[key] = timezone.make_aware(
                         value, timezone.get_default_timezone()
                     )
+        return sat_data
+
+    def _convert_json(self, sat_data: dict, satellite_class: type[MontrekSatelliteABC]):
+        for field in satellite_class.get_value_fields():
+            if field.name in sat_data and isinstance(field, JSONField):
+                value = sat_data[field.name]
+                if isinstance(value, str):
+                    sat_data[field.name] = json.loads(value.replace("'", '"'))
         return sat_data
 
     @transaction.atomic

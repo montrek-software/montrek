@@ -75,3 +75,17 @@ class HubAFileUploadRegistryRepository(FileUploadRegistryRepositoryABC):
     link_file_upload_registry_file_log_file_class = (
         me_models.LinkHubAFileUploadRegistryFileLogFile
     )
+
+
+class HubAJsonRepository(MontrekRepository):
+    hub_class = me_models.HubA
+
+    def std_queryset(self):
+        self.add_satellite_fields_annotations(
+            me_models.SatA3,
+            [
+                "field_a3_str",
+                "field_a3_json",
+            ],
+        )
+        return self.build_queryset()

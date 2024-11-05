@@ -85,6 +85,15 @@ class SatA2(MontrekSatelliteABC):
     identifier_fields = ["field_a2_str"]
 
 
+class SatA3(MontrekSatelliteABC):
+    hub_entity = models.ForeignKey(HubA, on_delete=models.CASCADE)
+    field_a3_str = models.CharField(
+        max_length=50, default="DEFAULT", null=True, blank=True
+    )
+    field_a3_json = models.JSONField(default=dict)
+    identifier_fields = ["field_a3_str"]
+
+
 class SatB1(MontrekSatelliteABC, AlertMixin):
     hub_entity = models.ForeignKey(HubB, on_delete=models.CASCADE)
     field_b1_str = models.CharField(max_length=50, default="DEFAULT")
