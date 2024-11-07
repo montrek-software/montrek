@@ -222,7 +222,7 @@ class MontrekViewMixin:
                 messages.info(self.request, message.message)
 
     def get_view_queryset(self):
-        return self.manager.repository.std_queryset()
+        return self.manager.repository.receive()
 
 
 class MontrekPermissionRequiredMixin(PermissionRequiredMixin):

@@ -596,8 +596,7 @@ class MontrekRepository(MontrekRepositoryOld):
         pass
 
     def receive(self):
-        # Will replace std_queryset
-        pass
+        return self.build_queryset()
 
     def delete(self, obj: MontrekHubABC):
         # Will replace std_delete_object
