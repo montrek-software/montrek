@@ -12,7 +12,7 @@ from api_upload.repositories.api_upload_registry_repository import (
 class HubARepository(MontrekRepository):
     hub_class = me_models.HubA
 
-    def std_queryset(self):
+    def set_annotations(self):
         self.add_satellite_fields_annotations(
             me_models.SatA1,
             [
@@ -32,10 +32,9 @@ class HubARepository(MontrekRepository):
             me_models.LinkHubAHubB,
             ["field_b1_str"],
         )
-        return self.build_queryset()
 
     def get_hub_b_objects(self):
-        return HubBRepository().std_queryset()
+        return HubBRepository().receive()
 
     def test_queryset_1(self):
         self.add_satellite_fields_annotations(
@@ -50,7 +49,7 @@ class HubARepository(MontrekRepository):
                 "field_a2_float",
             ],
         )
-        return self.build_queryset()
+        return self.receive()
 
     def test_queryset_2(self):
         self.add_linked_satellites_field_annotations(
@@ -58,7 +57,7 @@ class HubARepository(MontrekRepository):
             me_models.LinkHubAHubB,
             ["field_b1_str"],
         )
-        return self.build_queryset()
+        return self.receive()
 
 
 class HubAApiUploadRepository(ApiUploadRepositoryABC):
@@ -80,7 +79,7 @@ class HubAFileUploadRegistryRepository(FileUploadRegistryRepositoryABC):
 class HubAJsonRepository(MontrekRepository):
     hub_class = me_models.HubA
 
-    def std_queryset(self):
+    def set_annotations(self):
         self.add_satellite_fields_annotations(
             me_models.SatA3,
             [
@@ -88,4 +87,3 @@ class HubAJsonRepository(MontrekRepository):
                 "field_a3_json",
             ],
         )
-        return self.build_queryset()

@@ -9,7 +9,7 @@ from montrek_example import models as me_models
 class SatA1Repository(MontrekRepository):
     hub_class = me_models.HubA
 
-    def std_queryset(self):
+    def set_annotations(self):
         self.add_satellite_fields_annotations(
             me_models.SatA1,
             [
@@ -17,7 +17,6 @@ class SatA1Repository(MontrekRepository):
                 "field_a1_str",
             ],
         )
-        return self.build_queryset()
 
     def get_upload_registry_table(self):
         return (

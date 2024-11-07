@@ -560,7 +560,9 @@ class MontrekRepository(MontrekRepositoryOld):
 
     def set_annotations(self):
         if self.IS_REFACTORED:
-            raise NotImplementedError("set_annotations is not implemented yet")
+            raise NotImplementedError(
+                f"set_annotations is not implemented for {self.__class__.__name__}"
+            )
         self.std_queryset()
 
     def create_by_dict(self, data: Dict[str, Any]) -> MontrekHubABC:
