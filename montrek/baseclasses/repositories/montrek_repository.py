@@ -299,11 +299,6 @@ class MontrekRepositoryOld:
         self._add_to_primary_link_classes(link_class)
         self.linked_fields.extend(fields)
 
-    def build_queryset(self, **filter_kwargs) -> QuerySet:
-        queryset = self.query_builder.build_queryset(self.reference_date)
-        self._is_built = True
-        return queryset
-
     def build_time_series_queryset_container(
         self,
         time_series_satellite_class: type[MontrekSatelliteABC],
@@ -553,7 +548,7 @@ class MontrekRepositoryOld:
 class MontrekRepository(MontrekRepositoryOld):
     # TODO: This is the facade for the repository refactor.
     # During the refactoring the dependency on MontrekRepositoryOld will be removed
-    IS_REFACTORED = False  # Handles new refactoreed code, if True
+    IS_REFACTORED = True  # Handles new refactoreed code, if True
     # TODO: Remove IS_REFACTORED
     update: bool = True  # If this is true only the passed fields will be updated, otherwise empty fields will be set to None
 
@@ -576,8 +571,8 @@ class MontrekRepository(MontrekRepositoryOld):
         # Will replace create_objects_from_data_frame
         pass
 
-    def receive(self):
-        return self.build_queryset()
+    def receive(self) -> QuerySet:
+        return self.query_builder.build_queryset(self.reference_date)
 
     def delete(self, obj: MontrekHubABC):
         # Will replace std_delete_object
