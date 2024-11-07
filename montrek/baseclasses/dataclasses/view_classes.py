@@ -10,6 +10,15 @@ class ActionElement:
 
 
 @dataclass
+class BackActionElement(ActionElement):
+    def __init__(self, link: str):
+        self.icon = "arrow-left"
+        self.link = link
+        self.action_id = "id_back_action"
+        self.hover_text = "Go Back"
+
+
+@dataclass
 class TabElement:
     name: str
     link: str
