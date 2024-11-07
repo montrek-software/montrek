@@ -326,6 +326,7 @@ class TestMontrekExampleDListView(MontrekListViewTestCase):
         self.assertEqual(registry.upload_status, "failed")
 
     def test_simple_file_upload_overwrite(self):
+        # helper methods
         def _write_temporary_file_and_upload(data: str):
             with TemporaryDirectory() as temp_dir:
                 file_path = os.path.join(temp_dir, "upload_file.csv")
@@ -352,6 +353,7 @@ class TestMontrekExampleDListView(MontrekListViewTestCase):
         _write_temporary_file_and_upload(upload_csv_data)
         expected_values = [("a", 1), ("b", 2), ("c", 3)]
         _assert_database_values(expected_values)
+
         # upload second file, overwrite first file data
         upload_csv_data = dedent(
             """
@@ -365,8 +367,9 @@ class TestMontrekExampleDListView(MontrekListViewTestCase):
         _write_temporary_file_and_upload(upload_csv_data)
         expected_values = [("a", 1), ("b", 20), ("d", 30), ("e", 40)]
         _assert_database_values(expected_values)
-        # upload the third file which will lead to an error,
-        # the data in the database should not be changed
+
+        # upload the third file which will lead to an error during insertion,
+        # the data in the database should not have been deleted
         upload_csv_data = dedent(
             """
             D1 Int
