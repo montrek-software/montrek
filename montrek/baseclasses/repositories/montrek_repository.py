@@ -308,10 +308,7 @@ class MontrekRepositoryOld:
 
     def build_queryset(self, **filter_kwargs) -> QuerySet:
         base_query = self._get_base_query()
-        queryset = base_query.annotate(**self.annotations).filter(
-            Q(state_date_start__lte=self.reference_date),
-            Q(state_date_end__gt=self.reference_date),
-        )
+        queryset = base_query.annotate(**self.annotations)
         queryset = self._apply_filter(queryset)
         self._is_built = True
         return queryset
@@ -385,7 +382,11 @@ class MontrekRepositoryOld:
         return queryset
 
     def _get_base_query(self) -> QuerySet:
-        return self.hub_class.objects.all()
+        # Usually every query starts with all hubs of the repositories hub_class.
+        # If there is a time_series involved, the query is built from there.
+        if len(self._ts_queryset_containers) == 0:
+            return self.hub_class.objects.all()
+        return self._build_ts_base_query()
 
     def _build_ts_base_query(self) -> QuerySet:
         # If there are more than one base queries registered, we annotate them in the first step and return everything as base query
