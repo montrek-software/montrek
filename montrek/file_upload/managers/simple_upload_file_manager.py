@@ -1,3 +1,4 @@
+from django.db import transaction
 from typing import Any
 import pandas as pd
 from file_upload.managers.file_upload_manager import FileUploadManagerABC
@@ -17,12 +18,6 @@ class SimpleFileUploadProcessor:
         self.table_manager = table_manager
         self.overwrite = overwrite
 
-    def delete_all_existing_objects(self):
-        repository = self.table_manager.repository
-        queryset = repository.std_queryset()
-        for obj in queryset:
-            repository.std_delete_object(obj)
-
     def pre_check(self, file_path: str) -> bool:
         return True
 
@@ -37,11 +32,17 @@ class SimpleFileUploadProcessor:
             return False
         name_to_field_map = self.table_manager.get_table_elements_name_to_field_map()
         input_df = input_df.rename(columns=name_to_field_map)
+        target_repository = self.table_manager.repository
         try:
             if self.overwrite:
-                self.delete_all_existing_objects()
-            self.table_manager.repository.create_objects_from_data_frame(input_df)
-        except ValueError as e:
+                with transaction.atomic():
+                    queryset = target_repository.std_queryset()
+                    for obj in queryset:
+                        target_repository.std_delete_object(obj)
+                    target_repository.create_objects_from_data_frame(input_df)
+            else:
+                target_repository.create_objects_from_data_frame(input_df)
+        except Exception as e:
             self.message = str(e)
             return False
 
