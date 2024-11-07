@@ -75,7 +75,6 @@ class TestMontrekRepositorySatellite(TestCase):
             ["field_tsc2_float"],
             last_ts_value=True,
         )  # linked time series field
-        repo.std_queryset()
         repo.rename_field("field_a1_str", "my_field_a1_str")  # direct satellite field
         repo.rename_field("field_b1_str", "my_field_b1_str")  # linked field
         test_fields = repo.get_all_annotated_fields()
@@ -324,8 +323,8 @@ class TestMontrekCreateObject(TestCase):
                 "field_a2_str": "test2",
             }
         )
-        # The std_queryset should return the adjusted object
-        a_object = HubARepository().std_queryset().get()
+        # The receive should return the adjusted object
+        a_object = HubARepository().receive().get()
         self.assertEqual(a_object.field_a1_str, "test_new")
         self.assertEqual(a_object.field_a1_int, 5)
         self.assertEqual(a_object.field_a2_str, "test2")
@@ -359,7 +358,7 @@ class TestMontrekCreateObject(TestCase):
             }
         )
         a_object = (
-            HubARepository(session_data={"user_id": self.user.id}).std_queryset().get()
+            HubARepository(session_data={"user_id": self.user.id}).receive().get()
         )
         repository.std_create_object(
             {
@@ -373,8 +372,8 @@ class TestMontrekCreateObject(TestCase):
         # We should still have one Hub
         self.assertEqual(me_models.HubA.objects.count(), 1)
 
-        # The std_queryset should return the adjusted object
-        b_object = HubARepository().std_queryset().get()
+        # The receive should return the adjusted object
+        b_object = HubARepository().receive().get()
         self.assertEqual(b_object.field_a1_str, "test_new")
 
     def test_std_create_object_raises_error_for_missing_user_id(self):
@@ -509,7 +508,7 @@ class TestMontrekCreateObject(TestCase):
             }
         )
         repository.create_objects_from_data_frame(data_frame)
-        test_query = repository.std_queryset()
+        test_query = repository.receive()
         self.assertEqual(test_query.count(), 2)
 
     def test_create_objects_from_data_frame_drop_empty_rows(self):
@@ -523,7 +522,7 @@ class TestMontrekCreateObject(TestCase):
             }
         )
         repository.create_objects_from_data_frame(data_frame)
-        test_query = repository.std_queryset()
+        test_query = repository.receive()
         self.assertEqual(test_query.count(), 2)
         self.assertEqual(test_query[0].field_a1_int, 5)
         self.assertEqual(repository.messages[0].message, "1 empty rows not uploaded!")
@@ -532,7 +531,7 @@ class TestMontrekCreateObject(TestCase):
         self,
     ):
         repository = HubARepository(session_data={"user_id": self.user.id})
-        repository.std_queryset()
+        repository.receive()
         # A missing field_a1_str column should hot raise an error.
         data_frame = pd.DataFrame(
             {
@@ -541,7 +540,7 @@ class TestMontrekCreateObject(TestCase):
             }
         )
         repository.create_objects_from_data_frame(data_frame)
-        queryset = repository.std_queryset()
+        queryset = repository.receive()
         self.assertEqual(queryset.count(), 3)
 
     def test_create_objects_from_data_frame_comment(self):
@@ -578,7 +577,7 @@ class TestMontrekCreateObject(TestCase):
             }
         )
         repository.create_objects_from_data_frame(data_frame)
-        test_query = repository.std_queryset()
+        test_query = repository.receive()
         self.assertEqual(test_query.count(), 3)
         self.assertEqual(me_models.HubC.objects.count(), 2)
         self.assertEqual(me_models.SatC1.objects.count(), 2)
@@ -616,7 +615,7 @@ class TestMontrekCreateObject(TestCase):
                 "link_hub_a_hub_b": hub_b_1,
             }
         )
-        queried_object = repository.std_queryset().get()
+        queried_object = repository.receive().get()
         self.assertEqual(queried_object.field_b1_str, sat_b_1.field_b1_str)
         repository.std_create_object(
             {
@@ -635,7 +634,7 @@ class TestMontrekCreateObject(TestCase):
         self.assertEqual(
             first_linked_hub.state_date_end, last_linked_hub.state_date_start
         )
-        queried_object = repository.std_queryset().get()
+        queried_object = repository.receive().get()
         self.assertEqual(queried_object.field_b1_str, sat_b_2.field_b1_str)
 
     def test_create_hub_a_with_link_to_hub_b_existing(self):
@@ -651,7 +650,7 @@ class TestMontrekCreateObject(TestCase):
                 "link_hub_a_hub_b": hub_b_1,
             }
         )
-        queried_object = repository.std_queryset().get()
+        queried_object = repository.receive().get()
         self.assertEqual(queried_object.field_b1_str, sat_b_1.field_b1_str)
         repository.std_create_object(
             {
@@ -663,7 +662,7 @@ class TestMontrekCreateObject(TestCase):
             }
         )
         self.assertEqual(me_models.LinkHubAHubB.objects.count(), 1)
-        queried_object = repository.std_queryset().get()
+        queried_object = repository.receive().get()
         self.assertEqual(queried_object.field_b1_str, sat_b_1.field_b1_str)
 
     def test_write_zeros_to_db(self):
@@ -676,7 +675,7 @@ class TestMontrekCreateObject(TestCase):
                 "field_a2_str": "test2",
             }
         )
-        queried_object = repository.std_queryset().get()
+        queried_object = repository.receive().get()
         self.assertEqual(queried_object.field_a2_float, 0.0)
 
     def test_create_with_nan_in_data_frame(self):
@@ -690,12 +689,8 @@ class TestMontrekCreateObject(TestCase):
             }
         )
         repository.create_objects_from_data_frame(data_frame)
-        test_query = repository.std_queryset()
+        test_query = repository.receive()
         self.assertEqual(test_query.count(), 3)
-
-    def test__is_built(self):
-        montrek_repo = HubARepository()
-        self.assertTrue(montrek_repo._is_built)
 
 
 class TestMontrekCreateObjectTransaction(TransactionTestCase):
@@ -719,22 +714,22 @@ class TestDeleteObject(TestCase):
         repository.std_create_object({"field_a1_int": 5, "field_a1_str": "test"})
         self.assertEqual(me_models.SatA1.objects.count(), 1)
         self.assertEqual(me_models.HubA.objects.count(), 1)
-        deletion_object = repository.std_queryset().get()
+        deletion_object = repository.receive().get()
         repository.std_delete_object(deletion_object)
         self.assertEqual(me_models.SatA1.objects.count(), 1)
         self.assertLess(me_models.SatA1.objects.first().state_date_end, timezone.now())
         self.assertEqual(me_models.HubA.objects.count(), 1)
-        self.assertEqual(len(repository.std_queryset()), 0)
+        self.assertEqual(len(repository.receive()), 0)
 
     def test_reintroduce_deleted_object(self):
         repository = HubARepository(session_data={"user_id": self.user.id})
         repository.std_create_object({"field_a1_int": 5, "field_a1_str": "test"})
-        deletion_object = repository.std_queryset().get()
+        deletion_object = repository.receive().get()
         repository.std_delete_object(deletion_object)
         repository.std_create_object({"field_a1_int": 5, "field_a1_str": "test"})
         self.assertEqual(me_models.SatA1.objects.count(), 2)
         self.assertEqual(me_models.HubA.objects.count(), 2)
-        self.assertEqual(len(repository.std_queryset()), 1)
+        self.assertEqual(len(repository.receive()), 1)
 
 
 class TestMontrekRepositoryLinks(TestCase):
@@ -1120,7 +1115,7 @@ class TestTimeSeries(TestCase):
             )
             sat_c.hub_entity.link_hub_c_hub_d.add(sat_d.hub_entity)
         repository = HubCRepository(session_data={"user_id": self.user.id})
-        test_query = repository.std_queryset().filter(value_date__in=value_dates)
+        test_query = repository.receive().filter(value_date__in=value_dates)
         self.assertEqual(test_query.count(), 2)
         self.assertEqual(test_query[1].field_tsc2_float, 0.0)
         self.assertEqual(test_query[1].field_tsd2_float, 0)
@@ -1133,7 +1128,7 @@ class TestTimeSeries(TestCase):
 class TestTimeSeriesRepositoryEmpty(TestCase):
     def test_empty_time_series(self):
         repository = HubCRepository()
-        queryset = repository.std_queryset()
+        queryset = repository.receive()
         self.assertEqual(queryset.count(), 0)
         queryset.filter(field_tsc2_float__isnull=True)
 
@@ -1144,7 +1139,7 @@ class TestTimeSeriesRepositoryEmpty(TestCase):
             value_date=montrek_time(2024, 2, 5),
             field_tsc3_int=5,
         )
-        qs = repository.std_queryset()
+        qs = repository.receive()
         self.assertEqual(qs.count(), 1)
         self.assertEqual(qs[0].field_tsc3_str, "Test")
         self.assertEqual(qs[0].field_tsc3_int, 5)
@@ -1296,7 +1291,7 @@ class TestTimeSeriesStdQueryset(TestCase):
         )
         self.user = MontrekUserFactory()
 
-    def test_build_time_series_std_queryset(self):
+    def test_build_time_series_receive(self):
         def make_assertions(test_query):
             test_query = test_query.order_by("created_at")
             self.assertEqual(test_query.count(), 6)
@@ -1346,15 +1341,15 @@ class TestTimeSeriesStdQueryset(TestCase):
 
         repo = HubCRepository()
         # This query creates missing ts entries
-        test_query = repo.std_queryset()
+        test_query = repo.receive()
         make_assertions(test_query)
         # This catches all
-        test_query = repo.std_queryset()
+        test_query = repo.receive()
         make_assertions(test_query)
 
     def test_query_out_of_session_date(self):
         repo = HubCRepository(session_data={"end_date": datetime.datetime(2024, 1, 1)})
-        test_query = repo.std_queryset()
+        test_query = repo.receive()
         for query_element in test_query:
             self.assertEqual(query_element.value_date, None)
             self.assertEqual(query_element.field_tsc2_float, None)
@@ -1391,7 +1386,7 @@ class TestTimeSeriesPerformance(TestCase):
         }
         repository = HubCRepository(session_data=filter_data)
         t1 = datetime.datetime.now()
-        test_query = repository.std_queryset()
+        test_query = repository.receive()
         t2 = datetime.datetime.now()
         self.assertLess(t2 - t1, datetime.timedelta(seconds=1))
 
@@ -1399,7 +1394,7 @@ class TestTimeSeriesPerformance(TestCase):
 class TestTimeSeriesQuerySetEmpty(TestCase):
     def test_empty_queryset(self):
         repo = HubCRepository()
-        test_query = repo.std_queryset().filter(field_tsc3_int=42)
+        test_query = repo.receive().filter(field_tsc3_int=42)
         self.assertEqual(test_query.count(), 0)
 
 
@@ -1488,7 +1483,7 @@ class TestMontrekManyToManyRelations(TestCase):
 
     def test_return_many_to_many_relation(self):
         repository_b = HubBRepository()
-        satb_queryset = repository_b.std_queryset()
+        satb_queryset = repository_b.receive()
         self.assertEqual(satb_queryset.count(), 2)
         satb_queryset = satb_queryset.order_by("field_b1_str")
         self.assertEqual(
@@ -1501,7 +1496,7 @@ class TestMontrekManyToManyRelations(TestCase):
         )
         self.assertEqual(satb_queryset[1].field_d1_str, self.satd1.field_d1_str)
         repository_d = HubDRepository()
-        satd_queryset = repository_d.std_queryset()
+        satd_queryset = repository_d.receive()
         self.assertEqual(satd_queryset.count(), 2)
         self.assertEqual(
             satd_queryset[0].field_b1_str,
@@ -1532,7 +1527,7 @@ class TestMontrekManyToManyRelations(TestCase):
         )
         repository_b = HubBRepository(session_data={"user_id": self.user.id})
         repository_b.create_objects_from_data_frame(input_df)
-        new_sat_b = repository_b.std_queryset().last()
+        new_sat_b = repository_b.receive().last()
         links = new_sat_b.link_hub_b_hub_d.all()
         self.assertEqual(links.count(), 2)
         self.assertEqual(links[0], self.satd1.hub_entity)
@@ -1561,7 +1556,7 @@ class TestMontrekManyToManyRelations(TestCase):
         repository_b = HubBRepository(session_data={"user_id": self.user.id})
         repository_b.std_create_object(input_data)
 
-        hub_b = repository_b.std_queryset().filter(id=hub_entity_id).first()
+        hub_b = repository_b.receive().filter(id=hub_entity_id).first()
 
         links = me_models.LinkHubBHubD.objects.filter(hub_in=hub_b.id).all()
         continued = links.filter(hub_out=self.satd1.hub_entity).get()

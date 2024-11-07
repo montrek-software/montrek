@@ -55,7 +55,6 @@ class MontrekRepositoryOld:
         self.query_builder = QueryBuilder(self.hub_class, self.annotator, session_data)
         self._reference_date = None
         self.messages = []
-        self._is_built = False
         self.calculated_fields: list[str] = []
         self.linked_fields: list[str] = []
 
@@ -130,17 +129,12 @@ class MontrekRepositoryOld:
         return object_dict
 
     def std_satellite_fields(self):
-        if not self._is_built:
-            self.std_queryset()
         fields = []
         for satellite_class in self._primary_satellite_classes:
             fields.extend(satellite_class.get_value_fields())
         return fields
 
     def _get_satellite_field_names(self, is_time_series: bool) -> list[str]:
-        if not self._is_built:
-            self.std_queryset()
-
         fields = []
         for satellite_class in self._primary_satellite_classes:
             if (
@@ -166,16 +160,12 @@ class MontrekRepositoryOld:
         return satellite_fields + self.calculated_fields + self.linked_fields
 
     def get_all_annotated_fields(self):
-        if not self._is_built:
-            self.std_queryset()
         return list(self.annotations.keys()) + list(
             self.annotator.ts_annotations.keys()
         )
 
     def std_create_object(self, data: Dict[str, Any]) -> MontrekHubABC:
         self._raise_for_anonymous_user()
-        if not self._is_built:
-            self.std_queryset()
         hub_entity = self._get_hub_from_data(data)
         db_creator = DbCreator(self.hub_class, self._primary_satellite_classes)
         created_hub = db_creator.create(data, hub_entity, self.session_user_id)
@@ -232,8 +222,6 @@ class MontrekRepositoryOld:
         data_frame = self._drop_empty_rows(data_frame)
         data_frame = self._drop_duplicates(data_frame)
         self._raise_for_duplicated_entries(data_frame)
-        if not self._is_built:
-            self.std_queryset()
         db_creator = DbCreator(self.hub_class, self._primary_satellite_classes)
         created_hubs = []
         for _, row in data_frame.iterrows():
@@ -334,7 +322,7 @@ class MontrekRepositoryOld:
             )
             | Q(value_date=None)
         )
-        queryset = self._apply_filter(queryset)
+        queryset = self.query_builder._apply_filter(queryset)
         # TODO: Add SubqueryBuilder for this when refactoring TS
         self.annotator.ts_annotations.update(field_map)  # Not nice, rework!
 
@@ -345,8 +333,6 @@ class MontrekRepositoryOld:
         )
 
     def get_history_queryset(self, pk: int, **kwargs) -> dict[str, QuerySet]:
-        if not self._is_built:
-            self.std_queryset()
         hub = self.hub_class.objects.get(pk=pk)
         satellite_querys = {}
         for sat in self._primary_satellite_classes:
