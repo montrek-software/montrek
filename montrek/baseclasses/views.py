@@ -34,7 +34,7 @@ from baseclasses.forms import DateRangeForm, FilterForm, MontrekCreateForm
 from baseclasses.managers.montrek_manager import MontrekManagerNotImplemented
 from baseclasses.pages import NoPage
 
-from file_upload.forms import UploadFileForm
+from file_upload.forms import SimpleUploadFileForm
 from file_upload.managers.simple_upload_file_manager import SimpleUploadFileManager
 from baseclasses.serializers import MontrekSerializer
 
@@ -319,7 +319,7 @@ class MontrekListView(
             filter_field_choices=self.manager.get_std_queryset_field_choices(),
         )
         if self.do_simple_file_upload:
-            context["simple_upload_form"] = UploadFileForm(".xlsx,.csv")
+            context["simple_upload_form"] = SimpleUploadFileForm(".xlsx,.csv")
         context["do_simple_file_upload"] = self.do_simple_file_upload
         return context
 
@@ -338,12 +338,13 @@ class MontrekListView(
         return HttpResponseRedirect(self.request.path)
 
     def post(self, request, *args, **kwargs):
-        form = UploadFileForm(".xlsx,.csv", request.POST, request.FILES)
+        form = SimpleUploadFileForm(".xlsx,.csv", request.POST, request.FILES)
         if form.is_valid():
             file_upload_manager = SimpleUploadFileManager(
                 request.FILES["file"],
                 session_data=self.session_data,
                 table_manager=self.manager,
+                overwrite=form.cleaned_data["overwrite"],
                 **self.kwargs,
             )
             result = file_upload_manager.upload_and_process()

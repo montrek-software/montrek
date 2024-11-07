@@ -10,10 +10,18 @@ class SimpleFileUploadProcessor:
         file_upload_registry_hub,
         session_data: dict[str, Any],
         table_manager: MontrekTableManager,
+        overwrite: bool = False,
         **kwargs,
     ):
         self.message = ""
         self.table_manager = table_manager
+        self.overwrite = overwrite
+
+    def delete_all_existing_objects(self):
+        repository = self.table_manager.repository
+        queryset = repository.std_queryset()
+        for obj in queryset:
+            repository.std_delete_object(obj)
 
     def pre_check(self, file_path: str) -> bool:
         return True
@@ -30,6 +38,8 @@ class SimpleFileUploadProcessor:
         name_to_field_map = self.table_manager.get_table_elements_name_to_field_map()
         input_df = input_df.rename(columns=name_to_field_map)
         try:
+            if self.overwrite:
+                self.delete_all_existing_objects()
             self.table_manager.repository.create_objects_from_data_frame(input_df)
         except ValueError as e:
             self.message = str(e)

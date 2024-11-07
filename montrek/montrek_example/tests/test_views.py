@@ -1,4 +1,6 @@
+from tempfile import TemporaryDirectory
 import os
+from textwrap import dedent
 
 from baseclasses.dataclasses.alert import AlertEnum
 from baseclasses.utils import montrek_time
@@ -279,7 +281,7 @@ class TestMontrekExampleDListView(MontrekListViewTestCase):
     expected_no_of_rows = 1
 
     def build_factories(self):
-        me_factories.SatD1Factory.create()
+        me_factories.SatD1Factory.create(field_d1_str="0", field_d1_int=0)
 
     def test_simple_file_upload_csv(self):
         test_file_path = os.path.join(os.path.dirname(__file__), "data", "d_file.csv")
@@ -322,6 +324,56 @@ class TestMontrekExampleDListView(MontrekListViewTestCase):
         self.assertEqual(len(queyset), 1)
         registry = FileUploadRegistryRepository().std_queryset().last()
         self.assertEqual(registry.upload_status, "failed")
+
+    def test_simple_file_upload_overwrite(self):
+        first_upload_csv_data = dedent(
+            """
+            D1 String,D1 Int
+            a,1
+            b,2
+            c,3
+            """
+        )
+        second_upload_csv_data = dedent(
+            """
+            D1 String,D1 Int
+            a,1
+            b,20
+            d,30
+            e,40
+            """
+        )
+        hub_d_repository = HubDRepository()
+        with TemporaryDirectory() as temp_dir:
+            # upload first file, overwrite factory generated data
+            first_file_upload_file_path = os.path.join(
+                temp_dir, "first_upload_file.csv"
+            )
+            with open(first_file_upload_file_path, "w") as f:
+                f.write(first_upload_csv_data)
+            with open(first_file_upload_file_path, "rb") as f:
+                data = {"file": f, "overwrite": True}
+                self.client.post(self.url, data, follow=True)
+            queryset = hub_d_repository.std_queryset()
+            actual_values = queryset.values_list("field_d1_str", "field_d1_int")
+            expected_values = [("a", 1), ("b", 2), ("c", 3)]
+            self.assertEqual(list(actual_values), expected_values)
+            first_file_upload_file_path = os.path.join(
+                temp_dir, "first_upload_file.csv"
+            )
+            # upload second file, overwrite first file data
+            second_file_upload_file_path = os.path.join(
+                temp_dir, "second_upload_file.csv"
+            )
+            with open(second_file_upload_file_path, "w") as f:
+                f.write(second_upload_csv_data)
+            with open(second_file_upload_file_path, "rb") as f:
+                data = {"file": f, "overwrite": True}
+                self.client.post(self.url, data, follow=True)
+            queryset = hub_d_repository.std_queryset()
+            actual_values = queryset.values_list("field_d1_str", "field_d1_int")
+            expected_values = [("a", 1), ("b", 20), ("d", 30), ("e", 40)]
+            self.assertEqual(list(actual_values), expected_values)
 
 
 class TestMontrekExampleDCreate(MontrekCreateViewTestCase):
