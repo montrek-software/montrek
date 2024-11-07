@@ -3,7 +3,6 @@ from typing import Any, Dict, List, Optional, Type
 
 import pandas as pd
 from baseclasses.dataclasses.montrek_message import (
-    MontrekMessageError,
     MontrekMessageWarning,
 )
 from baseclasses.errors.montrek_user_error import MontrekError
@@ -17,7 +16,6 @@ from baseclasses.repositories.annotator import (
     Annotator,
 )
 from baseclasses.repositories.db_creator import DbCreator
-from baseclasses.repositories.filter_decoder import FilterDecoder
 from baseclasses.repositories.subquery_builder import (
     LastTSSatelliteSubqueryBuilder,
     LinkedSatelliteSubqueryBuilder,
@@ -25,7 +23,7 @@ from baseclasses.repositories.subquery_builder import (
     SatelliteSubqueryBuilder,
     SubqueryBuilder,
 )
-from django.core.exceptions import FieldError, PermissionDenied
+from django.core.exceptions import PermissionDenied
 from django.db.models import (
     F,
     ManyToManyField,
@@ -35,6 +33,7 @@ from django.db.models import (
     Subquery,
 )
 from django.utils import timezone
+from baseclasses.repositories.query_builder import QueryBuilder
 
 
 @dataclass
@@ -53,6 +52,7 @@ class MontrekRepositoryOld:
         self._primary_link_classes = []
         self._ts_queryset_containers = []
         self.session_data = session_data
+        self.query_builder = QueryBuilder(self.hub_class, self.annotator, session_data)
         self._reference_date = None
         self.messages = []
         self._is_built = False
@@ -96,13 +96,6 @@ class MontrekRepositoryOld:
     @reference_date.setter
     def reference_date(self, value):
         self._reference_date = value
-
-    @property
-    def query_filter(self) -> Q:
-        request_path = self.session_data.get("request_path", "")
-        filter = self.session_data.get("filter", {})
-        filter = filter.get(request_path, {})
-        return FilterDecoder.decode_dict_to_query(filter)
 
     def std_queryset(self, **kwargs):
         raise NotImplementedError("MontrekRepository has no std_queryset method!")
@@ -307,9 +300,7 @@ class MontrekRepositoryOld:
         self.linked_fields.extend(fields)
 
     def build_queryset(self, **filter_kwargs) -> QuerySet:
-        base_query = self._get_base_query()
-        queryset = base_query.annotate(**self.annotations)
-        queryset = self._apply_filter(queryset)
+        queryset = self.query_builder.build_queryset(self.reference_date)
         self._is_built = True
         return queryset
 
@@ -373,13 +364,6 @@ class MontrekRepositoryOld:
             link_query = link.objects.filter(hub_in=hub).order_by("-created_at")
             satellite_querys[link.__name__] = link_query
         return satellite_querys
-
-    def _apply_filter(self, queryset: QuerySet) -> QuerySet:
-        try:
-            queryset = queryset.filter(self.query_filter)
-        except (FieldError, ValueError) as e:
-            self.messages.append(MontrekMessageError(str(e)))
-        return queryset
 
     def _get_base_query(self) -> QuerySet:
         # Usually every query starts with all hubs of the repositories hub_class.

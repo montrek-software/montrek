@@ -1,15 +1,47 @@
-from django.db.models import QuerySet, Q
+from typing import Any
+
+from baseclasses.dataclasses.montrek_message import (
+    MontrekMessage,
+    MontrekMessageError,
+)
+from django.core.exceptions import FieldError
+from baseclasses.models import MontrekHubABC
+from baseclasses.repositories.annotator import Annotator
+from baseclasses.repositories.filter_decoder import FilterDecoder
+from django.db.models import Q, QuerySet
 from django.utils import timezone
 
 
 class QueryBuilder:
-    def __init__(self, model, annotator):
-        self.model = model
+    def __init__(
+        self,
+        hub_class: type[MontrekHubABC],
+        annotator: Annotator,
+        session_data: dict[str, Any],
+    ):
+        self.hub_class = hub_class
         self.annotator = annotator
+        self.session_data = session_data
+        self.messages: list[MontrekMessage] = []
+
+    @property
+    def query_filter(self) -> Q:
+        request_path = self.session_data.get("request_path", "")
+        filter = self.session_data.get("filter", {})
+        filter = filter.get(request_path, {})
+        return FilterDecoder.decode_dict_to_query(filter)
 
     def build_queryset(self, reference_date: timezone.datetime) -> QuerySet:
-        query = self.model.objects.annotate(**self.annotator.annotations).filter(
+        queryset = self.hub_class.objects.annotate(**self.annotator.annotations).filter(
             Q(state_date_start__lte=reference_date),
             Q(state_date_end__gt=reference_date),
         )
-        return query
+        queryset = self._apply_filter(queryset)
+        return queryset
+
+    def _apply_filter(self, queryset: QuerySet) -> QuerySet:
+        try:
+            queryset = queryset.filter(self.query_filter)
+        except (FieldError, ValueError) as e:
+            self.messages.append(MontrekMessageError(str(e)))
+        return queryset

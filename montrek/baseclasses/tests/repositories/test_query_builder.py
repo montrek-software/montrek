@@ -18,22 +18,21 @@ from baseclasses.utils import montrek_time
 class TestQueryBuilder(TestCase):
     def setUp(self):
         self.annotator = Annotator()
-        self.query_builder = QueryBuilder(TestMontrekHub, self.annotator)
+        self.query_builder = QueryBuilder(TestMontrekHub, self.annotator, {})
+        self.reference_date = timezone.now()
 
     def test_query_builder__build_queryset(self):
-        reference_date = timezone.now()
         test_sat = TestMontrekSatelliteFactory.create(test_name="Test Name")
         subquery_builder = SatelliteSubqueryBuilder(
-            TestMontrekSatellite, "pk", reference_date
+            TestMontrekSatellite, "pk", self.reference_date
         )
         self.annotator.query_to_annotations(["test_name"], subquery_builder)
-        test_query = self.query_builder.build_queryset(reference_date)
+        test_query = self.query_builder.build_queryset(self.reference_date)
         self.assertEqual(test_query.count(), 1)
         self.assertEqual(test_query.first().test_name, test_sat.test_name)
 
     def test_query_builder__build_queryset__no_annotations(self):
-        reference_date = timezone.now()
-        test_query = self.query_builder.build_queryset(reference_date)
+        test_query = self.query_builder.build_queryset(self.reference_date)
         self.assertEqual(test_query.count(), 0)
 
     def test_query_builder__build_queryset__with_reference_date(self):
@@ -50,3 +49,30 @@ class TestQueryBuilder(TestCase):
         test_query_2 = self.query_builder.build_queryset(ref_date_2)
         self.assertEqual(test_query_1.count(), 1)
         self.assertEqual(test_query_2.count(), 0)
+
+    def test_query_builder__build_queryset__with_filter(self):
+        TestMontrekSatelliteFactory.create(
+            test_name="Test Name 0",
+            test_value=0,
+        )
+        TestMontrekSatelliteFactory.create(
+            test_name="Test Name 1",
+            test_value=1,
+        )
+        subquery_builder = SatelliteSubqueryBuilder(
+            TestMontrekSatellite, "pk", self.reference_date
+        )
+        self.annotator.query_to_annotations(
+            ["test_name", "test_value"], subquery_builder
+        )
+        filter_dict = {
+            "filter": {
+                "": {"test_value__exact": {"filter_value": 0, "filter_negate": False}}
+            }
+        }
+        query_builder = QueryBuilder(
+            TestMontrekHub, self.annotator, session_data=filter_dict
+        )
+        test_query = query_builder.build_queryset(self.reference_date)
+        self.assertEqual(test_query.count(), 1)
+        self.assertEqual(test_query.first().test_name, "Test Name 0")
