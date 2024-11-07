@@ -23,10 +23,9 @@ class TestQueryBuilder(TestCase):
 
     def test_query_builder__build_queryset(self):
         test_sat = TestMontrekSatelliteFactory.create(test_name="Test Name")
-        subquery_builder = SatelliteSubqueryBuilder(
-            TestMontrekSatellite, "pk", self.reference_date
+        self.annotator.subquery_builder_to_annotations(
+            ["test_name"], TestMontrekSatellite, SatelliteSubqueryBuilder
         )
-        self.annotator.query_to_annotations(["test_name"], subquery_builder)
         test_query = self.query_builder.build_queryset(self.reference_date)
         self.assertEqual(test_query.count(), 1)
         self.assertEqual(test_query.first().test_name, test_sat.test_name)
@@ -41,10 +40,9 @@ class TestQueryBuilder(TestCase):
         )
         ref_date_1 = montrek_time(2024, 11, 6)
         ref_date_2 = montrek_time(2024, 11, 8)
-        subquery_builder = SatelliteSubqueryBuilder(
-            TestMontrekSatellite, "pk", ref_date_2
+        self.annotator.subquery_builder_to_annotations(
+            ["test_name"], TestMontrekSatellite, SatelliteSubqueryBuilder
         )
-        self.annotator.query_to_annotations(["test_name"], subquery_builder)
         test_query_1 = self.query_builder.build_queryset(ref_date_1)
         test_query_2 = self.query_builder.build_queryset(ref_date_2)
         self.assertEqual(test_query_1.count(), 1)
@@ -59,11 +57,8 @@ class TestQueryBuilder(TestCase):
             test_name="Test Name 1",
             test_value=1,
         )
-        subquery_builder = SatelliteSubqueryBuilder(
-            TestMontrekSatellite, "pk", self.reference_date
-        )
-        self.annotator.query_to_annotations(
-            ["test_name", "test_value"], subquery_builder
+        self.annotator.subquery_builder_to_annotations(
+            ["test_name", "test_value"], TestMontrekSatellite, SatelliteSubqueryBuilder
         )
         filter_dict = {
             "filter": {

@@ -32,7 +32,9 @@ class QueryBuilder:
         return FilterDecoder.decode_dict_to_query(filter)
 
     def build_queryset(self, reference_date: timezone.datetime) -> QuerySet:
-        queryset = self.hub_class.objects.annotate(**self.annotator.annotations).filter(
+        queryset = self.hub_class.objects.annotate(
+            **self.annotator.build(reference_date)
+        ).filter(
             Q(state_date_start__lte=reference_date),
             Q(state_date_end__gt=reference_date),
         )
