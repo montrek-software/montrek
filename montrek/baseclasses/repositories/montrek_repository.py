@@ -21,7 +21,6 @@ from baseclasses.repositories.subquery_builder import (
     LinkedSatelliteSubqueryBuilder,
     ReverseLinkedSatelliteSubqueryBuilder,
     SatelliteSubqueryBuilder,
-    SubqueryBuilder,
 )
 from django.core.exceptions import PermissionDenied
 from django.db.models import (
@@ -246,22 +245,21 @@ class MontrekRepositoryOld:
             )
             self._ts_queryset_containers.append(ts_container)
         else:
-            subquery_builder = SatelliteSubqueryBuilder(
-                satellite_class, "pk", self.reference_date
+            self.annotator.subquery_builder_to_annotations(
+                fields, satellite_class, SatelliteSubqueryBuilder
             )
-            self._add_to_annotations(fields, subquery_builder)
-        self._add_to_primary_satellite_classes(satellite_class)
 
     def add_last_ts_satellite_fields_annotations(
         self,
         satellite_class: Type[MontrekSatelliteABC],
         fields: List[str],
     ):
-        last_ts_sat_subquery_builder = LastTSSatelliteSubqueryBuilder(
-            satellite_class, "pk", self.reference_date, end_date=self.session_end_date
+        self.annotator.subquery_builder_to_annotations(
+            fields,
+            satellite_class,
+            LastTSSatelliteSubqueryBuilder,
+            end_date=self.session_end_date,
         )
-        self._add_to_annotations(fields, last_ts_sat_subquery_builder)
-        self._add_to_primary_satellite_classes(satellite_class)
 
     def add_linked_satellites_field_annotations(
         self,
@@ -277,13 +275,13 @@ class MontrekRepositoryOld:
         else:
             link_subquery_builder_class = LinkedSatelliteSubqueryBuilder
 
-        link_subquery_builder = link_subquery_builder_class(
+        self.annotator.subquery_builder_to_annotations(
+            fields,
             satellite_class,
-            link_class,
-            self.reference_date,
+            link_subquery_builder_class,
+            link_class=link_class,
             last_ts_value=last_ts_value,
         )
-        self._add_to_annotations(fields, link_subquery_builder)
         self._add_to_primary_link_classes(link_class)
         self.linked_fields.extend(fields)
 
@@ -452,9 +450,6 @@ class MontrekRepositoryOld:
             raise MontrekError(err_msg)
         hubs = [value_to_hub_map.get(value) for value in values]
         return hubs
-
-    def _add_to_annotations(self, fields: List[str], subquery_builder: SubqueryBuilder):
-        self.annotator.query_to_annotations(fields, subquery_builder)
 
     def _add_to_primary_satellite_classes(
         self, satellite_class: Type[MontrekSatelliteABC]
