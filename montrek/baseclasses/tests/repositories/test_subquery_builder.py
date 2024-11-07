@@ -32,11 +32,11 @@ class TestLinkedSatelliteSubqueryBuilder(TestCase):
     def test_get_subquery(self):
         builder = LinkedSatelliteSubqueryBuilder(
             satellite_class=bc_models.TestLinkSatellite,
+            field="test_id",
             link_class=bc_models.LinkTestMontrekTestLink,
-            reference_date=self.reference_date,
             last_ts_value=True,
         )
-        subquery = builder.get_subquery("test_id")
+        subquery = builder.build(self.reference_date)
         query = bc_models.TestMontrekHub.objects.annotate(**{"test_id": subquery})
         self.assertEqual(len(query), 2)
         self.assertEqual(query[0].test_id, self.sat_1.test_id)
@@ -44,23 +44,17 @@ class TestLinkedSatelliteSubqueryBuilder(TestCase):
 
         builder = LinkedSatelliteSubqueryBuilder(
             satellite_class=bc_models.TestLinkSatellite,
+            field="test_id",
             link_class=bc_models.LinkTestMontrekTestLink,
-            reference_date=self.reference_date + timezone.timedelta(days=1),
             last_ts_value=True,
         )
-        subquery = builder.get_subquery("test_id")
+        subquery = builder.build(self.reference_date + timezone.timedelta(days=1))
         query = bc_models.TestMontrekHub.objects.annotate(**{"test_id": subquery})
         self.assertEqual(len(query), 2)
         self.assertEqual(query[0].test_id, self.sat_1.test_id)
         self.assertEqual(query[1].test_id, self.sat_2_2.test_id)
 
-        builder = LinkedSatelliteSubqueryBuilder(
-            satellite_class=bc_models.TestLinkSatellite,
-            link_class=bc_models.LinkTestMontrekTestLink,
-            reference_date=self.reference_date + timezone.timedelta(days=-1),
-            last_ts_value=True,
-        )
-        subquery = builder.get_subquery("test_id")
+        subquery = builder.build(self.reference_date + timezone.timedelta(days=-1))
         query = bc_models.TestMontrekHub.objects.annotate(**{"test_id": subquery})
         self.assertEqual(len(query), 2)
         self.assertEqual(query[0].test_id, self.sat_1.test_id)
@@ -75,7 +69,7 @@ class TestLinkedSatelliteSubqueryBuilder(TestCase):
         ):
             LinkedSatelliteSubqueryBuilder(
                 bc_models.TestLinkSatellite,
+                "bla",
                 DummyLinkClass,
-                self.reference_date,
                 last_ts_value=True,
             )
