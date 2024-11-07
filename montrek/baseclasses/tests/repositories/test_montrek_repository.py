@@ -5,7 +5,7 @@ from baseclasses.repositories.montrek_repository import MontrekRepository
 
 
 class MockMontrekRepository(MontrekRepository):
-    def std_queryset(self, **kwargs):
+    def set_annotations(self):
         pass
 
 
@@ -50,7 +50,7 @@ class TestMontrekRepository(TestCase):
                 },
             }
         )
-        test_query = montrek_repo.query_filter
+        test_query = montrek_repo.query_builder.query_filter
 
         self.assertTrue(isinstance(test_query, Q))
         self.assertEqual(test_query.__dict__, Q(Q(field1__exact="value1")).__dict__)
@@ -58,7 +58,7 @@ class TestMontrekRepository(TestCase):
         montrek_repo.session_data["filter"]["/path/"]["field1__exact"][
             "filter_negate"
         ] = True
-        test_query = montrek_repo.query_filter
+        test_query = montrek_repo.query_builder.query_filter
 
         self.assertTrue(isinstance(test_query, Q))
         self.assertEqual(test_query.__dict__, (Q(~Q(field1__exact="value1"))).__dict__)

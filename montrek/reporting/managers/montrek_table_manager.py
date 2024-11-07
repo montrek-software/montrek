@@ -99,7 +99,7 @@ class MontrekTableManager(MontrekManager, metaclass=MontrekTableMetaClass):
         table_start_str += column_header_str[:-2] + "\\\\\n\\hline\n"
         latex_str = table_start_str
 
-        queryset = self.repository.std_queryset()
+        queryset = self.repository.receive()
         for i, query_object in enumerate(queryset):
             if i % 2 == 0:
                 latex_str += "\\rowcolor{lightblue}"
@@ -128,7 +128,7 @@ class MontrekTableManager(MontrekManager, metaclass=MontrekTableMetaClass):
         return output
 
     def get_paginated_queryset(self):
-        queryset = self.repository.std_queryset()
+        queryset = self.repository.receive()
         if self.is_paginated:
             return self._paginate_queryset(queryset)
         return queryset
@@ -182,7 +182,7 @@ class MontrekTableManager(MontrekManager, metaclass=MontrekTableMetaClass):
         return response
 
     def get_queryset_as_dataframe(self):
-        queryset = self.repository.std_queryset()
+        queryset = self.repository.receive()
         table_data = {}
         table_elements = [
             table_element
@@ -213,7 +213,7 @@ class MontrekTableManager(MontrekManager, metaclass=MontrekTableMetaClass):
         return value
 
     def _get_table_dimensions(self) -> int:
-        rows = self.repository.std_queryset().count()
+        rows = self.repository.receive().count()
         cols = len(self.table_elements)
         return rows * cols
 

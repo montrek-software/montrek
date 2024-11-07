@@ -4,6 +4,8 @@ from freezegun import freeze_time
 from django.test import TestCase
 from django.utils import timezone
 
+from baseclasses.utils import montrek_time
+
 from baseclasses.repositories.db_helper import get_hub_ids_by_satellite_attribute
 from baseclasses.repositories.db_helper import select_satellite
 from baseclasses.repositories.db_helper import update_satellite_from_satellite
@@ -33,9 +35,21 @@ class TestDBHelpers(TestCase):
         self.hub1 = TestMontrekHubFactory()
         self.hub2 = TestMontrekHubFactory()
         self.hub3 = TestMontrekHubFactory()
-        self.satellite1 = TestMontrekSatelliteFactory(hub_entity=self.hub1)
-        self.satellite2 = TestMontrekSatelliteFactory(hub_entity=self.hub2)
-        self.satellite3 = TestMontrekSatelliteFactory(hub_entity=self.hub3)
+        self.satellite1 = TestMontrekSatelliteFactory(
+            hub_entity=self.hub1,
+            state_date_end=montrek_time(2023, 7, 10),
+            state_date_start=montrek_time(2023, 6, 20),
+        )
+        self.satellite2 = TestMontrekSatelliteFactory(
+            hub_entity=self.hub2,
+            state_date_end=montrek_time(2023, 7, 10),
+            state_date_start=montrek_time(2023, 6, 20),
+        )
+        self.satellite3 = TestMontrekSatelliteFactory(
+            hub_entity=self.hub3,
+            state_date_end=montrek_time(2023, 7, 10),
+            state_date_start=montrek_time(2023, 6, 20),
+        )
 
     def tearDown(self):
         TestMontrekSatellite.objects.all().delete()
