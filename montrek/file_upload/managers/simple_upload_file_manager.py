@@ -36,8 +36,7 @@ class SimpleFileUploadProcessor:
         try:
             if self.overwrite:
                 with transaction.atomic():
-                    queryset = target_repository.std_queryset()
-                    for obj in queryset:
+                    for obj in target_repository.std_queryset():
                         target_repository.std_delete_object(obj)
                     target_repository.create_objects_from_data_frame(input_df)
             else:
