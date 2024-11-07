@@ -1,4 +1,5 @@
 from django.db.models import Subquery
+from django.utils import timezone
 from baseclasses.repositories.subquery_builder import (
     SubqueryBuilder,
 )
@@ -20,8 +21,8 @@ class Annotator:
         for field in fields:
             self.annotations[field] = subquery_builder(satellite_class, field, **kwargs)
 
-    def build(self):
+    def build(self, reference_date: timezone.datetime) -> dict[str, Subquery]:
         return {
-            field: subquery_builder.build()
+            field: subquery_builder.build(reference_date)
             for field, subquery_builder in self.annotations.items()
         }
