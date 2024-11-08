@@ -41,7 +41,7 @@ class TestMontrekExampleAListView(MontrekListViewTestCase):
         me_factories.SatA2Factory(
             hub_entity=other_sata1.hub_entity, field_a2_str="test"
         )
-        self.assertEqual(len(HubARepository().std_queryset()), 2)
+        self.assertEqual(len(HubARepository().receive()), 2)
 
         url = reverse(
             "montrek_example_a_list",
@@ -286,9 +286,9 @@ class TestMontrekExampleDListView(MontrekListViewTestCase):
         with open(test_file_path, "rb") as f:
             data = {"file": f}
             self.client.post(self.url, data, follow=True)
-        queyset = HubDRepository().std_queryset()
+        queyset = HubDRepository().receive()
         self.assertEqual(len(queyset), 4)
-        registry = FileUploadRegistryRepository().std_queryset().last()
+        registry = FileUploadRegistryRepository().receive().last()
         self.assertEqual(registry.upload_status, "processed")
 
     def test_simple_file_upload_excel(self):
@@ -296,9 +296,9 @@ class TestMontrekExampleDListView(MontrekListViewTestCase):
         with open(test_file_path, "rb") as f:
             data = {"file": f}
             self.client.post(self.url, data, follow=True)
-        queyset = HubDRepository().std_queryset()
+        queyset = HubDRepository().receive()
         self.assertEqual(len(queyset), 4)
-        registry = FileUploadRegistryRepository().std_queryset().last()
+        registry = FileUploadRegistryRepository().receive().last()
         self.assertEqual(registry.upload_status, "processed")
 
     def test_simple_file_upload_unknown(self):
@@ -306,9 +306,9 @@ class TestMontrekExampleDListView(MontrekListViewTestCase):
         with open(test_file_path, "rb") as f:
             data = {"file": f}
             self.client.post(self.url, data, follow=True)
-        queyset = HubDRepository().std_queryset()
+        queyset = HubDRepository().receive()
         self.assertEqual(len(queyset), 1)
-        registries = FileUploadRegistryRepository().std_queryset()
+        registries = FileUploadRegistryRepository().receive()
         self.assertEqual(len(registries), 0)
 
     def test_simple_file_upload_failure(self):
@@ -318,9 +318,9 @@ class TestMontrekExampleDListView(MontrekListViewTestCase):
         with open(test_file_path, "rb") as f:
             data = {"file": f}
             self.client.post(self.url, data, follow=True)
-        queyset = HubDRepository().std_queryset()
+        queyset = HubDRepository().receive()
         self.assertEqual(len(queyset), 1)
-        registry = FileUploadRegistryRepository().std_queryset().last()
+        registry = FileUploadRegistryRepository().receive().last()
         self.assertEqual(registry.upload_status, "failed")
 
 
@@ -422,7 +422,7 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
 
         messages = list(response.context["messages"])
 
-        a_hubs = HubARepository().std_queryset()
+        a_hubs = HubARepository().receive()
 
         self.assertRedirects(response, reverse("a1_view_uploads"))
         self.assertEqual(len(messages), 1)
@@ -451,7 +451,7 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
 
         messages = list(response.context["messages"])
 
-        HubARepository().std_queryset()
+        HubARepository().receive()
 
         self.assertRedirects(response, reverse("a1_view_uploads"))
         self.assertEqual(len(messages), 1)
@@ -491,7 +491,7 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
             data = {"file": f}
             response = self.client.post(self.url, data, follow=True)
         messages = list(response.context["messages"])
-        a_hubs = HubARepository().std_queryset()
+        a_hubs = HubARepository().receive()
         self.assertRedirects(response, reverse("a1_view_uploads"))
         self.assertEqual(len(messages), 1)
         self.assertEqual(
