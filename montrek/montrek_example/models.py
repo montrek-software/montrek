@@ -122,13 +122,18 @@ class SatC1(MontrekSatelliteABC):
     identifier_fields = ["field_c1_str"]
 
 
-class SatTSC2(MontrekTimeSeriesSatelliteABC):
-    hub_entity = models.ForeignKey(HubC, on_delete=models.CASCADE)
+class CHubValueDate(models.Model):
+    hub = models.ForeignKey(HubC, on_delete=models.CASCADE)
+    value_date = models.DateField()
+
+
+class SatTSC2(models.Model):
+    hub_value_date = models.ForeignKey(CHubValueDate, on_delete=models.CASCADE)
     field_tsc2_float = models.FloatField(default=0.0)
 
 
-class SatTSC3(MontrekTimeSeriesSatelliteABC):
-    hub_entity = models.ForeignKey(HubC, on_delete=models.CASCADE)
+class SatTSC3(models.Model):
+    hub_value_date = models.ForeignKey(CHubValueDate, on_delete=models.CASCADE)
     field_tsc3_int = models.IntegerField(null=True, blank=True)
     field_tsc3_str = models.CharField(max_length=50, null=True, blank=True)
     field_tsc3_int_times_two = models.GeneratedField(
