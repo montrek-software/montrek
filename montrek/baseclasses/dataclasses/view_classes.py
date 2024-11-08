@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+from django.urls import reverse
+
 
 @dataclass
 class ActionElement:
@@ -10,12 +12,23 @@ class ActionElement:
 
 
 @dataclass
-class BackActionElement(ActionElement):
-    def __init__(self, link: str):
-        self.icon = "arrow-left"
-        self.link = link
-        self.action_id = "id_back_action"
-        self.hover_text = "Go Back"
+class StandardActionElementBase(ActionElement):
+    icon = ""
+
+    def __init__(
+        self,
+        url_name: str,
+        action_id: str = "",
+        hover_text: str = "",
+    ):
+        self.link = reverse(url_name)
+        self.action_id = action_id or f"id_action_{url_name}"
+        self.hover_text = hover_text or f"Go to {url_name.replace('_', ' ').title()}"
+
+
+@dataclass(init=False)
+class BackActionElement(StandardActionElementBase):
+    icon = "arrow-left"
 
 
 @dataclass
