@@ -180,6 +180,10 @@ class MontrekSatelliteABC(TimeStampMixin, StateMixin, UserMixin):
     def get_hash_value(self) -> str:
         return self._get_hash_value()
 
+    @classmethod
+    def get_related_hub_class(cls) -> type[MontrekHubABC]:
+        return cls.hub_entity.field.related_model
+
 
 class MontrekTimeSeriesSatelliteABC(MontrekSatelliteABC):
     class Meta:

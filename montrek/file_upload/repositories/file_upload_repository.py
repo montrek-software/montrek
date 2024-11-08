@@ -5,5 +5,5 @@ from file_upload.models import FileUploadFileHub
 class FileUploadRepository(MontrekRepository):
     hub_class = FileUploadFileHub
 
-    def std_queryset(self):
-        return self.build_queryset()
+    def add_annotations(self):
+        pass

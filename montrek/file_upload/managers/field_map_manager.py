@@ -123,7 +123,7 @@ class FieldMapManagerABC(MontrekTableManager):
         self.exceptions = []
 
     def get_field_map(self, source_df: pd.DataFrame) -> pd.DataFrame:
-        field_maps = self.repository.std_queryset().filter(
+        field_maps = self.repository.receive().filter(
             source_field__in=source_df.columns.to_list()
         )
         return field_maps

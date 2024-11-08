@@ -99,7 +99,7 @@ class FileUploadManagerABC(MontrekManager):
         upload_file_hub = self.repository.std_create_object({"file": self.file})
         self.file_path = os.path.join(
             settings.MEDIA_ROOT,
-            self.repository.std_queryset().get(pk=upload_file_hub.pk).file,
+            self.repository.receive().get(pk=upload_file_hub.pk).file,
         )
         file_upload_registry_hub = self.registry_manager.repository.std_create_object(
             {
@@ -110,7 +110,7 @@ class FileUploadManagerABC(MontrekManager):
                 "link_file_upload_registry_file_upload_file": upload_file_hub,
             }
         )
-        self.file_upload_registry = self.registry_manager.repository.std_queryset().get(
+        self.file_upload_registry = self.registry_manager.repository.receive().get(
             pk=file_upload_registry_hub.pk
         )
 

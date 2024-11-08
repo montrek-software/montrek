@@ -381,7 +381,7 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
 
         messages = list(response.context["messages"])
 
-        a_hubs = HubARepository().std_queryset()
+        a_hubs = HubARepository().receive()
 
         self.assertRedirects(response, reverse("a1_view_uploads"))
         self.assertEqual(len(messages), 1)
@@ -399,7 +399,7 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
         self.assertEqual(a_hubs[0].field_a1_int, 1000)
         self.assertEqual(a_hubs[1].field_a1_int, 2000)
         self.assertEqual(a_hubs[2].field_a1_int, 3000)
-        upload_registry = HubAFileUploadRegistryRepository({}).std_queryset().last()
+        upload_registry = HubAFileUploadRegistryRepository({}).receive().last()
         log_file = upload_registry.log_file
         self.assertTrue(log_file)
 

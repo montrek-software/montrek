@@ -3,14 +3,16 @@ from django.utils import timezone
 from baseclasses.repositories.subquery_builder import (
     SubqueryBuilder,
 )
-from baseclasses.models import MontrekSatelliteABC
+from baseclasses.models import MontrekSatelliteABC, MontrekHubABC
 
 
 class Annotator:
-    def __init__(self):
+    def __init__(self, hub_class: type[MontrekHubABC]):
+        self.hub_class = hub_class
         self.annotations: dict[str, SubqueryBuilder] = {}
         self.ts_annotations: dict[str, Subquery] = {}
         self.annotated_satellite_classes: list[type[MontrekSatelliteABC]] = []
+        self.annotated_linked_satellite_classes: list[type[MontrekSatelliteABC]] = []
 
     def subquery_builder_to_annotations(
         self,
@@ -41,8 +43,22 @@ class Annotator:
     def get_annotated_field_names(self) -> list[str]:
         return list(self.annotations.keys())
 
+    def get_satellite_classes(self):
+        return self.annotated_satellite_classes
+
     def _add_to_annotated_satellite_classes(
         self, satellite_class: type[MontrekSatelliteABC]
     ):
-        if satellite_class not in self.annotated_satellite_classes:
-            self.annotated_satellite_classes.append(satellite_class)
+        related_hub_class = satellite_class.get_related_hub_class()
+        if related_hub_class == self.hub_class:
+            self._add_class(self.annotated_satellite_classes, satellite_class)
+        else:
+            self._add_class(self.annotated_linked_satellite_classes, satellite_class)
+
+    def _add_class(
+        self,
+        class_list: list[type[MontrekSatelliteABC]],
+        sat_class: type[MontrekSatelliteABC],
+    ):
+        if sat_class not in class_list:
+            class_list.append(sat_class)

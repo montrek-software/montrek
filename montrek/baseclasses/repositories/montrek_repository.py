@@ -46,12 +46,12 @@ class MontrekRepositoryOld:
     hub_class = MontrekHubABC
 
     def __init__(self, session_data: Dict[str, Any] = {}):
-        self.annotator = Annotator()
+        self.annotator = Annotator(self.hub_class)
         self._primary_satellite_classes = []
         self._primary_link_classes = []
         self._ts_queryset_containers = []
         self.session_data = session_data
-        self.query_builder = QueryBuilder(self.hub_class, self.annotator, session_data)
+        self.query_builder = QueryBuilder(self.annotator, session_data)
         self._reference_date = None
         self.messages = []
         self.calculated_fields: list[str] = []
@@ -160,7 +160,7 @@ class MontrekRepositoryOld:
     def std_create_object(self, data: Dict[str, Any]) -> MontrekHubABC:
         self._raise_for_anonymous_user()
         hub_entity = self._get_hub_from_data(data)
-        db_creator = DbCreator(self.hub_class, self._primary_satellite_classes)
+        db_creator = DbCreator(self.annotator)
         created_hub = db_creator.create(data, hub_entity, self.session_user_id)
         db_creator.save_stalled_objects()
         return created_hub
@@ -215,7 +215,7 @@ class MontrekRepositoryOld:
         data_frame = self._drop_empty_rows(data_frame)
         data_frame = self._drop_duplicates(data_frame)
         self._raise_for_duplicated_entries(data_frame)
-        db_creator = DbCreator(self.hub_class, self._primary_satellite_classes)
+        db_creator = DbCreator(self.annotator)
         created_hubs = []
         for _, row in data_frame.iterrows():
             row = row.to_dict()

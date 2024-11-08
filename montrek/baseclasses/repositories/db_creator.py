@@ -1,17 +1,19 @@
-from django.db import transaction
-import json
 import datetime
-from typing import Any, Dict, List, Protocol
+import json
 from dataclasses import dataclass
-from django.db.models import QuerySet, JSONField
-from django.utils import timezone
+from typing import Any, Dict, List, Protocol
+
+from baseclasses.errors.montrek_user_error import MontrekError
 from baseclasses.models import (
+    MontrekHubABC,
     MontrekOneToOneLinkABC,
     MontrekSatelliteABC,
-    MontrekHubABC,
     MontrekTimeSeriesSatelliteABC,
 )
-from baseclasses.errors.montrek_user_error import MontrekError
+from baseclasses.repositories.annotator import Annotator
+from django.db import transaction
+from django.db.models import JSONField, QuerySet
+from django.utils import timezone
 
 
 class SatelliteCreationState(Protocol):
@@ -41,13 +43,13 @@ class ExistingSatelliteCreationState:
 class DbCreator:
     def __init__(
         self,
-        hub_entity_class: type[MontrekHubABC],
-        satellite_classes: list[type[MontrekSatelliteABC]],
+        annotator: Annotator,
     ):
         self.hub_entity = None
+        satellite_classes = annotator.get_satellite_classes()
         self.satellite_classes = self._sorted_satellite_classes(satellite_classes)
 
-        self.stalled_hubs = {hub_entity_class: []}
+        self.stalled_hubs = {annotator.hub_class: []}
         self.stalled_satellites = {
             satellite_class: [] for satellite_class in satellite_classes
         }

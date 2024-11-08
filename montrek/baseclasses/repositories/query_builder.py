@@ -5,7 +5,6 @@ from baseclasses.dataclasses.montrek_message import (
     MontrekMessageError,
 )
 from django.core.exceptions import FieldError
-from baseclasses.models import MontrekHubABC
 from baseclasses.repositories.annotator import Annotator
 from baseclasses.repositories.filter_decoder import FilterDecoder
 from django.db.models import Q, QuerySet
@@ -15,12 +14,11 @@ from django.utils import timezone
 class QueryBuilder:
     def __init__(
         self,
-        hub_class: type[MontrekHubABC],
         annotator: Annotator,
         session_data: dict[str, Any],
     ):
-        self.hub_class = hub_class
         self.annotator = annotator
+        self.hub_class = annotator.hub_class
         self.session_data = session_data
         self.messages: list[MontrekMessage] = []
 
