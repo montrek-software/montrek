@@ -5,6 +5,7 @@ from baseclasses.dataclasses.view_classes import (
     BackActionElement,
     ActionElement,
     StandardActionElementBase,
+    UploadFileActionElement,
 )
 
 
@@ -21,10 +22,16 @@ class TestStandardActionElementBase(TestCase):
         self.assertEqual(element.hover_text, "Go to Montrek Example A List")
 
 
-class TestBackActionElement(TestCase):
+class TestStandardActionElements(TestCase):
     def test_init(self):
         url_name = "montrek_example_a_list"
-        element = BackActionElement(url_name=url_name)
 
-        self.assertTrue(isinstance(element, StandardActionElementBase))
-        self.assertEqual(element.icon, "arrow-left")
+        expected_icons = (
+            (BackActionElement, "arrow-left"),
+            (UploadFileActionElement, "upload"),
+        )
+
+        for element_class, expected_icon in expected_icons:
+            element = element_class(url_name=url_name)
+            self.assertTrue(isinstance(element, StandardActionElementBase))
+            self.assertEqual(element.icon, expected_icon)

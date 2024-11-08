@@ -31,6 +31,11 @@ class BackActionElement(StandardActionElementBase):
     icon = "arrow-left"
 
 
+@dataclass(init=False)
+class UploadFileActionElement(StandardActionElementBase):
+    icon = "upload"
+
+
 @dataclass
 class TabElement:
     name: str
