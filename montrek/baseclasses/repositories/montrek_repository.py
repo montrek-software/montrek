@@ -526,10 +526,12 @@ class MontrekRepository(MontrekRepositoryOld):
     IS_REFACTORED = True  # Handles new refactoreed code, if True
     # TODO: Remove IS_REFACTORED
     update: bool = True  # If this is true only the passed fields will be updated, otherwise empty fields will be set to None
+    default_order_fields: tuple[str, ...] = ()
 
     def __init__(self, session_data: Dict[str, Any] = {}):
         super().__init__(session_data)
         self.set_annotations()
+        self._order_fields: tuple[str] | None = None
 
     # New methods
 
@@ -549,7 +551,17 @@ class MontrekRepository(MontrekRepositoryOld):
         pass
 
     def receive(self) -> QuerySet:
-        return self.query_builder.build_queryset(self.reference_date)
+        return self.query_builder.build_queryset(self.reference_date).order_by(
+            *self.order_fields()
+        )
+
+    def order_fields(self) -> tuple[str, ...]:
+        if self._order_fields:
+            return self._order_fields
+        return self.default_order_fields
+
+    def set_order_fields(self, fields: tuple[str]):
+        self._order_fields = fields
 
     def delete(self, obj: MontrekHubABC):
         # Will replace std_delete_object

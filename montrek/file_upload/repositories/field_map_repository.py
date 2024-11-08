@@ -18,7 +18,7 @@ class FieldMapRepositoryABC(MontrekRepository):
         )
         self._setup_checks()
 
-    def std_queryset(self, **kwargs):
+    def set_annotations(self, **kwargs):
         self.add_satellite_fields_annotations(
             self.static_satellite_class,
             [
