@@ -31,7 +31,9 @@ class QueryBuilder:
         filter = filter.get(request_path, {})
         return FilterDecoder.decode_dict_to_query(filter)
 
-    def build_queryset(self, reference_date: timezone.datetime) -> QuerySet:
+    def build_queryset(
+        self, reference_date: timezone.datetime, order_fields: tuple[str, ...] = ()
+    ) -> QuerySet:
         queryset = self.hub_class.objects.annotate(
             **self.annotator.build(reference_date)
         ).filter(
@@ -39,6 +41,7 @@ class QueryBuilder:
             Q(state_date_end__gt=reference_date),
         )
         queryset = self._apply_filter(queryset)
+        queryset = self._apply_order(queryset, order_fields)
         return queryset
 
     def _apply_filter(self, queryset: QuerySet) -> QuerySet:
@@ -47,3 +50,8 @@ class QueryBuilder:
         except (FieldError, ValueError) as e:
             self.messages.append(MontrekMessageError(str(e)))
         return queryset
+
+    def _apply_order(
+        self, queryset: QuerySet, order_fields: tuple[str, ...]
+    ) -> QuerySet:
+        return queryset.order_by(*order_fields)

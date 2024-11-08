@@ -551,8 +551,8 @@ class MontrekRepository(MontrekRepositoryOld):
         pass
 
     def receive(self) -> QuerySet:
-        return self.query_builder.build_queryset(self.reference_date).order_by(
-            *self.order_fields()
+        return self.query_builder.build_queryset(
+            self.reference_date, self.order_fields()
         )
 
     def order_fields(self) -> tuple[str, ...]:
