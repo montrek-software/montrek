@@ -41,6 +41,16 @@ class SettingsActionElement(StandardActionElementBase):
     icon = "cog"
 
 
+@dataclass(init=False)
+class CreateActionElement(StandardActionElementBase):
+    icon = "plus"
+
+
+@dataclass(init=False)
+class RegistryActionElement(StandardActionElementBase):
+    icon = "inbox"
+
+
 @dataclass
 class TabElement:
     name: str

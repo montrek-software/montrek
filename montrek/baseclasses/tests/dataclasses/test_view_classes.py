@@ -7,6 +7,8 @@ from baseclasses.dataclasses.view_classes import (
     SettingsActionElement,
     StandardActionElementBase,
     UploadActionElement,
+    CreateActionElement,
+    RegistryActionElement,
 )
 
 
@@ -31,6 +33,8 @@ class TestStandardActionElements(TestCase):
             (BackActionElement, "arrow-left"),
             (UploadActionElement, "upload"),
             (SettingsActionElement, "cog"),
+            (CreateActionElement, "plus"),
+            (RegistryActionElement, "inbox"),
         )
 
         for element_class, expected_icon in expected_icons:
