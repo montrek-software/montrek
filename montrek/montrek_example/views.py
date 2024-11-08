@@ -11,7 +11,11 @@ from montrek_example.managers.a_upload_table_manager import (
     HubAFileUploadRegistryManager,
     HubAUploadTableManager,
 )
-from baseclasses.dataclasses.view_classes import ActionElement
+from baseclasses.dataclasses.view_classes import (
+    ActionElement,
+    CreateActionElement,
+    UploadActionElement,
+)
 from django.urls import reverse
 from file_upload.views import (
     FileUploadRegistryView,
@@ -179,10 +183,8 @@ class MontrekExampleCList(views.MontrekListView):
 
     @property
     def actions(self) -> tuple:
-        action_new_example_c = ActionElement(
-            icon="plus",
-            link=reverse("montrek_example_c_create"),
-            action_id="id_new_example_c",
+        action_new_example_c = CreateActionElement(
+            url_name="montrek_example_c_create",
             hover_text="Add new C Example",
         )
         return (action_back_to_overview("b"), action_new_example_c)
@@ -243,10 +245,8 @@ class MontrekExampleA1UploadView(FileUploadRegistryView):
 
     @property
     def actions(self) -> tuple:
-        action_upload_file = ActionElement(
-            icon="upload",
-            link=reverse("a1_upload_file"),
-            action_id="id_a_upload",
+        action_upload_file = UploadActionElement(
+            url_name="a1_upload_file",
             hover_text="Upload A1 data from file",
         )
         return (action_upload_file,)
@@ -299,10 +299,8 @@ class MontrekExampleHubAApiUploadView(views.MontrekListView):
 
     @property
     def actions(self) -> tuple:
-        action_do_a2_upload = ActionElement(
-            icon="upload",
-            link=reverse("do_a2_upload"),
-            action_id="id_do_a2_upload",
+        action_do_a2_upload = UploadActionElement(
+            url_name="do_a2_upload",
             hover_text="Upload A2 data from API",
         )
         return (action_do_a2_upload,)
