@@ -36,4 +36,4 @@ class HubBRepository(MontrekRepository):
         return self.receive()
 
     def get_hub_d_objects(self):
-        return HubDRepository().std_queryset()
+        return HubDRepository().receive()

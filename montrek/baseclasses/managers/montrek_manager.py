@@ -25,7 +25,7 @@ class MontrekManager:
         return self.repository.std_delete_object(object_query)
 
     def get_object_from_pk(self, pk: int):
-        return self.repository.std_queryset().get(pk=pk)
+        return self.repository.receive().get(pk=pk)
 
     def get_object_from_pk_as_dict(self, pk: int) -> dict:
         object_query = self.get_object_from_pk(pk)

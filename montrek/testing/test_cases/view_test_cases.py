@@ -112,8 +112,8 @@ class MontrekObjectViewBaseTestCase(MontrekViewTestCase):
         # Method to be overwritten
         pass
 
-    def _get_std_queryset(self) -> QuerySet:
-        return self.view.manager.repository.std_queryset()
+    def receive(self) -> QuerySet:
+        return self.view.manager.repository.receive()
 
     def get_post_response(self):
         return self.client.post(self.url, self.creation_data())
@@ -153,13 +153,13 @@ class MontrekCreateUpdateViewTestCase(MontrekObjectViewBaseTestCase):
 
 class GetObjectLastMixin:
     def _get_object(self) -> QuerySet:
-        std_query = self._get_std_queryset()
+        std_query = self.receive()
         return std_query.last()
 
 
 class GetObjectPkMixin:
     def _get_object(self) -> QuerySet:
-        std_query = self._get_std_queryset()
+        std_query = self.receive()
         return std_query.get(pk=self.url_kwargs()["pk"])
 
 
@@ -199,7 +199,7 @@ class MontrekDeleteViewTestCase(MontrekObjectViewBaseTestCase, GetObjectPkMixin)
         return self.__class__.__name__ == "MontrekDeleteViewTestCase"
 
     def _get_object(self):
-        std_query = self._get_std_queryset()
+        std_query = self.receive()
         return std_query.filter(pk=self.url_kwargs()["pk"])
 
     def creation_data(self) -> dict:
