@@ -1,4 +1,6 @@
+from tempfile import TemporaryDirectory
 import os
+from textwrap import dedent
 
 from baseclasses.dataclasses.alert import AlertEnum
 from baseclasses.utils import montrek_time
@@ -279,7 +281,7 @@ class TestMontrekExampleDListView(MontrekListViewTestCase):
     expected_no_of_rows = 1
 
     def build_factories(self):
-        me_factories.SatD1Factory.create()
+        me_factories.SatD1Factory.create(field_d1_str="0", field_d1_int=0)
 
     def test_simple_file_upload_csv(self):
         test_file_path = os.path.join(os.path.dirname(__file__), "data", "d_file.csv")
@@ -322,6 +324,60 @@ class TestMontrekExampleDListView(MontrekListViewTestCase):
         self.assertEqual(len(queyset), 1)
         registry = FileUploadRegistryRepository().receive().last()
         self.assertEqual(registry.upload_status, "failed")
+
+    def test_simple_file_upload_overwrite(self):
+        # helper methods
+        def _write_temporary_file_and_upload(csv_data: str):
+            with TemporaryDirectory() as temp_dir:
+                file_path = os.path.join(temp_dir, "upload_file.csv")
+                with open(file_path, "w") as f:
+                    f.write(csv_data)
+                with open(file_path, "rb") as f:
+                    csv_data = {"file": f, "overwrite": True}
+                    self.client.post(self.url, csv_data, follow=True)
+
+        def _assert_database_values(expected_values):
+            queryset = HubDRepository().std_queryset()
+            actual_values = queryset.values_list("field_d1_str", "field_d1_int")
+            self.assertEqual(list(actual_values), expected_values)
+
+        # upload first file, overwrite factory generated data
+        upload_csv_data = dedent(
+            """
+            D1 String,D1 Int
+            a,1
+            b,2
+            c,3
+            """
+        )
+        _write_temporary_file_and_upload(upload_csv_data)
+        expected_values = [("a", 1), ("b", 2), ("c", 3)]
+        _assert_database_values(expected_values)
+
+        # upload second file, overwrite first file data
+        upload_csv_data = dedent(
+            """
+            D1 String,D1 Int
+            a,1
+            b,20
+            d,30
+            e,40
+            """
+        )
+        _write_temporary_file_and_upload(upload_csv_data)
+        expected_values = [("a", 1), ("b", 20), ("d", 30), ("e", 40)]
+        _assert_database_values(expected_values)
+
+        # upload the third file which will lead to an error during insertion,
+        # the data in the database should not have been deleted
+        upload_csv_data = dedent(
+            """
+            D1 Int
+            a
+            """
+        )
+        _write_temporary_file_and_upload(upload_csv_data)
+        _assert_database_values(expected_values)
 
 
 class TestMontrekExampleDCreate(MontrekCreateViewTestCase):

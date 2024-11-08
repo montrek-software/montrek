@@ -20,6 +20,21 @@ class UploadFileForm(forms.Form):
         )
 
 
+class SimpleUploadFileForm(UploadFileForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["overwrite"] = forms.BooleanField(
+            required=False,
+            label="Overwrite existing data",
+            widget=forms.CheckboxInput(
+                attrs={
+                    "id": "id_upload__overwrite",
+                    "class": "form-check-input",
+                }
+            ),
+        )
+
+
 class FieldMapCreateForm(MontrekCreateForm):
     def __init__(self, *args, **kwargs):
         self.field_map_manager = kwargs.pop("field_map_manager")
