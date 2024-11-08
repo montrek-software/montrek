@@ -231,16 +231,16 @@ class MontrekRepositoryOld:
         satellite_class: Type[MontrekSatelliteABC],
         fields: List[str],
     ):
-        if satellite_class.is_timeseries:
-            ts_container = self.build_time_series_queryset_container(
-                satellite_class, fields
-            )
-            self._ts_queryset_containers.append(ts_container)
-            self.annotator.add_to_annotated_satellite_classes(satellite_class)
-        else:
-            self.annotator.subquery_builder_to_annotations(
-                fields, satellite_class, SatelliteSubqueryBuilder
-            )
+        # if satellite_class.is_timeseries:
+        #     ts_container = self.build_time_series_queryset_container(
+        #         satellite_class, fields
+        #     )
+        #     self._ts_queryset_containers.append(ts_container)
+        #     self.annotator.add_to_annotated_satellite_classes(satellite_class)
+        # else:
+        self.annotator.subquery_builder_to_annotations(
+            fields, satellite_class, SatelliteSubqueryBuilder
+        )
 
     def add_last_ts_satellite_fields_annotations(
         self,

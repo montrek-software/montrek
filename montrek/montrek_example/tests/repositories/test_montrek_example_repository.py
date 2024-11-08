@@ -93,15 +93,15 @@ class TestMontrekRepositorySatellite(TestCase):
         self.assertEqual(
             test_fields,
             [
+                "field_tsc2_float",
+                "field_tsc3_int",
+                "field_tsc3_str",
+                "value_date",
+                "field_tsc4_int",
                 "field_c1_bool",
                 "field_c1_str",
                 "field_tsd2_float",
                 "field_tsd2_int",
-                "field_tsc2_float",
-                "value_date",
-                "field_tsc3_int",
-                "field_tsc3_str",
-                "field_tsc4_int",
             ],
         )
 
