@@ -36,6 +36,11 @@ class UploadActionElement(StandardActionElementBase):
     icon = "upload"
 
 
+@dataclass(init=False)
+class SettingsActionElement(StandardActionElementBase):
+    icon = "cog"
+
+
 @dataclass
 class TabElement:
     name: str

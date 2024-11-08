@@ -4,6 +4,7 @@ from django.urls import reverse
 from baseclasses.dataclasses.view_classes import (
     BackActionElement,
     ActionElement,
+    SettingsActionElement,
     StandardActionElementBase,
     UploadActionElement,
 )
@@ -29,6 +30,7 @@ class TestStandardActionElements(TestCase):
         expected_icons = (
             (BackActionElement, "arrow-left"),
             (UploadActionElement, "upload"),
+            (SettingsActionElement, "cog"),
         )
 
         for element_class, expected_icon in expected_icons:
