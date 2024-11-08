@@ -5,7 +5,7 @@ from baseclasses.dataclasses.view_classes import (
     BackActionElement,
     ActionElement,
     StandardActionElementBase,
-    UploadFileActionElement,
+    UploadActionElement,
 )
 
 
@@ -28,7 +28,7 @@ class TestStandardActionElements(TestCase):
 
         expected_icons = (
             (BackActionElement, "arrow-left"),
-            (UploadFileActionElement, "upload"),
+            (UploadActionElement, "upload"),
         )
 
         for element_class, expected_icon in expected_icons:
