@@ -327,14 +327,14 @@ class TestMontrekExampleDListView(MontrekListViewTestCase):
 
     def test_simple_file_upload_overwrite(self):
         # helper methods
-        def _write_temporary_file_and_upload(data: str):
+        def _write_temporary_file_and_upload(csv_data: str):
             with TemporaryDirectory() as temp_dir:
                 file_path = os.path.join(temp_dir, "upload_file.csv")
                 with open(file_path, "w") as f:
-                    f.write(data)
+                    f.write(csv_data)
                 with open(file_path, "rb") as f:
-                    data = {"file": f, "overwrite": True}
-                    self.client.post(self.url, data, follow=True)
+                    csv_data = {"file": f, "overwrite": True}
+                    self.client.post(self.url, csv_data, follow=True)
 
         def _assert_database_values(expected_values):
             queryset = HubDRepository().std_queryset()
