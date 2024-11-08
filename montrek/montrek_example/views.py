@@ -11,7 +11,11 @@ from montrek_example.managers.a_upload_table_manager import (
     HubAFileUploadRegistryManager,
     HubAUploadTableManager,
 )
-from baseclasses.dataclasses.view_classes import ActionElement, UploadActionElement
+from baseclasses.dataclasses.view_classes import (
+    ActionElement,
+    CreateActionElement,
+    UploadActionElement,
+)
 from django.urls import reverse
 from file_upload.views import (
     FileUploadRegistryView,
@@ -179,10 +183,8 @@ class MontrekExampleCList(views.MontrekListView):
 
     @property
     def actions(self) -> tuple:
-        action_new_example_c = ActionElement(
-            icon="plus",
-            link=reverse("montrek_example_c_create"),
-            action_id="id_new_example_c",
+        action_new_example_c = CreateActionElement(
+            url_name="montrek_example_c_create",
             hover_text="Add new C Example",
         )
         return (action_back_to_overview("b"), action_new_example_c)
