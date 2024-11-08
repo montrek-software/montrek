@@ -23,7 +23,7 @@ class Annotator:
     ):
         for field in fields:
             self.annotations[field] = subquery_builder(satellite_class, field, **kwargs)
-            self._add_to_annotated_satellite_classes(satellite_class)
+            self.add_to_annotated_satellite_classes(satellite_class)
 
     def build(self, reference_date: timezone.datetime) -> dict[str, Subquery]:
         return {
@@ -46,7 +46,7 @@ class Annotator:
     def get_satellite_classes(self):
         return self.annotated_satellite_classes
 
-    def _add_to_annotated_satellite_classes(
+    def add_to_annotated_satellite_classes(
         self, satellite_class: type[MontrekSatelliteABC]
     ):
         related_hub_class = satellite_class.get_related_hub_class()

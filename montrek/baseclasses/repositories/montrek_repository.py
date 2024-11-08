@@ -238,6 +238,7 @@ class MontrekRepositoryOld:
                 satellite_class, fields
             )
             self._ts_queryset_containers.append(ts_container)
+            self.annotator.add_to_annotated_satellite_classes(satellite_class)
         else:
             self.annotator.subquery_builder_to_annotations(
                 fields, satellite_class, SatelliteSubqueryBuilder
