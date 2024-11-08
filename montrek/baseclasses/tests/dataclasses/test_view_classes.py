@@ -8,7 +8,7 @@ from baseclasses.dataclasses.view_classes import (
 )
 
 
-class TestStandardActionElement(TestCase):
+class TestStandardActionElementBase(TestCase):
     def test_init(self):
         url_name = "montrek_example_a_list"
         element = StandardActionElementBase(
