@@ -43,8 +43,11 @@ class Annotator:
     def get_annotated_field_names(self) -> list[str]:
         return list(self.annotations.keys())
 
-    def get_satellite_classes(self):
+    def get_satellite_classes(self) -> list[type[MontrekSatelliteABC]]:
         return self.annotated_satellite_classes
+
+    def get_linked_satellite_classes(self) -> list[type[MontrekSatelliteABC]]:
+        return self.annotated_linked_satellite_classes
 
     def add_to_annotated_satellite_classes(
         self, satellite_class: type[MontrekSatelliteABC]

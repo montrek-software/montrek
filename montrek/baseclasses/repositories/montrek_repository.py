@@ -47,8 +47,6 @@ class MontrekRepositoryOld:
 
     def __init__(self, session_data: Dict[str, Any] = {}):
         self.annotator = Annotator(self.hub_class)
-        self._primary_satellite_classes = []
-        self._primary_link_classes = []
         self._ts_queryset_containers = []
         self.session_data = session_data
         self.query_builder = QueryBuilder(self.annotator, session_data)
@@ -277,7 +275,6 @@ class MontrekRepositoryOld:
             link_class=link_class,
             last_ts_value=last_ts_value,
         )
-        self._add_to_primary_link_classes(link_class)
         self.linked_fields.extend(fields)
 
     def build_time_series_queryset_container(
@@ -328,13 +325,13 @@ class MontrekRepositoryOld:
     def get_history_queryset(self, pk: int, **kwargs) -> dict[str, QuerySet]:
         hub = self.hub_class.objects.get(pk=pk)
         satellite_querys = {}
-        for sat in self._primary_satellite_classes:
+        for sat in self.annotator.get_satellite_classes():
             sat_query = sat.objects.filter(hub_entity=hub).order_by("-created_at")
             sat_query = sat_query.annotate(
                 changed_by=F("created_by__email"),
             )
             satellite_querys[sat.__name__] = sat_query
-        for link in self._primary_link_classes:
+        for link in self.annotator.get_linked_satellite_classes():
             link_query = link.objects.filter(hub_in=hub).order_by("-created_at")
             satellite_querys[link.__name__] = link_query
         return satellite_querys
@@ -409,7 +406,7 @@ class MontrekRepositoryOld:
     def std_delete_object(self, obj: MontrekHubABC):
         obj.state_date_end = timezone.now()
         obj.save()
-        for satellite_class in self._primary_satellite_classes:
+        for satellite_class in self.annotator.get_satellite_classes():
             satellite_class.objects.filter(hub_entity=obj).update(
                 state_date_end=timezone.now()
             )
@@ -446,16 +443,6 @@ class MontrekRepositoryOld:
         hubs = [value_to_hub_map.get(value) for value in values]
         return hubs
 
-    def _add_to_primary_satellite_classes(
-        self, satellite_class: Type[MontrekSatelliteABC]
-    ):
-        if satellite_class not in self._primary_satellite_classes:
-            self._primary_satellite_classes.append(satellite_class)
-
-    def _add_to_primary_link_classes(self, link_class: Type[MontrekLinkABC]):
-        if link_class not in self._primary_link_classes:
-            self._primary_link_classes.append(link_class)
-
     def _get_hub_from_data(self, data: Dict[str, Any]) -> MontrekHubABC:
         if (
             "hub_entity_id" in data
@@ -476,7 +463,7 @@ class MontrekRepositoryOld:
     def _raise_for_duplicated_entries(self, data_frame: pd.DataFrame):
         raise_error = False
         error_message = ""
-        for satellite_class in self._primary_satellite_classes:
+        for satellite_class in self.annotator.get_satellite_classes():
             identifier_fields = satellite_class.identifier_fields
             subset = [col for col in identifier_fields if col in data_frame.columns]
             if "hub_entity_id" in data_frame.columns:
