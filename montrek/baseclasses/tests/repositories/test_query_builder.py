@@ -17,8 +17,8 @@ from baseclasses.utils import montrek_time
 
 class TestQueryBuilder(TestCase):
     def setUp(self):
-        self.annotator = Annotator()
-        self.query_builder = QueryBuilder(TestMontrekHub, self.annotator, {})
+        self.annotator = Annotator(TestMontrekHub)
+        self.query_builder = QueryBuilder(self.annotator, {})
         self.reference_date = timezone.now()
 
     def test_query_builder__build_queryset(self):
@@ -65,9 +65,7 @@ class TestQueryBuilder(TestCase):
                 "": {"test_value__exact": {"filter_value": 0, "filter_negate": False}}
             }
         }
-        query_builder = QueryBuilder(
-            TestMontrekHub, self.annotator, session_data=filter_dict
-        )
+        query_builder = QueryBuilder(self.annotator, session_data=filter_dict)
         test_query = query_builder.build_queryset(self.reference_date)
         self.assertEqual(test_query.count(), 1)
         self.assertEqual(test_query.first().test_name, "Test Name 0")

@@ -14,12 +14,18 @@ class MockSubqueryBuilder:
 
 
 class MockSatellite:
+    @classmethod
+    def get_related_hub_class(cls):
+        return MockHub
+
+
+class MockHub:
     pass
 
 
 class TestAnnotationManager(TestCase):
     def test_subquery_to_annotation(self):
-        test_annotator = Annotator()
+        test_annotator = Annotator(MockHub)
         test_annotator.subquery_builder_to_annotations(
             ["test", "test2"], MockSatellite, MockSubqueryBuilder
         )
