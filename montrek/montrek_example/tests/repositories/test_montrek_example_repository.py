@@ -55,15 +55,13 @@ class TestMontrekRepositorySatellite(TestCase):
         self.assertEqual(
             test_fields,
             [
-                "comment",
-                "field_a1_str",
                 "field_a1_int",
-                "comment",
-                "field_a2_str",
+                "field_a1_str",
                 "field_a2_float",
+                "field_a2_str",
+                "field_b1_str",
                 "dummy1",
                 "dummy2",
-                "field_b1_str",
             ],
         )
 

@@ -128,14 +128,11 @@ class MontrekRepositoryOld:
         return object_dict
 
     def std_satellite_fields(self):
-        fields = []
-        for satellite_class in self._primary_satellite_classes:
-            fields.extend(satellite_class.get_value_fields())
-        return fields
+        return self.annotator.satellite_fields()
 
     def _get_satellite_field_names(self, is_time_series: bool) -> list[str]:
         fields = []
-        for satellite_class in self._primary_satellite_classes:
+        for satellite_class in self.annotator.annotated_satellite_classes:
             if (
                 isinstance(satellite_class(), MontrekTimeSeriesSatelliteABC)
                 == is_time_series
@@ -155,13 +152,10 @@ class MontrekRepositoryOld:
         return self._get_satellite_field_names(is_time_series=True)
 
     def get_all_fields(self) -> list[str]:
-        satellite_fields = [field.name for field in self.std_satellite_fields()]
-        return satellite_fields + self.calculated_fields + self.linked_fields
+        return self.annotator.get_annotated_field_names() + self.calculated_fields
 
     def get_all_annotated_fields(self):
-        return list(self.annotations.keys()) + list(
-            self.annotator.ts_annotations.keys()
-        )
+        return self.annotator.get_annotated_field_names()
 
     def std_create_object(self, data: Dict[str, Any]) -> MontrekHubABC:
         self._raise_for_anonymous_user()
