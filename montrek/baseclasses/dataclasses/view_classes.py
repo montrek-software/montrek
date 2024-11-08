@@ -32,7 +32,7 @@ class BackActionElement(StandardActionElementBase):
 
 
 @dataclass(init=False)
-class UploadFileActionElement(StandardActionElementBase):
+class UploadActionElement(StandardActionElementBase):
     icon = "upload"
 
 

@@ -11,7 +11,7 @@ from montrek_example.managers.a_upload_table_manager import (
     HubAFileUploadRegistryManager,
     HubAUploadTableManager,
 )
-from baseclasses.dataclasses.view_classes import ActionElement, UploadFileActionElement
+from baseclasses.dataclasses.view_classes import ActionElement, UploadActionElement
 from django.urls import reverse
 from file_upload.views import (
     FileUploadRegistryView,
@@ -243,7 +243,7 @@ class MontrekExampleA1UploadView(FileUploadRegistryView):
 
     @property
     def actions(self) -> tuple:
-        action_upload_file = UploadFileActionElement(
+        action_upload_file = UploadActionElement(
             url_name="a1_upload_file",
             hover_text="Upload A1 data from file",
         )
@@ -297,7 +297,7 @@ class MontrekExampleHubAApiUploadView(views.MontrekListView):
 
     @property
     def actions(self) -> tuple:
-        action_do_a2_upload = UploadFileActionElement(
+        action_do_a2_upload = UploadActionElement(
             url_name="do_a2_upload",
             hover_text="Upload A2 data from API",
         )
