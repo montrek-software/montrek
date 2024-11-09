@@ -6,18 +6,17 @@ class HubCRepository(MontrekRepository):
     hub_class = me_models.HubC
 
     def set_annotations(self):
-        # self.add_satellite_fields_annotations(
-        #     me_models.SatTSC2,
-        #     ["field_tsc2_float"],
-        # )
-        # self.add_satellite_fields_annotations(
-        #     me_models.SatTSC3,
-        #     [
-        #         "field_tsc3_int",
-        #         "field_tsc3_str",
-        #         "value_date",
-        #     ],
-        # )
+        self.add_satellite_fields_annotations(
+            me_models.SatTSC2,
+            ["field_tsc2_float"],
+        )
+        self.add_satellite_fields_annotations(
+            me_models.SatTSC3,
+            [
+                "field_tsc3_int",
+                "field_tsc3_str",
+            ],
+        )
         # self.add_satellite_fields_annotations(
         #     me_models.SatTSC4,
         #     [

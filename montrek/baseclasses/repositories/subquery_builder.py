@@ -2,7 +2,11 @@ from django.conf import settings
 from typing import Type
 
 from django.db.models.functions import Cast
-from baseclasses.models import MontrekManyToManyLinkABC, MontrekSatelliteABC
+from baseclasses.models import (
+    MontrekManyToManyLinkABC,
+    MontrekSatelliteABC,
+    ValueDateList,
+)
 from baseclasses.models import MontrekTimeSeriesSatelliteABC
 from baseclasses.models import MontrekLinkABC
 from baseclasses.models import LinkTypeEnum
@@ -11,49 +15,72 @@ from django.utils import timezone
 
 
 class SubqueryBuilder:
-    def __init__(self, satellite_class: Type[MontrekSatelliteABC], field: str):
-        self.satellite_class = satellite_class
-        self.field = field
-        self.lookup_string = "pk"
-        self.hub_query = self.get_hub_query()
-
     def build(self, reference_date: timezone.datetime) -> Subquery:
         raise NotImplementedError("SubqueryBuilder has no get_subquery method!")
 
-    def get_hub_query(self) -> QuerySet:
+
+class SatelliteSubqueryBuilderABC(SubqueryBuilder):
+    lookup_field: str = ""
+
+    def __init__(
+        self,
+        satellite_class: Type[MontrekSatelliteABC],
+        field: str,
+    ):
+        self.satellite_class = satellite_class
+        self.field = field
+        # TODO: remove lookup_string
+        self.lookup_string = "pk"
+
+    @property
+    def hub_query(self) -> QuerySet:
         return self.satellite_class.get_related_hub_class().objects.filter(
             pk=OuterRef("hub")
         )
 
     def subquery_filter(self, reference_date: timezone.datetime) -> dict[str, object]:
         return {
-            "hub_entity": OuterRef(self.lookup_string),
+            self.lookup_field: OuterRef("pk"),
             "state_date_start__lte": reference_date,
             "state_date_end__gt": reference_date,
         }
 
+    def satellite_subquery(self, reference_date: timezone.datetime) -> Subquery:
+        return Subquery(
+            self.satellite_class.objects.filter(
+                **self.subquery_filter(reference_date)
+            ).values(self.field)
+        )
 
-class SatelliteSubqueryBuilder(SubqueryBuilder):
+
+class SatelliteSubqueryBuilder(SatelliteSubqueryBuilderABC):
+    lookup_field = "hub_entity"
+
     def build(self, reference_date: timezone.datetime) -> Subquery:
         return Subquery(
             self.hub_query.annotate(
                 **{
-                    self.field: Subquery(
-                        self.satellite_class.objects.filter(
-                            **self.subquery_filter(reference_date)
-                        ).values(self.field)
-                    )
+                    self.field: self.satellite_subquery(reference_date),
                 }
             ).values(self.field)
         )
 
 
-# class TSSatelliteSubqueryBuilder(SubqueryBuilder):
-#     def build(self, reference_date: timezone.datetime) -> Subquery:
-#         return Subquery
+class TSSatelliteSubqueryBuilder(SatelliteSubqueryBuilderABC):
+    lookup_field = "hub_value_date"
+
+    def build(self, reference_date: timezone.datetime) -> Subquery:
+        return self.satellite_subquery(reference_date)
 
 
-class LastTSSatelliteSubqueryBuilder(SubqueryBuilder):
+class ValueDateSubqueryBuilder(SubqueryBuilder):
+    def build(self, reference_date: timezone.datetime) -> Subquery:
+        return ValueDateList.objects.filter(pk=OuterRef("value_date_list")).values(
+            "value_date"
+        )
+
+
+class LastTSSatelliteSubqueryBuilder(SatelliteSubqueryBuilderABC):
     def __init__(
         self,
         satellite_class: Type[MontrekSatelliteABC],
@@ -98,7 +125,7 @@ def get_string_concat_function():
         )
 
 
-class LinkedSatelliteSubqueryBuilderBase(SubqueryBuilder):
+class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
     def __init__(
         self,
         satellite_class: Type[MontrekSatelliteABC],

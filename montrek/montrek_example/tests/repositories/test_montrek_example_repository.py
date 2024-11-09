@@ -1743,3 +1743,66 @@ class TestRepositoryQueryConcept(TestCase):
             query.first().value_date,
             tsc2_fac.hub_value_date.value_date_list.value_date.date(),
         )
+
+    def test_ts_satellite_concept__two_hubs(self):
+        tsc2_fac1 = me_factories.SatTSC2Factory(field_tsc2_float=10)
+        tsc2_fac2 = me_factories.SatTSC2Factory(field_tsc2_float=20)
+        repo = HubCRepository({})
+        query = repo.receive()
+        self.assertEqual(query.count(), 2)
+        self.assertEqual(query.first().field_tsc2_float, tsc2_fac1.field_tsc2_float)
+        self.assertEqual(query.last().field_tsc2_float, tsc2_fac2.field_tsc2_float)
+
+    def test_ts_satellite_concept__two_dates(self):
+        tsc2_fac1 = me_factories.SatTSC2Factory(field_tsc2_float=10)
+        tsc2_fac2 = me_factories.SatTSC2Factory(
+            field_tsc2_float=20,
+            hub_value_date__hub=tsc2_fac1.hub_value_date.hub,
+        )
+        repo = HubCRepository({})
+        query = repo.receive()
+        self.assertEqual(query.count(), 2)
+        self.assertEqual(query.first().field_tsc2_float, tsc2_fac1.field_tsc2_float)
+        self.assertEqual(query.last().field_tsc2_float, tsc2_fac2.field_tsc2_float)
+        self.assertEqual(
+            query.first().value_date,
+            tsc2_fac1.hub_value_date.value_date_list.value_date.date(),
+        )
+        self.assertEqual(
+            query.last().value_date,
+            tsc2_fac2.hub_value_date.value_date_list.value_date.date(),
+        )
+
+    def test_ts_satellite_concept__with_sat(self):
+        tsc2_fac1 = me_factories.SatTSC2Factory(field_tsc2_float=10)
+        c_sat = me_factories.SatC1Factory(
+            hub_entity=tsc2_fac1.hub_value_date.hub, field_c1_str="hallo"
+        )
+        repo = HubCRepository({})
+        query = repo.receive()
+        self.assertEqual(query.count(), 1)
+        self.assertEqual(query.first().field_tsc2_float, tsc2_fac1.field_tsc2_float)
+        self.assertEqual(
+            query.first().value_date,
+            tsc2_fac1.hub_value_date.value_date_list.value_date.date(),
+        )
+        self.assertEqual(query.first().field_c1_str, c_sat.field_c1_str)
+
+    def test_ts_satellite_concept__two_ts_sats(self):
+        tsc2_fac = me_factories.SatTSC2Factory(field_tsc2_float=10)
+        c_sat1 = me_factories.SatC1Factory(
+            hub_entity=tsc2_fac.hub_value_date.hub, field_c1_str="hallo"
+        )
+        tsc3_fac = me_factories.SatTSC3Factory(
+            field_tsc3_int=20, hub_value_date=tsc2_fac.hub_value_date
+        )
+        repo = HubCRepository({})
+        query = repo.receive()
+        self.assertEqual(query.count(), 1)
+        self.assertEqual(query.first().field_tsc2_float, tsc2_fac.field_tsc2_float)
+        self.assertEqual(
+            query.first().value_date,
+            tsc2_fac.hub_value_date.value_date_list.value_date.date(),
+        )
+        self.assertEqual(query.first().field_c1_str, c_sat1.field_c1_str)
+        self.assertEqual(query.first().field_tsc3_int, tsc3_fac.field_tsc3_int)

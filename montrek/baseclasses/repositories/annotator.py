@@ -2,6 +2,7 @@ from django.db.models import Field, Subquery
 from django.utils import timezone
 from baseclasses.repositories.subquery_builder import (
     SubqueryBuilder,
+    ValueDateSubqueryBuilder,
 )
 from baseclasses.models import MontrekSatelliteABC, MontrekHubABC
 
@@ -9,10 +10,13 @@ from baseclasses.models import MontrekSatelliteABC, MontrekHubABC
 class Annotator:
     def __init__(self, hub_class: type[MontrekHubABC]):
         self.hub_class = hub_class
-        self.annotations: dict[str, SubqueryBuilder] = {}
+        self.annotations: dict[str, SubqueryBuilder] = self.get_raw_annotations()
         self.ts_annotations: dict[str, Subquery] = {}
         self.annotated_satellite_classes: list[type[MontrekSatelliteABC]] = []
         self.annotated_linked_satellite_classes: list[type[MontrekSatelliteABC]] = []
+
+    def get_raw_annotations(self) -> dict[str, SubqueryBuilder]:
+        return {"value_date": ValueDateSubqueryBuilder()}
 
     def subquery_builder_to_annotations(
         self,

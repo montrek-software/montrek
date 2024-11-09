@@ -21,6 +21,7 @@ from baseclasses.repositories.subquery_builder import (
     LinkedSatelliteSubqueryBuilder,
     ReverseLinkedSatelliteSubqueryBuilder,
     SatelliteSubqueryBuilder,
+    TSSatelliteSubqueryBuilder,
 )
 from django.core.exceptions import PermissionDenied
 from django.db.models import (
@@ -231,15 +232,12 @@ class MontrekRepositoryOld:
         satellite_class: Type[MontrekSatelliteABC],
         fields: List[str],
     ):
-        # if satellite_class.is_timeseries:
-        #     ts_container = self.build_time_series_queryset_container(
-        #         satellite_class, fields
-        #     )
-        #     self._ts_queryset_containers.append(ts_container)
-        #     self.annotator.add_to_annotated_satellite_classes(satellite_class)
-        # else:
+        if satellite_class.is_timeseries:
+            subquery_builder = TSSatelliteSubqueryBuilder
+        else:
+            subquery_builder = SatelliteSubqueryBuilder
         self.annotator.subquery_builder_to_annotations(
-            fields, satellite_class, SatelliteSubqueryBuilder
+            fields, satellite_class, subquery_builder
         )
 
     def add_last_ts_satellite_fields_annotations(
