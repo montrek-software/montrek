@@ -75,7 +75,6 @@ class MontrekSatelliteBaseABC(TimeStampMixin, StateMixin, UserMixin):
     class Meta:
         abstract = True
 
-    hub_entity = models.ForeignKey(MontrekHubABC, on_delete=models.CASCADE)
     hash_identifier = models.CharField(max_length=64, default="")
     hash_value = models.CharField(max_length=64, default="")
 
@@ -176,10 +175,6 @@ class MontrekSatelliteBaseABC(TimeStampMixin, StateMixin, UserMixin):
     def get_hash_value(self) -> str:
         return self._get_hash_value()
 
-    @classmethod
-    def get_related_hub_class(cls) -> type[MontrekHubABC]:
-        return cls.hub_entity.field.related_model
-
 
 class MontrekSatelliteABC(MontrekSatelliteBaseABC):
     class Meta:
@@ -190,6 +185,14 @@ class MontrekSatelliteABC(MontrekSatelliteBaseABC):
         ]
 
     hub_entity = models.ForeignKey(MontrekHubABC, on_delete=models.CASCADE)
+
+    @classmethod
+    def get_related_hub_class(cls) -> type[MontrekHubABC]:
+        return cls.hub_entity.field.related_model
+
+
+# TODO:
+####### Remove this class ############
 
 
 class MontrekTimeSeriesSatelliteABC(MontrekSatelliteBaseABC):
@@ -205,6 +208,44 @@ class MontrekTimeSeriesSatelliteABC(MontrekSatelliteBaseABC):
     is_timeseries = True
     value_date = models.DateField()
     identifier_fields = ["value_date", "hub_entity_id"]
+
+    @classmethod
+    def get_related_hub_class(cls) -> type[MontrekHubABC]:
+        return cls.hub_entity.field.related_model
+
+    ##############
+
+
+class ValueDateList(models.Model):
+    value_date = models.DateField(unique=True)
+
+
+class HubValueDate(models.Model):
+    class Meta:
+        abstract = True
+
+    hub = models.ForeignKey(
+        MontrekHubABC, on_delete=models.CASCADE, related_name="hub_value_date"
+    )
+    value_date_list = models.ForeignKey(ValueDateList, on_delete=models.CASCADE)
+
+
+class MontrekTimeSeriesSatelliteInterimABC(MontrekSatelliteBaseABC):
+    class Meta:
+        abstract = True
+        indexes = [
+            models.Index(fields=["hash_identifier"]),
+            models.Index(fields=["hash_value"]),
+        ]
+
+    hub_value_date = models.ForeignKey(HubValueDate, on_delete=models.CASCADE)
+    allow_multiple = True
+    is_timeseries = True
+    identifier_fields = ["hub_value_date"]
+
+    @classmethod
+    def get_related_hub_class(cls) -> type[MontrekHubABC]:
+        return cls.hub_value_date.field.related_model.hub.field.related_model
 
 
 class MontrekTypeSatelliteABC(MontrekSatelliteABC):

@@ -1,23 +1,24 @@
+from baseclasses.models import ValueDateList
+from django.db.models import OuterRef, Q, Subquery
 from django.test import TestCase
-from django.db.models import Subquery, OuterRef, Q
+
 from montrek_example.models import (
-    SatC1,
-    SatTSC3,
-    HubC,
     CHubValueDate,
-    SatTSC2,
-    ValueDateList,
+    HubC,
+    SatC1,
     SatD1,
+    SatTSC2,
+    SatTSC3,
     SatTSD2,
 )
 from montrek_example.tests.factories.montrek_example_factories import (
+    CHubValueDateFactory,
+    DHubValueDateFactory,
+    SatC1Factory,
     SatD1Factory,
     SatTSC2Factory,
     SatTSC3Factory,
     SatTSD2Factory,
-    SatC1Factory,
-    CHubValueDateFactory,
-    DHubValueDateFactory,
     ValueDateListFactory,
 )
 
@@ -28,7 +29,7 @@ class TestMontrekSatellite(TestCase):
         value_fields = test_model_class.get_value_fields()
         self.assertEqual(
             [field.name for field in value_fields],
-            ["comment", "value_date", "field_tsc3_int", "field_tsc3_str"],
+            ["comment", "field_tsc3_int", "field_tsc3_str"],
         )
 
     def annotations(self):

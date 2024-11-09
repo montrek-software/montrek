@@ -1,6 +1,6 @@
 import factory
-import datetime
 
+from baseclasses.tests.factories.baseclass_factories import ValueDateListFactory
 from api_upload.tests.factories import (
     ApiUploadRegistryHubFactory,
     ApiUploadRegistryStaticSatelliteFactory,
@@ -68,13 +68,6 @@ class SatC1Factory(factory.django.DjangoModelFactory):
         model = "montrek_example.SatC1"
 
     hub_entity = factory.SubFactory(HubCFactory)
-
-
-class ValueDateListFactory(factory.django.DjangoModelFactory):
-    class Meta:
-        model = "montrek_example.ValueDateList"
-
-    value_date = factory.Faker("date_time", tzinfo=datetime.timezone.utc)
 
 
 class CHubValueDateFactory(factory.django.DjangoModelFactory):

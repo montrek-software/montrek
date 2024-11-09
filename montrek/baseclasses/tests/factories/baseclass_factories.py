@@ -1,4 +1,7 @@
+import datetime
+
 import factory
+
 from baseclasses.utils import montrek_time
 
 
@@ -43,3 +46,10 @@ class TestMontrekSatelliteNoIdFieldsFactory(factory.django.DjangoModelFactory):
         model = "baseclasses.TestMontrekSatelliteNoIdFields"
 
     hub_entity = factory.SubFactory(TestMontrekHubFactory)
+
+
+class ValueDateListFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "baseclasses.ValueDateList"
+
+    value_date = factory.Faker("date_time", tzinfo=datetime.timezone.utc)
