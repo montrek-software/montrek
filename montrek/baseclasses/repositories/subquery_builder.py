@@ -25,6 +25,13 @@ class SubqueryBuilder:
             pk=OuterRef("hub")
         )
 
+    def subquery_filter(self, reference_date: timezone.datetime) -> dict[str, object]:
+        return {
+            "hub_entity": OuterRef(self.lookup_string),
+            "state_date_start__lte": reference_date,
+            "state_date_end__gt": reference_date,
+        }
+
 
 class SatelliteSubqueryBuilder(SubqueryBuilder):
     def build(self, reference_date: timezone.datetime) -> Subquery:
@@ -33,14 +40,17 @@ class SatelliteSubqueryBuilder(SubqueryBuilder):
                 **{
                     self.field: Subquery(
                         self.satellite_class.objects.filter(
-                            hub_entity=OuterRef(self.lookup_string),
-                            state_date_start__lte=reference_date,
-                            state_date_end__gt=reference_date,
+                            **self.subquery_filter(reference_date)
                         ).values(self.field)
                     )
                 }
             ).values(self.field)
         )
+
+
+# class TSSatelliteSubqueryBuilder(SubqueryBuilder):
+#     def build(self, reference_date: timezone.datetime) -> Subquery:
+#         return Subquery
 
 
 class LastTSSatelliteSubqueryBuilder(SubqueryBuilder):
