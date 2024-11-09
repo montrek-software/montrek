@@ -85,6 +85,14 @@ class CHubValueDateFactory(factory.django.DjangoModelFactory):
     value_date_list = factory.SubFactory(ValueDateListFactory)
 
 
+class DHubValueDateFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "montrek_example.DHubValueDate"
+
+    hub = factory.SubFactory(HubDFactory)
+    value_date_list = factory.SubFactory(ValueDateListFactory)
+
+
 class SatTSC2Factory(factory.django.DjangoModelFactory):
     class Meta:
         model = "montrek_example.SatTSC2"
@@ -113,8 +121,7 @@ class SatTSD2Factory(factory.django.DjangoModelFactory):
     class Meta:
         model = "montrek_example.SatTSD2"
 
-    hub_entity = factory.SubFactory(HubDFactory)
-    value_date = factory.Faker("date_time", tzinfo=datetime.timezone.utc)
+    hub_value_date = factory.SubFactory(DHubValueDateFactory)
 
 
 class HubAFileUploadRegistryHubFactory(FileUploadRegistryHubFactory):

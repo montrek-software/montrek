@@ -8,13 +8,17 @@ from montrek_example.models import (
     SatTSC2,
     ValueDateList,
     SatD1,
+    SatTSD2,
 )
 from montrek_example.tests.factories.montrek_example_factories import (
     SatD1Factory,
     SatTSC2Factory,
     SatTSC3Factory,
+    SatTSD2Factory,
     SatC1Factory,
     CHubValueDateFactory,
+    DHubValueDateFactory,
+    ValueDateListFactory,
 )
 
 
@@ -66,6 +70,19 @@ class TestMontrekSatellite(TestCase):
                         )
                     }
                 ).values("field_d1_str")
+            ),
+            "field_tsd2_float": Subquery(
+                hub_query.annotate(
+                    **{
+                        "field_tsd2_float": Subquery(
+                            SatTSD2.objects.filter(
+                                hub_value_date=OuterRef(
+                                    "linkhubchubd__hub_out__hub_value_date"
+                                )
+                            ).values("field_tsd2_float")
+                        )
+                    }
+                ).values("field_tsd2_float")
             ),
         }
 
@@ -154,3 +171,20 @@ class TestMontrekSatellite(TestCase):
         self.assertEqual(query.count(), 1)
         self.assertEqual(query.first().field_c1_str, c_sat1.field_c1_str)
         self.assertEqual(query.first().field_d1_str, d_sat1.field_d1_str)
+
+    def test_ts_satellite_concept__linked_ts_sat(self):
+        value_date_list = ValueDateListFactory()
+        c_hub_value_date = CHubValueDateFactory.create(value_date_list=value_date_list)
+        d_hub_value_date = DHubValueDateFactory.create(value_date_list=value_date_list)
+        c_sat = SatTSC2Factory.create(
+            hub_value_date=c_hub_value_date, field_tsc2_float=10
+        )
+        d_sat = SatTSD2Factory.create(
+            hub_value_date=d_hub_value_date, field_tsd2_float=20
+        )
+        c_hub_value_date.hub.link_hub_c_hub_d.add(d_hub_value_date.hub)
+        annotations = self.annotations()
+        query = CHubValueDate.objects.annotate(**annotations)
+        self.assertEqual(query.count(), 1)
+        self.assertEqual(query.first().field_tsc2_float, c_sat.field_tsc2_float)
+        self.assertEqual(query.first().field_tsd2_float, d_sat.field_tsd2_float)

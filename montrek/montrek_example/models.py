@@ -127,7 +127,16 @@ class ValueDateList(models.Model):
 
 
 class CHubValueDate(models.Model):
-    hub = models.ForeignKey(HubC, on_delete=models.CASCADE)
+    hub = models.ForeignKey(
+        HubC, on_delete=models.CASCADE, related_name="hub_value_date"
+    )
+    value_date_list = models.ForeignKey(ValueDateList, on_delete=models.CASCADE)
+
+
+class DHubValueDate(models.Model):
+    hub = models.ForeignKey(
+        HubD, on_delete=models.CASCADE, related_name="hub_value_date"
+    )
     value_date_list = models.ForeignKey(ValueDateList, on_delete=models.CASCADE)
 
 
@@ -159,8 +168,8 @@ class SatD1(MontrekSatelliteABC):
     identifier_fields = ["field_d1_str"]
 
 
-class SatTSD2(MontrekTimeSeriesSatelliteABC):
-    hub_entity = models.ForeignKey(HubD, on_delete=models.CASCADE)
+class SatTSD2(models.Model):
+    hub_value_date = models.ForeignKey(DHubValueDate, on_delete=models.CASCADE)
     field_tsd2_float = models.FloatField(null=True)
     field_tsd2_int = models.IntegerField(null=True)
 
