@@ -144,6 +144,10 @@ class SatTSC2(models.Model):
     hub_value_date = models.ForeignKey(CHubValueDate, on_delete=models.CASCADE)
     field_tsc2_float = models.FloatField(default=0.0)
 
+    @classmethod
+    def get_related_hub_class(cls) -> type[MontrekHubABC]:
+        return cls.hub_value_date.field.related_model.hub.field.related_model
+
 
 class SatTSC3(models.Model):
     hub_value_date = models.ForeignKey(CHubValueDate, on_delete=models.CASCADE)

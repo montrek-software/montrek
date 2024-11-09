@@ -29,10 +29,14 @@ class QueryBuilder:
         filter = filter.get(request_path, {})
         return FilterDecoder.decode_dict_to_query(filter)
 
+    @property
+    def hub_value_date(self):
+        return self.hub_class.hub_value_date.field.model
+
     def build_queryset(
         self, reference_date: timezone.datetime, order_fields: tuple[str, ...] = ()
     ) -> QuerySet:
-        queryset = self.hub_class.objects.annotate(
+        queryset = self.hub_value_date.objects.annotate(
             **self.annotator.build(reference_date)
         ).filter(
             Q(state_date_start__lte=reference_date),

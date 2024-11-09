@@ -1719,3 +1719,23 @@ class TestGetHubsByFieldValues(TestCase):
                 raise_for_multiple_hubs=False,
                 raise_for_unmapped_values=True,
             )
+
+
+class TestRepositoryQueryConcept(TestCase):
+    def test_satellite_concept__single_static_entry(self):
+        c1_fac = me_factories.SatC1Factory(field_c1_str="Hallo", field_c1_bool=True)
+        repo = HubCRepository({})
+        query = repo.receive()
+        self.assertEqual(query.count(), 1)
+        self.assertEqual(query.first().field_c1_str, c1_fac.field_c1_str)
+        self.assertEqual(query.first().field_c1_bool, c1_fac.field_c1_bool)
+
+    def test_ts_satellite_concept__single_entry(self):
+        tsc2_fac = me_factories.SatTSC2Factory()
+        repo = HubCRepository({})
+        query = repo.receive()
+        self.assertEqual(query.first().field_tsc2_float, tsc2_fac.field_tsc2_float)
+        self.assertEqual(
+            query.first().value_date,
+            tsc2_fac.hub_value_date.value_date_list.value_date.date(),
+        )
