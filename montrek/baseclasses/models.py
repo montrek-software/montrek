@@ -71,13 +71,9 @@ class MontrekHubABC(TimeStampMixin, StateMixin, UserMixin):
 
 
 # Base Static Satellite Model ABC
-class MontrekSatelliteABC(TimeStampMixin, StateMixin, UserMixin):
+class MontrekSatelliteBaseABC(TimeStampMixin, StateMixin, UserMixin):
     class Meta:
         abstract = True
-        indexes = [
-            models.Index(fields=["hash_identifier"]),
-            models.Index(fields=["hash_value"]),
-        ]
 
     hub_entity = models.ForeignKey(MontrekHubABC, on_delete=models.CASCADE)
     hash_identifier = models.CharField(max_length=64, default="")
@@ -185,10 +181,26 @@ class MontrekSatelliteABC(TimeStampMixin, StateMixin, UserMixin):
         return cls.hub_entity.field.related_model
 
 
-class MontrekTimeSeriesSatelliteABC(MontrekSatelliteABC):
+class MontrekSatelliteABC(MontrekSatelliteBaseABC):
     class Meta:
         abstract = True
+        indexes = [
+            models.Index(fields=["hash_identifier"]),
+            models.Index(fields=["hash_value"]),
+        ]
 
+    hub_entity = models.ForeignKey(MontrekHubABC, on_delete=models.CASCADE)
+
+
+class MontrekTimeSeriesSatelliteABC(MontrekSatelliteBaseABC):
+    class Meta:
+        abstract = True
+        indexes = [
+            models.Index(fields=["hash_identifier"]),
+            models.Index(fields=["hash_value"]),
+        ]
+
+    hub_entity = models.ForeignKey(MontrekHubABC, on_delete=models.CASCADE)
     allow_multiple = True
     is_timeseries = True
     value_date = models.DateField()
