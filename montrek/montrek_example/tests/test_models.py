@@ -7,11 +7,14 @@ from montrek_example.models import (
     CHubValueDate,
     SatTSC2,
     ValueDateList,
+    SatD1,
 )
 from montrek_example.tests.factories.montrek_example_factories import (
+    SatD1Factory,
     SatTSC2Factory,
     SatTSC3Factory,
     SatC1Factory,
+    CHubValueDateFactory,
 )
 
 
@@ -25,10 +28,10 @@ class TestMontrekSatellite(TestCase):
         )
 
     def annotations(self):
+        hub_query = HubC.objects.filter(pk=OuterRef("hub"))
         return {
             "field_c1_str": Subquery(
-                HubC.objects.filter(pk=OuterRef("hub"))
-                .annotate(
+                hub_query.annotate(
                     **{
                         "field_c1_str": Subquery(
                             SatC1.objects.filter(hub_entity=OuterRef("pk")).values(
@@ -36,8 +39,7 @@ class TestMontrekSatellite(TestCase):
                             )
                         )
                     }
-                )
-                .values("field_c1_str")
+                ).values("field_c1_str")
             ),
             "field_tsc2_float": Subquery(
                 SatTSC2.objects.filter(hub_value_date=OuterRef("pk")).values(
@@ -53,6 +55,17 @@ class TestMontrekSatellite(TestCase):
                 ValueDateList.objects.filter(pk=OuterRef("value_date_list")).values(
                     "value_date"
                 )
+            ),
+            "field_d1_str": Subquery(
+                hub_query.annotate(
+                    **{
+                        "field_d1_str": Subquery(
+                            SatD1.objects.filter(
+                                hub_entity=OuterRef("linkhubchubd__hub_out")
+                            ).values("field_d1_str")
+                        )
+                    }
+                ).values("field_d1_str")
             ),
         }
 
@@ -128,3 +141,16 @@ class TestMontrekSatellite(TestCase):
         )
         self.assertEqual(query.first().field_c1_str, c_sat1.field_c1_str)
         self.assertEqual(query.first().field_tsc3_int, tsc3_fac.field_tsc3_int)
+
+    def test_ts_satellite_concept__linked_sat(self):
+        c_hub_value_date = CHubValueDateFactory.create()
+        c_sat1 = SatC1Factory(field_c1_str="hallo", hub_entity=c_hub_value_date.hub)
+        d_sat1 = SatD1Factory.create(
+            field_d1_str="test",
+        )
+        c_sat1.hub_entity.link_hub_c_hub_d.add(d_sat1.hub_entity)
+        annotations = self.annotations()
+        query = CHubValueDate.objects.annotate(**annotations)
+        self.assertEqual(query.count(), 1)
+        self.assertEqual(query.first().field_c1_str, c_sat1.field_c1_str)
+        self.assertEqual(query.first().field_d1_str, d_sat1.field_d1_str)
