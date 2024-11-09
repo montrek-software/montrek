@@ -1,5 +1,5 @@
 from django.test import TestCase
-from django.db.models import Subquery, OuterRef
+from django.db.models import Subquery, OuterRef, Q
 from montrek_example.models import (
     SatC1,
     SatTSC3,
@@ -76,13 +76,20 @@ class TestMontrekSatellite(TestCase):
                     **{
                         "field_tsd2_float": Subquery(
                             SatTSD2.objects.filter(
-                                hub_value_date=OuterRef(
-                                    "linkhubchubd__hub_out__hub_value_date"
+                                Q(
+                                    hub_value_date=OuterRef(
+                                        "linkhubchubd__hub_out__hub_value_date"
+                                    )
+                                )
+                                & Q(
+                                    hub_value_date__value_date_list=OuterRef(
+                                        "hub_value_date__value_date_list"
+                                    )
                                 )
                             ).values("field_tsd2_float")
                         )
                     }
-                ).values("field_tsd2_float")
+                ).values("field_tsd2_float")[:1]
             ),
         }
 
@@ -176,12 +183,14 @@ class TestMontrekSatellite(TestCase):
         value_date_list = ValueDateListFactory()
         c_hub_value_date = CHubValueDateFactory.create(value_date_list=value_date_list)
         d_hub_value_date = DHubValueDateFactory.create(value_date_list=value_date_list)
+        d_hub_value_date2 = DHubValueDateFactory.create(hub=d_hub_value_date.hub)
         c_sat = SatTSC2Factory.create(
             hub_value_date=c_hub_value_date, field_tsc2_float=10
         )
         d_sat = SatTSD2Factory.create(
             hub_value_date=d_hub_value_date, field_tsd2_float=20
         )
+        SatTSD2Factory.create(field_tsd2_float=30, hub_value_date=d_hub_value_date2)
         c_hub_value_date.hub.link_hub_c_hub_d.add(d_hub_value_date.hub)
         annotations = self.annotations()
         query = CHubValueDate.objects.annotate(**annotations)
