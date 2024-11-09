@@ -1,6 +1,13 @@
 from django.test import TestCase
 from django.db.models import Subquery, OuterRef
-from montrek_example.models import SatC1, SatTSC3, HubC, CHubValueDate, SatTSC2
+from montrek_example.models import (
+    SatC1,
+    SatTSC3,
+    HubC,
+    CHubValueDate,
+    SatTSC2,
+    ValueDateList,
+)
 from montrek_example.tests.factories.montrek_example_factories import (
     SatTSC2Factory,
     SatTSC3Factory,
@@ -42,6 +49,11 @@ class TestMontrekSatellite(TestCase):
                     "field_tsc3_int"
                 )
             ),
+            "value_date": Subquery(
+                ValueDateList.objects.filter(pk=OuterRef("value_date_list")).values(
+                    "value_date"
+                )
+            ),
         }
 
     def test_ts_satellite_concept__single_entry(self):
@@ -50,7 +62,8 @@ class TestMontrekSatellite(TestCase):
         query = CHubValueDate.objects.annotate(**annotations)
         self.assertEqual(query.first().field_tsc2_float, tsc2_fac.field_tsc2_float)
         self.assertEqual(
-            query.first().value_date, tsc2_fac.hub_value_date.value_date.date()
+            query.first().value_date,
+            tsc2_fac.hub_value_date.value_date_list.value_date.date(),
         )
 
     def test_ts_satellite_concept__two_hubs(self):
@@ -74,10 +87,12 @@ class TestMontrekSatellite(TestCase):
         self.assertEqual(query.first().field_tsc2_float, tsc2_fac1.field_tsc2_float)
         self.assertEqual(query.last().field_tsc2_float, tsc2_fac2.field_tsc2_float)
         self.assertEqual(
-            query.first().value_date, tsc2_fac1.hub_value_date.value_date.date()
+            query.first().value_date,
+            tsc2_fac1.hub_value_date.value_date_list.value_date.date(),
         )
         self.assertEqual(
-            query.last().value_date, tsc2_fac2.hub_value_date.value_date.date()
+            query.last().value_date,
+            tsc2_fac2.hub_value_date.value_date_list.value_date.date(),
         )
 
     def test_ts_satellite_concept__with_sat(self):
@@ -90,7 +105,8 @@ class TestMontrekSatellite(TestCase):
         self.assertEqual(query.count(), 1)
         self.assertEqual(query.first().field_tsc2_float, tsc2_fac1.field_tsc2_float)
         self.assertEqual(
-            query.first().value_date, tsc2_fac1.hub_value_date.value_date.date()
+            query.first().value_date,
+            tsc2_fac1.hub_value_date.value_date_list.value_date.date(),
         )
         self.assertEqual(query.first().field_c1_str, c_sat.field_c1_str)
 
@@ -107,7 +123,8 @@ class TestMontrekSatellite(TestCase):
         self.assertEqual(query.count(), 1)
         self.assertEqual(query.first().field_tsc2_float, tsc2_fac.field_tsc2_float)
         self.assertEqual(
-            query.first().value_date, tsc2_fac.hub_value_date.value_date.date()
+            query.first().value_date,
+            tsc2_fac.hub_value_date.value_date_list.value_date.date(),
         )
         self.assertEqual(query.first().field_c1_str, c_sat1.field_c1_str)
         self.assertEqual(query.first().field_tsc3_int, tsc3_fac.field_tsc3_int)

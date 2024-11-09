@@ -70,12 +70,19 @@ class SatC1Factory(factory.django.DjangoModelFactory):
     hub_entity = factory.SubFactory(HubCFactory)
 
 
+class ValueDateListFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "montrek_example.ValueDateList"
+
+    value_date = factory.Faker("date_time", tzinfo=datetime.timezone.utc)
+
+
 class CHubValueDateFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = "montrek_example.CHubValueDate"
 
     hub = factory.SubFactory(HubCFactory)
-    value_date = factory.Faker("date_time", tzinfo=datetime.timezone.utc)
+    value_date_list = factory.SubFactory(ValueDateListFactory)
 
 
 class SatTSC2Factory(factory.django.DjangoModelFactory):

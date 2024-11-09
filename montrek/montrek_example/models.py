@@ -122,9 +122,13 @@ class SatC1(MontrekSatelliteABC):
     identifier_fields = ["field_c1_str"]
 
 
+class ValueDateList(models.Model):
+    value_date = models.DateField(unique=True)
+
+
 class CHubValueDate(models.Model):
     hub = models.ForeignKey(HubC, on_delete=models.CASCADE)
-    value_date = models.DateField()
+    value_date_list = models.ForeignKey(ValueDateList, on_delete=models.CASCADE)
 
 
 class SatTSC2(models.Model):
