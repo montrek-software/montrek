@@ -39,8 +39,8 @@ class QueryBuilder:
         queryset = self.hub_value_date.objects.annotate(
             **self.annotator.build(reference_date)
         ).filter(
-            Q(state_date_start__lte=reference_date),
-            Q(state_date_end__gt=reference_date),
+            Q(hub__state_date_start__lte=reference_date),
+            Q(hub__state_date_end__gt=reference_date),
         )
         queryset = self._apply_filter(queryset)
         queryset = self._apply_order(queryset, order_fields)

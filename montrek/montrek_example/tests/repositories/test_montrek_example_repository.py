@@ -1723,7 +1723,11 @@ class TestGetHubsByFieldValues(TestCase):
 
 class TestRepositoryQueryConcept(TestCase):
     def test_satellite_concept__single_static_entry(self):
-        c1_fac = me_factories.SatC1Factory(field_c1_str="Hallo", field_c1_bool=True)
+        c1_fac = me_factories.SatC1Factory(
+            field_c1_str="Hallo",
+            field_c1_bool=True,
+        )
+        me_factories.CHubValueDateFactory.create(hub=c1_fac.hub_entity)
         repo = HubCRepository({})
         query = repo.receive()
         self.assertEqual(query.count(), 1)
@@ -1731,7 +1735,7 @@ class TestRepositoryQueryConcept(TestCase):
         self.assertEqual(query.first().field_c1_bool, c1_fac.field_c1_bool)
 
     def test_ts_satellite_concept__single_entry(self):
-        tsc2_fac = me_factories.SatTSC2Factory()
+        tsc2_fac = me_factories.SatTSC2Factory.create()
         repo = HubCRepository({})
         query = repo.receive()
         self.assertEqual(query.first().field_tsc2_float, tsc2_fac.field_tsc2_float)

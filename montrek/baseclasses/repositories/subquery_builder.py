@@ -6,7 +6,7 @@ from baseclasses.models import MontrekManyToManyLinkABC, MontrekSatelliteABC
 from baseclasses.models import MontrekTimeSeriesSatelliteABC
 from baseclasses.models import MontrekLinkABC
 from baseclasses.models import LinkTypeEnum
-from django.db.models import CharField, Subquery, OuterRef, Func
+from django.db.models import CharField, QuerySet, Subquery, OuterRef, Func
 from django.utils import timezone
 
 
@@ -15,18 +15,30 @@ class SubqueryBuilder:
         self.satellite_class = satellite_class
         self.field = field
         self.lookup_string = "pk"
+        self.hub_query = self.get_hub_query()
 
     def build(self, reference_date: timezone.datetime) -> Subquery:
         raise NotImplementedError("SubqueryBuilder has no get_subquery method!")
+
+    def get_hub_query(self) -> QuerySet:
+        return self.satellite_class.get_related_hub_class().objects.filter(
+            pk=OuterRef("hub")
+        )
 
 
 class SatelliteSubqueryBuilder(SubqueryBuilder):
     def build(self, reference_date: timezone.datetime) -> Subquery:
         return Subquery(
-            self.satellite_class.objects.filter(
-                hub_entity=OuterRef(self.lookup_string),
-                state_date_start__lte=reference_date,
-                state_date_end__gt=reference_date,
+            self.hub_query.annotate(
+                **{
+                    self.field: Subquery(
+                        self.satellite_class.objects.filter(
+                            hub_entity=OuterRef(self.lookup_string),
+                            state_date_start__lte=reference_date,
+                            state_date_end__gt=reference_date,
+                        ).values(self.field)
+                    )
+                }
             ).values(self.field)
         )
 
