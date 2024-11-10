@@ -43,9 +43,15 @@ class TestMontrekRepositorySatellite(TestCase):
             hub_entity=sat_a11.hub_entity,
             field_a2_float=8.0,
         )
-        me_factories.SatA2Factory(
+        me_factories.AHubValueDateFactory(
+            hub=sat_a11.hub_entity,
+        )
+        sat_a2 = me_factories.SatA2Factory(
             state_date_end=montrek_time(2023, 7, 10),
             field_a2_float=9,
+        )
+        me_factories.AHubValueDateFactory(
+            hub=sat_a2.hub_entity,
         )
 
     def test_get_all_fields(self):
@@ -55,6 +61,8 @@ class TestMontrekRepositorySatellite(TestCase):
         self.assertEqual(
             test_fields,
             [
+                "value_date",
+                "hub_entity_id",
                 "field_a1_int",
                 "field_a1_str",
                 "field_a2_float",
@@ -79,6 +87,8 @@ class TestMontrekRepositorySatellite(TestCase):
         self.assertEqual(
             test_fields,
             [
+                "value_date",
+                "hub_entity_id",
                 "field_a1_int",
                 "field_a2_float",
                 "field_a2_str",
@@ -93,13 +103,15 @@ class TestMontrekRepositorySatellite(TestCase):
         self.assertEqual(
             test_fields,
             [
+                "value_date",
+                "hub_entity_id",
                 "field_tsc2_float",
                 "field_tsc3_int",
                 "field_tsc3_str",
-                "value_date",
                 "field_tsc4_int",
                 "field_c1_bool",
                 "field_c1_str",
+                "field_d1_str",
                 "field_tsd2_float",
                 "field_tsd2_int",
             ],

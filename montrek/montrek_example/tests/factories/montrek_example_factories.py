@@ -35,6 +35,38 @@ class HubDFactory(factory.django.DjangoModelFactory):
         model = "montrek_example.HubD"
 
 
+class AHubValueDateFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "montrek_example.AHubValueDate"
+
+    hub = factory.SubFactory(HubAFactory)
+    value_date_list = factory.SubFactory(ValueDateListFactory)
+
+
+class BHubValueDateFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "montrek_example.BHubValueDate"
+
+    hub = factory.SubFactory(HubBFactory)
+    value_date_list = factory.SubFactory(ValueDateListFactory)
+
+
+class CHubValueDateFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "montrek_example.CHubValueDate"
+
+    hub = factory.SubFactory(HubCFactory)
+    value_date_list = factory.SubFactory(ValueDateListFactory)
+
+
+class DHubValueDateFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "montrek_example.DHubValueDate"
+
+    hub = factory.SubFactory(HubDFactory)
+    value_date_list = factory.SubFactory(ValueDateListFactory)
+
+
 class SatA1Factory(factory.django.DjangoModelFactory):
     class Meta:
         model = "montrek_example.SatA1"
@@ -68,22 +100,6 @@ class SatC1Factory(factory.django.DjangoModelFactory):
         model = "montrek_example.SatC1"
 
     hub_entity = factory.SubFactory(HubCFactory)
-
-
-class CHubValueDateFactory(factory.django.DjangoModelFactory):
-    class Meta:
-        model = "montrek_example.CHubValueDate"
-
-    hub = factory.SubFactory(HubCFactory)
-    value_date_list = factory.SubFactory(ValueDateListFactory)
-
-
-class DHubValueDateFactory(factory.django.DjangoModelFactory):
-    class Meta:
-        model = "montrek_example.DHubValueDate"
-
-    hub = factory.SubFactory(HubDFactory)
-    value_date_list = factory.SubFactory(ValueDateListFactory)
 
 
 class SatTSC2Factory(factory.django.DjangoModelFactory):

@@ -70,6 +70,30 @@ class HubD(MontrekHubABC):
     pass
 
 
+class AHubValueDate(HubValueDate):
+    hub = models.ForeignKey(
+        HubA, on_delete=models.CASCADE, related_name="hub_value_date"
+    )
+
+
+class BHubValueDate(HubValueDate):
+    hub = models.ForeignKey(
+        HubB, on_delete=models.CASCADE, related_name="hub_value_date"
+    )
+
+
+class CHubValueDate(HubValueDate):
+    hub = models.ForeignKey(
+        HubC, on_delete=models.CASCADE, related_name="hub_value_date"
+    )
+
+
+class DHubValueDate(HubValueDate):
+    hub = models.ForeignKey(
+        HubD, on_delete=models.CASCADE, related_name="hub_value_date"
+    )
+
+
 class SatA1(MontrekSatelliteABC):
     hub_entity = models.ForeignKey(HubA, on_delete=models.CASCADE)
     field_a1_str = models.CharField(max_length=50, default="DEFAULT")
@@ -121,18 +145,6 @@ class SatC1(MontrekSatelliteABC):
     field_c1_str = models.CharField(max_length=50, default="DEFAULT")
     field_c1_bool = models.BooleanField(default=False)
     identifier_fields = ["field_c1_str"]
-
-
-class CHubValueDate(HubValueDate):
-    hub = models.ForeignKey(
-        HubC, on_delete=models.CASCADE, related_name="hub_value_date"
-    )
-
-
-class DHubValueDate(HubValueDate):
-    hub = models.ForeignKey(
-        HubD, on_delete=models.CASCADE, related_name="hub_value_date"
-    )
 
 
 class SatTSC2(MontrekTimeSeriesSatelliteInterimABC):
