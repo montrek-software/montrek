@@ -217,7 +217,7 @@ class MontrekTimeSeriesSatelliteABC(MontrekSatelliteBaseABC):
 
 
 class ValueDateList(models.Model):
-    value_date = models.DateField(unique=True)
+    value_date = models.DateField(unique=True, null=True, blank=True)
 
 
 class HubValueDate(models.Model):

@@ -2,6 +2,7 @@ from django.test import TestCase
 from django.utils import timezone
 from baseclasses.utils import montrek_time
 from baseclasses.repositories.annotator import Annotator
+from baseclasses.models import TestMontrekHub
 
 
 class MockSubqueryBuilder:
@@ -16,20 +17,16 @@ class MockSubqueryBuilder:
 class MockSatellite:
     @classmethod
     def get_related_hub_class(cls):
-        return MockHub
-
-
-class MockHub:
-    pass
+        return TestMontrekHub
 
 
 class TestAnnotationManager(TestCase):
     def test_subquery_to_annotation(self):
-        test_annotator = Annotator(MockHub)
+        test_annotator = Annotator(TestMontrekHub)
         test_annotator.subquery_builder_to_annotations(
             ["test", "test2"], MockSatellite, MockSubqueryBuilder
         )
-        self.assertEqual(len(test_annotator.annotations), 2)
+        self.assertEqual(len(test_annotator.annotations), 4)
         reference_date = montrek_time(2024, 11, 7)
         annotations = test_annotator.build(reference_date)
         self.assertEqual(annotations["test"], "Hallo")

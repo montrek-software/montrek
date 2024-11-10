@@ -1727,12 +1727,16 @@ class TestRepositoryQueryConcept(TestCase):
             field_c1_str="Hallo",
             field_c1_bool=True,
         )
-        me_factories.CHubValueDateFactory.create(hub=c1_fac.hub_entity)
+        me_factories.CHubValueDateFactory.create(
+            hub=c1_fac.hub_entity, value_date_list__value_date=None
+        )
         repo = HubCRepository({})
         query = repo.receive()
         self.assertEqual(query.count(), 1)
         self.assertEqual(query.first().field_c1_str, c1_fac.field_c1_str)
         self.assertEqual(query.first().field_c1_bool, c1_fac.field_c1_bool)
+        self.assertEqual(query.first().hub_entity_id, c1_fac.hub_entity_id)
+        self.assertEqual(query.first().value_date, None)
 
     def test_ts_satellite_concept__single_entry(self):
         tsc2_fac = me_factories.SatTSC2Factory.create()

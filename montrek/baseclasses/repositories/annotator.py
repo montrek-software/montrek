@@ -3,6 +3,7 @@ from django.utils import timezone
 from baseclasses.repositories.subquery_builder import (
     SubqueryBuilder,
     ValueDateSubqueryBuilder,
+    HubEntityIdSubqueryBuilder,
 )
 from baseclasses.models import MontrekSatelliteABC, MontrekHubABC
 
@@ -16,7 +17,10 @@ class Annotator:
         self.annotated_linked_satellite_classes: list[type[MontrekSatelliteABC]] = []
 
     def get_raw_annotations(self) -> dict[str, SubqueryBuilder]:
-        return {"value_date": ValueDateSubqueryBuilder()}
+        return {
+            "value_date": ValueDateSubqueryBuilder(),
+            "hub_entity_id": HubEntityIdSubqueryBuilder(self.hub_class),
+        }
 
     def subquery_builder_to_annotations(
         self,

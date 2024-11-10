@@ -4,6 +4,7 @@ from typing import Type
 from django.db.models.functions import Cast
 from django.db.models import Q
 from baseclasses.models import (
+    MontrekHubABC,
     MontrekManyToManyLinkABC,
     MontrekSatelliteABC,
     ValueDateList,
@@ -85,6 +86,14 @@ class ValueDateSubqueryBuilder(SubqueryBuilder):
         return ValueDateList.objects.filter(pk=OuterRef("value_date_list")).values(
             "value_date"
         )
+
+
+class HubEntityIdSubqueryBuilder(SubqueryBuilder):
+    def __init__(self, hub_class: Type[MontrekHubABC]):
+        self.hub_class = hub_class
+
+    def build(self, reference_date: timezone.datetime) -> Subquery:
+        return Subquery(self.hub_class.objects.filter(pk=OuterRef("hub")).values("id"))
 
 
 class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
