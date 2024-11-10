@@ -9,6 +9,7 @@ from baseclasses.models import (
     MontrekOneToOneLinkABC,
     MontrekSatelliteABC,
     MontrekTimeSeriesSatelliteABC,
+    ValueDateList,
 )
 from baseclasses.repositories.annotator import Annotator
 from django.db import transaction
@@ -75,6 +76,7 @@ class DbCreator:
             sat = satellite_class(hub_entity=self.hub_entity, **sat_data)
             sat = self._process_new_satellite(sat, satellite_class)
             selected_satellites[sat.state].append(sat)
+
         reference_hub = self._stall_satellites_and_return_reference_hub(
             selected_satellites, creation_date
         )
@@ -113,6 +115,7 @@ class DbCreator:
             self._bulk_create_and_update_stalled_objects(
                 stalled_satellites, satellite_class
             )
+            self._save_hub_value_date(stalled_satellites)
         for link_class, stalled_links in self.stalled_links.items():
             self._bulk_create_and_update_stalled_objects(stalled_links, link_class)
 
@@ -365,6 +368,46 @@ class DbCreator:
             self.stalled_links[stalled_link.__class__] = [stalled_link]
         else:
             self.stalled_links[stalled_link.__class__].append(stalled_link)
+
+    def _save_hub_value_date(self, stalled_satellites: List[MontrekSatelliteABC]):
+        stalled_hub_value_dates = {}
+        for sat in stalled_satellites:
+            if sat.is_timeseries:
+                # TODO: Implement TS logic
+                return
+            value_date = None
+            hub_value_date_class = sat.hub_entity.hub_value_date.field.model
+            existing_hub_value_date = hub_value_date_class.objects.filter(
+                hub=sat.hub_entity,
+                value_date_list__value_date=value_date,
+            )
+            if existing_hub_value_date.count() == 1:
+                return
+            if existing_hub_value_date.count() > 1:
+                raise MontrekError(
+                    f"Severe Error: Multiple HubValueDate objects for hub {sat.hub_entity} and date None"
+                )
+            existing_value_date_list = ValueDateList.objects.filter(
+                value_date=value_date
+            )
+            if existing_value_date_list.count() == 0:
+                value_date_list = ValueDateList(value_date=value_date)
+                value_date_list.save()
+            elif existing_value_date_list.count() == 1:
+                value_date_list = existing_value_date_list.first()
+            else:
+                raise MontrekError(
+                    f"Severe Error: Multiple ValueDateList objects for date {value_date}"
+                )
+            hub_value_date = hub_value_date_class(
+                hub=sat.hub_entity, value_date_list=value_date_list
+            )
+            if hub_value_date_class not in stalled_hub_value_dates:
+                stalled_hub_value_dates[hub_value_date_class] = [hub_value_date]
+            else:
+                stalled_hub_value_dates[hub_value_date_class].append(hub_value_date)
+        for hub_value_date_class, hub_value_dates in stalled_hub_value_dates.items():
+            hub_value_date_class.objects.bulk_create(hub_value_dates)
 
     def _is_empty(self, data: Dict[str, Any]) -> bool:
         data = data.copy()

@@ -11,6 +11,7 @@ from baseclasses.models import MontrekSatelliteABC, MontrekHubABC
 class Annotator:
     def __init__(self, hub_class: type[MontrekHubABC]):
         self.hub_class = hub_class
+        self.hub_value_date_class = hub_class.hub_value_date.field.model
         self.annotations: dict[str, SubqueryBuilder] = self.get_raw_annotations()
         self.ts_annotations: dict[str, Subquery] = {}
         self.annotated_satellite_classes: list[type[MontrekSatelliteABC]] = []

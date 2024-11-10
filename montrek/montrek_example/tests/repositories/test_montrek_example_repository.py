@@ -167,6 +167,13 @@ class TestMontrekCreateObject(TestCase):
         self.assertEqual(me_models.SatA1.objects.first().created_by_id, self.user.id)
         self.assertEqual(me_models.HubA.objects.count(), 1)
         self.assertEqual(me_models.SatA2.objects.count(), 0)
+        self.assertEqual(me_models.AHubValueDate.objects.count(), 1)
+        self.assertEqual(
+            me_models.AHubValueDate.objects.first().hub, me_models.HubA.objects.first()
+        )
+        self.assertEqual(
+            me_models.AHubValueDate.objects.first().value_date_list.value_date, None
+        )
 
     def test_std_create_object_multi_satellites(self):
         repository = HubARepository(session_data={"user_id": self.user.id})
