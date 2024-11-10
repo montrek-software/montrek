@@ -32,96 +32,57 @@ class SatelliteSubqueryBuilderABC(SubqueryBuilder):
         # TODO: remove lookup_string
         self.lookup_string = "pk"
 
-    @property
-    def hub_query(self) -> QuerySet:
+    def get_hub_query(self, reference_date: timezone.datetime) -> QuerySet:
         return self.satellite_class.get_related_hub_class().objects.filter(
-            pk=OuterRef("hub")
+            **self.subquery_filter(reference_date, outer_ref="hub")
         )
 
-    def subquery_filter(self, reference_date: timezone.datetime) -> dict[str, object]:
+    def subquery_filter(
+        self,
+        reference_date: timezone.datetime,
+        lookup_field: str = "pk",
+        outer_ref: str = "pk",
+    ) -> dict[str, object]:
         return {
-            self.lookup_field: OuterRef("pk"),
+            lookup_field: OuterRef(outer_ref),
             "state_date_start__lte": reference_date,
             "state_date_end__gt": reference_date,
         }
 
-    def satellite_subquery(self, reference_date: timezone.datetime) -> Subquery:
+    def satellite_subquery(
+        self, reference_date: timezone.datetime, lookup_field: str = "pk"
+    ) -> Subquery:
         return Subquery(
             self.satellite_class.objects.filter(
-                **self.subquery_filter(reference_date)
+                **self.subquery_filter(reference_date, lookup_field=lookup_field)
             ).values(self.field)
         )
 
 
 class SatelliteSubqueryBuilder(SatelliteSubqueryBuilderABC):
-    lookup_field = "hub_entity"
-
     def build(self, reference_date: timezone.datetime) -> Subquery:
         return Subquery(
-            self.hub_query.annotate(
+            self.get_hub_query(reference_date)
+            .annotate(
                 **{
-                    self.field: self.satellite_subquery(reference_date),
+                    self.field: self.satellite_subquery(
+                        reference_date, lookup_field="hub_entity"
+                    ),
                 }
-            ).values(self.field)
+            )
+            .values(self.field)
         )
 
 
 class TSSatelliteSubqueryBuilder(SatelliteSubqueryBuilderABC):
-    lookup_field = "hub_value_date"
-
     def build(self, reference_date: timezone.datetime) -> Subquery:
-        return self.satellite_subquery(reference_date)
+        return self.satellite_subquery(reference_date, lookup_field="hub_value_date")
 
 
 class ValueDateSubqueryBuilder(SubqueryBuilder):
     def build(self, reference_date: timezone.datetime) -> Subquery:
         return ValueDateList.objects.filter(pk=OuterRef("value_date_list")).values(
             "value_date"
-        )
-
-
-class LastTSSatelliteSubqueryBuilder(SatelliteSubqueryBuilderABC):
-    def __init__(
-        self,
-        satellite_class: Type[MontrekSatelliteABC],
-        field: str,
-        end_date: timezone.datetime,
-    ):
-        super().__init__(satellite_class, field)
-        self.end_date = end_date
-
-    def build(self, reference_date: timezone.datetime) -> Subquery:
-        return Subquery(
-            self.satellite_class.objects.filter(
-                hub_entity=OuterRef(self.lookup_string),
-                state_date_start__lte=reference_date,
-                state_date_end__gt=reference_date,
-                value_date__lte=self.end_date,
-            )
-            .order_by("-value_date")
-            .values(self.field)[:1]
-        )
-
-
-class StringAgg(Func):
-    function = "STRING_AGG"
-    template = "%(function)s(%(expressions)s, ',')"
-
-
-class GroupConcat(Func):
-    function = "GROUP_CONCAT"
-    template = "%(function)s(%(expressions)s SEPARATOR ',')"
-
-
-def get_string_concat_function():
-    engine = settings.DATABASES["default"]["ENGINE"]
-    if "mysql" in engine:
-        return GroupConcat
-    elif "postgresql" in engine:
-        return StringAgg
-    else:
-        raise NotImplementedError(
-            f"No function for concatenating list of strings defined for {engine}!"
         )
 
 
@@ -140,9 +101,33 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         self.link_class = link_class
         self._last_ts_value = last_ts_value
 
+    def get_linked_hub_query(
+        self, hub_field: str, reference_date: timezone.datetime
+    ) -> QuerySet:
+        return self.link_class.get_related_hub_class(hub_field).objects.filter(
+            **self.subquery_filter(reference_date, outer_ref="hub")
+        )
+
     def _link_hubs_and_get_subquery(
-        self, hub_field_a: str, hub_field_b: str, reference_date: timezone.datetime
+        self, hub_field_to: str, hub_field_from: str, reference_date: timezone.datetime
     ) -> Subquery:
+        subquery = Subquery(
+            self.get_linked_hub_query(hub_field_from, reference_date)
+            .annotate(
+                **{
+                    self.field: Subquery(
+                        self.satellite_class.objects.filter(
+                            hub_entity=OuterRef(
+                                f"{self.link_class.__name__.lower()}__{hub_field_to}"
+                            )
+                        ).values(self.field)
+                    )
+                }
+            )
+            .values(self.field)
+        )
+        return subquery
+
         hub_out_query = self.link_class.objects.filter(
             state_date_start__lte=reference_date,
             state_date_end__gt=reference_date,
@@ -214,3 +199,48 @@ class ReverseLinkedSatelliteSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
 
     def build(self, reference_date: timezone.datetime) -> Subquery:
         return super()._link_hubs_and_get_subquery("hub_in", "hub_out", reference_date)
+
+
+class LastTSSatelliteSubqueryBuilder(SatelliteSubqueryBuilderABC):
+    def __init__(
+        self,
+        satellite_class: Type[MontrekSatelliteABC],
+        field: str,
+        end_date: timezone.datetime,
+    ):
+        super().__init__(satellite_class, field)
+        self.end_date = end_date
+
+    def build(self, reference_date: timezone.datetime) -> Subquery:
+        return Subquery(
+            self.satellite_class.objects.filter(
+                hub_entity=OuterRef(self.lookup_string),
+                state_date_start__lte=reference_date,
+                state_date_end__gt=reference_date,
+                value_date__lte=self.end_date,
+            )
+            .order_by("-value_date")
+            .values(self.field)[:1]
+        )
+
+
+class StringAgg(Func):
+    function = "STRING_AGG"
+    template = "%(function)s(%(expressions)s, ',')"
+
+
+class GroupConcat(Func):
+    function = "GROUP_CONCAT"
+    template = "%(function)s(%(expressions)s SEPARATOR ',')"
+
+
+def get_string_concat_function():
+    engine = settings.DATABASES["default"]["ENGINE"]
+    if "mysql" in engine:
+        return GroupConcat
+    elif "postgresql" in engine:
+        return StringAgg
+    else:
+        raise NotImplementedError(
+            f"No function for concatenating list of strings defined for {engine}!"
+        )

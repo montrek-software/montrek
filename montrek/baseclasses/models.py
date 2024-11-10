@@ -281,6 +281,10 @@ class MontrekLinkABC(TimeStampMixin, StateMixin):
     def __str__(self) -> str:
         return f"{self.hub_in.identifier or self.hub_in.pk} -> {self.hub_out.identifier or self.hub_out.pk}"
 
+    @classmethod
+    def get_related_hub_class(cls, hub_field: str) -> type[MontrekHubABC]:
+        return getattr(cls, hub_field).field.related_model
+
 
 class MontrekOneToOneLinkABC(MontrekLinkABC):
     class Meta:

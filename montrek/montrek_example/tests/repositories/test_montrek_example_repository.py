@@ -1806,3 +1806,18 @@ class TestRepositoryQueryConcept(TestCase):
         )
         self.assertEqual(query.first().field_c1_str, c_sat1.field_c1_str)
         self.assertEqual(query.first().field_tsc3_int, tsc3_fac.field_tsc3_int)
+
+    def test_ts_satellite_concept__linked_sat(self):
+        c_hub_value_date = me_factories.CHubValueDateFactory.create()
+        c_sat1 = me_factories.SatC1Factory(
+            field_c1_str="hallo", hub_entity=c_hub_value_date.hub
+        )
+        d_sat1 = me_factories.SatD1Factory.create(
+            field_d1_str="test",
+        )
+        c_sat1.hub_entity.link_hub_c_hub_d.add(d_sat1.hub_entity)
+        repo = HubCRepository({})
+        query = repo.receive()
+        self.assertEqual(query.count(), 1)
+        self.assertEqual(query.first().field_c1_str, c_sat1.field_c1_str)
+        self.assertEqual(query.first().field_d1_str, d_sat1.field_d1_str)

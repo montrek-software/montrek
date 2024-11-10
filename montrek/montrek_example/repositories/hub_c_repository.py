@@ -17,18 +17,23 @@ class HubCRepository(MontrekRepository):
                 "field_tsc3_str",
             ],
         )
-        # self.add_satellite_fields_annotations(
-        #     me_models.SatTSC4,
-        #     [
-        #         "field_tsc4_int",
-        #     ],
-        # )
+        self.add_satellite_fields_annotations(
+            me_models.SatTSC4,
+            [
+                "field_tsc4_int",
+            ],
+        )
         self.add_satellite_fields_annotations(
             me_models.SatC1,
             [
                 "field_c1_bool",
                 "field_c1_str",
             ],
+        )
+        self.add_linked_satellites_field_annotations(
+            me_models.SatD1,
+            me_models.LinkHubCHubD,
+            ["field_d1_str"],
         )
         # self.add_linked_satellites_field_annotations(
         #     me_models.SatTSD2,
