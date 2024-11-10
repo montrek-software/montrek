@@ -1821,3 +1821,30 @@ class TestRepositoryQueryConcept(TestCase):
         self.assertEqual(query.count(), 1)
         self.assertEqual(query.first().field_c1_str, c_sat1.field_c1_str)
         self.assertEqual(query.first().field_d1_str, d_sat1.field_d1_str)
+
+    def test_ts_satellite_concept__linked_ts_sat(self):
+        value_date_list = me_factories.ValueDateListFactory()
+        c_hub_value_date = me_factories.CHubValueDateFactory.create(
+            value_date_list=value_date_list
+        )
+        d_hub_value_date = me_factories.DHubValueDateFactory.create(
+            value_date_list=value_date_list
+        )
+        d_hub_value_date2 = me_factories.DHubValueDateFactory.create(
+            hub=d_hub_value_date.hub
+        )
+        c_sat = me_factories.SatTSC2Factory.create(
+            hub_value_date=c_hub_value_date, field_tsc2_float=10
+        )
+        d_sat = me_factories.SatTSD2Factory.create(
+            hub_value_date=d_hub_value_date, field_tsd2_float=20
+        )
+        me_factories.SatTSD2Factory.create(
+            field_tsd2_float=30, hub_value_date=d_hub_value_date2
+        )
+        c_hub_value_date.hub.link_hub_c_hub_d.add(d_hub_value_date.hub)
+        repo = HubCRepository({})
+        query = repo.receive()
+        self.assertEqual(query.count(), 1)
+        self.assertEqual(query.first().field_tsc2_float, c_sat.field_tsc2_float)
+        self.assertEqual(query.first().field_tsd2_float, d_sat.field_tsd2_float)

@@ -2,6 +2,7 @@ from django.conf import settings
 from typing import Type
 
 from django.db.models.functions import Cast
+from django.db.models import Q
 from baseclasses.models import (
     MontrekManyToManyLinkABC,
     MontrekSatelliteABC,
@@ -111,7 +112,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
     def _link_hubs_and_get_subquery(
         self, hub_field_to: str, hub_field_from: str, reference_date: timezone.datetime
     ) -> Subquery:
-        subquery = Subquery(
+        query = (
             self.get_linked_hub_query(hub_field_from, reference_date)
             .annotate(
                 **{
@@ -126,8 +127,34 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
             )
             .values(self.field)
         )
-        return subquery
+        return Subquery(query)
 
+    def _link_hubs_and_get_ts_subquery(
+        self, hub_field_to: str, hub_field_from: str, reference_date: timezone.datetime
+    ) -> Subquery:
+        query = (
+            self.get_linked_hub_query(hub_field_from, reference_date)
+            .annotate(
+                **{
+                    self.field: Subquery(
+                        self.satellite_class.objects.filter(
+                            Q(
+                                hub_value_date=OuterRef(
+                                    f"{self.link_class.__name__.lower()}__{hub_field_to}__hub_value_date"
+                                )
+                            )
+                            & Q(
+                                hub_value_date__value_date_list=OuterRef(
+                                    "hub_value_date__value_date_list"
+                                )
+                            )
+                        ).values(self.field)
+                    )
+                }
+            )
+            .values(self.field)[:1]
+        )
+        return Subquery(query)
         hub_out_query = self.link_class.objects.filter(
             state_date_start__lte=reference_date,
             state_date_end__gt=reference_date,
@@ -184,7 +211,14 @@ class LinkedSatelliteSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
         super().__init__(satellite_class, field, link_class, last_ts_value)
 
     def build(self, reference_date: timezone.datetime) -> Subquery:
-        return super()._link_hubs_and_get_subquery("hub_out", "hub_in", reference_date)
+        if self.satellite_class.is_timeseries:
+            return super()._link_hubs_and_get_ts_subquery(
+                "hub_out", "hub_in", reference_date
+            )
+        else:
+            return super()._link_hubs_and_get_subquery(
+                "hub_out", "hub_in", reference_date
+            )
 
 
 class ReverseLinkedSatelliteSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
