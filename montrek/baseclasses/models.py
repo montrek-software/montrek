@@ -316,6 +316,12 @@ class TestMontrekHub(MontrekHubABC):
     pass
 
 
+class TestHubValueDate(HubValueDate):
+    hub = models.ForeignKey(
+        TestMontrekHub, on_delete=models.CASCADE, related_name="hub_value_date"
+    )
+
+
 class TestMontrekSatellite(MontrekSatelliteABC):
     hub_entity = models.ForeignKey(TestMontrekHub, on_delete=models.CASCADE)
     identifier_fields = ["test_name"]

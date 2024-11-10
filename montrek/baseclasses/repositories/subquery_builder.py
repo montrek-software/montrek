@@ -109,13 +109,18 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         if link_class.link_type == LinkTypeEnum.NONE:
             raise TypeError(f"{link_class.__name__} must inherit from valid LinkClass!")
         self.link_class = link_class
+        self.link_db_name = link_class.__name__.lower()
         self._last_ts_value = last_ts_value
 
     def get_linked_hub_query(
         self, hub_field: str, reference_date: timezone.datetime
     ) -> QuerySet:
         return self.link_class.get_related_hub_class(hub_field).objects.filter(
-            **self.subquery_filter(reference_date, outer_ref="hub")
+            **self.subquery_filter(reference_date, outer_ref="hub"),
+            **{
+                f"{self.link_db_name}__state_date_start__lte": reference_date,
+                f"{self.link_db_name}__state_date_end__gt": reference_date,
+            },
         )
 
     def _link_hubs_and_get_subquery(
@@ -127,8 +132,10 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
                 **{
                     self.field: Subquery(
                         self.satellite_class.objects.filter(
-                            hub_entity=OuterRef(
-                                f"{self.link_class.__name__.lower()}__{hub_field_to}"
+                            **self.subquery_filter(
+                                reference_date,
+                                lookup_field="hub_entity",
+                                outer_ref=f"{self.link_class.__name__.lower()}__{hub_field_to}",
                             )
                         ).values(self.field)
                     )
@@ -148,8 +155,10 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
                     self.field: Subquery(
                         self.satellite_class.objects.filter(
                             Q(
-                                hub_value_date=OuterRef(
-                                    f"{self.link_class.__name__.lower()}__{hub_field_to}__hub_value_date"
+                                **self.subquery_filter(
+                                    reference_date,
+                                    lookup_field="hub_value_date",
+                                    outer_ref=f"{self.link_class.__name__.lower()}__{hub_field_to}__hub_value_date",
                                 )
                             )
                             & Q(

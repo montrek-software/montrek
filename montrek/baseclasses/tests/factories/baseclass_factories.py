@@ -53,3 +53,11 @@ class ValueDateListFactory(factory.django.DjangoModelFactory):
         model = "baseclasses.ValueDateList"
 
     value_date = factory.Faker("date_time", tzinfo=datetime.timezone.utc)
+
+
+class TestHubValueDateFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "baseclasses.TestHubValueDate"
+
+    hub = factory.SubFactory(TestMontrekHubFactory)
+    value_date_list = factory.SubFactory(ValueDateListFactory)
