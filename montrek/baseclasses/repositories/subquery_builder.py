@@ -88,12 +88,28 @@ class ValueDateSubqueryBuilder(SubqueryBuilder):
         )
 
 
-class HubEntityIdSubqueryBuilder(SubqueryBuilder):
+class HubDirectFieldSubqueryBuilder(SubqueryBuilder):
+    field: str = ""
+
     def __init__(self, hub_class: Type[MontrekHubABC]):
         self.hub_class = hub_class
 
     def build(self, reference_date: timezone.datetime) -> Subquery:
-        return Subquery(self.hub_class.objects.filter(pk=OuterRef("hub")).values("id"))
+        return Subquery(
+            self.hub_class.objects.filter(pk=OuterRef("hub")).values(self.field)
+        )
+
+
+class HubEntityIdSubqueryBuilder(HubDirectFieldSubqueryBuilder):
+    field = "id"
+
+
+class CreatedAtSubqueryBuilder(HubDirectFieldSubqueryBuilder):
+    field = "created_at"
+
+
+class CreatedBySubqueryBuilder(HubDirectFieldSubqueryBuilder):
+    field = "created_by"
 
 
 class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):

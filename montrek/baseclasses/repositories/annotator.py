@@ -4,6 +4,8 @@ from baseclasses.repositories.subquery_builder import (
     SubqueryBuilder,
     ValueDateSubqueryBuilder,
     HubEntityIdSubqueryBuilder,
+    CreatedAtSubqueryBuilder,
+    CreatedBySubqueryBuilder,
 )
 from baseclasses.models import MontrekSatelliteABC, MontrekHubABC
 
@@ -21,6 +23,8 @@ class Annotator:
         return {
             "value_date": ValueDateSubqueryBuilder(),
             "hub_entity_id": HubEntityIdSubqueryBuilder(self.hub_class),
+            "created_at": CreatedAtSubqueryBuilder(self.hub_class),
+            "created_by": CreatedBySubqueryBuilder(self.hub_class),
         }
 
     def subquery_builder_to_annotations(
