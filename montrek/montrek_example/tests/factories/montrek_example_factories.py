@@ -1,17 +1,19 @@
 import factory
-
-from baseclasses.tests.factories.baseclass_factories import ValueDateListFactory
 from api_upload.tests.factories import (
     ApiUploadRegistryHubFactory,
     ApiUploadRegistryStaticSatelliteFactory,
 )
-from file_upload.tests.factories.file_upload_factories import (
-    FileUploadRegistryHubFactory,
-    FileUploadRegistryStaticSatelliteFactory,
+from baseclasses.tests.factories.baseclass_factories import ValueDateListFactory
+from baseclasses.tests.factories.montrek_factory_schemas import (
+    MontrekTSSatelliteFactory,
 )
 from file_upload.tests.factories.field_map_factories import (
     FieldMapHubFactory,
     FieldMapStaticSatelliteFactory,
+)
+from file_upload.tests.factories.file_upload_factories import (
+    FileUploadRegistryHubFactory,
+    FileUploadRegistryStaticSatelliteFactory,
 )
 
 
@@ -102,7 +104,7 @@ class SatC1Factory(factory.django.DjangoModelFactory):
     hub_entity = factory.SubFactory(HubCFactory)
 
 
-class SatTSC2Factory(factory.django.DjangoModelFactory):
+class SatTSC2Factory(MontrekTSSatelliteFactory):
     class Meta:
         model = "montrek_example.SatTSC2"
 
@@ -110,7 +112,7 @@ class SatTSC2Factory(factory.django.DjangoModelFactory):
     field_tsc2_float = factory.Faker("random_int", min=0, max=100)
 
 
-class SatTSC3Factory(factory.django.DjangoModelFactory):
+class SatTSC3Factory(MontrekTSSatelliteFactory):
     class Meta:
         model = "montrek_example.SatTSC3"
 
@@ -126,7 +128,7 @@ class SatD1Factory(factory.django.DjangoModelFactory):
     hub_entity = factory.SubFactory(HubDFactory)
 
 
-class SatTSD2Factory(factory.django.DjangoModelFactory):
+class SatTSD2Factory(MontrekTSSatelliteFactory):
     class Meta:
         model = "montrek_example.SatTSD2"
 

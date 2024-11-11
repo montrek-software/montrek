@@ -1259,8 +1259,12 @@ class TestTimeSeriesStdQueryset(TestCase):
             field_c1_str="Hallo",
             field_c1_bool=True,
         )
+        me_factories.CHubValueDateFactory.create(
+            hub=ts_satellite_c1.hub_entity,
+            value_date_list__value_date=None,
+        )
         me_factories.SatTSC2Factory.create(
-            hub_entity=ts_satellite_c1.hub_entity,
+            hub_value_date__hub=ts_satellite_c1.hub_entity,
             field_tsc2_float=1.0,
             value_date=montrek_time(2024, 2, 5),
         )
@@ -1268,35 +1272,35 @@ class TestTimeSeriesStdQueryset(TestCase):
         static_sats[0].field_c1_str = "Test"
         static_sats[0].save()
         me_factories.SatTSC2Factory.create(
-            hub_entity=static_sats[0].hub_entity,
+            hub_value_date__hub=static_sats[0].hub_entity,
             field_tsc2_float=2.0,
             value_date=montrek_time(2024, 2, 5),
             state_date_end=montrek_time(2024, 7, 6),
         )
         me_factories.SatTSC2Factory.create(
-            hub_entity=static_sats[0].hub_entity,
+            hub_value_date__hub=static_sats[0].hub_entity,
             field_tsc2_float=3.0,
             value_date=montrek_time(2024, 2, 5),
             state_date_start=montrek_time(2024, 7, 6),
         )
         me_factories.SatTSC2Factory.create(
-            hub_entity=static_sats[0].hub_entity,
+            hub_value_date__hub=static_sats[0].hub_entity,
             value_date=montrek_time(2024, 2, 6),
             field_tsc2_float=2.5,
         )
         me_factories.SatTSC2Factory.create(
-            hub_entity=static_sats[1].hub_entity,
+            hub_value_date__hub=static_sats[1].hub_entity,
             value_date=montrek_time(2024, 2, 5),
             field_tsc2_float=3.5,
         )
         me_factories.SatTSC3Factory.create(
-            hub_entity=static_sats[0].hub_entity,
+            hub_value_date__hub=static_sats[0].hub_entity,
             value_date=montrek_time(2024, 2, 6),
             field_tsc3_int=5,
             field_tsc3_str="what1",
         )
         me_factories.SatTSC3Factory.create(
-            hub_entity=static_sats[1].hub_entity,
+            hub_value_date__hub=static_sats[1].hub_entity,
             value_date=montrek_time(2024, 2, 5),
             field_tsc3_int=7,
             field_tsc3_str="what2",
