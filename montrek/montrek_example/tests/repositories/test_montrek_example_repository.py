@@ -1169,28 +1169,29 @@ class TestTimeSeriesQuerySet(TestCase):
             field_c1_bool=True,
         )
         me_factories.SatTSC2Factory.create(
-            hub_entity=ts_satellite_c1.hub_entity,
+            hub_value_date__hub=ts_satellite_c1.hub_entity,
             field_tsc2_float=1.0,
             value_date=montrek_time(2024, 2, 5),
         )
         static_sats = me_factories.SatC1Factory.create_batch(3)
         self.ts_fact = me_factories.SatTSC2Factory.create(
-            hub_entity=static_sats[0].hub_entity,
+            hub_value_date__hub=static_sats[0].hub_entity,
             field_tsc2_float=1.0,
             value_date=montrek_time(2024, 2, 5),
             state_date_end=montrek_time(2024, 7, 6),
         )
         self.ts_fact2 = me_factories.SatTSC2Factory.create(
-            hub_entity=static_sats[0].hub_entity,
+            hub_value_date=self.ts_fact.hub_value_date,
             field_tsc2_float=3.0,
-            value_date=montrek_time(2024, 2, 5),
             state_date_start=montrek_time(2024, 7, 6),
         )
         me_factories.SatTSC2Factory.create(
-            hub_entity=static_sats[0].hub_entity, value_date=montrek_time(2024, 2, 6)
+            hub_value_date__hub=static_sats[0].hub_entity,
+            value_date=montrek_time(2024, 2, 6),
         )
         me_factories.SatTSC2Factory.create(
-            hub_entity=static_sats[1].hub_entity, value_date=montrek_time(2024, 2, 5)
+            hub_value_date__hub=static_sats[1].hub_entity,
+            value_date=montrek_time(2024, 2, 5),
         )
         self.user = MontrekUserFactory()
 

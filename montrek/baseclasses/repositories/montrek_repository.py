@@ -27,10 +27,8 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import (
     F,
     ManyToManyField,
-    OuterRef,
     Q,
     QuerySet,
-    Subquery,
 )
 from django.utils import timezone
 from baseclasses.repositories.query_builder import QueryBuilder
@@ -275,51 +273,6 @@ class MontrekRepositoryOld:
         )
         self.linked_fields.extend(fields)
 
-    def build_time_series_queryset_container(
-        self,
-        time_series_satellite_class: type[MontrekSatelliteABC],
-        fields: list[str],
-    ) -> TSQueryContainer:
-        if not issubclass(time_series_satellite_class, MontrekTimeSeriesSatelliteABC):
-            raise ValueError(
-                f"{time_series_satellite_class.__name__} is not a subclass of MontrekTimeSeriesSatelliteABC"
-            )
-        satellite_class_name = time_series_satellite_class.__name__.lower()
-        fields = [field for field in fields if field != "value_date"]
-        field_map = {field: F(f"{satellite_class_name}__{field}") for field in fields}
-        field_map["value_date"] = F(f"{satellite_class_name}__value_date")
-        queryset = self.hub_class.objects.filter(
-            (
-                Q(
-                    **{
-                        f"{satellite_class_name}__state_date_start__lte": self.reference_date
-                    }
-                )
-                & Q(
-                    **{
-                        f"{satellite_class_name}__state_date_end__gt": self.reference_date
-                    }
-                )
-            )
-            | Q(**{f"{satellite_class_name}__state_date_end": None})
-        ).annotate(**field_map)
-        queryset = queryset.filter(
-            (
-                Q(value_date__lte=self.session_end_date)
-                & Q(value_date__gte=self.session_start_date)
-            )
-            | Q(value_date=None)
-        )
-        queryset = self.query_builder._apply_filter(queryset)
-        # TODO: Add SubqueryBuilder for this when refactoring TS
-        self.annotator.ts_annotations.update(field_map)  # Not nice, rework!
-
-        return TSQueryContainer(
-            queryset=queryset,
-            fields=fields,
-            satellite_class=time_series_satellite_class,
-        )
-
     def get_history_queryset(self, pk: int, **kwargs) -> dict[str, QuerySet]:
         hub = self.hub_class.objects.get(pk=pk)
         satellite_querys = {}
@@ -333,70 +286,6 @@ class MontrekRepositoryOld:
             link_query = link.objects.filter(hub_in=hub).order_by("-created_at")
             satellite_querys[link.__name__] = link_query
         return satellite_querys
-
-    def _get_base_query(self) -> QuerySet:
-        # Usually every query starts with all hubs of the repositories hub_class.
-        # If there is a time_series involved, the query is built from there.
-        if len(self._ts_queryset_containers) == 0:
-            return self.hub_class.objects.all()
-        return self._build_ts_base_query()
-
-    def _build_ts_base_query(self) -> QuerySet:
-        # If there are more than one base queries registered, we annotate them in the first step and return everything as base query
-        base_query = self._ts_queryset_containers[0].queryset
-        base_annotation_dict = {}
-        base_container = self._ts_queryset_containers[0]
-        for ts_queryset_container in self._ts_queryset_containers[1:]:
-            container_query = ts_queryset_container.queryset
-            base_query = self._get_extended_container_queryset(
-                base_container, container_query
-            )
-            container_fields = ts_queryset_container.fields
-
-            subquery = container_query.filter(
-                value_date=OuterRef("value_date"), pk=OuterRef("pk")
-            )
-            annotation_dict = {
-                field: Subquery(subquery.values(field)[:1])
-                for field in container_fields
-            }
-            base_annotation_dict.update(annotation_dict)
-        base_query = base_query.annotate(**base_annotation_dict)
-        self._ts_queryset_containers = []
-        base_query = base_query.order_by("-value_date", "-pk")
-        return base_query
-
-    def _get_extended_container_queryset(
-        self, ts_queryset_container: TSQueryContainer, base_query: QuerySet
-    ) -> QuerySet:
-        # Find any elements that are in the base query but not in the container_query and add them to DB
-        container_query = ts_queryset_container.queryset
-        container_fields = ts_queryset_container.fields
-
-        container_values = container_query.values_list("pk", "value_date")
-        exclude_condition = Q()
-        for pk, value_date in container_values:
-            exclude_condition |= Q(pk=pk, value_date=value_date)
-        missing_container_entries = (
-            base_query.filter(value_date__isnull=False)
-            .exclude(exclude_condition)
-            .values_list("pk", "value_date")
-        )
-        if len(missing_container_entries) == 0:
-            return container_query
-        container_satellite_class = ts_queryset_container.satellite_class
-        missing_entries = []
-        for pk, value_date in missing_container_entries:
-            missing_entry = container_satellite_class(
-                hub_entity_id=pk,
-                value_date=value_date,
-                comment="Automatically added empty TS entry to align with other TS entries",
-            )
-            missing_entries.append(missing_entry)
-        ts_queryset_container.satellite_class.objects.bulk_create(missing_entries)
-        return self.build_time_series_queryset_container(
-            container_satellite_class, container_fields
-        ).queryset
 
     def rename_field(self, field: str, new_name: str):
         self.annotations[new_name] = self.annotations.pop(field)
