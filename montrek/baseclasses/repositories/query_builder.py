@@ -7,7 +7,7 @@ from baseclasses.dataclasses.montrek_message import (
 from django.core.exceptions import FieldError
 from baseclasses.repositories.annotator import Annotator
 from baseclasses.repositories.filter_decoder import FilterDecoder
-from django.db.models import Q, QuerySet
+from django.db.models import Q, QuerySet, OuterRef, Exists
 from django.utils import timezone
 
 
@@ -42,6 +42,7 @@ class QueryBuilder:
             Q(hub__state_date_start__lte=reference_date),
             Q(hub__state_date_end__gt=reference_date),
         )
+        queryset = self._filter_ts_rows(queryset)
         queryset = self._apply_filter(queryset)
         queryset = self._apply_order(queryset, order_fields)
         return queryset
@@ -57,3 +58,15 @@ class QueryBuilder:
         self, queryset: QuerySet, order_fields: tuple[str, ...]
     ) -> QuerySet:
         return queryset.order_by(*order_fields)
+
+    def _filter_ts_rows(self, queryset: QuerySet) -> QuerySet:
+        # Subquery to check if there's another row with the same hub_entity_id and a non-null value_date
+        non_null_value_date_exists = self.hub_value_date.objects.filter(
+            hub_id=OuterRef("hub_entity_id"), value_date_list__value_date__isnull=False
+        ).exclude(id=OuterRef("id"))
+
+        # Main query to exclude rows with None value_date if another row with the same hub_entity_id exists with a non-null value_date
+        filtered_query = queryset.filter(
+            ~Q(value_date__isnull=True) | Exists(non_null_value_date_exists)
+        )
+        return filtered_query
