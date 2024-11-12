@@ -130,10 +130,7 @@ class MontrekRepositoryOld:
     def _get_satellite_field_names(self, is_time_series: bool) -> list[str]:
         fields = []
         for satellite_class in self.annotator.annotated_satellite_classes:
-            if (
-                isinstance(satellite_class(), MontrekTimeSeriesSatelliteABC)
-                == is_time_series
-            ):
+            if satellite_class.is_timeseries == is_time_series:
                 fields.extend(satellite_class.get_value_field_names())
 
         common_fields = ["hub_entity_id"]
