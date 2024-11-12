@@ -239,6 +239,7 @@ class MontrekTimeSeriesSatelliteInterimABC(MontrekSatelliteBaseABC):
         ]
 
     hub_value_date = models.ForeignKey(HubValueDate, on_delete=models.CASCADE)
+    value_date = models.DateField()
     allow_multiple = True
     is_timeseries = True
     identifier_fields = ["hub_value_date"]

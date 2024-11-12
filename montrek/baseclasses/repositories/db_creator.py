@@ -9,11 +9,12 @@ from baseclasses.models import (
     MontrekOneToOneLinkABC,
     MontrekSatelliteABC,
     MontrekTimeSeriesSatelliteABC,
+    HubValueDate,
     ValueDateList,
 )
 from baseclasses.repositories.annotator import Annotator
 from django.db import transaction
-from django.db.models import JSONField, QuerySet
+from django.db.models import JSONField, QuerySet, Q
 from django.utils import timezone
 
 
@@ -62,6 +63,7 @@ class DbCreator:
         selected_satellites = {"new": [], "existing": [], "updated": []}
         creation_date = timezone.now()
         self.hub_entity = hub_entity
+        self._get_hub_value_date(self.hub_entity, None)
         for satellite_class in self.satellite_classes:
             sat_data = {
                 k: v
@@ -73,7 +75,16 @@ class DbCreator:
             sat_data = self._make_timezone_aware(sat_data)
             sat_data = self._convert_json(sat_data, satellite_class)
             sat_data["created_by_id"] = user_id
-            sat = satellite_class(hub_entity=self.hub_entity, **sat_data)
+            if satellite_class.is_timeseries:
+                value_date = sat_data.get("value_date", None)
+                if value_date is None:
+                    raise MontrekError(
+                        f"TimeSeriesSatellite needs a value_date: {sat_data}"
+                    )
+                hub_value_list = self._get_hub_value_date(self.hub_entity, value_date)
+                sat = satellite_class(hub_value_date=hub_value_list, **sat_data)
+            else:
+                sat = satellite_class(hub_entity=self.hub_entity, **sat_data)
             sat = self._process_new_satellite(sat, satellite_class)
             selected_satellites[sat.state].append(sat)
 
@@ -115,7 +126,7 @@ class DbCreator:
             self._bulk_create_and_update_stalled_objects(
                 stalled_satellites, satellite_class
             )
-            self._save_hub_value_date(stalled_satellites)
+            # self._save_hub_value_date(stalled_satellites)
         for link_class, stalled_links in self.stalled_links.items():
             self._bulk_create_and_update_stalled_objects(stalled_links, link_class)
 
@@ -157,17 +168,27 @@ class DbCreator:
         sat_hash_identifier = satellite.get_hash_identifier
         sat_hash_value = satellite.get_hash_value
         # TODO: Revisit this filter and check if it does not work if more Satellite have the same values
+        if satellite_class.is_timeseries:
+            state_date_end_criterion = Q(
+                hub_value_date__hub__state_date_end__gt=timezone.now()
+            )
+        else:
+            state_date_end_criterion = Q(hub_entity__state_date_end__gt=timezone.now())
+
         satellite_updates_or_none = (
             satellite_class.objects.filter(
-                hash_identifier=sat_hash_identifier,
-                hub_entity__state_date_end__gt=timezone.now(),
+                state_date_end_criterion,
+                Q(hash_identifier=sat_hash_identifier),
             )
             .order_by("-state_date_start")
             .first()
         )
         if satellite_updates_or_none is None:
             return NewSatelliteCreationState(satellite=satellite)
-        self.hub_entity = satellite_updates_or_none.hub_entity
+        if satellite_class.is_timeseries:
+            self.hub_entity = satellite_updates_or_none.hub_value_date.hub
+        else:
+            self.hub_entity = satellite_updates_or_none.hub_entity
         if satellite_updates_or_none.hash_value == sat_hash_value:
             return ExistingSatelliteCreationState(satellite=satellite_updates_or_none)
         return UpdatedSatelliteCreationState(
@@ -191,14 +212,19 @@ class DbCreator:
         return reference_hub
 
     def _get_reference_hub(self, selected_satellites):
+        def _get_hub(satellite):
+            if satellite.is_timeseries:
+                return satellite.hub_value_date.hub
+            return satellite.hub_entity
+
         if selected_satellites["new"]:
-            reference_hub = selected_satellites["new"][0].satellite.hub_entity
+            reference_hub = _get_hub(selected_satellites["new"][0].satellite)
             self._stall_hub(reference_hub)
             return reference_hub
         elif selected_satellites["existing"]:
-            return selected_satellites["existing"][0].satellite.hub_entity
+            return _get_hub(selected_satellites["existing"][0].satellite)
         elif selected_satellites["updated"]:
-            return selected_satellites["updated"][0].updated_sat.hub_entity
+            return _get_hub(selected_satellites["updated"][0].updated_sat)
         return self.hub_entity
 
     def _new_satellites(self, new_satellites, reference_hub, creation_date):
@@ -369,45 +395,35 @@ class DbCreator:
         else:
             self.stalled_links[stalled_link.__class__].append(stalled_link)
 
-    def _save_hub_value_date(self, stalled_satellites: List[MontrekSatelliteABC]):
-        stalled_hub_value_dates = {}
-        for sat in stalled_satellites:
-            if sat.is_timeseries:
-                # TODO: Implement TS logic
-                return
-            value_date = None
-            hub_value_date_class = sat.hub_entity.hub_value_date.field.model
-            existing_hub_value_date = hub_value_date_class.objects.filter(
-                hub=sat.hub_entity,
-                value_date_list__value_date=value_date,
+    def _get_hub_value_date(
+        self, hub_entity: MontrekHubABC, value_date: timezone.datetime | None
+    ) -> HubValueDate:
+        hub_value_date_class = hub_entity.hub_value_date.field.model
+        existing_hub_value_date = hub_value_date_class.objects.filter(
+            hub=hub_entity,
+            value_date_list__value_date=value_date,
+        )
+        if existing_hub_value_date.count() == 1:
+            return existing_hub_value_date.first()
+        if existing_hub_value_date.count() > 1:
+            raise MontrekError(
+                f"Severe Error: Multiple HubValueDate objects for hub {hub_entity} and date None"
             )
-            if existing_hub_value_date.count() == 1:
-                return
-            if existing_hub_value_date.count() > 1:
-                raise MontrekError(
-                    f"Severe Error: Multiple HubValueDate objects for hub {sat.hub_entity} and date None"
-                )
-            existing_value_date_list = ValueDateList.objects.filter(
-                value_date=value_date
+        existing_value_date_list = ValueDateList.objects.filter(value_date=value_date)
+        if existing_value_date_list.count() == 0:
+            value_date_list = ValueDateList(value_date=value_date)
+            value_date_list.save()
+        elif existing_value_date_list.count() == 1:
+            value_date_list = existing_value_date_list.first()
+        else:
+            raise MontrekError(
+                f"Severe Error: Multiple ValueDateList objects for date {value_date}"
             )
-            if existing_value_date_list.count() == 0:
-                value_date_list = ValueDateList(value_date=value_date)
-                value_date_list.save()
-            elif existing_value_date_list.count() == 1:
-                value_date_list = existing_value_date_list.first()
-            else:
-                raise MontrekError(
-                    f"Severe Error: Multiple ValueDateList objects for date {value_date}"
-                )
-            hub_value_date = hub_value_date_class(
-                hub=sat.hub_entity, value_date_list=value_date_list
-            )
-            if hub_value_date_class not in stalled_hub_value_dates:
-                stalled_hub_value_dates[hub_value_date_class] = [hub_value_date]
-            else:
-                stalled_hub_value_dates[hub_value_date_class].append(hub_value_date)
-        for hub_value_date_class, hub_value_dates in stalled_hub_value_dates.items():
-            hub_value_date_class.objects.bulk_create(hub_value_dates)
+        hub_value_date = hub_value_date_class(
+            hub=hub_entity, value_date_list=value_date_list
+        )
+        hub_value_date.save()
+        return hub_value_date
 
     def _is_empty(self, data: Dict[str, Any]) -> bool:
         data = data.copy()
