@@ -5,6 +5,7 @@ from api_upload.tests.factories import (
 )
 from baseclasses.tests.factories.baseclass_factories import ValueDateListFactory
 from baseclasses.tests.factories.montrek_factory_schemas import (
+    MontrekSatelliteFactory,
     MontrekTSSatelliteFactory,
 )
 from file_upload.tests.factories.field_map_factories import (
@@ -69,35 +70,35 @@ class DHubValueDateFactory(factory.django.DjangoModelFactory):
     value_date_list = factory.SubFactory(ValueDateListFactory)
 
 
-class SatA1Factory(factory.django.DjangoModelFactory):
+class SatA1Factory(MontrekSatelliteFactory):
     class Meta:
         model = "montrek_example.SatA1"
 
     hub_entity = factory.SubFactory(HubAFactory)
 
 
-class SatA2Factory(factory.django.DjangoModelFactory):
+class SatA2Factory(MontrekSatelliteFactory):
     class Meta:
         model = "montrek_example.SatA2"
 
     hub_entity = factory.SubFactory(HubAFactory)
 
 
-class SatB1Factory(factory.django.DjangoModelFactory):
+class SatB1Factory(MontrekSatelliteFactory):
     class Meta:
         model = "montrek_example.SatB1"
 
     hub_entity = factory.SubFactory(HubBFactory)
 
 
-class SatB2Factory(factory.django.DjangoModelFactory):
+class SatB2Factory(MontrekSatelliteFactory):
     class Meta:
         model = "montrek_example.SatB2"
 
     hub_entity = factory.SubFactory(HubBFactory)
 
 
-class SatC1Factory(factory.django.DjangoModelFactory):
+class SatC1Factory(MontrekSatelliteFactory):
     class Meta:
         model = "montrek_example.SatC1"
 
@@ -121,7 +122,7 @@ class SatTSC3Factory(MontrekTSSatelliteFactory):
     field_tsc3_str = factory.Faker("word")
 
 
-class SatD1Factory(factory.django.DjangoModelFactory):
+class SatD1Factory(MontrekSatelliteFactory):
     class Meta:
         model = "montrek_example.SatD1"
 
