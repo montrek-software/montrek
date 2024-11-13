@@ -60,6 +60,14 @@ class MontrekRepositoryOld:
             self.reference_date, self.order_fields()
         )
 
+    def delete(self, obj: MontrekHubABC):
+        obj.state_date_end = timezone.now()
+        obj.save()
+        for satellite_class in self.annotator.get_satellite_classes():
+            satellite_class.objects.filter(hub_entity=obj).update(
+                state_date_end=timezone.now()
+            )
+
     def order_fields(self) -> tuple[str, ...]:
         if self._order_fields:
             return self._order_fields
@@ -301,14 +309,6 @@ class MontrekRepositoryOld:
     def rename_field(self, field: str, new_name: str):
         self.annotations[new_name] = self.annotations.pop(field)
 
-    def std_delete_object(self, obj: MontrekHubABC):
-        obj.state_date_end = timezone.now()
-        obj.save()
-        for satellite_class in self.annotator.get_satellite_classes():
-            satellite_class.objects.filter(hub_entity=obj).update(
-                state_date_end=timezone.now()
-            )
-
     def get_hubs_by_field_values(
         self,
         values: list[Any],
@@ -433,8 +433,4 @@ class MontrekRepository(MontrekRepositoryOld):
 
     def create_by_data_frame(self, data_frame: pd.DataFrame) -> List[MontrekHubABC]:
         # Will replace create_objects_from_data_frame
-        pass
-
-    def delete(self, obj: MontrekHubABC):
-        # Will replace std_delete_object
         pass

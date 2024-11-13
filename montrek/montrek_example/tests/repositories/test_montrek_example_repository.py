@@ -737,8 +737,8 @@ class TestDeleteObject(TestCase):
         repository.std_create_object({"field_a1_int": 5, "field_a1_str": "test"})
         self.assertEqual(me_models.SatA1.objects.count(), 1)
         self.assertEqual(me_models.HubA.objects.count(), 1)
-        deletion_object = repository.receive().get()
-        repository.std_delete_object(deletion_object)
+        deletion_object = repository.receive().get().hub
+        repository.delete(deletion_object)
         self.assertEqual(me_models.SatA1.objects.count(), 1)
         self.assertLess(me_models.SatA1.objects.first().state_date_end, timezone.now())
         self.assertEqual(me_models.HubA.objects.count(), 1)
@@ -747,8 +747,8 @@ class TestDeleteObject(TestCase):
     def test_reintroduce_deleted_object(self):
         repository = HubARepository(session_data={"user_id": self.user.id})
         repository.std_create_object({"field_a1_int": 5, "field_a1_str": "test"})
-        deletion_object = repository.receive().get()
-        repository.std_delete_object(deletion_object)
+        deletion_object = repository.receive().get().hub
+        repository.delete(deletion_object)
         repository.std_create_object({"field_a1_int": 5, "field_a1_str": "test"})
         self.assertEqual(me_models.SatA1.objects.count(), 2)
         self.assertEqual(me_models.HubA.objects.count(), 2)
