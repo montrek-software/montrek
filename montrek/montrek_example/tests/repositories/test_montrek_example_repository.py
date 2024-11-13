@@ -346,7 +346,7 @@ class TestMontrekCreateObject(TestCase):
         self.assertEqual(a_object.field_a1_int, 5)
         self.assertEqual(a_object.field_a2_str, "test2")
         self.assertEqual(a_object.field_a2_float, 6.0)
-        self.assertEqual(a_object.created_by_id, self.user.id)
+        self.assertEqual(a_object.created_by, self.user.id)
 
         # Now we have two hubs with different state_date_start and state_date_end:
         self.assertEqual(me_models.HubA.objects.count(), 2)
@@ -595,7 +595,7 @@ class TestMontrekCreateObject(TestCase):
         )
         repository.create_objects_from_data_frame(data_frame)
         test_query = repository.receive()
-        # self.assertEqual(test_query.count(), 3)
+        self.assertEqual(test_query.count(), 3)
         self.assertEqual(me_models.HubC.objects.count(), 2)
         self.assertEqual(me_models.SatC1.objects.count(), 2)
 

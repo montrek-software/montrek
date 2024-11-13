@@ -126,7 +126,6 @@ class DbCreator:
             self._bulk_create_and_update_stalled_objects(
                 stalled_satellites, satellite_class
             )
-            # self._save_hub_value_date(stalled_satellites)
         for link_class, stalled_links in self.stalled_links.items():
             self._bulk_create_and_update_stalled_objects(stalled_links, link_class)
 
@@ -398,17 +397,6 @@ class DbCreator:
     def _get_hub_value_date(
         self, hub_entity: MontrekHubABC, value_date: timezone.datetime | None
     ) -> HubValueDate:
-        hub_value_date_class = hub_entity.hub_value_date.field.model
-        existing_hub_value_date = hub_value_date_class.objects.filter(
-            hub=hub_entity,
-            value_date_list__value_date=value_date,
-        )
-        if existing_hub_value_date.count() == 1:
-            return existing_hub_value_date.first()
-        if existing_hub_value_date.count() > 1:
-            raise MontrekError(
-                f"Severe Error: Multiple HubValueDate objects for hub {hub_entity} and date None"
-            )
         existing_value_date_list = ValueDateList.objects.filter(value_date=value_date)
         if existing_value_date_list.count() == 0:
             value_date_list = ValueDateList(value_date=value_date)
@@ -418,6 +406,17 @@ class DbCreator:
         else:
             raise MontrekError(
                 f"Severe Error: Multiple ValueDateList objects for date {value_date}"
+            )
+        hub_value_date_class = hub_entity.hub_value_date.field.model
+        existing_hub_value_date = hub_value_date_class.objects.filter(
+            hub=hub_entity,
+            value_date_list=value_date_list,
+        )
+        if existing_hub_value_date.count() == 1:
+            return existing_hub_value_date.first()
+        if existing_hub_value_date.count() > 1:
+            raise MontrekError(
+                f"Severe Error: Multiple HubValueDate objects for hub {hub_entity} and date None"
             )
         hub_value_date = hub_value_date_class(
             hub=hub_entity, value_date_list=value_date_list
