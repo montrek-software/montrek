@@ -1168,20 +1168,20 @@ class TestTimeSeriesQuerySet(TestCase):
             field_c1_str="Hallo",
             field_c1_bool=True,
         )
-        me_factories.SatTSC2Factory.create(
+        self.ts_fact0 = me_factories.SatTSC2Factory.create(
             hub_value_date__hub=ts_satellite_c1.hub_entity,
-            field_tsc2_float=1.0,
+            field_tsc2_float=4.0,
             value_date=montrek_time(2024, 2, 5),
         )
         static_sats = me_factories.SatC1Factory.create_batch(3)
-        self.ts_fact = me_factories.SatTSC2Factory.create(
+        self.ts_fact1 = me_factories.SatTSC2Factory.create(
             hub_value_date__hub=static_sats[0].hub_entity,
             field_tsc2_float=1.0,
             value_date=montrek_time(2024, 2, 5),
             state_date_end=montrek_time(2024, 7, 6),
         )
         self.ts_fact2 = me_factories.SatTSC2Factory.create(
-            hub_value_date=self.ts_fact.hub_value_date,
+            hub_value_date=self.ts_fact1.hub_value_date,
             field_tsc2_float=3.0,
             state_date_start=montrek_time(2024, 7, 6),
         )
@@ -1195,37 +1195,24 @@ class TestTimeSeriesQuerySet(TestCase):
         )
         self.user = MontrekUserFactory()
 
-    def test_build_time_series_queryset_wrong_satellite_class(self):
-        repository = HubCRepository()
-        with self.assertRaisesRegex(
-            ValueError,
-            "SatC1 is not a subclass of MontrekTimeSeriesSatelliteABC",
-        ):
-            repository.build_time_series_queryset_container(
-                me_models.SatC1,
-                montrek_time(2024, 2, 5),
-            ).queryset
-
     def test_build_time_series_queryset(self):
         repo = HubCRepository()
-        test_query = repo.build_time_series_queryset_container(
-            me_models.SatTSC2,
-            ["field_tsc2_float"],
-        ).queryset
+        test_query = repo.receive()
         self.assertEqual(test_query.count(), 5)
-        self.assertEqual(test_query[1].field_tsc2_float, self.ts_fact2.field_tsc2_float)
-        self.assertEqual(test_query[4].field_tsc2_float, None)
+        tsc2_floats = [ts.field_tsc2_float for ts in test_query]
+        self.assertEqual(tsc2_floats[1], self.ts_fact0.field_tsc2_float)
+        self.assertEqual(tsc2_floats[2], self.ts_fact2.field_tsc2_float)
+        self.assertEqual(tsc2_floats[4], None)
 
     def test_build_time_series_queryset__reference_date_filter(self):
         repo = HubCRepository()
         repo.reference_date = montrek_time(2024, 7, 1)
-        test_query = repo.build_time_series_queryset_container(
-            me_models.SatTSC2,
-            ["field_tsc2_float"],
-        ).queryset
+        test_query = repo.receive()
         self.assertEqual(test_query.count(), 5)
-        self.assertEqual(test_query[1].field_tsc2_float, self.ts_fact.field_tsc2_float)
-        self.assertEqual(test_query[4].field_tsc2_float, None)
+        tsc2_floats = [ts.field_tsc2_float for ts in test_query]
+        self.assertEqual(tsc2_floats[1], self.ts_fact0.field_tsc2_float)
+        self.assertEqual(tsc2_floats[2], self.ts_fact1.field_tsc2_float)
+        self.assertEqual(tsc2_floats[4], None)
 
     def test_build_time_series_queryset__session_dates(self):
         for end_date, expected_count in [
@@ -1235,10 +1222,7 @@ class TestTimeSeriesQuerySet(TestCase):
             (datetime.datetime(2024, 2, 7), 5),
         ]:
             repo = HubCRepository(session_data={"end_date": end_date})
-            test_query = repo.build_time_series_queryset_container(
-                me_models.SatTSC2,
-                ["field_tsc2_float"],
-            ).queryset
+            test_query = repo.receive()
             self.assertEqual(test_query.count(), expected_count)
         for start_date, expected_count in [
             (datetime.datetime(2024, 2, 1), 5),
@@ -1247,10 +1231,7 @@ class TestTimeSeriesQuerySet(TestCase):
             (datetime.datetime(2024, 2, 7), 1),
         ]:
             repo = HubCRepository(session_data={"start_date": start_date})
-            test_query = repo.build_time_series_queryset_container(
-                me_models.SatTSC2,
-                ["field_tsc2_float"],
-            ).queryset
+            test_query = repo.receive()
             self.assertEqual(test_query.count(), expected_count)
 
 
@@ -1761,19 +1742,26 @@ class TestRepositoryQueryConcept(TestCase):
         )
 
     def test_ts_satellite_concept__two_hubs(self):
-        tsc2_fac1 = me_factories.SatTSC2Factory(field_tsc2_float=10)
-        tsc2_fac2 = me_factories.SatTSC2Factory(field_tsc2_float=20)
+        tsc2_fac1 = me_factories.SatTSC2Factory.create(
+            field_tsc2_float=10, value_date="2024-11-13"
+        )
+        tsc2_fac2 = me_factories.SatTSC2Factory.create(
+            field_tsc2_float=20, value_date="2024-11-14"
+        )
         repo = HubCRepository({})
         query = repo.receive()
         self.assertEqual(query.count(), 2)
-        self.assertEqual(query.first().field_tsc2_float, tsc2_fac1.field_tsc2_float)
-        self.assertEqual(query.last().field_tsc2_float, tsc2_fac2.field_tsc2_float)
+        self.assertEqual(query.last().field_tsc2_float, tsc2_fac1.field_tsc2_float)
+        self.assertEqual(query.first().field_tsc2_float, tsc2_fac2.field_tsc2_float)
 
     def test_ts_satellite_concept__two_dates(self):
-        tsc2_fac1 = me_factories.SatTSC2Factory(field_tsc2_float=10)
-        tsc2_fac2 = me_factories.SatTSC2Factory(
+        tsc2_fac1 = me_factories.SatTSC2Factory.create(
+            field_tsc2_float=10, value_date="2024-11-14"
+        )
+        tsc2_fac2 = me_factories.SatTSC2Factory.create(
             field_tsc2_float=20,
             hub_value_date__hub=tsc2_fac1.hub_value_date.hub,
+            value_date="2024-11-13",
         )
         repo = HubCRepository({})
         query = repo.receive()
@@ -1781,11 +1769,11 @@ class TestRepositoryQueryConcept(TestCase):
         self.assertEqual(query.first().field_tsc2_float, tsc2_fac1.field_tsc2_float)
         self.assertEqual(query.last().field_tsc2_float, tsc2_fac2.field_tsc2_float)
         self.assertEqual(
-            query.first().value_date,
+            str(query.first().value_date),
             tsc2_fac1.hub_value_date.value_date_list.value_date,
         )
         self.assertEqual(
-            query.last().value_date,
+            str(query.last().value_date),
             tsc2_fac2.hub_value_date.value_date_list.value_date,
         )
 
@@ -1866,7 +1854,9 @@ class TestRepositoryQueryConcept(TestCase):
         self.assertEqual(query.first().field_tsd2_float, d_sat.field_tsd2_float)
 
     def test_ts_satellite_concept__two_ts_sats_different_dates(self):
-        tsc2_fac1 = me_factories.SatTSC2Factory(field_tsc2_float=10)
+        tsc2_fac1 = me_factories.SatTSC2Factory(
+            field_tsc2_float=10, value_date="2024-11-13"
+        )
         c_sat1 = me_factories.SatC1Factory(
             hub_entity=tsc2_fac1.hub_value_date.hub, field_c1_str="hallo"
         )
@@ -1874,7 +1864,7 @@ class TestRepositoryQueryConcept(TestCase):
             field_tsc3_int=20, hub_value_date=tsc2_fac1.hub_value_date
         )
         tsc3_fac_2 = me_factories.SatTSC3Factory(
-            field_tsc3_int=30,
+            field_tsc3_int=30, value_date="2024-11-15"
         )
         c_sat2 = me_factories.SatC1Factory(
             hub_entity=tsc3_fac_2.hub_value_date.hub, field_c1_str="wallo"
@@ -1882,8 +1872,8 @@ class TestRepositoryQueryConcept(TestCase):
         repo = HubCRepository({})
         query = repo.receive()
         self.assertEqual(query.count(), 2)
-        result_1 = query.first()
-        result_2 = query.last()
+        result_1 = query.last()
+        result_2 = query.first()
         self.assertEqual(result_1.field_tsc2_float, tsc2_fac1.field_tsc2_float)
         self.assertEqual(
             result_1.value_date,
@@ -1893,7 +1883,7 @@ class TestRepositoryQueryConcept(TestCase):
         self.assertEqual(result_1.field_tsc3_int, tsc3_fac.field_tsc3_int)
         self.assertEqual(result_2.field_tsc2_float, None)
         self.assertEqual(
-            result_2.value_date,
+            str(result_2.value_date),
             tsc3_fac_2.hub_value_date.value_date_list.value_date,
         )
         self.assertEqual(result_2.field_c1_str, c_sat2.field_c1_str)
