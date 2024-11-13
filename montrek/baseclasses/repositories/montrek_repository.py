@@ -43,6 +43,7 @@ class TSQueryContainer:
 
 class MontrekRepositoryOld:
     hub_class = MontrekHubABC
+    default_order_fields: tuple[str, ...] = ("-value_date", "hub_entity_id")
 
     def __init__(self, session_data: Dict[str, Any] = {}):
         self.annotator = Annotator(self.hub_class)
@@ -53,6 +54,19 @@ class MontrekRepositoryOld:
         self.messages = []
         self.calculated_fields: list[str] = []
         self.linked_fields: list[str] = []
+
+    def receive(self) -> QuerySet:
+        return self.query_builder.build_queryset(
+            self.reference_date, self.order_fields()
+        )
+
+    def order_fields(self) -> tuple[str, ...]:
+        if self._order_fields:
+            return self._order_fields
+        return self.default_order_fields
+
+    def set_order_fields(self, fields: tuple[str]):
+        self._order_fields = fields
 
     @classmethod
     def get_hub_by_id(cls, pk: int) -> MontrekHubABC:
@@ -304,7 +318,7 @@ class MontrekRepositoryOld:
         raise_for_unmapped_values: bool = True,
     ) -> list[MontrekHubABC | None]:
         filter_kwargs = {f"{by_repository_field}__in": values}
-        queryset = self.std_queryset().filter(**filter_kwargs)
+        queryset = self.receive().filter(**filter_kwargs)
         value_to_hub_map = {}
         unmapped_values = set()
         multiple_hub_values = set()
@@ -398,7 +412,6 @@ class MontrekRepository(MontrekRepositoryOld):
     IS_REFACTORED = True  # Handles new refactoreed code, if True
     # TODO: Remove IS_REFACTORED
     update: bool = True  # If this is true only the passed fields will be updated, otherwise empty fields will be set to None
-    default_order_fields: tuple[str, ...] = ("-value_date", "hub_entity_id")
 
     def __init__(self, session_data: Dict[str, Any] = {}):
         super().__init__(session_data)
@@ -421,19 +434,6 @@ class MontrekRepository(MontrekRepositoryOld):
     def create_by_data_frame(self, data_frame: pd.DataFrame) -> List[MontrekHubABC]:
         # Will replace create_objects_from_data_frame
         pass
-
-    def receive(self) -> QuerySet:
-        return self.query_builder.build_queryset(
-            self.reference_date, self.order_fields()
-        )
-
-    def order_fields(self) -> tuple[str, ...]:
-        if self._order_fields:
-            return self._order_fields
-        return self.default_order_fields
-
-    def set_order_fields(self, fields: tuple[str]):
-        self._order_fields = fields
 
     def delete(self, obj: MontrekHubABC):
         # Will replace std_delete_object

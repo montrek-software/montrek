@@ -1689,7 +1689,7 @@ class TestGetHubsByFieldValues(TestCase):
     def setUp(self):
         a1_str_values = ["a", "b", "c", "c", "", "x", "y", "z"]
         for hub_id, a1_str_value in enumerate(a1_str_values):
-            hub = me_factories.HubAFactory(id=hub_id)
+            hub = me_factories.HubAFactory(id=hub_id + 1)
             me_factories.SatA1Factory(
                 hub_entity=hub,
                 state_date_start=montrek_time(2023, 7, 10),
@@ -1705,8 +1705,8 @@ class TestGetHubsByFieldValues(TestCase):
             raise_for_multiple_hubs=False,
             raise_for_unmapped_values=False,
         )
-        actual_ids = [hub.id if hub else None for hub in actual]
-        expected_ids = [0, 1, 1, 2, None, None]  # 2 is the first hub with value "c"
+        actual_ids = [hub_vd.hub.id if hub_vd else None for hub_vd in actual]
+        expected_ids = [1, 2, 2, 3, None, None]  # 2 is the first hub with value "c"
         self.assertEqual(actual_ids, expected_ids)
 
     def test_get_hubs_by_field_values_raises_error_for_multiple_hubs(self):
