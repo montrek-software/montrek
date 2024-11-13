@@ -1,4 +1,5 @@
 import factory
+import datetime
 
 from baseclasses.models import ValueDateList
 
@@ -13,13 +14,13 @@ def get_value_date_list(value_date):
 
 
 class MontrekTSSatelliteFactory(factory.django.DjangoModelFactory):
+    value_date = factory.Faker("date_time", tzinfo=datetime.timezone.utc)
+
     @factory.post_generation
-    def value_date(self, create, extracted, **kwargs):
+    def set_value_date(self, create, extracted, **kwargs):
         if not create:
             return
-        if not extracted:
-            return
-        value_date_list = get_value_date_list(extracted)
+        value_date_list = get_value_date_list(self.value_date)
         self.hub_value_date.value_date_list = value_date_list
         self.hub_value_date.save()
 
