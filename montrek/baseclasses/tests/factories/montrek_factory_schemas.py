@@ -14,7 +14,11 @@ def get_value_date_list(value_date):
 
 
 class MontrekTSSatelliteFactory(factory.django.DjangoModelFactory):
-    value_date = factory.Faker("date_time", tzinfo=datetime.timezone.utc)
+    value_date = factory.Maybe(
+        "hub_value_date",
+        factory.SelfAttribute("hub_value_date.value_date_list.value_date"),
+        factory.Faker("date_time", tzinfo=datetime.timezone.utc),
+    )
 
     @factory.post_generation
     def set_value_date(self, create, extracted, **kwargs):

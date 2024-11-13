@@ -1745,9 +1745,6 @@ class TestRepositoryQueryConcept(TestCase):
             field_c1_str="Hallo",
             field_c1_bool=True,
         )
-        me_factories.CHubValueDateFactory.create(
-            hub=c1_fac.hub_entity, value_date_list__value_date=None
-        )
         repo = HubCRepository({})
         query = repo.receive()
         self.assertEqual(query.count(), 1)
@@ -1763,7 +1760,7 @@ class TestRepositoryQueryConcept(TestCase):
         self.assertEqual(query.first().field_tsc2_float, tsc2_fac.field_tsc2_float)
         self.assertEqual(
             query.first().value_date,
-            tsc2_fac.hub_value_date.value_date_list.value_date.date(),
+            tsc2_fac.hub_value_date.value_date_list.value_date,
         )
 
     def test_ts_satellite_concept__two_hubs(self):
@@ -1788,11 +1785,11 @@ class TestRepositoryQueryConcept(TestCase):
         self.assertEqual(query.last().field_tsc2_float, tsc2_fac2.field_tsc2_float)
         self.assertEqual(
             query.first().value_date,
-            tsc2_fac1.hub_value_date.value_date_list.value_date.date(),
+            tsc2_fac1.hub_value_date.value_date_list.value_date,
         )
         self.assertEqual(
             query.last().value_date,
-            tsc2_fac2.hub_value_date.value_date_list.value_date.date(),
+            tsc2_fac2.hub_value_date.value_date_list.value_date,
         )
 
     def test_ts_satellite_concept__with_sat(self):
@@ -1806,7 +1803,7 @@ class TestRepositoryQueryConcept(TestCase):
         self.assertEqual(query.first().field_tsc2_float, tsc2_fac1.field_tsc2_float)
         self.assertEqual(
             query.first().value_date,
-            tsc2_fac1.hub_value_date.value_date_list.value_date.date(),
+            tsc2_fac1.hub_value_date.value_date_list.value_date,
         )
         self.assertEqual(query.first().field_c1_str, c_sat.field_c1_str)
 
@@ -1824,7 +1821,7 @@ class TestRepositoryQueryConcept(TestCase):
         self.assertEqual(query.first().field_tsc2_float, tsc2_fac.field_tsc2_float)
         self.assertEqual(
             query.first().value_date,
-            tsc2_fac.hub_value_date.value_date_list.value_date.date(),
+            tsc2_fac.hub_value_date.value_date_list.value_date,
         )
         self.assertEqual(query.first().field_c1_str, c_sat1.field_c1_str)
         self.assertEqual(query.first().field_tsc3_int, tsc3_fac.field_tsc3_int)
@@ -1893,14 +1890,14 @@ class TestRepositoryQueryConcept(TestCase):
         self.assertEqual(result_1.field_tsc2_float, tsc2_fac1.field_tsc2_float)
         self.assertEqual(
             result_1.value_date,
-            tsc2_fac1.hub_value_date.value_date_list.value_date.date(),
+            tsc2_fac1.hub_value_date.value_date_list.value_date,
         )
         self.assertEqual(result_1.field_c1_str, c_sat1.field_c1_str)
         self.assertEqual(result_1.field_tsc3_int, tsc3_fac.field_tsc3_int)
         self.assertEqual(result_2.field_tsc2_float, None)
         self.assertEqual(
             result_2.value_date,
-            tsc3_fac_2.hub_value_date.value_date_list.value_date.date(),
+            tsc3_fac_2.hub_value_date.value_date_list.value_date,
         )
         self.assertEqual(result_2.field_c1_str, c_sat2.field_c1_str)
         self.assertEqual(result_2.field_tsc3_int, tsc3_fac_2.field_tsc3_int)
