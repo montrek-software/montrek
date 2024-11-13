@@ -56,6 +56,7 @@ class DbCreator:
             satellite_class: [] for satellite_class in satellite_classes
         }
         self.stalled_links = {}
+        self.stalled_hub_value_dates: dict[type[HubValueDate], list[HubValueDate]] = {}
 
     def create(
         self, data: Dict[str, Any], hub_entity: MontrekHubABC, user_id: int
@@ -63,7 +64,6 @@ class DbCreator:
         selected_satellites = {"new": [], "existing": [], "updated": []}
         creation_date = timezone.now()
         self.hub_entity = hub_entity
-        self._get_hub_value_date(self.hub_entity, None)
         for satellite_class in self.satellite_classes:
             sat_data = {
                 k: v
@@ -87,6 +87,7 @@ class DbCreator:
                 sat = satellite_class(hub_entity=self.hub_entity, **sat_data)
             sat = self._process_new_satellite(sat, satellite_class)
             selected_satellites[sat.state].append(sat)
+        self._get_hub_value_date(self.hub_entity, None)
 
         reference_hub = self._stall_satellites_and_return_reference_hub(
             selected_satellites, creation_date
@@ -116,6 +117,11 @@ class DbCreator:
     def save_stalled_objects(self):
         for hub_class, stalled_hubs in self.stalled_hubs.items():
             self._bulk_create_and_update_stalled_objects(stalled_hubs, hub_class)
+        for (
+            hub_value_date_class,
+            stalled_hub_value_dates,
+        ) in self.stalled_hub_value_dates.items():
+            hub_value_date_class.objects.bulk_create(stalled_hub_value_dates)
         for satellite_class, stalled_satellites in self.stalled_satellites.items():
             if "hub_entity_id" in satellite_class.identifier_fields:
                 for stalled_satellite in stalled_satellites:
@@ -394,6 +400,16 @@ class DbCreator:
         else:
             self.stalled_links[stalled_link.__class__].append(stalled_link)
 
+    def _stall_hub_value_date_object(self, stalled_hub_value_date: HubValueDate):
+        if stalled_hub_value_date.__class__ not in self.stalled_hub_value_dates:
+            self.stalled_hub_value_dates[stalled_hub_value_date.__class__] = [
+                stalled_hub_value_date
+            ]
+        else:
+            self.stalled_hub_value_dates[stalled_hub_value_date.__class__].append(
+                stalled_hub_value_date
+            )
+
     def _get_hub_value_date(
         self, hub_entity: MontrekHubABC, value_date: timezone.datetime | None
     ) -> HubValueDate:
@@ -408,6 +424,12 @@ class DbCreator:
                 f"Severe Error: Multiple ValueDateList objects for date {value_date}"
             )
         hub_value_date_class = hub_entity.hub_value_date.field.model
+        if hub_entity.id is None:
+            hub_value_date = hub_value_date_class(
+                hub=hub_entity, value_date_list=value_date_list
+            )
+            self._stall_hub_value_date_object(hub_value_date)
+            return hub_value_date
         existing_hub_value_date = hub_value_date_class.objects.filter(
             hub=hub_entity,
             value_date_list=value_date_list,
@@ -421,7 +443,7 @@ class DbCreator:
         hub_value_date = hub_value_date_class(
             hub=hub_entity, value_date_list=value_date_list
         )
-        hub_value_date.save()
+        self._stall_hub_value_date_object(hub_value_date)
         return hub_value_date
 
     def _is_empty(self, data: Dict[str, Any]) -> bool:
