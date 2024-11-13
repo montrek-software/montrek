@@ -32,6 +32,11 @@ class HubARepository(MontrekRepository):
             me_models.LinkHubAHubB,
             ["field_b1_str"],
         )
+        self.add_linked_satellites_field_annotations(
+            me_models.SatC1,
+            me_models.LinkHubAHubC,
+            ["field_c1_str"],
+        )
 
     def get_hub_b_objects(self):
         return HubBRepository().receive()
@@ -51,13 +56,16 @@ class HubARepository(MontrekRepository):
         )
         return self.receive()
 
-    def test_queryset_2(self):
+
+class HubARepository2(MontrekRepository):
+    hub_class = me_models.HubA
+
+    def set_annotations(self):
         self.add_linked_satellites_field_annotations(
             me_models.SatB1,
             me_models.LinkHubAHubB,
             ["field_b1_str"],
         )
-        return self.receive()
 
 
 class HubAApiUploadRepository(ApiUploadRepositoryABC):

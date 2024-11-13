@@ -6,6 +6,7 @@ from django.db.models import Q
 from baseclasses.models import (
     MontrekHubABC,
     MontrekManyToManyLinkABC,
+    MontrekOneToManyLinkABC,
     MontrekSatelliteABC,
     ValueDateList,
 )
@@ -132,31 +133,29 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         self, hub_field: str, reference_date: timezone.datetime
     ) -> QuerySet:
         return self.link_class.get_related_hub_class(hub_field).objects.filter(
-            **self.subquery_filter(reference_date, outer_ref="hub"),
-            **{
-                f"{self.link_db_name}__state_date_start__lte": reference_date,
-                f"{self.link_db_name}__state_date_end__gt": reference_date,
-            },
+            Q(**self.subquery_filter(reference_date, outer_ref="hub"))
+            & Q(
+                **{
+                    f"{self.link_db_name}__state_date_start__lte": reference_date,
+                    f"{self.link_db_name}__state_date_end__gt": reference_date,
+                }
+            ),
         )
 
     def _link_hubs_and_get_subquery(
         self, hub_field_to: str, hub_field_from: str, reference_date: timezone.datetime
     ) -> Subquery:
+        sat_query = self.satellite_class.objects.filter(
+            **self.subquery_filter(
+                reference_date,
+                lookup_field="hub_entity",
+                outer_ref=f"{self.link_class.__name__.lower()}__{hub_field_to}",
+            )
+        ).values(self.field)
+        sat_query = self._annotate_agg_field(hub_field_to, sat_query)
         query = (
             self.get_linked_hub_query(hub_field_from, reference_date)
-            .annotate(
-                **{
-                    self.field: Subquery(
-                        self.satellite_class.objects.filter(
-                            **self.subquery_filter(
-                                reference_date,
-                                lookup_field="hub_entity",
-                                outer_ref=f"{self.link_class.__name__.lower()}__{hub_field_to}",
-                            )
-                        ).values(self.field)
-                    )
-                }
-            )
+            .annotate(**{self.field: Subquery(sat_query)})
             .values(self.field)
         )
         return Subquery(query)
@@ -189,6 +188,25 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
             .values(self.field)[:1]
         )
         return Subquery(query)
+
+    def _annotate_agg_field(self, hub_field_to: str, query: QuerySet) -> QuerySet:
+        _is_many_to_many = isinstance(self.link_class(), MontrekManyToManyLinkABC)
+        _is_many_to_one = (
+            isinstance(self.link_class(), MontrekOneToManyLinkABC)
+            and hub_field_to == "hub_out"
+        )
+        if _is_many_to_many or _is_many_to_one:
+            func = get_string_concat_function()
+            return query.annotate(
+                **{
+                    self.field
+                    + "agg": Cast(
+                        func(Cast(self.field, CharField())),
+                        CharField(),
+                    )
+                }
+            ).values(self.field + "agg")
+        return query
         hub_out_query = self.link_class.objects.filter(
             state_date_start__lte=reference_date,
             state_date_end__gt=reference_date,

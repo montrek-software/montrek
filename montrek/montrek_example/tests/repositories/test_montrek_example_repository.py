@@ -17,6 +17,7 @@ from montrek_example import models as me_models
 from montrek_example.repositories.hub_a_repository import (
     HubAJsonRepository,
     HubARepository,
+    HubARepository2,
 )
 from montrek_example.repositories.hub_b_repository import HubBRepository
 from montrek_example.repositories.hub_c_repository import HubCRepository
@@ -759,6 +760,7 @@ class TestMontrekRepositoryLinks(TestCase):
     def setUp(self):
         huba1 = me_factories.HubAFactory()
         huba2 = me_factories.HubAFactory()
+        me_factories.AHubValueDateFactory(hub=huba2, value_date=None)
         hubb1 = me_factories.HubBFactory()
         hubb2 = me_factories.HubBFactory()
         hubc1 = me_factories.HubCFactory()
@@ -816,7 +818,7 @@ class TestMontrekRepositoryLinks(TestCase):
         )
 
     def test_many_to_one_link(self):
-        repository = HubARepository()
+        repository = HubARepository2()
         repository.reference_date = montrek_time(2023, 7, 8)
         queryset = repository.receive()
 
@@ -825,18 +827,18 @@ class TestMontrekRepositoryLinks(TestCase):
         self.assertEqual(queryset[1].field_b1_str, "First")
 
         repository.reference_date = montrek_time(2023, 7, 10)
-        queryset = repository.test_queryset_2()
+        queryset = repository.receive()
 
         self.assertEqual(queryset.count(), 2)
         self.assertEqual(queryset[0].field_b1_str, "Second")
         self.assertEqual(queryset[1].field_b1_str, "Second")
 
         repository.reference_date = montrek_time(2023, 7, 12)
-        queryset = repository.test_queryset_2()
+        queryset = repository.receive()
 
         self.assertEqual(queryset.count(), 2)
-        self.assertEqual(queryset[0].field_b1_str, "Second")
-        self.assertEqual(queryset[1].field_b1_str, "Third")
+        self.assertEqual(queryset[0].field_b1_str, "Third")
+        self.assertEqual(queryset[1].field_b1_str, "Second")
 
     def test_link_reversed(self):
         repository = HubBRepository()
