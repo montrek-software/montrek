@@ -86,11 +86,11 @@ class DbCreator:
                 sat = satellite_class(hub_entity=self.hub_entity, **sat_data)
             sat = self._process_new_satellite(sat, satellite_class)
             selected_satellites[sat.state].append(sat)
-        self._get_hub_value_date(self.hub_entity, None)
 
         reference_hub = self._stall_satellites_and_return_reference_hub(
             selected_satellites, creation_date
         )
+        self._get_hub_value_date(self.hub_entity, None)
         self._stall_hub(reference_hub)
         self._stall_links(data, reference_hub, creation_date)
         return reference_hub
@@ -278,6 +278,7 @@ class DbCreator:
         self._stall_hub(old_hub)
         new_hub.state_date_start = creation_date
         self._stall_hub(new_hub)
+        self.hub_entity = new_hub
 
     def _copy_satellite_for_hub(self, satellite, hub, creation_date):
         satellite.state_date_end = creation_date

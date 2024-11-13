@@ -175,6 +175,11 @@ class MontrekSatelliteBaseABC(TimeStampMixin, StateMixin, UserMixin):
     def get_hash_value(self) -> str:
         return self._get_hash_value()
 
+    def __str__(self) -> str:
+        return ",".join(
+            [f"{field} -> {getattr(self, field)}" for field in self.identifier_fields]
+        )
+
 
 class MontrekSatelliteABC(MontrekSatelliteBaseABC):
     class Meta:

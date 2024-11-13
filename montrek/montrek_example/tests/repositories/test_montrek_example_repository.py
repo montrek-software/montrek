@@ -336,6 +336,7 @@ class TestMontrekCreateObject(TestCase):
         self.assertEqual(me_models.SatA1.objects.count(), 1)
         self.assertEqual(me_models.SatA2.objects.count(), 1)
         self.assertEqual(me_models.HubA.objects.count(), 1)
+        self.assertEqual(me_models.AHubValueDate.objects.count(), 1)
         # Change the id of the first Satellite
         repository.std_create_object(
             {
@@ -388,7 +389,7 @@ class TestMontrekCreateObject(TestCase):
                 "field_a1_str": "test_new",
                 "field_a2_float": 6.0,
                 "field_a2_str": "test2",
-                "hub_entity_id": a_object.id,
+                "hub_entity_id": a_object.hub_entity_id,
             }
         )
         # We should still have one Hub
