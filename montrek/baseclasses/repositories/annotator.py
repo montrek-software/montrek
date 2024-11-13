@@ -7,7 +7,7 @@ from baseclasses.repositories.subquery_builder import (
     CreatedAtSubqueryBuilder,
     CreatedBySubqueryBuilder,
 )
-from baseclasses.models import MontrekSatelliteABC, MontrekHubABC
+from baseclasses.models import MontrekLinkABC, MontrekSatelliteABC, MontrekHubABC
 
 
 class Annotator:
@@ -18,6 +18,7 @@ class Annotator:
         self.ts_annotations: dict[str, Subquery] = {}
         self.annotated_satellite_classes: list[type[MontrekSatelliteABC]] = []
         self.annotated_linked_satellite_classes: list[type[MontrekSatelliteABC]] = []
+        self.annotated_link_classes: list[type[MontrekLinkABC]] = []
 
     def get_raw_annotations(self) -> dict[str, SubqueryBuilder]:
         return {
@@ -34,6 +35,9 @@ class Annotator:
         subquery_builder: type[SubqueryBuilder],
         **kwargs,
     ):
+        if "link_class" in kwargs:
+            self.annotated_link_classes.append(kwargs["link_class"])
+
         for field in fields:
             self.annotations[field] = subquery_builder(satellite_class, field, **kwargs)
             self.add_to_annotated_satellite_classes(satellite_class)
@@ -61,6 +65,9 @@ class Annotator:
 
     def get_linked_satellite_classes(self) -> list[type[MontrekSatelliteABC]]:
         return self.annotated_linked_satellite_classes
+
+    def get_link_classes(self) -> list[type[MontrekLinkABC]]:
+        return self.annotated_link_classes
 
     def add_to_annotated_satellite_classes(
         self, satellite_class: type[MontrekSatelliteABC]

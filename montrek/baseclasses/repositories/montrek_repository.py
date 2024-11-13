@@ -301,7 +301,7 @@ class MontrekRepositoryOld:
                 changed_by=F("created_by__email"),
             )
             satellite_querys[sat.__name__] = sat_query
-        for link in self.annotator.get_linked_satellite_classes():
+        for link in self.annotator.get_link_classes():
             link_query = link.objects.filter(hub_in=hub).order_by("-created_at")
             satellite_querys[link.__name__] = link_query
         return satellite_querys
