@@ -55,6 +55,7 @@ class DbCreator:
         self.stalled_satellites = {
             satellite_class: [] for satellite_class in satellite_classes
         }
+        self.stalled_links = {}
 
     def create(
         self, data: Dict[str, Any], hub_entity: MontrekHubABC, user_id: int
