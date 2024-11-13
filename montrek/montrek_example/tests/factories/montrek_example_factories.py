@@ -5,6 +5,7 @@ from api_upload.tests.factories import (
 )
 from baseclasses.tests.factories.baseclass_factories import ValueDateListFactory
 from baseclasses.tests.factories.montrek_factory_schemas import (
+    MontrekHubValueDateFactory,
     MontrekSatelliteFactory,
     MontrekTSSatelliteFactory,
 )
@@ -54,12 +55,11 @@ class BHubValueDateFactory(factory.django.DjangoModelFactory):
     value_date_list = factory.SubFactory(ValueDateListFactory)
 
 
-class CHubValueDateFactory(factory.django.DjangoModelFactory):
+class CHubValueDateFactory(MontrekHubValueDateFactory):
     class Meta:
         model = "montrek_example.CHubValueDate"
 
     hub = factory.SubFactory(HubCFactory)
-    value_date_list = factory.SubFactory(ValueDateListFactory)
 
 
 class DHubValueDateFactory(factory.django.DjangoModelFactory):

@@ -1,10 +1,15 @@
 import datetime
+import sys
+import unittest
 
 import pandas as pd
-from baseclasses.utils import montrek_time
 from baseclasses.errors.montrek_user_error import MontrekError
+from baseclasses.tests.factories.montrek_factory_schemas import (
+    ValueDateListFactory,
+)
+from baseclasses.utils import montrek_time
 from django.core.exceptions import PermissionDenied
-from django.test import TestCase, TransactionTestCase
+from django.test import TestCase, TransactionTestCase, tag
 from django.utils import timezone
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
@@ -1352,19 +1357,33 @@ class TestTimeSeriesStdQueryset(TestCase):
 
 
 class TestTimeSeriesPerformance(TestCase):
+    @unittest.skipUnless(
+        "--tag=slow" in sys.argv, "Extremely slow tests only run on demand"
+    )
+    @tag("slow")
     def test_large_datasets_with_filter__performance(self):
         year_range = range(2010, 2021)
         hubs = me_factories.HubCFactory.create_batch(1000)
+        value_date_lists = {
+            year: ValueDateListFactory(value_date=montrek_time(year, 1, 1))
+            for year in year_range
+        }
+        null_value_date_list = ValueDateListFactory(value_date=None)
         for hub in hubs:
-            me_factories.SatC1Factory.create()
-            for year in year_range:
-                me_factories.SatTSC2Factory.create(
-                    hub_entity=hub,
-                    value_date=montrek_time(year, 1, 1),
+            me_factories.SatC1Factory.create(
+                hub_value_date=me_factories.CHubValueDateFactory(
+                    hub=hub, value_date_list=null_value_date_list
                 )
-                me_factories.SatTSC3Factory.create(
-                    hub_entity=hub,
-                    value_date=montrek_time(year, 1, 1),
+            )
+            for year in year_range:
+                hvd = me_factories.CHubValueDateFactory.create(
+                    hub=hub, value_date_list=value_date_lists[year]
+                )
+                me_factories.SatTSC2Factory(
+                    hub_value_date=hvd,
+                )
+                me_factories.SatTSC3Factory(
+                    hub_value_date=hvd,
                 )
         repository = HubCRepository()
         filter_data = {
@@ -1380,7 +1399,7 @@ class TestTimeSeriesPerformance(TestCase):
         }
         repository = HubCRepository(session_data=filter_data)
         t1 = datetime.datetime.now()
-        test_query = repository.receive()
+        repository.receive()
         t2 = datetime.datetime.now()
         self.assertLess(t2 - t1, datetime.timedelta(seconds=1))
 
