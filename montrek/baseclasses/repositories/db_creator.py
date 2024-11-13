@@ -55,7 +55,6 @@ class DbCreator:
         self.stalled_satellites = {
             satellite_class: [] for satellite_class in satellite_classes
         }
-        self.stalled_links = {}
 
     def create(
         self, data: Dict[str, Any], hub_entity: MontrekHubABC, user_id: int
@@ -81,8 +80,8 @@ class DbCreator:
                     raise MontrekError(
                         f"TimeSeriesSatellite needs a value_date: {sat_data}"
                     )
-                hub_value_list = self._get_hub_value_date(self.hub_entity, value_date)
-                sat = satellite_class(hub_value_date=hub_value_list, **sat_data)
+                hub_value_date = self._get_hub_value_date(self.hub_entity, value_date)
+                sat = satellite_class(hub_value_date=hub_value_date, **sat_data)
             else:
                 sat = satellite_class(hub_entity=self.hub_entity, **sat_data)
             sat = self._process_new_satellite(sat, satellite_class)
