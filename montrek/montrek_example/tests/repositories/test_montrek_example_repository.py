@@ -1705,7 +1705,7 @@ class TestGetHubsByFieldValues(TestCase):
             raise_for_multiple_hubs=False,
             raise_for_unmapped_values=False,
         )
-        actual_ids = [hub_vd.hub.id if hub_vd else None for hub_vd in actual]
+        actual_ids = [hub.id if hub else None for hub in actual]
         expected_ids = [1, 2, 2, 3, None, None]  # 2 is the first hub with value "c"
         self.assertEqual(actual_ids, expected_ids)
 
@@ -1736,6 +1736,17 @@ class TestGetHubsByFieldValues(TestCase):
                 raise_for_multiple_hubs=False,
                 raise_for_unmapped_values=True,
             )
+
+    def test_get_hubs_by_field_values__timeseries(self):
+        sat = me_factories.SatTSC2Factory(field_tsc2_float=3.0)
+        repository = HubCRepository()
+        test_hubs = repository.get_hubs_by_field_values(
+            values=[3.0],
+            by_repository_field="field_tsc2_float",
+            raise_for_multiple_hubs=False,
+            raise_for_unmapped_values=False,
+        )
+        self.assertEqual(test_hubs[0], sat.hub_value_date.hub)
 
 
 class TestRepositoryQueryConcept(TestCase):

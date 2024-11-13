@@ -328,7 +328,7 @@ class MontrekRepositoryOld:
             if value in value_to_hub_map:
                 multiple_hub_values.add(value)
                 continue
-            value_to_hub_map[value] = obj
+            value_to_hub_map[value] = obj.hub
         if multiple_hub_values and raise_for_multiple_hubs:
             multiple_hubs_str = ", ".join(sorted(list(multiple_hub_values)[:10]))
             err_msg = f"Multiple {hub_class_name} objects found for {by_repository_field} values (truncated): {multiple_hubs_str}"
