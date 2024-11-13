@@ -817,7 +817,7 @@ class TestMontrekRepositoryLinks(TestCase):
     def test_many_to_one_link(self):
         repository = HubARepository()
         repository.reference_date = montrek_time(2023, 7, 8)
-        queryset = repository.test_queryset_2()
+        queryset = repository.receive()
 
         self.assertEqual(queryset.count(), 2)
         self.assertEqual(queryset[0].field_b1_str, "First")
@@ -1059,8 +1059,9 @@ class TestTimeSeries(TestCase):
             field_c1_str="Hallo",
             field_c1_bool=True,
         )
+
         me_factories.SatTSC2Factory.create(
-            hub_entity=ts_satellite_c1.hub_entity,
+            hub_value_date__hub=ts_satellite_c1.hub_entity,
             field_tsc2_float=1.0,
             value_date=montrek_time(2024, 2, 5),
         )
@@ -1135,7 +1136,7 @@ class TestTimeSeries(TestCase):
                 field_tsd2_int=i,
                 value_date=value_date,
             )
-            sat_c.hub_entity.link_hub_c_hub_d.add(sat_d.hub_entity)
+            sat_c.hub_value_date.hub.link_hub_c_hub_d.add(sat_d.hub_value_date.hub)
         repository = HubCRepository(session_data={"user_id": self.user.id})
         test_query = repository.receive().filter(value_date__in=value_dates)
         self.assertEqual(test_query.count(), 2)

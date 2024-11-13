@@ -248,7 +248,7 @@ class MontrekTimeSeriesSatelliteInterimABC(MontrekSatelliteBaseABC):
     value_date = models.DateField()
     allow_multiple = True
     is_timeseries = True
-    identifier_fields = ["hub_value_date"]
+    identifier_fields = ["hub_value_date_id"]
 
     @classmethod
     def get_related_hub_class(cls) -> type[MontrekHubABC]:

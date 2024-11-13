@@ -8,7 +8,6 @@ from baseclasses.models import (
     MontrekHubABC,
     MontrekOneToOneLinkABC,
     MontrekSatelliteABC,
-    MontrekTimeSeriesSatelliteABC,
     HubValueDate,
     ValueDateList,
 )
@@ -139,9 +138,7 @@ class DbCreator:
         self, satellite_classes: list[type[MontrekSatelliteABC]]
     ) -> list[type[MontrekSatelliteABC]]:
         time_series_classes = [
-            sat_class
-            for sat_class in satellite_classes
-            if isinstance(sat_class(), MontrekTimeSeriesSatelliteABC)
+            sat_class for sat_class in satellite_classes if sat_class().is_timeseries
         ]
         other_classes = [
             sat_class

@@ -39,7 +39,7 @@ class HubDFactory(factory.django.DjangoModelFactory):
         model = "montrek_example.HubD"
 
 
-class AHubValueDateFactory(factory.django.DjangoModelFactory):
+class AHubValueDateFactory(MontrekHubValueDateFactory):
     class Meta:
         model = "montrek_example.AHubValueDate"
 
@@ -47,7 +47,7 @@ class AHubValueDateFactory(factory.django.DjangoModelFactory):
     value_date_list = factory.SubFactory(ValueDateListFactory)
 
 
-class BHubValueDateFactory(factory.django.DjangoModelFactory):
+class BHubValueDateFactory(MontrekHubValueDateFactory):
     class Meta:
         model = "montrek_example.BHubValueDate"
 
@@ -62,7 +62,7 @@ class CHubValueDateFactory(MontrekHubValueDateFactory):
     hub = factory.SubFactory(HubCFactory)
 
 
-class DHubValueDateFactory(factory.django.DjangoModelFactory):
+class DHubValueDateFactory(MontrekHubValueDateFactory):
     class Meta:
         model = "montrek_example.DHubValueDate"
 
