@@ -410,9 +410,32 @@ class DbCreator:
                 stalled_hub_value_date
             )
 
+    def _hub_value_date_stalled(
+        self, hub_entity: MontrekHubABC, value_date: timezone.datetime | str | None
+    ) -> HubValueDate | None:
+        hub_value_date_class = hub_entity.hub_value_date.field.model
+        stalled_hub_value_dates = self.stalled_hub_value_dates.get(
+            hub_value_date_class, []
+        )
+        if isinstance(value_date, str):
+            value_date = timezone.datetime.fromisoformat(value_date).date()
+        for hub_value_date in stalled_hub_value_dates:
+            comp_value_date = hub_value_date.value_date_list.value_date
+            if isinstance(comp_value_date, str):
+                comp_value_date = timezone.datetime.fromisoformat(
+                    comp_value_date
+                ).date()
+            if hub_value_date.hub == hub_entity and comp_value_date == value_date:
+                return hub_value_date
+        return None
+
     def _get_hub_value_date(
         self, hub_entity: MontrekHubABC, value_date: timezone.datetime | None
     ) -> HubValueDate:
+        hub_value_date_class = hub_entity.hub_value_date.field.model
+        hub_value_date_stalled = self._hub_value_date_stalled(hub_entity, value_date)
+        if hub_value_date_stalled:
+            return hub_value_date_stalled
         existing_value_date_list = ValueDateList.objects.filter(value_date=value_date)
         if existing_value_date_list.count() == 0:
             value_date_list = ValueDateList(value_date=value_date)
@@ -423,7 +446,6 @@ class DbCreator:
             raise MontrekError(
                 f"Severe Error: Multiple ValueDateList objects for date {value_date}"
             )
-        hub_value_date_class = hub_entity.hub_value_date.field.model
         if hub_entity.id is None:
             hub_value_date = hub_value_date_class(
                 hub=hub_entity, value_date_list=value_date_list

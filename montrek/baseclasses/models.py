@@ -219,6 +219,9 @@ class MontrekTimeSeriesSatelliteABC(MontrekSatelliteBaseABC):
 class ValueDateList(models.Model):
     value_date = models.DateField(unique=True, null=True, blank=True)
 
+    def __str__(self):
+        return f"value_date: {self.value_date}"
+
 
 class HubValueDate(models.Model):
     class Meta:
@@ -228,6 +231,9 @@ class HubValueDate(models.Model):
         MontrekHubABC, on_delete=models.CASCADE, related_name="hub_value_date"
     )
     value_date_list = models.ForeignKey(ValueDateList, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"hub: {self.hub} value_date_list: {self.value_date_list}"
 
 
 class MontrekTimeSeriesSatelliteInterimABC(MontrekSatelliteBaseABC):
