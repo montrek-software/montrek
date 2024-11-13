@@ -43,6 +43,7 @@ class QueryBuilder:
             Q(hub__state_date_end__gt=reference_date),
         )
         queryset = self._filter_ts_rows(queryset)
+        queryset = self._filter_session_data(queryset)
         queryset = self._apply_filter(queryset)
         queryset = self._apply_order(queryset, order_fields)
         return queryset
@@ -62,7 +63,8 @@ class QueryBuilder:
     def _filter_ts_rows(self, queryset: QuerySet) -> QuerySet:
         # Subquery to check if there's another row with the same hub_entity_id and  only a non-null value_date
         non_null_value_date_exists = self.hub_value_date.objects.filter(
-            hub_id=OuterRef("hub_entity_id"), value_date_list__value_date__isnull=False
+            hub_id=OuterRef("hub_entity_id"),
+            value_date_list__value_date__isnull=False,
         ).exclude(id=OuterRef("id"))
 
         # Main query to exclude rows with None value_date if another row with the same hub_entity_id exists with a non-null value_date
@@ -70,3 +72,11 @@ class QueryBuilder:
             Q(value_date__isnull=False) | ~Exists(non_null_value_date_exists)
         )
         return filtered_query
+
+    def _filter_session_data(self, queryset: QuerySet) -> QuerySet:
+        end_date = self.session_data.get("end_date", timezone.datetime.max)
+        start_date = self.session_data.get("start_date", timezone.datetime.min)
+        return queryset.filter(
+            (Q(value_date__lte=end_date) & Q(value_date__gte=start_date))
+            | Q(value_date__isnull=True)
+        )

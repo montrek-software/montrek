@@ -398,7 +398,7 @@ class MontrekRepository(MontrekRepositoryOld):
     IS_REFACTORED = True  # Handles new refactoreed code, if True
     # TODO: Remove IS_REFACTORED
     update: bool = True  # If this is true only the passed fields will be updated, otherwise empty fields will be set to None
-    default_order_fields: tuple[str, ...] = ()
+    default_order_fields: tuple[str, ...] = ("-value_date", "hub_entity_id")
 
     def __init__(self, session_data: Dict[str, Any] = {}):
         super().__init__(session_data)
