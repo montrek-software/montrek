@@ -1,4 +1,5 @@
 import factory
+from baseclasses.tests.factories.montrek_factory_schemas import MontrekSatelliteFactory
 
 
 class MailHubFactory(factory.django.DjangoModelFactory):
@@ -6,7 +7,7 @@ class MailHubFactory(factory.django.DjangoModelFactory):
         model = "mailing.MailHub"
 
 
-class MailSatelliteFactory(factory.django.DjangoModelFactory):
+class MailSatelliteFactory(MontrekSatelliteFactory):
     class Meta:
         model = "mailing.MailSatellite"
 

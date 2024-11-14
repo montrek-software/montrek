@@ -1,11 +1,16 @@
 from django.db import models
 from baseclasses import models as baseclass_models
+from baseclasses.fields import HubForeignKey
 
 # Create your models here.
 
 
 class MailHub(baseclass_models.MontrekHubABC):
     pass
+
+
+class MailHubValueDate(baseclass_models.HubValueDate):
+    hub = HubForeignKey(MailHub)
 
 
 class MailSatellite(baseclass_models.MontrekSatelliteABC):

@@ -40,16 +40,16 @@ class TestFileUploadRegistryRepository(TestCase):
 
     def test_get_upload_file_from_registry(self):
         repository = MockFileUploadRegistryRepository(self.session_data)
-        file_upload_registry = repository.std_queryset().first()
+        file_upload_registry = repository.receive().first()
         test_file = repository.get_upload_file_from_registry(
-            file_upload_registry.id, self.request
+            file_upload_registry.hub.id, self.request
         )
         expected_file = self.file_sat.file
         self.assertEqual(test_file.read(), expected_file.read())
 
     def test_std_queryset_upload_date(self):
         repository = MockFileUploadRegistryRepository(self.session_data)
-        queryset = repository.std_queryset()
+        queryset = repository.receive()
         first_upload_date = queryset.first().upload_date
 
         assert first_upload_date == self.file_sat.created_at
@@ -63,7 +63,7 @@ class TestFileUploadRegistryRepository(TestCase):
             }
         )
 
-        queryset = repository.std_queryset()
+        queryset = repository.receive()
         second_upload_date = queryset.first().upload_date
 
         assert second_upload_date > first_upload_date
