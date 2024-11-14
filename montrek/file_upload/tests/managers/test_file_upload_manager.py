@@ -44,7 +44,7 @@ class TestFileUploadManager(TestCase):
             file=self.test_file,
             session_data=self.session_data,
         )
-        file_upload_registry_query = FileUploadRegistryRepository().std_queryset()
+        file_upload_registry_query = FileUploadRegistryRepository().receive()
         self.assertEqual(file_upload_registry_query.count(), 1)
         file_upload_registry = file_upload_registry_query.first()
         fname_pattern = r"test_file.*\.txt"
@@ -60,7 +60,7 @@ class TestFileUploadManager(TestCase):
             session_data=self.session_data,
         )
         fum.upload_and_process()
-        file_upload_registry_query = FileUploadRegistryRepository().std_queryset()
+        file_upload_registry_query = FileUploadRegistryRepository().receive()
         self.assertEqual(file_upload_registry_query.count(), 1)
         file_upload_registry = file_upload_registry_query.first()
         self.assertEqual(file_upload_registry.upload_status, "processed")
@@ -73,7 +73,7 @@ class TestFileUploadManager(TestCase):
         )
         fum.init_upload()
         fum.upload_and_process()
-        file_upload_registry_query = FileUploadRegistryRepository().std_queryset()
+        file_upload_registry_query = FileUploadRegistryRepository().receive()
         self.assertEqual(file_upload_registry_query.count(), 1)
         file_upload_registry = file_upload_registry_query.first()
         self.assertEqual(file_upload_registry.upload_status, "failed")
@@ -85,7 +85,7 @@ class TestFileUploadManager(TestCase):
             session_data=self.session_data,
         )
         fum.upload_and_process()
-        file_upload_registry_query = FileUploadRegistryRepository().std_queryset()
+        file_upload_registry_query = FileUploadRegistryRepository().receive()
         self.assertEqual(file_upload_registry_query.count(), 1)
         file_upload_registry = file_upload_registry_query.first()
         self.assertEqual(file_upload_registry.upload_status, "failed")
@@ -97,7 +97,7 @@ class TestFileUploadManager(TestCase):
             session_data=self.session_data,
         )
         fum.upload_and_process()
-        file_upload_registry_query = FileUploadRegistryRepository().std_queryset()
+        file_upload_registry_query = FileUploadRegistryRepository().receive()
         self.assertEqual(file_upload_registry_query.count(), 1)
         file_upload_registry = file_upload_registry_query.first()
         self.assertEqual(file_upload_registry.upload_status, "failed")

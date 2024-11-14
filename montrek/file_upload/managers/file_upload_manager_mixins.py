@@ -64,7 +64,7 @@ class LogFileMixin(LogFileChecksMixin):
 
     def _add_log_file_link(self, file: File):
         registry_log_file_link = (
-            self.file_upload_registry_hub.hub.link_file_upload_registry_file_log_file
+            self.file_upload_registry_hub.link_file_upload_registry_file_log_file
         )
         create_data = {"file": file}
         now = timezone.make_aware(datetime.datetime.now())
