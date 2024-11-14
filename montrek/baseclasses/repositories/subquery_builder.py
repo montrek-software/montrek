@@ -171,26 +171,28 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
             .annotate(
                 **{
                     self.field: Subquery(
-                        self.satellite_class.objects.filter(
-                            Q(
-                                **self.subquery_filter(
-                                    reference_date,
-                                    lookup_field="hub_value_date",
-                                    outer_ref=f"{hub_field_to}__hub_value_date",
+                        self._annotate_agg_field(
+                            hub_field_to,
+                            self.satellite_class.objects.filter(
+                                Q(
+                                    **self.subquery_filter(
+                                        reference_date,
+                                        lookup_field="hub_value_date",
+                                        outer_ref=f"{hub_field_to}__hub_value_date",
+                                    )
                                 )
-                            )
-                            & Q(
-                                hub_value_date__value_date_list=OuterRef(
-                                    f"{hub_field_to}__hub_value_date__value_date_list"
+                                & Q(
+                                    hub_value_date__value_date_list=OuterRef(
+                                        f"{hub_field_to}__hub_value_date__value_date_list"
+                                    )
                                 )
-                            )
-                        ).values(self.field)
+                            ).values(self.field),
+                        )
                     )
                 }
             )
             .values(self.field)[:1]
         )
-        query = self._annotate_agg_field(hub_field_to, query)
         return Subquery(query)
 
     def _annotate_agg_field(self, hub_field_to: str, query: QuerySet) -> QuerySet:

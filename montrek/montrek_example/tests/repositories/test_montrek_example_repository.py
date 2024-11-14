@@ -1147,11 +1147,11 @@ class TestTimeSeries(TestCase):
         test_query = repository.receive().filter(value_date__in=value_dates)
         self.assertEqual(test_query.count(), 2)
         self.assertEqual(test_query[1].field_tsc2_float, 0.0)
-        self.assertEqual(test_query[1].field_tsd2_float, 0)
-        self.assertEqual(test_query[1].field_tsd2_int, 0)
+        self.assertEqual(test_query[1].field_tsd2_float, "0")
+        self.assertEqual(test_query[1].field_tsd2_int, "0")
         self.assertEqual(test_query[0].field_tsc2_float, 0.1)
-        self.assertEqual(test_query[0].field_tsd2_float, 0.2)
-        self.assertEqual(test_query[0].field_tsd2_int, 1)
+        self.assertEqual(test_query[0].field_tsd2_float, "0.2")
+        self.assertEqual(test_query[0].field_tsd2_int, "1")
 
 
 class TestTimeSeriesRepositoryEmpty(TestCase):
@@ -1888,8 +1888,7 @@ class TestRepositoryQueryConcept(TestCase):
         query = repo.receive()
         self.assertEqual(query.count(), 1)
         self.assertEqual(query.first().field_tsc2_float, c_sat.field_tsc2_float)
-        # TODO: Filter by value_date
-        self.assertEqual(query.first().field_tsd2_float, d_sat.field_tsd2_float)
+        self.assertEqual(query.first().field_tsd2_float, str(d_sat.field_tsd2_float))
 
     def test_ts_satellite_concept__two_ts_sats_different_dates(self):
         tsc2_fac1 = me_factories.SatTSC2Factory(
