@@ -1548,7 +1548,7 @@ class TestMontrekManyToManyRelations(TestCase):
         repository_b = HubBRepository(session_data={"user_id": self.user.id})
         repository_b.create_objects_from_data_frame(input_df)
         new_sat_b = repository_b.receive().last()
-        links = new_sat_b.link_hub_b_hub_d.all()
+        links = new_sat_b.hub.link_hub_b_hub_d.all()
         self.assertEqual(links.count(), 2)
         self.assertEqual(links[0], self.satd1.hub_entity)
         self.assertEqual(links[1], self.satd2.hub_entity)
