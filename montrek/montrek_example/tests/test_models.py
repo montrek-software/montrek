@@ -29,7 +29,7 @@ class TestMontrekSatellite(TestCase):
         value_fields = test_model_class.get_value_fields()
         self.assertEqual(
             [field.name for field in value_fields],
-            ["comment", "field_tsc3_int", "field_tsc3_str"],
+            ["comment", "value_date", "field_tsc3_int", "field_tsc3_str"],
         )
 
     def annotations(self):
@@ -101,7 +101,7 @@ class TestMontrekSatellite(TestCase):
         self.assertEqual(query.first().field_tsc2_float, tsc2_fac.field_tsc2_float)
         self.assertEqual(
             query.first().value_date,
-            tsc2_fac.hub_value_date.value_date_list.value_date.date(),
+            tsc2_fac.hub_value_date.value_date_list.value_date,
         )
 
     def test_ts_satellite_concept__two_hubs(self):
@@ -126,11 +126,11 @@ class TestMontrekSatellite(TestCase):
         self.assertEqual(query.last().field_tsc2_float, tsc2_fac2.field_tsc2_float)
         self.assertEqual(
             query.first().value_date,
-            tsc2_fac1.hub_value_date.value_date_list.value_date.date(),
+            tsc2_fac1.hub_value_date.value_date_list.value_date,
         )
         self.assertEqual(
             query.last().value_date,
-            tsc2_fac2.hub_value_date.value_date_list.value_date.date(),
+            tsc2_fac2.hub_value_date.value_date_list.value_date,
         )
 
     def test_ts_satellite_concept__with_sat(self):
@@ -140,11 +140,11 @@ class TestMontrekSatellite(TestCase):
         )
         annotations = self.annotations()
         query = CHubValueDate.objects.annotate(**annotations)
-        self.assertEqual(query.count(), 1)
+        self.assertEqual(query.count(), 2)
         self.assertEqual(query.first().field_tsc2_float, tsc2_fac1.field_tsc2_float)
         self.assertEqual(
             query.first().value_date,
-            tsc2_fac1.hub_value_date.value_date_list.value_date.date(),
+            tsc2_fac1.hub_value_date.value_date_list.value_date,
         )
         self.assertEqual(query.first().field_c1_str, c_sat.field_c1_str)
 
@@ -158,11 +158,11 @@ class TestMontrekSatellite(TestCase):
         )
         annotations = self.annotations()
         query = CHubValueDate.objects.annotate(**annotations)
-        self.assertEqual(query.count(), 1)
+        self.assertEqual(query.count(), 2)
         self.assertEqual(query.first().field_tsc2_float, tsc2_fac.field_tsc2_float)
         self.assertEqual(
             query.first().value_date,
-            tsc2_fac.hub_value_date.value_date_list.value_date.date(),
+            tsc2_fac.hub_value_date.value_date_list.value_date,
         )
         self.assertEqual(query.first().field_c1_str, c_sat1.field_c1_str)
         self.assertEqual(query.first().field_tsc3_int, tsc3_fac.field_tsc3_int)
@@ -176,7 +176,7 @@ class TestMontrekSatellite(TestCase):
         c_sat1.hub_entity.link_hub_c_hub_d.add(d_sat1.hub_entity)
         annotations = self.annotations()
         query = CHubValueDate.objects.annotate(**annotations)
-        self.assertEqual(query.count(), 1)
+        self.assertEqual(query.count(), 2)
         self.assertEqual(query.first().field_c1_str, c_sat1.field_c1_str)
         self.assertEqual(query.first().field_d1_str, d_sat1.field_d1_str)
 
@@ -215,20 +215,20 @@ class TestMontrekSatellite(TestCase):
         )
         annotations = self.annotations()
         query = CHubValueDate.objects.annotate(**annotations)
-        self.assertEqual(query.count(), 2)
+        self.assertEqual(query.count(), 4)
         result_1 = query.first()
-        result_2 = query.last()
+        result_2 = query[2]
         self.assertEqual(result_1.field_tsc2_float, tsc2_fac1.field_tsc2_float)
         self.assertEqual(
             result_1.value_date,
-            tsc2_fac1.hub_value_date.value_date_list.value_date.date(),
+            tsc2_fac1.hub_value_date.value_date_list.value_date,
         )
         self.assertEqual(result_1.field_c1_str, c_sat1.field_c1_str)
         self.assertEqual(result_1.field_tsc3_int, tsc3_fac.field_tsc3_int)
         self.assertEqual(result_2.field_tsc2_float, None)
         self.assertEqual(
             result_2.value_date,
-            tsc3_fac_2.hub_value_date.value_date_list.value_date.date(),
+            tsc3_fac_2.hub_value_date.value_date_list.value_date,
         )
         self.assertEqual(result_2.field_c1_str, c_sat2.field_c1_str)
         self.assertEqual(result_2.field_tsc3_int, tsc3_fac_2.field_tsc3_int)
