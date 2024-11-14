@@ -147,7 +147,10 @@ class MontrekCreateUpdateViewTestCase(MontrekObjectViewBaseTestCase):
                 continue
             if isinstance(created_value, (datetime.datetime, datetime.date)):
                 value = pd.to_datetime(value).date()
-            self.assertEqual(created_value, value)
+                expected_value = created_value.date()
+            else:
+                expected_value = created_value
+            self.assertEqual(expected_value, value)
         self.additional_assertions(created_object)
 
 

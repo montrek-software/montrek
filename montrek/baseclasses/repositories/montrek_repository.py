@@ -27,8 +27,6 @@ from baseclasses.repositories.subquery_builder import (
 from django.core.exceptions import PermissionDenied
 from django.db.models import (
     F,
-    ManyToManyField,
-    Q,
     QuerySet,
 )
 from django.utils import timezone
@@ -116,33 +114,7 @@ class MontrekRepositoryOld:
         self._reference_date = value
 
     def object_to_dict(self, obj: HubValueDate) -> Dict[str, Any]:
-        object_dict = {
-            field.name: getattr(obj, field.name)
-            for field in self.std_satellite_fields()
-        }
-        for field in obj._meta.get_fields():
-            if isinstance(field, ManyToManyField):
-                value = (
-                    getattr(obj, field.name)
-                    .filter(
-                        Q(
-                            **{
-                                f"{field.name.replace('_','')}__state_date_start__lte": self.reference_date
-                            }
-                        ),
-                        Q(
-                            **{
-                                f"{field.name.replace('_','')}__state_date_end__gt": self.reference_date
-                            }
-                        ),
-                        Q(state_date_start__lte=self.reference_date),
-                        Q(state_date_end__gt=self.reference_date),
-                    )
-                    .first()
-                )
-                object_dict[field.name] = value
-        object_dict["hub_entity_id"] = obj.hub.pk
-        return object_dict
+        return {field: getattr(obj, field) for field in self.get_all_fields()}
 
     def std_satellite_fields(self):
         return self.annotator.satellite_fields()

@@ -1,9 +1,11 @@
 import datetime
 import re
+from io import BytesIO
+
+import pandas as pd
+from baseclasses.models import MontrekHubABC
 from django.core.files import File
 from django.utils import timezone
-import pandas as pd
-from io import BytesIO
 from file_upload.repositories.file_upload_file_repository import (
     FileUploadFileRepository,
 )
@@ -63,9 +65,11 @@ class LogFileMixin(LogFileChecksMixin):
         return excel_log_file
 
     def _add_log_file_link(self, file: File):
-        registry_log_file_link = (
-            self.file_upload_registry_hub.link_file_upload_registry_file_log_file
-        )
+        if isinstance(self.file_upload_registry_hub, MontrekHubABC):
+            hub = self.file_upload_registry_hub
+        else:
+            hub = self.file_upload_registry_hub.hub
+        registry_log_file_link = hub.link_file_upload_registry_file_log_file
         create_data = {"file": file}
         now = timezone.make_aware(datetime.datetime.now())
         existing_log_file = registry_log_file_link.filter(
