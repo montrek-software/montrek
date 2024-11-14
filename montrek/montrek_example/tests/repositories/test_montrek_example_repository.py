@@ -21,9 +21,11 @@ from montrek_example.repositories.hub_a_repository import (
 )
 from montrek_example.repositories.hub_b_repository import (
     HubBRepository,
-    HubBRepository2,
 )
-from montrek_example.repositories.hub_c_repository import HubCRepository
+from montrek_example.repositories.hub_c_repository import (
+    HubCRepository,
+    HubCRepository2,
+)
 from montrek_example.repositories.hub_d_repository import HubDRepository
 from montrek_example.tests.factories import montrek_example_factories as me_factories
 
@@ -764,60 +766,40 @@ class TestMontrekRepositoryLinks(TestCase):
         huba1 = me_factories.HubAFactory()
         huba2 = me_factories.HubAFactory()
         me_factories.AHubValueDateFactory(hub=huba2, value_date=None)
-        hubb1 = me_factories.HubBFactory()
-        hubb2 = me_factories.HubBFactory()
         hubc1 = me_factories.HubCFactory()
         hubc2 = me_factories.HubCFactory()
 
-        me_factories.LinkHubAHubBFactory(
-            hub_in=huba1,
-            hub_out=hubb1,
+        me_factories.SatA1Factory(
+            hub_entity=huba1,
+            field_a1_int=5,
         )
-        me_factories.LinkHubAHubBFactory(
-            hub_in=huba2,
-            hub_out=hubb1,
-            state_date_end=montrek_time(2023, 7, 12),
-        )
-        me_factories.LinkHubAHubBFactory(
-            hub_in=huba2,
-            hub_out=hubb2,
-            state_date_start=montrek_time(2023, 7, 12),
-        )
-        me_factories.SatB1Factory(
-            hub_entity=hubb1,
-            state_date_end=montrek_time(2023, 7, 10),
-            field_b1_str="First",
-        )
-        me_factories.SatB1Factory(
-            hub_entity=hubb1,
-            state_date_start=montrek_time(2023, 7, 10),
-            field_b1_str="Second",
-        )
-        me_factories.SatB1Factory(
-            hub_entity=hubb2,
-            field_b1_str="Third",
-        )
-
         me_factories.LinkHubAHubCFactory(
             hub_in=huba1,
             hub_out=hubc1,
         )
         me_factories.LinkHubAHubCFactory(
-            hub_in=huba1,
-            hub_out=hubc2,
+            hub_in=huba2,
+            hub_out=hubc1,
             state_date_end=montrek_time(2023, 7, 12),
         )
-        self.sat_c_1 = me_factories.SatC1Factory(
+        me_factories.LinkHubAHubCFactory(
+            hub_in=huba2,
+            hub_out=hubc2,
+            state_date_start=montrek_time(2023, 7, 12),
+        )
+        me_factories.SatC1Factory(
             hub_entity=hubc1,
-            field_c1_str="Multi1",
+            state_date_end=montrek_time(2023, 7, 10),
+            field_c1_str="First",
+        )
+        me_factories.SatC1Factory(
+            hub_entity=hubc1,
+            state_date_start=montrek_time(2023, 7, 10),
+            field_c1_str="Second",
         )
         me_factories.SatC1Factory(
             hub_entity=hubc2,
-            field_c1_str="Multi2",
-        )
-        me_factories.SatA1Factory(
-            hub_entity=huba1,
-            field_a1_int=5,
+            field_c1_str="Third",
         )
 
     def test_many_to_one_link(self):
@@ -826,34 +808,34 @@ class TestMontrekRepositoryLinks(TestCase):
         queryset = repository.receive()
 
         self.assertEqual(queryset.count(), 2)
-        self.assertEqual(queryset[0].field_b1_str, "First")
-        self.assertEqual(queryset[1].field_b1_str, "First")
+        self.assertEqual(queryset[0].field_c1_str, "First")
+        self.assertEqual(queryset[1].field_c1_str, "First")
 
         repository.reference_date = montrek_time(2023, 7, 10)
         queryset = repository.receive()
 
         self.assertEqual(queryset.count(), 2)
-        self.assertEqual(queryset[0].field_b1_str, "Second")
-        self.assertEqual(queryset[1].field_b1_str, "Second")
+        self.assertEqual(queryset[0].field_c1_str, "Second")
+        self.assertEqual(queryset[1].field_c1_str, "Second")
 
         repository.reference_date = montrek_time(2023, 7, 12)
         queryset = repository.receive()
 
         self.assertEqual(queryset.count(), 2)
-        self.assertEqual(queryset[0].field_b1_str, "Third")
-        self.assertEqual(queryset[1].field_b1_str, "Second")
+        self.assertEqual(queryset[0].field_c1_str, "Third")
+        self.assertEqual(queryset[1].field_c1_str, "Second")
 
     def test_link_reversed(self):
-        repository = HubBRepository2()
+        repository = HubCRepository2()
         repository.reference_date = montrek_time(2023, 7, 8)
         queryset = repository.receive()
         self.assertEqual(queryset.count(), 2)
-        self.assertEqual(queryset[0].field_a1_int, 5)
+        self.assertEqual(queryset[0].field_a1_int, "5")
         self.assertEqual(queryset[1].field_a1_int, None)
         repository.reference_date = montrek_time(2023, 7, 15)
         queryset = repository.receive()
         self.assertEqual(queryset.count(), 2)
-        self.assertEqual(queryset[0].field_a1_int, 5)
+        self.assertEqual(queryset[0].field_a1_int, "5")
         self.assertEqual(queryset[1].field_a1_int, None)
 
 

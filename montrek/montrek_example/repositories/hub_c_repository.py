@@ -40,3 +40,15 @@ class HubCRepository(MontrekRepository):
             me_models.LinkHubCHubD,
             ["field_tsd2_float", "field_tsd2_int"],
         )
+
+
+class HubCRepository2(MontrekRepository):
+    hub_class = me_models.HubC
+
+    def set_annotations(self):
+        self.add_linked_satellites_field_annotations(
+            me_models.SatA1,
+            me_models.LinkHubAHubC,
+            ["field_a1_int"],
+            reversed_link=True,
+        )
