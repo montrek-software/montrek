@@ -140,7 +140,7 @@ class MontrekCreateUpdateViewTestCase(MontrekObjectViewBaseTestCase):
             if key.startswith("link_"):
                 continue
             if key == "hub_entity_id":
-                key = "id"
+                key = "hub_id"
             created_value = getattr(created_object, key)
             if created_value is None:
                 self.assertEqual(value, "")

@@ -11,6 +11,7 @@ from baseclasses.models import (
     MontrekLinkABC,
     MontrekSatelliteABC,
     MontrekTimeSeriesSatelliteABC,
+    HubValueDate,
 )
 from baseclasses.repositories.annotator import (
     Annotator,
@@ -117,7 +118,7 @@ class MontrekRepositoryOld:
     def std_queryset(self, **kwargs):
         raise NotImplementedError("MontrekRepository has no std_queryset method!")
 
-    def object_to_dict(self, obj: MontrekHubABC) -> Dict[str, Any]:
+    def object_to_dict(self, obj: HubValueDate) -> Dict[str, Any]:
         object_dict = {
             field.name: getattr(obj, field.name)
             for field in self.std_satellite_fields()
@@ -143,7 +144,7 @@ class MontrekRepositoryOld:
                     .first()
                 )
                 object_dict[field.name] = value
-        object_dict["hub_entity_id"] = obj.pk
+        object_dict["hub_entity_id"] = obj.hub.pk
         return object_dict
 
     def std_satellite_fields(self):
