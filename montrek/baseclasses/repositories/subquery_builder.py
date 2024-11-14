@@ -2,7 +2,7 @@ from django.conf import settings
 from typing import Type
 
 from django.db.models.functions import Cast
-from django.db.models import Q, FloatField, IntegerField, Sum
+from django.db.models import Q
 from baseclasses.models import (
     MontrekHubABC,
     MontrekManyToManyLinkABC,
@@ -194,19 +194,9 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         return Subquery(query)
 
     def _annotate_agg_field(self, hub_field_to: str, query: QuerySet) -> QuerySet:
-        _is_many_to_many = isinstance(self.link_class(), MontrekManyToManyLinkABC)
-        _is_many_to_one = (
-            isinstance(self.link_class(), MontrekOneToManyLinkABC)
-            and hub_field_to == "hub_in"
-        )
-        if _is_many_to_many or _is_many_to_one:
-            field = getattr(self.satellite_class, self.field)
-            if isinstance(field.field, (IntegerField, FloatField)):
-                func = Sum
-                field_type = type(field.field)
-            else:
-                func = get_string_concat_function()
-                field_type = CharField
+        if self._is_multiple_allowed(hub_field_to):
+            func = get_string_concat_function()
+            field_type = CharField
             return query.annotate(
                 **{
                     self.field
@@ -217,6 +207,14 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
                 }
             ).values(self.field + "agg")
         return query
+
+    def _is_multiple_allowed(self, hub_field_to: str) -> bool:
+        _is_many_to_many = isinstance(self.link_class(), MontrekManyToManyLinkABC)
+        _is_many_to_one = (
+            isinstance(self.link_class(), MontrekOneToManyLinkABC)
+            and hub_field_to == "hub_in"
+        )
+        return _is_many_to_many or _is_many_to_one
 
 
 class LinkedSatelliteSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):

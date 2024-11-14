@@ -1576,7 +1576,7 @@ class TestMontrekManyToManyRelations(TestCase):
         repository_b = HubBRepository(session_data={"user_id": self.user.id})
         repository_b.std_create_object(input_data)
 
-        hub_b = repository_b.receive().filter(id=hub_entity_id).first()
+        hub_b = repository_b.receive().filter(hub__id=hub_entity_id).first()
 
         links = me_models.LinkHubBHubD.objects.filter(hub_in=hub_b.id).all()
         continued = links.filter(hub_out=self.satd1.hub_entity).get()
@@ -1927,11 +1927,9 @@ class TestRepositoryQueryConcept(TestCase):
         self.assertEqual(result_2.field_c1_str, c_sat2.field_c1_str)
         self.assertEqual(result_2.field_tsc3_int, tsc3_fac_2.field_tsc3_int)
 
-    def test_ts_satellite_concept__many_to_one_link(self):
-        c_hub_value_date = me_factories.CHubValueDateFactory.create()
-        c_sat1 = me_factories.SatC1Factory(
-            field_c1_str="hallo", hub_entity=c_hub_value_date.hub
-        )
+    def test_ts_satellite_concept__many_to_many_link(self):
+        c_sat1 = me_factories.SatC1Factory(field_c1_str="hallo")
+        c_sat2 = me_factories.SatC1Factory(field_c1_str="hallo2")
         d_sat1 = me_factories.SatD1Factory.create(
             field_d1_str="test",
         )
@@ -1940,10 +1938,13 @@ class TestRepositoryQueryConcept(TestCase):
         )
         c_sat1.hub_entity.link_hub_c_hub_d.add(d_sat1.hub_entity)
         c_sat1.hub_entity.link_hub_c_hub_d.add(d_sat2.hub_entity)
+        c_sat2.hub_entity.link_hub_c_hub_d.add(d_sat1.hub_entity)
         repo = HubCRepository({})
         query = repo.receive()
-        self.assertEqual(query.count(), 1)
+        self.assertEqual(query.count(), 2)
         self.assertEqual(query.first().field_c1_str, c_sat1.field_c1_str)
         self.assertEqual(
             query.first().field_d1_str, f"{d_sat1.field_d1_str},{d_sat2.field_d1_str}"
         )
+        self.assertEqual(query.last().field_c1_str, c_sat2.field_c1_str)
+        self.assertEqual(query.last().field_d1_str, d_sat1.field_d1_str)
