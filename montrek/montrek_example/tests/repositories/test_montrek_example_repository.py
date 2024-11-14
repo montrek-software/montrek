@@ -1578,7 +1578,7 @@ class TestMontrekManyToManyRelations(TestCase):
 
         hub_b = repository_b.receive().filter(hub__id=hub_entity_id).first()
 
-        links = me_models.LinkHubBHubD.objects.filter(hub_in=hub_b.id).all()
+        links = me_models.LinkHubBHubD.objects.filter(hub_in=hub_b.hub.id).all()
         continued = links.filter(hub_out=self.satd1.hub_entity).get()
         discontinued = links.filter(hub_out=self.satd2.hub_entity).get()
         new_1 = links.filter(hub_out=satd3.hub_entity).get()
