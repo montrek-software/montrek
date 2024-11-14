@@ -2,7 +2,7 @@ from django.conf import settings
 from typing import Type
 
 from django.db.models.functions import Cast
-from django.db.models import Q
+from django.db.models import Q, FloatField, IntegerField, Sum
 from baseclasses.models import (
     MontrekHubABC,
     MontrekManyToManyLinkABC,
@@ -200,13 +200,19 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
             and hub_field_to == "hub_in"
         )
         if _is_many_to_many or _is_many_to_one:
-            func = get_string_concat_function()
+            field = getattr(self.satellite_class, self.field)
+            if isinstance(field.field, (IntegerField, FloatField)):
+                func = Sum
+                field_type = type(field.field)
+            else:
+                func = get_string_concat_function()
+                field_type = CharField
             return query.annotate(
                 **{
                     self.field
                     + "agg": Cast(
-                        func(Cast(self.field, CharField())),
-                        CharField(),
+                        func(Cast(self.field, field_type())),
+                        field_type(),
                     )
                 }
             ).values(self.field + "agg")
