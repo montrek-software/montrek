@@ -213,6 +213,10 @@ class HubAFileUploadRegistryHub(FileUploadRegistryHubABC):
     )
 
 
+class HubAFileUploadRegistryHubValueDate(HubValueDate):
+    hub = HubForeignKey(HubAFileUploadRegistryHub)
+
+
 class LinkHubAFileUploadRegistryFileUploadFile(MontrekOneToOneLinkABC):
     hub_in = models.ForeignKey(
         "montrek_example.HubAFileUploadRegistryHub", on_delete=models.CASCADE

@@ -99,7 +99,7 @@ class FileUploadManagerABC(MontrekManager):
         upload_file_hub = self.repository.std_create_object({"file": self.file})
         self.file_path = os.path.join(
             settings.MEDIA_ROOT,
-            self.repository.receive().get(pk=upload_file_hub.pk).file,
+            self.repository.receive().get(hub__pk=upload_file_hub.pk).file,
         )
         file_upload_registry_hub = self.registry_manager.repository.std_create_object(
             {

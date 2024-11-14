@@ -27,7 +27,7 @@ class FileUploadRegistryRepositoryABC(MontrekRepository):
     link_file_upload_registry_file_log_file_class = (
         NotImplementedLinkFileUploadRegistryFile
     )
-    default_order_fields = ("-created_at",)
+    default_order_fields = ("-upload_date",)
 
     def __init__(self, session_data={}):
         self._setup_checks()
@@ -51,7 +51,7 @@ class FileUploadRegistryRepositoryABC(MontrekRepository):
         self.add_linked_satellites_field_annotations(
             FileUploadFileStaticSatellite,
             self.link_file_upload_registry_file_upload_file_class,
-            ["file", "created_at"],
+            ["file"],
         )
         self.rename_field("created_at", "upload_date")
 

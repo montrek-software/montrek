@@ -28,7 +28,6 @@ class FieldMapRepositoryABC(MontrekRepository):
                 "step",
                 "function_name",
                 "function_parameters",
-                "comment",
             ],
         )
         self.rename_field("comment", "field_map_static_satellite_comment")
