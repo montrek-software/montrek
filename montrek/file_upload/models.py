@@ -69,6 +69,10 @@ class FileUploadRegistryHub(FileUploadRegistryHubABC):
     )
 
 
+class FileUploadRegistryHubValueDate(baseclass_models.HubValueDate):
+    hub = HubForeignKey(FileUploadRegistryHub)
+
+
 class LinkFileUploadRegistryFileUploadFile(baseclass_models.MontrekOneToOneLinkABC):
     hub_in = models.ForeignKey(
         "file_upload.FileUploadRegistryHub", on_delete=models.CASCADE

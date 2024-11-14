@@ -337,7 +337,7 @@ class TestMontrekExampleDListView(MontrekListViewTestCase):
                     self.client.post(self.url, csv_data, follow=True)
 
         def _assert_database_values(expected_values):
-            queryset = HubDRepository().std_queryset()
+            queryset = HubDRepository().receive()
             actual_values = queryset.values_list("field_d1_str", "field_d1_int")
             self.assertEqual(list(actual_values), expected_values)
 

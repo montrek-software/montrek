@@ -26,6 +26,9 @@ class HubBRepository(MontrekRepository):
             ["field_d1_str", "field_d1_int"],
         )
 
+    def get_hub_d_objects(self):
+        return HubDRepository().receive()
+
 
 class HubBRepository2(MontrekRepository):
     hub_class = me_models.HubB
@@ -37,6 +40,3 @@ class HubBRepository2(MontrekRepository):
             ["field_a1_int"],
             reversed_link=True,
         )
-
-    def get_hub_d_objects(self):
-        return HubDRepository().receive()

@@ -1,5 +1,10 @@
 from django.core.files.uploadedfile import SimpleUploadedFile
+
 import factory
+
+from baseclasses.tests.factories.montrek_factory_schemas import (
+    MontrekSatelliteFactory,
+)
 
 
 class FileUploadRegistryHubFactory(factory.django.DjangoModelFactory):
@@ -7,7 +12,7 @@ class FileUploadRegistryHubFactory(factory.django.DjangoModelFactory):
         model = "file_upload.FileUploadRegistryHub"
 
 
-class FileUploadRegistryStaticSatelliteFactory(factory.django.DjangoModelFactory):
+class FileUploadRegistryStaticSatelliteFactory(MontrekSatelliteFactory):
     class Meta:
         model = "file_upload.FileUploadRegistryStaticSatellite"
 
@@ -59,7 +64,7 @@ class FileUploadFileHubFactory(factory.django.DjangoModelFactory):
         model = "file_upload.FileUploadFileHub"
 
 
-class FileUploadFileStaticSatelliteFactory(factory.django.DjangoModelFactory):
+class FileUploadFileStaticSatelliteFactory(MontrekSatelliteFactory):
     class Meta:
         model = "file_upload.FileUploadFileStaticSatellite"
 

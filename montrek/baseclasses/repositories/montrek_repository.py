@@ -115,9 +115,6 @@ class MontrekRepositoryOld:
     def reference_date(self, value):
         self._reference_date = value
 
-    def std_queryset(self, **kwargs):
-        raise NotImplementedError("MontrekRepository has no std_queryset method!")
-
     def object_to_dict(self, obj: HubValueDate) -> Dict[str, Any]:
         object_dict = {
             field.name: getattr(obj, field.name)
