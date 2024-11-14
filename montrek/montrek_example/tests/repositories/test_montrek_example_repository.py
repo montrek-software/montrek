@@ -25,6 +25,7 @@ from montrek_example.repositories.hub_b_repository import (
 from montrek_example.repositories.hub_c_repository import (
     HubCRepository,
     HubCRepository2,
+    HubCRepositoryCommonFields,
 )
 from montrek_example.repositories.hub_d_repository import HubDRepository
 from montrek_example.tests.factories import montrek_example_factories as me_factories
@@ -1932,3 +1933,27 @@ class TestRepositoryQueryConcept(TestCase):
         )
         self.assertEqual(query.last().field_c1_str, c_sat2.field_c1_str)
         self.assertEqual(query.last().field_d1_str, d_sat1.field_d1_str)
+
+
+class TestCommonFields(TestCase):
+    def test_commom_comments(self):
+        tsc2 = me_factories.SatTSC2Factory.create(
+            comment="First Comment", value_date="2019-09-09"
+        )
+        c1 = me_factories.SatC1Factory.create(
+            comment="Second Comment", hub_entity=tsc2.hub_value_date.hub
+        )
+        tsd2 = me_factories.SatTSD2Factory.create(
+            comment="Third Comment", value_date="2019-09-09"
+        )
+        d1 = me_factories.SatD1Factory.create(
+            comment="Fourth Comment", hub_entity=tsd2.hub_value_date.hub
+        )
+        c1.hub_entity.link_hub_c_hub_d.add(d1.hub_entity)
+
+        query = HubCRepositoryCommonFields().receive()
+        test_obj = query.first()
+        self.assertEqual(test_obj.comment_tsc2, "First Comment")
+        self.assertEqual(test_obj.comment_c1, "Second Comment")
+        self.assertEqual(test_obj.comment_tsd2, "Third Comment")
+        self.assertEqual(test_obj.comment_d1, "Fourth Comment")

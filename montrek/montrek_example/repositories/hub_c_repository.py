@@ -52,3 +52,35 @@ class HubCRepository2(MontrekRepository):
             ["field_a1_int"],
             reversed_link=True,
         )
+
+
+class HubCRepositoryCommonFields(MontrekRepository):
+    hub_class = me_models.HubC
+
+    def set_annotations(self):
+        self.add_satellite_fields_annotations(
+            me_models.SatTSC2,
+            ["field_tsc2_float", "comment"],
+        )
+        self.rename_field("comment", "comment_tsc2")
+        self.add_satellite_fields_annotations(
+            me_models.SatC1,
+            [
+                "field_c1_bool",
+                "field_c1_str",
+                "comment",
+            ],
+        )
+        self.rename_field("comment", "comment_c1")
+        self.add_linked_satellites_field_annotations(
+            me_models.SatD1,
+            me_models.LinkHubCHubD,
+            ["field_d1_str", "comment"],
+        )
+        self.rename_field("comment", "comment_d1")
+        self.add_linked_satellites_field_annotations(
+            me_models.SatTSD2,
+            me_models.LinkHubCHubD,
+            ["field_tsd2_float", "field_tsd2_int", "comment"],
+        )
+        self.rename_field("comment", "comment_tsd2")

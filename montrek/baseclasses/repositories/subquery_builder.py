@@ -67,12 +67,13 @@ class SatelliteSubqueryBuilder(SatelliteSubqueryBuilderABC):
             self.get_hub_query(reference_date)
             .annotate(
                 **{
-                    self.field: self.satellite_subquery(
+                    self.field
+                    + "sub": self.satellite_subquery(
                         reference_date, lookup_field="hub_entity"
                     ),
                 }
             )
-            .values(self.field)
+            .values(self.field + "sub")
         )
 
 
