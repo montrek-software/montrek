@@ -1,26 +1,26 @@
-from django.db import models
-from django.utils import timezone
+from api_upload.models import (
+    ApiUploadRegistryHubABC,
+    ApiUploadRegistryStaticSatelliteABC,
+)
+from baseclasses.fields import HubForeignKey
 from baseclasses.models import (
     AlertMixin,
     HubValueDate,
     MontrekHubABC,
-    MontrekSatelliteABC,
+    MontrekManyToManyLinkABC,
     MontrekOneToManyLinkABC,
     MontrekOneToOneLinkABC,
-    MontrekManyToManyLinkABC,
+    MontrekSatelliteABC,
     MontrekTimeSeriesSatelliteInterimABC,
 )
+from django.db import models
+from django.utils import timezone
 from file_upload.models import (
     FieldMapHubABC,
     FieldMapStaticSatelliteABC,
     FileUploadRegistryHubABC,
     FileUploadRegistryStaticSatelliteABC,
 )
-from api_upload.models import (
-    ApiUploadRegistryHubABC,
-    ApiUploadRegistryStaticSatelliteABC,
-)
-
 
 # Create your models here.
 
@@ -71,27 +71,19 @@ class HubD(MontrekHubABC):
 
 
 class AHubValueDate(HubValueDate):
-    hub = models.ForeignKey(
-        HubA, on_delete=models.CASCADE, related_name="hub_value_date"
-    )
+    hub = HubForeignKey(HubA)
 
 
 class BHubValueDate(HubValueDate):
-    hub = models.ForeignKey(
-        HubB, on_delete=models.CASCADE, related_name="hub_value_date"
-    )
+    hub = HubForeignKey(HubB)
 
 
 class CHubValueDate(HubValueDate):
-    hub = models.ForeignKey(
-        HubC, on_delete=models.CASCADE, related_name="hub_value_date"
-    )
+    hub = HubForeignKey(HubC)
 
 
 class DHubValueDate(HubValueDate):
-    hub = models.ForeignKey(
-        HubD, on_delete=models.CASCADE, related_name="hub_value_date"
-    )
+    hub = HubForeignKey(HubD)
 
 
 class SatA1(MontrekSatelliteABC):
@@ -247,6 +239,10 @@ class HubAApiUploadRegistryHub(ApiUploadRegistryHubABC):
     pass
 
 
+class HubAApiUploadRegistryHubValueDate(HubValueDate):
+    hub = HubForeignKey(HubAApiUploadRegistryHub)
+
+
 class HubAApiUploadRegistryStaticSatellite(ApiUploadRegistryStaticSatelliteABC):
     hub_entity = models.ForeignKey(HubAApiUploadRegistryHub, on_delete=models.CASCADE)
 
@@ -258,6 +254,10 @@ class LinkHubAApiUploadRegistry(MontrekManyToManyLinkABC):
 
 class SatA1FieldMapHub(FieldMapHubABC):
     pass
+
+
+class SatA1FieldMapHubValueDate(HubValueDate):
+    hub = HubForeignKey(SatA1FieldMapHub)
 
 
 class SatA1FieldMapStaticSatellite(FieldMapStaticSatelliteABC):

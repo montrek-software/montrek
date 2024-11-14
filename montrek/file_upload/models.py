@@ -1,6 +1,7 @@
 from django.db import models
 
 from baseclasses import models as baseclass_models
+from baseclasses.fields import HubForeignKey
 
 # Create your models here.
 
@@ -94,6 +95,10 @@ class FileUploadFileHub(baseclass_models.MontrekHubABC):
     pass
 
 
+class FileUploadFileHubValueDate(baseclass_models.HubValueDate):
+    hub = HubForeignKey(FileUploadFileHub)
+
+
 class FileUploadFileStaticSatellite(baseclass_models.MontrekSatelliteABC):
     hub_entity = models.ForeignKey(FileUploadFileHub, on_delete=models.CASCADE)
     identifier_fields = ["hub_entity_id"]
@@ -120,6 +125,10 @@ class FieldMapStaticSatelliteABC(baseclass_models.MontrekSatelliteABC):
 
 class FieldMapHub(FieldMapHubABC):
     pass
+
+
+class FieldMapHubValueDate(baseclass_models.HubValueDate):
+    hub = HubForeignKey(FieldMapHub)
 
 
 class FieldMapStaticSatellite(FieldMapStaticSatelliteABC):

@@ -1,11 +1,14 @@
-import hashlib
 import datetime
+import hashlib
 from enum import Enum
+
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
-from baseclasses.utils import datetime_to_montrek_time
+
 from baseclasses.dataclasses.alert import AlertEnum
+from baseclasses.fields import HubForeignKey
+from baseclasses.utils import datetime_to_montrek_time
 
 # Create your models here.
 
@@ -232,9 +235,7 @@ class HubValueDate(models.Model):
     class Meta:
         abstract = True
 
-    hub = models.ForeignKey(
-        MontrekHubABC, on_delete=models.CASCADE, related_name="hub_value_date"
-    )
+    hub = HubForeignKey(MontrekHubABC)
     value_date_list = models.ForeignKey(ValueDateList, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -329,9 +330,7 @@ class TestMontrekHub(MontrekHubABC):
 
 
 class TestHubValueDate(HubValueDate):
-    hub = models.ForeignKey(
-        TestMontrekHub, on_delete=models.CASCADE, related_name="hub_value_date"
-    )
+    hub = HubForeignKey(TestMontrekHub)
 
 
 class TestMontrekSatellite(MontrekSatelliteABC):
