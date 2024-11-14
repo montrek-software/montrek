@@ -10,7 +10,6 @@ from baseclasses.models import (
     MontrekSatelliteABC,
     ValueDateList,
 )
-from baseclasses.models import MontrekTimeSeriesSatelliteABC
 from baseclasses.models import MontrekLinkABC
 from baseclasses.models import LinkTypeEnum
 from django.db.models import CharField, QuerySet, Subquery, OuterRef, Func
@@ -212,49 +211,6 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
                 }
             ).values(self.field + "agg")
         return query
-        hub_out_query = self.link_class.objects.filter(
-            state_date_start__lte=reference_date,
-            state_date_end__gt=reference_date,
-        ).values(hub_field_a)
-        link_filter_dict = {
-            f"hub_entity__{self.link_class.__name__.lower()}__{hub_field_b}": OuterRef(
-                "pk"
-            ),
-            f"hub_entity__{self.link_class.__name__.lower()}__state_date_start__lte": reference_date,
-            f"hub_entity__{self.link_class.__name__.lower()}__state_date_end__gt": reference_date,
-        }
-
-        satellite_field_query = self.satellite_class.objects.filter(
-            hub_entity__in=Subquery(hub_out_query),
-            state_date_start__lte=reference_date,
-            state_date_end__gt=reference_date,
-            **link_filter_dict,
-        ).values(self.field)
-        if isinstance(self.link_class(), MontrekManyToManyLinkABC):
-            # In case of many-to-may links we return the return values concatenated as characters by default
-            func = get_string_concat_function()
-            satellite_field_query = satellite_field_query.annotate(
-                **{
-                    self.field
-                    + "agg": Cast(
-                        func(Cast(self.field, CharField())),
-                        CharField(),
-                    )
-                }
-            ).values(self.field + "agg")
-        if isinstance(self.satellite_class(), MontrekTimeSeriesSatelliteABC):
-            if self._last_ts_value:
-                satellite_field_query = (
-                    satellite_field_query.filter(value_date__lte=reference_date)
-                    .order_by("-value_date")
-                    .values(self.field)[:1]
-                )
-            else:
-                satellite_field_query = satellite_field_query.filter(
-                    value_date=OuterRef("value_date")
-                ).values(self.field)[:1]
-
-        return Subquery(satellite_field_query)
 
 
 class LinkedSatelliteSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
