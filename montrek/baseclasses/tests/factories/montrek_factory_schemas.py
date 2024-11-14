@@ -41,6 +41,15 @@ class MontrekTSSatelliteFactory(factory.django.DjangoModelFactory):
         self.hub_value_date.value_date_list = value_date_list
         self.hub_value_date.save()
 
+    @factory.post_generation
+    def hub_entity(self, create, extracted, **kwargs):
+        if not create:
+            return
+        if not extracted:
+            return
+        self.hub_value_date.hub = extracted
+        self.hub_value_date.save()
+
 
 class MontrekSatelliteFactory(factory.django.DjangoModelFactory):
     @factory.post_generation
