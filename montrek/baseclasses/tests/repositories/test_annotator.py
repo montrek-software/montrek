@@ -26,7 +26,7 @@ class TestAnnotationManager(TestCase):
         test_annotator.subquery_builder_to_annotations(
             ["test", "test2"], MockSatellite, MockSubqueryBuilder
         )
-        self.assertEqual(len(test_annotator.annotations), 4)
+        self.assertEqual(len(test_annotator.annotations), 6)
         reference_date = montrek_time(2024, 11, 7)
         annotations = test_annotator.build(reference_date)
         self.assertEqual(annotations["test"], "Hallo")
