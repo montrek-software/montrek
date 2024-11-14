@@ -22,7 +22,7 @@ class MontrekManager:
 
     def delete_object(self, pk: int):
         object_query = self.get_object_from_pk(pk)
-        return self.repository.std_delete_object(object_query)
+        return self.repository.delete(object_query.hub)
 
     def get_object_from_pk(self, pk: int):
         return self.repository.receive().get(hub__pk=pk)
