@@ -26,14 +26,17 @@ class HubBRepository(MontrekRepository):
             ["field_d1_str", "field_d1_int"],
         )
 
-    def test_queryset_1(self):
+
+class HubBRepository2(MontrekRepository):
+    hub_class = me_models.HubB
+
+    def set_annotations(self):
         self.add_linked_satellites_field_annotations(
             me_models.SatA1,
             me_models.LinkHubAHubB,
             ["field_a1_int"],
             reversed_link=True,
         )
-        return self.receive()
 
     def get_hub_d_objects(self):
         return HubDRepository().receive()

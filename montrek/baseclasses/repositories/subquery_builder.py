@@ -152,7 +152,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
                 outer_ref=f"{self.link_class.__name__.lower()}__{hub_field_to}",
             )
         ).values(self.field)
-        sat_query = self._annotate_agg_field(hub_field_to, sat_query)
+        # sat_query = self._annotate_agg_field(hub_field_to, sat_query)
         query = (
             self.get_linked_hub_query(hub_field_from, reference_date)
             .annotate(**{self.field: Subquery(sat_query)})
@@ -193,7 +193,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         _is_many_to_many = isinstance(self.link_class(), MontrekManyToManyLinkABC)
         _is_many_to_one = (
             isinstance(self.link_class(), MontrekOneToManyLinkABC)
-            and hub_field_to == "hub_out"
+            and hub_field_to == "hub_in"
         )
         if _is_many_to_many or _is_many_to_one:
             func = get_string_concat_function()

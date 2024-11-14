@@ -19,7 +19,10 @@ from montrek_example.repositories.hub_a_repository import (
     HubARepository,
     HubARepository2,
 )
-from montrek_example.repositories.hub_b_repository import HubBRepository
+from montrek_example.repositories.hub_b_repository import (
+    HubBRepository,
+    HubBRepository2,
+)
 from montrek_example.repositories.hub_c_repository import HubCRepository
 from montrek_example.repositories.hub_d_repository import HubDRepository
 from montrek_example.tests.factories import montrek_example_factories as me_factories
@@ -841,14 +844,14 @@ class TestMontrekRepositoryLinks(TestCase):
         self.assertEqual(queryset[1].field_b1_str, "Second")
 
     def test_link_reversed(self):
-        repository = HubBRepository()
+        repository = HubBRepository2()
         repository.reference_date = montrek_time(2023, 7, 8)
-        queryset = repository.test_queryset_1()
+        queryset = repository.receive()
         self.assertEqual(queryset.count(), 2)
         self.assertEqual(queryset[0].field_a1_int, 5)
         self.assertEqual(queryset[1].field_a1_int, None)
         repository.reference_date = montrek_time(2023, 7, 15)
-        queryset = repository.test_queryset_1()
+        queryset = repository.receive()
         self.assertEqual(queryset.count(), 2)
         self.assertEqual(queryset[0].field_a1_int, 5)
         self.assertEqual(queryset[1].field_a1_int, None)

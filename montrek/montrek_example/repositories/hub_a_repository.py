@@ -32,11 +32,6 @@ class HubARepository(MontrekRepository):
             me_models.LinkHubAHubB,
             ["field_b1_str"],
         )
-        self.add_linked_satellites_field_annotations(
-            me_models.SatC1,
-            me_models.LinkHubAHubC,
-            ["field_c1_str"],
-        )
 
     def get_hub_b_objects(self):
         return HubBRepository().receive()
