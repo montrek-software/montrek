@@ -1888,6 +1888,7 @@ class TestRepositoryQueryConcept(TestCase):
         query = repo.receive()
         self.assertEqual(query.count(), 1)
         self.assertEqual(query.first().field_tsc2_float, c_sat.field_tsc2_float)
+        # TODO: Filter by value_date
         self.assertEqual(query.first().field_tsd2_float, d_sat.field_tsd2_float)
 
     def test_ts_satellite_concept__two_ts_sats_different_dates(self):
@@ -1925,3 +1926,24 @@ class TestRepositoryQueryConcept(TestCase):
         )
         self.assertEqual(result_2.field_c1_str, c_sat2.field_c1_str)
         self.assertEqual(result_2.field_tsc3_int, tsc3_fac_2.field_tsc3_int)
+
+    def test_ts_satellite_concept__many_to_one_link(self):
+        c_hub_value_date = me_factories.CHubValueDateFactory.create()
+        c_sat1 = me_factories.SatC1Factory(
+            field_c1_str="hallo", hub_entity=c_hub_value_date.hub
+        )
+        d_sat1 = me_factories.SatD1Factory.create(
+            field_d1_str="test",
+        )
+        d_sat2 = me_factories.SatD1Factory.create(
+            field_d1_str="test2",
+        )
+        c_sat1.hub_entity.link_hub_c_hub_d.add(d_sat1.hub_entity)
+        c_sat1.hub_entity.link_hub_c_hub_d.add(d_sat2.hub_entity)
+        repo = HubCRepository({})
+        query = repo.receive()
+        self.assertEqual(query.count(), 1)
+        self.assertEqual(query.first().field_c1_str, c_sat1.field_c1_str)
+        self.assertEqual(
+            query.first().field_d1_str, f"{d_sat1.field_d1_str},{d_sat2.field_d1_str}"
+        )

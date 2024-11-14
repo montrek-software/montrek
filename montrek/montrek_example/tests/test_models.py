@@ -1,6 +1,8 @@
 from baseclasses.models import ValueDateList
-from django.db.models import OuterRef, Q, Subquery
+from django.db.models import OuterRef, Q, Subquery, CharField, Func
+from django.db.models.functions import Cast
 from django.test import TestCase
+from django.conf import settings
 
 from montrek_example.models import (
     CHubValueDate,
@@ -10,6 +12,7 @@ from montrek_example.models import (
     SatTSC2,
     SatTSC3,
     SatTSD2,
+    LinkHubCHubD,
 )
 from montrek_example.tests.factories.montrek_example_factories import (
     CHubValueDateFactory,
@@ -23,6 +26,28 @@ from montrek_example.tests.factories.montrek_example_factories import (
 )
 
 
+class StringAgg(Func):
+    function = "STRING_AGG"
+    template = "%(function)s(%(expressions)s, ',')"
+
+
+class GroupConcat(Func):
+    function = "GROUP_CONCAT"
+    template = "%(function)s(%(expressions)s SEPARATOR ',')"
+
+
+def func():
+    engine = settings.DATABASES["default"]["ENGINE"]
+    if "mysql" in engine:
+        return GroupConcat
+    elif "postgresql" in engine:
+        return StringAgg
+    else:
+        raise NotImplementedError(
+            f"No function for concatenating list of strings defined for {engine}!"
+        )
+
+
 class TestMontrekSatellite(TestCase):
     def test_value_fields_with_generated_field(self):
         test_model_class = SatTSC3
@@ -34,6 +59,7 @@ class TestMontrekSatellite(TestCase):
 
     def annotations(self):
         hub_query = HubC.objects.filter(pk=OuterRef("hub"))
+        link_query = LinkHubCHubD.objects.filter(hub_in=OuterRef("hub"))
         return {
             "field_c1_str": Subquery(
                 hub_query.annotate(
@@ -62,15 +88,17 @@ class TestMontrekSatellite(TestCase):
                 )
             ),
             "field_d1_str": Subquery(
-                hub_query.annotate(
-                    **{
-                        "field_d1_str": Subquery(
-                            SatD1.objects.filter(
-                                hub_entity=OuterRef("linkhubchubd__hub_out")
-                            ).values("field_d1_str")
-                        )
-                    }
-                ).values("field_d1_str")
+                self._add_concat(
+                    link_query.annotate(
+                        **{
+                            "field_d1_str": Subquery(
+                                SatD1.objects.filter(
+                                    hub_entity=OuterRef("hub_out")
+                                ).values("field_d1_str")
+                            )
+                        }
+                    ).values("field_d1_str")
+                )
             ),
             "field_tsd2_float": Subquery(
                 hub_query.annotate(
@@ -93,6 +121,14 @@ class TestMontrekSatellite(TestCase):
                 ).values("field_tsd2_float")[:1]
             ),
         }
+
+    def _add_concat(self, query):
+        return query.annotate(
+            field_d1_stragg=Cast(
+                func()(Cast("field_d1_str", CharField())),
+                CharField(),
+            )
+        ).values("field_d1_stragg")
 
     def test_ts_satellite_concept__single_entry(self):
         tsc2_fac = SatTSC2Factory()
@@ -232,3 +268,22 @@ class TestMontrekSatellite(TestCase):
         )
         self.assertEqual(result_2.field_c1_str, c_sat2.field_c1_str)
         self.assertEqual(result_2.field_tsc3_int, tsc3_fac_2.field_tsc3_int)
+
+    def test_ts_satellite_concept__many_to_one_link(self):
+        c_hub_value_date = CHubValueDateFactory.create()
+        c_sat1 = SatC1Factory(field_c1_str="hallo", hub_entity=c_hub_value_date.hub)
+        d_sat1 = SatD1Factory.create(
+            field_d1_str="test",
+        )
+        d_sat2 = SatD1Factory.create(
+            field_d1_str="test2",
+        )
+        c_sat1.hub_entity.link_hub_c_hub_d.add(d_sat1.hub_entity)
+        c_sat1.hub_entity.link_hub_c_hub_d.add(d_sat2.hub_entity)
+        annotations = self.annotations()
+        query = CHubValueDate.objects.annotate(**annotations)
+        self.assertEqual(query.count(), 2)
+        self.assertEqual(query.first().field_c1_str, c_sat1.field_c1_str)
+        self.assertEqual(
+            query.first().field_d1_str, f"{d_sat1.field_d1_str},{d_sat2.field_d1_str}"
+        )
