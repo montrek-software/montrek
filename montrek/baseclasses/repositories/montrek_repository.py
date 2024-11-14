@@ -305,7 +305,7 @@ class MontrekRepositoryOld:
         return satellite_querys
 
     def rename_field(self, field: str, new_name: str):
-        self.annotations[new_name] = self.annotations.pop(field)
+        self.annotator.rename_field(field, new_name)
 
     def get_hubs_by_field_values(
         self,

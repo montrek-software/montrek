@@ -52,7 +52,7 @@ class TestFileUploadRegistryRepository(TestCase):
         queryset = repository.receive()
         first_upload_date = queryset.first().upload_date
 
-        assert first_upload_date == self.file_sat.created_at
+        self.assertEqual(first_upload_date, self.file_sat.created_at)
         assert queryset.count() == 1
 
         second_file_sat = FileUploadFileStaticSatelliteFactory(file=self.test_file)

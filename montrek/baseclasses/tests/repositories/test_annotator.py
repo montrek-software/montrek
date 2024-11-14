@@ -30,3 +30,13 @@ class TestAnnotationManager(TestCase):
         reference_date = montrek_time(2024, 11, 7)
         annotations = test_annotator.build(reference_date)
         self.assertEqual(annotations["test"], "Hallo")
+
+    def test_rename_field(self):
+        test_annotator = Annotator(TestMontrekHub)
+        test_annotator.subquery_builder_to_annotations(
+            ["test", "test2"], MockSatellite, MockSubqueryBuilder
+        )
+        test_sub_queryset = test_annotator.annotations["test"]
+        test_annotator.rename_field("test", "test_renamed")
+        self.assertEqual(test_annotator.annotations["test_renamed"], test_sub_queryset)
+        self.assertNotIn("test", test_annotator.annotations)

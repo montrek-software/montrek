@@ -2,7 +2,7 @@ from django.conf import settings
 from typing import Type
 
 from django.db.models.functions import Cast
-from django.db.models import Q
+from django.db.models import Q, F
 from baseclasses.models import (
     MontrekHubABC,
     MontrekManyToManyLinkABC,
@@ -161,8 +161,8 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         ).values(self.field)
         query = (
             self.get_link_query(hub_field_from, reference_date)
-            .annotate(**{self.field: Subquery(sat_query)})
-            .values(self.field)
+            .annotate(**{self.field + "sub": Subquery(sat_query)})
+            .values(self.field + "sub")
         )
         query = self._annotate_agg_field(hub_field_to, query)
         return Subquery(query)
@@ -174,7 +174,8 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
             self.get_link_query(hub_field_from, reference_date)
             .annotate(
                 **{
-                    self.field: Subquery(
+                    self.field
+                    + "sub": Subquery(
                         self._annotate_agg_field(
                             hub_field_to,
                             self.satellite_class.objects.filter(
@@ -190,12 +191,14 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
                                         f"{hub_field_to}__hub_value_date__value_date_list"
                                     )
                                 )
-                            ).values(self.field),
+                            )
+                            .annotate(**{self.field + "sub": F(self.field)})
+                            .values(self.field),
                         )
                     )
                 }
             )
-            .values(self.field)[:1]
+            .values(self.field + "sub")[:1]
         )
         return Subquery(query)
 
@@ -207,7 +210,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
                 **{
                     self.field
                     + "agg": Cast(
-                        func(Cast(self.field, field_type())),
+                        func(Cast(self.field + "sub", field_type())),
                         field_type(),
                     )
                 }

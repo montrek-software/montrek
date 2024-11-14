@@ -79,6 +79,9 @@ class Annotator:
         else:
             self._add_class(self.annotated_linked_satellite_classes, satellite_class)
 
+    def rename_field(self, old_field: str, new_field: str):
+        self.annotations[new_field] = self.annotations.pop(old_field)
+
     def _add_class(
         self,
         class_list: list[type[MontrekSatelliteABC]],
