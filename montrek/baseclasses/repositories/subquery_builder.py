@@ -112,6 +112,10 @@ class CreatedBySubqueryBuilder(HubDirectFieldSubqueryBuilder):
     field = "created_by"
 
 
+class CommentSubqueryBuilder(HubDirectFieldSubqueryBuilder):
+    field = "comment"
+
+
 class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
     def __init__(
         self,

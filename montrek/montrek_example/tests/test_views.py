@@ -61,13 +61,13 @@ class TestMontrekExampleAListView(MontrekListViewTestCase):
         response = self.client.get(url, data=query_params)
         obj_list = response.context_data["object_list"]
         self.assertEqual(len(obj_list), 1)
-        self.assertEqual(obj_list[0].id, other_sata1.hub_entity.id)
+        self.assertEqual(obj_list[0].hub.id, other_sata1.hub_entity.id)
 
         # The filter should persist for this path until reset
         response = self.client.get(url)
         obj_list = response.context_data["object_list"]
         self.assertEqual(len(obj_list), 1)
-        self.assertEqual(obj_list[0].id, other_sata1.hub_entity.id)
+        self.assertEqual(obj_list[0].hub.id, other_sata1.hub_entity.id)
 
         response = self.client.get(url, data={"reset_filter": "true"}, follow=True)
         obj_list = response.context_data["object_list"]

@@ -160,7 +160,7 @@ class GetObjectLastMixin:
 class GetObjectPkMixin:
     def _get_object(self) -> QuerySet:
         std_query = self.receive()
-        return std_query.get(pk=self.url_kwargs()["pk"])
+        return std_query.get(hub__pk=self.url_kwargs()["pk"])
 
 
 class MontrekDetailViewTestCase(MontrekObjectViewBaseTestCase, GetObjectPkMixin):
@@ -200,7 +200,7 @@ class MontrekDeleteViewTestCase(MontrekObjectViewBaseTestCase, GetObjectPkMixin)
 
     def _get_object(self):
         std_query = self.receive()
-        return std_query.filter(pk=self.url_kwargs()["pk"])
+        return std_query.filter(hub__pk=self.url_kwargs()["pk"])
 
     def creation_data(self) -> dict:
         return {"action": "Delete"}

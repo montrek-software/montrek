@@ -6,6 +6,7 @@ from baseclasses.repositories.subquery_builder import (
     HubEntityIdSubqueryBuilder,
     CreatedAtSubqueryBuilder,
     CreatedBySubqueryBuilder,
+    CommentSubqueryBuilder,
 )
 from baseclasses.models import MontrekLinkABC, MontrekSatelliteABC, MontrekHubABC
 
@@ -25,6 +26,7 @@ class Annotator:
             "hub_entity_id": HubEntityIdSubqueryBuilder(self.hub_class),
             "created_at": CreatedAtSubqueryBuilder(self.hub_class),
             "created_by": CreatedBySubqueryBuilder(self.hub_class),
+            "comment": CommentSubqueryBuilder(self.hub_class),
         }
 
     def subquery_builder_to_annotations(
