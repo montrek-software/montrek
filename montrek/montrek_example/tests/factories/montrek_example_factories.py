@@ -8,6 +8,7 @@ from baseclasses.tests.factories.montrek_factory_schemas import (
     MontrekHubValueDateFactory,
     MontrekSatelliteFactory,
     MontrekTSSatelliteFactory,
+    MontrekHubFactory,
 )
 from file_upload.tests.factories.field_map_factories import (
     FieldMapHubFactory,
@@ -19,22 +20,22 @@ from file_upload.tests.factories.file_upload_factories import (
 )
 
 
-class HubAFactory(factory.django.DjangoModelFactory):
+class HubAFactory(MontrekHubFactory):
     class Meta:
         model = "montrek_example.HubA"
 
 
-class HubBFactory(factory.django.DjangoModelFactory):
+class HubBFactory(MontrekHubFactory):
     class Meta:
         model = "montrek_example.HubB"
 
 
-class HubCFactory(factory.django.DjangoModelFactory):
+class HubCFactory(MontrekHubFactory):
     class Meta:
         model = "montrek_example.HubC"
 
 
-class HubDFactory(factory.django.DjangoModelFactory):
+class HubDFactory(MontrekHubFactory):
     class Meta:
         model = "montrek_example.HubD"
 

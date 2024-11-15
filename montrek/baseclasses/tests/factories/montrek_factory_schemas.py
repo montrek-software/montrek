@@ -26,6 +26,40 @@ class ValueDateListFactory(factory.django.DjangoModelFactory):
     )
 
 
+class MontrekHubValueDateFactory(factory.django.DjangoModelFactory):
+    value_date_list = factory.SubFactory(ValueDateListFactory)
+
+    @factory.post_generation
+    def value_date(self, create, extracted, **kwargs):
+        if not create:
+            return
+        if not extracted:
+            return
+        value_date_list = get_value_date_list(extracted)
+        self.value_date_list = value_date_list
+
+
+class MontrekHubFactory(factory.django.DjangoModelFactory):
+    @factory.post_generation
+    def set_hub_value_date(self, create, extracted, **kwargs):
+        if not create:
+            return
+        if extracted:
+            return
+        value_date_list = get_value_date_list(None)
+        hub_value_date_class = self.hub_value_date.field.model
+        hub_value_date = hub_value_date_class.objects.filter(
+            hub=self, value_date_list=value_date_list
+        )
+        if hub_value_date.count() == 1:
+            hub_value_date = hub_value_date.first()
+        else:
+            hub_value_date = hub_value_date_class.objects.create(
+                hub=self, value_date_list=value_date_list
+            )
+        self.hub_value_date.add(hub_value_date)
+
+
 class MontrekTSSatelliteFactory(factory.django.DjangoModelFactory):
     value_date = factory.Maybe(
         "hub_value_date",
@@ -70,16 +104,3 @@ class MontrekSatelliteFactory(factory.django.DjangoModelFactory):
                 hub=self.hub_entity, value_date_list=value_date_list
             )
         return None
-
-
-class MontrekHubValueDateFactory(factory.django.DjangoModelFactory):
-    value_date_list = factory.SubFactory(ValueDateListFactory)
-
-    @factory.post_generation
-    def value_date(self, create, extracted, **kwargs):
-        if not create:
-            return
-        if not extracted:
-            return
-        value_date_list = get_value_date_list(extracted)
-        self.value_date_list = value_date_list
