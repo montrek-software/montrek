@@ -27,6 +27,7 @@ from montrek_example.repositories.hub_c_repository import (
     HubCRepository2,
     HubCRepositoryCommonFields,
     HubCRepositoryLastTS,
+    HubCRepositoryOnlyStatic,
 )
 from montrek_example.repositories.hub_d_repository import HubDRepository
 from montrek_example.tests.factories import montrek_example_factories as me_factories
@@ -1459,6 +1460,14 @@ class TestTSRepoLatestTS(TestCase):
         qs3 = test_query.get(field_c1_str="Hola")
         self.assertEqual(qs3.field_tsc2_float, None)
         self.assertEqual(qs3.value_date, None)
+
+    def test_only_statics(self):
+        repo = HubCRepositoryOnlyStatic()
+        test_query = repo.receive()
+        self.assertEqual(test_query.count(), 3)
+        c1_vals = [qs.field_c1_str for qs in test_query]
+        c1_vals.sort()
+        self.assertEqual(c1_vals, ["Bonjour", "Hallo", "Hola"])
 
 
 class TestTimeSeriesPerformance(TestCase):

@@ -46,6 +46,19 @@ class HubCRepositoryLastTS(HubCRepository):
     latest_ts = True
 
 
+class HubCRepositoryOnlyStatic(MontrekRepository):
+    hub_class = me_models.HubC
+
+    def set_annotations(self):
+        self.add_satellite_fields_annotations(
+            me_models.SatC1,
+            [
+                "field_c1_bool",
+                "field_c1_str",
+            ],
+        )
+
+
 class HubCRepository2(MontrekRepository):
     hub_class = me_models.HubC
 
