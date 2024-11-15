@@ -19,7 +19,6 @@ from baseclasses.repositories.annotator import (
 )
 from baseclasses.repositories.db_creator import DbCreator
 from baseclasses.repositories.subquery_builder import (
-    LastTSSatelliteSubqueryBuilder,
     LinkedSatelliteSubqueryBuilder,
     ReverseLinkedSatelliteSubqueryBuilder,
     SatelliteSubqueryBuilder,
@@ -243,18 +242,6 @@ class MontrekRepository:
             fields, satellite_class, subquery_builder
         )
 
-    def add_last_ts_satellite_fields_annotations(
-        self,
-        satellite_class: Type[MontrekSatelliteBaseABC],
-        fields: List[str],
-    ):
-        self.annotator.subquery_builder_to_annotations(
-            fields,
-            satellite_class,
-            LastTSSatelliteSubqueryBuilder,
-            end_date=self.session_end_date,
-        )
-
     def add_linked_satellites_field_annotations(
         self,
         satellite_class: Type[MontrekSatelliteABC],
@@ -262,7 +249,6 @@ class MontrekRepository:
         fields: List[str],
         *,
         reversed_link: bool = False,
-        last_ts_value: bool = False,
     ):
         if reversed_link:
             link_subquery_builder_class = ReverseLinkedSatelliteSubqueryBuilder
@@ -274,7 +260,6 @@ class MontrekRepository:
             satellite_class,
             link_subquery_builder_class,
             link_class=link_class,
-            last_ts_value=last_ts_value,
         )
         self.linked_fields.extend(fields)
 

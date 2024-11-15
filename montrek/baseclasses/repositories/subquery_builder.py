@@ -123,7 +123,6 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         satellite_class: Type[MontrekSatelliteABC],
         field: str,
         link_class: Type[MontrekLinkABC],
-        last_ts_value: bool,
     ):
         super().__init__(satellite_class, field)
 
@@ -131,7 +130,6 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
             raise TypeError(f"{link_class.__name__} must inherit from valid LinkClass!")
         self.link_class = link_class
         self.link_db_name = link_class.__name__.lower()
-        self._last_ts_value = last_ts_value
 
     def get_link_query(
         self, hub_field: str, reference_date: timezone.datetime
@@ -245,9 +243,8 @@ class LinkedSatelliteSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
         satellite_class: Type[MontrekSatelliteABC],
         field: str,
         link_class: Type[MontrekLinkABC],
-        last_ts_value: bool,
     ):
-        super().__init__(satellite_class, field, link_class, last_ts_value)
+        super().__init__(satellite_class, field, link_class)
 
     def build(self, reference_date: timezone.datetime) -> Subquery:
         if self.satellite_class.is_timeseries:
@@ -266,37 +263,11 @@ class ReverseLinkedSatelliteSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
         satellite_class: Type[MontrekSatelliteABC],
         field: str,
         link_class: Type[MontrekLinkABC],
-        last_ts_value: bool,
     ):
-        super().__init__(satellite_class, field, link_class, last_ts_value)
+        super().__init__(satellite_class, field, link_class)
 
     def build(self, reference_date: timezone.datetime) -> Subquery:
         return super()._link_hubs_and_get_subquery("hub_in", "hub_out", reference_date)
-
-
-class LastTSSatelliteSubqueryBuilder(SatelliteSubqueryBuilderABC):
-    def __init__(
-        self,
-        satellite_class: Type[MontrekSatelliteABC],
-        field: str,
-        end_date: timezone.datetime,
-    ):
-        super().__init__(satellite_class, field)
-        self.end_date = end_date
-
-    def build(self, reference_date: timezone.datetime) -> Subquery:
-        return Subquery(
-            self.satellite_class.objects.filter(
-                **self.subquery_filter(
-                    reference_date,
-                    lookup_field="hub_value_date__hub",
-                    outer_ref="hub",
-                ),
-                hub_value_date__value_date_list__value_date__lte=self.end_date,
-            )
-            .order_by("-value_date")
-            .values(self.field)[:1]
-        )
 
 
 class StringAgg(Func):

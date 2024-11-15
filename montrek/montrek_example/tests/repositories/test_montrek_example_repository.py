@@ -90,7 +90,6 @@ class TestMontrekRepositorySatellite(TestCase):
             me_models.SatTSC2,
             me_models.LinkHubAHubC,
             ["field_tsc2_float"],
-            last_ts_value=True,
         )  # linked time series field
         repo.rename_field("field_a1_str", "my_field_a1_str")  # direct satellite field
         repo.rename_field("field_b1_str", "my_field_b1_str")  # linked field
