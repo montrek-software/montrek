@@ -90,7 +90,7 @@ class TestApiUploadManager(TestCase):
         upload_result = manager.upload_and_process()
         api_upload_registry = (
             ApiUploadRepository()
-            .std_queryset()
+            .receive()
             .filter(pk=manager.api_upload_registry.pk)
             .first()
         )
@@ -121,7 +121,7 @@ class TestApiUploadManager(TestCase):
             upload_result = manager.upload_and_process()
             api_upload_registry = (
                 ApiUploadRepository()
-                .std_queryset()
+                .receive()
                 .filter(pk=manager.api_upload_registry.pk)
                 .first()
             )

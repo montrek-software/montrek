@@ -83,8 +83,8 @@ class ApiUploadManager(MontrekManager):
                 "upload_message": "Upload is pending",
             }
         )
-        self.api_upload_registry = self.registry_repository.std_queryset().get(
-            pk=api_upload_registry_hub.pk
+        self.api_upload_registry = self.registry_repository.receive().get(
+            hub__pk=api_upload_registry_hub.pk
         )
 
     def _update_api_upload_registry(
@@ -98,8 +98,8 @@ class ApiUploadManager(MontrekManager):
             },
         )
         api_upload_registry_hub = self.registry_repository.std_create_object(att_dict)
-        self.api_upload_registry = self.registry_repository.std_queryset().get(
-            pk=api_upload_registry_hub.pk
+        self.api_upload_registry = self.registry_repository.receive().get(
+            hub__pk=api_upload_registry_hub.pk
         )
 
         if upload_status == self.registry_repository.upload_status.FAILED.value:

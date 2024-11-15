@@ -9,6 +9,6 @@ from api_upload.repositories.api_upload_registry_repository import (
 class TestApiUploadRepository(TestCase):
     def test_std_queryset(self):
         ApiUploadRegistryStaticSatelliteFactory()
-        queryset = ApiUploadRepository().std_queryset()
+        queryset = ApiUploadRepository().receive()
 
         self.assertEqual(queryset.count(), 1)
