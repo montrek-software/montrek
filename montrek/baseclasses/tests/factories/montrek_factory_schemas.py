@@ -46,7 +46,7 @@ class MontrekHubFactory(factory.django.DjangoModelFactory):
             return
         if extracted:
             return
-        value_date_list = get_value_date_list("2024-11-15")
+        value_date_list = get_value_date_list(None)
         hub_value_date_class = self.hub_value_date.field.model
         hub_value_date = hub_value_date_class.objects.filter(
             hub=self, value_date_list=value_date_list
@@ -86,23 +86,4 @@ class MontrekTSSatelliteFactory(factory.django.DjangoModelFactory):
 
 
 class MontrekSatelliteFactory(factory.django.DjangoModelFactory):
-    @factory.post_generation
-    def hub_value_date(self, create, extracted, **kwargs):
-        if not create:
-            return
-        if extracted:
-            return extracted
-        # if self.hub_entity.hub_value_date.exists():
-        #     return
-        # value_date_list = get_value_date_list(None)
-        # hub_value_date_class = self.hub_entity.hub_value_date.field.model
-        # hub_value_date = hub_value_date_class.objects.filter(
-        #     hub=self.hub_entity, value_date_list=value_date_list
-        # )
-        # if hub_value_date.count() == 1:
-        #     hub_value_date = hub_value_date.first()
-        # else:
-        #     hub_value_date = hub_value_date_class.objects.create(
-        #         hub=self.hub_entity, value_date_list=value_date_list
-        #     )
-        # return hub_value_date
+    pass
