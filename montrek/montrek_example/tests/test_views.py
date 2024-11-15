@@ -238,11 +238,12 @@ class TestMontrekExampleBUpdate(MontrekUpdateViewTestCase):
     view_class = me_views.MontrekExampleBUpdate
 
     def build_factories(self):
-        self.satb1 = me_factories.SatB1Factory()
-        me_factories.SatB2Factory(hub_entity=self.satb1.hub_entity)
+        self.hub_vd = me_factories.BHubValueDateFactory()
+        me_factories.SatB1Factory(hub_entity=self.hub_vd.hub)
+        me_factories.SatB2Factory(hub_entity=self.hub_vd.hub)
 
     def url_kwargs(self) -> dict:
-        return {"pk": self.satb1.hub_entity.id}
+        return {"pk": self.hub_vd.id}
 
     def update_data(self) -> dict:
         return {
@@ -260,8 +261,8 @@ class TestMontrekExampleCListView(MontrekListViewTestCase):
     expected_no_of_rows = 1
 
     def build_factories(self):
-        satc1fac = me_factories.SatC1Factory()
-        me_factories.SatTSC2Factory(hub_entity=satc1fac.hub_entity)
+        sat_ts = me_factories.SatTSC2Factory()
+        me_factories.SatC1Factory(hub_entity=sat_ts.hub_value_date.hub)
 
 
 class TestMontrekExampleCCreate(MontrekCreateViewTestCase):

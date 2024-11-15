@@ -46,6 +46,8 @@ class MontrekHubFactory(factory.django.DjangoModelFactory):
             return
         if extracted:
             return
+        if self.hub_value_date.exists():
+            return
         value_date_list = get_value_date_list(None)
         hub_value_date_class = self.hub_value_date.field.model
         hub_value_date = hub_value_date_class.objects.filter(
@@ -92,6 +94,8 @@ class MontrekSatelliteFactory(factory.django.DjangoModelFactory):
             return
         if extracted:
             return extracted
+        if self.hub_entity.hub_value_date.exists():
+            return
         value_date_list = get_value_date_list(None)
         hub_value_date_class = self.hub_entity.hub_value_date.field.model
         hub_value_date = hub_value_date_class.objects.filter(
@@ -103,4 +107,3 @@ class MontrekSatelliteFactory(factory.django.DjangoModelFactory):
             hub_value_date = hub_value_date_class.objects.create(
                 hub=self.hub_entity, value_date_list=value_date_list
             )
-        return None

@@ -1940,11 +1940,11 @@ class TestCommonFields(TestCase):
         tsc2 = me_factories.SatTSC2Factory.create(
             comment="First Comment", value_date="2019-09-09"
         )
-        c1 = me_factories.SatC1Factory.create(
-            comment="Second Comment", hub_entity=tsc2.hub_value_date.hub
-        )
         tsd2 = me_factories.SatTSD2Factory.create(
             comment="Third Comment", value_date="2019-09-09"
+        )
+        c1 = me_factories.SatC1Factory.create(
+            comment="Second Comment", hub_entity=tsc2.hub_value_date.hub
         )
         d1 = me_factories.SatD1Factory.create(
             comment="Fourth Comment", hub_entity=tsd2.hub_value_date.hub
