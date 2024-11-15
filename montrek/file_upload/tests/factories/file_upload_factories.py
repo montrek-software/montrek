@@ -3,11 +3,12 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 import factory
 
 from baseclasses.tests.factories.montrek_factory_schemas import (
+    MontrekHubFactory,
     MontrekSatelliteFactory,
 )
 
 
-class FileUploadRegistryHubFactory(factory.django.DjangoModelFactory):
+class FileUploadRegistryHubFactory(MontrekHubFactory):
     class Meta:
         model = "file_upload.FileUploadRegistryHub"
 

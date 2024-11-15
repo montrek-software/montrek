@@ -142,6 +142,13 @@ class HubAFileUploadRegistryHubFactory(FileUploadRegistryHubFactory):
         model = "montrek_example.HubAFileUploadRegistryHub"
 
 
+class HubAFileUploadRegistryHubValueDateFactory(MontrekHubValueDateFactory):
+    class Meta:
+        model = "montrek_example.HubAFileUploadRegistryHubValueDate"
+
+    hub = factory.SubFactory(HubAFileUploadRegistryHubFactory)
+
+
 class HubAFileUploadRegistryStaticSatelliteFactory(
     FileUploadRegistryStaticSatelliteFactory
 ):

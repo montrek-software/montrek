@@ -591,7 +591,7 @@ class TestMontrekExampleA1UploadHistoryView(MontrekViewTestCase):
         )
 
     def url_kwargs(self) -> dict:
-        return {"pk": self.huba.pk}
+        return {"pk": self.huba.hub_value_date.first().pk}
 
     def test_view_with_history_data(self):
         test_history_data_tables = self.response.context_data["history_data_tables"]
@@ -710,7 +710,7 @@ class TestMontrekExampleA1FieldMapUpdateView(MontrekCreateViewTestCase):
         )
 
     def url_kwargs(self) -> dict:
-        return {"pk": self.field_map_factory.hub_entity.pk}
+        return {"pk": self.field_map_factory.hub_entity.hub_value_date.first().pk}
 
     def creation_data(self):
         return {
@@ -732,7 +732,7 @@ class TestMontrekExampleA1FieldMapDeleteView(MontrekDeleteViewTestCase):
         )
 
     def url_kwargs(self) -> dict:
-        return {"pk": self.field_map_factory.hub_entity.pk}
+        return {"pk": self.field_map_factory.hub_entity.hub_value_date.first().pk}
 
 
 class TestMontrekExampleA1FieldMapListView(MontrekListViewTestCase):
