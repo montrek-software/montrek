@@ -46,9 +46,7 @@ class MontrekHubFactory(factory.django.DjangoModelFactory):
             return
         if extracted:
             return
-        if self.hub_value_date.exists():
-            return
-        value_date_list = get_value_date_list(None)
+        value_date_list = get_value_date_list("2024-11-15")
         hub_value_date_class = self.hub_value_date.field.model
         hub_value_date = hub_value_date_class.objects.filter(
             hub=self, value_date_list=value_date_list
@@ -94,16 +92,17 @@ class MontrekSatelliteFactory(factory.django.DjangoModelFactory):
             return
         if extracted:
             return extracted
-        if self.hub_entity.hub_value_date.exists():
-            return
-        value_date_list = get_value_date_list(None)
-        hub_value_date_class = self.hub_entity.hub_value_date.field.model
-        hub_value_date = hub_value_date_class.objects.filter(
-            hub=self.hub_entity, value_date_list=value_date_list
-        )
-        if hub_value_date.count() == 1:
-            hub_value_date = hub_value_date.first()
-        else:
-            hub_value_date = hub_value_date_class.objects.create(
-                hub=self.hub_entity, value_date_list=value_date_list
-            )
+        # if self.hub_entity.hub_value_date.exists():
+        #     return
+        # value_date_list = get_value_date_list(None)
+        # hub_value_date_class = self.hub_entity.hub_value_date.field.model
+        # hub_value_date = hub_value_date_class.objects.filter(
+        #     hub=self.hub_entity, value_date_list=value_date_list
+        # )
+        # if hub_value_date.count() == 1:
+        #     hub_value_date = hub_value_date.first()
+        # else:
+        #     hub_value_date = hub_value_date_class.objects.create(
+        #         hub=self.hub_entity, value_date_list=value_date_list
+        #     )
+        # return hub_value_date

@@ -1435,7 +1435,9 @@ class TestHistory(TestCase):
         huba.link_hub_a_hub_b.add(hubb)
         repository = HubARepository()
 
-        test_querysets_dict = repository.get_history_queryset(huba.id)
+        test_querysets_dict = repository.get_history_queryset(
+            huba.hub_value_date.first().id
+        )
 
         self.assertEqual(len(test_querysets_dict), 3)
         sata1_queryset = test_querysets_dict["SatA1"]
