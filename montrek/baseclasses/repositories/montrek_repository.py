@@ -264,7 +264,7 @@ class MontrekRepository:
         self.linked_fields.extend(fields)
 
     def get_history_queryset(self, pk: int, **kwargs) -> dict[str, QuerySet]:
-        hub = self._get_hub_by_id(pk=pk)
+        hub = self.get_hub_by_id(pk=pk)
         satellite_querys = {}
         for sat in self.annotator.get_satellite_classes():
             sat_query = sat.objects.filter(hub_entity=hub).order_by("-created_at")
@@ -376,5 +376,5 @@ class MontrekRepository:
             return dropped_data_frame
         return data_frame
 
-    def _get_hub_by_id(self, pk: int) -> MontrekHubABC:
-        return self.hub_class.hub_value_date.field.model.objects.get(pk=pk).hub
+    def get_hub_by_id(self, pk: int) -> MontrekHubABC:
+        return self.hub_class.objects.get(hub_value_date__pk=pk)
