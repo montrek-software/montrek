@@ -40,9 +40,11 @@ class TSQueryContainer:
     satellite_class: type[MontrekTimeSeriesSatelliteABC]
 
 
-class MontrekRepositoryOld:
+class MontrekRepository:
     hub_class = MontrekHubABC
     default_order_fields: tuple[str, ...] = ("-value_date", "hub_entity_id")
+
+    update: bool = True  # If this is true only the passed fields will be updated, otherwise empty fields will be set to None
 
     def __init__(self, session_data: Dict[str, Any] = {}):
         self.annotator = Annotator(self.hub_class)
@@ -53,6 +55,21 @@ class MontrekRepositoryOld:
         self.messages = []
         self.calculated_fields: list[str] = []
         self.linked_fields: list[str] = []
+        self.set_annotations()
+        self._order_fields: tuple[str] | None = None
+
+    def set_annotations(self):
+        raise NotImplementedError(
+            f"set_annotations is not implemented for {self.__class__.__name__}"
+        )
+
+    def create_by_dict(self, data: Dict[str, Any]) -> MontrekHubABC:
+        # TODO: Will replace std_create_object
+        pass
+
+    def create_by_data_frame(self, data_frame: pd.DataFrame) -> List[MontrekHubABC]:
+        # TODO: Will replace create_objects_from_data_frame
+        pass
 
     def receive(self) -> QuerySet:
         return self.query_builder.build_queryset(
@@ -374,33 +391,3 @@ class MontrekRepositoryOld:
 
     def _get_hub_by_id(self, pk: int) -> MontrekHubABC:
         return self.hub_class.hub_value_date.field.model.objects.get(pk=pk).hub
-
-
-class MontrekRepository(MontrekRepositoryOld):
-    # TODO: This is the facade for the repository refactor.
-    # During the refactoring the dependency on MontrekRepositoryOld will be removed
-    IS_REFACTORED = True  # Handles new refactoreed code, if True
-    # TODO: Remove IS_REFACTORED
-    update: bool = True  # If this is true only the passed fields will be updated, otherwise empty fields will be set to None
-
-    def __init__(self, session_data: Dict[str, Any] = {}):
-        super().__init__(session_data)
-        self.set_annotations()
-        self._order_fields: tuple[str] | None = None
-
-    # New methods
-
-    def set_annotations(self):
-        if self.IS_REFACTORED:
-            raise NotImplementedError(
-                f"set_annotations is not implemented for {self.__class__.__name__}"
-            )
-        self.std_queryset()
-
-    def create_by_dict(self, data: Dict[str, Any]) -> MontrekHubABC:
-        # Will replace std_create_object
-        pass
-
-    def create_by_data_frame(self, data_frame: pd.DataFrame) -> List[MontrekHubABC]:
-        # Will replace create_objects_from_data_frame
-        pass

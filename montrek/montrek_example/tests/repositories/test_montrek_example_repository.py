@@ -767,27 +767,27 @@ class TestDeleteObject(TestCase):
 
 class TestMontrekRepositoryLinks(TestCase):
     def setUp(self):
-        huba1 = me_factories.HubAFactory()
-        huba2 = me_factories.HubAFactory()
-        me_factories.AHubValueDateFactory(hub=huba2, value_date=None)
+        self.huba1 = me_factories.HubAFactory()
+        self.huba2 = me_factories.HubAFactory()
+        me_factories.AHubValueDateFactory(hub=self.huba2, value_date=None)
         hubc1 = me_factories.HubCFactory()
         hubc2 = me_factories.HubCFactory()
 
         me_factories.SatA1Factory(
-            hub_entity=huba1,
+            hub_entity=self.huba1,
             field_a1_int=5,
         )
         me_factories.LinkHubAHubCFactory(
-            hub_in=huba1,
+            hub_in=self.huba1,
             hub_out=hubc1,
         )
         me_factories.LinkHubAHubCFactory(
-            hub_in=huba2,
+            hub_in=self.huba2,
             hub_out=hubc1,
             state_date_end=montrek_time(2023, 7, 12),
         )
         me_factories.LinkHubAHubCFactory(
-            hub_in=huba2,
+            hub_in=self.huba2,
             hub_out=hubc2,
             state_date_start=montrek_time(2023, 7, 12),
         )
@@ -826,8 +826,10 @@ class TestMontrekRepositoryLinks(TestCase):
         queryset = repository.receive()
 
         self.assertEqual(queryset.count(), 2)
-        self.assertEqual(queryset[0].field_c1_str, "Third")
-        self.assertEqual(queryset[1].field_c1_str, "Second")
+        qs_1 = queryset.get(hub_entity_id=self.huba1.id)
+        qs_2 = queryset.get(hub_entity_id=self.huba2.id)
+        self.assertEqual(qs_2.field_c1_str, "Third")
+        self.assertEqual(qs_1.field_c1_str, "Second")
 
     def test_link_reversed(self):
         repository = HubCRepository2()
@@ -1256,8 +1258,10 @@ class TestTimeSeriesQuerySet(TestCase):
         test_query = repo.receive()
         self.assertEqual(test_query.count(), 5)
         tsc2_floats = [ts.field_tsc2_float for ts in test_query]
-        self.assertEqual(tsc2_floats[1], self.ts_fact0.field_tsc2_float)
-        self.assertEqual(tsc2_floats[2], self.ts_fact2.field_tsc2_float)
+        qs_1 = test_query.get(pk=self.ts_fact0.hub_value_date.id)
+        qs_2 = test_query.get(pk=self.ts_fact1.hub_value_date.id)
+        self.assertEqual(qs_1.field_tsc2_float, self.ts_fact0.field_tsc2_float)
+        self.assertEqual(qs_2.field_tsc2_float, self.ts_fact2.field_tsc2_float)
         self.assertEqual(tsc2_floats[4], None)
 
     def test_build_time_series_queryset__reference_date_filter(self):
@@ -1266,8 +1270,10 @@ class TestTimeSeriesQuerySet(TestCase):
         test_query = repo.receive()
         self.assertEqual(test_query.count(), 5)
         tsc2_floats = [ts.field_tsc2_float for ts in test_query]
-        self.assertEqual(tsc2_floats[1], self.ts_fact0.field_tsc2_float)
-        self.assertEqual(tsc2_floats[2], self.ts_fact1.field_tsc2_float)
+        qs_1 = test_query.get(pk=self.ts_fact0.hub_value_date.id)
+        qs_2 = test_query.get(pk=self.ts_fact1.hub_value_date.id)
+        self.assertEqual(qs_1.field_tsc2_float, self.ts_fact0.field_tsc2_float)
+        self.assertEqual(qs_2.field_tsc2_float, self.ts_fact1.field_tsc2_float)
         self.assertEqual(tsc2_floats[4], None)
 
     def test_build_time_series_queryset__session_dates(self):
