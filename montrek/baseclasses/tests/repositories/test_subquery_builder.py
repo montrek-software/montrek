@@ -43,7 +43,6 @@ class TestLinkedSatelliteSubqueryBuilder(TestCase):
             satellite_class=bc_models.TestLinkSatellite,
             field="test_id",
             link_class=bc_models.LinkTestMontrekTestLink,
-            last_ts_value=True,
         )
         subquery = builder.build(self.reference_date)
         query = bc_models.TestHubValueDate.objects.annotate(**{"test_id": subquery})
@@ -55,7 +54,6 @@ class TestLinkedSatelliteSubqueryBuilder(TestCase):
             satellite_class=bc_models.TestLinkSatellite,
             field="test_id",
             link_class=bc_models.LinkTestMontrekTestLink,
-            last_ts_value=True,
         )
         subquery = builder.build(self.reference_date + timezone.timedelta(days=1))
         query = bc_models.TestHubValueDate.objects.annotate(**{"test_id": subquery})
@@ -80,5 +78,4 @@ class TestLinkedSatelliteSubqueryBuilder(TestCase):
                 bc_models.TestLinkSatellite,
                 "bla",
                 DummyLinkClass,
-                last_ts_value=True,
             )
