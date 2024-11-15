@@ -65,12 +65,33 @@ class AlertMixin(models.Model):
     alert_message = models.CharField(max_length=255, null=True, blank=True)
 
 
+class ValueDateList(models.Model):
+    value_date = models.DateField(unique=True, null=True, blank=True)
+
+    def __str__(self):
+        return f"value_date: {self.value_date}"
+
+
 # Base Hub Model ABC
 class MontrekHubABC(TimeStampMixin, StateMixin, UserMixin):
     class Meta:
         abstract = True
 
     identifier = models.CharField(max_length=12, default="")
+
+    def get_hub_value_date(self):
+        return self.hub_value_date.get(value_date_list__value_date=None)
+
+
+class HubValueDate(models.Model):
+    class Meta:
+        abstract = True
+
+    hub = HubForeignKey(MontrekHubABC)
+    value_date_list = models.ForeignKey(ValueDateList, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"hub: {self.hub} value_date_list: {self.value_date_list}"
 
 
 # Base Static Satellite Model ABC
@@ -198,23 +219,8 @@ class MontrekSatelliteABC(MontrekSatelliteBaseABC):
     def get_related_hub_class(cls) -> type[MontrekHubABC]:
         return cls.hub_entity.field.related_model
 
-
-class ValueDateList(models.Model):
-    value_date = models.DateField(unique=True, null=True, blank=True)
-
-    def __str__(self):
-        return f"value_date: {self.value_date}"
-
-
-class HubValueDate(models.Model):
-    class Meta:
-        abstract = True
-
-    hub = HubForeignKey(MontrekHubABC)
-    value_date_list = models.ForeignKey(ValueDateList, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return f"hub: {self.hub} value_date_list: {self.value_date_list}"
+    def get_hub_value_date(self) -> HubValueDate:
+        return self.hub_entity.get_hub_value_date()
 
 
 class MontrekTimeSeriesSatelliteABC(MontrekSatelliteBaseABC):
