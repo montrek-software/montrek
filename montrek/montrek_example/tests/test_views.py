@@ -131,11 +131,12 @@ class TestMontrekExampleADelete(MontrekDeleteViewTestCase):
     view_class = me_views.MontrekExampleADelete
 
     def build_factories(self):
-        self.sat_a1 = me_factories.SatA1Factory()
-        me_factories.SatA2Factory(hub_entity=self.sat_a1.hub_entity)
+        self.hub_vd = me_factories.AHubValueDateFactory()
+        me_factories.SatA1Factory(hub_entity=self.hub_vd.hub)
+        me_factories.SatA2Factory(hub_entity=self.hub_vd.hub)
 
     def url_kwargs(self) -> dict:
-        return {"pk": self.sat_a1.hub_entity.id}
+        return {"pk": self.hub_vd.id}
 
 
 class TestMontrekExampleAHistoryView(MontrekViewTestCase):
