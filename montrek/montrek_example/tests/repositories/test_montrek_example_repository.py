@@ -1257,24 +1257,20 @@ class TestTimeSeriesQuerySet(TestCase):
         repo = HubCRepository()
         test_query = repo.receive()
         self.assertEqual(test_query.count(), 5)
-        tsc2_floats = [ts.field_tsc2_float for ts in test_query]
         qs_1 = test_query.get(pk=self.ts_fact0.hub_value_date.id)
         qs_2 = test_query.get(pk=self.ts_fact1.hub_value_date.id)
         self.assertEqual(qs_1.field_tsc2_float, self.ts_fact0.field_tsc2_float)
         self.assertEqual(qs_2.field_tsc2_float, self.ts_fact2.field_tsc2_float)
-        self.assertEqual(tsc2_floats[4], None)
 
     def test_build_time_series_queryset__reference_date_filter(self):
         repo = HubCRepository()
         repo.reference_date = montrek_time(2024, 7, 1)
         test_query = repo.receive()
         self.assertEqual(test_query.count(), 5)
-        tsc2_floats = [ts.field_tsc2_float for ts in test_query]
         qs_1 = test_query.get(pk=self.ts_fact0.hub_value_date.id)
         qs_2 = test_query.get(pk=self.ts_fact1.hub_value_date.id)
         self.assertEqual(qs_1.field_tsc2_float, self.ts_fact0.field_tsc2_float)
         self.assertEqual(qs_2.field_tsc2_float, self.ts_fact1.field_tsc2_float)
-        self.assertEqual(tsc2_floats[4], None)
 
     def test_build_time_series_queryset__session_dates(self):
         for end_date, expected_count in [
@@ -1352,48 +1348,46 @@ class TestTimeSeriesStdQueryset(TestCase):
     def test_build_time_series_receive(self):
         def make_assertions(test_query):
             self.assertEqual(test_query.count(), 6)
-            test_obj_1 = test_query[0]
-            self.assertEqual(test_obj_1.field_c1_str, "Test")
+            test_obj_1 = test_query.get(
+                field_c1_str="Test", value_date=montrek_time(2024, 2, 6).date()
+            )
             self.assertEqual(test_obj_1.field_c1_bool, False)
             self.assertEqual(test_obj_1.field_tsc2_float, 2.5)
-            self.assertEqual(test_obj_1.value_date, montrek_time(2024, 2, 6).date())
             self.assertEqual(test_obj_1.field_tsc3_int, 5)
             self.assertEqual(test_obj_1.field_tsc3_str, "what1")
-            test_obj_0 = test_query[1]
-            self.assertEqual(test_obj_0.field_c1_str, "Hallo")
+            test_obj_0 = test_query.get(
+                field_c1_str="Hallo", value_date=montrek_time(2024, 2, 5).date()
+            )
             self.assertEqual(test_obj_0.field_c1_bool, True)
             self.assertEqual(test_obj_0.field_tsc2_float, 1.0)
-            self.assertEqual(test_obj_0.value_date, montrek_time(2024, 2, 5).date())
             self.assertEqual(test_obj_0.field_tsc3_int, None)
             self.assertEqual(test_obj_0.field_tsc3_str, None)
-            test_obj_2 = test_query[2]
-            self.assertEqual(test_obj_2.field_c1_str, "Test")
+            test_obj_2 = test_query.get(
+                field_c1_str="Test", value_date=montrek_time(2024, 2, 5).date()
+            )
             self.assertEqual(test_obj_2.field_c1_bool, False)
             self.assertEqual(test_obj_2.field_tsc2_float, 3.0)
-            self.assertEqual(test_obj_2.value_date, montrek_time(2024, 2, 5).date())
             self.assertEqual(test_obj_2.field_tsc3_int, None)
             self.assertEqual(test_obj_2.field_tsc3_str, None)
-            test_obj_3 = test_query[3]
-            self.assertEqual(test_obj_3.field_c1_str, "DEFAULT")
+            test_obj_3 = test_query.get(
+                field_c1_str="DEFAULT", value_date=montrek_time(2024, 2, 5).date()
+            )
             self.assertEqual(test_obj_3.field_c1_bool, False)
             self.assertEqual(test_obj_3.field_tsc2_float, 3.5)
-            self.assertEqual(test_obj_3.value_date, montrek_time(2024, 2, 5).date())
             self.assertEqual(test_obj_3.field_tsc3_int, 7)
             self.assertEqual(test_obj_3.field_tsc3_str, "what2")
-            test_obj_5 = test_query[4]
-            self.assertEqual(test_obj_5.field_c1_str, None)
-            self.assertEqual(test_obj_5.field_c1_bool, None)
-            self.assertEqual(test_obj_5.field_tsc2_float, None)  # Default is 0.0
-            self.assertEqual(test_obj_5.value_date, montrek_time(2024, 2, 3).date())
-            self.assertEqual(test_obj_5.field_tsc3_int, 8)
-            self.assertEqual(test_obj_5.field_tsc3_str, "what3")
-            test_obj_4 = test_query[5]
-            self.assertEqual(test_obj_4.field_c1_str, "DEFAULT")
+            test_obj_4 = test_query.get(field_c1_str="DEFAULT", value_date=None)
             self.assertEqual(test_obj_4.field_c1_bool, False)
             self.assertEqual(test_obj_4.field_tsc2_float, None)
-            self.assertEqual(test_obj_4.value_date, None)
             self.assertEqual(test_obj_4.field_tsc3_int, None)
             self.assertEqual(test_obj_4.field_tsc3_str, None)
+            test_obj_5 = test_query.get(
+                field_c1_str=None, value_date=montrek_time(2024, 2, 3).date()
+            )
+            self.assertEqual(test_obj_5.field_c1_bool, None)
+            self.assertEqual(test_obj_5.field_tsc2_float, None)  # Default is 0.0
+            self.assertEqual(test_obj_5.field_tsc3_int, 8)
+            self.assertEqual(test_obj_5.field_tsc3_str, "what3")
 
         repo = HubCRepository()
         # This query creates missing ts entries

@@ -140,8 +140,10 @@ class TestMontrekSatellite(TestCase):
         annotations = self.annotations()
         query = CHubValueDate.objects.annotate(**annotations)
         self.assertEqual(query.count(), 4)
-        self.assertEqual(query[1].field_tsc2_float, tsc2_fac1.field_tsc2_float)
-        self.assertEqual(query.last().field_tsc2_float, tsc2_fac2.field_tsc2_float)
+        qs_1 = query.get(pk=tsc2_fac1.hub_value_date.pk)
+        qs_2 = query.get(pk=tsc2_fac2.hub_value_date.pk)
+        self.assertEqual(qs_1.field_tsc2_float, tsc2_fac1.field_tsc2_float)
+        self.assertEqual(qs_2.field_tsc2_float, tsc2_fac2.field_tsc2_float)
 
     def test_ts_satellite_concept__two_dates(self):
         tsc2_fac1 = SatTSC2Factory(field_tsc2_float=10)
@@ -152,14 +154,16 @@ class TestMontrekSatellite(TestCase):
         annotations = self.annotations()
         query = CHubValueDate.objects.annotate(**annotations)
         self.assertEqual(query.count(), 3)
-        self.assertEqual(query[1].field_tsc2_float, tsc2_fac1.field_tsc2_float)
-        self.assertEqual(query.last().field_tsc2_float, tsc2_fac2.field_tsc2_float)
+        qs_1 = query.get(pk=tsc2_fac1.hub_value_date.pk)
+        qs_2 = query.get(pk=tsc2_fac2.hub_value_date.pk)
+        self.assertEqual(qs_1.field_tsc2_float, tsc2_fac1.field_tsc2_float)
+        self.assertEqual(qs_2.field_tsc2_float, tsc2_fac2.field_tsc2_float)
         self.assertEqual(
-            query[1].value_date,
+            qs_1.value_date,
             tsc2_fac1.hub_value_date.value_date_list.value_date,
         )
         self.assertEqual(
-            query.last().value_date,
+            qs_2.value_date,
             tsc2_fac2.hub_value_date.value_date_list.value_date,
         )
 
