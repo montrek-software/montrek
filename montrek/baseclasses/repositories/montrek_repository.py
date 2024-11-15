@@ -75,10 +75,6 @@ class MontrekRepositoryOld:
     def set_order_fields(self, fields: tuple[str]):
         self._order_fields = fields
 
-    @classmethod
-    def get_hub_by_id(cls, pk: int) -> MontrekHubABC:
-        return cls.hub_class.objects.get(pk=pk)
-
     @property
     def annotations(self):
         return self.annotator.annotations
@@ -114,7 +110,8 @@ class MontrekRepositoryOld:
         self._reference_date = value
 
     def object_to_dict(self, obj: HubValueDate) -> Dict[str, Any]:
-        return {field: getattr(obj, field) for field in self.get_all_fields()}
+        object_dict = {field: getattr(obj, field) for field in self.get_all_fields()}
+        return object_dict
 
     def std_satellite_fields(self):
         return self.annotator.satellite_fields()
@@ -263,7 +260,7 @@ class MontrekRepositoryOld:
         self.linked_fields.extend(fields)
 
     def get_history_queryset(self, pk: int, **kwargs) -> dict[str, QuerySet]:
-        hub = self.hub_class.objects.get(pk=pk)
+        hub = self._get_hub_by_id(pk=pk)
         satellite_querys = {}
         for sat in self.annotator.get_satellite_classes():
             sat_query = sat.objects.filter(hub_entity=hub).order_by("-created_at")
@@ -374,6 +371,9 @@ class MontrekRepositoryOld:
             )
             return dropped_data_frame
         return data_frame
+
+    def _get_hub_by_id(self, pk: int) -> MontrekHubABC:
+        return self.hub_class.hub_value_date.field.model.objects.get(pk=pk).hub
 
 
 class MontrekRepository(MontrekRepositoryOld):

@@ -147,7 +147,10 @@ class MontrekCreateUpdateViewTestCase(MontrekObjectViewBaseTestCase):
                 continue
             if isinstance(created_value, (datetime.datetime, datetime.date)):
                 value = pd.to_datetime(value).date()
-                expected_value = created_value.date()
+                if isinstance(created_value, datetime.datetime):
+                    expected_value = created_value.date()
+                else:
+                    expected_value = created_value
             else:
                 expected_value = created_value
             self.assertEqual(expected_value, value)
@@ -163,7 +166,7 @@ class GetObjectLastMixin:
 class GetObjectPkMixin:
     def _get_object(self) -> QuerySet:
         std_query = self.receive()
-        return std_query.get(hub__pk=self.url_kwargs()["pk"])
+        return std_query.get(pk=self.url_kwargs()["pk"])
 
 
 class MontrekDetailViewTestCase(MontrekObjectViewBaseTestCase, GetObjectPkMixin):
@@ -203,7 +206,7 @@ class MontrekDeleteViewTestCase(MontrekObjectViewBaseTestCase, GetObjectPkMixin)
 
     def _get_object(self):
         std_query = self.receive()
-        return std_query.filter(hub__pk=self.url_kwargs()["pk"])
+        return std_query.filter(pk=self.url_kwargs()["pk"])
 
     def creation_data(self) -> dict:
         return {"action": "Delete"}

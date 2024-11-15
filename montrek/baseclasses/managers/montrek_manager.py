@@ -25,7 +25,7 @@ class MontrekManager:
         return self.repository.delete(object_query.hub)
 
     def get_object_from_pk(self, pk: int):
-        return self.repository.receive().get(hub__pk=pk)
+        return self.repository.receive().get(pk=pk)
 
     def get_object_from_pk_as_dict(self, pk: int) -> dict:
         object_query = self.get_object_from_pk(pk)
