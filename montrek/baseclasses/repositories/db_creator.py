@@ -329,10 +329,17 @@ class DbCreator:
     def _get_link_data(self, data: dict) -> dict[str, list[MontrekHubABC]]:
         link_data = {}
         for key, value in data.items():
-            if isinstance(value, MontrekHubABC):
+            if isinstance(value, HubValueDate):
+                link_data[key] = [value.hub]
+            elif isinstance(value, MontrekHubABC):
                 link_data[key] = [value]
             elif isinstance(value, (list, QuerySet)):
-                many_links = [item for item in value if isinstance(item, MontrekHubABC)]
+                many_links = [
+                    item.hub for item in value if isinstance(item, HubValueDate)
+                ]
+                many_links += [
+                    item for item in value if isinstance(item, MontrekHubABC)
+                ]
                 if many_links:
                     link_data[key] = many_links
         return link_data

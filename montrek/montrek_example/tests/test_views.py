@@ -212,11 +212,16 @@ class TestMontrekExampleBCreate(MontrekCreateViewTestCase):
     view_class = me_views.MontrekExampleBCreate
 
     def build_factories(self):
-        self.d_fac1 = me_factories.SatD1Factory.create(
+        self.hub_vd1 = me_factories.DHubValueDateFactory()
+        self.hub_vd2 = me_factories.DHubValueDateFactory()
+        me_factories.SatD1Factory.create(
             field_d1_str="test1",
+            hub_entity=self.hub_vd1.hub,
         )
-        self.d_fac2 = me_factories.SatD1Factory.create(
+
+        me_factories.SatD1Factory.create(
             field_d1_str="test2",
+            hub_entity=self.hub_vd2.hub,
         )
 
     def creation_data(self):
@@ -225,12 +230,12 @@ class TestMontrekExampleBCreate(MontrekCreateViewTestCase):
             "field_b1_date": "2024-02-17",
             "field_b2_str": "test2",
             "field_b2_choice": "CHOICE2",
-            "link_hub_b_hub_d": [self.d_fac1.hub_entity.id, self.d_fac2.hub_entity.id],
+            "link_hub_b_hub_d": [self.hub_vd1.id, self.hub_vd2.id],
             "alert_level": AlertEnum.OK.value.description,
         }
 
     def additional_assertions(self, created_object):
-        self.assertEqual(created_object.field_d1_str, "test1,test2")
+        self.assertEqual(created_object.field_d1_str, "test2,test1")
 
 
 class TestMontrekExampleBUpdate(MontrekUpdateViewTestCase):

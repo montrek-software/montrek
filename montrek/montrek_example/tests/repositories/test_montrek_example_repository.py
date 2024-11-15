@@ -1045,6 +1045,64 @@ class TestLinkOneToManyUpates(TestCase):
         self.assertGreater(link_2.state_date_start, MIN_DATE)
 
 
+class TestCreateDataWithLinks(TestCase):
+    def setUp(self) -> None:
+        user = MontrekUserFactory()
+        self.session_data = {"user_id": user.id}
+
+    def test_create_data_with_one_link(self):
+        self.hub_vd1 = me_factories.DHubValueDateFactory()
+        # self.hub_vd2 = me_factories.DHubValueDateFactory()
+        me_factories.SatD1Factory.create(
+            field_d1_str="test1",
+            hub_entity=self.hub_vd1.hub,
+        )
+
+        # me_factories.SatD1Factory.create(
+        #     field_d1_str="test2",
+        #     hub_entity=self.hub_vd2.hub,
+        # )
+
+        creation_data = {
+            "field_b1_str": "test",
+            "field_b1_date": "2024-02-17",
+            "field_b2_str": "test2",
+            "field_b2_choice": "CHOICE2",
+            "link_hub_b_hub_d": self.hub_vd1,
+        }
+        repo = HubBRepository(session_data=self.session_data)
+        repo.std_create_object(creation_data)
+        queryset = repo.receive()
+        self.assertEqual(queryset.count(), 1)
+        self.assertEqual(queryset[0].field_d1_str, "test1")
+
+    def test_create_data_with_two_link(self):
+        self.hub_vd1 = me_factories.DHubValueDateFactory()
+        self.hub_vd2 = me_factories.DHubValueDateFactory()
+        me_factories.SatD1Factory.create(
+            field_d1_str="test1",
+            hub_entity=self.hub_vd1.hub,
+        )
+
+        me_factories.SatD1Factory.create(
+            field_d1_str="test2",
+            hub_entity=self.hub_vd2.hub,
+        )
+
+        creation_data = {
+            "field_b1_str": "test",
+            "field_b1_date": "2024-02-17",
+            "field_b2_str": "test2",
+            "field_b2_choice": "CHOICE2",
+            "link_hub_b_hub_d": [self.hub_vd1, self.hub_vd2],
+        }
+        repo = HubBRepository(session_data=self.session_data)
+        repo.std_create_object(creation_data)
+        queryset = repo.receive()
+        self.assertEqual(queryset.count(), 1)
+        self.assertEqual(queryset[0].field_d1_str, "test1,test2")
+
+
 class TestTimeSeries(TestCase):
     def setUp(self) -> None:
         ts_satellite_c1 = me_factories.SatC1Factory.create(
