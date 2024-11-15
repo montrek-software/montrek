@@ -42,6 +42,10 @@ class HubCRepository(MontrekRepository):
         )
 
 
+class HubCRepositoryLastTS(HubCRepository):
+    latest_ts = True
+
+
 class HubCRepository2(MontrekRepository):
     hub_class = me_models.HubC
 

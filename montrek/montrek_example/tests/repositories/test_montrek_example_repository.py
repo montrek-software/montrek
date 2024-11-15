@@ -26,6 +26,7 @@ from montrek_example.repositories.hub_c_repository import (
     HubCRepository,
     HubCRepository2,
     HubCRepositoryCommonFields,
+    HubCRepositoryLastTS,
 )
 from montrek_example.repositories.hub_d_repository import HubDRepository
 from montrek_example.tests.factories import montrek_example_factories as me_factories
@@ -1405,6 +1406,59 @@ class TestTimeSeriesStdQueryset(TestCase):
             self.assertEqual(query_element.field_tsc2_float, None)
             self.assertEqual(query_element.field_tsc3_int, None)
             self.assertEqual(query_element.field_tsc3_str, None)
+
+
+class TestTSRepoLatestTS(TestCase):
+    def setUp(self):
+        sat1 = me_factories.SatTSC2Factory.create(
+            value_date="2024-11-15", field_tsc2_float=1.0
+        )
+        sat2 = me_factories.SatTSC2Factory.create(
+            value_date="2024-11-15", field_tsc2_float=2.0
+        )
+        hub_vd1 = me_factories.CHubValueDateFactory.create(
+            hub=sat1.hub_value_date.hub,
+            value_date_list=me_factories.ValueDateListFactory.create(
+                value_date="2024-11-16"
+            ),
+        )
+        hub_vd2 = me_factories.CHubValueDateFactory.create(
+            hub=sat2.hub_value_date.hub,
+            value_date_list=hub_vd1.value_date_list,
+        )
+        me_factories.SatTSC2Factory.create(
+            hub_value_date=hub_vd1,
+            field_tsc2_float=3.0,
+        )
+        me_factories.SatTSC2Factory.create(
+            hub_value_date=hub_vd2,
+            field_tsc2_float=4.0,
+        )
+        me_factories.SatC1Factory.create(
+            field_c1_str="Hallo",
+            hub_entity=sat1.hub_value_date.hub,
+        )
+        me_factories.SatC1Factory.create(
+            field_c1_str="Bonjour",
+            hub_entity=sat2.hub_value_date.hub,
+        )
+        me_factories.SatC1Factory.create(
+            field_c1_str="Hola",
+        )
+
+    def test_last_ts_repo(self):
+        repo = HubCRepositoryLastTS()
+        test_query = repo.receive()
+        self.assertEqual(test_query.count(), 3)
+        qs1 = test_query.get(field_c1_str="Hallo")
+        self.assertEqual(qs1.field_tsc2_float, 3.0)
+        self.assertEqual(qs1.value_date, montrek_time(2024, 11, 16).date())
+        qs2 = test_query.get(field_c1_str="Bonjour")
+        self.assertEqual(qs2.field_tsc2_float, 4.0)
+        self.assertEqual(qs2.value_date, montrek_time(2024, 11, 16).date())
+        qs3 = test_query.get(field_c1_str="Hola")
+        self.assertEqual(qs3.field_tsc2_float, None)
+        self.assertEqual(qs3.value_date, None)
 
 
 class TestTimeSeriesPerformance(TestCase):

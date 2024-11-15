@@ -16,11 +16,13 @@ class QueryBuilder:
         self,
         annotator: Annotator,
         session_data: dict[str, Any],
+        latest_ts: bool = False,
     ):
         self.annotator = annotator
         self.hub_class = annotator.hub_class
         self.session_data = session_data
         self.messages: list[MontrekMessage] = []
+        self.latest_ts = latest_ts
 
     @property
     def query_filter(self) -> Q:
@@ -66,11 +68,20 @@ class QueryBuilder:
             hub_id=OuterRef("hub_entity_id"),
             value_date_list__value_date__isnull=False,
         ).exclude(id=OuterRef("id"))
-
-        # Main query to exclude rows with None value_date if another row with the same hub_entity_id exists with a non-null value_date
-        filtered_query = queryset.filter(
-            Q(value_date__isnull=False) | ~Exists(non_null_value_date_exists)
-        )
+        if self.latest_ts or not self.annotator.get_ts_satellite_classes():
+            latest_value_date = (
+                queryset.filter(hub=OuterRef("hub"))
+                .order_by("-value_date")
+                .values("value_date")[:1]
+            )
+            filtered_query = queryset.filter(
+                Q(value_date=latest_value_date) | ~Exists(non_null_value_date_exists)
+            )
+        else:
+            # Main query to exclude rows with None value_date if another row with the same hub_entity_id exists with a non-null value_date
+            filtered_query = queryset.filter(
+                Q(value_date__isnull=False) | ~Exists(non_null_value_date_exists)
+            )
         return filtered_query
 
     def _filter_session_data(self, queryset: QuerySet) -> QuerySet:

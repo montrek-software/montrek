@@ -69,6 +69,13 @@ class Annotator:
     def get_satellite_classes(self) -> list[type[MontrekSatelliteABC]]:
         return self.annotated_satellite_classes
 
+    def get_ts_satellite_classes(self) -> list[type[MontrekSatelliteABC]]:
+        return [
+            satellite_class
+            for satellite_class in self.annotated_satellite_classes
+            if satellite_class.is_timeseries
+        ]
+
     def get_linked_satellite_classes(self) -> list[type[MontrekSatelliteABC]]:
         return self.annotated_linked_satellite_classes
 

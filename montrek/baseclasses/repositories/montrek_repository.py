@@ -44,6 +44,7 @@ class TSQueryContainer:
 class MontrekRepository:
     hub_class = MontrekHubABC
     default_order_fields: tuple[str, ...] = ("-value_date", "hub_entity_id")
+    latest_ts: bool = False
 
     update: bool = True  # If this is true only the passed fields will be updated, otherwise empty fields will be set to None
 
@@ -51,7 +52,7 @@ class MontrekRepository:
         self.annotator = Annotator(self.hub_class)
         self._ts_queryset_containers = []
         self.session_data = session_data
-        self.query_builder = QueryBuilder(self.annotator, session_data)
+        self.query_builder = QueryBuilder(self.annotator, session_data, self.latest_ts)
         self._reference_date = None
         self.messages = []
         self.calculated_fields: list[str] = []
