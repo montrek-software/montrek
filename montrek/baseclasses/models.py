@@ -199,31 +199,6 @@ class MontrekSatelliteABC(MontrekSatelliteBaseABC):
         return cls.hub_entity.field.related_model
 
 
-# TODO:
-####### Remove this class ############
-
-
-class MontrekTimeSeriesSatelliteABC(MontrekSatelliteBaseABC):
-    class Meta:
-        abstract = True
-        indexes = [
-            models.Index(fields=["hash_identifier"]),
-            models.Index(fields=["hash_value"]),
-        ]
-
-    hub_entity = models.ForeignKey(MontrekHubABC, on_delete=models.CASCADE)
-    allow_multiple = True
-    is_timeseries = True
-    value_date = models.DateField()
-    identifier_fields = ["value_date", "hub_entity_id"]
-
-    @classmethod
-    def get_related_hub_class(cls) -> type[MontrekHubABC]:
-        return cls.hub_entity.field.related_model
-
-    ##############
-
-
 class ValueDateList(models.Model):
     value_date = models.DateField(unique=True, null=True, blank=True)
 
@@ -242,7 +217,7 @@ class HubValueDate(models.Model):
         return f"hub: {self.hub} value_date_list: {self.value_date_list}"
 
 
-class MontrekTimeSeriesSatelliteInterimABC(MontrekSatelliteBaseABC):
+class MontrekTimeSeriesSatelliteABC(MontrekSatelliteBaseABC):
     class Meta:
         abstract = True
         indexes = [

@@ -11,7 +11,7 @@ from baseclasses.models import (
     MontrekOneToManyLinkABC,
     MontrekOneToOneLinkABC,
     MontrekSatelliteABC,
-    MontrekTimeSeriesSatelliteInterimABC,
+    MontrekTimeSeriesSatelliteABC,
 )
 from django.db import models
 from django.utils import timezone
@@ -139,12 +139,12 @@ class SatC1(MontrekSatelliteABC):
     identifier_fields = ["field_c1_str"]
 
 
-class SatTSC2(MontrekTimeSeriesSatelliteInterimABC):
+class SatTSC2(MontrekTimeSeriesSatelliteABC):
     hub_value_date = models.ForeignKey(CHubValueDate, on_delete=models.CASCADE)
     field_tsc2_float = models.FloatField(default=0.0)
 
 
-class SatTSC3(MontrekTimeSeriesSatelliteInterimABC):
+class SatTSC3(MontrekTimeSeriesSatelliteABC):
     hub_value_date = models.ForeignKey(CHubValueDate, on_delete=models.CASCADE)
     field_tsc3_int = models.IntegerField(null=True, blank=True)
     field_tsc3_str = models.CharField(max_length=50, null=True, blank=True)
@@ -155,7 +155,7 @@ class SatTSC3(MontrekTimeSeriesSatelliteInterimABC):
     )
 
 
-class SatTSC4(MontrekTimeSeriesSatelliteInterimABC):
+class SatTSC4(MontrekTimeSeriesSatelliteABC):
     hub_value_date = models.ForeignKey(CHubValueDate, on_delete=models.CASCADE)
     field_tsc4_int = models.IntegerField(null=True, blank=True)
 
@@ -167,7 +167,7 @@ class SatD1(MontrekSatelliteABC):
     identifier_fields = ["field_d1_str"]
 
 
-class SatTSD2(MontrekTimeSeriesSatelliteInterimABC):
+class SatTSD2(MontrekTimeSeriesSatelliteABC):
     hub_value_date = models.ForeignKey(DHubValueDate, on_delete=models.CASCADE)
     field_tsd2_float = models.FloatField(null=True)
     field_tsd2_int = models.IntegerField(null=True)
