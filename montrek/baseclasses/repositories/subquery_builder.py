@@ -150,6 +150,23 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
             ),
         )
 
+    def get_link_hub_value_date_query(
+        self, hub_field: str, reference_date: timezone.datetime
+    ) -> QuerySet:
+        hub_value_date_class = self.satellite_class.hub_value_date.field.related_model
+        return hub_value_date_class.objects.filter(
+            Q(
+                hub=OuterRef(f"hub__{self.link_db_name}__{hub_field}"),
+            )
+            & Q(value_date_list=OuterRef("value_date_list"))
+            & Q(
+                **{
+                    f"hub__state_date_start__lte": reference_date,
+                    f"hub__state_date_end__gt": reference_date,
+                }
+            ),
+        )
+
     def _link_hubs_and_get_subquery(
         self, hub_field_to: str, hub_field_from: str, reference_date: timezone.datetime
     ) -> Subquery:
@@ -172,7 +189,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         self, hub_field_to: str, hub_field_from: str, reference_date: timezone.datetime
     ) -> Subquery:
         query = (
-            self.get_link_query(hub_field_from, reference_date)
+            self.get_link_hub_value_date_query(hub_field_to, reference_date)
             .annotate(
                 **{
                     self.field
@@ -184,12 +201,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
                                     **self.subquery_filter(
                                         reference_date,
                                         lookup_field="hub_value_date",
-                                        outer_ref=f"{hub_field_to}__hub_value_date",
-                                    )
-                                )
-                                & Q(
-                                    hub_value_date__value_date_list=OuterRef(
-                                        f"{hub_field_to}__hub_value_date__value_date_list"
+                                        outer_ref=f"pk",
                                     )
                                 )
                             )
@@ -199,7 +211,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
                     )
                 }
             )
-            .values(self.field + "sub")[:1]
+            .values(self.field + "sub")  # [:1]
         )
         return Subquery(query)
 

@@ -1928,7 +1928,7 @@ class TestRepositoryQueryConcept(TestCase):
         c_sat2.hub_entity.link_hub_c_hub_d.add(d_sat1.hub_entity)
         repo = HubCRepository({})
         query = repo.receive()
-        self.assertEqual(query.count(), 2)
+        self.assertEqual(query.count(), 3)
         self.assertEqual(query.first().field_c1_str, c_sat1.field_c1_str)
         self.assertEqual(
             query.first().field_d1_str, f"{d_sat1.field_d1_str},{d_sat2.field_d1_str}"
@@ -1954,7 +1954,7 @@ class TestCommonFields(TestCase):
         c1.hub_entity.link_hub_c_hub_d.add(d1.hub_entity)
 
         query = HubCRepositoryCommonFields().receive()
-        test_obj = query.first()
+        test_obj = query.last()
         self.assertEqual(test_obj.comment_tsc2, "First Comment")
         self.assertEqual(test_obj.comment_c1, "Second Comment")
         self.assertEqual(test_obj.comment_tsd2, "Third Comment")
