@@ -10,6 +10,7 @@ from baseclasses.models import (
     MontrekHubABC,
     MontrekLinkABC,
     MontrekSatelliteABC,
+    MontrekSatelliteBaseABC,
     MontrekTimeSeriesSatelliteABC,
     HubValueDate,
 )
@@ -230,7 +231,7 @@ class MontrekRepository:
 
     def add_satellite_fields_annotations(
         self,
-        satellite_class: Type[MontrekSatelliteABC],
+        satellite_class: Type[MontrekSatelliteBaseABC],
         fields: List[str],
     ):
         if satellite_class.is_timeseries:
@@ -243,7 +244,7 @@ class MontrekRepository:
 
     def add_last_ts_satellite_fields_annotations(
         self,
-        satellite_class: Type[MontrekSatelliteABC],
+        satellite_class: Type[MontrekSatelliteBaseABC],
         fields: List[str],
     ):
         self.annotator.subquery_builder_to_annotations(

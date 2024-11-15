@@ -287,7 +287,7 @@ class LastTSSatelliteSubqueryBuilder(SatelliteSubqueryBuilderABC):
     def build(self, reference_date: timezone.datetime) -> Subquery:
         return Subquery(
             self.satellite_class.objects.filter(
-                hub_entity=OuterRef(self.lookup_string),
+                hub_value_date__hub=OuterRef("hub"),
                 state_date_start__lte=reference_date,
                 state_date_end__gt=reference_date,
                 value_date__lte=self.end_date,

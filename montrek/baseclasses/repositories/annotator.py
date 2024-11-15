@@ -8,7 +8,12 @@ from baseclasses.repositories.subquery_builder import (
     CreatedBySubqueryBuilder,
     CommentSubqueryBuilder,
 )
-from baseclasses.models import MontrekLinkABC, MontrekSatelliteABC, MontrekHubABC
+from baseclasses.models import (
+    MontrekLinkABC,
+    MontrekSatelliteABC,
+    MontrekHubABC,
+    MontrekSatelliteBaseABC,
+)
 
 
 class Annotator:
@@ -32,7 +37,7 @@ class Annotator:
     def subquery_builder_to_annotations(
         self,
         fields: list[str],
-        satellite_class: type[MontrekSatelliteABC],
+        satellite_class: type[MontrekSatelliteBaseABC],
         subquery_builder: type[SubqueryBuilder],
         **kwargs,
     ):
