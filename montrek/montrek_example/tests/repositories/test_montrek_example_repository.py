@@ -726,6 +726,25 @@ class TestMontrekCreateObject(TestCase):
         test_query = repository.receive()
         self.assertEqual(test_query.count(), 3)
 
+    def test_create_ts_satellite_with_given_hub(self):
+        hub = me_factories.HubCFactory()
+        repository = HubCRepository(session_data={"user_id": self.user.id})
+        repository.std_create_object(
+            {
+                "hub_entity_id": hub.id,
+                "field_c1_str": "test",
+                "field_tsc2_float": 6.0,
+                "value_date": "2023-07-08",
+            }
+        )
+        test_query = repository.receive()
+        self.assertEqual(test_query.count(), 1)
+        queried_object = test_query.get()
+        self.assertEqual(queried_object.field_c1_str, "test")
+        self.assertEqual(queried_object.field_tsc2_float, 6.0)
+        self.assertEqual(queried_object.hub, hub)
+        self.assertEqual(queried_object.value_date, montrek_time(2023, 7, 8).date())
+
 
 class TestMontrekCreateObjectTransaction(TransactionTestCase):
     def setUp(self):
