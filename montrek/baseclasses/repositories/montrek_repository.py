@@ -65,12 +65,10 @@ class MontrekRepository:
         )
 
     def create_by_dict(self, data: Dict[str, Any]) -> MontrekHubABC:
-        # TODO: Will replace std_create_object
-        pass
+        return self.std_create_object(data)
 
     def create_by_data_frame(self, data_frame: pd.DataFrame) -> List[MontrekHubABC]:
-        # TODO: Will replace create_objects_from_data_frame
-        pass
+        return self.create_objects_from_data_frame(data_frame)
 
     def receive(self) -> QuerySet:
         return self.query_builder.build_queryset(
