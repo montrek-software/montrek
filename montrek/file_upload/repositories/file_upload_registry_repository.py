@@ -75,9 +75,7 @@ class FileUploadRegistryRepositoryABC(MontrekRepository):
     def get_upload_file_from_registry(
         self, file_upload_registry_id: int, request
     ) -> File | None:
-        file_upload_registry_path = (
-            self.receive().get(hub__pk=file_upload_registry_id).file
-        )
+        file_upload_registry_path = self.receive().get(pk=file_upload_registry_id).file
         return self._get_file_from_registry(file_upload_registry_path, request)
 
     def get_log_file_from_registry(

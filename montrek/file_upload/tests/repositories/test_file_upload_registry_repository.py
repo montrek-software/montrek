@@ -42,7 +42,7 @@ class TestFileUploadRegistryRepository(TestCase):
         repository = MockFileUploadRegistryRepository(self.session_data)
         file_upload_registry = repository.receive().first()
         test_file = repository.get_upload_file_from_registry(
-            file_upload_registry.hub.id, self.request
+            file_upload_registry.hub.get_hub_value_date().id, self.request
         )
         expected_file = self.file_sat.file
         self.assertEqual(test_file.read(), expected_file.read())
