@@ -231,13 +231,15 @@ class MontrekRepository:
         self,
         satellite_class: Type[MontrekSatelliteBaseABC],
         fields: List[str],
+        *,
+        rename_field_map: dict[str, str] = {},
     ):
         if satellite_class.is_timeseries:
             subquery_builder = TSSatelliteSubqueryBuilder
         else:
             subquery_builder = SatelliteSubqueryBuilder
         self.annotator.subquery_builder_to_annotations(
-            fields, satellite_class, subquery_builder
+            fields, satellite_class, subquery_builder, rename_field_map=rename_field_map
         )
 
     def add_linked_satellites_field_annotations(
@@ -247,6 +249,7 @@ class MontrekRepository:
         fields: List[str],
         *,
         reversed_link: bool = False,
+        rename_field_map: dict[str, str] = {},
     ):
         if reversed_link:
             link_subquery_builder_class = ReverseLinkedSatelliteSubqueryBuilder
@@ -258,6 +261,7 @@ class MontrekRepository:
             satellite_class,
             link_subquery_builder_class,
             link_class=link_class,
+            rename_field_map=rename_field_map,
         )
         self.linked_fields.extend(fields)
 

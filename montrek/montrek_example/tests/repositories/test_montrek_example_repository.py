@@ -2116,3 +2116,4 @@ class TestCommonFields(TestCase):
         self.assertEqual(test_obj.comment_c1, "Second Comment")
         self.assertEqual(test_obj.comment_tsd2, "Third Comment")
         self.assertEqual(test_obj.comment_d1, "Fourth Comment")
+        self.assertEqual(test_obj.comment, "")

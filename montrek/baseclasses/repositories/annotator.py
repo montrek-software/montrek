@@ -39,13 +39,20 @@ class Annotator:
         fields: list[str],
         satellite_class: type[MontrekSatelliteBaseABC],
         subquery_builder: type[SubqueryBuilder],
+        *,
+        rename_field_map: dict[str, str] = {},
         **kwargs,
     ):
         if "link_class" in kwargs:
             self.annotated_link_classes.append(kwargs["link_class"])
 
         for field in fields:
-            self.annotations[field] = subquery_builder(satellite_class, field, **kwargs)
+            outfield = (
+                field if field not in rename_field_map else rename_field_map[field]
+            )
+            self.annotations[outfield] = subquery_builder(
+                satellite_class, field, **kwargs
+            )
             self.add_to_annotated_satellite_classes(satellite_class)
 
     def build(self, reference_date: timezone.datetime) -> dict[str, Subquery]:
