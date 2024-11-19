@@ -236,6 +236,14 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         )
         return _is_many_to_many or _is_many_to_one
 
+    def _get_subquery(
+        self, hub_a: str, hub_b: str, reference_date: timezone.datetime
+    ) -> Subquery:
+        if self.satellite_class.is_timeseries:
+            return self._link_hubs_and_get_ts_subquery(hub_a, hub_b, reference_date)
+        else:
+            return self._link_hubs_and_get_subquery(hub_a, hub_b, reference_date)
+
 
 class LinkedSatelliteSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
     def __init__(
@@ -247,14 +255,7 @@ class LinkedSatelliteSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
         super().__init__(satellite_class, field, link_class)
 
     def build(self, reference_date: timezone.datetime) -> Subquery:
-        if self.satellite_class.is_timeseries:
-            return super()._link_hubs_and_get_ts_subquery(
-                "hub_out", "hub_in", reference_date
-            )
-        else:
-            return super()._link_hubs_and_get_subquery(
-                "hub_out", "hub_in", reference_date
-            )
+        return self._get_subquery("hub_out", "hub_in", reference_date)
 
 
 class ReverseLinkedSatelliteSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
@@ -267,7 +268,7 @@ class ReverseLinkedSatelliteSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
         super().__init__(satellite_class, field, link_class)
 
     def build(self, reference_date: timezone.datetime) -> Subquery:
-        return super()._link_hubs_and_get_subquery("hub_in", "hub_out", reference_date)
+        return self._get_subquery("hub_in", "hub_out", reference_date)
 
 
 class StringAgg(Func):

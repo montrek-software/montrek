@@ -29,7 +29,10 @@ from montrek_example.repositories.hub_c_repository import (
     HubCRepositoryLastTS,
     HubCRepositoryOnlyStatic,
 )
-from montrek_example.repositories.hub_d_repository import HubDRepository
+from montrek_example.repositories.hub_d_repository import (
+    HubDRepository,
+    HubDRepositoryTSReverseLink,
+)
 from montrek_example.tests.factories import montrek_example_factories as me_factories
 
 MIN_DATE = timezone.make_aware(timezone.datetime.min)
@@ -881,6 +884,16 @@ class TestMontrekRepositoryLinks(TestCase):
         self.assertEqual(queryset.count(), 2)
         self.assertEqual(queryset[0].field_a1_int, "5")
         self.assertEqual(queryset[1].field_a1_int, None)
+
+    def test_link_reversed_ts(self):
+        sat_tsc2 = me_factories.SatTSC2Factory(
+            field_tsc2_float=2.5, value_date="2024-11-19"
+        )
+        d_hub = me_factories.DHubValueDateFactory(value_date="2024-11-19").hub
+        sat_tsc2.hub_value_date.hub.link_hub_c_hub_d.add(d_hub)
+        queryset = HubDRepositoryTSReverseLink({}).receive()
+        self.assertEqual(queryset.count(), 1)
+        self.assertEqual(queryset[0].field_tsc2_float, "2.5")
 
 
 class TestLinkOneToOneUpates(TestCase):
