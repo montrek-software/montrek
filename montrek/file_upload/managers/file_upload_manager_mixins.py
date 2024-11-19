@@ -37,10 +37,7 @@ class LogFileMixin(LogFileChecksMixin):
     ) -> File:
         file_name = "upload_log.xlsx"
         user_mail = (
-            MontrekUserRepository()
-            .std_queryset()
-            .get(id=self.session_data["user_id"])
-            .email
+            MontrekUserRepository().receive().get(id=self.session_data["user_id"]).email
         )
         log_sr = pd.Series(
             {
