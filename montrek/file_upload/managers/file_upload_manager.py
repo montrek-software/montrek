@@ -112,9 +112,9 @@ class FileUploadManagerABC(MontrekManager):
                 "link_file_upload_registry_file_upload_file": upload_file_hub,
             }
         )
-        self.file_upload_registry = self.registry_manager.repository.receive().get(
-            hub__pk=file_upload_registry_hub.pk
-        )
+        self.file_upload_registry = self.registry_manager.repository.receive(
+            apply_filter=False
+        ).get(hub__pk=file_upload_registry_hub.pk)
 
     def _update_file_upload_registry(
         self, upload_status: str, upload_message: str

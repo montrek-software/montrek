@@ -38,6 +38,18 @@ class TestFileUploadManager(TestCase):
         )
         self.user = MontrekUserFactory()
         self.session_data = {"user_id": self.user.id}
+        filter_data = {
+            "request_path": "test_path",
+            "filter": {
+                "test_path": {
+                    "value_date": {
+                        "filter_value": "2024-01-01",
+                        "filter_negate": False,
+                    }
+                }
+            },
+        }
+        self.session_data.update(filter_data)
 
     def test_fum_init(self):
         MockFileUploadManager(
