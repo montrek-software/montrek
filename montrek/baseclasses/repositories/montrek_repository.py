@@ -70,9 +70,9 @@ class MontrekRepository:
     def create_by_data_frame(self, data_frame: pd.DataFrame) -> List[MontrekHubABC]:
         return self.create_objects_from_data_frame(data_frame)
 
-    def receive(self) -> QuerySet:
+    def receive(self, apply_filter: bool = True) -> QuerySet:
         return self.query_builder.build_queryset(
-            self.reference_date, self.order_fields()
+            self.reference_date, self.order_fields(), apply_filter=apply_filter
         )
 
     def delete(self, obj: MontrekHubABC):

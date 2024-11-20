@@ -36,7 +36,10 @@ class QueryBuilder:
         return self.hub_class.hub_value_date.field.model
 
     def build_queryset(
-        self, reference_date: timezone.datetime, order_fields: tuple[str, ...] = ()
+        self,
+        reference_date: timezone.datetime,
+        order_fields: tuple[str, ...] = (),
+        apply_filter: bool = True,
     ) -> QuerySet:
         queryset = self.hub_value_date.objects.annotate(
             **self.annotator.build(reference_date)
@@ -46,7 +49,8 @@ class QueryBuilder:
         )
         queryset = self._filter_ts_rows(queryset)
         queryset = self._filter_session_data(queryset)
-        queryset = self._apply_filter(queryset)
+        if apply_filter:
+            queryset = self._apply_filter(queryset)
         queryset = self._apply_order(queryset, order_fields)
         return queryset
 

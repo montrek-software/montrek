@@ -1866,8 +1866,8 @@ class TestGetHubsByFieldValues(TestCase):
             values=values,
             by_repository_field="field_a1_str",
             raise_for_multiple_hubs=False,
-            raise_for_unmapped_values=False,
         )
+        raise_for_unmapped_values = (False,)
         actual_ids = [hub.id if hub else None for hub in actual]
         expected_ids = [1, 2, 2, 3, None, None]  # 2 is the first hub with value "c"
         self.assertEqual(actual_ids, expected_ids)
@@ -2130,3 +2130,44 @@ class TestCommonFields(TestCase):
         self.assertEqual(test_obj.comment_tsd2, "Third Comment")
         self.assertEqual(test_obj.comment_d1, "Fourth Comment")
         self.assertEqual(test_obj.comment, "")
+
+
+class TestReceiveWithFilter(TestCase):
+    def test_receive_with_filter(self):
+        me_factories.SatC1Factory.create(field_c1_str="Test")
+        me_factories.SatC1Factory.create(field_c1_str="Test2")
+        me_factories.SatC1Factory.create(field_c1_str="Test3")
+        filter_data = {
+            "request_path": "test_path",
+            "filter": {
+                "test_path": {
+                    "field_c1_str": {
+                        "filter_value": "Test",
+                        "filter_negate": False,
+                    }
+                }
+            },
+        }
+        repo = HubCRepository(session_data=filter_data)
+        query = repo.receive()
+        self.assertEqual(query.count(), 1)
+        self.assertEqual(query.first().field_c1_str, "Test")
+
+    def test_receive_with_filter_dont_apply(self):
+        me_factories.SatC1Factory.create(field_c1_str="Test")
+        me_factories.SatC1Factory.create(field_c1_str="Test2")
+        me_factories.SatC1Factory.create(field_c1_str="Test3")
+        filter_data = {
+            "request_path": "test_path",
+            "filter": {
+                "test_path": {
+                    "field_c1_str": {
+                        "filter_value": "Test",
+                        "filter_negate": False,
+                    }
+                }
+            },
+        }
+        repo = HubCRepository(session_data=filter_data)
+        query = repo.receive(apply_filter=False)
+        self.assertEqual(query.count(), 3)

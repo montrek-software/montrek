@@ -17,7 +17,7 @@ class ProcessFileTaskABC(Task):
     def __init__(
         self,
         *args,
-        file_upload_processor_class: FileUploadProcessorProtocol,
+        file_upload_processor_class: type[FileUploadProcessorProtocol],
         file_upload_registry_repository_class: type[FileUploadRegistryRepositoryABC],
         **kwargs,
     ) -> None:
