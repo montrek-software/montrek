@@ -463,6 +463,9 @@ class TestMontrekCreateObject(TestCase):
                 "value_date": "2024-11-21",
             }
         )
+        test_query = repository.receive()
+        self.assertEqual(test_query.count(), 1)
+        self.assertEqual(test_query[0].field_tsc2_float, 5.0)
         repository.std_create_object(
             {
                 "field_tsc2_float": 5.0,
@@ -473,6 +476,16 @@ class TestMontrekCreateObject(TestCase):
         test_query = repository.receive()
         self.assertEqual(test_query.count(), 1)
         self.assertEqual(test_query[0].field_tsc2_float, 5.0)
+        repository.std_create_object(
+            {
+                "field_tsc2_float": 4.0,
+                "hub_entity_id": existing_hub.id,
+                "value_date": "2024-11-21",
+            }
+        )
+        test_query = repository.receive()
+        self.assertEqual(test_query.count(), 1)
+        self.assertEqual(test_query[0].field_tsc2_float, 4.0)
 
     def test_create_objects_from_data_frame(self):
         repository = HubARepository(session_data={"user_id": self.user.id})
