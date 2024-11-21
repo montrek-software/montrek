@@ -1,4 +1,5 @@
 import os
+from typing import Any
 
 from decouple import config
 from django.contrib import messages
@@ -379,8 +380,13 @@ class MontrekDetailView(
     MontrekViewMixin,
     ToPdfMixin,
 ):
+    """
+    View for displaying details of a single entity. pk is the corrresponding hub entity if is_hub_based is True
+    """
+
     template_name = "montrek_details.html"
     manager_class = MontrekManagerNotImplemented
+    is_hub_based = True
 
     def get_queryset(self):
         return self.get_view_queryset()
@@ -389,16 +395,26 @@ class MontrekDetailView(
         context = super().get_context_data(**kwargs)
         if not isinstance(self.manager, MontrekDetailsManager):
             raise ValueError(
-                f"Manager {self.manager.__class__.__name__} must be of type MontrekDetailsManager"
+                f"Manager {self.manager_class.__name__} must be of type MontrekDetailsManager"
             )
         context = self.get_page_context(context, **kwargs)
         context["table"] = self.manager.to_html()
         return context
 
     def get(self, request, *args, **kwargs):
+        if self.is_hub_based:
+            kwargs = self._set_hub_value_date_pk(kwargs)
+
         if self.request.GET.get("gen_pdf") == "true":
             return self.list_to_pdf()
         return super().get(request, *args, **kwargs)
+
+    def _set_hub_value_date_pk(self, kwargs: dict[str, Any]) -> dict[str, Any]:
+        repository = self.manager_class.repository_class()
+        hub_value_date_pk = repository.receive().filter(hub__pk=kwargs["pk"]).first().pk
+        kwargs["pk"] = hub_value_date_pk
+        self.kwargs["pk"] = hub_value_date_pk
+        return kwargs
 
 
 class MontrekCreateUpdateView(
