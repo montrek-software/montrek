@@ -122,9 +122,19 @@ class DbCreator:
         ) in self.stalled_hub_value_dates.items():
             hub_value_date_class.objects.bulk_create(stalled_hub_value_dates)
         for satellite_class, stalled_satellites in self.stalled_satellites.items():
-            if "hub_entity_id" in satellite_class.identifier_fields:
+            if (
+                "hub_entity_id" in satellite_class.identifier_fields
+                or satellite_class.is_timeseries
+            ):
                 for stalled_satellite in stalled_satellites:
-                    stalled_satellite.hub_entity_id = stalled_satellite.hub_entity.id
+                    if satellite_class.is_timeseries:
+                        stalled_satellite.hub_value_date_id = (
+                            stalled_satellite.hub_value_date.id
+                        )
+                    else:
+                        stalled_satellite.hub_entity_id = (
+                            stalled_satellite.hub_entity.id
+                        )
                     stalled_satellite.get_hash_identifier
                     stalled_satellite.get_hash_value
 
@@ -256,8 +266,11 @@ class DbCreator:
     ):
         if not existing_satellites:
             return
-
-        old_hub = existing_satellites[0].satellite.hub_entity
+        ref_satellite = existing_satellites[0].satellite
+        if ref_satellite.is_timeseries:
+            old_hub = ref_satellite.hub_value_date.hub
+        else:
+            old_hub = ref_satellite.hub_entity
         if old_hub == reference_hub:
             return
         self._update_hubs(old_hub, reference_hub, creation_date)
