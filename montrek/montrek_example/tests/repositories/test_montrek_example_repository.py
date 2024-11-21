@@ -2171,3 +2171,17 @@ class TestReceiveWithFilter(TestCase):
         repo = HubCRepository(session_data=filter_data)
         query = repo.receive(apply_filter=False)
         self.assertEqual(query.count(), 3)
+
+    def test_ignore_session_date(self):
+        hub_value_date = me_factories.CHubValueDateFactory.create(
+            value_date="2024-02-05"
+        )
+        me_factories.SatC1Factory.create(
+            field_c1_str="Test", hub_entity=hub_value_date.hub
+        )
+        repo = HubCRepositoryOnlyStatic(
+            session_data={"end_date": datetime.datetime(2024, 1, 1)}
+        )
+        test_query = repo.receive()
+        self.assertEqual(test_query.count(), 1)
+        self.assertEqual(test_query.first().field_c1_str, "Test")

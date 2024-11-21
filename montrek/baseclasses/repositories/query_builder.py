@@ -89,6 +89,8 @@ class QueryBuilder:
         return filtered_query
 
     def _filter_session_data(self, queryset: QuerySet) -> QuerySet:
+        if not self.annotator.get_ts_satellite_classes():
+            return queryset
         end_date = self.session_data.get("end_date", timezone.datetime.max)
         start_date = self.session_data.get("start_date", timezone.datetime.min)
         return queryset.filter(
