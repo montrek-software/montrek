@@ -74,7 +74,7 @@ class QueryBuilder:
         ).exclude(id=OuterRef("id"))
         if self.latest_ts or not self.annotator.get_ts_satellite_classes():
             latest_value_date = (
-                queryset.filter(hub=OuterRef("hub"))
+                queryset.filter(hub=OuterRef("hub"), value_date__isnull=False)
                 .order_by("-value_date")
                 .values("value_date")[:1]
             )

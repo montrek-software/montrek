@@ -65,7 +65,7 @@ class FileUploadManagerABC(MontrekManager):
 
     def __init__(
         self,
-        file: TextIO,
+        file: TextIO | None,
         session_data: Dict[str, Any],
         **kwargs,
     ) -> None:
