@@ -366,7 +366,7 @@ class TestMontrekCreateObject(TestCase):
         self.assertEqual(a_object.field_a1_int, 5)
         self.assertEqual(a_object.field_a2_str, "test2")
         self.assertEqual(a_object.field_a2_float, 6.0)
-        self.assertEqual(a_object.created_by, self.user.id)
+        self.assertEqual(a_object.created_by, self.user.email)
 
         # Now we have two hubs with different state_date_start and state_date_end:
         self.assertEqual(me_models.HubA.objects.count(), 2)
@@ -1898,8 +1898,8 @@ class TestGetHubsByFieldValues(TestCase):
             values=values,
             by_repository_field="field_a1_str",
             raise_for_multiple_hubs=False,
+            raise_for_unmapped_values=False,
         )
-        raise_for_unmapped_values = (False,)
         actual_ids = [hub.id if hub else None for hub in actual]
         expected_ids = [1, 2, 2, 3, None, None]  # 2 is the first hub with value "c"
         self.assertEqual(actual_ids, expected_ids)
