@@ -13,7 +13,7 @@ class LogFileTestMixin:
         additional_data: pd.DataFrame = None,
         _startswith: bool = False,
     ):
-        upload_registry_query = registry_repository.std_queryset()
+        upload_registry_query = registry_repository.receive()
         self.assertEqual(upload_registry_query.count(), 1)
         log_excel_file = upload_registry_query.first().log_file
         log_excel_path = os.path.join(settings.MEDIA_ROOT, log_excel_file)

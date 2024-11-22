@@ -38,13 +38,25 @@ class TestFileUploadManager(TestCase):
         )
         self.user = MontrekUserFactory()
         self.session_data = {"user_id": self.user.id}
+        filter_data = {
+            "request_path": "test_path",
+            "filter": {
+                "test_path": {
+                    "value_date": {
+                        "filter_value": "2024-01-01",
+                        "filter_negate": False,
+                    }
+                }
+            },
+        }
+        self.session_data.update(filter_data)
 
     def test_fum_init(self):
         MockFileUploadManager(
             file=self.test_file,
             session_data=self.session_data,
         )
-        file_upload_registry_query = FileUploadRegistryRepository().std_queryset()
+        file_upload_registry_query = FileUploadRegistryRepository().receive()
         self.assertEqual(file_upload_registry_query.count(), 1)
         file_upload_registry = file_upload_registry_query.first()
         fname_pattern = r"test_file.*\.txt"
@@ -60,7 +72,7 @@ class TestFileUploadManager(TestCase):
             session_data=self.session_data,
         )
         fum.upload_and_process()
-        file_upload_registry_query = FileUploadRegistryRepository().std_queryset()
+        file_upload_registry_query = FileUploadRegistryRepository().receive()
         self.assertEqual(file_upload_registry_query.count(), 1)
         file_upload_registry = file_upload_registry_query.first()
         self.assertEqual(file_upload_registry.upload_status, "processed")
@@ -73,7 +85,7 @@ class TestFileUploadManager(TestCase):
         )
         fum.init_upload()
         fum.upload_and_process()
-        file_upload_registry_query = FileUploadRegistryRepository().std_queryset()
+        file_upload_registry_query = FileUploadRegistryRepository().receive()
         self.assertEqual(file_upload_registry_query.count(), 1)
         file_upload_registry = file_upload_registry_query.first()
         self.assertEqual(file_upload_registry.upload_status, "failed")
@@ -85,7 +97,7 @@ class TestFileUploadManager(TestCase):
             session_data=self.session_data,
         )
         fum.upload_and_process()
-        file_upload_registry_query = FileUploadRegistryRepository().std_queryset()
+        file_upload_registry_query = FileUploadRegistryRepository().receive()
         self.assertEqual(file_upload_registry_query.count(), 1)
         file_upload_registry = file_upload_registry_query.first()
         self.assertEqual(file_upload_registry.upload_status, "failed")
@@ -97,7 +109,7 @@ class TestFileUploadManager(TestCase):
             session_data=self.session_data,
         )
         fum.upload_and_process()
-        file_upload_registry_query = FileUploadRegistryRepository().std_queryset()
+        file_upload_registry_query = FileUploadRegistryRepository().receive()
         self.assertEqual(file_upload_registry_query.count(), 1)
         file_upload_registry = file_upload_registry_query.first()
         self.assertEqual(file_upload_registry.upload_status, "failed")

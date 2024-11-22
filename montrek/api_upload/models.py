@@ -1,6 +1,7 @@
 from django.db import models
 
 from baseclasses import models as baseclass_models
+from baseclasses.fields import HubForeignKey
 
 
 class ApiUploadRegistryHubABC(baseclass_models.MontrekHubABC):
@@ -30,6 +31,10 @@ class ApiUploadRegistryStaticSatelliteABC(baseclass_models.MontrekSatelliteABC):
 
 class ApiUploadRegistryHub(ApiUploadRegistryHubABC):
     pass
+
+
+class ApiUploadRegistryHubValueDate(baseclass_models.HubValueDate):
+    hub = HubForeignKey(ApiUploadRegistryHub)
 
 
 class ApiUploadRegistryStaticSatellite(ApiUploadRegistryStaticSatelliteABC):

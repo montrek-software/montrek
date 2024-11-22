@@ -5,7 +5,7 @@ from baseclasses.repositories.montrek_repository import MontrekRepository
 class HubCRepository(MontrekRepository):
     hub_class = me_models.HubC
 
-    def std_queryset(self):
+    def set_annotations(self):
         self.add_satellite_fields_annotations(
             me_models.SatTSC2,
             ["field_tsc2_float"],
@@ -15,7 +15,6 @@ class HubCRepository(MontrekRepository):
             [
                 "field_tsc3_int",
                 "field_tsc3_str",
-                "value_date",
             ],
         )
         self.add_satellite_fields_annotations(
@@ -32,8 +31,73 @@ class HubCRepository(MontrekRepository):
             ],
         )
         self.add_linked_satellites_field_annotations(
+            me_models.SatD1,
+            me_models.LinkHubCHubD,
+            ["field_d1_str"],
+        )
+        self.add_linked_satellites_field_annotations(
             me_models.SatTSD2,
             me_models.LinkHubCHubD,
             ["field_tsd2_float", "field_tsd2_int"],
         )
-        return self.build_queryset()
+
+
+class HubCRepositoryLastTS(HubCRepository):
+    latest_ts = True
+
+
+class HubCRepositoryOnlyStatic(MontrekRepository):
+    hub_class = me_models.HubC
+
+    def set_annotations(self):
+        self.add_satellite_fields_annotations(
+            me_models.SatC1,
+            [
+                "field_c1_bool",
+                "field_c1_str",
+            ],
+        )
+
+
+class HubCRepository2(MontrekRepository):
+    hub_class = me_models.HubC
+
+    def set_annotations(self):
+        self.add_linked_satellites_field_annotations(
+            me_models.SatA1,
+            me_models.LinkHubAHubC,
+            ["field_a1_int"],
+            reversed_link=True,
+        )
+
+
+class HubCRepositoryCommonFields(MontrekRepository):
+    hub_class = me_models.HubC
+
+    def set_annotations(self):
+        self.add_satellite_fields_annotations(
+            me_models.SatTSC2,
+            ["field_tsc2_float", "comment"],
+            rename_field_map={"comment": "comment_tsc2"},
+        )
+        self.add_satellite_fields_annotations(
+            me_models.SatC1,
+            [
+                "field_c1_bool",
+                "field_c1_str",
+                "comment",
+            ],
+            rename_field_map={"comment": "comment_c1"},
+        )
+        self.add_linked_satellites_field_annotations(
+            me_models.SatD1,
+            me_models.LinkHubCHubD,
+            ["field_d1_str", "comment"],
+            rename_field_map={"comment": "comment_d1"},
+        )
+        self.add_linked_satellites_field_annotations(
+            me_models.SatTSD2,
+            me_models.LinkHubCHubD,
+            ["field_tsd2_float", "field_tsd2_int", "comment"],
+            rename_field_map={"comment": "comment_tsd2"},
+        )

@@ -47,7 +47,7 @@ class TestProcessFileTaskABC(TestCase):
         self.assertTrue(
             "File processed" in m.body,
         )
-        registry_sat_obj = MockFileUploadRegistryRepository({}).std_queryset().last()
+        registry_sat_obj = MockFileUploadRegistryRepository({}).receive().last()
         self.assertEqual(registry_sat_obj.upload_status, "processed")
 
     def test_run_pre_check_error(self):
@@ -71,7 +71,7 @@ class TestProcessFileTaskABC(TestCase):
         self.assertTrue(
             "Pre check failed" in m.body,
         )
-        registry_sat_obj = FileUploadRegistryRepository({}).std_queryset().last()
+        registry_sat_obj = FileUploadRegistryRepository({}).receive().last()
         self.assertEqual(registry_sat_obj.upload_status, "failed")
 
     def test_run_post_check_error(self):
@@ -95,7 +95,7 @@ class TestProcessFileTaskABC(TestCase):
         self.assertTrue(
             "Post check failed" in m.body,
         )
-        registry_sat_obj = FileUploadRegistryRepository({}).std_queryset().last()
+        registry_sat_obj = FileUploadRegistryRepository({}).receive().last()
         self.assertEqual(registry_sat_obj.upload_status, "failed")
 
     def test_run_unhandled_processor_error(self):
@@ -124,5 +124,5 @@ class TestProcessFileTaskABC(TestCase):
             "Error raised during file processing: <br>RuntimeError: Processor error"
             in m.body,
         )
-        registry_sat_obj = FileUploadRegistryRepository({}).std_queryset().last()
+        registry_sat_obj = FileUploadRegistryRepository({}).receive().last()
         self.assertEqual(registry_sat_obj.upload_status, "failed")

@@ -37,7 +37,7 @@ class MockRegistryRepository:
     def __init__(self, processor):
         self.processor = processor
 
-    def std_queryset(self):
+    def receive(self):
         return MockFileSatellites(
             self.processor.file_upload_registry_hub.link_file_upload_registry_file_log_file
         )
@@ -117,7 +117,9 @@ class TestExcelLogFileMixin(TestCase, LogFileTestMixin):
         self.processor.generate_log_file_excel(test_message)
         test_message_2 = "Another message"
         self.processor.generate_log_file_excel(test_message_2)
-        file_links = self.processor.file_upload_registry_hub.link_file_upload_registry_file_log_file
+        file_links = (
+            self.processor.file_upload_registry_hub.link_file_upload_registry_file_log_file
+        )
         # One file is linked
         self.assertEqual(
             file_links.count(),

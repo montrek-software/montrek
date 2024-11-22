@@ -1,112 +1,152 @@
 import factory
-import datetime
-
 from api_upload.tests.factories import (
     ApiUploadRegistryHubFactory,
     ApiUploadRegistryStaticSatelliteFactory,
 )
-from file_upload.tests.factories.file_upload_factories import (
-    FileUploadRegistryHubFactory,
-    FileUploadRegistryStaticSatelliteFactory,
+from baseclasses.tests.factories.baseclass_factories import ValueDateListFactory
+from baseclasses.tests.factories.montrek_factory_schemas import (
+    MontrekHubValueDateFactory,
+    MontrekSatelliteFactory,
+    MontrekTSSatelliteFactory,
+    MontrekHubFactory,
 )
 from file_upload.tests.factories.field_map_factories import (
     FieldMapHubFactory,
     FieldMapStaticSatelliteFactory,
 )
+from file_upload.tests.factories.file_upload_factories import (
+    FileUploadRegistryHubFactory,
+    FileUploadRegistryStaticSatelliteFactory,
+)
 
 
-class HubAFactory(factory.django.DjangoModelFactory):
+class HubAFactory(MontrekHubFactory):
     class Meta:
         model = "montrek_example.HubA"
 
 
-class HubBFactory(factory.django.DjangoModelFactory):
+class HubBFactory(MontrekHubFactory):
     class Meta:
         model = "montrek_example.HubB"
 
 
-class HubCFactory(factory.django.DjangoModelFactory):
+class HubCFactory(MontrekHubFactory):
     class Meta:
         model = "montrek_example.HubC"
 
 
-class HubDFactory(factory.django.DjangoModelFactory):
+class HubDFactory(MontrekHubFactory):
     class Meta:
         model = "montrek_example.HubD"
 
 
-class SatA1Factory(factory.django.DjangoModelFactory):
+class AHubValueDateFactory(MontrekHubValueDateFactory):
+    class Meta:
+        model = "montrek_example.AHubValueDate"
+
+    hub = factory.SubFactory(HubAFactory)
+    value_date_list = factory.SubFactory(ValueDateListFactory)
+
+
+class BHubValueDateFactory(MontrekHubValueDateFactory):
+    class Meta:
+        model = "montrek_example.BHubValueDate"
+
+    hub = factory.SubFactory(HubBFactory)
+    value_date_list = factory.SubFactory(ValueDateListFactory)
+
+
+class CHubValueDateFactory(MontrekHubValueDateFactory):
+    class Meta:
+        model = "montrek_example.CHubValueDate"
+
+    hub = factory.SubFactory(HubCFactory)
+
+
+class DHubValueDateFactory(MontrekHubValueDateFactory):
+    class Meta:
+        model = "montrek_example.DHubValueDate"
+
+    hub = factory.SubFactory(HubDFactory)
+    value_date_list = factory.SubFactory(ValueDateListFactory)
+
+
+class SatA1Factory(MontrekSatelliteFactory):
     class Meta:
         model = "montrek_example.SatA1"
 
     hub_entity = factory.SubFactory(HubAFactory)
 
 
-class SatA2Factory(factory.django.DjangoModelFactory):
+class SatA2Factory(MontrekSatelliteFactory):
     class Meta:
         model = "montrek_example.SatA2"
 
     hub_entity = factory.SubFactory(HubAFactory)
 
 
-class SatB1Factory(factory.django.DjangoModelFactory):
+class SatB1Factory(MontrekSatelliteFactory):
     class Meta:
         model = "montrek_example.SatB1"
 
     hub_entity = factory.SubFactory(HubBFactory)
 
 
-class SatB2Factory(factory.django.DjangoModelFactory):
+class SatB2Factory(MontrekSatelliteFactory):
     class Meta:
         model = "montrek_example.SatB2"
 
     hub_entity = factory.SubFactory(HubBFactory)
 
 
-class SatC1Factory(factory.django.DjangoModelFactory):
+class SatC1Factory(MontrekSatelliteFactory):
     class Meta:
         model = "montrek_example.SatC1"
 
     hub_entity = factory.SubFactory(HubCFactory)
 
 
-class SatTSC2Factory(factory.django.DjangoModelFactory):
+class SatTSC2Factory(MontrekTSSatelliteFactory):
     class Meta:
         model = "montrek_example.SatTSC2"
 
-    hub_entity = factory.SubFactory(HubCFactory)
-    value_date = factory.Faker("date_time", tzinfo=datetime.timezone.utc)
+    hub_value_date = factory.SubFactory(CHubValueDateFactory)
     field_tsc2_float = factory.Faker("random_int", min=0, max=100)
 
 
-class SatTSC3Factory(factory.django.DjangoModelFactory):
+class SatTSC3Factory(MontrekTSSatelliteFactory):
     class Meta:
         model = "montrek_example.SatTSC3"
 
-    hub_entity = factory.SubFactory(HubCFactory)
-    value_date = factory.Faker("date_time", tzinfo=datetime.timezone.utc)
+    hub_value_date = factory.SubFactory(CHubValueDateFactory)
     field_tsc3_int = factory.Faker("random_int", min=0, max=100)
     field_tsc3_str = factory.Faker("word")
 
 
-class SatD1Factory(factory.django.DjangoModelFactory):
+class SatD1Factory(MontrekSatelliteFactory):
     class Meta:
         model = "montrek_example.SatD1"
 
     hub_entity = factory.SubFactory(HubDFactory)
 
 
-class SatTSD2Factory(factory.django.DjangoModelFactory):
+class SatTSD2Factory(MontrekTSSatelliteFactory):
     class Meta:
         model = "montrek_example.SatTSD2"
 
-    hub_entity = factory.SubFactory(HubDFactory)
-    value_date = factory.Faker("date_time", tzinfo=datetime.timezone.utc)
+    hub_value_date = factory.SubFactory(DHubValueDateFactory)
 
 
 class HubAFileUploadRegistryHubFactory(FileUploadRegistryHubFactory):
     class Meta:
         model = "montrek_example.HubAFileUploadRegistryHub"
+
+
+class HubAFileUploadRegistryHubValueDateFactory(MontrekHubValueDateFactory):
+    class Meta:
+        model = "montrek_example.HubAFileUploadRegistryHubValueDate"
+
+    hub = factory.SubFactory(HubAFileUploadRegistryHubFactory)
 
 
 class HubAFileUploadRegistryStaticSatelliteFactory(

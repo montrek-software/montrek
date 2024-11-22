@@ -18,20 +18,20 @@ class TestFieldMapRepository(TestCase):
         FieldMapStaticSatelliteFactory(step=1, source_field="b", database_field="B")
         FieldMapStaticSatelliteFactory(step=1, source_field="a", database_field="A")
 
-        queryset = self.repository.std_queryset()
+        queryset = self.repository.receive()
 
         self.assertEqual(queryset.count(), 4)
 
         # Expect orderinb by step and source_field
-        self.assertEqual(queryset[0].source_field, "a")
-        self.assertEqual(queryset[1].source_field, "b")
-        self.assertEqual(queryset[2].source_field, "c")
-        self.assertEqual(queryset[3].source_field, "d")
+        self.assertEqual(queryset[0].source_field, "d")
+        self.assertEqual(queryset[1].source_field, "c")
+        self.assertEqual(queryset[2].source_field, "b")
+        self.assertEqual(queryset[3].source_field, "a")
 
-        self.assertEqual(queryset[0].database_field, "A")
-        self.assertEqual(queryset[1].database_field, "B")
-        self.assertEqual(queryset[2].database_field, "C")
-        self.assertEqual(queryset[3].database_field, "D")
+        self.assertEqual(queryset[0].database_field, "D")
+        self.assertEqual(queryset[1].database_field, "C")
+        self.assertEqual(queryset[2].database_field, "B")
+        self.assertEqual(queryset[3].database_field, "A")
 
     def test_get_source_field(self):
         FieldMapStaticSatelliteFactory(
@@ -44,12 +44,12 @@ class TestFieldMapRepository(TestCase):
         FieldMapStaticSatelliteFactory(
             source_field="source_field", database_field="database_field"
         )
-        test_queryset = self.repository.std_queryset()
+        test_queryset = self.repository.receive()
         self.assertEqual(test_queryset.count(), 1)
         self.assertEqual(test_queryset.first().source_field, "source_field")
         self.repository.std_create_object(
             {"source_field": "new_source_field", "database_field": "database_field"}
         )
-        test_queryset = self.repository.std_queryset()
+        test_queryset = self.repository.receive()
         self.assertEqual(test_queryset.count(), 1)
         self.assertEqual(test_queryset.first().source_field, "new_source_field")

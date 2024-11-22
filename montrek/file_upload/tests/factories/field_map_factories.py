@@ -1,12 +1,17 @@
 import factory
 
+from baseclasses.tests.factories.montrek_factory_schemas import (
+    MontrekHubFactory,
+    MontrekSatelliteFactory,
+)
 
-class FieldMapHubFactory(factory.django.DjangoModelFactory):
+
+class FieldMapHubFactory(MontrekHubFactory):
     class Meta:
         model = "file_upload.FieldMapHub"
 
 
-class FieldMapStaticSatelliteFactory(factory.django.DjangoModelFactory):
+class FieldMapStaticSatelliteFactory(MontrekSatelliteFactory):
     class Meta:
         model = "file_upload.FieldMapStaticSatellite"
 

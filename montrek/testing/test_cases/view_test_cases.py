@@ -112,8 +112,8 @@ class MontrekObjectViewBaseTestCase(MontrekViewTestCase):
         # Method to be overwritten
         pass
 
-    def _get_std_queryset(self) -> QuerySet:
-        return self.view.manager.repository.std_queryset()
+    def receive(self) -> QuerySet:
+        return self.view.manager.repository.receive()
 
     def get_post_response(self):
         return self.client.post(self.url, self.creation_data())
@@ -140,26 +140,32 @@ class MontrekCreateUpdateViewTestCase(MontrekObjectViewBaseTestCase):
             if key.startswith("link_"):
                 continue
             if key == "hub_entity_id":
-                key = "id"
+                key = "hub_id"
             created_value = getattr(created_object, key)
             if created_value is None:
                 self.assertEqual(value, "")
                 continue
             if isinstance(created_value, (datetime.datetime, datetime.date)):
                 value = pd.to_datetime(value).date()
-            self.assertEqual(created_value, value)
+                if isinstance(created_value, datetime.datetime):
+                    expected_value = created_value.date()
+                else:
+                    expected_value = created_value
+            else:
+                expected_value = created_value
+            self.assertEqual(expected_value, value)
         self.additional_assertions(created_object)
 
 
 class GetObjectLastMixin:
     def _get_object(self) -> QuerySet:
-        std_query = self._get_std_queryset()
+        std_query = self.receive()
         return std_query.last()
 
 
 class GetObjectPkMixin:
     def _get_object(self) -> QuerySet:
-        std_query = self._get_std_queryset()
+        std_query = self.receive()
         return std_query.get(pk=self.url_kwargs()["pk"])
 
 
@@ -199,7 +205,7 @@ class MontrekDeleteViewTestCase(MontrekObjectViewBaseTestCase, GetObjectPkMixin)
         return self.__class__.__name__ == "MontrekDeleteViewTestCase"
 
     def _get_object(self):
-        std_query = self._get_std_queryset()
+        std_query = self.receive()
         return std_query.filter(pk=self.url_kwargs()["pk"])
 
     def creation_data(self) -> dict:

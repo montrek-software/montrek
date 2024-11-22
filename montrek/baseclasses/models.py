@@ -1,11 +1,14 @@
-import hashlib
 import datetime
+import hashlib
 from enum import Enum
+
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
-from baseclasses.utils import datetime_to_montrek_time
+
 from baseclasses.dataclasses.alert import AlertEnum
+from baseclasses.fields import HubForeignKey
+from baseclasses.utils import datetime_to_montrek_time
 
 # Create your models here.
 
@@ -62,6 +65,13 @@ class AlertMixin(models.Model):
     alert_message = models.CharField(max_length=255, null=True, blank=True)
 
 
+class ValueDateList(models.Model):
+    value_date = models.DateField(unique=True, null=True, blank=True)
+
+    def __str__(self):
+        return f"value_date: {self.value_date}"
+
+
 # Base Hub Model ABC
 class MontrekHubABC(TimeStampMixin, StateMixin, UserMixin):
     class Meta:
@@ -69,17 +79,26 @@ class MontrekHubABC(TimeStampMixin, StateMixin, UserMixin):
 
     identifier = models.CharField(max_length=12, default="")
 
+    def get_hub_value_date(self):
+        return self.hub_value_date.get(value_date_list__value_date=None)
 
-# Base Static Satellite Model ABC
-class MontrekSatelliteABC(TimeStampMixin, StateMixin, UserMixin):
+
+class HubValueDate(models.Model):
     class Meta:
         abstract = True
-        indexes = [
-            models.Index(fields=["hash_identifier"]),
-            models.Index(fields=["hash_value"]),
-        ]
 
-    hub_entity = models.ForeignKey(MontrekHubABC, on_delete=models.CASCADE)
+    hub = HubForeignKey(MontrekHubABC)
+    value_date_list = models.ForeignKey(ValueDateList, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"hub: {self.hub} value_date_list: {self.value_date_list}"
+
+
+# Base Static Satellite Model ABC
+class MontrekSatelliteBaseABC(TimeStampMixin, StateMixin, UserMixin):
+    class Meta:
+        abstract = True
+
     hash_identifier = models.CharField(max_length=64, default="")
     hash_value = models.CharField(max_length=64, default="")
 
@@ -180,15 +199,47 @@ class MontrekSatelliteABC(TimeStampMixin, StateMixin, UserMixin):
     def get_hash_value(self) -> str:
         return self._get_hash_value()
 
+    def __str__(self) -> str:
+        return ",".join(
+            [f"{field} -> {getattr(self, field)}" for field in self.identifier_fields]
+        )
 
-class MontrekTimeSeriesSatelliteABC(MontrekSatelliteABC):
+
+class MontrekSatelliteABC(MontrekSatelliteBaseABC):
     class Meta:
         abstract = True
+        indexes = [
+            models.Index(fields=["hash_identifier"]),
+            models.Index(fields=["hash_value"]),
+        ]
 
+    hub_entity = models.ForeignKey(MontrekHubABC, on_delete=models.CASCADE)
+
+    @classmethod
+    def get_related_hub_class(cls) -> type[MontrekHubABC]:
+        return cls.hub_entity.field.related_model
+
+    def get_hub_value_date(self) -> HubValueDate:
+        return self.hub_entity.get_hub_value_date()
+
+
+class MontrekTimeSeriesSatelliteABC(MontrekSatelliteBaseABC):
+    class Meta:
+        abstract = True
+        indexes = [
+            models.Index(fields=["hash_identifier"]),
+            models.Index(fields=["hash_value"]),
+        ]
+
+    hub_value_date = models.ForeignKey(HubValueDate, on_delete=models.CASCADE)
+    value_date = models.DateField()
     allow_multiple = True
     is_timeseries = True
-    value_date = models.DateField()
-    identifier_fields = ["value_date", "hub_entity_id"]
+    identifier_fields = ["hub_value_date_id"]
+
+    @classmethod
+    def get_related_hub_class(cls) -> type[MontrekHubABC]:
+        return cls.hub_value_date.field.related_model.hub.field.related_model
 
 
 class MontrekTypeSatelliteABC(MontrekSatelliteABC):
@@ -224,6 +275,10 @@ class MontrekLinkABC(TimeStampMixin, StateMixin):
     def __str__(self) -> str:
         return f"{self.hub_in.identifier or self.hub_in.pk} -> {self.hub_out.identifier or self.hub_out.pk}"
 
+    @classmethod
+    def get_related_hub_class(cls, hub_field: str) -> type[MontrekHubABC]:
+        return getattr(cls, hub_field).field.related_model
+
 
 class MontrekOneToOneLinkABC(MontrekLinkABC):
     class Meta:
@@ -253,6 +308,10 @@ class MontrekManyToManyLinkABC(MontrekLinkABC):
 
 class TestMontrekHub(MontrekHubABC):
     pass
+
+
+class TestHubValueDate(HubValueDate):
+    hub = HubForeignKey(TestMontrekHub)
 
 
 class TestMontrekSatellite(MontrekSatelliteABC):

@@ -2,5 +2,5 @@ from user.models import MontrekUser
 
 
 class MontrekUserRepository:
-    def std_queryset(self):
+    def receive(self):
         return MontrekUser.objects.all()

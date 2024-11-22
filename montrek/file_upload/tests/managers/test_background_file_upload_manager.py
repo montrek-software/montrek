@@ -35,7 +35,7 @@ class TestBackgroundFileUploadManagerABC(TestCase):
         ]
         self.assertEqual(upload_status, ["pending", "scheduled", "processed"])
 
-        registry_sat_obj = MockFileUploadRegistryRepository({}).std_queryset().last()
+        registry_sat_obj = MockFileUploadRegistryRepository({}).receive().last()
         self.assertEqual(registry_sat_obj.upload_status, "processed")
         self.assertEqual(
             manager.processor.message,

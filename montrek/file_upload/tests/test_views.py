@@ -96,7 +96,7 @@ class TestMontrekDownloadFileView(MontrekFileResponseTestCase):
         )
 
     def url_kwargs(self) -> dict:
-        return {"pk": self.registrysat.hub_entity.pk}
+        return {"pk": self.registrysat.hub_entity.get_hub_value_date().pk}
 
     def test_return_file(self):
         content = b"".join(self.response.streaming_content)
