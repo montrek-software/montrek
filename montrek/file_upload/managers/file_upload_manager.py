@@ -81,16 +81,16 @@ class FileUploadManagerABC(MontrekManager):
 
     def upload_and_process(self) -> bool:
         if not self.processor.pre_check(self.file_path):
-            self._update_file_upload_registry("failed", self.processor.message)
+            self.update_file_upload_registry("failed", self.processor.message)
             return False
         if self.processor.process(self.file_path):
             if not self.processor.post_check(self.file_path):
-                self._update_file_upload_registry("failed", self.processor.message)
+                self.update_file_upload_registry("failed", self.processor.message)
                 return False
-            self._update_file_upload_registry("processed", self.processor.message)
+            self.update_file_upload_registry("processed", self.processor.message)
             return True
         else:
-            self._update_file_upload_registry("failed", self.processor.message)
+            self.update_file_upload_registry("failed", self.processor.message)
             return False
 
     def init_upload(self) -> None:
@@ -116,7 +116,7 @@ class FileUploadManagerABC(MontrekManager):
             apply_filter=False
         ).get(hub__pk=file_upload_registry_hub.pk)
 
-    def _update_file_upload_registry(
+    def update_file_upload_registry(
         self, upload_status: str, upload_message: str
     ) -> None:
         att_dict = self.registry_manager.repository.object_to_dict(
