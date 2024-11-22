@@ -110,7 +110,7 @@ class CreatedAtSubqueryBuilder(HubDirectFieldSubqueryBuilder):
 
 
 class CreatedBySubqueryBuilder(HubDirectFieldSubqueryBuilder):
-    field = "created_by"
+    field = "created_by__email"
 
 
 class CommentSubqueryBuilder(HubDirectFieldSubqueryBuilder):

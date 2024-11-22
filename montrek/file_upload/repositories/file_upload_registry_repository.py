@@ -52,8 +52,8 @@ class FileUploadRegistryRepositoryABC(MontrekRepository):
             FileUploadFileStaticSatellite,
             self.link_file_upload_registry_file_upload_file_class,
             ["file", "created_at"],
+            rename_field_map={"created_at": "upload_date"},
         )
-        self.rename_field("created_at", "upload_date")
 
     def _setup_checks(self):
         if self.hub_class is FileUploadRegistryHubABC:
