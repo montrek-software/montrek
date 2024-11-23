@@ -1,25 +1,38 @@
-from baseclasses.models import MontrekSatelliteABC, MontrekHubABC
+from baseclasses.models import MontrekHubABC, MontrekSatelliteABC
+from baseclasses.repositories.annotator import Annotator
 
 StalledSatelliteDict = dict[type[MontrekSatelliteABC], list[MontrekSatelliteABC]]
-StalledHubList = list[MontrekHubABC]
+
+StalledHubDict = dict[type[MontrekHubABC], list[MontrekHubABC]]
+
+
+StalledObject = MontrekSatelliteABC | MontrekHubABC
+
+StalledDicts = StalledSatelliteDict | StalledHubDict
 
 
 class DbStaller:
-    def __init__(self):
-        self.new_satellites: StalledSatelliteDict = {}
-        self.hub_list: StalledHubList = []
+    def __init__(self, annotator: Annotator):
+        self.annotator = annotator
+        self.new_satellites: StalledSatelliteDict = {
+            sat_class: [] for sat_class in annotator.annotated_satellite_classes
+        }
+        self.hubs: StalledHubDict = {annotator.hub_class: []}
 
     def stall_hub(self, new_hub: MontrekHubABC):
-        self.hub_list.append(new_hub)
+        self._add_stalled_object(new_hub, self.hubs)
 
     def stall_new_satellite(self, new_satellite: MontrekSatelliteABC):
-        sat_type = type(new_satellite)
-        if sat_type not in self.new_satellites:
-            self.new_satellites[sat_type] = []
-        self.new_satellites[sat_type].append(new_satellite)
+        self._add_stalled_object(new_satellite, self.new_satellites)
 
-    def get_hubs(self) -> StalledHubList:
-        return self.hub_list
+    def get_hubs(self) -> StalledHubDict:
+        return self.hubs
 
     def get_new_satellites(self) -> StalledSatelliteDict:
         return self.new_satellites
+
+    def _add_stalled_object(
+        self, new_object: StalledObject, stalled_list: StalledDicts
+    ):
+        object_type = type(new_object)
+        stalled_list[object_type].append(new_object)

@@ -1,4 +1,7 @@
-from baseclasses.repositories.db.db_staller import DbStaller
+from baseclasses.repositories.db.db_staller import (
+    DbStaller,
+    StalledDicts,
+)
 
 
 class DbWriter:
@@ -6,9 +9,17 @@ class DbWriter:
         self.db_staller = db_staller
 
     def write(self):
+        self.write_hubs()
         self.write_new_satellites()
+
+    def write_hubs(self):
+        new_hubs = self.db_staller.get_hubs()
+        self._bulk_create(new_hubs)
 
     def write_new_satellites(self):
         new_satellites = self.db_staller.get_new_satellites()
-        for sat_type, sats in new_satellites.items():
-            sat_type.objects.bulk_create(sats)
+        self._bulk_create(new_satellites)
+
+    def _bulk_create(self, new_objects: StalledDicts):
+        for obj_type, objs in new_objects.items():
+            obj_type.objects.bulk_create(objs)
