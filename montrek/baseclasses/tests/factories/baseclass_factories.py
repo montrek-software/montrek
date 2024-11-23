@@ -1,10 +1,20 @@
 import factory
+
 from baseclasses.utils import montrek_time
+from baseclasses.tests.factories.montrek_factory_schemas import ValueDateListFactory
 
 
 class TestMontrekHubFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = "baseclasses.TestMontrekHub"
+
+
+class TestHubValueDateFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "baseclasses.TestHubValueDate"
+
+    hub = factory.SubFactory(TestMontrekHubFactory)
+    value_date_list = factory.SubFactory(ValueDateListFactory)
 
 
 class TestMontrekSatelliteFactory(factory.django.DjangoModelFactory):
@@ -13,8 +23,12 @@ class TestMontrekSatelliteFactory(factory.django.DjangoModelFactory):
 
     hub_entity = factory.SubFactory(TestMontrekHubFactory)
     test_name = factory.Sequence(lambda n: f"Test Name {n}")
-    state_date_start = montrek_time(2023, 6, 20)
-    state_date_end = montrek_time(2023, 7, 10)
+
+    @classmethod
+    def _create(cls, model_class, *args, **kwargs):
+        instance = super()._create(model_class, *args, **kwargs)
+        TestHubValueDateFactory(hub=instance.hub_entity)
+        return instance
 
 
 class TestLinkHubFactory(factory.django.DjangoModelFactory):

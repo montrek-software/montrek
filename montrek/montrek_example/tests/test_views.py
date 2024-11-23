@@ -43,7 +43,7 @@ class TestMontrekExampleAListView(MontrekListViewTestCase):
         me_factories.SatA2Factory(
             hub_entity=other_sata1.hub_entity, field_a2_str="test"
         )
-        self.assertEqual(len(HubARepository().std_queryset()), 2)
+        self.assertEqual(len(HubARepository().receive()), 2)
 
         url = reverse(
             "montrek_example_a_list",
@@ -61,13 +61,13 @@ class TestMontrekExampleAListView(MontrekListViewTestCase):
         response = self.client.get(url, data=query_params)
         obj_list = response.context_data["object_list"]
         self.assertEqual(len(obj_list), 1)
-        self.assertEqual(obj_list[0].id, other_sata1.hub_entity.id)
+        self.assertEqual(obj_list[0].hub.id, other_sata1.hub_entity.id)
 
         # The filter should persist for this path until reset
         response = self.client.get(url)
         obj_list = response.context_data["object_list"]
         self.assertEqual(len(obj_list), 1)
-        self.assertEqual(obj_list[0].id, other_sata1.hub_entity.id)
+        self.assertEqual(obj_list[0].hub.id, other_sata1.hub_entity.id)
 
         response = self.client.get(url, data={"reset_filter": "true"}, follow=True)
         obj_list = response.context_data["object_list"]
@@ -93,11 +93,12 @@ class TestMontrekExampleAUpdateView(MontrekUpdateViewTestCase):
     view_class = me_views.MontrekExampleAUpdate
 
     def build_factories(self):
-        self.sat_a1 = me_factories.SatA1Factory()
-        me_factories.SatA2Factory(hub_entity=self.sat_a1.hub_entity)
+        self.hub_vd = me_factories.AHubValueDateFactory(value_date=None)
+        me_factories.SatA1Factory(hub_entity=self.hub_vd.hub)
+        me_factories.SatA2Factory(hub_entity=self.hub_vd.hub)
 
     def url_kwargs(self) -> dict:
-        return {"pk": self.sat_a1.hub_entity.id}
+        return {"pk": self.hub_vd.id}
 
     def update_data(self):
         return {
@@ -118,10 +119,13 @@ class TestMontrekExampleADetailView(MontrekViewTestCase):
     view_class = me_views.MontrekExampleADetails
 
     def build_factories(self):
-        self.sat_a = me_factories.SatA1Factory()
+        hub_vd_0 = me_factories.AHubValueDateFactory(value_date=None)
+        me_factories.SatA1Factory(hub_entity=hub_vd_0.hub)
+        self.hub_vd = me_factories.AHubValueDateFactory(value_date=None)
+        me_factories.SatA1Factory(hub_entity=self.hub_vd.hub)
 
     def url_kwargs(self) -> dict:
-        return {"pk": self.sat_a.hub_entity.id}
+        return {"pk": self.hub_vd.hub.id}
 
 
 class TestMontrekExampleADelete(MontrekDeleteViewTestCase):
@@ -129,11 +133,12 @@ class TestMontrekExampleADelete(MontrekDeleteViewTestCase):
     view_class = me_views.MontrekExampleADelete
 
     def build_factories(self):
-        self.sat_a1 = me_factories.SatA1Factory()
-        me_factories.SatA2Factory(hub_entity=self.sat_a1.hub_entity)
+        self.hub_vd = me_factories.AHubValueDateFactory()
+        me_factories.SatA1Factory(hub_entity=self.hub_vd.hub)
+        me_factories.SatA2Factory(hub_entity=self.hub_vd.hub)
 
     def url_kwargs(self) -> dict:
-        return {"pk": self.sat_a1.hub_entity.id}
+        return {"pk": self.hub_vd.id}
 
 
 class TestMontrekExampleAHistoryView(MontrekViewTestCase):
@@ -141,17 +146,18 @@ class TestMontrekExampleAHistoryView(MontrekViewTestCase):
     view_class = me_views.MontrekExampleAHistory
 
     def build_factories(self):
-        self.sat_a = me_factories.SatA1Factory()
+        self.hub_vd = me_factories.AHubValueDateFactory()
+        me_factories.SatA1Factory(hub_entity=self.hub_vd.hub)
 
     def url_kwargs(self) -> dict:
-        return {"pk": self.sat_a.hub_entity.id}
+        return {"pk": self.hub_vd.id}
 
     def test_view_with_history_data(self):
-        huba = me_factories.HubAFactory()
+        hubvd = me_factories.AHubValueDateFactory()
         user1 = MontrekUserFactory()
         user2 = MontrekUserFactory()
         me_factories.SatA1Factory(
-            hub_entity=huba,
+            hub_entity=hubvd.hub,
             field_a1_str="TestFeld",
             field_a1_int=5,
             state_date_end=montrek_time(2024, 2, 17),
@@ -159,7 +165,7 @@ class TestMontrekExampleAHistoryView(MontrekViewTestCase):
             comment="initial comment",
         )
         me_factories.SatA1Factory(
-            hub_entity=huba,
+            hub_entity=hubvd.hub,
             field_a1_str="TestFeld",
             field_a1_int=6,
             state_date_start=montrek_time(2024, 2, 17),
@@ -167,13 +173,13 @@ class TestMontrekExampleAHistoryView(MontrekViewTestCase):
             comment="change comment",
         )
         me_factories.SatA2Factory(
-            hub_entity=huba,
+            hub_entity=hubvd.hub,
             field_a2_str="ConstantTestFeld",
             field_a2_float=6.0,
             created_by=user2,
             comment="another comment",
         )
-        url = reverse("montrek_example_a_history", kwargs={"pk": huba.id})
+        url = reverse("montrek_example_a_history", kwargs={"pk": hubvd.id})
         response = self.client.get(url)
         test_history_data_tables = response.context_data["history_data_tables"]
         self.assertEqual(len(test_history_data_tables), 3)
@@ -208,11 +214,16 @@ class TestMontrekExampleBCreate(MontrekCreateViewTestCase):
     view_class = me_views.MontrekExampleBCreate
 
     def build_factories(self):
-        self.d_fac1 = me_factories.SatD1Factory.create(
+        self.hub_vd1 = me_factories.DHubValueDateFactory()
+        self.hub_vd2 = me_factories.DHubValueDateFactory()
+        me_factories.SatD1Factory.create(
             field_d1_str="test1",
+            hub_entity=self.hub_vd1.hub,
         )
-        self.d_fac2 = me_factories.SatD1Factory.create(
+
+        me_factories.SatD1Factory.create(
             field_d1_str="test2",
+            hub_entity=self.hub_vd2.hub,
         )
 
     def creation_data(self):
@@ -221,12 +232,12 @@ class TestMontrekExampleBCreate(MontrekCreateViewTestCase):
             "field_b1_date": "2024-02-17",
             "field_b2_str": "test2",
             "field_b2_choice": "CHOICE2",
-            "link_hub_b_hub_d": [self.d_fac1.hub_entity.id, self.d_fac2.hub_entity.id],
+            "link_hub_b_hub_d": [self.hub_vd1.id, self.hub_vd2.id],
             "alert_level": AlertEnum.OK.value.description,
         }
 
     def additional_assertions(self, created_object):
-        self.assertEqual(created_object.field_d1_str, "test1,test2")
+        self.assertEqual(created_object.field_d1_str, "test2,test1")
 
 
 class TestMontrekExampleBUpdate(MontrekUpdateViewTestCase):
@@ -234,11 +245,12 @@ class TestMontrekExampleBUpdate(MontrekUpdateViewTestCase):
     view_class = me_views.MontrekExampleBUpdate
 
     def build_factories(self):
-        self.satb1 = me_factories.SatB1Factory()
-        me_factories.SatB2Factory(hub_entity=self.satb1.hub_entity)
+        self.hub_vd = me_factories.BHubValueDateFactory()
+        me_factories.SatB1Factory(hub_entity=self.hub_vd.hub)
+        me_factories.SatB2Factory(hub_entity=self.hub_vd.hub)
 
     def url_kwargs(self) -> dict:
-        return {"pk": self.satb1.hub_entity.id}
+        return {"pk": self.hub_vd.id}
 
     def update_data(self) -> dict:
         return {
@@ -256,8 +268,8 @@ class TestMontrekExampleCListView(MontrekListViewTestCase):
     expected_no_of_rows = 1
 
     def build_factories(self):
-        satc1fac = me_factories.SatC1Factory()
-        me_factories.SatTSC2Factory(hub_entity=satc1fac.hub_entity)
+        sat_ts = me_factories.SatTSC2Factory()
+        me_factories.SatC1Factory(hub_entity=sat_ts.hub_value_date.hub)
 
 
 class TestMontrekExampleCCreate(MontrekCreateViewTestCase):
@@ -288,9 +300,9 @@ class TestMontrekExampleDListView(MontrekListViewTestCase):
         with open(test_file_path, "rb") as f:
             data = {"file": f}
             self.client.post(self.url, data, follow=True)
-        queyset = HubDRepository().std_queryset()
+        queyset = HubDRepository().receive()
         self.assertEqual(len(queyset), 4)
-        registry = FileUploadRegistryRepository().std_queryset().last()
+        registry = FileUploadRegistryRepository().receive().last()
         self.assertEqual(registry.upload_status, "processed")
 
     def test_simple_file_upload_excel(self):
@@ -298,9 +310,9 @@ class TestMontrekExampleDListView(MontrekListViewTestCase):
         with open(test_file_path, "rb") as f:
             data = {"file": f}
             self.client.post(self.url, data, follow=True)
-        queyset = HubDRepository().std_queryset()
+        queyset = HubDRepository().receive()
         self.assertEqual(len(queyset), 4)
-        registry = FileUploadRegistryRepository().std_queryset().last()
+        registry = FileUploadRegistryRepository().receive().last()
         self.assertEqual(registry.upload_status, "processed")
 
     def test_simple_file_upload_unknown(self):
@@ -308,9 +320,9 @@ class TestMontrekExampleDListView(MontrekListViewTestCase):
         with open(test_file_path, "rb") as f:
             data = {"file": f}
             self.client.post(self.url, data, follow=True)
-        queyset = HubDRepository().std_queryset()
+        queyset = HubDRepository().receive()
         self.assertEqual(len(queyset), 1)
-        registries = FileUploadRegistryRepository().std_queryset()
+        registries = FileUploadRegistryRepository().receive()
         self.assertEqual(len(registries), 0)
 
     def test_simple_file_upload_failure(self):
@@ -320,9 +332,9 @@ class TestMontrekExampleDListView(MontrekListViewTestCase):
         with open(test_file_path, "rb") as f:
             data = {"file": f}
             self.client.post(self.url, data, follow=True)
-        queyset = HubDRepository().std_queryset()
+        queyset = HubDRepository().receive()
         self.assertEqual(len(queyset), 1)
-        registry = FileUploadRegistryRepository().std_queryset().last()
+        registry = FileUploadRegistryRepository().receive().last()
         self.assertEqual(registry.upload_status, "failed")
 
     def test_simple_file_upload_overwrite(self):
@@ -337,7 +349,7 @@ class TestMontrekExampleDListView(MontrekListViewTestCase):
                     self.client.post(self.url, csv_data, follow=True)
 
         def _assert_database_values(expected_values):
-            queryset = HubDRepository().std_queryset()
+            queryset = HubDRepository().receive()
             actual_values = queryset.values_list("field_d1_str", "field_d1_int")
             self.assertEqual(list(actual_values), expected_values)
 
@@ -437,7 +449,7 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
 
         messages = list(response.context["messages"])
 
-        a_hubs = HubARepository().std_queryset()
+        a_hubs = HubARepository().receive()
 
         self.assertRedirects(response, reverse("a1_view_uploads"))
         self.assertEqual(len(messages), 1)
@@ -455,7 +467,7 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
         self.assertEqual(a_hubs[0].field_a1_int, 1000)
         self.assertEqual(a_hubs[1].field_a1_int, 2000)
         self.assertEqual(a_hubs[2].field_a1_int, 3000)
-        upload_registry = HubAFileUploadRegistryRepository({}).std_queryset().last()
+        upload_registry = HubAFileUploadRegistryRepository({}).receive().last()
         log_file = upload_registry.log_file
         self.assertTrue(log_file)
 
@@ -478,7 +490,7 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
 
         messages = list(response.context["messages"])
 
-        a_hubs = HubARepository().std_queryset()
+        a_hubs = HubARepository().receive()
 
         self.assertRedirects(response, reverse("a1_view_uploads"))
         self.assertEqual(len(messages), 1)
@@ -507,7 +519,7 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
 
         messages = list(response.context["messages"])
 
-        HubARepository().std_queryset()
+        HubARepository().receive()
 
         self.assertRedirects(response, reverse("a1_view_uploads"))
         self.assertEqual(len(messages), 1)
@@ -547,7 +559,7 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
             data = {"file": f}
             response = self.client.post(self.url, data, follow=True)
         messages = list(response.context["messages"])
-        a_hubs = HubARepository().std_queryset()
+        a_hubs = HubARepository().receive()
         self.assertRedirects(response, reverse("a1_view_uploads"))
         self.assertEqual(len(messages), 1)
         self.assertEqual(
@@ -586,7 +598,7 @@ class TestMontrekExampleA1UploadHistoryView(MontrekViewTestCase):
         )
 
     def url_kwargs(self) -> dict:
-        return {"pk": self.huba.pk}
+        return {"pk": self.huba.get_hub_value_date().pk}
 
     def test_view_with_history_data(self):
         test_history_data_tables = self.response.context_data["history_data_tables"]
@@ -705,7 +717,7 @@ class TestMontrekExampleA1FieldMapUpdateView(MontrekCreateViewTestCase):
         )
 
     def url_kwargs(self) -> dict:
-        return {"pk": self.field_map_factory.hub_entity.pk}
+        return {"pk": self.field_map_factory.get_hub_value_date().pk}
 
     def creation_data(self):
         return {
@@ -727,7 +739,7 @@ class TestMontrekExampleA1FieldMapDeleteView(MontrekDeleteViewTestCase):
         )
 
     def url_kwargs(self) -> dict:
-        return {"pk": self.field_map_factory.hub_entity.pk}
+        return {"pk": self.field_map_factory.get_hub_value_date().pk}
 
 
 class TestMontrekExampleA1FieldMapListView(MontrekListViewTestCase):

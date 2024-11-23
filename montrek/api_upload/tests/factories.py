@@ -4,14 +4,18 @@ from api_upload.models import (
     ApiUploadRegistryHub,
     ApiUploadRegistryStaticSatellite,
 )
+from baseclasses.tests.factories.montrek_factory_schemas import (
+    MontrekHubFactory,
+    MontrekSatelliteFactory,
+)
 
 
-class ApiUploadRegistryHubFactory(factory.django.DjangoModelFactory):
+class ApiUploadRegistryHubFactory(MontrekHubFactory):
     class Meta:
         model = ApiUploadRegistryHub
 
 
-class ApiUploadRegistryStaticSatelliteFactory(factory.django.DjangoModelFactory):
+class ApiUploadRegistryStaticSatelliteFactory(MontrekSatelliteFactory):
     class Meta:
         model = ApiUploadRegistryStaticSatellite
 

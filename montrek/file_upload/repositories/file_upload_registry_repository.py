@@ -27,12 +27,13 @@ class FileUploadRegistryRepositoryABC(MontrekRepository):
     link_file_upload_registry_file_log_file_class = (
         NotImplementedLinkFileUploadRegistryFile
     )
+    default_order_fields = ("-upload_date",)
 
     def __init__(self, session_data={}):
         self._setup_checks()
         super().__init__(session_data=session_data)
 
-    def std_queryset(self, **kwargs):
+    def set_annotations(self, **kwargs):
         self.add_satellite_fields_annotations(
             self.static_satellite_class,
             ["file_name", "file_type", "upload_status", "upload_message"],
@@ -51,10 +52,8 @@ class FileUploadRegistryRepositoryABC(MontrekRepository):
             FileUploadFileStaticSatellite,
             self.link_file_upload_registry_file_upload_file_class,
             ["file", "created_at"],
+            rename_field_map={"created_at": "upload_date"},
         )
-        self.rename_field("created_at", "upload_date")
-        queryset = self.build_queryset().order_by("-created_at")
-        return queryset
 
     def _setup_checks(self):
         if self.hub_class is FileUploadRegistryHubABC:
@@ -76,16 +75,14 @@ class FileUploadRegistryRepositoryABC(MontrekRepository):
     def get_upload_file_from_registry(
         self, file_upload_registry_id: int, request
     ) -> File | None:
-        file_upload_registry_path = (
-            self.std_queryset().get(pk=file_upload_registry_id).file
-        )
+        file_upload_registry_path = self.receive().get(pk=file_upload_registry_id).file
         return self._get_file_from_registry(file_upload_registry_path, request)
 
     def get_log_file_from_registry(
         self, file_log_registry_id: int, request
     ) -> File | None:
         file_log_registry_path = (
-            self.std_queryset().get(pk=file_log_registry_id).log_file
+            self.receive().get(hub__pk=file_log_registry_id).log_file
         )
 
         return self._get_file_from_registry(file_log_registry_path, request)

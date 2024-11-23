@@ -1,25 +1,26 @@
-from django.db import models
-from django.utils import timezone
+from api_upload.models import (
+    ApiUploadRegistryHubABC,
+    ApiUploadRegistryStaticSatelliteABC,
+)
+from baseclasses.fields import HubForeignKey
 from baseclasses.models import (
     AlertMixin,
+    HubValueDate,
     MontrekHubABC,
-    MontrekSatelliteABC,
+    MontrekManyToManyLinkABC,
     MontrekOneToManyLinkABC,
     MontrekOneToOneLinkABC,
-    MontrekManyToManyLinkABC,
+    MontrekSatelliteABC,
     MontrekTimeSeriesSatelliteABC,
 )
+from django.db import models
+from django.utils import timezone
 from file_upload.models import (
     FieldMapHubABC,
     FieldMapStaticSatelliteABC,
     FileUploadRegistryHubABC,
     FileUploadRegistryStaticSatelliteABC,
 )
-from api_upload.models import (
-    ApiUploadRegistryHubABC,
-    ApiUploadRegistryStaticSatelliteABC,
-)
-
 
 # Create your models here.
 
@@ -67,6 +68,22 @@ class HubC(MontrekHubABC):
 
 class HubD(MontrekHubABC):
     pass
+
+
+class AHubValueDate(HubValueDate):
+    hub = HubForeignKey(HubA)
+
+
+class BHubValueDate(HubValueDate):
+    hub = HubForeignKey(HubB)
+
+
+class CHubValueDate(HubValueDate):
+    hub = HubForeignKey(HubC)
+
+
+class DHubValueDate(HubValueDate):
+    hub = HubForeignKey(HubD)
 
 
 class SatA1(MontrekSatelliteABC):
@@ -123,12 +140,12 @@ class SatC1(MontrekSatelliteABC):
 
 
 class SatTSC2(MontrekTimeSeriesSatelliteABC):
-    hub_entity = models.ForeignKey(HubC, on_delete=models.CASCADE)
+    hub_value_date = models.ForeignKey(CHubValueDate, on_delete=models.CASCADE)
     field_tsc2_float = models.FloatField(default=0.0)
 
 
 class SatTSC3(MontrekTimeSeriesSatelliteABC):
-    hub_entity = models.ForeignKey(HubC, on_delete=models.CASCADE)
+    hub_value_date = models.ForeignKey(CHubValueDate, on_delete=models.CASCADE)
     field_tsc3_int = models.IntegerField(null=True, blank=True)
     field_tsc3_str = models.CharField(max_length=50, null=True, blank=True)
     field_tsc3_int_times_two = models.GeneratedField(
@@ -139,7 +156,7 @@ class SatTSC3(MontrekTimeSeriesSatelliteABC):
 
 
 class SatTSC4(MontrekTimeSeriesSatelliteABC):
-    hub_entity = models.ForeignKey(HubC, on_delete=models.CASCADE)
+    hub_value_date = models.ForeignKey(CHubValueDate, on_delete=models.CASCADE)
     field_tsc4_int = models.IntegerField(null=True, blank=True)
 
 
@@ -151,7 +168,7 @@ class SatD1(MontrekSatelliteABC):
 
 
 class SatTSD2(MontrekTimeSeriesSatelliteABC):
-    hub_entity = models.ForeignKey(HubD, on_delete=models.CASCADE)
+    hub_value_date = models.ForeignKey(DHubValueDate, on_delete=models.CASCADE)
     field_tsd2_float = models.FloatField(null=True)
     field_tsd2_int = models.IntegerField(null=True)
 
@@ -196,6 +213,10 @@ class HubAFileUploadRegistryHub(FileUploadRegistryHubABC):
     )
 
 
+class HubAFileUploadRegistryHubValueDate(HubValueDate):
+    hub = HubForeignKey(HubAFileUploadRegistryHub)
+
+
 class LinkHubAFileUploadRegistryFileUploadFile(MontrekOneToOneLinkABC):
     hub_in = models.ForeignKey(
         "montrek_example.HubAFileUploadRegistryHub", on_delete=models.CASCADE
@@ -222,6 +243,10 @@ class HubAApiUploadRegistryHub(ApiUploadRegistryHubABC):
     pass
 
 
+class HubAApiUploadRegistryHubValueDate(HubValueDate):
+    hub = HubForeignKey(HubAApiUploadRegistryHub)
+
+
 class HubAApiUploadRegistryStaticSatellite(ApiUploadRegistryStaticSatelliteABC):
     hub_entity = models.ForeignKey(HubAApiUploadRegistryHub, on_delete=models.CASCADE)
 
@@ -233,6 +258,10 @@ class LinkHubAApiUploadRegistry(MontrekManyToManyLinkABC):
 
 class SatA1FieldMapHub(FieldMapHubABC):
     pass
+
+
+class SatA1FieldMapHubValueDate(HubValueDate):
+    hub = HubForeignKey(SatA1FieldMapHub)
 
 
 class SatA1FieldMapStaticSatellite(FieldMapStaticSatelliteABC):

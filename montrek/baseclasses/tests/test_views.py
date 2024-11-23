@@ -58,7 +58,7 @@ class MockRepository:
         self.messages = []
         self.annotations = {}
 
-    def std_queryset(self):
+    def receive(self):
         return MockQuerySet(
             MockData("item1", 1), MockData("item2", 2), MockData("item3", 3)
         )  # Dummy data for testing

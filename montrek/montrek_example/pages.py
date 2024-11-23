@@ -38,7 +38,7 @@ class ExampleAPage(MontrekPage):
         super().__init__(**kwargs)
         if "pk" not in kwargs:
             raise ValueError("ExampleAPage needs pk specified in url!")
-        self.obj = HubARepository().std_queryset().get(pk=kwargs["pk"])
+        self.obj = HubARepository().receive().get(pk=kwargs["pk"])
         self.page_title = self.obj.field_a1_str
 
     def get_tabs(self):

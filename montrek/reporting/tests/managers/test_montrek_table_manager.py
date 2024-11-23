@@ -50,7 +50,7 @@ class MockRepository:
     def __init__(self, session_data: dict):
         self.session_data = session_data
 
-    def std_queryset(self):
+    def receive(self):
         return MockQuerySet(
             MockData("a", 1, 1.0, timezone.make_aware(datetime.datetime(2024, 7, 13))),
             MockData("b", 2, 2.0, datetime.datetime(2024, 7, 13)),
@@ -62,7 +62,7 @@ class MockLongRepository:
     def __init__(self, session_data: dict):
         self.session_data = session_data
 
-    def std_queryset(self):
+    def receive(self):
         mock_data = [
             MockData(
                 str(i), i, 1.0, timezone.make_aware(datetime.datetime(2024, 7, 13))

@@ -5,7 +5,7 @@ from mailing.models import MailHub, MailSatellite, MailStateSatellite
 class MailingRepository(MontrekRepository):
     hub_class = MailHub
 
-    def std_queryset(self):
+    def set_annotations(self):
         self.add_satellite_fields_annotations(
             MailSatellite,
             ["mail_recipients", "mail_subject", "mail_message"],
@@ -13,4 +13,3 @@ class MailingRepository(MontrekRepository):
         self.add_satellite_fields_annotations(
             MailStateSatellite, ["mail_state", "mail_comment"]
         )
-        return self.build_queryset()

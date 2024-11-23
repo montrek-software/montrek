@@ -65,7 +65,7 @@ class FileUploadManagerABC(MontrekManager):
 
     def __init__(
         self,
-        file: TextIO,
+        file: TextIO | None,
         session_data: Dict[str, Any],
         **kwargs,
     ) -> None:
@@ -81,16 +81,16 @@ class FileUploadManagerABC(MontrekManager):
 
     def upload_and_process(self) -> bool:
         if not self.processor.pre_check(self.file_path):
-            self._update_file_upload_registry("failed", self.processor.message)
+            self.update_file_upload_registry("failed", self.processor.message)
             return False
         if self.processor.process(self.file_path):
             if not self.processor.post_check(self.file_path):
-                self._update_file_upload_registry("failed", self.processor.message)
+                self.update_file_upload_registry("failed", self.processor.message)
                 return False
-            self._update_file_upload_registry("processed", self.processor.message)
+            self.update_file_upload_registry("processed", self.processor.message)
             return True
         else:
-            self._update_file_upload_registry("failed", self.processor.message)
+            self.update_file_upload_registry("failed", self.processor.message)
             return False
 
     def init_upload(self) -> None:
@@ -99,7 +99,9 @@ class FileUploadManagerABC(MontrekManager):
         upload_file_hub = self.repository.std_create_object({"file": self.file})
         self.file_path = os.path.join(
             settings.MEDIA_ROOT,
-            self.repository.std_queryset().get(pk=upload_file_hub.pk).file,
+            self.repository.receive(apply_filter=False)
+            .get(hub__pk=upload_file_hub.pk)
+            .file,
         )
         file_upload_registry_hub = self.registry_manager.repository.std_create_object(
             {
@@ -110,11 +112,11 @@ class FileUploadManagerABC(MontrekManager):
                 "link_file_upload_registry_file_upload_file": upload_file_hub,
             }
         )
-        self.file_upload_registry = self.registry_manager.repository.std_queryset().get(
-            pk=file_upload_registry_hub.pk
-        )
+        self.file_upload_registry = self.registry_manager.repository.receive(
+            apply_filter=False
+        ).get(hub__pk=file_upload_registry_hub.pk)
 
-    def _update_file_upload_registry(
+    def update_file_upload_registry(
         self, upload_status: str, upload_message: str
     ) -> None:
         att_dict = self.registry_manager.repository.object_to_dict(

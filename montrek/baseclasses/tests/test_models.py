@@ -1,15 +1,20 @@
 import datetime
-import time
 import hashlib
+import time
+
 from django.test import TestCase
 from django.utils import timezone
+
+from baseclasses.models import (
+    TestMontrekHub,
+    TestMontrekSatellite,
+    TestMontrekSatelliteNoIdFields,
+)
 from baseclasses.tests.factories.baseclass_factories import (
     TestMontrekHubFactory,
     TestMontrekSatelliteFactory,
 )
-from baseclasses.models import TestMontrekSatellite
-from baseclasses.models import TestMontrekHub
-from baseclasses.models import TestMontrekSatelliteNoIdFields
+from baseclasses.utils import montrek_time
 
 
 class TestBaseClassModels(TestCase):
@@ -44,9 +49,21 @@ class TestModelUtils(TestCase):
         self.hub1 = TestMontrekHubFactory()
         self.hub2 = TestMontrekHubFactory()
         self.hub3 = TestMontrekHubFactory()
-        self.satellite1 = TestMontrekSatelliteFactory(hub_entity=self.hub1)
-        self.satellite2 = TestMontrekSatelliteFactory(hub_entity=self.hub2)
-        self.satellite3 = TestMontrekSatelliteFactory(hub_entity=self.hub3)
+        self.satellite1 = TestMontrekSatelliteFactory(
+            hub_entity=self.hub1,
+            state_date_end=montrek_time(2023, 7, 10),
+            state_date_start=montrek_time(2023, 6, 20),
+        )
+        self.satellite2 = TestMontrekSatelliteFactory(
+            hub_entity=self.hub2,
+            state_date_end=montrek_time(2023, 7, 10),
+            state_date_start=montrek_time(2023, 6, 20),
+        )
+        self.satellite3 = TestMontrekSatelliteFactory(
+            hub_entity=self.hub3,
+            state_date_end=montrek_time(2023, 7, 10),
+            state_date_start=montrek_time(2023, 6, 20),
+        )
 
     def test_state_date(self):
         test_satellites = TestMontrekSatellite.objects.all()

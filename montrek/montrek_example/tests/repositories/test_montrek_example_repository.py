@@ -1,10 +1,15 @@
 import datetime
+import sys
+import unittest
 
 import pandas as pd
-from baseclasses.utils import montrek_time
 from baseclasses.errors.montrek_user_error import MontrekError
+from baseclasses.tests.factories.montrek_factory_schemas import (
+    ValueDateListFactory,
+)
+from baseclasses.utils import montrek_time
 from django.core.exceptions import PermissionDenied
-from django.test import TestCase, TransactionTestCase
+from django.test import TestCase, TransactionTestCase, tag
 from django.utils import timezone
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
@@ -12,10 +17,22 @@ from montrek_example import models as me_models
 from montrek_example.repositories.hub_a_repository import (
     HubAJsonRepository,
     HubARepository,
+    HubARepository2,
 )
-from montrek_example.repositories.hub_b_repository import HubBRepository
-from montrek_example.repositories.hub_c_repository import HubCRepository
-from montrek_example.repositories.hub_d_repository import HubDRepository
+from montrek_example.repositories.hub_b_repository import (
+    HubBRepository,
+)
+from montrek_example.repositories.hub_c_repository import (
+    HubCRepository,
+    HubCRepository2,
+    HubCRepositoryCommonFields,
+    HubCRepositoryLastTS,
+    HubCRepositoryOnlyStatic,
+)
+from montrek_example.repositories.hub_d_repository import (
+    HubDRepository,
+    HubDRepositoryTSReverseLink,
+)
 from montrek_example.tests.factories import montrek_example_factories as me_factories
 
 MIN_DATE = timezone.make_aware(timezone.datetime.min)
@@ -55,15 +72,18 @@ class TestMontrekRepositorySatellite(TestCase):
         self.assertEqual(
             test_fields,
             [
+                "value_date",
+                "hub_entity_id",
+                "created_at",
+                "created_by",
                 "comment",
-                "field_a1_str",
                 "field_a1_int",
-                "comment",
-                "field_a2_str",
+                "field_a1_str",
                 "field_a2_float",
+                "field_a2_str",
+                "field_b1_str",
                 "dummy1",
                 "dummy2",
-                "field_b1_str",
             ],
         )
 
@@ -73,15 +93,18 @@ class TestMontrekRepositorySatellite(TestCase):
             me_models.SatTSC2,
             me_models.LinkHubAHubC,
             ["field_tsc2_float"],
-            last_ts_value=True,
         )  # linked time series field
-        repo.std_queryset()
         repo.rename_field("field_a1_str", "my_field_a1_str")  # direct satellite field
         repo.rename_field("field_b1_str", "my_field_b1_str")  # linked field
         test_fields = repo.get_all_annotated_fields()
         self.assertEqual(
             test_fields,
             [
+                "value_date",
+                "hub_entity_id",
+                "created_at",
+                "created_by",
+                "comment",
                 "field_a1_int",
                 "field_a2_float",
                 "field_a2_str",
@@ -96,15 +119,20 @@ class TestMontrekRepositorySatellite(TestCase):
         self.assertEqual(
             test_fields,
             [
-                "field_c1_bool",
-                "field_c1_str",
-                "field_tsd2_float",
-                "field_tsd2_int",
-                "field_tsc2_float",
                 "value_date",
+                "hub_entity_id",
+                "created_at",
+                "created_by",
+                "comment",
+                "field_tsc2_float",
                 "field_tsc3_int",
                 "field_tsc3_str",
                 "field_tsc4_int",
+                "field_c1_bool",
+                "field_c1_str",
+                "field_d1_str",
+                "field_tsd2_float",
+                "field_tsd2_int",
             ],
         )
 
@@ -158,6 +186,13 @@ class TestMontrekCreateObject(TestCase):
         self.assertEqual(me_models.SatA1.objects.first().created_by_id, self.user.id)
         self.assertEqual(me_models.HubA.objects.count(), 1)
         self.assertEqual(me_models.SatA2.objects.count(), 0)
+        self.assertEqual(me_models.AHubValueDate.objects.count(), 1)
+        self.assertEqual(
+            me_models.AHubValueDate.objects.first().hub, me_models.HubA.objects.first()
+        )
+        self.assertEqual(
+            me_models.AHubValueDate.objects.first().value_date_list.value_date, None
+        )
 
     def test_std_create_object_multi_satellites(self):
         repository = HubARepository(session_data={"user_id": self.user.id})
@@ -315,6 +350,7 @@ class TestMontrekCreateObject(TestCase):
         self.assertEqual(me_models.SatA1.objects.count(), 1)
         self.assertEqual(me_models.SatA2.objects.count(), 1)
         self.assertEqual(me_models.HubA.objects.count(), 1)
+        self.assertEqual(me_models.AHubValueDate.objects.count(), 1)
         # Change the id of the first Satellite
         repository.std_create_object(
             {
@@ -324,13 +360,13 @@ class TestMontrekCreateObject(TestCase):
                 "field_a2_str": "test2",
             }
         )
-        # The std_queryset should return the adjusted object
-        a_object = HubARepository().std_queryset().get()
+        # The receive should return the adjusted object
+        a_object = HubARepository().receive().get()
         self.assertEqual(a_object.field_a1_str, "test_new")
         self.assertEqual(a_object.field_a1_int, 5)
         self.assertEqual(a_object.field_a2_str, "test2")
         self.assertEqual(a_object.field_a2_float, 6.0)
-        self.assertEqual(a_object.created_by_id, self.user.id)
+        self.assertEqual(a_object.created_by, self.user.email)
 
         # Now we have two hubs with different state_date_start and state_date_end:
         self.assertEqual(me_models.HubA.objects.count(), 2)
@@ -359,7 +395,7 @@ class TestMontrekCreateObject(TestCase):
             }
         )
         a_object = (
-            HubARepository(session_data={"user_id": self.user.id}).std_queryset().get()
+            HubARepository(session_data={"user_id": self.user.id}).receive().get()
         )
         repository.std_create_object(
             {
@@ -367,14 +403,14 @@ class TestMontrekCreateObject(TestCase):
                 "field_a1_str": "test_new",
                 "field_a2_float": 6.0,
                 "field_a2_str": "test2",
-                "hub_entity_id": a_object.id,
+                "hub_entity_id": a_object.hub_entity_id,
             }
         )
         # We should still have one Hub
         self.assertEqual(me_models.HubA.objects.count(), 1)
 
-        # The std_queryset should return the adjusted object
-        b_object = HubARepository().std_queryset().get()
+        # The receive should return the adjusted object
+        b_object = HubARepository().receive().get()
         self.assertEqual(b_object.field_a1_str, "test_new")
 
     def test_std_create_object_raises_error_for_missing_user_id(self):
@@ -418,6 +454,38 @@ class TestMontrekCreateObject(TestCase):
         )
         self.assertEqual(me_models.SatA1.objects.last().comment, "some new comment")
         self.assertEqual(me_models.SatA2.objects.last().comment, "some comment")
+
+    def test_create_object_ts_update(self):
+        repository = HubCRepository(session_data={"user_id": self.user.id})
+        existing_hub = repository.std_create_object(
+            {
+                "field_tsc2_float": 5.0,
+                "value_date": "2024-11-21",
+            }
+        )
+        test_query = repository.receive()
+        self.assertEqual(test_query.count(), 1)
+        self.assertEqual(test_query[0].field_tsc2_float, 5.0)
+        repository.std_create_object(
+            {
+                "field_tsc2_float": 5.0,
+                "hub_entity_id": existing_hub.id,
+                "value_date": "2024-11-21",
+            }
+        )
+        test_query = repository.receive()
+        self.assertEqual(test_query.count(), 1)
+        self.assertEqual(test_query[0].field_tsc2_float, 5.0)
+        repository.std_create_object(
+            {
+                "field_tsc2_float": 4.0,
+                "hub_entity_id": existing_hub.id,
+                "value_date": "2024-11-21",
+            }
+        )
+        test_query = repository.receive()
+        self.assertEqual(test_query.count(), 1)
+        self.assertEqual(test_query[0].field_tsc2_float, 4.0)
 
     def test_create_objects_from_data_frame(self):
         repository = HubARepository(session_data={"user_id": self.user.id})
@@ -509,7 +577,7 @@ class TestMontrekCreateObject(TestCase):
             }
         )
         repository.create_objects_from_data_frame(data_frame)
-        test_query = repository.std_queryset()
+        test_query = repository.receive()
         self.assertEqual(test_query.count(), 2)
 
     def test_create_objects_from_data_frame_drop_empty_rows(self):
@@ -523,7 +591,7 @@ class TestMontrekCreateObject(TestCase):
             }
         )
         repository.create_objects_from_data_frame(data_frame)
-        test_query = repository.std_queryset()
+        test_query = repository.receive()
         self.assertEqual(test_query.count(), 2)
         self.assertEqual(test_query[0].field_a1_int, 5)
         self.assertEqual(repository.messages[0].message, "1 empty rows not uploaded!")
@@ -532,7 +600,7 @@ class TestMontrekCreateObject(TestCase):
         self,
     ):
         repository = HubARepository(session_data={"user_id": self.user.id})
-        repository.std_queryset()
+        repository.receive()
         # A missing field_a1_str column should hot raise an error.
         data_frame = pd.DataFrame(
             {
@@ -541,7 +609,7 @@ class TestMontrekCreateObject(TestCase):
             }
         )
         repository.create_objects_from_data_frame(data_frame)
-        queryset = repository.std_queryset()
+        queryset = repository.receive()
         self.assertEqual(queryset.count(), 3)
 
     def test_create_objects_from_data_frame_comment(self):
@@ -578,7 +646,7 @@ class TestMontrekCreateObject(TestCase):
             }
         )
         repository.create_objects_from_data_frame(data_frame)
-        test_query = repository.std_queryset()
+        test_query = repository.receive()
         self.assertEqual(test_query.count(), 3)
         self.assertEqual(me_models.HubC.objects.count(), 2)
         self.assertEqual(me_models.SatC1.objects.count(), 2)
@@ -616,7 +684,7 @@ class TestMontrekCreateObject(TestCase):
                 "link_hub_a_hub_b": hub_b_1,
             }
         )
-        queried_object = repository.std_queryset().get()
+        queried_object = repository.receive().get()
         self.assertEqual(queried_object.field_b1_str, sat_b_1.field_b1_str)
         repository.std_create_object(
             {
@@ -635,7 +703,7 @@ class TestMontrekCreateObject(TestCase):
         self.assertEqual(
             first_linked_hub.state_date_end, last_linked_hub.state_date_start
         )
-        queried_object = repository.std_queryset().get()
+        queried_object = repository.receive().get()
         self.assertEqual(queried_object.field_b1_str, sat_b_2.field_b1_str)
 
     def test_create_hub_a_with_link_to_hub_b_existing(self):
@@ -651,7 +719,7 @@ class TestMontrekCreateObject(TestCase):
                 "link_hub_a_hub_b": hub_b_1,
             }
         )
-        queried_object = repository.std_queryset().get()
+        queried_object = repository.receive().get()
         self.assertEqual(queried_object.field_b1_str, sat_b_1.field_b1_str)
         repository.std_create_object(
             {
@@ -663,7 +731,7 @@ class TestMontrekCreateObject(TestCase):
             }
         )
         self.assertEqual(me_models.LinkHubAHubB.objects.count(), 1)
-        queried_object = repository.std_queryset().get()
+        queried_object = repository.receive().get()
         self.assertEqual(queried_object.field_b1_str, sat_b_1.field_b1_str)
 
     def test_write_zeros_to_db(self):
@@ -676,7 +744,7 @@ class TestMontrekCreateObject(TestCase):
                 "field_a2_str": "test2",
             }
         )
-        queried_object = repository.std_queryset().get()
+        queried_object = repository.receive().get()
         self.assertEqual(queried_object.field_a2_float, 0.0)
 
     def test_create_with_nan_in_data_frame(self):
@@ -690,12 +758,45 @@ class TestMontrekCreateObject(TestCase):
             }
         )
         repository.create_objects_from_data_frame(data_frame)
-        test_query = repository.std_queryset()
+        test_query = repository.receive()
         self.assertEqual(test_query.count(), 3)
 
-    def test__is_built(self):
-        montrek_repo = HubARepository()
-        self.assertTrue(montrek_repo._is_built)
+    def test_create_ts_satellite_with_given_hub(self):
+        hub = me_factories.HubCFactory()
+        repository = HubCRepository(session_data={"user_id": self.user.id})
+        repository.std_create_object(
+            {
+                "hub_entity_id": hub.id,
+                "field_c1_str": "test",
+                "field_tsc2_float": 6.0,
+                "value_date": "2023-07-08",
+            }
+        )
+        test_query = repository.receive()
+        self.assertEqual(test_query.count(), 1)
+        queried_object = test_query.get()
+        self.assertEqual(queried_object.field_c1_str, "test")
+        self.assertEqual(queried_object.field_tsc2_float, 6.0)
+        self.assertEqual(queried_object.hub, hub)
+        self.assertEqual(queried_object.value_date, montrek_time(2023, 7, 8).date())
+
+    def test_create_ts_satellite_with_given_static_id(self):
+        sat = me_factories.SatC1Factory(field_c1_str="test")
+        repository = HubCRepository(session_data={"user_id": self.user.id})
+        repository.std_create_object(
+            {
+                "field_c1_str": "test",
+                "field_tsc2_float": 6.0,
+                "value_date": "2023-07-08",
+            }
+        )
+        test_query = repository.receive()
+        self.assertEqual(test_query.count(), 1)
+        queried_object = test_query.get()
+        self.assertEqual(queried_object.field_c1_str, "test")
+        self.assertEqual(queried_object.field_tsc2_float, 6.0)
+        self.assertEqual(queried_object.hub, sat.hub_entity)
+        self.assertEqual(queried_object.value_date, montrek_time(2023, 7, 8).date())
 
 
 class TestMontrekCreateObjectTransaction(TransactionTestCase):
@@ -719,119 +820,112 @@ class TestDeleteObject(TestCase):
         repository.std_create_object({"field_a1_int": 5, "field_a1_str": "test"})
         self.assertEqual(me_models.SatA1.objects.count(), 1)
         self.assertEqual(me_models.HubA.objects.count(), 1)
-        deletion_object = repository.std_queryset().get()
-        repository.std_delete_object(deletion_object)
+        deletion_object = repository.receive().get().hub
+        repository.delete(deletion_object)
         self.assertEqual(me_models.SatA1.objects.count(), 1)
         self.assertLess(me_models.SatA1.objects.first().state_date_end, timezone.now())
         self.assertEqual(me_models.HubA.objects.count(), 1)
-        self.assertEqual(len(repository.std_queryset()), 0)
+        self.assertEqual(len(repository.receive()), 0)
 
     def test_reintroduce_deleted_object(self):
         repository = HubARepository(session_data={"user_id": self.user.id})
         repository.std_create_object({"field_a1_int": 5, "field_a1_str": "test"})
-        deletion_object = repository.std_queryset().get()
-        repository.std_delete_object(deletion_object)
+        deletion_object = repository.receive().get().hub
+        repository.delete(deletion_object)
         repository.std_create_object({"field_a1_int": 5, "field_a1_str": "test"})
         self.assertEqual(me_models.SatA1.objects.count(), 2)
         self.assertEqual(me_models.HubA.objects.count(), 2)
-        self.assertEqual(len(repository.std_queryset()), 1)
+        self.assertEqual(len(repository.receive()), 1)
 
 
 class TestMontrekRepositoryLinks(TestCase):
     def setUp(self):
-        huba1 = me_factories.HubAFactory()
-        huba2 = me_factories.HubAFactory()
-        hubb1 = me_factories.HubBFactory()
-        hubb2 = me_factories.HubBFactory()
+        self.huba1 = me_factories.HubAFactory()
+        self.huba2 = me_factories.HubAFactory()
+        me_factories.AHubValueDateFactory(hub=self.huba2, value_date=None)
         hubc1 = me_factories.HubCFactory()
         hubc2 = me_factories.HubCFactory()
 
-        me_factories.LinkHubAHubBFactory(
-            hub_in=huba1,
-            hub_out=hubb1,
+        me_factories.SatA1Factory(
+            hub_entity=self.huba1,
+            field_a1_int=5,
         )
-        me_factories.LinkHubAHubBFactory(
-            hub_in=huba2,
-            hub_out=hubb1,
-            state_date_end=montrek_time(2023, 7, 12),
-        )
-        me_factories.LinkHubAHubBFactory(
-            hub_in=huba2,
-            hub_out=hubb2,
-            state_date_start=montrek_time(2023, 7, 12),
-        )
-        me_factories.SatB1Factory(
-            hub_entity=hubb1,
-            state_date_end=montrek_time(2023, 7, 10),
-            field_b1_str="First",
-        )
-        me_factories.SatB1Factory(
-            hub_entity=hubb1,
-            state_date_start=montrek_time(2023, 7, 10),
-            field_b1_str="Second",
-        )
-        me_factories.SatB1Factory(
-            hub_entity=hubb2,
-            field_b1_str="Third",
-        )
-
         me_factories.LinkHubAHubCFactory(
-            hub_in=huba1,
+            hub_in=self.huba1,
             hub_out=hubc1,
         )
         me_factories.LinkHubAHubCFactory(
-            hub_in=huba1,
-            hub_out=hubc2,
+            hub_in=self.huba2,
+            hub_out=hubc1,
             state_date_end=montrek_time(2023, 7, 12),
         )
-        self.sat_c_1 = me_factories.SatC1Factory(
+        me_factories.LinkHubAHubCFactory(
+            hub_in=self.huba2,
+            hub_out=hubc2,
+            state_date_start=montrek_time(2023, 7, 12),
+        )
+        me_factories.SatC1Factory(
             hub_entity=hubc1,
-            field_c1_str="Multi1",
+            state_date_end=montrek_time(2023, 7, 10),
+            field_c1_str="First",
+        )
+        me_factories.SatC1Factory(
+            hub_entity=hubc1,
+            state_date_start=montrek_time(2023, 7, 10),
+            field_c1_str="Second",
         )
         me_factories.SatC1Factory(
             hub_entity=hubc2,
-            field_c1_str="Multi2",
-        )
-        me_factories.SatA1Factory(
-            hub_entity=huba1,
-            field_a1_int=5,
+            field_c1_str="Third",
         )
 
     def test_many_to_one_link(self):
-        repository = HubARepository()
+        repository = HubARepository2()
         repository.reference_date = montrek_time(2023, 7, 8)
-        queryset = repository.test_queryset_2()
+        queryset = repository.receive()
 
         self.assertEqual(queryset.count(), 2)
-        self.assertEqual(queryset[0].field_b1_str, "First")
-        self.assertEqual(queryset[1].field_b1_str, "First")
+        self.assertEqual(queryset[0].field_c1_str, "First")
+        self.assertEqual(queryset[1].field_c1_str, "First")
 
         repository.reference_date = montrek_time(2023, 7, 10)
-        queryset = repository.test_queryset_2()
+        queryset = repository.receive()
 
         self.assertEqual(queryset.count(), 2)
-        self.assertEqual(queryset[0].field_b1_str, "Second")
-        self.assertEqual(queryset[1].field_b1_str, "Second")
+        self.assertEqual(queryset[0].field_c1_str, "Second")
+        self.assertEqual(queryset[1].field_c1_str, "Second")
 
         repository.reference_date = montrek_time(2023, 7, 12)
-        queryset = repository.test_queryset_2()
+        queryset = repository.receive()
 
         self.assertEqual(queryset.count(), 2)
-        self.assertEqual(queryset[0].field_b1_str, "Second")
-        self.assertEqual(queryset[1].field_b1_str, "Third")
+        qs_1 = queryset.get(hub_entity_id=self.huba1.id)
+        qs_2 = queryset.get(hub_entity_id=self.huba2.id)
+        self.assertEqual(qs_2.field_c1_str, "Third")
+        self.assertEqual(qs_1.field_c1_str, "Second")
 
     def test_link_reversed(self):
-        repository = HubBRepository()
+        repository = HubCRepository2()
         repository.reference_date = montrek_time(2023, 7, 8)
-        queryset = repository.test_queryset_1()
+        queryset = repository.receive()
         self.assertEqual(queryset.count(), 2)
-        self.assertEqual(queryset[0].field_a1_int, 5)
+        self.assertEqual(queryset[0].field_a1_int, "5")
         self.assertEqual(queryset[1].field_a1_int, None)
         repository.reference_date = montrek_time(2023, 7, 15)
-        queryset = repository.test_queryset_1()
+        queryset = repository.receive()
         self.assertEqual(queryset.count(), 2)
-        self.assertEqual(queryset[0].field_a1_int, 5)
+        self.assertEqual(queryset[0].field_a1_int, "5")
         self.assertEqual(queryset[1].field_a1_int, None)
+
+    def test_link_reversed_ts(self):
+        sat_tsc2 = me_factories.SatTSC2Factory(
+            field_tsc2_float=2.5, value_date="2024-11-19"
+        )
+        d_hub = me_factories.DHubValueDateFactory(value_date="2024-11-19").hub
+        sat_tsc2.hub_value_date.hub.link_hub_c_hub_d.add(d_hub)
+        queryset = HubDRepositoryTSReverseLink({}).receive()
+        self.assertEqual(queryset.count(), 1)
+        self.assertEqual(queryset[0].field_tsc2_float, "2.5")
 
 
 class TestLinkOneToOneUpates(TestCase):
@@ -1036,14 +1130,73 @@ class TestLinkOneToManyUpates(TestCase):
         self.assertGreater(link_2.state_date_start, MIN_DATE)
 
 
+class TestCreateDataWithLinks(TestCase):
+    def setUp(self) -> None:
+        user = MontrekUserFactory()
+        self.session_data = {"user_id": user.id}
+
+    def test_create_data_with_one_link(self):
+        self.hub_vd1 = me_factories.DHubValueDateFactory()
+        # self.hub_vd2 = me_factories.DHubValueDateFactory()
+        me_factories.SatD1Factory.create(
+            field_d1_str="test1",
+            hub_entity=self.hub_vd1.hub,
+        )
+
+        # me_factories.SatD1Factory.create(
+        #     field_d1_str="test2",
+        #     hub_entity=self.hub_vd2.hub,
+        # )
+
+        creation_data = {
+            "field_b1_str": "test",
+            "field_b1_date": "2024-02-17",
+            "field_b2_str": "test2",
+            "field_b2_choice": "CHOICE2",
+            "link_hub_b_hub_d": self.hub_vd1,
+        }
+        repo = HubBRepository(session_data=self.session_data)
+        repo.std_create_object(creation_data)
+        queryset = repo.receive()
+        self.assertEqual(queryset.count(), 1)
+        self.assertEqual(queryset[0].field_d1_str, "test1")
+
+    def test_create_data_with_two_link(self):
+        self.hub_vd1 = me_factories.DHubValueDateFactory()
+        self.hub_vd2 = me_factories.DHubValueDateFactory()
+        me_factories.SatD1Factory.create(
+            field_d1_str="test1",
+            hub_entity=self.hub_vd1.hub,
+        )
+
+        me_factories.SatD1Factory.create(
+            field_d1_str="test2",
+            hub_entity=self.hub_vd2.hub,
+        )
+
+        creation_data = {
+            "field_b1_str": "test",
+            "field_b1_date": "2024-02-17",
+            "field_b2_str": "test2",
+            "field_b2_choice": "CHOICE2",
+            "link_hub_b_hub_d": [self.hub_vd1, self.hub_vd2],
+        }
+        repo = HubBRepository(session_data=self.session_data)
+        repo.std_create_object(creation_data)
+        queryset = repo.receive()
+        self.assertEqual(queryset.count(), 1)
+        self.assertEqual(queryset[0].field_d1_str, "test1,test2")
+
+
 class TestTimeSeries(TestCase):
     def setUp(self) -> None:
         ts_satellite_c1 = me_factories.SatC1Factory.create(
             field_c1_str="Hallo",
             field_c1_bool=True,
         )
+
         me_factories.SatTSC2Factory.create(
-            hub_entity=ts_satellite_c1.hub_entity,
+            hub_value_date__hub=ts_satellite_c1.hub_entity,
             field_tsc2_float=1.0,
             value_date=montrek_time(2024, 2, 5),
         )
@@ -1118,22 +1271,22 @@ class TestTimeSeries(TestCase):
                 field_tsd2_int=i,
                 value_date=value_date,
             )
-            sat_c.hub_entity.link_hub_c_hub_d.add(sat_d.hub_entity)
+            sat_c.hub_value_date.hub.link_hub_c_hub_d.add(sat_d.hub_value_date.hub)
         repository = HubCRepository(session_data={"user_id": self.user.id})
-        test_query = repository.std_queryset().filter(value_date__in=value_dates)
+        test_query = repository.receive().filter(value_date__in=value_dates)
         self.assertEqual(test_query.count(), 2)
         self.assertEqual(test_query[1].field_tsc2_float, 0.0)
-        self.assertEqual(test_query[1].field_tsd2_float, 0)
-        self.assertEqual(test_query[1].field_tsd2_int, 0)
+        self.assertEqual(test_query[1].field_tsd2_float, "0")
+        self.assertEqual(test_query[1].field_tsd2_int, "0")
         self.assertEqual(test_query[0].field_tsc2_float, 0.1)
-        self.assertEqual(test_query[0].field_tsd2_float, 0.2)
-        self.assertEqual(test_query[0].field_tsd2_int, 1)
+        self.assertEqual(test_query[0].field_tsd2_float, "0.2")
+        self.assertEqual(test_query[0].field_tsd2_int, "1")
 
 
 class TestTimeSeriesRepositoryEmpty(TestCase):
     def test_empty_time_series(self):
         repository = HubCRepository()
-        queryset = repository.std_queryset()
+        queryset = repository.receive()
         self.assertEqual(queryset.count(), 0)
         queryset.filter(field_tsc2_float__isnull=True)
 
@@ -1144,7 +1297,7 @@ class TestTimeSeriesRepositoryEmpty(TestCase):
             value_date=montrek_time(2024, 2, 5),
             field_tsc3_int=5,
         )
-        qs = repository.std_queryset()
+        qs = repository.receive()
         self.assertEqual(qs.count(), 1)
         self.assertEqual(qs[0].field_tsc3_str, "Test")
         self.assertEqual(qs[0].field_tsc3_int, 5)
@@ -1156,63 +1309,51 @@ class TestTimeSeriesQuerySet(TestCase):
             field_c1_str="Hallo",
             field_c1_bool=True,
         )
-        me_factories.SatTSC2Factory.create(
-            hub_entity=ts_satellite_c1.hub_entity,
-            field_tsc2_float=1.0,
+        self.ts_fact0 = me_factories.SatTSC2Factory.create(
+            hub_value_date__hub=ts_satellite_c1.hub_entity,
+            field_tsc2_float=4.0,
             value_date=montrek_time(2024, 2, 5),
         )
         static_sats = me_factories.SatC1Factory.create_batch(3)
-        self.ts_fact = me_factories.SatTSC2Factory.create(
-            hub_entity=static_sats[0].hub_entity,
+        self.ts_fact1 = me_factories.SatTSC2Factory.create(
+            hub_value_date__hub=static_sats[0].hub_entity,
             field_tsc2_float=1.0,
             value_date=montrek_time(2024, 2, 5),
             state_date_end=montrek_time(2024, 7, 6),
         )
         self.ts_fact2 = me_factories.SatTSC2Factory.create(
-            hub_entity=static_sats[0].hub_entity,
+            hub_value_date=self.ts_fact1.hub_value_date,
             field_tsc2_float=3.0,
-            value_date=montrek_time(2024, 2, 5),
             state_date_start=montrek_time(2024, 7, 6),
         )
         me_factories.SatTSC2Factory.create(
-            hub_entity=static_sats[0].hub_entity, value_date=montrek_time(2024, 2, 6)
+            hub_value_date__hub=static_sats[0].hub_entity,
+            value_date=montrek_time(2024, 2, 6),
         )
         me_factories.SatTSC2Factory.create(
-            hub_entity=static_sats[1].hub_entity, value_date=montrek_time(2024, 2, 5)
+            hub_value_date__hub=static_sats[1].hub_entity,
+            value_date=montrek_time(2024, 2, 5),
         )
         self.user = MontrekUserFactory()
 
-    def test_build_time_series_queryset_wrong_satellite_class(self):
-        repository = HubCRepository()
-        with self.assertRaisesRegex(
-            ValueError,
-            "SatC1 is not a subclass of MontrekTimeSeriesSatelliteABC",
-        ):
-            repository.build_time_series_queryset_container(
-                me_models.SatC1,
-                montrek_time(2024, 2, 5),
-            ).queryset
-
     def test_build_time_series_queryset(self):
         repo = HubCRepository()
-        test_query = repo.build_time_series_queryset_container(
-            me_models.SatTSC2,
-            ["field_tsc2_float"],
-        ).queryset
+        test_query = repo.receive()
         self.assertEqual(test_query.count(), 5)
-        self.assertEqual(test_query[1].field_tsc2_float, self.ts_fact2.field_tsc2_float)
-        self.assertEqual(test_query[4].field_tsc2_float, None)
+        qs_1 = test_query.get(pk=self.ts_fact0.hub_value_date.id)
+        qs_2 = test_query.get(pk=self.ts_fact1.hub_value_date.id)
+        self.assertEqual(qs_1.field_tsc2_float, self.ts_fact0.field_tsc2_float)
+        self.assertEqual(qs_2.field_tsc2_float, self.ts_fact2.field_tsc2_float)
 
     def test_build_time_series_queryset__reference_date_filter(self):
         repo = HubCRepository()
         repo.reference_date = montrek_time(2024, 7, 1)
-        test_query = repo.build_time_series_queryset_container(
-            me_models.SatTSC2,
-            ["field_tsc2_float"],
-        ).queryset
+        test_query = repo.receive()
         self.assertEqual(test_query.count(), 5)
-        self.assertEqual(test_query[1].field_tsc2_float, self.ts_fact.field_tsc2_float)
-        self.assertEqual(test_query[4].field_tsc2_float, None)
+        qs_1 = test_query.get(pk=self.ts_fact0.hub_value_date.id)
+        qs_2 = test_query.get(pk=self.ts_fact1.hub_value_date.id)
+        self.assertEqual(qs_1.field_tsc2_float, self.ts_fact0.field_tsc2_float)
+        self.assertEqual(qs_2.field_tsc2_float, self.ts_fact1.field_tsc2_float)
 
     def test_build_time_series_queryset__session_dates(self):
         for end_date, expected_count in [
@@ -1222,10 +1363,7 @@ class TestTimeSeriesQuerySet(TestCase):
             (datetime.datetime(2024, 2, 7), 5),
         ]:
             repo = HubCRepository(session_data={"end_date": end_date})
-            test_query = repo.build_time_series_queryset_container(
-                me_models.SatTSC2,
-                ["field_tsc2_float"],
-            ).queryset
+            test_query = repo.receive()
             self.assertEqual(test_query.count(), expected_count)
         for start_date, expected_count in [
             (datetime.datetime(2024, 2, 1), 5),
@@ -1234,10 +1372,7 @@ class TestTimeSeriesQuerySet(TestCase):
             (datetime.datetime(2024, 2, 7), 1),
         ]:
             repo = HubCRepository(session_data={"start_date": start_date})
-            test_query = repo.build_time_series_queryset_container(
-                me_models.SatTSC2,
-                ["field_tsc2_float"],
-            ).queryset
+            test_query = repo.receive()
             self.assertEqual(test_query.count(), expected_count)
 
 
@@ -1248,44 +1383,41 @@ class TestTimeSeriesStdQueryset(TestCase):
             field_c1_bool=True,
         )
         me_factories.SatTSC2Factory.create(
-            hub_entity=ts_satellite_c1.hub_entity,
+            hub_value_date__hub=ts_satellite_c1.hub_entity,
             field_tsc2_float=1.0,
             value_date=montrek_time(2024, 2, 5),
         )
         static_sats = me_factories.SatC1Factory.create_batch(3)
         static_sats[0].field_c1_str = "Test"
         static_sats[0].save()
-        me_factories.SatTSC2Factory.create(
-            hub_entity=static_sats[0].hub_entity,
+        ts_sat_0 = me_factories.SatTSC2Factory.create(
+            hub_value_date__hub=static_sats[0].hub_entity,
             field_tsc2_float=2.0,
             value_date=montrek_time(2024, 2, 5),
             state_date_end=montrek_time(2024, 7, 6),
         )
         me_factories.SatTSC2Factory.create(
-            hub_entity=static_sats[0].hub_entity,
+            hub_value_date=ts_sat_0.hub_value_date,
             field_tsc2_float=3.0,
-            value_date=montrek_time(2024, 2, 5),
             state_date_start=montrek_time(2024, 7, 6),
         )
-        me_factories.SatTSC2Factory.create(
-            hub_entity=static_sats[0].hub_entity,
+        ts_sat_1 = me_factories.SatTSC2Factory.create(
+            hub_value_date__hub=static_sats[0].hub_entity,
             value_date=montrek_time(2024, 2, 6),
             field_tsc2_float=2.5,
         )
-        me_factories.SatTSC2Factory.create(
-            hub_entity=static_sats[1].hub_entity,
+        ts_sat_2 = me_factories.SatTSC2Factory.create(
+            hub_value_date__hub=static_sats[1].hub_entity,
             value_date=montrek_time(2024, 2, 5),
             field_tsc2_float=3.5,
         )
         me_factories.SatTSC3Factory.create(
-            hub_entity=static_sats[0].hub_entity,
-            value_date=montrek_time(2024, 2, 6),
+            hub_value_date=ts_sat_1.hub_value_date,
             field_tsc3_int=5,
             field_tsc3_str="what1",
         )
         me_factories.SatTSC3Factory.create(
-            hub_entity=static_sats[1].hub_entity,
-            value_date=montrek_time(2024, 2, 5),
+            hub_value_date=ts_sat_2.hub_value_date,
             field_tsc3_int=7,
             field_tsc3_str="what2",
         )
@@ -1296,65 +1428,61 @@ class TestTimeSeriesStdQueryset(TestCase):
         )
         self.user = MontrekUserFactory()
 
-    def test_build_time_series_std_queryset(self):
+    def test_build_time_series_receive(self):
         def make_assertions(test_query):
-            test_query = test_query.order_by("created_at")
             self.assertEqual(test_query.count(), 6)
-            test_obj_0 = test_query[0]
-            self.assertEqual(test_obj_0.field_c1_str, "Hallo")
-            self.assertEqual(test_obj_0.field_c1_bool, True)
-            self.assertEqual(test_obj_0.field_tsc2_float, 1.0)
-            self.assertEqual(test_obj_0.value_date, montrek_time(2024, 2, 5).date())
-            self.assertEqual(test_obj_0.field_tsc3_int, None)
-            self.assertEqual(test_obj_0.field_tsc3_str, None)
-            test_obj_1 = test_query[2]
-            self.assertEqual(test_obj_1.field_c1_str, "Test")
+            test_obj_1 = test_query.get(
+                field_c1_str="Test", value_date=montrek_time(2024, 2, 6).date()
+            )
             self.assertEqual(test_obj_1.field_c1_bool, False)
             self.assertEqual(test_obj_1.field_tsc2_float, 2.5)
-            self.assertEqual(test_obj_1.value_date, montrek_time(2024, 2, 6).date())
             self.assertEqual(test_obj_1.field_tsc3_int, 5)
             self.assertEqual(test_obj_1.field_tsc3_str, "what1")
-            test_obj_2 = test_query[1]
-            self.assertEqual(test_obj_2.field_c1_str, "Test")
+            test_obj_0 = test_query.get(
+                field_c1_str="Hallo", value_date=montrek_time(2024, 2, 5).date()
+            )
+            self.assertEqual(test_obj_0.field_c1_bool, True)
+            self.assertEqual(test_obj_0.field_tsc2_float, 1.0)
+            self.assertEqual(test_obj_0.field_tsc3_int, None)
+            self.assertEqual(test_obj_0.field_tsc3_str, None)
+            test_obj_2 = test_query.get(
+                field_c1_str="Test", value_date=montrek_time(2024, 2, 5).date()
+            )
             self.assertEqual(test_obj_2.field_c1_bool, False)
             self.assertEqual(test_obj_2.field_tsc2_float, 3.0)
-            self.assertEqual(test_obj_2.value_date, montrek_time(2024, 2, 5).date())
             self.assertEqual(test_obj_2.field_tsc3_int, None)
             self.assertEqual(test_obj_2.field_tsc3_str, None)
-            test_obj_3 = test_query[3]
-            self.assertEqual(test_obj_3.field_c1_str, "DEFAULT")
+            test_obj_3 = test_query.get(
+                field_c1_str="DEFAULT", value_date=montrek_time(2024, 2, 5).date()
+            )
             self.assertEqual(test_obj_3.field_c1_bool, False)
             self.assertEqual(test_obj_3.field_tsc2_float, 3.5)
-            self.assertEqual(test_obj_3.value_date, montrek_time(2024, 2, 5).date())
             self.assertEqual(test_obj_3.field_tsc3_int, 7)
             self.assertEqual(test_obj_3.field_tsc3_str, "what2")
-            test_obj_4 = test_query[4]
-            self.assertEqual(test_obj_4.field_c1_str, "DEFAULT")
+            test_obj_4 = test_query.get(field_c1_str="DEFAULT", value_date=None)
             self.assertEqual(test_obj_4.field_c1_bool, False)
             self.assertEqual(test_obj_4.field_tsc2_float, None)
-            self.assertEqual(test_obj_4.value_date, None)
             self.assertEqual(test_obj_4.field_tsc3_int, None)
             self.assertEqual(test_obj_4.field_tsc3_str, None)
-
-            test_obj_5 = test_query[5]
-            self.assertEqual(test_obj_5.field_c1_str, None)
+            test_obj_5 = test_query.get(
+                field_c1_str=None, value_date=montrek_time(2024, 2, 3).date()
+            )
             self.assertEqual(test_obj_5.field_c1_bool, None)
-            self.assertEqual(test_obj_5.field_tsc2_float, 0.0)  # Default is 0.0
-            self.assertEqual(test_obj_5.value_date, montrek_time(2024, 2, 3).date())
+            self.assertEqual(test_obj_5.field_tsc2_float, None)  # Default is 0.0
             self.assertEqual(test_obj_5.field_tsc3_int, 8)
             self.assertEqual(test_obj_5.field_tsc3_str, "what3")
 
         repo = HubCRepository()
         # This query creates missing ts entries
-        test_query = repo.std_queryset()
+        test_query = repo.receive()
         make_assertions(test_query)
         # This catches all
-        test_query = repo.std_queryset()
+        test_query = repo.receive()
         make_assertions(test_query)
 
     def test_query_out_of_session_date(self):
         repo = HubCRepository(session_data={"end_date": datetime.datetime(2024, 1, 1)})
-        test_query = repo.std_queryset()
+        test_query = repo.receive()
         for query_element in test_query:
             self.assertEqual(query_element.value_date, None)
             self.assertEqual(query_element.field_tsc2_float, None)
@@ -1362,20 +1490,95 @@ class TestTimeSeriesStdQueryset(TestCase):
             self.assertEqual(query_element.field_tsc3_str, None)
 
 
+class TestTSRepoLatestTS(TestCase):
+    def setUp(self):
+        sat1 = me_factories.SatTSC2Factory.create(
+            value_date="2024-11-15", field_tsc2_float=1.0
+        )
+        sat2 = me_factories.SatTSC2Factory.create(
+            value_date="2024-11-15", field_tsc2_float=2.0
+        )
+        hub_vd1 = me_factories.CHubValueDateFactory.create(
+            hub=sat1.hub_value_date.hub,
+            value_date_list=me_factories.ValueDateListFactory.create(
+                value_date="2024-11-16"
+            ),
+        )
+        hub_vd2 = me_factories.CHubValueDateFactory.create(
+            hub=sat2.hub_value_date.hub,
+            value_date_list=hub_vd1.value_date_list,
+        )
+        me_factories.SatTSC2Factory.create(
+            hub_value_date=hub_vd1,
+            field_tsc2_float=3.0,
+        )
+        me_factories.SatTSC2Factory.create(
+            hub_value_date=hub_vd2,
+            field_tsc2_float=4.0,
+        )
+        me_factories.SatC1Factory.create(
+            field_c1_str="Hallo",
+            hub_entity=sat1.hub_value_date.hub,
+        )
+        me_factories.SatC1Factory.create(
+            field_c1_str="Bonjour",
+            hub_entity=sat2.hub_value_date.hub,
+        )
+        me_factories.SatC1Factory.create(
+            field_c1_str="Hola",
+        )
+
+    def test_last_ts_repo(self):
+        repo = HubCRepositoryLastTS()
+        test_query = repo.receive()
+        self.assertEqual(test_query.count(), 3)
+        qs1 = test_query.get(field_c1_str="Hallo")
+        self.assertEqual(qs1.field_tsc2_float, 3.0)
+        self.assertEqual(qs1.value_date, montrek_time(2024, 11, 16).date())
+        qs2 = test_query.get(field_c1_str="Bonjour")
+        self.assertEqual(qs2.field_tsc2_float, 4.0)
+        self.assertEqual(qs2.value_date, montrek_time(2024, 11, 16).date())
+        qs3 = test_query.get(field_c1_str="Hola")
+        self.assertEqual(qs3.field_tsc2_float, None)
+        self.assertEqual(qs3.value_date, None)
+
+    def test_only_statics(self):
+        repo = HubCRepositoryOnlyStatic()
+        test_query = repo.receive()
+        self.assertEqual(test_query.count(), 3)
+        c1_vals = [qs.field_c1_str for qs in test_query]
+        c1_vals.sort()
+        self.assertEqual(c1_vals, ["Bonjour", "Hallo", "Hola"])
+
+
 class TestTimeSeriesPerformance(TestCase):
+    @unittest.skipUnless(
+        "--tag=slow" in sys.argv, "Extremely slow tests only run on demand"
+    )
+    @tag("slow")
     def test_large_datasets_with_filter__performance(self):
         year_range = range(2010, 2021)
         hubs = me_factories.HubCFactory.create_batch(1000)
+        value_date_lists = {
+            year: ValueDateListFactory(value_date=montrek_time(year, 1, 1))
+            for year in year_range
+        }
+        null_value_date_list = ValueDateListFactory(value_date=None)
         for hub in hubs:
-            me_factories.SatC1Factory.create()
-            for year in year_range:
-                me_factories.SatTSC2Factory.create(
-                    hub_entity=hub,
-                    value_date=montrek_time(year, 1, 1),
+            me_factories.SatC1Factory.create(
+                hub_value_date=me_factories.CHubValueDateFactory(
+                    hub=hub, value_date_list=null_value_date_list
                 )
-                me_factories.SatTSC3Factory.create(
-                    hub_entity=hub,
-                    value_date=montrek_time(year, 1, 1),
+            )
+            for year in year_range:
+                hvd = me_factories.CHubValueDateFactory.create(
+                    hub=hub, value_date_list=value_date_lists[year]
+                )
+                me_factories.SatTSC2Factory(
+                    hub_value_date=hvd,
+                )
+                me_factories.SatTSC3Factory(
+                    hub_value_date=hvd,
                 )
         repository = HubCRepository()
         filter_data = {
@@ -1391,7 +1594,7 @@ class TestTimeSeriesPerformance(TestCase):
         }
         repository = HubCRepository(session_data=filter_data)
         t1 = datetime.datetime.now()
-        test_query = repository.std_queryset()
+        repository.receive()
         t2 = datetime.datetime.now()
         self.assertLess(t2 - t1, datetime.timedelta(seconds=1))
 
@@ -1399,7 +1602,7 @@ class TestTimeSeriesPerformance(TestCase):
 class TestTimeSeriesQuerySetEmpty(TestCase):
     def test_empty_queryset(self):
         repo = HubCRepository()
-        test_query = repo.std_queryset().filter(field_tsc3_int=42)
+        test_query = repo.receive().filter(field_tsc3_int=42)
         self.assertEqual(test_query.count(), 0)
 
 
@@ -1434,7 +1637,9 @@ class TestHistory(TestCase):
         huba.link_hub_a_hub_b.add(hubb)
         repository = HubARepository()
 
-        test_querysets_dict = repository.get_history_queryset(huba.id)
+        test_querysets_dict = repository.get_history_queryset(
+            huba.hub_value_date.first().id
+        )
 
         self.assertEqual(len(test_querysets_dict), 3)
         sata1_queryset = test_querysets_dict["SatA1"]
@@ -1488,7 +1693,7 @@ class TestMontrekManyToManyRelations(TestCase):
 
     def test_return_many_to_many_relation(self):
         repository_b = HubBRepository()
-        satb_queryset = repository_b.std_queryset()
+        satb_queryset = repository_b.receive()
         self.assertEqual(satb_queryset.count(), 2)
         satb_queryset = satb_queryset.order_by("field_b1_str")
         self.assertEqual(
@@ -1501,7 +1706,7 @@ class TestMontrekManyToManyRelations(TestCase):
         )
         self.assertEqual(satb_queryset[1].field_d1_str, self.satd1.field_d1_str)
         repository_d = HubDRepository()
-        satd_queryset = repository_d.std_queryset()
+        satd_queryset = repository_d.receive()
         self.assertEqual(satd_queryset.count(), 2)
         self.assertEqual(
             satd_queryset[0].field_b1_str,
@@ -1532,8 +1737,8 @@ class TestMontrekManyToManyRelations(TestCase):
         )
         repository_b = HubBRepository(session_data={"user_id": self.user.id})
         repository_b.create_objects_from_data_frame(input_df)
-        new_sat_b = repository_b.std_queryset().last()
-        links = new_sat_b.link_hub_b_hub_d.all()
+        new_sat_b = repository_b.receive().last()
+        links = new_sat_b.hub.link_hub_b_hub_d.all()
         self.assertEqual(links.count(), 2)
         self.assertEqual(links[0], self.satd1.hub_entity)
         self.assertEqual(links[1], self.satd2.hub_entity)
@@ -1561,9 +1766,9 @@ class TestMontrekManyToManyRelations(TestCase):
         repository_b = HubBRepository(session_data={"user_id": self.user.id})
         repository_b.std_create_object(input_data)
 
-        hub_b = repository_b.std_queryset().filter(id=hub_entity_id).first()
+        hub_b = repository_b.receive().filter(hub__id=hub_entity_id).first()
 
-        links = me_models.LinkHubBHubD.objects.filter(hub_in=hub_b.id).all()
+        links = me_models.LinkHubBHubD.objects.filter(hub_in=hub_b.hub.id).all()
         continued = links.filter(hub_out=self.satd1.hub_entity).get()
         discontinued = links.filter(hub_out=self.satd2.hub_entity).get()
         new_1 = links.filter(hub_out=satd3.hub_entity).get()
@@ -1679,7 +1884,7 @@ class TestGetHubsByFieldValues(TestCase):
     def setUp(self):
         a1_str_values = ["a", "b", "c", "c", "", "x", "y", "z"]
         for hub_id, a1_str_value in enumerate(a1_str_values):
-            hub = me_factories.HubAFactory(id=hub_id)
+            hub = me_factories.HubAFactory(id=hub_id + 1)
             me_factories.SatA1Factory(
                 hub_entity=hub,
                 state_date_start=montrek_time(2023, 7, 10),
@@ -1696,7 +1901,7 @@ class TestGetHubsByFieldValues(TestCase):
             raise_for_unmapped_values=False,
         )
         actual_ids = [hub.id if hub else None for hub in actual]
-        expected_ids = [0, 1, 1, 2, None, None]  # 2 is the first hub with value "c"
+        expected_ids = [1, 2, 2, 3, None, None]  # 2 is the first hub with value "c"
         self.assertEqual(actual_ids, expected_ids)
 
     def test_get_hubs_by_field_values_raises_error_for_multiple_hubs(self):
@@ -1726,3 +1931,289 @@ class TestGetHubsByFieldValues(TestCase):
                 raise_for_multiple_hubs=False,
                 raise_for_unmapped_values=True,
             )
+
+    def test_get_hubs_by_field_values__timeseries(self):
+        sat = me_factories.SatTSC2Factory(field_tsc2_float=3.0)
+        repository = HubCRepository()
+        test_hubs = repository.get_hubs_by_field_values(
+            values=[3.0],
+            by_repository_field="field_tsc2_float",
+            raise_for_multiple_hubs=False,
+            raise_for_unmapped_values=False,
+        )
+        self.assertEqual(test_hubs[0], sat.hub_value_date.hub)
+
+
+class TestRepositoryQueryConcept(TestCase):
+    def test_satellite_concept__single_static_entry(self):
+        c1_fac = me_factories.SatC1Factory(
+            field_c1_str="Hallo",
+            field_c1_bool=True,
+        )
+        repo = HubCRepository({})
+        query = repo.receive()
+        self.assertEqual(query.count(), 1)
+        self.assertEqual(query.first().field_c1_str, c1_fac.field_c1_str)
+        self.assertEqual(query.first().field_c1_bool, c1_fac.field_c1_bool)
+        self.assertEqual(query.first().hub_entity_id, c1_fac.hub_entity_id)
+        self.assertEqual(query.first().value_date, None)
+
+    def test_ts_satellite_concept__single_entry(self):
+        tsc2_fac = me_factories.SatTSC2Factory.create()
+        repo = HubCRepository({})
+        query = repo.receive()
+        self.assertEqual(query.first().field_tsc2_float, tsc2_fac.field_tsc2_float)
+        self.assertEqual(
+            query.first().value_date,
+            tsc2_fac.hub_value_date.value_date_list.value_date,
+        )
+
+    def test_ts_satellite_concept__two_hubs(self):
+        tsc2_fac1 = me_factories.SatTSC2Factory.create(
+            field_tsc2_float=10, value_date="2024-11-13"
+        )
+        tsc2_fac2 = me_factories.SatTSC2Factory.create(
+            field_tsc2_float=20, value_date="2024-11-14"
+        )
+        repo = HubCRepository({})
+        query = repo.receive()
+        self.assertEqual(query.count(), 2)
+        self.assertEqual(query.last().field_tsc2_float, tsc2_fac1.field_tsc2_float)
+        self.assertEqual(query.first().field_tsc2_float, tsc2_fac2.field_tsc2_float)
+
+    def test_ts_satellite_concept__two_dates(self):
+        tsc2_fac1 = me_factories.SatTSC2Factory.create(
+            field_tsc2_float=10, value_date="2024-11-14"
+        )
+        tsc2_fac2 = me_factories.SatTSC2Factory.create(
+            field_tsc2_float=20,
+            hub_value_date__hub=tsc2_fac1.hub_value_date.hub,
+            value_date="2024-11-13",
+        )
+        repo = HubCRepository({})
+        query = repo.receive()
+        self.assertEqual(query.count(), 2)
+        self.assertEqual(query.first().field_tsc2_float, tsc2_fac1.field_tsc2_float)
+        self.assertEqual(query.last().field_tsc2_float, tsc2_fac2.field_tsc2_float)
+        self.assertEqual(
+            str(query.first().value_date),
+            tsc2_fac1.hub_value_date.value_date_list.value_date,
+        )
+        self.assertEqual(
+            str(query.last().value_date),
+            tsc2_fac2.hub_value_date.value_date_list.value_date,
+        )
+
+    def test_ts_satellite_concept__with_sat(self):
+        tsc2_fac1 = me_factories.SatTSC2Factory(field_tsc2_float=10)
+        c_sat = me_factories.SatC1Factory(
+            hub_entity=tsc2_fac1.hub_value_date.hub, field_c1_str="hallo"
+        )
+        repo = HubCRepository({})
+        query = repo.receive()
+        self.assertEqual(query.count(), 1)
+        self.assertEqual(query.first().field_tsc2_float, tsc2_fac1.field_tsc2_float)
+        self.assertEqual(
+            query.first().value_date,
+            tsc2_fac1.hub_value_date.value_date_list.value_date,
+        )
+        self.assertEqual(query.first().field_c1_str, c_sat.field_c1_str)
+
+    def test_ts_satellite_concept__two_ts_sats(self):
+        tsc2_fac = me_factories.SatTSC2Factory(field_tsc2_float=10)
+        c_sat1 = me_factories.SatC1Factory(
+            hub_entity=tsc2_fac.hub_value_date.hub, field_c1_str="hallo"
+        )
+        tsc3_fac = me_factories.SatTSC3Factory(
+            field_tsc3_int=20, hub_value_date=tsc2_fac.hub_value_date
+        )
+        repo = HubCRepository({})
+        query = repo.receive()
+        self.assertEqual(query.count(), 1)
+        self.assertEqual(query.first().field_tsc2_float, tsc2_fac.field_tsc2_float)
+        self.assertEqual(
+            query.first().value_date,
+            tsc2_fac.hub_value_date.value_date_list.value_date,
+        )
+        self.assertEqual(query.first().field_c1_str, c_sat1.field_c1_str)
+        self.assertEqual(query.first().field_tsc3_int, tsc3_fac.field_tsc3_int)
+
+    def test_ts_satellite_concept__linked_sat(self):
+        c_hub_value_date = me_factories.CHubValueDateFactory.create()
+        c_sat1 = me_factories.SatC1Factory(
+            field_c1_str="hallo", hub_entity=c_hub_value_date.hub
+        )
+        d_sat1 = me_factories.SatD1Factory.create(
+            field_d1_str="test",
+        )
+        c_sat1.hub_entity.link_hub_c_hub_d.add(d_sat1.hub_entity)
+        repo = HubCRepository({})
+        query = repo.receive()
+        self.assertEqual(query.count(), 1)
+        self.assertEqual(query.first().field_c1_str, c_sat1.field_c1_str)
+        self.assertEqual(query.first().field_d1_str, d_sat1.field_d1_str)
+
+    def test_ts_satellite_concept__linked_ts_sat(self):
+        value_date_list = me_factories.ValueDateListFactory()
+        c_hub_value_date = me_factories.CHubValueDateFactory.create(
+            value_date_list=value_date_list
+        )
+        d_hub_value_date = me_factories.DHubValueDateFactory.create(
+            value_date_list=value_date_list
+        )
+        d_hub_value_date2 = me_factories.DHubValueDateFactory.create(
+            hub=d_hub_value_date.hub
+        )
+        c_sat = me_factories.SatTSC2Factory.create(
+            hub_value_date=c_hub_value_date, field_tsc2_float=10
+        )
+        d_sat = me_factories.SatTSD2Factory.create(
+            hub_value_date=d_hub_value_date, field_tsd2_float=20
+        )
+        me_factories.SatTSD2Factory.create(
+            field_tsd2_float=30, hub_value_date=d_hub_value_date2
+        )
+        c_hub_value_date.hub.link_hub_c_hub_d.add(d_hub_value_date.hub)
+        repo = HubCRepository({})
+        query = repo.receive()
+        self.assertEqual(query.count(), 1)
+        self.assertEqual(query.first().field_tsc2_float, c_sat.field_tsc2_float)
+        self.assertEqual(query.first().field_tsd2_float, str(d_sat.field_tsd2_float))
+
+    def test_ts_satellite_concept__two_ts_sats_different_dates(self):
+        tsc2_fac1 = me_factories.SatTSC2Factory(
+            field_tsc2_float=10, value_date="2024-11-13"
+        )
+        c_sat1 = me_factories.SatC1Factory(
+            hub_entity=tsc2_fac1.hub_value_date.hub, field_c1_str="hallo"
+        )
+        tsc3_fac = me_factories.SatTSC3Factory(
+            field_tsc3_int=20, hub_value_date=tsc2_fac1.hub_value_date
+        )
+        tsc3_fac_2 = me_factories.SatTSC3Factory(
+            field_tsc3_int=30, value_date="2024-11-15"
+        )
+        c_sat2 = me_factories.SatC1Factory(
+            hub_entity=tsc3_fac_2.hub_value_date.hub, field_c1_str="wallo"
+        )
+        repo = HubCRepository({})
+        query = repo.receive()
+        self.assertEqual(query.count(), 2)
+        result_1 = query.last()
+        result_2 = query.first()
+        self.assertEqual(result_1.field_tsc2_float, tsc2_fac1.field_tsc2_float)
+        self.assertEqual(
+            result_1.value_date,
+            tsc2_fac1.hub_value_date.value_date_list.value_date,
+        )
+        self.assertEqual(result_1.field_c1_str, c_sat1.field_c1_str)
+        self.assertEqual(result_1.field_tsc3_int, tsc3_fac.field_tsc3_int)
+        self.assertEqual(result_2.field_tsc2_float, None)
+        self.assertEqual(
+            str(result_2.value_date),
+            tsc3_fac_2.hub_value_date.value_date_list.value_date,
+        )
+        self.assertEqual(result_2.field_c1_str, c_sat2.field_c1_str)
+        self.assertEqual(result_2.field_tsc3_int, tsc3_fac_2.field_tsc3_int)
+
+    def test_ts_satellite_concept__many_to_many_link(self):
+        c_sat1 = me_factories.SatC1Factory(field_c1_str="hallo")
+        c_sat2 = me_factories.SatC1Factory(field_c1_str="hallo2")
+        d_sat1 = me_factories.SatD1Factory.create(
+            field_d1_str="test",
+        )
+        d_sat2 = me_factories.SatD1Factory.create(
+            field_d1_str="test2",
+        )
+        c_sat1.hub_entity.link_hub_c_hub_d.add(d_sat1.hub_entity)
+        c_sat1.hub_entity.link_hub_c_hub_d.add(d_sat2.hub_entity)
+        c_sat2.hub_entity.link_hub_c_hub_d.add(d_sat1.hub_entity)
+        repo = HubCRepository({})
+        query = repo.receive()
+        self.assertEqual(query.count(), 3)
+        self.assertEqual(query.first().field_c1_str, c_sat1.field_c1_str)
+        self.assertEqual(
+            query.first().field_d1_str, f"{d_sat1.field_d1_str},{d_sat2.field_d1_str}"
+        )
+        self.assertEqual(query.last().field_c1_str, c_sat2.field_c1_str)
+        self.assertEqual(query.last().field_d1_str, d_sat1.field_d1_str)
+
+
+class TestCommonFields(TestCase):
+    def test_commom_comments(self):
+        tsc2 = me_factories.SatTSC2Factory.create(
+            comment="First Comment", value_date="2019-09-09"
+        )
+        tsd2 = me_factories.SatTSD2Factory.create(
+            comment="Third Comment", value_date="2019-09-09"
+        )
+        c1 = me_factories.SatC1Factory.create(
+            comment="Second Comment", hub_entity=tsc2.hub_value_date.hub
+        )
+        d1 = me_factories.SatD1Factory.create(
+            comment="Fourth Comment", hub_entity=tsd2.hub_value_date.hub
+        )
+        c1.hub_entity.link_hub_c_hub_d.add(d1.hub_entity)
+
+        query = HubCRepositoryCommonFields().receive()
+        test_obj = query.last()
+        self.assertEqual(test_obj.comment_tsc2, "First Comment")
+        self.assertEqual(test_obj.comment_c1, "Second Comment")
+        self.assertEqual(test_obj.comment_tsd2, "Third Comment")
+        self.assertEqual(test_obj.comment_d1, "Fourth Comment")
+        self.assertEqual(test_obj.comment, "")
+
+
+class TestReceiveWithFilter(TestCase):
+    def test_receive_with_filter(self):
+        me_factories.SatC1Factory.create(field_c1_str="Test")
+        me_factories.SatC1Factory.create(field_c1_str="Test2")
+        me_factories.SatC1Factory.create(field_c1_str="Test3")
+        filter_data = {
+            "request_path": "test_path",
+            "filter": {
+                "test_path": {
+                    "field_c1_str": {
+                        "filter_value": "Test",
+                        "filter_negate": False,
+                    }
+                }
+            },
+        }
+        repo = HubCRepository(session_data=filter_data)
+        query = repo.receive()
+        self.assertEqual(query.count(), 1)
+        self.assertEqual(query.first().field_c1_str, "Test")
+
+    def test_receive_with_filter_dont_apply(self):
+        me_factories.SatC1Factory.create(field_c1_str="Test")
+        me_factories.SatC1Factory.create(field_c1_str="Test2")
+        me_factories.SatC1Factory.create(field_c1_str="Test3")
+        filter_data = {
+            "request_path": "test_path",
+            "filter": {
+                "test_path": {
+                    "field_c1_str": {
+                        "filter_value": "Test",
+                        "filter_negate": False,
+                    }
+                }
+            },
+        }
+        repo = HubCRepository(session_data=filter_data)
+        query = repo.receive(apply_filter=False)
+        self.assertEqual(query.count(), 3)
+
+    def test_ignore_session_date(self):
+        hub_value_date = me_factories.CHubValueDateFactory.create(
+            value_date="2024-02-05"
+        )
+        me_factories.SatC1Factory.create(
+            field_c1_str="Test", hub_entity=hub_value_date.hub
+        )
+        repo = HubCRepositoryOnlyStatic(
+            session_data={"end_date": datetime.datetime(2024, 1, 1)}
+        )
+        test_query = repo.receive()
+        self.assertEqual(test_query.count(), 1)
+        self.assertEqual(test_query.first().field_c1_str, "Test")

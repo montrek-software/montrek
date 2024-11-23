@@ -17,7 +17,7 @@ class ProcessFileTaskABC(Task):
     def __init__(
         self,
         *args,
-        file_upload_processor_class: FileUploadProcessorProtocol,
+        file_upload_processor_class: type[FileUploadProcessorProtocol],
         file_upload_registry_repository_class: type[FileUploadRegistryRepositoryABC],
         **kwargs,
     ) -> None:
@@ -41,7 +41,7 @@ class ProcessFileTaskABC(Task):
         registry_repo = self.file_upload_registry_repository_class(
             session_data=session_data
         )
-        registry_obj = registry_repo.std_queryset().get(pk=file_upload_registry_id)
+        registry_obj = registry_repo.receive().get(hub__pk=file_upload_registry_id)
         try:
             processor = self.file_upload_processor_class(
                 file_upload_registry_hub=registry_obj, session_data=session_data
