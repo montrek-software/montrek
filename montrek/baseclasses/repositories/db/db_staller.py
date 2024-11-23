@@ -1,5 +1,6 @@
 from baseclasses.models import HubValueDate, MontrekHubABC, MontrekSatelliteABC
 from baseclasses.repositories.annotator import Annotator
+from django.utils import timezone
 
 StalledSatelliteDict = dict[type[MontrekSatelliteABC], list[MontrekSatelliteABC]]
 
@@ -18,10 +19,14 @@ class DbStaller:
         self.new_satellites: StalledSatelliteDict = {
             sat_class: [] for sat_class in annotator.annotated_satellite_classes
         }
+        self.updated_satellites: StalledSatelliteDict = {
+            sat_class: [] for sat_class in annotator.annotated_satellite_classes
+        }
         self.hub_class = annotator.hub_class
         self.hubs: StalledHubDict = {self.hub_class: []}
         self.hub_value_date_class = self.hub_class.hub_value_date.field.model
         self.hub_value_dates: StalledHubValueDateDict = {self.hub_value_date_class: []}
+        self.creation_date = timezone.now()
 
     def stall_hub(self, new_hub: MontrekHubABC):
         self._add_stalled_object(new_hub, self.hubs)
@@ -32,6 +37,9 @@ class DbStaller:
     def stall_new_satellite(self, new_satellite: MontrekSatelliteABC):
         self._add_stalled_object(new_satellite, self.new_satellites)
 
+    def stall_updated_satellite(self, updated_satellite: MontrekSatelliteABC):
+        self._add_stalled_object(updated_satellite, self.updated_satellites)
+
     def get_hubs(self) -> StalledHubDict:
         return self.hubs
 
@@ -40,6 +48,9 @@ class DbStaller:
 
     def get_new_satellites(self) -> StalledSatelliteDict:
         return self.new_satellites
+
+    def get_updated_satellites(self) -> StalledSatelliteDict:
+        return self.updated_satellites
 
     def get_static_satellite_classes(self) -> list[type[MontrekSatelliteABC]]:
         return [

@@ -69,17 +69,7 @@ class DbCreator:
             self.db_staller.stall_new_satellite(sat)
             return
         self.hub = existing_sat.hub_entity
-
-        # if satellite_class.is_timeseries:
-        #     self.hub_entity = satellite_updates_or_none.hub_value_date.hub
-        # else:
-        #     self.hub_entity = satellite_updates_or_none.hub_entity
-        # if satellite_updates_or_none.hash_value == sat_hash_value:
-        #     return ExistingSatelliteCreationState(satellite=satellite_updates_or_none)
-        # return UpdatedSatelliteCreationState(
-        #     satellite=satellite, updated_sat=satellite_updates_or_none
-        # )
-        #
+        self._updated_satellite(sat, existing_sat)
 
     def _set_value_date_list(self, data: DataDict):
         value_date = data.get("value_date", None)
@@ -129,6 +119,17 @@ class DbCreator:
             .order_by("-state_date_start")
             .first()
         )
+
+    def _updated_satellite(
+        self, sat: MontrekSatelliteABC, existing_sat: MontrekSatelliteABC
+    ):
+        if existing_sat.get_hash_value == sat.get_hash_value:
+            return
+        creation_date = self.db_staller.creation_date
+        existing_sat.state_date_end = creation_date
+        sat.state_date_start = creation_date
+        self.db_staller.stall_new_satellite(sat)
+        self.db_staller.stall_updated_satellite(existing_sat)
 
     def _is_sat_data_empty(self, data: DataDict) -> bool:
         data = data.copy()
