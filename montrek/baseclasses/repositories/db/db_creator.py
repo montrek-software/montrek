@@ -67,6 +67,9 @@ class DbCreator:
         existing_sat = self._get_existing_satellite(sat, state_date_end_criterion)
         if existing_sat is None:
             self.db_staller.stall_new_satellite(sat)
+            return
+        self.hub = existing_sat.hub_entity
+
         # if satellite_class.is_timeseries:
         #     self.hub_entity = satellite_updates_or_none.hub_value_date.hub
         # else:
@@ -95,7 +98,7 @@ class DbCreator:
     def _stall_hub(self):
         if not self.hub:
             self.hub = self.db_staller.hub_class(created_by_id=self.user_id)
-        self.db_staller.stall_hub(self.hub)
+            self.db_staller.stall_hub(self.hub)
 
     def _stall_hub_value_date(self):
         if self.hub.id is None:
