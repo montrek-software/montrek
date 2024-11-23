@@ -22,6 +22,8 @@ class DbCreator:
         self.hub: MontrekHubABC | None = None
         self.hub_value_date: HubValueDate | None = None
         self.value_date_list: ValueDateList | None = None
+        self.existing_satellites: list[MontrekSatelliteABC] = []
+        self.creation_date = db_staller.creation_date
 
     def create(self, data: DataDict):
         data = self._enrich_data(data)
@@ -41,7 +43,7 @@ class DbCreator:
             sat_data = self._get_satellite_data(data, sat_class)
             if self._is_sat_data_empty(sat_data):
                 continue
-            sat = sat_class(**sat_data)
+            sat = sat_class(**sat_data, state_date_start=self.creation_date)
             self._process_static_satellite(sat)
 
     def _make_timezone_aware(self, sat_data: DataDict) -> DataDict:
@@ -87,7 +89,9 @@ class DbCreator:
 
     def _stall_hub(self):
         if not self.hub:
-            self.hub = self.db_staller.hub_class(created_by_id=self.user_id)
+            self.hub = self.db_staller.hub_class(
+                created_by_id=self.user_id, state_date_start=self.creation_date
+            )
             self.db_staller.stall_hub(self.hub)
 
     def _stall_hub_value_date(self):
@@ -99,6 +103,7 @@ class DbCreator:
             return
 
     def _set_static_satellites_hub(self):
+        self._reset_hub_if_new_and_existing()
         for sat_class in self.db_staller.get_static_satellite_classes():
             sats = self.db_staller.get_new_satellites()[sat_class]
             for sat in sats:
@@ -124,12 +129,42 @@ class DbCreator:
         self, sat: MontrekSatelliteABC, existing_sat: MontrekSatelliteABC
     ):
         if existing_sat.get_hash_value == sat.get_hash_value:
+            self.existing_satellites.append(existing_sat)
             return
-        creation_date = self.db_staller.creation_date
-        existing_sat.state_date_end = creation_date
-        sat.state_date_start = creation_date
+        existing_sat.state_date_end = self.creation_date
+        sat.state_date_start = self.creation_date
         self.db_staller.stall_new_satellite(sat)
         self.db_staller.stall_updated_satellite(existing_sat)
+
+    def _reset_hub_if_new_and_existing(self):
+        # if there are new and existing satellites stalled, treat every existing satellite as new
+        if len(self.existing_satellites) == 0:
+            return
+        if all(
+            [len(sats) == 0 for sats in self.db_staller.get_new_satellites().values()]
+        ):
+            return
+        self.hub = None
+        for existing_sat in self.existing_satellites:
+            self._close_and_renew_satellite(existing_sat)
+
+        self._stall_hub()
+
+    def _close_and_renew_satellite(self, existing_sat: MontrekSatelliteABC):
+        old_hub = existing_sat.hub_entity
+        old_hub.state_date_end = self.db_staller.creation_date
+        self.db_staller.stall_updated_hub(old_hub)
+        existing_sat.state_date_end = self.db_staller.creation_date
+        self.db_staller.stall_updated_satellite(existing_sat)
+        existing_sat.state_date_end = self.creation_date
+        existing_sat.hub_entity = None
+        existing_sat.state_date_start = self.creation_date
+        existing_sat.state_date_end = timezone.make_aware(
+            timezone.datetime.max, timezone.get_default_timezone()
+        )
+        existing_sat.pk = None
+        existing_sat.id = None
+        self.db_staller.stall_new_satellite(existing_sat)
 
     def _is_sat_data_empty(self, data: DataDict) -> bool:
         data = data.copy()

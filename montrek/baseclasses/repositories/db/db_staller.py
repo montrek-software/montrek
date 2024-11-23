@@ -24,12 +24,16 @@ class DbStaller:
         }
         self.hub_class = annotator.hub_class
         self.hubs: StalledHubDict = {self.hub_class: []}
+        self.updated_hubs: StalledHubDict = {self.hub_class: []}
         self.hub_value_date_class = self.hub_class.hub_value_date.field.model
         self.hub_value_dates: StalledHubValueDateDict = {self.hub_value_date_class: []}
         self.creation_date = timezone.now()
 
     def stall_hub(self, new_hub: MontrekHubABC):
         self._add_stalled_object(new_hub, self.hubs)
+
+    def stall_updated_hub(self, new_hub: MontrekHubABC):
+        self._add_stalled_object(new_hub, self.updated_hubs)
 
     def stall_hub_value_date(self, new_hub_value_date: HubValueDate):
         self._add_stalled_object(new_hub_value_date, self.hub_value_dates)
@@ -42,6 +46,9 @@ class DbStaller:
 
     def get_hubs(self) -> StalledHubDict:
         return self.hubs
+
+    def get_updated_hubs(self) -> StalledHubDict:
+        return self.updated_hubs
 
     def get_hub_value_dates(self) -> StalledHubValueDateDict:
         return self.hub_value_dates

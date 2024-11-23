@@ -10,6 +10,7 @@ class DbWriter:
 
     def write(self):
         self.write_hubs()
+        self.write_updated_hubs()
         self.write_hub_value_dates()
         self.write_new_satellites()
         self.write_updated_satellites()
@@ -17,6 +18,10 @@ class DbWriter:
     def write_hubs(self):
         new_hubs = self.db_staller.get_hubs()
         self._bulk_create(new_hubs)
+
+    def write_updated_hubs(self):
+        updated_hubs = self.db_staller.get_updated_hubs()
+        self._bulk_update(updated_hubs)
 
     def write_new_satellites(self):
         new_satellites = self.db_staller.get_new_satellites()

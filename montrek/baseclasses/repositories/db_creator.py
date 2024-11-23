@@ -237,6 +237,7 @@ class DbCreator:
             return _get_hub(selected_satellites["existing"][0].satellite)
         elif selected_satellites["updated"]:
             return _get_hub(selected_satellites["updated"][0].updated_sat)
+
         return self.hub_entity
 
     def _new_satellites(self, new_satellites, reference_hub, creation_date):
