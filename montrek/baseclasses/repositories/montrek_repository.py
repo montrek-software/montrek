@@ -19,7 +19,7 @@ from baseclasses.repositories.annotator import (
 )
 from baseclasses.repositories.db_creator import DbCreator
 
-# from baseclasses.repositories.db.db_creator import DbCreator as DbCreatorNew
+from baseclasses.repositories.db.db_creator import DbCreator as DbCreatorNew
 from baseclasses.repositories.subquery_builder import (
     LinkedSatelliteSubqueryBuilder,
     ReverseLinkedSatelliteSubqueryBuilder,
@@ -34,6 +34,10 @@ from django.db.models import (
 from django.utils import timezone
 from baseclasses.repositories.query_builder import QueryBuilder
 import logging
+
+from baseclasses.repositories.db.db_staller import DbStaller
+from baseclasses.repositories.db.db_writer import DbWriter
+from baseclasses.repositories.db.db_creator import DataDict
 
 logger = logging.getLogger(__name__)
 
@@ -69,13 +73,14 @@ class MontrekRepository:
             f"set_annotations is not implemented for {self.__class__.__name__}"
         )
 
-    def create_by_dict(self, data: Dict[str, Any]) -> MontrekHubABC:
+    def create_by_dict(self, data: DataDict) -> MontrekHubABC:
         self._raise_for_anonymous_user()
-        hub_entity = self._get_hub_from_data(data)
-        db_creator = DbCreator(self.annotator)
-        created_hub = db_creator.create(data, hub_entity, self.session_user_id)
-        db_creator.save_stalled_objects()
-        return created_hub
+        db_staller = DbStaller(self.annotator)
+        db_creator = DbCreatorNew(db_staller, self.session_user_id)
+        db_creator.create(data)
+        db_writer = DbWriter(db_staller)
+        db_writer.write()
+        return db_creator.hub
 
     def create_by_data_frame(self, data_frame: pd.DataFrame) -> List[MontrekHubABC]:
         return self.create_objects_from_data_frame(data_frame)
