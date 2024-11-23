@@ -18,6 +18,7 @@ DataDict = dict[str, Any]
 class DbCreator:
     def __init__(self, db_staller: DbStaller, user_id: int):
         self.db_staller = db_staller
+        self.data: DataDict = {}
         self.user_id = user_id
         self.hub: MontrekHubABC | None = None
         self.hub_value_date: HubValueDate | None = None
@@ -26,41 +27,38 @@ class DbCreator:
         self.creation_date = db_staller.creation_date
 
     def create(self, data: DataDict):
-        data = self._enrich_data(data)
-        self._create_static_satellites(data)
+        self.data = data
+        self._enrich_data()
+        self._create_static_satellites()
         self._stall_hub()
         self._set_static_satellites_hub()
-        self._set_value_date_list(data)
+        self._set_value_date_list()
         self._stall_hub_value_date()
 
-    def _enrich_data(self, data: DataDict) -> DataDict:
-        data["created_by_id"] = self.user_id
-        data = self._make_timezone_aware(data)
-        return data
+    def _enrich_data(self):
+        self.data["created_by_id"] = self.user_id
+        self._make_timezone_aware()
 
-    def _create_static_satellites(self, data: DataDict):
+    def _create_static_satellites(self):
         for sat_class in self.db_staller.get_static_satellite_classes():
-            sat_data = self._get_satellite_data(data, sat_class)
+            sat_data = self._get_satellite_data(sat_class)
             if self._is_sat_data_empty(sat_data):
                 continue
             sat = sat_class(**sat_data, state_date_start=self.creation_date)
             self._process_static_satellite(sat)
 
-    def _make_timezone_aware(self, sat_data: DataDict) -> DataDict:
-        for key, value in sat_data.items():
+    def _make_timezone_aware(self):
+        for key, value in self.data.items():
             if isinstance(value, datetime.datetime):
                 if value.tzinfo is None:
-                    sat_data[key] = timezone.make_aware(
+                    self.data[key] = timezone.make_aware(
                         value, timezone.get_default_timezone()
                     )
-        return sat_data
 
-    def _get_satellite_data(
-        self, data: DataDict, sat_class: type[MontrekSatelliteABC]
-    ) -> DataDict:
+    def _get_satellite_data(self, sat_class: type[MontrekSatelliteABC]):
         return {
             key: value
-            for key, value in data.items()
+            for key, value in self.data.items()
             if key in sat_class.get_value_field_names() + ["created_by_id"]
         }
 
@@ -69,12 +67,13 @@ class DbCreator:
         existing_sat = self._get_existing_satellite(sat, state_date_end_criterion)
         if existing_sat is None:
             self.db_staller.stall_new_satellite(sat)
+            self._close_existing_sat_if_hub_is_forced(sat)
             return
         self.hub = existing_sat.hub_entity
         self._updated_satellite(sat, existing_sat)
 
-    def _set_value_date_list(self, data: DataDict):
-        value_date = data.get("value_date", None)
+    def _set_value_date_list(self):
+        value_date = self.data.get("value_date", None)
         existing_value_date_list = ValueDateList.objects.filter(value_date=value_date)
         if existing_value_date_list.count() == 0:
             value_date_list = ValueDateList(value_date=value_date)
@@ -88,11 +87,16 @@ class DbCreator:
             )
 
     def _stall_hub(self):
-        if not self.hub:
-            self.hub = self.db_staller.hub_class(
-                created_by_id=self.user_id, state_date_start=self.creation_date
+        if "hub_entity_id" in self.data:
+            self.hub = self.db_staller.hub_class.objects.get(
+                id=self.data["hub_entity_id"]
             )
-            self.db_staller.stall_hub(self.hub)
+        if self.hub:
+            return
+        self.hub = self.db_staller.hub_class(
+            created_by_id=self.user_id, state_date_start=self.creation_date
+        )
+        self.db_staller.stall_hub(self.hub)
 
     def _stall_hub_value_date(self):
         if self.hub.id is None:
@@ -144,6 +148,8 @@ class DbCreator:
             [len(sats) == 0 for sats in self.db_staller.get_new_satellites().values()]
         ):
             return
+        if "hub_entity_id" in self.data:
+            return
         self.hub = None
         for existing_sat in self.existing_satellites:
             self._close_and_renew_satellite(existing_sat)
@@ -165,6 +171,15 @@ class DbCreator:
         existing_sat.pk = None
         existing_sat.id = None
         self.db_staller.stall_new_satellite(existing_sat)
+
+    def _close_existing_sat_if_hub_is_forced(self, sat: MontrekSatelliteABC):
+        if "hub_entity_id" not in self.data:
+            return
+        latest_sat = sat.__class__.objects.filter(
+            hub_entity_id=self.data["hub_entity_id"]
+        ).latest("state_date_start")
+        latest_sat.state_date_end = self.creation_date
+        self.db_staller.stall_updated_satellite(latest_sat)
 
     def _is_sat_data_empty(self, data: DataDict) -> bool:
         data = data.copy()
