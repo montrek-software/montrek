@@ -63,6 +63,7 @@ class DbCreator:
         selected_satellites = {"new": [], "existing": [], "updated": []}
         creation_date = timezone.now()
         self.hub_entity = hub_entity
+        value_date = data.get("value_date", None)
         for satellite_class in self.satellite_classes:
             sat_data = {
                 k: v
@@ -75,22 +76,21 @@ class DbCreator:
             sat_data = self._convert_json(sat_data, satellite_class)
             sat_data["created_by_id"] = user_id
             if satellite_class.is_timeseries:
-                value_date = sat_data.get("value_date", None)
                 if value_date is None:
                     raise MontrekError(
                         f"TimeSeriesSatellite needs a value_date: {sat_data}"
                     )
-                hub_value_date = self._get_hub_value_date(self.hub_entity, value_date)
+                hub_value_date = self._get_hub_value_date(value_date)
                 sat = satellite_class(hub_value_date=hub_value_date, **sat_data)
             else:
                 sat = satellite_class(hub_entity=self.hub_entity, **sat_data)
             sat = self._process_new_satellite(sat, satellite_class)
             selected_satellites[sat.state].append(sat)
 
+        self._get_hub_value_date(value_date)
         reference_hub = self._stall_satellites_and_return_reference_hub(
             selected_satellites, creation_date
         )
-        self._get_hub_value_date(self.hub_entity, None)
         self._stall_hub(reference_hub)
         self._stall_links(data, reference_hub, creation_date)
         return reference_hub
@@ -429,8 +429,11 @@ class DbCreator:
             )
 
     def _hub_value_date_stalled(
-        self, hub_entity: MontrekHubABC, value_date: timezone.datetime | str | None
+        self,
+        hub_entity: MontrekHubABC | None,
+        value_date: timezone.datetime | str | None,
     ) -> HubValueDate | None:
+        d1 = timezone.datetime.now()
         hub_value_date_class = hub_entity.hub_value_date.field.model
         stalled_hub_value_dates = self.stalled_hub_value_dates.get(
             hub_value_date_class, []
@@ -445,15 +448,16 @@ class DbCreator:
                 ).date()
             if hub_value_date.hub == hub_entity and comp_value_date == value_date:
                 return hub_value_date
+        d2 = timezone.datetime.now()
+        print(f"Time to check hub_value_date_stalled: {d2-d1}")
         return None
 
-    def _get_hub_value_date(
-        self, hub_entity: MontrekHubABC, value_date: timezone.datetime | None
-    ) -> HubValueDate:
+    def _get_hub_value_date(self, value_date: timezone.datetime | None) -> HubValueDate:
+        hub_entity = self.hub_entity
         hub_value_date_class = hub_entity.hub_value_date.field.model
-        hub_value_date_stalled = self._hub_value_date_stalled(hub_entity, value_date)
-        if hub_value_date_stalled:
-            return hub_value_date_stalled
+        # hub_value_date_stalled = self._hub_value_date_stalled(hub_entity, value_date)
+        # if hub_value_date_stalled:
+        #     return hub_value_date_stalled
         existing_value_date_list = ValueDateList.objects.filter(value_date=value_date)
         if existing_value_date_list.count() == 0:
             value_date_list = ValueDateList(value_date=value_date)

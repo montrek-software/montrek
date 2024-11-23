@@ -31,6 +31,9 @@ from django.db.models import (
 )
 from django.utils import timezone
 from baseclasses.repositories.query_builder import QueryBuilder
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -65,7 +68,12 @@ class MontrekRepository:
         )
 
     def create_by_dict(self, data: Dict[str, Any]) -> MontrekHubABC:
-        return self.std_create_object(data)
+        self._raise_for_anonymous_user()
+        hub_entity = self._get_hub_from_data(data)
+        db_creator = DbCreator(self.annotator)
+        created_hub = db_creator.create(data, hub_entity, self.session_user_id)
+        db_creator.save_stalled_objects()
+        return created_hub
 
     def create_by_data_frame(self, data_frame: pd.DataFrame) -> List[MontrekHubABC]:
         return self.create_objects_from_data_frame(data_frame)
@@ -157,12 +165,7 @@ class MontrekRepository:
         return self.annotator.get_annotated_field_names()
 
     def std_create_object(self, data: Dict[str, Any]) -> MontrekHubABC:
-        self._raise_for_anonymous_user()
-        hub_entity = self._get_hub_from_data(data)
-        db_creator = DbCreator(self.annotator)
-        created_hub = db_creator.create(data, hub_entity, self.session_user_id)
-        db_creator.save_stalled_objects()
-        return created_hub
+        return self.create_by_dict(data)
 
     @staticmethod
     def _convert_lists_to_tuples(df: pd.DataFrame, columns: List[str]):
@@ -197,13 +200,19 @@ class MontrekRepository:
                 static_df = self._convert_tuples_to_lists(static_df, link_columns)
             else:
                 static_df = data_frame.loc[:, static_columns]
+            d1 = timezone.now()
             static_hubs = self._create_objects_from_data_frame(static_df)
+            d2 = timezone.now()
+            logger.debug(f"Static creation time: {d2-d1}")
         else:
             static_hubs = []
         if ts_columns:
+            d1 = timezone.now()
             ts_hubs = self._create_objects_from_data_frame(
                 data_frame.loc[:, ts_columns]
             )
+            d2 = timezone.now()
+            logger.debug(f"TS creation time: {d2-d1}")
         else:
             ts_hubs = []
         return list(set(static_hubs + ts_hubs))
@@ -216,6 +225,7 @@ class MontrekRepository:
         self._raise_for_duplicated_entries(data_frame)
         db_creator = DbCreator(self.annotator)
         created_hubs = []
+        d1 = timezone.now()
         for _, row in data_frame.iterrows():
             row = row.to_dict()
             for key, value in row.items():
@@ -224,7 +234,12 @@ class MontrekRepository:
             hub_entity = self._get_hub_from_data(row)
             created_hub = db_creator.create(row, hub_entity, self.session_user_id)
             created_hubs.append(created_hub)
+        d2 = timezone.now()
+        logger.debug(f"Creation time: {d2-d1}")
+        d1 = timezone.now()
         db_creator.save_stalled_objects()
+        d2 = timezone.now()
+        logger.debug(f"Save stalled objects time: {d2-d1}")
         return created_hubs
 
     def add_satellite_fields_annotations(
