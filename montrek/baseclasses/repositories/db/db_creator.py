@@ -34,6 +34,8 @@ class DbCreator:
         self._set_static_satellites_hub()
         self._set_value_date_list()
         self._stall_hub_value_date()
+        self._create_ts_satellites()
+        self._set_ts_satellites_hub_value_date()
 
     def _enrich_data(self):
         self.data["created_by_id"] = self.user_id
@@ -46,6 +48,14 @@ class DbCreator:
                 continue
             sat = sat_class(**sat_data, state_date_start=self.creation_date)
             self._process_static_satellite(sat)
+
+    def _create_ts_satellites(self):
+        for sat_class in self.db_staller.get_ts_satellite_classes():
+            sat_data = self._get_satellite_data(sat_class)
+            if self._is_sat_data_empty(sat_data):
+                continue
+            sat = sat_class(**sat_data, state_date_start=self.creation_date)
+            self._process_ts_satellite(sat)
 
     def _make_timezone_aware(self):
         for key, value in self.data.items():
@@ -70,6 +80,17 @@ class DbCreator:
             self._close_existing_sat_if_hub_is_forced(sat)
             return
         self.hub = existing_sat.hub_entity
+        self._updated_satellite(sat, existing_sat)
+
+    def _process_ts_satellite(self, sat: MontrekSatelliteABC):
+        state_date_end_criterion = Q(
+            hub_value_date__hub__state_date_end__gt=timezone.now()
+        )
+        existing_sat = self._get_existing_satellite(sat, state_date_end_criterion)
+        if existing_sat is None:
+            self.db_staller.stall_new_satellite(sat)
+            return
+        self.hub_value_date = existing_sat.hub_value_date
         self._updated_satellite(sat, existing_sat)
 
     def _set_value_date_list(self):
@@ -99,12 +120,12 @@ class DbCreator:
         self.db_staller.stall_hub(self.hub)
 
     def _stall_hub_value_date(self):
-        if self.hub.id is None:
-            hub_value_date = self.db_staller.hub_value_date_class(
-                hub=self.hub, value_date_list=self.value_date_list
-            )
-            self.db_staller.stall_hub_value_date(hub_value_date)
+        if self.hub.id is not None:
             return
+        self.hub_value_date = self.db_staller.hub_value_date_class(
+            hub=self.hub, value_date_list=self.value_date_list
+        )
+        self.db_staller.stall_hub_value_date(self.hub_value_date)
 
     def _set_static_satellites_hub(self):
         self._reset_hub_if_new_and_existing()
@@ -112,6 +133,12 @@ class DbCreator:
             sats = self.db_staller.get_new_satellites()[sat_class]
             for sat in sats:
                 sat.hub_entity = self.hub
+
+    def _set_ts_satellites_hub_value_date(self):
+        for sat_class in self.db_staller.get_ts_satellite_classes():
+            sats = self.db_staller.get_new_satellites()[sat_class]
+            for sat in sats:
+                sat.hub_value_date = self.hub_value_date
 
     def _get_existing_satellite(
         self, sat: MontrekSatelliteABC, state_date_end_criterion: Q

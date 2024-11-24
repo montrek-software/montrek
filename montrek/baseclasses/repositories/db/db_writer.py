@@ -51,8 +51,11 @@ class DbWriter:
             )
 
     def _set_sat_hashes(self, new_satellites: StalledDicts):
-        for _, sats in new_satellites.items():
+        for sat_class, sats in new_satellites.items():
             for sat in sats:
-                sat.hub_entity_id = sat.hub_entity.id
+                if sat_class.is_timeseries:
+                    sat.hub_value_date_id = sat.hub_value_date.id
+                else:
+                    sat.hub_entity_id = sat.hub_entity.id
                 sat.get_hash_identifier
                 sat.get_hash_value
