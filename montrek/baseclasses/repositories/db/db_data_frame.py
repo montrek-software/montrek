@@ -32,10 +32,14 @@ class DbDataFrame:
 
     def _process_static_data(self):
         static_columns = self.get_static_satellite_field_names()
+        if len(static_columns) == 0:
+            return
         self._process_data(static_columns)
 
     def _process_time_series_data(self):
         time_series_columns = self.get_time_series_satellite_field_names()
+        if len(time_series_columns) == 0:
+            return
         self._process_data(time_series_columns)
 
     def _process_data(self, columns: list[str]):
