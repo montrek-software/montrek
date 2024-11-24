@@ -38,6 +38,9 @@ class DbStaller:
         self.links: StalledLinksDict = {
             link_class: [] for link_class in annotator.annotated_link_classes
         }
+        self.updated_links: StalledLinksDict = {
+            link_class: [] for link_class in annotator.annotated_link_classes
+        }
         self.creation_date = timezone.now()
 
     def stall_hub(self, new_hub: MontrekHubABC):
@@ -59,6 +62,10 @@ class DbStaller:
         for link in links:
             self._add_stalled_object(link, self.links)
 
+    def stall_updated_links(self, links: list[MontrekLinkABC]):
+        for link in links:
+            self._add_stalled_object(link, self.updated_links)
+
     def get_hubs(self) -> StalledHubDict:
         return self.hubs
 
@@ -76,6 +83,9 @@ class DbStaller:
 
     def get_links(self) -> StalledLinksDict:
         return self.links
+
+    def get_updated_links(self) -> StalledLinksDict:
+        return self.updated_links
 
     def get_static_satellite_classes(self) -> list[type[MontrekSatelliteABC]]:
         return [

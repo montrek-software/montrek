@@ -1,3 +1,4 @@
+from datetime import datetime
 import pandas as pd
 import numpy as np
 import logging
@@ -46,13 +47,17 @@ class FieldMapFileUploadProcessor:
 
     def process(self, file_path: str):
         try:
+            d1 = datetime.now()
             source_df = self.get_source_df_from_file(file_path)
+            d2 = datetime.now()
+            logger.error(f"Reading time source_df: {d2-d1}")
         except Exception as e:
             self.message = (
                 f"Error raised during file reading: <br>{e.__class__.__name__}: {e}"
             )
             return False
 
+        d1 = datetime.now()
         mapped_df = self.field_map_manager.apply_field_maps(source_df)
         if self.field_map_manager.exceptions:
             self.message = "Errors raised during field mapping:"
@@ -64,7 +69,12 @@ class FieldMapFileUploadProcessor:
             mapped_df = self.add_link_columns(mapped_df)
             mapped_df = mapped_df.replace({np.nan: None})
             mapped_df = self.post_map_processing(mapped_df)
+            d2 = datetime.now()
+            logger.error(f"Mapping time: {d2-d1}")
+            d1 = datetime.now()
             self.manager.repository.create_objects_from_data_frame(mapped_df)
+            d2 = datetime.now()
+            logger.error(f"Creation time: {d2-d1}")
         except Exception as e:
             self.message = (
                 f"Error raised during object creation: <br>{e.__class__.__name__}: {e}"

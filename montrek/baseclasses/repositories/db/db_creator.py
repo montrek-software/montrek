@@ -307,7 +307,7 @@ class DbCreator:
             discontinued_links = existing_links.exclude(**filter_kwargs).all()
             for link in discontinued_links:
                 link.state_date_end = self.creation_date
-                link.save()
+            self.db_staller.stall_updated_links(discontinued_links)
         continued_opposite_hubs = [
             getattr(link, opposite_field) for link in continued_links
         ]
@@ -318,7 +318,7 @@ class DbCreator:
         ]
         for link in new_links:
             link.state_date_start = self.creation_date
-        return new_links + list(continued_links)
+        return new_links
 
     def _get_opposite_field(self, field):
         return "hub_out" if field == "hub_in" else "hub_in"
