@@ -1,8 +1,8 @@
 import datetime
-import pandas as pd
+import json
 from typing import Any
-from django.db.models import QuerySet
 
+import pandas as pd
 from baseclasses.errors.montrek_user_error import MontrekError
 from baseclasses.models import (
     HubValueDate,
@@ -13,7 +13,7 @@ from baseclasses.models import (
     ValueDateList,
 )
 from baseclasses.repositories.db.db_staller import DbStaller
-from django.db.models import Q
+from django.db.models import Q, JSONField, QuerySet
 from django.utils import timezone
 
 DataDict = dict[str, Any]
@@ -46,7 +46,7 @@ class DbCreator:
 
     def _enrich_data(self):
         self.data["created_by_id"] = self.user_id
-        self._make_timezone_aware()
+        self._upfront_formats()
 
     def _create_static_satellites(self):
         for sat_class in self.db_staller.get_static_satellite_classes():
@@ -76,15 +76,25 @@ class DbCreator:
             new_links = self._create_new_links(link_class, values)
             self.db_staller.stall_links(new_links)
 
-    def _make_timezone_aware(self):
+    def _upfront_formats(self):
         for key, value in self.data.items():
             if isinstance(value, datetime.datetime):
-                if value.tzinfo is None:
-                    self.data[key] = timezone.make_aware(
-                        value, timezone.get_default_timezone()
-                    )
+                self._make_timezone_aware(value, key)
+        for sat_class in self.db_staller.get_static_satellite_classes():
+            self._convert_json(sat_class)
         if "value_date" in self.data:
             self.data["value_date"] = pd.to_datetime(self.data["value_date"]).date()
+
+    def _make_timezone_aware(self, value: datetime.datetime, key: str):
+        if value.tzinfo is None:
+            self.data[key] = timezone.make_aware(value, timezone.get_default_timezone())
+
+    def _convert_json(self, sat_class: type[MontrekSatelliteABC]):
+        for field in sat_class.get_value_fields():
+            if field.name in self.data and isinstance(field, JSONField):
+                value = self.data[field.name]
+                if isinstance(value, str):
+                    self.data[field.name] = json.loads(value.replace("'", '"'))
 
     def _get_satellite_data(self, sat_class: type[MontrekSatelliteABC]):
         return {
