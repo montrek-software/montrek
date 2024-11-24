@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Type
 
@@ -7,19 +8,23 @@ from baseclasses.dataclasses.montrek_message import (
 )
 from baseclasses.errors.montrek_user_error import MontrekError
 from baseclasses.models import (
+    HubValueDate,
     MontrekHubABC,
     MontrekLinkABC,
     MontrekSatelliteABC,
     MontrekSatelliteBaseABC,
     MontrekTimeSeriesSatelliteABC,
-    HubValueDate,
 )
 from baseclasses.repositories.annotator import (
     Annotator,
 )
-from baseclasses.repositories.db_creator import DbCreator
-
+from baseclasses.repositories.db.db_creator import DataDict
 from baseclasses.repositories.db.db_creator import DbCreator as DbCreatorNew
+from baseclasses.repositories.db.db_data_frame import DbDataFrame
+from baseclasses.repositories.db.db_staller import DbStaller
+from baseclasses.repositories.db.db_writer import DbWriter
+from baseclasses.repositories.db_creator import DbCreator
+from baseclasses.repositories.query_builder import QueryBuilder
 from baseclasses.repositories.subquery_builder import (
     LinkedSatelliteSubqueryBuilder,
     ReverseLinkedSatelliteSubqueryBuilder,
@@ -32,12 +37,6 @@ from django.db.models import (
     QuerySet,
 )
 from django.utils import timezone
-from baseclasses.repositories.query_builder import QueryBuilder
-import logging
-
-from baseclasses.repositories.db.db_staller import DbStaller
-from baseclasses.repositories.db.db_writer import DbWriter
-from baseclasses.repositories.db.db_creator import DataDict
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +82,10 @@ class MontrekRepository:
         return db_creator.hub
 
     def create_by_data_frame(self, data_frame: pd.DataFrame) -> List[MontrekHubABC]:
-        return self.create_objects_from_data_frame(data_frame)
+        self._raise_for_anonymous_user()
+        db_data_frame = DbDataFrame(self.annotator, self.session_user_id)
+        db_data_frame.create(data_frame)
+        return db_data_frame.hubs
 
     def receive(self, apply_filter: bool = True) -> QuerySet:
         return self.query_builder.build_queryset(
@@ -189,6 +191,7 @@ class MontrekRepository:
     def create_objects_from_data_frame(
         self, data_frame: pd.DataFrame
     ) -> List[MontrekHubABC]:
+        return self.create_by_data_frame(data_frame)
         self._raise_for_anonymous_user()
         static_fields = self.get_static_satellite_field_names()
         link_columns = [col for col in data_frame.columns if col.startswith("link_")]
