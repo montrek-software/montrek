@@ -1,4 +1,3 @@
-from datetime import datetime
 from montrek.celery_app import app as celery_app
 from celery import Task
 
@@ -12,9 +11,6 @@ from file_upload.managers.file_upload_manager import (
 from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepositoryABC,
 )
-import logging
-
-logger = logging.getLogger(__name__)
 
 
 class ProcessFileTaskABC(Task):
@@ -50,17 +46,11 @@ class ProcessFileTaskABC(Task):
             processor = self.file_upload_processor_class(
                 file_upload_registry_hub=registry_obj, session_data=session_data
             )
-            d1 = datetime.now()
             result = processor.pre_check(file_path)
-            d2 = datetime.now()
-            logger.error(f"Pre-check time: {d2-d1}")
             if result:
                 result = processor.process(file_path)
                 if result:
-                    d1 = datetime.now()
                     result = processor.post_check(file_path) if result else False
-                    d2 = datetime.now()
-                    logger.error(f"Post-check time: {d2-d1}")
             message = processor.message
         except Exception as e:
             result = False
