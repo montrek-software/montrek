@@ -1,4 +1,5 @@
 import datetime
+import pandas as pd
 from typing import Any
 
 from baseclasses.errors.montrek_user_error import MontrekError
@@ -70,6 +71,8 @@ class DbCreator:
                     self.data[key] = timezone.make_aware(
                         value, timezone.get_default_timezone()
                     )
+        if "value_date" in self.data:
+            self.data["value_date"] = pd.to_datetime(self.data["value_date"]).date()
 
     def _get_satellite_data(self, sat_class: type[MontrekSatelliteABC]):
         return {

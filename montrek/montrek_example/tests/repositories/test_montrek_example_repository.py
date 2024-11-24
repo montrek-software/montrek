@@ -533,6 +533,19 @@ class TestMontrekCreateTimeSeriesObject(TestCase):
         self.assertEqual(queried_object.hub, sat.hub_entity)
         self.assertEqual(queried_object.value_date, montrek_time(2023, 7, 8).date())
 
+    def test_write_zeros_to_db(self):
+        repository = HubARepository(session_data={"user_id": self.user.id})
+        repository.std_create_object(
+            {
+                "field_a1_int": 5,
+                "field_a1_str": "test",
+                "field_a2_float": 0.0,
+                "field_a2_str": "test2",
+            }
+        )
+        queried_object = repository.receive().get()
+        self.assertEqual(queried_object.field_a2_float, 0.0)
+
 
 class TestMontrekCreateObjectDataFrame(TestCase):
     def setUp(self):
@@ -702,6 +715,25 @@ class TestMontrekCreateObjectDataFrame(TestCase):
         self.assertEqual(me_models.HubC.objects.count(), 2)
         self.assertEqual(me_models.SatC1.objects.count(), 2)
 
+    def test_create_with_nan_in_data_frame(self):
+        repository = HubARepository(session_data={"user_id": self.user.id})
+        data_frame = pd.DataFrame(
+            {
+                "field_a1_int": [5, 6, 7],
+                "field_a1_str": ["test", "test2", "test3"],
+                "field_a2_float": [6.0, 7.0, 8.0],
+                "field_a2_str": ["test2", "test3", pd.NA],
+            }
+        )
+        repository.create_objects_from_data_frame(data_frame)
+        test_query = repository.receive()
+        self.assertEqual(test_query.count(), 3)
+
+
+class TestMontrekCreateObjectLinks(TestCase):
+    def setUp(self):
+        self.user = MontrekUserFactory()
+
     def test_create_hub_a_with_link_to_hub_b(self):
         hub_b = me_factories.SatB1Factory().hub_entity
         self.assertEqual(me_models.HubB.objects.count(), 1)
@@ -784,33 +816,6 @@ class TestMontrekCreateObjectDataFrame(TestCase):
         self.assertEqual(me_models.LinkHubAHubB.objects.count(), 1)
         queried_object = repository.receive().get()
         self.assertEqual(queried_object.field_b1_str, sat_b_1.field_b1_str)
-
-    def test_write_zeros_to_db(self):
-        repository = HubARepository(session_data={"user_id": self.user.id})
-        repository.std_create_object(
-            {
-                "field_a1_int": 5,
-                "field_a1_str": "test",
-                "field_a2_float": 0.0,
-                "field_a2_str": "test2",
-            }
-        )
-        queried_object = repository.receive().get()
-        self.assertEqual(queried_object.field_a2_float, 0.0)
-
-    def test_create_with_nan_in_data_frame(self):
-        repository = HubARepository(session_data={"user_id": self.user.id})
-        data_frame = pd.DataFrame(
-            {
-                "field_a1_int": [5, 6, 7],
-                "field_a1_str": ["test", "test2", "test3"],
-                "field_a2_float": [6.0, 7.0, 8.0],
-                "field_a2_str": ["test2", "test3", pd.NA],
-            }
-        )
-        repository.create_objects_from_data_frame(data_frame)
-        test_query = repository.receive()
-        self.assertEqual(test_query.count(), 3)
 
 
 class TestMontrekCreateObjectTransaction(TransactionTestCase):
