@@ -1,11 +1,14 @@
 import datetime
 import pandas as pd
 from typing import Any
+from django.db.models import QuerySet
 
 from baseclasses.errors.montrek_user_error import MontrekError
 from baseclasses.models import (
     HubValueDate,
     MontrekHubABC,
+    MontrekLinkABC,
+    MontrekOneToOneLinkABC,
     MontrekSatelliteABC,
     ValueDateList,
 )
@@ -39,6 +42,7 @@ class DbCreator:
         self._set_value_date_list()
         self._stall_hub_value_date()
         self._create_ts_satellites()
+        self._create_links()
 
     def _enrich_data(self):
         self.data["created_by_id"] = self.user_id
@@ -63,6 +67,14 @@ class DbCreator:
                 hub_value_date=self.hub_value_date,
             )
             self._process_ts_satellite(sat)
+
+    def _create_links(self):
+        link_data = self._get_link_data()
+        for field, values in link_data.items():
+            link_class = getattr(self.hub.__class__, field).through
+            values = [v for v in values if v]
+            new_links = self._create_new_links(link_class, values)
+            self.db_staller.stall_links(new_links)
 
     def _make_timezone_aware(self):
         for key, value in self.data.items():
@@ -238,3 +250,75 @@ class DbCreator:
         data.pop("created_by_id", None)
         data.pop("value_date", None)
         return not any(data.values())
+
+    def _get_link_data(self) -> dict[str, list[MontrekHubABC]]:
+        link_data = {}
+        for key, value in self.data.items():
+            if isinstance(value, HubValueDate):
+                link_data[key] = [value.hub]
+            elif isinstance(value, MontrekHubABC):
+                link_data[key] = [value]
+            elif isinstance(value, (list, QuerySet)):
+                many_links = [
+                    item.hub for item in value if isinstance(item, HubValueDate)
+                ]
+                many_links += [
+                    item for item in value if isinstance(item, MontrekHubABC)
+                ]
+                if many_links:
+                    link_data[key] = many_links
+        return link_data
+
+    def _create_new_links(
+        self, link_class: type[MontrekLinkABC], values: list[MontrekHubABC]
+    ) -> list[MontrekLinkABC]:
+        if link_class.hub_in.field.related_model == self.hub.__class__:
+            new_links = [link_class(hub_in=self.hub, hub_out=value) for value in values]
+            return self._update_links_if_exist(new_links, "hub_in")
+        else:
+            new_links = [link_class(hub_in=value, hub_out=self.hub) for value in values]
+            return self._update_links_if_exist(new_links, "hub_out")
+
+    def _update_links_if_exist(
+        self, links: list[MontrekLinkABC], hub_field: str
+    ) -> list[MontrekLinkABC]:
+        hub = getattr(links[0], hub_field)
+        if not hub.pk:
+            return links
+        link_class = links[0].__class__
+        is_one_to_one_link = isinstance(links[0], MontrekOneToOneLinkABC)
+        if is_one_to_one_link and len(links) > 1:
+            raise MontrekError(
+                f"Try to link mulitple items to OneToOne Link {link_class}"
+            )
+        filter_args = {
+            f"{hub_field}": hub,
+            "state_date_end__gt": self.creation_date,
+            "state_date_start__lte": self.creation_date,
+        }
+        existing_links = link_class.objects.filter(**filter_args).all()
+        if not existing_links:
+            return links
+        opposite_field = self._get_opposite_field(hub_field)
+        opposite_hubs = [getattr(link, opposite_field) for link in links]
+        filter_kwargs = {f"{opposite_field}__in": opposite_hubs}
+        continued_links = existing_links.filter(**filter_kwargs).all()
+        if is_one_to_one_link:
+            discontinued_links = existing_links.exclude(**filter_kwargs).all()
+            for link in discontinued_links:
+                link.state_date_end = self.creation_date
+                link.save()
+        continued_opposite_hubs = [
+            getattr(link, opposite_field) for link in continued_links
+        ]
+        new_links = [
+            link
+            for link in links
+            if getattr(link, opposite_field) not in continued_opposite_hubs
+        ]
+        for link in new_links:
+            link.state_date_start = self.creation_date
+        return new_links + list(continued_links)
+
+    def _get_opposite_field(self, field):
+        return "hub_out" if field == "hub_in" else "hub_in"

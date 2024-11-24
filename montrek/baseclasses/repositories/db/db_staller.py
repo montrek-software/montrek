@@ -1,4 +1,9 @@
-from baseclasses.models import HubValueDate, MontrekHubABC, MontrekSatelliteABC
+from baseclasses.models import (
+    HubValueDate,
+    MontrekHubABC,
+    MontrekSatelliteABC,
+    MontrekLinkABC,
+)
 from baseclasses.repositories.annotator import Annotator
 from django.utils import timezone
 
@@ -6,11 +11,14 @@ StalledSatelliteDict = dict[type[MontrekSatelliteABC], list[MontrekSatelliteABC]
 
 StalledHubDict = dict[type[MontrekHubABC], list[MontrekHubABC]]
 StalledHubValueDateDict = dict[type[HubValueDate], list[HubValueDate]]
+StalledLinksDict = dict[type[MontrekLinkABC], list[MontrekLinkABC]]
 
 
-StalledObject = MontrekSatelliteABC | MontrekHubABC | HubValueDate
+StalledObject = MontrekSatelliteABC | MontrekHubABC | HubValueDate | MontrekLinkABC
 
-StalledDicts = StalledSatelliteDict | StalledHubDict | StalledHubValueDateDict
+StalledDicts = (
+    StalledSatelliteDict | StalledHubDict | StalledHubValueDateDict | StalledLinksDict
+)
 
 
 class DbStaller:
@@ -27,6 +35,9 @@ class DbStaller:
         self.updated_hubs: StalledHubDict = {self.hub_class: []}
         self.hub_value_date_class = self.hub_class.hub_value_date.field.model
         self.hub_value_dates: StalledHubValueDateDict = {self.hub_value_date_class: []}
+        self.links: StalledLinksDict = {
+            link_class: [] for link_class in annotator.annotated_link_classes
+        }
         self.creation_date = timezone.now()
 
     def stall_hub(self, new_hub: MontrekHubABC):
@@ -44,6 +55,10 @@ class DbStaller:
     def stall_updated_satellite(self, updated_satellite: MontrekSatelliteABC):
         self._add_stalled_object(updated_satellite, self.updated_satellites)
 
+    def stall_links(self, links: list[MontrekLinkABC]):
+        for link in links:
+            self._add_stalled_object(link, self.links)
+
     def get_hubs(self) -> StalledHubDict:
         return self.hubs
 
@@ -58,6 +73,9 @@ class DbStaller:
 
     def get_updated_satellites(self) -> StalledSatelliteDict:
         return self.updated_satellites
+
+    def get_links(self) -> StalledLinksDict:
+        return self.links
 
     def get_static_satellite_classes(self) -> list[type[MontrekSatelliteABC]]:
         return [

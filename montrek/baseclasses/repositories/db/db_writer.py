@@ -16,6 +16,7 @@ class DbWriter:
         self.write_hub_value_dates()
         self.write_new_satellites()
         self.write_updated_satellites()
+        self.write_links()
 
     def write_hubs(self):
         new_hubs = self.db_staller.get_hubs()
@@ -37,6 +38,10 @@ class DbWriter:
     def write_hub_value_dates(self):
         new_hub_value_dates = self.db_staller.get_hub_value_dates()
         self._bulk_create(new_hub_value_dates)
+
+    def write_links(self):
+        links = self.db_staller.get_links()
+        self._bulk_create(links)
 
     def _bulk_create(self, new_objects: StalledDicts):
         for obj_type, objs in new_objects.items():
