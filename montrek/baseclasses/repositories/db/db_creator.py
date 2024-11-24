@@ -8,7 +8,7 @@ from baseclasses.models import (
     MontrekSatelliteABC,
     ValueDateList,
 )
-from baseclasses.repositories.db.db_staller import DbStaller
+from baseclasses.repositories.db.db_staller import DbStaller, StalledSatelliteDict
 from django.db.models import Q
 from django.utils import timezone
 
@@ -25,6 +25,7 @@ class DbCreator:
         self.value_date_list: ValueDateList | None = None
         self.existing_satellites: list[MontrekSatelliteABC] = []
         self.creation_date = db_staller.creation_date
+        self.new_satellites: StalledSatelliteDict = {}
 
     def create(self, data: DataDict):
         self.data = data
@@ -79,7 +80,7 @@ class DbCreator:
         state_date_end_criterion = Q(hub_entity__state_date_end__gt=timezone.now())
         existing_sat = self._get_existing_satellite(sat, state_date_end_criterion)
         if existing_sat is None:
-            self.db_staller.stall_new_satellite(sat)
+            self._stall_new_satellite(sat)
             self._close_existing_sat_if_hub_is_forced(sat)
             return
         self.hub = existing_sat.hub_entity
@@ -91,10 +92,17 @@ class DbCreator:
         )
         existing_sat = self._get_existing_satellite(sat, state_date_end_criterion)
         if existing_sat is None:
-            self.db_staller.stall_new_satellite(sat)
+            self._stall_new_satellite(sat)
             return
         self.hub_value_date = existing_sat.hub_value_date
         self._updated_satellite(sat, existing_sat)
+
+    def _stall_new_satellite(self, sat: MontrekSatelliteABC):
+        self.db_staller.stall_new_satellite(sat)
+        sat_class = type(sat)
+        if sat_class not in self.new_satellites:
+            self.new_satellites[sat_class] = []
+        self.new_satellites[sat_class].append(sat)
 
     def _set_value_date_list(self):
         value_date = self.data.get("value_date", None)
@@ -135,8 +143,9 @@ class DbCreator:
 
     def _set_static_satellites_hub(self):
         self._reset_hub_if_new_and_existing()
-        for sat_class in self.db_staller.get_static_satellite_classes():
-            sats = self.db_staller.get_new_satellites()[sat_class]
+        for sat_class, sats in self.new_satellites.items():
+            if sat_class.is_timeseries:
+                continue
             for sat in sats:
                 sat.hub_entity = self.hub
 
@@ -163,23 +172,23 @@ class DbCreator:
             return
         existing_sat.state_date_end = self.creation_date
         sat.state_date_start = self.creation_date
-        self.db_staller.stall_new_satellite(sat)
+        self._stall_new_satellite(sat)
         self.db_staller.stall_updated_satellite(existing_sat)
 
     def _reset_hub_if_new_and_existing(self):
         # if there are new and existing satellites stalled, treat every existing satellite as new
         if len(self.existing_satellites) == 0:
             return
-        if all(
-            [len(sats) == 0 for sats in self.db_staller.get_new_satellites().values()]
-        ):
+        if all([len(sats) == 0 for sats in self.new_satellites.values()]):
             return
         if "hub_entity_id" in self.data:
             return
         self.hub = None
         for existing_sat in self.existing_satellites:
+            # if there are no new satellites of the same type, don't renew
+            if existing_sat.__class__ not in self.new_satellites:
+                continue
             self._close_and_renew_satellite(existing_sat)
-
         self._stall_hub()
 
     def _close_and_renew_satellite(self, existing_sat: MontrekSatelliteABC):
