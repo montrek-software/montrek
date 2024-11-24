@@ -35,7 +35,6 @@ class DbCreator:
         self._set_value_date_list()
         self._stall_hub_value_date()
         self._create_ts_satellites()
-        self._set_ts_satellites_hub_value_date()
 
     def _enrich_data(self):
         self.data["created_by_id"] = self.user_id
@@ -54,7 +53,11 @@ class DbCreator:
             sat_data = self._get_satellite_data(sat_class)
             if self._is_sat_data_empty(sat_data):
                 continue
-            sat = sat_class(**sat_data, state_date_start=self.creation_date)
+            sat = sat_class(
+                **sat_data,
+                state_date_start=self.creation_date,
+                hub_value_date=self.hub_value_date,
+            )
             self._process_ts_satellite(sat)
 
     def _make_timezone_aware(self):
@@ -121,6 +124,9 @@ class DbCreator:
 
     def _stall_hub_value_date(self):
         if self.hub.id is not None:
+            self.hub_value_date = self.db_staller.hub_value_date_class.objects.get(
+                hub=self.hub, value_date_list=self.value_date_list
+            )
             return
         self.hub_value_date = self.db_staller.hub_value_date_class(
             hub=self.hub, value_date_list=self.value_date_list
@@ -134,19 +140,12 @@ class DbCreator:
             for sat in sats:
                 sat.hub_entity = self.hub
 
-    def _set_ts_satellites_hub_value_date(self):
-        for sat_class in self.db_staller.get_ts_satellite_classes():
-            sats = self.db_staller.get_new_satellites()[sat_class]
-            for sat in sats:
-                sat.hub_value_date = self.hub_value_date
-
     def _get_existing_satellite(
         self, sat: MontrekSatelliteABC, state_date_end_criterion: Q
     ) -> MontrekSatelliteABC | None:
         # Check if satellite already exists, if it is updated or if it is new
         sat_hash_identifier = sat.get_hash_identifier
         satellite_class = type(sat)
-
         return (
             satellite_class.objects.filter(
                 state_date_end_criterion,
@@ -212,4 +211,5 @@ class DbCreator:
         data = data.copy()
         data.pop("comment", None)
         data.pop("created_by_id", None)
+        data.pop("value_date", None)
         return not any(data.values())
