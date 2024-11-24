@@ -16,11 +16,10 @@ from baseclasses.repositories.annotator import (
     Annotator,
 )
 from baseclasses.repositories.db.db_creator import DataDict
-from baseclasses.repositories.db.db_creator import DbCreator as DbCreatorNew
+from baseclasses.repositories.db.db_creator import DbCreator
 from baseclasses.repositories.db.db_data_frame import DbDataFrame
 from baseclasses.repositories.db.db_staller import DbStaller
 from baseclasses.repositories.db.db_writer import DbWriter
-from baseclasses.repositories.db_creator import DbCreator
 from baseclasses.repositories.query_builder import QueryBuilder
 from baseclasses.repositories.subquery_builder import (
     LinkedSatelliteSubqueryBuilder,
@@ -72,7 +71,7 @@ class MontrekRepository:
     def create_by_dict(self, data: DataDict) -> MontrekHubABC:
         self._raise_for_anonymous_user()
         db_staller = DbStaller(self.annotator)
-        db_creator = DbCreatorNew(db_staller, self.session_user_id)
+        db_creator = DbCreator(db_staller, self.session_user_id)
         db_creator.create(data)
         db_writer = DbWriter(db_staller)
         db_writer.write()
@@ -190,65 +189,6 @@ class MontrekRepository:
         self, data_frame: pd.DataFrame
     ) -> List[MontrekHubABC]:
         return self.create_by_data_frame(data_frame)
-        self._raise_for_anonymous_user()
-        static_fields = self.get_static_satellite_field_names()
-        link_columns = [col for col in data_frame.columns if col.startswith("link_")]
-        static_columns = [
-            col for col in static_fields if col in data_frame.columns
-        ] + link_columns
-        ts_fields = self.get_time_series_satellite_field_names()
-        ts_columns = [col for col in ts_fields if col in data_frame.columns]
-        if static_columns:
-            if ts_columns:
-                # When static data and ts data is combined, the static data will be doubled in multiple lines
-                # For cleaning purposes we drop duplicates here
-                static_df = data_frame.loc[:, static_columns]
-                static_df = self._convert_lists_to_tuples(static_df, link_columns)
-                static_df = static_df.drop_duplicates()
-                static_df = self._convert_tuples_to_lists(static_df, link_columns)
-            else:
-                static_df = data_frame.loc[:, static_columns]
-            d1 = timezone.now()
-            static_hubs = self._create_objects_from_data_frame(static_df)
-            d2 = timezone.now()
-            logger.debug(f"Static creation time: {d2-d1}")
-        else:
-            static_hubs = []
-        if ts_columns:
-            d1 = timezone.now()
-            ts_hubs = self._create_objects_from_data_frame(
-                data_frame.loc[:, ts_columns]
-            )
-            d2 = timezone.now()
-            logger.debug(f"TS creation time: {d2-d1}")
-        else:
-            ts_hubs = []
-        return list(set(static_hubs + ts_hubs))
-
-    def _create_objects_from_data_frame(
-        self, data_frame: pd.DataFrame
-    ) -> List[MontrekHubABC]:
-        data_frame = self._drop_empty_rows(data_frame)
-        data_frame = self._drop_duplicates(data_frame)
-        self._raise_for_duplicated_entries(data_frame)
-        db_creator = DbCreator(self.annotator)
-        created_hubs = []
-        d1 = timezone.now()
-        for _, row in data_frame.iterrows():
-            row = row.to_dict()
-            for key, value in row.items():
-                if not isinstance(value, (list, dict)) and pd.isna(value):
-                    row[key] = None
-            hub_entity = self._get_hub_from_data(row)
-            created_hub = db_creator.create(row, hub_entity, self.session_user_id)
-            created_hubs.append(created_hub)
-        d2 = timezone.now()
-        logger.debug(f"Creation time: {d2-d1}")
-        d1 = timezone.now()
-        db_creator.save_stalled_objects()
-        d2 = timezone.now()
-        logger.debug(f"Save stalled objects time: {d2-d1}")
-        return created_hubs
 
     def add_satellite_fields_annotations(
         self,
