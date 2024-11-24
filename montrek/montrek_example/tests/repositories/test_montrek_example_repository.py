@@ -463,6 +463,10 @@ class TestMontrekCreateObject(TestCase):
                 "value_date": "2024-11-21",
             }
         )
+        self.assertEqual(me_models.HubC.objects.count(), 1)
+        self.assertEqual(me_models.SatC1.objects.count(), 0)
+        self.assertEqual(me_models.SatTSC2.objects.count(), 1)
+        self.assertEqual(me_models.SatTSC3.objects.count(), 0)
         test_query = repository.receive()
         self.assertEqual(test_query.count(), 1)
         self.assertEqual(test_query[0].field_tsc2_float, 5.0)
@@ -486,6 +490,11 @@ class TestMontrekCreateObject(TestCase):
         test_query = repository.receive()
         self.assertEqual(test_query.count(), 1)
         self.assertEqual(test_query[0].field_tsc2_float, 4.0)
+
+
+class TestMontrekCreateObjectDataFrame(TestCase):
+    def setUp(self):
+        self.user = MontrekUserFactory()
 
     def test_create_objects_from_data_frame(self):
         repository = HubARepository(session_data={"user_id": self.user.id})

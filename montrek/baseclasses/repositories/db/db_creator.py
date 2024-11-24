@@ -8,11 +8,12 @@ from baseclasses.models import (
     MontrekSatelliteABC,
     ValueDateList,
 )
-from baseclasses.repositories.db.db_staller import DbStaller, StalledSatelliteDict
+from baseclasses.repositories.db.db_staller import DbStaller
 from django.db.models import Q
 from django.utils import timezone
 
 DataDict = dict[str, Any]
+SatelliteDict = dict[type[MontrekSatelliteABC], MontrekSatelliteABC]
 
 
 class DbCreator:
@@ -23,9 +24,10 @@ class DbCreator:
         self.hub: MontrekHubABC | None = None
         self.hub_value_date: HubValueDate | None = None
         self.value_date_list: ValueDateList | None = None
-        self.existing_satellites: list[MontrekSatelliteABC] = []
         self.creation_date = db_staller.creation_date
-        self.new_satellites: StalledSatelliteDict = {}
+        self.new_satellites: SatelliteDict = {}
+        self.existing_satellites: SatelliteDict = {}
+        self.updated_satellites: SatelliteDict = {}
 
     def create(self, data: DataDict):
         self.data = data
@@ -100,9 +102,12 @@ class DbCreator:
     def _stall_new_satellite(self, sat: MontrekSatelliteABC):
         self.db_staller.stall_new_satellite(sat)
         sat_class = type(sat)
-        if sat_class not in self.new_satellites:
-            self.new_satellites[sat_class] = []
-        self.new_satellites[sat_class].append(sat)
+        self.new_satellites[sat_class] = sat
+
+    def _stall_updated_satellite(self, sat: MontrekSatelliteABC):
+        self.db_staller.stall_updated_satellite(sat)
+        sat_class = type(sat)
+        self.updated_satellites[sat_class] = sat
 
     def _set_value_date_list(self):
         value_date = self.data.get("value_date", None)
@@ -143,11 +148,10 @@ class DbCreator:
 
     def _set_static_satellites_hub(self):
         self._reset_hub_if_new_and_existing()
-        for sat_class, sats in self.new_satellites.items():
+        for sat_class, sat in self.new_satellites.items():
             if sat_class.is_timeseries:
                 continue
-            for sat in sats:
-                sat.hub_entity = self.hub
+            sat.hub_entity = self.hub
 
     def _get_existing_satellite(
         self, sat: MontrekSatelliteABC, state_date_end_criterion: Q
@@ -168,26 +172,27 @@ class DbCreator:
         self, sat: MontrekSatelliteABC, existing_sat: MontrekSatelliteABC
     ):
         if existing_sat.get_hash_value == sat.get_hash_value:
-            self.existing_satellites.append(existing_sat)
+            self.existing_satellites[existing_sat.__class__] = existing_sat
             return
         existing_sat.state_date_end = self.creation_date
         sat.state_date_start = self.creation_date
         self._stall_new_satellite(sat)
-        self.db_staller.stall_updated_satellite(existing_sat)
+        self._stall_updated_satellite(existing_sat)
 
     def _reset_hub_if_new_and_existing(self):
         # if there are new and existing satellites stalled, treat every existing satellite as new
         if len(self.existing_satellites) == 0:
             return
-        if all([len(sats) == 0 for sats in self.new_satellites.values()]):
+        if len(self.new_satellites) == 0:
+            return
+        if any(
+            [sat_class in self.updated_satellites for sat_class in self.new_satellites]
+        ):
             return
         if "hub_entity_id" in self.data:
             return
         self.hub = None
-        for existing_sat in self.existing_satellites:
-            # if there are no new satellites of the same type, don't renew
-            if existing_sat.__class__ not in self.new_satellites:
-                continue
+        for existing_sat in self.existing_satellites.values():
             self._close_and_renew_satellite(existing_sat)
         self._stall_hub()
 
@@ -205,7 +210,7 @@ class DbCreator:
         )
         existing_sat.pk = None
         existing_sat.id = None
-        self.db_staller.stall_new_satellite(existing_sat)
+        self._stall_new_satellite(existing_sat)
 
     def _close_existing_sat_if_hub_is_forced(self, sat: MontrekSatelliteABC):
         if "hub_entity_id" not in self.data:
