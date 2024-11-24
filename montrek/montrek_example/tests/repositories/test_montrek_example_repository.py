@@ -3,6 +3,7 @@ import sys
 import unittest
 
 import pandas as pd
+import numpy as np
 from baseclasses.errors.montrek_user_error import MontrekError
 from baseclasses.tests.factories.montrek_factory_schemas import (
     ValueDateListFactory,
@@ -659,6 +660,20 @@ class TestMontrekCreateObjectDataFrame(TestCase):
         self.assertEqual(test_query.count(), 2)
         self.assertEqual(test_query[0].field_a1_int, 5)
         self.assertEqual(repository.messages[0].message, "1 empty rows not uploaded!")
+
+    def test_create_objects_from_data_frame_fields_nan(self):
+        repository = HubARepository(session_data={"user_id": self.user.id})
+        data_frame = pd.DataFrame(
+            {
+                "field_a1_int": [5, 6, 7],
+                "field_a1_str": ["test", "test2", "test3"],
+                "field_a2_float": [6.0, 7.0, np.nan],
+                "field_a2_str": ["test2", "test3", "test4"],
+            }
+        )
+        repository.create_objects_from_data_frame(data_frame)
+        test_query = repository.receive()
+        self.assertEqual(test_query.count(), 3)
 
     def test_create_objects_from_data_frame_missing_primary_satellite_identifier_column(
         self,

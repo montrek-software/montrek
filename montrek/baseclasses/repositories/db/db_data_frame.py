@@ -54,6 +54,9 @@ class DbDataFrame:
 
     def _process_row(self, row: pd.Series):
         row_dict = row.to_dict()
+        for key, value in row_dict.items():
+            if not isinstance(value, (list, dict)) and pd.isna(value):
+                row_dict[key] = None
         db_creator = DbCreator(self.db_staller, self.user_id)
         db_creator.create(row_dict)
 
