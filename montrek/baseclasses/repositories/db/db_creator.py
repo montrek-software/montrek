@@ -82,7 +82,7 @@ class DbCreator:
                 self._make_timezone_aware(value, key)
         for sat_class in self.db_staller.get_static_satellite_classes():
             self._convert_json(sat_class)
-        if "value_date" in self.data:
+        if "value_date" in self.data and not pd.isnull(self.data["value_date"]):
             self.data["value_date"] = pd.to_datetime(self.data["value_date"]).date()
 
     def _make_timezone_aware(self, value: datetime.datetime, key: str):
@@ -149,7 +149,7 @@ class DbCreator:
             )
 
     def _stall_hub(self):
-        if "hub_entity_id" in self.data:
+        if "hub_entity_id" in self.data and not pd.isnull(self.data["hub_entity_id"]):
             self.hub = self.db_staller.hub_class.objects.get(
                 id=self.data["hub_entity_id"]
             )

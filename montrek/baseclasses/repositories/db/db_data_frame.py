@@ -20,6 +20,7 @@ class DbDataFrame:
         self.db_staller = DbStaller(self.annotator)
         self.db_writer = DbWriter(self.db_staller)
         self.messages = []
+        self.link_columns = []
 
     def create(self, data_frame: pd.DataFrame):
         self.data_frame = data_frame
@@ -31,7 +32,9 @@ class DbDataFrame:
         self.db_writer.write()
 
     def _process_static_data(self):
+        self.link_columns = self.get_link_field_names()
         static_columns = self.get_static_satellite_field_names()
+        static_columns.extend(self.link_columns)
         if len(static_columns) == 0:
             return
         self._process_data(static_columns)
@@ -44,7 +47,9 @@ class DbDataFrame:
 
     def _process_data(self, columns: list[str]):
         data_frame = self.data_frame.loc[:, columns]
+        data_frame = self._convert_lists_to_tuples(data_frame)
         data_frame = data_frame.drop_duplicates()
+        data_frame = self._convert_tuples_to_lists(data_frame)
         data_frame.apply(self._process_row, axis=1)
 
     def _process_row(self, row: pd.Series):
@@ -57,6 +62,13 @@ class DbDataFrame:
 
     def get_time_series_satellite_field_names(self) -> list[str]:
         return self._get_satellite_field_names(is_time_series=True)
+
+    def get_link_field_names(self) -> list[str]:
+        fields = []
+        for field in dir(self.annotator.hub_class):
+            if field.startswith("link_"):
+                fields.append(field)
+        return [field for field in fields if field in self.data_frame.columns]
 
     def _get_satellite_field_names(self, is_time_series: bool) -> list[str]:
         fields = []
@@ -119,3 +131,17 @@ class DbDataFrame:
                 MontrekMessageWarning(f"{dropped_rows} empty rows not uploaded!")
             )
             self.data_frame = dropped_data_frame
+
+    def _convert_lists_to_tuples(self, df: pd.DataFrame):
+        for col in self.link_columns:
+            if col not in df.columns:
+                continue
+            df[col] = df[col].apply(lambda x: tuple(x) if isinstance(x, list) else x)
+        return df
+
+    def _convert_tuples_to_lists(self, df: pd.DataFrame):
+        for col in self.link_columns:
+            if col not in df.columns:
+                continue
+            df[col] = df[col].apply(lambda x: list(x) if isinstance(x, tuple) else x)
+        return df

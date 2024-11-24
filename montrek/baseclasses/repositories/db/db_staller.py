@@ -105,4 +105,6 @@ class DbStaller:
         self, new_object: StalledObject, stalled_list: StalledDicts
     ):
         object_type = type(new_object)
+        if object_type not in stalled_list:
+            stalled_list[object_type] = []
         stalled_list[object_type].append(new_object)
