@@ -137,10 +137,14 @@ class DbCreator:
 
     def _stall_hub_value_date(self):
         if self.hub.id is not None:
-            self.hub_value_date = self.db_staller.hub_value_date_class.objects.get(
-                hub=self.hub, value_date_list=self.value_date_list
+            existing_hub_value_date = (
+                self.db_staller.hub_value_date_class.objects.filter(
+                    hub=self.hub, value_date_list=self.value_date_list
+                )
             )
-            return
+            if existing_hub_value_date:
+                self.hub_value_date = existing_hub_value_date.get()
+                return
         self.hub_value_date = self.db_staller.hub_value_date_class(
             hub=self.hub, value_date_list=self.value_date_list
         )
@@ -215,9 +219,13 @@ class DbCreator:
     def _close_existing_sat_if_hub_is_forced(self, sat: MontrekSatelliteABC):
         if "hub_entity_id" not in self.data:
             return
-        latest_sat = sat.__class__.objects.filter(
+        latest_sats = sat.__class__.objects.filter(
             hub_entity_id=self.data["hub_entity_id"]
-        ).latest("state_date_start")
+        )
+        if latest_sats.count() == 0:
+            return
+        latest_sat = latest_sats.latest("state_date_start")
+
         latest_sat.state_date_end = self.creation_date
         self.db_staller.stall_updated_satellite(latest_sat)
 
