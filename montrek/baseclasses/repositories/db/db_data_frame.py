@@ -27,14 +27,20 @@ class DbDataFrame:
         self._drop_duplicates()
         self._raise_for_duplicated_entries()
         self._process_static_data()
+        self._process_time_series_data()
         self.db_writer.write()
 
     def _process_static_data(self):
         static_columns = self.get_static_satellite_field_names()
         self._process_data(static_columns)
 
+    def _process_time_series_data(self):
+        time_series_columns = self.get_time_series_satellite_field_names()
+        self._process_data(time_series_columns)
+
     def _process_data(self, columns: list[str]):
         data_frame = self.data_frame.loc[:, columns]
+        data_frame = data_frame.drop_duplicates()
         data_frame.apply(self._process_row, axis=1)
 
     def _process_row(self, row: pd.Series):
@@ -54,7 +60,9 @@ class DbDataFrame:
             if satellite_class.is_timeseries == is_time_series:
                 fields.extend(satellite_class.get_value_field_names())
 
-        common_fields = ["hub_entity_id", "value_date"]
+        common_fields = ["hub_entity_id"]
+        if is_time_series:
+            common_fields.append("value_date")
         sat_fields = list(set(fields)) + common_fields
         return [field for field in sat_fields if field in self.data_frame.columns]
 
