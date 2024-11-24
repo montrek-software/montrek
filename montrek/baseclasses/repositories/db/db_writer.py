@@ -2,12 +2,14 @@ from baseclasses.repositories.db.db_staller import (
     DbStaller,
     StalledDicts,
 )
+from django.db import transaction
 
 
 class DbWriter:
     def __init__(self, db_staller: DbStaller):
         self.db_staller = db_staller
 
+    @transaction.atomic
     def write(self):
         self.write_hubs()
         self.write_updated_hubs()
