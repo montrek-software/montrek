@@ -3,9 +3,6 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Type
 
 import pandas as pd
-from baseclasses.dataclasses.montrek_message import (
-    MontrekMessageWarning,
-)
 from baseclasses.errors.montrek_user_error import MontrekError
 from baseclasses.models import (
     HubValueDate,
@@ -85,6 +82,7 @@ class MontrekRepository:
         self._raise_for_anonymous_user()
         db_data_frame = DbDataFrame(self.annotator, self.session_user_id)
         db_data_frame.create(data_frame)
+        self.messages += db_data_frame.messages
         return db_data_frame.hubs
 
     def receive(self, apply_filter: bool = True) -> QuerySet:
@@ -355,53 +353,6 @@ class MontrekRepository:
     def _raise_for_anonymous_user(self):
         if not self.session_user_id:
             raise PermissionDenied("User not authenticated!")
-
-    def _raise_for_duplicated_entries(self, data_frame: pd.DataFrame):
-        raise_error = False
-        error_message = ""
-        for satellite_class in self.annotator.get_satellite_classes():
-            identifier_fields = satellite_class.identifier_fields
-            subset = [col for col in identifier_fields if col in data_frame.columns]
-            if "hub_entity_id" in data_frame.columns:
-                subset = ["hub_entity_id"]
-                if "value_date" in data_frame.columns:
-                    subset.append("value_date")
-            if not subset:
-                continue
-            duplicated_entries = data_frame.duplicated(subset=subset)
-            if duplicated_entries.any():
-                raise_error = True
-                error_message += f"Duplicated entries found for {satellite_class.__name__} with fields {identifier_fields}\n"
-        if raise_error:
-            raise ValueError(error_message)
-
-    def _drop_duplicates(self, data_frame: pd.DataFrame) -> pd.DataFrame:
-        satellite_columns = [c.name for c in self.std_satellite_fields()]
-        satellite_columns = [
-            c for c in satellite_columns + ["hub_entity_id"] if c in data_frame.columns
-        ]
-
-        duplicated_data_frame = data_frame.loc[:, satellite_columns].duplicated()
-        no_of_duplicated_entries = duplicated_data_frame.sum()
-        if no_of_duplicated_entries == 0:
-            return data_frame
-        self.messages.append(
-            MontrekMessageWarning(
-                f"{no_of_duplicated_entries} duplicated entries not uploaded!"
-            )
-        )
-        return data_frame.loc[~(duplicated_data_frame)]
-
-    def _drop_empty_rows(self, data_frame: pd.DataFrame) -> pd.DataFrame:
-        dropped_data_frame = data_frame.dropna(how="all")
-        dropped_data_frame = dropped_data_frame.convert_dtypes()
-        dropped_rows = len(data_frame) - len(dropped_data_frame)
-        if dropped_rows > 0:
-            self.messages.append(
-                MontrekMessageWarning(f"{dropped_rows} empty rows not uploaded!")
-            )
-            return dropped_data_frame
-        return data_frame
 
     def get_hub_by_id(self, pk: int) -> MontrekHubABC:
         return self.hub_class.objects.get(hub_value_date__pk=pk)
