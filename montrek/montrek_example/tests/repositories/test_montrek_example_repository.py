@@ -744,6 +744,23 @@ class TestMontrekCreateObjectDataFrame(TestCase):
         test_query = repository.receive()
         self.assertEqual(test_query.count(), 3)
 
+    def test_drop_duplicates_separate_satellites(self):
+        repository = HubARepository(session_data={"user_id": self.user.id})
+        data_frame = pd.DataFrame(
+            {
+                "field_a1_int": [5, 6, 7],
+                "field_a1_str": ["test", "test2", "test3"],
+                "field_a2_float": [6.0, 7.0, 8.0],
+                "field_a2_str": ["test2", "test2", "test4"],
+            }
+        )
+        self.assertRaisesMessage(
+            ValueError,
+            "Duplicated entries found for SatA2 with fields ['field_a2_str']\n",
+            repository.create_objects_from_data_frame,
+            data_frame,
+        )
+
 
 class TestMontrekCreateObjectLinks(TestCase):
     def setUp(self):

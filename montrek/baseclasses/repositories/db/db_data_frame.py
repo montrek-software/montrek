@@ -26,7 +26,6 @@ class DbDataFrame:
         self.data_frame = data_frame
         self._drop_empty_rows()
         self._drop_duplicates()
-        self._raise_for_duplicated_entries()
         self._process_static_data()
         self._process_time_series_data()
         self.db_writer.write()
@@ -37,19 +36,20 @@ class DbDataFrame:
         static_columns.extend(self.link_columns)
         if len(static_columns) == 0:
             return
-        self._process_data(static_columns)
+        self._process_data(static_columns, False)
 
     def _process_time_series_data(self):
         time_series_columns = self.get_time_series_satellite_field_names()
         if len(time_series_columns) == 0:
             return
-        self._process_data(time_series_columns)
+        self._process_data(time_series_columns, True)
 
-    def _process_data(self, columns: list[str]):
+    def _process_data(self, columns: list[str], is_timeseries: bool):
         data_frame = self.data_frame.loc[:, columns]
         data_frame = self._convert_lists_to_tuples(data_frame)
         data_frame = data_frame.drop_duplicates()
         data_frame = self._convert_tuples_to_lists(data_frame)
+        self._raise_for_duplicated_entries(data_frame, is_timeseries)
         data_frame.apply(self._process_row, axis=1)
 
     def _process_row(self, row: pd.Series):
@@ -85,21 +85,32 @@ class DbDataFrame:
         sat_fields = list(set(fields)) + common_fields
         return [field for field in sat_fields if field in self.data_frame.columns]
 
-    def _raise_for_duplicated_entries(self):
+    def _raise_for_duplicated_entries(
+        self, data_frame: pd.DataFrame, is_timeseries: bool
+    ):
         raise_error = False
         error_message = ""
         for satellite_class in self.annotator.get_satellite_classes():
             identifier_fields = satellite_class.identifier_fields
-            subset = [
-                col for col in identifier_fields if col in self.data_frame.columns
+            identifier_field_names = [
+                col for col in identifier_fields if col in data_frame.columns
             ]
-            if "hub_entity_id" in self.data_frame.columns:
-                subset = ["hub_entity_id"]
-                if "value_date" in self.data_frame.columns:
-                    subset.append("value_date")
-            if not subset:
+            value_fields = satellite_class.get_value_field_names()
+            value_field_names = [
+                col for col in value_fields if col in data_frame.columns
+            ]
+            if "hub_entity_id" in data_frame.columns:
+                value_field_names.append("hub_entity_id")
+                identifier_field_names.append("hub_entity_id")
+            # if satellite_class.is_timeseries:
+            if "value_date" in data_frame.columns:
+                value_field_names.append("value_date")
+                identifier_field_names.append("value_date")
+            if not identifier_field_names:
                 continue
-            duplicated_entries = self.data_frame.duplicated(subset=subset)
+            duplicated_entries = data_frame.loc[:, value_field_names].duplicated(
+                subset=identifier_field_names
+            )
             if duplicated_entries.any():
                 raise_error = True
                 error_message += f"Duplicated entries found for {satellite_class.__name__} with fields {identifier_fields}\n"
