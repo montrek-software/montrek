@@ -98,7 +98,7 @@ class SatA2(MontrekSatelliteABC):
     field_a2_str = models.CharField(
         max_length=50, default="DEFAULT", null=True, blank=True
     )
-    field_a2_float = models.FloatField(default=0.0)
+    field_a2_float = models.FloatField(default=0.0, null=True, blank=True)
     identifier_fields = ["field_a2_str"]
 
 
