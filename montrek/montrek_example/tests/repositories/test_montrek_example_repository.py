@@ -1280,11 +1280,11 @@ class TestTimeSeries(TestCase):
         )
         queryset = me_models.SatTSC2.objects.all()
         self.assertEqual(queryset.count(), 2)
-        self.assertEqual(queryset[0].field_tsc2_float, 1.0)
-        self.assertEqual(queryset[0].value_date, montrek_time(2024, 2, 5).date())
-        self.assertEqual(queryset[1].field_tsc2_float, 2.0)
-        self.assertEqual(queryset[1].value_date, montrek_time(2024, 2, 5).date())
-        self.assertEqual(queryset[0].state_date_end, queryset[1].state_date_start)
+        object_1 = queryset.get(field_tsc2_float=1.0)
+        self.assertEqual(object_1.value_date, montrek_time(2024, 2, 5).date())
+        object_2 = queryset.get(field_tsc2_float=2.0)
+        self.assertEqual(object_2.value_date, montrek_time(2024, 2, 5).date())
+        self.assertEqual(object_1.state_date_end, object_2.state_date_start)
 
     def test_new_satellite(self):
         repository = HubCRepository(session_data={"user_id": self.user.id})
