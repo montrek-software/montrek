@@ -89,3 +89,20 @@ class TestRequestAuthenticators(TestCase):
         authenticator = RequestSlugAuthenticator(slug="testslug", token="12456")
         headers = authenticator.get_headers()
         self.assertEqual(headers["Authorization"], "testslug:12456")
+
+
+class MockRequestNoConnectionManager(RequestJsonManager):
+    base_url = "https://dummywummy.org/status/404"
+    no_of_retries = 2
+    sleep_time = 0.01
+
+
+class TestRequestNoRequestManager(TestCase):
+    def test_no_request_manager(self):
+        manager = MockRequestNoConnectionManager()
+        manager.get_response("json")
+        self.assertEqual(manager.status_code, 0)
+        self.assertEqual(
+            manager.message,
+            "No request made for https://dummywummy.org/status/404json after 2 attempts",
+        )

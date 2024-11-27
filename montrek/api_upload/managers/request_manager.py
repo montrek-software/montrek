@@ -1,8 +1,9 @@
 from abc import abstractmethod
-import requests
-import pandas as pd
 from base64 import b64encode
+from time import sleep
 
+import pandas as pd
+import requests
 from baseclasses.managers.montrek_manager import MontrekManager
 
 
@@ -61,13 +62,24 @@ class RequestManagerABC(MontrekManager):
 class RequestJsonManager(RequestManagerABC):
     authenticator = RequestAuthenticator()
     json_reader = JsonReader()
+    no_of_retries = 5
+    sleep_time = 2
 
     def get_response(self, endpoint: str) -> dict | list:
         endpoint_url = self.get_endpoint_url(endpoint)
         headers = {"User-Agent": "Chrome/128.0.6537.2"}
         headers.update(self.authenticator.get_headers())
-
-        request = requests.get(endpoint_url, headers=headers)
+        request = None
+        for _ in range(self.no_of_retries):
+            try:
+                request = requests.get(endpoint_url, headers=headers)
+                break
+            except requests.exceptions.RequestException as e:
+                sleep(self.sleep_time)
+        if request is None:
+            self.message = f"No request made for {endpoint_url} after {self.no_of_retries} attempts"
+            self.status_code = 0
+            return {}
         self.status_code = request.status_code
         if request.ok:
             try:
