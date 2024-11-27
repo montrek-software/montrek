@@ -192,6 +192,8 @@ class DbCreator:
             satellite_class.objects.filter(
                 state_date_end_criterion,
                 Q(hash_identifier=sat_hash_identifier),
+                state_date_start__lte=self.creation_date,
+                state_date_end__gt=self.creation_date,
             )
             .order_by("-state_date_start")
             .first()
@@ -200,7 +202,7 @@ class DbCreator:
     def _updated_satellite(
         self, sat: MontrekSatelliteABC, existing_sat: MontrekSatelliteABC
     ):
-        if existing_sat.get_hash_value == sat.get_hash_value:
+        if existing_sat.hash_value == sat.get_hash_value:
             self.existing_satellites[existing_sat.__class__] = existing_sat
             return
         existing_sat.state_date_end = self.creation_date

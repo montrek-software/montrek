@@ -47,10 +47,10 @@ class QueryBuilder:
             Q(hub__state_date_start__lte=reference_date),
             Q(hub__state_date_end__gt=reference_date),
         )
-        queryset = self._filter_ts_rows(queryset)
-        queryset = self._filter_session_data(queryset)
         if apply_filter:
             queryset = self._apply_filter(queryset)
+        queryset = self._filter_ts_rows(queryset)
+        queryset = self._filter_session_data(queryset)
         queryset = self._apply_order(queryset, order_fields)
         return queryset
 
@@ -72,7 +72,7 @@ class QueryBuilder:
             hub_id=OuterRef("hub_entity_id"),
             value_date_list__value_date__isnull=False,
         ).exclude(id=OuterRef("id"))
-        if self.latest_ts or not self.annotator.get_ts_satellite_classes():
+        if self.latest_ts:
             latest_value_date = (
                 queryset.filter(hub=OuterRef("hub"), value_date__isnull=False)
                 .order_by("-value_date")
@@ -81,6 +81,8 @@ class QueryBuilder:
             filtered_query = queryset.filter(
                 Q(value_date=latest_value_date) | ~Exists(non_null_value_date_exists)
             )
+        elif self.annotator.has_only_static_sats():
+            filtered_query = queryset.filter(value_date_list__value_date__isnull=True)
         else:
             # Main query to exclude rows with None value_date if another row with the same hub_entity_id exists with a non-null value_date
             filtered_query = queryset.filter(

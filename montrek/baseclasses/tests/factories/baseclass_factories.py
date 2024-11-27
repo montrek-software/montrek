@@ -1,15 +1,20 @@
 import factory
 
 from baseclasses.utils import montrek_time
-from baseclasses.tests.factories.montrek_factory_schemas import ValueDateListFactory
+from baseclasses.tests.factories.montrek_factory_schemas import (
+    MontrekHubFactory,
+    MontrekHubValueDateFactory,
+    MontrekSatelliteFactory,
+    ValueDateListFactory,
+)
 
 
-class TestMontrekHubFactory(factory.django.DjangoModelFactory):
+class TestMontrekHubFactory(MontrekHubFactory):
     class Meta:
         model = "baseclasses.TestMontrekHub"
 
 
-class TestHubValueDateFactory(factory.django.DjangoModelFactory):
+class TestHubValueDateFactory(MontrekHubValueDateFactory):
     class Meta:
         model = "baseclasses.TestHubValueDate"
 
@@ -17,18 +22,12 @@ class TestHubValueDateFactory(factory.django.DjangoModelFactory):
     value_date_list = factory.SubFactory(ValueDateListFactory)
 
 
-class TestMontrekSatelliteFactory(factory.django.DjangoModelFactory):
+class TestMontrekSatelliteFactory(MontrekSatelliteFactory):
     class Meta:
         model = "baseclasses.TestMontrekSatellite"
 
     hub_entity = factory.SubFactory(TestMontrekHubFactory)
     test_name = factory.Sequence(lambda n: f"Test Name {n}")
-
-    @classmethod
-    def _create(cls, model_class, *args, **kwargs):
-        instance = super()._create(model_class, *args, **kwargs)
-        TestHubValueDateFactory(hub=instance.hub_entity)
-        return instance
 
 
 class TestLinkHubFactory(factory.django.DjangoModelFactory):
@@ -36,7 +35,7 @@ class TestLinkHubFactory(factory.django.DjangoModelFactory):
         model = "baseclasses.TestLinkHub"
 
 
-class TestLinkSatelliteFactory(factory.django.DjangoModelFactory):
+class TestLinkSatelliteFactory(MontrekSatelliteFactory):
     class Meta:
         model = "baseclasses.TestLinkSatellite"
 
@@ -54,7 +53,7 @@ class LinkTestMontrekTestLinkFactory(factory.django.DjangoModelFactory):
     hub_out = factory.SubFactory(TestLinkHubFactory)
 
 
-class TestMontrekSatelliteNoIdFieldsFactory(factory.django.DjangoModelFactory):
+class TestMontrekSatelliteNoIdFieldsFactory(MontrekSatelliteFactory):
     class Meta:
         model = "baseclasses.TestMontrekSatelliteNoIdFields"
 

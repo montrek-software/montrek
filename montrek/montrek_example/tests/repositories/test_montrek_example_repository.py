@@ -1326,12 +1326,14 @@ class TestTimeSeries(TestCase):
         repository = HubCRepository(session_data={"user_id": self.user.id})
         test_query = repository.receive().filter(value_date__in=value_dates)
         self.assertEqual(test_query.count(), 2)
-        self.assertEqual(test_query[1].field_tsc2_float, 0.0)
-        self.assertEqual(test_query[1].field_tsd2_float, "0")
-        self.assertEqual(test_query[1].field_tsd2_int, "0")
-        self.assertEqual(test_query[0].field_tsc2_float, 0.1)
-        self.assertEqual(test_query[0].field_tsd2_float, "0.2")
-        self.assertEqual(test_query[0].field_tsd2_int, "1")
+        result_1 = test_query.get(value_date=value_dates[0])
+        result_2 = test_query.get(value_date=value_dates[1])
+        self.assertEqual(result_1.field_tsc2_float, 0.0)
+        self.assertEqual(result_1.field_tsd2_float, "0")
+        self.assertEqual(result_1.field_tsd2_int, "0")
+        self.assertEqual(result_2.field_tsc2_float, 0.1)
+        self.assertEqual(result_2.field_tsd2_float, "0.2")
+        self.assertEqual(result_2.field_tsd2_int, "1")
 
 
 class TestTimeSeriesRepositoryEmpty(TestCase):
@@ -2029,8 +2031,10 @@ class TestRepositoryQueryConcept(TestCase):
         repo = HubCRepository({})
         query = repo.receive()
         self.assertEqual(query.count(), 2)
-        self.assertEqual(query.last().field_tsc2_float, tsc2_fac1.field_tsc2_float)
-        self.assertEqual(query.first().field_tsc2_float, tsc2_fac2.field_tsc2_float)
+        query_1 = query.get(value_date="2024-11-13")
+        query_2 = query.get(value_date="2024-11-14")
+        self.assertEqual(query_1.field_tsc2_float, tsc2_fac1.field_tsc2_float)
+        self.assertEqual(query_2.field_tsc2_float, tsc2_fac2.field_tsc2_float)
 
     def test_ts_satellite_concept__two_dates(self):
         tsc2_fac1 = me_factories.SatTSC2Factory.create(
@@ -2150,8 +2154,8 @@ class TestRepositoryQueryConcept(TestCase):
         repo = HubCRepository({})
         query = repo.receive()
         self.assertEqual(query.count(), 2)
-        result_1 = query.last()
-        result_2 = query.first()
+        result_1 = query.get(value_date="2024-11-13")
+        result_2 = query.get(value_date="2024-11-15")
         self.assertEqual(result_1.field_tsc2_float, tsc2_fac1.field_tsc2_float)
         self.assertEqual(
             result_1.value_date,
