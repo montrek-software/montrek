@@ -6,9 +6,14 @@ from django.utils import timezone
 from baseclasses.models import ValueDateList
 
 
-def get_value_date_list(value_date):
+def value_date_to_date(value_date):
     if isinstance(value_date, datetime.datetime):
-        value_date = value_date.date()
+        return value_date.date()
+    return value_date
+
+
+def get_value_date_list(value_date):
+    value_date = value_date_to_date(value_date)
     value_date_list = ValueDateList.objects.filter(value_date=value_date)
     if value_date_list.exists():
         value_date_list = value_date_list.first()
@@ -85,6 +90,11 @@ class MontrekTSSatelliteFactory(factory.django.DjangoModelFactory):
         self.hub_value_date.hub = extracted
         self.hub_value_date.save()
 
+    @factory.post_generation
+    def post(self, create, extracted, **kwargs):
+        self.value_date = value_date_to_date(self.value_date)
+        self.get_hash_value
+
 
 class MontrekSatelliteFactory(factory.django.DjangoModelFactory):
-    pass
+    ...

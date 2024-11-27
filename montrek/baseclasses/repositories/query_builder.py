@@ -47,10 +47,10 @@ class QueryBuilder:
             Q(hub__state_date_start__lte=reference_date),
             Q(hub__state_date_end__gt=reference_date),
         )
-        queryset = self._filter_ts_rows(queryset)
-        queryset = self._filter_session_data(queryset)
         if apply_filter:
             queryset = self._apply_filter(queryset)
+        queryset = self._filter_ts_rows(queryset)
+        queryset = self._filter_session_data(queryset)
         queryset = self._apply_order(queryset, order_fields)
         return queryset
 
