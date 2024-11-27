@@ -53,7 +53,6 @@ class BHubValueDateFactory(MontrekHubValueDateFactory):
         model = "montrek_example.BHubValueDate"
 
     hub = factory.SubFactory(HubBFactory)
-    value_date_list = factory.SubFactory(ValueDateListFactory)
 
 
 class CHubValueDateFactory(MontrekHubValueDateFactory):

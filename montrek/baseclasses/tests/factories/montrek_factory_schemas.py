@@ -35,6 +35,7 @@ class MontrekHubValueDateFactory(factory.django.DjangoModelFactory):
             return
         if not extracted:
             return
+        extracted = None if extracted == "None" else extracted
         value_date_list = get_value_date_list(extracted)
         self.value_date_list = value_date_list
 
