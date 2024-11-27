@@ -1,17 +1,12 @@
-import pandas as pd
+from typing import Any, Dict
+
 import numpy as np
-import logging
-
-from typing import Dict, Any
-
-
-from file_upload.models import FileUploadRegistryHubABC
+import pandas as pd
 from baseclasses.managers.montrek_manager import MontrekManager
 from file_upload.managers.field_map_manager import (
     FieldMapManagerABC,
 )
-
-logger = logging.getLogger(__name__)
+from file_upload.models import FileUploadRegistryHubABC
 
 
 class FieldMapFileUploadProcessor:

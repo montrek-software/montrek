@@ -3,6 +3,7 @@ import sys
 import unittest
 
 import pandas as pd
+import numpy as np
 from baseclasses.errors.montrek_user_error import MontrekError
 from baseclasses.tests.factories.montrek_factory_schemas import (
     ValueDateListFactory,
@@ -455,6 +456,11 @@ class TestMontrekCreateObject(TestCase):
         self.assertEqual(me_models.SatA1.objects.last().comment, "some new comment")
         self.assertEqual(me_models.SatA2.objects.last().comment, "some comment")
 
+
+class TestMontrekCreateTimeSeriesObject(TestCase):
+    def setUp(self):
+        self.user = MontrekUserFactory()
+
     def test_create_object_ts_update(self):
         repository = HubCRepository(session_data={"user_id": self.user.id})
         existing_hub = repository.std_create_object(
@@ -463,6 +469,10 @@ class TestMontrekCreateObject(TestCase):
                 "value_date": "2024-11-21",
             }
         )
+        self.assertEqual(me_models.HubC.objects.count(), 1)
+        self.assertEqual(me_models.SatC1.objects.count(), 0)
+        self.assertEqual(me_models.SatTSC2.objects.count(), 1)
+        self.assertEqual(me_models.SatTSC3.objects.count(), 0)
         test_query = repository.receive()
         self.assertEqual(test_query.count(), 1)
         self.assertEqual(test_query[0].field_tsc2_float, 5.0)
@@ -486,6 +496,61 @@ class TestMontrekCreateObject(TestCase):
         test_query = repository.receive()
         self.assertEqual(test_query.count(), 1)
         self.assertEqual(test_query[0].field_tsc2_float, 4.0)
+
+    def test_create_ts_satellite_with_given_hub(self):
+        hub = me_factories.HubCFactory()
+        repository = HubCRepository(session_data={"user_id": self.user.id})
+        repository.std_create_object(
+            {
+                "hub_entity_id": hub.id,
+                "field_c1_str": "test",
+                "field_tsc2_float": 6.0,
+                "value_date": "2023-07-08",
+            }
+        )
+        test_query = repository.receive()
+        self.assertEqual(test_query.count(), 1)
+        queried_object = test_query.get()
+        self.assertEqual(queried_object.field_c1_str, "test")
+        self.assertEqual(queried_object.field_tsc2_float, 6.0)
+        self.assertEqual(queried_object.hub, hub)
+        self.assertEqual(queried_object.value_date, montrek_time(2023, 7, 8).date())
+
+    def test_create_ts_satellite_with_given_static_id(self):
+        sat = me_factories.SatC1Factory(field_c1_str="test")
+        repository = HubCRepository(session_data={"user_id": self.user.id})
+        repository.std_create_object(
+            {
+                "field_c1_str": "test",
+                "field_tsc2_float": 6.0,
+                "value_date": "2023-07-08",
+            }
+        )
+        test_query = repository.receive()
+        self.assertEqual(test_query.count(), 1)
+        queried_object = test_query.get()
+        self.assertEqual(queried_object.field_c1_str, "test")
+        self.assertEqual(queried_object.field_tsc2_float, 6.0)
+        self.assertEqual(queried_object.hub, sat.hub_entity)
+        self.assertEqual(queried_object.value_date, montrek_time(2023, 7, 8).date())
+
+    def test_write_zeros_to_db(self):
+        repository = HubARepository(session_data={"user_id": self.user.id})
+        repository.std_create_object(
+            {
+                "field_a1_int": 5,
+                "field_a1_str": "test",
+                "field_a2_float": 0.0,
+                "field_a2_str": "test2",
+            }
+        )
+        queried_object = repository.receive().get()
+        self.assertEqual(queried_object.field_a2_float, 0.0)
+
+
+class TestMontrekCreateObjectDataFrame(TestCase):
+    def setUp(self):
+        self.user = MontrekUserFactory()
 
     def test_create_objects_from_data_frame(self):
         repository = HubARepository(session_data={"user_id": self.user.id})
@@ -596,6 +661,20 @@ class TestMontrekCreateObject(TestCase):
         self.assertEqual(test_query[0].field_a1_int, 5)
         self.assertEqual(repository.messages[0].message, "1 empty rows not uploaded!")
 
+    def test_create_objects_from_data_frame_fields_nan(self):
+        repository = HubARepository(session_data={"user_id": self.user.id})
+        data_frame = pd.DataFrame(
+            {
+                "field_a1_int": [5, 6, 7],
+                "field_a1_str": ["test", "test2", "test3"],
+                "field_a2_float": [6.0, 7.0, np.nan],
+                "field_a2_str": ["test2", "test3", "test4"],
+            }
+        )
+        repository.create_objects_from_data_frame(data_frame)
+        test_query = repository.receive()
+        self.assertEqual(test_query.count(), 3)
+
     def test_create_objects_from_data_frame_missing_primary_satellite_identifier_column(
         self,
     ):
@@ -650,6 +729,42 @@ class TestMontrekCreateObject(TestCase):
         self.assertEqual(test_query.count(), 3)
         self.assertEqual(me_models.HubC.objects.count(), 2)
         self.assertEqual(me_models.SatC1.objects.count(), 2)
+
+    def test_create_with_nan_in_data_frame(self):
+        repository = HubARepository(session_data={"user_id": self.user.id})
+        data_frame = pd.DataFrame(
+            {
+                "field_a1_int": [5, 6, 7],
+                "field_a1_str": ["test", "test2", "test3"],
+                "field_a2_float": [6.0, 7.0, 8.0],
+                "field_a2_str": ["test2", "test3", pd.NA],
+            }
+        )
+        repository.create_objects_from_data_frame(data_frame)
+        test_query = repository.receive()
+        self.assertEqual(test_query.count(), 3)
+
+    def test_drop_duplicates_separate_satellites(self):
+        repository = HubARepository(session_data={"user_id": self.user.id})
+        data_frame = pd.DataFrame(
+            {
+                "field_a1_int": [5, 6, 7],
+                "field_a1_str": ["test", "test2", "test3"],
+                "field_a2_float": [6.0, 7.0, 8.0],
+                "field_a2_str": ["test2", "test2", "test4"],
+            }
+        )
+        self.assertRaisesMessage(
+            ValueError,
+            "Duplicated entries found for SatA2 with fields ['field_a2_str']\n",
+            repository.create_objects_from_data_frame,
+            data_frame,
+        )
+
+
+class TestMontrekCreateObjectLinks(TestCase):
+    def setUp(self):
+        self.user = MontrekUserFactory()
 
     def test_create_hub_a_with_link_to_hub_b(self):
         hub_b = me_factories.SatB1Factory().hub_entity
@@ -733,70 +848,6 @@ class TestMontrekCreateObject(TestCase):
         self.assertEqual(me_models.LinkHubAHubB.objects.count(), 1)
         queried_object = repository.receive().get()
         self.assertEqual(queried_object.field_b1_str, sat_b_1.field_b1_str)
-
-    def test_write_zeros_to_db(self):
-        repository = HubARepository(session_data={"user_id": self.user.id})
-        repository.std_create_object(
-            {
-                "field_a1_int": 5,
-                "field_a1_str": "test",
-                "field_a2_float": 0.0,
-                "field_a2_str": "test2",
-            }
-        )
-        queried_object = repository.receive().get()
-        self.assertEqual(queried_object.field_a2_float, 0.0)
-
-    def test_create_with_nan_in_data_frame(self):
-        repository = HubARepository(session_data={"user_id": self.user.id})
-        data_frame = pd.DataFrame(
-            {
-                "field_a1_int": [5, 6, 7],
-                "field_a1_str": ["test", "test2", "test3"],
-                "field_a2_float": [6.0, 7.0, 8.0],
-                "field_a2_str": ["test2", "test3", pd.NA],
-            }
-        )
-        repository.create_objects_from_data_frame(data_frame)
-        test_query = repository.receive()
-        self.assertEqual(test_query.count(), 3)
-
-    def test_create_ts_satellite_with_given_hub(self):
-        hub = me_factories.HubCFactory()
-        repository = HubCRepository(session_data={"user_id": self.user.id})
-        repository.std_create_object(
-            {
-                "hub_entity_id": hub.id,
-                "field_c1_str": "test",
-                "field_tsc2_float": 6.0,
-                "value_date": "2023-07-08",
-            }
-        )
-        test_query = repository.receive()
-        self.assertEqual(test_query.count(), 1)
-        queried_object = test_query.get()
-        self.assertEqual(queried_object.field_c1_str, "test")
-        self.assertEqual(queried_object.field_tsc2_float, 6.0)
-        self.assertEqual(queried_object.hub, hub)
-        self.assertEqual(queried_object.value_date, montrek_time(2023, 7, 8).date())
-
-    def test_create_ts_satellite_with_given_static_id(self):
-        sat = me_factories.SatC1Factory(field_c1_str="test")
-        repository = HubCRepository(session_data={"user_id": self.user.id})
-        repository.std_create_object(
-            {
-                "field_c1_str": "test",
-                "field_tsc2_float": 6.0,
-                "value_date": "2023-07-08",
-            }
-        )
-        test_query = repository.receive()
-        self.assertEqual(test_query.count(), 1)
-        queried_object = test_query.get()
-        self.assertEqual(queried_object.field_c1_str, "test")
-        self.assertEqual(queried_object.field_tsc2_float, 6.0)
-        self.assertEqual(queried_object.hub, sat.hub_entity)
-        self.assertEqual(queried_object.value_date, montrek_time(2023, 7, 8).date())
 
 
 class TestMontrekCreateObjectTransaction(TransactionTestCase):
@@ -1229,11 +1280,11 @@ class TestTimeSeries(TestCase):
         )
         queryset = me_models.SatTSC2.objects.all()
         self.assertEqual(queryset.count(), 2)
-        self.assertEqual(queryset[0].field_tsc2_float, 1.0)
-        self.assertEqual(queryset[0].value_date, montrek_time(2024, 2, 5).date())
-        self.assertEqual(queryset[1].field_tsc2_float, 2.0)
-        self.assertEqual(queryset[1].value_date, montrek_time(2024, 2, 5).date())
-        self.assertEqual(queryset[0].state_date_end, queryset[1].state_date_start)
+        object_1 = queryset.get(field_tsc2_float=1.0)
+        self.assertEqual(object_1.value_date, montrek_time(2024, 2, 5).date())
+        object_2 = queryset.get(field_tsc2_float=2.0)
+        self.assertEqual(object_2.value_date, montrek_time(2024, 2, 5).date())
+        self.assertEqual(object_1.state_date_end, object_2.state_date_start)
 
     def test_new_satellite(self):
         repository = HubCRepository(session_data={"user_id": self.user.id})
