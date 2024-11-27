@@ -46,7 +46,7 @@ class TSQueryContainer:
 
 class MontrekRepository:
     hub_class = MontrekHubABC
-    default_order_fields: tuple[str, ...] = ("-value_date", "hub_entity_id")
+    default_order_fields: tuple[str, ...] = ("hub_id",)
     latest_ts: bool = False
 
     update: bool = True  # If this is true only the passed fields will be updated, otherwise empty fields will be set to None
