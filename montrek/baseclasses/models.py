@@ -66,6 +66,11 @@ class AlertMixin(models.Model):
 
 
 class ValueDateList(models.Model):
+    class Meta:
+        indexes = [
+            models.Index(fields=["value_date"]),
+        ]
+
     value_date = models.DateField(unique=True, null=True, blank=True)
 
     def __str__(self):
@@ -86,6 +91,10 @@ class MontrekHubABC(TimeStampMixin, StateMixin, UserMixin):
 class HubValueDate(models.Model):
     class Meta:
         abstract = True
+        indexes = [
+            models.Index(fields=["value_date_list"]),
+            models.Index(fields=["hub"]),
+        ]
 
     hub = HubForeignKey(MontrekHubABC)
     value_date_list = models.ForeignKey(ValueDateList, on_delete=models.CASCADE)
@@ -211,6 +220,7 @@ class MontrekSatelliteABC(MontrekSatelliteBaseABC):
         indexes = [
             models.Index(fields=["hash_identifier"]),
             models.Index(fields=["hash_value"]),
+            models.Index(fields=["hub_entity"]),
         ]
 
     hub_entity = models.ForeignKey(MontrekHubABC, on_delete=models.CASCADE)
@@ -229,6 +239,7 @@ class MontrekTimeSeriesSatelliteABC(MontrekSatelliteBaseABC):
         indexes = [
             models.Index(fields=["hash_identifier"]),
             models.Index(fields=["hash_value"]),
+            models.Index(fields=["hub_value_date"]),
         ]
 
     hub_value_date = models.ForeignKey(HubValueDate, on_delete=models.CASCADE)
@@ -263,6 +274,10 @@ class LinkTypeEnum(Enum):
 class MontrekLinkABC(TimeStampMixin, StateMixin):
     class Meta:
         abstract = True
+        indexes = [
+            models.Index(fields=["hub_in"]),
+            models.Index(fields=["hub_out"]),
+        ]
 
     link_type = LinkTypeEnum.NONE
     hub_in = models.ForeignKey(

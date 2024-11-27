@@ -77,14 +77,13 @@ class Annotator:
         return self.annotated_satellite_classes
 
     def get_ts_satellite_classes(self) -> list[type[MontrekSatelliteABC]]:
-        return [
-            satellite_class
-            for satellite_class in self.annotated_satellite_classes
-            if satellite_class.is_timeseries
-        ]
+        return self._get_ts_satellite_classes(self.annotated_satellite_classes)
 
     def get_linked_satellite_classes(self) -> list[type[MontrekSatelliteABC]]:
         return self.annotated_linked_satellite_classes
+
+    def get_ts_linked_satellite_classes(self) -> list[type[MontrekSatelliteABC]]:
+        return self._get_ts_satellite_classes(self.annotated_linked_satellite_classes)
 
     def get_link_classes(self) -> list[type[MontrekLinkABC]]:
         return self.annotated_link_classes
@@ -103,7 +102,7 @@ class Annotator:
 
     def has_only_static_sats(self) -> bool:
         return not (
-            self.get_ts_satellite_classes() or self.annotated_linked_satellite_classes
+            self.get_ts_satellite_classes() or self.get_ts_linked_satellite_classes()
         )
 
     def _add_class(
@@ -113,3 +112,12 @@ class Annotator:
     ):
         if sat_class not in class_list:
             class_list.append(sat_class)
+
+    def _get_ts_satellite_classes(
+        self, satellite_classes: list[type[MontrekSatelliteABC]]
+    ) -> list[type[MontrekSatelliteABC]]:
+        return [
+            satellite_class
+            for satellite_class in satellite_classes
+            if satellite_class.is_timeseries
+        ]

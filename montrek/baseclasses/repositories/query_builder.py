@@ -82,7 +82,7 @@ class QueryBuilder:
                 Q(value_date=latest_value_date) | ~Exists(non_null_value_date_exists)
             )
         elif self.annotator.has_only_static_sats():
-            filtered_query = queryset.filter(value_date__isnull=True)
+            filtered_query = queryset.filter(value_date_list__value_date__isnull=True)
         else:
             # Main query to exclude rows with None value_date if another row with the same hub_entity_id exists with a non-null value_date
             filtered_query = queryset.filter(
