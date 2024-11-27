@@ -67,14 +67,17 @@ class RequestJsonManager(RequestManagerABC):
 
     def get_response(self, endpoint: str) -> dict | list:
         endpoint_url = self.get_endpoint_url(endpoint)
-        headers = {"User-Agent": "Chrome/128.0.6537.2"}
+        headers = {"User-Agent": "Chrome/128.0.6537.2", "Accept": "application/json"}
         headers.update(self.authenticator.get_headers())
         request = None
         for _ in range(self.no_of_retries):
             try:
-                request = requests.get(endpoint_url, headers=headers)
+                request = requests.get(endpoint_url, headers=headers, timeout=30)
                 break
-            except requests.exceptions.RequestException as e:
+            except (
+                requests.exceptions.RequestException,
+                requests.exceptions.ChunkedEncodingError,
+            ) as e:
                 sleep(self.sleep_time)
         if request is None:
             self.message = f"No request made for {endpoint_url} after {self.no_of_retries} attempts"
