@@ -93,12 +93,11 @@ class TestMontrekExampleAUpdateView(MontrekUpdateViewTestCase):
     view_class = me_views.MontrekExampleAUpdate
 
     def build_factories(self):
-        self.hub_vd = me_factories.AHubValueDateFactory(value_date=None)
-        me_factories.SatA1Factory(hub_entity=self.hub_vd.hub)
-        me_factories.SatA2Factory(hub_entity=self.hub_vd.hub)
+        self.sat_a1 = me_factories.SatA1Factory()
+        me_factories.SatA2Factory(hub_entity=self.sat_a1.hub_entity)
 
     def url_kwargs(self) -> dict:
-        return {"pk": self.hub_vd.id}
+        return {"pk": self.sat_a1.get_hub_value_date().id}
 
     def update_data(self):
         return {
@@ -133,12 +132,11 @@ class TestMontrekExampleADelete(MontrekDeleteViewTestCase):
     view_class = me_views.MontrekExampleADelete
 
     def build_factories(self):
-        self.hub_vd = me_factories.AHubValueDateFactory()
-        me_factories.SatA1Factory(hub_entity=self.hub_vd.hub)
-        me_factories.SatA2Factory(hub_entity=self.hub_vd.hub)
+        self.sata1 = me_factories.SatA1Factory()
+        me_factories.SatA2Factory(hub_entity=self.sata1.hub_entity)
 
     def url_kwargs(self) -> dict:
-        return {"pk": self.hub_vd.id}
+        return {"pk": self.sata1.get_hub_value_date().id}
 
 
 class TestMontrekExampleAHistoryView(MontrekViewTestCase):
@@ -146,18 +144,15 @@ class TestMontrekExampleAHistoryView(MontrekViewTestCase):
     view_class = me_views.MontrekExampleAHistory
 
     def build_factories(self):
-        self.hub_vd = me_factories.AHubValueDateFactory()
-        me_factories.SatA1Factory(hub_entity=self.hub_vd.hub)
+        self.sat = me_factories.SatA1Factory()
 
     def url_kwargs(self) -> dict:
-        return {"pk": self.hub_vd.id}
+        return {"pk": self.sat.get_hub_value_date().id}
 
     def test_view_with_history_data(self):
-        hubvd = me_factories.AHubValueDateFactory()
         user1 = MontrekUserFactory()
         user2 = MontrekUserFactory()
-        me_factories.SatA1Factory(
-            hub_entity=hubvd.hub,
+        sat = me_factories.SatA1Factory(
             field_a1_str="TestFeld",
             field_a1_int=5,
             state_date_end=montrek_time(2024, 2, 17),
@@ -165,7 +160,7 @@ class TestMontrekExampleAHistoryView(MontrekViewTestCase):
             comment="initial comment",
         )
         me_factories.SatA1Factory(
-            hub_entity=hubvd.hub,
+            hub_entity=sat.hub_entity,
             field_a1_str="TestFeld",
             field_a1_int=6,
             state_date_start=montrek_time(2024, 2, 17),
@@ -173,13 +168,15 @@ class TestMontrekExampleAHistoryView(MontrekViewTestCase):
             comment="change comment",
         )
         me_factories.SatA2Factory(
-            hub_entity=hubvd.hub,
+            hub_entity=sat.hub_entity,
             field_a2_str="ConstantTestFeld",
             field_a2_float=6.0,
             created_by=user2,
             comment="another comment",
         )
-        url = reverse("montrek_example_a_history", kwargs={"pk": hubvd.id})
+        url = reverse(
+            "montrek_example_a_history", kwargs={"pk": sat.get_hub_value_date().id}
+        )
         response = self.client.get(url)
         test_history_data_tables = response.context_data["history_data_tables"]
         self.assertEqual(len(test_history_data_tables), 3)
@@ -214,16 +211,12 @@ class TestMontrekExampleBCreate(MontrekCreateViewTestCase):
     view_class = me_views.MontrekExampleBCreate
 
     def build_factories(self):
-        self.hub_vd1 = me_factories.DHubValueDateFactory()
-        self.hub_vd2 = me_factories.DHubValueDateFactory()
-        me_factories.SatD1Factory.create(
+        self.satd_1 = me_factories.SatD1Factory.create(
             field_d1_str="test1",
-            hub_entity=self.hub_vd1.hub,
         )
 
-        me_factories.SatD1Factory.create(
+        self.satd_2 = me_factories.SatD1Factory.create(
             field_d1_str="test2",
-            hub_entity=self.hub_vd2.hub,
         )
 
     def creation_data(self):
@@ -232,12 +225,15 @@ class TestMontrekExampleBCreate(MontrekCreateViewTestCase):
             "field_b1_date": "2024-02-17",
             "field_b2_str": "test2",
             "field_b2_choice": "CHOICE2",
-            "link_hub_b_hub_d": [self.hub_vd1.id, self.hub_vd2.id],
+            "link_hub_b_hub_d": [
+                self.satd_1.hub_entity.get_hub_value_date().id,
+                self.satd_2.hub_entity.get_hub_value_date().id,
+            ],
             "alert_level": AlertEnum.OK.value.description,
         }
 
     def additional_assertions(self, created_object):
-        self.assertEqual(created_object.field_d1_str, "test2,test1")
+        self.assertEqual(created_object.field_d1_str, "test1,test2")
 
 
 class TestMontrekExampleBUpdate(MontrekUpdateViewTestCase):
@@ -245,12 +241,11 @@ class TestMontrekExampleBUpdate(MontrekUpdateViewTestCase):
     view_class = me_views.MontrekExampleBUpdate
 
     def build_factories(self):
-        self.hub_vd = me_factories.BHubValueDateFactory()
-        me_factories.SatB1Factory(hub_entity=self.hub_vd.hub)
-        me_factories.SatB2Factory(hub_entity=self.hub_vd.hub)
+        self.sat1 = me_factories.SatB1Factory()
+        me_factories.SatB2Factory(hub_entity=self.sat1.hub_entity)
 
     def url_kwargs(self) -> dict:
-        return {"pk": self.hub_vd.id}
+        return {"pk": self.sat1.hub_entity.get_hub_value_date().id}
 
     def update_data(self) -> dict:
         return {
