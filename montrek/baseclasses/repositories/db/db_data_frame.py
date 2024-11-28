@@ -23,6 +23,8 @@ class DbDataFrame:
         self.link_columns = []
 
     def create(self, data_frame: pd.DataFrame):
+        if data_frame.empty:
+            return
         self.data_frame = data_frame
         self._drop_empty_rows()
         self._drop_duplicates()
