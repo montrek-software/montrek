@@ -552,6 +552,12 @@ class TestMontrekCreateObjectDataFrame(TestCase):
     def setUp(self):
         self.user = MontrekUserFactory()
 
+    def test_create__empty_data_frame(self):
+        repository = HubCRepository(session_data={"user_id": self.user.id})
+        data_frame = pd.DataFrame()
+        repository.create_objects_from_data_frame(data_frame)
+        self.assertEqual(me_models.HubC.objects.count(), 0)
+
     def test_create_objects_from_data_frame(self):
         repository = HubARepository(session_data={"user_id": self.user.id})
         data_frame = pd.DataFrame(
