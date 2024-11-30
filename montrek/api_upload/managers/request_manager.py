@@ -1,6 +1,7 @@
 from abc import abstractmethod
 from base64 import b64encode
 from time import sleep
+from typing import Any
 
 import pandas as pd
 import requests
@@ -62,17 +63,17 @@ class RequestManagerABC(MontrekManager):
 class RequestJsonManager(RequestManagerABC):
     authenticator = RequestAuthenticator()
     json_reader = JsonReader()
+    request_kwargs = {}
     no_of_retries = 5
     sleep_time = 2
 
     def get_response(self, endpoint: str) -> dict | list:
         endpoint_url = self.get_endpoint_url(endpoint)
-        headers = {"User-Agent": "Chrome/128.0.6537.2", "Accept": "application/json"}
-        headers.update(self.authenticator.get_headers())
+        headers = self.get_headers()
         request = None
         for _ in range(self.no_of_retries):
             try:
-                request = requests.get(endpoint_url, headers=headers, timeout=30)
+                request = self.get_request(endpoint_url, headers)
                 break
             except (
                 requests.exceptions.RequestException,
@@ -98,3 +99,15 @@ class RequestJsonManager(RequestManagerABC):
         except requests.exceptions.HTTPError as e:
             self.message = str(e)
         return {}
+
+    def get_request(
+        self, endpoint_url: str, headers: dict[str, Any]
+    ) -> requests.models.Response:
+        return requests.get(
+            endpoint_url, self.request_kwargs, headers=headers, timeout=30
+        )
+
+    def get_headers(self) -> dict[str, Any]:
+        headers = {"User-Agent": "Chrome/128.0.6537.2", "Accept": "application/json"}
+        headers.update(self.authenticator.get_headers())
+        return headers

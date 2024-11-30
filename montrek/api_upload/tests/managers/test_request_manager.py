@@ -10,6 +10,7 @@ from api_upload.managers.request_manager import (
 class MockRequestManager(RequestJsonManager):
     base_url = "https://httpbin.org/"
     authenticator = RequestUserPasswordAuthenticator(user="user", password="pass")
+    request_kwargs = {"bla": "blubb"}
 
 
 class MockRequestManagerNoAuth(RequestJsonManager):
@@ -30,6 +31,13 @@ class TestRequestManager(TestCase):
         self.assertEqual(manager.message, "OK")
         self.assertEqual(response_json["authenticated"], True)
         self.assertEqual(response_json["user"], "user")
+
+    def test_request_kwargs(self):
+        manager = MockRequestManager()
+        request = manager.get_request("https://httpbin.org/basic-auth/user/pass", {})
+        self.assertEqual(
+            request.url, "https://httpbin.org/basic-auth/user/pass?bla=blubb"
+        )
 
     def test_get_json_unauthorized(self):
         manager = MockRequestManagerNoAuth()
