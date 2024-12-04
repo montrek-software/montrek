@@ -70,6 +70,10 @@ class HubD(MontrekHubABC):
     pass
 
 
+class HubE(MontrekHubABC):
+    pass
+
+
 class AHubValueDate(HubValueDate):
     hub = HubForeignKey(HubA)
 
@@ -84,6 +88,10 @@ class CHubValueDate(HubValueDate):
 
 class DHubValueDate(HubValueDate):
     hub = HubForeignKey(HubD)
+
+
+class EHubValueDate(HubValueDate):
+    hub = HubForeignKey(HubE)
 
 
 class SatA1(MontrekSatelliteABC):
@@ -115,7 +123,7 @@ class SatB1(MontrekSatelliteABC, AlertMixin):
     hub_entity = models.ForeignKey(HubB, on_delete=models.CASCADE)
     field_b1_str = models.CharField(max_length=50, default="DEFAULT")
     field_b1_date = models.DateField(default=timezone.now)
-    identifier_fields = ["field_b1_str", "field_b1_date", "hub_entity_id"]
+    identifier_fields = ["field_b1_str", "hub_entity_id"]
 
 
 class SatB2(MontrekSatelliteABC):
@@ -266,3 +274,17 @@ class SatA1FieldMapHubValueDate(HubValueDate):
 
 class SatA1FieldMapStaticSatellite(FieldMapStaticSatelliteABC):
     hub_entity = models.ForeignKey(SatA1FieldMapHub, on_delete=models.CASCADE)
+
+
+class SatE1(MontrekSatelliteABC):
+    hub_entity = models.ForeignKey(HubE, on_delete=models.CASCADE)
+    field_e1_str = models.CharField(max_length=50, default="DEFAULT")
+    field_e1_float = models.FloatField(default=0.0)
+    identifier_fields = ["field_e1_str"]
+
+
+class SatE2(MontrekSatelliteABC):
+    hub_entity = models.ForeignKey(HubE, on_delete=models.CASCADE)
+    field_e2_str = models.CharField(max_length=50, default="DEFAULT")
+    field_e2_int = models.IntegerField(default=0)
+    identifier_fields = ["field_e2_str", "hub_entity_id"]
