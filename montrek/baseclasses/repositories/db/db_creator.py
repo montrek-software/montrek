@@ -53,7 +53,9 @@ class DbCreator:
             sat_data = self._get_satellite_data(sat_class)
             if self._is_sat_data_empty(sat_data):
                 continue
-            sat = sat_class(**sat_data, state_date_start=self.creation_date)
+            sat = sat_class(
+                **sat_data, state_date_start=self.creation_date, hub_entity=self.hub
+            )
             self._process_static_satellite(sat)
 
     def _create_ts_satellites(self):
