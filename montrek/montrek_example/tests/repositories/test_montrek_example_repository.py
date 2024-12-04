@@ -2,8 +2,8 @@ import datetime
 import sys
 import unittest
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 from baseclasses.errors.montrek_user_error import MontrekError
 from baseclasses.tests.factories.montrek_factory_schemas import (
     ValueDateListFactory,
@@ -33,6 +33,9 @@ from montrek_example.repositories.hub_c_repository import (
 from montrek_example.repositories.hub_d_repository import (
     HubDRepository,
     HubDRepositoryTSReverseLink,
+)
+from montrek_example.repositories.hub_e_repository import (
+    HubERepository,
 )
 from montrek_example.tests.factories import montrek_example_factories as me_factories
 
@@ -413,6 +416,27 @@ class TestMontrekCreateObject(TestCase):
         # The receive should return the adjusted object
         b_object = HubARepository().receive().get()
         self.assertEqual(b_object.field_a1_str, "test_new")
+
+    def test_std_create_object_update_all_satellites(self):
+        repository = HubERepository(session_data={"user_id": self.user.id})
+        repository.std_create_object(
+            {
+                "field_e1_str": "test",
+                "field_e1_float": 2.5,
+                "field_e2_str": "test2",
+                "field_e2_int": 3,
+            }
+        )
+        repository.std_create_object(
+            {
+                "field_e1_str": "test",
+                "field_e1_float": 3.5,
+                "field_e2_str": "test2",
+                "field_e2_int": 3,
+            }
+        )
+        # smoke test
+        repository.receive().get()
 
     def test_std_create_object_raises_error_for_missing_user_id(self):
         with self.assertRaises(PermissionDenied):
