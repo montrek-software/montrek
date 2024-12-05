@@ -1,5 +1,5 @@
 from django.urls import path
-from showcase.views.product_views import ProductListView
+from showcase.views.product_views import ProductListView, load_product_example_data
 from showcase.views.product_views import ProductCreateView
 from showcase.views.product_views import ProductUpdateView
 from showcase.views.product_views import ProductDeleteView
@@ -24,5 +24,10 @@ urlpatterns = [
         "product/<int:pk>/update",
         ProductUpdateView.as_view(),
         name="product_update",
+    ),
+    path(
+        "product/load_product_example_data",
+        load_product_example_data,
+        name="load_product_example_data",
     ),
 ]

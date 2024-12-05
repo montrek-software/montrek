@@ -8,4 +8,4 @@ class ProductSatellite(MontrekSatelliteABC):
     hub_entity = models.ForeignKey(ProductHub, on_delete=models.CASCADE)
     product_name = models.CharField(max_length=255)
     inception_date = models.DateField()
-    identifier_fields = ["hub_entity_id"]
+    identifier_fields = ["product_name"]
