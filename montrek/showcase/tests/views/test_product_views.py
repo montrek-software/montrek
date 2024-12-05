@@ -16,7 +16,7 @@ class TestProductCreateView(MontrekCreateViewTestCase):
     view_class = ProductCreateView
 
     def creation_data(self):
-        return {}
+        return {"product_name": "Test Product", "inception_date": "2021-01-01"}
 
 
 class TestProductUpdateView(MontrekUpdateViewTestCase):
@@ -24,17 +24,17 @@ class TestProductUpdateView(MontrekUpdateViewTestCase):
     view_class = ProductUpdateView
 
     def build_factories(self):
-        self.sat_obj = ProductSatelliteFactory()
+        self.sat_obj = ProductSatelliteFactory(product_name="Test Product")
 
     def url_kwargs(self) -> dict:
-        return {"pk": self.sat_obj.hub_entity.id}
+        return {"pk": self.sat_obj.get_hub_value_date().id}
 
     def update_data(self):
-        return {}
+        return {"product_name": "Updated Product"}
 
 
 class TestProductListView(MontrekListViewTestCase):
-    viewname = "product"
+    viewname = "showcase"
     view_class = ProductListView
     expected_no_of_rows = 1
 
@@ -50,4 +50,4 @@ class TestProductDeleteView(MontrekDeleteViewTestCase):
         self.sat_obj = ProductSatelliteFactory()
 
     def url_kwargs(self) -> dict:
-        return {"pk": self.sat_obj.hub_entity.id}
+        return {"pk": self.sat_obj.get_hub_value_date().id}

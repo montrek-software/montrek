@@ -9,3 +9,5 @@ class ProductSatelliteFactory(factory.django.DjangoModelFactory):
         model = ProductSatellite
 
     hub_entity = factory.SubFactory(ProductHubFactory)
+    product_name = factory.Faker("word")
+    inception_date = factory.Faker("date")
