@@ -34,7 +34,7 @@ class {{ update_view_test_cls_name }}(MontrekUpdateViewTestCase):
         self.sat_obj = {{ sat_factory_cls_name }}()
 
     def url_kwargs(self) -> dict:
-        return {"pk": self.sat_obj.hub_entity.id}
+        return {"pk": self.sat_obj.get_hub_value_date().id}
 
     def update_data(self):
         return {}
@@ -57,4 +57,4 @@ class {{ delete_view_test_cls_name }}(MontrekDeleteViewTestCase):
         self.sat_obj = {{ sat_factory_cls_name }}()
 
     def url_kwargs(self) -> dict:
-        return {"pk": self.sat_obj.hub_entity.id}
+        return {"pk": self.sat_obj.get_hub_value_date().id}
