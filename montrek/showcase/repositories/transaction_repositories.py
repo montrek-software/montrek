@@ -10,6 +10,7 @@ from showcase.models.transaction_hub_models import (
 
 class TransactionRepository(MontrekRepository):
     hub_class = TransactionHub
+    default_order_fields = ("product_name", "value_date")
 
     def set_annotations(self):
         self.session_data["start_date"] = timezone.datetime.min
