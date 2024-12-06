@@ -19,5 +19,7 @@ class TransactionSatelliteFactory(MontrekTSSatelliteFactory):
         "random_element",
         elements=["security purchase", "security sale", "dividend payment"],
     )
-    transaction_quantity = factory.Faker("pyfloat")
-    transaction_price = factory.Faker("pyfloat")
+    transaction_quantity = factory.Faker(
+        "pyfloat", max_value=1_000_000_000, min_value=0.01
+    )
+    transaction_price = factory.Faker("pyfloat", max_value=10_000, min_value=0.01)

@@ -20,10 +20,10 @@ class TransactionTableManager(MontrekTableManager):
             te.StringTableElement(
                 name="Transaction Description", attr="transaction_description"
             ),
-            te.StringTableElement(
+            te.FloatTableElement(
                 name="Transaction Quantity", attr="transaction_quantity"
             ),
-            te.StringTableElement(name="Transaction Price", attr="transaction_price"),
+            te.MoneyTableElement(name="Transaction Price", attr="transaction_price"),
             te.LinkTableElement(
                 name="Edit",
                 url="transaction_update",
