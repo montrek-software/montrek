@@ -1,5 +1,7 @@
+from showcase.factories.product_sat_factories import ProductSatelliteFactory
 from reporting.dataclasses import table_elements as te
 from reporting.managers.montrek_table_manager import MontrekTableManager
+from showcase.managers.example_data_generator import ExampleDataGeneratorABC
 from showcase.repositories.product_repositories import ProductRepository
 
 
@@ -26,3 +28,16 @@ class ProductTableManager(MontrekTableManager):
                 hover_text="Delete Product",
             ),
         ]
+
+
+class ProductExampleDataGenerator(ExampleDataGeneratorABC):
+    data = [
+        {"product_name": "Balanced Alpha", "inception_date": "2010-05-01"},
+        {"product_name": "Factor Plus", "inception_date": "2015-08-01"},
+    ]
+
+    def load(self):
+        for record in self.data:
+            ProductSatelliteFactory(
+                **record, created_by_id=self.session_data["user_id"]
+            )

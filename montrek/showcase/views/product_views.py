@@ -5,10 +5,13 @@ from baseclasses.views import MontrekListView
 from baseclasses.views import MontrekCreateView
 from baseclasses.views import MontrekUpdateView
 from baseclasses.views import MontrekDeleteView
-from showcase.managers.product_managers import ProductTableManager
+from showcase.managers.product_managers import (
+    ProductExampleDataGenerator,
+    ProductTableManager,
+)
+from showcase.models.product_hub_models import ProductHub
 from showcase.pages.product_pages import ProductPage
 from showcase.forms.product_forms import ProductCreateForm
-from showcase.repositories.product_repositories import ProductRepository
 
 
 class ProductCreateView(MontrekCreateView):
@@ -58,16 +61,21 @@ class ProductListView(MontrekListView):
             action_id="id_load_product_example_data",
             hover_text="Load example data",
         )
-        return (action_new, action_load_example_data)
+        action_delete_all_product_data = ActionElement(
+            icon="trash",
+            link=reverse("delete_all_product_data"),
+            action_id="id_delete_all_product_data",
+            hover_text="Delete all Product data",
+        )
+        return (action_new, action_delete_all_product_data, action_load_example_data)
+
+
+def delete_all_product_data(request):
+    ProductHub.objects.all().delete()
+    return HttpResponseRedirect(reverse("showcase"))
 
 
 def load_product_example_data(request):
-    data = [
-        {"product_name": "Balanced Alpha", "inception_date": "2010-05-01"},
-        {"product_name": "Factor Plus", "inception_date": "2015-08-01"},
-    ]
     session_data = {"user_id": request.user.id}
-    repository = ProductRepository(session_data)
-    for record in data:
-        repository.std_create_object(record)
+    ProductExampleDataGenerator(session_data).load()
     return HttpResponseRedirect(reverse("showcase"))

@@ -4,7 +4,7 @@ from baseclasses.pages import MontrekPage
 
 
 class ProductPage(MontrekPage):
-    page_title = "Product"
+    page_title = "Investment Overview"
 
     def get_tabs(self):
         return (
@@ -13,5 +13,17 @@ class ProductPage(MontrekPage):
                 link=reverse("showcase"),
                 html_id="tab_product_list",
                 active="active",
+            ),
+            TabElement(
+                name="Transaction",
+                link=reverse("transaction_list"),
+                html_id="tab_transaction_list",
+                active="",
+            ),
+            TabElement(
+                name="Position",
+                link=reverse("position_list"),
+                html_id="tab_position_list",
+                active="",
             ),
         )

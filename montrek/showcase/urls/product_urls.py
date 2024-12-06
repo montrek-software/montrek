@@ -1,5 +1,9 @@
 from django.urls import path
-from showcase.views.product_views import ProductListView, load_product_example_data
+from showcase.views.product_views import (
+    ProductListView,
+    delete_all_product_data,
+    load_product_example_data,
+)
 from showcase.views.product_views import ProductCreateView
 from showcase.views.product_views import ProductUpdateView
 from showcase.views.product_views import ProductDeleteView
@@ -29,5 +33,10 @@ urlpatterns = [
         "product/load_product_example_data",
         load_product_example_data,
         name="load_product_example_data",
+    ),
+    path(
+        "product/delete_all_product_data",
+        delete_all_product_data,
+        name="delete_all_product_data",
     ),
 ]
