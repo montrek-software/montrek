@@ -6,45 +6,45 @@ from baseclasses.views import MontrekCreateView
 from baseclasses.views import MontrekUpdateView
 from baseclasses.views import MontrekDeleteView
 from showcase.managers.product_managers import (
-    ProductExampleDataGenerator,
-    ProductTableManager,
+    SProductExampleDataGenerator,
+    SProductTableManager,
 )
-from showcase.models.product_hub_models import ProductHub
-from showcase.pages.product_pages import ProductPage
-from showcase.forms.product_forms import ProductCreateForm
+from showcase.models.product_hub_models import SProductHub
+from showcase.pages.product_pages import SProductPage
+from showcase.forms.product_forms import SProductCreateForm
 
 
-class ProductCreateView(MontrekCreateView):
-    manager_class = ProductTableManager
-    page_class = ProductPage
+class SProductCreateView(MontrekCreateView):
+    manager_class = SProductTableManager
+    page_class = SProductPage
     tab = "tab_product_list"
-    form_class = ProductCreateForm
+    form_class = SProductCreateForm
     success_url = "showcase"
-    title = "Product Create"
+    title = "SProduct Create"
 
 
-class ProductUpdateView(MontrekUpdateView):
-    manager_class = ProductTableManager
-    page_class = ProductPage
+class SProductUpdateView(MontrekUpdateView):
+    manager_class = SProductTableManager
+    page_class = SProductPage
     tab = "tab_product_list"
-    form_class = ProductCreateForm
+    form_class = SProductCreateForm
     success_url = "showcase"
-    title = "Product Update"
+    title = "SProduct Update"
 
 
-class ProductDeleteView(MontrekDeleteView):
-    manager_class = ProductTableManager
-    page_class = ProductPage
+class SProductDeleteView(MontrekDeleteView):
+    manager_class = SProductTableManager
+    page_class = SProductPage
     tab = "tab_product_list"
     success_url = "showcase"
-    title = "Product Delete"
+    title = "SProduct Delete"
 
 
-class ProductListView(MontrekListView):
-    manager_class = ProductTableManager
-    page_class = ProductPage
+class SProductListView(MontrekListView):
+    manager_class = SProductTableManager
+    page_class = SProductPage
     tab = "tab_product_list"
-    title = "Product List"
+    title = "SProduct List"
     do_simple_file_upload = True
 
     @property
@@ -53,7 +53,7 @@ class ProductListView(MontrekListView):
             icon="plus",
             link=reverse("product_create"),
             action_id="id_create_product",
-            hover_text="Create new Product",
+            hover_text="Create new SProduct",
         )
         action_load_example_data = ActionElement(
             icon="upload",
@@ -65,17 +65,17 @@ class ProductListView(MontrekListView):
             icon="trash",
             link=reverse("delete_all_product_data"),
             action_id="id_delete_all_product_data",
-            hover_text="Delete all Product data",
+            hover_text="Delete all SProduct data",
         )
         return (action_new, action_delete_all_product_data, action_load_example_data)
 
 
 def delete_all_product_data(request):
-    ProductHub.objects.all().delete()
+    SProductHub.objects.all().delete()
     return HttpResponseRedirect(reverse("showcase"))
 
 
 def load_product_example_data(request):
     session_data = {"user_id": request.user.id}
-    ProductExampleDataGenerator(session_data).load()
+    SProductExampleDataGenerator(session_data).load()
     return HttpResponseRedirect(reverse("showcase"))

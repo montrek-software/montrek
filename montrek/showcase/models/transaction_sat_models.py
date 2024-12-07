@@ -1,12 +1,12 @@
 from django.db import models
 
 from baseclasses.models import MontrekTimeSeriesSatelliteABC
-from showcase.models.transaction_hub_models import TransactionHubValueDate
+from showcase.models.transaction_hub_models import STransactionHubValueDate
 
 
-class TransactionSatellite(MontrekTimeSeriesSatelliteABC):
+class STransactionSatellite(MontrekTimeSeriesSatelliteABC):
     hub_value_date = models.ForeignKey(
-        TransactionHubValueDate, on_delete=models.CASCADE
+        STransactionHubValueDate, on_delete=models.CASCADE
     )
 
     transaction_external_identifier = models.CharField(max_length=255)

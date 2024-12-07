@@ -4,17 +4,17 @@ from baseclasses.tests.factories.montrek_factory_schemas import (
     MontrekHubValueDateFactory,
     ValueDateListFactory,
 )
-from showcase.models.product_hub_models import ProductHub, ProductHubValueDate
+from showcase.models.product_hub_models import SProductHub, SProductHubValueDate
 
 
-class ProductHubFactory(MontrekHubFactory):
+class SProductHubFactory(MontrekHubFactory):
     class Meta:
-        model = ProductHub
+        model = SProductHub
 
 
-class ProductHubValueDateFactory(MontrekHubValueDateFactory):
+class SProductHubValueDateFactory(MontrekHubValueDateFactory):
     class Meta:
-        model = ProductHubValueDate
+        model = SProductHubValueDate
 
-    hub = factory.SubFactory(ProductHubFactory)
+    hub = factory.SubFactory(SProductHubFactory)
     value_date_list = factory.SubFactory(ValueDateListFactory)

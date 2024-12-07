@@ -6,12 +6,12 @@ from baseclasses.views import MontrekUpdateView
 from baseclasses.views import MontrekDeleteView
 from showcase.managers.position_managers import PositionTableManager
 from showcase.forms.position_forms import PositionCreateForm
-from showcase.pages.product_pages import ProductPage
+from showcase.pages.product_pages import SProductPage
 
 
 class PositionCreateView(MontrekCreateView):
     manager_class = PositionTableManager
-    page_class = ProductPage
+    page_class = SProductPage
     tab = "tab_position_list"
     form_class = PositionCreateForm
     success_url = "position_list"
@@ -20,7 +20,7 @@ class PositionCreateView(MontrekCreateView):
 
 class PositionUpdateView(MontrekUpdateView):
     manager_class = PositionTableManager
-    page_class = ProductPage
+    page_class = SProductPage
     tab = "tab_position_list"
     form_class = PositionCreateForm
     success_url = "position_list"
@@ -29,7 +29,7 @@ class PositionUpdateView(MontrekUpdateView):
 
 class PositionDeleteView(MontrekDeleteView):
     manager_class = PositionTableManager
-    page_class = ProductPage
+    page_class = SProductPage
     tab = "tab_position_list"
     success_url = "position_list"
     title = "Position Delete"
@@ -37,7 +37,7 @@ class PositionDeleteView(MontrekDeleteView):
 
 class PositionListView(MontrekListView):
     manager_class = PositionTableManager
-    page_class = ProductPage
+    page_class = SProductPage
     tab = "tab_position_list"
     title = "Position List"
 

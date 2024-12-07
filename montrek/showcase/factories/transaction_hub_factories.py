@@ -5,27 +5,27 @@ from baseclasses.tests.factories.montrek_factory_schemas import (
     MontrekHubValueDateFactory,
     MontrekHubFactory,
 )
-from showcase.factories.product_hub_factories import ProductHubFactory
-from showcase.models.transaction_hub_models import TransactionHub
-from showcase.models.transaction_hub_models import TransactionHubValueDate
+from showcase.factories.product_hub_factories import SProductHubFactory
+from showcase.models.transaction_hub_models import STransactionHub
+from showcase.models.transaction_hub_models import STransactionHubValueDate
 
 
-class TransactionHubFactory(MontrekHubFactory):
+class STransactionHubFactory(MontrekHubFactory):
     class Meta:
-        model = TransactionHub
+        model = STransactionHub
 
 
-class TransactionHubValueDateFactory(MontrekHubValueDateFactory):
+class STransactionHubValueDateFactory(MontrekHubValueDateFactory):
     class Meta:
-        model = TransactionHubValueDate
+        model = STransactionHubValueDate
 
-    hub = factory.SubFactory(TransactionHubFactory)
+    hub = factory.SubFactory(STransactionHubFactory)
     value_date_list = factory.SubFactory(ValueDateListFactory)
 
 
-class LinkTransactionProductFactory(factory.django.DjangoModelFactory):
+class LinkSTransactionSProductFactory(factory.django.DjangoModelFactory):
     class Meta:
-        model = "showcase.LinkTransactionProduct"
+        model = "showcase.LinkSTransactionSProduct"
 
-    hub_in = factory.SubFactory(TransactionHubFactory)
-    hub_out = factory.SubFactory(ProductHubFactory)
+    hub_in = factory.SubFactory(STransactionHubFactory)
+    hub_out = factory.SubFactory(SProductHubFactory)

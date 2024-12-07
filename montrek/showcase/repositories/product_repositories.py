@@ -1,14 +1,14 @@
 from baseclasses.repositories.montrek_repository import MontrekRepository
-from showcase.models.product_hub_models import ProductHub
-from showcase.models.product_sat_models import ProductSatellite
+from showcase.models.product_hub_models import SProductHub
+from showcase.models.product_sat_models import SProductSatellite
 
 
-class ProductRepository(MontrekRepository):
-    hub_class = ProductHub
+class SProductRepository(MontrekRepository):
+    hub_class = SProductHub
 
     def set_annotations(self):
         self.add_satellite_fields_annotations(
-            ProductSatellite,
+            SProductSatellite,
             [
                 "product_name",
                 "inception_date",

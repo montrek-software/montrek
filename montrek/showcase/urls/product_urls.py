@@ -1,32 +1,32 @@
 from django.urls import path
 from showcase.views.product_views import (
-    ProductListView,
+    SProductListView,
     delete_all_product_data,
     load_product_example_data,
 )
-from showcase.views.product_views import ProductCreateView
-from showcase.views.product_views import ProductUpdateView
-from showcase.views.product_views import ProductDeleteView
+from showcase.views.product_views import SProductCreateView
+from showcase.views.product_views import SProductUpdateView
+from showcase.views.product_views import SProductDeleteView
 
 urlpatterns = [
     path(
         "product/list",
-        ProductListView.as_view(),
+        SProductListView.as_view(),
         name="showcase",
     ),
     path(
         "product/create",
-        ProductCreateView.as_view(),
+        SProductCreateView.as_view(),
         name="product_create",
     ),
     path(
         "product/<int:pk>/delete",
-        ProductDeleteView.as_view(),
+        SProductDeleteView.as_view(),
         name="product_delete",
     ),
     path(
         "product/<int:pk>/update",
-        ProductUpdateView.as_view(),
+        SProductUpdateView.as_view(),
         name="product_update",
     ),
     path(

@@ -2,9 +2,9 @@ from baseclasses.fields import HubForeignKey
 from baseclasses.models import HubValueDate, MontrekHubABC
 
 
-class SProductHub(MontrekHubABC):
+class SAssetHub(MontrekHubABC):
     pass
 
 
-class SProductHubValueDate(HubValueDate):
-    hub = HubForeignKey(SProductHub)
+class SAssetHubValueDate(HubValueDate):
+    hub = HubForeignKey(SAssetHub)

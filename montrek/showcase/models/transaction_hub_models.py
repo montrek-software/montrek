@@ -5,17 +5,17 @@ from baseclasses.models import (
     MontrekHubABC,
     MontrekOneToManyLinkABC,
 )
-from showcase.models.product_hub_models import ProductHub
+from showcase.models.product_hub_models import SProductHub
 
 
-class TransactionHub(MontrekHubABC):
+class STransactionHub(MontrekHubABC):
     pass
 
 
-class TransactionHubValueDate(HubValueDate):
-    hub = HubForeignKey(TransactionHub)
+class STransactionHubValueDate(HubValueDate):
+    hub = HubForeignKey(STransactionHub)
 
 
-class LinkTransactionProduct(MontrekOneToManyLinkABC):
-    hub_in = models.ForeignKey(TransactionHub, on_delete=models.CASCADE)
-    hub_out = models.ForeignKey(ProductHub, on_delete=models.CASCADE)
+class LinkSTransactionSProduct(MontrekOneToManyLinkABC):
+    hub_in = models.ForeignKey(STransactionHub, on_delete=models.CASCADE)
+    hub_out = models.ForeignKey(SProductHub, on_delete=models.CASCADE)

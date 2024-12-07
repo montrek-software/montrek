@@ -8,13 +8,13 @@ from baseclasses.tests.factories.montrek_factory_schemas import (
     MontrekTSSatelliteFactory,
 )
 from showcase.factories.transaction_hub_factories import (
-    TransactionHubValueDateFactory,
+    STransactionHubValueDateFactory,
 )
-from showcase.models.transaction_sat_models import TransactionSatellite
+from showcase.models.transaction_sat_models import STransactionSatellite
 
 
 @dataclass
-class TransactionConfig:
+class STransactionConfig:
     description: str
     min_quantity: float
     max_quantity: float
@@ -22,26 +22,26 @@ class TransactionConfig:
     max_price: float
 
 
-class TransactionChoices(Enum):
-    SECURITY_PURCHASE = TransactionConfig(
+class STransactionChoices(Enum):
+    SECURITY_PURCHASE = STransactionConfig(
         "security purchase", 0, 100_000_000, 0.01, 10_000
     )
-    SECURITY_SALE = TransactionConfig("security sale", -100_000_000, 0, 0.01, 10_000)
-    DIVIDEND_PAYMENT = TransactionConfig("dividend payment", 0, 1_000_000, 0.01, 100)
-    FEE_PAYMENT = TransactionConfig("fee payment", -1_000_000, 0, 0.01, 1_000)
+    SECURITY_SALE = STransactionConfig("security sale", -100_000_000, 0, 0.01, 10_000)
+    DIVIDEND_PAYMENT = STransactionConfig("dividend payment", 0, 1_000_000, 0.01, 100)
+    FEE_PAYMENT = STransactionConfig("fee payment", -1_000_000, 0, 0.01, 1_000)
 
 
-class TransactionSatelliteFactory(MontrekTSSatelliteFactory):
+class STransactionSatelliteFactory(MontrekTSSatelliteFactory):
     class Meta:
-        model = TransactionSatellite
+        model = STransactionSatellite
         exclude = ["config"]
 
-    hub_value_date = factory.SubFactory(TransactionHubValueDateFactory)
+    hub_value_date = factory.SubFactory(STransactionHubValueDateFactory)
     transaction_external_identifier = factory.Faker("ssn")
 
     @factory.lazy_attribute
     def config(self):
-        return random.choice(list(TransactionChoices)).value
+        return random.choice(list(STransactionChoices)).value
 
     @factory.lazy_attribute
     def transaction_description(self):

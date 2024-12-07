@@ -1,32 +1,32 @@
 from django.urls import path
 from showcase.views.transaction_views import (
-    TransactionListView,
+    STransactionListView,
     delete_all_transaction_data,
     load_transaction_example_data,
 )
-from showcase.views.transaction_views import TransactionCreateView
-from showcase.views.transaction_views import TransactionUpdateView
-from showcase.views.transaction_views import TransactionDeleteView
+from showcase.views.transaction_views import STransactionCreateView
+from showcase.views.transaction_views import STransactionUpdateView
+from showcase.views.transaction_views import STransactionDeleteView
 
 urlpatterns = [
     path(
         "transaction/list",
-        TransactionListView.as_view(),
+        STransactionListView.as_view(),
         name="transaction_list",
     ),
     path(
         "transaction/create",
-        TransactionCreateView.as_view(),
+        STransactionCreateView.as_view(),
         name="transaction_create",
     ),
     path(
         "transaction/<int:pk>/delete",
-        TransactionDeleteView.as_view(),
+        STransactionDeleteView.as_view(),
         name="transaction_delete",
     ),
     path(
         "transaction/<int:pk>/update",
-        TransactionUpdateView.as_view(),
+        STransactionUpdateView.as_view(),
         name="transaction_update",
     ),
     path(

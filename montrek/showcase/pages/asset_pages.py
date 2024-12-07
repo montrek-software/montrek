@@ -3,15 +3,15 @@ from baseclasses.dataclasses.view_classes import TabElement
 from baseclasses.pages import MontrekPage
 
 
-class STransactionPage(MontrekPage):
-    page_title = "STransaction"
+class SAssetPage(MontrekPage):
+    page_title = "SAsset"
 
     def get_tabs(self):
         return (
             TabElement(
-                name="STransaction",
-                link=reverse("transaction_list"),
-                html_id="tab_transaction_list",
+                name="SAsset",
+                link=reverse("asset_list"),
+                html_id="tab_asset_list",
                 active="active",
             ),
         )

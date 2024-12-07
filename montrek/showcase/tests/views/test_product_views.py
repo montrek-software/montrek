@@ -4,50 +4,50 @@ from testing.test_cases.view_test_cases import (
     MontrekListViewTestCase,
     MontrekDeleteViewTestCase,
 )
-from showcase.factories.product_sat_factories import ProductSatelliteFactory
-from showcase.views.product_views import ProductCreateView
-from showcase.views.product_views import ProductUpdateView
-from showcase.views.product_views import ProductListView
-from showcase.views.product_views import ProductDeleteView
+from showcase.factories.product_sat_factories import SProductSatelliteFactory
+from showcase.views.product_views import SProductCreateView
+from showcase.views.product_views import SProductUpdateView
+from showcase.views.product_views import SProductListView
+from showcase.views.product_views import SProductDeleteView
 
 
-class TestProductCreateView(MontrekCreateViewTestCase):
+class TestSProductCreateView(MontrekCreateViewTestCase):
     viewname = "product_create"
-    view_class = ProductCreateView
+    view_class = SProductCreateView
 
     def creation_data(self):
-        return {"product_name": "Test Product", "inception_date": "2021-01-01"}
+        return {"product_name": "Test SProduct", "inception_date": "2021-01-01"}
 
 
-class TestProductUpdateView(MontrekUpdateViewTestCase):
+class TestSProductUpdateView(MontrekUpdateViewTestCase):
     viewname = "product_update"
-    view_class = ProductUpdateView
+    view_class = SProductUpdateView
 
     def build_factories(self):
-        self.sat_obj = ProductSatelliteFactory(product_name="Test Product")
+        self.sat_obj = SProductSatelliteFactory(product_name="Test SProduct")
 
     def url_kwargs(self) -> dict:
         return {"pk": self.sat_obj.get_hub_value_date().id}
 
     def update_data(self):
-        return {"product_name": "Updated Product"}
+        return {"product_name": "Updated SProduct"}
 
 
-class TestProductListView(MontrekListViewTestCase):
+class TestSProductListView(MontrekListViewTestCase):
     viewname = "showcase"
-    view_class = ProductListView
+    view_class = SProductListView
     expected_no_of_rows = 1
 
     def build_factories(self):
-        self.sat_obj = ProductSatelliteFactory()
+        self.sat_obj = SProductSatelliteFactory()
 
 
-class TestProductDeleteView(MontrekDeleteViewTestCase):
+class TestSProductDeleteView(MontrekDeleteViewTestCase):
     viewname = "product_delete"
-    view_class = ProductDeleteView
+    view_class = SProductDeleteView
 
     def build_factories(self):
-        self.sat_obj = ProductSatelliteFactory()
+        self.sat_obj = SProductSatelliteFactory()
 
     def url_kwargs(self) -> dict:
         return {"pk": self.sat_obj.get_hub_value_date().id}

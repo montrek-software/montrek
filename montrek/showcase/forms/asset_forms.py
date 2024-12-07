@@ -1,5 +1,5 @@
 from baseclasses.forms import MontrekCreateForm
 
 
-class SProductCreateForm(MontrekCreateForm):
+class SAssetCreateForm(MontrekCreateForm):
     pass

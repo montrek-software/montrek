@@ -1,13 +1,13 @@
 import factory
 
-from showcase.factories.product_hub_factories import ProductHubFactory
-from showcase.models.product_sat_models import ProductSatellite
+from showcase.factories.product_hub_factories import SProductHubFactory
+from showcase.models.product_sat_models import SProductSatellite
 
 
-class ProductSatelliteFactory(factory.django.DjangoModelFactory):
+class SProductSatelliteFactory(factory.django.DjangoModelFactory):
     class Meta:
-        model = ProductSatellite
+        model = SProductSatellite
 
-    hub_entity = factory.SubFactory(ProductHubFactory)
+    hub_entity = factory.SubFactory(SProductHubFactory)
     product_name = factory.Faker("word")
     inception_date = factory.Faker("date")

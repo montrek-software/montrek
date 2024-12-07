@@ -3,19 +3,19 @@ from baseclasses.dataclasses.view_classes import TabElement
 from baseclasses.pages import MontrekPage
 
 
-class ProductPage(MontrekPage):
+class SProductPage(MontrekPage):
     page_title = "Investment Overview"
 
     def get_tabs(self):
         return (
             TabElement(
-                name="Product",
+                name="SProduct",
                 link=reverse("showcase"),
                 html_id="tab_product_list",
                 active="active",
             ),
             TabElement(
-                name="Transaction",
+                name="STransaction",
                 link=reverse("transaction_list"),
                 html_id="tab_transaction_list",
                 active="",
