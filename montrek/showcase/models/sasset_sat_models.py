@@ -19,9 +19,9 @@ class SAssetTypes(Enum):
 
 class SAssetTypeSatellite(MontrekSatelliteABC):
     hub_entity = models.ForeignKey(SAssetHub, on_delete=models.CASCADE)
-    sasset_type = models.CharField(max_length=255, choices=SAssetTypes.get_choices())
+    asset_type = models.CharField(max_length=255, choices=SAssetTypes.get_choices())
 
 
 class SAssetStaticSatellite(MontrekSatelliteABC):
     hub_entity = models.ForeignKey(SAssetHub, on_delete=models.CASCADE)
-    sasset_name = models.CharField(max_length=255)
+    asset_name = models.CharField(max_length=255)

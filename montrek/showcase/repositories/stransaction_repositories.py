@@ -10,7 +10,7 @@ from showcase.models.stransaction_hub_models import (
 
 class STransactionRepository(MontrekRepository):
     hub_class = STransactionHub
-    default_order_fields = ("sproduct_name", "value_date")
+    default_order_fields = ("product_name", "value_date")
 
     def set_annotations(self):
         self.session_data["start_date"] = timezone.datetime.min
@@ -18,12 +18,12 @@ class STransactionRepository(MontrekRepository):
         self.add_satellite_fields_annotations(
             STransactionSatellite,
             [
-                "stransaction_external_identifier",
-                "stransaction_description",
-                "stransaction_quantity",
-                "stransaction_price",
+                "transaction_external_identifier",
+                "transaction_description",
+                "transaction_quantity",
+                "transaction_price",
             ],
         )
         self.add_linked_satellites_field_annotations(
-            SProductSatellite, LinkSTransactionSProduct, ["sproduct_name"]
+            SProductSatellite, LinkSTransactionSProduct, ["product_name"]
         )

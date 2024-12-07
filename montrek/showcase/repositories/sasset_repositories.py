@@ -7,5 +7,5 @@ class SAssetRepository(MontrekRepository):
     hub_class = SAssetHub
 
     def set_annotations(self):
-        self.add_satellite_fields_annotations(SAssetTypeSatellite, ["sasset_type"])
-        self.add_satellite_fields_annotations(SAssetStaticSatellite, ["sasset_name"])
+        self.add_satellite_fields_annotations(SAssetTypeSatellite, ["asset_type"])
+        self.add_satellite_fields_annotations(SAssetStaticSatellite, ["asset_name"])

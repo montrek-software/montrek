@@ -9,19 +9,19 @@ class SProductPage(MontrekPage):
     def get_tabs(self):
         return (
             TabElement(
-                name="SProduct",
+                name="Product",
                 link=reverse("showcase"),
                 html_id="tab_sproduct_list",
                 active="active",
             ),
             TabElement(
-                name="STransaction",
+                name="Transaction",
                 link=reverse("stransaction_list"),
                 html_id="tab_stransaction_list",
                 active="",
             ),
             TabElement(
-                name="SPosition",
+                name="Position",
                 link=reverse("sposition_list"),
                 html_id="tab_sposition_list",
                 active="",

@@ -17,28 +17,28 @@ class STransactionTableManager(MontrekTableManager):
     @property
     def table_elements(self):
         return [
-            te.StringTableElement(name="SProduct Name", attr="sproduct_name"),
+            te.StringTableElement(name="Product Name", attr="product_name"),
             te.DateTableElement(name="Value Date", attr="value_date"),
             te.StringTableElement(
-                name="STransaction Description", attr="stransaction_description"
+                name="Transaction Description", attr="transaction_description"
             ),
             te.FloatTableElement(
-                name="STransaction Quantity", attr="stransaction_quantity"
+                name="Transaction Quantity", attr="transaction_quantity"
             ),
-            te.MoneyTableElement(name="STransaction Price", attr="stransaction_price"),
+            te.MoneyTableElement(name="Transaction Price", attr="transaction_price"),
             te.LinkTableElement(
                 name="Edit",
                 url="stransaction_update",
                 icon="edit",
                 kwargs={"pk": "id"},
-                hover_text="Update STransaction",
+                hover_text="Update Transaction",
             ),
             te.LinkTableElement(
                 name="Delete",
                 url="stransaction_delete",
                 icon="trash",
                 kwargs={"pk": "id"},
-                hover_text="Delete STransaction",
+                hover_text="Delete Transaction",
             ),
         ]
 

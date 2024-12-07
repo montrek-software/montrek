@@ -37,20 +37,20 @@ class STransactionSatelliteFactory(MontrekTSSatelliteFactory):
         exclude = ["config"]
 
     hub_value_date = factory.SubFactory(STransactionHubValueDateFactory)
-    stransaction_external_identifier = factory.Faker("ssn")
+    transaction_external_identifier = factory.Faker("ssn")
 
     @factory.lazy_attribute
     def config(self):
         return random.choice(list(STransactionChoices)).value
 
     @factory.lazy_attribute
-    def stransaction_description(self):
+    def transaction_description(self):
         return self.config.description
 
     @factory.lazy_attribute
-    def stransaction_quantity(self):
+    def transaction_quantity(self):
         return random.uniform(self.config.min_quantity, self.config.max_quantity)
 
     @factory.lazy_attribute
-    def stransaction_price(self):
+    def transaction_price(self):
         return random.uniform(self.config.min_price, self.config.max_price)

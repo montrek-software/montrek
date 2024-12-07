@@ -4,12 +4,12 @@ from baseclasses.pages import MontrekPage
 
 
 class STransactionPage(MontrekPage):
-    page_title = "STransaction"
+    page_title = "Transaction"
 
     def get_tabs(self):
         return (
             TabElement(
-                name="STransaction",
+                name="Transaction",
                 link=reverse("stransaction_list"),
                 html_id="tab_stransaction_list",
                 active="active",

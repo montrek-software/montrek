@@ -9,4 +9,4 @@ class SAssetTypeFactory(factory.django.DjangoModelFactory):
         model = SAssetTypeSatellite
 
     hub_entity = factory.SubFactory(SAssetHubFactory)
-    sasset_type = factory.Faker("random_element", elements=list(SAssetTypes))
+    asset_type = factory.Faker("random_element", elements=list(SAssetTypes))

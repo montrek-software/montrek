@@ -11,29 +11,29 @@ class SProductTableManager(MontrekTableManager):
     @property
     def table_elements(self):
         return [
-            te.StringTableElement(name="SProduct Name", attr="sproduct_name"),
+            te.StringTableElement(name="Product Name", attr="product_name"),
             te.DateTableElement(name="Inception Date", attr="inception_date"),
             te.LinkTableElement(
                 name="Edit",
                 url="sproduct_update",
                 icon="edit",
                 kwargs={"pk": "id"},
-                hover_text="Update SProduct",
+                hover_text="Update Product",
             ),
             te.LinkTableElement(
                 name="Delete",
                 url="sproduct_delete",
                 icon="trash",
                 kwargs={"pk": "id"},
-                hover_text="Delete SProduct",
+                hover_text="Delete Product",
             ),
         ]
 
 
 class SProductExampleDataGenerator(ExampleDataGeneratorABC):
     data = [
-        {"sproduct_name": "Balanced Alpha", "inception_date": "2010-05-01"},
-        {"sproduct_name": "Factor Plus", "inception_date": "2015-08-01"},
+        {"product_name": "Balanced Alpha", "inception_date": "2010-05-01"},
+        {"product_name": "Factor Plus", "inception_date": "2015-08-01"},
     ]
 
     def load(self):

@@ -10,7 +10,7 @@ class SProductRepository(MontrekRepository):
         self.add_satellite_fields_annotations(
             SProductSatellite,
             [
-                "sproduct_name",
+                "product_name",
                 "inception_date",
             ],
         )

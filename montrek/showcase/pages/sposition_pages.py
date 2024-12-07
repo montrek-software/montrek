@@ -4,12 +4,12 @@ from baseclasses.pages import MontrekPage
 
 
 class SPositionPage(MontrekPage):
-    page_title = "SPosition"
+    page_title = "Position"
 
     def get_tabs(self):
         return (
             TabElement(
-                name="SPosition",
+                name="Position",
                 link=reverse("sposition_list"),
                 html_id="tab_sposition_list",
                 active="active",

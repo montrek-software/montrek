@@ -9,7 +9,7 @@ class STransactionSatellite(MontrekTimeSeriesSatelliteABC):
         STransactionHubValueDate, on_delete=models.CASCADE
     )
 
-    stransaction_external_identifier = models.CharField(max_length=255)
-    stransaction_description = models.CharField(max_length=255)
-    stransaction_quantity = models.FloatField()
-    stransaction_price = models.FloatField()
+    transaction_external_identifier = models.CharField(max_length=255)
+    transaction_description = models.CharField(max_length=255)
+    transaction_quantity = models.FloatField()
+    transaction_price = models.FloatField()

@@ -14,13 +14,13 @@ class SPositionTableManager(MontrekTableManager):
                 url="sposition_update",
                 icon="edit",
                 kwargs={"pk": "id"},
-                hover_text="Update SPosition",
+                hover_text="Update Position",
             ),
             te.LinkTableElement(
                 name="Delete",
                 url="sposition_delete",
                 icon="trash",
                 kwargs={"pk": "id"},
-                hover_text="Delete SPosition",
+                hover_text="Delete Position",
             ),
         ]
