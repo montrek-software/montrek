@@ -59,7 +59,7 @@ class STransactionListView(MontrekListView):
             icon="upload",
             link=reverse("load_stransaction_example_data"),
             action_id="id_load_stransaction_example_data",
-            hover_text="Load STransaction Example Data",
+            hover_text="Load Example Data",
         )
         action_delete_all_stransaction_data = ActionElement(
             icon="trash",

@@ -10,6 +10,7 @@ class SAssetTableManager(MontrekTableManager):
     def table_elements(self):
         return [
             te.StringTableElement(name="Asset Name", attr="asset_name"),
+            te.StringTableElement(name="Asset Type", attr="asset_type"),
             te.LinkTableElement(
                 name="Edit",
                 url="sasset_update",

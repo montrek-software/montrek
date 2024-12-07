@@ -59,7 +59,7 @@ class SProductListView(MontrekListView):
             icon="upload",
             link=reverse("load_sproduct_example_data"),
             action_id="id_load_sproduct_example_data",
-            hover_text="Load example data",
+            hover_text="Load Example Data",
         )
         action_delete_all_sproduct_data = ActionElement(
             icon="trash",
