@@ -15,7 +15,7 @@ class SPositionCreateView(MontrekCreateView):
     tab = "tab_sposition_list"
     form_class = SPositionCreateForm
     success_url = "sposition_list"
-    title = "SPosition Create"
+    title = "Position Create"
 
 
 class SPositionUpdateView(MontrekUpdateView):
@@ -24,7 +24,7 @@ class SPositionUpdateView(MontrekUpdateView):
     tab = "tab_sposition_list"
     form_class = SPositionCreateForm
     success_url = "sposition_list"
-    title = "SPosition Update"
+    title = "Position Update"
 
 
 class SPositionDeleteView(MontrekDeleteView):
@@ -32,14 +32,14 @@ class SPositionDeleteView(MontrekDeleteView):
     page_class = SProductPage
     tab = "tab_sposition_list"
     success_url = "sposition_list"
-    title = "SPosition Delete"
+    title = "Position Delete"
 
 
 class SPositionListView(MontrekListView):
     manager_class = SPositionTableManager
     page_class = SProductPage
     tab = "tab_sposition_list"
-    title = "SPosition List"
+    title = "Position List"
 
     @property
     def actions(self) -> tuple:
@@ -47,6 +47,6 @@ class SPositionListView(MontrekListView):
             icon="plus",
             link=reverse("sposition_create"),
             action_id="id_create_position",
-            hover_text="Create new SPosition",
+            hover_text="Create new Position",
         )
         return (action_new,)

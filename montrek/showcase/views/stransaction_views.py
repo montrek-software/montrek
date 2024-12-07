@@ -21,7 +21,7 @@ class STransactionCreateView(MontrekCreateView):
     tab = "tab_stransaction_list"
     form_class = STransactionCreateForm
     success_url = "stransaction_list"
-    title = "STransaction Create"
+    title = "Transaction Create"
 
 
 class STransactionUpdateView(MontrekUpdateView):
@@ -30,7 +30,7 @@ class STransactionUpdateView(MontrekUpdateView):
     tab = "tab_stransaction_list"
     form_class = STransactionCreateForm
     success_url = "stransaction_list"
-    title = "STransaction Update"
+    title = "Transaction Update"
 
 
 class STransactionDeleteView(MontrekDeleteView):
@@ -38,14 +38,14 @@ class STransactionDeleteView(MontrekDeleteView):
     page_class = SProductPage
     tab = "tab_stransaction_list"
     success_url = "stransaction_list"
-    title = "STransaction Delete"
+    title = "Transaction Delete"
 
 
 class STransactionListView(MontrekListView):
     manager_class = STransactionTableManager
     page_class = SProductPage
     tab = "tab_stransaction_list"
-    title = "STransaction List"
+    title = "Transaction List"
 
     @property
     def actions(self) -> tuple:
@@ -53,7 +53,7 @@ class STransactionListView(MontrekListView):
             icon="plus",
             link=reverse("stransaction_create"),
             action_id="id_create_transaction",
-            hover_text="Create new STransaction",
+            hover_text="Create new Transaction",
         )
         action_load_example_data = ActionElement(
             icon="upload",

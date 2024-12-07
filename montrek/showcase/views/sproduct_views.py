@@ -20,7 +20,7 @@ class SProductCreateView(MontrekCreateView):
     tab = "tab_sproduct_list"
     form_class = SProductCreateForm
     success_url = "showcase"
-    title = "SProduct Create"
+    title = "Product Create"
 
 
 class SProductUpdateView(MontrekUpdateView):
@@ -29,7 +29,7 @@ class SProductUpdateView(MontrekUpdateView):
     tab = "tab_sproduct_list"
     form_class = SProductCreateForm
     success_url = "showcase"
-    title = "SProduct Update"
+    title = "Product Update"
 
 
 class SProductDeleteView(MontrekDeleteView):
@@ -37,14 +37,14 @@ class SProductDeleteView(MontrekDeleteView):
     page_class = SProductPage
     tab = "tab_sproduct_list"
     success_url = "showcase"
-    title = "SProduct Delete"
+    title = "Product Delete"
 
 
 class SProductListView(MontrekListView):
     manager_class = SProductTableManager
     page_class = SProductPage
     tab = "tab_sproduct_list"
-    title = "SProduct List"
+    title = "Product List"
     do_simple_file_upload = True
 
     @property
@@ -53,7 +53,7 @@ class SProductListView(MontrekListView):
             icon="plus",
             link=reverse("sproduct_create"),
             action_id="id_create_product",
-            hover_text="Create new SProduct",
+            hover_text="Create new Product",
         )
         action_load_example_data = ActionElement(
             icon="upload",

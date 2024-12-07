@@ -15,7 +15,7 @@ class SAssetCreateView(MontrekCreateView):
     tab = "tab_sasset_list"
     form_class = SAssetCreateForm
     success_url = "sasset_list"
-    title = "SAsset Create"
+    title = "Asset Create"
 
 
 class SAssetUpdateView(MontrekUpdateView):
@@ -24,7 +24,7 @@ class SAssetUpdateView(MontrekUpdateView):
     tab = "tab_sasset_list"
     form_class = SAssetCreateForm
     success_url = "sasset_list"
-    title = "SAsset Update"
+    title = "Asset Update"
 
 
 class SAssetDeleteView(MontrekDeleteView):
@@ -32,14 +32,14 @@ class SAssetDeleteView(MontrekDeleteView):
     page_class = SAssetPage
     tab = "tab_sasset_list"
     success_url = "sasset_list"
-    title = "SAsset Delete"
+    title = "Asset Delete"
 
 
 class SAssetListView(MontrekListView):
     manager_class = SAssetTableManager
     page_class = SAssetPage
     tab = "tab_sasset_list"
-    title = "SAsset List"
+    title = "Asset List"
 
     @property
     def actions(self) -> tuple:
@@ -47,6 +47,6 @@ class SAssetListView(MontrekListView):
             icon="plus",
             link=reverse("sasset_create"),
             action_id="id_create_asset",
-            hover_text="Create new SAsset",
+            hover_text="Create new Asset",
         )
         return (action_new,)
