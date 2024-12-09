@@ -16,7 +16,13 @@ class TestSTransactionCreateView(MontrekCreateViewTestCase):
     view_class = STransactionCreateView
 
     def creation_data(self):
-        return {}
+        return {
+            "value_date": "2021-01-01",
+            "transaction_external_identifier": "test_external_identifier",
+            "transaction_description": "test_description",
+            "transaction_quantity": 100.0,
+            "transaction_price": 1.0,
+        }
 
 
 class TestSTransactionUpdateView(MontrekUpdateViewTestCase):
@@ -24,13 +30,15 @@ class TestSTransactionUpdateView(MontrekUpdateViewTestCase):
     view_class = STransactionUpdateView
 
     def build_factories(self):
-        self.sat_obj = STransactionSatelliteFactory()
+        self.sat_obj = STransactionSatelliteFactory(
+            transaction_external_identifier="test"
+        )
 
     def url_kwargs(self) -> dict:
-        return {"pk": self.sat_obj.get_hub_value_date().id}
+        return {"pk": self.sat_obj.hub_value_date.id}
 
     def update_data(self):
-        return {}
+        return {"transaction_external_identifier": "test_updated"}
 
 
 class TestSTransactionListView(MontrekListViewTestCase):
@@ -50,4 +58,4 @@ class TestSTransactionDeleteView(MontrekDeleteViewTestCase):
         self.sat_obj = STransactionSatelliteFactory()
 
     def url_kwargs(self) -> dict:
-        return {"pk": self.sat_obj.get_hub_value_date().id}
+        return {"pk": self.sat_obj.hub_value_date.id}

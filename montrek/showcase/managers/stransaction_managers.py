@@ -18,6 +18,7 @@ class STransactionTableManager(MontrekTableManager):
     def table_elements(self):
         return [
             te.StringTableElement(name="Product Name", attr="product_name"),
+            te.StringTableElement(name="Asset Name", attr="asset_name"),
             te.DateTableElement(name="Value Date", attr="value_date"),
             te.StringTableElement(
                 name="Transaction Description", attr="transaction_description"

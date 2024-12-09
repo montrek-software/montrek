@@ -1,8 +1,10 @@
 from django.utils import timezone
 from baseclasses.repositories.montrek_repository import MontrekRepository
+from showcase.models.sasset_sat_models import SAssetStaticSatellite
 from showcase.models.sproduct_sat_models import SProductSatellite
 from showcase.models.stransaction_sat_models import STransactionSatellite
 from showcase.models.stransaction_hub_models import (
+    LinkSTransactionSAsset,
     LinkSTransactionSProduct,
     STransactionHub,
 )
@@ -26,4 +28,7 @@ class STransactionRepository(MontrekRepository):
         )
         self.add_linked_satellites_field_annotations(
             SProductSatellite, LinkSTransactionSProduct, ["product_name"]
+        )
+        self.add_linked_satellites_field_annotations(
+            SAssetStaticSatellite, LinkSTransactionSAsset, ["asset_name"]
         )
