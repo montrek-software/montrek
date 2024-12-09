@@ -228,6 +228,13 @@ class MontrekExampleDCreate(views.MontrekCreateView):
     title = "Create Example D"
 
 
+class MontrekExampleDDelete(views.MontrekDeleteView):
+    manager_class = mem.HubDManager
+    page_class = pages.MontrekExampleDAppPage
+    success_url = "montrek_example_d_list"
+    title = "Delete Example D"
+
+
 class MontrekExampleA1UploadFileView(MontrekUploadFileView):
     page_class = pages.MontrekExampleAAppPage
     title = "Upload A1 File"

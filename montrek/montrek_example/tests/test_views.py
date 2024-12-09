@@ -411,6 +411,18 @@ class TestMontrekExampleDCreate(MontrekCreateViewTestCase):
         )
 
 
+class TestMontrekExampleDDelete(MontrekDeleteViewTestCase):
+    viewname = "montrek_example_d_delete"
+    view_class = me_views.MontrekExampleDDelete
+
+    def build_factories(self):
+        self.sattsd2 = me_factories.SatTSD2Factory()
+        me_factories.SatD1Factory(hub_entity=self.sattsd2.hub_value_date.hub)
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.sattsd2.hub_value_date.id}
+
+
 class TestMontrekExampleA1UploadFileView(TransactionTestCase):
     def setUp(self):
         self.user = MontrekUserFactory()

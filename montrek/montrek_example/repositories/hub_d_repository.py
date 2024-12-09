@@ -10,6 +10,10 @@ class HubDRepository(MontrekRepository):
             me_models.SatD1,
             ["field_d1_str", "field_d1_int"],
         )
+        self.add_satellite_fields_annotations(
+            me_models.SatTSD2,
+            ["field_tsd2_float", "field_tsd2_int"],
+        )
         self.add_linked_satellites_field_annotations(
             me_models.SatB1,
             me_models.LinkHubBHubD,
