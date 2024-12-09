@@ -9,3 +9,4 @@ class SAssetRepository(MontrekRepository):
     def set_annotations(self):
         self.add_satellite_fields_annotations(SAssetTypeSatellite, ["asset_type"])
         self.add_satellite_fields_annotations(SAssetStaticSatellite, ["asset_name"])
+        self.add_satellite_fields_annotations(SAssetStaticSatellite, ["asset_isin"])

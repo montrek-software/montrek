@@ -5,13 +5,13 @@ from baseclasses.views import MontrekCreateView
 from baseclasses.views import MontrekUpdateView
 from baseclasses.views import MontrekDeleteView
 from showcase.managers.sasset_managers import SAssetTableManager
-from showcase.pages.sasset_pages import SAssetPage
+from showcase.pages.sproduct_pages import SProductPage
 from showcase.forms.sasset_forms import SAssetCreateForm
 
 
 class SAssetCreateView(MontrekCreateView):
     manager_class = SAssetTableManager
-    page_class = SAssetPage
+    page_class = SProductPage
     tab = "tab_sasset_list"
     form_class = SAssetCreateForm
     success_url = "sasset_list"
@@ -20,7 +20,7 @@ class SAssetCreateView(MontrekCreateView):
 
 class SAssetUpdateView(MontrekUpdateView):
     manager_class = SAssetTableManager
-    page_class = SAssetPage
+    page_class = SProductPage
     tab = "tab_sasset_list"
     form_class = SAssetCreateForm
     success_url = "sasset_list"
@@ -29,7 +29,7 @@ class SAssetUpdateView(MontrekUpdateView):
 
 class SAssetDeleteView(MontrekDeleteView):
     manager_class = SAssetTableManager
-    page_class = SAssetPage
+    page_class = SProductPage
     tab = "tab_sasset_list"
     success_url = "sasset_list"
     title = "Asset Delete"
@@ -37,7 +37,7 @@ class SAssetDeleteView(MontrekDeleteView):
 
 class SAssetListView(MontrekListView):
     manager_class = SAssetTableManager
-    page_class = SAssetPage
+    page_class = SProductPage
     tab = "tab_sasset_list"
     title = "Asset List"
 

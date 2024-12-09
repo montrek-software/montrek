@@ -27,5 +27,6 @@ class SAssetTypeSatellite(MontrekSatelliteABC):
 class SAssetStaticSatellite(MontrekSatelliteABC):
     hub_entity = models.ForeignKey(SAssetHub, on_delete=models.CASCADE)
     asset_name = models.CharField(max_length=255)
+    asset_isin = models.CharField(max_length=12, null=True, blank=True)
 
     identifier_fields = ["asset_name"]

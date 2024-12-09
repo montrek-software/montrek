@@ -5,14 +5,17 @@ from baseclasses.views import MontrekListView
 from baseclasses.views import MontrekCreateView
 from baseclasses.views import MontrekUpdateView
 from baseclasses.views import MontrekDeleteView
+from showcase.managers.sasset_managers import SAssetExampleDataGenerator
 from showcase.managers.sproduct_managers import (
     SProductExampleDataGenerator,
     SProductTableManager,
 )
 from showcase.managers.stransaction_managers import STransactionExampleDataGenerator
+from showcase.models.sasset_hub_models import SAssetHub
 from showcase.models.sproduct_hub_models import SProductHub
 from showcase.pages.sproduct_pages import SProductPage
 from showcase.forms.sproduct_forms import SProductCreateForm
+from showcase.models.stransaction_hub_models import STransactionHub
 
 
 class SProductCreateView(MontrekCreateView):
@@ -68,6 +71,9 @@ class SProductListView(MontrekListView):
 def init_showcase_data(request):
     session_data = {"user_id": 1}
     SProductHub.objects.all().delete()
+    SAssetHub.objects.all().delete()
+    STransactionHub.objects.all().delete()
     SProductExampleDataGenerator(session_data).load()
+    SAssetExampleDataGenerator(session_data).load()
     STransactionExampleDataGenerator(session_data).load()
     return HttpResponseRedirect(reverse("showcase"))

@@ -27,7 +27,7 @@ class TestSPositionUpdateView(MontrekUpdateViewTestCase):
         self.sat_obj = SPositionSatelliteFactory()
 
     def url_kwargs(self) -> dict:
-        return {"pk": self.sat_obj.get_hub_value_date().id}
+        return {"pk": self.sat_obj.hub_entity.id}
 
     def update_data(self):
         return {}
@@ -50,4 +50,4 @@ class TestSPositionDeleteView(MontrekDeleteViewTestCase):
         self.sat_obj = SPositionSatelliteFactory()
 
     def url_kwargs(self) -> dict:
-        return {"pk": self.sat_obj.get_hub_value_date().id}
+        return {"pk": self.sat_obj.hub_entity.id}

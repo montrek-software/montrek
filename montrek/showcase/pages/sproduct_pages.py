@@ -15,6 +15,12 @@ class SProductPage(MontrekPage):
                 active="active",
             ),
             TabElement(
+                name="Asset",
+                link=reverse("sasset_list"),
+                html_id="tab_sasset_list",
+                active="",
+            ),
+            TabElement(
                 name="Transaction",
                 link=reverse("stransaction_list"),
                 html_id="tab_stransaction_list",
