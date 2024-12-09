@@ -1,8 +1,8 @@
 from django.urls import path
 from showcase.views.sproduct_views import (
     SProductListView,
-    delete_all_sproduct_data,
-    load_sproduct_example_data,
+    delete_all_showcase_data,
+    load_all_showcase_data,
 )
 from showcase.views.sproduct_views import SProductCreateView
 from showcase.views.sproduct_views import SProductUpdateView
@@ -30,13 +30,13 @@ urlpatterns = [
         name="sproduct_update",
     ),
     path(
-        "sproduct/load_sproduct_example_data",
-        load_sproduct_example_data,
-        name="load_sproduct_example_data",
+        "sproduct/load_all_showcase_data",
+        load_all_showcase_data,
+        name="load_all_showcase_data",
     ),
     path(
-        "sproduct/delete_all_sproduct_data",
-        delete_all_sproduct_data,
-        name="delete_all_sproduct_data",
+        "sproduct/delete_all_showcase_data",
+        delete_all_showcase_data,
+        name="delete_all_showcase_data",
     ),
 ]

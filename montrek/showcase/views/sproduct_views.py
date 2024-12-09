@@ -9,6 +9,7 @@ from showcase.managers.sproduct_managers import (
     SProductExampleDataGenerator,
     SProductTableManager,
 )
+from showcase.managers.stransaction_managers import STransactionExampleDataGenerator
 from showcase.models.sproduct_hub_models import SProductHub
 from showcase.pages.sproduct_pages import SProductPage
 from showcase.forms.sproduct_forms import SProductCreateForm
@@ -57,25 +58,26 @@ class SProductListView(MontrekListView):
         )
         action_load_example_data = ActionElement(
             icon="upload",
-            link=reverse("load_sproduct_example_data"),
-            action_id="id_load_sproduct_example_data",
+            link=reverse("load_all_showcase_data"),
+            action_id="id_load_all_showcase_data",
             hover_text="Load Example Data",
         )
-        action_delete_all_sproduct_data = ActionElement(
+        action_delete_all_showcase_data = ActionElement(
             icon="trash",
-            link=reverse("delete_all_sproduct_data"),
-            action_id="id_delete_all_sproduct_data",
+            link=reverse("delete_all_showcase_data"),
+            action_id="id_delete_all_showcase_data",
             hover_text="Delete all SProduct data",
         )
-        return (action_new, action_delete_all_sproduct_data, action_load_example_data)
+        return (action_new, action_delete_all_showcase_data, action_load_example_data)
 
 
-def delete_all_sproduct_data(request):
+def delete_all_showcase_data(request):
     SProductHub.objects.all().delete()
     return HttpResponseRedirect(reverse("showcase"))
 
 
-def load_sproduct_example_data(request):
+def load_all_showcase_data(request):
     session_data = {"user_id": request.user.id}
     SProductExampleDataGenerator(session_data).load()
+    STransactionExampleDataGenerator(session_data).load()
     return HttpResponseRedirect(reverse("showcase"))
