@@ -396,6 +396,9 @@ class TestMontrekExampleDCreate(MontrekCreateViewTestCase):
         return {
             "field_d1_str": "test",
             "field_d1_int": 13,
+            "value_date": "2024-02-17",
+            "field_tsd2_float": 1.0,
+            "field_tsd2_int": 2,
         }
 
     def test_view_without_permission(self):
