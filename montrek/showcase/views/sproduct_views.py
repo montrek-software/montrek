@@ -56,28 +56,18 @@ class SProductListView(MontrekListView):
             action_id="id_create_product",
             hover_text="Create new Product",
         )
-        action_load_example_data = ActionElement(
-            icon="upload",
-            link=reverse("load_all_showcase_data"),
-            action_id="id_load_all_showcase_data",
-            hover_text="Load Example Data",
+        action_init_showcase_data = ActionElement(
+            icon="refresh",
+            link=reverse("init_showcase_data"),
+            action_id="id_init_showcase_data",
+            hover_text="Initialize Showcase Data",
         )
-        action_delete_all_showcase_data = ActionElement(
-            icon="trash",
-            link=reverse("delete_all_showcase_data"),
-            action_id="id_delete_all_showcase_data",
-            hover_text="Delete all SProduct data",
-        )
-        return (action_new, action_delete_all_showcase_data, action_load_example_data)
+        return (action_new, action_init_showcase_data)
 
 
-def delete_all_showcase_data(request):
+def init_showcase_data(request):
+    session_data = {"user_id": 1}
     SProductHub.objects.all().delete()
-    return HttpResponseRedirect(reverse("showcase"))
-
-
-def load_all_showcase_data(request):
-    session_data = {"user_id": request.user.id}
     SProductExampleDataGenerator(session_data).load()
     STransactionExampleDataGenerator(session_data).load()
     return HttpResponseRedirect(reverse("showcase"))
