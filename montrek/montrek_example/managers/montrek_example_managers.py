@@ -126,4 +126,14 @@ class HubDManager(MontrekTableManager):
         return [
             te.StringTableElement(name="D1 String", attr="field_d1_str"),
             te.IntTableElement(name="D1 Int", attr="field_d1_int"),
+            te.DateTableElement(name="Value Date", attr="value_date"),
+            te.FloatTableElement(name="D2 Float", attr="field_tsd2_float"),
+            te.IntTableElement(name="D2 Int", attr="field_tsd2_int"),
+            te.LinkTableElement(
+                name="Delete",
+                url="montrek_example_d_delete",
+                kwargs={"pk": "id"},
+                icon="trash",
+                hover_text="Delete Example D",
+            ),
         ]
