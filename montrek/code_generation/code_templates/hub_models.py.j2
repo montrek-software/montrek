@@ -1,6 +1,10 @@
-from baseclasses.models import MontrekHubABC
+from baseclasses.fields import HubForeignKey
+from baseclasses.models import HubValueDate, MontrekHubABC
 
 
 class {{ hub_cls_name }}(MontrekHubABC):
     pass
 
+
+class {{ hub_value_date_cls_name }}(HubValueDate):
+    hub = HubForeignKey({{ hub_cls_name }})

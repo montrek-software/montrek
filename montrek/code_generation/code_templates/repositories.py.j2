@@ -6,6 +6,5 @@ from baseclasses.repositories.montrek_repository import MontrekRepository
 class {{ repo_cls_name }}(MontrekRepository):
     hub_class = {{ hub_cls_name }}
 
-    def std_queryset(self):
-        return self.build_queryset()
-
+    def set_annotations(self):
+        pass
