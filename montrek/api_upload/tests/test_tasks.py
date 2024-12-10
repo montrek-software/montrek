@@ -33,6 +33,10 @@ class TestApiUploadTask(TestCase):
         self.assertEqual(m.to, [self.user.email])
         self.assertEqual(m.subject, "API Upload successful")
         self.assertTrue("post check ok" in m.body)
+        self.assertTrue(
+            "<i>API: <a href='https://api.mock.com/v1/endpoint'>https://api.mock.com/v1/endpoint</a></i>"
+            in m.body
+        )
 
     def test_api_upload_task_fails(self):
         test_task = MockApiUploadTaskFail()

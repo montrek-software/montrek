@@ -35,6 +35,8 @@ class ApiUploadTask(Task):
         message = "<br>".join(
             [message.message for message in self.api_upload_manager.messages]
         )
+        url = self.api_upload_manager.get_url()
+        message += f"<br><br> <i>API: <a href='{url}'>{url}</a></i>"
         user = get_user_model().objects.get(pk=self.session_data["user_id"])
         if self.upload_result:
             subject = "API Upload successful"
