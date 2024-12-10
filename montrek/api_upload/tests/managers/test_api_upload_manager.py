@@ -41,10 +41,22 @@ class MockApiUploadProcessor:
         return True
 
 
+class MockApiUploadProcessorFail(MockApiUploadProcessor):
+    def process(self, json_response) -> bool:
+        self.message = "process not ok"
+        return False
+
+
 class MockApiUploadManager(ApiUploadManager):
     endpoint = "endpoint"
     request_manager_class = MockRequestManager
     api_upload_processor_class = MockApiUploadProcessor
+
+
+class MockApiUploadManagerFail(ApiUploadManager):
+    endpoint = "endpoint"
+    request_manager_class = MockRequestManager
+    api_upload_processor_class = MockApiUploadProcessorFail
 
 
 class TestApiUploadManager(TestCase):

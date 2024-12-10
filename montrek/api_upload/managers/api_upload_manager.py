@@ -78,7 +78,7 @@ class ApiUploadManager(MontrekManager):
     def init_upload(self) -> None:
         api_upload_registry_hub = self.registry_repository.std_create_object(
             {
-                "url": self.request_manager.get_endpoint_url(self.endpoint),
+                "url": self.get_url(),
                 "upload_status": self.registry_repository.upload_status.PENDING.value,
                 "upload_message": "Upload is pending",
             }
@@ -106,3 +106,6 @@ class ApiUploadManager(MontrekManager):
             self.messages.append(MontrekMessageError(upload_message))
         else:
             self.messages.append(MontrekMessageInfo(upload_message))
+
+    def get_url(self) -> str:
+        return self.request_manager.get_endpoint_url(self.endpoint)
