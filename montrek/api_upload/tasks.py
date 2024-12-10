@@ -3,27 +3,23 @@ from typing import Any
 from celery import Task
 from django.contrib.auth import get_user_model
 from mailing.managers.mailing_manager import MailingManager
-from montrek.celery_app import app as celery_app
 
 from api_upload.managers.api_upload_manager import ApiUploadManager
 
 
 class ApiUploadTask(Task):
-    def __init__(
+    api_upload_manager_class: type[ApiUploadManager]
+
+    def run(
         self,
         *args,
-        api_upload_manager_class: type[ApiUploadManager],
         session_data: dict[str, Any],
         **kwargs,
-    ) -> None:
-        super().__init__(*args, **kwargs)
+    ):
         self.session_data = session_data
-        self.api_upload_manager = api_upload_manager_class(
+        self.api_upload_manager = self.api_upload_manager_class(
             session_data=self.session_data
         )
-        celery_app.register_task(self)
-
-    def run(self, *args, **kwargs):
         self._upload_and_process()
         self._send_mail()
 
