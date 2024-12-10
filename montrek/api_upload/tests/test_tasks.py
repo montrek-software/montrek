@@ -7,7 +7,6 @@ from api_upload.tests.managers.test_api_upload_manager import (
 )
 from api_upload.tasks import ApiUploadTask
 from testing.decorators.add_logged_in_user import add_logged_in_user
-from montrek.celery_app import app as celery_app
 
 
 class MockApiUploadTask(ApiUploadTask):
@@ -25,7 +24,6 @@ class TestApiUploadTask(TestCase):
 
     def test_api_upload_task(self):
         test_task = MockApiUploadTask()
-        celery_app.register_task(test_task)
         test_task.delay(
             session_data=self.session_data,
         )
@@ -38,7 +36,6 @@ class TestApiUploadTask(TestCase):
 
     def test_api_upload_task_fails(self):
         test_task = MockApiUploadTaskFail()
-        celery_app.register_task(test_task)
         test_task.delay(
             session_data=self.session_data,
         )
