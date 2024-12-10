@@ -56,6 +56,15 @@ class STransactionExampleDataGenerator(ExampleDataGeneratorABC):
             "transaction_quantity": 100.0,
             "transaction_price": 1.0,
         },
+        # {
+        #     "product_name": "Balanced Alpha",
+        #     "asset_isin": "US0378331005",
+        #     "value_date": "2023-05-16",
+        #     "transaction_external_identifier": "0000000002",
+        #     "transaction_description": "security purchase",
+        #     "transaction_quantity": 200.0,
+        #     "transaction_price": 2.0,
+        # },
     ]
 
     def load(self):
@@ -93,6 +102,10 @@ class STransactionExampleDataGenerator(ExampleDataGeneratorABC):
         )
 
         link_df = df[
-            ["hub_entity_id", "link_stransaction_sproduct", "link_stransaction_sasset"]
+            [
+                "hub_entity_id",
+                "link_stransaction_sproduct",
+                "link_stransaction_sasset",
+            ]
         ]
         transaction_repo.create_objects_from_data_frame(link_df)
