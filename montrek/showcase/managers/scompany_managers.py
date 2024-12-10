@@ -2,6 +2,7 @@ from reporting.dataclasses import table_elements as te
 from reporting.managers.montrek_table_manager import MontrekTableManager
 from showcase.factories.scompany_sat_factories import SCompanyStaticSatelliteFactory
 from showcase.managers.example_data_generator import ExampleDataGeneratorABC
+from showcase.models.scompany_hub_models import SCompanyHub
 from showcase.repositories.scompany_repositories import SCompanyRepository
 
 
@@ -37,6 +38,7 @@ class SCompanyExampleDataGenerator(ExampleDataGeneratorABC):
     ]
 
     def load(self):
+        SCompanyHub.objects.all().delete()
         for record in self.data:
             SCompanyStaticSatelliteFactory(
                 **record, created_by_id=self.session_data["user_id"]

@@ -2,6 +2,7 @@ import pandas as pd
 from reporting.dataclasses import table_elements as te
 from reporting.managers.montrek_table_manager import MontrekTableManager
 from showcase.managers.example_data_generator import ExampleDataGeneratorABC
+from showcase.models.sasset_hub_models import SAssetHub
 from showcase.repositories.sasset_repositories import SAssetRepository
 from showcase.repositories.scompany_repositories import SCompanyRepository
 
@@ -56,6 +57,7 @@ class SAssetExampleDataGenerator(ExampleDataGeneratorABC):
     ]
 
     def load(self):
+        SAssetHub.objects.all().delete()
         df = pd.DataFrame(self.data)
         asset_df = df[["asset_name", "asset_type", "asset_isin"]]
         asset_repo = SAssetRepository(self.session_data)

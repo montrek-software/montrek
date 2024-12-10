@@ -1,3 +1,4 @@
+from showcase.models.stransaction_hub_models import STransactionHub
 import pandas as pd
 from reporting.dataclasses import table_elements as te
 from reporting.managers.montrek_table_manager import MontrekTableManager
@@ -58,6 +59,7 @@ class STransactionExampleDataGenerator(ExampleDataGeneratorABC):
     ]
 
     def load(self):
+        STransactionHub.objects.all().delete()
         df = pd.DataFrame(self.data)
 
         # add hub
