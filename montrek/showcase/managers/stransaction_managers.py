@@ -72,15 +72,11 @@ class STransactionExampleDataGenerator(ExampleDataGeneratorABC):
             ]
         ]
         transaction_repo.create_objects_from_data_frame(transaction_df)
-
-        # TODO: The hubs should already have been returned create_objects_from_data_frame
-        df["hub_entity_id"] = [
-            h.id
-            for h in transaction_repo.get_hubs_by_field_values(
-                values=df["transaction_external_identifier"].values.tolist(),
-                by_repository_field="transaction_external_identifier",
-            )
-        ]
+        hubs = transaction_repo.get_hubs_by_field_values(
+            values=df["transaction_external_identifier"].values.tolist(),
+            by_repository_field="transaction_external_identifier",
+        )
+        df["hub_entity_id"] = [h.id for h in hubs]
 
         # add links
         product_repo = SProductRepository(self.session_data)

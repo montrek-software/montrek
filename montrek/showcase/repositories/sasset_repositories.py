@@ -1,6 +1,7 @@
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from showcase.models.sasset_sat_models import SAssetStaticSatellite, SAssetTypeSatellite
-from showcase.models.sasset_hub_models import SAssetHub
+from showcase.models.sasset_hub_models import LinkSAssetSCompany, SAssetHub
+from showcase.models.scompany_sat_models import SCompanyStaticSatellite
 
 
 class SAssetRepository(MontrekRepository):
@@ -10,3 +11,6 @@ class SAssetRepository(MontrekRepository):
         self.add_satellite_fields_annotations(SAssetTypeSatellite, ["asset_type"])
         self.add_satellite_fields_annotations(SAssetStaticSatellite, ["asset_name"])
         self.add_satellite_fields_annotations(SAssetStaticSatellite, ["asset_isin"])
+        self.add_linked_satellites_field_annotations(
+            SCompanyStaticSatellite, LinkSAssetSCompany, ["company_name"]
+        )
