@@ -1,4 +1,5 @@
 from django.test import TestCase
+from django.core import mail
 
 from api_upload.tests.managers.test_api_upload_manager import MockApiUploadManager
 from api_upload.tasks import ApiUploadTask
@@ -18,3 +19,6 @@ class TestApiUploadTask(TestCase):
         test_task = MockApiUploadTask(session_data=self.session_data)
         test_task.delay()
         self.assertTrue(test_task.upload_result)
+        self.assertEqual(len(mail.outbox), 1)
+        m = mail.outbox[0]
+        self.assertEqual(m.to, [self.user.email])
