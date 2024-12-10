@@ -9,22 +9,25 @@ from api_upload.managers.api_upload_manager import ApiUploadManager
 
 
 class ApiUploadTask(Task):
-    api_upload_manager_class: type[ApiUploadManager]
-
-    def __init__(self, *args, session_data: dict[str, Any], **kwargs) -> None:
+    def __init__(
+        self,
+        *args,
+        api_upload_manager_class: type[ApiUploadManager],
+        session_data: dict[str, Any],
+        **kwargs,
+    ) -> None:
         super().__init__(*args, **kwargs)
-        self.upload_result: bool = False
         self.session_data = session_data
-        self.api_upload_manager = self.api_upload_manager_class(
+        self.api_upload_manager = api_upload_manager_class(
             session_data=self.session_data
         )
         celery_app.register_task(self)
 
     def run(self, *args, **kwargs):
-        self._run()
+        self._upload_and_process()
         self._send_mail()
 
-    def _run(self):
+    def _upload_and_process(self):
         self.upload_result = self.api_upload_manager.upload_and_process()
 
     def _send_mail(self):
