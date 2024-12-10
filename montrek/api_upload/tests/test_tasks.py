@@ -22,3 +22,23 @@ class TestApiUploadTask(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         m = mail.outbox[0]
         self.assertEqual(m.to, [self.user.email])
+        self.assertEqual(m.subject, "API Upload successful")
+        self.assertTrue("post check ok" in m.body)
+
+    def test_api_upload_task_fails(self):
+        test_task = MockApiUploadTask(session_data=self.session_data)
+        manager = test_task.api_upload_manager
+
+        def get_json_error(endpoint: str) -> dict:
+            manager.request_manager.status_code = 0
+            manager.request_manager.message = "request error"
+            return {}
+
+        manager.request_manager.get_response = get_json_error
+        test_task.delay()
+        self.assertFalse(test_task.upload_result)
+        self.assertEqual(len(mail.outbox), 1)
+        m = mail.outbox[0]
+        self.assertEqual(m.to, [self.user.email])
+        self.assertEqual(m.subject, "API Upload failed")
+        self.assertTrue("request error" in m.body)
