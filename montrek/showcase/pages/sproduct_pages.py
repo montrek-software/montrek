@@ -22,12 +22,6 @@ class SProductPage(MontrekPage):
                 active="",
             ),
             TabElement(
-                name="Transaction",
-                link=reverse("stransaction_list"),
-                html_id="tab_stransaction_list",
-                active="",
-            ),
-            TabElement(
                 name="Position",
                 link=reverse("sposition_list"),
                 html_id="tab_sposition_list",
@@ -53,5 +47,11 @@ class SProductDetailsPage(MontrekPage):
                 link=reverse("sproduct_details", args=[self.obj.id]),
                 html_id="tab_sproduct_details",
                 active="active",
+            ),
+            TabElement(
+                name="Product Transactions",
+                link=reverse("sproduct_stransactions", args=[self.obj.id]),
+                html_id="tab_sproduct_stransactions",
+                active="",
             ),
         )

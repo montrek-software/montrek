@@ -7,13 +7,13 @@ from baseclasses.views import MontrekDeleteView
 from showcase.managers.stransaction_managers import (
     STransactionTableManager,
 )
-from showcase.pages.sproduct_pages import SProductPage
+from showcase.pages.stransaction_pages import STransactionPage
 from showcase.forms.stransaction_forms import STransactionCreateForm
 
 
 class STransactionCreateView(MontrekCreateView):
     manager_class = STransactionTableManager
-    page_class = SProductPage
+    page_class = STransactionPage
     tab = "tab_stransaction_list"
     form_class = STransactionCreateForm
     success_url = "stransaction_list"
@@ -22,7 +22,7 @@ class STransactionCreateView(MontrekCreateView):
 
 class STransactionUpdateView(MontrekUpdateView):
     manager_class = STransactionTableManager
-    page_class = SProductPage
+    page_class = STransactionPage
     tab = "tab_stransaction_list"
     form_class = STransactionCreateForm
     success_url = "stransaction_list"
@@ -31,7 +31,7 @@ class STransactionUpdateView(MontrekUpdateView):
 
 class STransactionDeleteView(MontrekDeleteView):
     manager_class = STransactionTableManager
-    page_class = SProductPage
+    page_class = STransactionPage
     tab = "tab_stransaction_list"
     success_url = "stransaction_list"
     title = "Transaction Delete"
@@ -39,7 +39,7 @@ class STransactionDeleteView(MontrekDeleteView):
 
 class STransactionListView(MontrekListView):
     manager_class = STransactionTableManager
-    page_class = SProductPage
+    page_class = STransactionPage
     tab = "tab_stransaction_list"
     title = "Transaction List"
 

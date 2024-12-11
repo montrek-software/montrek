@@ -1,6 +1,7 @@
 from django.urls import path
 from showcase.views.sproduct_views import (
     SProductListView,
+    SProductSTransactionListView,
     init_showcase_data,
 )
 from showcase.views.sproduct_views import SProductCreateView
@@ -38,5 +39,10 @@ urlpatterns = [
         "sproduct/<int:pk>/details",
         SProductDetailView.as_view(),
         name="sproduct_details",
+    ),
+    path(
+        "sproduct/<int:pk>/transactions",
+        SProductSTransactionListView.as_view(),
+        name="sproduct_stransactions",
     ),
 ]

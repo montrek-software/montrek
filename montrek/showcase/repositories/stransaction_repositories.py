@@ -1,5 +1,5 @@
 from django.db import models
-from django.db.models import OuterRef, Subquery
+from django.db.models import OuterRef, QuerySet, Subquery
 from baseclasses.repositories.subquery_builder import SubqueryBuilder
 from django.utils import timezone
 from baseclasses.repositories.montrek_repository import MontrekRepository
@@ -11,6 +11,7 @@ from showcase.models.stransaction_hub_models import (
     LinkSTransactionSProduct,
     STransactionHub,
 )
+from showcase.repositories.sproduct_repositories import SProductRepository
 
 
 class STransactionRepository(MontrekRepository):
@@ -35,6 +36,13 @@ class STransactionRepository(MontrekRepository):
         self.add_linked_satellites_field_annotations(
             SAssetStaticSatellite, LinkSTransactionSAsset, ["asset_name"]
         )
+
+
+class SProductSTransactionRepository(STransactionRepository):
+    def receive(self, apply_filter: bool = True) -> QuerySet:
+        product_repo = SProductRepository(self.session_data)
+        product_hub = product_repo.get_hub_by_id(self.session_data["pk"])
+        return super().receive().filter(hub__link_stransaction_sproduct=product_hub)
 
 
 class SPositionSubqueryBuilder(SubqueryBuilder):

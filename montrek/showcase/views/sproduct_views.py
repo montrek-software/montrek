@@ -12,7 +12,10 @@ from showcase.managers.sproduct_managers import (
     SProductExampleDataGenerator,
     SProductTableManager,
 )
-from showcase.managers.stransaction_managers import STransactionExampleDataGenerator
+from showcase.managers.stransaction_managers import (
+    SProductSTransactionTableManager,
+    STransactionExampleDataGenerator,
+)
 from showcase.pages.sproduct_pages import SProductDetailsPage, SProductPage
 from showcase.forms.sproduct_forms import SProductCreateForm
 
@@ -67,12 +70,7 @@ class SProductListView(MontrekListView):
         return (action_new, action_init_showcase_data)
 
 
-class SProductDetailView(MontrekDetailView):
-    manager_class = SProductDetailsManager
-    page_class = SProductDetailsPage
-    tab = "tab_sproduct_details"
-    title = "Product Details"
-
+class BackToProductListActionMixin:
     @property
     def actions(self) -> tuple:
         return (
@@ -80,6 +78,20 @@ class SProductDetailView(MontrekDetailView):
                 url_name="showcase",
             ),
         )
+
+
+class SProductDetailView(BackToProductListActionMixin, MontrekDetailView):
+    manager_class = SProductDetailsManager
+    page_class = SProductDetailsPage
+    tab = "tab_sproduct_details"
+    title = "Product Details"
+
+
+class SProductSTransactionListView(BackToProductListActionMixin, MontrekListView):
+    manager_class = SProductSTransactionTableManager
+    page_class = SProductDetailsPage
+    tab = "tab_sproduct_stransactions"
+    title = "Product Transaction List"
 
 
 def init_showcase_data(request):

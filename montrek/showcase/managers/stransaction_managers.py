@@ -5,7 +5,10 @@ from reporting.managers.montrek_table_manager import MontrekTableManager
 from showcase.managers.example_data_generator import ExampleDataGeneratorABC
 from showcase.repositories.sasset_repositories import SAssetRepository
 from showcase.repositories.sproduct_repositories import SProductRepository
-from showcase.repositories.stransaction_repositories import STransactionRepository
+from showcase.repositories.stransaction_repositories import (
+    SProductSTransactionRepository,
+    STransactionRepository,
+)
 
 
 class STransactionTableManager(MontrekTableManager):
@@ -43,6 +46,10 @@ class STransactionTableManager(MontrekTableManager):
                 hover_text="Delete Transaction",
             ),
         ]
+
+
+class SProductSTransactionTableManager(STransactionTableManager):
+    repository_class = SProductSTransactionRepository
 
 
 class STransactionExampleDataGenerator(ExampleDataGeneratorABC):
