@@ -94,7 +94,11 @@ class MontrekRepository:
         obj.state_date_end = timezone.now()
         obj.save()
         for satellite_class in self.annotator.get_satellite_classes():
-            satellite_class.objects.filter(hub_entity=obj).update(
+            if satellite_class.is_timeseries:
+                filter_kwargs = {"hub_value_date__hub": obj}
+            else:
+                filter_kwargs = {"hub_entity": obj}
+            satellite_class.objects.filter(**filter_kwargs).update(
                 state_date_end=timezone.now()
             )
 

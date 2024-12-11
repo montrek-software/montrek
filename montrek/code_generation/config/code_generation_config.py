@@ -53,6 +53,8 @@ class CodeGenerationConfig:
 
         hub_cls_name = f"{c_prefix}Hub"
         hub_factory_cls_name = f"{hub_cls_name}Factory"
+        hub_value_date_cls_name = f"{hub_cls_name}ValueDate"
+        hub_value_date_factory_cls_name = f"{hub_value_date_cls_name}Factory"
         list_view_cls_name = f"{c_prefix}ListView"
         create_view_cls_name = f"{c_prefix}CreateView"
         create_form_cls_name = f"{c_prefix}CreateForm"
@@ -96,6 +98,15 @@ class CodeGenerationConfig:
             "hub_cls_import": self._get_import("hub_models", hub_cls_name),
             "hub_cls_import_rel": f"from .{prefix}_hub_models import {hub_cls_name}",
             "hub_cls_name": hub_cls_name,
+            "hub_value_date_factory_cls_import": self._get_import(
+                "hub_factories", hub_value_date_factory_cls_name
+            ),
+            "hub_value_date_factory_cls_name": hub_value_date_factory_cls_name,
+            "hub_value_date_cls_import": self._get_import(
+                "hub_models", hub_value_date_cls_name
+            ),
+            "hub_value_date_cls_import_rel": f"from .{prefix}_hub_models import {hub_value_date_cls_name}",
+            "hub_value_date_cls_name": hub_value_date_cls_name,
             "list_action_hover": f"List {c_prefix}",
             "list_action_id": f"id_list_{prefix}",
             "list_tab_id": f"tab_{prefix}_list",
@@ -106,7 +117,7 @@ class CodeGenerationConfig:
             "list_view_test_cls_name": f"Test{c_prefix}ListView",
             "list_view_title": f"{c_prefix} List",
             "list_view_url": f"{prefix}/list",
-            "list_view_url_name": f"{prefix}",
+            "list_view_url_name": f"{prefix}_list",
             "manager_cls_import": self._get_import("managers", manager_cls_name),
             "manager_cls_name": manager_cls_name,
             "page_cls_import": self._get_import("pages", page_cls_name),

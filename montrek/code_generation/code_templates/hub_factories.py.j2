@@ -1,9 +1,22 @@
 import factory
 
+from baseclasses.tests.factories.baseclass_factories import ValueDateListFactory
+from baseclasses.tests.factories.montrek_factory_schemas import (
+    MontrekHubValueDateFactory,
+    MontrekHubFactory,
+)
 {{ hub_cls_import }}
+{{ hub_value_date_cls_import }}
 
 
-class {{ hub_factory_cls_name }}(factory.django.DjangoModelFactory):
+class {{ hub_factory_cls_name }}(MontrekHubFactory):
     class Meta:
         model = {{ hub_cls_name }}
 
+
+class {{ hub_value_date_cls_name }}(MontrekHubValueDateFactory):
+    class Meta:
+      model = {{ hub_value_date_cls_name }}
+
+    hub = factory.SubFactory({{ hub_factory_cls_name }})
+    value_date_list = factory.SubFactory(ValueDateListFactory)

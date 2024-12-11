@@ -396,6 +396,9 @@ class TestMontrekExampleDCreate(MontrekCreateViewTestCase):
         return {
             "field_d1_str": "test",
             "field_d1_int": 13,
+            "value_date": "2024-02-17",
+            "field_tsd2_float": 1.0,
+            "field_tsd2_int": 2,
         }
 
     def test_view_without_permission(self):
@@ -409,6 +412,18 @@ class TestMontrekExampleDCreate(MontrekCreateViewTestCase):
             messages[0].message,
             "You do not have the required permissions to access this page.",
         )
+
+
+class TestMontrekExampleDDelete(MontrekDeleteViewTestCase):
+    viewname = "montrek_example_d_delete"
+    view_class = me_views.MontrekExampleDDelete
+
+    def build_factories(self):
+        self.sattsd2 = me_factories.SatTSD2Factory()
+        me_factories.SatD1Factory(hub_entity=self.sattsd2.hub_value_date.hub)
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.sattsd2.hub_value_date.id}
 
 
 class TestMontrekExampleA1UploadFileView(TransactionTestCase):
