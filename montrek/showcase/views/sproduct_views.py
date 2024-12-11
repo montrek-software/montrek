@@ -1,18 +1,19 @@
 from django.http import HttpResponseRedirect
 from django.urls import reverse
-from baseclasses.dataclasses.view_classes import ActionElement
-from baseclasses.views import MontrekListView
+from baseclasses.dataclasses.view_classes import ActionElement, BackActionElement
+from baseclasses.views import MontrekDetailView, MontrekListView
 from baseclasses.views import MontrekCreateView
 from baseclasses.views import MontrekUpdateView
 from baseclasses.views import MontrekDeleteView
 from showcase.managers.sasset_managers import SAssetExampleDataGenerator
 from showcase.managers.scompany_managers import SCompanyExampleDataGenerator
 from showcase.managers.sproduct_managers import (
+    SProductDetailsManager,
     SProductExampleDataGenerator,
     SProductTableManager,
 )
 from showcase.managers.stransaction_managers import STransactionExampleDataGenerator
-from showcase.pages.sproduct_pages import SProductPage
+from showcase.pages.sproduct_pages import SProductDetailsPage, SProductPage
 from showcase.forms.sproduct_forms import SProductCreateForm
 
 
@@ -64,6 +65,21 @@ class SProductListView(MontrekListView):
             hover_text="Initialize Showcase Data",
         )
         return (action_new, action_init_showcase_data)
+
+
+class SProductDetailView(MontrekDetailView):
+    manager_class = SProductDetailsManager
+    page_class = SProductDetailsPage
+    tab = "tab_sproduct_details"
+    title = "Product Details"
+
+    @property
+    def actions(self) -> tuple:
+        return (
+            BackActionElement(
+                url_name="showcase",
+            ),
+        )
 
 
 def init_showcase_data(request):

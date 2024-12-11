@@ -1,11 +1,13 @@
+from showcase.factories.sproduct_hub_factories import SProductHubValueDateFactory
 from testing.test_cases.view_test_cases import (
     MontrekCreateViewTestCase,
     MontrekUpdateViewTestCase,
     MontrekListViewTestCase,
     MontrekDeleteViewTestCase,
+    MontrekViewTestCase,
 )
 from showcase.factories.sproduct_sat_factories import SProductSatelliteFactory
-from showcase.views.sproduct_views import SProductCreateView
+from showcase.views.sproduct_views import SProductCreateView, SProductDetailView
 from showcase.views.sproduct_views import SProductUpdateView
 from showcase.views.sproduct_views import SProductListView
 from showcase.views.sproduct_views import SProductDeleteView
@@ -51,3 +53,15 @@ class TestSProductDeleteView(MontrekDeleteViewTestCase):
 
     def url_kwargs(self) -> dict:
         return {"pk": self.sat_obj.get_hub_value_date().id}
+
+
+class TestMontrekSProductDetailView(MontrekViewTestCase):
+    viewname = "sproduct_details"
+    view_class = SProductDetailView
+
+    def build_factories(self):
+        self.hub_vd = SProductHubValueDateFactory(value_date=None)
+        SProductSatelliteFactory(hub_entity=self.hub_vd.hub)
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.hub_vd.hub.id}

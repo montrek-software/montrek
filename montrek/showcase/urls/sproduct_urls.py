@@ -6,6 +6,7 @@ from showcase.views.sproduct_views import (
 from showcase.views.sproduct_views import SProductCreateView
 from showcase.views.sproduct_views import SProductUpdateView
 from showcase.views.sproduct_views import SProductDeleteView
+from showcase.views.sproduct_views import SProductDetailView
 
 urlpatterns = [
     path(
@@ -32,5 +33,10 @@ urlpatterns = [
         "sproduct/init_showcase_data",
         init_showcase_data,
         name="init_showcase_data",
+    ),
+    path(
+        "sproduct/<int:pk>/details",
+        SProductDetailView.as_view(),
+        name="sproduct_details",
     ),
 ]
