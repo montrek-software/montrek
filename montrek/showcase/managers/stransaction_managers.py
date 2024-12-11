@@ -56,24 +56,24 @@ class STransactionExampleDataGenerator(ExampleDataGeneratorABC):
             "transaction_quantity": 100.0,
             "transaction_price": 1.0,
         },
-        # {
-        #     "product_name": "Balanced Alpha",
-        #     "asset_isin": "US0378331005",
-        #     "value_date": "2023-05-16",
-        #     "transaction_external_identifier": "0000000002",
-        #     "transaction_description": "security purchase",
-        #     "transaction_quantity": 200.0,
-        #     "transaction_price": 2.0,
-        # },
+        {
+            "product_name": "Balanced Alpha",
+            "asset_isin": "US0378331005",
+            "value_date": "2023-05-16",
+            "transaction_external_identifier": "0000000002",
+            "transaction_description": "security purchase",
+            "transaction_quantity": 200.0,
+            "transaction_price": 2.0,
+        },
     ]
 
     def load(self):
         STransactionHub.objects.all().delete()
-        df = pd.DataFrame(self.data)
+        input_df = pd.DataFrame(self.data)
 
         # add hub
         transaction_repo = STransactionRepository(self.session_data)
-        transaction_df = df[
+        transaction_df = input_df[
             [
                 "value_date",
                 "transaction_external_identifier",
@@ -84,28 +84,25 @@ class STransactionExampleDataGenerator(ExampleDataGeneratorABC):
         ]
         transaction_repo.create_objects_from_data_frame(transaction_df)
         hubs = transaction_repo.get_hubs_by_field_values(
-            values=df["transaction_external_identifier"].values.tolist(),
+            values=input_df["transaction_external_identifier"].values.tolist(),
             by_repository_field="transaction_external_identifier",
         )
-        df["hub_entity_id"] = [h.id for h in hubs]
+        transaction_df["hub_entity_id"] = [h.id for h in hubs]
 
         # add links
         product_repo = SProductRepository(self.session_data)
-        df["link_stransaction_sproduct"] = product_repo.get_hubs_by_field_values(
-            values=df["product_name"].values.tolist(),
+        transaction_df[
+            "link_stransaction_sproduct"
+        ] = product_repo.get_hubs_by_field_values(
+            values=input_df["product_name"].values.tolist(),
             by_repository_field="product_name",
         )
         asset_repo = SAssetRepository(self.session_data)
-        df["link_stransaction_sasset"] = asset_repo.get_hubs_by_field_values(
-            values=df["asset_isin"].values.tolist(),
+        transaction_df[
+            "link_stransaction_sasset"
+        ] = asset_repo.get_hubs_by_field_values(
+            values=input_df["asset_isin"].values.tolist(),
             by_repository_field="asset_isin",
         )
 
-        link_df = df[
-            [
-                "hub_entity_id",
-                "link_stransaction_sproduct",
-                "link_stransaction_sasset",
-            ]
-        ]
-        transaction_repo.create_objects_from_data_frame(link_df)
+        transaction_repo.create_objects_from_data_frame(transaction_df)
