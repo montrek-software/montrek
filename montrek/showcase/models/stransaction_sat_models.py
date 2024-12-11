@@ -14,4 +14,4 @@ class STransactionSatellite(MontrekTimeSeriesSatelliteABC):
     transaction_quantity = models.FloatField()
     transaction_price = models.FloatField()
 
-    identifier_fields = ["transaction_external_identifier"]
+    identifier_fields = ["value_date", "transaction_external_identifier"]
