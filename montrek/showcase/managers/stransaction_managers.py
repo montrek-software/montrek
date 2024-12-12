@@ -20,7 +20,7 @@ class STransactionTableManager(MontrekTableManager):
         return [
             te.StringTableElement(name="Product Name", attr="product_name"),
             te.StringTableElement(name="Asset Name", attr="asset_name"),
-            te.DateTableElement(name="Value Date", attr="value_date"),
+            te.DateTableElement(name="Transaction Date", attr="transaction_date"),
             te.StringTableElement(
                 name="Transaction External Identifier",
                 attr="transaction_external_identifier",
@@ -70,7 +70,7 @@ class STransactionExampleDataGenerator(ExampleDataGeneratorABC):
         {
             "product_name": "Balanced Alpha",
             "asset_isin": "US0378331005",
-            "value_date": "2021-01-01",
+            "transaction_date": "2021-01-01",
             "transaction_external_identifier": "0000000001",
             "transaction_description": "security purchase",
             "transaction_quantity": 100.0,
@@ -79,7 +79,7 @@ class STransactionExampleDataGenerator(ExampleDataGeneratorABC):
         {
             "product_name": "Balanced Alpha",
             "asset_isin": "US0378331005",
-            "value_date": "2023-05-16",
+            "transaction_date": "2023-05-16",
             "transaction_external_identifier": "0000000002",
             "transaction_description": "security purchase",
             "transaction_quantity": 200.0,
@@ -95,7 +95,7 @@ class STransactionExampleDataGenerator(ExampleDataGeneratorABC):
         transaction_repo = STransactionRepository(self.session_data)
         transaction_df = input_df[
             [
-                "value_date",
+                "transaction_date",
                 "transaction_external_identifier",
                 "transaction_description",
                 "transaction_quantity",

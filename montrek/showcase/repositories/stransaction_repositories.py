@@ -20,7 +20,7 @@ from showcase.models.sasset_hub_models import SAssetHub
 
 class STransactionRepository(MontrekRepository):
     hub_class = STransactionHub
-    default_order_fields = ("product_name", "value_date")
+    default_order_fields = ("product_name", "transaction_date")
 
     def set_annotations(self):
         self.session_data["start_date"] = timezone.datetime.min
@@ -28,6 +28,7 @@ class STransactionRepository(MontrekRepository):
         self.add_satellite_fields_annotations(
             STransactionSatellite,
             [
+                "transaction_date",
                 "transaction_external_identifier",
                 "transaction_description",
                 "transaction_quantity",
@@ -35,10 +36,16 @@ class STransactionRepository(MontrekRepository):
             ],
         )
         self.add_linked_satellites_field_annotations(
-            SProductSatellite, LinkSTransactionSProduct, ["product_name"]
+            SProductSatellite,
+            LinkSTransactionSProduct,
+            ["hub_entity_id", "product_name"],
+            rename_field_map={"hub_entity_id": "product_id"},
         )
         self.add_linked_satellites_field_annotations(
-            SAssetStaticSatellite, LinkSTransactionSAsset, ["asset_name"]
+            SAssetStaticSatellite,
+            LinkSTransactionSAsset,
+            ["hub_entity_id", "asset_name"],
+            rename_field_map={"hub_entity_id": "asset_id"},
         )
 
 
@@ -56,15 +63,17 @@ class SProductSPositionSubqueryBuilder(SubqueryBuilder):
     def build(self, reference_date: timezone.datetime) -> Subquery:
         product_repo = SProductRepository(self.session_data)
         product_hub = product_repo.get_hub_by_id(self.session_data["pk"])
-        return Subquery(
+        sq = Subquery(
             STransactionRepository(self.session_data)
             .receive()
+            .order_by()
             .filter(hub__link_stransaction_sasset=OuterRef("pk"))
             .filter(hub__link_stransaction_sproduct=product_hub)
-            .values("hub__link_stransaction_sasset")
+            .values("asset_id")
             .annotate(position_quantity=models.Sum("transaction_quantity"))
             .values("position_quantity")
         )
+        return sq
 
 
 class SProductSPositionRepository(MontrekRepository):
