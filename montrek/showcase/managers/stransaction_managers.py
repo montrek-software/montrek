@@ -6,6 +6,7 @@ from showcase.managers.example_data_generator import ExampleDataGeneratorABC
 from showcase.repositories.sasset_repositories import SAssetRepository
 from showcase.repositories.sproduct_repositories import SProductRepository
 from showcase.repositories.stransaction_repositories import (
+    SProductSPositionRepository,
     SProductSTransactionRepository,
     STransactionRepository,
 )
@@ -50,6 +51,18 @@ class STransactionTableManager(MontrekTableManager):
 
 class SProductSTransactionTableManager(STransactionTableManager):
     repository_class = SProductSTransactionRepository
+
+
+class SProductSPositionTableManager(MontrekTableManager):
+    repository_class = SProductSPositionRepository
+
+    @property
+    def table_elements(self):
+        return [
+            te.StringTableElement(name="Asset Name", attr="asset_name"),
+            te.StringTableElement(name="Asset ISIN", attr="asset_isin"),
+            te.FloatTableElement(name="Position Quantity", attr="position_quantity"),
+        ]
 
 
 class STransactionExampleDataGenerator(ExampleDataGeneratorABC):

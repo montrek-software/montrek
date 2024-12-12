@@ -13,6 +13,7 @@ from showcase.managers.sproduct_managers import (
     SProductTableManager,
 )
 from showcase.managers.stransaction_managers import (
+    SProductSPositionTableManager,
     SProductSTransactionTableManager,
     STransactionExampleDataGenerator,
 )
@@ -90,8 +91,15 @@ class SProductDetailView(BackToProductListActionMixin, MontrekDetailView):
 class SProductSTransactionListView(BackToProductListActionMixin, MontrekListView):
     manager_class = SProductSTransactionTableManager
     page_class = SProductDetailsPage
-    tab = "tab_sproduct_stransactions"
+    tab = "tab_sproduct_stransaction_list"
     title = "Product Transaction List"
+
+
+class SProductSPositionListView(BackToProductListActionMixin, MontrekListView):
+    manager_class = SProductSPositionTableManager
+    page_class = SProductDetailsPage
+    tab = "tab_sproduct_sposition_list"
+    title = "Product Position List"
 
 
 def init_showcase_data(request):

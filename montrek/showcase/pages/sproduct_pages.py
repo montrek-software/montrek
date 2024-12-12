@@ -21,12 +21,6 @@ class SProductPage(MontrekPage):
                 html_id="tab_sasset_list",
                 active="",
             ),
-            TabElement(
-                name="Position",
-                link=reverse("sposition_list"),
-                html_id="tab_sposition_list",
-                active="",
-            ),
         )
 
 
@@ -43,15 +37,21 @@ class SProductDetailsPage(MontrekPage):
     def get_tabs(self):
         return (
             TabElement(
-                name="Product Details",
+                name="Details",
                 link=reverse("sproduct_details", args=[self.obj.id]),
                 html_id="tab_sproduct_details",
                 active="active",
             ),
             TabElement(
-                name="Product Transactions",
-                link=reverse("sproduct_stransactions", args=[self.obj.id]),
-                html_id="tab_sproduct_stransactions",
+                name="Transactions",
+                link=reverse("sproduct_stransaction_list", args=[self.obj.id]),
+                html_id="tab_sproduct_stransaction_list",
+                active="",
+            ),
+            TabElement(
+                name="Positions",
+                link=reverse("sproduct_sposition_list", args=[self.obj.id]),
+                html_id="tab_sproduct_sposition_list",
                 active="",
             ),
         )

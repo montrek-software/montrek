@@ -1,10 +1,12 @@
 from reporting.dataclasses import table_elements as te
 from reporting.managers.montrek_table_manager import MontrekTableManager
-from showcase.repositories.stransaction_repositories import SPositionRepository
+from showcase.repositories.stransaction_repositories import (
+    SProductSPositionRepository,
+)
 
 
 class SPositionTableManager(MontrekTableManager):
-    repository_class = SPositionRepository
+    repository_class = SProductSPositionRepository
 
     @property
     def table_elements(self):
