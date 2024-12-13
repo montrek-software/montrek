@@ -24,7 +24,11 @@ from reporting.tasks.download_table_task import DownloadTableTask
 
 class MontrekTableMetaClass(type):
     def __init__(cls, name, bases, dct):
-        cls.download_task = DownloadTableTask(manager_class=cls)
+        download_task = DownloadTableTask()
+        download_task.register_task(
+            manager_class=cls,
+        )
+        cls.download_task = download_task
         super().__init__(name, bases, dct)
 
 

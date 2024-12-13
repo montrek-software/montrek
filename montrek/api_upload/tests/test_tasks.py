@@ -24,7 +24,7 @@ class TestApiUploadTask(TestCase):
 
     def test_api_upload_task(self):
         test_task = MockApiUploadTask()
-        test_task.delay(
+        test_task.run(
             session_data=self.session_data,
         )
         self.assertTrue(test_task.upload_result)
@@ -40,7 +40,7 @@ class TestApiUploadTask(TestCase):
 
     def test_api_upload_task_fails(self):
         test_task = MockApiUploadTaskFail()
-        test_task.delay(
+        test_task.run(
             session_data=self.session_data,
         )
         self.assertFalse(test_task.upload_result)
