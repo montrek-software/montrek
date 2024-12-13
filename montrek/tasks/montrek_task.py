@@ -18,4 +18,4 @@ class MontrekTask(Task):
 
     @classmethod
     def register_task(cls, **kwargs):
-        celery_app.tasks[cls.name] = cls()
+        celery_app.register_task(cls, **kwargs)
