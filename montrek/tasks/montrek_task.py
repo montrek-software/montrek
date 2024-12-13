@@ -11,8 +11,7 @@ class MontrekTask(Task):
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
-        if not hasattr(cls, "name") or not cls.name:
-            cls.name = f"{cls.__module__}.{cls.__name__}"  # Set a default task name
+        cls.name = f"{cls.__module__}.{cls.__name__}"  # Set a default task name
         if cls.is_register_on_subclass_init:
             cls.register_task()
 

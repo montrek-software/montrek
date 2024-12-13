@@ -1,7 +1,3 @@
-from montrek.celery_app import app as celery_app
-from celery import Task
-
-
 from mailing.managers.mailing_manager import MailingManager
 from django.contrib.auth import get_user_model
 
@@ -11,22 +7,12 @@ from file_upload.managers.file_upload_manager import (
 from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepositoryABC,
 )
+from tasks.montrek_task import MontrekTask
 
 
-class ProcessFileTaskABC(Task):
-    def __init__(
-        self,
-        *args,
-        file_upload_processor_class: type[FileUploadProcessorProtocol],
-        file_upload_registry_repository_class: type[FileUploadRegistryRepositoryABC],
-        **kwargs,
-    ) -> None:
-        super().__init__(*args, **kwargs)
-        self.file_upload_processor_class = file_upload_processor_class
-        self.file_upload_registry_repository_class = (
-            file_upload_registry_repository_class
-        )
-        celery_app.register_task(self)
+class ProcessFileTaskABC(MontrekTask):
+    file_upload_processor_class: type[FileUploadProcessorProtocol]
+    file_upload_registry_repository_class: type[FileUploadRegistryRepositoryABC]
 
     def run(
         self,

@@ -18,12 +18,29 @@ from file_upload.tests.mocks import (
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
 
+class MockPreCheckFailTask(ProcessFileTaskABC):
+    file_upload_processor_class = MockFileUploadProcessorPreCheckFail
+    file_upload_registry_repository_class = FileUploadRegistryRepository
+
+
+class MockPostCheckFailTask(ProcessFileTaskABC):
+    file_upload_processor_class = MockFileUploadProcessorPostCheckFail
+    file_upload_registry_repository_class = FileUploadRegistryRepository
+
+
+class ErrorFileUploadProcessor(MockFileUploadProcessor):
+    def __init__(self, *args, **kwargs):
+        raise RuntimeError("Processor error")
+
+
+class MockErrorTask(ProcessFileTaskABC):
+    file_upload_processor_class = ErrorFileUploadProcessor
+    file_upload_registry_repository_class = FileUploadRegistryRepository
+
+
 class TestProcessFileTaskABC(TestCase):
     def setUp(self):
-        self.task = MockProcessFileTask(
-            file_upload_processor_class=MockFileUploadProcessor,
-            file_upload_registry_repository_class=MockFileUploadRegistryRepository,
-        )
+        self.task = MockProcessFileTask()
         self.user = MontrekUserFactory()
         self.session_data = {"user_id": self.user.id}
         self.registry_sat_obj = FileUploadRegistryStaticSatelliteFactory()
@@ -51,10 +68,7 @@ class TestProcessFileTaskABC(TestCase):
         self.assertEqual(registry_sat_obj.upload_status, "processed")
 
     def test_run_pre_check_error(self):
-        self.task = ProcessFileTaskABC(
-            file_upload_processor_class=MockFileUploadProcessorPreCheckFail,
-            file_upload_registry_repository_class=FileUploadRegistryRepository,
-        )
+        self.task = MockPreCheckFailTask()
         result = self.task.delay(
             file_path=self.file_path,
             file_upload_registry_id=self.registry_sat_obj.hub_entity.id,
@@ -75,10 +89,7 @@ class TestProcessFileTaskABC(TestCase):
         self.assertEqual(registry_sat_obj.upload_status, "failed")
 
     def test_run_post_check_error(self):
-        self.task = ProcessFileTaskABC(
-            file_upload_processor_class=MockFileUploadProcessorPostCheckFail,
-            file_upload_registry_repository_class=FileUploadRegistryRepository,
-        )
+        self.task = MockPostCheckFailTask()
         result = self.task.delay(
             file_path=self.file_path,
             file_upload_registry_id=self.registry_sat_obj.hub_entity.id,
@@ -99,14 +110,7 @@ class TestProcessFileTaskABC(TestCase):
         self.assertEqual(registry_sat_obj.upload_status, "failed")
 
     def test_run_unhandled_processor_error(self):
-        class ErrorFileUploadProcessor(MockFileUploadProcessor):
-            def __init__(self, *args, **kwargs):
-                raise RuntimeError("Processor error")
-
-        self.task = ProcessFileTaskABC(
-            file_upload_processor_class=ErrorFileUploadProcessor,
-            file_upload_registry_repository_class=FileUploadRegistryRepository,
-        )
+        self.task = MockErrorTask()
         result = self.task.delay(
             file_path=self.file_path,
             file_upload_registry_id=self.registry_sat_obj.hub_entity.id,
