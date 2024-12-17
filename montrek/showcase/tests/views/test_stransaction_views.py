@@ -17,7 +17,7 @@ class TestSTransactionCreateView(MontrekCreateViewTestCase):
 
     def creation_data(self):
         return {
-            "value_date": "2021-01-01",
+            "transaction_date": "2021-01-01",
             "transaction_external_identifier": "test_external_identifier",
             "transaction_description": "test_description",
             "transaction_quantity": 100.0,
