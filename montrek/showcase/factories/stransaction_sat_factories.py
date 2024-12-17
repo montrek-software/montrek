@@ -5,11 +5,9 @@ from enum import Enum
 
 
 from baseclasses.tests.factories.montrek_factory_schemas import (
-    MontrekTSSatelliteFactory,
+    MontrekSatelliteFactory,
 )
-from showcase.factories.stransaction_hub_factories import (
-    STransactionHubValueDateFactory,
-)
+from showcase.factories.stransaction_hub_factories import STransactionHubFactory
 from showcase.models.stransaction_sat_models import STransactionSatellite
 
 
@@ -31,12 +29,13 @@ class STransactionChoices(Enum):
     FEE_PAYMENT = STransactionConfig("fee payment", -1_000_000, 0, 0.01, 1_000)
 
 
-class STransactionSatelliteFactory(MontrekTSSatelliteFactory):
+class STransactionSatelliteFactory(MontrekSatelliteFactory):
     class Meta:
         model = STransactionSatellite
         exclude = ["config"]
 
-    hub_value_date = factory.SubFactory(STransactionHubValueDateFactory)
+    hub_entity = factory.SubFactory(STransactionHubFactory)
+    transaction_date = factory.Faker("date")
     transaction_external_identifier = factory.Faker("ssn")
 
     @factory.lazy_attribute

@@ -1,3 +1,8 @@
+from file_upload.managers.file_upload_manager import FileUploadManagerABC
+from file_upload.managers.file_upload_registry_manager import (
+    FileUploadRegistryManagerABC,
+)
+from file_upload.models import FileUploadRegistryHubABC
 from showcase.models.stransaction_hub_models import STransactionHub
 import pandas as pd
 from reporting.dataclasses import table_elements as te
@@ -8,6 +13,7 @@ from showcase.repositories.sproduct_repositories import SProductRepository
 from showcase.repositories.stransaction_repositories import (
     SProductSPositionRepository,
     SProductSTransactionRepository,
+    STransactionFURegistryRepository,
     STransactionRepository,
 )
 
@@ -126,3 +132,34 @@ class STransactionExampleDataGenerator(ExampleDataGeneratorABC):
         )
 
         transaction_repo.create_objects_from_data_frame(transaction_df)
+
+
+class STransactionFURegistryManager(FileUploadRegistryManagerABC):
+    repository_class = STransactionFURegistryRepository
+    download_url = "stransaction_download_file"
+
+
+class STransactionFUProcessor:
+    message = ""
+
+    def __init__(
+        self,
+        file_upload_registry_hub: FileUploadRegistryHubABC,
+        session_data: dict,
+        **kwargs,
+    ):
+        self.session_data = session_data
+
+    def pre_check(self, file_path: str) -> bool:
+        return True
+
+    def process(self, file_path: str) -> bool:
+        return True
+
+    def post_check(self, file_path: str) -> bool:
+        return True
+
+
+class STransactionUploadManager(FileUploadManagerABC):
+    file_upload_processor_class = STransactionFUProcessor
+    file_registry_manager_class = STransactionFURegistryManager

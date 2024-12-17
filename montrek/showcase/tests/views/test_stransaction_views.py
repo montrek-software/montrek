@@ -35,7 +35,7 @@ class TestSTransactionUpdateView(MontrekUpdateViewTestCase):
         )
 
     def url_kwargs(self) -> dict:
-        return {"pk": self.sat_obj.hub_value_date.id}
+        return {"pk": self.sat_obj.get_hub_value_date().id}
 
     def update_data(self):
         return {"transaction_external_identifier": "test_updated"}
@@ -58,4 +58,4 @@ class TestSTransactionDeleteView(MontrekDeleteViewTestCase):
         self.sat_obj = STransactionSatelliteFactory()
 
     def url_kwargs(self) -> dict:
-        return {"pk": self.sat_obj.hub_value_date.id}
+        return {"pk": self.sat_obj.get_hub_value_date().id}

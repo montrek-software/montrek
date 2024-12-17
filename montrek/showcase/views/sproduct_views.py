@@ -52,7 +52,6 @@ class SProductListView(MontrekListView):
     page_class = SProductPage
     tab = "tab_sproduct_list"
     title = "Product List"
-    do_simple_file_upload = True
 
     @property
     def actions(self) -> tuple:
@@ -68,7 +67,13 @@ class SProductListView(MontrekListView):
             action_id="id_init_showcase_data",
             hover_text="Initialize Showcase Data",
         )
-        return (action_new, action_init_showcase_data)
+        action_stransaction_fu_registry = ActionElement(
+            icon="inbox",
+            link=reverse("stransaction_fu_registry_list"),
+            action_id="id_stransaction_fu_registry_list",
+            hover_text="Go to Transaction File Upload Registry",
+        )
+        return (action_new, action_init_showcase_data, action_stransaction_fu_registry)
 
 
 class BackToProductListActionMixin:

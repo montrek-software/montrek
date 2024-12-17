@@ -14,4 +14,10 @@ class STransactionPage(MontrekPage):
                 html_id="tab_stransaction_list",
                 active="active",
             ),
+            TabElement(
+                name="File Upload",
+                link=reverse("stransaction_fu_registry_list"),
+                html_id="tab_stransaction_fu_registry_list",
+                active="",
+            ),
         )

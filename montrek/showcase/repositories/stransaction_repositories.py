@@ -1,14 +1,22 @@
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from django.utils import timezone
 
+from file_upload.repositories.file_upload_registry_repository import (
+    FileUploadRegistryRepositoryABC,
+)
 from showcase.models.sasset_sat_models import SAssetStaticSatellite
 from showcase.models.sproduct_sat_models import SProductSatellite
 from showcase.models.stransaction_hub_models import (
+    LinkSTransactionFURegistryFUFile,
     LinkSTransactionSAsset,
     LinkSTransactionSProduct,
+    STransactionFURegistryHub,
     STransactionHub,
 )
-from showcase.models.stransaction_sat_models import STransactionSatellite
+from showcase.models.stransaction_sat_models import (
+    STransactionFURegistryStaticSatellite,
+    STransactionSatellite,
+)
 from showcase.repositories.sproduct_repositories import SProductRepository
 
 from baseclasses.repositories.subquery_builder import SubqueryBuilder
@@ -90,3 +98,9 @@ class SProductSPositionRepository(MontrekRepository):
         qs = super().receive(apply_filter)
         qs = qs.filter(position_quantity__isnull=False)
         return qs
+
+
+class STransactionFURegistryRepository(FileUploadRegistryRepositoryABC):
+    hub_class = STransactionFURegistryHub
+    static_satellite_class = STransactionFURegistryStaticSatellite
+    link_file_upload_registry_file_upload_file_class = LinkSTransactionFURegistryFUFile
