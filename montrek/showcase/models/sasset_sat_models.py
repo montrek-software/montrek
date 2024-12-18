@@ -29,4 +29,4 @@ class SAssetStaticSatellite(MontrekSatelliteABC):
     asset_name = models.CharField(max_length=255)
     asset_isin = models.CharField(max_length=12, null=True, blank=True)
 
-    identifier_fields = ["asset_name"]
+    identifier_fields = ["asset_isin"]

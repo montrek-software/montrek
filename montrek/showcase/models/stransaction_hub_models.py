@@ -32,8 +32,8 @@ class STransactionHubValueDate(HubValueDate):
 
 class STransactionFURegistryHub(FileUploadRegistryHubABC):
     link_file_upload_registry_file_upload_file = models.ManyToManyField(
-        "STransactionFURegistryHub",
-        related_name="link_file_upload_file_file_upload_registry",
+        "file_upload.FileUploadFileHub",
+        related_name="link_stransaction_file_upload_file_file_upload_registry",
         through="LinkSTransactionFURegistryFUFile",
     )
 

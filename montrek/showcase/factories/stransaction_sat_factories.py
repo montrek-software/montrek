@@ -1,13 +1,19 @@
 import random
 from dataclasses import dataclass
-import factory
 from enum import Enum
 
-
+import factory
 from baseclasses.tests.factories.montrek_factory_schemas import (
     MontrekSatelliteFactory,
 )
-from showcase.factories.stransaction_hub_factories import STransactionHubFactory
+from file_upload.tests.factories.file_upload_factories import (
+    FileUploadRegistryStaticSatelliteFactory,
+)
+
+from showcase.factories.stransaction_hub_factories import (
+    STransactionFURegistryHubFactory,
+    STransactionHubFactory,
+)
 from showcase.models.stransaction_sat_models import STransactionSatellite
 
 
@@ -25,8 +31,6 @@ class STransactionChoices(Enum):
         "security purchase", 0, 100_000_000, 0.01, 10_000
     )
     SECURITY_SALE = STransactionConfig("security sale", -100_000_000, 0, 0.01, 10_000)
-    DIVIDEND_PAYMENT = STransactionConfig("dividend payment", 0, 1_000_000, 0.01, 100)
-    FEE_PAYMENT = STransactionConfig("fee payment", -1_000_000, 0, 0.01, 1_000)
 
 
 class STransactionSatelliteFactory(MontrekSatelliteFactory):
@@ -53,3 +57,12 @@ class STransactionSatelliteFactory(MontrekSatelliteFactory):
     @factory.lazy_attribute
     def transaction_price(self):
         return random.uniform(self.config.min_price, self.config.max_price)
+
+
+class STransactionFURegistryStaticSatelliteFactory(
+    FileUploadRegistryStaticSatelliteFactory
+):
+    class Meta:
+        model = "showcase.STransactionFURegistryStaticSatellite"
+
+    hub_entity = factory.SubFactory(STransactionFURegistryHubFactory)

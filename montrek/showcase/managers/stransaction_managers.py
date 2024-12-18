@@ -1,13 +1,12 @@
+import logging
+import pandas as pd
 from file_upload.managers.file_upload_manager import FileUploadManagerABC
 from file_upload.managers.file_upload_registry_manager import (
     FileUploadRegistryManagerABC,
 )
 from file_upload.models import FileUploadRegistryHubABC
-from showcase.models.stransaction_hub_models import STransactionHub
-import pandas as pd
 from reporting.dataclasses import table_elements as te
 from reporting.managers.montrek_table_manager import MontrekTableManager
-from showcase.managers.example_data_generator import ExampleDataGeneratorABC
 from showcase.repositories.sasset_repositories import SAssetRepository
 from showcase.repositories.sproduct_repositories import SProductRepository
 from showcase.repositories.stransaction_repositories import (
@@ -16,6 +15,8 @@ from showcase.repositories.stransaction_repositories import (
     STransactionFURegistryRepository,
     STransactionRepository,
 )
+
+logger = logging.getLogger(__file__)
 
 
 class STransactionTableManager(MontrekTableManager):
@@ -71,69 +72,6 @@ class SProductSPositionTableManager(MontrekTableManager):
         ]
 
 
-class STransactionExampleDataGenerator(ExampleDataGeneratorABC):
-    data = [
-        {
-            "product_name": "Balanced Alpha",
-            "asset_isin": "US0378331005",
-            "transaction_date": "2021-01-01",
-            "transaction_external_identifier": "0000000001",
-            "transaction_description": "security purchase",
-            "transaction_quantity": 100.0,
-            "transaction_price": 1.0,
-        },
-        {
-            "product_name": "Balanced Alpha",
-            "asset_isin": "US0378331005",
-            "transaction_date": "2023-05-16",
-            "transaction_external_identifier": "0000000002",
-            "transaction_description": "security purchase",
-            "transaction_quantity": 200.0,
-            "transaction_price": 2.0,
-        },
-    ]
-
-    def load(self):
-        STransactionHub.objects.all().delete()
-        input_df = pd.DataFrame(self.data)
-
-        # add hub
-        transaction_repo = STransactionRepository(self.session_data)
-        transaction_df = input_df[
-            [
-                "transaction_date",
-                "transaction_external_identifier",
-                "transaction_description",
-                "transaction_quantity",
-                "transaction_price",
-            ]
-        ]
-        transaction_repo.create_objects_from_data_frame(transaction_df)
-        hubs = transaction_repo.get_hubs_by_field_values(
-            values=input_df["transaction_external_identifier"].values.tolist(),
-            by_repository_field="transaction_external_identifier",
-        )
-        transaction_df["hub_entity_id"] = [h.id for h in hubs]
-
-        # add links
-        product_repo = SProductRepository(self.session_data)
-        transaction_df[
-            "link_stransaction_sproduct"
-        ] = product_repo.get_hubs_by_field_values(
-            values=input_df["product_name"].values.tolist(),
-            by_repository_field="product_name",
-        )
-        asset_repo = SAssetRepository(self.session_data)
-        transaction_df[
-            "link_stransaction_sasset"
-        ] = asset_repo.get_hubs_by_field_values(
-            values=input_df["asset_isin"].values.tolist(),
-            by_repository_field="asset_isin",
-        )
-
-        transaction_repo.create_objects_from_data_frame(transaction_df)
-
-
 class STransactionFURegistryManager(FileUploadRegistryManagerABC):
     repository_class = STransactionFURegistryRepository
     download_url = "stransaction_download_file"
@@ -150,10 +88,58 @@ class STransactionFUProcessor:
     ):
         self.session_data = session_data
 
+    @staticmethod
+    def _log_start(description: str):
+        logger.info(f"START: {description}")
+
+    @staticmethod
+    def _log_end(description: str):
+        logger.info(f"END: {description}")
+
     def pre_check(self, file_path: str) -> bool:
         return True
 
     def process(self, file_path: str) -> bool:
+        self._log_start("reading_file")
+        input_df = pd.read_csv(file_path)
+        self._log_end("reading_file")
+        transaction_df = input_df[
+            [
+                "transaction_date",
+                "transaction_external_identifier",
+                "transaction_description",
+                "transaction_quantity",
+                "transaction_price",
+            ]
+        ]
+        transaction_repo = STransactionRepository(self.session_data)
+        self._log_start("creating transactions")
+        transaction_repo.create_objects_from_data_frame(transaction_df)
+        self._log_end("creating transactions")
+
+        self._log_start("adding transaction hub entity ids")
+        transaction_hubs = transaction_repo.get_hubs_by_field_values(
+            values=transaction_df["transaction_external_identifier"].tolist(),
+            by_repository_field="transaction_external_identifier",
+        )
+        transaction_df["hub_entity_id"] = [h.id for h in transaction_hubs]
+        self._log_end("adding transaction hub entity ids")
+
+        self._log_start("creating links")
+        link_df = transaction_df[["hub_entity_id"]]
+        asset_repo = SAssetRepository(self.session_data)
+        link_df["link_stransaction_sasset"] = asset_repo.get_hubs_by_field_values(
+            values=input_df["ISIN"],
+            by_repository_field="asset_isin",
+        )
+        product_repo = SProductRepository(self.session_data)
+        link_df["link_stransaction_sproduct"] = product_repo.get_hubs_by_field_values(
+            values=input_df["product_name"],
+            by_repository_field="product_name",
+        )
+        transaction_repo.create_objects_from_data_frame(link_df)
+        self._log_end("creating links")
+        self.message = f"Successfully processed {len(transaction_df)} transactions"
         return True
 
     def post_check(self, file_path: str) -> bool:

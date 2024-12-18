@@ -5,17 +5,14 @@ from baseclasses.views import MontrekDetailView, MontrekListView
 from baseclasses.views import MontrekCreateView
 from baseclasses.views import MontrekUpdateView
 from baseclasses.views import MontrekDeleteView
-from showcase.managers.sasset_managers import SAssetExampleDataGenerator
-from showcase.managers.scompany_managers import SCompanyExampleDataGenerator
+from showcase.managers.initial_db_data_generator import InitialDbDataGenerator
 from showcase.managers.sproduct_managers import (
     SProductDetailsManager,
-    SProductExampleDataGenerator,
     SProductTableManager,
 )
 from showcase.managers.stransaction_managers import (
     SProductSPositionTableManager,
     SProductSTransactionTableManager,
-    STransactionExampleDataGenerator,
 )
 from showcase.pages.sproduct_pages import SProductDetailsPage, SProductPage
 from showcase.forms.sproduct_forms import SProductCreateForm
@@ -109,8 +106,5 @@ class SProductSPositionListView(BackToProductListActionMixin, MontrekListView):
 
 def init_showcase_data(request):
     session_data = {"user_id": 1}
-    SProductExampleDataGenerator(session_data).load()
-    SCompanyExampleDataGenerator(session_data).load()
-    SAssetExampleDataGenerator(session_data).load()
-    STransactionExampleDataGenerator(session_data).load()
+    InitialDbDataGenerator(session_data).generate()
     return HttpResponseRedirect(reverse("showcase"))

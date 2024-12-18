@@ -65,3 +65,12 @@ class TestMontrekSProductDetailView(MontrekViewTestCase):
 
     def url_kwargs(self) -> dict:
         return {"pk": self.hub_vd.hub.id}
+
+
+# TODO: Add tests for position view
+class TestSProductSTransactionListView:
+    pass
+
+
+class TestSProductSPositionListView:
+    pass

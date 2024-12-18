@@ -5,7 +5,8 @@ from baseclasses.tests.factories.montrek_factory_schemas import (
     MontrekHubValueDateFactory,
     MontrekHubFactory,
 )
-from showcase.models.sasset_hub_models import SAssetHub
+from showcase.factories.scompany_hub_factories import SCompanyHubFactory
+from showcase.models.sasset_hub_models import LinkSAssetSCompany, SAssetHub
 from showcase.models.sasset_hub_models import SAssetHubValueDate
 
 
@@ -20,3 +21,11 @@ class SAssetHubValueDateFactory(MontrekHubValueDateFactory):
 
     hub = factory.SubFactory(SAssetHubFactory)
     value_date_list = factory.SubFactory(ValueDateListFactory)
+
+
+class LinkSAssetSCompanyFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = LinkSAssetSCompany
+
+    hub_in = factory.SubFactory(SAssetHubFactory)
+    hub_out = factory.SubFactory(SCompanyHubFactory)
