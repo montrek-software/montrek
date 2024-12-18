@@ -1,19 +1,14 @@
 from typing import Any
 
-from celery import Task
 from django.contrib.auth import get_user_model
 from mailing.managers.mailing_manager import MailingManager
-from montrek.celery_app import app as celery_app
+from tasks.montrek_task import MontrekTask
 
 from api_upload.managers.api_upload_manager import ApiUploadManager
 
 
-class ApiUploadTask(Task):
+class ApiUploadTask(MontrekTask):
     api_upload_manager_class: type[ApiUploadManager]
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        celery_app.register_task(self)
 
     def run(
         self,

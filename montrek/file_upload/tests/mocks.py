@@ -81,12 +81,10 @@ class MockFileUploadProcessorPostCheckFail(MockFileUploadProcessor):
 
 
 class MockProcessFileTask(ProcessFileTaskABC):
-    pass
+    file_upload_processor_class = MockFileUploadProcessor
+    file_upload_registry_repository_class = MockFileUploadRegistryRepository
 
 
 class MockBackgroundFileUploadManager(BackgroundFileUploadManagerABC):
     file_upload_processor_class = MockFileUploadProcessor
-    task = MockProcessFileTask(
-        file_upload_processor_class=MockFileUploadProcessor,
-        file_upload_registry_repository_class=MockFileUploadRegistryRepository,
-    )
+    task = MockProcessFileTask()
