@@ -4,7 +4,10 @@ import os
 
 from django.test import TestCase
 from showcase.managers.initial_db_data_generator import InitialDbDataGenerator
-from showcase.repositories.stransaction_repositories import STransactionRepository
+from showcase.repositories.stransaction_repositories import (
+    STransactionFURegistryRepository,
+    STransactionRepository,
+)
 from showcase.tests import TEST_DATA_DIR
 from testing.decorators import add_logged_in_user
 from django.shortcuts import reverse
@@ -79,7 +82,6 @@ class TestSTransactionDeleteView(MontrekDeleteViewTestCase):
         return {"pk": self.sat_obj.get_hub_value_date().id}
 
 
-# TODO: Add tests for FU registry views
 class TestSTransactionFURegistryView(MontrekListViewTestCase):
     viewname = "stransaction_fu_registry_list"
     view_class = STransactionFURegistryView
@@ -147,10 +149,22 @@ class TestSTransactionUploadFileView(TestCase):
             expected_db_data.transaction_date
         ).dt.date
         messages = list(response.context["messages"])
+        registry_repo = STransactionFURegistryRepository(self.session_data)
+        registry_objs = registry_repo.receive()
         self.assertEqual(len(messages), 1)
+        self.assertEqual(registry_objs.count(), 1)
         message = messages[0]
+        registry_obj = registry_objs[0]
         self.assertRedirects(response, reverse("stransaction_fu_registry_list"))
-        self.assertEqual(str(message), "Successfully processed 993 transactions")
+        self.assertEqual(
+            str(message),
+            "Upload background task scheduled. You will receive an email when the task is finished.",
+        )
+        self.assertEqual(registry_obj.file_name, "stransaction_upload_file.csv")
+        self.assertEqual(
+            registry_obj.upload_message, "Successfully processed 993 transactions"
+        )
+        self.assertEqual(registry_obj.upload_status, "processed")
         pd.testing.assert_frame_equal(
             actual_db_data, expected_db_data, check_dtype=False
         )
