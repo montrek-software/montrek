@@ -1,14 +1,14 @@
 services:
   db:
     image: mariadb:latest
-    command: --max_allowed_packet=64M
+    command: --max_allowed_packet=64M --port=${DB_PORT}
     environment:
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "${DB_PORT}:3306"
+      - "${DB_PORT}:${DB_PORT}"
     volumes:
       - db_data:/var/lib/mysql
     networks:

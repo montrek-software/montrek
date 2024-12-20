@@ -41,8 +41,6 @@ services:
     depends_on:
       - db
       - redis
-    environment:
-      - DB_HOST=${DEPLOY_HOST}
     networks:
       - montrek_network
 
