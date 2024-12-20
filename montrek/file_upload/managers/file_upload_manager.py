@@ -20,6 +20,7 @@ class FileUploadProcessorProtocol(Protocol):
 
     def __init__(
         self,
+        file_upload_registry_hub: FileUploadRegistryHubABC,
         session_data: Dict[str, Any],
         **kwargs,
     ):
@@ -107,7 +108,10 @@ class FileUploadManagerABC(MontrekManager):
         # Called by task
         self._load_file_upload_registry()
         self._load_file_path()
-        self.processor = self.file_upload_processor_class(self.session_data)
+        self.processor = self.file_upload_processor_class(
+            self.file_upload_registry,
+            self.session_data,
+        )
         if not self.processor.pre_check(self.file_path):
             self._update_file_upload_registry("failed", self.processor.message)
             return False
