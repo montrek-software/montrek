@@ -1,13 +1,9 @@
 import logging
 import pandas as pd
-from file_upload.managers.background_file_upload_manager import (
-    BackgroundFileUploadManagerABC,
-)
 from file_upload.managers.file_upload_manager import FileUploadManagerABC
 from file_upload.managers.file_upload_registry_manager import (
     FileUploadRegistryManagerABC,
 )
-from file_upload.models import FileUploadRegistryHubABC
 from file_upload.tasks.process_file_task import ProcessFileTaskABC
 from reporting.dataclasses import table_elements as te
 from reporting.managers.montrek_table_manager import MontrekTableManager
@@ -86,7 +82,6 @@ class STransactionFUProcessor:
 
     def __init__(
         self,
-        file_upload_registry_hub: FileUploadRegistryHubABC,
         session_data: dict,
         **kwargs,
     ):
@@ -158,9 +153,3 @@ class STransactionFUManager(FileUploadManagerABC):
 class STransactionProcessFileTask(ProcessFileTaskABC):
     file_upload_processor_class = STransactionFUProcessor
     file_upload_registry_repository_class = STransactionFURegistryRepository
-
-
-class STransactionBFUManager(BackgroundFileUploadManagerABC):
-    file_upload_processor_class = STransactionFUProcessor
-    file_registry_manager_class = STransactionFURegistryManager
-    task = STransactionProcessFileTask()

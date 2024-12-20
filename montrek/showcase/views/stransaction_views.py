@@ -10,7 +10,7 @@ from file_upload.views import (
     MontrekUploadFileView,
 )
 from showcase.managers.stransaction_managers import (
-    STransactionBFUManager,
+    STransactionFUManager,
     STransactionFURegistryManager,
     STransactionTableManager,
 )
@@ -88,7 +88,7 @@ class STransactionUploadFileView(MontrekUploadFileView):
     page_class = STransactionPage
     tab = "tab_stransaction_fu_registry_list"
     title = "Upload Transaction File"
-    file_upload_manager_class = STransactionBFUManager
+    file_upload_manager_class = STransactionFUManager
     accept = ".csv"
 
     def get_success_url(self):
