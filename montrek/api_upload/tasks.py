@@ -10,6 +10,10 @@ from api_upload.managers.api_upload_manager import ApiUploadManager
 class ApiUploadTask(MontrekTask):
     api_upload_manager_class: type[ApiUploadManager]
 
+    def __init__(self):
+        task_name = f"{self.api_upload_manager_class.__module__}.{self.api_upload_manager_class.__name__}_process_file_task"
+        super().__init__(task_name)
+
     def run(
         self,
         *args,
