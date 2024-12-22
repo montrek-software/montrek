@@ -1,8 +1,8 @@
 from django.db import models
 
-from baseclasses.models import MontrekSatelliteABC, MontrekTimeSeriesSatelliteABC
-{{ hub_value_date_cls_import }}
+from baseclasses.models import MontrekSatelliteABC
+{{ hub_cls_import }}
 
 
-class {{ sat_cls_name }}(MontrekTimeSeriesSatelliteABC):
-    hub_value_date = models.ForeignKey({{ hub_value_date_cls_name }}, on_delete=models.CASCADE)
+class {{ sat_cls_name }}(MontrekSatelliteABC):
+    hub_entity = models.ForeignKey({{ hub_cls_name }}, on_delete=models.CASCADE)
