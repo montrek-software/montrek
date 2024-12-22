@@ -52,3 +52,4 @@ class SimpleFileUploadProcessor:
 
 class SimpleUploadFileManager(FileUploadManagerABC):
     file_upload_processor_class = SimpleFileUploadProcessor
+    do_process_file_async = False

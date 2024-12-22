@@ -350,11 +350,12 @@ class MontrekListView(
             if result:
                 messages.info(
                     request,
-                    "Successfully scheduled background task for processing file.",
+                    file_upload_manager.processor.message,
                 )
             else:
                 messages.error(
-                    request, "Failed to schedule background task for processing file!"
+                    request,
+                    file_upload_manager.processor.message,
                 )
         return HttpResponseRedirect(self.request.path)
 
