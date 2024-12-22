@@ -4,6 +4,7 @@ from django.core.management.base import BaseCommand
 from code_generation.management.base.code_generation_command import (
     StdArgumentsMixin,
 )
+from code_generation.config.code_generation_config import CodeGenerationConfig
 
 
 class Command(StdArgumentsMixin, BaseCommand):
@@ -30,3 +31,10 @@ class Command(StdArgumentsMixin, BaseCommand):
         call_command("generate_hub_factories", *std_args, **std_kwargs)
         call_command("generate_sat_factories", *std_args, **std_kwargs)
         call_command("generate_view_tests", *std_args, **std_kwargs)
+        call_command("makemigrations")
+        testcase = CodeGenerationConfig(
+            kwargs["app_path"], kwargs["prefix"]
+        ).output_paths["view_tests"]
+        testcase = testcase.replace(".py", "").replace("/", ".")
+        self.stdout.write(f"Running test case: {testcase}")
+        call_command("test", testcase)
