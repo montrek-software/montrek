@@ -1,6 +1,5 @@
 from typing import Any
 
-from file_upload.tasks.process_file_task import ProcessFileTaskABC
 from file_upload.models import FileUploadRegistryHubABC
 from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepositoryABC,
@@ -9,9 +8,6 @@ from file_upload.models import (
     FileUploadRegistryHub,
     FileUploadRegistryStaticSatellite,
     LinkFileUploadRegistryFileUploadFile,
-)
-from file_upload.managers.background_file_upload_manager import (
-    BackgroundFileUploadManagerABC,
 )
 
 
@@ -78,13 +74,3 @@ class MockFileUploadProcessorPostCheckFail(MockFileUploadProcessor):
 
     def post_check(self, file_path):
         return False
-
-
-class MockProcessFileTask(ProcessFileTaskABC):
-    file_upload_processor_class = MockFileUploadProcessor
-    file_upload_registry_repository_class = MockFileUploadRegistryRepository
-
-
-class MockBackgroundFileUploadManager(BackgroundFileUploadManagerABC):
-    file_upload_processor_class = MockFileUploadProcessor
-    task = MockProcessFileTask()

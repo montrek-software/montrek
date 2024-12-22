@@ -99,10 +99,11 @@ class FileUploadManagerABC(MontrekManager):
         self.registry_manager = self.file_registry_manager_class(session_data)
         self.file_upload_registry: MontrekHubABC | Any = None
         self.file_path = ""
+        self.processor: FileUploadProcessorProtocol | None = None
 
     def upload_and_process(self, file: TextIO | None) -> bool:
         # Called by view
-        self.session_data["file_upload_registry_id"] = self._register_file_in_db(file)
+        self.session_data["file_upload_registry_id"] = self.register_file_in_db(file)
         if self.do_process_file_async:
             self.process_file_task.delay(
                 session_data=self.session_data,
@@ -132,7 +133,7 @@ class FileUploadManagerABC(MontrekManager):
             self._update_file_upload_registry("failed", self.processor.message)
             return False
 
-    def _register_file_in_db(self, file: TextIO) -> int:
+    def register_file_in_db(self, file: TextIO) -> int:
         file_name = file.name
         file_type = file_name.split(".")[-1]
         upload_file_hub = self.repository.std_create_object({"file": file})

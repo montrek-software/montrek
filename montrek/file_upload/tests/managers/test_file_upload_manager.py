@@ -15,18 +15,22 @@ from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
 class MockFileUploadManager(FileUploadManagerABC):
     file_upload_processor_class = MockFileUploadProcessor
+    do_process_file_async = False
 
 
 class MockFileUploadManagerProcessorFail(FileUploadManagerABC):
     file_upload_processor_class = MockFileUploadProcessorFail
+    do_process_file_async = False
 
 
 class MockFileUploadManagerProcessorPreCheckFail(FileUploadManagerABC):
     file_upload_processor_class = MockFileUploadProcessorPreCheckFail
+    do_process_file_async = False
 
 
 class MockFileUploadManagerProcessorPostCheckFail(FileUploadManagerABC):
     file_upload_processor_class = MockFileUploadProcessorPostCheckFail
+    do_process_file_async = False
 
 
 class TestFileUploadManager(TestCase):
@@ -51,11 +55,11 @@ class TestFileUploadManager(TestCase):
         }
         self.session_data.update(filter_data)
 
-    def test_fum_init(self):
-        MockFileUploadManager(
-            file=self.test_file,
+    def test_fum_register_file_in_db(self):
+        manager = MockFileUploadManager(
             session_data=self.session_data,
         )
+        manager.register_file_in_db(self.test_file)
         file_upload_registry_query = FileUploadRegistryRepository().receive()
         self.assertEqual(file_upload_registry_query.count(), 1)
         file_upload_registry = file_upload_registry_query.first()
@@ -68,10 +72,9 @@ class TestFileUploadManager(TestCase):
 
     def test_fum_upload_success(self):
         fum = MockFileUploadManager(
-            file=self.test_file,
             session_data=self.session_data,
         )
-        fum.upload_and_process()
+        fum.upload_and_process(self.test_file)
         file_upload_registry_query = FileUploadRegistryRepository().receive()
         self.assertEqual(file_upload_registry_query.count(), 1)
         file_upload_registry = file_upload_registry_query.first()
@@ -80,11 +83,9 @@ class TestFileUploadManager(TestCase):
 
     def test_fum_upload_failure(self):
         fum = MockFileUploadManagerProcessorFail(
-            file=self.test_file,
             session_data=self.session_data,
         )
-        fum.init_upload()
-        fum.upload_and_process()
+        fum.upload_and_process(self.test_file)
         file_upload_registry_query = FileUploadRegistryRepository().receive()
         self.assertEqual(file_upload_registry_query.count(), 1)
         file_upload_registry = file_upload_registry_query.first()
@@ -93,10 +94,9 @@ class TestFileUploadManager(TestCase):
 
     def test_fum_pre_check_fails(self):
         fum = MockFileUploadManagerProcessorPreCheckFail(
-            file=self.test_file,
             session_data=self.session_data,
         )
-        fum.upload_and_process()
+        fum.upload_and_process(self.test_file)
         file_upload_registry_query = FileUploadRegistryRepository().receive()
         self.assertEqual(file_upload_registry_query.count(), 1)
         file_upload_registry = file_upload_registry_query.first()
@@ -105,10 +105,9 @@ class TestFileUploadManager(TestCase):
 
     def test_fum_post_check_fails(self):
         fum = MockFileUploadManagerProcessorPostCheckFail(
-            file=self.test_file,
             session_data=self.session_data,
         )
-        fum.upload_and_process()
+        fum.upload_and_process(self.test_file)
         file_upload_registry_query = FileUploadRegistryRepository().receive()
         self.assertEqual(file_upload_registry_query.count(), 1)
         file_upload_registry = file_upload_registry_query.first()
