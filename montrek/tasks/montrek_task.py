@@ -6,8 +6,7 @@ from montrek.celery_app import (
 
 
 class MontrekTask(Task):
-    queue = PARALLEL_QUEUE_NAME
-
-    def __init__(self, task_name: str):
+    def __init__(self, task_name: str, queue: str = PARALLEL_QUEUE_NAME):
         self.name = task_name
+        self.queue = queue
         celery_app.register_task(self)

@@ -12,6 +12,7 @@ from file_upload.managers.file_upload_registry_manager import (
 )
 from baseclasses.models import MontrekHubABC
 from baseclasses.managers.montrek_manager import MontrekManager
+from montrek.celery_app import PARALLEL_QUEUE_NAME
 from tasks.montrek_task import MontrekTask
 
 
@@ -61,12 +62,13 @@ class FileUploadTask(MontrekTask):
     def __init__(
         self,
         manager_class: type[MontrekManager],
+        queue: str,
     ):
         self.manager_class = manager_class
         task_name = (
             f"{manager_class.__module__}.{manager_class.__name__}_process_file_task"
         )
-        super().__init__(task_name)
+        super().__init__(task_name, queue)
 
     def run(self, session_data: Dict[str, Any]):
         manager = self.manager_class(session_data)
@@ -83,8 +85,8 @@ class FileUploadManagerABC(MontrekManager):
     file_registry_manager_class = FileUploadRegistryManager
     process_file_task: FileUploadTask
 
-    def __init_subclass__(cls, **kwargs):
-        cls.process_file_task = FileUploadTask(manager_class=cls)
+    def __init_subclass__(cls, task_queue: str = PARALLEL_QUEUE_NAME, **kwargs):
+        cls.process_file_task = FileUploadTask(manager_class=cls, queue=task_queue)
 
     def __init__(
         self,
