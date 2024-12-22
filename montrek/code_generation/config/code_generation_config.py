@@ -32,14 +32,14 @@ class CodeGenerationConfig:
 
         self.output_paths = {
             "forms": ["forms", f"{prefix}_forms.py"],
-            "hub_factories": ["factories", f"{prefix}_hub_factories.py"],
+            "hub_factories": ["tests", "factories", f"{prefix}_hub_factories.py"],
             "hub_models": ["models", f"{prefix}_hub_models.py"],
             "managers": ["managers", f"{prefix}_managers.py"],
             "models_init": ["models", "__init__.py"],
             "pages": ["pages", f"{prefix}_pages.py"],
             "repositories": ["repositories", f"{prefix}_repositories.py"],
             "sat_models": ["models", f"{prefix}_sat_models.py"],
-            "sat_factories": ["factories", f"{prefix}_sat_factories.py"],
+            "sat_factories": ["tests", "factories", f"{prefix}_sat_factories.py"],
             "urls": ["urls", f"{prefix}_urls.py"],
             "urls_init": ["urls", "__init__.py"],
             "views": ["views", f"{prefix}_views.py"],

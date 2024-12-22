@@ -21,6 +21,8 @@ class GenerateTableCommandTest(TestCase):
                 "urls_init": ["urls", "__init__.py"],
                 "views": ["views", "company_views.py"],
                 "views_init": ["views", "__init__.py"],
+                "hub_factories": ["tests", "factories", "company_hub_factories.py"],
+                "sat_factories": ["tests", "factories", "company_sat_factories.py"],
             }
             expected_paths = {
                 k: os.path.join(temp_dir, *v) for k, v in expected_paths.items()
