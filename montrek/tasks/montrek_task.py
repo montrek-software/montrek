@@ -7,6 +7,14 @@ from montrek.celery_app import (
 
 class MontrekTask(Task):
     def __init__(self, task_name: str, queue: str = PARALLEL_QUEUE_NAME):
+        self.raise_for_conflicting_task_name(task_name)
         self.name = task_name
         self.queue = queue
         celery_app.register_task(self)
+
+    def raise_for_conflicting_task_name(self, task_name: str):
+        registered_tasks = celery_app.tasks.keys()
+        if task_name in registered_tasks:
+            raise ValueError(
+                f"Task with name {task_name} already registered. Please choose a different name."
+            )
