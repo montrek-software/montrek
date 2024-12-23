@@ -36,5 +36,4 @@ class Command(StdArgumentsMixin, BaseCommand):
             kwargs["app_path"], kwargs["prefix"]
         ).output_paths["view_tests"]
         testcase = testcase.replace(".py", "").replace("/", ".")
-        self.stdout.write(f"Running test case: {testcase}")
-        call_command("test", testcase)
+        self.stdout.write(f"To run the test do\n\tpython manage.py {testcase}")
