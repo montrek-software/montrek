@@ -1,10 +1,13 @@
 import factory
+from baseclasses.tests.factories.montrek_factory_schemas import (
+    MontrekSatelliteFactory,
+    )
 
 {{ hub_factory_cls_import }}
 {{ sat_cls_import }}
 
 
-class {{ sat_factory_cls_name }}(factory.django.DjangoModelFactory):
+class {{ sat_factory_cls_name }}(MontrekSatelliteFactory):
     class Meta:
         model = {{ sat_cls_name }}
 
