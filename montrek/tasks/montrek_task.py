@@ -6,7 +6,10 @@ from montrek.celery_app import (
 
 
 class MontrekTask(Task):
-    def __init__(self, task_name: str, queue: str = PARALLEL_QUEUE_NAME):
+    def __init__(self, task_name: str = "", queue: str = PARALLEL_QUEUE_NAME):
+        task_name = (
+            task_name or f"{self.__class__.__module__}.{self.__class__.__name__}"
+        )
         self.raise_for_conflicting_task_name(task_name)
         self.name = task_name
         self.queue = queue
