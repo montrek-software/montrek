@@ -1,7 +1,8 @@
+from django.core.files import File
 import os
 from file_upload.models import FileUploadRegistryHubABC
 from django.conf import settings
-from typing import Any, TextIO, Dict
+from typing import Any, Dict
 from typing import Protocol
 
 from file_upload.repositories.file_upload_file_repository import (
@@ -48,13 +49,13 @@ class NotDefinedFileUploadProcessor:
     ) -> None:
         raise NotImplementedError(self.message)
 
-    def process(self, file: TextIO):
+    def process(self, file_path: str):
         raise NotImplementedError(self.message)
 
-    def pre_check(self, file: TextIO):
+    def pre_check(self, file_path: str):
         raise NotImplementedError(self.message)
 
-    def post_check(self, file: TextIO):
+    def post_check(self, file_path: str):
         raise NotImplementedError(self.message)
 
 
@@ -101,7 +102,7 @@ class FileUploadManagerABC(MontrekManager):
         self.file_path = ""
         self.processor: FileUploadProcessorProtocol | None = None
 
-    def upload_and_process(self, file: TextIO | None) -> bool:
+    def upload_and_process(self, file: File) -> bool:
         # Called by view
         self.session_data["file_upload_registry_id"] = self.register_file_in_db(file)
         if self.do_process_file_async:
@@ -133,7 +134,7 @@ class FileUploadManagerABC(MontrekManager):
             self._update_file_upload_registry("failed", self.processor.message)
             return False
 
-    def register_file_in_db(self, file: TextIO) -> int:
+    def register_file_in_db(self, file: File) -> int:
         file_name = file.name
         file_type = file_name.split(".")[-1]
         upload_file_hub = self.repository.std_create_object({"file": file})
