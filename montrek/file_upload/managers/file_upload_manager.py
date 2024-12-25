@@ -13,8 +13,8 @@ from file_upload.managers.file_upload_registry_manager import (
 )
 from baseclasses.models import MontrekHubABC
 from baseclasses.managers.montrek_manager import MontrekManager
+from file_upload.tasks.file_upload_task import FileUploadTask
 from montrek.celery_app import PARALLEL_QUEUE_NAME
-from tasks.montrek_task import MontrekTask
 
 
 class FileUploadProcessorProtocol(Protocol):
@@ -57,25 +57,6 @@ class NotDefinedFileUploadProcessor:
 
     def post_check(self, file_path: str):
         raise NotImplementedError(self.message)
-
-
-class FileUploadTask(MontrekTask):
-    def __init__(
-        self,
-        manager_class: type[MontrekManager],
-        queue: str,
-    ):
-        self.manager_class = manager_class
-        task_name = (
-            f"{manager_class.__module__}.{manager_class.__name__}_process_file_task"
-        )
-        super().__init__(task_name, queue)
-
-    def run(self, session_data: Dict[str, Any]):
-        manager = self.manager_class(session_data)
-        manager.process()
-        message = manager.processor.message
-        return message
 
 
 class FileUploadManagerABC(MontrekManager):

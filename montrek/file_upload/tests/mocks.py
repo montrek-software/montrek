@@ -1,5 +1,6 @@
 from typing import Any
 
+from file_upload.managers.file_upload_manager import FileUploadManagerABC
 from file_upload.models import FileUploadRegistryHubABC
 from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepositoryABC,
@@ -9,6 +10,7 @@ from file_upload.models import (
     FileUploadRegistryStaticSatellite,
     LinkFileUploadRegistryFileUploadFile,
 )
+from montrek.celery_app import SEQUENTIAL_QUEUE_NAME
 
 
 class MockFileUploadRegistryRepository(FileUploadRegistryRepositoryABC):
@@ -74,3 +76,23 @@ class MockFileUploadProcessorPostCheckFail(MockFileUploadProcessor):
 
     def post_check(self, file_path):
         return False
+
+
+class MockFileUploadManager(FileUploadManagerABC):
+    file_upload_processor_class = MockFileUploadProcessor
+
+
+class MockFileUploadManagerProcessorFail(FileUploadManagerABC):
+    file_upload_processor_class = MockFileUploadProcessorFail
+
+
+class MockFileUploadManagerProcessorPreCheckFail(FileUploadManagerABC):
+    file_upload_processor_class = MockFileUploadProcessorPreCheckFail
+
+
+class MockFileUploadManagerProcessorPostCheckFail(FileUploadManagerABC):
+    file_upload_processor_class = MockFileUploadProcessorPostCheckFail
+
+
+class MockFileUploadManagerSeq(FileUploadManagerABC, task_queue=SEQUENTIAL_QUEUE_NAME):
+    file_upload_processor_class = MockFileUploadProcessor
