@@ -466,7 +466,7 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
         self.assertEqual(len(messages), 1)
         self.assertEqual(
             str(messages[0]),
-            "Successfully scheduled background task for processing file.",
+            "Successfully scheduled background task for processing file. You will receive an email once the task has finished execution.",
         )
 
         self.assertEqual(len(a_hubs), 3)
@@ -508,7 +508,7 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
         self.assertEqual(len(messages), 1)
         self.assertEqual(
             str(messages[0]),
-            "Successfully scheduled background task for processing file.",
+            "Successfully scheduled background task for processing file. You will receive an email once the task has finished execution.",
         )
         self.assertEqual(upload_registry.upload_status, "failed")
         self.assertEqual(
@@ -543,7 +543,7 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
         self.assertEqual(len(messages), 1)
         self.assertEqual(
             str(messages[0]),
-            "Successfully scheduled background task for processing file.",
+            "Successfully scheduled background task for processing file. You will receive an email once the task has finished execution.",
         )
         self.assertEqual(upload_registry.upload_status, "failed")
         self.assertEqual(
@@ -590,7 +590,7 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
         self.assertEqual(len(messages), 1)
         self.assertEqual(
             str(messages[0]),
-            "Successfully scheduled background task for processing file.",
+            "Successfully scheduled background task for processing file. You will receive an email once the task has finished execution.",
         )
         self.assertEqual(registry.upload_status, "failed")
         self.assertEqual(

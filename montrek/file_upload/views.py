@@ -52,7 +52,7 @@ class MontrekUploadFileView(MontrekTemplateView):
             if result:
                 messages.info(
                     request,
-                    "Successfully scheduled background task for processing file.",
+                    "Successfully scheduled background task for processing file. You will receive an email once the task has finished execution.",
                 )
             else:
                 messages.error(
