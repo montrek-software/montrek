@@ -266,3 +266,25 @@ class MontrekRestApiViewTestCase(MontrekViewTestCase):
 
     def expected_json(self) -> list:
         raise NotImplementedError("Please set the expected_json method in the subclass")
+
+
+class MontrekRedirectViewTestCase(MontrekViewTestCase):
+    expected_status_code: int = 302
+
+    def _is_base_test_class(self) -> bool:
+        return self.__class__.__name__ == "MontrekRedirectViewTestCase"
+
+    def test_view_page(self):
+        return
+
+    def test_context_data(self):
+        return
+
+    def test_view_return_correct_html(self):
+        if self._is_base_test_class():
+            return
+        self.assertEqual(self.response.status_code, self.expected_status_code)
+        self.assertEqual(self.response.url, self.expected_url())
+
+    def expected_url(self) -> str:
+        raise NotImplementedError("Please set the expected_url method in the subclass")

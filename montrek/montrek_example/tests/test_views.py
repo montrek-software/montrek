@@ -14,6 +14,7 @@ from testing.test_cases.view_test_cases import (
     MontrekDeleteViewTestCase,
     MontrekFileResponseTestCase,
     MontrekListViewTestCase,
+    MontrekRedirectViewTestCase,
     MontrekUpdateViewTestCase,
     MontrekViewTestCase,
     MontrekRestApiViewTestCase,
@@ -841,3 +842,17 @@ class TestHubBRestApiView(MontrekRestApiViewTestCase):
             }
             expected_json.append(entry)
         return expected_json
+
+
+class TestHubARedirectView(MontrekRedirectViewTestCase):
+    viewname = "hub_a_redirect"
+    view_class = me_views.HubARedirectView
+
+    def build_factories(self):
+        self.hub = me_factories.HubAFactory.create()
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.hub.pk}
+
+    def expected_url(self) -> str:
+        return reverse("montrek_example_a_list")

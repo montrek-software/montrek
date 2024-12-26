@@ -9,7 +9,7 @@ from django.core.paginator import Paginator
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
-from django.views.generic import DetailView
+from django.views.generic import DetailView, RedirectView
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import CreateView
 from django.views.generic.list import ListView
@@ -265,9 +265,9 @@ class ToPdfMixin:
         if pdf_path and os.path.exists(pdf_path):
             with open(pdf_path, "rb") as pdf_file:
                 response = HttpResponse(pdf_file.read(), content_type="application/pdf")
-                response[
-                    "Content-Disposition"
-                ] = "inline; filename=" + os.path.basename(pdf_path)
+                response["Content-Disposition"] = (
+                    "inline; filename=" + os.path.basename(pdf_path)
+                )
                 return response
         previous_url = self.request.META.get("HTTP_REFERER")
         return HttpResponseRedirect(previous_url)
@@ -517,3 +517,7 @@ class MontrekRestApiView(APIView, MontrekViewMixin):
         query = self.get_view_queryset()
         serializer = MontrekSerializer(query, many=True, manager=self.manager)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class MontrekRedirectView(MontrekViewMixin, RedirectView):
+    manager_class = MontrekManagerNotImplemented
