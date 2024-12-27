@@ -65,8 +65,9 @@ class FileUploadManagerABC(MontrekManager):
         FileUploadProcessorProtocol
     ] = NotDefinedFileUploadProcessor
     file_registry_manager_class = FileUploadRegistryManager
-    process_file_task: FileUploadTask
     do_process_file_async: bool = True
+    process_file_task: FileUploadTask
+    message: str
 
     def __init_subclass__(cls, task_queue: str = PARALLEL_QUEUE_NAME, **kwargs):
         if cls.do_process_file_async:
@@ -90,9 +91,12 @@ class FileUploadManagerABC(MontrekManager):
             self.process_file_task.delay(
                 session_data=self.session_data,
             )
-            return True
+            result = True
+            self.message = "Successfully scheduled background task for processing file. You will receive an email once the task has finished execution."
         else:
-            return self.process()
+            result = self.process()
+            self.message = self.processor.message
+        return result
 
     def process(self) -> bool:
         # Called by task
