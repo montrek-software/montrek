@@ -196,6 +196,7 @@ class TestMontrekViewMixin(TestCase):
         expected_session_data = expected_filter_data.copy()
         expected_session_data["request_path"] = "/some/path"
         expected_session_data["host_url"] = "http://testserver"
+        expected_session_data["http_referer"] = None
 
         self.assertEqual(mock_view.session_data, expected_session_data)
         self.assertEqual(
