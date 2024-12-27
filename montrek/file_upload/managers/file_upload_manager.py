@@ -76,7 +76,6 @@ class FileUploadManagerABC(MontrekManager):
     def __init__(
         self,
         session_data: Dict[str, Any],
-        **kwargs,
     ) -> None:
         super().__init__(session_data=session_data)
         self.registry_manager = self.file_registry_manager_class(session_data)
