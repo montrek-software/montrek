@@ -185,6 +185,7 @@ class MontrekViewMixin:
             session_data["user_id"] = self.request.user.id
         self.request.session["filter"] = session_data.get("filter", {})
         session_data["host_url"] = self.request.build_absolute_uri("/")[:-1]
+        session_data["http_referer"] = self.request.META.get("HTTP_REFERER")
         return session_data
 
     def _get_filters(self, session_data):
