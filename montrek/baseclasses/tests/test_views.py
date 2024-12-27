@@ -75,15 +75,15 @@ class MockRepository:
 
 
 class MockRequester:
-    def add_mock_request_get(self, url: str):
+    def add_mock_request(self, url: str):
         self.request = RequestFactory().get(url)
-        self._add_mock_request(url)
+        self._pass_request_to_middleware()
 
     def add_mock_request_post(self, url: str, data: dict):
         self.request = RequestFactory().post(url, data)
-        self._add_mock_request(url)
+        self._pass_request_to_middleware()
 
-    def _add_mock_request(self, url: str):
+    def _pass_request_to_middleware(self):
         self.request.user = AnonymousUser()
         session_middleware = SessionMiddleware(lambda request: None)
         session_middleware.process_request(self.request)
@@ -115,7 +115,7 @@ class MockMontrekView(MontrekViewMixin, MockRequester):
 
     def __init__(self, url: str):
         super().__init__()
-        self.add_mock_request_get(url)
+        self.add_mock_request(url)
 
 
 class MockPage(MontrekPage):
