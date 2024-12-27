@@ -435,6 +435,7 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
         self.test_file_path = os.path.join(
             os.path.dirname(__file__), "data", "a_file.csv"
         )
+        self.registry_repo = HubAFileUploadRegistryRepository({})
 
     def test_view_return_correct_html(self):
         response = self.client.get(self.url)
@@ -466,7 +467,7 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
         self.assertEqual(len(messages), 1)
         self.assertEqual(
             str(messages[0]),
-            "Successfully uploaded 3 rows.",
+            "Successfully scheduled background task for processing file. You will receive an email once the task has finished execution.",
         )
 
         self.assertEqual(len(a_hubs), 3)
@@ -478,7 +479,7 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
         self.assertEqual(a_hubs[0].field_a1_int, 1000)
         self.assertEqual(a_hubs[1].field_a1_int, 2000)
         self.assertEqual(a_hubs[2].field_a1_int, 3000)
-        upload_registry = HubAFileUploadRegistryRepository({}).receive().last()
+        upload_registry = self.registry_repo.receive().last()
         log_file = upload_registry.log_file
         self.assertTrue(log_file)
 
@@ -500,6 +501,7 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
             response = self.client.post(self.url, data, follow=True)
 
         messages = list(response.context["messages"])
+        upload_registry = self.registry_repo.receive().last()
 
         a_hubs = HubARepository().receive()
 
@@ -507,6 +509,11 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
         self.assertEqual(len(messages), 1)
         self.assertEqual(
             str(messages[0]),
+            "Successfully scheduled background task for processing file. You will receive an email once the task has finished execution.",
+        )
+        self.assertEqual(upload_registry.upload_status, "failed")
+        self.assertEqual(
+            upload_registry.upload_message,
             (
                 "Errors raised during field mapping:"
                 "<br>('source_field_0', 'field_a1_str', 'multiply_by_value', {'value': 'a'}, \"TypeError: can't multiply sequence by non-int of type 'str'\")"
@@ -529,6 +536,7 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
             response = self.client.post(self.url, data, follow=True)
 
         messages = list(response.context["messages"])
+        upload_registry = self.registry_repo.receive().last()
 
         HubARepository().receive()
 
@@ -536,6 +544,11 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
         self.assertEqual(len(messages), 1)
         self.assertEqual(
             str(messages[0]),
+            "Successfully scheduled background task for processing file. You will receive an email once the task has finished execution.",
+        )
+        self.assertEqual(upload_registry.upload_status, "failed")
+        self.assertEqual(
+            upload_registry.upload_message,
             "Error raised during object creation: <br>ValueError: Field 'field_a1_int' expected a number but got 'aaaaaaaaaa'.",
         )
 
@@ -569,12 +582,20 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
         with open(self.test_file_path, "rb") as f:
             data = {"file": f}
             response = self.client.post(self.url, data, follow=True)
+        registries = self.registry_repo.receive()
+        self.assertEqual(registries.count(), 1)
+        registry = registries.first()
         messages = list(response.context["messages"])
         a_hubs = HubARepository().receive()
         self.assertRedirects(response, reverse("a1_view_uploads"))
         self.assertEqual(len(messages), 1)
         self.assertEqual(
             str(messages[0]),
+            "Successfully scheduled background task for processing file. You will receive an email once the task has finished execution.",
+        )
+        self.assertEqual(registry.upload_status, "failed")
+        self.assertEqual(
+            registry.upload_message,
             "The following database fields are defined in the field map but are not in the target repository: not_in_repository_field_0, not_in_repository_field_1, not_in_repository_field_2",
         )
         self.assertEqual(len(a_hubs), 0)

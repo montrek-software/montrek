@@ -1,32 +1,18 @@
+from django.core import mail
 from django.test import TestCase
 from django.core.files.uploadedfile import SimpleUploadedFile
-from file_upload.managers.file_upload_manager import FileUploadManagerABC
 from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepository,
 )
 from file_upload.tests.mocks import (
-    MockFileUploadProcessor,
-    MockFileUploadProcessorFail,
-    MockFileUploadProcessorPostCheckFail,
-    MockFileUploadProcessorPreCheckFail,
+    MockFileUploadManager,
+    MockFileUploadManagerProcessorFail,
+    MockFileUploadManagerProcessorPostCheckFail,
+    MockFileUploadManagerProcessorPreCheckFail,
+    MockFileUploadManagerSeq,
 )
+from montrek.celery_app import PARALLEL_QUEUE_NAME, SEQUENTIAL_QUEUE_NAME
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
-
-
-class MockFileUploadManager(FileUploadManagerABC):
-    file_upload_processor_class = MockFileUploadProcessor
-
-
-class MockFileUploadManagerProcessorFail(FileUploadManagerABC):
-    file_upload_processor_class = MockFileUploadProcessorFail
-
-
-class MockFileUploadManagerProcessorPreCheckFail(FileUploadManagerABC):
-    file_upload_processor_class = MockFileUploadProcessorPreCheckFail
-
-
-class MockFileUploadManagerProcessorPostCheckFail(FileUploadManagerABC):
-    file_upload_processor_class = MockFileUploadProcessorPostCheckFail
 
 
 class TestFileUploadManager(TestCase):
@@ -51,11 +37,27 @@ class TestFileUploadManager(TestCase):
         }
         self.session_data.update(filter_data)
 
-    def test_fum_init(self):
-        MockFileUploadManager(
-            file=self.test_file,
+    def test_init_subclass(self):
+        task = MockFileUploadManager.process_file_task
+        self.assertEqual(
+            task.name,
+            f"file_upload.tests.mocks.MockFileUploadManager_process_file_task",
+        )
+        self.assertEqual(task.queue, PARALLEL_QUEUE_NAME)
+        self.assertEqual(task.manager_class, MockFileUploadManager)
+        task = MockFileUploadManagerSeq.process_file_task
+        self.assertEqual(
+            task.name,
+            f"file_upload.tests.mocks.MockFileUploadManagerSeq_process_file_task",
+        )
+        self.assertEqual(task.queue, SEQUENTIAL_QUEUE_NAME)
+        self.assertEqual(task.manager_class, MockFileUploadManagerSeq)
+
+    def test_fum_register_file_in_db(self):
+        manager = MockFileUploadManager(
             session_data=self.session_data,
         )
+        manager.register_file_in_db(self.test_file)
         file_upload_registry_query = FileUploadRegistryRepository().receive()
         self.assertEqual(file_upload_registry_query.count(), 1)
         file_upload_registry = file_upload_registry_query.first()
@@ -68,49 +70,91 @@ class TestFileUploadManager(TestCase):
 
     def test_fum_upload_success(self):
         fum = MockFileUploadManager(
-            file=self.test_file,
             session_data=self.session_data,
         )
-        fum.upload_and_process()
-        file_upload_registry_query = FileUploadRegistryRepository().receive()
-        self.assertEqual(file_upload_registry_query.count(), 1)
-        file_upload_registry = file_upload_registry_query.first()
-        self.assertEqual(file_upload_registry.upload_status, "processed")
-        self.assertEqual(file_upload_registry.upload_message, fum.processor.message)
+        for do_process_file_async in (False, True):
+            fum.do_process_file_async = do_process_file_async
+            fum.upload_and_process(self.test_file)
+            file_upload_registry_query = FileUploadRegistryRepository().receive()
+            self.assertEqual(file_upload_registry_query.count(), 1)
+            file_upload_registry = file_upload_registry_query.first()
+            self.assertEqual(file_upload_registry.upload_status, "processed")
+            processor_message = (
+                MockFileUploadManager.file_upload_processor_class.message
+            )
+            self.assertEqual(
+                file_upload_registry.upload_message,
+                processor_message,
+            )
+
+            if do_process_file_async:
+                sent_email = mail.outbox[0]
+                self.assertEqual(
+                    sent_email.subject,
+                    "Background file processing finished successfully.",
+                )
+                self.assertEqual(sent_email.to, [self.user.email])
+                self.assertTrue(processor_message in sent_email.message().as_string())
+            else:
+                self.assertEqual(len(mail.outbox), 0)
 
     def test_fum_upload_failure(self):
         fum = MockFileUploadManagerProcessorFail(
-            file=self.test_file,
             session_data=self.session_data,
         )
-        fum.init_upload()
-        fum.upload_and_process()
-        file_upload_registry_query = FileUploadRegistryRepository().receive()
-        self.assertEqual(file_upload_registry_query.count(), 1)
-        file_upload_registry = file_upload_registry_query.first()
-        self.assertEqual(file_upload_registry.upload_status, "failed")
-        self.assertEqual(file_upload_registry.upload_message, fum.processor.message)
+        for do_process_file_async in (False, True):
+            fum.do_process_file_async = do_process_file_async
+            fum.upload_and_process(self.test_file)
+            file_upload_registry_query = FileUploadRegistryRepository().receive()
+            self.assertEqual(file_upload_registry_query.count(), 1)
+            file_upload_registry = file_upload_registry_query.first()
+            self.assertEqual(file_upload_registry.upload_status, "failed")
+            processor_message = (
+                MockFileUploadManagerProcessorFail.file_upload_processor_class.message
+            )
+            self.assertEqual(
+                file_upload_registry.upload_message,
+                processor_message,
+            )
+            if do_process_file_async:
+                sent_email = mail.outbox[0]
+                self.assertEqual(
+                    sent_email.subject,
+                    "ERROR: Background file processing did not finish successfully!",
+                )
+                self.assertEqual(sent_email.to, [self.user.email])
+                self.assertTrue(processor_message in sent_email.message().as_string())
+            else:
+                self.assertEqual(len(mail.outbox), 0)
 
     def test_fum_pre_check_fails(self):
         fum = MockFileUploadManagerProcessorPreCheckFail(
-            file=self.test_file,
             session_data=self.session_data,
         )
-        fum.upload_and_process()
-        file_upload_registry_query = FileUploadRegistryRepository().receive()
-        self.assertEqual(file_upload_registry_query.count(), 1)
-        file_upload_registry = file_upload_registry_query.first()
-        self.assertEqual(file_upload_registry.upload_status, "failed")
-        self.assertEqual(file_upload_registry.upload_message, fum.processor.message)
+        for do_process_file_async in (False, True):
+            fum.do_process_file_async = do_process_file_async
+            fum.upload_and_process(self.test_file)
+            file_upload_registry_query = FileUploadRegistryRepository().receive()
+            self.assertEqual(file_upload_registry_query.count(), 1)
+            file_upload_registry = file_upload_registry_query.first()
+            self.assertEqual(file_upload_registry.upload_status, "failed")
+            self.assertEqual(
+                file_upload_registry.upload_message,
+                MockFileUploadManagerProcessorPreCheckFail.file_upload_processor_class.message,
+            )
 
     def test_fum_post_check_fails(self):
         fum = MockFileUploadManagerProcessorPostCheckFail(
-            file=self.test_file,
             session_data=self.session_data,
         )
-        fum.upload_and_process()
-        file_upload_registry_query = FileUploadRegistryRepository().receive()
-        self.assertEqual(file_upload_registry_query.count(), 1)
-        file_upload_registry = file_upload_registry_query.first()
-        self.assertEqual(file_upload_registry.upload_status, "failed")
-        self.assertEqual(file_upload_registry.upload_message, fum.processor.message)
+        for do_process_file_async in (False, True):
+            fum.do_process_file_async = do_process_file_async
+            fum.upload_and_process(self.test_file)
+            file_upload_registry_query = FileUploadRegistryRepository().receive()
+            self.assertEqual(file_upload_registry_query.count(), 1)
+            file_upload_registry = file_upload_registry_query.first()
+            self.assertEqual(file_upload_registry.upload_status, "failed")
+            self.assertEqual(
+                file_upload_registry.upload_message,
+                MockFileUploadManagerProcessorPostCheckFail.file_upload_processor_class.message,
+            )

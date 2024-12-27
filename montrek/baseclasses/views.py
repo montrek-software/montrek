@@ -340,19 +340,23 @@ class MontrekListView(
     def post(self, request, *args, **kwargs):
         form = SimpleUploadFileForm(".xlsx,.csv", request.POST, request.FILES)
         if form.is_valid():
+            session_data = self.session_data.copy()
+            session_data["overwrite"] = form.cleaned_data["overwrite"]
             file_upload_manager = SimpleUploadFileManager(
-                request.FILES["file"],
-                session_data=self.session_data,
-                table_manager=self.manager,
-                overwrite=form.cleaned_data["overwrite"],
+                session_data=session_data,
                 **self.kwargs,
             )
-            result = file_upload_manager.upload_and_process()
+            result = file_upload_manager.upload_and_process(request.FILES["file"])
             if result:
-                messages.info(request, file_upload_manager.processor.message)
+                messages.info(
+                    request,
+                    file_upload_manager.processor.message,
+                )
             else:
-                messages.error(request, file_upload_manager.processor.message)
-            return HttpResponseRedirect(self.request.path)
+                messages.error(
+                    request,
+                    file_upload_manager.processor.message,
+                )
         return HttpResponseRedirect(self.request.path)
 
 
