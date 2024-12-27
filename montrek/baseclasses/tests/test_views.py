@@ -75,8 +75,15 @@ class MockRepository:
 
 
 class MockRequester:
-    def add_mock_request(self, url: str):
+    def add_mock_request_get(self, url: str):
         self.request = RequestFactory().get(url)
+        self._add_mock_request(url)
+
+    def add_mock_request_post(self, url: str, data: dict):
+        self.request = RequestFactory().post(url, data)
+        self._add_mock_request(url)
+
+    def _add_mock_request(self, url: str):
         self.request.user = AnonymousUser()
         session_middleware = SessionMiddleware(lambda request: None)
         session_middleware.process_request(self.request)
@@ -108,7 +115,7 @@ class MockMontrekView(MontrekViewMixin, MockRequester):
 
     def __init__(self, url: str):
         super().__init__()
-        self.add_mock_request(url)
+        self.add_mock_request_get(url)
 
 
 class MockPage(MontrekPage):
@@ -146,6 +153,14 @@ class TestMontrekViewMixin(TestCase):
             "host_url": "http://testserver",
         }
         self.assertEqual(mock_view.session_data, expected_data)
+
+    def test_session_data__post(self):
+        url = "/"
+        mock_view = MockMontrekView(url)
+        data = {"key1": "value1", "key2": "value2"}
+        mock_view.add_mock_request_post(url, data)
+        for k, v in data.items():
+            self.assertEqual(mock_view.session_data[k][0], v)
 
     def test_session_data_storage(self):
         mock_view = MockMontrekView("/")
