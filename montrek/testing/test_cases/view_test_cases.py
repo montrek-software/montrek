@@ -170,6 +170,9 @@ class GetObjectPkMixin:
 
 
 class MontrekDetailViewTestCase(MontrekObjectViewBaseTestCase, GetObjectPkMixin):
+    def _is_base_test_class(self):
+        return self.__class__.__name__ == "MontrekDetailViewTestCase"
+
     def test_view_get_success(self):
         if self._is_base_test_class():
             return
