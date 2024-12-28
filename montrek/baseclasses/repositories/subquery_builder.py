@@ -1,18 +1,18 @@
-from django.conf import settings
+from enum import Enum
 from typing import Type
 
-from django.db.models.functions import Cast
-from django.db.models import Q, F
 from baseclasses.models import (
+    LinkTypeEnum,
     MontrekHubABC,
+    MontrekLinkABC,
     MontrekManyToManyLinkABC,
     MontrekOneToManyLinkABC,
     MontrekSatelliteABC,
     ValueDateList,
 )
-from baseclasses.models import MontrekLinkABC
-from baseclasses.models import LinkTypeEnum
-from django.db.models import CharField, QuerySet, Subquery, OuterRef, Func
+from django.conf import settings
+from django.db.models import CharField, F, Func, OuterRef, Q, QuerySet, Subquery
+from django.db.models.functions import Cast
 from django.utils import timezone
 
 
@@ -67,8 +67,7 @@ class SatelliteSubqueryBuilder(SatelliteSubqueryBuilderABC):
             self.get_hub_query(reference_date)
             .annotate(
                 **{
-                    self.field
-                    + "sub": self.satellite_subquery(
+                    self.field + "sub": self.satellite_subquery(
                         reference_date, lookup_field="hub_entity"
                     ),
                 }
@@ -123,6 +122,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         satellite_class: Type[MontrekSatelliteABC],
         field: str,
         link_class: Type[MontrekLinkABC],
+        agg_func: str = "string_concat",
     ):
         super().__init__(satellite_class, field)
 
@@ -130,6 +130,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
             raise TypeError(f"{link_class.__name__} must inherit from valid LinkClass!")
         self.link_class = link_class
         self.link_db_name = link_class.__name__.lower()
+        self.agg_func = LinkAggFunctionEnum(agg_func)
 
     def get_link_query(
         self, hub_field: str, reference_date: timezone.datetime
@@ -190,8 +191,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
             self.get_link_hub_value_date_query(hub_field_to, reference_date)
             .annotate(
                 **{
-                    self.field
-                    + "sub": Subquery(
+                    self.field + "sub": Subquery(
                         self._annotate_agg_field(
                             hub_field_to,
                             self.satellite_class.objects.filter(
@@ -215,17 +215,27 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
 
     def _annotate_agg_field(self, hub_field_to: str, query: QuerySet) -> QuerySet:
         if self._is_multiple_allowed(hub_field_to):
-            func = get_string_concat_function()
-            field_type = CharField
-            return query.annotate(
-                **{
-                    self.field
-                    + "agg": Cast(
-                        func(Cast(self.field + "sub", field_type())),
-                        field_type(),
-                    )
-                }
-            ).values(self.field + "agg")
+            if self.agg_func == LinkAggFunctionEnum.SUM:
+                return query.annotate(
+                    **{
+                        self.field + "agg": Func(self.field + "sub", function="Sum"),
+                    }
+                ).values(self.field + "agg")
+            if self.agg_func == LinkAggFunctionEnum.STRING_CONCAT:
+                func = get_string_concat_function()
+                field_type = CharField
+                return query.annotate(
+                    **{
+                        self.field + "agg": Cast(
+                            func(Cast(self.field + "sub", field_type())),
+                            field_type(),
+                        )
+                    }
+                ).values(self.field + "agg")
+            else:
+                raise NotImplementedError(
+                    f"Aggregation function {self.agg_func} is not implemented!"
+                )
         return query
 
     def _is_multiple_allowed(self, hub_field_to: str) -> bool:
@@ -246,27 +256,11 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
 
 
 class LinkedSatelliteSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
-    def __init__(
-        self,
-        satellite_class: Type[MontrekSatelliteABC],
-        field: str,
-        link_class: Type[MontrekLinkABC],
-    ):
-        super().__init__(satellite_class, field, link_class)
-
     def build(self, reference_date: timezone.datetime) -> Subquery:
         return self._get_subquery("hub_out", "hub_in", reference_date)
 
 
 class ReverseLinkedSatelliteSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
-    def __init__(
-        self,
-        satellite_class: Type[MontrekSatelliteABC],
-        field: str,
-        link_class: Type[MontrekLinkABC],
-    ):
-        super().__init__(satellite_class, field, link_class)
-
     def build(self, reference_date: timezone.datetime) -> Subquery:
         return self._get_subquery("hub_in", "hub_out", reference_date)
 
@@ -291,3 +285,8 @@ def get_string_concat_function():
         raise NotImplementedError(
             f"No function for concatenating list of strings defined for {engine}!"
         )
+
+
+class LinkAggFunctionEnum(Enum):
+    SUM = "sum"
+    STRING_CONCAT = "string_concat"

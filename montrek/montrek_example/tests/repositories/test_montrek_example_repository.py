@@ -135,6 +135,7 @@ class TestMontrekRepositorySatellite(TestCase):
                 "field_c1_bool",
                 "field_c1_str",
                 "field_d1_str",
+                "field_d1_int",
                 "field_tsd2_float",
                 "field_tsd2_int",
             ],
@@ -1209,6 +1210,15 @@ class TestLinkOneToManyUpates(TestCase):
         self.assertEqual(link_1.state_date_end, MAX_DATE)
         self.assertEqual(link_2.state_date_end, MAX_DATE)
         self.assertGreater(link_2.state_date_start, MIN_DATE)
+
+    def test_aggreagte_multiples_sum(self):
+        hub_c = me_factories.HubCFactory()
+        sat_d1 = me_factories.SatD1Factory(field_d1_int=5)
+        sat_d2 = me_factories.SatD1Factory(field_d1_int=6)
+        hub_c.link_hub_c_hub_d.add(sat_d1.hub_entity)
+        hub_c.link_hub_c_hub_d.add(sat_d2.hub_entity)
+        test_query = HubCRepository().receive()
+        self.assertEqual(test_query.last().field_d1_int, 11)
 
 
 class TestCreateDataWithLinks(TestCase):

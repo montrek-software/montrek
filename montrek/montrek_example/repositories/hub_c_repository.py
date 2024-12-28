@@ -36,6 +36,12 @@ class HubCRepository(MontrekRepository):
             ["field_d1_str"],
         )
         self.add_linked_satellites_field_annotations(
+            me_models.SatD1,
+            me_models.LinkHubCHubD,
+            ["field_d1_int"],
+            agg_func="sum",
+        )
+        self.add_linked_satellites_field_annotations(
             me_models.SatTSD2,
             me_models.LinkHubCHubD,
             ["field_tsd2_float", "field_tsd2_int"],
