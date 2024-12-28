@@ -19,6 +19,7 @@ from montrek_example.repositories.hub_a_repository import (
     HubAJsonRepository,
     HubARepository,
     HubARepository2,
+    HubARepository3,
 )
 from montrek_example.repositories.hub_b_repository import (
     HubBRepository,
@@ -1007,6 +1008,17 @@ class TestMontrekRepositoryLinks(TestCase):
         queryset = HubDRepositoryTSReverseLink({}).receive()
         self.assertEqual(queryset.count(), 1)
         self.assertEqual(queryset[0].field_tsc2_float, "2.5")
+
+    def test_link_with_parent_links(self):
+        hubc = me_factories.HubCFactory()
+        hubd = me_factories.HubDFactory()
+        me_factories.SatD1Factory.create(hub_entity=hubd, field_d1_str="Test")
+        me_factories.LinkHubCHubDFactory(hub_in=hubc, hub_out=hubd)
+        me_factories.LinkHubAHubCFactory(hub_in=self.huba1, hub_out=hubc)
+        repository = HubARepository3()
+        queryset = repository.receive()
+        self.assertEqual(queryset.count(), 2)
+        self.assertEqual(queryset[0].field_d1_str, "Test")
 
 
 class TestLinkOneToOneUpates(TestCase):
