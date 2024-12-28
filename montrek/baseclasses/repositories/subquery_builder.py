@@ -122,7 +122,9 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         satellite_class: Type[MontrekSatelliteABC],
         field: str,
         link_class: Type[MontrekLinkABC],
+        *,
         agg_func: str = "string_concat",
+        parent_link_classes: tuple[Type[MontrekLinkABC], ...] = (),
     ):
         super().__init__(satellite_class, field)
 
@@ -132,19 +134,25 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         self.link_db_name = link_class.__name__.lower()
         self.agg_func = LinkAggFunctionEnum(agg_func)
 
+        self.parent_link_classes = parent_link_classes
+
+
     def get_link_query(
         self, hub_field: str, reference_date: timezone.datetime
     ) -> QuerySet:
+        hub_db_field_name = self._get_parent_db_name(hub_field)
         return self.link_class.objects.filter(
             Q(
                 **self.subquery_filter(
-                    reference_date, lookup_field=hub_field, outer_ref="hub"
+                    reference_date,
+                    lookup_field=hub_db_field_name,
+                    outer_ref="hub",
                 )
             )
             & Q(
                 **{
-                    f"{hub_field}__state_date_start__lte": reference_date,
-                    f"{hub_field}__state_date_end__gt": reference_date,
+                    f"{hub_db_field_name}__state_date_start__lte": reference_date,
+                    f"{hub_db_field_name}__state_date_end__gt": reference_date,
                 }
             ),
         )
@@ -165,6 +173,12 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
                 }
             ),
         )
+
+    def _get_parent_db_name(self, hub_field: str) -> str:
+        db_name = hub_field
+        for link_class in self.parent_link_classes:
+            db_name += "__" + link_class.__name__.lower() + f"__{hub_field}"
+        return db_name
 
     def _link_hubs_and_get_subquery(
         self, hub_field_to: str, hub_field_from: str, reference_date: timezone.datetime
