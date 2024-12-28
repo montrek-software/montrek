@@ -133,7 +133,9 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         self.link_class = link_class
         self.link_db_name = link_class.__name__.lower()
         self.agg_func = LinkAggFunctionEnum(agg_func)
+
         self.parent_link_classes = parent_link_classes
+
 
     def get_link_query(
         self, hub_field: str, reference_date: timezone.datetime
