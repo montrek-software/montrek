@@ -1,3 +1,4 @@
+from math import floor
 from reporting.managers.montrek_report_manager import ReportElementProtocol
 
 
@@ -28,13 +29,13 @@ class ReportGridLayout:
         self.report_grid_elements.add_report_grid_element(report_element, row, col)
 
     def to_html(self):
-        html_str = '<div><table id="noStyleTable">'
+        html_str = ""
         for row in self.report_grid_elements.report_grid_elements_container:
-            html_str += "<tr>"
+            html_str += '<div class="row">'
+            col_len = floor(12 / len(row))
             for element in row:
-                html_str += f"<td>{element.to_html()}</td>"
-            html_str += "</tr>"
-        html_str += "</table></div>"
+                html_str += f'<div class="col-lg-{col_len}">{element.to_html()}</div>'
+            html_str += "</div>"
         return html_str
 
     def to_latex(self):
