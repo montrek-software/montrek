@@ -15,7 +15,7 @@ class TestReportGridLayout(TestCase):
         html = self.grid.to_html()
         self.assertEqual(
             html,
-            '<div><table id="noStyleTable"><tr><td><p>One</p></td><td><p>Two</p></td></tr><tr><td><p>Three</p></td><td><p>Four</p></td></tr></table></div>',
+            '<div class="row"><div class="col-lg-6"><p>One</p></div><div class="col-lg-6"><p>Two</p></div></div><div class="row"><div class="col-lg-6"><p>Three</p></div><div class="col-lg-6"><p>Four</p></div></div>',
         )
 
     def test_report_grid_layout__latex(self):
@@ -31,6 +31,7 @@ class TestReportGridLayout(TestCase):
         nested_grid.add_report_grid_element(ReportingText("Nested Two"), 0, 0)
         self.grid.add_report_grid_element(nested_grid, 1, 0)
         html = self.grid.to_html()
-        self.assertTrue(
-            '<table id="noStyleTable"><tr><td>Nested Two</td></tr></table>' in html
+        self.assertEqual(
+            html,
+            '<div class="row"><div class="col-lg-6"><p>One</p></div><div class="col-lg-6"><p>Two</p></div></div><div class="row"><div class="col-lg-6"><div class="row"><div class="col-lg-12">Nested Two</div></div></div><div class="col-lg-6"><p>Four</p></div></div>',
         )
