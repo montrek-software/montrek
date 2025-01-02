@@ -1,7 +1,8 @@
+from django.core.files import File
 import os
 from file_upload.models import FileUploadRegistryHubABC
 from django.conf import settings
-from typing import Any, TextIO, Dict
+from typing import Any, Dict
 from typing import Protocol
 
 from file_upload.repositories.file_upload_file_repository import (
@@ -12,7 +13,8 @@ from file_upload.managers.file_upload_registry_manager import (
 )
 from baseclasses.models import MontrekHubABC
 from baseclasses.managers.montrek_manager import MontrekManager
-from tasks.montrek_task import MontrekTask
+from file_upload.tasks.file_upload_task import FileUploadTask
+from montrek.celery_app import PARALLEL_QUEUE_NAME
 
 
 class FileUploadProcessorProtocol(Protocol):
@@ -20,6 +22,7 @@ class FileUploadProcessorProtocol(Protocol):
 
     def __init__(
         self,
+        file_upload_registry_hub: FileUploadRegistryHubABC,
         session_data: Dict[str, Any],
         **kwargs,
     ):
@@ -46,32 +49,14 @@ class NotDefinedFileUploadProcessor:
     ) -> None:
         raise NotImplementedError(self.message)
 
-    def process(self, file: TextIO):
+    def process(self, file_path: str):
         raise NotImplementedError(self.message)
 
-    def pre_check(self, file: TextIO):
+    def pre_check(self, file_path: str):
         raise NotImplementedError(self.message)
 
-    def post_check(self, file: TextIO):
+    def post_check(self, file_path: str):
         raise NotImplementedError(self.message)
-
-
-class FileUploadTask(MontrekTask):
-    def __init__(
-        self,
-        manager_class: type[MontrekManager],
-    ):
-        self.manager_class = manager_class
-        task_name = (
-            f"{manager_class.__module__}.{manager_class.__name__}_process_file_task"
-        )
-        super().__init__(task_name)
-
-    def run(self, session_data: Dict[str, Any]):
-        manager = self.manager_class(session_data)
-        manager.process()
-        message = manager.processor.message
-        return message
 
 
 class FileUploadManagerABC(MontrekManager):
@@ -80,34 +65,46 @@ class FileUploadManagerABC(MontrekManager):
         FileUploadProcessorProtocol
     ] = NotDefinedFileUploadProcessor
     file_registry_manager_class = FileUploadRegistryManager
+    do_process_file_async: bool = True
     process_file_task: FileUploadTask
+    message: str
 
-    def __init_subclass__(cls, **kwargs):
-        cls.process_file_task = FileUploadTask(manager_class=cls)
+    def __init_subclass__(cls, task_queue: str = PARALLEL_QUEUE_NAME, **kwargs):
+        if cls.do_process_file_async:
+            cls.process_file_task = FileUploadTask(manager_class=cls, queue=task_queue)
 
     def __init__(
         self,
         session_data: Dict[str, Any],
-        **kwargs,
     ) -> None:
         super().__init__(session_data=session_data)
         self.registry_manager = self.file_registry_manager_class(session_data)
         self.file_upload_registry: MontrekHubABC | Any = None
         self.file_path = ""
+        self.processor: FileUploadProcessorProtocol | None = None
 
-    def upload_and_process(self, file: TextIO | None) -> bool:
+    def upload_and_process(self, file: File) -> bool:
         # Called by view
-        self.session_data["file_upload_registry_id"] = self._register_file_in_db(file)
-        self.process_file_task.delay(
-            session_data=self.session_data,
-        )
-        return True
+        self.session_data["file_upload_registry_id"] = self.register_file_in_db(file)
+        if self.do_process_file_async:
+            self.process_file_task.delay(
+                session_data=self.session_data,
+            )
+            result = True
+            self.message = "Successfully scheduled background task for processing file. You will receive an email once the task has finished execution."
+        else:
+            result = self.process()
+            self.message = self.processor.message
+        return result
 
     def process(self) -> bool:
         # Called by task
         self._load_file_upload_registry()
         self._load_file_path()
-        self.processor = self.file_upload_processor_class(self.session_data)
+        self.processor = self.file_upload_processor_class(
+            self.file_upload_registry,
+            self.session_data,
+        )
         if not self.processor.pre_check(self.file_path):
             self._update_file_upload_registry("failed", self.processor.message)
             return False
@@ -121,7 +118,7 @@ class FileUploadManagerABC(MontrekManager):
             self._update_file_upload_registry("failed", self.processor.message)
             return False
 
-    def _register_file_in_db(self, file: TextIO) -> int:
+    def register_file_in_db(self, file: File) -> int:
         file_name = file.name
         file_type = file_name.split(".")[-1]
         upload_file_hub = self.repository.std_create_object({"file": file})

@@ -63,6 +63,18 @@ class HubARepository2(MontrekRepository):
         )
 
 
+class HubARepository3(MontrekRepository):
+    hub_class = me_models.HubA
+
+    def set_annotations(self):
+        self.add_linked_satellites_field_annotations(
+            me_models.SatD1,
+            me_models.LinkHubCHubD,
+            ["field_d1_str"],
+            parent_link_classes=(me_models.LinkHubAHubC,),
+        )
+
+
 class HubAApiUploadRepository(ApiUploadRepositoryABC):
     hub_class = me_models.HubAApiUploadRegistryHub
     static_satellite_class = me_models.HubAApiUploadRegistryStaticSatellite

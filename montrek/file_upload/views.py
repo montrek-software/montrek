@@ -44,20 +44,12 @@ class MontrekUploadFileView(MontrekTemplateView):
                 return self.render_to_response(self.get_context_data())
             self.file_upload_manager = self.file_upload_manager_class(
                 session_data=self.session_data,
-                upload_form=form,
-                request=request,
-                **self.kwargs,
             )
             result = self.file_upload_manager.upload_and_process(request.FILES["file"])
             if result:
-                messages.info(
-                    request,
-                    "Successfully scheduled background task for processing file.",
-                )
+                messages.info(request, self.file_upload_manager.message)
             else:
-                messages.error(
-                    request, "Failed to schedule background task for processing file!"
-                )
+                messages.error(request, self.file_upload_manager.message)
             return HttpResponseRedirect(self.get_success_url())
         else:
             return self.render_to_response(self.get_context_data())

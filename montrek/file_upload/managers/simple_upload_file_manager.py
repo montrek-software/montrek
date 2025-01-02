@@ -1,8 +1,8 @@
+from django.urls import resolve
 from django.db import transaction
 from typing import Any
 import pandas as pd
 from file_upload.managers.file_upload_manager import FileUploadManagerABC
-from reporting.managers.montrek_table_manager import MontrekTableManager
 
 
 class SimpleFileUploadProcessor:
@@ -10,13 +10,12 @@ class SimpleFileUploadProcessor:
         self,
         file_upload_registry_hub,
         session_data: dict[str, Any],
-        table_manager: MontrekTableManager,
-        overwrite: bool = False,
         **kwargs,
     ):
         self.message = ""
-        self.table_manager = table_manager
-        self.overwrite = overwrite
+        view_class = resolve(session_data["request_path"]).func.view_class
+        self.table_manager = view_class.manager_class(session_data)
+        self.overwrite = session_data["overwrite"]
 
     def pre_check(self, file_path: str) -> bool:
         return True
@@ -53,3 +52,4 @@ class SimpleFileUploadProcessor:
 
 class SimpleUploadFileManager(FileUploadManagerABC):
     file_upload_processor_class = SimpleFileUploadProcessor
+    do_process_file_async = False

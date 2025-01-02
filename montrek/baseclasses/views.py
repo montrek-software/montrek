@@ -9,7 +9,7 @@ from django.core.paginator import Paginator
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
-from django.views.generic import DetailView
+from django.views.generic import DetailView, RedirectView
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import CreateView
 from django.views.generic.list import ListView
@@ -171,7 +171,11 @@ class MontrekViewMixin:
 
     @property
     def session_data(self) -> dict:
-        session_data = dict(self.request.GET)
+        session_data = {}
+        if self.request.method == "GET":
+            session_data.update(dict(self.request.GET))
+        elif self.request.method == "POST":
+            session_data.update(dict(self.request.POST))
         kwargs = getattr(self, "kwargs", {})
         session_data.update(kwargs)
         session_data.update(dict(self.request.session))
@@ -181,6 +185,7 @@ class MontrekViewMixin:
             session_data["user_id"] = self.request.user.id
         self.request.session["filter"] = session_data.get("filter", {})
         session_data["host_url"] = self.request.build_absolute_uri("/")[:-1]
+        session_data["http_referer"] = self.request.META.get("HTTP_REFERER")
         return session_data
 
     def _get_filters(self, session_data):
@@ -265,9 +270,9 @@ class ToPdfMixin:
         if pdf_path and os.path.exists(pdf_path):
             with open(pdf_path, "rb") as pdf_file:
                 response = HttpResponse(pdf_file.read(), content_type="application/pdf")
-                response[
-                    "Content-Disposition"
-                ] = "inline; filename=" + os.path.basename(pdf_path)
+                response["Content-Disposition"] = (
+                    "inline; filename=" + os.path.basename(pdf_path)
+                )
                 return response
         previous_url = self.request.META.get("HTTP_REFERER")
         return HttpResponseRedirect(previous_url)
@@ -340,19 +345,23 @@ class MontrekListView(
     def post(self, request, *args, **kwargs):
         form = SimpleUploadFileForm(".xlsx,.csv", request.POST, request.FILES)
         if form.is_valid():
+            session_data = self.session_data.copy()
+            session_data["overwrite"] = form.cleaned_data["overwrite"]
             file_upload_manager = SimpleUploadFileManager(
-                request.FILES["file"],
-                session_data=self.session_data,
-                table_manager=self.manager,
-                overwrite=form.cleaned_data["overwrite"],
+                session_data=session_data,
                 **self.kwargs,
             )
-            result = file_upload_manager.upload_and_process()
+            result = file_upload_manager.upload_and_process(request.FILES["file"])
             if result:
-                messages.info(request, file_upload_manager.processor.message)
+                messages.info(
+                    request,
+                    file_upload_manager.processor.message,
+                )
             else:
-                messages.error(request, file_upload_manager.processor.message)
-            return HttpResponseRedirect(self.request.path)
+                messages.error(
+                    request,
+                    file_upload_manager.processor.message,
+                )
         return HttpResponseRedirect(self.request.path)
 
 
@@ -517,3 +526,7 @@ class MontrekRestApiView(APIView, MontrekViewMixin):
         query = self.get_view_queryset()
         serializer = MontrekSerializer(query, many=True, manager=self.manager)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class MontrekRedirectView(MontrekViewMixin, RedirectView):
+    manager_class = MontrekManagerNotImplemented

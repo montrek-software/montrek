@@ -377,3 +377,12 @@ class HubARestApiView(views.MontrekRestApiView):
 
 class HubBRestApiView(views.MontrekRestApiView):
     manager_class = mem.HubBManager
+
+
+class HubARedirectView(views.MontrekRedirectView):
+    manager_class = mem.HubAManager
+    page_class = pages.ExampleAPage
+    title = "Redirect to Example A"
+
+    def get_redirect_url(self, *args, **kwargs):
+        return reverse("montrek_example_a_list")

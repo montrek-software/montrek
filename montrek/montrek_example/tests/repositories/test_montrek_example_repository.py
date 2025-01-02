@@ -19,6 +19,7 @@ from montrek_example.repositories.hub_a_repository import (
     HubAJsonRepository,
     HubARepository,
     HubARepository2,
+    HubARepository3,
 )
 from montrek_example.repositories.hub_b_repository import (
     HubBRepository,
@@ -135,6 +136,7 @@ class TestMontrekRepositorySatellite(TestCase):
                 "field_c1_bool",
                 "field_c1_str",
                 "field_d1_str",
+                "field_d1_int",
                 "field_tsd2_float",
                 "field_tsd2_int",
             ],
@@ -1008,6 +1010,17 @@ class TestMontrekRepositoryLinks(TestCase):
         self.assertEqual(queryset.count(), 1)
         self.assertEqual(queryset[0].field_tsc2_float, "2.5")
 
+    def test_link_with_parent_links(self):
+        hubc = me_factories.HubCFactory()
+        hubd = me_factories.HubDFactory()
+        me_factories.SatD1Factory.create(hub_entity=hubd, field_d1_str="Test")
+        me_factories.LinkHubCHubDFactory(hub_in=hubc, hub_out=hubd)
+        me_factories.LinkHubAHubCFactory(hub_in=self.huba1, hub_out=hubc)
+        repository = HubARepository3()
+        queryset = repository.receive()
+        self.assertEqual(queryset.count(), 2)
+        self.assertEqual(queryset[0].field_d1_str, "Test")
+
 
 class TestLinkOneToOneUpates(TestCase):
     def setUp(self):
@@ -1209,6 +1222,15 @@ class TestLinkOneToManyUpates(TestCase):
         self.assertEqual(link_1.state_date_end, MAX_DATE)
         self.assertEqual(link_2.state_date_end, MAX_DATE)
         self.assertGreater(link_2.state_date_start, MIN_DATE)
+
+    def test_aggreagte_multiples_sum(self):
+        hub_c = me_factories.HubCFactory()
+        sat_d1 = me_factories.SatD1Factory(field_d1_int=5)
+        sat_d2 = me_factories.SatD1Factory(field_d1_int=6)
+        hub_c.link_hub_c_hub_d.add(sat_d1.hub_entity)
+        hub_c.link_hub_c_hub_d.add(sat_d2.hub_entity)
+        test_query = HubCRepository().receive()
+        self.assertEqual(test_query.last().field_d1_int, 11)
 
 
 class TestCreateDataWithLinks(TestCase):

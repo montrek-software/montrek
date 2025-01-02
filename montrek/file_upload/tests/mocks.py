@@ -1,6 +1,6 @@
 from typing import Any
 
-from file_upload.tasks.process_file_task import ProcessFileTaskABC
+from file_upload.managers.file_upload_manager import FileUploadManagerABC
 from file_upload.models import FileUploadRegistryHubABC
 from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepositoryABC,
@@ -10,9 +10,7 @@ from file_upload.models import (
     FileUploadRegistryStaticSatellite,
     LinkFileUploadRegistryFileUploadFile,
 )
-from file_upload.managers.background_file_upload_manager import (
-    BackgroundFileUploadManagerABC,
-)
+from montrek.celery_app import SEQUENTIAL_QUEUE_NAME
 
 
 class MockFileUploadRegistryRepository(FileUploadRegistryRepositoryABC):
@@ -80,11 +78,21 @@ class MockFileUploadProcessorPostCheckFail(MockFileUploadProcessor):
         return False
 
 
-class MockProcessFileTask(ProcessFileTaskABC):
+class MockFileUploadManager(FileUploadManagerABC):
     file_upload_processor_class = MockFileUploadProcessor
-    file_upload_registry_repository_class = MockFileUploadRegistryRepository
 
 
-class MockBackgroundFileUploadManager(BackgroundFileUploadManagerABC):
+class MockFileUploadManagerProcessorFail(FileUploadManagerABC):
+    file_upload_processor_class = MockFileUploadProcessorFail
+
+
+class MockFileUploadManagerProcessorPreCheckFail(FileUploadManagerABC):
+    file_upload_processor_class = MockFileUploadProcessorPreCheckFail
+
+
+class MockFileUploadManagerProcessorPostCheckFail(FileUploadManagerABC):
+    file_upload_processor_class = MockFileUploadProcessorPostCheckFail
+
+
+class MockFileUploadManagerSeq(FileUploadManagerABC, task_queue=SEQUENTIAL_QUEUE_NAME):
     file_upload_processor_class = MockFileUploadProcessor
-    task = MockProcessFileTask()
