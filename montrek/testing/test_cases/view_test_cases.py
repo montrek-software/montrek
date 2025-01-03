@@ -81,7 +81,7 @@ class MontrekViewTestCase(TestCase):
             return
         self.assertIsInstance(self.view, self.view_class)
 
-    def test_view_without_permission(self):
+    def test_view_without_required_permission(self):
         if self._is_base_test_class():
             return
         required_user_permissions = self.required_user_permissions()

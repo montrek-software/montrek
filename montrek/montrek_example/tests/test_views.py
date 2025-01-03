@@ -394,7 +394,7 @@ class TestMontrekExampleDCreate(MontrekCreateViewTestCase):
     viewname = "montrek_example_d_create"
     view_class = me_views.MontrekExampleDCreate
 
-    def user_permissions(self) -> list[Permission]:
+    def required_user_permissions(self) -> list[Permission]:
         return [Permission.objects.get(codename="add_hubd")]
 
     def creation_data(self):
