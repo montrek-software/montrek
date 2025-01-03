@@ -18,7 +18,6 @@ class NotImplementedView(View):
 class MontrekViewTestCase(TestCase):
     viewname: str = "Please set the viewname in the subclass"
     view_class: type[View] = NotImplementedView
-    user_permissions: list[str] = []
     expected_status_code: int = 200
 
     def setUp(self):
@@ -38,10 +37,8 @@ class MontrekViewTestCase(TestCase):
 
     def _login_user(self):
         self.user = MontrekUserFactory()
-        for perm in self.user_permissions:
-            self.permission = Permission.objects.get(codename=perm)
-            self.user.user_permissions.add(self.permission)
         self.client.force_login(self.user)
+        self.user.user_permissions.set(self.user_permissions())
 
     def _is_base_test_class(self) -> bool:
         # Django runs all tests within these base classes here individually. This is not wanted and hence we skip the tests if django attempts to do this.
@@ -52,6 +49,9 @@ class MontrekViewTestCase(TestCase):
 
     def url_kwargs(self) -> dict:
         return {}
+
+    def user_permissions(self) -> list[Permission]:
+        return []
 
     @property
     def url(self):

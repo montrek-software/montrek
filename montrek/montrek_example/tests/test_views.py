@@ -2,6 +2,8 @@ from tempfile import TemporaryDirectory
 import os
 from textwrap import dedent
 
+from django.contrib.auth.models import Permission
+
 from baseclasses.dataclasses.alert import AlertEnum
 from baseclasses.utils import montrek_time
 from django.test import TestCase, TransactionTestCase
@@ -391,7 +393,9 @@ class TestMontrekExampleDListView(MontrekListViewTestCase):
 class TestMontrekExampleDCreate(MontrekCreateViewTestCase):
     viewname = "montrek_example_d_create"
     view_class = me_views.MontrekExampleDCreate
-    user_permissions = ["add_hubd"]
+
+    def user_permissions(self) -> list[Permission]:
+        return [Permission.objects.get(codename="add_hubd")]
 
     def creation_data(self):
         return {
@@ -403,7 +407,7 @@ class TestMontrekExampleDCreate(MontrekCreateViewTestCase):
         }
 
     def test_view_without_permission(self):
-        self.user.user_permissions.remove(self.permission)
+        self.user.user_permissions.clear()
         previous_url = reverse("montrek_example_d_list")
         response = self.client.get(self.url, HTTP_REFERER=previous_url, follow=True)
         messages = list(response.context["messages"])
