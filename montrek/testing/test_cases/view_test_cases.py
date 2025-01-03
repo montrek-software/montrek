@@ -5,6 +5,7 @@ import pandas as pd
 from django.test import TestCase
 from django.views import View
 from django.contrib.auth.models import Permission
+from middleware.permission_error_middleware import MISSING_PERMISSION_MESSAGE
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 from django.urls import reverse
 from bs4 import BeautifulSoup
@@ -38,7 +39,7 @@ class MontrekViewTestCase(TestCase):
     def _login_user(self):
         self.user = MontrekUserFactory()
         self.client.force_login(self.user)
-        self.user.user_permissions.set(self.user_permissions())
+        self.user.user_permissions.set(self.required_user_permissions())
 
     def _is_base_test_class(self) -> bool:
         # Django runs all tests within these base classes here individually. This is not wanted and hence we skip the tests if django attempts to do this.
@@ -50,7 +51,7 @@ class MontrekViewTestCase(TestCase):
     def url_kwargs(self) -> dict:
         return {}
 
-    def user_permissions(self) -> list[Permission]:
+    def required_user_permissions(self) -> list[Permission]:
         return []
 
     @property
@@ -79,6 +80,24 @@ class MontrekViewTestCase(TestCase):
         if isinstance(self.view, MontrekDeleteView):
             return
         self.assertIsInstance(self.view, self.view_class)
+
+    def test_view_without_permission(self):
+        if self._is_base_test_class():
+            return
+        required_user_permissions = self.required_user_permissions()
+        if not required_user_permissions:
+            return
+        self.user.user_permissions.clear()
+        previous_url = reverse("home")
+        response = self.client.get(self.url, HTTP_REFERER=previous_url, follow=True)
+        messages = list(response.context["messages"])
+        self.assertRedirects(response, previous_url)
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(
+            messages[0].message,
+            MISSING_PERMISSION_MESSAGE,
+        )
+        self.user.user_permissions.set(required_user_permissions)
 
 
 class MontrekListViewTestCase(MontrekViewTestCase):

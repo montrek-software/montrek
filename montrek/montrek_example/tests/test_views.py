@@ -406,18 +406,6 @@ class TestMontrekExampleDCreate(MontrekCreateViewTestCase):
             "field_tsd2_int": 2,
         }
 
-    def test_view_without_permission(self):
-        self.user.user_permissions.clear()
-        previous_url = reverse("montrek_example_d_list")
-        response = self.client.get(self.url, HTTP_REFERER=previous_url, follow=True)
-        messages = list(response.context["messages"])
-        self.assertRedirects(response, previous_url)
-        self.assertEqual(len(messages), 1)
-        self.assertEqual(
-            messages[0].message,
-            "You do not have the required permissions to access this page.",
-        )
-
 
 class TestMontrekExampleDDelete(MontrekDeleteViewTestCase):
     viewname = "montrek_example_d_delete"
