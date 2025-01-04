@@ -881,6 +881,45 @@ class TestMontrekCreateObjectLinks(TestCase):
         queried_object = repository.receive().get()
         self.assertEqual(queried_object.field_b1_str, sat_b_1.field_b1_str)
 
+    def test_update_one_to_many_link(self):
+        sat_c_1 = me_factories.SatC1Factory(
+            field_c1_str="test1",
+        )
+        repository = HubARepository(session_data={"user_id": self.user.id})
+        repository.std_create_object(
+            {
+                "field_a1_int": 5,
+                "field_a1_str": "test",
+                "field_a2_float": 6.0,
+                "field_a2_str": "test2",
+                "link_hub_a_hub_c": sat_c_1.hub_entity,
+            }
+        )
+        self.assertEqual(me_models.LinkHubAHubC.objects.count(), 1)
+        self.assertEqual(
+            me_models.LinkHubAHubC.objects.first().state_date_end, MAX_DATE
+        )
+        test_repository = HubARepository2({})
+        test_a_object = test_repository.receive().get()
+        self.assertEqual(test_a_object.field_c1_str, "test1")
+        sat_c_2 = me_factories.SatC1Factory(
+            field_c1_str="test2",
+        )
+        repository.std_create_object(
+            {
+                "field_a1_int": 5,
+                "field_a1_str": "test",
+                "field_a2_float": 6.0,
+                "field_a2_str": "test2",
+                "link_hub_a_hub_c": sat_c_2.hub_entity,
+            }
+        )
+        self.assertEqual(me_models.LinkHubAHubC.objects.count(), 2)
+        self.assertEqual(me_models.LinkHubAHubC.objects.last().state_date_end, MAX_DATE)
+        test_repository = HubARepository2({})
+        test_a_object = test_repository.receive().get()
+        self.assertEqual(test_a_object.field_c1_str, "test2")
+
 
 class TestMontrekCreateObjectTransaction(TransactionTestCase):
     def setUp(self):
