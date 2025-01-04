@@ -2,6 +2,8 @@ from tempfile import TemporaryDirectory
 import os
 from textwrap import dedent
 
+from django.contrib.auth.models import Permission
+
 from baseclasses.dataclasses.alert import AlertEnum
 from baseclasses.utils import montrek_time
 from django.test import TestCase, TransactionTestCase
@@ -391,7 +393,9 @@ class TestMontrekExampleDListView(MontrekListViewTestCase):
 class TestMontrekExampleDCreate(MontrekCreateViewTestCase):
     viewname = "montrek_example_d_create"
     view_class = me_views.MontrekExampleDCreate
-    user_permissions = ["add_hubd"]
+
+    def required_user_permissions(self) -> list[Permission]:
+        return [Permission.objects.get(codename="add_hubd")]
 
     def creation_data(self):
         return {
@@ -401,18 +405,6 @@ class TestMontrekExampleDCreate(MontrekCreateViewTestCase):
             "field_tsd2_float": 1.0,
             "field_tsd2_int": 2,
         }
-
-    def test_view_without_permission(self):
-        self.user.user_permissions.remove(self.permission)
-        previous_url = reverse("montrek_example_d_list")
-        response = self.client.get(self.url, HTTP_REFERER=previous_url, follow=True)
-        messages = list(response.context["messages"])
-        self.assertRedirects(response, previous_url)
-        self.assertEqual(len(messages), 1)
-        self.assertEqual(
-            messages[0].message,
-            "You do not have the required permissions to access this page.",
-        )
 
 
 class TestMontrekExampleDDelete(MontrekDeleteViewTestCase):

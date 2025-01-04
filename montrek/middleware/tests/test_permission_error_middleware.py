@@ -12,6 +12,8 @@ from django.contrib.sessions.middleware import SessionMiddleware
 from django.contrib.messages import get_messages
 from django.contrib.messages import ERROR
 
+from middleware.permission_error_middleware import MISSING_PERMISSION_MESSAGE
+
 
 class MockView(View):
     def get(self, request):
@@ -42,7 +44,7 @@ class PermissionErrorMiddlewareTest(MessagesTestMixin, TestCase):
         self.assertEqual(len(messages), 1)
         self.assertEqual(
             str(messages[0]),
-            "You do not have the required permissions to access this page.",
+            MISSING_PERMISSION_MESSAGE,
         )
         self.assertEqual(messages[0].level, ERROR)
 
@@ -62,6 +64,6 @@ class PermissionErrorMiddlewareTest(MessagesTestMixin, TestCase):
         self.assertEqual(response.url, reverse("login"))
         self.assertEqual(
             str(messages[0]),
-            "You do not have the required permissions to access this page.",
+            MISSING_PERMISSION_MESSAGE,
         )
         self.assertEqual(messages[0].level, ERROR)
