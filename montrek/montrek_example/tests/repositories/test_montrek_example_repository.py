@@ -1202,7 +1202,6 @@ class TestLinkOneToManyUpates(TestCase):
     def test_update_one_to_many_link_different(self):
         hub_c2 = me_factories.HubCFactory()
         # Adding the a new link should create a new link with adjusted state dates
-        # Both links should exist at the same time
         self.repository.std_create_object(
             {
                 "hub_entity_id": self.hub_a.id,
@@ -1216,7 +1215,7 @@ class TestLinkOneToManyUpates(TestCase):
         self.assertEqual(link_1.hub_out, self.hub_c)
         self.assertEqual(link_2.hub_out, hub_c2)
         self.assertEqual(link_1.state_date_start, MIN_DATE)
-        self.assertEqual(link_1.state_date_end, MAX_DATE)
+        self.assertEqual(link_1.state_date_end, link_2.state_date_start)
         self.assertEqual(link_2.state_date_end, MAX_DATE)
         self.assertGreater(link_2.state_date_start, MIN_DATE)
 
