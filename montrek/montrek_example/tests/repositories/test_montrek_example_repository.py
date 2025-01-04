@@ -899,6 +899,11 @@ class TestMontrekCreateObjectLinks(TestCase):
         self.assertEqual(
             me_models.LinkHubAHubC.objects.first().state_date_end, MAX_DATE
         )
+        # Check that link start date is set to creation date (which is for sure less than 5 minutes ago)
+        self.assertTrue(
+            me_models.LinkHubAHubC.objects.first().state_date_start
+            > timezone.now() - datetime.timedelta(minutes=5)
+        )
         test_repository = HubARepository2({})
         test_a_object = test_repository.receive().get()
         self.assertEqual(test_a_object.field_c1_str, "test1")
@@ -915,7 +920,10 @@ class TestMontrekCreateObjectLinks(TestCase):
             }
         )
         self.assertEqual(me_models.LinkHubAHubC.objects.count(), 2)
-        self.assertEqual(me_models.LinkHubAHubC.objects.last().state_date_end, MAX_DATE)
+        old_link = me_models.LinkHubAHubC.objects.first()
+        new_link = me_models.LinkHubAHubC.objects.last()
+        self.assertEqual(new_link.state_date_end, MAX_DATE)
+        self.assertEqual(old_link.state_date_end, new_link.state_date_start)
         test_repository = HubARepository2({})
         test_a_object = test_repository.receive().get()
         self.assertEqual(test_a_object.field_c1_str, "test2")

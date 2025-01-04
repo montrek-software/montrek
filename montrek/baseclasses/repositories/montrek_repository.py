@@ -232,7 +232,6 @@ class MontrekRepository:
             link_subquery_builder_class,
             link_class=link_class,
             rename_field_map=rename_field_map,
-
             parent_link_classes=parent_link_classes,
             agg_func=agg_func,
         )
