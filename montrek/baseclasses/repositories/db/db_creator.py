@@ -8,6 +8,7 @@ from baseclasses.models import (
     HubValueDate,
     MontrekHubABC,
     MontrekLinkABC,
+    MontrekOneToManyLinkABC,
     MontrekOneToOneLinkABC,
     MontrekSatelliteABC,
     ValueDateList,
@@ -287,10 +288,20 @@ class DbCreator:
         self, link_class: type[MontrekLinkABC], values: list[MontrekHubABC]
     ) -> list[MontrekLinkABC]:
         if link_class.hub_in.field.related_model == self.hub.__class__:
-            new_links = [link_class(hub_in=self.hub, hub_out=value) for value in values]
+            new_links = [
+                link_class(
+                    hub_in=self.hub, hub_out=value, state_date_start=self.creation_date
+                )
+                for value in values
+            ]
             return self._update_links_if_exist(new_links, "hub_in")
         else:
-            new_links = [link_class(hub_in=value, hub_out=self.hub) for value in values]
+            new_links = [
+                link_class(
+                    hub_in=value, hub_out=self.hub, state_date_start=self.creation_date
+                )
+                for value in values
+            ]
             return self._update_links_if_exist(new_links, "hub_out")
 
     def _update_links_if_exist(
@@ -317,11 +328,13 @@ class DbCreator:
         opposite_hubs = [getattr(link, opposite_field) for link in links]
         filter_kwargs = {f"{opposite_field}__in": opposite_hubs}
         continued_links = existing_links.filter(**filter_kwargs).all()
-        if is_one_to_one_link:
+        is_one_to_many_link = isinstance(links[0], MontrekOneToManyLinkABC)
+        if is_one_to_one_link or is_one_to_many_link:
             discontinued_links = existing_links.exclude(**filter_kwargs).all()
             for link in discontinued_links:
                 link.state_date_end = self.creation_date
             self.db_staller.stall_updated_links(discontinued_links)
+
         continued_opposite_hubs = [
             getattr(link, opposite_field) for link in continued_links
         ]
