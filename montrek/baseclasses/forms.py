@@ -93,6 +93,7 @@ class MontrekCreateForm(forms.ModelForm):
         if self.repository:
             self._meta.model = self.repository.hub_class
         super().__init__(*args, **kwargs)
+        self.initial = kwargs.get("initial", {})
 
         self._add_satellite_fields()
         self._add_hub_entity_id_field()
@@ -126,10 +127,14 @@ class MontrekCreateForm(forms.ModelForm):
             if is_many_to_many
             else MontrekModelChoiceField
         )
+        initial_link = queryset.filter(
+            **{display_field: self.initial.get(display_field)}
+        ).first()
         self.fields[link_name] = choice_class(
             display_field=display_field,
             queryset=queryset,
             required=required,
+            initial=initial_link,
             **kwargs,
         )
 
