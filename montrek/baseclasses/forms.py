@@ -1,3 +1,4 @@
+from typing import Any
 from django.db.models import TextChoices
 from django import forms
 from django.db.models import QuerySet
@@ -127,9 +128,9 @@ class MontrekCreateForm(forms.ModelForm):
             if is_many_to_many
             else MontrekModelChoiceField
         )
-        initial_link = queryset.filter(
-            **{display_field: self.initial.get(display_field)}
-        ).first()
+        initial_link = choice_class.get_initial_link(
+            self.initial, queryset, display_field
+        )
         self.fields[link_name] = choice_class(
             display_field=display_field,
             queryset=queryset,
@@ -147,9 +148,22 @@ class BaseMontrekChoiceField:
     def label_from_instance(self, obj):
         return getattr(obj, self.display_field)
 
+    @staticmethod
+    def get_initial_link(
+        initial: dict[str, Any], queryset: QuerySet, display_field: str
+    ) -> object | None:
+        raise NotImplementedError("Subclasses must implement this method.")
+
 
 class MontrekModelChoiceField(BaseMontrekChoiceField, forms.ModelChoiceField):
-    pass
+    @staticmethod
+    def get_initial_link(
+        initial: dict[str, Any], queryset: QuerySet, display_field: str
+    ) -> object | None:
+        initial_link = queryset.filter(
+            **{display_field: initial.get(display_field)}
+        ).first()
+        return initial_link
 
 
 class MontrekModelMultipleChoiceField(
@@ -158,3 +172,9 @@ class MontrekModelMultipleChoiceField(
     def __init__(self, display_field: str, *args, **kwargs):
         kwargs["widget"] = forms.CheckboxSelectMultiple()
         super().__init__(display_field, *args, **kwargs)
+
+    @staticmethod
+    def get_initial_link(
+        initial: dict[str, Any], queryset: QuerySet, display_field: str
+    ) -> object | None:
+        return None
