@@ -1,4 +1,5 @@
 import datetime
+
 import sys
 import unittest
 
@@ -87,6 +88,7 @@ class TestMontrekRepositorySatellite(TestCase):
                 "field_a2_float",
                 "field_a2_str",
                 "field_b1_str",
+                "field_b1_date",
                 "dummy1",
                 "dummy2",
             ],
@@ -113,6 +115,7 @@ class TestMontrekRepositorySatellite(TestCase):
                 "field_a1_int",
                 "field_a2_float",
                 "field_a2_str",
+                "field_b1_date",
                 "field_tsc2_float",
                 "my_field_a1_str",
                 "my_field_b1_str",
@@ -2370,3 +2373,20 @@ class TestReceiveWithFilter(TestCase):
         test_query = repo.receive()
         self.assertEqual(test_query.count(), 1)
         self.assertEqual(test_query.first().field_c1_str, "Test")
+
+
+class TestObjectToDict(TestCase):
+    def test_object_to_dict_with_link(self):
+        a_sat = me_factories.SatA1Factory.create(field_a1_str="TestA", field_a1_int=1)
+        b_sat = me_factories.SatB1Factory.create(
+            field_b1_str="TestB", field_b1_date="2024-02-05"
+        )
+        a_sat.hub_entity.link_hub_a_hub_b.add(b_sat.hub_entity)
+
+        repo = HubARepository()
+        query = repo.receive().first()
+        test_dict = repo.object_to_dict(query)
+        self.assertEqual(test_dict["field_a1_str"], "TestA")
+        self.assertEqual(test_dict["field_a1_int"], 1)
+        self.assertEqual(test_dict["field_b1_str"], "TestB")
+        self.assertEqual(test_dict["field_b1_date"], montrek_time(2024, 2, 5).date())
