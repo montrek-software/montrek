@@ -254,8 +254,12 @@ class TestMontrekExampleBUpdate(MontrekUpdateViewTestCase):
     view_class = me_views.MontrekExampleBUpdate
 
     def build_factories(self):
-        self.sat1 = me_factories.SatB1Factory()
+        self.sat1 = me_factories.SatB1Factory(field_b1_str="test")
         me_factories.SatB2Factory(hub_entity=self.sat1.hub_entity)
+        self.satd1 = me_factories.SatD1Factory.create(field_d1_str="test1")
+        self.satd2 = me_factories.SatD1Factory.create(field_d1_str="test2")
+        self.sat1.hub_entity.link_hub_b_hub_d.add(self.satd1.hub_entity)
+        self.sat1.hub_entity.link_hub_b_hub_d.add(self.satd2.hub_entity)
 
     def url_kwargs(self) -> dict:
         return {"pk": self.sat1.hub_entity.get_hub_value_date().id}
@@ -268,6 +272,18 @@ class TestMontrekExampleBUpdate(MontrekUpdateViewTestCase):
             "field_b2_choice": "CHOICE2",
             "alert_level": AlertEnum.OK.value.description,
         }
+
+    def test_initial_links_in_form(self):
+        response = self.client.get(self.url)
+        form = response.context["form"]
+        self.assertEqual(form.initial["field_b1_str"], "test")
+        self.assertEqual(
+            form["link_hub_b_hub_d"].value(),
+            [
+                self.satd1.hub_entity.get_hub_value_date().id,
+                self.satd2.hub_entity.get_hub_value_date().id,
+            ],
+        )
 
 
 class TestMontrekExampleCListView(MontrekListViewTestCase):

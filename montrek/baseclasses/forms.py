@@ -176,5 +176,9 @@ class MontrekModelMultipleChoiceField(
     @staticmethod
     def get_initial_link(
         initial: dict[str, Any], queryset: QuerySet, display_field: str
-    ) -> object | None:
-        return None
+    ) -> object | None | QuerySet:
+        initial_links_str = initial.get(display_field)
+        if not isinstance(initial_links_str, str):
+            return None
+        filter_kwargs = {f"{display_field}__in": initial_links_str.split(",")}
+        return queryset.filter(**filter_kwargs).all()
