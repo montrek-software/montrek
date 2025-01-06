@@ -18,7 +18,7 @@ class MontrekManager:
         return self._repository
 
     def create_object(self, **kwargs) -> Any:
-        return self.repository.std_create_object(**kwargs)
+        return self.repository.create_by_dict(**kwargs)
 
     def delete_object(self, pk: int):
         object_query = self.get_object_from_pk(pk)
