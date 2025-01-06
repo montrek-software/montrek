@@ -1,11 +1,12 @@
-from tempfile import TemporaryDirectory
 import os
+from tempfile import TemporaryDirectory
 from textwrap import dedent
 
-from django.contrib.auth.models import Permission
+from django.utils import timezone
 
 from baseclasses.dataclasses.alert import AlertEnum
 from baseclasses.utils import montrek_time
+from django.contrib.auth.models import Permission
 from django.test import TestCase, TransactionTestCase
 from django.urls import reverse
 from file_upload.repositories.file_upload_registry_repository import (
@@ -17,17 +18,19 @@ from testing.test_cases.view_test_cases import (
     MontrekFileResponseTestCase,
     MontrekListViewTestCase,
     MontrekRedirectViewTestCase,
+    MontrekRestApiViewTestCase,
     MontrekUpdateViewTestCase,
     MontrekViewTestCase,
-    MontrekRestApiViewTestCase,
 )
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
 from montrek_example import views as me_views
+from montrek_example.models import LinkHubBHubD
 from montrek_example.repositories.hub_a_repository import (
     HubAFileUploadRegistryRepository,
     HubARepository,
 )
+from montrek_example.repositories.hub_b_repository import HubBRepository
 from montrek_example.repositories.hub_d_repository import HubDRepository
 from montrek_example.tests.factories import montrek_example_factories as me_factories
 
@@ -255,7 +258,7 @@ class TestMontrekExampleBUpdate(MontrekUpdateViewTestCase):
 
     def build_factories(self):
         self.sat1 = me_factories.SatB1Factory(field_b1_str="test")
-        me_factories.SatB2Factory(hub_entity=self.sat1.hub_entity)
+        me_factories.SatB2Factory()
         self.satd1 = me_factories.SatD1Factory.create(field_d1_str="test1")
         self.satd2 = me_factories.SatD1Factory.create(field_d1_str="test2")
         self.sat1.hub_entity.link_hub_b_hub_d.add(self.satd1.hub_entity)
@@ -271,6 +274,8 @@ class TestMontrekExampleBUpdate(MontrekUpdateViewTestCase):
             "field_b2_str": "test2",
             "field_b2_choice": "CHOICE2",
             "alert_level": AlertEnum.OK.value.description,
+            "link_hub_b_hub_d": [self.satd2.get_hub_value_date().pk],
+            "hub_entity_id": self.sat1.hub_entity.id,
         }
 
     def test_initial_links_in_form(self):
@@ -284,6 +289,33 @@ class TestMontrekExampleBUpdate(MontrekUpdateViewTestCase):
                 self.satd2.hub_entity.get_hub_value_date().id,
             ],
         )
+
+    def test_remove_many_to_many_link(self):
+        links = LinkHubBHubD.objects.all()
+        self.assertEqual(links.count(), 2)
+        for link in links:
+            self.assertEqual(
+                link.state_date_end, timezone.make_aware(timezone.datetime.max)
+            )
+        repository = HubBRepository()
+        satb1 = repository.receive().first()
+        self.assertEqual(satb1.field_b1_str, "test")
+        self.assertEqual(satb1.hub.link_hub_b_hub_d.count(), 2)
+        self.assertEqual(satb1.field_d1_str, "test1,test2")
+        response = self.client.post(self.url, data=self.update_data())
+        self.assertRedirects(response, reverse("montrek_example_b_list"))
+        links = LinkHubBHubD.objects.all()
+        self.assertEqual(links.count(), 2)
+        self.assertEqual(
+            links[0].state_date_end, timezone.make_aware(timezone.datetime.max)
+        )
+        self.assertLess(
+            links[1].state_date_end, timezone.make_aware(timezone.datetime.max)
+        )
+        satb1 = repository.receive().get(pk=satb1.pk)
+        self.assertEqual(satb1.field_b1_str, "test")
+        self.assertEqual(satb1.hub.link_hub_b_hub_d.count(), 2)
+        self.assertEqual(satb1.field_d1_str, "test2")
 
 
 class TestMontrekExampleCListView(MontrekListViewTestCase):
