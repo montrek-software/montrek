@@ -1276,8 +1276,10 @@ class TestLinkOneToManyUpates(TestCase):
         hub_c = me_factories.HubCFactory()
         sat_d1 = me_factories.SatD1Factory(field_d1_int=5)
         sat_d2 = me_factories.SatD1Factory(field_d1_int=6)
+        sat_d3 = me_factories.SatD1Factory(field_d1_int=7)
         hub_c.link_hub_c_hub_d.add(sat_d1.hub_entity)
         hub_c.link_hub_c_hub_d.add(sat_d2.hub_entity)
+        hub_c.link_hub_c_hub_d.add(sat_d3.hub_entity)
         test_query = HubCRepository().receive()
         self.assertEqual(test_query.last().field_d1_int, 11)
 

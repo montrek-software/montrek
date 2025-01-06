@@ -250,8 +250,8 @@ class TestMontrekSatellite(TestCase):
         annotations = self.annotations()
         query = CHubValueDate.objects.annotate(**annotations)
         self.assertEqual(query.count(), 4)
-        result_1 = query[1]
-        result_2 = query[3]
+        result_1 = query.get(pk=tsc2_fac1.hub_value_date.pk)
+        result_2 = query.get(pk=tsc3_fac_2.hub_value_date.pk)
         self.assertEqual(result_1.field_tsc2_float, tsc2_fac1.field_tsc2_float)
         self.assertEqual(
             result_1.value_date,
