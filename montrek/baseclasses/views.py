@@ -418,7 +418,7 @@ class MontrekDetailView(
         return super().get(request, *args, **kwargs)
 
     def _set_hub_value_date_pk(self, kwargs: dict[str, Any]) -> dict[str, Any]:
-        repository = self.manager_class.repository_class()
+        repository = self.manager.repository
         hub_value_date_pk = repository.receive().filter(hub__pk=kwargs["pk"]).first().pk
         kwargs["pk"] = hub_value_date_pk
         self.kwargs["pk"] = hub_value_date_pk
