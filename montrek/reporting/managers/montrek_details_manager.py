@@ -16,7 +16,9 @@ class MontrekDetailsManager(MontrekManager):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.object_query = self.get_object_from_pk(self.session_data["pk"])
+        self.object_query = self.get_object_from_pk(
+            self.session_data.get("pk", "Unknown")
+        )
         self.row_size = math.ceil(len(self.table_elements) / self.table_cols)
 
     @property
