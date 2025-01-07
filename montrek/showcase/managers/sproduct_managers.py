@@ -1,3 +1,4 @@
+from reporting.core.reporting_grid_layout import ReportGridLayout
 from reporting.core.reporting_data import ReportingData
 from django_pandas.io import read_frame
 from reporting.core.reporting_plots import ReportingPlot
@@ -87,10 +88,17 @@ class SProductReportManager(MontrekReportManager):
 
     def collect_report_elements(self):
         self._add_top_ten_holdings_table()
-        self._plot_allocation_pie("country_name", "Country Allocation")
-        self._plot_allocation_pie("company_sector", "Sector Allocation")
+        self._plot_allocation_pies()
 
-    def _plot_allocation_pie(self, group_field, title):
+    def _plot_allocation_pies(self):
+        country_pie = self._get_allocation_pie("country_name", "Country Allocation")
+        sector_pie = self._get_allocation_pie("company_sector", "Sector Allocation")
+        grid = ReportGridLayout(1, 2)
+        grid.add_report_grid_element(country_pie, 0, 0)
+        grid.add_report_grid_element(sector_pie, 0, 1)
+        self.append_report_element(grid)
+
+    def _get_allocation_pie(self, group_field, title):
         value_field = "value"
         allocation_df = self.positions_df.groupby(group_field)[[value_field]].sum()
         plot_data = ReportingData(
@@ -102,7 +110,7 @@ class SProductReportManager(MontrekReportManager):
         )
         plot = ReportingPlot()
         plot.generate(plot_data)
-        self.append_report_element(plot)
+        return plot
 
     def _add_top_ten_holdings_table(self):
         table_manager = SProductTopTenSPositionsTableManager(self.session_data)
