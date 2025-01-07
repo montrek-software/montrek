@@ -87,8 +87,8 @@ class SProductReportManager(MontrekReportManager):
         return f"Holdings Report: {self.obj.product_name}"
 
     def collect_report_elements(self):
-        self._add_top_ten_holdings_table()
         self._plot_allocation_pies()
+        self._add_top_ten_holdings_table()
 
     def _plot_allocation_pies(self):
         country_pie = self._get_allocation_pie("country_name", "Country Allocation")
