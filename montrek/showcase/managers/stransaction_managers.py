@@ -84,6 +84,11 @@ class SProductSPositionTableManager(MontrekTableManager):
             te.FloatTableElement(name="Position Quantity", attr="position_quantity"),
         ]
 
+    def get_std_queryset_field_choices(self) -> list[tuple]:
+        default_choices = super().get_std_queryset_field_choices()
+        transaction_date_choice = ("transaction_date", "Transaction Date")
+        return tuple(list(default_choices) + [transaction_date_choice])
+
 
 class STransactionFURegistryManager(FileUploadRegistryManagerABC):
     repository_class = STransactionFURegistryRepository
