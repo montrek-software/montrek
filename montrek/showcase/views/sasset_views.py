@@ -1,10 +1,11 @@
 from django.urls import reverse
 from baseclasses.dataclasses.view_classes import ActionElement
-from baseclasses.views import MontrekListView
+from baseclasses.views import MontrekDetailView, MontrekListView
 from baseclasses.views import MontrekCreateView
 from baseclasses.views import MontrekUpdateView
 from baseclasses.views import MontrekDeleteView
-from showcase.managers.sasset_managers import SAssetTableManager
+from showcase.managers.sasset_managers import SAssetDetailsManager, SAssetTableManager
+from showcase.pages.sasset_pages import SassetDetailsPage
 from showcase.pages.sproduct_pages import SProductPage
 from showcase.forms.sasset_forms import SAssetCreateForm
 
@@ -50,3 +51,10 @@ class SAssetListView(MontrekListView):
             hover_text="Create new Asset",
         )
         return (action_new,)
+
+
+class SAssetDetailView(MontrekDetailView):
+    manager_class = SAssetDetailsManager
+    page_class = SassetDetailsPage
+    tab = "tab_sasset_details"
+    title = "Asset Details"

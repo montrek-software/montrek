@@ -1,12 +1,14 @@
+from showcase.factories.sasset_hub_factories import SAssetHubValueDateFactory
 from showcase.models.sasset_sat_models import SAssetTypes
 from testing.test_cases.view_test_cases import (
     MontrekCreateViewTestCase,
     MontrekUpdateViewTestCase,
     MontrekListViewTestCase,
     MontrekDeleteViewTestCase,
+    MontrekViewTestCase,
 )
 from showcase.factories.sasset_sat_factories import SAssetStaticSatelliteFactory
-from showcase.views.sasset_views import SAssetCreateView
+from showcase.views.sasset_views import SAssetCreateView, SAssetDetailView
 from showcase.views.sasset_views import SAssetUpdateView
 from showcase.views.sasset_views import SAssetListView
 from showcase.views.sasset_views import SAssetDeleteView
@@ -54,3 +56,15 @@ class TestSAssetDeleteView(MontrekDeleteViewTestCase):
 
     def url_kwargs(self) -> dict:
         return {"pk": self.sat_obj.get_hub_value_date().id}
+
+
+class TestSAssetDetailView(MontrekViewTestCase):
+    viewname = "sasset_details"
+    view_class = SAssetDetailView
+
+    def build_factories(self):
+        self.hub_vd = SAssetHubValueDateFactory(value_date=None)
+        SAssetStaticSatelliteFactory(hub_entity=self.hub_vd.hub)
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.hub_vd.hub.id}

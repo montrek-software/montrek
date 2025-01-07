@@ -55,7 +55,7 @@ class TestSProductDeleteView(MontrekDeleteViewTestCase):
         return {"pk": self.sat_obj.get_hub_value_date().id}
 
 
-class TestMontrekSProductDetailView(MontrekViewTestCase):
+class TestSProductDetailView(MontrekViewTestCase):
     viewname = "sproduct_details"
     view_class = SProductDetailView
 

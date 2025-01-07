@@ -1,5 +1,5 @@
 from django.urls import path
-from showcase.views.sasset_views import SAssetListView
+from showcase.views.sasset_views import SAssetDetailView, SAssetListView
 from showcase.views.sasset_views import SAssetCreateView
 from showcase.views.sasset_views import SAssetUpdateView
 from showcase.views.sasset_views import SAssetDeleteView
@@ -24,5 +24,10 @@ urlpatterns = [
         "sasset/<int:pk>/update",
         SAssetUpdateView.as_view(),
         name="sasset_update",
+    ),
+    path(
+        "sasset/<int:pk>/details",
+        SAssetDetailView.as_view(),
+        name="sasset_details",
     ),
 ]

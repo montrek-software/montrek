@@ -27,7 +27,13 @@ class STransactionTableManager(MontrekTableManager):
     def table_elements(self):
         return [
             te.StringTableElement(name="Product Name", attr="product_name"),
-            te.StringTableElement(name="Asset Name", attr="asset_name"),
+            te.LinkTextTableElement(
+                name="Asset Name",
+                url="sasset_details",
+                kwargs={"pk": "asset_id"},
+                hover_text="Show Asset Details",
+                text="asset_name",
+            ),
             te.DateTableElement(name="Transaction Date", attr="transaction_date"),
             te.StringTableElement(
                 name="Transaction External Identifier",
