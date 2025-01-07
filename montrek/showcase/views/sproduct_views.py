@@ -1,13 +1,14 @@
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from baseclasses.dataclasses.view_classes import ActionElement, BackActionElement
-from baseclasses.views import MontrekDetailView, MontrekListView
+from baseclasses.views import MontrekDetailView, MontrekListView, MontrekReportView
 from baseclasses.views import MontrekCreateView
 from baseclasses.views import MontrekUpdateView
 from baseclasses.views import MontrekDeleteView
 from showcase.managers.initial_db_data_generator import InitialDbDataGenerator
 from showcase.managers.sproduct_managers import (
     SProductDetailsManager,
+    SProductReportManager,
     SProductTableManager,
 )
 from showcase.managers.stransaction_managers import (
@@ -102,6 +103,12 @@ class SProductSPositionListView(BackToProductListActionMixin, MontrekListView):
     page_class = SProductDetailsPage
     tab = "tab_sproduct_sposition_list"
     title = "Product Position List"
+
+
+class SProductReportView(MontrekReportView):
+    manager_class = SProductReportManager
+    page_class = SProductDetailsPage
+    tab = "tab_sproduct_report"
 
 
 def init_showcase_data(request):

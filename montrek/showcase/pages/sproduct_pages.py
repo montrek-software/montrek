@@ -42,4 +42,10 @@ class SProductDetailsPage(MontrekDetailsPage):
                 html_id="tab_sproduct_sposition_list",
                 active="",
             ),
+            TabElement(
+                name="Report",
+                link=reverse("sproduct_report", args=[self.obj.id]),
+                html_id="tab_sproduct_report",
+                active="",
+            ),
         )

@@ -13,6 +13,7 @@ from showcase.repositories.sproduct_repositories import SProductRepository
 from showcase.repositories.stransaction_repositories import (
     SProductSPositionRepository,
     SProductSTransactionRepository,
+    SProductTopTenSPositionsRepository,
     STransactionFURegistryRepository,
     STransactionRepository,
 )
@@ -67,9 +68,7 @@ class SProductSTransactionTableManager(STransactionTableManager):
     repository_class = SProductSTransactionRepository
 
 
-class SProductSPositionTableManager(MontrekTableManager):
-    repository_class = SProductSPositionRepository
-
+class PositionTableElementsMixin:
     @property
     def table_elements(self):
         return [
@@ -82,12 +81,25 @@ class SProductSPositionTableManager(MontrekTableManager):
             ),
             te.StringTableElement(name="Asset ISIN", attr="asset_isin"),
             te.FloatTableElement(name="Position Quantity", attr="position_quantity"),
+            te.FloatTableElement(name="Asset Price", attr="price"),
+            te.FloatTableElement(name="Position Value", attr="value"),
         ]
+
+
+class SProductSPositionTableManager(PositionTableElementsMixin, MontrekTableManager):
+    repository_class = SProductSPositionRepository
 
     def get_std_queryset_field_choices(self) -> list[tuple]:
         default_choices = super().get_std_queryset_field_choices()
         transaction_date_choice = ("transaction_date", "Transaction Date")
         return tuple(list(default_choices) + [transaction_date_choice])
+
+
+class SProductTopTenSPositionsTableManager(
+    PositionTableElementsMixin, MontrekTableManager
+):
+    table_title = "Top Ten Positions"
+    repository_class = SProductTopTenSPositionsRepository
 
 
 class STransactionFURegistryManager(FileUploadRegistryManagerABC):

@@ -26,4 +26,8 @@ class SPositionTableManager(MontrekTableManager):
                 name="Position Quantity",
                 attr="position_quantity",
             ),
+            te.FloatTableElement(
+                name="Price",
+                attr="price",
+            ),
         ]

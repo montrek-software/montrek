@@ -1,10 +1,14 @@
+from django.db.models.functions import Random
+from django.db.models import F
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from django.utils import timezone
 
 from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepositoryABC,
 )
+from mt_economic_common.country.models import CountryStaticSatellite
 from showcase.models.sasset_sat_models import SAssetStaticSatellite
+from showcase.models.scompany_hub_models import LinkSCompanyCountry
 from showcase.models.sproduct_sat_models import SProductSatellite
 from showcase.models.stransaction_hub_models import (
     LinkSTransactionFURegistryFUFile,
@@ -23,7 +27,7 @@ from baseclasses.repositories.subquery_builder import SubqueryBuilder
 from django.db import models
 from django.db.models import OuterRef, Subquery, QuerySet
 
-from showcase.models.sasset_hub_models import SAssetHub
+from showcase.models.sasset_hub_models import LinkSAssetSCompany, SAssetHub
 
 
 class STransactionRepository(MontrekRepository):
@@ -93,6 +97,12 @@ class SProductSPositionRepository(MontrekRepository):
             ["hub_entity_id", "asset_name", "asset_isin"],
             rename_field_map={"hub_entity_id": "asset_id"},
         )
+        self.add_linked_satellites_field_annotations(
+            CountryStaticSatellite,
+            link_class=LinkSCompanyCountry,
+            fields=["country_code_2", "country_name"],
+            parent_link_classes=(LinkSAssetSCompany,),
+        )
         self.annotator.annotations[
             "position_quantity"
         ] = SProductSPositionSubqueryBuilder(self.session_data)
@@ -100,7 +110,16 @@ class SProductSPositionRepository(MontrekRepository):
     def receive(self, apply_filter: bool = True) -> QuerySet:
         qs = super().receive(apply_filter)
         qs = qs.filter(position_quantity__isnull=False)
+        qs = qs.annotate(price=10 + (Random() * 90))
+        qs = qs.annotate(value=F("position_quantity") * F("price"))
         return qs
+
+
+class SProductTopTenSPositionsRepository(SProductSPositionRepository):
+    def receive(self, apply_filter: bool = True) -> QuerySet:
+        qs = super().receive(apply_filter)
+        qs = qs.order_by("-value")
+        return qs[:10]
 
 
 class STransactionFURegistryRepository(FileUploadRegistryRepositoryABC):
