@@ -1,5 +1,7 @@
-from django.db.models.functions import Random
-from django.db.models import F
+import pandas as pd
+import os
+from showcase.tests import TEST_DATA_DIR
+from django.db.models import F, Case, When
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from django.utils import timezone
 
@@ -107,10 +109,22 @@ class SProductSPositionRepository(MontrekRepository):
             "position_quantity"
         ] = SProductSPositionSubqueryBuilder(self.session_data)
 
+    def load_prices(self):
+        file_path = os.path.join(TEST_DATA_DIR, "mock_prices.csv")
+        df = pd.read_csv(file_path)
+        return df.to_dict(orient="records")
+
     def receive(self, apply_filter: bool = True) -> QuerySet:
         qs = super().receive(apply_filter)
         qs = qs.filter(position_quantity__isnull=False)
-        qs = qs.annotate(price=10 + (Random() * 90))
+        prices = self.load_prices()
+        prices_cases = [
+            When(asset_isin=price["asset_isin"], then=price["asset_price"])
+            for price in prices
+        ]
+        qs = qs.annotate(
+            price=Case(*prices_cases, default=None, output_field=models.FloatField())
+        )
         qs = qs.annotate(value=F("position_quantity") * F("price"))
         return qs
 
