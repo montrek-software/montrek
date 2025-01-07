@@ -1,10 +1,11 @@
 import logging
+from typing import Any
 import pandas as pd
 from file_upload.managers.file_upload_manager import FileUploadManagerABC
 from file_upload.managers.file_upload_registry_manager import (
     FileUploadRegistryManagerABC,
 )
-from file_upload.tasks.process_file_task import ProcessFileTaskABC
+from file_upload.models import FileUploadRegistryHubABC
 from reporting.dataclasses import table_elements as te
 from reporting.managers.montrek_table_manager import MontrekTableManager
 from showcase.repositories.sasset_repositories import SAssetRepository
@@ -82,7 +83,8 @@ class STransactionFUProcessor:
 
     def __init__(
         self,
-        session_data: dict,
+        file_upload_registry_hub: FileUploadRegistryHubABC,
+        session_data: dict[str, Any],
         **kwargs,
     ):
         self.session_data = session_data
@@ -148,8 +150,3 @@ class STransactionFUProcessor:
 class STransactionFUManager(FileUploadManagerABC):
     file_upload_processor_class = STransactionFUProcessor
     file_registry_manager_class = STransactionFURegistryManager
-
-
-class STransactionProcessFileTask(ProcessFileTaskABC):
-    file_upload_processor_class = STransactionFUProcessor
-    file_upload_registry_repository_class = STransactionFURegistryRepository
