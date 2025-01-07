@@ -9,3 +9,7 @@ class SCompanyStaticSatelliteFactory(factory.django.DjangoModelFactory):
         model = SCompanyStaticSatellite
 
     hub_entity = factory.SubFactory(SCompanyHubFactory)
+    company_sector = factory.Faker(
+        "random_element",
+        elements=("Technology", "Healthcare", "Finance", "Energy", "Consumer Goods"),
+    )

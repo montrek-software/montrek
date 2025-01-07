@@ -87,17 +87,15 @@ class SProductReportManager(MontrekReportManager):
 
     def collect_report_elements(self):
         self._add_top_ten_holdings_table()
-        self._plot_country_allocation_pie()
+        self._plot_allocation_pie("country_name", "Country Allocation")
+        self._plot_allocation_pie("company_sector", "Sector Allocation")
 
-    def _plot_country_allocation_pie(self):
-        group_field = "country_name"
+    def _plot_allocation_pie(self, group_field, title):
         value_field = "value"
-        country_allocations_df = self.positions_df.groupby(group_field)[
-            [value_field]
-        ].sum()
+        allocation_df = self.positions_df.groupby(group_field)[[value_field]].sum()
         plot_data = ReportingData(
-            country_allocations_df,
-            "Country Allocation",
+            allocation_df,
+            title,
             x_axis_is_index=True,
             y_axis_columns=[value_field],
             plot_types=["pie"],

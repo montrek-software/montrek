@@ -1,5 +1,6 @@
 import pandas as pd
 import os
+from showcase.models.scompany_sat_models import SCompanyStaticSatellite
 from showcase.tests import TEST_DATA_DIR
 from django.db.models import F, Case, When
 from baseclasses.repositories.montrek_repository import MontrekRepository
@@ -104,6 +105,11 @@ class SProductSPositionRepository(MontrekRepository):
             link_class=LinkSCompanyCountry,
             fields=["country_code_2", "country_name"],
             parent_link_classes=(LinkSAssetSCompany,),
+        )
+        self.add_linked_satellites_field_annotations(
+            SCompanyStaticSatellite,
+            link_class=LinkSAssetSCompany,
+            fields=["company_sector"],
         )
         self.annotator.annotations[
             "position_quantity"

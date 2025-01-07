@@ -12,6 +12,7 @@ class SCompanyRepository(MontrekRepository):
             SCompanyStaticSatellite,
             [
                 "company_name",
+                "company_sector",
             ],
         )
         self.add_linked_satellites_field_annotations(

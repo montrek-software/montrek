@@ -16,6 +16,7 @@ class CommonTableElementsMixin:
                 hover_text="Show Country Details",
                 text="country_name",
             ),
+            te.StringTableElement(name="Sector", attr="company_sector"),
             te.LinkTableElement(
                 name="Edit",
                 url="scompany_update",
