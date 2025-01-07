@@ -1,4 +1,5 @@
 import datetime
+
 import sys
 import unittest
 
@@ -87,6 +88,7 @@ class TestMontrekRepositorySatellite(TestCase):
                 "field_a2_float",
                 "field_a2_str",
                 "field_b1_str",
+                "field_b1_date",
                 "dummy1",
                 "dummy2",
             ],
@@ -113,6 +115,7 @@ class TestMontrekRepositorySatellite(TestCase):
                 "field_a1_int",
                 "field_a2_float",
                 "field_a2_str",
+                "field_b1_date",
                 "field_tsc2_float",
                 "my_field_a1_str",
                 "my_field_b1_str",
@@ -881,6 +884,53 @@ class TestMontrekCreateObjectLinks(TestCase):
         queried_object = repository.receive().get()
         self.assertEqual(queried_object.field_b1_str, sat_b_1.field_b1_str)
 
+    def test_update_one_to_many_link(self):
+        sat_c_1 = me_factories.SatC1Factory(
+            field_c1_str="test1",
+        )
+        repository = HubARepository(session_data={"user_id": self.user.id})
+        repository.std_create_object(
+            {
+                "field_a1_int": 5,
+                "field_a1_str": "test",
+                "field_a2_float": 6.0,
+                "field_a2_str": "test2",
+                "link_hub_a_hub_c": sat_c_1.hub_entity,
+            }
+        )
+        self.assertEqual(me_models.LinkHubAHubC.objects.count(), 1)
+        self.assertEqual(
+            me_models.LinkHubAHubC.objects.first().state_date_end, MAX_DATE
+        )
+        # Check that link start date is set to creation date (which is for sure less than 5 minutes ago)
+        self.assertTrue(
+            me_models.LinkHubAHubC.objects.first().state_date_start
+            > timezone.now() - datetime.timedelta(minutes=5)
+        )
+        test_repository = HubARepository2({})
+        test_a_object = test_repository.receive().get()
+        self.assertEqual(test_a_object.field_c1_str, "test1")
+        sat_c_2 = me_factories.SatC1Factory(
+            field_c1_str="test2",
+        )
+        repository.std_create_object(
+            {
+                "field_a1_int": 5,
+                "field_a1_str": "test",
+                "field_a2_float": 6.0,
+                "field_a2_str": "test2",
+                "link_hub_a_hub_c": sat_c_2.hub_entity,
+            }
+        )
+        self.assertEqual(me_models.LinkHubAHubC.objects.count(), 2)
+        old_link = me_models.LinkHubAHubC.objects.first()
+        new_link = me_models.LinkHubAHubC.objects.last()
+        self.assertEqual(new_link.state_date_end, MAX_DATE)
+        self.assertEqual(old_link.state_date_end, new_link.state_date_start)
+        test_repository = HubARepository2({})
+        test_a_object = test_repository.receive().get()
+        self.assertEqual(test_a_object.field_c1_str, "test2")
+
 
 class TestMontrekCreateObjectTransaction(TransactionTestCase):
     def setUp(self):
@@ -1155,7 +1205,6 @@ class TestLinkOneToManyUpates(TestCase):
     def test_update_one_to_many_link_different(self):
         hub_c2 = me_factories.HubCFactory()
         # Adding the a new link should create a new link with adjusted state dates
-        # Both links should exist at the same time
         self.repository.std_create_object(
             {
                 "hub_entity_id": self.hub_a.id,
@@ -1169,7 +1218,7 @@ class TestLinkOneToManyUpates(TestCase):
         self.assertEqual(link_1.hub_out, self.hub_c)
         self.assertEqual(link_2.hub_out, hub_c2)
         self.assertEqual(link_1.state_date_start, MIN_DATE)
-        self.assertEqual(link_1.state_date_end, MAX_DATE)
+        self.assertEqual(link_1.state_date_end, link_2.state_date_start)
         self.assertEqual(link_2.state_date_end, MAX_DATE)
         self.assertGreater(link_2.state_date_start, MIN_DATE)
 
@@ -1227,8 +1276,10 @@ class TestLinkOneToManyUpates(TestCase):
         hub_c = me_factories.HubCFactory()
         sat_d1 = me_factories.SatD1Factory(field_d1_int=5)
         sat_d2 = me_factories.SatD1Factory(field_d1_int=6)
+        sat_d3 = me_factories.SatD1Factory(field_d1_int=7)
         hub_c.link_hub_c_hub_d.add(sat_d1.hub_entity)
         hub_c.link_hub_c_hub_d.add(sat_d2.hub_entity)
+        hub_c.link_hub_c_hub_d.add(sat_d3.hub_entity)
         test_query = HubCRepository().receive()
         self.assertEqual(test_query.last().field_d1_int, 11)
 
@@ -1879,12 +1930,12 @@ class TestMontrekManyToManyRelations(TestCase):
         new_1 = links.filter(hub_out=satd3.hub_entity).get()
         new_2 = links.filter(hub_out=satd4.hub_entity).get()
 
-        self.assertEqual(hub_b.field_d1_str, "erster,zwoter,dritter,vierter")
+        self.assertEqual(hub_b.field_d1_str, "erster,dritter,vierter")
 
         self.assertEqual(continued.state_date_start, MIN_DATE)
         self.assertEqual(continued.state_date_end, MAX_DATE)
         self.assertEqual(discontinued.state_date_start, MIN_DATE)
-        self.assertEqual(discontinued.state_date_end, MAX_DATE)
+        self.assertLess(discontinued.state_date_end, MAX_DATE)
         self.assertEqual(new_1.state_date_start, new_2.state_date_start)
         self.assertEqual(new_1.state_date_end, MAX_DATE)
         self.assertEqual(new_2.state_date_end, MAX_DATE)
@@ -2324,3 +2375,20 @@ class TestReceiveWithFilter(TestCase):
         test_query = repo.receive()
         self.assertEqual(test_query.count(), 1)
         self.assertEqual(test_query.first().field_c1_str, "Test")
+
+
+class TestObjectToDict(TestCase):
+    def test_object_to_dict_with_link(self):
+        a_sat = me_factories.SatA1Factory.create(field_a1_str="TestA", field_a1_int=1)
+        b_sat = me_factories.SatB1Factory.create(
+            field_b1_str="TestB", field_b1_date="2024-02-05"
+        )
+        a_sat.hub_entity.link_hub_a_hub_b.add(b_sat.hub_entity)
+
+        repo = HubARepository()
+        query = repo.receive().first()
+        test_dict = repo.object_to_dict(query)
+        self.assertEqual(test_dict["field_a1_str"], "TestA")
+        self.assertEqual(test_dict["field_a1_int"], 1)
+        self.assertEqual(test_dict["field_b1_str"], "TestB")
+        self.assertEqual(test_dict["field_b1_date"], montrek_time(2024, 2, 5).date())

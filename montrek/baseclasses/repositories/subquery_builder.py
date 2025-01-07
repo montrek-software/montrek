@@ -125,6 +125,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         *,
         agg_func: str = "string_concat",
         parent_link_classes: tuple[Type[MontrekLinkABC], ...] = (),
+        link_satellite_filter: dict[str, object] = {},
     ):
         super().__init__(satellite_class, field)
 
@@ -135,7 +136,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         self.agg_func = LinkAggFunctionEnum(agg_func)
 
         self.parent_link_classes = parent_link_classes
-
+        self.link_satellite_filter = link_satellite_filter
 
     def get_link_query(
         self, hub_field: str, reference_date: timezone.datetime
@@ -181,14 +182,18 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         return db_name
 
     def _link_hubs_and_get_subquery(
-        self, hub_field_to: str, hub_field_from: str, reference_date: timezone.datetime
+        self,
+        hub_field_to: str,
+        hub_field_from: str,
+        reference_date: timezone.datetime,
     ) -> Subquery:
         sat_query = self.satellite_class.objects.filter(
+            **self.link_satellite_filter,
             **self.subquery_filter(
                 reference_date,
                 lookup_field="hub_entity",
                 outer_ref=f"{hub_field_to}",
-            )
+            ),
         ).values(self.field)
         query = (
             self.get_link_query(hub_field_from, reference_date)
@@ -213,9 +218,9 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
                                     **self.subquery_filter(
                                         reference_date,
                                         lookup_field="hub_value_date",
-                                        outer_ref=f"pk",
+                                        outer_ref="pk",
                                     )
-                                )
+                                ),
                             )
                             .annotate(**{self.field + "sub": F(self.field)})
                             .values(self.field),
