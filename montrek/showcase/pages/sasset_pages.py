@@ -18,7 +18,7 @@ class SAssetPage(MontrekPage):
         )
 
 
-class SassetDetailsPage(MontrekDetailsPage):
+class SAssetDetailsPage(MontrekDetailsPage):
     repository_class = SAssetRepository
     title_field = "asset_name"
 

@@ -5,7 +5,7 @@ from baseclasses.views import MontrekCreateView
 from baseclasses.views import MontrekUpdateView
 from baseclasses.views import MontrekDeleteView
 from showcase.managers.sasset_managers import SAssetDetailsManager, SAssetTableManager
-from showcase.pages.sasset_pages import SassetDetailsPage
+from showcase.pages.sasset_pages import SAssetDetailsPage
 from showcase.pages.sproduct_pages import SProductPage
 from showcase.forms.sasset_forms import SAssetCreateForm
 
@@ -55,6 +55,6 @@ class SAssetListView(MontrekListView):
 
 class SAssetDetailView(MontrekDetailView):
     manager_class = SAssetDetailsManager
-    page_class = SassetDetailsPage
+    page_class = SAssetDetailsPage
     tab = "tab_sasset_details"
     title = "Asset Details"

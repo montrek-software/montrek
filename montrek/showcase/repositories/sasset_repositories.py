@@ -12,5 +12,8 @@ class SAssetRepository(MontrekRepository):
         self.add_satellite_fields_annotations(SAssetStaticSatellite, ["asset_name"])
         self.add_satellite_fields_annotations(SAssetStaticSatellite, ["asset_isin"])
         self.add_linked_satellites_field_annotations(
-            SCompanyStaticSatellite, LinkSAssetSCompany, ["company_name"]
+            SCompanyStaticSatellite,
+            LinkSAssetSCompany,
+            ["company_name", "hub_entity_id"],
+            rename_field_map={"hub_entity_id": "company_id"},
         )

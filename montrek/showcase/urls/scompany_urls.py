@@ -1,5 +1,5 @@
 from django.urls import path
-from showcase.views.scompany_views import SCompanyListView
+from showcase.views.scompany_views import SCompanyDetailView, SCompanyListView
 from showcase.views.scompany_views import SCompanyCreateView
 from showcase.views.scompany_views import SCompanyUpdateView
 from showcase.views.scompany_views import SCompanyDeleteView
@@ -24,5 +24,10 @@ urlpatterns = [
         "scompany/<int:pk>/update",
         SCompanyUpdateView.as_view(),
         name="scompany_update",
+    ),
+    path(
+        "scompany/<int:pk>/details",
+        SCompanyDetailView.as_view(),
+        name="scompany_details",
     ),
 ]

@@ -1,11 +1,10 @@
 from reporting.dataclasses import table_elements as te
+from reporting.managers.montrek_details_manager import MontrekDetailsManager
 from reporting.managers.montrek_table_manager import MontrekTableManager
 from showcase.repositories.scompany_repositories import SCompanyRepository
 
 
-class SCompanyTableManager(MontrekTableManager):
-    repository_class = SCompanyRepository
-
+class CommonTableElementsMixin:
     @property
     def table_elements(self):
         return [
@@ -25,3 +24,11 @@ class SCompanyTableManager(MontrekTableManager):
                 hover_text="Delete SCompany",
             ),
         ]
+
+
+class SCompanyTableManager(CommonTableElementsMixin, MontrekTableManager):
+    repository_class = SCompanyRepository
+
+
+class SCompanyDetailsManager(CommonTableElementsMixin, MontrekDetailsManager):
+    repository_class = SCompanyRepository
