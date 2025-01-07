@@ -9,6 +9,13 @@ class CommonTableElementsMixin:
     def table_elements(self):
         return [
             te.StringTableElement(name="Company", attr="company_name"),
+            te.LinkTextTableElement(
+                name="Country",
+                url="country_details",
+                kwargs={"pk": "country_id"},
+                hover_text="Show Country Details",
+                text="country_name",
+            ),
             te.LinkTableElement(
                 name="Edit",
                 url="scompany_update",

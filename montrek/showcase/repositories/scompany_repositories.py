@@ -1,6 +1,7 @@
 from baseclasses.repositories.montrek_repository import MontrekRepository
+from mt_economic_common.country.models import CountryStaticSatellite
 from showcase.models.scompany_sat_models import SCompanyStaticSatellite
-from showcase.models.scompany_hub_models import SCompanyHub
+from showcase.models.scompany_hub_models import LinkSCompanyCountry, SCompanyHub
 
 
 class SCompanyRepository(MontrekRepository):
@@ -12,4 +13,10 @@ class SCompanyRepository(MontrekRepository):
             [
                 "company_name",
             ],
+        )
+        self.add_linked_satellites_field_annotations(
+            CountryStaticSatellite,
+            LinkSCompanyCountry,
+            ["country_name", "hub_entity_id"],
+            rename_field_map={"hub_entity_id": "country_id"},
         )

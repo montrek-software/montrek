@@ -5,7 +5,10 @@ from baseclasses.tests.factories.montrek_factory_schemas import (
     MontrekHubValueDateFactory,
     MontrekHubFactory,
 )
-from showcase.models.scompany_hub_models import SCompanyHub
+from mt_economic_common.country.tests.factories.country_factories import (
+    CountryHubFactory,
+)
+from showcase.models.scompany_hub_models import LinkSCompanyCountry, SCompanyHub
 from showcase.models.scompany_hub_models import SCompanyHubValueDate
 
 
@@ -20,3 +23,11 @@ class SCompanyHubValueDateFactory(MontrekHubValueDateFactory):
 
     hub = factory.SubFactory(SCompanyHubFactory)
     value_date_list = factory.SubFactory(ValueDateListFactory)
+
+
+class LinkSCompanyCountryFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = LinkSCompanyCountry
+
+    hub_in = factory.SubFactory(SCompanyHubFactory)
+    hub_out = factory.SubFactory(CountryHubFactory)

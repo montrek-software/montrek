@@ -1,6 +1,8 @@
 import os
 import pandas as pd
+from mt_economic_common.country.repositories.country_repository import CountryRepository
 from showcase.factories.sasset_hub_factories import LinkSAssetSCompanyFactory
+from showcase.factories.scompany_hub_factories import LinkSCompanyCountryFactory
 from showcase.factories.scompany_sat_factories import SCompanyStaticSatelliteFactory
 from showcase.models.sasset_sat_models import SAssetTypes
 from showcase.models.scompany_hub_models import SCompanyHub
@@ -49,15 +51,26 @@ class InitialDbDataGenerator:
         asset_data = self.test_file_data[
             ["asset_name", "company_name", "ISIN"]
         ].drop_duplicates(subset=["ISIN"], keep="first")
+        countries = CountryRepository(self.session_data).receive()
+        asset_data["country_code"] = asset_data["ISIN"].str[:2]
+        companies = {}
         for row in asset_data.itertuples():
             asset_sat = SAssetStaticSatelliteFactory(
                 asset_name=row.asset_name,
                 asset_type=SAssetTypes.EQUITY.value,
                 asset_isin=row.ISIN,
             )
-            company_sat = SCompanyStaticSatelliteFactory(
-                company_name=row.company_name,
-            )
+            company_sat = companies.get(row.company_name)
+            if not company_sat:
+                company_sat = SCompanyStaticSatelliteFactory(
+                    company_name=row.company_name,
+                )
+                country = coy = countries.get(country_code_2=row.country_code)
+                LinkSCompanyCountryFactory(
+                    hub_in=company_sat.hub_entity, hub_out=country.hub
+                )
+                companies[row.company_name] = company_sat
+
             LinkSAssetSCompanyFactory(
                 hub_in=asset_sat.hub_entity, hub_out=company_sat.hub_entity
             )
