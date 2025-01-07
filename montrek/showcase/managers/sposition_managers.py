@@ -15,9 +15,12 @@ class SPositionTableManager(MontrekTableManager):
                 name="Product Name",
                 attr="product_name",
             ),
-            te.StringTableElement(
+            te.LinkTextTableElement(
                 name="Asset Name",
-                attr="asset_name",
+                url="sasset_details",
+                kwargs={"pk": "asset_id"},
+                hover_text="Show Asset Details",
+                text="asset_name",
             ),
             te.FloatTableElement(
                 name="Position Quantity",

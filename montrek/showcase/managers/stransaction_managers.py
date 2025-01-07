@@ -73,7 +73,13 @@ class SProductSPositionTableManager(MontrekTableManager):
     @property
     def table_elements(self):
         return [
-            te.StringTableElement(name="Asset Name", attr="asset_name"),
+            te.LinkTextTableElement(
+                name="Asset Name",
+                url="sasset_details",
+                kwargs={"pk": "asset_id"},
+                hover_text="Show Asset Details",
+                text="asset_name",
+            ),
             te.StringTableElement(name="Asset ISIN", attr="asset_isin"),
             te.FloatTableElement(name="Position Quantity", attr="position_quantity"),
         ]

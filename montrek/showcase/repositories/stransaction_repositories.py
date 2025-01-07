@@ -88,8 +88,12 @@ class SProductSPositionRepository(MontrekRepository):
     hub_class = SAssetHub
 
     def set_annotations(self):
-        self.add_satellite_fields_annotations(SAssetStaticSatellite, ["asset_name"])
-        self.add_satellite_fields_annotations(SAssetStaticSatellite, ["asset_isin"])
+        self.add_linked_satellites_field_annotations(
+            SAssetStaticSatellite,
+            LinkSTransactionSAsset,
+            ["hub_entity_id", "asset_name", "asset_isin"],
+            rename_field_map={"hub_entity_id": "asset_id"},
+        )
         self.annotator.annotations[
             "position_quantity"
         ] = SProductSPositionSubqueryBuilder(self.session_data)
