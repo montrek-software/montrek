@@ -1,6 +1,7 @@
 from django.test import TestCase
-from baseclasses.pages import MontrekPage, NoPage
+from baseclasses.pages import MontrekDetailsPage, MontrekPage, NoPage
 from baseclasses.dataclasses.view_classes import TabElement
+from baseclasses.tests.mocks import MockRepository
 
 
 class MockMontrekPage(MontrekPage):
@@ -14,6 +15,11 @@ class MockMontrekPage(MontrekPage):
                 html_id="id_test",
             ),
         )
+
+
+class MockMontrekDetailsPage(MontrekDetailsPage):
+    repository_class = MockRepository
+    title_field = "field"
 
 
 class TestMontrekPage(TestCase):
@@ -35,3 +41,16 @@ class TestMontrekPage(TestCase):
         page = NoPage()
         with self.assertRaises(NotImplementedError):
             page.get_tabs()
+
+
+class TestMontrekDetailsPage(TestCase):
+    def test_montrek_details_page(self):
+        page = MockMontrekDetailsPage(pk=0)
+        self.assertEqual(page.page_title, "item1")
+
+    def test_montrek_details_page_no_pk(self):
+        with self.assertRaises(ValueError) as e:
+            MockMontrekDetailsPage()
+        self.assertEqual(
+            str(e.exception), "MockMontrekDetailsPage needs pk specified in url!"
+        )
