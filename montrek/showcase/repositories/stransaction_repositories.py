@@ -82,7 +82,7 @@ class SProductSPositionSubqueryBuilder(SubqueryBuilder):
             STransactionRepository(self.session_data)
             .receive()
             .order_by()
-            .filter(hub__link_stransaction_sasset=OuterRef("pk"))
+            .filter(hub__link_stransaction_sasset=OuterRef("hub"))
             .filter(hub__link_stransaction_sproduct=product_hub)
             .values("asset_id")
             .annotate(position_quantity=models.Sum("transaction_quantity"))
