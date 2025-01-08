@@ -275,10 +275,10 @@ class TestMontrekDataFrameTableManager(TestCase):
         self.user = MontrekUserFactory()
         input_df = pd.DataFrame(
             {
-                "Field A": ["a", "b", "c"],
-                "Field B": [1, 2, 3],
-                "Field C": [1.0, 2.0, 3.0],
-                "Field D": [
+                "field_a": ["a", "b", "c"],
+                "field_b": [1, 2, 3],
+                "field_c": [1.0, 2.0, 3.0],
+                "field_d": [
                     datetime.datetime(2024, 7, 13),
                     datetime.datetime(2024, 7, 13),
                     timezone.datetime(2024, 7, 13),
@@ -288,10 +288,10 @@ class TestMontrekDataFrameTableManager(TestCase):
         )
         large_df = pd.DataFrame(
             {
-                "Field A": ["a", "b", "c"] * 10000,
-                "Field B": [1, 2, 3] * 10000,
-                "Field C": [1.0, 2.0, 3.0] * 10000,
-                "Field D": [
+                "field_a": ["a", "b", "c"] * 10000,
+                "field_b": [1, 2, 3] * 10000,
+                "field_c": [1.0, 2.0, 3.0] * 10000,
+                "field_d": [
                     datetime.datetime(2024, 7, 13),
                     datetime.datetime(2024, 7, 13),
                     timezone.datetime(2024, 7, 13),

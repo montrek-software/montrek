@@ -74,6 +74,11 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
             name_to_field_map[element.name] = getattr(element, "attr", "")
         return name_to_field_map
 
+    def get_field_table_elements_name_map(self) -> dict[str, str]:
+        return {
+            ele.attr: ele.name for ele in self.table_elements if hasattr(ele, "attr")
+        }
+
     def to_html(self):
         html_str = f"<h3>{self.table_title}</h3>"
         html_str += '<table class="table table-bordered table-hover"><tr>'
@@ -299,7 +304,7 @@ class MontrekDataFrameTableManager(MontrekTableManagerABC):
         return self.get_table()
 
     def get_df(self) -> pd.DataFrame:
-        return self.df
+        return self.df.rename(columns=self.get_field_table_elements_name_map())
 
     def _get_table_dimensions(self) -> int:
         return self.df.shape[0] * self.df.shape[1]
