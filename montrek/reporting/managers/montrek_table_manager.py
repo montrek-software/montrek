@@ -277,3 +277,15 @@ class MontrekTableManager(MontrekTableManagerABC):
         paginator = Paginator(queryset, self.paginate_by)
         page = paginator.get_page(page_number)
         return page
+
+
+class MontrekDataFrameTableManager(MontrekTableManagerABC):
+    def __init__(self, df: pd.DataFrame, session_data: dict[str, Any] = {}):
+        self.df = df
+        super().__init__(session_data)
+
+    def get_table(self) -> QuerySet | dict:
+        return self.get_df().to_dict()
+
+    def get_df(self) -> pd.DataFrame:
+        return self.df

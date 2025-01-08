@@ -9,7 +9,10 @@ from django.test import TestCase
 from django.utils import timezone
 
 from reporting.dataclasses import table_elements as te
-from reporting.managers.montrek_table_manager import MontrekTableManager
+from reporting.managers.montrek_table_manager import (
+    MontrekTableManager,
+    MontrekDataFrameTableManager,
+)
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
 
@@ -236,3 +239,69 @@ class TestMontrekTableManager(TestCase):
             manager.messages[-1].message,
             "Table is too large to download. Sending it by mail.",
         )
+
+
+class MockMontrekDataFrameTableManager(MontrekDataFrameTableManager):
+    @property
+    def table_elements(
+        self,
+    ) -> tuple[te.TableElement]:
+        return (
+            te.StringTableElement(attr="field_a", name="Field A"),
+            te.IntTableElement(attr="field_b", name="Field B"),
+            te.FloatTableElement(attr="field_c", name="Field C"),
+            te.DateTimeTableElement(attr="field_d", name="Field D"),
+            te.LinkTableElement(
+                name="Link",
+                url="home",
+                kwargs={},
+                hover_text="Link",
+                icon="icon",
+            ),
+            te.LinkTextTableElement(
+                name="Link Text",
+                url="home",
+                kwargs={},
+                hover_text="Link Text",
+                text="field_a",
+            ),
+        )
+
+
+class TestMontrekDataFrameTableManager(TestCase):
+    def setUp(self):
+        self.user = MontrekUserFactory()
+        input_df = pd.DataFrame(
+            {
+                "Field A": ["a", "b", "c"],
+                "Field B": [1, 2, 3],
+                "Field C": [1.0, 2.0, 3.0],
+                "Field D": [
+                    datetime.datetime(2024, 7, 13),
+                    datetime.datetime(2024, 7, 13),
+                    timezone.datetime(2024, 7, 13),
+                ],
+                "Link Text": ["a", "b", "c"],
+            }
+        )
+        self.manager = MockMontrekDataFrameTableManager(
+            input_df, {"user_id": self.user.id}
+        )
+
+    def test_to_html(self):
+        test_html = self.manager.to_html()
+        soup = BeautifulSoup(test_html, "html.parser")
+        table = soup.find("table")
+        rows = table.find_all("tr")
+        self.assertEqual(len(rows), 4)
+        headers = soup.find_all("th")
+        expected_headers = [
+            "Field A",
+            "Field B",
+            "Field C",
+            "Field D",
+            "Link",
+            "Link Text",
+        ]
+        header_texts = [th.get_text() for th in headers]
+        self.assertEqual(header_texts, expected_headers)
