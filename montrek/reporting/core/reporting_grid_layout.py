@@ -11,6 +11,7 @@ class ReportGridElements:
             self.report_grid_elements_container.append(
                 [EmptyReportGridElement() for _ in range(no_of_cols)]
             )
+        self.width = 0.98 / no_of_cols
 
     def add_report_grid_element(
         self, report_element: ReportElementProtocol, row: int, col: int
@@ -22,6 +23,10 @@ class ReportGridLayout:
     def __init__(self, no_of_rows: int, no_of_cols: int, is_nested=False):
         self.report_grid_elements = ReportGridElements(no_of_rows, no_of_cols)
         self.is_nested = is_nested
+
+    @property
+    def width(self):
+        return self.report_grid_elements.width
 
     def add_report_grid_element(
         self, report_element: ReportElementProtocol, row: int, col: int
@@ -62,7 +67,7 @@ class ReportGridLayout:
         col_tag = (
             "l"
             if self.is_nested
-            else f">{{\\raggedright\\arraybackslash}}p{{ {(0.97/no_of_columns):.5f}\\textwidth}}"
+            else f">{{\\raggedright\\arraybackslash}}p{{ {(self.width):.5f}\\textwidth}}"
         )
         col_str = ""
         for i in range(no_of_columns):

@@ -32,7 +32,7 @@ class MontrekReportManager(MontrekManager):
             self._report_elements.append(report_element)
 
     def collect_report_elements(self) -> None:
-        ...
+        raise NotImplementedError("This method must be implemented in the child class")
 
     def to_html(self) -> str:
         html_str = ""

@@ -10,6 +10,9 @@ from reporting.core.reporting_protocols import ReportingElement
 
 
 class ReportingPlot(ReportingElement, ReportingChecksMixin):
+    def __init__(self, width: float = 1):
+        self.width = width
+
     def generate(self, reporting_data: ReportingData) -> None:
         self._check_reporting_data(reporting_data)
         _x = self._set_x_axis(reporting_data)
@@ -23,7 +26,7 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
             title_font_color=ReportingColors.BLUE.hex,  # Customizing Title Color
             font=dict(
                 family="Arial, sans-serif",
-                size=12,
+                size=12 / (1.5 * self.width),
                 color=ReportingColors.BLUE.hex,  # Customizing Font Color
             ),
             paper_bgcolor=ReportingColors.WHITE.hex,  # Customizing Background Color
@@ -46,7 +49,7 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
     def to_latex(self) -> str:
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
         self.figure.write_image(temp_file.name)
-        return f"\\begin{{figure}}\\includegraphics[width=\\textwidth]{{{temp_file.name}}}\\end{{figure}}"
+        return f"\\includegraphics[width={self.width}\\textwidth]{{{temp_file.name}}}"
 
     def _check_reporting_data(self, reporting_data: ReportingData) -> None:
         if len(reporting_data.y_axis_columns) != len(reporting_data.plot_types):

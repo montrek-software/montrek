@@ -204,7 +204,7 @@ class NumberTableElement(AttrTableElement):
             return f'<td style="text-align:left;">{value}</td>'
         color = _get_value_color(value)
         formatted_value = self._format_value(value)
-        return f'<td style="text-align:right;color:{color};">{formatted_value}</td>'
+        return f'<td style="text-align:right;color:{color.hex};">{formatted_value}</td>'
 
     def format_latex(self, value):
         if not isinstance(value, (int, float, Decimal)):

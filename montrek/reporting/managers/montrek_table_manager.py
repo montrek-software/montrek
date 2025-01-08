@@ -95,10 +95,10 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         return html_str
 
     def to_latex(self):
-        table_start_str = "\n\\begin{table}[H]\n\\centering\n"
+        table_start_str = "\n\\begin{table}[H]\n\\centering\n\\small\n"
         table_start_str += "\\arrayrulecolor{lightgrey}\n"
-        table_start_str += "\\setlength{\\tabcolsep}{2pt}\n"
-        table_start_str += "\\renewcommand{\\arraystretch}{1.0}\n"
+        table_start_str += "\\setlength{\\tabcolsep}{1pt}\n"
+        table_start_str += "\\renewcommand{\\arraystretch}{0.5}\n"
         table_start_str += f"\\caption{{{self.table_title}}}\n"
         table_start_str += "\\begin{tabularx}{\\textwidth}{|"
         table_end_str = "\\end{tabularx}\n\\end{table}\n\n"
