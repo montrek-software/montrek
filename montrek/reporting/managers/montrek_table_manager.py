@@ -50,9 +50,9 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
     @property
     def document_name(self) -> str:
         if not self._document_name:
-            repo_name = self.repository.__class__.__name__.lower()
+            manager_name = self.__class__.__name__.lower()
             self._document_name = (
-                f"{repo_name}_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
+                f"{manager_name}_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
             )
         return self._document_name
 
@@ -64,6 +64,9 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
 
     def get_df(self) -> pd.DataFrame:
         raise NotImplementedError("Method get_df must be implemented")
+
+    def _get_table_dimensions(self) -> int:
+        raise NotImplementedError("Method _get_table_dimensions must be implemented")
 
     def get_table_elements_name_to_field_map(self) -> dict[str, str]:
         name_to_field_map = {}
@@ -78,7 +81,6 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
             html_str += f"<th title={getattr(table_element, 'attr', '')}>{table_element.name}</th>"
         html_str += "</tr>"
         table = self.get_table()
-        breakpoint()
         for query_object in table:
             html_str += '<tr style="white-space:nowrap;">'
             for table_element in self.table_elements:
@@ -189,11 +191,6 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
             value = timezone.make_naive(value)
         return value
 
-    def _get_table_dimensions(self) -> int:
-        rows = self.repository.receive().count()
-        cols = len(self.table_elements)
-        return rows * cols
-
     def send_table_by_mail(self, filetype: str):
         file_name = f"{self.document_name}.{filetype}"
         if filetype == "xlsx":
@@ -214,6 +211,8 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
 
     def _send_table_csv_by_mail(self, file_name: str):
         temp_file_path = os.path.join(file_name)
+        if not os.path.exists(default_storage.path("")):
+            os.mkdir(default_storage.path(""))
         self.to_csv(default_storage.path(temp_file_path))
         self._send_mail_with_file(temp_file_path, file_name)
 
@@ -279,14 +278,28 @@ class MontrekTableManager(MontrekTableManagerABC):
         page = paginator.get_page(page_number)
         return page
 
+    def _get_table_dimensions(self) -> int:
+        rows = self.repository.receive().count()
+        cols = len(self.table_elements)
+        return rows * cols
+
 
 class MontrekDataFrameTableManager(MontrekTableManagerABC):
-    def __init__(self, df: pd.DataFrame, session_data: dict[str, Any] = {}):
-        self.df = df
+    def __init__(self, session_data: dict[str, Any] = {}):
+        if "df_data" not in session_data:
+            raise ValueError("DataFrame data not set in session_data['df'].")
+        self.df_data = session_data["df_data"]
+        self.df = pd.DataFrame(self.df_data)
         super().__init__(session_data)
 
     def get_table(self) -> QuerySet | dict:
-        return self.get_df().to_dict(orient="records")
+        return self.df_data
+
+    def get_full_table(self) -> QuerySet | dict:
+        return self.get_table()
 
     def get_df(self) -> pd.DataFrame:
         return self.df
+
+    def _get_table_dimensions(self) -> int:
+        return self.df.shape[0] * self.df.shape[1]
