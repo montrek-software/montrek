@@ -26,7 +26,7 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
             title_font_color=ReportingColors.BLUE.hex,  # Customizing Title Color
             font=dict(
                 family="Arial, sans-serif",
-                size=12,
+                size=12 / (1.5 * self.width),
                 color=ReportingColors.BLUE.hex,  # Customizing Font Color
             ),
             paper_bgcolor=ReportingColors.WHITE.hex,  # Customizing Background Color
