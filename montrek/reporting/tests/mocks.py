@@ -49,11 +49,11 @@ class MockComprehensiveReportManager(MontrekReportManager):
         grid = ReportGridLayout(2, 2)
         grid.add_report_grid_element(reporting_text.ReportingParagraph("One"), 0, 0)
         grid.add_report_grid_element(reporting_text.ReportingParagraph("Two"), 0, 1)
-        grid.add_report_grid_element(self.plot(), 1, 0)
+        grid.add_report_grid_element(self.plot(grid.width), 1, 0)
         grid.add_report_grid_element(reporting_text.ReportingParagraph("Four"), 1, 1)
         return grid
 
-    def plot(self):
+    def plot(self, width):
         test_df = pd.DataFrame(
             {
                 "Category": ["A", "B", "C", "D"],
@@ -67,6 +67,6 @@ class MockComprehensiveReportManager(MontrekReportManager):
             plot_types=[ReportingPlotType.PIE],
             title="Test Plot",
         )
-        reporting_plot = ReportingPlot()
+        reporting_plot = ReportingPlot(width=width)
         reporting_plot.generate(reporting_data)
         return reporting_plot
