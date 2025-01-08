@@ -2,6 +2,11 @@ from reporting.managers.montrek_report_manager import (
     MontrekReportManager,
 )
 from reporting.managers.latex_report_manager import LatexReportManager
+from reporting.core import reporting_text
+
+
+class MockNoCollectReportElements(MontrekReportManager):
+    pass
 
 
 class MockMontrekReportManager(MontrekReportManager):
@@ -25,3 +30,10 @@ class MockReportElement:
 
 class MockLatexReportManagerNoTemplate(LatexReportManager):
     latex_template = "no_template.tex"
+
+
+class MockComprehensiveReportManager(MontrekReportManager):
+    document_title = "Mock Comprehensive Report"
+
+    def collect_report_elements(self):
+        self.append_report_element(reporting_text.ReportingHeader1("Hallo"))
