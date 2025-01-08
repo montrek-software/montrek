@@ -3,6 +3,7 @@ from django_pandas.io import read_frame
 import os
 
 from django.test import TestCase
+from file_upload.managers.file_upload_manager import TASK_SCHEDULED_MESSAGE
 from showcase.managers.initial_db_data_generator import InitialDbDataGenerator
 from showcase.repositories.stransaction_repositories import (
     STransactionFURegistryRepository,
@@ -117,7 +118,7 @@ class TestSTransactionUploadFileView(TestCase):
             TEST_DATA_DIR, "stransaction_upload_file.csv"
         )
         self.session_data = {"user_id": self.user.id}
-        self.rebase = True
+        self.rebase = False
 
     def test_post__success(self):
         # setup
@@ -158,11 +159,11 @@ class TestSTransactionUploadFileView(TestCase):
         self.assertRedirects(response, reverse("stransaction_fu_registry_list"))
         self.assertEqual(
             str(message),
-            "Upload background task scheduled. You will receive an email when the task is finished.",
+            TASK_SCHEDULED_MESSAGE,
         )
         self.assertEqual(registry_obj.file_name, "stransaction_upload_file.csv")
         self.assertEqual(
-            registry_obj.upload_message, "Successfully processed 993 transactions"
+            registry_obj.upload_message, "Successfully processed 313 transactions"
         )
         self.assertEqual(registry_obj.upload_status, "processed")
         pd.testing.assert_frame_equal(

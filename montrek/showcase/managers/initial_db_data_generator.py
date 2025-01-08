@@ -65,10 +65,11 @@ class InitialDbDataGenerator:
                 company_sat = SCompanyStaticSatelliteFactory(
                     company_name=row.company_name,
                 )
-                country = coy = countries.get(country_code_2=row.country_code)
-                LinkSCompanyCountryFactory(
-                    hub_in=company_sat.hub_entity, hub_out=country.hub
-                )
+                country = countries.filter(country_code_2=row.country_code).first()
+                if country:
+                    LinkSCompanyCountryFactory(
+                        hub_in=company_sat.hub_entity, hub_out=country.hub
+                    )
                 companies[row.company_name] = company_sat
 
             LinkSAssetSCompanyFactory(

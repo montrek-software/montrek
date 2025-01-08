@@ -9,6 +9,7 @@ from baseclasses.utils import montrek_time
 from django.contrib.auth.models import Permission
 from django.test import TestCase, TransactionTestCase
 from django.urls import reverse
+from file_upload.managers.file_upload_manager import TASK_SCHEDULED_MESSAGE
 from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepository,
 )
@@ -517,7 +518,7 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
         self.assertEqual(len(messages), 1)
         self.assertEqual(
             str(messages[0]),
-            "Successfully scheduled background task for processing file. You will receive an email once the task has finished execution.",
+            TASK_SCHEDULED_MESSAGE,
         )
 
         self.assertEqual(len(a_hubs), 3)
@@ -559,7 +560,7 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
         self.assertEqual(len(messages), 1)
         self.assertEqual(
             str(messages[0]),
-            "Successfully scheduled background task for processing file. You will receive an email once the task has finished execution.",
+            TASK_SCHEDULED_MESSAGE,
         )
         self.assertEqual(upload_registry.upload_status, "failed")
         self.assertEqual(
@@ -594,7 +595,7 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
         self.assertEqual(len(messages), 1)
         self.assertEqual(
             str(messages[0]),
-            "Successfully scheduled background task for processing file. You will receive an email once the task has finished execution.",
+            TASK_SCHEDULED_MESSAGE,
         )
         self.assertEqual(upload_registry.upload_status, "failed")
         self.assertEqual(
@@ -641,7 +642,7 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
         self.assertEqual(len(messages), 1)
         self.assertEqual(
             str(messages[0]),
-            "Successfully scheduled background task for processing file. You will receive an email once the task has finished execution.",
+            TASK_SCHEDULED_MESSAGE,
         )
         self.assertEqual(registry.upload_status, "failed")
         self.assertEqual(
