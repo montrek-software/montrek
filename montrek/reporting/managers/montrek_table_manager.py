@@ -78,6 +78,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
             html_str += f"<th title={getattr(table_element, 'attr', '')}>{table_element.name}</th>"
         html_str += "</tr>"
         table = self.get_table()
+        breakpoint()
         for query_object in table:
             html_str += '<tr style="white-space:nowrap;">'
             for table_element in self.table_elements:
@@ -285,7 +286,7 @@ class MontrekDataFrameTableManager(MontrekTableManagerABC):
         super().__init__(session_data)
 
     def get_table(self) -> QuerySet | dict:
-        return self.get_df().to_dict()
+        return self.get_df().to_dict(orient="records")
 
     def get_df(self) -> pd.DataFrame:
         return self.df
