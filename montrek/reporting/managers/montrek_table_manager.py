@@ -1,6 +1,8 @@
 import datetime
 import os
 from io import BytesIO
+from typing import Any
+from django.db.models import QuerySet
 
 import pandas as pd
 from baseclasses.dataclasses.montrek_message import MontrekMessageInfo
@@ -28,14 +30,12 @@ class MontrekTableMetaClass(type):
         super().__init__(name, bases, dct)
 
 
-class MontrekTableManager(MontrekManager, metaclass=MontrekTableMetaClass):
-    is_paginated = True
-    paginate_by = 10
+class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
     table_title = ""
     document_title = "Montrek Table"
     draft = False
 
-    def __init__(self, session_data: dict[str, any] = {}):
+    def __init__(self, session_data: dict[str, Any] = {}):
         super().__init__(session_data)
         self._document_name: None | str = None
 
@@ -50,11 +50,23 @@ class MontrekTableManager(MontrekManager, metaclass=MontrekTableMetaClass):
     @property
     def document_name(self) -> str:
         if not self._document_name:
-            repo_name = self.repository.__class__.__name__.lower()
+            manager_name = self.__class__.__name__.lower()
             self._document_name = (
-                f"{repo_name}_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
+                f"{manager_name}_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
             )
         return self._document_name
+
+    def get_table(self) -> QuerySet | dict:
+        raise NotImplementedError("Method get_table must be implemented")
+
+    def get_full_table(self) -> QuerySet | dict:
+        raise NotImplementedError("Method get_full_table must be implemented")
+
+    def get_df(self) -> pd.DataFrame:
+        raise NotImplementedError("Method get_df must be implemented")
+
+    def _get_table_dimensions(self) -> int:
+        raise NotImplementedError("Method _get_table_dimensions must be implemented")
 
     def get_table_elements_name_to_field_map(self) -> dict[str, str]:
         name_to_field_map = {}
@@ -62,14 +74,19 @@ class MontrekTableManager(MontrekManager, metaclass=MontrekTableMetaClass):
             name_to_field_map[element.name] = getattr(element, "attr", "")
         return name_to_field_map
 
+    def get_field_table_elements_name_map(self) -> dict[str, str]:
+        return {
+            ele.attr: ele.name for ele in self.table_elements if hasattr(ele, "attr")
+        }
+
     def to_html(self):
         html_str = f"<h3>{self.table_title}</h3>"
         html_str += '<table class="table table-bordered table-hover"><tr>'
         for table_element in self.table_elements:
             html_str += f"<th title={getattr(table_element, 'attr', '')}>{table_element.name}</th>"
         html_str += "</tr>"
-        queryset = self.get_paginated_queryset()
-        for query_object in queryset:
+        table = self.get_table()
+        for query_object in table:
             html_str += '<tr style="white-space:nowrap;">'
             for table_element in self.table_elements:
                 html_str += table_element.get_attribute(query_object, "html")
@@ -99,8 +116,8 @@ class MontrekTableManager(MontrekManager, metaclass=MontrekTableMetaClass):
         table_start_str += column_header_str[:-2] + "\\\\\n\\hline\n"
         latex_str = table_start_str
 
-        queryset = self.repository.receive()
-        for i, query_object in enumerate(queryset):
+        table = self.get_full_table()
+        for i, query_object in enumerate(table):
             if i % 2 == 0:
                 latex_str += "\\rowcolor{lightblue}"
             for table_element in self.table_elements:
@@ -117,27 +134,15 @@ class MontrekTableManager(MontrekManager, metaclass=MontrekTableMetaClass):
     def to_excel(
         self, output: HttpResponse | BytesIO | str
     ) -> HttpResponse | BytesIO | str:
-        table_df = self.get_queryset_as_dataframe()
+        table_df = self.get_df()
         with pd.ExcelWriter(output) as excel_writer:
             table_df.to_excel(excel_writer, index=False)
         return output
 
     def to_csv(self, output: HttpResponse | str) -> HttpResponse | str:
-        table_df = self.get_queryset_as_dataframe()
+        table_df = self.get_df()
         table_df.to_csv(output, index=False)
         return output
-
-    def get_paginated_queryset(self):
-        queryset = self.repository.receive()
-        if self.is_paginated:
-            return self._paginate_queryset(queryset)
-        return queryset
-
-    def _paginate_queryset(self, queryset):
-        page_number = self.session_data.get("page", [1])[0]
-        paginator = Paginator(queryset, self.paginate_by)
-        page = paginator.get_page(page_number)
-        return page
 
     def download_or_mail_csv(self) -> HttpResponse:
         table_dimensions = self._get_table_dimensions()
@@ -181,27 +186,6 @@ class MontrekTableManager(MontrekManager, metaclass=MontrekTableMetaClass):
         )
         return response
 
-    def get_queryset_as_dataframe(self):
-        queryset = self.repository.receive()
-        table_data = {}
-        table_elements = [
-            table_element
-            for table_element in self.table_elements
-            if not isinstance(table_element, te.LinkTableElement)
-        ]
-        for element in table_elements:
-            values = []
-            for row in queryset.all():
-                if hasattr(element, "attr"):
-                    attr = getattr(row, element.attr)
-                    attr = self._make_datetime_naive(attr)
-
-                    values.append(attr)
-                else:
-                    values.append(getattr(row, element.text))
-            table_data[element.name] = values
-        return pd.DataFrame(table_data)
-
     def do_download(self, response, filename, content_type):
         response["Content-Type"] = content_type
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
@@ -211,11 +195,6 @@ class MontrekTableManager(MontrekManager, metaclass=MontrekTableMetaClass):
         if isinstance(value, datetime.datetime) and not timezone.is_naive(value):
             value = timezone.make_naive(value)
         return value
-
-    def _get_table_dimensions(self) -> int:
-        rows = self.repository.receive().count()
-        cols = len(self.table_elements)
-        return rows * cols
 
     def send_table_by_mail(self, filetype: str):
         file_name = f"{self.document_name}.{filetype}"
@@ -237,6 +216,8 @@ class MontrekTableManager(MontrekManager, metaclass=MontrekTableMetaClass):
 
     def _send_table_csv_by_mail(self, file_name: str):
         temp_file_path = os.path.join(file_name)
+        if not os.path.exists(default_storage.path("")):
+            os.mkdir(default_storage.path(""))
         self.to_csv(default_storage.path(temp_file_path))
         self._send_mail_with_file(temp_file_path, file_name)
 
@@ -257,3 +238,73 @@ class MontrekTableManager(MontrekManager, metaclass=MontrekTableMetaClass):
             subject=f"{file_name} is ready for download",
             message=message,
         )
+
+
+class MontrekTableManager(MontrekTableManagerABC):
+    is_paginated = True
+    paginate_by = 10
+
+    def get_table(self) -> QuerySet | dict:
+        return self.get_paginated_queryset()
+
+    def get_full_table(self) -> QuerySet | dict:
+        return self.repository.receive()
+
+    def get_df(self) -> pd.DataFrame:
+        queryset = self.repository.receive()
+        table_data = {}
+        table_elements = [
+            table_element
+            for table_element in self.table_elements
+            if not isinstance(table_element, te.LinkTableElement)
+        ]
+        for element in table_elements:
+            values = []
+            for row in queryset.all():
+                if hasattr(element, "attr"):
+                    attr = getattr(row, element.attr)
+                    attr = self._make_datetime_naive(attr)
+
+                    values.append(attr)
+                else:
+                    values.append(getattr(row, element.text))
+            table_data[element.name] = values
+        return pd.DataFrame(table_data)
+
+    def get_paginated_queryset(self) -> QuerySet:
+        queryset = self.get_full_table()
+        if self.is_paginated:
+            return self._paginate_queryset(queryset)
+        return queryset
+
+    def _paginate_queryset(self, queryset):
+        page_number = self.session_data.get("page", [1])[0]
+        paginator = Paginator(queryset, self.paginate_by)
+        page = paginator.get_page(page_number)
+        return page
+
+    def _get_table_dimensions(self) -> int:
+        rows = self.repository.receive().count()
+        cols = len(self.table_elements)
+        return rows * cols
+
+
+class MontrekDataFrameTableManager(MontrekTableManagerABC):
+    def __init__(self, session_data: dict[str, Any] = {}):
+        if "df_data" not in session_data:
+            raise ValueError("DataFrame data not set in session_data['df'].")
+        self.df_data = session_data["df_data"]
+        self.df = pd.DataFrame(self.df_data)
+        super().__init__(session_data)
+
+    def get_table(self) -> QuerySet | dict:
+        return self.df_data
+
+    def get_full_table(self) -> QuerySet | dict:
+        return self.get_table()
+
+    def get_df(self) -> pd.DataFrame:
+        return self.df.rename(columns=self.get_field_table_elements_name_map())
+
+    def _get_table_dimensions(self) -> int:
+        return self.df.shape[0] * self.df.shape[1]
