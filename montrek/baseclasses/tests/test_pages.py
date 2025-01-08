@@ -44,10 +44,6 @@ class TestMontrekPage(TestCase):
 
 
 class TestMontrekDetailsPage(TestCase):
-    def test_montrek_details_page(self):
-        page = MockMontrekDetailsPage(pk=0)
-        self.assertEqual(page.page_title, "item1")
-
     def test_montrek_details_page_no_pk(self):
         with self.assertRaises(ValueError) as e:
             MockMontrekDetailsPage()

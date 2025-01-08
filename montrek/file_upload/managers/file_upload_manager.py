@@ -16,6 +16,8 @@ from baseclasses.managers.montrek_manager import MontrekManager
 from file_upload.tasks.file_upload_task import FileUploadTask
 from montrek.celery_app import PARALLEL_QUEUE_NAME
 
+TASK_SCHEDULED_MESSAGE = "Successfully scheduled background task for processing file. You will receive an email once the task has finished execution."
+
 
 class FileUploadProcessorProtocol(Protocol):
     message: str
@@ -91,7 +93,7 @@ class FileUploadManagerABC(MontrekManager):
                 session_data=self.session_data,
             )
             result = True
-            self.message = "Successfully scheduled background task for processing file. You will receive an email once the task has finished execution."
+            self.message = TASK_SCHEDULED_MESSAGE
         else:
             result = self.process()
             self.message = self.processor.message
