@@ -26,7 +26,7 @@ class SProductDetailsPage(MontrekDetailsPage):
         return (
             TabElement(
                 name="Details",
-                link=reverse("sproduct_details", args=[self.obj.id]),
+                link=reverse("sproduct_details", args=[self.hub.id]),
                 html_id="tab_sproduct_details",
                 active="active",
             ),

@@ -23,7 +23,7 @@ class SProductTableManager(MontrekTableManager):
             te.LinkTableElement(
                 name="Details",
                 url="sproduct_details",
-                kwargs={"pk": "id"},
+                kwargs={"pk": "hub_id"},
                 icon="eye-open",
                 hover_text="View Product Details",
             ),

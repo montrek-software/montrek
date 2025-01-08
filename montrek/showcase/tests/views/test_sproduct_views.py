@@ -1,4 +1,8 @@
 from showcase.factories.sproduct_hub_factories import SProductHubValueDateFactory
+from showcase.factories.stransaction_hub_factories import (
+    LinkSTransactionSProductFactory,
+)
+from showcase.factories.stransaction_sat_factories import STransactionSatelliteFactory
 from testing.test_cases.view_test_cases import (
     MontrekCreateViewTestCase,
     MontrekUpdateViewTestCase,
@@ -7,7 +11,11 @@ from testing.test_cases.view_test_cases import (
     MontrekViewTestCase,
 )
 from showcase.factories.sproduct_sat_factories import SProductSatelliteFactory
-from showcase.views.sproduct_views import SProductCreateView, SProductDetailView
+from showcase.views.sproduct_views import (
+    SProductCreateView,
+    SProductDetailView,
+    SProductSTransactionListView,
+)
 from showcase.views.sproduct_views import SProductUpdateView
 from showcase.views.sproduct_views import SProductListView
 from showcase.views.sproduct_views import SProductDeleteView
@@ -67,9 +75,20 @@ class TestSProductDetailView(MontrekViewTestCase):
         return {"pk": self.hub_vd.hub.id}
 
 
-# TODO: Add tests for position view
-class TestSProductSTransactionListView:
-    pass
+class TestSProductSTransactionListView(MontrekListViewTestCase):
+    viewname = "sproduct_stransaction_list"
+    view_class = SProductSTransactionListView
+    expected_no_of_rows = 1
+
+    def build_factories(self):
+        transaction_sat = STransactionSatelliteFactory()
+        link_transaction_product = LinkSTransactionSProductFactory(
+            hub_in=transaction_sat.hub_entity
+        )
+        self.product_hub = link_transaction_product.hub_out
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.product_hub.get_hub_value_date().id}
 
 
 class TestSProductSPositionListView:
