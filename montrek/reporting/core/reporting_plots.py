@@ -27,7 +27,17 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
                 color=ReportingColors.BLUE.hex,  # Customizing Font Color
             ),
             paper_bgcolor=ReportingColors.WHITE.hex,  # Customizing Background Color
-            plot_bgcolor=ReportingColors.LIGHT_BLUE.hex,  # Customizing Plot Background Color
+            plot_bgcolor=ReportingColors.WHITE.hex,  # Customizing Plot Background Color
+            xaxis=dict(
+                color=ReportingColors.BLUE.hex,  # Axis text and line color
+                gridcolor=ReportingColors.GREY.hex,  # Grid line color
+                zerolinecolor=ReportingColors.GREY.hex,  # Zero line color
+            ),
+            yaxis=dict(
+                color=ReportingColors.BLUE.hex,  # Axis text and line color
+                gridcolor=ReportingColors.GREY.hex,  # Grid line color
+                zerolinecolor=ReportingColors.GREY.hex,  # Zero line color
+            ),
         )
 
     def to_html(self) -> str:
@@ -68,6 +78,7 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
                         x=_x,
                         y=_y,
                         marker_color=color_palette[i],
+                        name=y_axis_column,
                     )
                 )
             elif plot_type == ReportingPlotType.LINE:
