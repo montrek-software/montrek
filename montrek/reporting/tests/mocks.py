@@ -18,6 +18,9 @@ class MockNoCollectReportElements(MontrekReportManager):
 class MockMontrekReportManager(MontrekReportManager):
     document_title = "Mock Report"
 
+    def collect_report_elements(self):
+        pass
+
     def generate_report(self) -> str:
         report = ""
         for report_element in self.report_elements:
