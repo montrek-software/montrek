@@ -19,6 +19,7 @@ from showcase.factories.sproduct_sat_factories import SProductSatelliteFactory
 from showcase.views.sproduct_views import (
     SProductCreateView,
     SProductDetailView,
+    SProductReportView,
     SProductSPositionListView,
     SProductSTransactionListView,
 )
@@ -142,3 +143,14 @@ class TestSProductSPositionListView(MontrekListViewTestCase):
         object_list = response.context["object_list"]
         self.assertEqual(object_list[0].position_quantity, 300)
         self.assertEqual(object_list[1].position_quantity, -100)
+
+
+class TestSProductReportView(MontrekViewTestCase):
+    viewname = "sproduct_report"
+    view_class = SProductReportView
+
+    def build_factories(self):
+        self.product_hub = SProductHubFactory()
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.product_hub.get_hub_value_date().id}
