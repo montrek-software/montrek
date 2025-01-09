@@ -38,8 +38,9 @@ class TableElement:
         raise NotImplementedError
 
     def format_latex(self, value):
-        value = HtmlLatexConverter.convert(value)
-        return f" \\color{{black}} {value} &"
+        value_str = str(value)
+        value_str = HtmlLatexConverter.convert(value_str)
+        return f" \\color{{black}} {value_str} &"
 
     def get_attribute(self, obj: Any, tag: str) -> str:
         raise NotImplementedError
