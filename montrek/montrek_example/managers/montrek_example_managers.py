@@ -1,3 +1,4 @@
+from django.http import HttpResponse
 from montrek_example.repositories.sat_a1_repository import SatA1Repository
 from reporting.managers.montrek_details_manager import MontrekDetailsManager
 from reporting.managers.montrek_table_manager import MontrekTableManager
@@ -55,6 +56,15 @@ class HubAManager(MontrekTableManager):
                 hover_text="Delete Example A",
             ),
         )
+
+    def download(self) -> HttpResponse:
+        response = HttpResponse()
+        df = self.get_df()
+        df.to_markdown(response, index=False)
+        return response
+
+    def get_filename(self) -> str:
+        return "example_md.txt"
 
 
 class SatA1Manager(MontrekTableManager):
