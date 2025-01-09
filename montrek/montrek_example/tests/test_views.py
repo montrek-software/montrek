@@ -22,7 +22,7 @@ from testing.test_cases.view_test_cases import (
     MontrekUpdateViewTestCase,
     MontrekViewTestCase,
     MontrekDownloadViewTestCase,
-    MontrekFileResponseViewTestCase,
+    MontrekFileResponseTestCase,
 )
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
@@ -712,7 +712,7 @@ class TestMontrekExampleA1UploadHistoryView(MontrekViewTestCase):
         self.assertEqual(sat_a1_queryset[0].changed_by, self.user2.email)
 
 
-class TestMontrekA1RepositoryDownloadView(MontrekFileResponseViewTestCase):
+class TestMontrekA1RepositoryDownloadView(MontrekFileResponseTestCase):
     viewname = "a1_download_file"
     view_class = me_views.MontrekExampleA1DownloadFileView
     is_redirected = True
@@ -732,7 +732,7 @@ class TestMontrekA1RepositoryDownloadView(MontrekFileResponseViewTestCase):
         self.assertEqual(content, b"test")
 
 
-class TestMontrekA1RepositoryDownloadLogView(MontrekFileResponseViewTestCase):
+class TestMontrekA1RepositoryDownloadLogView(MontrekFileResponseTestCase):
     viewname = "a1_download_log_file"
     view_class = me_views.MontrekExampleA1DownloadFileView
     is_redirected = True
