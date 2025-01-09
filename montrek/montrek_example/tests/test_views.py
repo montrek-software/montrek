@@ -16,12 +16,13 @@ from file_upload.repositories.file_upload_registry_repository import (
 from testing.test_cases.view_test_cases import (
     MontrekCreateViewTestCase,
     MontrekDeleteViewTestCase,
-    MontrekFileResponseTestCase,
     MontrekListViewTestCase,
     MontrekRedirectViewTestCase,
     MontrekRestApiViewTestCase,
     MontrekUpdateViewTestCase,
     MontrekViewTestCase,
+    MontrekDownloadViewTestCase,
+    MontrekFileResponseViewTestCase,
 )
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
@@ -128,6 +129,20 @@ class TestMontrekExampleAUpdateView(MontrekUpdateViewTestCase):
 class TestMontrekExampleAReportView(MontrekViewTestCase):
     viewname = "montrek_example_report"
     view_class = me_views.MontrekExampleReport
+
+
+class TestMontrekExampleADownloadView(MontrekDownloadViewTestCase):
+    viewname = "montrek_example_a_download"
+    view_class = me_views.MontrekExampleADownloadView
+
+    def expected_filename(self) -> str:
+        return "example_md.txt"
+
+    def additional_download_assertions(self):
+        self.assertEqual(
+            self.response.content.decode(),
+            "| A1 String   | A1 Int   | A2 String   | A2 Float   | B1 String   |\n|-------------|----------|-------------|------------|-------------|",
+        )
 
 
 class TestMontrekExampleADetailView(MontrekViewTestCase):
@@ -697,7 +712,7 @@ class TestMontrekExampleA1UploadHistoryView(MontrekViewTestCase):
         self.assertEqual(sat_a1_queryset[0].changed_by, self.user2.email)
 
 
-class TestMontrekA1RepositoryDownloadView(MontrekFileResponseTestCase):
+class TestMontrekA1RepositoryDownloadView(MontrekFileResponseViewTestCase):
     viewname = "a1_download_file"
     view_class = me_views.MontrekExampleA1DownloadFileView
     is_redirected = True
@@ -717,7 +732,7 @@ class TestMontrekA1RepositoryDownloadView(MontrekFileResponseTestCase):
         self.assertEqual(content, b"test")
 
 
-class TestMontrekA1RepositoryDownloadLogView(MontrekFileResponseTestCase):
+class TestMontrekA1RepositoryDownloadLogView(MontrekFileResponseViewTestCase):
     viewname = "a1_download_log_file"
     view_class = me_views.MontrekExampleA1DownloadFileView
     is_redirected = True

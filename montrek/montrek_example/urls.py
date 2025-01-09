@@ -15,6 +15,11 @@ urlpatterns = [
     ),
     path("a/list", views.MontrekExampleAList.as_view(), name="montrek_example_a_list"),
     path(
+        "a/download",
+        views.MontrekExampleADownloadView.as_view(),
+        name="montrek_example_a_download",
+    ),
+    path(
         "b/create",
         views.MontrekExampleBCreate.as_view(),
         name="montrek_example_b_create",

@@ -241,7 +241,43 @@ class MontrekDeleteViewTestCase(MontrekObjectViewBaseTestCase, GetObjectPkMixin)
         self.assertEqual(query.count(), 0)
 
 
-class MontrekFileResponseTestCase(MontrekViewTestCase):
+class MontrekDownloadViewTestCase(MontrekViewTestCase):
+    def _is_base_test_class(self) -> bool:
+        # Django runs all tests within these base classes here individually. This is not wanted and hence we skip the tests if django attempts to do this.
+        return self.__class__.__name__ == "MontrekDownloadViewTestCase"
+
+    def get_response(self):
+        response = self.client.get(self.url, follow=True)
+        response.context = {"view": None}
+        return response
+
+    def test_view_return_correct_html(self):
+        if self._is_base_test_class():
+            return
+        self.assertEqual(self.response.status_code, self.expected_status_code)
+        content_disposition = self.response.get("Content-Disposition")
+        self.assertIsNotNone(content_disposition)
+        self.assertEqual(
+            content_disposition, f'attachment; filename="{self.expected_filename()}"'
+        )
+        self.additional_download_assertions()
+
+    def expected_filename(self) -> str:
+        raise NotImplementedError(
+            "Please set the expected_filename method in the subclass"
+        )
+
+    def additional_download_assertions(self):
+        return
+
+    def test_context_data(self):
+        return
+
+    def test_view_page(self):
+        return
+
+
+class MontrekFileResponseViewTestCase(MontrekViewTestCase):
     def _is_base_test_class(self) -> bool:
         # Django runs all tests within these base classes here individually. This is not wanted and hence we skip the tests if django attempts to do this.
         return self.__class__.__name__ == "MontrekFileResponseTestCase"
