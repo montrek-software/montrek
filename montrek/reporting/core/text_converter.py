@@ -77,6 +77,7 @@ class HtmlLatexConverter:
             "&gt;": "$>$",
             "%": "\\%",
             "&lowbar;": "\\_",
+            "&": "\\&",
         }
         for key, value in characters.items():
             text = text.replace(key, value)

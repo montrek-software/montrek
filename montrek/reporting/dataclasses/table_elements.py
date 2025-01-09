@@ -19,6 +19,8 @@ from pandas.core.tools.datetimes import DateParseError
 from reporting.core.reporting_colors import ReportingColors
 from rest_framework import serializers
 
+from reporting.core.text_converter import HtmlLatexConverter
+
 
 def _get_value_color(value):
     return ReportingColors.RED if value < 0 else ReportingColors.DARK_BLUE
@@ -36,6 +38,7 @@ class TableElement:
         raise NotImplementedError
 
     def format_latex(self, value):
+        value = HtmlLatexConverter.convert(value)
         return f" \\color{{black}} {value} &"
 
     def get_attribute(self, obj: Any, tag: str) -> str:
