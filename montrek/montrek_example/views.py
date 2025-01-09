@@ -105,6 +105,11 @@ class MontrekExampleAList(views.MontrekListView):
         )
 
 
+class MontrekExampleADownloadView(views.MontrekDownloadView):
+    manager_class = mem.HubAManager
+    page_class = pages.ExampleAPage
+
+
 class MontrekExampleADelete(views.MontrekDeleteView):
     manager_class = mem.HubAManager
     page_class = pages.ExampleAPage

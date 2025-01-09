@@ -9,7 +9,7 @@ from django.core.paginator import Paginator
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
-from django.views.generic import DetailView, RedirectView
+from django.views.generic import DetailView, RedirectView, View
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import CreateView
 from django.views.generic.list import ListView
@@ -534,3 +534,29 @@ class MontrekRestApiView(APIView, MontrekViewMixin):
 
 class MontrekRedirectView(MontrekViewMixin, RedirectView):
     manager_class = MontrekManagerNotImplemented
+
+
+class MontrekDownloadView(MontrekViewMixin, View):
+    manager_class = MontrekManagerNotImplemented
+
+    def get(self, request, *args, **kwargs) -> HttpResponse:
+        response = self.manager.download()
+        filename = self.manager.get_filename()
+        content_type = self.get_content_type(filename)
+        response["Content-Type"] = content_type
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
+
+    def get_content_type(self, filename: str) -> str:
+        file_extension = filename.split(".")[-1]
+        if file_extension == "pdf":
+            return "application/pdf"
+        if file_extension == "txt":
+            return "text/plain"
+        if file_extension == "csv":
+            return "text/csv"
+        if file_extension == "xlsx":
+            return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        if file_extension == "zip":
+            return "application/zip"
+        return "application/octet-stream"
