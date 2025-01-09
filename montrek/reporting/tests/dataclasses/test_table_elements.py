@@ -162,6 +162,17 @@ class TestTableElements(TestCase):
             '<td style="text-align:left;"><a href="https://www.google.com" target="_blank" title="https://www.google.com">https://www.google.com</a></td>',
         )
 
+    def test_latex_special_character_is_handled(self):
+        table_element = te.StringTableElement(
+            name="name",
+            attr="test_attr",
+        )
+        test_str_latex = table_element.format_latex("you & me = 100%")
+        self.assertEqual(
+            test_str_latex,
+            " \\color{black} you \\& me = 100\\% &",
+        )
+
     def test_external_link_table_element__latex(self):
         table_element = te.ExternalLinkTableElement(
             name="name",
