@@ -72,15 +72,15 @@ class HtmlLatexConverter:
     def special_characters(text: str) -> str:
         characters = {
             "&middot;": "$\\cdot$",
-            "&amp;": "\\&",
+            "&amp;": "&",
             "&lt;": "$<$",
             "&gt;": "$>$",
             "%": "\\%",
             "&lowbar;": "\\_",
-            "&": "\\&",
         }
         for key, value in characters.items():
             text = text.replace(key, value)
+        text = text.replace("&", "\\&")
         return text
 
     @staticmethod
