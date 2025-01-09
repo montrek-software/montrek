@@ -167,10 +167,10 @@ class TestTableElements(TestCase):
             name="name",
             attr="test_attr",
         )
-        test_str_latex = table_element.format_latex("you & me = 100%")
+        test_str_latex = table_element.format_latex("this & that = 100%")
         self.assertEqual(
             test_str_latex,
-            " \\color{black} you \\& me = 100\\% &",
+            " \\color{black} this \\& that = 100\\% &",
         )
 
     def test_external_link_table_element__latex(self):
