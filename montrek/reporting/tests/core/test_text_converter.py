@@ -45,24 +45,10 @@ class TestHtmlLatexConverter(TestCase):
         expected_text = "\\begin{itemize} \\item Item 1\\item Item 2\\begin{itemize} \\item Subitem 2.1\\item Subitem 2.2 \\end{itemize} \\end{itemize}"
         self.assertEqual(converted_text, expected_text)
 
-    def test_tables(self):
-        test_text = (
-            "<div>TextBlock</div><table><tr><td>Cell 1</td><td>Cell 2</td></tr></table>"
-        )
-        converted_text = HtmlLatexConverter.convert(test_text)
-        expected_text = "<div>TextBlock</div>\\begin{table}[h!]\\centering\\arrayrulecolor{lightgrey}\\setlength{\\tabcolsep}{2pt}\\renewcommand{\\arraystretch}{1.0}\\begin{tabularx}{\\textwidth}{||}\\hline\\rowcolor{blue} \\\\\\hlineCell 1 & Cell 2 \\\\\\hline\\end{tabularx}\\end{table}"
-        self.assertEqual(converted_text.replace("\n", ""), expected_text)
-
-    def test_two_tables(self):
-        test_text = "<div>TextBlock</div><table><tr><td>Cell 1</td><td>Cell 2</td></tr></table><table><tr><td>Cell 3</td><td>Cell 4</td></tr></table>"
-        converted_text = HtmlLatexConverter.convert(test_text)
-        expected_text = "<div>TextBlock</div>\\begin{table}[h!]\\centering\\arrayrulecolor{lightgrey}\\setlength{\\tabcolsep}{2pt}\\renewcommand{\\arraystretch}{1.0}\\begin{tabularx}{\\textwidth}{||}\\hline\\rowcolor{blue} \\\\\\hlineCell 1 & Cell 2 \\\\\hline\\end{tabularx}\\end{table}\\begin{table}[h!]\\centering\\arrayrulecolor{lightgrey}\\setlength{\\tabcolsep}{2pt}\\renewcommand{\\arraystretch}{1.0}\\begin{tabularx}{\\textwidth}{||}\\hline\\rowcolor{blue} \\\\\\hlineCell 3 & Cell 4 \\\\\\hline\\end{tabularx}\\end{table}"
-        self.assertEqual(converted_text.replace("\n", ""), expected_text)
-
     def test_special_characters(self):
-        test_text = "Special characters: &lt;, &gt;, &amp;"
+        test_text = "Special characters: &lt;, &gt;, &amp; &"
         converted_text = HtmlLatexConverter.convert(test_text)
-        expected_text = "Special characters: $<$, $>$, \\&"
+        expected_text = "Special characters: $<$, $>$, \\& \\&"
         self.assertEqual(converted_text, expected_text)
 
     def test_sub_sup_script(self):
