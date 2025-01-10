@@ -1,3 +1,4 @@
+from math import floor
 from reporting.managers.montrek_report_manager import ReportElementProtocol
 
 
@@ -10,6 +11,7 @@ class ReportGridElements:
             self.report_grid_elements_container.append(
                 [EmptyReportGridElement() for _ in range(no_of_cols)]
             )
+        self.width = 0.98 / no_of_cols
 
     def add_report_grid_element(
         self, report_element: ReportElementProtocol, row: int, col: int
@@ -22,19 +24,23 @@ class ReportGridLayout:
         self.report_grid_elements = ReportGridElements(no_of_rows, no_of_cols)
         self.is_nested = is_nested
 
+    @property
+    def width(self):
+        return self.report_grid_elements.width
+
     def add_report_grid_element(
         self, report_element: ReportElementProtocol, row: int, col: int
     ):
         self.report_grid_elements.add_report_grid_element(report_element, row, col)
 
     def to_html(self):
-        html_str = '<div><table id="noStyleTable">'
+        html_str = ""
         for row in self.report_grid_elements.report_grid_elements_container:
-            html_str += "<tr>"
+            html_str += '<div class="row">'
+            col_len = floor(12 / len(row))
             for element in row:
-                html_str += f"<td>{element.to_html()}</td>"
-            html_str += "</tr>"
-        html_str += "</table></div>"
+                html_str += f'<div class="col-lg-{col_len}">{element.to_html()}</div>'
+            html_str += "</div>"
         return html_str
 
     def to_latex(self):
@@ -61,7 +67,7 @@ class ReportGridLayout:
         col_tag = (
             "l"
             if self.is_nested
-            else f">{{\\raggedright\\arraybackslash}}p{{ {(0.97/no_of_columns):.5f}\\textwidth}}"
+            else f">{{\\raggedright\\arraybackslash}}p{{ {(self.width):.5f}\\textwidth}}"
         )
         col_str = ""
         for i in range(no_of_columns):

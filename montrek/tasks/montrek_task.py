@@ -6,15 +6,18 @@ from montrek.celery_app import (
 
 
 class MontrekTask(Task):
-    queue = PARALLEL_QUEUE_NAME
-    is_register_on_subclass_init = True
+    def __init__(self, task_name: str = "", queue: str = PARALLEL_QUEUE_NAME):
+        task_name = (
+            task_name or f"{self.__class__.__module__}.{self.__class__.__name__}"
+        )
+        self.raise_for_conflicting_task_name(task_name)
+        self.name = task_name
+        self.queue = queue
+        celery_app.register_task(self)
 
-    def __init_subclass__(cls, **kwargs):
-        super().__init_subclass__(**kwargs)
-        cls.name = f"{cls.__module__}.{cls.__name__}"  # Set a default task name
-        if cls.is_register_on_subclass_init:
-            cls.register_task()
-
-    @classmethod
-    def register_task(cls, **kwargs):
-        celery_app.register_task(cls, **kwargs)
+    def raise_for_conflicting_task_name(self, task_name: str):
+        registered_tasks = celery_app.tasks.keys()
+        if task_name in registered_tasks:
+            raise ValueError(
+                f"Task with name {task_name} already registered. Please choose a different name."
+            )

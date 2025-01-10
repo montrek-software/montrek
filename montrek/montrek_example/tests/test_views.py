@@ -1,30 +1,38 @@
-from tempfile import TemporaryDirectory
 import os
+from tempfile import TemporaryDirectory
 from textwrap import dedent
+
+from django.utils import timezone
 
 from baseclasses.dataclasses.alert import AlertEnum
 from baseclasses.utils import montrek_time
+from django.contrib.auth.models import Permission
 from django.test import TestCase, TransactionTestCase
 from django.urls import reverse
+from file_upload.managers.file_upload_manager import TASK_SCHEDULED_MESSAGE
 from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepository,
 )
 from testing.test_cases.view_test_cases import (
     MontrekCreateViewTestCase,
     MontrekDeleteViewTestCase,
-    MontrekFileResponseTestCase,
     MontrekListViewTestCase,
+    MontrekRedirectViewTestCase,
+    MontrekRestApiViewTestCase,
     MontrekUpdateViewTestCase,
     MontrekViewTestCase,
-    MontrekRestApiViewTestCase,
+    MontrekDownloadViewTestCase,
+    MontrekFileResponseTestCase,
 )
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
 from montrek_example import views as me_views
+from montrek_example.models import LinkHubBHubD
 from montrek_example.repositories.hub_a_repository import (
     HubAFileUploadRegistryRepository,
     HubARepository,
 )
+from montrek_example.repositories.hub_b_repository import HubBRepository
 from montrek_example.repositories.hub_d_repository import HubDRepository
 from montrek_example.tests.factories import montrek_example_factories as me_factories
 
@@ -93,8 +101,12 @@ class TestMontrekExampleAUpdateView(MontrekUpdateViewTestCase):
     view_class = me_views.MontrekExampleAUpdate
 
     def build_factories(self):
-        self.sat_a1 = me_factories.SatA1Factory()
+        self.sat_a1 = me_factories.SatA1Factory(field_a1_str="test")
+        me_factories.SatA1Factory(field_a1_str="dummy")
         me_factories.SatA2Factory(hub_entity=self.sat_a1.hub_entity)
+        self.sat_b1 = me_factories.SatB1Factory()
+        me_factories.SatB2Factory(hub_entity=self.sat_b1.hub_entity)
+        self.sat_a1.hub_entity.link_hub_a_hub_b.add(self.sat_b1.hub_entity)
 
     def url_kwargs(self) -> dict:
         return {"pk": self.sat_a1.get_hub_value_date().id}
@@ -107,10 +119,30 @@ class TestMontrekExampleAUpdateView(MontrekUpdateViewTestCase):
             "field_a2_float": 3.0,
         }
 
+    def test_initial_links_in_form(self):
+        response = self.client.get(self.url)
+        form = response.context["form"]
+        self.assertEqual(form.initial["field_a1_str"], "test")
+        self.assertEqual(form["link_hub_a_hub_b"].value(), self.sat_b1.hub_entity.pk)
+
 
 class TestMontrekExampleAReportView(MontrekViewTestCase):
     viewname = "montrek_example_report"
     view_class = me_views.MontrekExampleReport
+
+
+class TestMontrekExampleADownloadView(MontrekDownloadViewTestCase):
+    viewname = "montrek_example_a_download"
+    view_class = me_views.MontrekExampleADownloadView
+
+    def expected_filename(self) -> str:
+        return "example_md.txt"
+
+    def additional_download_assertions(self):
+        self.assertEqual(
+            self.response.content.decode(),
+            "| A1 String   | A1 Int   | A2 String   | A2 Float   | B1 String   |\n|-------------|----------|-------------|------------|-------------|",
+        )
 
 
 class TestMontrekExampleADetailView(MontrekViewTestCase):
@@ -241,8 +273,12 @@ class TestMontrekExampleBUpdate(MontrekUpdateViewTestCase):
     view_class = me_views.MontrekExampleBUpdate
 
     def build_factories(self):
-        self.sat1 = me_factories.SatB1Factory()
-        me_factories.SatB2Factory(hub_entity=self.sat1.hub_entity)
+        self.sat1 = me_factories.SatB1Factory(field_b1_str="test")
+        me_factories.SatB2Factory()
+        self.satd1 = me_factories.SatD1Factory.create(field_d1_str="test1")
+        self.satd2 = me_factories.SatD1Factory.create(field_d1_str="test2")
+        self.sat1.hub_entity.link_hub_b_hub_d.add(self.satd1.hub_entity)
+        self.sat1.hub_entity.link_hub_b_hub_d.add(self.satd2.hub_entity)
 
     def url_kwargs(self) -> dict:
         return {"pk": self.sat1.hub_entity.get_hub_value_date().id}
@@ -254,7 +290,48 @@ class TestMontrekExampleBUpdate(MontrekUpdateViewTestCase):
             "field_b2_str": "test2",
             "field_b2_choice": "CHOICE2",
             "alert_level": AlertEnum.OK.value.description,
+            "link_hub_b_hub_d": [self.satd2.get_hub_value_date().pk],
+            "hub_entity_id": self.sat1.hub_entity.id,
         }
+
+    def test_initial_links_in_form(self):
+        response = self.client.get(self.url)
+        form = response.context["form"]
+        self.assertEqual(form.initial["field_b1_str"], "test")
+        self.assertEqual(
+            form["link_hub_b_hub_d"].value(),
+            [
+                self.satd1.hub_entity.get_hub_value_date().id,
+                self.satd2.hub_entity.get_hub_value_date().id,
+            ],
+        )
+
+    def test_remove_many_to_many_link(self):
+        links = LinkHubBHubD.objects.all()
+        self.assertEqual(links.count(), 2)
+        for link in links:
+            self.assertEqual(
+                link.state_date_end, timezone.make_aware(timezone.datetime.max)
+            )
+        repository = HubBRepository()
+        satb1 = repository.receive().first()
+        self.assertEqual(satb1.field_b1_str, "test")
+        self.assertEqual(satb1.hub.link_hub_b_hub_d.count(), 2)
+        self.assertEqual(satb1.field_d1_str, "test1,test2")
+        response = self.client.post(self.url, data=self.update_data())
+        self.assertRedirects(response, reverse("montrek_example_b_list"))
+        links = LinkHubBHubD.objects.all()
+        self.assertEqual(links.count(), 2)
+        self.assertEqual(
+            links[0].state_date_end, timezone.make_aware(timezone.datetime.max)
+        )
+        self.assertLess(
+            links[1].state_date_end, timezone.make_aware(timezone.datetime.max)
+        )
+        satb1 = repository.receive().get(pk=satb1.pk)
+        self.assertEqual(satb1.field_b1_str, "test")
+        self.assertEqual(satb1.hub.link_hub_b_hub_d.count(), 2)
+        self.assertEqual(satb1.field_d1_str, "test2")
 
 
 class TestMontrekExampleCListView(MontrekListViewTestCase):
@@ -390,7 +467,9 @@ class TestMontrekExampleDListView(MontrekListViewTestCase):
 class TestMontrekExampleDCreate(MontrekCreateViewTestCase):
     viewname = "montrek_example_d_create"
     view_class = me_views.MontrekExampleDCreate
-    user_permissions = ["add_hubd"]
+
+    def required_user_permissions(self) -> list[Permission]:
+        return [Permission.objects.get(codename="add_hubd")]
 
     def creation_data(self):
         return {
@@ -400,18 +479,6 @@ class TestMontrekExampleDCreate(MontrekCreateViewTestCase):
             "field_tsd2_float": 1.0,
             "field_tsd2_int": 2,
         }
-
-    def test_view_without_permission(self):
-        self.user.user_permissions.remove(self.permission)
-        previous_url = reverse("montrek_example_d_list")
-        response = self.client.get(self.url, HTTP_REFERER=previous_url, follow=True)
-        messages = list(response.context["messages"])
-        self.assertRedirects(response, previous_url)
-        self.assertEqual(len(messages), 1)
-        self.assertEqual(
-            messages[0].message,
-            "You do not have the required permissions to access this page.",
-        )
 
 
 class TestMontrekExampleDDelete(MontrekDeleteViewTestCase):
@@ -434,6 +501,7 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
         self.test_file_path = os.path.join(
             os.path.dirname(__file__), "data", "a_file.csv"
         )
+        self.registry_repo = HubAFileUploadRegistryRepository({})
 
     def test_view_return_correct_html(self):
         response = self.client.get(self.url)
@@ -465,7 +533,7 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
         self.assertEqual(len(messages), 1)
         self.assertEqual(
             str(messages[0]),
-            "Successfully uploaded 3 rows.",
+            TASK_SCHEDULED_MESSAGE,
         )
 
         self.assertEqual(len(a_hubs), 3)
@@ -477,7 +545,7 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
         self.assertEqual(a_hubs[0].field_a1_int, 1000)
         self.assertEqual(a_hubs[1].field_a1_int, 2000)
         self.assertEqual(a_hubs[2].field_a1_int, 3000)
-        upload_registry = HubAFileUploadRegistryRepository({}).receive().last()
+        upload_registry = self.registry_repo.receive().last()
         log_file = upload_registry.log_file
         self.assertTrue(log_file)
 
@@ -499,6 +567,7 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
             response = self.client.post(self.url, data, follow=True)
 
         messages = list(response.context["messages"])
+        upload_registry = self.registry_repo.receive().last()
 
         a_hubs = HubARepository().receive()
 
@@ -506,6 +575,11 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
         self.assertEqual(len(messages), 1)
         self.assertEqual(
             str(messages[0]),
+            TASK_SCHEDULED_MESSAGE,
+        )
+        self.assertEqual(upload_registry.upload_status, "failed")
+        self.assertEqual(
+            upload_registry.upload_message,
             (
                 "Errors raised during field mapping:"
                 "<br>('source_field_0', 'field_a1_str', 'multiply_by_value', {'value': 'a'}, \"TypeError: can't multiply sequence by non-int of type 'str'\")"
@@ -528,6 +602,7 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
             response = self.client.post(self.url, data, follow=True)
 
         messages = list(response.context["messages"])
+        upload_registry = self.registry_repo.receive().last()
 
         HubARepository().receive()
 
@@ -535,6 +610,11 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
         self.assertEqual(len(messages), 1)
         self.assertEqual(
             str(messages[0]),
+            TASK_SCHEDULED_MESSAGE,
+        )
+        self.assertEqual(upload_registry.upload_status, "failed")
+        self.assertEqual(
+            upload_registry.upload_message,
             "Error raised during object creation: <br>ValueError: Field 'field_a1_int' expected a number but got 'aaaaaaaaaa'.",
         )
 
@@ -568,12 +648,20 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
         with open(self.test_file_path, "rb") as f:
             data = {"file": f}
             response = self.client.post(self.url, data, follow=True)
+        registries = self.registry_repo.receive()
+        self.assertEqual(registries.count(), 1)
+        registry = registries.first()
         messages = list(response.context["messages"])
         a_hubs = HubARepository().receive()
         self.assertRedirects(response, reverse("a1_view_uploads"))
         self.assertEqual(len(messages), 1)
         self.assertEqual(
             str(messages[0]),
+            TASK_SCHEDULED_MESSAGE,
+        )
+        self.assertEqual(registry.upload_status, "failed")
+        self.assertEqual(
+            registry.upload_message,
             "The following database fields are defined in the field map but are not in the target repository: not_in_repository_field_0, not_in_repository_field_1, not_in_repository_field_2",
         )
         self.assertEqual(len(a_hubs), 0)
@@ -841,3 +929,17 @@ class TestHubBRestApiView(MontrekRestApiViewTestCase):
             }
             expected_json.append(entry)
         return expected_json
+
+
+class TestHubARedirectView(MontrekRedirectViewTestCase):
+    viewname = "hub_a_redirect"
+    view_class = me_views.HubARedirectView
+
+    def build_factories(self):
+        self.hub = me_factories.HubAFactory.create()
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.hub.pk}
+
+    def expected_url(self) -> str:
+        return reverse("montrek_example_a_list")

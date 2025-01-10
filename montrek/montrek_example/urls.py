@@ -15,6 +15,11 @@ urlpatterns = [
     ),
     path("a/list", views.MontrekExampleAList.as_view(), name="montrek_example_a_list"),
     path(
+        "a/download",
+        views.MontrekExampleADownloadView.as_view(),
+        name="montrek_example_a_download",
+    ),
+    path(
         "b/create",
         views.MontrekExampleBCreate.as_view(),
         name="montrek_example_b_create",
@@ -133,4 +138,9 @@ urlpatterns = [
     ),
     path("hub_a/api", views.HubARestApiView.as_view(), name="hub_a_rest_api"),
     path("hub_b/api", views.HubBRestApiView.as_view(), name="hub_b_rest_api"),
+    path(
+        "hub_a/redirect/<int:pk>/",
+        views.HubARedirectView.as_view(),
+        name="hub_a_redirect",
+    ),
 ]

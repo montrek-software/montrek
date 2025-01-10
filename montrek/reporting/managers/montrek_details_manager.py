@@ -16,7 +16,9 @@ class MontrekDetailsManager(MontrekManager):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.object_query = self.get_object_from_pk(self.session_data["pk"])
+        self.object_query = self.get_object_from_pk(
+            self.session_data.get("pk", "Unknown")
+        )
         self.row_size = math.ceil(len(self.table_elements) / self.table_cols)
 
     @property
@@ -47,7 +49,7 @@ class MontrekDetailsManager(MontrekManager):
         minipage_width = 0.98 / self.table_cols
         for i in range(self.table_cols):
             latex_str += f"\\begin{{minipage}}[t]{{{minipage_width}\\textwidth}}\n"
-            latex_str += "\\begin{table}[H]\n\\centering\n"
+            latex_str += "\\begin{table}[H]\n\\centering\n\\small\n"
             latex_str += "\\arrayrulecolor{lightgrey}\n"
             latex_str += "\\setlength{\\tabcolsep}{2pt}\n"
             latex_str += "\\renewcommand{\\arraystretch}{1.0}\n"

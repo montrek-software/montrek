@@ -1,10 +1,10 @@
+from baseclasses.tests.mocks import MockRepository
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 from django.contrib.auth.models import AnonymousUser
 from django.test import TestCase, RequestFactory
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.contrib.messages.middleware import MessageMiddleware
 from django.contrib.messages import get_messages
-from dataclasses import dataclass
 from baseclasses.views import MontrekViewMixin
 from baseclasses.views import MontrekListView
 from baseclasses.dataclasses.montrek_message import (
@@ -16,67 +16,16 @@ from reporting.managers.montrek_table_manager import MontrekTableManager
 from reporting.dataclasses import table_elements as te
 
 
-class MockQuerySet:
-    def __init__(self, *args):
-        self.items = args
-
-    def __iter__(self):
-        return iter(self.items)
-
-    def __len__(self):
-        return len(self.items)
-
-    def __getitem__(self, index):
-        return self.items[index]
-
-    def __eq__(self, other):
-        if isinstance(other, list):
-            return list(self.items) == other
-        return NotImplemented
-
-    def all(self):
-        return self.items
-
-    def count(self):
-        return len(self.items)
-
-
-@dataclass
-class MockData:
-    field: str
-    value: int
-
-
-@dataclass
-class MockField:
-    name: str
-
-
-class MockRepository:
-    def __init__(self, session_data):
-        self.session_data = session_data
-        self.messages = []
-        self.annotations = {}
-
-    def receive(self):
-        return MockQuerySet(
-            MockData("item1", 1), MockData("item2", 2), MockData("item3", 3)
-        )  # Dummy data for testing
-
-    def std_satellite_fields(self):
-        return [
-            MockField("item1"),
-            MockField("item2"),
-            MockField("item3"),
-        ]  # Dummy data for testing
-
-    def get_all_fields(self):
-        return ["item1", "item2", "item3"]
-
-
 class MockRequester:
     def add_mock_request(self, url: str):
         self.request = RequestFactory().get(url)
+        self._pass_request_to_middleware()
+
+    def add_mock_request_post(self, url: str, data: dict):
+        self.request = RequestFactory().post(url, data)
+        self._pass_request_to_middleware()
+
+    def _pass_request_to_middleware(self):
         self.request.user = AnonymousUser()
         session_middleware = SessionMiddleware(lambda request: None)
         session_middleware.process_request(self.request)
@@ -134,6 +83,7 @@ class TestMontrekViewMixin(TestCase):
             {
                 "request_path": "/",
                 "host_url": "http://testserver",
+                "http_referer": None,
             },
         )
 
@@ -144,8 +94,17 @@ class TestMontrekViewMixin(TestCase):
             "param2": ["value2"],
             "request_path": "/",
             "host_url": "http://testserver",
+            "http_referer": None,
         }
         self.assertEqual(mock_view.session_data, expected_data)
+
+    def test_session_data__post(self):
+        url = "/"
+        mock_view = MockMontrekView(url)
+        data = {"key1": "value1", "key2": "value2"}
+        mock_view.add_mock_request_post(url, data)
+        for k, v in data.items():
+            self.assertEqual(mock_view.session_data[k][0], v)
 
     def test_session_data_storage(self):
         mock_view = MockMontrekView("/")
@@ -179,6 +138,7 @@ class TestMontrekViewMixin(TestCase):
         expected_session_data = expected_filter_data.copy()
         expected_session_data["request_path"] = "/some/path"
         expected_session_data["host_url"] = "http://testserver"
+        expected_session_data["http_referer"] = None
 
         self.assertEqual(mock_view.session_data, expected_session_data)
         self.assertEqual(

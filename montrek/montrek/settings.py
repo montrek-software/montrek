@@ -132,8 +132,12 @@ DATABASES = {
         "NAME": config("DB_NAME", default="montrek_db"),
         "USER": config("DB_USER", default="root"),
         "PASSWORD": config("DB_PASSWORD"),
-        "HOST": config("DB_HOST", default="localhost"),
-        "PORT": config("DB_PORT", default=3306, cast=int),
+        "HOST": config(
+            "DB_HOST", default="localhost"
+        ),  # in docker setup: docker-compose service name (db)
+        "PORT": config(
+            "DB_PORT", default=3306, cast=int
+        ),  # in docker setup: internal docker container port
     }
 }
 

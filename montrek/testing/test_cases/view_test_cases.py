@@ -5,6 +5,7 @@ import pandas as pd
 from django.test import TestCase
 from django.views import View
 from django.contrib.auth.models import Permission
+from middleware.permission_error_middleware import MISSING_PERMISSION_MESSAGE
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 from django.urls import reverse
 from bs4 import BeautifulSoup
@@ -18,7 +19,6 @@ class NotImplementedView(View):
 class MontrekViewTestCase(TestCase):
     viewname: str = "Please set the viewname in the subclass"
     view_class: type[View] = NotImplementedView
-    user_permissions: list[str] = []
     expected_status_code: int = 200
 
     def setUp(self):
@@ -38,10 +38,8 @@ class MontrekViewTestCase(TestCase):
 
     def _login_user(self):
         self.user = MontrekUserFactory()
-        for perm in self.user_permissions:
-            self.permission = Permission.objects.get(codename=perm)
-            self.user.user_permissions.add(self.permission)
         self.client.force_login(self.user)
+        self.user.user_permissions.set(self.required_user_permissions())
 
     def _is_base_test_class(self) -> bool:
         # Django runs all tests within these base classes here individually. This is not wanted and hence we skip the tests if django attempts to do this.
@@ -52,6 +50,9 @@ class MontrekViewTestCase(TestCase):
 
     def url_kwargs(self) -> dict:
         return {}
+
+    def required_user_permissions(self) -> list[Permission]:
+        return []
 
     @property
     def url(self):
@@ -79,6 +80,24 @@ class MontrekViewTestCase(TestCase):
         if isinstance(self.view, MontrekDeleteView):
             return
         self.assertIsInstance(self.view, self.view_class)
+
+    def test_view_without_required_permission(self):
+        if self._is_base_test_class():
+            return
+        required_user_permissions = self.required_user_permissions()
+        if not required_user_permissions:
+            return
+        self.user.user_permissions.clear()
+        previous_url = reverse("home")
+        response = self.client.get(self.url, HTTP_REFERER=previous_url, follow=True)
+        messages = list(response.context["messages"])
+        self.assertRedirects(response, previous_url)
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(
+            messages[0].message,
+            MISSING_PERMISSION_MESSAGE,
+        )
+        self.user.user_permissions.set(required_user_permissions)
 
 
 class MontrekListViewTestCase(MontrekViewTestCase):
@@ -170,6 +189,9 @@ class GetObjectPkMixin:
 
 
 class MontrekDetailViewTestCase(MontrekObjectViewBaseTestCase, GetObjectPkMixin):
+    def _is_base_test_class(self) -> bool:
+        return self.__class__.__name__ == "MontrekDetailViewTestCase"
+
     def test_view_get_success(self):
         if self._is_base_test_class():
             return
@@ -219,6 +241,42 @@ class MontrekDeleteViewTestCase(MontrekObjectViewBaseTestCase, GetObjectPkMixin)
         self.assertEqual(query.count(), 0)
 
 
+class MontrekDownloadViewTestCase(MontrekViewTestCase):
+    def _is_base_test_class(self) -> bool:
+        # Django runs all tests within these base classes here individually. This is not wanted and hence we skip the tests if django attempts to do this.
+        return self.__class__.__name__ == "MontrekDownloadViewTestCase"
+
+    def get_response(self):
+        response = self.client.get(self.url, follow=True)
+        response.context = {"view": None}
+        return response
+
+    def test_view_return_correct_html(self):
+        if self._is_base_test_class():
+            return
+        self.assertEqual(self.response.status_code, self.expected_status_code)
+        content_disposition = self.response.get("Content-Disposition")
+        self.assertIsNotNone(content_disposition)
+        self.assertEqual(
+            content_disposition, f'attachment; filename="{self.expected_filename()}"'
+        )
+        self.additional_download_assertions()
+
+    def expected_filename(self) -> str:
+        raise NotImplementedError(
+            "Please set the expected_filename method in the subclass"
+        )
+
+    def additional_download_assertions(self):
+        return
+
+    def test_context_data(self):
+        return
+
+    def test_view_page(self):
+        return
+
+
 class MontrekFileResponseTestCase(MontrekViewTestCase):
     def _is_base_test_class(self) -> bool:
         # Django runs all tests within these base classes here individually. This is not wanted and hence we skip the tests if django attempts to do this.
@@ -266,3 +324,25 @@ class MontrekRestApiViewTestCase(MontrekViewTestCase):
 
     def expected_json(self) -> list:
         raise NotImplementedError("Please set the expected_json method in the subclass")
+
+
+class MontrekRedirectViewTestCase(MontrekViewTestCase):
+    expected_status_code: int = 302
+
+    def _is_base_test_class(self) -> bool:
+        return self.__class__.__name__ == "MontrekRedirectViewTestCase"
+
+    def test_view_page(self):
+        return
+
+    def test_context_data(self):
+        return
+
+    def test_view_return_correct_html(self):
+        if self._is_base_test_class():
+            return
+        self.assertEqual(self.response.status_code, self.expected_status_code)
+        self.assertEqual(self.response.url, self.expected_url())
+
+    def expected_url(self) -> str:
+        raise NotImplementedError("Please set the expected_url method in the subclass")

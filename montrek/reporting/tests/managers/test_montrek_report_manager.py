@@ -1,4 +1,5 @@
 from django.test import TestCase
+from reporting.managers.latex_report_manager import LatexReportManager
 
 from reporting.tests import mocks
 
@@ -9,6 +10,10 @@ class TestMontrekReportManager(TestCase):
         manager = mocks.MockMontrekReportManager(session_data=session_data)
         assert manager.session_data == session_data
         assert manager._report_elements == []
+
+    def test_no_collect_report_elements(self):
+        manager = mocks.MockNoCollectReportElements(session_data={})
+        self.assertRaises(NotImplementedError, manager.collect_report_elements)
 
     def test_append_report_element(self):
         session_data = {}
@@ -36,3 +41,13 @@ class TestMontrekReportManager(TestCase):
         manager.append_report_element(report_element)
         manager.append_report_element(report_element)
         assert manager.generate_report() == "htmllatexhtmllatex"
+
+
+class TestComprehensiveReport(TestCase):
+    def test_generate_report_and_compile(self):
+        session_data = {}
+        manager = mocks.MockComprehensiveReportManager(session_data=session_data)
+        assert manager.document_title == "Mock Comprehensive Report"
+        report_manager = LatexReportManager(manager)
+        pdf_path = report_manager.compile_report()
+        self.assertIn("document.pdf", pdf_path)

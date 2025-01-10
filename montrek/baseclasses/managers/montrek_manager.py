@@ -1,3 +1,4 @@
+from django.http import HttpResponse
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from typing import Any
 from baseclasses.dataclasses.montrek_message import MontrekMessage
@@ -18,7 +19,7 @@ class MontrekManager:
         return self._repository
 
     def create_object(self, **kwargs) -> Any:
-        return self.repository.std_create_object(**kwargs)
+        return self.repository.create_by_dict(**kwargs)
 
     def delete_object(self, pk: int):
         object_query = self.get_object_from_pk(pk)
@@ -39,6 +40,16 @@ class MontrekManager:
 
     def collect_messages(self):
         self.messages += self.repository.messages
+
+    def download(self) -> HttpResponse:
+        raise NotImplementedError(
+            f"Implement download method for {self.__class__.__name__}"
+        )
+
+    def get_filename(self) -> str:
+        raise NotImplementedError(
+            f"Implement get_filename method for {self.__class__.__name__}"
+        )
 
 
 class MontrekManagerNotImplemented(MontrekManager):

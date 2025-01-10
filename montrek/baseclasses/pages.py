@@ -1,3 +1,6 @@
+from baseclasses.repositories.montrek_repository import MontrekRepository
+
+
 class MontrekPage:
     page_title = "page_title not set!"
     show_date_range_selector = False
@@ -20,6 +23,26 @@ class MontrekPage:
                 tab.active = "active"
             else:
                 tab.active = ""
+
+
+class MontrekDetailsPage(MontrekPage):
+    repository_class: type[MontrekRepository]
+    title_field: str
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._raise_for_missing_pk(**kwargs)
+        self._set_page_title(pk=kwargs["pk"])
+
+    def _raise_for_missing_pk(self, **kwargs):
+        if "pk" not in kwargs:
+            raise ValueError(f"{self.__class__.__name__} needs pk specified in url!")
+
+    def _set_page_title(self, pk):
+        repository = self.repository_class({})
+        self.hub = repository.get_hub_by_id(pk)
+        self.obj = repository.receive().get(hub=self.hub)
+        self.page_title = getattr(self.obj, self.title_field)
 
 
 class NoPage(MontrekPage):

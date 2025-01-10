@@ -3,6 +3,10 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.core.exceptions import PermissionDenied
 
+MISSING_PERMISSION_MESSAGE = (
+    "You do not have the required permissions to access this page."
+)
+
 
 class PermissionErrorMiddleware:
     def __init__(self, get_response):
@@ -14,10 +18,9 @@ class PermissionErrorMiddleware:
 
     def process_exception(self, request, exception):
         if isinstance(exception, PermissionDenied):
-            msg = "You do not have the required permissions to access this page."
             messages.error(
                 request,
-                msg,
+                MISSING_PERMISSION_MESSAGE,
             )
             if request.user.is_authenticated:
                 redirect_url = request.META.get("HTTP_REFERER") or reverse("home")

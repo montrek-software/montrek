@@ -1,5 +1,5 @@
 
-\documentclass{article}
+\documentclass[8pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage{geometry}
 \usepackage{xcolor}
@@ -14,6 +14,7 @@
 \usepackage{float}
 \usepackage{ragged2e}
 \usepackage{draftwatermark}
+\usepackage{setspace}
 \SetWatermarkText{ {{ watermark_text }} }
 \SetWatermarkScale{1}
 
@@ -32,6 +33,7 @@
 \renewcommand{\headrule}{\hbox to\headwidth{\color{blue}\leaders\hrule height \headrulewidth\hfill}}
 \setlength{\headsep}{1in}
 \renewcommand{\footrulewidth}{1pt}
+\setstretch{0.9}
 
 % Fonts and colors
 \usepackage{fontspec}
@@ -42,7 +44,7 @@
 \titleformat*{\subsection}{\bfseries\color{blue}}
 
 % Table settings
-\renewcommand{\arraystretch}{1.5}
+\renewcommand{\arraystretch}{1.2}
 
 % Captions
 \DeclareCaptionFormat{custom}
