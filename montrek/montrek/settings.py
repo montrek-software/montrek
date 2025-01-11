@@ -124,6 +124,7 @@ WSGI_APPLICATION = "montrek.wsgi.application"
 DATABASE_ENGINE_MAP = {
     "mariadb": "django.db.backends.mysql",
     "postgres": "django.db.backends.postgresql",
+    "cloudsqlproxy": "django.db.backends.postgresql",
 }
 
 DATABASES = {
