@@ -6,7 +6,7 @@ services:
     networks:
       - montrek_network
     volumes:
-      - ./db/key.json:/db/key.json:ro
+      - ./secrets/${SQLPROXY_KEYFILE}:/db/key.json:ro
     ports:
       - "${DB_PORT}:${DB_PORT}"
     command: >

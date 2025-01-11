@@ -1,5 +1,5 @@
 include:
-    - ${DB_ENGINE}.yml
+  - db_yml/${DB_ENGINE}.yml
 services:
   nginx:
     build: ./nginx
