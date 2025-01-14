@@ -15,11 +15,13 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
-from django.contrib import admin
-from django.urls import path, include
+import os
+
 from baseclasses import views as base_views
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib import admin
+from django.urls import include, path
 
 urlpatterns = [
     path("", base_views.home, name="home"),
@@ -28,19 +30,13 @@ urlpatterns = [
     path(
         "under_construction", base_views.under_construction, name="under_construction"
     ),
-    path("admin/", admin.site.urls),
-    path("user/", include("user.urls")),
-    path("baseclasses/", include("baseclasses.urls")),
-    path("file_upload/", include("file_upload.urls")),
-    path("mailing/", include("mailing.urls")),
-    path("montrek_example/", include("montrek_example.urls")),
-    path("reporting/", include("reporting.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 
-for app in settings.MONTREK_EXTENSION_APPS:
+for app in settings.INSTALLED_APPS:
     app_path = app.replace(".", "/") + "/"
-    urlpatterns.append(path(app_path, include(f"{app}.urls")))
+    if os.path.exists(f"{app_path}/urls.py") or os.path.exists(f"{app_path}/urls"):
+        urlpatterns.append(path(app_path, include(f"{app}.urls")))
 
 
 if settings.DEBUG:

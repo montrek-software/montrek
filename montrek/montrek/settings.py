@@ -57,17 +57,6 @@ DJANGO_APPS = [
     "rest_framework",
 ]
 
-MONTREK_BASE_APPS = [
-    "user",
-    "baseclasses",
-    "montrek_example",
-    "file_upload",
-    "mailing",
-    "reporting",
-    "api_upload",
-    "code_generation",
-]
-
 
 def get_montrek_extension_apps(base_dir, app_path=""):
     """
@@ -108,19 +97,19 @@ def get_montrek_extension_apps_list():
     Returns:
         list: Fully qualified Montrek extension apps.
     """
-    installed_apps = config("INSTALLED_APPS", default="").split(",")
+    # installed_apps = config("INSTALLED_APPS", default="").split(",")
     base_dir = Path(BASE_DIR)
     montrek_extension_apps = []
 
-    for app in installed_apps:
-        montrek_extension_apps.extend(get_montrek_extension_apps(base_dir, app.strip()))
+    # for app in installed_apps:
+    montrek_extension_apps.extend(get_montrek_extension_apps(base_dir, ""))
 
     return montrek_extension_apps
 
 
 MONTREK_EXTENSION_APPS = get_montrek_extension_apps_list()
 
-INSTALLED_APPS = DJANGO_APPS + MONTREK_BASE_APPS + MONTREK_EXTENSION_APPS
+INSTALLED_APPS = DJANGO_APPS + MONTREK_EXTENSION_APPS
 
 DJANGO_MIDDLEWARE = [
     "debug_toolbar.middleware.DebugToolbarMiddleware",
