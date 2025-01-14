@@ -57,22 +57,59 @@ DJANGO_APPS = [
     "rest_framework",
 ]
 
-MONTREK_BASE_APPS = [
-    "user",
-    "baseclasses",
-    "montrek_example",
-    "file_upload",
-    "mailing",
-    "reporting",
-    "api_upload",
-    "code_generation",
-]
 
-MONTREK_EXTENSION_APPS = [
-    i for i in config("INSTALLED_APPS", default="").split(",") if i
-]
+def get_montrek_extension_apps(base_dir, app_path=""):
+    """
+    Recursively find Montrek extension apps by identifying directories
+    containing an 'apps.py' file.
 
-INSTALLED_APPS = DJANGO_APPS + MONTREK_BASE_APPS + MONTREK_EXTENSION_APPS
+    Args:
+        base_dir (Path): The base directory to search.
+        app_path (str): The relative app path for current recursion level.
+
+    Returns:
+        list: A list of fully qualified app names.
+    """
+    full_path = base_dir / app_path.replace(".", os.sep)
+    montrek_apps = []
+
+    if not full_path.is_dir():
+        return montrek_apps
+
+    # Check if the current directory contains 'apps.py'
+    if "apps.py" in os.listdir(full_path):
+        montrek_apps.append(app_path)
+    else:
+        # Recurse into subdirectories
+        for subdir in os.listdir(full_path):
+            subdir_path = full_path / subdir
+            if subdir_path.is_dir():
+                sub_app_path = f"{app_path}.{subdir}" if app_path else subdir
+                montrek_apps.extend(get_montrek_extension_apps(base_dir, sub_app_path))
+
+    return montrek_apps
+
+
+def get_montrek_extension_apps_list():
+    """
+    Get the list of Montrek extension apps from the configured installed apps.
+
+    Returns:
+        list: Fully qualified Montrek extension apps.
+    """
+    # installed_apps = config("INSTALLED_APPS", default="").split(",")
+    base_dir = Path(BASE_DIR)
+    montrek_extension_apps = []
+
+    # for app in installed_apps:
+    montrek_extension_apps.extend(get_montrek_extension_apps(base_dir, ""))
+
+    return montrek_extension_apps
+
+
+MONTREK_EXTENSION_APPS = get_montrek_extension_apps_list()
+
+INSTALLED_APPS = DJANGO_APPS + MONTREK_EXTENSION_APPS
 
 DJANGO_MIDDLEWARE = [
     "debug_toolbar.middleware.DebugToolbarMiddleware",
@@ -112,8 +149,7 @@ TEMPLATES = [
 ]
 
 TEMPLATES[0]["DIRS"] += [
-    app.replace(".", "/") + "/templates"
-    for app in MONTREK_BASE_APPS + MONTREK_EXTENSION_APPS
+    app.replace(".", "/") + "/templates" for app in MONTREK_EXTENSION_APPS
 ]
 
 WSGI_APPLICATION = "montrek.wsgi.application"
