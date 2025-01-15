@@ -30,12 +30,15 @@ urlpatterns = [
     path(
         "under_construction", base_views.under_construction, name="under_construction"
     ),
+    path("admin/", admin.site.urls),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-
 
 for app in settings.INSTALLED_APPS:
     app_path = app.replace(".", "/") + "/"
-    if os.path.exists(f"{app_path}/urls.py") or os.path.exists(f"{app_path}/urls"):
+    abs_app_path = str(settings.BASE_DIR) + os.sep + app_path
+    if os.path.exists(f"{abs_app_path}/urls.py") or os.path.exists(
+        f"{abs_app_path}/urls"
+    ):
         urlpatterns.append(path(app_path, include(f"{app}.urls")))
 
 

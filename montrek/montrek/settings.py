@@ -97,14 +97,8 @@ def get_montrek_extension_apps_list():
     Returns:
         list: Fully qualified Montrek extension apps.
     """
-    # installed_apps = config("INSTALLED_APPS", default="").split(",")
     base_dir = Path(BASE_DIR)
-    montrek_extension_apps = []
-
-    # for app in installed_apps:
-    montrek_extension_apps.extend(get_montrek_extension_apps(base_dir, ""))
-
-    return montrek_extension_apps
+    return get_montrek_extension_apps(base_dir, "")
 
 
 MONTREK_EXTENSION_APPS = get_montrek_extension_apps_list()
