@@ -1,14 +1,17 @@
+import os
+from smtplib import SMTPException
+
+from baseclasses.dataclasses.montrek_message import (
+    MontrekMessageError,
+    MontrekMessageInfo,
+)
+from baseclasses.managers.montrek_manager import MontrekManager
+from baseclasses.utils import get_content_type
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
-from baseclasses.managers.montrek_manager import MontrekManager
 from mailing.repositories.mailing_repository import MailingRepository
-from baseclasses.dataclasses.montrek_message import (
-    MontrekMessageInfo,
-    MontrekMessageError,
-)
-from smtplib import SMTPException
 
 
 class MailingManager(MontrekManager):
@@ -24,7 +27,7 @@ class MailingManager(MontrekManager):
         subject: str,
         message: str,
         additional_parms: dict = {},
-        attachments: list | None = None,
+        attachments: str = "",
     ):
         recipient_list = recipients.replace(" ", "").split(",")
         mail_params: dict = {
@@ -32,17 +35,18 @@ class MailingManager(MontrekManager):
             "mail_recipients": recipients,
             "mail_message": message,
             "mail_state": "Pending",
+            "mail_attachments": attachments,
         }
         mail_hub = self.repository.std_create_object(mail_params)
         body = self.get_mail_body(message, additional_parms)
-
+        attachments_list = self.get_attachments(attachments)
         try:
             email = EmailMessage(
                 subject,
                 body,
                 settings.EMAIL_BACKEND,
                 recipient_list,
-                attachments=attachments,
+                attachments=attachments_list,
             )
             email.content_subtype = "html"
             email.send()
@@ -71,7 +75,7 @@ class MailingManager(MontrekManager):
         subject: str,
         message: str,
         additional_parms: dict = {},
-        attachments: list | None = None,
+        attachments: str = "",
     ) -> None:
         user_id = self.session_data["user_id"]
         user = get_user_model().objects.get(pk=user_id)
@@ -90,3 +94,18 @@ class MailingManager(MontrekManager):
 
     def get_context_data(self, message: str, additional_parms: dict):
         return {"message": message, **additional_parms}
+
+    def get_attachments(self, attachments: str):
+        if attachments == "":
+            return []
+        attachment_list = attachments.replace(" ", "").split(",")
+        output_list = []
+        for attachment in attachment_list:
+            output_list.append(self.get_attachment(attachment))
+        return output_list
+
+    def get_attachment(self, attachment):
+        file_name = os.path.basename(attachment)
+        file_content_type = get_content_type(attachment)
+        file_content = open(attachment, "rb").read()
+        return (file_name, file_content, file_content_type)

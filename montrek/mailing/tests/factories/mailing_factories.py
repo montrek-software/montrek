@@ -18,3 +18,4 @@ class MailSatelliteFactory(MontrekSatelliteFactory):
     mail_subject = factory.Sequence(lambda n: f"Mail {n}")
     mail_message = factory.Sequence(lambda n: f"Mail message {n}")
     mail_recipients = ",".join([str(factory.Faker("email")) for _ in range(3)])
+    mail_attachments = ""
