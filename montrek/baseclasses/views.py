@@ -13,18 +13,20 @@ from django.views.generic import DetailView, RedirectView, View
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import CreateView
 from django.views.generic.list import ListView
+from file_upload.forms import SimpleUploadFileForm
+from file_upload.managers.simple_upload_file_manager import SimpleUploadFileManager
 from reporting.dataclasses.table_elements import (
     AttrTableElement,
     LinkTextTableElement,
     TableElement,
 )
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
 from reporting.managers.latex_report_manager import LatexReportManager
 from reporting.managers.montrek_details_manager import MontrekDetailsManager
 from reporting.managers.montrek_report_manager import MontrekReportManager
 from reporting.managers.montrek_table_manager import MontrekTableManager
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from baseclasses import utils
 from baseclasses.dataclasses.history_data_table import HistoryDataTable
@@ -34,10 +36,8 @@ from baseclasses.dataclasses.view_classes import ActionElement
 from baseclasses.forms import DateRangeForm, FilterForm, MontrekCreateForm
 from baseclasses.managers.montrek_manager import MontrekManagerNotImplemented
 from baseclasses.pages import NoPage
-
-from file_upload.forms import SimpleUploadFileForm
-from file_upload.managers.simple_upload_file_manager import SimpleUploadFileManager
 from baseclasses.serializers import MontrekSerializer
+from baseclasses.utils import get_content_type
 
 
 def home(request):
@@ -544,21 +544,7 @@ class MontrekDownloadView(MontrekViewMixin, View):
     def get(self, request, *args, **kwargs) -> HttpResponse:
         response = self.manager.download()
         filename = self.manager.get_filename()
-        content_type = self.get_content_type(filename)
+        content_type = get_content_type(filename)
         response["Content-Type"] = content_type
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
         return response
-
-    def get_content_type(self, filename: str) -> str:
-        file_extension = filename.split(".")[-1]
-        if file_extension == "pdf":
-            return "application/pdf"
-        if file_extension == "txt":
-            return "text/plain"
-        if file_extension == "csv":
-            return "text/csv"
-        if file_extension == "xlsx":
-            return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        if file_extension == "zip":
-            return "application/zip"
-        return "application/octet-stream"
