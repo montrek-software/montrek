@@ -1,9 +1,9 @@
 from collections.abc import Iterable
-from django.http import HttpResponseRedirect
 
-from django.shortcuts import redirect
-from django.urls import reverse
 from baseclasses.managers.montrek_manager import MontrekManager
+from django.conf import settings
+from django.http import HttpResponseRedirect
+from django.urls import reverse
 from reporting.core import reporting_text as rt
 from reporting.lib.protocols import (
     ReportElementProtocol,
@@ -57,5 +57,13 @@ class MontrekReportManager(MontrekManager):
         footer = f'<div style="height:2cm"></div><hr><div style="color:grey">{self.footer_text.to_html()}</div>'
         return footer
 
+    def get_mail_message(self) -> str:
+        return "Please find attached the report"
+
+    def get_mail_recipients(self) -> str:
+        return settings.ADMIN_MAILING_LIST
+
     def prepare_mail(self) -> HttpResponseRedirect:
-        return HttpResponseRedirect(reverse("send_mail"))
+        return HttpResponseRedirect(
+            f"{reverse("send_mail")}?subject={self.document_title}&message={self.get_mail_message()}&recipients={self.get_mail_recipients()}"
+        )

@@ -51,6 +51,16 @@ class SendMailView(MontrekCreateUpdateView):
         context["tag"] = "Send Mail"
         return context
 
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        recipients = self.request.GET.get("recipients", "")
+        subject = self.request.GET.get("subject", "")
+        message = self.request.GET.get("message", "")
+        form.fields["mail_recipients"].initial = recipients
+        form.fields["mail_subject"].initial = subject
+        form.fields["mail_message"].initial = message
+        return form
+
     def form_valid(self, form):
         mail_data = form.cleaned_data
         self.manager.send_montrek_mail(

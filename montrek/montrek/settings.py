@@ -279,3 +279,5 @@ INTERNAL_IPS = [
 
 # TABLE Generation
 SEND_TABLE_BY_MAIL_LIMIT = config("SEND_TABLE_BY_MAIL_LIMIT", default=10000, cast=int)
+
+ADMIN_MAILING_LIST = config("ADMIN_MAILING_LIST", default="")

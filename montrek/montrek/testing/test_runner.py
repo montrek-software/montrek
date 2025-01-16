@@ -10,6 +10,7 @@ class MontrekTestRunner(DiscoverRunner):
             test_settings = {
                 "DEBUG": True,
                 "MEDIA_ROOT": temp_dir,
+                "ADMIN_MAILING_LIST": "test_admin@example.com",
                 # Add other test-specific settings here
             }
         self._override = override_settings(**test_settings)

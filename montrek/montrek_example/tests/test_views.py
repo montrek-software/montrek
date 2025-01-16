@@ -134,7 +134,11 @@ class TestMontrekExampleAReportView(MontrekViewTestCase):
         user = MontrekUserFactory()
         self.client.force_login(user)
         response = self.client.get(self.url + "?send_mail=true")
-        self.assertRedirects(response, reverse("send_mail"))
+        self.assertRedirects(
+            response,
+            reverse("send_mail")
+            + "?subject=Montrek%20Report&message=Please%20find%20attached%20the%20report&recipients=test_admin@example.com",
+        )
 
 
 class TestMontrekExampleADownloadView(MontrekDownloadViewTestCase):
