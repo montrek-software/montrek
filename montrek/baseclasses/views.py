@@ -516,6 +516,8 @@ class MontrekReportView(MontrekTemplateView, ToPdfMixin):
     def get(self, request, *args, **kwargs):
         if self.request.GET.get("gen_pdf") == "true":
             return self.list_to_pdf()
+        if self.request.GET.get("send_mail") == "true":
+            return self.manager.prepare_mail()
         return super().get(request, *args, **kwargs)
 
     @property
