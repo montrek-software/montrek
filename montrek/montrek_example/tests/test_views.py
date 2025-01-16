@@ -2,27 +2,27 @@ import os
 from tempfile import TemporaryDirectory
 from textwrap import dedent
 
-from django.utils import timezone
-
 from baseclasses.dataclasses.alert import AlertEnum
 from baseclasses.utils import montrek_time
 from django.contrib.auth.models import Permission
 from django.test import TestCase, TransactionTestCase
 from django.urls import reverse
+from django.utils import timezone
 from file_upload.managers.file_upload_manager import TASK_SCHEDULED_MESSAGE
 from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepository,
 )
+from mailing.repositories.mailing_repository import MailingRepository
 from testing.test_cases.view_test_cases import (
     MontrekCreateViewTestCase,
     MontrekDeleteViewTestCase,
+    MontrekDownloadViewTestCase,
+    MontrekFileResponseTestCase,
     MontrekListViewTestCase,
     MontrekRedirectViewTestCase,
     MontrekRestApiViewTestCase,
     MontrekUpdateViewTestCase,
     MontrekViewTestCase,
-    MontrekDownloadViewTestCase,
-    MontrekFileResponseTestCase,
 )
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
@@ -134,10 +134,10 @@ class TestMontrekExampleAReportView(MontrekViewTestCase):
         user = MontrekUserFactory()
         self.client.force_login(user)
         response = self.client.get(self.url + "?send_mail=true")
+        last_mail = MailingRepository({}).receive().last()
         self.assertRedirects(
             response,
-            reverse("send_mail")
-            + "?subject=Montrek%20Report&message=Please%20find%20attached%20the%20report&recipients=test_admin@example.com",
+            reverse("send_mail", kwargs={"pk": last_mail.pk}),
         )
 
 

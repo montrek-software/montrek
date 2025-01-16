@@ -8,6 +8,7 @@ from reporting.core import reporting_text as rt
 from reporting.lib.protocols import (
     ReportElementProtocol,
 )
+from mailing.repositories.mailing_repository import MailingRepository
 
 
 class MontrekReportManager(MontrekManager):
@@ -58,12 +59,18 @@ class MontrekReportManager(MontrekManager):
         return footer
 
     def get_mail_message(self) -> str:
-        return "Please find attached the report"
+        return f"<div>Please find attached the report</div><div>{self.to_html()}</div>"
 
     def get_mail_recipients(self) -> str:
         return settings.ADMIN_MAILING_LIST
 
     def prepare_mail(self) -> HttpResponseRedirect:
-        return HttpResponseRedirect(
-            f"{reverse("send_mail")}?subject={self.document_title}&message={self.get_mail_message()}&recipients={self.get_mail_recipients()}"
+        mailing_repository = MailingRepository(self.session_data)
+        new_mail = mailing_repository.create_by_dict(
+            {
+                "mail_subject": self.document_title,
+                "mail_message": self.get_mail_message(),
+                "mail_recipients": self.get_mail_recipients(),
+            }
         )
+        return HttpResponseRedirect(reverse("send_mail", kwargs={"pk": new_mail.pk}))
