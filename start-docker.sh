@@ -14,10 +14,18 @@ done < <(find . -mindepth 2 -name "docker-compose.yml" -print0)
 # Print the compose files to be used
 echo "Detected docker-compose files: ${COMPOSE_FILES[*]}"
 
+# Get the base command
+
+COMMAND="up"
+
+if [[ "$1" == "down" ]]; then
+	COMMAND="down"
+fi
+
 # Check for the -d flag
 DETACHED=""
-if [[ "$1" == "-d" ]]; then
+if [[ "$2" == "-d" ]]; then
 	DETACHED="-d"
 fi
 # Combine and run them
-docker compose -f ${COMPOSE_FILES[@]} up $DETACHED
+docker compose -f ${COMPOSE_FILES[@]} $COMMAND $DETACHED
