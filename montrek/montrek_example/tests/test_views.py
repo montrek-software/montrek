@@ -130,6 +130,12 @@ class TestMontrekExampleAReportView(MontrekViewTestCase):
     viewname = "montrek_example_report"
     view_class = me_views.MontrekExampleReport
 
+    def test_send_report_per_mail(self):
+        user = MontrekUserFactory()
+        self.client.force_login(user)
+        response = self.client.get(self.url + "?send_mail=true")
+        self.assertRedirects(response, reverse("send_mail"))
+
 
 class TestMontrekExampleADownloadView(MontrekDownloadViewTestCase):
     viewname = "montrek_example_a_download"
