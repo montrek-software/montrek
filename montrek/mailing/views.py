@@ -54,6 +54,8 @@ class SendMailView(MontrekCreateUpdateView):
     def get_form(self, form_class=None):
         if "pk" in self.kwargs:
             initial = self.manager.get_object_from_pk_as_dict(self.kwargs["pk"])
+        else:
+            initial = {}
         return self.form_class(repository=self.manager.repository, initial=initial)
 
     def form_valid(self, form):
@@ -62,7 +64,7 @@ class SendMailView(MontrekCreateUpdateView):
             recipients=mail_data["mail_recipients"],
             subject=mail_data["mail_subject"],
             message=mail_data["mail_message"],
-            attachments=mail_data["mail_attachments"],
+            attachments=mail_data.get("mail_attachments", ""),
         )
         self.show_messages()
         return HttpResponseRedirect(self.get_success_url())

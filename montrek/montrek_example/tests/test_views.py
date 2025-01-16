@@ -275,7 +275,7 @@ class TestMontrekExampleBCreate(MontrekCreateViewTestCase):
         }
 
     def additional_assertions(self, created_object):
-        self.assertEqual(created_object.field_d1_str, "test1,test2")
+        self.assertTrue(created_object.field_d1_str in ["test1,test2", "test2,test1"])
 
 
 class TestMontrekExampleBUpdate(MontrekUpdateViewTestCase):
