@@ -62,6 +62,7 @@ class SendMailView(MontrekCreateUpdateView):
             recipients=mail_data["mail_recipients"],
             subject=mail_data["mail_subject"],
             message=mail_data["mail_message"],
+            attachments=mail_data["mail_attachments"],
         )
         self.show_messages()
         return HttpResponseRedirect(self.get_success_url())
