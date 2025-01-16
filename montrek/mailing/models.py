@@ -18,6 +18,7 @@ class MailSatellite(baseclass_models.MontrekSatelliteABC):
     mail_subject = models.CharField(max_length=255)
     mail_message = models.TextField()
     mail_recipients = models.TextField()
+    mail_attachments = models.TextField(default="", blank=True, null=True)
 
     class Meta:
         verbose_name = "Mail Satellite"
