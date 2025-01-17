@@ -6,3 +6,6 @@ docker_down:
 
 local-db-create:
 	@bash bin/local-db.sh create
+
+runserver:
+	@bash bin/local-runserver.sh

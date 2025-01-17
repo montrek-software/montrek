@@ -44,7 +44,7 @@ if [[ "$1" == "create" ]]; then
 
 		# Check if the 'postgres' role exists
 		echo "Checking if the 'postgres' superuser exists..."
-		SUPERUSER_EXISTS=$(psql -h "$DB_HOST" -p "$DB_PORT" -tAc "SELECT 1 FROM pg_roles WHERE rolname='postgres';" -U postgres -d postgres)
+		SUPERUSER_EXISTS=$(psql -h "$DB_HOST" -p "$DB_PORT" -tAc "SELECT 1 FROM pg_roles WHERE rolname='postgres';" -U postgres -d $DB_NAME)
 		if [[ "$SUPERUSER_EXISTS" != "1" ]]; then
 			echo "Error: 'postgres' role does not exist. Please ensure initdb has created it correctly."
 			exit 1
@@ -63,7 +63,7 @@ if [[ "$1" == "create" ]]; then
 
 		echo "Start creating the database..."
 		# Connect to the PostgreSQL server and execute the SQL commands
-		psql -U postgres -p $DB_PORT -d postgres -c "CREATE DATABASE $DB_NAME;" 2>/dev/null
+		psql -U postgres -p $DB_PORT -d $DB_NAME -c "CREATE DATABASE $DB_NAME;" 2>/dev/null
 
 		if [ $? -eq 0 ]; then
 			echo "Database '$DB_NAME' created successfully."
@@ -73,19 +73,21 @@ if [[ "$1" == "create" ]]; then
 
 		# Create a database user (if needed)
 		echo "Checking if the user '$DB_USER' exists..."
-		USER_EXISTS=$(psql -h $DB_HOST -U postgres -p $DB_PORT -d postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='$DB_USER';")
+		USER_EXISTS=$(psql -h $DB_HOST -U postgres -p $DB_PORT -d $DB_NAME -tAc "SELECT 1 FROM pg_roles WHERE rolname='$DB_USER';")
 
 		if [[ "$USER_EXISTS" == "1" ]]; then
 			echo "User '$DB_USER' already exists."
 		else
 			echo "Creating user '$DB_USER'..."
-			PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -p $DB_PORT -d postgres -c "CREATE USER $DB_USER WITH PASSWORD '$DB_PASSWORD';"
+			PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -p $DB_PORT -d $DB_NAME -c "CREATE USER $DB_USER WITH PASSWORD '$DB_PASSWORD';"
 			echo "User '$DB_USER' created successfully."
 		fi
 
 		# Grant privileges to the user
 		echo "Granting privileges to user '$DB_USER' on database '$DB_NAME'..."
-		PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -p $DB_PORT -d postgres -c "GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;"
+		psql -h $DB_HOST -U postgres -p $DB_PORT -d $DB_NAME -c "GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;"
+		psql -h "$DB_HOST" -p "$DB_PORT" -U postgres -d $DB_NAME -c "GRANT USAGE ON SCHEMA public TO montrekblockchainuser;"
+		psql -h "$DB_HOST" -p "$DB_PORT" -U postgres -d $DB_NAME -c "GRANT CREATE ON SCHEMA public TO montrekblockchainuser;"
 
 		echo "Database setup completed successfully."
 	else
