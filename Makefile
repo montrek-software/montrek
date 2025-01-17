@@ -1,5 +1,5 @@
 docker_up:
-	@bash start-docker.sh up -d
+	@bash bin/start-docker.sh up -d
 
 docker_down:
-	@bash start-docker.sh down
+	@bash bin/start-docker.sh down
