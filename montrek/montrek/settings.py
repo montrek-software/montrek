@@ -241,7 +241,7 @@ else:
 EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
 EMAIL_TEMPLATE = config("EMAIL_TEMPLATE", "mail_templates/montrek_mail_template.html")
-DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="")
+DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default=EMAIL_HOST_USER)
 
 CELERY_BROKER_URL = config("CELERY_BROKER_URL", default="redis://redis:6379")
 CELERY_RESULT_BACKEND = config("CELERY_RESULT_BACKEND", default="redis://redis:6379")
