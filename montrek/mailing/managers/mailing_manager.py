@@ -42,10 +42,9 @@ class MailingManager(MontrekManager):
         attachments_list = self.get_attachments(attachments)
         try:
             email = EmailMessage(
-                subject,
-                body,
-                settings.EMAIL_BACKEND,
-                recipient_list,
+                subject=subject,
+                body=body,
+                to=recipient_list,
                 attachments=attachments_list,
             )
             email.content_subtype = "html"
