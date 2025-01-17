@@ -9,3 +9,6 @@ local-db-create:
 
 runserver:
 	@bash bin/local-runserver.sh
+
+clone-repository:
+	@bash bin/clone-repository.sh $(filter-out $@,$(MAKECMDGOALS))
