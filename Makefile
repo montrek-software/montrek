@@ -1,7 +1,7 @@
 docker-up:
 	@bash bin/start-docker.sh up -d
 
-docker_down:
+docker-down:
 	@bash bin/start-docker.sh down
 
 local-db-create:
@@ -12,3 +12,6 @@ runserver:
 
 clone-repository:
 	@bash bin/clone-repository.sh $(filter-out $@,$(MAKECMDGOALS))
+
+generate-https-certs:
+	@bash bin/generate-https-certs.sh

@@ -1,16 +1,95 @@
 # montrek
-A program that tracks financial transactions of a number of bank accounts and depots, analyzes the data and gives valuable output? 
+
+The montrek software is a powerful tool to manage data, generate reports, analyse data and to provide a web interface for easy usage. It is highly customizable such that it can be used in wide range of applications.
 
 ## Installation Notes
+
+### Prerequisites
+
+- git (https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
+- Access rights to github repository (https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account)
+- openssl
+- make
+- docker (https://docs.docker.com/engine/install/)
+- make docker accessible for your user
 
 ### Checkout Repository
 
 Do
+
 ```
 git clone git@github.com:chrishombach/montrek.git <your-folder>
 ```
 
-You have to eventually sort out ssh keys.
+### Setup .env file
+
+The .env file is the central configuration file for montrek.
+
+_Since this file contains sensitive information, it should be handled carefully._
+
+Copy the template file:
+
+```bash
+cp .env.template .env
+```
+
+Fill in all required information in the .env file.
+
+### Generate HTTPS Certificate
+
+Run the following commands in the root directory of the project:
+
+```bash
+make generate-https-certs
+```
+
+and enter the information.
+
+### Start docker
+
+Run:
+
+```bash
+make docker-up
+```
+
+This will build the docker containers and start the montrek server.
+
+You should now be able to access montrek in your webbrowser:
+
+```
+<IP:PORT>
+```
+
+## Add new repository
+
+To add a new repository to the montrek project, you have to follow these steps:
+
+Run:
+
+```bash
+make clone-repository <name_of_repo>
+```
+
+And add the app to `NAVBAR_APPS` in the .env file.
+
+E.g. do:
+
+```bash
+make clone-repository mt_economic_common
+```
+
+and set in the .env file:
+
+```
+NAVBAR_APPS=mt_economic_common.country,mt_economic_common.currency
+```
+
+Restart docker.
+
+# This section might be outdated
+
+## TODO: Check section
 
 ### DB Setup
 
@@ -23,7 +102,7 @@ You have to eventually sort out ssh keys.
 - Create a user `createuser root`
 - Login to database `psql montrek_db`
 
-1b) Install MariaDB 
+1b) Install MariaDB
 
 (Largely taken from [Django-Maria-DB Setup](https://www.digitalocean.com/community/tutorials/how-to-use-mysql-or-mariadb-with-your-django-application-on-ubuntu-14-04))
 
@@ -32,29 +111,34 @@ If your system has already MariaDB installed, you can skip this step
 Install the packages from the repositories by typing:
 
 ```
+
 sudo apt-get update
 sudo apt-get install python-pip python-dev mariadb-server libmariadbclient-dev libssl-dev
-```
-
-
-   You will be asked to select and confirm a password for the administrative MariaDB account.
-
-   You can then run through a simple security script by running:
 
 ```
+
+You will be asked to select and confirm a password for the administrative MariaDB account.
+
+You can then run through a simple security script by running:
+
+```
+
 sudo mysql_secure_installation
+
 ```
 
-   You’ll be asked for the administrative password you set for MariaDB during installation. Afterwards, you’ll be asked a series of questions. Besides the first question, asking you to choose another administrative password, select yes for each question.
+You’ll be asked for the administrative password you set for MariaDB during installation. Afterwards, you’ll be asked a series of questions. Besides the first question, asking you to choose another administrative password, select yes for each question.
 
-   With the installation and initial database configuration out of the way, we can move on to create our database and database user.
+With the installation and initial database configuration out of the way, we can move on to create our database and database user.
 
-2) Create a database and user
+2. Create a database and user
 
 We can start by logging into an interactive session with our database software by typing the following:
 
 ```
+
 mysql -u root -p
+
 ```
 
 You will be prompted for the administrative password you selected during installation. Afterwards, you will be given a prompt.
@@ -72,19 +156,23 @@ Next, we will create a database user which we will use to connect to and interac
 ```sql
 CREATE USER montrekuser@localhost IDENTIFIED BY 'password';
 ```
+
 Now, all we need to do is give our database user access rights to the database we created:
 
 ```sql
 GRANT ALL PRIVILEGES ON montrek_db.* TO montrekuser@localhost;
 GRANT ALL PRIVILEGES ON test_montrek_db.* TO 'montrekuser'@'localhost';
 ```
+
 The second privileged command is needed for the test suite.
 Then, we need to flush the privileges so that the current instance of the database knows about the recent changes we’ve made:
 
 ```sql
 FLUSH PRIVILEGES;
 ```
+
 Exit the SQL prompt to get back to your regular shell session:
+
 ```
 exit
 ```
@@ -92,6 +180,7 @@ exit
 ### Locally (For development)
 
 Copy the following to `.env` file in the root directory of the project and adjust where needed:
+
 ```
 #montrek Config
 NAVBAR_APPS= montrek_example_a_list montrek_example_b_list
@@ -114,6 +203,7 @@ DB_VOLUME=/var/lib/mysql
 APP_PORT=8000
 
 ```
+
 Set `DB_ENGINE=mariadb` and `DB_PORT=3306` if you want to use MariaDB.
 
 Enter in your bash terminal
@@ -127,11 +217,14 @@ python manage.py makemigrations
 ```
 
 Run the migrations and start the server:
+
 ```
 python manage.py migrate
 python manage.py runserver
 ```
+
 Now you should be able to open montrek in your webbrowser:
+
 ```
 http://127.0.0.1:8000/
 ```
@@ -142,7 +235,7 @@ If you want to make sure that everything runs, you can run the test suite:
 python manage.py test
 ```
 
-### In Docker container ###
+### In Docker container
 
 If you want to run montrek without developing it as the bases of your application or want to deploy it in you local network, you are encouraged to let it run in a docker container.
 
@@ -151,17 +244,19 @@ Install docker (e.g. like here: [Django installation Linux](https://www.simplile
 Install docker-compose.
 
 Set in your .env file:
+
 ```
 PROJECT_NAME=<your-project-name>
 ```
+
 The name of your server will be `montrek.<PROJECT_NAME>`
 
-You have to create a certificate for the https connection. For unix systems you can find instructions here: [Django SSL](https://medium.com/@eng.fadishaar/step-by-step-guide-configuring-nginx-with-https-on-localhost-for-secure-web-application-testing-c78febc26c78),using the server name `montrek.<PROJECT_NAME>`. 
+You have to create a certificate for the https connection. For unix systems you can find instructions here: [Django SSL](https://medium.com/@eng.fadishaar/step-by-step-guide-configuring-nginx-with-https-on-localhost-for-secure-web-application-testing-c78febc26c78),using the server name `montrek.<PROJECT_NAME>`.
 Or you have to ask your system administrator to provide a certificate.
 
-Copy those as *cert.crt* and *cert.key* to `nginx/certs`
+Copy those as _cert.crt_ and _cert.key_ to `nginx/certs`
 
-On you local machine you can add `<Server's IP> montrek.<PROJECT_NAME>` to */etc/hosts/* or ask your system administrator to add this to the networks DNS list.
+On you local machine you can add `<Server's IP> montrek.<PROJECT_NAME>` to _/etc/hosts/_ or ask your system administrator to add this to the networks DNS list.
 
 Change in the .env file:
 
@@ -184,30 +279,35 @@ CELERY_TASK_ALWAYS_EAGER=1
 (Set `CELERY_TASK_ALWAYS_EAGER` to 0 if you want to run tasks asynchronously in the background using the celery worker.)
 
 Run
+
 ```
 docker-compose up --build
 ```
 
 You can now access montrek in your webbrowser:
+
 ```
 https://127.0.0.1:<DEPLOY_PORT>
 ```
 
 Or from any browser in you network:
+
 ```
 https://<your-ip-address>:<DEPLOY_PORT>
 ```
 
 Or if it set up:
+
 ```
 https://montrek.<PROJECT_NAME>:<DEPLOY_PORT>
 ```
+
 Background tasks can be monitored with the Flower app. It runs at `<your-ip-address>:5555`.
 
-
-*Note for installation on windows*:
+_Note for installation on windows_:
 
 Montrek can be installed on Windows via wsl. For this open a Powershell as administrator and determine the IP address of the wsl connection:
+
 ```
 wsl hostname -I
 ```
@@ -218,4 +318,8 @@ Now you can access wsl and install montrek as described above with the wsl IP as
 
 ```
 netsh interfact portproxy add v4t<F2><F2><F2>o4 listenaddress=0.0.0.0 listenport=1339 connectaddress=<your-wsl-ip> connectport=1339
+```
+
+```
+
 ```
