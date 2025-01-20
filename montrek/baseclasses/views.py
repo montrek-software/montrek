@@ -539,6 +539,9 @@ class MontrekRestApiView(APIView, MontrekViewMixin):
 class MontrekRedirectView(MontrekViewMixin, RedirectView):
     manager_class = MontrekManagerNotImplemented
 
+    def get_redirect_url(self, *args, **kwargs) -> str:
+        raise NotImplementedError("Please implement this method in your subclass!")
+
 
 class MontrekDownloadView(MontrekViewMixin, View):
     manager_class = MontrekManagerNotImplemented

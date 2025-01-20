@@ -86,8 +86,9 @@ if [[ "$1" == "create" ]]; then
 		# Grant privileges to the user
 		echo "Granting privileges to user '$DB_USER' on database '$DB_NAME'..."
 		psql -h $DB_HOST -U postgres -p $DB_PORT -d $DB_NAME -c "GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;"
-		psql -h "$DB_HOST" -p "$DB_PORT" -U postgres -d $DB_NAME -c "GRANT USAGE ON SCHEMA public TO montrekblockchainuser;"
-		psql -h "$DB_HOST" -p "$DB_PORT" -U postgres -d $DB_NAME -c "GRANT CREATE ON SCHEMA public TO montrekblockchainuser;"
+		psql -h "$DB_HOST" -p "$DB_PORT" -U postgres -d $DB_NAME -c "GRANT USAGE ON SCHEMA public TO $DB_USER;"
+		psql -h "$DB_HOST" -p "$DB_PORT" -U postgres -d $DB_NAME -c "GRANT CREATE ON SCHEMA public TO $DB_USER;"
+		psql -h "$DB_HOST" -p "$DB_PORT" -U postgres -d $DB_NAME -c "ALTER USER $DB_USER CREATEDB;"
 
 		echo "Database setup completed successfully."
 	else
