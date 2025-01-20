@@ -12,3 +12,6 @@ runserver:
 
 clone-repository:
 	@bash bin/clone-repository.sh $(filter-out $@,$(MAKECMDGOALS))
+
+generate-https-certs:
+	@bash bin/generate-https-certs.sh
