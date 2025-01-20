@@ -9,6 +9,7 @@ The montrek software is a powerful tool to manage data, generate reports, analys
 - git (https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 - Access rights to github repository (https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account)
 - openssl
+- make
 
 ### Checkout Repository
 
@@ -17,6 +18,20 @@ Do
 ```
 git clone git@github.com:chrishombach/montrek.git <your-folder>
 ```
+
+### Setup .env file
+
+The .env file is the central configuration file for montrek.
+
+_Since this file contains sensitive information, it should be handled carefully._
+
+Copy the template file:
+
+```bash
+cp .env.template .env
+```
+
+Fill in all required information in the .env file.
 
 ### Generate HTTPS Certificate
 
