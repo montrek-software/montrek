@@ -10,6 +10,8 @@ The montrek software is a powerful tool to manage data, generate reports, analys
 - Access rights to github repository (https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account)
 - openssl
 - make
+- docker (https://docs.docker.com/engine/install/)
+- make docker accessible for your user
 
 ### Checkout Repository
 
@@ -41,6 +43,54 @@ Run the following commands in the root directory of the project:
 make generate-https-certs
 ```
 
+and enter the information.
+
+### Start docker
+
+Run:
+
+```bash
+make docker-up
+```
+
+This will build the docker containers and start the montrek server.
+
+You should now be able to access montrek in your webbrowser:
+
+```
+<IP:PORT>
+```
+
+## Add new repository
+
+To add a new repository to the montrek project, you have to follow these steps:
+
+Run:
+
+```bash
+make clone-repository <name_of_repo>
+```
+
+And add the app to `NAVBAR_APPS` in the .env file.
+
+E.g. do:
+
+```bash
+make clone-repository mt_economic_common
+```
+
+and set in the .env file:
+
+```
+NAVBAR_APPS=mt_economic_common.country,mt_economic_common.currency
+```
+
+Restart docker.
+
+# This section might be outdated
+
+## TODO: Check section
+
 ### DB Setup
 
 1a) Install PostgreSQL
@@ -61,8 +111,10 @@ If your system has already MariaDB installed, you can skip this step
 Install the packages from the repositories by typing:
 
 ```
+
 sudo apt-get update
 sudo apt-get install python-pip python-dev mariadb-server libmariadbclient-dev libssl-dev
+
 ```
 
 You will be asked to select and confirm a password for the administrative MariaDB account.
@@ -70,7 +122,9 @@ You will be asked to select and confirm a password for the administrative MariaD
 You can then run through a simple security script by running:
 
 ```
+
 sudo mysql_secure_installation
+
 ```
 
 You’ll be asked for the administrative password you set for MariaDB during installation. Afterwards, you’ll be asked a series of questions. Besides the first question, asking you to choose another administrative password, select yes for each question.
@@ -82,7 +136,9 @@ With the installation and initial database configuration out of the way, we can 
 We can start by logging into an interactive session with our database software by typing the following:
 
 ```
+
 mysql -u root -p
+
 ```
 
 You will be prompted for the administrative password you selected during installation. Afterwards, you will be given a prompt.
@@ -262,4 +318,8 @@ Now you can access wsl and install montrek as described above with the wsl IP as
 
 ```
 netsh interfact portproxy add v4t<F2><F2><F2>o4 listenaddress=0.0.0.0 listenport=1339 connectaddress=<your-wsl-ip> connectport=1339
+```
+
+```
+
 ```
