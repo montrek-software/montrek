@@ -195,7 +195,7 @@ class AlertTableElement(AttrTableElement):
 
     def format(self, value):
         status = AlertEnum.get_by_description(value)
-        return f'<td style="text-align: left;color:{status.color};">{value}</td>'
+        return f'<td style="text-align: left;color:{status.color.hex};"><b>{value}</b></td>'
 
 
 @dataclass
