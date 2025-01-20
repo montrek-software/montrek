@@ -1,7 +1,7 @@
 docker-up:
 	@bash bin/start-docker.sh up -d
 
-docker_down:
+docker-down:
 	@bash bin/start-docker.sh down
 
 local-db-create:
