@@ -58,11 +58,13 @@ class MontrekUploadFileView(MontrekTemplateView):
         raise NotImplementedError("get_success_url not implemented")
 
     def _check_file_type(self, file: TextIO, form: forms.Form) -> bool:
-        expected_file_type = form.fields["file"].widget.attrs["accept"].upper()
-        if "." + file.name.split(".")[-1].upper() != expected_file_type:
+        expected_file_types = form.fields["file"].widget.attrs["accept"].split(",")
+        expected_file_types = [e.lstrip(".").upper() for e in expected_file_types]
+        actual_file_type = file.name.split(".")[-1].upper()
+        if actual_file_type not in expected_file_types:
             messages.error(
                 self.request,
-                f"File type {file.name.split('.')[-1].upper()} not allowed",
+                f"File type {actual_file_type} not allowed",
             )
             return False
         return True
