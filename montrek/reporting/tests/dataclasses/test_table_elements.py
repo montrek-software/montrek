@@ -422,3 +422,25 @@ class TestDataTableFilters(TestCase):
         )
         test_str = table_element.get_attribute(test_obj)
         self.assertEqual(test_str, "test_name")
+
+    def test_progress_bar__html(self):
+        table_element = te.ProgressBarTableElement(
+            name="name",
+            attr="test_attr",
+        )
+        test_str = table_element.format(0.50)
+        self.assertEqual(
+            str(test_str),
+            '<td><div class="bar-container"> <div class="bar" style="width: 50.0%;"></div> <span class="bar-value">50.00%</span> </div></td>',
+        )
+
+    def test_progress_bar__latex(self):
+        table_element = te.ProgressBarTableElement(
+            name="name",
+            attr="test_attr",
+        )
+        test_str = table_element.format_latex(0.50)
+        self.assertEqual(
+            str(test_str),
+            "\\progressbar{ 50.0 }{ 50.0\\% } &",
+        )
