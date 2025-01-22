@@ -141,8 +141,11 @@ th {
 .bar-value {
   position: relative;
   z-index: 1;
+  text-align: center;
+  width: 100%;
   color: #004767; /* Text color */
   font-weight: bold;
+  border: 1px solid #004767; /* Border color */
 }
 input[readonly] {
   background-color: #e0e0e0; /* Light grey */
