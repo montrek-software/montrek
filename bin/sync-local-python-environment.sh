@@ -1,4 +1,5 @@
 #!/bin/bash
-find . -name 'requirements.in' -exec pip-compile --output-file=- {} \; >all-requirements.txt
-pip-sync all-requirements.txt
-rm all-requirements.txt
+temporary_requirements_file="all_requirements.txt"
+find . -name 'requirements.txt' -exec cat {} + >"$temporary_requirements_file"
+pip-sync "$temporary_requirements_file"
+rm "$temporary_requirements_file"
