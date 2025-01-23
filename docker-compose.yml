@@ -6,7 +6,7 @@ services:
     ports:
       - ${DEPLOY_PORT}:80
     volumes:
-      - static_volume:/montrek/montrek/baseclasses/static
+      - static_volume:/montrek/static
       - uploads_volume:/montrek/uploads
     depends_on:
       - web
@@ -28,7 +28,7 @@ services:
       gunicorn --chdir montrek montrek.wsgi:application --bind 0.0.0.0:${APP_PORT} --timeout 300"
     volumes:
       - .:/montrek
-      - static_volume:/montrek/montrek/baseclasses/static
+      - static_volume:/montrek/static
       - uploads_volume:/montrek/uploads
     env_file:
       - .env
@@ -51,7 +51,7 @@ services:
     command: sh -c "cd montrek && celery --app=montrek worker --loglevel=info -Q sequential_queue --concurrency=1" -n sequential_worker@%h
     volumes:
       - .:/montrek
-      - static_volume:/montrek/montrek/baseclasses/static
+      - static_volume:/montrek/static
       - uploads_volume:/montrek/uploads
     env_file:
       - .env
@@ -69,7 +69,7 @@ services:
     command: sh -c "cd montrek && celery --app=montrek worker --loglevel=info -Q parallel_queue --concurrency=4" -n parallel_worker@%h
     volumes:
       - .:/montrek
-      - static_volume:/montrek/montrek/baseclasses/static
+      - static_volume:/montrek/static
       - uploads_volume:/montrek/uploads
     env_file:
       - .env
