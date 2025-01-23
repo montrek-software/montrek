@@ -40,7 +40,7 @@ jobs:
       - name: Install Python Dependencies
         run: |
           cd ./bin
-          chmod +x sync-local-python-environment.sh
+          chmod +x sync-local-python-env.sh
           sync-local-python-env.sh
       - name: Setup env
         run: |
