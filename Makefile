@@ -18,3 +18,6 @@ clone-repository:
 
 generate-https-certs:
 	@bash bin/generate-https-certs.sh
+
+sync-local-python-environment:
+	@bash bin/sync-local-python-environment.sh
