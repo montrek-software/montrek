@@ -481,7 +481,6 @@ class MontrekCreateView(MontrekCreateUpdateView):
 class MontrekUpdateView(MontrekCreateUpdateView):
     def get_form(self, form_class=None):
         initial = self.manager.get_object_from_pk_as_dict(self.kwargs["pk"])
-
         return self.form_class(repository=self.manager.repository, initial=initial)
 
     def get_context_data(self, **kwargs):
