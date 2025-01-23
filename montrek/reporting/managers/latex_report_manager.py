@@ -35,7 +35,11 @@ class LatexReportManager:
     def get_layout_data(self) -> dict:
         return {
             "montrek_logo": os.path.join(
-                settings.STATIC_ROOT, "logos", "montrek_logo_variant.png"
+                settings.BASE_DIR,
+                "baseclasses",
+                "static",
+                "logos",
+                "montrek_logo_variant.png",
             ),
             "document_title": self.report_manager.document_title,
             "footer_text": self.report_manager.footer_text,
