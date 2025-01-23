@@ -50,6 +50,8 @@ factory-boy==3.3.1
     # via -r requirements.in
 faker==34.0.2
     # via factory-boy
+freezegun==1.5.0
+    # via -r requirements.in
 frozendict==2.4.6
     # via yfinance
 html5lib==1.1
@@ -100,6 +102,7 @@ python-dateutil==2.9.0.post0
     # via
     #   celery
     #   faker
+    #   freezegun
     #   pandas
     #   sdmx1
 python-decouple==3.8
@@ -134,6 +137,8 @@ sqlparse==0.5.3
     #   django
     #   django-debug-toolbar
 tabulate==0.9.0
+    # via -r requirements.in
+tblib==3.0.0
     # via -r requirements.in
 tenacity==9.0.0
     # via plotly
