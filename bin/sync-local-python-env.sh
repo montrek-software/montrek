@@ -1,4 +1,5 @@
 #!/bin/bash
+pip install pip-tools
 temporary_requirements_file="all_requirements.txt"
 find . -name 'requirements.txt' -exec cat {} + >"$temporary_requirements_file"
 pip-sync "$temporary_requirements_file"
