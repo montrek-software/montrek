@@ -1,14 +1,14 @@
-from django.test import TestCase
-
-from api_upload.managers.request_manager import RequestJsonManager
-from api_upload.managers.api_upload_manager import ApiUploadManager
-from api_upload.repositories.api_upload_registry_repository import (
-    ApiUploadRepository,
-)
-from user.tests.factories.montrek_user_factories import MontrekUserFactory
 from baseclasses.dataclasses.montrek_message import (
     MontrekMessageError,
     MontrekMessageInfo,
+)
+from django.test import TestCase
+from requesting.managers.request_manager import RequestJsonManager
+from user.tests.factories.montrek_user_factories import MontrekUserFactory
+
+from api_upload.managers.api_upload_manager import ApiUploadManager
+from api_upload.repositories.api_upload_registry_repository import (
+    ApiUploadRepository,
 )
 
 

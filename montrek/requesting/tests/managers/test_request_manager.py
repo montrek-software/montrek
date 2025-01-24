@@ -1,5 +1,5 @@
 from django.test import TestCase
-from api_upload.managers.request_manager import (
+from requesting.managers.request_manager import (
     RequestJsonManager,
     RequestSlugAuthenticator,
     RequestUserPasswordAuthenticator,

@@ -1,5 +1,5 @@
 import datetime
-from api_upload.managers.request_manager import RequestJsonManager
+from requesting.managers.request_manager import RequestJsonManager
 
 
 class A2RequestManager(RequestJsonManager):
