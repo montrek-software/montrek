@@ -14,5 +14,10 @@ class TestTmpStorageManager(TestCase):
         tmp_storage_manager.cleanup()
         self.assertFalse(os.path.exists(saved_path))
 
+    def test_save_file_not_found(self):
+        tmp_storage_manager = TmpStorageManager()
+        with self.assertRaises(FileNotFoundError):
+            tmp_storage_manager.save("non_existent_file.txt")
+
     def test_load(self):
         pass
