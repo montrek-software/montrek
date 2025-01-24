@@ -51,7 +51,7 @@ COPY . $DOCKERHOME
 RUN /venv/bin/pip install -r requirements.txt
 
 # Find and install dependencies from all requirements.txt files in subdirectories
-RUN find . -type f -name "requirements.txt" ! -path "./requirements.txt" -exec /venv/bin/pip install -r {} +
+RUN find . -type f -name "requirements.txt" ! -path "./requirements.txt" -exec /venv/bin/pip install -r {} \;
 
 # Set the entrypoint to use the virtual environment's Python
 ENV PATH="/venv/bin:$PATH"
