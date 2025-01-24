@@ -18,10 +18,11 @@ class StandardActionElementBase(ActionElement):
     def __init__(
         self,
         url_name: str,
+        kwargs: dict = {},
         action_id: str = "",
         hover_text: str = "",
     ):
-        self.link = reverse(url_name)
+        self.link = reverse(url_name, kwargs=kwargs)
         self.action_id = action_id or f"id_action_{url_name}"
         self.hover_text = hover_text or f"Go to {url_name.replace('_', ' ').title()}"
 

@@ -13,18 +13,20 @@ from django.views.generic import DetailView, RedirectView, View
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import CreateView
 from django.views.generic.list import ListView
+from file_upload.forms import SimpleUploadFileForm
+from file_upload.managers.simple_upload_file_manager import SimpleUploadFileManager
 from reporting.dataclasses.table_elements import (
     AttrTableElement,
     LinkTextTableElement,
     TableElement,
 )
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
 from reporting.managers.latex_report_manager import LatexReportManager
 from reporting.managers.montrek_details_manager import MontrekDetailsManager
 from reporting.managers.montrek_report_manager import MontrekReportManager
 from reporting.managers.montrek_table_manager import MontrekTableManager
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from baseclasses import utils
 from baseclasses.dataclasses.history_data_table import HistoryDataTable
@@ -34,10 +36,8 @@ from baseclasses.dataclasses.view_classes import ActionElement
 from baseclasses.forms import DateRangeForm, FilterForm, MontrekCreateForm
 from baseclasses.managers.montrek_manager import MontrekManagerNotImplemented
 from baseclasses.pages import NoPage
-
-from file_upload.forms import SimpleUploadFileForm
-from file_upload.managers.simple_upload_file_manager import SimpleUploadFileManager
 from baseclasses.serializers import MontrekSerializer
+from baseclasses.utils import get_content_type
 
 
 def home(request):
@@ -481,7 +481,6 @@ class MontrekCreateView(MontrekCreateUpdateView):
 class MontrekUpdateView(MontrekCreateUpdateView):
     def get_form(self, form_class=None):
         initial = self.manager.get_object_from_pk_as_dict(self.kwargs["pk"])
-
         return self.form_class(repository=self.manager.repository, initial=initial)
 
     def get_context_data(self, **kwargs):
@@ -516,6 +515,10 @@ class MontrekReportView(MontrekTemplateView, ToPdfMixin):
     def get(self, request, *args, **kwargs):
         if self.request.GET.get("gen_pdf") == "true":
             return self.list_to_pdf()
+        if self.request.GET.get("send_mail") == "true":
+            report_manager = LatexReportManager(self.manager)
+            pdf_path = report_manager.compile_report()
+            return self.manager.prepare_mail(pdf_path)
         return super().get(request, *args, **kwargs)
 
     @property
@@ -535,6 +538,9 @@ class MontrekRestApiView(APIView, MontrekViewMixin):
 class MontrekRedirectView(MontrekViewMixin, RedirectView):
     manager_class = MontrekManagerNotImplemented
 
+    def get_redirect_url(self, *args, **kwargs) -> str:
+        raise NotImplementedError("Please implement this method in your subclass!")
+
 
 class MontrekDownloadView(MontrekViewMixin, View):
     manager_class = MontrekManagerNotImplemented
@@ -542,21 +548,7 @@ class MontrekDownloadView(MontrekViewMixin, View):
     def get(self, request, *args, **kwargs) -> HttpResponse:
         response = self.manager.download()
         filename = self.manager.get_filename()
-        content_type = self.get_content_type(filename)
+        content_type = get_content_type(filename)
         response["Content-Type"] = content_type
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
         return response
-
-    def get_content_type(self, filename: str) -> str:
-        file_extension = filename.split(".")[-1]
-        if file_extension == "pdf":
-            return "application/pdf"
-        if file_extension == "txt":
-            return "text/plain"
-        if file_extension == "csv":
-            return "text/csv"
-        if file_extension == "xlsx":
-            return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        if file_extension == "zip":
-            return "application/zip"
-        return "application/octet-stream"

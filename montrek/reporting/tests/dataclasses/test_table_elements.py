@@ -162,6 +162,17 @@ class TestTableElements(TestCase):
             '<td style="text-align:left;"><a href="https://www.google.com" target="_blank" title="https://www.google.com">https://www.google.com</a></td>',
         )
 
+    def test_latex_special_character_is_handled(self):
+        table_element = te.StringTableElement(
+            name="name",
+            attr="test_attr",
+        )
+        test_str_latex = table_element.format_latex("this & that = 100%")
+        self.assertEqual(
+            test_str_latex,
+            " \\color{black} this \\& that = 100\\% &",
+        )
+
     def test_external_link_table_element__latex(self):
         table_element = te.ExternalLinkTableElement(
             name="name",
@@ -411,3 +422,25 @@ class TestDataTableFilters(TestCase):
         )
         test_str = table_element.get_attribute(test_obj)
         self.assertEqual(test_str, "test_name")
+
+    def test_progress_bar__html(self):
+        table_element = te.ProgressBarTableElement(
+            name="name",
+            attr="test_attr",
+        )
+        test_str = table_element.format(0.50)
+        self.assertEqual(
+            str(test_str),
+            '<td><div class="bar-container"> <div class="bar" style="width: 50.0%;"></div> <span class="bar-value">50.00%</span> </div></td>',
+        )
+
+    def test_progress_bar__latex(self):
+        table_element = te.ProgressBarTableElement(
+            name="name",
+            attr="test_attr",
+        )
+        test_str = table_element.format_latex(0.50)
+        self.assertEqual(
+            str(test_str),
+            "\\progressbar{ 50.0 }{ 50.0\\% } &",
+        )

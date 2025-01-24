@@ -8,7 +8,7 @@ class MailingRepository(MontrekRepository):
     def set_annotations(self):
         self.add_satellite_fields_annotations(
             MailSatellite,
-            ["mail_recipients", "mail_subject", "mail_message"],
+            ["mail_recipients", "mail_subject", "mail_message", "mail_attachments"],
         )
         self.add_satellite_fields_annotations(
             MailStateSatellite, ["mail_state", "mail_comment"]

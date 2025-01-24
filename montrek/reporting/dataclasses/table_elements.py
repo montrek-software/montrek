@@ -19,6 +19,8 @@ from pandas.core.tools.datetimes import DateParseError
 from reporting.core.reporting_colors import ReportingColors
 from rest_framework import serializers
 
+from reporting.core.text_converter import HtmlLatexConverter
+
 
 def _get_value_color(value):
     return ReportingColors.RED if value < 0 else ReportingColors.DARK_BLUE
@@ -36,7 +38,9 @@ class TableElement:
         raise NotImplementedError
 
     def format_latex(self, value):
-        return f" \\color{{black}} {value} &"
+        value_str = str(value)
+        value_str = HtmlLatexConverter.convert(value_str)
+        return f" \\color{{black}} {value_str} &"
 
     def get_attribute(self, obj: Any, tag: str) -> str:
         raise NotImplementedError
@@ -191,7 +195,7 @@ class AlertTableElement(AttrTableElement):
 
     def format(self, value):
         status = AlertEnum.get_by_description(value)
-        return f'<td style="text-align: left;color:{status.color};">{value}</td>'
+        return f'<td style="text-align: left;color:{status.color.hex};"><b>{value}</b></td>'
 
 
 @dataclass
@@ -249,6 +253,20 @@ class PercentTableElement(NumberTableElement):
     def format_latex(self, value) -> str:
         value = super().format_latex(value)
         return value.replace("%", "\\%")
+
+
+@dataclass
+class ProgressBarTableElement(NumberTableElement):
+    serializer_field_class = serializers.FloatField
+    attr: str
+
+    def format(self, value) -> str:
+        per_value = value * 100
+        return f"""<td><div class="bar-container"> <div class="bar" style="width: {per_value}%;"></div> <span class="bar-value">{value:,.2%}</span> </div></td>"""
+
+    def format_latex(self, value) -> str:
+        per_value = value * 100
+        return f"\\progressbar{{ {per_value } }}{{ {per_value}\\% }} &"
 
 
 @dataclass

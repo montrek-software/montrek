@@ -1,5 +1,5 @@
 from django.test import TestCase
-from api_upload.managers.request_manager import (
+from requesting.managers.request_manager import (
     RequestJsonManager,
     RequestSlugAuthenticator,
     RequestUserPasswordAuthenticator,
@@ -81,6 +81,15 @@ class TestRequestManager(TestCase):
             "401 Client Error: UNAUTHORIZED for url: https://httpbin.org/basic-auth/user/pass",
         )
 
+    def test_post_json_dummy(self):
+        manager = MockRequestManager()
+        response_json = manager.post_response(
+            "response-headers", {"freeform": "Hello Yello"}
+        )
+        self.assertEqual(manager.status_code, 200)
+        self.assertEqual(manager.message, "OK")
+        self.assertNotEqual(response_json, {})
+
 
 class TestRequestAuthenticators(TestCase):
     def test_user_password_authenticator(self):
@@ -112,5 +121,5 @@ class TestRequestNoRequestManager(TestCase):
         self.assertEqual(manager.status_code, 0)
         self.assertEqual(
             manager.message,
-            "No request made for https://dummywummy.org/status/404json after 2 attempts",
+            "No request made after 2 attempts",
         )

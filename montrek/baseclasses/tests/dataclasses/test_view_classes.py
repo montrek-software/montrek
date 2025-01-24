@@ -41,3 +41,28 @@ class TestStandardActionElements(TestCase):
             element = element_class(url_name=url_name)
             self.assertTrue(isinstance(element, StandardActionElementBase))
             self.assertEqual(element.icon, expected_icon)
+
+    def test_with_kwargs(self):
+        url_name = "montrek_example_a_details"
+        action_id = "id_custom_action"
+        hover_text = "Custom Action"
+        kwargs = {"pk": 1}
+        expected_icons = (
+            (BackActionElement, "arrow-left"),
+            (UploadActionElement, "upload"),
+            (SettingsActionElement, "cog"),
+            (CreateActionElement, "plus"),
+            (RegistryActionElement, "inbox"),
+        )
+        for element_class, expected_icon in expected_icons:
+            element = element_class(
+                url_name=url_name,
+                kwargs=kwargs,
+                action_id=action_id,
+                hover_text=hover_text,
+            )
+            self.assertTrue(isinstance(element, StandardActionElementBase))
+            self.assertEqual(element.icon, expected_icon)
+            self.assertEqual(element.link, reverse(url_name, kwargs=kwargs))
+            self.assertEqual(element.action_id, action_id)
+            self.assertEqual(element.hover_text, hover_text)

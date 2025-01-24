@@ -1,5 +1,4 @@
 import re
-from bs4 import BeautifulSoup
 
 
 class HtmlLatexConverter:
@@ -13,7 +12,6 @@ class HtmlLatexConverter:
         text = HtmlLatexConverter.lists(text)
         text = HtmlLatexConverter.links(text)
         text = HtmlLatexConverter.images(text)
-        text = HtmlLatexConverter.tables(text)
         text = HtmlLatexConverter.alignments(text)
         text = HtmlLatexConverter.newline(text)
         text = HtmlLatexConverter.special_characters(text)
@@ -74,7 +72,7 @@ class HtmlLatexConverter:
     def special_characters(text: str) -> str:
         characters = {
             "&middot;": "$\\cdot$",
-            "&amp;": "\\&",
+            "&amp;": "&",
             "&lt;": "$<$",
             "&gt;": "$>$",
             "%": "\\%",
@@ -82,6 +80,7 @@ class HtmlLatexConverter:
         }
         for key, value in characters.items():
             text = text.replace(key, value)
+        text = text.replace("&", "\\&")
         return text
 
     @staticmethod
@@ -101,52 +100,6 @@ class HtmlLatexConverter:
     @staticmethod
     def images(text: str) -> str:
         text = re.sub(r'<img src="(.*?)"[^>]*>', r"\\includegraphics{\1}", text)
-        return text
-
-    @staticmethod
-    def tables(text: str) -> str:
-        # Parse the HTML
-        soup = BeautifulSoup(text, "html.parser")
-        tables = soup.find_all("table")
-
-        if len(tables) == 0:
-            return text
-        for table in tables:
-            # Extract table headers
-            headers = [th.get_text() for th in table.find_all("th")]
-
-            # Extract table rows
-            rows = []
-            for tr in table.find_all("tr"):
-                cols = tr.find_all("td")
-                if cols:
-                    rows.append([td.get_text() for td in cols])
-
-            # Start building the LaTeX table string
-            latex_table = "\\begin{table}[h!]\n\\centering\n"
-            latex_table += "\\arrayrulecolor{lightgrey}\n"
-            latex_table += "\\setlength{\\tabcolsep}{2pt}\n"
-            latex_table += "\\renewcommand{\\arraystretch}{1.0}\n"
-
-            latex_table += "\\begin{tabularx}{\\textwidth}{|"
-            latex_table += " | ".join(["X" for _ in headers]) + "|}\n\\hline\n"
-
-            # Add the headers to the LaTeX table
-            latex_table += "\\rowcolor{blue}"
-            latex_table += (
-                " & ".join([f"\\color{{white}}\\textbf{{{head}}}" for head in headers])
-                + " \\\\\n\\hline\n"
-            )
-
-            # Add the rows to the LaTeX table
-            for i, row in enumerate(rows):
-                if i % 2 == 1:
-                    latex_table += "\\rowcolor{lightblue}"
-                latex_table += " & ".join(row) + " \\\\\n\\hline\n"
-
-            # End the LaTeX table string
-            latex_table += "\\end{tabularx}\n\\end{table}"
-            text = text.replace(str(table), latex_table)
         return text
 
     @staticmethod

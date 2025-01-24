@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:latest
+    image: postgres:16
     shm_size: 256m
     command: postgres -c jit=off -p ${DB_PORT}
     environment:

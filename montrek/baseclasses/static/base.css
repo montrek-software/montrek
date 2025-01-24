@@ -1,18 +1,18 @@
 /* Basic Reset */
-*{
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 body {
-    font-family: 'Arial', sans-serif;
-    background-color: #f4f4f4; /* Light grey background */
+  font-family: "Arial", sans-serif;
+  background-color: #f4f4f4; /* Light grey background */
 }
 
 label {
-    font-weight: bold;
-    text-align: left;
+  font-weight: bold;
+  text-align: left;
 }
 
 p {
@@ -23,110 +23,134 @@ p {
 }
 
 h2 {
-    color: #004767; /* Dark blue text */
+  color: #004767; /* Dark blue text */
 }
 
 /* Navigation Bar Styling */
 .navbar {
-    background-color: #004767; /* Dark blue background */
+  background-color: #004767; /* Dark blue background */
 }
 
 .navbar a {
-    color: #ffffff; /* White text */
+  color: #ffffff; /* White text */
 }
 
 .box {
   border: 1px solid #004767;
 }
 
-
 .page_title {
 }
 .page_title h1 {
   text-align: center;
-    color: #004767; /* Dark blue text */
+  color: #004767; /* Dark blue text */
 }
 
 /* Tab Styling */
 .nav-tabs {
-    border-bottom: 2px solid #004767; /* Dark blue border */
-    margin-top: 10px; /* Add some top margin for spacing */
+  border-bottom: 2px solid #004767; /* Dark blue border */
+  margin-top: 10px; /* Add some top margin for spacing */
 }
 
 .nav-item {
-    margin-right: 5px;
+  margin-right: 5px;
 }
 
 .nav-link {
-    color: #004767; /* Dark blue text */
-    border: 1px solid #004767; /* Dark blue border */
+  color: #004767; /* Dark blue text */
+  border: 1px solid #004767; /* Dark blue border */
 }
 
-.nav-item.active .nav-link, 
+.nav-item.active .nav-link,
 .nav-link:hover {
-    background-color: #004767; /* Dark blue background */
-    color: #ffffff; /* White text */
+  background-color: #004767; /* Dark blue background */
+  color: #ffffff; /* White text */
 }
 
 /* Buttons */
 .btn {
-    background-color: #BE0D3E; /* Red background */
-    color: #ffffff; /* White text */
-    margin: 5px; /* Add some top margin for spacing */
+  background-color: #be0d3e; /* Red background */
+  color: #ffffff; /* White text */
+  margin: 5px; /* Add some top margin for spacing */
 }
 
 .btn:hover {
-    background-color: #9e0b36; /* Darker red on hover */
+  background-color: #9e0b36; /* Darker red on hover */
 }
 
 /* Input */
 .input {
-    background-color: #BE0D3E; /* Red background */
-    color: #ffffff; /* White text */
-    width: 100px;
+  background-color: #be0d3e; /* Red background */
+  color: #ffffff; /* White text */
+  width: 100px;
 }
 
 .input:hover {
-    background-color: #9e0b36; /* Darker red on hover */
+  background-color: #9e0b36; /* Darker red on hover */
 }
 
 /* Table Styling */
 table {
-    width: 100%; /* Make table use full width of the parent */
-    border-collapse: collapse; /* Collapse borders */
-    margin-top: 10px; /* Add some top margin for spacing */
+  width: 100%; /* Make table use full width of the parent */
+  border-collapse: collapse; /* Collapse borders */
+  margin-top: 10px; /* Add some top margin for spacing */
 }
 
 /* Table Row Styling */
 tr {
-    border-bottom: 1px solid #e0e0e0; /* Add a light border at the bottom of each row */
+  border-bottom: 1px solid #e0e0e0; /* Add a light border at the bottom of each row */
 }
 
 /* Table Data/Cell Styling */
 td {
-    padding: 2px; /* Add padding to each cell */
-    text-align: left; /* Align text to the left */
+  padding: 2px; /* Add padding to each cell */
+  text-align: left; /* Align text to the left */
 }
 /* Every even row will have a pale blue background */
 tr:nth-child(even) {
-    background-color: #E6F2F8; /* Pale blue */
+  background-color: #e6f2f8; /* Pale blue */
 }
 
 /* Every odd row will have a white background */
 tr:nth-child(odd) {
-    background-color: #FFFFFF; /* White */
+  background-color: #ffffff; /* White */
 }
 th {
-    background-color: #004767; /* Dark blue */
-    color: #ffffff; /* White */
-    padding: 10px; /* Add some padding */
-    text-align: left; /* Align text to the left */
+  background-color: #004767; /* Dark blue */
+  color: #ffffff; /* White */
+  padding: 10px; /* Add some padding */
+  text-align: left; /* Align text to the left */
+}
+/* Progress Bar elements */
+.bar-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background-color: #f0f0f0; /* Light background for visibility */
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
 }
 
+.bar {
+  position: absolute;
+  height: 90%; /* Adjust height as needed */
+  background-color: #388e3c; /* Bar color */
+}
+
+.bar-value {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  width: 100%;
+  color: #004767; /* Text color */
+  font-weight: bold;
+  border: 1px solid #004767; /* Border color */
+}
 input[readonly] {
-    background-color: #e0e0e0; /* Light grey */
-    color: #333;
-    cursor: not-allowed;
+  background-color: #e0e0e0; /* Light grey */
+  color: #333;
+  cursor: not-allowed;
 }
 
 .scrollable-content {
@@ -134,7 +158,10 @@ input[readonly] {
   overflow-y: auto; /* Enables vertical scrolling if the content overflows */
 }
 
-#noStyleTable, #noStyleTable th, #noStyleTable td, #noStyleTable tr {
+#noStyleTable,
+#noStyleTable th,
+#noStyleTable td,
+#noStyleTable tr {
   background-color: initial;
   border-bottom: initial;
 }

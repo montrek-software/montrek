@@ -57,22 +57,53 @@ DJANGO_APPS = [
     "rest_framework",
 ]
 
-MONTREK_BASE_APPS = [
-    "user",
-    "baseclasses",
-    "montrek_example",
-    "file_upload",
-    "mailing",
-    "reporting",
-    "api_upload",
-    "code_generation",
-]
 
-MONTREK_EXTENSION_APPS = [
-    i for i in config("INSTALLED_APPS", default="").split(",") if i
-]
+def get_montrek_extension_apps(base_dir, app_path=""):
+    """
+    Recursively find Montrek extension apps by identifying directories
+    containing an 'apps.py' file.
 
-INSTALLED_APPS = DJANGO_APPS + MONTREK_BASE_APPS + MONTREK_EXTENSION_APPS
+    Args:
+        base_dir (Path): The base directory to search.
+        app_path (str): The relative app path for current recursion level.
+
+    Returns:
+        list: A list of fully qualified app names.
+    """
+    full_path = base_dir / app_path.replace(".", os.sep)
+    montrek_apps = []
+
+    if not full_path.is_dir():
+        return montrek_apps
+
+    # Check if the current directory contains 'apps.py'
+    if "apps.py" in os.listdir(full_path):
+        montrek_apps.append(app_path)
+    else:
+        # Recurse into subdirectories
+        for subdir in os.listdir(full_path):
+            subdir_path = full_path / subdir
+            if subdir_path.is_dir():
+                sub_app_path = f"{app_path}.{subdir}" if app_path else subdir
+                montrek_apps.extend(get_montrek_extension_apps(base_dir, sub_app_path))
+
+    return montrek_apps
+
+
+def get_montrek_extension_apps_list():
+    """
+    Get the list of Montrek extension apps from the configured installed apps.
+
+    Returns:
+        list: Fully qualified Montrek extension apps.
+    """
+    base_dir = Path(BASE_DIR)
+    return get_montrek_extension_apps(base_dir, "")
+
+
+MONTREK_EXTENSION_APPS = get_montrek_extension_apps_list()
+
+INSTALLED_APPS = DJANGO_APPS + MONTREK_EXTENSION_APPS
 
 DJANGO_MIDDLEWARE = [
     "debug_toolbar.middleware.DebugToolbarMiddleware",
@@ -112,8 +143,7 @@ TEMPLATES = [
 ]
 
 TEMPLATES[0]["DIRS"] += [
-    app.replace(".", "/") + "/templates"
-    for app in MONTREK_BASE_APPS + MONTREK_EXTENSION_APPS
+    app.replace(".", "/") + "/templates" for app in MONTREK_EXTENSION_APPS
 ]
 
 WSGI_APPLICATION = "montrek.wsgi.application"
@@ -124,6 +154,7 @@ WSGI_APPLICATION = "montrek.wsgi.application"
 DATABASE_ENGINE_MAP = {
     "mariadb": "django.db.backends.mysql",
     "postgres": "django.db.backends.postgresql",
+    "cloudsqlproxy": "django.db.backends.postgresql",
 }
 
 DATABASES = {
@@ -181,7 +212,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = "/static/"
-STATIC_ROOT = os.path.join(BASE_DIR, "baseclasses/static")
+STATIC_ROOT = os.path.join(BASE_DIR, "../static")
 
 MEDIA_URL = "/uploads/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "uploads")
@@ -210,6 +241,7 @@ else:
 EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
 EMAIL_TEMPLATE = config("EMAIL_TEMPLATE", "mail_templates/montrek_mail_template.html")
+DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default=EMAIL_HOST_USER)
 
 CELERY_BROKER_URL = config("CELERY_BROKER_URL", default="redis://redis:6379")
 CELERY_RESULT_BACKEND = config("CELERY_RESULT_BACKEND", default="redis://redis:6379")
@@ -248,3 +280,5 @@ INTERNAL_IPS = [
 
 # TABLE Generation
 SEND_TABLE_BY_MAIL_LIMIT = config("SEND_TABLE_BY_MAIL_LIMIT", default=10000, cast=int)
+
+ADMIN_MAILING_LIST = config("ADMIN_MAILING_LIST", default="")

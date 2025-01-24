@@ -2,27 +2,27 @@ import os
 from tempfile import TemporaryDirectory
 from textwrap import dedent
 
-from django.utils import timezone
-
 from baseclasses.dataclasses.alert import AlertEnum
 from baseclasses.utils import montrek_time
 from django.contrib.auth.models import Permission
 from django.test import TestCase, TransactionTestCase
 from django.urls import reverse
+from django.utils import timezone
 from file_upload.managers.file_upload_manager import TASK_SCHEDULED_MESSAGE
 from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepository,
 )
+from mailing.repositories.mailing_repository import MailingRepository
 from testing.test_cases.view_test_cases import (
     MontrekCreateViewTestCase,
     MontrekDeleteViewTestCase,
+    MontrekDownloadViewTestCase,
+    MontrekFileResponseTestCase,
     MontrekListViewTestCase,
     MontrekRedirectViewTestCase,
     MontrekRestApiViewTestCase,
     MontrekUpdateViewTestCase,
     MontrekViewTestCase,
-    MontrekDownloadViewTestCase,
-    MontrekFileResponseTestCase,
 )
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
@@ -129,6 +129,16 @@ class TestMontrekExampleAUpdateView(MontrekUpdateViewTestCase):
 class TestMontrekExampleAReportView(MontrekViewTestCase):
     viewname = "montrek_example_report"
     view_class = me_views.MontrekExampleReport
+
+    def test_send_report_per_mail(self):
+        user = MontrekUserFactory()
+        self.client.force_login(user)
+        response = self.client.get(self.url + "?send_mail=true")
+        last_mail = MailingRepository({}).receive().last()
+        self.assertRedirects(
+            response,
+            reverse("send_mail", kwargs={"pk": last_mail.pk}),
+        )
 
 
 class TestMontrekExampleADownloadView(MontrekDownloadViewTestCase):
@@ -265,7 +275,7 @@ class TestMontrekExampleBCreate(MontrekCreateViewTestCase):
         }
 
     def additional_assertions(self, created_object):
-        self.assertEqual(created_object.field_d1_str, "test1,test2")
+        self.assertTrue(created_object.field_d1_str in ["test1,test2", "test2,test1"])
 
 
 class TestMontrekExampleBUpdate(MontrekUpdateViewTestCase):

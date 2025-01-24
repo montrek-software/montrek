@@ -49,3 +49,18 @@ def get_date_range_dates(request) -> Tuple[str, str]:
     end_date_str = request.session.get("end_date", default_end_date)
 
     return start_date_str, end_date_str
+
+
+def get_content_type(filename: str) -> str:
+    file_extension = filename.split(".")[-1]
+    if file_extension == "pdf":
+        return "application/pdf"
+    if file_extension == "txt":
+        return "text/plain"
+    if file_extension == "csv":
+        return "text/csv"
+    if file_extension == "xlsx":
+        return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    if file_extension == "zip":
+        return "application/zip"
+    return "application/octet-stream"
