@@ -54,6 +54,8 @@ freezegun==1.5.0
     # via -r requirements.in
 frozendict==2.4.6
     # via yfinance
+gunicorn==22.0.0
+    # via -r requirements.in
 html5lib==1.1
     # via yfinance
 idna==3.10
@@ -84,7 +86,9 @@ numpy==2.2.2
 openpyxl==3.1.2
     # via -r requirements.in
 packaging==24.2
-    # via plotly
+    # via
+    #   gunicorn
+    #   plotly
 pandas==2.2.3
     # via
     #   -r requirements.in
