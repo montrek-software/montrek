@@ -1,11 +1,14 @@
 from abc import abstractmethod
 from base64 import b64encode
 from time import sleep
-from typing import Any
+from typing import Any, Callable
 
 import pandas as pd
 import requests
 from baseclasses.managers.montrek_manager import MontrekManager
+
+
+from functools import wraps
 
 
 class RequestAuthenticator:
@@ -62,21 +65,6 @@ class RequestManagerABC(MontrekManager):
 
     def get_endpoint_url(self, endpoint: str) -> str:
         return f"{self.base_url}{endpoint}"
-
-
-class RequestJsonManager(RequestManagerABC):
-    authenticator = RequestAuthenticator()
-    json_reader = JsonReader()
-    request_kwargs = {}
-    no_of_retries = 5
-    sleep_time = 2
-
-    import requests
-
-
-from time import sleep
-from functools import wraps
-from typing import Any, Callable
 
 
 class RequestJsonManager(RequestManagerABC):

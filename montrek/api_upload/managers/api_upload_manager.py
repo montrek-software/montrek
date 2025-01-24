@@ -1,15 +1,15 @@
 from typing import Protocol
 
+from api_upload.models import ApiUploadRegistryHub
 from api_upload.repositories.api_upload_registry_repository import (
     ApiUploadRepository,
 )
-from baseclasses.managers.montrek_manager import MontrekManager
-from api_upload.managers.request_manager import RequestManagerABC
 from baseclasses.dataclasses.montrek_message import (
     MontrekMessageError,
     MontrekMessageInfo,
 )
-from api_upload.models import ApiUploadRegistryHub
+from baseclasses.managers.montrek_manager import MontrekManager
+from requesting.managers.request_manager import RequestManagerABC
 
 
 # todo: should this be an ABC?
