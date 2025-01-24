@@ -56,6 +56,10 @@ class RequestManagerABC(MontrekManager):
     def get_response(self, endpoint: str) -> dict | list | pd.DataFrame:
         ...
 
+    @abstractmethod
+    def post_response(self, endpoint: str, data: dict) -> dict | list | pd.DataFrame:
+        ...
+
     def get_endpoint_url(self, endpoint: str) -> str:
         return f"{self.base_url}{endpoint}"
 
@@ -67,44 +71,93 @@ class RequestJsonManager(RequestManagerABC):
     no_of_retries = 5
     sleep_time = 2
 
+    import requests
+
+
+from time import sleep
+from functools import wraps
+from typing import Any, Callable
+
+
+class RequestJsonManager(RequestManagerABC):
+    authenticator = RequestAuthenticator()
+    json_reader = JsonReader()
+    request_kwargs = {}
+    no_of_retries = 5
+    sleep_time = 2
+
+    def retry_on_failure(method: Callable) -> Callable:
+        """Decorator to handle retry logic."""
+
+        @wraps(method)
+        def wrapper(self, *args, **kwargs):
+            for _ in range(self.no_of_retries):
+                try:
+                    return method(self, *args, **kwargs)
+                except (
+                    requests.exceptions.RequestException,
+                    requests.exceptions.ChunkedEncodingError,
+                ) as e:
+                    sleep(self.sleep_time)
+            self.message = f"No request made after {self.no_of_retries} attempts"
+            self.status_code = 0
+            return None
+
+        return wrapper
+
+    def process_response(method: Callable) -> Callable:
+        """Decorator to handle response processing and JSON extraction."""
+
+        @wraps(method)
+        def wrapper(self, *args, **kwargs):
+            request = method(self, *args, **kwargs)
+            if request is None:
+                return {}
+
+            self.status_code = request.status_code
+            if request.ok:
+                try:
+                    json_response = self.json_reader.get_json_response(request)
+                    self.message = "OK"
+                    return json_response
+                except requests.exceptions.JSONDecodeError:
+                    self.message = "No valid json returned"
+                    self.status_code = 0
+                    return {}
+            try:
+                request.raise_for_status()
+            except requests.exceptions.HTTPError as e:
+                self.message = str(e)
+            return {}
+
+        return wrapper
+
+    @retry_on_failure
+    @process_response
     def get_response(self, endpoint: str) -> dict | list:
         endpoint_url = self.get_endpoint_url(endpoint)
         headers = self.get_headers()
-        request = None
-        for _ in range(self.no_of_retries):
-            try:
-                request = self.get_request(endpoint_url, headers)
-                break
-            except (
-                requests.exceptions.RequestException,
-                requests.exceptions.ChunkedEncodingError,
-            ) as e:
-                sleep(self.sleep_time)
-        if request is None:
-            self.message = f"No request made for {endpoint_url} after {self.no_of_retries} attempts"
-            self.status_code = 0
-            return {}
-        self.status_code = request.status_code
-        if request.ok:
-            try:
-                json_response = self.json_reader.get_json_response(request)
-            except requests.exceptions.JSONDecodeError:
-                self.message = "No valid json returned"
-                self.status_code = 0
-                return {}
-            self.message = "OK"
-            return json_response
-        try:
-            request.raise_for_status()
-        except requests.exceptions.HTTPError as e:
-            self.message = str(e)
-        return {}
+        return self.get_request(endpoint_url, headers)
+
+    @retry_on_failure
+    @process_response
+    def post_response(self, endpoint: str, data: dict) -> dict | list | pd.DataFrame:
+        endpoint_url = self.get_endpoint_url(endpoint)
+        headers = self.get_headers()
+        return self.post_request(endpoint_url, headers, data)
 
     def get_request(
         self, endpoint_url: str, headers: dict[str, Any]
     ) -> requests.models.Response:
         return requests.get(
             endpoint_url, self.request_kwargs, headers=headers, timeout=30
+        )
+
+    def post_request(
+        self, endpoint_url: str, headers: dict[str, Any], data: dict
+    ) -> requests.models.Response:
+        return requests.post(
+            endpoint_url, self.request_kwargs, headers=headers, files=data, timeout=30
         )
 
     def get_headers(self) -> dict[str, Any]:
