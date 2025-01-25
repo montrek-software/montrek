@@ -7,6 +7,7 @@ docker-down:
 local-db-create:
 	@bash bin/local-db.sh create
 
+
 runserver:
 	@bash bin/local-runserver.sh
 
@@ -21,3 +22,4 @@ generate-https-certs:
 
 sync-local-python-env:
 	@bash bin/sync-local-python-env.sh
+
