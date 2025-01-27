@@ -3,8 +3,8 @@ from baseclasses.tests.factories.montrek_factory_schemas import (
     MontrekSatelliteFactory,
     )
 
-from .users.vincentmohiuddin.code.montrek.montrek.code_generation.tests.data.output.tests.factories.company_hub_factories import CompanyHubFactory
-from .users.vincentmohiuddin.code.montrek.montrek.code_generation.tests.data.output.models.company_sat_models import CompanySatellite
+from code_generation.tests.data.output.tests.factories.company_hub_factories import CompanyHubFactory
+from code_generation.tests.data.output.models.company_sat_models import CompanySatellite
 
 
 class CompanySatelliteFactory(MontrekSatelliteFactory):

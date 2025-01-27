@@ -10,7 +10,7 @@ from code_generation.tests import get_test_file_path
 
 class TestGenerateTableCommand(TestCase):
     def setUp(self):
-        self.output_dir = get_test_file_path("output")
+        self.output_dir = os.path.relpath(get_test_file_path("output"))
         self.maxDiff = None
         os.makedirs(self.output_dir, exist_ok=True)
 
