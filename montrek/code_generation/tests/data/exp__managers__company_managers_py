@@ -1,8 +1,6 @@
 from reporting.dataclasses import table_elements as te
 from reporting.managers.montrek_table_manager import MontrekTableManager
-from .users.vincentmohiuddin.code.montrek.montrek.code_generation.tests.data.output.repositories.company_repositories import (
-    CompanyRepository,
-)
+from .users.vincentmohiuddin.code.montrek.montrek.code_generation.tests.data.output.repositories.company_repositories import CompanyRepository
 
 
 class CompanyTableManager(MontrekTableManager):

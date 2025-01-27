@@ -10,6 +10,7 @@ from code_generation.tests import get_test_file_path
 class GenerateTableCommandTest(TestCase):
     def setUp(self):
         self.output_dir = get_test_file_path("output")
+        self.maxDiff = None
         os.makedirs(self.output_dir, exist_ok=True)
 
     def tearDown(self):
@@ -37,6 +38,8 @@ class GenerateTableCommandTest(TestCase):
 
         for path_list in expected_paths.values():
             test_file_name = f"exp__{'__'.join(path_list)}"
+            # Real .py files will be formatted by git hooks
+            test_file_name = test_file_name.replace(".", "_")
             path = os.path.join(self.output_dir, *path_list)
             self.assertTrue(os.path.exists(path))
             test_file_path = get_test_file_path(test_file_name)
