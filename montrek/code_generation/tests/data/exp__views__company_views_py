@@ -1,0 +1,52 @@
+from django.urls import reverse
+from baseclasses.dataclasses.view_classes import ActionElement
+from baseclasses.views import MontrekListView
+from baseclasses.views import MontrekCreateView
+from baseclasses.views import MontrekUpdateView
+from baseclasses.views import MontrekDeleteView
+from code_generation.tests.data.output.managers.company_managers import CompanyTableManager
+from code_generation.tests.data.output.pages.company_pages import CompanyPage
+from code_generation.tests.data.output.forms.company_forms import CompanyCreateForm
+
+
+class CompanyCreateView(MontrekCreateView):
+    manager_class = CompanyTableManager
+    page_class = CompanyPage
+    tab = "tab_company_list"
+    form_class = CompanyCreateForm
+    success_url = "company_list"
+    title = "Company Create"
+
+
+class CompanyUpdateView(MontrekUpdateView):
+    manager_class = CompanyTableManager
+    page_class = CompanyPage
+    tab = "tab_company_list"
+    form_class = CompanyCreateForm
+    success_url = "company_list"
+    title = "Company Update"
+
+
+class CompanyDeleteView(MontrekDeleteView):
+    manager_class = CompanyTableManager
+    page_class = CompanyPage
+    tab = "tab_company_list"
+    success_url = "company_list"
+    title = "Company Delete"
+
+
+class CompanyListView(MontrekListView):
+    manager_class = CompanyTableManager
+    page_class = CompanyPage
+    tab = "tab_company_list"
+    title = "Company List"
+
+    @property
+    def actions(self) -> tuple:
+        action_new = ActionElement(
+            icon="plus",
+            link=reverse("company_create"),
+            action_id="id_create_company",
+            hover_text="Create new Company",
+        )
+        return (action_new,)
