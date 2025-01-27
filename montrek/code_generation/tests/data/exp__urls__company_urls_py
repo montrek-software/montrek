@@ -1,8 +1,8 @@
 from django.urls import path
-from .users.vincentmohiuddin.code.montrek.montrek.code_generation.tests.data.output.views.company_views import CompanyListView
-from .users.vincentmohiuddin.code.montrek.montrek.code_generation.tests.data.output.views.company_views import CompanyCreateView
-from .users.vincentmohiuddin.code.montrek.montrek.code_generation.tests.data.output.views.company_views import CompanyUpdateView
-from .users.vincentmohiuddin.code.montrek.montrek.code_generation.tests.data.output.views.company_views import CompanyDeleteView
+from code_generation.tests.data.output.views.company_views import CompanyListView
+from code_generation.tests.data.output.views.company_views import CompanyCreateView
+from code_generation.tests.data.output.views.company_views import CompanyUpdateView
+from code_generation.tests.data.output.views.company_views import CompanyDeleteView
 
 urlpatterns = [
     path(
