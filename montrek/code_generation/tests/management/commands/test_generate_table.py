@@ -16,7 +16,7 @@ class GenerateTableCommandTest(TestCase):
     def tearDown(self):
         shutil.rmtree(self.output_dir)
 
-    def test_files_are_created(self):
+    def test_files_as_expected(self):
         rebase = False
         call_command("generate_table", self.output_dir, "company")
 
@@ -38,15 +38,15 @@ class GenerateTableCommandTest(TestCase):
 
         for path_list in expected_paths.values():
             test_file_name = f"exp__{'__'.join(path_list)}"
-            # Real .py files will be formatted by git hooks
+            # Real .py files will be formatted by git hooks which makes comparing them difficult
             test_file_name = test_file_name.replace(".", "_")
             path = os.path.join(self.output_dir, *path_list)
             self.assertTrue(os.path.exists(path))
             test_file_path = get_test_file_path(test_file_name)
             if rebase:
                 shutil.copyfile(path, test_file_path)
-            actual = open(path).read()
-            expected = open(test_file_path).read()
+            actual = open(path).read().strip()
+            expected = open(test_file_path).read().strip()
             self.assertEqual(actual, expected)
 
     def test_handle_camel_case_prefixes(self):
