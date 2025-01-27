@@ -13,3 +13,7 @@ class BaseStorageManager(ABC):
     @abstractmethod
     def cleanup(self):
         pass
+
+    @abstractmethod
+    def exists(self, file_name: str) -> bool:
+        pass
