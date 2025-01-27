@@ -1,0 +1,28 @@
+from django.urls import path
+from .users.vincentmohiuddin.code.montrek.montrek.code_generation.tests.data.output.views.company_views import CompanyListView
+from .users.vincentmohiuddin.code.montrek.montrek.code_generation.tests.data.output.views.company_views import CompanyCreateView
+from .users.vincentmohiuddin.code.montrek.montrek.code_generation.tests.data.output.views.company_views import CompanyUpdateView
+from .users.vincentmohiuddin.code.montrek.montrek.code_generation.tests.data.output.views.company_views import CompanyDeleteView
+
+urlpatterns = [
+    path(
+        "company/list",
+        CompanyListView.as_view(),
+        name="company_list",
+    ),
+    path(
+        "company/create",
+        CompanyCreateView.as_view(),
+        name="company_create",
+    ),
+    path(
+        "company/<int:pk>/delete",
+        CompanyDeleteView.as_view(),
+        name="company_delete",
+    ),
+    path(
+        "company/<int:pk>/update",
+        CompanyUpdateView.as_view(),
+        name="company_update",
+    ),
+]
