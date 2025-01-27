@@ -15,6 +15,9 @@ from pathlib import Path
 from decouple import Config, RepositoryEnv
 from django.urls import reverse_lazy
 
+from montrek.filtered_warnings import add_filtered_warnings
+
+add_filtered_warnings()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
