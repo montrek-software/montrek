@@ -1,0 +1,28 @@
+from reporting.dataclasses import table_elements as te
+from reporting.managers.montrek_table_manager import MontrekTableManager
+from .users.vincentmohiuddin.code.montrek.montrek.code_generation.tests.data.output.repositories.company_repositories import (
+    CompanyRepository,
+)
+
+
+class CompanyTableManager(MontrekTableManager):
+    repository_class = CompanyRepository
+
+    @property
+    def table_elements(self):
+        return [
+            te.LinkTableElement(
+                name="Edit",
+                url="company_update",
+                icon="edit",
+                kwargs={"pk": "id"},
+                hover_text="Update Company",
+            ),
+            te.LinkTableElement(
+                name="Delete",
+                url="company_delete",
+                icon="trash",
+                kwargs={"pk": "id"},
+                hover_text="Delete Company",
+            ),
+        ]
