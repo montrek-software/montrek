@@ -1,13 +1,14 @@
 import shutil
 import os
-import tempfile
 from django.test import TestCase
 from django.core.management import call_command
 
+from unittest.mock import patch
+import io
 from code_generation.tests import get_test_file_path
 
 
-class GenerateTableCommandTest(TestCase):
+class TestGenerateTableCommand(TestCase):
     def setUp(self):
         self.output_dir = get_test_file_path("output")
         self.maxDiff = None
@@ -18,7 +19,8 @@ class GenerateTableCommandTest(TestCase):
 
     def test_files_as_expected(self):
         rebase = False
-        call_command("generate_table", self.output_dir, "company")
+        with patch("sys.stdout", new_callable=io.StringIO):
+            call_command("generate_table", self.output_dir, "company")
 
         expected_paths = {
             "forms": ["forms", "company_forms.py"],
@@ -50,26 +52,26 @@ class GenerateTableCommandTest(TestCase):
             self.assertEqual(actual, expected)
 
     def test_handle_camel_case_prefixes(self):
-        with tempfile.TemporaryDirectory() as temp_dir:
-            call_command("generate_table", temp_dir, "TestCompany")
-            expected_paths = {
-                "forms": ["forms", "test_company_forms.py"],
-                "hub_models": ["models", "test_company_hub_models.py"],
-                "managers": ["managers", "test_company_managers.py"],
-                "models_init": ["models", "__init__.py"],
-                "pages": ["pages", "test_company_pages.py"],
-                "repositories": ["repositories", "test_company_repositories.py"],
-                "sat_models": ["models", "test_company_sat_models.py"],
-                "urls": ["urls", "test_company_urls.py"],
-                "urls_init": ["urls", "__init__.py"],
-                "views": ["views", "test_company_views.py"],
-                "views_init": ["views", "__init__.py"],
-            }
-            expected_paths = {
-                k: os.path.join(temp_dir, *v) for k, v in expected_paths.items()
-            }
-            for path in expected_paths.values():
-                self.assertTrue(os.path.exists(path))
-                if "__init__" not in path:
-                    with open(path) as f:
-                        self.assertIn("TestCompany", f.read())
+        with patch("sys.stdout", new_callable=io.StringIO):
+            call_command("generate_table", self.output_dir, "TestCompany")
+        expected_paths = {
+            "forms": ["forms", "test_company_forms.py"],
+            "hub_models": ["models", "test_company_hub_models.py"],
+            "managers": ["managers", "test_company_managers.py"],
+            "models_init": ["models", "__init__.py"],
+            "pages": ["pages", "test_company_pages.py"],
+            "repositories": ["repositories", "test_company_repositories.py"],
+            "sat_models": ["models", "test_company_sat_models.py"],
+            "urls": ["urls", "test_company_urls.py"],
+            "urls_init": ["urls", "__init__.py"],
+            "views": ["views", "test_company_views.py"],
+            "views_init": ["views", "__init__.py"],
+        }
+        expected_paths = {
+            k: os.path.join(self.output_dir, *v) for k, v in expected_paths.items()
+        }
+        for path in expected_paths.values():
+            self.assertTrue(os.path.exists(path))
+            if "__init__" not in path:
+                with open(path) as f:
+                    self.assertIn("TestCompany", f.read())
