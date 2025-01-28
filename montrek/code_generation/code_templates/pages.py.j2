@@ -1,6 +1,7 @@
 from django.urls import reverse
 from baseclasses.dataclasses.view_classes import TabElement
-from baseclasses.pages import MontrekPage
+from baseclasses.pages import MontrekDetailsPage, MontrekPage
+{{ repo_cls_import }}
 
 
 class {{ page_cls_name }}(MontrekPage):
@@ -17,8 +18,9 @@ class {{ page_cls_name }}(MontrekPage):
         )
 
 
-class {{ details_page_cls_name }}(MontrekPage):
-    page_title = "{{ details_page_title }}"
+class {{ details_page_cls_name }}(MontrekDetailsPage):
+    repository_class = {{ repo_cls_name }}
+    title_field = "hub_entity_id"
 
     def get_tabs(self):
         return (

@@ -94,7 +94,7 @@ class CodeGenerationConfig:
             "delete_view_url": f"{prefix}/<int:pk>/delete",
             "delete_view_url_name": f"{prefix}_delete",
             "detail_tab_id": f"tab_{prefix}_details",
-            "detail_tab_name": f"{c_prefix}",
+            "details_tab_name": f"{c_prefix}",
             "detail_view_cls_import": self._get_import("views", detail_view_cls_name),
             "detail_view_cls_import_rel": f"from .{prefix}_views import {detail_view_cls_name}",
             "detail_view_cls_name": detail_view_cls_name,
