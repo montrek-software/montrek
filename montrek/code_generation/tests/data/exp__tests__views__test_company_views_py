@@ -1,0 +1,69 @@
+from testing.test_cases.view_test_cases import (
+    MontrekCreateViewTestCase,
+    MontrekUpdateViewTestCase,
+    MontrekViewTestCase,
+    MontrekListViewTestCase,
+    MontrekDeleteViewTestCase,
+)
+from code_generation.tests.data.output.tests.factories.company_hub_factories import CompanyHubValueDateFactory
+from code_generation.tests.data.output.tests.factories.company_sat_factories import CompanySatelliteFactory
+from code_generation.tests.data.output.views.company_views import CompanyCreateView
+from code_generation.tests.data.output.views.company_views import CompanyUpdateView
+from code_generation.tests.data.output.views.company_views import CompanyListView
+from code_generation.tests.data.output.views.company_views import CompanyDeleteView
+from code_generation.tests.data.output.views.company_views import CompanyDetailView
+
+
+class TestCompanyCreateView(MontrekCreateViewTestCase):
+    viewname = "company_create"
+    view_class = CompanyCreateView
+
+    def creation_data(self):
+        return {}
+
+
+class TestCompanyUpdateView(MontrekUpdateViewTestCase):
+    viewname = "company_update"
+    view_class = CompanyUpdateView
+
+    def build_factories(self):
+        self.sat_obj = CompanySatelliteFactory()
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.sat_obj.get_hub_value_date().id}
+
+    def update_data(self):
+        return {}
+
+
+class TestCompanyListView(MontrekListViewTestCase):
+    viewname = "company_list"
+    view_class = CompanyListView
+    expected_no_of_rows = 1
+
+    def build_factories(self):
+        self.sat_obj = CompanySatelliteFactory()
+
+
+class TestCompanyDeleteView(MontrekDeleteViewTestCase):
+    viewname = "company_delete"
+    view_class = CompanyDeleteView
+
+    def build_factories(self):
+        self.sat_obj = CompanySatelliteFactory()
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.sat_obj.get_hub_value_date().id}
+
+
+
+class TestCompanyDetailView(MontrekViewTestCase):
+    viewname = "company_details"
+    view_class = CompanyDetailView
+
+    def build_factories(self):
+        self.hub_vd = CompanyHubValueDateFactory(value_date=None)
+        CompanySatelliteFactory(hub_entity=self.hub_vd.hub)
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.hub_vd.hub.id}

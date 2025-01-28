@@ -3,6 +3,7 @@ from code_generation.tests.data.output.views.company_views import CompanyListVie
 from code_generation.tests.data.output.views.company_views import CompanyCreateView
 from code_generation.tests.data.output.views.company_views import CompanyUpdateView
 from code_generation.tests.data.output.views.company_views import CompanyDeleteView
+from code_generation.tests.data.output.views.company_views import CompanyDetailView
 
 urlpatterns = [
     path(
@@ -24,5 +25,10 @@ urlpatterns = [
         "company/<int:pk>/update",
         CompanyUpdateView.as_view(),
         name="company_update",
+    ),
+    path(
+        "company/<int:pk>/details",
+        CompanyDetailView.as_view(),
+        name="company_details",
     ),
 ]

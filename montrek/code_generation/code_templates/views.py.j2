@@ -1,11 +1,13 @@
 from django.urls import reverse
 from baseclasses.dataclasses.view_classes import ActionElement
-from baseclasses.views import MontrekListView
+from baseclasses.views import MontrekDetailView, MontrekListView
 from baseclasses.views import MontrekCreateView
 from baseclasses.views import MontrekUpdateView
 from baseclasses.views import MontrekDeleteView
 {{ manager_cls_import }}
+{{ details_manager_cls_import }}
 {{ page_cls_import }}
+{{ details_page_cls_import }}
 {{ create_form_cls_import }}
 
 
@@ -51,3 +53,8 @@ class {{ list_view_cls_name }}(MontrekListView):
         )
         return (action_new,)
 
+class {{ detail_view_cls_name }}(MontrekDetailView):
+    manager_class = {{ details_manager_cls_name }}
+    page_class = {{ details_page_cls_name }}
+    tab = "{{ detail_tab_id }}"
+    title = "{{ details_page_title }}"

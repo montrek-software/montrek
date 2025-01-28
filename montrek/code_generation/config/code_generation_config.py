@@ -60,8 +60,11 @@ class CodeGenerationConfig:
         create_form_cls_name = f"{c_prefix}CreateForm"
         update_view_cls_name = f"{c_prefix}UpdateView"
         delete_view_cls_name = f"{c_prefix}DeleteView"
+        detail_view_cls_name = f"{c_prefix}DetailView"
         manager_cls_name = f"{c_prefix}TableManager"
+        details_manager_cls_name = f"{c_prefix}DetailsManager"
         page_cls_name = f"{c_prefix}Page"
+        details_page_cls_name = f"{c_prefix}DetailsPage"
         repo_cls_name = f"{c_prefix}Repository"
         sat_cls_name = f"{c_prefix}Satellite"
         sat_factory_cls_name = f"{sat_cls_name}Factory"
@@ -80,8 +83,7 @@ class CodeGenerationConfig:
             "create_view_title": f"{c_prefix} Create",
             "create_view_url": f"{prefix}/create",
             "create_view_url_name": f"{prefix}_create",
-            "delete_action_hover": f"Delete {c_prefix}",
-            "delete_action_id": f"id_delete_{prefix}",
+            "delete_hover": f"Delete {c_prefix}",
             "delete_tab_id": f"tab_{prefix}_delete",
             "delete_tab_name": f"{c_prefix}",
             "delete_view_cls_import": self._get_import("views", delete_view_cls_name),
@@ -91,24 +93,39 @@ class CodeGenerationConfig:
             "delete_view_title": f"{c_prefix} Delete",
             "delete_view_url": f"{prefix}/<int:pk>/delete",
             "delete_view_url_name": f"{prefix}_delete",
+            "detail_tab_id": f"tab_{prefix}_details",
+            "details_tab_name": f"{c_prefix}",
+            "detail_view_cls_import": self._get_import("views", detail_view_cls_name),
+            "detail_view_cls_import_rel": f"from .{prefix}_views import {detail_view_cls_name}",
+            "detail_view_cls_name": detail_view_cls_name,
+            "detail_view_test_cls_name": f"Test{c_prefix}DetailView",
+            "detail_view_title": f"{c_prefix} Details",
+            "detail_view_url": f"{prefix}/<int:pk>/details",
+            "detail_view_url_name": f"{prefix}_details",
+            "details_hover": f"View {c_prefix} Details",
+            "details_manager_cls_import": self._get_import(
+                "managers", details_manager_cls_name
+            ),
+            "details_manager_cls_name": details_manager_cls_name,
+            "details_page_cls_import": self._get_import("pages", details_page_cls_name),
+            "details_page_cls_name": details_page_cls_name,
+            "details_page_title": f"{c_prefix} Details",
+            "hub_cls_import": self._get_import("hub_models", hub_cls_name),
+            "hub_cls_import_rel": f"from .{prefix}_hub_models import {hub_cls_name}",
+            "hub_cls_name": hub_cls_name,
             "hub_factory_cls_import": self._get_import(
                 "hub_factories", hub_factory_cls_name
             ),
             "hub_factory_cls_name": hub_factory_cls_name,
-            "hub_cls_import": self._get_import("hub_models", hub_cls_name),
-            "hub_cls_import_rel": f"from .{prefix}_hub_models import {hub_cls_name}",
-            "hub_cls_name": hub_cls_name,
-            "hub_value_date_factory_cls_import": self._get_import(
-                "hub_factories", hub_value_date_factory_cls_name
-            ),
-            "hub_value_date_factory_cls_name": hub_value_date_factory_cls_name,
             "hub_value_date_cls_import": self._get_import(
                 "hub_models", hub_value_date_cls_name
             ),
             "hub_value_date_cls_import_rel": f"from .{prefix}_hub_models import {hub_value_date_cls_name}",
             "hub_value_date_cls_name": hub_value_date_cls_name,
-            "list_action_hover": f"List {c_prefix}",
-            "list_action_id": f"id_list_{prefix}",
+            "hub_value_date_factory_cls_import": self._get_import(
+                "hub_factories", hub_value_date_factory_cls_name
+            ),
+            "hub_value_date_factory_cls_name": hub_value_date_factory_cls_name,
             "list_tab_id": f"tab_{prefix}_list",
             "list_tab_name": f"{c_prefix}",
             "list_view_cls_import": self._get_import("views", list_view_cls_name),
@@ -125,15 +142,14 @@ class CodeGenerationConfig:
             "page_title": c_prefix,
             "repo_cls_import": self._get_import("repositories", repo_cls_name),
             "repo_cls_name": repo_cls_name,
+            "sat_cls_import": self._get_import("sat_models", sat_cls_name),
+            "sat_cls_import_rel": f"from .{prefix}_sat_models import {sat_cls_name}",
+            "sat_cls_name": sat_cls_name,
             "sat_factory_cls_import": self._get_import(
                 "sat_factories", sat_factory_cls_name
             ),
             "sat_factory_cls_name": sat_factory_cls_name,
-            "sat_cls_import": self._get_import("sat_models", sat_cls_name),
-            "sat_cls_import_rel": f"from .{prefix}_sat_models import {sat_cls_name}",
-            "sat_cls_name": sat_cls_name,
-            "update_action_hover": f"Update {c_prefix}",
-            "update_action_id": f"id_update_{prefix}",
+            "update_hover": f"Update {c_prefix}",
             "update_tab_id": f"tab_{prefix}_update",
             "update_tab_name": f"{c_prefix}",
             "update_view_cls_import": self._get_import("views", update_view_cls_name),

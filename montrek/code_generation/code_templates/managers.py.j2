@@ -1,11 +1,9 @@
 from reporting.dataclasses import table_elements as te
 from reporting.managers.montrek_table_manager import MontrekTableManager
+from reporting.managers.montrek_details_manager import MontrekDetailsManager
 {{ repo_cls_import }}
 
-
-class {{ manager_cls_name }}(MontrekTableManager):
-    repository_class = {{ repo_cls_name }}
-
+class CommonTableElementsMixin:
     @property
     def table_elements(self):
         return [
@@ -14,14 +12,34 @@ class {{ manager_cls_name }}(MontrekTableManager):
                 url="{{ update_view_url_name }}",
                 icon="edit",
                 kwargs={"pk": "id"},
-                hover_text="{{ update_action_hover }}",
+                hover_text="{{ update_hover }}",
             ),
             te.LinkTableElement(
                 name="Delete",
                 url="{{ delete_view_url_name }}",
                 icon="trash",
                 kwargs={"pk": "id"},
-                hover_text="{{ delete_action_hover }}",
+                hover_text="{{ delete_hover }}",
             ),
         ]
 
+class {{ manager_cls_name }}(CommonTableElementsMixin, MontrekTableManager):
+    repository_class = {{ repo_cls_name }}
+
+    @property
+    def table_elements(self):
+        table_elements = [
+            te.LinkTableElement(
+                name="Details",
+                url="{{ detail_view_url_name }}",
+                kwargs={"pk": "hub_id"},
+                icon="eye-open",
+                hover_text="{{ details_hover }}",
+            ),
+        ]
+        table_elements += super().table_elements
+        return table_elements
+
+
+class {{ details_manager_cls_name }}(CommonTableElementsMixin, MontrekDetailsManager):
+    repository_class = {{ repo_cls_name }}
