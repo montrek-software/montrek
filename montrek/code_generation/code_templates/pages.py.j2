@@ -16,3 +16,16 @@ class {{ page_cls_name }}(MontrekPage):
             ),
         )
 
+
+class {{ details_page_cls_name }}(MontrekPage):
+    page_title = "{{ details_page_title }}"
+
+    def get_tabs(self):
+        return (
+            TabElement(
+                name="{{ details_tab_name }}",
+                link=reverse("{{ detail_view_url_name }}", args=[self.obj.id]),
+                html_id="{{ detail_tab_id }}",
+                active="active",
+            ),
+        )

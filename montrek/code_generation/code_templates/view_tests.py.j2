@@ -1,21 +1,17 @@
-import os
-from django.test import TransactionTestCase
-from django.urls import reverse
 from testing.test_cases.view_test_cases import (
     MontrekCreateViewTestCase,
     MontrekUpdateViewTestCase,
     MontrekViewTestCase,
     MontrekListViewTestCase,
     MontrekDeleteViewTestCase,
-    MontrekFileResponseTestCase,
 )
-from user.tests.factories.montrek_user_factories import MontrekUserFactory
+{{ hub_value_date_factory_cls_import }}
 {{ sat_factory_cls_import }}
 {{ create_view_cls_import }}
 {{ update_view_cls_import }}
 {{ list_view_cls_import }}
 {{ delete_view_cls_import }}
-{{ view_cls_import }}
+{{ detail_view_cls_import }}
 
 
 class {{ create_view_test_cls_name }}(MontrekCreateViewTestCase):
@@ -58,3 +54,16 @@ class {{ delete_view_test_cls_name }}(MontrekDeleteViewTestCase):
 
     def url_kwargs(self) -> dict:
         return {"pk": self.sat_obj.get_hub_value_date().id}
+
+
+
+class {{ detail_view_test_cls_name }}(MontrekViewTestCase):
+    viewname = "{{ detail_view_url_name }}"
+    view_class = {{ detail_view_cls_name }}
+
+    def build_factories(self):
+        self.hub_vd = {{ hub_value_date_factory_cls_name }}(value_date=None)
+        {{ sat_factory_cls_name }}(hub_entity=self.hub_vd.hub)
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.hub_vd.hub.id}
