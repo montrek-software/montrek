@@ -1,11 +1,13 @@
 from django.urls import reverse
 from baseclasses.dataclasses.view_classes import ActionElement
-from baseclasses.views import MontrekListView
+from baseclasses.views import MontrekDetailView, MontrekListView
 from baseclasses.views import MontrekCreateView
 from baseclasses.views import MontrekUpdateView
 from baseclasses.views import MontrekDeleteView
 from code_generation.tests.data.output.managers.company_managers import CompanyTableManager
+from code_generation.tests.data.output.managers.company_managers import CompanyDetailsManager
 from code_generation.tests.data.output.pages.company_pages import CompanyPage
+from code_generation.tests.data.output.pages.company_pages import CompanyDetailsPage
 from code_generation.tests.data.output.forms.company_forms import CompanyCreateForm
 
 
@@ -50,3 +52,9 @@ class CompanyListView(MontrekListView):
             hover_text="Create new Company",
         )
         return (action_new,)
+
+class CompanyDetailView(MontrekDetailView):
+    manager_class = CompanyDetailsManager
+    page_class = CompanyDetailsPage
+    tab = "tab_company_details"
+    title = "Company Details"
