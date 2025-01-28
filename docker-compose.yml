@@ -86,9 +86,7 @@ services:
       - montrek_network
 
   flower:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: mher/flower
     command: celery flower -A montrek.celery_app --port=${FLOWER_PORT} --broker={CELERY_BROKER_URL}
     ports:
       - ${FLOWER_PORT}:${FLOWER_PORT}
