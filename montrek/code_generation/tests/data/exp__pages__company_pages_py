@@ -1,6 +1,7 @@
 from django.urls import reverse
 from baseclasses.dataclasses.view_classes import TabElement
-from baseclasses.pages import MontrekPage
+from baseclasses.pages import MontrekDetailsPage, MontrekPage
+from code_generation.tests.data.output.repositories.company_repositories import CompanyRepository
 
 
 class CompanyPage(MontrekPage):
@@ -12,6 +13,21 @@ class CompanyPage(MontrekPage):
                 name="Company",
                 link=reverse("company_list"),
                 html_id="tab_company_list",
+                active="active",
+            ),
+        )
+
+
+class CompanyDetailsPage(MontrekDetailsPage):
+    repository_class = CompanyRepository
+    title_field = "hub_entity_id"
+
+    def get_tabs(self):
+        return (
+            TabElement(
+                name="Company",
+                link=reverse("company_details", args=[self.obj.id]),
+                html_id="tab_company_details",
                 active="active",
             ),
         )

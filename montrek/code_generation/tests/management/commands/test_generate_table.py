@@ -24,18 +24,19 @@ class TestGenerateTableCommand(TestCase):
 
         expected_paths = {
             "forms": ["forms", "company_forms.py"],
+            "hub_factories": ["tests", "factories", "company_hub_factories.py"],
             "hub_models": ["models", "company_hub_models.py"],
             "managers": ["managers", "company_managers.py"],
             "models_init": ["models", "__init__.py"],
             "pages": ["pages", "company_pages.py"],
             "repositories": ["repositories", "company_repositories.py"],
+            "sat_factories": ["tests", "factories", "company_sat_factories.py"],
             "sat_models": ["models", "company_sat_models.py"],
             "urls": ["urls", "company_urls.py"],
             "urls_init": ["urls", "__init__.py"],
+            "view_tests": ["tests", "views", "test_company_views.py"],
             "views": ["views", "company_views.py"],
             "views_init": ["views", "__init__.py"],
-            "hub_factories": ["tests", "factories", "company_hub_factories.py"],
-            "sat_factories": ["tests", "factories", "company_sat_factories.py"],
         }
 
         for path_list in expected_paths.values():

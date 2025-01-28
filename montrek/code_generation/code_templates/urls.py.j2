@@ -3,6 +3,7 @@ from django.urls import path
 {{ create_view_cls_import }}
 {{ update_view_cls_import }}
 {{ delete_view_cls_import }}
+{{ detail_view_cls_import }}
 
 urlpatterns = [
     path(
@@ -25,5 +26,9 @@ urlpatterns = [
         {{ update_view_cls_name }}.as_view(),
         name="{{ update_view_url_name }}",
     ),
+    path(
+        "{{ detail_view_url }}",
+        {{ detail_view_cls_name }}.as_view(),
+        name="{{ detail_view_url_name }}",
+    ),
 ]
-
