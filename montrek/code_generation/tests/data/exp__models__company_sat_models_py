@@ -1,0 +1,8 @@
+from django.db import models
+
+from baseclasses.models import MontrekSatelliteABC
+from code_generation.tests.data.output.models.company_hub_models import CompanyHub
+
+
+class CompanySatellite(MontrekSatelliteABC):
+    hub_entity = models.ForeignKey(CompanyHub, on_delete=models.CASCADE)
