@@ -8,9 +8,10 @@ django==5.1.5
 djangorestframework==3.15.2
 factory-boy==3.3.1
 faker-marketdata==0.4
+flower==2.0.1
 freezegun==1.5.0
-gunicorn==22.0.0
 graphviz==0.20.3
+gunicorn==22.0.0
 kaleido==0.2.1
 openpyxl==3.1.2
 pandas==2.2.3
