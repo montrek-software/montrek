@@ -36,16 +36,14 @@ class RequestManagerABC(MontrekManager):
 
 
 class RequestJsonManager(RequestManagerABC):
-    authenticator_class: type[RequestAuthenticator] = RequestAuthenticator
-    authenticator_kwargs: dict[str, Any] = {}
     json_reader = JsonReader()
     request_kwargs = {}
     no_of_retries = 5
     sleep_time = 2
 
-    def __init__(self):
+    def __init__(self, authenticator: RequestAuthenticator):
         super().__init__()
-        self.authenticator = self.authenticator_class(**self.authenticator_kwargs)
+        self.authenticator = authenticator
 
     def retry_on_failure(method: Callable) -> Callable:
         """Decorator to handle retry logic."""
