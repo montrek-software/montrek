@@ -5,6 +5,7 @@ from textwrap import dedent
 from baseclasses.dataclasses.alert import AlertEnum
 from baseclasses.utils import montrek_time
 from django.contrib.auth.models import Permission
+from django.contrib.messages import get_messages
 from django.test import TestCase, TransactionTestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -960,5 +961,15 @@ class TestA2ApiUploadView(MontrekViewTestCase):
     viewname = "do_a2_upload"
 
     def test_post(self):
-        response = self.client.post(self.url)
+        response = self.client.post(
+            self.url, data={"user": "user", "password": "password"}
+        )
         self.assertRedirects(response, reverse("montrek_example_a_list"))
+
+    def test_post__no_user(self):
+        response = self.client.post(self.url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_post__no_password(self):
+        response = self.client.post(self.url, data={"user": "user"})
+        self.assertEqual(response.status_code, 200)
