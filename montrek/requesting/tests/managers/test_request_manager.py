@@ -1,6 +1,9 @@
 from django.test import TestCase
 from requesting.managers.request_manager import (
     RequestJsonManager,
+)
+
+from requesting.managers.authenticator_managers import (
     RequestSlugAuthenticator,
     RequestUserPasswordAuthenticator,
     RequestBearerAuthenticator,
