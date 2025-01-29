@@ -323,7 +323,11 @@ class MontrekExampleHubAApiUploadView(views.MontrekListView):
 
 def do_a2_upload(request):
     manager = A2ApiUploadManager(
-        session_data={"user_id": request.user.id},
+        session_data={
+            "user_id": request.user.id,
+            "user": "user",
+            "password": "password",
+        },
     )
     manager.upload_and_process()
     for m in manager.messages:
@@ -334,7 +338,15 @@ def do_a2_upload(request):
 class A2ApiUploadView(AuthenticatorUserPasswordView):
     page_class = pages.MontrekExampleAAppPage
     title = "A2 Api Upload"
-    success_url = "montrek_example_a_list"
+    success_url = "hub_a_view_api_uploads"
+
+    def process_authenticator(self):
+        manager = A2ApiUploadManager(
+            session_data=self.session_data,
+        )
+        manager.upload_and_process()
+        for m in manager.messages:
+            getattr(messages, m.message_type)(self.request, m.message)
 
 
 class MontrekExampleA1DownloadFileView(MontrekDownloadFileView):

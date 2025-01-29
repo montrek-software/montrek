@@ -964,7 +964,7 @@ class TestA2ApiUploadView(MontrekViewTestCase):
         response = self.client.post(
             self.url, data={"user": "user", "password": "password"}
         )
-        self.assertRedirects(response, reverse("montrek_example_a_list"))
+        self.assertRedirects(response, reverse("hub_a_view_api_uploads"))
 
     def test_post__no_user(self):
         response = self.client.post(self.url)
