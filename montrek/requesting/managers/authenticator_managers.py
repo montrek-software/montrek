@@ -1,20 +1,33 @@
 from base64 import b64encode
 from abc import ABC, abstractmethod
+from baseclasses.managers.montrek_manager import MontrekManager
 
 
-class RequestAuthenticator(ABC):
+class RequestAuthenticator(MontrekManager):
+    def __init__(self, **session_data):
+        super().__init__(session_data)
+        self.credentials = self.get_credentials()
+
+    @abstractmethod
+    def get_credentials(self) -> dict:
+        ...
+
     @abstractmethod
     def get_headers(self):
         return {}
 
 
 class RequestUserPasswordAuthenticator(RequestAuthenticator):
-    def __init__(self, user: str, password: str):
-        self.user = user
-        self.password = password
+    def get_credentials(self):
+        return {
+            "user": self.session_data["user"],
+            "password": self.session_data["password"],
+        }
 
     def get_headers(self):
-        credentials = b64encode(f"{self.user}:{self.password}".encode()).decode()
+        credentials = b64encode(
+            f"{self.credentials["user"]}:{self.credentials["password"]}".encode()
+        ).decode()
         return {"Authorization": f"Basic {credentials}"}
 
 
