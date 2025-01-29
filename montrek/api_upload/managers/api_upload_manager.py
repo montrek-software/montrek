@@ -42,7 +42,7 @@ class ApiUploadManager(MontrekManager):
         session_data: dict,
     ) -> None:
         super().__init__(session_data=session_data)
-        self.request_manager = self.request_manager_class()
+        self.request_manager = self.request_manager_class(session_data)
         self.session_data = session_data
         self.registry_repository = self.repository_class(session_data)
         self.init_upload()

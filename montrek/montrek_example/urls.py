@@ -120,7 +120,11 @@ urlpatterns = [
         views.MontrekExampleHubAApiUploadView.as_view(),
         name="hub_a_view_api_uploads",
     ),
-    path("do_a2_upload", views.do_a2_upload, name="do_a2_upload"),
+    path(
+        "do_a2_upload",
+        views.A2ApiUploadView.as_view(),
+        name="do_a2_upload",
+    ),
     path(
         "a1_file_upload_history/<int:pk>",
         views.MontrekExampleA1UploadHistoryView.as_view(),
