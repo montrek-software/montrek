@@ -7,7 +7,9 @@ from montrek.celery_app import (
     SEQUENTIAL_QUEUE_NAME,
     app as celery_app,
 )
-from requesting.views.authenticator_views import AuthenticatorView
+from requesting.views.authenticator_views import (
+    AuthenticatorUserPasswordView,
+)
 from montrek_example.managers.a_upload_table_manager import (
     HubAFileUploadRegistryManager,
     HubAUploadTableManager,
@@ -329,9 +331,8 @@ def do_a2_upload(request):
     return HttpResponseRedirect(reverse("hub_a_view_api_uploads"))
 
 
-class A2ApiUploadView(AuthenticatorView):
+class A2ApiUploadView(AuthenticatorUserPasswordView):
     page_class = pages.MontrekExampleAAppPage
-    ...
 
 
 class MontrekExampleA1DownloadFileView(MontrekDownloadFileView):
