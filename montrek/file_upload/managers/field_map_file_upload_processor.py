@@ -1,3 +1,4 @@
+import logging
 from typing import Any, Dict
 
 import numpy as np
@@ -7,6 +8,8 @@ from file_upload.managers.field_map_manager import (
     FieldMapManagerABC,
 )
 from file_upload.models import FileUploadRegistryHubABC
+
+logger = logging.getLogger(__name__)
 
 
 class FieldMapFileUploadProcessor:
@@ -64,6 +67,7 @@ class FieldMapFileUploadProcessor:
             self.message = (
                 f"Error raised during object creation: <br>{e.__class__.__name__}: {e}"
             )
+            logger.debug(self.message)
             return False
         for message in self.manager.repository.messages:
             self.detailed_message += f"<br>{message.message}<br>"

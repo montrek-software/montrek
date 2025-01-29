@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 from decouple import Config, RepositoryEnv
 from django.urls import reverse_lazy
+from .logging import get_logging_config
 
 from montrek.filtered_warnings import add_filtered_warnings
 
@@ -285,3 +286,6 @@ INTERNAL_IPS = [
 SEND_TABLE_BY_MAIL_LIMIT = config("SEND_TABLE_BY_MAIL_LIMIT", default=10000, cast=int)
 
 ADMIN_MAILING_LIST = config("ADMIN_MAILING_LIST", default="")
+
+LOG_LEVEL = config("LOG_LEVEL", default="WARNING")
+LOGGING = get_logging_config(LOG_LEVEL, MONTREK_EXTENSION_APPS)
