@@ -5,7 +5,10 @@ from typing import Any, Callable
 import pandas as pd
 import requests
 from baseclasses.managers.montrek_manager import MontrekManager
-from requesting.managers.authenticator_managers import RequestAuthenticator
+from requesting.managers.authenticator_managers import (
+    NoAuthenticator,
+    RequestAuthenticator,
+)
 
 
 from functools import wraps
@@ -37,13 +40,14 @@ class RequestManagerABC(MontrekManager):
 
 class RequestJsonManager(RequestManagerABC):
     json_reader = JsonReader()
+    authenticator_class: type[RequestAuthenticator] = NoAuthenticator
     request_kwargs = {}
     no_of_retries = 5
     sleep_time = 2
 
-    def __init__(self, authenticator: RequestAuthenticator):
+    def __init__(self, session_data: dict[str, Any]):
         super().__init__()
-        self.authenticator = authenticator
+        self.authenticator = self.authenticator_class(session_data)
 
     def retry_on_failure(method: Callable) -> Callable:
         """Decorator to handle retry logic."""

@@ -18,6 +18,14 @@ class RequestAuthenticator(MontrekManager):
         return {}
 
 
+class NoAuthenticator(RequestAuthenticator):
+    def get_credentials(self):
+        return {}
+
+    def get_headers(self):
+        return {}
+
+
 class RequestUserPasswordAuthenticator(RequestAuthenticator):
     def get_credentials(self):
         return {
