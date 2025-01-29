@@ -953,3 +953,11 @@ class TestHubARedirectView(MontrekRedirectViewTestCase):
 
     def expected_url(self) -> str:
         return reverse("montrek_example_a_list")
+
+
+class TestA2ApiUploadView(MontrekViewTestCase):
+    view_class = me_views.A2ApiUploadView
+    viewname = "do_a2_upload"
+
+    def test_dummy(self):
+        self.assertTrue(True)

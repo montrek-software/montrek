@@ -1,9 +1,11 @@
 import datetime
+from requesting.managers.authenticator_managers import RequestUserPasswordAuthenticator
 from requesting.managers.request_manager import RequestJsonManager
 
 
 class A2RequestManager(RequestJsonManager):
     base_url = "http://example.com/api/v1/"
+    authenticator_class = RequestUserPasswordAuthenticator
 
     def get_json(self, endpoint: str) -> dict | list:
         now = datetime.datetime.now()
