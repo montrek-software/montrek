@@ -12,18 +12,21 @@ from requesting.managers.authenticator_managers import (
 
 class MockRequestManager(RequestJsonManager):
     base_url = "https://httpbin.org/"
-    authenticator = RequestUserPasswordAuthenticator(user="user", password="pass")
+    authenticator_class = RequestUserPasswordAuthenticator
+    authenticator_kwargs = {"user": "user", "password": "pass"}
     request_kwargs = {"bla": "blubb"}
 
 
 class MockRequestManagerNoAuth(RequestJsonManager):
     base_url = "https://httpbin.org/"
-    authenticator = RequestUserPasswordAuthenticator(user="user", password="wrongpass")
+    authenticator_class = RequestUserPasswordAuthenticator
+    authenticator_kwargs = {"user": "user", "password": "wrongpass"}
 
 
 class MockRequestManagerToken(RequestJsonManager):
     base_url = "https://httpbin.org/"
-    authenticator = RequestBearerAuthenticator(token="testtoken123")
+    authenticator_class = RequestBearerAuthenticator
+    authenticator_kwargs = {"token": "testtoken123"}
 
 
 class TestRequestManager(TestCase):

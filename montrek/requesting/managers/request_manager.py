@@ -17,7 +17,7 @@ class JsonReader:
 
 
 class RequestManagerABC(MontrekManager):
-    base_url = "NONESET"
+    base_url: str = "NONESET"
 
     def __init__(self):
         self.status_code = 0
@@ -36,11 +36,16 @@ class RequestManagerABC(MontrekManager):
 
 
 class RequestJsonManager(RequestManagerABC):
-    authenticator = RequestAuthenticator()
+    authenticator_class: type[RequestAuthenticator] = RequestAuthenticator
+    authenticator_kwargs: dict[str, Any] = {}
     json_reader = JsonReader()
     request_kwargs = {}
     no_of_retries = 5
     sleep_time = 2
+
+    def __init__(self):
+        super().__init__()
+        self.authenticator = self.authenticator_class(**self.authenticator_kwargs)
 
     def retry_on_failure(method: Callable) -> Callable:
         """Decorator to handle retry logic."""
