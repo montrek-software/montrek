@@ -959,5 +959,6 @@ class TestA2ApiUploadView(MontrekViewTestCase):
     view_class = me_views.A2ApiUploadView
     viewname = "do_a2_upload"
 
-    def test_dummy(self):
-        self.assertTrue(True)
+    def test_post(self):
+        response = self.client.post(self.url)
+        self.assertRedirects(response, reverse("montrek_example_a_list"))

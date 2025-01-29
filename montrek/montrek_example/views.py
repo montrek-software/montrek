@@ -334,6 +334,7 @@ def do_a2_upload(request):
 class A2ApiUploadView(AuthenticatorUserPasswordView):
     page_class = pages.MontrekExampleAAppPage
     title = "A2 Api Upload"
+    success_url = "montrek_example_a_list"
 
 
 class MontrekExampleA1DownloadFileView(MontrekDownloadFileView):
