@@ -22,7 +22,8 @@ class JsonReader:
 class RequestManagerABC(MontrekManager):
     base_url: str = "NONESET"
 
-    def __init__(self):
+    def __init__(self, session_data: dict[str, Any]):
+        self.session_data = session_data
         self.status_code = 0
         self.message = "No get request made"
 
@@ -46,7 +47,7 @@ class RequestJsonManager(RequestManagerABC):
     sleep_time = 2
 
     def __init__(self, session_data: dict[str, Any]):
-        super().__init__()
+        super().__init__(session_data)
         self.authenticator = self.authenticator_class(session_data)
 
     def retry_on_failure(method: Callable) -> Callable:
