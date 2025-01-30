@@ -485,6 +485,43 @@ class TestMontrekCreateObject(TestCase):
         self.assertEqual(me_models.SatA1.objects.last().comment, "some new comment")
         self.assertEqual(me_models.SatA2.objects.last().comment, "some comment")
 
+    def test_update_satellite_and_raise_error_when_identifier_field_exists(self):
+        existing_sat = me_factories.SatA1Factory(
+            field_a1_int=3, field_a1_str="existing"
+        )
+        me_factories.SatA2Factory(
+            field_a2_float=4.0,
+            field_a2_str="existing2",
+            hub_entity=existing_sat.hub_entity,
+        )
+        repository = HubARepository(session_data={"user_id": self.user.id})
+        test_hub = repository.std_create_object(
+            {
+                "field_a1_int": 5,
+                "field_a1_str": "test",
+                "field_a2_float": 6.0,
+                "field_a2_str": "test2",
+            }
+        )
+        test_query = repository.receive()
+        self.assertEqual(test_query.count(), 2)
+        new_obj = test_query.get(field_a1_str="test")
+        self.assertEqual(new_obj.field_a1_int, 5)
+        ## Change test_hub to existing_sat identifier field
+        repository.std_create_object(
+            {
+                "field_a1_int": 5,
+                "field_a1_str": "existing",
+                "field_a2_float": 6.0,
+                "field_a2_str": "existing2",
+                "hub_entity_id": test_hub.id,
+            }
+        )
+        test_query = repository.receive()
+        self.assertEqual(test_query.count(), 2)
+        new_obj = test_query.get(field_a1_str="test")
+        self.assertEqual(new_obj.field_a1_int, 5)
+
 
 class TestMontrekCreateTimeSeriesObject(TestCase):
     def setUp(self):
