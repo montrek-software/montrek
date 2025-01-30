@@ -495,7 +495,7 @@ class TestMontrekCreateObject(TestCase):
             hub_entity=existing_sat.hub_entity,
         )
         repository = HubARepository(session_data={"user_id": self.user.id})
-        test_hub = repository.std_create_object(
+        test_hub = repository.create_by_dict(
             {
                 "field_a1_int": 5,
                 "field_a1_str": "test",
@@ -508,7 +508,7 @@ class TestMontrekCreateObject(TestCase):
         new_obj = test_query.get(field_a1_str="test")
         self.assertEqual(new_obj.field_a1_int, 5)
         ## Change test_hub to existing_sat identifier field
-        repository.std_create_object(
+        repository.create_by_dict(
             {
                 "field_a1_int": 5,
                 "field_a1_str": "existing",
