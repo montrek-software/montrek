@@ -10,6 +10,9 @@ local-db-create:
 local-db-backup:
 	@bash bin/local-db.sh backup
 
+local-db-restore:
+	@bash bin/local-db.sh restore
+
 runserver:
 	@bash bin/local-runserver.sh
 

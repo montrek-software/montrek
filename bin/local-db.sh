@@ -139,4 +139,54 @@ elif [[ "$1" == "backup" ]]; then
 		fi
 	done
 
+elif [[ "$1" == "restore" ]]; then
+	BACKUP_FOLDER=db_backups
+
+	# Ask the user for the date (format: YYYY-MM-DD)
+	read -p "Enter the date of the backup to restore (format: YYYY-MM-DD): " RESTORE_DATE
+
+	# Check if the user input matches the expected format (YYYY-MM-DD)
+	if ! [[ $RESTORE_DATE =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+		echo "Invalid date format. Please use YYYY-MM-DD."
+		exit 0
+	fi
+
+	# Find the backup file for the given date
+	BACKUP_FILE=$(find "$BACKUP_FOLDER" -type f -name "backup_${RESTORE_DATE}_*.sql")
+
+	# Check if a backup file was found
+	if [ -z "$BACKUP_FILE" ]; then
+		echo "No backup file found for date: $RESTORE_DATE"
+		exit 0
+	fi
+
+	echo "Found backup file: $BACKUP_FILE"
+
+	# Confirm the restoration
+	read -p "Are you sure you want to restore the database from this backup? (y/n): " CONFIRM
+
+	if [[ $CONFIRM != "y" ]]; then
+		echo "Restore operation cancelled."
+		exit 1
+	fi
+	# Step 1: Clean the database by dropping all tables
+	echo "Cleaning the database..."
+
+	# Drop the existing database
+
+	PGPASSWORD=$DB_PASSWORD psql -U $DB_USER -d postgres -h $DB_HOST -p $DB_PORT -c "DROP DATABASE IF EXISTS $DB_NAME;"
+
+	# Recreate the database
+	PGPASSWORD=$DB_PASSWORD psql -U $DB_USER -d postgres -h $DB_HOST -p $DB_PORT -c "CREATE DATABASE $DB_NAME;"
+
+	# Step 2: Restore the database by running the backup file inside the Docker container
+	cat "$BACKUP_FILE" | PGPASSWORD=$DB_PASSWORD psql -U $DB_USER -h $DB_HOST -d $DB_NAME -p $DB_PORT
+
+	# Check if the restore was successful
+	if [ $? -eq 0 ]; then
+		echo "Database restored successfully from backup: $BACKUP_FILE"
+	else
+		echo "Database restore failed!"
+		exit 1
+	fi
 fi
