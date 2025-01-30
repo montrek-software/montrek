@@ -123,7 +123,6 @@ class DbCreator:
         if existing_sat is None:
             self._stall_new_satellite(sat)
             return
-        self.hub_v
         self._updated_satellite(sat, existing_sat)
 
     def _stall_new_satellite(self, sat: MontrekSatelliteABC):
