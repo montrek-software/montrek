@@ -508,19 +508,16 @@ class TestMontrekCreateObject(TestCase):
         new_obj = test_query.get(field_a1_str="test")
         self.assertEqual(new_obj.field_a1_int, 5)
         ## Change test_hub to existing_sat identifier field
-        repository.create_by_dict(
-            {
-                "field_a1_int": 5,
-                "field_a1_str": "existing",
-                "field_a2_float": 6.0,
-                "field_a2_str": "existing2",
-                "hub_entity_id": test_hub.id,
-            }
-        )
-        test_query = repository.receive()
-        self.assertEqual(test_query.count(), 2)
-        new_obj = test_query.get(field_a1_str="test")
-        self.assertEqual(new_obj.field_a1_int, 5)
+        with self.assertRaises(MontrekError):
+            repository.create_by_dict(
+                {
+                    "field_a1_int": 5,
+                    "field_a1_str": "existing",
+                    "field_a2_float": 6.0,
+                    "field_a2_str": "existing2",
+                    "hub_entity_id": test_hub.id,
+                }
+            )
 
 
 class TestMontrekCreateTimeSeriesObject(TestCase):
