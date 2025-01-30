@@ -97,3 +97,11 @@ class Vspace:
 
     def to_html(self) -> str:
         return f'<div style="height:{self.space}mm;"></div>'
+
+
+class NewPage:
+    def to_latex(self) -> str:
+        return "\\newpage"
+
+    def to_html(self) -> str:
+        return "<div style='page-break-after: always; height:15mm;'><hr></div>"
