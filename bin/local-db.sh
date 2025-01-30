@@ -95,5 +95,48 @@ if [[ "$1" == "create" ]]; then
 		echo "Unsupported database engine: $DB_ENGINE"
 		exit
 	fi
+elif [[ "$1" == "backup" ]]; then
+	BACKUP_FOLDER=db_backups
+	DATE=$(date +"%Y-%m-%d_%H-%M-%S")
+	BACKUP_FILE="$BACKUP_FOLDER/backup_$DB_NAME_$DATE.sql"
+
+	# Ensure the backup folder exists
+	mkdir -p "$BACKUP_FOLDER"
+
+	echo "$DB_HOST:$DB_PORT:$DB_NAME:$DB_USER:$DB_PASSWORD" >~/.pgpass
+	chmod 600 ~/.pgpass
+
+	# Run the pg_dump command inside the Docker container
+	pg_dump -U $DB_USER -h $DB_HOST -d $DB_NAME -p $DB_PORT >"$BACKUP_FILE"
+
+	# Check if the backup was successful
+	if [ $? -eq 0 ]; then
+		echo "Backup successful! File: $BACKUP_FILE"
+	else
+		echo "Backup failed!"
+		exit 1
+	fi
+
+	# Cleanup logic: remove files older than 1 year and remove files older than 1 month except the last file of the month
+	find "$BACKUP_FOLDER" -type f -name "*.sql" -mtime +365 -exec rm {} \; # Remove files older than 1 year
+
+	# Find files older than 1 month
+	find "$BACKUP_FOLDER" -type f -name "*.sql" -mtime +30 | while read FILE; do
+		# Extract the file creation date
+		FILE_DATE=$(basename "$FILE" | cut -d'_' -f2)
+
+		# Extract the year, month, and day
+		YEAR=$(echo "$FILE_DATE" | cut -d'-' -f1)
+		MONTH=$(echo "$FILE_DATE" | cut -d'-' -f2)
+		DAY=$(echo "$FILE_DATE" | cut -d'-' -f3)
+
+		# Check if it's the last day of the month
+		LAST_DAY=$(date -d "$YEAR-$MONTH-01 +1 month -1 day" +"%d")
+
+		if [ "$DAY" != "$LAST_DAY" ]; then
+			echo "Removing file: $FILE (Not the last day of the month)"
+			rm "$FILE"
+		fi
+	done
 
 fi
