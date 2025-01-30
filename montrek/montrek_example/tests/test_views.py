@@ -5,7 +5,6 @@ from textwrap import dedent
 from baseclasses.dataclasses.alert import AlertEnum
 from baseclasses.utils import montrek_time
 from django.contrib.auth.models import Permission
-from django.contrib.messages import get_messages
 from django.test import TestCase, TransactionTestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -835,6 +834,7 @@ class TestMontrekExampleA1FieldMapUpdateView(MontrekCreateViewTestCase):
             "step": 1,
             "function_name": "append_source_field_1",
             "function_parameters": "",
+            "hub_entity_id": self.field_map_factory.hub_entity.id,
         }
 
 

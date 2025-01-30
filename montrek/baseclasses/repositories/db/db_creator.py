@@ -113,7 +113,6 @@ class DbCreator:
             self._close_existing_sat_if_hub_is_forced(sat)
             return
         self.hub = existing_sat.hub_entity
-        self._raise_error_if_existing_hub_does_not_match(existing_sat)
         self._updated_satellite(sat, existing_sat)
 
     def _process_ts_satellite(self, sat: MontrekSatelliteABC):
@@ -124,7 +123,7 @@ class DbCreator:
         if existing_sat is None:
             self._stall_new_satellite(sat)
             return
-        self.hub_value_date = existing_sat.hub_value_date
+        self.hub_v
         self._updated_satellite(sat, existing_sat)
 
     def _stall_new_satellite(self, sat: MontrekSatelliteABC):
@@ -205,6 +204,7 @@ class DbCreator:
     def _updated_satellite(
         self, sat: MontrekSatelliteABC, existing_sat: MontrekSatelliteABC
     ):
+        self._raise_error_if_existing_hub_does_not_match(existing_sat)
         if existing_sat.hash_value == sat.get_hash_value:
             self.existing_satellites[existing_sat.__class__] = existing_sat
             return
