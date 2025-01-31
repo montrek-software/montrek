@@ -64,10 +64,10 @@ class FieldMapFileUploadProcessor:
             mapped_df = self.post_map_processing(mapped_df)
             self.manager.repository.create_objects_from_data_frame(mapped_df)
         except Exception as e:
+            logger.error(str(e))
             self.message = (
                 f"Error raised during object creation: <br>{e.__class__.__name__}: {e}"
             )
-            logger.debug(self.message)
             return False
         for message in self.manager.repository.messages:
             self.detailed_message += f"<br>{message.message}<br>"
