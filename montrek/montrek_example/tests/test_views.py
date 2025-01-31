@@ -834,6 +834,7 @@ class TestMontrekExampleA1FieldMapUpdateView(MontrekCreateViewTestCase):
             "step": 1,
             "function_name": "append_source_field_1",
             "function_parameters": "",
+            "hub_entity_id": self.field_map_factory.hub_entity.id,
         }
 
 
@@ -953,3 +954,22 @@ class TestHubARedirectView(MontrekRedirectViewTestCase):
 
     def expected_url(self) -> str:
         return reverse("montrek_example_a_list")
+
+
+class TestA2ApiUploadView(MontrekViewTestCase):
+    view_class = me_views.A2ApiUploadView
+    viewname = "do_a2_upload"
+
+    def test_post(self):
+        response = self.client.post(
+            self.url, data={"user": "user", "password": "password"}
+        )
+        self.assertRedirects(response, reverse("hub_a_view_api_uploads"))
+
+    def test_post__no_user(self):
+        response = self.client.post(self.url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_post__no_password(self):
+        response = self.client.post(self.url, data={"user": "user"})
+        self.assertEqual(response.status_code, 200)

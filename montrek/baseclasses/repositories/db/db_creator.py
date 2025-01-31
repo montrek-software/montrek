@@ -8,7 +8,6 @@ from baseclasses.models import (
     HubValueDate,
     MontrekHubABC,
     MontrekLinkABC,
-    MontrekOneToManyLinkABC,
     MontrekOneToOneLinkABC,
     MontrekSatelliteABC,
     ValueDateList,
@@ -124,7 +123,6 @@ class DbCreator:
         if existing_sat is None:
             self._stall_new_satellite(sat)
             return
-        self.hub_value_date = existing_sat.hub_value_date
         self._updated_satellite(sat, existing_sat)
 
     def _stall_new_satellite(self, sat: MontrekSatelliteABC):
@@ -205,6 +203,7 @@ class DbCreator:
     def _updated_satellite(
         self, sat: MontrekSatelliteABC, existing_sat: MontrekSatelliteABC
     ):
+        self._raise_error_if_existing_hub_does_not_match(existing_sat)
         if existing_sat.hash_value == sat.get_hash_value:
             self.existing_satellites[existing_sat.__class__] = existing_sat
             return
@@ -347,3 +346,16 @@ class DbCreator:
 
     def _get_opposite_field(self, field):
         return "hub_out" if field == "hub_in" else "hub_in"
+
+    def _raise_error_if_existing_hub_does_not_match(
+        self, existing_sat: MontrekSatelliteABC
+    ):
+        if "hub_entity_id" not in self.data:
+            return
+        if self.data["hub_entity_id"] != self.hub.id:
+            existing_id_str = ""
+            for field in existing_sat.identifier_fields:
+                existing_id_str += f"{field}: {getattr(existing_sat, field)}, "
+            raise MontrekError(
+                f"Try to update data with ({existing_id_str}) that already exists!"
+            )

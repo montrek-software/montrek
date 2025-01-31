@@ -15,7 +15,7 @@ class A2ApiUploadProcessor:
     def process(self, json_response: dict | list) -> bool:
         try:
             df = pd.DataFrame(json_response)
-            df['link_hub_a_api_upload_registry'] = self.file_upload_registry
+            df["link_hub_a_api_upload_registry"] = self.file_upload_registry
             HubARepository(self.session_data).create_objects_from_data_frame(df)
             self.message = f"Successfully saved {df.shape[0]} rows."
         except Exception as e:
