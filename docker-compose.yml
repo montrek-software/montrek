@@ -19,6 +19,7 @@ services:
       - montrek_network
 
   web:
+    image: montrek_app
     build:
       context: .
       dockerfile: Dockerfile
@@ -32,7 +33,6 @@ services:
       - uploads_volume:/montrek/uploads
     env_file:
       - .env
-    image: montrek_app
     expose:
       - ${APP_PORT}
     ports:
@@ -45,9 +45,7 @@ services:
       - montrek_network
 
   sequential_worker:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: montrek_app
     command: sh -c "cd montrek && celery --app=montrek worker --loglevel=info -Q sequential_queue --concurrency=1" -n sequential_worker@%h
     volumes:
       - .:/montrek
@@ -63,9 +61,7 @@ services:
       - montrek_network
 
   parallel_worker:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: montrek_app
     command: sh -c "cd montrek && celery --app=montrek worker --loglevel=info -Q parallel_queue --concurrency=4" -n parallel_worker@%h
     volumes:
       - .:/montrek
