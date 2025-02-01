@@ -2,6 +2,7 @@ from typing import Any
 
 from django.contrib.auth import get_user_model
 from mailing.managers.mailing_manager import MailingManager
+from montrek.celery_app import PARALLEL_QUEUE_NAME
 from tasks.montrek_task import MontrekTask
 
 from api_upload.managers.api_upload_manager import ApiUploadManager
@@ -10,9 +11,9 @@ from api_upload.managers.api_upload_manager import ApiUploadManager
 class ApiUploadTask(MontrekTask):
     api_upload_manager_class: type[ApiUploadManager]
 
-    def __init__(self):
+    def __init__(self, queue: str = PARALLEL_QUEUE_NAME):
         task_name = f"{self.api_upload_manager_class.__module__}.{self.api_upload_manager_class.__name__}_process_api_task"
-        super().__init__(task_name)
+        super().__init__(task_name, queue=queue)
 
     def run(
         self,
