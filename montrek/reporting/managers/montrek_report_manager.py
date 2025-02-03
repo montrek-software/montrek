@@ -14,6 +14,7 @@ from mailing.repositories.mailing_repository import MailingRepository
 class MontrekReportManager(MontrekManager):
     document_name = "document"
     document_title = "Montrek Report"
+    send_mail_url = "send_mail"
     draft = False
 
     def __init__(self, session_data: dict[str, str], **kwargs) -> None:
@@ -74,4 +75,6 @@ class MontrekReportManager(MontrekManager):
                 "mail_attachments": report_path,
             }
         )
-        return HttpResponseRedirect(reverse("send_mail", kwargs={"pk": new_mail.pk}))
+        return HttpResponseRedirect(
+            reverse(self.send_mail_url, kwargs={"pk": new_mail.pk})
+        )
