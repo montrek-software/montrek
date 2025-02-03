@@ -38,7 +38,7 @@ Requires core.js and SelectBox.js.
             // <div class="selector-available">
             const selector_available = quickElement('div', selector_div);
             selector_available.className = 'selector-available';
-            const title_available = quickElement('h2', selector_available, interpolate(gettext('Available %s') + ' ', [field_name]));
+            const title_available = quickElement('span', selector_available, interpolate(gettext('Available %s') + ' ', [field_name]));
             quickElement(
                 'span', title_available, '',
                 'class', 'help help-tooltip help-icon',
@@ -65,7 +65,7 @@ Requires core.js and SelectBox.js.
 
             filter_p.appendChild(document.createTextNode(' '));
 
-            const filter_input = quickElement('input', filter_p, '', 'type', 'text', 'placeholder', gettext("Filter"));
+            const filter_input = quickElement('input', filter_p, '', 'type', 'text', 'placeholder', gettext("Filter"), 'style', 'font-size: 16px;');
             filter_input.id = field_id + '_input';
 
             selector_available.appendChild(from_box);
@@ -83,7 +83,7 @@ Requires core.js and SelectBox.js.
             // <div class="selector-chosen">
             const selector_chosen = quickElement('div', selector_div, '', 'id', field_id + '_selector_chosen');
             selector_chosen.className = 'selector-chosen';
-            const title_chosen = quickElement('h2', selector_chosen, interpolate(gettext('Chosen %s') + ' ', [field_name]));
+            const title_chosen = quickElement('span', selector_chosen, interpolate(gettext('Chosen %s') + ' ', [field_name]));
             quickElement(
                 'span', title_chosen, '',
                 'class', 'help help-tooltip help-icon',
@@ -110,7 +110,7 @@ Requires core.js and SelectBox.js.
 
             filter_selected_p.appendChild(document.createTextNode(' '));
 
-            const filter_selected_input = quickElement('input', filter_selected_p, '', 'type', 'text', 'placeholder', gettext("Filter"));
+            const filter_selected_input = quickElement('input', filter_selected_p, '', 'type', 'text', 'placeholder', gettext("Filter"), 'style', 'font-size: 16px;');
             filter_selected_input.id = field_id + '_selected_input';
 
             const to_box = quickElement('select', selector_chosen, '', 'id', field_id + '_to', 'multiple', '', 'size', from_box.size, 'name', from_box.name);

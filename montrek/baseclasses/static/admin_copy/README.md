@@ -1,2 +1,2 @@
-The files in this directory where copied from `admin` to make the `FilteredSelectMultiple` widget work in the `MontrekCreateForm` without referencing the `admin` static files directly, since they may change between Django versions.
+The files in this directory where copied from `admin` to make the `FilteredSelectMultiple` widget work in the `MontrekCreateForm` without referencing the `admin` static files directly, since they may change between Django versions. Slight modifications were made (e.g. change font sizes) to make the widget integrate better with the montrek style. The files are imported in the `base.html` template.
 ```
