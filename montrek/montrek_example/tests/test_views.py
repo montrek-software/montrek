@@ -343,6 +343,35 @@ class TestMontrekExampleBUpdate(MontrekUpdateViewTestCase):
         self.assertEqual(satb1.hub.link_hub_b_hub_d.count(), 2)
         self.assertEqual(satb1.field_d1_str, "test2")
 
+    def test_remove_all_many_to_many_links(self):
+        links = LinkHubBHubD.objects.all()
+        self.assertEqual(links.count(), 2)
+        for link in links:
+            self.assertEqual(
+                link.state_date_end, timezone.make_aware(timezone.datetime.max)
+            )
+        repository = HubBRepository()
+        satb1 = repository.receive().first()
+        self.assertEqual(satb1.field_b1_str, "test")
+        self.assertEqual(satb1.hub.link_hub_b_hub_d.count(), 2)
+        self.assertEqual(satb1.field_d1_str, "test1,test2")
+        update_data = self.update_data()
+        update_data["link_hub_b_hub_d"] = []
+        response = self.client.post(self.url, data=update_data)
+        self.assertRedirects(response, reverse("montrek_example_b_list"))
+        links = LinkHubBHubD.objects.all()
+        self.assertEqual(links.count(), 2)
+        self.assertLess(
+            links[0].state_date_end, timezone.make_aware(timezone.datetime.max)
+        )
+        self.assertLess(
+            links[1].state_date_end, timezone.make_aware(timezone.datetime.max)
+        )
+        satb1 = repository.receive().get(pk=satb1.pk)
+        self.assertEqual(satb1.field_b1_str, "test")
+        self.assertEqual(satb1.hub.link_hub_b_hub_d.count(), 2)
+        self.assertEqual(satb1.field_d1_str, None)
+
 
 class TestMontrekExampleCListView(MontrekListViewTestCase):
     viewname = "montrek_example_c_list"
