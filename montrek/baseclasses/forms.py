@@ -178,7 +178,7 @@ class MontrekModelMultipleChoiceField(
             kwargs["widget"] = forms.CheckboxSelectMultiple()
         else:
             kwargs["widget"] = FilteredSelectMultiple(
-                verbose_name="display_field", is_stacked=False
+                verbose_name=display_field, is_stacked=False
             )
         super().__init__(display_field, *args, **kwargs)
 
