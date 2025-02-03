@@ -1,5 +1,13 @@
 {% extends 'base.html' %}
 {% block content %}
+<!--Start: needed for FilteredSelectMultiple widget used in MontrekCreateForm-->
+{% load static %}
+<link href="{% static 'admin_copy/css/widgets.css' %}" type="text/css" rel="stylesheet">
+<script src="{% url 'jsi18n' %}"></script>
+<script src="{% static 'admin_copy/js/core.js' %}"></script>
+<script src="{% static 'admin_copy/js/SelectBox.js' %}"></script>
+<script src="{% static 'admin_copy/js/SelectFilter2.js' %}"></script>
+<!--End: needed for FilteredSelectMultiple widget used in MontrekCreateForm-->
 <div class="container-fluid"> <!-- Added margin-top for spacing -->
   <div class="col-lg-5">
     <div class="row"> <!-- Centered the title for better alignment -->
