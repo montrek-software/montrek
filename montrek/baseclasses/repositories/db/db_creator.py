@@ -310,7 +310,7 @@ class DbCreator:
     ) -> list[MontrekLinkABC]:
         if not self.hub.pk:
             return links
-        is_one_to_one_link = isinstance(link_class, MontrekOneToOneLinkABC)
+        is_one_to_one_link = issubclass(link_class, MontrekOneToOneLinkABC)
         if is_one_to_one_link and len(links) > 1:
             raise MontrekError(
                 f"Try to link mulitple items to OneToOne Link {link_class}"
