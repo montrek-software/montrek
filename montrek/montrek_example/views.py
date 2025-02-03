@@ -232,7 +232,6 @@ class MontrekExampleDCreate(views.MontrekCreateView):
     manager_class = mem.HubDManager
     page_class = pages.MontrekExampleDAppPage
     success_url = "montrek_example_d_list"
-    permission_required = ["montrek_example.add_hubd"]
     title = "Create Example D"
 
 

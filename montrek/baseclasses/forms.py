@@ -1,3 +1,4 @@
+from django.contrib.admin.widgets import FilteredSelectMultiple
 from typing import Any
 from django.db.models import TextChoices
 from django import forms
@@ -170,7 +171,15 @@ class MontrekModelMultipleChoiceField(
     BaseMontrekChoiceField, forms.ModelMultipleChoiceField
 ):
     def __init__(self, display_field: str, *args, **kwargs):
-        kwargs["widget"] = forms.CheckboxSelectMultiple()
+        use_checkboxes_for_many_to_many = kwargs.pop(
+            "use_checkboxes_for_many_to_many", True
+        )
+        if use_checkboxes_for_many_to_many:
+            kwargs["widget"] = forms.CheckboxSelectMultiple()
+        else:
+            kwargs["widget"] = FilteredSelectMultiple(
+                verbose_name="display_field", is_stacked=False
+            )
         super().__init__(display_field, *args, **kwargs)
 
     @staticmethod

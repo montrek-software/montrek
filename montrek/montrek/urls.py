@@ -18,6 +18,7 @@ Including another URLconf
 import os
 
 from baseclasses import views as base_views
+from baseclasses.urls import javascriptcatalog_url
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
@@ -31,6 +32,7 @@ urlpatterns = [
         "under_construction", base_views.under_construction, name="under_construction"
     ),
     path("admin/", admin.site.urls),
+    javascriptcatalog_url,
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 for app in settings.INSTALLED_APPS:
