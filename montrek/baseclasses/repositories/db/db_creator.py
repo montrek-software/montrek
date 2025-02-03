@@ -279,8 +279,7 @@ class DbCreator:
                 many_links += [
                     item for item in value if isinstance(item, MontrekHubABC)
                 ]
-                if many_links:
-                    link_data[key] = many_links
+                link_data[key] = many_links
         return link_data
 
     def _create_new_links(
@@ -293,7 +292,7 @@ class DbCreator:
                 )
                 for value in values
             ]
-            return self._update_links_if_exist(new_links, "hub_in")
+            return self._update_links_if_exist(new_links, "hub_in", link_class)
         else:
             new_links = [
                 link_class(
@@ -301,22 +300,23 @@ class DbCreator:
                 )
                 for value in values
             ]
-            return self._update_links_if_exist(new_links, "hub_out")
+            return self._update_links_if_exist(new_links, "hub_out", link_class)
 
     def _update_links_if_exist(
-        self, links: list[MontrekLinkABC], hub_field: str
+        self,
+        links: list[MontrekLinkABC],
+        hub_field: str,
+        link_class: type[MontrekLinkABC],
     ) -> list[MontrekLinkABC]:
-        hub = getattr(links[0], hub_field)
-        if not hub.pk:
+        if not self.hub.pk:
             return links
-        link_class = links[0].__class__
-        is_one_to_one_link = isinstance(links[0], MontrekOneToOneLinkABC)
+        is_one_to_one_link = isinstance(link_class, MontrekOneToOneLinkABC)
         if is_one_to_one_link and len(links) > 1:
             raise MontrekError(
                 f"Try to link mulitple items to OneToOne Link {link_class}"
             )
         filter_args = {
-            f"{hub_field}": hub,
+            f"{hub_field}": self.hub,
             "state_date_end__gt": self.creation_date,
             "state_date_start__lte": self.creation_date,
         }

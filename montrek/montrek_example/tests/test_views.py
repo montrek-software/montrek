@@ -370,7 +370,7 @@ class TestMontrekExampleBUpdate(MontrekUpdateViewTestCase):
         satb1 = repository.receive().get(pk=satb1.pk)
         self.assertEqual(satb1.field_b1_str, "test")
         self.assertEqual(satb1.hub.link_hub_b_hub_d.count(), 2)
-        self.assertEqual(satb1.field_d1_str, "test2")
+        self.assertEqual(satb1.field_d1_str, None)
 
 
 class TestMontrekExampleCListView(MontrekListViewTestCase):
