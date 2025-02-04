@@ -105,3 +105,23 @@ class NewPage:
 
     def to_html(self) -> str:
         return "<div style='page-break-after: always; height:15mm;'><hr></div>"
+
+
+class ReportingImage:
+    def __init__(self, image_path: str, width: float = 1.0):
+        self.image_path = image_path
+        self.width = width
+
+    def to_latex(self) -> str:
+        return f"\\includegraphics[width={self.width}\\textwidth]{{{self.image_path}}}"
+
+    def to_html(self) -> str:
+        return f'<div style="text-align: right;"><img src="{self.image_path}" alt="image" style="width:{self.width*100}%;"></div>'
+
+
+class MontrekLogo(ReportingImage):
+    def __init__(self, width: float = 1.0):
+        super().__init__(
+            "http://static1.squarespace.com/static/673bfbe149f99b59e4a41ee7/t/673bfdb41644c858ec83dc7e/1731984820187/montrek_logo_variant.png?format=1500w",
+            width=width,
+        )
