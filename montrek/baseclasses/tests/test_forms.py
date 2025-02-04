@@ -1,7 +1,9 @@
-from django.db.models import Q
+from django.contrib.admin.widgets import FilteredSelectMultiple
+from django.db.models import QuerySet
+from django.forms import CheckboxSelectMultiple
 from django.test import TestCase
 
-from baseclasses.forms import FilterForm
+from baseclasses.forms import FilterForm, MontrekModelMultipleChoiceField
 
 
 class TestFilterForm(TestCase):
@@ -42,3 +44,16 @@ class TestFilterForm(TestCase):
         self.assertEqual(form.fields["filter_lookup"].initial, "exact")
         self.assertFalse(form.fields["filter_negate"].initial)
         self.assertFalse(form.fields["filter_value"].initial)
+
+
+class TestMontrekModelMultipleChoiceField(TestCase):
+    def test_init__widget(self):
+        field_kwargs = {"display_field": "field1", "queryset": QuerySet()}
+        checkbox_field = MontrekModelMultipleChoiceField(
+            **field_kwargs, use_checkboxes_for_many_to_many=True
+        )
+        list_field = MontrekModelMultipleChoiceField(
+            **field_kwargs, use_checkboxes_for_many_to_many=False
+        )
+        self.assertTrue(isinstance(checkbox_field.widget, CheckboxSelectMultiple))
+        self.assertTrue(isinstance(list_field.widget, FilteredSelectMultiple))
