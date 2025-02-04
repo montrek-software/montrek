@@ -42,6 +42,26 @@ class TestMontrekReportManager(TestCase):
         manager.append_report_element(report_element)
         assert manager.generate_report() == "htmllatexhtmllatex"
 
+    def test_cleanup_report_elements(self):
+        session_data = {}
+        manager = mocks.MockMontrekReportManager(session_data=session_data)
+        manager.cleanup_report_elements()
+        assert manager.report_elements == []
+
+    def test_cleanup_after_to_html(self):
+        session_data = {}
+        manager = mocks.MockMontrekReportManager(session_data=session_data)
+        manager.append_report_element(mocks.MockReportElement())
+        manager.to_html()
+        assert manager.report_elements == []
+
+    def test_cleanup_after_to_latex(self):
+        session_data = {}
+        manager = mocks.MockMontrekReportManager(session_data=session_data)
+        manager.append_report_element(mocks.MockReportElement())
+        manager.to_latex()
+        assert manager.report_elements == []
+
 
 class TestComprehensiveReport(TestCase):
     def test_generate_report_and_compile(self):

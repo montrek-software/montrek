@@ -1,7 +1,9 @@
+from django.contrib.admin.widgets import FilteredSelectMultiple
 from typing import Any
 from django.db.models import TextChoices
 from django import forms
 from django.db.models import QuerySet
+from django.forms.widgets import ChoiceWidget
 
 from baseclasses.models import LinkTypeEnum
 
@@ -118,16 +120,18 @@ class MontrekCreateForm(forms.ModelForm):
         queryset: QuerySet,
         display_field: str,
         required: bool = False,
+        use_checkboxes_for_many_to_many: bool = True,
         **kwargs,
     ):
         link_class = getattr(self.repository.hub_class, link_name).through
         is_many_to_many = link_class.link_type == LinkTypeEnum.MANY_TO_MANY
 
-        choice_class = (
-            MontrekModelMultipleChoiceField
-            if is_many_to_many
-            else MontrekModelChoiceField
-        )
+        if is_many_to_many:
+            choice_class = MontrekModelMultipleChoiceField
+            kwargs["use_checkboxes_for_many_to_many"] = use_checkboxes_for_many_to_many
+        else:
+            choice_class = MontrekModelChoiceField
+
         initial_link = choice_class.get_initial_link(
             self.initial, queryset, display_field
         )
@@ -169,9 +173,21 @@ class MontrekModelChoiceField(BaseMontrekChoiceField, forms.ModelChoiceField):
 class MontrekModelMultipleChoiceField(
     BaseMontrekChoiceField, forms.ModelMultipleChoiceField
 ):
-    def __init__(self, display_field: str, *args, **kwargs):
-        kwargs["widget"] = forms.CheckboxSelectMultiple()
+    def __init__(
+        self,
+        display_field: str,
+        use_checkboxes_for_many_to_many: bool = True,
+        *args,
+        **kwargs,
+    ):
+        kwargs["widget"] = self.get_widget(use_checkboxes_for_many_to_many)
         super().__init__(display_field, *args, **kwargs)
+
+    @staticmethod
+    def get_widget(use_checkboxes: bool) -> ChoiceWidget:
+        if use_checkboxes:
+            return forms.CheckboxSelectMultiple()
+        return FilteredSelectMultiple(verbose_name="display_field", is_stacked=False)
 
     @staticmethod
     def get_initial_link(
