@@ -70,6 +70,9 @@ class MontrekReportManager(MontrekManager):
     def get_mail_recipients(self) -> str:
         return settings.ADMIN_MAILING_LIST
 
+    def get_mail_kwargs(self) -> dict:
+        return {}
+
     def prepare_mail(self, report_path) -> HttpResponseRedirect:
         mailing_repository = MailingRepository(self.session_data)
         new_mail = mailing_repository.create_by_dict(
@@ -80,6 +83,6 @@ class MontrekReportManager(MontrekManager):
                 "mail_attachments": report_path,
             }
         )
-        return HttpResponseRedirect(
-            reverse(self.send_mail_url, kwargs={"pk": new_mail.pk})
-        )
+        url_kwargs = {"pk": new_mail.pk}
+        url_kwargs.update(self.get_mail_kwargs())
+        return HttpResponseRedirect(reverse(self.send_mail_url, kwargs=url_kwargs))
