@@ -49,6 +49,7 @@ class MontrekReportManager(MontrekManager):
         for report_element in self.report_elements:
             html_str += report_element.to_html()
         html_str += self._get_footer()
+        self.cleanup_report_elements()
         return html_str
 
     def to_latex(self) -> str:
@@ -56,6 +57,7 @@ class MontrekReportManager(MontrekManager):
         self.collect_report_elements()
         for report_element in self.report_elements:
             latex_str += report_element.to_latex()
+        self.cleanup_report_elements()
         return latex_str
 
     def _get_footer(self) -> str:
