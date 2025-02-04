@@ -30,6 +30,7 @@ class TestSendMailView(vtc.MontrekViewTestCase):
     viewname = "send_mail"
     view_class = views.SendMailView
     expected_mail_template = "montrek_mail_template"
+    expected_success_url = "/mailing/overview"
 
     def test_send_mail(self):
         class MockForm:
@@ -41,7 +42,7 @@ class TestSendMailView(vtc.MontrekViewTestCase):
 
         mock_form = MockForm()
         response = self.view.form_valid(mock_form)
-        self.assertEqual(response.url, "/mailing/overview")
+        self.assertEqual(response.url, self.expected_success_url)
         test_message = str(mail.outbox[0].message())
         self.assertIn("This is a test", test_message)
         self.assertEqual(mail.outbox[0].subject, "Test")
