@@ -1,8 +1,10 @@
-from mailing.tests.factories.mailing_factories import MailSatelliteFactory
+from baseclasses.managers.montrek_manager import MontrekManager
+from django.core import mail
+from testing.test_cases import view_test_cases as vtc
+
 from mailing import views
 from mailing.forms import MailingSendForm
-from baseclasses.managers.montrek_manager import MontrekManager
-from testing.test_cases import view_test_cases as vtc
+from mailing.tests.factories.mailing_factories import MailSatelliteFactory
 
 
 class TestMailListViewOverview(vtc.MontrekListViewTestCase):
@@ -38,6 +40,10 @@ class TestSendMailView(vtc.MontrekViewTestCase):
         mock_form = MockForm()
         response = self.view.form_valid(mock_form)
         self.assertEqual(response.url, "/mailing/overview")
+        test_message = str(mail.outbox[0].message())
+        self.assertIn("This is a test", test_message)
+        self.assertEqual(mail.outbox[0].subject, "Test")
+        self.assertEqual(mail.outbox[0].to, ["a@b.de"])
 
     def test_view_form(self):
         view = views.SendMailView()
