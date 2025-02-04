@@ -170,10 +170,13 @@ class MontrekModelChoiceField(BaseMontrekChoiceField, forms.ModelChoiceField):
 class MontrekModelMultipleChoiceField(
     BaseMontrekChoiceField, forms.ModelMultipleChoiceField
 ):
-    def __init__(self, display_field: str, *args, **kwargs):
-        use_checkboxes_for_many_to_many = kwargs.pop(
-            "use_checkboxes_for_many_to_many", True
-        )
+    def __init__(
+        self,
+        display_field: str,
+        use_checkboxes_for_many_to_many: bool = True,
+        *args,
+        **kwargs,
+    ):
         if use_checkboxes_for_many_to_many:
             kwargs["widget"] = forms.CheckboxSelectMultiple()
         else:
