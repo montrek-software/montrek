@@ -119,6 +119,7 @@ class MontrekCreateForm(forms.ModelForm):
         queryset: QuerySet,
         display_field: str,
         required: bool = False,
+        use_checkboxes_for_many_to_many: bool = True,
         **kwargs,
     ):
         link_class = getattr(self.repository.hub_class, link_name).through
@@ -137,6 +138,7 @@ class MontrekCreateForm(forms.ModelForm):
             queryset=queryset,
             required=required,
             initial=initial_link,
+            use_checkboxes_for_many_to_many=use_checkboxes_for_many_to_many,
             **kwargs,
         )
 
