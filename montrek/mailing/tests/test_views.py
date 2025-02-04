@@ -1,4 +1,5 @@
 from baseclasses.managers.montrek_manager import MontrekManager
+from django.conf import settings
 from django.core import mail
 from testing.test_cases import view_test_cases as vtc
 
@@ -28,6 +29,7 @@ class MockSendMailView(views.SendMailView):
 class TestSendMailView(vtc.MontrekViewTestCase):
     viewname = "send_mail"
     view_class = views.SendMailView
+    expected_mail_template = "montrek_mail_template"
 
     def test_send_mail(self):
         class MockForm:
@@ -44,6 +46,13 @@ class TestSendMailView(vtc.MontrekViewTestCase):
         self.assertIn("This is a test", test_message)
         self.assertEqual(mail.outbox[0].subject, "Test")
         self.assertEqual(mail.outbox[0].to, ["a@b.de"])
+        with open(
+            settings.BASE_DIR
+            / f"mailing/templates/mail_templates/{self.expected_mail_template}.html"
+        ) as f:
+            template = f.read()
+            template_start = template.find("<body>")
+            self.assertIn(template[:template_start], test_message)
 
     def test_view_form(self):
         view = views.SendMailView()
