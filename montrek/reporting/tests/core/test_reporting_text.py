@@ -3,6 +3,7 @@ from django.test import TestCase
 from reporting.core.reporting_text import (
     ReportingParagraph,
     ReportingTextParagraph,
+    MontrekLogo,
 )
 from reporting.constants import ReportingTextType
 
@@ -86,4 +87,18 @@ class TestReportingParagraph(TestCase):
         self.assertEqual(
             test_italic_to_latex,
             "\\begin{justify}This is a \\textit{italic} text\\end{justify}",
+        )
+
+
+class TestMontrekLogo(TestCase):
+    def test_logo(self):
+        logo = MontrekLogo(width=0.5)
+        self.assertEqual(logo.width, 0.5)
+        self.assertEqual(
+            logo.to_html(),
+            '<div style="text-align: right;"><img src="http://static1.squarespace.com/static/673bfbe149f99b59e4a41ee7/t/673bfdb41644c858ec83dc7e/1731984820187/montrek_logo_variant.png?format=1500w" alt="image" style="width:50.0%;"></div>',
+        )
+        self.assertEqual(
+            logo.to_latex(),
+            "\\includegraphics[width=0.5\\textwidth]{http://static1.squarespace.com/static/673bfbe149f99b59e4a41ee7/t/673bfdb41644c858ec83dc7e/1731984820187/montrek_logo_variant.png?format=1500w}",
         )
