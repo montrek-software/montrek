@@ -81,6 +81,7 @@ class MontrekReportManager(MontrekManager):
                 "mail_message": self.get_mail_message(),
                 "mail_recipients": self.get_mail_recipients(),
                 "mail_attachments": report_path,
+                "mail_bcc": settings.ADMIN_MAILING_LIST,
             }
         )
         url_kwargs = {"pk": new_mail.pk}
