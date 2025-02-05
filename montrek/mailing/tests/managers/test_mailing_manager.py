@@ -125,4 +125,4 @@ class TestMailingManager(TestCase):
         sent_email = mail.outbox[0]
         self.assertEqual(sent_email.bcc, ["test@abc.de", "rest@def.de"])
         mail_object = MailingRepository({}).receive().first()
-        self.assertEqual(mail_object.mail_bcc, self.subject)
+        self.assertEqual(mail_object.mail_bcc, "test@abc.de,rest@def.de")

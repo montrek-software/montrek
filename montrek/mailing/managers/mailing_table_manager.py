@@ -13,6 +13,7 @@ class MailingTableManager(MontrekTableManager):
             te.StringTableElement(name="Subject", attr="mail_subject"),
             te.StringTableElement(name="Recipients", attr="mail_recipients"),
             te.StringTableElement(name="State", attr="mail_state"),
+            te.StringTableElement(name="BCC", attr="mail_bcc"),
             te.LinkTableElement(
                 name="View",
                 url="mail_detail",

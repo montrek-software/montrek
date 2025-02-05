@@ -38,6 +38,7 @@ class MailingManager(MontrekManager):
             "mail_message": message,
             "mail_state": "Pending",
             "mail_attachments": attachments,
+            "mail_bcc": bcc,
         }
         mail_hub = self.repository.std_create_object(mail_params)
         body = self.get_mail_body(message, additional_parms)
