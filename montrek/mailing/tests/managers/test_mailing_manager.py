@@ -113,3 +113,16 @@ class TestMailingManager(TestCase):
                     )
                 ],
             )
+
+    def test_send_mail_bcc(self):
+        mailing_manager = MailingManager({"user_id": self.user.id})
+        mailing_manager.send_montrek_mail(
+            recipients=self.recipients,
+            subject=self.subject,
+            message=self.message,
+            bcc="test@abc.de,rest@def.de",
+        )
+        sent_email = mail.outbox[0]
+        self.assertEqual(sent_email.bcc, ["test@abc.de", "rest@def.de"])
+        mail_object = MailingRepository({}).receive().first()
+        self.assertEqual(mail_object.mail_bcc, self.subject)

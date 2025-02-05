@@ -28,8 +28,10 @@ class MailingManager(MontrekManager):
         message: str,
         additional_parms: dict = {},
         attachments: str = "",
+        bcc: str = "",
     ):
         recipient_list = recipients.replace(" ", "").split(",")
+        bcc_list = bcc.replace(" ", "").split(",")
         mail_params: dict = {
             "mail_subject": subject,
             "mail_recipients": recipients,
@@ -46,6 +48,7 @@ class MailingManager(MontrekManager):
                 body=body,
                 to=recipient_list,
                 attachments=attachments_list,
+                bcc=bcc_list,
             )
             email.content_subtype = "html"
             email.send()
