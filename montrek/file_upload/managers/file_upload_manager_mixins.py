@@ -9,7 +9,7 @@ from django.utils import timezone
 from file_upload.repositories.file_upload_file_repository import (
     FileUploadFileRepository,
 )
-from user.repositories.user_repository import MontrekUserRepository
+from user.repositories.montrek_auth_user_repositories import MontrekUserRepository
 
 
 class LogFileChecksMixin:

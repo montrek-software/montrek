@@ -31,6 +31,8 @@ class MontrekUserTableManager(CommonTableElementsMixin, MontrekTableManager):
     @property
     def table_elements(self):
         table_elements = [
+            te.StringTableElement(name="User", attr="created_by"),
+            te.StringTableElement(name="Status", attr="montrek_user_status"),
             te.LinkTableElement(
                 name="Details",
                 url="montrek_user_details",
