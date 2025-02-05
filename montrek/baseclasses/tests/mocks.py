@@ -40,7 +40,20 @@ class MockField:
     name: str
 
 
+class MockObjects:
+    def all(self):
+        return MockQuerySet(
+            MockData("item1", 1), MockData("item2", 2), MockData("item3", 3)
+        )
+
+
+class MockHub:
+    objects = MockObjects()
+
+
 class MockRepository:
+    hub_class = MockHub
+
     def __init__(self, session_data):
         self.session_data = session_data
         self.messages = []

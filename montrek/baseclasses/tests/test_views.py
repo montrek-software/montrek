@@ -12,9 +12,11 @@ from baseclasses.dataclasses.montrek_message import (
     MontrekMessageError,
     MontrekMessageInfo,
 )
+from baseclasses.managers.montrek_manager import MontrekManager
 from baseclasses.pages import MontrekPage
 from baseclasses.tests.mocks import MockRepository
 from baseclasses.views import (
+    MontrekDetailView,
     MontrekListView,
     MontrekPageViewMixin,
     MontrekTemplateView,
@@ -59,6 +61,22 @@ class MockManager(MontrekTableManager):
         ]
 
 
+class MockFooter:
+    def to_latex(self):
+        return "Guten Abend"
+
+
+class MockManager2(MontrekManager):
+    repository_class = MockRepository
+    document_title = "Guten Tag!"
+    footer_text = MockFooter()
+    draft = True
+    document_name = "whats your name"
+
+    def to_latex(self):
+        return "Hallo!"
+
+
 class MockMontrekView(MontrekViewMixin, MockRequester, MontrekPageViewMixin):
     manager_class = MockManager
 
@@ -86,6 +104,23 @@ class MockMontrekTemplateView(MockMontrekTemplateViewNoMethods):
 
     def get_template_context(self) -> dict:
         return {}
+
+
+class MockMontrekListViewWrongManager(MontrekListView, MockRequester):
+    manager_class = MockManager2
+
+    def __init__(self, url: str):
+        super().__init__()
+        self.add_mock_request(url)
+
+
+class MockMontrekDetailViewWrongManager(MontrekDetailView, MockRequester):
+    manager_class = MockManager2
+    is_hub_based = False
+
+    def __init__(self, url: str):
+        super().__init__()
+        self.add_mock_request(url)
 
 
 class TestUnderConstruction(TestCase):
@@ -286,6 +321,27 @@ class TestMontrekListView(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(test_list_view.request.session.get("filter"), {})
         self.assertEqual(test_list_view.session_data.get("filter"), {})
+
+    def test_get_context_data__raise_error(self):
+        test_view = MockMontrekListViewWrongManager("/")
+        test_view.kwargs = {}
+        self.assertRaises(
+            NotImplementedError, test_view.get_context_data, **{"object_list": []}
+        )
+
+
+class TestMontrekDetailView(TestCase):
+    def test_gen_pdf(self):
+        test_view = MockMontrekDetailViewWrongManager("dummy?gen_pdf=true")
+        response = test_view.get(test_view.request)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/pdf")
+
+    def test_get_context_data__raise_error(self):
+        test_view = MockMontrekDetailViewWrongManager("/")
+        test_view.kwargs = {}
+        test_view.object = []
+        self.assertRaises(ValueError, test_view.get_context_data, {"pk": 1})
 
 
 class TestNavbar(TestCase):
