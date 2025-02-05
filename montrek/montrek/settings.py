@@ -287,5 +287,11 @@ SEND_TABLE_BY_MAIL_LIMIT = config("SEND_TABLE_BY_MAIL_LIMIT", default=10000, cas
 
 ADMIN_MAILING_LIST = config("ADMIN_MAILING_LIST", default="")
 
+# Logging
 LOG_LEVEL = config("LOG_LEVEL", default="WARNING")
 LOGGING = get_logging_config(LOG_LEVEL, MONTREK_EXTENSION_APPS)
+
+
+# NGINX will only allow requests from this IP.
+# To specify a range of IPs, use CIDR notation like 192.168.1.0/24.
+NGINX_ALLOWED_CLIENT_IP = config("NGINX_ALLOWED_CLIENT_IP", default="all")

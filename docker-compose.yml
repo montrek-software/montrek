@@ -14,6 +14,7 @@ services:
       - APP_PORT=${APP_PORT}
       - DEPLOY_PORT=${DEPLOY_PORT}
       - PROJECT_NAME=${PROJECT_NAME}
+      - NGINX_ALLOWED_CLIENT_IP=${NGINX_ALLOWED_CLIENT_IP}
     restart: "on-failure"
     networks:
       - montrek_network
