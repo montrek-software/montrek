@@ -148,29 +148,6 @@ class MontrekViewMixin:
             self._manager = self.manager_class(self.session_data)
         return self._manager
 
-    # TODO:
-    ##Should go to manager
-    @property
-    def elements(self) -> list[TableElement]:
-        return []
-
-    def get_fields_from_elements(self) -> list[str]:
-        link_elements = self.get_link_table_elements(self.elements)
-        att_elements = self.get_attr_table_elements(self.elements)
-        return [element.text for element in link_elements] + [
-            element.attr for element in att_elements
-        ]
-
-    def get_attr_table_elements(self, elements) -> list[AttrTableElement]:
-        return [
-            element for element in elements if isinstance(element, AttrTableElement)
-        ]
-
-    def get_link_table_elements(self, elements) -> list[LinkTextTableElement]:
-        return [
-            element for element in elements if isinstance(element, LinkTextTableElement)
-        ]
-
     @property
     def session_data(self) -> dict:
         session_data = {}
