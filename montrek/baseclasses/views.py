@@ -16,14 +16,8 @@ from django.views.generic.edit import CreateView
 from django.views.generic.list import ListView
 from file_upload.forms import SimpleUploadFileForm
 from file_upload.managers.simple_upload_file_manager import SimpleUploadFileManager
-from reporting.dataclasses.table_elements import (
-    AttrTableElement,
-    LinkTextTableElement,
-    TableElement,
-)
 from reporting.managers.latex_report_manager import LatexReportManager
 from reporting.managers.montrek_details_manager import MontrekDetailsManager
-from reporting.managers.montrek_report_manager import MontrekReportManager
 from reporting.managers.montrek_table_manager import MontrekTableManager
 from rest_framework import status
 from rest_framework.response import Response
@@ -482,27 +476,6 @@ class MontrekDeleteView(
         if "action" in request.POST and request.POST["action"] == "Delete":
             self.manager.delete_object(pk=self.kwargs["pk"])
         return HttpResponseRedirect(self.get_success_url())
-
-
-class MontrekReportView(MontrekTemplateView, ToPdfMixin):
-    manager_class = MontrekReportManager
-    template_name = "montrek_report.html"
-
-    def get_template_context(self) -> dict:
-        return {"report": self.manager.to_html()}
-
-    def get(self, request, *args, **kwargs):
-        if self.request.GET.get("gen_pdf") == "true":
-            return self.list_to_pdf()
-        if self.request.GET.get("send_mail") == "true":
-            report_manager = LatexReportManager(self.manager)
-            pdf_path = report_manager.compile_report()
-            return self.manager.prepare_mail(pdf_path)
-        return super().get(request, *args, **kwargs)
-
-    @property
-    def title(self):
-        return self.manager.document_title
 
 
 class MontrekRestApiView(APIView, MontrekViewMixin):

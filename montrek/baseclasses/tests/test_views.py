@@ -181,10 +181,6 @@ class TestMontrekViewMixin(TestCase):
             )
         )
 
-    def test_elements_property(self):
-        mock_view = MockMontrekView("/")
-        self.assertEqual(mock_view.elements, [])
-
     def test_get_view_queryset(self):
         mock_view = MockMontrekView("/")
         mock_queryset = mock_view.get_view_queryset()
@@ -318,3 +314,40 @@ class TestNavbar(TestCase):
         mailing_link = soup.find("a", href="/mailing/overview")
         self.assertIsNotNone(mailing_link)
         self.assertEqual(mailing_link.text.strip(), "Mailing")
+
+
+class TestFiter(TestCase):
+    def test__get_filters_isnull(self):
+        test_view = MockMontrekView("/")
+        test_data = test_view._get_filters(
+            {"filter_lookup": ["isnull"], "filter_field": ["test_field"]}
+        )
+        self.assertTrue(test_data["filter"]["/"]["test_field__isnull"]["filter_value"])
+
+    def test__get_filters_true(self):
+        test_view = MockMontrekView("/")
+        for true_value in ("True", "true", True):
+            test_data = test_view._get_filters(
+                {
+                    "filter_lookup": ["test"],
+                    "filter_field": ["test_field"],
+                    "filter_value": [true_value],
+                }
+            )
+            self.assertTrue(
+                test_data["filter"]["/"]["test_field__test"]["filter_value"]
+            )
+
+    def test__get_filters_false(self):
+        test_view = MockMontrekView("/")
+        for false_value in ("False", "false", False):
+            test_data = test_view._get_filters(
+                {
+                    "filter_lookup": ["test"],
+                    "filter_field": ["test_field"],
+                    "filter_value": [false_value],
+                }
+            )
+            self.assertFalse(
+                test_data["filter"]["/"]["test_field__test"]["filter_value"]
+            )
