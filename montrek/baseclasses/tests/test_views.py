@@ -17,6 +17,7 @@ from baseclasses.tests.mocks import MockRepository
 from baseclasses.views import (
     MontrekListView,
     MontrekPageViewMixin,
+    MontrekTemplateView,
     MontrekViewMixin,
     navbar,
 )
@@ -70,6 +71,13 @@ class MockPage(MontrekPage):
     @property
     def tabs(self):
         return []
+
+
+class MockMontrekTemplateView(MontrekTemplateView):
+    page_class = MockPage
+
+    def get_template_context(self) -> dict:
+        return {}
 
 
 class TestUnderConstruction(TestCase):
@@ -351,3 +359,11 @@ class TestFiter(TestCase):
             self.assertFalse(
                 test_data["filter"]["/"]["test_field__test"]["filter_value"]
             )
+
+
+class TestMontrekTemplateView(TestCase):
+    def test_no_kwargs(self):
+        test_view = MockMontrekTemplateView()
+        kwargs = {"hallo": "wallo!"}
+        test_view.get_context_data(**kwargs)
+        self.assertEqual(test_view.kwargs, kwargs)
