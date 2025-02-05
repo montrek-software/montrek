@@ -54,10 +54,15 @@ class TestSendMailView(vtc.MontrekViewTestCase):
             template = f.read()
             template_start = template.find("<body>")
             self.assertIn(template[:template_start], test_message)
+        self.additional_assertions()
 
     def test_view_form(self):
         view = views.SendMailView()
         self.assertEqual(view.form_class, MailingSendForm)
+
+    def additional_assertions(self):
+        # Method con be overwritten in child test cases
+        ...
 
 
 class TestMailDetailsView(vtc.MontrekDetailViewTestCase):
