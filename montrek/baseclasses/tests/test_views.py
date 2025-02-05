@@ -73,8 +73,16 @@ class MockPage(MontrekPage):
         return []
 
 
-class MockMontrekTemplateView(MontrekTemplateView):
+class MockMontrekTemplateViewNoMethods(MontrekTemplateView, MockRequester):
     page_class = MockPage
+
+    def __init__(self, url: str):
+        super().__init__()
+        self.add_mock_request(url)
+
+
+class MockMontrekTemplateView(MockMontrekTemplateViewNoMethods):
+    manager_class = MockManager
 
     def get_template_context(self) -> dict:
         return {}
@@ -363,7 +371,19 @@ class TestFiter(TestCase):
 
 class TestMontrekTemplateView(TestCase):
     def test_no_kwargs(self):
-        test_view = MockMontrekTemplateView()
+        test_view = MockMontrekTemplateView("/")
         kwargs = {"hallo": "wallo!"}
         test_view.get_context_data(**kwargs)
         self.assertEqual(test_view.kwargs, kwargs)
+
+    def test_no_get_template_context(self):
+        test_view = MockMontrekTemplateViewNoMethods("/")
+        self.assertRaises(NotImplementedError, test_view.get_context_data)
+
+    def test_get_view_queryset(self):
+        test_view = MockMontrekTemplateView("/")
+        test_queryset = test_view.get_view_queryset()
+        self.assertEqual(
+            [mqe.field for mqe in test_queryset], ["item1", "item2", "item3"]
+        )
+        self.assertEqual([mqe.value for mqe in test_queryset], [1, 2, 3])
