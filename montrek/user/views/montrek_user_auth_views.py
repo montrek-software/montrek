@@ -3,7 +3,7 @@ from django.urls import reverse_lazy
 from django.contrib.auth import views as auth_views
 from django.views import generic as generic_views
 from django.contrib import messages
-from user import forms
+from user.forms import montrek_user_auth_forms as forms
 
 
 class MessageHandlerMixin:

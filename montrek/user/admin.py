@@ -1,6 +1,9 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from user.forms import MontrekUserChangeForm, MontrekUserCreationForm
+from user.forms.montrek_user_auth_forms import (
+    MontrekUserChangeForm,
+    MontrekUserCreationForm,
+)
 
 from user.models import MontrekUser
 

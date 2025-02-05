@@ -1,6 +1,6 @@
 from django.urls import path
 
-from user import views
+from user.views import montrek_user_auth_views as views
 
 urlpatterns = [
     path("signup/", views.MontrekSignUpView.as_view(), name="signup"),
