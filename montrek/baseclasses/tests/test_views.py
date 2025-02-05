@@ -1,19 +1,20 @@
-from baseclasses.tests.mocks import MockRepository
-from user.tests.factories.montrek_user_factories import MontrekUserFactory
+from bs4 import BeautifulSoup
 from django.contrib.auth.models import AnonymousUser
-from django.test import TestCase, RequestFactory
-from django.contrib.sessions.middleware import SessionMiddleware
-from django.contrib.messages.middleware import MessageMiddleware
 from django.contrib.messages import get_messages
-from baseclasses.views import MontrekViewMixin
-from baseclasses.views import MontrekListView
+from django.contrib.messages.middleware import MessageMiddleware
+from django.contrib.sessions.middleware import SessionMiddleware
+from django.test import RequestFactory, TestCase
+from reporting.dataclasses import table_elements as te
+from reporting.managers.montrek_table_manager import MontrekTableManager
+from user.tests.factories.montrek_user_factories import MontrekUserFactory
+
 from baseclasses.dataclasses.montrek_message import (
     MontrekMessageError,
     MontrekMessageInfo,
 )
 from baseclasses.pages import MontrekPage
-from reporting.managers.montrek_table_manager import MontrekTableManager
-from reporting.dataclasses import table_elements as te
+from baseclasses.tests.mocks import MockRepository
+from baseclasses.views import MontrekListView, MontrekViewMixin, navbar
 
 
 class MockRequester:
@@ -263,3 +264,47 @@ class TestMontrekListView(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(test_list_view.request.session.get("filter"), {})
         self.assertEqual(test_list_view.session_data.get("filter"), {})
+
+
+class TestNavbar(TestCase):
+    def setUp(self) -> None:
+        self.factory = RequestFactory()
+
+    def test_navbar(self):
+        request = self.factory.get("/navbar/")
+        response = navbar(request)
+        self.assertEqual(response.status_code, 200)
+        soup = BeautifulSoup(response.content, "html.parser")
+
+        # Check Navbar Brand
+        brand = soup.find("a", class_="navbar-brand")
+        self.assertIsNotNone(brand)
+        self.assertEqual(brand.text.strip(), "montrek")
+
+        # Check "Home" link
+        home_link = soup.find("a", href="/")
+        self.assertIsNotNone(home_link)
+        self.assertEqual(home_link.text.strip(), "montrek")
+
+        # Check Dropdown for "Montrek Example"
+        dropdown = soup.find("li", class_="dropdown")
+        self.assertIsNotNone(dropdown)
+
+        # Verify dropdown title
+        dropdown_toggle = dropdown.find("a", class_="dropdown-toggle")
+        self.assertIsNotNone(dropdown_toggle)
+        self.assertIn("Montrek Example", dropdown_toggle.text)
+
+        # Verify dropdown items
+        dropdown_items = dropdown.find_all("li")
+        self.assertEqual(len(dropdown_items), 1)  # Should contain one item
+
+        dropdown_link = dropdown_items[0].find("a")
+        self.assertIsNotNone(dropdown_link)
+        self.assertEqual(dropdown_link.text.strip(), "Montrek Example Report")
+        self.assertEqual(dropdown_link["href"], "/montrek_example/")
+
+        # Check individual "Mailing" link (not inside dropdown)
+        mailing_link = soup.find("a", href="/mailing/overview")
+        self.assertIsNotNone(mailing_link)
+        self.assertEqual(mailing_link.text.strip(), "Mailing")

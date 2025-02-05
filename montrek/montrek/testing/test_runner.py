@@ -12,6 +12,11 @@ class MontrekTestRunner(DiscoverRunner):
                 "MEDIA_ROOT": temp_dir,
                 "ADMIN_MAILING_LIST": "test_admin@example.com",
                 "CELERY_TASK_ALWAYS_EAGER": 1,
+                "NAVBAR_APPS": [
+                    "mailing",
+                    "montrek_example.montrek_example_report",
+                    "",
+                ],
                 # Add other test-specific settings here
             }
         self._override = override_settings(**test_settings)

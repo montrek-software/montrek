@@ -2,6 +2,7 @@ import os
 from typing import Any
 
 from decouple import config
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied
@@ -49,7 +50,8 @@ def under_construction(request):
 
 
 def navbar(request):
-    navbar_apps_config = config("NAVBAR_APPS", default="").split(",")
+    # navbar_apps_config = config("NAVBAR_APPS", default="").split(",")
+    navbar_apps_config = settings.NAVBAR_APPS
     navbar_apps = []
     navbar_dropdowns = {}
     for app in navbar_apps_config:

@@ -109,6 +109,7 @@ MONTREK_EXTENSION_APPS = get_montrek_extension_apps_list()
 
 INSTALLED_APPS = DJANGO_APPS + MONTREK_EXTENSION_APPS
 
+NAVBAR_APPS = config("NAVBAR_APPS", default="").replace(" ", "").split(",")
 DJANGO_MIDDLEWARE = [
     "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django.middleware.security.SecurityMiddleware",
