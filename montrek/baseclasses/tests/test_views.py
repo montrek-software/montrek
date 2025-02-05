@@ -21,6 +21,7 @@ from baseclasses.views import (
     MontrekPageViewMixin,
     MontrekTemplateView,
     MontrekViewMixin,
+    MontrekCreateUpdateView,
     navbar,
 )
 
@@ -121,6 +122,33 @@ class MockMontrekDetailViewWrongManager(MontrekDetailView, MockRequester):
     def __init__(self, url: str):
         super().__init__()
         self.add_mock_request(url)
+
+
+class MockErrors:
+    def items(self):
+        return [("bla", "blubb")]
+
+
+class MockFormClass:
+    errors = MockErrors()
+
+    def __init__(self, request, repository):
+        ...
+
+    def is_valid(self):
+        return False
+
+
+class MockMontrekCreateView(MontrekCreateUpdateView, MockRequester):
+    manager_class = MockManager
+    is_hub_based = False
+    form_class = MockFormClass
+    page_class = MockPage
+
+    def __init__(self, url: str):
+        super().__init__()
+        self.add_mock_request(url)
+        self.kwargs = {}
 
 
 class TestUnderConstruction(TestCase):
@@ -443,3 +471,18 @@ class TestMontrekTemplateView(TestCase):
             [mqe.field for mqe in test_queryset], ["item1", "item2", "item3"]
         )
         self.assertEqual([mqe.value for mqe in test_queryset], [1, 2, 3])
+
+
+class TestMontrekCreateView(TestCase):
+    def test_get_queryset(self):
+        test_view = MockMontrekCreateView("/")
+        test_queryset = test_view.get_view_queryset()
+        self.assertEqual(
+            [mqe.field for mqe in test_queryset], ["item1", "item2", "item3"]
+        )
+        self.assertEqual([mqe.value for mqe in test_queryset], [1, 2, 3])
+
+    def test_post(self):
+        test_view = MockMontrekCreateView("/")
+        test_form = test_view.post(test_view.request)
+        self.assertEqual(test_form.status_code, 200)
