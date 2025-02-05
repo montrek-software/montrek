@@ -14,7 +14,12 @@ from baseclasses.dataclasses.montrek_message import (
 )
 from baseclasses.pages import MontrekPage
 from baseclasses.tests.mocks import MockRepository
-from baseclasses.views import MontrekListView, MontrekViewMixin, navbar
+from baseclasses.views import (
+    MontrekListView,
+    MontrekPageViewMixin,
+    MontrekViewMixin,
+    navbar,
+)
 
 
 class MockRequester:
@@ -53,7 +58,7 @@ class MockManager(MontrekTableManager):
         ]
 
 
-class MockMontrekView(MontrekViewMixin, MockRequester):
+class MockMontrekView(MontrekViewMixin, MockRequester, MontrekPageViewMixin):
     manager_class = MockManager
 
     def __init__(self, url: str):
@@ -186,6 +191,11 @@ class TestMontrekViewMixin(TestCase):
         self.assertEqual(
             [mqe.field for mqe in mock_queryset], ["item1", "item2", "item3"]
         )
+
+    def test_empty_request_in_date_range_form(self):
+        mock_view = MontrekPageViewMixin()
+        form_data = mock_view._handle_date_range_form()
+        self.assertEqual(form_data, {})
 
 
 class MockMontrekListView(MontrekListView, MockRequester):

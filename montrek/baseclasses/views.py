@@ -115,7 +115,7 @@ class MontrekPageViewMixin:
         context.update(self._handle_date_range_form())
         return context
 
-    def _handle_date_range_form(self):
+    def _handle_date_range_form(self) -> dict[str, DateRangeForm]:
         if not self.request:
             return {}
         start_date, end_date = utils.get_date_range_dates(self.request)
