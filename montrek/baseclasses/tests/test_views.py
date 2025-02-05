@@ -22,6 +22,7 @@ from baseclasses.views import (
     MontrekTemplateView,
     MontrekViewMixin,
     MontrekCreateUpdateView,
+    MontrekRedirectView,
     navbar,
 )
 
@@ -109,6 +110,7 @@ class MockMontrekTemplateView(MockMontrekTemplateViewNoMethods):
 
 class MockMontrekListViewWrongManager(MontrekListView, MockRequester):
     manager_class = MockManager2
+    page_class = MockPage
 
     def __init__(self, url: str):
         super().__init__()
@@ -353,9 +355,7 @@ class TestMontrekListView(TestCase):
     def test_get_context_data__raise_error(self):
         test_view = MockMontrekListViewWrongManager("/")
         test_view.kwargs = {}
-        self.assertRaises(
-            NotImplementedError, test_view.get_context_data, **{"object_list": []}
-        )
+        self.assertRaises(ValueError, test_view.get_context_data, **{"object_list": []})
 
 
 class TestMontrekDetailView(TestCase):
@@ -369,7 +369,7 @@ class TestMontrekDetailView(TestCase):
         test_view = MockMontrekDetailViewWrongManager("/")
         test_view.kwargs = {}
         test_view.object = []
-        self.assertRaises(ValueError, test_view.get_context_data, {"pk": 1})
+        self.assertRaises(ValueError, test_view.get_context_data)
 
 
 class TestNavbar(TestCase):
@@ -466,7 +466,7 @@ class TestMontrekTemplateView(TestCase):
 
     def test_get_view_queryset(self):
         test_view = MockMontrekTemplateView("/")
-        test_queryset = test_view.get_view_queryset()
+        test_queryset = test_view.get_queryset()
         self.assertEqual(
             [mqe.field for mqe in test_queryset], ["item1", "item2", "item3"]
         )
@@ -476,7 +476,7 @@ class TestMontrekTemplateView(TestCase):
 class TestMontrekCreateView(TestCase):
     def test_get_queryset(self):
         test_view = MockMontrekCreateView("/")
-        test_queryset = test_view.get_view_queryset()
+        test_queryset = test_view.get_queryset()
         self.assertEqual(
             [mqe.field for mqe in test_queryset], ["item1", "item2", "item3"]
         )
@@ -486,3 +486,9 @@ class TestMontrekCreateView(TestCase):
         test_view = MockMontrekCreateView("/")
         test_form = test_view.post(test_view.request)
         self.assertEqual(test_form.status_code, 200)
+
+
+class TestMontrekRedirectView(TestCase):
+    def test_no_get_redirect_url(self):
+        test_view = MontrekRedirectView()
+        self.assertRaises(NotImplementedError, test_view.get_redirect_url)
