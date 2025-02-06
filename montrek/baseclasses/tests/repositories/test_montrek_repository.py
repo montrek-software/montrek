@@ -32,6 +32,12 @@ class TestMontrekRepository(TestCase):
             "set_annotations is not implemented for MontrekRepository",
         )
 
+    def test_annotations(self):
+        montrek_repo = TestRepository()
+        expected_anotations = ["test_name", "test_value"]
+        for anno in expected_anotations:
+            self.assertIn(anno, montrek_repo.annotations)
+
     def test_session_date_default(self):
         montrek_repo = MockMontrekRepository()
         session_start_date = montrek_repo.session_start_date
