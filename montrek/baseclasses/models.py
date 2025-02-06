@@ -261,9 +261,6 @@ class MontrekTypeSatelliteABC(MontrekSatelliteABC):
     typename = models.CharField(max_length=50, default="NONE")
     identifier_fields = ["typename"]
 
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-
 
 class LinkTypeEnum(Enum):
     NONE = 0
@@ -332,10 +329,11 @@ class TestHubValueDate(HubValueDate):
 
 class TestMontrekSatellite(MontrekSatelliteABC):
     hub_entity = models.ForeignKey(TestMontrekHub, on_delete=models.CASCADE)
-    identifier_fields = ["test_name"]
+    identifier_fields = ["test_name", "test_date"]
     test_name = models.CharField(max_length=12)
     test_value = models.CharField(max_length=50, null=True)
     test_decimal = models.DecimalField(max_digits=10, decimal_places=4, default=0)
+    test_date = models.DateTimeField()
 
 
 class TestMontrekSatelliteNoIdFields(MontrekSatelliteABC):

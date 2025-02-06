@@ -28,6 +28,7 @@ class TestMontrekSatelliteFactory(MontrekSatelliteFactory):
 
     hub_entity = factory.SubFactory(TestMontrekHubFactory)
     test_name = factory.Sequence(lambda n: f"Test Name {n}")
+    test_date = montrek_time(2023, 6, 20)
 
 
 class TestLinkHubFactory(factory.django.DjangoModelFactory):

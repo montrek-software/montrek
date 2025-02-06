@@ -6,13 +6,16 @@ from django.test import TestCase
 from django.utils import timezone
 
 from baseclasses.models import (
+    TestLinkHub,
     TestMontrekHub,
     TestMontrekSatellite,
     TestMontrekSatelliteNoIdFields,
+    LinkTestMontrekTestLink,
 )
 from baseclasses.tests.factories.baseclass_factories import (
     TestMontrekHubFactory,
     TestMontrekSatelliteFactory,
+    LinkTestMontrekTestLinkFactory,
 )
 from baseclasses.utils import montrek_time
 
@@ -89,14 +92,18 @@ class TestSatelliteIdentifier(TestCase):
         )
 
     def test_new_satellite_has_correct_identifier_hash(self):
-        test_hash = hashlib.sha256(b"test_name").hexdigest()
+        teststr = b"test_name2023-06-20 00:00:00+00:00"
+        test_hash = hashlib.sha256(teststr).hexdigest()
         test_satellite = TestMontrekSatelliteFactory(
-            test_name="test_name", hub_entity=TestMontrekHubFactory()
+            test_name="test_name",
+            hub_entity=TestMontrekHubFactory(),
+            test_date=montrek_time(2023, 6, 20),
         )
         self.assertEqual(test_satellite.hash_identifier, test_hash)
 
     def test_new_satellite_has_incorrect_identifier_hash(self):
-        test_hash = hashlib.sha256(b"test_name").hexdigest()
+        teststr = b"test_name2023-06-20 00:00:00+00:00"
+        test_hash = hashlib.sha256(teststr).hexdigest()
         test_satellite = TestMontrekSatelliteFactory(
             test_name="test_name_2", hub_entity=TestMontrekHubFactory()
         )
@@ -114,18 +121,64 @@ class TestSatelliteIdentifier(TestCase):
         hash_saved = satellite_from_db.hash_identifier
         self.assertEqual(hash_unsaved, hash_saved)
 
+    def test_get_field_names(self):
+        test_satellite = TestMontrekSatelliteFactory()
+        field_names = test_satellite.get_field_names()
+        self.assertEqual(
+            field_names,
+            [
+                "id",
+                "created_at",
+                "updated_at",
+                "state_date_start",
+                "state_date_end",
+                "comment",
+                "created_by",
+                "hash_identifier",
+                "hash_value",
+                "hub_entity",
+                "test_name",
+                "test_value",
+                "test_decimal",
+                "test_date",
+            ],
+        )
+
 
 class TestSatelliteValueHash(TestCase):
     def test_new_satellite_has_correct_value_hash(self):
-        test_hash = hashlib.sha256(b"test_nameNone0").hexdigest()
+        test_hash = hashlib.sha256(
+            b"test_nameNone02023-06-20 00:00:00+00:00"
+        ).hexdigest()
         test_satellite = TestMontrekSatelliteFactory(
-            test_name="test_name", hub_entity=TestMontrekHubFactory()
+            test_name="test_name",
+            hub_entity=TestMontrekHubFactory(),
+            test_date=montrek_time(2023, 6, 20),
         )
         self.assertEqual(test_satellite.hash_value, test_hash)
 
     def test_new_satellite_has_wrong_value_hash(self):
-        test_hash = hashlib.sha256(b"test_name").hexdigest()
+        test_hash = hashlib.sha256(b"test_name2023-06-20 00:00:00+00:00").hexdigest()
         test_satellite = TestMontrekSatelliteFactory(
             test_name="test_name_2", hub_entity=TestMontrekHubFactory()
         )
         self.assertNotEqual(test_satellite.hash_value, test_hash)
+
+
+class TestMontrekLink(TestCase):
+    def test_link_str_representation(self):
+        test_link = LinkTestMontrekTestLinkFactory()
+        self.assertEqual(
+            str(test_link),
+            f"{test_link.hub_in.pk} -> {test_link.hub_out.pk}",
+        )
+
+    def test_get_related_hub_class(self):
+        self.assertEqual(
+            LinkTestMontrekTestLink.get_related_hub_class("hub_in"),
+            TestMontrekHub,
+        )
+        self.assertEqual(
+            LinkTestMontrekTestLink.get_related_hub_class("hub_out"),
+            TestLinkHub,
+        )
