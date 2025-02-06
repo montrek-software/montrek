@@ -1,3 +1,4 @@
+from django.db.models import QuerySet
 from django.test import TestCase
 from django.utils import timezone
 
@@ -69,3 +70,29 @@ class TestQueryBuilder(TestCase):
         test_query = query_builder.build_queryset(self.reference_date)
         self.assertEqual(test_query.count(), 1)
         self.assertEqual(test_query.first().test_name, "Test Name 0")
+
+    def test_failure_with_filter(self):
+        TestMontrekSatelliteFactory.create(
+            test_name="Test Name 0",
+            test_value=0,
+        )
+        TestMontrekSatelliteFactory.create(
+            test_name="Test Name 1",
+            test_value=1,
+        )
+        self.annotator.subquery_builder_to_annotations(
+            ["test_name", "test_value"], TestMontrekSatellite, SatelliteSubqueryBuilder
+        )
+        filter_dict = {
+            "filter": {
+                "": {
+                    "test_value__nonsense": {
+                        "filter_value": 0,
+                        "filter_negate": "Flumms",
+                    }
+                }
+            }
+        }
+        query_builder = QueryBuilder(self.annotator, session_data=filter_dict)
+        query_builder.build_queryset(self.reference_date)
+        self.assertEqual(query_builder.messages[0].message_type, "error")

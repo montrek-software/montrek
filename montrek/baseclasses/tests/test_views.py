@@ -1,19 +1,30 @@
-from baseclasses.tests.mocks import MockRepository
-from user.tests.factories.montrek_user_factories import MontrekUserFactory
+from bs4 import BeautifulSoup
 from django.contrib.auth.models import AnonymousUser
-from django.test import TestCase, RequestFactory
-from django.contrib.sessions.middleware import SessionMiddleware
-from django.contrib.messages.middleware import MessageMiddleware
 from django.contrib.messages import get_messages
-from baseclasses.views import MontrekViewMixin
-from baseclasses.views import MontrekListView
+from django.contrib.messages.middleware import MessageMiddleware
+from django.contrib.sessions.middleware import SessionMiddleware
+from django.test import RequestFactory, TestCase
+from reporting.dataclasses import table_elements as te
+from reporting.managers.montrek_table_manager import MontrekTableManager
+from user.tests.factories.montrek_user_factories import MontrekUserFactory
+
 from baseclasses.dataclasses.montrek_message import (
     MontrekMessageError,
     MontrekMessageInfo,
 )
+from baseclasses.managers.montrek_manager import MontrekManager
 from baseclasses.pages import MontrekPage
-from reporting.managers.montrek_table_manager import MontrekTableManager
-from reporting.dataclasses import table_elements as te
+from baseclasses.tests.mocks import MockRepository
+from baseclasses.views import (
+    MontrekDetailView,
+    MontrekListView,
+    MontrekPageViewMixin,
+    MontrekTemplateView,
+    MontrekViewMixin,
+    MontrekCreateUpdateView,
+    MontrekRedirectView,
+    navbar,
+)
 
 
 class MockRequester:
@@ -52,7 +63,23 @@ class MockManager(MontrekTableManager):
         ]
 
 
-class MockMontrekView(MontrekViewMixin, MockRequester):
+class MockFooter:
+    def to_latex(self):
+        return "Guten Abend"
+
+
+class MockManager2(MontrekManager):
+    repository_class = MockRepository
+    document_title = "Guten Tag!"
+    footer_text = MockFooter()
+    draft = True
+    document_name = "whats your name"
+
+    def to_latex(self):
+        return "Hallo!"
+
+
+class MockMontrekView(MontrekViewMixin, MockRequester, MontrekPageViewMixin):
     manager_class = MockManager
 
     def __init__(self, url: str):
@@ -64,6 +91,66 @@ class MockPage(MontrekPage):
     @property
     def tabs(self):
         return []
+
+
+class MockMontrekTemplateViewNoMethods(MontrekTemplateView, MockRequester):
+    page_class = MockPage
+
+    def __init__(self, url: str):
+        super().__init__()
+        self.add_mock_request(url)
+
+
+class MockMontrekTemplateView(MockMontrekTemplateViewNoMethods):
+    manager_class = MockManager
+
+    def get_template_context(self) -> dict:
+        return {}
+
+
+class MockMontrekListViewWrongManager(MontrekListView, MockRequester):
+    manager_class = MockManager2
+    page_class = MockPage
+
+    def __init__(self, url: str):
+        super().__init__()
+        self.add_mock_request(url)
+
+
+class MockMontrekDetailViewWrongManager(MontrekDetailView, MockRequester):
+    manager_class = MockManager2
+    is_hub_based = False
+
+    def __init__(self, url: str):
+        super().__init__()
+        self.add_mock_request(url)
+
+
+class MockErrors:
+    def items(self):
+        return [("bla", "blubb")]
+
+
+class MockFormClass:
+    errors = MockErrors()
+
+    def __init__(self, request, repository):
+        ...
+
+    def is_valid(self):
+        return False
+
+
+class MockMontrekCreateView(MontrekCreateUpdateView, MockRequester):
+    manager_class = MockManager
+    is_hub_based = False
+    form_class = MockFormClass
+    page_class = MockPage
+
+    def __init__(self, url: str):
+        super().__init__()
+        self.add_mock_request(url)
+        self.kwargs = {}
 
 
 class TestUnderConstruction(TestCase):
@@ -175,16 +262,17 @@ class TestMontrekViewMixin(TestCase):
             )
         )
 
-    def test_elements_property(self):
-        mock_view = MockMontrekView("/")
-        self.assertEqual(mock_view.elements, [])
-
     def test_get_view_queryset(self):
         mock_view = MockMontrekView("/")
         mock_queryset = mock_view.get_view_queryset()
         self.assertEqual(
             [mqe.field for mqe in mock_queryset], ["item1", "item2", "item3"]
         )
+
+    def test_empty_request_in_date_range_form(self):
+        mock_view = MontrekPageViewMixin()
+        form_data = mock_view._handle_date_range_form()
+        self.assertEqual(form_data, {})
 
 
 class MockMontrekListView(MontrekListView, MockRequester):
@@ -263,3 +351,144 @@ class TestMontrekListView(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(test_list_view.request.session.get("filter"), {})
         self.assertEqual(test_list_view.session_data.get("filter"), {})
+
+    def test_get_context_data__raise_error(self):
+        test_view = MockMontrekListViewWrongManager("/")
+        test_view.kwargs = {}
+        self.assertRaises(ValueError, test_view.get_context_data, **{"object_list": []})
+
+
+class TestMontrekDetailView(TestCase):
+    def test_gen_pdf(self):
+        test_view = MockMontrekDetailViewWrongManager("dummy?gen_pdf=true")
+        response = test_view.get(test_view.request)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/pdf")
+
+    def test_get_context_data__raise_error(self):
+        test_view = MockMontrekDetailViewWrongManager("/")
+        test_view.kwargs = {}
+        test_view.object = []
+        self.assertRaises(ValueError, test_view.get_context_data)
+
+
+class TestNavbar(TestCase):
+    def setUp(self) -> None:
+        self.factory = RequestFactory()
+
+    def test_navbar(self):
+        request = self.factory.get("/navbar/")
+        response = navbar(request)
+        self.assertEqual(response.status_code, 200)
+        soup = BeautifulSoup(response.content, "html.parser")
+
+        # Check Navbar Brand
+        brand = soup.find("a", class_="navbar-brand")
+        self.assertIsNotNone(brand)
+        self.assertEqual(brand.text.strip(), "montrek")
+
+        # Check "Home" link
+        home_link = soup.find("a", href="/")
+        self.assertIsNotNone(home_link)
+        self.assertEqual(home_link.text.strip(), "montrek")
+
+        # Check Dropdown for "Montrek Example"
+        dropdown = soup.find("li", class_="dropdown")
+        self.assertIsNotNone(dropdown)
+
+        # Verify dropdown title
+        dropdown_toggle = dropdown.find("a", class_="dropdown-toggle")
+        self.assertIsNotNone(dropdown_toggle)
+        self.assertIn("Montrek Example", dropdown_toggle.text)
+
+        # Verify dropdown items
+        dropdown_items = dropdown.find_all("li")
+        self.assertEqual(len(dropdown_items), 1)  # Should contain one item
+
+        dropdown_link = dropdown_items[0].find("a")
+        self.assertIsNotNone(dropdown_link)
+        self.assertEqual(dropdown_link.text.strip(), "Montrek Example Report")
+        self.assertEqual(dropdown_link["href"], "/montrek_example/")
+
+        # Check individual "Mailing" link (not inside dropdown)
+        mailing_link = soup.find("a", href="/mailing/overview")
+        self.assertIsNotNone(mailing_link)
+        self.assertEqual(mailing_link.text.strip(), "Mailing")
+
+
+class TestFiter(TestCase):
+    def test__get_filters_isnull(self):
+        test_view = MockMontrekView("/")
+        test_data = test_view._get_filters(
+            {"filter_lookup": ["isnull"], "filter_field": ["test_field"]}
+        )
+        self.assertTrue(test_data["filter"]["/"]["test_field__isnull"]["filter_value"])
+
+    def test__get_filters_true(self):
+        test_view = MockMontrekView("/")
+        for true_value in ("True", "true", True):
+            test_data = test_view._get_filters(
+                {
+                    "filter_lookup": ["test"],
+                    "filter_field": ["test_field"],
+                    "filter_value": [true_value],
+                }
+            )
+            self.assertTrue(
+                test_data["filter"]["/"]["test_field__test"]["filter_value"]
+            )
+
+    def test__get_filters_false(self):
+        test_view = MockMontrekView("/")
+        for false_value in ("False", "false", False):
+            test_data = test_view._get_filters(
+                {
+                    "filter_lookup": ["test"],
+                    "filter_field": ["test_field"],
+                    "filter_value": [false_value],
+                }
+            )
+            self.assertFalse(
+                test_data["filter"]["/"]["test_field__test"]["filter_value"]
+            )
+
+
+class TestMontrekTemplateView(TestCase):
+    def test_no_kwargs(self):
+        test_view = MockMontrekTemplateView("/")
+        kwargs = {"hallo": "wallo!"}
+        test_view.get_context_data(**kwargs)
+        self.assertEqual(test_view.kwargs, kwargs)
+
+    def test_no_get_template_context(self):
+        test_view = MockMontrekTemplateViewNoMethods("/")
+        self.assertRaises(NotImplementedError, test_view.get_context_data)
+
+    def test_get_view_queryset(self):
+        test_view = MockMontrekTemplateView("/")
+        test_queryset = test_view.get_queryset()
+        self.assertEqual(
+            [mqe.field for mqe in test_queryset], ["item1", "item2", "item3"]
+        )
+        self.assertEqual([mqe.value for mqe in test_queryset], [1, 2, 3])
+
+
+class TestMontrekCreateView(TestCase):
+    def test_get_queryset(self):
+        test_view = MockMontrekCreateView("/")
+        test_queryset = test_view.get_queryset()
+        self.assertEqual(
+            [mqe.field for mqe in test_queryset], ["item1", "item2", "item3"]
+        )
+        self.assertEqual([mqe.value for mqe in test_queryset], [1, 2, 3])
+
+    def test_post(self):
+        test_view = MockMontrekCreateView("/")
+        test_form = test_view.post(test_view.request)
+        self.assertEqual(test_form.status_code, 200)
+
+
+class TestMontrekRedirectView(TestCase):
+    def test_no_get_redirect_url(self):
+        test_view = MontrekRedirectView()
+        self.assertRaises(NotImplementedError, test_view.get_redirect_url)

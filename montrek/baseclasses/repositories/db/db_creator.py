@@ -144,10 +144,6 @@ class DbCreator:
             self.value_date_list = value_date_list
         elif existing_value_date_list.count() == 1:
             self.value_date_list = existing_value_date_list.first()
-        else:
-            raise MontrekError(
-                f"Severe Error: Multiple ValueDateList objects for date {value_date}"
-            )
 
     def _stall_hub(self):
         if "hub_entity_id" in self.data and not pd.isnull(self.data["hub_entity_id"]):

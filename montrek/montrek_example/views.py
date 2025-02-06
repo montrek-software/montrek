@@ -1,44 +1,48 @@
 import time
-from django.contrib import messages
-from django.http import HttpResponseRedirect
+
 from baseclasses import views
-from montrek.celery_app import (
-    PARALLEL_QUEUE_NAME,
-    SEQUENTIAL_QUEUE_NAME,
-    app as celery_app,
-)
-from requesting.views.authenticator_views import (
-    AuthenticatorUserPasswordView,
-)
-from montrek_example.managers.a_upload_table_manager import (
-    HubAFileUploadRegistryManager,
-    HubAUploadTableManager,
-)
 from baseclasses.dataclasses.view_classes import (
     ActionElement,
     CreateActionElement,
     UploadActionElement,
 )
+from reporting.views import MontrekReportView
+from django.contrib import messages
+from django.http import HttpResponseRedirect
 from django.urls import reverse
 from file_upload.views import (
     FileUploadRegistryView,
-    MontrekFieldMapCreateView,
-    MontrekFieldMapUpdateView,
-    MontrekFieldMapListView,
-    MontrekUploadFileView,
     MontrekDownloadFileView,
     MontrekDownloadLogFileView,
+    MontrekFieldMapCreateView,
+    MontrekFieldMapListView,
+    MontrekFieldMapUpdateView,
+    MontrekUploadFileView,
 )
-from montrek_example.managers.a2_api_upload_manager import A2ApiUploadManager
-from montrek_example.managers.a1_file_upload_manager import (
-    A1FileUploadManager,
+from montrek.celery_app import (
+    PARALLEL_QUEUE_NAME,
+    SEQUENTIAL_QUEUE_NAME,
 )
-from montrek_example.managers.a1_field_map_manager import (
-    A1FieldMapManager,
+from montrek.celery_app import (
+    app as celery_app,
+)
+from requesting.views.authenticator_views import (
+    AuthenticatorUserPasswordView,
 )
 
 from montrek_example import forms, pages
 from montrek_example.managers import montrek_example_managers as mem
+from montrek_example.managers.a1_field_map_manager import (
+    A1FieldMapManager,
+)
+from montrek_example.managers.a1_file_upload_manager import (
+    A1FileUploadManager,
+)
+from montrek_example.managers.a2_api_upload_manager import A2ApiUploadManager
+from montrek_example.managers.a_upload_table_manager import (
+    HubAFileUploadRegistryManager,
+    HubAUploadTableManager,
+)
 
 
 def action_back_to_overview(example: str):
@@ -50,7 +54,7 @@ def action_back_to_overview(example: str):
     )
 
 
-class MontrekExampleReport(views.MontrekReportView):
+class MontrekExampleReport(MontrekReportView):
     page_class = pages.MontrekExampleAAppPage
     manager_class = mem.ExampleReportManager
     title = "Montrek Example Report"
