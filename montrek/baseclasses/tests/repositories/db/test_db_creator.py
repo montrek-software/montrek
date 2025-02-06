@@ -14,10 +14,11 @@ from baseclasses.tests.factories.baseclass_factories import (
     TestMontrekTimeSeriesSatelliteFactory,
     TestMontrekHubFactory,
 )
+from baseclasses.utils import montrek_time
 
 
 class MockDbStaller:
-    creation_date = datetime.datetime(2018, 1, 1, 0, 0, 0)
+    creation_date = montrek_time(2018, 1, 1, 0, 0, 0)
 
 
 class TestDBCreator(TestCase):

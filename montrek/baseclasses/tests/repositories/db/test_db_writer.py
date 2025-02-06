@@ -4,6 +4,7 @@ from baseclasses.repositories.db.db_writer import DbWriter
 from baseclasses.repositories.annotator import Annotator
 
 from baseclasses.models import TestMontrekSatellite, TestMontrekHub
+from baseclasses.utils import montrek_time
 
 
 class MockAnnotator(Annotator):
@@ -19,7 +20,9 @@ class TestDbWriter(TestCase):
 
     def test_db_writer__add_and_write_new_satellite(self):
         new_hub = TestMontrekHub()
-        new_sat = TestMontrekSatellite(hub_entity=new_hub, test_date="2023-06-20")
+        new_sat = TestMontrekSatellite(
+            hub_entity=new_hub, test_date=montrek_time(2023, 6, 1)
+        )
         self.db_staller.stall_hub(new_hub)
         self.db_staller.stall_new_satellite(new_sat)
         db_writer = DbWriter(self.db_staller)
