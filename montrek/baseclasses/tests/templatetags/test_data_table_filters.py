@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from django.test import TestCase
 from django.urls import reverse, NoReverseMatch
 from reporting.dataclasses import table_elements
@@ -8,7 +9,7 @@ from baseclasses.templatetags.data_table_filters import (
 )
 
 
-class ShowItemFilterTests(TestCase):
+class TestShowItemFilterTests(TestCase):
     def setUp(self):
         self.obj = {
             "name": "Test Name",
@@ -36,8 +37,48 @@ class ShowItemFilterTests(TestCase):
         result = get_attribute(self.obj, missing_element)
         self.assertIn("missing", result)  # Defaults to attribute name
 
+    def test_get_attribute__none_value(self):
+        self.obj["name"] = None
+        result = get_attribute(self.obj, self.simple_element)
+        self.assertIn("-", result)
 
-class GetDottedAttrOrArgTests(TestCase):
+
+@dataclass
+class MockObject:
+    name: str
+    nested: dict
+
+
+class TestShowItemFilterTestsObects(TestCase):
+    def setUp(self):
+        self.obj = MockObject(
+            name="Test Name",
+            nested={"value": "Nested Value"},
+        )
+        self.simple_element = table_elements.TextTableElement(
+            attr="name", name="simple"
+        )
+        self.nested_element = table_elements.TextTableElement(
+            attr="nested.value", name="nested"
+        )
+
+    def test_get_attribute_simple(self):
+        result = get_attribute(self.obj, self.simple_element)
+        self.assertIn("Test Name", result)
+
+    def test_get_attribute_nested(self):
+        result = get_attribute(self.obj, self.nested_element)
+        self.assertIn("nested.value", result)
+
+    def test_get_attribute_missing(self):
+        missing_element = table_elements.TextTableElement(
+            attr="missing", name="missing"
+        )
+        result = get_attribute(self.obj, missing_element)
+        self.assertIn("missing", result)  # Defaults to attribute name
+
+
+class TestGetDottedAttrOrArgTests(TestCase):
     def test_get_dotted_attr_or_arg_dict(self):
         obj = {"level1": {"level2": "value"}}
         result = _get_dotted_attr_or_arg(obj, "level1.level2")
@@ -48,8 +89,13 @@ class GetDottedAttrOrArgTests(TestCase):
         result = _get_dotted_attr_or_arg(obj, "level1.missing")
         self.assertIsNone(result)
 
+    def test_get_dotted_attr_or_arg_obj(self):
+        obj = MockObject(name="Test Name", nested={"value": "Nested Value"})
+        result = _get_dotted_attr_or_arg(obj, "nested.value")
+        self.assertEqual("Nested Value", result)
 
-class GetLinkTests(TestCase):
+
+class TestGetLinkTests(TestCase):
     def setUp(self):
         self.obj = {"id": 1, "name": "Test"}
         self.link_element = table_elements.LinkTableElement(
@@ -59,15 +105,37 @@ class GetLinkTests(TestCase):
             hover_text="Click me",
             name="link",
         )
+        self.link_text_element = table_elements.LinkTextTableElement(
+            url="home",
+            kwargs={},
+            hover_text="Click me",
+            name="link",
+            text="Link Text",
+        )
 
     def test_get_link_success(self):
-        # with self.settings(ROOT_URLCONF="your_project.urls"):
         url = reverse("home")
-        rendered_link = _get_link(self.obj, self.link_element)
+        rendered_link = get_attribute(self.obj, self.link_element)
+        self.assertIn(url, rendered_link)
+        self.assertIn("Click me", rendered_link)
+
+    def test_get_link_filter(self):
+        url = reverse("home")
+        self.link_element.kwargs = {"filter": "filter"}
+        rendered_link = get_attribute(self.obj, self.link_element)
+        self.assertIn(url, rendered_link)
+        self.assertIn(
+            "?filter_field=filter&amp;filter_lookup=in&amp;filter_value=None",
+            rendered_link,
+        )
+
+    def test_get_text_link_success(self):
+        url = reverse("home")
+        rendered_link = get_attribute(self.obj, self.link_text_element)
         self.assertIn(url, rendered_link)
         self.assertIn("Click me", rendered_link)
 
     def test_get_link_no_reverse_match(self):
         self.link_element.url = "invalid_url"
-        result = _get_link(self.obj, self.link_element)
+        result = get_attribute(self.obj, self.link_element)
         self.assertEqual(result, "<td></td>")
