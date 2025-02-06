@@ -336,6 +336,11 @@ class TestMontrekSatellite(MontrekSatelliteABC):
     test_date = models.DateTimeField()
 
 
+class TestMontrekTimeSeriesSatellite(MontrekTimeSeriesSatelliteABC):
+    hub_value_date = models.ForeignKey(TestHubValueDate, on_delete=models.CASCADE)
+    test_decimal = models.DecimalField(max_digits=10, decimal_places=4, default=0)
+
+
 class TestMontrekSatelliteNoIdFields(MontrekSatelliteABC):
     hub_entity = models.ForeignKey(TestMontrekHub, on_delete=models.CASCADE)
 

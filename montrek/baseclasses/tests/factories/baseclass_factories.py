@@ -5,6 +5,7 @@ from baseclasses.tests.factories.montrek_factory_schemas import (
     MontrekHubFactory,
     MontrekHubValueDateFactory,
     MontrekSatelliteFactory,
+    MontrekTSSatelliteFactory,
     ValueDateListFactory,
 )
 
@@ -59,3 +60,10 @@ class TestMontrekSatelliteNoIdFieldsFactory(MontrekSatelliteFactory):
         model = "baseclasses.TestMontrekSatelliteNoIdFields"
 
     hub_entity = factory.SubFactory(TestMontrekHubFactory)
+
+
+class TestMontrekTimeSeriesSatelliteFactory(MontrekTSSatelliteFactory):
+    class Meta:
+        model = "baseclasses.TestMontrekTimeSeriesSatellite"
+
+    hub_value_date = factory.SubFactory(TestHubValueDateFactory)
