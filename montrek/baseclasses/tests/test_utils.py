@@ -16,12 +16,8 @@ class TestMontrekTime(TestCase):
         self.factory = RequestFactory()
 
     def create_request_with_session(self):
-        # Create a dummy 'get_response' function
-        def get_response(request):
-            return None
-
         request = self.factory.get("/")  # Create a request object
-        middleware = SessionMiddleware(get_response)
+        middleware = SessionMiddleware(lambda: None)
         middleware.process_request(request)
         request.session.save()
         return request
@@ -70,3 +66,7 @@ class TestGetContentType(TestCase):
         self.assertEqual(get_content_type("test.csv"), "text/csv")
         self.assertEqual(get_content_type("test.zip"), "application/zip")
         self.assertEqual(get_content_type("test"), "application/octet-stream")
+        self.assertEqual(
+            get_content_type("test.xlsx"),
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )

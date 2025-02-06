@@ -10,7 +10,7 @@ import requests
 from baseclasses.dataclasses.alert import AlertEnum
 from baseclasses.dataclasses.number_shortener import (
     NoShortening,
-    NumberShortenerProtocol,
+    NumberShortenerABC,
 )
 from django.template import Context, Template
 from django.urls import NoReverseMatch, reverse
@@ -201,7 +201,7 @@ class AlertTableElement(AttrTableElement):
 @dataclass
 class NumberTableElement(AttrTableElement):
     attr: str
-    shortener: NumberShortenerProtocol = NoShortening()
+    shortener: NumberShortenerABC = NoShortening()
 
     def format(self, value):
         if not isinstance(value, (int, float, Decimal)):
@@ -225,7 +225,7 @@ class NumberTableElement(AttrTableElement):
 class FloatTableElement(NumberTableElement):
     serializer_field_class = serializers.FloatField
     attr: str
-    shortener: NumberShortenerProtocol = NoShortening()
+    shortener: NumberShortenerABC = NoShortening()
 
     def _format_value(self, value) -> str:
         return self.shortener.shorten(value, ",.3f")
@@ -235,7 +235,7 @@ class FloatTableElement(NumberTableElement):
 class IntTableElement(NumberTableElement):
     serializer_field_class = serializers.IntegerField
     attr: str
-    shortener: NumberShortenerProtocol = NoShortening()
+    shortener: NumberShortenerABC = NoShortening()
 
     def _format_value(self, value) -> str:
         value = round(value)
@@ -313,7 +313,7 @@ class BooleanTableElement(AttrTableElement):
 class MoneyTableElement(NumberTableElement):
     serializer_field_class = serializers.FloatField
     attr: str
-    shortener: NumberShortenerProtocol = NoShortening()
+    shortener: NumberShortenerABC = NoShortening()
 
     @property
     def ccy_symbol(self) -> str:

@@ -1,17 +1,18 @@
-from typing import Protocol
+from abc import abstractmethod
 
 
-class NumberShortenerProtocol(Protocol):
+class NumberShortenerABC:
+    @abstractmethod
     def shorten(self, number: float, format: str) -> str:
-        pass
+        ...  # pragma: no cover
 
 
-class NoShortening:
+class NoShortening(NumberShortenerABC):
     def shorten(self, number: float, format: str) -> str:
         return f"{{0:{format}}}".format(number)
 
 
-class BaseShortening:
+class BaseShortening(NumberShortenerABC):
     order: int = 1
     symbol: str = ""
 
