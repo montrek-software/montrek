@@ -1,4 +1,4 @@
-from typing import Protocol
+from abc import ABC, abstractmethod
 
 from api_upload.models import ApiUploadRegistryHub
 from api_upload.repositories.api_upload_registry_repository import (
@@ -12,29 +12,31 @@ from baseclasses.managers.montrek_manager import MontrekManager
 from requesting.managers.request_manager import RequestManagerABC
 
 
-# todo: should this be an ABC?
-class ApiUploadProcessorProtocol(Protocol):
+class ApiUploadProcessorABC(ABC):
     message: str
 
     def __init__(
         self, api_upload_registry: ApiUploadRegistryHub, session_data: dict
     ) -> None:
-        ...
+        ...  # pragma: no cover
 
+    @abstractmethod
     def pre_check(self, json_response: dict | list) -> bool:
-        ...
+        ...  # pragma: no cover
 
+    @abstractmethod
     def process(self, json_response: dict | list) -> bool:
-        ...
+        ...  # pragma: no cover
 
+    @abstractmethod
     def post_check(self, json_response: dict | list) -> bool:
-        ...
+        ...  # pragma: no cover
 
 
 class ApiUploadManager(MontrekManager):
     repository_class = ApiUploadRepository
     request_manager_class: type[RequestManagerABC]
-    api_upload_processor_class: type[ApiUploadProcessorProtocol]
+    api_upload_processor_class: type[ApiUploadProcessorABC]
     endpoint: str
 
     def __init__(
