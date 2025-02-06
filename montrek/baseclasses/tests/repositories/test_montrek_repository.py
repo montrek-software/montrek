@@ -1,3 +1,4 @@
+import pandas as pd
 from django.db.models import Q
 from django.test import TestCase
 from django.utils import timezone
@@ -5,6 +6,7 @@ from django.utils import timezone
 from baseclasses.models import TestMontrekHub, TestMontrekSatellite
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from baseclasses.tests.factories.baseclass_factories import TestMontrekSatelliteFactory
+from baseclasses.tests.factories.baseclass_factories import TestMontrekHubFactory
 
 
 class MockMontrekRepository(MontrekRepository):
@@ -37,6 +39,20 @@ class TestMontrekRepository(TestCase):
         expected_anotations = ["test_name", "test_value"]
         for anno in expected_anotations:
             self.assertIn(anno, montrek_repo.annotations)
+
+    def test_convert_lists_to_tuples(self):
+        test_df = pd.DataFrame({"A": [[1, 2], (3, 4), 5]})
+        result_df = MontrekRepository._convert_lists_to_tuples(test_df, ["A"])
+        self.assertEqual(result_df["A"].iloc[0], (1, 2))
+        self.assertEqual(result_df["A"].iloc[1], (3, 4))
+        self.assertEqual(result_df["A"].iloc[2], 5)
+
+    def test_convert_tuples_to_lists(self):
+        test_df = pd.DataFrame({"A": [[1, 2], (3, 4), 5]})
+        result_df = MontrekRepository._convert_tuples_to_lists(test_df, ["A"])
+        self.assertEqual(result_df["A"].iloc[0], [1, 2])
+        self.assertEqual(result_df["A"].iloc[1], [3, 4])
+        self.assertEqual(result_df["A"].iloc[2], 5)
 
     def test_session_date_default(self):
         montrek_repo = MockMontrekRepository()
@@ -106,3 +122,22 @@ class TestMontrekRepository(TestCase):
             [test.test_name for test in montrek_repo.receive()],
             ["MMM", "AAA", "ZZZ"],
         )
+
+    def test_get_hub_from_data(self):
+        test_hub = TestMontrekHubFactory.create()
+        montrek_repo = TestRepository()
+        data = {"hub_entity_id": test_hub.pk}
+        hub = montrek_repo._get_hub_from_data(data)
+        self.assertEqual(hub, test_hub)
+
+    def test_get_hub_from_data__new_hub(self):
+        montrek_repo = TestRepository()
+        for null_data in [None, ""]:
+            data = {"hub_entity_id": null_data}
+            hub = montrek_repo._get_hub_from_data(data)
+            self.assertTrue(isinstance(hub, TestMontrekHub))
+            self.assertTrue(hub.pk is None)
+        data = {}
+        hub = montrek_repo._get_hub_from_data(data)
+        self.assertTrue(isinstance(hub, TestMontrekHub))
+        self.assertTrue(hub.pk is None)
