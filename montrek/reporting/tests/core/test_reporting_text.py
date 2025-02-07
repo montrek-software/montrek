@@ -4,6 +4,7 @@ from reporting.core.reporting_text import (
     ReportingParagraph,
     ReportingTextParagraph,
     MontrekLogo,
+    ReportingEditableText,
 )
 from reporting.constants import ReportingTextType
 
@@ -46,6 +47,40 @@ class TestReportText(TestCase):
         self.assertEqual(test_plain_to_html, self.plain_html_text)
         test_plain_to_latex = paragraph.format_latex()
         self.assertEqual(test_plain_to_latex, self.plain_latex_text)
+
+    def test_reporting_editable_text(self):
+        test_element = ReportingEditableText("This is a plain text")
+        self.assertEqual(test_element.text, "This is a plain text")
+        self.assertEqual(
+            test_element.to_html(),
+            """<div class="container-fluid">
+        <div class="row">
+        <div class="col-lg-12" style="padding:0">This is a plain text</div>
+        </div>
+        <div class="row">
+        <div class="col-lg-11"></div>
+        <div class="col-lg-1"></div>
+        </div>
+</div>""",
+        )
+
+    def test_reporting_editable_text_with_url(self):
+        test_element = ReportingEditableText(
+            "This is a plain text", edit_url="http://example.com"
+        )
+        self.assertEqual(test_element.text, "This is a plain text")
+        self.assertEqual(
+            test_element.to_html(),
+            """<div class="container-fluid">
+        <div class="row">
+        <div class="col-lg-12" style="padding:0">This is a plain text</div>
+        </div>
+        <div class="row">
+        <div class="col-lg-11"></div>
+        <div class="col-lg-1"><a href="http://example.com" class="btn"><span class="glyphicon glyphicon-pencil"/></a></div>
+        </div>
+</div>""",
+        )
 
 
 class TestReportingParagraph(TestCase):

@@ -66,6 +66,33 @@ class ReportingParagraph(ReportingText):
         return f"<p>{self.text}</p>"
 
 
+class ReportingEditableText(ReportingText):
+    def __init__(
+        self,
+        text: str,
+        reporting_text_type: ReportingTextType = ReportingTextType.HTML,
+        edit_url: str = "",
+    ):
+        super().__init__(text, reporting_text_type)
+        self.edit_url = edit_url
+
+    def to_html(self) -> str:
+        edit_button = (
+            f'<a href="{self.edit_url}" class="btn"><span class="glyphicon glyphicon-pencil"/></a>'
+            if self.edit_url != ""
+            else ""
+        )
+        return f"""<div class="container-fluid">
+        <div class="row">
+        <div class="col-lg-12" style="padding:0">{self.text}</div>
+        </div>
+        <div class="row">
+        <div class="col-lg-11"></div>
+        <div class="col-lg-1">{edit_button}</div>
+        </div>
+</div>"""
+
+
 class ReportingHeader1:
     def __init__(self, text: str):
         self.text = text
