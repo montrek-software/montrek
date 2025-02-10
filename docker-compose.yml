@@ -76,6 +76,22 @@ services:
     networks:
       - montrek_network
 
+  celery_beat:
+    image: montrek_app
+    command: sh -c "cd montrek && celery --app=montrek beat --loglevel=info"
+    volumes:
+      - .:/montrek
+    env_file:
+      - .env
+    depends_on:
+      - web
+      - db
+      - redis
+      - parallel_worker
+      - sequential_worker
+    networks:
+      - montrek_network
+
   redis:
     image: redis:7-alpine
     networks:

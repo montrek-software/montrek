@@ -51,6 +51,7 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 DJANGO_APPS = [
     "django.contrib.admin",
+    "django_celery_beat",
     "debug_toolbar",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -257,6 +258,7 @@ CELERY_WORKER_PREFETCH_MULTIPLIER = 1
 CELERY_BROKER_TRANSPORT_OPTIONS = {
     "visibility_timeout": 3600 * 10,  # 10 hours
 }
+CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers.DatabaseScheduler"
 
 LOGGING = {
     "version": 1,
