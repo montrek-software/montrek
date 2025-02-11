@@ -13,7 +13,9 @@ beautifulsoup4==4.12.3
 billiard==4.2.1
     # via celery
 celery==5.4.0
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   django-celery-beat
 certifi==2024.12.14
     # via requests
 charset-normalizer==3.4.1
@@ -30,18 +32,26 @@ click-plugins==1.1.1
     # via celery
 click-repl==0.3.0
     # via celery
+cron-descriptor==1.4.5
+    # via django-celery-beat
 django==5.1.5
     # via
     #   -r requirements.in
+    #   django-celery-beat
     #   django-debug-toolbar
     #   django-extensions
+    #   django-timezone-field
     #   djangorestframework
+django-celery-beat==2.7.0
+    # via -r requirements.in
 django-debug-toolbar==5.0.1
     # via -r requirements.in
 django-extensions==3.2.3
     # via -r requirements.in
 django-pandas==0.6.7
     # via -r requirements.in
+django-timezone-field==7.1
+    # via django-celery-beat
 djangorestframework==3.15.2
     # via -r requirements.in
 et-xmlfile==2.0.0
@@ -116,12 +126,15 @@ psycopg2==2.9.10
     # via -r requirements.in
 pycountry==24.6.1
     # via faker-marketdata
+python-crontab==3.2.0
+    # via django-celery-beat
 python-dateutil==2.9.0.post0
     # via
     #   celery
     #   faker
     #   freezegun
     #   pandas
+    #   python-crontab
     #   sdmx1
 python-decouple==3.8
     # via -r requirements.in
@@ -170,6 +183,7 @@ typing-inspect==0.9.0
 tzdata==2025.1
     # via
     #   celery
+    #   django-celery-beat
     #   kombu
     #   pandas
 urllib3==2.3.0
