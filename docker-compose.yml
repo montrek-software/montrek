@@ -4,7 +4,7 @@ services:
   nginx:
     build: ./nginx
     ports:
-      - ${DEPLOY_PORT}:80
+      - ${DEPLOY_PORT}:${DEPLOY_PORT}
     volumes:
       - static_volume:/montrek/static
       - uploads_volume:/montrek/uploads
