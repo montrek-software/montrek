@@ -6,7 +6,7 @@ server {
 
 
     server_name montrek.${PROJECT_NAME};
-    listen 80 ssl;
+    listen ${DEPLOY_PORT} ssl;
     ssl_certificate /etc/ssl/cert.crt;
     ssl_certificate_key /etc/ssl/cert.key;
 
