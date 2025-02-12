@@ -141,6 +141,7 @@ class CodeGenerationConfig:
             "page_cls_import": self._get_import("pages", page_cls_name),
             "page_cls_name": page_cls_name,
             "page_title": ui_prefix,
+            "prefix": prefix,
             "repo_cls_import": self._get_import("repositories", repo_cls_name),
             "repo_cls_name": repo_cls_name,
             "sat_cls_import": self._get_import("sat_models", sat_cls_name),
