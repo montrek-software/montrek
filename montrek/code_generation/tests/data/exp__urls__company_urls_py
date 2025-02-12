@@ -1,3 +1,4 @@
+from django.shortcuts import redirect
 from django.urls import path
 from code_generation.tests.data.output.views.company_views import CompanyListView
 from code_generation.tests.data.output.views.company_views import CompanyCreateView
@@ -6,6 +7,11 @@ from code_generation.tests.data.output.views.company_views import CompanyDeleteV
 from code_generation.tests.data.output.views.company_views import CompanyDetailView
 
 urlpatterns = [
+    path(
+        "company",
+        lambda _: redirect("fund_list"),
+        name="company"
+    ),
     path(
         "company/list",
         CompanyListView.as_view(),

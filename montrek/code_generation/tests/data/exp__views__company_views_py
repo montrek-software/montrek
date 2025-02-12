@@ -1,5 +1,5 @@
 from django.urls import reverse
-from baseclasses.dataclasses.view_classes import ActionElement
+from baseclasses.dataclasses.view_classes import ActionElement, BackActionElement
 from baseclasses.views import MontrekDetailView, MontrekListView
 from baseclasses.views import MontrekCreateView
 from baseclasses.views import MontrekUpdateView
@@ -58,3 +58,8 @@ class CompanyDetailView(MontrekDetailView):
     page_class = CompanyDetailsPage
     tab = "tab_company_details"
     title = "Company Details"
+
+    @property
+    def actions(self) -> tuple:
+        action_back = BackActionElement("company_list")
+        return (action_back,)
