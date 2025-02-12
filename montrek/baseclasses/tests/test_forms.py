@@ -61,6 +61,7 @@ class TestMontrekModelMultipleChoiceField(TestCase):
         )
         self.assertTrue(isinstance(checkbox_field.widget, CheckboxSelectMultiple))
         self.assertTrue(isinstance(list_field.widget, FilteredSelectMultiple))
+        self.assertEqual(list_field.widget.verbose_name, "field1")
 
 
 class TestBaseMontrekChoiceField(TestCase):
