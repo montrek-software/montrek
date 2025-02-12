@@ -9,7 +9,7 @@ from django.urls import path
 urlpatterns = [
     path(
         "{{ prefix }}",
-        lambda _: redirect("fund_list"),
+        lambda _: redirect("{{ list_view_url_name }}"),
         name="{{ prefix }}"
     ),
     path(

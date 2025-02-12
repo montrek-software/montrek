@@ -9,7 +9,7 @@ from code_generation.tests.data.output.views.company_views import CompanyDetailV
 urlpatterns = [
     path(
         "company",
-        lambda _: redirect("fund_list"),
+        lambda _: redirect("company_list"),
         name="company"
     ),
     path(
