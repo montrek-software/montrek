@@ -1,9 +1,12 @@
+from unittest.mock import patch
+
 from bs4 import BeautifulSoup
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.messages import get_messages
 from django.contrib.messages.middleware import MessageMiddleware
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.test import RequestFactory, TestCase
+from django.urls import reverse
 from reporting.dataclasses import table_elements as te
 from reporting.managers.montrek_table_manager import MontrekTableManager
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
@@ -16,15 +19,16 @@ from baseclasses.managers.montrek_manager import MontrekManager
 from baseclasses.pages import MontrekPage
 from baseclasses.tests.mocks import MockRepository
 from baseclasses.views import (
+    MontrekCreateUpdateView,
     MontrekDetailView,
     MontrekListView,
     MontrekPageViewMixin,
+    MontrekRedirectView,
     MontrekTemplateView,
     MontrekViewMixin,
-    MontrekCreateUpdateView,
-    MontrekRedirectView,
     navbar,
 )
+from testing.decorators.add_logged_in_user import add_logged_in_user
 
 
 class MockRequester:
@@ -492,3 +496,30 @@ class TestMontrekRedirectView(TestCase):
     def test_no_get_redirect_url(self):
         test_view = MontrekRedirectView()
         self.assertRaises(NotImplementedError, test_view.get_redirect_url)
+
+
+class ClientLogoViewTest(TestCase):
+    @patch("baseclasses.views.config")  # patching the config function
+    @add_logged_in_user
+    def test_client_logo(self, mock_config):
+        # Mock the config value to simulate the environment variable
+        mock_config.return_value = "my_logo.png"
+
+        # Make a request to the view
+        response = self.client.get(
+            reverse("client_logo")
+        )  # assuming the view has the URL name 'client_logo'
+
+        # Check that the response is OK (200)
+        self.assertEqual(response.status_code, 200)
+
+        # Ensure the context contains the correct logo path
+        self.assertIn("client_logo_path", response.context)
+        self.assertEqual(response.context["client_logo_path"], "my_logo.png")
+
+        # Check the rendered HTML
+        # Check that the static URL for the logo is correct
+        self.assertContains(
+            response,
+            '<img src="/static/logos/my_logo.png" class="img-responsive" alt="Client Logo"/>',
+        )
