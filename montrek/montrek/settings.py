@@ -234,6 +234,7 @@ CSRF_TRUSTED_ORIGINS = [
 CSRF_TRUSTED_ORIGINS += [
     f"https://montrek.{PROJECT_NAME}:{DEPLOY_PORT}",
     f"https://{DEPLOY_HOST}:{DEPLOY_PORT}",
+    f"https://{DEPLOY_HOST}",
 ]
 
 EMAIL_HOST = config("EMAIL_HOST", default=None)
