@@ -16,6 +16,9 @@ jobs:
       matrix:
         python-version: [3.12.0]
 
+    container:
+      image: vimsnt/montrek-github-actions:latest
+
     services:
       postgres:
         image: postgres:latest
@@ -29,10 +32,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - name: Install Tex Live
-        run: |
-          sudo apt-get update
-          sudo apt-get install texlive-xetex texlive-fonts-recommended
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v3
         with:
@@ -47,17 +46,6 @@ jobs:
           echo "DB_PASSWORD=ci_pipe_pssw" >> .env
           echo "DB_NAME=montrek_ci_pipe_db" >> .env
           echo "DB_HOST=0.0.0.0" >> .env
-
-      - name: Install Arial font
-        run: |
-          sudo apt-get update
-          echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true | sudo debconf-set-selections
-          sudo apt-get install -y ttf-mscorefonts-installer
-          sudo fc-cache -f -v
-
-      - name: Verify Arial font installation
-        run: |
-          fc-list | grep -i arial
       - name: Run Tests
         run: |
           cd montrek
