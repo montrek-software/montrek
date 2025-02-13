@@ -7,13 +7,6 @@ class CommonTableElementsMixin:
     @property
     def table_elements(self):
         return [
-            te.LinkTextTableElement(
-                name="Details",
-                url="company_details",
-                kwargs={"pk": "hub_id"},
-                text="hub_entity_id",
-                hover_text="View Company Details",
-            ),
             te.LinkTableElement(
                 name="Edit",
                 url="company_update",
@@ -33,6 +26,28 @@ class CommonTableElementsMixin:
 class CompanyTableManager(CommonTableElementsMixin, MontrekTableManager):
     repository_class = CompanyRepository
 
+    @property
+    def table_elements(self):
+        table_elements = [
+            te.LinkTextTableElement(
+                name="Details",
+                url="company_details",
+                kwargs={"pk": "hub_id"},
+                text="hub_entity_id",
+                hover_text="View Company Details",
+            ),
+        ]
+        table_elements += super().table_elements
+        return table_elements
+
 
 class CompanyDetailsManager(CommonTableElementsMixin, MontrekDetailsManager):
     repository_class = CompanyRepository
+
+    @property
+    def table_elements(self):
+        table_elements = [
+            te.StringTableElement(name="hub", attr="hub_entity_id"),
+        ]
+        table_elements += super().table_elements
+        return table_elements

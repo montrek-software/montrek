@@ -7,13 +7,6 @@ class CommonTableElementsMixin:
     @property
     def table_elements(self):
         return [
-            te.LinkTextTableElement(
-                name="Details",
-                url="{{ detail_view_url_name }}",
-                kwargs={"pk": "hub_id"},
-                text="hub_entity_id",
-                hover_text="{{ details_hover }}",
-            ),
             te.LinkTableElement(
                 name="Edit",
                 url="{{ update_view_url_name }}",
@@ -33,6 +26,28 @@ class CommonTableElementsMixin:
 class {{ manager_cls_name }}(CommonTableElementsMixin, MontrekTableManager):
     repository_class = {{ repo_cls_name }}
 
+    @property
+    def table_elements(self):
+        table_elements = [
+            te.LinkTextTableElement(
+                name="Details",
+                url="{{ detail_view_url_name }}",
+                kwargs={"pk": "hub_id"},
+                text="hub_entity_id",
+                hover_text="{{ details_hover }}",
+            ),
+        ]
+        table_elements += super().table_elements
+        return table_elements
+
 
 class {{ details_manager_cls_name }}(CommonTableElementsMixin, MontrekDetailsManager):
     repository_class = {{ repo_cls_name }}
+
+    @property
+    def table_elements(self):
+        table_elements = [
+            te.StringTableElement(name="hub", attr="hub_entity_id"),
+        ]
+        table_elements += super().table_elements
+        return table_elements
