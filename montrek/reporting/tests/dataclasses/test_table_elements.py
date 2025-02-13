@@ -26,6 +26,20 @@ class TestTableElements(TestCase):
             '<td style="text-align: left; white-space: pre-wrap;">test</td>',
         )
 
+    def test_list_table_element(self):
+        test_element = te.ListTableElement(name="test", attr="test_value")
+        self.assertEqual(
+            test_element.format("test1,test2"),
+            '<td style="text-align: left">test1<br>test2</td>',
+        )
+        test_element = te.ListTableElement(
+            name="test", attr="test_value", in_separator=";", out_separator="|"
+        )
+        self.assertEqual(
+            test_element.format("test1,2;test3;test4"),
+            '<td style="text-align: left">test1,2|test3|test4</td>',
+        )
+
     def test_float_table_elements(self):
         test_element = te.FloatTableElement(name="test", attr="test_value")
         self.assertEqual(

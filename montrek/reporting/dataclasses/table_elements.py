@@ -189,6 +189,19 @@ class TextTableElement(AttrTableElement):
 
 
 @dataclass
+class ListTableElement(AttrTableElement):
+    serializer_field_class = serializers.CharField
+    attr: str
+    in_separator: str = ","
+    out_separator: str = "<br>"
+
+    def format(self, value):
+        values = value.split(self.in_separator)
+        out_value = self.out_separator.join(values)
+        return f'<td style="text-align: left">{out_value}</td>'
+
+
+@dataclass
 class AlertTableElement(AttrTableElement):
     serializer_field_class = serializers.CharField
     attr: str
@@ -266,7 +279,7 @@ class ProgressBarTableElement(NumberTableElement):
 
     def format_latex(self, value) -> str:
         per_value = value * 100
-        return f"\\progressbar{{ {per_value } }}{{ {per_value}\\% }} &"
+        return f"\\progressbar{{ {per_value} }}{{ {per_value}\\% }} &"
 
 
 @dataclass
