@@ -89,11 +89,16 @@ def client_logo(request):
         "CLIENT_LOGO_PATH",
         default="https://vme-stiftung.de/wp-content/uploads/2019/09/example-logo-2-300x201.jpg",
     )
+    client_logo_link = config("CLIENT_LOGO_LINK", default="https://example.com")
     is_url = bool(re.match(r"^https?://", client_logo_path))
     return render(
         request,
         "client_logo.html",
-        {"client_logo_path": client_logo_path, "is_url": is_url},
+        {
+            "client_logo_path": client_logo_path,
+            "is_url": is_url,
+            "client_logo_link": client_logo_link,
+        },
     )
 
 
