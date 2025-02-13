@@ -1,4 +1,5 @@
 import os
+import re
 from typing import Any
 
 from decouple import config
@@ -84,8 +85,16 @@ def test_banner(request):
 
 
 def client_logo(request):
-    client_logo_path = config("CLIENT_LOGO_PATH", default="")
-    return render(request, "client_logo.html", {"client_logo_path": client_logo_path})
+    client_logo_path = config(
+        "CLIENT_LOGO_PATH",
+        default="https://vme-stiftung.de/wp-content/uploads/2019/09/example-logo-2-300x201.jpg",
+    )
+    is_url = bool(re.match(r"^https?://", client_logo_path))
+    return render(
+        request,
+        "client_logo.html",
+        {"client_logo_path": client_logo_path, "is_url": is_url},
+    )
 
 
 class MontrekPageViewMixin:

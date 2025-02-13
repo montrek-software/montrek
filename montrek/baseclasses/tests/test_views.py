@@ -523,3 +523,28 @@ class ClientLogoViewTest(TestCase):
             response,
             '<img src="/static/logos/my_logo.png" class="img-responsive" alt="Client Logo"/>',
         )
+
+    @patch("baseclasses.views.config")  # patching the config function
+    @add_logged_in_user
+    def test_client_logo_url(self, mock_config):
+        # Mock the config value to simulate the environment variable
+        mock_config.return_value = "http://my_logo.png"
+
+        # Make a request to the view
+        response = self.client.get(
+            reverse("client_logo")
+        )  # assuming the view has the URL name 'client_logo'
+
+        # Check that the response is OK (200)
+        self.assertEqual(response.status_code, 200)
+
+        # Ensure the context contains the correct logo path
+        self.assertIn("client_logo_path", response.context)
+        self.assertEqual(response.context["client_logo_path"], "http://my_logo.png")
+
+        # Check the rendered HTML
+        # Check that the static URL for the logo is correct
+        self.assertContains(
+            response,
+            '<img src="http://my_logo.png" class="img-responsive" alt="Client Logo"/>',
+        )
