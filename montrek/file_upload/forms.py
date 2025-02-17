@@ -42,7 +42,8 @@ class FieldMapCreateForm(MontrekCreateForm):
         self.fields["function_name"] = ChoiceField(
             choices=[(f, f) for f in self._get_function_name_choices()],
         )
-        self.initial["function_name"] = "no_change"
+        if "function_name" not in self.initial.keys():
+            self.initial["function_name"] = "no_change"
 
     def _get_function_name_choices(self):
         function_names = []
