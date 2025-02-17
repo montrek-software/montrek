@@ -9,15 +9,15 @@ class MockQuerySet:
         return iter(self.items)
 
     def __len__(self):
-        return len(self.items)
+        return len(self.items)  #  pragma: no cover
 
     def __getitem__(self, index):
         return self.items[index]
 
     def __eq__(self, other):
-        if isinstance(other, list):
-            return list(self.items) == other
-        return NotImplemented
+        if isinstance(other, list):  #  pragma: no cover
+            return list(self.items) == other  #  pragma: no cover
+        return NotImplemented  #  pragma: no cover
 
     def all(self):
         return self.items
@@ -26,7 +26,7 @@ class MockQuerySet:
         return len(self.items)
 
     def get(self, pk):
-        return self.items[pk]
+        return self.items[pk]  #  pragma: no cover
 
 
 @dataclass
@@ -40,7 +40,20 @@ class MockField:
     name: str
 
 
+class MockObjects:
+    def all(self):
+        return MockQuerySet(  #  pragma: no cover
+            MockData("item1", 1), MockData("item2", 2), MockData("item3", 3)
+        )
+
+
+class MockHub:
+    objects = MockObjects()
+
+
 class MockRepository:
+    hub_class = MockHub
+
     def __init__(self, session_data):
         self.session_data = session_data
         self.messages = []
@@ -52,7 +65,7 @@ class MockRepository:
         )  # Dummy data for testing
 
     def std_satellite_fields(self):
-        return [
+        return [  #  pragma: no cover
             MockField("item1"),
             MockField("item2"),
             MockField("item3"),

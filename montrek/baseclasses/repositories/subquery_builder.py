@@ -18,7 +18,9 @@ from django.utils import timezone
 
 class SubqueryBuilder:
     def build(self, reference_date: timezone.datetime) -> Subquery:
-        raise NotImplementedError("SubqueryBuilder has no get_subquery method!")
+        raise NotImplementedError(
+            f"{self.__class__.__name__} must be subclassed and the build method must be implemented!"
+        )
 
 
 class SatelliteSubqueryBuilderABC(SubqueryBuilder):

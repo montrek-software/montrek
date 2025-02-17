@@ -10,7 +10,7 @@ import requests
 from baseclasses.dataclasses.alert import AlertEnum
 from baseclasses.dataclasses.number_shortener import (
     NoShortening,
-    NumberShortenerProtocol,
+    NumberShortenerABC,
 )
 from django.template import Context, Template
 from django.urls import NoReverseMatch, reverse
@@ -189,6 +189,19 @@ class TextTableElement(AttrTableElement):
 
 
 @dataclass
+class ListTableElement(AttrTableElement):
+    serializer_field_class = serializers.CharField
+    attr: str
+    in_separator: str = ","
+    out_separator: str = "<br>"
+
+    def format(self, value):
+        values = value.split(self.in_separator)
+        out_value = self.out_separator.join(values)
+        return f'<td style="text-align: left">{out_value}</td>'
+
+
+@dataclass
 class AlertTableElement(AttrTableElement):
     serializer_field_class = serializers.CharField
     attr: str
@@ -201,7 +214,7 @@ class AlertTableElement(AttrTableElement):
 @dataclass
 class NumberTableElement(AttrTableElement):
     attr: str
-    shortener: NumberShortenerProtocol = NoShortening()
+    shortener: NumberShortenerABC = NoShortening()
 
     def format(self, value):
         if not isinstance(value, (int, float, Decimal)):
@@ -225,7 +238,7 @@ class NumberTableElement(AttrTableElement):
 class FloatTableElement(NumberTableElement):
     serializer_field_class = serializers.FloatField
     attr: str
-    shortener: NumberShortenerProtocol = NoShortening()
+    shortener: NumberShortenerABC = NoShortening()
 
     def _format_value(self, value) -> str:
         return self.shortener.shorten(value, ",.3f")
@@ -235,7 +248,7 @@ class FloatTableElement(NumberTableElement):
 class IntTableElement(NumberTableElement):
     serializer_field_class = serializers.IntegerField
     attr: str
-    shortener: NumberShortenerProtocol = NoShortening()
+    shortener: NumberShortenerABC = NoShortening()
 
     def _format_value(self, value) -> str:
         value = round(value)
@@ -266,7 +279,7 @@ class ProgressBarTableElement(NumberTableElement):
 
     def format_latex(self, value) -> str:
         per_value = value * 100
-        return f"\\progressbar{{ {per_value } }}{{ {per_value}\\% }} &"
+        return f"\\progressbar{{ {per_value} }}{{ {per_value}\\% }} &"
 
 
 @dataclass
@@ -313,7 +326,7 @@ class BooleanTableElement(AttrTableElement):
 class MoneyTableElement(NumberTableElement):
     serializer_field_class = serializers.FloatField
     attr: str
-    shortener: NumberShortenerProtocol = NoShortening()
+    shortener: NumberShortenerABC = NoShortening()
 
     @property
     def ccy_symbol(self) -> str:

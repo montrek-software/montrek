@@ -1,8 +1,11 @@
-from mailing.tests.factories.mailing_factories import MailSatelliteFactory
+from baseclasses.managers.montrek_manager import MontrekManager
+from django.conf import settings
+from django.core import mail
+from testing.test_cases import view_test_cases as vtc
+
 from mailing import views
 from mailing.forms import MailingSendForm
-from baseclasses.managers.montrek_manager import MontrekManager
-from testing.test_cases import view_test_cases as vtc
+from mailing.tests.factories.mailing_factories import MailSatelliteFactory
 
 
 class TestMailListViewOverview(vtc.MontrekListViewTestCase):
@@ -26,6 +29,8 @@ class MockSendMailView(views.SendMailView):
 class TestSendMailView(vtc.MontrekViewTestCase):
     viewname = "send_mail"
     view_class = views.SendMailView
+    expected_mail_template = "montrek_mail_template"
+    expected_success_url = "/mailing/overview"
 
     def test_send_mail(self):
         class MockForm:
@@ -37,11 +42,27 @@ class TestSendMailView(vtc.MontrekViewTestCase):
 
         mock_form = MockForm()
         response = self.view.form_valid(mock_form)
-        self.assertEqual(response.url, "/mailing/overview")
+        self.assertEqual(response.url, self.expected_success_url)
+        test_message = str(mail.outbox[0].message())
+        self.assertIn("This is a test", test_message)
+        self.assertEqual(mail.outbox[0].subject, "Test")
+        self.assertEqual(mail.outbox[0].to, ["a@b.de"])
+        with open(
+            settings.BASE_DIR
+            / f"mailing/templates/mail_templates/{self.expected_mail_template}.html"
+        ) as f:
+            template = f.read()
+            template_start = template.find("<body>")
+            self.assertIn(template[:template_start], test_message)
+        self.additional_assertions()
 
     def test_view_form(self):
         view = views.SendMailView()
         self.assertEqual(view.form_class, MailingSendForm)
+
+    def additional_assertions(self):
+        # Method con be overwritten in child test cases
+        ...
 
 
 class TestMailDetailsView(vtc.MontrekDetailViewTestCase):

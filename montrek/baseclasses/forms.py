@@ -180,14 +180,16 @@ class MontrekModelMultipleChoiceField(
         *args,
         **kwargs,
     ):
-        kwargs["widget"] = self.get_widget(use_checkboxes_for_many_to_many)
+        kwargs["widget"] = self.get_widget(
+            display_field, use_checkboxes_for_many_to_many
+        )
         super().__init__(display_field, *args, **kwargs)
 
     @staticmethod
-    def get_widget(use_checkboxes: bool) -> ChoiceWidget:
+    def get_widget(display_field, use_checkboxes: bool) -> ChoiceWidget:
         if use_checkboxes:
             return forms.CheckboxSelectMultiple()
-        return FilteredSelectMultiple(verbose_name="display_field", is_stacked=False)
+        return FilteredSelectMultiple(verbose_name=display_field, is_stacked=False)
 
     @staticmethod
     def get_initial_link(

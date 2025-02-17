@@ -40,3 +40,13 @@ class TestAnnotationManager(TestCase):
         test_annotator.rename_field("test", "test_renamed")
         self.assertEqual(test_annotator.annotations["test_renamed"], test_sub_queryset)
         self.assertNotIn("test", test_annotator.annotations)
+
+    def test_satellite_field_names(self):
+        test_annotator = Annotator(TestMontrekHub)
+        result = test_annotator.satellite_fields_names()
+        self.assertEqual(result, [])
+
+    def test_get_linked_satellite_classes(self):
+        test_annotator = Annotator(TestMontrekHub)
+        result = test_annotator.get_linked_satellite_classes()
+        self.assertEqual(result, [])

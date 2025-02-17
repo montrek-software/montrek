@@ -28,24 +28,29 @@ class MailingManager(MontrekManager):
         message: str,
         additional_parms: dict = {},
         attachments: str = "",
-    ):
+        bcc: str = "",
+    ) -> bool:
         recipient_list = recipients.replace(" ", "").split(",")
+        bcc_list = bcc.replace(" ", "").split(",")
         mail_params: dict = {
             "mail_subject": subject,
             "mail_recipients": recipients,
             "mail_message": message,
             "mail_state": "Pending",
             "mail_attachments": attachments,
+            "mail_bcc": bcc,
         }
         mail_hub = self.repository.std_create_object(mail_params)
         body = self.get_mail_body(message, additional_parms)
         attachments_list = self.get_attachments(attachments)
+        is_sent = False
         try:
             email = EmailMessage(
                 subject=subject,
                 body=body,
                 to=recipient_list,
                 attachments=attachments_list,
+                bcc=bcc_list,
             )
             email.content_subtype = "html"
             email.send()
@@ -58,6 +63,7 @@ class MailingManager(MontrekManager):
             self.messages.append(
                 MontrekMessageInfo(message=f"Mail successfully sent to {recipients}")
             )
+            is_sent = True
         except SMTPException as e:
             mail_fail_params = {
                 "mail_state": "Failed",
@@ -68,6 +74,7 @@ class MailingManager(MontrekManager):
             self.messages.append(
                 MontrekMessageError(message=f"Mail failed to send to {recipients}")
             )
+        return is_sent
 
     def send_montrek_mail_to_user(
         self,

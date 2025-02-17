@@ -7,8 +7,27 @@ from baseclasses.tests.factories.baseclass_factories import (
 from baseclasses.tests.factories.baseclass_factories import (
     LinkTestMontrekTestLinkFactory,
 )
-from baseclasses.repositories.subquery_builder import LinkedSatelliteSubqueryBuilder
+from baseclasses.repositories.subquery_builder import (
+    LinkedSatelliteSubqueryBuilder,
+    SubqueryBuilder,
+    get_string_concat_function,
+    GroupConcat,
+    StringAgg,
+)
 from baseclasses import models as bc_models
+
+import warnings
+
+warnings.filterwarnings(
+    "ignore",
+    message="Overriding setting DATABASES can lead to unexpected behavior.",
+    category=UserWarning,
+)
+
+
+class MockLinkedSatelliteSubqueryBuilder(LinkedSatelliteSubqueryBuilder):
+    def _is_multiple_allowed(self, hub_field_to: str) -> bool:
+        return True
 
 
 class TestLinkedSatelliteSubqueryBuilder(TestCase):
@@ -29,6 +48,14 @@ class TestLinkedSatelliteSubqueryBuilder(TestCase):
         )
         self.sat_2_2 = TestLinkSatelliteFactory(
             hub_entity=link_entry_2_2.hub_out,
+        )
+
+    def test_build_not_impolemented(self):
+        with self.assertRaises(NotImplementedError) as cm:
+            SubqueryBuilder().build(reference_date=timezone.now())
+        self.assertEqual(
+            str(cm.exception),
+            "SubqueryBuilder must be subclassed and the build method must be implemented!",
         )
 
     def test_get_subquery(self):
@@ -59,6 +86,16 @@ class TestLinkedSatelliteSubqueryBuilder(TestCase):
         self.assertEqual(len(query), 2)
         self.assertEqual(query[0].test_id, self.sat_1.test_id)
         # self.assertEqual(query[1].test_id, self.sat_2_1.test_id)
+        #
+
+    def test_no_agg_func(self):
+        builder = MockLinkedSatelliteSubqueryBuilder(
+            satellite_class=bc_models.TestLinkSatellite,
+            field="test_id",
+            link_class=bc_models.LinkTestMontrekTestLink,
+        )
+        builder.agg_func = None
+        self.assertRaises(NotImplementedError, builder._annotate_agg_field, "", [])
 
     def test_raise_error_when_no_relation_to_link_table_is_set(self):
         class DummyLinkClass(bc_models.MontrekLinkABC):
@@ -72,3 +109,13 @@ class TestLinkedSatelliteSubqueryBuilder(TestCase):
                 "bla",
                 DummyLinkClass,
             )
+
+
+class TestSideFunctions(TestCase):
+    def test_get_string_concat_function(self):
+        with self.settings(DATABASES={"default": {"ENGINE": "mysql"}}):
+            self.assertEqual(get_string_concat_function(), GroupConcat)
+        with self.settings(DATABASES={"default": {"ENGINE": "postgresql"}}):
+            self.assertEqual(get_string_concat_function(), StringAgg)
+        with self.settings(DATABASES={"default": {"ENGINE": "unknown"}}):
+            self.assertRaises(NotImplementedError, get_string_concat_function)

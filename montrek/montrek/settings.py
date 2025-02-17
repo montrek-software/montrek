@@ -51,6 +51,7 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 DJANGO_APPS = [
     "django.contrib.admin",
+    "django_celery_beat",
     "debug_toolbar",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -109,6 +110,7 @@ MONTREK_EXTENSION_APPS = get_montrek_extension_apps_list()
 
 INSTALLED_APPS = DJANGO_APPS + MONTREK_EXTENSION_APPS
 
+NAVBAR_APPS = config("NAVBAR_APPS", default="").replace(" ", "").split(",")
 DJANGO_MIDDLEWARE = [
     "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django.middleware.security.SecurityMiddleware",
@@ -232,6 +234,7 @@ CSRF_TRUSTED_ORIGINS = [
 CSRF_TRUSTED_ORIGINS += [
     f"https://montrek.{PROJECT_NAME}:{DEPLOY_PORT}",
     f"https://{DEPLOY_HOST}:{DEPLOY_PORT}",
+    f"https://{DEPLOY_HOST}",
 ]
 
 EMAIL_HOST = config("EMAIL_HOST", default=None)
@@ -256,6 +259,7 @@ CELERY_WORKER_PREFETCH_MULTIPLIER = 1
 CELERY_BROKER_TRANSPORT_OPTIONS = {
     "visibility_timeout": 3600 * 10,  # 10 hours
 }
+CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers.DatabaseScheduler"
 
 LOGGING = {
     "version": 1,

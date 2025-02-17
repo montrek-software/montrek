@@ -3,7 +3,11 @@ from django.db.models import QuerySet
 from django.forms import CheckboxSelectMultiple
 from django.test import TestCase
 
-from baseclasses.forms import FilterForm, MontrekModelMultipleChoiceField
+from baseclasses.forms import (
+    BaseMontrekChoiceField,
+    FilterForm,
+    MontrekModelMultipleChoiceField,
+)
 
 
 class TestFilterForm(TestCase):
@@ -57,3 +61,22 @@ class TestMontrekModelMultipleChoiceField(TestCase):
         )
         self.assertTrue(isinstance(checkbox_field.widget, CheckboxSelectMultiple))
         self.assertTrue(isinstance(list_field.widget, FilteredSelectMultiple))
+        self.assertEqual(list_field.widget.verbose_name, "field1")
+
+
+class TestBaseMontrekChoiceField(TestCase):
+    def test_init__widget(self):
+        field_kwargs = {"display_field": "field1", "queryset": QuerySet()}
+        checkbox_field = MontrekModelMultipleChoiceField(
+            **field_kwargs, use_checkboxes_for_many_to_many=True
+        )
+        list_field = MontrekModelMultipleChoiceField(
+            **field_kwargs, use_checkboxes_for_many_to_many=False
+        )
+        self.assertTrue(isinstance(checkbox_field.widget, CheckboxSelectMultiple))
+        self.assertTrue(isinstance(list_field.widget, FilteredSelectMultiple))
+
+    def test_get_initial_link_not_implemented(self):
+        field = BaseMontrekChoiceField(display_field="field1")
+        with self.assertRaises(NotImplementedError):
+            field.get_initial_link(None, None, None)

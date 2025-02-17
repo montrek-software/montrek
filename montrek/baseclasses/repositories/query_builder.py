@@ -49,8 +49,8 @@ class QueryBuilder:
         )
         if apply_filter:
             queryset = self._apply_filter(queryset)
-        queryset = self._filter_ts_rows(queryset)
         queryset = self._filter_session_data(queryset)
+        queryset = self._filter_ts_rows(queryset)
         queryset = self._apply_order(queryset, order_fields)
         return queryset
 

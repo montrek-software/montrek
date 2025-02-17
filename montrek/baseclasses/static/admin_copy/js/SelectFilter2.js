@@ -38,7 +38,7 @@ Requires core.js and SelectBox.js.
             // <div class="selector-available">
             const selector_available = quickElement('div', selector_div);
             selector_available.className = 'selector-available';
-            const title_available = quickElement('span', selector_available, interpolate(gettext('Available %s') + ' ', [field_name]));
+            const title_available = quickElement('span', selector_available, interpolate(gettext('Available %s'), [field_name]));
             quickElement(
                 'span', title_available, '',
                 'class', 'help help-tooltip help-icon',
@@ -83,7 +83,7 @@ Requires core.js and SelectBox.js.
             // <div class="selector-chosen">
             const selector_chosen = quickElement('div', selector_div, '', 'id', field_id + '_selector_chosen');
             selector_chosen.className = 'selector-chosen';
-            const title_chosen = quickElement('span', selector_chosen, interpolate(gettext('Chosen %s') + ' ', [field_name]));
+            const title_chosen = quickElement('span', selector_chosen, interpolate(gettext('Chosen %s'), [field_name]));
             quickElement(
                 'span', title_chosen, '',
                 'class', 'help help-tooltip help-icon',

@@ -29,11 +29,11 @@ class {{ manager_cls_name }}(CommonTableElementsMixin, MontrekTableManager):
     @property
     def table_elements(self):
         table_elements = [
-            te.LinkTableElement(
+            te.LinkTextTableElement(
                 name="Details",
                 url="{{ detail_view_url_name }}",
                 kwargs={"pk": "hub_id"},
-                icon="eye-open",
+                text="hub_entity_id",
                 hover_text="{{ details_hover }}",
             ),
         ]
@@ -43,3 +43,11 @@ class {{ manager_cls_name }}(CommonTableElementsMixin, MontrekTableManager):
 
 class {{ details_manager_cls_name }}(CommonTableElementsMixin, MontrekDetailsManager):
     repository_class = {{ repo_cls_name }}
+
+    @property
+    def table_elements(self):
+        table_elements = [
+            te.StringTableElement(name="hub", attr="hub_entity_id"),
+        ]
+        table_elements += super().table_elements
+        return table_elements

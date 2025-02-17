@@ -5,6 +5,7 @@ from baseclasses.tests.factories.montrek_factory_schemas import (
     MontrekHubFactory,
     MontrekHubValueDateFactory,
     MontrekSatelliteFactory,
+    MontrekTSSatelliteFactory,
     ValueDateListFactory,
 )
 
@@ -28,6 +29,7 @@ class TestMontrekSatelliteFactory(MontrekSatelliteFactory):
 
     hub_entity = factory.SubFactory(TestMontrekHubFactory)
     test_name = factory.Sequence(lambda n: f"Test Name {n}")
+    test_date = montrek_time(2023, 6, 20)
 
 
 class TestLinkHubFactory(factory.django.DjangoModelFactory):
@@ -58,3 +60,10 @@ class TestMontrekSatelliteNoIdFieldsFactory(MontrekSatelliteFactory):
         model = "baseclasses.TestMontrekSatelliteNoIdFields"
 
     hub_entity = factory.SubFactory(TestMontrekHubFactory)
+
+
+class TestMontrekTimeSeriesSatelliteFactory(MontrekTSSatelliteFactory):
+    class Meta:
+        model = "baseclasses.TestMontrekTimeSeriesSatellite"
+
+    hub_value_date = factory.SubFactory(TestHubValueDateFactory)

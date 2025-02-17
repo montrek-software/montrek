@@ -66,6 +66,33 @@ class ReportingParagraph(ReportingText):
         return f"<p>{self.text}</p>"
 
 
+class ReportingEditableText(ReportingText):
+    def __init__(
+        self,
+        text: str,
+        reporting_text_type: ReportingTextType = ReportingTextType.HTML,
+        edit_url: str = "",
+    ):
+        super().__init__(text, reporting_text_type)
+        self.edit_url = edit_url
+
+    def to_html(self) -> str:
+        edit_button = (
+            f'<a href="{self.edit_url}" class="btn"><span class="glyphicon glyphicon-pencil"/></a>'
+            if self.edit_url != ""
+            else ""
+        )
+        return f"""<div class="container-fluid">
+        <div class="row">
+        <div class="col-lg-12" style="padding:0">{self.text}</div>
+        </div>
+        <div class="row">
+        <div class="col-lg-11"></div>
+        <div class="col-lg-1">{edit_button}</div>
+        </div>
+</div>"""
+
+
 class ReportingHeader1:
     def __init__(self, text: str):
         self.text = text
@@ -105,3 +132,23 @@ class NewPage:
 
     def to_html(self) -> str:
         return "<div style='page-break-after: always; height:15mm;'><hr></div>"
+
+
+class ReportingImage:
+    def __init__(self, image_path: str, width: float = 1.0):
+        self.image_path = image_path
+        self.width = width
+
+    def to_latex(self) -> str:
+        return f"\\includegraphics[width={self.width}\\textwidth]{{{self.image_path}}}"
+
+    def to_html(self) -> str:
+        return f'<div style="text-align: right;"><img src="{self.image_path}" alt="image" style="width:{self.width*100}%;"></div>'
+
+
+class MontrekLogo(ReportingImage):
+    def __init__(self, width: float = 1.0):
+        super().__init__(
+            "http://static1.squarespace.com/static/673bfbe149f99b59e4a41ee7/t/673bfdb41644c858ec83dc7e/1731984820187/montrek_logo_variant.png?format=1500w",
+            width=width,
+        )

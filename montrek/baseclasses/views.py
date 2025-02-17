@@ -1,7 +1,9 @@
 import os
+import re
 from typing import Any
 
 from decouple import config
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied
@@ -15,14 +17,8 @@ from django.views.generic.edit import CreateView
 from django.views.generic.list import ListView
 from file_upload.forms import SimpleUploadFileForm
 from file_upload.managers.simple_upload_file_manager import SimpleUploadFileManager
-from reporting.dataclasses.table_elements import (
-    AttrTableElement,
-    LinkTextTableElement,
-    TableElement,
-)
 from reporting.managers.latex_report_manager import LatexReportManager
 from reporting.managers.montrek_details_manager import MontrekDetailsManager
-from reporting.managers.montrek_report_manager import MontrekReportManager
 from reporting.managers.montrek_table_manager import MontrekTableManager
 from rest_framework import status
 from rest_framework.response import Response
@@ -49,7 +45,8 @@ def under_construction(request):
 
 
 def navbar(request):
-    navbar_apps_config = config("NAVBAR_APPS", default="").split(",")
+    # navbar_apps_config = config("NAVBAR_APPS", default="").split(",")
+    navbar_apps_config = settings.NAVBAR_APPS
     navbar_apps = []
     navbar_dropdowns = {}
     for app in navbar_apps_config:
@@ -88,8 +85,21 @@ def test_banner(request):
 
 
 def client_logo(request):
-    client_logo_path = config("CLIENT_LOGO_PATH", default="")
-    return render(request, "client_logo.html", {"client_logo_path": client_logo_path})
+    client_logo_path = config(
+        "CLIENT_LOGO_PATH",
+        default="https://vme-stiftung.de/wp-content/uploads/2019/09/example-logo-2-300x201.jpg",
+    )
+    client_logo_link = config("CLIENT_LOGO_LINK", default="https://example.com")
+    is_url = bool(re.match(r"^https?://", client_logo_path))
+    return render(
+        request,
+        "client_logo.html",
+        {
+            "client_logo_path": client_logo_path,
+            "is_url": is_url,
+            "client_logo_link": client_logo_link,
+        },
+    )
 
 
 class MontrekPageViewMixin:
@@ -113,7 +123,7 @@ class MontrekPageViewMixin:
         context.update(self._handle_date_range_form())
         return context
 
-    def _handle_date_range_form(self):
+    def _handle_date_range_form(self) -> dict[str, DateRangeForm]:
         if not self.request:
             return {}
         start_date, end_date = utils.get_date_range_dates(self.request)
@@ -145,29 +155,6 @@ class MontrekViewMixin:
         if self._manager is None:
             self._manager = self.manager_class(self.session_data)
         return self._manager
-
-    # TODO:
-    ##Should go to manager
-    @property
-    def elements(self) -> list[TableElement]:
-        return []
-
-    def get_fields_from_elements(self) -> list[str]:
-        link_elements = self.get_link_table_elements(self.elements)
-        att_elements = self.get_attr_table_elements(self.elements)
-        return [element.text for element in link_elements] + [
-            element.attr for element in att_elements
-        ]
-
-    def get_attr_table_elements(self, elements) -> list[AttrTableElement]:
-        return [
-            element for element in elements if isinstance(element, AttrTableElement)
-        ]
-
-    def get_link_table_elements(self, elements) -> list[LinkTextTableElement]:
-        return [
-            element for element in elements if isinstance(element, LinkTextTableElement)
-        ]
 
     @property
     def session_data(self) -> dict:
@@ -503,27 +490,6 @@ class MontrekDeleteView(
         if "action" in request.POST and request.POST["action"] == "Delete":
             self.manager.delete_object(pk=self.kwargs["pk"])
         return HttpResponseRedirect(self.get_success_url())
-
-
-class MontrekReportView(MontrekTemplateView, ToPdfMixin):
-    manager_class = MontrekReportManager
-    template_name = "montrek_report.html"
-
-    def get_template_context(self) -> dict:
-        return {"report": self.manager.to_html()}
-
-    def get(self, request, *args, **kwargs):
-        if self.request.GET.get("gen_pdf") == "true":
-            return self.list_to_pdf()
-        if self.request.GET.get("send_mail") == "true":
-            report_manager = LatexReportManager(self.manager)
-            pdf_path = report_manager.compile_report()
-            return self.manager.prepare_mail(pdf_path)
-        return super().get(request, *args, **kwargs)
-
-    @property
-    def title(self):
-        return self.manager.document_title
 
 
 class MontrekRestApiView(APIView, MontrekViewMixin):
