@@ -122,8 +122,9 @@ class BaseLinkTableElement(TableElement):
         return f"<td>{link}</td>"
 
     def _get_url_kwargs(self, obj: Any) -> dict:
+        # TODO Update this such that _get_dotted_attr_or_arg is not used anymore
         kwargs = {
-            key: BaseLinkTableElement.get_dotted_attr_or_arg(obj, value)
+            key: self.get_dotted_attr_or_arg(obj, value)
             for key, value in self.kwargs.items()
             if key != "filter"
         }
