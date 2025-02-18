@@ -207,7 +207,9 @@ class LinkListTableElement(BaseLinkTableElement):
             url = self._get_url(obj, url_kwargs)
             link_text = text_values[i]
             link = self._get_link(url, link_text)
-            result += f"{link}{self.out_separator}"
+            if i > 0:
+                result += self.out_separator
+            result += link
         result += "</td>"
         return result
 
