@@ -168,9 +168,11 @@ class MontrekViewMixin:
         session_data.update(dict(self.request.session))
         session_data["request_path"] = self.request.path
         session_data.update(self._get_filters(session_data))
+        session_data.update(self._get_page_number(session_data))
         if self.request.user.is_authenticated:
             session_data["user_id"] = self.request.user.id
         self.request.session["filter"] = session_data.get("filter", {})
+        self.request.session["pages"] = session_data.get("pages", {})
         session_data["host_url"] = self.request.build_absolute_uri("/")[:-1]
         session_data["http_referer"] = self.request.META.get("HTTP_REFERER")
         return session_data
@@ -205,6 +207,22 @@ class MontrekViewMixin:
                 }
             }
         return filter_data
+
+    def _get_page_number(self, session_data):
+        request_path = self.request.path
+        pages_data = {}
+        if "pages" not in session_data:
+            pages_data["pages"] = {}
+            session_data["pages"] = {}
+        else:
+            pages_data["pages"] = session_data["pages"]
+        if "page" in session_data:
+            page = session_data["page"]
+            pages_data["pages"][request_path] = page
+        else:
+            if request_path in session_data["pages"]:
+                pages_data["page"] = session_data["pages"][request_path]
+        return pages_data
 
     def show_messages(self):
         self.manager.collect_messages()
@@ -257,9 +275,9 @@ class ToPdfMixin:
         if pdf_path and os.path.exists(pdf_path):
             with open(pdf_path, "rb") as pdf_file:
                 response = HttpResponse(pdf_file.read(), content_type="application/pdf")
-                response["Content-Disposition"] = (
-                    "inline; filename=" + os.path.basename(pdf_path)
-                )
+                response[
+                    "Content-Disposition"
+                ] = "inline; filename=" + os.path.basename(pdf_path)
                 return response
         previous_url = self.request.META.get("HTTP_REFERER")
         return HttpResponseRedirect(previous_url)
