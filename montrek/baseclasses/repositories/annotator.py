@@ -51,7 +51,7 @@ class Annotator:
             outfield = (
                 field if field not in rename_field_map else rename_field_map[field]
             )
-            if field in self.raw_annotations.keys():
+            if field in ["value_date", "hub_entity_id"]:
                 if outfield != field:
                     self.annotations[outfield] = self.annotations[field]
                 continue
