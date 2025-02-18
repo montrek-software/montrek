@@ -2,6 +2,8 @@ import os
 from tempfile import TemporaryDirectory
 from textwrap import dedent
 
+from django.core.paginator import Page
+
 from baseclasses.dataclasses.alert import AlertEnum
 from baseclasses.utils import montrek_time
 from django.contrib.auth.models import Permission
@@ -81,6 +83,26 @@ class TestMontrekExampleAListView(MontrekListViewTestCase):
         obj_list = response.context_data["object_list"]
         self.assertRedirects(response, url)
         self.assertEqual(len(obj_list), 2)
+
+
+class TestMontrekExampleAListViewPages(MontrekListViewTestCase):
+    viewname = "montrek_example_a_list"
+    view_class = me_views.MontrekExampleAList
+    expected_no_of_rows = 10
+
+    def build_factories(self):
+        me_factories.SatA2Factory.create_batch(15)
+
+    def test_selected_and_remember_pages(self):
+        query_params = {"page": 2}
+        response = self.client.get(self.url, data=query_params)
+        test_page = response.context_data["object_list"]
+        self.assertIsInstance(test_page, Page)
+        self.assertEqual(test_page.number, 2)
+        response = self.client.get(self.url)
+        test_page = response.context_data["object_list"]
+        self.assertIsInstance(test_page, Page)
+        self.assertEqual(test_page.number, 2)
 
 
 class TestMontrekExampleACreateView(MontrekCreateViewTestCase):

@@ -175,6 +175,7 @@ class TestMontrekViewMixin(TestCase):
                 "request_path": "/",
                 "host_url": "http://testserver",
                 "http_referer": None,
+                "pages": {},
             },
         )
 
@@ -185,6 +186,7 @@ class TestMontrekViewMixin(TestCase):
             "param2": ["value2"],
             "request_path": "/",
             "host_url": "http://testserver",
+            "pages": {},
             "http_referer": None,
         }
         self.assertEqual(mock_view.session_data, expected_data)
@@ -230,6 +232,7 @@ class TestMontrekViewMixin(TestCase):
         expected_session_data["request_path"] = "/some/path"
         expected_session_data["host_url"] = "http://testserver"
         expected_session_data["http_referer"] = None
+        expected_session_data["pages"] = {}
 
         self.assertEqual(mock_view.session_data, expected_session_data)
         self.assertEqual(
