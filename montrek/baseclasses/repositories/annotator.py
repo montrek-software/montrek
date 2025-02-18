@@ -19,7 +19,8 @@ from baseclasses.models import (
 class Annotator:
     def __init__(self, hub_class: type[MontrekHubABC]):
         self.hub_class = hub_class
-        self.annotations: dict[str, SubqueryBuilder] = self.get_raw_annotations()
+        self.raw_annotations: dict[str, SubqueryBuilder] = self.get_raw_annotations()
+        self.annotations: dict[str, SubqueryBuilder] = self.raw_annotations.copy()
         self.ts_annotations: dict[str, Subquery] = {}
         self.annotated_satellite_classes: list[type[MontrekSatelliteABC]] = []
         self.annotated_linked_satellite_classes: list[type[MontrekSatelliteABC]] = []
@@ -50,6 +51,10 @@ class Annotator:
             outfield = (
                 field if field not in rename_field_map else rename_field_map[field]
             )
+            if field in ["value_date", "hub_entity_id"]:
+                if outfield != field:
+                    self.annotations[outfield] = self.annotations[field]
+                continue
             self.annotations[outfield] = subquery_builder(
                 satellite_class, field, **kwargs
             )
