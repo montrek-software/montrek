@@ -132,10 +132,9 @@ class BaseLinkTableElement(TableElement):
         return kwargs
 
     def _get_url(self, obj: Any, url_kwargs: dict) -> str:
-        url_target = self.url
         try:
             url = reverse(
-                url_target,
+                self.url,
                 kwargs=url_kwargs,
             )
         except NoReverseMatch:
