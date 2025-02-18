@@ -187,22 +187,20 @@ class LinkTextTableElement(BaseLinkTableElement):
 class LinkListTableElement(BaseLinkTableElement):
     serializer_field_class = serializers.CharField
     text: str
-    list_kwargs: dict
+    list_attr: str
+    list_kwarg: str
     out_separator: str = "<br>"
 
     def get_attribute(self, obj: Any, tag: str) -> str:
-        assert len(self.list_kwargs) == 1
         if tag == "latex":
             value = self._get_link_text(obj)
             return self.format_latex(value)
-        list_key = list(self.list_kwargs.keys())[0]
-        list_attr = self.list_kwargs[list_key]
-        list_values = self.get_dotted_attr_or_arg(obj, list_attr).split(",")
+        list_values = self.get_dotted_attr_or_arg(obj, self.list_attr).split(",")
         text_values = self.get_dotted_attr_or_arg(obj, self.text).split(",")
         result = "<td>"
         for i, list_value in enumerate(list_values):
             url_kwargs = self._get_url_kwargs(obj)
-            url_kwargs[list_key] = list_value
+            url_kwargs[self.list_kwarg] = list_value
             url = self._get_url(obj, url_kwargs)
             link_text = text_values[i]
             link = self._get_link(url, link_text)
