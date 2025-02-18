@@ -19,7 +19,8 @@ from baseclasses.models import (
 class Annotator:
     def __init__(self, hub_class: type[MontrekHubABC]):
         self.hub_class = hub_class
-        self.annotations: dict[str, SubqueryBuilder] = self.get_raw_annotations()
+        self.raw_annotations: dict[str, SubqueryBuilder] = self.get_raw_annotations()
+        self.annotations: dict[str, SubqueryBuilder] = self.raw_annotations.copy()
         self.ts_annotations: dict[str, Subquery] = {}
         self.annotated_satellite_classes: list[type[MontrekSatelliteABC]] = []
         self.annotated_linked_satellite_classes: list[type[MontrekSatelliteABC]] = []
@@ -47,6 +48,8 @@ class Annotator:
             self.annotated_link_classes.append(kwargs["link_class"])
 
         for field in fields:
+            if field in self.raw_annotations.keys():
+                continue
             outfield = (
                 field if field not in rename_field_map else rename_field_map[field]
             )

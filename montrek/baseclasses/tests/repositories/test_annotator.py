@@ -50,3 +50,14 @@ class TestAnnotationManager(TestCase):
         test_annotator = Annotator(TestMontrekHub)
         result = test_annotator.get_linked_satellite_classes()
         self.assertEqual(result, [])
+
+    def test_skip_raw_annotations_fields(self):
+        test_annotator = Annotator(TestMontrekHub)
+        raw_fields = test_annotator.raw_annotations.keys()
+        test_annotator.subquery_builder_to_annotations(
+            raw_fields, MockSatellite, MockSubqueryBuilder
+        )
+        for raw_field in raw_fields:
+            self.assertNotIsInstance(
+                test_annotator.annotations[raw_field], MockSubqueryBuilder
+            )
