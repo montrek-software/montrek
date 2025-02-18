@@ -195,8 +195,10 @@ class LinkListTableElement(BaseLinkTableElement):
         if tag == "latex":
             value = self._get_link_text(obj)
             return self.format_latex(value)
-        list_values = self.get_dotted_attr_or_arg(obj, self.list_attr).split(",")
-        text_values = self.get_dotted_attr_or_arg(obj, self.text).split(",")
+        list_values = self.get_dotted_attr_or_arg(obj, self.list_attr)
+        list_values = list_values.split(",") if list_values else []
+        text_values = self.get_dotted_attr_or_arg(obj, self.text)
+        text_values = text_values.split(",") if text_values else []
         result = "<td>"
         for i, list_value in enumerate(list_values):
             url_kwargs = self._get_url_kwargs(obj)
