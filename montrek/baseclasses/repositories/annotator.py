@@ -48,11 +48,13 @@ class Annotator:
             self.annotated_link_classes.append(kwargs["link_class"])
 
         for field in fields:
-            if field in self.raw_annotations.keys():
-                continue
             outfield = (
                 field if field not in rename_field_map else rename_field_map[field]
             )
+            if field in self.raw_annotations.keys():
+                if outfield != field:
+                    self.annotations[outfield] = self.annotations[field]
+                continue
             self.annotations[outfield] = subquery_builder(
                 satellite_class, field, **kwargs
             )
