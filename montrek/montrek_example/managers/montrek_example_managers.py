@@ -103,11 +103,20 @@ class HubBManager(MontrekTableManager):
             te.StringTableElement(name="B2 String", attr="field_b2_str"),
             te.StringTableElement(name="B2 Choice", attr="field_b2_choice"),
             te.LinkTextTableElement(
-                name="D2 String",
+                name="D1 String",
                 text="field_d1_str",
                 url="montrek_example_d_list",
                 hover_text="View D Example",
                 kwargs={"filter": "field_d1_str"},
+            ),
+            te.LinkListTableElement(
+                name="Linked D Objects",
+                url="montrek_example_d_details",
+                kwargs={},
+                hover_text="View D Example",
+                text="field_d1_str",
+                list_attr="hub_d_id",
+                list_kwarg="pk",
             ),
             te.StringTableElement(name="D2 Int", attr="field_d1_int"),
             te.AlertTableElement(name="Alert Level", attr="alert_level"),
@@ -129,6 +138,27 @@ class HubCManager(MontrekTableManager):
 
 
 class HubDManager(MontrekTableManager):
+    repository_class = HubDRepository
+
+    @property
+    def table_elements(self) -> list:
+        return [
+            te.StringTableElement(name="D1 String", attr="field_d1_str"),
+            te.IntTableElement(name="D1 Int", attr="field_d1_int"),
+            te.DateTableElement(name="Value Date", attr="value_date"),
+            te.FloatTableElement(name="D2 Float", attr="field_tsd2_float"),
+            te.IntTableElement(name="D2 Int", attr="field_tsd2_int"),
+            te.LinkTableElement(
+                name="Delete",
+                url="montrek_example_d_delete",
+                kwargs={"pk": "id"},
+                icon="trash",
+                hover_text="Delete Example D",
+            ),
+        ]
+
+
+class HubDDetailsManager(MontrekDetailsManager):
     repository_class = HubDRepository
 
     @property
