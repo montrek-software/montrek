@@ -83,7 +83,6 @@ def _get_link(table_element, url: str, link_text: str) -> str:
 
 def _get_link_attribute(obj, table_element):
     # TODO Update this such that _get_dotted_attr_or_arg is not used anymore
-    link_text = _get_dotted_attr_or_arg(obj, table_element.text)
     url_kwargs = _get_url_kwargs(table_element, obj)
     url = _get_url(table_element, obj, url_kwargs)
     if isinstance(table_element, table_elements.LinkTextTableElement):
@@ -94,7 +93,7 @@ def _get_link_attribute(obj, table_element):
             '<span class="glyphicon glyphicon-{{ icon }}"></span>'
         ).render(Context({"icon": table_element.icon}))
     link = _get_link(table_element, url, link_text)
-    return link
+    return f"<td>{link}</td>"
 
 
 def _get_link_list_attribute(obj, table_element):
