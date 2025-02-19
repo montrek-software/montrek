@@ -110,6 +110,8 @@ def _get_link_list_attribute(obj, table_element):
         url = _get_url(table_element, obj, url_kwargs)
         link_text = text_values[i]
         link = _get_link(table_element, url, link_text)
-        result += f"{link}{table_element.out_separator}"
+        if i > 0:
+            result += table_element.out_separator
+        result += link
     result += "</td>"
     return result
