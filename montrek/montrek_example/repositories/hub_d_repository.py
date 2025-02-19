@@ -20,8 +20,9 @@ class HubDRepository(MontrekRepository):
         self.add_linked_satellites_field_annotations(
             me_models.SatB1,
             me_models.LinkHubBHubD,
-            ["field_b1_str"],
+            ["hub_entity_id", "field_b1_str"],
             reversed_link=True,
+            rename_field_map={"hub_entity_id": "hub_b_id"},
         )
 
 
