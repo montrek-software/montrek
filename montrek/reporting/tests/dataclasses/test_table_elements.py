@@ -1,8 +1,8 @@
-from unittest import mock
 import datetime
 from functools import wraps
+from unittest import mock
 
-
+import numpy as np
 import reporting.dataclasses.table_elements as te
 from baseclasses.tests.factories.baseclass_factories import TestMontrekSatelliteFactory
 from django.test import TestCase
@@ -111,6 +111,10 @@ class TestTableElements(TestCase):
         )
         self.assertEqual(
             test_element.format("bla"), '<td style="text-align:left;">bla</td>'
+        )
+        self.assertEqual(
+            test_element.format(np.nan),
+            '<td style="text-align:center;">-</td>',
         )
 
     def test_date_table_elements(self):

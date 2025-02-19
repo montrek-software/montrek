@@ -266,6 +266,8 @@ class NumberTableElement(AttrTableElement):
     shortener: NumberShortenerABC = NoShortening()
 
     def format(self, value):
+        if pd.isna(value):
+            return '<td style="text-align:center;">-</td>'
         if not isinstance(value, (int, float, Decimal)):
             return f'<td style="text-align:left;">{value}</td>'
         color = _get_value_color(value)
