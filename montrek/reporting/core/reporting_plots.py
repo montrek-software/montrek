@@ -50,9 +50,7 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
         self.figure.write_image(temp_file.name)
         latex_str = "\\begin{figure}[H]\n"
-        latex_str += (
-            f"\\includegraphics[width={self.width}\\textwidth]{{{temp_file.name}}}\n"
-        )
+        latex_str += f"\\includegraphics[width=\\textwidth]{{{temp_file.name}}}\n"
         latex_str += "\\end{figure}"
         return latex_str
 
