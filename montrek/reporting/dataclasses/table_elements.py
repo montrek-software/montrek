@@ -213,6 +213,9 @@ class LinkListTableElement(BaseLinkTableElement):
         result += "</td>"
         return result
 
+    def _get_link_text(self, obj):
+        return BaseLinkTableElement.get_dotted_attr_or_arg(obj, self.text)
+
 
 @dataclass
 class StringTableElement(AttrTableElement):
