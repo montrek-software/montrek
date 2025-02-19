@@ -1,3 +1,4 @@
+from unittest import mock
 from dataclasses import dataclass
 from django.test import TestCase
 from django.urls import reverse
@@ -145,9 +146,24 @@ class TestGetLinkTests(TestCase):
         self.assertIn(url, rendered_link)
         self.assertIn("Click me", rendered_link)
 
-    def test_get_link_list_success(self):
+    @mock.patch("baseclasses.templatetags.data_table_filters.reverse")
+    def test_get_link_list_success(self, mock_reverse):
+        def reverse_side_effect(*args, **kwargs):
+            value = kwargs["kwargs"]["list_kwarg"]
+            return f"/home/{value}"
+
+        mock_reverse.side_effect = reverse_side_effect
         rendered_link = get_attribute(self.obj, self.link_list_element)
-        self.assertEqual(rendered_link, "<td><br><br><br></td>")
+        self.assertEqual(
+            rendered_link,
+            (
+                "<td>"
+                '<a id="id__home_1" href="/home/1" title="Click me">a</a><br>'
+                '<a id="id__home_2" href="/home/2" title="Click me">b</a><br>'
+                '<a id="id__home_3" href="/home/3" title="Click me">c</a><br>'
+                "</td>"
+            ),
+        )
 
     def test_get_link_no_reverse_match(self):
         self.link_element.url = "invalid_url"
