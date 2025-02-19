@@ -49,7 +49,12 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
     def to_latex(self) -> str:
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
         self.figure.write_image(temp_file.name)
-        return f"\\includegraphics[width={self.width}\\textwidth]{{{temp_file.name}}}"
+        latex_str = "\\begin{figure}[H]\n"
+        latex_str += (
+            f"\\includegraphics[width={self.width}\\textwidth]{{{temp_file.name}}}\n"
+        )
+        latex_str += "\\end{figure}"
+        return latex_str
 
     def _check_reporting_data(self, reporting_data: ReportingData) -> None:
         if len(reporting_data.y_axis_columns) != len(reporting_data.plot_types):

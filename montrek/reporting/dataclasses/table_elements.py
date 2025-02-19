@@ -68,11 +68,11 @@ class AttrTableElement(TableElement):
         else:
             value = getattr(obj, attr, attr)
         if tag == "html":
-            if value is None:
+            if pd.isna(value):
                 return self.none_return_html(obj)
             return self.format(value)
         elif tag == "latex":
-            if value is None:
+            if pd.isna(value):
                 return " \\color{black} - &"
             return self.format_latex(value)
         return str(value)
