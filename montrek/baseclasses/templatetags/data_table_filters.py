@@ -99,9 +99,9 @@ def _get_link_attribute(obj, table_element):
 
 def _get_link_list_attribute(obj, table_element):
     list_values = _get_dotted_attr_or_arg(obj, table_element.list_attr)
-    list_values = list_values.split(",") if list_values else []
+    list_values = str(list_values).split(",") if list_values else []
     text_values = _get_dotted_attr_or_arg(obj, table_element.text)
-    text_values = text_values.split(",") if text_values else []
+    text_values = str(text_values).split(",") if text_values else []
     assert len(list_values) == len(text_values)
     result = "<td>"
     for i, list_value in enumerate(list_values):
