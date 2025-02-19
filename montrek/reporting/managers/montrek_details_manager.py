@@ -54,7 +54,7 @@ class MontrekDetailsManager(MontrekManager):
             latex_str += "\\setlength{\\tabcolsep}{2pt}\n"
             latex_str += "\\renewcommand{\\arraystretch}{1.0}\n"
             latex_str += f"\\caption{{{self.table_title}}}\n"
-            latex_str += "\\begin{tabularx}{\\textwidth}{"
+            latex_str += f"\\begin{{tabularx}}{{\\textwidth}}{{"
 
             # Define the column format based on the number of columns
             column_format = "|X|X|"
@@ -72,5 +72,5 @@ class MontrekDetailsManager(MontrekManager):
                 latex_str += f"\\cellcolor{{blue}}\\color{{white}}\\textbf{{{element_name}}} &{cell_color} {element_attribute} \\\\\n\\hline\n"
 
             latex_str += "\\end{tabularx}\n\\end{table}\n"
-            latex_str += "\\end{minipage}\n"
+            latex_str += "\\end{minipage}"
         return latex_str

@@ -26,7 +26,7 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
             title_font_color=ReportingColors.BLUE.hex,  # Customizing Title Color
             font=dict(
                 family="Arial, sans-serif",
-                size=12 / (1.5 * self.width),
+                size=14,
                 color=ReportingColors.BLUE.hex,  # Customizing Font Color
             ),
             paper_bgcolor=ReportingColors.WHITE.hex,  # Customizing Background Color
@@ -49,7 +49,10 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
     def to_latex(self) -> str:
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
         self.figure.write_image(temp_file.name)
-        return f"\\includegraphics[width={self.width}\\textwidth]{{{temp_file.name}}}"
+        latex_str = "\\begin{figure}[H]\n"
+        latex_str += f"\\includegraphics[width=\\textwidth]{{{temp_file.name}}}\n"
+        latex_str += "\\end{figure}"
+        return latex_str
 
     def _check_reporting_data(self, reporting_data: ReportingData) -> None:
         if len(reporting_data.y_axis_columns) != len(reporting_data.plot_types):
