@@ -71,6 +71,11 @@ urlpatterns = [
         name="montrek_example_d_create",
     ),
     path(
+        "d/<int:pk>/details",
+        views.MontrekExampleDDetails.as_view(),
+        name="montrek_example_d_details",
+    ),
+    path(
         "d/<int:pk>/delete",
         views.MontrekExampleDDelete.as_view(),
         name="montrek_example_d_delete",

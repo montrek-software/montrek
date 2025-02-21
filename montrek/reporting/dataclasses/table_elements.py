@@ -68,11 +68,11 @@ class AttrTableElement(TableElement):
         else:
             value = getattr(obj, attr, attr)
         if tag == "html":
-            if value is None:
+            if pd.isna(value):
                 return self.none_return_html(obj)
             return self.format(value)
         elif tag == "latex":
-            if value is None:
+            if pd.isna(value):
                 return " \\color{black} - &"
             return self.format_latex(value)
         return str(value)
@@ -100,8 +100,10 @@ class BaseLinkTableElement(TableElement):
 
     @staticmethod
     def get_dotted_attr_or_arg(obj, value):
-        """Gets an attribute of an object dynamically from a string name"""
-        """If the attribute is not found, then it is assumed to be an argument"""
+        """
+        Gets an attribute of an object dynamically from a string name.
+        If the attribute is not found, then it is assumed to be an argument.
+        """
         attrs = value.split(".")
         for attr in attrs:
             if isinstance(obj, dict):
@@ -111,37 +113,48 @@ class BaseLinkTableElement(TableElement):
         return obj
 
     def get_attribute(self, obj: Any, tag: str) -> str:
+        link_text = self._get_link_text(obj)
         if tag == "latex":
-            value = self._get_link_text(obj)
-            return self.format_latex(value)
+            return self.format_latex(link_text)
+        url_kwargs = self._get_url_kwargs(obj)
+        url = self._get_url(obj, url_kwargs)
+        link = self._get_link(url, link_text)
+        return f"<td>{link}</td>"
+
+    def _get_url_kwargs(self, obj: Any) -> dict:
         # TODO Update this such that _get_dotted_attr_or_arg is not used anymore
         kwargs = {
-            key: BaseLinkTableElement.get_dotted_attr_or_arg(obj, value)
+            key: self.get_dotted_attr_or_arg(obj, value)
             for key, value in self.kwargs.items()
             if key != "filter"
         }
         kwargs = {key: str(value).replace("/", "_") for key, value in kwargs.items()}
-        url_target = self.url
+        return kwargs
+
+    def _get_url(self, obj: Any, url_kwargs: dict) -> str:
         try:
             url = reverse(
-                url_target,
-                kwargs=kwargs,
+                self.url,
+                kwargs=url_kwargs,
             )
         except NoReverseMatch:
-            return "<td></td>"
+            return ""
         filter_field = self.kwargs.get("filter")
         if filter_field:
-            filter_str = f"?filter_field={filter_field}&filter_lookup=in&filter_value={BaseLinkTableElement.get_dotted_attr_or_arg(obj, filter_field)}"
+            filter_str = f"?filter_field={filter_field}&filter_lookup=in&filter_value={self.get_dotted_attr_or_arg(obj, filter_field)}"
             url += filter_str
-        link_text = self._get_link_text(obj)
+        return url
+
+    def _get_link(self, url: str, link_text: str) -> str:
+        if not url:
+            return ""
         id_tag = url.replace("/", "_")
         hover_text = self.hover_text
-        template_str = '<td><a id="id_{{ id_tag }}" href="{{ url }}" title="{{ hover_text }}">{{ link_text }}</a></td>'
+        template_str = '<a id="id_{{ id_tag }}" href="{{ url }}" title="{{ hover_text }}">{{ link_text }}</a>'
         template = Template(template_str)
         context = {
             "url": url,
             "link_text": link_text,
-            "url_target": url_target,
             "id_tag": id_tag,
             "hover_text": hover_text,
         }
@@ -165,6 +178,42 @@ class LinkTableElement(BaseLinkTableElement):
 class LinkTextTableElement(BaseLinkTableElement):
     serializer_field_class = serializers.CharField
     text: str
+
+    def _get_link_text(self, obj):
+        return BaseLinkTableElement.get_dotted_attr_or_arg(obj, self.text)
+
+
+@dataclass
+class LinkListTableElement(BaseLinkTableElement):
+    serializer_field_class = serializers.CharField
+    text: str
+    list_attr: str
+    list_kwarg: str
+    out_separator: str = "<br>"
+
+    def get_attribute(self, obj: Any, tag: str) -> str:
+        if tag == "latex":
+            value = self._get_link_text(obj)
+            return self.format_latex(value)
+        list_values = self.get_dotted_attr_or_arg(obj, self.list_attr)
+        list_values = str(list_values).split(",") if list_values else []
+        text_values = self.get_dotted_attr_or_arg(obj, self.text)
+        text_values = str(text_values).split(",") if text_values else []
+        assert len(list_values) == len(
+            text_values
+        ), f"list_values: {list_values}, text_values: {text_values}"
+        result = "<td>"
+        for i, list_value in enumerate(list_values):
+            url_kwargs = self._get_url_kwargs(obj)
+            url_kwargs[self.list_kwarg] = list_value
+            url = self._get_url(obj, url_kwargs)
+            link_text = text_values[i]
+            link = self._get_link(url, link_text)
+            if i > 0:
+                result += self.out_separator
+            result += link
+        result += "</td>"
+        return result
 
     def _get_link_text(self, obj):
         return BaseLinkTableElement.get_dotted_attr_or_arg(obj, self.text)
@@ -217,6 +266,8 @@ class NumberTableElement(AttrTableElement):
     shortener: NumberShortenerABC = NoShortening()
 
     def format(self, value):
+        if pd.isna(value):
+            return '<td style="text-align:center;">-</td>'
         if not isinstance(value, (int, float, Decimal)):
             return f'<td style="text-align:left;">{value}</td>'
         color = _get_value_color(value)

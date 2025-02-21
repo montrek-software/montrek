@@ -14,6 +14,7 @@ class HtmlLatexConverter:
         text = HtmlLatexConverter.images(text)
         text = HtmlLatexConverter.alignments(text)
         text = HtmlLatexConverter.newline(text)
+        text = HtmlLatexConverter.emojis(text)
         text = HtmlLatexConverter.special_characters(text)
         text = HtmlLatexConverter.sub_sup_script(text)
         return text
@@ -123,4 +124,9 @@ class HtmlLatexConverter:
         for pattern, replacement in patterns.items():
             while re.search(pattern, text, flags=re.DOTALL):
                 text = re.sub(pattern, replacement, text, flags=re.DOTALL)
+        return text
+
+    @staticmethod
+    def emojis(text: str) -> str:
+        text = text.replace("&#128640;", "\\twemoji{rocket}")
         return text

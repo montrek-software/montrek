@@ -47,11 +47,13 @@ class ReportGridLayout:
         col_str = self._get_latex_column_definition()
         latex_str = "\n\n" if self.is_nested else "\n\n\\begin{table}[H]"
 
-        latex_str += f"\n\\begin{{tabular}}{{ {col_str} }}"
+        latex_str += f"\n\\begin{{tabular}}{{ {col_str} }}\n"
         for row in self.report_grid_elements.report_grid_elements_container:
             latex_str += "\n"
             for element in row:
-                latex_str += f"{element.to_latex()} & "
+                latex_str += f"\\begin{{minipage}}[t]{{{self.report_grid_elements.width}\\textwidth}}\n"
+                latex_str += f"{element.to_latex()} "
+                latex_str += "\\end{minipage} &\n"
             latex_str = latex_str[:-3] + " \\\\\n"
         latex_str += "\n\\end{tabular}"
         if self.is_nested:

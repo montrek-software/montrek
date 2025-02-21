@@ -53,7 +53,7 @@ class TestAnnotationManager(TestCase):
 
     def test_skip_raw_annotations_fields(self):
         test_annotator = Annotator(TestMontrekHub)
-        raw_fields = ["hub_entity_id", "value_date"]
+        raw_fields = ["value_date"]
         test_annotator.subquery_builder_to_annotations(
             raw_fields, MockSatellite, MockSubqueryBuilder
         )

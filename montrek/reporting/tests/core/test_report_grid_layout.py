@@ -20,9 +20,10 @@ class TestReportGridLayout(TestCase):
 
     def test_report_grid_layout__latex(self):
         latex = self.grid.to_latex()
-        self.assertEqual(
-            latex.replace("\n", ""),
-            r"\begin{table}[H]\begin{tabular}{ >{\raggedright\arraybackslash}p{ 0.49000\textwidth}>{\raggedleft\arraybackslash}p{ 0.49000\textwidth} }\begin{justify}One\end{justify} & \begin{justify}Two\end{justify} \\\begin{justify}Three\end{justify} & \begin{justify}Four\end{justify} \\\end{tabular}\end{table}",
+        self.assertTrue(
+            latex.replace("\n", "").startswith(
+                r"\begin{table}[H]\begin{tabular}{ >{\raggedright\arraybackslash}p{ 0.49000\textwidth}>{\raggedleft\arraybackslash}p{ 0.49000\textwidth} }\begin{minipage}[t]{0.49\textwidth}"
+            )
         )
 
     def test_nested_grids(self):

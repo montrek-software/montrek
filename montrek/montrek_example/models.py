@@ -1,3 +1,7 @@
+from django.core.validators import (
+    MinValueValidator,
+    MaxValueValidator,
+)
 from api_upload.models import (
     ApiUploadRegistryHubABC,
     ApiUploadRegistryStaticSatelliteABC,
@@ -97,7 +101,10 @@ class EHubValueDate(HubValueDate):
 class SatA1(MontrekSatelliteABC):
     hub_entity = models.ForeignKey(HubA, on_delete=models.CASCADE)
     field_a1_str = models.CharField(max_length=50, default="DEFAULT")
-    field_a1_int = models.IntegerField(default=0)
+    field_a1_int = models.IntegerField(
+        default=0,
+        validators=[MinValueValidator(-1000), MaxValueValidator(1000)],
+    )
     identifier_fields = ["field_a1_str"]
 
 

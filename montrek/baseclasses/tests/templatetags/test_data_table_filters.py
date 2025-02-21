@@ -1,11 +1,11 @@
+from unittest import mock
 from dataclasses import dataclass
 from django.test import TestCase
-from django.urls import reverse, NoReverseMatch
+from django.urls import reverse
 from reporting.dataclasses import table_elements
 from baseclasses.templatetags.data_table_filters import (
     get_attribute,
     _get_dotted_attr_or_arg,
-    _get_link,
 )
 
 
@@ -97,20 +97,31 @@ class TestGetDottedAttrOrArgTests(TestCase):
 
 class TestGetLinkTests(TestCase):
     def setUp(self):
-        self.obj = {"id": 1, "name": "Test"}
+        self.obj = {
+            "id": 1,
+            "name": "Test",
+            "list_attr": "1,2,3",
+            "text_attr": "a,b,c",
+        }
+        shared_kwargs = {
+            "url": "home",
+            "kwargs": {},
+            "hover_text": "Click me",
+            "name": "link",
+        }
         self.link_element = table_elements.LinkTableElement(
-            url="home",
-            kwargs={},
             icon="info",
-            hover_text="Click me",
-            name="link",
+            **shared_kwargs,
         )
         self.link_text_element = table_elements.LinkTextTableElement(
-            url="home",
-            kwargs={},
-            hover_text="Click me",
-            name="link",
             text="Link Text",
+            **shared_kwargs,
+        )
+        self.link_list_element = table_elements.LinkListTableElement(
+            text="text_attr",
+            list_attr="list_attr",
+            list_kwarg="list_kwarg",
+            **shared_kwargs,
         )
 
     def test_get_link_success(self):
@@ -134,6 +145,25 @@ class TestGetLinkTests(TestCase):
         rendered_link = get_attribute(self.obj, self.link_text_element)
         self.assertIn(url, rendered_link)
         self.assertIn("Click me", rendered_link)
+
+    @mock.patch("baseclasses.templatetags.data_table_filters.reverse")
+    def test_get_link_list_success(self, mock_reverse):
+        def reverse_side_effect(*args, **kwargs):
+            value = kwargs["kwargs"]["list_kwarg"]
+            return f"/home/{value}"
+
+        mock_reverse.side_effect = reverse_side_effect
+        rendered_link = get_attribute(self.obj, self.link_list_element)
+        self.assertEqual(
+            rendered_link,
+            (
+                "<td>"
+                '<a id="id__home_1" href="/home/1" title="Click me">a</a><br>'
+                '<a id="id__home_2" href="/home/2" title="Click me">b</a><br>'
+                '<a id="id__home_3" href="/home/3" title="Click me">c</a>'
+                "</td>"
+            ),
+        )
 
     def test_get_link_no_reverse_match(self):
         self.link_element.url = "invalid_url"
