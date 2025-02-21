@@ -117,6 +117,22 @@ class TestMontrekExampleACreateView(MontrekCreateViewTestCase):
             "field_a2_float": 2.0,
         }
 
+    def test_validation_error(self):
+        # The validator on field_a1_int should only allow values between -1000 and 1000
+        data = self.creation_data()
+        data["field_a1_int"] = 1001
+        response = self.client.post(self.url, data=data)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response, "Ensure this value is less than or equal to 1000."
+        )
+        data["field_a1_int"] = -1001
+        response = self.client.post(self.url, data=data)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response, "Ensure this value is greater than or equal to -1000."
+        )
+
 
 class TestMontrekExampleAUpdateView(MontrekUpdateViewTestCase):
     viewname = "montrek_example_a_update"
