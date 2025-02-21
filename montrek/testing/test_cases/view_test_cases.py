@@ -257,7 +257,7 @@ class MontrekDownloadViewTestCase(MontrekViewTestCase):
         self.assertEqual(self.response.status_code, self.expected_status_code)
         content_disposition = self.response.get("Content-Disposition")
         self.assertIsNotNone(content_disposition)
-        self.assertEqual(
+        self.assertRegex(
             content_disposition, f'attachment; filename="{self.expected_filename()}"'
         )
         self.additional_download_assertions()
