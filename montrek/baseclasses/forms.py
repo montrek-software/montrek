@@ -105,6 +105,7 @@ class MontrekCreateForm(forms.ModelForm):
         fields = self.repository.std_satellite_fields()
         for field in fields:
             form_field = field.formfield()
+            form_field.validators.extend(field.validators)
             if form_field and field.name not in self._meta.exclude:
                 self.fields[field.name] = form_field
                 self.fields[field.name].widget.attrs.update({"id": f"id_{field.name}"})
