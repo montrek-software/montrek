@@ -97,6 +97,7 @@ class BaseLinkTableElement(TableElement):
     url: str
     kwargs: dict
     hover_text: str
+    static_kwargs = {}
 
     @staticmethod
     def get_dotted_attr_or_arg(obj, value):
@@ -129,6 +130,7 @@ class BaseLinkTableElement(TableElement):
             if key != "filter"
         }
         kwargs = {key: str(value).replace("/", "_") for key, value in kwargs.items()}
+        kwargs.update(self.static_kwargs)
         return kwargs
 
     def _get_url(self, obj: Any, url_kwargs: dict) -> str:
@@ -167,6 +169,7 @@ class BaseLinkTableElement(TableElement):
 @dataclass
 class LinkTableElement(BaseLinkTableElement):
     icon: str
+    static_kwargs: dict = field(default_factory=dict)
 
     def _get_link_text(self, obj):
         return Template(
@@ -178,6 +181,7 @@ class LinkTableElement(BaseLinkTableElement):
 class LinkTextTableElement(BaseLinkTableElement):
     serializer_field_class = serializers.CharField
     text: str
+    static_kwargs: dict = field(default_factory=dict)
 
     def _get_link_text(self, obj):
         return BaseLinkTableElement.get_dotted_attr_or_arg(obj, self.text)

@@ -425,6 +425,19 @@ class TestDataTableFilters(TestCase):
             in test_link
         )
 
+    def test__get_link_static_kwargs(self):
+        test_obj = TestMontrekSatelliteFactory.create()
+        table_element = te.LinkTextTableElement(
+            name="name",
+            url="dummy_detail_static",
+            text="test_name",
+            hover_text="hover_text",
+            kwargs={"pk": "pk", "filter": "test_name"},
+            static_kwargs={"static": "test_static"},
+        )
+        test_kwargs = table_element._get_url_kwargs(test_obj)
+        self.assertEqual(test_kwargs["static"], "test_static")
+
     def test_get_attribute(self):
         test_obj = TestMontrekSatelliteFactory.create(test_name="Test Name")
         table_element = te.LinkTableElement(
