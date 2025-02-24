@@ -193,7 +193,6 @@ class LinkListTableElement(BaseLinkTableElement):
     text: str
     list_attr: str
     list_kwarg: str
-    sort_attr: str = ""
     out_separator: str = "<br>"
 
     def get_attribute(self, obj: Any, tag: str) -> str:
@@ -202,7 +201,7 @@ class LinkListTableElement(BaseLinkTableElement):
             return self.format_latex(value)
         result = "<td><div style='max-height: 300px; overflow-y: auto;'>"
         values = self._get_object_values(obj)
-        for i, (list_value, link_text, _) in enumerate(values):
+        for i, (list_value, link_text) in enumerate(values):
             url_kwargs = self._get_url_kwargs(obj)
             url_kwargs[self.list_kwarg] = list_value
             url = self._get_url(obj, url_kwargs)
@@ -219,16 +218,8 @@ class LinkListTableElement(BaseLinkTableElement):
         text_values = self.get_dotted_attr_or_arg(obj, self.text)
         text_values = str(text_values).split(",") if text_values else []
         assert len(list_values) == len(text_values), ()
-        if self.sort_attr:
-            sort_values = self.get_dotted_attr_or_arg(obj, self.sort_attr)
-            sort_values = str(sort_values).split(",") if sort_values else []
-            assert len(list_values) == len(
-                sort_values
-            ), f"sort_values: {sort_values}, list_values: {list_values}"
-        else:
-            sort_values = text_values
-        values = zip(list_values, text_values, sort_values)
-        values = sorted(values, key=lambda x: x[2])
+        values = zip(list_values, text_values)
+        values = sorted(values, key=lambda x: x[1])
         return values
 
     def _get_link_text(self, obj):
