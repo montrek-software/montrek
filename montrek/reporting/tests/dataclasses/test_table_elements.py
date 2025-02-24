@@ -323,8 +323,9 @@ class TestTableElements(TestCase):
             kwargs={},
             list_attr="list_attr",
             list_kwarg="list_kwarg",
+            sort_attr="sort_attr",
         )
-        obj = {"list_attr": "1,2,3", "text_attr": "a,b,c"}
+        obj = {"list_attr": "1,2,3", "text_attr": "a,b,c", "sort_attr": "103,102,101"}
         latex_str = table_element.get_attribute(obj, "latex")
         self.assertEqual(latex_str, " \\color{black} a,b,c &")
         html_str = table_element.get_attribute(obj, "html")
@@ -332,9 +333,9 @@ class TestTableElements(TestCase):
             html_str,
             (
                 "<td>"
-                '<a id="id__fake_url_1" href="/fake_url/1" title="hover_text">a</a><br>'
+                '<a id="id__fake_url_3" href="/fake_url/3" title="hover_text">c</a><br>'
                 '<a id="id__fake_url_2" href="/fake_url/2" title="hover_text">b</a><br>'
-                '<a id="id__fake_url_3" href="/fake_url/3" title="hover_text">c</a>'
+                '<a id="id__fake_url_1" href="/fake_url/1" title="hover_text">a</a>'
                 "</td>"
             ),
         )

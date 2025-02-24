@@ -193,12 +193,27 @@ class LinkListTableElement(BaseLinkTableElement):
     text: str
     list_attr: str
     list_kwarg: str
+    sort_attr: str = ""
     out_separator: str = "<br>"
 
     def get_attribute(self, obj: Any, tag: str) -> str:
         if tag == "latex":
             value = self._get_link_text(obj)
             return self.format_latex(value)
+        result = "<td>"
+        values = self._get_object_values(obj)
+        for i, (list_value, link_text, _) in enumerate(values):
+            url_kwargs = self._get_url_kwargs(obj)
+            url_kwargs[self.list_kwarg] = list_value
+            url = self._get_url(obj, url_kwargs)
+            link = self._get_link(url, link_text)
+            if i > 0:
+                result += self.out_separator
+            result += link
+        result += "</td>"
+        return result
+
+    def _get_object_values(self, obj) -> list:
         list_values = self.get_dotted_attr_or_arg(obj, self.list_attr)
         list_values = str(list_values).split(",") if list_values else []
         text_values = self.get_dotted_attr_or_arg(obj, self.text)
@@ -206,18 +221,17 @@ class LinkListTableElement(BaseLinkTableElement):
         assert len(list_values) == len(
             text_values
         ), f"list_values: {list_values}, text_values: {text_values}"
-        result = "<td>"
-        for i, list_value in enumerate(list_values):
-            url_kwargs = self._get_url_kwargs(obj)
-            url_kwargs[self.list_kwarg] = list_value
-            url = self._get_url(obj, url_kwargs)
-            link_text = text_values[i]
-            link = self._get_link(url, link_text)
-            if i > 0:
-                result += self.out_separator
-            result += link
-        result += "</td>"
-        return result
+        if self.sort_attr:
+            sort_values = self.get_dotted_attr_or_arg(obj, self.sort_attr)
+            sort_values = str(sort_values).split(",") if sort_values else []
+            assert len(list_values) == len(
+                sort_values
+            ), f"sort_values: {sort_values}, list_values: {list_values}"
+        else:
+            sort_values = text_values
+        values = zip(list_values, text_values, sort_values)
+        values = sorted(values, key=lambda x: x[2])
+        return values
 
     def _get_link_text(self, obj):
         return BaseLinkTableElement.get_dotted_attr_or_arg(obj, self.text)
