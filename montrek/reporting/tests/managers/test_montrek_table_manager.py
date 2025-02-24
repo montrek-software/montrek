@@ -1,4 +1,5 @@
 import datetime
+from decimal import Decimal
 import io
 from dataclasses import dataclass
 
@@ -22,6 +23,7 @@ class MockData:
     field_b: int
     field_c: float
     field_d: datetime.datetime | datetime.date | timezone.datetime
+    field_e: Decimal
 
 
 class MockQuerySet:
@@ -55,9 +57,15 @@ class MockRepository:
 
     def receive(self):
         return MockQuerySet(
-            MockData("a", 1, 1.0, timezone.make_aware(datetime.datetime(2024, 7, 13))),
-            MockData("b", 2, 2.0, datetime.datetime(2024, 7, 13)),
-            MockData("c", 3, 3.0, timezone.datetime(2024, 7, 13)),
+            MockData(
+                "a",
+                1,
+                1.0,
+                timezone.make_aware(datetime.datetime(2024, 7, 13)),
+                Decimal(1),
+            ),
+            MockData("b", 2, 2.0, datetime.datetime(2024, 7, 13), Decimal(2.2)),
+            MockData("c", 3, 3.0, timezone.datetime(2024, 7, 13), Decimal(3)),
         )
 
 
@@ -68,7 +76,7 @@ class MockLongRepository:
     def receive(self):
         mock_data = [
             MockData(
-                str(i), i, 1.0, timezone.make_aware(datetime.datetime(2024, 7, 13))
+                str(i), i, 1.0, timezone.make_aware(datetime.datetime(2024, 7, 13)), i
             )
             for i in range(10000)
         ]
@@ -87,6 +95,7 @@ class MockMontrekTableManager(MontrekTableManager):
             te.IntTableElement(attr="field_b", name="Field B"),
             te.FloatTableElement(attr="field_c", name="Field C"),
             te.DateTimeTableElement(attr="field_d", name="Field D"),
+            te.EuroTableElement(attr="field_e", name="Field E"),
             te.LinkTableElement(
                 name="Link",
                 url="home",
@@ -134,6 +143,7 @@ class TestMontrekTableManager(TestCase):
             "Field B",
             "Field C",
             "Field D",
+            "Field E",
             "Link",
             "Link Text",
         ]
@@ -159,7 +169,7 @@ class TestMontrekTableManager(TestCase):
         self.assertRegex(content_disposition, filename_pattern)
         self.assertEqual(
             response.getvalue(),
-            b"Field A,Field B,Field C,Field D,Link Text\na,1,1.0,2024-07-13,a\nb,2,2.0,2024-07-13,b\nc,3,3.0,2024-07-13,c\n",
+            b"Field A,Field B,Field C,Field D,Field E,Link Text\na,1,1.0,2024-07-13,1.0,a\nb,2,2.0,2024-07-13,2.2,b\nc,3,3.0,2024-07-13,3.0,c\n",
         )
 
     def test_download_excel(self):
@@ -188,6 +198,7 @@ class TestMontrekTableManager(TestCase):
                         datetime.datetime(2024, 7, 13),
                         timezone.datetime(2024, 7, 13),
                     ],
+                    "Field E": [1, 2.2, 3],
                     "Link Text": ["a", "b", "c"],
                 }
             )
@@ -201,6 +212,7 @@ class TestMontrekTableManager(TestCase):
             "Field B": "field_b",
             "Field C": "field_c",
             "Field D": "field_d",
+            "Field E": "field_e",
             "Link": "",
             "Link Text": "",
         }
@@ -253,6 +265,7 @@ class MockMontrekDataFrameTableManager(MontrekDataFrameTableManager):
             te.IntTableElement(attr="field_b", name="Field B"),
             te.FloatTableElement(attr="field_c", name="Field C"),
             te.DateTimeTableElement(attr="field_d", name="Field D"),
+            te.EuroTableElement(attr="field_e", name="Field E"),
             te.LinkTableElement(
                 name="Link",
                 url="home",
@@ -283,6 +296,7 @@ class TestMontrekDataFrameTableManager(TestCase):
                     datetime.datetime(2024, 7, 13),
                     timezone.datetime(2024, 7, 13),
                 ],
+                "field_e": [Decimal(1), Decimal(2), Decimal(3)],
                 "Link Text": ["a", "b", "c"],
             }
         )
@@ -327,6 +341,7 @@ class TestMontrekDataFrameTableManager(TestCase):
             "Field B",
             "Field C",
             "Field D",
+            "Field E",
             "Link",
             "Link Text",
         ]
@@ -353,7 +368,7 @@ class TestMontrekDataFrameTableManager(TestCase):
         self.assertRegex(content_disposition, filename_pattern)
         self.assertEqual(
             response.getvalue(),
-            b"Field A,Field B,Field C,Field D,Link Text\na,1,1.0,2024-07-13,a\nb,2,2.0,2024-07-13,b\nc,3,3.0,2024-07-13,c\n",
+            b"Field A,Field B,Field C,Field D,Field E,Link Text\na,1,1.0,2024-07-13,1,a\nb,2,2.0,2024-07-13,2,b\nc,3,3.0,2024-07-13,3,c\n",
         )
 
     def test_download_excel(self):
@@ -381,6 +396,7 @@ class TestMontrekDataFrameTableManager(TestCase):
                         datetime.datetime(2024, 7, 13),
                         timezone.datetime(2024, 7, 13),
                     ],
+                    "Field E": [1.0, 2.0, 3.0],
                     "Link Text": ["a", "b", "c"],
                 }
             )
@@ -393,6 +409,7 @@ class TestMontrekDataFrameTableManager(TestCase):
             "Field B": "field_b",
             "Field C": "field_c",
             "Field D": "field_d",
+            "Field E": "field_e",
             "Link": "",
             "Link Text": "",
         }

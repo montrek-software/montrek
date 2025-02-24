@@ -1,4 +1,5 @@
 import datetime
+from decimal import Decimal
 import os
 from io import BytesIO
 from typing import Any
@@ -196,6 +197,11 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
             value = timezone.make_naive(value)
         return value
 
+    def _make_float(self, value):
+        if isinstance(value, Decimal):
+            return float(value)
+        return value
+
     def send_table_by_mail(self, filetype: str):
         file_name = f"{self.document_name}.{filetype}"
         if filetype == "xlsx":
@@ -264,6 +270,7 @@ class MontrekTableManager(MontrekTableManagerABC):
                 if hasattr(element, "attr"):
                     attr = getattr(row, element.attr)
                     attr = self._make_datetime_naive(attr)
+                    attr = self._make_float(attr)
 
                     values.append(attr)
                 else:
