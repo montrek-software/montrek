@@ -324,18 +324,18 @@ class TestTableElements(TestCase):
             list_attr="list_attr",
             list_kwarg="list_kwarg",
         )
-        obj = {"list_attr": "1,2,3", "text_attr": "a,b,c"}
+        obj = {"list_attr": "3,2,1", "text_attr": "c,b,a"}
         latex_str = table_element.get_attribute(obj, "latex")
         self.assertEqual(latex_str, " \\color{black} a,b,c &")
         html_str = table_element.get_attribute(obj, "html")
         self.assertEqual(
             html_str,
             (
-                "<td>"
+                "<td><div style='max-height: 300px; overflow-y: auto;'>"
                 '<a id="id__fake_url_1" href="/fake_url/1" title="hover_text">a</a><br>'
                 '<a id="id__fake_url_2" href="/fake_url/2" title="hover_text">b</a><br>'
                 '<a id="id__fake_url_3" href="/fake_url/3" title="hover_text">c</a>'
-                "</td>"
+                "</div></td>"
             ),
         )
 

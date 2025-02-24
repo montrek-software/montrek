@@ -96,21 +96,29 @@ def _get_link_attribute(obj, table_element):
     return f"<td>{link}</td>"
 
 
-def _get_link_list_attribute(obj, table_element):
+def _get_link_list_object_values(obj, table_element) -> list:
     list_values = _get_dotted_attr_or_arg(obj, table_element.list_attr)
     list_values = str(list_values).split(",") if list_values else []
     text_values = _get_dotted_attr_or_arg(obj, table_element.text)
     text_values = str(text_values).split(",") if text_values else []
-    assert len(list_values) == len(text_values)
-    result = "<td>"
-    for i, list_value in enumerate(list_values):
+    assert len(list_values) == len(
+        text_values
+    ), f"list_values: {list_values}, text_values: {text_values}"
+    values = zip(list_values, text_values)
+    values = sorted(values, key=lambda x: x[1])
+    return values
+
+
+def _get_link_list_attribute(obj, table_element):
+    values = _get_link_list_object_values(obj, table_element)
+    result = "<td><div style='max-height: 300px; overflow-y: auto;'>"
+    for i, (list_value, link_text) in enumerate(values):
         url_kwargs = _get_url_kwargs(table_element, obj)
         url_kwargs[table_element.list_kwarg] = list_value
         url = _get_url(table_element, obj, url_kwargs)
-        link_text = text_values[i]
         link = _get_link(table_element, url, link_text)
         if i > 0:
             result += table_element.out_separator
         result += link
-    result += "</td>"
+    result += "</div></td>"
     return result
