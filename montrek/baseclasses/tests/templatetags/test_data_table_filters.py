@@ -102,6 +102,7 @@ class TestGetLinkTests(TestCase):
             "name": "Test",
             "list_attr": "1,2,3",
             "text_attr": "a,b,c",
+            "sort_attr": "103,102,101",
         }
         shared_kwargs = {
             "url": "home",
@@ -121,6 +122,7 @@ class TestGetLinkTests(TestCase):
             text="text_attr",
             list_attr="list_attr",
             list_kwarg="list_kwarg",
+            sort_attr="sort_attr",
             **shared_kwargs,
         )
 
@@ -158,9 +160,9 @@ class TestGetLinkTests(TestCase):
             rendered_link,
             (
                 "<td>"
-                '<a id="id__home_1" href="/home/1" title="Click me">a</a><br>'
+                '<a id="id__home_3" href="/home/3" title="Click me">c</a><br>'
                 '<a id="id__home_2" href="/home/2" title="Click me">b</a><br>'
-                '<a id="id__home_3" href="/home/3" title="Click me">c</a>'
+                '<a id="id__home_1" href="/home/1" title="Click me">a</a>'
                 "</td>"
             ),
         )
