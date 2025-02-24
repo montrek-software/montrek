@@ -324,7 +324,7 @@ class TestTableElements(TestCase):
             list_attr="list_attr",
             list_kwarg="list_kwarg",
         )
-        obj = {"list_attr": "1,2,3", "text_attr": "a,b,c"}
+        obj = {"list_attr": "3,2,1", "text_attr": "c,b,a"}
         latex_str = table_element.get_attribute(obj, "latex")
         self.assertEqual(latex_str, " \\color{black} a,b,c &")
         html_str = table_element.get_attribute(obj, "html")

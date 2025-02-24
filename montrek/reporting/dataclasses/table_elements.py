@@ -196,11 +196,11 @@ class LinkListTableElement(BaseLinkTableElement):
     out_separator: str = "<br>"
 
     def get_attribute(self, obj: Any, tag: str) -> str:
+        values = self._get_object_values(obj)
         if tag == "latex":
-            value = self._get_link_text(obj)
+            value = ",".join(link_text for _, link_text in values)
             return self.format_latex(value)
         result = "<td><div style='max-height: 300px; overflow-y: auto;'>"
-        values = self._get_object_values(obj)
         for i, (list_value, link_text) in enumerate(values):
             url_kwargs = self._get_url_kwargs(obj)
             url_kwargs[self.list_kwarg] = list_value
@@ -223,9 +223,6 @@ class LinkListTableElement(BaseLinkTableElement):
         values = zip(list_values, text_values)
         values = sorted(values, key=lambda x: x[1])
         return values
-
-    def _get_link_text(self, obj):
-        return BaseLinkTableElement.get_dotted_attr_or_arg(obj, self.text)
 
 
 @dataclass
