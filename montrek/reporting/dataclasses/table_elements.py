@@ -217,7 +217,9 @@ class LinkListTableElement(BaseLinkTableElement):
         list_values = str(list_values).split(",") if list_values else []
         text_values = self.get_dotted_attr_or_arg(obj, self.text)
         text_values = str(text_values).split(",") if text_values else []
-        assert len(list_values) == len(text_values), ()
+        assert len(list_values) == len(
+            text_values
+        ), f"list_values: {list_values}, text_values: {text_values}"
         values = zip(list_values, text_values)
         values = sorted(values, key=lambda x: x[1])
         return values

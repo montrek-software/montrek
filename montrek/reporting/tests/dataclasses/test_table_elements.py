@@ -331,11 +331,11 @@ class TestTableElements(TestCase):
         self.assertEqual(
             html_str,
             (
-                "<td>"
+                "<td><div style='max-height: 300px; overflow-y: auto;'>"
                 '<a id="id__fake_url_1" href="/fake_url/1" title="hover_text">a</a><br>'
                 '<a id="id__fake_url_2" href="/fake_url/2" title="hover_text">b</a><br>'
                 '<a id="id__fake_url_3" href="/fake_url/3" title="hover_text">c</a>'
-                "</td>"
+                "</div></td>"
             ),
         )
 
