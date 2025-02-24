@@ -200,7 +200,7 @@ class LinkListTableElement(BaseLinkTableElement):
         if tag == "latex":
             value = self._get_link_text(obj)
             return self.format_latex(value)
-        result = "<td>"
+        result = "<td><div style='max-height: 300px; overflow-y: auto;'>"
         values = self._get_object_values(obj)
         for i, (list_value, link_text, _) in enumerate(values):
             url_kwargs = self._get_url_kwargs(obj)
@@ -210,7 +210,7 @@ class LinkListTableElement(BaseLinkTableElement):
             if i > 0:
                 result += self.out_separator
             result += link
-        result += "</td>"
+        result += "</div></td>"
         return result
 
     def _get_object_values(self, obj) -> list:
@@ -218,9 +218,7 @@ class LinkListTableElement(BaseLinkTableElement):
         list_values = str(list_values).split(",") if list_values else []
         text_values = self.get_dotted_attr_or_arg(obj, self.text)
         text_values = str(text_values).split(",") if text_values else []
-        assert len(list_values) == len(
-            text_values
-        ), f"list_values: {list_values}, text_values: {text_values}"
+        assert len(list_values) == len(text_values), ()
         if self.sort_attr:
             sort_values = self.get_dotted_attr_or_arg(obj, self.sort_attr)
             sort_values = str(sort_values).split(",") if sort_values else []

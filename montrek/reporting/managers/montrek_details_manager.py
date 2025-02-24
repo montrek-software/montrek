@@ -34,7 +34,9 @@ class MontrekDetailsManager(MontrekManager):
         bt_col_size = 12 // self.table_cols
         for i in range(self.table_cols):
             html_str += f'<div class="col-md-{bt_col_size}">'
-            html_str += '<table class="table table-bordered table-hover">'
+            html_str += (
+                '<table class="table table-bordered table-hover table-responsive">'
+            )
             start_idx = self.row_size * i
             end_idx = min(self.row_size * (i + 1), len(self.table_elements))
             for table_element in self.table_elements[start_idx:end_idx]:
