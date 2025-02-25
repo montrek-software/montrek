@@ -53,6 +53,26 @@ class HubCRepositoryLastTS(HubCRepository):
     latest_ts = True
 
 
+class HubCRepositorySumTS(MontrekRepository):
+    hub_class = me_models.HubC
+    latest_ts = True
+
+    def set_annotations(self):
+        self.add_satellite_fields_annotations(
+            me_models.SatTSC2,
+            ["field_tsc2_float"],
+            rename_field_map={"field_tsc2_float": "agg_field_tsc2_float"},
+            ts_agg_func="sum",
+        )
+        self.add_satellite_fields_annotations(
+            me_models.SatC1,
+            [
+                "field_c1_bool",
+                "field_c1_str",
+            ],
+        )
+
+
 class HubCRepositoryOnlyStatic(MontrekRepository):
     hub_class = me_models.HubC
 

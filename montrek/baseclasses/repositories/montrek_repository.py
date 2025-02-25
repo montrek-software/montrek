@@ -26,6 +26,7 @@ from baseclasses.repositories.subquery_builder import (
     ReverseLinkedSatelliteSubqueryBuilder,
     SatelliteSubqueryBuilder,
     TSSatelliteSubqueryBuilder,
+    SumTSSatelliteSubqueryBuilder,
 )
 from django.core.exceptions import PermissionDenied
 from django.db.models import (
@@ -201,9 +202,13 @@ class MontrekRepository:
         fields: List[str],
         *,
         rename_field_map: dict[str, str] = {},
+        ts_agg_func: str | None = None,
     ):
         if satellite_class.is_timeseries:
-            subquery_builder = TSSatelliteSubqueryBuilder
+            if ts_agg_func == "sum":
+                subquery_builder = SumTSSatelliteSubqueryBuilder
+            else:
+                subquery_builder = TSSatelliteSubqueryBuilder
         else:
             subquery_builder = SatelliteSubqueryBuilder
         self.annotator.subquery_builder_to_annotations(
