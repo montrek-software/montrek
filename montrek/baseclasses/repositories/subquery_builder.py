@@ -53,14 +53,17 @@ class SatelliteSubqueryBuilderABC(SubqueryBuilder):
             "state_date_end__gt": reference_date,
         }
 
+    def satellite_query(
+        self, reference_date: timezone.datetime, lookup_field: str = "pk"
+    ) -> QuerySet:
+        return self.satellite_class.objects.filter(
+            **self.subquery_filter(reference_date, lookup_field=lookup_field)
+        ).values(self.field)
+
     def satellite_subquery(
         self, reference_date: timezone.datetime, lookup_field: str = "pk"
     ) -> Subquery:
-        return Subquery(
-            self.satellite_class.objects.filter(
-                **self.subquery_filter(reference_date, lookup_field=lookup_field)
-            ).values(self.field)
-        )
+        return Subquery(self.satellite_query(reference_date, lookup_field))
 
 
 class SatelliteSubqueryBuilder(SatelliteSubqueryBuilderABC):
@@ -81,6 +84,19 @@ class SatelliteSubqueryBuilder(SatelliteSubqueryBuilderABC):
 class TSSatelliteSubqueryBuilder(SatelliteSubqueryBuilderABC):
     def build(self, reference_date: timezone.datetime) -> Subquery:
         return self.satellite_subquery(reference_date, lookup_field="hub_value_date")
+
+
+class SumTSSatelliteSubqueryBuilder(SatelliteSubqueryBuilder):
+    def satellite_query(
+        self, reference_date: timezone.datetime, lookup_field: str = "pk"
+    ) -> QuerySet:
+        sat_query = super().satellite_query(reference_date, "hub_value_date__hub__pk")
+
+        return sat_query.annotate(
+            **{
+                self.field + "agg": Func(self.field, function="Sum"),
+            }
+        ).values(self.field + "agg")
 
 
 class ValueDateSubqueryBuilder(SubqueryBuilder):

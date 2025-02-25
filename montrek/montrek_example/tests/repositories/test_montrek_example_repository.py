@@ -31,6 +31,7 @@ from montrek_example.repositories.hub_c_repository import (
     HubCRepositoryCommonFields,
     HubCRepositoryLastTS,
     HubCRepositoryOnlyStatic,
+    HubCRepositorySumTS,
 )
 from montrek_example.repositories.hub_d_repository import (
     HubDRepository,
@@ -1682,14 +1683,14 @@ class TestTimeSeriesStdQueryset(TestCase):
 
 class TestTSRepoLatestTS(TestCase):
     def setUp(self):
-        sat1 = me_factories.SatTSC2Factory.create(
+        self.sat1 = me_factories.SatTSC2Factory.create(
             value_date="2024-11-15", field_tsc2_float=1.0
         )
         sat2 = me_factories.SatTSC2Factory.create(
             value_date="2024-11-15", field_tsc2_float=2.0
         )
         hub_vd1 = me_factories.CHubValueDateFactory.create(
-            hub=sat1.hub_value_date.hub,
+            hub=self.sat1.hub_value_date.hub,
             value_date_list=me_factories.ValueDateListFactory.create(
                 value_date="2024-11-16"
             ),
@@ -1708,7 +1709,7 @@ class TestTSRepoLatestTS(TestCase):
         )
         me_factories.SatC1Factory.create(
             field_c1_str="Hallo",
-            hub_entity=sat1.hub_value_date.hub,
+            hub_entity=self.sat1.hub_value_date.hub,
         )
         me_factories.SatC1Factory.create(
             field_c1_str="Bonjour",
@@ -1731,6 +1732,25 @@ class TestTSRepoLatestTS(TestCase):
         qs3 = test_query.get(field_c1_str="Hola")
         self.assertEqual(qs3.field_tsc2_float, None)
         self.assertEqual(qs3.value_date, None)
+
+    def test_ts_sum_repo(self):
+        hub_vd1 = me_factories.CHubValueDateFactory.create(
+            hub=self.sat1.hub_value_date.hub,
+            value_date_list=me_factories.ValueDateListFactory.create(
+                value_date="2024-11-17"
+            ),
+        )
+        me_factories.SatTSC2Factory.create(
+            hub_value_date=hub_vd1,
+            field_tsc2_float=5.0,
+        )
+        repo = HubCRepositorySumTS()
+        test_query = repo.receive()
+        self.assertEqual(test_query.count(), 3)
+        qs1 = test_query.get(field_c1_str="Bonjour")
+        self.assertEqual(qs1.agg_field_tsc2_float, 6.0)
+        qs2 = test_query.get(field_c1_str="Hallo")
+        self.assertEqual(qs2.agg_field_tsc2_float, 9.0)
 
     def test_only_statics(self):
         repo = HubCRepositoryOnlyStatic()
