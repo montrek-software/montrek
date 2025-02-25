@@ -54,6 +54,13 @@ class HubCRepository(MontrekRepository):
             rename_field_map={"field_tsd2_float": "field_tsd2_float_agg"},
             agg_func="sum",
         )
+        self.add_linked_satellites_field_annotations(
+            me_models.SatTSD2,
+            me_models.LinkHubCHubD,
+            ["field_tsd2_float"],
+            rename_field_map={"field_tsd2_float": "field_tsd2_float_latest"},
+            agg_func="latest",
+        )
 
 
 class HubCRepositoryLastTS(HubCRepository):

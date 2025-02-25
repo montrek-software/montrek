@@ -144,6 +144,7 @@ class TestMontrekRepositorySatellite(TestCase):
                 "field_tsd2_float",
                 "field_tsd2_int",
                 "field_tsd2_float_agg",
+                "field_tsd2_float_latest",
             ],
         )
 
@@ -2382,6 +2383,7 @@ class TestRepositoryQueryConcept(TestCase):
         repo = HubCRepository({})
         query = repo.receive()
         self.assertEqual(query.first().field_tsd2_float_agg, 100.0)
+        self.assertEqual(query.first().field_tsd2_float_latest, 60.0)
 
 
 class TestCommonFields(TestCase):
