@@ -276,33 +276,39 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
                 }
             ).values(self.field + "sub")  # [:1]
         )
-        query = self._annotate_agg_field(hub_field_to, query)[:1]
+        query = self._annotate_sum(query)[:1]
         return Subquery(query)
 
     def _annotate_agg_field(self, hub_field_to: str, query: QuerySet) -> QuerySet:
         if self._is_multiple_allowed(hub_field_to):
             if self.agg_func == LinkAggFunctionEnum.SUM:
-                return query.annotate(
-                    **{
-                        self.field + "agg": Func(self.field + "sub", function="Sum"),
-                    }
-                ).values(self.field + "agg")
+                return self._annotate_sum(query)
             if self.agg_func == LinkAggFunctionEnum.STRING_CONCAT:
-                func = get_string_concat_function()
-                field_type = CharField
-                return query.annotate(
-                    **{
-                        self.field + "agg": Cast(
-                            func(Cast(self.field + "sub", field_type())),
-                            field_type(),
-                        )
-                    }
-                ).values(self.field + "agg")
+                return self._annotate_string_concat(query)
             else:
                 raise NotImplementedError(
                     f"Aggregation function {self.agg_func} is not implemented!"
                 )
         return query
+
+    def _annotate_sum(self, query: QuerySet) -> QuerySet:
+        return query.annotate(
+            **{
+                self.field + "agg": Func(self.field + "sub", function="Sum"),
+            }
+        ).values(self.field + "agg")
+
+    def _annotate_string_concat(self, query: QuerySet) -> QuerySet:
+        func = get_string_concat_function()
+        field_type = CharField
+        return query.annotate(
+            **{
+                self.field + "agg": Cast(
+                    func(Cast(self.field + "sub", field_type())),
+                    field_type(),
+                )
+            }
+        ).values(self.field + "agg")
 
     def _is_multiple_allowed(self, hub_field_to: str) -> bool:
         _is_many_to_many = isinstance(self.link_class(), MontrekManyToManyLinkABC)
