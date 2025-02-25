@@ -250,6 +250,35 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         )
         return Subquery(query)
 
+    def _link_hubs_and_get_ts_sum_subquery(
+        self, hub_field_to: str, hub_field_from: str, reference_date: timezone.datetime
+    ) -> Subquery:
+        query = self.get_link_query(hub_field_from, reference_date)
+        query = (
+            query.annotate(
+                **{
+                    self.field + "sub": Subquery(
+                        self._annotate_agg_field(
+                            hub_field_to,
+                            self.satellite_class.objects.filter(
+                                Q(
+                                    **self.subquery_filter(
+                                        reference_date,
+                                        lookup_field="hub_value_date__hub",
+                                        outer_ref=hub_field_to,
+                                    )
+                                ),
+                            )
+                            .annotate(**{self.field + "sub": F(self.field)})
+                            .values(self.field),
+                        )[:1]
+                    )
+                }
+            ).values(self.field + "sub")  # [:1]
+        )
+        query = self._annotate_agg_field(hub_field_to, query)[:1]
+        return Subquery(query)
+
     def _annotate_agg_field(self, hub_field_to: str, query: QuerySet) -> QuerySet:
         if self._is_multiple_allowed(hub_field_to):
             if self.agg_func == LinkAggFunctionEnum.SUM:
@@ -287,6 +316,10 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         self, hub_a: str, hub_b: str, reference_date: timezone.datetime
     ) -> Subquery:
         if self.satellite_class.is_timeseries:
+            if self.agg_func == LinkAggFunctionEnum.SUM:
+                return self._link_hubs_and_get_ts_sum_subquery(
+                    hub_a, hub_b, reference_date
+                )
             return self._link_hubs_and_get_ts_subquery(hub_a, hub_b, reference_date)
         else:
             return self._link_hubs_and_get_subquery(hub_a, hub_b, reference_date)

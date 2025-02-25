@@ -131,7 +131,11 @@ class TestMontrekSatellite(TestCase):
                             .values("field_tsd2_float_agg")
                         )
                     }
-                ).values("field_tsd2_float")[:1]
+                )
+                .annotate(
+                    **{"field_tsd2_float_agg": Func("field_tsd2_float", function="Sum")}
+                )[:1]
+                .values("field_tsd2_float_agg")
             ),
         }
 
@@ -314,6 +318,13 @@ class TestMontrekSatellite(TestCase):
             value_date="2024-09-09",
         )
         c_sat1.hub_entity.link_hub_c_hub_d.add(tsd2_fac1.hub_value_date.hub)
+        tsd2_fac3 = SatTSD2Factory(field_tsd2_float=30, value_date="2019-09-09")
+        tsd2_fac3 = SatTSD2Factory(
+            field_tsd2_float=40,
+            hub_entity=tsd2_fac3.hub_value_date.hub,
+            value_date="2024-09-09",
+        )
+        c_sat1.hub_entity.link_hub_c_hub_d.add(tsd2_fac3.hub_value_date.hub)
         annotations = self.annotations()
         query = CHubValueDate.objects.annotate(**annotations)
-        self.assertEqual(query.first().field_tsd2_float_agg, 30.0)
+        self.assertEqual(query.first().field_tsd2_float_agg, 100.0)
