@@ -250,30 +250,68 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         )
         return Subquery(query)
 
+    def _link_hubs_and_get_ts_sum_subquery(
+        self, hub_field_to: str, hub_field_from: str, reference_date: timezone.datetime
+    ) -> Subquery:
+        query = self.get_link_query(hub_field_from, reference_date)
+        query = query.annotate(
+            **{
+                self.field + "sub": Subquery(
+                    self._annotate_agg_field(
+                        hub_field_to,
+                        self.satellite_class.objects.filter(
+                            Q(
+                                **self.subquery_filter(
+                                    reference_date,
+                                    lookup_field="hub_value_date__hub",
+                                    outer_ref=hub_field_to,
+                                )
+                            ),
+                        )
+                        .annotate(**{self.field + "sub": F(self.field)})
+                        .values(self.field),
+                    )
+                )
+            }
+        ).values(self.field + "sub")
+        query = self._annotate_sum(query)
+        return Subquery(query)
+
     def _annotate_agg_field(self, hub_field_to: str, query: QuerySet) -> QuerySet:
         if self._is_multiple_allowed(hub_field_to):
             if self.agg_func == LinkAggFunctionEnum.SUM:
-                return query.annotate(
-                    **{
-                        self.field + "agg": Func(self.field + "sub", function="Sum"),
-                    }
-                ).values(self.field + "agg")
+                return self._annotate_sum(query)
             if self.agg_func == LinkAggFunctionEnum.STRING_CONCAT:
-                func = get_string_concat_function()
-                field_type = CharField
-                return query.annotate(
-                    **{
-                        self.field + "agg": Cast(
-                            func(Cast(self.field + "sub", field_type())),
-                            field_type(),
-                        )
-                    }
-                ).values(self.field + "agg")
+                return self._annotate_string_concat(query)
+            if self.agg_func == LinkAggFunctionEnum.LATEST:
+                return self._annotate_latest(query)
             else:
                 raise NotImplementedError(
                     f"Aggregation function {self.agg_func} is not implemented!"
                 )
         return query
+
+    def _annotate_sum(self, query: QuerySet) -> QuerySet:
+        return query.annotate(
+            **{
+                self.field + "agg": Func(self.field + "sub", function="Sum"),
+            }
+        ).values(self.field + "agg")
+
+    def _annotate_string_concat(self, query: QuerySet) -> QuerySet:
+        func = get_string_concat_function()
+        field_type = CharField
+        return query.annotate(
+            **{
+                self.field + "agg": Cast(
+                    func(Cast(self.field + "sub", field_type())),
+                    field_type(),
+                )
+            }
+        ).values(self.field + "agg")
+
+    def _annotate_latest(self, query: QuerySet) -> QuerySet:
+        return query.order_by("-hub_value_date__value_date_list__value_date")[:1]
 
     def _is_multiple_allowed(self, hub_field_to: str) -> bool:
         _is_many_to_many = isinstance(self.link_class(), MontrekManyToManyLinkABC)
@@ -287,6 +325,10 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         self, hub_a: str, hub_b: str, reference_date: timezone.datetime
     ) -> Subquery:
         if self.satellite_class.is_timeseries:
+            if self.agg_func in [LinkAggFunctionEnum.SUM, LinkAggFunctionEnum.LATEST]:
+                return self._link_hubs_and_get_ts_sum_subquery(
+                    hub_a, hub_b, reference_date
+                )
             return self._link_hubs_and_get_ts_subquery(hub_a, hub_b, reference_date)
         else:
             return self._link_hubs_and_get_subquery(hub_a, hub_b, reference_date)
@@ -327,3 +369,4 @@ def get_string_concat_function():
 class LinkAggFunctionEnum(Enum):
     SUM = "sum"
     STRING_CONCAT = "string_concat"
+    LATEST = "latest"

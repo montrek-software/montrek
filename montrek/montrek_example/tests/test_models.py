@@ -114,6 +114,50 @@ class TestMontrekSatellite(TestCase):
                     )
                 ).values("field_tsd2_float")
             ),
+            "field_tsd2_float_agg": Subquery(
+                link_query.annotate(
+                    **{
+                        "field_tsd2_float": Subquery(
+                            SatTSD2.objects.filter(
+                                hub_value_date__hub=OuterRef("hub_out")
+                            )
+                            .annotate(
+                                **{
+                                    "field_tsd2_float_agg": Func(
+                                        "field_tsd2_float", function="Sum"
+                                    )
+                                }
+                            )[:1]
+                            .values("field_tsd2_float_agg")
+                        )
+                    }
+                )
+                .annotate(
+                    **{"field_tsd2_float_agg": Func("field_tsd2_float", function="Sum")}
+                )[:1]
+                .values("field_tsd2_float_agg")
+            ),
+            "field_tsd2_float_latest": Subquery(
+                link_query.annotate(
+                    **{
+                        "field_tsd2_float": Subquery(
+                            SatTSD2.objects.filter(
+                                hub_value_date__hub=OuterRef("hub_out")
+                            )
+                            .order_by("-hub_value_date__value_date_list__value_date")
+                            .values("field_tsd2_float")[:1]
+                        )
+                    }
+                )
+                .annotate(
+                    **{
+                        "field_tsd2_float_latest": Func(
+                            "field_tsd2_float", function="Sum"
+                        )
+                    }
+                )[:1]
+                .values("field_tsd2_float_latest")
+            ),
         }
 
     def _add_concat(self, query):
@@ -285,3 +329,24 @@ class TestMontrekSatellite(TestCase):
         self.assertEqual(
             query.first().field_d1_str, f"{d_sat1.field_d1_str},{d_sat2.field_d1_str}"
         )
+
+    def test_multiple_ts_links_aggregated_to_one(self):
+        c_sat1 = SatC1Factory()
+        tsd2_fac1 = SatTSD2Factory(field_tsd2_float=10, value_date="2019-09-09")
+        tsd2_fac2 = SatTSD2Factory(
+            field_tsd2_float=20,
+            hub_entity=tsd2_fac1.hub_value_date.hub,
+            value_date="2024-09-09",
+        )
+        c_sat1.hub_entity.link_hub_c_hub_d.add(tsd2_fac1.hub_value_date.hub)
+        tsd2_fac3 = SatTSD2Factory(field_tsd2_float=30, value_date="2019-09-09")
+        tsd2_fac3 = SatTSD2Factory(
+            field_tsd2_float=40,
+            hub_entity=tsd2_fac3.hub_value_date.hub,
+            value_date="2024-09-09",
+        )
+        c_sat1.hub_entity.link_hub_c_hub_d.add(tsd2_fac3.hub_value_date.hub)
+        annotations = self.annotations()
+        query = CHubValueDate.objects.annotate(**annotations)
+        self.assertEqual(query.first().field_tsd2_float_agg, 100.0)
+        self.assertEqual(query.first().field_tsd2_float_latest, 60.0)
