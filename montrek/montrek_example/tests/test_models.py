@@ -137,6 +137,27 @@ class TestMontrekSatellite(TestCase):
                 )[:1]
                 .values("field_tsd2_float_agg")
             ),
+            "field_tsd2_float_latest": Subquery(
+                link_query.annotate(
+                    **{
+                        "field_tsd2_float": Subquery(
+                            SatTSD2.objects.filter(
+                                hub_value_date__hub=OuterRef("hub_out")
+                            )
+                            .order_by("-hub_value_date__value_date_list__value_date")
+                            .values("field_tsd2_float")[:1]
+                        )
+                    }
+                )
+                .annotate(
+                    **{
+                        "field_tsd2_float_latest": Func(
+                            "field_tsd2_float", function="Sum"
+                        )
+                    }
+                )[:1]
+                .values("field_tsd2_float_latest")
+            ),
         }
 
     def _add_concat(self, query):
@@ -328,3 +349,4 @@ class TestMontrekSatellite(TestCase):
         annotations = self.annotations()
         query = CHubValueDate.objects.annotate(**annotations)
         self.assertEqual(query.first().field_tsd2_float_agg, 100.0)
+        self.assertEqual(query.first().field_tsd2_float_latest, 60.0)
