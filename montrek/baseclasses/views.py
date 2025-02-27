@@ -28,7 +28,7 @@ from baseclasses import utils
 from baseclasses.dataclasses.history_data_table import HistoryDataTable
 from baseclasses.dataclasses.link_model import LinkModel
 from baseclasses.dataclasses.nav_bar_model import NavBarDropdownModel, NavBarModel
-from baseclasses.dataclasses.view_classes import ActionElement
+from baseclasses.dataclasses.view_classes import ActionElement, BackActionElement
 from baseclasses.forms import DateRangeForm, FilterForm, MontrekCreateForm
 from baseclasses.managers.montrek_manager import MontrekManagerNotImplemented
 from baseclasses.pages import NoPage
@@ -442,6 +442,17 @@ class MontrekCreateUpdateView(
     template_name = "montrek_create.html"
     success_url = "under_construction"
     title = ""
+
+    @property
+    def actions(self) -> tuple[ActionElement] | tuple:
+        return (
+            ActionElement(
+                link=self.get_success_url(),
+                icon="arrow-left",
+                action_id="id_back",
+                hover_text="Go back",
+            ),
+        )
 
     def get_queryset(self):
         return self.get_view_queryset()
