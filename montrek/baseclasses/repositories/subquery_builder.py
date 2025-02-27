@@ -311,7 +311,10 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         ).values(self.field + "agg")
 
     def _annotate_latest(self, query: QuerySet) -> QuerySet:
-        return query.order_by("-hub_value_date__value_date_list__value_date")[:1]
+        if self.satellite_class.is_timeseries:
+            return query.order_by("-hub_value_date__value_date_list__value_date")[:1]
+        else:
+            return query[:1]
 
     def _is_multiple_allowed(self, hub_field_to: str) -> bool:
         _is_many_to_many = isinstance(self.link_class(), MontrekManyToManyLinkABC)
