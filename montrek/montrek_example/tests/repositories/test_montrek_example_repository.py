@@ -30,6 +30,7 @@ from montrek_example.repositories.hub_c_repository import (
     HubCRepository2,
     HubCRepositoryCommonFields,
     HubCRepositoryLastTS,
+    HubCRepositoryLast,
     HubCRepositoryOnlyStatic,
     HubCRepositorySumTS,
 )
@@ -1761,6 +1762,21 @@ class TestTSRepoLatestTS(TestCase):
         c1_vals = [qs.field_c1_str for qs in test_query]
         c1_vals.sort()
         self.assertEqual(c1_vals, ["Bonjour", "Hallo", "Hola"])
+
+
+class TestStaticAggFuncs(TestCase):
+    def setUp(self) -> None:
+        sat_d1_1 = me_factories.SatD1Factory(field_d1_int=2)
+        sat_d1_2 = me_factories.SatD1Factory(field_d1_int=3)
+        sat_c1 = me_factories.SatC1Factory()
+        sat_c1.hub_entity.link_hub_c_hub_d.add(sat_d1_1.hub_entity)
+        sat_c1.hub_entity.link_hub_c_hub_d.add(sat_d1_2.hub_entity)
+
+    def test_latest_entry(self):
+        repo = HubCRepositoryLast()
+        test_query = repo.receive()
+        self.assertEqual(test_query.count(), 1)
+        self.assertEqual(test_query[0].field_d1_int, 2)
 
 
 class TestTimeSeriesPerformance(TestCase):

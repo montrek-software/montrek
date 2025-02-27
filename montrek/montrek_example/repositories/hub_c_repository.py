@@ -142,3 +142,15 @@ class HubCRepositoryCommonFields(MontrekRepository):
             ["field_tsd2_float", "field_tsd2_int", "comment"],
             rename_field_map={"comment": "comment_tsd2"},
         )
+
+
+class HubCRepositoryLast(MontrekRepository):
+    hub_class = me_models.HubC
+
+    def set_annotations(self):
+        self.add_linked_satellites_field_annotations(
+            me_models.SatD1,
+            me_models.LinkHubCHubD,
+            ["field_d1_int"],
+            agg_func="latest",
+        )
