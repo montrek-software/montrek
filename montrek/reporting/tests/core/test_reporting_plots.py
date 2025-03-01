@@ -131,6 +131,20 @@ class TestReportingPlots(TestCase):
         self.assertTrue(reporting_plot_html.startswith("<div>"))
         self.assertTrue(reporting_plot_html.endswith("</div>"))
 
+    def test_reporting_plots__plot_parameters(self):
+        reporting_data = ReportingData(
+            data_df=self.test_df,
+            x_axis_column="Category",
+            y_axis_columns=["Value", "ValueLine"],
+            plot_types=["line", "line"],
+            title="Test Plot",
+            report_parameters=[{"fill": "tozeroy"}, {"fill": "tonexty"}],
+        )
+        reporting_plot = ReportingPlot()
+        reporting_plot.generate(reporting_data)
+        self.assertEqual(reporting_plot.figure.data[0].fill, "tozeroy")
+        self.assertEqual(reporting_plot.figure.data[1].fill, "tonexty")
+
     def test_set_x_axis(self):
         test_df = pd.DataFrame(
             {

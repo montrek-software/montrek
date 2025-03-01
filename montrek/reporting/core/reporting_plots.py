@@ -1,5 +1,5 @@
 import tempfile
-from typing import Any, List, Union
+from typing import Any, List, Union, Dict
 
 import plotly.graph_objects as go
 from reporting.constants import ReportingPlotType
@@ -72,18 +72,13 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
         self, _x: List[Any], reporting_data: ReportingData
     ) -> List[Any]:
         plot_types = self._set_plot_types(reporting_data)
+        reporting_parameters = self._set_reporting_parameters(reporting_data)
         figure_data = []
         color_palette = ReportingColors().hex_color_palette()
         _y = None
         for i, (y_axis_column, plot_type) in enumerate(
             zip(reporting_data.y_axis_columns, plot_types)
         ):
-            # if _y is None:
-            #     _y = reporting_data.data_df[y_axis_column]
-            #     fill = "tozeroy"
-            # else:
-            #     _y += reporting_data.data_df[y_axis_column]
-            #     fill = "tonexty"
             if plot_type == ReportingPlotType.BAR:
                 _y = reporting_data.data_df[y_axis_column]
                 figure_data.append(
@@ -92,6 +87,7 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
                         y=_y,
                         marker_color=color_palette[i],
                         name=y_axis_column,
+                        **reporting_parameters[i],
                     )
                 )
             elif plot_type == ReportingPlotType.LINE:
@@ -101,8 +97,8 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
                         x=_x,
                         y=_y,
                         marker_color=color_palette[i],
-                        # fill=fill,
                         name=y_axis_column,
+                        **reporting_parameters[i],
                     )
                 )
             elif plot_type == ReportingPlotType.LINESTACK:
@@ -115,8 +111,8 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
                         x=_x,
                         y=_y,
                         marker_color=color_palette[i],
-                        # fill=fill,
                         name=y_axis_column,
+                        **reporting_parameters[i],
                     )
                 )
             elif plot_type == ReportingPlotType.PIE:
@@ -128,6 +124,7 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
                         marker_colors=color_palette,
                         direction="clockwise",
                         sort=True,
+                        **reporting_parameters[i],
                     )
                 )
             else:
@@ -148,3 +145,10 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
                 raise ValueError(f"{plot_type} is no valid ReportingPlotType")
 
         return [_get_plot_type(plot_type) for plot_type in reporting_data.plot_types]
+
+    def _set_reporting_parameters(
+        self, reporting_data: ReportingData
+    ) -> List[Dict[str, Any]]:
+        if reporting_data.report_parameters is None:
+            return [{} for _ in range(len(reporting_data.plot_types))]
+        return reporting_data.report_parameters
