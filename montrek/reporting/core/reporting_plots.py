@@ -74,10 +74,16 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
         plot_types = self._set_plot_types(reporting_data)
         figure_data = []
         color_palette = ReportingColors().hex_color_palette()
+        _y = None
         for i, (y_axis_column, plot_type) in enumerate(
             zip(reporting_data.y_axis_columns, plot_types)
         ):
-            _y = reporting_data.data_df[y_axis_column]
+            if _y is None:
+                _y = reporting_data.data_df[y_axis_column]
+                fill = "tozeroy"
+            else:
+                _y += reporting_data.data_df[y_axis_column]
+                fill = "tonexty"
             if plot_type == ReportingPlotType.BAR:
                 figure_data.append(
                     go.Bar(
@@ -93,6 +99,8 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
                         x=_x,
                         y=_y,
                         marker_color=color_palette[i],
+                        fill=fill,
+                        name=y_axis_column,
                     )
                 )
             elif plot_type == ReportingPlotType.PIE:
