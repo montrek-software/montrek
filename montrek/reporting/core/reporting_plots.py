@@ -78,13 +78,14 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
         for i, (y_axis_column, plot_type) in enumerate(
             zip(reporting_data.y_axis_columns, plot_types)
         ):
-            if _y is None:
-                _y = reporting_data.data_df[y_axis_column]
-                fill = "tozeroy"
-            else:
-                _y += reporting_data.data_df[y_axis_column]
-                fill = "tonexty"
+            # if _y is None:
+            #     _y = reporting_data.data_df[y_axis_column]
+            #     fill = "tozeroy"
+            # else:
+            #     _y += reporting_data.data_df[y_axis_column]
+            #     fill = "tonexty"
             if plot_type == ReportingPlotType.BAR:
+                _y = reporting_data.data_df[y_axis_column]
                 figure_data.append(
                     go.Bar(
                         x=_x,
@@ -94,16 +95,32 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
                     )
                 )
             elif plot_type == ReportingPlotType.LINE:
+                _y = reporting_data.data_df[y_axis_column]
                 figure_data.append(
                     go.Scatter(
                         x=_x,
                         y=_y,
                         marker_color=color_palette[i],
-                        fill=fill,
+                        # fill=fill,
+                        name=y_axis_column,
+                    )
+                )
+            elif plot_type == ReportingPlotType.LINESTACK:
+                if _y is None:
+                    _y = reporting_data.data_df[y_axis_column]
+                else:
+                    _y += reporting_data.data_df[y_axis_column]
+                figure_data.append(
+                    go.Scatter(
+                        x=_x,
+                        y=_y,
+                        marker_color=color_palette[i],
+                        # fill=fill,
                         name=y_axis_column,
                     )
                 )
             elif plot_type == ReportingPlotType.PIE:
+                _y = reporting_data.data_df[y_axis_column]
                 figure_data.append(
                     go.Pie(
                         labels=_x,

@@ -83,6 +83,30 @@ class TestReportingPlots(TestCase):
         self.assertTrue(reporting_plot_html.startswith("<div>"))
         self.assertTrue(reporting_plot_html.endswith("</div>"))
 
+    def test_reporting_plots_line_stacked_fill(self):
+        reporting_data = ReportingData(
+            data_df=self.test_df,
+            x_axis_column="Category",
+            y_axis_columns=["Value", "ValueLine"],
+            plot_types=[ReportingPlotType.LINE, ReportingPlotType.LINESTACK],
+            title="Test Plot",
+        )
+        reporting_plot = ReportingPlot()
+        reporting_plot.generate(reporting_data)
+        self.assertTrue(isinstance(reporting_plot.figure, go.Figure))
+        self.assertEqual(len(reporting_plot.figure.data), 2)
+        self.assertEqual(reporting_plot.figure.data[0].type, "scatter")
+        self.assertEqual(reporting_plot.figure.data[1].type, "scatter")
+        self.assertTrue(isinstance(reporting_plot.figure.data[0], go.Scatter))
+        self.assertTrue(isinstance(reporting_plot.figure.data[1], go.Scatter))
+        self.assertEqual(reporting_plot.figure.data[0].x.tolist(), ["A", "B", "C", "D"])
+        self.assertEqual(reporting_plot.figure.data[0].y.tolist(), [10, 25, 15, 30])
+        self.assertEqual(reporting_plot.figure.data[1].x.tolist(), ["A", "B", "C", "D"])
+        self.assertEqual(reporting_plot.figure.data[1].y.tolist(), [25, 45, 25, 70])
+        reporting_plot_html = reporting_plot.to_html()
+        self.assertTrue(reporting_plot_html.startswith("<div>"))
+        self.assertTrue(reporting_plot_html.endswith("</div>"))
+
     def test_set_x_axis(self):
         test_df = pd.DataFrame(
             {

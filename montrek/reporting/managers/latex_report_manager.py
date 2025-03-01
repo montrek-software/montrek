@@ -61,8 +61,6 @@ class LatexReportManager:
 
     def compile_report(self) -> str | None:
         report_str = self.generate_report()
-        with open("report.tex", "w") as f:
-            f.write(report_str)
         output_dir = os.path.join(settings.MEDIA_ROOT, "latex")
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
