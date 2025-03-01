@@ -72,7 +72,7 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
         self, _x: List[Any], reporting_data: ReportingData
     ) -> List[Any]:
         plot_types = self._set_plot_types(reporting_data)
-        reporting_parameters = self._set_reporting_parameters(reporting_data)
+        plot_parameters = self._set_plot_parameters(reporting_data)
         figure_data = []
         color_palette = ReportingColors().hex_color_palette()
         _y = None
@@ -87,7 +87,7 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
                         y=_y,
                         marker_color=color_palette[i],
                         name=y_axis_column,
-                        **reporting_parameters[i],
+                        **plot_parameters[i],
                     )
                 )
             elif plot_type == ReportingPlotType.LINE:
@@ -98,7 +98,7 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
                         y=_y,
                         marker_color=color_palette[i],
                         name=y_axis_column,
-                        **reporting_parameters[i],
+                        **plot_parameters[i],
                     )
                 )
             elif plot_type == ReportingPlotType.LINESTACK:
@@ -112,7 +112,7 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
                         y=_y,
                         marker_color=color_palette[i],
                         name=y_axis_column,
-                        **reporting_parameters[i],
+                        **plot_parameters[i],
                     )
                 )
             elif plot_type == ReportingPlotType.PIE:
@@ -124,7 +124,7 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
                         marker_colors=color_palette,
                         direction="clockwise",
                         sort=True,
-                        **reporting_parameters[i],
+                        **plot_parameters[i],
                     )
                 )
             else:
@@ -146,9 +146,9 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
 
         return [_get_plot_type(plot_type) for plot_type in reporting_data.plot_types]
 
-    def _set_reporting_parameters(
+    def _set_plot_parameters(
         self, reporting_data: ReportingData
     ) -> List[Dict[str, Any]]:
-        if reporting_data.report_parameters is None:
+        if reporting_data.plot_parameters is None:
             return [{} for _ in range(len(reporting_data.plot_types))]
-        return reporting_data.report_parameters
+        return reporting_data.plot_parameters

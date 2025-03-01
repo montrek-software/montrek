@@ -138,7 +138,7 @@ class TestReportingPlots(TestCase):
             y_axis_columns=["Value", "ValueLine"],
             plot_types=["line", "line"],
             title="Test Plot",
-            report_parameters=[{"fill": "tozeroy"}, {"fill": "tonexty"}],
+            plot_parameters=[{"fill": "tozeroy"}, {"fill": "tonexty"}],
         )
         reporting_plot = ReportingPlot()
         reporting_plot.generate(reporting_data)
