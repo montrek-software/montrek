@@ -1,6 +1,5 @@
 from typing import TextIO
 from django.shortcuts import redirect
-from django import forms
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.http import FileResponse
@@ -40,7 +39,7 @@ class MontrekUploadFileView(MontrekTemplateView):
     def post(self, request, *args, **kwargs):
         form = self.get_post_form(request)
         if form.is_valid():
-            if not self._check_file_type(request.FILES["file"], form):
+            if not self._check_file_type(request.FILES["file"]):
                 return self.render_to_response(self.get_context_data())
             self.file_upload_manager = self.file_upload_manager_class(
                 session_data=self.session_data,
@@ -57,8 +56,8 @@ class MontrekUploadFileView(MontrekTemplateView):
     def get_success_url(self):
         raise NotImplementedError("get_success_url not implemented")
 
-    def _check_file_type(self, file: TextIO, form: forms.Form) -> bool:
-        expected_file_types = form.fields["file"].widget.attrs["accept"].split(",")
+    def _check_file_type(self, file: TextIO) -> bool:
+        expected_file_types = self.accept.split(",")
         expected_file_types = [e.lstrip(".").upper() for e in expected_file_types]
         actual_file_type = file.name.split(".")[-1].upper()
         if actual_file_type not in expected_file_types:
