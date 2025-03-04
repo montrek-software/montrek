@@ -41,6 +41,7 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
                 gridcolor=ReportingColors.GREY.hex,  # Grid line color
                 zerolinecolor=ReportingColors.GREY.hex,  # Zero line color
             ),
+            margin={"l": 0, "r": 0},
         )
 
     def to_html(self) -> str:
@@ -48,7 +49,7 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
 
     def to_latex(self) -> str:
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
-        self.figure.write_image(temp_file.name)
+        self.figure.write_image(temp_file.name, width=1000, height=500)
         latex_str = "\\begin{figure}[H]\n"
         latex_str += f"\\includegraphics[width=\\textwidth]{{{temp_file.name}}}\n"
         latex_str += "\\end{figure}"

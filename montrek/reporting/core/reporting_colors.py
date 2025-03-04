@@ -55,7 +55,7 @@ class ReportingColors:
         DARKER_BROWN,
         LIGHT_GREY,
         GREY,
-    ]
+    ] + [DARK_BLUE] * 100
 
     COLOR_PALETTE_GRADIENT = [
         RED,

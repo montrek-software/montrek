@@ -1,10 +1,14 @@
+import tempfile
+from urllib.parse import urlparse
+
+import requests
 from reporting.constants import ReportingTextType
-from reporting.core.reporting_protocols import ReportingElement
 from reporting.core.reporting_mixins import ReportingChecksMixin
+from reporting.core.reporting_protocols import ReportingElement
+from reporting.core.text_converter import HtmlLatexConverter
 from reporting.lib.protocols import (
     ReportElementProtocol,
 )
-from reporting.core.text_converter import HtmlLatexConverter
 
 
 class ReportingTextParagraph(ReportingElement, ReportingChecksMixin):
@@ -72,9 +76,11 @@ class ReportingEditableText(ReportingText):
         text: str,
         reporting_text_type: ReportingTextType = ReportingTextType.HTML,
         edit_url: str = "",
+        header: str = "",
     ):
         super().__init__(text, reporting_text_type)
         self.edit_url = edit_url
+        self.header = header
 
     def to_html(self) -> str:
         edit_button = (
@@ -83,6 +89,9 @@ class ReportingEditableText(ReportingText):
             else ""
         )
         return f"""<div class="container-fluid">
+        <div class="row">
+        <div class="col-lg-12" style="padding:0"><h2>{self.header}</h2></div>
+        </div>
         <div class="row">
         <div class="col-lg-12" style="padding:0">{self.text}</div>
         </div>
@@ -140,7 +149,27 @@ class ReportingImage:
         self.width = width
 
     def to_latex(self) -> str:
-        return f"\\includegraphics[width={self.width}\\textwidth]{{{self.image_path}}}"
+        try:
+            urlparse(self.image_path)
+            is_url = True
+        except ValueError:
+            is_url = False
+        if not is_url:
+            return self._return_string(self.image_path)
+        response = requests.get(self.image_path)
+        if response.status_code != 200:
+            return f"Image not found: {self.image_path} &"
+        temp_file = tempfile.NamedTemporaryFile(
+            delete=False, suffix="." + self.image_path.split(".")[-1]
+        )
+        temp_file.write(response.content)
+        temp_file_path = temp_file.name
+        temp_file.close()
+        value = temp_file_path
+        return self._return_string(value)
+
+    def _return_string(self, value) -> str:
+        return f"\\includegraphics[width={self.width}\\textwidth]{{{value}}}"
 
     def to_html(self) -> str:
         return f'<div style="text-align: right;"><img src="{self.image_path}" alt="image" style="width:{self.width*100}%;"></div>'
