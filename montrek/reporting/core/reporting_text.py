@@ -160,7 +160,7 @@ class ReportingImage:
         if response.status_code != 200:
             return f"Image not found: {self.image_path} &"
         temp_file = tempfile.NamedTemporaryFile(
-            delete=False, suffix="." + self.image_path.split(".")[-1]
+            delete=False, suffix="." + self.image_path.split(".")[-1].split("?")[0]
         )
         temp_file.write(response.content)
         temp_file_path = temp_file.name
