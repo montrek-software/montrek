@@ -55,6 +55,9 @@ class TestReportText(TestCase):
             test_element.to_html(),
             """<div class="container-fluid">
         <div class="row">
+        <div class="col-lg-12" style="padding:0"><h2></h2></div>
+        </div>
+        <div class="row">
         <div class="col-lg-12" style="padding:0">This is a plain text</div>
         </div>
         <div class="row">
@@ -72,6 +75,9 @@ class TestReportText(TestCase):
         self.assertEqual(
             test_element.to_html(),
             """<div class="container-fluid">
+        <div class="row">
+        <div class="col-lg-12" style="padding:0"><h2></h2></div>
+        </div>
         <div class="row">
         <div class="col-lg-12" style="padding:0">This is a plain text</div>
         </div>
@@ -133,7 +139,7 @@ class TestMontrekLogo(TestCase):
             logo.to_html(),
             '<div style="text-align: right;"><img src="http://static1.squarespace.com/static/673bfbe149f99b59e4a41ee7/t/673bfdb41644c858ec83dc7e/1731984820187/montrek_logo_variant.png?format=1500w" alt="image" style="width:50.0%;"></div>',
         )
-        self.assertEqual(
+        self.assertRegex(
             logo.to_latex(),
-            "\\includegraphics[width=0.5\\textwidth]{http://static1.squarespace.com/static/673bfbe149f99b59e4a41ee7/t/673bfdb41644c858ec83dc7e/1731984820187/montrek_logo_variant.png?format=1500w}",
+            r"\\includegraphics\[width=0.5\\textwidth\]{/tmp/tmp[0-9a-zA-Z]+\.png}",
         )
