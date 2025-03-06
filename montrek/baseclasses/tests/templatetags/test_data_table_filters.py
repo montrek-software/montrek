@@ -157,11 +157,11 @@ class TestGetLinkTests(TestCase):
         self.assertEqual(
             rendered_link,
             (
-                "<td>"
+                "<td><div style='max-height: 300px; overflow-y: auto;'>"
                 '<a id="id__home_1" href="/home/1" title="Click me">a</a><br>'
                 '<a id="id__home_2" href="/home/2" title="Click me">b</a><br>'
                 '<a id="id__home_3" href="/home/3" title="Click me">c</a>'
-                "</td>"
+                "</div></td>"
             ),
         )
 

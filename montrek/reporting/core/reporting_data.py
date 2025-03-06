@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict, Any
 from dataclasses import dataclass
 import pandas as pd
 from reporting.constants import ReportingPlotType
@@ -8,7 +8,8 @@ from reporting.constants import ReportingPlotType
 class ReportingData:
     data_df: pd.DataFrame
     title: str
-    x_axis_column: str = None
+    x_axis_column: str | None = None
     x_axis_is_index: bool = False
-    y_axis_columns: List[str] = None
-    plot_types: List[ReportingPlotType] = None
+    y_axis_columns: List[str] | None = None
+    plot_types: List[ReportingPlotType | str] | None = None
+    plot_parameters: List[Dict[str, Any]] | None = None

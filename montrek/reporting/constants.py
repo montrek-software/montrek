@@ -17,6 +17,7 @@ class ReportingPlotType(Enum):
     HISTOGRAM = 5
     BOXPLOT = 6
     HEATMAP = 7
+    LINESTACK = 8
 
 
 class TextType(Enum):

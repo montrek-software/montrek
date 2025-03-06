@@ -30,7 +30,9 @@ from montrek_example.repositories.hub_c_repository import (
     HubCRepository2,
     HubCRepositoryCommonFields,
     HubCRepositoryLastTS,
+    HubCRepositoryLast,
     HubCRepositoryOnlyStatic,
+    HubCRepositorySumTS,
 )
 from montrek_example.repositories.hub_d_repository import (
     HubDRepository,
@@ -142,6 +144,8 @@ class TestMontrekRepositorySatellite(TestCase):
                 "field_d1_int",
                 "field_tsd2_float",
                 "field_tsd2_int",
+                "field_tsd2_float_agg",
+                "field_tsd2_float_latest",
             ],
         )
 
@@ -1682,14 +1686,14 @@ class TestTimeSeriesStdQueryset(TestCase):
 
 class TestTSRepoLatestTS(TestCase):
     def setUp(self):
-        sat1 = me_factories.SatTSC2Factory.create(
+        self.sat1 = me_factories.SatTSC2Factory.create(
             value_date="2024-11-15", field_tsc2_float=1.0
         )
         sat2 = me_factories.SatTSC2Factory.create(
             value_date="2024-11-15", field_tsc2_float=2.0
         )
         hub_vd1 = me_factories.CHubValueDateFactory.create(
-            hub=sat1.hub_value_date.hub,
+            hub=self.sat1.hub_value_date.hub,
             value_date_list=me_factories.ValueDateListFactory.create(
                 value_date="2024-11-16"
             ),
@@ -1708,7 +1712,7 @@ class TestTSRepoLatestTS(TestCase):
         )
         me_factories.SatC1Factory.create(
             field_c1_str="Hallo",
-            hub_entity=sat1.hub_value_date.hub,
+            hub_entity=self.sat1.hub_value_date.hub,
         )
         me_factories.SatC1Factory.create(
             field_c1_str="Bonjour",
@@ -1732,6 +1736,25 @@ class TestTSRepoLatestTS(TestCase):
         self.assertEqual(qs3.field_tsc2_float, None)
         self.assertEqual(qs3.value_date, None)
 
+    def test_ts_sum_repo(self):
+        hub_vd1 = me_factories.CHubValueDateFactory.create(
+            hub=self.sat1.hub_value_date.hub,
+            value_date_list=me_factories.ValueDateListFactory.create(
+                value_date="2024-11-17"
+            ),
+        )
+        me_factories.SatTSC2Factory.create(
+            hub_value_date=hub_vd1,
+            field_tsc2_float=5.0,
+        )
+        repo = HubCRepositorySumTS()
+        test_query = repo.receive()
+        self.assertEqual(test_query.count(), 3)
+        qs1 = test_query.get(field_c1_str="Bonjour")
+        self.assertEqual(qs1.agg_field_tsc2_float, 6.0)
+        qs2 = test_query.get(field_c1_str="Hallo")
+        self.assertEqual(qs2.agg_field_tsc2_float, 9.0)
+
     def test_only_statics(self):
         repo = HubCRepositoryOnlyStatic()
         test_query = repo.receive()
@@ -1739,6 +1762,21 @@ class TestTSRepoLatestTS(TestCase):
         c1_vals = [qs.field_c1_str for qs in test_query]
         c1_vals.sort()
         self.assertEqual(c1_vals, ["Bonjour", "Hallo", "Hola"])
+
+
+class TestStaticAggFuncs(TestCase):
+    def setUp(self) -> None:
+        sat_d1_1 = me_factories.SatD1Factory(field_d1_int=2)
+        sat_d1_2 = me_factories.SatD1Factory(field_d1_int=3)
+        sat_c1 = me_factories.SatC1Factory()
+        sat_c1.hub_entity.link_hub_c_hub_d.add(sat_d1_1.hub_entity)
+        sat_c1.hub_entity.link_hub_c_hub_d.add(sat_d1_2.hub_entity)
+
+    def test_latest_entry(self):
+        repo = HubCRepositoryLast()
+        test_query = repo.receive()
+        self.assertEqual(test_query.count(), 1)
+        self.assertEqual(test_query[0].field_d1_int, 2)
 
 
 class TestTimeSeriesPerformance(TestCase):
@@ -2337,6 +2375,31 @@ class TestRepositoryQueryConcept(TestCase):
         )
         self.assertEqual(query.last().field_c1_str, c_sat2.field_c1_str)
         self.assertEqual(query.last().field_d1_str, d_sat1.field_d1_str)
+
+    def test_ts_satellite_concept__multiple_ts_links_aggregated_to_one(self):
+        c_sat1 = me_factories.SatC1Factory()
+        tsd2_fac1 = me_factories.SatTSD2Factory(
+            field_tsd2_float=10, value_date="2019-09-09"
+        )
+        tsd2_fac2 = me_factories.SatTSD2Factory(
+            field_tsd2_float=20,
+            hub_entity=tsd2_fac1.hub_value_date.hub,
+            value_date="2024-09-09",
+        )
+        c_sat1.hub_entity.link_hub_c_hub_d.add(tsd2_fac1.hub_value_date.hub)
+        tsd2_fac3 = me_factories.SatTSD2Factory(
+            field_tsd2_float=30, value_date="2019-09-09"
+        )
+        tsd2_fac3 = me_factories.SatTSD2Factory(
+            field_tsd2_float=40,
+            hub_entity=tsd2_fac3.hub_value_date.hub,
+            value_date="2024-09-09",
+        )
+        c_sat1.hub_entity.link_hub_c_hub_d.add(tsd2_fac3.hub_value_date.hub)
+        repo = HubCRepository({})
+        query = repo.receive()
+        self.assertEqual(query.first().field_tsd2_float_agg, 100.0)
+        self.assertEqual(query.first().field_tsd2_float_latest, 60.0)
 
 
 class TestCommonFields(TestCase):

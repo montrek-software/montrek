@@ -47,10 +47,44 @@ class HubCRepository(MontrekRepository):
             me_models.LinkHubCHubD,
             ["field_tsd2_float", "field_tsd2_int"],
         )
+        self.add_linked_satellites_field_annotations(
+            me_models.SatTSD2,
+            me_models.LinkHubCHubD,
+            ["field_tsd2_float"],
+            rename_field_map={"field_tsd2_float": "field_tsd2_float_agg"},
+            agg_func="sum",
+        )
+        self.add_linked_satellites_field_annotations(
+            me_models.SatTSD2,
+            me_models.LinkHubCHubD,
+            ["field_tsd2_float"],
+            rename_field_map={"field_tsd2_float": "field_tsd2_float_latest"},
+            agg_func="latest",
+        )
 
 
 class HubCRepositoryLastTS(HubCRepository):
     latest_ts = True
+
+
+class HubCRepositorySumTS(MontrekRepository):
+    hub_class = me_models.HubC
+    latest_ts = True
+
+    def set_annotations(self):
+        self.add_satellite_fields_annotations(
+            me_models.SatTSC2,
+            ["field_tsc2_float"],
+            rename_field_map={"field_tsc2_float": "agg_field_tsc2_float"},
+            ts_agg_func="sum",
+        )
+        self.add_satellite_fields_annotations(
+            me_models.SatC1,
+            [
+                "field_c1_bool",
+                "field_c1_str",
+            ],
+        )
 
 
 class HubCRepositoryOnlyStatic(MontrekRepository):
@@ -107,4 +141,16 @@ class HubCRepositoryCommonFields(MontrekRepository):
             me_models.LinkHubCHubD,
             ["field_tsd2_float", "field_tsd2_int", "comment"],
             rename_field_map={"comment": "comment_tsd2"},
+        )
+
+
+class HubCRepositoryLast(MontrekRepository):
+    hub_class = me_models.HubC
+
+    def set_annotations(self):
+        self.add_linked_satellites_field_annotations(
+            me_models.SatD1,
+            me_models.LinkHubCHubD,
+            ["field_d1_int"],
+            agg_func="latest",
         )

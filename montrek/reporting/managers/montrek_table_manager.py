@@ -1,4 +1,5 @@
 import datetime
+from decimal import Decimal
 import os
 from io import BytesIO
 from typing import Any
@@ -81,6 +82,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
 
     def to_html(self):
         html_str = f"<h3>{self.table_title}</h3>"
+        html_str += '<div class="row scrollable-content"><div class="col-md-12">'
         html_str += '<table class="table table-bordered table-hover"><tr>'
         for table_element in self.table_elements:
             html_str += f"<th title={getattr(table_element, 'attr', '')}>{table_element.name}</th>"
@@ -92,6 +94,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
                 html_str += table_element.get_attribute(query_object, "html")
             html_str += "</tr>"
         html_str += "</table>"
+        html_str += "</div></div>"
         return html_str
 
     def to_latex(self):
@@ -196,6 +199,11 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
             value = timezone.make_naive(value)
         return value
 
+    def _make_float(self, value):
+        if isinstance(value, Decimal):
+            return float(value)
+        return value
+
     def send_table_by_mail(self, filetype: str):
         file_name = f"{self.document_name}.{filetype}"
         if filetype == "xlsx":
@@ -264,6 +272,7 @@ class MontrekTableManager(MontrekTableManagerABC):
                 if hasattr(element, "attr"):
                     attr = getattr(row, element.attr)
                     attr = self._make_datetime_naive(attr)
+                    attr = self._make_float(attr)
 
                     values.append(attr)
                 else:

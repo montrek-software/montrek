@@ -97,6 +97,7 @@ class BaseLinkTableElement(TableElement):
     url: str
     kwargs: dict
     hover_text: str
+    static_kwargs = {}
 
     @staticmethod
     def get_dotted_attr_or_arg(obj, value):
@@ -129,6 +130,7 @@ class BaseLinkTableElement(TableElement):
             if key != "filter"
         }
         kwargs = {key: str(value).replace("/", "_") for key, value in kwargs.items()}
+        kwargs.update(self.static_kwargs)
         return kwargs
 
     def _get_url(self, obj: Any, url_kwargs: dict) -> str:
@@ -167,6 +169,7 @@ class BaseLinkTableElement(TableElement):
 @dataclass
 class LinkTableElement(BaseLinkTableElement):
     icon: str
+    static_kwargs: dict = field(default_factory=dict)
 
     def _get_link_text(self, obj):
         return Template(
@@ -178,6 +181,7 @@ class LinkTableElement(BaseLinkTableElement):
 class LinkTextTableElement(BaseLinkTableElement):
     serializer_field_class = serializers.CharField
     text: str
+    static_kwargs: dict = field(default_factory=dict)
 
     def _get_link_text(self, obj):
         return BaseLinkTableElement.get_dotted_attr_or_arg(obj, self.text)
@@ -192,9 +196,23 @@ class LinkListTableElement(BaseLinkTableElement):
     out_separator: str = "<br>"
 
     def get_attribute(self, obj: Any, tag: str) -> str:
+        values = self._get_object_values(obj)
         if tag == "latex":
-            value = self._get_link_text(obj)
+            value = ",".join(link_text for _, link_text in values)
             return self.format_latex(value)
+        result = "<td><div style='max-height: 300px; overflow-y: auto;'>"
+        for i, (list_value, link_text) in enumerate(values):
+            url_kwargs = self._get_url_kwargs(obj)
+            url_kwargs[self.list_kwarg] = list_value
+            url = self._get_url(obj, url_kwargs)
+            link = self._get_link(url, link_text)
+            if i > 0:
+                result += self.out_separator
+            result += link
+        result += "</div></td>"
+        return result
+
+    def _get_object_values(self, obj) -> list:
         list_values = self.get_dotted_attr_or_arg(obj, self.list_attr)
         list_values = str(list_values).split(",") if list_values else []
         text_values = self.get_dotted_attr_or_arg(obj, self.text)
@@ -202,21 +220,9 @@ class LinkListTableElement(BaseLinkTableElement):
         assert len(list_values) == len(
             text_values
         ), f"list_values: {list_values}, text_values: {text_values}"
-        result = "<td>"
-        for i, list_value in enumerate(list_values):
-            url_kwargs = self._get_url_kwargs(obj)
-            url_kwargs[self.list_kwarg] = list_value
-            url = self._get_url(obj, url_kwargs)
-            link_text = text_values[i]
-            link = self._get_link(url, link_text)
-            if i > 0:
-                result += self.out_separator
-            result += link
-        result += "</td>"
-        return result
-
-    def _get_link_text(self, obj):
-        return BaseLinkTableElement.get_dotted_attr_or_arg(obj, self.text)
+        values = zip(list_values, text_values)
+        values = sorted(values, key=lambda x: x[1])
+        return values
 
 
 @dataclass

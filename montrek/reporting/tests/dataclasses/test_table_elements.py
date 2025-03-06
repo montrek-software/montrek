@@ -324,18 +324,18 @@ class TestTableElements(TestCase):
             list_attr="list_attr",
             list_kwarg="list_kwarg",
         )
-        obj = {"list_attr": "1,2,3", "text_attr": "a,b,c"}
+        obj = {"list_attr": "3,2,1", "text_attr": "c,b,a"}
         latex_str = table_element.get_attribute(obj, "latex")
         self.assertEqual(latex_str, " \\color{black} a,b,c &")
         html_str = table_element.get_attribute(obj, "html")
         self.assertEqual(
             html_str,
             (
-                "<td>"
+                "<td><div style='max-height: 300px; overflow-y: auto;'>"
                 '<a id="id__fake_url_1" href="/fake_url/1" title="hover_text">a</a><br>'
                 '<a id="id__fake_url_2" href="/fake_url/2" title="hover_text">b</a><br>'
                 '<a id="id__fake_url_3" href="/fake_url/3" title="hover_text">c</a>'
-                "</td>"
+                "</div></td>"
             ),
         )
 
@@ -424,6 +424,19 @@ class TestDataTableFilters(TestCase):
             f"?filter_field=test_name&filter_lookup=in&filter_value={test_obj.test_name}"
             in test_link
         )
+
+    def test__get_link_static_kwargs(self):
+        test_obj = TestMontrekSatelliteFactory.create()
+        table_element = te.LinkTextTableElement(
+            name="name",
+            url="dummy_detail_static",
+            text="test_name",
+            hover_text="hover_text",
+            kwargs={"pk": "pk", "filter": "test_name"},
+            static_kwargs={"static": "test_static"},
+        )
+        test_kwargs = table_element._get_url_kwargs(test_obj)
+        self.assertEqual(test_kwargs["static"], "test_static")
 
     def test_get_attribute(self):
         test_obj = TestMontrekSatelliteFactory.create(test_name="Test Name")

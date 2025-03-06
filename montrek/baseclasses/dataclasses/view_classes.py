@@ -52,6 +52,11 @@ class RegistryActionElement(StandardActionElementBase):
     icon = "inbox"
 
 
+@dataclass(init=False)
+class ListActionElement(StandardActionElementBase):
+    icon = "align-justify"
+
+
 @dataclass
 class TabElement:
     name: str
