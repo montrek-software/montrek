@@ -180,6 +180,35 @@ class TestMontrekExampleAReportView(MontrekReportViewTestCase):
         return {"pk": self.sat_a1.get_hub_value_date().id}
 
 
+class TestMontrekExampleAReportFieldEditView(MontrekViewTestCase):
+    viewname = "montrek_example_a_edit_field"
+    view_class = me_views.MontrekExampleAReportFieldEditView
+    expected_status_code = 302
+
+    def build_factories(self):
+        self.sat_a1 = me_factories.SatA1Factory(field_a1_str="test", field_a1_int=12)
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.sat_a1.get_hub_value_date().id}
+
+    def test_view_post(self):
+        self.client.post(self.url, {"content": "Updated Field"})
+        test_object = (
+            HubARepository({}).receive().get(pk=self.sat_a1.get_hub_value_date().id)
+        )
+        self.assertEqual(test_object.field_a1_str, "Updated Field")
+        self.assertEqual(test_object.field_a1_int, 12)
+
+    def test_view_page(self):
+        ...
+
+    def test_view_return_correct_html(self):
+        ...
+
+    def test_context_data(self):
+        ...
+
+
 class TestMontrekExampleADownloadView(MontrekDownloadViewTestCase):
     viewname = "montrek_example_a_download"
     view_class = me_views.MontrekExampleADownloadView

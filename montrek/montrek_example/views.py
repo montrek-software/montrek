@@ -99,12 +99,11 @@ class MontrekExampleAReportFieldEditView(
             return HttpResponseRedirect("")
 
     def post(self, request, *args, **kwargs):
-        breakpoint()
-        obj = self.manager.get_object_from_pk(self.session_data["pk"])
+        edit_data = self.manager.get_object_from_pk_as_dict(self.session_data["pk"])
 
         # Update the model with the submitted content
         field_content = request.POST.get("content")
-        edit_data = {"field_a1_str": field_content, "hub_entity_id": obj.hub_entity_id}
+        edit_data.update({"field_a1_str": field_content})
         self.manager.repository.create_by_dict(edit_data)
 
         # Return the updated display partial
