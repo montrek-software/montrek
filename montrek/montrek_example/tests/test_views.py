@@ -192,7 +192,9 @@ class TestMontrekExampleAReportFieldEditView(MontrekViewTestCase):
         return {"pk": self.sat_a1.get_hub_value_date().id}
 
     def test_view_post(self):
-        self.client.post(self.url, {"content": "Updated Field"})
+        self.client.post(
+            self.url, {"content": "Updated Field", "field": "field_a1_str"}
+        )
         test_object = (
             HubARepository({}).receive().get(pk=self.sat_a1.get_hub_value_date().id)
         )

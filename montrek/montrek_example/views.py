@@ -103,7 +103,8 @@ class MontrekExampleAReportFieldEditView(
 
         # Update the model with the submitted content
         field_content = request.POST.get("content")
-        edit_data.update({"field_a1_str": field_content})
+        field = request.POST.get("field")
+        edit_data.update({field: field_content})
         self.manager.repository.create_by_dict(edit_data)
 
         # Return the updated display partial
