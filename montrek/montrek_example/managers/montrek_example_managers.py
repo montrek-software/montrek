@@ -1,4 +1,5 @@
 from django.http import HttpResponse
+from django.urls import reverse
 from montrek_example.repositories.sat_a1_repository import SatA1Repository
 from reporting.managers.montrek_details_manager import MontrekDetailsManager
 from reporting.managers.montrek_table_manager import MontrekTableManager
@@ -26,9 +27,19 @@ class ExampleReportManager(MontrekReportManager):
 
 class ExampleAReportManager(MontrekReportManager):
     report_name = "Example Report"
+    repository_class = HubARepository
 
     def collect_report_elements(self) -> None:
+        self.obj = self.get_object_from_pk(self.session_data["pk"])
         self.append_report_element(rt.ReportingHeader2("Test Header"))
+        editable_element = rt.ReportingEditableText(
+            self.obj.field_a1_str,
+            edit_url=reverse(
+                "montrek_example_a_update", kwargs={"pk": self.session_data["pk"]}
+            ),
+            header="Executive Commentary",
+        )
+        self.append_report_element(editable_element)
 
 
 class HubAManager(MontrekTableManager):
