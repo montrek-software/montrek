@@ -33,7 +33,8 @@ class ExampleAReportManager(MontrekReportManager):
         self.obj = self.get_object_from_pk(self.session_data["pk"])
         self.append_report_element(rt.ReportingHeader2("Test Header"))
         editable_element = rt.ReportingEditableText(
-            self.obj.field_a1_str,
+            self.obj,
+            "field_a1_str",
             edit_url=reverse(
                 "montrek_example_a_update", kwargs={"pk": self.session_data["pk"]}
             ),

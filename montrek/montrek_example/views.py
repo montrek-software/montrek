@@ -66,6 +66,10 @@ class MontrekExampleAReport(MontrekReportView):
     title = "Montrek Example A Report"
 
 
+class MontrekExampleAReportFieldEditView(views.MontrekViewMixin):
+    ...
+
+
 # Create your views here.
 
 

@@ -2,6 +2,7 @@ import tempfile
 from urllib.parse import urlparse
 
 import requests
+from baseclasses.models import HubValueDate
 from reporting.constants import ReportingTextType
 from reporting.core.reporting_mixins import ReportingChecksMixin
 from reporting.core.reporting_protocols import ReportingElement
@@ -70,36 +71,34 @@ class ReportingParagraph(ReportingText):
         return f"<p>{self.text}</p>"
 
 
+from django.template import Context, Template
+
+
 class ReportingEditableText(ReportingText):
     def __init__(
         self,
-        text: str,
-        reporting_text_type: ReportingTextType = ReportingTextType.HTML,
+        obj: HubValueDate,
+        field: str,
         edit_url: str = "",
         header: str = "",
     ):
-        super().__init__(text, reporting_text_type)
+        text = getattr(obj, field)
+
+        super().__init__(text)
         self.edit_url = edit_url
         self.header = header
 
     def to_html(self) -> str:
-        edit_button = (
-            f'<a href="{self.edit_url}" class="btn"><span class="glyphicon glyphicon-pencil"/></a>'
-            if self.edit_url != ""
-            else ""
-        )
-        return f"""<div class="container-fluid">
+        return Template(
+            f"""<div class="container-fluid">
         <div class="row">
-        <div class="col-lg-12" style="padding:0"><h2>{self.header}</h2></div>
-        </div>
-        <div class="row">
-        <div class="col-lg-12" style="padding:0">{self.text}</div>
-        </div>
-        <div class="row">
-        <div class="col-lg-11"></div>
-        <div class="col-lg-1">{edit_button}</div>
+         <div class="col-lg-12" style="padding:0"><h2>{self.header}</h2></div>
+         <div id="field-content-container">
+             {{% include "partials/display_field.html" %}}
+         </div>
         </div>
 </div>"""
+        ).render(Context({"object_content": self.text}))
 
 
 class ReportingHeader1:
