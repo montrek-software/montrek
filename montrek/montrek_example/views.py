@@ -69,7 +69,9 @@ class MontrekExampleAReport(MontrekReportView):
     title = "Montrek Example A Report"
 
 
-class MontrekExampleAReportFieldEditView(View, views.MontrekViewMixin):
+class MontrekExampleAReportFieldEditView(
+    views.MontrekPermissionRequiredMixin, View, views.MontrekViewMixin
+):
     manager_class = mem.HubAManager
 
     def get(self, request, *args, **kwargs):
@@ -79,14 +81,36 @@ class MontrekExampleAReportFieldEditView(View, views.MontrekViewMixin):
         if mode == "edit":
             # Return just the edit form partial
             return render(
-                request, "partials/edit_field.html", {"object_content": "Flummsi"}
+                request,
+                "partials/edit_field.html",
+                {
+                    "object_content": obj.field_a1_str,
+                    "display_url": self.session_data["request_path"],
+                },
             )
         elif mode == "display":
             # Return just the display partial
-            return render(request, "partials/display_field.html", {"object": obj})
+            return render(
+                request,
+                "partials/display_field.html",
+                {"object_content": obj.field_a1_str},
+            )
         else:
-            # Return the full page
-            return HttpResponseRedirect(self.session_data["http_referer"])
+            return HttpResponseRedirect("")
+
+    def post(self, request, *args, **kwargs):
+        breakpoint()
+        obj = self.manager.get_object_from_pk(self.session_data["pk"])
+
+        # Update the model with the submitted content
+        field_content = request.POST.get("content")
+        edit_data = {"field_a1_str": field_content, "hub_entity_id": obj.hub_entity_id}
+        self.manager.repository.create_by_dict(edit_data)
+
+        # Return the updated display partial
+        return render(
+            request, "partials/display_field.html", {"object_content": field_content}
+        )
 
 
 # Create your views here.

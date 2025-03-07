@@ -1,7 +1,8 @@
 <div class="content-edit">
-  <form hx-post="{{ display_url }}" hx-target="#content-container">
+  <form hx-post="{{ display_url }}" hx-target="#field-content-container">
+    {% csrf_token %}
     <textarea name="content" class="content-textarea">
-{{ object_content }}</textarea
+      {{ object_content }}</textarea
     >
     <button type="submit" class="save-btn">Save</button>
   </form>
