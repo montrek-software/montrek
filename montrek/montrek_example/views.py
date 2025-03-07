@@ -77,6 +77,7 @@ class MontrekExampleAReportFieldEditView(
     def get(self, request, *args, **kwargs):
         obj = self.manager.get_object_from_pk(self.session_data["pk"])
         mode = request.GET.get("mode")
+        field = request.GET.get("field")
         # Determine which mode we're in based on the requested action
         if mode == "edit":
             # Return just the edit form partial
@@ -86,6 +87,7 @@ class MontrekExampleAReportFieldEditView(
                 {
                     "object_content": obj.field_a1_str,
                     "display_url": self.session_data["request_path"],
+                    "field": field,
                 },
             )
         elif mode == "display":

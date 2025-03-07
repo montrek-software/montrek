@@ -87,6 +87,7 @@ class ReportingEditableText(ReportingText):
         super().__init__(text)
         self.edit_url = edit_url
         self.header = header
+        self.field = field
 
     def to_html(self) -> str:
         return Template(
@@ -98,7 +99,15 @@ class ReportingEditableText(ReportingText):
          </div>
         </div>
 </div>"""
-        ).render(Context({"object_content": self.text, "edit_url": self.edit_url}))
+        ).render(
+            Context(
+                {
+                    "object_content": self.text,
+                    "edit_url": self.edit_url,
+                    "field": self.field,
+                }
+            )
+        )
 
 
 class ReportingHeader1:

@@ -1,7 +1,7 @@
 <div class="content-text">
   <div class="content-display">{{ object_content }}</div>
   <button
-    hx-get="{{ edit_url }}?mode=edit"
+    hx-get="{{ edit_url }}?mode=edit&field={{ field }}"
     hx-target="#field-content-container"
   >
     Edit
