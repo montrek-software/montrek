@@ -36,7 +36,7 @@ class ExampleAReportManager(MontrekReportManager):
             self.obj,
             "field_a1_str",
             edit_url=reverse(
-                "montrek_example_a_update", kwargs={"pk": self.session_data["pk"]}
+                "montrek_example_a_edit_field", kwargs={"pk": self.session_data["pk"]}
             ),
             header="Executive Commentary",
         )

@@ -1,5 +1,8 @@
 import time
 
+from django.views import View
+from django.shortcuts import render
+
 from baseclasses import views
 from baseclasses.dataclasses.view_classes import (
     ActionElement,
@@ -8,7 +11,7 @@ from baseclasses.dataclasses.view_classes import (
 )
 from reporting.views import MontrekReportView
 from django.contrib import messages
-from django.http import HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from file_upload.views import (
     FileUploadRegistryView,
@@ -66,8 +69,24 @@ class MontrekExampleAReport(MontrekReportView):
     title = "Montrek Example A Report"
 
 
-class MontrekExampleAReportFieldEditView(views.MontrekViewMixin):
-    ...
+class MontrekExampleAReportFieldEditView(View, views.MontrekViewMixin):
+    manager_class = mem.HubAManager
+
+    def get(self, request, *args, **kwargs):
+        obj = self.manager.get_object_from_pk(self.session_data["pk"])
+        mode = request.GET.get("mode")
+        # Determine which mode we're in based on the requested action
+        if mode == "edit":
+            # Return just the edit form partial
+            return render(
+                request, "partials/edit_field.html", {"object_content": "Flummsi"}
+            )
+        elif mode == "display":
+            # Return just the display partial
+            return render(request, "partials/display_field.html", {"object": obj})
+        else:
+            # Return the full page
+            return HttpResponseRedirect(self.session_data["http_referer"])
 
 
 # Create your views here.

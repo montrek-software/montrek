@@ -98,7 +98,7 @@ class ReportingEditableText(ReportingText):
          </div>
         </div>
 </div>"""
-        ).render(Context({"object_content": self.text}))
+        ).render(Context({"object_content": self.text, "edit_url": self.edit_url}))
 
 
 class ReportingHeader1:

@@ -1,4 +1,9 @@
-<div class="content-display">
-  <div class="content-text">{{ object_content }}</div>
-  <button>Edit</button>
+<div class="content-text">
+  <div class="content-display">{{ object_content }}</div>
+  <button
+    hx-get="{{ edit_url }}?mode=edit"
+    hx-target="#field-content-container"
+  >
+    Edit
+  </button>
 </div>

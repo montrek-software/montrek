@@ -25,6 +25,11 @@ urlpatterns = [
         name="montrek_example_a_report",
     ),
     path(
+        "a/<int:pk>/edit_field",
+        views.MontrekExampleAReportFieldEditView.as_view(),
+        name="montrek_example_a_edit_field",
+    ),
+    path(
         "b/create",
         views.MontrekExampleBCreate.as_view(),
         name="montrek_example_b_create",
