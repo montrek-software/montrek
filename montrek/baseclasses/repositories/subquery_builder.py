@@ -183,7 +183,6 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
 
         return hub_value_date_class.objects.filter(
             Q(
-                # hub=OuterRef(f"hub__{self.link_db_name}__{hub_field}"),
                 **{
                     f"hub__{self.link_db_name}__id__in": Subquery(
                         self.get_link_query(hub_field, reference_date).only("id").all()
