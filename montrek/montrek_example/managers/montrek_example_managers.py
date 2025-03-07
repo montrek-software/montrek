@@ -32,15 +32,24 @@ class ExampleAReportManager(MontrekReportManager):
     def collect_report_elements(self) -> None:
         self.obj = self.get_object_from_pk(self.session_data["pk"])
         self.append_report_element(rt.ReportingHeader2("Test Header"))
-        editable_element = rt.ReportingEditableText(
+        editable_element_a1 = rt.ReportingEditableText(
             self.obj,
             "field_a1_str",
             edit_url=reverse(
                 "montrek_example_a_edit_field", kwargs={"pk": self.session_data["pk"]}
             ),
-            header="Executive Commentary",
+            header="Field A1 Str",
         )
-        self.append_report_element(editable_element)
+        self.append_report_element(editable_element_a1)
+        editable_element_a2 = rt.ReportingEditableText(
+            self.obj,
+            "field_a2_str",
+            edit_url=reverse(
+                "montrek_example_a_edit_field", kwargs={"pk": self.session_data["pk"]}
+            ),
+            header="Field A2 Str",
+        )
+        self.append_report_element(editable_element_a2)
 
 
 class HubAManager(MontrekTableManager):
