@@ -60,6 +60,12 @@ class MontrekExampleReport(MontrekReportView):
     title = "Montrek Example Report"
 
 
+class MontrekExampleAReport(MontrekReportView):
+    page_class = pages.ExampleAPage
+    manager_class = mem.ExampleAReportManager
+    title = "Montrek Example A Report"
+
+
 # Create your views here.
 
 

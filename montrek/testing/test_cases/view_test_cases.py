@@ -1,15 +1,17 @@
 import datetime
+
+import pandas as pd
+from baseclasses.views import MontrekDeleteView
+from bs4 import BeautifulSoup
+from django.contrib.auth.models import Permission
 from django.db.models import QuerySet
 from django.http import FileResponse
-import pandas as pd
 from django.test import TestCase
+from django.urls import reverse
 from django.views import View
-from django.contrib.auth.models import Permission
+from mailing.repositories.mailing_repository import MailingRepository
 from middleware.permission_error_middleware import MISSING_PERMISSION_MESSAGE
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
-from django.urls import reverse
-from bs4 import BeautifulSoup
-from baseclasses.views import MontrekDeleteView
 
 
 class NotImplementedView(View):
@@ -346,3 +348,15 @@ class MontrekRedirectViewTestCase(MontrekViewTestCase):
 
     def expected_url(self) -> str:
         raise NotImplementedError("Please set the expected_url method in the subclass")
+
+
+class MontrekReportViewTestCase(MontrekViewTestCase):
+    def test_send_report_per_mail(self):
+        user = MontrekUserFactory()
+        self.client.force_login(user)
+        response = self.client.get(self.url + "?send_mail=true")
+        last_mail = MailingRepository({}).receive().last()
+        self.assertRedirects(
+            response,
+            reverse("send_mail", kwargs={"pk": last_mail.pk}),
+        )

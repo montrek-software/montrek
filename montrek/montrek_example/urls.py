@@ -20,6 +20,11 @@ urlpatterns = [
         name="montrek_example_a_download",
     ),
     path(
+        "a/<int:pk>/report",
+        views.MontrekExampleAReport.as_view(),
+        name="montrek_example_a_report",
+    ),
+    path(
         "b/create",
         views.MontrekExampleBCreate.as_view(),
         name="montrek_example_b_create",
