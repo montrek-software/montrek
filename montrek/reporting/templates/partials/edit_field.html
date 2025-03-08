@@ -13,9 +13,17 @@
     </div>
     <div class="row p-2">
       <input type="hidden" name="field" value="{{ field }}" />
-      <button type="submit" class="btn">
-        <span class="glyphicon glyphicon-floppy-disk" />
-      </button>
+      <div class="col-lg-1">
+        <button type="submit" name="action" value="save" class="btn">
+          <span class="glyphicon glyphicon-floppy-disk" />
+        </button>
+      </div>
+      <div class="col-lg-1">
+        <button type="submit" name="action" value="cancel" class="btn">
+          <span class="glyphicon glyphicon-remove" />
+        </button>
+      </div>
+      <div class="col-lg-10"></div>
     </div>
   </div>
 </form>

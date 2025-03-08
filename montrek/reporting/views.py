@@ -83,10 +83,18 @@ class MontrekReportFieldEditView(
 
     def post(self, request, *args, **kwargs):
         edit_data = self.manager.get_object_from_pk_as_dict(self.session_data["pk"])
+        action = request.POST.get("action")
+        field = request.POST.get("field")
+        if action == "cancel":
+            field_content = edit_data[field]
+            return render(
+                request,
+                "partials/display_field.html",
+                {"object_content": field_content},
+            )
 
         # Update the model with the submitted content
         field_content = request.POST.get("content")
-        field = request.POST.get("field")
         edit_data.update({field: field_content})
         self.manager.repository.create_by_dict(edit_data)
 
