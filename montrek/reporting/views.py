@@ -1,8 +1,15 @@
 import os
 
-from baseclasses.views import MontrekTemplateView, ToPdfMixin
+from baseclasses.views import (
+    MontrekPermissionRequiredMixin,
+    MontrekTemplateView,
+    MontrekViewMixin,
+    ToPdfMixin,
+)
 from django.conf import settings
 from django.http import Http404, HttpResponse
+from django.shortcuts import render
+from django.views import View
 
 from reporting.managers.latex_report_manager import LatexReportManager
 from reporting.managers.montrek_report_manager import MontrekReportManager
@@ -42,3 +49,48 @@ class MontrekReportView(MontrekTemplateView, ToPdfMixin):
     @property
     def title(self):
         return self.manager.document_title
+
+
+class MontrekReportFieldEditView(
+    MontrekPermissionRequiredMixin, View, MontrekViewMixin
+):
+    def get(self, request, *args, **kwargs):
+        obj = self.manager.get_object_from_pk(self.session_data["pk"])
+        mode = request.GET.get("mode")
+        field = request.GET.get("field")
+        object_content = getattr(obj, field)
+        # Determine which mode we're in based on the requested action
+        if mode == "edit":
+            # Return just the edit form partial
+            return render(
+                request,
+                "partials/edit_field.html",
+                {
+                    "object_content": object_content,
+                    "display_url": self.session_data["request_path"],
+                    "field": field,
+                },
+            )
+        elif mode == "display":
+            # Return just the display partial
+            return render(
+                request,
+                "partials/display_field.html",
+                {"object_content": object_content},
+            )
+        else:
+            return HttpResponseRedirect("")
+
+    def post(self, request, *args, **kwargs):
+        edit_data = self.manager.get_object_from_pk_as_dict(self.session_data["pk"])
+
+        # Update the model with the submitted content
+        field_content = request.POST.get("content")
+        field = request.POST.get("field")
+        edit_data.update({field: field_content})
+        self.manager.repository.create_by_dict(edit_data)
+
+        # Return the updated display partial
+        return render(
+            request, "partials/display_field.html", {"object_content": field_content}
+        )

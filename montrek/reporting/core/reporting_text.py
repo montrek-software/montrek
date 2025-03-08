@@ -94,7 +94,7 @@ class ReportingEditableText(ReportingText):
             f"""<div class="container-fluid">
         <div class="row">
          <div class="col-lg-12" style="padding:0"><h2>{self.header}</h2></div>
-         <div id="field-content-container">
+         <div id="field-content-container-{self.field}">
              {{% include "partials/display_field.html" %}}
          </div>
         </div>

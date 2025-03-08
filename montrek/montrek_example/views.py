@@ -1,7 +1,5 @@
 import time
 
-from django.views import View
-from django.shortcuts import render
 
 from baseclasses import views
 from baseclasses.dataclasses.view_classes import (
@@ -9,7 +7,7 @@ from baseclasses.dataclasses.view_classes import (
     CreateActionElement,
     UploadActionElement,
 )
-from reporting.views import MontrekReportView
+from reporting.views import MontrekReportView, MontrekReportFieldEditView
 from django.contrib import messages
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
@@ -69,50 +67,8 @@ class MontrekExampleAReport(MontrekReportView):
     title = "Montrek Example A Report"
 
 
-class MontrekExampleAReportFieldEditView(
-    views.MontrekPermissionRequiredMixin, View, views.MontrekViewMixin
-):
+class MontrekExampleAReportFieldEditView(MontrekReportFieldEditView):
     manager_class = mem.HubAManager
-
-    def get(self, request, *args, **kwargs):
-        obj = self.manager.get_object_from_pk(self.session_data["pk"])
-        mode = request.GET.get("mode")
-        field = request.GET.get("field")
-        # Determine which mode we're in based on the requested action
-        if mode == "edit":
-            # Return just the edit form partial
-            return render(
-                request,
-                "partials/edit_field.html",
-                {
-                    "object_content": obj.field_a1_str,
-                    "display_url": self.session_data["request_path"],
-                    "field": field,
-                },
-            )
-        elif mode == "display":
-            # Return just the display partial
-            return render(
-                request,
-                "partials/display_field.html",
-                {"object_content": obj.field_a1_str},
-            )
-        else:
-            return HttpResponseRedirect("")
-
-    def post(self, request, *args, **kwargs):
-        edit_data = self.manager.get_object_from_pk_as_dict(self.session_data["pk"])
-
-        # Update the model with the submitted content
-        field_content = request.POST.get("content")
-        field = request.POST.get("field")
-        edit_data.update({field: field_content})
-        self.manager.repository.create_by_dict(edit_data)
-
-        # Return the updated display partial
-        return render(
-            request, "partials/display_field.html", {"object_content": field_content}
-        )
 
 
 # Create your views here.

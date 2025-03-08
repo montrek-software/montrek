@@ -2,7 +2,7 @@
   <div class="content-display">{{ object_content }}</div>
   <button
     hx-get="{{ edit_url }}?mode=edit&field={{ field }}"
-    hx-target="#field-content-container"
+    hx-target="#field-content-container-{{ field }}"
   >
     Edit
   </button>
