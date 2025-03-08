@@ -351,7 +351,12 @@ class MontrekRedirectViewTestCase(MontrekViewTestCase):
 
 
 class MontrekReportViewTestCase(MontrekViewTestCase):
+    def _is_base_test_class(self) -> bool:
+        return self.__class__.__name__ == "MontrekReportViewTestCase"
+
     def test_send_report_per_mail(self):
+        if self._is_base_test_class():
+            return
         user = MontrekUserFactory()
         self.client.force_login(user)
         response = self.client.get(self.url + "?send_mail=true")

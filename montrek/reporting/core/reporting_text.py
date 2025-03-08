@@ -79,10 +79,12 @@ class ReportingEditableText(ReportingText):
         self,
         obj: HubValueDate,
         field: str,
-        edit_url: str = "",
+        edit_url: str,
         header: str = "",
     ):
         text = getattr(obj, field)
+        if not text:
+            text = ""
 
         super().__init__(text)
         self.edit_url = edit_url
