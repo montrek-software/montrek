@@ -7,6 +7,7 @@ from baseclasses.views import (
     ToPdfMixin,
 )
 from django.conf import settings
+from django.contrib import messages
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.views import View
@@ -85,18 +86,31 @@ class MontrekReportFieldEditView(
         edit_data = self.manager.get_object_from_pk_as_dict(self.session_data["pk"])
         action = request.POST.get("action")
         field = request.POST.get("field")
+        org_field_content = edit_data[field]
         if action == "cancel":
-            field_content = edit_data[field]
             return render(
                 request,
                 "partials/display_field.html",
-                {"object_content": field_content},
+                {"object_content": org_field_content},
             )
 
         # Update the model with the submitted content
         field_content = request.POST.get("content")
         edit_data.update({field: field_content})
-        self.manager.repository.create_by_dict(edit_data)
+        try:
+            self.manager.repository.create_by_dict(edit_data)
+        except Exception as e:
+            error_message = str(e)
+            return render(
+                request,
+                "partials/edit_field.html",
+                {
+                    "object_content": field_content,
+                    "display_url": self.session_data["request_path"],
+                    "field": field,
+                    "error_message": error_message,
+                },
+            )
 
         # Return the updated display partial
         return render(
