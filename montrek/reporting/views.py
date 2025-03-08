@@ -7,7 +7,7 @@ from baseclasses.views import (
     ToPdfMixin,
 )
 from django.conf import settings
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.views import View
 

@@ -191,6 +191,10 @@ class TestMontrekExampleAReportFieldEditView(MontrekViewTestCase):
     def url_kwargs(self) -> dict:
         return {"pk": self.sat_a1.get_hub_value_date().id}
 
+    @property
+    def url(self):
+        return reverse(self.viewname, kwargs=self.url_kwargs()) + "?field=field_a1_str"
+
     def test_view_post(self):
         self.client.post(
             self.url, {"content": "Updated Field", "field": "field_a1_str"}
@@ -199,6 +203,17 @@ class TestMontrekExampleAReportFieldEditView(MontrekViewTestCase):
             HubARepository({}).receive().get(pk=self.sat_a1.get_hub_value_date().id)
         )
         self.assertEqual(test_object.field_a1_str, "Updated Field")
+        self.assertEqual(test_object.field_a1_int, 12)
+
+    def test_view_post_cancel(self):
+        self.client.post(
+            self.url,
+            {"content": "Updated Field", "field": "field_a1_str", "action": "cancel"},
+        )
+        test_object = (
+            HubARepository({}).receive().get(pk=self.sat_a1.get_hub_value_date().id)
+        )
+        self.assertEqual(test_object.field_a1_str, "test")
         self.assertEqual(test_object.field_a1_int, 12)
 
     def test_view_page(self):
