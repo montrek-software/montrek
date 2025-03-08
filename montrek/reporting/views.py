@@ -91,7 +91,11 @@ class MontrekReportFieldEditView(
             return render(
                 request,
                 "partials/display_field.html",
-                {"object_content": org_field_content},
+                {
+                    "object_content": org_field_content,
+                    "edit_url": self.session_data["request_path"],
+                    "field": field,
+                },
             )
 
         # Update the model with the submitted content
@@ -114,5 +118,11 @@ class MontrekReportFieldEditView(
 
         # Return the updated display partial
         return render(
-            request, "partials/display_field.html", {"object_content": field_content}
+            request,
+            "partials/display_field.html",
+            {
+                "object_content": field_content,
+                "edit_url": self.session_data["request_path"],
+                "field": field,
+            },
         )
