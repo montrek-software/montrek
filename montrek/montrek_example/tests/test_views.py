@@ -14,7 +14,6 @@ from file_upload.managers.file_upload_manager import TASK_SCHEDULED_MESSAGE
 from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepository,
 )
-from mailing.repositories.mailing_repository import MailingRepository
 from testing.test_cases.view_test_cases import (
     MontrekCreateViewTestCase,
     MontrekDeleteViewTestCase,
@@ -25,6 +24,7 @@ from testing.test_cases.view_test_cases import (
     MontrekRestApiViewTestCase,
     MontrekUpdateViewTestCase,
     MontrekViewTestCase,
+    MontrekReportViewTestCase,
 )
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
@@ -164,19 +164,66 @@ class TestMontrekExampleAUpdateView(MontrekUpdateViewTestCase):
         self.assertEqual(form["link_hub_a_hub_b"].value(), self.sat_b1.hub_entity.pk)
 
 
-class TestMontrekExampleAReportView(MontrekViewTestCase):
+class TestMontrekExampleReportView(MontrekReportViewTestCase):
     viewname = "montrek_example_report"
     view_class = me_views.MontrekExampleReport
 
-    def test_send_report_per_mail(self):
-        user = MontrekUserFactory()
-        self.client.force_login(user)
-        response = self.client.get(self.url + "?send_mail=true")
-        last_mail = MailingRepository({}).receive().last()
-        self.assertRedirects(
-            response,
-            reverse("send_mail", kwargs={"pk": last_mail.pk}),
+
+class TestMontrekExampleAReportView(MontrekReportViewTestCase):
+    viewname = "montrek_example_a_report"
+    view_class = me_views.MontrekExampleAReport
+
+    def build_factories(self):
+        self.sat_a1 = me_factories.SatA1Factory(field_a1_str="test")
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.sat_a1.get_hub_value_date().id}
+
+
+class TestMontrekExampleAReportFieldEditView(MontrekViewTestCase):
+    viewname = "montrek_example_a_edit_field"
+    view_class = me_views.MontrekExampleAReportFieldEditView
+    expected_status_code = 302
+
+    def build_factories(self):
+        self.sat_a1 = me_factories.SatA1Factory(field_a1_str="test", field_a1_int=12)
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.sat_a1.get_hub_value_date().id}
+
+    @property
+    def url(self):
+        return reverse(self.viewname, kwargs=self.url_kwargs()) + "?field=field_a1_str"
+
+    def test_view_post(self):
+        self.client.post(
+            self.url, {"content": "Updated Field", "field": "field_a1_str"}
         )
+        test_object = (
+            HubARepository({}).receive().get(pk=self.sat_a1.get_hub_value_date().id)
+        )
+        self.assertEqual(test_object.field_a1_str, "Updated Field")
+        self.assertEqual(test_object.field_a1_int, 12)
+
+    def test_view_post_cancel(self):
+        self.client.post(
+            self.url,
+            {"content": "Updated Field", "field": "field_a1_str", "action": "cancel"},
+        )
+        test_object = (
+            HubARepository({}).receive().get(pk=self.sat_a1.get_hub_value_date().id)
+        )
+        self.assertEqual(test_object.field_a1_str, "test")
+        self.assertEqual(test_object.field_a1_int, 12)
+
+    def test_view_page(self):
+        ...
+
+    def test_view_return_correct_html(self):
+        ...
+
+    def test_context_data(self):
+        ...
 
 
 class TestMontrekExampleADownloadView(MontrekDownloadViewTestCase):

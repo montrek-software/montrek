@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from django.test import TestCase
 
 from reporting.core.reporting_text import (
@@ -7,6 +8,11 @@ from reporting.core.reporting_text import (
     ReportingEditableText,
 )
 from reporting.constants import ReportingTextType
+
+
+@dataclass
+class MockObject:
+    field: str
 
 
 class TestReportText(TestCase):
@@ -49,41 +55,71 @@ class TestReportText(TestCase):
         self.assertEqual(test_plain_to_latex, self.plain_latex_text)
 
     def test_reporting_editable_text(self):
-        test_element = ReportingEditableText("This is a plain text")
-        self.assertEqual(test_element.text, "This is a plain text")
+        mock_object = MockObject(field="AA123")
+        test_element = ReportingEditableText(
+            obj=mock_object, field="field", edit_url="test_url"
+        )
+        self.assertEqual(test_element.text, "AA123")
         self.assertEqual(
             test_element.to_html(),
             """<div class="container-fluid">
         <div class="row">
-        <div class="col-lg-12" style="padding:0"><h2></h2></div>
-        </div>
-        <div class="row">
-        <div class="col-lg-12" style="padding:0">This is a plain text</div>
-        </div>
-        <div class="row">
-        <div class="col-lg-11"></div>
-        <div class="col-lg-1"></div>
+         <div class="col-lg-12" style="padding:0"><h2></h2></div>
+         <div id="field-content-container-field">
+             <div class="container-fluid p-0">
+  <div class="row border p-3">
+    <div class="col">AA123</div>
+  </div>
+  <div class="row p-2">
+    <div class="col-lg-1">
+      <button
+        class="btn btn-primary"
+        hx-get="test_url?mode=edit&field=field"
+        hx-target="#field-content-container-field"
+      >
+        <span class="glyphicon glyphicon-pencil" />
+      </button>
+    </div>
+    <div class="col-lg-11"></div>
+  </div>
+</div>
+
+         </div>
         </div>
 </div>""",
         )
 
-    def test_reporting_editable_text_with_url(self):
+    def test_reporting_editable_text_with_header(self):
+        mock_object = MockObject(field="AA123")
         test_element = ReportingEditableText(
-            "This is a plain text", edit_url="http://example.com"
+            obj=mock_object, field="field", edit_url="test_url", header="Test Header"
         )
-        self.assertEqual(test_element.text, "This is a plain text")
+        self.assertEqual(test_element.text, "AA123")
         self.assertEqual(
             test_element.to_html(),
             """<div class="container-fluid">
         <div class="row">
-        <div class="col-lg-12" style="padding:0"><h2></h2></div>
-        </div>
-        <div class="row">
-        <div class="col-lg-12" style="padding:0">This is a plain text</div>
-        </div>
-        <div class="row">
-        <div class="col-lg-11"></div>
-        <div class="col-lg-1"><a href="http://example.com" class="btn"><span class="glyphicon glyphicon-pencil"/></a></div>
+         <div class="col-lg-12" style="padding:0"><h2>Test Header</h2></div>
+         <div id="field-content-container-field">
+             <div class="container-fluid p-0">
+  <div class="row border p-3">
+    <div class="col">AA123</div>
+  </div>
+  <div class="row p-2">
+    <div class="col-lg-1">
+      <button
+        class="btn btn-primary"
+        hx-get="test_url?mode=edit&field=field"
+        hx-target="#field-content-container-field"
+      >
+        <span class="glyphicon glyphicon-pencil" />
+      </button>
+    </div>
+    <div class="col-lg-11"></div>
+  </div>
+</div>
+
+         </div>
         </div>
 </div>""",
         )
