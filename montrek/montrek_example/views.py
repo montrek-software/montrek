@@ -1,14 +1,15 @@
 import time
 
+
 from baseclasses import views
 from baseclasses.dataclasses.view_classes import (
     ActionElement,
     CreateActionElement,
     UploadActionElement,
 )
-from reporting.views import MontrekReportView
+from reporting.views import MontrekReportView, MontrekReportFieldEditView
 from django.contrib import messages
-from django.http import HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from file_upload.views import (
     FileUploadRegistryView,
@@ -58,6 +59,16 @@ class MontrekExampleReport(MontrekReportView):
     page_class = pages.MontrekExampleAAppPage
     manager_class = mem.ExampleReportManager
     title = "Montrek Example Report"
+
+
+class MontrekExampleAReport(MontrekReportView):
+    page_class = pages.ExampleAPage
+    manager_class = mem.ExampleAReportManager
+    title = "Montrek Example A Report"
+
+
+class MontrekExampleAReportFieldEditView(MontrekReportFieldEditView):
+    manager_class = mem.HubAManager
 
 
 # Create your views here.

@@ -1,9 +1,11 @@
 from django.http import HttpResponse
+from django.urls import reverse
 from montrek_example.repositories.sat_a1_repository import SatA1Repository
 from reporting.managers.montrek_details_manager import MontrekDetailsManager
 from reporting.managers.montrek_table_manager import MontrekTableManager
 from reporting.managers.montrek_report_manager import MontrekReportManager
 from reporting.dataclasses import table_elements as te
+from reporting.core import reporting_text as rt
 from montrek_example.repositories.hub_a_repository import HubARepository
 from montrek_example.repositories.hub_b_repository import HubBRepository
 from montrek_example.repositories.hub_c_repository import HubCRepository
@@ -21,6 +23,33 @@ class ExampleReportManager(MontrekReportManager):
         ]
         for table_manager in table_managers:
             self.append_report_element(table_manager)
+
+
+class ExampleAReportManager(MontrekReportManager):
+    report_name = "Example Report"
+    repository_class = HubARepository
+
+    def collect_report_elements(self) -> None:
+        self.obj = self.get_object_from_pk(self.session_data["pk"])
+        self.append_report_element(rt.ReportingHeader2("Test Header"))
+        editable_element_a1 = rt.ReportingEditableText(
+            self.obj,
+            "field_a1_str",
+            edit_url=reverse(
+                "montrek_example_a_edit_field", kwargs={"pk": self.session_data["pk"]}
+            ),
+            header="Field A1 Str",
+        )
+        self.append_report_element(editable_element_a1)
+        editable_element_a2 = rt.ReportingEditableText(
+            self.obj,
+            "field_a2_str",
+            edit_url=reverse(
+                "montrek_example_a_edit_field", kwargs={"pk": self.session_data["pk"]}
+            ),
+            header="Field A2 Str",
+        )
+        self.append_report_element(editable_element_a2)
 
 
 class HubAManager(MontrekTableManager):

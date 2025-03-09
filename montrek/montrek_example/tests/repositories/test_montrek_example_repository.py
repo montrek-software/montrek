@@ -1476,6 +1476,37 @@ class TestTimeSeries(TestCase):
         self.assertEqual(result_2.field_tsd2_float, "0.2")
         self.assertEqual(result_2.field_tsd2_int, "1")
 
+    def test_time_series_link_to_time_series_update(self):
+        value_date = montrek_time(2024, 9, 18)
+        sat_d1 = me_factories.SatTSD2Factory.create(
+            field_tsd2_float=0.2,
+            field_tsd2_int=2,
+            value_date=value_date,
+        )
+        sat_d2 = me_factories.SatTSD2Factory.create(
+            field_tsd2_float=0.3,
+            field_tsd2_int=3,
+            value_date=value_date,
+        )
+        repository = HubCRepository(session_data={"user_id": self.user.id})
+        repository.create_by_dict(
+            {
+                "field_tsc2_float": 0.1,
+                "value_date": value_date,
+                "link_hub_c_hub_d": sat_d1.hub_value_date.hub,
+            }
+        )
+        test_query = repository.receive().filter(value_date=value_date)
+        created_obj = test_query.first()
+        repository.create_by_dict(
+            {
+                "link_hub_c_hub_d": sat_d2.hub_value_date.hub,
+                "hub_entity_id": created_obj.hub.pk,
+            }
+        )
+        test_query = repository.receive().filter(value_date=value_date)
+        self.assertEqual(test_query.count(), 1)
+
 
 class TestTimeSeriesRepositoryEmpty(TestCase):
     def test_empty_time_series(self):
@@ -2368,7 +2399,7 @@ class TestRepositoryQueryConcept(TestCase):
         c_sat2.hub_entity.link_hub_c_hub_d.add(d_sat1.hub_entity)
         repo = HubCRepository({})
         query = repo.receive()
-        self.assertEqual(query.count(), 3)
+        self.assertEqual(query.count(), 2)
         self.assertEqual(query.first().field_c1_str, c_sat1.field_c1_str)
         self.assertEqual(
             query.first().field_d1_str, f"{d_sat1.field_d1_str},{d_sat2.field_d1_str}"

@@ -180,15 +180,20 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         self, hub_field: str, reference_date: timezone.datetime
     ) -> QuerySet:
         hub_value_date_class = self.satellite_class.hub_value_date.field.related_model
+
         return hub_value_date_class.objects.filter(
             Q(
-                hub=OuterRef(f"hub__{self.link_db_name}__{hub_field}"),
+                **{
+                    f"hub__{self.link_db_name}__id__in": Subquery(
+                        self.get_link_query(hub_field, reference_date).only("id").all()
+                    )
+                },
             )
             & Q(value_date_list=OuterRef("value_date_list"))
             & Q(
                 **{
-                    f"hub__state_date_start__lte": reference_date,
-                    f"hub__state_date_end__gt": reference_date,
+                    "hub__state_date_start__lte": reference_date,
+                    "hub__state_date_end__gt": reference_date,
                 }
             ),
         )
@@ -246,8 +251,9 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
                     )
                 }
             )
-            .values(self.field + "sub")  # [:1]
+            .values(self.field + "sub")
         )
+        query = self._annotate_string_concat(query)
         return Subquery(query)
 
     def _link_hubs_and_get_ts_sum_subquery(
