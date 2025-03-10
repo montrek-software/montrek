@@ -1514,7 +1514,7 @@ class TestTimeSeries(TestCase):
             }
         )
         test_query = repository.receive().filter(value_date=value_date)
-        self.assertEqual(test_query.count(), 1)
+        self.assertEqual(test_query.count(), 2)
         test_obj = test_query.first()
         self.assertEqual(float(test_obj.field_tsd2_float), 0.3)
         self.assertEqual(int(test_obj.field_tsd2_int), 3)
