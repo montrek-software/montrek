@@ -187,6 +187,12 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
             & Q(**{f"hub__{self.link_db_name}__state_date_start__lte": reference_date})
             & Q(value_date_list=OuterRef("value_date_list"))
             & Q(**{f"hub__{self.link_db_name}__{hub_field}": OuterRef("hub")})
+            & Q(
+                **{
+                    "hub__state_date_start__lte": reference_date,
+                    "hub__state_date_end__gt": reference_date,
+                }
+            ),
         )
 
     def _get_parent_db_name(self, hub_field: str) -> str:
