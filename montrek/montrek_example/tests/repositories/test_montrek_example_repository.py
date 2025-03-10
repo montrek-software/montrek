@@ -1496,6 +1496,13 @@ class TestTimeSeries(TestCase):
                 "link_hub_c_hub_d": sat_d1.hub_value_date.hub,
             }
         )
+        repository.create_by_dict(
+            {
+                "field_tsc2_float": 0.2,
+                "value_date": value_date,
+                "link_hub_c_hub_d": sat_d2.hub_value_date.hub,
+            }
+        )
         test_query = repository.receive().filter(value_date=value_date)
         created_obj = test_query.first()
         self.assertEqual(float(created_obj.field_tsd2_float), 0.2)
