@@ -72,7 +72,8 @@ class SatelliteSubqueryBuilder(SatelliteSubqueryBuilderABC):
             self.get_hub_query(reference_date)
             .annotate(
                 **{
-                    self.field + "sub": self.satellite_subquery(
+                    self.field
+                    + "sub": self.satellite_subquery(
                         reference_date, lookup_field="hub_entity"
                     ),
                 }
@@ -157,7 +158,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         self.link_satellite_filter = link_satellite_filter
 
     def get_link_query(
-        self, hub_field: str, reference_date: timezone.datetime
+        self, hub_field: str, reference_date: timezone.datetime, outer_ref: str = "hub"
     ) -> QuerySet:
         hub_db_field_name = self._get_parent_db_name(hub_field)
         return self.link_class.objects.filter(
@@ -165,7 +166,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
                 **self.subquery_filter(
                     reference_date,
                     lookup_field=hub_db_field_name,
-                    outer_ref="hub",
+                    outer_ref=outer_ref,
                 )
             )
             & Q(
@@ -173,7 +174,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
                     f"{hub_db_field_name}__state_date_start__lte": reference_date,
                     f"{hub_db_field_name}__state_date_end__gt": reference_date,
                 }
-            ),
+            )
         )
 
     def get_link_hub_value_date_query(
@@ -182,14 +183,10 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         hub_value_date_class = self.satellite_class.hub_value_date.field.related_model
 
         return hub_value_date_class.objects.filter(
-            Q(
-                **{
-                    f"hub__{self.link_db_name}__id__in": Subquery(
-                        self.get_link_query(hub_field, reference_date).only("id").all()
-                    )
-                },
-            )
+            Q(**{f"hub__{self.link_db_name}__state_date_end__gt": reference_date})
+            & Q(**{f"hub__{self.link_db_name}__state_date_start__lte": reference_date})
             & Q(value_date_list=OuterRef("value_date_list"))
+            & Q(**{f"hub__{self.link_db_name}__{hub_field}": OuterRef("hub")})
             & Q(
                 **{
                     "hub__state_date_start__lte": reference_date,
@@ -230,10 +227,11 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         self, hub_field_to: str, hub_field_from: str, reference_date: timezone.datetime
     ) -> Subquery:
         query = (
-            self.get_link_hub_value_date_query(hub_field_to, reference_date)
+            self.get_link_hub_value_date_query(hub_field_from, reference_date)
             .annotate(
                 **{
-                    self.field + "sub": Subquery(
+                    self.field
+                    + "sub": Subquery(
                         self._annotate_agg_field(
                             hub_field_to,
                             self.satellite_class.objects.filter(
@@ -262,7 +260,8 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         query = self.get_link_query(hub_field_from, reference_date)
         query = query.annotate(
             **{
-                self.field + "sub": Subquery(
+                self.field
+                + "sub": Subquery(
                     self._annotate_agg_field(
                         hub_field_to,
                         self.satellite_class.objects.filter(
@@ -309,7 +308,8 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         field_type = CharField
         return query.annotate(
             **{
-                self.field + "agg": Cast(
+                self.field
+                + "agg": Cast(
                     func(Cast(self.field + "sub", field_type())),
                     field_type(),
                 )
