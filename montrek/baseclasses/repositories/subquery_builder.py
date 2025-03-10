@@ -158,7 +158,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         self.link_satellite_filter = link_satellite_filter
 
     def get_link_query(
-        self, hub_field: str, reference_date: timezone.datetime
+        self, hub_field: str, reference_date: timezone.datetime, outer_ref: str = "hub"
     ) -> QuerySet:
         hub_db_field_name = self._get_parent_db_name(hub_field)
         return self.link_class.objects.filter(
@@ -166,7 +166,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
                 **self.subquery_filter(
                     reference_date,
                     lookup_field=hub_db_field_name,
-                    outer_ref="hub",
+                    outer_ref=outer_ref,
                 )
             )
             & Q(
@@ -174,20 +174,25 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
                     f"{hub_db_field_name}__state_date_start__lte": reference_date,
                     f"{hub_db_field_name}__state_date_end__gt": reference_date,
                 }
-            ),
+            )
         )
 
     def get_link_hub_value_date_query(
         self, hub_field: str, reference_date: timezone.datetime
     ) -> QuerySet:
         hub_value_date_class = self.satellite_class.hub_value_date.field.related_model
+        outer_ref = f"hub__{self.link_db_name}__{hub_field}"
 
         return hub_value_date_class.objects.filter(
             Q(
-                # hub=OuterRef(f"hub__{self.link_db_name}__{hub_field}"),
+                hub=OuterRef(f"hub__{self.link_db_name}__{hub_field}"),
+            )
+            & Q(
                 **{
-                    f"hub__{self.link_db_name}__id__in": Subquery(
-                        self.get_link_query(hub_field, reference_date).only("id").all()
+                    f"hub__{self.link_db_name}": Subquery(
+                        self.get_link_query(
+                            hub_field, reference_date, outer_ref=outer_ref
+                        ).only("id")
                     )
                 },
             )
