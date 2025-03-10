@@ -1496,8 +1496,17 @@ class TestTimeSeries(TestCase):
                 "link_hub_c_hub_d": sat_d1.hub_value_date.hub,
             }
         )
+        repository.create_by_dict(
+            {
+                "field_tsc2_float": 0.2,
+                "value_date": value_date,
+                "link_hub_c_hub_d": sat_d2.hub_value_date.hub,
+            }
+        )
         test_query = repository.receive().filter(value_date=value_date)
         created_obj = test_query.first()
+        self.assertEqual(float(created_obj.field_tsd2_float), 0.2)
+        self.assertEqual(int(created_obj.field_tsd2_int), 2)
         repository.create_by_dict(
             {
                 "link_hub_c_hub_d": sat_d2.hub_value_date.hub,
@@ -1505,7 +1514,43 @@ class TestTimeSeries(TestCase):
             }
         )
         test_query = repository.receive().filter(value_date=value_date)
-        self.assertEqual(test_query.count(), 1)
+        self.assertEqual(test_query.count(), 2)
+        test_obj = test_query.first()
+        self.assertEqual(float(test_obj.field_tsd2_float), 0.3)
+        self.assertEqual(int(test_obj.field_tsd2_int), 3)
+        self.assertEqual(float(test_obj.field_tsc2_float), 0.1)
+        test_obj = test_query.last()
+        self.assertEqual(float(test_obj.field_tsd2_float), 0.3)
+        self.assertEqual(int(test_obj.field_tsd2_int), 3)
+        self.assertEqual(float(test_obj.field_tsc2_float), 0.2)
+
+    def test_time_series_link_to_time_series_close_hub(self):
+        value_date = montrek_time(2024, 9, 18)
+        sat_d1 = me_factories.SatTSD2Factory.create(
+            field_tsd2_float=0.2,
+            field_tsd2_int=2,
+            value_date=value_date,
+        )
+        repository = HubCRepository(session_data={"user_id": self.user.id})
+        repository.create_by_dict(
+            {
+                "field_tsc2_float": 0.1,
+                "value_date": value_date,
+                "link_hub_c_hub_d": sat_d1.hub_value_date.hub,
+            }
+        )
+        test_query = repository.receive().filter(value_date=value_date)
+        created_obj = test_query.first()
+        self.assertEqual(float(created_obj.field_tsd2_float), 0.2)
+        self.assertEqual(int(created_obj.field_tsd2_int), 2)
+        self.assertEqual(float(created_obj.field_tsc2_float), 0.1)
+        sat_d1.hub_value_date.hub.state_date_end = montrek_time(2024, 10, 1)
+        sat_d1.hub_value_date.hub.save()
+        test_query = repository.receive().filter(value_date=value_date)
+        created_obj = test_query.first()
+        self.assertEqual(created_obj.field_tsd2_float, None)
+        self.assertEqual(created_obj.field_tsd2_int, None)
+        self.assertEqual(float(created_obj.field_tsc2_float), 0.1)
 
 
 class TestTimeSeriesRepositoryEmpty(TestCase):
