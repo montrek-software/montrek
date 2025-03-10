@@ -1518,6 +1518,11 @@ class TestTimeSeries(TestCase):
         test_obj = test_query.first()
         self.assertEqual(float(test_obj.field_tsd2_float), 0.3)
         self.assertEqual(int(test_obj.field_tsd2_int), 3)
+        self.assertEqual(float(test_obj.field_tsc2_float), 0.1)
+        test_obj = test_query.last()
+        self.assertEqual(float(test_obj.field_tsd2_float), 0.3)
+        self.assertEqual(int(test_obj.field_tsd2_int), 3)
+        self.assertEqual(float(test_obj.field_tsc2_float), 0.2)
 
 
 class TestTimeSeriesRepositoryEmpty(TestCase):
