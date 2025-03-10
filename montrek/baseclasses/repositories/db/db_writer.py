@@ -51,7 +51,6 @@ class DbWriter:
         self._bulk_update(updated_links)
 
     def clear_cache(self):
-        breakpoint()
         cache.clear()
 
     def _bulk_create(self, new_objects: StalledDicts):
