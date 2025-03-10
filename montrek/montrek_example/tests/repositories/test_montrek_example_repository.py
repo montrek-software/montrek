@@ -1498,6 +1498,8 @@ class TestTimeSeries(TestCase):
         )
         test_query = repository.receive().filter(value_date=value_date)
         created_obj = test_query.first()
+        self.assertEqual(float(created_obj.field_tsd2_float), 0.2)
+        self.assertEqual(int(created_obj.field_tsd2_int), 2)
         repository.create_by_dict(
             {
                 "link_hub_c_hub_d": sat_d2.hub_value_date.hub,
@@ -1506,6 +1508,9 @@ class TestTimeSeries(TestCase):
         )
         test_query = repository.receive().filter(value_date=value_date)
         self.assertEqual(test_query.count(), 1)
+        test_obj = test_query.first()
+        self.assertEqual(float(test_obj.field_tsd2_float), 0.3)
+        self.assertEqual(int(test_obj.field_tsd2_int), 3)
 
 
 class TestTimeSeriesRepositoryEmpty(TestCase):

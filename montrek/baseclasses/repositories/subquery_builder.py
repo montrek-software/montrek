@@ -72,7 +72,8 @@ class SatelliteSubqueryBuilder(SatelliteSubqueryBuilderABC):
             self.get_hub_query(reference_date)
             .annotate(
                 **{
-                    self.field + "sub": self.satellite_subquery(
+                    self.field
+                    + "sub": self.satellite_subquery(
                         reference_date, lookup_field="hub_entity"
                     ),
                 }
@@ -183,6 +184,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
 
         return hub_value_date_class.objects.filter(
             Q(
+                # hub=OuterRef(f"hub__{self.link_db_name}__{hub_field}"),
                 **{
                     f"hub__{self.link_db_name}__id__in": Subquery(
                         self.get_link_query(hub_field, reference_date).only("id").all()
@@ -233,7 +235,8 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
             self.get_link_hub_value_date_query(hub_field_to, reference_date)
             .annotate(
                 **{
-                    self.field + "sub": Subquery(
+                    self.field
+                    + "sub": Subquery(
                         self._annotate_agg_field(
                             hub_field_to,
                             self.satellite_class.objects.filter(
@@ -262,7 +265,8 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         query = self.get_link_query(hub_field_from, reference_date)
         query = query.annotate(
             **{
-                self.field + "sub": Subquery(
+                self.field
+                + "sub": Subquery(
                     self._annotate_agg_field(
                         hub_field_to,
                         self.satellite_class.objects.filter(
@@ -309,7 +313,8 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         field_type = CharField
         return query.annotate(
             **{
-                self.field + "agg": Cast(
+                self.field
+                + "agg": Cast(
                     func(Cast(self.field + "sub", field_type())),
                     field_type(),
                 )
