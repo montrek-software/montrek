@@ -251,7 +251,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
             )
             .values(self.field + "sub")
         )
-        query = self._annotate_string_concat(query)
+        query = self._annotate_agg_field(hub_field_to, query)
         return Subquery(query)
 
     def _link_hubs_and_get_ts_sum_subquery(
