@@ -4,6 +4,7 @@ import pandas as pd
 from baseclasses.views import MontrekDeleteView
 from bs4 import BeautifulSoup
 from django.contrib.auth.models import Permission
+from django.core.cache import cache
 from django.db.models import QuerySet
 from django.http import FileResponse
 from django.test import TestCase
@@ -24,6 +25,7 @@ class MontrekViewTestCase(TestCase):
     expected_status_code: int = 200
 
     def setUp(self):
+        cache.clear()
         if self._is_base_test_class():
             return
         self._check_view_class()
