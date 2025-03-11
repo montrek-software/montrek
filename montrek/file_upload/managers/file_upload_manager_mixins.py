@@ -61,6 +61,8 @@ class LogFileMixin(LogFileChecksMixin):
     def _generate_txt_file(self, message: str, additional_data: pd.DataFrame | None):
         log_sr = self._get_log_sr(message)
         file_content = log_sr.to_string()
+        if isinstance(additional_data, pd.DataFrame):
+            file_content += additional_data.to_string()
         content_file = ContentFile(file_content.encode("utf-8"), name="upload_log.txt")
         return content_file
 
