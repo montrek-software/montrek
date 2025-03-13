@@ -177,5 +177,5 @@ class TestMontrekLogo(TestCase):
         )
         self.assertRegex(
             logo.to_latex(),
-            r"\\includegraphics\[width=0.5\\textwidth\]{/tmp/tmp[0-9a-zA-Z]+\.png}",
+            r"\\includegraphics\[width=0.5\\textwidth\]\{/tmp/tmp[a-zA-Z0-9_]+\.png\}",
         )
