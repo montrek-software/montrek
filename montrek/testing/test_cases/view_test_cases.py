@@ -388,6 +388,8 @@ class MontrekReportFieldEditViewTestCase(MontrekObjectViewBaseTestCase):
         return {"content": self.updated_content, "field": self.update_field}
 
     def test_view_post(self):
+        if self._is_base_test_class():
+            return
         self.get_post_response()
         pk = self.url_kwargs()["pk"]
         test_object = (
@@ -399,6 +401,8 @@ class MontrekReportFieldEditViewTestCase(MontrekObjectViewBaseTestCase):
         self.additional_assertions(test_object)
 
     def test_view_post_cancel(self):
+        if self._is_base_test_class():
+            return
         post_data = self.creation_data().copy()
         post_data["action"] = "cancel"
         self.client.post(self.url, post_data)
