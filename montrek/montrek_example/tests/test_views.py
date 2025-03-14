@@ -21,6 +21,7 @@ from testing.test_cases.view_test_cases import (
     MontrekFileResponseTestCase,
     MontrekListViewTestCase,
     MontrekRedirectViewTestCase,
+    MontrekReportFieldEditViewTestCase,
     MontrekRestApiViewTestCase,
     MontrekUpdateViewTestCase,
     MontrekViewTestCase,
@@ -180,10 +181,11 @@ class TestMontrekExampleAReportView(MontrekReportViewTestCase):
         return {"pk": self.sat_a1.get_hub_value_date().id}
 
 
-class TestMontrekExampleAReportFieldEditView(MontrekViewTestCase):
+class TestMontrekExampleAReportFieldEditView(MontrekReportFieldEditViewTestCase):
     viewname = "montrek_example_a_edit_field"
     view_class = me_views.MontrekExampleAReportFieldEditView
-    expected_status_code = 302
+    update_field = "field_a1_str"
+    updated_content = "Updated Field"
 
     def build_factories(self):
         self.sat_a1 = me_factories.SatA1Factory(field_a1_str="test", field_a1_int=12)
@@ -191,39 +193,8 @@ class TestMontrekExampleAReportFieldEditView(MontrekViewTestCase):
     def url_kwargs(self) -> dict:
         return {"pk": self.sat_a1.get_hub_value_date().id}
 
-    @property
-    def url(self):
-        return reverse(self.viewname, kwargs=self.url_kwargs()) + "?field=field_a1_str"
-
-    def test_view_post(self):
-        self.client.post(
-            self.url, {"content": "Updated Field", "field": "field_a1_str"}
-        )
-        test_object = (
-            HubARepository({}).receive().get(pk=self.sat_a1.get_hub_value_date().id)
-        )
-        self.assertEqual(test_object.field_a1_str, "Updated Field")
-        self.assertEqual(test_object.field_a1_int, 12)
-
-    def test_view_post_cancel(self):
-        self.client.post(
-            self.url,
-            {"content": "Updated Field", "field": "field_a1_str", "action": "cancel"},
-        )
-        test_object = (
-            HubARepository({}).receive().get(pk=self.sat_a1.get_hub_value_date().id)
-        )
-        self.assertEqual(test_object.field_a1_str, "test")
-        self.assertEqual(test_object.field_a1_int, 12)
-
-    def test_view_page(self):
-        ...
-
-    def test_view_return_correct_html(self):
-        ...
-
-    def test_context_data(self):
-        ...
+    def additional_assertions(self, created_object):
+        self.assertEqual(created_object.field_a1_int, 12)
 
 
 class TestMontrekExampleADownloadView(MontrekDownloadViewTestCase):
