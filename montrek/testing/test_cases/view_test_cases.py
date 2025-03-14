@@ -390,8 +390,12 @@ class MontrekReportFieldEditViewTestCase(MontrekObjectViewBaseTestCase):
     def test_view_post(self):
         self.get_post_response()
         pk = self.url_kwargs()["pk"]
-        test_object = self.view_class.manager_class({}).repository.receive().get(pk=pk)
-        self.assertEqual(test_object.field_a1_str, self.updated_content)
+        test_object = (
+            self.view_class.manager_class(self.url_kwargs())
+            .repository.receive()
+            .get(pk=pk)
+        )
+        self.assertEqual(getattr(test_object, self.update_field), self.updated_content)
         self.additional_assertions(test_object)
 
     def test_view_post_cancel(self):
@@ -399,8 +403,14 @@ class MontrekReportFieldEditViewTestCase(MontrekObjectViewBaseTestCase):
         post_data["action"] = "cancel"
         self.client.post(self.url, post_data)
         pk = self.url_kwargs()["pk"]
-        test_object = self.view_class.manager_class({}).repository.receive().get(pk=pk)
-        self.assertNotEqual(test_object.field_a1_str, self.updated_content)
+        test_object = (
+            self.view_class.manager_class(self.url_kwargs())
+            .repository.receive()
+            .get(pk=pk)
+        )
+        self.assertNotEqual(
+            getattr(test_object, self.update_field), self.updated_content
+        )
         self.additional_assertions(test_object)
 
     def test_view_page(self):
