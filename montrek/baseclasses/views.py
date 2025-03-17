@@ -15,6 +15,8 @@ from django.views.generic import DetailView, RedirectView, View
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import CreateView
 from django.views.generic.list import ListView
+from django.views.decorators.cache import cache_page
+from django.utils.decorators import method_decorator
 from file_upload.forms import SimpleUploadFileForm
 from file_upload.managers.simple_upload_file_manager import SimpleUploadFileManager
 from reporting.managers.latex_report_manager import LatexReportManager
@@ -293,6 +295,10 @@ class MontrekListView(
     template_name = "montrek_table.html"
     manager_class = MontrekManagerNotImplemented
     do_simple_file_upload = False
+
+    @method_decorator(cache_page(60 * 5))  # Cache for 5 minutes
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
 
     def get(self, request, *args, **kwargs):
         if self.request.GET.get("gen_csv") == "true":
