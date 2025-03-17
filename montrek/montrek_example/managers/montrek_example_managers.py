@@ -153,6 +153,15 @@ class HubBManager(MontrekTableManager):
         ]
 
 
+class ExampleBReportManager(MontrekReportManager):
+    report_name = "Example Report"
+    repository_class = HubBRepository
+
+    def collect_report_elements(self) -> None:
+        self.obj = self.get_object_from_pk(self.session_data["pk"])
+        self.append_report_element(rt.ReportingHeader2("Test Header"))
+
+
 class HubCManager(MontrekTableManager):
     repository_class = HubCRepository
 
