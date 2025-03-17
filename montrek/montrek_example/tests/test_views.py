@@ -440,6 +440,19 @@ class TestMontrekExampleBReportView(MontrekReportViewTestCase):
         return {"pk": self.sat_b1.get_hub_value_date().id}
 
 
+class TestMontrekExampleBReportFieldEditView(MontrekReportFieldEditViewTestCase):
+    viewname = "montrek_example_b_edit_field"
+    view_class = me_views.MontrekExampleBReportFieldEditView
+    update_field = "field_b1_str"
+    updated_content = "Updated Field"
+
+    def build_factories(self):
+        self.sat_b1 = me_factories.SatB1Factory(field_b1_str="test")
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.sat_b1.get_hub_value_date().id}
+
+
 class TestMontrekExampleCListView(MontrekListViewTestCase):
     viewname = "montrek_example_c_list"
     view_class = me_views.MontrekExampleCList

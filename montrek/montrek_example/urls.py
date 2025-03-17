@@ -39,6 +39,11 @@ urlpatterns = [
         views.MontrekExampleBUpdate.as_view(),
         name="montrek_example_b_update",
     ),
+    path(
+        "b/<int:pk>/edit_field",
+        views.MontrekExampleBReportFieldEditView.as_view(),
+        name="montrek_example_b_edit_field",
+    ),
     path("b/list", views.MontrekExampleBList.as_view(), name="montrek_example_b_list"),
     path(
         "b/<int:pk>/report",
