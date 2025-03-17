@@ -385,7 +385,11 @@ class MontrekReportFieldEditViewTestCase(MontrekObjectViewBaseTestCase):
         )
 
     def creation_data(self) -> dict:
-        return {"content": self.updated_content, "field": self.update_field}
+        return {
+            "content": self.updated_content,
+            "field": self.update_field,
+            self.update_field: self.updated_content,
+        }
 
     def test_view_post(self):
         if self._is_base_test_class():

@@ -108,7 +108,9 @@ class MontrekCreateForm(forms.ModelForm):
             form_field.validators.extend(field.validators)
             if form_field and field.name not in self._meta.exclude:
                 self.fields[field.name] = form_field
-                self.fields[field.name].widget.attrs.update({"id": f"id_{field.name}"})
+                self.fields[field.name].widget.attrs.update(
+                    {"id": f"id_{field.name}", "style": "width: 100%"}
+                )
 
     def _add_hub_entity_id_field(self):
         self.fields["hub_entity_id"] = forms.IntegerField(required=False)

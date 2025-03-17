@@ -43,12 +43,17 @@ class ExampleAPage(MontrekDetailsPage):
             link=reverse("montrek_example_a_details", args=[self.obj.id]),
             html_id="tab_details",
         )
+        report_tab = TabElement(
+            name="Report",
+            link=reverse("montrek_example_a_report", args=[self.obj.id]),
+            html_id="tab_report",
+        )
         history_tab = TabElement(
             name="History",
             link=reverse("montrek_example_a_history", args=[self.obj.id]),
             html_id="tab_history",
         )
-        return [details_tab, history_tab]
+        return [details_tab, report_tab, history_tab]
 
 
 class MontrekExampleBAppPage(MontrekPage):

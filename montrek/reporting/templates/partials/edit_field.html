@@ -1,8 +1,9 @@
 <form
   hx-post="{{ display_url }}"
-  hx-target="#field-content-container-{{ field }}"
+  hx-target="#field-content-container-{{ field.name }}"
 >
   {% csrf_token %}
+  <input type="hidden" name="field" value="{{ field.name }}" />
   <div class="container-fluid p-0">
     {% if error_message %}
     <div class="row border p-3">
@@ -11,21 +12,27 @@
     {% endif %}
     <div class="row border p-3">
       <div class="col">
-        <textarea name="content" class="form-control" rows="5">
-{{ object_content }}</textarea
-        >
+        <div>
+          <!-- Made table responsive -->
+          <table class="table table-bordered table-hover">
+            <!-- Applied Bootstrap table styles -->
+            <tr>
+              <th>{{ field.label_tag }}</th>
+              <td>{{ field }}</td>
+            </tr>
+          </table>
+        </div>
       </div>
     </div>
     <div class="row p-2">
-      <input type="hidden" name="field" value="{{ field }}" />
       <div class="col-lg-1">
         <button type="submit" name="action" value="save" class="btn">
-          <span class="glyphicon glyphicon-floppy-disk" />
+          <span class="glyphicon glyphicon-floppy-disk"></span>
         </button>
       </div>
       <div class="col-lg-1">
         <button type="submit" name="action" value="cancel" class="btn">
-          <span class="glyphicon glyphicon-remove" />
+          <span class="glyphicon glyphicon-remove"></span>
         </button>
       </div>
       <div class="col-lg-10"></div>

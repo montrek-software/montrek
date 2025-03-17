@@ -194,6 +194,16 @@ class MontrekExampleBList(views.MontrekListView):
     success_url = "montrek_example_b_list"
 
 
+class MontrekExampleBReport(MontrekReportView):
+    page_class = pages.MontrekExampleBAppPage
+    manager_class = mem.ExampleBReportManager
+    title = "Montrek Example B Report"
+
+
+class MontrekExampleBReportFieldEditView(MontrekReportFieldEditView):
+    manager_class = mem.HubBManager
+
+
 class MontrekExampleAHistory(views.MontrekHistoryListView):
     manager_class = mem.HubAManager
     page_class = pages.ExampleAPage
