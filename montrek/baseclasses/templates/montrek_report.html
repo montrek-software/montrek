@@ -24,7 +24,16 @@
       </div>
     </div>
     <div class="row" style="background-color: white ;padding:5mm; border-style:solid">
-      {{ report | safe }}
+      <div id="report-content" 
+             hx-get="{{ request.path }}" 
+             hx-trigger="load" 
+             hx-target="#report-content">
+            <div class="loader-container">
+                <h2>Initializing Report</h2>
+                <div class="loader"></div>
+                <p>Please wait while we prepare your report...</p>
+            </div>
+        </div>
     </div>
   </div>
 {% endblock %}
