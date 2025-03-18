@@ -45,7 +45,7 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
         )
 
     def to_html(self) -> str:
-        return self.figure.to_html(full_html=False, include_plotlyjs="cdn")
+        return self.figure.to_html(full_html=False, include_plotlyjs=True)
 
     def to_latex(self) -> str:
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
