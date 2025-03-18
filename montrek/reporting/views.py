@@ -38,8 +38,10 @@ class MontrekReportView(MontrekTemplateView, ToPdfMixin):
     loading_template_name = "partials/montrek_report_loading.html"
     display_template_name = "partials/montrek_report_display.html"
 
-    def get_template_context(self) -> dict:
-        return {"report": self.manager.to_html()}
+    def get_template_context(self, load=False) -> dict:
+        if load:
+            return {"report": self.manager.to_html()}
+        return {}
 
     def get(self, request, *args, **kwargs):
         if self.request.GET.get("gen_pdf") == "true":
@@ -51,12 +53,12 @@ class MontrekReportView(MontrekTemplateView, ToPdfMixin):
         if request.headers.get("HX-Request"):
             if request.GET.get("state") == "loading":
                 # This is the data request - return the content with data
-                context = self.get_template_context()
+                context = self.get_template_context(load=True)
                 return render(request, self.display_template_name, context)
             else:
                 # This is the first HTMX request - return loading template
                 return render(request, self.loading_template_name)
-        return render(request, self.template_name)
+        return super().get(request, *args, **kwargs)
 
     @property
     def title(self):
