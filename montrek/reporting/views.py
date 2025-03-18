@@ -11,9 +11,7 @@ from django.conf import settings
 from django.forms import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
-from django.utils.decorators import method_decorator
 from django.views import View
-from django.views.decorators.cache import cache_page
 
 from reporting.managers.latex_report_manager import LatexReportManager
 from reporting.managers.montrek_report_manager import MontrekReportManager
@@ -37,10 +35,6 @@ def download_reporting_file_view(request, file_path: str):
 class MontrekReportView(MontrekTemplateView, ToPdfMixin):
     manager_class = MontrekReportManager
     template_name = "montrek_report.html"
-
-    @method_decorator(cache_page(60 * 5))  # Cache for 5 minutes
-    def dispatch(self, *args, **kwargs):
-        return super().dispatch(*args, **kwargs)
 
     def get_template_context(self) -> dict:
         return {"report": self.manager.to_html()}
