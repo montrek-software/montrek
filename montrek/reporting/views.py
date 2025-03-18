@@ -56,7 +56,7 @@ class MontrekReportView(MontrekTemplateView, ToPdfMixin):
             else:
                 # This is the first HTMX request - return loading template
                 return render(request, self.loading_template_name)
-        return super().get(request, *args, **kwargs)
+        return render(request, self.template_name)
 
     @property
     def title(self):
