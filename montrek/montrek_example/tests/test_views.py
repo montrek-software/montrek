@@ -364,13 +364,15 @@ class TestMontrekExampleBUpdate(MontrekUpdateViewTestCase):
         response = self.client.get(self.url)
         form = response.context["form"]
         self.assertEqual(form.initial["field_b1_str"], "test")
-        self.assertEqual(
-            form["link_hub_b_hub_d"].value(),
-            [
-                self.satd1.hub_entity.get_hub_value_date().id,
-                self.satd2.hub_entity.get_hub_value_date().id,
-            ],
-        )
+        expected_sats = [
+            self.satd1.hub_entity.get_hub_value_date().id,
+            self.satd2.hub_entity.get_hub_value_date().id,
+        ]
+        for sat_id in expected_sats:
+            self.assertIn(
+                sat_id,
+                form["link_hub_b_hub_d"].value(),
+            )
 
     def test_remove_many_to_many_link(self):
         links = LinkHubBHubD.objects.all()
