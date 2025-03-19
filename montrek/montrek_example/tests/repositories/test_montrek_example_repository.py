@@ -664,6 +664,16 @@ class TestMontrekCreateObjectDataFrame(TestCase):
         self.assertEqual(len(produced_hubs), 2)
         produced_hubs = repository.create_objects_from_data_frame(data_frame)
         self.assertEqual(len(produced_hubs), 0)
+        data_frame = pd.DataFrame(
+            {
+                "field_a1_int": [5, 7],
+                "field_a1_str": ["test", "test2"],
+                "field_a2_float": [6.0, 7.0],
+                "field_a2_str": ["test2", "test3"],
+            }
+        )
+        produced_hubs = repository.create_objects_from_data_frame(data_frame)
+        self.assertEqual(len(produced_hubs), 1)
 
     def test_create_objects_from_data_frame_duplicate(self):
         repository = HubARepository(session_data={"user_id": self.user.id})
