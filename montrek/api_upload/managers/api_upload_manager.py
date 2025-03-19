@@ -76,7 +76,8 @@ class ApiUploadManager(MontrekManager):
                 )
                 return False
             self._update_api_upload_registry(us.PROCESSED.value, self.processor.message)
-            self.send_mail = self.processor.send_mail
+            if hasattr(self.processor, "send_mail"):
+                self.send_mail = self.processor.send_mail
             return True
         else:
             self._update_api_upload_registry(us.FAILED.value, self.processor.message)
