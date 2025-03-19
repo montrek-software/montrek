@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 
+from django.contrib.auth.models import send_mail
+
 from api_upload.models import ApiUploadRegistryHub
 from api_upload.repositories.api_upload_registry_repository import (
     ApiUploadRepository,
@@ -14,6 +16,7 @@ from requesting.managers.request_manager import RequestManagerABC
 
 class ApiUploadProcessorABC(ABC):
     message: str
+    send_mail: bool
 
     def __init__(
         self, api_upload_registry: ApiUploadRegistryHub, session_data: dict
@@ -47,6 +50,7 @@ class ApiUploadManager(MontrekManager):
         self.request_manager = self.request_manager_class(session_data)
         self.session_data = session_data
         self.registry_repository = self.repository_class(session_data)
+        self.send_mail: bool = True
         self.init_upload()
         self.processor = self.api_upload_processor_class(
             self.api_upload_registry, session_data
@@ -72,6 +76,7 @@ class ApiUploadManager(MontrekManager):
                 )
                 return False
             self._update_api_upload_registry(us.PROCESSED.value, self.processor.message)
+            self.send_mail = self.processor.send_mail
             return True
         else:
             self._update_api_upload_registry(us.FAILED.value, self.processor.message)

@@ -32,6 +32,8 @@ class ApiUploadTask(MontrekTask):
         self.upload_result = self.api_upload_manager.upload_and_process()
 
     def _send_mail(self):
+        if not self.api_upload_manager.send_mail:
+            return
         message = "<br>".join(
             [message.message for message in self.api_upload_manager.messages]
         )

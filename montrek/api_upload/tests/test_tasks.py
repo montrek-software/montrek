@@ -4,6 +4,7 @@ from django.core import mail
 from api_upload.tests.managers.test_api_upload_manager import (
     MockApiUploadManager,
     MockApiUploadManagerFail,
+    MockApiUploadManagerNoMail,
 )
 from api_upload.tasks import ApiUploadTask
 from testing.decorators.add_logged_in_user import add_logged_in_user
@@ -15,6 +16,10 @@ class MockApiUploadTask(ApiUploadTask):
 
 class MockApiUploadTaskFail(ApiUploadTask):
     api_upload_manager_class = MockApiUploadManagerFail
+
+
+class MockApiUploadTaskNoMail(ApiUploadTask):
+    api_upload_manager_class = MockApiUploadManagerNoMail
 
 
 class TestApiUploadTask(TestCase):
@@ -49,3 +54,10 @@ class TestApiUploadTask(TestCase):
         self.assertEqual(m.to, [self.user.email])
         self.assertEqual(m.subject, "API Upload failed")
         self.assertTrue("process not ok" in m.body)
+
+    def test_api_upload__send_no_mail(self):
+        test_task = MockApiUploadTaskNoMail()
+        test_task.run(
+            session_data=self.session_data,
+        )
+        self.assertEqual(len(mail.outbox), 0)
