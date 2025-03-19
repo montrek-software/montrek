@@ -41,6 +41,12 @@ class MockApiUploadProcessor:
         return True
 
 
+class MockApiUploadProcessorNoMail(MockApiUploadProcessor):
+    def process(self, json_response) -> bool:
+        self.send_mail = False
+        return super().process(json_response)
+
+
 class MockApiUploadProcessorFail(MockApiUploadProcessor):
     def process(self, json_response) -> bool:
         self.message = "process not ok"
@@ -57,6 +63,12 @@ class MockApiUploadManagerFail(ApiUploadManager):
     endpoint = "endpoint"
     request_manager_class = MockRequestManager
     api_upload_processor_class = MockApiUploadProcessorFail
+
+
+class MockApiUploadManagerNoMail(ApiUploadManager):
+    endpoint = "endpoint"
+    request_manager_class = MockRequestManager
+    api_upload_processor_class = MockApiUploadProcessorNoMail
 
 
 class TestApiUploadManager(TestCase):
