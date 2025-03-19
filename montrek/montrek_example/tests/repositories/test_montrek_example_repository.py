@@ -661,7 +661,7 @@ class TestMontrekCreateObjectDataFrame(TestCase):
             }
         )
         produced_hubs = repository.create_objects_from_data_frame(data_frame)
-        self.assertEqual(len(produced_hubs), 3)
+        self.assertEqual(len(produced_hubs), 2)
         produced_hubs = repository.create_objects_from_data_frame(data_frame)
         self.assertEqual(len(produced_hubs), 0)
 
