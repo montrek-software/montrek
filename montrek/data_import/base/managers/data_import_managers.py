@@ -24,6 +24,9 @@ class DataImportManagerABC(MontrekManager):
             self._update_registry(status="failed", message=processor.get_message())
             return
         processor.process()
+        if not processor.post_check():
+            self._update_registry(status="failed", message=processor.get_message())
+            return
         self._update_registry(status="processed", message=processor.get_message())
 
     def get_registry(self):

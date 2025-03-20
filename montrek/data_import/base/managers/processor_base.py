@@ -16,6 +16,11 @@ class ProcessorBaseABC:
             f"Set 'pre_check' Method in {self.__class__.__name__}"
         )
 
+    def post_check(self) -> bool:
+        raise NotImplementedError(
+            f"Set 'post_check' Method in {self.__class__.__name__}"
+        )
+
     def set_message(self, message: str):
         self._message = message
 

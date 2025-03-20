@@ -23,10 +23,19 @@ class MockProcessor(ProcessorBaseABC):
     def pre_check(self) -> bool:
         return True
 
+    def post_check(self) -> bool:
+        return True
+
 
 class MockProcessorFailPreCheck(MockProcessor):
     def pre_check(self) -> bool:
-        self.set_message("Import Failed")
+        self.set_message("Pre Check Failed")
+        return False
+
+
+class MockProcessorFailPostCheck(MockProcessor):
+    def post_check(self) -> bool:
+        self.set_message("Post Check Failed")
         return False
 
 
@@ -40,3 +49,7 @@ class MockDataImportManager(DataImportManagerABC):
 
 class MockDataImportManagerFailPreCheck(MockDataImportManager):
     processor_class = MockProcessorFailPreCheck
+
+
+class MockDataImportManagerFailPostCheck(MockDataImportManager):
+    processor_class = MockProcessorFailPostCheck
