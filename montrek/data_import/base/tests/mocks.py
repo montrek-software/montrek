@@ -20,6 +20,15 @@ class MockProcessor(ProcessorBaseABC):
         self.set_message("Sucessfull Import")
         return True
 
+    def pre_check(self) -> bool:
+        return True
+
+
+class MockProcessorFailPreCheck(MockProcessor):
+    def pre_check(self) -> bool:
+        self.set_message("Import Failed")
+        return False
+
 
 class MockDataImportManager(DataImportManagerABC):
     registry_repository_class = MockRegistryRepository
@@ -27,3 +36,7 @@ class MockDataImportManager(DataImportManagerABC):
 
     def set_import_data(self, import_data: ImportDataType):
         self.import_data = import_data
+
+
+class MockDataImportManagerFailPreCheck(MockDataImportManager):
+    processor_class = MockProcessorFailPreCheck

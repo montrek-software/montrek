@@ -11,6 +11,11 @@ class ProcessorBaseABC:
     def process(self) -> bool:
         raise NotImplementedError(f"Set 'process' Method in {self.__class__.__name__}")
 
+    def pre_check(self) -> bool:
+        raise NotImplementedError(
+            f"Set 'pre_check' Method in {self.__class__.__name__}"
+        )
+
     def set_message(self, message: str):
         self._message = message
 

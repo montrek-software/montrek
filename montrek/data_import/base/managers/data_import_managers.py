@@ -20,6 +20,9 @@ class DataImportManagerABC(MontrekManager):
     def process_import_data(self, import_data: ImportDataType):
         self._update_registry(status="in_progress", message="Data Import in progress")
         processor = self._get_processor(import_data)
+        if not processor.pre_check():
+            self._update_registry(status="failed", message=processor.get_message())
+            return
         processor.process()
         self._update_registry(status="processed", message=processor.get_message())
 
