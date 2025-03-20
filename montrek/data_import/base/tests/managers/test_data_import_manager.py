@@ -12,12 +12,10 @@ class TestDataImportManager(TestCase):
     def test_setup_registry(self):
         test_registry_entry = self.data_import_manager.get_registry()
         self.assertEqual(test_registry_entry.import_status, "pending")
-
-    def test_set_import_data(self):
-        self.assertEqual(self.data_import_manager.import_data, None)
-        self.data_import_manager.set_import_data(self.test_data)
-        self.assertEqual(self.data_import_manager.import_data, self.test_data)
+        self.assertEqual(test_registry_entry.import_message, "Initialize Import")
 
     def test_process_import_data(self):
-        self.data_import_manager.set_import_data(self.test_data)
         self.data_import_manager.process_import_data(self.test_data)
+        test_registry_entry = self.data_import_manager.get_registry()
+        self.assertEqual(test_registry_entry.import_status, "processed")
+        self.assertEqual(test_registry_entry.import_message, "Sucessfull Import")
