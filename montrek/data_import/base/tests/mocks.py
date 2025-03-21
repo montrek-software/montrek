@@ -8,6 +8,7 @@ from data_import.base.models.import_registry_base_models import (
     TestRegistrySatellite,
 )
 from data_import.base.repositories.registry_repositories import RegistryRepositoryABC
+from data_import.base.tasks.data_import_task import DataImportTask
 
 
 class MockRegistryRepository(RegistryRepositoryABC):
@@ -63,3 +64,7 @@ class MockDataImportManagerFailPostCheck(MockDataImportManager):
 
 class MockDataImportManagerFailProcess(MockDataImportManager):
     processor_class = MockProcessorFailProcess
+
+
+class MockDataImportTask(DataImportTask):
+    manager_class = MockDataImportManager
