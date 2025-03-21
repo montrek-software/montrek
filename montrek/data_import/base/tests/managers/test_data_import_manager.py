@@ -3,6 +3,7 @@ from data_import.base.tests.mocks import (
     MockDataImportManager,
     MockDataImportManagerFailPreCheck,
     MockDataImportManagerFailPostCheck,
+    MockDataImportManagerFailProcess,
 )
 from testing.decorators.add_logged_in_user import add_logged_in_user
 
@@ -41,3 +42,12 @@ class TestDataImportManager(TestCase):
         test_registry_entry = data_import_manager.get_registry()
         self.assertEqual(test_registry_entry.import_status, "failed")
         self.assertEqual(test_registry_entry.import_message, "Post Check Failed")
+
+    def test_process_import_data__process_fails(self):
+        data_import_manager = MockDataImportManagerFailProcess(
+            {"user_id": self.user.id}
+        )
+        data_import_manager.process_import_data(self.test_data)
+        test_registry_entry = data_import_manager.get_registry()
+        self.assertEqual(test_registry_entry.import_status, "failed")
+        self.assertEqual(test_registry_entry.import_message, "Process Failed")
