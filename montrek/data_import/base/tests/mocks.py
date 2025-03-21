@@ -39,6 +39,12 @@ class MockProcessorFailPostCheck(MockProcessor):
         return False
 
 
+class MockProcessorFailProcess(MockProcessor):
+    def process(self) -> bool:
+        self.set_message("Process Failed")
+        return False
+
+
 class MockDataImportManager(DataImportManagerABC):
     registry_repository_class = MockRegistryRepository
     processor_class = MockProcessor
@@ -53,3 +59,7 @@ class MockDataImportManagerFailPreCheck(MockDataImportManager):
 
 class MockDataImportManagerFailPostCheck(MockDataImportManager):
     processor_class = MockProcessorFailPostCheck
+
+
+class MockDataImportManagerFailProcess(MockDataImportManager):
+    processor_class = MockProcessorFailProcess

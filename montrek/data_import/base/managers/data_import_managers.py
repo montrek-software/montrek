@@ -12,6 +12,7 @@ class DataImportManagerABC(MontrekManager):
 
     def __init__(self, session_data: dict[str, Any]):
         super().__init__(session_data)
+        self.processor: ProcessorBaseABC | None = None
         self.registry_repository: RegistryRepositoryABC = (
             self._get_registry_repository()
         )
@@ -19,18 +20,23 @@ class DataImportManagerABC(MontrekManager):
 
     def process_import_data(self, import_data: ImportDataType):
         self._update_registry(status="in_progress", message="Data Import in progress")
-        processor = self._get_processor(import_data)
-        if not processor.pre_check():
-            self._update_registry(status="failed", message=processor.get_message())
+        self.processor = self._get_processor(import_data)
+        if not self._apply_step("pre_check"):
             return
-        processor.process()
-        if not processor.post_check():
-            self._update_registry(status="failed", message=processor.get_message())
+        if not self._apply_step("process"):
             return
-        self._update_registry(status="processed", message=processor.get_message())
+        if not self._apply_step("post_check"):
+            return
+        self._update_registry(status="processed", message=self.processor.get_message())
 
     def get_registry(self):
         return self.registry_repository.receive().get(pk=self.registry_hub_pk)
+
+    def _apply_step(self, step: str) -> bool:
+        if not getattr(self.processor, step)():
+            self._update_registry(status="failed", message=self.processor.get_message())
+            return False
+        return True
 
     def _get_registry_repository(self) -> RegistryRepositoryABC:
         if not self.registry_repository_class:
