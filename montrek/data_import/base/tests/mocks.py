@@ -68,4 +68,7 @@ class MockDataImportManagerFailProcess(MockDataImportManager):
 
 class MockDataImportTask(DataImportTask):
     manager_class = MockDataImportManager
-    success_subject = "Data Import Task successful"
+
+
+class MockDataImportTaskFail(DataImportTask):
+    manager_class = MockDataImportManagerFailProcess

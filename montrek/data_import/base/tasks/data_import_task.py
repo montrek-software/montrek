@@ -1,4 +1,5 @@
 from typing import Any
+import re
 
 from data_import.base.managers.data_import_managers import DataImportManagerABC
 from data_import.types import ImportDataType
@@ -13,7 +14,6 @@ from tasks.montrek_task import MontrekTask
 class DataImportTask(MontrekTask):
     manager_class: type[DataImportManagerABC]
     queue: str = PARALLEL_QUEUE_NAME
-    success_subject: str | None = None
 
     def __init__(
         self,
@@ -34,7 +34,12 @@ class DataImportTask(MontrekTask):
 
     def send_mail(self):
         user = get_user_model().objects.get(pk=self.session_data["user_id"])
-        subject = self.success_subject
+        registry_entry = self.manager.get_registry()
+        subject_name = self.get_subject_name()
+        if registry_entry.import_status == "processed":
+            subject = f"{subject_name} successful"
+        else:
+            subject = f"ERROR: {subject_name} unsuccessful"
         message = self.get_message()
         MailingManager(session_data=self.session_data).send_montrek_mail(
             user.email, subject, message
@@ -43,16 +48,5 @@ class DataImportTask(MontrekTask):
     def get_message(self) -> str:
         return self.manager.get_message()
 
-    # def run(self, session_data: Dict[str, Any]):
-    #     manager = self.manager_class(session_data)
-    #     result = manager.process()
-    #     message = manager.processor.message
-    #     user = get_user_model().objects.get(pk=session_data["user_id"])
-    #     if result:
-    #         subject = "Background file processing finished successfully."
-    #     else:
-    #         subject = "ERROR: Background file processing did not finish successfully!"
-    #     MailingManager(session_data=session_data).send_montrek_mail(
-    #         user.email, subject, message
-    #     )
-    #     return message
+    def get_subject_name(self) -> str:
+        return re.sub(r"(?<=[a-z])(?=[A-Z])", " ", self.__class__.__name__)
