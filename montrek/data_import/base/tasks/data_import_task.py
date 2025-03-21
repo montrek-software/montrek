@@ -37,6 +37,8 @@ class DataImportTask(MontrekTask):
         registry_entry = self.manager.get_registry()
         subject_name = self.get_subject_name()
         if registry_entry.import_status == "processed":
+            if not self.manager.send_mail():
+                return
             subject = f"{subject_name} successful"
         else:
             subject = f"ERROR: {subject_name} unsuccessful"

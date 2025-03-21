@@ -46,6 +46,12 @@ class MockProcessorFailProcess(MockProcessor):
         return False
 
 
+class MockProcessorNoMail(MockProcessor):
+    def process(self) -> bool:
+        self.send_mail = False
+        return super().process()
+
+
 class MockDataImportManager(DataImportManagerABC):
     registry_repository_class = MockRegistryRepository
     processor_class = MockProcessor
@@ -66,9 +72,17 @@ class MockDataImportManagerFailProcess(MockDataImportManager):
     processor_class = MockProcessorFailProcess
 
 
+class MockDataImportManagerNoMail(MockDataImportManager):
+    processor_class = MockProcessorNoMail
+
+
 class MockDataImportTask(DataImportTask):
     manager_class = MockDataImportManager
 
 
 class MockDataImportTaskFail(DataImportTask):
     manager_class = MockDataImportManagerFailProcess
+
+
+class MockDataImportTaskNoMail(DataImportTask):
+    manager_class = MockDataImportManagerNoMail

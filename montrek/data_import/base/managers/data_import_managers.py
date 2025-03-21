@@ -35,6 +35,9 @@ class DataImportManagerABC(MontrekManager):
     def get_registry(self):
         return self.registry_repository.receive().get(pk=self.registry_hub_pk)
 
+    def send_mail(self) -> bool:
+        return self.processor.send_mail
+
     def _apply_step(self, step: str) -> bool:
         if not getattr(self.processor, step)():
             self._update_registry(status="failed", message=self.get_message())
