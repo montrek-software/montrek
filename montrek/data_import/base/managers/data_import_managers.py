@@ -27,14 +27,20 @@ class DataImportManagerABC(MontrekManager):
             return
         if not self._apply_step("post_check"):
             return
-        self._update_registry(status="processed", message=self.processor.get_message())
+        self._update_registry(status="processed", message=self.get_message())
+
+    def get_message(self) -> str:
+        return self.processor.get_message()
 
     def get_registry(self):
         return self.registry_repository.receive().get(pk=self.registry_hub_pk)
 
+    def send_mail(self) -> bool:
+        return self.processor.send_mail
+
     def _apply_step(self, step: str) -> bool:
         if not getattr(self.processor, step)():
-            self._update_registry(status="failed", message=self.processor.get_message())
+            self._update_registry(status="failed", message=self.get_message())
             return False
         return True
 

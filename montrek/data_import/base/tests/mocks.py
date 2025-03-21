@@ -8,6 +8,7 @@ from data_import.base.models.import_registry_base_models import (
     TestRegistrySatellite,
 )
 from data_import.base.repositories.registry_repositories import RegistryRepositoryABC
+from data_import.base.tasks.data_import_task import DataImportTask
 
 
 class MockRegistryRepository(RegistryRepositoryABC):
@@ -45,6 +46,12 @@ class MockProcessorFailProcess(MockProcessor):
         return False
 
 
+class MockProcessorNoMail(MockProcessor):
+    def process(self) -> bool:
+        self.send_mail = False
+        return super().process()
+
+
 class MockDataImportManager(DataImportManagerABC):
     registry_repository_class = MockRegistryRepository
     processor_class = MockProcessor
@@ -63,3 +70,19 @@ class MockDataImportManagerFailPostCheck(MockDataImportManager):
 
 class MockDataImportManagerFailProcess(MockDataImportManager):
     processor_class = MockProcessorFailProcess
+
+
+class MockDataImportManagerNoMail(MockDataImportManager):
+    processor_class = MockProcessorNoMail
+
+
+class MockDataImportTask(DataImportTask):
+    manager_class = MockDataImportManager
+
+
+class MockDataImportTaskFail(DataImportTask):
+    manager_class = MockDataImportManagerFailProcess
+
+
+class MockDataImportTaskNoMail(DataImportTask):
+    manager_class = MockDataImportManagerNoMail
