@@ -43,6 +43,15 @@ class TestApiUploadManager(TestCase):
     def setUp(self):
         self.user = MontrekUserFactory()
         self.session_data = {"user_id": self.user.id}
+        self.api_data_import_manager = MockApiDataImportManager(self.session_data)
 
-    def test_init_upload(self):
-        manager = MockApiDataImportManager(self.session_data)
+    def test_setup_registry(self):
+        test_registry_entry = self.api_data_import_manager.get_registry()
+        self.assertEqual(test_registry_entry.import_status, "pending")
+        self.assertEqual(test_registry_entry.import_message, "Initialize Import")
+
+    def test_process_import_data(self):
+        self.api_data_import_manager.process_import_data(self.test_data)
+        test_registry_entry = self.api_data_import_manager.get_registry()
+        self.assertEqual(test_registry_entry.import_status, "processed")
+        self.assertEqual(test_registry_entry.import_message, "Sucessfull Import")
