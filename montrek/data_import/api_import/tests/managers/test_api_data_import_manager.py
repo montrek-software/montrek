@@ -1,4 +1,5 @@
 from data_import.base.managers.processor_base import ProcessorBaseABC
+from copy import deepcopy
 from django.test import TestCase
 from requesting.managers.request_manager import RequestJsonManager
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
@@ -53,3 +54,17 @@ class TestApiUploadManager(TestCase):
         test_registry_entry = self.api_data_import_manager.get_registry()
         self.assertEqual(test_registry_entry.import_status, "processed")
         self.assertEqual(test_registry_entry.import_message, "proccess okdata")
+
+    def test_process_import_data_json_error(self):
+        manager = deepcopy(self.api_data_import_manager)
+
+        def get_json_error(endpoint: str) -> dict:
+            manager.request_manager.status_code = 0
+            manager.request_manager.message = "request error"
+            return {}
+
+        manager.request_manager.get_response = get_json_error
+        manager.process_import_data()
+        test_registry_entry = manager.get_registry()
+        self.assertEqual(test_registry_entry.import_status, "failed")
+        self.assertEqual(test_registry_entry.import_message, "request error")

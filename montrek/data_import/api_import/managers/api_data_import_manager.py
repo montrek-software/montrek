@@ -21,6 +21,10 @@ class ApiDataImportManager(DataImportManagerABC):
 
     def process_import_data(self, import_data: ImportDataType = {}):
         response = self.request_manager.get_response(self.endpoint)
+        if self.request_manager.status_code == 0:
+            self._update_registry(status="failed", message=self.request_manager.message)
+            return
+
         return super().process_import_data(response)
 
     def additional_registry_data(self) -> dict:
