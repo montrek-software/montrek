@@ -15,28 +15,23 @@ class MockRequestManager(RequestJsonManager):
 
 
 class MockApiDataImportProcessor(ProcessorBaseABC):
-    message = ""
-
     def pre_check(self) -> bool:
-        self.message = "pre check ok"
-        self.message += self.import_data["some"]
         return True
 
     def process(self) -> bool:
-        self.message = "proccess ok"
-        self.message += self.import_data["some"]
+        message = "proccess ok"
+        message += self.import_data["some"]
+        self.set_message(message)
         return True
 
     def post_check(self) -> bool:
-        self.message = "post check ok"
-        self.message += self.import_data["some"]
         return True
 
 
 class MockApiDataImportManager(ApiDataImportManager):
     endpoint = "endpoint"
     request_manager_class = MockRequestManager
-    api_data_import_processor_class = MockApiDataImportProcessor
+    processor_class = MockApiDataImportProcessor
 
 
 class TestApiUploadManager(TestCase):
@@ -51,7 +46,7 @@ class TestApiUploadManager(TestCase):
         self.assertEqual(test_registry_entry.import_message, "Initialize Import")
 
     def test_process_import_data(self):
-        self.api_data_import_manager.process_import_data(self.test_data)
+        self.api_data_import_manager.process_import_data()
         test_registry_entry = self.api_data_import_manager.get_registry()
         self.assertEqual(test_registry_entry.import_status, "processed")
-        self.assertEqual(test_registry_entry.import_message, "Sucessfull Import")
+        self.assertEqual(test_registry_entry.import_message, "proccess okdata")
