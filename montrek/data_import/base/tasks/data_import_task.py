@@ -27,7 +27,7 @@ class DataImportTask(MontrekTask):
         super().__init__(task_name, self.queue)
         self.manager = manager_class(session_data)
 
-    def run(self, import_data: ImportDataType) -> str:
+    def run(self, import_data: ImportDataType = {}) -> str:
         self.manager.process_import_data(import_data)
         self.send_mail()
         return self.get_message()
