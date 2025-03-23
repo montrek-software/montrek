@@ -44,6 +44,9 @@ class TestApiUploadManager(TestCase):
         test_registry_entry = self.api_data_import_manager.get_registry()
         self.assertEqual(test_registry_entry.import_status, "pending")
         self.assertEqual(test_registry_entry.import_message, "Initialize Import")
+        self.assertEqual(
+            test_registry_entry.import_url, "https://api.mock.com/v1/endpoint"
+        )
 
     def test_process_import_data(self):
         self.api_data_import_manager.process_import_data()

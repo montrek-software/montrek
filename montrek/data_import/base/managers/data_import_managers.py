@@ -38,6 +38,9 @@ class DataImportManagerABC(MontrekManager):
     def send_mail(self) -> bool:
         return self.processor.send_mail
 
+    def additional_registry_data(self) -> dict:
+        return {}
+
     def _apply_step(self, step: str) -> bool:
         if not getattr(self.processor, step)():
             self._update_registry(status="failed", message=self.get_message())
@@ -59,7 +62,10 @@ class DataImportManagerABC(MontrekManager):
         return self.processor_class(self.session_data, import_data)
 
     def _init_registry_and_get_pk(self) -> int:
-        init_data = {"import_message": "Initialize Import"}
+        init_data = {
+            "import_message": "Initialize Import",
+        }
+        init_data.update(self.additional_registry_data())
         return self.registry_repository.create_by_dict(init_data).pk
 
     def _update_registry(self, status: str, message: str):
@@ -68,4 +74,5 @@ class DataImportManagerABC(MontrekManager):
             "import_message": message,
             "hub_entity_id": self.registry_hub_pk,
         }
+        update_data.update(self.additional_registry_data())
         self.registry_repository.create_by_dict(update_data)
