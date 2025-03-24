@@ -1,3 +1,4 @@
+
 from django.db import models
 from baseclasses import models as baseclass_models
 from baseclasses.fields import HubForeignKey
