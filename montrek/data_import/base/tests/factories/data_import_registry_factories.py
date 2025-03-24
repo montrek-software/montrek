@@ -2,7 +2,7 @@ import factory
 from baseclasses.tests.factories.montrek_factory_schemas import (
     MontrekSatelliteFactory,
 )
-from data_import.base.models.import_registry_base_models import (
+from data_import.base.models import (
     DataImportRegistryBaseSatelliteABC,
 )
 
