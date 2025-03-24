@@ -24,12 +24,11 @@ class DataImportTask(MontrekTask):
         )
         super().__init__(task_name, self.queue)
 
-    def setUp(self, session_data: dict[str, Any]):
+
+
+    def run(self, session_data: dict[str, Any], import_data: ImportDataType = {} ) -> str:
         self.session_data = session_data
         self.manager = self.manager_class(session_data)
-
-
-    def run(self, import_data: ImportDataType = {}) -> str:
         self.manager.process_import_data(import_data)
         self.send_mail()
         return self.get_message()
