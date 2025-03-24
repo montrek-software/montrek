@@ -1,11 +1,3 @@
-from django.core.validators import (
-    MinValueValidator,
-    MaxValueValidator,
-)
-from api_upload.models import (
-    ApiUploadRegistryHubABC,
-    ApiUploadRegistryStaticSatelliteABC,
-)
 from baseclasses.fields import HubForeignKey
 from baseclasses.models import (
     AlertMixin,
@@ -16,6 +8,11 @@ from baseclasses.models import (
     MontrekOneToOneLinkABC,
     MontrekSatelliteABC,
     MontrekTimeSeriesSatelliteABC,
+)
+from data_import.api_import.models import ApiRegistrySatellite
+from django.core.validators import (
+    MaxValueValidator,
+    MinValueValidator,
 )
 from django.db import models
 from django.utils import timezone
@@ -254,7 +251,7 @@ class HubAFileUploadRegistryStaticSatellite(FileUploadRegistryStaticSatelliteABC
     hub_entity = models.ForeignKey(HubAFileUploadRegistryHub, on_delete=models.CASCADE)
 
 
-class HubAApiUploadRegistryHub(ApiUploadRegistryHubABC):
+class HubAApiUploadRegistryHub(MontrekHubABC):
     pass
 
 
@@ -262,7 +259,7 @@ class HubAApiUploadRegistryHubValueDate(HubValueDate):
     hub = HubForeignKey(HubAApiUploadRegistryHub)
 
 
-class HubAApiUploadRegistryStaticSatellite(ApiUploadRegistryStaticSatelliteABC):
+class HubAApiUploadRegistryStaticSatellite(ApiRegistrySatellite):
     hub_entity = models.ForeignKey(HubAApiUploadRegistryHub, on_delete=models.CASCADE)
 
 
