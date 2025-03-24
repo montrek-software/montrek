@@ -1,21 +1,18 @@
 import pandas as pd
+from data_import.base.managers.processor_base import ProcessorBaseABC
 from montrek_example.repositories.hub_a_repository import HubARepository
 
 
-class A2ApiUploadProcessor:
+class A2ApiUploadProcessor(ProcessorBaseABC):
     message = "Not implemented"
 
-    def __init__(self, file_upload_registry: int, session_data: dict, **kwargs):
-        self.session_data = session_data
-        self.file_upload_registry = file_upload_registry
 
-    def pre_check(self, json_response: dict | list) -> bool:
+    def pre_check(self) -> bool:
         return True
 
-    def process(self, json_response: dict | list) -> bool:
+    def process(self) -> bool:
         try:
-            df = pd.DataFrame(json_response)
-            df["link_hub_a_api_upload_registry"] = self.file_upload_registry
+            df = pd.DataFrame(self.import_data)
             HubARepository(self.session_data).create_objects_from_data_frame(df)
             self.message = f"Successfully saved {df.shape[0]} rows."
         except Exception as e:
@@ -25,5 +22,5 @@ class A2ApiUploadProcessor:
             return False
         return True
 
-    def post_check(self, json_response: dict | list) -> bool:
+    def post_check(self) -> bool:
         return True

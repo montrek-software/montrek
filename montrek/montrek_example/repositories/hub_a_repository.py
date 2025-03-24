@@ -4,9 +4,7 @@ from file_upload.repositories.file_upload_registry_repository import (
 )
 from montrek_example import models as me_models
 from montrek_example.repositories.hub_b_repository import HubBRepository
-from api_upload.repositories.api_upload_registry_repository import (
-    ApiUploadRepositoryABC,
-)
+from data_import.api_import.repositories.api_data_import_registry_repositories import ApiDataImportRegistryRepository
 
 
 class HubARepository(MontrekRepository):
@@ -75,9 +73,9 @@ class HubARepository3(MontrekRepository):
         )
 
 
-class HubAApiUploadRepository(ApiUploadRepositoryABC):
+class HubAApiUploadRepository(ApiDataImportRegistryRepository):
     hub_class = me_models.HubAApiUploadRegistryHub
-    static_satellite_class = me_models.HubAApiUploadRegistryStaticSatellite
+    registry_satellite = me_models.HubAApiUploadRegistryStaticSatellite
 
 
 class HubAFileUploadRegistryRepository(FileUploadRegistryRepositoryABC):

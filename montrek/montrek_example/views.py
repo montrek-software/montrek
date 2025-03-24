@@ -361,7 +361,7 @@ def do_a2_upload(request):
             "password": "password",
         },
     )
-    manager.upload_and_process()
+    manager.process_import_data({})
     for m in manager.messages:
         getattr(messages, m.message_type)(request, m.message)
     return HttpResponseRedirect(reverse("hub_a_view_api_uploads"))
@@ -376,7 +376,7 @@ class A2ApiUploadView(AuthenticatorUserPasswordView):
         manager = A2ApiUploadManager(
             session_data=self.session_data,
         )
-        manager.upload_and_process()
+        manager.process_import_data({})
         for m in manager.messages:
             getattr(messages, m.message_type)(self.request, m.message)
 
