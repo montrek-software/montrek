@@ -6,6 +6,7 @@ from data_import.base.models.import_registry_base_models import (
 
 class RegistryRepositoryABC(MontrekRepository):
     registry_satellite: type[DataImportRegistryBaseSatelliteABC]
+    default_order_fields = ("-created_at",)
 
     def set_annotations(self):
         self.add_satellite_fields_annotations(
