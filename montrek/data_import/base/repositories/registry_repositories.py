@@ -1,5 +1,5 @@
 from baseclasses.repositories.montrek_repository import MontrekRepository
-from data_import.base.models.import_registry_base_models import (
+from data_import.base.models import (
     DataImportRegistryBaseSatelliteABC,
 )
 

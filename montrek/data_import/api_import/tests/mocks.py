@@ -1,5 +1,5 @@
 from data_import.api_import.managers.api_data_import_manager import ApiDataImportManager
-from data_import.api_import.models.api_registry_sat_models import (
+from data_import.api_import.models import (
     MockApiRegistryHub,
     MockApiRegistrySatellite,
 )

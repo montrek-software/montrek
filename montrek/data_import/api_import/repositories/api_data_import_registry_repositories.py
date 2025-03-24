@@ -1,5 +1,5 @@
 from data_import.base.repositories.registry_repositories import RegistryRepositoryABC
-from data_import.api_import.models.api_registry_sat_models import (
+from data_import.api_import.models import (
     ApiRegistrySatellite,
 )
 

@@ -14,8 +14,8 @@ class TestDataImportBaseTask(TestCase):
         self.test_data = {"test_data": [1, 2, 3]}
 
     def test_data_import_task(self):
-        data_import_task = MockDataImportTask({"user_id": self.user.id})
-        data_import_task.delay(self.test_data)
+        data_import_task = MockDataImportTask()
+        data_import_task.delay({"user_id": self.user.id},self.test_data)
         test_registry_entry = data_import_task.manager.get_registry()
         self.assertEqual(test_registry_entry.import_status, "processed")
         self.assertEqual(test_registry_entry.import_message, "Sucessfull Import")
@@ -25,8 +25,8 @@ class TestDataImportBaseTask(TestCase):
         self.assertTrue("Sucessfull Import" in test_mail.body)
 
     def test_data_import_task__failure(self):
-        data_import_task = MockDataImportTaskFail({"user_id": self.user.id})
-        data_import_task.delay(self.test_data)
+        data_import_task = MockDataImportTaskFail()
+        data_import_task.delay({"user_id": self.user.id},self.test_data)
         test_registry_entry = data_import_task.manager.get_registry()
         self.assertEqual(test_registry_entry.import_status, "failed")
         self.assertEqual(test_registry_entry.import_message, "Process Failed")
@@ -38,6 +38,6 @@ class TestDataImportBaseTask(TestCase):
         self.assertTrue("Process Failed" in test_mail.body)
 
     def test_data_import_task__no_mail(self):
-        data_import_task = MockDataImportTaskNoMail({"user_id": self.user.id})
-        data_import_task.delay(self.test_data)
+        data_import_task = MockDataImportTaskNoMail()
+        data_import_task.delay({"user_id": self.user.id},self.test_data)
         self.assertEqual(len(mail.outbox), 0)

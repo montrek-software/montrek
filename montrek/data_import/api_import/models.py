@@ -1,4 +1,4 @@
-from data_import.base.models.import_registry_base_models import (
+from data_import.base.models import (
     DataImportRegistryBaseSatelliteABC,
 )
 from django.db import models
@@ -19,6 +19,6 @@ class MockApiRegistryHub(MontrekHubABC):
 
 class MockApiRegistryHubValueDate(HubValueDate):
     hub = HubForeignKey(MockApiRegistryHub)
-    
+
 class MockApiRegistrySatellite(ApiRegistrySatellite):
     hub_entity = models.ForeignKey(MockApiRegistryHub, on_delete=models.CASCADE)
