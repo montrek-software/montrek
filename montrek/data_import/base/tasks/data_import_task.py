@@ -17,15 +17,17 @@ class DataImportTask(MontrekTask):
 
     def __init__(
         self,
-        session_data: dict[str, Any],
     ):
-        self.session_data = session_data
         manager_class = self.manager_class
         task_name = (
             f"{manager_class.__module__}.{manager_class.__name__}_process_file_task"
         )
         super().__init__(task_name, self.queue)
-        self.manager = manager_class(session_data)
+
+    def setUp(self, session_data: dict[str, Any]):
+        self.session_data = session_data
+        self.manager = self.manager_class(session_data)
+
 
     def run(self, import_data: ImportDataType = {}) -> str:
         self.manager.process_import_data(import_data)
