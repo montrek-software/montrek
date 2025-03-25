@@ -179,9 +179,7 @@ class MontrekViewMixin:
 
     def _get_filters(self, session_data):
         request_path = self.request.path
-        filter_data = {}
-        filter_data["filter"] = {}
-        filter_data["filter"][request_path] = {}
+        filter_data = {"filter": session_data.pop("filter", {})}
         filter_fields = session_data.pop("filter_field", [""])
         filter_negates = session_data.pop("filter_negate", [""]*len(filter_fields))
         filter_lookups = session_data.pop("filter_lookup", [""])
