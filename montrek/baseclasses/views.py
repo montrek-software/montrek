@@ -179,33 +179,35 @@ class MontrekViewMixin:
 
     def _get_filters(self, session_data):
         request_path = self.request.path
-        filter_field = session_data.pop("filter_field", [""])[0]
-        filter_negate = session_data.pop("filter_negate", [""])[0]
-        filter_lookup = session_data.pop("filter_lookup", [""])[0]
-        filter_value = session_data.pop("filter_value", [""])[0]
         filter_data = {}
-        if filter_lookup == "isnull":
-            filter_value = True
-        if filter_field:
-            true_values = ("True", "true", True)
-            false_values = ("False", "false", False)
-            filter_negate = filter_negate in true_values
-            filter_lookup = filter_lookup
-            filter_value = filter_value
-            filter_key = f"{filter_field}__{filter_lookup}"
-            if filter_lookup == "in":
-                filter_value = filter_value.split(",")
-            if filter_value in true_values:
+        filter_data["filter"] = {}
+        filter_data["filter"][request_path] = {}
+        filter_fields = session_data.pop("filter_field", [""])
+        filter_negates = session_data.pop("filter_negate", [""]*len(filter_fields))
+        filter_lookups = session_data.pop("filter_lookup", [""])
+        filter_values = session_data.pop("filter_value", [""])
+        filter_input_data = list(zip(filter_fields, filter_negates, filter_lookups, filter_values))
+        for filter_field, filter_negate, filter_lookup, filter_value in filter_input_data:
+            if filter_lookup == "isnull":
                 filter_value = True
-            elif filter_value in false_values:
-                filter_value = False
-            filter_data["filter"] = {}
-            filter_data["filter"][request_path] = {
-                filter_key: {
+            if filter_field:
+                true_values = ("True", "true", True)
+                false_values = ("False", "false", False)
+                filter_negate = filter_negate in true_values
+                filter_lookup = filter_lookup
+                filter_value = filter_value
+                filter_key = f"{filter_field}__{filter_lookup}"
+                if filter_lookup == "in":
+                    filter_value = filter_value.split(",")
+                if filter_value in true_values:
+                    filter_value = True
+                elif filter_value in false_values:
+                    filter_value = False
+
+                filter_data["filter"][request_path][filter_key]={
                     "filter_negate": filter_negate,
                     "filter_value": filter_value,
                 }
-            }
         return filter_data
 
     def _get_page_number(self, session_data):

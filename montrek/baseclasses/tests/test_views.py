@@ -458,6 +458,21 @@ class TestFiter(TestCase):
             self.assertFalse(
                 test_data["filter"]["/"]["test_field__test"]["filter_value"]
             )
+    def test__get_filters_and(self):
+        test_view = MockMontrekView("/")
+        test_data = test_view._get_filters(
+                {
+                    "filter_lookup": ["test", "and_test"],
+                    "filter_field": ["test_field", "sub_field"],
+                    "filter_value": ["test_value", "sub_test_value"],
+                }
+        )
+        self.assertEqual(
+            test_data["filter"]["/"]["test_field__test"]["filter_value"], "test_value"
+        )
+        self.assertEqual(
+            test_data["filter"]["/"]["sub_field__and_test"]["filter_value"], "sub_test_value"
+        )
 
 
 class TestMontrekTemplateView(TestCase):
