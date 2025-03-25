@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Type
+from typing import Any, Callable, Type
 
 from baseclasses.models import (
     LinkTypeEnum,
@@ -359,19 +359,19 @@ class StringAgg(Func):
     function = "STRING_AGG"
 
     def __init__(self, *expressions, separator, **extra):
-        template = f"{self.function}(%(expressions)s, '{separator}')"
-        super().__init__(*expressions, template=template, **extra)
+        self.template = f"{self.function}(%(expressions)s, '{separator}')"
+        super().__init__(*expressions, template=self.template, **extra)
 
 
 class GroupConcat(Func):
     function = "GROUP_CONCAT"
 
     def __init__(self, *expressions, separator, **extra):
-        template = f"{self.function}(%(expressions)s SEPARATOR '{separator}')"
-        super().__init__(*expressions, template=template, **extra)
+        self.template = f"{self.function}(%(expressions)s SEPARATOR '{separator}')"
+        super().__init__(*expressions, template=self.template, **extra)
 
 
-def get_string_concat_function(separator: str) -> Type[Func]:
+def get_string_concat_function(separator: str) -> Callable[..., Any]:
     engine = settings.DATABASES["default"]["ENGINE"]
     if "mysql" in engine:
         return lambda *args, **kwargs: GroupConcat(*args, separator=separator, **kwargs)
