@@ -71,6 +71,61 @@ class TestQueryBuilder(TestCase):
         self.assertEqual(test_query.count(), 1)
         self.assertEqual(test_query.first().test_name, "Test Name 0")
 
+    def test_query_builder__build_queryset__with_and_filter(self):
+        TestMontrekSatelliteFactory.create(
+            test_name="Test Name 0",
+            test_value=0,
+        )
+        TestMontrekSatelliteFactory.create(
+            test_name="Test Name 1",
+            test_value=1,
+        )
+        TestMontrekSatelliteFactory.create(
+            test_name="Test Name 2",
+            test_value=2,
+        )
+        self.annotator.subquery_builder_to_annotations(
+            ["test_name", "test_value"], TestMontrekSatellite, SatelliteSubqueryBuilder
+        )
+        filter_dict = {
+            "filter": {
+                "": {"test_value__gte": {"filter_value": 1, "filter_negate": False},
+                     "test_name__exact": {"filter_value": "Test Name 1", "filter_negate": False}}
+            }
+        }
+        query_builder = QueryBuilder(self.annotator, session_data=filter_dict)
+        test_query = query_builder.build_queryset(self.reference_date)
+        self.assertEqual(test_query.count(), 1)
+        self.assertEqual(test_query.last().test_name, "Test Name 1")
+
+    def test_query_builder__build_queryset__with_or_filter(self):
+        TestMontrekSatelliteFactory.create(
+            test_name="Test Name 0",
+            test_value=0,
+        )
+        TestMontrekSatelliteFactory.create(
+            test_name="Test Name 1",
+            test_value=1,
+        )
+        TestMontrekSatelliteFactory.create(
+            test_name="Test Name 2",
+            test_value=2,
+        )
+        self.annotator.subquery_builder_to_annotations(
+            ["test_name", "test_value"], TestMontrekSatellite, SatelliteSubqueryBuilder
+        )
+        filter_dict = {
+            "filter": {
+                "":  {"or": {"test_value__exact": {"filter_value": 1, "filter_negate": False},
+                     "test_name__exact": {"filter_value": "Test Name 0", "filter_negate": False}}}
+            }
+        }
+        query_builder = QueryBuilder(self.annotator, session_data=filter_dict)
+        test_query = query_builder.build_queryset(self.reference_date)
+        self.assertEqual(test_query.count(), 2)
+        self.assertEqual(test_query.first().test_name, "Test Name 0")
+        self.assertEqual(test_query.last().test_name, "Test Name 1")
+
     def test_failure_with_filter(self):
         TestMontrekSatelliteFactory.create(
             test_name="Test Name 0",
