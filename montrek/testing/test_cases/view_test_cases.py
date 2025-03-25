@@ -375,6 +375,8 @@ class MontrekReportViewTestCase(MontrekViewTestCase):
         )
 
     def test_report_content(self):
+        if self._is_base_test_class():
+            return
         report_manager = self.view.manager
         report_manager.collect_report_elements()
         self.assertEqual(len(report_manager.report_elements), self.expected_number_of_report_elements)
