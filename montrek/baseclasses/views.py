@@ -331,11 +331,7 @@ class MontrekListView(
             FilterForm(
                 filter=filter,
                 filter_field_choices=self.manager.get_std_queryset_field_choices(),
-            ),
-            # FilterForm(
-            #     filter=filter,
-            #     filter_field_choices=self.manager.get_std_queryset_field_choices(),
-            # )
+            ) for i in range(max(1,len(filter)))
         ]
         if self.do_simple_file_upload:
             context["simple_upload_form"] = SimpleUploadFileForm(".xlsx,.csv")
