@@ -193,6 +193,7 @@ class LinkListTableElement(BaseLinkTableElement):
     text: str
     list_attr: str
     list_kwarg: str
+    in_separator: str = ";"
     out_separator: str = "<br>"
 
     def get_attribute(self, obj: Any, tag: str) -> str:
@@ -214,9 +215,9 @@ class LinkListTableElement(BaseLinkTableElement):
 
     def _get_object_values(self, obj) -> list:
         list_values = self.get_dotted_attr_or_arg(obj, self.list_attr)
-        list_values = str(list_values).split(",") if list_values else []
+        list_values = str(list_values).split(self.in_separator) if list_values else []
         text_values = self.get_dotted_attr_or_arg(obj, self.text)
-        text_values = str(text_values).split(",") if text_values else []
+        text_values = str(text_values).split(self.in_separator) if text_values else []
         assert len(list_values) == len(
             text_values
         ), f"list_values: {list_values}, text_values: {text_values}"

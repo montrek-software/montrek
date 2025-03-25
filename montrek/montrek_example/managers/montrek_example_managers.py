@@ -146,6 +146,7 @@ class HubBManager(MontrekTableManager):
                 text="field_d1_str",
                 list_attr="hub_d_id",
                 list_kwarg="pk",
+                in_separator=",",
             ),
             te.StringTableElement(name="D2 Int", attr="field_d1_int"),
             te.AlertTableElement(name="Alert Level", attr="alert_level"),

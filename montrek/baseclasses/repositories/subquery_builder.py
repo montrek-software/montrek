@@ -145,6 +145,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         agg_func: str = "string_concat",
         parent_link_classes: tuple[Type[MontrekLinkABC], ...] = (),
         link_satellite_filter: dict[str, object] = {},
+        separator: str = ",",
     ):
         super().__init__(satellite_class, field)
 
@@ -153,6 +154,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         self.link_class = link_class
         self.link_db_name = link_class.__name__.lower()
         self.agg_func = LinkAggFunctionEnum(agg_func)
+        self.separator = separator
 
         self.parent_link_classes = parent_link_classes
         self.link_satellite_filter = link_satellite_filter
@@ -287,7 +289,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
             if self.agg_func == LinkAggFunctionEnum.SUM:
                 return self._annotate_sum(query)
             if self.agg_func == LinkAggFunctionEnum.STRING_CONCAT:
-                return self._annotate_string_concat(query)
+                return self._annotate_string_concat(query, self.separator)
             if self.agg_func == LinkAggFunctionEnum.LATEST:
                 return self._annotate_latest(query)
             else:
@@ -303,8 +305,8 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
             }
         ).values(self.field + "agg")
 
-    def _annotate_string_concat(self, query: QuerySet) -> QuerySet:
-        func = get_string_concat_function()
+    def _annotate_string_concat(self, query: QuerySet, separator: str) -> QuerySet:
+        func = get_string_concat_function(separator)
         field_type = CharField
         return query.annotate(
             **{
@@ -355,20 +357,26 @@ class ReverseLinkedSatelliteSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
 
 class StringAgg(Func):
     function = "STRING_AGG"
-    template = "%(function)s(%(expressions)s, ',')"
+
+    def __init__(self, *expressions, separator=",", **extra):
+        template = f"{self.function}(%(expressions)s, '{separator}')"
+        super().__init__(*expressions, template=template, **extra)
 
 
 class GroupConcat(Func):
     function = "GROUP_CONCAT"
-    template = "%(function)s(%(expressions)s SEPARATOR ',')"
+
+    def __init__(self, *expressions, separator=",", **extra):
+        template = f"{self.function}(%(expressions)s SEPARATOR '{separator}')"
+        super().__init__(*expressions, template=template, **extra)
 
 
-def get_string_concat_function():
+def get_string_concat_function(separator: str) -> Type[Func]:
     engine = settings.DATABASES["default"]["ENGINE"]
     if "mysql" in engine:
-        return GroupConcat
+        return lambda *args, **kwargs: GroupConcat(*args, separator=separator, **kwargs)
     elif "postgresql" in engine:
-        return StringAgg
+        return lambda *args, **kwargs: StringAgg(*args, separator=separator, **kwargs)
     else:
         raise NotImplementedError(
             f"No function for concatenating list of strings defined for {engine}!"
