@@ -304,7 +304,7 @@ class MontrekListView(
             return self.list_to_excel()
         if self.request.GET.get("gen_pdf") == "true":
             return self.list_to_pdf()
-        if self.request.GET.get("reset_filter") == "true":
+        if self.request.GET.get("action") == "reset":
             return self.reset_filter()
         return super().get(request, *args, **kwargs)
 
@@ -327,10 +327,16 @@ class MontrekListView(
         context["table"] = self.manager.to_html()
         filter = self.session_data.get("filter", {})
         filter = filter.get(self.session_data["request_path"], {})
-        context["filter_form"] = FilterForm(
-            filter=filter,
-            filter_field_choices=self.manager.get_std_queryset_field_choices(),
-        )
+        context["filter_forms"] = [
+            FilterForm(
+                filter=filter,
+                filter_field_choices=self.manager.get_std_queryset_field_choices(),
+            ),
+            # FilterForm(
+            #     filter=filter,
+            #     filter_field_choices=self.manager.get_std_queryset_field_choices(),
+            # )
+        ]
         if self.do_simple_file_upload:
             context["simple_upload_form"] = SimpleUploadFileForm(".xlsx,.csv")
         context["do_simple_file_upload"] = self.do_simple_file_upload

@@ -9,21 +9,29 @@
     </div>
     <div class="row">
         <div class="col-md-8">
-            <form method="get" class="form-inline">
-                <div class="form-group mr-2">
-                  {{ filter_form.filter_field }}
+            <div class="container-fluid">
+              <form method="get" class="form-inline">
+                {% for filter_form in filter_forms %}
+                <div class="col-md-12">
+                      <div class="form-group mr-2">
+                        {{ filter_form.filter_field }}
+                      </div>
+                      <div class="form-group mr-2">
+                        {{ filter_form.filter_negate }}
+                      </div>
+                      <div class="form-group mr-2">
+                        {{ filter_form.filter_lookup }}
+                      </div>
+                      <div class="form-group mr-2">
+                        {{ filter_form.filter_value }}
+                      </div>
                 </div>
-                <div class="form-group mr-2">
-                  {{ filter_form.filter_negate }}
-                </div>
-                <div class="form-group mr-2">
-                  {{ filter_form.filter_lookup }}
-                </div>
-                <div class="form-group mr-2">
-                  {{ filter_form.filter_value }}
-                </div>
-                <button type="submit" class="btn btn-primary mr-2">Filter</button>
-            </form>
+                {% endfor %}
+                <input type="hidden" name="action" id="form-action" value="">
+                  <button type="submit" onclick="document.getElementById('form-action').value='filter'" class="btn btn-primary mr-2">Filter</button>
+                  <button type="submit" onclick="document.getElementById('form-action').value='reset'" class="btn" title="Reset">Reset</button>
+              </form>
+            </div>
         </div>
         <div class="col-md-4 text-right">
             <div class="btn-group">
@@ -41,12 +49,6 @@
                 </form>
             </div>
         </div>
-    </div>
-    <div class="row">
-      <form action="" method="get" style="display: inline-block;">
-        <input type="hidden" name="reset_filter" value="true" />
-        <button type="submit" class="btn btn-default" title="Reset">Reset</button>
-      </form>
     </div>
     <div class="row">
       {{ table|safe }}
