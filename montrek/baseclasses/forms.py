@@ -62,7 +62,7 @@ class FilterForm(forms.Form):
         self.fields["filter_field"] = forms.ChoiceField(
             initial=filter_field,
             choices=filter_field_choices,
-            widget=forms.Select(attrs={"id": "id_field"}),
+            widget=forms.Select(attrs={"id": "id_field", "class": "form-control"}),
             required=False,
         )
         self.fields["filter_negate"] = forms.ChoiceField(
@@ -72,17 +72,17 @@ class FilterForm(forms.Form):
                 (True, "not"),
             ],
             required=False,
-            widget=forms.Select(attrs={"id": "id_negate"}),
+            widget=forms.Select(attrs={"id": "id_negate", "class": "form-control"}),
         )
         self.fields["filter_lookup"] = forms.ChoiceField(
             initial=filter_lookup,
             choices=self.LookupChoices,
-            widget=forms.Select(attrs={"id": "id_lookup"}),
+            widget=forms.Select(attrs={"id": "id_lookup", "class": "form-control"}),
             required=False,
         )
         self.fields["filter_value"] = forms.CharField(
             initial=filter_value,
-            widget=forms.TextInput(attrs={"id": "id_value"}),
+            widget=forms.TextInput(attrs={"id": "id_value", "class": "form-control"}),
             required=False,
         )
 
