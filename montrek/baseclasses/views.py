@@ -8,7 +8,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, request
 from django.shortcuts import render
 from django.urls import reverse
 from django.views.generic import DetailView, RedirectView, View
@@ -169,10 +169,12 @@ class MontrekViewMixin:
         session_data["request_path"] = self.request.path
         session_data.update(self._get_filters(session_data))
         session_data.update(self._get_page_number(session_data))
+        session_data.update(self._get_filter_form_count(session_data))
         if self.request.user.is_authenticated:
             session_data["user_id"] = self.request.user.id
         self.request.session["filter"] = session_data.get("filter", {})
         self.request.session["pages"] = session_data.get("pages", {})
+        self.request.session["filter_count"] = session_data.get("filter_count", {})
         session_data["host_url"] = self.request.build_absolute_uri("/")[:-1]
         session_data["http_referer"] = self.request.META.get("HTTP_REFERER")
         return session_data
@@ -226,6 +228,18 @@ class MontrekViewMixin:
             if request_path in session_data["pages"]:
                 pages_data["page"] = session_data["pages"][request_path]
         return pages_data
+
+    def _get_filter_form_count(self, session_data):
+        request_path = self.request.path
+        cfield = "filter_count"
+        count_data = {}
+        if cfield not in session_data:
+            count_data[cfield] = {}
+        else:
+            count_data[cfield] = session_data[cfield]
+        if request_path not in count_data[cfield]:
+            count_data[cfield][request_path] = 1
+        return count_data
 
     def show_messages(self):
         self.manager.collect_messages()
@@ -306,6 +320,8 @@ class MontrekListView(
             return self.list_to_pdf()
         if self.request.GET.get("action") == "reset":
             return self.reset_filter()
+        if self.request.GET.get("action") == "add_filter":
+            return self.add_filter()
         return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -327,11 +343,13 @@ class MontrekListView(
         context["table"] = self.manager.to_html()
         filter = self.session_data.get("filter", {})
         filter = filter.get(self.session_data["request_path"], {})
+        filter_count = self.session_data.get("filter_count", {})
+        filter_count = filter_count.get(self.session_data["request_path"],1)
         context["filter_forms"] = [
             FilterForm(
                 filter=filter,
                 filter_field_choices=self.manager.get_std_queryset_field_choices(),
-            ) for i in range(max(1,len(filter)))
+            ) for i in range(filter_count)
         ]
         if self.do_simple_file_upload:
             context["simple_upload_form"] = SimpleUploadFileForm(".xlsx,.csv")
@@ -350,7 +368,13 @@ class MontrekListView(
 
     def reset_filter(self):
         self.request.session["filter"] = {}
+        self.request.session["filter_count"][self.session_data["request_path"]] = 1
         return HttpResponseRedirect(self.request.path)
+
+    def add_filter(self):
+        self.request.session["filter_count"][self.session_data["request_path"]] += 1
+        return HttpResponseRedirect(self.request.path)
+
 
     def post(self, request, *args, **kwargs):
         form = SimpleUploadFileForm(".xlsx,.csv", request.POST, request.FILES)
