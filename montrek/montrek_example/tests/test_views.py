@@ -166,11 +166,13 @@ class TestMontrekExampleAUpdateView(MontrekUpdateViewTestCase):
 
 
 class TestMontrekExampleReportView(MontrekReportViewTestCase):
+    expected_number_of_report_elements = 3
     viewname = "montrek_example_report"
     view_class = me_views.MontrekExampleReport
 
 
 class TestMontrekExampleAReportView(MontrekReportViewTestCase):
+    expected_number_of_report_elements = 3
     viewname = "montrek_example_a_report"
     view_class = me_views.MontrekExampleAReport
 
@@ -432,6 +434,7 @@ class TestMontrekExampleBUpdate(MontrekUpdateViewTestCase):
 
 
 class TestMontrekExampleBReportView(MontrekReportViewTestCase):
+    expected_number_of_report_elements = 3
     viewname = "montrek_example_b_report"
     view_class = me_views.MontrekExampleBReport
 

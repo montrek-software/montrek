@@ -3,6 +3,7 @@ from django.test import TestCase
 
 from reporting.core.reporting_text import (
     ReportingParagraph,
+    ReportingText,
     ReportingTextParagraph,
     MontrekLogo,
     ReportingEditableText,
@@ -123,6 +124,11 @@ class TestReportText(TestCase):
         </div>
 </div>""",
         )
+
+    def test_reporting_text_with_none(self):
+        reporting_text = ReportingText(None)
+        self.assertEqual(reporting_text.to_html(), "")
+        self.assertEqual(reporting_text.to_latex(),"")
 
 
 class TestReportingParagraph(TestCase):
