@@ -172,12 +172,15 @@ class TestMontrekViewMixin(TestCase):
         self.assertEqual(
             mock_view.session_data,
             {
+                "filter": {},
                 "request_path": "/",
                 "host_url": "http://testserver",
                 "http_referer": None,
                 "pages": {},
             },
         )
+
+    # MARKER
 
     def test_session_data_with_query_params(self):
         mock_view = MockMontrekView("/?param1=value1&param2=value2")
@@ -188,6 +191,7 @@ class TestMontrekViewMixin(TestCase):
             "host_url": "http://testserver",
             "pages": {},
             "http_referer": None,
+            "filter": {},
         }
         self.assertEqual(mock_view.session_data, expected_data)
 
