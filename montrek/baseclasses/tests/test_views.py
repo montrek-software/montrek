@@ -180,7 +180,6 @@ class TestMontrekViewMixin(TestCase):
             },
         )
 
-    # MARKER
 
     def test_session_data_with_query_params(self):
         mock_view = MockMontrekView("/?param1=value1&param2=value2")
@@ -192,6 +191,21 @@ class TestMontrekViewMixin(TestCase):
             "pages": {},
             "http_referer": None,
             "filter": {},
+        }
+        self.assertEqual(mock_view.session_data, expected_data)
+
+    def test_session_data_with_multiple_filter_params(self):
+        mock_view = MockMontrekView("/?filter_field=field1&filter_negate=False&filter_lookup=exact&filter_value=value1&filter_field=field2&filter_negate=True&filter_lookup=lgt&filter_value=value2")
+
+        expected_data = {
+            "request_path": "/",
+            "host_url": "http://testserver",
+            "pages": {},
+            "http_referer": None,
+            "filter": {'/': {'field1__exact': {'filter_negate': False,
+                                     'filter_value': 'value1'},
+                   'field2__lgt': {'filter_negate': True,
+                                   'filter_value': 'value2'}}},
         }
         self.assertEqual(mock_view.session_data, expected_data)
 
