@@ -226,6 +226,7 @@ class MontrekRepository:
         parent_link_classes: tuple[Type[MontrekLinkABC], ...] = (),
         agg_func: str = "string_concat",
         link_satellite_filter: dict[str, Any] = {},
+        separator: str = ";",
     ):
         if reversed_link:
             link_subquery_builder_class = ReverseLinkedSatelliteSubqueryBuilder
@@ -241,6 +242,7 @@ class MontrekRepository:
             parent_link_classes=parent_link_classes,
             agg_func=agg_func,
             link_satellite_filter=link_satellite_filter,
+            separator=separator,
         )
         self.linked_fields.extend(fields)
 

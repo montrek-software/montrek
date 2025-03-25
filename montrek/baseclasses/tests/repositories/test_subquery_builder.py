@@ -114,8 +114,18 @@ class TestLinkedSatelliteSubqueryBuilder(TestCase):
 class TestSideFunctions(TestCase):
     def test_get_string_concat_function(self):
         with self.settings(DATABASES={"default": {"ENGINE": "mysql"}}):
-            self.assertEqual(get_string_concat_function(), GroupConcat)
+            act = get_string_concat_function(separator="|")()
+            exp = GroupConcat(separator="|")
+            self.assertEqual(act, exp)
+            self.assertEqual(
+                act.template, "GROUP_CONCAT(%(expressions)s SEPARATOR '|')"
+            )
         with self.settings(DATABASES={"default": {"ENGINE": "postgresql"}}):
-            self.assertEqual(get_string_concat_function(), StringAgg)
+            act = get_string_concat_function(separator=",")()
+            exp = StringAgg(separator=",")
+            self.assertEqual(act, exp)
+            self.assertEqual(act.template, "STRING_AGG(%(expressions)s, ',')")
         with self.settings(DATABASES={"default": {"ENGINE": "unknown"}}):
-            self.assertRaises(NotImplementedError, get_string_concat_function)
+            self.assertRaises(
+                NotImplementedError, get_string_concat_function, separator=","
+            )
