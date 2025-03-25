@@ -145,7 +145,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         agg_func: str = "string_concat",
         parent_link_classes: tuple[Type[MontrekLinkABC], ...] = (),
         link_satellite_filter: dict[str, object] = {},
-        separator: str = ",",
+        separator: str = ";",
     ):
         super().__init__(satellite_class, field)
 
@@ -358,7 +358,7 @@ class ReverseLinkedSatelliteSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
 class StringAgg(Func):
     function = "STRING_AGG"
 
-    def __init__(self, *expressions, separator=",", **extra):
+    def __init__(self, *expressions, separator, **extra):
         template = f"{self.function}(%(expressions)s, '{separator}')"
         super().__init__(*expressions, template=template, **extra)
 
@@ -366,7 +366,7 @@ class StringAgg(Func):
 class GroupConcat(Func):
     function = "GROUP_CONCAT"
 
-    def __init__(self, *expressions, separator=",", **extra):
+    def __init__(self, *expressions, separator, **extra):
         template = f"{self.function}(%(expressions)s SEPARATOR '{separator}')"
         super().__init__(*expressions, template=template, **extra)
 
