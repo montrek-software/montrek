@@ -351,6 +351,7 @@ class MontrekRedirectViewTestCase(MontrekViewTestCase):
 
 
 class MontrekReportViewTestCase(MontrekViewTestCase):
+    expected_number_of_report_elements : int = -1
     @property
     def mail_success_url(self) -> str:
         last_mail = MailingRepository({}).receive().last()
@@ -372,6 +373,11 @@ class MontrekReportViewTestCase(MontrekViewTestCase):
             response,
             self.mail_success_url
         )
+
+    def test_report_content(self):
+        report_manager = self.view.manager
+        report_manager.collect_report_elements()
+        self.assertEqual(len(report_manager.report_elements), self.expected_number_of_report_elements)
 
 
 class MontrekReportFieldEditViewTestCase(MontrekObjectViewBaseTestCase):
