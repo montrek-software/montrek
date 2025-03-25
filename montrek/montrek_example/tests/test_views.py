@@ -80,7 +80,7 @@ class TestMontrekExampleAListView(MontrekListViewTestCase):
         self.assertEqual(len(obj_list), 1)
         self.assertEqual(obj_list[0].hub.id, other_sata1.hub_entity.id)
 
-        response = self.client.get(url, data={"reset_filter": "true"}, follow=True)
+        response = self.client.get(url, data={"action": "reset"}, follow=True)
         obj_list = response.context_data["object_list"]
         self.assertRedirects(response, url)
         self.assertEqual(len(obj_list), 2)

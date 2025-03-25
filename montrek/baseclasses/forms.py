@@ -35,27 +35,39 @@ class FilterForm(forms.Form):
         self,
         filter_field_choices: list[tuple] | None = None,
         filter: dict | None = None,
+        filter_index: int = 0,
         *args,
         **kwargs,
     ):
+        # Set default values
+        filter_field = ""
+        filter_lookup = "exact"
+        filter_negate = False
+        filter_value = ""
+
         if filter and isinstance(filter, dict):
-            filter_key, value = list(filter.items())[0]
-            if filter_key.upper() == "OR":
-                filter_field = ""
-                filter_lookup = "exact"
-                filter_negate = False
-                filter_value = ""
-            else:
-                filter_field, filter_lookup = filter_key.split("__")
-                filter_negate = value["filter_negate"]
-                filter_value = value["filter_value"]
-                if isinstance(filter_value, list):
-                    filter_value = ",".join(filter_value)
-        else:
-            filter_field = ""
-            filter_lookup = "exact"
-            filter_negate = False
-            filter_value = ""
+            filter_items = list(filter.items())
+            if filter_index < len(filter_items):
+                filter_key, value = filter_items[filter_index]
+
+                if filter_key.upper() != "OR":
+                    try:
+                        filter_field, filter_lookup = filter_key.split("__", 1)
+                    except ValueError:
+                        filter_field = filter_key
+                        filter_lookup = "exact"
+
+                    filter_negate = value.get("filter_negate", False)
+                    filter_value = value.get("filter_value", "")
+                    if isinstance(filter_value, list):
+                        filter_value = ",".join(map(str, filter_value))
+
+
+        # Set filter values as instance attributes
+        filter_field = filter_field
+        filter_lookup = filter_lookup
+        filter_negate = filter_negate
+        filter_value = filter_value
         filter_field_choices = filter_field_choices or []
         super().__init__(*args, **kwargs)
 

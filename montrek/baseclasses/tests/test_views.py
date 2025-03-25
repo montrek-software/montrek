@@ -177,6 +177,7 @@ class TestMontrekViewMixin(TestCase):
                 "host_url": "http://testserver",
                 "http_referer": None,
                 "pages": {},
+                "filter_count": {"/": 1}
             },
         )
 
@@ -191,6 +192,7 @@ class TestMontrekViewMixin(TestCase):
             "pages": {},
             "http_referer": None,
             "filter": {},
+            "filter_count": {"/": 1}
         }
         self.assertEqual(mock_view.session_data, expected_data)
 
@@ -206,6 +208,7 @@ class TestMontrekViewMixin(TestCase):
                                      'filter_value': 'value1'},
                    'field2__lgt': {'filter_negate': True,
                                    'filter_value': 'value2'}}},
+            "filter_count": {"/": 1}
         }
         self.assertEqual(mock_view.session_data, expected_data)
 
@@ -251,11 +254,13 @@ class TestMontrekViewMixin(TestCase):
         expected_session_data["host_url"] = "http://testserver"
         expected_session_data["http_referer"] = None
         expected_session_data["pages"] = {}
+        expected_session_data['filter_count'] = {'/some/path': 1}
 
         self.assertEqual(mock_view.session_data, expected_session_data)
         self.assertEqual(
             mock_view.request.session["filter"], expected_filter_data["filter"]
         )
+
 
     def test_repository_object_creation(self):
         mock_view = MockMontrekView("/")
@@ -370,12 +375,23 @@ class TestMontrekListView(TestCase):
         self.assertGreater(len(test_list_view.manager.messages), 0)
 
     def test_list_view_base_filter_reset(self):
-        test_list_view = MockMontrekListView("dummy?filter_reset=true")
+        mock_view = MockMontrekListView(
+            "/dummy?filter_field=field1&filter_negate=false&filter_lookup=in&filter_value=value1,value2"
+        )
+        response = mock_view.get(mock_view.request)
+        self.assertNotEqual(mock_view.request.session["filter"]["/dummy"], {})
+        test_list_view = MockMontrekListView("dummy?action=reset")
         response = test_list_view.get(test_list_view.request)
 
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(test_list_view.request.session.get("filter"), {})
-        self.assertEqual(test_list_view.session_data.get("filter"), {})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(test_list_view.request.session["filter"]["/dummy"], {})
+
+    def test_list_view_base_filter_add(self):
+        test_list_view = MockMontrekListView("dummy?action=add_filter")
+        response = test_list_view.get(test_list_view.request)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(test_list_view.request.session["filter_count"]["/dummy"], 2)
 
     def test_get_context_data__raise_error(self):
         test_view = MockMontrekListViewWrongManager("/")

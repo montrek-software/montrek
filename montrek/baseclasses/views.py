@@ -149,6 +149,8 @@ class MontrekPageViewMixin:
 class MontrekViewMixin:
     _manager = None
     request = None
+    _session_data = None
+
 
     @property
     def manager(self):
@@ -158,6 +160,8 @@ class MontrekViewMixin:
 
     @property
     def session_data(self) -> dict:
+        if self._session_data:
+            return self._session_data
         session_data = {}
         if self.request.method == "GET":
             session_data.update(dict(self.request.GET))
@@ -177,6 +181,7 @@ class MontrekViewMixin:
         self.request.session["filter_count"] = session_data.get("filter_count", {})
         session_data["host_url"] = self.request.build_absolute_uri("/")[:-1]
         session_data["http_referer"] = self.request.META.get("HTTP_REFERER")
+        self._session_data = session_data
         return session_data
 
     def _get_filters(self, session_data):
@@ -349,6 +354,7 @@ class MontrekListView(
             FilterForm(
                 filter=filter,
                 filter_field_choices=self.manager.get_std_queryset_field_choices(),
+                filter_index=i,
             ) for i in range(filter_count)
         ]
         if self.do_simple_file_upload:
@@ -367,12 +373,14 @@ class MontrekListView(
         return response
 
     def reset_filter(self):
-        self.request.session["filter"] = {}
-        self.request.session["filter_count"][self.session_data["request_path"]] = 1
+        request_path = self.session_data["request_path"]
+        self.request.session["filter"][request_path] = {}
+        self.request.session["filter_count"][request_path] = 1
         return HttpResponseRedirect(self.request.path)
 
     def add_filter(self):
-        self.request.session["filter_count"][self.session_data["request_path"]] += 1
+        request_path = self.session_data["request_path"]
+        self.request.session["filter_count"][request_path] += 1
         return HttpResponseRedirect(self.request.path)
 
 
