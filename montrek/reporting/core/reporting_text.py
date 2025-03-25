@@ -45,6 +45,8 @@ class ReportingText(ReportElementProtocol):
         text: str,
         reporting_text_type: ReportingTextType = ReportingTextType.HTML,
     ):
+        if not text:
+            text  = ""
         self.text = text
         self.reporting_text_type = reporting_text_type
 
