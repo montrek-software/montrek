@@ -231,10 +231,7 @@ class MontrekModelCharChoiceField(BaseMontrekChoiceField, forms.CharField):
     def get_initial_link(
         initial: dict[str, Any], queryset: QuerySet, display_field: str
     ) -> object | None:
-        initial_link = queryset.filter(
-            **{display_field: initial.get(display_field)}
-        ).first()
-        return initial_link
+        return initial.get(display_field)
 
     def clean(self, value):
         if not value:

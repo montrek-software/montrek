@@ -63,3 +63,18 @@ class TestMontrekCreateForm(TestCase):
         self.assertEqual(
             test_form.errors, {"link_hub_a_hub_c": ["Multiple matching objects found!"]}
         )
+
+    def test_link_choice_char_field__init(self):
+        test_sat = SatC1Factory.create(field_c1_str="TESTID123")
+        repository = HubARepository({})
+        initial_data = {"link_hub_a_hub_c": test_sat.hub_entity}
+        test_data = {
+            "field_a1_str": "test",
+            "field_a1_int": 1,
+            "field_a2_str": "test2",
+            "field_a2_float": 2.0,
+        }
+        test_form = ExampleACreateForm(
+            initial=initial_data, data=test_data, repository=repository
+        )
+        self.assertTrue(test_form.is_valid())
