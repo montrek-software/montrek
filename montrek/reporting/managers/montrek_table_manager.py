@@ -39,6 +39,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
     def __init__(self, session_data: dict[str, Any] = {}):
         super().__init__(session_data)
         self._document_name: None | str = None
+        self._queryset: None | QuerySet = None
 
     @property
     def footer_text(self) -> ReportElementProtocol:
@@ -254,20 +255,21 @@ class MontrekTablePaginator:
     has_next: bool
     previous_page_number: int
     number: int
-    num_pages: int
+    num_pages: int | str
     next_page_number: int
 
 
 class MontrekTableManager(MontrekTableManagerABC):
     is_paginated = True
     paginate_by = 10
+    is_large: bool = False
 
     def __init__(self, session_data: dict[str, Any] = {}):
         super().__init__(session_data)
         self.paginator: None | MontrekTablePaginator = None
 
     def get_table(self) -> QuerySet | dict:
-        return self.get_paginated_queryset()
+        return self._get_queryset(self.get_paginated_queryset)
 
     def get_full_table(self) -> QuerySet | dict:
         return self.repository.receive()
@@ -314,12 +316,16 @@ class MontrekTableManager(MontrekTableManagerABC):
             results = results[:paginate_by]
         has_previous = page_number > 1
         has_next = True
+        num_pages = (
+            -1 if self.is_large else int(self.get_full_table().count() / paginate_by)
+        )
+
         self.paginator = MontrekTablePaginator(
             has_previous=has_previous,
             has_next=has_next,
             previous_page_number=page_number - 1,
             number=page_number,
-            num_pages=1000000,
+            num_pages=num_pages,
             next_page_number=page_number + 1,
         )
         return results
@@ -328,6 +334,13 @@ class MontrekTableManager(MontrekTableManagerABC):
         rows = self.repository.receive().count()
         cols = len(self.table_elements)
         return rows * cols
+
+    def _get_queryset(self, func: callable) -> QuerySet | dict:
+        if self._queryset:
+            return self._queryset
+        queryset = func()
+        self._queryset = queryset
+        return queryset
 
 
 class MontrekDataFrameTableManager(MontrekTableManagerABC):

@@ -335,7 +335,7 @@ class MontrekListView(
         return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
-        return []
+        return self.manager.get_table()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -347,6 +347,7 @@ class MontrekListView(
             )
         context["table"] = self.manager.to_html()
         context["paginator"] = self.manager.paginator
+        context["is_large"] = self.manager.is_large
         filter = self.session_data.get("filter", {})
         filter = filter.get(self.session_data["request_path"], {})
         filter_count = self.session_data.get("filter_count", {})
