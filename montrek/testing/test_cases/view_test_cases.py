@@ -4,7 +4,6 @@ import pandas as pd
 from baseclasses.views import MontrekDeleteView
 from bs4 import BeautifulSoup
 from django.contrib.auth.models import Permission
-from django.core.cache import cache
 from django.db.models import QuerySet
 from django.http import FileResponse
 from django.test import TestCase
@@ -25,7 +24,6 @@ class MontrekViewTestCase(TestCase):
     expected_status_code: int = 200
 
     def setUp(self):
-        cache.clear()
         if self._is_base_test_class():
             return
         self._check_view_class()
@@ -353,6 +351,15 @@ class MontrekRedirectViewTestCase(MontrekViewTestCase):
 
 
 class MontrekReportViewTestCase(MontrekViewTestCase):
+    expected_number_of_report_elements : int = -1
+    @property
+    def mail_success_url(self) -> str:
+        last_mail = MailingRepository({}).receive().last()
+        mail_kwargs={"pk": last_mail.pk}
+        report_manager = self.view.manager
+        mail_kwargs.update(report_manager.get_mail_kwargs())
+        return reverse(report_manager.send_mail_url, kwargs=mail_kwargs)
+
     def _is_base_test_class(self) -> bool:
         return self.__class__.__name__ == "MontrekReportViewTestCase"
 
@@ -362,8 +369,76 @@ class MontrekReportViewTestCase(MontrekViewTestCase):
         user = MontrekUserFactory()
         self.client.force_login(user)
         response = self.client.get(self.url + "?send_mail=true")
-        last_mail = MailingRepository({}).receive().last()
         self.assertRedirects(
             response,
-            reverse("send_mail", kwargs={"pk": last_mail.pk}),
+            self.mail_success_url
         )
+
+    def test_report_content(self):
+        if self._is_base_test_class():
+            return
+        report_manager = self.view.manager
+        report_manager.collect_report_elements()
+        self.assertEqual(len(report_manager.report_elements), self.expected_number_of_report_elements)
+
+
+class MontrekReportFieldEditViewTestCase(MontrekObjectViewBaseTestCase):
+    expected_status_code = 302
+    update_field = ""
+    updated_content = ""
+
+    def _is_base_test_class(self) -> bool:
+        return self.__class__.__name__ == "MontrekReportFieldEditViewTestCase"
+
+    @property
+    def url(self):
+        return (
+            reverse(self.viewname, kwargs=self.url_kwargs())
+            + f"?field={self.update_field}"
+        )
+
+    def creation_data(self) -> dict:
+        return {
+            "content": self.updated_content,
+            "field": self.update_field,
+            self.update_field: self.updated_content,
+        }
+
+    def test_view_post(self):
+        if self._is_base_test_class():
+            return
+        self.get_post_response()
+        pk = self.url_kwargs()["pk"]
+        test_object = (
+            self.view_class.manager_class(self.url_kwargs())
+            .repository.receive()
+            .get(pk=pk)
+        )
+        self.assertEqual(getattr(test_object, self.update_field), self.updated_content)
+        self.additional_assertions(test_object)
+
+    def test_view_post_cancel(self):
+        if self._is_base_test_class():
+            return
+        post_data = self.creation_data().copy()
+        post_data["action"] = "cancel"
+        self.client.post(self.url, post_data)
+        pk = self.url_kwargs()["pk"]
+        test_object = (
+            self.view_class.manager_class(self.url_kwargs())
+            .repository.receive()
+            .get(pk=pk)
+        )
+        self.assertNotEqual(
+            getattr(test_object, self.update_field), self.updated_content
+        )
+        self.additional_assertions(test_object)
+
+    def test_view_page(self):
+        ...
+
+    def test_view_return_correct_html(self):
+        ...
+
+    def test_context_data(self):
+        ...

@@ -8,7 +8,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, request
 from django.shortcuts import render
 from django.urls import reverse
 from django.views.generic import DetailView, RedirectView, View
@@ -149,6 +149,8 @@ class MontrekPageViewMixin:
 class MontrekViewMixin:
     _manager = None
     request = None
+    _session_data = None
+
 
     @property
     def manager(self):
@@ -158,6 +160,8 @@ class MontrekViewMixin:
 
     @property
     def session_data(self) -> dict:
+        if self._session_data:
+            return self._session_data
         session_data = {}
         if self.request.method == "GET":
             session_data.update(dict(self.request.GET))
@@ -169,43 +173,49 @@ class MontrekViewMixin:
         session_data["request_path"] = self.request.path
         session_data.update(self._get_filters(session_data))
         session_data.update(self._get_page_number(session_data))
+        session_data.update(self._get_filter_form_count(session_data))
         if self.request.user.is_authenticated:
             session_data["user_id"] = self.request.user.id
         self.request.session["filter"] = session_data.get("filter", {})
         self.request.session["pages"] = session_data.get("pages", {})
+        self.request.session["filter_count"] = session_data.get("filter_count", {})
         session_data["host_url"] = self.request.build_absolute_uri("/")[:-1]
         session_data["http_referer"] = self.request.META.get("HTTP_REFERER")
+        self._session_data = session_data
         return session_data
 
     def _get_filters(self, session_data):
         request_path = self.request.path
-        filter_field = session_data.pop("filter_field", [""])[0]
-        filter_negate = session_data.pop("filter_negate", [""])[0]
-        filter_lookup = session_data.pop("filter_lookup", [""])[0]
-        filter_value = session_data.pop("filter_value", [""])[0]
-        filter_data = {}
-        if filter_lookup == "isnull":
-            filter_value = True
-        if filter_field:
-            true_values = ("True", "true", True)
-            false_values = ("False", "false", False)
-            filter_negate = filter_negate in true_values
-            filter_lookup = filter_lookup
-            filter_value = filter_value
-            filter_key = f"{filter_field}__{filter_lookup}"
-            if filter_lookup == "in":
-                filter_value = filter_value.split(",")
-            if filter_value in true_values:
+        filter_data = {"filter": session_data.pop("filter", {})}
+
+        filter_fields = session_data.pop("filter_field", [])
+        filter_negates = session_data.pop("filter_negate", [""]*len(filter_fields))
+        filter_lookups = session_data.pop("filter_lookup", [])
+        filter_values = session_data.pop("filter_value", [""]*len(filter_fields))
+        filter_input_data = list(zip(filter_fields, filter_negates, filter_lookups, filter_values))
+        if len(filter_input_data) > 0:
+            filter_data["filter"][request_path] = {}
+        for filter_field, filter_negate, filter_lookup, filter_value in filter_input_data:
+            if filter_lookup == "isnull":
                 filter_value = True
-            elif filter_value in false_values:
-                filter_value = False
-            filter_data["filter"] = {}
-            filter_data["filter"][request_path] = {
-                filter_key: {
+            if filter_field:
+                true_values = ("True", "true", True)
+                false_values = ("False", "false", False)
+                filter_negate = filter_negate in true_values
+                filter_lookup = filter_lookup
+                filter_value = filter_value
+                filter_key = f"{filter_field}__{filter_lookup}"
+                if filter_lookup == "in":
+                    filter_value = filter_value.split(",")
+                if filter_value in true_values:
+                    filter_value = True
+                elif filter_value in false_values:
+                    filter_value = False
+
+                filter_data["filter"][request_path][filter_key]={
                     "filter_negate": filter_negate,
                     "filter_value": filter_value,
                 }
-            }
         return filter_data
 
     def _get_page_number(self, session_data):
@@ -223,6 +233,18 @@ class MontrekViewMixin:
             if request_path in session_data["pages"]:
                 pages_data["page"] = session_data["pages"][request_path]
         return pages_data
+
+    def _get_filter_form_count(self, session_data):
+        request_path = self.request.path
+        cfield = "filter_count"
+        count_data = {}
+        if cfield not in session_data:
+            count_data[cfield] = {}
+        else:
+            count_data[cfield] = session_data[cfield]
+        if request_path not in count_data[cfield]:
+            count_data[cfield][request_path] = 1
+        return count_data
 
     def show_messages(self):
         self.manager.collect_messages()
@@ -301,8 +323,10 @@ class MontrekListView(
             return self.list_to_excel()
         if self.request.GET.get("gen_pdf") == "true":
             return self.list_to_pdf()
-        if self.request.GET.get("reset_filter") == "true":
+        if self.request.GET.get("action") == "reset":
             return self.reset_filter()
+        if self.request.GET.get("action") == "add_filter":
+            return self.add_filter()
         return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -324,10 +348,15 @@ class MontrekListView(
         context["table"] = self.manager.to_html()
         filter = self.session_data.get("filter", {})
         filter = filter.get(self.session_data["request_path"], {})
-        context["filter_form"] = FilterForm(
-            filter=filter,
-            filter_field_choices=self.manager.get_std_queryset_field_choices(),
-        )
+        filter_count = self.session_data.get("filter_count", {})
+        filter_count = filter_count.get(self.session_data["request_path"],1)
+        context["filter_forms"] = [
+            FilterForm(
+                filter=filter,
+                filter_field_choices=self.manager.get_std_queryset_field_choices(),
+                filter_index=i,
+            ) for i in range(filter_count)
+        ]
         if self.do_simple_file_upload:
             context["simple_upload_form"] = SimpleUploadFileForm(".xlsx,.csv")
         context["do_simple_file_upload"] = self.do_simple_file_upload
@@ -344,8 +373,16 @@ class MontrekListView(
         return response
 
     def reset_filter(self):
-        self.request.session["filter"] = {}
+        request_path = self.session_data["request_path"]
+        self.request.session["filter"][request_path] = {}
+        self.request.session["filter_count"][request_path] = 1
         return HttpResponseRedirect(self.request.path)
+
+    def add_filter(self):
+        request_path = self.session_data["request_path"]
+        self.request.session["filter_count"][request_path] += 1
+        return HttpResponseRedirect(self.request.path)
+
 
     def post(self, request, *args, **kwargs):
         form = SimpleUploadFileForm(".xlsx,.csv", request.POST, request.FILES)

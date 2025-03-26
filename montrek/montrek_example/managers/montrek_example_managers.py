@@ -146,11 +146,39 @@ class HubBManager(MontrekTableManager):
                 text="field_d1_str",
                 list_attr="hub_d_id",
                 list_kwarg="pk",
+                in_separator=",",
             ),
             te.StringTableElement(name="D2 Int", attr="field_d1_int"),
             te.AlertTableElement(name="Alert Level", attr="alert_level"),
             te.StringTableElement(name="Alert Message", attr="alert_message"),
         ]
+
+
+class ExampleBReportManager(MontrekReportManager):
+    report_name = "Example Report"
+    repository_class = HubBRepository
+
+    def collect_report_elements(self) -> None:
+        self.obj = self.get_object_from_pk(self.session_data["pk"])
+        self.append_report_element(rt.ReportingHeader2("Test Header"))
+        editable_element_a1 = rt.ReportingEditableText(
+            self.obj,
+            "field_b2_choice",
+            edit_url=reverse(
+                "montrek_example_b_edit_field", kwargs={"pk": self.session_data["pk"]}
+            ),
+            header="Field B2 Choice",
+        )
+        self.append_report_element(editable_element_a1)
+        editable_element_a2 = rt.ReportingEditableText(
+            self.obj,
+            "alert_level",
+            edit_url=reverse(
+                "montrek_example_b_edit_field", kwargs={"pk": self.session_data["pk"]}
+            ),
+            header="Field Alert Level",
+        )
+        self.append_report_element(editable_element_a2)
 
 
 class HubCManager(MontrekTableManager):

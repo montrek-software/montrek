@@ -1,6 +1,7 @@
 import datetime
 import re
 from io import BytesIO
+from django.db.models.fields.files import ContentFile
 
 import pandas as pd
 from baseclasses.models import MontrekHubABC
@@ -32,22 +33,18 @@ class LogFileMixin(LogFileChecksMixin):
         excel_log_file = self._generate_excel_file(message, additional_data)
         self._add_log_file_link(excel_log_file)
 
+    def generate_log_file_txt(
+        self, message: str, *, additional_data: pd.DataFrame | None = None
+    ):
+        self._check_attributes()
+        txt_log_file = self._generate_txt_file(message, additional_data)
+        self._add_log_file_link(txt_log_file)
+
     def _generate_excel_file(
         self, message: str, additional_data: pd.DataFrame | None
     ) -> File:
         file_name = "upload_log.xlsx"
-        user_mail = (
-            MontrekUserRepository().receive().get(id=self.session_data["user_id"]).email
-        )
-        log_sr = pd.Series(
-            {
-                "Upload Message": message,
-                "Upload Date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "Uploaded By": user_mail,
-            },
-            name="Log Meta Data",
-        )
-        log_sr.index.name = "Param"
+        log_sr = self._get_log_sr(message)
         buffer = BytesIO()
         with pd.ExcelWriter(buffer, engine="openpyxl") as excel_writer:
             log_sr.to_excel(excel_writer, sheet_name="meta_data")
@@ -60,6 +57,29 @@ class LogFileMixin(LogFileChecksMixin):
                 )
         excel_log_file = File(buffer, name=file_name)
         return excel_log_file
+
+    def _generate_txt_file(self, message: str, additional_data: pd.DataFrame | None):
+        log_sr = self._get_log_sr(message)
+        file_content = log_sr.to_string()
+        if isinstance(additional_data, pd.DataFrame):
+            file_content += additional_data.to_string()
+        content_file = ContentFile(file_content.encode("utf-8"), name="upload_log.txt")
+        return content_file
+
+    def _get_log_sr(self, message) -> pd.Series:
+        user_mail = (
+            MontrekUserRepository().receive().get(id=self.session_data["user_id"]).email
+        )
+        log_sr = pd.Series(
+            {
+                "Upload Message": message,
+                "Upload Date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "Uploaded By": user_mail,
+            },
+            name="Log Meta Data",
+        )
+        log_sr.index.name = "Param"
+        return log_sr
 
     def _add_log_file_link(self, file: File):
         if isinstance(self.file_upload_registry_hub, MontrekHubABC):

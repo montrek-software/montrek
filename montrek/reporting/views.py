@@ -1,5 +1,6 @@
 import os
 
+from baseclasses.forms import MontrekCreateForm
 from baseclasses.views import (
     MontrekPermissionRequiredMixin,
     MontrekTemplateView,
@@ -7,11 +8,10 @@ from baseclasses.views import (
     ToPdfMixin,
 )
 from django.conf import settings
+from django.forms import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
-from django.utils.decorators import method_decorator
 from django.views import View
-from django.views.decorators.cache import cache_page
 
 from reporting.managers.latex_report_manager import LatexReportManager
 from reporting.managers.montrek_report_manager import MontrekReportManager
@@ -35,13 +35,13 @@ def download_reporting_file_view(request, file_path: str):
 class MontrekReportView(MontrekTemplateView, ToPdfMixin):
     manager_class = MontrekReportManager
     template_name = "montrek_report.html"
+    loading_template_name = "partials/montrek_report_loading.html"
+    display_template_name = "partials/montrek_report_display.html"
 
-    @method_decorator(cache_page(60 * 5))  # Cache for 5 minutes
-    def dispatch(self, *args, **kwargs):
-        return super().dispatch(*args, **kwargs)
-
-    def get_template_context(self) -> dict:
-        return {"report": self.manager.to_html()}
+    def get_template_context(self, load=False) -> dict:
+        if load:
+            return {"report": self.manager.to_html()}
+        return {}
 
     def get(self, request, *args, **kwargs):
         if self.request.GET.get("gen_pdf") == "true":
@@ -50,6 +50,14 @@ class MontrekReportView(MontrekTemplateView, ToPdfMixin):
             report_manager = LatexReportManager(self.manager)
             pdf_path = report_manager.compile_report()
             return self.manager.prepare_mail(pdf_path)
+        if request.headers.get("HX-Request"):
+            if request.GET.get("state") == "loading":
+                # This is the data request - return the content with data
+                context = self.get_template_context(load=True)
+                return render(request, self.display_template_name, context)
+            else:
+                # This is the first HTMX request - return loading template
+                return render(request, self.loading_template_name)
         return super().get(request, *args, **kwargs)
 
     @property
@@ -60,6 +68,8 @@ class MontrekReportView(MontrekTemplateView, ToPdfMixin):
 class MontrekReportFieldEditView(
     MontrekPermissionRequiredMixin, View, MontrekViewMixin
 ):
+    form_class = MontrekCreateForm
+
     def get(self, request, *args, **kwargs):
         obj = self.manager.get_object_from_pk(self.session_data["pk"])
         mode = request.GET.get("mode")
@@ -68,13 +78,18 @@ class MontrekReportFieldEditView(
         # Determine which mode we're in based on the requested action
         if mode == "edit":
             # Return just the edit form partial
+            form = self.form_class(
+                repository=self.manager.repository,
+                initial={field: object_content},
+            )
+            formfield = form[field]
             return render(
                 request,
                 "partials/edit_field.html",
                 {
                     "object_content": object_content,
                     "display_url": self.session_data["request_path"],
-                    "field": field,
+                    "field": formfield,
                 },
             )
         elif mode == "display":
@@ -89,9 +104,10 @@ class MontrekReportFieldEditView(
 
     def post(self, request, *args, **kwargs):
         edit_data = self.manager.get_object_from_pk_as_dict(self.session_data["pk"])
+        form = self.form_class(self.request.POST, repository=self.manager.repository)
         action = request.POST.get("action")
-        field = request.POST.get("field")
-        org_field_content = edit_data[field]
+        field_name = request.POST.get("field")
+        org_field_content = edit_data[field_name]
         if action == "cancel":
             return render(
                 request,
@@ -99,35 +115,46 @@ class MontrekReportFieldEditView(
                 {
                     "object_content": org_field_content,
                     "edit_url": self.session_data["request_path"],
-                    "field": field,
+                    "field": field_name,
                 },
             )
 
-        # Update the model with the submitted content
-        field_content = request.POST.get("content")
-        edit_data.update({field: field_content})
+        form = self.form_class(self.request.POST, repository=self.manager.repository)
         try:
-            self.manager.repository.create_by_dict(edit_data)
-        except Exception as e:
-            error_message = str(e)
-            return render(
-                request,
-                "partials/edit_field.html",
-                {
-                    "object_content": field_content,
-                    "display_url": self.session_data["request_path"],
-                    "field": field,
-                    "error_message": error_message,
-                },
-            )
+            # This will validate just the particular field
+            field_value = form.fields[field_name].clean(request.POST.get(field_name))
+            form.cleaned_data = {field_name: field_value}
+            return self.form_valid(form, edit_data, request, field_name)
+        except ValidationError as e:
+            # Add the error to the form's errors dictionary
+            form._errors = {field_name: form.error_class(e.messages)}
+            return self.form_invalid(form, edit_data, request, field_name)
 
-        # Return the updated display partial
+    def form_valid(self, form, edit_data: dict, request, field):
+        edit_data[field] = form.cleaned_data[field]
+        self.manager.repository.create_by_dict(edit_data)
         return render(
             request,
             "partials/display_field.html",
             {
-                "object_content": field_content,
+                "object_content": edit_data[field],
                 "edit_url": self.session_data["request_path"],
                 "field": field,
+            },
+        )
+
+    def form_invalid(self, form, edit_data, request, field):
+        error_message = "\n".join(
+            [f"{k}: {', '.join(v)}" for k, v in form.errors.items()]
+        )
+        formfield = form[field]
+        return render(
+            request,
+            "partials/edit_field.html",
+            {
+                "object_content": edit_data[field],
+                "display_url": self.session_data["request_path"],
+                "field": formfield,
+                "error_message": error_message,
             },
         )

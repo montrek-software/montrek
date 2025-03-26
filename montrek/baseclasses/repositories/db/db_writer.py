@@ -3,7 +3,6 @@ from baseclasses.repositories.db.db_staller import (
     StalledDicts,
 )
 from django.db import transaction
-from django.core.cache import cache
 
 
 class DbWriter:
@@ -19,7 +18,6 @@ class DbWriter:
         self.write_updated_satellites()
         self.write_links()
         self.write_updated_links()
-        self.clear_cache()
 
     def write_hubs(self):
         new_hubs = self.db_staller.get_hubs()
@@ -49,9 +47,6 @@ class DbWriter:
     def write_updated_links(self):
         updated_links = self.db_staller.get_updated_links()
         self._bulk_update(updated_links)
-
-    def clear_cache(self):
-        cache.clear()
 
     def _bulk_create(self, new_objects: StalledDicts):
         for obj_type, objs in new_objects.items():

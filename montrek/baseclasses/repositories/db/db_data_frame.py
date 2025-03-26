@@ -31,6 +31,7 @@ class DbDataFrame:
         self._process_static_data()
         self._process_time_series_data()
         self.db_writer.write()
+        self._assign_hubs()
 
     def _process_static_data(self):
         self.link_columns = self.get_link_field_names()
@@ -61,6 +62,15 @@ class DbDataFrame:
                 row_dict[key] = None
         db_creator = DbCreator(self.db_staller, self.user_id)
         db_creator.create(row_dict)
+
+    def _assign_hubs(self):
+        for hubs in self.db_writer.db_staller.get_hubs().values():
+            self.hubs += hubs
+        for hubs in self.db_writer.db_staller.get_updated_hubs().values():
+            self.hubs += hubs
+        for satellites in self.db_writer.db_staller.get_updated_satellites().values():
+            hubs = [satellite.hub_entity for satellite in satellites]
+            self.hubs += hubs
 
     def get_static_satellite_field_names(self) -> list[str]:
         return self._get_satellite_field_names(is_time_series=False)

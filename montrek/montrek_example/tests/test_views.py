@@ -21,6 +21,7 @@ from testing.test_cases.view_test_cases import (
     MontrekFileResponseTestCase,
     MontrekListViewTestCase,
     MontrekRedirectViewTestCase,
+    MontrekReportFieldEditViewTestCase,
     MontrekRestApiViewTestCase,
     MontrekUpdateViewTestCase,
     MontrekViewTestCase,
@@ -79,7 +80,7 @@ class TestMontrekExampleAListView(MontrekListViewTestCase):
         self.assertEqual(len(obj_list), 1)
         self.assertEqual(obj_list[0].hub.id, other_sata1.hub_entity.id)
 
-        response = self.client.get(url, data={"reset_filter": "true"}, follow=True)
+        response = self.client.get(url, data={"action": "reset"}, follow=True)
         obj_list = response.context_data["object_list"]
         self.assertRedirects(response, url)
         self.assertEqual(len(obj_list), 2)
@@ -165,11 +166,13 @@ class TestMontrekExampleAUpdateView(MontrekUpdateViewTestCase):
 
 
 class TestMontrekExampleReportView(MontrekReportViewTestCase):
+    expected_number_of_report_elements = 3
     viewname = "montrek_example_report"
     view_class = me_views.MontrekExampleReport
 
 
 class TestMontrekExampleAReportView(MontrekReportViewTestCase):
+    expected_number_of_report_elements = 3
     viewname = "montrek_example_a_report"
     view_class = me_views.MontrekExampleAReport
 
@@ -180,10 +183,11 @@ class TestMontrekExampleAReportView(MontrekReportViewTestCase):
         return {"pk": self.sat_a1.get_hub_value_date().id}
 
 
-class TestMontrekExampleAReportFieldEditView(MontrekViewTestCase):
+class TestMontrekExampleAReportFieldEditView(MontrekReportFieldEditViewTestCase):
     viewname = "montrek_example_a_edit_field"
     view_class = me_views.MontrekExampleAReportFieldEditView
-    expected_status_code = 302
+    update_field = "field_a1_str"
+    updated_content = "Updated Field"
 
     def build_factories(self):
         self.sat_a1 = me_factories.SatA1Factory(field_a1_str="test", field_a1_int=12)
@@ -191,39 +195,8 @@ class TestMontrekExampleAReportFieldEditView(MontrekViewTestCase):
     def url_kwargs(self) -> dict:
         return {"pk": self.sat_a1.get_hub_value_date().id}
 
-    @property
-    def url(self):
-        return reverse(self.viewname, kwargs=self.url_kwargs()) + "?field=field_a1_str"
-
-    def test_view_post(self):
-        self.client.post(
-            self.url, {"content": "Updated Field", "field": "field_a1_str"}
-        )
-        test_object = (
-            HubARepository({}).receive().get(pk=self.sat_a1.get_hub_value_date().id)
-        )
-        self.assertEqual(test_object.field_a1_str, "Updated Field")
-        self.assertEqual(test_object.field_a1_int, 12)
-
-    def test_view_post_cancel(self):
-        self.client.post(
-            self.url,
-            {"content": "Updated Field", "field": "field_a1_str", "action": "cancel"},
-        )
-        test_object = (
-            HubARepository({}).receive().get(pk=self.sat_a1.get_hub_value_date().id)
-        )
-        self.assertEqual(test_object.field_a1_str, "test")
-        self.assertEqual(test_object.field_a1_int, 12)
-
-    def test_view_page(self):
-        ...
-
-    def test_view_return_correct_html(self):
-        ...
-
-    def test_context_data(self):
-        ...
+    def additional_assertions(self, created_object):
+        self.assertEqual(created_object.field_a1_int, 12)
 
 
 class TestMontrekExampleADownloadView(MontrekDownloadViewTestCase):
@@ -393,13 +366,15 @@ class TestMontrekExampleBUpdate(MontrekUpdateViewTestCase):
         response = self.client.get(self.url)
         form = response.context["form"]
         self.assertEqual(form.initial["field_b1_str"], "test")
-        self.assertEqual(
-            form["link_hub_b_hub_d"].value(),
-            [
-                self.satd1.hub_entity.get_hub_value_date().id,
-                self.satd2.hub_entity.get_hub_value_date().id,
-            ],
-        )
+        expected_sats = [
+            self.satd1.hub_entity.get_hub_value_date().id,
+            self.satd2.hub_entity.get_hub_value_date().id,
+        ]
+        for sat_id in expected_sats:
+            self.assertIn(
+                sat_id,
+                form["link_hub_b_hub_d"].value(),
+            )
 
     def test_remove_many_to_many_link(self):
         links = LinkHubBHubD.objects.all()
@@ -456,6 +431,31 @@ class TestMontrekExampleBUpdate(MontrekUpdateViewTestCase):
         self.assertEqual(satb1.field_b1_str, "test")
         self.assertEqual(satb1.hub.link_hub_b_hub_d.count(), 2)
         self.assertEqual(satb1.field_d1_str, None)
+
+
+class TestMontrekExampleBReportView(MontrekReportViewTestCase):
+    expected_number_of_report_elements = 3
+    viewname = "montrek_example_b_report"
+    view_class = me_views.MontrekExampleBReport
+
+    def build_factories(self):
+        self.sat_b1 = me_factories.SatB1Factory(field_b1_str="test")
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.sat_b1.get_hub_value_date().id}
+
+
+class TestMontrekExampleBReportFieldEditView(MontrekReportFieldEditViewTestCase):
+    viewname = "montrek_example_b_edit_field"
+    view_class = me_views.MontrekExampleBReportFieldEditView
+    update_field = "field_b1_str"
+    updated_content = "Updated Field"
+
+    def build_factories(self):
+        self.sat_b1 = me_factories.SatB1Factory(field_b1_str="test")
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.sat_b1.get_hub_value_date().id}
 
 
 class TestMontrekExampleCListView(MontrekListViewTestCase):

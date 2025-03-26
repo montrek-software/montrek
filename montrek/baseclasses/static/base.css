@@ -165,3 +165,51 @@ input[readonly] {
   background-color: initial;
   border-bottom: initial;
 }
+.highlight-list {
+  list-style: none;
+  padding: 0;
+}
+.highlight-list li {
+  padding: 4px 6px;
+  margin: 5px 0;
+  border-radius: 5px;
+  display: flex;
+}
+.highlight-list li::before {
+  content: ">";
+  font-weight: bold;
+  color: #004767;
+  margin-right: 10px;
+}
+.lowlight-list {
+  list-style: none;
+  padding: 0;
+}
+.lowlight-list li {
+  padding: 4px 6px;
+  margin: 5px 0;
+  border-radius: 5px;
+  display: flex;
+}
+.lowlight-list li::before {
+  content: ">";
+  font-weight: bold;
+  color: #be0d3e;
+  margin-right: 10px;
+}
+.loader-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+}
+
+.loader {
+  border: 6px solid #f3f3f3;
+  border-top: 6px solid #3498db;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  animation: spin 1.5s linear infinite;
+}

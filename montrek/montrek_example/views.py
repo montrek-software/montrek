@@ -194,6 +194,16 @@ class MontrekExampleBList(views.MontrekListView):
     success_url = "montrek_example_b_list"
 
 
+class MontrekExampleBReport(MontrekReportView):
+    page_class = pages.MontrekExampleBAppPage
+    manager_class = mem.ExampleBReportManager
+    title = "Montrek Example B Report"
+
+
+class MontrekExampleBReportFieldEditView(MontrekReportFieldEditView):
+    manager_class = mem.HubBManager
+
+
 class MontrekExampleAHistory(views.MontrekHistoryListView):
     manager_class = mem.HubAManager
     page_class = pages.ExampleAPage
@@ -351,7 +361,7 @@ def do_a2_upload(request):
             "password": "password",
         },
     )
-    manager.upload_and_process()
+    manager.process_import_data({})
     for m in manager.messages:
         getattr(messages, m.message_type)(request, m.message)
     return HttpResponseRedirect(reverse("hub_a_view_api_uploads"))
@@ -366,7 +376,7 @@ class A2ApiUploadView(AuthenticatorUserPasswordView):
         manager = A2ApiUploadManager(
             session_data=self.session_data,
         )
-        manager.upload_and_process()
+        manager.process_import_data({})
         for m in manager.messages:
             getattr(messages, m.message_type)(self.request, m.message)
 

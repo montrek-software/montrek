@@ -112,6 +112,18 @@ class TestExcelLogFileMixin(TestCase, LogFileTestMixin):
             additional_data=test_additional_data,
         )
 
+    def test_log_txt_file__additional_data(self):
+        test_message = "Test with additional data sheet"
+        test_additional_data = pd.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
+        self.processor.generate_log_file_txt(
+            test_message, additional_data=test_additional_data
+        )
+        self.assert_log_txt_file(
+            MockRegistryRepository(self.processor),
+            test_message,
+            additional_data=test_additional_data,
+        )
+
     def test_muktiple_log_files(self):
         test_message = "Some message"
         self.processor.generate_log_file_excel(test_message)

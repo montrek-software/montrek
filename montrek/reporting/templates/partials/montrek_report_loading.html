@@ -1,0 +1,12 @@
+<div
+  id="report-content"
+  hx-get="{{ request.path }}?state=loading"
+  hx-trigger="load"
+  hx-target="#report-content"
+>
+  <div class="loader-container">
+    <h2>Processing Data</h2>
+    <div class="loader"></div>
+    <p>Analyzing and formatting report data...</p>
+  </div>
+</div>

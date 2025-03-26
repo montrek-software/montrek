@@ -74,6 +74,38 @@
           width: 100%;
         }
       }
+      .highlight-list {
+        list-style: none;
+        padding: 0;
+      }
+      .highlight-list li {
+        padding: 4px 6px;
+        margin: 5px 0;
+        border-radius: 5px;
+        display: flex;
+      }
+      .highlight-list li::before {
+        content: ">";
+        font-weight: bold;
+        color: #004767;
+        margin-right: 10px;
+      }
+      .lowlight-list {
+        list-style: none;
+        padding: 0;
+      }
+      .lowlight-list li {
+        padding: 4px 6px;
+        margin: 5px 0;
+        border-radius: 5px;
+        display: flex;
+      }
+      .lowlight-list li::before {
+        content: ">";
+        font-weight: bold;
+        color: #be0d3e;
+        margin-right: 10px;
+      }
     </style>
   </head>
   <body>
