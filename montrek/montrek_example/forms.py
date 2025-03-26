@@ -9,6 +9,12 @@ class ExampleACreateForm(MontrekCreateForm):
             link_name="link_hub_a_hub_b",
             queryset=self.repository.get_hub_b_objects(),
         )
+        self.add_link_choice_field(
+            display_field="field_c1_str",
+            link_name="link_hub_a_hub_c",
+            queryset=self.repository.get_hub_c_objects(),
+            is_char_field=True,
+        )
 
 
 class ExampleBCreateForm(MontrekCreateForm):
@@ -25,3 +31,6 @@ class ExampleBCreateForm(MontrekCreateForm):
 class ExampleCCreateForm(MontrekCreateForm):
     class Meta:
         exclude = []
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)

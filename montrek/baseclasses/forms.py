@@ -62,7 +62,6 @@ class FilterForm(forms.Form):
                     if isinstance(filter_value, list):
                         filter_value = ",".join(map(str, filter_value))
 
-
         # Set filter values as instance attributes
         filter_field = filter_field
         filter_lookup = filter_lookup
@@ -107,6 +106,8 @@ class MontrekCreateForm(forms.ModelForm):
         self.repository = kwargs.pop("repository", None)
         if self.repository:
             self._meta.model = self.repository.hub_class
+        else:
+            raise NotImplementedError("No repository passed ")
         super().__init__(*args, **kwargs)
         self.initial = kwargs.get("initial", {})
 
@@ -135,6 +136,7 @@ class MontrekCreateForm(forms.ModelForm):
         queryset: QuerySet,
         display_field: str,
         required: bool = False,
+        is_char_field: bool = False,
         use_checkboxes_for_many_to_many: bool = True,
         **kwargs,
     ):
@@ -145,7 +147,10 @@ class MontrekCreateForm(forms.ModelForm):
             choice_class = MontrekModelMultipleChoiceField
             kwargs["use_checkboxes_for_many_to_many"] = use_checkboxes_for_many_to_many
         else:
-            choice_class = MontrekModelChoiceField
+            if is_char_field:
+                choice_class = MontrekModelCharChoiceField
+            else:
+                choice_class = MontrekModelChoiceField
 
         initial_link = choice_class.get_initial_link(
             self.initial, queryset, display_field

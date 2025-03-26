@@ -4,7 +4,10 @@ from file_upload.repositories.file_upload_registry_repository import (
 )
 from montrek_example import models as me_models
 from montrek_example.repositories.hub_b_repository import HubBRepository
-from data_import.api_import.repositories.api_data_import_registry_repositories import ApiDataImportRegistryRepository
+from montrek_example.repositories.hub_c_repository import HubCRepository
+from data_import.api_import.repositories.api_data_import_registry_repositories import (
+    ApiDataImportRegistryRepository,
+)
 
 
 class HubARepository(MontrekRepository):
@@ -33,6 +36,9 @@ class HubARepository(MontrekRepository):
 
     def get_hub_b_objects(self):
         return HubBRepository().receive()
+
+    def get_hub_c_objects(self):
+        return HubCRepository().receive()
 
     def test_queryset_1(self):
         self.add_satellite_fields_annotations(
