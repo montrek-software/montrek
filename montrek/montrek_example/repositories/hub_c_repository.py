@@ -1,5 +1,6 @@
-from montrek_example import models as me_models
 from baseclasses.repositories.montrek_repository import MontrekRepository
+from montrek_example import models as me_models
+from montrek_example.repositories.hub_d_repository import HubDRepository
 
 
 class HubCRepository(MontrekRepository):
@@ -62,6 +63,9 @@ class HubCRepository(MontrekRepository):
             rename_field_map={"field_tsd2_float": "field_tsd2_float_latest"},
             agg_func="latest",
         )
+
+    def get_hub_d_objects(self):
+        return HubDRepository().receive()
 
 
 class HubCRepositoryLastTS(HubCRepository):
