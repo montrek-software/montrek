@@ -347,6 +347,7 @@ class MontrekListView(
             )
         context["table"] = self.manager.to_html()
         context["paginator"] = self.manager.paginator
+        context["is_large"] = self.manager.is_large
         filter = self.session_data.get("filter", {})
         filter = filter.get(self.session_data["request_path"], {})
         filter_count = self.session_data.get("filter_count", {})
