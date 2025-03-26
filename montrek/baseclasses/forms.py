@@ -235,3 +235,6 @@ class MontrekModelCharChoiceField(BaseMontrekChoiceField, forms.CharField):
             **{display_field: initial.get(display_field)}
         ).first()
         return initial_link
+
+    def validate(self, value):
+        raise forms.ValidationError("No matching object found!")
