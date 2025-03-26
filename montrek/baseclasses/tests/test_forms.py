@@ -87,3 +87,9 @@ class TestMontrekModelCharChoiceField(TestCase):
     def test_raise_error_when_empty(self):
         test_field = MontrekModelCharChoiceField(display_field="abc")
         self.assertRaises(forms.ValidationError, test_field.clean, None)
+
+    def test_get_initial_link(self):
+        test_field = MontrekModelCharChoiceField(
+            display_field="abc",
+        )
+        self.assertEqual(test_field.get_initial_link({"abc": "def"}, [], "abc"), "def")
