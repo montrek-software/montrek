@@ -220,3 +220,18 @@ class MontrekModelMultipleChoiceField(
             return None
         filter_kwargs = {f"{display_field}__in": initial_links_str.split(",")}
         return queryset.filter(**filter_kwargs).all()
+
+
+class MontrekModelCharChoiceField(BaseMontrekChoiceField, forms.CharField):
+    def __init__(self, display_field, *args, **kwargs):
+        self.queryset = kwargs.pop("queryset", QuerySet())
+        super().__init__(display_field, *args, **kwargs)
+
+    @staticmethod
+    def get_initial_link(
+        initial: dict[str, Any], queryset: QuerySet, display_field: str
+    ) -> object | None:
+        initial_link = queryset.filter(
+            **{display_field: initial.get(display_field)}
+        ).first()
+        return initial_link
