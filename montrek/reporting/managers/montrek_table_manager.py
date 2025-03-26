@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import datetime
 from decimal import Decimal
 import os
@@ -11,7 +12,6 @@ from baseclasses.managers.montrek_manager import MontrekManager
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
-from django.core.paginator import Paginator
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils import timezone
@@ -39,6 +39,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
     def __init__(self, session_data: dict[str, Any] = {}):
         super().__init__(session_data)
         self._document_name: None | str = None
+        self._queryset: None | QuerySet = None
 
     @property
     def footer_text(self) -> ReportElementProtocol:
@@ -248,12 +249,27 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         )
 
 
+@dataclass
+class MontrekTablePaginator:
+    has_previous: bool
+    has_next: bool
+    previous_page_number: int
+    number: int
+    num_pages: int | str
+    next_page_number: int
+
+
 class MontrekTableManager(MontrekTableManagerABC):
     is_paginated = True
     paginate_by = 10
+    is_large: bool = False
+
+    def __init__(self, session_data: dict[str, Any] = {}):
+        super().__init__(session_data)
+        self.paginator: None | MontrekTablePaginator = None
 
     def get_table(self) -> QuerySet | dict:
-        return self.get_paginated_queryset()
+        return self._get_queryset(self.get_paginated_queryset)
 
     def get_full_table(self) -> QuerySet | dict:
         return self.repository.receive()
@@ -287,15 +303,44 @@ class MontrekTableManager(MontrekTableManagerABC):
         return queryset
 
     def _paginate_queryset(self, queryset):
-        page_number = self.session_data.get("page", [1])[0]
-        paginator = Paginator(queryset, self.paginate_by)
-        page = paginator.get_page(page_number)
-        return page
+        page_number = int(self.session_data.get("page", [1])[0])
+        paginate_by = self.paginate_by
+        offset = (page_number - 1) * paginate_by
+        results = list(
+            queryset[offset : offset + paginate_by + 1]
+        )  # Fetch 1 extra item
+
+        len_results = len(results)
+        trim_next = len_results > paginate_by
+        if trim_next:
+            results = results[:paginate_by]
+        has_previous = page_number > 1
+        has_next = True
+        num_pages = (
+            -1 if self.is_large else int(self.get_full_table().count() / paginate_by)
+        )
+
+        self.paginator = MontrekTablePaginator(
+            has_previous=has_previous,
+            has_next=has_next,
+            previous_page_number=page_number - 1,
+            number=page_number,
+            num_pages=num_pages,
+            next_page_number=page_number + 1,
+        )
+        return results
 
     def _get_table_dimensions(self) -> int:
         rows = self.repository.receive().count()
         cols = len(self.table_elements)
         return rows * cols
+
+    def _get_queryset(self, func: callable) -> QuerySet | dict:
+        if self._queryset:
+            return self._queryset
+        queryset = func()
+        self._queryset = queryset
+        return queryset
 
 
 class MontrekDataFrameTableManager(MontrekTableManagerABC):

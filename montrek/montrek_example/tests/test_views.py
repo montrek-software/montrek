@@ -2,8 +2,6 @@ import os
 from tempfile import TemporaryDirectory
 from textwrap import dedent
 
-from django.core.paginator import Page
-
 from baseclasses.dataclasses.alert import AlertEnum
 from baseclasses.utils import montrek_time
 from django.contrib.auth.models import Permission
@@ -14,6 +12,7 @@ from file_upload.managers.file_upload_manager import TASK_SCHEDULED_MESSAGE
 from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepository,
 )
+from reporting.managers.montrek_table_manager import MontrekTablePaginator
 from testing.test_cases.view_test_cases import (
     MontrekCreateViewTestCase,
     MontrekDeleteViewTestCase,
@@ -22,10 +21,10 @@ from testing.test_cases.view_test_cases import (
     MontrekListViewTestCase,
     MontrekRedirectViewTestCase,
     MontrekReportFieldEditViewTestCase,
+    MontrekReportViewTestCase,
     MontrekRestApiViewTestCase,
     MontrekUpdateViewTestCase,
     MontrekViewTestCase,
-    MontrekReportViewTestCase,
 )
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
@@ -97,12 +96,12 @@ class TestMontrekExampleAListViewPages(MontrekListViewTestCase):
     def test_selected_and_remember_pages(self):
         query_params = {"page": 2}
         response = self.client.get(self.url, data=query_params)
-        test_page = response.context_data["object_list"]
-        self.assertIsInstance(test_page, Page)
+        test_page = response.context_data["paginator"]
+        self.assertIsInstance(test_page, MontrekTablePaginator)
         self.assertEqual(test_page.number, 2)
         response = self.client.get(self.url)
-        test_page = response.context_data["object_list"]
-        self.assertIsInstance(test_page, Page)
+        test_page = response.context_data["paginator"]
+        self.assertIsInstance(test_page, MontrekTablePaginator)
         self.assertEqual(test_page.number, 2)
 
 
