@@ -60,16 +60,16 @@
       <div class="col-md-12">
         <div class="pagination">
           <span class="step-links">
-            {% if object_list.has_previous %}
+            {% if paginator.has_previous %}
               <a href="?page=1"><span class="glyphicon glyphicon-fast-backward"/></a>
-              <a href="?page={{ object_list.previous_page_number }}"><span class="glyphicon glyphicon-step-backward"/></a>
+              <a href="?page={{ paginator.previous_page_number }}"><span class="glyphicon glyphicon-step-backward"/></a>
             {% endif %}
             <span class="current">
-              Page {{ object_list.number }} of {{ object_list.paginator.num_pages }}.
+              Page {{ paginator.number }} of {{ paginator.num_pages }}.
             </span>
-            {% if object_list.has_next %}
-                <a href="?page={{ object_list.next_page_number }}"><span class="glyphicon glyphicon-step-forward"/></a>
-                <a href="?page={{ object_list.paginator.num_pages }}"><span class="glyphicon glyphicon-fast-forward"/></a>
+            {% if paginator.has_next %}
+                <a href="?page={{ paginator.next_page_number }}"><span class="glyphicon glyphicon-step-forward"/></a>
+                <a href="?page={{ paginator.num_pages }}"><span class="glyphicon glyphicon-fast-forward"/></a>
             {% endif %}
           </span>
         </div>

@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import datetime
 from decimal import Decimal
 import os
@@ -248,9 +249,23 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         )
 
 
+@dataclass
+class MontrekTablePaginator:
+    has_previous: bool
+    has_next: bool
+    previous_page_number: int
+    number: int
+    num_pages: int
+    next_page_number: int
+
+
 class MontrekTableManager(MontrekTableManagerABC):
     is_paginated = True
     paginate_by = 10
+
+    def __init__(self, session_data: dict[str, Any] = {}):
+        super().__init__(session_data)
+        self.paginator: None | MontrekTablePaginator = None
 
     def get_table(self) -> QuerySet | dict:
         return self.get_paginated_queryset()
@@ -290,6 +305,14 @@ class MontrekTableManager(MontrekTableManagerABC):
         page_number = self.session_data.get("page", [1])[0]
         paginator = Paginator(queryset, self.paginate_by)
         page = paginator.get_page(page_number)
+        self.paginator = MontrekTablePaginator(
+            has_previous=page.has_previous,
+            has_next=page.has_next,
+            previous_page_number=page.previous_page_number,
+            number=page.number,
+            num_pages=page.paginator.num_pages,
+            next_page_number=page.next_page_number,
+        )
         return page
 
     def _get_table_dimensions(self) -> int:
