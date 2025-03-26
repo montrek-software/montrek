@@ -240,4 +240,6 @@ class MontrekModelCharChoiceField(BaseMontrekChoiceField, forms.CharField):
         instance = self.queryset.filter(**{self.display_field: value})
         if not instance:
             raise forms.ValidationError("No matching object found!")
-        return instance.get()
+        if instance.count() == 1:
+            return instance.get()
+        raise forms.ValidationError("Multiple matching objects found!")
