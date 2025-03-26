@@ -40,6 +40,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
     def __init__(self, session_data: dict[str, Any] = {}):
         super().__init__(session_data)
         self._document_name: None | str = None
+        self._queryset: None | QuerySet = None
 
     @property
     def footer_text(self) -> ReportElementProtocol:
@@ -268,10 +269,10 @@ class MontrekTableManager(MontrekTableManagerABC):
         self.paginator: None | MontrekTablePaginator = None
 
     def get_table(self) -> QuerySet | dict:
-        return self.get_paginated_queryset()
+        return self._get_queryset(self.get_paginated_queryset)
 
     def get_full_table(self) -> QuerySet | dict:
-        return self.repository.receive()
+        return self._get_queryset(self.repository.receive)
 
     def get_df(self) -> pd.DataFrame:
         queryset = self.repository.receive()
@@ -319,6 +320,13 @@ class MontrekTableManager(MontrekTableManagerABC):
         rows = self.repository.receive().count()
         cols = len(self.table_elements)
         return rows * cols
+
+    def _get_queryset(self, func: callable) -> QuerySet | dict:
+        if self._queryset:
+            return self._queryset
+        queryset = func()
+        self._queryset = queryset
+        return queryset
 
 
 class MontrekDataFrameTableManager(MontrekTableManagerABC):
