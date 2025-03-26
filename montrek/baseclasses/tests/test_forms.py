@@ -1,11 +1,12 @@
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.db.models import QuerySet
-from django.forms import CheckboxSelectMultiple
+from django.forms import CheckboxSelectMultiple, forms
 from django.test import TestCase
 
 from baseclasses.forms import (
     BaseMontrekChoiceField,
     FilterForm,
+    MontrekModelCharChoiceField,
     MontrekModelMultipleChoiceField,
 )
 
@@ -80,3 +81,9 @@ class TestBaseMontrekChoiceField(TestCase):
         field = BaseMontrekChoiceField(display_field="field1")
         with self.assertRaises(NotImplementedError):
             field.get_initial_link(None, None, None)
+
+
+class TestMontrekModelCharChoiceField(TestCase):
+    def test_raise_error_when_empty(self):
+        test_field = MontrekModelCharChoiceField(display_field="abc")
+        self.assertRaises(forms.ValidationError, test_field.clean, None)
