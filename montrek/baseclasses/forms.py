@@ -237,6 +237,10 @@ class MontrekModelCharChoiceField(BaseMontrekChoiceField, forms.CharField):
         return initial_link
 
     def clean(self, value):
+        if not value:
+            if self.required:
+                raise forms.ValidationError("No value given")
+            return
         instance = self.queryset.filter(**{self.display_field: value})
         if not instance:
             raise forms.ValidationError("No matching object found!")

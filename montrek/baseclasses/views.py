@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 from typing import Any
@@ -33,6 +34,8 @@ from baseclasses.managers.montrek_manager import MontrekManagerNotImplemented
 from baseclasses.pages import NoPage
 from baseclasses.serializers import MontrekSerializer
 from baseclasses.utils import get_content_type
+
+logger = logging.getLogger(__name__)
 
 
 def home(request):
@@ -518,6 +521,7 @@ class MontrekCreateUpdateView(
         form = self.form_class(self.request.POST, repository=self.manager.repository)
         if form.is_valid():
             return self.form_valid(form)
+        logger.error(f"Form errors: {form.errors}")
         return self.form_invalid(form)
 
     def form_invalid(self, form):

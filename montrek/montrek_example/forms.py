@@ -14,7 +14,6 @@ class ExampleACreateForm(MontrekCreateForm):
             link_name="link_hub_a_hub_c",
             queryset=self.repository.get_hub_c_objects(),
             is_char_field=True,
-            required=True,
         )
 
 
