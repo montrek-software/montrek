@@ -7,8 +7,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied
-from django.core.paginator import Paginator
-from django.http import HttpResponse, HttpResponseRedirect, request
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 from django.views.generic import DetailView, RedirectView, View
@@ -28,7 +27,7 @@ from baseclasses import utils
 from baseclasses.dataclasses.history_data_table import HistoryDataTable
 from baseclasses.dataclasses.link_model import LinkModel
 from baseclasses.dataclasses.nav_bar_model import NavBarDropdownModel, NavBarModel
-from baseclasses.dataclasses.view_classes import ActionElement, BackActionElement
+from baseclasses.dataclasses.view_classes import ActionElement
 from baseclasses.forms import DateRangeForm, FilterForm, MontrekCreateForm
 from baseclasses.managers.montrek_manager import MontrekManagerNotImplemented
 from baseclasses.pages import NoPage
@@ -151,7 +150,6 @@ class MontrekViewMixin:
     request = None
     _session_data = None
 
-
     @property
     def manager(self):
         if self._manager is None:
@@ -189,13 +187,20 @@ class MontrekViewMixin:
         filter_data = {"filter": session_data.pop("filter", {})}
 
         filter_fields = session_data.pop("filter_field", [])
-        filter_negates = session_data.pop("filter_negate", [""]*len(filter_fields))
+        filter_negates = session_data.pop("filter_negate", [""] * len(filter_fields))
         filter_lookups = session_data.pop("filter_lookup", [])
-        filter_values = session_data.pop("filter_value", [""]*len(filter_fields))
-        filter_input_data = list(zip(filter_fields, filter_negates, filter_lookups, filter_values))
+        filter_values = session_data.pop("filter_value", [""] * len(filter_fields))
+        filter_input_data = list(
+            zip(filter_fields, filter_negates, filter_lookups, filter_values)
+        )
         if len(filter_input_data) > 0:
             filter_data["filter"][request_path] = {}
-        for filter_field, filter_negate, filter_lookup, filter_value in filter_input_data:
+        for (
+            filter_field,
+            filter_negate,
+            filter_lookup,
+            filter_value,
+        ) in filter_input_data:
             if filter_lookup == "isnull":
                 filter_value = True
             if filter_field:
@@ -212,7 +217,7 @@ class MontrekViewMixin:
                 elif filter_value in false_values:
                     filter_value = False
 
-                filter_data["filter"][request_path][filter_key]={
+                filter_data["filter"][request_path][filter_key] = {
                     "filter_negate": filter_negate,
                     "filter_value": filter_value,
                 }
@@ -297,9 +302,9 @@ class ToPdfMixin:
         if pdf_path and os.path.exists(pdf_path):
             with open(pdf_path, "rb") as pdf_file:
                 response = HttpResponse(pdf_file.read(), content_type="application/pdf")
-                response["Content-Disposition"] = (
-                    "inline; filename=" + os.path.basename(pdf_path)
-                )
+                response[
+                    "Content-Disposition"
+                ] = "inline; filename=" + os.path.basename(pdf_path)
                 return response
         previous_url = self.request.META.get("HTTP_REFERER")
         return HttpResponseRedirect(previous_url)
@@ -330,12 +335,7 @@ class MontrekListView(
         return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
-        queryset = self.get_view_queryset()
-        page_number = self.session_data.get("page", [1])[0]
-        paginate_by = 10  # or you can make this customizable
-        paginator = Paginator(queryset, paginate_by)
-        page = paginator.get_page(page_number)
-        return page
+        return self.manager.get_table()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -346,16 +346,18 @@ class MontrekListView(
                 f"Manager {self.manager.__class__.__name__} must be of type MontrekTableManager"
             )
         context["table"] = self.manager.to_html()
+        context["paginator"] = self.manager.paginator
         filter = self.session_data.get("filter", {})
         filter = filter.get(self.session_data["request_path"], {})
         filter_count = self.session_data.get("filter_count", {})
-        filter_count = filter_count.get(self.session_data["request_path"],1)
+        filter_count = filter_count.get(self.session_data["request_path"], 1)
         context["filter_forms"] = [
             FilterForm(
                 filter=filter,
                 filter_field_choices=self.manager.get_std_queryset_field_choices(),
                 filter_index=i,
-            ) for i in range(filter_count)
+            )
+            for i in range(filter_count)
         ]
         if self.do_simple_file_upload:
             context["simple_upload_form"] = SimpleUploadFileForm(".xlsx,.csv")
@@ -382,7 +384,6 @@ class MontrekListView(
         request_path = self.session_data["request_path"]
         self.request.session["filter_count"][request_path] += 1
         return HttpResponseRedirect(self.request.path)
-
 
     def post(self, request, *args, **kwargs):
         form = SimpleUploadFileForm(".xlsx,.csv", request.POST, request.FILES)
