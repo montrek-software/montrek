@@ -315,10 +315,10 @@ class MontrekTableManager(MontrekTableManagerABC):
         if trim_next:
             results = results[:paginate_by]
         has_previous = page_number > 1
-        has_next = True
         num_pages = (
             -1 if self.is_large else int(self.get_full_table().count() / paginate_by)
         )
+        has_next = page_number < num_pages
 
         self.paginator = MontrekTablePaginator(
             has_previous=has_previous,
