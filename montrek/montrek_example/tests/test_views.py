@@ -520,6 +520,7 @@ class TestMontrekExampleDListView(MontrekListViewTestCase):
         registries = FileUploadRegistryRepository().receive()
         self.assertEqual(len(registries), 0)
 
+    @override_settings(IS_TEST_RUN=False)
     def test_simple_file_upload_failure(self):
         test_file_path = os.path.join(
             os.path.dirname(__file__), "data", "d_file_fail.csv"
@@ -532,6 +533,7 @@ class TestMontrekExampleDListView(MontrekListViewTestCase):
         registry = FileUploadRegistryRepository().receive().last()
         self.assertEqual(registry.upload_status, "failed")
 
+    @override_settings(IS_TEST_RUN=False)
     def test_simple_file_upload_overwrite(self):
         # helper methods
         def _write_temporary_file_and_upload(csv_data: str):
@@ -713,6 +715,7 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
 
         self.assertEqual(len(a_hubs), 0)
 
+    @override_settings(IS_TEST_RUN=False)
     def test_view_post_db_creator_exception(self):
         me_factories.SatA1FieldMapStaticSatelliteFactory(
             source_field="source_field_0",
