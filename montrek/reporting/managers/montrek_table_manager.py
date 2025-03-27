@@ -262,7 +262,7 @@ class MontrekTablePaginator:
 
     @property
     def has_next(self) -> bool:
-        return self.number < self.num_pages
+        return self.number < self.num_pages or self.num_pages == -1
 
     @property
     def previous_page_number(self) -> int:
@@ -328,7 +328,9 @@ class MontrekTableManager(MontrekTableManagerABC):
         trim_next = len_results > paginate_by
         if trim_next:
             results = results[:paginate_by]
-        len_full_table = self.get_full_table().count()
+        len_full_table = (
+            paginate_by + 5 if self.is_large else self.get_full_table().count()
+        )
         show_paginator = len_full_table > paginate_by
         num_pages = -1 if self.is_large else math.ceil(len_full_table / paginate_by)
 
