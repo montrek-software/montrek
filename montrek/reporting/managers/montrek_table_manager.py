@@ -251,12 +251,24 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
 
 @dataclass
 class MontrekTablePaginator:
-    has_previous: bool
-    has_next: bool
-    previous_page_number: int
     number: int
-    num_pages: int | str
-    next_page_number: int
+    num_pages: int
+
+    @property
+    def has_previous(self) -> bool:
+        return self.number > 1
+
+    @property
+    def has_next(self) -> bool:
+        return self.number < self.num_pages
+
+    @property
+    def previous_page_number(self) -> int:
+        return self.number - 1
+
+    @property
+    def next_page_number(self) -> int:
+        return self.number + 1
 
 
 class MontrekTableManager(MontrekTableManagerABC):
@@ -314,19 +326,13 @@ class MontrekTableManager(MontrekTableManagerABC):
         trim_next = len_results > paginate_by
         if trim_next:
             results = results[:paginate_by]
-        has_previous = page_number > 1
         num_pages = (
             -1 if self.is_large else int(self.get_full_table().count() / paginate_by)
         )
-        has_next = page_number < num_pages
 
         self.paginator = MontrekTablePaginator(
-            has_previous=has_previous,
-            has_next=has_next,
-            previous_page_number=page_number - 1,
             number=page_number,
             num_pages=num_pages,
-            next_page_number=page_number + 1,
         )
         return results
 
