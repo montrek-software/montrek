@@ -1,5 +1,6 @@
 import logging
 from typing import Any, Dict
+from django.conf import settings
 
 import numpy as np
 import pandas as pd
@@ -46,6 +47,8 @@ class FieldMapFileUploadProcessor:
         try:
             source_df = self.get_source_df_from_file(file_path)
         except Exception as e:
+            if settings.IS_TEST_RUN:
+                raise e
             self.message = (
                 f"Error raised during file reading: <br>{e.__class__.__name__}: {e}"
             )
@@ -64,6 +67,8 @@ class FieldMapFileUploadProcessor:
             mapped_df = self.post_map_processing(mapped_df)
             self.manager.repository.create_objects_from_data_frame(mapped_df)
         except Exception as e:
+            if settings.IS_TEST_RUN:
+                raise e
             logger.error(str(e))
             self.message = (
                 f"Error raised during object creation: <br>{e.__class__.__name__}: {e}"
