@@ -69,7 +69,16 @@ class DbDataFrame:
         for hubs in self.db_writer.db_staller.get_updated_hubs().values():
             self.hubs += hubs
         for satellites in self.db_writer.db_staller.get_updated_satellites().values():
-            hubs = [satellite.hub_entity for satellite in satellites]
+            hubs = [
+                satellite.hub_entity
+                for satellite in satellites
+                if not satellite.is_timeseries
+            ]
+            hubs += [
+                satellite.hub_value_date.hub
+                for satellite in satellites
+                if satellite.is_timeseries
+            ]
             self.hubs += hubs
 
     def get_static_satellite_field_names(self) -> list[str]:
