@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from django.conf import settings
 import pandas as pd
 from file_upload.repositories.field_map_repository import (
     FieldMapRepository,
@@ -142,6 +143,8 @@ class FieldMapManagerABC(MontrekTableManager):
                     source_df, field_map.source_field, **function_parameters
                 )
             except Exception as e:
+                if settings.IS_TEST_RUN:
+                    raise e
                 exception_info = FieldMapExceptionInfo(
                     database_field=field_map.database_field,
                     exception_message=f"{e.__class__.__name__}: {e}",

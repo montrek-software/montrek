@@ -49,7 +49,7 @@ class LatexReportManager:
     def get_colors(self) -> str:
         colorstr = ""
         for color in ReportingColors.COLOR_PALETTE:
-            colorstr += f"\\definecolor{{{color.name}}}{{HTML}}{{{color.hex.replace("#",'')}}}\n"
+            colorstr += f"\\definecolor{{{color.name}}}{{HTML}}{{{color.hex.replace("  # ",'')}}}\n"
         return colorstr
 
     def read_template(self) -> str:
@@ -89,6 +89,8 @@ class LatexReportManager:
                     text=True,
                 )
             except subprocess.CalledProcessError as e:
+                if settings.IS_TEST_RUN:
+                    raise e
                 error_message = self.get_xelatex_error_message(e.stdout)
                 self.report_manager.messages.append(
                     MontrekMessageError(message=error_message)

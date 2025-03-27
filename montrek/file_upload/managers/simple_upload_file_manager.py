@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.urls import resolve
 from django.db import transaction
 from typing import Any
@@ -41,6 +42,8 @@ class SimpleFileUploadProcessor:
             else:
                 target_repository.create_objects_from_data_frame(input_df)
         except Exception as e:
+            if settings.IS_TEST_RUN:
+                raise e
             self.message = str(e)
             return False
 

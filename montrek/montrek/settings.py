@@ -277,6 +277,7 @@ LOGGING = {
 }
 # Testing
 TEST_RUNNER = "montrek.testing.test_runner.MontrekTestRunner"
+IS_TEST_RUN = False
 
 MONTREK_GITHUB_TOKEN = config("MONTREK_GITHUB_TOKEN", default="")
 
