@@ -13,6 +13,7 @@ class MontrekTestRunner(DiscoverRunner):
                 "MEDIA_ROOT": temp_dir,
                 "ADMIN_MAILING_LIST": "test_admin@example.com",
                 "CELERY_TASK_ALWAYS_EAGER": 1,
+                "CELERY_TASK_EAGER_PROPAGATES": 1,
                 "NAVBAR_APPS": [
                     "mailing",
                     "montrek_example.montrek_example_report",

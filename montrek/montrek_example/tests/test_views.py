@@ -5,7 +5,7 @@ from textwrap import dedent
 from baseclasses.dataclasses.alert import AlertEnum
 from baseclasses.utils import montrek_time
 from django.contrib.auth.models import Permission
-from django.test import TestCase, TransactionTestCase
+from django.test import TestCase, TransactionTestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 from file_upload.managers.file_upload_manager import TASK_SCHEDULED_MESSAGE
@@ -672,6 +672,7 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
         log_file = upload_registry.log_file
         self.assertTrue(log_file)
 
+    @override_settings(IS_TEST_RUN=False)
     def test_view_post_field_map_exception(self):
         me_factories.SatA1FieldMapStaticSatelliteFactory(
             source_field="source_field_0",
