@@ -4,7 +4,7 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-12">
-            <h2 id="id_montrek_table_title">Country Overview</h2>
+          <h2 id="id_montrek_table_title"> {{ title }}</h2>
         </div>
     </div>
     <div class="row">
@@ -56,32 +56,34 @@
     <div class="row">
       {{ table|safe }}
     </div>
-    <div class="row">
-      <div class="col-md-12">
-        <div class="pagination">
-          <span class="step-links">
-            {% if paginator.has_previous %}
-              <a href="?page=1"><span class="glyphicon glyphicon-fast-backward"/></a>
-              <a href="?page={{ paginator.previous_page_number }}"><span class="glyphicon glyphicon-step-backward"/></a>
-            {% endif %}
-            <span class="current">
-              Page {{ paginator.number }}
-              {% if is_large %}
-              {% else %}
-                of {{ paginator.num_pages }}.
+    {% if paginator.show_paginator %}
+      <div class="row">
+        <div class="col-md-12">
+          <div class="pagination">
+            <span class="step-links">
+              {% if paginator.has_previous %}
+                <a href="?page=1"><span class="glyphicon glyphicon-fast-backward"/></a>
+                <a href="?page={{ paginator.previous_page_number }}"><span class="glyphicon glyphicon-step-backward"/></a>
               {% endif %}
-            </span>
-            {% if paginator.has_next %}
-                <a href="?page={{ paginator.next_page_number }}"><span class="glyphicon glyphicon-step-forward"/></a>
+              <span class="current">
+                Page {{ paginator.number }}
                 {% if is_large %}
                 {% else %}
-                  <a href="?page={{ paginator.num_pages }}"><span class="glyphicon glyphicon-fast-forward"/></a>
+                  of {{ paginator.num_pages }}.
                 {% endif %}
-            {% endif %}
-          </span>
+              </span>
+              {% if paginator.has_next %}
+                  <a href="?page={{ paginator.next_page_number }}"><span class="glyphicon glyphicon-step-forward"/></a>
+                  {% if is_large %}
+                  {% else %}
+                    <a href="?page={{ paginator.num_pages }}"><span class="glyphicon glyphicon-fast-forward"/></a>
+                  {% endif %}
+              {% endif %}
+            </span>
+          </div>
         </div>
       </div>
-    </div>
+    {% endif %}
 </div>
 {% endblock %}
 {% block side_page %}

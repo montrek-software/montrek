@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import math
 import datetime
 from decimal import Decimal
 import os
@@ -251,12 +252,25 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
 
 @dataclass
 class MontrekTablePaginator:
-    has_previous: bool
-    has_next: bool
-    previous_page_number: int
     number: int
-    num_pages: int | str
-    next_page_number: int
+    num_pages: int
+    show_paginator: bool
+
+    @property
+    def has_previous(self) -> bool:
+        return self.number > 1
+
+    @property
+    def has_next(self) -> bool:
+        return self.number < self.num_pages or self.num_pages == -1
+
+    @property
+    def previous_page_number(self) -> int:
+        return self.number - 1
+
+    @property
+    def next_page_number(self) -> int:
+        return self.number + 1
 
 
 class MontrekTableManager(MontrekTableManagerABC):
@@ -314,19 +328,16 @@ class MontrekTableManager(MontrekTableManagerABC):
         trim_next = len_results > paginate_by
         if trim_next:
             results = results[:paginate_by]
-        has_previous = page_number > 1
-        has_next = True
-        num_pages = (
-            -1 if self.is_large else int(self.get_full_table().count() / paginate_by)
+        len_full_table = (
+            paginate_by + 5 if self.is_large else self.get_full_table().count()
         )
+        show_paginator = len_full_table > paginate_by
+        num_pages = -1 if self.is_large else math.ceil(len_full_table / paginate_by)
 
         self.paginator = MontrekTablePaginator(
-            has_previous=has_previous,
-            has_next=has_next,
-            previous_page_number=page_number - 1,
             number=page_number,
             num_pages=num_pages,
-            next_page_number=page_number + 1,
+            show_paginator=show_paginator,
         )
         return results
 
