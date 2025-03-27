@@ -36,7 +36,7 @@ class ReportingColors:
     LIGHT_GREY = Color("lightgrey", "#F4F4F4")
     GREY = Color("grey", "#BDBDBD")
 
-    COLOR_PALETTE = [
+    COLOR_PALETTE_SKIM = [
         RED,
         BLUE,
         DARK_BLUE,
@@ -55,7 +55,9 @@ class ReportingColors:
         DARKER_BROWN,
         LIGHT_GREY,
         GREY,
-    ] + [DARK_BLUE] * 100
+    ]
+
+    COLOR_PALETTE = COLOR_PALETTE_SKIM + [DARK_BLUE] * 100
 
     COLOR_PALETTE_GRADIENT = [
         RED,

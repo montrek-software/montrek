@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from file_upload.tests.factories.field_map_factories import (
     FieldMapStaticSatelliteFactory,
@@ -73,6 +73,7 @@ class TestFieldMapManager(TestCase):
         self.assertEqual(mapped_df["database_field_3"].to_list(), ["7a", "8b", "9c"])
         self.assertEqual(field_map_manager.exceptions, [])
 
+    @override_settings(IS_TEST_RUN=False)
     def test_apply_field_maps_exception(self):
         FieldMapStaticSatelliteFactory(
             source_field="source_field_0",

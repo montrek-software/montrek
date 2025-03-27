@@ -32,7 +32,7 @@ class A1FileUploadProcessor(FieldMapFileUploadProcessor, LogFileMixin):
     def post_map_processing(self, mapped_df: pd.DataFrame) -> pd.DataFrame:
         merged_df = super().post_map_processing(mapped_df)
         self.generate_log_file_excel(
-            f"Mapped input data",
+            "Mapped input data",
             additional_data=merged_df,
         )
         return merged_df

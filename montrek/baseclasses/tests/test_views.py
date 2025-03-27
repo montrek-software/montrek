@@ -5,7 +5,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.contrib.messages import get_messages
 from django.contrib.messages.middleware import MessageMiddleware
 from django.contrib.sessions.middleware import SessionMiddleware
-from django.test import RequestFactory, TestCase
+from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 from reporting.dataclasses import table_elements as te
 from reporting.managers.montrek_table_manager import MontrekTableManager
@@ -177,10 +177,9 @@ class TestMontrekViewMixin(TestCase):
                 "host_url": "http://testserver",
                 "http_referer": None,
                 "pages": {},
-                "filter_count": {"/": 1}
+                "filter_count": {"/": 1},
             },
         )
-
 
     def test_session_data_with_query_params(self):
         mock_view = MockMontrekView("/?param1=value1&param2=value2")
@@ -192,23 +191,27 @@ class TestMontrekViewMixin(TestCase):
             "pages": {},
             "http_referer": None,
             "filter": {},
-            "filter_count": {"/": 1}
+            "filter_count": {"/": 1},
         }
         self.assertEqual(mock_view.session_data, expected_data)
 
     def test_session_data_with_multiple_filter_params(self):
-        mock_view = MockMontrekView("/?filter_field=field1&filter_negate=False&filter_lookup=exact&filter_value=value1&filter_field=field2&filter_negate=True&filter_lookup=lgt&filter_value=value2")
+        mock_view = MockMontrekView(
+            "/?filter_field=field1&filter_negate=False&filter_lookup=exact&filter_value=value1&filter_field=field2&filter_negate=True&filter_lookup=lgt&filter_value=value2"
+        )
 
         expected_data = {
             "request_path": "/",
             "host_url": "http://testserver",
             "pages": {},
             "http_referer": None,
-            "filter": {'/': {'field1__exact': {'filter_negate': False,
-                                     'filter_value': 'value1'},
-                   'field2__lgt': {'filter_negate': True,
-                                   'filter_value': 'value2'}}},
-            "filter_count": {"/": 1}
+            "filter": {
+                "/": {
+                    "field1__exact": {"filter_negate": False, "filter_value": "value1"},
+                    "field2__lgt": {"filter_negate": True, "filter_value": "value2"},
+                }
+            },
+            "filter_count": {"/": 1},
         }
         self.assertEqual(mock_view.session_data, expected_data)
 
@@ -254,13 +257,12 @@ class TestMontrekViewMixin(TestCase):
         expected_session_data["host_url"] = "http://testserver"
         expected_session_data["http_referer"] = None
         expected_session_data["pages"] = {}
-        expected_session_data['filter_count'] = {'/some/path': 1}
+        expected_session_data["filter_count"] = {"/some/path": 1}
 
         self.assertEqual(mock_view.session_data, expected_session_data)
         self.assertEqual(
             mock_view.request.session["filter"], expected_filter_data["filter"]
         )
-
 
     def test_repository_object_creation(self):
         mock_view = MockMontrekView("/")
@@ -368,6 +370,7 @@ class TestMontrekListView(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Content-Type"], "application/pdf")
 
+    @override_settings(IS_TEST_RUN=False)
     def test_list_view_base_pdf_generation__fails(self):
         test_list_view = MockMontrekListViewPdfFails("dummy?gen_pdf=true")
         response = test_list_view.get(test_list_view.request)
@@ -492,20 +495,22 @@ class TestFiter(TestCase):
             self.assertFalse(
                 test_data["filter"]["/"]["test_field__test"]["filter_value"]
             )
+
     def test__get_filters_and(self):
         test_view = MockMontrekView("/")
         test_data = test_view._get_filters(
-                {
-                    "filter_lookup": ["test", "and_test"],
-                    "filter_field": ["test_field", "sub_field"],
-                    "filter_value": ["test_value", "sub_test_value"],
-                }
+            {
+                "filter_lookup": ["test", "and_test"],
+                "filter_field": ["test_field", "sub_field"],
+                "filter_value": ["test_value", "sub_test_value"],
+            }
         )
         self.assertEqual(
             test_data["filter"]["/"]["test_field__test"]["filter_value"], "test_value"
         )
         self.assertEqual(
-            test_data["filter"]["/"]["sub_field__and_test"]["filter_value"], "sub_test_value"
+            test_data["filter"]["/"]["sub_field__and_test"]["filter_value"],
+            "sub_test_value",
         )
 
 

@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from file_upload.managers.field_map_file_upload_processor import (
     FieldMapFileUploadProcessor,
@@ -20,6 +20,7 @@ class ReadErrorFieldMapFileUploadProcessor(FieldMapFileUploadProcessor):
         raise RuntimeError("cannot read file")
 
 
+@override_settings(IS_TEST_RUN=False)
 class TestFieldMapFileUploadProcessor(TestCase):
     def test_read_error_is_handled(self):
         registry_sat = FileUploadRegistryStaticSatelliteFactory()
