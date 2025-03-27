@@ -48,7 +48,7 @@ class LatexReportManager:
 
     def get_colors(self) -> str:
         colorstr = ""
-        for color in ReportingColors.COLOR_PALETTE:
+        for color in ReportingColors.COLOR_PALETTE_SKIM:
             colorstr += f"\\definecolor{{{color.name}}}{{HTML}}{{{color.hex.replace("  # ",'')}}}\n"
         return colorstr
 
