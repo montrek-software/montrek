@@ -1,5 +1,7 @@
 from django.http import HttpResponse
 from django.urls import reverse
+from baseclasses.dataclasses.link_model import LinkModel
+from baseclasses.managers.montrek_link_manager import MontrekLinkManager
 from montrek_example.repositories.sat_a1_repository import SatA1Repository
 from reporting.managers.montrek_details_manager import MontrekDetailsManager
 from reporting.managers.montrek_table_manager import MontrekTableManager
@@ -234,3 +236,19 @@ class HubDDetailsManager(MontrekDetailsManager):
                 hover_text="Delete Example D",
             ),
         ]
+
+
+class ExampleALinkManager(MontrekLinkManager):
+    repository_class = HubARepository
+
+    def get_links(self) -> list:
+        objects = self.repository.receive()
+        links = []
+        for obj in objects:
+            link = LinkModel(
+                href=reverse("montrek_example_a_details", kwargs={"pk": obj.pk}),
+                title=obj.field_a1_str,
+                new_tab=False,
+            )
+            links.append(link)
+        return links

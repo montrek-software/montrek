@@ -9,7 +9,7 @@ from baseclasses.dataclasses.view_classes import (
 )
 from reporting.views import MontrekReportView, MontrekReportFieldEditView
 from django.contrib import messages
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 from django.urls import reverse
 from file_upload.views import (
     FileUploadRegistryView,
@@ -140,6 +140,7 @@ class MontrekExampleADetails(views.MontrekDetailView):
     page_class = pages.ExampleAPage
     tab = "tab_details"
     title = "Example A Details"
+    link_manager_class = mem.ExampleALinkManager
 
     @property
     def actions(self) -> tuple:

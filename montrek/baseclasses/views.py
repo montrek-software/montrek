@@ -15,6 +15,7 @@ from django.views.generic import DetailView, RedirectView, View
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import CreateView
 from django.views.generic.list import ListView
+from baseclasses.managers.montrek_link_manager import DefaultLinkManager
 from file_upload.forms import SimpleUploadFileForm
 from file_upload.managers.simple_upload_file_manager import SimpleUploadFileManager
 from reporting.managers.latex_report_manager import LatexReportManager
@@ -30,7 +31,9 @@ from baseclasses.dataclasses.link_model import LinkModel
 from baseclasses.dataclasses.nav_bar_model import NavBarDropdownModel, NavBarModel
 from baseclasses.dataclasses.view_classes import ActionElement
 from baseclasses.forms import DateRangeForm, FilterForm, MontrekCreateForm
-from baseclasses.managers.montrek_manager import MontrekManagerNotImplemented
+from baseclasses.managers.montrek_manager import (
+    MontrekManagerNotImplemented,
+)
 from baseclasses.pages import NoPage
 from baseclasses.serializers import MontrekSerializer
 from baseclasses.utils import get_content_type
@@ -149,7 +152,9 @@ class MontrekPageViewMixin:
 
 
 class MontrekViewMixin:
+    link_manager_class = DefaultLinkManager
     _manager = None
+    _link_manager = None
     request = None
     _session_data = None
 
@@ -158,6 +163,12 @@ class MontrekViewMixin:
         if self._manager is None:
             self._manager = self.manager_class(self.session_data)
         return self._manager
+
+    @property
+    def link_manager(self):
+        if self._link_manager is None:
+            self._link_manager = self.link_manager_class(self.session_data)
+        return self._link_manager
 
     @property
     def session_data(self) -> dict:
@@ -282,6 +293,7 @@ class MontrekTemplateView(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context["links"] = self.link_manager.get_links()
         if not hasattr(self, "kwargs"):
             self.kwargs = kwargs
         context = self.get_page_context(context, **kwargs)
@@ -349,6 +361,7 @@ class MontrekListView(
                 f"Manager {self.manager.__class__.__name__} must be of type MontrekTableManager"
             )
         context["table"] = self.manager.to_html()
+        context["link_table"] = self.link_manager.to_html()
         context["paginator"] = self.manager.paginator
         context["is_large"] = self.manager.is_large
         filter = self.session_data.get("filter", {})
@@ -448,6 +461,7 @@ class MontrekDetailView(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context["link_table"] = self.link_manager.to_html()
         if not isinstance(self.manager, MontrekDetailsManager):
             raise ValueError(
                 f"Manager {self.manager_class.__name__} must be of type MontrekDetailsManager"
@@ -512,6 +526,7 @@ class MontrekCreateUpdateView(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context["link_table"] = self.link_manager.to_html()
         context = self.get_page_context(context, **kwargs)
         return context
 
@@ -533,6 +548,7 @@ class MontrekCreateUpdateView(
 class MontrekCreateView(MontrekCreateUpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context["link_table"] = self.link_manager.to_html()
         context["tag"] = "Create"
         return context
 
@@ -544,6 +560,7 @@ class MontrekUpdateView(MontrekCreateUpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context["link_table"] = self.link_manager.to_html()
         context["tag"] = "Update"
         return context
 
