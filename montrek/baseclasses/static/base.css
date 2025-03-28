@@ -166,17 +166,13 @@ input[readonly] {
   border-bottom: initial;
 }
 #overviewTable,
-#overviewTable th,
 #overviewTable td,
 #overviewTable tr {
-  border: 1px solid grey; /* Add a light border at the bottom of each row */
-  background-color: #f0f0f0; /* Grey background for header row */
-  color: black;
   padding: 2px; /* Add padding to each cell */
-  text-align: left; /* Align text to the left */
 }
 #overviewTable th {
-  font-weight: normal; /* Ensure header row text is not bold */
+  padding: 3px; /* Add padding to each cell */
+}
 .highlight-list {
   list-style: none;
   padding: 0;
