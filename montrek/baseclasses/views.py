@@ -122,6 +122,7 @@ class MontrekPageViewMixin:
         context["actions"] = self.actions
         context["title"] = self.title
         context["show_date_range_selector"] = page.show_date_range_selector
+        context["overview"] = page.overview
         context.update(self._handle_date_range_form())
         return context
 

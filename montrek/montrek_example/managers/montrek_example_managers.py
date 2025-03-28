@@ -56,10 +56,21 @@ class HubAManager(MontrekTableManager):
     repository_class = HubARepository
 
     @property
-    def table_elements(self) -> list:
-        return (
-            te.StringTableElement(name="A1 String", attr="field_a1_str"),
+    def overview_table_elements(self) -> list:
+        return [
+            te.LinkTextTableElement(
+                name="A1 String",
+                url="montrek_example_a_details",
+                kwargs={"pk": "id"},
+                text="field_a1_str",
+                hover_text="View Example A",
+            ),
             te.IntTableElement(name="A1 Int", attr="field_a1_int"),
+        ]
+
+    @property
+    def table_elements(self) -> list:
+        return self.overview_table_elements + [
             te.StringTableElement(name="A2 String", attr="field_a2_str"),
             te.FloatTableElement(name="A2 Float", attr="field_a2_float"),
             te.StringTableElement(name="B1 String", attr="field_b1_str"),
@@ -84,7 +95,7 @@ class HubAManager(MontrekTableManager):
                 icon="trash",
                 hover_text="Delete Example A",
             ),
-        )
+        ]
 
     def download(self) -> HttpResponse:
         response = HttpResponse()
