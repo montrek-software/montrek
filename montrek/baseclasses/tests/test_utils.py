@@ -75,19 +75,25 @@ class TestGetContentType(TestCase):
 
 class MockRequest:
     def __init__(self) -> None:
-        self.path = "/"
+        self.path = "/test-path/"
+        self.session = {}
 
 
 class TestTableMetaSessionData(TestCase):
+    def setUp(self):
+        self.request = MockRequest()
+
     def test__get_filters_isnull(self):
-        test_table_meta_session_data = TableMetaSessionData(MockRequest())
+        test_table_meta_session_data = TableMetaSessionData(self.request)
         test_data = test_table_meta_session_data._get_filters(
             {"filter_lookup": ["isnull"], "filter_field": ["test_field"]}
         )
-        self.assertTrue(test_data["filter"]["/"]["test_field__isnull"]["filter_value"])
+        self.assertTrue(
+            test_data["filter"]["/test-path/"]["test_field__isnull"]["filter_value"]
+        )
 
     def test__get_filters_true(self):
-        test_table_meta_session_data = TableMetaSessionData(MockRequest())
+        test_table_meta_session_data = TableMetaSessionData(self.request)
         for true_value in ("True", "true", True):
             test_data = test_table_meta_session_data._get_filters(
                 {
@@ -97,11 +103,11 @@ class TestTableMetaSessionData(TestCase):
                 }
             )
             self.assertTrue(
-                test_data["filter"]["/"]["test_field__test"]["filter_value"]
+                test_data["filter"]["/test-path/"]["test_field__test"]["filter_value"]
             )
 
     def test__get_filters_false(self):
-        test_table_meta_session_data = TableMetaSessionData(MockRequest())
+        test_table_meta_session_data = TableMetaSessionData(self.request)
         for false_value in ("False", "false", False):
             test_data = test_table_meta_session_data._get_filters(
                 {
@@ -111,11 +117,11 @@ class TestTableMetaSessionData(TestCase):
                 }
             )
             self.assertFalse(
-                test_data["filter"]["/"]["test_field__test"]["filter_value"]
+                test_data["filter"]["/test-path/"]["test_field__test"]["filter_value"]
             )
 
     def test__get_filters_and(self):
-        test_table_meta_session_data = TableMetaSessionData(MockRequest())
+        test_table_meta_session_data = TableMetaSessionData(self.request)
         test_data = test_table_meta_session_data._get_filters(
             {
                 "filter_lookup": ["test", "and_test"],
@@ -124,9 +130,160 @@ class TestTableMetaSessionData(TestCase):
             }
         )
         self.assertEqual(
-            test_data["filter"]["/"]["test_field__test"]["filter_value"], "test_value"
+            test_data["filter"]["/test-path/"]["test_field__test"]["filter_value"],
+            "test_value",
         )
         self.assertEqual(
-            test_data["filter"]["/"]["sub_field__and_test"]["filter_value"],
+            test_data["filter"]["/test-path/"]["sub_field__and_test"]["filter_value"],
             "sub_test_value",
         )
+
+    def test_init(self):
+        """Test initialization of TableMetaSessionData"""
+        table_meta = TableMetaSessionData(self.request)
+        self.assertEqual(table_meta.request, self.request)
+
+    def test_update_session_data_basic(self):
+        """Test basic update of session data"""
+        table_meta = TableMetaSessionData(self.request)
+
+        # Prepare initial session data
+        session_data = {
+            "filter_field": ["name"],
+            "filter_lookup": ["icontains"],
+            "filter_value": ["test"],
+        }
+
+        # Update session data
+        updated_data = table_meta.update_session_data(session_data)
+
+        # Verify session updates
+        self.assertIn("filter", self.request.session)
+        self.assertIn("pages", self.request.session)
+        self.assertIn("filter_count", self.request.session)
+
+    def test_get_filters_multiple_conditions(self):
+        """Test getting filters with multiple conditions"""
+        table_meta = TableMetaSessionData(self.request)
+
+        session_data = {
+            "filter_field": ["name", "age"],
+            "filter_lookup": ["icontains", "gte"],
+            "filter_value": ["John", "18"],
+        }
+
+        filter_data = table_meta._get_filters(session_data)
+
+        self.assertIn("/test-path/", filter_data["filter"])
+        filters = filter_data["filter"]["/test-path/"]
+
+        self.assertIn("name__icontains", filters)
+        self.assertIn("age__gte", filters)
+
+    def test_get_filters_boolean_values(self):
+        """Test filters with boolean values"""
+        table_meta = TableMetaSessionData(self.request)
+
+        # Test true values
+        session_data = {
+            "filter_field": ["is_active"],
+            "filter_lookup": ["exact"],
+            "filter_value": ["True"],
+        }
+
+        filter_data = table_meta._get_filters(session_data)
+        bool_filter = filter_data["filter"]["/test-path/"]["is_active__exact"]
+
+        self.assertTrue(bool_filter["filter_value"])
+        self.assertFalse(bool_filter["filter_negate"])
+
+    def test_get_filters_negation(self):
+        """Test filter negation"""
+        table_meta = TableMetaSessionData(self.request)
+
+        session_data = {
+            "filter_field": ["status"],
+            "filter_lookup": ["exact"],
+            "filter_value": ["pending"],
+            "filter_negate": ["true"],
+        }
+
+        filter_data = table_meta._get_filters(session_data)
+        negate_filter = filter_data["filter"]["/test-path/"]["status__exact"]
+
+        self.assertEqual(negate_filter["filter_value"], "pending")
+        self.assertTrue(negate_filter["filter_negate"])
+
+    def test_get_page_number_existing(self):
+        """Test getting existing page number"""
+        table_meta = TableMetaSessionData(self.request)
+
+        session_data = {"pages": {"/test-path/": 3}, "page": 5}
+
+        page_data = table_meta._get_page_number(session_data)
+
+        self.assertEqual(page_data["pages"]["/test-path/"], 5)
+
+    def test_get_page_number_default(self):
+        """Test page number when no page is specified"""
+        table_meta = TableMetaSessionData(self.request)
+
+        session_data = {}
+
+        page_data = table_meta._get_page_number(session_data)
+
+        self.assertIn("pages", page_data)
+        self.assertEqual(page_data["pages"], {})
+
+    def test_get_filter_form_count(self):
+        """Test filter form count incrementation"""
+        table_meta = TableMetaSessionData(self.request)
+
+        session_data = {}
+
+        count_data = table_meta._get_filter_form_count(session_data)
+
+        self.assertIn("filter_count", count_data)
+        self.assertEqual(count_data["filter_count"]["/test-path/"], 1)
+
+    def test_update_session_data_empty_input(self):
+        """Test update with empty session data"""
+        table_meta = TableMetaSessionData(self.request)
+
+        session_data = {}
+
+        updated_data = table_meta.update_session_data(session_data)
+
+        self.assertEqual(self.request.session["filter"], {})
+        self.assertEqual(self.request.session["pages"], {})
+        self.assertEqual(self.request.session["filter_count"], {"/test-path/": 1})
+
+    def test_get_filters_in_lookup(self):
+        """Test 'in' lookup type for filters"""
+        table_meta = TableMetaSessionData(self.request)
+
+        session_data = {
+            "filter_field": ["status"],
+            "filter_lookup": ["in"],
+            "filter_value": ["active,pending"],
+        }
+
+        filter_data = table_meta._get_filters(session_data)
+        in_filter = filter_data["filter"]["/test-path/"]["status__in"]
+
+        self.assertEqual(in_filter["filter_value"], ["active", "pending"])
+
+    def test_get_filters_isnull_lookup(self):
+        """Test 'isnull' lookup type"""
+        table_meta = TableMetaSessionData(self.request)
+
+        session_data = {
+            "filter_field": ["end_date"],
+            "filter_lookup": ["isnull"],
+            "filter_value": [""],
+        }
+
+        filter_data = table_meta._get_filters(session_data)
+        isnull_filter = filter_data["filter"]["/test-path/"]["end_date__isnull"]
+
+        self.assertTrue(isnull_filter["filter_value"])
