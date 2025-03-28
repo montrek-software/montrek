@@ -20,6 +20,7 @@ psycopg2==2.9.10
 python-decouple==3.8.0
 redis==5.0.4
 requests==2.32.3
+ruff==0.11.2
 sdmx1==2.15.0
 sdmx==0.2.10
 sf-hamilton==1.86.1
