@@ -828,6 +828,37 @@ class TestMontrekCreateObjectDataFrame(TestCase):
         self.assertEqual(me_models.HubC.objects.count(), 2)
         self.assertEqual(me_models.SatC1.objects.count(), 2)
 
+    def test_create_objects_from_data_frame__ts_data_update(self):
+        repository = HubCRepository(session_data={"user_id": self.user.id})
+        hub1 = me_factories.HubCFactory()
+        hub2 = me_factories.HubCFactory()
+        data_frame = pd.DataFrame(
+            {
+                "hub_entity_id": [hub1.id, hub1.id, hub2.id],
+                "field_c1_str": ["test_static", "test_static", "test_static2"],
+                "field_c1_bool": [True, True, False],
+                "value_date": ["2024-08-01", "2024-08-02", "2024-08-02"],
+                "field_tsc2_float": [6.0, 7.0, 8.0],
+                "field_tsc3_int": [1, 2, 3],
+                "field_tsc3_str": ["test", "test2", "test3"],
+                "field_tsc4_int": [4, 5, 6],
+            }
+        )
+        repository.create_objects_from_data_frame(data_frame)
+        data_frame = pd.DataFrame(
+            {
+                "hub_entity_id": [hub1.id, hub1.id, hub2.id],
+                "value_date": ["2024-08-01", "2024-08-02", "2024-08-02"],
+                "field_tsc2_float": [5.0, 6.0, 8.0],
+            }
+        )
+        repository.create_objects_from_data_frame(data_frame)
+        test_query = repository.receive()
+        self.assertEqual(test_query.count(), 3)
+        self.assertEqual(me_models.HubC.objects.count(), 2)
+        self.assertEqual(me_models.SatC1.objects.count(), 2)
+        self.assertEqual(test_query[0].field_tsc2_float, 5.0)
+
     def test_create_with_nan_in_data_frame(self):
         repository = HubARepository(session_data={"user_id": self.user.id})
         data_frame = pd.DataFrame(
