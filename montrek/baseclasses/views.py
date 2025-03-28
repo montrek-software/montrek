@@ -33,7 +33,8 @@ from baseclasses.forms import DateRangeForm, FilterForm, MontrekCreateForm
 from baseclasses.managers.montrek_manager import MontrekManagerNotImplemented
 from baseclasses.pages import NoPage
 from baseclasses.serializers import MontrekSerializer
-from baseclasses.utils import get_content_type
+from baseclasses.typing import SessionDataType
+from baseclasses.utils import TableMetaSessionData, get_content_type
 
 logger = logging.getLogger(__name__)
 
@@ -160,7 +161,7 @@ class MontrekViewMixin:
         return self._manager
 
     @property
-    def session_data(self) -> dict:
+    def session_data(self) -> SessionDataType:
         if self._session_data:
             return self._session_data
         session_data = {}
@@ -172,87 +173,18 @@ class MontrekViewMixin:
         session_data.update(kwargs)
         session_data.update(dict(self.request.session))
         session_data["request_path"] = self.request.path
-        session_data.update(self._get_filters(session_data))
-        session_data.update(self._get_page_number(session_data))
-        session_data.update(self._get_filter_form_count(session_data))
         if self.request.user.is_authenticated:
             session_data["user_id"] = self.request.user.id
-        self.request.session["filter"] = session_data.get("filter", {})
-        self.request.session["pages"] = session_data.get("pages", {})
-        self.request.session["filter_count"] = session_data.get("filter_count", {})
         session_data["host_url"] = self.request.build_absolute_uri("/")[:-1]
         session_data["http_referer"] = self.request.META.get("HTTP_REFERER")
+        session_data = self.view_dependent_session_data(session_data)
         self._session_data = session_data
         return session_data
 
-    def _get_filters(self, session_data):
-        request_path = self.request.path
-        filter_data = {"filter": session_data.pop("filter", {})}
-
-        filter_fields = session_data.pop("filter_field", [])
-        filter_negates = session_data.pop("filter_negate", [""] * len(filter_fields))
-        filter_lookups = session_data.pop("filter_lookup", [])
-        filter_values = session_data.pop("filter_value", [""] * len(filter_fields))
-        filter_input_data = list(
-            zip(filter_fields, filter_negates, filter_lookups, filter_values)
-        )
-        if len(filter_input_data) > 0:
-            filter_data["filter"][request_path] = {}
-        for (
-            filter_field,
-            filter_negate,
-            filter_lookup,
-            filter_value,
-        ) in filter_input_data:
-            if filter_lookup == "isnull":
-                filter_value = True
-            if filter_field:
-                true_values = ("True", "true", True)
-                false_values = ("False", "false", False)
-                filter_negate = filter_negate in true_values
-                filter_lookup = filter_lookup
-                filter_value = filter_value
-                filter_key = f"{filter_field}__{filter_lookup}"
-                if filter_lookup == "in":
-                    filter_value = filter_value.split(",")
-                if filter_value in true_values:
-                    filter_value = True
-                elif filter_value in false_values:
-                    filter_value = False
-
-                filter_data["filter"][request_path][filter_key] = {
-                    "filter_negate": filter_negate,
-                    "filter_value": filter_value,
-                }
-        return filter_data
-
-    def _get_page_number(self, session_data):
-        request_path = self.request.path
-        pages_data = {}
-        if "pages" not in session_data:
-            pages_data["pages"] = {}
-            session_data["pages"] = {}
-        else:
-            pages_data["pages"] = session_data["pages"]
-        if "page" in session_data:
-            page = session_data["page"]
-            pages_data["pages"][request_path] = page
-        else:
-            if request_path in session_data["pages"]:
-                pages_data["page"] = session_data["pages"][request_path]
-        return pages_data
-
-    def _get_filter_form_count(self, session_data):
-        request_path = self.request.path
-        cfield = "filter_count"
-        count_data = {}
-        if cfield not in session_data:
-            count_data[cfield] = {}
-        else:
-            count_data[cfield] = session_data[cfield]
-        if request_path not in count_data[cfield]:
-            count_data[cfield][request_path] = 1
-        return count_data
+    def view_dependent_session_data(
+        self, session_data: SessionDataType
+    ) -> SessionDataType:
+        return session_data
 
     def show_messages(self):
         self.manager.collect_messages()
@@ -305,9 +237,9 @@ class ToPdfMixin:
         if pdf_path and os.path.exists(pdf_path):
             with open(pdf_path, "rb") as pdf_file:
                 response = HttpResponse(pdf_file.read(), content_type="application/pdf")
-                response[
-                    "Content-Disposition"
-                ] = "inline; filename=" + os.path.basename(pdf_path)
+                response["Content-Disposition"] = (
+                    "inline; filename=" + os.path.basename(pdf_path)
+                )
                 return response
         previous_url = self.request.META.get("HTTP_REFERER")
         return HttpResponseRedirect(previous_url)
@@ -339,6 +271,12 @@ class MontrekListView(
 
     def get_queryset(self):
         return self.manager.get_table()
+
+    def view_dependent_session_data(
+        self, session_data: SessionDataType
+    ) -> SessionDataType:
+        table_meta_session_data = TableMetaSessionData(self.request)
+        return table_meta_session_data.update_session_data(session_data)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

@@ -138,8 +138,7 @@ class MockErrors:
 class MockFormClass:
     errors = MockErrors()
 
-    def __init__(self, request, repository):
-        ...
+    def __init__(self, request, repository): ...
 
     def is_valid(self):
         return False
@@ -168,7 +167,7 @@ class TestUnderConstruction(TestCase):
 
 class TestMontrekViewMixin(TestCase):
     def test_session_data(self):
-        mock_view = MockMontrekView("/")
+        mock_view = MockMontrekListView("/")
         self.assertEqual(
             mock_view.session_data,
             {
@@ -182,7 +181,7 @@ class TestMontrekViewMixin(TestCase):
         )
 
     def test_session_data_with_query_params(self):
-        mock_view = MockMontrekView("/?param1=value1&param2=value2")
+        mock_view = MockMontrekListView("/?param1=value1&param2=value2")
         expected_data = {
             "param1": ["value1"],
             "param2": ["value2"],
@@ -196,7 +195,7 @@ class TestMontrekViewMixin(TestCase):
         self.assertEqual(mock_view.session_data, expected_data)
 
     def test_session_data_with_multiple_filter_params(self):
-        mock_view = MockMontrekView(
+        mock_view = MockMontrekListView(
             "/?filter_field=field1&filter_negate=False&filter_lookup=exact&filter_value=value1&filter_field=field2&filter_negate=True&filter_lookup=lgt&filter_value=value2"
         )
 
@@ -217,7 +216,7 @@ class TestMontrekViewMixin(TestCase):
 
     def test_session_data__post(self):
         url = "/"
-        mock_view = MockMontrekView(url)
+        mock_view = MockMontrekListView(url)
         data = {"key1": "value1", "key2": "value2"}
         mock_view.add_mock_request_post(url, data)
         for k, v in data.items():
@@ -239,7 +238,7 @@ class TestMontrekViewMixin(TestCase):
         self.assertNotIn("user_id", mock_view.session_data)
 
     def test_filter_data_handling(self):
-        mock_view = MockMontrekView(
+        mock_view = MockMontrekListView(
             "/some/path?filter_field=field1&filter_negate=false&filter_lookup=in&filter_value=value1,value2"
         )
         expected_filter_data = {
@@ -458,60 +457,6 @@ class TestNavbar(TestCase):
         mailing_link = soup.find("a", href="/mailing/overview")
         self.assertIsNotNone(mailing_link)
         self.assertEqual(mailing_link.text.strip(), "Mailing")
-
-
-class TestFiter(TestCase):
-    def test__get_filters_isnull(self):
-        test_view = MockMontrekView("/")
-        test_data = test_view._get_filters(
-            {"filter_lookup": ["isnull"], "filter_field": ["test_field"]}
-        )
-        self.assertTrue(test_data["filter"]["/"]["test_field__isnull"]["filter_value"])
-
-    def test__get_filters_true(self):
-        test_view = MockMontrekView("/")
-        for true_value in ("True", "true", True):
-            test_data = test_view._get_filters(
-                {
-                    "filter_lookup": ["test"],
-                    "filter_field": ["test_field"],
-                    "filter_value": [true_value],
-                }
-            )
-            self.assertTrue(
-                test_data["filter"]["/"]["test_field__test"]["filter_value"]
-            )
-
-    def test__get_filters_false(self):
-        test_view = MockMontrekView("/")
-        for false_value in ("False", "false", False):
-            test_data = test_view._get_filters(
-                {
-                    "filter_lookup": ["test"],
-                    "filter_field": ["test_field"],
-                    "filter_value": [false_value],
-                }
-            )
-            self.assertFalse(
-                test_data["filter"]["/"]["test_field__test"]["filter_value"]
-            )
-
-    def test__get_filters_and(self):
-        test_view = MockMontrekView("/")
-        test_data = test_view._get_filters(
-            {
-                "filter_lookup": ["test", "and_test"],
-                "filter_field": ["test_field", "sub_field"],
-                "filter_value": ["test_value", "sub_test_value"],
-            }
-        )
-        self.assertEqual(
-            test_data["filter"]["/"]["test_field__test"]["filter_value"], "test_value"
-        )
-        self.assertEqual(
-            test_data["filter"]["/"]["sub_field__and_test"]["filter_value"],
-            "sub_test_value",
-        )
 
 
 class TestMontrekTemplateView(TestCase):

@@ -150,6 +150,8 @@ requests==2.32.3
     #   sdmx
     #   sdmx1
     #   yfinance
+ruff==0.11.2
+    # via -r requirements.in
 sdmx==0.2.10
     # via -r requirements.in
 sdmx1==2.15.0
