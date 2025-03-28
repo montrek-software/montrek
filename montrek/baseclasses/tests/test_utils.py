@@ -2,6 +2,7 @@ from django.test import TestCase, RequestFactory
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.utils import timezone
 from baseclasses.utils import (
+    TableMetaSessionData,
     montrek_time,
     montrek_today,
     montrek_date_string,
@@ -69,4 +70,63 @@ class TestGetContentType(TestCase):
         self.assertEqual(
             get_content_type("test.xlsx"),
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+
+
+class MockRequest:
+    def __init__(self) -> None:
+        self.path = "/"
+
+
+class TestTableMetaSessionData(TestCase):
+    def test__get_filters_isnull(self):
+        test_table_meta_session_data = TableMetaSessionData(MockRequest())
+        test_data = test_table_meta_session_data._get_filters(
+            {"filter_lookup": ["isnull"], "filter_field": ["test_field"]}
+        )
+        self.assertTrue(test_data["filter"]["/"]["test_field__isnull"]["filter_value"])
+
+    def test__get_filters_true(self):
+        test_table_meta_session_data = TableMetaSessionData(MockRequest())
+        for true_value in ("True", "true", True):
+            test_data = test_table_meta_session_data._get_filters(
+                {
+                    "filter_lookup": ["test"],
+                    "filter_field": ["test_field"],
+                    "filter_value": [true_value],
+                }
+            )
+            self.assertTrue(
+                test_data["filter"]["/"]["test_field__test"]["filter_value"]
+            )
+
+    def test__get_filters_false(self):
+        test_table_meta_session_data = TableMetaSessionData(MockRequest())
+        for false_value in ("False", "false", False):
+            test_data = test_table_meta_session_data._get_filters(
+                {
+                    "filter_lookup": ["test"],
+                    "filter_field": ["test_field"],
+                    "filter_value": [false_value],
+                }
+            )
+            self.assertFalse(
+                test_data["filter"]["/"]["test_field__test"]["filter_value"]
+            )
+
+    def test__get_filters_and(self):
+        test_table_meta_session_data = TableMetaSessionData(MockRequest())
+        test_data = test_table_meta_session_data._get_filters(
+            {
+                "filter_lookup": ["test", "and_test"],
+                "filter_field": ["test_field", "sub_field"],
+                "filter_value": ["test_value", "sub_test_value"],
+            }
+        )
+        self.assertEqual(
+            test_data["filter"]["/"]["test_field__test"]["filter_value"], "test_value"
+        )
+        self.assertEqual(
+            test_data["filter"]["/"]["sub_field__and_test"]["filter_value"],
+            "sub_test_value",
         )
