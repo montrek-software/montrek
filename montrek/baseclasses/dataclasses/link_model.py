@@ -6,4 +6,3 @@ class LinkModel:
     # Dataclass for links shown in montrek frontend
     href: str
     title: str
-    new_tab: bool = True
