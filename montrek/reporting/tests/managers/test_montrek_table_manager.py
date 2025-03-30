@@ -254,6 +254,21 @@ class TestMontrekTableManager(TestCase):
             "Table is too large to download. Sending it by mail.",
         )
 
+    def test_set_paginate_by(self):
+        test_manager = MockLongMontrekTableManager({})
+        self.assertEqual(test_manager.paginate_by, 10)
+        query = test_manager.get_table()
+        self.assertEqual(len(query), 10)
+
+        test_manager = MockLongMontrekTableManager({"paginate_by": 20})
+        self.assertEqual(test_manager.paginate_by, 20)
+        query = test_manager.get_table()
+        self.assertEqual(len(query), 20)
+        test_manager = MockLongMontrekTableManager({"paginate_by": 0})
+        self.assertEqual(test_manager.paginate_by, 5)
+        query = test_manager.get_table()
+        self.assertEqual(len(query), 5)
+
 
 class MockMontrekDataFrameTableManager(MontrekDataFrameTableManager):
     @property

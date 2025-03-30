@@ -275,12 +275,13 @@ class MontrekTablePaginator:
 
 class MontrekTableManager(MontrekTableManagerABC):
     is_paginated = True
-    paginate_by = 10
     is_large: bool = False
 
     def __init__(self, session_data: dict[str, Any] = {}):
         super().__init__(session_data)
         self.paginator: None | MontrekTablePaginator = None
+        self.paginate_by: int = session_data.get("paginate_by", 10)
+        self.paginate_by = 5 if self.paginate_by <= 5 else self.paginate_by
 
     def get_table(self) -> QuerySet | dict:
         return self._get_queryset(self.get_paginated_queryset)
