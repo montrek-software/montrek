@@ -177,6 +177,8 @@ class TestMontrekViewMixin(TestCase):
                 "http_referer": None,
                 "pages": {},
                 "filter_count": {"/": 1},
+                "paginate_by": {"/": 10},
+                "current_paginate_by": 10,
             },
         )
 
@@ -191,6 +193,8 @@ class TestMontrekViewMixin(TestCase):
             "http_referer": None,
             "filter": {},
             "filter_count": {"/": 1},
+            "paginate_by": {"/": 10},
+            "current_paginate_by": 10,
         }
         self.assertEqual(mock_view.session_data, expected_data)
 
@@ -211,6 +215,8 @@ class TestMontrekViewMixin(TestCase):
                 }
             },
             "filter_count": {"/": 1},
+            "paginate_by": {"/": 10},
+            "current_paginate_by": 10,
         }
         self.assertEqual(mock_view.session_data, expected_data)
 
@@ -257,7 +263,12 @@ class TestMontrekViewMixin(TestCase):
         expected_session_data["http_referer"] = None
         expected_session_data["pages"] = {}
         expected_session_data["filter_count"] = {"/some/path": 1}
-
+        expected_session_data.update(
+            {
+                "paginate_by": {"/some/path": 10},
+                "current_paginate_by": 10,
+            }
+        )
         self.assertEqual(mock_view.session_data, expected_session_data)
         self.assertEqual(
             mock_view.request.session["filter"], expected_filter_data["filter"]
