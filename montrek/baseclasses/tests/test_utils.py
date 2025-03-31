@@ -2,8 +2,10 @@ from django.test import TestCase, RequestFactory
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.utils import timezone
 from baseclasses.utils import (
+    FilterCountMetaSessionDataElement,
     FilterMetaSessionDataElement,
     PagesMetaSessionDataElement,
+    PaginateByMetaSessionDataElement,
     TableMetaSessionData,
     TableMetaSessionDataElement,
     montrek_time,
@@ -245,6 +247,66 @@ class TestPagesMetaSessionDataElement(TestCase):
         self.assertEqual(page_data["pages"], {})
 
 
+class TestFilterCountMetaSessionDataElement(TestCase):
+    def setUp(self):
+        self.request = MockRequest()
+
+    def test_get_filter_form_count(self):
+        """Test filter form count incrementation"""
+
+        session_data = {}
+        test_element = FilterCountMetaSessionDataElement(session_data, self.request)
+
+        count_data = test_element.apply_data()
+
+        self.assertIn("filter_count", count_data)
+        self.assertEqual(count_data["filter_count"]["/test-path/"], 1)
+
+
+class TestPaginateByCountMetaSessionDataElement(TestCase):
+    def setUp(self):
+        self.request = MockRequest()
+
+    def test_get_paginate_by(self):
+        """Test paginate_by"""
+
+        session_data = {}
+        test_element = PaginateByMetaSessionDataElement(session_data, self.request)
+        test_data = test_element.apply_data()
+
+        self.assertIn("paginate_by", test_data)
+        self.assertEqual(test_data["paginate_by"]["/test-path/"], 10)
+
+    def test_get_pageinate_by_existing(self):
+        """Test getting existing paginate_by"""
+
+        session_data = {"paginate_by": {"/test-path/": 15}}
+        test_element = PaginateByMetaSessionDataElement(session_data, self.request)
+        test_data = test_element.apply_data()
+
+        self.assertEqual(test_data["paginate_by"]["/test-path/"], 15)
+
+    def test_get_pageinate_not_below_five(self):
+        """Test getting existing paginate_by"""
+
+        session_data = {"paginate_by": {"/test-path/": 4}}
+
+        test_element = PaginateByMetaSessionDataElement(session_data, self.request)
+        test_data = test_element.apply_data()
+
+        self.assertEqual(test_data["paginate_by"]["/test-path/"], 5)
+        session_data = {"paginate_by": {"/test-path/": 0}}
+        test_element = PaginateByMetaSessionDataElement(session_data, self.request)
+        test_data = test_element.apply_data()
+
+        self.assertEqual(test_data["paginate_by"]["/test-path/"], 5)
+        session_data = {"paginate_by": {"/test-path/": -5}}
+        test_element = PaginateByMetaSessionDataElement(session_data, self.request)
+        test_data = test_element.apply_data()
+
+        self.assertEqual(test_data["paginate_by"]["/test-path/"], 5)
+
+
 class TestTableMetaSessionData(TestCase):
     def setUp(self):
         self.request = MockRequest()
@@ -274,17 +336,6 @@ class TestTableMetaSessionData(TestCase):
         self.assertIn("filter_count", self.request.session)
         self.assertIn("paginate_by", self.request.session)
 
-    def test_get_filter_form_count(self):
-        """Test filter form count incrementation"""
-        table_meta = TableMetaSessionData(self.request)
-
-        session_data = {}
-
-        count_data = table_meta._get_filter_form_count(session_data)
-
-        self.assertIn("filter_count", count_data)
-        self.assertEqual(count_data["filter_count"]["/test-path/"], 1)
-
     def test_update_session_data_empty_input(self):
         """Test update with empty session data"""
         table_meta = TableMetaSessionData(self.request)
@@ -297,44 +348,3 @@ class TestTableMetaSessionData(TestCase):
         self.assertEqual(self.request.session["pages"], {})
         self.assertEqual(self.request.session["filter_count"], {"/test-path/": 1})
         self.assertEqual(self.request.session["paginate_by"], {"/test-path/": 10})
-
-    def test_get_paginate_by(self):
-        """Test paginate_by"""
-        table_meta = TableMetaSessionData(self.request)
-
-        session_data = {}
-
-        count_data = table_meta._get_paginate_by(session_data)
-
-        self.assertIn("paginate_by", count_data)
-        self.assertEqual(count_data["paginate_by"]["/test-path/"], 10)
-
-    def test_get_pageinate_by_existing(self):
-        """Test getting existing paginate_by"""
-        table_meta = TableMetaSessionData(self.request)
-
-        session_data = {"paginate_by": {"/test-path/": 15}}
-
-        page_data = table_meta._get_paginate_by(session_data)
-
-        self.assertEqual(page_data["paginate_by"]["/test-path/"], 15)
-
-    def test_get_pageinate_not_below_five(self):
-        """Test getting existing paginate_by"""
-        table_meta = TableMetaSessionData(self.request)
-
-        session_data = {"paginate_by": {"/test-path/": 4}}
-
-        page_data = table_meta._get_paginate_by(session_data)
-
-        self.assertEqual(page_data["paginate_by"]["/test-path/"], 5)
-        session_data = {"paginate_by": {"/test-path/": 0}}
-
-        page_data = table_meta._get_paginate_by(session_data)
-
-        self.assertEqual(page_data["paginate_by"]["/test-path/"], 5)
-        session_data = {"paginate_by": {"/test-path/": -5}}
-
-        page_data = table_meta._get_paginate_by(session_data)
-
-        self.assertEqual(page_data["paginate_by"]["/test-path/"], 5)

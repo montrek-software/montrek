@@ -85,6 +85,16 @@ class TableMetaSessionDataElement(ABC):
     @abstractmethod
     def apply_data(self) -> SessionDataType: ...
 
+    def _set_data_to_path(self, default: int) -> SessionDataType:
+        data = {}
+        if self.field not in self.session_data:
+            data[self.field] = {}
+        else:
+            data[self.field] = self.session_data[self.field]
+        if self.request_path not in data[self.field]:
+            data[self.field][self.request_path] = default
+        return data
+
 
 class FilterMetaSessionDataElement(TableMetaSessionDataElement):
     field: str = "filter"
@@ -135,7 +145,7 @@ class FilterMetaSessionDataElement(TableMetaSessionDataElement):
 class PagesMetaSessionDataElement(TableMetaSessionDataElement):
     field: str = "pages"
 
-    def apply_data(self):
+    def apply_data(self) -> SessionDataType:
         pages_data = {}
         if self.field not in self.session_data:
             pages_data[self.field] = {}
@@ -151,52 +161,38 @@ class PagesMetaSessionDataElement(TableMetaSessionDataElement):
         return pages_data
 
 
+class FilterCountMetaSessionDataElement(TableMetaSessionDataElement):
+    field: str = "filter_count"
+
+    def apply_data(self) -> SessionDataType:
+        return self._set_data_to_path(default=1)
+
+
+class PaginateByMetaSessionDataElement(TableMetaSessionDataElement):
+    field: str = "paginate_by"
+
+    def apply_data(self) -> SessionDataType:
+        session_data = self._set_data_to_path(default=10)
+        if session_data["paginate_by"][self.request.path] < 5:
+            session_data["paginate_by"][self.request.path] = 5
+        return session_data
+
+
 class TableMetaSessionData:
     meta_session_data_elements: list[type[TableMetaSessionDataElement]] = [
         FilterMetaSessionDataElement,
         PagesMetaSessionDataElement,
+        FilterCountMetaSessionDataElement,
+        PaginateByMetaSessionDataElement,
     ]
 
     def __init__(self, request) -> None:
         self.request = request
 
     def update_session_data(self, session_data: SessionDataType) -> SessionDataType:
-        update_entities = {
-            "filter_count": self._get_filter_form_count,
-            "paginate_by": self._get_paginate_by,
-        }
-        for field, func in update_entities.items():
-            session_data.update(func(session_data))
-            self.request.session[field] = session_data.get(field, {})
         for element_class in self.meta_session_data_elements:
             element = element_class(session_data, self.request)
             element.process()
             session_data = element.session_data
 
         return session_data
-
-    def _get_filter_form_count(self, session_data: SessionDataType) -> SessionDataType:
-        return self._set_data_to_path(
-            field="filter_count", default=1, session_data=session_data
-        )
-
-    def _get_paginate_by(self, session_data: SessionDataType) -> SessionDataType:
-        session_data = self._set_data_to_path(
-            field="paginate_by", default=10, session_data=session_data
-        )
-        if session_data["paginate_by"][self.request.path] < 5:
-            session_data["paginate_by"][self.request.path] = 5
-        return session_data
-
-    def _set_data_to_path(
-        self, field: str, default: int, session_data: SessionDataType
-    ) -> SessionDataType:
-        request_path = self.request.path
-        data = {}
-        if field not in session_data:
-            data[field] = {}
-        else:
-            data[field] = session_data[field]
-        if request_path not in data[field]:
-            data[field][request_path] = default
-        return data
