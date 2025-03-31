@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 import datetime
 from datetime import timedelta
 from typing import Tuple
@@ -69,35 +70,39 @@ def get_content_type(filename: str) -> str:
     return "application/octet-stream"
 
 
-class TableMetaSessionData:
-    def __init__(self, request) -> None:
+class TableMetaSessionDataElement(ABC):
+    field: str = ""
+
+    def __init__(self, session_data: SessionDataType, request) -> None:
+        self.session_data = session_data
         self.request = request
+        self.request_path = request.path
 
-    def update_session_data(self, session_data: SessionDataType) -> SessionDataType:
-        update_entities = {
-            "filter": self._get_filters,
-            "pages": self._get_page_number,
-            "filter_count": self._get_filter_form_count,
-            "paginate_by": self._get_paginate_by,
-        }
-        for field, func in update_entities.items():
-            session_data.update(func(session_data))
-            self.request.session[field] = session_data.get(field, {})
-        return session_data
+    def process(self):
+        self.session_data.update(self.apply_data())
+        self.request.session[self.field] = self.session_data.get(self.field, {})
 
-    def _get_filters(self, session_data):
-        request_path = self.request.path
-        filter_data = {"filter": session_data.pop("filter", {})}
+    @abstractmethod
+    def apply_data(self) -> SessionDataType: ...
 
-        filter_fields = session_data.pop("filter_field", [])
-        filter_negates = session_data.pop("filter_negate", [""] * len(filter_fields))
-        filter_lookups = session_data.pop("filter_lookup", [])
-        filter_values = session_data.pop("filter_value", [""] * len(filter_fields))
+
+class FilterMetaSessionDataElement(TableMetaSessionDataElement):
+    field: str = "filter"
+
+    def apply_data(self) -> SessionDataType:
+        filter_data = {self.field: self.session_data.pop("filter", {})}
+
+        filter_fields = self.session_data.pop("filter_field", [])
+        filter_negates = self.session_data.pop(
+            "filter_negate", [""] * len(filter_fields)
+        )
+        filter_lookups = self.session_data.pop("filter_lookup", [])
+        filter_values = self.session_data.pop("filter_value", [""] * len(filter_fields))
         filter_input_data = list(
             zip(filter_fields, filter_negates, filter_lookups, filter_values)
         )
         if len(filter_input_data) > 0:
-            filter_data["filter"][request_path] = {}
+            filter_data[self.field][self.request_path] = {}
         for (
             filter_field,
             filter_negate,
@@ -120,11 +125,36 @@ class TableMetaSessionData:
                 elif filter_value in false_values:
                     filter_value = False
 
-                filter_data["filter"][request_path][filter_key] = {
+                filter_data[self.field][self.request_path][filter_key] = {
                     "filter_negate": filter_negate,
                     "filter_value": filter_value,
                 }
         return filter_data
+
+
+class TableMetaSessionData:
+    meta_session_data_elements: list[type[TableMetaSessionDataElement]] = [
+        FilterMetaSessionDataElement
+    ]
+
+    def __init__(self, request) -> None:
+        self.request = request
+
+    def update_session_data(self, session_data: SessionDataType) -> SessionDataType:
+        update_entities = {
+            "pages": self._get_page_number,
+            "filter_count": self._get_filter_form_count,
+            "paginate_by": self._get_paginate_by,
+        }
+        for field, func in update_entities.items():
+            session_data.update(func(session_data))
+            self.request.session[field] = session_data.get(field, {})
+        for element_class in self.meta_session_data_elements:
+            element = element_class(session_data, self.request)
+            element.process()
+            session_data = element.session_data
+
+        return session_data
 
     def _get_page_number(self, session_data):
         request_path = self.request.path
