@@ -407,6 +407,13 @@ class TestMontrekListView(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(test_list_view.request.session["paginate_by"]["/dummy"], 15)
 
+    def test_list_view_base__sub_paginate_by(self):
+        test_list_view = MockMontrekListView("dummy?action=sub_paginate_by")
+        response = test_list_view.get(test_list_view.request)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(test_list_view.request.session["paginate_by"]["/dummy"], 5)
+
 
 class TestMontrekDetailView(TestCase):
     def test_gen_pdf(self):
