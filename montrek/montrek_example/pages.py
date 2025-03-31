@@ -39,7 +39,7 @@ class MontrekExampleAAppPage(MontrekPage):
 class ExampleAPage(MontrekDetailsPage):
     repository_class = HubARepository
     title_field = "field_a1_str"
-    table_manager_class = CompactHubAManager
+    manager_class = CompactHubAManager
 
     def get_tabs(self):
         details_tab = TabElement(

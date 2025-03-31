@@ -1,7 +1,7 @@
 class MontrekPage:
     page_title = "page_title not set!"
     show_date_range_selector = False
-    table_manager_class = None
+    manager_class = None
 
     def __init__(self, **kwargs):
         self._tabs = None
@@ -11,9 +11,9 @@ class MontrekPage:
         raise NotImplementedError("MontrekPage needs get_tabs method!")
 
     def get_overview(self) -> str:
-        if self.table_manager_class:
-            table_manager = self.table_manager_class(session_data={})
-            return table_manager.to_html()
+        if self.manager_class:
+            manager = self.manager_class(session_data={})
+            return manager.to_html()
         return ""
 
     @property
@@ -49,7 +49,7 @@ class MontrekDetailsPage(MontrekPage):
             raise ValueError(f"{self.__class__.__name__} needs pk specified in url!")
 
     def _set_page_title(self, pk):
-        repository = self.table_manager_class.repository_class({})
+        repository = self.manager_class.repository_class({})
         self.hub = repository.get_hub_by_id(pk)
         self.obj = repository.receive().get(hub=self.hub)
         self.page_title = getattr(self.obj, self.title_field)

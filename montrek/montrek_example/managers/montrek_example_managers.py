@@ -57,8 +57,8 @@ class CompactHubAManager(MontrekTableManager):
     is_compact_format = True
 
     @property
-    def table_elements(self) -> list:
-        return [
+    def table_elements(self) -> tuple:
+        return (
             te.LinkTextTableElement(
                 name="A1 String",
                 url="montrek_example_a_details",
@@ -67,22 +67,16 @@ class CompactHubAManager(MontrekTableManager):
                 hover_text="View Example A",
             ),
             te.IntTableElement(name="A1 Int", attr="field_a1_int"),
-        ]
+        )
 
 
 class HubAManager(MontrekTableManager):
     repository_class = HubARepository
 
     @property
-    def table_elements(self) -> list:
-        return [
-            te.LinkTextTableElement(
-                name="A1 String",
-                url="montrek_example_a_details",
-                kwargs={"pk": "hub_id"},
-                text="field_a1_str",
-                hover_text="View Example A",
-            ),
+    def table_elements(self) -> tuple:
+        return (
+            te.StringTableElement(name="A1 String", attr="field_a1_str"),
             te.IntTableElement(name="A1 Int", attr="field_a1_int"),
             te.StringTableElement(name="A2 String", attr="field_a2_str"),
             te.FloatTableElement(name="A2 Float", attr="field_a2_float"),
@@ -108,7 +102,7 @@ class HubAManager(MontrekTableManager):
                 icon="trash",
                 hover_text="Delete Example A",
             ),
-        ]
+        )
 
     def download(self) -> HttpResponse:
         response = HttpResponse()
