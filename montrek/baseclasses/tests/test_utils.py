@@ -2,7 +2,12 @@ from django.test import TestCase, RequestFactory
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.utils import timezone
 from baseclasses.utils import (
+    FilterCountMetaSessionDataElement,
+    FilterMetaSessionDataElement,
+    PagesMetaSessionDataElement,
+    PaginateByMetaSessionDataElement,
     TableMetaSessionData,
+    TableMetaSessionDataElement,
     montrek_time,
     montrek_today,
     montrek_date_string,
@@ -79,56 +84,52 @@ class MockRequest:
         self.session = {}
 
 
-class TestTableMetaSessionData(TestCase):
+class TestFilterMetaSessionDataElement(TestCase):
     def setUp(self):
         self.request = MockRequest()
 
     def test__get_filters_isnull(self):
-        test_table_meta_session_data = TableMetaSessionData(self.request)
-        test_data = test_table_meta_session_data._get_filters(
-            {"filter_lookup": ["isnull"], "filter_field": ["test_field"]}
-        )
+        session_data = {"filter_lookup": ["isnull"], "filter_field": ["test_field"]}
+        test_element = FilterMetaSessionDataElement(session_data, self.request)
+        test_data = test_element.apply_data()
         self.assertTrue(
             test_data["filter"]["/test-path/"]["test_field__isnull"]["filter_value"]
         )
 
     def test__get_filters_true(self):
-        test_table_meta_session_data = TableMetaSessionData(self.request)
         for true_value in ("True", "true", True):
-            test_data = test_table_meta_session_data._get_filters(
-                {
-                    "filter_lookup": ["test"],
-                    "filter_field": ["test_field"],
-                    "filter_value": [true_value],
-                }
-            )
+            session_data = {
+                "filter_lookup": ["test"],
+                "filter_field": ["test_field"],
+                "filter_value": [true_value],
+            }
+            test_element = FilterMetaSessionDataElement(session_data, self.request)
+            test_data = test_element.apply_data()
             self.assertTrue(
                 test_data["filter"]["/test-path/"]["test_field__test"]["filter_value"]
             )
 
     def test__get_filters_false(self):
-        test_table_meta_session_data = TableMetaSessionData(self.request)
         for false_value in ("False", "false", False):
-            test_data = test_table_meta_session_data._get_filters(
-                {
-                    "filter_lookup": ["test"],
-                    "filter_field": ["test_field"],
-                    "filter_value": [false_value],
-                }
-            )
+            session_data = {
+                "filter_lookup": ["test"],
+                "filter_field": ["test_field"],
+                "filter_value": [false_value],
+            }
+            test_element = FilterMetaSessionDataElement(session_data, self.request)
+            test_data = test_element.apply_data()
             self.assertFalse(
                 test_data["filter"]["/test-path/"]["test_field__test"]["filter_value"]
             )
 
     def test__get_filters_and(self):
-        test_table_meta_session_data = TableMetaSessionData(self.request)
-        test_data = test_table_meta_session_data._get_filters(
-            {
-                "filter_lookup": ["test", "and_test"],
-                "filter_field": ["test_field", "sub_field"],
-                "filter_value": ["test_value", "sub_test_value"],
-            }
-        )
+        session_data = {
+            "filter_lookup": ["test", "and_test"],
+            "filter_field": ["test_field", "sub_field"],
+            "filter_value": ["test_value", "sub_test_value"],
+        }
+        test_element = FilterMetaSessionDataElement(session_data, self.request)
+        test_data = test_element.apply_data()
         self.assertEqual(
             test_data["filter"]["/test-path/"]["test_field__test"]["filter_value"],
             "test_value",
@@ -137,6 +138,178 @@ class TestTableMetaSessionData(TestCase):
             test_data["filter"]["/test-path/"]["sub_field__and_test"]["filter_value"],
             "sub_test_value",
         )
+
+    def test_get_filters_multiple_conditions(self):
+        """Test getting filters with multiple conditions"""
+
+        session_data = {
+            "filter_field": ["name", "age"],
+            "filter_lookup": ["icontains", "gte"],
+            "filter_value": ["John", "18"],
+        }
+
+        test_element = FilterMetaSessionDataElement(session_data, self.request)
+        filter_data = test_element.apply_data()
+
+        self.assertIn("/test-path/", filter_data["filter"])
+        filters = filter_data["filter"]["/test-path/"]
+
+        self.assertIn("name__icontains", filters)
+        self.assertIn("age__gte", filters)
+
+    def test_get_filters_boolean_values(self):
+        """Test filters with boolean values"""
+
+        # Test true values
+        session_data = {
+            "filter_field": ["is_active"],
+            "filter_lookup": ["exact"],
+            "filter_value": ["True"],
+        }
+
+        test_element = FilterMetaSessionDataElement(session_data, self.request)
+        filter_data = test_element.apply_data()
+        bool_filter = filter_data["filter"]["/test-path/"]["is_active__exact"]
+
+        self.assertTrue(bool_filter["filter_value"])
+        self.assertFalse(bool_filter["filter_negate"])
+
+    def test_get_filters_negation(self):
+        """Test filter negation"""
+
+        session_data = {
+            "filter_field": ["status"],
+            "filter_lookup": ["exact"],
+            "filter_value": ["pending"],
+            "filter_negate": ["true"],
+        }
+
+        test_element = FilterMetaSessionDataElement(session_data, self.request)
+        filter_data = test_element.apply_data()
+        negate_filter = filter_data["filter"]["/test-path/"]["status__exact"]
+
+        self.assertEqual(negate_filter["filter_value"], "pending")
+        self.assertTrue(negate_filter["filter_negate"])
+
+    def test_get_filters_in_lookup(self):
+        """Test 'in' lookup type for filters"""
+        session_data = {
+            "filter_field": ["status"],
+            "filter_lookup": ["in"],
+            "filter_value": ["active,pending"],
+        }
+
+        test_element = FilterMetaSessionDataElement(session_data, self.request)
+        filter_data = test_element.apply_data()
+        in_filter = filter_data["filter"]["/test-path/"]["status__in"]
+
+        self.assertEqual(in_filter["filter_value"], ["active", "pending"])
+
+    def test_get_filters_isnull_lookup(self):
+        """Test 'isnull' lookup type"""
+
+        session_data = {
+            "filter_field": ["end_date"],
+            "filter_lookup": ["isnull"],
+            "filter_value": [""],
+        }
+
+        test_element = FilterMetaSessionDataElement(session_data, self.request)
+        filter_data = test_element.apply_data()
+        isnull_filter = filter_data["filter"]["/test-path/"]["end_date__isnull"]
+
+        self.assertTrue(isnull_filter["filter_value"])
+
+
+class TestPagesMetaSessionDataElement(TestCase):
+    def setUp(self):
+        self.request = MockRequest()
+
+    def test_get_page_number_existing(self):
+        """Test getting existing page number"""
+
+        session_data = {"pages": {"/test-path/": 3}, "page": 5}
+        test_element = PagesMetaSessionDataElement(session_data, self.request)
+
+        page_data = test_element.apply_data()
+
+        self.assertEqual(page_data["pages"]["/test-path/"], 5)
+
+    def test_get_page_number_default(self):
+        """Test page number when no page is specified"""
+
+        session_data = {}
+        test_element = PagesMetaSessionDataElement(session_data, self.request)
+
+        page_data = test_element.apply_data()
+
+        self.assertIn("pages", page_data)
+        self.assertEqual(page_data["pages"], {})
+
+
+class TestFilterCountMetaSessionDataElement(TestCase):
+    def setUp(self):
+        self.request = MockRequest()
+
+    def test_get_filter_form_count(self):
+        """Test filter form count incrementation"""
+
+        session_data = {}
+        test_element = FilterCountMetaSessionDataElement(session_data, self.request)
+
+        count_data = test_element.apply_data()
+
+        self.assertIn("filter_count", count_data)
+        self.assertEqual(count_data["filter_count"]["/test-path/"], 1)
+
+
+class TestPaginateByCountMetaSessionDataElement(TestCase):
+    def setUp(self):
+        self.request = MockRequest()
+
+    def test_get_paginate_by(self):
+        """Test paginate_by"""
+
+        session_data = {}
+        test_element = PaginateByMetaSessionDataElement(session_data, self.request)
+        test_data = test_element.apply_data()
+
+        self.assertIn("paginate_by", test_data)
+        self.assertEqual(test_data["paginate_by"]["/test-path/"], 10)
+
+    def test_get_pageinate_by_existing(self):
+        """Test getting existing paginate_by"""
+
+        session_data = {"paginate_by": {"/test-path/": 15}}
+        test_element = PaginateByMetaSessionDataElement(session_data, self.request)
+        test_data = test_element.apply_data()
+
+        self.assertEqual(test_data["paginate_by"]["/test-path/"], 15)
+
+    def test_get_pageinate_not_below_five(self):
+        """Test getting existing paginate_by"""
+
+        session_data = {"paginate_by": {"/test-path/": 4}}
+
+        test_element = PaginateByMetaSessionDataElement(session_data, self.request)
+        test_data = test_element.apply_data()
+
+        self.assertEqual(test_data["paginate_by"]["/test-path/"], 5)
+        session_data = {"paginate_by": {"/test-path/": 0}}
+        test_element = PaginateByMetaSessionDataElement(session_data, self.request)
+        test_data = test_element.apply_data()
+
+        self.assertEqual(test_data["paginate_by"]["/test-path/"], 5)
+        session_data = {"paginate_by": {"/test-path/": -5}}
+        test_element = PaginateByMetaSessionDataElement(session_data, self.request)
+        test_data = test_element.apply_data()
+
+        self.assertEqual(test_data["paginate_by"]["/test-path/"], 5)
+
+
+class TestTableMetaSessionData(TestCase):
+    def setUp(self):
+        self.request = MockRequest()
 
     def test_init(self):
         """Test initialization of TableMetaSessionData"""
@@ -161,90 +334,7 @@ class TestTableMetaSessionData(TestCase):
         self.assertIn("filter", self.request.session)
         self.assertIn("pages", self.request.session)
         self.assertIn("filter_count", self.request.session)
-
-    def test_get_filters_multiple_conditions(self):
-        """Test getting filters with multiple conditions"""
-        table_meta = TableMetaSessionData(self.request)
-
-        session_data = {
-            "filter_field": ["name", "age"],
-            "filter_lookup": ["icontains", "gte"],
-            "filter_value": ["John", "18"],
-        }
-
-        filter_data = table_meta._get_filters(session_data)
-
-        self.assertIn("/test-path/", filter_data["filter"])
-        filters = filter_data["filter"]["/test-path/"]
-
-        self.assertIn("name__icontains", filters)
-        self.assertIn("age__gte", filters)
-
-    def test_get_filters_boolean_values(self):
-        """Test filters with boolean values"""
-        table_meta = TableMetaSessionData(self.request)
-
-        # Test true values
-        session_data = {
-            "filter_field": ["is_active"],
-            "filter_lookup": ["exact"],
-            "filter_value": ["True"],
-        }
-
-        filter_data = table_meta._get_filters(session_data)
-        bool_filter = filter_data["filter"]["/test-path/"]["is_active__exact"]
-
-        self.assertTrue(bool_filter["filter_value"])
-        self.assertFalse(bool_filter["filter_negate"])
-
-    def test_get_filters_negation(self):
-        """Test filter negation"""
-        table_meta = TableMetaSessionData(self.request)
-
-        session_data = {
-            "filter_field": ["status"],
-            "filter_lookup": ["exact"],
-            "filter_value": ["pending"],
-            "filter_negate": ["true"],
-        }
-
-        filter_data = table_meta._get_filters(session_data)
-        negate_filter = filter_data["filter"]["/test-path/"]["status__exact"]
-
-        self.assertEqual(negate_filter["filter_value"], "pending")
-        self.assertTrue(negate_filter["filter_negate"])
-
-    def test_get_page_number_existing(self):
-        """Test getting existing page number"""
-        table_meta = TableMetaSessionData(self.request)
-
-        session_data = {"pages": {"/test-path/": 3}, "page": 5}
-
-        page_data = table_meta._get_page_number(session_data)
-
-        self.assertEqual(page_data["pages"]["/test-path/"], 5)
-
-    def test_get_page_number_default(self):
-        """Test page number when no page is specified"""
-        table_meta = TableMetaSessionData(self.request)
-
-        session_data = {}
-
-        page_data = table_meta._get_page_number(session_data)
-
-        self.assertIn("pages", page_data)
-        self.assertEqual(page_data["pages"], {})
-
-    def test_get_filter_form_count(self):
-        """Test filter form count incrementation"""
-        table_meta = TableMetaSessionData(self.request)
-
-        session_data = {}
-
-        count_data = table_meta._get_filter_form_count(session_data)
-
-        self.assertIn("filter_count", count_data)
-        self.assertEqual(count_data["filter_count"]["/test-path/"], 1)
+        self.assertIn("paginate_by", self.request.session)
 
     def test_update_session_data_empty_input(self):
         """Test update with empty session data"""
@@ -257,33 +347,4 @@ class TestTableMetaSessionData(TestCase):
         self.assertEqual(self.request.session["filter"], {})
         self.assertEqual(self.request.session["pages"], {})
         self.assertEqual(self.request.session["filter_count"], {"/test-path/": 1})
-
-    def test_get_filters_in_lookup(self):
-        """Test 'in' lookup type for filters"""
-        table_meta = TableMetaSessionData(self.request)
-
-        session_data = {
-            "filter_field": ["status"],
-            "filter_lookup": ["in"],
-            "filter_value": ["active,pending"],
-        }
-
-        filter_data = table_meta._get_filters(session_data)
-        in_filter = filter_data["filter"]["/test-path/"]["status__in"]
-
-        self.assertEqual(in_filter["filter_value"], ["active", "pending"])
-
-    def test_get_filters_isnull_lookup(self):
-        """Test 'isnull' lookup type"""
-        table_meta = TableMetaSessionData(self.request)
-
-        session_data = {
-            "filter_field": ["end_date"],
-            "filter_lookup": ["isnull"],
-            "filter_value": [""],
-        }
-
-        filter_data = table_meta._get_filters(session_data)
-        isnull_filter = filter_data["filter"]["/test-path/"]["end_date__isnull"]
-
-        self.assertTrue(isnull_filter["filter_value"])
+        self.assertEqual(self.request.session["paginate_by"], {"/test-path/": 10})

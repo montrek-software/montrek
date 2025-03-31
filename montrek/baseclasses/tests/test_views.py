@@ -177,6 +177,8 @@ class TestMontrekViewMixin(TestCase):
                 "http_referer": None,
                 "pages": {},
                 "filter_count": {"/": 1},
+                "paginate_by": {"/": 10},
+                "current_paginate_by": 10,
             },
         )
 
@@ -191,6 +193,8 @@ class TestMontrekViewMixin(TestCase):
             "http_referer": None,
             "filter": {},
             "filter_count": {"/": 1},
+            "paginate_by": {"/": 10},
+            "current_paginate_by": 10,
         }
         self.assertEqual(mock_view.session_data, expected_data)
 
@@ -211,6 +215,8 @@ class TestMontrekViewMixin(TestCase):
                 }
             },
             "filter_count": {"/": 1},
+            "paginate_by": {"/": 10},
+            "current_paginate_by": 10,
         }
         self.assertEqual(mock_view.session_data, expected_data)
 
@@ -257,7 +263,12 @@ class TestMontrekViewMixin(TestCase):
         expected_session_data["http_referer"] = None
         expected_session_data["pages"] = {}
         expected_session_data["filter_count"] = {"/some/path": 1}
-
+        expected_session_data.update(
+            {
+                "paginate_by": {"/some/path": 10},
+                "current_paginate_by": 10,
+            }
+        )
         self.assertEqual(mock_view.session_data, expected_session_data)
         self.assertEqual(
             mock_view.request.session["filter"], expected_filter_data["filter"]
@@ -399,6 +410,20 @@ class TestMontrekListView(TestCase):
         test_view = MockMontrekListViewWrongManager("/")
         test_view.kwargs = {}
         self.assertRaises(ValueError, test_view.get_context_data, **{"object_list": []})
+
+    def test_list_view_base__add_paginate_by(self):
+        test_list_view = MockMontrekListView("dummy?action=add_paginate_by")
+        response = test_list_view.get(test_list_view.request)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(test_list_view.request.session["paginate_by"]["/dummy"], 15)
+
+    def test_list_view_base__sub_paginate_by(self):
+        test_list_view = MockMontrekListView("dummy?action=sub_paginate_by")
+        response = test_list_view.get(test_list_view.request)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(test_list_view.request.session["paginate_by"]["/dummy"], 5)
 
 
 class TestMontrekDetailView(TestCase):
