@@ -7,7 +7,7 @@ from baseclasses.utils import (
     PagesMetaSessionDataElement,
     PaginateByMetaSessionDataElement,
     TableMetaSessionData,
-    TableMetaSessionDataElement,
+    IsCompactFormatMetaSessionDataElement,
     montrek_time,
     montrek_today,
     montrek_date_string,
@@ -307,6 +307,31 @@ class TestPaginateByCountMetaSessionDataElement(TestCase):
         self.assertEqual(test_data["paginate_by"]["/test-path/"], 5)
 
 
+class TestIsCompactFormatCountMetaSessionDataElement(TestCase):
+    def setUp(self):
+        self.request = MockRequest()
+
+    def test_is_comapct_format(self):
+        """Test paginate_by"""
+
+        session_data = {}
+        test_element = IsCompactFormatMetaSessionDataElement(session_data, self.request)
+        test_data = test_element.apply_data()
+
+        self.assertIn("is_compact_format", test_data)
+        self.assertEqual(test_data["is_compact_format"]["/test-path/"], False)
+
+    def test_is_comapct_format__set(self):
+        """Test paginate_by"""
+
+        session_data = {"is_compact_format": {"/test-path/": True}}
+        test_element = IsCompactFormatMetaSessionDataElement(session_data, self.request)
+        test_data = test_element.apply_data()
+
+        self.assertIn("is_compact_format", test_data)
+        self.assertEqual(test_data["is_compact_format"]["/test-path/"], True)
+
+
 class TestTableMetaSessionData(TestCase):
     def setUp(self):
         self.request = MockRequest()
@@ -335,6 +360,7 @@ class TestTableMetaSessionData(TestCase):
         self.assertIn("pages", self.request.session)
         self.assertIn("filter_count", self.request.session)
         self.assertIn("paginate_by", self.request.session)
+        self.assertIn("is_compact_format", self.request.session)
 
     def test_update_session_data_empty_input(self):
         """Test update with empty session data"""
@@ -348,3 +374,6 @@ class TestTableMetaSessionData(TestCase):
         self.assertEqual(self.request.session["pages"], {})
         self.assertEqual(self.request.session["filter_count"], {"/test-path/": 1})
         self.assertEqual(self.request.session["paginate_by"], {"/test-path/": 10})
+        self.assertEqual(
+            self.request.session["is_compact_format"], {"/test-path/": False}
+        )
