@@ -165,13 +165,13 @@ input[readonly] {
   background-color: initial;
   border-bottom: initial;
 }
-#overviewTable,
-#overviewTable td,
-#overviewTable tr {
-  padding: 2px; /* Add padding to each cell */
+#compactTable,
+#compactTable td,
+#compactTable tr {
+  padding: 2px;
 }
-#overviewTable th {
-  padding: 3px; /* Add padding to each cell */
+#compactTable th {
+  padding: 3px;
 }
 .highlight-list {
   list-style: none;

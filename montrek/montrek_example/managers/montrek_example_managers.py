@@ -52,25 +52,38 @@ class ExampleAReportManager(MontrekReportManager):
         self.append_report_element(editable_element_a2)
 
 
-class HubAManager(MontrekTableManager):
+class CompactHubAManager(MontrekTableManager):
     repository_class = HubARepository
+    is_compact_format = True
 
     @property
-    def overview_table_elements(self) -> list:
+    def table_elements(self) -> list:
         return [
             te.LinkTextTableElement(
                 name="A1 String",
                 url="montrek_example_a_details",
-                kwargs={"pk": "id"},
+                kwargs={"pk": "hub_id"},
                 text="field_a1_str",
                 hover_text="View Example A",
             ),
             te.IntTableElement(name="A1 Int", attr="field_a1_int"),
         ]
 
+
+class HubAManager(MontrekTableManager):
+    repository_class = HubARepository
+
     @property
     def table_elements(self) -> list:
-        return self.overview_table_elements + [
+        return [
+            te.LinkTextTableElement(
+                name="A1 String",
+                url="montrek_example_a_details",
+                kwargs={"pk": "hub_id"},
+                text="field_a1_str",
+                hover_text="View Example A",
+            ),
+            te.IntTableElement(name="A1 Int", attr="field_a1_int"),
             te.StringTableElement(name="A2 String", attr="field_a2_str"),
             te.FloatTableElement(name="A2 Float", attr="field_a2_float"),
             te.StringTableElement(name="B1 String", attr="field_b1_str"),

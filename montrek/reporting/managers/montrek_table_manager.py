@@ -36,6 +36,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
     table_title = ""
     document_title = "Montrek Table"
     draft = False
+    is_compact_format = False
 
     def __init__(self, session_data: dict[str, Any] = {}):
         super().__init__(session_data)
@@ -45,10 +46,6 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
     @property
     def footer_text(self) -> ReportElementProtocol:
         return rt.ReportingText("Internal Report")
-
-    @property
-    def overview_table_elements(self) -> tuple[te.TableElement, ...]:
-        return ()
 
     @property
     def table_elements(self) -> tuple[te.TableElement, ...]:
@@ -86,12 +83,8 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
             ele.attr: ele.name for ele in self.table_elements if hasattr(ele, "attr")
         }
 
-    def to_html(self, overview=False):
-        table_id = 'id="overviewTable"' if overview else ""
-        table_elements = (
-            self.overview_table_elements if overview else self.table_elements
-        )
-
+    def to_html(self):
+        table_id = 'id="overviewTable"' if self.is_compact_format else ""
         html_str = (
             f"<h3>{self.table_title}</h3>"
             '<div class="row scrollable-content"><div class="col-md-12">'
@@ -100,14 +93,14 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
 
         html_str += "".join(
             f"<th title='{getattr(te, 'attr', '')}'>{te.name}</th>"
-            for te in table_elements
+            for te in self.table_elements
         )
         html_str += "</tr>"
 
         for query_object in self.get_table():
             html_str += '<tr style="white-space:nowrap;">'
             html_str += "".join(
-                te.get_attribute(query_object, "html") for te in table_elements
+                te.get_attribute(query_object, "html") for te in self.table_elements
             )
             html_str += "</tr>"
 
