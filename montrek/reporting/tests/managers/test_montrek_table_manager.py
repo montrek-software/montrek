@@ -278,6 +278,15 @@ class TestMontrekTableManager(TestCase):
         test_manager = MockLongMontrekTableManager({"current_is_compact_format": False})
         self.assertEqual(test_manager.is_current_compact_format, False)
 
+    def test_order_field(self):
+        test_manager = MockLongMontrekTableManager({})
+        self.assertEqual(test_manager.order_field, None)
+
+        test_manager = MockLongMontrekTableManager({"order_field": "field_a"})
+        self.assertEqual(test_manager.order_field, "field_a")
+        test_manager = MockLongMontrekTableManager({"order_field": "-field_a"})
+        self.assertEqual(test_manager.order_field, "-field_a")
+
 
 class MockMontrekDataFrameTableManager(MontrekDataFrameTableManager):
     @property

@@ -43,6 +43,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         self._document_name: None | str = None
         self._queryset: None | QuerySet = None
         self.is_current_compact_format: bool = self.get_is_compact_format()
+        self.order_field: None | str = self.get_order_field_and_apply()
 
     @property
     def footer_text(self) -> ReportElementProtocol:
@@ -65,6 +66,10 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         return self.session_data.get(
             "current_is_compact_format", self.is_compact_format
         )
+
+    def get_order_field_and_apply(self) -> None | str:
+        order_field = self.session_data.get("order_field", None)
+        return order_field
 
     def get_table(self) -> QuerySet | dict:
         raise NotImplementedError("Method get_table must be implemented")
