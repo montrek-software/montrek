@@ -84,7 +84,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         }
 
     def to_html(self):
-        table_id = 'id="overviewTable"' if self.is_compact_format else ""
+        table_id = 'id="compactTable"' if self.is_compact_format else ""
         html_str = (
             f"<h3>{self.table_title}</h3>"
             '<div class="row scrollable-content"><div class="col-md-12">'
