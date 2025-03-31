@@ -3,7 +3,9 @@ from django.contrib.sessions.middleware import SessionMiddleware
 from django.utils import timezone
 from baseclasses.utils import (
     FilterMetaSessionDataElement,
+    PagesMetaSessionDataElement,
     TableMetaSessionData,
+    TableMetaSessionDataElement,
     montrek_time,
     montrek_today,
     montrek_date_string,
@@ -217,6 +219,32 @@ class TestFilterMetaSessionDataElement(TestCase):
         self.assertTrue(isnull_filter["filter_value"])
 
 
+class TestPagesMetaSessionDataElement(TestCase):
+    def setUp(self):
+        self.request = MockRequest()
+
+    def test_get_page_number_existing(self):
+        """Test getting existing page number"""
+
+        session_data = {"pages": {"/test-path/": 3}, "page": 5}
+        test_element = PagesMetaSessionDataElement(session_data, self.request)
+
+        page_data = test_element.apply_data()
+
+        self.assertEqual(page_data["pages"]["/test-path/"], 5)
+
+    def test_get_page_number_default(self):
+        """Test page number when no page is specified"""
+
+        session_data = {}
+        test_element = PagesMetaSessionDataElement(session_data, self.request)
+
+        page_data = test_element.apply_data()
+
+        self.assertIn("pages", page_data)
+        self.assertEqual(page_data["pages"], {})
+
+
 class TestTableMetaSessionData(TestCase):
     def setUp(self):
         self.request = MockRequest()
@@ -245,27 +273,6 @@ class TestTableMetaSessionData(TestCase):
         self.assertIn("pages", self.request.session)
         self.assertIn("filter_count", self.request.session)
         self.assertIn("paginate_by", self.request.session)
-
-    def test_get_page_number_existing(self):
-        """Test getting existing page number"""
-        table_meta = TableMetaSessionData(self.request)
-
-        session_data = {"pages": {"/test-path/": 3}, "page": 5}
-
-        page_data = table_meta._get_page_number(session_data)
-
-        self.assertEqual(page_data["pages"]["/test-path/"], 5)
-
-    def test_get_page_number_default(self):
-        """Test page number when no page is specified"""
-        table_meta = TableMetaSessionData(self.request)
-
-        session_data = {}
-
-        page_data = table_meta._get_page_number(session_data)
-
-        self.assertIn("pages", page_data)
-        self.assertEqual(page_data["pages"], {})
 
     def test_get_filter_form_count(self):
         """Test filter form count incrementation"""

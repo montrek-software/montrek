@@ -132,9 +132,29 @@ class FilterMetaSessionDataElement(TableMetaSessionDataElement):
         return filter_data
 
 
+class PagesMetaSessionDataElement(TableMetaSessionDataElement):
+    field: str = "pages"
+
+    def apply_data(self):
+        pages_data = {}
+        if self.field not in self.session_data:
+            pages_data[self.field] = {}
+            self.session_data[self.field] = {}
+        else:
+            pages_data[self.field] = self.session_data[self.field]
+        if "page" in self.session_data:
+            page = self.session_data["page"]
+            pages_data[self.field][self.request_path] = page
+        else:
+            if self.request_path in self.session_data[self.field]:
+                pages_data["page"] = self.session_data[self.field][self.request_path]
+        return pages_data
+
+
 class TableMetaSessionData:
     meta_session_data_elements: list[type[TableMetaSessionDataElement]] = [
-        FilterMetaSessionDataElement
+        FilterMetaSessionDataElement,
+        PagesMetaSessionDataElement,
     ]
 
     def __init__(self, request) -> None:
@@ -142,7 +162,6 @@ class TableMetaSessionData:
 
     def update_session_data(self, session_data: SessionDataType) -> SessionDataType:
         update_entities = {
-            "pages": self._get_page_number,
             "filter_count": self._get_filter_form_count,
             "paginate_by": self._get_paginate_by,
         }
@@ -155,22 +174,6 @@ class TableMetaSessionData:
             session_data = element.session_data
 
         return session_data
-
-    def _get_page_number(self, session_data):
-        request_path = self.request.path
-        pages_data = {}
-        if "pages" not in session_data:
-            pages_data["pages"] = {}
-            session_data["pages"] = {}
-        else:
-            pages_data["pages"] = session_data["pages"]
-        if "page" in session_data:
-            page = session_data["page"]
-            pages_data["pages"][request_path] = page
-        else:
-            if request_path in session_data["pages"]:
-                pages_data["page"] = session_data["pages"][request_path]
-        return pages_data
 
     def _get_filter_form_count(self, session_data: SessionDataType) -> SessionDataType:
         return self._set_data_to_path(
