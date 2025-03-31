@@ -85,7 +85,7 @@ class TableMetaSessionDataElement(ABC):
     @abstractmethod
     def apply_data(self) -> SessionDataType: ...
 
-    def _set_data_to_path(self, default: int) -> SessionDataType:
+    def _set_data_to_path(self, default: int | None) -> SessionDataType:
         data = {}
         if self.field not in self.session_data:
             data[self.field] = {}
@@ -189,6 +189,15 @@ class IsCompactFormatMetaSessionDataElement(TableMetaSessionDataElement):
         session_data["current_is_compact_format"] = session_data["is_compact_format"][
             self.request.path
         ]
+        return session_data
+
+
+class OrderFieldMetaSessionDataElement(TableMetaSessionDataElement):
+    field: str = "order_fields"
+
+    def apply_data(self) -> SessionDataType:
+        session_data = self._set_data_to_path(default=None)
+        session_data["order_field"] = session_data["order_fields"][self.request.path]
         return session_data
 
 
