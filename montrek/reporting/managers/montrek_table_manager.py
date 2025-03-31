@@ -69,6 +69,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
 
     def get_order_field_and_apply(self) -> None | str:
         order_field = self.session_data.get("order_field", None)
+        self.repository.set_order_fields(order_field)
         return order_field
 
     def get_table(self) -> QuerySet | dict:

@@ -72,6 +72,7 @@ class MockRepository:
 class MockLongRepository:
     def __init__(self, session_data: dict):
         self.session_data = session_data
+        self._order_field = None
 
     def receive(self):
         mock_data = [
@@ -81,6 +82,12 @@ class MockLongRepository:
             for i in range(10000)
         ]
         return MockQuerySet(*mock_data)
+
+    def get_order_fields(self):
+        return self._order_field
+
+    def set_order_fields(self, value):
+        self._order_field = value
 
 
 class MockMontrekTableManager(MontrekTableManager):
@@ -281,11 +288,14 @@ class TestMontrekTableManager(TestCase):
     def test_order_field(self):
         test_manager = MockLongMontrekTableManager({})
         self.assertEqual(test_manager.order_field, None)
+        self.assertEqual(test_manager.repository.get_order_fields(), None)
 
         test_manager = MockLongMontrekTableManager({"order_field": "field_a"})
         self.assertEqual(test_manager.order_field, "field_a")
+        self.assertEqual(test_manager.repository.get_order_fields(), "field_a")
         test_manager = MockLongMontrekTableManager({"order_field": "-field_a"})
         self.assertEqual(test_manager.order_field, "-field_a")
+        self.assertEqual(test_manager.repository.get_order_fields(), "-field_a")
 
 
 class MockMontrekDataFrameTableManager(MontrekDataFrameTableManager):
