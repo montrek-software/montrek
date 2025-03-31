@@ -257,6 +257,7 @@ class TestTableMetaSessionData(TestCase):
         self.assertEqual(self.request.session["filter"], {})
         self.assertEqual(self.request.session["pages"], {})
         self.assertEqual(self.request.session["filter_count"], {"/test-path/": 1})
+        self.assertEqual(self.request.session["paginate_by"], {"/test-path/": 10})
 
     def test_get_filters_in_lookup(self):
         """Test 'in' lookup type for filters"""
@@ -287,3 +288,44 @@ class TestTableMetaSessionData(TestCase):
         isnull_filter = filter_data["filter"]["/test-path/"]["end_date__isnull"]
 
         self.assertTrue(isnull_filter["filter_value"])
+
+    def test_get_paginate_by(self):
+        """Test paginate_by"""
+        table_meta = TableMetaSessionData(self.request)
+
+        session_data = {}
+
+        count_data = table_meta._get_paginate_by(session_data)
+
+        self.assertIn("paginate_by", count_data)
+        self.assertEqual(count_data["paginate_by"]["/test-path/"], 10)
+
+    def test_get_pageinate_by_existing(self):
+        """Test getting existing paginate_by"""
+        table_meta = TableMetaSessionData(self.request)
+
+        session_data = {"paginate_by": {"/test-path/": 15}}
+
+        page_data = table_meta._get_paginate_by(session_data)
+
+        self.assertEqual(page_data["paginate_by"]["/test-path/"], 15)
+
+    def test_get_pageinate_not_below_five(self):
+        """Test getting existing paginate_by"""
+        table_meta = TableMetaSessionData(self.request)
+
+        session_data = {"paginate_by": {"/test-path/": 4}}
+
+        page_data = table_meta._get_paginate_by(session_data)
+
+        self.assertEqual(page_data["paginate_by"]["/test-path/"], 5)
+        session_data = {"paginate_by": {"/test-path/": 0}}
+
+        page_data = table_meta._get_paginate_by(session_data)
+
+        self.assertEqual(page_data["paginate_by"]["/test-path/"], 5)
+        session_data = {"paginate_by": {"/test-path/": -5}}
+
+        page_data = table_meta._get_paginate_by(session_data)
+
+        self.assertEqual(page_data["paginate_by"]["/test-path/"], 5)

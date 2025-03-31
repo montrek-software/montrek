@@ -74,12 +74,15 @@ class TableMetaSessionData:
         self.request = request
 
     def update_session_data(self, session_data: SessionDataType) -> SessionDataType:
-        session_data.update(self._get_filters(session_data))
-        session_data.update(self._get_page_number(session_data))
-        session_data.update(self._get_filter_form_count(session_data))
-        self.request.session["filter"] = session_data.get("filter", {})
-        self.request.session["pages"] = session_data.get("pages", {})
-        self.request.session["filter_count"] = session_data.get("filter_count", {})
+        update_entities = {
+            "filter": self._get_filters,
+            "pages": self._get_page_number,
+            "filter_count": self._get_filter_form_count,
+            "paginate_by": self._get_paginate_by,
+        }
+        for field, func in update_entities.items():
+            session_data.update(func(session_data))
+            self.request.session[field] = session_data.get(field, {})
         return session_data
 
     def _get_filters(self, session_data):
@@ -139,14 +142,28 @@ class TableMetaSessionData:
                 pages_data["page"] = session_data["pages"][request_path]
         return pages_data
 
-    def _get_filter_form_count(self, session_data):
+    def _get_filter_form_count(self, session_data: SessionDataType) -> SessionDataType:
+        return self._set_data_to_path(
+            field="filter_count", default=1, session_data=session_data
+        )
+
+    def _get_paginate_by(self, session_data: SessionDataType) -> SessionDataType:
+        session_data = self._set_data_to_path(
+            field="paginate_by", default=10, session_data=session_data
+        )
+        if session_data["paginate_by"][self.request.path] < 5:
+            session_data["paginate_by"][self.request.path] = 5
+        return session_data
+
+    def _set_data_to_path(
+        self, field: str, default: int, session_data: SessionDataType
+    ) -> SessionDataType:
         request_path = self.request.path
-        cfield = "filter_count"
-        count_data = {}
-        if cfield not in session_data:
-            count_data[cfield] = {}
+        data = {}
+        if field not in session_data:
+            data[field] = {}
         else:
-            count_data[cfield] = session_data[cfield]
-        if request_path not in count_data[cfield]:
-            count_data[cfield][request_path] = 1
-        return count_data
+            data[field] = session_data[field]
+        if request_path not in data[field]:
+            data[field][request_path] = default
+        return data
