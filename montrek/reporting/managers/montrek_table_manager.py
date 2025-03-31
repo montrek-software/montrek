@@ -280,7 +280,11 @@ class MontrekTableManager(MontrekTableManagerABC):
     def __init__(self, session_data: dict[str, Any] = {}):
         super().__init__(session_data)
         self.paginator: None | MontrekTablePaginator = None
-        self.paginate_by: int = session_data.get("current_paginate_by", 10)
+        self.paginate_by: int = self.get_paginate_by()
+
+    def get_paginate_by(self):
+        paginate_by = self.session_data.get("current_paginate_by", 10)
+        return max(paginate_by, 5)
 
     def get_table(self) -> QuerySet | dict:
         return self._get_queryset(self.get_paginated_queryset)
