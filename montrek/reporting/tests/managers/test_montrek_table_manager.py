@@ -273,9 +273,9 @@ class TestMontrekTableManager(TestCase):
         test_manager = MockLongMontrekTableManager({})
         self.assertEqual(test_manager.is_current_compact_format, False)
 
-        test_manager = MockLongMontrekTableManager({"is_compact_format": True})
+        test_manager = MockLongMontrekTableManager({"current_is_compact_format": True})
         self.assertEqual(test_manager.is_current_compact_format, True)
-        test_manager = MockLongMontrekTableManager({"is_compact_format": False})
+        test_manager = MockLongMontrekTableManager({"current_is_compact_format": False})
         self.assertEqual(test_manager.is_current_compact_format, False)
 
 

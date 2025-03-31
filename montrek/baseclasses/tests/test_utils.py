@@ -320,6 +320,7 @@ class TestIsCompactFormatCountMetaSessionDataElement(TestCase):
 
         self.assertIn("is_compact_format", test_data)
         self.assertEqual(test_data["is_compact_format"]["/test-path/"], False)
+        self.assertEqual(test_data["current_is_compact_format"], False)
 
     def test_is_comapct_format__set(self):
         """Test paginate_by"""
@@ -330,6 +331,7 @@ class TestIsCompactFormatCountMetaSessionDataElement(TestCase):
 
         self.assertIn("is_compact_format", test_data)
         self.assertEqual(test_data["is_compact_format"]["/test-path/"], True)
+        self.assertEqual(test_data["current_is_compact_format"], True)
 
 
 class TestTableMetaSessionData(TestCase):

@@ -185,7 +185,11 @@ class IsCompactFormatMetaSessionDataElement(TableMetaSessionDataElement):
     field: str = "is_compact_format"
 
     def apply_data(self) -> SessionDataType:
-        return self._set_data_to_path(default=False)
+        session_data = self._set_data_to_path(default=False)
+        session_data["current_is_compact_format"] = session_data["is_compact_format"][
+            self.request.path
+        ]
+        return session_data
 
 
 class TableMetaSessionData:

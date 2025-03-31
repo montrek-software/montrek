@@ -62,7 +62,9 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         return self._document_name
 
     def get_is_compact_format(self) -> bool:
-        return self.session_data.get("is_compact_format", self.is_compact_format)
+        return self.session_data.get(
+            "current_is_compact_format", self.is_compact_format
+        )
 
     def get_table(self) -> QuerySet | dict:
         raise NotImplementedError("Method get_table must be implemented")
@@ -88,7 +90,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         }
 
     def to_html(self):
-        table_id = 'id="overviewTable"' if self.is_compact_format else ""
+        table_id = 'id="overviewTable"' if self.is_current_compact_format else ""
         html_str = (
             f"<h3>{self.table_title}</h3>"
             '<div class="row scrollable-content"><div class="col-md-12">'
