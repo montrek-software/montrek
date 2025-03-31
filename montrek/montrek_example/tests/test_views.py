@@ -238,7 +238,7 @@ class TestMontrekExampleADetailView(MontrekViewTestCase):
             "<h3></h3>"
             '<div class="row scrollable-content">'
             '<div class="col-md-12">'
-            '<table id="overviewTable" class="table table-bordered table-hover">'
+            '<table id="compactTable" class="table table-bordered table-hover">'
             "<tr><th title=''>A1 String</th><th title='field_a1_int'>A1 Int</th></tr>"
             '<tr style="white-space:nowrap;">'
             f'<td><a id="id__montrek_example_a_{self.hub_vd_0.hub_id}_details" href="/montrek_example/a/{self.hub_vd_0.hub_id}/details" title="View Example A">DEFAULT</a></td>'
