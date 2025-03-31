@@ -62,13 +62,12 @@
       <div>
           <a href="https://montrek-software.de" target="_blank" ><img src="https://images.squarespace-cdn.com/content/v1/673bfbe149f99b59e4a41ee7/cf8061ac-dc74-490d-8b62-40497ebc9629/montrek_logo_variant.png?format=1500w" class="img-responsive" alt="Montrek Logo" style="width: 80%;"/></a>
       </div>
+      {% if overview %}
       <div>
           <h2>OVERVIEW</h2>
+          {{ overview|safe }}
       </div>
-      <div>
-          <h2>LINKS</h2>
-            {% include_links %}
-      </div>
+      {% endif %}
     </div>
     <div class="col-lg-8">
       <div class="container-fluid">

@@ -12,6 +12,7 @@ from data_import.api_import.repositories.api_data_import_registry_repositories i
 
 class HubARepository(MontrekRepository):
     hub_class = me_models.HubA
+    default_order_fields = ("hub_id",)
 
     def set_annotations(self):
         self.add_satellite_fields_annotations(

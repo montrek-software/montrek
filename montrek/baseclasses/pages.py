@@ -4,18 +4,32 @@ from baseclasses.repositories.montrek_repository import MontrekRepository
 class MontrekPage:
     page_title = "page_title not set!"
     show_date_range_selector = False
+    overview_manager_class = None
 
     def __init__(self, **kwargs):
         self._tabs = None
+        self._overview = None
 
-    def get_tabs(self):
+    def get_tabs(self) -> list:
         raise NotImplementedError("MontrekPage needs get_tabs method!")
+
+    def get_overview(self) -> str:
+        if self.overview_manager_class:
+            manager = self.overview_manager_class(session_data={})
+            return manager.to_html()
+        return ""
 
     @property
     def tabs(self):
         if self._tabs is None:
             self._tabs = self.get_tabs()
         return self._tabs
+
+    @property
+    def overview(self):
+        if self._overview is None:
+            self._overview = self.get_overview()
+        return self._overview
 
     def set_active_tab(self, active_tab: str):
         for tab in self.tabs:

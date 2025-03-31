@@ -175,6 +175,14 @@ input[readonly] {
   background-color: initial;
   border-bottom: initial;
 }
+#compactTable,
+#compactTable td,
+#compactTable tr {
+  padding: 2px;
+}
+#compactTable th {
+  padding: 3px;
+}
 .highlight-list {
   list-style: none;
   padding: 0;

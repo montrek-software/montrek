@@ -36,6 +36,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
     table_title = ""
     document_title = "Montrek Table"
     draft = False
+    is_compact_format = False
 
     def __init__(self, session_data: dict[str, Any] = {}):
         super().__init__(session_data)
@@ -83,20 +84,27 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         }
 
     def to_html(self):
-        html_str = f"<h3>{self.table_title}</h3>"
-        html_str += '<div class="row scrollable-content"><div class="col-md-12">'
-        html_str += '<table class="table table-bordered table-hover"><tr>'
-        for table_element in self.table_elements:
-            html_str += f"<th title={getattr(table_element, 'attr', '')}>{table_element.name}</th>"
+        table_id = 'id="overviewTable"' if self.is_compact_format else ""
+        html_str = (
+            f"<h3>{self.table_title}</h3>"
+            '<div class="row scrollable-content"><div class="col-md-12">'
+            f'<table {table_id} class="table table-bordered table-hover"><tr>'
+        )
+
+        html_str += "".join(
+            f"<th title='{getattr(te, 'attr', '')}'>{te.name}</th>"
+            for te in self.table_elements
+        )
         html_str += "</tr>"
-        table = self.get_table()
-        for query_object in table:
+
+        for query_object in self.get_table():
             html_str += '<tr style="white-space:nowrap;">'
-            for table_element in self.table_elements:
-                html_str += table_element.get_attribute(query_object, "html")
+            html_str += "".join(
+                te.get_attribute(query_object, "html") for te in self.table_elements
+            )
             html_str += "</tr>"
-        html_str += "</table>"
-        html_str += "</div></div>"
+
+        html_str += "</table></div></div>"
         return html_str
 
     def to_latex(self):
