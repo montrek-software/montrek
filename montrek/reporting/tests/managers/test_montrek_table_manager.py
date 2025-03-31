@@ -269,6 +269,15 @@ class TestMontrekTableManager(TestCase):
         query = test_manager.get_table()
         self.assertEqual(len(query), 5)
 
+    def test_set_is_compact_format(self):
+        test_manager = MockLongMontrekTableManager({})
+        self.assertEqual(test_manager.is_current_compact_format, False)
+
+        test_manager = MockLongMontrekTableManager({"current_is_compact_format": True})
+        self.assertEqual(test_manager.is_current_compact_format, True)
+        test_manager = MockLongMontrekTableManager({"current_is_compact_format": False})
+        self.assertEqual(test_manager.is_current_compact_format, False)
+
 
 class MockMontrekDataFrameTableManager(MontrekDataFrameTableManager):
     @property

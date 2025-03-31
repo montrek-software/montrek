@@ -179,6 +179,8 @@ class TestMontrekViewMixin(TestCase):
                 "filter_count": {"/": 1},
                 "paginate_by": {"/": 10},
                 "current_paginate_by": 10,
+                "is_compact_format": {"/": False},
+                "current_is_compact_format": False,
             },
         )
 
@@ -195,6 +197,8 @@ class TestMontrekViewMixin(TestCase):
             "filter_count": {"/": 1},
             "paginate_by": {"/": 10},
             "current_paginate_by": 10,
+            "is_compact_format": {"/": False},
+            "current_is_compact_format": False,
         }
         self.assertEqual(mock_view.session_data, expected_data)
 
@@ -217,6 +221,8 @@ class TestMontrekViewMixin(TestCase):
             "filter_count": {"/": 1},
             "paginate_by": {"/": 10},
             "current_paginate_by": 10,
+            "is_compact_format": {"/": False},
+            "current_is_compact_format": False,
         }
         self.assertEqual(mock_view.session_data, expected_data)
 
@@ -267,6 +273,8 @@ class TestMontrekViewMixin(TestCase):
             {
                 "paginate_by": {"/some/path": 10},
                 "current_paginate_by": 10,
+                "is_compact_format": {"/some/path": False},
+                "current_is_compact_format": False,
             }
         )
         self.assertEqual(mock_view.session_data, expected_session_data)
@@ -424,6 +432,24 @@ class TestMontrekListView(TestCase):
 
         self.assertEqual(response.status_code, 302)
         self.assertEqual(test_list_view.request.session["paginate_by"]["/dummy"], 5)
+
+    def test_list_view_base__set_is_compact_format__true(self):
+        test_list_view = MockMontrekListView("dummy?action=is_compact_format_true")
+        response = test_list_view.get(test_list_view.request)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            test_list_view.request.session["is_compact_format"]["/dummy"], True
+        )
+
+    def test_list_view_base__set_is_compact_format__false(self):
+        test_list_view = MockMontrekListView("dummy?action=is_compact_format_false")
+        response = test_list_view.get(test_list_view.request)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            test_list_view.request.session["is_compact_format"]["/dummy"], False
+        )
 
 
 class TestMontrekDetailView(TestCase):

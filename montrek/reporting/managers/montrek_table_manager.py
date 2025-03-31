@@ -42,6 +42,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         super().__init__(session_data)
         self._document_name: None | str = None
         self._queryset: None | QuerySet = None
+        self.is_current_compact_format: bool = self.get_is_compact_format()
 
     @property
     def footer_text(self) -> ReportElementProtocol:
@@ -59,6 +60,11 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
                 f"{manager_name}_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
             )
         return self._document_name
+
+    def get_is_compact_format(self) -> bool:
+        return self.session_data.get(
+            "current_is_compact_format", self.is_compact_format
+        )
 
     def get_table(self) -> QuerySet | dict:
         raise NotImplementedError("Method get_table must be implemented")
@@ -84,7 +90,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         }
 
     def to_html(self):
-        table_id = 'id="compactTable"' if self.is_compact_format else ""
+        table_id = 'id="compactTable"' if self.is_current_compact_format else ""
         html_str = (
             f"<h3>{self.table_title}</h3>"
             '<div class="row scrollable-content"><div class="col-md-12">'

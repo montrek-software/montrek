@@ -181,12 +181,24 @@ class PaginateByMetaSessionDataElement(TableMetaSessionDataElement):
         return session_data
 
 
+class IsCompactFormatMetaSessionDataElement(TableMetaSessionDataElement):
+    field: str = "is_compact_format"
+
+    def apply_data(self) -> SessionDataType:
+        session_data = self._set_data_to_path(default=False)
+        session_data["current_is_compact_format"] = session_data["is_compact_format"][
+            self.request.path
+        ]
+        return session_data
+
+
 class TableMetaSessionData:
     meta_session_data_elements: list[type[TableMetaSessionDataElement]] = [
         FilterMetaSessionDataElement,
         PagesMetaSessionDataElement,
         FilterCountMetaSessionDataElement,
         PaginateByMetaSessionDataElement,
+        IsCompactFormatMetaSessionDataElement,
     ]
 
     def __init__(self, request) -> None:
