@@ -181,6 +181,8 @@ class TestMontrekViewMixin(TestCase):
                 "current_paginate_by": 10,
                 "is_compact_format": {"/": False},
                 "current_is_compact_format": False,
+                "order_fields": {"/": None},
+                "order_field": None,
             },
         )
 
@@ -199,6 +201,8 @@ class TestMontrekViewMixin(TestCase):
             "current_paginate_by": 10,
             "is_compact_format": {"/": False},
             "current_is_compact_format": False,
+            "order_fields": {"/": None},
+            "order_field": None,
         }
         self.assertEqual(mock_view.session_data, expected_data)
 
@@ -223,6 +227,8 @@ class TestMontrekViewMixin(TestCase):
             "current_paginate_by": 10,
             "is_compact_format": {"/": False},
             "current_is_compact_format": False,
+            "order_fields": {"/": None},
+            "order_field": None,
         }
         self.assertEqual(mock_view.session_data, expected_data)
 
@@ -275,6 +281,8 @@ class TestMontrekViewMixin(TestCase):
                 "current_paginate_by": 10,
                 "is_compact_format": {"/some/path": False},
                 "current_is_compact_format": False,
+                "order_fields": {"/some/path": None},
+                "order_field": None,
             }
         )
         self.assertEqual(mock_view.session_data, expected_session_data)

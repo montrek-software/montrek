@@ -208,6 +208,7 @@ class TableMetaSessionData:
         FilterCountMetaSessionDataElement,
         PaginateByMetaSessionDataElement,
         IsCompactFormatMetaSessionDataElement,
+        OrderFieldMetaSessionDataElement,
     ]
 
     def __init__(self, request) -> None:
