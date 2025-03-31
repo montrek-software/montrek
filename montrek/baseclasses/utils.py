@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 import datetime
 from datetime import timedelta
 from typing import Tuple
@@ -69,32 +70,49 @@ def get_content_type(filename: str) -> str:
     return "application/octet-stream"
 
 
-class TableMetaSessionData:
-    def __init__(self, request) -> None:
+class TableMetaSessionDataElement(ABC):
+    field: str = ""
+
+    def __init__(self, session_data: SessionDataType, request) -> None:
+        self.session_data = session_data
         self.request = request
+        self.request_path = request.path
 
-    def update_session_data(self, session_data: SessionDataType) -> SessionDataType:
-        session_data.update(self._get_filters(session_data))
-        session_data.update(self._get_page_number(session_data))
-        session_data.update(self._get_filter_form_count(session_data))
-        self.request.session["filter"] = session_data.get("filter", {})
-        self.request.session["pages"] = session_data.get("pages", {})
-        self.request.session["filter_count"] = session_data.get("filter_count", {})
-        return session_data
+    def process(self):
+        self.session_data.update(self.apply_data())
+        self.request.session[self.field] = self.session_data.get(self.field, {})
 
-    def _get_filters(self, session_data):
-        request_path = self.request.path
-        filter_data = {"filter": session_data.pop("filter", {})}
+    @abstractmethod
+    def apply_data(self) -> SessionDataType: ...
 
-        filter_fields = session_data.pop("filter_field", [])
-        filter_negates = session_data.pop("filter_negate", [""] * len(filter_fields))
-        filter_lookups = session_data.pop("filter_lookup", [])
-        filter_values = session_data.pop("filter_value", [""] * len(filter_fields))
+    def _set_data_to_path(self, default: int) -> SessionDataType:
+        data = {}
+        if self.field not in self.session_data:
+            data[self.field] = {}
+        else:
+            data[self.field] = self.session_data[self.field]
+        if self.request_path not in data[self.field]:
+            data[self.field][self.request_path] = default
+        return data
+
+
+class FilterMetaSessionDataElement(TableMetaSessionDataElement):
+    field: str = "filter"
+
+    def apply_data(self) -> SessionDataType:
+        filter_data = {self.field: self.session_data.pop("filter", {})}
+
+        filter_fields = self.session_data.pop("filter_field", [])
+        filter_negates = self.session_data.pop(
+            "filter_negate", [""] * len(filter_fields)
+        )
+        filter_lookups = self.session_data.pop("filter_lookup", [])
+        filter_values = self.session_data.pop("filter_value", [""] * len(filter_fields))
         filter_input_data = list(
             zip(filter_fields, filter_negates, filter_lookups, filter_values)
         )
         if len(filter_input_data) > 0:
-            filter_data["filter"][request_path] = {}
+            filter_data[self.field][self.request_path] = {}
         for (
             filter_field,
             filter_negate,
@@ -117,36 +135,67 @@ class TableMetaSessionData:
                 elif filter_value in false_values:
                     filter_value = False
 
-                filter_data["filter"][request_path][filter_key] = {
+                filter_data[self.field][self.request_path][filter_key] = {
                     "filter_negate": filter_negate,
                     "filter_value": filter_value,
                 }
         return filter_data
 
-    def _get_page_number(self, session_data):
-        request_path = self.request.path
+
+class PagesMetaSessionDataElement(TableMetaSessionDataElement):
+    field: str = "pages"
+
+    def apply_data(self) -> SessionDataType:
         pages_data = {}
-        if "pages" not in session_data:
-            pages_data["pages"] = {}
-            session_data["pages"] = {}
+        if self.field not in self.session_data:
+            pages_data[self.field] = {}
+            self.session_data[self.field] = {}
         else:
-            pages_data["pages"] = session_data["pages"]
-        if "page" in session_data:
-            page = session_data["page"]
-            pages_data["pages"][request_path] = page
+            pages_data[self.field] = self.session_data[self.field]
+        if "page" in self.session_data:
+            page = self.session_data["page"]
+            pages_data[self.field][self.request_path] = page
         else:
-            if request_path in session_data["pages"]:
-                pages_data["page"] = session_data["pages"][request_path]
+            if self.request_path in self.session_data[self.field]:
+                pages_data["page"] = self.session_data[self.field][self.request_path]
         return pages_data
 
-    def _get_filter_form_count(self, session_data):
-        request_path = self.request.path
-        cfield = "filter_count"
-        count_data = {}
-        if cfield not in session_data:
-            count_data[cfield] = {}
-        else:
-            count_data[cfield] = session_data[cfield]
-        if request_path not in count_data[cfield]:
-            count_data[cfield][request_path] = 1
-        return count_data
+
+class FilterCountMetaSessionDataElement(TableMetaSessionDataElement):
+    field: str = "filter_count"
+
+    def apply_data(self) -> SessionDataType:
+        return self._set_data_to_path(default=1)
+
+
+class PaginateByMetaSessionDataElement(TableMetaSessionDataElement):
+    field: str = "paginate_by"
+
+    def apply_data(self) -> SessionDataType:
+        session_data = self._set_data_to_path(default=10)
+        if session_data["paginate_by"][self.request.path] < 5:
+            session_data["paginate_by"][self.request.path] = 5
+        session_data["current_paginate_by"] = session_data["paginate_by"][
+            self.request.path
+        ]
+        return session_data
+
+
+class TableMetaSessionData:
+    meta_session_data_elements: list[type[TableMetaSessionDataElement]] = [
+        FilterMetaSessionDataElement,
+        PagesMetaSessionDataElement,
+        FilterCountMetaSessionDataElement,
+        PaginateByMetaSessionDataElement,
+    ]
+
+    def __init__(self, request) -> None:
+        self.request = request
+
+    def update_session_data(self, session_data: SessionDataType) -> SessionDataType:
+        for element_class in self.meta_session_data_elements:
+            element = element_class(session_data, self.request)
+            element.process()
+            session_data = element.session_data
+
+        return session_data

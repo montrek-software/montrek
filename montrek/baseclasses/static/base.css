@@ -78,6 +78,16 @@ h2 {
   background-color: #9e0b36; /* Darker red on hover */
 }
 
+.btn-light {
+  color: #004767; /* White text */
+  border: none;
+  outline: none;
+  background: none;
+}
+
+.btn-light:hover {
+  color: #9e0b36; /* Darker red on hover */
+}
 /* Input */
 .input {
   background-color: #be0d3e; /* Red background */

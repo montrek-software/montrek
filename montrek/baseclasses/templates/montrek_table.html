@@ -28,9 +28,9 @@
                 </div>
                 {% endfor %}
                 <input type="hidden" name="action" id="form-action" value="">
-                  <button type="submit" onclick="document.getElementById('form-action').value='filter'" class="btn btn-primary mr-2">Filter</button>
-                  <button type="submit" onclick="document.getElementById('form-action').value='reset'" class="btn" title="Reset">Reset</button>
-                  <button type="submit" onclick="document.getElementById('form-action').value='add_filter'" class="btn" title="Reset">
+                  <button type="submit" onclick="document.getElementById('form-action').value='filter'" class="btn btn-primary mr-2"title="Apply Filter">Filter</button>
+                  <button type="submit" onclick="document.getElementById('form-action').value='reset'" class="btn" title="Reset Filter">Reset</button>
+                  <button type="submit" onclick="document.getElementById('form-action').value='add_filter'" class="btn" title="Add filter">
                     <span class="glyphicon glyphicon-plus"</span>
                   </button>
               </form>
@@ -56,14 +56,14 @@
     <div class="row">
       {{ table|safe }}
     </div>
-    {% if paginator.show_paginator %}
-      <div class="row">
-        <div class="col-md-12">
+    <div class="row">
+      <div class="col-md-10">
+        {% if paginator.show_paginator %}
           <div class="pagination">
             <span class="step-links">
               {% if paginator.has_previous %}
-                <a href="?page=1"><span class="glyphicon glyphicon-fast-backward"/></a>
-                <a href="?page={{ paginator.previous_page_number }}"><span class="glyphicon glyphicon-step-backward"/></a>
+                <a href="?page=1" class="btn-light"><span class="glyphicon glyphicon-fast-backward"/></a>
+                <a href="?page={{ paginator.previous_page_number }}" class="btn-light"><span class="glyphicon glyphicon-step-backward"/></a>
               {% endif %}
               <span class="current">
                 Page {{ paginator.number }}
@@ -73,17 +73,32 @@
                 {% endif %}
               </span>
               {% if paginator.has_next %}
-                  <a href="?page={{ paginator.next_page_number }}"><span class="glyphicon glyphicon-step-forward"/></a>
+                  <a href="?page={{ paginator.next_page_number }}" class="btn-light"><span class="glyphicon glyphicon-step-forward"/></a>
                   {% if is_large %}
                   {% else %}
-                    <a href="?page={{ paginator.num_pages }}"><span class="glyphicon glyphicon-fast-forward"/></a>
+                    <a href="?page={{ paginator.num_pages }}" class="btn-light"><span class="glyphicon glyphicon-fast-forward"/></a>
                   {% endif %}
               {% endif %}
             </span>
           </div>
+        {% endif %}
+      </div>
+      <div class="col-md-1">
+        <div class="pagination">
+          {{ paginate_by }}/Page
         </div>
       </div>
-    {% endif %}
+      <div class="col-md-1">
+        <div class="pagination">
+          <form>
+              <input type="hidden" name="action" id="form-paginate_by-action" value="">
+                <button type="submit" onclick="document.getElementById('form-paginate_by-action').value='add_paginate_by'" class="btn-light"><span class="glyphicon glyphicon-arrow-down"/></button>
+                <button type="submit" onclick="document.getElementById('form-paginate_by-action').value='sub_paginate_by'" class="btn-light"><span class="glyphicon glyphicon-arrow-up"/></button>
+              </input>
+          </form>
+        </div>
+      </div>
+    </div>
 </div>
 {% endblock %}
 {% block side_page %}

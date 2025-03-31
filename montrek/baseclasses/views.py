@@ -267,6 +267,10 @@ class MontrekListView(
             return self.reset_filter()
         if self.request.GET.get("action") == "add_filter":
             return self.add_filter()
+        if self.request.GET.get("action") == "add_paginate_by":
+            return self.add_paginate_by()
+        if self.request.GET.get("action") == "sub_paginate_by":
+            return self.sub_paginate_by()
         return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -288,6 +292,7 @@ class MontrekListView(
             )
         context["table"] = self.manager.to_html()
         context["paginator"] = self.manager.paginator
+        context["paginate_by"] = self.manager.paginate_by
         context["is_large"] = self.manager.is_large
         filter = self.session_data.get("filter", {})
         filter = filter.get(self.session_data["request_path"], {})
@@ -325,6 +330,16 @@ class MontrekListView(
     def add_filter(self):
         request_path = self.session_data["request_path"]
         self.request.session["filter_count"][request_path] += 1
+        return HttpResponseRedirect(self.request.path)
+
+    def add_paginate_by(self):
+        request_path = self.session_data["request_path"]
+        self.request.session["paginate_by"][request_path] += 5
+        return HttpResponseRedirect(self.request.path)
+
+    def sub_paginate_by(self):
+        request_path = self.session_data["request_path"]
+        self.request.session["paginate_by"][request_path] -= 5
         return HttpResponseRedirect(self.request.path)
 
     def post(self, request, *args, **kwargs):
