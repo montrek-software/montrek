@@ -267,6 +267,8 @@ class MontrekListView(
             return self.reset_filter()
         if self.request.GET.get("action") == "add_filter":
             return self.add_filter()
+        if self.request.GET.get("action") == "add_paginate_by":
+            return self.add_paginate_by()
         return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -325,6 +327,11 @@ class MontrekListView(
     def add_filter(self):
         request_path = self.session_data["request_path"]
         self.request.session["filter_count"][request_path] += 1
+        return HttpResponseRedirect(self.request.path)
+
+    def add_paginate_by(self):
+        request_path = self.session_data["request_path"]
+        self.request.session["paginate_by"][request_path] += 5
         return HttpResponseRedirect(self.request.path)
 
     def post(self, request, *args, **kwargs):

@@ -175,6 +175,9 @@ class PaginateByMetaSessionDataElement(TableMetaSessionDataElement):
         session_data = self._set_data_to_path(default=10)
         if session_data["paginate_by"][self.request.path] < 5:
             session_data["paginate_by"][self.request.path] = 5
+        session_data["current_paginate_by"] = session_data["paginate_by"][
+            self.request.path
+        ]
         return session_data
 
 

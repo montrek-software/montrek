@@ -400,6 +400,13 @@ class TestMontrekListView(TestCase):
         test_view.kwargs = {}
         self.assertRaises(ValueError, test_view.get_context_data, **{"object_list": []})
 
+    def test_list_view_base__add_paginate_by(self):
+        test_list_view = MockMontrekListView("dummy?action=add_paginate_by")
+        response = test_list_view.get(test_list_view.request)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(test_list_view.request.session["paginate_by"]["/dummy"], 15)
+
 
 class TestMontrekDetailView(TestCase):
     def test_gen_pdf(self):
