@@ -83,6 +83,7 @@ h2 {
   border: none;
   outline: none;
   background: none;
+  margin: 5px; /* Add some top margin for spacing */
 }
 
 .btn-light:hover {
