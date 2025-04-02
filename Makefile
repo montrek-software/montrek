@@ -32,4 +32,4 @@ update-repositories:
 	@bash bin/update-repositories-to-latest-tags.sh
 
 update-server:
-	@bash bin/start-docker.sh down && bin/update-repositories-to-latest-tags.sh && bin/start-docker.sh up -d
+	@bash -c 'bin/start-docker.sh down && bin/update-repositories-to-latest-tags.sh && bin/start-docker.sh up -d'
