@@ -17,7 +17,7 @@ update_repo_to_latest_tag() {
 
   if [ -n "$latest_tag" ]; then
     echo -e "\033[1;32mChecking out to latest tag: $latest_tag\033[0m"
-    git checkout "$latest_tag"
+    git checkout --quiet "$latest_tag"
   else
     echo "No tags found in repository: $repo_path, continuing."
   fi
