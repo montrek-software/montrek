@@ -28,3 +28,5 @@ generate-https-certs:
 sync-local-python-env:
 	@bash bin/sync-local-python-env.sh
 
+make update-server:
+	@bash bin/update-repositories-to-latest-tags.sh
