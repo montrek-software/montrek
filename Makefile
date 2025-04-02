@@ -34,5 +34,4 @@ update-repositories:
 update-server:
 	@bash bin/start-docker.sh down
 	@bash bin/update-repositories-to-latest-tags.sh
-	@bash cd $(CURDIR)
 	@bash bin/start-docker.sh up -d
