@@ -101,7 +101,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
             f"<h3>{self.table_title}</h3>"
             '<div class="row scrollable-content"><div class="col-md-12">'
             f'<table {table_id} class="table table-bordered table-hover">'
-            '<form><input type="hidden" name="action" id="form-order_by-action" value="">'
+            '<form><input type="hidden" name="order_action" id="form-order_by-action" value="">'
             "<tr>"
         )
         for table_element in self.table_elements:

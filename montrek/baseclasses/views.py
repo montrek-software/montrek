@@ -258,24 +258,27 @@ class MontrekListView(
     do_simple_file_upload = False
 
     def get(self, request, *args, **kwargs):
-        if self.request.GET.get("gen_csv") == "true":
+        request_get = self.request.GET
+        if request_get.get("gen_csv") == "true":
             return self.list_to_csv()
-        if self.request.GET.get("gen_excel") == "true":
+        if request_get.get("gen_excel") == "true":
             return self.list_to_excel()
-        if self.request.GET.get("gen_pdf") == "true":
+        if request_get.get("gen_pdf") == "true":
             return self.list_to_pdf()
-        if self.request.GET.get("action") == "reset":
+        if request_get.get("action") == "reset":
             return self.reset_filter()
-        if self.request.GET.get("action") == "add_filter":
+        if request_get.get("action") == "add_filter":
             return self.add_filter()
-        if self.request.GET.get("action") == "add_paginate_by":
+        if request_get.get("action") == "add_paginate_by":
             return self.add_paginate_by()
-        if self.request.GET.get("action") == "sub_paginate_by":
+        if request_get.get("action") == "sub_paginate_by":
             return self.sub_paginate_by()
-        if self.request.GET.get("action") == "is_compact_format_true":
+        if request_get.get("action") == "is_compact_format_true":
             return self.set_is_compact_format(True)
-        if self.request.GET.get("action") == "is_compact_format_false":
+        if request_get.get("action") == "is_compact_format_false":
             return self.set_is_compact_format(False)
+        if "order_action" in request_get:
+            return self.set_order_field(request_get.get("order_action", ""))
         return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -351,6 +354,12 @@ class MontrekListView(
     def set_is_compact_format(self, val: bool):
         request_path = self.session_data["request_path"]
         self.request.session["is_compact_format"][request_path] = val
+        return HttpResponseRedirect(self.request.path)
+
+    def set_order_field(self, val: bool):
+        request_path = self.session_data["request_path"]
+        self.request.session["order_fields"][request_path] = [val]
+        self.session_data["page"] = 1
         return HttpResponseRedirect(self.request.path)
 
     def post(self, request, *args, **kwargs):
