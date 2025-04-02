@@ -16,7 +16,7 @@ update_repo_to_latest_tag() {
   latest_tag=$(git describe --tags $(git rev-list --tags --max-count=1) 2>/dev/null || true)
 
   if [ -n "$latest_tag" ]; then
-    echo "Checking out to latest tag: $latest_tag"
+    echo -e "\033[1;32mChecking out to latest tag: $latest_tag\033[0m"
     git checkout "$latest_tag"
   else
     echo "No tags found in repository: $repo_path, continuing."
