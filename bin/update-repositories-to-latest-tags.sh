@@ -6,7 +6,7 @@ set -e
 # Function to update a git repository to the latest tag
 update_repo_to_latest_tag() {
   local repo_path="$1"
-  echo "U\033[1;32mpdating repository at: $repo_path\033[0m"
+  echo -e "\033[1;34mUpdating repository at: $repo_path\033[0m"
   cd "$repo_path"
 
   # Fetch all tags
