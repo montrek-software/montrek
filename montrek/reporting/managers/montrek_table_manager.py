@@ -100,14 +100,17 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         html_str = (
             f"<h3>{self.table_title}</h3>"
             '<div class="row scrollable-content"><div class="col-md-12">'
-            f'<table {table_id} class="table table-bordered table-hover"><tr>'
+            f'<table {table_id} class="table table-bordered table-hover">'
+            '<form><input type="hidden" name="action" id="form-order_by-action" value="">'
+            "<tr>"
         )
-
-        html_str += "".join(
-            f"<th title='{getattr(te, 'attr', '')}'>{te.name}</th>"
-            for te in self.table_elements
-        )
-        html_str += "</tr>"
+        for table_element in self.table_elements:
+            elem_attr = getattr(table_element, "attr", "")
+            html_str += f"<th title='{elem_attr}'>"
+            html_str += f"<div>{table_element.name}</div>"
+            html_str += f"<button type=\"submit\" onclick=\"document.getElementById('form-order_by-action').value='{elem_attr}'\">"
+            html_str += "SORT</button></th>"
+        html_str += "</tr></input></form>"
 
         for query_object in self.get_table():
             html_str += '<tr style="white-space:nowrap;">'
