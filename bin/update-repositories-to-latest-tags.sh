@@ -19,7 +19,7 @@ update_repo_to_latest_tag() {
     echo "Checking out to latest tag: $latest_tag"
     git checkout "$latest_tag"
   else
-    echo "No tags found in repository: $repo_path"
+    echo "No tags found in repository: $repo_path, continuing."
   fi
 
   # Return to the original directory
