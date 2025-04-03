@@ -107,7 +107,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
             '<div class="row scrollable-content"><div class="col-md-12">'
             f'<table {table_id} class="table table-bordered table-hover">'
             '<form><input type="hidden" name="order_action" id="form-order_by-action" value="">'
-            "<tr>"
+            "<thead><tr>"
         )
         for table_element in self.table_elements:
             # TODO: Handle links
@@ -120,7 +120,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
             if "-" + elem_attr == self.order_field:
                 html_str += '<span class="glyphicon glyphicon-arrow-up"></span>'
             html_str += "</div></button></th>"
-        html_str += "</tr></input></form>"
+        html_str += "</tr></thead></input></form>"
 
         for query_object in self.get_table():
             html_str += '<tr style="white-space:nowrap;">'
