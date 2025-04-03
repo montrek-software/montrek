@@ -113,9 +113,13 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
             # TODO: Handle links
             elem_attr = getattr(table_element, "attr", "hub_entity_id")
             html_str += f"<th title='{elem_attr}'>"
-            html_str += f"<div>{table_element.name}</div>"
-            html_str += f"<button type=\"submit\" onclick=\"document.getElementById('form-order_by-action').value='{elem_attr}'\">"
-            html_str += "SORT</button></th>"
+            html_str += f'<button type="submit" onclick="document.getElementById(\'form-order_by-action\').value=\'{elem_attr}\'" class="btn-order-field">'
+            html_str += f'<div style="display: flex; justify-content: space-between; align-items: center;">{table_element.name}'
+            if elem_attr == self.order_field:
+                html_str += '<span class="glyphicon glyphicon-arrow-down"></span>'
+            if "-" + elem_attr == self.order_field:
+                html_str += '<span class="glyphicon glyphicon-arrow-up"></span>'
+            html_str += "</div></button></th>"
         html_str += "</tr></input></form>"
 
         for query_object in self.get_table():

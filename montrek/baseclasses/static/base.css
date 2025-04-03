@@ -89,6 +89,14 @@ h2 {
 .btn-light:hover {
   color: #9e0b36; /* Darker red on hover */
 }
+.btn-order-field {
+  background: none;
+  border: none;
+  outline: none;
+}
+.btn-order-field:hover {
+  color: #be0d3e; /* Pale blue */
+}
 /* Input */
 .input {
   background-color: #be0d3e; /* Red background */
