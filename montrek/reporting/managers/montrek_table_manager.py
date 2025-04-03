@@ -91,18 +91,18 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
 
     def to_html(self):
         table_id = 'id="compactTable"' if self.is_current_compact_format else ""
-        html_str = (
-            f"<h3>{self.table_title}</h3>"
-            '<div class="row scrollable-content"><div class="col-md-12">'
-            f'<table {table_id} class="table table-bordered table-hover"><tr>'
-        )
-
+        html_str = f"<h3>{self.table_title}</h3>"
+        html_str += '<div class="row scrollable-content">'
+        html_str += '<div class="col-md-12">'
+        html_str += f'<table {table_id} class="table table-bordered table-hover">'
+        html_str += "<thead>"
+        html_str += "<tr>"
         html_str += "".join(
             f"<th title='{getattr(te, 'attr', '')}'>{te.name}</th>"
             for te in self.table_elements
         )
         html_str += "</tr>"
-
+        html_str += "</thead>"
         for query_object in self.get_table():
             html_str += '<tr style="white-space:nowrap;">'
             html_str += "".join(
@@ -110,7 +110,9 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
             )
             html_str += "</tr>"
 
-        html_str += "</table></div></div>"
+        html_str += "</table>"
+        html_str += "</div>"
+        html_str += "</div>"
         return html_str
 
     def to_latex(self):

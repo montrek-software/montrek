@@ -131,6 +131,9 @@ th {
   color: #ffffff; /* White */
   padding: 10px; /* Add some padding */
   text-align: left; /* Align text to the left */
+  position: sticky;
+  top: 0;
+  z-index: 1; /* Ensure it stays above other content */
 }
 /* Progress Bar elements */
 .bar-container {
