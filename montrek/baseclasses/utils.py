@@ -85,7 +85,7 @@ class TableMetaSessionDataElement(ABC):
     @abstractmethod
     def apply_data(self) -> SessionDataType: ...
 
-    def _set_data_to_path(self, default: int | None) -> SessionDataType:
+    def _set_data_to_path(self, default: int | str | None) -> SessionDataType:
         data = {}
         if self.field not in self.session_data:
             data[self.field] = {}

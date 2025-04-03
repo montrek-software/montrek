@@ -467,26 +467,41 @@ class TestMontrekListView(TestCase):
         self.assertEqual(
             test_list_view.request.session["order_fields"]["/dummy"], ["field_a"]
         )
+        request = test_list_view.request
         test_list_view = MockMontrekListView("dummy?order_action=field_b")
+        test_list_view.request.session["order_fields"] = request.session["order_fields"]
         response = test_list_view.get(test_list_view.request)
 
         self.assertEqual(response.status_code, 302)
         self.assertEqual(
             test_list_view.request.session["order_fields"]["/dummy"], ["field_b"]
         )
+        request = test_list_view.request
         test_list_view = MockMontrekListView("dummy?order_action=field_b")
+        test_list_view.request.session["order_fields"] = request.session["order_fields"]
         response = test_list_view.get(test_list_view.request)
 
         self.assertEqual(response.status_code, 302)
         self.assertEqual(
             test_list_view.request.session["order_fields"]["/dummy"], ["-field_b"]
         )
+        request = test_list_view.request
         test_list_view = MockMontrekListView("dummy?order_action=field_b")
+        test_list_view.request.session["order_fields"] = request.session["order_fields"]
         response = test_list_view.get(test_list_view.request)
 
         self.assertEqual(response.status_code, 302)
         self.assertEqual(
             test_list_view.request.session["order_fields"]["/dummy"], [None]
+        )
+        request = test_list_view.request
+        test_list_view = MockMontrekListView("dummy?order_action=field_b")
+        test_list_view.request.session["order_fields"] = request.session["order_fields"]
+        response = test_list_view.get(test_list_view.request)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            test_list_view.request.session["order_fields"]["/dummy"], ["field_b"]
         )
 
 

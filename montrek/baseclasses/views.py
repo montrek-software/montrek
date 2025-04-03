@@ -357,9 +357,21 @@ class MontrekListView(
         self.request.session["is_compact_format"][request_path] = val
         return HttpResponseRedirect(self.request.path)
 
-    def set_order_field(self, val: bool):
+    def set_order_field(self, val: str | None):
         request_path = self.session_data["request_path"]
-        self.request.session["order_fields"][request_path] = [val]
+        request_data = self.request.session
+        field = "order_fields"
+        current_order_field = request_data.get(field, {}).get(request_path, [])
+        if current_order_field:
+            if current_order_field[0]:
+                if val == current_order_field[0]:
+                    val = "-" + str(val)
+                elif (
+                    val == current_order_field[0][1:]
+                    and current_order_field[0][0] == "-"
+                ):
+                    val = None
+        self.request.session[field][request_path] = [val]
         return HttpResponseRedirect(self.request.path)
 
     def post(self, request, *args, **kwargs):
