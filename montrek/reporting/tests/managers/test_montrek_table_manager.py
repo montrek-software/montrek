@@ -1,7 +1,6 @@
 import datetime
 from decimal import Decimal
 import io
-from dataclasses import dataclass
 
 import pandas as pd
 from bs4 import BeautifulSoup
@@ -9,122 +8,12 @@ from django.core import mail
 from django.test import TestCase
 from django.utils import timezone
 
-from reporting.dataclasses import table_elements as te
-from reporting.managers.montrek_table_manager import (
-    MontrekTableManager,
-    MontrekDataFrameTableManager,
-)
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
-
-
-@dataclass
-class MockData:
-    field_a: str
-    field_b: int
-    field_c: float
-    field_d: datetime.datetime | datetime.date | timezone.datetime
-    field_e: Decimal
-
-
-class MockQuerySet:
-    def __init__(self, *args):
-        self.items = args
-
-    def __iter__(self):
-        return iter(self.items)
-
-    def __len__(self):
-        return len(self.items)
-
-    def __getitem__(self, index):
-        return self.items[index]
-
-    def __eq__(self, other):
-        if isinstance(other, list):
-            return list(self.items) == other
-        return NotImplemented
-
-    def all(self):
-        return self.items
-
-    def count(self) -> int:
-        return len(self.items)
-
-
-class MockRepository:
-    def __init__(self, session_data: dict):
-        self.session_data = session_data
-
-    def receive(self):
-        return MockQuerySet(
-            MockData(
-                "a",
-                1,
-                1.0,
-                timezone.make_aware(datetime.datetime(2024, 7, 13)),
-                Decimal(1),
-            ),
-            MockData("b", 2, 2.0, datetime.datetime(2024, 7, 13), Decimal(2.2)),
-            MockData("c", 3, 3.0, timezone.datetime(2024, 7, 13), Decimal(3)),
-        )
-
-
-class MockLongRepository:
-    def __init__(self, session_data: dict):
-        self.session_data = session_data
-
-    def receive(self):
-        mock_data = [
-            MockData(
-                str(i), i, 1.0, timezone.make_aware(datetime.datetime(2024, 7, 13)), i
-            )
-            for i in range(10000)
-        ]
-        return MockQuerySet(*mock_data)
-
-
-class MockMontrekTableManager(MontrekTableManager):
-    repository_class = MockRepository
-
-    @property
-    def table_elements(
-        self,
-    ) -> tuple[te.TableElement]:
-        return (
-            te.StringTableElement(attr="field_a", name="Field A"),
-            te.IntTableElement(attr="field_b", name="Field B"),
-            te.FloatTableElement(attr="field_c", name="Field C"),
-            te.DateTimeTableElement(attr="field_d", name="Field D"),
-            te.EuroTableElement(attr="field_e", name="Field E"),
-            te.LinkTableElement(
-                name="Link",
-                url="home",
-                kwargs={},
-                hover_text="Link",
-                icon="icon",
-            ),
-            te.LinkTextTableElement(
-                name="Link Text",
-                url="home",
-                kwargs={},
-                hover_text="Link Text",
-                text="field_a",
-            ),
-        )
-
-
-class MockLongMontrekTableManager(MockMontrekTableManager):
-    repository_class = MockLongRepository
-
-
-class MockHttpResponse:
-    content: str = ""
-
-    def write(self, content):
-        self.content += content
-
-    def getvalue(self):
-        return self.content
+from reporting.tests.mocks import (
+    MockMontrekTableManager,
+    MockLongMontrekTableManager,
+    MockMontrekDataFrameTableManager,
+)
 
 
 class TestMontrekTableManager(TestCase):
@@ -278,33 +167,19 @@ class TestMontrekTableManager(TestCase):
         test_manager = MockLongMontrekTableManager({"current_is_compact_format": False})
         self.assertEqual(test_manager.is_current_compact_format, False)
 
+    def test_order_field(self):
+        test_manager = MockLongMontrekTableManager({})
+        self.assertEqual(test_manager.order_field, None)
+        self.assertEqual(test_manager.repository.get_order_fields(), None)
 
-class MockMontrekDataFrameTableManager(MontrekDataFrameTableManager):
-    @property
-    def table_elements(
-        self,
-    ) -> tuple[te.TableElement]:
-        return (
-            te.StringTableElement(attr="field_a", name="Field A"),
-            te.IntTableElement(attr="field_b", name="Field B"),
-            te.FloatTableElement(attr="field_c", name="Field C"),
-            te.DateTimeTableElement(attr="field_d", name="Field D"),
-            te.EuroTableElement(attr="field_e", name="Field E"),
-            te.LinkTableElement(
-                name="Link",
-                url="home",
-                kwargs={},
-                hover_text="Link",
-                icon="icon",
-            ),
-            te.LinkTextTableElement(
-                name="Link Text",
-                url="home",
-                kwargs={},
-                hover_text="Link Text",
-                text="field_a",
-            ),
-        )
+        test_manager = MockLongMontrekTableManager({"order_field": "field_a"})
+        self.assertEqual(test_manager.order_field, "field_a")
+        test_manager.get_table()
+        self.assertEqual(test_manager.repository.get_order_fields(), ("field_a",))
+        test_manager = MockLongMontrekTableManager({"order_field": "-field_a"})
+        self.assertEqual(test_manager.order_field, "-field_a")
+        test_manager.get_full_table()
+        self.assertEqual(test_manager.repository.get_order_fields(), ("-field_a",))
 
 
 class TestMontrekDataFrameTableManager(TestCase):

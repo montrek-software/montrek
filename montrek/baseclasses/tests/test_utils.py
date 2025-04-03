@@ -6,6 +6,7 @@ from baseclasses.utils import (
     FilterMetaSessionDataElement,
     PagesMetaSessionDataElement,
     PaginateByMetaSessionDataElement,
+    OrderFieldMetaSessionDataElement,
     TableMetaSessionData,
     IsCompactFormatMetaSessionDataElement,
     montrek_time,
@@ -334,6 +335,32 @@ class TestIsCompactFormatCountMetaSessionDataElement(TestCase):
         self.assertEqual(test_data["current_is_compact_format"], True)
 
 
+class TestOrderFieldMetaSessionDataElement(TestCase):
+    def setUp(self):
+        self.request = MockRequest()
+
+    def test_get_order_field(self):
+        """Test paginate_by"""
+
+        session_data = {}
+        test_element = OrderFieldMetaSessionDataElement(session_data, self.request)
+        test_data = test_element.apply_data()
+
+        self.assertIn("order_fields", test_data)
+        self.assertEqual(test_data["order_fields"]["/test-path/"], None)
+        self.assertEqual(test_data["order_field"], None)
+
+    def test_get_order_field_existing(self):
+        """Test getting existing paginate_by"""
+
+        session_data = {"order_fields": {"/test-path/": "field"}}
+        test_element = OrderFieldMetaSessionDataElement(session_data, self.request)
+        test_data = test_element.apply_data()
+
+        self.assertEqual(test_data["order_fields"]["/test-path/"], "field")
+        self.assertEqual(test_data["order_field"], "field")
+
+
 class TestTableMetaSessionData(TestCase):
     def setUp(self):
         self.request = MockRequest()
@@ -363,6 +390,7 @@ class TestTableMetaSessionData(TestCase):
         self.assertIn("filter_count", self.request.session)
         self.assertIn("paginate_by", self.request.session)
         self.assertIn("is_compact_format", self.request.session)
+        self.assertIn("order_fields", self.request.session)
 
     def test_update_session_data_empty_input(self):
         """Test update with empty session data"""
@@ -379,3 +407,4 @@ class TestTableMetaSessionData(TestCase):
         self.assertEqual(
             self.request.session["is_compact_format"], {"/test-path/": False}
         )
+        self.assertEqual(self.request.session["order_fields"], {"/test-path/": None})

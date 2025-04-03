@@ -43,6 +43,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         self._document_name: None | str = None
         self._queryset: None | QuerySet = None
         self.is_current_compact_format: bool = self.get_is_compact_format()
+        self.order_field: None | str = self.get_order_field()
 
     @property
     def footer_text(self) -> ReportElementProtocol:
@@ -65,6 +66,16 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         return self.session_data.get(
             "current_is_compact_format", self.is_compact_format
         )
+
+    def get_order_field(self) -> None | str:
+        order_field = self.session_data.get("order_field", None)
+        if isinstance(order_field, (list, tuple)):
+            order_field = order_field[0]
+        return order_field
+
+    def set_order_field(self):
+        if self.order_field:
+            self.repository.set_order_fields((str(self.order_field),))
 
     def get_table(self) -> QuerySet | dict:
         raise NotImplementedError("Method get_table must be implemented")
@@ -91,18 +102,26 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
 
     def to_html(self):
         table_id = 'id="compactTable"' if self.is_current_compact_format else ""
-        html_str = f"<h3>{self.table_title}</h3>"
-        html_str += '<div class="row scrollable-content">'
-        html_str += '<div class="col-md-12">'
-        html_str += f'<table {table_id} class="table table-bordered table-hover">'
-        html_str += "<thead>"
-        html_str += "<tr>"
-        html_str += "".join(
-            f"<th title='{getattr(te, 'attr', '')}'>{te.name}</th>"
-            for te in self.table_elements
+        html_str = (
+            f"<h3>{self.table_title}</h3>"
+            '<div class="row scrollable-content"><div class="col-md-12">'
+            f'<table {table_id} class="table table-bordered table-hover">'
+            '<form><input type="hidden" name="order_action" id="form-order_by-action" value="">'
+            "<tr>"
         )
-        html_str += "</tr>"
-        html_str += "</thead>"
+        for table_element in self.table_elements:
+            # TODO: Handle links
+            elem_attr = getattr(table_element, "attr", "hub_entity_id")
+            html_str += f"<th title='{elem_attr}'>"
+            html_str += f'<button type="submit" onclick="document.getElementById(\'form-order_by-action\').value=\'{elem_attr}\'" class="btn-order-field">'
+            html_str += f'<div style="display: flex; justify-content: space-between; align-items: center;">{table_element.name}'
+            if elem_attr == self.order_field:
+                html_str += '<span class="glyphicon glyphicon-arrow-down"></span>'
+            if "-" + elem_attr == self.order_field:
+                html_str += '<span class="glyphicon glyphicon-arrow-up"></span>'
+            html_str += "</div></button></th>"
+        html_str += "</tr></input></form>"
+
         for query_object in self.get_table():
             html_str += '<tr style="white-space:nowrap;">'
             html_str += "".join(
@@ -306,6 +325,7 @@ class MontrekTableManager(MontrekTableManagerABC):
         return self._get_queryset(self.get_paginated_queryset)
 
     def get_full_table(self) -> QuerySet | dict:
+        self.set_order_field()
         return self.repository.receive()
 
     def get_df(self) -> pd.DataFrame:

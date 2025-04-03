@@ -181,6 +181,8 @@ class TestMontrekViewMixin(TestCase):
                 "current_paginate_by": 10,
                 "is_compact_format": {"/": False},
                 "current_is_compact_format": False,
+                "order_fields": {"/": None},
+                "order_field": None,
             },
         )
 
@@ -199,6 +201,8 @@ class TestMontrekViewMixin(TestCase):
             "current_paginate_by": 10,
             "is_compact_format": {"/": False},
             "current_is_compact_format": False,
+            "order_fields": {"/": None},
+            "order_field": None,
         }
         self.assertEqual(mock_view.session_data, expected_data)
 
@@ -223,6 +227,8 @@ class TestMontrekViewMixin(TestCase):
             "current_paginate_by": 10,
             "is_compact_format": {"/": False},
             "current_is_compact_format": False,
+            "order_fields": {"/": None},
+            "order_field": None,
         }
         self.assertEqual(mock_view.session_data, expected_data)
 
@@ -275,6 +281,8 @@ class TestMontrekViewMixin(TestCase):
                 "current_paginate_by": 10,
                 "is_compact_format": {"/some/path": False},
                 "current_is_compact_format": False,
+                "order_fields": {"/some/path": None},
+                "order_field": None,
             }
         )
         self.assertEqual(mock_view.session_data, expected_session_data)
@@ -449,6 +457,52 @@ class TestMontrekListView(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(
             test_list_view.request.session["is_compact_format"]["/dummy"], False
+        )
+
+    def test_list_view_base__order_field(self):
+        test_list_view = MockMontrekListView("dummy?order_action=field_a&page=2")
+        response = test_list_view.get(test_list_view.request)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            test_list_view.request.session["order_fields"]["/dummy"], ["field_a"]
+        )
+        self.assertEqual(test_list_view.request.session["pages"]["/dummy"], ["1"])
+        request = test_list_view.request
+        test_list_view = MockMontrekListView("dummy?order_action=field_b")
+        test_list_view.request.session["order_fields"] = request.session["order_fields"]
+        response = test_list_view.get(test_list_view.request)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            test_list_view.request.session["order_fields"]["/dummy"], ["field_b"]
+        )
+        request = test_list_view.request
+        test_list_view = MockMontrekListView("dummy?order_action=field_b")
+        test_list_view.request.session["order_fields"] = request.session["order_fields"]
+        response = test_list_view.get(test_list_view.request)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            test_list_view.request.session["order_fields"]["/dummy"], ["-field_b"]
+        )
+        request = test_list_view.request
+        test_list_view = MockMontrekListView("dummy?order_action=field_b")
+        test_list_view.request.session["order_fields"] = request.session["order_fields"]
+        response = test_list_view.get(test_list_view.request)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            test_list_view.request.session["order_fields"]["/dummy"], [None]
+        )
+        request = test_list_view.request
+        test_list_view = MockMontrekListView("dummy?order_action=field_b")
+        test_list_view.request.session["order_fields"] = request.session["order_fields"]
+        response = test_list_view.get(test_list_view.request)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            test_list_view.request.session["order_fields"]["/dummy"], ["field_b"]
         )
 
 
