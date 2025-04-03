@@ -397,7 +397,7 @@ class MontrekTableManager(MontrekTableManagerABC):
 class MontrekDataFrameTableManager(MontrekTableManagerABC):
     def __init__(self, session_data: dict[str, Any] = {}):
         if "df_data" not in session_data:
-            raise ValueError("DataFrame data not set in session_data['df'].")
+            raise ValueError("DataFrame data not set in session_data['df_data'].")
         self.df_data = session_data["df_data"]
         self.df = pd.DataFrame(self.df_data)
         super().__init__(session_data)
