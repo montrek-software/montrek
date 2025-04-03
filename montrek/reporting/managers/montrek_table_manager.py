@@ -399,7 +399,7 @@ class MontrekDataFrameTableManager(MontrekTableManagerABC):
         if "df_data" not in session_data:
             raise ValueError("DataFrame data not set in session_data['df_data'].")
         self.df_data = session_data["df_data"]
-        self.df = pd.DataFrame(self.df_data)
+        self.df = self.set_df()
         super().__init__(session_data)
 
     def get_table(self) -> QuerySet | dict:
@@ -407,6 +407,9 @@ class MontrekDataFrameTableManager(MontrekTableManagerABC):
 
     def get_full_table(self) -> QuerySet | dict:
         return self.get_table()
+
+    def set_df(self):
+        return pd.DataFrame(self.df_data)
 
     def get_df(self) -> pd.DataFrame:
         return self.df.rename(columns=self.get_field_table_elements_name_map())
