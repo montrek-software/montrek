@@ -278,7 +278,8 @@ class MontrekListView(
         if request_get.get("action") == "is_compact_format_false":
             return self.set_is_compact_format(False)
         if "order_action" in request_get:
-            return self.set_order_field(request_get.get("order_action", ""))
+            return self.set_order_field(request_get.get("order_action", None))
+        # self.session_data["order_field"] = None
         return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -359,7 +360,6 @@ class MontrekListView(
     def set_order_field(self, val: bool):
         request_path = self.session_data["request_path"]
         self.request.session["order_fields"][request_path] = [val]
-        self.session_data["page"] = 1
         return HttpResponseRedirect(self.request.path)
 
     def post(self, request, *args, **kwargs):

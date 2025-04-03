@@ -105,7 +105,8 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
             "<tr>"
         )
         for table_element in self.table_elements:
-            elem_attr = getattr(table_element, "attr", "")
+            # TODO: Handle links
+            elem_attr = getattr(table_element, "attr", "hub_entity_id")
             html_str += f"<th title='{elem_attr}'>"
             html_str += f"<div>{table_element.name}</div>"
             html_str += f"<button type=\"submit\" onclick=\"document.getElementById('form-order_by-action').value='{elem_attr}'\">"
