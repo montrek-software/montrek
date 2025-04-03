@@ -39,7 +39,8 @@ class MontrekManager:
         return list(zip(field_names, field_descriptions))
 
     def collect_messages(self):
-        self.messages += self.repository.messages
+        if self._repository:
+            self.messages += self.repository.messages
 
     def download(self) -> HttpResponse:
         raise NotImplementedError(
