@@ -460,13 +460,14 @@ class TestMontrekListView(TestCase):
         )
 
     def test_list_view_base__order_field(self):
-        test_list_view = MockMontrekListView("dummy?order_action=field_a")
+        test_list_view = MockMontrekListView("dummy?order_action=field_a&page=2")
         response = test_list_view.get(test_list_view.request)
 
         self.assertEqual(response.status_code, 302)
         self.assertEqual(
             test_list_view.request.session["order_fields"]["/dummy"], ["field_a"]
         )
+        self.assertEqual(test_list_view.request.session["pages"]["/dummy"], ["1"])
         request = test_list_view.request
         test_list_view = MockMontrekListView("dummy?order_action=field_b")
         test_list_view.request.session["order_fields"] = request.session["order_fields"]

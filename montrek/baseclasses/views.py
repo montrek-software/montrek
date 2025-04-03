@@ -371,6 +371,7 @@ class MontrekListView(
                     and current_order_field[0][0] == "-"
                 ):
                     val = None
+        self.request.session["pages"][request_path] = ["1"]
         self.request.session[field][request_path] = [val]
         return HttpResponseRedirect(self.request.path)
 

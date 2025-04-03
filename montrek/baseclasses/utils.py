@@ -198,17 +198,18 @@ class OrderFieldMetaSessionDataElement(TableMetaSessionDataElement):
     def apply_data(self) -> SessionDataType:
         session_data = self._set_data_to_path(default=None)
         session_data["order_field"] = session_data["order_fields"][self.request.path]
+
         return session_data
 
 
 class TableMetaSessionData:
     meta_session_data_elements: list[type[TableMetaSessionDataElement]] = [
+        OrderFieldMetaSessionDataElement,
         FilterMetaSessionDataElement,
         PagesMetaSessionDataElement,
         FilterCountMetaSessionDataElement,
         PaginateByMetaSessionDataElement,
         IsCompactFormatMetaSessionDataElement,
-        OrderFieldMetaSessionDataElement,
     ]
 
     def __init__(self, request) -> None:
