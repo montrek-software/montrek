@@ -459,6 +459,36 @@ class TestMontrekListView(TestCase):
             test_list_view.request.session["is_compact_format"]["/dummy"], False
         )
 
+    def test_list_view_base__order_field(self):
+        test_list_view = MockMontrekListView("dummy?order_action=field_a")
+        response = test_list_view.get(test_list_view.request)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            test_list_view.request.session["order_fields"]["/dummy"], ["field_a"]
+        )
+        test_list_view = MockMontrekListView("dummy?order_action=field_b")
+        response = test_list_view.get(test_list_view.request)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            test_list_view.request.session["order_fields"]["/dummy"], ["field_b"]
+        )
+        test_list_view = MockMontrekListView("dummy?order_action=field_b")
+        response = test_list_view.get(test_list_view.request)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            test_list_view.request.session["order_fields"]["/dummy"], ["-field_b"]
+        )
+        test_list_view = MockMontrekListView("dummy?order_action=field_b")
+        response = test_list_view.get(test_list_view.request)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            test_list_view.request.session["order_fields"]["/dummy"], [None]
+        )
+
 
 class TestMontrekDetailView(TestCase):
     def test_gen_pdf(self):
