@@ -174,10 +174,12 @@ class TestMontrekTableManager(TestCase):
 
         test_manager = MockLongMontrekTableManager({"order_field": "field_a"})
         self.assertEqual(test_manager.order_field, "field_a")
-        self.assertEqual(test_manager.repository.get_order_fields(), "field_a")
+        test_manager.get_table()
+        self.assertEqual(test_manager.repository.get_order_fields(), ("field_a",))
         test_manager = MockLongMontrekTableManager({"order_field": "-field_a"})
         self.assertEqual(test_manager.order_field, "-field_a")
-        self.assertEqual(test_manager.repository.get_order_fields(), "-field_a")
+        test_manager.get_full_table()
+        self.assertEqual(test_manager.repository.get_order_fields(), ("-field_a",))
 
 
 class TestMontrekDataFrameTableManager(TestCase):
