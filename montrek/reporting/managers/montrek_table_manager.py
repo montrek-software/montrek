@@ -129,7 +129,9 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
             )
             html_str += "</tr>"
 
-        html_str += "</table></div></div>"
+        html_str += "</table>"
+        html_str += "</div>"
+        html_str += "</div>"
         return html_str
 
     def to_latex(self):
