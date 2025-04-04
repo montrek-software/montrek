@@ -1,6 +1,9 @@
 from django.urls import reverse
 from baseclasses.dataclasses.view_classes import TabElement
 from baseclasses.pages import MontrekDetailsPage, MontrekPage
+from montrek_example.managers.montrek_example_managers import (
+    CompactHubAManager,
+)
 from montrek_example.repositories.hub_a_repository import HubARepository
 
 
@@ -36,6 +39,7 @@ class MontrekExampleAAppPage(MontrekPage):
 class ExampleAPage(MontrekDetailsPage):
     repository_class = HubARepository
     title_field = "field_a1_str"
+    overview_manager_class = CompactHubAManager
 
     def get_tabs(self):
         details_tab = TabElement(

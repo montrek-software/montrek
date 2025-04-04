@@ -6,8 +6,9 @@ from baseclasses.utils import (
     FilterMetaSessionDataElement,
     PagesMetaSessionDataElement,
     PaginateByMetaSessionDataElement,
+    OrderFieldMetaSessionDataElement,
     TableMetaSessionData,
-    TableMetaSessionDataElement,
+    IsCompactFormatMetaSessionDataElement,
     montrek_time,
     montrek_today,
     montrek_date_string,
@@ -307,6 +308,59 @@ class TestPaginateByCountMetaSessionDataElement(TestCase):
         self.assertEqual(test_data["paginate_by"]["/test-path/"], 5)
 
 
+class TestIsCompactFormatCountMetaSessionDataElement(TestCase):
+    def setUp(self):
+        self.request = MockRequest()
+
+    def test_is_comapct_format(self):
+        """Test paginate_by"""
+
+        session_data = {}
+        test_element = IsCompactFormatMetaSessionDataElement(session_data, self.request)
+        test_data = test_element.apply_data()
+
+        self.assertIn("is_compact_format", test_data)
+        self.assertEqual(test_data["is_compact_format"]["/test-path/"], False)
+        self.assertEqual(test_data["current_is_compact_format"], False)
+
+    def test_is_comapct_format__set(self):
+        """Test paginate_by"""
+
+        session_data = {"is_compact_format": {"/test-path/": True}}
+        test_element = IsCompactFormatMetaSessionDataElement(session_data, self.request)
+        test_data = test_element.apply_data()
+
+        self.assertIn("is_compact_format", test_data)
+        self.assertEqual(test_data["is_compact_format"]["/test-path/"], True)
+        self.assertEqual(test_data["current_is_compact_format"], True)
+
+
+class TestOrderFieldMetaSessionDataElement(TestCase):
+    def setUp(self):
+        self.request = MockRequest()
+
+    def test_get_order_field(self):
+        """Test paginate_by"""
+
+        session_data = {}
+        test_element = OrderFieldMetaSessionDataElement(session_data, self.request)
+        test_data = test_element.apply_data()
+
+        self.assertIn("order_fields", test_data)
+        self.assertEqual(test_data["order_fields"]["/test-path/"], None)
+        self.assertEqual(test_data["order_field"], None)
+
+    def test_get_order_field_existing(self):
+        """Test getting existing paginate_by"""
+
+        session_data = {"order_fields": {"/test-path/": "field"}}
+        test_element = OrderFieldMetaSessionDataElement(session_data, self.request)
+        test_data = test_element.apply_data()
+
+        self.assertEqual(test_data["order_fields"]["/test-path/"], "field")
+        self.assertEqual(test_data["order_field"], "field")
+
+
 class TestTableMetaSessionData(TestCase):
     def setUp(self):
         self.request = MockRequest()
@@ -335,6 +389,8 @@ class TestTableMetaSessionData(TestCase):
         self.assertIn("pages", self.request.session)
         self.assertIn("filter_count", self.request.session)
         self.assertIn("paginate_by", self.request.session)
+        self.assertIn("is_compact_format", self.request.session)
+        self.assertIn("order_fields", self.request.session)
 
     def test_update_session_data_empty_input(self):
         """Test update with empty session data"""
@@ -348,3 +404,7 @@ class TestTableMetaSessionData(TestCase):
         self.assertEqual(self.request.session["pages"], {})
         self.assertEqual(self.request.session["filter_count"], {"/test-path/": 1})
         self.assertEqual(self.request.session["paginate_by"], {"/test-path/": 10})
+        self.assertEqual(
+            self.request.session["is_compact_format"], {"/test-path/": False}
+        )
+        self.assertEqual(self.request.session["order_fields"], {"/test-path/": None})

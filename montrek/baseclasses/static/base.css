@@ -83,10 +83,19 @@ h2 {
   border: none;
   outline: none;
   background: none;
+  margin: 5px; /* Add some top margin for spacing */
 }
 
 .btn-light:hover {
   color: #9e0b36; /* Darker red on hover */
+}
+.btn-order-field {
+  background: none;
+  border: none;
+  outline: none;
+}
+.btn-order-field:hover {
+  color: #be0d3e; /* Pale blue */
 }
 /* Input */
 .input {
@@ -130,6 +139,9 @@ th {
   color: #ffffff; /* White */
   padding: 10px; /* Add some padding */
   text-align: left; /* Align text to the left */
+  position: sticky;
+  top: 0;
+  z-index: 1; /* Ensure it stays above other content */
 }
 /* Progress Bar elements */
 .bar-container {
@@ -174,6 +186,14 @@ input[readonly] {
 #noStyleTable tr {
   background-color: initial;
   border-bottom: initial;
+}
+#compactTable,
+#compactTable td,
+#compactTable tr {
+  padding: 2px;
+}
+#compactTable th {
+  padding: 3px;
 }
 .highlight-list {
   list-style: none;

@@ -36,11 +36,14 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
     table_title = ""
     document_title = "Montrek Table"
     draft = False
+    is_compact_format = False
 
     def __init__(self, session_data: dict[str, Any] = {}):
         super().__init__(session_data)
         self._document_name: None | str = None
         self._queryset: None | QuerySet = None
+        self.is_current_compact_format: bool = self.get_is_compact_format()
+        self.order_field: None | str = self.get_order_field()
 
     @property
     def footer_text(self) -> ReportElementProtocol:
@@ -58,6 +61,21 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
                 f"{manager_name}_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
             )
         return self._document_name
+
+    def get_is_compact_format(self) -> bool:
+        return self.session_data.get(
+            "current_is_compact_format", self.is_compact_format
+        )
+
+    def get_order_field(self) -> None | str:
+        order_field = self.session_data.get("order_field", None)
+        if isinstance(order_field, (list, tuple)):
+            order_field = order_field[0]
+        return order_field
+
+    def set_order_field(self):
+        if self.order_field:
+            self.repository.set_order_fields((str(self.order_field),))
 
     def get_table(self) -> QuerySet | dict:
         raise NotImplementedError("Method get_table must be implemented")
@@ -83,20 +101,37 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         }
 
     def to_html(self):
-        html_str = f"<h3>{self.table_title}</h3>"
-        html_str += '<div class="row scrollable-content"><div class="col-md-12">'
-        html_str += '<table class="table table-bordered table-hover"><tr>'
+        table_id = 'id="compactTable"' if self.is_current_compact_format else ""
+        html_str = (
+            f"<h3>{self.table_title}</h3>"
+            '<div class="row scrollable-content"><div class="col-md-12">'
+            f'<table {table_id} class="table table-bordered table-hover">'
+            '<form><input type="hidden" name="order_action" id="form-order_by-action" value="">'
+            "<thead><tr>"
+        )
         for table_element in self.table_elements:
-            html_str += f"<th title={getattr(table_element, 'attr', '')}>{table_element.name}</th>"
-        html_str += "</tr>"
-        table = self.get_table()
-        for query_object in table:
+            # TODO: Handle links
+            elem_attr = getattr(table_element, "attr", "hub_entity_id")
+            html_str += f"<th title='{elem_attr}'>"
+            html_str += f'<button type="submit" onclick="document.getElementById(\'form-order_by-action\').value=\'{elem_attr}\'" class="btn-order-field">'
+            html_str += f'<div style="display: flex; justify-content: space-between; align-items: center;">{table_element.name}'
+            if elem_attr == self.order_field:
+                html_str += '<span class="glyphicon glyphicon-arrow-down"></span>'
+            if "-" + elem_attr == self.order_field:
+                html_str += '<span class="glyphicon glyphicon-arrow-up"></span>'
+            html_str += "</div></button></th>"
+        html_str += "</tr></thead></input></form>"
+
+        for query_object in self.get_table():
             html_str += '<tr style="white-space:nowrap;">'
-            for table_element in self.table_elements:
-                html_str += table_element.get_attribute(query_object, "html")
+            html_str += "".join(
+                te.get_attribute(query_object, "html") for te in self.table_elements
+            )
             html_str += "</tr>"
+
         html_str += "</table>"
-        html_str += "</div></div>"
+        html_str += "</div>"
+        html_str += "</div>"
         return html_str
 
     def to_latex(self):
@@ -290,6 +325,7 @@ class MontrekTableManager(MontrekTableManagerABC):
         return self._get_queryset(self.get_paginated_queryset)
 
     def get_full_table(self) -> QuerySet | dict:
+        self.set_order_field()
         return self.repository.receive()
 
     def get_df(self) -> pd.DataFrame:
@@ -361,9 +397,9 @@ class MontrekTableManager(MontrekTableManagerABC):
 class MontrekDataFrameTableManager(MontrekTableManagerABC):
     def __init__(self, session_data: dict[str, Any] = {}):
         if "df_data" not in session_data:
-            raise ValueError("DataFrame data not set in session_data['df'].")
+            raise ValueError("DataFrame data not set in session_data['df_data'].")
         self.df_data = session_data["df_data"]
-        self.df = pd.DataFrame(self.df_data)
+        self.df = self.set_df()
         super().__init__(session_data)
 
     def get_table(self) -> QuerySet | dict:
@@ -371,6 +407,9 @@ class MontrekDataFrameTableManager(MontrekTableManagerABC):
 
     def get_full_table(self) -> QuerySet | dict:
         return self.get_table()
+
+    def set_df(self):
+        return pd.DataFrame(self.df_data)
 
     def get_df(self) -> pd.DataFrame:
         return self.df.rename(columns=self.get_field_table_elements_name_map())

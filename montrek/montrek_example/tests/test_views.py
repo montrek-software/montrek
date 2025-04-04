@@ -84,6 +84,12 @@ class TestMontrekExampleAListView(MontrekListViewTestCase):
         self.assertRedirects(response, url)
         self.assertEqual(len(obj_list), 2)
 
+    def test_overview(self):
+        response = self.client.get(self.url)
+        overview_html = response.context_data["overview"]
+        exp_overview_html = ""
+        self.assertEqual(overview_html, exp_overview_html)
+
 
 class TestMontrekExampleAListViewPages(MontrekListViewTestCase):
     viewname = "montrek_example_a_list"
@@ -217,13 +223,36 @@ class TestMontrekExampleADetailView(MontrekViewTestCase):
     view_class = me_views.MontrekExampleADetails
 
     def build_factories(self):
-        hub_vd_0 = me_factories.AHubValueDateFactory(value_date=None)
-        me_factories.SatA1Factory(hub_entity=hub_vd_0.hub)
+        self.hub_vd_0 = me_factories.AHubValueDateFactory(value_date=None)
+        me_factories.SatA1Factory(hub_entity=self.hub_vd_0.hub)
         self.hub_vd = me_factories.AHubValueDateFactory(value_date=None)
         me_factories.SatA1Factory(hub_entity=self.hub_vd.hub)
 
     def url_kwargs(self) -> dict:
         return {"pk": self.hub_vd.hub.id}
+
+    def test_overview(self):
+        response = self.client.get(self.url)
+        overview_html = response.context_data["overview"]
+        exp_overview_html = (
+            "<h3></h3>"
+            '<div class="row scrollable-content">'
+            '<div class="col-md-12">'
+            '<table id="compactTable" class="table table-bordered table-hover">'
+            '<form><input type="hidden" name="order_action" id="form-order_by-action" value=""><thead><tr><th title=\'hub_entity_id\'><button type="submit" onclick="document.getElementById(\'form-order_by-action\').value=\'hub_entity_id\'" class="btn-order-field"><div style="display: flex; justify-content: space-between; align-items: center;">A1 String</div></button></th><th title=\'field_a1_int\'><button type="submit" onclick="document.getElementById(\'form-order_by-action\').value=\'field_a1_int\'" class="btn-order-field"><div style="display: flex; justify-content: space-between; align-items: center;">A1 Int</div></button></th></tr></thead></input></form>'
+            '<tr style="white-space:nowrap;">'
+            f'<td><a id="id__montrek_example_a_{self.hub_vd_0.hub_id}_details" href="/montrek_example/a/{self.hub_vd_0.hub_id}/details" title="View Example A">DEFAULT</a></td>'
+            '<td style="text-align:right;color:#002F6C;">0</td>'
+            "</tr>"
+            '<tr style="white-space:nowrap;">'
+            f'<td><a id="id__montrek_example_a_{self.hub_vd.hub_id}_details" href="/montrek_example/a/{self.hub_vd.hub_id}/details" title="View Example A">DEFAULT</a></td>'
+            '<td style="text-align:right;color:#002F6C;">0</td>'
+            "</tr>"
+            "</table>"
+            "</div>"
+            "</div>"
+        )
+        self.assertEqual(overview_html, exp_overview_html)
 
 
 class TestMontrekExampleADelete(MontrekDeleteViewTestCase):

@@ -58,6 +58,7 @@ class MockRepository:
         self.session_data = session_data
         self.messages = []
         self.annotations = {}
+        self._order_field = None
 
     def receive(self):
         return MockQuerySet(
@@ -73,3 +74,6 @@ class MockRepository:
 
     def get_all_fields(self):
         return ["item1", "item2", "item3"]
+
+    def set_order_fields(self, value):
+        self._order_field = value

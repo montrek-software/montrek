@@ -123,6 +123,7 @@ class MontrekPageViewMixin:
         context["actions"] = self.actions
         context["title"] = self.title
         context["show_date_range_selector"] = page.show_date_range_selector
+        context["overview"] = page.overview
         context.update(self._handle_date_range_form())
         return context
 
@@ -257,20 +258,28 @@ class MontrekListView(
     do_simple_file_upload = False
 
     def get(self, request, *args, **kwargs):
-        if self.request.GET.get("gen_csv") == "true":
+        request_get = self.request.GET
+        if request_get.get("gen_csv") == "true":
             return self.list_to_csv()
-        if self.request.GET.get("gen_excel") == "true":
+        if request_get.get("gen_excel") == "true":
             return self.list_to_excel()
-        if self.request.GET.get("gen_pdf") == "true":
+        if request_get.get("gen_pdf") == "true":
             return self.list_to_pdf()
-        if self.request.GET.get("action") == "reset":
+        if request_get.get("action") == "reset":
             return self.reset_filter()
-        if self.request.GET.get("action") == "add_filter":
+        if request_get.get("action") == "add_filter":
             return self.add_filter()
-        if self.request.GET.get("action") == "add_paginate_by":
+        if request_get.get("action") == "add_paginate_by":
             return self.add_paginate_by()
-        if self.request.GET.get("action") == "sub_paginate_by":
+        if request_get.get("action") == "sub_paginate_by":
             return self.sub_paginate_by()
+        if request_get.get("action") == "is_compact_format_true":
+            return self.set_is_compact_format(True)
+        if request_get.get("action") == "is_compact_format_false":
+            return self.set_is_compact_format(False)
+        if "order_action" in request_get:
+            return self.set_order_field(request_get.get("order_action", None))
+        # self.session_data["order_field"] = None
         return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -294,6 +303,7 @@ class MontrekListView(
         context["paginator"] = self.manager.paginator
         context["paginate_by"] = self.manager.paginate_by
         context["is_large"] = self.manager.is_large
+        context["is_compact_format"] = self.manager.is_current_compact_format
         filter = self.session_data.get("filter", {})
         filter = filter.get(self.session_data["request_path"], {})
         filter_count = self.session_data.get("filter_count", {})
@@ -340,6 +350,29 @@ class MontrekListView(
     def sub_paginate_by(self):
         request_path = self.session_data["request_path"]
         self.request.session["paginate_by"][request_path] -= 5
+        return HttpResponseRedirect(self.request.path)
+
+    def set_is_compact_format(self, val: bool):
+        request_path = self.session_data["request_path"]
+        self.request.session["is_compact_format"][request_path] = val
+        return HttpResponseRedirect(self.request.path)
+
+    def set_order_field(self, val: str | None):
+        request_path = self.session_data["request_path"]
+        request_data = self.request.session
+        field = "order_fields"
+        current_order_field = request_data.get(field, {}).get(request_path, [])
+        if current_order_field:
+            if current_order_field[0]:
+                if val == current_order_field[0]:
+                    val = "-" + str(val)
+                elif (
+                    val == current_order_field[0][1:]
+                    and current_order_field[0][0] == "-"
+                ):
+                    val = None
+        self.request.session["pages"][request_path] = ["1"]
+        self.request.session[field][request_path] = [val]
         return HttpResponseRedirect(self.request.path)
 
     def post(self, request, *args, **kwargs):
