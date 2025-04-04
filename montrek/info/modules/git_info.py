@@ -24,7 +24,7 @@ class GitInfo:
         if self.is_git_repo:
             self._collect_git_info()
 
-    def _run_git_command(self, command_args, default="Unknown"):
+    def _run_git_command(self, command_args, default="Unknown") -> str:
         """
         Run a git command and return its output.
 
@@ -46,7 +46,7 @@ class GitInfo:
         except subprocess.CalledProcessError:
             return default
 
-    def _check_is_git_repo(self):
+    def _check_is_git_repo(self) -> bool:
         """Check if the specified path is a git repository."""
         result = self._run_git_command(["rev-parse", "--is-inside-work-tree"])
 
@@ -102,11 +102,11 @@ class GitInfo:
         status = self._run_git_command(["status", "--porcelain"])
         self.git_info["is_clean"] = "True" if status == "" else "False"
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         """Return git information as a dictionary."""
         return self.git_info.copy() if self.is_git_repo else {}
 
-    def to_dataframe(self):
+    def to_dataframe(self) -> pd.DataFrame:
         """
         Convert git information to a pandas DataFrame.
 
