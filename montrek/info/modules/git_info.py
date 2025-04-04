@@ -89,9 +89,8 @@ class GitInfo:
         )
 
         # Get repo name
-        repo_path = self._run_git_command(["rev-parse", "--show-toplevel"])
         self.git_info["repo_name"] = (
-            os.path.basename(repo_path) if repo_path != "Unknown" else "Unknown"
+            self.git_info["remote_url"].split("/")[-1].replace(".git", "")
         )
 
         # Number of commits in the current branch
