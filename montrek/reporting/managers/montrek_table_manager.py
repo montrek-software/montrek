@@ -107,7 +107,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
             '<div class="row scrollable-content"><div class="col-md-12">'
             f'<table {table_id} class="table table-bordered table-hover">'
             '<form><input type="hidden" name="order_action" id="form-order_by-action" value="">'
-            "<tr>"
+            "<thead><tr>"
         )
         for table_element in self.table_elements:
             # TODO: Handle links
@@ -120,7 +120,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
             if "-" + elem_attr == self.order_field:
                 html_str += '<span class="glyphicon glyphicon-arrow-up"></span>'
             html_str += "</div></button></th>"
-        html_str += "</tr></input></form>"
+        html_str += "</tr></thead></input></form>"
 
         for query_object in self.get_table():
             html_str += '<tr style="white-space:nowrap;">'
@@ -397,9 +397,9 @@ class MontrekTableManager(MontrekTableManagerABC):
 class MontrekDataFrameTableManager(MontrekTableManagerABC):
     def __init__(self, session_data: dict[str, Any] = {}):
         if "df_data" not in session_data:
-            raise ValueError("DataFrame data not set in session_data['df'].")
+            raise ValueError("DataFrame data not set in session_data['df_data'].")
         self.df_data = session_data["df_data"]
-        self.df = pd.DataFrame(self.df_data)
+        self.df = self.set_df()
         super().__init__(session_data)
 
     def get_table(self) -> QuerySet | dict:
@@ -407,6 +407,9 @@ class MontrekDataFrameTableManager(MontrekTableManagerABC):
 
     def get_full_table(self) -> QuerySet | dict:
         return self.get_table()
+
+    def set_df(self):
+        return pd.DataFrame(self.df_data)
 
     def get_df(self) -> pd.DataFrame:
         return self.df.rename(columns=self.get_field_table_elements_name_map())
