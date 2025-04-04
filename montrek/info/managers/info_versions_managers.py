@@ -11,6 +11,8 @@ class GitVersionsManager(MontrekDataFrameTableManager):
 
 
 class InfoVersionsManager(MontrekReportManager):
+    document_title = "Montrek Versions"
+
     def collect_report_elements(self) -> None:
         self.append_report_element(self.get_git_versions())
 
