@@ -19,6 +19,7 @@ class MontrekTestRunner(DiscoverRunner):
                     "montrek_example.montrek_example_report",
                     "",
                 ],
+                "MONTREK_EXTENSION_APPS": ["app1", "app2", "mt_dummy.app3"],
                 # Add other test-specific settings here
             }
         self._override = override_settings(**test_settings)
