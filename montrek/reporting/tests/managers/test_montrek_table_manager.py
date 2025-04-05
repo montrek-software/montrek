@@ -236,7 +236,7 @@ class TestMontrekDataFrameTableManager(TestCase):
         self.assertEqual(len(rows), 4)
         headers = soup.find_all("th")
         expected_headers = [
-            "Field A",
+            "Field_A",
             "Field B",
             "Field C",
             "Field D",
@@ -251,6 +251,7 @@ class TestMontrekDataFrameTableManager(TestCase):
         test_latex = self.manager.to_latex()
         self.assertTrue(test_latex.startswith("\n\\begin{table}"))
         self.assertTrue(test_latex.endswith("\\end{table}\n\n"))
+        self.assertIn("Field\\_A", test_latex)
 
     def test_download_csv(self):
         response = self.manager.download_or_mail_csv()
@@ -267,7 +268,7 @@ class TestMontrekDataFrameTableManager(TestCase):
         self.assertRegex(content_disposition, filename_pattern)
         self.assertEqual(
             response.getvalue(),
-            b"Field A,Field B,Field C,Field D,Field E,Link Text\na,1,1.0,2024-07-13,1,a\nb,2,2.0,2024-07-13,2,b\nc,3,3.0,2024-07-13,3,c\n",
+            b"Field_A,Field B,Field C,Field D,Field E,Link Text\na,1,1.0,2024-07-13,1,a\nb,2,2.0,2024-07-13,2,b\nc,3,3.0,2024-07-13,3,c\n",
         )
 
     def test_download_excel(self):
@@ -287,7 +288,7 @@ class TestMontrekDataFrameTableManager(TestCase):
             excel_file = pd.read_excel(f)
             expected_df = pd.DataFrame(
                 {
-                    "Field A": ["a", "b", "c"],
+                    "Field_A": ["a", "b", "c"],
                     "Field B": [1, 2, 3],
                     "Field C": [1.0, 2.0, 3.0],
                     "Field D": [
@@ -304,7 +305,7 @@ class TestMontrekDataFrameTableManager(TestCase):
     def test_get_table_elements_name_to_field_map(self):
         name_to_field_map = self.manager.get_table_elements_name_to_field_map()
         expected_map = {
-            "Field A": "field_a",
+            "Field_A": "field_a",
             "Field B": "field_b",
             "Field C": "field_c",
             "Field D": "field_d",

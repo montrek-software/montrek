@@ -4,9 +4,9 @@ from reporting.core.text_converter import HtmlLatexConverter
 
 class TestHtmlLatexConverter(TestCase):
     def test_html_to_latex(self):
-        test_text = "This is a <b>html</b> text. <br> This is a new <i>line</i> and a &middot; More<strong>strong</strong> test and <em>emphasis</em>."
+        test_text = "This is a <b>html</b> text. <br> This is a new <i>line</i> and a &middot; More<strong>strong</strong> _test and <em>emphasis</em>."
         converted_text = HtmlLatexConverter.convert(test_text)
-        expected_text = "This is a \\textbf{html} text. \\newline  This is a new \\textit{line} and a $\\cdot$ More\\textbf{strong} test and \\textit{emphasis}."
+        expected_text = "This is a \\textbf{html} text. \\newline  This is a new \\textit{line} and a $\\cdot$ More\\textbf{strong} \\_test and \\textit{emphasis}."
         self.assertEqual(converted_text, expected_text)
 
     def test_ignored(self):
@@ -46,9 +46,9 @@ class TestHtmlLatexConverter(TestCase):
         self.assertEqual(converted_text, expected_text)
 
     def test_special_characters(self):
-        test_text = "Special characters: &lt;, &gt;, &amp; &"
+        test_text = "Special characters: &lt;, &gt;, &amp; & _"
         converted_text = HtmlLatexConverter.convert(test_text)
-        expected_text = "Special characters: $<$, $>$, \\& \\&"
+        expected_text = "Special characters: $<$, $>$, \\& \\& \\_"
         self.assertEqual(converted_text, expected_text)
 
     def test_sub_sup_script(self):

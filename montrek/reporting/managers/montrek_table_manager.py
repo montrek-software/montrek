@@ -1,11 +1,10 @@
-from dataclasses import dataclass
-import math
 import datetime
-from decimal import Decimal
+import math
 import os
+from dataclasses import dataclass
+from decimal import Decimal
 from io import BytesIO
 from typing import Any
-from django.db.models import QuerySet
 
 import pandas as pd
 from baseclasses.dataclasses.montrek_message import MontrekMessageInfo
@@ -13,12 +12,14 @@ from baseclasses.managers.montrek_manager import MontrekManager
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
+from django.db.models import QuerySet
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils import timezone
 from django.views.generic.base import HttpResponse
 from mailing.managers.mailing_manager import MailingManager
 from reporting.core import reporting_text as rt
+from reporting.core.text_converter import HtmlLatexConverter
 from reporting.dataclasses import table_elements as te
 from reporting.lib.protocols import (
     ReportElementProtocol,
@@ -150,7 +151,8 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
             if isinstance(table_element, te.LinkTableElement):
                 continue
             column_def_str += "X|"
-            column_header_str += f"\\color{{white}}\\textbf{{{table_element.name}}} & "
+            element_header = HtmlLatexConverter.convert(table_element.name)
+            column_header_str += f"\\color{{white}}\\textbf{{{element_header}}} & "
         table_start_str += column_def_str
         table_start_str += "}\n\\hline\n"
         table_start_str += column_header_str[:-2] + "\\\\\n\\hline\n"
