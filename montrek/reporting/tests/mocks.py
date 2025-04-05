@@ -213,7 +213,7 @@ class MockMontrekDataFrameTableManager(MontrekDataFrameTableManager):
         self,
     ) -> tuple[te.TableElement]:
         return (
-            te.StringTableElement(attr="field_a", name="Field A"),
+            te.StringTableElement(attr="field_a", name="Field_A"),
             te.IntTableElement(attr="field_b", name="Field B"),
             te.FloatTableElement(attr="field_c", name="Field C"),
             te.DateTimeTableElement(attr="field_d", name="Field D"),

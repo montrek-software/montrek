@@ -96,6 +96,7 @@ class LatexReportManager:
                 if settings.IS_TEST_RUN:
                     logger.error(e.stdout)
                     raise e
+                logger.error(report_str)
                 error_message = self.get_xelatex_error_message(e.stdout)
                 self.report_manager.messages.append(
                     MontrekMessageError(message=error_message)
