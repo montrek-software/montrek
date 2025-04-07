@@ -4,11 +4,12 @@ import os
 from dataclasses import dataclass
 from decimal import Decimal
 from io import BytesIO
-from typing import Any
+from django_pandas.io import read_frame
 
 import pandas as pd
 from baseclasses.dataclasses.montrek_message import MontrekMessageInfo
 from baseclasses.managers.montrek_manager import MontrekManager
+from baseclasses.typing import SessionDataType
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
@@ -39,7 +40,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
     draft = False
     is_compact_format = False
 
-    def __init__(self, session_data: dict[str, Any] = {}):
+    def __init__(self, session_data: SessionDataType = {}):
         super().__init__(session_data)
         self._document_name: None | str = None
         self._queryset: None | QuerySet = None
@@ -51,7 +52,9 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         return rt.ReportingText("Internal Report")
 
     @property
-    def table_elements(self) -> tuple[te.TableElement, ...]:
+    def table_elements(
+        self,
+    ) -> tuple[te.TableElement, ...] | list[te.TableElement, ...]:
         return ()
 
     @property
@@ -314,7 +317,7 @@ class MontrekTableManager(MontrekTableManagerABC):
     is_paginated = True
     is_large: bool = False
 
-    def __init__(self, session_data: dict[str, Any] = {}):
+    def __init__(self, session_data: SessionDataType = {}):
         super().__init__(session_data)
         self.paginator: None | MontrekTablePaginator = None
         self.paginate_by: int = self.get_paginate_by()
@@ -397,7 +400,7 @@ class MontrekTableManager(MontrekTableManagerABC):
 
 
 class MontrekDataFrameTableManager(MontrekTableManagerABC):
-    def __init__(self, session_data: dict[str, Any] = {}):
+    def __init__(self, session_data: SessionDataType = {}):
         if "df_data" not in session_data:
             raise ValueError("DataFrame data not set in session_data['df_data'].")
         self.df_data = session_data["df_data"]
@@ -418,3 +421,74 @@ class MontrekDataFrameTableManager(MontrekTableManagerABC):
 
     def _get_table_dimensions(self) -> int:
         return self.df.shape[0] * self.df.shape[1]
+
+
+class HistoryDataTableManager(MontrekTableManagerABC):
+    is_current_compact_format = True
+    EXCLUDE_COLUMNS = [
+        "id",
+        "created_at",
+        "updated_at",
+        "hash_identifier",
+        "hash_value",
+        "hub_entity",
+    ]
+    order_field = "-created_at"
+
+    def __init__(self, session_data: SessionDataType, title: str, queryset: QuerySet):
+        super().__init__(session_data)
+        self.title = title
+        self.queryset = queryset
+        self.table = self.to_html()
+
+    def get_table(self) -> QuerySet | dict:
+        return self.queryset
+
+    @property
+    def table_elements(self) -> list[te.TableElement]:
+        columns = self.queryset.model._meta.fields
+        elements: list[te.TableElement] = []
+        change_map = self.get_change_map()
+        for column in columns:
+            if column.name in self.EXCLUDE_COLUMNS:
+                continue
+            elements.append(
+                te.HistoryStringTableElement(
+                    attr=column.name, name=column.name, change_map=change_map
+                )
+            )
+        return elements
+
+    def get_change_map(self) -> te.ChangeMapType:
+        sat_df = read_frame(self.queryset)
+        return self.get_change_map_from_df(sat_df)
+
+    @staticmethod
+    def get_change_map_from_df(df: pd.DataFrame) -> te.ChangeMapType:
+        id_column = "id"
+        exclude_cols = [id_column, "state_date_start", "state_date_end"]
+        # Make a copy of the dataframe sorted by id in descending order (bottom to top)
+        sorted_df = df.sort_values(by=id_column, ascending=False).reset_index(drop=True)
+        changes = {}
+
+        # Iterate through rows from bottom to top (highest id to lowest)
+        for i in range(len(sorted_df) - 1):
+            current_row = sorted_df.iloc[i]
+            next_row = sorted_df.iloc[i + 1]
+
+            current_id = current_row[id_column]
+            next_id = next_row[id_column]
+
+            # Compare all columns except the id column
+            for col in sorted_df.columns:
+                if col not in exclude_cols and current_row[col] != next_row[col]:
+                    # If there's a change, record it
+                    if current_id not in changes:
+                        changes[int(current_id)] = {}
+                    if next_id not in changes:
+                        changes[int(next_id)] = {}
+
+                    changes[int(current_id)][col] = te.HistoryChangeState.NEW
+                    changes[int(next_id)][col] = te.HistoryChangeState.OLD
+
+        return changes

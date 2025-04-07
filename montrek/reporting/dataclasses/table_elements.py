@@ -1,3 +1,4 @@
+from enum import Enum
 import inspect
 import tempfile
 from dataclasses import dataclass, field
@@ -218,9 +219,9 @@ class LinkListTableElement(BaseLinkTableElement):
         list_values = str(list_values).split(self.in_separator) if list_values else []
         text_values = self.get_dotted_attr_or_arg(obj, self.text)
         text_values = str(text_values).split(self.in_separator) if text_values else []
-        assert len(list_values) == len(
-            text_values
-        ), f"list_values: {list_values}, text_values: {text_values}"
+        assert len(list_values) == len(text_values), (
+            f"list_values: {list_values}, text_values: {text_values}"
+        )
         values = zip(list_values, text_values)
         values = sorted(values, key=lambda x: x[1])
         return values
@@ -484,3 +485,35 @@ class MethodNameTableElement(AttrTableElement):
         doc = inspect.getdoc(func)
         doc = doc or ""
         return f'<td style="text-align: left" title="{doc}">{value}</td>'
+
+
+class HistoryChangeState(Enum):
+    OLD = "old"
+    NEW = "new"
+    NONE = "none"
+
+
+ChangeMapType = dict[int, dict[str, HistoryChangeState]]
+
+
+class HistoryStringTableElement(StringTableElement):
+    def __init__(self, attr: str, name: str, change_map: ChangeMapType):
+        super().__init__(name=name, attr=attr)
+        self.change_map = change_map
+
+    def format(self, value: Any) -> str:
+        change_format = self._get_change_format()
+        if change_format == HistoryChangeState.NONE:
+            return super().format(value)
+        if change_format == HistoryChangeState.OLD:
+            return f'<td style="text-align: left; color: {ReportingColors.RED.hex}"><strong>{value}</strong></td>'
+        if change_format == HistoryChangeState.NEW:
+            return f'<td style="text-align: left; color: {ReportingColors.DARK_GREEN.hex}"><strong>{value}</strong></td>'
+
+    def _get_change_format(self):
+        obj_id = self.obj.id
+        if obj_id not in self.change_map:
+            return HistoryChangeState.NONE
+        if self.attr not in self.change_map[obj_id]:
+            return HistoryChangeState.NONE
+        return self.change_map[obj_id][self.attr]
