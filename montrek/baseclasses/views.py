@@ -28,7 +28,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from baseclasses import utils
-from baseclasses.dataclasses.history_data_table import HistoryDataTable
 from baseclasses.dataclasses.link_model import LinkModel
 from baseclasses.dataclasses.nav_bar_model import NavBarDropdownModel, NavBarModel
 from baseclasses.dataclasses.view_classes import ActionElement
