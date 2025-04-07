@@ -379,4 +379,16 @@ class TestHistoryDataTable(TestCase):
         )
         history_manager = HistoryDataTableManager({}, "SatA1", SatA1.objects.all())
         self.assertEqual(history_manager.title, "SatA1")
-        self.assertEqual(history_manager.to_html(), "")
+        html = history_manager.to_html()
+        for col in (
+            "state_date_start",
+            "state_date_end",
+            "comment",
+            "created_by",
+            "field_a1_str",
+            "field_a1_str",
+        ):
+            self.assertIn(
+                f'<th title=\'{col}\'><button type="submit" onclick="document.getElementById(\'form-order_by-action\').value=\'{col}\'" class="btn-order-field"><div style="display: flex; justify-content: space-between; align-items: center;">{col}</div></button></th>',
+                html,
+            )
