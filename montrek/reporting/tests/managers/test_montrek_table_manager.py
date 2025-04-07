@@ -12,6 +12,7 @@ from montrek_example.models import SatA1
 from montrek_example.tests.factories import montrek_example_factories as me_factories
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
+from reporting.dataclasses.table_elements import HistoryChangeState
 from reporting.managers.montrek_table_manager import HistoryDataTableManager
 from reporting.tests.mocks import (
     MockLongMontrekTableManager,
@@ -396,4 +397,10 @@ class TestHistoryDataTable(TestCase):
     def test_get_change_map_from_df(self):
         input_df = pd.DataFrame({"id": [1, 2], "col_1": ["A", "A"], "col_2": [2, 3]})
         test_dict = HistoryDataTableManager.get_change_map_from_df(input_df)
-        self.assertEqual(test_dict, {1: {"col_2": "old"}, 2: {"col_2": "new"}})
+        self.assertEqual(
+            test_dict,
+            {
+                1: {"col_2": HistoryChangeState.OLD},
+                2: {"col_2": HistoryChangeState.NEW},
+            },
+        )
