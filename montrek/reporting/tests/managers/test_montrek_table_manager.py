@@ -392,3 +392,8 @@ class TestHistoryDataTable(TestCase):
                 f'<th title=\'{col}\'><button type="submit" onclick="document.getElementById(\'form-order_by-action\').value=\'{col}\'" class="btn-order-field"><div style="display: flex; justify-content: space-between; align-items: center;">{col}</div></button></th>',
                 html,
             )
+
+    def test_get_change_map_from_df(self):
+        input_df = pd.DataFrame({"id": [1, 2], "col_1": ["A", "A"], "col_2": [2, 3]})
+        test_dict = HistoryDataTableManager.get_change_map_from_df(input_df)
+        self.assertEqual(test_dict, {1: {"col_2": "old"}, 2: {"col_2": "new"}})

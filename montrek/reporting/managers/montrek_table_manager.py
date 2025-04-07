@@ -4,6 +4,7 @@ import os
 from dataclasses import dataclass
 from decimal import Decimal
 from io import BytesIO
+from django_pandas.io import read_frame
 
 import pandas as pd
 from baseclasses.dataclasses.montrek_message import MontrekMessageInfo
@@ -447,8 +448,43 @@ class HistoryDataTableManager(MontrekTableManagerABC):
     def table_elements(self) -> list[te.TableElement]:
         columns = self.queryset.model._meta.fields
         elements: list[te.TableElement] = []
+        change_map = self.get_change_map()
         for column in columns:
             if column.name in self.EXCLUDE_COLUMNS:
                 continue
             elements.append(te.StringTableElement(attr=column.name, name=column.name))
         return elements
+
+    def get_change_map(self) -> dict[int, dict[str, str]]:
+        sat_df = read_frame(self.queryset)
+        return self.get_change_map_from_df(sat_df)
+
+    @staticmethod
+    def get_change_map_from_df(df: pd.DataFrame) -> dict[int, dict[str, str]]:
+        id_column = "id"
+        # Make a copy of the dataframe sorted by id in descending order (bottom to top)
+        sorted_df = df.sort_values(by=id_column, ascending=False).reset_index(drop=True)
+
+        changes = {}
+
+        # Iterate through rows from bottom to top (highest id to lowest)
+        for i in range(len(sorted_df) - 1):
+            current_row = sorted_df.iloc[i]
+            next_row = sorted_df.iloc[i + 1]
+
+            current_id = current_row[id_column]
+            next_id = next_row[id_column]
+
+            # Compare all columns except the id column
+            for col in sorted_df.columns:
+                if col != id_column and current_row[col] != next_row[col]:
+                    # If there's a change, record it
+                    if current_id not in changes:
+                        changes[int(current_id)] = {}
+                    if next_id not in changes:
+                        changes[int(next_id)] = {}
+
+                    changes[int(current_id)][col] = te.HistoryChangeState.NEW.value
+                    changes[int(next_id)][col] = te.HistoryChangeState.OLD.value
+
+        return changes
