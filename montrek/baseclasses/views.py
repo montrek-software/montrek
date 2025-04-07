@@ -19,7 +19,10 @@ from file_upload.forms import SimpleUploadFileForm
 from file_upload.managers.simple_upload_file_manager import SimpleUploadFileManager
 from reporting.managers.latex_report_manager import LatexReportManager
 from reporting.managers.montrek_details_manager import MontrekDetailsManager
-from reporting.managers.montrek_table_manager import MontrekTableManager
+from reporting.managers.montrek_table_manager import (
+    MontrekTableManager,
+    HistoryDataTableManager,
+)
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -408,7 +411,11 @@ class MontrekHistoryListView(MontrekTemplateView):
 
         return {
             "history_data_tables": [
-                HistoryDataTable(title=queryset, queryset=history_querysets[queryset])
+                HistoryDataTableManager(
+                    session_data=self.session_data,
+                    title=queryset,
+                    queryset=history_querysets[queryset],
+                )
                 for queryset in history_querysets
             ]
         }

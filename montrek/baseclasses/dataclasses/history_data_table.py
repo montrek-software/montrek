@@ -27,3 +27,7 @@ class HistoryDataTable:
                 continue
             self.elements.append(StringTableElement(attr=column.name, name=column.name))
             self.columns.append(column.name)
+        self.table = self.get_table()
+
+    def get_table(self) -> str:
+        return "Hallo!"

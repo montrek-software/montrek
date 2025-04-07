@@ -4,11 +4,11 @@ import os
 from dataclasses import dataclass
 from decimal import Decimal
 from io import BytesIO
-from typing import Any
 
 import pandas as pd
 from baseclasses.dataclasses.montrek_message import MontrekMessageInfo
 from baseclasses.managers.montrek_manager import MontrekManager
+from baseclasses.typing import SessionDataType
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
@@ -39,7 +39,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
     draft = False
     is_compact_format = False
 
-    def __init__(self, session_data: dict[str, Any] = {}):
+    def __init__(self, session_data: SessionDataType = {}):
         super().__init__(session_data)
         self._document_name: None | str = None
         self._queryset: None | QuerySet = None
@@ -51,7 +51,9 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         return rt.ReportingText("Internal Report")
 
     @property
-    def table_elements(self) -> tuple[te.TableElement, ...]:
+    def table_elements(
+        self,
+    ) -> tuple[te.TableElement, ...] | list[te.TableElement, ...]:
         return ()
 
     @property
@@ -314,7 +316,7 @@ class MontrekTableManager(MontrekTableManagerABC):
     is_paginated = True
     is_large: bool = False
 
-    def __init__(self, session_data: dict[str, Any] = {}):
+    def __init__(self, session_data: SessionDataType = {}):
         super().__init__(session_data)
         self.paginator: None | MontrekTablePaginator = None
         self.paginate_by: int = self.get_paginate_by()
@@ -397,7 +399,7 @@ class MontrekTableManager(MontrekTableManagerABC):
 
 
 class MontrekDataFrameTableManager(MontrekTableManagerABC):
-    def __init__(self, session_data: dict[str, Any] = {}):
+    def __init__(self, session_data: SessionDataType = {}):
         if "df_data" not in session_data:
             raise ValueError("DataFrame data not set in session_data['df_data'].")
         self.df_data = session_data["df_data"]
@@ -418,3 +420,35 @@ class MontrekDataFrameTableManager(MontrekTableManagerABC):
 
     def _get_table_dimensions(self) -> int:
         return self.df.shape[0] * self.df.shape[1]
+
+
+class HistoryDataTableManager(MontrekTableManagerABC):
+    is_current_compact_format = True
+    EXCLUDE_COLUMNS = [
+        "id",
+        "created_at",
+        "updated_at",
+        "hash_identifier",
+        "hash_value",
+        "hub_entity",
+    ]
+    order_field = "-created_at"
+
+    def __init__(self, session_data: SessionDataType, title: str, queryset: QuerySet):
+        self.title = title
+        self.queryset = queryset
+        self.table = self.to_html()
+        super().__init__(session_data)
+
+    def get_table(self) -> QuerySet | dict:
+        return self.queryset
+
+    @property
+    def table_elements(self) -> list[te.TableElement]:
+        columns = self.queryset.model._meta.fields
+        elements: list[te.TableElement] = []
+        for column in columns:
+            if column.name in self.EXCLUDE_COLUMNS:
+                continue
+            elements.append(te.StringTableElement(attr=column.name, name=column.name))
+        return elements
