@@ -452,19 +452,23 @@ class HistoryDataTableManager(MontrekTableManagerABC):
         for column in columns:
             if column.name in self.EXCLUDE_COLUMNS:
                 continue
-            elements.append(te.StringTableElement(attr=column.name, name=column.name))
+            elements.append(
+                te.HistoryStringTableElement(
+                    attr=column.name, name=column.name, change_map=change_map
+                )
+            )
         return elements
 
-    def get_change_map(self) -> dict[int, dict[str, str]]:
+    def get_change_map(self) -> te.ChangeMapType:
         sat_df = read_frame(self.queryset)
         return self.get_change_map_from_df(sat_df)
 
     @staticmethod
-    def get_change_map_from_df(df: pd.DataFrame) -> dict[int, dict[str, str]]:
+    def get_change_map_from_df(df: pd.DataFrame) -> te.ChangeMapType:
         id_column = "id"
+        exclude_cols = [id_column, "state_date_start", "state_date_end"]
         # Make a copy of the dataframe sorted by id in descending order (bottom to top)
         sorted_df = df.sort_values(by=id_column, ascending=False).reset_index(drop=True)
-
         changes = {}
 
         # Iterate through rows from bottom to top (highest id to lowest)
@@ -477,14 +481,14 @@ class HistoryDataTableManager(MontrekTableManagerABC):
 
             # Compare all columns except the id column
             for col in sorted_df.columns:
-                if col != id_column and current_row[col] != next_row[col]:
+                if col not in exclude_cols and current_row[col] != next_row[col]:
                     # If there's a change, record it
                     if current_id not in changes:
                         changes[int(current_id)] = {}
                     if next_id not in changes:
                         changes[int(next_id)] = {}
 
-                    changes[int(current_id)][col] = te.HistoryChangeState.NEW.value
-                    changes[int(next_id)][col] = te.HistoryChangeState.OLD.value
+                    changes[int(current_id)][col] = te.HistoryChangeState.NEW
+                    changes[int(next_id)][col] = te.HistoryChangeState.OLD
 
         return changes

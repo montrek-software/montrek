@@ -490,3 +490,30 @@ class MethodNameTableElement(AttrTableElement):
 class HistoryChangeState(Enum):
     OLD = "old"
     NEW = "new"
+    NONE = "none"
+
+
+ChangeMapType = dict[int, dict[str, HistoryChangeState]]
+
+
+class HistoryStringTableElement(StringTableElement):
+    def __init__(self, attr: str, name: str, change_map: ChangeMapType):
+        super().__init__(name=name, attr=attr)
+        self.change_map = change_map
+
+    def format(self, value: Any) -> str:
+        change_format = self._get_change_format()
+        if change_format == HistoryChangeState.NONE:
+            return super().format(value)
+        if change_format == HistoryChangeState.OLD:
+            return f'<td style="text-align: left; color: {ReportingColors.RED.hex}"><strong>{value}</strong></td>'
+        if change_format == HistoryChangeState.NEW:
+            return f'<td style="text-align: left; color: {ReportingColors.DARK_GREEN.hex}"><strong>{value}</strong></td>'
+
+    def _get_change_format(self):
+        obj_id = self.obj.id
+        if obj_id not in self.change_map:
+            return HistoryChangeState.NONE
+        if self.attr not in self.change_map[obj_id]:
+            return HistoryChangeState.NONE
+        return self.change_map[obj_id][self.attr]
