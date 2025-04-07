@@ -435,10 +435,10 @@ class HistoryDataTableManager(MontrekTableManagerABC):
     order_field = "-created_at"
 
     def __init__(self, session_data: SessionDataType, title: str, queryset: QuerySet):
+        super().__init__(session_data)
         self.title = title
         self.queryset = queryset
         self.table = self.to_html()
-        super().__init__(session_data)
 
     def get_table(self) -> QuerySet | dict:
         return self.queryset

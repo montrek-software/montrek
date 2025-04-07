@@ -386,7 +386,7 @@ class TestHistoryDataTable(TestCase):
             "comment",
             "created_by",
             "field_a1_str",
-            "field_a1_str",
+            "field_a1_int",
         ):
             self.assertIn(
                 f'<th title=\'{col}\'><button type="submit" onclick="document.getElementById(\'form-order_by-action\').value=\'{col}\'" class="btn-order-field"><div style="display: flex; justify-content: space-between; align-items: center;">{col}</div></button></th>',
