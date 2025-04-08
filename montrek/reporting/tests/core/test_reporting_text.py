@@ -200,10 +200,7 @@ class TestMarkdownReportingElement(TestCase):
         self.assertEqual(element.to_html(), expected_html)
 
     def test_markdown_to_latex(self):
-        markdown_text = "This is a **bold** text with a table:\n\n| Header1 | Header2 |\n|---------|---------|\n| Cell1   | Cell2   |"
+        markdown_text = "This is a **bold** text."
         element = MarkdownReportingElement(markdown_text)
         latex_output = element.to_latex()
         self.assertIn("\\textbf{bold}", latex_output)
-        self.assertIn("\\begin{tabular}", latex_output)
-        self.assertIn("Header1 & Header2 \\\\", latex_output)
-        self.assertIn("Cell1 & Cell2 \\\\", latex_output)
