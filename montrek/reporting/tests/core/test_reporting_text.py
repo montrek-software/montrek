@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from django.test import TestCase
 
 from reporting.core.reporting_text import (
-    MarkdownReportElement,
+    MarkdownReportingElement,
     ReportingParagraph,
     ReportingText,
     ReportingTextParagraph,
@@ -188,10 +188,10 @@ class TestMontrekLogo(TestCase):
         )
 
 
-class TestMarkdownReportElement(TestCase):
+class TestMarkdownReportingElement(TestCase):
     def test_markdown_to_html(self):
         markdown_text = "This is a **bold** text with a table:\n\n| Header1 | Header2 |\n|---------|---------|\n| Cell1   | Cell2   |"
-        element = MarkdownReportElement(markdown_text)
+        element = MarkdownReportingElement(markdown_text)
         expected_html = (
             "<p>This is a <strong>bold</strong> text with a table:</p>\n"
             "<table>\n<thead>\n<tr>\n<th>Header1</th>\n<th>Header2</th>\n</tr>\n</thead>\n"
@@ -201,7 +201,7 @@ class TestMarkdownReportElement(TestCase):
 
     def test_markdown_to_latex(self):
         markdown_text = "This is a **bold** text with a table:\n\n| Header1 | Header2 |\n|---------|---------|\n| Cell1   | Cell2   |"
-        element = MarkdownReportElement(markdown_text)
+        element = MarkdownReportingElement(markdown_text)
         latex_output = element.to_latex()
         self.assertIn("\\textbf{bold}", latex_output)
         self.assertIn("\\begin{tabular}", latex_output)

@@ -196,7 +196,7 @@ class MontrekLogo(ReportingImage):
         )
 
 
-class MarkdownReportElement:
+class MarkdownReportingElement:
     def __init__(self, markdown_text: str):
         self.markdown_text = markdown_text
 
