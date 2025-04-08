@@ -1,4 +1,3 @@
-from django.template import Context, Template
 import tempfile
 from urllib.parse import urlparse
 
@@ -73,6 +72,9 @@ class ReportingParagraph(ReportingText):
 
     def to_html(self) -> str:
         return f"<p>{self.text}</p>"
+
+
+from django.template import Context, Template
 
 
 class ReportingEditableText(ReportingText):
