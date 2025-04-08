@@ -1,6 +1,8 @@
+from django.template import Context, Template
 import tempfile
 from urllib.parse import urlparse
 
+import markdown
 import requests
 from baseclasses.models import HubValueDate
 from reporting.constants import ReportingTextType
@@ -46,7 +48,7 @@ class ReportingText(ReportElementProtocol):
         reporting_text_type: ReportingTextType = ReportingTextType.HTML,
     ):
         if not text:
-            text  = ""
+            text = ""
         self.text = text
         self.reporting_text_type = reporting_text_type
 
@@ -71,9 +73,6 @@ class ReportingParagraph(ReportingText):
 
     def to_html(self) -> str:
         return f"<p>{self.text}</p>"
-
-
-from django.template import Context, Template
 
 
 class ReportingEditableText(ReportingText):
@@ -193,3 +192,18 @@ class MontrekLogo(ReportingImage):
             "http://static1.squarespace.com/static/673bfbe149f99b59e4a41ee7/t/673bfdb41644c858ec83dc7e/1731984820187/montrek_logo_variant.png?format=1500w",
             width=width,
         )
+
+
+class MarkdownReportElement:
+    def __init__(self, markdown_text: str):
+        self.markdown_text = markdown_text
+
+    def to_html(self) -> str:
+        return markdown.markdown(
+            self.markdown_text, extensions=["markdown.extensions.tables"]
+        )
+
+    def to_latex(self) -> str:
+        html_text = self.to_html()
+        converter = HtmlLatexConverter()
+        return converter.convert(html_text)

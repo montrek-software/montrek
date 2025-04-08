@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from django.test import TestCase
 
 from reporting.core.reporting_text import (
+    MarkdownReportElement,
     ReportingParagraph,
     ReportingText,
     ReportingTextParagraph,
@@ -128,7 +129,7 @@ class TestReportText(TestCase):
     def test_reporting_text_with_none(self):
         reporting_text = ReportingText(None)
         self.assertEqual(reporting_text.to_html(), "")
-        self.assertEqual(reporting_text.to_latex(),"")
+        self.assertEqual(reporting_text.to_latex(), "")
 
 
 class TestReportingParagraph(TestCase):
@@ -185,3 +186,24 @@ class TestMontrekLogo(TestCase):
             logo.to_latex(),
             r"\\includegraphics\[width=0.5\\textwidth\]\{/tmp/tmp[a-zA-Z0-9_]+\.png\}",
         )
+
+
+class TestMarkdownReportElement(TestCase):
+    def test_markdown_to_html(self):
+        markdown_text = "This is a **bold** text with a table:\n\n| Header1 | Header2 |\n|---------|---------|\n| Cell1   | Cell2   |"
+        element = MarkdownReportElement(markdown_text)
+        expected_html = (
+            "<p>This is a <strong>bold</strong> text with a table:</p>\n"
+            "<table>\n<thead>\n<tr>\n<th>Header1</th>\n<th>Header2</th>\n</tr>\n</thead>\n"
+            "<tbody>\n<tr>\n<td>Cell1</td>\n<td>Cell2</td>\n</tr>\n</tbody>\n</table>"
+        )
+        self.assertEqual(element.to_html(), expected_html)
+
+    def test_markdown_to_latex(self):
+        markdown_text = "This is a **bold** text with a table:\n\n| Header1 | Header2 |\n|---------|---------|\n| Cell1   | Cell2   |"
+        element = MarkdownReportElement(markdown_text)
+        latex_output = element.to_latex()
+        self.assertIn("\\textbf{bold}", latex_output)
+        self.assertIn("\\begin{tabular}", latex_output)
+        self.assertIn("Header1 & Header2 \\\\", latex_output)
+        self.assertIn("Cell1 & Cell2 \\\\", latex_output)
