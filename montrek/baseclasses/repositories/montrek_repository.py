@@ -250,7 +250,12 @@ class MontrekRepository:
         hub = self.get_hub_by_id(pk=pk)
         satellite_querys = {}
         for sat in self.annotator.get_satellite_classes():
-            sat_query = sat.objects.filter(hub_entity=hub).order_by("-created_at")
+            if sat.is_timeseries:
+                sat_query = sat.objects.filter(hub_value_date__hub=hub).order_by(
+                    "-created_at"
+                )
+            else:
+                sat_query = sat.objects.filter(hub_entity=hub).order_by("-created_at")
             sat_query = sat_query.annotate(
                 changed_by=F("created_by__email"),
             )
