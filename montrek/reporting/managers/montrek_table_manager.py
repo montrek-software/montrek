@@ -1,5 +1,6 @@
 import datetime
 import math
+from operator import is_
 import os
 from dataclasses import dataclass
 from decimal import Decimal
@@ -423,16 +424,19 @@ class MontrekDataFrameTableManager(MontrekTableManagerABC):
         return self.df.shape[0] * self.df.shape[1]
 
 
+EXCLUDE_COLUMNS = [
+    "id",
+    "created_at",
+    "updated_at",
+    "hash_identifier",
+    "hash_value",
+    "hub_entity",
+    "hub_value_date",
+]
+
+
 class HistoryDataTableManager(MontrekTableManagerABC):
     is_current_compact_format = True
-    EXCLUDE_COLUMNS = [
-        "id",
-        "created_at",
-        "updated_at",
-        "hash_identifier",
-        "hash_value",
-        "hub_entity",
-    ]
     order_field = "-created_at"
 
     def __init__(self, session_data: SessionDataType, title: str, queryset: QuerySet):
@@ -450,7 +454,7 @@ class HistoryDataTableManager(MontrekTableManagerABC):
         elements: list[te.TableElement] = []
         change_map = self.get_change_map()
         for column in columns:
-            if column.name in self.EXCLUDE_COLUMNS:
+            if column.name in EXCLUDE_COLUMNS:
                 continue
             elements.append(
                 te.HistoryStringTableElement(
@@ -465,10 +469,13 @@ class HistoryDataTableManager(MontrekTableManagerABC):
 
     @staticmethod
     def get_change_map_from_df(df: pd.DataFrame) -> te.ChangeMapType:
+        is_timeseries = True if "value_date" in df.columns else False
         id_column = "id"
-        exclude_cols = [id_column, "state_date_start", "state_date_end"]
+
+        exclude_cols = [id_column, "state_date_start", "state_date_end", "value_date"]
         # Make a copy of the dataframe sorted by id in descending order (bottom to top)
-        sorted_df = df.sort_values(by=id_column, ascending=False).reset_index(drop=True)
+        sort_col = "value_date" if is_timeseries else id_column
+        sorted_df = df.sort_values(by=sort_col, ascending=False).reset_index(drop=True)
         changes = {}
 
         # Iterate through rows from bottom to top (highest id to lowest)
@@ -479,6 +486,8 @@ class HistoryDataTableManager(MontrekTableManagerABC):
             current_id = current_row[id_column]
             next_id = next_row[id_column]
 
+            if is_timeseries and current_row["value_date"] != next_row["value_date"]:
+                continue
             # Compare all columns except the id column
             for col in sorted_df.columns:
                 if col not in exclude_cols and current_row[col] != next_row[col]:

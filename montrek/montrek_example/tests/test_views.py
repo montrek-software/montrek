@@ -324,6 +324,17 @@ class TestMontrekExampleAHistoryView(MontrekViewTestCase):
         self.assertEqual(sat_a2_queryset[0].changed_by, user2.email)
 
 
+class TestMontrekExampleCHistoryView(MontrekViewTestCase):
+    viewname = "montrek_example_c_history"
+    view_class = me_views.MontrekExampleCHistory
+
+    def build_factories(self):
+        self.sat = me_factories.SatC1Factory()
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.sat.get_hub_value_date().id}
+
+
 class TestMontrekExampleBListView(MontrekListViewTestCase):
     viewname = "montrek_example_b_list"
     view_class = me_views.MontrekExampleBList
