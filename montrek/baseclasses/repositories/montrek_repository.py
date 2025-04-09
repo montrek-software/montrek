@@ -252,7 +252,7 @@ class MontrekRepository:
         for sat in self.annotator.get_satellite_classes():
             if sat.is_timeseries:
                 sat_query = sat.objects.filter(hub_value_date__hub=hub).order_by(
-                    "-created_at"
+                    ("-value_date")
                 )
             else:
                 sat_query = sat.objects.filter(hub_entity=hub).order_by("-created_at")

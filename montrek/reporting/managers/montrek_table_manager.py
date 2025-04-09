@@ -1,5 +1,6 @@
 import datetime
 import math
+from operator import is_
 import os
 from dataclasses import dataclass
 from decimal import Decimal
@@ -473,10 +474,8 @@ class HistoryDataTableManager(MontrekTableManagerABC):
 
         exclude_cols = [id_column, "state_date_start", "state_date_end", "value_date"]
         # Make a copy of the dataframe sorted by id in descending order (bottom to top)
-        sort_cols = [id_column]
-        if is_timeseries:
-            sort_cols.append("value_date")
-        sorted_df = df.sort_values(by=sort_cols, ascending=False).reset_index(drop=True)
+        sort_col = "value_date" if is_timeseries else id_column
+        sorted_df = df.sort_values(by=sort_col, ascending=False).reset_index(drop=True)
         changes = {}
 
         # Iterate through rows from bottom to top (highest id to lowest)
@@ -491,8 +490,6 @@ class HistoryDataTableManager(MontrekTableManagerABC):
                 continue
             # Compare all columns except the id column
             for col in sorted_df.columns:
-                if col in EXCLUDE_COLUMNS:
-                    continue
                 if col not in exclude_cols and current_row[col] != next_row[col]:
                     # If there's a change, record it
                     if current_id not in changes:
