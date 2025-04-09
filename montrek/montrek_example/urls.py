@@ -71,6 +71,11 @@ urlpatterns = [
         name="montrek_example_a_history",
     ),
     path(
+        "c/<int:pk>/history",
+        views.MontrekExampleCHistory.as_view(),
+        name="montrek_example_c_history",
+    ),
+    path(
         "c/list",
         views.MontrekExampleCList.as_view(),
         name="montrek_example_c_list",

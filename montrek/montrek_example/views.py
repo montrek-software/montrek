@@ -215,6 +215,17 @@ class MontrekExampleAHistory(views.MontrekHistoryListView):
         return (action_back_to_overview("a"),)
 
 
+class MontrekExampleCHistory(views.MontrekHistoryListView):
+    manager_class = mem.HubCManager
+    page_class = pages.MontrekExampleCAppPage
+    tab = "tab_history"
+    title = "Example C History"
+
+    @property
+    def actions(self) -> tuple:
+        return (action_back_to_overview("a"),)
+
+
 class MontrekExampleCList(views.MontrekListView):
     manager_class = mem.HubCManager
     page_class = pages.MontrekExampleCAppPage
