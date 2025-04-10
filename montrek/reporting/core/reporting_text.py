@@ -1,6 +1,7 @@
 import tempfile
 from urllib.parse import urlparse
 
+import markdown
 import requests
 from baseclasses.models import HubValueDate
 from reporting.constants import ReportingTextType
@@ -46,7 +47,7 @@ class ReportingText(ReportElementProtocol):
         reporting_text_type: ReportingTextType = ReportingTextType.HTML,
     ):
         if not text:
-            text  = ""
+            text = ""
         self.text = text
         self.reporting_text_type = reporting_text_type
 
@@ -187,9 +188,42 @@ class ReportingImage:
         return f'<div style="text-align: right;"><img src="{self.image_path}" alt="image" style="width:{self.width*100}%;"></div>'
 
 
+class ReportingMap:
+    def __init__(self, longitude: int, latitude: int, offset: int = 5):
+        box_coords = [
+            longitude - offset,
+            latitude + offset,
+            longitude + offset,
+            latitude - offset,
+        ]
+        self.embedded_url = f"https://www.openstreetmap.org/export/embed.html?bbox={box_coords[0]}%2C{box_coords[3]}%2C{box_coords[2]}%2C{box_coords[1]}&layer=mapnik&marker={latitude}%2C{longitude}"
+
+    def to_latex(self) -> str:
+        # TODO: Implement LaTeX conversion for iframe
+        return ""
+
+    def to_html(self) -> str:
+        return f'<iframe src="{self.embedded_url}" style="width: 100%; aspect-ratio: 4/3; height: auto; border:2;" loading="lazy" allowfullscreen></iframe>'
+
+
 class MontrekLogo(ReportingImage):
     def __init__(self, width: float = 1.0):
         super().__init__(
             "http://static1.squarespace.com/static/673bfbe149f99b59e4a41ee7/t/673bfdb41644c858ec83dc7e/1731984820187/montrek_logo_variant.png?format=1500w",
             width=width,
         )
+
+
+class MarkdownReportingElement:
+    def __init__(self, markdown_text: str):
+        self.markdown_text = markdown_text
+
+    def to_html(self) -> str:
+        return markdown.markdown(
+            self.markdown_text, extensions=["markdown.extensions.tables"]
+        )
+
+    def to_latex(self) -> str:
+        html_text = self.to_html()
+        converter = HtmlLatexConverter()
+        return converter.convert(html_text)

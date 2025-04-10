@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from django.test import TestCase
 
 from reporting.core.reporting_text import (
+    MarkdownReportingElement,
+    ReportingMap,
     ReportingParagraph,
     ReportingText,
     ReportingTextParagraph,
@@ -128,7 +130,7 @@ class TestReportText(TestCase):
     def test_reporting_text_with_none(self):
         reporting_text = ReportingText(None)
         self.assertEqual(reporting_text.to_html(), "")
-        self.assertEqual(reporting_text.to_latex(),"")
+        self.assertEqual(reporting_text.to_latex(), "")
 
 
 class TestReportingParagraph(TestCase):
@@ -185,3 +187,28 @@ class TestMontrekLogo(TestCase):
             logo.to_latex(),
             r"\\includegraphics\[width=0.5\\textwidth\]\{/tmp/tmp[a-zA-Z0-9_]+\.png\}",
         )
+
+
+class TestMarkdownReportingElement(TestCase):
+    def test_markdown_to_html(self):
+        markdown_text = "This is a **bold** text with a table:\n\n| Header1 | Header2 |\n|---------|---------|\n| Cell1   | Cell2   |"
+        element = MarkdownReportingElement(markdown_text)
+        expected_html = (
+            "<p>This is a <strong>bold</strong> text with a table:</p>\n"
+            "<table>\n<thead>\n<tr>\n<th>Header1</th>\n<th>Header2</th>\n</tr>\n</thead>\n"
+            "<tbody>\n<tr>\n<td>Cell1</td>\n<td>Cell2</td>\n</tr>\n</tbody>\n</table>"
+        )
+        self.assertEqual(element.to_html(), expected_html)
+
+    def test_markdown_to_latex(self):
+        markdown_text = "This is a **bold** text."
+        element = MarkdownReportingElement(markdown_text)
+        latex_output = element.to_latex()
+        self.assertIn("\\textbf{bold}", latex_output)
+
+
+class TestReportingMap(TestCase):
+    def test_map(self):
+        map_element = ReportingMap(longitude=10, latitude=20)
+        expected_html = '<iframe src="https://www.openstreetmap.org/export/embed.html?bbox=5%2C15%2C15%2C25&layer=mapnik&marker=20%2C10" style="width: 100%; aspect-ratio: 4/3; height: auto; border:2;" loading="lazy" allowfullscreen></iframe>'
+        self.assertEqual(map_element.to_html(), expected_html)
