@@ -240,9 +240,9 @@ class ToPdfMixin:
         if pdf_path and os.path.exists(pdf_path):
             with open(pdf_path, "rb") as pdf_file:
                 response = HttpResponse(pdf_file.read(), content_type="application/pdf")
-                response["Content-Disposition"] = (
-                    "inline; filename=" + os.path.basename(pdf_path)
-                )
+                response[
+                    "Content-Disposition"
+                ] = "inline; filename=" + os.path.basename(pdf_path)
                 return response
         previous_url = self.request.META.get("HTTP_REFERER")
         return HttpResponseRedirect(previous_url)
@@ -281,7 +281,6 @@ class MontrekListView(
             return self.set_is_compact_format(False)
         if "order_action" in request_get:
             return self.set_order_field(request_get.get("order_action", None))
-        # self.session_data["order_field"] = None
         return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -563,6 +562,12 @@ class MontrekRestApiView(APIView, MontrekViewMixin):
         query = self.get_view_queryset()
         serializer = MontrekSerializer(query, many=True, manager=self.manager)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def view_dependent_session_data(
+        self, session_data: SessionDataType
+    ) -> SessionDataType:
+        table_meta_session_data = TableMetaSessionData(self.request)
+        return table_meta_session_data.update_session_data(session_data)
 
 
 class MontrekRedirectView(MontrekViewMixin, RedirectView):

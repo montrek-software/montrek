@@ -1068,6 +1068,44 @@ class TestHubARestApiView(MontrekRestApiViewTestCase):
         return expected_json
 
 
+class TestHubARestApiViewWithFilter(MontrekRestApiViewTestCase):
+    viewname = "hub_a_rest_api"
+    view_class = me_views.HubARestApiView
+    expected_no_of_rows = 1
+
+    def build_factories(self):
+        hubs = me_factories.HubAFactory.create_batch(3)
+        self.sat_a1s = []
+        self.sat_a2s = []
+
+        for i, hub in enumerate(hubs):
+            self.sat_a1s.append(
+                me_factories.SatA1Factory(hub_entity=hub, field_a1_str=f"field{i}")
+            )
+            self.sat_a2s.append(me_factories.SatA2Factory(hub_entity=hub))
+
+    def get_response(self):
+        call_kwargs = {
+            "filter_field": "field_a1_str",
+            "filter_value": "field1",
+            "filter_negate": "False",
+            "filter_lookup": "exact",
+        }
+        return self.client.get(self.url, query_params=call_kwargs)
+
+    def expected_json(self) -> list:
+        expected_json = [
+            {
+                "field_a1_str": self.sat_a1s[1].field_a1_str,
+                "field_a1_int": self.sat_a1s[1].field_a1_int,
+                "field_a2_str": self.sat_a2s[1].field_a2_str,
+                "field_a2_float": self.sat_a2s[1].field_a2_float,
+                "field_b1_str": None,
+            }
+        ]
+        return expected_json
+
+
 class TestHubBRestApiView(MontrekRestApiViewTestCase):
     viewname = "hub_b_rest_api"
     view_class = me_views.HubBRestApiView
