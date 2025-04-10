@@ -97,7 +97,8 @@ class TestMontrekExampleAListViewPages(MontrekListViewTestCase):
     expected_no_of_rows = 10
 
     def build_factories(self):
-        me_factories.SatA2Factory.create_batch(15)
+        for i in range(15):
+            me_factories.SatA2Factory.create(field_a2_str=f"field_{i}")
 
     def test_selected_and_remember_pages(self):
         query_params = {"page": 2}
@@ -109,6 +110,23 @@ class TestMontrekExampleAListViewPages(MontrekListViewTestCase):
         test_page = response.context_data["paginator"]
         self.assertIsInstance(test_page, MontrekTablePaginator)
         self.assertEqual(test_page.number, 2)
+
+    def test_apply_filter_on_latter_page(self):
+        query_params = {"page": 2}
+        response = self.client.get(self.url, data=query_params)
+        query_params = {
+            "filter_field": "field_a2_str",
+            "filter_value": "field_12",
+            "filter_negate": "False",
+            "filter_lookup": "exact",
+            "action": "filter",
+        }
+        response = self.client.get(self.url, data=query_params)
+        object_list = response.context_data["object_list"]
+        self.assertEqual(len(object_list), 1)
+        self.assertEqual(object_list[0].field_a2_str, "field_12")
+        test_page = response.context_data["paginator"]
+        self.assertEqual(test_page.number, 1)
 
 
 class TestMontrekExampleACreateView(MontrekCreateViewTestCase):
