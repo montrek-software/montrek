@@ -3,6 +3,7 @@ from django.test import TestCase
 
 from reporting.core.reporting_text import (
     MarkdownReportingElement,
+    ReportingMap,
     ReportingParagraph,
     ReportingText,
     ReportingTextParagraph,
@@ -204,3 +205,10 @@ class TestMarkdownReportingElement(TestCase):
         element = MarkdownReportingElement(markdown_text)
         latex_output = element.to_latex()
         self.assertIn("\\textbf{bold}", latex_output)
+
+
+class TestReportingMap(TestCase):
+    def test_map(self):
+        map_element = ReportingMap(longitude=10, latitude=20)
+        expected_html = '<iframe src="https://www.openstreetmap.org/export/embed.html?bbox=5%2C15%2C15%2C25&layer=mapnik&marker=20%2C10" style="width: 100%; aspect-ratio: 4/3; height: auto; border:2;" loading="lazy" allowfullscreen></iframe>'
+        self.assertEqual(map_element.to_html(), expected_html)
