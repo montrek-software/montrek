@@ -188,6 +188,24 @@ class ReportingImage:
         return f'<div style="text-align: right;"><img src="{self.image_path}" alt="image" style="width:{self.width*100}%;"></div>'
 
 
+class ReportingMap:
+    def __init__(self, longitude: int, latitude: int, offset: int = 5):
+        box_coords = [
+            longitude - offset,
+            latitude + offset,
+            longitude + offset,
+            latitude - offset,
+        ]
+        self.embedded_url = f"https://www.openstreetmap.org/export/embed.html?bbox={box_coords[0]}%2C{box_coords[3]}%2C{box_coords[2]}%2C{box_coords[1]}&layer=mapnik&marker={latitude}%2C{longitude}"
+
+    def to_latex(self) -> str:
+        # TODO: Implement LaTeX conversion for iframe
+        return ""
+
+    def to_html(self) -> str:
+        return f'<iframe src="{self.embedded_url}" style="width: 100%; aspect-ratio: 4/3; height: auto; border:2;" loading="lazy" allowfullscreen></iframe>'
+
+
 class MontrekLogo(ReportingImage):
     def __init__(self, width: float = 1.0):
         super().__init__(
