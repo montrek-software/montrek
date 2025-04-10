@@ -97,7 +97,8 @@ class TestMontrekExampleAListViewPages(MontrekListViewTestCase):
     expected_no_of_rows = 10
 
     def build_factories(self):
-        me_factories.SatA2Factory.create_batch(15)
+        for i in range(15):
+            me_factories.SatA2Factory.create(field_a2_str=f"field_{i}")
 
     def test_selected_and_remember_pages(self):
         query_params = {"page": 2}
@@ -109,6 +110,23 @@ class TestMontrekExampleAListViewPages(MontrekListViewTestCase):
         test_page = response.context_data["paginator"]
         self.assertIsInstance(test_page, MontrekTablePaginator)
         self.assertEqual(test_page.number, 2)
+
+    def test_apply_filter_on_latter_page(self):
+        query_params = {"page": 2}
+        response = self.client.get(self.url, data=query_params)
+        query_params = {
+            "filter_field": "field_a2_str",
+            "filter_value": "field_12",
+            "filter_negate": "False",
+            "filter_lookup": "exact",
+            "action": "filter",
+        }
+        response = self.client.get(self.url, data=query_params)
+        object_list = response.context_data["object_list"]
+        self.assertEqual(len(object_list), 1)
+        self.assertEqual(object_list[0].field_a2_str, "field_12")
+        test_page = response.context_data["paginator"]
+        self.assertEqual(test_page.number, 1)
 
 
 class TestMontrekExampleACreateView(MontrekCreateViewTestCase):
@@ -1065,6 +1083,44 @@ class TestHubARestApiView(MontrekRestApiViewTestCase):
                 "field_b1_str": None,
             }
             expected_json.append(entry)
+        return expected_json
+
+
+class TestHubARestApiViewWithFilter(MontrekRestApiViewTestCase):
+    viewname = "hub_a_rest_api"
+    view_class = me_views.HubARestApiView
+    expected_no_of_rows = 1
+
+    def build_factories(self):
+        hubs = me_factories.HubAFactory.create_batch(3)
+        self.sat_a1s = []
+        self.sat_a2s = []
+
+        for i, hub in enumerate(hubs):
+            self.sat_a1s.append(
+                me_factories.SatA1Factory(hub_entity=hub, field_a1_str=f"field{i}")
+            )
+            self.sat_a2s.append(me_factories.SatA2Factory(hub_entity=hub))
+
+    def get_response(self):
+        call_kwargs = {
+            "filter_field": "field_a1_str",
+            "filter_value": "field1",
+            "filter_negate": "False",
+            "filter_lookup": "exact",
+        }
+        return self.client.get(self.url, query_params=call_kwargs)
+
+    def expected_json(self) -> list:
+        expected_json = [
+            {
+                "field_a1_str": self.sat_a1s[1].field_a1_str,
+                "field_a1_int": self.sat_a1s[1].field_a1_int,
+                "field_a2_str": self.sat_a2s[1].field_a2_str,
+                "field_a2_float": self.sat_a2s[1].field_a2_float,
+                "field_b1_str": None,
+            }
+        ]
         return expected_json
 
 

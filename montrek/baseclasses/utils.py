@@ -83,7 +83,8 @@ class TableMetaSessionDataElement(ABC):
         self.request.session[self.field] = self.session_data.get(self.field, {})
 
     @abstractmethod
-    def apply_data(self) -> SessionDataType: ...
+    def apply_data(self) -> SessionDataType:
+        ...
 
     def _set_data_to_path(self, default: int | str | None) -> SessionDataType:
         data = {}
@@ -139,6 +140,7 @@ class FilterMetaSessionDataElement(TableMetaSessionDataElement):
                     "filter_negate": filter_negate,
                     "filter_value": filter_value,
                 }
+                filter_data["page"] = [1]
         return filter_data
 
 

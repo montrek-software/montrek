@@ -138,7 +138,8 @@ class MockErrors:
 class MockFormClass:
     errors = MockErrors()
 
-    def __init__(self, request, repository): ...
+    def __init__(self, request, repository):
+        ...
 
     def is_valid(self):
         return False
@@ -229,6 +230,8 @@ class TestMontrekViewMixin(TestCase):
             "current_is_compact_format": False,
             "order_fields": {"/": None},
             "order_field": None,
+            "page": [1],
+            "pages": {"/": [1]},
         }
         self.assertEqual(mock_view.session_data, expected_data)
 
@@ -283,6 +286,8 @@ class TestMontrekViewMixin(TestCase):
                 "current_is_compact_format": False,
                 "order_fields": {"/some/path": None},
                 "order_field": None,
+                "page": [1],
+                "pages": {"/some/path": [1]},
             }
         )
         self.assertEqual(mock_view.session_data, expected_session_data)
