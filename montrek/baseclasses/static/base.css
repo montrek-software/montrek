@@ -31,6 +31,10 @@ h2 {
   background-color: #004767; /* Dark blue background */
 }
 
+li {
+  margin-left: 20px;
+}
+
 .navbar a {
   color: #ffffff; /* White text */
 }
