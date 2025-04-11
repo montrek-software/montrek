@@ -237,11 +237,6 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
         return response
 
-    def _make_float(self, value):
-        if isinstance(value, Decimal):
-            return float(value)
-        return value
-
     def send_table_by_mail(self, filetype: str):
         file_name = f"{self.document_name}.{filetype}"
         if filetype == "xlsx":

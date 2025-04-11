@@ -296,6 +296,12 @@ class NumberTableElement(AttrTableElement):
     def _format_value(self, value) -> str:
         return self.shortener.shorten(value, "")
 
+    def get_value(self, obj: Any) -> Any:
+        value = super().get_value(obj)
+        if isinstance(value, Decimal):
+            return float(value)
+        return value
+
 
 @dataclass
 class FloatTableElement(NumberTableElement):
