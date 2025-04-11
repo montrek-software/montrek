@@ -237,16 +237,6 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
         return response
 
-    def _make_datetime_naive(self, value):
-        if isinstance(value, datetime.datetime) and not timezone.is_naive(value):
-            value = timezone.make_naive(value)
-        return value
-
-    def _make_float(self, value):
-        if isinstance(value, Decimal):
-            return float(value)
-        return value
-
     def send_table_by_mail(self, filetype: str):
         file_name = f"{self.document_name}.{filetype}"
         if filetype == "xlsx":
@@ -345,14 +335,7 @@ class MontrekTableManager(MontrekTableManagerABC):
         for element in table_elements:
             values = []
             for row in queryset.all():
-                if hasattr(element, "attr"):
-                    attr = getattr(row, element.attr)
-                    attr = self._make_datetime_naive(attr)
-                    attr = self._make_float(attr)
-
-                    values.append(attr)
-                else:
-                    values.append(getattr(row, element.text))
+                values.append(element.get_value(row))
             table_data[element.name] = values
         return pd.DataFrame(table_data)
 
