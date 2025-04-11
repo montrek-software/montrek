@@ -1,6 +1,5 @@
 import datetime
 import math
-from operator import is_
 import os
 from dataclasses import dataclass
 from decimal import Decimal
@@ -236,6 +235,16 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         response["Content-Type"] = content_type
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
         return response
+
+    def _make_datetime_naive(self, value):
+        if isinstance(value, datetime.datetime) and not timezone.is_naive(value):
+            value = timezone.make_naive(value)
+        return value
+
+    def _make_float(self, value):
+        if isinstance(value, Decimal):
+            return float(value)
+        return value
 
     def send_table_by_mail(self, filetype: str):
         file_name = f"{self.document_name}.{filetype}"
