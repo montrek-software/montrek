@@ -1,8 +1,9 @@
-from enum import Enum
+import datetime
 import inspect
 import tempfile
 from dataclasses import dataclass, field
 from decimal import Decimal
+from enum import Enum
 from typing import Any
 from urllib.parse import urlparse
 
@@ -18,9 +19,8 @@ from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
 from pandas.core.tools.datetimes import DateParseError
 from reporting.core.reporting_colors import ReportingColors
-from rest_framework import serializers
-
 from reporting.core.text_converter import HtmlLatexConverter
+from rest_framework import serializers
 
 
 def _get_value_color(value):
@@ -62,12 +62,8 @@ class AttrTableElement(TableElement):
     obj: Any = None
 
     def get_attribute(self, obj: Any, tag: str) -> str:
-        attr = self.attr
         self.obj = obj
-        if isinstance(obj, dict):
-            value = obj.get(attr, attr)
-        else:
-            value = getattr(obj, attr, attr)
+        value = self.get_value(obj)
         if tag == "html":
             if pd.isna(value):
                 return self.none_return_html(obj)
@@ -77,6 +73,14 @@ class AttrTableElement(TableElement):
                 return " \\color{black} - &"
             return self.format_latex(value)
         return str(value)
+
+    def get_value(self, obj: Any) -> Any:
+        attr = self.attr
+        if isinstance(obj, dict):
+            value = obj.get(attr, attr)
+        else:
+            value = getattr(obj, attr, attr)
+        return value
 
     def none_return_html(self, obj: Any) -> str:
         return NoneTableElement(name=self.name, attr=self.attr).format()
@@ -115,13 +119,16 @@ class BaseLinkTableElement(TableElement):
         return obj
 
     def get_attribute(self, obj: Any, tag: str) -> str:
-        link_text = self._get_link_text(obj)
+        link_text = self.get_value(obj)
         if tag == "latex":
             return self.format_latex(link_text)
         url_kwargs = self._get_url_kwargs(obj)
         url = self._get_url(obj, url_kwargs)
         link = self._get_link(url, link_text)
         return f"<td>{link}</td>"
+
+    def get_value(self, obj):
+        raise NotImplementedError
 
     def _get_url_kwargs(self, obj: Any) -> dict:
         # TODO Update this such that _get_dotted_attr_or_arg is not used anymore
@@ -163,16 +170,13 @@ class BaseLinkTableElement(TableElement):
         }
         return template.render(Context(context))
 
-    def _get_link_text(self, obj):
-        raise NotImplementedError
-
 
 @dataclass
 class LinkTableElement(BaseLinkTableElement):
     icon: str
     static_kwargs: dict = field(default_factory=dict)
 
-    def _get_link_text(self, obj):
+    def get_value(self, obj):
         return Template(
             f'<span class="glyphicon glyphicon-{self.icon}"></span>'
         ).render(Context())
@@ -184,7 +188,7 @@ class LinkTextTableElement(BaseLinkTableElement):
     text: str
     static_kwargs: dict = field(default_factory=dict)
 
-    def _get_link_text(self, obj):
+    def get_value(self, obj):
         return BaseLinkTableElement.get_dotted_attr_or_arg(obj, self.text)
 
 
@@ -198,7 +202,7 @@ class LinkListTableElement(BaseLinkTableElement):
     out_separator: str = "<br>"
 
     def get_attribute(self, obj: Any, tag: str) -> str:
-        values = self._get_object_values(obj)
+        values = self.get_value(obj)
         if tag == "latex":
             value = ",".join(link_text for _, link_text in values)
             return self.format_latex(value)
@@ -214,7 +218,7 @@ class LinkListTableElement(BaseLinkTableElement):
         result += "</div></td>"
         return result
 
-    def _get_object_values(self, obj) -> list:
+    def get_value(self, obj) -> list:
         list_values = self.get_dotted_attr_or_arg(obj, self.list_attr)
         list_values = str(list_values).split(self.in_separator) if list_values else []
         text_values = self.get_dotted_attr_or_arg(obj, self.text)
@@ -342,15 +346,31 @@ class ProgressBarTableElement(NumberTableElement):
 
 
 @dataclass
-class DateTableElement(AttrTableElement):
-    serializer_field_class = serializers.DateField
+class DateTableBaseElement(AttrTableElement):
     attr: str
+    date_format: str = ""
 
     def format(self, value):
         if not isinstance(value, timezone.datetime):
             return f'<td style="text-align:left;">{value}</td>'
-        value = value.strftime("%d/%m/%Y")
+        value = value.strftime(self.date_format)
         return f'<td style="text-align:left;">{value}</td>'
+
+    def get_value(self, obj: Any) -> Any:
+        value = super().get_value(obj)
+        if isinstance(value, datetime.datetime) and not timezone.is_naive(value):
+            value = timezone.make_naive(value)
+        return value
+
+
+class DateTableElement(DateTableBaseElement):
+    serializer_field_class = serializers.DateField
+    date_format = "%d/%m/%Y"
+
+
+class DateTimeTableElement(DateTableBaseElement):
+    serializer_field_class = serializers.DateTimeField
+    date_format = "%d/%m/%Y"
 
 
 @dataclass
@@ -459,17 +479,6 @@ class ImageTableElement(AttrTableElement):
         temp_file.close()
         value = temp_file_path
         return _return_string(value)
-
-
-class DateTimeTableElement(AttrTableElement):
-    serializer_field_class = serializers.DateTimeField
-    attr: str
-
-    def format(self, value):
-        if not isinstance(value, timezone.datetime):
-            return f'<td style="text-align:left;">{value}</td>'
-        value = value.strftime("%d/%m/%Y %H:%M:%S")
-        return f'<td style="text-align:left;">{value}</td>'
 
 
 @dataclass
