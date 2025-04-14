@@ -46,6 +46,9 @@ class TableElement:
     def get_attribute(self, obj: Any, tag: str) -> str:
         raise NotImplementedError
 
+    def get_value(self, obj: Any) -> Any:
+        raise NotImplementedError
+
 
 @dataclass
 class NoneTableElement(TableElement):
