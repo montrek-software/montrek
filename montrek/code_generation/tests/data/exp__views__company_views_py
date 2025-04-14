@@ -1,9 +1,6 @@
 from django.urls import reverse
 from baseclasses.dataclasses.view_classes import ActionElement, ListActionElement
-from baseclasses.views import MontrekDetailView, MontrekListView
-from baseclasses.views import MontrekCreateView
-from baseclasses.views import MontrekUpdateView
-from baseclasses.views import MontrekDeleteView
+from baseclasses import views
 from code_generation.tests.data.output.managers.company_managers import CompanyTableManager
 from code_generation.tests.data.output.managers.company_managers import CompanyDetailsManager
 from code_generation.tests.data.output.pages.company_pages import CompanyPage
@@ -11,7 +8,7 @@ from code_generation.tests.data.output.pages.company_pages import CompanyDetails
 from code_generation.tests.data.output.forms.company_forms import CompanyCreateForm
 
 
-class CompanyCreateView(MontrekCreateView):
+class CompanyCreateView(views.MontrekCreateView):
     manager_class = CompanyTableManager
     page_class = CompanyPage
     tab = "tab_company_list"
@@ -20,7 +17,7 @@ class CompanyCreateView(MontrekCreateView):
     title = "Company Create"
 
 
-class CompanyUpdateView(MontrekUpdateView):
+class CompanyUpdateView(views.MontrekUpdateView):
     manager_class = CompanyTableManager
     page_class = CompanyPage
     tab = "tab_company_list"
@@ -29,7 +26,7 @@ class CompanyUpdateView(MontrekUpdateView):
     title = "Company Update"
 
 
-class CompanyDeleteView(MontrekDeleteView):
+class CompanyDeleteView(views.MontrekDeleteView):
     manager_class = CompanyTableManager
     page_class = CompanyPage
     tab = "tab_company_list"
@@ -37,7 +34,7 @@ class CompanyDeleteView(MontrekDeleteView):
     title = "Company Delete"
 
 
-class CompanyListView(MontrekListView):
+class CompanyListView(views.MontrekListView):
     manager_class = CompanyTableManager
     page_class = CompanyPage
     tab = "tab_company_list"
@@ -53,11 +50,23 @@ class CompanyListView(MontrekListView):
         )
         return (action_new,)
 
-class CompanyDetailView(MontrekDetailView):
+class CompanyDetailView(views.MontrekDetailView):
     manager_class = CompanyDetailsManager
     page_class = CompanyDetailsPage
     tab = "tab_company_details"
     title = "Company Details"
+
+    @property
+    def actions(self) -> tuple:
+        action_back = ListActionElement("company_list")
+        return (action_back,)
+
+
+class CompanyHistoryView(views.MontrekHistoryView):
+    manager_class = CompanyTableManager
+    page_class = CompanyDetailsPage
+    tab = "tab_company_history"
+    title = "Company History"
 
     @property
     def actions(self) -> tuple:

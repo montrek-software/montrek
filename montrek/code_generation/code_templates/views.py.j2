@@ -1,9 +1,6 @@
 from django.urls import reverse
 from baseclasses.dataclasses.view_classes import ActionElement, ListActionElement
-from baseclasses.views import MontrekDetailView, MontrekListView
-from baseclasses.views import MontrekCreateView
-from baseclasses.views import MontrekUpdateView
-from baseclasses.views import MontrekDeleteView
+from baseclasses import views
 {{ manager_cls_import }}
 {{ details_manager_cls_import }}
 {{ page_cls_import }}
@@ -11,7 +8,7 @@ from baseclasses.views import MontrekDeleteView
 {{ create_form_cls_import }}
 
 
-class {{ create_view_cls_name }}(MontrekCreateView):
+class {{ create_view_cls_name }}(views.MontrekCreateView):
     manager_class = {{ manager_cls_name }}
     page_class = {{ page_cls_name }}
     tab = "{{ list_tab_id }}"
@@ -20,7 +17,7 @@ class {{ create_view_cls_name }}(MontrekCreateView):
     title = "{{ create_view_title }}"
 
 
-class {{ update_view_cls_name }}(MontrekUpdateView):
+class {{ update_view_cls_name }}(views.MontrekUpdateView):
     manager_class = {{ manager_cls_name }}
     page_class = {{ page_cls_name }}
     tab = "{{ list_tab_id }}"
@@ -29,7 +26,7 @@ class {{ update_view_cls_name }}(MontrekUpdateView):
     title = "{{ update_view_title }}"
 
 
-class {{ delete_view_cls_name }}(MontrekDeleteView):
+class {{ delete_view_cls_name }}(views.MontrekDeleteView):
     manager_class = {{ manager_cls_name }}
     page_class = {{ page_cls_name }}
     tab = "{{ list_tab_id }}"
@@ -37,7 +34,7 @@ class {{ delete_view_cls_name }}(MontrekDeleteView):
     title = "{{ delete_view_title }}"
 
 
-class {{ list_view_cls_name }}(MontrekListView):
+class {{ list_view_cls_name }}(views.MontrekListView):
     manager_class = {{ manager_cls_name }}
     page_class = {{ page_cls_name }}
     tab = "{{ list_tab_id }}"
@@ -53,11 +50,23 @@ class {{ list_view_cls_name }}(MontrekListView):
         )
         return (action_new,)
 
-class {{ detail_view_cls_name }}(MontrekDetailView):
+class {{ detail_view_cls_name }}(views.MontrekDetailView):
     manager_class = {{ details_manager_cls_name }}
     page_class = {{ details_page_cls_name }}
     tab = "{{ detail_tab_id }}"
     title = "{{ details_page_title }}"
+
+    @property
+    def actions(self) -> tuple:
+        action_back = ListActionElement("{{ list_view_url_name }}")
+        return (action_back,)
+
+
+class {{ history_view_cls_name }}(views.MontrekHistoryView):
+    manager_class = {{ manager_cls_name }}
+    page_class = {{ details_page_cls_name }}
+    tab = "{{ history_tab_id }}"
+    title = "{{ history_view_title }}"
 
     @property
     def actions(self) -> tuple:

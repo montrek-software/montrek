@@ -59,6 +59,7 @@ class CodeGenerationConfig:
         list_view_cls_name = f"{c_prefix}ListView"
         create_view_cls_name = f"{c_prefix}CreateView"
         create_form_cls_name = f"{c_prefix}CreateForm"
+        history_view_cls_name = f"{c_prefix}HistoryView"
         update_view_cls_name = f"{c_prefix}UpdateView"
         delete_view_cls_name = f"{c_prefix}DeleteView"
         detail_view_cls_name = f"{c_prefix}DetailView"
@@ -111,6 +112,15 @@ class CodeGenerationConfig:
             "details_page_cls_import": self._get_import("pages", details_page_cls_name),
             "details_page_cls_name": details_page_cls_name,
             "details_page_title": f"{ui_prefix} Details",
+            "history_tab_id": f"tab_{prefix}_history",
+            "history_tab_name": "History",
+            "history_view_cls_import": self._get_import("views", history_view_cls_name),
+            "history_view_cls_import_rel": f"from .{prefix}_views import {history_view_cls_name}",
+            "history_view_cls_name": history_view_cls_name,
+            "history_view_test_cls_name": f"Test{c_prefix}HistoryView",
+            "history_view_title": f"{ui_prefix} History",
+            "history_view_url": f"{prefix}/<int:pk>/history",
+            "history_view_url_name": f"{prefix}_history",
             "hub_cls_import": self._get_import("hub_models", hub_cls_name),
             "hub_cls_import_rel": f"from .{prefix}_hub_models import {hub_cls_name}",
             "hub_cls_name": hub_cls_name,

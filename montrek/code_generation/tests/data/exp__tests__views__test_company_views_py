@@ -67,3 +67,15 @@ class TestCompanyDetailView(MontrekViewTestCase):
 
     def url_kwargs(self) -> dict:
         return {"pk": self.hub_vd.hub.id}
+
+
+class TestCompanyHistoryView(MontrekViewTestCase):
+    viewname = "company_history"
+    view_class = CompanyHistoryView
+
+    def build_factories(self):
+        self.hub_vd = CompanyHubValueDateFactory(value_date=None)
+        CompanySatelliteFactory(hub_entity=self.hub_vd.hub)
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.hub_vd.hub.id}

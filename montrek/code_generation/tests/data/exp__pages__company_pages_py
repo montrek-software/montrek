@@ -30,4 +30,9 @@ class CompanyDetailsPage(MontrekDetailsPage):
                 html_id="tab_company_details",
                 active="active",
             ),
+            TabElement(
+                name="History",
+                link=reverse("company_history", args=[self.obj.id]),
+                html_id="tab_company_history",
+            ),
         )
