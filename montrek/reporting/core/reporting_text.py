@@ -4,6 +4,7 @@ from urllib.parse import urlparse
 import markdown
 import requests
 from baseclasses.models import HubValueDate
+from django.template import Context, Template
 from reporting.constants import ReportingTextType
 from reporting.core.reporting_mixins import ReportingChecksMixin
 from reporting.core.reporting_protocols import ReportingElement
@@ -74,10 +75,7 @@ class ReportingParagraph(ReportingText):
         return f"<p>{self.text}</p>"
 
 
-from django.template import Context, Template
-
-
-class ReportingEditableText(ReportingText):
+class ReportingEditableText(ReportingParagraph):
     def __init__(
         self,
         obj: HubValueDate,
@@ -113,6 +111,14 @@ class ReportingEditableText(ReportingText):
                 }
             )
         )
+
+    def to_latex(self) -> str:
+        if self.header != "":
+            latex_str = ReportingHeader2(self.header).to_latex()
+        else:
+            latex_str = ""
+        latex_str += super().to_latex()
+        return latex_str
 
 
 class ReportingHeader1:
@@ -185,7 +191,7 @@ class ReportingImage:
         return f"\\includegraphics[width={self.width}\\textwidth]{{{value}}}"
 
     def to_html(self) -> str:
-        return f'<div style="text-align: right;"><img src="{self.image_path}" alt="image" style="width:{self.width*100}%;"></div>'
+        return f'<div style="text-align: right;"><img src="{self.image_path}" alt="image" style="width:{self.width * 100}%;"></div>'
 
 
 class ReportingMap:

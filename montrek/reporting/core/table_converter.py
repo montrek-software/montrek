@@ -44,6 +44,9 @@ class LatexTableConverter:
             column_size = column_sizes[table_element.name]
             column_def_str += f">{{\\hsize={column_size}\\hsize}}X|"
             element_header = HtmlLatexConverter.convert(table_element.name)
+            element_header = " ".join(
+                [f"\\mbox{{{head}}}" for head in element_header.split(" ")]
+            )
             column_header_str += f"\\color{{white}}\\textbf{{{element_header}}} & "
         table_start_str += column_def_str
         table_start_str += "}\n\\hline\n"
