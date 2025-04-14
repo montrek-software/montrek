@@ -41,7 +41,7 @@ class LatexTableConverter:
         for table_element in self.table_elements:
             if isinstance(table_element, te.LinkTableElement):
                 continue
-            column_size = column_sizes[table_element.name]
+            column_size = column_sizes.get(table_element.name, 0)
             column_def_str += f">{{\\hsize={column_size}\\hsize}}X|"
             element_header = HtmlLatexConverter.convert(table_element.name)
             element_header = " ".join(
