@@ -46,6 +46,12 @@ class TableElement:
     def get_attribute(self, obj: Any, tag: str) -> str:
         raise NotImplementedError
 
+    def get_value(self, obj: Any) -> Any:
+        raise NotImplementedError
+
+    def get_value_len(self, obj: Any) -> int:
+        return len(str(self.get_value(obj)))
+
 
 @dataclass
 class NoneTableElement(TableElement):
@@ -312,6 +318,9 @@ class FloatTableElement(NumberTableElement):
     def _format_value(self, value) -> str:
         return self.shortener.shorten(value, ",.3f")
 
+    def get_value_len(self, obj: Any) -> int:
+        return super().get_value_len(obj) + 4
+
 
 @dataclass
 class IntTableElement(NumberTableElement):
@@ -349,6 +358,9 @@ class ProgressBarTableElement(NumberTableElement):
     def format_latex(self, value) -> str:
         per_value = value * 100
         return f"\\progressbar{{ {per_value} }}{{ {per_value}\\% }} &"
+
+    def get_value_len(self, obj: Any) -> int:
+        return 14
 
 
 @dataclass
