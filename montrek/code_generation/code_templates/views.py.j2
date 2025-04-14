@@ -62,7 +62,7 @@ class {{ detail_view_cls_name }}(views.MontrekDetailView):
         return (action_back,)
 
 
-class {{ history_view_cls_name }}(views.MontrekHistoryView):
+class {{ history_view_cls_name }}(views.MontrekHistoryListView):
     manager_class = {{ manager_cls_name }}
     page_class = {{ details_page_cls_name }}
     tab = "{{ history_tab_id }}"

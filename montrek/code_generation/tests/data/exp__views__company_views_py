@@ -62,7 +62,7 @@ class CompanyDetailView(views.MontrekDetailView):
         return (action_back,)
 
 
-class CompanyHistoryView(views.MontrekHistoryView):
+class CompanyHistoryView(views.MontrekListHistoryView):
     manager_class = CompanyTableManager
     page_class = CompanyDetailsPage
     tab = "tab_company_history"
