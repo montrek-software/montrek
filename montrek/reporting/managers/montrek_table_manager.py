@@ -9,7 +9,7 @@ from django_pandas.io import read_frame
 import pandas as pd
 from baseclasses.dataclasses.montrek_message import MontrekMessageInfo
 from baseclasses.managers.montrek_manager import MontrekManager
-from baseclasses.typing import SessionDataType
+from baseclasses.typing import SessionDataType, TableElementsType
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
@@ -20,12 +20,12 @@ from django.utils import timezone
 from django.views.generic.base import HttpResponse
 from mailing.managers.mailing_manager import MailingManager
 from reporting.core import reporting_text as rt
-from reporting.core.text_converter import HtmlLatexConverter
 from reporting.dataclasses import table_elements as te
 from reporting.lib.protocols import (
     ReportElementProtocol,
 )
 from reporting.tasks.download_table_task import DownloadTableTask
+from reporting.core.table_converter import LatexTableConverter
 
 
 class MontrekTableMetaClass(type):
@@ -52,9 +52,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         return rt.ReportingText("Internal Report")
 
     @property
-    def table_elements(
-        self,
-    ) -> tuple[te.TableElement, ...] | list[te.TableElement, ...]:
+    def table_elements(self) -> TableElementsType:
         return ()
 
     @property
@@ -139,42 +137,9 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         return html_str
 
     def to_latex(self):
-        table_start_str = "\n\\begin{table}[H]\n\\centering\n\\small\n"
-        table_start_str += "\\arrayrulecolor{lightgrey}\n"
-        table_start_str += "\\setlength{\\tabcolsep}{1pt}\n"
-        table_start_str += "\\renewcommand{\\arraystretch}{0.5}\n"
-        table_start_str += f"\\caption{{{self.table_title}}}\n"
-        table_start_str += "\\begin{tabularx}{\\textwidth}{|"
-        table_end_str = "\\end{tabularx}\n\\end{table}\n\n"
-
-        column_def_str = ""
-        column_header_str = "\\rowcolor{blue}"
-
-        for table_element in self.table_elements:
-            if isinstance(table_element, te.LinkTableElement):
-                continue
-            column_def_str += "X|"
-            element_header = HtmlLatexConverter.convert(table_element.name)
-            column_header_str += f"\\color{{white}}\\textbf{{{element_header}}} & "
-        table_start_str += column_def_str
-        table_start_str += "}\n\\hline\n"
-        table_start_str += column_header_str[:-2] + "\\\\\n\\hline\n"
-        latex_str = table_start_str
-
-        table = self.get_full_table()
-        for i, query_object in enumerate(table):
-            if i % 2 == 0:
-                latex_str += "\\rowcolor{lightblue}"
-            for table_element in self.table_elements:
-                if isinstance(table_element, te.LinkTableElement):
-                    continue
-                latex_str += table_element.get_attribute(query_object, "latex")
-            latex_str = latex_str[:-2] + "\\\\\n\\hline\n"
-            if (i + 1) % 25 == 0:
-                latex_str += table_end_str
-                latex_str += table_start_str
-        latex_str += table_end_str
-        return latex_str
+        return LatexTableConverter(
+            self.table_title, self.table_elements, self.get_full_table()
+        ).to_latex()
 
     def to_excel(
         self, output: HttpResponse | BytesIO | str
