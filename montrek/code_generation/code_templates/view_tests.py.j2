@@ -12,6 +12,7 @@ from testing.test_cases.view_test_cases import (
 {{ list_view_cls_import }}
 {{ delete_view_cls_import }}
 {{ detail_view_cls_import }}
+{{ history_view_cls_import }}
 
 
 class {{ create_view_test_cls_name }}(MontrekCreateViewTestCase):
@@ -67,3 +68,15 @@ class {{ detail_view_test_cls_name }}(MontrekViewTestCase):
 
     def url_kwargs(self) -> dict:
         return {"pk": self.hub_vd.hub.id}
+
+
+class {{ history_view_test_cls_name }}(MontrekViewTestCase):
+    viewname = "{{ history_view_url_name }}"
+    view_class = {{ history_view_cls_name }}
+
+    def build_factories(self):
+        self.hub_vd = {{ hub_value_date_factory_cls_name }}(value_date=None)
+        {{ sat_factory_cls_name }}(hub_entity=self.hub_vd.hub)
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.hub_vd.id}

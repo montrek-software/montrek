@@ -12,6 +12,7 @@ from code_generation.tests.data.output.views.company_views import CompanyUpdateV
 from code_generation.tests.data.output.views.company_views import CompanyListView
 from code_generation.tests.data.output.views.company_views import CompanyDeleteView
 from code_generation.tests.data.output.views.company_views import CompanyDetailView
+from code_generation.tests.data.output.views.company_views import CompanyHistoryView
 
 
 class TestCompanyCreateView(MontrekCreateViewTestCase):
@@ -67,3 +68,15 @@ class TestCompanyDetailView(MontrekViewTestCase):
 
     def url_kwargs(self) -> dict:
         return {"pk": self.hub_vd.hub.id}
+
+
+class TestCompanyHistoryView(MontrekViewTestCase):
+    viewname = "company_history"
+    view_class = CompanyHistoryView
+
+    def build_factories(self):
+        self.hub_vd = CompanyHubValueDateFactory(value_date=None)
+        CompanySatelliteFactory(hub_entity=self.hub_vd.hub)
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.hub_vd.id}
