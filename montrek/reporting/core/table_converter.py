@@ -36,11 +36,13 @@ class LatexTableConverter:
         table_start_str += "\\begin{tabularx}{\\textwidth}{|"
         column_def_str = ""
         column_header_str = "\\rowcolor{blue}"
+        column_sizes = self.get_column_sizes()
 
         for table_element in self.table_elements:
             if isinstance(table_element, te.LinkTableElement):
                 continue
-            column_def_str += ">{\\hsize=1\\hsize}X|"
+            column_size = column_sizes[table_element.name]
+            column_def_str += f">{{\\hsize={column_size}\\hsize}}X|"
             element_header = HtmlLatexConverter.convert(table_element.name)
             column_header_str += f"\\color{{white}}\\textbf{{{element_header}}} & "
         table_start_str += column_def_str
@@ -70,8 +72,33 @@ class LatexTableConverter:
 
     def add_to_column_sizer(self, table_element: te.TableElement, query_object: Any):
         field = table_element.name
-        value_len = len(str(table_element.get_value(query_object)))
+        value_len = table_element.get_value_len(query_object)
         if field not in self.column_sizer:
             self.column_sizer[field] = [value_len]
         else:
             self.column_sizer[field].append(value_len)
+
+    def get_column_sizes(self):
+        total_size = 0
+        max_col_size = {}
+        for col in self.column_sizer:
+            max_val = max(self.column_sizer[col])
+            max_col_size[col] = max_val
+            total_size += max_val
+        max_col_size, total_size = self._adjust_col_size(max_col_size, total_size)
+        return {
+            col: self._get_adj_col_size(val, max_col_size, total_size)
+            for col, val in max_col_size.items()
+        }
+
+    def _get_adj_col_size(self, val: int, max_col_size: dict, total_size: int) -> float:
+        return val / total_size * len(max_col_size)
+
+    def _adjust_col_size(self, max_col_size: dict, total_size: int):
+        cols_len = len(max_col_size)
+        adj_total_size = 0
+        for col, val in max_col_size.items():
+            val = min(val, total_size / cols_len)
+            adj_total_size += val
+            max_col_size[col] = val
+        return max_col_size, adj_total_size

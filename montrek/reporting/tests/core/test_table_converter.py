@@ -29,3 +29,6 @@ class TestLatexTableConverter(TestCase):
             self.table_elements[0], self.table[1]
         )
         self.assertEqual(self.latex_table_converter.column_sizer["TestCol"], [6, 4])
+        test_col_sizes = self.latex_table_converter.get_column_sizes()
+        expected_col_sizes = {"TestCol": 1.0}
+        self.assertEqual(test_col_sizes, expected_col_sizes)
