@@ -5,6 +5,7 @@ from django.urls import path
 {{ update_view_cls_import }}
 {{ delete_view_cls_import }}
 {{ detail_view_cls_import }}
+{{ history_view_cls_import }}
 
 urlpatterns = [
     path(
@@ -36,5 +37,10 @@ urlpatterns = [
         "{{ detail_view_url }}",
         {{ detail_view_cls_name }}.as_view(),
         name="{{ detail_view_url_name }}",
+    ),
+    path(
+        "{{ history_view_url }}",
+        {{ history_view_cls_name }}.as_view(),
+        name="{{ history_view_url_name }}",
     ),
 ]

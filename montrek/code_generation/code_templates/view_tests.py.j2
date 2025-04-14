@@ -12,6 +12,7 @@ from testing.test_cases.view_test_cases import (
 {{ list_view_cls_import }}
 {{ delete_view_cls_import }}
 {{ detail_view_cls_import }}
+{{ history_view_cls_import }}
 
 
 class {{ create_view_test_cls_name }}(MontrekCreateViewTestCase):
@@ -78,4 +79,4 @@ class {{ history_view_test_cls_name }}(MontrekViewTestCase):
         {{ sat_factory_cls_name }}(hub_entity=self.hub_vd.hub)
 
     def url_kwargs(self) -> dict:
-        return {"pk": self.hub_vd.hub.id}
+        return {"pk": self.hub_vd.id}
