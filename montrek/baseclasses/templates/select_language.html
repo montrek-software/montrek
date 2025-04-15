@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block content %}
+  <div class="container-fluid">
+    <h2>Select Language</h2>
+    <p>Please select your preferred language:</p>
+    <form action="{% url 'set_language' %}" method="post">
+        {% csrf_token %}
+        <input name="next" type="hidden" value="/">
+        <select name="language">
+            {% for lang_code, lang_name in languages %}
+                <option value="{{ lang_code }}">{{ lang_name }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Switch</button>
+    </form>
+  </div>
+{% endblock %}

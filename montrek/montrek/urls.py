@@ -17,12 +17,21 @@ Including another URLconf
 
 import os
 
+from django.views.generic import TemplateView
+
 from baseclasses import views as base_views
 from baseclasses.urls import javascriptcatalog_url
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
+from django.views.i18n import set_language
+
+
+class SelectLanguageView(TemplateView):
+    template_name = "select_language.html"
+    extra_context = {"languages": settings.LANGUAGES}
+
 
 urlpatterns = [
     path("", base_views.home, name="home"),
@@ -32,6 +41,8 @@ urlpatterns = [
         "under_construction", base_views.under_construction, name="under_construction"
     ),
     path("admin/", admin.site.urls),
+    path("select_language/", SelectLanguageView.as_view(), name="select_language"),
+    path("set_language/", set_language, name="set_language"),
     javascriptcatalog_url,
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

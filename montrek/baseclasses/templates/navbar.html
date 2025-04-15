@@ -75,6 +75,7 @@
         <li><a href="{% url 'login' %}">Login</a></li>
         <li><a href="{% url 'signup' %}">Sign Up</a></li>
         {% endif %}
+        <li><a href="{% url 'select_language' %}">{{ request.LANGUAGE_CODE|upper }}</li>
       </ul>
     </div>
   </div>
