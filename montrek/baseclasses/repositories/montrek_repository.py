@@ -261,7 +261,13 @@ class MontrekRepository:
             )
             satellite_querys[sat.__name__] = sat_query
         for link in self.annotator.get_link_classes():
-            link_query = link.objects.filter(hub_in=hub).order_by("-created_at")
+            hub_in_class = link.hub_in.field.remote_field.model
+            if hub_in_class is self.hub_class:
+                link_query = link.objects.filter(hub_in=hub)
+            hub_out_class = link.hub_out.field.remote_field.model
+            if hub_out_class is self.hub_class:
+                link_query = link.objects.filter(hub_out=hub)
+            link_query = link_query.order_by("-created_at")
             satellite_querys[link.__name__] = link_query
         return satellite_querys
 
