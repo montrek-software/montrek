@@ -24,6 +24,7 @@ from montrek_example.repositories.hub_a_repository import (
 )
 from montrek_example.repositories.hub_b_repository import (
     HubBRepository,
+    HubBRepository2,
 )
 from montrek_example.repositories.hub_c_repository import (
     HubCRepository,
@@ -2018,6 +2019,35 @@ class TestHistory(TestCase):
         link_queryset = test_querysets_dict["LinkHubAHubB"]
         self.assertEqual(link_queryset.count(), 1)
         self.assertEqual(link_queryset[0].hub_out, hubb)
+
+    def test_reversed_link(self):
+        repo = HubBRepository2({"user_id": self.user.id})
+        sat_a = me_factories.SatA1Factory()
+        repo.create_by_dict(
+            {"link_hub_b_hub_a": sat_a.hub_entity, "field_b1_str": "testb1"}
+        )
+        b1_objs = me_models.SatB1.objects.all()
+        self.assertEqual(b1_objs.count(), 1)
+
+        repo = HubBRepository2({"user_id": self.user.id})
+        sat_a = me_factories.SatA1Factory()
+        repo.create_by_dict(
+            {
+                "link_hub_b_hub_a": sat_a.hub_entity,
+                "hub_entity_id": b1_objs.first().hub_entity.id,
+            }
+        )
+        b1_objs = me_models.SatB1.objects.all()
+        self.assertEqual(b1_objs.count(), 1)
+        repo = HubBRepository2({"user_id": self.user.id})
+        b1_obj = repo.receive().get()
+        test_queryset = repo.get_history_queryset(b1_obj.pk)
+        history_links = test_queryset["LinkHubAHubB"]
+        self.assertEqual(history_links.count(), 2)
+        self.assertEqual(
+            history_links.first().state_date_start,
+            history_links.last().state_date_end,
+        )
 
 
 class TestMontrekManyToManyRelations(TestCase):

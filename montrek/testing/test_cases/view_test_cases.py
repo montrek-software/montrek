@@ -351,11 +351,12 @@ class MontrekRedirectViewTestCase(MontrekViewTestCase):
 
 
 class MontrekReportViewTestCase(MontrekViewTestCase):
-    expected_number_of_report_elements : int = -1
+    expected_number_of_report_elements: int = -1
+
     @property
     def mail_success_url(self) -> str:
         last_mail = MailingRepository({}).receive().last()
-        mail_kwargs={"pk": last_mail.pk}
+        mail_kwargs = {"pk": last_mail.pk}
         report_manager = self.view.manager
         mail_kwargs.update(report_manager.get_mail_kwargs())
         return reverse(report_manager.send_mail_url, kwargs=mail_kwargs)
@@ -369,17 +370,16 @@ class MontrekReportViewTestCase(MontrekViewTestCase):
         user = MontrekUserFactory()
         self.client.force_login(user)
         response = self.client.get(self.url + "?send_mail=true")
-        self.assertRedirects(
-            response,
-            self.mail_success_url
-        )
+        self.assertRedirects(response, self.mail_success_url)
 
     def test_report_content(self):
         if self._is_base_test_class():
             return
         report_manager = self.view.manager
         report_manager.collect_report_elements()
-        self.assertEqual(len(report_manager.report_elements), self.expected_number_of_report_elements)
+        self.assertEqual(
+            len(report_manager.report_elements), self.expected_number_of_report_elements
+        )
 
 
 class MontrekReportFieldEditViewTestCase(MontrekObjectViewBaseTestCase):
@@ -434,11 +434,8 @@ class MontrekReportFieldEditViewTestCase(MontrekObjectViewBaseTestCase):
         )
         self.additional_assertions(test_object)
 
-    def test_view_page(self):
-        ...
+    def test_view_page(self): ...
 
-    def test_view_return_correct_html(self):
-        ...
+    def test_view_return_correct_html(self): ...
 
-    def test_context_data(self):
-        ...
+    def test_context_data(self): ...
