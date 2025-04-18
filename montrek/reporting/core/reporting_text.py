@@ -177,7 +177,8 @@ class ReportingImage:
             return self._return_string(self.image_path)
         response = requests.get(self.image_path)
         if response.status_code != 200:
-            return f"Image not found: {self.image_path} &"
+            image_path = HtmlLatexConverter.convert(self.image_path)
+            return f"Image not found: {image_path}"
         temp_file = tempfile.NamedTemporaryFile(
             delete=False, suffix="." + self.image_path.split(".")[-1].split("?")[0]
         )
@@ -188,6 +189,7 @@ class ReportingImage:
         return self._return_string(value)
 
     def _return_string(self, value) -> str:
+        value = HtmlLatexConverter.convert(value)
         return f"\\includegraphics[width={self.width}\\textwidth]{{{value}}}"
 
     def to_html(self) -> str:

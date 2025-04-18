@@ -62,3 +62,9 @@ class TestHtmlLatexConverter(TestCase):
         converted_text = HtmlLatexConverter.convert(test_text)
         expected_text = "\\begin{center} Centered Text \\end{center}"
         self.assertEqual(converted_text, expected_text)
+
+    def test_convert_std_icons(self):
+        test_text = '<span class="glyphicon glyphicon-edit"></span>\n<span class="glyphicon glyphicon-trash"></span>'
+        converted_text = HtmlLatexConverter.convert(test_text)
+        expected_text = "\\twemoji{pencil}\n\\twemoji{wastebasket}"
+        self.assertEqual(converted_text, expected_text)

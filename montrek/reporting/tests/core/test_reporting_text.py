@@ -3,6 +3,7 @@ from django.test import TestCase
 
 from reporting.core.reporting_text import (
     MarkdownReportingElement,
+    ReportingImage,
     ReportingMap,
     ReportingParagraph,
     ReportingText,
@@ -172,6 +173,17 @@ class TestReportingParagraph(TestCase):
         self.assertEqual(
             test_italic_to_latex,
             "\\begin{justify}This is a \\textit{italic} text\\end{justify}",
+        )
+
+
+class TestReportingImage(TestCase):
+    def test_unformatted_not_found_image(self):
+        image_path = "https://example.com/properties/lakeside_residences.jpg"
+        test_image = ReportingImage(image_path)
+        test_output = test_image.to_latex()
+        self.assertEqual(
+            test_output,
+            "Image not found: https://example.com/properties/lakeside\_residences.jpg",
         )
 
 
