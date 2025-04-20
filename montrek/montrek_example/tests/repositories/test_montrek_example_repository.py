@@ -1145,6 +1145,18 @@ class TestMontrekRepositoryLinks(TestCase):
         self.assertEqual(queryset[0].field_a1_int, "5")
         self.assertEqual(queryset[1].field_a1_int, None)
 
+    def test_link_reversed__session_data(self):
+        repository = HubCRepository2({"reference_date": "2023-07-08"})
+        queryset = repository.receive()
+        self.assertEqual(queryset.count(), 2)
+        self.assertEqual(queryset[0].field_a1_int, "5")
+        self.assertEqual(queryset[1].field_a1_int, None)
+        repository = HubCRepository2({"reference_date": ["2023-07-15"]})
+        queryset = repository.receive()
+        self.assertEqual(queryset.count(), 2)
+        self.assertEqual(queryset[0].field_a1_int, "5")
+        self.assertEqual(queryset[1].field_a1_int, None)
+
     def test_link_reversed_ts(self):
         sat_tsc2 = me_factories.SatTSC2Factory(
             field_tsc2_float=2.5, value_date="2024-11-19"
