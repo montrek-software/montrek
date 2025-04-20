@@ -118,7 +118,8 @@ class MontrekRepository:
     @property
     def reference_date(self) -> timezone.datetime:
         if self._reference_date is None:
-            return timezone.now()
+            reference_date = self.session_data.get("reference_date", timezone.now())
+            return reference_date
         return self._reference_date
 
     @property

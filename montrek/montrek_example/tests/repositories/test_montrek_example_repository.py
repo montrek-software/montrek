@@ -1682,6 +1682,15 @@ class TestTimeSeriesQuerySet(TestCase):
         self.assertEqual(qs_1.field_tsc2_float, self.ts_fact0.field_tsc2_float)
         self.assertEqual(qs_2.field_tsc2_float, self.ts_fact1.field_tsc2_float)
 
+    def test_build_time_series_queryset__reference_date_filter__session_data(self):
+        repo = HubCRepository({"reference_date": montrek_time(2024, 7, 1)})
+        test_query = repo.receive()
+        self.assertEqual(test_query.count(), 5)
+        qs_1 = test_query.get(pk=self.ts_fact0.hub_value_date.id)
+        qs_2 = test_query.get(pk=self.ts_fact1.hub_value_date.id)
+        self.assertEqual(qs_1.field_tsc2_float, self.ts_fact0.field_tsc2_float)
+        self.assertEqual(qs_2.field_tsc2_float, self.ts_fact1.field_tsc2_float)
+
     def test_build_time_series_queryset__session_dates(self):
         for end_date, expected_count in [
             (datetime.datetime(2024, 2, 1), 1),
