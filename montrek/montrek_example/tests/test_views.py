@@ -1186,3 +1186,43 @@ class TestA2ApiUploadView(MontrekViewTestCase):
     def test_post__no_password(self):
         response = self.client.post(self.url, data={"user": "user"})
         self.assertEqual(response.status_code, 200)
+
+
+class TestTableDataWithReferenceDate(MontrekListViewTestCase):
+    viewname = "montrek_example_a_list"
+    view_class = me_views.MontrekExampleAList
+    expected_no_of_rows = 1
+
+    def get_response(self):
+        return self.client.get(self.url, {"reference_date": ["2023-07-15"]})
+
+    def build_factories(self):
+        sat_a11 = me_factories.SatA1Factory(
+            state_date_end=montrek_time(2023, 7, 10),
+            field_a1_int=5,
+        )
+        me_factories.SatA1Factory(
+            hub_entity=sat_a11.hub_entity,
+            state_date_start=montrek_time(2023, 7, 10),
+            state_date_end=montrek_time(2023, 7, 20),
+            field_a1_int=6,
+        )
+        me_factories.SatA1Factory(
+            hub_entity=sat_a11.hub_entity,
+            state_date_start=montrek_time(2023, 7, 20),
+            field_a1_int=7,
+        )
+        me_factories.SatA2Factory(
+            hub_entity=sat_a11.hub_entity,
+            field_a2_float=8.0,
+        )
+        hub_a12 = me_factories.HubAFactory(state_date_end=montrek_time(2023, 7, 10))
+        me_factories.SatA2Factory(
+            hub_entity=hub_a12,
+            state_date_end=montrek_time(2023, 7, 10),
+            field_a2_float=9,
+        )
+
+    def test_assign_old_data(self):
+        test_object = self.view.object_list[0]
+        self.assertEqual(test_object.field_a1_int, 6)

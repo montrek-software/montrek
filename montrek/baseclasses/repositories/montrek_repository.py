@@ -15,8 +15,7 @@ from baseclasses.models import (
 from baseclasses.repositories.annotator import (
     Annotator,
 )
-from baseclasses.repositories.db.db_creator import DataDict
-from baseclasses.repositories.db.db_creator import DbCreator
+from baseclasses.repositories.db.db_creator import DataDict, DbCreator
 from baseclasses.repositories.db.db_data_frame import DbDataFrame
 from baseclasses.repositories.db.db_staller import DbStaller
 from baseclasses.repositories.db.db_writer import DbWriter
@@ -25,9 +24,10 @@ from baseclasses.repositories.subquery_builder import (
     LinkedSatelliteSubqueryBuilder,
     ReverseLinkedSatelliteSubqueryBuilder,
     SatelliteSubqueryBuilder,
-    TSSatelliteSubqueryBuilder,
     SumTSSatelliteSubqueryBuilder,
+    TSSatelliteSubqueryBuilder,
 )
+from baseclasses.utils import datetime_to_montrek_time
 from django.core.exceptions import PermissionDenied
 from django.db.models import (
     F,
@@ -118,7 +118,14 @@ class MontrekRepository:
     @property
     def reference_date(self) -> timezone.datetime:
         if self._reference_date is None:
-            return timezone.now()
+            reference_date = self.session_data.get("reference_date", timezone.now())
+            if isinstance(reference_date, list):
+                reference_date = reference_date[0]
+            if isinstance(reference_date, str):
+                reference_date = datetime_to_montrek_time(
+                    pd.to_datetime(reference_date)
+                )
+            return reference_date
         return self._reference_date
 
     @property

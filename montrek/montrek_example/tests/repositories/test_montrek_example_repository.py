@@ -1145,6 +1145,18 @@ class TestMontrekRepositoryLinks(TestCase):
         self.assertEqual(queryset[0].field_a1_int, "5")
         self.assertEqual(queryset[1].field_a1_int, None)
 
+    def test_link_reversed__session_data(self):
+        repository = HubCRepository2({"reference_date": "2023-07-08"})
+        queryset = repository.receive()
+        self.assertEqual(queryset.count(), 2)
+        self.assertEqual(queryset[0].field_a1_int, "5")
+        self.assertEqual(queryset[1].field_a1_int, None)
+        repository = HubCRepository2({"reference_date": ["2023-07-15"]})
+        queryset = repository.receive()
+        self.assertEqual(queryset.count(), 2)
+        self.assertEqual(queryset[0].field_a1_int, "5")
+        self.assertEqual(queryset[1].field_a1_int, None)
+
     def test_link_reversed_ts(self):
         sat_tsc2 = me_factories.SatTSC2Factory(
             field_tsc2_float=2.5, value_date="2024-11-19"
@@ -1675,6 +1687,15 @@ class TestTimeSeriesQuerySet(TestCase):
     def test_build_time_series_queryset__reference_date_filter(self):
         repo = HubCRepository()
         repo.reference_date = montrek_time(2024, 7, 1)
+        test_query = repo.receive()
+        self.assertEqual(test_query.count(), 5)
+        qs_1 = test_query.get(pk=self.ts_fact0.hub_value_date.id)
+        qs_2 = test_query.get(pk=self.ts_fact1.hub_value_date.id)
+        self.assertEqual(qs_1.field_tsc2_float, self.ts_fact0.field_tsc2_float)
+        self.assertEqual(qs_2.field_tsc2_float, self.ts_fact1.field_tsc2_float)
+
+    def test_build_time_series_queryset__reference_date_filter__session_data(self):
+        repo = HubCRepository({"reference_date": montrek_time(2024, 7, 1)})
         test_query = repo.receive()
         self.assertEqual(test_query.count(), 5)
         qs_1 = test_query.get(pk=self.ts_fact0.hub_value_date.id)
