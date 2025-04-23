@@ -89,10 +89,12 @@ class MontrekHubABC(TimeStampMixin, StateMixin, UserMixin):
 
     def __str__(self):
         sat_class = None
-        for r in self._meta.related_objects:
-            if not issubclass(r.related_model, MontrekSatelliteABC):
-                continue
-            sat_class = r.related_model
+        related_sat_classes = [
+            r.related_model
+            for r in self._meta.related_objects
+            if issubclass(r.related_model, MontrekSatelliteABC)
+        ]
+        for sat_class in related_sat_classes:
             id_field = sat_class.identifier_fields[0]
             if id_field == "hub_entity_id":
                 continue
