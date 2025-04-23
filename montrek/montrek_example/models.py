@@ -54,11 +54,19 @@ class HubA(MontrekHubABC):
         through="LinkHubAApiUploadRegistry",
     )
 
+    def __str__(self):
+        sat = self.sata1_set.order_by("-state_date_end").first()
+        return sat.field_a1_str if sat else "No Satellite"
+
 
 class HubB(MontrekHubABC):
     link_hub_b_hub_d = models.ManyToManyField(
         "HubD", related_name="link_hub_d_hub_b", through="LinkHubBHubD"
     )
+
+    def __str__(self):
+        sat = self.satb1_set.order_by("-state_date_end").first()
+        return sat.field_b1_str if sat else "No Satellite"
 
 
 class HubC(MontrekHubABC):
