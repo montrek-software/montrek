@@ -87,6 +87,27 @@ class MontrekHubABC(TimeStampMixin, StateMixin, UserMixin):
     def get_hub_value_date(self):
         return self.hub_value_date.get(value_date_list__value_date=None)
 
+    def __str__(self):
+        sat_class = None
+        related_sat_classes = [
+            r.related_model
+            for r in self._meta.related_objects
+            if issubclass(r.related_model, MontrekSatelliteABC)
+        ]
+        for sat_class in related_sat_classes:
+            id_field = sat_class.identifier_fields[0]
+            if id_field == "hub_entity_id":
+                continue
+            sat = (
+                getattr(self, sat_class.__name__.lower() + "_set")
+                .order_by("-state_date_end")
+                .first()
+            )
+            if not sat:
+                continue
+            return getattr(sat, id_field)
+        return super().__str__()
+
 
 class HubValueDate(models.Model):
     class Meta:

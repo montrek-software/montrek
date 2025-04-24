@@ -4,6 +4,7 @@ from django.db.models.functions import Cast
 from django.test import TestCase
 from django.conf import settings
 
+from baseclasses.utils import montrek_time
 from montrek_example.models import (
     CHubValueDate,
     DHubValueDate,
@@ -18,6 +19,8 @@ from montrek_example.models import (
 from montrek_example.tests.factories.montrek_example_factories import (
     CHubValueDateFactory,
     DHubValueDateFactory,
+    HubAFactory,
+    SatA1Factory,
     SatC1Factory,
     SatD1Factory,
     SatTSC2Factory,
@@ -47,6 +50,25 @@ def func():
         raise NotImplementedError(
             f"No function for concatenating list of strings defined for {engine}!"
         )
+
+
+class TestMontrekHub(TestCase):
+    def test_str(self):
+        hub = HubAFactory()
+        self.assertEqual(str(hub), f"HubA object ({hub.pk})")
+        SatA1Factory(
+            field_a1_str="old",
+            hub_entity=hub,
+            state_date_start=montrek_time(2025, 1, 1),
+            state_date_end=montrek_time(2025, 1, 31),
+        )
+        sat_new = SatA1Factory(
+            field_a1_str="new",
+            hub_entity=hub,
+            state_date_start=montrek_time(2025, 1, 31),
+            state_date_end=montrek_time(9999, 12, 31),
+        )
+        self.assertEqual(str(hub), sat_new.field_a1_str)
 
 
 class TestMontrekSatellite(TestCase):
