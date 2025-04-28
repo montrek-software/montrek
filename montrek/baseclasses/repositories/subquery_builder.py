@@ -270,7 +270,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
                                 outer_ref=outer_ref_field,
                             )
                         ),
-                        # **self.link_satellite_filter,
+                        Q(**self.link_satellite_filter),
                     )
                     .annotate(**{self.field + "sub": F(self.field)})
                     .values(self.field),

@@ -1545,6 +1545,28 @@ class TestTimeSeries(TestCase):
         self.assertEqual(result_2.field_tsd2_float, "0.2")
         self.assertEqual(result_2.field_tsd2_int, "1")
 
+    def test_satellite_filter_in_time_series(self):
+        value_dates = [montrek_time(2024, 9, 18), montrek_time(2024, 9, 19)]
+        for i, value_date in enumerate(value_dates):
+            sat_c = me_factories.SatTSC2Factory.create(
+                field_tsc2_float=i * -0.1,
+                value_date=value_date,
+            )
+            sat_d = me_factories.SatTSD2Factory.create(
+                field_tsd2_float=i * -0.2,
+                field_tsd2_int=i,
+                value_date=value_date,
+            )
+            sat_c.hub_value_date.hub.link_hub_c_hub_d.add(sat_d.hub_value_date.hub)
+
+        repository = HubCRepository(session_data={"user_id": self.user.id})
+        test_query = repository.receive().filter(value_date__in=value_dates)
+        self.assertEqual(test_query.count(), 2)
+        result_1 = test_query.get(value_date=value_dates[0])
+        result_2 = test_query.get(value_date=value_dates[1])
+        self.assertEqual(result_1.field_tsd2_float, "0")
+        self.assertEqual(result_2.field_tsd2_float, None)
+
     def test_time_series_link_to_time_series_update(self):
         value_date = montrek_time(2024, 9, 18)
         sat_d1 = me_factories.SatTSD2Factory.create(
