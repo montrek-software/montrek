@@ -72,8 +72,7 @@ class SatelliteSubqueryBuilder(SatelliteSubqueryBuilderABC):
             self.get_hub_query(reference_date)
             .annotate(
                 **{
-                    self.field
-                    + "sub": self.satellite_subquery(
+                    self.field + "sub": self.satellite_subquery(
                         reference_date, lookup_field="hub_entity"
                     ),
                 }
@@ -231,25 +230,9 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         query = (
             self.get_link_hub_value_date_query(hub_field_from, reference_date)
             .annotate(
-                **{
-                    self.field
-                    + "sub": Subquery(
-                        self._annotate_agg_field(
-                            hub_field_to,
-                            self.satellite_class.objects.filter(
-                                Q(
-                                    **self.subquery_filter(
-                                        reference_date,
-                                        lookup_field="hub_value_date",
-                                        outer_ref="pk",
-                                    )
-                                ),
-                            )
-                            .annotate(**{self.field + "sub": F(self.field)})
-                            .values(self.field),
-                        )
-                    )
-                }
+                **self._annotate_ts_satellite_dict(
+                    hub_field_to, reference_date, "pk", "hub_value_date"
+                )
             )
             .values(self.field + "sub")
         )
@@ -261,28 +244,39 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
     ) -> Subquery:
         query = self.get_link_query(hub_field_from, reference_date)
         query = query.annotate(
-            **{
-                self.field
-                + "sub": Subquery(
-                    self._annotate_agg_field(
-                        hub_field_to,
-                        self.satellite_class.objects.filter(
-                            Q(
-                                **self.subquery_filter(
-                                    reference_date,
-                                    lookup_field="hub_value_date__hub",
-                                    outer_ref=hub_field_to,
-                                )
-                            ),
-                        )
-                        .annotate(**{self.field + "sub": F(self.field)})
-                        .values(self.field),
-                    )
-                )
-            }
+            **self._annotate_ts_satellite_dict(
+                hub_field_to, reference_date, hub_field_to, "hub_value_date__hub"
+            )
         ).values(self.field + "sub")
         query = self._annotate_sum(query)
         return Subquery(query)
+
+    def _annotate_ts_satellite_dict(
+        self,
+        hub_field_to: str,
+        reference_date: timezone.datetime,
+        outer_ref_field: str,
+        lookup_field: str,
+    ) -> dict:
+        return {
+            self.field + "sub": Subquery(
+                self._annotate_agg_field(
+                    hub_field_to,
+                    self.satellite_class.objects.filter(
+                        Q(
+                            **self.subquery_filter(
+                                reference_date,
+                                lookup_field=lookup_field,
+                                outer_ref=outer_ref_field,
+                            )
+                        ),
+                        Q(**self.link_satellite_filter),
+                    )
+                    .annotate(**{self.field + "sub": F(self.field)})
+                    .values(self.field),
+                )
+            )
+        }
 
     def _annotate_agg_field(self, hub_field_to: str, query: QuerySet) -> QuerySet:
         if self._is_multiple_allowed(hub_field_to):
@@ -310,8 +304,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         field_type = CharField
         return query.annotate(
             **{
-                self.field
-                + "agg": Cast(
+                self.field + "agg": Cast(
                     func(Cast(self.field + "sub", field_type())),
                     field_type(),
                 )
