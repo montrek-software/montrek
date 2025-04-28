@@ -72,6 +72,7 @@ class HtmlLatexConverter:
     @staticmethod
     def special_characters(text: str) -> str:
         characters = {
+            "#": "\\#",
             "_": "\\_",
             "&middot;": "$\\cdot$",
             "&amp;": "&",
