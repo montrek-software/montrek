@@ -12,7 +12,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: pandoc/latex:ubuntu
+      image: pandoc/latex:latest-ubuntu
     strategy:
       max-parallel: 4
       matrix:
