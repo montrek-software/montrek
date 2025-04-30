@@ -112,3 +112,23 @@ class TestLatexTableConverter(TestCase):
         self.assertGreaterEqual(table_str.count("\\begin{tabularx}"), 2)
         self.assertIn("row0", table_str)
         self.assertIn("row29", table_str)
+
+    def test_min_col_size(self):
+        table_elements = [
+            DummyTableElement(name="TestCol", attr="test_col"),
+            DummyTableElement(name="MinCol", attr="other_col"),
+        ]
+        table = [
+            MockQueryElement(test_col="value1" + 300 * "xx", other_col="v"),
+            MockQueryElement(test_col="val2", other_col="v"),
+        ]
+        latex_table_converter = LatexTableConverter(
+            "Test Table Title", table_elements, table
+        )
+        latex_table_converter.get_table_str()
+        col_sizes = latex_table_converter.get_column_sizes()
+        expected_col_sizes = {
+            "TestCol": 1.6666666666666667,
+            "MinCol": 0.33333333333333337,
+        }
+        self.assertEqual(col_sizes, expected_col_sizes)
