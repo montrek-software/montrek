@@ -101,7 +101,9 @@ class LatexTableConverter:
         cols_len = len(max_col_size)
         adj_total_size = 0
         for col, val in max_col_size.items():
-            val = min(val, total_size / cols_len)
+            min_size = total_size / (5 * cols_len)
+            max_size = total_size / cols_len
+            val = min(max(val, min_size), max_size)
             adj_total_size += val
             max_col_size[col] = val
         return max_col_size, adj_total_size
