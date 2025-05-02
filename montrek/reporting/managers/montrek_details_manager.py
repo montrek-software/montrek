@@ -56,10 +56,10 @@ class MontrekDetailsManager(MontrekManager):
             latex_str += "\\setlength{\\tabcolsep}{2pt}\n"
             latex_str += "\\renewcommand{\\arraystretch}{1.0}\n"
             latex_str += f"\\caption{{{self.table_title}}}\n"
-            latex_str += f"\\begin{{tabularx}}{{\\textwidth}}{{"
+            latex_str += "\\begin{tabularx}{\\textwidth}{"
 
             # Define the column format based on the number of columns
-            column_format = "|X|X|"
+            column_format = "|>{\\hsize=0.666\\hsize}X|>{\\raggedleft\\arraybackslash\\hsize=1.333\\hsize}X|"
             latex_str += column_format + "}\n\\hline\n"
 
             start_idx = self.row_size * i
@@ -75,4 +75,6 @@ class MontrekDetailsManager(MontrekManager):
 
             latex_str += "\\end{tabularx}\n\\end{table}\n"
             latex_str += "\\end{minipage}"
+        with open("test.txt", "w") as f:
+            f.write(latex_str)
         return latex_str
