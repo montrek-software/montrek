@@ -336,8 +336,8 @@ class MontrekListView(
         return response
 
     def list_to_rest_api(self):
-        query = self.get_view_queryset()
-        serializer = MontrekSerializer(query, many=True, manager=self.manager)
+        query = self.manager.to_json()
+        serializer = MontrekSerializer(query, manager=self.manager, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def reset_filter(self):
@@ -567,7 +567,7 @@ class MontrekRestApiView(APIView, MontrekViewMixin):
     manager_class = MontrekManagerNotImplemented
 
     def get(self, request, *args, **kwargs):
-        query = self.get_view_queryset()
+        query = self.manager.to_json()
         serializer = MontrekSerializer(query, many=True, manager=self.manager)
         return Response(serializer.data, status=status.HTTP_200_OK)
 

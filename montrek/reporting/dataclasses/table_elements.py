@@ -503,6 +503,7 @@ class ImageTableElement(AttrTableElement):
 class MethodNameTableElement(AttrTableElement):
     attr: str
     class_: type = object
+    serializer_field_class = serializers.CharField
 
     def format(self, value):
         func = getattr(self.class_, value)

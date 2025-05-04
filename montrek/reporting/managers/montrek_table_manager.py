@@ -139,21 +139,25 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
 
     def to_json(self):
         out_json = []
-        for query_object in self.get_table():
+        for query_object in self.get_full_table():
             objects_dict = {}
             for table_element in self.table_elements:
                 if isinstance(table_element, (te.LinkTableElement)):
                     continue
-                if isinstance(
-                    table_element, (te.LinkTextTableElement, te.LinkListTableElement)
-                ):
-                    objects_dict[table_element.name] = table_element.get_value(
+                if isinstance(table_element, te.LinkTextTableElement):
+                    objects_dict[table_element.text] = table_element.get_value(
                         query_object
                     )
+                elif isinstance(table_element, te.LinkListTableElement):
+                    values = table_element.get_value(query_object)
+
+                    objects_dict[table_element.text] = str([val[1] for val in values])
                 else:
-                    objects_dict[table_element.attr] = table_element.get_value(
-                        query_object
-                    )
+                    value = table_element.get_value(query_object)
+                    if isinstance(value, (datetime.datetime, datetime.date)):
+                        value = value.isoformat()
+
+                    objects_dict[table_element.attr] = value
             out_json.append(objects_dict)
         return out_json
 

@@ -53,6 +53,9 @@ class MontrekViewTestCase(TestCase):
     def url_kwargs(self) -> dict:
         return {}
 
+    def query_params(self) -> dict:
+        return {}
+
     def required_user_permissions(self) -> list[Permission]:
         return []
 
@@ -61,7 +64,7 @@ class MontrekViewTestCase(TestCase):
         return reverse(self.viewname, kwargs=self.url_kwargs())
 
     def get_response(self):
-        return self.client.get(self.url)
+        return self.client.get(self.url, query_params=self.query_params())
 
     def test_view_return_correct_html(self):
         if self._is_base_test_class():
@@ -122,6 +125,16 @@ class MontrekListViewTestCase(MontrekViewTestCase):
         columns = bs.find_all("th")
         for expected_column in self.expected_columns:
             self.assertIn(expected_column, [column.text for column in columns])
+
+    def test_rest_api_view(self):
+        if self._is_base_test_class():
+            return
+        query_params = self.query_params()
+        query_params.update({"gen_rest_api": "true"})
+        response = self.client.get(self.url, query_params=query_params)
+        response_json = response.json()
+
+        self.assertEqual(response_json, self.view.manager.to_json())
 
 
 class MontrekObjectViewBaseTestCase(MontrekViewTestCase):

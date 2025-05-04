@@ -1,3 +1,4 @@
+import datetime
 import os
 from tempfile import TemporaryDirectory
 from textwrap import dedent
@@ -232,7 +233,7 @@ class TestMontrekExampleADownloadView(MontrekDownloadViewTestCase):
     def additional_download_assertions(self):
         self.assertEqual(
             self.response.content.decode(),
-            "| A1 String   | A1 Int   | A2 String   | A2 Float   | B1 String   |\n|-------------|----------|-------------|------------|-------------|",
+            "| A1 String   | A1 Int   | A2 String   | A2 Float   | B1 String   | TestField   |\n|-------------|----------|-------------|------------|-------------|-------------|",
         )
 
 
@@ -521,7 +522,7 @@ class TestMontrekExampleCListView(MontrekListViewTestCase):
     expected_no_of_rows = 1
 
     def build_factories(self):
-        sat_ts = me_factories.SatTSC2Factory()
+        sat_ts = me_factories.SatTSC2Factory(value_date=datetime.date.today())
         me_factories.SatC1Factory(hub_entity=sat_ts.hub_value_date.hub)
 
 
@@ -1081,6 +1082,7 @@ class TestHubARestApiView(MontrekRestApiViewTestCase):
                 "field_a2_str": self.sat_a2s[i].field_a2_str,
                 "field_a2_float": self.sat_a2s[i].field_a2_float,
                 "field_b1_str": None,
+                "individual_field": 0.0,
             }
             expected_json.append(entry)
         return expected_json
@@ -1119,6 +1121,7 @@ class TestHubARestApiViewWithFilter(MontrekRestApiViewTestCase):
                 "field_a2_str": self.sat_a2s[1].field_a2_str,
                 "field_a2_float": self.sat_a2s[1].field_a2_float,
                 "field_b1_str": None,
+                "individual_field": 0.0,
             }
         ]
         return expected_json
@@ -1137,6 +1140,8 @@ class TestHubBRestApiView(MontrekRestApiViewTestCase):
             self.sat_b2s.append(me_factories.SatB2Factory(hub_entity=hub))
             satd = me_factories.SatD1Factory.create(field_d1_str="bla")
             hub.link_hub_b_hub_d.add(satd.hub_entity)
+            satd = me_factories.SatD1Factory.create(field_d1_str="blubb")
+            hub.link_hub_b_hub_d.add(satd.hub_entity)
 
     def expected_json(self) -> list:
         expected_json = []
@@ -1146,8 +1151,8 @@ class TestHubBRestApiView(MontrekRestApiViewTestCase):
                 "field_b1_date": self.sat_b1s[i].field_b1_date.strftime("%Y-%m-%d"),
                 "field_b2_str": self.sat_b2s[i].field_b2_str,
                 "field_b2_choice": self.sat_b2s[i].field_b2_choice.value,
-                "field_d1_str": "bla",
-                "field_d1_int": "0",
+                "field_d1_str": "['bla', 'blubb']",
+                "field_d1_int": "0,0",
                 "alert_level": AlertEnum.OK.value.description,
                 "alert_message": None,
             }
@@ -1193,8 +1198,8 @@ class TestTableDataWithReferenceDate(MontrekListViewTestCase):
     view_class = me_views.MontrekExampleAList
     expected_no_of_rows = 1
 
-    def get_response(self):
-        return self.client.get(self.url, {"reference_date": ["2023-07-15"]})
+    def query_params(self) -> dict:
+        return {"reference_date": ["2023-07-15"]}
 
     def build_factories(self):
         sat_a11 = me_factories.SatA1Factory(
