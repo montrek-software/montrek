@@ -1,4 +1,5 @@
 import datetime
+import json
 import math
 import os
 from dataclasses import dataclass
@@ -135,6 +136,26 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         html_str += "</div>"
         html_str += "</div>"
         return html_str
+
+    def to_json(self):
+        out_json = []
+        for query_object in self.get_table():
+            objects_dict = {}
+            for table_element in self.table_elements:
+                if isinstance(table_element, (te.LinkTableElement)):
+                    continue
+                if isinstance(
+                    table_element, (te.LinkTextTableElement, te.LinkListTableElement)
+                ):
+                    objects_dict[table_element.name] = table_element.get_value(
+                        query_object
+                    )
+                else:
+                    objects_dict[table_element.attr] = table_element.get_value(
+                        query_object
+                    )
+            out_json.append(objects_dict)
+        return out_json
 
     def to_latex(self):
         return LatexTableConverter(
