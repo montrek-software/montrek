@@ -56,25 +56,22 @@ class TestMontrekTableManager(TestCase):
                 "field_a": "a",
                 "field_b": 1,
                 "field_c": 1.0,
-                "field_d": datetime.datetime(2024, 7, 13, 0, 0),
+                "field_d": "2024-07-13T00:00:00",
                 "field_e": 1.0,
-                "Link Text": "a",
             },
             {
                 "field_a": "b",
                 "field_b": 2,
                 "field_c": 2.0,
-                "field_d": datetime.datetime(2024, 7, 13, 0, 0),
+                "field_d": "2024-07-13T00:00:00",
                 "field_e": 2.2,
-                "Link Text": "b",
             },
             {
                 "field_a": "c",
                 "field_b": 3,
                 "field_c": 3.0,
-                "field_d": datetime.datetime(2024, 7, 13, 0, 0),
+                "field_d": "2024-07-13T00:00:00",
                 "field_e": 3.0,
-                "Link Text": "c",
             },
         ]
         self.assertEqual(test_json, expected_json)
