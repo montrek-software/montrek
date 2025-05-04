@@ -1,5 +1,12 @@
 from rest_framework import serializers
 from reporting.dataclasses import table_elements as te
+from rest_framework.fields import (  # NOQA # isort:skip
+    CreateOnlyDefault,
+    CurrentUserDefault,
+    SkipField,
+    empty,
+)
+from rest_framework.relations import Hyperlink, PKOnlyObject  # NOQA # isort:skip
 
 
 class MontrekSerializer(serializers.Serializer):

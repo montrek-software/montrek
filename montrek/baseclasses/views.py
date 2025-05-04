@@ -254,6 +254,7 @@ class MontrekListView(
     MontrekPageViewMixin,
     MontrekViewMixin,
     ToPdfMixin,
+    APIView,
 ):
     template_name = "montrek_table.html"
     manager_class = MontrekManagerNotImplemented
@@ -267,6 +268,8 @@ class MontrekListView(
             return self.list_to_excel()
         if request_get.get("gen_pdf") == "true":
             return self.list_to_pdf()
+        if request_get.get("gen_rest_api") == "true":
+            return self.list_to_rest_api()
         if request_get.get("action") == "reset":
             return self.reset_filter()
         if request_get.get("action") == "add_filter":
@@ -331,6 +334,11 @@ class MontrekListView(
         response = self.manager.download_or_mail_excel()
         self.show_messages()
         return response
+
+    def list_to_rest_api(self):
+        query = self.get_view_queryset()
+        serializer = MontrekSerializer(query, many=True, manager=self.manager)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def reset_filter(self):
         request_path = self.session_data["request_path"]
