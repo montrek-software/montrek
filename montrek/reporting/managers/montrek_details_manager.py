@@ -1,3 +1,4 @@
+import datetime
 import math
 from baseclasses.managers.montrek_manager import MontrekManager
 from reporting.dataclasses import table_elements as te
@@ -29,7 +30,7 @@ class MontrekDetailsManager(MontrekManager):
     def footer_text(self) -> ReportElementProtocol:
         return rt.ReportingText("Internal Report")
 
-    def to_html(self):
+    def to_html(self) -> str:
         html_str = '<div class="row">'
         bt_col_size = 12 // self.table_cols
         for i in range(self.table_cols):
@@ -46,7 +47,7 @@ class MontrekDetailsManager(MontrekManager):
         html_str += "</div>"
         return html_str
 
-    def to_latex(self):
+    def to_latex(self) -> str:
         latex_str = ""
         minipage_width = 0.98 / self.table_cols
         for i in range(self.table_cols):
@@ -78,3 +79,24 @@ class MontrekDetailsManager(MontrekManager):
         with open("test.txt", "w") as f:
             f.write(latex_str)
         return latex_str
+
+    def to_json(self) -> dict:
+        out_json = dict()
+        for table_element in self.table_elements:
+            if isinstance(table_element, (te.LinkTableElement)):
+                continue
+            if isinstance(table_element, te.LinkTextTableElement):
+                out_json[table_element.text] = table_element.get_value(
+                    self.object_query
+                )
+            elif isinstance(table_element, te.LinkListTableElement):
+                values = table_element.get_value(self.object_query)
+
+                out_json[table_element.text] = str([val[1] for val in values])
+            else:
+                value = table_element.get_value(self.object_query)
+                if isinstance(value, (datetime.datetime, datetime.date)):
+                    value = value.isoformat()
+
+                out_json[table_element.attr] = value
+        return out_json

@@ -18,6 +18,18 @@ class NotImplementedView(View):
     pass
 
 
+class RestApiTestCaseMixin:
+    def rest_api_view_test(self):
+        if self._is_base_test_class():
+            return
+        query_params = self.query_params()
+        query_params.update({"gen_rest_api": "true"})
+        response = self.client.get(self.url, query_params=query_params)
+        response_json = response.json()
+
+        self.assertEqual(response_json, self.view.manager.to_json())
+
+
 class MontrekViewTestCase(TestCase):
     viewname: str = "Please set the viewname in the subclass"
     view_class: type[View] = NotImplementedView
@@ -53,6 +65,9 @@ class MontrekViewTestCase(TestCase):
     def url_kwargs(self) -> dict:
         return {}
 
+    def query_params(self) -> dict:
+        return {}
+
     def required_user_permissions(self) -> list[Permission]:
         return []
 
@@ -61,7 +76,7 @@ class MontrekViewTestCase(TestCase):
         return reverse(self.viewname, kwargs=self.url_kwargs())
 
     def get_response(self):
-        return self.client.get(self.url)
+        return self.client.get(self.url, query_params=self.query_params())
 
     def test_view_return_correct_html(self):
         if self._is_base_test_class():
@@ -102,7 +117,7 @@ class MontrekViewTestCase(TestCase):
         self.user.user_permissions.set(required_user_permissions)
 
 
-class MontrekListViewTestCase(MontrekViewTestCase):
+class MontrekListViewTestCase(MontrekViewTestCase, RestApiTestCaseMixin):
     expected_no_of_rows: int = 0
     expected_columns = []
 
@@ -122,6 +137,9 @@ class MontrekListViewTestCase(MontrekViewTestCase):
         columns = bs.find_all("th")
         for expected_column in self.expected_columns:
             self.assertIn(expected_column, [column.text for column in columns])
+
+    def test_rest_api_view(self):
+        self.rest_api_view_test()
 
 
 class MontrekObjectViewBaseTestCase(MontrekViewTestCase):
@@ -190,7 +208,9 @@ class GetObjectPkMixin:
         return std_query.get(pk=self.url_kwargs()["pk"])
 
 
-class MontrekDetailViewTestCase(MontrekObjectViewBaseTestCase, GetObjectPkMixin):
+class MontrekDetailViewTestCase(
+    MontrekObjectViewBaseTestCase, GetObjectPkMixin, RestApiTestCaseMixin
+):
     def _is_base_test_class(self) -> bool:
         return self.__class__.__name__ == "MontrekDetailViewTestCase"
 
@@ -199,6 +219,9 @@ class MontrekDetailViewTestCase(MontrekObjectViewBaseTestCase, GetObjectPkMixin)
             return
         context_data = self.response.context
         self.assertIsNotNone(context_data["object"])
+
+    def test_rest_api_view(self):
+        self.rest_api_view_test()
 
 
 class MontrekCreateViewTestCase(MontrekCreateUpdateViewTestCase, GetObjectLastMixin):
