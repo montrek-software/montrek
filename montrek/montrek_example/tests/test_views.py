@@ -26,6 +26,7 @@ from testing.test_cases.view_test_cases import (
     MontrekRestApiViewTestCase,
     MontrekUpdateViewTestCase,
     MontrekViewTestCase,
+    MontrekDetailViewTestCase,
 )
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
@@ -237,7 +238,7 @@ class TestMontrekExampleADownloadView(MontrekDownloadViewTestCase):
         )
 
 
-class TestMontrekExampleADetailView(MontrekViewTestCase):
+class TestMontrekExampleADetailView(MontrekDetailViewTestCase):
     viewname = "montrek_example_a_details"
     view_class = me_views.MontrekExampleADetails
 

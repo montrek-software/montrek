@@ -2,6 +2,7 @@ import logging
 import os
 import re
 from typing import Any
+from celery.app.base import App
 
 from decouple import config
 from django.conf import settings
@@ -433,6 +434,7 @@ class MontrekDetailView(
     MontrekPageViewMixin,
     MontrekViewMixin,
     ToPdfMixin,
+    APIView,
 ):
     """
     View for displaying details of a single entity. pk is the corrresponding hub entity if is_hub_based is True
@@ -458,9 +460,11 @@ class MontrekDetailView(
     def get(self, request, *args, **kwargs):
         if self.is_hub_based:
             kwargs = self._set_hub_value_date_pk(kwargs)
-
-        if self.request.GET.get("gen_pdf") == "true":
+        request_get = self.request.GET
+        if request_get.get("gen_pdf") == "true":
             return self.list_to_pdf()
+        elif request_get.get("gen_rest_api") == "true":
+            return self.list_to_rest_api()
         return super().get(request, *args, **kwargs)
 
     def _set_hub_value_date_pk(self, kwargs: dict[str, Any]) -> dict[str, Any]:
@@ -473,6 +477,11 @@ class MontrekDetailView(
         kwargs["pk"] = hub_value_date_pk
         self.kwargs["pk"] = hub_value_date_pk
         return kwargs
+
+    def list_to_rest_api(self):
+        query = self.manager.to_json()
+        serializer = MontrekSerializer(query, manager=self.manager)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class MontrekCreateUpdateView(

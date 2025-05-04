@@ -137,7 +137,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         html_str += "</div>"
         return html_str
 
-    def to_json(self):
+    def to_json(self) -> dict:
         out_json = []
         for query_object in self.get_full_table():
             objects_dict = {}
