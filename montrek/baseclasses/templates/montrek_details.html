@@ -8,13 +8,19 @@
       </div>
     </div>
     <div class="row">
-      <div class="col-md-11">
+      <div class="col-md-10">
       </div>
-      <div class="col-md-1">
-        <form action="" method="get" style="display: inline-block;">
-          <input type="hidden" name="gen_pdf" value="true" />
-          <button type="submit" class="btn btn-default" title="Export to pdf"><span class="glyphicon glyphicon-file"</span></button>
-        </form>
+      <div class="col-md-2 text-right">
+        <div class="btn-group">
+          <form action="" method="get" style="display: inline-block;">
+            <input type="hidden" name="gen_pdf" value="true" />
+            <button type="submit" class="btn btn-default" title="Export to pdf"><span class="glyphicon glyphicon-file"</span></button>
+          </form>
+          <form action="" method="get" style="display: inline-block;">
+            <input type="hidden" name="gen_rest_api" value="true" />
+            <button type="submit" class="btn btn-default" title="Get REST Api data"><span class="glyphicon glyphicon-globe"</span></button>
+          </form>
+        </div>
       </div>
 
     </div>
