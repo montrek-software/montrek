@@ -13,6 +13,7 @@ from django.forms import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.views import View
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -70,9 +71,8 @@ class MontrekReportView(MontrekTemplateView, ToPdfMixin, APIView):
         return self.manager.document_title
 
     def list_to_rest_api(self):
-        query = self.manager.to_json()
-        serializer = MontrekSerializer(query, manager=self.manager)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        data = self.manager.to_json()
+        return Response(data, status=status.HTTP_200_OK)
 
 
 class MontrekReportFieldEditView(
