@@ -82,6 +82,8 @@ class TestReportingPlots(TestCase):
         reporting_plot_html = reporting_plot.to_html()
         self.assertTrue(reporting_plot_html.startswith("<div>"))
         self.assertTrue(reporting_plot_html.endswith("</div>"))
+        reporting_plot_json = reporting_plot.to_json()
+        self.assertTrue("reporting_plot" in reporting_plot_json.keys())
 
     def test_reporting_plots_line_stacked(self):
         reporting_data = ReportingData(
@@ -106,6 +108,8 @@ class TestReportingPlots(TestCase):
         reporting_plot_html = reporting_plot.to_html()
         self.assertTrue(reporting_plot_html.startswith("<div>"))
         self.assertTrue(reporting_plot_html.endswith("</div>"))
+        reporting_plot_json = reporting_plot.to_json()
+        self.assertTrue("reporting_plot" in reporting_plot_json.keys())
 
     def test_reporting_plots_line_stacked__str_call(self):
         reporting_data = ReportingData(
@@ -238,3 +242,5 @@ class TestReportingPiePlots(TestCase):
         self.assertTrue(reporting_plot_html.endswith("</div>"))
         reporting_plot_latex = reporting_plot.to_latex()
         self.assertTrue(reporting_plot_latex.startswith("\\begin{figure}"))
+        reporting_plot_json = reporting_plot.to_json()
+        self.assertTrue("reporting_plot" in reporting_plot_json.keys())

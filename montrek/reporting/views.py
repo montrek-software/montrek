@@ -1,6 +1,7 @@
 import os
 
 from baseclasses.forms import MontrekCreateForm
+from baseclasses.serializers import MontrekSerializer
 from baseclasses.views import (
     MontrekPermissionRequiredMixin,
     MontrekTemplateView,
@@ -12,6 +13,9 @@ from django.forms import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.views import View
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from reporting.managers.latex_report_manager import LatexReportManager
 from reporting.managers.montrek_report_manager import MontrekReportManager
@@ -25,14 +29,14 @@ def download_reporting_file_view(request, file_path: str):
         raise Http404
     with open(file_path, "rb") as file:
         response = HttpResponse(file.read(), content_type="application/octet-stream")
-        response[
-            "Content-Disposition"
-        ] = f"attachment; filename={os.path.basename(file_path)}"
+        response["Content-Disposition"] = (
+            f"attachment; filename={os.path.basename(file_path)}"
+        )
         os.remove(file_path)
         return response
 
 
-class MontrekReportView(MontrekTemplateView, ToPdfMixin):
+class MontrekReportView(MontrekTemplateView, ToPdfMixin, APIView):
     manager_class = MontrekReportManager
     template_name = "montrek_report.html"
     loading_template_name = "partials/montrek_report_loading.html"
@@ -50,6 +54,8 @@ class MontrekReportView(MontrekTemplateView, ToPdfMixin):
             report_manager = LatexReportManager(self.manager)
             pdf_path = report_manager.compile_report()
             return self.manager.prepare_mail(pdf_path)
+        if self.request.GET.get("gen_rest_api") == "true":
+            return self.list_to_rest_api()
         if request.headers.get("HX-Request"):
             if request.GET.get("state") == "loading":
                 # This is the data request - return the content with data
@@ -63,6 +69,10 @@ class MontrekReportView(MontrekTemplateView, ToPdfMixin):
     @property
     def title(self):
         return self.manager.document_title
+
+    def list_to_rest_api(self):
+        data = self.manager.to_json()
+        return Response(data, status=status.HTTP_200_OK)
 
 
 class MontrekReportFieldEditView(

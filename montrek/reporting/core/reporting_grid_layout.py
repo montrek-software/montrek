@@ -1,4 +1,6 @@
 from math import floor
+
+from typing import Any
 from reporting.managers.montrek_report_manager import ReportElementProtocol
 
 
@@ -62,6 +64,15 @@ class ReportGridLayout:
             latex_str += "\n\\end{table}\n\n"
         return latex_str
 
+    def to_json(self) -> dict[str, list]:
+        return_list = []
+        for row in self.report_grid_elements.report_grid_elements_container:
+            row_list = []
+            for element in row:
+                row_list.append(element.to_json())
+            return_list.append(row_list)
+        return {"report_grid_elements": return_list}
+
     def _get_latex_column_definition(self) -> str:
         # If the grid is top level, it should span over the complete textwidth
         # and the last column should be rightaligned
@@ -86,3 +97,6 @@ class EmptyReportGridElement:
 
     def to_latex(self) -> str:
         return ""
+
+    def to_json(self) -> dict:
+        return {"empty_report_grid_element": []}

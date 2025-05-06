@@ -65,6 +65,9 @@ class ReportingText(ReportElementProtocol):
     def to_html(self) -> str:
         return self.text
 
+    def to_json(self) -> dict[str, str]:
+        return {self.__class__.__name__.lower(): self.text}
+
 
 class ReportingParagraph(ReportingText):
     def to_latex(self) -> str:
@@ -131,6 +134,9 @@ class ReportingHeader1:
     def to_latex(self) -> str:
         return f"\\section*{{{self.text}}}"
 
+    def to_json(self) -> dict[str, str]:
+        return {"reporting_header_1": self.text}
+
 
 class ReportingHeader2:
     def __init__(self, text: str):
@@ -141,6 +147,9 @@ class ReportingHeader2:
 
     def to_latex(self) -> str:
         return f"\\subsection*{{{self.text}}}"
+
+    def to_json(self) -> dict[str, str]:
+        return {"reporting_header_2": self.text}
 
 
 class Vspace:
@@ -153,6 +162,9 @@ class Vspace:
     def to_html(self) -> str:
         return f'<div style="height:{self.space}mm;"></div>'
 
+    def to_json(self) -> dict[str, int]:
+        return {"vspace": self.space}
+
 
 class NewPage:
     def to_latex(self) -> str:
@@ -160,6 +172,9 @@ class NewPage:
 
     def to_html(self) -> str:
         return "<div style='page-break-after: always; height:15mm;'><hr></div>"
+
+    def to_json(self) -> dict[str, bool]:
+        return {"new_page": True}
 
 
 class ReportingImage:
@@ -195,6 +210,9 @@ class ReportingImage:
     def to_html(self) -> str:
         return f'<div style="text-align: right;"><img src="{self.image_path}" alt="image" style="width:{self.width * 100}%;"></div>'
 
+    def to_json(self) -> dict[str, str]:
+        return {"reporting_image": self.image_path}
+
 
 class ReportingMap:
     def __init__(self, longitude: int, latitude: int, offset: int = 5):
@@ -212,6 +230,9 @@ class ReportingMap:
 
     def to_html(self) -> str:
         return f'<iframe src="{self.embedded_url}" style="width: 100%; aspect-ratio: 4/3; height: auto; border:2;" loading="lazy" allowfullscreen></iframe>'
+
+    def to_json(self) -> dict[str, str]:
+        return {"reporting_map": self.embedded_url}
 
 
 class MontrekLogo(ReportingImage):
@@ -235,3 +256,6 @@ class MarkdownReportingElement:
         html_text = self.to_html()
         converter = HtmlLatexConverter()
         return converter.convert(html_text)
+
+    def to_json(self) -> dict[str, str]:
+        return {"markdown_reporting_element": self.markdown_text}
