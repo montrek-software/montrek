@@ -332,6 +332,13 @@ class IntTableElement(NumberTableElement):
         value = round(value)
         return self.shortener.shorten(value, ",.0f")
 
+    def get_value(self, obj: Any) -> Any:
+        value = super().get_value(obj)
+        try:
+            return int(value)
+        except TypeError:
+            return value
+
 
 @dataclass
 class PercentTableElement(NumberTableElement):
