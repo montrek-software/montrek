@@ -373,7 +373,7 @@ class MontrekRedirectViewTestCase(MontrekViewTestCase):
         raise NotImplementedError("Please set the expected_url method in the subclass")
 
 
-class MontrekReportViewTestCase(MontrekViewTestCase):
+class MontrekReportViewTestCase(MontrekViewTestCase, RestApiTestCaseMixin):
     expected_number_of_report_elements: int = -1
 
     @property
@@ -403,6 +403,9 @@ class MontrekReportViewTestCase(MontrekViewTestCase):
         self.assertEqual(
             len(report_manager.report_elements), self.expected_number_of_report_elements
         )
+
+    def test_rest_api_view(self):
+        self.rest_api_view_test()
 
 
 class MontrekReportFieldEditViewTestCase(MontrekObjectViewBaseTestCase):
