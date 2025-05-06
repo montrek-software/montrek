@@ -60,6 +60,9 @@ class MontrekReportManager(MontrekManager):
         self.cleanup_report_elements()
         return latex_str
 
+    def to_json(self) -> list[dict]:
+        return []
+
     def _get_footer(self) -> str:
         footer = f'<div style="height:2cm"></div><hr><div style="color:grey">{self.footer_text.to_html()}</div>'
         return footer
