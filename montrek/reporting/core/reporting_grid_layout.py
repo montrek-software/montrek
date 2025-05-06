@@ -97,3 +97,6 @@ class EmptyReportGridElement:
 
     def to_latex(self) -> str:
         return ""
+
+    def to_json(self) -> dict:
+        return {"empty_report_grid_element": []}
