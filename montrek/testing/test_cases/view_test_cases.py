@@ -26,8 +26,10 @@ class RestApiTestCaseMixin:
         query_params.update({"gen_rest_api": "true"})
         response = self.client.get(self.url, query_params=query_params)
         response_json = response.json()
+        self.view._session_data = None
+        manager = self.view.manager_class(self.view.session_data)
 
-        self.assertEqual(response_json, self.view.manager.to_json())
+        self.assertEqual(response_json, manager.to_json())
 
 
 class MontrekViewTestCase(TestCase):
