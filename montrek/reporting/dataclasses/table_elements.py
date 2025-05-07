@@ -336,7 +336,7 @@ class IntTableElement(NumberTableElement):
         value = super().get_value(obj)
         try:
             return int(value)
-        except TypeError:
+        except (TypeError, ValueError):
             return value
 
 
