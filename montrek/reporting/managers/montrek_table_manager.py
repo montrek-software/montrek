@@ -154,7 +154,9 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
                     objects_dict[table_element.text] = str([val[1] for val in values])
                 else:
                     value = table_element.get_value(query_object)
-                    if isinstance(value, (datetime.datetime, datetime.date)):
+                    if pd.isna(value):
+                        value = None
+                    elif isinstance(value, (datetime.datetime, datetime.date)):
                         value = value.isoformat()
 
                     objects_dict[table_element.attr] = value

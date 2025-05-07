@@ -3,6 +3,7 @@ import io
 from decimal import Decimal
 
 import pandas as pd
+import numpy as np
 from baseclasses.utils import montrek_time
 from bs4 import BeautifulSoup
 from django.core import mail
@@ -377,6 +378,23 @@ class TestMontrekDataFrameTableManager(TestCase):
             self.large_manager.messages[-1].message,
             "Table is too large to download. Sending it by mail.",
         )
+
+    def test_convert_nan_to_json(self):
+        input_df = pd.DataFrame(
+            {
+                "field_b": ["a", "b", np.nan],
+            }
+        )
+        manager = MockMontrekDataFrameTableManager(
+            {
+                "user_id": self.user.id,
+                "host_url": "test_server",
+                "df_data": input_df.to_dict(orient="records"),
+            }
+        )
+        test_json = manager.to_json()
+        test_output = [dd["field_b"] for dd in test_json]
+        self.assertEqual(test_output[2], None)
 
 
 class TestHistoryDataTable(TestCase):
