@@ -30,20 +30,80 @@ class TestMontrekTableManager(TestCase):
         test_html = MockMontrekTableManager().to_html()
         soup = BeautifulSoup(test_html, "html.parser")
         table = soup.find("table")
-        rows = table.find_all("tr")
-        self.assertEqual(len(rows), 4)
-        headers = soup.find_all("th")
-        expected_headers = [
-            "Field A",
-            "Field B",
-            "Field C",
-            "Field D",
-            "Field E",
-            "Link",
-            "Link Text",
-        ]
-        header_texts = [th.get_text() for th in headers]
-        self.assertEqual(header_texts, expected_headers)
+        self.assertEqual(
+            str(table),
+            '<table class="table table-bordered table-hover">'
+            "<form>"
+            '<input id="form-order_by-action" name="order_action" type="hidden" value=""/>'
+            "<thead>"
+            "<tr>"
+            '<th title="field_a">'
+            '<button class="btn-order-field" onclick="document.getElementById(\'form-order_by-action\').value=\'field_a\'" type="submit">'
+            '<div style="display: flex; justify-content: space-between; align-items: center;">Field A</div>'
+            "</button>"
+            "</th>"
+            '<th title="field_b">'
+            '<button class="btn-order-field" onclick="document.getElementById(\'form-order_by-action\').value=\'field_b\'" type="submit">'
+            '<div style="display: flex; justify-content: space-between; align-items: center;">Field B</div>'
+            "</button>"
+            "</th>"
+            '<th title="field_c">'
+            '<button class="btn-order-field" onclick="document.getElementById(\'form-order_by-action\').value=\'field_c\'" type="submit">'
+            '<div style="display: flex; justify-content: space-between; align-items: center;">Field C</div>'
+            "</button>"
+            "</th>"
+            '<th title="field_d">'
+            '<button class="btn-order-field" onclick="document.getElementById(\'form-order_by-action\').value=\'field_d\'" type="submit">'
+            '<div style="display: flex; justify-content: space-between; align-items: center;">Field D</div>'
+            "</button>"
+            "</th>"
+            '<th title="field_e">'
+            '<button class="btn-order-field" onclick="document.getElementById(\'form-order_by-action\').value=\'field_e\'" type="submit">'
+            '<div style="display: flex; justify-content: space-between; align-items: center;">Field E</div>'
+            "</button>"
+            "</th>"
+            '<th title="hub_entity_id">'
+            '<button class="btn-order-field" onclick="document.getElementById(\'form-order_by-action\').value=\'hub_entity_id\'" type="submit">'
+            '<div style="display: flex; justify-content: space-between; align-items: center;">Link</div>'
+            "</button>"
+            "</th>"
+            '<th title="hub_entity_id">'
+            '<button class="btn-order-field" onclick="document.getElementById(\'form-order_by-action\').value=\'hub_entity_id\'" type="submit">'
+            '<div style="display: flex; justify-content: space-between; align-items: center;">Link Text</div>'
+            "</button>"
+            "</th>"
+            "</tr>"
+            "</thead>"
+            "</form>"
+            '<tr style="white-space:nowrap;">'
+            '<td style="text-align: left">a</td>'
+            '<td style="text-align:right;color:#002F6C;">1</td>'
+            '<td style="text-align:right;color:#002F6C;">1.000</td>'
+            '<td style="text-align:left;">2024-07-13 00:00:00</td>'
+            '<td style="text-align:right;color:#002F6C;">1.00€</td>'
+            '<td><a href="/" id="id__" title="Link"><span class="glyphicon glyphicon-icon"></span></a></td>'
+            '<td><a href="/" id="id__" title="Link Text">a</a></td>'
+            "</tr>"
+            '<tr style="white-space:nowrap;">'
+            '<td style="text-align: left">b</td>'
+            '<td style="text-align:right;color:#002F6C;">2</td>'
+            '<td style="text-align:right;color:#002F6C;">2.000</td>'
+            '<td style="text-align:left;">2024-07-13 00:00:00</td>'
+            '<td style="text-align:right;color:#002F6C;">2.20€</td>'
+            '<td><a href="/" id="id__" title="Link"><span class="glyphicon glyphicon-icon"></span></a></td>'
+            '<td><a href="/" id="id__" title="Link Text">b</a></td>'
+            "</tr>"
+            '<tr style="white-space:nowrap;">'
+            '<td style="text-align: left">c</td>'
+            '<td style="text-align:right;color:#002F6C;">3</td>'
+            '<td style="text-align:right;color:#002F6C;">3.000</td>'
+            '<td style="text-align:left;">2024-07-13 00:00:00</td>'
+            '<td style="text-align:right;color:#002F6C;">3.00€</td>'
+            '<td><a href="/" id="id__" title="Link"><span class="glyphicon glyphicon-icon"></span></a></td>'
+            '<td><a href="/" id="id__" title="Link Text">c</a></td>'
+            "</tr>"
+            "</table>",
+        )
 
     def test_to_latex(self):
         test_latex = MockMontrekTableManager().to_latex()
