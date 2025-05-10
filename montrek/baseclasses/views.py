@@ -10,6 +10,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse, HttpResponseRedirect
+from django.middleware.csrf import get_token
 from django.shortcuts import render
 from django.urls import reverse
 from django.views.generic import DetailView, RedirectView, View
@@ -304,7 +305,8 @@ class MontrekListView(
             raise ValueError(
                 f"Manager {self.manager.__class__.__name__} must be of type MontrekTableManager"
             )
-        context["table"] = self.manager.to_html()
+        table = self.manager.to_html()
+        context["table"] = table
         context["paginator"] = self.manager.paginator
         context["paginate_by"] = self.manager.paginate_by
         context["is_large"] = self.manager.is_large
