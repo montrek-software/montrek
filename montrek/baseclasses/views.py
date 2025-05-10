@@ -306,8 +306,6 @@ class MontrekListView(
                 f"Manager {self.manager.__class__.__name__} must be of type MontrekTableManager"
             )
         table = self.manager.to_html()
-        csrf_token = get_token(self.request)
-        table = table.replace("{{CSRF_TOKEN}}", csrf_token)
         context["table"] = table
         context["paginator"] = self.manager.paginator
         context["paginate_by"] = self.manager.paginate_by
