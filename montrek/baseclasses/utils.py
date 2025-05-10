@@ -3,6 +3,7 @@ import datetime
 from datetime import timedelta
 from typing import Tuple
 import bleach
+from bleach.css_sanitizer import CSSSanitizer
 
 from django.utils import timezone
 
@@ -260,10 +261,15 @@ class HtmlSanitizer:
 
     ALLOWED_STYLES = ["color", "font-weight", "text-align"]
 
+    def __init__(self):
+        # Apply allowed styles using the CSS sanitizer
+        self.css_sanitizer = CSSSanitizer(allowed_css_properties=self.ALLOWED_STYLES)
+
     def clean_html(self, raw_html: str) -> str:
         return bleach.clean(
             raw_html,
             tags=self.ALLOWED_TAGS,
             attributes=self.ALLOWED_ATTRIBUTES,
+            css_sanitizer=self.css_sanitizer,
             strip=True,  # Remove disallowed tags entirely
         )
