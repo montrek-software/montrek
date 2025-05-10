@@ -27,6 +27,17 @@ class TestTableElements(TestCase):
             '<td style="text-align: left; white-space: pre-wrap;">test</td>',
         )
 
+    def test_secure_table_element(self):
+        obj = {
+            "test_value": "<b><script>Malicious Hack</script><button>Here</button></b>"
+        }
+        test_element = te.TextTableElement(name="test", attr="test_value")
+        test_value = test_element.get_attribute(obj, "html")
+        self.assertEqual(
+            test_value,
+            '<td style="text-align: left; white-space: pre-wrap;"><b>Malicious HackHere</b></td>',
+        )
+
     def test_list_table_element(self):
         test_element = te.ListTableElement(name="test", attr="test_value")
         self.assertEqual(

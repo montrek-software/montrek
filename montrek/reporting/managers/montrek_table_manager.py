@@ -5,11 +5,11 @@ import os
 from dataclasses import dataclass
 from decimal import Decimal
 from io import BytesIO
-from django_pandas.io import read_frame
 
 import pandas as pd
 from baseclasses.dataclasses.montrek_message import MontrekMessageInfo
 from baseclasses.managers.montrek_manager import MontrekManager
+from baseclasses.sanitizer import HtmlSanitizer
 from baseclasses.typing import SessionDataType, TableElementsType
 from django.conf import settings
 from django.core.files.base import ContentFile
@@ -19,14 +19,15 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils import timezone
 from django.views.generic.base import HttpResponse
+from django_pandas.io import read_frame
 from mailing.managers.mailing_manager import MailingManager
 from reporting.core import reporting_text as rt
+from reporting.core.table_converter import LatexTableConverter
 from reporting.dataclasses import table_elements as te
 from reporting.lib.protocols import (
     ReportElementProtocol,
 )
 from reporting.tasks.download_table_task import DownloadTableTask
-from reporting.core.table_converter import LatexTableConverter
 
 
 class MontrekTableMetaClass(type):
@@ -108,33 +109,44 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         html_str = (
             f"<h3>{self.table_title}</h3>"
             '<div class="row scrollable-content"><div class="col-md-12">'
-            f'<table {table_id} class="table table-bordered table-hover">'
-            '<form><input type="hidden" name="order_action" id="form-order_by-action" value="">'
-            "<thead><tr>"
+            '<form method="post">'  # Wrap form outside the table
+            '<input type="hidden" name="order_action" id="form-order_by-action" value="">'
         )
+        table_str = (
+            f'<table {table_id} class="table table-bordered table-hover"><thead><tr>'
+        )
+
         for table_element in self.table_elements:
-            # TODO: Handle links
             elem_attr = getattr(table_element, "attr", "hub_entity_id")
-            html_str += f"<th title='{elem_attr}'>"
-            html_str += f'<button type="submit" onclick="document.getElementById(\'form-order_by-action\').value=\'{elem_attr}\'" class="btn-order-field">'
-            html_str += f'<div style="display: flex; justify-content: space-between; align-items: center;">{table_element.name}'
+            table_str += f"<th title='{elem_attr}'>"
+            table_str += (
+                f'<button type="submit" '
+                f"onclick=\"document.getElementById('form-order_by-action').value='{elem_attr}'\" "
+                'class="btn-order-field">'
+                f'<div style="display: flex; justify-content: space-between; align-items: center;">'
+                f"{table_element.name}"
+            )
             if elem_attr == self.order_field:
-                html_str += '<span class="glyphicon glyphicon-arrow-down"></span>'
+                table_str += '<span class="glyphicon glyphicon-arrow-down"></span>'
             if "-" + elem_attr == self.order_field:
-                html_str += '<span class="glyphicon glyphicon-arrow-up"></span>'
-            html_str += "</div></button></th>"
-        html_str += "</tr></thead></input></form>"
+                table_str += '<span class="glyphicon glyphicon-arrow-up"></span>'
+            table_str += "</div></button></th>"
+
+        table_str += "</tr></thead>"
+        table_body_str = "<tbody>"
 
         for query_object in self.get_table():
-            html_str += '<tr style="white-space:nowrap;">'
-            html_str += "".join(
+            table_body_str += '<tr style="white-space:nowrap;">'
+            table_body_str += "".join(
                 te.get_attribute(query_object, "html") for te in self.table_elements
             )
-            html_str += "</tr>"
+            table_body_str += "</tr>"
 
-        html_str += "</table>"
-        html_str += "</div>"
-        html_str += "</div>"
+        table_body_str += "</tbody>"
+        table_str += table_body_str
+        table_str += "</table>"
+        html_str += table_str
+        html_str += "</form></div></div>"
         return html_str
 
     def to_json(self) -> dict:

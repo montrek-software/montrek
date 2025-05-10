@@ -26,12 +26,6 @@ class HtmlSanitizer:
         "blockquote",
         "pre",
         "code",
-        "td",
-        "tr",
-        "th",
-        "table",
-        "thead",
-        "tbody",
     ]
 
     ALLOWED_ATTRIBUTES = {
