@@ -1,7 +1,6 @@
 import os
 
 from baseclasses.forms import MontrekCreateForm
-from baseclasses.serializers import MontrekSerializer
 from baseclasses.views import (
     MontrekPermissionRequiredMixin,
     MontrekTemplateView,
@@ -16,6 +15,7 @@ from django.views import View
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from baseclasses.sanitizer import HtmlSanitizer
 
 from reporting.managers.latex_report_manager import LatexReportManager
 from reporting.managers.montrek_report_manager import MontrekReportManager
@@ -133,6 +133,7 @@ class MontrekReportFieldEditView(
         try:
             # This will validate just the particular field
             field_value = form.fields[field_name].clean(request.POST.get(field_name))
+            field_value = HtmlSanitizer().clean_html(field_value)
             form.cleaned_data = {field_name: field_value}
             return self.form_valid(form, edit_data, request, field_name)
         except ValidationError as e:
