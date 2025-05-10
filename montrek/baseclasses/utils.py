@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 import datetime
 from datetime import timedelta
 from typing import Tuple
+import bleach
 
 from django.utils import timezone
 
@@ -83,8 +84,7 @@ class TableMetaSessionDataElement(ABC):
         self.request.session[self.field] = self.session_data.get(self.field, {})
 
     @abstractmethod
-    def apply_data(self) -> SessionDataType:
-        ...
+    def apply_data(self) -> SessionDataType: ...
 
     def _set_data_to_path(self, default: int | str | None) -> SessionDataType:
         data = {}
@@ -224,3 +224,46 @@ class TableMetaSessionData:
             session_data = element.session_data
 
         return session_data
+
+
+class HtmlSanitizer:
+    ALLOWED_TAGS = [
+        "p",
+        "b",
+        "i",
+        "u",
+        "em",
+        "strong",
+        "a",
+        "ul",
+        "ol",
+        "li",
+        "br",
+        "span",
+        "div",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+        "blockquote",
+        "pre",
+        "code",
+    ]
+
+    ALLOWED_ATTRIBUTES = {
+        "*": ["class", "style"],
+        "a": ["href", "title", "target"],
+        "img": ["src", "alt"],
+    }
+
+    ALLOWED_STYLES = ["color", "font-weight", "text-align"]
+
+    def clean_html(self, raw_html: str) -> str:
+        return bleach.clean(
+            raw_html,
+            tags=self.ALLOWED_TAGS,
+            attributes=self.ALLOWED_ATTRIBUTES,
+            strip=True,  # Remove disallowed tags entirely
+        )

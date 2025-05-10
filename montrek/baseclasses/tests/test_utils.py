@@ -4,6 +4,7 @@ from django.utils import timezone
 from baseclasses.utils import (
     FilterCountMetaSessionDataElement,
     FilterMetaSessionDataElement,
+    HtmlSanitizer,
     PagesMetaSessionDataElement,
     PaginateByMetaSessionDataElement,
     OrderFieldMetaSessionDataElement,
@@ -408,3 +409,10 @@ class TestTableMetaSessionData(TestCase):
             self.request.session["is_compact_format"], {"/test-path/": False}
         )
         self.assertEqual(self.request.session["order_fields"], {"/test-path/": None})
+
+
+class TestHtmlSanitizer(TestCase):
+    def test_sanitation(self):
+        test_html = "<b>Hello<script>Mailicious stuff!</script></b>"
+        return_html = HtmlSanitizer().clean_html(test_html)
+        self.assertEqual(return_html, "<b>HelloMailicious stuff!</b>")
