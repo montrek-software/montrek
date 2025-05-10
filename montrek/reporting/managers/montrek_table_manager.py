@@ -110,6 +110,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
             f"<h3>{self.table_title}</h3>"
             '<div class="row scrollable-content"><div class="col-md-12">'
             '<form method="post">'  # Wrap form outside the table
+            '<input type="hidden" name="csrfmiddlewaretoken" value="{{CSRF_TOKEN}}">'
             '<input type="hidden" name="order_action" id="form-order_by-action" value="">'
         )
         table_str = (
