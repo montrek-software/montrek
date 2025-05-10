@@ -13,7 +13,7 @@ from baseclasses.models import (
     ValueDateList,
 )
 from baseclasses.repositories.db.db_staller import DbStaller
-from baseclasses.utils import HtmlSanitizer
+from baseclasses.sanitizer import HtmlSanitizer
 from django.db.models import JSONField, Q, QuerySet
 from django.utils import timezone
 
