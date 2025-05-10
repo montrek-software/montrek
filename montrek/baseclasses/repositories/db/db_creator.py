@@ -13,7 +13,8 @@ from baseclasses.models import (
     ValueDateList,
 )
 from baseclasses.repositories.db.db_staller import DbStaller
-from django.db.models import Q, JSONField, QuerySet
+from baseclasses.utils import HtmlSanitizer
+from django.db.models import JSONField, Q, QuerySet
 from django.utils import timezone
 
 DataDict = dict[str, Any]
@@ -32,9 +33,10 @@ class DbCreator:
         self.new_satellites: SatelliteDict = {}
         self.existing_satellites: SatelliteDict = {}
         self.updated_satellites: SatelliteDict = {}
+        self.sanitizer = HtmlSanitizer()
 
     def create(self, data: DataDict):
-        self.data = data
+        self.data = self.cleaned_data(data)
         self._enrich_data()
         self._create_static_satellites()
         self._stall_hub()
@@ -43,6 +45,12 @@ class DbCreator:
         self._stall_hub_value_date()
         self._create_ts_satellites()
         self._create_links()
+
+    def cleaned_data(self, data: DataDict) -> DataDict:
+        return {
+            key: self.sanitizer.clean_html(value) if isinstance(value, str) else value
+            for key, value in data.items()
+        }
 
     def _enrich_data(self):
         self.data["created_by_id"] = self.user_id
