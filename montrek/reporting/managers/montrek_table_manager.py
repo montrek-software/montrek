@@ -338,7 +338,7 @@ class MontrekTableManager(MontrekTableManagerABC):
         return self.repository.receive()
 
     def get_df(self) -> pd.DataFrame:
-        queryset = self.repository.receive()
+        queryset = list(self.repository.receive())
         table_data = {}
         table_elements = [
             table_element
@@ -346,10 +346,7 @@ class MontrekTableManager(MontrekTableManagerABC):
             if not isinstance(table_element, te.LinkTableElement)
         ]
         for element in table_elements:
-            values = []
-            for row in queryset.all():
-                values.append(element.get_value(row))
-            table_data[element.name] = values
+            table_data[element.name] = [element.get_value(row) for row in queryset]
         return pd.DataFrame(table_data)
 
     def get_paginated_queryset(self) -> QuerySet:
