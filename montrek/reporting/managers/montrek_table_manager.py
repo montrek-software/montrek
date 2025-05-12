@@ -1,5 +1,4 @@
 import datetime
-import json
 import math
 import os
 from dataclasses import dataclass
@@ -9,7 +8,6 @@ from io import BytesIO
 import pandas as pd
 from baseclasses.dataclasses.montrek_message import MontrekMessageInfo
 from baseclasses.managers.montrek_manager import MontrekManager
-from baseclasses.sanitizer import HtmlSanitizer
 from baseclasses.typing import SessionDataType, TableElementsType
 from django.conf import settings
 from django.core.files.base import ContentFile
@@ -41,6 +39,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
     document_title = "Montrek Table"
     draft = False
     is_compact_format = False
+    is_large: bool = False
 
     def __init__(self, session_data: SessionDataType = {}):
         super().__init__(session_data)
@@ -194,18 +193,20 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         return output
 
     def download_or_mail_csv(self) -> HttpResponse:
-        table_dimensions = self._get_table_dimensions()
-        if table_dimensions > settings.SEND_TABLE_BY_MAIL_LIMIT:
-            return self._handle_large_table("csv")
-        else:
-            return self._download_csv()
+        return self._download_or_mail("csv", self._download_csv)
 
     def download_or_mail_excel(self) -> HttpResponse:
+        return self._download_or_mail("xlsx", self._download_excel)
+
+    def _download_or_mail(
+        self, filetype: str, download_method: callable
+    ) -> HttpResponse:
+        if self.is_large:
+            return self._handle_large_table(filetype)
         table_dimensions = self._get_table_dimensions()
         if table_dimensions > settings.SEND_TABLE_BY_MAIL_LIMIT:
-            return self._handle_large_table("xlsx")
-        else:
-            return self._download_excel()
+            return self._handle_large_table(filetype)
+        return download_method()
 
     def _handle_large_table(self, filetype: str) -> HttpResponse:
         self.messages.append(
@@ -319,7 +320,6 @@ class MontrekTablePaginator:
 
 class MontrekTableManager(MontrekTableManagerABC):
     is_paginated = True
-    is_large: bool = False
 
     def __init__(self, session_data: SessionDataType = {}):
         super().__init__(session_data)
