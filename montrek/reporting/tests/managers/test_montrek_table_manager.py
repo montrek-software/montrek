@@ -17,6 +17,7 @@ from reporting.dataclasses.table_elements import HistoryChangeState
 from reporting.managers.montrek_table_manager import HistoryDataTableManager
 from reporting.tests.mocks import (
     MockLongMontrekTableManager,
+    MockLongMontrekTableManager2,
     MockMontrekDataFrameTableManager,
     MockMontrekTableManager,
 )
@@ -131,40 +132,38 @@ class TestMontrekTableManager(TestCase):
         self.assertEqual(name_to_field_map, expected_map)
 
     def test_large_download_excel(self):
-        manager = MockLongMontrekTableManager(
-            {"user_id": self.user.id, "host_url": "test_server"}
-        )
-        response = manager.download_or_mail_excel()
-        self.assertEqual(response.status_code, 302)
-        sent_email = mail.outbox[0]
-        self.assertTrue(sent_email.subject.endswith(".xlsx is ready for download"))
-        self.assertEqual(sent_email.to, [self.user.email])
-        self.assertTrue(
-            "Please download the table from the link below:"
-            in sent_email.message().as_string()
-        )
-        self.assertEqual(
-            manager.messages[-1].message,
-            "Table is too large to download. Sending it by mail.",
-        )
+        for manager_cls in (MockLongMontrekTableManager, MockLongMontrekTableManager2):
+            manager = manager_cls({"user_id": self.user.id, "host_url": "test_server"})
+            response = manager.download_or_mail_excel()
+            self.assertEqual(response.status_code, 302)
+            sent_email = mail.outbox[0]
+            self.assertTrue(sent_email.subject.endswith(".xlsx is ready for download"))
+            self.assertEqual(sent_email.to, [self.user.email])
+            self.assertTrue(
+                "Please download the table from the link below:"
+                in sent_email.message().as_string()
+            )
+            self.assertEqual(
+                manager.messages[-1].message,
+                "Table is too large to download. Sending it by mail.",
+            )
 
     def test_large_download_csv(self):
-        manager = MockLongMontrekTableManager(
-            {"user_id": self.user.id, "host_url": "test_server"}
-        )
-        response = manager.download_or_mail_csv()
-        self.assertEqual(response.status_code, 302)
-        sent_email = mail.outbox[0]
-        self.assertTrue(sent_email.subject.endswith(".csv is ready for download"))
-        self.assertEqual(sent_email.to, [self.user.email])
-        self.assertTrue(
-            "Please download the table from the link below:"
-            in sent_email.message().as_string()
-        )
-        self.assertEqual(
-            manager.messages[-1].message,
-            "Table is too large to download. Sending it by mail.",
-        )
+        for manager_cls in (MockLongMontrekTableManager, MockLongMontrekTableManager2):
+            manager = manager_cls({"user_id": self.user.id, "host_url": "test_server"})
+            response = manager.download_or_mail_csv()
+            self.assertEqual(response.status_code, 302)
+            sent_email = mail.outbox[0]
+            self.assertTrue(sent_email.subject.endswith(".csv is ready for download"))
+            self.assertEqual(sent_email.to, [self.user.email])
+            self.assertTrue(
+                "Please download the table from the link below:"
+                in sent_email.message().as_string()
+            )
+            self.assertEqual(
+                manager.messages[-1].message,
+                "Table is too large to download. Sending it by mail.",
+            )
 
     def test_set_paginate_by(self):
         test_manager = MockLongMontrekTableManager({})
