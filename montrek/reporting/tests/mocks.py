@@ -195,6 +195,10 @@ class MockLongMontrekTableManager(MockMontrekTableManager):
     repository_class = MockLongRepository
 
 
+class MockLongMontrekTableManager2(MockMontrekTableManager):
+    is_large = True
+
+
 class MockHttpResponse:
     content: str = ""
 
