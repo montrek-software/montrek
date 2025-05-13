@@ -114,6 +114,7 @@ NAVBAR_APPS = config("NAVBAR_APPS", default="").replace(" ", "").split(",")
 NAVBAR_RENAME = {
     k: v
     for x in config("NAVBAR_RENAME", default="").replace("*", " ").split(",")
+    if x
     for k, v in [x.split("::")]
 }
 DJANGO_MIDDLEWARE = [
