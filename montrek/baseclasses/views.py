@@ -2,7 +2,6 @@ import logging
 import os
 import re
 from typing import Any
-from celery.app.base import App
 
 from decouple import config
 from django.conf import settings
@@ -10,7 +9,6 @@ from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse, HttpResponseRedirect
-from django.middleware.csrf import get_token
 from django.shortcuts import render
 from django.urls import reverse
 from django.views.generic import DetailView, RedirectView, View
@@ -54,6 +52,7 @@ def under_construction(request):
 def navbar(request):
     # navbar_apps_config = config("NAVBAR_APPS", default="").split(",")
     navbar_apps_config = settings.NAVBAR_APPS
+    navbar_rename_config = settings.NAVBAR_RENAME
     navbar_apps = []
     navbar_dropdowns = {}
     for app in navbar_apps_config:
@@ -64,7 +63,9 @@ def navbar(request):
             repo_name = app_structure[0]
             app_name = app_structure[1]
             if repo_name not in navbar_dropdowns:
-                navbar_dropdowns[repo_name] = NavBarDropdownModel(repo_name)
+                navbar_dropdowns[repo_name] = NavBarDropdownModel(
+                    repo_name, force_display_name=navbar_rename_config.get(repo_name)
+                )
             dropdown = navbar_dropdowns[repo_name]
             dropdown.dropdown_items.append(NavBarModel(app_name))
         else:
@@ -242,9 +243,9 @@ class ToPdfMixin:
         if pdf_path and os.path.exists(pdf_path):
             with open(pdf_path, "rb") as pdf_file:
                 response = HttpResponse(pdf_file.read(), content_type="application/pdf")
-                response["Content-Disposition"] = (
-                    "inline; filename=" + os.path.basename(pdf_path)
-                )
+                response[
+                    "Content-Disposition"
+                ] = "inline; filename=" + os.path.basename(pdf_path)
                 return response
         previous_url = self.request.META.get("HTTP_REFERER")
         return HttpResponseRedirect(previous_url)
