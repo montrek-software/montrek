@@ -55,4 +55,4 @@ update-repositories: # Update all montrek repositories to the latest git tags.
 update-server: # Stop all docker containers, update the repositories to the latest git tags, and start the containers again.
 	@bash bin/start-docker.sh down
 	@bash bin/update-repositories-to-latest-tags.sh
-	@bash bin/start-docker.sh up -d --build --prune
+	@bash bin/start-docker.sh up -d --build

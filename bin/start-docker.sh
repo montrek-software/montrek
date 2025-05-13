@@ -32,10 +32,6 @@ BUILD=""
 if [[ "$3" == "--build" ]]; then
   BUILD="--build"
 fi
-PRUNE=""
-if [[ "$4" == "--prune" ]]; then
-  PRUNE="--prune"
-fi
 
 # Combine and run them
-docker compose -f "${COMPOSE_FILES[@]}" $COMMAND $DETACHED $BUILD $PRUNE
+docker compose -f "${COMPOSE_FILES[@]}" $COMMAND $DETACHED $BUILD --remove-orphans
