@@ -568,6 +568,11 @@ class TestNavbar(TestCase):
         self.assertIsNotNone(mailing_link)
         self.assertEqual(mailing_link.text.strip(), "Mailing")
 
+        # Check individual "Info" link (renamed)
+        mailing_link = soup.find("a", href="/info/info")
+        self.assertIsNotNone(mailing_link)
+        self.assertEqual(mailing_link.text.strip(), "Amazing App")
+
 
 class TestMontrekTemplateView(TestCase):
     def test_no_kwargs(self):

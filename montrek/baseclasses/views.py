@@ -67,9 +67,15 @@ def navbar(request):
                     repo_name, force_display_name=navbar_rename_config.get(repo_name)
                 )
             dropdown = navbar_dropdowns[repo_name]
-            dropdown.dropdown_items.append(NavBarModel(app_name))
+            dropdown.dropdown_items.append(
+                NavBarModel(
+                    app_name, force_display_name=navbar_rename_config.get(app_name)
+                )
+            )
         else:
-            navbar_apps.append(NavBarModel(app))
+            navbar_apps.append(
+                NavBarModel(app, force_display_name=navbar_rename_config.get(app))
+            )
     return render(
         request,
         "navbar.html",

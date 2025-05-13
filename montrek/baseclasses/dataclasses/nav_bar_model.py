@@ -6,10 +6,13 @@ class NavBarModel:
     """Model for the navigation bar"""
 
     app_name: str
+    force_display_name: str | None = None
 
     @property
     def display_name(self) -> str:
         """Display name for the app"""
+        if self.force_display_name:
+            return self.force_display_name
         return self.app_name.replace("_", " ").title()
 
 
