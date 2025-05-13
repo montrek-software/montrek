@@ -16,9 +16,11 @@ class MontrekTestRunner(DiscoverRunner):
                 "CELERY_TASK_EAGER_PROPAGATES": 1,
                 "NAVBAR_APPS": [
                     "mailing",
+                    "info",
                     "montrek_example.montrek_example_report",
                     "",
                 ],
+                "NAVBAR_RENAME": {"info": "Amazing App"},
                 "MONTREK_EXTENSION_APPS": ["app1", "app2", "mt_dummy.app3"],
                 # Add other test-specific settings here
             }
