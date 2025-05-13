@@ -56,3 +56,4 @@ update-server: # Stop all docker containers, update the repositories to the late
 	@bash bin/start-docker.sh down
 	@bash bin/update-repositories-to-latest-tags.sh
 	@bash bin/start-docker.sh up -d --build
+	@docker builder prune -f
