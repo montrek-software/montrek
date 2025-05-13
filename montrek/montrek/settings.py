@@ -111,6 +111,7 @@ MONTREK_EXTENSION_APPS = get_montrek_extension_apps_list()
 INSTALLED_APPS = DJANGO_APPS + MONTREK_EXTENSION_APPS
 
 NAVBAR_APPS = config("NAVBAR_APPS", default="").replace(" ", "").split(",")
+# some_repo::NEW*Name -> {some_repo: "NEW Name"}
 NAVBAR_RENAME = {
     k: v
     for x in config("NAVBAR_RENAME", default="").replace("*", " ").split(",")
