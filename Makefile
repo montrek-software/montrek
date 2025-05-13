@@ -51,9 +51,13 @@ sync-local-python-env: # Sync the local (non-docker) python environment with the
 update-repositories: # Update all montrek repositories to the latest git tags.
 	@bash bin/update-repositories-to-latest-tags.sh
 
+.PHONY: docker-cleanup
+docker-cleanup: # Remove unused docker artifacts.
+	bash bin/docker-prune.sh
+
 .PHONY: update-server
 update-server: # Stop all docker containers, update the repositories to the latest git tags, and start the containers again.
 	@bash bin/start-docker.sh down
 	@bash bin/update-repositories-to-latest-tags.sh
 	@bash bin/start-docker.sh up -d --build
-	@docker builder prune -f
+	@bash bin/docker-prune.sh
