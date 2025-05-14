@@ -30,4 +30,9 @@ class {{ details_page_cls_name }}(MontrekDetailsPage):
                 html_id="{{ detail_tab_id }}",
                 active="active",
             ),
+            TabElement(
+                name="{{ history_tab_name }}",
+                link=reverse("{{ history_view_url_name }}", args=[self.obj.id]),
+                html_id="{{ history_tab_id }}",
+            ),
         )

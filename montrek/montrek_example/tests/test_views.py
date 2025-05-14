@@ -1,3 +1,4 @@
+import datetime
 import os
 from tempfile import TemporaryDirectory
 from textwrap import dedent
@@ -25,6 +26,7 @@ from testing.test_cases.view_test_cases import (
     MontrekRestApiViewTestCase,
     MontrekUpdateViewTestCase,
     MontrekViewTestCase,
+    MontrekDetailViewTestCase,
 )
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
@@ -232,11 +234,11 @@ class TestMontrekExampleADownloadView(MontrekDownloadViewTestCase):
     def additional_download_assertions(self):
         self.assertEqual(
             self.response.content.decode(),
-            "| A1 String   | A1 Int   | A2 String   | A2 Float   | B1 String   |\n|-------------|----------|-------------|------------|-------------|",
+            "| A1 String   | A1 Int   | A2 String   | A2 Float   | B1 String   | TestField   |\n|-------------|----------|-------------|------------|-------------|-------------|",
         )
 
 
-class TestMontrekExampleADetailView(MontrekViewTestCase):
+class TestMontrekExampleADetailView(MontrekDetailViewTestCase):
     viewname = "montrek_example_a_details"
     view_class = me_views.MontrekExampleADetails
 
@@ -252,25 +254,48 @@ class TestMontrekExampleADetailView(MontrekViewTestCase):
     def test_overview(self):
         response = self.client.get(self.url)
         overview_html = response.context_data["overview"]
-        exp_overview_html = (
-            "<h3></h3>"
-            '<div class="row scrollable-content">'
-            '<div class="col-md-12">'
-            '<table id="compactTable" class="table table-bordered table-hover">'
-            '<form><input type="hidden" name="order_action" id="form-order_by-action" value=""><thead><tr><th title=\'hub_entity_id\'><button type="submit" onclick="document.getElementById(\'form-order_by-action\').value=\'hub_entity_id\'" class="btn-order-field"><div style="display: flex; justify-content: space-between; align-items: center;">A1 String</div></button></th><th title=\'field_a1_int\'><button type="submit" onclick="document.getElementById(\'form-order_by-action\').value=\'field_a1_int\'" class="btn-order-field"><div style="display: flex; justify-content: space-between; align-items: center;">A1 Int</div></button></th></tr></thead></input></form>'
-            '<tr style="white-space:nowrap;">'
-            f'<td><a id="id__montrek_example_a_{self.hub_vd_0.hub_id}_details" href="/montrek_example/a/{self.hub_vd_0.hub_id}/details" title="View Example A">DEFAULT</a></td>'
-            '<td style="text-align:right;color:#002F6C;">0</td>'
-            "</tr>"
-            '<tr style="white-space:nowrap;">'
-            f'<td><a id="id__montrek_example_a_{self.hub_vd.hub_id}_details" href="/montrek_example/a/{self.hub_vd.hub_id}/details" title="View Example A">DEFAULT</a></td>'
-            '<td style="text-align:right;color:#002F6C;">0</td>'
-            "</tr>"
-            "</table>"
-            "</div>"
-            "</div>"
+        exp_overview_html = f"""<h3></h3>
+<div class="row scrollable-content">
+  <div class="col-md-12">
+    <form method="get">
+      <input type="hidden" name="order_action" id="form-order_by-action" value="">
+      <table id="compactTable" class="table table-bordered table-hover">
+        <thead>
+          <tr>
+            <th title='hub_entity_id'>
+              <button type="submit" onclick="document.getElementById('form-order_by-action').value='hub_entity_id'" class="btn-order-field">
+                <div style="display: flex; justify-content: space-between; align-items: center;">A1 String</div>
+              </button>
+            </th>
+            <th title='field_a1_int'>
+              <button type="submit" onclick="document.getElementById('form-order_by-action').value='field_a1_int'" class="btn-order-field">
+                <div style="display: flex; justify-content: space-between; align-items: center;">A1 Int</div>
+              </button>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="white-space:nowrap;">
+            <td>
+              <a id="id__montrek_example_a_{self.hub_vd_0.hub_id}_details" href="/montrek_example/a/{self.hub_vd_0.hub_id}/details" title="View Example A">DEFAULT</a>
+            </td>
+            <td style="text-align:right;color:#002F6C;">0</td>
+          </tr>
+          <tr style="white-space:nowrap;">
+            <td>
+              <a id="id__montrek_example_a_{self.hub_vd.hub_id}_details" href="/montrek_example/a/{self.hub_vd.hub_id}/details" title="View Example A">DEFAULT</a>
+            </td>
+            <td style="text-align:right;color:#002F6C;">0</td>
+          </tr>
+        </tbody>
+      </table>
+    </form>
+</div></div>"""
+
+        self.assertEqual(
+            overview_html.replace(" ", "").replace("\n", ""),
+            exp_overview_html.replace(" ", "").replace("\n", ""),
         )
-        self.assertEqual(overview_html, exp_overview_html)
 
 
 class TestMontrekExampleADelete(MontrekDeleteViewTestCase):
@@ -521,7 +546,7 @@ class TestMontrekExampleCListView(MontrekListViewTestCase):
     expected_no_of_rows = 1
 
     def build_factories(self):
-        sat_ts = me_factories.SatTSC2Factory()
+        sat_ts = me_factories.SatTSC2Factory(value_date=datetime.date.today())
         me_factories.SatC1Factory(hub_entity=sat_ts.hub_value_date.hub)
 
 
@@ -1081,6 +1106,7 @@ class TestHubARestApiView(MontrekRestApiViewTestCase):
                 "field_a2_str": self.sat_a2s[i].field_a2_str,
                 "field_a2_float": self.sat_a2s[i].field_a2_float,
                 "field_b1_str": None,
+                "individual_field": 0.0,
             }
             expected_json.append(entry)
         return expected_json
@@ -1119,6 +1145,7 @@ class TestHubARestApiViewWithFilter(MontrekRestApiViewTestCase):
                 "field_a2_str": self.sat_a2s[1].field_a2_str,
                 "field_a2_float": self.sat_a2s[1].field_a2_float,
                 "field_b1_str": None,
+                "individual_field": 0.0,
             }
         ]
         return expected_json
@@ -1137,6 +1164,8 @@ class TestHubBRestApiView(MontrekRestApiViewTestCase):
             self.sat_b2s.append(me_factories.SatB2Factory(hub_entity=hub))
             satd = me_factories.SatD1Factory.create(field_d1_str="bla")
             hub.link_hub_b_hub_d.add(satd.hub_entity)
+            satd = me_factories.SatD1Factory.create(field_d1_str="blubb")
+            hub.link_hub_b_hub_d.add(satd.hub_entity)
 
     def expected_json(self) -> list:
         expected_json = []
@@ -1146,8 +1175,8 @@ class TestHubBRestApiView(MontrekRestApiViewTestCase):
                 "field_b1_date": self.sat_b1s[i].field_b1_date.strftime("%Y-%m-%d"),
                 "field_b2_str": self.sat_b2s[i].field_b2_str,
                 "field_b2_choice": self.sat_b2s[i].field_b2_choice.value,
-                "field_d1_str": "bla",
-                "field_d1_int": "0",
+                "field_d1_str": "['bla', 'blubb']",
+                "field_d1_int": "0,0",
                 "alert_level": AlertEnum.OK.value.description,
                 "alert_message": None,
             }
@@ -1186,3 +1215,43 @@ class TestA2ApiUploadView(MontrekViewTestCase):
     def test_post__no_password(self):
         response = self.client.post(self.url, data={"user": "user"})
         self.assertEqual(response.status_code, 200)
+
+
+class TestTableDataWithReferenceDate(MontrekListViewTestCase):
+    viewname = "montrek_example_a_list"
+    view_class = me_views.MontrekExampleAList
+    expected_no_of_rows = 1
+
+    def query_params(self) -> dict:
+        return {"reference_date": ["2023-07-15"]}
+
+    def build_factories(self):
+        sat_a11 = me_factories.SatA1Factory(
+            state_date_end=montrek_time(2023, 7, 10),
+            field_a1_int=5,
+        )
+        me_factories.SatA1Factory(
+            hub_entity=sat_a11.hub_entity,
+            state_date_start=montrek_time(2023, 7, 10),
+            state_date_end=montrek_time(2023, 7, 20),
+            field_a1_int=6,
+        )
+        me_factories.SatA1Factory(
+            hub_entity=sat_a11.hub_entity,
+            state_date_start=montrek_time(2023, 7, 20),
+            field_a1_int=7,
+        )
+        me_factories.SatA2Factory(
+            hub_entity=sat_a11.hub_entity,
+            field_a2_float=8.0,
+        )
+        hub_a12 = me_factories.HubAFactory(state_date_end=montrek_time(2023, 7, 10))
+        me_factories.SatA2Factory(
+            hub_entity=hub_a12,
+            state_date_end=montrek_time(2023, 7, 10),
+            field_a2_float=9,
+        )
+
+    def test_assign_old_data(self):
+        test_object = self.view.object_list[0]
+        self.assertEqual(test_object.field_a1_int, 6)

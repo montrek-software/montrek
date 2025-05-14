@@ -3,6 +3,7 @@ import io
 from decimal import Decimal
 
 import pandas as pd
+import numpy as np
 from baseclasses.utils import montrek_time
 from bs4 import BeautifulSoup
 from django.core import mail
@@ -16,6 +17,7 @@ from reporting.dataclasses.table_elements import HistoryChangeState
 from reporting.managers.montrek_table_manager import HistoryDataTableManager
 from reporting.tests.mocks import (
     MockLongMontrekTableManager,
+    MockLongMontrekTableManager2,
     MockMontrekDataFrameTableManager,
     MockMontrekTableManager,
 )
@@ -25,29 +27,46 @@ class TestMontrekTableManager(TestCase):
     def setUp(self):
         self.user = MontrekUserFactory()
 
-    def test_to_html(self):
-        test_html = MockMontrekTableManager().to_html()
-        soup = BeautifulSoup(test_html, "html.parser")
+    def test_to_html_exact_match(self):
+        html = MockMontrekTableManager().to_html()
+        soup = BeautifulSoup(html, "html.parser")
         table = soup.find("table")
-        rows = table.find_all("tr")
-        self.assertEqual(len(rows), 4)
-        headers = soup.find_all("th")
-        expected_headers = [
-            "Field A",
-            "Field B",
-            "Field C",
-            "Field D",
-            "Field E",
-            "Link",
-            "Link Text",
-        ]
-        header_texts = [th.get_text() for th in headers]
-        self.assertEqual(header_texts, expected_headers)
+
+        expected_table = """<table class="table table-bordered table-hover"><thead><tr><th title="field_a"><button class="btn-order-field" onclick="document.getElementById('form-order_by-action').value='field_a'" type="submit"><div style="display: flex; justify-content: space-between; align-items: center;">Field A</div></button></th><th title="field_b"><button class="btn-order-field" onclick="document.getElementById('form-order_by-action').value='field_b'" type="submit"><div style="display: flex; justify-content: space-between; align-items: center;">Field B</div></button></th><th title="field_c"><button class="btn-order-field" onclick="document.getElementById('form-order_by-action').value='field_c'" type="submit"><div style="display: flex; justify-content: space-between; align-items: center;">Field C</div></button></th><th title="field_d"><button class="btn-order-field" onclick="document.getElementById('form-order_by-action').value='field_d'" type="submit"><div style="display: flex; justify-content: space-between; align-items: center;">Field D</div></button></th><th title="field_e"><button class="btn-order-field" onclick="document.getElementById('form-order_by-action').value='field_e'" type="submit"><div style="display: flex; justify-content: space-between; align-items: center;">Field E</div></button></th><th title="hub_entity_id"><button class="btn-order-field" onclick="document.getElementById('form-order_by-action').value='hub_entity_id'" type="submit"><div style="display: flex; justify-content: space-between; align-items: center;">Link</div></button></th><th title="hub_entity_id"><button class="btn-order-field" onclick="document.getElementById('form-order_by-action').value='hub_entity_id'" type="submit"><div style="display: flex; justify-content: space-between; align-items: center;">Link Text</div></button></th></tr></thead><tbody><tr style="white-space:nowrap;"><td style="text-align: left">a</td><td style="text-align:right;color:#002F6C;">1</td><td style="text-align:right;color:#002F6C;">1.000</td><td style="text-align:left;">2024-07-13 00:00:00</td><td style="text-align:right;color:#002F6C;">1.00€</td><td><a href="/" id="id__" title="Link"><span class="glyphicon glyphicon-icon"></span></a></td><td><a href="/" id="id__" title="Link Text">a</a></td></tr><tr style="white-space:nowrap;"><td style="text-align: left">b</td><td style="text-align:right;color:#002F6C;">2</td><td style="text-align:right;color:#002F6C;">2.000</td><td style="text-align:left;">2024-07-13 00:00:00</td><td style="text-align:right;color:#002F6C;">2.20€</td><td><a href="/" id="id__" title="Link"><span class="glyphicon glyphicon-icon"></span></a></td><td><a href="/" id="id__" title="Link Text">b</a></td></tr><tr style="white-space:nowrap;"><td style="text-align: left">c</td><td style="text-align:right;color:#002F6C;">3</td><td style="text-align:right;color:#002F6C;">3.000</td><td style="text-align:left;">2024-07-13 00:00:00</td><td style="text-align:right;color:#002F6C;">3.00€</td><td><a href="/" id="id__" title="Link"><span class="glyphicon glyphicon-icon"></span></a></td><td><a href="/" id="id__" title="Link Text">c</a></td></tr></tbody></table>"""
+
+        self.assertEqual(str(table), expected_table)
 
     def test_to_latex(self):
         test_latex = MockMontrekTableManager().to_latex()
         self.assertTrue(test_latex.startswith("\n\\begin{table}"))
         self.assertTrue(test_latex.endswith("\\end{table}\n\n"))
+
+    def test_to_json(self):
+        test_json = MockMontrekTableManager().to_json()
+        expected_json = [
+            {
+                "field_a": "a",
+                "field_b": 1,
+                "field_c": 1.0,
+                "field_d": "2024-07-13T00:00:00",
+                "field_e": 1.0,
+            },
+            {
+                "field_a": "b",
+                "field_b": 2,
+                "field_c": 2.0,
+                "field_d": "2024-07-13T00:00:00",
+                "field_e": 2.2,
+            },
+            {
+                "field_a": "c",
+                "field_b": 3,
+                "field_c": 3.0,
+                "field_d": "2024-07-13T00:00:00",
+                "field_e": 3.0,
+            },
+        ]
+        self.assertEqual(test_json, expected_json)
 
     def test_download_csv(self):
         manager = MockMontrekTableManager()
@@ -113,40 +132,38 @@ class TestMontrekTableManager(TestCase):
         self.assertEqual(name_to_field_map, expected_map)
 
     def test_large_download_excel(self):
-        manager = MockLongMontrekTableManager(
-            {"user_id": self.user.id, "host_url": "test_server"}
-        )
-        response = manager.download_or_mail_excel()
-        self.assertEqual(response.status_code, 302)
-        sent_email = mail.outbox[0]
-        self.assertTrue(sent_email.subject.endswith(".xlsx is ready for download"))
-        self.assertEqual(sent_email.to, [self.user.email])
-        self.assertTrue(
-            "Please download the table from the link below:"
-            in sent_email.message().as_string()
-        )
-        self.assertEqual(
-            manager.messages[-1].message,
-            "Table is too large to download. Sending it by mail.",
-        )
+        for manager_cls in (MockLongMontrekTableManager, MockLongMontrekTableManager2):
+            manager = manager_cls({"user_id": self.user.id, "host_url": "test_server"})
+            response = manager.download_or_mail_excel()
+            self.assertEqual(response.status_code, 302)
+            sent_email = mail.outbox[0]
+            self.assertTrue(sent_email.subject.endswith(".xlsx is ready for download"))
+            self.assertEqual(sent_email.to, [self.user.email])
+            self.assertTrue(
+                "Please download the table from the link below:"
+                in sent_email.message().as_string()
+            )
+            self.assertEqual(
+                manager.messages[-1].message,
+                "Table is too large to download. Sending it by mail.",
+            )
 
     def test_large_download_csv(self):
-        manager = MockLongMontrekTableManager(
-            {"user_id": self.user.id, "host_url": "test_server"}
-        )
-        response = manager.download_or_mail_csv()
-        self.assertEqual(response.status_code, 302)
-        sent_email = mail.outbox[0]
-        self.assertTrue(sent_email.subject.endswith(".csv is ready for download"))
-        self.assertEqual(sent_email.to, [self.user.email])
-        self.assertTrue(
-            "Please download the table from the link below:"
-            in sent_email.message().as_string()
-        )
-        self.assertEqual(
-            manager.messages[-1].message,
-            "Table is too large to download. Sending it by mail.",
-        )
+        for manager_cls in (MockLongMontrekTableManager, MockLongMontrekTableManager2):
+            manager = manager_cls({"user_id": self.user.id, "host_url": "test_server"})
+            response = manager.download_or_mail_csv()
+            self.assertEqual(response.status_code, 302)
+            sent_email = mail.outbox[0]
+            self.assertTrue(sent_email.subject.endswith(".csv is ready for download"))
+            self.assertEqual(sent_email.to, [self.user.email])
+            self.assertTrue(
+                "Please download the table from the link below:"
+                in sent_email.message().as_string()
+            )
+            self.assertEqual(
+                manager.messages[-1].message,
+                "Table is too large to download. Sending it by mail.",
+            )
 
     def test_set_paginate_by(self):
         test_manager = MockLongMontrekTableManager({})
@@ -350,6 +367,23 @@ class TestMontrekDataFrameTableManager(TestCase):
             self.large_manager.messages[-1].message,
             "Table is too large to download. Sending it by mail.",
         )
+
+    def test_convert_nan_to_json(self):
+        input_df = pd.DataFrame(
+            {
+                "field_b": ["a", "b", np.nan],
+            }
+        )
+        manager = MockMontrekDataFrameTableManager(
+            {
+                "user_id": self.user.id,
+                "host_url": "test_server",
+                "df_data": input_df.to_dict(orient="records"),
+            }
+        )
+        test_json = manager.to_json()
+        test_output = [dd["field_b"] for dd in test_json]
+        self.assertEqual(test_output[2], None)
 
 
 class TestHistoryDataTable(TestCase):

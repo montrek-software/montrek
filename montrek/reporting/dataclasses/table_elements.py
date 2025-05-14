@@ -14,6 +14,7 @@ from baseclasses.dataclasses.number_shortener import (
     NoShortening,
     NumberShortenerABC,
 )
+from baseclasses.sanitizer import HtmlSanitizer
 from django.template import Context, Template
 from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
@@ -45,6 +46,12 @@ class TableElement:
 
     def get_attribute(self, obj: Any, tag: str) -> str:
         raise NotImplementedError
+
+    def get_value(self, obj: Any) -> Any:
+        raise NotImplementedError
+
+    def get_value_len(self, obj: Any) -> int:
+        return len(str(self.get_value(obj)))
 
 
 @dataclass
@@ -80,6 +87,8 @@ class AttrTableElement(TableElement):
             value = obj.get(attr, attr)
         else:
             value = getattr(obj, attr, attr)
+        if isinstance(value, str):
+            value = HtmlSanitizer().clean_html(value)
         return value
 
     def none_return_html(self, obj: Any) -> str:
@@ -312,6 +321,9 @@ class FloatTableElement(NumberTableElement):
     def _format_value(self, value) -> str:
         return self.shortener.shorten(value, ",.3f")
 
+    def get_value_len(self, obj: Any) -> int:
+        return super().get_value_len(obj) + 4
+
 
 @dataclass
 class IntTableElement(NumberTableElement):
@@ -322,6 +334,13 @@ class IntTableElement(NumberTableElement):
     def _format_value(self, value) -> str:
         value = round(value)
         return self.shortener.shorten(value, ",.0f")
+
+    def get_value(self, obj: Any) -> Any:
+        value = super().get_value(obj)
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return value
 
 
 @dataclass
@@ -350,6 +369,9 @@ class ProgressBarTableElement(NumberTableElement):
         per_value = value * 100
         return f"\\progressbar{{ {per_value} }}{{ {per_value}\\% }} &"
 
+    def get_value_len(self, obj: Any) -> int:
+        return 14
+
 
 @dataclass
 class DateTableBaseElement(AttrTableElement):
@@ -359,7 +381,7 @@ class DateTableBaseElement(AttrTableElement):
     def format(self, value):
         if not isinstance(value, timezone.datetime):
             return f'<td style="text-align:left;">{value}</td>'
-        value = value.strftime(self.date_format)
+        value.strftime(self.date_format)
         return f'<td style="text-align:left;">{value}</td>'
 
     def get_value(self, obj: Any) -> Any:
@@ -491,6 +513,7 @@ class ImageTableElement(AttrTableElement):
 class MethodNameTableElement(AttrTableElement):
     attr: str
     class_: type = object
+    serializer_field_class = serializers.CharField
 
     def format(self, value):
         func = getattr(self.class_, value)

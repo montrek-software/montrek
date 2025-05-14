@@ -55,6 +55,9 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
         latex_str += "\\end{figure}"
         return latex_str
 
+    def to_json(self) -> dict[str, str | Any | None]:
+        return {"reporting_plot": self.figure.to_json()}
+
     def _check_reporting_data(self, reporting_data: ReportingData) -> None:
         if len(reporting_data.y_axis_columns) != len(reporting_data.plot_types):
             raise ValueError("Number of y_axis_columns and plot_types must match")

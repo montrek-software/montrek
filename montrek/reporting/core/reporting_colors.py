@@ -40,6 +40,7 @@ class ReportingColors:
         RED,
         BLUE,
         DARK_BLUE,
+        LIGHT_ROSE,
         LIGHT_BLUE,
         DARK_GREEN,
         DARK_ORANGE,

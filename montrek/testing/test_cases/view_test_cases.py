@@ -18,6 +18,20 @@ class NotImplementedView(View):
     pass
 
 
+class RestApiTestCaseMixin:
+    def rest_api_view_test(self):
+        if self._is_base_test_class():
+            return
+        query_params = self.query_params()
+        query_params.update({"gen_rest_api": "true"})
+        response = self.client.get(self.url, query_params=query_params)
+        response_json = response.json()
+        self.view._session_data = None
+        manager = self.view.manager_class(self.view.session_data)
+
+        self.assertEqual(response_json, manager.to_json())
+
+
 class MontrekViewTestCase(TestCase):
     viewname: str = "Please set the viewname in the subclass"
     view_class: type[View] = NotImplementedView
@@ -53,6 +67,9 @@ class MontrekViewTestCase(TestCase):
     def url_kwargs(self) -> dict:
         return {}
 
+    def query_params(self) -> dict:
+        return {}
+
     def required_user_permissions(self) -> list[Permission]:
         return []
 
@@ -61,7 +78,7 @@ class MontrekViewTestCase(TestCase):
         return reverse(self.viewname, kwargs=self.url_kwargs())
 
     def get_response(self):
-        return self.client.get(self.url)
+        return self.client.get(self.url, query_params=self.query_params())
 
     def test_view_return_correct_html(self):
         if self._is_base_test_class():
@@ -102,7 +119,7 @@ class MontrekViewTestCase(TestCase):
         self.user.user_permissions.set(required_user_permissions)
 
 
-class MontrekListViewTestCase(MontrekViewTestCase):
+class MontrekListViewTestCase(MontrekViewTestCase, RestApiTestCaseMixin):
     expected_no_of_rows: int = 0
     expected_columns = []
 
@@ -122,6 +139,9 @@ class MontrekListViewTestCase(MontrekViewTestCase):
         columns = bs.find_all("th")
         for expected_column in self.expected_columns:
             self.assertIn(expected_column, [column.text for column in columns])
+
+    def test_rest_api_view(self):
+        self.rest_api_view_test()
 
 
 class MontrekObjectViewBaseTestCase(MontrekViewTestCase):
@@ -190,7 +210,9 @@ class GetObjectPkMixin:
         return std_query.get(pk=self.url_kwargs()["pk"])
 
 
-class MontrekDetailViewTestCase(MontrekObjectViewBaseTestCase, GetObjectPkMixin):
+class MontrekDetailViewTestCase(
+    MontrekObjectViewBaseTestCase, GetObjectPkMixin, RestApiTestCaseMixin
+):
     def _is_base_test_class(self) -> bool:
         return self.__class__.__name__ == "MontrekDetailViewTestCase"
 
@@ -199,6 +221,9 @@ class MontrekDetailViewTestCase(MontrekObjectViewBaseTestCase, GetObjectPkMixin)
             return
         context_data = self.response.context
         self.assertIsNotNone(context_data["object"])
+
+    def test_rest_api_view(self):
+        self.rest_api_view_test()
 
 
 class MontrekCreateViewTestCase(MontrekCreateUpdateViewTestCase, GetObjectLastMixin):
@@ -350,12 +375,13 @@ class MontrekRedirectViewTestCase(MontrekViewTestCase):
         raise NotImplementedError("Please set the expected_url method in the subclass")
 
 
-class MontrekReportViewTestCase(MontrekViewTestCase):
-    expected_number_of_report_elements : int = -1
+class MontrekReportViewTestCase(MontrekViewTestCase, RestApiTestCaseMixin):
+    expected_number_of_report_elements: int = -1
+
     @property
     def mail_success_url(self) -> str:
         last_mail = MailingRepository({}).receive().last()
-        mail_kwargs={"pk": last_mail.pk}
+        mail_kwargs = {"pk": last_mail.pk}
         report_manager = self.view.manager
         mail_kwargs.update(report_manager.get_mail_kwargs())
         return reverse(report_manager.send_mail_url, kwargs=mail_kwargs)
@@ -369,17 +395,19 @@ class MontrekReportViewTestCase(MontrekViewTestCase):
         user = MontrekUserFactory()
         self.client.force_login(user)
         response = self.client.get(self.url + "?send_mail=true")
-        self.assertRedirects(
-            response,
-            self.mail_success_url
-        )
+        self.assertRedirects(response, self.mail_success_url)
 
     def test_report_content(self):
         if self._is_base_test_class():
             return
         report_manager = self.view.manager
         report_manager.collect_report_elements()
-        self.assertEqual(len(report_manager.report_elements), self.expected_number_of_report_elements)
+        self.assertEqual(
+            len(report_manager.report_elements), self.expected_number_of_report_elements
+        )
+
+    def test_rest_api_view(self):
+        self.rest_api_view_test()
 
 
 class MontrekReportFieldEditViewTestCase(MontrekObjectViewBaseTestCase):
@@ -434,11 +462,8 @@ class MontrekReportFieldEditViewTestCase(MontrekObjectViewBaseTestCase):
         )
         self.additional_assertions(test_object)
 
-    def test_view_page(self):
-        ...
+    def test_view_page(self): ...
 
-    def test_view_return_correct_html(self):
-        ...
+    def test_view_return_correct_html(self): ...
 
-    def test_context_data(self):
-        ...
+    def test_context_data(self): ...

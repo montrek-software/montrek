@@ -70,6 +70,11 @@ class CompactHubAManager(MontrekTableManager):
         )
 
 
+class ExampleIndividualTableElement(te.FloatTableElement):
+    def get_value(self, obj):
+        return obj.field_a2_float * 2
+
+
 class HubAManager(MontrekTableManager):
     repository_class = HubARepository
 
@@ -81,6 +86,7 @@ class HubAManager(MontrekTableManager):
             te.StringTableElement(name="A2 String", attr="field_a2_str"),
             te.FloatTableElement(name="A2 Float", attr="field_a2_float"),
             te.StringTableElement(name="B1 String", attr="field_b1_str"),
+            ExampleIndividualTableElement(name="TestField", attr="individual_field"),
             te.LinkTableElement(
                 name="View",
                 url="montrek_example_a_details",
@@ -205,10 +211,9 @@ class HubCManager(MontrekTableManager):
     @property
     def table_elements(self) -> list:
         return (
-            te.StringTableElement(name="B1 String", attr="field_b1_str"),
-            te.IntTableElement(name="B1 Date", attr="field_b1_date"),
-            te.StringTableElement(name="B2 String", attr="field_b2_str"),
-            te.StringTableElement(name="B2 Choice", attr="field_b2_choice"),
+            te.DateTableElement(name="Value Date", attr="value_date"),
+            te.StringTableElement(name="C1 String", attr="field_c1_str"),
+            te.IntTableElement(name="C1 Bool", attr="field_c1_bool"),
         )
 
 

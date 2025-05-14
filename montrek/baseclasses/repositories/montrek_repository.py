@@ -15,8 +15,7 @@ from baseclasses.models import (
 from baseclasses.repositories.annotator import (
     Annotator,
 )
-from baseclasses.repositories.db.db_creator import DataDict
-from baseclasses.repositories.db.db_creator import DbCreator
+from baseclasses.repositories.db.db_creator import DataDict, DbCreator
 from baseclasses.repositories.db.db_data_frame import DbDataFrame
 from baseclasses.repositories.db.db_staller import DbStaller
 from baseclasses.repositories.db.db_writer import DbWriter
@@ -25,9 +24,10 @@ from baseclasses.repositories.subquery_builder import (
     LinkedSatelliteSubqueryBuilder,
     ReverseLinkedSatelliteSubqueryBuilder,
     SatelliteSubqueryBuilder,
-    TSSatelliteSubqueryBuilder,
     SumTSSatelliteSubqueryBuilder,
+    TSSatelliteSubqueryBuilder,
 )
+from baseclasses.utils import datetime_to_montrek_time
 from django.core.exceptions import PermissionDenied
 from django.db.models import (
     F,
@@ -118,7 +118,14 @@ class MontrekRepository:
     @property
     def reference_date(self) -> timezone.datetime:
         if self._reference_date is None:
-            return timezone.now()
+            reference_date = self.session_data.get("reference_date", timezone.now())
+            if isinstance(reference_date, list):
+                reference_date = reference_date[0]
+            if isinstance(reference_date, str):
+                reference_date = datetime_to_montrek_time(
+                    pd.to_datetime(reference_date)
+                )
+            return reference_date
         return self._reference_date
 
     @property
@@ -261,7 +268,13 @@ class MontrekRepository:
             )
             satellite_querys[sat.__name__] = sat_query
         for link in self.annotator.get_link_classes():
-            link_query = link.objects.filter(hub_in=hub).order_by("-created_at")
+            hub_in_class = link.hub_in.field.remote_field.model
+            if hub_in_class is self.hub_class:
+                link_query = link.objects.filter(hub_in=hub)
+            hub_out_class = link.hub_out.field.remote_field.model
+            if hub_out_class is self.hub_class:
+                link_query = link.objects.filter(hub_out=hub)
+            link_query = link_query.order_by("-created_at")
             satellite_querys[link.__name__] = link_query
         return satellite_querys
 

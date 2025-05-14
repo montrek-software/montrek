@@ -72,6 +72,7 @@ class HtmlLatexConverter:
     @staticmethod
     def special_characters(text: str) -> str:
         characters = {
+            "#": "\\#",
             "_": "\\_",
             "&middot;": "$\\cdot$",
             "&amp;": "&",
@@ -130,4 +131,10 @@ class HtmlLatexConverter:
     @staticmethod
     def emojis(text: str) -> str:
         text = text.replace("&#128640;", "\\twemoji{rocket}")
+        text = text.replace(
+            '<span class="glyphicon glyphicon-edit"></span>', "\\twemoji{pencil}"
+        )
+        text = text.replace(
+            '<span class="glyphicon glyphicon-trash"></span>', "\\twemoji{wastebasket}"
+        )
         return text

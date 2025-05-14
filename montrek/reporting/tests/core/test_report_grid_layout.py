@@ -26,6 +26,16 @@ class TestReportGridLayout(TestCase):
             )
         )
 
+    def test_report_grid_layout__json(self):
+        json = self.grid.to_json()
+        expected_json = {
+            "report_grid_elements": [
+                [{"reportingparagraph": "One"}, {"reportingparagraph": "Two"}],
+                [{"reportingparagraph": "Three"}, {"reportingparagraph": "Four"}],
+            ]
+        }
+        self.assertEqual(json, expected_json)
+
     def test_nested_grids(self):
         nested_grid = ReportGridLayout(1, 1)
         nested_grid.add_report_grid_element(ReportingText("Nested One"), 0, 0)

@@ -83,8 +83,7 @@ class TableMetaSessionDataElement(ABC):
         self.request.session[self.field] = self.session_data.get(self.field, {})
 
     @abstractmethod
-    def apply_data(self) -> SessionDataType:
-        ...
+    def apply_data(self) -> SessionDataType: ...
 
     def _set_data_to_path(self, default: int | str | None) -> SessionDataType:
         data = {}

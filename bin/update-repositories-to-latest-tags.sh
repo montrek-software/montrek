@@ -10,7 +10,7 @@ update_repo_to_latest_tag() {
   cd "$repo_path"
 
   # Fetch all tags
-  git fetch --tags
+  git fetch --tags --force
 
   # Get the latest tag
   latest_tag=$(git describe --tags $(git rev-list --tags --max-count=1) 2>/dev/null || true)

@@ -24,6 +24,7 @@ from montrek_example.repositories.hub_a_repository import (
 )
 from montrek_example.repositories.hub_b_repository import (
     HubBRepository,
+    HubBRepository2,
 )
 from montrek_example.repositories.hub_c_repository import (
     HubCRepository,
@@ -1144,6 +1145,18 @@ class TestMontrekRepositoryLinks(TestCase):
         self.assertEqual(queryset[0].field_a1_int, "5")
         self.assertEqual(queryset[1].field_a1_int, None)
 
+    def test_link_reversed__session_data(self):
+        repository = HubCRepository2({"reference_date": "2023-07-08"})
+        queryset = repository.receive()
+        self.assertEqual(queryset.count(), 2)
+        self.assertEqual(queryset[0].field_a1_int, "5")
+        self.assertEqual(queryset[1].field_a1_int, None)
+        repository = HubCRepository2({"reference_date": ["2023-07-15"]})
+        queryset = repository.receive()
+        self.assertEqual(queryset.count(), 2)
+        self.assertEqual(queryset[0].field_a1_int, "5")
+        self.assertEqual(queryset[1].field_a1_int, None)
+
     def test_link_reversed_ts(self):
         sat_tsc2 = me_factories.SatTSC2Factory(
             field_tsc2_float=2.5, value_date="2024-11-19"
@@ -1532,6 +1545,28 @@ class TestTimeSeries(TestCase):
         self.assertEqual(result_2.field_tsd2_float, "0.2")
         self.assertEqual(result_2.field_tsd2_int, "1")
 
+    def test_satellite_filter_in_time_series(self):
+        value_dates = [montrek_time(2024, 9, 18), montrek_time(2024, 9, 19)]
+        for i, value_date in enumerate(value_dates):
+            sat_c = me_factories.SatTSC2Factory.create(
+                field_tsc2_float=i * -0.1,
+                value_date=value_date,
+            )
+            sat_d = me_factories.SatTSD2Factory.create(
+                field_tsd2_float=i * -0.2,
+                field_tsd2_int=i,
+                value_date=value_date,
+            )
+            sat_c.hub_value_date.hub.link_hub_c_hub_d.add(sat_d.hub_value_date.hub)
+
+        repository = HubCRepository(session_data={"user_id": self.user.id})
+        test_query = repository.receive().filter(value_date__in=value_dates)
+        self.assertEqual(test_query.count(), 2)
+        result_1 = test_query.get(value_date=value_dates[0])
+        result_2 = test_query.get(value_date=value_dates[1])
+        self.assertEqual(result_1.field_tsd2_float, "0")
+        self.assertEqual(result_2.field_tsd2_float, None)
+
     def test_time_series_link_to_time_series_update(self):
         value_date = montrek_time(2024, 9, 18)
         sat_d1 = me_factories.SatTSD2Factory.create(
@@ -1674,6 +1709,15 @@ class TestTimeSeriesQuerySet(TestCase):
     def test_build_time_series_queryset__reference_date_filter(self):
         repo = HubCRepository()
         repo.reference_date = montrek_time(2024, 7, 1)
+        test_query = repo.receive()
+        self.assertEqual(test_query.count(), 5)
+        qs_1 = test_query.get(pk=self.ts_fact0.hub_value_date.id)
+        qs_2 = test_query.get(pk=self.ts_fact1.hub_value_date.id)
+        self.assertEqual(qs_1.field_tsc2_float, self.ts_fact0.field_tsc2_float)
+        self.assertEqual(qs_2.field_tsc2_float, self.ts_fact1.field_tsc2_float)
+
+    def test_build_time_series_queryset__reference_date_filter__session_data(self):
+        repo = HubCRepository({"reference_date": montrek_time(2024, 7, 1)})
         test_query = repo.receive()
         self.assertEqual(test_query.count(), 5)
         qs_1 = test_query.get(pk=self.ts_fact0.hub_value_date.id)
@@ -2018,6 +2062,35 @@ class TestHistory(TestCase):
         link_queryset = test_querysets_dict["LinkHubAHubB"]
         self.assertEqual(link_queryset.count(), 1)
         self.assertEqual(link_queryset[0].hub_out, hubb)
+
+    def test_reversed_link(self):
+        repo = HubBRepository2({"user_id": self.user.id})
+        sat_a = me_factories.SatA1Factory()
+        repo.create_by_dict(
+            {"link_hub_b_hub_a": sat_a.hub_entity, "field_b1_str": "testb1"}
+        )
+        b1_objs = me_models.SatB1.objects.all()
+        self.assertEqual(b1_objs.count(), 1)
+
+        repo = HubBRepository2({"user_id": self.user.id})
+        sat_a = me_factories.SatA1Factory()
+        repo.create_by_dict(
+            {
+                "link_hub_b_hub_a": sat_a.hub_entity,
+                "hub_entity_id": b1_objs.first().hub_entity.id,
+            }
+        )
+        b1_objs = me_models.SatB1.objects.all()
+        self.assertEqual(b1_objs.count(), 1)
+        repo = HubBRepository2({"user_id": self.user.id})
+        b1_obj = repo.receive().get()
+        test_queryset = repo.get_history_queryset(b1_obj.pk)
+        history_links = test_queryset["LinkHubAHubB"]
+        self.assertEqual(history_links.count(), 2)
+        self.assertEqual(
+            history_links.first().state_date_start,
+            history_links.last().state_date_end,
+        )
 
 
 class TestMontrekManyToManyRelations(TestCase):
@@ -2629,3 +2702,12 @@ class TestObjectToDict(TestCase):
         self.assertEqual(test_dict["field_a1_int"], 1)
         self.assertEqual(test_dict["field_b1_str"], "TestB")
         self.assertEqual(test_dict["field_b1_date"], montrek_time(2024, 2, 5).date())
+
+
+class TestSecurity(TestCase):
+    def test_avoid_write_hacked_strings(self):
+        user = MontrekUserFactory()
+        repo = HubARepository({"user_id": user.id})
+        repo.create_by_dict({"field_a1_str": "<b><script>HACKED!!</script></b>"})
+        obj = repo.receive().first()
+        self.assertEqual(obj.field_a1_str, "<b>HACKED!!</b>")

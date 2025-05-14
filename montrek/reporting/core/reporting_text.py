@@ -4,6 +4,7 @@ from urllib.parse import urlparse
 import markdown
 import requests
 from baseclasses.models import HubValueDate
+from django.template import Context, Template
 from reporting.constants import ReportingTextType
 from reporting.core.reporting_mixins import ReportingChecksMixin
 from reporting.core.reporting_protocols import ReportingElement
@@ -64,6 +65,9 @@ class ReportingText(ReportElementProtocol):
     def to_html(self) -> str:
         return self.text
 
+    def to_json(self) -> dict[str, str]:
+        return {self.__class__.__name__.lower(): self.text}
+
 
 class ReportingParagraph(ReportingText):
     def to_latex(self) -> str:
@@ -74,10 +78,7 @@ class ReportingParagraph(ReportingText):
         return f"<p>{self.text}</p>"
 
 
-from django.template import Context, Template
-
-
-class ReportingEditableText(ReportingText):
+class ReportingEditableText(ReportingParagraph):
     def __init__(
         self,
         obj: HubValueDate,
@@ -114,6 +115,14 @@ class ReportingEditableText(ReportingText):
             )
         )
 
+    def to_latex(self) -> str:
+        if self.header != "":
+            latex_str = ReportingHeader2(self.header).to_latex()
+        else:
+            latex_str = ""
+        latex_str += super().to_latex()
+        return latex_str
+
 
 class ReportingHeader1:
     def __init__(self, text: str):
@@ -124,6 +133,9 @@ class ReportingHeader1:
 
     def to_latex(self) -> str:
         return f"\\section*{{{self.text}}}"
+
+    def to_json(self) -> dict[str, str]:
+        return {"reporting_header_1": self.text}
 
 
 class ReportingHeader2:
@@ -136,6 +148,9 @@ class ReportingHeader2:
     def to_latex(self) -> str:
         return f"\\subsection*{{{self.text}}}"
 
+    def to_json(self) -> dict[str, str]:
+        return {"reporting_header_2": self.text}
+
 
 class Vspace:
     def __init__(self, space: int):
@@ -147,6 +162,9 @@ class Vspace:
     def to_html(self) -> str:
         return f'<div style="height:{self.space}mm;"></div>'
 
+    def to_json(self) -> dict[str, int]:
+        return {"vspace": self.space}
+
 
 class NewPage:
     def to_latex(self) -> str:
@@ -154,6 +172,9 @@ class NewPage:
 
     def to_html(self) -> str:
         return "<div style='page-break-after: always; height:15mm;'><hr></div>"
+
+    def to_json(self) -> dict[str, bool]:
+        return {"new_page": True}
 
 
 class ReportingImage:
@@ -171,7 +192,8 @@ class ReportingImage:
             return self._return_string(self.image_path)
         response = requests.get(self.image_path)
         if response.status_code != 200:
-            return f"Image not found: {self.image_path} &"
+            image_path = HtmlLatexConverter.convert(self.image_path)
+            return f"Image not found: {image_path}"
         temp_file = tempfile.NamedTemporaryFile(
             delete=False, suffix="." + self.image_path.split(".")[-1].split("?")[0]
         )
@@ -182,10 +204,14 @@ class ReportingImage:
         return self._return_string(value)
 
     def _return_string(self, value) -> str:
+        value = HtmlLatexConverter.convert(value)
         return f"\\includegraphics[width={self.width}\\textwidth]{{{value}}}"
 
     def to_html(self) -> str:
-        return f'<div style="text-align: right;"><img src="{self.image_path}" alt="image" style="width:{self.width*100}%;"></div>'
+        return f'<div style="text-align: right;"><img src="{self.image_path}" alt="image" style="width:{self.width * 100}%;"></div>'
+
+    def to_json(self) -> dict[str, str]:
+        return {"reporting_image": self.image_path}
 
 
 class ReportingMap:
@@ -204,6 +230,9 @@ class ReportingMap:
 
     def to_html(self) -> str:
         return f'<iframe src="{self.embedded_url}" style="width: 100%; aspect-ratio: 4/3; height: auto; border:2;" loading="lazy" allowfullscreen></iframe>'
+
+    def to_json(self) -> dict[str, str]:
+        return {"reporting_map": self.embedded_url}
 
 
 class MontrekLogo(ReportingImage):
@@ -227,3 +256,6 @@ class MarkdownReportingElement:
         html_text = self.to_html()
         converter = HtmlLatexConverter()
         return converter.convert(html_text)
+
+    def to_json(self) -> dict[str, str]:
+        return {"markdown_reporting_element": self.markdown_text}
