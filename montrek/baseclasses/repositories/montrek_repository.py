@@ -1,7 +1,6 @@
 import logging
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Type
-from django.db import models
 
 import pandas as pd
 from baseclasses.errors.montrek_user_error import MontrekError
@@ -29,7 +28,10 @@ from baseclasses.repositories.subquery_builder import (
     TSSatelliteSubqueryBuilder,
 )
 from baseclasses.utils import datetime_to_montrek_time
+from django.apps import apps
 from django.core.exceptions import PermissionDenied
+from django.core.management import call_command
+from django.db import models, connection
 from django.db.models import (
     F,
     QuerySet,
@@ -91,22 +93,56 @@ class MontrekRepository:
         return db_data_frame.hubs
 
     def store_in_view_model(self):
-        view_model = self.get_view_model()
+        self.get_view_model()
+        query = self.receive()
+        data = list(query.values())
+        fields_to_exclude = ["hub_id", "value_date_list_id"]
+        cleaned_data = [
+            {k: v for k, v in item.items() if k not in fields_to_exclude}
+            for item in data
+        ]
+        instances = [self.view_model(**item) for item in cleaned_data]
+        self.view_model.objects.bulk_create(instances)
 
-    def get_view_model(self) -> models.Model: ...
+    def get_view_model(self) -> models.Model:
+        if not self.view_model:
+            self.generate_view_model()
 
     @classmethod
     def generate_view_model(cls):
         class Meta:
             app_label = "baseclasses"
+            managed = True
+            db_table = cls.__name__.lower() + "_view_model"
 
         repo_instance = cls()
         fields = repo_instance.annotator.get_annotated_field_map()
+        for field in fields.values():
+            field.null = True
+            field.blank = True
 
         attrs = {"__module__": cls.__name__, "Meta": Meta}
         attrs.update(fields)
-        name = cls.__name__ + "ViewModel"
-        cls.view_model = type(name, (models.Model,), attrs)
+        model_name = cls.__name__ + "ViewModel"
+        # Step 2: Dynamically create the model
+        model = type(model_name, (models.Model,), attrs)
+
+        # Step 3: Register it in the app registry
+        app_config = apps.get_app_config("baseclasses")
+        app_config.models[model_name.lower()] = model
+
+        cls.view_model = model  # Save the model class on the class
+
+        # Step 4: Check if table already exists
+        table_name = model._meta.db_table
+        with connection.cursor() as cursor:
+            existing_tables = connection.introspection.table_names()
+            table_exists = table_name in existing_tables
+
+        # Step 5: If table doesn't exist, make and apply migrations
+        if not table_exists:
+            call_command("makemigrations", "baseclasses", verbosity=0)
+            call_command("migrate", "baseclasses", verbosity=0)
 
     def receive(self, apply_filter: bool = True) -> QuerySet:
         return self.query_builder.build_queryset(

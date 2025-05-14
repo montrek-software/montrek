@@ -2719,6 +2719,9 @@ class TestRepositoryViewModel(TestCase):
         user = MontrekUserFactory()
         self.repo = HubARepository({"user_id": user.id})
 
+    def tearDown(self) -> None:
+        del self.repo
+
     def test_create_view_model(self):
         self.assertEqual(self.repo.view_model, None)
         self.repo.generate_view_model()
@@ -2736,4 +2739,25 @@ class TestRepositoryViewModel(TestCase):
 
     def test_view_model_exists_after_create(self):
         self.repo.create_by_dict({"field_a1_str": "Field"})
-        self.assertIsInstance(self.repo.view_model, models.Model)
+        repo_view = self.repo.view_model
+        self.assertTrue(issubclass(repo_view, models.Model))
+
+    def test_view_model_writes_to_db(self):
+        self.repo.generate_view_model()
+        repo_view = self.repo.view_model
+        instance = repo_view(
+            field_a1_str="Test",
+            value_date="2025-01-02",
+            hub_entity_id=1,
+            created_at="2025-01-02",
+            created_by="test@tester.de",
+        )
+        instance.save()
+        received_instance = repo_view.objects.first()
+        self.assertEqual(received_instance.field_a1_str, "Test")
+
+    def test_view_model_is_filled_after_create(self):
+        self.repo.create_by_dict({"field_a1_str": "Field"})
+        repo_view = self.repo.view_model
+        instance = repo_view.objects.first()
+        self.assertEqual(instance.field_a1_str, "Field")

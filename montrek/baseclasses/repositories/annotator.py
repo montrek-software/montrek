@@ -105,7 +105,7 @@ class Annotator:
 
     def get_annotated_field_map(self) -> dict[str, Any]:
         return {
-            field: subquery_builder.field_type
+            field: subquery_builder.field_type.clone()
             for field, subquery_builder in self.annotations.items()
         }
 
