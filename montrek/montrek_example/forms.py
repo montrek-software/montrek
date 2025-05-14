@@ -25,6 +25,7 @@ class ExampleBCreateForm(MontrekCreateForm):
             link_name="link_hub_b_hub_d",
             queryset=self.repository.get_hub_d_objects(),
             use_checkboxes_for_many_to_many=False,
+            separator=",",
         )
 
 
