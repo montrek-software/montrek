@@ -138,6 +138,7 @@ class MontrekCreateForm(forms.ModelForm):
         required: bool = False,
         is_char_field: bool = False,
         use_checkboxes_for_many_to_many: bool = True,
+        separator=";",
         **kwargs,
     ):
         link_class = getattr(self.repository.hub_class, link_name).through
@@ -153,7 +154,7 @@ class MontrekCreateForm(forms.ModelForm):
                 choice_class = MontrekModelChoiceField
 
         initial_link = choice_class.get_initial_link(
-            self.initial, queryset, display_field
+            self.initial, queryset, display_field, separator
         )
         self.fields[link_name] = choice_class(
             display_field=display_field,
@@ -174,7 +175,7 @@ class BaseMontrekChoiceField:
 
     @staticmethod
     def get_initial_link(
-        initial: dict[str, Any], queryset: QuerySet, display_field: str
+        initial: dict[str, Any], queryset: QuerySet, display_field: str, separator: str
     ) -> object | None:
         raise NotImplementedError("Subclasses must implement this method.")
 
@@ -182,7 +183,7 @@ class BaseMontrekChoiceField:
 class MontrekModelChoiceField(BaseMontrekChoiceField, forms.ModelChoiceField):
     @staticmethod
     def get_initial_link(
-        initial: dict[str, Any], queryset: QuerySet, display_field: str
+        initial: dict[str, Any], queryset: QuerySet, display_field: str, separator: str
     ) -> object | None:
         initial_link = queryset.filter(
             **{display_field: initial.get(display_field)}
@@ -213,12 +214,12 @@ class MontrekModelMultipleChoiceField(
 
     @staticmethod
     def get_initial_link(
-        initial: dict[str, Any], queryset: QuerySet, display_field: str
+        initial: dict[str, Any], queryset: QuerySet, display_field: str, separator: str
     ) -> object | None | QuerySet:
         initial_links_str = initial.get(display_field)
         if not isinstance(initial_links_str, str):
             return None
-        filter_kwargs = {f"{display_field}__in": initial_links_str.split(";")}
+        filter_kwargs = {f"{display_field}__in": initial_links_str.split(separator)}
         return queryset.filter(**filter_kwargs).all()
 
 
@@ -229,7 +230,7 @@ class MontrekModelCharChoiceField(BaseMontrekChoiceField, forms.CharField):
 
     @staticmethod
     def get_initial_link(
-        initial: dict[str, Any], queryset: QuerySet, display_field: str
+        initial: dict[str, Any], queryset: QuerySet, display_field: str, separator: str
     ) -> object | None:
         return initial.get(display_field)
 
