@@ -23,7 +23,7 @@ class HubDRepository(MontrekRepository):
             ["hub_entity_id", "field_b1_str"],
             reversed_link=True,
             rename_field_map={"hub_entity_id": "hub_b_id"},
-            separator=";",
+            separator=",",
         )
 
 
@@ -36,5 +36,5 @@ class HubDRepositoryTSReverseLink(MontrekRepository):
             me_models.LinkHubCHubD,
             ["field_tsc2_float"],
             reversed_link=True,
-            separator=";",
+            separator=",",
         )
