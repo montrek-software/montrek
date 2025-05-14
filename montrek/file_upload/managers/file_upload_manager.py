@@ -94,6 +94,7 @@ class FileUploadManagerABC(MontrekManager):
                 session_data=self.session_data,
             )
             self.task_id = task_result.id
+            self._load_file_upload_registry()
             self._update_file_upload_registry(celery_task_id=self.task_id)
             result = True
             self.message = TASK_SCHEDULED_MESSAGE
@@ -142,6 +143,7 @@ class FileUploadManagerABC(MontrekManager):
                 "upload_status": "pending",
                 "upload_message": "Upload is pending",
                 "link_file_upload_registry_file_upload_file": upload_file_hub,
+                "celery_task_id": "",
             }
         )
         return file_upload_registry_hub.pk

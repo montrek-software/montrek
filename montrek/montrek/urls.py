@@ -23,7 +23,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
-from montrek.celery_app import kill_task
+from montrek.celery_app import revoke_task
 
 urlpatterns = [
     path("", base_views.home, name="home"),
@@ -32,7 +32,7 @@ urlpatterns = [
     path(
         "under_construction", base_views.under_construction, name="under_construction"
     ),
-    path("kill_task/<str:task_id>", kill_task, name="kill_task"),
+    path("revoke_task/<str:task_id>", revoke_task, name="revoke_task"),
     path("admin/", admin.site.urls),
     javascriptcatalog_url,
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -22,7 +22,7 @@ app.conf.task_default_queue = SEQUENTIAL_QUEUE_NAME
 app.autodiscover_tasks()
 
 
-def kill_task(request, task_id):
+def revoke_task(request, task_id):
     try:
         app.control.revoke(task_id, terminate=True)
         return JsonResponse(
