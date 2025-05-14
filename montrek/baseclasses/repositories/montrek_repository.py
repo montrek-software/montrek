@@ -95,13 +95,14 @@ class MontrekRepository:
 
     def get_view_model(self) -> models.Model: ...
 
-    def create_view_model(self):
+    @classmethod
+    def generate_view_model(cls):
         class Meta:
             app_label = "baseclasses"
 
-        attrs = {"__module__": self.__class__.__name__, "Meta": Meta}
-        name = self.__class__.__name__ + "ViewModel"
-        self.view_model = type(name, (models.Model,), attrs)
+        attrs = {"__module__": cls.__name__, "Meta": Meta}
+        name = cls.__name__ + "ViewModel"
+        cls.view_model = type(name, (models.Model,), attrs)
 
     def receive(self, apply_filter: bool = True) -> QuerySet:
         return self.query_builder.build_queryset(

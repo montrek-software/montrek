@@ -2724,6 +2724,11 @@ class TestRepositoryViewModel(TestCase):
         self.repo.create_view_model()
         self.assertTrue(issubclass(self.repo.view_model, models.Model))
 
+    def test_model_view_created_on_class_level(self):
+        self.repo.generate_view_model()
+        side_repo = HubARepository()
+        self.assertTrue(issubclass(side_repo.view_model, models.Model))
+
     def test_view_model_exists_after_create(self):
         self.repo.create_by_dict({"field_a1_str": "Field"})
         self.assertIsInstance(self.repo.view_model, models.Model)
