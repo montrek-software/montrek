@@ -21,8 +21,8 @@ class FilterForm(forms.Form):
     class LookupChoices(TextChoices):
         CONTAINS = "contains", "contains"
         ENDS_WITH = "endswith", "ends with"
-        # With MariaDB collation utf9mb4_general_ci 'exact' is case-insensitive.
-        EQUALS = "exact", "equals"
+        EQUALS = "exact", "equals (case-sensitive)"
+        I_EQUALS = "iexact", "equals"
         GREATER_THAN = "gt", ">"
         GREATER_THAN_OR_EQUAL = "gte", ">="
         IN = "in", "in"
@@ -41,7 +41,7 @@ class FilterForm(forms.Form):
     ):
         # Set default values
         filter_field = ""
-        filter_lookup = "exact"
+        filter_lookup = "iexact"
         filter_negate = False
         filter_value = ""
 
