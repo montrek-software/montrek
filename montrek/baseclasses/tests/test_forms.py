@@ -80,7 +80,7 @@ class TestBaseMontrekChoiceField(TestCase):
     def test_get_initial_link_not_implemented(self):
         field = BaseMontrekChoiceField(display_field="field1")
         with self.assertRaises(NotImplementedError):
-            field.get_initial_link(None, None, None)
+            field.get_initial_link(None, None, None, None)
 
 
 class TestMontrekModelCharChoiceField(TestCase):
@@ -92,4 +92,6 @@ class TestMontrekModelCharChoiceField(TestCase):
         test_field = MontrekModelCharChoiceField(
             display_field="abc",
         )
-        self.assertEqual(test_field.get_initial_link({"abc": "def"}, [], "abc"), "def")
+        self.assertEqual(
+            test_field.get_initial_link({"abc": "def"}, [], "abc", ","), "def"
+        )
