@@ -84,14 +84,17 @@ class FileUploadManagerABC(MontrekManager):
         self.file_upload_registry: MontrekHubABC | Any = None
         self.file_path = ""
         self.processor: FileUploadProcessorProtocol | None = None
+        self.task_id = ""
 
     def upload_and_process(self, file: File) -> bool:
         # Called by view
         self.session_data["file_upload_registry_id"] = self.register_file_in_db(file)
         if self.do_process_file_async:
-            self.process_file_task.delay(
+            task_result = self.process_file_task.delay(
                 session_data=self.session_data,
             )
+            self.task_id = task_result.id
+            self._update_file_upload_registry(celery_task_id=self.task_id)
             result = True
             self.message = TASK_SCHEDULED_MESSAGE
         else:
@@ -108,16 +111,24 @@ class FileUploadManagerABC(MontrekManager):
             self.session_data,
         )
         if not self.processor.pre_check(self.file_path):
-            self._update_file_upload_registry("failed", self.processor.message)
+            self._update_file_upload_registry(
+                upload_status="failed", upload_message=self.processor.message
+            )
             return False
         if self.processor.process(self.file_path):
             if not self.processor.post_check(self.file_path):
-                self._update_file_upload_registry("failed", self.processor.message)
+                self._update_file_upload_registry(
+                    upload_status="failed", upload_message=self.processor.message
+                )
                 return False
-            self._update_file_upload_registry("processed", self.processor.message)
+            self._update_file_upload_registry(
+                upload_status="processed", upload_message=self.processor.message
+            )
             return True
         else:
-            self._update_file_upload_registry("failed", self.processor.message)
+            self._update_file_upload_registry(
+                upload_status="failed", upload_message=self.processor.message
+            )
             return False
 
     def register_file_in_db(self, file: File) -> int:
@@ -135,18 +146,11 @@ class FileUploadManagerABC(MontrekManager):
         )
         return file_upload_registry_hub.pk
 
-    def _update_file_upload_registry(
-        self, upload_status: str, upload_message: str
-    ) -> None:
+    def _update_file_upload_registry(self, **kwargs) -> None:
         att_dict = self.registry_manager.repository.object_to_dict(
             self.file_upload_registry
         )
-        att_dict.update(
-            {
-                "upload_status": upload_status,
-                "upload_message": upload_message,
-            },
-        )
+        att_dict.update(kwargs)
         self.file_upload_registry = self.registry_manager.repository.std_create_object(
             att_dict
         )

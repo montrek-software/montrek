@@ -32,6 +32,13 @@ class FileUploadRegistryManagerABC(MontrekTableManager):
                 icon="download",
                 hover_text="Download",
             ),
+            LinkTableElement(
+                name="Revoke",
+                url="kill_task",
+                kwargs={"task_id": "celery_task_id"},
+                hover_text="Revoke Upload Task",
+                icon="remove-sign",
+            ),
         ]
         if self.download_log_url != "":
             table_elements.append(
