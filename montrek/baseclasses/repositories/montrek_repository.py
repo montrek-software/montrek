@@ -1,6 +1,7 @@
 import logging
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Type
+from django.db import models
 
 import pandas as pd
 from baseclasses.errors.montrek_user_error import MontrekError
@@ -50,6 +51,7 @@ class MontrekRepository:
     # default_order_fields: tuple[str, ...] = ("hub_id",)
     default_order_fields: tuple[str, ...] = ()
     latest_ts: bool = False
+    view_model: None | type[models.Model] = None
 
     update: bool = True  # If this is true only the passed fields will be updated, otherwise empty fields will be set to None
 
@@ -77,6 +79,7 @@ class MontrekRepository:
         db_creator.create(data)
         db_writer = DbWriter(db_staller)
         db_writer.write()
+        self.store_in_view_model()
         return db_creator.hub
 
     def create_by_data_frame(self, data_frame: pd.DataFrame) -> List[MontrekHubABC]:
@@ -84,7 +87,21 @@ class MontrekRepository:
         db_data_frame = DbDataFrame(self.annotator, self.session_user_id)
         db_data_frame.create(data_frame)
         self.messages += db_data_frame.messages
+        self.store_in_view_model()
         return db_data_frame.hubs
+
+    def store_in_view_model(self):
+        view_model = self.get_view_model()
+
+    def get_view_model(self) -> models.Model: ...
+
+    def create_view_model(self):
+        class Meta:
+            app_label = "baseclasses"
+
+        attrs = {"__module__": self.__class__.__name__, "Meta": Meta}
+        name = self.__class__.__name__ + "ViewModel"
+        self.view_model = type(name, (models.Model,), attrs)
 
     def receive(self, apply_filter: bool = True) -> QuerySet:
         return self.query_builder.build_queryset(

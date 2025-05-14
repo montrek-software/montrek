@@ -2,6 +2,7 @@ import datetime
 
 import sys
 import unittest
+from django.db import models
 
 import numpy as np
 import pandas as pd
@@ -2711,3 +2712,18 @@ class TestSecurity(TestCase):
         repo.create_by_dict({"field_a1_str": "<b><script>HACKED!!</script></b>"})
         obj = repo.receive().first()
         self.assertEqual(obj.field_a1_str, "<b>HACKED!!</b>")
+
+
+class TestRepositoryViewModel(TestCase):
+    def setUp(self) -> None:
+        user = MontrekUserFactory()
+        self.repo = HubARepository({"user_id": user.id})
+
+    def test_create_view_model(self):
+        self.assertEqual(self.repo.view_model, None)
+        self.repo.create_view_model()
+        self.assertTrue(issubclass(self.repo.view_model, models.Model))
+
+    def test_view_model_exists_after_create(self):
+        self.repo.create_by_dict({"field_a1_str": "Field"})
+        self.assertIsInstance(self.repo.view_model, models.Model)
