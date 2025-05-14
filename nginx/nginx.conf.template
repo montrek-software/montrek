@@ -13,7 +13,7 @@ server {
     client_max_body_size 100M;
 
     location / {
-        proxy_read_timeout 300s;
+        proxy_read_timeout 20M;
         proxy_pass http://backend;
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-Proto https;
