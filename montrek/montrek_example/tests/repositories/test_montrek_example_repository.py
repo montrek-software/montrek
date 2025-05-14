@@ -2721,8 +2721,13 @@ class TestRepositoryViewModel(TestCase):
 
     def test_create_view_model(self):
         self.assertEqual(self.repo.view_model, None)
-        self.repo.create_view_model()
-        self.assertTrue(issubclass(self.repo.view_model, models.Model))
+        self.repo.generate_view_model()
+        repo_view = self.repo.view_model
+        self.assertTrue(issubclass(repo_view, models.Model))
+        test_instance = repo_view(field_a1_str="Test")
+        self.assertEqual(test_instance.field_a1_str, "Test")
+        for field in self.repo.annotator.get_annotated_field_names():
+            self.assertTrue(hasattr(test_instance, field))
 
     def test_model_view_created_on_class_level(self):
         self.repo.generate_view_model()

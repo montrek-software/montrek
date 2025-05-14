@@ -1,6 +1,8 @@
 from enum import Enum
 from typing import Any, Callable, Type
 
+from django.db import models
+
 from baseclasses.models import (
     LinkTypeEnum,
     MontrekHubABC,
@@ -33,6 +35,7 @@ class SatelliteSubqueryBuilderABC(SubqueryBuilder):
     ):
         self.satellite_class = satellite_class
         self.field = field
+        self.field_type = type(self.satellite_class._meta.get_field(self.field))
         # TODO: remove lookup_string
         self.lookup_string = "pk"
 
@@ -100,6 +103,8 @@ class SumTSSatelliteSubqueryBuilder(SatelliteSubqueryBuilder):
 
 
 class ValueDateSubqueryBuilder(SubqueryBuilder):
+    field_type = models.DateTimeField
+
     def build(self, reference_date: timezone.datetime) -> Subquery:
         return ValueDateList.objects.filter(pk=OuterRef("value_date_list")).values(
             "value_date"
@@ -120,18 +125,22 @@ class HubDirectFieldSubqueryBuilder(SubqueryBuilder):
 
 class HubEntityIdSubqueryBuilder(HubDirectFieldSubqueryBuilder):
     field = "id"
+    field_type = models.IntegerField
 
 
 class CreatedAtSubqueryBuilder(HubDirectFieldSubqueryBuilder):
     field = "created_at"
+    field_type = models.DateTimeField
 
 
 class CreatedBySubqueryBuilder(HubDirectFieldSubqueryBuilder):
     field = "created_by__email"
+    field_type = models.EmailField
 
 
 class CommentSubqueryBuilder(HubDirectFieldSubqueryBuilder):
     field = "comment"
+    field_type = models.CharField
 
 
 class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):

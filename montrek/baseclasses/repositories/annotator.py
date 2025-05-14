@@ -1,3 +1,4 @@
+from typing import Any
 from django.db.models import Field, Subquery
 from django.utils import timezone
 from baseclasses.repositories.subquery_builder import (
@@ -101,6 +102,12 @@ class Annotator:
             self._add_class(self.annotated_satellite_classes, satellite_class)
         else:
             self._add_class(self.annotated_linked_satellite_classes, satellite_class)
+
+    def get_annotated_field_map(self) -> dict[str, Any]:
+        return {
+            field: subquery_builder.field_type
+            for field, subquery_builder in self.annotations.items()
+        }
 
     def rename_field(self, old_field: str, new_field: str):
         self.annotations[new_field] = self.annotations.pop(old_field)

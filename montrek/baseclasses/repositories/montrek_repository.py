@@ -100,7 +100,12 @@ class MontrekRepository:
         class Meta:
             app_label = "baseclasses"
 
+        repo_instance = cls()
+        field_list = repo_instance.annotator.satellite_fields()
+        fields = {field.name: field for field in field_list}
+
         attrs = {"__module__": cls.__name__, "Meta": Meta}
+        attrs.update(fields)
         name = cls.__name__ + "ViewModel"
         cls.view_model = type(name, (models.Model,), attrs)
 

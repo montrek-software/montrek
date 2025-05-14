@@ -1,3 +1,4 @@
+from django.db import models
 from django.test import TestCase
 from django.utils import timezone
 from baseclasses.utils import montrek_time
@@ -9,6 +10,7 @@ class MockSubqueryBuilder:
     def __init__(self, satellite_class: type, field: str):
         self.satellite_class = satellite_class
         self.field = field
+        self.field_type = models.CharField
 
     def build(self, reference_date: timezone.datetime) -> str:
         return "Hallo"
@@ -30,6 +32,25 @@ class TestAnnotationManager(TestCase):
         reference_date = montrek_time(2024, 11, 7)
         annotations = test_annotator.build(reference_date)
         self.assertEqual(annotations["test"], "Hallo")
+
+    def test_annotations_field_map(self):
+        test_annotator = Annotator(TestMontrekHub)
+        test_annotator.subquery_builder_to_annotations(
+            ["test", "test2"], MockSatellite, MockSubqueryBuilder
+        )
+        field_map = test_annotator.get_annotated_field_map()
+        self.assertEqual(
+            field_map,
+            {
+                "comment": models.CharField,
+                "created_at": models.DateTimeField,
+                "created_by": models.EmailField,
+                "hub_entity_id": models.IntegerField,
+                "test": models.CharField,
+                "test2": models.CharField,
+                "value_date": models.DateTimeField,
+            },
+        )
 
     def test_rename_field(self):
         test_annotator = Annotator(TestMontrekHub)
