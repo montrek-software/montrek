@@ -1,0 +1,3 @@
+from montrek_example.repositories.hub_a_repository import HubARepository
+
+HubARepository.generate_view_model()

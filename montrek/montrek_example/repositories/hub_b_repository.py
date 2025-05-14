@@ -1,4 +1,4 @@
-from montrek_example import models as me_models
+from montrek_example.models import example_models as me_models
 from montrek_example.repositories.hub_d_repository import HubDRepository
 from baseclasses.repositories.montrek_repository import MontrekRepository
 

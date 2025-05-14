@@ -2723,8 +2723,6 @@ class TestRepositoryViewModel(TestCase):
         del self.repo
 
     def test_create_view_model(self):
-        self.assertEqual(self.repo.view_model, None)
-        self.repo.generate_view_model()
         repo_view = self.repo.view_model
         self.assertTrue(issubclass(repo_view, models.Model))
         test_instance = repo_view(field_a1_str="Test")

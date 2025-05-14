@@ -3,7 +3,7 @@ from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepository,
 )
 from file_upload.repositories.field_map_repository import FieldMapRepositoryABC
-from montrek_example import models as me_models
+from montrek_example.models import example_models as me_models
 
 
 class SatA1Repository(MontrekRepository):

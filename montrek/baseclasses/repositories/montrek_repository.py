@@ -31,7 +31,7 @@ from baseclasses.utils import datetime_to_montrek_time
 from django.apps import apps
 from django.core.exceptions import PermissionDenied
 from django.core.management import call_command
-from django.db import models, connection
+from django.db import connection, models
 from django.db.models import (
     F,
     QuerySet,
@@ -57,8 +57,8 @@ class MontrekRepository:
 
     update: bool = True  # If this is true only the passed fields will be updated, otherwise empty fields will be set to None
 
-    def __init__(self, session_data: Dict[str, Any] = {}):
-        self.annotator = Annotator(self.hub_class)
+    def __init__(self, session_data: Dict[str, Any] = {}, load_subqueries: bool = True):
+        self.annotator = Annotator(self.hub_class, load_subqueries)
         self._ts_queryset_containers = []
         self.session_data = session_data
         self.query_builder = QueryBuilder(self.annotator, session_data, self.latest_ts)
@@ -124,25 +124,9 @@ class MontrekRepository:
         attrs = {"__module__": cls.__name__, "Meta": Meta}
         attrs.update(fields)
         model_name = cls.__name__ + "ViewModel"
-        # Step 2: Dynamically create the model
         model = type(model_name, (models.Model,), attrs)
 
-        # Step 3: Register it in the app registry
-        app_config = apps.get_app_config("baseclasses")
-        app_config.models[model_name.lower()] = model
-
         cls.view_model = model  # Save the model class on the class
-
-        # Step 4: Check if table already exists
-        table_name = model._meta.db_table
-        with connection.cursor() as cursor:
-            existing_tables = connection.introspection.table_names()
-            table_exists = table_name in existing_tables
-
-        # Step 5: If table doesn't exist, make and apply migrations
-        if not table_exists:
-            call_command("makemigrations", "baseclasses", verbosity=0)
-            call_command("migrate", "baseclasses", verbosity=0)
 
     def receive(self, apply_filter: bool = True) -> QuerySet:
         return self.query_builder.build_queryset(

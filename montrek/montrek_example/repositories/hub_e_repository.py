@@ -1,5 +1,5 @@
 from baseclasses.repositories.montrek_repository import MontrekRepository
-from montrek_example import models as me_models
+from montrek_example.models import example_models as me_models
 
 
 class HubERepository(MontrekRepository):
