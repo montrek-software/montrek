@@ -1,3 +1,4 @@
+from django.http import JsonResponse
 import os
 
 from celery import Celery
@@ -19,3 +20,13 @@ app.conf.task_queues = (
 app.conf.task_default_queue = SEQUENTIAL_QUEUE_NAME
 
 app.autodiscover_tasks()
+
+
+def kill_task(request, task_id):
+    try:
+        app.control.revoke(task_id, terminate=True)
+        return JsonResponse(
+            {"status": "success", "message": f"Task {task_id} has been revoked."}
+        )
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": str(e)}, status=400)
