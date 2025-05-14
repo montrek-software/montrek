@@ -19,7 +19,7 @@ from baseclasses.models import (
 
 
 class Annotator:
-    def __init__(self, hub_class: type[MontrekHubABC], load_subqueries: bool = True):
+    def __init__(self, hub_class: type[MontrekHubABC]):
         self.hub_class = hub_class
         self.load_subqueries = load_subqueries
 

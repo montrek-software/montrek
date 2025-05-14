@@ -57,8 +57,8 @@ class MontrekRepository:
 
     update: bool = True  # If this is true only the passed fields will be updated, otherwise empty fields will be set to None
 
-    def __init__(self, session_data: Dict[str, Any] = {}, load_subqueries: bool = True):
-        self.annotator = Annotator(self.hub_class, load_subqueries)
+    def __init__(self, session_data: Dict[str, Any] = {}):
+        self.annotator = Annotator(self.hub_class)
         self._ts_queryset_containers = []
         self.session_data = session_data
         self.query_builder = QueryBuilder(self.annotator, session_data, self.latest_ts)
@@ -93,7 +93,9 @@ class MontrekRepository:
         return db_data_frame.hubs
 
     def store_in_view_model(self):
-        self.get_view_model()
+        if not self.view_model:
+            return
+
         query = self.receive()
         data = list(query.values())
         fields_to_exclude = ["hub_id", "value_date_list_id"]
@@ -102,11 +104,8 @@ class MontrekRepository:
             for item in data
         ]
         instances = [self.view_model(**item) for item in cleaned_data]
+        self.view_model.objects.all().delete()
         self.view_model.objects.bulk_create(instances)
-
-    def get_view_model(self) -> models.Model:
-        if not self.view_model:
-            self.generate_view_model()
 
     @classmethod
     def generate_view_model(cls):

@@ -16,7 +16,7 @@ from django.test import TestCase, TransactionTestCase, tag
 from django.utils import timezone
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
-from montrek_example import models as me_models
+from montrek_example.models import example_models as me_models
 from montrek_example.repositories.hub_a_repository import (
     HubAJsonRepository,
     HubARepository,
