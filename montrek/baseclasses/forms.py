@@ -218,7 +218,7 @@ class MontrekModelMultipleChoiceField(
         initial_links_str = initial.get(display_field)
         if not isinstance(initial_links_str, str):
             return None
-        filter_kwargs = {f"{display_field}__in": initial_links_str.split(",")}
+        filter_kwargs = {f"{display_field}__in": initial_links_str.split(";")}
         return queryset.filter(**filter_kwargs).all()
 
 
