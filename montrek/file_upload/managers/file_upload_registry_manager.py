@@ -23,6 +23,13 @@ class FileUploadRegistryManagerABC(MontrekTableManager):
             StringTableElement(name="File Name", attr="file_name"),
             StringTableElement(name="Upload Status", attr="upload_status"),
             TextTableElement(name="Upload Message", attr="upload_message"),
+            LinkTableElement(
+                name="Revoke",
+                url="kill_task",
+                kwargs={"task_id": "celery_task_id"},
+                hover_text="Revoke Upload Task",
+                icon="remove-sign",
+            ),
             DateTimeTableElement(name="Upload Date", attr="upload_date"),
             StringTableElement(name="Uploaded By", attr="created_by"),
             LinkTableElement(
@@ -31,13 +38,6 @@ class FileUploadRegistryManagerABC(MontrekTableManager):
                 kwargs={"pk": "id"},
                 icon="download",
                 hover_text="Download",
-            ),
-            LinkTableElement(
-                name="Revoke",
-                url="kill_task",
-                kwargs={"task_id": "celery_task_id"},
-                hover_text="Revoke Upload Task",
-                icon="remove-sign",
             ),
         ]
         if self.download_log_url != "":
