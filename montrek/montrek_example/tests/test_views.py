@@ -991,7 +991,7 @@ class TestRevokeExampleA1UploadTask(TestCase):
             .get(pk=registries[0].get_hub_value_date().pk)
         )
         self.assertEqual(revoked_registry.upload_status, "revoked")
-        self.assertEqual(revoked_registry.upload_message, "Task has been revoked.")
+        self.assertEqual(revoked_registry.upload_message, "Task has been revoked")
 
 
 class TestMontrekExampleA1FieldMapCreateView(MontrekCreateViewTestCase):
