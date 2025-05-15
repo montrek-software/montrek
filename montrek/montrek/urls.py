@@ -23,7 +23,9 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
-from montrek.celery_app import revoke_file_upload_task
+
+from file_upload.tasks.file_upload_task import revoke_file_upload_task
+
 
 urlpatterns = [
     path("", base_views.home, name="home"),

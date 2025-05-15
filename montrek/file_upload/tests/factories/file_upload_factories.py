@@ -19,6 +19,7 @@ class FileUploadRegistryStaticSatelliteFactory(MontrekSatelliteFactory):
 
     hub_entity = factory.SubFactory(FileUploadRegistryHubFactory)
     file_name = factory.Faker("file_name", extension="csv")
+    celery_task_id = factory.Faker("uuid4")
 
     @factory.post_generation
     def file_upload_file(self, create, extracted, **kwargs):
