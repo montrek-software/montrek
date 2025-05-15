@@ -38,7 +38,7 @@ class FileUploadTask(MontrekTask):
 
 def revoke_file_upload_task(request, task_id: str):
     """
-    Kill a running celery file upload task and update the correcsponding
+    Kill a running celery file upload task and update the corresponding
     registry entry.
     """
     previous_url = request.META.get("HTTP_REFERER")
@@ -62,6 +62,6 @@ def revoke_file_upload_task(request, task_id: str):
         return redirect
     registry_dict = registry_repository.object_to_dict(registry)
     registry_dict["upload_status"] = "revoked"
-    registry_dict["upload_message"] = "Task has been revoked."
+    registry_dict["upload_message"] = "Task has been revoked"
     registry_repository.create_by_dict(registry_dict)
     return redirect
