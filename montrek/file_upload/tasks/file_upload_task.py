@@ -1,3 +1,4 @@
+from montrek.celery_app import app as celery_app
 from django.urls import resolve
 from urllib.parse import urlparse
 from django.contrib import messages
