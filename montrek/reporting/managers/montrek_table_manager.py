@@ -156,8 +156,8 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
                 if isinstance(table_element, (te.LinkTableElement)):
                     continue
                 if isinstance(table_element, te.LinkTextTableElement):
-                    objects_dict[table_element.text] = str(
-                        table_element.get_value(query_object)
+                    objects_dict[table_element.text] = table_element.get_value(
+                        query_object
                     )
                 elif isinstance(table_element, te.LinkListTableElement):
                     values = table_element.get_value(query_object)
