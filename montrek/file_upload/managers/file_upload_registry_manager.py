@@ -34,7 +34,7 @@ class FileUploadRegistryManagerABC(MontrekTableManager):
             ),
             LinkTableElement(
                 name="Revoke",
-                url="revoke_task",
+                url="revoke_file_upload_task",
                 kwargs={"task_id": "celery_task_id"},
                 hover_text="Revoke Upload Task",
                 icon="remove-sign",
