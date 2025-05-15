@@ -43,7 +43,7 @@ def revoke_file_upload_task(request, task_id: str):
     """
     previous_url = request.META.get("HTTP_REFERER")
     try:
-        # celery_app.control.revoke(task_id, terminate=True)
+        celery_app.control.revoke(task_id, terminate=True)
         messages.info(request, f"Task {task_id} has been revoked.")
     except Exception as e:
         messages.error(request, str(e))
