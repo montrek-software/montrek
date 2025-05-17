@@ -2,7 +2,7 @@ from baseclasses.repositories.montrek_repository import MontrekRepository
 from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepositoryABC,
 )
-from montrek_example import models as me_models
+from montrek_example.models import example_models as me_models
 from montrek_example.repositories.hub_b_repository import HubBRepository
 from montrek_example.repositories.hub_c_repository import HubCRepository
 from data_import.api_import.repositories.api_data_import_registry_repositories import (

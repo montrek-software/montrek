@@ -1,5 +1,5 @@
 from django.contrib import admin
-from montrek_example import models as me_models
+from montrek_example.models import example_models as me_models
 
 # Register your models here.
 admin.site.register(me_models.HubB)

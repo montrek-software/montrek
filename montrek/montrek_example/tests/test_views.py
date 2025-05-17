@@ -1,3 +1,4 @@
+from testing.decorators import add_logged_in_user
 import datetime
 import os
 from tempfile import TemporaryDirectory
@@ -31,7 +32,7 @@ from testing.test_cases.view_test_cases import (
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
 from montrek_example import views as me_views
-from montrek_example.models import LinkHubBHubD
+from montrek_example.models.example_models import LinkHubBHubD
 from montrek_example.repositories.hub_a_repository import (
     HubAFileUploadRegistryRepository,
     HubARepository,
@@ -55,7 +56,9 @@ class TestMontrekExampleAListView(MontrekListViewTestCase):
         me_factories.SatA2Factory(
             hub_entity=other_sata1.hub_entity, field_a2_str="test"
         )
-        self.assertEqual(len(HubARepository().receive()), 2)
+        repo = HubARepository()
+        repo.store_in_view_model()
+        self.assertEqual(len(repo.receive()), 2)
 
         url = reverse(
             "montrek_example_a_list",
@@ -348,6 +351,7 @@ class TestMontrekExampleAHistoryView(MontrekViewTestCase):
         url = reverse(
             "montrek_example_a_history", kwargs={"pk": sat.get_hub_value_date().id}
         )
+        self.store_in_view_model()
         response = self.client.get(url)
         test_history_data_tables = response.context_data["history_data_tables"]
         self.assertEqual(len(test_history_data_tables), 3)
@@ -970,6 +974,27 @@ class TestMontrekExampleA1UploadView(MontrekListViewTestCase):
     def build_factories(self):
         self.hub_a = me_factories.HubAFactory.create()
         me_factories.HubAFileUploadRegistryStaticSatelliteFactory.create_batch(3)
+
+
+class TestRevokeExampleA1UploadTask(TestCase):
+    @add_logged_in_user
+    def test_revoke_file_upload_task(self):
+        registries = (
+            me_factories.HubAFileUploadRegistryStaticSatelliteFactory.create_batch(3)
+        )
+        url = reverse(
+            "revoke_file_upload_task", kwargs={"task_id": registries[0].celery_task_id}
+        )
+        self.client.get(
+            url, HTTP_REFERER="http://127.0.0.1:8002/montrek_example/a1_view_uploads"
+        )
+        revoked_registry = (
+            HubAFileUploadRegistryRepository()
+            .receive()
+            .get(pk=registries[0].get_hub_value_date().pk)
+        )
+        self.assertEqual(revoked_registry.upload_status, "revoked")
+        self.assertEqual(revoked_registry.upload_message, "Task has been revoked")
 
 
 class TestMontrekExampleA1FieldMapCreateView(MontrekCreateViewTestCase):

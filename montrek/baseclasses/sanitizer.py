@@ -26,12 +26,19 @@ class HtmlSanitizer:
         "blockquote",
         "pre",
         "code",
+        "table",
+        "thead",
+        "tbody",
+        "th",
+        "tr",
+        "td",
     ]
 
     ALLOWED_ATTRIBUTES = {
         "*": ["class", "style"],
         "a": ["href", "title", "target"],
         "img": ["src", "alt"],
+        "table": ["border"],
     }
 
     ALLOWED_STYLES = ["color", "font-weight", "text-align"]

@@ -1,3 +1,4 @@
+import datetime
 import logging
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Type
@@ -29,6 +30,7 @@ from baseclasses.repositories.subquery_builder import (
 )
 from baseclasses.utils import datetime_to_montrek_time
 from django.core.exceptions import PermissionDenied
+from django.db import models
 from django.db.models import (
     F,
     QuerySet,
@@ -50,6 +52,7 @@ class MontrekRepository:
     # default_order_fields: tuple[str, ...] = ("hub_id",)
     default_order_fields: tuple[str, ...] = ()
     latest_ts: bool = False
+    view_model: None | type[models.Model] = None
 
     update: bool = True  # If this is true only the passed fields will be updated, otherwise empty fields will be set to None
 
@@ -77,6 +80,7 @@ class MontrekRepository:
         db_creator.create(data)
         db_writer = DbWriter(db_staller)
         db_writer.write()
+        self.store_in_view_model()
         return db_creator.hub
 
     def create_by_data_frame(self, data_frame: pd.DataFrame) -> List[MontrekHubABC]:
@@ -84,12 +88,72 @@ class MontrekRepository:
         db_data_frame = DbDataFrame(self.annotator, self.session_user_id)
         db_data_frame.create(data_frame)
         self.messages += db_data_frame.messages
+        self.store_in_view_model()
         return db_data_frame.hubs
 
-    def receive(self, apply_filter: bool = True) -> QuerySet:
-        return self.query_builder.build_queryset(
+    def store_in_view_model(self):
+        if not self.view_model:
+            return
+
+        query = self.receive(update_view_model=True)
+        self.store_query_in_view_model(query)
+
+    def store_query_in_view_model(self, query):
+        data = list(query.values())
+        instances = [self.view_model(**item) for item in data]
+        self.view_model.objects.all().delete()
+        self.view_model.objects.bulk_create(instances)
+
+    @classmethod
+    def generate_view_model(cls):
+        if cls.view_model:
+            return
+
+        class Meta:
+            # Only works if repository is in repositories folder
+            app_label = cls.__module__.split(".repositories")[0].split(".")[-1]
+            managed = True
+            db_table = f"{app_label}_{cls.__name__.lower()}_view_model"
+
+        repo_instance = cls()
+        fields = repo_instance.annotator.get_annotated_field_map()
+        for field in fields.values():
+            field.null = True
+            field.blank = True
+        fields["value_date_list_id"] = models.IntegerField(null=True, blank=True)
+        fields["hub"] = models.ForeignKey(cls.hub_class, on_delete=models.CASCADE)
+
+        attrs = {
+            "__module__": cls.__name__,
+            "Meta": Meta,
+            "reference_date": datetime.date.today(),
+        }
+        attrs.update(fields)
+        model_name = cls.__name__ + "ViewModel"
+        model = type(model_name, (models.Model,), attrs)
+
+        cls.view_model = model  # Save the model class on the class
+
+    def receive(
+        self, apply_filter: bool = True, update_view_model: bool = False
+    ) -> QuerySet:
+        if (
+            self.view_model
+            and not update_view_model
+            and self.view_model.reference_date == self.reference_date.date()
+        ):
+            query = self.view_model.objects.all()
+            if apply_filter:
+                query_builder = QueryBuilder(self.annotator, self.session_data)
+                query = query_builder._apply_order(query, self.order_fields())
+                query = query_builder._apply_filter(query)
+                return query
+        query = self.query_builder.build_queryset(
             self.reference_date, self.order_fields(), apply_filter=apply_filter
         )
+        if self.view_model:
+            self.store_query_in_view_model(query)
+        return query
 
     def delete(self, obj: MontrekHubABC):
         obj.state_date_end = timezone.now()
@@ -102,6 +166,7 @@ class MontrekRepository:
             satellite_class.objects.filter(**filter_kwargs).update(
                 state_date_end=timezone.now()
             )
+        self.store_in_view_model()
 
     def order_fields(self) -> tuple[str, ...]:
         if self._order_fields:

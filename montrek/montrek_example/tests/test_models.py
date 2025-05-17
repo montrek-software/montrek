@@ -5,7 +5,7 @@ from django.test import TestCase
 from django.conf import settings
 
 from baseclasses.utils import montrek_time
-from montrek_example.models import (
+from montrek_example.models.example_models import (
     CHubValueDate,
     DHubValueDate,
     HubC,

@@ -155,9 +155,9 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
             for table_element in self.table_elements:
                 if isinstance(table_element, (te.LinkTableElement)):
                     continue
-                if isinstance(table_element, te.LinkTextTableElement):
-                    objects_dict[table_element.text] = str(
-                        table_element.get_value(query_object)
+                elif isinstance(table_element, te.LinkTextTableElement):
+                    objects_dict[table_element.text] = table_element.get_value(
+                        query_object
                     )
                 elif isinstance(table_element, te.LinkListTableElement):
                     values = table_element.get_value(query_object)
@@ -169,7 +169,8 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
                         value = None
                     elif isinstance(value, (datetime.datetime, datetime.date)):
                         value = value.isoformat()
-
+                    elif isinstance(table_element, (te.StringTableElement)):
+                        value = str(value)
                     objects_dict[table_element.attr] = value
             out_json.append(objects_dict)
         return out_json
