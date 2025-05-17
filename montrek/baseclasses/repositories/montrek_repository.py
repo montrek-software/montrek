@@ -140,7 +140,7 @@ class MontrekRepository:
         if (
             self.view_model
             and not update_view_model
-            and self.view_model.reference_date == self.reference_date
+            and self.view_model.reference_date == self.reference_date.date()
         ):
             return self.view_model.objects.all()
         query = self.query_builder.build_queryset(
