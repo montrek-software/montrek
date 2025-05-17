@@ -1,5 +1,7 @@
 import factory
-from data_import.api_import.tests.factories.api_data_import_registry_factories import ApiDataImportRegistryBaseSatelliteFactory
+from data_import.api_import.tests.factories.api_data_import_registry_factories import (
+    ApiDataImportRegistryBaseSatelliteFactory,
+)
 from baseclasses.tests.factories.baseclass_factories import ValueDateListFactory
 from baseclasses.tests.factories.montrek_factory_schemas import (
     MontrekHubValueDateFactory,

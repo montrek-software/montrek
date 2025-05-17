@@ -36,7 +36,13 @@ class FileUploadRegistryRepositoryABC(MontrekRepository):
     def set_annotations(self, **kwargs):
         self.add_satellite_fields_annotations(
             self.static_satellite_class,
-            ["file_name", "file_type", "upload_status", "upload_message"],
+            [
+                "file_name",
+                "file_type",
+                "upload_status",
+                "upload_message",
+                "celery_task_id",
+            ],
         )
         if (
             self.link_file_upload_registry_file_log_file_class

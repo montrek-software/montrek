@@ -118,6 +118,10 @@ NAVBAR_RENAME = {
     if x
     for k, v in [x.split("::")]
 }
+
+NAVBAR_HOME_URL = config("NAVBAR_HOME_URL", default="home")
+NAVBAR_HOME_LABEL = config("NAVBAR_HOME_LABEL", default="Home").replace("*", " ")
+
 DJANGO_MIDDLEWARE = [
     "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django.middleware.security.SecurityMiddleware",

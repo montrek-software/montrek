@@ -418,7 +418,7 @@ class MontrekExampleA1UploadHistoryView(views.MontrekHistoryListView):
 
 @celery_app.task(queue=PARALLEL_QUEUE_NAME)
 def example_parallel_task():
-    time.sleep(30)
+    time.sleep(5)
     return "Hello from parallel task!"
 
 
@@ -430,7 +430,7 @@ def do_run_example_parallel_task(request):
 
 @celery_app.task(queue=SEQUENTIAL_QUEUE_NAME)
 def example_sequential_task():
-    time.sleep(30)
+    time.sleep(5)
     return "Hello from sequential task!"
 
 

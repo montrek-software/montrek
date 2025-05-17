@@ -30,6 +30,7 @@ class FileUploadRegistryStaticSatelliteABC(baseclass_models.MontrekSatelliteABC)
         IN_PROGRESS = "in_progress"
         PROCESSED = "processed"
         FAILED = "failed"
+        REVOKED = "revoked"
 
     hub_entity = models.ForeignKey(FileUploadRegistryHubABC, on_delete=models.CASCADE)
     identifier_fields = ["file_name", "file_type"]
@@ -41,6 +42,7 @@ class FileUploadRegistryStaticSatelliteABC(baseclass_models.MontrekSatelliteABC)
         max_length=20, choices=UploadStatus.choices, default=UploadStatus.PENDING
     )
     upload_message = models.TextField(default="")
+    celery_task_id = models.CharField(max_length=255, default="")
 
     def clean(self):
         super().clean()

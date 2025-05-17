@@ -76,10 +76,17 @@ def navbar(request):
             navbar_apps.append(
                 NavBarModel(app, force_display_name=navbar_rename_config.get(app))
             )
+    home_url = reverse(settings.NAVBAR_HOME_URL)
+    home_label = settings.NAVBAR_HOME_LABEL
     return render(
         request,
         "navbar.html",
-        {"nav_apps": navbar_apps, "navbar_dropdowns": navbar_dropdowns.values()},
+        {
+            "nav_apps": navbar_apps,
+            "navbar_dropdowns": navbar_dropdowns.values(),
+            "home_url": home_url,
+            "home_label": home_label,
+        },
     )
 
 
