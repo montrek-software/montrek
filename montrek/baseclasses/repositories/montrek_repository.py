@@ -96,11 +96,8 @@ class MontrekRepository:
 
         query = self.receive(update_view_model=True)
         data = list(query.values())
-        fields_to_exclude = ["hub_id", "value_date_list_id"]
         cleaned_data = [
-            # {k: v for k, v in item.items() if k not in fields_to_exclude}
-            {k: v for k, v in item.items() if not k.endswith("_id")}
-            for item in data
+            {k: v for k, v in item.items() if not k.endswith("_id")} for item in data
         ]
         instances = [self.view_model(**item) for item in cleaned_data]
         self.view_model.objects.all().delete()

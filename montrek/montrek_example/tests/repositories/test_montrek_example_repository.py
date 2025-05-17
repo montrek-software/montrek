@@ -2733,7 +2733,6 @@ class TestRepositoryViewModel(TestCase):
             self.assertTrue(hasattr(test_instance, field))
 
     def test_model_view_created_on_class_level(self):
-        self.repo.generate_view_model()
         side_repo = HubARepository()
         self.assertTrue(issubclass(side_repo.view_model, models.Model))
 
@@ -2743,12 +2742,10 @@ class TestRepositoryViewModel(TestCase):
         self.assertTrue(issubclass(repo_view, models.Model))
 
     def test_view_model_writes_to_db(self):
-        self.repo.generate_view_model()
         repo_view = self.repo.view_model
         instance = repo_view(
             field_a1_str="Test",
             value_date="2025-01-02",
-            hub_entity_id=1,
             created_at="2025-01-02",
             created_by="test@tester.de",
         )
@@ -2761,3 +2758,15 @@ class TestRepositoryViewModel(TestCase):
         repo_view = self.repo.view_model
         instance = repo_view.objects.first()
         self.assertEqual(instance.field_a1_str, "Field")
+
+    def test_view_model_received_by_repo(self):
+        repo_view = self.repo.view_model
+        instance = repo_view(
+            field_a1_str="Test",
+            value_date="2025-01-02",
+            created_at="2025-01-02",
+            created_by="test@tester.de",
+        )
+        instance.save()
+        received_instance = self.repo.receive().first()
+        self.assertEqual(received_instance.field_a1_str, "Test")
