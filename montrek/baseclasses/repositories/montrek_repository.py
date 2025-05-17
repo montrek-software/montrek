@@ -142,7 +142,12 @@ class MontrekRepository:
             and not update_view_model
             and self.view_model.reference_date == self.reference_date.date()
         ):
-            return self.view_model.objects.all()
+            query = self.view_model.objects.all()
+            if apply_filter:
+                query_builder = QueryBuilder(self.annotator, self.session_data)
+                query = query_builder._apply_order(query, self.order_fields())
+                query = query_builder._apply_filter(query)
+                return query
         query = self.query_builder.build_queryset(
             self.reference_date, self.order_fields(), apply_filter=apply_filter
         )

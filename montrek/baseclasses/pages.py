@@ -56,7 +56,7 @@ class MontrekDetailsPage(MontrekPage):
     def _set_page_title(self, pk):
         repository = self.repository_class({})
         self.hub = repository.get_hub_by_id(pk)
-        self.obj = repository.receive().get(hub_entity_id=pk)
+        self.obj = repository.receive().get(hub_entity_id=self.hub.pk)
         self.page_title = getattr(self.obj, self.title_field)
 
 
