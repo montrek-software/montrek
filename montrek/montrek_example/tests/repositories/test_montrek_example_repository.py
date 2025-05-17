@@ -2336,6 +2336,7 @@ class TestGetHubsByFieldValues(TestCase):
     def test_get_hubs_by_field_values(self):
         values = ["a", "b", "b", "c", "d", "e"]
         repository = HubARepository()
+        repository.store_in_view_model()
         actual = repository.get_hubs_by_field_values(
             values=values,
             by_repository_field="field_a1_str",
@@ -2349,6 +2350,7 @@ class TestGetHubsByFieldValues(TestCase):
     def test_get_hubs_by_field_values_raises_error_for_multiple_hubs(self):
         values = ["a", "b", "c", "d", "e"]
         repository = HubARepository()
+        repository.store_in_view_model()
         with self.assertRaisesMessage(
             MontrekError,
             "Multiple HubA objects found for field_a1_str values (truncated): c",
@@ -2363,6 +2365,7 @@ class TestGetHubsByFieldValues(TestCase):
     def test_get_hubs_by_field_values_raises_error_for_unmapped_values(self):
         values = ["a", "b", "c", "d", "e"]
         repository = HubARepository()
+        repository.store_in_view_model()
         with self.assertRaisesMessage(
             MontrekError,
             "Cannot find HubA objects for field_a1_str values (truncated): d, e",
@@ -2697,6 +2700,7 @@ class TestObjectToDict(TestCase):
         a_sat.hub_entity.link_hub_a_hub_b.add(b_sat.hub_entity)
 
         repo = HubARepository()
+        repo.store_in_view_model()
         query = repo.receive().first()
         test_dict = repo.object_to_dict(query)
         self.assertEqual(test_dict["field_a1_str"], "TestA")
