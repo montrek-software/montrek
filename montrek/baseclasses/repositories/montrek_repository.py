@@ -1,3 +1,4 @@
+import datetime
 import logging
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Type
@@ -95,6 +96,9 @@ class MontrekRepository:
             return
 
         query = self.receive(update_view_model=True)
+        self.store_query_in_view_model(query)
+
+    def store_query_in_view_model(self, query):
         data = list(query.values())
         instances = [self.view_model(**item) for item in data]
         self.view_model.objects.all().delete()
@@ -119,7 +123,11 @@ class MontrekRepository:
         fields["value_date_list_id"] = models.IntegerField(null=True, blank=True)
         fields["hub"] = models.ForeignKey(cls.hub_class, on_delete=models.CASCADE)
 
-        attrs = {"__module__": cls.__name__, "Meta": Meta}
+        attrs = {
+            "__module__": cls.__name__,
+            "Meta": Meta,
+            "reference_date": datetime.date.today(),
+        }
         attrs.update(fields)
         model_name = cls.__name__ + "ViewModel"
         model = type(model_name, (models.Model,), attrs)
@@ -129,11 +137,18 @@ class MontrekRepository:
     def receive(
         self, apply_filter: bool = True, update_view_model: bool = False
     ) -> QuerySet:
-        if self.view_model and not update_view_model:
+        if (
+            self.view_model
+            and not update_view_model
+            and self.view_model.reference_date == self.reference_date
+        ):
             return self.view_model.objects.all()
-        return self.query_builder.build_queryset(
+        query = self.query_builder.build_queryset(
             self.reference_date, self.order_fields(), apply_filter=apply_filter
         )
+        if self.view_model:
+            self.store_query_in_view_model(query)
+        return query
 
     def delete(self, obj: MontrekHubABC):
         obj.state_date_end = timezone.now()
