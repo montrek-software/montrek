@@ -16,7 +16,7 @@ class TestFilterForm(TestCase):
         form = FilterForm(filter_field_choices=[("field1", "Field 1")])
 
         self.assertTrue(form.fields["filter_field"].initial == "")
-        self.assertTrue(form.fields["filter_lookup"].initial == "exact")
+        self.assertTrue(form.fields["filter_lookup"].initial == "iexact")
         self.assertFalse(form.fields["filter_negate"].initial)
         self.assertTrue(form.fields["filter_value"].initial == "")
 
@@ -46,7 +46,7 @@ class TestFilterForm(TestCase):
     def test_filter_form_or(self):
         form = FilterForm(filter={"or": {"field1__in": {"filter_value": ["value1"]}}})
         self.assertFalse(form.fields["filter_field"].initial)
-        self.assertEqual(form.fields["filter_lookup"].initial, "exact")
+        self.assertEqual(form.fields["filter_lookup"].initial, "iexact")
         self.assertFalse(form.fields["filter_negate"].initial)
         self.assertFalse(form.fields["filter_value"].initial)
 
@@ -80,7 +80,7 @@ class TestBaseMontrekChoiceField(TestCase):
     def test_get_initial_link_not_implemented(self):
         field = BaseMontrekChoiceField(display_field="field1")
         with self.assertRaises(NotImplementedError):
-            field.get_initial_link(None, None, None)
+            field.get_initial_link(None, None, None, None)
 
 
 class TestMontrekModelCharChoiceField(TestCase):
@@ -92,4 +92,6 @@ class TestMontrekModelCharChoiceField(TestCase):
         test_field = MontrekModelCharChoiceField(
             display_field="abc",
         )
-        self.assertEqual(test_field.get_initial_link({"abc": "def"}, [], "abc"), "def")
+        self.assertEqual(
+            test_field.get_initial_link({"abc": "def"}, [], "abc", ","), "def"
+        )
