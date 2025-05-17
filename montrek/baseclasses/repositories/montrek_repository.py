@@ -96,10 +96,7 @@ class MontrekRepository:
 
         query = self.receive(update_view_model=True)
         data = list(query.values())
-        cleaned_data = [
-            {k: v for k, v in item.items() if not k.endswith("_id")} for item in data
-        ]
-        instances = [self.view_model(**item) for item in cleaned_data]
+        instances = [self.view_model(**item) for item in data]
         self.view_model.objects.all().delete()
         self.view_model.objects.bulk_create(instances)
 
@@ -119,7 +116,8 @@ class MontrekRepository:
         for field in fields.values():
             field.null = True
             field.blank = True
-        fields = {key: value for key, value in fields.items() if key != "hub_entity_id"}
+        fields["value_date_list_id"] = models.IntegerField(null=True, blank=True)
+        fields["hub"] = models.ForeignKey(cls.hub_class, on_delete=models.CASCADE)
 
         attrs = {"__module__": cls.__name__, "Meta": Meta}
         attrs.update(fields)
@@ -148,6 +146,7 @@ class MontrekRepository:
             satellite_class.objects.filter(**filter_kwargs).update(
                 state_date_end=timezone.now()
             )
+        self.store_in_view_model()
 
     def order_fields(self) -> tuple[str, ...]:
         if self._order_fields:
