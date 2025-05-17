@@ -2,6 +2,7 @@ import datetime
 
 import sys
 import unittest
+from django.db import models
 
 import numpy as np
 import pandas as pd
@@ -15,7 +16,7 @@ from django.test import TestCase, TransactionTestCase, tag
 from django.utils import timezone
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
-from montrek_example import models as me_models
+from montrek_example.models import example_models as me_models
 from montrek_example.repositories.hub_a_repository import (
     HubAJsonRepository,
     HubARepository,
@@ -2335,6 +2336,7 @@ class TestGetHubsByFieldValues(TestCase):
     def test_get_hubs_by_field_values(self):
         values = ["a", "b", "b", "c", "d", "e"]
         repository = HubARepository()
+        repository.store_in_view_model()
         actual = repository.get_hubs_by_field_values(
             values=values,
             by_repository_field="field_a1_str",
@@ -2348,6 +2350,7 @@ class TestGetHubsByFieldValues(TestCase):
     def test_get_hubs_by_field_values_raises_error_for_multiple_hubs(self):
         values = ["a", "b", "c", "d", "e"]
         repository = HubARepository()
+        repository.store_in_view_model()
         with self.assertRaisesMessage(
             MontrekError,
             "Multiple HubA objects found for field_a1_str values (truncated): c",
@@ -2362,6 +2365,7 @@ class TestGetHubsByFieldValues(TestCase):
     def test_get_hubs_by_field_values_raises_error_for_unmapped_values(self):
         values = ["a", "b", "c", "d", "e"]
         repository = HubARepository()
+        repository.store_in_view_model()
         with self.assertRaisesMessage(
             MontrekError,
             "Cannot find HubA objects for field_a1_str values (truncated): d, e",
@@ -2696,6 +2700,7 @@ class TestObjectToDict(TestCase):
         a_sat.hub_entity.link_hub_a_hub_b.add(b_sat.hub_entity)
 
         repo = HubARepository()
+        repo.store_in_view_model()
         query = repo.receive().first()
         test_dict = repo.object_to_dict(query)
         self.assertEqual(test_dict["field_a1_str"], "TestA")
@@ -2711,3 +2716,65 @@ class TestSecurity(TestCase):
         repo.create_by_dict({"field_a1_str": "<b><script>HACKED!!</script></b>"})
         obj = repo.receive().first()
         self.assertEqual(obj.field_a1_str, "<b>HACKED!!</b>")
+
+
+class TestRepositoryViewModel(TestCase):
+    def setUp(self) -> None:
+        user = MontrekUserFactory()
+        self.repo = HubARepository({"user_id": user.id})
+
+    def tearDown(self) -> None:
+        del self.repo
+
+    def test_create_view_model(self):
+        repo_view = self.repo.view_model
+        self.assertTrue(issubclass(repo_view, models.Model))
+        test_instance = repo_view(field_a1_str="Test")
+        self.assertEqual(test_instance.field_a1_str, "Test")
+        for field in self.repo.annotator.get_annotated_field_names():
+            if field in ["hub_entity_id"]:
+                continue
+            self.assertTrue(hasattr(test_instance, field))
+
+    def test_model_view_created_on_class_level(self):
+        side_repo = HubARepository()
+        self.assertTrue(issubclass(side_repo.view_model, models.Model))
+
+    def test_view_model_exists_after_create(self):
+        self.repo.create_by_dict({"field_a1_str": "Field"})
+        repo_view = self.repo.view_model
+        self.assertTrue(issubclass(repo_view, models.Model))
+
+    def test_view_model_writes_to_db(self):
+        hub_a = me_factories.HubAFactory()
+        repo_view = self.repo.view_model
+        instance = repo_view(
+            field_a1_str="Test",
+            value_date="2025-01-02",
+            created_at="2025-01-02",
+            created_by="test@tester.de",
+            hub=hub_a,
+        )
+        instance.save()
+        received_instance = repo_view.objects.first()
+        self.assertEqual(received_instance.field_a1_str, "Test")
+
+    def test_view_model_is_filled_after_create(self):
+        self.repo.create_by_dict({"field_a1_str": "Field"})
+        repo_view = self.repo.view_model
+        instance = repo_view.objects.first()
+        self.assertEqual(instance.field_a1_str, "Field")
+
+    def test_view_model_received_by_repo(self):
+        hub_a = me_factories.HubAFactory()
+        repo_view = self.repo.view_model
+        instance = repo_view(
+            field_a1_str="Test",
+            value_date="2025-01-02",
+            created_at="2025-01-02",
+            created_by="test@tester.de",
+            hub=hub_a,
+        )
+        instance.save()
+        received_instance = self.repo.receive().first()
+        self.assertEqual(received_instance.field_a1_str, "Test")

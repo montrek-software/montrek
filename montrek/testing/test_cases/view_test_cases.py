@@ -42,6 +42,7 @@ class MontrekViewTestCase(TestCase):
             return
         self._check_view_class()
         self.build_factories()
+        self.store_in_view_model()
         self._login_user()
         self.response = self.get_response()
         self.view = self.response.context.get("view")
@@ -63,6 +64,11 @@ class MontrekViewTestCase(TestCase):
 
     def build_factories(self):
         pass
+
+    def store_in_view_model(self):
+        repository_class = self.view_class.manager_class.repository_class
+        if repository_class.view_model:
+            repository_class().store_in_view_model()
 
     def url_kwargs(self) -> dict:
         return {}
@@ -462,8 +468,11 @@ class MontrekReportFieldEditViewTestCase(MontrekObjectViewBaseTestCase):
         )
         self.additional_assertions(test_object)
 
-    def test_view_page(self): ...
+    def test_view_page(self):
+        ...
 
-    def test_view_return_correct_html(self): ...
+    def test_view_return_correct_html(self):
+        ...
 
-    def test_context_data(self): ...
+    def test_context_data(self):
+        ...

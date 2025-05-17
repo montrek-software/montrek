@@ -1,3 +1,5 @@
+from typing import Any
+from django.apps.registry import AppRegistryNotReady
 from django.db.models import Field, Subquery
 from django.utils import timezone
 from baseclasses.repositories.subquery_builder import (
@@ -19,6 +21,7 @@ from baseclasses.models import (
 class Annotator:
     def __init__(self, hub_class: type[MontrekHubABC]):
         self.hub_class = hub_class
+
         self.raw_annotations: dict[str, SubqueryBuilder] = self.get_raw_annotations()
         self.annotations: dict[str, SubqueryBuilder] = self.raw_annotations.copy()
         self.ts_annotations: dict[str, Subquery] = {}
@@ -96,11 +99,22 @@ class Annotator:
     def add_to_annotated_satellite_classes(
         self, satellite_class: type[MontrekSatelliteABC]
     ):
-        related_hub_class = satellite_class.get_related_hub_class()
-        if related_hub_class == self.hub_class:
-            self._add_class(self.annotated_satellite_classes, satellite_class)
-        else:
-            self._add_class(self.annotated_linked_satellite_classes, satellite_class)
+        try:
+            related_hub_class = satellite_class.get_related_hub_class()
+            if related_hub_class == self.hub_class:
+                self._add_class(self.annotated_satellite_classes, satellite_class)
+            else:
+                self._add_class(
+                    self.annotated_linked_satellite_classes, satellite_class
+                )
+        except AppRegistryNotReady:
+            return
+
+    def get_annotated_field_map(self) -> dict[str, Any]:
+        return {
+            field: subquery_builder.field_type
+            for field, subquery_builder in self.annotations.items()
+        }
 
     def rename_field(self, old_field: str, new_field: str):
         self.annotations[new_field] = self.annotations.pop(old_field)
