@@ -10,7 +10,7 @@ class MockSubqueryBuilder:
     def __init__(self, satellite_class: type, field: str):
         self.satellite_class = satellite_class
         self.field = field
-        self.field_type = models.CharField
+        self.field_type = models.CharField()
 
     def build(self, reference_date: timezone.datetime) -> str:
         return "Hallo"
@@ -39,18 +39,19 @@ class TestAnnotationManager(TestCase):
             ["test", "test2"], MockSatellite, MockSubqueryBuilder
         )
         field_map = test_annotator.get_annotated_field_map()
-        self.assertEqual(
-            field_map,
-            {
-                "comment": models.CharField,
-                "created_at": models.DateTimeField,
-                "created_by": models.EmailField,
-                "hub_entity_id": models.IntegerField,
-                "test": models.CharField,
-                "test2": models.CharField,
-                "value_date": models.DateTimeField,
-            },
-        )
+        expected_map = {
+            "comment": models.CharField,
+            "created_at": models.DateTimeField,
+            "created_by": models.EmailField,
+            "hub_entity_id": models.IntegerField,
+            "test": models.CharField,
+            "test2": models.CharField,
+            "value_date": models.DateTimeField,
+        }
+
+        self.assertEqual(field_map.keys(), expected_map.keys())
+        for field, ftype in expected_map.items():
+            self.assertTrue(type(field_map[field]) is ftype)
 
     def test_rename_field(self):
         test_annotator = Annotator(TestMontrekHub)

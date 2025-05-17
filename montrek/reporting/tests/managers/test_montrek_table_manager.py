@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 from django.core import mail
 from django.test import TestCase
 from django.utils import timezone
-from montrek_example.models import SatA1
+from montrek_example.models.example_models import SatA1
 from montrek_example.tests.factories import montrek_example_factories as me_factories
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 

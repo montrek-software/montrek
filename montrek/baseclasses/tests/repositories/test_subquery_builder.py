@@ -1,3 +1,4 @@
+from django.db.models import CharField
 from django.test import TestCase
 from django.utils import timezone
 from baseclasses.utils import montrek_time
@@ -26,6 +27,8 @@ warnings.filterwarnings(
 
 
 class MockLinkedSatelliteSubqueryBuilder(LinkedSatelliteSubqueryBuilder):
+    field_type = CharField()
+
     def _is_multiple_allowed(self, hub_field_to: str) -> bool:
         return True
 
@@ -106,7 +109,7 @@ class TestLinkedSatelliteSubqueryBuilder(TestCase):
         ):
             LinkedSatelliteSubqueryBuilder(
                 bc_models.TestLinkSatellite,
-                "bla",
+                "test_id",
                 DummyLinkClass,
             )
 
