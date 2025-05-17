@@ -2728,6 +2728,8 @@ class TestRepositoryViewModel(TestCase):
         test_instance = repo_view(field_a1_str="Test")
         self.assertEqual(test_instance.field_a1_str, "Test")
         for field in self.repo.annotator.get_annotated_field_names():
+            if field in ["hub_entity_id"]:
+                continue
             self.assertTrue(hasattr(test_instance, field))
 
     def test_model_view_created_on_class_level(self):

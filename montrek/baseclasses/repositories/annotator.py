@@ -21,7 +21,6 @@ from baseclasses.models import (
 class Annotator:
     def __init__(self, hub_class: type[MontrekHubABC]):
         self.hub_class = hub_class
-        self.load_subqueries = load_subqueries
 
         self.raw_annotations: dict[str, SubqueryBuilder] = self.get_raw_annotations()
         self.annotations: dict[str, SubqueryBuilder] = self.raw_annotations.copy()
@@ -113,7 +112,7 @@ class Annotator:
 
     def get_annotated_field_map(self) -> dict[str, Any]:
         return {
-            field: subquery_builder.field_type.clone()
+            field: subquery_builder.field_type
             for field, subquery_builder in self.annotations.items()
         }
 

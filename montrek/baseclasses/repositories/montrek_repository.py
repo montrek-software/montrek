@@ -28,10 +28,8 @@ from baseclasses.repositories.subquery_builder import (
     TSSatelliteSubqueryBuilder,
 )
 from baseclasses.utils import datetime_to_montrek_time
-from django.apps import apps
 from django.core.exceptions import PermissionDenied
-from django.core.management import call_command
-from django.db import connection, models
+from django.db import models
 from django.db.models import (
     F,
     QuerySet,
@@ -96,11 +94,12 @@ class MontrekRepository:
         if not self.view_model:
             return
 
-        query = self.receive()
+        query = self.receive(update_view_model=True)
         data = list(query.values())
         fields_to_exclude = ["hub_id", "value_date_list_id"]
         cleaned_data = [
-            {k: v for k, v in item.items() if k not in fields_to_exclude}
+            # {k: v for k, v in item.items() if k not in fields_to_exclude}
+            {k: v for k, v in item.items() if not k.endswith("_id")}
             for item in data
         ]
         instances = [self.view_model(**item) for item in cleaned_data]
@@ -109,16 +108,21 @@ class MontrekRepository:
 
     @classmethod
     def generate_view_model(cls):
+        if cls.view_model:
+            return
+
         class Meta:
-            app_label = "baseclasses"
+            # Only works if repository is in repositories folder
+            app_label = cls.__module__.split(".repositories")[0].split(".")[-1]
             managed = True
-            db_table = cls.__name__.lower() + "_view_model"
+            db_table = f"{app_label}_{cls.__name__.lower()}_view_model"
 
         repo_instance = cls()
         fields = repo_instance.annotator.get_annotated_field_map()
         for field in fields.values():
             field.null = True
             field.blank = True
+        fields = {key: value for key, value in fields.items() if key != "hub_entity_id"}
 
         attrs = {"__module__": cls.__name__, "Meta": Meta}
         attrs.update(fields)
@@ -127,7 +131,11 @@ class MontrekRepository:
 
         cls.view_model = model  # Save the model class on the class
 
-    def receive(self, apply_filter: bool = True) -> QuerySet:
+    def receive(
+        self, apply_filter: bool = True, update_view_model: bool = False
+    ) -> QuerySet:
+        if self.view_model and not update_view_model:
+            return self.view_model.objects.all()
         return self.query_builder.build_queryset(
             self.reference_date, self.order_fields(), apply_filter=apply_filter
         )
