@@ -2,6 +2,7 @@ from enum import Enum
 from typing import Any, Callable, Type
 
 from django.db import models
+from numpy import isin
 
 from baseclasses.models import (
     LinkTypeEnum,
@@ -36,6 +37,8 @@ class SatelliteSubqueryBuilderABC(SubqueryBuilder):
         self.satellite_class = satellite_class
         self.field = field
         self.field_type = self.satellite_class._meta.get_field(self.field)
+        if isinstance(self.field_type, models.ForeignKey):
+            self.field_type = models.IntegerField(null=True, blank=True)
         # TODO: remove lookup_string
         self.lookup_string = "pk"
 
@@ -163,6 +166,12 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         self.link_db_name = link_class.__name__.lower()
         self.agg_func = LinkAggFunctionEnum(agg_func)
         self.separator = separator
+        if issubclass(link_class, MontrekManyToManyLinkABC) or (
+            issubclass(link_class, MontrekOneToManyLinkABC)
+            and isinstance(self, LinkedSatelliteSubqueryBuilder)
+        ):
+            if agg_func == "string_concat":
+                self.field_type = CharField(null=True, blank=True)
 
         self.parent_link_classes = parent_link_classes
         self.link_satellite_filter = link_satellite_filter

@@ -174,6 +174,7 @@ class TestMontrekExampleAUpdateView(MontrekUpdateViewTestCase):
         self.sat_b1 = me_factories.SatB1Factory()
         me_factories.SatB2Factory(hub_entity=self.sat_b1.hub_entity)
         self.sat_a1.hub_entity.link_hub_a_hub_b.add(self.sat_b1.hub_entity)
+        HubBRepository().store_in_view_model()
 
     def url_kwargs(self) -> dict:
         return {"pk": self.sat_a1.get_hub_value_date().id}
