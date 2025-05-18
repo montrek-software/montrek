@@ -117,9 +117,11 @@ class MontrekRepository:
 
         repo_instance = cls()
         fields = repo_instance.annotator.get_annotated_field_map()
-        for field in fields.values():
+        for key, field in fields.items():
             field.null = True
             field.blank = True
+            field.name = key
+
         fields["value_date_list_id"] = models.IntegerField(null=True, blank=True)
         fields["hub"] = models.ForeignKey(cls.hub_class, on_delete=models.CASCADE)
 

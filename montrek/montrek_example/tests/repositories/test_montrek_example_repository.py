@@ -2127,6 +2127,7 @@ class TestMontrekManyToManyRelations(TestCase):
 
     def test_return_many_to_many_relation(self):
         repository_b = HubBRepository()
+        repository_b.store_in_view_model()
         satb_queryset = repository_b.receive()
         self.assertEqual(satb_queryset.count(), 2)
         satb_queryset = satb_queryset.order_by("field_b1_str")
