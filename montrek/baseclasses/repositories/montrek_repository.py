@@ -100,6 +100,12 @@ class MontrekRepository:
 
     def store_query_in_view_model(self, query):
         data = list(query.values())
+        for row in data:
+            if row["value_date"]:
+                row["value_date"] = timezone.make_aware(
+                    datetime.datetime.combine(row["value_date"], datetime.time()),
+                    timezone.get_current_timezone(),
+                )
         instances = [self.view_model(**item) for item in data]
         self.view_model.objects.all().delete()
         self.view_model.objects.bulk_create(instances)
