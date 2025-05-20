@@ -2,7 +2,6 @@ from enum import Enum
 from typing import Any, Callable, Type
 
 from django.db import models
-from numpy import isin
 
 from baseclasses.models import (
     LinkTypeEnum,
@@ -78,7 +77,8 @@ class SatelliteSubqueryBuilder(SatelliteSubqueryBuilderABC):
             self.get_hub_query(reference_date)
             .annotate(
                 **{
-                    self.field + "sub": self.satellite_subquery(
+                    self.field
+                    + "sub": self.satellite_subquery(
                         reference_date, lookup_field="hub_entity"
                     ),
                 }
@@ -106,7 +106,7 @@ class SumTSSatelliteSubqueryBuilder(SatelliteSubqueryBuilder):
 
 
 class ValueDateSubqueryBuilder(SubqueryBuilder):
-    field_type = models.DateTimeField()
+    field_type = models.DateField()
 
     def build(self, reference_date: timezone.datetime) -> Subquery:
         return ValueDateList.objects.filter(pk=OuterRef("value_date_list")).values(
@@ -277,7 +277,8 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         lookup_field: str,
     ) -> dict:
         return {
-            self.field + "sub": Subquery(
+            self.field
+            + "sub": Subquery(
                 self._annotate_agg_field(
                     hub_field_to,
                     self.satellite_class.objects.filter(
@@ -322,7 +323,8 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         field_type = CharField
         return query.annotate(
             **{
-                self.field + "agg": Cast(
+                self.field
+                + "agg": Cast(
                     func(Cast(self.field + "sub", field_type())),
                     field_type(),
                 )
