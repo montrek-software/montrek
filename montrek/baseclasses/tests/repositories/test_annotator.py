@@ -46,7 +46,7 @@ class TestAnnotationManager(TestCase):
             "hub_entity_id": models.IntegerField,
             "test": models.CharField,
             "test2": models.CharField,
-            "value_date": models.DateTimeField,
+            "value_date": models.DateField,
         }
 
         self.assertEqual(field_map.keys(), expected_map.keys())
