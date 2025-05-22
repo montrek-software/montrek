@@ -1,3 +1,4 @@
+from copy import deepcopy
 import datetime
 import logging
 from dataclasses import dataclass
@@ -121,12 +122,14 @@ class MontrekRepository:
             managed = True
             db_table = f"{app_label}_{cls.__name__.lower()}_view_model"
 
-        repo_instance = cls()
+        repo_instance = cls({})
         fields = repo_instance.annotator.get_annotated_field_map()
         for key, field in fields.items():
+            field = deepcopy(field)
             field.null = True
             field.blank = True
             field.name = key
+            fields[key] = field
 
         fields["value_date_list_id"] = models.IntegerField(null=True, blank=True)
         fields["hub"] = models.ForeignKey(cls.hub_class, on_delete=models.CASCADE)
