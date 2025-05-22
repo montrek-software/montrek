@@ -168,7 +168,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         self.separator = separator
         if issubclass(link_class, MontrekManyToManyLinkABC) or (
             issubclass(link_class, MontrekOneToManyLinkABC)
-            and isinstance(self, LinkedSatelliteSubqueryBuilder)
+            and isinstance(self, ReverseLinkedSatelliteSubqueryBuilder)
         ):
             if agg_func == "string_concat":
                 self.field_type = CharField(null=True, blank=True)
