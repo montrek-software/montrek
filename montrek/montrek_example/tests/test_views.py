@@ -228,6 +228,22 @@ class TestMontrekExampleAReportFieldEditView(MontrekReportFieldEditViewTestCase)
         self.assertEqual(created_object.field_a1_int, 12)
 
 
+class TestMontrekExampleAReportFieldEditViewInt(MontrekReportFieldEditViewTestCase):
+    viewname = "montrek_example_a_edit_field"
+    view_class = me_views.MontrekExampleAReportFieldEditView
+    update_field = "field_a1_int"
+    updated_content = 13
+
+    def build_factories(self):
+        self.sat_a1 = me_factories.SatA1Factory(field_a1_str="test", field_a1_int=12)
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.sat_a1.get_hub_value_date().id}
+
+    def additional_assertions(self, created_object):
+        self.assertEqual(created_object.field_a1_str, "test")
+
+
 class TestMontrekExampleADownloadView(MontrekDownloadViewTestCase):
     viewname = "montrek_example_a_download"
     view_class = me_views.MontrekExampleADownloadView
