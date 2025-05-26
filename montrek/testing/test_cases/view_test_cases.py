@@ -68,7 +68,7 @@ class MontrekViewTestCase(TestCase):
     def store_in_view_model(self):
         repository_class = self.view_class.manager_class.repository_class
         if repository_class.view_model:
-            repository_class().store_in_view_model()
+            repository_class({}).store_in_view_model()
 
     def url_kwargs(self) -> dict:
         return {}

@@ -1,3 +1,4 @@
+from copy import deepcopy
 import datetime
 import logging
 from dataclasses import dataclass
@@ -95,11 +96,17 @@ class MontrekRepository:
         if not self.view_model:
             return
 
-        query = self.receive(update_view_model=True)
+        query = self.receive_raw(update_view_model=True)
         self.store_query_in_view_model(query)
 
     def store_query_in_view_model(self, query):
         data = list(query.values())
+        for row in data:
+            if row["value_date"]:
+                row["value_date"] = timezone.make_aware(
+                    datetime.datetime.combine(row["value_date"], datetime.time()),
+                    timezone.get_current_timezone(),
+                )
         instances = [self.view_model(**item) for item in data]
         self.view_model.objects.all().delete()
         self.view_model.objects.bulk_create(instances)
@@ -115,12 +122,14 @@ class MontrekRepository:
             managed = True
             db_table = f"{app_label}_{cls.__name__.lower()}_view_model"
 
-        repo_instance = cls()
+        repo_instance = cls({})
         fields = repo_instance.annotator.get_annotated_field_map()
         for key, field in fields.items():
+            field = deepcopy(field)
             field.null = True
             field.blank = True
             field.name = key
+            fields[key] = field
 
         fields["value_date_list_id"] = models.IntegerField(null=True, blank=True)
         fields["hub"] = models.ForeignKey(cls.hub_class, on_delete=models.CASCADE)
@@ -136,7 +145,10 @@ class MontrekRepository:
 
         cls.view_model = model  # Save the model class on the class
 
-    def receive(
+    def receive(self, apply_filter: bool = True) -> QuerySet:
+        return self.receive_raw(apply_filter, False)
+
+    def receive_raw(
         self, apply_filter: bool = True, update_view_model: bool = False
     ) -> QuerySet:
         if (
