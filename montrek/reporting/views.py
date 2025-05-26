@@ -29,9 +29,9 @@ def download_reporting_file_view(request, file_path: str):
         raise Http404
     with open(file_path, "rb") as file:
         response = HttpResponse(file.read(), content_type="application/octet-stream")
-        response["Content-Disposition"] = (
-            f"attachment; filename={os.path.basename(file_path)}"
-        )
+        response[
+            "Content-Disposition"
+        ] = f"attachment; filename={os.path.basename(file_path)}"
         os.remove(file_path)
         return response
 
@@ -133,7 +133,7 @@ class MontrekReportFieldEditView(
         try:
             # This will validate just the particular field
             field_value = form.fields[field_name].clean(request.POST.get(field_name))
-            field_value = HtmlSanitizer().clean_html(field_value)
+            field_value = HtmlSanitizer().clean_html(str(field_value))
             form.cleaned_data = {field_name: field_value}
             return self.form_valid(form, edit_data, request, field_name)
         except ValidationError as e:
