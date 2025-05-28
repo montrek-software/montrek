@@ -8,3 +8,6 @@ class RefreshDataTask(MontrekTask):
 
     def run(self):
         self.manager.repository.store_in_view_model()
+
+
+refresh_data_task = RefreshDataTask()
