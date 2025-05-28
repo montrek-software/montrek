@@ -286,6 +286,8 @@ class MontrekListView(
             return self.list_to_pdf()
         if request_get.get("gen_rest_api") == "true":
             return self.list_to_rest_api()
+        if request_get.get("refresh_data") == "true":
+            return self.refresh_data()
         if request_get.get("action") == "reset":
             return self.reset_filter()
         if request_get.get("action") == "add_filter":
@@ -356,6 +358,10 @@ class MontrekListView(
         query = self.manager.to_json()
         serializer = MontrekSerializer(query, manager=self.manager, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def refresh_data(self):
+        self.manager.refresh_data_task.delay()
+        return HttpResponseRedirect(self.request.path)
 
     def reset_filter(self):
         request_path = self.session_data["request_path"]
