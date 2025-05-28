@@ -37,7 +37,6 @@ from baseclasses.pages import NoPage
 from baseclasses.serializers import MontrekSerializer
 from baseclasses.typing import SessionDataType
 from baseclasses.utils import TableMetaSessionData, get_content_type
-from baseclasses.tasks import refresh_data_task
 
 logger = logging.getLogger(__name__)
 
@@ -361,10 +360,7 @@ class MontrekListView(
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def refresh_data(self):
-        task = refresh_data_task
-        task.set_manager(self.manager)
-        task.delay()
-
+        self.manager.refresh_data_task.delay()
         return HttpResponseRedirect(self.request.path)
 
     def reset_filter(self):

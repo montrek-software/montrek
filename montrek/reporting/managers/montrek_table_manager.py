@@ -26,11 +26,13 @@ from reporting.lib.protocols import (
     ReportElementProtocol,
 )
 from reporting.tasks.download_table_task import DownloadTableTask
+from reporting.tasks.refresh_data_task import RefreshDataTask
 
 
 class MontrekTableMetaClass(type):
     def __init__(cls, name, bases, dct):
         cls.download_task = DownloadTableTask(manager_class=cls)
+        cls.refresh_data_task = RefreshDataTask(manager_class=cls)
         super().__init__(name, bases, dct)
 
 
