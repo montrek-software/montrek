@@ -57,16 +57,17 @@ class TestMontrekExampleAListView(MontrekListViewTestCase):
             hub_entity=other_sata1.hub_entity, field_a2_str="test"
         )
         repo = HubARepository()
-        repo.store_in_view_model()
-        self.assertEqual(len(repo.receive()), 2)
+        # repo.store_in_view_model()
+        # self.assertEqual(len(repo.receive()), 2)
 
         url = reverse(
             "montrek_example_a_list",
         )
+        self.client.get(url, data={"refresh_data": "true"})
         response = self.client.get(url)
         obj_list = response.context_data["object_list"]
-        self.assertEqual(len(obj_list), 2)
 
+        self.assertEqual(len(obj_list), 2)
         query_params = {
             "filter_field": "field_a2_str",
             "filter_lookup": "in",
