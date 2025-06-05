@@ -109,7 +109,7 @@ class MontrekRepository:
                 )
         instances = [self.view_model(**item) for item in data]
         self.view_model.objects.all().delete()
-        self.view_model.objects.bulk_create(instances)
+        self.view_model.objects.bulk_create(instances, batch_size=1000)
 
     @classmethod
     def generate_view_model(cls):
