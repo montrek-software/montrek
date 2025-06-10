@@ -3,7 +3,92 @@
   h2 {
     color: {% get_color "primary" %};
   }
+
   .navbar {
+    background-color: {% get_color "primary" %};
+  }
+
+  .navbar a {
+    color: #ffffff;
+  }
+
+  .box {
+    border: 1px solid {% get_color "primary" %};
+  }
+
+  .page_title h1 {
+    color: {% get_color "primary" %};
+  }
+
+  .nav-tabs {
+    border-bottom: 2px solid {% get_color "primary" %};
+  }
+
+  .nav-link {
+    color: {% get_color "primary" %};
+    border: 1px solid {% get_color "primary" %};
+  }
+
+  .nav-item.active .nav-link,
+  .nav-link:hover {
+    background-color: {% get_color "primary" %};
+    color: #ffffff;
+  }
+
+  .btn {
     background-color: {% get_color "secondary" %};
+    color: #ffffff;
+  }
+
+  .btn:hover {
+    background-color: #9e0b36;
+  }
+
+  .btn-light {
+    color: {% get_color "primary" %};
+    background: none;
+  }
+
+  .btn-light:hover {
+    color: #9e0b36;
+  }
+
+  .btn-order-field:hover {
+    color: {% get_color "secondary" %};
+  }
+
+  .input {
+    background-color: {% get_color "secondary" %};
+    color: #ffffff;
+  }
+
+  .input:hover {
+    background-color: #9e0b36;
+  }
+
+  tr:nth-child(even) {
+    background-color: #e6f2f8;
+  }
+
+  tr:nth-child(odd) {
+    background-color: #ffffff;
+  }
+
+  th {
+    background-color: {% get_color "primary" %};
+    color: #ffffff;
+  }
+
+  .bar-value {
+    color: {% get_color "primary" %};
+    border: 1px solid {% get_color "primary" %};
+  }
+
+  .highlight-list li::before {
+    color: {% get_color "primary" %};
+  }
+
+  .lowlight-list li::before {
+    color: {% get_color "secondary" %};
   }
 </style>

@@ -14,6 +14,8 @@ import os
 from pathlib import Path
 from decouple import Config, RepositoryEnv
 from django.urls import reverse_lazy
+
+from reporting.core.reporting_colors import ReportingColors
 from .logging import get_logging_config
 
 from montrek.filtered_warnings import add_filtered_warnings
@@ -308,3 +310,5 @@ ADMIN_MAILING_LIST = config("ADMIN_MAILING_LIST", default="")
 
 LOG_LEVEL = config("LOG_LEVEL", default="WARNING")
 LOGGING = get_logging_config(LOG_LEVEL, MONTREK_EXTENSION_APPS)
+PRIMARY_COLOR = config("PRIMARY_COLOR", default=ReportingColors.BLUE.hex)
+SECONDARY_COLOR = config("SECONDARY_COLOR", default=ReportingColors.RED.hex)
