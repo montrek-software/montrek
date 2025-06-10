@@ -1,8 +1,9 @@
+{% load colors %}
 <style>
   h2 {
-    color: red;
+    color: {% get_color "primary" %};
   }
   .navbar {
-    background-color: blue;
+    background-color: {% get_color "secondary" %};
   }
 </style>
