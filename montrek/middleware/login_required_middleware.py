@@ -1,3 +1,4 @@
+from urllib.parse import parse_qs
 from django.http import HttpResponseRedirect
 from django.urls import reverse_lazy
 from django.conf import settings
@@ -10,7 +11,12 @@ class LoginRequiredMiddleware:
 
     def __call__(self, request):
         is_login_exempt = any([x in request.path for x in settings.LOGIN_EXEMPT_PATHS])
+        is_login_exempt = is_login_exempt or self.is_rest_api(request)
         if not request.user.is_authenticated and not is_login_exempt:
             return self.login_redirect
         response = self.get_response(request)
         return response
+
+    def is_rest_api(self, request) -> bool:
+        query_params = parse_qs(request.META.get("QUERY_STRING", ""))
+        return query_params.get("gen_rest_api") == ["true"]
