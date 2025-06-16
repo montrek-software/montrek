@@ -303,7 +303,7 @@ class MontrekRepository:
 
     def add_linked_satellites_field_annotations(
         self,
-        satellite_class: Type[MontrekSatelliteABC],
+        satellite_class: Type[MontrekSatelliteABC | MontrekTimeSeriesSatelliteABC],
         link_class: Type[MontrekLinkABC],
         fields: List[str],
         *,
