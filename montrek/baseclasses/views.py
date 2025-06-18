@@ -139,7 +139,7 @@ class MontrekPageViewMixin:
     def actions(self) -> tuple[ActionElement] | tuple:
         return ()
 
-    def get_page_context(self, context):
+    def get_page_context(self, context, **kwargs):
         page = self.page_class(**self.kwargs)
         context["page_title"] = page.page_title
         page.set_active_tab(self.tab)
