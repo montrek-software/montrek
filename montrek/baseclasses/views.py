@@ -8,8 +8,9 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import FileResponse, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
+from django.template import context
 from django.urls import reverse
 from django.views.generic import DetailView, RedirectView, View
 from django.views.generic.base import TemplateView
@@ -260,11 +261,11 @@ class ToPdfMixin:
         self.show_messages()
         if pdf_path and os.path.exists(pdf_path):
             with open(pdf_path, "rb") as pdf_file:
-                response = HttpResponse(pdf_file.read(), content_type="application/pdf")
-                response["Content-Disposition"] = (
-                    "inline; filename=" + os.path.basename(pdf_path)
+                return FileResponse(
+                    open(pdf_path, "rb"),
+                    content_type="application/pdf",
+                    filename=os.path.basename(pdf_path),
                 )
-                return response
         previous_url = self.request.META.get("HTTP_REFERER")
         return HttpResponseRedirect(previous_url)
 
