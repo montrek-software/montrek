@@ -1,9 +1,13 @@
-from django.contrib.auth import login
+from urllib.parse import urlencode
+from django.contrib.auth import login, logout
+from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.contrib.auth import views as auth_views
-from django.views import generic as generic_views
+from django.views import View, generic as generic_views
 from django.contrib import messages
 from user import forms
+
+KEYCLOAK_URL = "http://localhost:8080/realms/montrek"
 
 
 class MessageHandlerMixin:
@@ -40,30 +44,15 @@ class MontrekSignUpView(generic_views.CreateView, MessageHandlerMixin):
 
 
 class MontrekLoginView(generic_views.FormView, MessageHandlerMixin):
-    form_class = forms.MontrekAuthenticationForm
-    template_name = "user/user_base.html"
-    success_url = reverse_lazy("home")
-
-    def form_valid(self, form):
-        user = form.get_user()
-        login(self.request, user)
-        self.add_successfull_login_message(user.email)
-        return super().form_valid(form)
-
-    def form_invalid(self, form):
-        self.add_form_error_messages(form)
-        return super().form_invalid(form)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["page_title"] = "Login"
-        context["link_text"] = "Lost password?"
-        context["link"] = reverse_lazy("password_reset")
-        return context
+    def get(self, request, *args, **kwargs):
+        return redirect("oidc_authentication_init")
 
 
-class MontrekLogoutView(auth_views.LogoutView):
-    pass
+class MontrekLogoutView(View):
+    def dispatch(self, request, *args, **kwargs):
+        logout(request)
+        keycloak_logout_url = KEYCLOAK_URL + "/protocol/openid-connect/logout"
+        return redirect(keycloak_logout_url)
 
 
 class MontrekPasswordResetConfirmView(auth_views.PasswordResetConfirmView):
