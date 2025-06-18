@@ -102,7 +102,8 @@ class TestLinkedSatelliteSubqueryBuilder(TestCase):
 
     def test_raise_error_when_no_relation_to_link_table_is_set(self):
         class DummyLinkClass(bc_models.MontrekLinkABC):
-            pass
+            class Meta:
+                managed = False
 
         with self.assertRaisesMessage(
             TypeError, "DummyLinkClass must inherit from valid LinkClass!"

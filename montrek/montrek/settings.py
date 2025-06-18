@@ -14,6 +14,8 @@ import os
 from pathlib import Path
 from decouple import Config, RepositoryEnv
 from django.urls import reverse_lazy
+
+from reporting.core.reporting_colors import ReportingColors
 from .logging import get_logging_config
 
 from montrek.filtered_warnings import add_filtered_warnings
@@ -29,7 +31,7 @@ config = Config(RepositoryEnv(BASE_DIR / "../.env"))
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-2@8w*43%w2=36x1y3#v8mlll#!3kw9)jnn&^i&xw-o8^br_od-"
+SECRET_KEY = config("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config("DEBUG", default=False, cast=bool)
@@ -327,3 +329,5 @@ ADMIN_MAILING_LIST = config("ADMIN_MAILING_LIST", default="")
 
 LOG_LEVEL = config("LOG_LEVEL", default="WARNING")
 LOGGING = get_logging_config(LOG_LEVEL, MONTREK_EXTENSION_APPS)
+PRIMARY_COLOR = config("PRIMARY_COLOR", default=ReportingColors.BLUE.hex)
+SECONDARY_COLOR = config("SECONDARY_COLOR", default=ReportingColors.RED.hex)

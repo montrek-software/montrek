@@ -137,6 +137,7 @@ class TestMontrekRepositorySatellite(TestCase):
                 "created_by",
                 "comment",
                 "field_tsc2_float",
+                "created_by__email",
                 "field_tsc3_int",
                 "field_tsc3_str",
                 "field_tsc4_int",

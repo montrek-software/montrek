@@ -2,6 +2,7 @@ from enum import Enum
 from typing import Any, Callable, Type
 
 from django.db import models
+from django.db.models.fields.related import RelatedField
 
 from baseclasses.models import (
     LinkTypeEnum,
@@ -35,7 +36,9 @@ class SatelliteSubqueryBuilderABC(SubqueryBuilder):
     ):
         self.satellite_class = satellite_class
         self.field = field
-        self.field_type = self.satellite_class._meta.get_field(self.field)
+        field_parts = self.field.split("__")
+        # TODO: get field of related_model right
+        self.field_type = self.satellite_class._meta.get_field(field_parts[0])
         if isinstance(self.field_type, models.ForeignKey):
             self.field_type = models.IntegerField(null=True, blank=True)
         # TODO: remove lookup_string
@@ -77,8 +80,7 @@ class SatelliteSubqueryBuilder(SatelliteSubqueryBuilderABC):
             self.get_hub_query(reference_date)
             .annotate(
                 **{
-                    self.field
-                    + "sub": self.satellite_subquery(
+                    self.field + "sub": self.satellite_subquery(
                         reference_date, lookup_field="hub_entity"
                     ),
                 }
@@ -277,8 +279,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         lookup_field: str,
     ) -> dict:
         return {
-            self.field
-            + "sub": Subquery(
+            self.field + "sub": Subquery(
                 self._annotate_agg_field(
                     hub_field_to,
                     self.satellite_class.objects.filter(
@@ -323,8 +324,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         field_type = CharField
         return query.annotate(
             **{
-                self.field
-                + "agg": Cast(
+                self.field + "agg": Cast(
                     func(Cast(self.field + "sub", field_type())),
                     field_type(),
                 )
