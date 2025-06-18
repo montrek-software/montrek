@@ -29,3 +29,4 @@ tblib==3.0.0
 yfinance==0.2.52
 bleach==6.2.0
 tinycss2==1.4.0
+mozilla-django-oidc==4.0.1
