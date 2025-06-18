@@ -40,6 +40,7 @@ urlpatterns = [
         name="revoke_file_upload_task",
     ),
     path("admin/", admin.site.urls),
+    path("oidc/", include("mozilla_django_oidc.urls")),
     javascriptcatalog_url,
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

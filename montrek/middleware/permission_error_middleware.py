@@ -1,6 +1,6 @@
 from django.contrib import messages
 from django.http import HttpResponseRedirect
-from django.urls import reverse
+from django.conf import settings
 from django.core.exceptions import PermissionDenied
 
 MISSING_PERMISSION_MESSAGE = (
@@ -25,5 +25,5 @@ class PermissionErrorMiddleware:
             if request.user.is_authenticated:
                 redirect_url = request.META.get("HTTP_REFERER") or reverse("home")
             else:
-                redirect_url = reverse("login")
+                redirect_url = settings.LOGIN_URL
             return HttpResponseRedirect(redirect_url)
