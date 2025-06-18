@@ -37,20 +37,23 @@ from baseclasses.pages import NoPage
 from baseclasses.serializers import MontrekSerializer
 from baseclasses.typing import SessionDataType
 from baseclasses.utils import TableMetaSessionData, get_content_type
+from django.views.decorators.http import require_safe
 
 logger = logging.getLogger(__name__)
 
 
+@require_safe
 def home(request):
     return render(request, "home.html")
 
 
+@require_safe
 def under_construction(request):
     return render(request, "under_construction.html")
 
 
+@require_safe
 def navbar(request):
-    # navbar_apps_config = config("NAVBAR_APPS", default="").split(",")
     navbar_apps_config = settings.NAVBAR_APPS
     navbar_rename_config = settings.NAVBAR_RENAME
     navbar_apps = []
@@ -90,8 +93,9 @@ def navbar(request):
     )
 
 
+@require_safe
 def links(request):
-    links_config = config("LINKS", default="http://example.com,Example").split(" ")
+    links_config = config("LINKS", default="https://example.com,Example").split(" ")
     links = []
     for link in links_config:
         link_constituents = link.split(",")
@@ -99,12 +103,14 @@ def links(request):
     return render(request, "links.html", {"links": links})
 
 
+@require_safe
 def test_banner(request):
     test_tag = config("DEBUG", default=0)
     test_tag = True if test_tag == "1" else False
     return render(request, "test_banner.html", {"test_tag": test_tag})
 
 
+@require_safe
 def client_logo(request):
     client_logo_path = config(
         "CLIENT_LOGO_PATH",
@@ -133,7 +139,7 @@ class MontrekPageViewMixin:
     def actions(self) -> tuple[ActionElement] | tuple:
         return ()
 
-    def get_page_context(self, context, **kwargs):
+    def get_page_context(self, context):
         page = self.page_class(**self.kwargs)
         context["page_title"] = page.page_title
         page.set_active_tab(self.tab)
@@ -249,16 +255,15 @@ class MontrekTemplateView(
 
 class ToPdfMixin:
     def list_to_pdf(self):
-        response = HttpResponse(content_type="application/pdf")
         report_manager = LatexReportManager(self.manager)
         pdf_path = report_manager.compile_report()
         self.show_messages()
         if pdf_path and os.path.exists(pdf_path):
             with open(pdf_path, "rb") as pdf_file:
                 response = HttpResponse(pdf_file.read(), content_type="application/pdf")
-                response[
-                    "Content-Disposition"
-                ] = "inline; filename=" + os.path.basename(pdf_path)
+                response["Content-Disposition"] = (
+                    "inline; filename=" + os.path.basename(pdf_path)
+                )
                 return response
         previous_url = self.request.META.get("HTTP_REFERER")
         return HttpResponseRedirect(previous_url)
@@ -327,13 +332,13 @@ class MontrekListView(
         context["paginate_by"] = self.manager.paginate_by
         context["is_large"] = self.manager.is_large
         context["is_compact_format"] = self.manager.is_current_compact_format
-        filter = self.session_data.get("filter", {})
-        filter = filter.get(self.session_data["request_path"], {})
+        session_filter = self.session_data.get("filter", {})
+        session_filter = session_filter.get(self.session_data["request_path"], {})
         filter_count = self.session_data.get("filter_count", {})
         filter_count = filter_count.get(self.session_data["request_path"], 1)
         context["filter_forms"] = [
             FilterForm(
-                filter=filter,
+                filter=session_filter,
                 filter_field_choices=self.manager.get_std_queryset_field_choices(),
                 filter_index=i,
             )
@@ -394,15 +399,11 @@ class MontrekListView(
         request_data = self.request.session
         field = "order_fields"
         current_order_field = request_data.get(field, {}).get(request_path, [])
-        if current_order_field:
-            if current_order_field[0]:
-                if val == current_order_field[0]:
-                    val = "-" + str(val)
-                elif (
-                    val == current_order_field[0][1:]
-                    and current_order_field[0][0] == "-"
-                ):
-                    val = None
+        if current_order_field and current_order_field[0]:
+            if val == current_order_field[0]:
+                val = "-" + str(val)
+            elif val == current_order_field[0][1:] and current_order_field[0][0] == "-":
+                val = None
         self.request.session["pages"][request_path] = ["1"]
         self.request.session[field][request_path] = [val]
         return HttpResponseRedirect(self.request.path)
@@ -537,7 +538,6 @@ class MontrekCreateUpdateView(
         return HttpResponseRedirect(self.get_success_url())
 
     def get_form(self, form_class=None):
-        # TODO: Form should receive manager
         return self.form_class(repository=self.manager.repository)
 
     def get_context_data(self, **kwargs):
@@ -546,7 +546,6 @@ class MontrekCreateUpdateView(
         return context
 
     def post(self, request, *args, **kwargs):
-        # TODO: Form should receive manager
         self.object = None
         form = self.form_class(self.request.POST, repository=self.manager.repository)
         if form.is_valid():
