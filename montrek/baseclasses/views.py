@@ -106,8 +106,7 @@ def links(request):
 
 @require_safe
 def test_banner(request):
-    test_tag = config("DEBUG", default=0)
-    test_tag = True if test_tag == "1" else False
+    test_tag = settings.DEBUG
     return render(request, "test_banner.html", {"test_tag": test_tag})
 
 
