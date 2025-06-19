@@ -10,20 +10,12 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.http import FileResponse, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
-from django.template import context
 from django.urls import reverse
+from django.views.decorators.http import require_safe
 from django.views.generic import DetailView, RedirectView, View
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import CreateView
 from django.views.generic.list import ListView
-from file_upload.forms import SimpleUploadFileForm
-from file_upload.managers.simple_upload_file_manager import SimpleUploadFileManager
-from reporting.managers.latex_report_manager import LatexReportManager
-from reporting.managers.montrek_details_manager import MontrekDetailsManager
-from reporting.managers.montrek_table_manager import (
-    MontrekTableManager,
-    HistoryDataTableManager,
-)
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -38,7 +30,14 @@ from baseclasses.pages import NoPage
 from baseclasses.serializers import MontrekSerializer
 from baseclasses.typing import SessionDataType
 from baseclasses.utils import TableMetaSessionData, get_content_type
-from django.views.decorators.http import require_safe
+from file_upload.forms import SimpleUploadFileForm
+from file_upload.managers.simple_upload_file_manager import SimpleUploadFileManager
+from reporting.managers.latex_report_manager import LatexReportManager
+from reporting.managers.montrek_details_manager import MontrekDetailsManager
+from reporting.managers.montrek_table_manager import (
+    HistoryDataTableManager,
+    MontrekTableManager,
+)
 
 logger = logging.getLogger(__name__)
 
