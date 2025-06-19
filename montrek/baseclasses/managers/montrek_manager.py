@@ -8,7 +8,9 @@ class MontrekManager:
     repository_class = MontrekRepository
     _repository = None
 
-    def __init__(self, session_data: dict[str, Any] = {}):
+    def __init__(self, session_data: dict[str, Any] | None = None):
+        if session_data is None:
+            session_data = {}
         self.session_data = session_data
         self.messages: list[MontrekMessage] = []
 

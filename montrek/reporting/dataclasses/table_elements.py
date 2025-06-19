@@ -232,9 +232,9 @@ class LinkListTableElement(BaseLinkTableElement):
         list_values = str(list_values).split(self.in_separator) if list_values else []
         text_values = self.get_dotted_attr_or_arg(obj, self.text)
         text_values = str(text_values).split(self.in_separator) if text_values else []
-        assert len(list_values) == len(
-            text_values
-        ), f"list_values: {list_values}, text_values: {text_values}"
+        assert len(list_values) == len(text_values), (
+            f"list_values: {list_values}, text_values: {text_values}"
+        )
         values = zip(list_values, text_values)
         values = sorted(values, key=lambda x: x[1])
         return values
@@ -377,12 +377,11 @@ class ProgressBarTableElement(NumberTableElement):
 @dataclass
 class DateTableBaseElement(AttrTableElement):
     attr: str
-    date_format: str = ""
+    date_format = "%d/%m/%Y"
 
     def format(self, value):
-        if not isinstance(value, timezone.datetime):
-            return f'<td style="text-align:left;">{value}</td>'
-        value.strftime(self.date_format)
+        if isinstance(value, timezone.datetime):
+            value = value.strftime(self.date_format)
         return f'<td style="text-align:left;">{value}</td>'
 
     def get_value(self, obj: Any) -> Any:
@@ -394,12 +393,11 @@ class DateTableBaseElement(AttrTableElement):
 
 class DateTableElement(DateTableBaseElement):
     serializer_field_class = serializers.DateField
-    date_format = "%d/%m/%Y"
 
 
 class DateTimeTableElement(DateTableBaseElement):
     serializer_field_class = serializers.DateTimeField
-    date_format = "%d/%m/%Y"
+    date_format = "%Y-%m-%d %H:%M:%S"
 
 
 @dataclass

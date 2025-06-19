@@ -45,29 +45,78 @@ class FilterForm(forms.Form):
         filter_negate = False
         filter_value = ""
 
-        if filter and isinstance(filter, dict):
-            filter_items = list(filter.items())
-            if filter_index < len(filter_items):
-                filter_key, value = filter_items[filter_index]
+        if not filter or not isinstance(filter, dict):
+            self.set_filter_fields(
+                filter_field,
+                filter_field_choices,
+                filter_negate,
+                filter_lookup,
+                filter_value,
+                *args,
+                **kwargs,
+            )
+            return
 
-                if filter_key.upper() != "OR":
-                    try:
-                        filter_field, filter_lookup = filter_key.split("__", 1)
-                    except ValueError:
-                        filter_field = filter_key
-                        filter_lookup = "exact"
+        filter_items = list(filter.items())
+        if filter_index >= len(filter_items):
+            self.set_filter_fields(
+                filter_field,
+                filter_field_choices,
+                filter_negate,
+                filter_lookup,
+                filter_value,
+                *args,
+                **kwargs,
+            )
+            return
 
-                    filter_negate = value.get("filter_negate", False)
-                    filter_value = value.get("filter_value", "")
-                    if isinstance(filter_value, list):
-                        filter_value = ",".join(map(str, filter_value))
+        filter_key, value = filter_items[filter_index]
+
+        if filter_key.upper() == "OR":
+            self.set_filter_fields(
+                filter_field,
+                filter_field_choices,
+                filter_negate,
+                filter_lookup,
+                filter_value,
+                *args,
+                **kwargs,
+            )
+            return
+
+        try:
+            filter_field, filter_lookup = filter_key.split("__", 1)
+        except ValueError:
+            filter_field = filter_key
+            filter_lookup = "exact"
+
+        filter_negate = value.get("filter_negate", False)
+        filter_value = value.get("filter_value", "")
+        if isinstance(filter_value, list):
+            filter_value = ",".join(map(str, filter_value))
 
         # Set filter values as instance attributes
-        filter_field = filter_field
-        filter_lookup = filter_lookup
-        filter_negate = filter_negate
-        filter_value = filter_value
         filter_field_choices = filter_field_choices or []
+        self.set_filter_fields(
+            filter_field,
+            filter_field_choices,
+            filter_negate,
+            filter_lookup,
+            filter_value,
+            *args,
+            **kwargs,
+        )
+
+    def set_filter_fields(
+        self,
+        filter_field,
+        filter_field_choices,
+        filter_negate,
+        filter_lookup,
+        filter_value,
+        *args,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
 
         self.fields["filter_field"] = forms.ChoiceField(

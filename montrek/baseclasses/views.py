@@ -1,36 +1,23 @@
 import logging
 import os
-import re
 from typing import Any
 
-from decouple import config
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.http import FileResponse, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
-from django.template import context
 from django.urls import reverse
+from django.views.decorators.http import require_safe
 from django.views.generic import DetailView, RedirectView, View
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import CreateView
 from django.views.generic.list import ListView
-from file_upload.forms import SimpleUploadFileForm
-from file_upload.managers.simple_upload_file_manager import SimpleUploadFileManager
-from reporting.managers.latex_report_manager import LatexReportManager
-from reporting.managers.montrek_details_manager import MontrekDetailsManager
-from reporting.managers.montrek_table_manager import (
-    MontrekTableManager,
-    HistoryDataTableManager,
-)
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from baseclasses import utils
-from baseclasses.dataclasses.link_model import LinkModel
-from baseclasses.dataclasses.nav_bar_model import NavBarDropdownModel, NavBarModel
 from baseclasses.dataclasses.view_classes import ActionElement
 from baseclasses.forms import DateRangeForm, FilterForm, MontrekCreateForm
 from baseclasses.managers.montrek_manager import MontrekManagerNotImplemented
@@ -38,7 +25,14 @@ from baseclasses.pages import NoPage
 from baseclasses.serializers import MontrekSerializer
 from baseclasses.typing import SessionDataType
 from baseclasses.utils import TableMetaSessionData, get_content_type
-from django.views.decorators.http import require_safe
+from file_upload.forms import SimpleUploadFileForm
+from file_upload.managers.simple_upload_file_manager import SimpleUploadFileManager
+from reporting.managers.latex_report_manager import LatexReportManager
+from reporting.managers.montrek_details_manager import MontrekDetailsManager
+from reporting.managers.montrek_table_manager import (
+    HistoryDataTableManager,
+    MontrekTableManager,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -51,82 +45,6 @@ def home(request):
 @require_safe
 def under_construction(request):
     return render(request, "under_construction.html")
-
-
-@require_safe
-def navbar(request):
-    navbar_apps_config = settings.NAVBAR_APPS
-    navbar_rename_config = settings.NAVBAR_RENAME
-    navbar_apps = []
-    navbar_dropdowns = {}
-    for app in navbar_apps_config:
-        if app == "":
-            continue
-        app_structure = app.split(".")
-        if len(app_structure) > 1:
-            repo_name = app_structure[0]
-            app_name = app_structure[1]
-            if repo_name not in navbar_dropdowns:
-                navbar_dropdowns[repo_name] = NavBarDropdownModel(
-                    repo_name, force_display_name=navbar_rename_config.get(repo_name)
-                )
-            dropdown = navbar_dropdowns[repo_name]
-            dropdown.dropdown_items.append(
-                NavBarModel(
-                    app_name, force_display_name=navbar_rename_config.get(app_name)
-                )
-            )
-        else:
-            navbar_apps.append(
-                NavBarModel(app, force_display_name=navbar_rename_config.get(app))
-            )
-    home_url = reverse(settings.NAVBAR_HOME_URL)
-    home_label = settings.NAVBAR_HOME_LABEL
-    return render(
-        request,
-        "navbar.html",
-        {
-            "nav_apps": navbar_apps,
-            "navbar_dropdowns": navbar_dropdowns.values(),
-            "home_url": home_url,
-            "home_label": home_label,
-        },
-    )
-
-
-@require_safe
-def links(request):
-    links_config = config("LINKS", default="https://example.com,Example").split(" ")
-    links = []
-    for link in links_config:
-        link_constituents = link.split(",")
-        links.append(LinkModel(href=link_constituents[0], title=link_constituents[1]))
-    return render(request, "links.html", {"links": links})
-
-
-@require_safe
-def test_banner(request):
-    test_tag = settings.DEBUG
-    return render(request, "test_banner.html", {"test_tag": test_tag})
-
-
-@require_safe
-def client_logo(request):
-    client_logo_path = config(
-        "CLIENT_LOGO_PATH",
-        default="https://vme-stiftung.de/wp-content/uploads/2019/09/example-logo-2-300x201.jpg",
-    )
-    client_logo_link = config("CLIENT_LOGO_LINK", default="https://example.com")
-    is_url = bool(re.match(r"^https?://", client_logo_path))
-    return render(
-        request,
-        "client_logo.html",
-        {
-            "client_logo_path": client_logo_path,
-            "is_url": is_url,
-            "client_logo_link": client_logo_link,
-        },
-    )
 
 
 class MontrekPageViewMixin:
@@ -259,12 +177,11 @@ class ToPdfMixin:
         pdf_path = report_manager.compile_report()
         self.show_messages()
         if pdf_path and os.path.exists(pdf_path):
-            with open(pdf_path, "rb") as pdf_file:
-                return FileResponse(
-                    open(pdf_path, "rb"),
-                    content_type="application/pdf",
-                    filename=os.path.basename(pdf_path),
-                )
+            return FileResponse(
+                open(pdf_path, "rb"),
+                content_type="application/pdf",
+                filename=os.path.basename(pdf_path),
+            )
         previous_url = self.request.META.get("HTTP_REFERER")
         return HttpResponseRedirect(previous_url)
 

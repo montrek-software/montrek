@@ -5,6 +5,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.contrib.messages import get_messages
 from django.contrib.messages.middleware import MessageMiddleware
 from django.contrib.sessions.middleware import SessionMiddleware
+from django.conf import settings
 from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 from reporting.dataclasses import table_elements as te
@@ -26,7 +27,6 @@ from baseclasses.views import (
     MontrekRedirectView,
     MontrekTemplateView,
     MontrekViewMixin,
-    navbar,
 )
 from testing.decorators.add_logged_in_user import add_logged_in_user
 
@@ -138,8 +138,7 @@ class MockErrors:
 class MockFormClass:
     errors = MockErrors()
 
-    def __init__(self, request, repository):
-        ...
+    def __init__(self, request, repository): ...
 
     def is_valid(self):
         return False
@@ -529,9 +528,9 @@ class TestNavbar(TestCase):
     def setUp(self) -> None:
         self.factory = RequestFactory()
 
+    @add_logged_in_user
     def test_navbar(self):
-        request = self.factory.get("/navbar/")
-        response = navbar(request)
+        response = self.client.get(reverse("home"))
         self.assertEqual(response.status_code, 200)
         soup = BeautifulSoup(response.content, "html.parser")
 
@@ -616,15 +615,20 @@ class TestMontrekRedirectView(TestCase):
 
 
 class ClientLogoViewTest(TestCase):
-    @patch("baseclasses.views.config")  # patching the config function
     @add_logged_in_user
-    def test_client_logo(self, mock_config):
-        # Mock the config value to simulate the environment variable
-        mock_config.return_value = "my_logo.png"
+    @override_settings(CLIENT_LOGO_PATH="my_logo.png")
+    def test_client_logo(self):
+        self._run_test("/static/logos/")
 
+    @add_logged_in_user
+    @override_settings(CLIENT_LOGO_PATH="https://my_logo.png")
+    def test_client_logo_url(self):
+        self._run_test("https://")
+
+    def _run_test(self, expected_path: str):
         # Make a request to the view
         response = self.client.get(
-            reverse("client_logo")
+            reverse("home")
         )  # assuming the view has the URL name 'client_logo'
 
         # Check that the response is OK (200)
@@ -632,36 +636,12 @@ class ClientLogoViewTest(TestCase):
 
         # Ensure the context contains the correct logo path
         self.assertIn("client_logo_path", response.context)
-        self.assertEqual(response.context["client_logo_path"], "my_logo.png")
-
-        # Check the rendered HTML
-        # Check that the static URL for the logo is correct
-        self.assertContains(
-            response,
-            '<img src="/static/logos/my_logo.png" class="img-responsive" alt="Client Logo"/>',
+        self.assertEqual(
+            response.context["client_logo_path"], settings.CLIENT_LOGO_PATH
         )
-
-    @patch("baseclasses.views.config")  # patching the config function
-    @add_logged_in_user
-    def test_client_logo_url(self, mock_config):
-        # Mock the config value to simulate the environment variable
-        mock_config.return_value = "http://my_logo.png"
-
-        # Make a request to the view
-        response = self.client.get(
-            reverse("client_logo")
-        )  # assuming the view has the URL name 'client_logo'
-
-        # Check that the response is OK (200)
-        self.assertEqual(response.status_code, 200)
-
-        # Ensure the context contains the correct logo path
-        self.assertIn("client_logo_path", response.context)
-        self.assertEqual(response.context["client_logo_path"], "http://my_logo.png")
-
         # Check the rendered HTML
         # Check that the static URL for the logo is correct
         self.assertContains(
             response,
-            '<img src="http://my_logo.png" class="img-responsive" alt="Client Logo"/>',
+            f'<img src="{expected_path}my_logo.png" class="img-responsive" alt="Client Logo"/>',
         )

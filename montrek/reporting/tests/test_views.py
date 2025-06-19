@@ -1,6 +1,6 @@
 import os
 from django.http import Http404
-from django.test import TestCase
+from django.test import TestCase, RequestFactory
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.files.storage import default_storage
 from django.urls import reverse
@@ -8,6 +8,9 @@ from reporting.views import download_reporting_file_view
 
 
 class TestDownloadFileView(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+
     def test_download_view_via_url(self):
         test_file = SimpleUploadedFile(
             name="test_file.txt",
@@ -28,7 +31,8 @@ class TestDownloadFileView(TestCase):
             content_type="text/plain",
         )
         temp_file_path = default_storage.save("temp/test_file.txt", test_file)
-        response = download_reporting_file_view(None, temp_file_path)
+        request = self.factory.get("/")
+        response = download_reporting_file_view(request, temp_file_path)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             response.get("Content-Disposition"), "attachment; filename=test_file.txt"
@@ -41,4 +45,5 @@ class TestDownloadFileView(TestCase):
         self.assertRaises(Http404)
 
     def test_download_view_file_not_found(self):
-        self.assertRaises(Http404, download_reporting_file_view, None, "Dummy.txt")
+        request = self.factory.get("/")
+        self.assertRaises(Http404, download_reporting_file_view, request, "Dummy.txt")

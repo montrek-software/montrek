@@ -29,8 +29,6 @@ from file_upload.tasks.file_upload_task import revoke_file_upload_task
 
 urlpatterns = [
     path("", base_views.home, name="home"),
-    path("navbar", base_views.navbar, name="navbar"),
-    path("links", base_views.links, name="links"),
     path(
         "under_construction", base_views.under_construction, name="under_construction"
     ),

@@ -1,28 +1,30 @@
 import os
 
+from django.conf import settings
+from django.forms import ValidationError
+from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.shortcuts import render
+from django.views import View
+from django.views.decorators.http import require_safe
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
 from baseclasses.forms import MontrekCreateForm
+from baseclasses.sanitizer import HtmlSanitizer
 from baseclasses.views import (
     MontrekPermissionRequiredMixin,
     MontrekTemplateView,
     MontrekViewMixin,
     ToPdfMixin,
 )
-from django.conf import settings
-from django.forms import ValidationError
-from django.http import Http404, HttpResponse, HttpResponseRedirect
-from django.shortcuts import render
-from django.views import View
-from rest_framework import status
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from baseclasses.sanitizer import HtmlSanitizer
-
 from reporting.managers.latex_report_manager import LatexReportManager
 from reporting.managers.montrek_report_manager import MontrekReportManager
 
 # Create your views here.
 
 
+@require_safe
 def download_reporting_file_view(request, file_path: str):
     file_path = os.path.join(settings.MEDIA_ROOT, file_path)
     if not os.path.exists(file_path):
