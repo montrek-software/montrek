@@ -377,7 +377,7 @@ class ProgressBarTableElement(NumberTableElement):
 @dataclass
 class DateTableBaseElement(AttrTableElement):
     attr: str
-    date_format: str = ""
+    date_format = "%d/%m/%Y"
 
     def format(self, value):
         if isinstance(value, timezone.datetime):
@@ -393,12 +393,11 @@ class DateTableBaseElement(AttrTableElement):
 
 class DateTableElement(DateTableBaseElement):
     serializer_field_class = serializers.DateField
-    date_format = "%d/%m/%Y"
 
 
 class DateTimeTableElement(DateTableBaseElement):
     serializer_field_class = serializers.DateTimeField
-    date_format = "%d/%m/%Y"
+    date_format = "%Y-%m-%d %H:%M:%S"
 
 
 @dataclass

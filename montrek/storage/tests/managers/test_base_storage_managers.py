@@ -9,6 +9,9 @@ class MockStorageManager(BaseStorageManager):
     def load(self) -> bytes:
         raise NotImplementedError
 
+    def cleanup(self):
+        raise NotImplementedError
+
 
 class TestMockStorageManager(TestCase):
     def test_save(self):
