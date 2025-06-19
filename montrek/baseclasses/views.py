@@ -53,47 +53,6 @@ def under_construction(request):
 
 
 @require_safe
-def navbar(request):
-    navbar_apps_config = settings.NAVBAR_APPS
-    navbar_rename_config = settings.NAVBAR_RENAME
-    navbar_apps = []
-    navbar_dropdowns = {}
-    for app in navbar_apps_config:
-        if app == "":
-            continue
-        app_structure = app.split(".")
-        if len(app_structure) > 1:
-            repo_name = app_structure[0]
-            app_name = app_structure[1]
-            if repo_name not in navbar_dropdowns:
-                navbar_dropdowns[repo_name] = NavBarDropdownModel(
-                    repo_name, force_display_name=navbar_rename_config.get(repo_name)
-                )
-            dropdown = navbar_dropdowns[repo_name]
-            dropdown.dropdown_items.append(
-                NavBarModel(
-                    app_name, force_display_name=navbar_rename_config.get(app_name)
-                )
-            )
-        else:
-            navbar_apps.append(
-                NavBarModel(app, force_display_name=navbar_rename_config.get(app))
-            )
-    home_url = reverse(settings.NAVBAR_HOME_URL)
-    home_label = settings.NAVBAR_HOME_LABEL
-    return render(
-        request,
-        "navbar.html",
-        {
-            "nav_apps": navbar_apps,
-            "navbar_dropdowns": navbar_dropdowns.values(),
-            "home_url": home_url,
-            "home_label": home_label,
-        },
-    )
-
-
-@require_safe
 def links(request):
     links_config = config("LINKS", default="https://example.com,Example").split(" ")
     links = []
@@ -258,12 +217,11 @@ class ToPdfMixin:
         pdf_path = report_manager.compile_report()
         self.show_messages()
         if pdf_path and os.path.exists(pdf_path):
-            with open(pdf_path, "rb") as pdf_file:
-                return FileResponse(
-                    open(pdf_path, "rb"),
-                    content_type="application/pdf",
-                    filename=os.path.basename(pdf_path),
-                )
+            return FileResponse(
+                open(pdf_path, "rb"),
+                content_type="application/pdf",
+                filename=os.path.basename(pdf_path),
+            )
         previous_url = self.request.META.get("HTTP_REFERER")
         return HttpResponseRedirect(previous_url)
 

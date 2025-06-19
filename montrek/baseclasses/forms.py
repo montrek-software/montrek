@@ -63,10 +63,6 @@ class FilterForm(forms.Form):
                         filter_value = ",".join(map(str, filter_value))
 
         # Set filter values as instance attributes
-        filter_field = filter_field
-        filter_lookup = filter_lookup
-        filter_negate = filter_negate
-        filter_value = filter_value
         filter_field_choices = filter_field_choices or []
         super().__init__(*args, **kwargs)
 
