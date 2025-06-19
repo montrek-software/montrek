@@ -53,16 +53,6 @@ def under_construction(request):
 
 
 @require_safe
-def links(request):
-    links_config = config("LINKS", default="https://example.com,Example").split(" ")
-    links = []
-    for link in links_config:
-        link_constituents = link.split(",")
-        links.append(LinkModel(href=link_constituents[0], title=link_constituents[1]))
-    return render(request, "links.html", {"links": links})
-
-
-@require_safe
 def test_banner(request):
     test_tag = settings.DEBUG
     return render(request, "test_banner.html", {"test_tag": test_tag})

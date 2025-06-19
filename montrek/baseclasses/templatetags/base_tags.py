@@ -1,15 +1,15 @@
 from django import template
 from django.utils.safestring import mark_safe
 from django.urls import reverse
-from baseclasses.views import links, client_logo, test_banner
+from baseclasses.views import client_logo, test_banner
 from django.conf import settings
 from baseclasses.dataclasses.nav_bar_model import NavBarDropdownModel, NavBarModel
 
 register = template.Library()
 
 
-@register.inclusion_tag("navbar.html", takes_context=True)
-def include_navbar(context):
+@register.inclusion_tag("navbar.html")
+def include_navbar():
     navbar_apps_config = settings.NAVBAR_APPS
     navbar_rename_config = settings.NAVBAR_RENAME
     navbar_apps = []
@@ -43,13 +43,6 @@ def include_navbar(context):
         "home_url": reverse(settings.NAVBAR_HOME_URL),
         "home_label": settings.NAVBAR_HOME_LABEL,
     }
-
-
-@register.simple_tag(takes_context=True)
-def include_links(context):
-    request = context["request"]
-    response = links(request)
-    return mark_safe(response.content.decode("utf-8"))
 
 
 @register.simple_tag(takes_context=True)
