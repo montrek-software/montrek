@@ -10,7 +10,7 @@ class HubCRepository(MontrekRepository):
     def set_annotations(self):
         self.add_satellite_fields_annotations(
             me_models.SatTSC2,
-            ["field_tsc2_float"],
+            ["field_tsc2_float", "created_by__email"],
         )
         self.add_satellite_fields_annotations(
             me_models.SatTSC3,
