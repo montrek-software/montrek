@@ -312,3 +312,10 @@ LOG_LEVEL = config("LOG_LEVEL", default="WARNING")
 LOGGING = get_logging_config(LOG_LEVEL, MONTREK_EXTENSION_APPS)
 PRIMARY_COLOR = config("PRIMARY_COLOR", default=ReportingColors.BLUE.hex)
 SECONDARY_COLOR = config("SECONDARY_COLOR", default=ReportingColors.RED.hex)
+
+# CLient Logo
+CLIENT_LOGO_PATH = config(
+    "CLIENT_LOGO_PATH",
+    default="https://vme-stiftung.de/wp-content/uploads/2019/09/example-logo-2-300x201.jpg",
+)
+CLIENT_LOGO_LINK = config("CLIENT_LOGO_LINK", default="https://example.com")

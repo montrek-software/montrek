@@ -1,8 +1,9 @@
+import re
+
 from django import template
-from django.utils.safestring import mark_safe
-from django.urls import reverse
-from baseclasses.views import client_logo, test_banner
 from django.conf import settings
+from django.urls import reverse
+
 from baseclasses.dataclasses.nav_bar_model import NavBarDropdownModel, NavBarModel
 
 register = template.Library()
@@ -45,15 +46,20 @@ def include_navbar():
     }
 
 
-@register.simple_tag(takes_context=True)
-def include_client_logo(context):
-    request = context["request"]
-    response = client_logo(request)
-    return mark_safe(response.content.decode("utf-8"))
+@register.inclusion_tag("client_logo.html")
+def include_client_logo():
+    client_logo_path = settings.CLIENT_LOGO_PATH
+    client_logo_link = settings.CLIENT_LOGO_LINK
+
+    is_url = bool(re.match(r"^https?://", client_logo_path))
+    return {
+        "client_logo_path": client_logo_path,
+        "is_url": is_url,
+        "client_logo_link": client_logo_link,
+    }
 
 
-@register.simple_tag(takes_context=True)
-def include_test_banner(context):
-    request = context["request"]
-    response = test_banner(request)
-    return mark_safe(response.content.decode("utf-8"))
+@register.inclusion_tag("test_banner.html")
+def include_test_banner():
+    test_tag = settings.DEBUG
+    return {"test_tag": test_tag}
