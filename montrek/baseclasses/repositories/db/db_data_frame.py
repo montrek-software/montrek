@@ -106,9 +106,7 @@ class DbDataFrame:
         sat_fields = list(set(fields)) + common_fields
         return [field for field in sat_fields if field in self.data_frame.columns]
 
-    def _raise_for_duplicated_entries(
-        self, data_frame: pd.DataFrame, is_timeseries: bool
-    ):
+    def _raise_for_duplicated_entries(self, data_frame: pd.DataFrame):
         raise_error = False
         error_message = ""
         for satellite_class in self.annotator.get_satellite_classes():
@@ -123,7 +121,6 @@ class DbDataFrame:
             if "hub_entity_id" in data_frame.columns:
                 value_field_names.append("hub_entity_id")
                 identifier_field_names.append("hub_entity_id")
-            # if satellite_class.is_timeseries:
             if "value_date" in data_frame.columns:
                 value_field_names.append("value_date")
                 identifier_field_names.append("value_date")
