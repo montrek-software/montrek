@@ -55,6 +55,7 @@ class DbDataFrame:
         data_frame = data_frame.drop_duplicates()
         data_frame = self._convert_tuples_to_lists(data_frame)
         self._raise_for_duplicated_entries(data_frame)
+        self.data_frame = self.data_frame.copy()
         self.data_frame["hub_entity"] = data_frame.apply(self._process_row, axis=1)
 
     def _process_row(self, row: pd.Series) -> MontrekHubABC | None:
@@ -191,11 +192,11 @@ class DbDataFrame:
     def _set_missing_hubs(self):
         if "hub_entity_id" in self.data_frame.columns:
             return
+        if not pd.isnull(self.data_frame["hub_entity"]).any():
+            return
         self.data_frame["hub_entity_id"] = self.data_frame["hub_entity"].apply(
             self._assign_hub
         )
-        if not pd.isnull(self.data_frame["hub_entity_id"]).any():
-            return
         static_identifier_fields = []
         for satellite_class in self.annotator.annotated_satellite_classes:
             if satellite_class.is_timeseries is False:
