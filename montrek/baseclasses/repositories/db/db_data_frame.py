@@ -41,10 +41,9 @@ class DbDataFrame:
             return
         self._process_data(static_columns)
         self.db_writer.write_hubs()
-        self.db_staller.clean_hubs()
-        self._set_missing_hubs()
 
     def _process_time_series_data(self):
+        self._set_missing_hubs()
         time_series_columns = self.get_time_series_satellite_field_names()
         if len(time_series_columns) == 0:
             return
@@ -103,6 +102,8 @@ class DbDataFrame:
         for satellite_class in self.annotator.annotated_satellite_classes:
             if satellite_class.is_timeseries == is_time_series:
                 fields.extend(satellite_class.get_value_field_names())
+        if fields == []:
+            return fields
 
         common_fields = ["hub_entity_id"]
         if is_time_series:
@@ -188,15 +189,24 @@ class DbDataFrame:
         return x.pk
 
     def _set_missing_hubs(self):
+        if "hub_entity_id" in self.data_frame.columns:
+            return
         self.data_frame["hub_entity_id"] = self.data_frame["hub_entity"].apply(
             self._assign_hub
         )
-        if not pd.isnull(self.data_frame["hub_entity_id"]).any:
+        if not pd.isnull(self.data_frame["hub_entity_id"]).any():
             return
         static_identifier_fields = []
         for satellite_class in self.annotator.annotated_satellite_classes:
             if satellite_class.is_timeseries is False:
                 static_identifier_fields.extend(satellite_class.identifier_fields)
+        static_identifier_fields = [
+            field
+            for field in static_identifier_fields
+            if field in self.data_frame.columns
+        ]
+        if not static_identifier_fields:
+            return
         self.data_frame["hub_entity_id"] = self.data_frame.groupby(
             static_identifier_fields
         )["hub_entity_id"].transform(lambda x: x.ffill().bfill())
