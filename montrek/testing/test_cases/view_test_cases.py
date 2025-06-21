@@ -353,10 +353,19 @@ class MontrekRestApiViewTestCase(MontrekViewTestCase):
             return
         return_json = self.response.json()
         self.assertIsInstance(return_json, list)
-        self.assertEqual(return_json, self.expected_json())
+        expected_json = self.expected_json()
+        if not expected_json:
+            expected_json = self.manager_json()
+        self.assertEqual(return_json, expected_json)
 
-    def expected_json(self) -> list:
-        raise NotImplementedError("Please set the expected_json method in the subclass")
+    def manager_json(self) -> list:
+        view = self.view_class()
+        view._session_data = None
+        manager = view.manager_class({})
+        return manager.to_json()
+
+    def expected_json(self) -> list | None:
+        return None
 
 
 class MontrekRedirectViewTestCase(MontrekViewTestCase):
