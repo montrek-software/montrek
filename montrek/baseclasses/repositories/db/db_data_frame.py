@@ -45,7 +45,8 @@ class DbDataFrame:
     def _process_time_series_data(self):
         self._set_missing_hubs()
         time_series_columns = self.get_time_series_satellite_field_names()
-        if time_series_columns == ["hub_entity_id"] or len(time_series_columns) == 0:
+        allowed_fields = {"hub_entity_id", "comment"}
+        if set(time_series_columns).issubset(allowed_fields):
             return
         self._process_data(time_series_columns)
 
