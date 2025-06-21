@@ -50,7 +50,8 @@ class DbWriter:
 
     def _bulk_create(self, new_objects: StalledDicts):
         for obj_type, objs in new_objects.items():
-            obj_type.objects.bulk_create(objs)
+            unsaved_objects = [obj for obj in objs if obj.pk is None]
+            obj_type.objects.bulk_create(unsaved_objects)
 
     def _bulk_update(self, new_objects: StalledDicts):
         for obj_type, objs in new_objects.items():

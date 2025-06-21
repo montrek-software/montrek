@@ -39,29 +39,33 @@ class DbDataFrame:
         static_columns.extend(self.link_columns)
         if len(static_columns) == 0:
             return
-        self._process_data(static_columns, False)
+        self._process_data(static_columns)
+        self.db_writer.write_hubs()
 
     def _process_time_series_data(self):
+        self._set_missing_hubs()
         time_series_columns = self.get_time_series_satellite_field_names()
         if len(time_series_columns) == 0:
             return
-        self._process_data(time_series_columns, True)
+        self._process_data(time_series_columns)
 
-    def _process_data(self, columns: list[str], is_timeseries: bool):
+    def _process_data(self, columns: list[str]):
         data_frame = self.data_frame.loc[:, columns]
         data_frame = self._convert_lists_to_tuples(data_frame)
         data_frame = data_frame.drop_duplicates()
         data_frame = self._convert_tuples_to_lists(data_frame)
-        self._raise_for_duplicated_entries(data_frame, is_timeseries)
-        data_frame.apply(self._process_row, axis=1)
+        self._raise_for_duplicated_entries(data_frame)
+        self.data_frame = self.data_frame.copy()
+        self.data_frame["hub_entity"] = data_frame.apply(self._process_row, axis=1)
 
-    def _process_row(self, row: pd.Series):
+    def _process_row(self, row: pd.Series) -> MontrekHubABC | None:
         row_dict = row.to_dict()
         for key, value in row_dict.items():
             if not isinstance(value, (list, dict)) and pd.isna(value):
                 row_dict[key] = None
         db_creator = DbCreator(self.db_staller, self.user_id)
         db_creator.create(row_dict)
+        return db_creator.hub
 
     def _assign_hubs(self):
         for hubs in self.db_writer.db_staller.get_hubs().values():
@@ -99,6 +103,8 @@ class DbDataFrame:
         for satellite_class in self.annotator.annotated_satellite_classes:
             if satellite_class.is_timeseries == is_time_series:
                 fields.extend(satellite_class.get_value_field_names())
+        if fields == []:
+            return fields
 
         common_fields = ["hub_entity_id"]
         if is_time_series:
@@ -106,9 +112,7 @@ class DbDataFrame:
         sat_fields = list(set(fields)) + common_fields
         return [field for field in sat_fields if field in self.data_frame.columns]
 
-    def _raise_for_duplicated_entries(
-        self, data_frame: pd.DataFrame, is_timeseries: bool
-    ):
+    def _raise_for_duplicated_entries(self, data_frame: pd.DataFrame):
         raise_error = False
         error_message = ""
         for satellite_class in self.annotator.get_satellite_classes():
@@ -123,7 +127,6 @@ class DbDataFrame:
             if "hub_entity_id" in data_frame.columns:
                 value_field_names.append("hub_entity_id")
                 identifier_field_names.append("hub_entity_id")
-            # if satellite_class.is_timeseries:
             if "value_date" in data_frame.columns:
                 value_field_names.append("value_date")
                 identifier_field_names.append("value_date")
@@ -180,3 +183,31 @@ class DbDataFrame:
                 continue
             df[col] = df[col].apply(lambda x: list(x) if isinstance(x, tuple) else x)
         return df
+
+    def _assign_hub(self, x) -> int | None:
+        if pd.isna(x):
+            return None
+        return x.pk
+
+    def _set_missing_hubs(self):
+        if "hub_entity_id" in self.data_frame.columns:
+            return
+        if not pd.isnull(self.data_frame["hub_entity"]).any():
+            return
+        self.data_frame["hub_entity_id"] = self.data_frame["hub_entity"].apply(
+            self._assign_hub
+        )
+        static_identifier_fields = []
+        for satellite_class in self.annotator.annotated_satellite_classes:
+            if satellite_class.is_timeseries is False:
+                static_identifier_fields.extend(satellite_class.identifier_fields)
+        static_identifier_fields = [
+            field
+            for field in static_identifier_fields
+            if field in self.data_frame.columns
+        ]
+        if not static_identifier_fields:
+            return
+        self.data_frame["hub_entity_id"] = self.data_frame.groupby(
+            static_identifier_fields
+        )["hub_entity_id"].transform(lambda x: x.ffill().bfill())

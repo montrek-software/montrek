@@ -101,6 +101,10 @@ class DbStaller:
             if sat_class.is_timeseries
         ]
 
+    def clean_hubs(self):
+        self.hubs: StalledHubDict = {self.hub_class: []}
+        self.updated_hubs: StalledHubDict = {self.hub_class: []}
+
     def _add_stalled_object(
         self, new_object: StalledObject, stalled_list: StalledDicts
     ):
