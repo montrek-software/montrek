@@ -354,7 +354,7 @@ class MontrekRestApiViewTestCase(MontrekViewTestCase):
         return_json = self.response.json()
         self.assertIsInstance(return_json, list)
         expected_json = self.expected_json()
-        if not expected_json:
+        if expected_json is None:
             expected_json = self.manager_json()
         self.assertEqual(return_json, expected_json)
 
