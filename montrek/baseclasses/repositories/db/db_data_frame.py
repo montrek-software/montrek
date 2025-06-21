@@ -45,7 +45,8 @@ class DbDataFrame:
     def _process_time_series_data(self):
         self._set_missing_hubs()
         time_series_columns = self.get_time_series_satellite_field_names()
-        if len(time_series_columns) == 0:
+        allowed_fields = {"hub_entity_id", "comment"}
+        if set(time_series_columns).issubset(allowed_fields):
             return
         self._process_data(time_series_columns)
 
@@ -192,11 +193,11 @@ class DbDataFrame:
     def _set_missing_hubs(self):
         if "hub_entity_id" in self.data_frame.columns:
             return
-        if not pd.isnull(self.data_frame["hub_entity"]).any():
-            return
         self.data_frame["hub_entity_id"] = self.data_frame["hub_entity"].apply(
             self._assign_hub
         )
+        if not pd.isnull(self.data_frame["hub_entity"]).any():
+            return
         static_identifier_fields = []
         for satellite_class in self.annotator.annotated_satellite_classes:
             if satellite_class.is_timeseries is False:

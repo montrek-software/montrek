@@ -1140,20 +1140,6 @@ class TestHubARestApiView(MontrekRestApiViewTestCase):
             self.sat_a1s.append(me_factories.SatA1Factory(hub_entity=hub))
             self.sat_a2s.append(me_factories.SatA2Factory(hub_entity=hub))
 
-    def expected_json(self) -> list:
-        expected_json = []
-        for i in range(3):
-            entry = {
-                "field_a1_str": self.sat_a1s[i].field_a1_str,
-                "field_a1_int": self.sat_a1s[i].field_a1_int,
-                "field_a2_str": self.sat_a2s[i].field_a2_str,
-                "field_a2_float": self.sat_a2s[i].field_a2_float,
-                "field_b1_str": None,
-                "individual_field": 0.0,
-            }
-            expected_json.append(entry)
-        return expected_json
-
 
 class TestHubARestApiViewWithFilter(MontrekRestApiViewTestCase):
     viewname = "hub_a_rest_api"
@@ -1171,14 +1157,13 @@ class TestHubARestApiViewWithFilter(MontrekRestApiViewTestCase):
             )
             self.sat_a2s.append(me_factories.SatA2Factory(hub_entity=hub))
 
-    def get_response(self):
-        call_kwargs = {
+    def query_params(self) -> dict:
+        return {
             "filter_field": "field_a1_str",
             "filter_value": "field1",
             "filter_negate": "False",
             "filter_lookup": "exact",
         }
-        return self.client.get(self.url, query_params=call_kwargs)
 
     def expected_json(self) -> list:
         expected_json = [
@@ -1209,22 +1194,6 @@ class TestHubBRestApiView(MontrekRestApiViewTestCase):
             hub.link_hub_b_hub_d.add(satd.hub_entity)
             satd = me_factories.SatD1Factory.create(field_d1_str="blubb")
             hub.link_hub_b_hub_d.add(satd.hub_entity)
-
-    def expected_json(self) -> list:
-        expected_json = []
-        for i in range(3):
-            entry = {
-                "field_b1_str": self.sat_b1s[i].field_b1_str,
-                "field_b1_date": self.sat_b1s[i].field_b1_date.strftime("%Y-%m-%d"),
-                "field_b2_str": self.sat_b2s[i].field_b2_str,
-                "field_b2_choice": self.sat_b2s[i].field_b2_choice.value,
-                "field_d1_str": "['bla', 'blubb']",
-                "field_d1_int": "0,0",
-                "alert_level": AlertEnum.OK.value.description,
-                "alert_message": None,
-            }
-            expected_json.append(entry)
-        return expected_json
 
 
 class TestHubARedirectView(MontrekRedirectViewTestCase):
