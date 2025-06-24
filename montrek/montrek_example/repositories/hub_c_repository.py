@@ -163,3 +163,21 @@ class HubCRepositoryLast(MontrekRepository):
             ["field_d1_int"],
             agg_func="latest",
         )
+
+
+class HubCRepositoryReversedParents(MontrekRepository):
+    hub_class = me_models.HubC
+
+    def set_annotations(self):
+        self.add_linked_satellites_field_annotations(
+            me_models.SatB1,
+            me_models.LinkHubAHubB,
+            ["field_b1_str"],
+            parent_link_classes=(me_models.LinkHubAHubC,),
+        )
+        self.add_linked_satellites_field_annotations(
+            me_models.SatA1,
+            me_models.LinkHubAHubC,
+            ["field_a1_str"],
+            reversed_link=True,
+        )
