@@ -1093,20 +1093,21 @@ class TestMontrekRepositoryLinks(TestCase):
         self.huba1 = me_factories.HubAFactory()
         self.huba2 = me_factories.HubAFactory()
         me_factories.AHubValueDateFactory(hub=self.huba2, value_date=None)
-        hubc1 = me_factories.HubCFactory()
+        self.hubc1 = me_factories.HubCFactory()
         hubc2 = me_factories.HubCFactory()
 
         me_factories.SatA1Factory(
             hub_entity=self.huba1,
             field_a1_int=5,
+            field_a1_str="Test",
         )
         me_factories.LinkHubAHubCFactory(
             hub_in=self.huba1,
-            hub_out=hubc1,
+            hub_out=self.hubc1,
         )
         me_factories.LinkHubAHubCFactory(
             hub_in=self.huba2,
-            hub_out=hubc1,
+            hub_out=self.hubc1,
             state_date_end=montrek_time(2023, 7, 12),
         )
         me_factories.LinkHubAHubCFactory(
@@ -1115,12 +1116,12 @@ class TestMontrekRepositoryLinks(TestCase):
             state_date_start=montrek_time(2023, 7, 12),
         )
         me_factories.SatC1Factory(
-            hub_entity=hubc1,
+            hub_entity=self.hubc1,
             state_date_end=montrek_time(2023, 7, 10),
             field_c1_str="First",
         )
         me_factories.SatC1Factory(
-            hub_entity=hubc1,
+            hub_entity=self.hubc1,
             state_date_start=montrek_time(2023, 7, 10),
             field_c1_str="Second",
         )
@@ -1201,11 +1202,8 @@ class TestMontrekRepositoryLinks(TestCase):
         self.assertEqual(queryset[0].field_d1_str, "Test")
 
     def test_link_reversed_with_parent_links(self):
-        hubc = me_factories.HubCFactory()
-        hubd = me_factories.HubDFactory()
-        me_factories.SatA1Factory.create(hub_entity=self.huba1, field_a1_str="Test")
-        me_factories.LinkHubCHubDFactory(hub_in=hubc, hub_out=hubd)
-        me_factories.LinkHubAHubCFactory(hub_in=self.huba1, hub_out=hubc)
+        satd = me_factories.SatD1Factory()
+        me_factories.LinkHubCHubDFactory(hub_in=self.hubc1, hub_out=satd.hub_entity)
         repository = HubDRepositoryReversedParentLink()
         queryset = repository.receive()
         self.assertEqual(queryset.count(), 1)
