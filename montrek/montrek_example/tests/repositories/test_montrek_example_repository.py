@@ -38,6 +38,7 @@ from montrek_example.repositories.hub_c_repository import (
 )
 from montrek_example.repositories.hub_d_repository import (
     HubDRepository,
+    HubDRepositoryReversedParentLink,
     HubDRepositoryTSReverseLink,
 )
 from montrek_example.repositories.hub_e_repository import (
@@ -1198,6 +1199,17 @@ class TestMontrekRepositoryLinks(TestCase):
         queryset = repository.receive()
         self.assertEqual(queryset.count(), 2)
         self.assertEqual(queryset[0].field_d1_str, "Test")
+
+    def test_link_reversed_with_parent_links(self):
+        hubc = me_factories.HubCFactory()
+        hubd = me_factories.HubDFactory()
+        me_factories.SatA1Factory.create(hub_entity=self.huba1, field_a1_str="Test")
+        me_factories.LinkHubCHubDFactory(hub_in=hubc, hub_out=hubd)
+        me_factories.LinkHubAHubCFactory(hub_in=self.huba1, hub_out=hubc)
+        repository = HubDRepositoryReversedParentLink()
+        queryset = repository.receive()
+        self.assertEqual(queryset.count(), 1)
+        self.assertEqual(queryset.first().field_a1_str, "Test")
 
 
 class TestLinkOneToOneUpates(TestCase):
