@@ -38,3 +38,16 @@ class HubDRepositoryTSReverseLink(MontrekRepository):
             reversed_link=True,
             separator=",",
         )
+
+
+class HubDRepositoryReversedParentLink(MontrekRepository):
+    hub_class = me_models.HubD
+
+    def set_annotations(self):
+        self.add_linked_satellites_field_annotations(
+            me_models.SatA1,
+            me_models.LinkHubAHubC,
+            ["field_a1_str"],
+            parent_link_classes=(me_models.LinkHubCHubD,),
+            reversed_link=True,
+        )
