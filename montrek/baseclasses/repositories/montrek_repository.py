@@ -310,6 +310,7 @@ class MontrekRepository:
         reversed_link: bool = False,
         rename_field_map: dict[str, str] = {},
         parent_link_classes: tuple[Type[MontrekLinkABC], ...] = (),
+        parent_link_reversed: tuple[bool] | list[bool] | None = None,
         agg_func: str = "string_concat",
         link_satellite_filter: dict[str, Any] = {},
         separator: str = ";",
@@ -318,6 +319,8 @@ class MontrekRepository:
             link_subquery_builder_class = ReverseLinkedSatelliteSubqueryBuilder
         else:
             link_subquery_builder_class = LinkedSatelliteSubqueryBuilder
+        if parent_link_reversed is None:
+            parent_link_reversed = [reversed_link for _ in parent_link_classes]
 
         self.annotator.subquery_builder_to_annotations(
             fields,
@@ -326,6 +329,7 @@ class MontrekRepository:
             link_class=link_class,
             rename_field_map=rename_field_map,
             parent_link_classes=parent_link_classes,
+            parent_link_reversed=parent_link_reversed,
             agg_func=agg_func,
             link_satellite_filter=link_satellite_filter,
             separator=separator,

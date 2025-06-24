@@ -174,6 +174,7 @@ class HubCRepositoryReversedParents(MontrekRepository):
             me_models.LinkHubAHubB,
             ["field_b1_str"],
             parent_link_classes=(me_models.LinkHubAHubC,),
+            parent_link_reversed=(True,),
         )
         self.add_linked_satellites_field_annotations(
             me_models.SatA1,
