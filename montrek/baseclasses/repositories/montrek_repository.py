@@ -321,6 +321,10 @@ class MontrekRepository:
             link_subquery_builder_class = LinkedSatelliteSubqueryBuilder
         if parent_link_reversed is None:
             parent_link_reversed = [reversed_link for _ in parent_link_classes]
+        if len(parent_link_reversed) != len(parent_link_classes):
+            raise ValueError(
+                "'parent_link_classes' and 'parent_link_reversed' must have same length"
+            )
 
         self.annotator.subquery_builder_to_annotations(
             fields,

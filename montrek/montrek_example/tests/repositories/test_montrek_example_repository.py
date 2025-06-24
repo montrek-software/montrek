@@ -35,6 +35,7 @@ from montrek_example.repositories.hub_c_repository import (
     HubCRepositoryLast,
     HubCRepositoryOnlyStatic,
     HubCRepositoryReversedParents,
+    HubCRepositoryReversedParentsNoMatchingReversedParents,
     HubCRepositorySumTS,
 )
 from montrek_example.repositories.hub_d_repository import (
@@ -1222,6 +1223,12 @@ class TestMontrekRepositoryLinks(TestCase):
         c_object = repository.receive().get(hub__pk=hub_c.pk)
         self.assertEqual(c_object.field_a1_str, "A1Test")
         self.assertEqual(c_object.field_b1_str, "B1Test")
+
+    def test_link_with_reversed_parent__non_matching_items(self):
+        def call_repo():
+            return HubCRepositoryReversedParentsNoMatchingReversedParents()
+
+        self.assertRaises(ValueError, call_repo)
 
 
 class TestLinkOneToOneUpates(TestCase):
