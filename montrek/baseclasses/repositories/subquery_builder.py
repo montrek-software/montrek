@@ -157,6 +157,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         *,
         agg_func: str = "string_concat",
         parent_link_classes: tuple[Type[MontrekLinkABC], ...] = (),
+        parent_link_reversed: tuple[bool, ...] | list[bool] = (),
         link_satellite_filter: dict[str, object] = {},
         separator: str = ";",
     ):
@@ -176,6 +177,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
                 self.field_type = CharField(null=True, blank=True)
 
         self.parent_link_classes = parent_link_classes
+        self.parent_link_reversed = parent_link_reversed
         self.link_satellite_filter = link_satellite_filter
 
     def get_link_query(
@@ -218,8 +220,10 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
 
     def _get_parent_db_name(self, hub_field: str) -> str:
         db_name = hub_field
-        for link_class in self.parent_link_classes:
-            db_name += "__" + link_class.__name__.lower() + f"__{hub_field}"
+        for i, link_class in enumerate(self.parent_link_classes):
+            is_reversed = self.parent_link_reversed[i]
+            parent_hub_field = "hub_out" if is_reversed else "hub_in"
+            db_name += "__" + link_class.__name__.lower() + f"__{parent_hub_field}"
         return db_name
 
     def _link_hubs_and_get_subquery(
