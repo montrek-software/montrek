@@ -33,6 +33,7 @@ from montrek_example.repositories.hub_c_repository import (
     HubCRepositoryCommonFields,
     HubCRepositoryLastTS,
     HubCRepositoryLast,
+    HubCRepositoryMean,
     HubCRepositoryOnlyStatic,
     HubCRepositoryReversedParents,
     HubCRepositoryReversedParentsNoMatchingReversedParents,
@@ -2005,6 +2006,12 @@ class TestStaticAggFuncs(TestCase):
         test_query = repo.receive()
         self.assertEqual(test_query.count(), 1)
         self.assertEqual(test_query[0].field_d1_int, 2)
+
+    def test_mean(self):
+        repo = HubCRepositoryMean()
+        test_query = repo.receive()
+        self.assertEqual(test_query.count(), 1)
+        self.assertEqual(test_query[0].field_d1_int, (2 + 3) / 5.0)
 
 
 class TestTimeSeriesPerformance(TestCase):

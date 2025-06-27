@@ -165,6 +165,18 @@ class HubCRepositoryLast(MontrekRepository):
         )
 
 
+class HubCRepositoryMean(MontrekRepository):
+    hub_class = me_models.HubC
+
+    def set_annotations(self):
+        self.add_linked_satellites_field_annotations(
+            me_models.SatD1,
+            me_models.LinkHubCHubD,
+            ["field_d1_int"],
+            agg_func="mean",
+        )
+
+
 class HubCRepositoryReversedParents(MontrekRepository):
     hub_class = me_models.HubC
 
