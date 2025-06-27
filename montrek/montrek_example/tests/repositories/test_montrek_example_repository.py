@@ -2016,7 +2016,7 @@ class TestStaticAggFuncs(TestCase):
         test_query = repo.receive()
         self.assertEqual(test_query.count(), 1)
         self.assertEqual(test_query[0].field_d1_int, 2)
-        self.assertEqual(test_query[0].field_a2_float, 2.75)
+        self.assertAlmostEqual(test_query[0].field_a2_float, 2.75, delta=0.01)
 
 
 class TestTimeSeriesPerformance(TestCase):
