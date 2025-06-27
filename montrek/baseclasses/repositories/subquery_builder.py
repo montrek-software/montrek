@@ -310,6 +310,8 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
                 return self._annotate_string_concat(query, self.separator)
             if self.agg_func == LinkAggFunctionEnum.LATEST:
                 return self._annotate_latest(query)
+            if self.agg_func == LinkAggFunctionEnum.MEAN:
+                return self._annotate_mean(query)
             else:
                 raise NotImplementedError(
                     f"Aggregation function {self.agg_func} is not implemented!"
@@ -340,6 +342,13 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
             return query.order_by("-hub_value_date__value_date_list__value_date")[:1]
         else:
             return query.order_by(f"{self.field}sub")[:1]
+
+    def _annotate_mean(self, query: QuerySet) -> QuerySet:
+        return query.annotate(
+            **{
+                self.field + "agg": Func(self.field + "sub", function="Avg"),
+            }
+        ).values(self.field + "agg")
 
     def _is_multiple_allowed(self, hub_field_to: str) -> bool:
         _is_many_to_many = isinstance(self.link_class(), MontrekManyToManyLinkABC)
@@ -404,3 +413,4 @@ class LinkAggFunctionEnum(Enum):
     SUM = "sum"
     STRING_CONCAT = "string_concat"
     LATEST = "latest"
+    MEAN = "mean"
