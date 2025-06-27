@@ -175,6 +175,13 @@ class HubCRepositoryMean(MontrekRepository):
             ["field_d1_int"],
             agg_func="mean",
         )
+        self.add_linked_satellites_field_annotations(
+            me_models.SatA2,
+            me_models.LinkHubAHubC,
+            ["field_a2_float"],
+            reversed_link=True,
+            agg_func="mean",
+        )
 
 
 class HubCRepositoryReversedParents(MontrekRepository):

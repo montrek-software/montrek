@@ -2000,6 +2000,10 @@ class TestStaticAggFuncs(TestCase):
         sat_c1 = me_factories.SatC1Factory()
         sat_c1.hub_entity.link_hub_c_hub_d.add(sat_d1_1.hub_entity)
         sat_c1.hub_entity.link_hub_c_hub_d.add(sat_d1_2.hub_entity)
+        sat_a2_1 = me_factories.SatA2Factory(field_a2_float=2.5)
+        sat_a2_2 = me_factories.SatA2Factory(field_a2_float=3.0)
+        sat_a2_1.hub_entity.link_hub_a_hub_c.add(sat_c1.hub_entity)
+        sat_a2_2.hub_entity.link_hub_a_hub_c.add(sat_c1.hub_entity)
 
     def test_latest_entry(self):
         repo = HubCRepositoryLast()
@@ -2011,7 +2015,8 @@ class TestStaticAggFuncs(TestCase):
         repo = HubCRepositoryMean()
         test_query = repo.receive()
         self.assertEqual(test_query.count(), 1)
-        self.assertEqual(test_query[0].field_d1_int, (2 + 3) / 5.0)
+        self.assertEqual(test_query[0].field_d1_int, 2)
+        self.assertEqual(test_query[0].field_a2_float, 2.75)
 
 
 class TestTimeSeriesPerformance(TestCase):
