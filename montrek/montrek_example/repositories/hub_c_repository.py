@@ -200,7 +200,16 @@ class HubCRepositoryCount(MontrekRepository):
             ["field_a2_float"],
             reversed_link=True,
             agg_func="count",
-            link_satellite_filter={"field_a2_float__gte": 1},
+            link_satellite_filter={"field_a2_float__gte": 2.6},
+            rename_field_map={"field_a2_float": "a2_counter_w_filter"},
+        )
+        self.add_linked_satellites_field_annotations(
+            me_models.SatA2,
+            me_models.LinkHubAHubC,
+            ["field_a2_float"],
+            reversed_link=True,
+            agg_func="count",
+            rename_field_map={"field_a2_float": "a2_counter"},
         )
 
 
