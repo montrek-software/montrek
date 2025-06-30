@@ -2024,6 +2024,8 @@ class TestStaticAggFuncs(TestCase):
     def test_count(self):
         repo = HubCRepositoryCount()
         test_query = repo.receive()
+        self.assertEqual(test_query.count(), 1)
+        self.assertEqual(test_query[0].field_d1_int, 2)
 
 
 class TestTimeSeriesPerformance(TestCase):
