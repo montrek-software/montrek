@@ -184,6 +184,26 @@ class HubCRepositoryMean(MontrekRepository):
         )
 
 
+class HubCRepositoryCount(MontrekRepository):
+    hub_class = me_models.HubC
+
+    def set_annotations(self):
+        self.add_linked_satellites_field_annotations(
+            me_models.SatD1,
+            me_models.LinkHubCHubD,
+            ["field_d1_int"],
+            agg_func="count",
+        )
+        self.add_linked_satellites_field_annotations(
+            me_models.SatA2,
+            me_models.LinkHubAHubC,
+            ["field_a2_float"],
+            reversed_link=True,
+            agg_func="count",
+            link_satellite_filter={"field_a2_float__gte": 1},
+        )
+
+
 class HubCRepositoryReversedParents(MontrekRepository):
     hub_class = me_models.HubC
 

@@ -31,6 +31,7 @@ from montrek_example.repositories.hub_c_repository import (
     HubCRepository,
     HubCRepository2,
     HubCRepositoryCommonFields,
+    HubCRepositoryCount,
     HubCRepositoryLastTS,
     HubCRepositoryLast,
     HubCRepositoryMean,
@@ -2019,6 +2020,10 @@ class TestStaticAggFuncs(TestCase):
         self.assertEqual(test_query.count(), 1)
         self.assertEqual(test_query[0].field_d1_int, 3)
         self.assertAlmostEqual(test_query[0].field_a2_float, 2.75, delta=0.01)
+
+    def test_count(self):
+        repo = HubCRepositoryCount()
+        test_query = repo.receive()
 
 
 class TestTimeSeriesPerformance(TestCase):
