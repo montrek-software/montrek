@@ -13,11 +13,12 @@
   <script src="https://unpkg.com/htmx.org@1.9.6"></script>
   {% include "partials/color_scheme.html" %}
  </head>
- <body>
+ <body class="d-flex flex-column min-vh-100">
 	 <!-- Bootstrap CSS Link -->
 
 <!-- Your Webpage -->
-<div class="container-fluid" style="padding:20px;">
+<main class="flex-grow-1">
+<div class="container-fluid" style="padding:20px;padding-bottom:40px">
 
   <!-- NAVBAR -->
   <div class="row" style="height:35px;">
@@ -140,7 +141,8 @@
   </div>
 
 </div>
-<div class="footer">
+</main>
+<div class="footer mt-4 py-3 bg-light">
   <div class="container">
     <div class="row">
       <div class="col text-right">
