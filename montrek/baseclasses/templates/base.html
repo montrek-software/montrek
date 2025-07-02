@@ -60,9 +60,6 @@
 
   <div class="row">
     <div class="col-lg-2">
-      <div>
-          <a href="https://montrek-software.de" target="_blank" ><img src="https://images.squarespace-cdn.com/content/v1/673bfbe149f99b59e4a41ee7/cf8061ac-dc74-490d-8b62-40497ebc9629/montrek_logo_variant.png?format=1500w" class="img-responsive" alt="Montrek Logo" style="width: 80%;"/></a>
-      </div>
       {% if overview %}
       <div>
           <h2>OVERVIEW</h2>
@@ -143,7 +140,21 @@
   </div>
 
 </div>
-
+<div class="footer">
+  <div class="container">
+    <div class="row">
+      <div class="col text-right">
+        &copy; {% now "Y" %} Powered by 
+        <a href="https://montrek-software.de" target="_blank" style="display: inline-flex; align-items: center; gap: 0.25rem;">
+          <img 
+            src="https://images.squarespace-cdn.com/content/v1/673bfbe149f99b59e4a41ee7/cf8061ac-dc74-490d-8b62-40497ebc9629/montrek_logo_variant.png?format=1500w" 
+            alt="Montrek Logo" 
+            style="height: 1.2rem; vertical-align: middle;" />
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
 <!-- jQuery and Bootstrap JS -->
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
