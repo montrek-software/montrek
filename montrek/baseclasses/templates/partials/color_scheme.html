@@ -4,6 +4,10 @@
     color: {% get_color "primary" %};
   }
 
+  a {
+    color: {% get_color "primary" %};
+  }
+
   .navbar {
     background-color: {% get_color "primary" %};
   }
@@ -18,10 +22,12 @@
 
   .page_title h1 {
     color: {% get_color "primary" %};
+  text-align: center;
   }
 
   .nav-tabs {
     border-bottom: 2px solid {% get_color "primary" %};
+  margin-top: 10px; /* Add some top margin for spacing */
   }
 
   .nav-link {
@@ -38,19 +44,24 @@
   .btn {
     background-color: {% get_color "secondary" %};
     color: #ffffff;
+    margin: 5px; /* Add some top margin for spacing */
   }
 
   .btn:hover {
-    background-color: #9e0b36;
+    background-color: {% get_color "secondary_light" %};
   }
 
   .btn-light {
     color: {% get_color "primary" %};
     background: none;
+    border: none;
+    outline: none;
+    background: none;
+    margin: 5px; /* Add some top margin for spacing */
   }
 
   .btn-light:hover {
-    color: #9e0b36;
+    color: {% get_color "secondary_light" %};
   }
 
   .btn-order-field:hover {
@@ -60,14 +71,15 @@
   .input {
     background-color: {% get_color "secondary" %};
     color: #ffffff;
+    width: 100px;
   }
 
   .input:hover {
-    background-color: #9e0b36;
+    background-color: {% get_color "secondary_light" %};
   }
 
   tr:nth-child(even) {
-    background-color: #e6f2f8;
+    background-color: {% get_color "primary_light" %};
   }
 
   tr:nth-child(odd) {
@@ -75,6 +87,12 @@
   }
 
   th {
+    color: #ffffff; /* White */
+    padding: 10px; /* Add some padding */
+    text-align: left; /* Align text to the left */
+    position: sticky;
+    top: 0;
+    z-index: 1; /* Ensure it stays above other content */
     background-color: {% get_color "primary" %};
     color: #ffffff;
   }
@@ -90,5 +108,17 @@
 
   .lowlight-list li::before {
     color: {% get_color "secondary" %};
+  }
+  .glyphicon-fast-backward {
+    color: {% get_color "primary" %};
+  }
+  .glyphicon-fast-forward {
+    color: {% get_color "primary" %};
+  }
+  .glyphicon-step-backward {
+    color: {% get_color "primary" %};
+  }
+  .glyphicon-step-forward {
+    color: {% get_color "primary" %};
   }
 </style>
