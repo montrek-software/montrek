@@ -2,6 +2,7 @@ import logging
 import os
 from typing import Any
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied
@@ -39,7 +40,8 @@ logger = logging.getLogger(__name__)
 
 @require_safe
 def home(request):
-    return render(request, "home.html")
+    project_name = settings.PROJECT_NAME.replace("mt_", "").replace("_", " ").title()
+    return render(request, "home.html", context={"project_name": project_name})
 
 
 @require_safe

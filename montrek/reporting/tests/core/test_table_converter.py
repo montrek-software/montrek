@@ -73,7 +73,7 @@ class TestLatexTableConverter(TestCase):
         table_str = self.latex_table_converter.get_table_str()
         self.assertIn("value1", table_str)
         self.assertIn("val2", table_str)
-        self.assertIn("\\rowcolor{lightblue}", table_str)
+        self.assertIn("\\rowcolor{primary_light}", table_str)
 
     def test_to_latex_full_output(self):
         latex_str = self.latex_table_converter.to_latex()

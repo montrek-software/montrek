@@ -6,9 +6,10 @@ from django.template import Template, Context
 import subprocess
 import tempfile
 import shutil
+from reporting.core.reporting_text import ClientLogo
 from reporting.managers.montrek_report_manager import MontrekReportManager
 from baseclasses.dataclasses.montrek_message import MontrekMessageError
-from reporting.core.reporting_colors import ReportingColors
+from reporting.core.reporting_colors import ReportingColors, Color
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +45,7 @@ class LatexReportManager:
                 "logos",
                 "montrek_logo_variant.png",
             ),
+            "client_logo": ClientLogo().to_latex(),
             "document_title": self.report_manager.document_title,
             "footer_text": self.report_manager.footer_text,
             "colors": self.get_colors(),
@@ -54,6 +56,21 @@ class LatexReportManager:
         for color in ReportingColors.COLOR_PALETTE_SKIM:
             color_hex = color.hex.replace("#", "")
             colorstr += f"\\definecolor{{{color.name}}}{{HTML}}{{{color_hex}}}\n"
+
+        primary_color = Color("primary", settings.PRIMARY_COLOR)
+        secondary_color = Color("secondary", settings.SECONDARY_COLOR)
+        primary_color_hex = primary_color.hex.replace("#", "")
+        secondary_color_hex = secondary_color.hex.replace("#", "")
+        colorstr += f"\\definecolor{{primary}}{{HTML}}{{{primary_color_hex}}}\n"
+        colorstr += f"\\definecolor{{secondary}}{{HTML}}{{{secondary_color_hex}}}\n"
+        primary_light = ReportingColors.lighten_color(primary_color)
+        secondary_light = ReportingColors.lighten_color(secondary_color)
+        primary_light_hex = primary_light.hex.replace("#", "")
+        secondary_light_hex = secondary_light.hex.replace("#", "")
+        colorstr += f"\\definecolor{{primary_light}}{{HTML}}{{{primary_light_hex}}}\n"
+        colorstr += (
+            f"\\definecolor{{secondary_light}}{{HTML}}{{{secondary_light_hex}}}\n"
+        )
         return colorstr
 
     def read_template(self) -> str:
