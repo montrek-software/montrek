@@ -75,3 +75,18 @@ class ReportingColors:
 
     def hex_color_palette(self):
         return [color.hex for color in self.COLOR_PALETTE]
+
+    @classmethod
+    def lighten_color(cls, color: Color, factor=0.9) -> Color:
+        """
+        Lighten the given hex color by a factor (0 < factor < 1).
+        `factor` is how much closer to white the color should move.
+        """
+        hex_color = color.hex.lstrip("#")
+        r, g, b = [int(hex_color[i : i + 2], 16) for i in (0, 2, 4)]
+
+        r = int(r + (255 - r) * factor)
+        g = int(g + (255 - g) * factor)
+        b = int(b + (255 - b) * factor)
+
+        return Color(f"{color.name}_light", "#{:02x}{:02x}{:02x}".format(r, g, b))

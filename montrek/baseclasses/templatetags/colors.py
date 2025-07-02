@@ -1,30 +1,18 @@
 from django import template
 from django.conf import settings
+from reporting.core.reporting_colors import Color, ReportingColors
 
 register = template.Library()
 
 
 @register.simple_tag
 def get_color(name):
+    primary_color = Color("primary", settings.PRIMARY_COLOR)
+    secondary_color = Color("secondary", settings.SECONDARY_COLOR)
     color_scheme = {
-        "primary": settings.PRIMARY_COLOR,
-        "secondary": settings.SECONDARY_COLOR,
+        "primary": primary_color.hex,
+        "secondary": secondary_color.hex,
     }
-    color_scheme["primary_light"] = lighten_color(color_scheme["primary"])
-    color_scheme["secondary_light"] = lighten_color(color_scheme["secondary"])
+    color_scheme["primary_light"] = ReportingColors.lighten_color(primary_color).hex
+    color_scheme["secondary_light"] = ReportingColors.lighten_color(secondary_color).hex
     return color_scheme.get(name, "#000000")
-
-
-def lighten_color(hex_color, factor=0.9):
-    """
-    Lighten the given hex color by a factor (0 < factor < 1).
-    `factor` is how much closer to white the color should move.
-    """
-    hex_color = hex_color.lstrip("#")
-    r, g, b = [int(hex_color[i : i + 2], 16) for i in (0, 2, 4)]
-
-    r = int(r + (255 - r) * factor)
-    g = int(g + (255 - g) * factor)
-    b = int(b + (255 - b) * factor)
-
-    return "#{:02x}{:02x}{:02x}".format(r, g, b)
