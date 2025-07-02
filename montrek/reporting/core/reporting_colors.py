@@ -82,6 +82,8 @@ class ReportingColors:
         Lighten the given hex color by a factor (0 < factor < 1).
         `factor` is how much closer to white the color should move.
         """
+        if factor < 0.0 or factor > 1.0:
+            raise ValueError("factor needs to be between 0 an 1")
         hex_color = color.hex.lstrip("#")
         r, g, b = [int(hex_color[i : i + 2], 16) for i in (0, 2, 4)]
 

@@ -29,3 +29,9 @@ class TestReportingColors(TestCase):
                     Color(name, hex_code), factor
                 )
                 self.assertEqual(test_color.hex.lower(), expected.lower())
+
+    def test_invalid_factor(self):
+        with self.assertRaises(ValueError):
+            ReportingColors.lighten_color(Color("invalid", "#123456"), -0.1)
+        with self.assertRaises(ValueError):
+            ReportingColors.lighten_color(Color("invalid", "#123456"), 1.1)
