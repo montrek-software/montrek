@@ -1,5 +1,5 @@
 from django.test import TestCase
-from reporting.core.text_converter import HtmlLatexConverter
+from reporting.core.text_converter import HtmlLatexConverter, HtmlTextConverter
 
 
 class TestHtmlLatexConverter(TestCase):
@@ -68,3 +68,10 @@ class TestHtmlLatexConverter(TestCase):
         converted_text = HtmlLatexConverter.convert(test_text)
         expected_text = "\\twemoji{pencil}\n\\twemoji{wastebasket}"
         self.assertEqual(converted_text, expected_text)
+
+
+class TestHtmlTextConverter(TestCase):
+    def test_special_characters__no_strings(self):
+        for value in (12, False, 32.1, None, "test"):
+            test_value = HtmlTextConverter.convert(value)
+            self.assertEqual(value, test_value)
