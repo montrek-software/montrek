@@ -1,6 +1,6 @@
+from html import unescape
 import re
 from typing import Any
-from bs4 import BeautifulSoup
 
 
 class HtmlLatexConverter:
@@ -152,5 +152,4 @@ class HtmlTextConverter:
     def special_characters(text: Any) -> Any:
         if not isinstance(text, str):
             return text
-        soup = BeautifulSoup(text, "html.parser")
-        return soup.get_text()
+        return unescape(text)
