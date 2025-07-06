@@ -75,3 +75,9 @@ class TestHtmlTextConverter(TestCase):
         for value in (12, False, 32.1, None, "test"):
             test_value = HtmlTextConverter.convert(value)
             self.assertEqual(value, test_value)
+
+    def test_special_characters(self):
+        test_text = "Learn HTML entities: &middot; is a middle dot &middot; &amp; stands for ampersand &amp; &lt; means less than &lt; &gt; means greater than &gt; and &lowbar; represents an underscore &lowbar;"
+        test_value = HtmlTextConverter.convert(test_text)
+        expected_value = "Learn HTML entities: · is a middle dot · & stands for ampersand & < means less than < > means greater than > and _ represents an underscore _"
+        self.assertEqual(expected_value, test_value)
