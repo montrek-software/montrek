@@ -21,6 +21,7 @@ from django_pandas.io import read_frame
 from mailing.managers.mailing_manager import MailingManager
 from reporting.core import reporting_text as rt
 from reporting.core.table_converter import LatexTableConverter
+from reporting.core.text_converter import HtmlTextConverter
 from reporting.dataclasses import table_elements as te
 from reporting.lib.protocols import (
     ReportElementProtocol,
@@ -349,7 +350,9 @@ class MontrekTableManager(MontrekTableManagerABC):
             if not isinstance(table_element, te.LinkTableElement)
         ]
         for element in table_elements:
-            table_data[element.name] = [element.get_value(row) for row in queryset]
+            table_data[element.name] = [
+                HtmlTextConverter.convert(element.get_value(row)) for row in queryset
+            ]
         return pd.DataFrame(table_data)
 
     def get_paginated_queryset(self) -> QuerySet:

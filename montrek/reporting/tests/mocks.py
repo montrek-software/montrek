@@ -140,6 +140,19 @@ class MockRepository:
         self._order_field = value
 
 
+class MockHtmlRepository(MockRepository):
+    def receive(self):
+        return MockQuerySet(
+            MockData(
+                " &middot; &amp;  &lt;  &lt; &gt;  &gt; and &lowbar; ",
+                1,
+                1.0,
+                timezone.make_aware(datetime.datetime(2024, 7, 13)),
+                Decimal(1),
+            ),
+        )
+
+
 class MockLongRepository:
     def __init__(self, session_data: dict):
         self.session_data = session_data
@@ -189,6 +202,10 @@ class MockMontrekTableManager(MontrekTableManager):
                 text="field_a",
             ),
         )
+
+
+class MockHtmlMontrekTableManager(MockMontrekTableManager):
+    repository_class = MockHtmlRepository
 
 
 class MockLongMontrekTableManager(MockMontrekTableManager):
