@@ -188,7 +188,7 @@ class ReportingImage:
     def to_latex(self) -> str:
         try:
             urlparse(self.image_path)
-            is_url = True if self.image_path.startswith("http") else False
+            is_url = self.image_path.startswith("http")
         except ValueError:
             is_url = False
         if not is_url:
