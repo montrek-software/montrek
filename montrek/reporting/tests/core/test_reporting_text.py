@@ -115,6 +115,12 @@ class TestReportingImage(ReportingElementTestCase):
     def get_call_parameters(self) -> dict:
         return {"image_path": "https://example.com/properties/lakeside_residences.jpg"}
 
+    def test_urllike_but_no_html(self):
+        image_path = "abcd.png"
+        reporting_image = ReportingImage(image_path)
+        latex_path = reporting_image.to_latex()
+        self.assertEqual(latex_path, r"\includegraphics[width=1.0\textwidth]{abcd.png}")
+
 
 class TestReportingMap(ReportingElementTestCase):
     reporting_element_class = ReportingMap
