@@ -1,3 +1,5 @@
+import os
+import tempfile
 from dataclasses import dataclass
 from django.test import TestCase
 
@@ -114,6 +116,26 @@ class TestReportingImage(ReportingElementTestCase):
 
     def get_call_parameters(self) -> dict:
         return {"image_path": "https://example.com/properties/lakeside_residences.jpg"}
+
+    def test_urllike_but_no_html(self):
+        # Create a temporary image file
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+            tmp.write(b"\x89PNG\r\n\x1a\n")  # Write minimal PNG header
+            tmp_path = tmp.name
+
+        try:
+            reporting_image = ReportingImage(tmp_path)
+            latex_path = reporting_image.to_latex()
+            expected = rf"\includegraphics[width=1.0\textwidth]{{{tmp_path}}}"
+            self.assertEqual(latex_path, expected)
+        finally:
+            os.remove(tmp_path)  # Clean up the temporary file
+
+    def test_image_not_found(self):
+        image_path = "abcd.png"
+        reporting_image = ReportingImage(image_path)
+        latex_path = reporting_image.to_latex()
+        self.assertEqual(latex_path, "")
 
 
 class TestReportingMap(ReportingElementTestCase):
