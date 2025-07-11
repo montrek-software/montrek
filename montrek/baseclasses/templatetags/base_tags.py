@@ -21,7 +21,7 @@ def include_navbar():
             continue
         app_structure = app.split(".")
         if len(app_structure) > 1:
-            repo_name = app_structure[-2]
+            repo_name = app_structure[-2]  # Access the second-to-last element, which represents the repository name.
             app_name = app_structure[-1]
             if repo_name not in navbar_dropdowns:
                 navbar_dropdowns[repo_name] = NavBarDropdownModel(
