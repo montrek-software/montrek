@@ -1,4 +1,5 @@
 import tempfile
+import os
 from urllib.parse import urlparse
 
 import markdown
@@ -191,6 +192,8 @@ class ReportingImage:
         except ValueError:
             is_url = False
         if not is_url:
+            if not os.path.exists(self.image_path):
+                return ""
             return self._return_string(self.image_path)
         response = requests.get(self.image_path)
         if response.status_code != 200:
