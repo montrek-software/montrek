@@ -49,7 +49,7 @@ http://<your-ip>:<KEYCLOAK_PORT>
 
 **Example (default configuration):**
 
-http://localhost:8080
+<http://localhost:8080>
 
 ---
 
@@ -65,7 +65,6 @@ Use the following credentials to log in to Keycloak:
 ## Notes
 
 - Make sure `ENABLE_KEYCLOAK=1` is set in `.env` before running `make docker-up`, otherwise the Keycloak service will not be started.
-- You can change `KEYCLOAK_PORT` and `KEYCLOAK_DB_PORT` if these ports are already in use on your system.
 - **Important:** Use secure passwords in production environments. The example values are for development only.
 
 ---
