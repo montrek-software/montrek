@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# Load variables from .env file
+if [ -f .env ]; then
+  export $(grep -v '^#' .env | xargs)
+else
+  echo ".env file not found!"
+  exit 1
+fi
 # Base docker-compose.yml file
 MAIN_COMPOSE_FILE="docker-compose.yml"
 
@@ -16,7 +23,9 @@ echo "Detected docker-compose files: ${COMPOSE_FILES[*]}"
 
 # Get the base command
 
-COMMAND="up"
+if [[ "$1" == "up" ]]; then
+  COMMAND="up"
+fi
 
 if [[ "$1" == "down" ]]; then
   COMMAND="down"
@@ -32,6 +41,9 @@ BUILD=""
 if [[ "$3" == "--build" ]]; then
   BUILD="--build"
 fi
-
+if [[ "$ENABLE_KEYCLOAK" == "1" ]]; then
+  COMMAND=" --profile keycloak $COMMAND"
+fi
+echo "docker compose -f "${COMPOSE_FILES[@]}" $COMMAND $DETACHED $BUILD --remove-orphans"
 # Combine and run them
 docker compose -f "${COMPOSE_FILES[@]}" $COMMAND $DETACHED $BUILD --remove-orphans
