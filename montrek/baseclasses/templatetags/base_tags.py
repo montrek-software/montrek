@@ -9,8 +9,8 @@ from baseclasses.dataclasses.nav_bar_model import NavBarDropdownModel, NavBarMod
 register = template.Library()
 
 
-@register.inclusion_tag("navbar.html")
-def include_navbar():
+@register.inclusion_tag("navbar.html", takes_context=True)
+def include_navbar(context):
     navbar_apps_config = settings.NAVBAR_APPS
     navbar_rename_config = settings.NAVBAR_RENAME
     navbar_apps = []
@@ -21,7 +21,9 @@ def include_navbar():
             continue
         app_structure = app.split(".")
         if len(app_structure) > 1:
-            repo_name = app_structure[-2]  # Access the second-to-last element, which represents the repository name.
+            repo_name = app_structure[
+                -2
+            ]  # Access the second-to-last element, which represents the repository name.
             app_name = app_structure[-1]
             if repo_name not in navbar_dropdowns:
                 navbar_dropdowns[repo_name] = NavBarDropdownModel(
@@ -42,6 +44,7 @@ def include_navbar():
         "navbar_dropdowns": navbar_dropdowns.values(),
         "home_url": reverse(settings.NAVBAR_HOME_URL),
         "home_label": settings.NAVBAR_HOME_LABEL,
+        "user": context["user"],
     }
 
 
