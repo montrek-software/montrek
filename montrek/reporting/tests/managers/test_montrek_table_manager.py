@@ -16,6 +16,7 @@ from user.tests.factories.montrek_user_factories import MontrekUserFactory
 from reporting.dataclasses.table_elements import HistoryChangeState
 from reporting.managers.montrek_table_manager import HistoryDataTableManager
 from reporting.tests.mocks import (
+    MockHtmlMontrekTableManager,
     MockLongMontrekTableManager,
     MockLongMontrekTableManager2,
     MockMontrekDataFrameTableManager,
@@ -202,6 +203,11 @@ class TestMontrekTableManager(TestCase):
         self.assertEqual(test_manager.order_field, "-field_a")
         test_manager.get_full_table()
         self.assertEqual(test_manager.repository.get_order_fields(), ("-field_a",))
+
+    def test_df_without_html(self):
+        manager = MockHtmlMontrekTableManager()
+        test_df = manager.get_df()
+        self.assertEqual(test_df.loc[0, "Field A"], " · &  <  < >  > and _ ")
 
 
 class TestMontrekDataFrameTableManager(TestCase):

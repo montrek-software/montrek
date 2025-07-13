@@ -163,3 +163,83 @@ class HubCRepositoryLast(MontrekRepository):
             ["field_d1_int"],
             agg_func="latest",
         )
+
+
+class HubCRepositoryMean(MontrekRepository):
+    hub_class = me_models.HubC
+
+    def set_annotations(self):
+        self.add_linked_satellites_field_annotations(
+            me_models.SatD1,
+            me_models.LinkHubCHubD,
+            ["field_d1_int"],
+            agg_func="mean",
+        )
+        self.add_linked_satellites_field_annotations(
+            me_models.SatA2,
+            me_models.LinkHubAHubC,
+            ["field_a2_float"],
+            reversed_link=True,
+            agg_func="mean",
+        )
+
+
+class HubCRepositoryCount(MontrekRepository):
+    hub_class = me_models.HubC
+
+    def set_annotations(self):
+        self.add_linked_satellites_field_annotations(
+            me_models.SatD1,
+            me_models.LinkHubCHubD,
+            ["field_d1_int"],
+            agg_func="count",
+        )
+        self.add_linked_satellites_field_annotations(
+            me_models.SatA2,
+            me_models.LinkHubAHubC,
+            ["field_a2_float"],
+            reversed_link=True,
+            agg_func="count",
+            link_satellite_filter={"field_a2_float__gte": 2.6},
+            rename_field_map={"field_a2_float": "a2_counter_w_filter"},
+        )
+        self.add_linked_satellites_field_annotations(
+            me_models.SatA2,
+            me_models.LinkHubAHubC,
+            ["field_a2_float"],
+            reversed_link=True,
+            agg_func="count",
+            rename_field_map={"field_a2_float": "a2_counter"},
+        )
+
+
+class HubCRepositoryReversedParents(MontrekRepository):
+    hub_class = me_models.HubC
+
+    def set_annotations(self):
+        self.add_linked_satellites_field_annotations(
+            me_models.SatB1,
+            me_models.LinkHubAHubB,
+            ["field_b1_str"],
+            parent_link_classes=(me_models.LinkHubAHubC,),
+            parent_link_reversed=(True,),
+        )
+        self.add_linked_satellites_field_annotations(
+            me_models.SatA1,
+            me_models.LinkHubAHubC,
+            ["field_a1_str"],
+            reversed_link=True,
+        )
+
+
+class HubCRepositoryReversedParentsNoMatchingReversedParents(MontrekRepository):
+    hub_class = me_models.HubC
+
+    def set_annotations(self):
+        self.add_linked_satellites_field_annotations(
+            me_models.SatB1,
+            me_models.LinkHubAHubB,
+            ["field_b1_str"],
+            parent_link_classes=(me_models.LinkHubAHubC,),
+            parent_link_reversed=(True, False),
+        )

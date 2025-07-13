@@ -157,6 +157,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         *,
         agg_func: str = "string_concat",
         parent_link_classes: tuple[Type[MontrekLinkABC], ...] = (),
+        parent_link_reversed: tuple[bool, ...] | list[bool] = (),
         link_satellite_filter: dict[str, object] = {},
         separator: str = ";",
     ):
@@ -176,6 +177,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
                 self.field_type = CharField(null=True, blank=True)
 
         self.parent_link_classes = parent_link_classes
+        self.parent_link_reversed = parent_link_reversed
         self.link_satellite_filter = link_satellite_filter
 
     def get_link_query(
@@ -218,8 +220,10 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
 
     def _get_parent_db_name(self, hub_field: str) -> str:
         db_name = hub_field
-        for link_class in self.parent_link_classes:
-            db_name += "__" + link_class.__name__.lower() + f"__{hub_field}"
+        for i, link_class in enumerate(self.parent_link_classes):
+            is_reversed = self.parent_link_reversed[i]
+            parent_hub_field = "hub_out" if is_reversed else "hub_in"
+            db_name += "__" + link_class.__name__.lower() + f"__{parent_hub_field}"
         return db_name
 
     def _link_hubs_and_get_subquery(
@@ -306,6 +310,10 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
                 return self._annotate_string_concat(query, self.separator)
             if self.agg_func == LinkAggFunctionEnum.LATEST:
                 return self._annotate_latest(query)
+            if self.agg_func == LinkAggFunctionEnum.MEAN:
+                return self._annotate_mean(query)
+            if self.agg_func == LinkAggFunctionEnum.COUNT:
+                return self._annotate_count(query)
             else:
                 raise NotImplementedError(
                     f"Aggregation function {self.agg_func} is not implemented!"
@@ -336,6 +344,20 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
             return query.order_by("-hub_value_date__value_date_list__value_date")[:1]
         else:
             return query.order_by(f"{self.field}sub")[:1]
+
+    def _annotate_mean(self, query: QuerySet) -> QuerySet:
+        return query.annotate(
+            **{
+                self.field + "agg": Func(self.field + "sub", function="Avg"),
+            }
+        ).values(self.field + "agg")
+
+    def _annotate_count(self, query: QuerySet) -> QuerySet:
+        return query.annotate(
+            **{
+                self.field + "agg": Func(self.field + "sub", function="Count"),
+            }
+        ).values(self.field + "agg")
 
     def _is_multiple_allowed(self, hub_field_to: str) -> bool:
         _is_many_to_many = isinstance(self.link_class(), MontrekManyToManyLinkABC)
@@ -400,3 +422,5 @@ class LinkAggFunctionEnum(Enum):
     SUM = "sum"
     STRING_CONCAT = "string_concat"
     LATEST = "latest"
+    MEAN = "mean"
+    COUNT = "count"

@@ -1,10 +1,13 @@
 import tempfile
+import os
 from urllib.parse import urlparse
 
 import markdown
 import requests
-from baseclasses.models import HubValueDate
+from django.conf import settings
 from django.template import Context, Template
+
+from baseclasses.models import HubValueDate
 from reporting.constants import ReportingTextType
 from reporting.core.reporting_mixins import ReportingChecksMixin
 from reporting.core.reporting_protocols import ReportingElement
@@ -185,10 +188,12 @@ class ReportingImage:
     def to_latex(self) -> str:
         try:
             urlparse(self.image_path)
-            is_url = True
+            is_url = self.image_path.startswith("http")
         except ValueError:
             is_url = False
         if not is_url:
+            if not os.path.exists(self.image_path):
+                return ""
             return self._return_string(self.image_path)
         response = requests.get(self.image_path)
         if response.status_code != 200:
@@ -241,6 +246,18 @@ class MontrekLogo(ReportingImage):
             "http://static1.squarespace.com/static/673bfbe149f99b59e4a41ee7/t/673bfdb41644c858ec83dc7e/1731984820187/montrek_logo_variant.png?format=1500w",
             width=width,
         )
+
+
+class ClientLogo(ReportingImage):
+    def __init__(self, width: float = 1.0):
+        super().__init__(
+            settings.CLIENT_LOGO_PATH,
+            width=width,
+        )
+
+    def _return_string(self, value) -> str:
+        value = HtmlLatexConverter.convert(value)
+        return f"\\includegraphics[height=1cm]{{{value}}}"
 
 
 class MarkdownReportingElement:

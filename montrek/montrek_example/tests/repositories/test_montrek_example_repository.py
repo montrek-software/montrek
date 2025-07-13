@@ -31,13 +31,18 @@ from montrek_example.repositories.hub_c_repository import (
     HubCRepository,
     HubCRepository2,
     HubCRepositoryCommonFields,
+    HubCRepositoryCount,
     HubCRepositoryLastTS,
     HubCRepositoryLast,
+    HubCRepositoryMean,
     HubCRepositoryOnlyStatic,
+    HubCRepositoryReversedParents,
+    HubCRepositoryReversedParentsNoMatchingReversedParents,
     HubCRepositorySumTS,
 )
 from montrek_example.repositories.hub_d_repository import (
     HubDRepository,
+    HubDRepositoryReversedParentLink,
     HubDRepositoryTSReverseLink,
 )
 from montrek_example.repositories.hub_e_repository import (
@@ -1092,20 +1097,21 @@ class TestMontrekRepositoryLinks(TestCase):
         self.huba1 = me_factories.HubAFactory()
         self.huba2 = me_factories.HubAFactory()
         me_factories.AHubValueDateFactory(hub=self.huba2, value_date=None)
-        hubc1 = me_factories.HubCFactory()
+        self.hubc1 = me_factories.HubCFactory()
         hubc2 = me_factories.HubCFactory()
 
         me_factories.SatA1Factory(
             hub_entity=self.huba1,
             field_a1_int=5,
+            field_a1_str="Test",
         )
         me_factories.LinkHubAHubCFactory(
             hub_in=self.huba1,
-            hub_out=hubc1,
+            hub_out=self.hubc1,
         )
         me_factories.LinkHubAHubCFactory(
             hub_in=self.huba2,
-            hub_out=hubc1,
+            hub_out=self.hubc1,
             state_date_end=montrek_time(2023, 7, 12),
         )
         me_factories.LinkHubAHubCFactory(
@@ -1114,12 +1120,12 @@ class TestMontrekRepositoryLinks(TestCase):
             state_date_start=montrek_time(2023, 7, 12),
         )
         me_factories.SatC1Factory(
-            hub_entity=hubc1,
+            hub_entity=self.hubc1,
             state_date_end=montrek_time(2023, 7, 10),
             field_c1_str="First",
         )
         me_factories.SatC1Factory(
-            hub_entity=hubc1,
+            hub_entity=self.hubc1,
             state_date_start=montrek_time(2023, 7, 10),
             field_c1_str="Second",
         )
@@ -1198,6 +1204,33 @@ class TestMontrekRepositoryLinks(TestCase):
         queryset = repository.receive()
         self.assertEqual(queryset.count(), 2)
         self.assertEqual(queryset[0].field_d1_str, "Test")
+
+    def test_link_reversed_with_parent_links(self):
+        satd = me_factories.SatD1Factory()
+        me_factories.LinkHubCHubDFactory(hub_in=self.hubc1, hub_out=satd.hub_entity)
+        repository = HubDRepositoryReversedParentLink()
+        queryset = repository.receive()
+        self.assertEqual(queryset.count(), 1)
+        self.assertEqual(queryset.first().field_a1_str, "Test")
+
+    def test_link_with_reversed_parent(self):
+        hub_c = me_factories.HubCFactory()
+        sat_a = me_factories.SatA1Factory(field_a1_str="A1Test")
+        me_factories.LinkHubAHubCFactory(hub_in=sat_a.hub_entity, hub_out=hub_c)
+        satb = me_factories.SatB1Factory(field_b1_str="B1Test")
+        me_factories.LinkHubAHubBFactory(
+            hub_in=sat_a.hub_entity, hub_out=satb.hub_entity
+        )
+        repository = HubCRepositoryReversedParents()
+        c_object = repository.receive().get(hub__pk=hub_c.pk)
+        self.assertEqual(c_object.field_a1_str, "A1Test")
+        self.assertEqual(c_object.field_b1_str, "B1Test")
+
+    def test_link_with_reversed_parent__non_matching_items(self):
+        def call_repo():
+            return HubCRepositoryReversedParentsNoMatchingReversedParents()
+
+        self.assertRaises(ValueError, call_repo)
 
 
 class TestLinkOneToOneUpates(TestCase):
@@ -1964,16 +1997,37 @@ class TestTSRepoLatestTS(TestCase):
 class TestStaticAggFuncs(TestCase):
     def setUp(self) -> None:
         sat_d1_1 = me_factories.SatD1Factory(field_d1_int=2)
-        sat_d1_2 = me_factories.SatD1Factory(field_d1_int=3)
+        sat_d1_2 = me_factories.SatD1Factory(field_d1_int=5)
         sat_c1 = me_factories.SatC1Factory()
         sat_c1.hub_entity.link_hub_c_hub_d.add(sat_d1_1.hub_entity)
         sat_c1.hub_entity.link_hub_c_hub_d.add(sat_d1_2.hub_entity)
+        sat_a2_1 = me_factories.SatA2Factory(field_a2_float=2.5)
+        sat_a2_2 = me_factories.SatA2Factory(field_a2_float=3.0)
+        sat_a2_3 = me_factories.SatA2Factory(field_a2_float=None)
+        sat_a2_1.hub_entity.link_hub_a_hub_c.add(sat_c1.hub_entity)
+        sat_a2_2.hub_entity.link_hub_a_hub_c.add(sat_c1.hub_entity)
+        sat_a2_3.hub_entity.link_hub_a_hub_c.add(sat_c1.hub_entity)
 
     def test_latest_entry(self):
         repo = HubCRepositoryLast()
         test_query = repo.receive()
         self.assertEqual(test_query.count(), 1)
         self.assertEqual(test_query[0].field_d1_int, 2)
+
+    def test_mean(self):
+        repo = HubCRepositoryMean()
+        test_query = repo.receive()
+        self.assertEqual(test_query.count(), 1)
+        self.assertEqual(test_query[0].field_d1_int, 3)
+        self.assertAlmostEqual(test_query[0].field_a2_float, 2.75, delta=0.01)
+
+    def test_count(self):
+        repo = HubCRepositoryCount()
+        test_query = repo.receive()
+        self.assertEqual(test_query.count(), 1)
+        self.assertEqual(test_query[0].field_d1_int, 2)
+        self.assertEqual(test_query[0].a2_counter, 2)
+        self.assertEqual(test_query[0].a2_counter_w_filter, 1)
 
 
 class TestTimeSeriesPerformance(TestCase):

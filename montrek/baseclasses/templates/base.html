@@ -13,11 +13,12 @@
   <script src="https://unpkg.com/htmx.org@1.9.6"></script>
   {% include "partials/color_scheme.html" %}
  </head>
- <body>
+ <body class="d-flex flex-column min-vh-100">
 	 <!-- Bootstrap CSS Link -->
 
 <!-- Your Webpage -->
-<div class="container-fluid" style="padding:20px;">
+<main class="flex-grow-1">
+<div class="container-fluid" style="padding:20px;padding-bottom:40px">
 
   <!-- NAVBAR -->
   <div class="row" style="height:35px;">
@@ -60,9 +61,6 @@
 
   <div class="row">
     <div class="col-lg-2">
-      <div>
-          <a href="https://montrek-software.de" target="_blank" ><img src="https://images.squarespace-cdn.com/content/v1/673bfbe149f99b59e4a41ee7/cf8061ac-dc74-490d-8b62-40497ebc9629/montrek_logo_variant.png?format=1500w" class="img-responsive" alt="Montrek Logo" style="width: 80%;"/></a>
-      </div>
       {% if overview %}
       <div>
           <h2>OVERVIEW</h2>
@@ -75,7 +73,7 @@
         <!-- TITLE -->
         <div class="row">
           <div class="col-lg-12 page_title">
-            <h1>{{ page_title }}</h1>
+            <h1>{{ page_title|safe }}</h1>
           </div>
         </div>
         <!-- DATE RANGE SELECTOR -->
@@ -131,7 +129,7 @@
       </div>
     </div>
     <div class="col-lg-2">
-      <div class="row">
+      <div class="row" style="padding:2mm;">
           {% include_client_logo %}
       </div>
       <div class="row">
@@ -143,7 +141,22 @@
   </div>
 
 </div>
-
+</main>
+<div class="footer mt-4 py-3 bg-light">
+  <div class="container">
+    <div class="row">
+      <div class="col text-right">
+        &copy; {% now "Y" %} Powered by 
+        <a href="https://montrek-software.de" target="_blank" style="display: inline-flex; align-items: center; gap: 0.25rem;">
+          <img 
+            src="https://images.squarespace-cdn.com/content/v1/673bfbe149f99b59e4a41ee7/cf8061ac-dc74-490d-8b62-40497ebc9629/montrek_logo_variant.png?format=1500w" 
+            alt="Montrek Logo" 
+            style="height: 1.2rem; vertical-align: middle;" />
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
 <!-- jQuery and Bootstrap JS -->
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>

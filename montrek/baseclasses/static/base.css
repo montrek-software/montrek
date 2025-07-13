@@ -22,15 +22,6 @@ p {
   margin-left: 0;
 }
 
-h2 {
-  color: #004767; /* Dark blue text */
-}
-
-/* Navigation Bar Styling */
-.navbar {
-  background-color: #004767; /* Dark blue background */
-}
-
 li {
   margin-left: 20px;
 }
@@ -39,78 +30,18 @@ li {
   color: #ffffff; /* White text */
 }
 
-.box {
-  border: 1px solid #004767;
-}
-
-.page_title {
-}
-.page_title h1 {
-  text-align: center;
-  color: #004767; /* Dark blue text */
-}
-
 /* Tab Styling */
-.nav-tabs {
-  border-bottom: 2px solid #004767; /* Dark blue border */
-  margin-top: 10px; /* Add some top margin for spacing */
-}
 
 .nav-item {
   margin-right: 5px;
 }
 
-.nav-link {
-  color: #004767; /* Dark blue text */
-  border: 1px solid #004767; /* Dark blue border */
-}
-
-.nav-item.active .nav-link,
-.nav-link:hover {
-  background-color: #004767; /* Dark blue background */
-  color: #ffffff; /* White text */
-}
-
-/* Buttons */
-.btn {
-  background-color: #be0d3e; /* Red background */
-  color: #ffffff; /* White text */
-  margin: 5px; /* Add some top margin for spacing */
-}
-
-.btn:hover {
-  background-color: #9e0b36; /* Darker red on hover */
-}
-
-.btn-light {
-  color: #004767; /* White text */
-  border: none;
-  outline: none;
-  background: none;
-  margin: 5px; /* Add some top margin for spacing */
-}
-
-.btn-light:hover {
-  color: #9e0b36; /* Darker red on hover */
-}
 .btn-order-field {
   background: none;
   border: none;
   outline: none;
 }
-.btn-order-field:hover {
-  color: #be0d3e; /* Pale blue */
-}
 /* Input */
-.input {
-  background-color: #be0d3e; /* Red background */
-  color: #ffffff; /* White text */
-  width: 100px;
-}
-
-.input:hover {
-  background-color: #9e0b36; /* Darker red on hover */
-}
 
 /* Table Styling */
 table {
@@ -128,24 +59,6 @@ tr {
 td {
   padding: 2px; /* Add padding to each cell */
   text-align: left; /* Align text to the left */
-}
-/* Every even row will have a pale blue background */
-tr:nth-child(even) {
-  background-color: #e6f2f8; /* Pale blue */
-}
-
-/* Every odd row will have a white background */
-tr:nth-child(odd) {
-  background-color: #ffffff; /* White */
-}
-th {
-  background-color: #004767; /* Dark blue */
-  color: #ffffff; /* White */
-  padding: 10px; /* Add some padding */
-  text-align: left; /* Align text to the left */
-  position: sticky;
-  top: 0;
-  z-index: 1; /* Ensure it stays above other content */
 }
 /* Progress Bar elements */
 .bar-container {

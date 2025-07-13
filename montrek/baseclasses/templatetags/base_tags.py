@@ -21,8 +21,8 @@ def include_navbar():
             continue
         app_structure = app.split(".")
         if len(app_structure) > 1:
-            repo_name = app_structure[0]
-            app_name = app_structure[1]
+            repo_name = app_structure[-2]  # Access the second-to-last element, which represents the repository name.
+            app_name = app_structure[-1]
             if repo_name not in navbar_dropdowns:
                 navbar_dropdowns[repo_name] = NavBarDropdownModel(
                     repo_name, force_display_name=navbar_rename_config.get(repo_name)
@@ -37,7 +37,6 @@ def include_navbar():
             navbar_apps.append(
                 NavBarModel(app, force_display_name=navbar_rename_config.get(app))
             )
-
     return {
         "nav_apps": navbar_apps,
         "navbar_dropdowns": navbar_dropdowns.values(),

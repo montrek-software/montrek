@@ -1,4 +1,6 @@
+from html import unescape
 import re
+from typing import Any
 
 
 class HtmlLatexConverter:
@@ -138,3 +140,16 @@ class HtmlLatexConverter:
             '<span class="glyphicon glyphicon-trash"></span>', "\\twemoji{wastebasket}"
         )
         return text
+
+
+class HtmlTextConverter:
+    @staticmethod
+    def convert(text: Any) -> Any:
+        text = HtmlTextConverter.special_characters(text)
+        return text
+
+    @staticmethod
+    def special_characters(text: Any) -> Any:
+        if not isinstance(text, str):
+            return text
+        return unescape(text)

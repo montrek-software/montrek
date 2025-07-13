@@ -35,7 +35,7 @@ class LatexTableConverter:
         table_start_str += f"\\caption{{{self.table_title}}}\n"
         table_start_str += "\\begin{tabularx}{\\textwidth}{|"
         column_def_str = ""
-        column_header_str = "\\rowcolor{blue}"
+        column_header_str = "\\rowcolor{primary}"
         column_sizes = self.get_column_sizes()
 
         for table_element in self.table_elements:
@@ -61,7 +61,7 @@ class LatexTableConverter:
 
         for i, query_object in enumerate(self.table):
             if i % 2 == 0:
-                table_str += "\\rowcolor{lightblue}"
+                table_str += "\\rowcolor{primary_light}"
             for table_element in self.table_elements:
                 if isinstance(table_element, te.LinkTableElement):
                     continue

@@ -534,15 +534,10 @@ class TestNavbar(TestCase):
         self.assertEqual(response.status_code, 200)
         soup = BeautifulSoup(response.content, "html.parser")
 
-        # Check Navbar Brand
-        brand = soup.find("a", class_="navbar-brand")
-        self.assertIsNotNone(brand)
-        self.assertEqual(brand.text.strip(), "montrek")
-
         # Check "Home" link
         home_link = soup.find("a", href="/")
         self.assertIsNotNone(home_link)
-        self.assertEqual(home_link.text.strip(), "montrek")
+        self.assertEqual(home_link.text.strip(), "Home")
 
         # Check Dropdown for "Montrek Example"
         dropdown = soup.find("li", class_="dropdown")
