@@ -213,31 +213,38 @@ AUTH_PASSWORD_VALIDATORS = [
 AUTH_USER_MODEL = "user.MontrekUser"
 
 ENABLE_KEYCLOAK = config("ENABLE_KEYCLOAK", default=False, cast=bool)
+LOGIN_EXEMPT_PATHS = [
+    r"^oidc/authenticate/?$",
+    r"^oidc/callback/?$",
+    r"^oidc/logout/?$",
+    r"^admin/.*$",
+    r"^api/.*$",
+    r"^user/.*$",
+]
 if ENABLE_KEYCLOAK:
-    LOGIN_URL = "bla"
-    LOGIN_REDIRECT_URL = "bla"
     AUTHENTICATION_BACKENDS = ("mozilla_django_oidc.auth.OIDCAuthenticationBackend",)
     LOGIN_URL = "/oidc/authenticate/"
-    LOGIN_EXEMPT_PATHS = ["/user", "/admin", "/api", "/oidc"]
 
-    OIDC_RP_CLIENT_ID = "montrek-app"
-    OIDC_RP_CLIENT_SECRET = "QFA2YiBMwsh0tEbHvb2SRk5UDAwx5aYF"
+    OIDC_RP_CLIENT_ID = config("KEYCLOAK_CLIENT_ID", default="")
+    OIDC_RP_CLIENT_SECRET = config("KEYCLOAK_CLIENT_SECRET", default="")
     OIDC_RP_SIGN_ALGO = "RS256"
+    realm = config("KEYCLOAK_REALM", default="")
+
     OIDC_OP_AUTHORIZATION_ENDPOINT = (
-        "http://localhost:8080/realms/montrek/protocol/openid-connect/auth"
+        f"http://localhost:8080/realms/{realm}/protocol/openid-connect/auth"
     )
     OIDC_OP_TOKEN_ENDPOINT = (
-        "http://localhost:8080/realms/montrek/protocol/openid-connect/token"
+        f"http://localhost:8080/realms/{realm}/protocol/openid-connect/token"
     )
     OIDC_OP_USER_ENDPOINT = (
-        "http://localhost:8080/realms/montrek/protocol/openid-connect/userinfo"
+        f"http://localhost:8080/realms/{realm}/protocol/openid-connect/userinfo"
     )
     OIDC_OP_JWKS_ENDPOINT = (
-        "http://localhost:8080/realms/montrek/protocol/openid-connect/certs"
+        f"http://localhost:8080/realms/{realm}/protocol/openid-connect/certs"
     )
 else:
     LOGIN_URL = reverse_lazy("login")
-    LOGIN_REDIRECT_URL = reverse_lazy("home")
+LOGIN_REDIRECT_URL = reverse_lazy("home")
 
 
 # Internationalization
@@ -322,7 +329,6 @@ IS_TEST_RUN = False
 
 MONTREK_GITHUB_TOKEN = config("MONTREK_GITHUB_TOKEN", default="")
 
-LOGIN_EXEMPT_PATHS = ["/user", "/admin", "/api"]
 
 INTERNAL_IPS = [
     "127.0.0.1",
