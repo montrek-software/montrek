@@ -74,7 +74,7 @@ class MontrekLogoutView(auth_views.LogoutView):
         if settings.ENABLE_KEYCLOAK:
             logout(request)
             return redirect(settings.OIDC_OP_LOGOUT)
-        self.super().dispatch(request, *auth, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
 
 
 class MontrekPasswordResetConfirmView(auth_views.PasswordResetConfirmView):

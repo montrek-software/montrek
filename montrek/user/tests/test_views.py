@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.core import mail
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 
@@ -9,6 +9,7 @@ def _get_messages_from_response(response):
 
 
 class TestMontrekSignUpView(TestCase):
+    @override_settings(KEYCLOAK_ENABLED=["/a/"])
     def test_signup_view(self):
         url = reverse("signup")
         response = self.client.get(url)
