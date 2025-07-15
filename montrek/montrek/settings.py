@@ -225,23 +225,18 @@ if ENABLE_KEYCLOAK:
     AUTHENTICATION_BACKENDS = ("mozilla_django_oidc.auth.OIDCAuthenticationBackend",)
     LOGIN_URL = "/oidc/authenticate/"
 
+    KEYCLOAK_PORT = config("KEYCLOAK_PORT", default="")
     OIDC_RP_CLIENT_ID = config("KEYCLOAK_CLIENT_ID", default="")
     OIDC_RP_CLIENT_SECRET = config("KEYCLOAK_CLIENT_SECRET", default="")
     OIDC_RP_SIGN_ALGO = "RS256"
     realm = config("KEYCLOAK_REALM", default="")
+    KEYCLOAK_URL = f"http://{DEPLOY_HOST}:{KEYCLOAK_PORT}/realms/{realm}"
 
-    OIDC_OP_AUTHORIZATION_ENDPOINT = (
-        f"http://localhost:8080/realms/{realm}/protocol/openid-connect/auth"
-    )
-    OIDC_OP_TOKEN_ENDPOINT = (
-        f"http://localhost:8080/realms/{realm}/protocol/openid-connect/token"
-    )
-    OIDC_OP_USER_ENDPOINT = (
-        f"http://localhost:8080/realms/{realm}/protocol/openid-connect/userinfo"
-    )
-    OIDC_OP_JWKS_ENDPOINT = (
-        f"http://localhost:8080/realms/{realm}/protocol/openid-connect/certs"
-    )
+    OIDC_OP_AUTHORIZATION_ENDPOINT = KEYCLOAK_URL + "/protocol/openid-connect/auth"
+    OIDC_OP_TOKEN_ENDPOINT = KEYCLOAK_URL + "/protocol/openid-connect/token"
+    OIDC_OP_USER_ENDPOINT = KEYCLOAK_URL + "/protocol/openid-connect/userinfo"
+    OIDC_OP_JWKS_ENDPOINT = KEYCLOAK_URL + "/protocol/openid-connect/certs"
+    OIDC_OP_LOGOUT = KEYCLOAK_URL + "/protocol/openid-connect/logout"
 else:
     LOGIN_URL = reverse_lazy("login")
 LOGIN_REDIRECT_URL = reverse_lazy("home")

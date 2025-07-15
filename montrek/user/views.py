@@ -1,4 +1,6 @@
-from django.contrib.auth import login
+from django.contrib.auth import login, logout
+from django.conf import settings
+from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.contrib.auth import views as auth_views
 from django.views import generic as generic_views
@@ -61,9 +63,18 @@ class MontrekLoginView(generic_views.FormView, MessageHandlerMixin):
         context["link"] = reverse_lazy("password_reset")
         return context
 
+    def get(self, request, *args, **kwargs):
+        if settings.ENABLE_KEYCLOAK:
+            return redirect("oidc_authentication_init")
+        return super().get(request, *args, **kwargs)
+
 
 class MontrekLogoutView(auth_views.LogoutView):
-    pass
+    def dispatch(self, request, *args, **kwargs):
+        if settings.ENABLE_KEYCLOAK:
+            logout(request)
+            return redirect(settings.OIDC_OP_LOGOUT)
+        self.super().dispatch(request, *auth, **kwargs)
 
 
 class MontrekPasswordResetConfirmView(auth_views.PasswordResetConfirmView):
