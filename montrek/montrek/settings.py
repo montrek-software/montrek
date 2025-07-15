@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 from decouple import Config, RepositoryEnv
 from django.urls import reverse_lazy
+from montrek.utils import get_keycloak_base_url, get_oidc_endpoints
 
 from reporting.core.reporting_colors import ReportingColors
 from .logging import get_logging_config
@@ -229,14 +230,15 @@ if ENABLE_KEYCLOAK:
     OIDC_RP_CLIENT_ID = config("KEYCLOAK_CLIENT_ID", default="")
     OIDC_RP_CLIENT_SECRET = config("KEYCLOAK_CLIENT_SECRET", default="")
     OIDC_RP_SIGN_ALGO = "RS256"
-    realm = config("KEYCLOAK_REALM", default="")
-    KEYCLOAK_URL = f"http://{DEPLOY_HOST}:{KEYCLOAK_PORT}/realms/{realm}"
+    KEYCLOAK_REALM = config("KEYCLOAK_REALM", default="")
+    KEYCLOAK_URL = get_keycloak_base_url()
+    oicd_endpoints = get_oidc_endpoints()
 
-    OIDC_OP_AUTHORIZATION_ENDPOINT = KEYCLOAK_URL + "/protocol/openid-connect/auth"
-    OIDC_OP_TOKEN_ENDPOINT = KEYCLOAK_URL + "/protocol/openid-connect/token"
-    OIDC_OP_USER_ENDPOINT = KEYCLOAK_URL + "/protocol/openid-connect/userinfo"
-    OIDC_OP_JWKS_ENDPOINT = KEYCLOAK_URL + "/protocol/openid-connect/certs"
-    OIDC_OP_LOGOUT = KEYCLOAK_URL + "/protocol/openid-connect/logout"
+    OIDC_OP_AUTHORIZATION_ENDPOINT = oicd_endpoints["authorization"]
+    OIDC_OP_TOKEN_ENDPOINT = oicd_endpoints["token"]
+    OIDC_OP_USER_ENDPOINT = oicd_endpoints["userinfo"]
+    OIDC_OP_JWKS_ENDPOINT = oicd_endpoints["jwks"]
+    OIDC_OP_LOGOUT = oicd_endpoints["logout"]
 else:
     LOGIN_URL = reverse_lazy("login")
 LOGIN_REDIRECT_URL = reverse_lazy("home")
