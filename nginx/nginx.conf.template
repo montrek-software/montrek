@@ -1,28 +1,47 @@
-upstream backend { # name of our web image
-    server web:${APP_PORT}; # default django port
+upstream django_backend {
+    server web:${APP_PORT};  # Django container
 }
 
+upstream keycloak_backend {
+    server keycloak:${KEYCLOAK_PORT};  # Keycloak container
+}
+
+# Django Application
 server {
-
-
-    server_name montrek.${PROJECT_NAME};
     listen ${DEPLOY_PORT} ssl;
-    ssl_certificate /etc/ssl/cert.crt;
+    server_name app.${DEPLOY_HOST};
+
+    ssl_certificate /etc/ssl/fullchain.crt;
+    ssl_certificate_key /etc/ssl/cert.key;
+
+    client_max_body_size 100M;
+
+    location /static/ {
+        alias /montrek/static/;
+    }
+
+    location / {
+        proxy_pass http://django_backend;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+
+# Keycloak Application
+server {
+    listen 443 ssl;
+    server_name auth.${DEPLOY_HOST};
+
+    ssl_certificate /etc/ssl/fullchain.crt;
     ssl_certificate_key /etc/ssl/cert.key;
 
     client_max_body_size 100M;
 
     location / {
-        proxy_read_timeout 1200s;
-        proxy_pass http://backend;
+        proxy_pass http://keycloak_backend;
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-Proto https;
-        proxy_connect_timeout 60;
         proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-Host $host:${DEPLOY_PORT};
     }
-    location /static/ {
-        alias /montrek/static/; # where our static files are hosted
-    }
-
 }

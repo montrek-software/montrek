@@ -2,17 +2,17 @@
 
 # Load variables from .env file
 if [ -f .env ]; then
-	export $(grep -v '^#' .env | xargs)
+  export $(grep -v '^#' .env | xargs)
 else
-	echo ".env file not found!"
-	exit 1
+  echo ".env file not found!"
+  exit 1
 fi
 
 # Check if required variables are set
 if [[ -z "$DEPLOY_HOST" ]]; then
-	echo "One or more required environment variables are missing in .env:"
-	echo "DEPLOY_HOST"
-	exit 1
+  echo "One or more required environment variables are missing in .env:"
+  echo "DEPLOY_HOST"
+  exit 1
 fi
 # Generate a self-signed certificate for the HTTPS server
 # Generate an RSA private key of size 2048:
@@ -39,17 +39,21 @@ authorityKeyIdentifier = keyid:always, issuer:always
 keyUsage               = nonRepudiation, digitalSignature, keyEncipherment, dataEncipherment
 subjectAltName         = @alt_names
 [ alt_names ]
-DNS.1 = $DEPLOY_HOST" >openssl.cnf
+DNS.1 = app.$DEPLOY_HOST
+DNS.2 = auth.$DEPLOY_HOST" >openssl.cnf
 
 # Sign the CSR using the root certificate and key:
 openssl x509 -req -in cert.csr -CA rootCert.pem -CAkey rootCA.key -CAcreateserial -out cert.crt -days 730 -sha256 -extfile openssl.cnf
 
 # Verify that the certificate is built correctly:
 
-openssl verify -CAfile rootCert.pem -verify_hostname $DEPLOY_HOST cert.crt
+openssl verify -CAfile rootCert.pem -verify_hostname app.$DEPLOY_HOST cert.crt
+openssl verify -CAfile rootCert.pem -verify_hostname auth.$DEPLOY_HOST cert.crt
 
 mkdir -p nginx/certs
 
+cat cert.crt rootCert.pem >fullchain.crt
 mv cert.* nginx/certs/
+mv fullchain.crt nginx/certs/
 
-rm -f rootCA.key rootCert.pem cert.csr cert.key openssl.cnf
+rm -f rootCA.key cert.csr cert.key openssl.cnf

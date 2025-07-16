@@ -65,5 +65,12 @@ ENV PATH="/venv/bin:$PATH"
 # port where the Django app runs
 EXPOSE 8000
 
+
+# Copy certs
+RUN apt-get install -y --no-install-recommends ca-certificates
+
+COPY ./nginx/certs/fullchain.crt /usr/local/share/ca-certificates/montrek_root_ca.crt
+RUN update-ca-certificates
+ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
 # Clean up
 RUN rm -rf /var/lib/apt/lists/*

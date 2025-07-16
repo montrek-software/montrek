@@ -46,6 +46,7 @@ ALLOWED_HOSTS = [
     f"montrek.{PROJECT_NAME}",
     f"{DEPLOY_HOST}:{DEPLOY_PORT}",
     DEPLOY_HOST,
+    f"app.{DEPLOY_HOST}",
 ]
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
@@ -239,6 +240,9 @@ if ENABLE_KEYCLOAK:
     OIDC_OP_USER_ENDPOINT = oicd_endpoints["userinfo"]
     OIDC_OP_JWKS_ENDPOINT = oicd_endpoints["jwks"]
     OIDC_OP_LOGOUT = oicd_endpoints["logout"]
+    OIDC_EXTRA_REQUEST_ARGS = {"verify": "/etc/ssl/certs/ca-certificates.crt"}
+    os.environ["REQUESTS_CA_BUNDLE"] = "/etc/ssl/certs/ca-certificates.crt"
+
 else:
     LOGIN_URL = reverse_lazy("login")
 LOGIN_REDIRECT_URL = reverse_lazy("home")

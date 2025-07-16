@@ -4,7 +4,7 @@ from django.conf import settings
 
 
 def get_keycloak_base_url():
-    return f"http://{settings.DEPLOY_HOST}:{settings.KEYCLOAK_PORT}/realms/{settings.KEYCLOAK_REALM}"
+    return f"https://auth.{settings.DEPLOY_HOST}/realms/{settings.KEYCLOAK_REALM}"
 
 
 def get_oidc_endpoints():
