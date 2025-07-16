@@ -270,13 +270,13 @@ class TestMontrekPasswordChangeView(TestCase):
 class TestKeycloakSettings(TestCase):
     @override_settings(
         ENABLE_KEYCLOAK=True,
-        DEPLOY_HOST="127.0.0.1",
+        DEPLOY_HOST="test-host.de",
         KEYCLOAK_PORT="8080",
         KEYCLOAK_REALM="test-realm",
     )
     def test_keycloak_settings(self):
         keycloak_base = get_keycloak_base_url()
-        self.assertEqual(keycloak_base, "http://127.0.0.1:8080/realms/test-realm")
+        self.assertEqual(keycloak_base, "https://auth.test-host.de/realms/test-realm")
         oicd_endpoints = get_oidc_endpoints()
 
         self.assertEqual(
