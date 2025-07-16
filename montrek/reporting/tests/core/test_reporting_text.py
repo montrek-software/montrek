@@ -126,6 +126,7 @@ class TestReportingImage(ReportingElementTestCase):
         try:
             reporting_image = ReportingImage(tmp_path)
             latex_path = reporting_image.to_latex()
+            tmp_path = tmp_path.replace("_", r"\\_")
             expected = rf"\includegraphics[width=1.0\textwidth]{{{tmp_path}}}"
             self.assertEqual(latex_path, expected)
         finally:
