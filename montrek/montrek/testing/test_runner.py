@@ -1,6 +1,7 @@
 import tempfile
 from django.test.runner import DiscoverRunner
 from django.test.utils import override_settings
+from django.urls import reverse_lazy
 
 
 class MontrekTestRunner(DiscoverRunner):
@@ -22,6 +23,11 @@ class MontrekTestRunner(DiscoverRunner):
                 ],
                 "NAVBAR_RENAME": {"info": "Amazing App"},
                 "MONTREK_EXTENSION_APPS": ["app1", "app2", "mt_dummy.app3"],
+                "ENABLE_KEYCLOAK": False,
+                "LOGIN_URL": reverse_lazy("login"),
+                "AUTHENTICATION_BACKENDS": (
+                    "django.contrib.auth.backends.ModelBackend",
+                ),
                 # Add other test-specific settings here
             }
         self._override = override_settings(**test_settings)

@@ -126,7 +126,8 @@ class TestReportingImage(ReportingElementTestCase):
         try:
             reporting_image = ReportingImage(tmp_path)
             latex_path = reporting_image.to_latex()
-            expected = rf"\includegraphics[width=1.0\textwidth]{{{tmp_path}}}"
+            cleaned_tmp_path = tmp_path.replace("_", r"\_")
+            expected = rf"\includegraphics[width=1.0\textwidth]{{{cleaned_tmp_path}}}"
             self.assertEqual(latex_path, expected)
         finally:
             os.remove(tmp_path)  # Clean up the temporary file

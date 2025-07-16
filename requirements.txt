@@ -20,6 +20,8 @@ celery==5.4.0
     #   django-celery-beat
 certifi==2024.12.14
     # via requests
+cffi==1.17.1
+    # via cryptography
 charset-normalizer==3.4.1
     # via requests
 click==8.1.8
@@ -36,6 +38,10 @@ click-repl==0.3.0
     # via celery
 cron-descriptor==1.4.5
     # via django-celery-beat
+cryptography==45.0.5
+    # via
+    #   josepy
+    #   mozilla-django-oidc
 django==5.1.5
     # via
     #   -r requirements.in
@@ -44,6 +50,7 @@ django==5.1.5
     #   django-extensions
     #   django-timezone-field
     #   djangorestframework
+    #   mozilla-django-oidc
 django-celery-beat==2.7.0
     # via -r requirements.in
 django-debug-toolbar==5.0.1
@@ -80,6 +87,8 @@ idna==3.10
     # via requests
 jinja2==3.1.4
     # via -r requirements.in
+josepy==2.1.0
+    # via mozilla-django-oidc
 kaleido==0.2.1
     # via -r requirements.in
 kombu==5.4.2
@@ -92,6 +101,8 @@ markdown==3.6
     # via -r requirements.in
 markupsafe==3.0.2
     # via jinja2
+mozilla-django-oidc==4.0.1
+    # via -r requirements.in
 multitasking==0.0.11
     # via yfinance
 mypy-extensions==1.0.0
@@ -128,6 +139,8 @@ psycopg2==2.9.10
     # via -r requirements.in
 pycountry==24.6.1
     # via faker-marketdata
+pycparser==2.22
+    # via cffi
 python-crontab==3.2.0
     # via django-celery-beat
 python-dateutil==2.9.0.post0
@@ -149,6 +162,7 @@ redis==5.0.4
 requests==2.32.3
     # via
     #   -r requirements.in
+    #   mozilla-django-oidc
     #   sdmx
     #   sdmx1
     #   yfinance
