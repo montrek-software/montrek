@@ -271,12 +271,15 @@ class TestKeycloakSettings(TestCase):
     @override_settings(
         ENABLE_KEYCLOAK=True,
         DEPLOY_HOST="test-host.de",
+        PROJECT_NAME="test-project",
         KEYCLOAK_PORT="8080",
         KEYCLOAK_REALM="test-realm",
     )
     def test_keycloak_settings(self):
         keycloak_base = get_keycloak_base_url()
-        self.assertEqual(keycloak_base, "https://auth.test-host.de/realms/test-realm")
+        self.assertEqual(
+            keycloak_base, "https://auth.test-project.test-host.de/realms/test-realm"
+        )
         oicd_endpoints = get_oidc_endpoints()
 
         self.assertEqual(
