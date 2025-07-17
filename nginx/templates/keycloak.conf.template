@@ -5,7 +5,7 @@ upstream keycloak_backend {
 # Keycloak Application
 server {
     listen 443 ssl;
-    server_name auth.${PROJECT_NAME}${DEPLOY_HOST};
+    server_name auth.${PROJECT_NAME}.${DEPLOY_HOST};
 
     ssl_certificate /etc/ssl/fullchain.crt;
     ssl_certificate_key /etc/ssl/cert.key;

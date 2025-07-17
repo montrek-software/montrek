@@ -140,7 +140,7 @@ services:
       KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
       KC_PROXY: edge
       KC_HTTP_ENABLED: true
-      KC_HOSTNAME: auth.${DEPLOY_HOST}
+      KC_HOSTNAME: auth.${PROJECT_NAME}.${DEPLOY_HOST}
       KC_HOSTNAME_STRICT: false
     depends_on:
       - keycloak-db
