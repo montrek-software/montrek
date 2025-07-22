@@ -8,6 +8,8 @@ amqp==5.3.1
     # via kombu
 asgiref==3.8.1
     # via django
+babel==2.17.0
+    # via docxcompose
 beautifulsoup4==4.12.3
     # via yfinance
 billiard==4.2.1
@@ -63,6 +65,10 @@ django-timezone-field==7.1
     # via django-celery-beat
 djangorestframework==3.15.2
     # via -r requirements.in
+docxcompose==1.4.0
+    # via docxtpl
+docxtpl==0.20.1
+    # via -r requirements.in
 et-xmlfile==2.0.0
     # via openpyxl
 factory-boy==3.3.1
@@ -85,8 +91,10 @@ html5lib==1.1
     # via yfinance
 idna==3.10
     # via requests
-jinja2==3.1.4
-    # via -r requirements.in
+jinja2==3.1.6
+    # via
+    #   -r requirements.in
+    #   docxtpl
 josepy==2.1.0
     # via mozilla-django-oidc
 kaleido==0.2.1
@@ -95,6 +103,9 @@ kombu==5.4.2
     # via celery
 lxml==5.3.0
     # via
+    #   docxcompose
+    #   docxtpl
+    #   python-docx
     #   sdmx1
     #   yfinance
 markdown==3.6
@@ -153,6 +164,10 @@ python-dateutil==2.9.0.post0
     #   sdmx1
 python-decouple==3.8
     # via -r requirements.in
+python-docx==1.2.0
+    # via
+    #   docxcompose
+    #   docxtpl
 pytz==2024.2
     # via
     #   pandas
@@ -163,12 +178,9 @@ requests==2.32.3
     # via
     #   -r requirements.in
     #   mozilla-django-oidc
-    #   sdmx
     #   sdmx1
     #   yfinance
 ruff==0.11.2
-    # via -r requirements.in
-sdmx==0.2.10
     # via -r requirements.in
 sdmx1==2.15.0
     # via -r requirements.in
@@ -177,6 +189,7 @@ sf-hamilton==1.86.1
 six==1.17.0
     # via
     #   django-pandas
+    #   docxcompose
     #   html5lib
     #   python-dateutil
 soupsieve==2.6
@@ -196,6 +209,7 @@ tinycss2==1.4.0
 typing-extensions==4.12.2
     # via
     #   faker
+    #   python-docx
     #   sf-hamilton
     #   typing-inspect
 typing-inspect==0.9.0
@@ -222,3 +236,6 @@ webencodings==0.5.1
     #   tinycss2
 yfinance==0.2.52
     # via -r requirements.in
+
+# The following packages are considered to be unsafe in a requirements file:
+# setuptools
