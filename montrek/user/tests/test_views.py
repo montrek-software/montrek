@@ -1,7 +1,10 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core import mail
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
+
+from montrek.utils import get_keycloak_base_url, get_oidc_endpoints
 
 
 def _get_messages_from_response(response):
@@ -261,4 +264,41 @@ class TestMontrekPasswordChangeView(TestCase):
 
         self.assertRedirects(
             response, f"{reverse('login')}?next={reverse('password_change')}"
+        )
+
+
+class TestKeycloakSettings(TestCase):
+    @override_settings(
+        ENABLE_KEYCLOAK=True,
+        DEPLOY_HOST="test-host.de",
+        PROJECT_NAME="test-project",
+        KEYCLOAK_PORT="8080",
+        KEYCLOAK_REALM="test-realm",
+    )
+    def test_keycloak_settings(self):
+        keycloak_base = get_keycloak_base_url()
+        self.assertEqual(
+            keycloak_base, "https://auth.test-project.test-host.de/realms/test-realm"
+        )
+        oicd_endpoints = get_oidc_endpoints()
+
+        self.assertEqual(
+            oicd_endpoints["authorization"],
+            keycloak_base + "/protocol/openid-connect/auth",
+        )
+        self.assertEqual(
+            oicd_endpoints["token"],
+            keycloak_base + "/protocol/openid-connect/token",
+        )
+        self.assertEqual(
+            oicd_endpoints["userinfo"],
+            keycloak_base + "/protocol/openid-connect/userinfo",
+        )
+        self.assertEqual(
+            oicd_endpoints["jwks"],
+            keycloak_base + "/protocol/openid-connect/certs",
+        )
+        self.assertEqual(
+            oicd_endpoints["logout"],
+            keycloak_base + "/protocol/openid-connect/logout",
         )

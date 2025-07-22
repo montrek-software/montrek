@@ -13,7 +13,10 @@ services:
     environment:
       - APP_PORT=${APP_PORT}
       - DEPLOY_PORT=${DEPLOY_PORT}
+      - DEPLOY_HOST=${DEPLOY_HOST}
       - PROJECT_NAME=${PROJECT_NAME}
+      - ENABLE_KEYCLOAK=${ENABLE_KEYCLOAK}
+      - KEYCLOAK_PORT=${KEYCLOAK_PORT}
     restart: "on-failure"
     networks:
       - montrek_network
@@ -112,10 +115,45 @@ services:
     networks:
       - montrek_network
 
+  keycloak-db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
+    volumes:
+      - keycloak_db_data:/var/lib/postgresql/data
+    networks:
+      - montrek_network
+    profiles:
+      - keycloak
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0
+    command: start
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
+      KC_PROXY: edge
+      KC_HTTP_ENABLED: true
+      KC_HOSTNAME: auth.${PROJECT_NAME}.${DEPLOY_HOST}
+      KC_HOSTNAME_STRICT: false
+    depends_on:
+      - keycloak-db
+    networks:
+      - montrek_network
+    profiles:
+      - keycloak
+
 volumes:
   db_data:
   static_volume:
   uploads_volume:
+  keycloak_db_data:
 
 networks:
   montrek_network:

@@ -1,0 +1,26 @@
+upstream django_backend {
+    server web:${APP_PORT};  # Django container
+}
+
+
+# Django Application
+server {
+    listen ${DEPLOY_PORT} ssl;
+    server_name ${PROJECT_NAME}.${DEPLOY_HOST};
+
+    ssl_certificate /etc/ssl/fullchain.crt;
+    ssl_certificate_key /etc/ssl/cert.key;
+
+    client_max_body_size 100M;
+
+    location /static/ {
+        alias /montrek/static/;
+    }
+
+    location / {
+        proxy_pass http://django_backend;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}

@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 from decouple import Config, RepositoryEnv
 from django.urls import reverse_lazy
+from montrek.utils import get_keycloak_base_url, get_oidc_endpoints
 
 from reporting.core.reporting_colors import ReportingColors
 from .logging import get_logging_config
@@ -45,6 +46,7 @@ ALLOWED_HOSTS = [
     f"montrek.{PROJECT_NAME}",
     f"{DEPLOY_HOST}:{DEPLOY_PORT}",
     DEPLOY_HOST,
+    f"{PROJECT_NAME}.{DEPLOY_HOST}",
 ]
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
@@ -212,8 +214,39 @@ AUTH_PASSWORD_VALIDATORS = [
 
 AUTH_USER_MODEL = "user.MontrekUser"
 
-LOGIN_URL = reverse_lazy("login")
+ENABLE_KEYCLOAK = config("ENABLE_KEYCLOAK", default=False, cast=bool)
+LOGIN_EXEMPT_PATHS = [
+    r"^oidc/authenticate/?$",
+    r"^oidc/callback/?$",
+    r"^oidc/logout/?$",
+    r"^admin/.*$",
+    r"^api/.*$",
+    r"^user/.*$",
+]
+if ENABLE_KEYCLOAK:
+    AUTHENTICATION_BACKENDS = ("mozilla_django_oidc.auth.OIDCAuthenticationBackend",)
+    LOGIN_URL = "/oidc/authenticate/"
+
+    KEYCLOAK_PORT = config("KEYCLOAK_PORT", default="")
+    OIDC_RP_CLIENT_ID = config("KEYCLOAK_CLIENT_ID", default="")
+    OIDC_RP_CLIENT_SECRET = config("KEYCLOAK_CLIENT_SECRET", default="")
+    OIDC_RP_SIGN_ALGO = "RS256"
+    KEYCLOAK_REALM = config("KEYCLOAK_REALM", default="")
+    KEYCLOAK_URL = get_keycloak_base_url()
+    oicd_endpoints = get_oidc_endpoints()
+
+    OIDC_OP_AUTHORIZATION_ENDPOINT = oicd_endpoints["authorization"]
+    OIDC_OP_TOKEN_ENDPOINT = oicd_endpoints["token"]
+    OIDC_OP_USER_ENDPOINT = oicd_endpoints["userinfo"]
+    OIDC_OP_JWKS_ENDPOINT = oicd_endpoints["jwks"]
+    OIDC_OP_LOGOUT = oicd_endpoints["logout"]
+    OIDC_EXTRA_REQUEST_ARGS = {"verify": "/etc/ssl/certs/ca-certificates.crt"}
+    os.environ["REQUESTS_CA_BUNDLE"] = "/etc/ssl/certs/ca-certificates.crt"
+
+else:
+    LOGIN_URL = reverse_lazy("login")
 LOGIN_REDIRECT_URL = reverse_lazy("home")
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
@@ -297,7 +330,6 @@ IS_TEST_RUN = False
 
 MONTREK_GITHUB_TOKEN = config("MONTREK_GITHUB_TOKEN", default="")
 
-LOGIN_EXEMPT_PATHS = ["/user", "/admin", "/api"]
 
 INTERNAL_IPS = [
     "127.0.0.1",

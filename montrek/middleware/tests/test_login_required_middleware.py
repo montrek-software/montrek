@@ -18,7 +18,7 @@ class TestLoginRequiredMiddleware(TestCase):
         response = self.client.get(reverse("password_reset"))
         self.assertEqual(response.status_code, 200)
 
-    @override_settings(LOGIN_EXEMPT_PATHS=["/a/"])
+    @override_settings(LOGIN_EXEMPT_PATHS=[r"^montrek_example/a/.*$"])
     def test_middleware_does_not_redirect_for_exempt_path__sub_path(self):
         response = self.client.get(reverse("montrek_example_a_list"))
         self.assertEqual(response.status_code, 200)
