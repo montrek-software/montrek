@@ -1,6 +1,7 @@
 from django.test import TestCase
 import requests
 from requesting.managers.request_manager import (
+    JsonReader,
     RequestJsonManager,
 )
 
@@ -21,6 +22,15 @@ class MockTokenRequestManager(RequestJsonManager):
     base_url = "https://httpbin.org/"
     request_kwargs = {"bla": "blubb"}
     authenticator_class = RequestBearerAuthenticator
+
+
+class MockJsonReaderNoValidJSON(JsonReader):
+    def get_json_response(self, request):
+        raise requests.exceptions.JSONDecodeError("Error!", "", 0)
+
+
+class MockRequestManageNoValidJSON(MockRequestManager):
+    json_reader = MockJsonReaderNoValidJSON()
 
 
 class TestRequestManager(TestCase):
@@ -84,7 +94,9 @@ class TestRequestManager(TestCase):
     @patch("requesting.managers.request_manager.requests.get")
     def test_get_json_no_valid_json(self, mock_get):
         mock_get.return_value = self.get_mock_response()
-        manager = MockRequestManager({"user": "user", "password": "wrongpass"})
+        manager = MockRequestManageNoValidJSON(
+            {"user": "user", "password": "wrongpass"}
+        )
         response_json = manager.get_response("html")
         self.assertEqual(manager.status_code, 0)
         self.assertEqual(manager.message, "No valid json returned")
