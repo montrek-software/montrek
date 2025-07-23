@@ -125,8 +125,6 @@ class FilterMetaSessionDataElement(TableMetaSessionDataElement):
                 true_values = ("True", "true", True)
                 false_values = ("False", "false", False)
                 filter_negate = filter_negate in true_values
-                filter_lookup = filter_lookup
-                filter_value = filter_value
                 filter_key = f"{filter_field}__{filter_lookup}"
                 if filter_lookup == "in":
                     filter_value = filter_value.split(",")
