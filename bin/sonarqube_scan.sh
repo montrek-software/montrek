@@ -82,4 +82,4 @@ else
   echo "Skip running tests"
 fi
 
-sonar-scanner -Dsonar.projectKey=$REPO -Dsonar.sources=. -Dsonar.exclusions=**/migrations/** -Dsonar.host.url=$SONARCUBE_URL -Dsonar.login=$SONARCUBE_TOKEN -Dsonar.python.coverage.reportPaths=coverage.xml | grep "ANALYSIS SUCCESSFUL"
+sonar-scanner -Dsonar.projectKey=$REPO -Dsonar.sources=. -Dsonar.exclusions=**/migrations/**,**/static/** -Dsonar.host.url=$SONARCUBE_URL -Dsonar.login=$SONARCUBE_TOKEN -Dsonar.python.coverage.reportPaths=coverage.xml | grep "ANALYSIS SUCCESSFUL"
