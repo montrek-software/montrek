@@ -274,8 +274,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "uploads")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 CSRF_TRUSTED_ORIGINS = [
-    f"http://{host}:{DEPLOY_PORT}"
-    for host in ["localhost", "127.0.0.1", DEPLOY_HOST, f"montrek.{PROJECT_NAME}"]
+    f"http://{host}:{DEPLOY_PORT}" for host in ["localhost", "127.0.0.1"]
 ]
 CSRF_TRUSTED_ORIGINS += [
     f"https://montrek.{PROJECT_NAME}:{DEPLOY_PORT}",
