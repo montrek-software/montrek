@@ -31,9 +31,9 @@ def download_reporting_file_view(request, file_path: str):
         raise Http404
     with open(file_path, "rb") as file:
         response = HttpResponse(file.read(), content_type="application/octet-stream")
-        response[
-            "Content-Disposition"
-        ] = f"attachment; filename={os.path.basename(file_path)}"
+        response["Content-Disposition"] = (
+            f"attachment; filename={os.path.basename(file_path)}"
+        )
         os.remove(file_path)
         return response
 
@@ -87,6 +87,7 @@ class MontrekReportFieldEditView(
         mode = request.GET.get("mode")
         field = request.GET.get("field")
         object_content = getattr(obj, field)
+        object_content = HtmlSanitizer().clean_html(object_content)
         # Determine which mode we're in based on the requested action
         if mode == "edit":
             # Return just the edit form partial
