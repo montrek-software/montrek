@@ -63,7 +63,7 @@ update-server: # Stop all docker containers, update the repositories to the late
 	@bash bin/docker-prune.sh
 
 .PHONY: sonarqube-scan
-sonarqube-scan: # Run a sonarcube scan and open in Sonarcube (Add NO_TESTS=true to skip tests)
+sonarqube-scan: # Run a SonarQube scan and open in SonarQube (Add NO_TESTS=true to skip tests)
 	@bash bin/sonarqube_scan.sh NO_TESTS=$(NO_TESTS) $(filter-out $@,$(MAKECMDGOALS))
 
 %:
