@@ -1,4 +1,5 @@
 from html import unescape
+from bs4 import BeautifulSoup
 import re
 from typing import Any
 
@@ -97,21 +98,22 @@ class HtmlLatexConverter:
     @staticmethod
     def links(text: str) -> str:
         # Replace hrefs with a simplified LaTeX hyperlink command
+
         text = re.sub(
-            r'<a href="(.*?)">(.*?)</a>', r"\\textcolor{blue}{\\href{\1}{\2}}", text
+            r'<a href="([^"]*)">([^<]*)</a>', r"\\textcolor{blue}{\\href{\1}{\2}}", text
         )
         return text
 
     @staticmethod
     def images(text: str) -> str:
-        text = re.sub(r'<img src="(.*?)"[^>]*>', r"\\includegraphics{\1}", text)
+        text = re.sub(r'<img src="([^"]+)"[^>]*>', r"\\includegraphics{\1}", text)
         return text
 
     @staticmethod
     def alignments(text: str) -> str:
         # This will replace div tags with alignment, can be expanded to handle more cases
         text = re.sub(
-            r'<div style="text-align: (.*?)">(.*?)</div>',
+            r'<div style="text-align: ([^"]*)">([^<]*)</div>',
             r"\\begin{\1} \2 \\end{\1}",
             text,
         )

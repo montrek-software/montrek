@@ -46,3 +46,8 @@ class TestHtmlSanitizer(TestCase):
         cleaned = self.sanitizer.clean_html(html)
         # Unsafe styles are stripped if not in ALLOWED_STYLES (but note: bleach doesn't filter styles unless css_sanitizer is used)
         self.assertIn("style=", cleaned)  # Bleach 6+ does not fil
+
+    def test_handle_non_strings(self):
+        html = 1
+        cleaned = self.sanitizer.clean_html(html)
+        self.assertEqual(cleaned, "1")

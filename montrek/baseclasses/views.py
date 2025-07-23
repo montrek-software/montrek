@@ -23,6 +23,7 @@ from baseclasses.dataclasses.view_classes import ActionElement
 from baseclasses.forms import DateRangeForm, FilterForm, MontrekCreateForm
 from baseclasses.managers.montrek_manager import MontrekManagerNotImplemented
 from baseclasses.pages import NoPage
+from baseclasses.sanitizer import HtmlSanitizer
 from baseclasses.serializers import MontrekSerializer
 from baseclasses.typing import SessionDataType
 from baseclasses.utils import TableMetaSessionData, get_content_type
@@ -61,7 +62,7 @@ class MontrekPageViewMixin:
 
     def get_page_context(self, context, **kwargs):
         page = self.page_class(**self.kwargs)
-        context["page_title"] = page.page_title
+        context["page_title"] = HtmlSanitizer().clean_html(page.page_title)
         page.set_active_tab(self.tab)
         context["tab_elements"] = page.tabs
         context["actions"] = self.actions
