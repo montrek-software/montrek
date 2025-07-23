@@ -40,7 +40,7 @@ class CodeGenerationCommandBase(StdArgumentsMixin, BaseCommand):
         config = CodeGenerationConfig(app_path, prefix)
         output_path = config.output_paths[self.key]
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        env = Environment(loader=FileSystemLoader(CODE_TEMPLATE_DIR))
+        env = Environment(loader=FileSystemLoader(CODE_TEMPLATE_DIR), autoescape=True)
         template = env.get_template(config.template_files[self.key])
         rendered_content = template.render(**config.context)
         msg = f"Generating code at '{output_path}'."
