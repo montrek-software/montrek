@@ -38,6 +38,8 @@ click-plugins==1.1.1
     # via celery
 click-repl==0.3.0
     # via celery
+coverage==7.9.2
+    # via -r requirements.in
 cron-descriptor==1.4.5
     # via django-celery-beat
 cryptography==45.0.5
