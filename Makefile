@@ -61,3 +61,7 @@ update-server: # Stop all docker containers, update the repositories to the late
 	@bash bin/update-repositories-to-latest-tags.sh
 	@bash bin/start-docker.sh up -d --build
 	@bash bin/docker-prune.sh
+
+.PHONY: sonarcube-scan
+sonarcube-scan: # Run a sonarcube scan and open in Sonarcube
+	@bash bin/sonarcube_scan.sh
