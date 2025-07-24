@@ -12,4 +12,9 @@ class InfoPage(MontrekPage):
             link=reverse("info"),
             html_id="id_info",
         )
-        return (info_tab,)
+        admin_tab = TabElement(
+            name="Admin",
+            link=reverse("admin"),
+            html_id="id_admin",
+        )
+        return (info_tab, admin_tab)
