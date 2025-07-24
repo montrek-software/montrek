@@ -352,6 +352,5 @@ CLIENT_LOGO_PATH = config(
 CLIENT_LOGO_LINK = config("CLIENT_LOGO_LINK", default="https://example.com")
 
 # Admin Data
-ADMIN_NAME = config("ADMIN_NAME", default=None)
 ADMIN_EMAIL = config("ADMIN_EMAIL", default=None)
 ADMIN_PASSWORD = config("ADMIN_PASSWORD", default=None)
