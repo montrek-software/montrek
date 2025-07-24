@@ -17,6 +17,7 @@ services:
       - PROJECT_NAME=${PROJECT_NAME}
       - ENABLE_KEYCLOAK=${ENABLE_KEYCLOAK}
       - KEYCLOAK_PORT=${KEYCLOAK_PORT}
+      - FLOWER_PORT=${FLOWER_PORT}
     restart: "on-failure"
     networks:
       - montrek_network
@@ -103,7 +104,7 @@ services:
 
   flower:
     image: mher/flower:2.0.1
-    command: celery flower -A montrek.celery_app --port=${FLOWER_PORT} --broker={CELERY_BROKER_URL} --basic_auth=admin:admin
+    command: celery flower -A montrek.celery_app --port=${FLOWER_PORT} --broker={CELERY_BROKER_URL} --basic_auth=admin:${ADMIN_PASSWORD}
     ports:
       - ${FLOWER_PORT}:${FLOWER_PORT}
     env_file:
@@ -134,7 +135,7 @@ services:
     command: start
     environment:
       KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KEYCLOAK_ADMIN_PASSWORD: ${ADMIN_PASSWORD}
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
       KC_DB_USERNAME: keycloak

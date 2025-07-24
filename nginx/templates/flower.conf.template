@@ -1,0 +1,21 @@
+
+upstream flower_backend {
+    server flower:${FLOWER_PORT};  # Keycloak container
+}
+# Keycloak Application
+server {
+    listen 443 ssl;
+    server_name flower.${PROJECT_NAME}.${DEPLOY_HOST};
+
+    ssl_certificate /etc/ssl/fullchain.crt;
+    ssl_certificate_key /etc/ssl/cert.key;
+
+    client_max_body_size 100M;
+
+    location / {
+        proxy_pass http://flower_backend;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
