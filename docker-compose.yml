@@ -102,7 +102,7 @@ services:
 
   flower:
     image: mher/flower:2.0.1
-    command: celery flower -A montrek.celery_app --port=${FLOWER_PORT} --broker={CELERY_BROKER_URL}
+    command: celery flower -A montrek.celery_app --port=${FLOWER_PORT} --broker={CELERY_BROKER_URL} --basic_auth=admin:admin
     ports:
       - ${FLOWER_PORT}:${FLOWER_PORT}
     env_file:

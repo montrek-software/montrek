@@ -29,6 +29,9 @@ class MontrekTestRunner(DiscoverRunner):
                     "django.contrib.auth.backends.ModelBackend",
                 ),
                 # Add other test-specific settings here
+                "ADMIN_NAME": "test_admin",
+                "ADMIN_EMAIL": "test@admin.de",
+                "ADMIN_PASSWORD": "testpassword",
             }
         self._override = override_settings(**test_settings)
         self._override.enable()
