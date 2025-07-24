@@ -18,7 +18,7 @@ class AdminLinksManager(MontrekDataFrameTableManager):
 
 
 class InfoAdminManager(MontrekReportManager):
-    document_title = "Montrek Versions"
+    document_title = "Montrek Admin"
 
     def collect_report_elements(self) -> None:
         self.append_report_element(self.get_admin_links())
