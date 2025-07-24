@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from user.scripts.create_superuser import run
 
@@ -14,3 +15,13 @@ class TestCreateSuperUser(TestCase):
     @override_settings(ADMIN_PASSWORD=None)
     def test_no_admin_password(self):
         self.assertRaisesMessage(run, "No ADMIN_NAME, ADMIN_EMAIL, ADMIN_PASSWORD set")
+
+    def test_create_super_user(self):
+        User = get_user_model()
+        # Check that admin superuser has not been created
+        admin_query = User.objects.filter(email="test@admin.de")
+        self.assertEqual(admin_query.count(), 0)
+        run()
+        admin_query = User.objects.filter(email="test@admin.de")
+        self.assertEqual(admin_query.count(), 1)
+        run()
