@@ -224,7 +224,10 @@ LOGIN_EXEMPT_PATHS = [
     r"^user/.*$",
 ]
 if ENABLE_KEYCLOAK:
-    AUTHENTICATION_BACKENDS = ("mozilla_django_oidc.auth.OIDCAuthenticationBackend",)
+    AUTHENTICATION_BACKENDS = (
+        "mozilla_django_oidc.auth.OIDCAuthenticationBackend",
+        "django.contrib.auth.backends.ModelBackend",
+    )
     LOGIN_URL = "/oidc/authenticate/"
 
     KEYCLOAK_PORT = config("KEYCLOAK_PORT", default="")
