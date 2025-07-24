@@ -17,12 +17,12 @@ class TestCreateSuperUser(TestCase):
         self.assertRaisesMessage(run, "No ADMIN_NAME, ADMIN_EMAIL, ADMIN_PASSWORD set")
 
     def test_create_super_user(self):
-        User = get_user_model()
+        user = get_user_model()
         # Check that admin superuser has not been created
-        admin_query = User.objects.filter(email="test@admin.de")
+        admin_query = user.objects.filter(email="test@admin.de")
         self.assertEqual(admin_query.count(), 0)
         run()
-        admin_query = User.objects.filter(email="test@admin.de")
+        admin_query = user.objects.filter(email="test@admin.de")
         self.assertEqual(admin_query.count(), 1)
         admin = admin_query.first()
         self.assertEqual(admin.email, "test@admin.de")
