@@ -13,4 +13,4 @@ class InfoVersionsView(MontrekReportView):
 class InfoAdminView(MontrekReportView):
     page_class = InfoPage
     manager_class = InfoAdminManager
-    tab = "id_info"
+    tab = "id_admin"
