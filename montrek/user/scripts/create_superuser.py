@@ -1,5 +1,9 @@
+import logging
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
+
+logger = logging.getLogger(__name__)
 
 
 def run():
@@ -10,6 +14,6 @@ def run():
     User = get_user_model()
     if not User.objects.filter(email=admin_email).exists():
         User.objects.create_superuser(admin_email, admin_password)
-        print(f"Created admin {admin_email}")
+        logger.info(f"Created admin {admin_email}")
     else:
-        print(f"Admin {admin_email} exists.")
+        logger.info(f"Admin {admin_email} exists.")
