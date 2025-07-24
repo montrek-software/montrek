@@ -24,4 +24,11 @@ class TestCreateSuperUser(TestCase):
         run()
         admin_query = User.objects.filter(email="test@admin.de")
         self.assertEqual(admin_query.count(), 1)
+        admin = admin_query.first()
+        self.assertEqual(admin.email, "test@admin.de")
+        self.assertTrue(
+            admin.password.startswith(
+                "pbkdf2_sha256$",
+            )
+        )
         run()
