@@ -10,8 +10,6 @@ asgiref==3.8.1
     # via django
 babel==2.17.0
     # via docxcompose
-beautifulsoup4==4.12.3
-    # via yfinance
 billiard==4.2.1
     # via celery
 bleach==6.2.0
@@ -83,14 +81,10 @@ faker-marketdata==0.4
     # via -r requirements.in
 freezegun==1.5.0
     # via -r requirements.in
-frozendict==2.4.6
-    # via yfinance
 graphviz==0.20.3
     # via -r requirements.in
 gunicorn==22.0.0
     # via -r requirements.in
-html5lib==1.1
-    # via yfinance
 idna==3.10
     # via requests
 jinja2==3.1.6
@@ -108,23 +102,18 @@ lxml==5.3.0
     #   docxcompose
     #   docxtpl
     #   python-docx
-    #   sdmx1
-    #   yfinance
 markdown==3.6
     # via -r requirements.in
 markupsafe==3.0.2
     # via jinja2
 mozilla-django-oidc==4.0.1
     # via -r requirements.in
-multitasking==0.0.11
-    # via yfinance
 mypy-extensions==1.0.0
     # via typing-inspect
 numpy==2.2.2
     # via
     #   pandas
     #   sf-hamilton
-    #   yfinance
 openpyxl==3.1.2
     # via -r requirements.in
 packaging==24.2
@@ -135,15 +124,7 @@ pandas==2.2.3
     # via
     #   -r requirements.in
     #   django-pandas
-    #   sdmx1
     #   sf-hamilton
-    #   yfinance
-peewee==3.17.8
-    # via yfinance
-platformdirs==4.3.6
-    # via
-    #   sdmx1
-    #   yfinance
 plotly==5.24.1
     # via -r requirements.in
 prompt-toolkit==3.0.50
@@ -163,7 +144,6 @@ python-dateutil==2.9.0.post0
     #   freezegun
     #   pandas
     #   python-crontab
-    #   sdmx1
 python-decouple==3.8
     # via -r requirements.in
 python-docx==1.2.0
@@ -171,20 +151,14 @@ python-docx==1.2.0
     #   docxcompose
     #   docxtpl
 pytz==2024.2
-    # via
-    #   pandas
-    #   yfinance
+    # via pandas
 redis==5.0.4
     # via -r requirements.in
 requests==2.32.3
     # via
     #   -r requirements.in
     #   mozilla-django-oidc
-    #   sdmx1
-    #   yfinance
 ruff==0.11.2
-    # via -r requirements.in
-sdmx1==2.15.0
     # via -r requirements.in
 sf-hamilton==1.86.1
     # via -r requirements.in
@@ -192,10 +166,7 @@ six==1.17.0
     # via
     #   django-pandas
     #   docxcompose
-    #   html5lib
     #   python-dateutil
-soupsieve==2.6
-    # via beautifulsoup4
 sqlparse==0.5.3
     # via
     #   django
@@ -234,10 +205,7 @@ wcwidth==0.2.13
 webencodings==0.5.1
     # via
     #   bleach
-    #   html5lib
     #   tinycss2
-yfinance==0.2.52
-    # via -r requirements.in
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools
