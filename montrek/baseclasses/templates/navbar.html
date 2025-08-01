@@ -26,6 +26,7 @@
             role="button"
             aria-haspopup="true"
             aria-expanded="false"
+            onkeydown="if(event.key === 'Enter' || event.key === ' ') this.click();"
           >
             {{nav_dd.display_name}}
             <span class="caret"></span>
@@ -58,6 +59,7 @@
             role="button"
             aria-haspopup="true"
             aria-expanded="false"
+            onkeydown="if(event.key === 'Enter' || event.key === ' ') this.click();"
           >
             <span class="glyphicon glyphicon-cog"></span>
             <!-- Settings wheel icon -->
@@ -67,7 +69,7 @@
             <li><a href="#" onclick="logout(event)">Logout</a></li>
             <!-- logout via POST -->
             <li><a href="{% url 'password_change' %}">Change Password</a></li>
-            <li><a href="{% url 'info' %}">Info</a></li>
+            <li><a href="{% url 'info' %}" >Info</a></li>
           </ul>
         </li>
         {% else %}

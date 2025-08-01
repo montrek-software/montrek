@@ -51,7 +51,8 @@ keyUsage               = nonRepudiation, digitalSignature, keyEncipherment, data
 subjectAltName         = @alt_names
 [ alt_names ]
 DNS.1 = $PROJECT_NAME.$DEPLOY_HOST
-DNS.2 = auth.$PROJECT_NAME.$DEPLOY_HOST" >openssl.cnf
+DNS.2 = auth.$PROJECT_NAME.$DEPLOY_HOST
+DNS.3 = flower.$PROJECT_NAME.$DEPLOY_HOST" >openssl.cnf
 
 # Sign the CSR using the root certificate and key:
 openssl x509 -req -in cert.csr -CA rootCert.pem -CAkey rootCA.key -CAcreateserial -out cert.crt -days 730 -sha256 -extfile openssl.cnf
@@ -60,6 +61,7 @@ openssl x509 -req -in cert.csr -CA rootCert.pem -CAkey rootCA.key -CAcreateseria
 
 openssl verify -CAfile rootCert.pem -verify_hostname $PROJECT_NAME.$DEPLOY_HOST cert.crt
 openssl verify -CAfile rootCert.pem -verify_hostname auth.$PROJECT_NAME.$DEPLOY_HOST cert.crt
+openssl verify -CAfile rootCert.pem -verify_hostname flower.$PROJECT_NAME.$DEPLOY_HOST cert.crt
 
 mkdir -p nginx/certs
 

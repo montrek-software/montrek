@@ -26,7 +26,7 @@ class TestMailingManager(TestCase):
         sent_email = mail.outbox[0]
         self.assertEqual(sent_email.subject, self.subject)
         self.assertEqual(sent_email.to, ["a@b.de", "c@e.f"])
-        self.assertTrue(sent_email.body.startswith("<html>"))
+        self.assertTrue(sent_email.body.startswith('<!doctype html>\n<html lang="en">'))
         self.assertTrue(sent_email.body.endswith("</html>\n"))
         self.assertTrue(self.message in sent_email.body)
         mail_object = MailingRepository({}).receive().first()
@@ -59,7 +59,7 @@ class TestMailingManager(TestCase):
         sent_email = mail.outbox[0]
         self.assertEqual(sent_email.subject, self.subject)
         self.assertEqual(sent_email.to, [self.user.email])
-        self.assertTrue(sent_email.body.startswith("<html>"))
+        self.assertTrue(sent_email.body.startswith('<!doctype html>\n<html lang="en">'))
         self.assertTrue(sent_email.body.endswith("</html>\n"))
         self.assertTrue(self.message in sent_email.body)
         mail_object = MailingRepository({}).receive().first()

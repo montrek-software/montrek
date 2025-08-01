@@ -35,10 +35,10 @@ class FieldMapFileUploadProcessor:
         self.field_map_manager = self.field_map_manager_class(self.session_data)
 
     def get_source_df_from_file(self, file_path: str) -> pd.DataFrame:
-        NotImplementedError("Please implement this method in a subclass.")
+        raise NotImplementedError("Please implement this method in a subclass.")
 
     def add_link_columns(self, mapped_df: pd.DataFrame) -> pd.DataFrame:
-        NotImplementedError("Please implement this method in a subclass.")
+        raise NotImplementedError("Please implement this method in a subclass.")
 
     def post_map_processing(self, mapped_df: pd.DataFrame) -> pd.DataFrame:
         return mapped_df

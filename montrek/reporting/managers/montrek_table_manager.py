@@ -266,7 +266,6 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         output = BytesIO()
         self.to_excel(output)
         output.seek(0)
-        file_name = f"{self.document_name}.xlsx"
         temp_file_path = os.path.join("temp", file_name)
 
         # Save the file to the default storage (e.g., file system or cloud storage)

@@ -1,3 +1,4 @@
+from typing import Any
 import bleach
 from bleach.css_sanitizer import CSSSanitizer
 
@@ -47,7 +48,8 @@ class HtmlSanitizer:
         # Apply allowed styles using the CSS sanitizer
         self.css_sanitizer = CSSSanitizer(allowed_css_properties=self.ALLOWED_STYLES)
 
-    def clean_html(self, raw_html: str) -> str:
+    def clean_html(self, raw_html: str | Any) -> str:
+        raw_html = str(raw_html)
         return bleach.clean(
             raw_html,
             tags=self.ALLOWED_TAGS,

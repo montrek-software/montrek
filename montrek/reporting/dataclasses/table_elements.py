@@ -413,7 +413,7 @@ class DateYearTableElement(AttrTableElement):
             else:
                 value = value.strftime("%Y")
         except DateParseError:
-            value = value
+            return f'<td style="text-align:left;">{value}</td>'
         return f'<td style="text-align:left;">{value}</td>'
 
 

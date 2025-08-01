@@ -1,5 +1,7 @@
 import pandas as pd
 from django.conf import settings
+
+from baseclasses.typing import TableElementsType
 from info.modules.git_info import GitInfo
 from reporting.dataclasses import table_elements as te
 from reporting.managers.montrek_report_manager import MontrekReportManager
@@ -8,7 +10,7 @@ from reporting.managers.montrek_table_manager import MontrekDataFrameTableManage
 
 class GitVersionsManager(MontrekDataFrameTableManager):
     @property
-    def table_elements(self) -> tuple[te.TableElement, ...]:
+    def table_elements(self) -> TableElementsType:
         return (
             te.StringTableElement(name="repo_name", attr="repo_name"),
             te.StringTableElement(name="latest_tag", attr="latest_tag"),

@@ -6,11 +6,11 @@ The montrek software is a powerful tool to manage data, generate reports, analys
 
 ### Prerequisites
 
-- git (https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
-- Access rights to github repository (https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account)
+- git (<https://git-scm.com/book/en/v2/Getting-Started-Installing-Git>)
+- Access rights to github repository (<https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account>)
 - openssl
 - make
-- docker (https://docs.docker.com/engine/install/)
+- docker (<https://docs.docker.com/engine/install/>)
 - make docker accessible for your user
 
 ### Checkout Repository
@@ -95,7 +95,7 @@ Restart docker.
 
 1a) Install PostgreSQL
 
-- Follow installation for your OS at https://www.postgresql.org/download/
+- Follow installation for your OS at <https://www.postgresql.org/download/>
 - Initalise data directory `initdb /usr/local/var/postgres`
 - Start server `pg_ctl -D /usr/local/var/postgres start`
 - Create a database `createdb montrek_db`
@@ -184,7 +184,6 @@ Copy the following to `.env` file in the root directory of the project and adjus
 ```
 #montrek Config
 NAVBAR_APPS= montrek_example_a_list montrek_example_b_list
-LINKS=https://example.com,Example
 INSTALLED_APPS= credit_institution currency country company
 
 #Django

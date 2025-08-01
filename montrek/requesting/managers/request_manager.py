@@ -28,12 +28,12 @@ class RequestManagerABC(MontrekManager):
         self.message = "No get request made"
 
     @abstractmethod
-    def get_response(self, endpoint: str) -> dict | list | pd.DataFrame:
-        ...
+    def get_response(self, endpoint: str) -> dict | list | pd.DataFrame: ...
 
     @abstractmethod
-    def post_response(self, endpoint: str, data: dict) -> dict | list | pd.DataFrame:
-        ...
+    def post_response(
+        self, endpoint: str, data: dict
+    ) -> dict | list | pd.DataFrame: ...
 
     def get_endpoint_url(self, endpoint: str) -> str:
         return f"{self.base_url}{endpoint}"

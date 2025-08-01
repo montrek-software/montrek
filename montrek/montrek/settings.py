@@ -224,7 +224,10 @@ LOGIN_EXEMPT_PATHS = [
     r"^user/.*$",
 ]
 if ENABLE_KEYCLOAK:
-    AUTHENTICATION_BACKENDS = ("mozilla_django_oidc.auth.OIDCAuthenticationBackend",)
+    AUTHENTICATION_BACKENDS = (
+        "mozilla_django_oidc.auth.OIDCAuthenticationBackend",
+        "django.contrib.auth.backends.ModelBackend",
+    )
     LOGIN_URL = "/oidc/authenticate/"
 
     KEYCLOAK_PORT = config("KEYCLOAK_PORT", default="")
@@ -274,8 +277,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "uploads")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 CSRF_TRUSTED_ORIGINS = [
-    f"http://{host}:{DEPLOY_PORT}"
-    for host in ["localhost", "127.0.0.1", DEPLOY_HOST, f"montrek.{PROJECT_NAME}"]
+    f"http://{host}:{DEPLOY_PORT}" for host in ["localhost", "127.0.0.1"]
 ]
 CSRF_TRUSTED_ORIGINS += [
     f"https://montrek.{PROJECT_NAME}:{DEPLOY_PORT}",
@@ -351,3 +353,7 @@ CLIENT_LOGO_PATH = config(
     default="https://vme-stiftung.de/wp-content/uploads/2019/09/example-logo-2-300x201.jpg",
 )
 CLIENT_LOGO_LINK = config("CLIENT_LOGO_LINK", default="https://example.com")
+
+# Admin Data
+ADMIN_EMAIL = config("ADMIN_EMAIL", default=None)
+ADMIN_PASSWORD = config("ADMIN_PASSWORD", default=None)
