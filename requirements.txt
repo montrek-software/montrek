@@ -42,8 +42,9 @@ coverage==7.9.2
     # via -r requirements.in
 cron-descriptor==1.4.5
     # via django-celery-beat
-cryptography==45.0.5
+cryptography==44.0.0
     # via
+    #   -r requirements.in
     #   josepy
     #   mozilla-django-oidc
 django==5.1.5
