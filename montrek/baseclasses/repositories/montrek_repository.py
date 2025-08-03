@@ -152,8 +152,9 @@ class MontrekRepository:
         self, apply_filter: bool = True, update_view_model: bool = False
     ) -> QuerySet:
         if (
-            self.view_model and not update_view_model
-            # and self.view_model.reference_date == self.reference_date.date()
+            self.view_model
+            and not update_view_model
+            and "reference_date" not in self.session_data.keys()
         ):
             return self.get_view_model_query(apply_filter=apply_filter)
         query = self.query_builder.build_queryset(

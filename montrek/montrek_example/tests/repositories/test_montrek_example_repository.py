@@ -159,8 +159,7 @@ class TestMontrekRepositorySatellite(TestCase):
         )
 
     def test_build_queryset_with_satellite_fields(self):
-        repository = HubARepository()
-        repository.reference_date = montrek_time(2023, 7, 8)
+        repository = HubARepository({"reference_date": montrek_time(2023, 7, 8)})
         queryset = repository.test_queryset_1()
 
         self.assertEqual(queryset.count(), 2)
@@ -169,7 +168,7 @@ class TestMontrekRepositorySatellite(TestCase):
         self.assertEqual(queryset[0].field_a2_float, 8.0)
         self.assertEqual(queryset[1].field_a2_float, 9.0)
 
-        repository.reference_date = montrek_time(2023, 7, 10)
+        repository = HubARepository({"reference_date": montrek_time(2023, 7, 10)})
         queryset = repository.test_queryset_1()
 
         self.assertEqual(queryset.count(), 2)
@@ -178,7 +177,7 @@ class TestMontrekRepositorySatellite(TestCase):
         self.assertEqual(queryset[0].field_a2_float, 8.0)
         self.assertEqual(queryset[1].field_a2_float, None)
 
-        repository.reference_date = montrek_time(2023, 7, 15)
+        repository = HubARepository({"reference_date": montrek_time(2023, 7, 15)})
         queryset = repository.test_queryset_1()
 
         self.assertEqual(queryset[0].field_a1_int, 6)
@@ -186,7 +185,7 @@ class TestMontrekRepositorySatellite(TestCase):
         self.assertEqual(queryset[0].field_a2_float, 8.0)
         self.assertEqual(queryset[1].field_a2_float, None)
 
-        repository.reference_date = montrek_time(2023, 7, 20)
+        repository = HubARepository({"reference_date": montrek_time(2023, 7, 20)})
         queryset = repository.test_queryset_1()
 
         self.assertEqual(queryset[0].field_a1_int, 7)
@@ -2855,7 +2854,7 @@ class TestRepositoryViewModel(TestCase):
         received_instance = self.repo.receive().first()
         self.assertEqual(received_instance.field_a1_str, "Test")
 
-    def test_keep_view_model_a_day_after_creation(self):
+    def test_call_view_model_a_day_after_creation(self):
         with freeze_time("2023-01-01") as frozen_date:
             self.repo.view_model.reference_date = datetime.date(2023, 1, 1)
             # Check that View Model data is called when reference_dates are inline
@@ -2868,3 +2867,9 @@ class TestRepositoryViewModel(TestCase):
             with patch.object(HubARepository, "get_view_model_query") as mock_method:
                 repo.receive()
                 mock_method.assert_called()
+
+    def test_dont_call_view_model_when_reference_date_call_is_done(self):
+        repo = HubARepository({"user_id": self.user.id, "reference_date": "2023-01-01"})
+        with patch.object(HubARepository, "get_view_model_query") as mock_method:
+            repo.receive()
+            mock_method.assert_not_called()
