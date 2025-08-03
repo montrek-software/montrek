@@ -1,21 +1,21 @@
 import datetime
-
 import sys
 import unittest
-from django.db import models
+from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
+from django.core.exceptions import PermissionDenied
+from django.db import models
+from django.test import TestCase, TransactionTestCase, tag
+from django.utils import timezone
+from freezegun import freeze_time
+
 from baseclasses.errors.montrek_user_error import MontrekError
 from baseclasses.tests.factories.montrek_factory_schemas import (
     ValueDateListFactory,
 )
 from baseclasses.utils import montrek_time
-from django.core.exceptions import PermissionDenied
-from django.test import TestCase, TransactionTestCase, tag
-from django.utils import timezone
-from user.tests.factories.montrek_user_factories import MontrekUserFactory
-
 from montrek_example.models import example_models as me_models
 from montrek_example.repositories.hub_a_repository import (
     HubAJsonRepository,
@@ -32,8 +32,8 @@ from montrek_example.repositories.hub_c_repository import (
     HubCRepository2,
     HubCRepositoryCommonFields,
     HubCRepositoryCount,
-    HubCRepositoryLastTS,
     HubCRepositoryLast,
+    HubCRepositoryLastTS,
     HubCRepositoryMean,
     HubCRepositoryOnlyStatic,
     HubCRepositoryReversedParents,
@@ -49,6 +49,7 @@ from montrek_example.repositories.hub_e_repository import (
     HubERepository,
 )
 from montrek_example.tests.factories import montrek_example_factories as me_factories
+from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
 MIN_DATE = timezone.make_aware(timezone.datetime.min)
 MAX_DATE = timezone.make_aware(timezone.datetime.max)
@@ -158,8 +159,7 @@ class TestMontrekRepositorySatellite(TestCase):
         )
 
     def test_build_queryset_with_satellite_fields(self):
-        repository = HubARepository()
-        repository.reference_date = montrek_time(2023, 7, 8)
+        repository = HubARepository({"reference_date": montrek_time(2023, 7, 8)})
         queryset = repository.test_queryset_1()
 
         self.assertEqual(queryset.count(), 2)
@@ -168,7 +168,7 @@ class TestMontrekRepositorySatellite(TestCase):
         self.assertEqual(queryset[0].field_a2_float, 8.0)
         self.assertEqual(queryset[1].field_a2_float, 9.0)
 
-        repository.reference_date = montrek_time(2023, 7, 10)
+        repository = HubARepository({"reference_date": montrek_time(2023, 7, 10)})
         queryset = repository.test_queryset_1()
 
         self.assertEqual(queryset.count(), 2)
@@ -177,7 +177,7 @@ class TestMontrekRepositorySatellite(TestCase):
         self.assertEqual(queryset[0].field_a2_float, 8.0)
         self.assertEqual(queryset[1].field_a2_float, None)
 
-        repository.reference_date = montrek_time(2023, 7, 15)
+        repository = HubARepository({"reference_date": montrek_time(2023, 7, 15)})
         queryset = repository.test_queryset_1()
 
         self.assertEqual(queryset[0].field_a1_int, 6)
@@ -185,7 +185,7 @@ class TestMontrekRepositorySatellite(TestCase):
         self.assertEqual(queryset[0].field_a2_float, 8.0)
         self.assertEqual(queryset[1].field_a2_float, None)
 
-        repository.reference_date = montrek_time(2023, 7, 20)
+        repository = HubARepository({"reference_date": montrek_time(2023, 7, 20)})
         queryset = repository.test_queryset_1()
 
         self.assertEqual(queryset[0].field_a1_int, 7)
@@ -2795,8 +2795,8 @@ class TestSecurity(TestCase):
 
 class TestRepositoryViewModel(TestCase):
     def setUp(self) -> None:
-        user = MontrekUserFactory()
-        self.repo = HubARepository({"user_id": user.id})
+        self.user = MontrekUserFactory()
+        self.repo = HubARepository({"user_id": self.user.id})
 
     def tearDown(self) -> None:
         del self.repo
@@ -2853,3 +2853,64 @@ class TestRepositoryViewModel(TestCase):
         instance.save()
         received_instance = self.repo.receive().first()
         self.assertEqual(received_instance.field_a1_str, "Test")
+
+    def test_call_view_model_a_day_after_creation(self):
+        with freeze_time("2023-01-01") as frozen_date:
+            self.repo.view_model.reference_date = datetime.date(2023, 1, 1)
+            # Check that View Model data is called when reference_dates are inline
+            with patch.object(HubARepository, "get_view_model_query") as mock_method:
+                self.repo.receive()
+                mock_method.assert_called()
+            # Check that this still the case one day after
+            frozen_date.tick(delta=datetime.timedelta(days=1))
+            repo = HubARepository({"user_id": self.user.id})
+            with patch.object(HubARepository, "get_view_model_query") as mock_method:
+                repo.receive()
+                mock_method.assert_called()
+
+    def test_dont_call_view_model_when_reference_date_call_is_done(self):
+        repo = HubARepository({"user_id": self.user.id, "reference_date": "2023-01-01"})
+        with patch.object(HubARepository, "get_view_model_query") as mock_method:
+            repo.receive()
+            mock_method.assert_not_called()
+
+    def test_view_model_with_filter(self):
+        me_factories.SatA1Factory.create(field_a1_str="Test")
+        me_factories.SatA1Factory.create(field_a1_str="Test2")
+        me_factories.SatA1Factory.create(field_a1_str="Test3")
+        filter_data = {
+            "request_path": "test_path",
+            "filter": {
+                "test_path": {
+                    "field_a1_str": {
+                        "filter_value": "Test",
+                        "filter_negate": False,
+                    }
+                }
+            },
+        }
+        repo = HubARepository(session_data=filter_data)
+        repo.store_in_view_model()
+        query = repo.get_view_model_query()
+        self.assertEqual(query.count(), 1)
+        self.assertEqual(query.first().field_a1_str, "Test")
+
+    def test_view_model_with_filter__filter_not_applied(self):
+        me_factories.SatA1Factory.create(field_a1_str="Test")
+        me_factories.SatA1Factory.create(field_a1_str="Test2")
+        me_factories.SatA1Factory.create(field_a1_str="Test3")
+        filter_data = {
+            "request_path": "test_path",
+            "filter": {
+                "test_path": {
+                    "field_a1_str": {
+                        "filter_value": "Test",
+                        "filter_negate": False,
+                    }
+                }
+            },
+        }
+        repo = HubARepository(session_data=filter_data)
+        repo.store_in_view_model()
+        query = repo.get_view_model_query(apply_filter=False)
+        self.assertEqual(query.count(), 3)

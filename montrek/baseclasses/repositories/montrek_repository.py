@@ -96,7 +96,9 @@ class MontrekRepository:
         if not self.view_model:
             return
 
-        query = self.receive_raw(update_view_model=True)
+        # When storing in the view model, we want to include all data without applying filters,
+        # so we explicitly set apply_filter=False.
+        query = self.receive_raw(update_view_model=True, apply_filter=False)
         self.store_query_in_view_model(query)
 
     def store_query_in_view_model(self, query):
@@ -154,19 +156,22 @@ class MontrekRepository:
         if (
             self.view_model
             and not update_view_model
-            and self.view_model.reference_date == self.reference_date.date()
+            and "reference_date" not in self.session_data.keys()
         ):
-            query = self.view_model.objects.all()
-            if apply_filter:
-                query_builder = QueryBuilder(self.annotator, self.session_data)
-                query = query_builder._apply_order(query, self.order_fields())
-                query = query_builder._apply_filter(query)
-                return query
+            return self.get_view_model_query(apply_filter=apply_filter)
         query = self.query_builder.build_queryset(
             self.reference_date, self.order_fields(), apply_filter=apply_filter
         )
         if self.view_model:
             self.store_query_in_view_model(query)
+        return query
+
+    def get_view_model_query(self, apply_filter: bool = True) -> QuerySet:
+        query = self.view_model.objects.all()
+        if apply_filter:
+            query_builder = QueryBuilder(self.annotator, self.session_data)
+            query = query_builder._apply_order(query, self.order_fields())
+            query = query_builder._apply_filter(query)
         return query
 
     def delete(self, obj: MontrekHubABC):
