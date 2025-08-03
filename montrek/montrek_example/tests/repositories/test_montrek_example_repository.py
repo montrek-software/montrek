@@ -2873,3 +2873,44 @@ class TestRepositoryViewModel(TestCase):
         with patch.object(HubARepository, "get_view_model_query") as mock_method:
             repo.receive()
             mock_method.assert_not_called()
+
+    def test_view_model_with_filter(self):
+        me_factories.SatA1Factory.create(field_a1_str="Test")
+        me_factories.SatA1Factory.create(field_a1_str="Test2")
+        me_factories.SatA1Factory.create(field_a1_str="Test3")
+        filter_data = {
+            "request_path": "test_path",
+            "filter": {
+                "test_path": {
+                    "field_a1_str": {
+                        "filter_value": "Test",
+                        "filter_negate": False,
+                    }
+                }
+            },
+        }
+        repo = HubARepository(session_data=filter_data)
+        repo.store_in_view_model()
+        query = repo.get_view_model_query()
+        self.assertEqual(query.count(), 1)
+        self.assertEqual(query.first().field_a1_str, "Test")
+
+    def test_view_model_with_filter__filter_not_applied(self):
+        me_factories.SatA1Factory.create(field_a1_str="Test")
+        me_factories.SatA1Factory.create(field_a1_str="Test2")
+        me_factories.SatA1Factory.create(field_a1_str="Test3")
+        filter_data = {
+            "request_path": "test_path",
+            "filter": {
+                "test_path": {
+                    "field_a1_str": {
+                        "filter_value": "Test",
+                        "filter_negate": False,
+                    }
+                }
+            },
+        }
+        repo = HubARepository(session_data=filter_data)
+        repo.store_in_view_model()
+        query = repo.get_view_model_query(apply_filter=False)
+        self.assertEqual(query.count(), 3)

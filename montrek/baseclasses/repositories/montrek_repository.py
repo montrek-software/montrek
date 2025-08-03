@@ -96,7 +96,7 @@ class MontrekRepository:
         if not self.view_model:
             return
 
-        query = self.receive_raw(update_view_model=True)
+        query = self.receive_raw(update_view_model=True, apply_filter=False)
         self.store_query_in_view_model(query)
 
     def store_query_in_view_model(self, query):
