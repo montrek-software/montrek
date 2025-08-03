@@ -1,21 +1,21 @@
 import datetime
-
 import sys
 import unittest
-from django.db import models
+from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
+from django.core.exceptions import PermissionDenied
+from django.db import models
+from django.test import TestCase, TransactionTestCase, tag
+from django.utils import timezone
+from freezegun import freeze_time
+
 from baseclasses.errors.montrek_user_error import MontrekError
 from baseclasses.tests.factories.montrek_factory_schemas import (
     ValueDateListFactory,
 )
 from baseclasses.utils import montrek_time
-from django.core.exceptions import PermissionDenied
-from django.test import TestCase, TransactionTestCase, tag
-from django.utils import timezone
-from user.tests.factories.montrek_user_factories import MontrekUserFactory
-
 from montrek_example.models import example_models as me_models
 from montrek_example.repositories.hub_a_repository import (
     HubAJsonRepository,
@@ -32,8 +32,8 @@ from montrek_example.repositories.hub_c_repository import (
     HubCRepository2,
     HubCRepositoryCommonFields,
     HubCRepositoryCount,
-    HubCRepositoryLastTS,
     HubCRepositoryLast,
+    HubCRepositoryLastTS,
     HubCRepositoryMean,
     HubCRepositoryOnlyStatic,
     HubCRepositoryReversedParents,
@@ -49,6 +49,7 @@ from montrek_example.repositories.hub_e_repository import (
     HubERepository,
 )
 from montrek_example.tests.factories import montrek_example_factories as me_factories
+from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
 MIN_DATE = timezone.make_aware(timezone.datetime.min)
 MAX_DATE = timezone.make_aware(timezone.datetime.max)
@@ -2795,8 +2796,8 @@ class TestSecurity(TestCase):
 
 class TestRepositoryViewModel(TestCase):
     def setUp(self) -> None:
-        user = MontrekUserFactory()
-        self.repo = HubARepository({"user_id": user.id})
+        self.user = MontrekUserFactory()
+        self.repo = HubARepository({"user_id": self.user.id})
 
     def tearDown(self) -> None:
         del self.repo
@@ -2853,3 +2854,17 @@ class TestRepositoryViewModel(TestCase):
         instance.save()
         received_instance = self.repo.receive().first()
         self.assertEqual(received_instance.field_a1_str, "Test")
+
+    def test_keep_view_model_a_day_after_creation(self):
+        with freeze_time("2023-01-01") as frozen_date:
+            self.repo.view_model.reference_date = datetime.date(2023, 1, 1)
+            # Check that View Model data is called when reference_dates are inline
+            with patch.object(HubARepository, "get_view_model_query") as mock_method:
+                self.repo.receive()
+                mock_method.assert_called()
+            # Check that this still the case one day after
+            frozen_date.tick(delta=datetime.timedelta(days=1))
+            repo = HubARepository({"user_id": self.user.id})
+            with patch.object(HubARepository, "get_view_model_query") as mock_method:
+                repo.receive()
+                mock_method.assert_called()
