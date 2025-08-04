@@ -187,7 +187,8 @@ class MontrekCreateForm(forms.ModelForm):
         required: bool = False,
         is_char_field: bool = False,
         use_checkboxes_for_many_to_many: bool = True,
-        separator=";",
+        separator: str = ";",
+        readonly: bool = False,
         **kwargs,
     ):
         link_class = getattr(self.repository.hub_class, link_name).through
@@ -205,6 +206,8 @@ class MontrekCreateForm(forms.ModelForm):
         initial_link = choice_class.get_initial_link(
             self.initial, queryset, display_field, separator
         )
+        if readonly:
+            kwargs["widget"] = forms.TextInput(attrs={"readonly": "readonly"})
         self.fields[link_name] = choice_class(
             display_field=display_field,
             queryset=queryset,

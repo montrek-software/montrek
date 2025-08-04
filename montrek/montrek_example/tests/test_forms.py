@@ -78,3 +78,10 @@ class TestMontrekCreateForm(TestCase):
             initial=initial_data, data=test_data, repository=repository
         )
         self.assertTrue(test_form.is_valid())
+
+    def test_link_choice_field__readonly(self):
+        repository = HubARepository({})
+        test_form = ExampleACreateForm(repository=repository)
+        self.assertEqual(
+            test_form.fields["link_hub_a_hub_b"].widget.attrs["readonly"], "readonly"
+        )
