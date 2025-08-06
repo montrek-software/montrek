@@ -41,6 +41,8 @@ jobs:
             ${{ runner.os }}-pip-${{ matrix.python-version }}-
       - name: Install Python Dependencies
         run: ./bin/init.sh
+        env:
+          CI: true
       - name: Setup env
         run: |
           echo "DB_ENGINE=postgres" >> .env
