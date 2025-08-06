@@ -29,7 +29,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - uses: zauguin/setup-texlive@v2
+      - name: Install TeX Live (minimal)
+        uses: zauguin/install-texlive@v1
         with:
           packages: >-
             xetex
