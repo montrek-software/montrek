@@ -29,24 +29,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - name: Install TeX Live (minimal)
-        uses: zauguin/install-texlive@v1
-        with:
-          packages: >-
-            collection-latexrecommended
-            collection-fontsrecommended
-            collection-latexextra
-            collection-pictures
-            float
-            colortbl
-            ragged2e
-            draftwatermark
-            setspace
-            fontspec
-            pgf
-            tools
-            caption
-            hyperref
+      - name: Install Tex Live
+        run: |
+          sudo apt-get update
+          sudo apt-get install texlive-xetex texlive-fonts-recommended
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v3
         with:
