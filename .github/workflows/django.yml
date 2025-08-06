@@ -38,7 +38,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install Python Dependencies
-        run: ./bin/sync-local-python-env.sh
+        run: ./bin/init.sh
       - name: Setup env
         run: |
           echo "DB_ENGINE=postgres" >> .env
