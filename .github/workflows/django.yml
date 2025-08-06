@@ -33,8 +33,20 @@ jobs:
         uses: zauguin/install-texlive@v1
         with:
           packages: >-
-            xetex
+            collection-latexrecommended
             collection-fontsrecommended
+            collection-latexextra
+            collection-pictures
+            float
+            colortbl
+            ragged2e
+            draftwatermark
+            setspace
+            fontspec
+            pgf
+            tools
+            caption
+            hyperref
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v3
         with:
