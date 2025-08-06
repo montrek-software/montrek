@@ -11,6 +11,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/montrek-software/texlive-python:latest
     strategy:
       max-parallel: 4
       matrix:
@@ -29,10 +31,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - name: Install Tex Live
-        run: |
-          sudo apt-get update
-          sudo apt-get install texlive-xetex texlive-fonts-recommended
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v3
         with:
