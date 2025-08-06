@@ -3,7 +3,8 @@
 # Install pip-tools
 echo "Installing pip-tools..."
 pip install pip-tools
-temporary_requirements_file="all_requirements.txt"
-find . -name 'requirements.txt' -exec cat {} + >"$temporary_requirements_file"
-pip-sync "$temporary_requirements_file"
+temporary_requirements_file="all_requirements.in"
+find . -name 'requirements.in' -exec cat {} + >"$temporary_requirements_file"
+pip-compile "$temporary_requirements_file"
+pip-sync requirements.txt
 rm "$temporary_requirements_file"
