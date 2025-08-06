@@ -14,7 +14,7 @@ eval "$(pyenv init -)"
 eval "$(pyenv virtualenv-init -)"
 # Define the pyenv version name and Python version
 pyenv_version_name=$ENV_NAME
-python_version=PYTHON_VERSION
+python_version=$PYTHON_VERSION
 
 # Check if the pyenv version exists
 if ! pyenv versions | grep -q "$pyenv_version_name"; then
