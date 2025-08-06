@@ -33,3 +33,7 @@ repos:
     rev: 1.7.5
     hooks:
       - id: bandit
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.3.0
+    hooks:
+      - id: check-merge-conflict
