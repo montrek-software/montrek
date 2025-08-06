@@ -2,6 +2,15 @@ import logging
 import os
 from typing import Any
 
+from baseclasses import utils
+from baseclasses.dataclasses.view_classes import ActionElement
+from baseclasses.forms import DateRangeForm, FilterForm, MontrekCreateForm
+from baseclasses.managers.montrek_manager import MontrekManagerNotImplemented
+from baseclasses.pages import NoPage
+from baseclasses.sanitizer import HtmlSanitizer
+from baseclasses.serializers import MontrekSerializer
+from baseclasses.typing import SessionDataType
+from baseclasses.utils import TableMetaSessionData, get_content_type
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
@@ -14,19 +23,6 @@ from django.views.generic import DetailView, RedirectView, View
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import CreateView
 from django.views.generic.list import ListView
-from rest_framework import status
-from rest_framework.response import Response
-from rest_framework.views import APIView
-
-from baseclasses import utils
-from baseclasses.dataclasses.view_classes import ActionElement
-from baseclasses.forms import DateRangeForm, FilterForm, MontrekCreateForm
-from baseclasses.managers.montrek_manager import MontrekManagerNotImplemented
-from baseclasses.pages import NoPage
-from baseclasses.sanitizer import HtmlSanitizer
-from baseclasses.serializers import MontrekSerializer
-from baseclasses.typing import SessionDataType
-from baseclasses.utils import TableMetaSessionData, get_content_type
 from file_upload.forms import SimpleUploadFileForm
 from file_upload.managers.simple_upload_file_manager import SimpleUploadFileManager
 from reporting.managers.latex_report_manager import LatexReportManager
@@ -35,6 +31,9 @@ from reporting.managers.montrek_table_manager import (
     HistoryDataTableManager,
     MontrekTableManager,
 )
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 logger = logging.getLogger(__name__)
 
