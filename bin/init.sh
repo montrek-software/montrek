@@ -14,3 +14,4 @@ else
   pyenv virtualenv "$PYTHON_VERSION" "$ENV_NAME"
 fi
 make sync-local-python-env
+python -m pre_commit install
