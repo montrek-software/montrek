@@ -33,3 +33,4 @@ coverage==7.9.2
 packaging==25.0
 yfinance==0.2.52
 cryptography==44.0.0
+pre-commit
