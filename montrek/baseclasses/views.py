@@ -38,8 +38,6 @@ from reporting.managers.montrek_table_manager import (
 
 logger = logging.getLogger(__name__)
 
-# Test comment
-
 
 @require_safe
 def home(request):
