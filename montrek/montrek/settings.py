@@ -12,14 +12,15 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 import os
 from pathlib import Path
+
 from decouple import Config, RepositoryEnv
 from django.urls import reverse_lazy
-from montrek.utils import get_keycloak_base_url, get_oidc_endpoints
-
 from reporting.core.reporting_colors import ReportingColors
-from .logging import get_logging_config
 
 from montrek.filtered_warnings import add_filtered_warnings
+from montrek.utils import get_keycloak_base_url, get_oidc_endpoints
+
+from .logging import get_logging_config
 
 add_filtered_warnings()
 
