@@ -29,10 +29,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - name: Install Tex Live
-        run: |
-          sudo apt-get update
-          sudo apt-get install texlive-xetex texlive-fonts-recommended
+      - uses: zauguin/setup-texlive@v2
+        with:
+          packages: >-
+            xetex
+            collection-fontsrecommended
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v3
         with:
