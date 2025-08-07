@@ -35,10 +35,6 @@ RUN echo "deb http://deb.debian.org/debian bookworm main contrib non-free non-fr
 
 # Copy certs
 RUN apt-get install -y --no-install-recommends ca-certificates
-
-COPY ./nginx/certs/fullchain.crt /usr/local/share/ca-certificates/montrek_root_ca.crt
-RUN update-ca-certificates
-ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
 # port where the Django app runs
 EXPOSE 8000
 # Clean up
