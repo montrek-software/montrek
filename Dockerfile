@@ -1,5 +1,8 @@
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
+# Create a user and group (with no password, home dir, and no shell access)
+RUN addgroup --system appgroup && \
+  adduser --system --ingroup appgroup --home /home/appuser appuser
 # setup environment variable
 ENV DOCKERHOME=/montrek
 
@@ -10,33 +13,42 @@ RUN mkdir -p $DOCKERHOME
 
 WORKDIR $DOCKERHOME
 
+
 # Install required system dependencies
 RUN apt-get update && \
-  apt-get install -y \
-  texlive-xetex \
-  texlive-fonts-recommended \
+  apt-get install -y --no-install-recommends \
+  ca-certificates\
+  curl \
   fontconfig \
+  git \
+  gosu \
   graphviz \
   libgraphviz-dev \
   libmariadb-dev \
   libpq-dev \
-  unzip \
   make \
-  git \
-  curl && \
-  apt-get clean && rm -rf /var/lib/apt/lists/*
-# Add contrib/non-free to apt sources (Debian Bookworm slim)
-RUN echo "deb http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware" > /etc/apt/sources.list && \
-  echo "deb http://deb.debian.org/debian-security bookworm-security main contrib non-free non-free-firmware" >> /etc/apt/sources.list && \
-  echo "deb http://deb.debian.org/debian bookworm-updates main contrib non-free non-free-firmware" >> /etc/apt/sources.list && \
+  texlive-fonts-recommended \
+  texlive-xetex \
+  unzip && \
+  # Add contrib/non-free to apt sources (Debian Bookworm slim)
+  echo "deb https://deb.debian.org/debian bookworm main contrib non-free non-free-firmware" > /etc/apt/sources.list && \
+  echo "deb https://deb.debian.org/debian-security bookworm-security main contrib non-free non-free-firmware" >> /etc/apt/sources.list && \
+  echo "deb https://deb.debian.org/debian bookworm-updates main contrib non-free non-free-firmware" >> /etc/apt/sources.list && \
   apt-get update && \
   echo "ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true" | debconf-set-selections && \
-  apt-get install -y ttf-mscorefonts-installer && \
-  apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Copy certs
-RUN apt-get install -y --no-install-recommends ca-certificates
+  apt-get install -y --no-install-recommends \
+  ttf-mscorefonts-installer &&\
+  # Copy certs
+  apt-get clean && rm -rf /var/lib/apt/lists/* &&\
+  # Set permissions if needed
+  chown -R appuser:appgroup ${DOCKERHOME}
 # port where the Django app runs
 EXPOSE 8000
 # Clean up
 RUN rm -rf /var/lib/apt/lists/*
+# Copy entrypoint
+COPY bin/montrek-entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Run as root initially
+ENTRYPOINT ["/entrypoint.sh"]

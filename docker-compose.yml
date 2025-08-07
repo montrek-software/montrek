@@ -24,9 +24,10 @@ services:
 
   web:
     image: ghcr.io/montrek-software/montrek-container:latest
-    command: ./bin/web-entrypoint.sh
+    user: "${USER_ID}:${GROUP_ID}"
     environment:
       - REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+      - SERVICE=web
     volumes:
       - .:/montrek
       - static_volume:/montrek/static
