@@ -10,8 +10,6 @@ RUN mkdir -p $DOCKERHOME
 
 WORKDIR $DOCKERHOME
 
-COPY . $DOCKERHOME
-
 # Install required system dependencies
 RUN apt-get update && \
   apt-get install -y \
