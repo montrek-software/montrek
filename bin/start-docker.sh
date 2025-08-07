@@ -21,6 +21,9 @@ done < <(find . -mindepth 2 -name "docker-compose.yml" -print0)
 # Print the compose files to be used
 echo "Detected docker-compose files: ${COMPOSE_FILES[*]}"
 
+# Set the User
+export USER_ID=$(id -u)
+export GROUP_ID=$(id -g)
 # Get the base command
 
 if [[ "$1" == "up" ]]; then

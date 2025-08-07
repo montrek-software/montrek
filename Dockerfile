@@ -52,3 +52,5 @@ RUN chmod +x /entrypoint.sh
 
 # Run as root initially
 ENTRYPOINT ["/entrypoint.sh"]
+# Then switch to non-root
+USER appuser
