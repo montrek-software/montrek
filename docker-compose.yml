@@ -27,9 +27,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: bash -c "
-      source .venv/bin/activate &&
-      make sync-local-python-env &&
+    command: sh -c "
+      . .venv/bin/activate &&
       cd montrek &&
       python manage.py migrate &&
       python manage.py collectstatic --noinput &&
@@ -54,7 +53,7 @@ services:
 
   sequential_worker:
     image: montrek_app
-    command: sh -c "cd montrek && celery --app=montrek worker --loglevel=info -Q sequential_queue --concurrency=1" -n sequential_worker@%h
+    command: sh -c ". .venv/bin/activate && cd montrek && python -m celery --app=montrek worker --loglevel=info -Q sequential_queue --concurrency=1" -n sequential_worker@%h
     volumes:
       - .:/montrek
       - static_volume:/montrek/static
@@ -70,7 +69,7 @@ services:
 
   parallel_worker:
     image: montrek_app
-    command: sh -c "cd montrek && celery --app=montrek worker --loglevel=info -Q parallel_queue --concurrency=4" -n parallel_worker@%h
+    command: sh -c ". .venv/bin/activate && cd montrek && python -m celery --app=montrek worker --loglevel=info -Q parallel_queue --concurrency=4" -n parallel_worker@%h
     volumes:
       - .:/montrek
       - static_volume:/montrek/static
@@ -86,7 +85,7 @@ services:
 
   celery_beat:
     image: montrek_app
-    command: sh -c "cd montrek && celery --app=montrek beat --loglevel=info"
+    command: sh -c ". .venv/bin/activate && cd montrek &&  python -m celery --app=montrek beat --loglevel=info"
     volumes:
       - .:/montrek
     env_file:

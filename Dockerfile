@@ -53,6 +53,7 @@ RUN ln -s /usr/bin/python3.12 /usr/bin/python && \
 # copy whole project to your docker home directory.
 COPY . $DOCKERHOME
 
+RUN make sync-local-python-env
 # port where the Django app runs
 EXPOSE 8000
 
