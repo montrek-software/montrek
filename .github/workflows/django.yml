@@ -65,5 +65,6 @@ jobs:
           fc-list | grep -i arial
       - name: Run Tests
         run: |
+          . .venv/bin/activate
           cd montrek
           python manage.py test --exclude-tag=functional --parallel
