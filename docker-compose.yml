@@ -28,6 +28,7 @@ services:
       context: .
       dockerfile: Dockerfile
     command: sh -c "
+      make sync-local-python-env &&
       . .venv/bin/activate &&
       cd montrek &&
       python manage.py migrate &&

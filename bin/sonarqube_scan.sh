@@ -81,5 +81,9 @@ if $RUN_TESTS; then
 else
   echo "Skip running tests"
 fi
+if [[ "$REPO" == "montrek" ]]; then
+  mv coverage.xml ../
+  cd ../
+fi
 
 sonar-scanner -Dsonar.projectKey=$REPO -Dsonar.sources=. -Dsonar.exclusions=**/migrations/**,**/static/** -Dsonar.host.url=$SONARCUBE_URL -Dsonar.login=$SONARCUBE_TOKEN -Dsonar.python.coverage.reportPaths=coverage.xml | grep "ANALYSIS SUCCESSFUL"

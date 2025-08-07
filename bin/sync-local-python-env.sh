@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+set -x
 
 echo "Syncing Python environment with uv..."
 uv venv
