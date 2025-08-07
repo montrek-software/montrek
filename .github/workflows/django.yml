@@ -10,7 +10,9 @@ on:
 
 jobs:
   build:
-    runs-on: ghcr.io/montrek-software/montrek-container:latest
+    runs-on: ubuntu-latest # or any available runner
+    container:
+      image: ghcr.io/montrek-software/montrek-container:latest
     strategy:
       max-parallel: 4
 
