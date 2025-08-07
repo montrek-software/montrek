@@ -37,14 +37,10 @@ jobs:
         uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Cache pip dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: >-
-            ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('**/all_requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-${{ matrix.python-version }}-
+      - name: Install uv
+        run: |
+          curl -Ls https://astral.sh/uv/install.sh | bash
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
       - name: Install Python Dependencies
         run: ./bin/sync-local-python-env.sh
       - name: Setup env
