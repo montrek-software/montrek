@@ -21,9 +21,6 @@ done < <(find . -mindepth 2 -name "docker-compose.yml" -print0)
 # Print the compose files to be used
 echo "Detected docker-compose files: ${COMPOSE_FILES[*]}"
 
-# Set the User
-export USER_ID=$(id -u)
-export GROUP_ID=$(id -g)
 # Get the base command
 
 if [[ "$1" == "up" ]]; then
@@ -47,6 +44,12 @@ fi
 if [[ "$ENABLE_KEYCLOAK" == "1" ]]; then
   COMMAND=" --profile keycloak $COMMAND"
 fi
+
+# Inject dynamic UID and GID into .env
+sed -i '/^USER_ID=/d' .env
+sed -i '/^GROUP_ID=/d' .env
+echo "USER_ID=$(id -u)" >>.env
+echo "GROUP_ID=$(id -g)" >>.env
 echo "docker compose -f "${COMPOSE_FILES[@]}" $COMMAND $DETACHED $BUILD --remove-orphans"
 # Combine and run them
 docker compose -f "${COMPOSE_FILES[@]}" $COMMAND $DETACHED $BUILD --remove-orphans
