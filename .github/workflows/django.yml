@@ -38,7 +38,7 @@ jobs:
           echo "DB_USER=postgres" >> .env
           echo "DB_PASSWORD=ci_pipe_pssw" >> .env
           echo "DB_NAME=montrek_ci_pipe_db" >> .env
-          echo "DB_HOST=0.0.0.0" >> .env
+          echo "DB_HOST=postgres" >> .env
           echo "SECRET_KEY=testkey" >> .env
       - name: Run Tests
         run: |
