@@ -27,11 +27,14 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: sh -c "cd montrek &&
+    command: bash -c "
+      source .venv/bin/activate &&
+      make sync-local-python-env &&
+      cd montrek &&
       python manage.py migrate &&
       python manage.py collectstatic --noinput &&
       python manage.py runscript user.scripts.create_superuser &&
-      gunicorn --chdir montrek montrek.wsgi:application --bind 0.0.0.0:${APP_PORT} --timeout 300"
+      python -m gunicorn --chdir montrek montrek.wsgi:application --bind 0.0.0.0:${APP_PORT} --timeout 300"
     volumes:
       - .:/montrek
       - static_volume:/montrek/static

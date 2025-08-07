@@ -19,8 +19,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
   python3.12 \
-  python3-pip \
-  python3-venv \
+  make \
+  curl \
   texlive-xetex \
   texlive-fonts-recommended \
   fontconfig \
@@ -40,27 +40,18 @@ RUN add-apt-repository multiverse && apt-get update
 RUN echo "ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true" | debconf-set-selections \
   && apt-get install -y ttf-mscorefonts-installer \
   && fc-cache -f -v
-# Create a virtual environment
-RUN python3 -m venv /venv
-
-# Activate the virtual environment and upgrade pip
-RUN /venv/bin/pip install --upgrade pip
-# copy whole project to your docker home directory.
-COPY . $DOCKERHOME
-
-# Install Python dependencies within the virtual environment
-RUN /venv/bin/pip install -r requirements.txt
-
-# Find and install dependencies from all requirements.txt files in subdirectories
-RUN find . -type f -name "requirements.txt" ! -path "./requirements.txt" -exec /venv/bin/pip install -r {} \;
 
 # Install postgres utils
 RUN apt-get update && \
   apt-get install -y postgresql-client && \
   rm -rf /var/lib/apt/lists/*
-
-# Set the entrypoint to use the virtual environment's Python
-ENV PATH="/venv/bin:$PATH"
+# Install uv from prebuilt binaries
+RUN curl -Ls https://astral.sh/uv/install.sh | bash && \
+  cp /root/.local/bin/uv /usr/local/bin/uv
+RUN ln -s /usr/bin/python3.12 /usr/bin/python && \
+  ln -s /usr/bin/pip3 /usr/bin/pip
+# copy whole project to your docker home directory.
+COPY . $DOCKERHOME
 
 # port where the Django app runs
 EXPOSE 8000
