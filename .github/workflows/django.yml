@@ -46,7 +46,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-${{ matrix.python-version }}-
       - name: Install Python Dependencies
-        run: ./bin/init.sh
+        run: ./bin/sync-local-python-env.sh
       - name: Setup env
         run: |
           echo "DB_ENGINE=postgres" >> .env
