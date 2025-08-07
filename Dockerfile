@@ -34,10 +34,6 @@ RUN echo "deb http://deb.debian.org/debian bookworm main contrib non-free non-fr
   apt-get install -y ttf-mscorefonts-installer && \
   apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Accept the EULA and install Microsoft core fonts
-RUN echo "ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true" | debconf-set-selections \
-  && apt-get install -y ttf-mscorefonts-installer \
-  && fc-cache -f -v
 # Copy certs
 RUN apt-get install -y --no-install-recommends ca-certificates
 # port where the Django app runs
