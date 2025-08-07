@@ -23,10 +23,7 @@ services:
       - montrek_network
 
   web:
-    image: montrek_app
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/montrek-software/montrek-container:latest
     command: sh -c "
       make sync-local-python-env &&
       . .venv/bin/activate &&
@@ -53,7 +50,7 @@ services:
       - montrek_network
 
   sequential_worker:
-    image: montrek_app
+    image: ghcr.io/montrek-software/montrek-container:latest
     command: sh -c ". .venv/bin/activate && cd montrek && python -m celery --app=montrek worker --loglevel=info -Q sequential_queue --concurrency=1" -n sequential_worker@%h
     volumes:
       - .:/montrek
@@ -69,7 +66,7 @@ services:
       - montrek_network
 
   parallel_worker:
-    image: montrek_app
+    image: ghcr.io/montrek-software/montrek-container:latest
     command: sh -c ". .venv/bin/activate && cd montrek && python -m celery --app=montrek worker --loglevel=info -Q parallel_queue --concurrency=4" -n parallel_worker@%h
     volumes:
       - .:/montrek
@@ -85,7 +82,7 @@ services:
       - montrek_network
 
   celery_beat:
-    image: montrek_app
+    image: ghcr.io/montrek-software/montrek-container:latest
     command: sh -c ". .venv/bin/activate && cd montrek &&  python -m celery --app=montrek beat --loglevel=info"
     volumes:
       - .:/montrek
