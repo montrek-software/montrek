@@ -10,7 +10,7 @@ on:
 
 jobs:
   build:
-    runs-on: docker pull ghcr.io/montrek-software/montrek-container:latest
+    runs-on: ghcr.io/montrek-software/montrek-container:latest
     strategy:
       max-parallel: 4
 
