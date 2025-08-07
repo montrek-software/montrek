@@ -45,9 +45,17 @@ RUN echo "ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula sele
 RUN apt-get update && \
   apt-get install -y postgresql-client && \
   rm -rf /var/lib/apt/lists/*
-# Install uv from prebuilt binaries
-RUN curl -Ls https://astral.sh/uv/install.sh | bash && \
-  cp /root/.local/bin/uv /usr/local/bin/uv
+# Install uv from prebuilt binaries (secure, version-pinned, checksum-verified)
+ENV UV_VERSION="v0.1.41"
+RUN ARCH=$(uname -m) && \
+  if [ "$ARCH" = "x86_64" ]; then UV_ARCH="x86_64"; elif [ "$ARCH" = "aarch64" ]; then UV_ARCH="aarch64"; else echo "Unsupported architecture: $ARCH"; exit 1; fi && \
+  curl -fsSL -o /tmp/uv.tar.gz "https://github.com/astral-sh/uv/releases/download/${UV_VERSION}/uv-${UV_ARCH}-unknown-linux-gnu.tar.gz" && \
+  curl -fsSL -o /tmp/uv.tar.gz.sha256 "https://github.com/astral-sh/uv/releases/download/${UV_VERSION}/uv-${UV_ARCH}-unknown-linux-gnu.tar.gz.sha256" && \
+  cd /tmp && sha256sum -c uv.tar.gz.sha256 && \
+  tar -xzf uv.tar.gz && \
+  mv uv /usr/local/bin/uv && \
+  chmod +x /usr/local/bin/uv && \
+  rm -rf /tmp/uv*
 RUN ln -s /usr/bin/python3.12 /usr/bin/python && \
   ln -s /usr/bin/pip3 /usr/bin/pip
 # copy whole project to your docker home directory.
