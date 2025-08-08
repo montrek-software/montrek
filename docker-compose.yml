@@ -46,7 +46,8 @@ services:
 
   sequential_worker:
     image: ghcr.io/montrek-software/montrek-container:latest
-    command: sh -c ". .venv/bin/activate && cd montrek && python -m celery --app=montrek worker --loglevel=info -Q sequential_queue --concurrency=1" -n sequential_worker@%h
+    environment:
+      - SERVICE=sequential_worker
     volumes:
       - .:/montrek
       - static_volume:/montrek/static
@@ -62,7 +63,8 @@ services:
 
   parallel_worker:
     image: ghcr.io/montrek-software/montrek-container:latest
-    command: sh -c ". .venv/bin/activate && cd montrek && python -m celery --app=montrek worker --loglevel=info -Q parallel_queue --concurrency=4" -n parallel_worker@%h
+    environment:
+      - SERVICE=sequential_worker
     volumes:
       - .:/montrek
       - static_volume:/montrek/static

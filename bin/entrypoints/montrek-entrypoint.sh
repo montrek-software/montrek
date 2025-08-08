@@ -10,8 +10,14 @@ if [[ -f /certs/fullchain.crt ]]; then
 fi
 # Conditionally run the app as appuser only for the "web" role
 if [[ "$SERVICE" == "web" ]]; then
-  echo "Running web logic as appuser..."
-  exec /montrek/bin/web-entrypoint.sh
+  echo "Running $SERVICE logic..."
+  exec /montrek/bin/entrypoints/web-entrypoint.sh
+elif [[ "$SERVICE" == "sequential_worker" ]]; then
+  echo "Running $SERVICE logic..."
+  exec /montrek/bin/entrypoints/worker-entrypoint.sh 1 $SERVICE
+elif [[ "$SERVICE" == "parallel_worker" ]]; then
+  echo "Running $SERVICE logic..."
+  exec /montrek/bin/entrypoints/worker-entrypoint.sh 5 $SERVICE
 else
   echo "Skipping appuser switch for role: $SERVICE"
   exec "$@" # Or run default logic for other services
