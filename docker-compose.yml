@@ -23,15 +23,10 @@ services:
       - montrek_network
 
   web:
-    image: montrek_app
-    build:
-      context: .
-      dockerfile: Dockerfile
-    command: sh -c "cd montrek &&
-      python manage.py migrate &&
-      python manage.py collectstatic --noinput &&
-      python manage.py runscript user.scripts.create_superuser &&
-      gunicorn --chdir montrek montrek.wsgi:application --bind 0.0.0.0:${APP_PORT} --timeout 300"
+    image: ghcr.io/montrek-software/montrek-container:latest
+    environment:
+      - REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+      - SERVICE=web
     volumes:
       - .:/montrek
       - static_volume:/montrek/static
@@ -50,8 +45,9 @@ services:
       - montrek_network
 
   sequential_worker:
-    image: montrek_app
-    command: sh -c "cd montrek && celery --app=montrek worker --loglevel=info -Q sequential_queue --concurrency=1" -n sequential_worker@%h
+    image: ghcr.io/montrek-software/montrek-container:latest
+    environment:
+      - SERVICE=sequential_worker
     volumes:
       - .:/montrek
       - static_volume:/montrek/static
@@ -66,8 +62,9 @@ services:
       - montrek_network
 
   parallel_worker:
-    image: montrek_app
-    command: sh -c "cd montrek && celery --app=montrek worker --loglevel=info -Q parallel_queue --concurrency=4" -n parallel_worker@%h
+    image: ghcr.io/montrek-software/montrek-container:latest
+    environment:
+      - SERVICE=parallel_worker
     volumes:
       - .:/montrek
       - static_volume:/montrek/static
@@ -82,8 +79,9 @@ services:
       - montrek_network
 
   celery_beat:
-    image: montrek_app
-    command: sh -c "cd montrek && celery --app=montrek beat --loglevel=info"
+    image: ghcr.io/montrek-software/montrek-container:latest
+    environment:
+      - SERVICE=celery_beat
     volumes:
       - .:/montrek
     env_file:

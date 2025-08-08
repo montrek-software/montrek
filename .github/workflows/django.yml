@@ -10,11 +10,11 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest # or any available runner
+    container:
+      image: ghcr.io/montrek-software/montrek-container:latest
     strategy:
       max-parallel: 4
-      matrix:
-        python-version: [3.12.0]
 
     services:
       postgres:
@@ -29,24 +29,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - name: Install Tex Live
-        run: |
-          sudo apt-get update
-          sudo apt-get install texlive-xetex texlive-fonts-recommended
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v3
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Cache pip dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: >-
-            ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('**/all_requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-${{ matrix.python-version }}-
       - name: Install Python Dependencies
-        run: ./bin/init.sh
+        run: ./bin/sync-local-python-env.sh
       - name: Setup env
         run: |
           echo "DB_ENGINE=postgres" >> .env
@@ -54,20 +38,10 @@ jobs:
           echo "DB_USER=postgres" >> .env
           echo "DB_PASSWORD=ci_pipe_pssw" >> .env
           echo "DB_NAME=montrek_ci_pipe_db" >> .env
-          echo "DB_HOST=0.0.0.0" >> .env
+          echo "DB_HOST=postgres" >> .env
           echo "SECRET_KEY=testkey" >> .env
-
-      - name: Install Arial font
-        run: |
-          sudo apt-get update
-          echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true | sudo debconf-set-selections
-          sudo apt-get install -y ttf-mscorefonts-installer
-          sudo fc-cache -f -v
-
-      - name: Verify Arial font installation
-        run: |
-          fc-list | grep -i arial
       - name: Run Tests
         run: |
+          . .venv/bin/activate
           cd montrek
           python manage.py test --exclude-tag=functional --parallel

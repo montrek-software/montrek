@@ -70,5 +70,9 @@ update-server: # Stop all docker containers, update the repositories to the late
 sonarqube-scan: # Run a SonarQube scan and open in SonarQube (Add NO_TESTS=true to skip tests)
 	@bash bin/sonarqube_scan.sh NO_TESTS=$(NO_TESTS) $(filter-out $@,$(MAKECMDGOALS))
 
+.PHONY: build-montrek-container
+build-montrek-container: # Build the container to run montrek in docker or github actions
+	@bash bin/build-montrek-container.sh
+
 %:
 	@

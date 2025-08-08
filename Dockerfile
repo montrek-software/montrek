@@ -1,6 +1,8 @@
-# Use an Ubuntu base image
-FROM ubuntu:24.04
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
+# Create a user and group (with no password, home dir, and no shell access)
+RUN addgroup --system appgroup && \
+  adduser --system --ingroup appgroup --home /home/appuser appuser
 # setup environment variable
 ENV DOCKERHOME=/montrek
 
@@ -8,69 +10,46 @@ ENV DOCKERHOME=/montrek
 RUN mkdir -p $DOCKERHOME
 
 # where your code lives
+
 WORKDIR $DOCKERHOME
 
-# set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-ENV DEBIAN_FRONTEND=noninteractive
 
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-  python3.12 \
-  python3-pip \
-  python3-venv \
-  texlive-xetex \
-  texlive-fonts-recommended \
+# Install required system dependencies
+RUN apt-get update && \
+  apt-get install -y --no-install-recommends \
+  ca-certificates \
+  curl \
   fontconfig \
-  wget \
-  software-properties-common \
-  pkg-config \
-  libmysqlclient-dev \
-  libpq-dev gcc \
+  git \
+  gosu \
   graphviz \
   libgraphviz-dev \
-  && apt-get clean
-
-# Enable the multiverse repository
-RUN add-apt-repository multiverse && apt-get update
-
-# Accept the EULA and install Microsoft core fonts
-RUN echo "ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true" | debconf-set-selections \
-  && apt-get install -y ttf-mscorefonts-installer \
-  && fc-cache -f -v
-# Create a virtual environment
-RUN python3 -m venv /venv
-
-# Activate the virtual environment and upgrade pip
-RUN /venv/bin/pip install --upgrade pip
-# copy whole project to your docker home directory.
-COPY . $DOCKERHOME
-
-# Install Python dependencies within the virtual environment
-RUN /venv/bin/pip install -r requirements.txt
-
-# Find and install dependencies from all requirements.txt files in subdirectories
-RUN find . -type f -name "requirements.txt" ! -path "./requirements.txt" -exec /venv/bin/pip install -r {} \;
-
-# Install postgres utils
-RUN apt-get update && \
-  apt-get install -y postgresql-client && \
-  rm -rf /var/lib/apt/lists/*
-
-# Set the entrypoint to use the virtual environment's Python
-ENV PATH="/venv/bin:$PATH"
-
+  libmariadb-dev \
+  libpq-dev \
+  make \
+  texlive-fonts-recommended \
+  texlive-xetex \
+  unzip && \
+  # Add contrib/non-free to apt sources (Debian Bookworm slim)
+  echo "deb https://deb.debian.org/debian bookworm main contrib non-free non-free-firmware" > /etc/apt/sources.list && \
+  echo "deb https://deb.debian.org/debian-security bookworm-security main contrib non-free non-free-firmware" >> /etc/apt/sources.list && \
+  echo "deb https://deb.debian.org/debian bookworm-updates main contrib non-free non-free-firmware" >> /etc/apt/sources.list && \
+  apt-get update && \
+  echo "ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true" | debconf-set-selections && \
+  apt-get install -y --no-install-recommends \
+  ttf-mscorefonts-installer && \
+  # Copy certs
+  apt-get clean && rm -rf /var/lib/apt/lists/* && \
+  # Set permissions if needed
+  chown -R appuser:appgroup ${DOCKERHOME}
 # port where the Django app runs
 EXPOSE 8000
+# Copy entrypoint
+COPY bin/entrypoints/montrek-entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-
-# Copy certs
-RUN apt-get install -y --no-install-recommends ca-certificates
-
-COPY ./nginx/certs/fullchain.crt /usr/local/share/ca-certificates/montrek_root_ca.crt
-RUN update-ca-certificates
-ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
-# Clean up
-RUN rm -rf /var/lib/apt/lists/*
+# Run as root initially
+ENTRYPOINT ["/entrypoint.sh"]
+# Switch to the non-root user
+# TODO: Handle Non Root user
+# USER appuser
