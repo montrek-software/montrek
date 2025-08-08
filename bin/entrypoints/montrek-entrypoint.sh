@@ -18,6 +18,9 @@ elif [[ "$SERVICE" == "sequential_worker" ]]; then
 elif [[ "$SERVICE" == "parallel_worker" ]]; then
   echo "Running $SERVICE logic..."
   exec /montrek/bin/entrypoints/worker-entrypoint.sh 5 $SERVICE
+elif [[ "$SERVICE" == "celery_beat" ]]; then
+  echo "Running $SERVICE logic..."
+  exec /montrek/bin/entrypoints/celery_beat-entrypoint.sh
 else
   echo "Skipping appuser switch for role: $SERVICE"
   exec "$@" # Or run default logic for other services
