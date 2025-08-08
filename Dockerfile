@@ -17,7 +17,7 @@ WORKDIR $DOCKERHOME
 # Install required system dependencies
 RUN apt-get update && \
   apt-get install -y --no-install-recommends \
-  ca-certificates\
+  ca-certificates \
   curl \
   fontconfig \
   git \
@@ -37,9 +37,9 @@ RUN apt-get update && \
   apt-get update && \
   echo "ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true" | debconf-set-selections && \
   apt-get install -y --no-install-recommends \
-  ttf-mscorefonts-installer &&\
+  ttf-mscorefonts-installer && \
   # Copy certs
-  apt-get clean && rm -rf /var/lib/apt/lists/* &&\
+  apt-get clean && rm -rf /var/lib/apt/lists/* && \
   # Set permissions if needed
   chown -R appuser:appgroup ${DOCKERHOME}
 # port where the Django app runs
