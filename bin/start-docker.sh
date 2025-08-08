@@ -24,6 +24,8 @@ echo "Detected docker-compose files: ${COMPOSE_FILES[*]}"
 # Get the base command
 
 if [[ "$1" == "up" ]]; then
+  # Pull latest montrek-container image
+  docker pull ghcr.io/montrek-software/montrek-container:latest
   COMMAND="up"
 fi
 
@@ -51,7 +53,5 @@ sed -i '/^GROUP_ID=/d' .env
 echo "USER_ID=$(id -u)" >>.env
 echo "GROUP_ID=$(id -g)" >>.env
 echo "docker compose -f "${COMPOSE_FILES[@]}" $COMMAND $DETACHED $BUILD --remove-orphans"
-# Pull latest montrek-container image
-docker pull ghcr.io/montrek-software/montrek-container:latest
 # Combine and run them
 docker compose -f "${COMPOSE_FILES[@]}" $COMMAND $DETACHED $BUILD --remove-orphans
