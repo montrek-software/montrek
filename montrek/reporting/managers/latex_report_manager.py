@@ -1,15 +1,18 @@
-from django.conf import settings
 import logging
-from django.utils.safestring import mark_safe
 import os
-from django.template import Template, Context
-import subprocess
-import tempfile
 import shutil
+import subprocess  # nosec B404
+from pathlib import Path
+
+from baseclasses.dataclasses.montrek_message import MontrekMessageError
+from baseclasses.sanitizer import HtmlSanitizer
+from django.conf import settings
+from django.template import Context, Template
+from django.utils.safestring import mark_safe
+from reporting.constants import WORKBENCH_PATH
+from reporting.core.reporting_colors import Color, ReportingColors
 from reporting.core.reporting_text import ClientLogo
 from reporting.managers.montrek_report_manager import MontrekReportManager
-from baseclasses.dataclasses.montrek_message import MontrekMessageError
-from reporting.core.reporting_colors import ReportingColors, Color
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +27,9 @@ class LatexReportManager:
         context_data = self.get_context()
         context_data.update(self.get_layout_data())
         for key, value in context_data.items():
-            context_data[key] = mark_safe(value)
+            context_data[key] = mark_safe(
+                HtmlSanitizer().clean_html(value)
+            )  # nosec B308 B703 - value is sanitized
         context_data["footer_text"] = self.report_manager.footer_text.to_latex()
         context_data["watermark_text"] = "Draft" if self.report_manager.draft else ""
         context = Context(context_data)
@@ -82,61 +87,59 @@ class LatexReportManager:
 
     def compile_report(self) -> str | None:
         report_str = self.generate_report()
+
+        # Ensure the output folders exist
         output_dir = os.path.join(settings.MEDIA_ROOT, "latex")
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            # Path to the temporary LaTeX file
-            latex_file_path = os.path.join(
-                tmpdirname, f"{self.report_manager.document_name}.tex"
+        os.makedirs(output_dir, exist_ok=True)
+        WORKBENCH_PATH.mkdir(parents=True, exist_ok=True)
+
+        # Paths for .tex and .pdf files in the workbench
+        tex_filename = f"{self.report_manager.document_name}.tex"
+        pdf_filename = f"{self.report_manager.document_name}.pdf"
+
+        latex_file_path = WORKBENCH_PATH / tex_filename
+        pdf_file_path = WORKBENCH_PATH / pdf_filename
+        output_pdf_path = Path(output_dir) / pdf_filename
+
+        # Write the LaTeX code to the .tex file
+        with open(latex_file_path, "w") as f:
+            f.write(report_str)
+
+        # Compile the LaTeX file into a PDF using xelatex
+        try:
+            subprocess.run(
+                [
+                    "/usr/bin/xelatex",
+                    "-output-directory",
+                    str(WORKBENCH_PATH),
+                    "-interaction=nonstopmode",
+                    str(latex_file_path),
+                ],
+                capture_output=True,
+                check=True,
+                text=True,
+            )  # nosec B603
+        except subprocess.CalledProcessError as e:
+            if settings.IS_TEST_RUN:
+                logger.error(e.stdout)
+                raise e
+            logger.error(report_str)
+            error_message = self.get_xelatex_error_message(e.stdout)
+            self.report_manager.messages.append(
+                MontrekMessageError(message=error_message)
             )
+            self.report_manager.messages.append(MontrekMessageError(message=report_str))
+            return None
 
-            # Write the LaTeX code to a file
-            with open(latex_file_path, "w") as f:
-                f.write(report_str)
-
-            # Compile the LaTeX file into a PDF using xelatex
-            try:
-                subprocess.run(
-                    [
-                        "xelatex",
-                        "-output-directory",
-                        tmpdirname,
-                        "-interaction=nonstopmode",
-                        latex_file_path,
-                    ],
-                    capture_output=True,
-                    check=True,
-                    text=True,
-                )
-            except subprocess.CalledProcessError as e:
-                if settings.IS_TEST_RUN:
-                    logger.error(e.stdout)
-                    raise e
-                logger.error(report_str)
-                error_message = self.get_xelatex_error_message(e.stdout)
-                self.report_manager.messages.append(
-                    MontrekMessageError(message=error_message)
-                )
-                self.report_manager.messages.append(
-                    MontrekMessageError(message=report_str)
-                )
-                return None
-
-            # Define the source PDF path (assuming the output PDF has the same name as the .tex file, but with .pdf extension)
-            pdf_file_path = os.path.join(
-                tmpdirname, f"{self.report_manager.document_name}.pdf"
-            )
-
-            # Define the destination PDF path
-            output_pdf_path = os.path.join(
-                output_dir, f"{self.report_manager.document_name}.pdf"
-            )
-            # Move the PDF to the output directory
-            shutil.move(pdf_file_path, output_pdf_path)
-
-            # Return the path to the output PDF file
-            return output_pdf_path
+        # Move the compiled PDF to the final output directory
+        shutil.move(str(pdf_file_path), str(output_pdf_path))
+        # Clear the workbench directory (but preserve the folder itself)
+        for item in WORKBENCH_PATH.iterdir():
+            if item.is_file() or item.is_symlink():
+                item.unlink()
+            elif item.is_dir():
+                shutil.rmtree(item)
+        return str(output_pdf_path)
 
     def _get_template_path(self) -> str | None:
         for template_dir in settings.TEMPLATES[0]["DIRS"]:
