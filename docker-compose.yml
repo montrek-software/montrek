@@ -64,7 +64,7 @@ services:
   parallel_worker:
     image: ghcr.io/montrek-software/montrek-container:latest
     environment:
-      - SERVICE=sequential_worker
+      - SERVICE=parallel_worker
     volumes:
       - .:/montrek
       - static_volume:/montrek/static
