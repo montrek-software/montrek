@@ -1,20 +1,18 @@
-import tempfile
+import hashlib
 import os
+from pathlib import Path
 from urllib.parse import urlparse
 
 import markdown
 import requests
+from baseclasses.models import HubValueDate
 from django.conf import settings
 from django.template import Context, Template
-
-from baseclasses.models import HubValueDate
-from reporting.constants import ReportingTextType
+from reporting.constants import WORKBENCH_PATH, ReportingTextType
 from reporting.core.reporting_mixins import ReportingChecksMixin
 from reporting.core.reporting_protocols import ReportingElement
 from reporting.core.text_converter import HtmlLatexConverter
-from reporting.lib.protocols import (
-    ReportElementProtocol,
-)
+from reporting.lib.protocols import ReportElementProtocol
 
 
 class ReportingTextParagraph(ReportingElement, ReportingChecksMixin):
@@ -187,26 +185,35 @@ class ReportingImage:
 
     def to_latex(self) -> str:
         try:
-            urlparse(self.image_path)
-            is_url = self.image_path.startswith("http")
+            parsed = urlparse(self.image_path)
+            is_url = parsed.scheme in {"http", "https"}
         except ValueError:
             is_url = False
+
         if not is_url:
             if not os.path.exists(self.image_path):
                 return ""
             return self._return_string(self.image_path)
-        response = requests.get(self.image_path)
+
+        # Remote image: download and save to WORKBENCH_PATH
+        response = requests.get(self.image_path, timeout=5)
         if response.status_code != 200:
             image_path = HtmlLatexConverter.convert(self.image_path)
             return f"Image not found: {image_path}"
-        temp_file = tempfile.NamedTemporaryFile(
-            delete=False, suffix="." + self.image_path.split(".")[-1].split("?")[0]
-        )
-        temp_file.write(response.content)
-        temp_file_path = temp_file.name
-        temp_file.close()
-        value = temp_file_path
-        return self._return_string(value)
+
+        # Derive a unique filename from the URL (safe and repeatable)
+        ext = Path(self.image_path).suffix.split("?")[0] or ".png"
+        hash_name = hashlib.md5(
+            self.image_path.encode("utf-8")
+        ).hexdigest()  # nosec B324 - weak MD5 hash is justified
+        filename = f"{hash_name}{ext}"
+        image_path = WORKBENCH_PATH / filename
+
+        # Save the file to WORKBENCH_PATH
+        with open(image_path, "wb") as f:
+            f.write(response.content)
+
+        return self._return_string(str(image_path))
 
     def _return_string(self, value) -> str:
         value = HtmlLatexConverter.convert(value)

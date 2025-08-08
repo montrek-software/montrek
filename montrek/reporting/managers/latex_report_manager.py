@@ -5,7 +5,6 @@ import subprocess  # nosec B404
 from pathlib import Path
 
 from baseclasses.dataclasses.montrek_message import MontrekMessageError
-from baseclasses.sanitizer import HtmlSanitizer
 from django.conf import settings
 from django.template import Context, Template
 from django.utils.safestring import mark_safe
@@ -27,9 +26,7 @@ class LatexReportManager:
         context_data = self.get_context()
         context_data.update(self.get_layout_data())
         for key, value in context_data.items():
-            context_data[key] = mark_safe(
-                HtmlSanitizer().clean_html(value)
-            )  # nosec B308 B703 - value is sanitized
+            context_data[key] = mark_safe(value)  # nosec B308 B703 - value is sanitized
         context_data["footer_text"] = self.report_manager.footer_text.to_latex()
         context_data["watermark_text"] = "Draft" if self.report_manager.draft else ""
         context = Context(context_data)
