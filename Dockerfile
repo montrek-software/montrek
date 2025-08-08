@@ -47,8 +47,11 @@ EXPOSE 8000
 # Clean up
 RUN rm -rf /var/lib/apt/lists/*
 # Copy entrypoint
-COPY bin/montrek-entrypoint.sh /entrypoint.sh
+COPY bin/entrypoints/montrek-entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 # Run as root initially
 ENTRYPOINT ["/entrypoint.sh"]
+# Switch to the non-root user
+# TODO: Handle Non Root user
+# USER appuser
