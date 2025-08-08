@@ -2,12 +2,6 @@
 set -e
 echo "SERVICE is: $SERVICE"
 
-# Install instance-specific certs if provided
-if [[ -f ./nginx/certs/fullchain.crt ]]; then
-  echo "Installing instance-specific certificate..."
-  cp ./nginx/certs/fullchain.crt /usr/local/share/ca-certificates/montrek_root_ca.crt
-  update-ca-certificates
-fi
 # Conditionally run the app as appuser only for the "web" role
 if [[ "$SERVICE" == "web" ]]; then
   echo "Running $SERVICE logic..."

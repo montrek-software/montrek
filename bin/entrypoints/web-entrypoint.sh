@@ -2,6 +2,12 @@
 export XDG_CACHE_HOME=/tmp/.cache
 set -e
 
+# Install instance-specific certs if provided
+if [[ -f ./nginx/certs/fullchain.crt ]]; then
+  echo "Installing instance-specific certificate..."
+  cp ./nginx/certs/fullchain.crt /usr/local/share/ca-certificates/montrek_root_ca.crt
+  update-ca-certificates
+fi
 make sync-local-python-env
 . .venv/bin/activate
 cd montrek
