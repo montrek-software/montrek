@@ -44,8 +44,6 @@ RUN apt-get update && \
   chown -R appuser:appgroup ${DOCKERHOME}
 # port where the Django app runs
 EXPOSE 8000
-# Clean up
-RUN rm -rf /var/lib/apt/lists/*
 # Copy entrypoint
 COPY bin/entrypoints/montrek-entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
