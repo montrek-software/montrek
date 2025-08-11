@@ -2,20 +2,24 @@
 set -e
 echo "SERVICE is: $SERVICE"
 
+exec /montrek/bin/entrypoints/priviledged-entrypoint.sh
+
 # Conditionally run the app as appuser only for the "web" role
-if [[ "$SERVICE" == "web" ]]; then
-  echo "Running $SERVICE logic..."
-  exec /montrek/bin/entrypoints/web-entrypoint.sh
-elif [[ "$SERVICE" == "sequential_worker" ]]; then
-  echo "Running $SERVICE logic..."
-  exec /montrek/bin/entrypoints/worker-entrypoint.sh 1 $SERVICE
-elif [[ "$SERVICE" == "parallel_worker" ]]; then
-  echo "Running $SERVICE logic..."
-  exec /montrek/bin/entrypoints/worker-entrypoint.sh 5 $SERVICE
-elif [[ "$SERVICE" == "celery_beat" ]]; then
-  echo "Running $SERVICE logic..."
-  exec /montrek/bin/entrypoints/celery_beat-entrypoint.sh
-else
-  echo "Skipping appuser switch for role: $SERVICE"
-  exec "$@" # Or run default logic for other services
-fi
+echo "Running $SERVICE logic..."
+case "$SERVICE" in
+web)
+  exec gosu "${PUID}:${PGID}" /montrek/bin/entrypoints/web-entrypoint.sh
+  ;;
+sequential_worker)
+  exec gosu "${PUID}:${PGID}" /montrek/bin/entrypoints/worker-entrypoint.sh 1 "$SERVICE"
+  ;;
+parallel_worker)
+  exec gosu "${PUID}:${PGID}" /montrek/bin/entrypoints/worker-entrypoint.sh 5 "$SERVICE"
+  ;;
+celery_beat)
+  exec gosu "${PUID}:${PGID}" /montrek/bin/entrypoints/celery_beat-entrypoint.sh
+  ;;
+*)
+  exec gosu "${PUID}:${PGID}" "$@"
+  ;;
+esac

@@ -24,9 +24,12 @@ services:
 
   web:
     image: ghcr.io/montrek-software/montrek-container:latest
+    user: "0:0"
     environment:
       - REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
       - SERVICE=web
+      - PIUD=${USER_ID}
+      - PGUD=${GROUP_ID}
     volumes:
       - .:/montrek
       - static_volume:/montrek/static
@@ -37,7 +40,6 @@ services:
       - ${APP_PORT}
     ports:
       - ${APP_PORT}:${APP_PORT}
-    restart: "on-failure"
     depends_on:
       - db
       - redis
@@ -46,8 +48,11 @@ services:
 
   sequential_worker:
     image: ghcr.io/montrek-software/montrek-container:latest
+    user: "0:0"
     environment:
       - SERVICE=sequential_worker
+      - PIUD=${USER_ID}
+      - PGUD=${GROUP_ID}
     volumes:
       - .:/montrek
       - static_volume:/montrek/static
@@ -63,8 +68,11 @@ services:
 
   parallel_worker:
     image: ghcr.io/montrek-software/montrek-container:latest
+    user: "0:0"
     environment:
       - SERVICE=parallel_worker
+      - PIUD=${USER_ID}
+      - PGUD=${GROUP_ID}
     volumes:
       - .:/montrek
       - static_volume:/montrek/static
@@ -80,8 +88,11 @@ services:
 
   celery_beat:
     image: ghcr.io/montrek-software/montrek-container:latest
+    user: "0:0"
     environment:
       - SERVICE=celery_beat
+      - PIUD=${USER_ID}
+      - PGUD=${GROUP_ID}
     volumes:
       - .:/montrek
     env_file:
