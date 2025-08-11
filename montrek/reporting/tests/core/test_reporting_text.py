@@ -1,23 +1,23 @@
 import os
 import tempfile
 from dataclasses import dataclass
-from django.test import TestCase
 
+from django.test import TestCase
+from reporting.constants import ReportingTextType
 from reporting.core.reporting_text import (
     MarkdownReportingElement,
+    MontrekLogo,
     NewPage,
+    ReportingEditableText,
+    ReportingHeader1,
+    ReportingHeader2,
     ReportingImage,
     ReportingMap,
     ReportingParagraph,
     ReportingText,
     ReportingTextParagraph,
-    MontrekLogo,
-    ReportingEditableText,
-    ReportingHeader1,
-    ReportingHeader2,
     Vspace,
 )
-from reporting.constants import ReportingTextType
 
 
 @dataclass
@@ -340,10 +340,13 @@ class TestMontrekLogo(TestCase):
             logo.to_html(),
             '<div style="text-align: right;"><img src="http://static1.squarespace.com/static/673bfbe149f99b59e4a41ee7/t/673bfdb41644c858ec83dc7e/1731984820187/montrek_logo_variant.png?format=1500w" alt="image" style="width:50.0%;"></div>',
         )
-        self.assertRegex(
+        logo_str = logo.to_latex()
+        self.assertTrue(logo_str.startswith("\\includegraphics[width=0.5\\textwidth]{"))
+        self.assertIn(
+            "reporting/.workbench/09bf0cab36c0b00c63dcf42ea3fdaec5.png",
             logo.to_latex(),
-            r"\\includegraphics\[width=0.5\\textwidth\]\{/tmp/tmp[a-zA-Z0-9\\_]+\.png\}",
         )
+        self.assertTrue(logo_str.endswith("}"))
 
 
 class TestMarkdownReportingElement(ReportingElementTestCase):
