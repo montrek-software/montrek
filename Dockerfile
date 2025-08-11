@@ -1,4 +1,7 @@
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+# Create a user and group (with no password, home dir, and no shell access)
+RUN addgroup --system appgroup && \
+  adduser --system --ingroup appgroup --home /home/appuser appuser
 
 # setup environment variable
 ENV DOCKERHOME=/montrek
@@ -37,7 +40,7 @@ RUN apt-get update && \
   echo "ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true" | debconf-set-selections && \
   apt-get install -y --no-install-recommends \
   ttf-mscorefonts-installer && \
-  # Copy certs
+  chown -R appuser:appgroup ${DOCKERHOME} && \
   apt-get clean && rm -rf /var/lib/apt/lists/*
 # port where the Django app runs
 EXPOSE 8000
@@ -47,3 +50,5 @@ RUN chmod +x /entrypoint.sh
 
 # Run as root initially
 ENTRYPOINT ["/entrypoint.sh"]
+# Switch to the non-root user
+USER appuser

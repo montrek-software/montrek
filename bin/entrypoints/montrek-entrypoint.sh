@@ -2,7 +2,7 @@
 set -e
 echo "SERVICE is: $SERVICE"
 
-exec /montrek/bin/entrypoints/priviledged-entrypoint.sh
+/montrek/bin/entrypoints/privileged-entrypoint.sh
 
 # Conditionally run the app as appuser only for the "web" role
 echo "Running $SERVICE logic..."
