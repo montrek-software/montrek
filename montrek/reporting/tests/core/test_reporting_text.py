@@ -343,7 +343,7 @@ class TestMontrekLogo(TestCase):
         logo_str = logo.to_latex()
         self.assertTrue(logo_str.startswith("\\includegraphics[width=0.5\\textwidth]{"))
         self.assertIn(
-            "reporting/.workbench/09bf0cab36c0b00c63dcf42ea3fdaec5.png",
+            "reporting/.workbench/b1c15ab1db73597bedf8ace0d4521004c58c0feb98858703ecc255f966c8008e.png",
             logo.to_latex(),
         )
         self.assertTrue(logo_str.endswith("}"))

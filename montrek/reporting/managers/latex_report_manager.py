@@ -1,3 +1,4 @@
+import locale
 import logging
 import os
 import subprocess  # nosec B404
@@ -120,7 +121,8 @@ class LatexReportManager:
         except subprocess.CalledProcessError as e:
             # Decode safely for the exception message
             err = (e.stderr or b"") + b"\n" + (e.stdout or b"")
-            err_txt = err.decode("latin-1", errors="replace")
+            preferred_encoding = locale.getpreferredencoding(False)
+            err_txt = err.decode(preferred_encoding, errors="replace")
             # Optionally dump to .log for debugging
             try:
                 log_path.write_text(err_txt, encoding="utf-8", errors="replace")

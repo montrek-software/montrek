@@ -203,7 +203,7 @@ class ReportingImage:
 
         # Derive a unique filename from the URL (safe and repeatable)
         ext = Path(self.image_path).suffix.split("?")[0] or ".png"
-        hash_name = hashlib.md5(
+        hash_name = hashlib.sha256(
             self.image_path.encode("utf-8")
         ).hexdigest()  # nosec B324 - weak MD5 hash is justified
         filename = f"{hash_name}{ext}"

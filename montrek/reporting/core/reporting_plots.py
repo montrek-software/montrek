@@ -1,4 +1,4 @@
-import uuid
+import hashlib
 from typing import Any, Dict, List, Union
 
 import plotly.graph_objects as go
@@ -48,15 +48,16 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
         return self.figure.to_html(full_html=False, include_plotlyjs=False)
 
     def to_latex(self) -> str:
-        # Generate a unique filename in the workbench
-        filename = f"{uuid.uuid4().hex}.png"
+        # Generate a deterministic filename based on the plot data
+        plot_json = self.figure.to_json()
+        hash_digest = hashlib.sha256(plot_json.encode("utf-8")).hexdigest()[:16]
+        filename = f"{hash_digest}.png"
         image_path = WORKBENCH_PATH / filename
-
         # Ensure the directory exists
         WORKBENCH_PATH.mkdir(parents=True, exist_ok=True)
-
-        # Write the image
-        self.figure.write_image(str(image_path), width=1000, height=500)
+        # Write the image if it does not already exist
+        if not image_path.exists():
+            self.figure.write_image(str(image_path), width=1000, height=500)
 
         # Build the LaTeX string
         latex_str = "\\begin{figure}[H]\n"
