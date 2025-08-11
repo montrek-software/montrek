@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest # or any available runner
     container:
       image: ghcr.io/montrek-software/montrek-container:latest
+      options: --user 0:0 # run job steps as root in CI
     strategy:
       max-parallel: 4
 
