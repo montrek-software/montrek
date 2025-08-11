@@ -1,8 +1,8 @@
-import tempfile
-from typing import Any, List, Union, Dict
+import hashlib
+from typing import Any, Dict, List, Union
 
 import plotly.graph_objects as go
-from reporting.constants import ReportingPlotType
+from reporting.constants import WORKBENCH_PATH, ReportingPlotType
 from reporting.core.reporting_colors import ReportingColors
 from reporting.core.reporting_data import ReportingData
 from reporting.core.reporting_mixins import ReportingChecksMixin
@@ -48,11 +48,22 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
         return self.figure.to_html(full_html=False, include_plotlyjs=False)
 
     def to_latex(self) -> str:
-        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
-        self.figure.write_image(temp_file.name, width=1000, height=500)
+        # Generate a deterministic filename based on the plot data
+        plot_json = self.figure.to_json()
+        hash_digest = hashlib.sha256(plot_json.encode("utf-8")).hexdigest()[:16]
+        filename = f"{hash_digest}.png"
+        image_path = WORKBENCH_PATH / filename
+        # Ensure the directory exists
+        WORKBENCH_PATH.mkdir(parents=True, exist_ok=True)
+        # Write the image if it does not already exist
+        if not image_path.exists():
+            self.figure.write_image(str(image_path), width=1000, height=500)
+
+        # Build the LaTeX string
         latex_str = "\\begin{figure}[H]\n"
-        latex_str += f"\\includegraphics[width=\\textwidth]{{{temp_file.name}}}\n"
+        latex_str += f"\\includegraphics[width=\\textwidth]{{{image_path}}}\n"
         latex_str += "\\end{figure}"
+
         return latex_str
 
     def to_json(self) -> dict[str, str | Any | None]:

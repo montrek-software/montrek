@@ -1,4 +1,5 @@
 import tempfile
+
 from django.test.runner import DiscoverRunner
 from django.test.utils import override_settings
 from django.urls import reverse_lazy
@@ -32,6 +33,7 @@ class MontrekTestRunner(DiscoverRunner):
                 "ADMIN_NAME": "test_admin",
                 "ADMIN_EMAIL": "test@admin.de",
                 "ADMIN_PASSWORD": "testpassword",
+                "CLIENT_LOGO_PATH": "montrek_logo_variant.png",
             }
         self._override = override_settings(**test_settings)
         self._override.enable()
