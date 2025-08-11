@@ -1,6 +1,5 @@
 import logging
 import os
-import shutil
 import subprocess  # nosec B404
 from pathlib import Path
 
@@ -85,57 +84,66 @@ class LatexReportManager:
     def compile_report(self) -> str | None:
         report_str = self.generate_report()
 
-        # Ensure the output folders exist
-        output_dir = os.path.join(settings.MEDIA_ROOT, "latex")
-        os.makedirs(output_dir, exist_ok=True)
+        output_dir = Path(settings.MEDIA_ROOT) / "latex"
+        output_dir.mkdir(parents=True, exist_ok=True)
         WORKBENCH_PATH.mkdir(parents=True, exist_ok=True)
 
-        # Paths for .tex and .pdf files in the workbench
         tex_filename = f"{self.report_manager.document_name}.tex"
         pdf_filename = f"{self.report_manager.document_name}.pdf"
 
         latex_file_path = WORKBENCH_PATH / tex_filename
         pdf_file_path = WORKBENCH_PATH / pdf_filename
-        output_pdf_path = Path(output_dir) / pdf_filename
+        output_pdf_path = output_dir / pdf_filename
+        log_path = WORKBENCH_PATH / f"{self.report_manager.document_name}.log"
 
-        # Write the LaTeX code to the .tex file
-        with open(latex_file_path, "w") as f:
+        # Write LaTeX file explicitly as UTF-8 (XeLaTeX handles UTF-8 well)
+        with open(latex_file_path, "w", encoding="utf-8") as f:
             f.write(report_str)
 
-        # Compile the LaTeX file into a PDF using xelatex
         try:
-            subprocess.run(
+            proc = subprocess.run(
                 [
                     "/usr/bin/xelatex",
                     "-output-directory",
                     str(WORKBENCH_PATH),
                     "-interaction=nonstopmode",
+                    "-halt-on-error",
                     str(latex_file_path),
                 ],
                 capture_output=True,
                 check=True,
-                text=True,
+                text=False,  # capture raw bytes to avoid UnicodeDecodeError
+                env={**os.environ, "LANG": os.environ.get("LANG", "C.UTF-8")},
+                cwd=str(WORKBENCH_PATH),
             )  # nosec B603
+
         except subprocess.CalledProcessError as e:
-            if settings.IS_TEST_RUN:
-                logger.error(e.stdout)
-                raise e
-            logger.error(report_str)
-            error_message = self.get_xelatex_error_message(e.stdout)
+            # Decode safely for the exception message
+            err = (e.stderr or b"") + b"\n" + (e.stdout or b"")
+            err_txt = err.decode("latin-1", errors="replace")
+            # Optionally dump to .log for debugging
+            try:
+                log_path.write_text(err_txt, encoding="utf-8", errors="replace")
+            except (OSError, UnicodeError) as log_exc:
+                # Writing the debug log isn't critical; warn and continue.
+                logger.warning("Failed to write LaTeX log to %s: %s", log_path, log_exc)
             self.report_manager.messages.append(
-                MontrekMessageError(message=error_message)
+                MontrekMessageError(
+                    message=f"LaTeX compilation failed. See log at {log_path}.\n{err_txt[-4000:]}"
+                )
             )
-            self.report_manager.messages.append(MontrekMessageError(message=report_str))
             return None
 
-        # Move the compiled PDF to the final output directory
-        shutil.move(str(pdf_file_path), str(output_pdf_path))
-        # Clear the workbench directory (but preserve the folder itself)
-        for item in WORKBENCH_PATH.iterdir():
-            if item.is_file() or item.is_symlink():
-                item.unlink()
-            elif item.is_dir():
-                shutil.rmtree(item)
+        # Move/copy the resulting PDF to media output
+        if not pdf_file_path.exists():
+            # If XeLaTeX didn't produce it, surface the log
+            stdout = (proc.stdout or b"").decode("latin-1", errors="replace")
+            stderr = (proc.stderr or b"").decode("latin-1", errors="replace")
+            raise RuntimeError(
+                f"LaTeX did not produce a PDF.\n{stdout[-2000:]}\n{stderr[-2000:]}"
+            )
+
+        output_pdf_path.write_bytes(pdf_file_path.read_bytes())
         return str(output_pdf_path)
 
     def _get_template_path(self) -> str | None:
