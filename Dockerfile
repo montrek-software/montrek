@@ -17,6 +17,7 @@ WORKDIR $DOCKERHOME
 # Install required system dependencies
 RUN apt-get update && \
   apt-get install -y --no-install-recommends \
+  build-essential \
   ca-certificates \
   curl \
   fontconfig \
@@ -26,7 +27,8 @@ RUN apt-get update && \
   libgraphviz-dev \
   libmariadb-dev \
   libpq-dev \
-  make \
+  pkg-config \
+  python3-dev \
   texlive-fonts-recommended \
   texlive-xetex \
   unzip && \
