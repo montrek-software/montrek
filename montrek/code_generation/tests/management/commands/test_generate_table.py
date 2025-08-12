@@ -97,10 +97,11 @@ class TestStartMontrekAppCommand(TestCase):
         with patch("sys.stdout", new_callable=io.StringIO):
             call_command("start_montrek_app", self.new_app_name)
         self._test_app_assertions(self.new_app_name)
+        shutil.rmtree(self.new_app_name)
 
     def _test_app_assertions(self, new_app_path: str):
         self.assertTrue(os.path.exists(new_app_path))
-        existing_files = ("migrations", "apps.py", "admin.py")
+        existing_files = ("migrations", "apps.py", "admin.py", "__init__.py")
         for existing_file in existing_files:
             with self.subTest(file=existing_file):
                 self.assertTrue(
