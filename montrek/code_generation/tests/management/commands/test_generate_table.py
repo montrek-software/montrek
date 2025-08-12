@@ -1,11 +1,11 @@
-import shutil
-import os
-from django.test import TestCase
-from django.core.management import call_command
-
-from unittest.mock import patch
 import io
+import os
+import shutil
+from unittest.mock import patch
+
 from code_generation.tests import get_test_file_path
+from django.core.management import call_command
+from django.test import TestCase
 
 
 class TestGenerateTableCommand(TestCase):
@@ -76,3 +76,17 @@ class TestGenerateTableCommand(TestCase):
             if "__init__" not in path:
                 with open(path) as f:
                     self.assertIn("TestCompany", f.read())
+
+
+class TestStartMontrekAppCommand(TestCase):
+    def setUp(self):
+        self.output_dir = os.path.relpath(get_test_file_path("output"))
+        self.maxDiff = None
+        os.makedirs(self.output_dir, exist_ok=True)
+
+    def tearDown(self):
+        shutil.rmtree(self.output_dir)
+
+    def test_startmontrekapp(self):
+        with patch("sys.stdout", new_callable=io.StringIO):
+            call_command("start_montrek_app")  # , self.output_dir, "company")
