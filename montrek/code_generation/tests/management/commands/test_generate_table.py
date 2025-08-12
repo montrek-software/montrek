@@ -89,4 +89,4 @@ class TestStartMontrekAppCommand(TestCase):
 
     def test_startmontrekapp(self):
         with patch("sys.stdout", new_callable=io.StringIO):
-            call_command("start_montrek_app")  # , self.output_dir, "company")
+            call_command("start_montrek_app", self.output_dir, "new_app")
