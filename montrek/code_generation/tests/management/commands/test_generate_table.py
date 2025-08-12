@@ -81,12 +81,16 @@ class TestGenerateTableCommand(TestCase):
 class TestStartMontrekAppCommand(TestCase):
     def setUp(self):
         self.output_dir = os.path.relpath(get_test_file_path("output"))
+        self.new_app_name = "new_app"
         self.maxDiff = None
         os.makedirs(self.output_dir, exist_ok=True)
+        with patch("sys.stdout", new_callable=io.StringIO):
+            call_command("start_montrek_app", self.new_app_name, path=self.output_dir)
 
     def tearDown(self):
         shutil.rmtree(self.output_dir)
 
-    def test_startmontrekapp(self):
-        with patch("sys.stdout", new_callable=io.StringIO):
-            call_command("start_montrek_app", self.output_dir, "new_app")
+    def test_startmontrekapp_new_folder(self):
+        self.assertTrue(
+            os.path.exists(os.path.join(self.output_dir, self.new_app_name))
+        )
