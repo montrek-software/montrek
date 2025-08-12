@@ -1,11 +1,11 @@
-import shutil
-import os
-from django.test import TestCase
-from django.core.management import call_command
-
-from unittest.mock import patch
 import io
+import os
+import shutil
+from unittest.mock import patch
+
 from code_generation.tests import get_test_file_path
+from django.core.management import call_command
+from django.test import TestCase
 
 
 class TestGenerateTableCommand(TestCase):
@@ -76,3 +76,45 @@ class TestGenerateTableCommand(TestCase):
             if "__init__" not in path:
                 with open(path) as f:
                     self.assertIn("TestCompany", f.read())
+
+
+class TestStartMontrekAppCommand(TestCase):
+    def setUp(self):
+        self.output_dir = os.path.relpath(get_test_file_path("output"))
+        self.new_app_name = "new_app"
+        self.maxDiff = None
+        os.makedirs(self.output_dir, exist_ok=True)
+
+    def tearDown(self):
+        shutil.rmtree(self.output_dir)
+
+    def test_startmontrekapp__w_path(self):
+        with patch("sys.stdout", new_callable=io.StringIO):
+            call_command("start_montrek_app", self.new_app_name, path=self.output_dir)
+        self._test_app_assertions(os.path.join(self.output_dir, self.new_app_name))
+        with open(os.path.join(self.output_dir, self.new_app_name, "apps.py")) as f:
+            search_str = (
+                f"name = '{self.output_dir.replace(os.sep, '.')}.{self.new_app_name}'"
+            )
+            self.assertIn(search_str, f.read())
+
+    def test_startmontrekapp__wo_path(self):
+        with patch("sys.stdout", new_callable=io.StringIO):
+            call_command("start_montrek_app", self.new_app_name)
+        self._test_app_assertions(self.new_app_name)
+        shutil.rmtree(self.new_app_name)
+
+    def _test_app_assertions(self, new_app_path: str):
+        self.assertTrue(os.path.exists(new_app_path))
+        existing_files = ("migrations", "apps.py", "admin.py", "__init__.py")
+        for existing_file in existing_files:
+            with self.subTest(file=existing_file):
+                self.assertTrue(
+                    os.path.exists(os.path.join(new_app_path, existing_file))
+                )
+        removed_files = ("tests.py", "models.py", "views.py")
+        for removed_file in removed_files:
+            with self.subTest(file=removed_file):
+                self.assertFalse(
+                    os.path.exists(os.path.join(new_app_path, removed_file))
+                )
