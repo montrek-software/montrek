@@ -14,6 +14,8 @@ if [[ -z "$DB_ENGINE" || -z "$DB_NAME" || -z "$DB_USER" || -z "$DB_PASSWORD" || 
   echo "DB_ENGINE, DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT"
   exit 1
 fi
+# Set default for DB_BACKUP_KEEP_DAYS if not provided
+: "${DB_BACKUP_KEEP_DAYS:=30}"
 
 echo "Environment variables loaded successfully."
 echo "DB Engine: $DB_ENGINE"
@@ -21,6 +23,7 @@ echo "DB Name: $DB_NAME"
 echo "DB User: $DB_USER"
 echo "DB Host: $DB_HOST"
 echo "DB Port: $DB_PORT"
+echo "Days to keep $DB_BACKUP_KEEP_DAYS"
 
 if [[ "$1" == "backup" ]]; then
   BACKUP_FOLDER=db_backups
@@ -48,7 +51,7 @@ if [[ "$1" == "backup" ]]; then
   find "$BACKUP_FOLDER" -type f -name "*.sql" -mtime +365 -exec rm {} \; # Remove files older than 1 year
 
   # Find files older than 1 month
-  find "$BACKUP_FOLDER" -type f -name "*.sql" -mtime +30 | while read FILE; do
+  find "$BACKUP_FOLDER" -type f -name "*.sql" -mtime +$DB_BACKUP_KEEP_DAYS | while read FILE; do
     # Extract the file creation date
     FILE_DATE=$(basename "$FILE" | cut -d'_' -f2)
 
