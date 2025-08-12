@@ -73,7 +73,6 @@ class Command(BaseCommand):
 
         # Replace the default `name = 'myapp'` with the dotted path
         # Be tolerant if quotes are double or single.
-        import re
 
         content, n = re.subn(
             r"(^\s*name\s*=\s*['\"][^'\"]+['\"])",
