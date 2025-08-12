@@ -84,31 +84,31 @@ class TestStartMontrekAppCommand(TestCase):
         self.new_app_name = "new_app"
         self.maxDiff = None
         os.makedirs(self.output_dir, exist_ok=True)
-        with patch("sys.stdout", new_callable=io.StringIO):
-            call_command("start_montrek_app", self.new_app_name, path=self.output_dir)
 
     def tearDown(self):
         shutil.rmtree(self.output_dir)
 
-    def test_startmontrekapp_new_folder(self):
-        self.assertTrue(
-            os.path.exists(os.path.join(self.output_dir, self.new_app_name))
-        )
+    def test_startmontrekapp__w_path(self):
+        with patch("sys.stdout", new_callable=io.StringIO):
+            call_command("start_montrek_app", self.new_app_name, path=self.output_dir)
+        self._test_app_assertions(os.path.join(self.output_dir, self.new_app_name))
 
-    def test_startmontrekapp__file_structure(self):
+    def test_startmontrekapp__wo_path(self):
+        with patch("sys.stdout", new_callable=io.StringIO):
+            call_command("start_montrek_app", self.new_app_name)
+        self._test_app_assertions(self.new_app_name)
+
+    def _test_app_assertions(self, new_app_path: str):
+        self.assertTrue(os.path.exists(new_app_path))
         existing_files = ("migrations", "apps.py", "admin.py")
         for existing_file in existing_files:
             with self.subTest(file=existing_file):
                 self.assertTrue(
-                    os.path.exists(
-                        os.path.join(self.output_dir, self.new_app_name, existing_file)
-                    )
+                    os.path.exists(os.path.join(new_app_path, existing_file))
                 )
         removed_files = ("tests.py", "models.py", "views.py")
         for removed_file in removed_files:
             with self.subTest(file=removed_file):
                 self.assertFalse(
-                    os.path.exists(
-                        os.path.join(self.output_dir, self.new_app_name, removed_file)
-                    )
+                    os.path.exists(os.path.join(new_app_path, removed_file))
                 )

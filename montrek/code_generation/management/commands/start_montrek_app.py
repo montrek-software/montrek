@@ -18,8 +18,11 @@ class Command(BaseCommand):
             help="Name of the new name.",
         )
         parser.add_argument(
+            "-p",
             "--path",
-            action="store_true",
+            type=str,
+            default=".",
+            metavar="DIR",
             help="Path of repository in which to generate the new app.",
         )
 
@@ -36,6 +39,8 @@ class Command(BaseCommand):
         call_command("startapp", self.app_name)
 
     def _move_app(self):
+        if self.base_path == ".":
+            return
         shutil.move(self.app_name, self.base_path)
 
     def _remove_files(self):
