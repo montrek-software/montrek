@@ -16,35 +16,36 @@ RUN apt-get update && \
   curl \
   fontconfig \
   git \
+  gnupg \
   gosu \
   graphviz \
   libgraphviz-dev \
   libmariadb-dev \
   libpq-dev \
+  lsb-release \
   pkg-config \
   python3-dev \
   texlive-fonts-recommended \
   texlive-xetex \
   unzip \
-  wget \
-  gnupg \
-  lsb-release && \
-  # Add PostgreSQL official APT repository
-  mkdir -p /etc/apt/keyrings && \
-  wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /etc/apt/keyrings/postgresql.gpg && \
-  echo "deb [signed-by=/etc/apt/keyrings/postgresql.gpg] http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list && \
-  # Add contrib/non-free to apt sources (Debian Bookworm slim)
-  echo "deb https://deb.debian.org/debian bookworm main contrib non-free non-free-firmware" > /etc/apt/sources.list && \
-  echo "deb https://deb.debian.org/debian-security bookworm-security main contrib non-free non-free-firmware" >> /etc/apt/sources.list && \
-  echo "deb https://deb.debian.org/debian bookworm-updates main contrib non-free non-free-firmware" >> /etc/apt/sources.list && \
-  apt-get update && \
-  # Install PostgreSQL 16 client tools (including pg_dump)
-  apt-get install -y --no-install-recommends postgresql-client-16 && \
-  echo "ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true" | debconf-set-selections && \
-  apt-get install -y --no-install-recommends \
-  ttf-mscorefonts-installer && \
-  chown -R appuser:appgroup ${DOCKERHOME} && \
-  apt-get clean && rm -rf /var/lib/apt/lists/*
+  && mkdir -p /etc/apt/keyrings \
+  && curl --fail --silent --show-error \
+  --proto '=https' --tlsv1.2 \
+  https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+  | gpg --dearmor -o /etc/apt/keyrings/postgresql.gpg \
+  && echo "deb [signed-by=/etc/apt/keyrings/postgresql.gpg] https://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" \
+  > /etc/apt/sources.list.d/pgdg.list \
+  && echo "deb https://deb.debian.org/debian bookworm main contrib non-free non-free-firmware" > /etc/apt/sources.list \
+  && echo "deb https://deb.debian.org/debian-security bookworm-security main contrib non-free non-free-firmware" >> /etc/apt/sources.list \
+  && echo "deb https://deb.debian.org/debian bookworm-updates main contrib non-free non-free-firmware" >> /etc/apt/sources.list \
+  && apt-get update \
+  && echo "ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true" | debconf-set-selections \
+  && apt-get install -y --no-install-recommends \
+  ttf-mscorefonts-installer \
+  postgresql-client-16 \
+  && chown -R appuser:appgroup ${DOCKERHOME} \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
 # port where the Django app runs
 EXPOSE 8000
 # Copy entrypoint
