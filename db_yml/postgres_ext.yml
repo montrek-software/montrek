@@ -1,0 +1,11 @@
+services:
+  db:
+    image: alpine:3.19 # super lightweight
+    command:
+      [
+        "sh",
+        "-c",
+        "echo 'Dummy DB service — using External DB instead'; sleep infinity",
+      ]
+    networks:
+      - montrek_network

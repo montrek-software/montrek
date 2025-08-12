@@ -176,12 +176,14 @@ WSGI_APPLICATION = "montrek.wsgi.application"
 DATABASE_ENGINE_MAP = {
     "mariadb": "django.db.backends.mysql",
     "postgres": "django.db.backends.postgresql",
+    "postgres_ext": "django.db.backends.postgresql",
     "cloudsqlproxy": "django.db.backends.postgresql",
 }
+db_engine = str(config("DB_ENGINE", default="postgres"))
 
 DATABASES = {
     "default": {
-        "ENGINE": DATABASE_ENGINE_MAP[config("DB_ENGINE", default="mariadb")],
+        "ENGINE": DATABASE_ENGINE_MAP[db_engine],
         "NAME": config("DB_NAME", default="montrek_db"),
         "USER": config("DB_USER", default="root"),
         "PASSWORD": config("DB_PASSWORD"),
@@ -193,6 +195,8 @@ DATABASES = {
         ),  # in docker setup: internal docker container port
     }
 }
+if db_engine == "postgres_ext":
+    DATABASES["default"]["OPTIONS"] = {"sslmode": "require"}
 
 
 # Password validation
