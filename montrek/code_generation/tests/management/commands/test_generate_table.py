@@ -94,3 +94,21 @@ class TestStartMontrekAppCommand(TestCase):
         self.assertTrue(
             os.path.exists(os.path.join(self.output_dir, self.new_app_name))
         )
+
+    def test_startmontrekapp__file_structure(self):
+        existing_files = ("migrations", "apps.py", "admin.py")
+        for existing_file in existing_files:
+            with self.subTest(file=existing_file):
+                self.assertTrue(
+                    os.path.exists(
+                        os.path.join(self.output_dir, self.new_app_name, existing_file)
+                    )
+                )
+        removed_files = ("tests.py", "models.py", "views.py")
+        for removed_file in removed_files:
+            with self.subTest(file=removed_file):
+                self.assertFalse(
+                    os.path.exists(
+                        os.path.join(self.output_dir, self.new_app_name, removed_file)
+                    )
+                )
