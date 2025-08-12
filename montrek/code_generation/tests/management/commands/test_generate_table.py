@@ -92,6 +92,11 @@ class TestStartMontrekAppCommand(TestCase):
         with patch("sys.stdout", new_callable=io.StringIO):
             call_command("start_montrek_app", self.new_app_name, path=self.output_dir)
         self._test_app_assertions(os.path.join(self.output_dir, self.new_app_name))
+        with open(os.path.join(self.output_dir, self.new_app_name, "apps.py")) as f:
+            search_str = (
+                f"name = '{self.output_dir.replace(os.sep, '.')}.{self.new_app_name}'"
+            )
+            self.assertIn(search_str, f.read())
 
     def test_startmontrekapp__wo_path(self):
         with patch("sys.stdout", new_callable=io.StringIO):
