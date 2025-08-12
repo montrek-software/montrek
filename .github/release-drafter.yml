@@ -83,7 +83,7 @@ autolabeler:
 
 # Your release body template
 template: |
-  ## Functional tests
+  ## Functional tests (Check for Mayor and Minor releases)
 
   - [ ] Log out and log in successful
   - [ ] Visit and show table
@@ -94,6 +94,10 @@ template: |
   - [ ] Import countries
   - [ ] Check country report
   - [ ] Download country report as pdf
+
+  ## SonarQube Result (Check for Mayor and Minor releases)
+
+  *Paste screenshot of latest SonarQube Result*
 
   ## Changelog
   $CHANGES
