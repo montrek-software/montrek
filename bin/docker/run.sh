@@ -24,13 +24,13 @@ echo "Detected docker-compose files: ${COMPOSE_FILES[*]}"
 # Get the base command
 
 if [[ "$1" == "up" ]]; then
+  # Pull latest montrek-container image
+  docker pull ghcr.io/montrek-software/montrek-container:latest
   # Inject dynamic UID and GID into .env
   sed -i '/^USER_ID=/d' .env
   sed -i '/^GROUP_ID=/d' .env
   echo "USER_ID=$(id -u)" >>.env
   echo "GROUP_ID=$(id -g)" >>.env
-  # Pull latest montrek-container image
-  docker pull ghcr.io/montrek-software/montrek-container:latest
   COMMAND="up"
 fi
 
