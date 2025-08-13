@@ -32,7 +32,7 @@ docker-restart: # Shut the docker compose container down and up again
 
 .PHONY: docker-logs
 docker-logs: # Show docker compose logs
-	@bash bin/docker/logs.sh
+	@bash bin/docker/logs.sh $(filter-out $@,$(MAKECMDGOALS))
 
 .PHONY: docker-build
 docker-build: # Build the docker images
