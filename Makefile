@@ -35,7 +35,7 @@ docker-logs: # Show docker compose logs
 	@bash bin/docker/logs.sh
 
 .PHONY: docker-build
-docker-build: # Shut the docker compose container down and up again
+docker-build: # Build the docker images
 	@bash bin/docker/build.sh
 
 .PHONY: docker-db-backup
