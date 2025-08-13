@@ -20,8 +20,7 @@ docker-restart: # Shut the docker compose container down and up again
 
 .PHONY: docker-logs
 docker-logs: # Show docker compose logs
-	@bash bin/docker/logs.sh $(filter-out $@,$(MAKECMDGOALS))
-
+	@bash bin/docker/logs.sh
 .PHONY: docker-build
 docker-build: # Shut the docker compose container down and up again
 	@bash bin/docker/build.sh
@@ -34,19 +33,22 @@ docker-db-backup: # Make a backup of the docker database.
 docker-db-restore: # Restore the docker database from a backup.
 	@bash bin/docker/db.sh restore
 
-.PHONY: runserver
-runserver: # Run the montrek django app locally (non-docker).
-	@bash bin/local-runserver.sh
+.PHONY: django-local-runserver
+django-local-runserver: # Run the montrek django app locally (non-docker).
+	@bash bin/django/local-runserver.sh
 
-.PHONY: collect-static
-collect-static: # Collect static files for the montrek django app.
-	@bash bin/collect-static.sh
-
+.PHONY: docker-django-manage
+docker-django-manage: # Collect static files for the montrek django app.
+	@bash bin/docker/django-manage.sh $(filter-out $@,$(MAKECMDGOALS))
+%:
+	@:
 
 .PHONY: clone-repository
 clone-repository: # Clone a montrek repository (expects a repository name like 'mt_economic_common').
 	@bash bin/clone-repository.sh $(filter-out $@,$(MAKECMDGOALS))
 
+%:
+	@:
 .PHONY: server-generate-https-certs
 server-generate-https-certs: # Generate HTTPS certificates for the montrek django app.
 	@bash bin/server/generate-https-certs.sh
@@ -74,9 +76,8 @@ update-server: # Stop all docker containers, update the repositories to the late
 sonarqube-scan: # Run a SonarQube scan and open in SonarQube (Add NO_TESTS=true to skip tests)
 	@bash bin/sonarqube_scan.sh NO_TESTS=$(NO_TESTS) $(filter-out $@,$(MAKECMDGOALS))
 
+%:
+	@
 .PHONY: build-montrek-container
 build-montrek-container: # Build the container to run montrek in docker or github actions
 	@bash bin/build-montrek-container.sh
-
-%:
-	@
