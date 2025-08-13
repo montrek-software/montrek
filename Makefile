@@ -22,6 +22,9 @@ docker-restart: # Shut the docker compose container down and up again
 docker-logs: # Show docker compose logs
 	@bash bin/docker/logs.sh $(filter-out $@,$(MAKECMDGOALS))
 
+.PHONY: docker-build
+docker-build: # Shut the docker compose container down and up again
+	@bash bin/docker/build.sh
 
 .PHONY: docker-db-backup
 docker-db-backup: # Make a backup of the docker database.
