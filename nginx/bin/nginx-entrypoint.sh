@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 envsubst "\$DEPLOY_HOST \$PROJECT_NAME \$FLOWER_PORT" </etc/nginx/templates/flower.conf.template >/tmp/nginx.conf
 envsubst "\$APP_PORT \$DEPLOY_PORT \$DEPLOY_HOST \$PROJECT_NAME" </etc/nginx/templates/django.conf.template >>/tmp/nginx.conf
