@@ -9,6 +9,11 @@ local-init: # Install local python environment and necessary packages
 .PHONY: local-runserver
 local-runserver: # Run the montrek django app locally (non-docker).
 	@bash bin/local/runserver.sh
+
+.PHONY: sync-local-python-env
+sync-local-python-env: # Sync the local (non-docker) python environment with the requirements specified in the montrek repositories.
+	@bash bin/local/sync-python-env.sh
+
 .PHONY: docker-up
 docker-up: # Start all docker containers in detached mode.
 	@bash bin/docker/run.sh up -d
@@ -24,6 +29,7 @@ docker-restart: # Shut the docker compose container down and up again
 .PHONY: docker-logs
 docker-logs: # Show docker compose logs
 	@bash bin/docker/logs.sh
+
 .PHONY: docker-build
 docker-build: # Shut the docker compose container down and up again
 	@bash bin/docker/build.sh
@@ -43,39 +49,29 @@ docker-django-manage: # Collect static files for the montrek django app.
 %:
 	@:
 
+.PHONY: docker-cleanup
+docker-cleanup: # Remove unused docker artifacts.
+	@bash bin/docker/cleanup.sh
 .PHONY: git-clone-repository
 git-clone-repository: # Clone a montrek repository (expects a repository name like 'mt_economic_common').
 	@bash bin/git/clone-repository.sh $(filter-out $@,$(MAKECMDGOALS))
+
+.PHONY: git-update-repositories
+git-update-repositories: # Update all montrek repositories to the latest git tags.
+	@bash bin/git/update-repositories-to-latest-tags.sh
 
 .PHONY: server-generate-https-certs
 server-generate-https-certs: # Generate HTTPS certificates for the montrek django app.
 	@bash bin/server/generate-https-certs.sh
 
-.PHONY: sync-local-python-env
-sync-local-python-env: # Sync the local (non-docker) python environment with the requirements specified in the montrek repositories.
-	@bash bin/local/sync-python-env.sh
-
-.PHONY: update-repositories
-update-repositories: # Update all montrek repositories to the latest git tags.
-	@bash bin/update-repositories-to-latest-tags.sh
-
-.PHONY: docker-cleanup
-docker-cleanup: # Remove unused docker artifacts.
-	@bash bin/docker/cleanup.sh
-
-.PHONY: update-server
-update-server: # Stop all docker containers, update the repositories to the latest git tags, and start the containers again.
-	@bash bin/start-docker.sh down
-	@bash bin/update-repositories-to-latest-tags.sh
-	@bash bin/start-docker.sh up -d --build
-	@bash bin/docker-prune.sh
+.PHONY: server-update
+server-update: # Stop all docker containers, update the repositories to the latest git tags, and start the containers again.
+	@bash bin/server/update.sh
 
 .PHONY: sonarqube-scan
 sonarqube-scan: # Run a SonarQube scan and open in SonarQube (Add NO_TESTS=true to skip tests)
 	@bash bin/sonarqube_scan.sh NO_TESTS=$(NO_TESTS) $(filter-out $@,$(MAKECMDGOALS))
 
-%:
-	@
 .PHONY: build-montrek-container
 build-montrek-container: # Build the container to run montrek in docker or github actions
 	@bash bin/build-montrek-container.sh
