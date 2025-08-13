@@ -6,6 +6,9 @@ help: # Show help for each of the Makefile recipes.
 local-init: # Install local python environment and necessary packages
 	@bash bin/local/init.sh
 
+.PHONY: local-runserver
+local-runserver: # Run the montrek django app locally (non-docker).
+	@bash bin/local/runserver.sh
 .PHONY: docker-up
 docker-up: # Start all docker containers in detached mode.
 	@bash bin/docker/run.sh up -d
@@ -33,9 +36,6 @@ docker-db-backup: # Make a backup of the docker database.
 docker-db-restore: # Restore the docker database from a backup.
 	@bash bin/docker/db.sh restore
 
-.PHONY: django-local-runserver
-django-local-runserver: # Run the montrek django app locally (non-docker).
-	@bash bin/django/local-runserver.sh
 
 .PHONY: docker-django-manage
 docker-django-manage: # Collect static files for the montrek django app.
@@ -46,7 +46,6 @@ docker-django-manage: # Collect static files for the montrek django app.
 .PHONY: clone-repository
 clone-repository: # Clone a montrek repository (expects a repository name like 'mt_economic_common').
 	@bash bin/clone-repository.sh $(filter-out $@,$(MAKECMDGOALS))
-
 %:
 	@:
 .PHONY: server-generate-https-certs
