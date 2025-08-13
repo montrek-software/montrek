@@ -43,11 +43,10 @@ docker-django-manage: # Collect static files for the montrek django app.
 %:
 	@:
 
-.PHONY: clone-repository
-clone-repository: # Clone a montrek repository (expects a repository name like 'mt_economic_common').
-	@bash bin/clone-repository.sh $(filter-out $@,$(MAKECMDGOALS))
-%:
-	@:
+.PHONY: git-clone-repository
+git-clone-repository: # Clone a montrek repository (expects a repository name like 'mt_economic_common').
+	@bash bin/git/clone-repository.sh $(filter-out $@,$(MAKECMDGOALS))
+
 .PHONY: server-generate-https-certs
 server-generate-https-certs: # Generate HTTPS certificates for the montrek django app.
 	@bash bin/server/generate-https-certs.sh
@@ -80,3 +79,5 @@ sonarqube-scan: # Run a SonarQube scan and open in SonarQube (Add NO_TESTS=true 
 .PHONY: build-montrek-container
 build-montrek-container: # Build the container to run montrek in docker or github actions
 	@bash bin/build-montrek-container.sh
+%:
+	@:
