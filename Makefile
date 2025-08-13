@@ -8,15 +8,15 @@ local-init: # Install local python environment and necessary packages
 
 .PHONY: docker-up
 docker-up: # Start all docker containers in detached mode.
-	@bash bin/start-docker.sh up -d
+	@bash bin/docker/run.sh up -d
 
 .PHONY: docker-down
 docker-down: # Stop all docker containers.
-	@bash bin/start-docker.sh down
+	@bash bin/docker/run.sh down
 
 .PHONY: docker-restart
-local-db-backup: # Make a backup of the local (non-docker) database.
-	@bash bin/local-db.sh backup
+docker-restart: # Make a backup of the local (non-docker) database.
+	@bash bin/docker/restart.sh
 
 .PHONY: docker-restore
 local-db-restore: # Restore the local (non-docker) database from a backup.
@@ -43,9 +43,9 @@ collect-static: # Collect static files for the montrek django app.
 clone-repository: # Clone a montrek repository (expects a repository name like 'mt_economic_common').
 	@bash bin/clone-repository.sh $(filter-out $@,$(MAKECMDGOALS))
 
-.PHONY: generate-https-certs
-generate-https-certs: # Generate HTTPS certificates for the montrek django app.
-	@bash bin/generate-https-certs.sh
+.PHONY: server-generate-https-certs
+server-generate-https-certs: # Generate HTTPS certificates for the montrek django app.
+	@bash bin/server/generate-https-certs.sh
 
 .PHONY: sync-local-python-env
 sync-local-python-env: # Sync the local (non-docker) python environment with the requirements specified in the montrek repositories.
