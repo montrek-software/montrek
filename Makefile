@@ -14,6 +14,10 @@ local-runserver: # Run the montrek django app locally (non-docker).
 sync-local-python-env: # Sync the local (non-docker) python environment with the requirements specified in the montrek repositories.
 	@bash bin/local/sync-python-env.sh
 
+.PHONY: local-sonarqube-scan
+local-sonarqube-scan: # Run a SonarQube scan and open in SonarQube (Add NO_TESTS=true to skip tests)
+	@bash bin/local/sonarqube_scan.sh NO_TESTS=$(NO_TESTS) $(filter-out $@,$(MAKECMDGOALS))
+
 .PHONY: docker-up
 docker-up: # Start all docker containers in detached mode.
 	@bash bin/docker/run.sh up -d
@@ -42,16 +46,14 @@ docker-db-backup: # Make a backup of the docker database.
 docker-db-restore: # Restore the docker database from a backup.
 	@bash bin/docker/db.sh restore
 
-
 .PHONY: docker-django-manage
 docker-django-manage: # Collect static files for the montrek django app.
 	@bash bin/docker/django-manage.sh $(filter-out $@,$(MAKECMDGOALS))
-%:
-	@:
 
 .PHONY: docker-cleanup
 docker-cleanup: # Remove unused docker artifacts.
 	@bash bin/docker/cleanup.sh
+
 .PHONY: git-clone-repository
 git-clone-repository: # Clone a montrek repository (expects a repository name like 'mt_economic_common').
 	@bash bin/git/clone-repository.sh $(filter-out $@,$(MAKECMDGOALS))
@@ -59,6 +61,10 @@ git-clone-repository: # Clone a montrek repository (expects a repository name li
 .PHONY: git-update-repositories
 git-update-repositories: # Update all montrek repositories to the latest git tags.
 	@bash bin/git/update-repositories-to-latest-tags.sh
+
+.PHONY: git-build-montrek-container
+git-build-montrek-container: # Build the container to run montrek in docker or github actions
+	@bash bin/git/build-montrek-container.sh
 
 .PHONY: server-generate-https-certs
 server-generate-https-certs: # Generate HTTPS certificates for the montrek django app.
@@ -68,12 +74,5 @@ server-generate-https-certs: # Generate HTTPS certificates for the montrek djang
 server-update: # Stop all docker containers, update the repositories to the latest git tags, and start the containers again.
 	@bash bin/server/update.sh
 
-.PHONY: sonarqube-scan
-sonarqube-scan: # Run a SonarQube scan and open in SonarQube (Add NO_TESTS=true to skip tests)
-	@bash bin/sonarqube_scan.sh NO_TESTS=$(NO_TESTS) $(filter-out $@,$(MAKECMDGOALS))
-
-.PHONY: build-montrek-container
-build-montrek-container: # Build the container to run montrek in docker or github actions
-	@bash bin/build-montrek-container.sh
 %:
 	@:
