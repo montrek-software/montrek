@@ -53,7 +53,7 @@ server-generate-https-certs: # Generate HTTPS certificates for the montrek djang
 
 .PHONY: sync-local-python-env
 sync-local-python-env: # Sync the local (non-docker) python environment with the requirements specified in the montrek repositories.
-	@bash bin/sync-local-python-env.sh
+	@bash bin/local/sync-python-env.sh
 
 .PHONY: update-repositories
 update-repositories: # Update all montrek repositories to the latest git tags.
