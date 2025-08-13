@@ -15,8 +15,13 @@ docker-down: # Stop all docker containers.
 	@bash bin/docker/run.sh down
 
 .PHONY: docker-restart
-docker-restart: # Make a backup of the local (non-docker) database.
+docker-restart: # Shut the docker compose container down and up again
 	@bash bin/docker/restart.sh
+
+.PHONY: docker-logs
+docker-logs: # Show docker compose logs
+	@bash bin/docker/logs.sh $(filter-out $@,$(MAKECMDGOALS))
+
 
 .PHONY: docker-db-backup
 docker-db-backup: # Make a backup of the docker database.
