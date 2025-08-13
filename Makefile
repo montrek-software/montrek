@@ -61,7 +61,7 @@ update-repositories: # Update all montrek repositories to the latest git tags.
 
 .PHONY: docker-cleanup
 docker-cleanup: # Remove unused docker artifacts.
-	bash bin/docker-prune.sh
+	@bash bin/docker/cleanup.sh
 
 .PHONY: update-server
 update-server: # Stop all docker containers, update the repositories to the latest git tags, and start the containers again.
