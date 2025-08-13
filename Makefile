@@ -26,9 +26,6 @@ local-db-restore: # Restore the local (non-docker) database from a backup.
 db-backup: # Make a backup of the docker database.
 	@bash bin/docker-db.sh backup
 
-.PHONY: db-restore
-db-restore: # Restore the docker database from a backup.
-	@bash bin/docker-db.sh restore
 
 .PHONY: runserver
 runserver: # Run the montrek django app locally (non-docker).
