@@ -47,7 +47,7 @@ docker-db-restore: # Restore the docker database from a backup.
 	@bash bin/docker/db.sh restore
 
 .PHONY: docker-django-manage
-docker-django-manage: # Collect static files for the montrek django app.
+docker-django-manage: # Run Django management commands inside the docker container.
 	@bash bin/docker/django-manage.sh $(filter-out $@,$(MAKECMDGOALS))
 
 .PHONY: docker-cleanup
