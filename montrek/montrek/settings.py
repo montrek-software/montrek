@@ -248,6 +248,9 @@ if ENABLE_KEYCLOAK:
     OIDC_OP_USER_ENDPOINT = oicd_endpoints["userinfo"]
     OIDC_OP_JWKS_ENDPOINT = oicd_endpoints["jwks"]
     OIDC_OP_LOGOUT = oicd_endpoints["logout"]
+    OIDC_USE_PKCE = True
+    OIDC_PKCE_CODE_CHALLENGE_METHOD = "S256"
+
     OIDC_EXTRA_REQUEST_ARGS = {"verify": "/etc/ssl/certs/ca-certificates.crt"}
     os.environ["REQUESTS_CA_BUNDLE"] = "/etc/ssl/certs/ca-certificates.crt"
 
