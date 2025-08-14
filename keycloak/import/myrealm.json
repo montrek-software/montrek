@@ -1,0 +1,13 @@
+{
+  "realm": "myrealm",
+  "enabled": true,
+  "clients": [
+    {
+      "clientId": "myapp",
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "redirectUris": ["https://myapp.example.com/*"],
+      "attributes": { "pkce.code.challenge.method": "S256" }
+    }
+  ]
+}

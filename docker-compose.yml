@@ -138,10 +138,8 @@ services:
       - montrek_network
     profiles:
       - keycloak
-
   keycloak:
     image: quay.io/keycloak/keycloak:24.0
-    command: start
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: ${ADMIN_PASSWORD}
@@ -150,9 +148,16 @@ services:
       KC_DB_USERNAME: keycloak
       KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
       KC_PROXY: edge
-      KC_HTTP_ENABLED: true
+      KC_HTTP_ENABLED: "true"
       KC_HOSTNAME: auth.${PROJECT_NAME}.${DEPLOY_HOST}
-      KC_HOSTNAME_STRICT: false
+      KC_HOSTNAME_STRICT: "false"
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID}
+      PROJECT_NAME: ${PROJECT_NAME}
+      DEPLOY_HOST: ${DEPLOY_HOST}
+    volumes:
+      - ./keycloak/bin/init-realm.sh:/usr/local/bin/init-realm.sh:ro
+    entrypoint: ["/bin/sh", "/usr/local/bin/init-realm.sh"]
     depends_on:
       - keycloak-db
     networks:
