@@ -173,11 +173,12 @@ WSGI_APPLICATION = "montrek.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
+postgres_backend_str = "django.db.backends.postgresql"
 DATABASE_ENGINE_MAP = {
     "mariadb": "django.db.backends.mysql",
-    "postgres": "django.db.backends.postgresql",
-    "postgres_ext": "django.db.backends.postgresql",
-    "cloudsqlproxy": "django.db.backends.postgresql",
+    "postgres": postgres_backend_str,
+    "postgres_ext": postgres_backend_str,
+    "cloudsqlproxy": postgres_backend_str,
 }
 db_engine = str(config("DB_ENGINE", default="postgres"))
 
@@ -248,6 +249,9 @@ if ENABLE_KEYCLOAK:
     OIDC_OP_USER_ENDPOINT = oicd_endpoints["userinfo"]
     OIDC_OP_JWKS_ENDPOINT = oicd_endpoints["jwks"]
     OIDC_OP_LOGOUT = oicd_endpoints["logout"]
+    OIDC_USE_PKCE = True
+    OIDC_PKCE_CODE_CHALLENGE_METHOD = "S256"
+
     OIDC_EXTRA_REQUEST_ARGS = {"verify": "/etc/ssl/certs/ca-certificates.crt"}
     os.environ["REQUESTS_CA_BUNDLE"] = "/etc/ssl/certs/ca-certificates.crt"
 
