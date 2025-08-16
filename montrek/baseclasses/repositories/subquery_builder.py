@@ -1,9 +1,6 @@
 from enum import Enum
 from typing import Any, Callable, Type
 
-from django.db import models
-from django.db.models.fields.related import RelatedField
-
 from baseclasses.models import (
     LinkTypeEnum,
     MontrekHubABC,
@@ -14,6 +11,7 @@ from baseclasses.models import (
     ValueDateList,
 )
 from django.conf import settings
+from django.db import models
 from django.db.models import CharField, F, Func, OuterRef, Q, QuerySet, Subquery
 from django.db.models.functions import Cast
 from django.utils import timezone
@@ -80,7 +78,8 @@ class SatelliteSubqueryBuilder(SatelliteSubqueryBuilderABC):
             self.get_hub_query(reference_date)
             .annotate(
                 **{
-                    self.field + "sub": self.satellite_subquery(
+                    self.field
+                    + "sub": self.satellite_subquery(
                         reference_date, lookup_field="hub_entity"
                     ),
                 }
@@ -178,12 +177,21 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
 
         self.parent_link_classes = parent_link_classes
         self.parent_link_reversed = parent_link_reversed
+        self.parent_link_strings = []
         self.link_satellite_filter = link_satellite_filter
 
     def get_link_query(
         self, hub_field: str, reference_date: timezone.datetime, outer_ref: str = "hub"
     ) -> QuerySet:
         hub_db_field_name = self._get_parent_db_name(hub_field)
+        parent_link_filters = {}
+        for parent_link_string in self.parent_link_strings:
+            parent_link_filters[parent_link_string + "__state_date_end__gt"] = (
+                reference_date
+            )
+            parent_link_filters[parent_link_string + "__state_date_start__lte"] = (
+                reference_date
+            )
         return self.link_class.objects.filter(
             Q(
                 **self.subquery_filter(
@@ -198,6 +206,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
                     f"{hub_db_field_name}__state_date_end__gt": reference_date,
                 }
             )
+            & Q(**parent_link_filters)
         )
 
     def get_link_hub_value_date_query(
@@ -223,7 +232,9 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         for i, link_class in enumerate(self.parent_link_classes):
             is_reversed = self.parent_link_reversed[i]
             parent_hub_field = "hub_out" if is_reversed else "hub_in"
-            db_name += "__" + link_class.__name__.lower() + f"__{parent_hub_field}"
+            db_name += "__" + link_class.__name__.lower()
+            self.parent_link_strings.append(db_name)
+            db_name += f"__{parent_hub_field}"
         return db_name
 
     def _link_hubs_and_get_subquery(
@@ -237,7 +248,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
             **self.subquery_filter(
                 reference_date,
                 lookup_field="hub_entity",
-                outer_ref=f"{hub_field_to}",
+                outer_ref=hub_field_to,
             ),
         ).values(self.field)
         query = (
@@ -283,7 +294,8 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         lookup_field: str,
     ) -> dict:
         return {
-            self.field + "sub": Subquery(
+            self.field
+            + "sub": Subquery(
                 self._annotate_agg_field(
                     hub_field_to,
                     self.satellite_class.objects.filter(
@@ -332,7 +344,8 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         field_type = CharField
         return query.annotate(
             **{
-                self.field + "agg": Cast(
+                self.field
+                + "agg": Cast(
                     func(Cast(self.field + "sub", field_type())),
                     field_type(),
                 )
