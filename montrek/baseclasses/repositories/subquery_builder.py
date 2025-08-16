@@ -177,21 +177,17 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
 
         self.parent_link_classes = parent_link_classes
         self.parent_link_reversed = parent_link_reversed
-        self.parent_link_strings = []
         self.link_satellite_filter = link_satellite_filter
 
     def get_link_query(
         self, hub_field: str, reference_date: timezone.datetime, outer_ref: str = "hub"
     ) -> QuerySet:
-        hub_db_field_name = self._get_parent_db_name(hub_field)
-        parent_link_filters = self._get_parent_link_filters(reference_date)
-        for parent_link_string in self.parent_link_strings:
-            parent_link_filters[parent_link_string + "__state_date_end__gt"] = (
-                reference_date
-            )
-            parent_link_filters[parent_link_string + "__state_date_start__lte"] = (
-                reference_date
-            )
+        hub_db_field_name, parent_link_strings = (
+            self._get_parent_db_name_und_link_string(hub_field)
+        )
+        parent_link_filters = self._get_parent_link_filters(
+            reference_date, parent_link_strings
+        )
         return self.link_class.objects.filter(
             Q(
                 **self.subquery_filter(
@@ -227,19 +223,24 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
             ),
         )
 
-    def _get_parent_db_name(self, hub_field: str) -> str:
+    def _get_parent_db_name_und_link_string(
+        self, hub_field: str
+    ) -> tuple[str, list[str]]:
         db_name = hub_field
+        parent_link_strings = []
         for i, link_class in enumerate(self.parent_link_classes):
             is_reversed = self.parent_link_reversed[i]
             parent_hub_field = "hub_out" if is_reversed else "hub_in"
             db_name += "__" + link_class.__name__.lower()
-            self.parent_link_strings.append(db_name)
+            parent_link_strings.append(db_name)
             db_name += f"__{parent_hub_field}"
-        return db_name
+        return db_name, parent_link_strings
 
-    def _get_parent_link_filters(self, reference_date: timezone.datetime) -> dict[str]:
+    def _get_parent_link_filters(
+        self, reference_date: timezone.datetime, parent_link_strings: list[str]
+    ) -> dict[str, timezone.datetime]:
         parent_link_filters = {}
-        for parent_link_string in self.parent_link_strings:
+        for parent_link_string in parent_link_strings:
             parent_link_filters[parent_link_string + "__state_date_end__gt"] = (
                 reference_date
             )
