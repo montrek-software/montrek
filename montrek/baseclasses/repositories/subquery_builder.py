@@ -184,7 +184,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         self, hub_field: str, reference_date: timezone.datetime, outer_ref: str = "hub"
     ) -> QuerySet:
         hub_db_field_name = self._get_parent_db_name(hub_field)
-        parent_link_filters = {}
+        parent_link_filters = self._get_parent_link_filters(reference_date)
         for parent_link_string in self.parent_link_strings:
             parent_link_filters[parent_link_string + "__state_date_end__gt"] = (
                 reference_date
@@ -236,6 +236,17 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
             self.parent_link_strings.append(db_name)
             db_name += f"__{parent_hub_field}"
         return db_name
+
+    def _get_parent_link_filters(self, reference_date: timezone.datetime) -> dict[str]:
+        parent_link_filters = {}
+        for parent_link_string in self.parent_link_strings:
+            parent_link_filters[parent_link_string + "__state_date_end__gt"] = (
+                reference_date
+            )
+            parent_link_filters[parent_link_string + "__state_date_start__lte"] = (
+                reference_date
+            )
+        return parent_link_filters
 
     def _link_hubs_and_get_subquery(
         self,
