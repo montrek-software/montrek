@@ -1,13 +1,13 @@
 from baseclasses.repositories.montrek_repository import MontrekRepository
+from data_import.api_import.repositories.api_data_import_registry_repositories import (
+    ApiDataImportRegistryRepository,
+)
 from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepositoryABC,
 )
 from montrek_example.models import example_models as me_models
 from montrek_example.repositories.hub_b_repository import HubBRepository
 from montrek_example.repositories.hub_c_repository import HubCRepository
-from data_import.api_import.repositories.api_data_import_registry_repositories import (
-    ApiDataImportRegistryRepository,
-)
 
 
 class HubARepository(MontrekRepository):
@@ -72,6 +72,12 @@ class HubARepository3(MontrekRepository):
     hub_class = me_models.HubA
 
     def set_annotations(self):
+        self.add_satellite_fields_annotations(
+            me_models.SatA1,
+            [
+                "field_a1_str",
+            ],
+        )
         self.add_linked_satellites_field_annotations(
             me_models.SatD1,
             me_models.LinkHubCHubD,
