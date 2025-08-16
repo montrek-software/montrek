@@ -5,17 +5,14 @@ from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
+from baseclasses.errors.montrek_user_error import MontrekError
+from baseclasses.tests.factories.montrek_factory_schemas import ValueDateListFactory
+from baseclasses.utils import montrek_time
 from django.core.exceptions import PermissionDenied
 from django.db import models
 from django.test import TestCase, TransactionTestCase, tag
 from django.utils import timezone
 from freezegun import freeze_time
-
-from baseclasses.errors.montrek_user_error import MontrekError
-from baseclasses.tests.factories.montrek_factory_schemas import (
-    ValueDateListFactory,
-)
-from baseclasses.utils import montrek_time
 from montrek_example.models import example_models as me_models
 from montrek_example.repositories.hub_a_repository import (
     HubAJsonRepository,
@@ -45,9 +42,7 @@ from montrek_example.repositories.hub_d_repository import (
     HubDRepositoryReversedParentLink,
     HubDRepositoryTSReverseLink,
 )
-from montrek_example.repositories.hub_e_repository import (
-    HubERepository,
-)
+from montrek_example.repositories.hub_e_repository import HubERepository
 from montrek_example.tests.factories import montrek_example_factories as me_factories
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
@@ -1204,6 +1199,26 @@ class TestMontrekRepositoryLinks(TestCase):
         queryset = repository.receive()
         self.assertEqual(queryset.count(), 2)
         self.assertEqual(queryset[0].field_d1_str, "Test")
+
+    def test_link_with_parent_links__reference_date_filter_on_parent_link_class(self):
+        # Initial setup
+        hubc = me_factories.HubCFactory()
+        hubd = me_factories.HubDFactory()
+        me_factories.SatD1Factory.create(hub_entity=hubd, field_d1_str="Test")
+        me_factories.LinkHubCHubDFactory(hub_in=hubc, hub_out=hubd)
+        me_factories.LinkHubAHubCFactory(hub_in=self.huba1, hub_out=hubc)
+        # Change link from A to C
+        hubc2 = me_factories.HubCFactory()
+        hubd2 = me_factories.HubDFactory()
+        me_factories.SatD1Factory.create(hub_entity=hubd2, field_d1_str="Test2")
+        me_factories.LinkHubCHubDFactory(hub_in=hubc2, hub_out=hubd2)
+        user = MontrekUserFactory()
+        session_data = {"user_id": user.id}
+        repository = HubARepository3(session_data)
+        repository.create_by_dict({"field_a1_str": "Test", "link_hub_a_hub_c": hubc2})
+        queryset = repository.receive()
+        self.assertEqual(queryset.count(), 2)
+        self.assertEqual(queryset[0].field_d1_str, "Test2")
 
     def test_link_reversed_with_parent_links(self):
         satd = me_factories.SatD1Factory()
