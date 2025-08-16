@@ -51,6 +51,7 @@ services:
     user: "0:0"
     environment:
       - SERVICE=sequential_worker
+      - QUEUE=sequential_queue
       - PIUD=${USER_ID}
       - PGUD=${GROUP_ID}
     volumes:
@@ -71,6 +72,7 @@ services:
     user: "0:0"
     environment:
       - SERVICE=parallel_worker
+      - QUEUE=parallel_queue
       - PIUD=${USER_ID}
       - PGUD=${GROUP_ID}
     volumes:
