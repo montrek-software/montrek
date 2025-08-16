@@ -11,10 +11,10 @@ web)
   exec gosu "${PUID}:${PGID}" /montrek/bin/entrypoints/web-entrypoint.sh
   ;;
 sequential_worker)
-  exec gosu "${PUID}:${PGID}" /montrek/bin/entrypoints/worker-entrypoint.sh 1 "$SERVICE"
+  exec gosu "${PUID}:${PGID}" /montrek/bin/entrypoints/worker-entrypoint.sh 1
   ;;
 parallel_worker)
-  exec gosu "${PUID}:${PGID}" /montrek/bin/entrypoints/worker-entrypoint.sh 5 "$SERVICE"
+  exec gosu "${PUID}:${PGID}" /montrek/bin/entrypoints/worker-entrypoint.sh 5
   ;;
 celery_beat)
   exec gosu "${PUID}:${PGID}" /montrek/bin/entrypoints/celery_beat-entrypoint.sh
