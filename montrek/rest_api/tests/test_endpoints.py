@@ -2,7 +2,7 @@ from django.urls import reverse
 from rest_framework.test import APITestCase
 
 
-class TokenObtainPairTests(APITestCase):
+class TestRestAPITokens(APITestCase):
     def test_endpoints_not_redirected_to_user_login(self):
         for reverse_name in ("token_obtain_pair", "token_refresh", "token_verify"):
             with self.subTest(endpoint=reverse_name):
@@ -20,3 +20,13 @@ class TokenObtainPairTests(APITestCase):
 
                 # Not a redirect status
                 self.assertNotIn(resp.status_code, (301, 302, 303, 307, 308))
+
+    def test_no_valid_user_no_token(self):
+        url = reverse("token_obtain_pair")
+        payload = {"email": "unknown_user", "password": "password"}
+        resp = self.client.post(url, payload)
+        self.assertEqual(resp.status_code, 401)
+        self.assertEqual(
+            resp.json()["detail"],
+            "No active account found with the given credentials",
+        )
