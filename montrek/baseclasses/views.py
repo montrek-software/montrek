@@ -206,7 +206,8 @@ class MontrekApiViewMixin(APIView):
     def get_permissions(self):
         if self._is_rest(self.request):
             # Pick what you want for the API:
-            return [IsAuthenticated()]  # or: [IsAuthenticated()]
+            # REST API endpoints require authenticated users; use IsAuthenticated to enforce this.
+            return [IsAuthenticated()]  # Only authenticated users can access REST API endpoints.
         # For non-REST paths, rely on your Django mixins (MontrekPermissionRequiredMixin, etc.)
         return [AllowAny()]
 
