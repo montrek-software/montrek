@@ -22,9 +22,18 @@ class RestApiTestCaseMixin:
     def rest_api_view_test(self):
         if self._is_base_test_class():
             return
+        get_token_url = reverse("token_obtain_pair")
+        payload = {"email": self.user.email, "password": "S3cret!123"}
+        resp = self.client.post(get_token_url, payload)
+        self.assertEqual(resp.status_code, 200, resp.content)
+        access = resp.data["access"]
         query_params = self.query_params()
         query_params.update({"gen_rest_api": "true"})
-        response = self.client.get(self.url, query_params=query_params)
+        response = self.client.get(
+            self.url,
+            query_params=query_params,
+            headers={"Authorization": f"Bearer {access}"},
+        )
         response_json = response.json()
         self.view._session_data = None
         manager = self.view.manager_class(self.view.session_data)
@@ -477,11 +486,8 @@ class MontrekReportFieldEditViewTestCase(MontrekObjectViewBaseTestCase):
         )
         self.additional_assertions(test_object)
 
-    def test_view_page(self):
-        ...
+    def test_view_page(self): ...
 
-    def test_view_return_correct_html(self):
-        ...
+    def test_view_return_correct_html(self): ...
 
-    def test_context_data(self):
-        ...
+    def test_context_data(self): ...

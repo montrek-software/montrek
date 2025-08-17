@@ -32,6 +32,7 @@ from reporting.managers.montrek_table_manager import (
     MontrekTableManager,
 )
 from rest_framework import status
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -188,13 +189,35 @@ class ToPdfMixin:
         return HttpResponseRedirect(previous_url)
 
 
+class MontrekApiViewMixin(APIView):
+    permission_classes = [AllowAny]
+
+    def _is_rest(self, request) -> bool:
+        return request.GET.get("gen_rest_api") == "true"
+
+    # Turn DRF authentication/permissions ON only for the REST mode
+    def get_authenticators(self):
+        if self._is_rest(self.request):
+            return (
+                super().get_authenticators()
+            )  # use project defaults (e.g., API key/JWT)
+        return []  # HTML/CSV/Excel/PDF paths use Django flow, not DRF auth
+
+    def get_permissions(self):
+        if self._is_rest(self.request):
+            # Pick what you want for the API:
+            return [IsAuthenticated()]  # or: [IsAuthenticated()]
+        # For non-REST paths, rely on your Django mixins (MontrekPermissionRequiredMixin, etc.)
+        return [AllowAny()]
+
+
 class MontrekListView(
     MontrekPermissionRequiredMixin,
     ListView,
     MontrekPageViewMixin,
     MontrekViewMixin,
     ToPdfMixin,
-    APIView,
+    MontrekApiViewMixin,
 ):
     template_name = "montrek_table.html"
     manager_class = MontrekManagerNotImplemented
@@ -208,7 +231,7 @@ class MontrekListView(
             return self.list_to_excel()
         if request_get.get("gen_pdf") == "true":
             return self.list_to_pdf()
-        if request_get.get("gen_rest_api") == "true":
+        if self._is_rest(request):
             return self.list_to_rest_api()
         if request_get.get("refresh_data") == "true":
             return self.refresh_data()
@@ -376,7 +399,7 @@ class MontrekDetailView(
     MontrekPageViewMixin,
     MontrekViewMixin,
     ToPdfMixin,
-    APIView,
+    MontrekApiViewMixin,
 ):
     """
     View for displaying details of a single entity. pk is the corrresponding hub entity if is_hub_based is True
@@ -405,7 +428,7 @@ class MontrekDetailView(
         request_get = self.request.GET
         if request_get.get("gen_pdf") == "true":
             return self.list_to_pdf()
-        elif request_get.get("gen_rest_api") == "true":
+        elif self._is_rest(request):
             return self.list_to_rest_api()
         return super().get(request, *args, **kwargs)
 
@@ -512,7 +535,7 @@ class MontrekDeleteView(
         return HttpResponseRedirect(self.get_success_url())
 
 
-class MontrekRestApiView(APIView, MontrekViewMixin):
+class MontrekRestApiView(MontrekApiViewMixin, MontrekViewMixin):
     manager_class = MontrekManagerNotImplemented
 
     def get(self, request, *args, **kwargs):
