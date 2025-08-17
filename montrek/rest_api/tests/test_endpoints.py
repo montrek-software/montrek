@@ -7,7 +7,7 @@ class TokenObtainPairTests(APITestCase):
         for reverse_name in ("token_obtain_pair", "token_refresh", "token_verify"):
             with self.subTest(endpoint=reverse_name):
                 url = reverse(reverse_name)
-                resp = self.client.post(url, {}, format="json")
+                resp = self.client.options(url)
                 # Not redirected to /user/login/ via Response.url attribute
                 self.assertNotEqual(getattr(resp, "url", None), "/user/login/")
 
