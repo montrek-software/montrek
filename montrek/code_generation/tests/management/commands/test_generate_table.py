@@ -15,7 +15,8 @@ class TestGenerateTableCommand(TestCase):
         os.makedirs(self.output_dir, exist_ok=True)
 
     def tearDown(self):
-        shutil.rmtree(self.output_dir)
+        if os.path.exists(self.output_dir):
+            shutil.rmtree(self.output_dir)
 
     def test_files_as_expected(self):
         rebase = False
