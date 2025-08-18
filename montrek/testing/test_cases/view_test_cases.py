@@ -37,7 +37,7 @@ class RestApiTestCaseMixin:
         response = self.client.get(
             self.url,
             query_params=query_params,
-            headers={"Authorization": self.get_headers()},
+            headers=self.get_headers(),
         )
         response_json = response.json()
         self.view._session_data = None
