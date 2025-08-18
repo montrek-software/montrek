@@ -352,7 +352,10 @@ class MontrekRestApiViewTestCase(MontrekViewTestCase, RestApiTestCaseMixin):
         return self.__class__.__name__ == "MontrekRestApiViewTestCase"
 
     def get_response(self):
-        return self.client.get(self.url, headers=self.get_headers(), follow=True)
+        query_params = self.query_params()
+        return self.client.get(
+            self.url, query_params=query_params, headers=self.get_headers(), follow=True
+        )
 
     def test_view_page(self):
         return
