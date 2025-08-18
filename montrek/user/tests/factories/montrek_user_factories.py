@@ -7,7 +7,7 @@ class MontrekUserFactory(factory.django.DjangoModelFactory):
 
     email = factory.Faker("email")
     is_active = True
-    password = "S3cret!123"  # nosec B105: test-only password
+    password = factory.Faker("password")
 
     @classmethod
     def _create(cls, model_class, *args, **kwargs):

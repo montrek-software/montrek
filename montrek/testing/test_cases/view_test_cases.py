@@ -13,6 +13,8 @@ from mailing.repositories.mailing_repository import MailingRepository
 from middleware.permission_error_middleware import MISSING_PERMISSION_MESSAGE
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
+TEST_USER_PASSWORD = "S3cret!123"  # nosec B105: test-only password
+
 
 class NotImplementedView(View):
     pass
@@ -23,7 +25,7 @@ class RestApiTestCaseMixin:
         if self._is_base_test_class():
             return
         get_token_url = reverse("token_obtain_pair")
-        payload = {"email": self.user.email, "password": "S3cret!123"}
+        payload = {"email": self.user.email, "password": TEST_USER_PASSWORD}
         resp = self.client.post(get_token_url, payload)
         self.assertEqual(resp.status_code, 200, resp.content)
         access = resp.data["access"]
@@ -63,7 +65,7 @@ class MontrekViewTestCase(TestCase):
             )
 
     def _login_user(self):
-        self.user = MontrekUserFactory()
+        self.user = MontrekUserFactory(password=TEST_USER_PASSWORD)
         self.client.force_login(self.user)
         self.user.user_permissions.set(self.required_user_permissions())
 
