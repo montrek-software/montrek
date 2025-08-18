@@ -21,20 +21,23 @@ class NotImplementedView(View):
 
 
 class RestApiTestCaseMixin:
-    def rest_api_view_test(self):
-        if self._is_base_test_class():
-            return
+    def get_headers(self) -> dict[str, str]:
         get_token_url = reverse("token_obtain_pair")
         payload = {"email": self.user.email, "password": TEST_USER_PASSWORD}
         resp = self.client.post(get_token_url, payload)
         self.assertEqual(resp.status_code, 200, resp.content)
         access = resp.data["access"]
+        return {"Authorization": f"Bearer {access}"}
+
+    def rest_api_view_test(self):
+        if self._is_base_test_class():
+            return
         query_params = self.query_params()
         query_params.update({"gen_rest_api": "true"})
         response = self.client.get(
             self.url,
             query_params=query_params,
-            headers={"Authorization": f"Bearer {access}"},
+            headers={"Authorization": self.get_headers()},
         )
         response_json = response.json()
         self.view._session_data = None
@@ -344,9 +347,12 @@ class MontrekFileResponseTestCase(MontrekViewTestCase):
         return
 
 
-class MontrekRestApiViewTestCase(MontrekViewTestCase):
+class MontrekRestApiViewTestCase(MontrekViewTestCase, RestApiTestCaseMixin):
     def _is_base_test_class(self) -> bool:
         return self.__class__.__name__ == "MontrekRestApiViewTestCase"
+
+    def get_response(self):
+        return self.client.get(self.url, headers=self.get_headers(), follow=True)
 
     def test_view_page(self):
         return
