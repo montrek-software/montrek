@@ -229,6 +229,7 @@ LOGIN_EXEMPT_PATHS = [
     r"^oidc/logout/?$",
     r"^admin/.*$",
     r"^api/.*$",
+    r".*/api/?$",
     r"^rest_api/token/.*$",
     r"^user/.*$",
 ]
