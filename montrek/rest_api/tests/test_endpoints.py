@@ -1,6 +1,7 @@
 from django.urls import reverse
 from rest_framework.test import APITestCase
 from testing.decorators.add_logged_in_user import add_logged_in_user
+from testing.test_cases.view_test_cases import TEST_USER_PASSWORD
 
 
 class TestRestAPITokens(APITestCase):
@@ -32,10 +33,10 @@ class TestRestAPITokens(APITestCase):
             "No active account found with the given credentials",
         )
 
-    @add_logged_in_user
+    @add_logged_in_user(password=TEST_USER_PASSWORD)
     def test_get_token_and_validate(self):
         url = reverse("token_obtain_pair")
-        payload = {"email": self.user.email, "password": "S3cret!123"}
+        payload = {"email": self.user.email, "password": TEST_USER_PASSWORD}
         resp = self.client.post(url, payload)
         self.assertEqual(resp.status_code, 200, resp.content)
         self.assertIn("access", resp.data)
