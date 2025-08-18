@@ -543,6 +543,9 @@ class MontrekDeleteView(
 class MontrekRestApiView(MontrekApiViewMixin, MontrekViewMixin):
     manager_class = MontrekManagerNotImplemented
 
+    def _is_rest(self, request) -> bool:
+        return True
+
     def get(self, request, *args, **kwargs):
         query = self.manager.to_json()
         serializer = MontrekSerializer(query, many=True, manager=self.manager)
