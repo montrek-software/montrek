@@ -554,7 +554,7 @@ class HistoryStringTableElement(StringTableElement):
 
 
 class ColorCodedStringTableElement(StringTableElement):
-    def __init__(self, attr: str, name: str, color_codes: dict[str, Color]):
+    def __init__(self, name: str, attr: str, color_codes: dict[str, Color]):
         self.color_codes = color_codes
         super().__init__(name, attr)
 
