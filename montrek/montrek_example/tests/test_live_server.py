@@ -11,9 +11,9 @@ class TokenEndpointLiveTests(LiveServerTestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        User = get_user_model()
+        user = get_user_model()
         cls.password = TEST_USER_PASSWORD
-        cls.user = User.objects.create_user(
+        cls.user = user.objects.create_user(
             email="alice@example.com",
             password=cls.password,
         )
