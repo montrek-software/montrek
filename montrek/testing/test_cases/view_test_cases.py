@@ -13,18 +13,32 @@ from mailing.repositories.mailing_repository import MailingRepository
 from middleware.permission_error_middleware import MISSING_PERMISSION_MESSAGE
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
+TEST_USER_PASSWORD = "S3cret!123"  # nosec B105: test-only password
+
 
 class NotImplementedView(View):
     pass
 
 
 class RestApiTestCaseMixin:
+    def get_headers(self) -> dict[str, str]:
+        get_token_url = reverse("token_obtain_pair")
+        payload = {"email": self.user.email, "password": TEST_USER_PASSWORD}
+        resp = self.client.post(get_token_url, payload)
+        self.assertEqual(resp.status_code, 200, resp.content)
+        access = resp.data["access"]
+        return {"Authorization": f"Bearer {access}"}
+
     def rest_api_view_test(self):
         if self._is_base_test_class():
             return
         query_params = self.query_params()
         query_params.update({"gen_rest_api": "true"})
-        response = self.client.get(self.url, query_params=query_params)
+        response = self.client.get(
+            self.url,
+            query_params=query_params,
+            headers=self.get_headers(),
+        )
         response_json = response.json()
         self.view._session_data = None
         manager = self.view.manager_class(self.view.session_data)
@@ -54,7 +68,7 @@ class MontrekViewTestCase(TestCase):
             )
 
     def _login_user(self):
-        self.user = MontrekUserFactory()
+        self.user = MontrekUserFactory(password=TEST_USER_PASSWORD)
         self.client.force_login(self.user)
         self.user.user_permissions.set(self.required_user_permissions())
 
@@ -333,9 +347,15 @@ class MontrekFileResponseTestCase(MontrekViewTestCase):
         return
 
 
-class MontrekRestApiViewTestCase(MontrekViewTestCase):
+class MontrekRestApiViewTestCase(MontrekViewTestCase, RestApiTestCaseMixin):
     def _is_base_test_class(self) -> bool:
         return self.__class__.__name__ == "MontrekRestApiViewTestCase"
+
+    def get_response(self):
+        query_params = self.query_params()
+        return self.client.get(
+            self.url, query_params=query_params, headers=self.get_headers(), follow=True
+        )
 
     def test_view_page(self):
         return
@@ -477,11 +497,8 @@ class MontrekReportFieldEditViewTestCase(MontrekObjectViewBaseTestCase):
         )
         self.additional_assertions(test_object)
 
-    def test_view_page(self):
-        ...
+    def test_view_page(self): ...
 
-    def test_view_return_correct_html(self):
-        ...
+    def test_view_return_correct_html(self): ...
 
-    def test_context_data(self):
-        ...
+    def test_context_data(self): ...

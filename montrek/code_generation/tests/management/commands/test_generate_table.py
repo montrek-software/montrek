@@ -10,17 +10,14 @@ from django.test import TestCase
 
 class TestGenerateTableCommand(TestCase):
     def setUp(self):
-        self.output_dir = os.path.relpath(get_test_file_path("output"))
         self.maxDiff = None
-        os.makedirs(self.output_dir, exist_ok=True)
-
-    def tearDown(self):
-        shutil.rmtree(self.output_dir)
 
     def test_files_as_expected(self):
+        output_dir = os.path.relpath(get_test_file_path("output"))
+        os.makedirs(output_dir, exist_ok=True)
         rebase = False
         with patch("sys.stdout", new_callable=io.StringIO):
-            call_command("generate_table", self.output_dir, "company")
+            call_command("generate_table", output_dir, "company")
 
         expected_paths = {
             "forms": ["forms", "company_forms.py"],
@@ -43,7 +40,7 @@ class TestGenerateTableCommand(TestCase):
             test_file_name = f"exp__{'__'.join(path_list)}"
             # Real .py files will be formatted by git hooks which makes comparing them difficult
             test_file_name = test_file_name.replace(".", "_")
-            path = os.path.join(self.output_dir, *path_list)
+            path = os.path.join(output_dir, *path_list)
             self.assertTrue(os.path.exists(path))
             test_file_path = get_test_file_path(test_file_name)
             if rebase:
@@ -51,10 +48,15 @@ class TestGenerateTableCommand(TestCase):
             actual = open(path).read().strip()
             expected = open(test_file_path).read().strip()
             self.assertEqual(actual, expected)
+        shutil.rmtree(output_dir)
 
     def test_handle_camel_case_prefixes(self):
+        output_dir = os.path.relpath(
+            get_test_file_path("output_handle_camel_case_prefixes")
+        )
+        os.makedirs(output_dir, exist_ok=True)
         with patch("sys.stdout", new_callable=io.StringIO):
-            call_command("generate_table", self.output_dir, "TestCompany")
+            call_command("generate_table", output_dir, "TestCompany")
         expected_paths = {
             "forms": ["forms", "test_company_forms.py"],
             "hub_models": ["models", "test_company_hub_models.py"],
@@ -69,13 +71,14 @@ class TestGenerateTableCommand(TestCase):
             "views_init": ["views", "__init__.py"],
         }
         expected_paths = {
-            k: os.path.join(self.output_dir, *v) for k, v in expected_paths.items()
+            k: os.path.join(output_dir, *v) for k, v in expected_paths.items()
         }
         for path in expected_paths.values():
             self.assertTrue(os.path.exists(path))
             if "__init__" not in path:
                 with open(path) as f:
                     self.assertIn("TestCompany", f.read())
+        shutil.rmtree(output_dir)
 
 
 class TestStartMontrekAppCommand(TestCase):

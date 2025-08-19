@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 import os
+from datetime import timedelta
 from pathlib import Path
 
 from decouple import Config, RepositoryEnv
@@ -65,6 +66,7 @@ DJANGO_APPS = [
     "django.contrib.staticfiles",
     "django_extensions",
     "rest_framework",
+    "rest_framework_simplejwt.token_blacklist",
 ]
 
 
@@ -227,6 +229,8 @@ LOGIN_EXEMPT_PATHS = [
     r"^oidc/logout/?$",
     r"^admin/.*$",
     r"^api/.*$",
+    r".*/api/?$",
+    r"^rest_api/token/.*$",
     r"^user/.*$",
 ]
 if ENABLE_KEYCLOAK:
@@ -366,3 +370,17 @@ CLIENT_LOGO_LINK = config("CLIENT_LOGO_LINK", default="https://example.com")
 # Admin Data
 ADMIN_EMAIL = config("ADMIN_EMAIL", default=None)
 ADMIN_PASSWORD = config("ADMIN_PASSWORD", default=None)
+
+
+# Rest Framework
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ],
+}
+SIMPLE_JWT = {
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+}
