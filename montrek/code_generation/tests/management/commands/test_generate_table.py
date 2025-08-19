@@ -13,7 +13,7 @@ class TestGenerateTableCommand(TestCase):
         self.maxDiff = None
 
     def test_files_as_expected(self):
-        output_dir = os.path.relpath(get_test_file_path("output_files_as_expected"))
+        output_dir = os.path.relpath(get_test_file_path("output"))
         os.makedirs(output_dir, exist_ok=True)
         rebase = False
         with patch("sys.stdout", new_callable=io.StringIO):
@@ -40,7 +40,7 @@ class TestGenerateTableCommand(TestCase):
             test_file_name = f"exp__{'__'.join(path_list)}"
             # Real .py files will be formatted by git hooks which makes comparing them difficult
             test_file_name = test_file_name.replace(".", "_")
-            path = os.path.join(self.output_dir, *path_list)
+            path = os.path.join(output_dir, *path_list)
             self.assertTrue(os.path.exists(path))
             test_file_path = get_test_file_path(test_file_name)
             if rebase:
