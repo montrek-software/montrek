@@ -12,13 +12,9 @@ class TestGenerateTableCommand(TestCase):
     def setUp(self):
         self.output_dir = os.path.relpath(get_test_file_path("output"))
         self.maxDiff = None
-        os.makedirs(self.output_dir, exist_ok=True)
-
-    def tearDown(self):
-        if os.path.exists(self.output_dir):
-            shutil.rmtree(self.output_dir)
 
     def test_files_as_expected(self):
+        os.makedirs(self.output_dir, exist_ok=True)
         rebase = False
         with patch("sys.stdout", new_callable=io.StringIO):
             call_command("generate_table", self.output_dir, "company")
@@ -52,8 +48,10 @@ class TestGenerateTableCommand(TestCase):
             actual = open(path).read().strip()
             expected = open(test_file_path).read().strip()
             self.assertEqual(actual, expected)
+        shutil.rmtree(self.output_dir)
 
     def test_handle_camel_case_prefixes(self):
+        os.makedirs(self.output_dir, exist_ok=True)
         with patch("sys.stdout", new_callable=io.StringIO):
             call_command("generate_table", self.output_dir, "TestCompany")
         expected_paths = {
@@ -77,6 +75,7 @@ class TestGenerateTableCommand(TestCase):
             if "__init__" not in path:
                 with open(path) as f:
                     self.assertIn("TestCompany", f.read())
+        shutil.rmtree(self.output_dir)
 
 
 class TestStartMontrekAppCommand(TestCase):
