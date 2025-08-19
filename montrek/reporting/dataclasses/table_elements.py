@@ -10,16 +10,13 @@ from urllib.parse import urlparse
 import pandas as pd
 import requests
 from baseclasses.dataclasses.alert import AlertEnum
-from baseclasses.dataclasses.number_shortener import (
-    NoShortening,
-    NumberShortenerABC,
-)
+from baseclasses.dataclasses.number_shortener import NoShortening, NumberShortenerABC
 from baseclasses.sanitizer import HtmlSanitizer
 from django.template import Context, Template
 from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
 from pandas.core.tools.datetimes import DateParseError
-from reporting.core.reporting_colors import ReportingColors
+from reporting.core.reporting_colors import Color, ReportingColors
 from reporting.core.text_converter import HtmlLatexConverter
 from rest_framework import serializers
 
@@ -232,9 +229,9 @@ class LinkListTableElement(BaseLinkTableElement):
         list_values = str(list_values).split(self.in_separator) if list_values else []
         text_values = self.get_dotted_attr_or_arg(obj, self.text)
         text_values = str(text_values).split(self.in_separator) if text_values else []
-        assert len(list_values) == len(text_values), (
-            f"list_values: {list_values}, text_values: {text_values}"
-        )
+        assert len(list_values) == len(  # nosec b101
+            text_values
+        ), f"list_values: {list_values}, text_values: {text_values}"
         values = zip(list_values, text_values)
         values = sorted(values, key=lambda x: x[1])
         return values
@@ -495,7 +492,7 @@ class ImageTableElement(AttrTableElement):
             is_url = False
         if not is_url:
             return _return_string(value)
-        response = requests.get(value)
+        response = requests.get(value, timeout=10)
         if response.status_code != 200:
             return f"Image not found: {value} &"
         temp_file = tempfile.NamedTemporaryFile(
@@ -554,3 +551,19 @@ class HistoryStringTableElement(StringTableElement):
         if self.attr not in self.change_map[obj_id]:
             return HistoryChangeState.NONE
         return self.change_map[obj_id][self.attr]
+
+
+class ColorCodedStringTableElement(StringTableElement):
+    def __init__(self, name: str, attr: str, color_codes: dict[str, Color]):
+        self.color_codes = color_codes
+        super().__init__(name, attr)
+
+    def format(self, value):
+        color = self.color_codes.get(value, ReportingColors.BLUE)
+        return f'<td style="text-align: left; color: {color.hex}">{value}</td>'
+
+    def format_latex(self, value):
+        value_str = str(value)
+        value_str = HtmlLatexConverter.convert(value_str)
+        color = self.color_codes.get(value, ReportingColors.BLUE)
+        return f" \\color{{{color.name}}} {value_str} &"

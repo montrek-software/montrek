@@ -520,3 +520,48 @@ class TestDataTableFilters(TestCase):
             str(test_str),
             "\\progressbar{ 50.0 }{ 50.0\\% } &",
         )
+
+    def test_color_coded_table_element__html(self):
+        color_codes = {
+            "abc": ReportingColors.MEDIUM_BLUE,
+            "def": ReportingColors.SOFT_ROSE,
+        }
+        table_element = te.ColorCodedStringTableElement(
+            name="name", attr="test_attr", color_codes=color_codes
+        )
+        blue_value = table_element.format("abc")
+        self.assertEqual(
+            blue_value, '<td style="text-align: left; color: #2B6D8B">abc</td>'
+        )
+        rose_value = table_element.format("def")
+        self.assertEqual(
+            rose_value, '<td style="text-align: left; color: #D3A9A1">def</td>'
+        )
+        default_value = table_element.format("ghi")
+        self.assertEqual(
+            default_value, '<td style="text-align: left; color: #004767">ghi</td>'
+        )
+
+    def test_color_coded_table_element__latex(self):
+        color_codes = {
+            "abc": ReportingColors.MEDIUM_BLUE,
+            "def": ReportingColors.SOFT_ROSE,
+        }
+        table_element = te.ColorCodedStringTableElement(
+            name="name", attr="test_attr", color_codes=color_codes
+        )
+        blue_value = table_element.format_latex("abc")
+        self.assertEqual(
+            blue_value,
+            " \\color{mediumblue} abc &",
+        )
+        rose_value = table_element.format_latex("def")
+        self.assertEqual(
+            rose_value,
+            " \\color{softrose} def &",
+        )
+        default_value = table_element.format_latex("ghi")
+        self.assertEqual(
+            default_value,
+            " \\color{blue} ghi &",
+        )
