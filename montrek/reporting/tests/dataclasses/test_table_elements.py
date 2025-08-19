@@ -541,3 +541,27 @@ class TestDataTableFilters(TestCase):
         self.assertEqual(
             default_value, '<td style="text-align: left; color: #004767">ghi</td>'
         )
+
+    def test_color_coded_table_element__latex(self):
+        color_codes = {
+            "abc": ReportingColors.MEDIUM_BLUE,
+            "def": ReportingColors.SOFT_ROSE,
+        }
+        table_element = te.ColorCodedStringTableElement(
+            name="name", attr="test_attr", color_codes=color_codes
+        )
+        blue_value = table_element.format_latex("abc")
+        self.assertEqual(
+            blue_value,
+            " \\color{mediumblue} abc &",
+        )
+        rose_value = table_element.format_latex("def")
+        self.assertEqual(
+            rose_value,
+            " \\color{softrose} def &",
+        )
+        default_value = table_element.format_latex("ghi")
+        self.assertEqual(
+            default_value,
+            " \\color{blue} ghi &",
+        )

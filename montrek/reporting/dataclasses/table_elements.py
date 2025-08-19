@@ -561,3 +561,9 @@ class ColorCodedStringTableElement(StringTableElement):
     def format(self, value):
         color = self.color_codes.get(value, ReportingColors.BLUE)
         return f'<td style="text-align: left; color: {color.hex}">{value}</td>'
+
+    def format_latex(self, value):
+        value_str = str(value)
+        value_str = HtmlLatexConverter.convert(value_str)
+        color = self.color_codes.get(value, ReportingColors.BLUE)
+        return f" \\color{{{color.name}}} {value_str} &"
