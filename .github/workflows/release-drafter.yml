@@ -1,5 +1,7 @@
-name: Release Drafter
-
+name: Run Montrek Release-Drafter
+permissions:
+  contents: write
+  pull-requests: write
 on:
   push:
     branches:
@@ -9,43 +11,6 @@ on:
   pull_request_target:
     types: [opened, reopened, synchronize, edited, labeled, unlabeled]
   workflow_dispatch:
-
-permissions:
-  contents: write # needed to update/publish releases
-  pull-requests: write # needed for autolabeler
-
 jobs:
-  update_release_draft:
-    if: github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/')
-    runs-on: ubuntu-latest
-    steps:
-      - name: Update draft release
-        uses: release-drafter/release-drafter@v6
-        with:
-          config-name: release-drafter.yml
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  publish:
-    if: startsWith(github.ref, 'refs/tags/')
-    runs-on: ubuntu-latest
-    steps:
-      - name: Publish the draft as a release
-        uses: release-drafter/release-drafter@v6
-        with:
-          config-name: release-drafter.yml
-          publish: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  autolabeler:
-    if: github.event_name == 'pull_request_target'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Auto-label PRs (no release update)
-        uses: release-drafter/release-drafter@v6
-        with:
-          config-name: release-drafter.yml
-          disable-releaser: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  run-tests:
+    uses: montrek-software/.github/.github/workflows/montrek_release_drafter_template.yml@main
