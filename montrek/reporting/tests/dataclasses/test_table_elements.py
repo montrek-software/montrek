@@ -520,3 +520,9 @@ class TestDataTableFilters(TestCase):
             str(test_str),
             "\\progressbar{ 50.0 }{ 50.0\\% } &",
         )
+
+    def test_color_coded_table_element__html(self):
+        color_codes = {"abc": ReportingColors.BLUE, "def": ReportingColors.SOFT_ROSE}
+        table_element = te.ColorCodedStringTableElement(
+            name="name", attr="test_attr", color_codes=color_codes
+        )
