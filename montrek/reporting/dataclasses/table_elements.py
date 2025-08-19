@@ -557,3 +557,7 @@ class ColorCodedStringTableElement(StringTableElement):
     def __init__(self, attr: str, name: str, color_codes: dict[str, Color]):
         self.color_codes = color_codes
         super().__init__(name, attr)
+
+    def format(self, value):
+        color = self.color_codes.get(value, ReportingColors.BLUE)
+        return f'<td style="text-align: left; color: {color.hex}">{value}</td>'
