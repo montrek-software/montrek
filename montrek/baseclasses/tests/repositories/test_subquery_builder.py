@@ -1,23 +1,21 @@
-from django.db.models import CharField
-from django.test import TestCase
-from django.utils import timezone
-from baseclasses.utils import montrek_time
-from baseclasses.tests.factories.baseclass_factories import (
-    TestLinkSatelliteFactory,
+import warnings
+
+from baseclasses import models as bc_models
+from baseclasses.repositories.subquery_builder import (
+    GroupConcat,
+    LinkedSatelliteSubqueryBuilder,
+    StringAgg,
+    SubqueryBuilder,
+    get_string_concat_function,
 )
 from baseclasses.tests.factories.baseclass_factories import (
     LinkTestMontrekTestLinkFactory,
+    TestLinkSatelliteFactory,
 )
-from baseclasses.repositories.subquery_builder import (
-    LinkedSatelliteSubqueryBuilder,
-    SubqueryBuilder,
-    get_string_concat_function,
-    GroupConcat,
-    StringAgg,
-)
-from baseclasses import models as bc_models
-
-import warnings
+from baseclasses.utils import montrek_time
+from django.db.models import CharField
+from django.test import TestCase
+from django.utils import timezone
 
 warnings.filterwarnings(
     "ignore",
@@ -104,6 +102,7 @@ class TestLinkedSatelliteSubqueryBuilder(TestCase):
         class DummyLinkClass(bc_models.MontrekLinkABC):
             class Meta:
                 managed = False
+                abstract = True
 
         with self.assertRaisesMessage(
             TypeError, "DummyLinkClass must inherit from valid LinkClass!"
