@@ -10,10 +10,7 @@ from baseclasses.models import (
     MontrekTimeSeriesSatelliteABC,
 )
 from data_import.api_import.models import ApiRegistrySatellite
-from django.core.validators import (
-    MaxValueValidator,
-    MinValueValidator,
-)
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
 from file_upload.models import (
@@ -121,6 +118,12 @@ class SatA3(MontrekSatelliteABC):
     )
     field_a3_json = models.JSONField(default=dict)
     identifier_fields = ["field_a3_str"]
+
+
+class SatA4(MontrekSatelliteABC):
+    hub_entity = models.ForeignKey(HubA, on_delete=models.CASCADE)
+    field_a4_str = models.CharField(max_length=50, default="DEFAULT")
+    identifier_fields = ["hub_entity_id"]
 
 
 class SatB1(MontrekSatelliteABC, AlertMixin):

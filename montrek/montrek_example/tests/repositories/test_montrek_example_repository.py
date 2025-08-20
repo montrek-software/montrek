@@ -526,6 +526,9 @@ class TestMontrekCreateObject(TestCase):
                 }
             )
 
+    def test_dont_update_satelitte_with_hub_entity_id_as_identifier_field(self):
+        self.assertEqual(me_models.SatA4.objects.count(), 0)
+
 
 class TestMontrekCreateTimeSeriesObject(TestCase):
     def setUp(self):
