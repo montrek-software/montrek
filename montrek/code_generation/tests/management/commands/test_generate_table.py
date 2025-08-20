@@ -83,23 +83,21 @@ class TestGenerateTableCommand(TestCase):
 
 class TestStartMontrekAppCommand(TestCase):
     def setUp(self):
-        self.output_dir = os.path.relpath(get_test_file_path("output"))
         self.new_app_name = "new_app"
         self.maxDiff = None
-        os.makedirs(self.output_dir, exist_ok=True)
-
-    def tearDown(self):
-        shutil.rmtree(self.output_dir)
 
     def test_startmontrekapp__w_path(self):
+        output_dir = os.path.relpath(get_test_file_path("output_start_app"))
+        os.makedirs(output_dir, exist_ok=True)
         with patch("sys.stdout", new_callable=io.StringIO):
-            call_command("start_montrek_app", self.new_app_name, path=self.output_dir)
-        self._test_app_assertions(os.path.join(self.output_dir, self.new_app_name))
-        with open(os.path.join(self.output_dir, self.new_app_name, "apps.py")) as f:
+            call_command("start_montrek_app", self.new_app_name, path=output_dir)
+        self._test_app_assertions(os.path.join(output_dir, self.new_app_name))
+        with open(os.path.join(output_dir, self.new_app_name, "apps.py")) as f:
             search_str = (
-                f"name = '{self.output_dir.replace(os.sep, '.')}.{self.new_app_name}'"
+                f"name = '{output_dir.replace(os.sep, '.')}.{self.new_app_name}'"
             )
             self.assertIn(search_str, f.read())
+        shutil.rmtree(output_dir)
 
     def test_startmontrekapp__wo_path(self):
         with patch("sys.stdout", new_callable=io.StringIO):

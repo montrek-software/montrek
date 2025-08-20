@@ -1,13 +1,13 @@
 import factory
-from data_import.api_import.tests.factories.api_data_import_registry_factories import (
-    ApiDataImportRegistryBaseSatelliteFactory,
-)
 from baseclasses.tests.factories.baseclass_factories import ValueDateListFactory
 from baseclasses.tests.factories.montrek_factory_schemas import (
+    MontrekHubFactory,
     MontrekHubValueDateFactory,
     MontrekSatelliteFactory,
     MontrekTSSatelliteFactory,
-    MontrekHubFactory,
+)
+from data_import.api_import.tests.factories.api_data_import_registry_factories import (
+    ApiDataImportRegistryBaseSatelliteFactory,
 )
 from file_upload.tests.factories.field_map_factories import (
     FieldMapHubFactory,
@@ -79,6 +79,13 @@ class SatA1Factory(MontrekSatelliteFactory):
 class SatA2Factory(MontrekSatelliteFactory):
     class Meta:
         model = "montrek_example.SatA2"
+
+    hub_entity = factory.SubFactory(HubAFactory)
+
+
+class SatA4Factory(MontrekSatelliteFactory):
+    class Meta:
+        model = "montrek_example.SatA4"
 
     hub_entity = factory.SubFactory(HubAFactory)
 

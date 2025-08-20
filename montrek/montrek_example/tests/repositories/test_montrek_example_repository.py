@@ -19,6 +19,7 @@ from montrek_example.repositories.hub_a_repository import (
     HubARepository,
     HubARepository2,
     HubARepository3,
+    HubARepository4,
 )
 from montrek_example.repositories.hub_b_repository import (
     HubBRepository,
@@ -525,6 +526,15 @@ class TestMontrekCreateObject(TestCase):
                     "hub_entity_id": test_hub.id,
                 }
             )
+
+    def test_dont_update_satellite_with_hub_entity_id_as_identifier_field(self):
+        self.assertEqual(me_models.SatA4.objects.count(), 0)
+        sat = me_factories.SatA4Factory.create(field_a4_str="Test")
+        self.assertEqual(me_models.SatA4.objects.count(), 1)
+        HubARepository4({"user_id": self.user.id}).create_by_dict(
+            {"hub_entity_id": sat.hub_entity_id, "field_a4_str": "Test"}
+        )
+        self.assertEqual(me_models.SatA4.objects.count(), 1)
 
 
 class TestMontrekCreateTimeSeriesObject(TestCase):
