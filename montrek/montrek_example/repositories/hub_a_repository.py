@@ -86,7 +86,7 @@ class HubARepository3(MontrekRepository):
         )
 
 
-class hubARepository4(MontrekRepository):
+class HubARepository4(MontrekRepository):
     hub_class = me_models.HubA
 
     def set_annotations(self):
