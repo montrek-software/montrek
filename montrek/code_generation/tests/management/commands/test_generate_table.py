@@ -13,7 +13,7 @@ class TestGenerateTableCommand(TestCase):
         self.maxDiff = None
 
     def test_files_as_expected(self):
-        output_dir = os.path.relpath(get_test_file_path("output_file_as_expected"))
+        output_dir = os.path.relpath(get_test_file_path("output"))
         os.makedirs(output_dir, exist_ok=True)
         rebase = False
         with patch("sys.stdout", new_callable=io.StringIO):
