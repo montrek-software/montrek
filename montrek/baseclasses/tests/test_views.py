@@ -1,17 +1,3 @@
-from unittest.mock import patch
-
-from bs4 import BeautifulSoup
-from django.contrib.auth.models import AnonymousUser
-from django.contrib.messages import get_messages
-from django.contrib.messages.middleware import MessageMiddleware
-from django.contrib.sessions.middleware import SessionMiddleware
-from django.conf import settings
-from django.test import RequestFactory, TestCase, override_settings
-from django.urls import reverse
-from reporting.dataclasses import table_elements as te
-from reporting.managers.montrek_table_manager import MontrekTableManager
-from user.tests.factories.montrek_user_factories import MontrekUserFactory
-
 from baseclasses.dataclasses.montrek_message import (
     MontrekMessageError,
     MontrekMessageInfo,
@@ -28,7 +14,18 @@ from baseclasses.views import (
     MontrekTemplateView,
     MontrekViewMixin,
 )
+from bs4 import BeautifulSoup
+from django.conf import settings
+from django.contrib.auth.models import AnonymousUser
+from django.contrib.messages import get_messages
+from django.contrib.messages.middleware import MessageMiddleware
+from django.contrib.sessions.middleware import SessionMiddleware
+from django.test import RequestFactory, TestCase, override_settings
+from django.urls import reverse
+from reporting.dataclasses import table_elements as te
+from reporting.managers.montrek_table_manager import MontrekTableManager
 from testing.decorators.add_logged_in_user import add_logged_in_user
+from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
 
 class MockRequester:
@@ -138,7 +135,7 @@ class MockErrors:
 class MockFormClass:
     errors = MockErrors()
 
-    def __init__(self, request, repository): ...
+    def __init__(self, request, repository, session_data): ...
 
     def is_valid(self):
         return False

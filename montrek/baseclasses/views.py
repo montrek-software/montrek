@@ -485,7 +485,11 @@ class MontrekCreateUpdateView(
         return HttpResponseRedirect(self.get_success_url())
 
     def get_form(self, form_class=None):
-        return self.form_class(repository=self.manager.repository)
+        if form_class is None:
+            form_class = self.form_class
+        return form_class(
+            repository=self.manager.repository, session_data=self.session_data
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -494,7 +498,11 @@ class MontrekCreateUpdateView(
 
     def post(self, request, *args, **kwargs):
         self.object = None
-        form = self.form_class(self.request.POST, repository=self.manager.repository)
+        form = self.form_class(
+            self.request.POST,
+            repository=self.manager.repository,
+            session_data=self.session_data,
+        )
         if form.is_valid():
             return self.form_valid(form)
         logger.error(f"Form errors: {form.errors}")
@@ -516,7 +524,11 @@ class MontrekCreateView(MontrekCreateUpdateView):
 class MontrekUpdateView(MontrekCreateUpdateView):
     def get_form(self, form_class=None):
         initial = self.manager.get_object_from_pk_as_dict(self.kwargs["pk"])
-        return self.form_class(repository=self.manager.repository, initial=initial)
+        return self.form_class(
+            repository=self.manager.repository,
+            initial=initial,
+            session_data=self.session_data,
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
