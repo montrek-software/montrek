@@ -527,7 +527,7 @@ class TestMontrekCreateObject(TestCase):
                 }
             )
 
-    def test_dont_update_satelitte_with_hub_entity_id_as_identifier_field(self):
+    def test_dont_update_satellite_with_hub_entity_id_as_identifier_field(self):
         self.assertEqual(me_models.SatA4.objects.count(), 0)
         sat = me_factories.SatA4Factory.create(field_a4_str="Test")
         self.assertEqual(me_models.SatA4.objects.count(), 1)
