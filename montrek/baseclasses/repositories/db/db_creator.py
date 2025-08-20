@@ -155,6 +155,10 @@ class DbCreator:
             self.value_date_list = existing_value_date_list.first()
 
     def _get_hub_from_data(self):
+        """
+        Retrieve an existing hub entity from the database if 'hub_entity_id' is provided in self.data.
+        Sets self.hub to the corresponding hub instance.
+        """
         if "hub_entity_id" in self.data and not pd.isnull(self.data["hub_entity_id"]):
             self.hub = self.db_staller.hub_class.objects.get(
                 id=self.data["hub_entity_id"]
