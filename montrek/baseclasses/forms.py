@@ -1,11 +1,10 @@
-from django.contrib.admin.widgets import FilteredSelectMultiple
 from typing import Any
-from django.db.models import TextChoices
-from django import forms
-from django.db.models import QuerySet
-from django.forms.widgets import ChoiceWidget
 
 from baseclasses.models import LinkTypeEnum
+from django import forms
+from django.contrib.admin.widgets import FilteredSelectMultiple
+from django.db.models import QuerySet, TextChoices
+from django.forms.widgets import ChoiceWidget
 
 
 class DateRangeForm(forms.Form):
@@ -157,6 +156,7 @@ class MontrekCreateForm(forms.ModelForm):
             self._meta.model = self.repository.hub_class
         else:
             raise NotImplementedError("No repository passed ")
+        self.session_data = kwargs.pop("session_data", {})
         super().__init__(*args, **kwargs)
         self.initial = kwargs.get("initial", {})
 
