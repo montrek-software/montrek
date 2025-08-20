@@ -485,7 +485,7 @@ class MontrekCreateUpdateView(
         return HttpResponseRedirect(self.get_success_url())
 
     def get_form(self, form_class=None):
-        if not form_class:
+        if form_class is None:
             form_class = self.form_class
         return form_class(
             repository=self.manager.repository, session_data=self.session_data
