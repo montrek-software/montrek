@@ -343,8 +343,6 @@ LOGGING = {
 TEST_RUNNER = "montrek.testing.test_runner.MontrekTestRunner"
 IS_TEST_RUN = False
 
-MONTREK_GITHUB_TOKEN = config("MONTREK_GITHUB_TOKEN", default="")
-
 
 INTERNAL_IPS = [
     "127.0.0.1",
