@@ -40,3 +40,8 @@ class TestEncryptedFields(TestCase):
         html = self.manager.to_html()
         self.assertNotIn(">secret</td>", html)
         self.assertIn(">******</td>", html)
+
+    def test_field_is_hidden_in_latex(self):
+        html = self.manager.to_latex()
+        self.assertNotIn("& \\color{black} secret\\\\", html)
+        self.assertIn("& \\color{black} ******\\\\", html)
