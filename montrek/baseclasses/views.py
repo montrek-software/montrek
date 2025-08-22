@@ -482,6 +482,7 @@ class MontrekCreateUpdateView(
 
     def form_valid(self, form):
         self.manager.create_object(data=form.cleaned_data)
+        self.show_messages()
         return HttpResponseRedirect(self.get_success_url())
 
     def get_form(self, form_class=None):
