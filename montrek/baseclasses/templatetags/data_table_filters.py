@@ -103,7 +103,11 @@ def _get_link_list_object_values(obj, table_element) -> list:
     text_values = _get_dotted_attr_or_arg(obj, table_element.text)
     text_values = str(text_values).split(",") if text_values else []
     if len(list_values) != len(text_values):
-        raise ValueError(f"list_values: {list_values}, text_values: {text_values}")
+        raise ValueError(
+            f"Mismatched lengths between list_values and text_values: "
+            f"list_values (len={len(list_values)}): {list_values}, "
+            f"text_values (len={len(text_values)}): {text_values}"
+        )
     values = zip(list_values, text_values)
     values = sorted(values, key=lambda x: x[1])
     return values
