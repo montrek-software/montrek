@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from functools import wraps
 from time import sleep
 from typing import Any, Callable
 
@@ -9,9 +10,6 @@ from requesting.managers.authenticator_managers import (
     NoAuthenticator,
     RequestAuthenticator,
 )
-
-
-from functools import wraps
 
 
 class JsonReader:
@@ -32,7 +30,7 @@ class RequestManagerABC(MontrekManager):
 
     @abstractmethod
     def post_response(
-        self, endpoint: str, data: dict
+        self, endpoint: str, data: dict, json: dict
     ) -> dict | list | pd.DataFrame: ...
 
     def get_endpoint_url(self, endpoint: str) -> str:
@@ -105,10 +103,12 @@ class RequestJsonManager(RequestManagerABC):
 
     @retry_on_failure
     @process_response
-    def post_response(self, endpoint: str, data: dict) -> dict | list | pd.DataFrame:
+    def post_response(
+        self, endpoint: str, data: dict, json: dict = {}
+    ) -> dict | list | pd.DataFrame:
         endpoint_url = self.get_endpoint_url(endpoint)
         headers = self.get_headers()
-        return self.post_request(endpoint_url, headers, data)
+        return self.post_request(endpoint_url, headers, data, json)
 
     def get_request(
         self, endpoint_url: str, headers: dict[str, Any]
@@ -118,10 +118,15 @@ class RequestJsonManager(RequestManagerABC):
         )
 
     def post_request(
-        self, endpoint_url: str, headers: dict[str, Any], data: dict
+        self, endpoint_url: str, headers: dict[str, Any], data: dict, json: dict = {}
     ) -> requests.models.Response:
         return requests.post(
-            endpoint_url, self.request_kwargs, headers=headers, files=data, timeout=30
+            endpoint_url,
+            self.request_kwargs,
+            headers=headers,
+            files=data,
+            json=json,
+            timeout=30,
         )
 
     def get_headers(self) -> dict[str, Any]:
