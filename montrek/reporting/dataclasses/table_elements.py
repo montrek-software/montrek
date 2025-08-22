@@ -12,9 +12,11 @@ import requests
 from baseclasses.dataclasses.alert import AlertEnum
 from baseclasses.dataclasses.number_shortener import NoShortening, NumberShortenerABC
 from baseclasses.sanitizer import HtmlSanitizer
+from django.core.exceptions import FieldDoesNotExist
 from django.template import Context, Template
 from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
+from encrypted_fields import EncryptedCharField
 from pandas.core.tools.datetimes import DateParseError
 from reporting.core.reporting_colors import Color, ReportingColors
 from reporting.core.text_converter import HtmlLatexConverter
@@ -83,13 +85,26 @@ class AttrTableElement(TableElement):
         if isinstance(obj, dict):
             value = obj.get(attr, attr)
         else:
-            value = getattr(obj, attr, attr)
+            value = self._get_value_from_field(obj, attr)
         if isinstance(value, str):
             value = HtmlSanitizer().clean_html(value)
         return value
 
     def none_return_html(self, obj: Any) -> str:
         return NoneTableElement(name=self.name, attr=self.attr).format()
+
+    def _get_value_from_field(self, obj: Any, attr: str) -> Any:
+        try:
+            field = obj._meta.get_field(attr)
+        except FieldDoesNotExist:
+            # Not a model field → just return the attribute (or the name if missing)
+            return getattr(obj, attr, attr)
+        value = getattr(obj, attr, attr)
+
+        field = obj._meta.get_field(attr)
+        if isinstance(field, EncryptedCharField):
+            value = "*" * len(value)
+        return value
 
 
 @dataclass
