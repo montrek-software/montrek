@@ -54,3 +54,23 @@ class TestEncryptedFields(TestCase):
         html = history_manager.to_html()
         self.assertNotIn(">secret</td>", html)
         self.assertIn(">******</td>", html)
+
+
+class TestEncryptedFieldsWithNone(TestCase):
+    def setUp(self):
+        self.secret = None  # nosec b105 Test Purposes
+        self.sat = SatA5Factory.create(secret_field=self.secret)
+        self.manager = SatA5Manager()
+
+    def test_field_is_hidden_in_html(self):
+        html = self.manager.to_html()
+        self.assertIn("></td>", html)
+
+    def test_field_is_hidden_in_latex(self):
+        latex = self.manager.to_latex()
+        self.assertIn("& \\color{black} \\\\", latex)
+
+    def test_secret_in_history_manager_in_html(self):
+        history_manager = SatA5HistoryManager({}, "History", SatA5.objects.all())
+        html = history_manager.to_html()
+        self.assertIn("></td>", html)

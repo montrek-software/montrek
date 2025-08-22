@@ -130,7 +130,7 @@ class SatA4(MontrekSatelliteABC):
 class SatA5(MontrekSatelliteABC):
     hub_entity = models.ForeignKey(HubA, on_delete=models.CASCADE)
     field_a5_str = models.CharField(max_length=50, default="DEFAULT")
-    secret_field = EncryptedCharField(max_length=24, default="SECRET")
+    secret_field = EncryptedCharField(max_length=24, default="SECRET", null=True)
     identifier_fields = ["field_a5_str"]
 
 

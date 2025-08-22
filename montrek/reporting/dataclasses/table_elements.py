@@ -101,9 +101,8 @@ class AttrTableElement(TableElement):
             return getattr(obj, attr, attr)
         value = getattr(obj, attr, attr)
 
-        field = obj._meta.get_field(attr)
-        if isinstance(field, EncryptedCharField):
-            value = "*" * len(value)
+        if isinstance(field, EncryptedCharField) and value is not None:
+            value = "*" * len(str(value))
         return value
 
 
@@ -587,4 +586,6 @@ class ColorCodedStringTableElement(StringTableElement):
 class SecretStringTableElement(StringTableElement):
     def get_value(self, obj: Any) -> Any:
         value = super().get_value(obj)
-        return "*" * len(value)
+        if value is None:
+            return ""
+        return "*" * len(str(value))
