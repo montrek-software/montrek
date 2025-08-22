@@ -1,7 +1,10 @@
 from baseclasses.forms import MontrekCreateForm
 
 
-class ExampleACreateForm(MontrekCreateForm):
+class ExampleABaseForm(MontrekCreateForm): ...
+
+
+class ExampleACreateForm(ExampleABaseForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.add_link_choice_field(
