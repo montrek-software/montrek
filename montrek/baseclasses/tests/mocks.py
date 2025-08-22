@@ -29,10 +29,16 @@ class MockQuerySet:
         return self.items[pk]  #  pragma: no cover
 
 
+class MockMeta:
+    def get_field(self, field: str):
+        return field
+
+
 @dataclass
 class MockData:
     field: str
     value: int
+    _meta: MockMeta = MockMeta()
 
 
 @dataclass
