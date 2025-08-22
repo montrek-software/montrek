@@ -12,7 +12,10 @@ from reporting.core import reporting_text as rt
 from reporting.dataclasses import table_elements as te
 from reporting.managers.montrek_details_manager import MontrekDetailsManager
 from reporting.managers.montrek_report_manager import MontrekReportManager
-from reporting.managers.montrek_table_manager import MontrekTableManager
+from reporting.managers.montrek_table_manager import (
+    HistoryDataTableManager,
+    MontrekTableManager,
+)
 
 
 class ExampleReportManager(MontrekReportManager):
@@ -143,6 +146,9 @@ class SatA5Manager(MontrekTableManager):
             te.StringTableElement(name="A5 String", attr="field_a5_str"),
             te.SecretStringTableElement(name="Secret", attr="secret_field"),
         )
+
+
+class SatA5HistoryManager(HistoryDataTableManager): ...
 
 
 class HubADetailsManager(MontrekDetailsManager):

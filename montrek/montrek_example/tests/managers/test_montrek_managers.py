@@ -1,6 +1,9 @@
 from django.db import connections
 from django.test import TestCase
-from montrek_example.managers.montrek_example_managers import SatA5Manager
+from montrek_example.managers.montrek_example_managers import (
+    SatA5HistoryManager,
+    SatA5Manager,
+)
 from montrek_example.models.example_models import SatA5
 from montrek_example.repositories.hub_a_repository import HubARepository5
 from montrek_example.tests.factories.montrek_example_factories import SatA5Factory
@@ -42,6 +45,12 @@ class TestEncryptedFields(TestCase):
         self.assertIn(">******</td>", html)
 
     def test_field_is_hidden_in_latex(self):
-        html = self.manager.to_latex()
-        self.assertNotIn("& \\color{black} secret\\\\", html)
-        self.assertIn("& \\color{black} ******\\\\", html)
+        latex = self.manager.to_latex()
+        self.assertNotIn("& \\color{black} secret\\\\", latex)
+        self.assertIn("& \\color{black} ******\\\\", latex)
+
+    def test_secret_in_history_manager_in_html(self):
+        history_manager = SatA5HistoryManager({}, "History", SatA5.objects.all())
+        html = history_manager.to_html()
+        self.assertNotIn(">secret</td>", html)
+        self.assertIn(">******</td>", html)
