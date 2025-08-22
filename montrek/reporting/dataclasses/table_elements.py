@@ -582,3 +582,9 @@ class ColorCodedStringTableElement(StringTableElement):
         value_str = HtmlLatexConverter.convert(value_str)
         color = self.color_codes.get(value, ReportingColors.BLUE)
         return f" \\color{{{color.name}}} {value_str} &"
+
+
+class SecretStringTableElement(StringTableElement):
+    def get_value(self, obj: Any) -> Any:
+        value = super().get_value(obj)
+        return "*" * len(value)

@@ -141,7 +141,7 @@ class SatA5Manager(MontrekTableManager):
     def table_elements(self) -> list:
         return (
             te.StringTableElement(name="A5 String", attr="field_a5_str"),
-            te.StringTableElement(name="Secret", attr="secret_field"),
+            te.SecretStringTableElement(name="Secret", attr="secret_field"),
         )
 
 
