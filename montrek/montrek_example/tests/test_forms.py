@@ -1,8 +1,11 @@
+from django.forms import PasswordInput
 from django.test import TestCase
+from montrek_example.forms import ExampleABaseForm, ExampleACreateForm
+from montrek_example.repositories.hub_a_repository import (
+    HubARepository,
+    HubARepository5,
+)
 from montrek_example.tests.factories.montrek_example_factories import SatC1Factory
-
-from montrek_example.forms import ExampleACreateForm
-from montrek_example.repositories.hub_a_repository import HubARepository
 
 
 class TestMontrekCreateForm(TestCase):
@@ -85,3 +88,8 @@ class TestMontrekCreateForm(TestCase):
         self.assertEqual(
             test_form.fields["link_hub_a_hub_b"].widget.attrs["readonly"], "readonly"
         )
+
+    def test_encrypted_value_in_form(self):
+        repository = HubARepository5({})
+        test_form = ExampleABaseForm(repository=repository)
+        self.assertIsInstance(test_form.fields["secret_field"].widget, PasswordInput)

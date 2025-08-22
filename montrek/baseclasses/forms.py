@@ -3,8 +3,9 @@ from typing import Any
 from baseclasses.models import LinkTypeEnum
 from django import forms
 from django.contrib.admin.widgets import FilteredSelectMultiple
-from django.db.models import QuerySet, TextChoices
+from django.db.models import Field, QuerySet, TextChoices
 from django.forms.widgets import ChoiceWidget
+from encrypted_fields import EncryptedCharField
 
 
 class DateRangeForm(forms.Form):
@@ -166,13 +167,18 @@ class MontrekCreateForm(forms.ModelForm):
     def _add_satellite_fields(self):
         fields = self.repository.std_satellite_fields()
         for field in fields:
-            form_field = field.formfield()
+            form_field = self._get_form_field(field)
             form_field.validators.extend(field.validators)
             if form_field and field.name not in self._meta.exclude:
                 self.fields[field.name] = form_field
                 self.fields[field.name].widget.attrs.update(
                     {"id": f"id_{field.name}", "style": "width: 100%"}
                 )
+
+    def _get_form_field(self, field: Field):
+        if isinstance(field, EncryptedCharField):
+            return forms.CharField(widget=forms.PasswordInput(render_value=True))
+        return field.formfield()
 
     def _add_hub_entity_id_field(self):
         self.fields["hub_entity_id"] = forms.IntegerField(required=False)

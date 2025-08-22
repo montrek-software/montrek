@@ -4,7 +4,6 @@ from decimal import Decimal
 
 import pandas as pd
 from django.utils import timezone
-
 from reporting.constants import ReportingPlotType
 from reporting.core import reporting_text
 from reporting.core.reporting_data import ReportingData
@@ -12,9 +11,7 @@ from reporting.core.reporting_grid_layout import ReportGridLayout
 from reporting.core.reporting_plots import ReportingPlot
 from reporting.dataclasses import table_elements as te
 from reporting.managers.latex_report_manager import LatexReportManager
-from reporting.managers.montrek_report_manager import (
-    MontrekReportManager,
-)
+from reporting.managers.montrek_report_manager import MontrekReportManager
 from reporting.managers.montrek_table_manager import (
     MontrekDataFrameTableManager,
     MontrekTableManager,
@@ -85,6 +82,11 @@ class MockComprehensiveReportManager(MontrekReportManager):
         return reporting_plot
 
 
+class MockMeta:
+    def get_field(self, field: str):
+        return field
+
+
 @dataclass
 class MockData:
     field_a: str
@@ -92,6 +94,7 @@ class MockData:
     field_c: float
     field_d: datetime.datetime | datetime.date | timezone.datetime
     field_e: Decimal
+    _meta: MockMeta = MockMeta()
 
 
 class MockQuerySet:
