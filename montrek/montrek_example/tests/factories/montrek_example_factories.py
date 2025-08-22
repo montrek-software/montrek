@@ -90,6 +90,13 @@ class SatA4Factory(MontrekSatelliteFactory):
     hub_entity = factory.SubFactory(HubAFactory)
 
 
+class SatA5Factory(MontrekSatelliteFactory):
+    class Meta:
+        model = "montrek_example.SatA5"
+
+    hub_entity = factory.SubFactory(HubAFactory)
+
+
 class SatB1Factory(MontrekSatelliteFactory):
     class Meta:
         model = "montrek_example.SatB1"

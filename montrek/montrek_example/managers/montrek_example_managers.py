@@ -1,15 +1,18 @@
 from django.http import HttpResponse
 from django.urls import reverse
-from montrek_example.repositories.sat_a1_repository import SatA1Repository
-from reporting.managers.montrek_details_manager import MontrekDetailsManager
-from reporting.managers.montrek_table_manager import MontrekTableManager
-from reporting.managers.montrek_report_manager import MontrekReportManager
-from reporting.dataclasses import table_elements as te
-from reporting.core import reporting_text as rt
-from montrek_example.repositories.hub_a_repository import HubARepository
+from montrek_example.repositories.hub_a_repository import (
+    HubARepository,
+    HubARepository5,
+)
 from montrek_example.repositories.hub_b_repository import HubBRepository
 from montrek_example.repositories.hub_c_repository import HubCRepository
 from montrek_example.repositories.hub_d_repository import HubDRepository
+from montrek_example.repositories.sat_a1_repository import SatA1Repository
+from reporting.core import reporting_text as rt
+from reporting.dataclasses import table_elements as te
+from reporting.managers.montrek_details_manager import MontrekDetailsManager
+from reporting.managers.montrek_report_manager import MontrekReportManager
+from reporting.managers.montrek_table_manager import MontrekTableManager
 
 
 class ExampleReportManager(MontrekReportManager):
@@ -128,6 +131,17 @@ class SatA1Manager(MontrekTableManager):
         return (
             te.StringTableElement(name="A1 String", attr="field_a1_str"),
             te.IntTableElement(name="A1 Int", attr="field_a1_int"),
+        )
+
+
+class SatA5Manager(MontrekTableManager):
+    repository_class = HubARepository5
+
+    @property
+    def table_elements(self) -> list:
+        return (
+            te.StringTableElement(name="A5 String", attr="field_a5_str"),
+            te.StringTableElement(name="Secret", attr="secret_field"),
         )
 
 

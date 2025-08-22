@@ -13,6 +13,7 @@ from data_import.api_import.models import ApiRegistrySatellite
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
+from encrypted_fields import EncryptedCharField
 from file_upload.models import (
     FieldMapHubABC,
     FieldMapStaticSatelliteABC,
@@ -124,6 +125,13 @@ class SatA4(MontrekSatelliteABC):
     hub_entity = models.ForeignKey(HubA, on_delete=models.CASCADE)
     field_a4_str = models.CharField(max_length=50, default="DEFAULT")
     identifier_fields = ["hub_entity_id"]
+
+
+class SatA5(MontrekSatelliteABC):
+    hub_entity = models.ForeignKey(HubA, on_delete=models.CASCADE)
+    field_a5_str = models.CharField(max_length=50, default="DEFAULT")
+    secret_field = EncryptedCharField(max_length=24, default="SECRET")
+    identifier_fields = ["field_a5_str"]
 
 
 class SatB1(MontrekSatelliteABC, AlertMixin):

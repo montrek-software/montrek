@@ -98,6 +98,19 @@ class HubARepository4(MontrekRepository):
         )
 
 
+class HubARepository5(MontrekRepository):
+    hub_class = me_models.HubA
+
+    def set_annotations(self):
+        self.add_satellite_fields_annotations(
+            me_models.SatA5,
+            [
+                "field_a5_str",
+                "secret_field",
+            ],
+        )
+
+
 class HubAApiUploadRepository(ApiDataImportRegistryRepository):
     hub_class = me_models.HubAApiUploadRegistryHub
     registry_satellite = me_models.HubAApiUploadRegistryStaticSatellite
