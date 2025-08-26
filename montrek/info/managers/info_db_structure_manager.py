@@ -6,6 +6,7 @@ from baseclasses.models import (
     MontrekTimeSeriesSatelliteABC,
 )
 from django.apps import apps
+from django.db.models.fields.related import ForwardManyToOneDescriptor
 from info.dataclasses.db_structure_container import (
     DbStructureContainer,
     DbStructureHub,
@@ -35,18 +36,25 @@ class InfoDbStructureManager:
             if isinstance(model_inst, MontrekHubABC):
                 container_dict[app].hubs.append(DbStructureHub(**structure_kwargs))
             elif isinstance(model_inst, HubValueDate):
+                hub = self._get_related_field_name(model.hub)
                 container_dict[app].hub_value_dates.append(
-                    DbStructureHubValueDate(**structure_kwargs)
+                    DbStructureHubValueDate(**structure_kwargs, hub=hub)
                 )
             elif isinstance(model_inst, MontrekSatelliteABC):
                 container_dict[app].sats.append(
                     DbStructureSatellite(**structure_kwargs)
                 )
             elif isinstance(model_inst, MontrekTimeSeriesSatelliteABC):
+                hub_value_date = self._get_related_field_name(model.hub_value_date)
                 container_dict[app].ts_sats.append(
-                    DbStructureTSSatellite(**structure_kwargs)
+                    DbStructureTSSatellite(
+                        **structure_kwargs, hub_value_date=hub_value_date
+                    )
                 )
             elif isinstance(model_inst, MontrekLinkABC):
                 container_dict[app].links.append(DbStructureLink(**structure_kwargs))
 
         return container_dict
+
+    def _get_related_field_name(self, descriptor: ForwardManyToOneDescriptor) -> str:
+        return descriptor.field.remote_field.model.__name__
