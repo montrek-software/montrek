@@ -1,9 +1,10 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
 class DbStructureBase:
     model_name: str
+    db_table_name: str
     app: str
 
 
@@ -13,4 +14,4 @@ class DbStructureHub(DbStructureBase): ...
 
 @dataclass
 class DbStructureContainer:
-    hubs: list[DbStructureHub]
+    hubs: list[DbStructureHub] = field(default_factory=list)
