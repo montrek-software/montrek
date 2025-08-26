@@ -1,3 +1,5 @@
+import os
+
 import matplotlib.pyplot as plt
 import networkx as nx
 from baseclasses.models import (
@@ -18,6 +20,8 @@ from info.dataclasses.db_structure_container import (
     DbStructureSatellite,
     DbStructureTSSatellite,
 )
+from reporting.core.reporting_text import ReportingImage
+from reporting.managers.montrek_report_manager import MontrekReportManager
 
 
 class InfoDbStructureManager:
@@ -66,16 +70,17 @@ class InfoDbStructureManager:
 
     def save_graph_as_png(
         self, graph: nx.DiGraph, filename: str = "db_structure.png"
-    ) -> None:
+    ) -> str:
         """
         Save the networkx graph as a PNG file.
 
         Args:
             graph (nx.DiGraph): The directed graph to save.
             filename (str): The name of the file to save the graph as.
+        Returns: path to image
         """
-        path = settings.MEDIA_ROOT + filename
-        plt.figure(figsize=(12, 12))
+        path = os.path.join(settings.MEDIA_ROOT, filename)
+        plt.figure(figsize=(24, 12))
         pos = nx.spring_layout(graph)
         nx.draw(
             graph,
@@ -89,6 +94,7 @@ class InfoDbStructureManager:
         )
         plt.savefig(path)
         plt.close()
+        return path
 
     def _get_related_field_name(self, descriptor: ForwardManyToOneDescriptor) -> str:
         return descriptor.field.remote_field.model.__name__
@@ -131,3 +137,15 @@ class InfoDbStructureManager:
                 graph.add_edge(link.model_name, link.hub_out)
 
         return graph
+
+
+class InfoDbstructureReportManager(MontrekReportManager):
+    def collect_report_elements(self):
+        self.append_report_element(self.get_db_structure_network_plot())
+
+    def get_db_structure_network_plot(self):
+        db_structure_manager = InfoDbStructureManager()
+        db_structure_container = db_structure_manager.get_db_structure_container()
+        graph = db_structure_manager.to_networkx_graph(db_structure_container)
+        image_path = db_structure_manager.save_graph_as_png(graph)
+        return ReportingImage(settings.MEDIA_URL + image_path)

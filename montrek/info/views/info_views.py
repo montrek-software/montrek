@@ -1,7 +1,8 @@
-from reporting.views import MontrekReportView
-from info.pages import InfoPage
-from info.managers.info_versions_managers import InfoVersionsManager
 from info.managers.info_admin_managers import InfoAdminManager
+from info.managers.info_db_structure_manager import InfoDbstructureReportManager
+from info.managers.info_versions_managers import InfoVersionsManager
+from info.pages import InfoPage
+from reporting.views import MontrekReportView
 
 
 class InfoVersionsView(MontrekReportView):
@@ -14,3 +15,9 @@ class InfoAdminView(MontrekReportView):
     page_class = InfoPage
     manager_class = InfoAdminManager
     tab = "id_admin"
+
+
+class InfoDbStructureView(MontrekReportView):
+    page_class = InfoPage
+    manager_class = InfoDbstructureReportManager
+    tab = "id_db_structure"
