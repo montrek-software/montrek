@@ -74,7 +74,7 @@ class InfoDbStructureManager:
             graph (nx.DiGraph): The directed graph to save.
             filename (str): The name of the file to save the graph as.
         """
-        path = settings.MEDIA_ROOT / filename
+        path = settings.MEDIA_ROOT + filename
         plt.figure(figsize=(12, 12))
         pos = nx.spring_layout(graph)
         nx.draw(
