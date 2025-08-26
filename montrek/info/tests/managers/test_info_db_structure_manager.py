@@ -27,3 +27,14 @@ class TestInfoDbStructureManager(TestCase):
         self.assertEqual(hub_value_date_b.hub, "TestHubB")
         for ts_sat in info_db_structure_container.ts_sats:
             self.assertEqual(ts_sat.hub_value_date, "TestHubValueDateB")
+        expected_sat_hubs = (
+            ("TestSatA1", "TestHubA"),
+            ("TestSatA2", "TestHubA"),
+            ("TestSatB1", "TestHubB"),
+            ("TestSatB2", "TestHubB"),
+        )
+        for sat, hub in expected_sat_hubs:
+            self.assertEqual(info_db_structure_container.find_sat(sat).hub, hub)
+        link = info_db_structure_container.find_link("LinkTestHubATestHubB")
+        self.assertEqual(link.hub_in, "TestHubA")
+        self.assertEqual(link.hub_out, "TestHubB")

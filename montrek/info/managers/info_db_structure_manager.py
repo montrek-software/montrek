@@ -41,8 +41,9 @@ class InfoDbStructureManager:
                     DbStructureHubValueDate(**structure_kwargs, hub=hub)
                 )
             elif isinstance(model_inst, MontrekSatelliteABC):
+                hub = self._get_related_field_name(model.hub_entity)
                 container_dict[app].sats.append(
-                    DbStructureSatellite(**structure_kwargs)
+                    DbStructureSatellite(**structure_kwargs, hub=hub)
                 )
             elif isinstance(model_inst, MontrekTimeSeriesSatelliteABC):
                 hub_value_date = self._get_related_field_name(model.hub_value_date)
@@ -52,7 +53,11 @@ class InfoDbStructureManager:
                     )
                 )
             elif isinstance(model_inst, MontrekLinkABC):
-                container_dict[app].links.append(DbStructureLink(**structure_kwargs))
+                hub_in = self._get_related_field_name(model.hub_in)
+                hub_out = self._get_related_field_name(model.hub_out)
+                container_dict[app].links.append(
+                    DbStructureLink(**structure_kwargs, hub_in=hub_in, hub_out=hub_out)
+                )
 
         return container_dict
 

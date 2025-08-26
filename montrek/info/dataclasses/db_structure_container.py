@@ -19,7 +19,8 @@ class DbStructureHubValueDate(DbStructureBase):
 
 
 @dataclass
-class DbStructureSatellite(DbStructureBase): ...
+class DbStructureSatellite(DbStructureBase):
+    hub: str
 
 
 @dataclass
@@ -28,7 +29,9 @@ class DbStructureTSSatellite(DbStructureBase):
 
 
 @dataclass
-class DbStructureLink(DbStructureBase): ...
+class DbStructureLink(DbStructureBase):
+    hub_in: str
+    hub_out: str
 
 
 T = TypeVar("T", bound=DbStructureBase)
@@ -55,3 +58,9 @@ class DbStructureContainer:
         self, hub_value_date_name: str
     ) -> DbStructureHubValueDate | None:
         return self.find_model(hub_value_date_name, self.hub_value_dates)
+
+    def find_sat(self, sat_name: str) -> DbStructureSatellite | None:
+        return self.find_model(sat_name, self.sats)
+
+    def find_link(self, link_name: str) -> DbStructureLink | None:
+        return self.find_model(link_name, self.links)
