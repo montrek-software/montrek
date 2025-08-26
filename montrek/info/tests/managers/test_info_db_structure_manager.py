@@ -9,4 +9,4 @@ class TestInfoDbStructureManager(TestCase):
     def test_get_db_structure_container(self):
         manager = InfoDbStructureManager()
         db_structure_container = manager.get_db_structure_container()
-        self.assertIsInstance(db_structure_container, DbStructureContainer)
+        self.assertIsInstance(db_structure_container["info"], DbStructureContainer)
