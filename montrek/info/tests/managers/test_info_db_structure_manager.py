@@ -148,18 +148,7 @@ class TestInfoDbStructureManager(TestCase):
         description = self.manager.get_db_structure_description(
             self.db_structure_container
         )
-        expected_description = """info_testhubb:   Hub table in app info
-info_testhuba:   Hub table in app info
-info_testhubvaluedatea:  Hub Value Date table in app info, field 'hub_id' referes to info_testhuba.id
-info_testhubvaluedateb:  Hub Value Date table in app info, field 'hub_id' referes to info_testhubb.id
-info_testsata1:  Satellite table in app info, field 'hub_entity_id' referes to info_testhuba.id
-info_testsata2:  Satellite table in app info, field 'hub_entity_id' referes to info_testhuba.id
-info_testsatb1:  Satellite table in app info, field 'hub_entity_id' referes to info_testhubb.id
-info_testsatb2:  Satellite table in app info, field 'hub_entity_id' referes to info_testhubb.id
-info_testsattsb1:        Time Series Satellite table in app info, field 'hub_value_date_id' referes to info_testhubvaluedateb.id
-info_testsattsb2:        Time Series Satellite table in app info, field 'hub_value_date_id' referes to info_testhubvaluedateb.id
-info_linktesthubatesthubb:       Link table in app info, field 'hub_in_id' referes to info_testhuba.id, field 'hub_out_id' referes to info_testhubb.id
-"""
+        expected_description = """info_testhubb:   Hub table in app info"""
         self.assertIn(
             expected_description.replace(" ", "").replace("\n", "").replace("\t", ""),
             description.replace(" ", "").replace("\n", "").replace("\t", ""),

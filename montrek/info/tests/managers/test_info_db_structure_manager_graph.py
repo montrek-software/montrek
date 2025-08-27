@@ -1,24 +1,18 @@
-import os
-
-import networkx as nx
-from django.conf import settings
 from django.test import TestCase
-from info.managers.info_db_structure_manager import InfoDbStructureManager
+from info.managers.info_db_structure_manager import (
+    InfoDbStructureManager,
+    InfoDbStructureNetworkReportingElement,
+)
 
 
 class TestInfoDbStructureManagerGraph(TestCase):
     def setUp(self):
         self.manager = InfoDbStructureManager()
         self.db_structure_container = self.manager.get_db_structure_container()
-        self.graph = self.manager.to_networkx_graph(self.db_structure_container)
-
-    def test_save_graph_as_png(self):
-        filename = "test_db_structure.png"
-        self.manager.save_graph_as_png(self.graph, filename)
-        path = settings.MEDIA_ROOT + filename
-        self.assertTrue(os.path.exists(path))
-        os.remove(path)
-        self.assertIsInstance(self.graph, nx.DiGraph)
+        self.graph_manager = InfoDbStructureNetworkReportingElement(
+            self.db_structure_container
+        )
+        self.graph = self.graph_manager.to_networkx_graph(self.db_structure_container)
 
     def test_graph_nodes(self):
         expected_nodes = {
