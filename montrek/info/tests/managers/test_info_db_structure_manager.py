@@ -1,3 +1,4 @@
+import pandas as pd
 from django.test import TestCase
 from info.managers.info_db_structure_manager import (
     DbStructureContainer,
@@ -56,38 +57,87 @@ class TestInfoDbStructureManager(TestCase):
         for sat, hub in expected_sat_hubs:
             self.assertEqual(self.info_db_structure_container.find_sat(sat).hub, hub)
 
-    def test_link_hubs(self):
-        link = self.info_db_structure_container.find_link("LinkTestHubATestHubB")
-        self.assertEqual(link.hub_in, "TestHubA")
-        self.assertEqual(link.hub_out, "TestHubB")
-        manager = InfoDbStructureManager()
-        db_structure_container = manager.get_db_structure_container()
-        example_app = "info"
-        info_db_structure_container = db_structure_container[example_app]
-        self.assertIsInstance(info_db_structure_container, DbStructureContainer)
-        self.assertEqual(len(info_db_structure_container.hubs), 2)
-        self.assertEqual(len(info_db_structure_container.hub_value_dates), 2)
-        self.assertEqual(len(info_db_structure_container.sats), 4)
-        self.assertEqual(len(info_db_structure_container.ts_sats), 2)
-        self.assertEqual(len(info_db_structure_container.links), 1)
-        hub_value_date_a = info_db_structure_container.find_hub_value_date(
-            "TestHubValueDateA"
-        )
-        self.assertEqual(hub_value_date_a.hub, "TestHubA")
-        hub_value_date_b = info_db_structure_container.find_hub_value_date(
-            "TestHubValueDateB"
-        )
-        self.assertEqual(hub_value_date_b.hub, "TestHubB")
-        for ts_sat in info_db_structure_container.ts_sats:
-            self.assertEqual(ts_sat.hub_value_date, "TestHubValueDateB")
-        expected_sat_hubs = (
-            ("TestSatA1", "TestHubA"),
-            ("TestSatA2", "TestHubA"),
-            ("TestSatB1", "TestHubB"),
-            ("TestSatB2", "TestHubB"),
-        )
-        for sat, hub in expected_sat_hubs:
-            self.assertEqual(info_db_structure_container.find_sat(sat).hub, hub)
-        link = info_db_structure_container.find_link("LinkTestHubATestHubB")
-        self.assertEqual(link.hub_in, "TestHubA")
-        self.assertEqual(link.hub_out, "TestHubB")
+    def test_get_db_structure_df(self):
+        test_df = self.manager.get_db_structure_df(self.db_structure_container)
+        test_df = test_df.loc[test_df["app"] == self.example_app]
+        expecetd_data = [
+            {
+                "app": "info",
+                "type": "Hub",
+                "name": "TestHubB",
+                "db_table_name": "info_testhubb",
+                "link": "",
+            },
+            {
+                "app": "info",
+                "type": "Hub",
+                "name": "TestHubA",
+                "db_table_name": "info_testhuba",
+                "link": "",
+            },
+            {
+                "app": "info",
+                "type": "HubValueDate",
+                "name": "TestHubValueDateA",
+                "db_table_name": "info_testhubvaluedatea",
+                "link": "Hub: TestHubA",
+            },
+            {
+                "app": "info",
+                "type": "HubValueDate",
+                "name": "TestHubValueDateB",
+                "db_table_name": "info_testhubvaluedateb",
+                "link": "Hub: TestHubB",
+            },
+            {
+                "app": "info",
+                "type": "Satellite",
+                "name": "TestSatA1",
+                "db_table_name": "info_testsata1",
+                "link": "Hub: TestHubA",
+            },
+            {
+                "app": "info",
+                "type": "Satellite",
+                "name": "TestSatA2",
+                "db_table_name": "info_testsata2",
+                "link": "Hub: TestHubA",
+            },
+            {
+                "app": "info",
+                "type": "Satellite",
+                "name": "TestSatB1",
+                "db_table_name": "info_testsatb1",
+                "link": "Hub: TestHubB",
+            },
+            {
+                "app": "info",
+                "type": "Satellite",
+                "name": "TestSatB2",
+                "db_table_name": "info_testsatb2",
+                "link": "Hub: TestHubB",
+            },
+            {
+                "app": "info",
+                "type": "TS Satellite",
+                "name": "TestSatTSB1",
+                "db_table_name": "info_testsattsb1",
+                "link": "Hub Value Date: TestHubValueDateB",
+            },
+            {
+                "app": "info",
+                "type": "TS Satellite",
+                "name": "TestSatTSB2",
+                "db_table_name": "info_testsattsb2",
+                "link": "Hub Value Date: TestHubValueDateB",
+            },
+            {
+                "app": "info",
+                "type": "Link",
+                "name": "LinkTestHubATestHubB",
+                "db_table_name": "info_linktesthubatesthubb",
+                "link": "Hub in: TestHubA, Hub out: TestHubB",
+            },
+        ]
+
+        pd.testing.assert_frame_equal(test_df, pd.DataFrame(expecetd_data))

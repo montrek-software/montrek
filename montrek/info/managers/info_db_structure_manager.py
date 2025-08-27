@@ -3,6 +3,7 @@ import math
 
 import networkx as nx
 import numpy as np
+import pandas as pd
 import plotly.graph_objects as go
 from baseclasses.models import (
     HubValueDate,
@@ -11,6 +12,7 @@ from baseclasses.models import (
     MontrekSatelliteABC,
     MontrekTimeSeriesSatelliteABC,
 )
+from baseclasses.typing import TableElementsType
 from django.apps import apps
 from django.db.models.fields.related import ForwardManyToOneDescriptor
 from info.dataclasses.db_structure_container import (
@@ -22,14 +24,16 @@ from info.dataclasses.db_structure_container import (
     DbStructureTSSatellite,
 )
 from reporting.core.reporting_colors import ReportingColors
+from reporting.dataclasses import table_elements as te
 from reporting.managers.montrek_report_manager import MontrekReportManager
+from reporting.managers.montrek_table_manager import MontrekDataFrameTableManager
 
 
 class InfoDbStructureManager:
     def get_db_structure_container(self) -> dict[str, DbStructureContainer]:
         all_models = apps.get_models()
         container_dict = {}
-        excluded_apps = ["montrek_example", "baseclasses", "info"]
+        excluded_apps = ["montrek_example", "baseclasses"]
         for model in all_models:
             app = model._meta.app_label
             if app in excluded_apps:
@@ -71,6 +75,45 @@ class InfoDbStructureManager:
                 )
 
         return container_dict
+
+    def get_db_structure_df(
+        self, container: dict[str, DbStructureContainer]
+    ) -> pd.DataFrame:
+        df_data = {"app": [], "type": [], "name": [], "db_table_name": [], "link": []}
+        for app in container.keys():
+            for hub in container[app].hubs:
+                df_data["app"].append(app)
+                df_data["name"].append(hub.model_name)
+                df_data["db_table_name"].append(hub.db_table_name)
+                df_data["type"].append("Hub")
+                df_data["link"].append("")
+            for hub_vd in container[app].hub_value_dates:
+                df_data["app"].append(app)
+                df_data["name"].append(hub_vd.model_name)
+                df_data["db_table_name"].append(hub_vd.db_table_name)
+                df_data["type"].append("HubValueDate")
+                df_data["link"].append(f"Hub: {hub_vd.hub}")
+            for sat in container[app].sats:
+                df_data["app"].append(app)
+                df_data["name"].append(sat.model_name)
+                df_data["db_table_name"].append(sat.db_table_name)
+                df_data["type"].append("Satellite")
+                df_data["link"].append(f"Hub: {sat.hub}")
+            for sat in container[app].ts_sats:
+                df_data["app"].append(app)
+                df_data["name"].append(sat.model_name)
+                df_data["db_table_name"].append(sat.db_table_name)
+                df_data["type"].append("TS Satellite")
+                df_data["link"].append(f"Hub Value Date: {sat.hub_value_date}")
+            for link in container[app].links:
+                df_data["app"].append(app)
+                df_data["name"].append(link.model_name)
+                df_data["db_table_name"].append(link.db_table_name)
+                df_data["type"].append("Link")
+                df_data["link"].append(
+                    f"Hub in: {link.hub_in}, Hub out: {link.hub_out}"
+                )
+        return pd.DataFrame(df_data)
 
     def _get_related_field_name(self, descriptor: ForwardManyToOneDescriptor) -> str:
         return descriptor.field.remote_field.model.__name__
@@ -315,11 +358,33 @@ class InfoDbStructureNetworkReportingElement:
         return figure.to_html(full_html=False, include_plotlyjs=False)
 
 
+class InfoDbStructureDataFrameTableManager(MontrekDataFrameTableManager):
+    @property
+    def table_elements(self) -> TableElementsType:
+        return [
+            te.StringTableElement("App", "app"),
+            te.StringTableElement("Type", "type"),
+            te.StringTableElement("Name", "name"),
+            te.StringTableElement("DB Name", "db_table_name"),
+            te.StringTableElement("Link", "link"),
+        ]
+
+
 class InfoDbstructureReportManager(MontrekReportManager):
     def collect_report_elements(self):
         self.db_structure_manager = InfoDbStructureManager()
         self.append_report_element(self.get_db_structure_network_plot())
+        self.append_report_element(self.get_db_structure_table())
 
     def get_db_structure_network_plot(self):
-        db_structure_container = InfoDbStructureManager().get_db_structure_container()
+        db_structure_container = self.db_structure_manager.get_db_structure_container()
         return InfoDbStructureNetworkReportingElement(db_structure_container)
+
+    def get_db_structure_table(self):
+        db_structure_container = self.db_structure_manager.get_db_structure_container()
+        db_structure_df = self.db_structure_manager.get_db_structure_df(
+            db_structure_container
+        )
+        return InfoDbStructureDataFrameTableManager(
+            {"df_data": db_structure_df.to_dict(orient="records")}
+        )
