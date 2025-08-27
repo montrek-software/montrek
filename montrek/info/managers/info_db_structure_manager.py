@@ -72,6 +72,14 @@ class InfoDbStructureManager:
 
         return container_dict
 
+    def _get_related_field_name(self, descriptor: ForwardManyToOneDescriptor) -> str:
+        return descriptor.field.remote_field.model.__name__
+
+
+class InfoDbStructureNetworkReportingElement:
+    def __init__(self, db_structure_container):
+        self.db_structure_container = db_structure_container
+
     def to_plotly_figure(self, graph: nx.DiGraph) -> go.Figure:
         """
         Convert a networkx DiGraph into an interactive Plotly figure.
@@ -262,9 +270,6 @@ class InfoDbStructureManager:
 
         return pos
 
-    def _get_related_field_name(self, descriptor: ForwardManyToOneDescriptor) -> str:
-        return descriptor.field.remote_field.model.__name__
-
     def to_networkx_graph(
         self, container_dict: dict[str, DbStructureContainer]
     ) -> nx.DiGraph:
@@ -305,15 +310,16 @@ class InfoDbStructureManager:
         return graph
 
     def to_html(self):
-        db_structure_container = self.get_db_structure_container()
-        graph = self.to_networkx_graph(db_structure_container)
+        graph = self.to_networkx_graph(self.db_structure_container)
         figure = self.to_plotly_figure(graph)
         return figure.to_html(full_html=False, include_plotlyjs=False)
 
 
 class InfoDbstructureReportManager(MontrekReportManager):
     def collect_report_elements(self):
+        self.db_structure_manager = InfoDbStructureManager()
         self.append_report_element(self.get_db_structure_network_plot())
 
     def get_db_structure_network_plot(self):
-        return InfoDbStructureManager()
+        db_structure_container = InfoDbStructureManager().get_db_structure_container()
+        return InfoDbStructureNetworkReportingElement(db_structure_container)
