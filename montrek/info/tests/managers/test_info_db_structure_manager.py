@@ -139,6 +139,7 @@ class TestInfoDbStructureManager(TestCase):
                 "link": "Hub in: TestHubA, Hub out: TestHubB",
             },
         ]
+        test_df = test_df.reset_index(drop=True)
 
         pd.testing.assert_frame_equal(
             test_df, pd.DataFrame(expected_data), check_index_type=False
