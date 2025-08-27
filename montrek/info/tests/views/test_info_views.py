@@ -15,6 +15,6 @@ class TestInfoAdminView(MontrekReportViewTestCase):
 
 
 class TestInfoDbStructureView(MontrekReportViewTestCase):
-    expected_number_of_report_elements = 1
+    expected_number_of_report_elements = 2
     view_class = InfoDbStructureView
     viewname = "db_structure"

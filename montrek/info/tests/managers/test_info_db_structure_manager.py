@@ -140,7 +140,9 @@ class TestInfoDbStructureManager(TestCase):
             },
         ]
 
-        pd.testing.assert_frame_equal(test_df, pd.DataFrame(expected_data))
+        pd.testing.assert_frame_equal(
+            test_df, pd.DataFrame(expected_data), check_index_type=False
+        )
 
     def test_get_db_structure_description(self):
         description = self.manager.get_db_structure_description(

@@ -390,6 +390,12 @@ class InfoDbStructureNetworkReportingElement:
         figure = self.to_plotly_figure(graph)
         return figure.to_html(full_html=False, include_plotlyjs=False)
 
+    def to_latex(self) -> str:
+        return ""
+
+    def to_json(self) -> dict:
+        return {}
+
 
 class InfoDbStructureDataFrameTableManager(MontrekDataFrameTableManager):
     @property
