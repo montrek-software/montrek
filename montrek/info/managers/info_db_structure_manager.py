@@ -86,6 +86,7 @@ class InfoDbStructureManager:
             x1, y1 = pos[dst]
             edge_x += [x0, x1, None]
             edge_y += [y0, y1, None]
+
         edge_trace = go.Scatter(
             x=edge_x,
             y=edge_y,
@@ -119,7 +120,13 @@ class InfoDbStructureManager:
             x, y = pos[node]
             node_x.append(x)
             node_y.append(y)
-            node_text.append(node)
+            txt = (
+                node.replace("Satellite", "")
+                .replace("Link", "")
+                .replace("Hub", "")
+                .replace("ValueDate", "")
+            )
+            node_text.append(f"<b>{txt}</b>")
             t = attrs.get("type")
             hover_text.append(f"<b>{node}</b><br>{t}<br>app={attrs.get('app')}")
             node_symbols.append(symbol_map.get(t, "circle"))
@@ -130,7 +137,7 @@ class InfoDbStructureManager:
             y=node_y,
             mode="markers+text",
             text=node_text,
-            textposition="top center",
+            # textposition="top center",
             hovertext=hover_text,
             hoverinfo="text",
             marker=dict(color=node_color, size=20, line_width=2, symbol=node_symbols),
