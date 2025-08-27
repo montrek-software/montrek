@@ -17,16 +17,16 @@ class TokenEndpointLiveTests(LiveServerTestCase):
             email="alice@example.com",
             password=cls.password,
         )
+        cls.payload = {"email": cls.user.email, "password": cls.password}
 
     def test_obtain_token_via_http(self):
         # Test Data
         test_sat = SatD1Factory()
         # If your login uses email, change payload to {"email": self.user.email, "password": self.password}
-        payload = {"email": self.user.email, "password": self.password}
         url = f"{self.live_server_url}/rest_api/token/"
 
         resp = requests.post(
-            url, json=payload, headers={"Accept": "application/json"}, timeout=10
+            url, json=self.payload, headers={"Accept": "application/json"}, timeout=10
         )
         self.assertEqual(resp.status_code, 200, resp.text)
         data = resp.json()
@@ -54,3 +54,18 @@ class TokenEndpointLiveTests(LiveServerTestCase):
             "field_tsd2_int": None,
         }
         self.assertEqual(data, [expected_data])
+
+    def test_restricted_api_call__not_authorised(self):
+        url = f"{self.live_server_url}/rest_api/token/"
+
+        resp = requests.post(
+            url, json=self.payload, headers={"Accept": "application/json"}, timeout=10
+        )
+        data = resp.json()
+        token = data["access"]
+        rest_api_url = (
+            f"{self.live_server_url}/montrek_example/d/listrestricted?gen_rest_api=true"
+        )
+        headers = {"Authorization": f"Bearer {token}"}
+        response = requests.get(rest_api_url, headers=headers, timeout=10)
+        self.assertEqual(response.status_code, 200)

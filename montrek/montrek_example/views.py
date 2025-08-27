@@ -1,16 +1,15 @@
 import time
 
-from django.contrib import messages
-from django.http import HttpResponseRedirect
-from django.urls import reverse
-from django.views.decorators.http import require_safe
-
 from baseclasses import views
 from baseclasses.dataclasses.view_classes import (
     ActionElement,
     CreateActionElement,
     UploadActionElement,
 )
+from django.contrib import messages
+from django.http import HttpResponseRedirect
+from django.urls import reverse
+from django.views.decorators.http import require_safe
 from file_upload.views import (
     FileUploadRegistryView,
     MontrekDownloadFileView,
@@ -20,30 +19,20 @@ from file_upload.views import (
     MontrekFieldMapUpdateView,
     MontrekUploadFileView,
 )
-from montrek.celery_app import (
-    PARALLEL_QUEUE_NAME,
-    SEQUENTIAL_QUEUE_NAME,
-)
-from montrek.celery_app import (
-    app as celery_app,
-)
 from montrek_example import forms, pages
 from montrek_example.managers import montrek_example_managers as mem
-from montrek_example.managers.a1_field_map_manager import (
-    A1FieldMapManager,
-)
-from montrek_example.managers.a1_file_upload_manager import (
-    A1FileUploadManager,
-)
+from montrek_example.managers.a1_field_map_manager import A1FieldMapManager
+from montrek_example.managers.a1_file_upload_manager import A1FileUploadManager
 from montrek_example.managers.a2_api_upload_manager import A2ApiUploadManager
 from montrek_example.managers.a_upload_table_manager import (
     HubAFileUploadRegistryManager,
     HubAUploadTableManager,
 )
 from reporting.views import MontrekReportFieldEditView, MontrekReportView
-from requesting.views.authenticator_views import (
-    AuthenticatorUserPasswordView,
-)
+from requesting.views.authenticator_views import AuthenticatorUserPasswordView
+
+from montrek.celery_app import PARALLEL_QUEUE_NAME, SEQUENTIAL_QUEUE_NAME
+from montrek.celery_app import app as celery_app
 
 
 def action_back_to_overview(example: str):
@@ -269,6 +258,10 @@ class MontrekExampleDList(views.MontrekListView):
         return (action_back_to_overview("d"), action_new_example_d)
 
     success_url = "montrek_example_d_list"
+
+
+class MontrekExampleDListResticted(MontrekExampleDList):
+    permission_required = ["montrek_example.add_hubd"]
 
 
 class MontrekExampleDCreate(views.MontrekCreateView):
