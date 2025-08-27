@@ -60,7 +60,7 @@ class TestInfoDbStructureManager(TestCase):
     def test_get_db_structure_df(self):
         test_df = self.manager.get_db_structure_df(self.db_structure_container)
         test_df = test_df.loc[test_df["app"] == self.example_app]
-        expecetd_data = [
+        expected_data = [
             {
                 "app": "info",
                 "type": "Hub",
@@ -140,7 +140,7 @@ class TestInfoDbStructureManager(TestCase):
             },
         ]
 
-        pd.testing.assert_frame_equal(test_df, pd.DataFrame(expecetd_data))
+        pd.testing.assert_frame_equal(test_df, pd.DataFrame(expected_data))
 
     def test_get_db_structure_description(self):
         description = self.manager.get_db_structure_description(
