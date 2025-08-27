@@ -90,7 +90,7 @@ urlpatterns = [
         name="montrek_example_d_list",
     ),
     path(
-        "d/listresticted",
+        "d/listrestricted",
         views.MontrekExampleDListResticted.as_view(),
         name="montrek_example_d_list_restricted",
     ),
