@@ -10,28 +10,47 @@ class DbStructureBase:
 
 
 @dataclass
-class DbStructureHub(DbStructureBase): ...
+class DbStructureHub(DbStructureBase):
+    def __str__(self) -> str:
+        return f"{self.db_table_name}:\t Hub table in app {self.app}\n"
 
 
 @dataclass
 class DbStructureHubValueDate(DbStructureBase):
     hub: str
+    hub_db: str
+
+    def __str__(self) -> str:
+        return f"{self.db_table_name}:\t Hub Value Date table in app {self.app}, field 'hub_id' referes to {self.hub_db}.id\n"
 
 
 @dataclass
 class DbStructureSatellite(DbStructureBase):
     hub: str
+    hub_db: str
+
+    def __str__(self) -> str:
+        return f"{self.db_table_name}:\t Satellite table in app {self.app}, field 'hub_entity_id' referes to {self.hub_db}.id\n"
 
 
 @dataclass
 class DbStructureTSSatellite(DbStructureBase):
     hub_value_date: str
+    hub_value_date_db: str
+
+    def __str__(self) -> str:
+        return f"{self.db_table_name}:\t Time Series Satellite table in app {self.app}, field 'hub_value_date_id' referes to {self.hub_value_date_db}.id\n"
 
 
 @dataclass
 class DbStructureLink(DbStructureBase):
     hub_in: str
     hub_out: str
+    hub_in_db: str
+    hub_out_db: str
+
+    def __str__(self) -> str:
+        return f"{self.db_table_name}:\t Link table in app {self.app}, field 'hub_in_id' referes to {self.hub_in_db}.id, field 'hub_out_id' referes to {self.hub_out_db}.id\n"
 
 
 T = TypeVar("T", bound=DbStructureBase)

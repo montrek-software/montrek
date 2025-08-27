@@ -52,26 +52,39 @@ class InfoDbStructureManager:
                 container_dict[app].hubs.append(DbStructureHub(**structure_kwargs))
             elif isinstance(model_inst, HubValueDate):
                 hub = self._get_related_field_name(model.hub)
+                hub_db = self._get_related_db_name(model.hub)
                 container_dict[app].hub_value_dates.append(
-                    DbStructureHubValueDate(**structure_kwargs, hub=hub)
+                    DbStructureHubValueDate(**structure_kwargs, hub=hub, hub_db=hub_db)
                 )
             elif isinstance(model_inst, MontrekSatelliteABC):
                 hub = self._get_related_field_name(model.hub_entity)
+                hub_db = self._get_related_db_name(model.hub_entity)
                 container_dict[app].sats.append(
-                    DbStructureSatellite(**structure_kwargs, hub=hub)
+                    DbStructureSatellite(**structure_kwargs, hub=hub, hub_db=hub_db)
                 )
             elif isinstance(model_inst, MontrekTimeSeriesSatelliteABC):
                 hub_value_date = self._get_related_field_name(model.hub_value_date)
+                hub_value_date_db = self._get_related_db_name(model.hub_value_date)
                 container_dict[app].ts_sats.append(
                     DbStructureTSSatellite(
-                        **structure_kwargs, hub_value_date=hub_value_date
+                        **structure_kwargs,
+                        hub_value_date=hub_value_date,
+                        hub_value_date_db=hub_value_date_db,
                     )
                 )
             elif isinstance(model_inst, MontrekLinkABC):
                 hub_in = self._get_related_field_name(model.hub_in)
                 hub_out = self._get_related_field_name(model.hub_out)
+                hub_in_db = self._get_related_db_name(model.hub_in)
+                hub_out_db = self._get_related_db_name(model.hub_out)
                 container_dict[app].links.append(
-                    DbStructureLink(**structure_kwargs, hub_in=hub_in, hub_out=hub_out)
+                    DbStructureLink(
+                        **structure_kwargs,
+                        hub_in=hub_in,
+                        hub_out=hub_out,
+                        hub_in_db=hub_in_db,
+                        hub_out_db=hub_out_db,
+                    )
                 )
 
         return container_dict
@@ -115,8 +128,28 @@ class InfoDbStructureManager:
                 )
         return pd.DataFrame(df_data)
 
+    def get_db_structure_description(
+        self, container: dict[str, DbStructureContainer]
+    ) -> str:
+        description_str = ""
+        for app in container.keys():
+            for hub in container[app].hubs:
+                description_str += str(hub)
+            for hub_vd in container[app].hub_value_dates:
+                description_str += str(hub_vd)
+            for sat in container[app].sats:
+                description_str += str(sat)
+            for sat in container[app].ts_sats:
+                description_str += str(sat)
+            for link in container[app].links:
+                description_str += str(link)
+        return description_str
+
     def _get_related_field_name(self, descriptor: ForwardManyToOneDescriptor) -> str:
         return descriptor.field.remote_field.model.__name__
+
+    def _get_related_db_name(self, descriptor: ForwardManyToOneDescriptor) -> str:
+        return descriptor.field.remote_field.model._meta.db_table
 
 
 class InfoDbStructureNetworkReportingElement:
