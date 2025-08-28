@@ -260,7 +260,7 @@ class MontrekExampleDList(views.MontrekListView):
     success_url = "montrek_example_d_list"
 
 
-class MontrekExampleDListResticted(MontrekExampleDList):
+class MontrekExampleDListRestricted(MontrekExampleDList):
     permission_required = ["montrek_example.show_hubd"]
 
 
