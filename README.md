@@ -1,324 +1,224 @@
 # montrek
 
-The montrek software is a powerful tool to manage data, generate reports, analyse data and to provide a web interface for easy usage. It is highly customizable such that it can be used in wide range of applications.
+**montrek** is a flexible software platform for data management, report generation, data analysis, and providing a web interface for easy interaction.
+It is highly customizable and can be adapted for a wide range of applications.
 
-## Installation Notes
+---
+
+## Installation Guide
 
 ### Prerequisites
 
-- git (<https://git-scm.com/book/en/v2/Getting-Started-Installing-Git>)
-- Access rights to github repository (<https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account>)
-- openssl
-- make
-- docker (<https://docs.docker.com/engine/install/>)
-- make docker accessible for your user
+Before installing, ensure the following are available on your system:
 
-### Checkout Repository
+- [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
+- [GitHub access via SSH](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account)
+- OpenSSL
+- `make`
+- [Docker](https://docs.docker.com/engine/install/)
+- Docker must be accessible for your user (ensure your user is in the `docker` group)
 
-Do
+---
 
-```
+### Clone the Repository
+
+Run:
+
+```bash
 git clone git@github.com:chrishombach/montrek.git <your-folder>
 ```
 
-### Setup .env file
+---
 
-The .env file is the central configuration file for montrek.
+### Configure Environment
 
-_Since this file contains sensitive information, it should be handled carefully._
+The `.env` file is the **central configuration file** for montrek.
+It contains sensitive information and should be handled carefully.
 
-Copy the template file:
+1. Copy the template:
+
+   ```bash
+   cp .env.template .env
+   ```
+
+2. Fill in all required configuration values inside `.env`.
+
+---
+
+### Generate HTTPS Certificates
+
+From the project root directory, run:
 
 ```bash
-cp .env.template .env
+make server-generate-https-certs
 ```
 
-Fill in all required information in the .env file.
+Follow the prompts to provide certificate details.
 
-### Generate HTTPS Certificate
+---
 
-Run the following commands in the root directory of the project:
+### Add Additional Repositories
 
-```bash
-make generate-https-certs
-```
+If your project requires additional client or montrek repositories:
 
-and enter the information.
+1. Clone the repository inside the **montrek base folder**:
 
-### Start docker
+   ```bash
+   make clone-repository <name_of_repo>
+   ```
 
-Run:
+2. Register the repository in `.env` by updating `NAVBAR_APPS`.
+
+   Example:
+
+   ```bash
+   make clone-repository mt_economic_common
+   ```
+
+   Then set in `.env`:
+
+   ```
+   NAVBAR_APPS=mt_economic_common.country,mt_economic_common.currency
+   ```
+
+---
+
+### Start Docker
+
+Build and start the containers:
 
 ```bash
 make docker-up
 ```
 
-This will build the docker containers and start the montrek server.
-
-You should now be able to access montrek in your webbrowser:
+Once running, you can access montrek in your browser at:
 
 ```
-<IP:PORT>
+https://<PROJECT_NAME>.<DEPLOY_HOST>
 ```
 
-## Add new repository
+---
 
-To add a new repository to the montrek project, you have to follow these steps:
+### Keycloak Setup (Optional)
 
-Run:
+By default, montrek uses Django’s authentication framework.
+If you need **two-factor authentication** or advanced user management, enable **Keycloak**.
+
+Instructions are available in:
+`docs/keycloak_setup.md`
+
+---
+
+## Local Setup (For Developers)
+
+For development, the Django application can be run locally without Docker.
+
+### 1. Setup Python Environment
+
+Initialize a local environment:
 
 ```bash
-make clone-repository <name_of_repo>
+make local-init
 ```
 
-And add the app to `NAVBAR_APPS` in the .env file.
+This sets up a `pyenv` virtual environment and installs all dependencies.
 
-E.g. do:
+---
+
+### 2. Setup Database
+
+The easiest option is to use the database running inside Docker.
+
+1. In `.env`, set:
+
+   ```
+   DB_HOST=localhost
+   ```
+
+2. Start the database container:
+
+   ```bash
+   docker compose up db -d
+   ```
+
+---
+
+### 3. Run Application
+
+For debugging and local development:
+
+1. Enable debug mode in `.env`:
+
+   ```
+   DEBUG=1
+   ```
+
+2. Start the Django server:
+
+   ```bash
+   cd montrek
+   python manage.py runserver
+   ```
+
+3. Open the application in your browser.
+
+4. If running for the first time (or after new migrations):
+
+   ```bash
+   python manage.py migrate
+   ```
+
+---
+
+## Common Tasks
+
+### Update Requirements
+
+To add new dependencies:
+
+1. Add packages to the relevant `requirements.in` file (base or module-specific).
+2. Sync and install dependencies:
+
+   ```bash
+   make sync-local-python-env
+   ```
+
+---
+
+### Database Backup
+
+Create a backup:
 
 ```bash
-make clone-repository mt_economic_common
+make docker-db-backup
 ```
 
-and set in the .env file:
+- Ensure `db` and `web` containers are running.
+- Backup files are stored in `db_backups/`.
+- Old backups are pruned automatically:
+  - Older than **30 days** (unless end-of-month) → deleted.
+  - Older than **1 year** → deleted.
 
-```
-NAVBAR_APPS=mt_economic_common.country,mt_economic_common.currency
-```
+To automate backups on Unix systems, add a cronjob:
 
-Restart docker.
-
-# This section might be outdated
-
-## TODO: Check section
-
-### DB Setup
-
-1a) Install PostgreSQL
-
-- Follow installation for your OS at <https://www.postgresql.org/download/>
-- Initalise data directory `initdb /usr/local/var/postgres`
-- Start server `pg_ctl -D /usr/local/var/postgres start`
-- Create a database `createdb montrek_db`
-- Create a user `createuser root`
-- Login to database `psql montrek_db`
-
-1b) Install MariaDB
-
-(Largely taken from [Django-Maria-DB Setup](https://www.digitalocean.com/community/tutorials/how-to-use-mysql-or-mariadb-with-your-django-application-on-ubuntu-14-04))
-
-If your system has already MariaDB installed, you can skip this step
-
-Install the packages from the repositories by typing:
-
+```bash
+crontab -e
 ```
 
-sudo apt-get update
-sudo apt-get install python-pip python-dev mariadb-server libmariadbclient-dev libssl-dev
+Example entry (daily at 10:15):
 
 ```
-
-You will be asked to select and confirm a password for the administrative MariaDB account.
-
-You can then run through a simple security script by running:
-
+15 10 * * * cd <path-to-montrek> && make docker-db-backup
 ```
 
-sudo mysql_secure_installation
+---
 
+### Database Restore
+
+To restore a backup:
+
+```bash
+make docker-db-restore
 ```
 
-You’ll be asked for the administrative password you set for MariaDB during installation. Afterwards, you’ll be asked a series of questions. Besides the first question, asking you to choose another administrative password, select yes for each question.
-
-With the installation and initial database configuration out of the way, we can move on to create our database and database user.
-
-2. Create a database and user
-
-We can start by logging into an interactive session with our database software by typing the following:
-
-```
-
-mysql -u root -p
-
-```
-
-You will be prompted for the administrative password you selected during installation. Afterwards, you will be given a prompt.
-
-First, we will create a database for our Montrek project. Each project should have its own isolated database for security reasons. We will call our database montrek_db in this guide, but it’s always better to select something more descriptive. We’ll set the default type for the database to UTF-8, which is what Django expects:
-
-```sql
-CREATE DATABASE montrek_db CHARACTER SET UTF8;
-```
-
-Remember to end all commands at an SQL prompt with a semicolon.
-
-Next, we will create a database user which we will use to connect to and interact with the database. Set the password to something strong and secure:
-
-```sql
-CREATE USER montrekuser@localhost IDENTIFIED BY 'password';
-```
-
-Now, all we need to do is give our database user access rights to the database we created:
-
-```sql
-GRANT ALL PRIVILEGES ON montrek_db.* TO montrekuser@localhost;
-GRANT ALL PRIVILEGES ON test_montrek_db.* TO 'montrekuser'@'localhost';
-```
-
-The second privileged command is needed for the test suite.
-Then, we need to flush the privileges so that the current instance of the database knows about the recent changes we’ve made:
-
-```sql
-FLUSH PRIVILEGES;
-```
-
-Exit the SQL prompt to get back to your regular shell session:
-
-```
-exit
-```
-
-### Locally (For development)
-
-Copy the following to `.env` file in the root directory of the project and adjust where needed:
-
-```
-#montrek Config
-NAVBAR_APPS= montrek_example_a_list montrek_example_b_list
-INSTALLED_APPS= credit_institution currency country company
-
-#Django
-SECRET_KEY="my_secret_key"
-DEBUG=1
-ALLOWED_HOSTS=localhost 127.0.0.1
-
-# database access credentials
-DB_ENGINE=postgres
-DB_NAME=montrek_db
-DB_USER=montrekuser
-DB_PASSWORD=password
-DB_HOST=localhost
-DB_PORT=5432
-DB_VOLUME=/var/lib/mysql
-APP_PORT=8000
-
-```
-
-Set `DB_ENGINE=mariadb` and `DB_PORT=3306` if you want to use MariaDB.
-
-Enter in your bash terminal
-
-```
-python -m venv venv_montrek
-. venv_montrek/bin/activate
-python -m pip install -r requirements.txt
-cd montrek
-python manage.py makemigrations
-```
-
-Run the migrations and start the server:
-
-```
-python manage.py migrate
-python manage.py runserver
-```
-
-Now you should be able to open montrek in your webbrowser:
-
-```
-http://127.0.0.1:8000/
-```
-
-If you want to make sure that everything runs, you can run the test suite:
-
-```
-python manage.py test
-```
-
-### In Docker container
-
-If you want to run montrek without developing it as the bases of your application or want to deploy it in you local network, you are encouraged to let it run in a docker container.
-
-Install docker (e.g. like here: [Django installation Linux](https://www.simplilearn.com/tutorials/docker-tutorial/how-to-install-docker-on-ubuntu))
-
-Install docker-compose.
-
-Set in your .env file:
-
-```
-PROJECT_NAME=<your-project-name>
-```
-
-The name of your server will be `montrek.<PROJECT_NAME>`
-
-You have to create a certificate for the https connection. For unix systems you can find instructions here: [Django SSL](https://medium.com/@eng.fadishaar/step-by-step-guide-configuring-nginx-with-https-on-localhost-for-secure-web-application-testing-c78febc26c78),using the server name `montrek.<PROJECT_NAME>`.
-Or you have to ask your system administrator to provide a certificate.
-
-Copy those as _cert.crt_ and _cert.key_ to `nginx/certs`
-
-On you local machine you can add `<Server's IP> montrek.<PROJECT_NAME>` to _/etc/hosts/_ or ask your system administrator to add this to the networks DNS list.
-
-Change in the .env file:
-
-```
-DEBUG=0
-```
-
-And add the following line to the .env file:
-
-```
-DEPLOY_PORT=1339
-DEPLOY_HOST=<your-ip-address>
-
-CELERY_BROKER_URL=redis://redis:6379
-CELERY_RESULT_BACKEND=redis://redis:6379
-CELERY_TASK_ALWAYS_EAGER=1
-
-```
-
-(Set `CELERY_TASK_ALWAYS_EAGER` to 0 if you want to run tasks asynchronously in the background using the celery worker.)
-
-Run
-
-```
-docker-compose up --build
-```
-
-You can now access montrek in your webbrowser:
-
-```
-https://127.0.0.1:<DEPLOY_PORT>
-```
-
-Or from any browser in you network:
-
-```
-https://<your-ip-address>:<DEPLOY_PORT>
-```
-
-Or if it set up:
-
-```
-https://montrek.<PROJECT_NAME>:<DEPLOY_PORT>
-```
-
-Background tasks can be monitored with the Flower app. It runs at `<your-ip-address>:5555`.
-
-_Note for installation on windows_:
-
-Montrek can be installed on Windows via wsl. For this open a Powershell as administrator and determine the IP address of the wsl connection:
-
-```
-wsl hostname -I
-```
-
-(The first IP shown here should work.)
-
-Now you can access wsl and install montrek as described above with the wsl IP as DEPLOY_HOST. You can access montrek locally via the wsl IP and the port you defined in the .env file. If you want to make montrek public to your localhost, you can do this from the powershell with:
-
-```
-netsh interfact portproxy add v4t<F2><F2><F2>o4 listenaddress=0.0.0.0 listenport=1339 connectaddress=<your-wsl-ip> connectport=1339
-```
-
-```
-
-```
+You will be prompted to enter the backup date you want to restore.
