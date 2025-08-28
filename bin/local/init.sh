@@ -41,5 +41,6 @@ else
   echo "Creating virtualenv '$ENV_NAME'..."
   pyenv virtualenv "$PYTHON_VERSION" "$ENV_NAME"
 fi
+pip install uv
 make sync-local-python-env
 python -m pre_commit install
