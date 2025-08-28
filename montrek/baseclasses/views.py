@@ -32,7 +32,6 @@ from reporting.managers.montrek_table_manager import (
     MontrekTableManager,
 )
 from rest_framework import status
-from rest_framework.authentication import SessionAuthentication
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -154,28 +153,6 @@ class MontrekPermissionRequiredMixin(PermissionRequiredMixin):
         raise PermissionDenied
 
 
-class MontrekTemplateView(
-    MontrekPermissionRequiredMixin, TemplateView, MontrekPageViewMixin, MontrekViewMixin
-):
-    template_name = "montrek.html"
-    manager_class = MontrekManagerNotImplemented
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        if not hasattr(self, "kwargs"):
-            self.kwargs = kwargs
-        context = self.get_page_context(context, **kwargs)
-        template_context = self.get_template_context()
-        context.update(template_context)
-        return context
-
-    def get_template_context(self) -> dict:
-        raise NotImplementedError("Please implement this method in your subclass!")
-
-    def get_queryset(self):
-        return self.get_view_queryset()
-
-
 class ToPdfMixin:
     def list_to_pdf(self):
         report_manager = LatexReportManager(self.manager)
@@ -197,32 +174,42 @@ class MontrekApiViewMixin(APIView):
     def _is_rest(self, request) -> bool:
         return request.GET.get("gen_rest_api") == "true"
 
-    # Turn DRF authentication/permissions ON only for the REST mode
+    def dispatch(self, request, *args, **kwargs):
+        if self._is_rest(request):
+            # Use DRF's dispatch (this will run JWT auth/DRF permissions)
+            return APIView.dispatch(self, request, *args, **kwargs)
+        # Non-REST: fall back to the normal Django CBV chain
+        return super(APIView, self).dispatch(request, *args, **kwargs)
+
+    # Runs only when APIView.dispatch is used.
+    # After DRF has authenticated, run the Django permission check too.
+    def initial(self, request, *args, **kwargs):
+        super().initial(request, *args, **kwargs)  # JWT auth, DRF perms, throttles
+        # If this view also mixes in PermissionRequiredMixin, enforce it here.
+        if isinstance(self, PermissionRequiredMixin):
+            if not self.has_permission():  # from PermissionRequiredMixin
+                raise PermissionDenied
+
+    # Only used on the REST path (because non-REST doesn't hit APIView.dispatch)
     def get_authenticators(self):
         if self._is_rest(self.request):
             return [JWTAuthentication()]
-        return [
-            SessionAuthentication()
-        ]  # HTML/CSV/Excel/PDF paths use Django flow, not DRF auth
+        return []  # not used outside REST
 
     def get_permissions(self):
         if self._is_rest(self.request):
-            # Pick what you want for the API:
-            # REST API endpoints require authenticated users; use IsAuthenticated to enforce this.
-            return [
-                IsAuthenticated()
-            ]  # Only authenticated users can access REST API endpoints.
-        # For non-REST paths, rely on your Django mixins (MontrekPermissionRequiredMixin, etc.)
+            # DRF auth gate; Django perms enforced in .initial() above
+            return [IsAuthenticated()]
         return [AllowAny()]
 
 
 class MontrekListView(
+    MontrekApiViewMixin,
     MontrekPermissionRequiredMixin,
     ListView,
     MontrekPageViewMixin,
     MontrekViewMixin,
     ToPdfMixin,
-    MontrekApiViewMixin,
 ):
     template_name = "montrek_table.html"
     manager_class = MontrekManagerNotImplemented
@@ -376,6 +363,28 @@ class MontrekListView(
                     file_upload_manager.processor.message,
                 )
         return HttpResponseRedirect(self.request.path)
+
+
+class MontrekTemplateView(
+    MontrekPermissionRequiredMixin, TemplateView, MontrekPageViewMixin, MontrekViewMixin
+):
+    template_name = "montrek.html"
+    manager_class = MontrekManagerNotImplemented
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if not hasattr(self, "kwargs"):
+            self.kwargs = kwargs
+        context = self.get_page_context(context, **kwargs)
+        template_context = self.get_template_context()
+        context.update(template_context)
+        return context
+
+    def get_template_context(self) -> dict:
+        raise NotImplementedError("Please implement this method in your subclass!")
+
+    def get_queryset(self):
+        return self.get_view_queryset()
 
 
 class MontrekHistoryListView(MontrekTemplateView):

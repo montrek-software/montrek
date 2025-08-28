@@ -1,7 +1,6 @@
 from django.urls import path
 from montrek_example import views
 
-
 urlpatterns = [
     path(
         "",
@@ -89,6 +88,11 @@ urlpatterns = [
         "d/list",
         views.MontrekExampleDList.as_view(),
         name="montrek_example_d_list",
+    ),
+    path(
+        "d/listrestricted",
+        views.MontrekExampleDListRestricted.as_view(),
+        name="montrek_example_d_list_restricted",
     ),
     path(
         "d/create",
