@@ -91,7 +91,7 @@ urlpatterns = [
     ),
     path(
         "d/listrestricted",
-        views.MontrekExampleDListResticted.as_view(),
+        views.MontrekExampleDListRestricted.as_view(),
         name="montrek_example_d_list_restricted",
     ),
     path(
