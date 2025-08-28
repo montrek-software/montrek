@@ -179,7 +179,7 @@ class MontrekApiViewMixin(APIView):
             # Use DRF's dispatch (this will run JWT auth/DRF permissions)
             return APIView.dispatch(self, request, *args, **kwargs)
         # Non-REST: fall back to the normal Django CBV chain
-        return super().dispatch(request, *args, **kwargs)
+        return super(APIView, self).dispatch(request, *args, **kwargs)
 
     # Runs only when APIView.dispatch is used.
     # After DRF has authenticated, run the Django permission check too.
@@ -188,7 +188,6 @@ class MontrekApiViewMixin(APIView):
         # If this view also mixes in PermissionRequiredMixin, enforce it here.
         if isinstance(self, PermissionRequiredMixin):
             if not self.has_permission():  # from PermissionRequiredMixin
-                # you already overrode handle_no_permission to raise PermissionDenied
                 raise PermissionDenied
 
     # Only used on the REST path (because non-REST doesn't hit APIView.dispatch)
