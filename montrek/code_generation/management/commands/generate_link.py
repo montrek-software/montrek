@@ -81,10 +81,11 @@ class Command(BaseCommand):
             new_code, count = re.subn(
                 pattern_class, replacement_class, code, count=1, flags=re.MULTILINE
             )
-        link_class_lines = f"""\n\nclass Link{self.model_in_name}{self.model_out_name}(MontrekOneToManyLinkABC):
-    hub_in = models.ForeignKey({self.model_in_name}Hub, on_delete=models.CASCADE)
-    hub_out = models.ForeignKey({self.model_out_name}Hub, on_delete=models.CASCADE)
-    """
+        link_class_lines = "\n\n" + "\n".join([
+            f"class Link{self.model_in_name}{self.model_out_name}(MontrekOneToManyLinkABC):",
+            f"    hub_in = models.ForeignKey({self.model_in_name}Hub, on_delete=models.CASCADE)",
+            f"    hub_out = models.ForeignKey({self.model_out_name}Hub, on_delete=models.CASCADE)",
+        ])
         new_code += link_class_lines
         import_statements = (
             "from django.db import models\n",
