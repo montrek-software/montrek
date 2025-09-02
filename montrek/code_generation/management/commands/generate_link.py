@@ -60,11 +60,12 @@ class Command(BaseCommand):
         with open(hub_file_path, "r") as f:
             code = f.read()
         first_line = f"{link_field_name} = models.ManyToManyField("
-        second_line = rf""" to={self.model_out_name}Hub,
-        through="Link{self.model_in_name}{self.model_out_name}",
-        related_name="{link_related_field_name}",
-    )
-    """
+        second_line = (
+            f"to={self.model_out_name}Hub,\n"
+            f'    through="Link{self.model_in_name}{self.model_out_name}",\n'
+            f'    related_name="{link_related_field_name}",\n'
+            ")\n"
+        )
         pattern_pass = rf"(class\s+{self.model_in_name}Hub\s*\(\s*MontrekHubABC\s*\)\s*:\s*\n)(\s*)pass\s*$"
         replacement_pass = rf"\1\2{first_line}\n\2    {second_line}"
 
