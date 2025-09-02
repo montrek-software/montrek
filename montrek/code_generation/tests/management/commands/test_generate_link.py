@@ -25,11 +25,15 @@ class TestGenerateLinkCommand(TestCase):
         with open(
             os.path.join(self.output_dir, "models", "daughter_hub_models.py")
         ) as f:
-            code = f.read()
+            code = f.read().replace(" ", "")
             link_field = """class DaughterHub(MontrekHubABC):
     link_daughter_mother = models.ManyToManyField(
-        "MotherHub",
+        to=MotherHub,
         through="LinkDaughterMother",
         related_name="link_mother_daughter",
     )"""
-            self.assertIn(link_field.replace(" ", ""), code.replace(" ", ""))
+            self.assertIn(link_field.replace(" ", ""), code)
+            link_class = """class LinkDaughterMother(MontrekOneToManyLinkABC):
+    hub_in = models.ForeignKey(DaughterHub, on_delete=models.CASCADE)
+    hub_out = models.ForeignKey(MotherHub, on_delete=models.CASCADE)"""
+            self.assertIn(link_class.replace(" ", ""), code)

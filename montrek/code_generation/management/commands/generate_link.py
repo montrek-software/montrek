@@ -41,10 +41,15 @@ class Command(BaseCommand):
         self.model_out_name = self.get_model_name(self.model_out)
         self.path_in = kwargs["path_in"]
         self.path_out = kwargs["path_out"]
+        self.python_path_in = self.get_python_path(self.path_in)
+        self.python_path_out = self.get_python_path(self.path_out)
         self.add_link_to_hub()
 
     def get_model_name(self, model: str) -> str:
         return model.replace("_", " ").title().replace(" ", "")
+
+    def get_python_path(self, path: str) -> str:
+        return path.replace(os.path.sep, ".")
 
     def add_link_to_hub(self):
         hub_file_path = os.path.join(
@@ -55,7 +60,7 @@ class Command(BaseCommand):
         with open(hub_file_path, "r") as f:
             code = f.read()
         first_line = f"{link_field_name} = models.ManyToManyField("
-        second_line = rf""" "{self.model_out_name}Hub",
+        second_line = rf""" to={self.model_out_name}Hub,
         through="Link{self.model_in_name}{self.model_out_name}",
         related_name="{link_related_field_name}",
     )
@@ -76,8 +81,18 @@ class Command(BaseCommand):
             new_code, count = re.subn(
                 pattern_class, replacement_class, code, count=1, flags=re.MULTILINE
             )
-        models_import_satement = "from django.db import models\n"
-        if models_import_satement not in new_code:
-            new_code = "from django.db import models\n" + new_code
+        link_class_lines = f"""\n\nclass Link{self.model_in_name}{self.model_out_name}(MontrekOneToManyLinkABC):
+    hub_in = models.ForeignKey({self.model_in_name}Hub, on_delete=models.CASCADE)
+    hub_out = models.ForeignKey({self.model_out_name}Hub, on_delete=models.CASCADE)
+    """
+        new_code += link_class_lines
+        import_statements = (
+            "from django.db import models\n",
+            "from baseclasses.models import MontrekOneToManyLinkABC\n",
+            f"from {self.python_path_out}models.{self.model_out}_hub_models import {self.model_out_name}Hub\n",
+        )
+        for statement in import_statements:
+            if statement not in new_code:
+                new_code = statement + new_code
         with open(hub_file_path, "w") as f:
             f.write(new_code)
