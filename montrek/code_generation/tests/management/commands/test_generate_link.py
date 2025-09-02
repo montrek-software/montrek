@@ -1,5 +1,6 @@
 import os
 import shutil
+from unittest.mock import patch
 
 from code_generation.tests import get_test_file_path
 from django.core.management import call_command
