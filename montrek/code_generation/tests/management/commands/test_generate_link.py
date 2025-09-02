@@ -1,3 +1,4 @@
+import io
 import os
 import shutil
 from unittest.mock import patch
