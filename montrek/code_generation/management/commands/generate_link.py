@@ -1,6 +1,7 @@
 import os
 import re
 
+from code_generation.management.commands.helper import ensure_method_with_code
 from django.core.management.base import BaseCommand
 
 
@@ -44,6 +45,7 @@ class Command(BaseCommand):
         self.python_path_in = self.get_python_path(self.path_in)
         self.python_path_out = self.get_python_path(self.path_out)
         self.add_link_to_hub()
+        self.add_link_to_repository()
 
     def get_model_name(self, model: str) -> str:
         return model.replace("_", " ").title().replace(" ", "")
@@ -82,11 +84,13 @@ class Command(BaseCommand):
             new_code, count = re.subn(
                 pattern_class, replacement_class, code, count=1, flags=re.MULTILINE
             )
-        link_class_lines = "\n\n" + "\n".join([
-            f"class Link{self.model_in_name}{self.model_out_name}(MontrekOneToManyLinkABC):",
-            f"    hub_in = models.ForeignKey({self.model_in_name}Hub, on_delete=models.CASCADE)",
-            f"    hub_out = models.ForeignKey({self.model_out_name}Hub, on_delete=models.CASCADE)",
-        ])
+        link_class_lines = "\n\n" + "\n".join(
+            [
+                f"class Link{self.model_in_name}{self.model_out_name}(MontrekOneToManyLinkABC):",
+                f"    hub_in = models.ForeignKey({self.model_in_name}Hub, on_delete=models.CASCADE)",
+                f"    hub_out = models.ForeignKey({self.model_out_name}Hub, on_delete=models.CASCADE)",
+            ]
+        )
         new_code += link_class_lines
         import_statements = (
             "from django.db import models\n",
@@ -98,3 +102,19 @@ class Command(BaseCommand):
                 new_code = statement + new_code
         with open(hub_file_path, "w") as f:
             f.write(new_code)
+
+    def add_link_to_repository(self):
+        repo_path = f"{self.path_in}repositories/{self.model_in}_repositories.py"
+        repo_class_name = f"{self.model_in_name}Repository"
+        code = f"""self.add_linked_satellites_field_annotations(
+            {self.model_out_name}Satellite,
+            Link{self.model_in_name}{self.model_out_name},
+            ["hub_entity_id"],
+            rename_field_map={{"hub_entity_id": "{self.model_out}_id"}}
+            """
+        ensure_method_with_code(
+            filename=repo_path,
+            class_name=repo_class_name,
+            method_name="set_annotations",
+            code_to_insert=code,
+        )
