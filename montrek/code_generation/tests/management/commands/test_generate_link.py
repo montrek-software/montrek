@@ -10,9 +10,6 @@ class TestGenerateLinkCommand(TestCase):
     def setUp(self):
         self.maxDiff = None
 
-    def tearDown(self) -> None:
-        shutil.rmtree(self.output_dir)
-
     def test_insertions_in_files(self):
         self.output_dir = os.path.relpath(get_test_file_path("output"))
         os.makedirs(self.output_dir, exist_ok=True)
