@@ -1,7 +1,5 @@
-import io
 import os
 import shutil
-from unittest.mock import patch
 
 from code_generation.tests import get_test_file_path
 from django.core.management import call_command
@@ -18,9 +16,20 @@ class TestGenerateLinkCommand(TestCase):
 
     def test_insertions_in_files(self):
         os.makedirs(self.output_dir, exist_ok=True)
-        with patch("sys.stdout", new_callable=io.StringIO):
-            call_command("generate_table", self.output_dir, "mother")
-            call_command("generate_table", self.output_dir, "daughter")
-            call_command(
-                "generate_link", self.output_dir, "daughter", self.output_dir, "mother"
-            )
+        # with patch("sys.stdout", new_callable=io.StringIO):
+        call_command("generate_table", self.output_dir, "mother")
+        call_command("generate_table", self.output_dir, "daughter")
+        call_command(
+            "generate_link", self.output_dir, "daughter", self.output_dir, "mother"
+        )
+        with open(
+            os.path.join(self.output_dir, "models", "daughter_hub_models.py")
+        ) as f:
+            code = f.read()
+            link_field = """class DaughterHub(MontrekHubABC):
+    link_daughter_mother = models.ManyToManyField(
+        "MotherHub",
+        through="LinkDaughterMother",
+        related_name="link_mother_daughter",
+    )"""
+            self.assertIn(link_field.replace(" ", ""), code.replace(" ", ""))
