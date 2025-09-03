@@ -48,7 +48,7 @@ class TestGenerateLinkCommand(TestCase):
             MotherSatellite,
             LinkDaughterMother,
             ["hub_entity_id"],
-            rename_field_map={"hub_entity_id":"mother_id"}
+            rename_field_map={'hub_entity_id':'mother_id'}
         )"""
             self.assertIn(repo_change.replace(" ", ""), code)
             expected_import_statements = (
