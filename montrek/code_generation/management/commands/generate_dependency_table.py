@@ -47,6 +47,7 @@ class Command(BaseCommand):
             "generate_link", self.path_in, self.model_in, self.path_out, self.model_out
         )
         self.add_view_test()
+        self.add_view()
 
     def get_model_name(self, model: str) -> str:
         return model.replace("_", " ").title().replace(" ", "")
@@ -103,3 +104,27 @@ class Command(BaseCommand):
             f"from {self.python_path_in}.tests.factories.{self.model_in}_sat_factories import {self.model_in_name}SatelliteFactory",
         )
         self._add_code(test_path, class_name, code, import_statements)
+
+    def add_view(self):
+        view_path = os.path.join(self.path_out, "views", f"{self.model_out}_views.py")
+        class_name = f"{self.model_out_name}{self.model_in_name}sListView"
+        code = f"""class {self.model_out_name}{self.model_in_name}sListView(MontrekListView):
+    manager_class = {self.model_out_name}{self.model_in_name}sManager
+    page_class = {self.model_out_name}DetailsPage
+    title = "{self.model_out_name} {self.model_in_name}s"
+    tab = "tab_{self.model_out}_{self.model_in}s"
+
+    @property
+    def actions(self) -> tuple[ActionElement]:
+        action_create = CreateActionElement(
+            url_name = "{self.model_in}_create_from_{self.model_out}"
+            kwargs = {{"{self.model_out}_id": self.kwargs["pk"]}}
+            action_id="id_{self.model_in}_{self.model_out}_create",
+            hover_text="Create {self.model_in_name} from {self.model_out_name}",
+        )
+        return (action_create,)
+                """
+        import_statements = (
+            f"from {self.python_path_out}.managers.{self.model_out}_managers import {self.model_out_name}{self.model_in_name}sManager",
+        )
+        self._add_code(view_path, class_name, code, import_statements)
