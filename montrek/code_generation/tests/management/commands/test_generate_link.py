@@ -40,4 +40,15 @@ class TestGenerateLinkCommand(TestCase):
             os.path.join(self.output_dir, "repositories", "daughter_repositories.py")
         ) as f:
             code = f.read().replace(" ", "")
+            repo_change = """class DaughterRepository(MontrekRepository):
+    hub_class=DaughterHub
+
+    def set_annotations(self):
+        self.add_linked_satellites_field_annotations(
+            MotherSatellite,
+            LinkDaughterMother,
+            ["hub_entity_id"],
+            rename_field_map={"hub_entity_id":"mother_id"}
+        )"""
+            self.assertIn(repo_change.replace(" ", ""), code)
         shutil.rmtree(self.output_dir)

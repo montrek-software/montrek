@@ -113,7 +113,7 @@ class Command(BaseCommand):
             Link{self.model_in_name}{self.model_out_name},
             ["hub_entity_id"],
             rename_field_map={{"hub_entity_id": "{self.model_out}_id"}}
-            """
+        )"""
         ensure_method_with_code(
             filename=repo_path,
             class_name=repo_class_name,
