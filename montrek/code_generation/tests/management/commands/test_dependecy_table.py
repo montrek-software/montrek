@@ -91,4 +91,21 @@ class TestGenerateLinkCommand(TestCase):
             )
             for import_statement in import_statements:
                 self.assertIn(import_statement.replace(" ", ""), code)
+        with open(
+            os.path.join(self.output_dir, "repositories", "mother_repositories.py")
+        ) as f:
+            code = f.read().replace(" ", "")
+            expected_code = """class MotherDaughtersRepository(DaughterRepository):
+    repository_class = MotherDaughtersRepository
+        mother_hub = MotherHubValueDate.objects.get(
+            pk=self.session_data.get("pk")
+        ).hub
+        query = super().receive(apply_filter).filter(mother_id=mother_hub.id)
+                """
+            self.assertIn(expected_code.replace(" ", ""), code)
+            import_statements = (
+                "from code_generation.tests.data.output_dependecy_table.repositories.daughters_repositories import DaughtersRepository\n",
+            )
+            for import_statement in import_statements:
+                self.assertIn(import_statement.replace(" ", ""), code)
         shutil.rmtree(self.output_dir)
