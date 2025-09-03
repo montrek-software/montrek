@@ -51,6 +51,8 @@ class Command(BaseCommand):
         return model.replace("_", " ").title().replace(" ", "")
 
     def get_python_path(self, path: str) -> str:
+        if path.endswith(os.path.sep):
+            path = path[:-1]
         return path.replace(os.path.sep, ".")
 
     def add_link_to_hub(self):
@@ -95,7 +97,7 @@ class Command(BaseCommand):
         import_statements = (
             "from django.db import models\n",
             "from baseclasses.models import MontrekOneToManyLinkABC\n",
-            f"from {self.python_path_out}models.{self.model_out}_hub_models import {self.model_out_name}Hub\n",
+            f"from {self.python_path_out}.models.{self.model_out}_hub_models import {self.model_out_name}Hub\n",
         )
         for statement in import_statements:
             if statement not in new_code:
@@ -109,11 +111,11 @@ class Command(BaseCommand):
         )
         repo_class_name = f"{self.model_in_name}Repository"
         code = f"""self.add_linked_satellites_field_annotations(
-            {self.model_out_name}Satellite,
-            Link{self.model_in_name}{self.model_out_name},
-            ["hub_entity_id"],
-            rename_field_map={{"hub_entity_id": "{self.model_out}_id"}}
-        )"""
+    {self.model_out_name}Satellite,
+    Link{self.model_in_name}{self.model_out_name},
+    ["hub_entity_id"],
+    rename_field_map={{"hub_entity_id": "{self.model_out}_id"}}
+)"""
         import_statements = (
             f"from {self.python_path_out}.models.{self.model_out}_sat_models import {self.model_out_name}Satellite\n",
             f"from {self.python_path_in}.models.{self.model_in}_hub_models import Link{self.model_in_name}{self.model_out_name}\n",
