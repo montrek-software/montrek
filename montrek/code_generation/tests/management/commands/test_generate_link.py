@@ -60,4 +60,18 @@ class TestGenerateLinkCommand(TestCase):
                     import_statement.replace(" ", ""),
                     code,
                 )
+        with open(
+            os.path.join(
+                self.output_dir, "tests", "factories", "daughter_sat_factories.py"
+            )
+        ) as f:
+            code = f.read().replace(" ", "")
+            post_generate_code = """def mother(self, create, extracted, **kwargs):
+    if not create:
+        return
+    if not extracted:
+        return
+    self.hub_entity.link_daughter_mother.add(extracted.hub_entity)
+    """
+            self.assertIn(post_generate_code.replace(" ", ""), code)
         shutil.rmtree(self.output_dir)
