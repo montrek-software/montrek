@@ -66,15 +66,27 @@ class TestGenerateLinkCommand(TestCase):
     def actions(self) -> tuple[ActionElement]:
         action_create = CreateActionElement(
             url_name = "mother_daughter_create",
-            kwargs = {"mother_id": self.kwargs["pk"]},
+            kwargs = {"pk": self.kwargs["pk"]},
             action_id="id_daughter_mother_create",
             hover_text="Create Daughter from Mother",
         )
         return (action_create,)
                 """
             self.assertIn(expected_code.replace(" ", ""), code)
+            expected_code = """class MotherDaughterCreateView(DaughterCreateView):
+
+    def get_success_url(self):
+        return reverse("mother_daughters_list", kwargs={"pk": self.kwargs["pk"]})
+
+    def get_form(self, *args, **kwargs):
+        form = super().get_form(*args, **kwargs)
+        hub = MotherRepository(self.session_data).receive().get(hub__pk=self.kwargs["pk"])
+        form["link_daughter_mother"].initial = hub
+        return form"""
+            self.assertIn(expected_code.replace(" ", ""), code)
             import_statements = (
                 "from code_generation.tests.data.output_dependecy_table.managers.mother_managers import MotherDaughtersTableManager\n",
+                "from code_generation.tests.data.output_dependecy_table.repositories.mother_repositories import MotherRepository\n",
                 "from baseclasses.dataclasses.view_classes import CreateActionElement",
             )
             for import_statement in import_statements:
