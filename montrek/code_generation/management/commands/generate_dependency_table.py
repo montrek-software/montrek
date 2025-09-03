@@ -125,10 +125,10 @@ class Command(BaseCommand):
             action_id="id_{self.model_in}_{self.model_out}_create",
             hover_text="Create {self.model_in_name} from {self.model_out_name}",
         )
-       return (action_create,)
+        return (action_create,)
 
 
- class {self.model_out_name}{self.model_in_name}CreateView({self.model_in_name}CreateView):
+class {self.model_out_name}{self.model_in_name}CreateView({self.model_in_name}CreateView):
 
     def get_success_url(self):
         return reverse("{self.model_out}_{self.model_in}s_list", kwargs={{"pk": self.kwargs["pk"]}})
