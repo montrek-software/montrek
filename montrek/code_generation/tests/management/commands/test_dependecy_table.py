@@ -96,7 +96,7 @@ class TestGenerateLinkCommand(TestCase):
         ) as f:
             code = f.read().replace(" ", "")
             expected_code = """class MotherDaughtersRepository(DaughterRepository):
-    repository_class = MotherDaughtersRepository
+    def receive(self, apply_filter=True):
         mother_hub = MotherHubValueDate.objects.get(
             pk=self.session_data.get("pk")
         ).hub
@@ -104,7 +104,7 @@ class TestGenerateLinkCommand(TestCase):
                 """
             self.assertIn(expected_code.replace(" ", ""), code)
             import_statements = (
-                "from code_generation.tests.data.output_dependecy_table.repositories.daughters_repositories import DaughtersRepository\n",
+                "from code_generation.tests.data.output_dependecy_table.repositories.daughter_repositories import DaughterRepository\n",
             )
             for import_statement in import_statements:
                 self.assertIn(import_statement.replace(" ", ""), code)

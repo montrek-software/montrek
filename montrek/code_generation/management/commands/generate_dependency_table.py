@@ -49,6 +49,7 @@ class Command(BaseCommand):
         self.add_view_test()
         self.add_view()
         self.add_manager()
+        self.add_repository()
 
     def get_model_name(self, model: str) -> str:
         return model.replace("_", " ").title().replace(" ", "")
@@ -144,3 +145,20 @@ class Command(BaseCommand):
             f"from {self.python_path_in}.managers.{self.model_in}_managers import {self.model_in_name}TableManager",
         )
         self._add_code(manager_path, class_name, code, import_statements)
+
+    def add_repository(self):
+        repository_path = os.path.join(
+            self.path_out, "repositories", f"{self.model_out}_repositories.py"
+        )
+        class_name = f"{self.model_out_name}{self.model_in_name}sRepository"
+        code = f"""class {class_name}({self.model_in_name}Repository):
+    def receive(self, apply_filter=True):
+        {self.model_out}_hub = {self.model_out_name}HubValueDate.objects.get(
+            pk=self.session_data.get("pk")
+        ).hub
+        query = super().receive(apply_filter).filter({self.model_out}_id={self.model_out}_hub.id)
+                """
+        import_statements = (
+            f"from {self.python_path_in}.repositories.{self.model_in}_repositories import {self.model_in_name}Repository",
+        )
+        self._add_code(repository_path, class_name, code, import_statements)
