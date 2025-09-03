@@ -1,6 +1,8 @@
 import os
 import re
 
+
+from code_generation.management.commands.helper import ensure_method_with_code
 from django.core.management.base import BaseCommand
 
 
@@ -44,11 +46,16 @@ class Command(BaseCommand):
         self.python_path_in = self.get_python_path(self.path_in)
         self.python_path_out = self.get_python_path(self.path_out)
         self.add_link_to_hub()
+        self.add_link_to_repository()
+
 
     def get_model_name(self, model: str) -> str:
         return model.replace("_", " ").title().replace(" ", "")
 
     def get_python_path(self, path: str) -> str:
+        if path.endswith(os.path.sep):
+            path = path[:-1]
+
         return path.replace(os.path.sep, ".")
 
     def add_link_to_hub(self):
@@ -82,19 +89,49 @@ class Command(BaseCommand):
             new_code, count = re.subn(
                 pattern_class, replacement_class, code, count=1, flags=re.MULTILINE
             )
-        link_class_lines = "\n\n" + "\n".join([
-            f"class Link{self.model_in_name}{self.model_out_name}(MontrekOneToManyLinkABC):",
-            f"    hub_in = models.ForeignKey({self.model_in_name}Hub, on_delete=models.CASCADE)",
-            f"    hub_out = models.ForeignKey({self.model_out_name}Hub, on_delete=models.CASCADE)",
-        ])
+        link_class_lines = "\n\n" + "\n".join(
+            [
+                f"class Link{self.model_in_name}{self.model_out_name}(MontrekOneToManyLinkABC):",
+                f"    hub_in = models.ForeignKey({self.model_in_name}Hub, on_delete=models.CASCADE)",
+                f"    hub_out = models.ForeignKey({self.model_out_name}Hub, on_delete=models.CASCADE)",
+            ]
+        )
+
         new_code += link_class_lines
         import_statements = (
             "from django.db import models\n",
             "from baseclasses.models import MontrekOneToManyLinkABC\n",
-            f"from {self.python_path_out}models.{self.model_out}_hub_models import {self.model_out_name}Hub\n",
+            f"from {self.python_path_out}.models.{self.model_out}_hub_models import {self.model_out_name}Hub\n",
         )
         for statement in import_statements:
             if statement not in new_code:
                 new_code = statement + new_code
         with open(hub_file_path, "w") as f:
             f.write(new_code)
+
+    def add_link_to_repository(self):
+        repo_path = os.path.join(
+            self.path_in, "repositories", f"{self.model_in}_repositories.py"
+        )
+        repo_class_name = f"{self.model_in_name}Repository"
+        rename_field_map = {"hub_entity_id": f"{self.model_out}_id"}
+        code = (
+            f"self.add_linked_satellites_field_annotations(\n"
+            f"    {self.model_out_name}Satellite,\n"
+            f"    Link{self.model_in_name}{self.model_out_name},\n"
+            f"    [\"hub_entity_id\"],\n"
+            f"    rename_field_map={repr(rename_field_map)}\n"
+            f")"
+        )
+        import_statements = (
+            f"from {self.python_path_out}.models.{self.model_out}_sat_models import {self.model_out_name}Satellite\n",
+            f"from {self.python_path_in}.models.{self.model_in}_hub_models import Link{self.model_in_name}{self.model_out_name}\n",
+        )
+        ensure_method_with_code(
+            filename=repo_path,
+            class_name=repo_class_name,
+            method_name="set_annotations",
+            code_to_insert=code,
+            import_statements=import_statements,
+        )
+

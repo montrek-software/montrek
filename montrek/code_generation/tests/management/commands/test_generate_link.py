@@ -36,4 +36,28 @@ class TestGenerateLinkCommand(TestCase):
     hub_in = models.ForeignKey(DaughterHub, on_delete=models.CASCADE)
     hub_out = models.ForeignKey(MotherHub, on_delete=models.CASCADE)"""
             self.assertIn(link_class.replace(" ", ""), code)
+        with open(
+            os.path.join(self.output_dir, "repositories", "daughter_repositories.py")
+        ) as f:
+            code = f.read().replace(" ", "")
+            repo_change = """class DaughterRepository(MontrekRepository):
+    hub_class=DaughterHub
+
+    def set_annotations(self):
+        self.add_linked_satellites_field_annotations(
+            MotherSatellite,
+            LinkDaughterMother,
+            ["hub_entity_id"],
+            rename_field_map={'hub_entity_id':'mother_id'}
+        )"""
+            self.assertIn(repo_change.replace(" ", ""), code)
+            expected_import_statements = (
+                "from code_generation.tests.data.output_links.models.mother_sat_models import MotherSatellite\n",
+                "from code_generation.tests.data.output_links.models.daughter_hub_models import LinkDaughterMother\n",
+            )
+            for import_statement in expected_import_statements:
+                self.assertIn(
+                    import_statement.replace(" ", ""),
+                    code,
+                )
         shutil.rmtree(self.output_dir)
