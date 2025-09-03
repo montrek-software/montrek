@@ -44,6 +44,8 @@ class Command(BaseCommand):
         self.path_out = kwargs["path_out"]
         self.python_path_in = self.get_python_path(self.path_in)
         self.python_path_out = self.get_python_path(self.path_out)
+        if self.link_exists():
+            return
         self.add_link_to_hub()
         self.add_link_to_repository()
         self.add_post_generation_method_to_factory()
@@ -56,6 +58,18 @@ class Command(BaseCommand):
             path = path[:-1]
 
         return path.replace(os.path.sep, ".")
+
+    def link_exists(self) -> bool:
+        hub_file_path = os.path.join(
+            self.path_in, "models", f"{self.model_in}_hub_models.py"
+        )
+        link_class_name = f"Link{self.model_in_name}{self.model_out_name}"
+        with open(hub_file_path, "r") as f:
+            code = f.read()
+            if f"class {link_class_name}" in code:
+                self.stdout.write(f"Link class {link_class_name} exists already!")
+                return True
+        return False
 
     def add_link_to_hub(self):
         hub_file_path = os.path.join(
@@ -107,6 +121,7 @@ class Command(BaseCommand):
                 new_code = statement + new_code
         with open(hub_file_path, "w") as f:
             f.write(new_code)
+        self.stdout.write(f"Added link class and field to {hub_file_path}")
 
     def add_link_to_repository(self):
         repo_path = os.path.join(
@@ -133,6 +148,7 @@ class Command(BaseCommand):
             code_to_insert=code,
             import_statements=import_statements,
         )
+        self.stdout.write(f"Add link to repository in {repo_path}")
 
     def add_post_generation_method_to_factory(self):
         factory_path = os.path.join(
@@ -153,4 +169,7 @@ class Command(BaseCommand):
             code_to_insert=code,
             method_args="self, create, extracted, **kwargs",
             method_decorator="factory.post_generation",
+        )
+        self.stdout.write(
+            f"Add link as post_generation method to factory in {factory_path}"
         )
