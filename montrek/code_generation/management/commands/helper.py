@@ -8,6 +8,7 @@ def ensure_method_with_code(
     method_name: str,
     code_to_insert: str,
     method_args: str = "self",
+    method_decorator: str | None = None,
     import_statements: tuple[str, ...] = (),
 ):
     with open(filename, "r", encoding="utf-8") as f:
@@ -97,6 +98,8 @@ def ensure_method_with_code(
             lines[insertion_index - 1].strip() != ""
         ):
             to_insert.append("\n")
+        if method_decorator:
+            to_insert.append(f"{method_indent}@{method_decorator}\n")
         to_insert.append(f"{method_indent}def {method_name}({method_args}):\n")
         to_insert.append(indent_block(code_to_insert, body_indent))
         lines[insertion_index:insertion_index] = to_insert

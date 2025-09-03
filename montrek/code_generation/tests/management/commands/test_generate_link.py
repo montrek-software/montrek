@@ -66,7 +66,7 @@ class TestGenerateLinkCommand(TestCase):
             )
         ) as f:
             code = f.read().replace(" ", "")
-            post_generate_code = """def mother(self, create, extracted, **kwargs):
+            post_generate_code = """@factory.post_generation\ndef mother(self, create, extracted, **kwargs):
     if not create:
         return
     if not extracted:

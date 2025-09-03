@@ -152,4 +152,5 @@ class Command(BaseCommand):
             method_name=self.model_out,
             code_to_insert=code,
             method_args="self, create, extracted, **kwargs",
+            method_decorator="factory.post_generation",
         )
