@@ -130,9 +130,7 @@ def ensure_method_with_code(
 
     new_text = "".join(lines)
 
-    def add_import_statements(in_text: str) -> str:
-        import_statements_str = "\n".join(import_statements)
-        return import_statements_str + in_text
+        return import_statements_str + '\n' + in_text if import_statements else in_text
 
     new_text = add_import_statements(new_text)
     with open(filename, "w", encoding="utf-8") as f:
