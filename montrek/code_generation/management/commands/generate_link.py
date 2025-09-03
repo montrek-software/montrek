@@ -114,12 +114,15 @@ class Command(BaseCommand):
             self.path_in, "repositories", f"{self.model_in}_repositories.py"
         )
         repo_class_name = f"{self.model_in_name}Repository"
-        code = f"""self.add_linked_satellites_field_annotations(
-    {self.model_out_name}Satellite,
-    Link{self.model_in_name}{self.model_out_name},
-    ["hub_entity_id"],
-    rename_field_map={{"hub_entity_id": "{self.model_out}_id"}}
-)"""
+        rename_field_map = {"hub_entity_id": f"{self.model_out}_id"}
+        code = (
+            f"self.add_linked_satellites_field_annotations(\n"
+            f"    {self.model_out_name}Satellite,\n"
+            f"    Link{self.model_in_name}{self.model_out_name},\n"
+            f"    [\"hub_entity_id\"],\n"
+            f"    rename_field_map={repr(rename_field_map)}\n"
+            f")"
+        )
         import_statements = (
             f"from {self.python_path_out}.models.{self.model_out}_sat_models import {self.model_out_name}Satellite\n",
             f"from {self.python_path_in}.models.{self.model_in}_hub_models import Link{self.model_in_name}{self.model_out_name}\n",
