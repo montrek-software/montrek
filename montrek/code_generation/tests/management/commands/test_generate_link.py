@@ -13,7 +13,7 @@ class TestGenerateLinkCommand(TestCase):
         self.maxDiff = None
 
     def test_insertions_in_files(self):
-        self.output_dir = os.path.relpath(get_test_file_path("output"))
+        self.output_dir = os.path.relpath(get_test_file_path("output_links"))
         os.makedirs(self.output_dir, exist_ok=True)
         with patch("sys.stdout", new_callable=io.StringIO):
             call_command("generate_table", self.output_dir, "mother")
