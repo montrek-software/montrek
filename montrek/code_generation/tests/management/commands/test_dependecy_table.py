@@ -29,9 +29,9 @@ class TestGenerateLinkCommand(TestCase):
             os.path.join(self.output_dir, "tests", "views", "test_mother_views.py")
         ) as f:
             code = f.read().replace(" ", "")
-            expected_code = """class TestMotherDaughtersListView(vtc.MontrekListViewTestCase):
+            expected_code = """class TestMotherDaughtersListView(MontrekListViewTestCase):
     viewname = "mother_daughters_list"
-    view_class = views.MotherDaughtersListView
+    view_class = MotherDaughtersListView
     expected_no_of_rows = 5
 
     def build_factories(self):
@@ -47,4 +47,11 @@ class TestGenerateLinkCommand(TestCase):
     def url_kwargs(self):
         return {"pk": self.mother_factory.get_hub_value_date().pk}"""
             self.assertIn(expected_code.replace(" ", ""), code)
+            import_statements = (
+                "from code_generation.tests.data.output_dependecy_table.views.mother_views import MotherDaughtersListView\n",
+                "from code_generation.tests.data.output_dependecy_table.tests.factories.mother_sat_factories import MotherSatelliteFactory\n",
+                "from code_generation.tests.data.output_dependecy_table.tests.factories.daughter_sat_factories import DaughterSatelliteFactory\n",
+            )
+            for import_statement in import_statements:
+                self.assertIn(import_statement.replace(" ", ""), code)
         shutil.rmtree(self.output_dir)

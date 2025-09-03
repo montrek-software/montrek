@@ -57,13 +57,20 @@ class Command(BaseCommand):
 
         return path.replace(os.path.sep, ".")
 
-    def _add_code(self, path: str, search_string: str, code: str):
+    def _add_code(
+        self,
+        path: str,
+        search_string: str,
+        code: str,
+        import_statements: tuple[str, ...] = (),
+    ):
         with open(path, "r") as f:
             old_code = f.read()
         if search_string in old_code:
             self.stdout.write(f"{search_string} exists already in {path}!")
             return
         new_code = old_code + code
+        new_code = "\n".join(import_statements) + "\n" + new_code
         with open(path, "w") as f:
             f.write(new_code)
         self.stdout.write(f"Created {search_string} in {path}!")
@@ -73,9 +80,9 @@ class Command(BaseCommand):
             self.path_out, "tests", "views", f"test_{self.model_out}_views.py"
         )
         class_name = f"Test{self.model_out_name}{self.model_in_name}sListView"
-        code = f"""class {class_name}(vtc.MontrekListViewTestCase):
+        code = f"""class {class_name}(MontrekListViewTestCase):
     viewname = "{self.model_out}_{self.model_in}s_list"
-    view_class = views.{self.model_out_name}{self.model_in_name}sListView
+    view_class = {self.model_out_name}{self.model_in_name}sListView
     expected_no_of_rows = 5
 
     def build_factories(self):
@@ -90,4 +97,9 @@ class Command(BaseCommand):
 
     def url_kwargs(self):
         return {{"pk": self.{self.model_out}_factory.get_hub_value_date().pk}}"""
-        self._add_code(test_path, class_name, code)
+        import_statements = (
+            f"from {self.python_path_out}.views.{self.model_out}_views import {self.model_out_name}{self.model_in_name}sListView",
+            f"from {self.python_path_out}.tests.factories.{self.model_out}_sat_factories import {self.model_out_name}SatelliteFactory",
+            f"from {self.python_path_in}.tests.factories.{self.model_in}_sat_factories import {self.model_in_name}SatelliteFactory",
+        )
+        self._add_code(test_path, class_name, code, import_statements)
