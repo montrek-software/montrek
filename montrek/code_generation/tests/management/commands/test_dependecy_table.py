@@ -57,7 +57,7 @@ class TestGenerateLinkCommand(TestCase):
         with open(os.path.join(self.output_dir, "views", "mother_views.py")) as f:
             code = f.read().replace(" ", "")
             expected_code = """class MotherDaughtersListView(MontrekListView):
-    manager_class = MotherDaughtersManager
+    manager_class = MotherDaughtersTableManager
     page_class = MotherDetailsPage
     title = "Mother Daughters"
     tab = "tab_mother_daughters"
@@ -74,8 +74,20 @@ class TestGenerateLinkCommand(TestCase):
                 """
             self.assertIn(expected_code.replace(" ", ""), code)
             import_statements = (
-                "from code_generation.tests.data.output_dependecy_table.managers.mother_managers import MotherDaughtersManager\n",
+                "from code_generation.tests.data.output_dependecy_table.managers.mother_managers import MotherDaughtersTableManager\n",
                 "from baseclasses.dataclasses.view_classes import CreateActionElement",
+            )
+            for import_statement in import_statements:
+                self.assertIn(import_statement.replace(" ", ""), code)
+        with open(os.path.join(self.output_dir, "managers", "mother_managers.py")) as f:
+            code = f.read().replace(" ", "")
+            expected_code = """class MotherDaughtersTableManager(DaughterTableManager):
+    repository_class = MotherDaughtersRepository
+                """
+            self.assertIn(expected_code.replace(" ", ""), code)
+            import_statements = (
+                "from code_generation.tests.data.output_dependecy_table.repositories.mother_repositories import MotherDaughtersRepository\n",
+                "from code_generation.tests.data.output_dependecy_table.managers.daughter_managers import DaughterTableManager\n",
             )
             for import_statement in import_statements:
                 self.assertIn(import_statement.replace(" ", ""), code)

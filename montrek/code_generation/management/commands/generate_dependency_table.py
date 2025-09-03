@@ -48,6 +48,7 @@ class Command(BaseCommand):
         )
         self.add_view_test()
         self.add_view()
+        self.add_manager()
 
     def get_model_name(self, model: str) -> str:
         return model.replace("_", " ").title().replace(" ", "")
@@ -108,8 +109,8 @@ class Command(BaseCommand):
     def add_view(self):
         view_path = os.path.join(self.path_out, "views", f"{self.model_out}_views.py")
         class_name = f"{self.model_out_name}{self.model_in_name}sListView"
-        code = f"""class {self.model_out_name}{self.model_in_name}sListView(MontrekListView):
-    manager_class = {self.model_out_name}{self.model_in_name}sManager
+        code = f"""class {class_name}(MontrekListView):
+    manager_class = {self.model_out_name}{self.model_in_name}sTableManager
     page_class = {self.model_out_name}DetailsPage
     title = "{self.model_out_name} {self.model_in_name}s"
     tab = "tab_{self.model_out}_{self.model_in}s"
@@ -125,7 +126,21 @@ class Command(BaseCommand):
         return (action_create,)
                 """
         import_statements = (
-            f"from {self.python_path_out}.managers.{self.model_out}_managers import {self.model_out_name}{self.model_in_name}sManager",
+            f"from {self.python_path_out}.managers.{self.model_out}_managers import {self.model_out_name}{self.model_in_name}sTableManager",
             "from baseclasses.dataclasses.view_classes import CreateActionElement",
         )
         self._add_code(view_path, class_name, code, import_statements)
+
+    def add_manager(self):
+        manager_path = os.path.join(
+            self.path_out, "managers", f"{self.model_out}_managers.py"
+        )
+        class_name = f"{self.model_out_name}{self.model_in_name}sTableManager"
+        code = f"""class {class_name}({self.model_in_name}TableManager):
+    repository_class = {self.model_out_name}{self.model_in_name}sRepository
+    """
+        import_statements = (
+            f"from {self.python_path_out}.repositories.{self.model_out}_repositories import {self.model_out_name}{self.model_in_name}sRepository",
+            f"from {self.python_path_in}.managers.{self.model_in}_managers import {self.model_in_name}TableManager",
+        )
+        self._add_code(manager_path, class_name, code, import_statements)
