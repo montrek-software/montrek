@@ -117,8 +117,8 @@ class Command(BaseCommand):
     @property
     def actions(self) -> tuple[ActionElement]:
         action_create = CreateActionElement(
-            url_name = "{self.model_in}_create_from_{self.model_out}"
-            kwargs = {{"{self.model_out}_id": self.kwargs["pk"]}}
+            url_name = "{self.model_in}_create_from_{self.model_out}",
+            kwargs = {{"{self.model_out}_id": self.kwargs["pk"]}},
             action_id="id_{self.model_in}_{self.model_out}_create",
             hover_text="Create {self.model_in_name} from {self.model_out_name}",
         )
@@ -126,5 +126,6 @@ class Command(BaseCommand):
                 """
         import_statements = (
             f"from {self.python_path_out}.managers.{self.model_out}_managers import {self.model_out_name}{self.model_in_name}sManager",
+            "from baseclasses.dataclasses.view_classes import CreateActionElement",
         )
         self._add_code(view_path, class_name, code, import_statements)

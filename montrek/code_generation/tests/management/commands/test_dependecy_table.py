@@ -65,8 +65,8 @@ class TestGenerateLinkCommand(TestCase):
     @property
     def actions(self) -> tuple[ActionElement]:
         action_create = CreateActionElement(
-            url_name = "daughter_create_from_mother"
-            kwargs = {"mother_id": self.kwargs["pk"]}
+            url_name = "daughter_create_from_mother",
+            kwargs = {"mother_id": self.kwargs["pk"]},
             action_id="id_daughter_mother_create",
             hover_text="Create Daughter from Mother",
         )
@@ -75,6 +75,7 @@ class TestGenerateLinkCommand(TestCase):
             self.assertIn(expected_code.replace(" ", ""), code)
             import_statements = (
                 "from code_generation.tests.data.output_dependecy_table.managers.mother_managers import MotherDaughtersManager\n",
+                "from baseclasses.dataclasses.view_classes import CreateActionElement",
             )
             for import_statement in import_statements:
                 self.assertIn(import_statement.replace(" ", ""), code)
