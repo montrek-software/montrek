@@ -61,10 +61,12 @@ class Command(BaseCommand):
         with open(path, "r") as f:
             old_code = f.read()
         if search_string in old_code:
+            self.stdout.write(f"{search_string} exists already in {path}!")
             return
         new_code = old_code + code
         with open(path, "w") as f:
             f.write(new_code)
+        self.stdout.write(f"Created {search_string} in {path}!")
 
     def add_view_test(self):
         test_path = os.path.join(
