@@ -100,11 +100,12 @@ class TestGenerateLinkCommand(TestCase):
         mother_hub = MotherHubValueDate.objects.get(
             pk=self.session_data.get("pk")
         ).hub
-        query = super().receive(apply_filter).filter(mother_id=mother_hub.id)
+        return super().receive(apply_filter).filter(mother_id=mother_hub.id)
                 """
             self.assertIn(expected_code.replace(" ", ""), code)
             import_statements = (
                 "from code_generation.tests.data.output_dependecy_table.repositories.daughter_repositories import DaughterRepository\n",
+                "from code_generation.tests.data.output_dependecy_table.models.mother_hub_models import MotherHubValueDate\n",
             )
             for import_statement in import_statements:
                 self.assertIn(import_statement.replace(" ", ""), code)

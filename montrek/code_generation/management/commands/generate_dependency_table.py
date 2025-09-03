@@ -156,9 +156,10 @@ class Command(BaseCommand):
         {self.model_out}_hub = {self.model_out_name}HubValueDate.objects.get(
             pk=self.session_data.get("pk")
         ).hub
-        query = super().receive(apply_filter).filter({self.model_out}_id={self.model_out}_hub.id)
+        return super().receive(apply_filter).filter({self.model_out}_id={self.model_out}_hub.id)
                 """
         import_statements = (
             f"from {self.python_path_in}.repositories.{self.model_in}_repositories import {self.model_in_name}Repository",
+            f"from {self.python_path_out}.models.{self.model_out}_hub_models import {self.model_out_name}HubValueDate",
         )
         self._add_code(repository_path, class_name, code, import_statements)
