@@ -1,5 +1,6 @@
 import os
 
+from django.core.management import call_command
 from django.core.management.base import BaseCommand
 
 
@@ -42,6 +43,9 @@ class Command(BaseCommand):
         self.path_out = kwargs["path_out"]
         self.python_path_in = self.get_python_path(self.path_in)
         self.python_path_out = self.get_python_path(self.path_out)
+        call_command(
+            "generate_link", self.path_in, self.model_in, self.path_out, self.model_out
+        )
 
     def get_model_name(self, model: str) -> str:
         return model.replace("_", " ").title().replace(" ", "")
