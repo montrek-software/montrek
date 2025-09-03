@@ -1,6 +1,7 @@
 import os
 import re
 
+
 from code_generation.management.commands.helper import ensure_method_with_code
 from django.core.management.base import BaseCommand
 
@@ -47,12 +48,14 @@ class Command(BaseCommand):
         self.add_link_to_hub()
         self.add_link_to_repository()
 
+
     def get_model_name(self, model: str) -> str:
         return model.replace("_", " ").title().replace(" ", "")
 
     def get_python_path(self, path: str) -> str:
         if path.endswith(os.path.sep):
             path = path[:-1]
+
         return path.replace(os.path.sep, ".")
 
     def add_link_to_hub(self):
@@ -93,6 +96,7 @@ class Command(BaseCommand):
                 f"    hub_out = models.ForeignKey({self.model_out_name}Hub, on_delete=models.CASCADE)",
             ]
         )
+
         new_code += link_class_lines
         import_statements = (
             "from django.db import models\n",
@@ -127,3 +131,4 @@ class Command(BaseCommand):
             code_to_insert=code,
             import_statements=import_statements,
         )
+
