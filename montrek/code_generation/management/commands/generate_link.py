@@ -104,7 +104,9 @@ class Command(BaseCommand):
             f.write(new_code)
 
     def add_link_to_repository(self):
-        repo_path = f"{self.path_in}repositories/{self.model_in}_repositories.py"
+        repo_path = os.path.join(
+            self.path_in, "repositories", f"{self.model_in}_repositories.py"
+        )
         repo_class_name = f"{self.model_in_name}Repository"
         code = f"""self.add_linked_satellites_field_annotations(
             {self.model_out_name}Satellite,

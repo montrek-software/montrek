@@ -36,4 +36,8 @@ class TestGenerateLinkCommand(TestCase):
     hub_in = models.ForeignKey(DaughterHub, on_delete=models.CASCADE)
     hub_out = models.ForeignKey(MotherHub, on_delete=models.CASCADE)"""
             self.assertIn(link_class.replace(" ", ""), code)
+        with open(
+            os.path.join(self.output_dir, "repositories", "daughter_repositories.py")
+        ) as f:
+            code = f.read().replace(" ", "")
         shutil.rmtree(self.output_dir)
