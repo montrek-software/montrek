@@ -140,11 +140,11 @@ class Command(BaseCommand):
         )
         factory_class_name = f"{self.model_in_name}SatelliteFactory"
         code = (
-            "if not create:\n"
-            "   return\n"
-            "if not extracted:\n"
-            "   return\n"
-            f"self.hub_entity.link_{self.model_in}_{self.model_out}.add(extracted.hub_entity)\n"
+            "    if not create:\n"
+            "        return\n"
+            "    if not extracted:\n"
+            "        return\n"
+            f"    self.hub_entity.link_{self.model_in}_{self.model_out}.add(extracted.hub_entity)\n"
         )
         ensure_method_with_code(
             filename=factory_path,
