@@ -1,7 +1,6 @@
 import os
 import re
 
-
 from code_generation.management.commands.helper import ensure_method_with_code
 from django.core.management.base import BaseCommand
 
@@ -47,7 +46,7 @@ class Command(BaseCommand):
         self.python_path_out = self.get_python_path(self.path_out)
         self.add_link_to_hub()
         self.add_link_to_repository()
-
+        self.add_post_generation_method_to_factory()
 
     def get_model_name(self, model: str) -> str:
         return model.replace("_", " ").title().replace(" ", "")
@@ -119,7 +118,7 @@ class Command(BaseCommand):
             f"self.add_linked_satellites_field_annotations(\n"
             f"    {self.model_out_name}Satellite,\n"
             f"    Link{self.model_in_name}{self.model_out_name},\n"
-            f"    [\"hub_entity_id\"],\n"
+            f'    ["hub_entity_id"],\n'
             f"    rename_field_map={repr(rename_field_map)}\n"
             f")"
         )
@@ -135,3 +134,23 @@ class Command(BaseCommand):
             import_statements=import_statements,
         )
 
+    def add_post_generation_method_to_factory(self):
+        factory_path = os.path.join(
+            self.path_in, "tests", "factories", f"{self.model_in}_sat_factories.py"
+        )
+        factory_class_name = f"{self.model_in_name}SatelliteFactory"
+        code = (
+            "    if not create:\n"
+            "        return\n"
+            "    if not extracted:\n"
+            "        return\n"
+            f"    self.hub_entity.link_{self.model_in}_{self.model_out}.add(extracted.hub_entity)\n"
+        )
+        ensure_method_with_code(
+            filename=factory_path,
+            class_name=factory_class_name,
+            method_name=self.model_out,
+            code_to_insert=code,
+            method_args="self, create, extracted, **kwargs",
+            method_decorator="factory.post_generation",
+        )
