@@ -171,5 +171,5 @@ class Command(BaseCommand):
             method_decorator="factory.post_generation",
         )
         self.stdout.write(
-            f"Add link as post_generation method to fatcory in {factory_path}"
+            f"Add link as post_generation method to factory in {factory_path}"
         )
