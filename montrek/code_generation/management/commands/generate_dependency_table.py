@@ -134,7 +134,7 @@ class {self.model_out_name}{self.model_in_name}CreateView({self.model_in_name}Cr
         return reverse("{self.model_out}_{self.model_in}s_list", kwargs={{"pk": self.kwargs["pk"]}})
 
     def get_form(self, *args, **kwargs):
-        form = super().get_form(kwargs)
+        form = super().get_form(*args, **kwargs)
         hub = {self.model_out_name}Repository(self.session_data).receive().get(hub__pk=self.kwargs["pk"])
         form["link_{self.model_in}_{self.model_out}"].initial = hub
         return form
