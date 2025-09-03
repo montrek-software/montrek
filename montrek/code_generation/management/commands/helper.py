@@ -8,6 +8,7 @@ def ensure_method_with_code(
     method_name: str,
     code_to_insert: str,
     method_args: str = "self",
+    import_statements: tuple[str, ...] = (),
 ):
     with open(filename, "r", encoding="utf-8") as f:
         text = f.read()
@@ -128,5 +129,11 @@ def ensure_method_with_code(
             lines[insertion_at:insertion_at] = to_insert
 
     new_text = "".join(lines)
+
+    def add_import_statements(in_text: str) -> str:
+        import_statements_str = "\n".join(import_statements)
+        return import_statements_str + in_text
+
+    new_text = add_import_statements(new_text)
     with open(filename, "w", encoding="utf-8") as f:
         f.write(new_text)

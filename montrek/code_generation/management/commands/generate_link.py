@@ -114,9 +114,14 @@ class Command(BaseCommand):
             ["hub_entity_id"],
             rename_field_map={{"hub_entity_id": "{self.model_out}_id"}}
         )"""
+        import_statements = (
+            f"from {self.python_path_out}.models.{self.model_out}_sat_models import {self.model_out_name}Satellite\n",
+            f"from {self.python_path_in}.models.{self.model_in}_hub_models import Link{self.model_in_name}{self.model_out_name}\n",
+        )
         ensure_method_with_code(
             filename=repo_path,
             class_name=repo_class_name,
             method_name="set_annotations",
             code_to_insert=code,
+            import_statements=import_statements,
         )

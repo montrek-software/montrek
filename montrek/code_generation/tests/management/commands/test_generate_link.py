@@ -51,4 +51,13 @@ class TestGenerateLinkCommand(TestCase):
             rename_field_map={"hub_entity_id":"mother_id"}
         )"""
             self.assertIn(repo_change.replace(" ", ""), code)
+            expected_import_statements = (
+                "from code_generation.tests.data.output_links.models.mother_sat_models import MotherSatellite\n",
+                "from code_generation.tests.data.output_links.models.daughter_hub_models import LinkDaughterMother\n",
+            )
+            for import_statement in expected_import_statements:
+                self.assertIn(
+                    import_statement.replace(" ", ""),
+                    code,
+                )
         shutil.rmtree(self.output_dir)
