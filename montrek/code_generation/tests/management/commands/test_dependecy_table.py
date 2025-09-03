@@ -109,4 +109,18 @@ class TestGenerateLinkCommand(TestCase):
             )
             for import_statement in import_statements:
                 self.assertIn(import_statement.replace(" ", ""), code)
+        with open(os.path.join(self.output_dir, "urls", "mother_urls.py")) as f:
+            code = f.read().replace(" ", "")
+            expected_code = """path(
+        "mother/<int:pk>/daughters/list",
+        MotherDaughtersListView.as_view(),
+        name="mother_daughters_list"
+    ),
+    """
+            self.assertIn(expected_code.replace(" ", ""), code)
+            import_statements = (
+                "from code_generation.tests.data.output_dependecy_table.views.mother_views import MotherDaughtersListView\n",
+            )
+            for import_statement in import_statements:
+                self.assertIn(import_statement.replace(" ", ""), code)
         shutil.rmtree(self.output_dir)

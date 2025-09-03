@@ -50,6 +50,7 @@ class Command(BaseCommand):
         self.add_view()
         self.add_manager()
         self.add_repository()
+        self.add_urls()
 
     def get_model_name(self, model: str) -> str:
         return model.replace("_", " ").title().replace(" ", "")
@@ -163,3 +164,22 @@ class Command(BaseCommand):
             f"from {self.python_path_out}.models.{self.model_out}_hub_models import {self.model_out_name}HubValueDate",
         )
         self._add_code(repository_path, class_name, code, import_statements)
+
+    def add_urls(self):
+        urls_path = os.path.join(self.path_out, "urls", f"{self.model_out}_urls.py")
+        with open(urls_path, "r") as f:
+            old_code = f.read()
+        code = f"""path(
+        "{self.model_out}/<int:pk>/{self.model_in}s/list",
+        {self.model_out_name}{self.model_in_name}sListView.as_view(),
+        name="{self.model_out}_{self.model_in}s_list"
+    ),
+    ]
+    """
+        new_code = old_code.replace("]", code)
+        import_statements = (
+            f"from {self.python_path_out}.views.{self.model_out}_views import {self.model_out_name}{self.model_in_name}sListView",
+        )
+        new_code = "\n".join(import_statements) + "\n" + new_code
+        with open(urls_path, "w") as f:
+            f.write(new_code)
