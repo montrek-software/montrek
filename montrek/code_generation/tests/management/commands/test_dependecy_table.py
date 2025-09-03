@@ -65,7 +65,7 @@ class TestGenerateLinkCommand(TestCase):
     @property
     def actions(self) -> tuple[ActionElement]:
         action_create = CreateActionElement(
-            url_name = "daughter_create_from_mother",
+            url_name = "mother_daughter_create",
             kwargs = {"mother_id": self.kwargs["pk"]},
             action_id="id_daughter_mother_create",
             hover_text="Create Daughter from Mother",
@@ -116,10 +116,16 @@ class TestGenerateLinkCommand(TestCase):
         MotherDaughtersListView.as_view(),
         name="mother_daughters_list"
     ),
+    path(
+        "mother/<int:pk>/daughter/create",
+        MotherDaughterCreateView.as_view(),
+        name="mother_daughter_create"
+    ),
     """
             self.assertIn(expected_code.replace(" ", ""), code)
             import_statements = (
                 "from code_generation.tests.data.output_dependecy_table.views.mother_views import MotherDaughtersListView\n",
+                "from code_generation.tests.data.output_dependecy_table.views.mother_views import MotherDaughterCreateView\n",
             )
             for import_statement in import_statements:
                 self.assertIn(import_statement.replace(" ", ""), code)
