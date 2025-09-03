@@ -86,6 +86,7 @@ class TestGenerateLinkCommand(TestCase):
             self.assertIn(expected_code.replace(" ", ""), code)
             import_statements = (
                 "from code_generation.tests.data.output_dependecy_table.managers.mother_managers import MotherDaughtersTableManager\n",
+                "from code_generation.tests.data.output_dependecy_table.repositories.mother_repositories import MotherRepository\n",
                 "from baseclasses.dataclasses.view_classes import CreateActionElement",
             )
             for import_statement in import_statements:
