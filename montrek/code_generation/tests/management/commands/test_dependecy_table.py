@@ -54,4 +54,29 @@ class TestGenerateLinkCommand(TestCase):
             )
             for import_statement in import_statements:
                 self.assertIn(import_statement.replace(" ", ""), code)
+        with open(os.path.join(self.output_dir, "views", "mother_views.py")) as f:
+            code = f.read().replace(" ", "")
+            expected_code = """class MotherDaughtersListView(MontrekListView):
+    manager_class = MotherDaughtersManager
+    page_class = MotherDetailsPage
+    title = "Mother Daughters"
+    tab = "tab_mother_daughters"
+
+    @property
+    def actions(self) -> tuple[ActionElement]:
+        action_create = CreateActionElement(
+            url_name = "daughter_create_from_mother",
+            kwargs = {"mother_id": self.kwargs["pk"]},
+            action_id="id_daughter_mother_create",
+            hover_text="Create Daughter from Mother",
+        )
+        return (action_create,)
+                """
+            self.assertIn(expected_code.replace(" ", ""), code)
+            import_statements = (
+                "from code_generation.tests.data.output_dependecy_table.managers.mother_managers import MotherDaughtersManager\n",
+                "from baseclasses.dataclasses.view_classes import CreateActionElement",
+            )
+            for import_statement in import_statements:
+                self.assertIn(import_statement.replace(" ", ""), code)
         shutil.rmtree(self.output_dir)
