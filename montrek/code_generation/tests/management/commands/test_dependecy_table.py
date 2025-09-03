@@ -79,7 +79,7 @@ class TestGenerateLinkCommand(TestCase):
         return reverse("mother_daughters_list", kwargs={"pk": self.kwargs["pk"]})
 
     def get_form(self, *args, **kwargs):
-        form = super().get_form(kwargs)
+        form = super().get_form(*args, **kwargs)
         hub = MotherRepository(self.session_data).receive().get(hub__pk=self.kwargs["pk"])
         form["link_daughter_mother"].initial = hub
         return form"""
