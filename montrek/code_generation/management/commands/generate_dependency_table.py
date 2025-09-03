@@ -121,14 +121,27 @@ class Command(BaseCommand):
     def actions(self) -> tuple[ActionElement]:
         action_create = CreateActionElement(
             url_name = "{self.model_out}_{self.model_in}_create",
-            kwargs = {{"{self.model_out}_id": self.kwargs["pk"]}},
+            kwargs = {{"pk": self.kwargs["pk"]}},
             action_id="id_{self.model_in}_{self.model_out}_create",
             hover_text="Create {self.model_in_name} from {self.model_out_name}",
         )
-        return (action_create,)
+       return (action_create,)
+
+
+ class {self.model_out_name}{self.model_in_name}CreateView({self.model_in_name}CreateView):
+
+    def get_success_url(self):
+        return reverse("{self.model_out}_{self.model_in}s_list", kwargs={{"pk": self.kwargs["pk"]}})
+
+    def get_form(self, *args, **kwargs):
+        form = super().get_form(kwargs)
+        hub = {self.model_out_name}Repository(self.session_data).receive().get(hub__pk=self.kwargs["pk"])
+        form["link_{self.model_in}_{self.model_out}"].initial = hub
+        return form
                 """
         import_statements = (
             f"from {self.python_path_out}.managers.{self.model_out}_managers import {self.model_out_name}{self.model_in_name}sTableManager",
+            f"from {self.python_path_in}.views.{self.model_in}_views import {self.model_in_name}CreateView",
             "from baseclasses.dataclasses.view_classes import CreateActionElement",
         )
         self._add_code(view_path, class_name, code, import_statements)
