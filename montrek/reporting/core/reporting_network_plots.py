@@ -45,7 +45,8 @@ class ReportingNetworkPlot(ReportingPlotBase[ReportingNetworkData]):
         )
 
     def get_nodes(self, pos: dict[str, np.ndarray], graph: nx.DiGraph) -> Scatter:
-        node_x, node_y = (
+        node_x, node_y, node_text = (
+            [],
             [],
             [],
         )
@@ -53,8 +54,10 @@ class ReportingNetworkPlot(ReportingPlotBase[ReportingNetworkData]):
             x, y = pos[node]
             node_x.append(x)
             node_y.append(y)
+            node_text.append(f"<b>{node}</b>")
         return Scatter(
             x=node_x,
             y=node_y,
             mode="markers+text",
+            text=node_text,
         )

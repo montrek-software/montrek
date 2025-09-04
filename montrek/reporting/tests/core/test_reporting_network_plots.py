@@ -22,3 +22,4 @@ class TestReportingNetworkPlot(TestCase):
         nodes = figure_data[1]
         self.assertEqual(edges["mode"], "lines")
         self.assertEqual(nodes["mode"], "markers+text")
+        self.assertEqual(nodes["text"], ("<b>A</b>", "<b>B</b>"))
