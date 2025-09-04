@@ -37,3 +37,4 @@ tblib==3.0.0
 tinycss2==1.4.0
 matplotlib==3.10.5
 networkx==3.5
+scipy==1.16.1
