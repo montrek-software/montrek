@@ -23,3 +23,23 @@ class TestReportingNetworkPlot(TestCase):
         self.assertEqual(edges["mode"], "lines")
         self.assertEqual(nodes["mode"], "markers+text")
         self.assertEqual(nodes["text"], ("<b>A</b>", "<b>B</b>"))
+
+    def test_generate_network_plot__with_marker(self):
+        graph = DiGraph()
+        graph.add_node("A", marker_att="A")
+        graph.add_node("B", marker_att="B")
+        graph.add_edge("A", "B")
+
+        marker_map = {"A": "circle", "B": "square"}
+
+        reporting_data = ReportingNetworkData(
+            graph=graph,
+            title="Test Network Graph",
+            symbol_attr="marker_att",
+            symbol_map=marker_map,
+        )
+
+        reporting_plot = ReportingNetworkPlot()
+        reporting_plot.generate(reporting_data)
+        figure_data = reporting_plot.figure.data
+        self.assertEqual(figure_data[1]["marker"]["symbol"], ("circle", "square"))

@@ -17,7 +17,7 @@ class ReportingNetworkPlot(ReportingPlotBase[ReportingNetworkData]):
         graph = reporting_data.graph
         pos = self.grouped_grid_layout(reporting_data)
         edge_trace = self.get_edges(pos, graph)
-        node_trace = self.get_nodes(pos, graph)
+        node_trace = self.get_nodes(pos, reporting_data)
         return [edge_trace, node_trace]
 
     def grouped_grid_layout(
@@ -44,8 +44,12 @@ class ReportingNetworkPlot(ReportingPlotBase[ReportingNetworkData]):
             hoverinfo="none",
         )
 
-    def get_nodes(self, pos: dict[str, np.ndarray], graph: nx.DiGraph) -> Scatter:
-        node_x, node_y, node_text = (
+    def get_nodes(
+        self, pos: dict[str, np.ndarray], reporting_data: ReportingNetworkData
+    ) -> Scatter:
+        graph = reporting_data.graph
+        node_x, node_y, node_text, node_symbols = (
+            [],
             [],
             [],
             [],
@@ -55,9 +59,15 @@ class ReportingNetworkPlot(ReportingPlotBase[ReportingNetworkData]):
             node_x.append(x)
             node_y.append(y)
             node_text.append(f"<b>{node}</b>")
+            if reporting_data.symbol_attr:
+                node_symbols.append(
+                    reporting_data.symbol_map.get(
+                        attrs.get(reporting_data.symbol_attr), "circle"
+                    )
+                )
+        marker_attrs = {"size": 20, "line_width": 2}
+        if reporting_data.symbol_attr:
+            marker_attrs["symbol"] = node_symbols
         return Scatter(
-            x=node_x,
-            y=node_y,
-            mode="markers+text",
-            text=node_text,
+            x=node_x, y=node_y, mode="markers+text", text=node_text, marker=marker_attrs
         )
