@@ -24,6 +24,7 @@ class ReportingData(ReportingDataBase):
 @dataclass
 class ReportingNetworkData(ReportingDataBase):
     graph: DiGraph
+    group_attr: str | None = None
     symbol_attr: str | None = None
     symbol_map: dict[str, str] | None = None
     marker_size: int = 20

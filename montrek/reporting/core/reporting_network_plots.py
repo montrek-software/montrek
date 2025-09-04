@@ -1,8 +1,10 @@
+import itertools
 from typing import Any
 
 import networkx as nx
 import numpy as np
 from plotly.graph_objs import Scatter
+from reporting.core.reporting_colors import Color, ReportingColors
 from reporting.core.reporting_data import ReportingNetworkData
 from reporting.core.reporting_plots import ReportingPlotBase
 
@@ -48,7 +50,9 @@ class ReportingNetworkPlot(ReportingPlotBase[ReportingNetworkData]):
         self, pos: dict[str, np.ndarray], reporting_data: ReportingNetworkData
     ) -> Scatter:
         graph = reporting_data.graph
-        node_x, node_y, node_text, node_symbols = (
+        group_color_map = self.get_group_color_map(reporting_data.group_attr, graph)
+        node_x, node_y, node_text, node_symbols, node_colors = (
+            [],
             [],
             [],
             [],
@@ -65,12 +69,26 @@ class ReportingNetworkPlot(ReportingPlotBase[ReportingNetworkData]):
                         attrs.get(reporting_data.symbol_attr), "circle"
                     )
                 )
+            group = attrs.get(reporting_data.group_attr)
+            node_colors.append(group_color_map.get(group, "gray"))
         marker_attrs = {
             "size": reporting_data.marker_size,
             "line_width": reporting_data.marker_line_width,
+            "color": node_colors,
         }
         if reporting_data.symbol_attr:
             marker_attrs["symbol"] = node_symbols
         return Scatter(
             x=node_x, y=node_y, mode="markers+text", text=node_text, marker=marker_attrs
         )
+
+    def get_group_color_map(
+        self, group: str | None, graph: nx.DiGraph
+    ) -> dict[Any, Color]:
+        if not group:
+            return {}
+
+        groups = list({attrs.get(group) for _, attrs in graph.nodes(data=True)})
+        color_palette = ReportingColors().hex_color_palette()
+        color_cycle = itertools.cycle(color_palette)
+        return {gr: next(color_cycle) for gr in groups}

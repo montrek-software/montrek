@@ -59,3 +59,18 @@ class TestReportingNetworkPlot(TestCase):
         figure_data = reporting_plot.figure.data
         self.assertEqual(figure_data[1]["marker"]["size"], 30)
         self.assertEqual(figure_data[1]["marker"]["line"]["width"], 3)
+
+    def test_generate_network_plot__group_colors(self):
+        graph = DiGraph()
+        graph.add_node("A", group="AA")
+        graph.add_node("B", group="BB")
+        graph.add_edge("A", "B")
+
+        reporting_data = ReportingNetworkData(
+            graph=graph, title="Test Network Graph", group_attr="group"
+        )
+
+        reporting_plot = ReportingNetworkPlot()
+        reporting_plot.generate(reporting_data)
+        figure_data = reporting_plot.figure.data
+        self.assertEqual(figure_data[1]["marker"]["color"], ("#004767", "#BE0D3E"))
