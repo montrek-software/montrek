@@ -56,4 +56,5 @@ class ReportingNetworkPlot(ReportingPlotBase[ReportingNetworkData]):
         return Scatter(
             x=node_x,
             y=node_y,
+            mode="markers+text",
         )

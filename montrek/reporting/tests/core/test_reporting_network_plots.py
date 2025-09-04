@@ -16,6 +16,9 @@ class TestReportingNetworkPlot(TestCase):
 
         reporting_plot = ReportingNetworkPlot()
         reporting_plot.generate(reporting_data)
-        self.assertTrue(
-            all([isinstance(plot, Scatter) for plot in reporting_plot.figure.data])
-        )
+        figure_data = reporting_plot.figure.data
+        self.assertTrue(all([isinstance(plot, Scatter) for plot in figure_data]))
+        edges = figure_data[0]
+        nodes = figure_data[1]
+        self.assertEqual(edges["mode"], "lines")
+        self.assertEqual(nodes["mode"], "markers+text")
