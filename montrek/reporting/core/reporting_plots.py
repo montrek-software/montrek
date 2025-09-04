@@ -9,7 +9,7 @@ from reporting.core.reporting_mixins import ReportingChecksMixin
 from reporting.core.reporting_protocols import ReportingElement
 
 
-class ReportingPlot(ReportingElement, ReportingChecksMixin):
+class ReportingPlotBase(ReportingElement, ReportingChecksMixin):
     def __init__(self, width: float = 1):
         self.width = width
 
@@ -69,6 +69,8 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
     def to_json(self) -> dict[str, str | Any | None]:
         return {"reporting_plot": self.figure.to_json()}
 
+
+class ReportingPlot(ReportingPlotBase):
     def _check_reporting_data(self, reporting_data: ReportingData) -> None:
         if len(reporting_data.y_axis_columns) != len(reporting_data.plot_types):
             raise ValueError("Number of y_axis_columns and plot_types must match")

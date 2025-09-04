@@ -3,7 +3,7 @@ import plotly.graph_objects as go
 from django.test import TestCase
 from networkx import DiGraph
 from reporting.constants import ReportingPlotType
-from reporting.core.reporting_data import ReportingData
+from reporting.core.reporting_data import ReportingData, ReportingNetworkData
 from reporting.core.reporting_plots import ReportingPlot
 
 
@@ -249,5 +249,9 @@ class TestReportingPiePlots(TestCase):
 
 class TestReportingNetworkPlots(TestCase):
     def test_generate_network_plot(self):
-        network = DiGraph()
-        reporting_data = ReportingData(graph=network, title="Test Network Graph")
+        graph = DiGraph()
+        graph.add_node("A")
+        graph.add_node("B")
+        graph.add_edge("A", "B")
+
+        reporting_data = ReportingNetworkData(graph=graph, title="Test Network Graph")
