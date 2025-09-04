@@ -4,16 +4,17 @@ from typing import Any, Dict, List, Union
 import plotly.graph_objects as go
 from reporting.constants import WORKBENCH_PATH, ReportingPlotType
 from reporting.core.reporting_colors import ReportingColors
-from reporting.core.reporting_data import ReportingData
-from reporting.core.reporting_mixins import ReportingChecksMixin
+from reporting.core.reporting_data import ReportingData, ReportingNetworkData
 from reporting.core.reporting_protocols import ReportingElement
 
 
-class ReportingPlotBase(ReportingElement, ReportingChecksMixin):
+class ReportingPlotBase(ReportingElement):
     def __init__(self, width: float = 1):
         self.width = width
 
-    def generate(self, reporting_data: ReportingData) -> None:
+    def generate(
+        self, reporting_data: ReportingData | ReportingNetworkData | str
+    ) -> None:
         self._check_reporting_data(reporting_data)
         _x = self._set_x_axis(reporting_data)
         figure_data = self._get_figure_data(
@@ -68,6 +69,21 @@ class ReportingPlotBase(ReportingElement, ReportingChecksMixin):
 
     def to_json(self) -> dict[str, str | Any | None]:
         return {"reporting_plot": self.figure.to_json()}
+
+    def _check_reporting_data(
+        self, reporting_data: ReportingData | ReportingNetworkData
+    ):
+        raise NotImplementedError("Method is not implemented")
+
+    def _set_x_axis(
+        self, reporting_data: ReportingData | ReportingNetworkData
+    ) -> list[Any]:
+        return []
+
+    def _get_figure_data(
+        self, _x: list[Any], reporting_data: ReportingData | ReportingNetworkData
+    ) -> list[Any]:
+        raise NotImplementedError("Method is not implemented")
 
 
 class ReportingPlot(ReportingPlotBase):

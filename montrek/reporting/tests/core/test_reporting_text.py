@@ -193,20 +193,8 @@ class TestReportText(TestCase):
             "This is a <b>latex</b> text. <br> This is a new <i>line</i>"
         )
 
-    def test_paragraph_not_generated(self):
-        paragraph = ReportingTextParagraph()
-        self.assertEqual(paragraph.text, None)
-        self.assertEqual(paragraph.text_type.name, "PLAIN")
-        with self.assertRaises(ValueError):
-            paragraph.format_html()
-        with self.assertRaises(ValueError):
-            paragraph.format_latex()
-        with self.assertRaises(ValueError):
-            paragraph.format_mail()
-
     def test_paragraph_plain(self):
-        paragraph = ReportingTextParagraph()
-        paragraph.generate(self.plain_text)
+        paragraph = ReportingTextParagraph(self.plain_text)
         self.assertEqual(paragraph.text, self.plain_text)
         self.assertEqual(paragraph.text_type.name, "PLAIN")
         test_plain_to_html = paragraph.format_html()
