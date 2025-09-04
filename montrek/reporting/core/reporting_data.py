@@ -26,3 +26,5 @@ class ReportingNetworkData(ReportingDataBase):
     graph: DiGraph
     symbol_attr: str | None = None
     symbol_map: dict[str, str] | None = None
+    marker_size: int = 20
+    marker_line_width: int = 2

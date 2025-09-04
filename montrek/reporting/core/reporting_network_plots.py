@@ -65,7 +65,10 @@ class ReportingNetworkPlot(ReportingPlotBase[ReportingNetworkData]):
                         attrs.get(reporting_data.symbol_attr), "circle"
                     )
                 )
-        marker_attrs = {"size": 20, "line_width": 2}
+        marker_attrs = {
+            "size": reporting_data.marker_size,
+            "line_width": reporting_data.marker_line_width,
+        }
         if reporting_data.symbol_attr:
             marker_attrs["symbol"] = node_symbols
         return Scatter(
