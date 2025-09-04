@@ -1,9 +1,10 @@
 import pandas as pd
 import plotly.graph_objects as go
 from django.test import TestCase
-from reporting.core.reporting_plots import ReportingPlot
-from reporting.core.reporting_data import ReportingData
+from networkx import DiGraph
 from reporting.constants import ReportingPlotType
+from reporting.core.reporting_data import ReportingData
+from reporting.core.reporting_plots import ReportingPlot
 
 
 class TestReportingPlots(TestCase):
@@ -244,3 +245,9 @@ class TestReportingPiePlots(TestCase):
         self.assertTrue(reporting_plot_latex.startswith("\\begin{figure}"))
         reporting_plot_json = reporting_plot.to_json()
         self.assertTrue("reporting_plot" in reporting_plot_json.keys())
+
+
+class TestReportingNetworkPlots(TestCase):
+    def test_generate_network_plot(self):
+        network = DiGraph()
+        reporting_data = ReportingData(graph=network, title="Test Network Graph")
