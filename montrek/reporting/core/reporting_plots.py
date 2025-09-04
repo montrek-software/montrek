@@ -1,19 +1,19 @@
 import hashlib
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, Generic, List, TypeVar, Union
 
 import plotly.graph_objects as go
 from reporting.constants import WORKBENCH_PATH, ReportingPlotType
 from reporting.core.reporting_colors import ReportingColors
-from reporting.core.reporting_data import ReportingData
-from reporting.core.reporting_mixins import ReportingChecksMixin
-from reporting.core.reporting_protocols import ReportingElement
+from reporting.core.reporting_data import ReportingData, ReportingDataBase
+
+TData = TypeVar("TData", bound=ReportingDataBase)
 
 
-class ReportingPlot(ReportingElement, ReportingChecksMixin):
+class ReportingPlotBase(Generic[TData]):
     def __init__(self, width: float = 1):
         self.width = width
 
-    def generate(self, reporting_data: ReportingData) -> None:
+    def generate(self, reporting_data: TData) -> None:
         self._check_reporting_data(reporting_data)
         _x = self._set_x_axis(reporting_data)
         figure_data = self._get_figure_data(
@@ -21,6 +21,7 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
             reporting_data,
         )
         self.figure = go.Figure(data=figure_data)
+
         self.figure.update_layout(
             title_text=reporting_data.title,  # Adding Title
             title_font_color=ReportingColors.BLUE.hex,  # Customizing Title Color
@@ -31,18 +32,9 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
             ),
             paper_bgcolor=ReportingColors.WHITE.hex,  # Customizing Background Color
             plot_bgcolor=ReportingColors.WHITE.hex,  # Customizing Plot Background Color
-            xaxis=dict(
-                color=ReportingColors.BLUE.hex,  # Axis text and line color
-                gridcolor=ReportingColors.GREY.hex,  # Grid line color
-                zerolinecolor=ReportingColors.GREY.hex,  # Zero line color
-            ),
-            yaxis=dict(
-                color=ReportingColors.BLUE.hex,  # Axis text and line color
-                gridcolor=ReportingColors.GREY.hex,  # Grid line color
-                zerolinecolor=ReportingColors.GREY.hex,  # Zero line color
-            ),
             margin={"l": 0, "r": 0},
         )
+        self.update_axis_layout(reporting_data)
 
     def to_html(self) -> str:
         return self.figure.to_html(full_html=False, include_plotlyjs=False)
@@ -69,6 +61,20 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
     def to_json(self) -> dict[str, str | Any | None]:
         return {"reporting_plot": self.figure.to_json()}
 
+    def _check_reporting_data(self, reporting_data: TData):
+        raise NotImplementedError("Method is not implemented")
+
+    def _set_x_axis(self, reporting_data: TData) -> list[Any]:
+        return []
+
+    def _get_figure_data(self, _x: list[Any], reporting_data: TData) -> list[Any]:
+        raise NotImplementedError("Method is not implemented")
+
+    def update_axis_layout(self, reporting_data: TData):
+        return
+
+
+class ReportingPlot(ReportingPlotBase[ReportingData]):
     def _check_reporting_data(self, reporting_data: ReportingData) -> None:
         if len(reporting_data.y_axis_columns) != len(reporting_data.plot_types):
             raise ValueError("Number of y_axis_columns and plot_types must match")
@@ -167,3 +173,17 @@ class ReportingPlot(ReportingElement, ReportingChecksMixin):
         if reporting_data.plot_parameters is None:
             return [{} for _ in range(len(reporting_data.plot_types))]
         return reporting_data.plot_parameters
+
+    def update_axis_layout(self, reporting_data: ReportingData):
+        self.figure.update_layout(
+            xaxis=dict(
+                color=ReportingColors.BLUE.hex,  # Axis text and line color
+                gridcolor=ReportingColors.GREY.hex,  # Grid line color
+                zerolinecolor=ReportingColors.GREY.hex,  # Zero line color
+            ),
+            yaxis=dict(
+                color=ReportingColors.BLUE.hex,  # Axis text and line color
+                gridcolor=ReportingColors.GREY.hex,  # Grid line color
+                zerolinecolor=ReportingColors.GREY.hex,  # Zero line color
+            ),
+        )

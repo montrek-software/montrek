@@ -1,9 +1,9 @@
 import pandas as pd
 import plotly.graph_objects as go
 from django.test import TestCase
-from reporting.core.reporting_plots import ReportingPlot
-from reporting.core.reporting_data import ReportingData
 from reporting.constants import ReportingPlotType
+from reporting.core.reporting_data import ReportingData
+from reporting.core.reporting_plots import ReportingPlot
 
 
 class TestReportingPlots(TestCase):
