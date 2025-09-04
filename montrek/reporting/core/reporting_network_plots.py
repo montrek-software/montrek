@@ -14,12 +14,6 @@ class ReportingNetworkPlot(ReportingPlotBase[ReportingNetworkData]):
     def _check_reporting_data(self, reporting_data: ReportingNetworkData):
         return
 
-    def to_html(self) -> str:
-        return super().to_html()
-
-    def to_latex(self) -> str:
-        return super().to_latex()
-
     def _get_figure_data(
         self, _x: list[Any], reporting_data: ReportingNetworkData
     ) -> list[Scatter]:
