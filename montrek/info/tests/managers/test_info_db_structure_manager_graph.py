@@ -12,7 +12,7 @@ class TestInfoDbStructureManagerGraph(TestCase):
         self.graph_manager = InfoDbStructureNetworkReportingElement(
             self.db_structure_container
         )
-        self.graph = self.graph_manager.to_networkx_graph(self.db_structure_container)
+        self.graph = self.graph_manager.to_networkx_graph()
 
     def test_graph_nodes(self):
         expected_nodes = {

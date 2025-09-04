@@ -37,8 +37,8 @@ class ReportingNetworkPlot(ReportingPlotBase[ReportingNetworkData]):
         n_cols: int | None = None,
         cell_w: float = 10.0,
         cell_h: float = 8.0,
-        pad: float = 1.0,
         sublayout: str = "kamada_kawai",  # "spring" | "kamada_kawai" | "circular"
+        pad: float = 1.0,
         seed: int = 42,
     ) -> dict[str, np.ndarray]:
         """

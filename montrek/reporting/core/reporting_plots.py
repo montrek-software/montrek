@@ -5,12 +5,11 @@ import plotly.graph_objects as go
 from reporting.constants import WORKBENCH_PATH, ReportingPlotType
 from reporting.core.reporting_colors import ReportingColors
 from reporting.core.reporting_data import ReportingData, ReportingDataBase
-from reporting.core.reporting_protocols import ReportingElement
 
 TData = TypeVar("TData", bound=ReportingDataBase)
 
 
-class ReportingPlotBase(ReportingElement, Generic[TData]):
+class ReportingPlotBase(Generic[TData]):
     def __init__(self, width: float = 1):
         self.width = width
 
