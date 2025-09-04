@@ -7,8 +7,12 @@ from reporting.constants import ReportingPlotType
 
 
 @dataclass
-class ReportingData:
+class ReportingDataBase:
     title: str
+
+
+@dataclass
+class ReportingData(ReportingDataBase):
     data_df: pd.DataFrame
     x_axis_column: str | None = None
     x_axis_is_index: bool = False
@@ -18,6 +22,5 @@ class ReportingData:
 
 
 @dataclass
-class ReportingNetworkData:
-    title: str
+class ReportingNetworkData(ReportingDataBase):
     graph: DiGraph

@@ -1,20 +1,20 @@
 import hashlib
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, Generic, List, TypeVar, Union
 
 import plotly.graph_objects as go
 from reporting.constants import WORKBENCH_PATH, ReportingPlotType
 from reporting.core.reporting_colors import ReportingColors
-from reporting.core.reporting_data import ReportingData, ReportingNetworkData
+from reporting.core.reporting_data import ReportingData, ReportingDataBase
 from reporting.core.reporting_protocols import ReportingElement
 
+TData = TypeVar("TData", bound=ReportingDataBase)
 
-class ReportingPlotBase(ReportingElement):
+
+class ReportingPlotBase(ReportingElement, Generic[TData]):
     def __init__(self, width: float = 1):
         self.width = width
 
-    def generate(
-        self, reporting_data: ReportingData | ReportingNetworkData | str
-    ) -> None:
+    def generate(self, reporting_data: TData) -> None:
         self._check_reporting_data(reporting_data)
         _x = self._set_x_axis(reporting_data)
         figure_data = self._get_figure_data(
@@ -70,23 +70,17 @@ class ReportingPlotBase(ReportingElement):
     def to_json(self) -> dict[str, str | Any | None]:
         return {"reporting_plot": self.figure.to_json()}
 
-    def _check_reporting_data(
-        self, reporting_data: ReportingData | ReportingNetworkData
-    ):
+    def _check_reporting_data(self, reporting_data: TData):
         raise NotImplementedError("Method is not implemented")
 
-    def _set_x_axis(
-        self, reporting_data: ReportingData | ReportingNetworkData
-    ) -> list[Any]:
+    def _set_x_axis(self, reporting_data: TData) -> list[Any]:
         return []
 
-    def _get_figure_data(
-        self, _x: list[Any], reporting_data: ReportingData | ReportingNetworkData
-    ) -> list[Any]:
+    def _get_figure_data(self, _x: list[Any], reporting_data: TData) -> list[Any]:
         raise NotImplementedError("Method is not implemented")
 
 
-class ReportingPlot(ReportingPlotBase):
+class ReportingPlot(ReportingPlotBase[ReportingData]):
     def _check_reporting_data(self, reporting_data: ReportingData) -> None:
         if len(reporting_data.y_axis_columns) != len(reporting_data.plot_types):
             raise ValueError("Number of y_axis_columns and plot_types must match")
