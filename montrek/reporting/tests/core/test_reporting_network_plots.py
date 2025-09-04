@@ -73,4 +73,4 @@ class TestReportingNetworkPlot(TestCase):
         reporting_plot = ReportingNetworkPlot()
         reporting_plot.generate(reporting_data)
         figure_data = reporting_plot.figure.data
-        self.assertEqual(figure_data[1]["marker"]["color"], ("#004767", "#BE0D3E"))
+        self.assertEqual(figure_data[1]["marker"]["color"], ("#BE0D3E", "#004767"))
