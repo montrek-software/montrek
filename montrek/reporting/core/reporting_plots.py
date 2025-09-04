@@ -22,6 +22,7 @@ class ReportingPlotBase(ReportingElement, Generic[TData]):
             reporting_data,
         )
         self.figure = go.Figure(data=figure_data)
+
         self.figure.update_layout(
             title_text=reporting_data.title,  # Adding Title
             title_font_color=ReportingColors.BLUE.hex,  # Customizing Title Color
@@ -32,18 +33,9 @@ class ReportingPlotBase(ReportingElement, Generic[TData]):
             ),
             paper_bgcolor=ReportingColors.WHITE.hex,  # Customizing Background Color
             plot_bgcolor=ReportingColors.WHITE.hex,  # Customizing Plot Background Color
-            xaxis=dict(
-                color=ReportingColors.BLUE.hex,  # Axis text and line color
-                gridcolor=ReportingColors.GREY.hex,  # Grid line color
-                zerolinecolor=ReportingColors.GREY.hex,  # Zero line color
-            ),
-            yaxis=dict(
-                color=ReportingColors.BLUE.hex,  # Axis text and line color
-                gridcolor=ReportingColors.GREY.hex,  # Grid line color
-                zerolinecolor=ReportingColors.GREY.hex,  # Zero line color
-            ),
             margin={"l": 0, "r": 0},
         )
+        self.update_axis_layout(reporting_data)
 
     def to_html(self) -> str:
         return self.figure.to_html(full_html=False, include_plotlyjs=False)
@@ -78,6 +70,9 @@ class ReportingPlotBase(ReportingElement, Generic[TData]):
 
     def _get_figure_data(self, _x: list[Any], reporting_data: TData) -> list[Any]:
         raise NotImplementedError("Method is not implemented")
+
+    def update_axis_layout(self, reporting_data: TData):
+        return
 
 
 class ReportingPlot(ReportingPlotBase[ReportingData]):
@@ -179,3 +174,17 @@ class ReportingPlot(ReportingPlotBase[ReportingData]):
         if reporting_data.plot_parameters is None:
             return [{} for _ in range(len(reporting_data.plot_types))]
         return reporting_data.plot_parameters
+
+    def update_axis_layout(self, reporting_data: ReportingData):
+        self.figure.update_layout(
+            xaxis=dict(
+                color=ReportingColors.BLUE.hex,  # Axis text and line color
+                gridcolor=ReportingColors.GREY.hex,  # Grid line color
+                zerolinecolor=ReportingColors.GREY.hex,  # Zero line color
+            ),
+            yaxis=dict(
+                color=ReportingColors.BLUE.hex,  # Axis text and line color
+                gridcolor=ReportingColors.GREY.hex,  # Grid line color
+                zerolinecolor=ReportingColors.GREY.hex,  # Zero line color
+            ),
+        )

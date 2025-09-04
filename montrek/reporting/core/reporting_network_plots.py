@@ -23,6 +23,14 @@ class ReportingNetworkPlot(ReportingPlotBase[ReportingNetworkData]):
         node_trace = self.get_nodes(pos, reporting_data)
         return [edge_trace, node_trace]
 
+    def update_axis_layout(self, reporting_data: ReportingNetworkData):
+        self.figure.update_layout(
+            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            height=reporting_data.fig_height,
+            showlegend=False,
+        )
+
     def grouped_grid_layout(
         self,
         reporting_data: ReportingNetworkData,
@@ -30,7 +38,7 @@ class ReportingNetworkPlot(ReportingPlotBase[ReportingNetworkData]):
         cell_w: float = 10.0,
         cell_h: float = 8.0,
         pad: float = 1.0,
-        sublayout: str = "spring",  # "spring" | "kamada_kawai" | "circular"
+        sublayout: str = "kamada_kawai",  # "spring" | "kamada_kawai" | "circular"
         seed: int = 42,
     ) -> dict[str, np.ndarray]:
         """

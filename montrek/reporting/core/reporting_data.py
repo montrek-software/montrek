@@ -29,3 +29,4 @@ class ReportingNetworkData(ReportingDataBase):
     symbol_map: dict[str, str] | None = None
     marker_size: int = 20
     marker_line_width: int = 2
+    fig_height: int = 400
