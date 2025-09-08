@@ -16,11 +16,11 @@ class TokenEndpointLiveTests(LiveServerTestCase):
     port = 8917
 
     def setUp(self):
-        User = get_user_model()
+        user_model = get_user_model()
         # unique email each test, avoids any accidental collisions
         email = f"alice+{uuid.uuid4().hex[:8]}@example.com"
         self.password = TEST_USER_PASSWORD
-        self.user = User.objects.create_user(email=email, password=self.password)
+        self.user = user_model.objects.create_user(email=email, password=self.password)
         self.payload = {"email": self.user.email, "password": self.password}
 
     # --- helpers -------------------------------------------------------------

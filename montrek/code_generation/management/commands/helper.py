@@ -19,6 +19,20 @@ def ensure_method_with_code(
     def leading_spaces(s: str) -> int:
         return len(s) - len(s.lstrip(" "))
 
+    def find_end_of_class_by_indentation(line: str, i: int) -> Tuple[int, int, int]:
+        class_indent = leading_spaces(line)
+        # Find end of class by indentation
+        j = i + 1
+        while j < len(lines):
+            lj = lines[j]
+            # Stop when we hit a line that's less-indented or equal to class indent
+            # and not blank/comment
+            if lj.strip() != "" and not lj.lstrip().startswith("#"):
+                if leading_spaces(lj) <= class_indent:
+                    break
+            j += 1
+        return i, j, class_indent
+
     def find_class_block(lines) -> Tuple[int, int, int]:
         """
         Returns (class_start_idx, class_end_idx_exclusive, class_indent)
@@ -30,19 +44,23 @@ def ensure_method_with_code(
         for i, line in enumerate(lines):
             m = class_header_re.match(line)
             if m:
-                class_indent = leading_spaces(line)
-                # Find end of class by indentation
-                j = i + 1
-                while j < len(lines):
-                    lj = lines[j]
-                    # Stop when we hit a line that's less-indented or equal to class indent
-                    # and not blank/comment
-                    if lj.strip() != "" and not lj.lstrip().startswith("#"):
-                        if leading_spaces(lj) <= class_indent:
-                            break
-                    j += 1
-                return i, j, class_indent
+                return find_end_of_class_by_indentation(line, i)
         raise ValueError(f"Class {class_name} not found.")
+
+    def find_body_start(lines, i, end) -> Tuple[int, int, int]:
+        def_indent = leading_spaces(lines[i])
+        # Body starts at next line that is more indented
+        j = i + 1
+        while j < end:
+            if lines[j].strip() == "" or lines[j].lstrip().startswith("#"):
+                j += 1
+                continue
+            if leading_spaces(lines[j]) > def_indent:
+                return i, j, def_indent
+            else:
+                # empty body (we'll still treat j as body start right after def)
+                return i, i + 1, def_indent
+        return i, i + 1, def_indent
 
     def find_method_in_block(lines, start, end) -> Tuple[int, int, int] | None:
         """
@@ -55,32 +73,16 @@ def ensure_method_with_code(
         for i in range(start + 1, end):
             m = method_re.match(lines[i])
             if m:
-                def_indent = leading_spaces(lines[i])
-                # Body starts at next line that is more indented
-                j = i + 1
-                while j < end:
-                    if lines[j].strip() == "" or lines[j].lstrip().startswith("#"):
-                        j += 1
-                        continue
-                    if leading_spaces(lines[j]) > def_indent:
-                        return i, j, def_indent
-                    else:
-                        # empty body (we'll still treat j as body start right after def)
-                        return i, i + 1, def_indent
-                return i, i + 1, def_indent
+                return find_body_start(lines, i, end)
         return None
 
-    try:
-        cls_start, cls_end, cls_indent = find_class_block(lines)
-    except ValueError as e:
-        raise
+    cls_start, cls_end, cls_indent = find_class_block(lines)
 
     method_info = find_method_in_block(lines, cls_start, cls_end)
 
     # Normalize code_to_insert with correct indentation
     body_indent = " " * (cls_indent + 4)
     method_indent = " " * (cls_indent + 4)
-    def_indent_str = " " * (cls_indent + 4)
 
     # Indent each line of code_to_insert to body indent
     def indent_block(block: str, indent: str) -> str:

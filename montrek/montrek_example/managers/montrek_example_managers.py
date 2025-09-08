@@ -1,3 +1,4 @@
+from baseclasses.typing import TableElementsType
 from django.http import HttpResponse
 from django.urls import reverse
 from montrek_example.repositories.hub_a_repository import (
@@ -141,7 +142,7 @@ class SatA5Manager(MontrekTableManager):
     repository_class = HubARepository5
 
     @property
-    def table_elements(self) -> list:
+    def table_elements(self) -> TableElementsType:
         return (
             te.StringTableElement(name="A5 String", attr="field_a5_str"),
             te.SecretStringTableElement(name="Secret", attr="secret_field"),
