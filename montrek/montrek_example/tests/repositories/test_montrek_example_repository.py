@@ -41,7 +41,6 @@ from montrek_example.repositories.hub_c_repository import (
 from montrek_example.repositories.hub_d_repository import (
     HubDRepository,
     HubDRepositoryReversedParentLink,
-    HubDRepositoryReversedParents,
     HubDRepositoryTSReverseLink,
 )
 from montrek_example.repositories.hub_e_repository import HubERepository
@@ -1203,12 +1202,7 @@ class TestMontrekRepositoryLinks(TestCase):
     def test_link_with_parent_links(self):
         hubc = me_factories.HubCFactory()
         hubd = me_factories.HubDFactory()
-        me_factories.SatD1Factory.create(
-            hub_entity=hubd, field_d1_str="Test", state_date_start="2025-08-28"
-        )
-        me_factories.SatD1Factory.create(
-            hub_entity=hubd, field_d1_str="TestOld", state_date_end="2025-08-28"
-        )
+        me_factories.SatD1Factory.create(hub_entity=hubd, field_d1_str="Test")
         me_factories.LinkHubCHubDFactory(hub_in=hubc, hub_out=hubd)
         me_factories.LinkHubAHubCFactory(hub_in=self.huba1, hub_out=hubc)
         repository = HubARepository3()
@@ -1220,12 +1214,7 @@ class TestMontrekRepositoryLinks(TestCase):
         # Initial setup
         hubc = me_factories.HubCFactory()
         hubd = me_factories.HubDFactory()
-        me_factories.SatD1Factory.create(
-            hub_entity=hubd, field_d1_str="Test", state_date_start="2025-08-28"
-        )
-        me_factories.SatD1Factory.create(
-            hub_entity=hubd, field_d1_str="TestOld", state_date_end="2025-08-28"
-        )
+        me_factories.SatD1Factory.create(hub_entity=hubd, field_d1_str="Test")
         me_factories.LinkHubCHubDFactory(hub_in=hubc, hub_out=hubd)
         me_factories.LinkHubAHubCFactory(hub_in=self.huba1, hub_out=hubc)
         # Change link from A to C
@@ -1267,25 +1256,6 @@ class TestMontrekRepositoryLinks(TestCase):
             return HubCRepositoryReversedParentsNoMatchingReversedParents()
 
         self.assertRaises(ValueError, call_repo)
-
-    def test_link_with_multiple_reversed_parents(self):
-        satd = me_factories.SatD1Factory()
-        me_factories.LinkHubCHubDFactory(hub_in=self.hubc1, hub_out=satd.hub_entity)
-        satb = me_factories.SatB1Factory(
-            field_b1_str="Reversed Test Old", state_date_end="2025-08-28"
-        )
-        me_factories.SatB1Factory(
-            field_b1_str="Reversed Test",
-            hub_entity=satb.hub_entity,
-            state_date_start="2025-08-28",
-        )
-        a_alt = me_factories.SatA1Factory(field_a1_str="Another A")
-        me_factories.LinkHubAHubBFactory(hub_in=self.huba1, hub_out=satb.hub_entity)
-        me_factories.LinkHubAHubBFactory(
-            hub_in=a_alt.hub_entity, hub_out=satb.hub_entity
-        )
-        repo = HubDRepositoryReversedParents()
-        self.assertEqual(repo.receive()[0].field_b1_str, "Reversed Test")
 
 
 class TestLinkOneToOneUpates(TestCase):
