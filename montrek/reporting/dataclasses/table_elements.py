@@ -588,4 +588,4 @@ class SecretStringTableElement(StringTableElement):
         value = super().get_value(obj)
         if value is None:
             return ""
-        return "*" * len(str(value))
+        return "*" * min(56, len(str(value)))
