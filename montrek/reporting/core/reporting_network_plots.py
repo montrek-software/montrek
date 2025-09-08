@@ -66,18 +66,6 @@ class ReportingNetworkPlot(ReportingPlotBase[ReportingNetworkData]):
             n_cols = math.ceil(math.sqrt(n_groups))
 
         # --- 3) choose sublayout fn ---
-        def _sublayout(gsub, _seed):
-            if len(gsub) == 1:
-                # single node at center
-                lone = next(iter(gsub.nodes()))
-                return {lone: np.array([0.5, 0.5])}
-            if sublayout == "spring":
-                return nx.spring_layout(gsub, seed=_seed, dim=2)
-            if sublayout == "kamada_kawai":
-                return nx.kamada_kawai_layout(gsub, dim=2)
-            if sublayout == "circular":
-                return nx.circular_layout(gsub, dim=2)
-            return nx.spring_layout(gsub, seed=_seed, dim=2)
 
         pos: dict = {}
 
@@ -86,7 +74,7 @@ class ReportingNetworkPlot(ReportingPlotBase[ReportingNetworkData]):
             gsub = graph.subgraph(nodes)
 
             # local layout in [arbitrary coordinates]
-            sub_pos = _sublayout(gsub, seed + i)
+            sub_pos = self._sublayout(gsub, sublayout, seed + i)
 
             # normalize to [0,1]x[0,1] to avoid overlaps across groups
             xs = np.array([xy[0] for xy in sub_pos.values()], dtype=float)
@@ -119,6 +107,19 @@ class ReportingNetworkPlot(ReportingPlotBase[ReportingNetworkData]):
                 pos[n] = np.array([x, y])
 
         return pos
+
+    def _sublayout(self, gsub, sublayout, _seed):
+        if len(gsub) == 1:
+            # single node at center
+            lone = next(iter(gsub.nodes()))
+            return {lone: np.array([0.5, 0.5])}
+        if sublayout == "spring":
+            return nx.spring_layout(gsub, seed=_seed, dim=2)
+        if sublayout == "kamada_kawai":
+            return nx.kamada_kawai_layout(gsub, dim=2)
+        if sublayout == "circular":
+            return nx.circular_layout(gsub, dim=2)
+        return nx.spring_layout(gsub, seed=_seed, dim=2)
 
     def get_edges(self, pos: dict[str, np.ndarray], graph: nx.DiGraph) -> Scatter:
         edge_x, edge_y = [], []
