@@ -1,6 +1,6 @@
+from baseclasses.repositories.montrek_repository import MontrekRepository
 from django.utils import timezone
 from montrek_example.models import example_models as me_models
-from baseclasses.repositories.montrek_repository import MontrekRepository
 
 
 class HubDRepository(MontrekRepository):
