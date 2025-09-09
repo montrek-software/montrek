@@ -30,3 +30,4 @@ class ReportingNetworkData(ReportingDataBase):
     marker_size: int = 20
     marker_line_width: int = 2
     fig_height: int = 400
+    layout: str = "LR"

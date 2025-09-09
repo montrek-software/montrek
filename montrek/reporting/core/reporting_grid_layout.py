@@ -1,6 +1,5 @@
 from math import floor
 
-from typing import Any
 from reporting.managers.montrek_report_manager import ReportElementProtocol
 
 

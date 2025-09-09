@@ -1,10 +1,10 @@
 import itertools
-import math
 from typing import Any
 
 import networkx as nx
 import numpy as np
 from plotly.graph_objs import Scatter
+from reporting.core.network_layouts import NetworkLayoutsFactory
 from reporting.core.reporting_colors import Color, ReportingColors
 from reporting.core.reporting_data import ReportingNetworkData
 from reporting.core.reporting_plots import ReportingPlotBase
@@ -18,7 +18,8 @@ class ReportingNetworkPlot(ReportingPlotBase[ReportingNetworkData]):
         self, _x: list[Any], reporting_data: ReportingNetworkData
     ) -> list[Scatter]:
         graph = reporting_data.graph
-        pos = self.grouped_grid_layout(reporting_data)
+        layout = reporting_data.layout
+        pos = self.get_pos(layout, graph)
         edge_trace = self.get_edges(pos, graph)
         node_trace = self.get_nodes(pos, reporting_data)
         return [edge_trace, node_trace]
@@ -30,96 +31,11 @@ class ReportingNetworkPlot(ReportingPlotBase[ReportingNetworkData]):
             height=reporting_data.fig_height,
             showlegend=False,
         )
+        self.figure.update_xaxes(automargin=True)
+        self.figure.update_yaxes(automargin=True)
 
-    def grouped_grid_layout(
-        self,
-        reporting_data: ReportingNetworkData,
-        n_cols: int | None = None,
-        cell_w: float = 10.0,
-        cell_h: float = 8.0,
-        sublayout: str = "kamada_kawai",  # "spring" | "kamada_kawai" | "circular"
-        pad: float = 1.0,
-        seed: int = 42,
-    ) -> dict[str, np.ndarray]:
-        """
-        Place nodes in a grid of cells by `group_attr`. Each group's subgraph is
-        laid out inside its own cell, normalized to fit with padding.
-
-        - No overlap between different groups (each group stays in its cell).
-        - Within a group, nodes can still overlap if there are many; increase cell_w/h.
-
-        Returns:
-            dict[node] -> np.array([x, y])
-        """
-        graph = reporting_data.graph
-        group_attr = reporting_data.group_attr
-        # --- 1) group nodes ---
-        groups: dict[str, list[str]] = {}
-        for node, attrs in graph.nodes(data=True):
-            groups.setdefault(attrs.get(group_attr, "default"), []).append(node)
-
-        group_items = sorted(groups.items(), key=lambda kv: kv[0])  # stable ordering
-        n_groups = len(group_items)
-
-        # --- 2) decide grid size ---
-        if n_cols is None:
-            n_cols = math.ceil(math.sqrt(n_groups))
-
-        # --- 3) choose sublayout fn ---
-
-        pos: dict = {}
-
-        # --- 4) layout each group in its own cell ---
-        for i, (group_name, nodes) in enumerate(group_items):
-            gsub = graph.subgraph(nodes)
-
-            # local layout in [arbitrary coordinates]
-            sub_pos = self._sublayout(gsub, sublayout, seed + i)
-
-            # normalize to [0,1]x[0,1] to avoid overlaps across groups
-            xs = np.array([xy[0] for xy in sub_pos.values()], dtype=float)
-            ys = np.array([xy[1] for xy in sub_pos.values()], dtype=float)
-
-            # handle degenerate ranges (e.g., 2 nodes perfectly aligned)
-            x_min, x_max = float(xs.min()), float(xs.max())
-            y_min, y_max = float(ys.min()), float(ys.max())
-            x_range = x_max - x_min if x_max > x_min else 1.0
-            y_range = y_max - y_min if y_max > y_min else 1.0
-
-            # normalize to [0,1]
-            for n in sub_pos:
-                x, y = sub_pos[n]
-                sub_pos[n] = np.array([(x - x_min) / x_range, (y - y_min) / y_range])
-
-            # scale to cell with padding
-            inner_w = max(cell_w - 2 * pad, 0.1)
-            inner_h = max(cell_h - 2 * pad, 0.1)
-
-            # cell origin (top-left of its cell)
-            row = i // n_cols
-            col = i % n_cols
-            cell_origin = np.array([col * cell_w, row * cell_h])
-
-            for n, (ux, uy) in sub_pos.items():
-                # place inside padded inner box
-                x = cell_origin[0] + pad + ux * inner_w
-                y = cell_origin[1] + pad + uy * inner_h
-                pos[n] = np.array([x, y])
-
-        return pos
-
-    def _sublayout(self, gsub, sublayout, _seed):
-        if len(gsub) == 1:
-            # single node at center
-            lone = next(iter(gsub.nodes()))
-            return {lone: np.array([0.5, 0.5])}
-        if sublayout == "spring":
-            return nx.spring_layout(gsub, seed=_seed, dim=2)
-        if sublayout == "kamada_kawai":
-            return nx.kamada_kawai_layout(gsub, dim=2)
-        if sublayout == "circular":
-            return nx.circular_layout(gsub, dim=2)
-        return nx.spring_layout(gsub, seed=_seed, dim=2)
+    def get_pos(self, layout: str, graph: nx.DiGraph):
+        return NetworkLayoutsFactory.get(layout).pos(graph)
 
     def get_edges(self, pos: dict[str, np.ndarray], graph: nx.DiGraph) -> Scatter:
         edge_x, edge_y = [], []
