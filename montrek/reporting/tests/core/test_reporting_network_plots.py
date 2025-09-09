@@ -74,3 +74,15 @@ class TestReportingNetworkPlot(TestCase):
         reporting_plot.generate(reporting_data)
         figure_data = reporting_plot.figure.data
         self.assertEqual(figure_data[1]["marker"]["color"], ("#BE0D3E", "#004767"))
+
+    def test_reporting_network_plot__left_to_right_layout(self):
+        graph = DiGraph()
+        graph.add_node("A")
+        graph.add_node("B")
+        graph.add_edge("A", "B")
+
+        reporting_data = ReportingNetworkData(
+            graph=graph, title="Test Network Graph", layout="LR"
+        )
+        reporting_plot = ReportingNetworkPlot()
+        reporting_plot.generate(reporting_data)
