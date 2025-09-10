@@ -15,6 +15,7 @@ from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.views import View
 from django.views.decorators.http import require_safe
+from reporting.forms import MontrekReportForm, NoMontrekReportForm
 from reporting.managers.latex_report_manager import LatexReportManager
 from reporting.managers.montrek_report_manager import MontrekReportManager
 from rest_framework import status
@@ -39,9 +40,17 @@ def download_reporting_file_view(request, file_path: str):
 
 class MontrekReportView(MontrekTemplateView, ToPdfMixin, MontrekApiViewMixin):
     manager_class = MontrekReportManager
+    report_form_class = NoMontrekReportForm
+    _report_form: MontrekReportForm | None = None
     template_name = "montrek_report.html"
     loading_template_name = "partials/montrek_report_loading.html"
     display_template_name = "partials/montrek_report_display.html"
+
+    @property
+    def report_form(self) -> MontrekReportForm:
+        if self._report_form is None:
+            self._report_form = self.report_form_class()
+        return self._report_form
 
     def get_template_context(self, load=False) -> dict:
         if load:
