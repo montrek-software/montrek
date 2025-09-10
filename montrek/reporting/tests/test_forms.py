@@ -1,18 +1,9 @@
-from django import forms
 from django.test import TestCase
-from reporting.forms import MontrekReportForm
-
-
-class MockNoTemplateMontrekReportForm(MontrekReportForm): ...
-
-
-class MockTemplateNotFoundMontrekReportForm(MontrekReportForm):
-    form_template = "not_found"
-
-
-class MockMontrekReportForm(MontrekReportForm):
-    form_template = "test_form.html"
-    field_1 = forms.CharField()
+from reporting.tests.mocks import (
+    MockMontrekReportForm,
+    MockNoTemplateMontrekReportForm,
+    MockTemplateNotFoundMontrekReportForm,
+)
 
 
 class TestMontrekReportForm(TestCase):

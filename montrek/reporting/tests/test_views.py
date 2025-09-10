@@ -5,7 +5,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.http import Http404
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
-from reporting.tests.mocks import MockMontrekReportView
+from reporting.tests.mocks import MockMontrekReportView, MockMontrekReportWithFormView
 from reporting.views import download_reporting_file_view
 from testing.decorators import add_logged_in_user
 
@@ -53,20 +53,36 @@ class TestDownloadFileView(TestCase):
 
 
 class TestMontrekReportFormView(TestCase):
+    @add_logged_in_user
     def setUp(self):
-        factory = RequestFactory()
-        self.request = factory.get("/")
+        self.factory = RequestFactory()
+        self.request = self.factory.get("/")
         self.request.user = self.user
         self.request.session = {}
 
-    @add_logged_in_user
     def test_get_no_report_form_as_default(self):
         response = MockMontrekReportView.as_view()(self.request)
         ctx = response.context_data
         self.assertEqual(ctx["report_form"], "")
 
-    @add_logged_in_user
     def test_get_report_form(self):
         response = MockMontrekReportWithFormView.as_view()(self.request)
         ctx = response.context_data
         self.assertNotEqual(ctx["report_form"], "")
+
+    def test_report_view__get(self):
+        request = self.factory.get("/?state=loading", HTTP_HX_REQUEST="true")
+        request.user = self.user
+        request.session = {}
+        response = MockMontrekReportWithFormView.as_view()(request)
+        self.assertIn("Init", str(response.content))
+
+    def test_get_report_form__post(self):
+        form_data = {"field_1": "ABC"}
+        request = self.factory.post(
+            "/?state=loading", HTTP_HX_REQUEST="true", data=form_data
+        )
+        request.user = self.user
+        request.session = {}
+        response = MockMontrekReportWithFormView.as_view()(request)
+        self.assertIn("ABC", str(response.content))

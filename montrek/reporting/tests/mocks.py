@@ -5,6 +5,7 @@ from decimal import Decimal
 import pandas as pd
 from baseclasses.dataclasses.view_classes import TabElement
 from baseclasses.pages import MontrekPage
+from django import forms
 from django.utils import timezone
 from reporting.constants import ReportingPlotType
 from reporting.core import reporting_text
@@ -12,6 +13,7 @@ from reporting.core.reporting_data import ReportingData
 from reporting.core.reporting_grid_layout import ReportGridLayout
 from reporting.core.reporting_plots import ReportingPlot
 from reporting.dataclasses import table_elements as te
+from reporting.forms import MontrekReportForm
 from reporting.managers.latex_report_manager import LatexReportManager
 from reporting.managers.montrek_report_manager import MontrekReportManager
 from reporting.managers.montrek_table_manager import (
@@ -19,6 +21,18 @@ from reporting.managers.montrek_table_manager import (
     MontrekTableManager,
 )
 from reporting.views import MontrekReportView
+
+
+class MockNoTemplateMontrekReportForm(MontrekReportForm): ...
+
+
+class MockTemplateNotFoundMontrekReportForm(MontrekReportForm):
+    form_template = "not_found"
+
+
+class MockMontrekReportForm(MontrekReportForm):
+    form_template = "test_form.html"
+    field_1 = forms.CharField()
 
 
 class MockNoCollectReportElements(MontrekReportManager):
@@ -39,14 +53,27 @@ class MockMontrekReportManager(MontrekReportManager):
         return report
 
 
+class MockMontrekDummyReportManager(MontrekReportManager):
+    document_title = "Mock Report"
+
+    def collect_report_elements(self):
+        self.append_report_element(
+            reporting_text.ReportingText(self.session_data.get("field_1", ["Init"])[0])
+        )
+
+
 class MockMontrekReportPage(MontrekPage):
     def get_tabs(self) -> list | tuple[TabElement]:
         return []
 
 
 class MockMontrekReportView(MontrekReportView):
-    manager_class = MockMontrekReportManager
+    manager_class = MockMontrekDummyReportManager
     page_class = MockMontrekReportPage
+
+
+class MockMontrekReportWithFormView(MockMontrekReportView):
+    report_form_class = MockMontrekReportForm
 
 
 class MockReportElement:

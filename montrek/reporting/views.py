@@ -1,3 +1,4 @@
+import logging
 import os
 
 from baseclasses.forms import MontrekCreateForm
@@ -20,6 +21,8 @@ from reporting.managers.latex_report_manager import LatexReportManager
 from reporting.managers.montrek_report_manager import MontrekReportManager
 from rest_framework import status
 from rest_framework.response import Response
+
+logger = logging.getLogger(__name__)
 
 # Create your views here.
 
@@ -80,6 +83,15 @@ class MontrekReportView(MontrekTemplateView, ToPdfMixin, MontrekApiViewMixin):
                 # This is the first HTMX request - return loading template
                 return render(request, self.loading_template_name)
         return super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        form = self.report_form_class(
+            self.request.POST,
+        )
+        if form.is_valid():
+            return self.get(request, *args, **kwargs)
+        logger.error(f"Form errors: {form.errors}")
+        return self.form_invalid(form)
 
     @property
     def title(self):
