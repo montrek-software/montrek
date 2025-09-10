@@ -44,7 +44,7 @@ class AppSelectForm(MontrekReportForm):
     )
 
     def __init__(self, *args, **kwargs):
-        self._n_columns = int(kwargs.pop("columns", 3) or 3)
+        self._n_columns = int(kwargs.pop("columns", 3))
         super().__init__(*args, **kwargs)
         self.fields["apps_field"].choices = get_app_choices()
 
