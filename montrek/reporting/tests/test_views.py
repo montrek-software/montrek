@@ -79,10 +79,8 @@ class TestMontrekReportFormView(TestCase):
 
     def test_get_report_form__post(self):
         form_data = {"field_1": "ABC"}
-        request = self.factory.post(
-            "/?state=loading", HTTP_HX_REQUEST="true", data=form_data
-        )
+        request = self.factory.post("/example/", data=form_data)
         request.user = self.user
         request.session = {}
         response = MockMontrekReportWithFormView.as_view()(request)
-        self.assertIn("ABC", str(response.content))
+        self.assertEqual(response.url, "/example/?field_1=ABC")

@@ -1,0 +1,121 @@
+
+\documentclass[10pt]{article}
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{colortbl}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{ragged2e}
+\usepackage{draftwatermark}
+\usepackage{setspace}
+\usepackage{tikz}
+\usepackage{twemojis}
+\SetWatermarkText{  }
+\SetWatermarkScale{1}
+
+% Define colors
+\definecolor{red}{HTML}{BE0D3E}
+\definecolor{blue}{HTML}{004767}
+\definecolor{darkblue}{HTML}{002F6C}
+\definecolor{lightrose}{HTML}{FBE8E8}
+\definecolor{lightblue}{HTML}{E6F2F8}
+\definecolor{darkgreen}{HTML}{1B5E20}
+\definecolor{darkorange}{HTML}{FF6F00}
+\definecolor{yellow}{HTML}{FDD835}
+\definecolor{brown}{HTML}{6D4C41}
+\definecolor{purple}{HTML}{7E57C2}
+\definecolor{teal}{HTML}{26A69A}
+\definecolor{brighterred}{HTML}{D32F2F}
+\definecolor{brighterblue}{HTML}{0277BD}
+\definecolor{brightergreen}{HTML}{388E3C}
+\definecolor{brighterorange}{HTML}{FFA000}
+\definecolor{brighteryellow}{HTML}{FBC02D}
+\definecolor{darkerbrown}{HTML}{5D4037}
+\definecolor{lightgrey}{HTML}{F4F4F4}
+\definecolor{grey}{HTML}{BDBDBD}
+\definecolor{primary}{HTML}{1F4753}
+\definecolor{secondary}{HTML}{2C12B5}
+\definecolor{primary_light}{HTML}{e8eced}
+\definecolor{secondary_light}{HTML}{e9e7f7}
+
+
+% Page geometry
+\geometry{left=1.7cm, right=1.2cm, top=1in, bottom=2in}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{ {   } }
+\fancyhead[C]{\color{primary}\large\textbf{ Mock Comprehensive Report }}
+\fancyfoot[R]{\includegraphics[height=0.5cm]{ /home/christoph/private/projects/montrek_polar_night/montrek/baseclasses/static/logos/montrek_logo_variant.png  }\hspace{1cm}\color{primary}\thepage}
+\fancyfoot[L]{\color{grey}\footnotesize Internal Report   }
+\renewcommand{\headrulewidth}{2pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{primary}\leaders\hrule height \headrulewidth\hfill}}
+\setlength{\headsep}{1in}
+\renewcommand{\footrulewidth}{1pt}
+\setstretch{0.9}
+\setlength{\headheight}{40pt}
+
+% Fonts and colors
+\usepackage{fontspec}
+\setmainfont{Arial}
+
+% Title formats
+\titleformat*{\section}{\large\bfseries\color{primary}}
+\titleformat*{\subsection}{\bfseries\color{primary}}
+
+% Table settings
+\renewcommand{\arraystretch}{0.9}
+
+% Progress bars
+\newcommand{\progressbar}[2]{
+    % #1: Width percentage (0-100)
+    % #2: Label (e.g., percentage)
+    \begin{tikzpicture}[baseline=(bottom.base)]
+        \draw[fill=brightergreen, draw=none] (0, 0) rectangle (#1*0.01*\linewidth, 0.3);
+        \draw[draw=black] (0, 0) rectangle (\linewidth, 0.3);
+        \node[anchor=center] at (0.5*\linewidth, 0.15) {\color{primary}\textbf{#2}};
+        \coordinate (bottom) at (0.3,0.3);
+    \end{tikzpicture}
+}
+
+% Table extensions
+\newcolumntype{R}[1]{>{\RaggedLeft\arraybackslash}p{#1}}
+
+
+% Captions
+\DeclareCaptionFormat{custom}
+{%
+  \textbf{\color{primary} \large #3}
+}
+\captionsetup{format=custom}
+\begin{document}
+
+
+\section*{Hallo}
+
+\begin{table}[H]
+\begin{tabular}{ >{\raggedright\arraybackslash}p{ 0.49000\textwidth}>{\raggedleft\arraybackslash}p{ 0.49000\textwidth} }
+
+\begin{minipage}[t]{0.49\textwidth}
+\begin{justify}One\end{justify} \end{minipage} &
+\begin{minipage}[t]{0.49\textwidth}
+\begin{justify}Two\end{justify} \end{minipage} \\
+
+\begin{minipage}[t]{0.49\textwidth}
+\begin{figure}[H]
+\includegraphics[width=\textwidth]{/home/christoph/private/projects/montrek_polar_night/montrek/reporting/.workbench/25314afeb440502d.png}
+\end{figure} \end{minipage} &
+\begin{minipage}[t]{0.49\textwidth}
+\begin{justify}Four\end{justify} \end{minipage} \\
+
+\end{tabular}
+\end{table}
+
+
+
+\end{document}
