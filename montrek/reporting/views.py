@@ -1,5 +1,6 @@
 import logging
 import os
+from urllib.parse import urlencode
 
 from baseclasses.forms import MontrekCreateForm
 from baseclasses.sanitizer import HtmlSanitizer
@@ -66,6 +67,7 @@ class MontrekReportView(MontrekTemplateView, ToPdfMixin, MontrekApiViewMixin):
         }
 
     def get(self, request, *args, **kwargs):
+        self._report_form = self.report_form_class(initial=request.GET)
         if self.request.GET.get("gen_pdf") == "true":
             return self.list_to_pdf()
         if self.request.GET.get("send_mail") == "true":
@@ -85,11 +87,25 @@ class MontrekReportView(MontrekTemplateView, ToPdfMixin, MontrekApiViewMixin):
         return super().get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        form = self.report_form_class(
-            self.request.POST,
-        )
+        form = self.report_form_class(request.POST)
         if form.is_valid():
-            return self.get(request, *args, **kwargs)
+            # Build query string from cleaned_data
+            params = {}
+            for k, v in form.cleaned_data.items():
+                # Normalize booleans to the strings your GET branch expects
+                if isinstance(v, bool):
+                    params[k] = "true" if v else "false"
+                else:
+                    params[k] = v
+
+            query = urlencode(params, doseq=True)  # doseq handles lists/multi-selects
+            url = request.path
+            if query:
+                url = f"{url}?{query}"
+
+            return HttpResponseRedirect(url)  # triggers your get()
+
+        # Invalid form: fall back to your invalid handler
         logger.error(f"Form errors: {form.errors}")
         return self.form_invalid(form)
 

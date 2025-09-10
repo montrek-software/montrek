@@ -26,7 +26,7 @@
     <div class="row" style="background-color: white ;padding:5mm; border-style:solid">
       {{ report_form  |safe}}
       <div id="report-content"
-             hx-get="{{ request.path }}"
+             hx-get="{{ request.get_full_path }}"
              hx-trigger="load"
              hx-target="#report-content">
             {{ report | safe }}

@@ -1,0 +1,12 @@
+<div class="row">
+  {% for col in form.apps_columns %}
+  <div class="col-md-4">
+    {% for checkbox in col %}
+    <div class="form-check">
+      {{ checkbox.tag }}
+      <label class="form-check-label">{{ checkbox.choice_label }}</label>
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+</div>
