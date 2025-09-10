@@ -1,0 +1,46 @@
+import os
+
+from django.conf import settings
+from django.forms import Form
+from django.template import Context, Template
+
+
+class MontrekReportForm(Form):
+    form_template: str | None = None
+
+    def to_html(self) -> str:
+        context = Context({"form": self})
+        template = Template(self.read_template())
+        rendered_template = template.render(context)
+        return f"""
+    <form method="post">
+    {rendered_template}
+    <button type="submit" class="btn btn-default">Submit</button>
+    </form>
+            """
+
+    def read_template(self) -> str:
+        if not self.form_template:
+            raise NotImplementedError("MontrekReportForm needs template attribute")
+        template_path = self._get_template_path()
+        with open(template_path, "r", encoding="utf-8") as file:
+            return file.read()
+
+    def _get_template_path(self) -> str:
+        for template_dir in settings.TEMPLATES[0]["DIRS"]:
+            potential_path = os.path.join(
+                settings.BASE_DIR,
+                template_dir,
+                "report_form_templates",
+                str(self.form_template),
+            )
+            if os.path.exists(potential_path):
+                return potential_path
+        raise FileNotFoundError(
+            f"Template templates/report_form_templates/{self.form_template} not found"
+        )
+
+
+class NoMontrekReportForm(MontrekReportForm):
+    def to_html(self) -> str:
+        return ""

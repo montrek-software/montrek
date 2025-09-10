@@ -1,6 +1,7 @@
 <div
   id="report-content"
-  hx-get="{{ request.path }}?state=loading"
+  hx-get="{{ request.get_full_path }}"
+  hx-vals='{"state":"loading"}'
   hx-trigger="load"
   hx-target="#report-content"
 >

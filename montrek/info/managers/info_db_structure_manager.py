@@ -26,14 +26,17 @@ from reporting.managers.montrek_table_manager import MontrekDataFrameTableManage
 
 
 class InfoDbStructureManager:
+    def __init__(self, included_apps: list[str] | None = None):
+        self.included_apps = included_apps
+
     def get_db_structure_container(self) -> dict[str, DbStructureContainer]:
         all_models = apps.get_models()
         container_dict = {}
-        excluded_apps = ["montrek_example", "baseclasses"]
         for model in all_models:
             app = model._meta.app_label
-            if app in excluded_apps:
-                continue
+            if self.included_apps:
+                if app not in self.included_apps:
+                    continue
             model_name = model.__name__
             db_table_name = model._meta.db_table
             if app not in container_dict:
@@ -204,7 +207,8 @@ class InfoDbStructureDataFrameTableManager(MontrekDataFrameTableManager):
 
 class InfoDbstructureReportManager(MontrekReportManager):
     def collect_report_elements(self):
-        self.db_structure_manager = InfoDbStructureManager()
+        included_apps = self.session_data.get("apps_field", None)
+        self.db_structure_manager = InfoDbStructureManager(included_apps)
         self.append_report_element(self.get_db_structure_network_plot())
         self.append_report_element(self.get_db_structure_table())
 

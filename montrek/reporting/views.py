@@ -1,4 +1,6 @@
+import logging
 import os
+from urllib.parse import urlencode
 
 from baseclasses.forms import MontrekCreateForm
 from baseclasses.sanitizer import HtmlSanitizer
@@ -15,10 +17,13 @@ from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.views import View
 from django.views.decorators.http import require_safe
+from reporting.forms import MontrekReportForm, NoMontrekReportForm
 from reporting.managers.latex_report_manager import LatexReportManager
 from reporting.managers.montrek_report_manager import MontrekReportManager
 from rest_framework import status
 from rest_framework.response import Response
+
+logger = logging.getLogger(__name__)
 
 # Create your views here.
 
@@ -39,16 +44,30 @@ def download_reporting_file_view(request, file_path: str):
 
 class MontrekReportView(MontrekTemplateView, ToPdfMixin, MontrekApiViewMixin):
     manager_class = MontrekReportManager
+    report_form_class = NoMontrekReportForm
+    _report_form: MontrekReportForm | None = None
     template_name = "montrek_report.html"
     loading_template_name = "partials/montrek_report_loading.html"
     display_template_name = "partials/montrek_report_display.html"
 
+    @property
+    def report_form(self) -> MontrekReportForm:
+        if self._report_form is None:
+            self._report_form = self.report_form_class()
+        return self._report_form
+
     def get_template_context(self, load=False) -> dict:
         if load:
-            return {"report": self.manager.to_html()}
-        return {}
+            return {
+                "report": self.manager.to_html(),
+                "report_form": self.report_form.to_html(),
+            }
+        return {
+            "report_form": self.report_form.to_html(),
+        }
 
     def get(self, request, *args, **kwargs):
+        self._report_form = self.report_form_class(data=request.GET)
         if self.request.GET.get("gen_pdf") == "true":
             return self.list_to_pdf()
         if self.request.GET.get("send_mail") == "true":
@@ -66,6 +85,29 @@ class MontrekReportView(MontrekTemplateView, ToPdfMixin, MontrekApiViewMixin):
                 # This is the first HTMX request - return loading template
                 return render(request, self.loading_template_name)
         return super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        form = self.report_form_class(request.POST)
+        if form.is_valid():
+            # Build query string from cleaned_data
+            params = {}
+            for k, v in form.cleaned_data.items():
+                # Normalize booleans to the strings your GET branch expects
+                if isinstance(v, bool):
+                    params[k] = "true" if v else "false"
+                elif v is not None:
+                    params[k] = v
+
+            query = urlencode(params, doseq=True)  # doseq handles lists/multi-selects
+            url = request.path
+            if query:
+                url = f"{url}?{query}"
+
+            return HttpResponseRedirect(url)  # triggers your get()
+
+        # Invalid form: fall back to your invalid handler
+        logger.error(f"Form errors: {form.errors}")
+        return self.form_invalid(form)
 
     @property
     def title(self):
