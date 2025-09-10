@@ -3,6 +3,8 @@ from dataclasses import dataclass
 from decimal import Decimal
 
 import pandas as pd
+from baseclasses.dataclasses.view_classes import TabElement
+from baseclasses.pages import MontrekPage
 from django.utils import timezone
 from reporting.constants import ReportingPlotType
 from reporting.core import reporting_text
@@ -16,6 +18,7 @@ from reporting.managers.montrek_table_manager import (
     MontrekDataFrameTableManager,
     MontrekTableManager,
 )
+from reporting.views import MontrekReportView
 
 
 class MockNoCollectReportElements(MontrekReportManager):
@@ -34,6 +37,16 @@ class MockMontrekReportManager(MontrekReportManager):
             report += report_element.to_html()
             report += report_element.to_latex()
         return report
+
+
+class MockMontrekReportPage(MontrekPage):
+    def get_tabs(self) -> list | tuple[TabElement]:
+        return []
+
+
+class MockMontrekReportView(MontrekReportView):
+    manager_class = MockMontrekReportManager
+    page_class = MockMontrekReportPage
 
 
 class MockReportElement:

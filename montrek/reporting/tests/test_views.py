@@ -1,10 +1,13 @@
 import os
-from django.http import Http404
-from django.test import TestCase, RequestFactory
-from django.core.files.uploadedfile import SimpleUploadedFile
+
 from django.core.files.storage import default_storage
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.http import Http404
+from django.test import RequestFactory, TestCase
 from django.urls import reverse
+from reporting.tests.mocks import MockMontrekReportView
 from reporting.views import download_reporting_file_view
+from testing.decorators import add_logged_in_user
 
 
 class TestDownloadFileView(TestCase):
@@ -47,3 +50,16 @@ class TestDownloadFileView(TestCase):
     def test_download_view_file_not_found(self):
         request = self.factory.get("/")
         self.assertRaises(Http404, download_reporting_file_view, request, "Dummy.txt")
+
+
+class TestMontrekReportView(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+
+    @add_logged_in_user
+    def test_get_view(self):
+        request = self.factory.get("/")
+        request.user = self.user
+        request.session = {}
+        response = MockMontrekReportView.as_view()(request)
+        ctx = response.context_data

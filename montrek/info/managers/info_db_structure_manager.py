@@ -30,9 +30,12 @@ class InfoDbStructureManager:
         all_models = apps.get_models()
         container_dict = {}
         excluded_apps = ["montrek_example", "baseclasses"]
+        included_apps = ["fund", "general_partner", "prompt"]
         for model in all_models:
             app = model._meta.app_label
             if app in excluded_apps:
+                continue
+            if app not in included_apps:
                 continue
             model_name = model.__name__
             db_table_name = model._meta.db_table

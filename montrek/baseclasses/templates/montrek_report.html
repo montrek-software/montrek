@@ -10,23 +10,24 @@
         <div class="btn-group ">
           <form action="" method="get" style="display: inline-block;">
             <input type="hidden" name="gen_pdf" value="true" />
-            <button type="submit" class="btn btn-default" title="Export to pdf"><span class="glyphicon glyphicon-file"</span></button>
+            <button type="submit" class="btn btn-default" title="Export to pdf"><span class="glyphicon glyphicon-file"></span></button>
           </form>
           <form action="" method="get" style="display: inline-block;">
             <input type="hidden" name="send_mail" value="true" />
-            <button type="submit" class="btn btn-default" title="Send report per mail"><span class="glyphicon glyphicon-envelope"</span></button>
+            <button type="submit" class="btn btn-default" title="Send report per mail"><span class="glyphicon glyphicon-envelope"></span></button>
           </form>
           <form action="" method="get" style="display: inline-block;">
             <input type="hidden" name="gen_rest_api" value="true" />
-            <button type="submit" class="btn btn-default" title="Get REST Api data"><span class="glyphicon glyphicon-globe"</span></button>
+            <button type="submit" class="btn btn-default" title="Get REST Api data"><span class="glyphicon glyphicon-globe"></span></button>
           </form>
         </div>
       </div>
     </div>
     <div class="row" style="background-color: white ;padding:5mm; border-style:solid">
-      <div id="report-content" 
+      {{ report_form }}
+      <div id="report-content"
              hx-get="{{ request.path }}"
-             hx-trigger="load" 
+             hx-trigger="load"
              hx-target="#report-content">
             {{ report | safe }}
         </div>

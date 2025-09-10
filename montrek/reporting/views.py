@@ -45,8 +45,13 @@ class MontrekReportView(MontrekTemplateView, ToPdfMixin, MontrekApiViewMixin):
 
     def get_template_context(self, load=False) -> dict:
         if load:
-            return {"report": self.manager.to_html()}
-        return {}
+            return {
+                "report": self.manager.to_html(),
+                "report_form": self.report_form.to_html(),
+            }
+        return {
+            "report_form": self.report_form.to_html(),
+        }
 
     def get(self, request, *args, **kwargs):
         if self.request.GET.get("gen_pdf") == "true":
