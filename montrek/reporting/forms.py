@@ -23,7 +23,7 @@ class MontrekReportForm(Form):
         if not self.form_template:
             raise NotImplementedError("MontrekReportForm needs template attribute")
         template_path = self._get_template_path()
-        with open(template_path, "r") as file:
+        with open(template_path, "r", encoding="utf-8") as file:
             return file.read()
 
     def _get_template_path(self) -> str:
