@@ -95,7 +95,7 @@ class MontrekReportView(MontrekTemplateView, ToPdfMixin, MontrekApiViewMixin):
                 # Normalize booleans to the strings your GET branch expects
                 if isinstance(v, bool):
                     params[k] = "true" if v else "false"
-                else:
+                elif v is not None:
                     params[k] = v
 
             query = urlencode(params, doseq=True)  # doseq handles lists/multi-selects
