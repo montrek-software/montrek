@@ -52,14 +52,15 @@ class TestDownloadFileView(TestCase):
         self.assertRaises(Http404, download_reporting_file_view, request, "Dummy.txt")
 
 
-class TestMontrekReportView(TestCase):
+class TestMontrekReportFormView(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
 
     @add_logged_in_user
-    def test_get_view(self):
+    def test_get_no_report_form_as_default(self):
         request = self.factory.get("/")
         request.user = self.user
         request.session = {}
         response = MockMontrekReportView.as_view()(request)
         ctx = response.context_data
+        self.assertEqual(ctx["report_form"], "")
