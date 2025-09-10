@@ -54,13 +54,19 @@ class TestDownloadFileView(TestCase):
 
 class TestMontrekReportFormView(TestCase):
     def setUp(self):
-        self.factory = RequestFactory()
+        factory = RequestFactory()
+        self.request = factory.get("/")
+        self.request.user = self.user
+        self.request.session = {}
 
     @add_logged_in_user
     def test_get_no_report_form_as_default(self):
-        request = self.factory.get("/")
-        request.user = self.user
-        request.session = {}
-        response = MockMontrekReportView.as_view()(request)
+        response = MockMontrekReportView.as_view()(self.request)
         ctx = response.context_data
         self.assertEqual(ctx["report_form"], "")
+
+    @add_logged_in_user
+    def test_get_report_form(self):
+        response = MockMontrekReportWithFormView.as_view()(self.request)
+        ctx = response.context_data
+        self.assertNotEqual(ctx["report_form"], "")
