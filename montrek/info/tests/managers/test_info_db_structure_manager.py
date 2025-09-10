@@ -60,6 +60,14 @@ class TestInfoDbStructureManager(TestCase):
     def test_get_db_structure_df(self):
         test_df = self.manager.get_db_structure_df(self.db_structure_container)
         test_df = test_df.loc[test_df["app"] == self.example_app]
+        self._assert_test_df(test_df)
+
+    def test_get_db_structure_df__included_apps(self):
+        manager = InfoDbStructureManager([self.example_app])
+        test_df = manager.get_db_structure_df(manager.get_db_structure_container())
+        self._assert_test_df(test_df)
+
+    def _assert_test_df(self, test_df: pd.DataFrame):
         expected_data = [
             {
                 "app": "info",
