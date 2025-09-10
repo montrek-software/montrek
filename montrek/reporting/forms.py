@@ -14,9 +14,8 @@ class MontrekReportForm(Form):
         rendered_template = template.render(context)
         return f"""
     <form method="post">
-    {{% csrf_token %}}
     {rendered_template}
-    <button type="submit">Submit</button>
+    <button type="submit" class="btn btn-default">Submit</button>
     </form>
             """
 
@@ -37,7 +36,9 @@ class MontrekReportForm(Form):
             )
             if os.path.exists(potential_path):
                 return potential_path
-        raise FileNotFoundError(f"Template {self.form_template} not found")
+        raise FileNotFoundError(
+            f"Template templates/report_form_templates/{self.form_template} not found"
+        )
 
 
 class NoMontrekReportForm(MontrekReportForm):

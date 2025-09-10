@@ -24,7 +24,7 @@
       </div>
     </div>
     <div class="row" style="background-color: white ;padding:5mm; border-style:solid">
-      {{ report_form }}
+      {{ report_form  |safe}}
       <div id="report-content"
              hx-get="{{ request.path }}"
              hx-trigger="load"
