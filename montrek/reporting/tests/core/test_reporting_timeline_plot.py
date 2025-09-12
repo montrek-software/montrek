@@ -13,6 +13,12 @@ class TestReportingTimelinePlot(TestCase):
                 "topic": ["step_1", "step_2"],
             }
         )
-        report_data = ReportingTimelineData(title="Test Timeline", timeline_df=tl_df)
+        report_data = ReportingTimelineData(
+            title="Test Timeline",
+            timeline_df=tl_df,
+            item_name_col="topic",
+            start_date_col="start_date",
+            end_date_col="end_date",
+        )
         timeline_plot = ReportingTimelinePlot()
         timeline_plot.generate(report_data)

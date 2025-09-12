@@ -11,18 +11,18 @@ class ReportingTimelinePlot(ReportingPlotBase[ReportingTimelineData]):
     def get_figure(self, reporting_data: ReportingTimelineData) -> go.Figure:
         fig = px.timeline(
             reporting_data.timeline_df,
-            x_start="Start Date",
-            x_end="End Date",
-            y="Name",
-            color="Name",
-            hover_data={
-                "Start Date": "|%Y-%m-%d",
-                "End Date": "|%Y-%m-%d",
-                "Total Workdays": True,
-                "Workdays Percentage": True,
-                "Abnahme": True,
-                "Signatur": True,
-                "Name": False,  # already used as Y
-            },
+            x_start=reporting_data.start_date_col,
+            x_end=reporting_data.end_date_col,
+            y=reporting_data.item_name_col,
+            color=reporting_data.item_name_col,
+            # hover_data={
+            #     "Start Date": "|%Y-%m-%d",
+            #     "End Date": "|%Y-%m-%d",
+            #     "Total Workdays": True,
+            #     "Workdays Percentage": True,
+            #     "Abnahme": True,
+            #     "Signatur": True,
+            #     "Name": False,  # already used as Y
+            # },
         )
         return fig

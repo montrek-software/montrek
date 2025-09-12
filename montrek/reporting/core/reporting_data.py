@@ -36,3 +36,6 @@ class ReportingNetworkData(ReportingDataBase):
 @dataclass
 class ReportingTimelineData(ReportingDataBase):
     timeline_df: pd.DataFrame
+    item_name_col: str
+    start_date_col: str
+    end_date_col: str
