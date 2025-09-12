@@ -31,3 +31,11 @@ class ReportingNetworkData(ReportingDataBase):
     marker_line_width: int = 2
     fig_height: int = 400
     layout: str = "LR"
+
+
+@dataclass
+class ReportingTimelineData(ReportingDataBase):
+    timeline_df: pd.DataFrame
+    item_name_col: str
+    start_date_col: str
+    end_date_col: str

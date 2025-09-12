@@ -15,12 +15,7 @@ class ReportingPlotBase(Generic[TData]):
 
     def generate(self, reporting_data: TData) -> None:
         self._check_reporting_data(reporting_data)
-        _x = self._set_x_axis(reporting_data)
-        figure_data = self._get_figure_data(
-            _x,
-            reporting_data,
-        )
-        self.figure = go.Figure(data=figure_data)
+        self.figure = self.get_figure(reporting_data)
 
         self.figure.update_layout(
             title_text=reporting_data.title,  # Adding Title
@@ -35,6 +30,14 @@ class ReportingPlotBase(Generic[TData]):
             margin={"l": 0, "r": 0},
         )
         self.update_axis_layout(reporting_data)
+
+    def get_figure(self, reporting_data: TData) -> go.Figure:
+        _x = self._set_x_axis(reporting_data)
+        figure_data = self._get_figure_data(
+            _x,
+            reporting_data,
+        )
+        return go.Figure(data=figure_data)
 
     def to_html(self) -> str:
         return self.figure.to_html(full_html=False, include_plotlyjs=False)
