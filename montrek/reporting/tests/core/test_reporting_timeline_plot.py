@@ -55,7 +55,7 @@ class TestReportingTimelinePlot(TestCase):
         # You printed x as ~6.048e+08; that's 7 days in milliseconds.
         # 7 days in ms:
         seven_days_ms = 7 * 24 * 60 * 60 * 1000  # 604_800_000
-        self.assertTrue(np.allclose(tr.x.astype(float), seven_days_ms, rtol=0, atol=0))
+        self.assertTrue(np.array_equal(tr.x.astype(float), seven_days_ms))
 
     def test_hovertemplate_exact(self):
         tr = self.fig.data[0]
