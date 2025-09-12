@@ -55,7 +55,7 @@ class TestReportingTimelinePlot(TestCase):
         # You printed x as ~6.048e+08; that's 7 days in milliseconds.
         # 7 days in ms:
         seven_days_ms = 7 * 24 * 60 * 60 * 1000  # 604_800_000
-        self.assertTrue(np.array_equal(tr.x.astype(float), seven_days_ms))
+        self.assertTrue(np.allclose(tr.x.astype(float), seven_days_ms, rtol=0, atol=0))
 
     def test_hovertemplate_exact(self):
         tr = self.fig.data[0]
@@ -103,3 +103,51 @@ class TestReportingTimelinePlot(TestCase):
 
         # Spot-check first bar spans exactly 7 days
         self.assertEqual((ends[0] - starts[0]), pd.Timedelta(days=7))
+
+    def test_invalid_data__no_df(self):
+        tl_df = "Something wrong"
+        report_data = ReportingTimelineData(
+            title="Test Timeline",
+            timeline_df=tl_df,
+            item_name_col="topic",
+            start_date_col="start_date",
+            end_date_col="end_date",
+        )
+        timeline_plot = ReportingTimelinePlot()
+        self.assertRaises(ValueError, timeline_plot.generate, report_data)
+
+    def test_invalid_data__wrong_cols(self):
+        tl_df = pd.DataFrame(
+            {
+                "start_date": ["2025-10-12", "2025-10-19"],
+                "end_date": ["2025-10-19", "2025-10-26"],
+                "topic": ["step_1", "step_2"],
+            }
+        )
+        report_data = ReportingTimelineData(
+            title="Test Timeline",
+            timeline_df=tl_df,
+            item_name_col="schopic",
+            start_date_col="start_date",
+            end_date_col="end_date",
+        )
+        timeline_plot = ReportingTimelinePlot()
+        self.assertRaises(ValueError, timeline_plot.generate, report_data)
+
+    def test_invalid_data__wrong_item_col_type(self):
+        tl_df = pd.DataFrame(
+            {
+                "start_date": ["2025-10-12", "2025-10-19"],
+                "end_date": ["2025-10-19", "2025-10-26"],
+                "topic": ["step_1", "step_2"],
+            }
+        )
+        report_data = ReportingTimelineData(
+            title="Test Timeline",
+            timeline_df=tl_df,
+            item_name_col=15,
+            start_date_col="start_date",
+            end_date_col="end_date",
+        )
+        timeline_plot = ReportingTimelinePlot()
+        self.assertRaises(ValueError, timeline_plot.generate, report_data)
