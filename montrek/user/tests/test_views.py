@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core import mail
 from django.test import TestCase, override_settings
@@ -23,8 +22,8 @@ class TestMontrekSignUpView(TestCase):
         url = reverse("signup")
         data = {
             "email": "test@example.com",
-            "password1": "testpassword",
-            "password2": "testpassword",
+            "password1": "testpassword",  # nosec: B106: Testpasswort
+            "password2": "testpassword",  # nosec: B106: Testpasswort
         }
 
         response = self.client.post(url, data, follow=True)
@@ -45,8 +44,8 @@ class TestMontrekSignUpView(TestCase):
         url = reverse("signup")
         data = {
             "email": "invalid-email",
-            "password1": "testpassword",
-            "password2": "testpassword",
+            "password1": "testpassword",  # nosec: B106: Testpasswort
+            "password2": "testpassword",  # nosec: B106: Testpasswort
         }
 
         response = self.client.post(url, data)
@@ -62,7 +61,7 @@ class TestMontrekLoginView(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(
             email="test@example.com",
-            password="testpassword",
+            password="testpassword",  # nosec: B106: Testpasswort
         )
 
     def test_login_view(self):
@@ -76,7 +75,7 @@ class TestMontrekLoginView(TestCase):
         url = reverse("login")
         data = {
             "username": "test@example.com",
-            "password": "testpassword",
+            "password": "testpassword",  # nosec: B106: Testpasswort
         }
 
         response = self.client.post(url, data, follow=True)
@@ -92,7 +91,7 @@ class TestMontrekLoginView(TestCase):
         url = reverse("login")
         data = {
             "username": "nonexistent",
-            "password": "testpassword",
+            "password": "testpassword",  # nosec: B106: Testpasswort
         }
 
         response = self.client.post(url, data)
@@ -113,7 +112,7 @@ class TestMontrekLogoutView(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(
             email="test@example.com",
-            password="testpassword",
+            password="testpassword",  # nosec: B106: Testpasswort
         )
 
     def test_logout_view(self):
@@ -127,7 +126,7 @@ class TestMontrekPasswordResetView(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(
             email="test@example.com",
-            password="testpassword",
+            password="testpassword",  # nosec: B106: Testpasswort
         )
 
     def test_password_reset_view(self):
@@ -198,23 +197,27 @@ class TestMontrekPasswordChangeView(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(
             email="test@example.com",
-            password="testpassword",
+            password="testpassword",  # nosec: B106: Testpasswort
         )
 
     def test_password_change_view(self):
-        self.client.login(email="test@example.com", password="testpassword")
+        self.client.login(
+            email="test@example.com", password="testpassword"
+        )  # nosec: B106: Testpasswort
         url = reverse("password_change")
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "user/user_base.html")
 
     def test_password_change_form_submission(self):
-        self.client.login(email="test@example.com", password="testpassword")
+        self.client.login(
+            email="test@example.com", password="testpassword"
+        )  # nosec: B106: Testpasswort
         url = reverse("password_change")
         data = {
             "old_password": "testpassword",
-            "new_password1": "!@#$hardt0guess",
-            "new_password2": "!@#$hardt0guess",
+            "new_password1": "!@#$hardt0guess",  # nosec: B106: Testpasswort
+            "new_password2": "!@#$hardt0guess",  # nosec: B106: Testpasswort
         }
         response = self.client.post(url, data, follow=True)
         messages = _get_messages_from_response(response)
@@ -227,7 +230,9 @@ class TestMontrekPasswordChangeView(TestCase):
         self.assertTrue(self.user.check_password("!@#$hardt0guess"))
 
     def test_password_change_form_invalid_submission(self):
-        self.client.login(email="test@example.com", password="testpassword")
+        self.client.login(
+            email="test@example.com", password="testpassword"
+        )  # nosec: B106: Testpasswort
         url = reverse("password_change")
         data = {
             "old_password": "invalid",
@@ -257,8 +262,8 @@ class TestMontrekPasswordChangeView(TestCase):
         url = reverse("password_change")
         data = {
             "old_password": "testpassword",
-            "new_password1": "!@#$hardt0guess",
-            "new_password2": "!@#$hardt0guess",
+            "new_password1": "!@#$hardt0guess",  # nosec: B106: Testpasswort
+            "new_password2": "!@#$hardt0guess",  # nosec: B106: Testpasswort
         }
         response = self.client.post(url, data)
 
@@ -278,7 +283,7 @@ class TestKeycloakSettings(TestCase):
     def test_keycloak_settings(self):
         keycloak_base = get_keycloak_base_url()
         self.assertEqual(
-            keycloak_base, "https://auth.test-project.test-host.de/realms/test-realm"
+            keycloak_base, "https://auth-test-project.test-host.de/realms/test-realm"
         )
         oicd_endpoints = get_oidc_endpoints()
 

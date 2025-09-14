@@ -1,7 +1,6 @@
 import pandas as pd
-from django.conf import settings
-
 from baseclasses.typing import TableElementsType
+from django.conf import settings
 from reporting.dataclasses import table_elements as te
 from reporting.managers.montrek_report_manager import MontrekReportManager
 from reporting.managers.montrek_table_manager import MontrekDataFrameTableManager
@@ -27,8 +26,8 @@ class InfoAdminManager(MontrekReportManager):
         deploy_host = settings.DEPLOY_HOST
         project_name = settings.PROJECT_NAME
         django_admin_link = f"https://{project_name}.{deploy_host}/admin"
-        keycloak_link = f"https://auth.{project_name}.{deploy_host}"
-        flower_link = f"https://flower.{project_name}.{deploy_host}"
+        keycloak_link = f"https://auth-{project_name}.{deploy_host}"
+        flower_link = f"https://flower-{project_name}.{deploy_host}"
         admin_links_df = pd.DataFrame(
             {
                 "system": ["Django Admin", "Keycloak", "Flower"],
