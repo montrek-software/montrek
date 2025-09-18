@@ -73,9 +73,9 @@ if $RUN_TESTS; then
     done
 
     # Now run Django tests only on those apps
-    coverage run manage.py test "${apps_to_test[@]}"
+    coverage run manage.py test "${apps_to_test[@]}" --keepdb --parallel
   else
-    coverage run ../manage.py test
+    coverage run ../manage.py test --keepdb --parallel
   fi
   coverage xml
 else
