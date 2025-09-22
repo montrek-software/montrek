@@ -1,6 +1,7 @@
 import os
 import tempfile
 from dataclasses import dataclass
+from unittest.mock import Mock, patch
 
 from django.test import TestCase
 from reporting.constants import ReportingTextType
@@ -137,6 +138,14 @@ class TestReportingImage(ReportingElementTestCase):
         reporting_image = ReportingImage(image_path)
         latex_path = reporting_image.to_latex()
         self.assertEqual(latex_path, "")
+
+    @patch("reporting.core.reporting_text.requests.get")
+    def test_to_latex(self, mock_get):
+        mock_get.return_value = Mock(status_code=401, content=b"\x89PNG\r\n\x1a\n...")
+        super().test_to_latex()
+        mock_get.assert_called_once_with(
+            "https://example.com/properties/lakeside_residences.jpg", timeout=5
+        )
 
 
 class TestReportingMap(ReportingElementTestCase):
