@@ -73,11 +73,12 @@ if $RUN_TESTS; then
     done
 
     # Now run Django tests only on those apps
-    coverage run manage.py test "${apps_to_test[@]}" --keepdb --parallel
+    coverage run --rcfile=../.coveragerc manage.py test "${apps_to_test[@]}" --keepdb --parallel
   else
-    coverage run ../manage.py test --keepdb --parallel
+    coverage run --rcfile=.coveragerc ../manage.py test --keepdb --parallel
   fi
-  coverage xml
+  coverage combine
+  coverage xml -o coverage.xml
 else
   echo "Skip running tests"
 fi
