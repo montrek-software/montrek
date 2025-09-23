@@ -3,9 +3,7 @@ from typing import Dict, Tuple
 
 import networkx as nx
 from django.test import SimpleTestCase
-
-# 🔧 Change this import to your real module path:
-from reporting.core.network_layouts import (
+from reporting.core.network_layouts.layouts import (
     LayoutKind,
     LRNetworkLayout,
     NetworkLayout,

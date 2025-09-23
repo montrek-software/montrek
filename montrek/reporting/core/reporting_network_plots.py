@@ -4,7 +4,7 @@ from typing import Any
 import networkx as nx
 import numpy as np
 from plotly.graph_objs import Scatter
-from reporting.core.network_layouts import NetworkLayoutsFactory
+from reporting.core.network_layouts.layouts import NetworkLayoutsFactory
 from reporting.core.reporting_colors import Color, ReportingColors
 from reporting.core.reporting_data import ReportingNetworkData
 from reporting.core.reporting_plots import ReportingPlotBase
