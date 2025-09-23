@@ -28,20 +28,13 @@ if ($LASTEXITCODE -ne 0 -or $ver -ne "3.12") {
   throw "Python 3.12 not found. Install it, or install the 'py' launcher."
 }
 
-# Create venv (example)
-if (-not (Test-Path .venv)) {
-  Invoke-Python -m venv .venv
-}
 
-# Activate and continue...
-. .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
-python -m pip install uv pre-commit
+python -m pip install pip-tools pre-commit
 
 # Sync local environment (PowerShell port below)
 . .\bin\local\sync-python-env.ps1
 
 # Install pre-commit
-python -m pip install pre-commit
 python -m pre_commit install
 Write-Host "Environment ready: $ENV_NAME"
