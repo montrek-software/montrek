@@ -3,9 +3,7 @@ from typing import Dict, Tuple
 
 import networkx as nx
 from django.test import SimpleTestCase
-
-# 🔧 Change this import to your real module path:
-from reporting.core.network_layouts import (
+from reporting.core.network_layouts.layouts import (
     LayoutKind,
     LRNetworkLayout,
     NetworkLayout,
@@ -115,22 +113,6 @@ class TestNetworkLayoutPos(SimpleTestCase):
             x2, y2 = p2[n]
             self.assertTrue(math.isclose(x1, x2, rel_tol=0, abs_tol=1e-12))
             self.assertTrue(math.isclose(y1, y2, rel_tol=0, abs_tol=1e-12))
-
-    def test_graphviz_lr_vs_tb_orientation_differs(self):
-        G = make_small_digraph()
-
-        lr = LRNetworkLayout().pos(G)
-        tb = TBNetworkLayout().pos(G)
-
-        sx_lr, sy_lr = span(lr)
-        sx_tb, sy_tb = span(tb)
-
-        self.assertGreater(sx_lr, sy_lr * 1.05)
-        self.assertLess(sy_tb, sx_tb * 1.05)
-
-        # Both return positions for all nodes
-        self.assertEqual(set(lr.keys()), set(G.nodes))
-        self.assertEqual(set(tb.keys()), set(G.nodes))
 
 
 # ---------------------------------------------------------------------

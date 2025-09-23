@@ -3,41 +3,34 @@ from dataclasses import dataclass
 from enum import Enum
 
 import networkx as nx
-from networkx.drawing.nx_agraph import graphviz_layout  # pygraphviz backend
+from reporting.core.network_layouts.typing import Pos
+from reporting.core.network_layouts.utils import layered_pos
 
 
 # ---------- Layouts ----------
 class NetworkLayout:
-    def pos(self, graph: nx.DiGraph) -> dict[str, tuple[float, float]]:
+    def pos(self, graph: nx.DiGraph) -> Pos:
         raise NotImplementedError("method must be implemented")
 
 
 class LRNetworkLayout(NetworkLayout):
     """Graphviz (dot) laid out Left→Right."""
 
-    def pos(self, graph: nx.DiGraph) -> dict[str, tuple[float, float]]:
-        return graphviz_layout(
-            graph,
-            prog="dot",
-            args="-Grankdir=LR -Gnodesep=0.6 -Granksep=0.7 -Gsplines=true",
-        )
+    def pos(self, graph: nx.DiGraph) -> Pos:
+        return layered_pos(graph, "vertical")
 
 
 class TBNetworkLayout(NetworkLayout):
     """Graphviz (dot) laid out Top→Bottom."""
 
-    def pos(self, graph: nx.DiGraph) -> dict[str, tuple[float, float]]:
-        return graphviz_layout(
-            graph,
-            prog="dot",
-            args="-Grankdir=TB -Gnodesep=0.6 -Granksep=0.7 -Gsplines=true",
-        )
+    def pos(self, graph: nx.DiGraph) -> Pos:
+        return layered_pos(graph, "horizontal")
 
 
 class SpringNetworkLayout(NetworkLayout):
     """Force-directed fallback (no Graphviz required)."""
 
-    def pos(self, graph: nx.DiGraph) -> dict[str, tuple[float, float]]:
+    def pos(self, graph: nx.DiGraph) -> Pos:
         return nx.spring_layout(graph, seed=42)  # deterministic
 
 

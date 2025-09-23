@@ -18,8 +18,6 @@ RUN apt-get update && \
   git \
   gnupg \
   gosu \
-  graphviz \
-  libgraphviz-dev \
   libmariadb-dev \
   libpq-dev \
   lsb-release \

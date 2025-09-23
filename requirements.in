@@ -30,7 +30,6 @@ plotly==5.24.1
 pre_commit==4.2.0
 psycopg2-binary==2.9.10
 python-decouple==3.8.0
-pygraphviz==1.14
 redis==5.0.4
 requests==2.32.3
 ruff==0.11.2
