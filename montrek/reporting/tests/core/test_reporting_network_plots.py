@@ -44,6 +44,23 @@ class TestReportingNetworkPlot(TestCase):
         figure_data = reporting_plot.figure.data
         self.assertEqual(figure_data[1]["marker"]["symbol"], ("circle", "square"))
 
+    def test_generate_network_plot__with_url(self):
+        graph = DiGraph()
+        graph.add_node("A", url="link_A")
+        graph.add_node("B", url="link_B")
+        graph.add_edge("A", "B")
+
+        reporting_data = ReportingNetworkData(
+            graph=graph,
+            title="Test Network Graph",
+            link_attr="url",
+        )
+
+        reporting_plot = ReportingNetworkPlot()
+        reporting_plot.generate(reporting_data)
+        figure_data = reporting_plot.figure.data
+        self.assertEqual(figure_data[1]["customdata"], ("link_A", "link_B"))
+
     def test_generate_network_plot__marker_properties(self):
         graph = DiGraph()
         graph.add_node("A")

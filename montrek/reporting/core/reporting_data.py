@@ -31,6 +31,7 @@ class ReportingNetworkData(ReportingDataBase):
     marker_line_width: int = 2
     fig_height: int = 400
     layout: str = "LR"
+    link_attr: str = "link"
 
 
 @dataclass
