@@ -5,6 +5,7 @@ import networkx as nx
 import numpy as np
 from plotly.graph_objs import Scatter
 from reporting.core.network_layouts.layouts import NetworkLayoutsFactory
+from reporting.core.network_layouts.typing import Pos
 from reporting.core.reporting_colors import Color, ReportingColors
 from reporting.core.reporting_data import ReportingNetworkData
 from reporting.core.reporting_plots import ReportingPlotBase
@@ -19,7 +20,7 @@ class ReportingNetworkPlot(ReportingPlotBase[ReportingNetworkData]):
     ) -> list[Scatter]:
         graph = reporting_data.graph
         layout = reporting_data.layout
-        pos = self.get_pos(layout, graph, reporting_data)
+        pos = self.get_pos(layout, reporting_data)
         edge_trace = self.get_edges(pos, graph)
         node_trace = self.get_nodes(pos, reporting_data)
         return [edge_trace, node_trace]
@@ -34,7 +35,7 @@ class ReportingNetworkPlot(ReportingPlotBase[ReportingNetworkData]):
         self.figure.update_xaxes(automargin=True)
         self.figure.update_yaxes(automargin=True)
 
-    def get_pos(self, layout: str, reporting_data: ReportingNetworkData):
+    def get_pos(self, layout: str, reporting_data: ReportingNetworkData) -> Pos:
         return NetworkLayoutsFactory.get(layout).pos(reporting_data)
 
     def get_edges(self, pos: dict[str, np.ndarray], graph: nx.DiGraph) -> Scatter:

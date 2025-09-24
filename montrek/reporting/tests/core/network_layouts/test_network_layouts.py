@@ -11,6 +11,7 @@ from reporting.core.network_layouts.layouts import (
     SpringNetworkLayout,
     TBNetworkLayout,
 )
+from reporting.core.reporting_data import ReportingNetworkData
 
 
 # ---------------------------------------------------------------------
@@ -95,20 +96,20 @@ class TestNetworkLayoutsFactory(SimpleTestCase):
 # ---------------------------------------------------------------------
 class TestNetworkLayoutPos(SimpleTestCase):
     def test_spring_layout_pos_returns_mapping_and_is_deterministic(self):
-        G = make_small_digraph()
+        graph = make_small_digraph()
         layout = SpringNetworkLayout()
-        p1 = layout.pos(G)
-        p2 = layout.pos(G)
+        p1 = layout.pos(ReportingNetworkData(title="Dummy", graph=graph))
+        p2 = layout.pos(ReportingNetworkData(title="Dummy", graph=graph))
 
         # Correct structure
-        self.assertEqual(set(p1.keys()), set(G.nodes))
+        self.assertEqual(set(p1.keys()), set(graph.nodes))
         for v in p1.values():
             self.assertEqual(len(v), 2)
             self.assertIsInstance(v[0], float)
             self.assertIsInstance(v[1], float)
 
         # Deterministic because seed=42 in implementation
-        for n in G.nodes:
+        for n in graph.nodes:
             x1, y1 = p1[n]
             x2, y2 = p2[n]
             self.assertTrue(math.isclose(x1, x2, rel_tol=0, abs_tol=1e-12))
