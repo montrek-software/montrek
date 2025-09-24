@@ -58,7 +58,16 @@ class ReportingNetworkPlot(ReportingPlotBase[ReportingNetworkData]):
     ) -> Scatter:
         graph = reporting_data.graph
         group_color_map = self.get_group_color_map(reporting_data.group_attr, graph)
-        node_x, node_y, node_text, node_symbols, node_colors, node_urls = (
+        (
+            node_x,
+            node_y,
+            node_text,
+            node_symbols,
+            node_colors,
+            node_urls,
+            node_hovertexts,
+        ) = (
+            [],
             [],
             [],
             [],
@@ -80,6 +89,7 @@ class ReportingNetworkPlot(ReportingPlotBase[ReportingNetworkData]):
             group = attrs.get(reporting_data.group_attr)
             node_colors.append(group_color_map.get(group, "gray"))
             node_urls.append(attrs.get(reporting_data.link_attr))
+            node_hovertexts.append(attrs.get(reporting_data.hover_attr, ""))
         marker_attrs = {
             "size": reporting_data.marker_size,
             "line_width": reporting_data.marker_line_width,
@@ -95,8 +105,9 @@ class ReportingNetworkPlot(ReportingPlotBase[ReportingNetworkData]):
             marker=marker_attrs,
             name="nodes",
             customdata=node_urls,  # ← attach URLs here
+            hovertext=node_hovertexts,
             hoverinfo="text",
-            hovertemplate="%{text}<extra></extra>",
+            hovertemplate="%{text}<br>%{hovertext}<extra></extra>",
         )
 
     def get_group_color_map(

@@ -32,6 +32,7 @@ class ReportingNetworkData(ReportingDataBase):
     fig_height: int = 400
     layout: str = "LR"
     link_attr: str = "link"
+    hover_attr: str = "hovertext"
 
 
 @dataclass

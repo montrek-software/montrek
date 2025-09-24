@@ -61,6 +61,23 @@ class TestReportingNetworkPlot(TestCase):
         figure_data = reporting_plot.figure.data
         self.assertEqual(figure_data[1]["customdata"], ("link_A", "link_B"))
 
+    def test_generate_network_plot__with_hovertext(self):
+        graph = DiGraph()
+        graph.add_node("A", hovertext="hover_A")
+        graph.add_node("B", hovertext="hover_B")
+        graph.add_edge("A", "B")
+
+        reporting_data = ReportingNetworkData(
+            graph=graph,
+            title="Test Network Graph",
+            hover_attr="hovertext",
+        )
+
+        reporting_plot = ReportingNetworkPlot()
+        reporting_plot.generate(reporting_data)
+        figure_data = reporting_plot.figure.data
+        self.assertEqual(figure_data[1]["hovertext"], ("hover_A", "hover_B"))
+
     def test_generate_network_plot__marker_properties(self):
         graph = DiGraph()
         graph.add_node("A")
