@@ -28,10 +28,7 @@
       const url = urlArray[idx];
       if (!url || typeof url !== "string") return;
 
-      // only allow http(s) for safety; open in new tab with noopener
-      if (/^https?:\/\//i.test(url)) {
-        window.open(url, "_blank", "noopener");
-      }
+      window.open(url, "_blank", "noopener");
     });
   }
 </script>
