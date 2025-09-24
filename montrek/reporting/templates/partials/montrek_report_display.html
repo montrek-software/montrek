@@ -1,1 +1,34 @@
 {{ report | safe}}
+<script>
+  (function wireAllGraphs() {
+    document
+      .querySelectorAll(".plotly-graph-div")
+      .forEach((gd) => wireClicks(gd));
+  })();
+
+  function wireClicks(gd) {
+    if (gd.__clickWired) return;
+    gd.__clickWired = true;
+
+    // find the "nodes" trace (or the first markers trace)
+    const nodeIndex = (gd.data || []).findIndex(
+      (t) => t && (t.name === "nodes" || (t.mode || "").includes("markers")),
+    );
+    if (nodeIndex < 0) return;
+
+    gd.on("plotly_click", (ev) => {
+      const pt = ev.points && ev.points[0];
+      if (!pt || pt.curveNumber !== nodeIndex) return;
+
+      const idx = pt.pointIndex;
+      const t = gd.data[nodeIndex];
+      const urlArray = t.customdata;
+      if (!Array.isArray(urlArray)) return;
+
+      const url = urlArray[idx];
+      if (!url || typeof url !== "string") return;
+
+      window.open(url, "_blank", "noopener");
+    });
+  }
+</script>

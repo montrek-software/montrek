@@ -5,33 +5,34 @@ from enum import Enum
 import networkx as nx
 from reporting.core.network_layouts.typing import Pos
 from reporting.core.network_layouts.utils import layered_pos
+from reporting.core.reporting_data import ReportingNetworkData
 
 
 # ---------- Layouts ----------
 class NetworkLayout:
-    def pos(self, graph: nx.DiGraph) -> Pos:
+    def pos(self, reporting_data: ReportingNetworkData) -> Pos:
         raise NotImplementedError("method must be implemented")
 
 
 class LRNetworkLayout(NetworkLayout):
     """Graphviz (dot) laid out Left→Right."""
 
-    def pos(self, graph: nx.DiGraph) -> Pos:
-        return layered_pos(graph, "vertical")
+    def pos(self, reporting_data: ReportingNetworkData) -> Pos:
+        return layered_pos(reporting_data, "vertical")
 
 
 class TBNetworkLayout(NetworkLayout):
     """Graphviz (dot) laid out Top→Bottom."""
 
-    def pos(self, graph: nx.DiGraph) -> Pos:
-        return layered_pos(graph, "horizontal")
+    def pos(self, reporting_data: ReportingNetworkData) -> Pos:
+        return layered_pos(reporting_data, "horizontal")
 
 
 class SpringNetworkLayout(NetworkLayout):
     """Force-directed fallback (no Graphviz required)."""
 
-    def pos(self, graph: nx.DiGraph) -> Pos:
-        return nx.spring_layout(graph, seed=42)  # deterministic
+    def pos(self, reporting_data: ReportingNetworkData) -> Pos:
+        return nx.spring_layout(reporting_data.graph, seed=42)  # deterministic
 
 
 # ---------- Registry via Enum ----------

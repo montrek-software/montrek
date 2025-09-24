@@ -3,6 +3,7 @@ from django.test import SimpleTestCase
 
 # Adjust this import to where you put layered_pos
 from reporting.core.network_layouts.utils import layered_pos
+from reporting.core.reporting_data import ReportingNetworkData
 
 
 def _round_tuple(t, ndigits=6):
@@ -16,8 +17,8 @@ class TestLayeredPos(SimpleTestCase):
         - align='horizontal' => ranks differ in Y (top→bottom),
           nodes in same rank share (approximately) the same Y.
         """
-        G = nx.DiGraph()
-        G.add_edges_from(
+        graph = nx.DiGraph()
+        graph.add_edges_from(
             [
                 ("Start", "A"),
                 ("Start", "B"),
@@ -27,15 +28,16 @@ class TestLayeredPos(SimpleTestCase):
                 ("C", "E"),
             ]
         )
+        reporting_data = ReportingNetworkData(title="Dummy", graph=graph)
 
-        pos = layered_pos(G, align="horizontal")
+        pos = layered_pos(reporting_data, align="horizontal")
         self.assertTrue(pos, "Expected non-empty positions dict")
         # Round to avoid tiny float noise
         pos = {n: _round_tuple(p, 6) for n, p in pos.items()}
 
         # Compute expected layers via topological generations (same as function uses for DAGs)
         expected_layers = {
-            n: i for i, gen in enumerate(nx.topological_generations(G)) for n in gen
+            n: i for i, gen in enumerate(nx.topological_generations(graph)) for n in gen
         }
 
         # Group nodes by expected layer and check Y is (approximately) constant per layer,
@@ -60,14 +62,15 @@ class TestLayeredPos(SimpleTestCase):
         align='vertical' => ranks differ in X (left→right),
         nodes in same rank share approx the same X.
         """
-        G = nx.DiGraph()
-        G.add_edges_from([("S", "A"), ("S", "B"), ("A", "C"), ("B", "C")])
+        graph = nx.DiGraph()
+        graph.add_edges_from([("S", "A"), ("S", "B"), ("A", "C"), ("B", "C")])
 
-        pos = layered_pos(G, align="vertical")
+        reporting_data = ReportingNetworkData(title="Dummy", graph=graph)
+        pos = layered_pos(reporting_data, align="vertical")
         pos = {n: _round_tuple(p, 6) for n, p in pos.items()}
 
         expected_layers = {
-            n: i for i, gen in enumerate(nx.topological_generations(G)) for n in gen
+            n: i for i, gen in enumerate(nx.topological_generations(graph)) for n in gen
         }
 
         layer_to_x = {}
@@ -89,16 +92,17 @@ class TestLayeredPos(SimpleTestCase):
         We can't guarantee exact layers, but positions should be returned for all nodes
         and there should be multiple ranks (not all nodes stacked).
         """
-        G = nx.DiGraph()
+        graph = nx.DiGraph()
         # Insertion order helps keep layering stable for the test
-        G.add_edges_from([("A", "B"), ("B", "C"), ("C", "A")])  # 3-cycle
+        graph.add_edges_from([("A", "B"), ("B", "C"), ("C", "A")])  # 3-cycle
 
-        pos_tb = layered_pos(G, align="horizontal")  # TB
-        pos_lr = layered_pos(G, align="vertical")  # LR
+        reporting_data = ReportingNetworkData(title="Dummy", graph=graph)
+        pos_tb = layered_pos(reporting_data, align="horizontal")  # TB
+        pos_lr = layered_pos(reporting_data, align="vertical")  # LR
 
         # All nodes must have positions in both orientations
-        self.assertEqual(set(pos_tb.keys()), set(G.nodes()))
-        self.assertEqual(set(pos_lr.keys()), set(G.nodes()))
+        self.assertEqual(set(pos_tb.keys()), set(graph.nodes()))
+        self.assertEqual(set(pos_lr.keys()), set(graph.nodes()))
 
         # Check there is at least more than one distinct coordinate along the layering axis
         ys = {round(p[1], 6) for p in pos_tb.values()}
@@ -110,12 +114,13 @@ class TestLayeredPos(SimpleTestCase):
         """
         Isolated or unreachable nodes should still receive coordinates.
         """
-        G = nx.DiGraph()
-        G.add_nodes_from(["X", "Y", "Z"])  # no edges
+        graph = nx.DiGraph()
+        graph.add_nodes_from(["X", "Y", "Z"])  # no edges
 
-        pos = layered_pos(G, align="horizontal")
+        reporting_data = ReportingNetworkData(title="Dummy", graph=graph)
+        pos = layered_pos(reporting_data, align="horizontal")
         self.assertEqual(set(pos.keys()), {"X", "Y", "Z"})
-        for n in G:
+        for n in graph:
             self.assertEqual(len(pos[n]), 2)
             # finite numbers
             self.assertTrue(all(map(lambda v: isinstance(v, (int, float)), pos[n])))
@@ -124,10 +129,27 @@ class TestLayeredPos(SimpleTestCase):
         """
         Basic contract: dict[node] -> (float, float)
         """
-        G = nx.DiGraph()
-        G.add_edges_from([(1, 2), (2, 3)])
-        pos = layered_pos(G, align="horizontal")
+        graph = nx.DiGraph()
+        graph.add_edges_from([(1, 2), (2, 3)])
+        reporting_data = ReportingNetworkData(title="Dummy", graph=graph)
+        pos = layered_pos(reporting_data, align="horizontal")
         self.assertIsInstance(pos, dict)
         for n, p in pos.items():
             self.assertEqual(len(p), 2)
             self.assertTrue(all(isinstance(c, (int, float)) for c in p))
+
+    def test_position_groups(self):
+        """
+        Basic contract: dict[node] -> (float, float)
+        """
+        graph = nx.DiGraph()
+        for node in ("A", "B", "C"):
+            graph.add_node(node, group="GroupA")
+        for node in ("D", "E", "F"):
+            graph.add_node(node, group="GroupB")
+
+        reporting_data = ReportingNetworkData(
+            title="Dummy", graph=graph, group_attr="group"
+        )
+        pos = layered_pos(reporting_data, align="horizontal")
+        self.assertIsInstance(pos, dict)
