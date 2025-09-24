@@ -19,7 +19,7 @@ class ReportingNetworkPlot(ReportingPlotBase[ReportingNetworkData]):
     ) -> list[Scatter]:
         graph = reporting_data.graph
         layout = reporting_data.layout
-        pos = self.get_pos(layout, graph)
+        pos = self.get_pos(layout, graph, reporting_data)
         edge_trace = self.get_edges(pos, graph)
         node_trace = self.get_nodes(pos, reporting_data)
         return [edge_trace, node_trace]
@@ -34,8 +34,8 @@ class ReportingNetworkPlot(ReportingPlotBase[ReportingNetworkData]):
         self.figure.update_xaxes(automargin=True)
         self.figure.update_yaxes(automargin=True)
 
-    def get_pos(self, layout: str, graph: nx.DiGraph):
-        return NetworkLayoutsFactory.get(layout).pos(graph)
+    def get_pos(self, layout: str, reporting_data: ReportingNetworkData):
+        return NetworkLayoutsFactory.get(layout).pos(reporting_data)
 
     def get_edges(self, pos: dict[str, np.ndarray], graph: nx.DiGraph) -> Scatter:
         edge_x, edge_y = [], []

@@ -1,13 +1,15 @@
 import networkx as nx
 from reporting.core.network_layouts.typing import Pos
+from reporting.core.reporting_data import ReportingNetworkData
 
 
-def layered_pos(graph: nx.DiGraph, align: str = "horizontal") -> Pos:
+def layered_pos(reporting_data: ReportingNetworkData, align: str = "horizontal") -> Pos:
     """
     Pure-Python layered positions:
       - align='horizontal' -> ranks stacked top→bottom (TB)
       - align='vertical'   -> ranks side-by-side left→right (LR)
     """
+    graph = reporting_data.graph
     # Layer nodes by topological generations (works best for DAGs)
     if nx.is_directed_acyclic_graph(graph):
         layers = {
@@ -32,4 +34,14 @@ def layered_pos(graph: nx.DiGraph, align: str = "horizontal") -> Pos:
             layers.setdefault(n, 0)
 
     nx.set_node_attributes(graph, layers, "subset")
+    if reporting_data.group_attr:
+        subsets = {}
+        for n, layer in layers.items():
+            group = graph.nodes[n].get(reporting_data.group_attr, 0)
+            # multipartite_layout sorts subsets uniquely; we combine into tuple
+            subsets[n] = (layer, group)
+
+        nx.set_node_attributes(graph, subsets, "subset")
+
+    # --- Step 3: layout ---
     return nx.multipartite_layout(graph, subset_key="subset", align=align, scale=1.0)
