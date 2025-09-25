@@ -1,4 +1,5 @@
-from typing import Any
+from typing import Any, Literal
+
 from baseclasses.typing import TableElementsType
 from django.db.models import QuerySet
 from reporting.core.text_converter import HtmlLatexConverter
@@ -90,11 +91,16 @@ class LatexTableConverter:
             total_size += max_val
         max_col_size, total_size = self._adjust_col_size(max_col_size, total_size)
         return {
-            col: self._get_adj_col_size(val, max_col_size, total_size)
+            col: self.get_adj_col_size(val, max_col_size, total_size)
             for col, val in max_col_size.items()
         }
 
-    def _get_adj_col_size(self, val: int, max_col_size: dict, total_size: int) -> float:
+    @staticmethod
+    def get_adj_col_size(
+        val: int, max_col_size: dict, total_size: float | Literal[0]
+    ) -> float:
+        if total_size == 0:
+            return 0
         return val / total_size * len(max_col_size)
 
     def _adjust_col_size(self, max_col_size: dict, total_size: int):
