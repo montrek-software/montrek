@@ -245,6 +245,18 @@ class MontrekDetailViewTestCase(
     def test_rest_api_view(self):
         self.rest_api_view_test()
 
+    def test_gen_pdf(self):
+        if self._is_base_test_class():
+            return
+        query_params = self.query_params()
+        query_params.update({"gen_pdf": "true"})
+        response = self.client.get(
+            self.url,
+            query_params=query_params,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/pdf")
+
 
 class MontrekCreateViewTestCase(MontrekCreateUpdateViewTestCase, GetObjectLastMixin):
     def _is_base_test_class(self) -> bool:
