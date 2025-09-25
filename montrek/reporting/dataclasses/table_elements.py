@@ -67,7 +67,7 @@ class AttrTableElement(TableElement):
     attr: str = field(default="")
     obj: Any = None
 
-    def get_attribute(self, obj: Any, tag: str) -> str:
+    def get_attribute(self, obj: Any, tag: str = "html") -> str:
         self.obj = obj
         value = self.get_value(obj)
         if tag == "html":
@@ -138,14 +138,16 @@ class BaseLinkTableElement(TableElement):
                 obj = getattr(obj, attr, None)
         return obj
 
-    def get_attribute(self, obj: Any, tag: str) -> str:
+    def get_attribute(self, obj: Any, tag: str = "html") -> str:
         link_text = self.get_value(obj)
         if tag == "latex":
             return self.format_latex(link_text)
-        url_kwargs = self._get_url_kwargs(obj)
-        url = self._get_url(obj, url_kwargs)
-        link = self._get_link(url, link_text)
-        return f"<td>{link}</td>"
+        if tag == "html":
+            url_kwargs = self._get_url_kwargs(obj)
+            url = self._get_url(obj, url_kwargs)
+            link = self._get_link(url, link_text)
+            return f"<td>{link}</td>"
+        return link_text
 
     def get_value(self, obj):
         raise NotImplementedError
@@ -500,8 +502,7 @@ class ImageTableElement(AttrTableElement):
 
         # Check if value is a valid URL. If so, download the image and include it in the latex document.
         try:
-            urlparse(value)
-            is_url = True
+            is_url = urlparse(value).scheme != ""
         except ValueError:
             is_url = False
         if not is_url:

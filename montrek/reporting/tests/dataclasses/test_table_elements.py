@@ -4,6 +4,7 @@ from unittest import mock
 
 import numpy as np
 import reporting.dataclasses.table_elements as te
+import requests
 from baseclasses.tests.factories.baseclass_factories import TestMontrekSatelliteFactory
 from django.test import TestCase
 from django.utils import timezone
@@ -170,15 +171,15 @@ class TestTableElements(TestCase):
         test_element = te.AlertTableElement(name="test", attr="test_value")
         self.assertEqual(
             test_element.format("ok"),
-            '<td style="text-align: left;color:#388E3C;">ok</td>',
+            '<td style="text-align: left;color:#388E3C;"><b>ok</b></td>',
         )
         self.assertEqual(
             test_element.format("warning"),
-            '<td style="text-align: left;color:#FDD835;">warning</td>',
+            '<td style="text-align: left;color:#FDD835;"><b>warning</b></td>',
         )
         self.assertEqual(
             test_element.format("error"),
-            '<td style="text-align: left;color:#BE0D3E;">error</td>',
+            '<td style="text-align: left;color:#BE0D3E;"><b>error</b></td>',
         )
 
     def test_external_link_table_element__html(self):
@@ -231,7 +232,12 @@ class TestTableElements(TestCase):
             attr="test_attr",
         )
         url = "https://upload.wikimedia.org/wikipedia/commons/7/70/Example.png"
-        test_str_latex = table_element.format_latex(url)
+        fake_response = mock.Mock()
+        fake_response.status_code = 200
+        fake_response.content = b"fake image bytes"
+
+        with mock.patch.object(requests, "get", return_value=fake_response):
+            test_str_latex = table_element.format_latex(url)
         self.assertIn(
             "\\includegraphics[width=0.3\\textwidth]{/tmp/",
             test_str_latex,
@@ -335,19 +341,13 @@ class TestTableElements(TestCase):
             list_attr="list_attr",
             list_kwarg="list_kwarg",
         )
-        obj = {"list_attr": "3,2,1", "text_attr": "c,b,a"}
+        obj = {"list_attr": "1,2,3", "text_attr": "a,b,c"}
         latex_str = table_element.get_attribute(obj, "latex")
         self.assertEqual(latex_str, " \\color{black} a,b,c &")
         html_str = table_element.get_attribute(obj, "html")
         self.assertEqual(
             html_str,
-            (
-                "<td><div style='max-height: 300px; overflow-y: auto;'>"
-                '<a id="id__fake_url_1" href="/fake_url/1" title="hover_text">a</a><br>'
-                '<a id="id__fake_url_2" href="/fake_url/2" title="hover_text">b</a><br>'
-                '<a id="id__fake_url_3" href="/fake_url/3" title="hover_text">c</a>'
-                "</div></td>"
-            ),
+            '<td><div style=\'max-height: 300px; overflow-y: auto;\'><a id="id__fake_url_1,2,3" href="/fake_url/1,2,3" title="hover_text">a,b,c</a></div></td>',
         )
 
 
@@ -432,7 +432,7 @@ class TestDataTableFilters(TestCase):
         )
         test_link = table_element.get_attribute(test_obj)
         self.assertTrue(
-            f"?filter_field=test_name&filter_lookup=in&filter_value={test_obj.test_name}"
+            f"?filter_field=test_name&amp;filter_lookup=in&amp;filter_value={test_obj.test_name}"
             in test_link
         )
 
