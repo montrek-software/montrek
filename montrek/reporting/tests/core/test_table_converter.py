@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from typing import Any
 
 from django.test import TestCase
-
 from reporting.core.table_converter import LatexTableConverter
 from reporting.dataclasses import table_elements as te
 
@@ -132,3 +131,15 @@ class TestLatexTableConverter(TestCase):
             "MinCol": 0.33333333333333337,
         }
         self.assertEqual(col_sizes, expected_col_sizes)
+
+    def test_get_adj_col_size(self):
+        test_adj_col_size = LatexTableConverter.get_adj_col_size(
+            15, {"a": 1, "b": 2}, 3
+        )
+        self.assertEqual(test_adj_col_size, 10)
+
+    def test_get_adj_col_size__div_by_zero(self):
+        test_adj_col_size = LatexTableConverter.get_adj_col_size(
+            15, {"a": 1, "b": 2}, 0
+        )
+        self.assertEqual(test_adj_col_size, 0)
