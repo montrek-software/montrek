@@ -67,7 +67,7 @@ class AttrTableElement(TableElement):
     attr: str = field(default="")
     obj: Any = None
 
-    def get_attribute(self, obj: Any, tag: str) -> str:
+    def get_attribute(self, obj: Any, tag: str = "html") -> str:
         self.obj = obj
         value = self.get_value(obj)
         if tag == "html":
@@ -138,14 +138,16 @@ class BaseLinkTableElement(TableElement):
                 obj = getattr(obj, attr, None)
         return obj
 
-    def get_attribute(self, obj: Any, tag: str) -> str:
+    def get_attribute(self, obj: Any, tag: str = "html") -> str:
         link_text = self.get_value(obj)
         if tag == "latex":
             return self.format_latex(link_text)
-        url_kwargs = self._get_url_kwargs(obj)
-        url = self._get_url(obj, url_kwargs)
-        link = self._get_link(url, link_text)
-        return f"<td>{link}</td>"
+        if tag == "html":
+            url_kwargs = self._get_url_kwargs(obj)
+            url = self._get_url(obj, url_kwargs)
+            link = self._get_link(url, link_text)
+            return f"<td>{link}</td>"
+        return link_text
 
     def get_value(self, obj):
         raise NotImplementedError
@@ -221,22 +223,24 @@ class LinkListTableElement(BaseLinkTableElement):
     in_separator: str = ";"
     out_separator: str = "<br>"
 
-    def get_attribute(self, obj: Any, tag: str) -> str:
+    def get_attribute(self, obj: Any, tag: str = "html") -> str:
         values = self.get_value(obj)
         if tag == "latex":
             value = ",".join(link_text for _, link_text in values)
             return self.format_latex(value)
-        result = "<td><div style='max-height: 300px; overflow-y: auto;'>"
-        for i, (list_value, link_text) in enumerate(values):
-            url_kwargs = self._get_url_kwargs(obj)
-            url_kwargs[self.list_kwarg] = list_value
-            url = self._get_url(obj, url_kwargs)
-            link = self._get_link(url, link_text)
-            if i > 0:
-                result += self.out_separator
-            result += link
-        result += "</div></td>"
-        return result
+        if tag == "html":
+            result = "<td><div style='max-height: 300px; overflow-y: auto;'>"
+            for i, (list_value, link_text) in enumerate(values):
+                url_kwargs = self._get_url_kwargs(obj)
+                url_kwargs[self.list_kwarg] = list_value
+                url = self._get_url(obj, url_kwargs)
+                link = self._get_link(url, link_text)
+                if i > 0:
+                    result += self.out_separator
+                result += link
+            result += "</div></td>"
+            return result
+        return "No tag"
 
     def get_value(self, obj) -> list:
         list_values = self.get_dotted_attr_or_arg(obj, self.list_attr)
@@ -500,8 +504,7 @@ class ImageTableElement(AttrTableElement):
 
         # Check if value is a valid URL. If so, download the image and include it in the latex document.
         try:
-            urlparse(value)
-            is_url = True
+            is_url = urlparse(value).scheme != ""
         except ValueError:
             is_url = False
         if not is_url:

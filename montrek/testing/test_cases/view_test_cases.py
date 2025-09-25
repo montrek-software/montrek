@@ -46,6 +46,20 @@ class RestApiTestCaseMixin:
         self.assertEqual(response_json, manager.to_json())
 
 
+class PdfTestCaseMixin:
+    def pdf_view_test(self):
+        if self._is_base_test_class():
+            return
+        query_params = self.query_params()
+        query_params.update({"gen_pdf": "true"})
+        response = self.client.get(
+            self.url,
+            query_params=query_params,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/pdf")
+
+
 class MontrekViewTestCase(TestCase):
     viewname: str = "Please set the viewname in the subclass"
     view_class: type[View] = NotImplementedView
@@ -139,7 +153,9 @@ class MontrekViewTestCase(TestCase):
         self.user.user_permissions.set(required_user_permissions)
 
 
-class MontrekListViewTestCase(MontrekViewTestCase, RestApiTestCaseMixin):
+class MontrekListViewTestCase(
+    MontrekViewTestCase, RestApiTestCaseMixin, PdfTestCaseMixin
+):
     expected_no_of_rows: int = 0
     expected_columns = []
 
@@ -162,6 +178,9 @@ class MontrekListViewTestCase(MontrekViewTestCase, RestApiTestCaseMixin):
 
     def test_rest_api_view(self):
         self.rest_api_view_test()
+
+    def test_gen_pdf(self):
+        self.pdf_view_test()
 
 
 class MontrekObjectViewBaseTestCase(MontrekViewTestCase):
@@ -231,7 +250,10 @@ class GetObjectPkMixin:
 
 
 class MontrekDetailViewTestCase(
-    MontrekObjectViewBaseTestCase, GetObjectPkMixin, RestApiTestCaseMixin
+    MontrekObjectViewBaseTestCase,
+    GetObjectPkMixin,
+    RestApiTestCaseMixin,
+    PdfTestCaseMixin,
 ):
     def _is_base_test_class(self) -> bool:
         return self.__class__.__name__ == "MontrekDetailViewTestCase"
@@ -244,6 +266,9 @@ class MontrekDetailViewTestCase(
 
     def test_rest_api_view(self):
         self.rest_api_view_test()
+
+    def test_gen_pdf(self):
+        self.pdf_view_test()
 
 
 class MontrekCreateViewTestCase(MontrekCreateUpdateViewTestCase, GetObjectLastMixin):

@@ -2,8 +2,8 @@ import datetime
 import io
 from decimal import Decimal
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 from baseclasses.utils import montrek_time
 from bs4 import BeautifulSoup
 from django.core import mail
@@ -11,8 +11,6 @@ from django.test import TestCase
 from django.utils import timezone
 from montrek_example.models.example_models import SatA1
 from montrek_example.tests.factories import montrek_example_factories as me_factories
-from user.tests.factories.montrek_user_factories import MontrekUserFactory
-
 from reporting.dataclasses.table_elements import HistoryChangeState
 from reporting.managers.montrek_table_manager import HistoryDataTableManager
 from reporting.tests.mocks import (
@@ -22,6 +20,7 @@ from reporting.tests.mocks import (
     MockMontrekDataFrameTableManager,
     MockMontrekTableManager,
 )
+from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
 
 class TestMontrekTableManager(TestCase):
@@ -77,8 +76,8 @@ class TestMontrekTableManager(TestCase):
             response["Content-Type"],
             "text/csv",
         )
-        # Check the Content-Disposition header using regex
         content_disposition = response["Content-Disposition"]
+        # Check the Content-Disposition header using regex
         filename_pattern = r'attachment; filename="mockmontrektablemanager_\d{14}\.csv"'
         self.assertRegex(content_disposition, filename_pattern)
         self.assertEqual(
