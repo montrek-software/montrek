@@ -15,6 +15,7 @@ from reporting.core.reporting_plots import ReportingPlot
 from reporting.dataclasses import table_elements as te
 from reporting.forms import MontrekReportForm
 from reporting.managers.latex_report_manager import LatexReportManager
+from reporting.managers.montrek_details_manager import MontrekDetailsManager
 from reporting.managers.montrek_report_manager import MontrekReportManager
 from reporting.managers.montrek_table_manager import (
     MontrekDataFrameTableManager,
@@ -161,6 +162,9 @@ class MockQuerySet:
     def count(self) -> int:
         return len(self.items)
 
+    def get(self, **kwargs):
+        return self.items[0]
+
 
 class MockRepository:
     def __init__(self, session_data: dict):
@@ -218,6 +222,36 @@ class MockLongRepository:
 
 
 class MockMontrekTableManager(MontrekTableManager):
+    repository_class = MockRepository
+
+    @property
+    def table_elements(
+        self,
+    ) -> tuple[te.TableElement]:
+        return (
+            te.StringTableElement(attr="field_a", name="Field A"),
+            te.IntTableElement(attr="field_b", name="Field B"),
+            te.FloatTableElement(attr="field_c", name="Field C"),
+            te.DateTimeTableElement(attr="field_d", name="Field D"),
+            te.EuroTableElement(attr="field_e", name="Field E"),
+            te.LinkTableElement(
+                name="Link",
+                url="home",
+                kwargs={},
+                hover_text="Link",
+                icon="icon",
+            ),
+            te.LinkTextTableElement(
+                name="Link Text",
+                url="home",
+                kwargs={},
+                hover_text="Link Text",
+                text="field_a",
+            ),
+        )
+
+
+class MockMontrekDetailsManager(MontrekDetailsManager):
     repository_class = MockRepository
 
     @property
