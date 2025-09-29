@@ -1,16 +1,17 @@
-from django.test import TestCase
-from django.urls import reverse
-
 from baseclasses.dataclasses.view_classes import (
-    BackActionElement,
     ActionElement,
+    BackActionElement,
+    CreateActionElement,
     ListActionElement,
+    PlayActionElement,
+    RegistryActionElement,
     SettingsActionElement,
+    ShowActionElement,
     StandardActionElementBase,
     UploadActionElement,
-    CreateActionElement,
-    RegistryActionElement,
 )
+from django.test import TestCase
+from django.urls import reverse
 
 
 class TestStandardActionElementBase(TestCase):
@@ -37,6 +38,8 @@ class TestStandardActionElements(TestCase):
             (CreateActionElement, "plus"),
             (RegistryActionElement, "inbox"),
             (ListActionElement, "align-justify"),
+            (PlayActionElement, "play"),
+            (ShowActionElement, "eye"),
         )
 
         for element_class, expected_icon in expected_icons:
@@ -55,6 +58,8 @@ class TestStandardActionElements(TestCase):
             (SettingsActionElement, "cog"),
             (CreateActionElement, "plus"),
             (RegistryActionElement, "inbox"),
+            (PlayActionElement, "play"),
+            (ShowActionElement, "eye"),
         )
         for element_class, expected_icon in expected_icons:
             element = element_class(
