@@ -57,6 +57,16 @@ class ListActionElement(StandardActionElementBase):
     icon = "align-justify"
 
 
+@dataclass(init=False)
+class PlayActionElement(StandardActionElementBase):
+    icon = "play"
+
+
+@dataclass(init=False)
+class ShowActionElement(StandardActionElementBase):
+    icon = "eye"
+
+
 @dataclass
 class TabElement:
     name: str
