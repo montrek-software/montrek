@@ -64,7 +64,7 @@ class PlayActionElement(StandardActionElementBase):
 
 @dataclass(init=False)
 class ShowActionElement(StandardActionElementBase):
-    icon = "eye"
+    icon = "eye-open"
 
 
 @dataclass

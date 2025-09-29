@@ -39,7 +39,7 @@ class TestStandardActionElements(TestCase):
             (RegistryActionElement, "inbox"),
             (ListActionElement, "align-justify"),
             (PlayActionElement, "play"),
-            (ShowActionElement, "eye"),
+            (ShowActionElement, "eye-open"),
         )
 
         for element_class, expected_icon in expected_icons:
@@ -59,7 +59,7 @@ class TestStandardActionElements(TestCase):
             (CreateActionElement, "plus"),
             (RegistryActionElement, "inbox"),
             (PlayActionElement, "play"),
-            (ShowActionElement, "eye"),
+            (ShowActionElement, "eye-open"),
         )
         for element_class, expected_icon in expected_icons:
             element = element_class(
