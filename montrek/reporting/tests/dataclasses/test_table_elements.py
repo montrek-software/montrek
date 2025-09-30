@@ -157,6 +157,24 @@ class TestTableElements(TestCase):
             test_element.format("bla"), '<td style="text-align:left;">&#x2713;</td>'
         )
 
+    def test_wrap_text_in_string_table_element(self):
+        test_obj = TestMontrekSatelliteFactory.create(test_text="Test Name" * 20)
+        table_element = te.StringTableElement(
+            name="name",
+            attr="test_text",
+        )
+        value = table_element.get_value(test_obj)
+        self.assertIn("<br>", value)
+
+    def test_wrap_text_in_string_table_element__none(self):
+        test_obj = TestMontrekSatelliteFactory.create()
+        table_element = te.StringTableElement(
+            name="name",
+            attr="test_text",
+        )
+        value = table_element.get_value(test_obj)
+        self.assertEqual(None, value)
+
     def test_not_implemented_table_elements(self):
         test_element = te.TableElement(name="test")
         with self.assertRaises(NotImplementedError):

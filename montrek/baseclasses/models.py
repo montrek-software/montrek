@@ -2,13 +2,12 @@ import datetime
 import hashlib
 from enum import Enum
 
-from django.conf import settings
-from django.db import models
-from django.utils import timezone
-
 from baseclasses.dataclasses.alert import AlertEnum
 from baseclasses.fields import HubForeignKey
 from baseclasses.utils import datetime_to_montrek_time
+from django.conf import settings
+from django.db import models
+from django.utils import timezone
 
 # Create your models here.
 
@@ -353,6 +352,7 @@ class TestMontrekSatellite(MontrekSatelliteABC):
     identifier_fields = ["test_name", "test_date"]
     test_name = models.CharField(max_length=12)
     test_value = models.CharField(max_length=50, null=True)
+    test_text = models.TextField(null=True)
     test_decimal = models.DecimalField(max_digits=10, decimal_places=4, default=0)
     test_date = models.DateTimeField()
 
