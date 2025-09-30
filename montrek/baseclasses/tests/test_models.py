@@ -2,22 +2,21 @@ import datetime
 import hashlib
 import time
 
-from django.test import TestCase
-from django.utils import timezone
-
 from baseclasses.models import (
+    LinkTestMontrekTestLink,
     TestLinkHub,
     TestMontrekHub,
     TestMontrekSatellite,
     TestMontrekSatelliteNoIdFields,
-    LinkTestMontrekTestLink,
 )
 from baseclasses.tests.factories.baseclass_factories import (
+    LinkTestMontrekTestLinkFactory,
     TestMontrekHubFactory,
     TestMontrekSatelliteFactory,
-    LinkTestMontrekTestLinkFactory,
 )
 from baseclasses.utils import montrek_time
+from django.test import TestCase
+from django.utils import timezone
 
 
 class TestBaseClassModels(TestCase):
@@ -139,6 +138,7 @@ class TestSatelliteIdentifier(TestCase):
                 "hub_entity",
                 "test_name",
                 "test_value",
+                "test_text",
                 "test_decimal",
                 "test_date",
             ],
@@ -148,7 +148,7 @@ class TestSatelliteIdentifier(TestCase):
 class TestSatelliteValueHash(TestCase):
     def test_new_satellite_has_correct_value_hash(self):
         test_hash = hashlib.sha256(
-            b"test_nameNone02023-06-20 00:00:00+00:00"
+            b"test_nameNoneNone02023-06-20 00:00:00+00:00"
         ).hexdigest()
         test_satellite = TestMontrekSatelliteFactory(
             test_name="test_name",

@@ -259,7 +259,7 @@ class LinkListTableElement(BaseLinkTableElement):
 class StringTableElement(AttrTableElement):
     serializer_field_class = serializers.CharField
     attr: str
-    chunk_size: int = 50
+    chunk_size: int = 56
 
     def format(self, value):
         return f'<td style="text-align: left">{value}</td>'
@@ -268,6 +268,7 @@ class StringTableElement(AttrTableElement):
         value = super().get_value(obj)
         if not value:
             return None
+        value = str(value)
         if len(value) > self.chunk_size:
             return "<br>".join(self._chunk_text(value))
         return value
