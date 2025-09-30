@@ -266,7 +266,7 @@ class StringTableElement(AttrTableElement):
 
     def get_value(self, obj: Any) -> Any:
         value = super().get_value(obj)
-        if not value:
+        if pd.isna(value):
             return None
         value = str(value)
         if len(value) > self.chunk_size:
