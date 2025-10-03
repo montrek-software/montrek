@@ -1292,13 +1292,13 @@ class TestMontrekRepositoryLinks(TestCase):
     def test_link_with_many_to_many_parents(self):
         sat_e1 = me_factories.SatE1Factory(field_e1_str="Test1")
         hub_d1 = me_factories.HubDFactory(hub_e=sat_e1.hub_entity)
-        sat_e2 = me_factories.SatE1Factory(field_e1_str="Test1")
+        sat_e2 = me_factories.SatE1Factory(field_e1_str="Test2")
         hub_d2 = me_factories.HubDFactory(hub_e=sat_e2.hub_entity)
         hub_c = me_factories.HubCFactory(hub_d=[hub_d1, hub_d2])
         repo = HubCRepositoryWithManyToManyParents({})
         test_query = repo.receive()
         test_element = test_query.get(hub_entity_id=hub_c.pk)
-        self.assertEqual(test_element.field_e1_str, "Test1")
+        self.assertEqual(test_element.field_e1_str, "Test1;Test2")
 
 
 class TestLinkOneToOneUpates(TestCase):
