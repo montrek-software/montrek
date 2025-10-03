@@ -9,7 +9,7 @@ from baseclasses.errors.montrek_user_error import MontrekError
 from baseclasses.tests.factories.montrek_factory_schemas import ValueDateListFactory
 from baseclasses.utils import montrek_time
 from django.core.exceptions import PermissionDenied
-from django.db import models
+from django.db import ProgrammingError, models
 from django.test import TestCase, TransactionTestCase, tag
 from django.utils import timezone
 from freezegun import freeze_time
@@ -1233,6 +1233,21 @@ class TestMontrekRepositoryLinks(TestCase):
     def test_link_reversed_with_parent_links(self):
         satd = me_factories.SatD1Factory()
         me_factories.LinkHubCHubDFactory(hub_in=self.hubc1, hub_out=satd.hub_entity)
+        sata3 = me_factories.SatA1Factory(field_a1_str="Extra Test")
+        hubc2 = me_factories.HubCFactory()
+        me_factories.LinkHubAHubCFactory(
+            hub_in=sata3.hub_entity,
+            hub_out=hubc2,
+        )
+        me_factories.LinkHubCHubDFactory(hub_in=hubc2, hub_out=satd.hub_entity)
+        repository = HubDRepositoryReversedParentLink()
+        queryset = repository.receive()
+        self.assertEqual(queryset.count(), 1)
+        self.assertEqual(queryset.first().field_a1_str, "Test;Extra Test")
+
+    def test_link_reversed_with_parent_links__many_to_many(self):
+        satd = me_factories.SatD1Factory()
+        me_factories.LinkHubCHubDFactory(hub_in=self.hubc1, hub_out=satd.hub_entity)
         repository = HubDRepositoryReversedParentLink()
         queryset = repository.receive()
         self.assertEqual(queryset.count(), 1)
@@ -1250,6 +1265,22 @@ class TestMontrekRepositoryLinks(TestCase):
         c_object = repository.receive().get(hub__pk=hub_c.pk)
         self.assertEqual(c_object.field_a1_str, "A1Test")
         self.assertEqual(c_object.field_b1_str, "B1Test")
+
+    def test_link_with_reversed_parent__many_to_many__raise_error(self):
+        hub_c = me_factories.HubCFactory()
+        sat_a = me_factories.SatA1Factory(field_a1_str="A1Test")
+        me_factories.LinkHubAHubCFactory(hub_in=sat_a.hub_entity, hub_out=hub_c)
+        satb1 = me_factories.SatB1Factory(field_b1_str="B1Test1")
+        me_factories.LinkHubAHubBFactory(
+            hub_in=sat_a.hub_entity, hub_out=satb1.hub_entity
+        )
+        satb2 = me_factories.SatB1Factory(field_b1_str="B1Test2")
+        me_factories.LinkHubAHubBFactory(
+            hub_in=sat_a.hub_entity, hub_out=satb2.hub_entity
+        )
+        repository = HubCRepositoryReversedParents()
+        with self.assertRaises(ProgrammingError):
+            repository.receive().get(hub__pk=hub_c.pk)
 
     def test_link_with_reversed_parent__non_matching_items(self):
         def call_repo():
