@@ -387,10 +387,8 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
     def _is_multiple_allowed(self, hub_field_to: str) -> bool:
         _is_many_to_many = isinstance(self.link_class(), MontrekManyToManyLinkABC)
         _is_many_to_many_parent = any(
-            [
-                isinstance(parent_link_class(), MontrekManyToManyLinkABC)
-                for parent_link_class in self.parent_link_classes
-            ]
+            isinstance(parent_link_class(), MontrekManyToManyLinkABC)
+            for parent_link_class in self.parent_link_classes
         )
         _is_many_to_one = (
             isinstance(self.link_class(), MontrekOneToManyLinkABC)
