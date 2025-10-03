@@ -33,10 +33,33 @@ class HubCFactory(MontrekHubFactory):
     class Meta:
         model = "montrek_example.HubC"
 
+    @factory.post_generation
+    def hub_d(self, created, extracted):
+        if not created:
+            return
+        if not extracted:
+            return
+        if isinstance(extracted, list):
+            for hub in extracted:
+                self.link_hub_c_hub_d.add(hub)
+
 
 class HubDFactory(MontrekHubFactory):
     class Meta:
         model = "montrek_example.HubD"
+
+    @factory.post_generation
+    def hub_e(self, created, extracted):
+        if not created:
+            return
+        if not extracted:
+            return
+        self.link_hub_d_hub_e.add(extracted)
+
+
+class HubEFactory(MontrekHubFactory):
+    class Meta:
+        model = "montrek_example.HubE"
 
 
 class AHubValueDateFactory(MontrekHubValueDateFactory):
@@ -147,6 +170,13 @@ class SatTSD2Factory(MontrekTSSatelliteFactory):
         model = "montrek_example.SatTSD2"
 
     hub_value_date = factory.SubFactory(DHubValueDateFactory)
+
+
+class SatE1Factory(MontrekSatelliteFactory):
+    class Meta:
+        model = "montrek_example.SatE1"
+
+    hub_entity = factory.SubFactory(HubEFactory)
 
 
 class HubAFileUploadRegistryHubFactory(FileUploadRegistryHubFactory):

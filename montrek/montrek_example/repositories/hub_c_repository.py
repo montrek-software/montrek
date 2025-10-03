@@ -1,4 +1,3 @@
-from django.utils import timezone
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from montrek_example.models import example_models as me_models
 from montrek_example.repositories.hub_d_repository import HubDRepository
@@ -242,4 +241,16 @@ class HubCRepositoryReversedParentsNoMatchingReversedParents(MontrekRepository):
             ["field_b1_str"],
             parent_link_classes=(me_models.LinkHubAHubC,),
             parent_link_reversed=(True, False),
+        )
+
+
+class HubCRepositoryWithManyToManyParents(MontrekRepository):
+    hub_class = me_models.HubC
+
+    def set_annotations(self):
+        self.add_linked_satellites_field_annotations(
+            me_models.SatE1,
+            me_models.LinkHubDHubE,
+            ["field_e1_str"],
+            parent_link_classes=(me_models.LinkHubCHubD,),
         )
