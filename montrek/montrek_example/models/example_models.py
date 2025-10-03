@@ -26,8 +26,8 @@ from file_upload.models import (
 ####################################################################################################
 # Test classes                              / -- LinkHubBHubD -- HubD -- SatD1
 #                                          /                      /   \- SatTSD2
-#    SatA1 -- HubA -- LinkHubAHubB -- HubB -- SatB1              /
-#    SatA2 -/   \                          \- SatB2    LinkHubCHubD
+#    SatA1 -- HubA -- LinkHubAHubB -- HubB -- SatB1              /    \
+#    SatA2 -/   \                          \- SatB2    LinkHubCHubD   \- LinkHubDHubE - SatE1
 #                \ -- LinkHubAHubC -- HubC -- SatC1   /
 #                                          \- SatTSC2/
 #                                          \--------/
@@ -66,7 +66,9 @@ class HubC(MontrekHubABC):
 
 
 class HubD(MontrekHubABC):
-    pass
+    link_hub_d_hub_e = models.ManyToManyField(
+        "HubE", related_name="link_hub_e_hub_d", through="LinkHubDHubE"
+    )
 
 
 class HubE(MontrekHubABC):
@@ -221,6 +223,11 @@ class LinkHubAFileUploadRegistry(MontrekManyToManyLinkABC):
 class LinkHubCHubD(MontrekManyToManyLinkABC):
     hub_in = models.ForeignKey(HubC, on_delete=models.CASCADE)
     hub_out = models.ForeignKey(HubD, on_delete=models.CASCADE)
+
+
+class LinkHubDHubE(MontrekOneToManyLinkABC):
+    hub_in = models.ForeignKey(HubD, on_delete=models.CASCADE)
+    hub_out = models.ForeignKey(HubE, on_delete=models.CASCADE)
 
 
 class HubAFileUploadRegistryHub(FileUploadRegistryHubABC):
