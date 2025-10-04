@@ -3,14 +3,17 @@ from baseclasses.dataclasses.view_classes import TabElement
 from baseclasses.pages import MontrekDetailsPage, MontrekPage
 from code_generation.tests.data.output.repositories.company_repositories import CompanyRepository
 
+PAGE_TITLE="Company"
+LIST_TAB_NAME="Company"
+DETAILS_TAB_NAME="Company"
 
 class CompanyPage(MontrekPage):
-    page_title = "Company"
+    page_title = PAGE_TITLE
 
     def get_tabs(self):
         return (
             TabElement(
-                name="Company",
+                name=LIST_TAB_NAME,
                 link=reverse("company_list"),
                 html_id="tab_company_list",
                 active="active",
@@ -25,7 +28,7 @@ class CompanyDetailsPage(MontrekDetailsPage):
     def get_tabs(self):
         return (
             TabElement(
-                name="Company",
+                name=DETAILS_TAB_NAME,
                 link=reverse("company_details", args=[self.obj.id]),
                 html_id="tab_company_details",
                 active="active",

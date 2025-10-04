@@ -3,14 +3,17 @@ from baseclasses.dataclasses.view_classes import TabElement
 from baseclasses.pages import MontrekDetailsPage, MontrekPage
 {{ repo_cls_import }}
 
+PAGE_TITLE="{{ page_title }}"
+LIST_TAB_NAME="{{ list_tab_name }}"
+DETAILS_TAB_NAME="{{ details_tab_name }}"
 
 class {{ page_cls_name }}(MontrekPage):
-    page_title = "{{ page_title }}"
+    page_title = PAGE_TITLE
 
     def get_tabs(self):
         return (
             TabElement(
-                name="{{ list_tab_name }}",
+                name=LIST_TAB_NAME,
                 link=reverse("{{ list_view_url_name }}"),
                 html_id="{{ list_tab_id }}",
                 active="active",
@@ -25,7 +28,7 @@ class {{ details_page_cls_name }}(MontrekDetailsPage):
     def get_tabs(self):
         return (
             TabElement(
-                name="{{ details_tab_name }}",
+                name=DETAILS_TAB_NAME,
                 link=reverse("{{ detail_view_url_name }}", args=[self.obj.id]),
                 html_id="{{ detail_tab_id }}",
                 active="active",
