@@ -170,7 +170,7 @@ class TestTableElements(TestCase):
         test_obj = TestMontrekSatelliteFactory.create()
         table_element = te.StringTableElement(
             name="name",
-            attr="test_text",
+            attr="test_value",
         )
         value = table_element.get_value(test_obj)
         self.assertEqual(None, value)
