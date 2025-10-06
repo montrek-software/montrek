@@ -141,6 +141,16 @@ class MockFormClass:
         return False
 
 
+class MockFormClassValid:
+    errors = MockErrors()
+    cleaned_data = {}
+
+    def __init__(self, request, repository, session_data): ...
+
+    def is_valid(self):
+        return True
+
+
 class MockMontrekCreateView(MontrekCreateUpdateView, MockRequester):
     manager_class = MockManager
     is_hub_based = False
@@ -151,6 +161,10 @@ class MockMontrekCreateView(MontrekCreateUpdateView, MockRequester):
         super().__init__()
         self.add_mock_request(url)
         self.kwargs = {}
+
+
+class MockMontrekCreateValidView(MockMontrekCreateView):
+    form_class = MockFormClassValid
 
 
 class TestUnderConstruction(TestCase):
@@ -595,9 +609,10 @@ class TestMontrekCreateView(TestCase):
         self.assertEqual([mqe.value for mqe in test_queryset], [1, 2, 3])
 
     def test_post(self):
-        test_view = MockMontrekCreateView("/")
+        test_view = MockMontrekCreateValidView("/")
         test_form = test_view.post(test_view.request)
-        self.assertEqual(test_form.status_code, 200)
+        self.assertEqual(test_form.status_code, 302)
+        self.assertIsNotNone(test_view.object)
 
 
 class TestMontrekRedirectView(TestCase):

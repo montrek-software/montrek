@@ -83,3 +83,6 @@ class MockRepository:
 
     def set_order_fields(self, value):
         self._order_field = value
+
+    def create_by_dict(self, data: dict) -> MockData:
+        return MockData("item1", 1)
