@@ -64,6 +64,7 @@ services:
       - redis
       - parallel_worker
       - sequential_worker
+      - fast_worker
     networks:
       - montrek_network
 
@@ -84,6 +85,7 @@ services:
       - redis
       - sequential_worker
       - parallel_worker
+      - fast_worker
     networks:
       - montrek_network
 
