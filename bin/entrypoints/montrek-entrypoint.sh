@@ -20,6 +20,9 @@ parallel_worker)
 fast_worker)
   exec gosu "${PUID}:${PGID}" /montrek/bin/entrypoints/worker-entrypoint.sh
   ;;
+fast_worker)
+  exec gosu "${PUID}:${PGID}" /montrek/bin/entrypoints/worker-entrypoint.sh 2
+  ;;
 celery_beat)
   exec gosu "${PUID}:${PGID}" /montrek/bin/entrypoints/celery_beat-entrypoint.sh
   ;;
