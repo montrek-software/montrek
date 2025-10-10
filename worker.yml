@@ -1,0 +1,65 @@
+services:
+  sequential_worker:
+    image: ghcr.io/montrek-software/montrek-container:latest
+    user: "0:0"
+    environment:
+      - SERVICE=sequential_worker
+      - QUEUE=sequential_queue
+      - POOL=prefork
+      - PIUD=${USER_ID}
+      - PGUD=${GROUP_ID}
+    volumes:
+      - .:/montrek
+      - static_volume:/montrek/static
+      - uploads_volume:/montrek/uploads
+    env_file:
+      - .env
+    depends_on:
+      - web
+      - db
+      - redis
+    networks:
+      - montrek_network
+
+  parallel_worker:
+    image: ghcr.io/montrek-software/montrek-container:latest
+    user: "0:0"
+    environment:
+      - SERVICE=parallel_worker
+      - QUEUE=parallel_queue
+      - POOL=prefork
+      - PIUD=${USER_ID}
+      - PGUD=${GROUP_ID}
+    volumes:
+      - .:/montrek
+      - static_volume:/montrek/static
+      - uploads_volume:/montrek/uploads
+    env_file:
+      - .env
+    depends_on:
+      - web
+      - db
+      - redis
+    networks:
+      - montrek_network
+  fast_worker:
+    image: ghcr.io/montrek-software/montrek-container:latest
+    user: "0:0"
+    environment:
+      - SERVICE=fast_worker
+      - QUEUE=fast_queue
+      - POOL=gevent
+      - PIUD=${USER_ID}
+      - PGUD=${GROUP_ID}
+    volumes:
+      - .:/montrek
+      - static_volume:/montrek/static
+      - uploads_volume:/montrek/uploads
+    env_file:
+      - .env
+    depends_on:
+      - web
+      - db
+      - redis
+    networks:
+      - montrek_network
