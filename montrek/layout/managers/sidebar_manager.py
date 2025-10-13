@@ -26,14 +26,15 @@ class SidebarManagerABC(MontrekTableManagerABC):
         grouped_items = defaultdict(list)
         compare_url = self.compare_url()
         active_group = None
+        link = self.link()
         for item in items:
-            url_kwargs = self.link()._get_url_kwargs(item)
-            linked_url = self.link()._get_url(item, url_kwargs)
+            url_kwargs = link._get_url_kwargs(item)
+            linked_url = link._get_url(item, url_kwargs)
             active = linked_url == compare_url
             group = getattr(item, self.group_field)
             if active:
                 active_group = group
-            grouped_items[group].append(self.link().get_attribute(item, active=active))
+            grouped_items[group].append(link.get_attribute(item, active=active))
         # Render using Django template
         html = render_to_string(
             "sidebar.html",
