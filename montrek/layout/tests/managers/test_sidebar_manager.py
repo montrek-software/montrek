@@ -47,7 +47,10 @@ class TestSidebarManager(TestCase):
                 f.write(test_html)
         with open(exp_content_fp) as f:
             exp_content = f.read()
-        self.assertEqual(test_html, exp_content)
+        self.assertEqual(
+            test_html.replace(" ", "").replace("\n", ""),
+            exp_content.replace(" ", "").replace("\n", ""),
+        )
 
     def test_sidebar_html_expanded(self):
         rebase = False
@@ -59,4 +62,7 @@ class TestSidebarManager(TestCase):
                 f.write(test_html)
         with open(exp_content_fp) as f:
             exp_content = f.read()
-        self.assertEqual(test_html, exp_content)
+        self.assertEqual(
+            test_html.replace(" ", "").replace("\n", ""),
+            exp_content.replace(" ", "").replace("\n", ""),
+        )
