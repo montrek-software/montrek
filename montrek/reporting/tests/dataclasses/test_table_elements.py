@@ -439,6 +439,21 @@ class TestDataTableFilters(TestCase):
             f'<td><a id="id__baseclasses_{test_obj.id}_details" href="/baseclasses/{test_obj.id}/details" title="hover_text">{test_obj.test_name}</a></td>',
         )
 
+    def test__get_link_text__active(self):
+        test_obj = TestMontrekSatelliteFactory.create()
+        table_element = te.LinkTextTableElement(
+            name="name",
+            url="dummy_detail",
+            kwargs={"pk": "pk"},
+            text="test_name",
+            hover_text="hover_text",
+        )
+        test_link = table_element.get_attribute(test_obj, active=True)
+        self.assertEqual(
+            str(test_link),
+            f'<td><b><a id="id__baseclasses_{test_obj.id}_details" href="/baseclasses/{test_obj.id}/details" title="hover_text">{test_obj.test_name}</a></b></td>',
+        )
+
     def test__get_link_text_filter(self):
         test_obj = TestMontrekSatelliteFactory.create()
         table_element = te.LinkTextTableElement(

@@ -124,6 +124,11 @@ class BaseLinkTableElement(TableElement):
     hover_text: str
     static_kwargs = {}
 
+    def format_link(self, value, active: bool = False):
+        if active:
+            return f"<b>{value}</b>"
+        return value
+
     @staticmethod
     def get_dotted_attr_or_arg(obj, value):
         """
@@ -138,7 +143,7 @@ class BaseLinkTableElement(TableElement):
                 obj = getattr(obj, attr, None)
         return obj
 
-    def get_attribute(self, obj: Any, tag: str = "html") -> str:
+    def get_attribute(self, obj: Any, tag: str = "html", active: bool = False) -> str:
         link_text = self.get_value(obj)
         if tag == "latex":
             return self.format_latex(link_text)
@@ -146,7 +151,7 @@ class BaseLinkTableElement(TableElement):
             url_kwargs = self._get_url_kwargs(obj)
             url = self._get_url(obj, url_kwargs)
             link = self._get_link(url, link_text)
-            return f"<td>{link}</td>"
+            return f"<td>{self.format_link(link, active)}</td>"
         return link_text
 
     def get_value(self, obj):

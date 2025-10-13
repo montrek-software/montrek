@@ -1,5 +1,5 @@
-from baseclasses.repositories.montrek_repository import MontrekRepository
 from baseclasses.dataclasses.view_classes import TabElement
+from baseclasses.repositories.montrek_repository import MontrekRepository
 
 
 class MontrekPage:
@@ -10,13 +10,14 @@ class MontrekPage:
     def __init__(self, **kwargs):
         self._tabs = None
         self._overview = None
+        self.kwargs = kwargs
 
     def get_tabs(self) -> list | tuple[TabElement]:
         raise NotImplementedError("MontrekPage needs get_tabs method!")
 
     def get_overview(self) -> str:
         if self.overview_manager_class:
-            manager = self.overview_manager_class(session_data={})
+            manager = self.overview_manager_class(session_data=self.kwargs)
             return manager.to_html()
         return ""
 
