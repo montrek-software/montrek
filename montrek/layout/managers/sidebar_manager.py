@@ -36,7 +36,7 @@ class SidebarManagerABC(MontrekTableManagerABC):
             grouped_items[group].append(self.link().get_attribute(item, active=active))
         # Render using Django template
         html = render_to_string(
-            "side_navbar.html",
+            "sidebar.html",
             {
                 "grouped_items": dict(grouped_items),
                 "active_group": active_group,

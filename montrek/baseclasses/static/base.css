@@ -160,3 +160,16 @@ input[readonly] {
   height: 60px;
   animation: spin 1.5s linear infinite;
 }
+
+.sidebar {
+  background-color: #f8f8f8;
+  border-right: 1px solid #ddd;
+  padding-top: 15px;
+}
+.sidebar .nav > li > a {
+  color: #333;
+  padding: 5px 5px;
+}
+.sidebar .nav > li > a:hover {
+  background-color: #e7e7e7;
+}
