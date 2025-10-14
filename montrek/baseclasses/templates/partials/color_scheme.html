@@ -46,19 +46,62 @@
     border-right: 1px solid #ddd;
     padding-top: 15px;
   }
-  .sidebar .nav > li > a {
+
+  /* Style nav buttons like links */
+  .sidebar .nav > li > button.nav-link {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
     color: #ffffff;
     padding: 2px 2px;
+    cursor: pointer;
+    font: inherit; /* keeps the same font as before */
   }
-  .sidebar .nav > li > a:hover {
+
+  /* Hover and focus states */
+  .sidebar .nav > li > button.nav-link:hover,
+  .sidebar .nav > li > button.nav-link:focus {
     background-color: {% get_color "primary_light" %};
     color: {% get_color "secondary" %};
+    outline: none; /* remove default button outline */
   }
+
+  /* Active / expanded button */
   .sidebar .nav-link.active,
-  .sidebar .nav-link:focus {
+  .sidebar .nav-link[aria-expanded="true"] {
     background-color: {% get_color "primary_light" %};
     color: {% get_color "secondary" %};
     font-weight: bold;
+  }
+
+  /* Optional: caret alignment */
+  .sidebar .nav-link .caret {
+    margin-left: auto;
+    transition: transform 0.3s ease;
+  }
+  .sidebar .nav-link[aria-expanded="true"] .caret {
+    transform: rotate(90deg);
+  }
+
+
+  .link-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .link-list a {
+    color: #ffffff;
+    text-decoration: none;
+    display: block;
+    padding: 2px 2px;
+  }
+
+  .link-list a:hover {
+    background-color: {% get_color "primary_light" %};
+    color: {% get_color "secondary" %};
   }
   .btn {
     background-color: {% get_color "secondary" %};
@@ -148,19 +191,5 @@
     padding: 1rem 1rem;
     border-top: 1px solid #dee2e6;
     z-index: 1030; /* make sure it stays above content */
-  }
-  .link-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-
-  .link-list a {
-    color: {% get_color "secondary_light" %};
-    text-decoration: none;
-  }
-
-  .link-list a:hover {
-    text-decoration: underline;
   }
 </style>
