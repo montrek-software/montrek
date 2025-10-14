@@ -41,6 +41,25 @@
     color: #ffffff;
   }
 
+  .sidebar {
+    background-color: {% get_color "primary" %};
+    border-right: 1px solid #ddd;
+    padding-top: 15px;
+  }
+  .sidebar .nav > li > a {
+    color: #ffffff;
+    padding: 2px 2px;
+  }
+  .sidebar .nav > li > a:hover {
+    background-color: {% get_color "primary_light" %};
+    color: {% get_color "secondary" %};
+  }
+  .sidebar .nav-link.active,
+  .sidebar .nav-link:focus {
+    background-color: {% get_color "primary_light" %};
+    color: {% get_color "secondary" %};
+    font-weight: bold;
+  }
   .btn {
     background-color: {% get_color "secondary" %};
     color: #ffffff;
