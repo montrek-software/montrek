@@ -448,7 +448,10 @@ class TestDataTableFilters(TestCase):
             text="test_name",
             hover_text="hover_text",
         )
-        test_link = table_element.get_attribute(test_obj, active=True)
+        link_text = table_element.get_value(test_obj)
+        test_link = table_element.get_html_table_link_element(
+            test_obj, link_text, active=True
+        )
         self.assertEqual(
             str(test_link),
             f'<td><b><a id="id__baseclasses_{test_obj.id}_details" href="/baseclasses/{test_obj.id}/details" title="hover_text">{test_obj.test_name}</a></b></td>',

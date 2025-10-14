@@ -143,16 +143,21 @@ class BaseLinkTableElement(TableElement):
                 obj = getattr(obj, attr, None)
         return obj
 
-    def get_attribute(self, obj: Any, tag: str = "html", active: bool = False) -> str:
+    def get_attribute(self, obj: Any, tag: str = "html") -> str:
         link_text = self.get_value(obj)
         if tag == "latex":
             return self.format_latex(link_text)
         if tag == "html":
-            url_kwargs = self._get_url_kwargs(obj)
-            url = self._get_url(obj, url_kwargs)
-            link = self._get_link(url, link_text)
-            return f"<td>{self.format_link(link, active)}</td>"
+            return self.get_html_table_link_element(obj, link_text)
         return link_text
+
+    def get_html_table_link_element(
+        self, obj: Any, link_text: str, *, active: bool = False
+    ) -> str:
+        url_kwargs = self._get_url_kwargs(obj)
+        url = self._get_url(obj, url_kwargs)
+        link = self._get_link(url, link_text)
+        return f"<td>{self.format_link(link, active)}</td>"
 
     def get_value(self, obj):
         raise NotImplementedError
