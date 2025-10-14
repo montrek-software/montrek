@@ -1,11 +1,10 @@
 from baseclasses.managers.montrek_manager import MontrekManager
 from django.conf import settings
 from django.core import mail
-from testing.test_cases import view_test_cases as vtc
-
 from mailing import views
 from mailing.forms import MailingSendForm
 from mailing.tests.factories.mailing_factories import MailSatelliteFactory
+from testing.test_cases import view_test_cases as vtc
 
 
 class TestMailListViewOverview(vtc.MontrekListViewTestCase):
@@ -63,6 +62,20 @@ class TestSendMailView(vtc.MontrekViewTestCase):
     def additional_assertions(self):
         # Method con be overwritten in child test cases
         ...
+
+    def test_send_mail_bcc(self):
+        class MockForm:
+            cleaned_data: dict = {
+                "mail_recipients": "a@b.de",
+                "mail_subject": "Test",
+                "mail_message": "This is a test",
+                "mail_bcc": "d@c.de,t@a.fr",
+            }
+
+        mock_form = MockForm()
+        response = self.view.form_valid(mock_form)
+        self.assertEqual(response.url, self.expected_success_url)
+        self.assertEqual(mail.outbox[0].bcc, ["d@c.de", "t@a.fr"])
 
 
 class TestMailDetailsView(vtc.MontrekDetailViewTestCase):

@@ -1,22 +1,18 @@
-from django.http import HttpResponseRedirect
-from django.urls import reverse
-
+from baseclasses.dataclasses.view_classes import ActionElement
 from baseclasses.views import (
     MontrekCreateUpdateView,
-    MontrekListView,
     MontrekDetailView,
+    MontrekListView,
 )
-from mailing.managers.mailing_manager import (
-    MailingManager,
-)
-from mailing.managers.mailing_table_manager import (
-    MailingTableManager,
-    MailingDetailsManager,
-)
-
-from mailing.pages import MailingPage
-from baseclasses.dataclasses.view_classes import ActionElement
+from django.http import HttpResponseRedirect
+from django.urls import reverse
 from mailing.forms import MailingSendForm
+from mailing.managers.mailing_manager import MailingManager
+from mailing.managers.mailing_table_manager import (
+    MailingDetailsManager,
+    MailingTableManager,
+)
+from mailing.pages import MailingPage
 
 
 # Create your views here.
@@ -65,6 +61,7 @@ class SendMailView(MontrekCreateUpdateView):
             subject=mail_data["mail_subject"],
             message=mail_data["mail_message"],
             attachments=mail_data.get("mail_attachments", ""),
+            bcc=mail_data.get("mail_bcc", ""),
         )
         self.show_messages()
         return HttpResponseRedirect(self.get_success_url())
