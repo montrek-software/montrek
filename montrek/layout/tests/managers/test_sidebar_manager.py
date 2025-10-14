@@ -33,16 +33,17 @@ class MockSidebarManagerExpanded(MockSidebarManager):
 
 
 class TestSidebarManager(TestCase):
+    rebase = False
+
     def test_link_not_implemented(self):
         manager = SidebarManagerABC()
         self.assertRaises(NotImplementedError, manager.link)
 
     def test_sidebar_html(self):
-        rebase = False
         manager = MockSidebarManager()
         test_html = manager.to_html()
         exp_content_fp = get_test_file_path("test_sidebar_html.txt")
-        if rebase:
+        if self.rebase:
             with open(exp_content_fp, "w") as f:
                 f.write(test_html)
         with open(exp_content_fp) as f:
@@ -53,11 +54,10 @@ class TestSidebarManager(TestCase):
         )
 
     def test_sidebar_html_expanded(self):
-        rebase = False
         manager = MockSidebarManagerExpanded()
         test_html = manager.to_html()
         exp_content_fp = get_test_file_path("test_sidebar_html_expanded.txt")
-        if rebase:
+        if self.rebase:
             with open(exp_content_fp, "w") as f:
                 f.write(test_html)
         with open(exp_content_fp) as f:

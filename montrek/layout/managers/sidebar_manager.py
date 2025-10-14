@@ -34,7 +34,10 @@ class SidebarManagerABC(MontrekTableManagerABC):
             group = getattr(item, self.group_field)
             if active:
                 active_group = group
-            grouped_items[group].append(link.get_attribute(item, active=active))
+            link_text = str(link.get_value(item))
+            grouped_items[group].append(
+                link.get_html_table_link_element(item, link_text, active=active)
+            )
         # Render using Django template
         html = render_to_string(
             "sidebar.html",

@@ -6,29 +6,25 @@
     {% for group, links in grouped_items.items %}
     {% with group_slug=group|slugify %}
     <li class="nav-item">
-      <a
+      <button
         class="nav-link d-flex justify-content-between align-items-center"
         data-toggle="collapse"
-        href="#group-{{ group_slug }}"
-        role="button"
+        data-target="#group-{{ group_slug }}"
         aria-expanded="{% if group == active_group %}true{% else %}false{% endif %}"
         aria-controls="group-{{ group_slug }}"
+        type="button"
       >
         <strong>{{ group }}</strong>
         <span class="caret"></span>
-      </a>
+      </button>
       <ul
         class="collapse list-unstyled ml-3 {% if group == active_group %}show{% endif %}"
         id="group-{{ group_slug }}"
         data-parent="#sideNavAccordion"
       >
-        <li>
-          <table>
           {% for link in links %}
-            <tr>{{ link  | safe}}</tr>
+            <li class="link-list">{{ link  | safe}}</li>
           {% endfor %}
-          </table>
-        </li>
       </ul>
     </li>
     {% endwith %}
