@@ -22,13 +22,9 @@
         id="group-{{ group_slug }}"
         data-parent="#sideNavAccordion"
       >
-        <li>
-          <table role="presentation">
           {% for link in links %}
-            <tr>{{ link  | safe}}</tr>
+            <li class="link-list">{{ link  | safe}}</li>
           {% endfor %}
-          </table>
-        </li>
       </ul>
     </li>
     {% endwith %}

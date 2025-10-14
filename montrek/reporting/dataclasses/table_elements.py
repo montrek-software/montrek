@@ -148,7 +148,8 @@ class BaseLinkTableElement(TableElement):
         if tag == "latex":
             return self.format_latex(link_text)
         if tag == "html":
-            return self.get_html_table_link_element(obj, link_text)
+            link = self.get_html_table_link_element(obj, link_text)
+            return f"<td>{link}</td>"
         return link_text
 
     def get_html_table_link_element(
@@ -157,7 +158,7 @@ class BaseLinkTableElement(TableElement):
         url_kwargs = self._get_url_kwargs(obj)
         url = self._get_url(obj, url_kwargs)
         link = self._get_link(url, link_text)
-        return f"<td>{self.format_link(link, active)}</td>"
+        return f"{self.format_link(link, active)}"
 
     def get_value(self, obj):
         raise NotImplementedError

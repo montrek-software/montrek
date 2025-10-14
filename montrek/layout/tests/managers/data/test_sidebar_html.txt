@@ -22,13 +22,9 @@
         id="group-item1"
         data-parent="#sideNavAccordion"
       >
-        <li>
-          <table>
 
-            <tr><td><a id="id__" href="/" title="View Expert Evaluation">None</a></td></tr>
+            <li class="link-list"><a id="id__" href="/" title="View Expert Evaluation">None</a></li>
 
-          </table>
-        </li>
       </ul>
     </li>
 
@@ -51,13 +47,9 @@
         id="group-item2"
         data-parent="#sideNavAccordion"
       >
-        <li>
-          <table>
 
-            <tr><td><a id="id__" href="/" title="View Expert Evaluation">None</a></td></tr>
+            <li class="link-list"><a id="id__" href="/" title="View Expert Evaluation">None</a></li>
 
-          </table>
-        </li>
       </ul>
     </li>
 
@@ -80,13 +72,9 @@
         id="group-item3"
         data-parent="#sideNavAccordion"
       >
-        <li>
-          <table>
 
-            <tr><td><a id="id__" href="/" title="View Expert Evaluation">None</a></td></tr>
+            <li class="link-list"><a id="id__" href="/" title="View Expert Evaluation">None</a></li>
 
-          </table>
-        </li>
       </ul>
     </li>
 

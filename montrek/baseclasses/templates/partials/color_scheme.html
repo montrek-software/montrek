@@ -113,7 +113,6 @@
     top: 0;
     z-index: 1; /* Ensure it stays above other content */
     background-color: {% get_color "primary" %};
-    color: #ffffff;
   }
 
   .bar-value {
@@ -150,5 +149,18 @@
     border-top: 1px solid #dee2e6;
     z-index: 1030; /* make sure it stays above content */
   }
+  .link-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
 
+  .link-list a {
+    color: {% get_color "secondary_light" %};
+    text-decoration: none;
+  }
+
+  .link-list a:hover {
+    text-decoration: underline;
+  }
 </style>
