@@ -77,7 +77,7 @@ class TestColors(TestCase):
                 test_color = Color(name, hex_code)
                 self.assertEqual(test_color.rgb(), expected)
 
-    def test_color_brighntess(self):
+    def test_color_brightness(self):
         test_cases = [
             # Format: (color_name, hex_code, factor, expected_hex_result)
             ("blue", "#004767", 68.555),
