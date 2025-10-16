@@ -38,7 +38,7 @@ class TestReportingColors(TestCase):
 
     def test_get_contrast_font_color(self):
         test_cases = [
-            # Format: (color_name, hex_code, factor, expected_hex_result)
+            # Format: (color_name, hex_code, expected_font_color)
             ("blue", "#004767", "white"),
             ("red", "#990000", "white"),
             ("green", "#006400", "white"),
