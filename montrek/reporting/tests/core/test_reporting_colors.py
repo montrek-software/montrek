@@ -36,6 +36,26 @@ class TestReportingColors(TestCase):
         with self.assertRaises(ValueError):
             ReportingColors.lighten_color(Color("invalid", "#123456"), 1.1)
 
+    def test_get_contrast_font_color(self):
+        test_cases = [
+            # Format: (color_name, hex_code, factor, expected_hex_result)
+            ("blue", "#004767", "black"),
+            ("red", "#990000", "black"),
+            ("green", "#006400", "black"),
+            ("white", "#ffffff", "black"),  # white should stay white
+            ("black", "#000000", "black"),  # black should go light grey
+            ("gray", "#808080", "black"),
+            ("factor_zero", "#123456", "black"),  # no lightening
+            ("almost_one", "#222222", "black"),  # very close to white
+            ("uppercase_hex", "#ABCDEF", "black"),  # same as above
+        ]
+
+        for name, hex_code, expected in test_cases:
+            with self.subTest(name=name, hex_code=hex_code):
+                test_color = Color(name, hex_code)
+                font_contrast_color = ReportingColors.contrast_font_color(test_color)
+                self.assertEqual(font_contrast_color.name, expected)
+
 
 class TestColors(TestCase):
     def test_color_to_rgb(self):
@@ -56,3 +76,22 @@ class TestColors(TestCase):
             with self.subTest(name=name, hex_code=hex_code):
                 test_color = Color(name, hex_code)
                 self.assertEqual(test_color.rgb(), expected)
+
+    def test_color_brighntess(self):
+        test_cases = [
+            # Format: (color_name, hex_code, factor, expected_hex_result)
+            ("blue", "#004767", 68.555),
+            ("red", "#990000", 45.747),
+            ("green", "#006400", 11.4),
+            ("white", "#ffffff", 255.0),  # white should stay white
+            ("black", "#000000", 0.0),  # black should go light grey
+            ("gray", "#808080", 128.0),
+            ("factor_zero", "#123456", 61.792),  # no lightening
+            ("almost_one", "#222222", 34.0),  # very close to white
+            ("uppercase_hex", "#ABCDEF", 214.792),  # same as above
+        ]
+
+        for name, hex_code, expected in test_cases:
+            with self.subTest(name=name, hex_code=hex_code):
+                test_color = Color(name, hex_code)
+                self.assertEqual(test_color.brightness(), expected)

@@ -10,10 +10,15 @@ class Color:
         hex_color = self.hex.lstrip("#")
         return [int(hex_color[i : i + 2], 16) for i in (0, 2, 4)]
 
+    def brightness(self) -> float:
+        r, b, g = self.rgb()
+        return (299 * r + 587 * g + 114 * b) / 1000
+
 
 @dataclass
 class ReportingColors:
     WHITE = Color("white", "#FFFFFF")
+    BLACK = Color("black", "#000000")
     BLUE = Color("blue", "#004767")
     LIGHT_BLUE = Color("lightblue", "#E6F2F8")
     DARK_BLUE = Color("darkblue", "#002F6C")
@@ -95,3 +100,7 @@ class ReportingColors:
         b = int(b + (255 - b) * factor)
 
         return Color(f"{color.name}_light", "#{:02x}{:02x}{:02x}".format(r, g, b))
+
+    @classmethod
+    def contrast_font_color(cls, color: Color) -> Color:
+        return cls.BLACK
