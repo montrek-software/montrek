@@ -613,7 +613,7 @@ class TestDataTableFilters(TestCase):
         blue_value = table_element.format("abc")
         self.assertEqual(
             blue_value,
-            '<td style="text-align: left";><span class="badge" style="background-color:#2B6D8B;color:#FFFFFF;">abc</span></td>',
+            '<td style="text-align: left;"><span class="badge" style="background-color:#2B6D8B;color:#FFFFFF;">abc</span></td>',
         )
         rose_value = table_element.format("def")
         self.assertEqual(
