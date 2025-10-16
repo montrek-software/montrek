@@ -629,7 +629,7 @@ class LabelTableElement(StringTableElement):
         color = self.color_codes.get(value, ReportingColors.BLUE)
         font_color = ReportingColors.contrast_font_color(color)
         label_html = f'<span class="badge" style="background-color:{color.hex};color:{font_color.hex};">{value}</span>'
-        return f'<td style="text-align: left";>{label_html}</td>'
+        return f'<td style="text-align: left;">{label_html}</td>'
 
     def format_latex(self, value):
         value_str = str(value)
