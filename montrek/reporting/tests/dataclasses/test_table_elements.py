@@ -618,12 +618,12 @@ class TestDataTableFilters(TestCase):
         rose_value = table_element.format("def")
         self.assertEqual(
             rose_value,
-            '<td style="text-align: left";><span class="badge" style="background-color:#D3A9A1;color:#000000;">def</span></td>',
+            '<td style="text-align: left;"><span class="badge" style="background-color:#D3A9A1;color:#000000;">def</span></td>',
         )
         default_value = table_element.format("ghi")
         self.assertEqual(
             default_value,
-            '<td style="text-align: left";><span class="badge" style="background-color:#004767;color:#FFFFFF;">ghi</span></td>',
+            '<td style="text-align: left;"><span class="badge" style="background-color:#004767;color:#FFFFFF;">ghi</span></td>',
         )
 
     def test_label_table_element__latex(self):

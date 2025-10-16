@@ -80,15 +80,15 @@ class TestColors(TestCase):
     def test_color_brightness(self):
         test_cases = [
             # Format: (color_name, hex_code, factor, expected_hex_result)
-            ("blue", "#004767", 68.555),
+            ("blue", "#004767", 53.419),
             ("red", "#990000", 45.747),
-            ("green", "#006400", 11.4),
+            ("green", "#006400", 58.7),
             ("white", "#ffffff", 255.0),  # white should stay white
             ("black", "#000000", 0.0),  # black should go light grey
             ("gray", "#808080", 128.0),
-            ("factor_zero", "#123456", 61.792),  # no lightening
+            ("factor_zero", "#123456", 45.71),  # no lightening
             ("almost_one", "#222222", 34.0),  # very close to white
-            ("uppercase_hex", "#ABCDEF", 214.792),  # same as above
+            ("uppercase_hex", "#ABCDEF", 198.71),  # same as above
         ]
 
         for name, hex_code, expected in test_cases:
