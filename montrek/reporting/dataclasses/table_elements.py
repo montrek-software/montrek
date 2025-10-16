@@ -620,6 +620,36 @@ class ColorCodedStringTableElement(StringTableElement):
         return f" \\color{{{color.name}}} {value_str} &"
 
 
+class LabelTableElement(StringTableElement):
+    def __init__(self, name: str, attr: str, color_codes: dict[str, Color]):
+        self.color_codes = color_codes
+        super().__init__(name, attr)
+
+    def format(self, value):
+        color = self.color_codes.get(value, ReportingColors.BLUE)
+        font_color = ReportingColors.contrast_font_color(color)
+        label_html = f'<span class="badge" style="background-color:{color.hex};color:{font_color.hex};">{value}</span>'
+        return f'<td style="text-align: left;">{label_html}</td>'
+
+    def format_latex(self, value):
+        value_str = str(value)
+        value_str = HtmlLatexConverter.convert(value_str)
+
+        color = self.color_codes.get(value, ReportingColors.BLUE)
+        r, g, b = color.rgb()  # Must return 0–255 integers
+        r /= 255
+        g /= 255
+        b /= 255
+
+        font_color = ReportingColors.contrast_font_color(color)
+
+        return (
+            f"\\colorbox[rgb]{{{r:.3f},{g:.3f},{b:.3f}}}"
+            f"{{\\textcolor[HTML]{{{font_color.hex.lstrip('#')}}}"
+            f"{{\\textbf{{{value_str}}}}}}}}}}}"
+        )
+
+
 class SecretStringTableElement(StringTableElement):
     def get_value(self, obj: Any) -> Any:
         value = super().get_value(obj)

@@ -601,3 +601,51 @@ class TestDataTableFilters(TestCase):
             default_value,
             " \\color{blue} ghi &",
         )
+
+    def test_label_table_element__html(self):
+        color_codes = {
+            "abc": ReportingColors.MEDIUM_BLUE,
+            "def": ReportingColors.SOFT_ROSE,
+        }
+        table_element = te.LabelTableElement(
+            name="name", attr="test_attr", color_codes=color_codes
+        )
+        blue_value = table_element.format("abc")
+        self.assertEqual(
+            blue_value,
+            '<td style="text-align: left;"><span class="badge" style="background-color:#2B6D8B;color:#FFFFFF;">abc</span></td>',
+        )
+        rose_value = table_element.format("def")
+        self.assertEqual(
+            rose_value,
+            '<td style="text-align: left;"><span class="badge" style="background-color:#D3A9A1;color:#000000;">def</span></td>',
+        )
+        default_value = table_element.format("ghi")
+        self.assertEqual(
+            default_value,
+            '<td style="text-align: left;"><span class="badge" style="background-color:#004767;color:#FFFFFF;">ghi</span></td>',
+        )
+
+    def test_label_table_element__latex(self):
+        color_codes = {
+            "abc": ReportingColors.MEDIUM_BLUE,
+            "def": ReportingColors.SOFT_ROSE,
+        }
+        table_element = te.LabelTableElement(
+            name="name", attr="test_attr", color_codes=color_codes
+        )
+        blue_value = table_element.format_latex("abc")
+        self.assertEqual(
+            blue_value,
+            "\\colorbox[rgb]{0.169,0.427,0.545}{\\textcolor[HTML]{FFFFFF}{\\textbf{abc}}}}}",
+        )
+        rose_value = table_element.format_latex("def")
+        self.assertEqual(
+            rose_value,
+            "\\colorbox[rgb]{0.827,0.663,0.631}{\\textcolor[HTML]{000000}{\\textbf{def}}}}}",
+        )
+        default_value = table_element.format_latex("ghi")
+        self.assertEqual(
+            default_value,
+            "\\colorbox[rgb]{0.000,0.278,0.404}{\\textcolor[HTML]{FFFFFF}{\\textbf{ghi}}}}}",
+        )
