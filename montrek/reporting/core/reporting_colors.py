@@ -92,7 +92,7 @@ class ReportingColors:
         `factor` is how much closer to white the color should move.
         """
         if factor < 0.0 or factor > 1.0:
-            raise ValueError("factor needs to be between 0 an 1")
+            raise ValueError("factor needs to be between 0 and 1")
         r, g, b = color.rgb()
 
         r = int(r + (255 - r) * factor)
