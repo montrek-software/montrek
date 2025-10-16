@@ -6,6 +6,10 @@ class Color:
     name: str
     hex: str
 
+    def rgb(self) -> list[int]:
+        hex_color = self.hex.lstrip("#")
+        return [int(hex_color[i : i + 2], 16) for i in (0, 2, 4)]
+
 
 @dataclass
 class ReportingColors:
@@ -84,8 +88,7 @@ class ReportingColors:
         """
         if factor < 0.0 or factor > 1.0:
             raise ValueError("factor needs to be between 0 an 1")
-        hex_color = color.hex.lstrip("#")
-        r, g, b = [int(hex_color[i : i + 2], 16) for i in (0, 2, 4)]
+        r, g, b = color.rgb()
 
         r = int(r + (255 - r) * factor)
         g = int(g + (255 - g) * factor)

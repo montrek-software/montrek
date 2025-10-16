@@ -35,3 +35,24 @@ class TestReportingColors(TestCase):
             ReportingColors.lighten_color(Color("invalid", "#123456"), -0.1)
         with self.assertRaises(ValueError):
             ReportingColors.lighten_color(Color("invalid", "#123456"), 1.1)
+
+
+class TestColors(TestCase):
+    def test_color_to_rgb(self):
+        test_cases = [
+            # Format: (color_name, hex_code, factor, expected_hex_result)
+            ("blue", "#004767", [0, 71, 103]),
+            ("red", "#990000", [153, 0, 0]),
+            ("green", "#006400", [0, 100, 0]),
+            ("white", "#ffffff", [255, 255, 255]),  # white should stay white
+            ("black", "#000000", [0, 0, 0]),  # black should go light grey
+            ("gray", "#808080", [128, 128, 128]),
+            ("factor_zero", "#123456", [18, 52, 86]),  # no lightening
+            ("almost_one", "#222222", [34, 34, 34]),  # very close to white
+            ("uppercase_hex", "#ABCDEF", [171, 205, 239]),  # same as above
+        ]
+
+        for name, hex_code, expected in test_cases:
+            with self.subTest(name=name, hex_code=hex_code):
+                test_color = Color(name, hex_code)
+                self.assertEqual(test_color.rgb(), expected)
