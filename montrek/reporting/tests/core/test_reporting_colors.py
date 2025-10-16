@@ -39,14 +39,14 @@ class TestReportingColors(TestCase):
     def test_get_contrast_font_color(self):
         test_cases = [
             # Format: (color_name, hex_code, factor, expected_hex_result)
-            ("blue", "#004767", "black"),
-            ("red", "#990000", "black"),
-            ("green", "#006400", "black"),
+            ("blue", "#004767", "white"),
+            ("red", "#990000", "white"),
+            ("green", "#006400", "white"),
             ("white", "#ffffff", "black"),  # white should stay white
-            ("black", "#000000", "black"),  # black should go light grey
-            ("gray", "#808080", "black"),
-            ("factor_zero", "#123456", "black"),  # no lightening
-            ("almost_one", "#222222", "black"),  # very close to white
+            ("black", "#000000", "white"),  # black should go light grey
+            ("gray", "#808080", "white"),
+            ("factor_zero", "#123456", "white"),  # no lightening
+            ("almost_one", "#222222", "white"),  # very close to white
             ("uppercase_hex", "#ABCDEF", "black"),  # same as above
         ]
 

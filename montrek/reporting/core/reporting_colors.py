@@ -103,4 +103,4 @@ class ReportingColors:
 
     @classmethod
     def contrast_font_color(cls, color: Color) -> Color:
-        return cls.BLACK
+        return cls.BLACK if color.brightness() > 128 else cls.WHITE
