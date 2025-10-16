@@ -11,7 +11,7 @@ class Color:
         return [int(hex_color[i : i + 2], 16) for i in (0, 2, 4)]
 
     def brightness(self) -> float:
-        r, b, g = self.rgb()
+        r, g, b = self.rgb()
         return (299 * r + 587 * g + 114 * b) / 1000
 
 
