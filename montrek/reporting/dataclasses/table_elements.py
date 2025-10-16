@@ -646,7 +646,7 @@ class LabelTableElement(StringTableElement):
         return (
             f"\\colorbox[rgb]{{{r:.3f},{g:.3f},{b:.3f}}}"
             f"{{\\textcolor[HTML]{{{font_color.hex.lstrip('#')}}}"
-            f"{{\\textbf{{{value_str}}}}}}}}}}}"
+            f"{{\\textbf{{{value_str}}}}}}} &"
         )
 
 
