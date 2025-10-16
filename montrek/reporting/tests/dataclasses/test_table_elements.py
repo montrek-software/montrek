@@ -637,15 +637,15 @@ class TestDataTableFilters(TestCase):
         blue_value = table_element.format_latex("abc")
         self.assertEqual(
             blue_value,
-            "\\colorbox[rgb]{0.169,0.427,0.545}{\\textcolor[HTML]{FFFFFF}{\\textbf{abc}}}}}",
+            "\\colorbox[rgb]{0.169,0.427,0.545}{\\textcolor[HTML]{FFFFFF}{\\textbf{abc}}} &",
         )
         rose_value = table_element.format_latex("def")
         self.assertEqual(
             rose_value,
-            "\\colorbox[rgb]{0.827,0.663,0.631}{\\textcolor[HTML]{000000}{\\textbf{def}}}}}",
+            "\\colorbox[rgb]{0.827,0.663,0.631}{\\textcolor[HTML]{000000}{\\textbf{def}}} &",
         )
         default_value = table_element.format_latex("ghi")
         self.assertEqual(
             default_value,
-            "\\colorbox[rgb]{0.000,0.278,0.404}{\\textcolor[HTML]{FFFFFF}{\\textbf{ghi}}}}}",
+            "\\colorbox[rgb]{0.000,0.278,0.404}{\\textcolor[HTML]{FFFFFF}{\\textbf{ghi}}} &",
         )
