@@ -4,6 +4,9 @@ set -e
 . .venv/bin/activate
 # Detect CPU count (not super relevant, but can guide concurrency cap)
 CPU_COUNT=$(nproc --all 2>/dev/null || echo 4)
+if [[ $CPU_COUNT -gt 32 ]]; then
+  CPU_COUNT=32
+fi
 case "$SERVICE" in
 sequential_worker)
   CONCURRENCY=1
