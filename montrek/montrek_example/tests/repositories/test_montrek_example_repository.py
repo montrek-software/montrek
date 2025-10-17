@@ -37,6 +37,7 @@ from montrek_example.repositories.hub_c_repository import (
     HubCRepositoryReversedParents,
     HubCRepositoryReversedParentsNoMatchingReversedParents,
     HubCRepositorySumTS,
+    HubCRepositoryViewModel,
     HubCRepositoryWithManyToManyParents,
 )
 from montrek_example.repositories.hub_d_repository import (
@@ -2997,3 +2998,19 @@ class TestRepositoryViewModel(TestCase):
         self.assertIn("Test2", field_a1_strs)
         self.assertIn("Test3", field_a1_strs)
         self.assertNotIn("Test", field_a1_strs)
+
+    def test_delete_object_from_view_model_ts(self):
+        repo = HubCRepositoryViewModel()
+        hub = me_factories.HubCFactory()
+        hub_vd1 = me_factories.CHubValueDateFactory(hub=hub, value_date="2025-10-17")
+        me_factories.SatTSC2Factory(field_tsc2_float=1.0, hub_value_date=hub_vd1)
+        hub_vd2 = me_factories.CHubValueDateFactory(hub=hub, value_date="2025-10-18")
+        me_factories.SatTSC2Factory(field_tsc2_float=2.0, hub_value_date=hub_vd2)
+        hub_vd3 = me_factories.CHubValueDateFactory(hub=hub, value_date="2025-10-19")
+        me_factories.SatTSC2Factory(field_tsc2_float=3.0, hub_value_date=hub_vd3)
+        repo.store_in_view_model()
+        prior_objs = repo.receive()
+        self.assertEqual(prior_objs.count(), 3)
+        repo.delete(hub)
+        post_objs = repo.receive()
+        self.assertEqual(prior_objs.count(), 0)

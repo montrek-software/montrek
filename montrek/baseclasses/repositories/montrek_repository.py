@@ -198,7 +198,7 @@ class MontrekRepository:
     def delete_from_view_model(self, obj: MontrekHubABC):
         if not self.view_model:
             return
-        deleted_object = self.view_model.objects.get(hub_entity_id=obj.pk)
+        deleted_object = self.view_model.objects.filter(hub_entity_id=obj.pk)
         deleted_object.delete()
 
     def order_fields(self) -> tuple[str, ...]:
