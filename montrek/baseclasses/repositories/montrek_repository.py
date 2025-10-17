@@ -434,4 +434,4 @@ class MontrekRepository:
         return self.hub_class.objects.get(hub_value_date__pk=pk)
 
     def _debug_logging(self, msg: str):
-        logger.debug(f"{self.__class__.__name__}: {msg}")
+        logger.debug("%s: %s", self.__class__.__name__, msg)
