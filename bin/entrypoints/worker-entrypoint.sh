@@ -12,7 +12,12 @@ sequential_worker)
   CONCURRENCY=1
   ;;
 parallel_worker)
-  CONCURRENCY=$((CPU_COUNT - 2))
+
+  if [[ $SET_CONCURRENCY ]]; then
+    CONCURRENCY=$SET_CONCURRENCY
+  else
+    CONCURRENCY=$((CPU_COUNT - 2))
+  fi
   ;;
 fast_worker)
   CONCURRENCY=$((CPU_COUNT * 50))
@@ -25,9 +30,6 @@ esac
 MAX_CONCURRENCY=500
 if [[ $CONCURRENCY -gt $MAX_CONCURRENCY ]]; then
   CONCURRENCY=$MAX_CONCURRENCY
-fi
-if [[ $SET_CONCURRENCY ]]; then
-  CONCURRENCY=$SET_CONCURRENCY
 fi
 
 cd montrek
