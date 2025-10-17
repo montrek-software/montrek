@@ -26,6 +26,9 @@ MAX_CONCURRENCY=500
 if [[ $CONCURRENCY -gt $MAX_CONCURRENCY ]]; then
   CONCURRENCY=$MAX_CONCURRENCY
 fi
+if [[ $SET_CONCURRENCY ]]; then
+  CONCURRENCY=$SET_CONCURRENCY
+fi
 
 cd montrek
 python -m celery --app=montrek worker --loglevel=info -Q $QUEUE --concurrency=$CONCURRENCY -n $SERVICE@%h --pool=$POOL
