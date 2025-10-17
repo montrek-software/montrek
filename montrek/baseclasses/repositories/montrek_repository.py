@@ -1,6 +1,6 @@
-from copy import deepcopy
 import datetime
 import logging
+from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Type
 
@@ -14,9 +14,7 @@ from baseclasses.models import (
     MontrekSatelliteBaseABC,
     MontrekTimeSeriesSatelliteABC,
 )
-from baseclasses.repositories.annotator import (
-    Annotator,
-)
+from baseclasses.repositories.annotator import Annotator
 from baseclasses.repositories.db.db_creator import DataDict, DbCreator
 from baseclasses.repositories.db.db_data_frame import DbDataFrame
 from baseclasses.repositories.db.db_staller import DbStaller
@@ -32,10 +30,7 @@ from baseclasses.repositories.subquery_builder import (
 from baseclasses.utils import datetime_to_montrek_time
 from django.core.exceptions import PermissionDenied
 from django.db import models
-from django.db.models import (
-    F,
-    QuerySet,
-)
+from django.db.models import F, QuerySet
 from django.utils import timezone
 
 logger = logging.getLogger(__name__)
@@ -55,7 +50,9 @@ class MontrekRepository:
     latest_ts: bool = False
     view_model: None | type[models.Model] = None
 
-    update: bool = True  # If this is true only the passed fields will be updated, otherwise empty fields will be set to None
+    update: bool = (
+        True  # If this is true only the passed fields will be updated, otherwise empty fields will be set to None
+    )
 
     def __init__(self, session_data: Dict[str, Any] = {}):
         self.annotator = Annotator(self.hub_class)
@@ -75,6 +72,7 @@ class MontrekRepository:
         )
 
     def create_by_dict(self, data: DataDict) -> MontrekHubABC:
+        self._debug_logging("Start create by dict")
         self._raise_for_anonymous_user()
         db_staller = DbStaller(self.annotator)
         db_creator = DbCreator(db_staller, self.session_user_id)
@@ -82,14 +80,20 @@ class MontrekRepository:
         db_writer = DbWriter(db_staller)
         db_writer.write()
         self.store_in_view_model()
+        self._debug_logging("End create by dict")
         return db_creator.hub
 
     def create_by_data_frame(self, data_frame: pd.DataFrame) -> List[MontrekHubABC]:
+        self._debug_logging("raise for anonymous user")
         self._raise_for_anonymous_user()
+        self._debug_logging("Get DbDataFrame")
         db_data_frame = DbDataFrame(self.annotator, self.session_user_id)
+        self._debug_logging("Write to DB")
         db_data_frame.create(data_frame)
         self.messages += db_data_frame.messages
+        self._debug_logging("Update view model")
         self.store_in_view_model()
+        self._debug_logging("Wrote data frame to DB")
         return db_data_frame.hubs
 
     def store_in_view_model(self):
@@ -102,6 +106,7 @@ class MontrekRepository:
         self.store_query_in_view_model(query)
 
     def store_query_in_view_model(self, query):
+        self._debug_logging("Start store_query_in_view_model")
         data = list(query.values())
         for row in data:
             if row["value_date"]:
@@ -112,6 +117,7 @@ class MontrekRepository:
         instances = [self.view_model(**item) for item in data]
         self.view_model.objects.all().delete()
         self.view_model.objects.bulk_create(instances, batch_size=1000)
+        self._debug_logging("End store_query_in_view_model")
 
     @classmethod
     def generate_view_model(cls):
@@ -153,6 +159,7 @@ class MontrekRepository:
     def receive_raw(
         self, apply_filter: bool = True, update_view_model: bool = False
     ) -> QuerySet:
+        self._debug_logging("Start receive")
         if (
             self.view_model
             and not update_view_model
@@ -164,6 +171,7 @@ class MontrekRepository:
         )
         if self.view_model:
             self.store_query_in_view_model(query)
+        self._debug_logging("End receive")
         return query
 
     def get_view_model_query(self, apply_filter: bool = True) -> QuerySet:
@@ -424,3 +432,6 @@ class MontrekRepository:
 
     def get_hub_by_id(self, pk: int) -> MontrekHubABC:
         return self.hub_class.objects.get(hub_value_date__pk=pk)
+
+    def _debug_logging(self, msg: str):
+        logger.debug(f"{self.__class__.__name__}: {msg}")

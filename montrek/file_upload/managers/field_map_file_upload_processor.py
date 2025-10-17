@@ -1,13 +1,11 @@
 import logging
 from typing import Any, Dict
-from django.conf import settings
 
 import numpy as np
 import pandas as pd
 from baseclasses.managers.montrek_manager import MontrekManager
-from file_upload.managers.field_map_manager import (
-    FieldMapManagerABC,
-)
+from django.conf import settings
+from file_upload.managers.field_map_manager import FieldMapManagerABC
 from file_upload.models import FileUploadRegistryHubABC
 
 logger = logging.getLogger(__name__)
@@ -44,7 +42,9 @@ class FieldMapFileUploadProcessor:
         return mapped_df
 
     def process(self, file_path: str):
+        logger.debug(f"FieldMapFileUploadProcessor class: {self}")
         try:
+            logger.debug("Start getting source DF from file")
             source_df = self.get_source_df_from_file(file_path)
         except Exception as e:
             if settings.IS_TEST_RUN:
@@ -54,6 +54,7 @@ class FieldMapFileUploadProcessor:
             )
             return False
 
+        logger.debug("Apply field maps")
         mapped_df = self.field_map_manager.apply_field_maps(source_df)
         if self.field_map_manager.exceptions:
             self.message = "Errors raised during field mapping:"
@@ -62,9 +63,12 @@ class FieldMapFileUploadProcessor:
             return False
         try:
             mapped_df["comment"] = self.file_upload_registry_hub.file_name
+            logger.debug("Add link columns")
             mapped_df = self.add_link_columns(mapped_df)
             mapped_df = mapped_df.replace({np.nan: None})
+            logger.debug("Post Map Processing")
             mapped_df = self.post_map_processing(mapped_df)
+            logger.debug("Write to DB")
             self.manager.repository.create_objects_from_data_frame(mapped_df)
         except Exception as e:
             if settings.IS_TEST_RUN:
@@ -80,6 +84,7 @@ class FieldMapFileUploadProcessor:
         self.message = (
             f"Successfully uploaded {mapped_df.shape[0]} rows.{self.detailed_message}"
         )
+        logger.debug(self.message)
         return True
 
     def _check_all_database_fields_allowed(self):
