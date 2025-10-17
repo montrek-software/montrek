@@ -3013,4 +3013,4 @@ class TestRepositoryViewModel(TestCase):
         self.assertEqual(prior_objs.count(), 3)
         repo.delete(hub)
         post_objs = repo.receive()
-        self.assertEqual(prior_objs.count(), 0)
+        self.assertEqual(post_objs.count(), 0)
