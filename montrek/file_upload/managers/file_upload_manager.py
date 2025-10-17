@@ -86,7 +86,7 @@ class FileUploadManagerABC(MontrekManager):
     def upload_and_process(self, file: File) -> bool:
         # Called by view
         self.session_data["file_upload_registry_id"] = self.register_file_in_db(file)
-        logger.debug(f"do_process_file_async: {self.do_process_file_async}")
+        logger.debug("do_process_file_async: %s", self.do_process_file_async)
         if self.do_process_file_async:
             task_result = self.process_file_task.delay(
                 session_data=self.session_data,
