@@ -30,6 +30,7 @@ services:
       - POOL=prefork
       - PIUD=${USER_ID}
       - PGUD=${GROUP_ID}
+      - SET_CONCURRENCY=${SET_CONCURRENCY}
     volumes:
       - .:/montrek
       - static_volume:/montrek/static
