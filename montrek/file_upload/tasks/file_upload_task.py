@@ -30,7 +30,7 @@ class FileUploadTask(MontrekTask):
     def run(self, session_data: Dict[str, Any]):
         logger.debug("Start task run")
         manager = self.manager_class(session_data)
-        logger.debug(f"{self.__class__.__name__}: manager: {manager}")
+        logger.debug("%s: manager: %s", self.__class__.__name__, manager)
         result = manager.process()
         message = manager.processor.message
         user = get_user_model().objects.get(pk=session_data["user_id"])
