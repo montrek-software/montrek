@@ -45,7 +45,7 @@ class MontrekUploadFileView(MontrekTemplateView):
             self.file_upload_manager = self.file_upload_manager_class(
                 session_data=self.session_data,
             )
-            logger.debug(f"file_upload_manager: {self.file_upload_manager}")
+            logger.debug("file_upload_manager: %s", self.file_upload_manager)
             result = self.file_upload_manager.upload_and_process(request.FILES["file"])
             if result:
                 messages.info(request, self.file_upload_manager.message)
