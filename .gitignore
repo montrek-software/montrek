@@ -7,8 +7,6 @@ montrek/sent_emails/*
 *.pyc
 montrek/mt_accounting/*
 montrek/mt_economic_common/*
-montrek/mt_effectual/*
-montrek/mt_effectual
 montrek/baseclasses/static/logos/effectual_logo.png
 nginx/certs/*
 montrek/reporting/.workbench/*

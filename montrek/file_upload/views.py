@@ -1,24 +1,24 @@
+import logging
 from typing import TextIO
-from django.shortcuts import redirect
-from django.contrib import messages
-from django.http import HttpResponseRedirect
-from django.http import FileResponse
-from django.utils.decorators import method_decorator
-from django.contrib.auth.decorators import login_required
-from file_upload.forms import FieldMapCreateForm, UploadFileForm
-from file_upload.managers.file_upload_manager import (
-    FileUploadManagerABC,
-)
+
 from baseclasses.views import (
     MontrekCreateView,
-    MontrekTemplateView,
     MontrekListView,
+    MontrekTemplateView,
     MontrekUpdateView,
 )
-from file_upload.managers.file_upload_registry_manager import FileUploadRegistryManager
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.http import FileResponse, HttpResponseRedirect
+from django.shortcuts import redirect
+from django.utils.decorators import method_decorator
+from file_upload.forms import FieldMapCreateForm, UploadFileForm
 from file_upload.managers.field_map_manager import FieldMapManagerABC
+from file_upload.managers.file_upload_manager import FileUploadManagerABC
+from file_upload.managers.file_upload_registry_manager import FileUploadRegistryManager
 from file_upload.pages import FileUploadPage
 
+logger = logging.getLogger(__name__)
 # Create your views here.
 
 
@@ -39,16 +39,19 @@ class MontrekUploadFileView(MontrekTemplateView):
     def post(self, request, *args, **kwargs):
         form = self.get_post_form(request)
         if form.is_valid():
+            logger.debug("Start file upload process")
             if not self._check_file_type(request.FILES["file"]):
                 return self.render_to_response(self.get_context_data())
             self.file_upload_manager = self.file_upload_manager_class(
                 session_data=self.session_data,
             )
+            logger.debug("file_upload_manager: %s", self.file_upload_manager)
             result = self.file_upload_manager.upload_and_process(request.FILES["file"])
             if result:
                 messages.info(request, self.file_upload_manager.message)
             else:
                 messages.error(request, self.file_upload_manager.message)
+            logger.debug("End file upload process")
             return HttpResponseRedirect(self.get_success_url())
         else:
             return self.render_to_response(self.get_context_data())

@@ -1,13 +1,18 @@
-from montrek.celery_app import app as celery_app
-from django.urls import resolve
-from urllib.parse import urlparse
-from django.contrib import messages
-from django.http import HttpResponseRedirect
+import logging
 from typing import Any, Dict
-from django.contrib.auth import get_user_model
+from urllib.parse import urlparse
+
 from baseclasses.managers.montrek_manager import MontrekManager
-from tasks.montrek_task import MontrekTask
+from django.contrib import messages
+from django.contrib.auth import get_user_model
+from django.http import HttpResponseRedirect
+from django.urls import resolve
 from mailing.managers.mailing_manager import MailingManager
+from tasks.montrek_task import MontrekTask
+
+from montrek.celery_app import app as celery_app
+
+logger = logging.getLogger(__name__)
 
 
 class FileUploadTask(MontrekTask):
@@ -23,7 +28,9 @@ class FileUploadTask(MontrekTask):
         super().__init__(task_name, queue)
 
     def run(self, session_data: Dict[str, Any]):
+        logger.debug("Start task run")
         manager = self.manager_class(session_data)
+        logger.debug("%s: manager: %s", self.__class__.__name__, manager)
         result = manager.process()
         message = manager.processor.message
         user = get_user_model().objects.get(pk=session_data["user_id"])
@@ -34,6 +41,7 @@ class FileUploadTask(MontrekTask):
         MailingManager(session_data=session_data).send_montrek_mail(
             user.email, subject, message
         )
+        logger.debug("End task run")
         return message
 
 
