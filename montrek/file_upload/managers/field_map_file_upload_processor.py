@@ -42,7 +42,7 @@ class FieldMapFileUploadProcessor:
         return mapped_df
 
     def process(self, file_path: str):
-        logger.debug(f"FieldMapFileUploadProcessor class: {self}")
+        logger.debug("FieldMapFileUploadProcessor class: %s", self)
         try:
             logger.debug("Start getting source DF from file")
             source_df = self.get_source_df_from_file(file_path)
