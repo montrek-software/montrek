@@ -193,7 +193,13 @@ class MontrekRepository:
             satellite_class.objects.filter(**filter_kwargs).update(
                 state_date_end=timezone.now()
             )
-        self.store_in_view_model()
+        self.delete_from_view_model(obj)
+
+    def delete_from_view_model(self, obj: MontrekHubABC):
+        if not self.view_model:
+            return
+        deleted_object = self.view_model.objects.get(hub_entity_id=obj.pk)
+        deleted_object.delete()
 
     def order_fields(self) -> tuple[str, ...]:
         if self._order_fields:

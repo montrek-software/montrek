@@ -2982,3 +2982,18 @@ class TestRepositoryViewModel(TestCase):
         repo.store_in_view_model()
         query = repo.get_view_model_query(apply_filter=False)
         self.assertEqual(query.count(), 3)
+
+    def test_delete_object_from_view_model(self):
+        me_factories.SatA1Factory.create(field_a1_str="Test")
+        me_factories.SatA1Factory.create(field_a1_str="Test2")
+        me_factories.SatA1Factory.create(field_a1_str="Test3")
+
+        self.repo.store_in_view_model()
+        object_to_delete = self.repo.receive().get(field_a1_str="Test")
+        self.repo.delete(object_to_delete.hub)
+        test_objects = self.repo.receive()
+        self.assertEqual(test_objects.count(), 2)
+        field_a1_strs = test_objects.values_list("field_a1_str", flat=True)
+        self.assertIn("Test2", field_a1_strs)
+        self.assertIn("Test3", field_a1_strs)
+        self.assertNotIn("Test", field_a1_strs)
