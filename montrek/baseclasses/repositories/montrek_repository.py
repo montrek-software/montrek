@@ -109,19 +109,20 @@ class MontrekRepository:
         if not self.view_model:
             return
 
+        def sat_hub_pk(sat: MontrekSatelliteBaseABC) -> int:
+            if sat.is_timeseries:
+                return sat.hub_value_date.hub.pk
+            else:
+                return sat.hub_entity_id
+
         # When storing in the view model, we want to include all data without applying filters,
         # so we explicitly set apply_filter=False.
         query = self.receive_raw(update_view_model=True, apply_filter=False)
         if db_staller is not None:
             new_hub_ids = [hub.pk for hub in db_staller.get_hubs()[self.hub_class]]
             for sat_class in self.annotator.get_satellite_classes():
-                hub_field = (
-                    "hub_value_date.hub.pk"
-                    if sat_class.is_timeseries
-                    else "hub_entity_id"
-                )
                 new_hub_ids += [
-                    getattr(sat, hub_field)
+                    sat_hub_pk(sat)
                     for sat in db_staller.get_new_satellites()[sat_class]
                 ]
 
@@ -132,13 +133,8 @@ class MontrekRepository:
                 self.delete_from_view_model(delete_hub)
             updated_hub_ids = []
             for sat_class in self.annotator.get_satellite_classes():
-                hub_field = (
-                    "hub_value_date.hub.pk"
-                    if sat_class.is_timeseries
-                    else "hub_entity_id"
-                )
                 updated_hub_ids += [
-                    getattr(sat, hub_field)
+                    sat_hub_pk(sat)
                     for sat in db_staller.get_updated_satellites()[sat_class]
                 ]
 

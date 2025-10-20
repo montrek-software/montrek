@@ -616,6 +616,22 @@ class TestMontrekCreateTimeSeriesObject(TestCase):
         self.assertEqual(queried_object.field_a2_float, 6.0)
         self.assertEqual(queried_object.hub_entity_id, hub.id)
 
+    def test_create_ts_satellite_with_given_hub__view_model(self):
+        hub = me_factories.HubCFactory()
+        repository = HubCRepositoryViewModel(session_data={"user_id": self.user.id})
+        repository.std_create_object(
+            {
+                "hub_entity_id": hub.id,
+                "value_date": "2025-10-20",
+                "field_tsc2_float": 6.0,
+            }
+        )
+        test_query = repository.receive()
+        self.assertEqual(test_query.count(), 1)
+        queried_object = test_query.get()
+        self.assertEqual(queried_object.field_tsc2_float, 6.0)
+        self.assertEqual(queried_object.hub_entity_id, hub.id)
+
     def test_create_satellite_with_given_satellite__view_model(self):
         sat = me_factories.SatA1Factory(field_a1_str="test")
         repository = HubARepository(session_data={"user_id": self.user.id})
