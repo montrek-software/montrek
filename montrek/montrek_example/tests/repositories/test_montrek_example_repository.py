@@ -720,7 +720,6 @@ class TestMontrekCreateObjectDataFrame(TestCase):
         self.assertEqual(len(produced_hubs), 2)
         produced_hubs = repository.create_objects_from_data_frame(data_frame)
         self.assertEqual(len(produced_hubs), 0)
-
         data_frame = pd.DataFrame(
             {
                 "field_a1_int": [5, 7],
