@@ -114,11 +114,11 @@ class MontrekRepository:
         query = self.receive_raw(update_view_model=True, apply_filter=False)
         if db_staller is not None:
             new_hub_ids = [hub.pk for hub in db_staller.get_hubs()[self.hub_class]]
-            # for sat_class in self.annotator.get_satellite_classes():
-            #     new_hub_ids += [
-            #         sat.hub_entity_id
-            #         for sat in db_staller.get_new_satellites()[sat_class]
-            #     ]
+            for sat_class in self.annotator.get_satellite_classes():
+                new_hub_ids += [
+                    sat.hub_entity_id
+                    for sat in db_staller.get_new_satellites()[sat_class]
+                ]
             query_create = query.filter(hub_entity_id__in=new_hub_ids)
             self.store_query_in_view_model(query_create, "create")
             delete_hubs = [hub for hub in db_staller.get_updated_hubs()[self.hub_class]]
