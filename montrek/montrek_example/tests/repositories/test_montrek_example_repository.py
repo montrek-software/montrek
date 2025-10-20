@@ -665,6 +665,8 @@ class TestMontrekCreateObjectDataFrame(TestCase):
         self.assertEqual(me_models.SatA2.objects.last().field_a2_str, "test3")
         self.assertEqual(me_models.HubA.objects.first().created_by_id, self.user.id)
         self.assertEqual(me_models.HubA.objects.last().created_by_id, self.user.id)
+        received_data = repository.receive()
+        self.assertEqual(received_data.count(), 2)
 
     def test_create_objects_from_data_frame_return_hubs(self):
         repository = HubARepository(session_data={"user_id": self.user.id})
