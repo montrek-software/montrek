@@ -505,6 +505,7 @@ class TestMontrekCreateObject(TestCase):
             hub_entity=existing_sat.hub_entity,
         )
         repository = HubARepository(session_data={"user_id": self.user.id})
+        repository.store_in_view_model()
         test_hub = repository.create_by_dict(
             {
                 "field_a1_int": 5,
