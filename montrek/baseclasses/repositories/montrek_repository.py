@@ -105,10 +105,22 @@ class MontrekRepository:
         query = self.receive_raw(update_view_model=True, apply_filter=False)
         if db_staller is not None:
             new_hub_ids = [hub.pk for hub in db_staller.get_hubs()[self.hub_class]]
-            query = query.filter(hub_entity_id__in=new_hub_ids)
+            query_create = query.filter(hub_entity_id__in=new_hub_ids)
+            self.store_query_in_view_model(query_create, "create")
+            updated_hub_ids = [
+                hub.pk for hub in db_staller.get_updated_hubs()[self.hub_class]
+            ]
+            for sat_class in self.annotator.get_satellite_classes():
+                updated_hub_ids += [
+                    sat.hub_entity_id
+                    for sat in db_staller.get_updated_satellites()[sat_class]
+                ]
+            query_update = query.filter(hub_entity_id__in=updated_hub_ids)
+            self.store_query_in_view_model(query_update, "update")
+            return
         self.store_query_in_view_model(query)
 
-    def store_query_in_view_model(self, query):
+    def store_query_in_view_model(self, query, mode: str = "all"):
         self._debug_logging("Start store_query_in_view_model")
         data = list(query.values())
         for row in data:
@@ -118,8 +130,15 @@ class MontrekRepository:
                     timezone.get_current_timezone(),
                 )
         instances = [self.view_model(**item) for item in data]
-        self.view_model.objects.all().delete()
-        self.view_model.objects.bulk_create(instances, batch_size=1000)
+        if mode == "all":
+            self.view_model.objects.all().delete()
+            self.view_model.objects.bulk_create(instances, batch_size=1000)
+        elif mode == "create":
+            self.view_model.objects.bulk_create(instances, batch_size=1000)
+        elif mode == "update":
+            self.view_model.objects.bulk_update(
+                instances, batch_size=1000, fields=self.get_all_annotated_fields()
+            )
         self._debug_logging("End store_query_in_view_model")
 
     @classmethod
@@ -281,7 +300,7 @@ class MontrekRepository:
     def get_all_fields(self) -> list[str]:
         return self.annotator.get_annotated_field_names() + self.calculated_fields
 
-    def get_all_annotated_fields(self):
+    def get_all_annotated_fields(self) -> list[str]:
         return self.annotator.get_annotated_field_names()
 
     def std_create_object(self, data: Dict[str, Any]) -> MontrekHubABC:
