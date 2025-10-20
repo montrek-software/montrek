@@ -115,16 +115,15 @@ class MontrekRepository:
         if db_staller is not None:
             new_hub_ids = [hub.pk for hub in db_staller.get_hubs()[self.hub_class]]
             for sat_class in self.annotator.get_satellite_classes():
-                if sat_class.is_timeseries:
-                    new_hub_ids += [
-                        sat.hub_value_date.hub.pk
-                        for sat in db_staller.get_new_satellites()[sat_class]
-                    ]
-                else:
-                    new_hub_ids += [
-                        sat.hub_entity_id
-                        for sat in db_staller.get_new_satellites()[sat_class]
-                    ]
+                hub_field = (
+                    "hub_value_date.hub.pk"
+                    if sat_class.is_timeseries
+                    else "hub_entity_id"
+                )
+                new_hub_ids += [
+                    getattr(sat, hub_field)
+                    for sat in db_staller.get_new_satellites()[sat_class]
+                ]
 
             query_create = query.filter(hub_entity_id__in=new_hub_ids)
             self.store_query_in_view_model(query_create, "create")
@@ -133,8 +132,13 @@ class MontrekRepository:
                 self.delete_from_view_model(delete_hub)
             updated_hub_ids = []
             for sat_class in self.annotator.get_satellite_classes():
+                hub_field = (
+                    "hub_value_date.hub.pk"
+                    if sat_class.is_timeseries
+                    else "hub_entity_id"
+                )
                 updated_hub_ids += [
-                    sat.hub_entity_id
+                    getattr(sat, hub_field)
                     for sat in db_staller.get_updated_satellites()[sat_class]
                 ]
 
