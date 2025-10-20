@@ -651,7 +651,9 @@ class TestMontrekCreateObjectDataFrame(TestCase):
                 "field_a2_str": ["test2", "test3"],
             }
         )
+        self.assertIsNone(repository.get_db_staller())
         repository.create_objects_from_data_frame(data_frame)
+        self.assertIsNotNone(repository.get_db_staller())
         self.assertEqual(me_models.HubA.objects.count(), 2)
         self.assertEqual(me_models.SatA1.objects.count(), 2)
         self.assertEqual(me_models.SatA2.objects.count(), 2)
@@ -682,6 +684,7 @@ class TestMontrekCreateObjectDataFrame(TestCase):
         self.assertEqual(len(produced_hubs), 2)
         produced_hubs = repository.create_objects_from_data_frame(data_frame)
         self.assertEqual(len(produced_hubs), 0)
+
         data_frame = pd.DataFrame(
             {
                 "field_a1_int": [5, 7],

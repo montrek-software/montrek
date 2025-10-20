@@ -65,11 +65,18 @@ class MontrekRepository:
         self.linked_fields: list[str] = []
         self.set_annotations()
         self._order_fields: tuple[str] | None = None
+        self._db_staller: DbStaller | None = None
 
     def set_annotations(self):
         raise NotImplementedError(
             f"set_annotations is not implemented for {self.__class__.__name__}"
         )
+
+    def save_db_staller(self, db_staller: DbStaller):
+        self._db_staller = db_staller
+
+    def get_db_staller(self) -> DbStaller | None:
+        return self._db_staller
 
     def create_by_dict(self, data: DataDict) -> MontrekHubABC:
         self._debug_logging("Start create by dict")
@@ -79,6 +86,7 @@ class MontrekRepository:
         db_creator.create(data)
         db_writer = DbWriter(db_staller)
         db_writer.write()
+        self.save_db_staller(db_staller)
         self.store_in_view_model(db_staller)
         self._debug_logging("End create by dict")
         return db_creator.hub
@@ -92,6 +100,7 @@ class MontrekRepository:
         db_data_frame.create(data_frame)
         self.messages += db_data_frame.messages
         self._debug_logging("Update view model")
+        self.save_db_staller(db_data_frame.db_staller)
         self.store_in_view_model(db_data_frame.db_staller)
         self._debug_logging("Wrote data frame to DB")
         return db_data_frame.hubs
@@ -105,6 +114,11 @@ class MontrekRepository:
         query = self.receive_raw(update_view_model=True, apply_filter=False)
         if db_staller is not None:
             new_hub_ids = [hub.pk for hub in db_staller.get_hubs()[self.hub_class]]
+            # for sat_class in self.annotator.get_satellite_classes():
+            #     new_hub_ids += [
+            #         sat.hub_entity_id
+            #         for sat in db_staller.get_new_satellites()[sat_class]
+            #     ]
             query_create = query.filter(hub_entity_id__in=new_hub_ids)
             self.store_query_in_view_model(query_create, "create")
             delete_hubs = [hub for hub in db_staller.get_updated_hubs()[self.hub_class]]
@@ -151,6 +165,10 @@ class MontrekRepository:
             self.view_model.objects.all().delete()
             self.view_model.objects.bulk_create(instances, batch_size=1000)
         elif mode == "create":
+            # self.view_model.objects.filter(
+            #     hub_entity_id__in=[inst.hub_entity_id for inst in instances]
+            # ).delete()
+
             self.view_model.objects.bulk_create(instances, batch_size=1000)
         elif mode == "update":
             self.view_model.objects.bulk_update(
