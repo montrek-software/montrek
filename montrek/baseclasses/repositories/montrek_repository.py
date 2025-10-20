@@ -165,11 +165,14 @@ class MontrekRepository:
             self.view_model.objects.all().delete()
             self.view_model.objects.bulk_create(instances, batch_size=1000)
         elif mode == "create":
-            self.view_model.objects.filter(
-                hub_entity_id__in=[inst.hub_entity_id for inst in instances]
-            ).delete()
+            self.view_model.objects.bulk_create(
+                instances,
+                batch_size=1000,
+                update_conflicts=True,
+                update_fields=self.get_all_annotated_fields(),
+                unique_fields=["pk"],
+            )
 
-            self.view_model.objects.bulk_create(instances, batch_size=1000)
         elif mode == "update":
             self.view_model.objects.bulk_update(
                 instances, batch_size=1000, fields=self.get_all_annotated_fields()
