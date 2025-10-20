@@ -2984,6 +2984,12 @@ class TestRepositoryViewModel(TestCase):
         query = repo.get_view_model_query(apply_filter=False)
         self.assertEqual(query.count(), 3)
 
+    def test_create_object_from_dict_with_view_model(self):
+        self.repo.create_by_dict({"field_a1_str": "Hallo", "field_a1_int": 15})
+        created_object = self.repo.receive().first()
+        self.assertEqual(created_object.field_a1_str, "Hallo")
+        self.assertEqual(created_object.field_a1_int, 15)
+
     def test_delete_object_from_view_model(self):
         me_factories.SatA1Factory.create(field_a1_str="Test")
         me_factories.SatA1Factory.create(field_a1_str="Test2")

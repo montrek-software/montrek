@@ -79,7 +79,7 @@ class MontrekRepository:
         db_creator.create(data)
         db_writer = DbWriter(db_staller)
         db_writer.write()
-        self.store_in_view_model()
+        self.store_in_view_model(db_staller)
         self._debug_logging("End create by dict")
         return db_creator.hub
 
@@ -96,7 +96,7 @@ class MontrekRepository:
         self._debug_logging("Wrote data frame to DB")
         return db_data_frame.hubs
 
-    def store_in_view_model(self):
+    def store_in_view_model(self, db_staller: DbStaller | None = None):
         if not self.view_model:
             return
 
@@ -169,7 +169,7 @@ class MontrekRepository:
         query = self.query_builder.build_queryset(
             self.reference_date, self.order_fields(), apply_filter=apply_filter
         )
-        if self.view_model:
+        if self.view_model and not update_view_model:
             self.store_query_in_view_model(query)
         self._debug_logging("End receive")
         return query
