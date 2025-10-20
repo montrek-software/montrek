@@ -103,6 +103,9 @@ class MontrekRepository:
         # When storing in the view model, we want to include all data without applying filters,
         # so we explicitly set apply_filter=False.
         query = self.receive_raw(update_view_model=True, apply_filter=False)
+        if db_staller is not None:
+            new_hub_ids = [hub.pk for hub in db_staller.get_hubs()[self.hub_class]]
+            query = query.filter(hub_entity_id__in=new_hub_ids)
         self.store_query_in_view_model(query)
 
     def store_query_in_view_model(self, query):
