@@ -116,6 +116,16 @@ class MontrekRepository:
                     sat.hub_entity_id
                     for sat in db_staller.get_updated_satellites()[sat_class]
                 ]
+            for link_class in db_staller.links:
+                hub_in_model = link_class.hub_in.field.related_model
+                if hub_in_model == self.hub_class:
+                    hub_tag = "hub_in"
+                else:
+                    hub_tag = "hub_out"
+                for link in (
+                    db_staller.links[link_class] + db_staller.updated_links[link_class]
+                ):
+                    updated_hub_ids.append(getattr(link, hub_tag).pk)
             query_update = query.filter(hub_entity_id__in=updated_hub_ids)
             self.store_query_in_view_model(query_update, "update")
             return
