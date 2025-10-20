@@ -165,9 +165,9 @@ class MontrekRepository:
             self.view_model.objects.all().delete()
             self.view_model.objects.bulk_create(instances, batch_size=1000)
         elif mode == "create":
-            # self.view_model.objects.filter(
-            #     hub_entity_id__in=[inst.hub_entity_id for inst in instances]
-            # ).delete()
+            self.view_model.objects.filter(
+                hub_entity_id__in=[inst.hub_entity_id for inst in instances]
+            ).delete()
 
             self.view_model.objects.bulk_create(instances, batch_size=1000)
         elif mode == "update":
