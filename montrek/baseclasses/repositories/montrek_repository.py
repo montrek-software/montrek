@@ -92,7 +92,7 @@ class MontrekRepository:
         db_data_frame.create(data_frame)
         self.messages += db_data_frame.messages
         self._debug_logging("Update view model")
-        self.store_in_view_model()
+        self.store_in_view_model(db_data_frame.db_staller)
         self._debug_logging("Wrote data frame to DB")
         return db_data_frame.hubs
 
