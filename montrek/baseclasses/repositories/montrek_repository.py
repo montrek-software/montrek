@@ -79,7 +79,7 @@ class MontrekRepository:
         db_creator.create(data)
         db_writer = DbWriter(db_staller)
         db_writer.write()
-        self.store_in_view_model()
+        self.store_in_view_model(db_staller)
         self._debug_logging("End create by dict")
         return db_creator.hub
 
@@ -96,16 +96,48 @@ class MontrekRepository:
         self._debug_logging("Wrote data frame to DB")
         return db_data_frame.hubs
 
-    def store_in_view_model(self):
+    def store_in_view_model(self, db_staller: DbStaller | None = None):
         if not self.view_model:
             return
 
         # When storing in the view model, we want to include all data without applying filters,
         # so we explicitly set apply_filter=False.
         query = self.receive_raw(update_view_model=True, apply_filter=False)
+        if db_staller is not None:
+            new_hub_ids = [hub.pk for hub in db_staller.get_hubs()[self.hub_class]]
+            query_create = query.filter(hub_entity_id__in=new_hub_ids)
+            self.store_query_in_view_model(query_create, "create")
+            delete_hubs = [hub for hub in db_staller.get_updated_hubs()[self.hub_class]]
+            for delete_hub in delete_hubs:
+                self.delete_from_view_model(delete_hub)
+            updated_hub_ids = []
+            for sat_class in self.annotator.get_satellite_classes():
+                updated_hub_ids += [
+                    sat.hub_entity_id
+                    for sat in db_staller.get_updated_satellites()[sat_class]
+                ]
+
+            def add_link_hub(link_class, db_staller_links):
+                hub_in_model = link_class.hub_in.field.related_model
+                if hub_in_model == self.hub_class:
+                    hub_tag = "hub_in"
+                else:
+                    hub_tag = "hub_out"
+                hub_ids = []
+                for link in db_staller_links[link_class]:
+                    hub_ids.append(getattr(link, hub_tag).pk)
+                return hub_ids
+
+            for link_class in db_staller.links:
+                updated_hub_ids += add_link_hub(link_class, db_staller.links)
+            for link_class in db_staller.updated_links:
+                updated_hub_ids += add_link_hub(link_class, db_staller.updated_links)
+            query_update = query.filter(hub_entity_id__in=updated_hub_ids)
+            self.store_query_in_view_model(query_update, "update")
+            return
         self.store_query_in_view_model(query)
 
-    def store_query_in_view_model(self, query):
+    def store_query_in_view_model(self, query, mode: str = "all"):
         self._debug_logging("Start store_query_in_view_model")
         data = list(query.values())
         for row in data:
@@ -115,8 +147,15 @@ class MontrekRepository:
                     timezone.get_current_timezone(),
                 )
         instances = [self.view_model(**item) for item in data]
-        self.view_model.objects.all().delete()
-        self.view_model.objects.bulk_create(instances, batch_size=1000)
+        if mode == "all":
+            self.view_model.objects.all().delete()
+            self.view_model.objects.bulk_create(instances, batch_size=1000)
+        elif mode == "create":
+            self.view_model.objects.bulk_create(instances, batch_size=1000)
+        elif mode == "update":
+            self.view_model.objects.bulk_update(
+                instances, batch_size=1000, fields=self.get_all_annotated_fields()
+            )
         self._debug_logging("End store_query_in_view_model")
 
     @classmethod
@@ -169,7 +208,7 @@ class MontrekRepository:
         query = self.query_builder.build_queryset(
             self.reference_date, self.order_fields(), apply_filter=apply_filter
         )
-        if self.view_model:
+        if self.view_model and not update_view_model:
             self.store_query_in_view_model(query)
         self._debug_logging("End receive")
         return query
@@ -278,7 +317,7 @@ class MontrekRepository:
     def get_all_fields(self) -> list[str]:
         return self.annotator.get_annotated_field_names() + self.calculated_fields
 
-    def get_all_annotated_fields(self):
+    def get_all_annotated_fields(self) -> list[str]:
         return self.annotator.get_annotated_field_names()
 
     def std_create_object(self, data: Dict[str, Any]) -> MontrekHubABC:

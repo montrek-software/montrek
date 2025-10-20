@@ -505,6 +505,7 @@ class TestMontrekCreateObject(TestCase):
             hub_entity=existing_sat.hub_entity,
         )
         repository = HubARepository(session_data={"user_id": self.user.id})
+        repository.store_in_view_model()
         test_hub = repository.create_by_dict(
             {
                 "field_a1_int": 5,
@@ -2350,6 +2351,7 @@ class TestMontrekManyToManyRelations(TestCase):
             ],
         }
         repository_b = HubBRepository(session_data={"user_id": self.user.id})
+        repository_b.store_in_view_model()
         repository_b.std_create_object(input_data)
 
         hub_b = repository_b.receive().filter(hub__id=hub_entity_id).first()
@@ -2369,6 +2371,34 @@ class TestMontrekManyToManyRelations(TestCase):
         self.assertEqual(new_1.state_date_start, new_2.state_date_start)
         self.assertEqual(new_1.state_date_end, MAX_DATE)
         self.assertEqual(new_2.state_date_end, MAX_DATE)
+
+    def test_remove_existing_links(self):
+        me_factories.SatD1Factory(
+            field_d1_str="dritter",
+            field_d1_int=3,
+        )
+        me_factories.SatD1Factory(
+            field_d1_str="vierter",
+            field_d1_int=4,
+        )
+        hub_entity_id = self.satb1.hub_entity_id
+
+        input_data = {
+            "hub_entity_id": hub_entity_id,
+            "link_hub_b_hub_d": [],
+        }
+        repository_b = HubBRepository(session_data={"user_id": self.user.id})
+        repository_b.store_in_view_model()
+        repository_b.std_create_object(input_data)
+
+        hub_b = repository_b.receive().filter(hub__id=hub_entity_id).first()
+
+        links = me_models.LinkHubBHubD.objects.filter(hub_in=hub_b.hub.id).all()
+
+        self.assertIsNone(hub_b.field_d1_str)
+        for link in links:
+            self.assertEqual(link.state_date_start, MIN_DATE)
+            self.assertLess(link.state_date_end, MAX_DATE)
 
     def test_json_field__from_dict(self):
         test_dict = {"key": "value"}
@@ -2983,6 +3013,21 @@ class TestRepositoryViewModel(TestCase):
         repo.store_in_view_model()
         query = repo.get_view_model_query(apply_filter=False)
         self.assertEqual(query.count(), 3)
+
+    def test_create_object_from_dict_with_view_model(self):
+        self.repo.create_by_dict({"field_a1_str": "Hallo", "field_a1_int": 15})
+        objects = self.repo.receive()
+        created_object = objects.first()
+        self.assertEqual(objects.count(), 1)
+        self.assertEqual(created_object.field_a1_str, "Hallo")
+        self.assertEqual(created_object.field_a1_int, 15)
+
+        self.repo.create_by_dict({"field_a1_str": "Hallo", "field_a1_int": 16})
+        objects = self.repo.receive()
+        created_object = objects.first()
+        self.assertEqual(objects.count(), 1)
+        self.assertEqual(created_object.field_a1_str, "Hallo")
+        self.assertEqual(created_object.field_a1_int, 16)
 
     def test_delete_object_from_view_model(self):
         me_factories.SatA1Factory.create(field_a1_str="Test")
