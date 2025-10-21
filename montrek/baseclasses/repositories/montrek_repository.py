@@ -66,6 +66,7 @@ class MontrekRepository:
         self.set_annotations()
         self._order_fields: tuple[str] | None = None
         self._db_staller: DbStaller | None = None
+        self.view_model_repository = ViewModelRepository(self.view_model)
 
     def set_annotations(self):
         raise NotImplementedError(
