@@ -172,6 +172,9 @@ class MontrekRepository:
             satellite_class.objects.filter(**filter_kwargs).update(
                 state_date_end=timezone.now()
             )
+        self.delete_from_view_model(obj)
+
+    def delete_from_view_model(self, obj: MontrekHubABC):
         self.view_model_repository.delete_from_view_model(obj)
 
     def order_fields(self) -> tuple[str, ...]:
