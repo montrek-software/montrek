@@ -149,9 +149,7 @@ class MontrekRepository:
         )
         if self.view_model and not update_view_model:
             fields = self.get_all_annotated_fields()
-            self.view_model_repository.store_query_in_view_model(
-                query, self.hub_class, fields
-            )
+            self.view_model_repository.store_query_in_view_model(query, fields, "all")
         self._debug_logging("End receive")
         return query
 
