@@ -1,4 +1,3 @@
-import datetime
 import logging
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Type
@@ -110,81 +109,13 @@ class MontrekRepository:
         if not self.view_model:
             return
 
-        def sat_hub_pk(sat: MontrekSatelliteBaseABC) -> int:
-            if sat.is_timeseries:
-                return sat.hub_value_date.hub.pk
-            else:
-                return sat.hub_entity_id
-
         # When storing in the view model, we want to include all data without applying filters,
         # so we explicitly set apply_filter=False.
         query = self.receive_raw(update_view_model=True, apply_filter=False)
-        if db_staller is not None:
-            new_hub_ids = [hub.pk for hub in db_staller.get_hubs()[self.hub_class]]
-            new_sats_dict = db_staller.get_new_satellites()
-            for sat_class in new_sats_dict:
-                new_hub_ids += [sat_hub_pk(sat) for sat in new_sats_dict[sat_class]]
-
-            query_create = query.filter(hub_entity_id__in=new_hub_ids)
-            self.store_query_in_view_model(query_create, "create")
-            delete_hubs = [hub for hub in db_staller.get_updated_hubs()[self.hub_class]]
-            for delete_hub in delete_hubs:
-                self.delete_from_view_model(delete_hub)
-            updated_hub_ids = []
-            updated_sats_dict = db_staller.get_updated_satellites()
-            for sat_class in updated_sats_dict:
-                updated_hub_ids += [
-                    sat_hub_pk(sat) for sat in updated_sats_dict[sat_class]
-                ]
-
-            def add_link_hub(link_class, db_staller_links):
-                hub_in_model = link_class.hub_in.field.related_model
-                if hub_in_model == self.hub_class:
-                    hub_tag = "hub_in"
-                else:
-                    hub_tag = "hub_out"
-                hub_ids = []
-                for link in db_staller_links[link_class]:
-                    hub_ids.append(getattr(link, hub_tag).pk)
-                return hub_ids
-
-            for link_class in db_staller.links:
-                updated_hub_ids += add_link_hub(link_class, db_staller.links)
-            for link_class in db_staller.updated_links:
-                updated_hub_ids += add_link_hub(link_class, db_staller.updated_links)
-            query_update = query.filter(hub_entity_id__in=updated_hub_ids)
-            self.store_query_in_view_model(query_update, "update")
-            return
-        self.store_query_in_view_model(query)
-
-    def store_query_in_view_model(self, query, mode: str = "all"):
-        self._debug_logging("Start store_query_in_view_model")
-        data = list(query.values())
-        for row in data:
-            if row["value_date"]:
-                row["value_date"] = timezone.make_aware(
-                    datetime.datetime.combine(row["value_date"], datetime.time()),
-                    timezone.get_current_timezone(),
-                )
-        instances = [self.view_model(**item) for item in data]
-        if mode == "all":
-            self.view_model.objects.all().delete()
-            self.view_model.objects.bulk_create(instances, batch_size=1000)
-        elif mode == "create":
-            if instances:
-                self.view_model.objects.filter(
-                    hub_entity_id__in=[inst.hub_entity_id for inst in instances]
-                ).delete()
-            self.view_model.objects.bulk_create(
-                instances,
-                batch_size=1000,
-            )
-
-        elif mode == "update":
-            self.view_model.objects.bulk_update(
-                instances, batch_size=1000, fields=self.get_all_annotated_fields()
-            )
-        self._debug_logging("End store_query_in_view_model")
+        fields = self.get_all_annotated_fields()
+        self.view_model_repository.store_in_view_model(
+            db_staller, query, self.hub_class, fields
+        )
 
     @classmethod
     def generate_view_model(cls):
@@ -217,7 +148,10 @@ class MontrekRepository:
             self.reference_date, self.order_fields(), apply_filter=apply_filter
         )
         if self.view_model and not update_view_model:
-            self.store_query_in_view_model(query)
+            fields = self.get_all_annotated_fields()
+            self.view_model_repository.store_query_in_view_model(
+                query, self.hub_class, fields
+            )
         self._debug_logging("End receive")
         return query
 
@@ -240,13 +174,7 @@ class MontrekRepository:
             satellite_class.objects.filter(**filter_kwargs).update(
                 state_date_end=timezone.now()
             )
-        self.delete_from_view_model(obj)
-
-    def delete_from_view_model(self, obj: MontrekHubABC):
-        if not self.view_model:
-            return
-        deleted_object = self.view_model.objects.filter(hub_entity_id=obj.pk)
-        deleted_object.delete()
+        self.view_model_repository.delete_from_view_model(obj)
 
     def order_fields(self) -> tuple[str, ...]:
         if self._order_fields:
