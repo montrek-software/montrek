@@ -1,6 +1,5 @@
 import datetime
 import logging
-from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Type
 
@@ -27,6 +26,7 @@ from baseclasses.repositories.subquery_builder import (
     SumTSSatelliteSubqueryBuilder,
     TSSatelliteSubqueryBuilder,
 )
+from baseclasses.repositories.view_model_repository import ViewModelRepository
 from baseclasses.utils import datetime_to_montrek_time
 from django.core.exceptions import PermissionDenied
 from django.db import models
@@ -189,35 +189,15 @@ class MontrekRepository:
     def generate_view_model(cls):
         if cls.view_model:
             return
-
-        class Meta:
-            # Only works if repository is in repositories folder
-            app_label = cls.__module__.split(".repositories")[0].split(".")[-1]
-            managed = True
-            db_table = f"{app_label}_{cls.__name__.lower()}_view_model"
-
         repo_instance = cls({})
         fields = repo_instance.annotator.get_annotated_field_map()
-        for key, field in fields.items():
-            field = deepcopy(field)
-            field.null = True
-            field.blank = True
-            field.name = key
-            fields[key] = field
-
-        fields["value_date_list_id"] = models.IntegerField(null=True, blank=True)
-        fields["hub"] = models.ForeignKey(cls.hub_class, on_delete=models.CASCADE)
-
-        attrs = {
-            "__module__": cls.__name__,
-            "Meta": Meta,
-            "reference_date": datetime.date.today(),
-        }
-        attrs.update(fields)
-        model_name = cls.__name__ + "ViewModel"
-        model = type(model_name, (models.Model,), attrs)
-
-        cls.view_model = model  # Save the model class on the class
+        view_model = ViewModelRepository.generate_view_model(
+            module_name=cls.__module__,
+            repository_name=cls.__name__,
+            hub_class=cls.hub_class,
+            fields=fields,
+        )
+        cls.view_model = view_model  # Save the model class on the class
 
     def receive(self, apply_filter: bool = True) -> QuerySet:
         return self.receive_raw(apply_filter, False)
