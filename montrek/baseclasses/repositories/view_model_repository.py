@@ -52,59 +52,93 @@ class ViewModelRepository:
         model = type(model_name, (models.Model,), attrs)
         return model
 
+    # ───────────────────────────────────────────────
+    # Public API
+    # ───────────────────────────────────────────────
     def store_in_view_model(
         self,
-        db_staller: DbStaller | None,
+        db_staller: "DbStaller | None",
         query: models.QuerySet,
-        hub_class: type[MontrekHubABC],
+        hub_class: type["MontrekHubABC"],
         fields: list[str],
     ):
+        """Store query results into the view model, handling create/update/delete logic."""
         if not self.view_model:
             return
 
-        def sat_hub_pk(sat: MontrekSatelliteBaseABC) -> int:
-            if sat.is_timeseries:
-                return sat.hub_value_date.hub.pk
-            else:
-                return sat.hub_entity_id
-
-        if db_staller is not None:
-            new_hub_ids = [hub.pk for hub in db_staller.get_hubs()[hub_class]]
-            new_sats_dict = db_staller.get_new_satellites()
-            for sat_class in new_sats_dict:
-                new_hub_ids += [sat_hub_pk(sat) for sat in new_sats_dict[sat_class]]
-
-            query_create = query.filter(hub_entity_id__in=new_hub_ids)
-            self.store_query_in_view_model(query_create, fields, "create")
-            delete_hubs = [hub for hub in db_staller.get_updated_hubs()[hub_class]]
-            for delete_hub in delete_hubs:
-                self.delete_from_view_model(delete_hub)
-            updated_hub_ids = []
-            updated_sats_dict = db_staller.get_updated_satellites()
-            for sat_class in updated_sats_dict:
-                updated_hub_ids += [
-                    sat_hub_pk(sat) for sat in updated_sats_dict[sat_class]
-                ]
-
-            def add_link_hub(link_class, db_staller_links):
-                hub_in_model = link_class.hub_in.field.related_model
-                if hub_in_model == hub_class:
-                    hub_tag = "hub_in"
-                else:
-                    hub_tag = "hub_out"
-                hub_ids = []
-                for link in db_staller_links[link_class]:
-                    hub_ids.append(getattr(link, hub_tag).pk)
-                return hub_ids
-
-            for link_class in db_staller.links:
-                updated_hub_ids += add_link_hub(link_class, db_staller.links)
-            for link_class in db_staller.updated_links:
-                updated_hub_ids += add_link_hub(link_class, db_staller.updated_links)
-            query_update = query.filter(hub_entity_id__in=updated_hub_ids)
-            self.store_query_in_view_model(query_update, fields, "update")
+        if db_staller is None:
+            # No staging updates: store everything
+            self.store_query_in_view_model(query, fields)
             return
-        self.store_query_in_view_model(query, fields)
+
+        # Create operations
+        new_hub_ids = self._collect_new_hub_ids(db_staller, hub_class)
+        query_create = query.filter(hub_entity_id__in=new_hub_ids)
+        self.store_query_in_view_model(query_create, fields, "create")
+
+        # Delete operations
+        self._delete_updated_hubs(db_staller, hub_class)
+
+        # Update operations
+        updated_hub_ids = self._collect_updated_hub_ids(db_staller, hub_class)
+        query_update = query.filter(hub_entity_id__in=updated_hub_ids)
+        self.store_query_in_view_model(query_update, fields, "update")
+
+    # ───────────────────────────────────────────────
+    # Private helpers
+    # ───────────────────────────────────────────────
+    def _sat_hub_pk(self, sat: "MontrekSatelliteBaseABC") -> int:
+        """Extract the hub primary key from a satellite instance."""
+        return sat.hub_value_date.hub.pk if sat.is_timeseries else sat.hub_entity_id
+
+    def _collect_new_hub_ids(
+        self, db_staller: "DbStaller", hub_class: type["MontrekHubABC"]
+    ) -> list[int]:
+        """Gather hub IDs that are newly created or belong to new satellites."""
+        hub_ids = [hub.pk for hub in db_staller.get_hubs().get(hub_class, [])]
+
+        for sat_class, satellites in db_staller.get_new_satellites().items():
+            hub_ids += [self._sat_hub_pk(sat) for sat in satellites]
+
+        return hub_ids
+
+    def _delete_updated_hubs(
+        self, db_staller: "DbStaller", hub_class: type["MontrekHubABC"]
+    ):
+        """Delete view model records corresponding to updated hubs."""
+        updated_hubs = db_staller.get_updated_hubs().get(hub_class, [])
+        for hub in updated_hubs:
+            self.delete_from_view_model(hub)
+
+    def _collect_updated_hub_ids(
+        self, db_staller: "DbStaller", hub_class: type["MontrekHubABC"]
+    ) -> list[int]:
+        """Collect hub IDs that are updated via satellites or links."""
+        hub_ids = []
+
+        # Satellites
+        for sat_class, satellites in db_staller.get_updated_satellites().items():
+            hub_ids += [self._sat_hub_pk(sat) for sat in satellites]
+
+        # Links (both existing and updated)
+        for link_source in [db_staller.links, db_staller.updated_links]:
+            for link_class, link_objs in link_source.items():
+                hub_ids += self._collect_link_hub_ids(link_class, link_objs, hub_class)
+
+        return hub_ids
+
+    def _collect_link_hub_ids(
+        self,
+        link_class: type[models.Model],
+        link_instances: list[models.Model],
+        hub_class: type["MontrekHubABC"],
+    ) -> list[int]:
+        """Extract hub primary keys from a link class for the relevant hub_class."""
+        # Determine whether the link’s `hub_in` or `hub_out` relates to the given hub_class
+        hub_in_model = link_class.hub_in.field.related_model
+        hub_field = "hub_in" if hub_in_model == hub_class else "hub_out"
+
+        return [getattr(link, hub_field).pk for link in link_instances]
 
     def store_query_in_view_model(
         self, query: models.QuerySet, fields: list[str], mode: str = "all"
