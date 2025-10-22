@@ -166,17 +166,14 @@ class ViewModelRepository:
                     timezone.get_current_timezone(),
                 )
 
-        instances = [
-            self.view_model(**{k: v for k, v in item.items() if k != "id"})
-            for item in data
-        ]
+        instances = [self.view_model(**item) for item in data]
         if mode == "all":
             self.view_model.objects.all().delete()
             self.view_model.objects.bulk_create(instances, batch_size=1000)
         elif mode == "create" or mode == "update":
             if instances:
                 self.view_model.objects.filter(
-                    hub_entity_id__in=[inst.hub_entity_id for inst in instances]
+                    pk__in=[inst.pk for inst in instances]
                 ).delete()
             self.view_model.objects.bulk_create(
                 instances,
