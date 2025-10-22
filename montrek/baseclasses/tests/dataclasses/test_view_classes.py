@@ -8,6 +8,7 @@ from baseclasses.dataclasses.view_classes import (
     SettingsActionElement,
     ShowActionElement,
     StandardActionElementBase,
+    UpdateActionElement,
     UploadActionElement,
 )
 from django.test import TestCase
@@ -40,6 +41,7 @@ class TestStandardActionElements(TestCase):
             (ListActionElement, "align-justify"),
             (PlayActionElement, "play"),
             (ShowActionElement, "eye-open"),
+            (UpdateActionElement, "pencil"),
         )
 
         for element_class, expected_icon in expected_icons:
@@ -60,6 +62,7 @@ class TestStandardActionElements(TestCase):
             (RegistryActionElement, "inbox"),
             (PlayActionElement, "play"),
             (ShowActionElement, "eye-open"),
+            (UpdateActionElement, "pencil"),
         )
         for element_class, expected_icon in expected_icons:
             element = element_class(

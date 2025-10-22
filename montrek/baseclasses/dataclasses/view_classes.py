@@ -48,6 +48,11 @@ class CreateActionElement(StandardActionElementBase):
 
 
 @dataclass(init=False)
+class UpdateActionElement(StandardActionElementBase):
+    icon = "pencil"
+
+
+@dataclass(init=False)
 class RegistryActionElement(StandardActionElementBase):
     icon = "inbox"
 
