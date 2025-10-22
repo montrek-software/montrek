@@ -101,12 +101,8 @@ class ViewModelRepository:
         """Gather hub IDs that are newly created or belong to new satellites."""
         hub_ids = [hub.pk for hub in db_staller.get_hubs().get(hub_class, [])]
 
-        # existing_hubs = list(self.view_model.objects.values_list("hub_id", flat=True))
         for satellites in db_staller.get_new_satellites().values():
             hub_ids += [self._sat_hub_pk(sat) for sat in satellites]
-            # for new_sat_hub in new_sat_hubs:
-            #     if new_sat_hub not in existing_hubs and new_sat_hub not in hub_ids:
-            #         hub_ids += [new_sat_hub]
         return hub_ids
 
     def _delete_updated_hubs(
@@ -156,7 +152,9 @@ class ViewModelRepository:
                 break
             except (IntegrityError, UniqueViolation):
                 if attempt == self.MAX_RETRIES - 1:
-                    raise ValueError("Nur ein test")
+                    raise ValueError(
+                        "Maximum number of retries exceeded when storing to the view model due to repeated integrity errors."
+                    )
                 time.sleep(0.1)  # brief backoff
 
     def _try_store_query_in_view_model(self, query: models.QuerySet, mode: str = "all"):
@@ -169,7 +167,7 @@ class ViewModelRepository:
                 )
 
         instances = [
-            self.view_model(**{key: item[key] for key in item.keys() if key != "id"})
+            self.view_model(**{k: v for k, v in item.items() if k != "id"})
             for item in data
         ]
         if mode == "all":
