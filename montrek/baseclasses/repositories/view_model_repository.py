@@ -1,17 +1,22 @@
 import datetime
 import logging
+import time
 from copy import deepcopy
 from typing import Any
 
 from baseclasses.models import MontrekHubABC, MontrekSatelliteBaseABC
 from baseclasses.repositories.db.db_staller import DbStaller
-from django.db import models
+from django.db import models, transaction
+from django.db.utils import IntegrityError
 from django.utils import timezone
+from psycopg2.errors import UniqueViolation
 
 logger = logging.getLogger(__name__)
 
 
 class ViewModelRepository:
+    MAX_RETRIES = 3
+
     def __init__(self, view_model: None | type[models.Model]):
         self.view_model = view_model
 
@@ -60,7 +65,6 @@ class ViewModelRepository:
         db_staller: "DbStaller | None",
         query: models.QuerySet,
         hub_class: type["MontrekHubABC"],
-        fields: list[str],
     ):
         """Store query results into the view model, handling create/update/delete logic."""
         if not self.view_model:
@@ -68,13 +72,13 @@ class ViewModelRepository:
 
         if db_staller is None:
             # No staging updates: store everything
-            self.store_query_in_view_model(query, fields)
+            self.store_query_in_view_model(query)
             return
 
         # Create operations
         new_hub_ids = self._collect_new_hub_ids(db_staller, hub_class)
         query_create = query.filter(hub_entity_id__in=new_hub_ids)
-        self.store_query_in_view_model(query_create, fields, "create")
+        self.store_query_in_view_model(query_create, "create")
 
         # Delete operations
         self._delete_updated_hubs(db_staller, hub_class)
@@ -82,7 +86,7 @@ class ViewModelRepository:
         # Update operations
         updated_hub_ids = self._collect_updated_hub_ids(db_staller, hub_class)
         query_update = query.filter(hub_entity_id__in=updated_hub_ids)
-        self.store_query_in_view_model(query_update, fields, "update")
+        self.store_query_in_view_model(query_update, "update")
 
     # ───────────────────────────────────────────────
     # Private helpers
@@ -97,9 +101,12 @@ class ViewModelRepository:
         """Gather hub IDs that are newly created or belong to new satellites."""
         hub_ids = [hub.pk for hub in db_staller.get_hubs().get(hub_class, [])]
 
-        for sat_class, satellites in db_staller.get_new_satellites().items():
+        # existing_hubs = list(self.view_model.objects.values_list("hub_id", flat=True))
+        for satellites in db_staller.get_new_satellites().values():
             hub_ids += [self._sat_hub_pk(sat) for sat in satellites]
-
+            # for new_sat_hub in new_sat_hubs:
+            #     if new_sat_hub not in existing_hubs and new_sat_hub not in hub_ids:
+            #         hub_ids += [new_sat_hub]
         return hub_ids
 
     def _delete_updated_hubs(
@@ -140,10 +147,19 @@ class ViewModelRepository:
 
         return [getattr(link, hub_field).pk for link in link_instances]
 
-    def store_query_in_view_model(
-        self, query: models.QuerySet, fields: list[str], mode: str = "all"
-    ):
+    def store_query_in_view_model(self, query: models.QuerySet, mode: str = "all"):
         self._debug_logging("Start store_query_in_view_model")
+        for attempt in range(self.MAX_RETRIES):
+            try:
+                with transaction.atomic():
+                    self._try_store_query_in_view_model(query, mode)
+                break
+            except (IntegrityError, UniqueViolation):
+                if attempt == self.MAX_RETRIES - 1:
+                    raise ValueError("Nur ein test")
+                time.sleep(0.1)  # brief backoff
+
+    def _try_store_query_in_view_model(self, query: models.QuerySet, mode: str = "all"):
         data = list(query.values())
         for row in data:
             if row["value_date"]:
@@ -151,11 +167,15 @@ class ViewModelRepository:
                     datetime.datetime.combine(row["value_date"], datetime.time()),
                     timezone.get_current_timezone(),
                 )
-        instances = [self.view_model(**item) for item in data]
+
+        instances = [
+            self.view_model(**{key: item[key] for key in item.keys() if key != "id"})
+            for item in data
+        ]
         if mode == "all":
             self.view_model.objects.all().delete()
             self.view_model.objects.bulk_create(instances, batch_size=1000)
-        elif mode == "create":
+        elif mode == "create" or mode == "update":
             if instances:
                 self.view_model.objects.filter(
                     hub_entity_id__in=[inst.hub_entity_id for inst in instances]
@@ -163,11 +183,6 @@ class ViewModelRepository:
             self.view_model.objects.bulk_create(
                 instances,
                 batch_size=1000,
-            )
-
-        elif mode == "update":
-            self.view_model.objects.bulk_update(
-                instances, batch_size=1000, fields=fields
             )
         self._debug_logging("End store_query_in_view_model")
 

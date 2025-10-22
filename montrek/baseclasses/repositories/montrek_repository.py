@@ -112,9 +112,8 @@ class MontrekRepository:
         # When storing in the view model, we want to include all data without applying filters,
         # so we explicitly set apply_filter=False.
         query = self.receive_raw(update_view_model=True, apply_filter=False)
-        fields = self.get_all_annotated_fields()
         self.view_model_repository.store_in_view_model(
-            db_staller, query, self.hub_class, fields
+            db_staller, query, self.hub_class
         )
 
     @classmethod
@@ -148,8 +147,7 @@ class MontrekRepository:
             self.reference_date, self.order_fields(), apply_filter=apply_filter
         )
         if self.view_model and not update_view_model:
-            fields = self.get_all_annotated_fields()
-            self.view_model_repository.store_query_in_view_model(query, fields, "all")
+            self.view_model_repository.store_query_in_view_model(query, "all")
         self._debug_logging("End receive")
         return query
 
