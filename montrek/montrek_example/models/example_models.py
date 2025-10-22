@@ -164,6 +164,13 @@ class SatC1(MontrekSatelliteABC):
     identifier_fields = ["field_c1_str"]
 
 
+class SatCBoolean(MontrekSatelliteABC):
+    hub_entity = models.ForeignKey(HubC, on_delete=models.CASCADE)
+    field_bool_1 = models.BooleanField(default=False)
+    field_bool_2 = models.BooleanField(default=False)
+    identifier_fields = ["hub_entity_id"]
+
+
 class SatTSC2(MontrekTimeSeriesSatelliteABC):
     hub_value_date = models.ForeignKey(CHubValueDate, on_delete=models.CASCADE)
     field_tsc2_float = models.FloatField(default=0.0)

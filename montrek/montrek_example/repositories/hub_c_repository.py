@@ -264,3 +264,13 @@ class HubCRepositoryViewModel(MontrekRepository):
             me_models.SatTSC2,
             ["field_tsc2_float"],
         )
+
+
+class HubCBooleanRepository(MontrekRepository):
+    hub_class = me_models.HubC
+
+    def set_annotations(self):
+        self.add_satellite_fields_annotations(
+            me_models.SatCBoolean,
+            ["field_bool_1", "field_bool_2"],
+        )

@@ -26,6 +26,7 @@ from montrek_example.repositories.hub_b_repository import (
     HubBRepository2,
 )
 from montrek_example.repositories.hub_c_repository import (
+    HubCBooleanRepository,
     HubCRepository,
     HubCRepository2,
     HubCRepositoryCommonFields,
@@ -538,6 +539,15 @@ class TestMontrekCreateObject(TestCase):
             {"hub_entity_id": sat.hub_entity_id, "field_a4_str": "Test"}
         )
         self.assertEqual(me_models.SatA4.objects.count(), 1)
+
+    def test_std_create__only_booleans(self):
+        repo = HubCBooleanRepository({"user_id": self.user.id})
+        repo.create_by_dict({"field_bool_1": False, "field_bool_2": False})
+        created_satellites = me_models.SatCBoolean.objects.all()
+        self.assertEqual(created_satellites.count(), 1)
+        created_sat = created_satellites.first()
+        self.assertFalse(created_sat.field_bool_1)
+        self.assertFalse(created_sat.field_bool_2)
 
 
 class TestMontrekCreateTimeSeriesObject(TestCase):
