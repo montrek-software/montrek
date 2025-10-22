@@ -274,7 +274,7 @@ class DbCreator:
         data.pop("comment", None)
         data.pop("created_by_id", None)
         data.pop("value_date", None)
-        return not any(data.values())
+        return all(dt is None for dt in data.values())
 
     def _get_link_data(self) -> dict[str, list[MontrekHubABC]]:
         link_data = {}
