@@ -100,24 +100,56 @@ elif [[ "$1" == "restore" ]]; then
     echo "Restore operation cancelled."
     exit 1
   fi
-  # Step 1: Clean the database by dropping all tables
-  echo "Cleaning the database..."
+  echo "Checking for active connections to $DB_NAME..."
 
-  # Drop the existing database
+  # Get count of active connections
+  ACTIVE_COUNT=$(PGPASSWORD=$DB_PASSWORD psql -U $DB_USER -d postgres -h $DB_HOST -p $DB_PORT -t -c "
+  SELECT count(*) FROM pg_stat_activity WHERE datname = '${DB_NAME}' AND pid <> pg_backend_pid();
+  " | xargs)
+
+  if [ "$ACTIVE_COUNT" -gt 0 ]; then
+    echo ""
+    echo "⚠️  There are currently $ACTIVE_COUNT active connection(s) to $DB_NAME:"
+    echo ""
+
+    # Show details of active connections
+    PGPASSWORD=$DB_PASSWORD psql -U $DB_USER -d postgres -h $DB_HOST -p $DB_PORT -c "
+    SELECT pid, usename AS user, application_name, client_addr, state, query
+    FROM pg_stat_activity
+    WHERE datname = '${DB_NAME}' AND pid <> pg_backend_pid();
+    "
+
+    echo ""
+    read -p "Do you want to terminate all these connections? [y/N]: " CONFIRM
+
+    if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
+      echo "Aborting. Database restore cancelled."
+      exit 1
+    fi
+
+    echo "Terminating all active connections..."
+    PGPASSWORD=$DB_PASSWORD psql -U $DB_USER -d postgres -h $DB_HOST -p $DB_PORT -c "
+    SELECT pg_terminate_backend(pid)
+    FROM pg_stat_activity
+    WHERE datname = '${DB_NAME}' AND pid <> pg_backend_pid();
+    "
+  else
+    echo "No active connections found. Proceeding..."
+  fi
+
+  echo ""
+  echo "Dropping and recreating the database..."
 
   PGPASSWORD=$DB_PASSWORD psql -U $DB_USER -d postgres -h $DB_HOST -p $DB_PORT -c "DROP DATABASE IF EXISTS $DB_NAME;"
-
-  # Recreate the database
   PGPASSWORD=$DB_PASSWORD psql -U $DB_USER -d postgres -h $DB_HOST -p $DB_PORT -c "CREATE DATABASE $DB_NAME;"
 
-  # Step 2: Restore the database by running the backup file inside the Docker container
+  echo "Restoring the database from backup..."
   cat "$BACKUP_FILE" | PGPASSWORD=$DB_PASSWORD psql -U $DB_USER -h $DB_HOST -d $DB_NAME -p $DB_PORT
 
-  # Check if the restore was successful
   if [ $? -eq 0 ]; then
-    echo "Database restored successfully from backup: $BACKUP_FILE"
+    echo "✅ Database restored successfully from backup: $BACKUP_FILE"
   else
-    echo "Database restore failed!"
+    echo "❌ Database restore failed!"
     exit 1
   fi
 fi
