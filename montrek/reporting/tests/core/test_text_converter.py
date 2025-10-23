@@ -1,3 +1,5 @@
+import datetime
+
 from django.test import TestCase
 from reporting.core.text_converter import HtmlLatexConverter, HtmlTextConverter
 
@@ -67,6 +69,18 @@ class TestHtmlLatexConverter(TestCase):
         test_text = '<span class="glyphicon glyphicon-edit"></span>\n<span class="glyphicon glyphicon-trash"></span>'
         converted_text = HtmlLatexConverter.convert(test_text)
         expected_text = "\\twemoji{pencil}\n\\twemoji{wastebasket}"
+        self.assertEqual(converted_text, expected_text)
+
+    def test_convert_dates(self):
+        test_text = datetime.date(2025, 10, 23)
+        converted_text = HtmlLatexConverter.convert(test_text)
+        expected_text = "2025-10-23"
+        self.assertEqual(converted_text, expected_text)
+
+    def test_convert_datetime(self):
+        test_text = datetime.datetime(2025, 10, 23)
+        converted_text = HtmlLatexConverter.convert(test_text)
+        expected_text = "2025-10-23 00:00:00"
         self.assertEqual(converted_text, expected_text)
 
 

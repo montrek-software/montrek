@@ -1,12 +1,12 @@
-from html import unescape
-from bs4 import BeautifulSoup
 import re
+from html import unescape
 from typing import Any
 
 
 class HtmlLatexConverter:
     @staticmethod
     def convert(text: str) -> str:
+        text = str(text)
         text = HtmlLatexConverter.ignored(text)
         text = HtmlLatexConverter.paragraphs(text)
         text = HtmlLatexConverter.bold(text)
