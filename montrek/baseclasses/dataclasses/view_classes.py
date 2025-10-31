@@ -38,6 +38,11 @@ class UploadActionElement(StandardActionElementBase):
 
 
 @dataclass(init=False)
+class DownloadActionElement(StandardActionElementBase):
+    icon = "download"
+
+
+@dataclass(init=False)
 class SettingsActionElement(StandardActionElementBase):
     icon = "cog"
 
