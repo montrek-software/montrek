@@ -2,6 +2,7 @@ from baseclasses.dataclasses.view_classes import (
     ActionElement,
     BackActionElement,
     CreateActionElement,
+    DownloadActionElement,
     ListActionElement,
     PlayActionElement,
     RegistryActionElement,
@@ -42,6 +43,7 @@ class TestStandardActionElements(TestCase):
             (PlayActionElement, "play"),
             (ShowActionElement, "eye-open"),
             (UpdateActionElement, "pencil"),
+            (DownloadActionElement, "download"),
         )
 
         for element_class, expected_icon in expected_icons:
@@ -63,6 +65,7 @@ class TestStandardActionElements(TestCase):
             (PlayActionElement, "play"),
             (ShowActionElement, "eye-open"),
             (UpdateActionElement, "pencil"),
+            (DownloadActionElement, "download"),
         )
         for element_class, expected_icon in expected_icons:
             element = element_class(
