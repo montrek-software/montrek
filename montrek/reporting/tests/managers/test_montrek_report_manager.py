@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from reporting.managers.latex_report_manager import LatexReportManager
 from reporting.tests import mocks
 
@@ -71,7 +71,19 @@ class TestMontrekReportManager(TestCase):
         test_html = manager.to_html()
         self.assertEqual(
             test_html,
-            '<div class="alert alert-danger"><strong>Error during report generation: This fails!</strong></div>',
+            '<div class="alert alert-danger"><strong>Error during report generation: This fails!</strong></div><div class="alert">Traceback (most recent call last):<br>  File "/home/christoph/private/projects/montrek_accounting/montrek/reporting/managers/montrek_report_manager.py", line 48, in to_html<br>    self.collect_report_elements()<br>  File "/home/christoph/private/projects/montrek_accounting/montrek/reporting/tests/mocks.py", line 61, in collect_report_elements<br>    raise ValueError("This fails!")<br>ValueError: This fails!<br></div>',
+        )
+        self.assertEqual(manager.report_elements, [])
+
+    @override_settings(DEBUG=False)
+    def test_failing_report_generation__no_debug(self):
+        session_data = {}
+        manager = mocks.MockMontrekReportManagerError(session_data=session_data)
+        manager.append_report_element(mocks.MockReportElement())
+        test_html = manager.to_html()
+        self.assertEqual(
+            test_html,
+            '<div class="alert alert-danger"><strong>Error during report generation: This fails!</strong></div><div class="alert"> Contact admin and check Debug mode',
         )
         self.assertEqual(manager.report_elements, [])
 

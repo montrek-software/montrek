@@ -1,3 +1,4 @@
+import traceback
 from collections.abc import Iterable
 
 from baseclasses.managers.montrek_manager import MontrekManager
@@ -47,7 +48,14 @@ class MontrekReportManager(MontrekManager):
             self.collect_report_elements()
         except Exception as e:
             self.cleanup_report_elements()
-            return f'<div class="alert alert-danger"><strong>Error during report generation: {e}</strong></div>'
+            error_html = f'<div class="alert alert-danger"><strong>Error during report generation: {e}</strong></div>'
+            if settings.DEBUG:
+                error_details = traceback.format_exc()
+                error_details = error_details.replace("\n", "<br>")
+                error_html += f'<div class="alert">{error_details}</div>'
+            else:
+                error_html += '<div class="alert"> Contact admin and check Debug mode'
+            return error_html
         for report_element in self.report_elements:
             html_str += report_element.to_html()
         html_str += self._get_footer()
