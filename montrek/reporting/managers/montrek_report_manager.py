@@ -4,11 +4,9 @@ from baseclasses.managers.montrek_manager import MontrekManager
 from django.conf import settings
 from django.http import HttpResponseRedirect
 from django.urls import reverse
-from reporting.core import reporting_text as rt
-from reporting.lib.protocols import (
-    ReportElementProtocol,
-)
 from mailing.repositories.mailing_repository import MailingRepository
+from reporting.core import reporting_text as rt
+from reporting.lib.protocols import ReportElementProtocol
 
 
 class MontrekReportManager(MontrekManager):
@@ -45,7 +43,10 @@ class MontrekReportManager(MontrekManager):
 
     def to_html(self) -> str:
         html_str = ""
-        self.collect_report_elements()
+        try:
+            self.collect_report_elements()
+        except Exception as e:
+            return f'<div class="alert alert-danger"><strong>Error during report generation: {e}</strong></div>'
         for report_element in self.report_elements:
             html_str += report_element.to_html()
         html_str += self._get_footer()

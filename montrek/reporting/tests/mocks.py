@@ -54,6 +54,13 @@ class MockMontrekReportManager(MontrekReportManager):
         return report
 
 
+class MockMontrekReportManagerError(MontrekReportManager):
+    document_title = "Mock Report"
+
+    def collect_report_elements(self):
+        raise ValueError("This fails!")
+
+
 class MockMontrekDummyReportManager(MontrekReportManager):
     document_title = "Mock Report"
 
