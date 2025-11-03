@@ -73,6 +73,7 @@ class TestMontrekReportManager(TestCase):
             test_html,
             '<div class="alert alert-danger"><strong>Error during report generation: This fails!</strong></div>',
         )
+        self.assertEqual(manager.report_elements, [])
 
 
 class TestComprehensiveReport(TestCase):
