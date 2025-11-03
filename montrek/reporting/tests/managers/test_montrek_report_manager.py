@@ -91,7 +91,7 @@ class TestMontrekReportManager(TestCase):
         test_html = manager.to_html()
         self.assertEqual(
             test_html,
-            '<div class="alert alert-danger"><strong>Error during report generation: This fails!</strong></div><div class="alert"> Contact admin and check Debug mode',
+            '<div class="alert alert-danger"><strong>Error during report generation: This fails!</strong></div><div class="alert"> Contact admin and check Debug mode</div>',
         )
         self.assertEqual(manager.report_elements, [])
 
