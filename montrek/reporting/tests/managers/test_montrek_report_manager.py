@@ -69,9 +69,17 @@ class TestMontrekReportManager(TestCase):
         manager = mocks.MockMontrekReportManagerError(session_data=session_data)
         manager.append_report_element(mocks.MockReportElement())
         test_html = manager.to_html()
-        self.assertEqual(
+        self.assertIn(
+            '<div class="alert alert-danger"><strong>Error during report generation: This fails!</strong></div>',
             test_html,
-            '<div class="alert alert-danger"><strong>Error during report generation: This fails!</strong></div><div class="alert">Traceback (most recent call last):<br>  File "/home/christoph/private/projects/montrek_accounting/montrek/reporting/managers/montrek_report_manager.py", line 48, in to_html<br>    self.collect_report_elements()<br>  File "/home/christoph/private/projects/montrek_accounting/montrek/reporting/tests/mocks.py", line 61, in collect_report_elements<br>    raise ValueError("This fails!")<br>ValueError: This fails!<br></div>',
+        )
+        self.assertIn(
+            'Traceback (most recent call last):',
+            test_html,
+        )
+        self.assertIn(
+            'ValueError: This fails!',
+            test_html,
         )
         self.assertEqual(manager.report_elements, [])
 
