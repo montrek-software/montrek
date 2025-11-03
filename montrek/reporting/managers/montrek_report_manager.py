@@ -1,14 +1,13 @@
+import traceback
 from collections.abc import Iterable
 
 from baseclasses.managers.montrek_manager import MontrekManager
 from django.conf import settings
 from django.http import HttpResponseRedirect
 from django.urls import reverse
-from reporting.core import reporting_text as rt
-from reporting.lib.protocols import (
-    ReportElementProtocol,
-)
 from mailing.repositories.mailing_repository import MailingRepository
+from reporting.core import reporting_text as rt
+from reporting.lib.protocols import ReportElementProtocol
 
 
 class MontrekReportManager(MontrekManager):
@@ -45,7 +44,20 @@ class MontrekReportManager(MontrekManager):
 
     def to_html(self) -> str:
         html_str = ""
-        self.collect_report_elements()
+        try:
+            self.collect_report_elements()
+        except Exception as e:
+            self.cleanup_report_elements()
+            error_html = f'<div class="alert alert-danger"><strong>Error during report generation: {e}</strong></div>'
+            if settings.DEBUG:
+                error_details = traceback.format_exc()
+                error_details = error_details.replace("\n", "<br>")
+                error_html += f'<div class="alert">{error_details}</div>'
+            else:
+                error_html += (
+                    '<div class="alert"> Contact admin and check Debug mode</div>'
+                )
+            return error_html
         for report_element in self.report_elements:
             html_str += report_element.to_html()
         html_str += self._get_footer()
