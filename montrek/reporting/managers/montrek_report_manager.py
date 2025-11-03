@@ -54,7 +54,9 @@ class MontrekReportManager(MontrekManager):
                 error_details = error_details.replace("\n", "<br>")
                 error_html += f'<div class="alert">{error_details}</div>'
             else:
-                error_html += '<div class="alert"> Contact admin and check Debug mode'
+                error_html += (
+                    '<div class="alert"> Contact admin and check Debug mode</div>'
+                )
             return error_html
         for report_element in self.report_elements:
             html_str += report_element.to_html()
