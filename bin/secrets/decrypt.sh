@@ -33,7 +33,7 @@ if [[ ! -f "$ENV_FILE" ]]; then
 fi
 
 # Ask for password (input hidden)
-echo -n "🔑 Enter Ansible Vault password: " >&2
+echo -n "🔑 Enter Vault password: " >&2
 read -s VAULT_PASS
 echo >&2
 

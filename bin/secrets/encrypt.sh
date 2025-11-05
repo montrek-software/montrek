@@ -19,10 +19,10 @@ fi
 # If password passed as first argument, use it; otherwise generate one
 if [[ -n "$1" ]]; then
   VAULT_PASS="$1"
-  echo "🔐 Using provided Ansible Vault password."
+  echo "🔐 Using provided Vault password."
 else
   VAULT_PASS=$(openssl rand -hex 32)
-  echo "🔑 Generated Ansible Vault password (SAVE THIS SAFELY):"
+  echo "🔑 Generated Vault password (SAVE THIS SAFELY):"
   echo "$VAULT_PASS"
   echo
 fi
