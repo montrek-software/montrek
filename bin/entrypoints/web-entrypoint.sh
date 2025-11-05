@@ -8,7 +8,7 @@ if [[ -f ./nginx/certs/fullchain.crt ]]; then
   cp ./nginx/certs/fullchain.crt /usr/local/share/ca-certificates/montrek_root_ca.crt
   update-ca-certificates
 fi
-make sync-local-python-env
+./bin/local/sync-python-env.sh
 . .venv/bin/activate
 cd montrek
 python manage.py migrate

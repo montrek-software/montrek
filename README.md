@@ -18,6 +18,10 @@ Before installing, ensure the following are available on your system:
 - [Docker](https://docs.docker.com/engine/install/)
 - Docker must be accessible for your user (ensure your user is in the `docker` group)
 
+[Optional]
+
+- Ansible-Vault: For encryptions
+
 ---
 
 ### Clone the Repository
