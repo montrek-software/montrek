@@ -103,9 +103,26 @@ https://<PROJECT_NAME>.<DEPLOY_HOST>
 
 By default, montrek uses Django’s authentication framework.
 If you need **two-factor authentication** or advanced user management, enable **Keycloak**.
+_This is highly recommended in production environments_
 
 Instructions are available in:
 `docs/keycloak_setup.md`
+
+### Encrypt the .env file
+
+Since the .env file contains a number of secrets and sensible data, it is not recommended to just have the .env stored in plain text. This is especially true for production environments. montrek offers the possibility to encrypt the file. To do so run:
+
+```
+make secrets-encrypt
+```
+
+You will be asked to keep the encryption password safe, which you should do, since you will not have a chance to restore the .env file properly afterwards.
+
+If you want to make adjustments to the .env file, you can do so by running.
+
+```
+make secrets-edit-env
+```
 
 ---
 
