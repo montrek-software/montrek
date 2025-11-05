@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # Load variables from .env file
 if [ -f .env ]; then
   export $(grep -v '^#' .env | xargs)
