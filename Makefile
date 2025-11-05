@@ -50,7 +50,7 @@ docker-db-restore: # Restore the docker database from a backup.
 
 .PHONY: docker-django-manage
 docker-django-manage: # Run Django management commands inside the docker container.
-	@$(SECURE_WRAPPER)  bin/docker/django-manage.sh $(filter-out $@,$(MAKECMDGOALS))
+	@$(SECURE_WRAPPER) bin/docker/django-manage.sh $(filter-out $@,$(MAKECMDGOALS))
 
 .PHONY: docker-cleanup
 docker-cleanup: # Remove unused docker artifacts.
