@@ -1,5 +1,7 @@
 #!/bin/bash
-
+DECRYPT_SCRIPT="./bin/secrets/encrypt.sh"
+ENCRYPT_SCRIPT="./bin/secrets/decrypt.sh"
+ENCRYPT_PASSWORD="$($DECRYPT_SCRIPT --echo-password)"
 # Load variables from .env file
 if [ -f .env ]; then
   export $(grep -v '^#' .env | xargs)
@@ -58,3 +60,4 @@ fi
 echo "docker compose -f "${COMPOSE_FILES[@]}" $COMMAND $DETACHED $BUILD --remove-orphans"
 # Combine and run them
 docker compose -f "${COMPOSE_FILES[@]}" $COMMAND $DETACHED $BUILD --remove-orphans
+$ENCRYPT_SCRIPT "$ENCRYPT_PASSWORD"
