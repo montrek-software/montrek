@@ -74,5 +74,11 @@ server-generate-https-certs: # Generate HTTPS certificates for the montrek djang
 server-update: # Stop all docker containers, update the repositories to the latest git tags, and start the containers again.
 	@bash bin/server/update.sh
 
+.PHONY: secrets-encrypt
+secrets-encrypt: # Stop all docker containers, update the repositories to the latest git tags, and start the containers again.
+	@bash bin/secrets/encrypt.sh $(filter-out $@,$(MAKECMDGOALS))
+.PHONY: secrets-decrypt
+secrets-decrypt: # Stop all docker containers, update the repositories to the latest git tags, and start the containers again.
+	@bash bin/secrets/decrypt.sh $(filter-out $@,$(MAKECMDGOALS))
 %:
 	@:
