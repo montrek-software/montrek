@@ -114,7 +114,7 @@ Instructions are available in:
 
 ### Encrypt the .env file
 
-Since the .env file contains a number of secrets and sensible data, it is not recommended to just have the .env stored in plain text. This is especially true for production environments. montrek offers the possibility to encrypt the file. To do so run:
+Since the .env file contains a number of secrets and sensitive data, it is not recommended to just have the .env stored in plain text. This is especially true for production environments. montrek offers the possibility to encrypt the file. To do so run:
 
 ```
 make secrets-encrypt
