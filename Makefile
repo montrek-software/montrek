@@ -82,5 +82,8 @@ secrets-encrypt: # Encrypt the .env file with a generated password
 .PHONY: secrets-decrypt
 secrets-decrypt: # Decrypt the .env file
 	@bash bin/secrets/decrypt.sh $(filter-out $@,$(MAKECMDGOALS))
+.PHONY: secrets-edit-env
+secrets-edit-env: # Edit the .env file
+	@$(SECURE_WRAPPER) bin/secrets/edit-env.sh
 %:
 	@:
