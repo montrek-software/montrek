@@ -18,8 +18,10 @@ ENCRYPT_PASSWORD="$("$DECRYPT_SCRIPT" --echo-password > >(tee /dev/tty))"
 
 # Ensure re-encryption happens even if something fails
 cleanup() {
-  echo "🔐 Re-encrypting $ENV_FILE..."
-  "$ENCRYPT_SCRIPT" "$ENCRYPT_PASSWORD"
+  if [[ -n "${ENCRYPT_PASSWORD:-}" ]]; then
+    echo "🔐 Re-encrypting $ENV_FILE..."
+    "$ENCRYPT_SCRIPT" "$ENCRYPT_PASSWORD"
+  fi
 }
 trap cleanup EXIT
 
