@@ -46,6 +46,8 @@ class MontrekReportManager(MontrekManager):
         html_str = ""
         try:
             self.collect_report_elements()
+            for report_element in self.report_elements:
+                html_str += report_element.to_html()
         except Exception as e:
             self.cleanup_report_elements()
             error_html = f'<div class="alert alert-danger"><strong>Error during report generation: {e}</strong></div>'
@@ -58,8 +60,6 @@ class MontrekReportManager(MontrekManager):
                     '<div class="alert"> Contact admin and check Debug mode</div>'
                 )
             return error_html
-        for report_element in self.report_elements:
-            html_str += report_element.to_html()
         html_str += self._get_footer()
         self.cleanup_report_elements()
         return html_str

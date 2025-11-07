@@ -74,11 +74,11 @@ class TestMontrekReportManager(TestCase):
             test_html,
         )
         self.assertIn(
-            'Traceback (most recent call last):',
+            "Traceback (most recent call last):",
             test_html,
         )
         self.assertIn(
-            'ValueError: This fails!',
+            "ValueError: This fails!",
             test_html,
         )
         self.assertEqual(manager.report_elements, [])
@@ -88,6 +88,37 @@ class TestMontrekReportManager(TestCase):
         session_data = {}
         manager = mocks.MockMontrekReportManagerError(session_data=session_data)
         manager.append_report_element(mocks.MockReportElement())
+        test_html = manager.to_html()
+        self.assertEqual(
+            test_html,
+            '<div class="alert alert-danger"><strong>Error during report generation: This fails!</strong></div><div class="alert"> Contact admin and check Debug mode</div>',
+        )
+        self.assertEqual(manager.report_elements, [])
+
+    def test_failing_report_generation_while_to_html(self):
+        session_data = {}
+        manager = mocks.MockMontrekReportManager(session_data=session_data)
+        manager.append_report_element(mocks.MockReportElementError())
+        test_html = manager.to_html()
+        self.assertIn(
+            '<div class="alert alert-danger"><strong>Error during report generation: This fails!</strong></div>',
+            test_html,
+        )
+        self.assertIn(
+            "Traceback (most recent call last):",
+            test_html,
+        )
+        self.assertIn(
+            "ValueError: This fails!",
+            test_html,
+        )
+        self.assertEqual(manager.report_elements, [])
+
+    @override_settings(DEBUG=False)
+    def test_failing_report_generation__no_debug_while_to_html(self):
+        session_data = {}
+        manager = mocks.MockMontrekReportManager(session_data=session_data)
+        manager.append_report_element(mocks.MockReportElementError())
         test_html = manager.to_html()
         self.assertEqual(
             test_html,

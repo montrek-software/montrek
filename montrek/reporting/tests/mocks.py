@@ -93,6 +93,14 @@ class MockReportElement:
         return "latex"
 
 
+class MockReportElementError:
+    def to_html(self):
+        raise ValueError("This fails!")
+
+    def to_latex(self):
+        raise ValueError("This fails!")
+
+
 class MockLatexReportManagerNoTemplate(LatexReportManager):
     latex_template = "no_template.tex"
 
