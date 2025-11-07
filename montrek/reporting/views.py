@@ -122,13 +122,14 @@ class MontrekReportFieldEditView(
     MontrekPermissionRequiredMixin, View, MontrekViewMixin
 ):
     form_class = MontrekCreateForm
+    html_sanitizer = HtmlSanitizer()
 
     def get(self, request, *args, **kwargs):
         obj = self.manager.get_object_from_pk(self.session_data["pk"])
         mode = request.GET.get("mode")
         field = request.GET.get("field")
         object_content = getattr(obj, field)
-        object_content = HtmlSanitizer().clean_html(object_content)
+        object_content = self.html_sanitizer.clean_html(object_content)
         # Determine which mode we're in based on the requested action
         if mode == "edit":
             # Return just the edit form partial
@@ -155,7 +156,7 @@ class MontrekReportFieldEditView(
         action = request.POST.get("action")
         field_name = request.POST.get("field")
         if action == "cancel":
-            org_field_content = HtmlSanitizer().display_text_as_html(
+            org_field_content = self.html_sanitizer.display_text_as_html(
                 edit_data[field_name]
             )
             return render(
@@ -182,7 +183,7 @@ class MontrekReportFieldEditView(
 
     def form_valid(self, form, edit_data: dict, request, field):
         edit_data[field] = form.cleaned_data[field]
-        field_content = HtmlSanitizer().display_text_as_html(edit_data[field])
+        field_content = self.html_sanitizer.display_text_as_html(edit_data[field])
         self.manager.repository.create_by_dict(edit_data)
         return render(
             request,
