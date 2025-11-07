@@ -1,6 +1,7 @@
 import datetime
 from dataclasses import dataclass
 from decimal import Decimal
+from typing import Any
 
 import pandas as pd
 from baseclasses.dataclasses.view_classes import TabElement
@@ -21,7 +22,7 @@ from reporting.managers.montrek_table_manager import (
     MontrekDataFrameTableManager,
     MontrekTableManager,
 )
-from reporting.views import MontrekReportView
+from reporting.views import MontrekReportFieldEditView, MontrekReportView
 
 
 class MockNoTemplateMontrekReportForm(MontrekReportForm): ...
@@ -193,6 +194,17 @@ class MockRepository:
     def set_order_fields(self, value):
         self._order_field = value
 
+    def object_to_dict(self, obj: Any) -> dict:
+        return {
+            "field_a": "TestField",
+            "field_b": 5,
+            "field_c": 5.3,
+            "field_d": timezone.make_aware(datetime.datetime(2025, 11, 7)),
+            "field_e": Decimal(1),
+        }
+
+    def create_by_dict(self, _): ...
+
 
 class MockHtmlRepository(MockRepository):
     def receive(self):
@@ -338,3 +350,34 @@ class MockMontrekDataFrameTableManager(MontrekDataFrameTableManager):
                 text="field_a",
             ),
         )
+
+
+class MockField:
+    def clean(self, field):
+        return field
+
+
+class MockErrorClass:
+    def __init__(self, err_msg): ...
+
+
+class MockFieldForm:
+    fields = {"field_a": MockField()}
+    error_class = MockErrorClass
+    errors = {"error": ["error"]}
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def __getitem__(self, index):
+        return "Test"
+
+
+class MockMontrekReportFieldEditView(MontrekReportFieldEditView):
+    manager_class = MockMontrekTableManager
+    form_class = MockFieldForm
+
+
+class MockMontrekReportFieldEditViewValidationError(MockMontrekReportFieldEditView):
+    def form_valid(self, form, edit_data: dict, request, field):
+        raise forms.ValidationError("Validation Error raised!")

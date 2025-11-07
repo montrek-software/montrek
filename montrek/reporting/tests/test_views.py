@@ -5,7 +5,12 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.http import Http404
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
-from reporting.tests.mocks import MockMontrekReportView, MockMontrekReportWithFormView
+from reporting.tests.mocks import (
+    MockMontrekReportFieldEditView,
+    MockMontrekReportFieldEditViewValidationError,
+    MockMontrekReportView,
+    MockMontrekReportWithFormView,
+)
 from reporting.views import download_reporting_file_view
 from testing.decorators import add_logged_in_user
 
@@ -84,3 +89,78 @@ class TestMontrekReportFormView(TestCase):
         request.session = {}
         response = MockMontrekReportWithFormView.as_view()(request)
         self.assertEqual(response.url, "/example/?field_1=ABC")
+
+
+class TestMontrekReportFieldEditView(TestCase):
+    @add_logged_in_user
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.field_edit_view = MockMontrekReportFieldEditView
+
+    def test_get_edit_mode_renders_partial(self):
+        """GET with mode=edit should render the edit field partial."""
+        request = self.factory.get("/fake/url/?mode=edit&field=field_a")
+        request.user = self.user
+        request.session = {"method": "GET", "pk": 1}
+
+        response = self.field_edit_view.as_view()(request)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"<td>Test</td>", response.content)
+
+    def test_get_non_edit_redirects(self):
+        """GET without mode=edit should redirect."""
+        request = self.factory.get("/fake/url/?mode=view&field=field_a")
+        request.user = self.user
+        request.session = {"method": "GET", "pk": 1}
+
+        response = self.field_edit_view.as_view()(request)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "")
+
+    def test_post_cancel_renders_display_partial(self):
+        """POST with action=cancel should render the display partial."""
+        request = self.factory.post(
+            "/fake/url/",
+            {"action": "cancel", "field": "field_a"},
+        )
+        request.user = self.user
+        request.session = {"method": "POST", "pk": 1}
+
+        response = self.field_edit_view.as_view()(request)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"TestField", response.content)
+        self.assertIn(b"field=field_a", response.content)
+
+    def test_post_valid_form_calls_form_valid_and_creates(self):
+        """POST valid field value should trigger form_valid and repository create."""
+        request = self.factory.post(
+            "/fake/url/",
+            {"field": "field_a", "field_a": "new value"},
+        )
+        request.user = self.user
+        request.session = {"method": "POST", "pk": 1}
+
+        response = self.field_edit_view.as_view()(request)
+
+        # Check that we got the display partial back
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"new value", response.content)
+
+    def test_post_invalid_form_calls_form_invalid(self):
+        """POST with invalid data should hit form_invalid branch."""
+        request = self.factory.post(
+            "/fake/url/",
+            {"field": "field_a", "field_a": "bad input"},
+        )
+        request.user = self.user
+        request.session = {"method": "POST", "pk": 1}
+
+        response = MockMontrekReportFieldEditViewValidationError.as_view()(request)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            b'<div class="error-message alert alert-danger">error: error</div>',
+            response.content,
+        )
