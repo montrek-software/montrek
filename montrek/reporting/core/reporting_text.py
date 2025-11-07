@@ -62,6 +62,10 @@ class ReportingText(ReportElementProtocol):
     def to_json(self) -> dict[str, str]:
         return {self.__class__.__name__.lower(): self.text}
 
+    def convert_text_to_html(self, text: str) -> str:
+        html_text = text.replace("\n", "<br>")
+        return html_text
+
 
 class ReportingParagraph(ReportingText):
     def to_latex(self) -> str:
@@ -69,7 +73,7 @@ class ReportingParagraph(ReportingText):
         return f"\\begin{{justify}}{text}\\end{{justify}}"
 
     def to_html(self) -> str:
-        return f"<p>{self.text}</p>"
+        return f"<p>{super().to_html()}</p>"
 
 
 class ReportingEditableText(ReportingParagraph):
@@ -90,6 +94,7 @@ class ReportingEditableText(ReportingParagraph):
         self.field = field
 
     def to_html(self) -> str:
+        text = self.convert_text_to_html(self.text)
         return Template(
             f"""<div class="container-fluid">
         <div class="row">
@@ -102,7 +107,7 @@ class ReportingEditableText(ReportingParagraph):
         ).render(
             Context(
                 {
-                    "object_content": self.text,
+                    "object_content": text,
                     "edit_url": self.edit_url,
                     "field": self.field,
                 }
