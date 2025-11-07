@@ -64,10 +64,6 @@ class ReportingText(ReportElementProtocol):
     def to_json(self) -> dict[str, str]:
         return {self.__class__.__name__.lower(): self.text}
 
-    def convert_text_to_html(self, text: str) -> str:
-        html_text = text.replace("\n", "<br>")
-        return html_text
-
     def _html(self, text: str) -> str:
         return text
 

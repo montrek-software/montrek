@@ -60,5 +60,6 @@ class HtmlSanitizer:
         )
 
     def display_text_as_html(self, text: str | Any) -> str:
+        text = str(text)
         html_text = text.replace("\n", "<br>")
         return html_text
