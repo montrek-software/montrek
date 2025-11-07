@@ -1,4 +1,5 @@
 from typing import Any
+
 import bleach
 from bleach.css_sanitizer import CSSSanitizer
 
@@ -57,3 +58,8 @@ class HtmlSanitizer:
             css_sanitizer=self.css_sanitizer,
             strip=True,  # Remove disallowed tags entirely
         )
+
+    def display_text_as_html(self, text: str | Any) -> str:
+        text = str(text)
+        html_text = text.replace("\n", "<br>")
+        return html_text

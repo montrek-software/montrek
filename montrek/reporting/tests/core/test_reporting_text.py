@@ -246,6 +246,14 @@ class TestReportText(TestCase):
 </div>""",
         )
 
+    def test_reporting_editable_text_display_newline(self):
+        mock_object = MockObject(field="AA123\nNewline")
+        test_element = ReportingEditableText(
+            obj=mock_object, field="field", edit_url="test_url"
+        )
+        self.assertEqual(test_element.text, "AA123\nNewline")
+        self.assertIn("AA123<br>Newline", test_element.to_html())
+
     def test_reporting_editable_text_with_header(self):
         mock_object = MockObject(field="AA123")
         test_element = ReportingEditableText(

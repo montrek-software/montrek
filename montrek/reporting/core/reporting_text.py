@@ -6,6 +6,7 @@ from urllib.parse import urlparse
 import markdown
 import requests
 from baseclasses.models import HubValueDate
+from baseclasses.sanitizer import HtmlSanitizer
 from django.conf import settings
 from django.template import Context, Template
 from reporting.constants import WORKBENCH_PATH, ReportingTextType
@@ -57,10 +58,14 @@ class ReportingText(ReportElementProtocol):
         return text
 
     def to_html(self) -> str:
-        return self.text
+        text = HtmlSanitizer().display_text_as_html(self.text)
+        return self._html(text)
 
     def to_json(self) -> dict[str, str]:
         return {self.__class__.__name__.lower(): self.text}
+
+    def _html(self, text: str) -> str:
+        return text
 
 
 class ReportingParagraph(ReportingText):
@@ -68,8 +73,8 @@ class ReportingParagraph(ReportingText):
         text = super().to_latex()
         return f"\\begin{{justify}}{text}\\end{{justify}}"
 
-    def to_html(self) -> str:
-        return f"<p>{self.text}</p>"
+    def _html(self, text: str) -> str:
+        return f"<p>{text}</p>"
 
 
 class ReportingEditableText(ReportingParagraph):
@@ -89,7 +94,7 @@ class ReportingEditableText(ReportingParagraph):
         self.header = header
         self.field = field
 
-    def to_html(self) -> str:
+    def _html(self, text: str) -> str:
         return Template(
             f"""<div class="container-fluid">
         <div class="row">
@@ -102,7 +107,7 @@ class ReportingEditableText(ReportingParagraph):
         ).render(
             Context(
                 {
-                    "object_content": self.text,
+                    "object_content": text,
                     "edit_url": self.edit_url,
                     "field": self.field,
                 }
