@@ -146,13 +146,6 @@ class MontrekReportFieldEditView(
                     "field": formfield,
                 },
             )
-        elif mode == "display":
-            # Return just the display partial
-            return render(
-                request,
-                "partials/display_field.html",
-                {"object_content": object_content},
-            )
         else:
             return HttpResponseRedirect("")
 
