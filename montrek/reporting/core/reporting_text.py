@@ -6,6 +6,7 @@ from urllib.parse import urlparse
 import markdown
 import requests
 from baseclasses.models import HubValueDate
+from baseclasses.sanitizer import HtmlSanitizer
 from django.conf import settings
 from django.template import Context, Template
 from reporting.constants import WORKBENCH_PATH, ReportingTextType
@@ -57,7 +58,7 @@ class ReportingText(ReportElementProtocol):
         return text
 
     def to_html(self) -> str:
-        text = self.convert_text_to_html(self.text)
+        text = HtmlSanitizer().display_text_as_html(self.text)
         return self._html(text)
 
     def to_json(self) -> dict[str, str]:

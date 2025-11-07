@@ -51,3 +51,8 @@ class TestHtmlSanitizer(TestCase):
         html = 1
         cleaned = self.sanitizer.clean_html(html)
         self.assertEqual(cleaned, "1")
+
+    def test_display_text_as_html(self):
+        text = "AA\nBB"
+        html_text = self.sanitizer.display_text_as_html(text)
+        self.assertEqual(html_text, "AA<br>BB")
