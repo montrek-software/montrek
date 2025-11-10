@@ -1,6 +1,6 @@
 from django.core import mail
-from django.test import TestCase
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import TestCase
 from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepository,
 )
@@ -11,8 +11,9 @@ from file_upload.tests.mocks import (
     MockFileUploadManagerProcessorPreCheckFail,
     MockFileUploadManagerSeq,
 )
-from montrek.celery_app import PARALLEL_QUEUE_NAME, SEQUENTIAL_QUEUE_NAME
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
+
+from montrek.celery_app import PARALLEL_QUEUE_NAME, SEQUENTIAL_QUEUE_NAME
 
 
 class TestFileUploadManager(TestCase):
@@ -38,14 +39,14 @@ class TestFileUploadManager(TestCase):
         self.session_data.update(filter_data)
 
     def test_init_subclass(self):
-        task = MockFileUploadManager.process_file_task
+        task = MockFileUploadManager.upload_file_task
         self.assertEqual(
             task.name,
             f"file_upload.tests.mocks.MockFileUploadManager_process_file_task",
         )
         self.assertEqual(task.queue, PARALLEL_QUEUE_NAME)
         self.assertEqual(task.manager_class, MockFileUploadManager)
-        task = MockFileUploadManagerSeq.process_file_task
+        task = MockFileUploadManagerSeq.upload_file_task
         self.assertEqual(
             task.name,
             f"file_upload.tests.mocks.MockFileUploadManagerSeq_process_file_task",

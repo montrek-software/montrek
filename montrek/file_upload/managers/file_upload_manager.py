@@ -65,12 +65,15 @@ class FileUploadManagerABC(MontrekManager):
     )
     file_registry_manager_class = FileUploadRegistryManager
     do_process_file_async: bool = True
-    process_file_task: FileUploadTask
+    upload_file_task_class: type[FileUploadTask] = FileUploadTask
+    upload_file_task: FileUploadTask
     message: str
 
     def __init_subclass__(cls, task_queue: str = PARALLEL_QUEUE_NAME, **kwargs):
         if cls.do_process_file_async:
-            cls.process_file_task = FileUploadTask(manager_class=cls, queue=task_queue)
+            cls.upload_file_task = cls.upload_file_task_class(
+                manager_class=cls, queue=task_queue
+            )
 
     def __init__(
         self,
@@ -88,7 +91,7 @@ class FileUploadManagerABC(MontrekManager):
         self.session_data["file_upload_registry_id"] = self.register_file_in_db(file)
         logger.debug("do_process_file_async: %s", self.do_process_file_async)
         if self.do_process_file_async:
-            task_result = self.process_file_task.delay(
+            task_result = self.upload_file_task.delay(
                 session_data=self.session_data,
             )
             self.task_id = task_result.id
