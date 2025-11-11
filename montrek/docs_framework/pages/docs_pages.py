@@ -13,7 +13,7 @@ class DocsPageABC(MontrekPage, DocsFilesMixin):
         for docs_file in docs_files:
             tabs.append(
                 TabElement(
-                    name=docs_file.docs_name,
+                    name=docs_file.docs_title,
                     link=reverse(
                         self.docs_url, kwargs={"docs_name": docs_file.docs_name}
                     ),

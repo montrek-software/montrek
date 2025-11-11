@@ -10,7 +10,13 @@ class DocsViewABC(MontrekReportView, DocsFilesMixin):
     @property
     def session_data(self) -> SessionDataType:
         session_data = super().session_data
-        session_data["docs_file_path"] = self.get_docs_file_by_name(
+        session_data["docs_file"] = self.get_docs_file_by_name(
             session_data["docs_name"]
-        ).docs_path
+        )
+        session_data["docs_file_path"] = session_data["docs_file"].docs_path
         return session_data
+
+    @property
+    def tab(self) -> str:
+        docs_file = self.session_data["docs_file"]
+        return f"tab_docs_{docs_file.docs_name}"
