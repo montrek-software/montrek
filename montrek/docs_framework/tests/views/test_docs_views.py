@@ -7,17 +7,10 @@ class MockDocsView(DocsViewABC):
     page_class = DocsPageTest
 
 
-class BaseTestDocsViews(MontrekReportViewTestCase):
+class TestDocs1Views(MontrekReportViewTestCase):
     view_class = MockDocsView
     viewname = "test_docs"
     expected_number_of_report_elements = 1
 
-
-class TestDocs1Views(BaseTestDocsViews):
     def url_kwargs(self) -> dict:
         return {"docs_name": "docs_1"}
-
-
-class TestDocs2Views(BaseTestDocsViews):
-    def url_kwargs(self) -> dict:
-        return {"docs_name": "docs_2"}

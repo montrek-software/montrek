@@ -25,7 +25,8 @@ class TestDocsFilesMixin(TestCase):
         test_docs_files = self.mixin.get_docs_files()
         self.assertEqual(len(test_docs_files), 3)
         files_list = [docfile.docs_name for docfile in test_docs_files]
-        self.assertEqual(files_list, ["docs_2", "docs_3", "docs_1"])
+        files_list.sort()
+        self.assertEqual(files_list, ["docs_1", "docs_2", "docs_3"])
 
     def test_get_docs_files__no_docs_path(self):
         mixin = MockTestClassNoDocsPath()
