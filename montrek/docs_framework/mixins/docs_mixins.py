@@ -31,4 +31,6 @@ class DocsFilesMixin:
         for doc_file in doc_files:
             if doc_file.docs_name == docsfilename:
                 return doc_file
-        raise FileNotFoundError(f"{docsfilename} not found in {self.get_docs_path}")
+        raise FileNotFoundError(
+            f"{docsfilename} not found in {str(self.get_docs_path())}"
+        )
