@@ -25,3 +25,10 @@ class DocsFilesMixin:
                 docs_file = DocsFile(docs_path=file_path)
                 docs_files.append(docs_file)
         return docs_files
+
+    def get_docs_file_by_name(self, docsfilename: str) -> DocsFile:
+        doc_files = self.get_docs_files()
+        for doc_file in doc_files:
+            if doc_file.docs_name == docsfilename:
+                return doc_file
+        raise FileNotFoundError(f"{docsfilename} not found in {self.get_docs_path}")

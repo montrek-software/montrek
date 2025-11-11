@@ -5,6 +5,7 @@ from docs_framework.pages.docs_pages import DocsPageABC
 
 class DocsPageTest(DocsPageABC):
     docs_url: str = "test_docs"
+    page_title: str = "Test Page"
 
 
 class TestDocsPage(TestCase):

@@ -31,3 +31,11 @@ class TestDocsFilesMixin(TestCase):
         mixin = MockTestClassNoDocsPath()
         test_docs_files = mixin.get_docs_files()
         self.assertEqual(test_docs_files, [])
+
+    def test_get_docs_file_by_name(self):
+        docs_file = self.mixin.get_docs_file_by_name("docs_1")
+        self.assertEqual(docs_file.docs_name, "docs_1")
+
+    def test_get_docs_file_by_name__not_found(self):
+        with self.assertRaises(FileNotFoundError):
+            self.mixin.get_docs_file_by_name("docs_na")
