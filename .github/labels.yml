@@ -1,0 +1,79 @@
+# 🚀 Features
+- name: feature
+  color: "#0277BD" # brighterblue
+  description: "A new feature or capability added to the project"
+- name: enhancement
+  color: "#2B6D8B" # mediumblue
+  description: "Improvement or extension of an existing feature"
+
+# 📝 Requests
+- name: request
+  color: "#6B93B0" # softsky
+  description: "A request for a new feature or change"
+- name: feature-request
+  color: "#B1CFE2" # lightsky
+  description: "User-submitted feature request"
+
+# ❗ Issues / Incidents
+- name: issue
+  color: "#BE0D3E" # red
+  description: "A problem or defect that needs investigation"
+- name: incident
+  color: "#D32F2F" # brighterred
+  description: "An incident or urgent issue requiring attention"
+
+# 🐛 Bug Fixes
+- name: bug
+  color: "#E64C4C" # brighterred (for high visibility)
+  description: "A confirmed bug or defect in the codebase"
+- name: fix
+  color: "#821621" # darkerred
+  description: "A commit or PR that fixes a bug or issue"
+
+# 🛠 Maintenance
+- name: chore
+  color: "#6D4C41" # brown
+  description: "Routine maintenance or housekeeping tasks"
+- name: refactor
+  color: "#5D4037" # darkerbrown
+  description: "Code restructuring or cleanup without functional changes"
+- name: ci
+  color: "#26A69A" # teal
+  description: "Changes related to continuous integration or automation"
+- name: infrastructure
+  color: "#1B5E20" # darkgreen
+  description: "Infrastructure or build system improvements"
+
+# 📚 Documentation
+- name: docs
+  color: "#7E57C2" # purple
+  description: "Documentation updates or improvements"
+
+# ⬆️ Dependencies
+- name: dependencies
+  color: "#FFA000" # brighterorange
+  description: "Dependency updates or management tasks"
+
+# 🚫 Skip Changelog
+- name: skip-changelog
+  color: "#BDBDBD" # grey
+  description: "Exclude this PR from changelog generation"
+
+# ⚡ Semantic Versioning
+- name: major
+  color: "#BE0D3E" # red
+  description: "Introduces breaking changes (major version bump)"
+- name: minor
+  color: "#0277BD" # brighterblue
+  description: "Adds functionality in a backward-compatible manner (minor bump)"
+- name: patch
+  color: "#388E3C" # brightergreen
+  description: "Backward-compatible bug fix (patch bump)"
+- name: breaking-change
+  color: "#FF6F00" # darkorange
+  description: "Introduces incompatible API or behavior changes"
+
+# 🧩 Misc
+- name: other
+  color: "#F4F4F4" # lightgrey
+  description: "Miscellaneous or uncategorized changes"
