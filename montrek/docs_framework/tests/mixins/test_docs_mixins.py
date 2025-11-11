@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 from django.test import TestCase
@@ -25,9 +24,8 @@ class TestDocsFilesMixin(TestCase):
     def test_get_docs_files(self):
         test_docs_files = self.mixin.get_docs_files()
         self.assertEqual(len(test_docs_files), 3)
-        files_list = [str(docfile).split(os.sep)[-1] for docfile in test_docs_files]
-        files_list.sort()
-        self.assertEqual(files_list, ["docs_1.md", "docs_2.md", "docs_3.md"])
+        files_list = [docfile.docs_name for docfile in test_docs_files]
+        self.assertEqual(files_list, ["docs_2", "docs_3", "docs_1"])
 
     def test_get_docs_files__no_docs_path(self):
         mixin = MockTestClassNoDocsPath()
