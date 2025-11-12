@@ -9,6 +9,7 @@ class DocsPageABC(MontrekPage, DocsFilesMixin):
 
     def get_tabs(self) -> list | tuple[TabElement]:
         docs_files = self.get_docs_files()
+        docs_files.sort(key=lambda f: f.docs_name)
         tabs = []
         for docs_file in docs_files:
             tabs.append(
