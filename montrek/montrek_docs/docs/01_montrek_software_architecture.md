@@ -1,8 +1,8 @@
-Montrek Framework Documentation
+Montrek Software Architecture
 
 ## Overview
 
-The Montrek framework is a structured approach to building data-driven applications. It provides a clear and opinionated software architecture that emphasizes inheritance with dependency injection.
+Montrek is a Django framework that provides a structured approach to building data-driven applications. At its core, Montrek is designed around a clear and opinionated software architecture that emphasizes inheritance with dependency injection.
 
 ## Key Components
 
@@ -47,46 +47,6 @@ The following table lists the key classes and their corresponding source module 
 | `MontrekCreateView` | `baseclasses.views` |
 | `MontrekUpdateView` | `baseclasses.views` |
 
-## Concrete Examples from montrek_examples
-
-### Illustration of the above concepts
-
-The `montrek_examples` module provides concrete examples of how to use the Montrek framework. For instance, the `MontrekExampleReport` class demonstrates how to create a report using the `MontrekReportManager` class.
-
-```python
-from montrek_example import views
-
-urlpatterns = [
-    path(
-        "",
-        views.MontrekExampleReport.as_view(),
-        name="montrek_example_report",
-    ),
-    # ...
-]
-```
-
-### Code snippets
-
-The following code snippet shows how to create a `MontrekReportManager` instance and use it to generate a report:
-
-```python
-from reporting.managers.montrek_report_manager import MontrekReportManager
-
-class ExampleReportManager(MontrekReportManager):
-    report_name = "Example Report"
-
-    def __init__(self, session_data: dict[str, str], **kwargs) -> None:
-        super().__init__(session_data=session_data, **kwargs)
-        self._report_elements = []
-
-    # ...
-```
-
-### Explanations
-
-The `MontrekReportManager` class provides a unified interface for managing data and executing business logic. It acts as an intermediary between the data access layer and the business logic layer.
-
 ## Summary
 
-The Montrek framework provides a structured approach to building data-driven applications. It emphasizes inheritance with dependency injection and provides a clear and opinionated software architecture. The framework's key components, including `MontrekRepository`, `MontrekManager`, and `MontrekView`, work together to provide a unified interface for managing data and executing business logic. With its flexible and extensible design, Montrek is an ideal choice for building complex data-driven applications.
+Montrek's software architecture is designed to provide a clear and structured approach to building data-driven applications. By emphasizing inheritance with dependency injection, Montrek enables developers to create robust and maintainable applications with ease. The framework's key components, including `MontrekRepository`, `MontrekManager`, and `MontrekView`, work together to provide a unified interface for managing data and executing business logic. With its flexible and extensible design, Montrek is an ideal choice for building complex data-driven applications.

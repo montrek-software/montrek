@@ -1,44 +1,33 @@
 Montrek Serializers and API
 
-## Serializer Classes
+## Overview
 
-Montrek provides a set of serializer classes that can be used to serialize and deserialize data. The main serializer class is `MontrekSerializer`, which is a subclass of Django's built-in `Serializer` class.
+Montrek provides a set of serializers and API views to handle data serialization and deserialization. This section covers the serializer classes, API views, and endpoints.
+
+## Serializer Classes
 
 ### MontrekSerializer
 
-The `MontrekSerializer` class is used to serialize and deserialize Montrek data. It provides a set of methods for serializing and deserializing data, including:
+The `MontrekSerializer` class is the base serializer class in Montrek. It provides a standardized way to serialize and deserialize data.
 
-* `serialize`: Serializes the data into a JSON string.
-* `deserialize`: Deserializes a JSON string into a Python object.
-
-Here is an example of how to use the `MontrekSerializer` class:
 ```python
+from rest_framework import serializers
 from baseclasses.serializers import MontrekSerializer
 
-data = {'name': 'John', 'age': 30}
-serializer = MontrekSerializer(data)
-json_data = serializer.serialize()
-print(json_data)  # Output: '{"name": "John", "age": 30}'
-
-# Deserialize the JSON data
-deserialized_data = serializer.deserialize(json_data)
-print(deserialized_data)  # Output: {'name': 'John', 'age': 30}
+class MyModelSerializer(MontrekSerializer):
+    class Meta:
+        model = MyModel
+        fields = ['id', 'name', 'description']
 ```
-## API Views and Endpoints
 
-Montrek provides a set of API views and endpoints that can be used to interact with the Montrek data. The main API view is `MontrekApiViewMixin`, which is a subclass of Django's built-in `View` class.
+## API Views and Endpoints
 
 ### MontrekApiViewMixin
 
-The `MontrekApiViewMixin` class is used to create API views that interact with the Montrek data. It provides a set of methods for handling API requests, including:
+The `MontrekApiViewMixin` class provides a set of methods to handle API requests. It can be used to create API views that handle GET, POST, PUT, and DELETE requests.
 
-* `get`: Handles GET requests.
-* `post`: Handles POST requests.
-* `put`: Handles PUT requests.
-* `delete`: Handles DELETE requests.
-
-Here is an example of how to use the `MontrekApiViewMixin` class:
 ```python
+from rest_framework.response import Response
 from baseclasses.views import MontrekApiViewMixin
 
 class MyApiView(MontrekApiViewMixin):
@@ -58,27 +47,40 @@ class MyApiView(MontrekApiViewMixin):
         # Handle DELETE request
         pass
 ```
+
+### API Endpoints
+
+Montrek provides a set of API endpoints to handle data serialization and deserialization. The following table lists the available API endpoints:
+
+| Endpoint | Method | Description |
+| --- | --- | --- |
+| `/api/data/` | GET | Retrieve a list of data objects |
+| `/api/data/` | POST | Create a new data object |
+| `/api/data/{id}/` | GET | Retrieve a single data object |
+| `/api/data/{id}/` | PUT | Update a single data object |
+| `/api/data/{id}/` | DELETE | Delete a single data object |
+
 ## Data Serialization and Deserialization
 
-Montrek provides a set of methods for serializing and deserializing data. The main method for serializing data is `serialize`, which is provided by the `MontrekSerializer` class. The main method for deserializing data is `deserialize`, which is also provided by the `MontrekSerializer` class.
+Montrek provides a set of methods to handle data serialization and deserialization. The following table lists the available methods:
 
-Here is an example of how to use the `serialize` and `deserialize` methods:
+| Method | Description |
+| --- | --- |
+| `serialize_data` | Serialize a data object into a JSON string |
+| `deserialize_data` | Deserialize a JSON string into a data object |
+
 ```python
 from baseclasses.serializers import MontrekSerializer
 
-data = {'name': 'John', 'age': 30}
+data = {'id': 1, 'name': 'John Doe', 'description': 'This is a test'}
 serializer = MontrekSerializer(data)
-json_data = serializer.serialize()
-print(json_data)  # Output: '{"name": "John", "age": 30}'
+serialized_data = serializer.serialize_data()
+print(serialized_data)  # Output: '{"id": 1, "name": "John Doe", "description": "This is a test"}'
 
-# Deserialize the JSON data
-deserialized_data = serializer.deserialize(json_data)
-print(deserialized_data)  # Output: {'name': 'John', 'age': 30}
+deserialized_data = serializer.deserialize_data(serialized_data)
+print(deserialized_data)  # Output: {'id': 1, 'name': 'John Doe', 'description': 'This is a test'}
 ```
+
 ## Summary
 
-In this section, we covered the Montrek serializers and API. We discussed the `MontrekSerializer` class, which is used to serialize and deserialize Montrek data. We also discussed the `MontrekApiViewMixin` class, which is used to create API views that interact with the Montrek data. Finally, we covered the methods for serializing and deserializing data.
-
-## Next Steps
-
-In the next section, we will cover the Montrek views and templates. We will discuss how to create views that interact with the Montrek data and how to use templates to render the data.
+Montrek provides a set of serializers and API views to handle data serialization and deserialization. The `MontrekSerializer` class provides a standardized way to serialize and deserialize data, while the `MontrekApiViewMixin` class provides a set of methods to handle API requests. The API endpoints and methods provided by Montrek enable developers to easily handle data serialization and deserialization in their applications.

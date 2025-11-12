@@ -1,107 +1,53 @@
 Montrek Tasks and Celery
 
-## Task Classes
+## Overview
 
-Montrek provides a custom task class, `MontrekTask`, which inherits from Celery's `Task` class. This class is designed to handle tasks specific to the Montrek framework.
+Montrek provides a robust task management system built on top of Celery, a distributed task queue. This allows for asynchronous execution of tasks, enabling efficient and scalable data processing.
+
+## Task Classes
 
 ### MontrekTask
 
-The `MontrekTask` class is the base class for all tasks in Montrek. It provides a basic implementation of a task and can be extended to create custom tasks.
+The `MontrekTask` class is the base class for all tasks in Montrek. It provides a standardized interface for defining tasks and handling task execution.
 
 ```python
-from tasks.montrek_task import MontrekTask
+from celery import Task
+from baseclasses.tasks import MontrekTask
 
 class MyTask(MontrekTask):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     def run(self, *args, **kwargs):
-        # Task implementation here
+        # Task execution logic here
         pass
 ```
 
 ## Celery Configuration and Usage
 
-To use Celery with Montrek, you need to configure it in your Django project. Here's an example of how to do it:
-
-### settings.py
+To use Celery with Montrek, you need to configure the Celery broker and backend. This can be done in the `settings.py` file:
 
 ```python
-CELERY_BROKER_URL = 'amqp://localhost'
-CELERY_RESULT_BACKEND = 'amqp://localhost'
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
+CELERY_BROKER_URL = 'amqp://guest:guest@localhost:5672//'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
 ```
 
-### celery.py
+Once configured, you can use the `celery` command to start the worker:
 
-```python
-from __future__ import absolute_import, unicode_literals
-import os
-from celery import Celery
-
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'myproject.settings')
-
-app = Celery('myproject')
-app.config_from_object('django.conf:settings', namespace='CELERY')
-app.autodiscover_tasks()
-```
-
-To run a task, you can use the `delay` method:
-
-```python
-my_task = MyTask()
-my_task.delay()
+```bash
+celery -A myapp worker -l info
 ```
 
 ## Asynchronous Task Execution
 
-Montrek provides a way to execute tasks asynchronously using Celery. To do this, you need to create a task instance and call the `delay` method:
+To execute a task asynchronously, you can use the `apply_async` method:
 
 ```python
-my_task = MyTask()
-my_task.delay()
+from myapp.tasks import MyTask
+
+task = MyTask()
+task.apply_async(args=['arg1', 'arg2'], kwargs={'key': 'value'})
 ```
 
-This will send a message to the Celery broker, which will then execute the task in the background.
-
-### Example
-
-Here's an example of how to create a task that sends an email:
-
-```python
-from tasks.montrek_task import MontrekTask
-from django.core.mail import send_mail
-
-class SendEmailTask(MontrekTask):
-    def __init__(self, subject, message, from_email, to_email):
-        self.subject = subject
-        self.message = message
-        self.from_email = from_email
-        self.to_email = to_email
-
-    def run(self):
-        send_mail(self.subject, self.message, self.from_email, [self.to_email])
-```
-
-To run this task, you can use the `delay` method:
-
-```python
-send_email_task = SendEmailTask('Hello', 'This is a test email', 'from@example.com', 'to@example.com')
-send_email_task.delay()
-```
-
-This will send an email in the background using Celery.
+This will schedule the task for execution by the Celery worker.
 
 ## Summary
 
-In this section, we covered the basics of Montrek tasks and Celery. We learned how to create custom tasks, configure Celery, and execute tasks asynchronously.
-
-## Next Steps
-
-* Learn more about Celery and its features
-* Explore the Montrek framework and its capabilities
-* Create your own custom tasks and integrate them with your Django project
-
-By following these steps, you can unlock the full potential of Montrek and Celery, and take your Django project to the next level.
+Montrek's task management system, built on top of Celery, provides a robust and scalable way to execute tasks asynchronously. By defining tasks using the `MontrekTask` class and configuring Celery, you can take advantage of this powerful feature to build efficient and scalable data-driven applications.

@@ -2,119 +2,105 @@ Montrek Forms and Validation
 
 ## Overview
 
-Montrek provides a robust form handling system, allowing developers to create custom forms with ease. This section covers the basics of Montrek forms, including custom form classes, validation logic, and error handling.
+Montrek provides a robust form handling system that allows developers to create custom forms with ease. This section covers the basics of Montrek forms, including custom form classes, validation logic, and error handling.
 
 ## Custom Form Classes
 
-Montrek provides a base `MontrekCreateForm` class that can be extended to create custom forms. This class inherits from Django's built-in `Form` class and provides additional functionality specific to Montrek.
+Montrek provides several custom form classes that can be used to create forms with specific functionality. These classes include:
+
+*   `MontrekCreateForm`: A form class that handles the creation of new objects.
+*   `MontrekUpdateForm`: A form class that handles the updating of existing objects.
+
+### Example: Creating a Custom Form Class
 
 ```python
 from baseclasses.forms import MontrekCreateForm
 
-class CustomForm(MontrekCreateForm):
-    # Define form fields here
+class MyCreateForm(MontrekCreateForm):
+    # Define form fields and validation logic here
     pass
 ```
 
 ## Validation Logic
 
-Montrek forms use Django's built-in validation system. You can define custom validation logic by overriding the `clean()` method in your form class.
+Montrek forms use Django's built-in validation system to ensure that form data is valid and consistent. Validation logic can be defined at the form level or at the field level.
+
+### Example: Defining Validation Logic
 
 ```python
 from baseclasses.forms import MontrekCreateForm
+from django.core.exceptions import ValidationError
 
-class CustomForm(MontrekCreateForm):
+class MyCreateForm(MontrekCreateForm):
     # Define form fields here
 
     def clean(self):
-        # Custom validation logic here
+        # Define form-level validation logic here
+        pass
+
+    def clean_field_name(self):
+        # Define field-level validation logic here
         pass
 ```
 
 ## Error Handling
 
-Montrek forms handle errors using Django's built-in error handling system. You can access form errors using the `errors` attribute.
+Montrek forms provide a robust error handling system that allows developers to handle form errors with ease. Error messages can be defined at the form level or at the field level.
+
+### Example: Defining Error Messages
 
 ```python
 from baseclasses.forms import MontrekCreateForm
+from django.core.exceptions import ValidationError
 
-class CustomForm(MontrekCreateForm):
+class MyCreateForm(MontrekCreateForm):
     # Define form fields here
 
     def clean(self):
-        # Custom validation logic here
-        pass
+        # Define form-level validation logic here
+        raise ValidationError("Form-level error message")
 
-form = CustomForm()
-if not form.is_valid():
-    print(form.errors)
-```
-
-## Montrek Report Form
-
-Montrek provides a `MontrekReportForm` class that can be used to generate reports. This class inherits from Django's built-in `Form` class and provides additional functionality specific to Montrek reports.
-
-```python
-from reporting.forms import MontrekReportForm
-
-class CustomReportForm(MontrekReportForm):
-    # Define report fields here
-    pass
-```
-
-## Montrek Report Form Template
-
-Montrek report forms use a template to render the form HTML. You can define a custom template by setting the `form_template` attribute in your form class.
-
-```python
-from reporting.forms import MontrekReportForm
-
-class CustomReportForm(MontrekReportForm):
-    form_template = "custom_report_form.html"
-    # Define report fields here
-    pass
-```
-
-## Montrek Report Form Validation
-
-Montrek report forms use Django's built-in validation system. You can define custom validation logic by overriding the `clean()` method in your form class.
-
-```python
-from reporting.forms import MontrekReportForm
-
-class CustomReportForm(MontrekReportForm):
-    # Define report fields here
-
-    def clean(self):
-        # Custom validation logic here
-        pass
-```
-
-## Montrek Report Form Error Handling
-
-Montrek report forms handle errors using Django's built-in error handling system. You can access form errors using the `errors` attribute.
-
-```python
-from reporting.forms import MontrekReportForm
-
-class CustomReportForm(MontrekReportForm):
-    # Define report fields here
-
-    def clean(self):
-        # Custom validation logic here
-        pass
-
-form = CustomReportForm()
-if not form.is_valid():
-    print(form.errors)
+    def clean_field_name(self):
+        # Define field-level validation logic here
+        raise ValidationError("Field-level error message")
 ```
 
 ## Summary
 
-Montrek provides a robust form handling system that allows developers to create custom forms with ease. By extending the base `MontrekCreateForm` class, developers can create custom forms with custom validation logic and error handling. Montrek also provides a `MontrekReportForm` class that can be used to generate reports.
+Montrek forms provide a robust and flexible way to handle form data in Django applications. By using custom form classes, validation logic, and error handling, developers can create forms that meet their specific needs. Whether you're creating a simple contact form or a complex data entry form, Montrek forms have got you covered.
 
-## Next Steps
+### Graph
 
-* Learn more about Montrek's form handling system by reading the official documentation.
-* Experiment with creating custom forms using the `MontrekCreateForm` class.
-* Use the `MontrekReportForm` class to generate reports in your Montrek application.
+Here is a simple graph that illustrates the Montrek form handling process:
+
+```
+                      +---------------+
+                      |  Form Submission  |
+                      +---------------+
+                             |
+                             |
+                             v
+                      +---------------+
+                      |  Form Validation  |
+                      |  (Form-level and  |
+                      |   Field-level)    |
+                      +---------------+
+                             |
+                             |
+                             v
+                      +---------------+
+                      |  Error Handling  |
+                      |  (Form-level and  |
+                      |   Field-level)    |
+                      +---------------+
+                             |
+                             |
+                             v
+                      +---------------+
+                      |  Form Processing  |
+                      |  (Create, Update,  |
+                      |   Delete, etc.)    |
+                      +---------------+
+```
+
+This graph shows the basic flow of the Montrek form handling process, from form submission to form processing. The form validation and error handling steps are critical in ensuring that form data is valid and consistent before it is processed.

@@ -8,4 +8,4 @@ class TestMontrekDocsViews(MontrekReportViewTestCase):
     expected_number_of_report_elements = 1
 
     def url_kwargs(self) -> dict:
-        return {"docs_name": "montrek_views_and_subclasses"}
+        return {"docs_name": "01_montrek_software_architecture"}

@@ -2,97 +2,89 @@ Montrek Manager, Repositories, and Pages
 
 ## Overview
 
-The Montrek framework is a powerful tool for building data-driven applications. At its core, Montrek consists of three main components: the Montrek Manager, Repositories, and Pages. In this documentation, we will delve into the roles of each component, their interactions, and how they connect to Django's ORM and templates.
+The Montrek framework is built around a robust architecture that includes several key components: MontrekManager, MontrekRepositories, and MontrekPages. Understanding the roles and interactions of these components is crucial for building data-driven applications with Montrek.
 
-## Montrek Manager
+## MontrekManager
 
-The Montrek Manager is the central component of the Montrek framework. It is responsible for managing the data flow between the Repositories and Pages. The Manager provides a unified interface for creating, reading, updating, and deleting data.
+The `MontrekManager` class is the central component of the Montrek framework. It acts as an intermediary between the data access layer and the business logic layer, providing a unified interface for managing data and executing business logic.
 
-### Key Features
+### Exact Role
 
-*   **Data Management**: The Montrek Manager handles data creation, retrieval, updates, and deletion.
-*   **Repository Interaction**: The Manager interacts with the Repositories to store and retrieve data.
-*   **Page Interaction**: The Manager provides data to the Pages for rendering.
+The MontrekManager is responsible for:
 
-### Example Code
+*   Managing data access through the `MontrekRepository` class
+*   Executing business logic and providing a unified interface for data management
+*   Handling user input and session data
 
+### Data Flow
+
+The MontrekManager interacts with the `MontrekRepository` class to access and manipulate data. It also interacts with the `MontrekPage` class to handle user input and render responses.
+
+### Connection to Django's ORM or Templates
+
+The MontrekManager uses Django's ORM (Object-Relational Mapping) system to interact with the underlying database. It also uses Django's template engine to render HTML templates.
+
+## MontrekRepositories
+
+The `MontrekRepository` class serves as the data access layer, encapsulating the logic for interacting with the underlying data storage.
+
+### Exact Role
+
+The MontrekRepository is responsible for:
+
+*   Encapsulating data access logic
+*   Providing a standardized interface for creating, reading, updating, and deleting data
+
+### Data Flow
+
+The MontrekRepository interacts with the underlying data storage to access and manipulate data. It also interacts with the MontrekManager to provide data access services.
+
+### Connection to Django's ORM or Templates
+
+The MontrekRepository uses Django's ORM system to interact with the underlying database.
+
+## MontrekPages
+
+The `MontrekPage` class is responsible for handling HTTP requests and rendering responses.
+
+### Exact Role
+
+The MontrekPage is responsible for:
+
+*   Handling HTTP requests and rendering responses
+*   Providing a flexible and extensible way to define views that can be used to display data, handle forms, and execute business logic
+
+### Data Flow
+
+The MontrekPage interacts with the MontrekManager to handle user input and render responses.
+
+### Connection to Django's ORM or Templates
+
+The MontrekPage uses Django's template engine to render HTML templates.
+
+## Example Code
+
+Here is an example of how the MontrekManager, MontrekRepository, and MontrekPage classes interact:
 ```python
 from baseclasses.managers.montrek_manager import MontrekManager
-
-class MyManager(MontrekManager):
-    def __init__(self, session_data: dict[str, str], **kwargs) -> None:
-        super().__init__(session_data=session_data, **kwargs)
-        self._report_elements = []
-
-    @property
-    def report_elements(self) -> list[ReportElementProtocol, ...]:
-        return self._report_elements
-```
-
-## Repositories
-
-Repositories in Montrek are responsible for encapsulating data access and storage. They provide a layer of abstraction between the Manager and the underlying data storage.
-
-### Key Features
-
-*   **Data Access**: Repositories handle data retrieval and storage.
-*   **Data Abstraction**: Repositories abstract the underlying data storage, making it easier to switch between different storage solutions.
-
-### Example Code
-
-```python
 from baseclasses.repositories.montrek_repository import MontrekRepository
-
-class MyRepository(MontrekRepository):
-    def __init__(self, session_data: dict[str, Any]):
-        super().__init__(session_data)
-
-    def create_object(self, **kwargs) -> Any:
-        # Implement object creation logic
-        pass
-```
-
-## Pages
-
-Pages in Montrek are responsible for rendering the user interface. They receive data from the Manager and use it to generate the HTML output.
-
-### Key Features
-
-*   **Data Rendering**: Pages render the data provided by the Manager.
-*   **Template Rendering**: Pages use Django's template engine to render the HTML output.
-
-### Example Code
-
-```python
 from baseclasses.pages import MontrekPage
 
-class MyPage(MontrekPage):
-    page_title = "My Page"
+# Create a MontrekManager instance
+manager = MontrekManager(session_data={})
 
-    def get_tabs(self):
-        # Implement tab generation logic
-        pass
+# Create a MontrekRepository instance
+repository = MontrekRepository(session_data={})
+
+# Create a MontrekPage instance
+page = MontrekPage()
+
+# Use the MontrekManager to access data through the MontrekRepository
+data = manager.repository.get_data()
+
+# Use the MontrekPage to render a response
+response = page.render_response(data)
 ```
-
-## Data Flow
-
-The data flow in Montrek is as follows:
-
-1.  The Manager receives a request from the user.
-2.  The Manager interacts with the Repository to retrieve or store data.
-3.  The Manager provides the data to the Page.
-4.  The Page renders the data using Django's template engine.
-
-## Connection to Django's ORM and Templates
-
-Montrek uses Django's ORM to interact with the underlying data storage. The Repositories encapsulate the data access logic, making it easier to switch between different storage solutions.
-
-Montrek also uses Django's template engine to render the HTML output. The Pages receive data from the Manager and use it to generate the HTML output.
-
 ## Summary
 
-In summary, the Montrek Manager, Repositories, and Pages work together to provide a powerful framework for building data-driven applications. The Manager handles data management, the Repositories encapsulate data access, and the Pages render the user interface.
-
-## Next Steps
-
-To get started with Montrek, create a new Manager class that inherits from `MontrekManager`. Then, create a new Repository class that inherits from `MontrekRepository`. Finally, create a new Page class that inherits from `MontrekPage`. Use the examples provided in this documentation as a starting point for your implementation.
+In summary, the MontrekManager, MontrekRepository, and MontrekPage classes are the core components of the Montrek framework. They work together to provide a unified interface for managing data and executing business logic, making it easy to build complex data-driven applications. By understanding the roles and interactions of these components, developers can effectively use Montrek to build robust and maintainable applications.
