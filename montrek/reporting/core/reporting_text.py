@@ -271,7 +271,18 @@ class MarkdownReportingElement:
 
     def to_html(self) -> str:
         return markdown.markdown(
-            self.markdown_text, extensions=["markdown.extensions.tables"]
+            self.markdown_text,
+            extensions=[
+                "markdown.extensions.tables",
+                "markdown.extensions.fenced_code",  # enables ``` code blocks
+                "markdown.extensions.codehilite",  # adds syntax highlighting via Pygments
+            ],
+            extension_configs={
+                "markdown.extensions.codehilite": {
+                    "guess_lang": False,  # don't try to auto-detect language
+                    "css_class": "highlight",  # class for styling the code blocks
+                }
+            },
         )
 
     def to_latex(self) -> str:
