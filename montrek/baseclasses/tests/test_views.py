@@ -167,6 +167,21 @@ class MockMontrekCreateValidView(MockMontrekCreateView):
     form_class = MockFormClassValid
 
 
+class TestHomeView(TestCase):
+    @add_logged_in_user
+    def test_home_direct_to_welcome_page(self):
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "home.html")
+
+    @add_logged_in_user
+    @override_settings(HOME_VIEW="under_construction")
+    def test_home_redirect_to_under_construction(self):
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "under_construction.html")
+
+
 class TestUnderConstruction(TestCase):
     def test_under_construction(self):
         user = MontrekUserFactory()
