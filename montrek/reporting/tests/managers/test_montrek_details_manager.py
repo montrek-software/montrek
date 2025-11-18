@@ -61,17 +61,17 @@ class TestMontrekDetailsManager(TestCase):
 
         # Link cell with icon
         self.assertIn("Link", right_map)
-        link_a = right_map["Link"].find("a", id="id__")
+        link_a = right_map["Link"].find("a", id="id__home")
         self.assertIsNotNone(link_a)
-        self.assertEqual(link_a.get("href"), "/")
+        self.assertEqual(link_a.get("href"), "/home")
         self.assertEqual(link_a.get("title"), "Link")
         self.assertIsNotNone(link_a.find("span", class_="glyphicon"))
 
         # Link Text cell with anchor text
         self.assertIn("Link Text", right_map)
-        link_text_a = right_map["Link Text"].find("a", id="id__")
+        link_text_a = right_map["Link Text"].find("a", id="id__home")
         self.assertIsNotNone(link_text_a)
-        self.assertEqual(link_text_a.get("href"), "/")
+        self.assertEqual(link_text_a.get("href"), "/home")
         self.assertEqual(link_text_a.get("title"), "Link Text")
         self.assertEqual(link_text_a.get_text(strip=True), "a")
 

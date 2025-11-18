@@ -557,13 +557,14 @@ class TestNavbar(TestCase):
         self.factory = RequestFactory()
 
     @add_logged_in_user
+    @override_settings(DEBUG=False)
     def test_navbar(self):
         response = self.client.get(reverse("home"))
         self.assertEqual(response.status_code, 200)
         soup = BeautifulSoup(response.content, "html.parser")
 
         # Check "Home" link
-        home_link = soup.find("a", href="/")
+        home_link = soup.find("a", href="/home")
         self.assertIsNotNone(home_link)
         self.assertEqual(home_link.text.strip(), "Home")
 
