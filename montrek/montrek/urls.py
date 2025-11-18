@@ -23,12 +23,11 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
-
 from file_upload.tasks.file_upload_task import revoke_file_upload_task
 
-
 urlpatterns = [
-    path("", base_views.home, name="home"),
+    path("", base_views.redirect_home, name="redirect_home"),
+    path("home", base_views.home, name="home"),
     path(
         "under_construction", base_views.under_construction, name="under_construction"
     ),

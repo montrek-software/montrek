@@ -16,7 +16,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.http import FileResponse, HttpResponse, HttpResponseRedirect
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_safe
 from django.views.generic import DetailView, RedirectView, View
@@ -38,6 +38,12 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 logger = logging.getLogger(__name__)
+
+
+@require_safe
+def redirect_home(request):
+    redirect_url = settings.HOME_URL
+    return redirect(reverse(redirect_url))
 
 
 @require_safe

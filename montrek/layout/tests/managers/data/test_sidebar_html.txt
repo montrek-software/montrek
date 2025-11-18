@@ -23,7 +23,7 @@
         data-parent="#sideNavAccordion"
       >
 
-            <li class="link-list"><a id="id__" href="/" title="View Expert Evaluation">None</a></li>
+            <li class="link-list"><a id="id__home" href="/home" title="View Expert Evaluation">None</a></li>
 
       </ul>
     </li>
@@ -48,7 +48,7 @@
         data-parent="#sideNavAccordion"
       >
 
-            <li class="link-list"><a id="id__" href="/" title="View Expert Evaluation">None</a></li>
+            <li class="link-list"><a id="id__home" href="/home" title="View Expert Evaluation">None</a></li>
 
       </ul>
     </li>
@@ -73,7 +73,7 @@
         data-parent="#sideNavAccordion"
       >
 
-            <li class="link-list"><a id="id__" href="/" title="View Expert Evaluation">None</a></li>
+            <li class="link-list"><a id="id__home" href="/home" title="View Expert Evaluation">None</a></li>
 
       </ul>
     </li>

@@ -11,7 +11,7 @@ class TestLoginRequiredMiddleware(TestCase):
     def test_middleware_does_not_redirect_for_authenticated_user(self):
         user = MontrekUserFactory()
         self.client.force_login(user)
-        response = self.client.get("/")
+        response = self.client.get("/", follow=True)
         self.assertEqual(response.status_code, 200)
 
     def test_middleware_does_not_redirect_for_exempt_path(self):

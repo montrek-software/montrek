@@ -167,6 +167,23 @@ class MockMontrekCreateValidView(MockMontrekCreateView):
     form_class = MockFormClassValid
 
 
+class TestHomeView(TestCase):
+    @add_logged_in_user
+    def test_home_redirect_to_welcome_page(self):
+        response = self.client.get("/", follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertRedirects(response, reverse(settings.HOME_URL))
+        self.assertTemplateUsed(response, "home.html")
+
+    @add_logged_in_user
+    @override_settings(HOME_URL="under_construction")
+    def test_home_redirect_to_under_construction(self):
+        response = self.client.get("/", follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertRedirects(response, reverse(settings.HOME_URL))
+        self.assertTemplateUsed(response, "under_construction.html")
+
+
 class TestUnderConstruction(TestCase):
     def test_under_construction(self):
         user = MontrekUserFactory()
@@ -540,13 +557,14 @@ class TestNavbar(TestCase):
         self.factory = RequestFactory()
 
     @add_logged_in_user
+    @override_settings(DEBUG=False)
     def test_navbar(self):
         response = self.client.get(reverse("home"))
         self.assertEqual(response.status_code, 200)
         soup = BeautifulSoup(response.content, "html.parser")
 
         # Check "Home" link
-        home_link = soup.find("a", href="/")
+        home_link = soup.find("a", href="/home")
         self.assertIsNotNone(home_link)
         self.assertEqual(home_link.text.strip(), "Home")
 
