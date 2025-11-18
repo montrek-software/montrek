@@ -169,7 +169,7 @@ class MockMontrekCreateValidView(MockMontrekCreateView):
 
 class TestHomeView(TestCase):
     @add_logged_in_user
-    def test_home_direct_to_welcome_page(self):
+    def test_home_redirect_to_welcome_page(self):
         response = self.client.get("/", follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertRedirects(response, reverse(settings.HOME_URL))

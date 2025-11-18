@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 @require_safe
 def redirect_home(request):
     redirect_url = settings.HOME_URL
-    return redirect(reverse(redirect_url), request)
+    return redirect(reverse(redirect_url))
 
 
 @require_safe
