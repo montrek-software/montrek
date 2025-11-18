@@ -41,12 +41,13 @@ logger = logging.getLogger(__name__)
 
 
 @require_safe
-def home(request):
-    return redirect(reverse("redirect_home"), request)
+def redirect_home(request):
+    redirect_url = settings.HOME_URL
+    return redirect(reverse(redirect_url), request)
 
 
 @require_safe
-def redirect_home(request):
+def home(request):
     project_name = settings.PROJECT_NAME.replace("mt_", "").replace("_", " ").title()
     return render(request, "home.html", context={"project_name": project_name})
 

@@ -127,8 +127,9 @@ NAVBAR_RENAME = {
     if x
     for k, v in [x.split("::")]
 }
+HOME_URL = config("HOME_URL", default="home")
 
-NAVBAR_HOME_URL = config("NAVBAR_HOME_URL", default="home")
+NAVBAR_HOME_URL = config("NAVBAR_HOME_URL", default=HOME_URL)
 NAVBAR_HOME_LABEL = config("NAVBAR_HOME_LABEL", default="Home").replace("*", " ")
 
 DJANGO_MIDDLEWARE = [
@@ -234,6 +235,8 @@ LOGIN_EXEMPT_PATHS = [
     r".*/api/?$",
     r"^rest_api/token/.*$",
     r"^user/.*$",
+    r"^mt_website/.*$",
+    r"^__debug__/.*$",
 ]
 if ENABLE_KEYCLOAK:
     AUTHENTICATION_BACKENDS = (
