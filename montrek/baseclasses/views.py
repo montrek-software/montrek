@@ -68,7 +68,7 @@ class MontrekPageViewMixin:
         return ()
 
     def get_page_context(self, context, **kwargs):
-        page = self.page_class(**self.session_data)
+        page = self.page_class(**kwargs, **self.session_data)
         context["page_title"] = HtmlSanitizer().clean_html(page.page_title)
         page.set_active_tab(self.tab)
         context["tab_elements"] = page.tabs
