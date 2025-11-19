@@ -1,6 +1,6 @@
 {% load static %} {% load base_tags %}
 <!doctype html>
-<html lang="en">
+<html lang="de">
   <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -11,10 +11,10 @@
       content="Finanzsoftware, Datenplattform, Reporting, Compliance, Workflow-Automatisierung, Data Governance, Regulatorik, Portfolio Management, Risikomanagement, Finanzprozesse, Finanzsysteme, individuelle Softwareentwicklung"
     />
     <meta
-      name="description"
-      content="Maßgeschneiderte Finanzsoftware für Datenprozesse, Reporting und Compliance. Wir automatisieren Workflows, verbessern Datenqualität und erhöhen Effizienz im Finanzsektor."
+        name="description"
+        content="Maßgeschneiderte Finanzsoftware für Datenprozesse, Reporting und Compliance. Wir automatisieren Workflows, verbessern Datenqualität und erhöhen Effizienz im Finanzsektor."
     />
-    <title>Montrek</title>
+    <title>Montrek – Finanzsoftware, Datenplattform & Workflow-Automation für den Finanzsektor</title>
 
     <link
       href="{% static 'bootstrap/css/bootstrap.min.css' %}"
@@ -30,7 +30,15 @@
     <main class="flex-grow-1">
       <div class="container-fluid" style="padding: 20px; padding-bottom: 40px">
         <!-- NAVBAR -->
-        <div class="row" style="height: 35px">{% include_navbar %}</div>
+
+        <div class="row" style="height: 35px">
+          {% if navbar_template %}
+            {% include navbar_template %}
+          {% else %}
+            {% include_navbar %}
+          {% endif %}
+
+        </div>
 
         <!-- TEST BANNER -->
         <div class="row">
