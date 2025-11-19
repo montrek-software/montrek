@@ -1,22 +1,23 @@
-from django.test import TestCase, RequestFactory
-from django.contrib.sessions.middleware import SessionMiddleware
-from django.contrib.messages.middleware import MessageMiddleware
-from file_upload.views import (
-    MontrekUploadFileView,
-    FileUploadRegistryView,
-    MontrekDownloadFileView,
-    MontrekDownloadLogFileView,
-)
 from baseclasses.pages import MontrekPage
-from file_upload.tests.factories.file_upload_factories import (
-    FileUploadRegistryStaticSatelliteFactory,
-)
+from django.contrib.auth.models import AnonymousUser
+from django.contrib.messages.middleware import MessageMiddleware
+from django.contrib.sessions.middleware import SessionMiddleware
+from django.test import RequestFactory, TestCase
 from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepositoryABC,
 )
+from file_upload.tests.factories.file_upload_factories import (
+    FileUploadRegistryStaticSatelliteFactory,
+)
+from file_upload.views import (
+    FileUploadRegistryView,
+    MontrekDownloadFileView,
+    MontrekDownloadLogFileView,
+    MontrekUploadFileView,
+)
 from testing.test_cases.view_test_cases import (
-    MontrekListViewTestCase,
     MontrekFileResponseTestCase,
+    MontrekListViewTestCase,
 )
 
 
@@ -26,14 +27,11 @@ class MockPage(MontrekPage):
 
 
 class MockFileUploadProcessor:
-    def process(self, file):
-        ...
+    def process(self, file): ...
 
-    def pre_check(self, file):
-        ...
+    def pre_check(self, file): ...
 
-    def post_check(self, file):
-        ...
+    def post_check(self, file): ...
 
 
 class MockFileUploadManager(FileUploadRegistryRepositoryABC):
@@ -50,6 +48,7 @@ class MockFileUploadView(MontrekUploadFileView):
 
     def add_mock_request(self, url: str):
         self.request = RequestFactory().get(url)
+        self.request.user = AnonymousUser()
         session_middleware = SessionMiddleware(lambda request: None)
         session_middleware.process_request(self.request)
         self.request.session.save()

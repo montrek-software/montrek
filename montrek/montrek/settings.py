@@ -236,6 +236,7 @@ LOGIN_EXEMPT_PATHS = [
     r"^rest_api/token/.*$",
     r"^user/.*$",
     r"^mt_website/.*$",
+    r"^uploads/website/.*$",
     r"^__debug__/.*$",
 ]
 if ENABLE_KEYCLOAK:

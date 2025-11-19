@@ -1,0 +1,18 @@
+{% extends "base_common.html" %}
+
+{% block body_layout %}
+<div class="row">
+  <div class="container-fluid">
+
+    {% include "partials/title_and_date.html" %}
+    {% include "partials/tabs_and_actions.html" %}
+
+    <div class="row">
+      <div class="col-lg-12">
+        {% block content %}{% endblock %}
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

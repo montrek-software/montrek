@@ -1,0 +1,25 @@
+{% load static %}
+<div class="footer mt-4 py-3 bg-light">
+  <div class="container">
+    <div class="row">
+      <div
+        class="col text-right d-flex justify-content-end align-items-center gap-2"
+      >
+        <span>© {% now "Y" %} powered by</span>
+
+        <a
+          href="https://montrek-software.de"
+          target="_blank"
+          class="d-inline-flex align-items-center"
+        >
+          <img
+            src="{% static 'logos/montrek_logo.svg' %}"
+            alt="montrek logo"
+            height="20"
+            width="auto"
+          />
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

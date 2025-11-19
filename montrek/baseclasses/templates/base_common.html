@@ -1,0 +1,62 @@
+{% load static %} {% load base_tags %}
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <meta
+      name="keywords"
+      content="Finanzsoftware, Datenplattform, Reporting, Compliance, Workflow-Automatisierung, Data Governance, Regulatorik, Portfolio Management, Risikomanagement, Finanzprozesse, Finanzsysteme, individuelle Softwareentwicklung"
+    />
+    <meta
+        name="description"
+        content="Maßgeschneiderte Finanzsoftware für Datenprozesse, Reporting und Compliance. Wir automatisieren Workflows, verbessern Datenqualität und erhöhen Effizienz im Finanzsektor."
+    />
+    <title>{% block title %}Montrek – Finanzsoftware, Datenplattform & Workflow-Automation für den Finanzsektor{% endblock %}</title>
+
+    <link
+      href="{% static 'bootstrap/css/bootstrap.min.css' %}"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="{% static 'base.css' %}" />
+    <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+
+    {% include "partials/color_scheme.html" %}
+  </head>
+
+  <body class="d-flex flex-column min-vh-100">
+    <main class="flex-grow-1">
+      <div class="container-fluid" style="padding: 20px; padding-bottom: 40px">
+        <!-- NAVBAR -->
+
+        <div class="row" style="height: 35px">
+          {% if navbar_template %}
+            {% include navbar_template %}
+          {% else %}
+            {% include_navbar %}
+          {% endif %}
+
+        </div>
+
+        <!-- TEST BANNER -->
+        <div class="row">
+          <div class="col-lg-12">{% include_test_banner %}</div>
+        </div>
+
+        <!-- ALERTS -->
+        {% include "partials/alerts.html" %}
+
+        <!-- MAIN BODY (defined separately in `base.html` and `base_wide.html`) -->
+        {% block body_layout %}{% endblock %}
+      </div>
+    </main>
+
+    <!-- FOOTER -->
+    {% include "partials/footer.html" %}
+
+    <!-- JS -->
+    {% include "partials/scripts.html" %}
+  </body>
+</html>

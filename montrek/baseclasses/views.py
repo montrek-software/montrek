@@ -68,7 +68,8 @@ class MontrekPageViewMixin:
         return ()
 
     def get_page_context(self, context, **kwargs):
-        page = self.page_class(**self.kwargs)
+        kwargs.update(self.session_data)
+        page = self.page_class(**kwargs)
         context["page_title"] = HtmlSanitizer().clean_html(page.page_title)
         page.set_active_tab(self.tab)
         context["tab_elements"] = page.tabs
@@ -381,9 +382,9 @@ class MontrekTemplateView(
         context = super().get_context_data(**kwargs)
         if not hasattr(self, "kwargs"):
             self.kwargs = kwargs
-        context = self.get_page_context(context, **kwargs)
         template_context = self.get_template_context()
         context.update(template_context)
+        context = self.get_page_context(context, **kwargs)
         return context
 
     def get_template_context(self) -> dict:

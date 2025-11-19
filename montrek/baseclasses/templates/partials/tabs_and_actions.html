@@ -1,0 +1,30 @@
+<!-- TABS -->
+<div class="row">
+  <div class="col-lg-12">
+    <ul class="nav nav-tabs">
+      {% for tab in tab_elements %}
+      <li class="nav-item {{ tab.active }}">
+        <a class="nav-link" id="{{ tab.html_id }}" href="{{ tab.link }}"
+          >{{ tab.name }}</a
+        >
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+
+<!-- ACTIONS -->
+<div class="row">
+  <div class="col-lg-12">
+    {% for action in actions %}
+    <a
+      id="{{ action.action_id }}"
+      href="{{ action.link }}"
+      class="btn"
+      title="{{ action.hover_text }}"
+    >
+      <span class="glyphicon glyphicon-{{ action.icon }}" />
+    </a>
+    {% endfor %}
+  </div>
+</div>
