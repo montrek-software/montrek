@@ -24,6 +24,8 @@ class LoginRequiredMiddleware:
         return query_params.get("gen_rest_api") == ["true"]
 
     def is_login_exempt_path(self, request) -> bool:
+        # Exempt the root path ('/') because it is handled separately (presumably by URL routing)
+        # to redirect to '/home'.
         if request.path == "/":
             return True
         for pattern in settings.LOGIN_EXEMPT_PATHS:
