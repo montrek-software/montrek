@@ -1,7 +1,8 @@
 import re
 from urllib.parse import parse_qs
-from django.http import HttpResponseRedirect
+
 from django.conf import settings
+from django.http import HttpResponseRedirect
 
 
 class LoginRequiredMiddleware:
@@ -23,6 +24,8 @@ class LoginRequiredMiddleware:
         return query_params.get("gen_rest_api") == ["true"]
 
     def is_login_exempt_path(self, request) -> bool:
+        if request.path == "/":
+            return True
         for pattern in settings.LOGIN_EXEMPT_PATHS:
             if re.match(pattern, request.path.lstrip("/")):
                 return True

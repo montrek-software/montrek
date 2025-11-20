@@ -4,8 +4,13 @@ from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
 
 class TestLoginRequiredMiddleware(TestCase):
-    def test_middleware_redirects_to_login_page(self):
+    def test_startpage_redirects_to_home(self):
         response = self.client.get("/")
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "/home")
+
+    def test_middleware_redirects_to_login_page(self):
+        response = self.client.get("/home")
         self.assertRedirects(response, reverse("login"))
 
     def test_middleware_does_not_redirect_for_authenticated_user(self):
