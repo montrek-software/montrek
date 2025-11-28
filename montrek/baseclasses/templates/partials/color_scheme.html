@@ -76,18 +76,21 @@ h2 {
    BUTTONS (sauber, ohne Bootstrap-Überschreibung)
    ========================================================= */
 
-/* Wichtig: NICHT .btn überschreiben! */
 
 /* Sekundärfarbe = dein bisheriger "default button" */
 .btn-custom {
   background-color: {% get_color "secondary" %};
   color: #ffffff;
-  border: 1px solid {% get_color "secondary" %};
+  border: 2px solid {% get_color "secondary" %};
+  margin-right: 3px;
+  padding: 2px;
+  padding-right: 6px;
+  padding-left: 6px;
 }
 
 .btn-custom:hover {
   background-color: {% get_color "secondary_light" %};
-  border-color: {% get_color "secondary_light" %};
+  border: 2px solid {% get_color "secondary" %};
   color: #ffffff;
 }
 
