@@ -1,104 +1,96 @@
-<nav class="navbar navbar-inverse navbar-fixed-top">
-  <div class="container">
-    <div class="navbar-header">
-      <button
-        type="button"
-        class="navbar-toggle"
-        data-toggle="collapse"
-        data-target=".navbar-collapse"
-      >
-        <span class="sr-only">Toggle Navigation</span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-      </button>
-    </div>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+  <div class="container-fluid">
 
-    <div class="collapse navbar-collapse">
-      <ul class="nav navbar-nav">
-        <li><a href="{{ home_url }}">{{ home_label }}</a></li>
+    <!-- Brand / Home -->
+    <a class="navbar-brand" href="{{ home_url }}">{{ home_label }}</a>
+
+    <!-- Toggler -->
+    <button
+      class="navbar-toggler"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#mainNavbar"
+      aria-controls="mainNavbar"
+      aria-expanded="false"
+      aria-label="Toggle navigation"
+    >
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <!-- Navbar Content -->
+    <div class="collapse navbar-collapse" id="mainNavbar">
+
+      <!-- Left Navigation -->
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+
+        <li class="nav-item">
+          <a class="nav-link" href="{{ home_url }}">{{ home_label }}</a>
+        </li>
+
         {% for nav_dd in navbar_dropdowns %}
-        <li class="dropdown">
+        <li class="nav-item dropdown">
           <a
+            class="nav-link dropdown-toggle"
             href="#"
-            class="dropdown-toggle"
-            data-toggle="dropdown"
-            role="button"
-            aria-haspopup="true"
+            id="dropdown{{forloop.counter}}"
+            data-bs-toggle="dropdown"
             aria-expanded="false"
-            onkeydown="if(event.key === 'Enter' || event.key === ' ') this.click();"
           >
-            {{nav_dd.display_name}}
-            <span class="caret"></span>
+            {{ nav_dd.display_name }}
           </a>
-          <ul class="dropdown-menu">
+          <ul class="dropdown-menu" aria-labelledby="dropdown{{forloop.counter}}">
             {% for nav_app in nav_dd.dropdown_items %}
             <li>
-              <a href="{% url nav_app.app_name %}"
-                >{{ nav_app.display_name }}</a
-              >
+              <a class="dropdown-item" href="{% url nav_app.app_name %}">
+                {{ nav_app.display_name }}
+              </a>
             </li>
             {% endfor %}
           </ul>
         </li>
-        {% endfor %} {% for nav_app in nav_apps %}
-        <li>
-          <a href="{% url nav_app.app_name %}">{{ nav_app.display_name }}</a>
+        {% endfor %}
+
+        {% for nav_app in nav_apps %}
+        <li class="nav-item">
+          <a class="nav-link" href="{% url nav_app.app_name %}">
+            {{ nav_app.display_name }}
+          </a>
         </li>
         {% endfor %}
       </ul>
 
-      <ul class="nav navbar-nav navbar-right">
+      <!-- Right Navigation -->
+      <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+
         {% if user.is_authenticated %}
-        <li><a>Logged in as {{ user.email }}</a></li>
-        <li class="dropdown">
+        <li class="nav-item">
+          <span class="navbar-text">Logged in as {{ user.email }}</span>
+        </li>
+
+        <li class="nav-item dropdown">
           <a
+            class="nav-link dropdown-toggle"
             href="#"
-            class="dropdown-toggle"
-            data-toggle="dropdown"
+            id="userDropdown"
             role="button"
-            aria-haspopup="true"
+            data-bs-toggle="dropdown"
             aria-expanded="false"
-            onkeydown="if(event.key === 'Enter' || event.key === ' ') this.click();"
           >
-            <span class="glyphicon glyphicon-cog"></span>
-            <!-- Settings wheel icon -->
-            <span class="caret"></span>
+            <i class="bi bi-gear"></i>
           </a>
-          <ul class="dropdown-menu">
-            <li><a href="#" onclick="logout(event)">Logout</a></li>
-            <!-- logout via POST -->
-            <li><a href="{% url 'password_change' %}">Change Password</a></li>
-            <li><a href="{% url 'info' %}" >Info</a></li>
-            <li><a href="{% url 'montrek_docs' docs_name='01_montrek_software_architecture' %}" >Montrek Documentation</a></li>
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+            <li><a class="dropdown-item" href="#" onclick="logout(event)">Logout</a></li>
+            <li><a class="dropdown-item" href="{% url 'password_change' %}">Change Password</a></li>
+            <li><a class="dropdown-item" href="{% url 'info' %}">Info</a></li>
+            <li><a class="dropdown-item" href="{% url 'montrek_docs' docs_name='01_montrek_software_architecture' %}">Montrek Documentation</a></li>
           </ul>
         </li>
+
         {% else %}
-        <li><a href="{% url 'login' %}">Login</a></li>
-        <li><a href="{% url 'signup' %}">Sign Up</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Login</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'signup' %}">Sign Up</a></li>
         {% endif %}
       </ul>
     </div>
   </div>
 </nav>
-
-<script>
-  function logout(event) {
-    event.preventDefault(); // Prevent the default action of the link
-
-    // Create a hidden form
-    var form = document.createElement("form");
-    form.method = "POST";
-    form.action = "{% url 'logout' %}";
-    document.body.appendChild(form);
-
-    // Add CSRF token
-    var csrfInput = document.createElement("input");
-    csrfInput.type = "hidden";
-    csrfInput.name = "csrfmiddlewaretoken";
-    csrfInput.value = "{{ csrf_token }}";
-    form.appendChild(csrfInput);
-
-    form.submit();
-  }
-</script>
