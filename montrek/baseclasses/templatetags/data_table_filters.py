@@ -95,9 +95,9 @@ def _get_link_attribute(obj, table_element):
         link_text = _get_dotted_attr_or_arg(obj, table_element.text)
         link_text = "" if link_text is None else link_text
     else:
-        link_text = Template(
-            '<span class="glyphicon glyphicon-{{ icon }}"></span>'
-        ).render(Context({"icon": table_element.icon}))
+        link_text = Template('<span class="bi bi-{{ icon }}"></span>').render(
+            Context({"icon": table_element.icon})
+        )
     link = _get_link(table_element, url, link_text)
     return f"<td>{link}</td>"
 

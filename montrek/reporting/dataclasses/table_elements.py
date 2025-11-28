@@ -210,9 +210,11 @@ class LinkTableElement(BaseLinkTableElement):
     static_kwargs: dict = field(default_factory=dict)
 
     def get_value(self, obj):
-        return Template(
-            f'<span class="glyphicon glyphicon-{self.icon}"></span>'
-        ).render(Context())
+        if self.icon == "edit":
+            icon = "pencil"
+        else:
+            icon = self.icon
+        return Template(f'<span class="bi bi-{icon}"></span>').render(Context())
 
 
 @dataclass
