@@ -47,3 +47,4 @@ class ViewFormMixin(HasFormMethods):
 
     def get_form(self, request):
         self._report_form = self.report_form_class(data=request.GET)
+        return self._report_form
