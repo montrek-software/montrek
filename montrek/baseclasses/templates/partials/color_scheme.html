@@ -55,10 +55,11 @@ h2 {
 /* =========================================================
    NAVBAR COLORS (Bootstrap-5-friendly)
    ========================================================= */
-/* Hinweis: Nutze .navbar-dark + bg-primary im HTML,
-   daher hier keine globalen a-Overrides mehr! */
-
-/* Brand / Title optional: */
+.navbar-custom {
+  font-weight: bold;
+  color: #ffffff;
+  background-color: {% get_color "primary" %};
+}
 .navbar-brand {
   font-weight: bold;
 }
@@ -169,8 +170,13 @@ table.table-custom-striped tbody tr:nth-child(even) > td {
 .table-custom-striped.table thead th div {
     color: white !important;
 }
+.table.table-custom-striped > thead > tr > th {
+  background-color: {% get_color "primary" %} !important;
+  color: #ffffff !important;
+}
 /* Table-Header */
 .table-custom-striped.table thead th {
+  color: white !important;
   background-color: {% get_color "primary" %} !important;
   padding: 4px 6px !important;
   text-align: left;

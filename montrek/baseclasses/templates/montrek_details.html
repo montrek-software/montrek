@@ -3,29 +3,29 @@
 {% block content %}
   <div class="container-fluid">
     <div class="row">
-      <div class="col-md-12">
+      <div class="col-12">
         <h2 id="id_montrek_table_title">{{ title }}</h2>
       </div>
     </div>
     <div class="row">
-      <div class="col-md-10">
+      <div class="col-10">
       </div>
-      <div class="col-md-2 text-right">
+      <div class="col-2 text-right">
         <div class="btn-group">
           <form action="" method="get" style="display: inline-block;">
             <input type="hidden" name="gen_pdf" value="true" />
-            <button type="submit" class="btn btn-default" title="Export to pdf"><span class="glyphicon glyphicon-file"</span></button>
+            <button type="submit" class="btn btn-light-custom" title="Export to pdf"><span class="bi bi-file-earmark-pdf"</span></button>
           </form>
           <form action="" method="get" style="display: inline-block;">
             <input type="hidden" name="gen_rest_api" value="true" />
-            <button type="submit" class="btn btn-default" title="Get REST Api data"><span class="glyphicon glyphicon-globe"</span></button>
+            <button type="submit" class="btn btn-light-custom" title="Get REST Api data"><span class="bi bi-globe"</span></button>
           </form>
         </div>
       </div>
 
     </div>
-    <div id="id_montrek_table_list" class="row">
-      <div class="col-md-12">
+    <div id="id_montrek_table_list" class="row tile">
+      <div class="col-12">
         {{ table  | safe }}
       </div>
     </div>
