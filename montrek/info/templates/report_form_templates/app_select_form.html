@@ -1,12 +1,15 @@
 <div class="row">
-  {% for col in form.apps_columns %}
-  <div class="col-md-4">
-    {% for checkbox in col %}
-    <div class="form-check">
-      {{ checkbox.tag }}
-      <label class="form-check-label">{{ checkbox.choice_label }}</label>
+  {% for group_label, widgets in form.apps_grouped %}
+    <div class="col-md-4">
+      <h5>{{ group_label }}</h5>
+      <ul class="list-unstyled">
+        {% for checkbox in widgets %}
+          <li class="form-check">
+            {{ checkbox.tag }}
+            <label class="form-check-label">{{ checkbox.choice_label }}</label>
+          </li>
+        {% endfor %}
+      </ul>
     </div>
-    {% endfor %}
-  </div>
   {% endfor %}
 </div>
