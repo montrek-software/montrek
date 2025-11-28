@@ -8,11 +8,11 @@ from reporting.forms import MontrekReportForm, NoMontrekReportForm
 logger = logging.getLogger(__name__)
 
 
-class HasFormMethods(Protocol):
+class HasFormInvalid(Protocol):
     def form_invalid(self, form): ...
 
 
-class ViewFormMixin(HasFormMethods):
+class ViewFormMixin(HasFormInvalid):
     report_form_class = NoMontrekReportForm
     _report_form: MontrekReportForm | None = None
 
