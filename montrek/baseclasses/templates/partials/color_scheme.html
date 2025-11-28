@@ -56,7 +56,24 @@ h2 {
 .navbar-brand {
   font-weight: bold;
 }
+.page-link.custom {
+  background-color: #ffffff;
+  color: {% get_color "primary" %};
+  border: 1px solid {% get_color "primary" %};
+  border-radius: 4px;
+  padding: 0.25rem 0.6rem;
+}
 
+.page-link.custom:hover {
+  background-color: {% get_color "primary_light" %};
+  color: {% get_color "secondary" %};
+}
+
+.page-item.disabled .page-link.custom {
+    background-color: #e9ecef;
+    color: #6c757d;
+    cursor: not-allowed;
+}
 /* =========================================================
    TABS (Bootstrap 5)
    ========================================================= */
