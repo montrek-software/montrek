@@ -1,15 +1,18 @@
 <div class="row">
   {% for group_label, widgets in form.apps_grouped %}
-    <div class="col-md-4">
-      <h5>{{ group_label }}</h5>
-      <ul class="list-unstyled">
+    <div class="app-group mb-2">
+      <a class="fw-bold d-block" data-bs-toggle="collapse" href="#grp-{{ forloop.counter }}">
+        {{ group_label }}
+      </a>
+
+      <div id="grp-{{ forloop.counter }}" class="collapse mt-2">
         {% for checkbox in widgets %}
-          <li class="form-check">
+          <div class="form-check">
             {{ checkbox.tag }}
             <label class="form-check-label">{{ checkbox.choice_label }}</label>
-          </li>
+          </div>
         {% endfor %}
-      </ul>
+      </div>
     </div>
   {% endfor %}
 </div>
