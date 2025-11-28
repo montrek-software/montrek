@@ -60,11 +60,9 @@
           {% endif %}
 
           <!-- CURRENT -->
-          <li class="page-item disabled">
-            <span class="page-link custom">
+          <li class="btn btn-light-custom btn-sm disabled">
               Page {{ paginator.number }}
               {% if not is_large %} / {{ paginator.num_pages }}{% endif %}
-            </span>
           </li>
 
           {% if paginator.has_next %}
@@ -92,7 +90,7 @@
     <!-- RIGHT SIDE: Format + Pagination Controls -->
     <div class="col-4">
 
-      <div class="d-flex justify-content-end align-items-center gap-3 flex-wrap">
+      <div class="d-flex justify-content-end align-items-center gap-2 flex-wrap">
 
         <!-- FORMAT TOGGLE -->
         <form method="get">

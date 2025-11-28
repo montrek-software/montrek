@@ -149,26 +149,29 @@ h2 {
    ========================================================= */
 
 /* Keine globalen tr:nth-child mehr. */
-.table-custom-striped tbody tr:nth-child(even) {
-  background-color: {% get_color "primary_light" %};
+table.table-custom-striped tbody tr:nth-child(even) > td {
+  background-color: {% get_color "primary_light" %} !important;
 }
 
-.table-custom-striped tbody tr:nth-child(odd) {
-  background-color: #ffffff;
+.table-custom-striped.table td {
+  padding: 3px !important;
 }
-
+.table-custom-striped.table thead th .btn-order-field,
+.table-custom-striped.table thead th .btn-order-field *,
+.table-custom-striped.table thead th button,
+.table-custom-striped.table thead th button *,
+.table-custom-striped.table thead th div {
+    color: white !important;
+}
 /* Table-Header */
-.table thead th,
-th {
-  color: #ffffff;
-  background-color: {% get_color "primary" %};
-  padding: 10px;
+.table-custom-striped.table thead th {
+  background-color: {% get_color "primary" %} !important;
+  padding: 4px 6px !important;
   text-align: left;
   position: sticky;
   top: 0;
-  z-index: 1;
+  z-index: 5;
 }
-
 /* Cells */
 td {
   padding: 2px;
@@ -185,10 +188,10 @@ td {
 
 /* Kompakte Tabelle */
 #compactTable td {
-  padding: 2px;
+  padding: 1px;
 }
 #compactTable th {
-  padding: 3px;
+  padding: 2px;
 }
 
 /* =========================================================
