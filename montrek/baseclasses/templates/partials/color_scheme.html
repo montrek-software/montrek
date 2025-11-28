@@ -23,7 +23,13 @@ p {
 li {
   margin-left: 20px;
 }
-
+a {
+  color: {% get_color "primary" %};
+  text-decoration: none;
+  }
+a:hover {
+  color: {% get_color "secondary" %};
+  }
 h2 {
   color: {% get_color "primary" %};
 }
@@ -224,7 +230,23 @@ td {
   color: {% get_color "secondary" %};
   margin-right: 10px;
 }
+.link-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
 
+.link-list a {
+  color: #ffffff;
+  text-decoration: none;
+  display: block;
+  padding: 2px 2px;
+}
+
+.link-list a:hover {
+  background-color: {% get_color "primary_light" %};
+  color: {% get_color "secondary" %};
+}
 /* =========================================================
    INPUTS
    ========================================================= */
