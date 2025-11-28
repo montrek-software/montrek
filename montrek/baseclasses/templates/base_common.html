@@ -32,21 +32,20 @@
 
   <body class="d-flex flex-column min-vh-100">
     <main class="flex-grow-1">
-      <div class="container-fluid" style="padding: 20px; padding-bottom: 40px">
+      <div class="container-fluid px-3 py-4 pb-5">
         <!-- NAVBAR -->
-
         <div class="row" style="height: 35px">
-          {% if navbar_template %}
-            {% include navbar_template %}
-          {% else %}
-            {% include_navbar %}
-          {% endif %}
-
+          <div class="col-12">
+            {% if navbar_template %}
+              {% include navbar_template %}
+            {% else %}
+              {% include_navbar %}
+            {% endif %}
+          </div>
         </div>
-
         <!-- TEST BANNER -->
         <div class="row">
-          <div class="col-lg-12">{% include_test_banner %}</div>
+          <div class="col-12">{% include_test_banner %}</div>
         </div>
 
         <!-- ALERTS -->
