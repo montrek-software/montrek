@@ -28,6 +28,11 @@ def get_attribute(obj, table_element):
     return table_element.format(value)
 
 
+@register.filter(name="add_class")
+def add_class(field, css):
+    return field.as_widget(attrs={"class": css})
+
+
 def _get_dotted_attr_or_arg(obj, attr):
     """Gets an attribute of an object dynamically from a string name"""
     """If the attribute is not found, then it is assumed to be an argument"""

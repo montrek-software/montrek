@@ -32,6 +32,20 @@ h2 {
   color: {% get_color "primary" %};
   text-align: center;
 }
+
+/* =========================================================
+   TILES
+  ========================================================== */
+
+.tile {
+  position: relative;       /* allows absolute positioning inside */
+  padding: 15px;
+  border-radius: 10px;
+  background-color: rgba(247, 249, 250, 0.9);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  margin-bottom: 20px;
+}
+
 /* =========================================================
    NAVBAR COLORS (Bootstrap-5-friendly)
    ========================================================= */
@@ -82,10 +96,6 @@ h2 {
   background-color: {% get_color "secondary" %};
   color: #ffffff;
   border: 2px solid {% get_color "secondary" %};
-  margin-right: 3px;
-  padding: 2px;
-  padding-right: 6px;
-  padding-left: 6px;
 }
 
 .btn-custom:hover {
