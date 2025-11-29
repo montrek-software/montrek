@@ -81,13 +81,6 @@ h2 {
     color: #6c757d;
     cursor: not-allowed;
 }
-/* =========================================================
-   NAVBAR CUSTOM
-   ========================================================= */
-
-.navbar-custom {
-  background-color: {% get_color "primary" %};
-}
 
 /* Hauptlinks */
 .navbar-custom .nav-link {
@@ -139,6 +132,28 @@ h2 {
   background-color: {% get_color "primary_light" %};
   color: #ffffff;
 }
+
+/* Tabs
+
+/* Tab-Link-Grundfarben */
+.nav-tabs .nav-link {
+  color: {% get_color "primary" %};
+  border: 1px solid {% get_color "primary" %};
+  margin-right: 5px;
+}
+/* Aktiver Tab */
+.nav-tabs .nav-link.active {
+  background-color: {% get_color "primary" %};
+  color: #ffffff;
+  border-color: {% get_color "primary" %};
+}
+/* Hover */
+.nav-tabs .nav-link:hover {
+  background-color: {% get_color "primary_light" %};
+  color: #ffffff;
+}
+.nav-link a { color: #ffffff;}
+
 /* =========================================================
    BUTTONS (sauber, ohne Bootstrap-Überschreibung)
    ========================================================= */
