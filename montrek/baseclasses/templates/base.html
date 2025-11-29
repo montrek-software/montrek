@@ -4,16 +4,16 @@
 {% block body_layout %}
 <div class="row">
 
-  <!-- LEFT SIDEBAR (2 cols) -->
-  <div class="col-2">
+  <!-- LEFT SIDEBAR -->
+  <div class="col-12 col-lg-2">
     {% if overview %}
       <h2>Overview</h2>
       {{ overview|safe }}
     {% endif %}
   </div>
 
-  <!-- MAIN (8 cols) -->
-  <div class="col-8">
+  <!-- MAIN -->
+  <div class="col-12 col-lg-8">
     <div class="px-0">
 
       {% include "partials/title_and_date.html" %}
@@ -28,8 +28,8 @@
     </div>
   </div>
 
-  <!-- RIGHT SIDEBAR (2 cols) -->
-  <div class="col-2">
+  <!-- RIGHT SIDEBAR -->
+  <div class="col-12 col-lg-2">
     <div>
       {% include_client_logo %}
     </div>
@@ -37,5 +37,6 @@
       {% block side_page %}{% endblock %}
     </div>
   </div>
+
 </div>
 {% endblock %}

@@ -56,7 +56,6 @@ h2 {
    NAVBAR COLORS (Bootstrap-5-friendly)
    ========================================================= */
 .navbar-custom {
-  font-weight: bold;
   color: #ffffff;
   background-color: {% get_color "primary" %};
 }
@@ -89,7 +88,7 @@ h2 {
 
 .navbar-custom .nav-link:hover,
 .navbar-custom .nav-link:focus {
-  color: {% get_color "primary_light" %};
+  color: {% get_color "secondary" %};
 }
 
 /* Brand */
@@ -153,6 +152,24 @@ h2 {
   color: #ffffff;
 }
 .nav-link a { color: #ffffff;}
+
+.nav-link-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+.nav-link-list a {
+  color: #ffffff;
+  text-decoration: none;
+  display: block;
+  padding: 2px 2px;
+}
+
+.nav-link-list li:hover {
+  background-color: {% get_color "primary" %};
+  color: {% get_color "secondary" %};
+}
 
 /* =========================================================
    BUTTONS (sauber, ohne Bootstrap-Überschreibung)
