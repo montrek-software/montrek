@@ -2,65 +2,71 @@
 
 <form method="get" class="w-100">
   {% for f in filter_forms %}
-
   <!-- One row exactly like the old version -->
-  <div class="row mb-2">
-    <div class="col-12 d-flex flex-wrap gap-3 align-items-center">
+    <div class="row mb-1">
       <!-- FIELD -->
+      <div class=" col-3 px-1">
       <div class="input-group input-group-sm w-auto">
         <span class="input-group-text">Field</span>
         {{ f.filter_field|add_class:"form-select" }}
       </div>
+      </div>
 
       <!-- NEGATE -->
-      <div class="input-group input-group-sm w-auto">
+      <div class=" col-2 px-1">
+      <div class="input-group col-3  px-1 input-group-sm w-auto">
         <span class="input-group-text">Not</span>
         {{ f.filter_negate|add_class:"form-select" }}
       </div>
+      </div>
 
       <!-- LOOKUP -->
-      <div class="input-group input-group-sm w-auto">
+      <div class=" col-3 px-1">
+      <div class="input-group col-3 px-1 input-group-sm w-auto">
         <span class="input-group-text">Cond</span>
         {{ f.filter_lookup|add_class:"form-select" }}
       </div>
+      </div>
 
       <!-- VALUE -->
-      <div class="input-group input-group-sm w-auto">
+      <div class=" col-4 px-1">
+      <div class="input-group col-3 px-1 input-group-sm w-auto">
         <span class="input-group-text">Value</span>
         {{ f.filter_value|add_class:"form-control" }}
       </div>
+      </div>
     </div>
-  </div>
-
   {% endfor %}
+  <div class="row">
+    <div class="col-1 ">
+      <button
+        type="submit"
+        onclick="document.getElementById('form-action').value='filter'"
+        class="btn btn-custom py-0"
+      >
+        Filter
+      </button>
+    </div>
 
-  <input type="hidden" name="action" id="form-action" />
+    <div class="col-1">
+      <button
+        type="submit"
+        onclick="document.getElementById('form-action').value='reset'"
+        class="btn btn-light-custom py-0"
+      >
+        Reset
+      </button>
+    </div>
 
-  <!-- ACTION BUTTONS (same logic as old version) -->
-  <div class="d-flex flex-wrap gap-2 mt-1">
-    <button
-      type="submit"
-      onclick="document.getElementById('form-action').value='filter'"
-      class="btn btn-custom py-0 px-3"
-    >
-      Filter
-    </button>
-
-    <button
-      type="submit"
-      onclick="document.getElementById('form-action').value='reset'"
-      class="btn btn-light-custom py-0 px-3"
-    >
-      Reset
-    </button>
-
-    <button
-      type="submit"
-      onclick="document.getElementById('form-action').value='add_filter'"
-      class="btn btn-light-custom py-0 px-1"
-      title="Add filter"
-    >
-      <i class="bi bi-plus fs-5"></i>
-    </button>
+    <div class="col-1">
+      <button
+        type="submit"
+        onclick="document.getElementById('form-action').value='add_filter'"
+        class="btn btn-light-custom py-0"
+        title="Add filter"
+      >
+        <i class="bi bi-plus fs-6"></i>
+      </button>
+    </div>
   </div>
 </form>
