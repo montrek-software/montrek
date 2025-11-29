@@ -44,7 +44,7 @@ class DownloadActionElement(StandardActionElementBase):
 
 @dataclass(init=False)
 class SettingsActionElement(StandardActionElementBase):
-    icon = "cog"
+    icon = "gear"
 
 
 @dataclass(init=False)
@@ -64,7 +64,7 @@ class RegistryActionElement(StandardActionElementBase):
 
 @dataclass(init=False)
 class ListActionElement(StandardActionElementBase):
-    icon = "align-justify"
+    icon = "list"
 
 
 @dataclass(init=False)

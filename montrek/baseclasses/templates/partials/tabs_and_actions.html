@@ -1,13 +1,17 @@
 <!-- TABS -->
 <div class="row">
-  <div class="col-lg-12">
+  <div class="col-12">
     <ul class="nav nav-tabs">
       {% for tab in tab_elements %}
-      <li class="nav-item {{ tab.active }}">
-        <a class="nav-link" id="{{ tab.html_id }}" href="{{ tab.link }}"
-          >{{ tab.name }}</a
-        >
-      </li>
+        <li class="nav-item">
+          <a
+            class="nav-link {% if tab.active %}active{% endif %}"
+            id="{{ tab.html_id }}"
+            href="{{ tab.link }}"
+          >
+            {{ tab.name }}
+          </a>
+        </li>
       {% endfor %}
     </ul>
   </div>
@@ -15,15 +19,15 @@
 
 <!-- ACTIONS -->
 <div class="row">
-  <div class="col-lg-12">
+  <div class="col-12 p-2">
     {% for action in actions %}
     <a
       id="{{ action.action_id }}"
       href="{{ action.link }}"
-      class="btn"
+      class="btn btn-custom py-0 px-1"
       title="{{ action.hover_text }}"
     >
-      <span class="glyphicon glyphicon-{{ action.icon }}" />
+      <span class="bi bi-{{ action.icon }} fs-4" />
     </a>
     {% endfor %}
   </div>

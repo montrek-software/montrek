@@ -2,14 +2,14 @@
 {% load data_table_filters %}
 {% block content %}
   <div class="container-fluid">
-    {% for history_data_table in history_data_tables %} 
+    {% for history_data_table in history_data_tables %}
       <div class="row">
-        <div class="col-md-12">
+        <div class="col-12 tile">
           <h2 id="id_montrek_table_title">{{ history_data_table.title }}</h2>
         </div>
       </div>
       <div id="id_montrek_table_list" class="row">
-        <div class="col-md-12">
+        <div class="col-12 tile">
           {{ history_data_table.table | safe}}
         </div>
       </div>
