@@ -82,34 +82,63 @@ h2 {
     cursor: not-allowed;
 }
 /* =========================================================
-   TABS (Bootstrap 5)
+   NAVBAR CUSTOM
    ========================================================= */
 
-/* Unterstreichung passend zu deiner Primärfarbe */
-.nav-tabs {
-  border-bottom: 2px solid {% get_color "primary" %};
-}
-
-/* Tab-Link-Grundfarben */
-.nav-tabs .nav-link {
-  color: {% get_color "primary" %};
-  border: 1px solid {% get_color "primary" %};
-  margin-right: 5px;
-}
-
-/* Aktiver Tab */
-.nav-tabs .nav-link.active {
+.navbar-custom {
   background-color: {% get_color "primary" %};
-  color: #ffffff;
-  border-color: {% get_color "primary" %};
 }
 
-/* Hover */
-.nav-tabs .nav-link:hover {
+/* Hauptlinks */
+.navbar-custom .nav-link {
+  color: #ffffff;
+}
+
+.navbar-custom .nav-link:hover,
+.navbar-custom .nav-link:focus {
+  color: {% get_color "primary_light" %};
+}
+
+/* Brand */
+.navbar-custom .navbar-brand {
+  color: #ffffff;
+}
+
+.navbar-custom .navbar-brand:hover {
+  color: {% get_color "primary_light" %};
+}
+
+/* Toggler Icon */
+.navbar-custom .navbar-toggler {
+  border-color: rgba(255,255,255,0.4);
+}
+
+.navbar-custom .navbar-toggler-icon {
+  background-image: url("data:image/svg+xml;charset=utf8,%3Csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke='rgba%28 255,255,255, 0.8 %29' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
+}
+
+/* Navbar-Text (logged in as …) */
+.navbar-custom .navbar-text {
+  display: flex;
+  align-items: center;
+  padding: 0 1rem;
+  color: #ffffff;
+  height: 100%;
+}
+
+/* Dropdown (hell, damit lesbar) */
+.navbar-custom .dropdown-menu {
+  background-color: #ffffff;
+}
+
+.navbar-custom .dropdown-item {
+  color: #000000;
+}
+
+.navbar-custom .dropdown-item:hover {
   background-color: {% get_color "primary_light" %};
   color: #ffffff;
 }
-
 /* =========================================================
    BUTTONS (sauber, ohne Bootstrap-Überschreibung)
    ========================================================= */
