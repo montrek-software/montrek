@@ -421,7 +421,7 @@ class TestDataTableFilters(TestCase):
         test_link = table_element.get_attribute(test_obj)
         self.assertEqual(
             str(test_link),
-            f'<td><a id="id__baseclasses_{test_obj.id}_details" href="/baseclasses/{test_obj.id}/details" title="hover_text"><span class="glyphicon glyphicon-icon"></span></a></td>',
+            f'<td><a id="id__baseclasses_{test_obj.id}_details" href="/baseclasses/{test_obj.id}/details" title="hover_text"><span class="bi bi-icon"></span></a></td>',
         )
 
     def test__get_link_text(self):
@@ -497,7 +497,7 @@ class TestDataTableFilters(TestCase):
         test_str = table_element.get_attribute(test_obj)
         self.assertEqual(
             str(test_str),
-            f'<td><a id="id__baseclasses_{test_obj.id}_details" href="/baseclasses/{test_obj.id}/details" title="hover_text"><span class="glyphicon glyphicon-icon"></span></a></td>',
+            f'<td><a id="id__baseclasses_{test_obj.id}_details" href="/baseclasses/{test_obj.id}/details" title="hover_text"><span class="bi bi-icon"></span></a></td>',
         )
         table_element = te.StringTableElement(
             name="name",
