@@ -7,16 +7,16 @@
         <h2 id="id_montrek_table_title">{{ title }}</h2>
       </div>
     </div>
-    <div class="row">
-      <div class="col-10">
+    <div class="row ">
+      <div class="col-9">
       </div>
-      <div class="col-2 text-right">
-        <div class="btn-group">
-          <form action="" method="get" style="display: inline-block;">
+      <div class="col-3 text-right tile">
+        <div class="row">
+          <form action="" method="get" class="col-2">
             <input type="hidden" name="gen_pdf" value="true" />
             <button type="submit" class="btn btn-light-custom" title="Export to pdf"><span class="bi bi-file-earmark-pdf"</span></button>
           </form>
-          <form action="" method="get" style="display: inline-block;">
+          <form action="" method="get" class="col-2">
             <input type="hidden" name="gen_rest_api" value="true" />
             <button type="submit" class="btn btn-light-custom" title="Get REST Api data"><span class="bi bi-globe"</span></button>
           </form>

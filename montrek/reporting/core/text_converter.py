@@ -135,7 +135,7 @@ class HtmlLatexConverter:
     @staticmethod
     def emojis(text: str) -> str:
         text = text.replace("&#128640;", "\\twemoji{rocket}")
-        text = text.replace('<span class="bi bi-edit"></span>', "\\twemoji{pencil}")
+        text = text.replace('<span class="bi bi-pencil"></span>', "\\twemoji{pencil}")
         text = text.replace(
             '<span class="bi bi-trash"></span>', "\\twemoji{wastebasket}"
         )
