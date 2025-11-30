@@ -1,174 +1,139 @@
 {% extends 'base.html' %}
-{% load data_table_filters %}
 {% block content %}
-<div class="container-fluid">
-  <div class="row">
-      <div class="col-md-12">
-        <h2 id="id_montrek_table_title"> {{ title }}</h2>
-      </div>
-  </div>
-  <div class="row">
-      <div class="col-md-8">
-          <div class="container-fluid">
-            <form method="get" class="form-inline">
-              {% for filter_form in filter_forms %}
-              <div class="row">
-                <div class="col-md-12">
-                      <div class="form-group mr-2">
-                        {{ filter_form.filter_field }}
-                      </div>
-                      <div class="form-group mr-2">
-                        {{ filter_form.filter_negate }}
-                      </div>
-                      <div class="form-group mr-2">
-                        {{ filter_form.filter_lookup }}
-                      </div>
-                      <div class="form-group mr-2">
-                        {{ filter_form.filter_value }}
-                      </div>
-                </div>
-              </div>
-              {% endfor %}
-              <input type="hidden" name="action" id="form-action" value="">
-                <button type="submit" onclick="document.getElementById('form-action').value='filter'" class="btn btn-primary mr-2"title="Apply Filter">Filter</button>
-                <button type="submit" onclick="document.getElementById('form-action').value='reset'" class="btn" title="Reset Filter">Reset</button>
-                <button type="submit" onclick="document.getElementById('form-action').value='add_filter'" class="btn" title="Add filter">
-                  <span class="glyphicon glyphicon-plus"></span>
-                </button>
-            </form>
-          </div>
-      </div>
-      <div class="col-md-4 text-right">
-          <div class="btn-group">
-              <form action="" method="get" style="display: inline-block;">
-                <input type="hidden" name="gen_csv" value="true" />
-                <button type="submit" class="btn btn-default" title="Export to csv"><span class="glyphicon glyphicon-download"</span></button>
-              </form>
-              <form action="" method="get" style="display: inline-block;">
-                <input type="hidden" name="gen_excel" value="true" />
-                <button type="submit" class="btn btn-default" title="Export to Excel"><span class="glyphicon glyphicon-download-alt"</span></button>
-              </form>
-              <form action="" method="get" style="display: inline-block;">
-                <input type="hidden" name="gen_pdf" value="true" />
-                <button type="submit" class="btn btn-default" title="Export to pdf"><span class="glyphicon glyphicon-file"</span></button>
-              </form>
-              <form action="" method="get" style="display: inline-block;">
-                <input type="hidden" name="gen_rest_api" value="true" />
-                <button type="submit" class="btn btn-default" title="Get REST Api data"><span class="glyphicon glyphicon-globe"</span></button>
-              </form>
-              <form action="" method="get" style="display: inline-block;">
-                <input type="hidden" name="refresh_data" value="true" />
-                <button type="submit" class="btn btn-default" title="Refresh Data"><span class="glyphicon glyphicon-refresh"</span></button>
-              </form>
-          </div>
-      </div>
-  </div>
-  <div class="row">
-    {{ table|safe }}
-  </div>
-  <div class="row align-items-center">
-    <div class="col-md-10">
-      {% if paginator.show_paginator %}
-        <nav aria-label="Pagination">
-          <ul class="pagination mb-0">
-            {% if paginator.has_previous %}
-              <li class="page-item">
-                <a class="page-link btn-light" href="?page=1" title="First Page">
-                  <span class="glyphicon glyphicon-fast-backward"></span>
-                </a>
-              </li>
-              <li class="page-item">
-                <a class="page-link btn-light" href="?page={{ paginator.previous_page_number }}" title="Previous Page">
-                  <span class="glyphicon glyphicon-step-backward"></span>
-                </a>
-              </li>
-            {% endif %}
 
-            <li class="page-item disabled">
-              <span class="page-link btn-light">
-                Page {{ paginator.number }}
-                {% if not is_large %} of {{ paginator.num_pages }}{% endif %}
-              </span>
+<div class="container-fluid">
+
+  <!-- TITLE -->
+  <div class="row mb-3">
+    <div class="col-12">
+      <h2 id="id_montrek_table_title">{{ title }}</h2>
+    </div>
+  </div>
+
+  <!-- FILTERS + EXPORTS -->
+  <div class="row mb-0">
+
+    <!-- LEFT: FILTER FORM -->
+    <div class="col-9 tile">
+      {% include "partials/table_filter_form.html" %}
+    </div>
+
+    <!-- RIGHT: EXPORT BUTTONS -->
+    <div class="col-3 text-end tile">
+
+      {% include "partials/table_actions.html" %}
+
+    </div>
+  </div>
+
+  <!-- DATA TABLE -->
+  <div class="row tile">
+    <div class="col-12 p-0">
+      {{ table|safe }}
+    </div>
+  </div>
+
+  <!-- PAGINATION -->
+  <div class="row align-items-center tile">
+
+    <!-- LEFT SIDE: Pagination nav -->
+    <div class="col-8">
+
+      {% if paginator.show_paginator %}
+      <nav aria-label="Pagination">
+        <ul class="pagination mb-0">
+
+          {% if paginator.has_previous %}
+            <!-- FIRST PAGE -->
+            <li class="page-item">
+              <a class="page-link custom" href="?page=1" title="First Page">
+                <i class="bi bi-skip-backward-fill"></i>
+              </a>
             </li>
 
-            {% if paginator.has_next %}
+            <!-- PREVIOUS -->
+            <li class="page-item">
+              <a class="page-link custom" href="?page={{ paginator.previous_page_number }}" title="Previous Page">
+                <i class="bi bi-arrow-left-square-fill"></i>
+              </a>
+            </li>
+          {% endif %}
+
+          <!-- CURRENT -->
+          <li class="btn btn-light-custom btn-sm disabled">
+              Page {{ paginator.number }}
+              {% if not is_large %} / {{ paginator.num_pages }}{% endif %}
+          </li>
+
+          {% if paginator.has_next %}
+            <!-- NEXT -->
+            <li class="page-item">
+              <a class="page-link custom" href="?page={{ paginator.next_page_number }}" title="Next Page">
+                <i class="bi bi-arrow-right-square-fill"></i>
+              </a>
+            </li>
+
+            {% if not is_large %}
+              <!-- LAST -->
               <li class="page-item">
-                <a class="page-link btn-light" href="?page={{ paginator.next_page_number }}" title="Next Page">
-                  <span class="glyphicon glyphicon-step-forward"></span>
+                <a class="page-link custom" href="?page={{ paginator.num_pages }}" title="Last Page">
+                  <i class="bi bi-skip-forward-fill"></i>
                 </a>
               </li>
-              {% if not is_large %}
-                <li class="page-item">
-                  <a class="page-link btn-light" href="?page={{ paginator.num_pages }}" title="Last Page">
-                    <span class="glyphicon glyphicon-fast-forward"></span>
-                  </a>
-                </li>
-              {% endif %}
             {% endif %}
-          </ul>
-        </nav>
+          {% endif %}
+        </ul>
+      </nav>
       {% endif %}
     </div>
 
-    <div class="col-md-2">
-      <div class="d-flex justify-content-end align-items-right flex-wrap gap-2">
+    <!-- RIGHT SIDE: Format + Pagination Controls -->
+    <div class="col-4">
 
-        <!-- Format toggle -->
-        <div class="container-fluid ">
-          <div class="row">
-            <div class="col-md-4 pagination">
-              <form method="get">
-                <input type="hidden" name="action" id="form-is_compact_format-action" value="">
-                <button type="submit"
-                        onclick="document.getElementById('form-is_compact_format-action').value='{% if is_compact_format %}is_compact_format_false{% else %}is_compact_format_true{% endif %}'"
-                        class="btn-light btn-sm"
-                        title="{% if is_compact_format %}Switch to Large Table format{% else %}Switch to Small Table format{% endif %}">
-                  <span class="glyphicon {% if is_compact_format %}glyphicon-resize-full{% else %}glyphicon-resize-small{% endif %}"></span>
-                </button>
-              </form>
-            </div>
-            <div class="col-md-4 pagination">
+      <div class="d-flex justify-content-end align-items-center gap-2 flex-wrap">
 
-              <!-- Items per page display -->
-              <div class="btn btn-light btn-sm disabled">
-                {{ paginate_by }}/Page
-              </div>
-            </div>
-            <!-- Paginate by adjustment -->
-            <form class="d-flex align-items-center">
-              <input type="hidden" name="action" id="form-paginate_by-action" value="">
-              <div class="col-md-2 pagination">
-                <button type="submit"
-                        onclick="document.getElementById('form-paginate_by-action').value='add_paginate_by'"
-                        class="btn-light btn-sm me-1"
-                        title="Increase number per page">
-                  <span class="glyphicon glyphicon-arrow-down"></span>
-                </button>
-              </div>
-              <div class="col-md-2 pagination">
-                <button type="submit"
-                        onclick="document.getElementById('form-paginate_by-action').value='sub_paginate_by'"
-                        class="btn-light btn-sm"
-                        title="Decrease number per page">
-                  <span class="glyphicon glyphicon-arrow-up"></span>
-                </button>
-              </div>
-              </input>
-            </form>
-          </div>
+        <!-- FORMAT TOGGLE -->
+        <form method="get">
+          <input type="hidden" name="action" id="form-is_compact_format-action">
+          <button type="submit"
+                  onclick="document.getElementById('form-is_compact_format-action').value='{% if is_compact_format %}is_compact_format_false{% else %}is_compact_format_true{% endif %}'"
+                  class="btn btn-light-custom btn-sm"
+                  title="{% if is_compact_format %}Switch to Large Table format{% else %}Switch to Small Table format{% endif %}">
+            <i class="bi {% if is_compact_format %}bi-arrows-angle-expand{% else %}bi-arrows-angle-contract{% endif %}"></i>
+          </button>
+        </form>
+
+        <!-- ITEMS PER PAGE DISPLAY -->
+        <div class="btn btn-light-custom btn-sm disabled">
+          {{ paginate_by }}/Page
         </div>
+
+        <!-- PAGINATE + / - -->
+        <form class="d-flex align-items-center gap-2">
+          <input type="hidden" name="action" id="form-paginate_by-action">
+
+          <button type="submit"
+                  onclick="document.getElementById('form-paginate_by-action').value='add_paginate_by'"
+                  class="btn btn-light-custom btn-sm"
+                  title="Increase number per page">
+            <i class="bi bi-plus-circle-fill"></i>
+          </button>
+
+          <button type="submit"
+                  onclick="document.getElementById('form-paginate_by-action').value='sub_paginate_by'"
+                  class="btn btn-light-custom btn-sm"
+                  title="Decrease number per page">
+            <i class="bi bi-dash-circle-fill"></i>
+          </button>
+
+        </form>
+
       </div>
+
     </div>
+
   </div>
+
 </div>
-{% endblock %}
-{% block side_page %}
-  {% if do_simple_file_upload %}
-    <h2>Simple File upload</h2>
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        {{ simple_upload_form.as_div }}
-        <input id="simple_submit" type="submit" value="Upload" />
-    </form>
-  {% endif %}
+
 {% endblock %}

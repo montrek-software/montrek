@@ -4,23 +4,23 @@
 {% block body_layout %}
 <div class="row">
 
-  <!-- LEFT SIDEBAR (2 cols) -->
-  <div class="col-lg-2">
+  <!-- LEFT SIDEBAR -->
+  <div class="col-12 col-lg-2">
     {% if overview %}
       <h2>Overview</h2>
       {{ overview|safe }}
     {% endif %}
   </div>
 
-  <!-- MAIN (8 cols) -->
-  <div class="col-lg-8">
-    <div class="container-fluid">
+  <!-- MAIN -->
+  <div class="col-12 col-lg-8">
+    <div class="px-0">
 
       {% include "partials/title_and_date.html" %}
       {% include "partials/tabs_and_actions.html" %}
 
       <div class="row">
-        <div class="col-lg-12">
+        <div class="col-12">
           {% block content %}{% endblock %}
         </div>
       </div>
@@ -28,14 +28,15 @@
     </div>
   </div>
 
-  <!-- RIGHT SIDEBAR (2 cols) -->
-  <div class="col-lg-2">
-    <div style="padding:2mm;">
+  <!-- RIGHT SIDEBAR -->
+  <div class="col-12 col-lg-2">
+    <div>
       {% include_client_logo %}
     </div>
     <div>
       {% block side_page %}{% endblock %}
     </div>
   </div>
+
 </div>
 {% endblock %}

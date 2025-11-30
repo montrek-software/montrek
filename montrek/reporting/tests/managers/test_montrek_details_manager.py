@@ -65,7 +65,7 @@ class TestMontrekDetailsManager(TestCase):
         self.assertIsNotNone(link_a)
         self.assertEqual(link_a.get("href"), "/home")
         self.assertEqual(link_a.get("title"), "Link")
-        self.assertIsNotNone(link_a.find("span", class_="glyphicon"))
+        self.assertIsNotNone(link_a.find("span", class_="bi"))
 
         # Link Text cell with anchor text
         self.assertIn("Link Text", right_map)
@@ -123,7 +123,7 @@ class TestMontrekDetailsManager(TestCase):
         )
         self.assertRegexPresent(
             latex,
-            r"\\cellcolor{blue}\\color{white}\\textbf{Link}\s*&\s*\\cellcolor{lightblue}\s*\\color{black}\s*<span class=\"glyphicon glyphicon-icon\"></span>\s*\\\\",
+            r"\\cellcolor{blue}\\color{white}\\textbf{Link}\s*&\s*\\cellcolor{lightblue}\s*\\color{black}\s*<span class=\"bi bi-icon\"></span>\s*\\\\",
         )
         self.assertRegexPresent(
             latex,

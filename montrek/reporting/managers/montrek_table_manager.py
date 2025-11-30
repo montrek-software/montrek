@@ -23,9 +23,7 @@ from reporting.core import reporting_text as rt
 from reporting.core.table_converter import LatexTableConverter
 from reporting.core.text_converter import HtmlTextConverter
 from reporting.dataclasses import table_elements as te
-from reporting.lib.protocols import (
-    ReportElementProtocol,
-)
+from reporting.lib.protocols import ReportElementProtocol
 from reporting.tasks.download_table_task import DownloadTableTask
 from reporting.tasks.refresh_data_task import RefreshDataTask
 
@@ -110,13 +108,11 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         table_id = 'id="compactTable"' if self.is_current_compact_format else ""
         html_str = (
             f"<h3>{self.table_title}</h3>"
-            '<div class="row scrollable-content"><div class="col-md-12">'
+            '<div class="row scrollable-content">'
             '<form method="get">'  # Wrap form outside the table
             '<input type="hidden" name="order_action" id="form-order_by-action" value="">'
         )
-        table_str = (
-            f'<table {table_id} class="table table-bordered table-hover"><thead><tr>'
-        )
+        table_str = f'<table {table_id} class="table table-custom-striped table-bordered table-hover"><thead><tr>'
 
         for table_element in self.table_elements:
             elem_attr = getattr(table_element, "attr", "hub_entity_id")
@@ -129,9 +125,9 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
                 f"{table_element.name}"
             )
             if elem_attr == self.order_field:
-                table_str += '<span class="glyphicon glyphicon-arrow-down"></span>'
+                table_str += '<span class="bi bi-arrow-down"></span>'
             if "-" + elem_attr == self.order_field:
-                table_str += '<span class="glyphicon glyphicon-arrow-up"></span>'
+                table_str += '<span class="bi bi-arrow-up"></span>'
             table_str += "</div></button></th>"
 
         table_str += "</tr></thead>"
@@ -148,7 +144,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         table_str += table_body_str
         table_str += "</table>"
         html_str += table_str
-        html_str += "</form></div></div>"
+        html_str += "</form></div>"
         return html_str
 
     def to_json(self) -> dict:

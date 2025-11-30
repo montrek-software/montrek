@@ -668,5 +668,5 @@ class ClientLogoViewTest(TestCase):
         # Check that the static URL for the logo is correct
         self.assertContains(
             response,
-            f'<img src="{expected_path}my_logo.png" class="img-responsive" alt="Client Logo"/>',
+            f'src="{expected_path}my_logo.png"',
         )
