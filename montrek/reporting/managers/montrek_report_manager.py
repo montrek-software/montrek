@@ -100,6 +100,6 @@ class MontrekReportManager(MontrekManager):
                 "mail_bcc": settings.ADMIN_MAILING_LIST,
             }
         )
-        url_kwargs = {"pk": new_mail.pk}
+        url_kwargs = {"pk": new_mail.get_hub_value_date().pk}
         url_kwargs.update(self.get_mail_kwargs())
         return HttpResponseRedirect(reverse(self.send_mail_url, kwargs=url_kwargs))
