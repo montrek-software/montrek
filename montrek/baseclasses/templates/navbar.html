@@ -71,7 +71,15 @@
             <i class="bi bi-gear"></i>
           </a>
           <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-            <li><a class="dropdown-item" href="#" onclick="logout(event)">Logout</a></li>
+            <li>
+              <button
+                type="button"
+                class="dropdown-item"
+                onclick="logout(event)"
+              >
+                Logout
+              </button>
+            </li>
             <li><a class="dropdown-item" href="{% url 'password_change' %}">Change Password</a></li>
             <li><a class="dropdown-item" href="{% url 'info' %}">Info</a></li>
             <li><a class="dropdown-item" href="{% url 'montrek_docs' docs_name='01_montrek_software_architecture' %}">Montrek Documentation</a></li>

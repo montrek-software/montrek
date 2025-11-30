@@ -112,7 +112,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
             '<form method="get">'  # Wrap form outside the table
             '<input type="hidden" name="order_action" id="form-order_by-action" value="">'
         )
-        table_str = f'<table  {table_id} class="table table-custom-striped table-bordered table-hover"><thead><tr>'
+        table_str = f'<table {table_id} class="table table-custom-striped table-bordered table-hover"><thead><tr>'
 
         for table_element in self.table_elements:
             elem_attr = getattr(table_element, "attr", "hub_entity_id")
