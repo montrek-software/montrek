@@ -1,6 +1,8 @@
 from django.test import TestCase, override_settings
+from mailing.models import MailHub
 from reporting.managers.latex_report_manager import LatexReportManager
 from reporting.tests import mocks
+from testing.decorators.add_logged_in_user import add_logged_in_user
 
 
 class TestMontrekReportManager(TestCase):
@@ -125,6 +127,14 @@ class TestMontrekReportManager(TestCase):
             '<div class="alert alert-danger"><strong>Error during report generation: This fails!</strong></div><div class="alert"> Contact admin and check Debug mode</div>',
         )
         self.assertEqual(manager.report_elements, [])
+
+    @add_logged_in_user
+    def test_prepare_mail_redirect_to_correct_mail(self):
+        MailHub().save()
+        session_data = {"user_id": self.user.id}
+        manager = mocks.MockMontrekReportManager(session_data=session_data)
+        redirect = manager.prepare_mail("")
+        self.assertEqual(redirect.status_code, 302)
 
 
 class TestComprehensiveReport(TestCase):
