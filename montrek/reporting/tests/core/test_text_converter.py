@@ -67,7 +67,7 @@ class TestHtmlLatexConverter(TestCase):
 
     def test_convert_std_icons(self):
         test_text = (
-            '<span class="bi bi-edit"></span>\n<span class="bi bi-trash"></span>'
+            '<span class="bi bi-pencil"></span>\n<span class="bi bi-trash"></span>'
         )
         converted_text = HtmlLatexConverter.convert(test_text)
         expected_text = "\\twemoji{pencil}\n\\twemoji{wastebasket}"

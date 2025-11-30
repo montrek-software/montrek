@@ -1,4 +1,3 @@
-from testing.decorators import add_logged_in_user
 import datetime
 import os
 from tempfile import TemporaryDirectory
@@ -14,23 +13,6 @@ from file_upload.managers.file_upload_manager import TASK_SCHEDULED_MESSAGE
 from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepository,
 )
-from reporting.managers.montrek_table_manager import MontrekTablePaginator
-from testing.test_cases.view_test_cases import (
-    MontrekCreateViewTestCase,
-    MontrekDeleteViewTestCase,
-    MontrekDownloadViewTestCase,
-    MontrekFileResponseTestCase,
-    MontrekListViewTestCase,
-    MontrekRedirectViewTestCase,
-    MontrekReportFieldEditViewTestCase,
-    MontrekReportViewTestCase,
-    MontrekRestApiViewTestCase,
-    MontrekUpdateViewTestCase,
-    MontrekViewTestCase,
-    MontrekDetailViewTestCase,
-)
-from user.tests.factories.montrek_user_factories import MontrekUserFactory
-
 from montrek_example import views as me_views
 from montrek_example.models.example_models import LinkHubBHubD
 from montrek_example.repositories.hub_a_repository import (
@@ -40,6 +22,23 @@ from montrek_example.repositories.hub_a_repository import (
 from montrek_example.repositories.hub_b_repository import HubBRepository
 from montrek_example.repositories.hub_d_repository import HubDRepository
 from montrek_example.tests.factories import montrek_example_factories as me_factories
+from reporting.managers.montrek_table_manager import MontrekTablePaginator
+from testing.decorators import add_logged_in_user
+from testing.test_cases.view_test_cases import (
+    MontrekCreateViewTestCase,
+    MontrekDeleteViewTestCase,
+    MontrekDetailViewTestCase,
+    MontrekDownloadViewTestCase,
+    MontrekFileResponseTestCase,
+    MontrekListViewTestCase,
+    MontrekRedirectViewTestCase,
+    MontrekReportFieldEditViewTestCase,
+    MontrekReportViewTestCase,
+    MontrekRestApiViewTestCase,
+    MontrekUpdateViewTestCase,
+    MontrekViewTestCase,
+)
+from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
 
 class TestMontrekExampleAListView(MontrekListViewTestCase):
@@ -312,6 +311,7 @@ class TestMontrekExampleADetailView(MontrekDetailViewTestCase):
       </table>
     </form>
 </div></div>"""
+        exp_overview_html = f"""<h3></h3><div class="row scrollable-content"><form method="get"><input type="hidden" name="order_action" id="form-order_by-action" value=""><table  id="compactTable" class="table table-custom-striped table-bordered table-hover"><thead><tr><th title=\'hub_entity_id\'><button type="submit" onclick="document.getElementById(\'form-order_by-action\').value=\'hub_entity_id\'" class="btn-order-field"><div style="display: flex; justify-content: space-between; align-items: center;">A1 String</div></button></th><th title=\'field_a1_int\'><button type="submit" onclick="document.getElementById(\'form-order_by-action\').value=\'field_a1_int\'" class="btn-order-field"><div style="display: flex; justify-content: space-between; align-items: center;">A1 Int</div></button></th></tr></thead><tbody><tr style="white-space:nowrap;"><td><a id="id__montrek_example_a_{self.hub_vd_0.hub_id}_details" href="/montrek_example/a/{self.hub_vd_0.hub_id}/details" title="View Example A">DEFAULT</a></td><td style="text-align:right;color:#002F6C;">0</td></tr><tr style="white-space:nowrap;"><td><a id="id__montrek_example_a_{self.hub_vd.hub_id}_details" href="/montrek_example/a/{self.hub_vd.hub_id}/details" title="View Example A">DEFAULT</a></td><td style="text-align:right;color:#002F6C;">0</td></tr></tbody></table></form></div>"""
 
         self.assertEqual(
             overview_html.replace(" ", "").replace("\n", ""),

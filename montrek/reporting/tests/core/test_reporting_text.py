@@ -172,7 +172,7 @@ class TestReportingParagraphSmoke(ReportingElementTestCase):
 
 class TestReportingEditableTextSmoke(ReportingElementTestCase):
     reporting_element_class = ReportingEditableText
-    expected_html = '<div class="container-fluid">\n        <div class="row">\n         <div class="col-lg-12" style="padding:0"><h2></h2></div>\n         <div id="field-content-container-field">\n             <div class="container-fluid p-0">\n  <div class="row border p-3">\n    <div class="col">field_content</div>\n  </div>\n  <div class="row p-2">\n    <div class="col-lg-1">\n      <button\n        class="btn btn-primary"\n        hx-get="dummy?mode=edit&field=field"\n        hx-target="#field-content-container-field"\n      >\n        <span class="bi bi-pencil" />\n      </button>\n    </div>\n    <div class="col-lg-11"></div>\n  </div>\n</div>\n\n         </div>\n        </div>\n</div>'
+    expected_html = '<div class="container-fluid">\n        <div class="row">\n         <div class="col-lg-12" style="padding:0"><h2></h2></div>\n         <div id="field-content-container-field">\n             <div class="container-fluid p-0">\n  <div class="row border p-3">\n    <div class="col">field_content</div>\n  </div>\n  <div class="row p-2">\n    <div class="col-lg-1">\n      <button\n        class="btn btn-custom"\n        hx-get="dummy?mode=edit&field=field"\n        hx-target="#field-content-container-field"\n      >\n        <span class="bi bi-pencil" />\n      </button>\n    </div>\n    <div class="col-lg-11"></div>\n  </div>\n</div>\n\n         </div>\n        </div>\n</div>'
     expected_latex = "\\begin{justify}field\\_content\\end{justify}"
     expected_json = {"reportingeditabletext": "field_content"}
 
@@ -230,7 +230,7 @@ class TestReportText(TestCase):
   <div class="row p-2">
     <div class="col-lg-1">
       <button
-        class="btn btn-primary"
+        class="btn btn-custom"
         hx-get="test_url?mode=edit&field=field"
         hx-target="#field-content-container-field"
       >
@@ -273,7 +273,7 @@ class TestReportText(TestCase):
   <div class="row p-2">
     <div class="col-lg-1">
       <button
-        class="btn btn-primary"
+        class="btn btn-custom"
         hx-get="test_url?mode=edit&field=field"
         hx-target="#field-content-container-field"
       >
