@@ -3,22 +3,22 @@
 {% block content %}
   <div class="container-fluid">
     <div class="row">
-      <div class="col-md-8">
+      <div class="col-9">
         <h2>{{ title }}</h2>
       </div>
-      <div class="col-md-4 text-right">
-        <div class="btn-group ">
-          <form action="" method="get" style="display: inline-block;">
+      <div class="col-3">
+        <div class="row tile">
+          <form action="" method="get" class="col-2">
             <input type="hidden" name="gen_pdf" value="true" />
-            <button type="submit" class="btn btn-default" title="Export to pdf"><span class="glyphicon glyphicon-file"></span></button>
+            <button type="submit" class="btn btn-light-custom" title="Export to pdf"><span class="bi bi-file-earmark-pdf"></span></button>
           </form>
-          <form action="" method="get" style="display: inline-block;">
+          <form action="" method="get" class="col-2">
             <input type="hidden" name="send_mail" value="true" />
-            <button type="submit" class="btn btn-default" title="Send report per mail"><span class="glyphicon glyphicon-envelope"></span></button>
+            <button type="submit" class="btn btn-light-custom" title="Send report per mail"><span class="bi bi-envelope"></span></button>
           </form>
-          <form action="" method="get" style="display: inline-block;">
+          <form action="" method="get" class="col-2">
             <input type="hidden" name="gen_rest_api" value="true" />
-            <button type="submit" class="btn btn-default" title="Get REST Api data"><span class="glyphicon glyphicon-globe"></span></button>
+            <button type="submit" class="btn btn-light-custom" title="Get REST Api data"><span class="bi bi-globe"></span></button>
           </form>
         </div>
       </div>

@@ -9,15 +9,15 @@
 <script src="{% static 'admin_copy/js/SelectFilter2.js' %}"></script>
 <!--End: needed for FilteredSelectMultiple widget used in MontrekCreateForm-->
 <div class="container-fluid"> <!-- Added margin-top for spacing -->
-  <div class="col-lg-12">
+  <div class="col-12">
     <div class="row"> <!-- Centered the title for better alignment -->
-      <h2 id="id_title">{{ tag }}</h1> <!-- Centered the title and added bottom margin -->
+      <h2 id="id_title">{{ tag }}</h2> <!-- Centered the title and added bottom margin -->
     </div>
-    <div class="row"> <!-- Centered the title for better alignment -->
+    <div class="row tile"> <!-- Centered the title for better alignment -->
       <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="table-responsive"> <!-- Made table responsive -->
-          <table class="table table-bordered table-hover"> <!-- Applied Bootstrap table styles -->
+          <table class="table table-custom-striped table-bordered table-hover"> <!-- Applied Bootstrap table styles -->
             {% for field in form %}
             <tr>
               <th style="width: 30%" scope="row">{{ field.label_tag }}</th>
@@ -26,7 +26,7 @@
             {% endfor %}
             <tr>
               <td colspan="2" class="text-center"> <!-- Centered the submit button -->
-                <button type="submit" class="btn btn-primary" id="id_submit">{{ tag }}</button> <!-- Used button instead of input for better styling -->
+                <button type="submit" class="btn btn-custom" id="id_submit">{{ tag }}</button> <!-- Used button instead of input for better styling -->
               </td>
             </tr>
           </table>

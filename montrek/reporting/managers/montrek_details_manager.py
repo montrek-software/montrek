@@ -1,11 +1,10 @@
 import datetime
 import math
+
 from baseclasses.managers.montrek_manager import MontrekManager
-from reporting.dataclasses import table_elements as te
 from reporting.core import reporting_text as rt
-from reporting.lib.protocols import (
-    ReportElementProtocol,
-)
+from reporting.dataclasses import table_elements as te
+from reporting.lib.protocols import ReportElementProtocol
 
 
 class MontrekDetailsManager(MontrekManager):
@@ -35,13 +34,11 @@ class MontrekDetailsManager(MontrekManager):
         bt_col_size = 12 // self.table_cols
         for i in range(self.table_cols):
             html_str += f'<div class="col-md-{bt_col_size}">'
-            html_str += (
-                '<table class="table table-bordered table-hover table-responsive">'
-            )
+            html_str += '<table class="table table-custom-striped table-bordered table-hover  table-responsive">'
             start_idx = self.row_size * i
             end_idx = min(self.row_size * (i + 1), len(self.table_elements))
             for table_element in self.table_elements[start_idx:end_idx]:
-                html_str += f'<tr><th style="width:33%">{table_element.name}</th style="width:0.33%">{table_element.get_attribute(self.object_query, "html")}</tr>'
+                html_str += f'<tr><th style="width:33%">{table_element.name}</th>{table_element.get_attribute(self.object_query, "html")}</tr>'
             html_str += "</table>"
             html_str += "</div>"
         html_str += "</div>"
