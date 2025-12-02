@@ -5,13 +5,11 @@
     {% csrf_token %}
   <div class="container-fluid" style="margin-top:15px;">
   <div class="row">
-    <div class="col-lg-2">
-      <div>
-      {{ form.as_div }}
-      </div>
-      <div>
-      <input style="margin-top:15px;" type="submit" value="Upload" class="input" />
-      </div>
+    <div class="col-2">
+        {{ form.as_div }}
+    <div class="col-2 mt-2">
+      <input  type="submit" value="Upload" class="input-custom" />
+    </div>
     </div>
   </div>
   </div>
