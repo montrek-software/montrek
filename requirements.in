@@ -14,20 +14,22 @@ django==5.2.9
 djangorestframework==3.16.1
 djangorestframework-simplejwt==5.5.1
 mozilla-django-oidc==4.0.1
+# Third Wave
+celery==5.6.0
+redis==7.1.0
+gevent==25.9.1
+gunicorn==23.0.0
 
 Jinja2==3.1.6
 Markdown==3.6
 beautifulsoup4==4.13.4
 bleach==6.2.0
-celery==5.4.0
 coverage==7.9.2
 cryptography==44.0.0
 docxtpl==0.20.1
 factory-boy==3.3.1
 faker-marketdata==0.4
 freezegun==1.5.0
-gevent==25.9.1
-gunicorn==22.0.0
 kaleido==0.2.1
 matplotlib==3.10.5
 networkx==3.5
@@ -36,7 +38,6 @@ pandas==2.2.3
 plotly==5.24.1
 psycopg2-binary==2.9.10
 python-decouple==3.8.0
-redis==5.0.4
 requests==2.32.3
 scipy==1.16.1
 sf-hamilton==1.86.1
