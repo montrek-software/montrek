@@ -26,7 +26,7 @@ def get_app_choices(
             continue
 
         key = get_group_key(cfg)
-        groups[key].append((cfg.label, f"{cfg.verbose_name}"))
+        groups[key].append((cfg.label, cfg.verbose_name))
 
     # Sort groups alphabetically by group key
     return [(key, groups[key]) for key in sorted(groups)]
