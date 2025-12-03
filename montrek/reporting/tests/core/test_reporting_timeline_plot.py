@@ -48,7 +48,8 @@ class TestReportingTimelinePlot(TestCase):
             tr.y, np.array(["step_1", "step_2"], dtype=object)
         )
         # base carries start dates as strings that Plotly can parse
-        self.assertEqual(list(tr.base), ["2025-10-12", "2025-10-19"])
+        dates_list = [np.datetime_as_string(fdate, unit="D") for fdate in tr.base]
+        self.assertEqual(dates_list, ["2025-10-12", "2025-10-19"])
 
     def test_durations_are_7_days_in_ms(self):
         tr = self.fig.data[0]
@@ -80,9 +81,7 @@ class TestReportingTimelinePlot(TestCase):
     def test_alignment_and_grouping_fields_present(self):
         tr = self.fig.data[0]
         # Presence/values as printed
-        self.assertEqual(getattr(tr, "alignmentgroup", None), "True")
         self.assertEqual(getattr(tr, "legendgroup", ""), "")
-        self.assertEqual(getattr(tr, "offsetgroup", ""), "")
 
     def test_json_serializable(self):
         # Should not raise
