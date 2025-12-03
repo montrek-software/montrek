@@ -13,9 +13,9 @@ class MontrekReportForm(Form):
         template = Template(self.read_template())
         rendered_template = template.render(context)
         return f"""
-    <form method="post">
+    <form method="post" class="tile">
     {rendered_template}
-    <button type="submit" class="btn btn-default">Submit</button>
+    <button type="submit" class="btn btn-custom">Submit</button>
     </form>
             """
 
