@@ -20,7 +20,7 @@ redis==7.1.0
 gevent==25.9.1
 gunicorn==23.0.0
 
-# Forth Wave
+# Fourth Wave
 pandas==2.3.3
 matplotlib==3.10.7
 plotly==6.5.0
