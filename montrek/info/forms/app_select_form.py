@@ -72,6 +72,11 @@ class AppSelectForm(MontrekReportForm):
         return grouped
 
     @property
+    def grouped_columns(self):
+        groups = self.apps_grouped
+        return _split_into_columns(groups, self._n_columns)
+
+    @property
     def apps_columns(self):
         """
         Returns a list of columns, each a list of subwidgets.
