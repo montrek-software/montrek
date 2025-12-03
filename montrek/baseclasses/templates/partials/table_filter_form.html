@@ -38,35 +38,41 @@
     </div>
   {% endfor %}
   <div class="row">
-    <div class="col-1 ">
-      <button
-        type="submit"
-        onclick="document.getElementById('form-action').value='filter'"
-        class="btn btn-custom py-0"
-      >
-        Filter
-      </button>
-    </div>
+    <form method="get" class="w-100">
+      <input type="hidden" id="form-action" name="action" value="">
 
-    <div class="col-1">
-      <button
-        type="submit"
-        onclick="document.getElementById('form-action').value='reset'"
-        class="btn btn-light-custom py-0"
-      >
-        Reset
-      </button>
-    </div>
+      <div class="row">
+        <div class="col-1">
+          <button
+            type="submit"
+            onclick="document.getElementById('form-action').value='filter'"
+            class="btn btn-custom py-0"
+          >
+            Filter
+          </button>
+        </div>
 
-    <div class="col-1">
-      <button
-        type="submit"
-        onclick="document.getElementById('form-action').value='add_filter'"
-        class="btn btn-light-custom py-0"
-        title="Add filter"
-      >
-        <i class="bi bi-plus fs-6"></i>
-      </button>
-    </div>
+        <div class="col-1">
+          <button
+            type="submit"
+            onclick="document.getElementById('form-action').value='reset'"
+            class="btn btn-light-custom py-0"
+          >
+            Reset
+          </button>
+        </div>
+
+        <div class="col-1">
+          <button
+            type="submit"
+            onclick="document.getElementById('form-action').value='add_filter'"
+            class="btn btn-light-custom py-0"
+            title="Add filter"
+          >
+            <i class="bi bi-plus fs-6"></i>
+          </button>
+        </div>
+      </div>
+    </form>
   </div>
 </form>
