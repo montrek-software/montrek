@@ -20,6 +20,16 @@ redis==7.1.0
 gevent==25.9.1
 gunicorn==23.0.0
 
+# Fourth Wave
+pandas==2.3.3
+matplotlib==3.10.7
+plotly==6.5.0
+scipy==1.16.3
+kaleido==1.2.0
+networkx==3.6
+openpyxl==3.1.5
+tblib==3.2.2
+
 Jinja2==3.1.6
 Markdown==3.6
 beautifulsoup4==4.13.4
@@ -30,15 +40,8 @@ docxtpl==0.20.1
 factory-boy==3.3.1
 faker-marketdata==0.4
 freezegun==1.5.0
-kaleido==0.2.1
-matplotlib==3.10.5
-networkx==3.5
-openpyxl==3.1.2
-pandas==2.2.3
-plotly==5.24.1
 psycopg2-binary==2.9.10
 python-decouple==3.8.0
 requests==2.32.3
-scipy==1.16.1
 sf-hamilton==1.86.1
 tinycss2==1.4.0
