@@ -19,7 +19,7 @@ class ViewFormMixin(HasFormInvalid):
     @property
     def report_form(self) -> MontrekReportForm:
         if self._report_form is None:
-            self._report_form = self.report_form_class()
+            self._report_form = self.report_form_class(data=self.request.GET)
         return self._report_form
 
     def post_form(self, request, *args, **kwargs):
