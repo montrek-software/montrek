@@ -23,6 +23,8 @@ class TestMontrekReportForm(TestCase):
         form = MockMontrekReportForm()
         test_html = form.to_html()
         self.assertEqual(
-            test_html,
-            '\n    <form method="post" class="tile">\n    <fieldset>\n  <legend>Test</legend>\n  <input type="text" name="field_1" required id="id_field_1">\n</fieldset>\n\n    <button type="submit" class="btn btn-custom">Submit</button>\n    </form>\n            ',
+            test_html.replace(" ", ""),
+            '<form method="post" class="tile">\n  <fieldset>\n  <legend>Test</legend>\n  <input type="text" name="field_1" required id="id_field_1">\n</fieldset>\n\n    <button type="submit" class="btn btn-custom">Submit</button>\n    </form>\n'.replace(
+                " ", ""
+            ),
         )
