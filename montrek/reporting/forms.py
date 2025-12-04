@@ -2,22 +2,16 @@ import os
 
 from django.conf import settings
 from django.forms import Form
-from django.template import Context, Template
+from django.template import Context, Template, loader
 
 
 class MontrekReportForm(Form):
     form_template: str | None = None
 
     def to_html(self) -> str:
-        context = Context({"form": self})
-        template = Template(self.read_template())
-        rendered_template = template.render(context)
-        return f"""
-    <form method="post" class="tile">
-    {rendered_template}
-    <button type="submit" class="btn btn-custom">Submit</button>
-    </form>
-            """
+        inner = Template(self.read_template()).render(Context({"form": self}))
+        wrapper = loader.get_template("report_form_templates/report_form_base.html")
+        return wrapper.render({"inner": inner})
 
     def read_template(self) -> str:
         if not self.form_template:
