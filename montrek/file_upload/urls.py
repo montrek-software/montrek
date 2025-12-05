@@ -19,7 +19,7 @@ urlpatterns = [
     ),
     path(
         "revoke_file_upload_task/<str:task_id>",
-        views.revoke_file_upload_task,
+        views.RevokeFileUploadTask.as_view(),
         name="revoke_file_upload_task",
     ),
 ]
