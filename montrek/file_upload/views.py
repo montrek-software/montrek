@@ -20,6 +20,8 @@ from file_upload.managers.file_upload_manager import FileUploadManagerABC
 from file_upload.managers.file_upload_registry_manager import FileUploadRegistryManager
 from file_upload.pages import FileUploadPage
 
+from montrek.celery_app import app as celery_app
+
 logger = logging.getLogger(__name__)
 # Create your views here.
 

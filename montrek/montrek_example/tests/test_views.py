@@ -2,6 +2,7 @@ import datetime
 import os
 from tempfile import TemporaryDirectory
 from textwrap import dedent
+from unittest.mock import patch
 
 from baseclasses.dataclasses.alert import AlertEnum
 from baseclasses.utils import montrek_time
@@ -976,6 +977,24 @@ class TestRevokeExampleA1UploadTask(TestCase):
         )
         self.assertEqual(revoked_registry.upload_status, "revoked")
         self.assertEqual(revoked_registry.upload_message, "Task has been revoked")
+
+    @patch("file_upload.views.celery_app.control.revoke")
+    @add_logged_in_user
+    def test_revoke_calls_celery(self, mock_revoke):
+        # Patch celery task revoke, since we cannot spin up a worker in test environment
+        registry = me_factories.HubAFileUploadRegistryStaticSatelliteFactory()
+        url = reverse(
+            "revoke_file_upload_task", kwargs={"task_id": registry.celery_task_id}
+        )
+        previous_url = "http://127.0.0.1:8002/montrek_example/a1_view_uploads"
+        response = self.client.get(
+            url,
+            HTTP_REFERER=previous_url,
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, previous_url)
+
+        mock_revoke.assert_called_once_with(registry.celery_task_id, terminate=True)
 
 
 class TestMontrekExampleA1FieldMapCreateView(MontrekCreateViewTestCase):
