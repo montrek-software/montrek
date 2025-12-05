@@ -18,7 +18,10 @@ from django.utils.decorators import method_decorator
 from file_upload.forms import FieldMapCreateForm, UploadFileForm
 from file_upload.managers.field_map_manager import FieldMapManagerABC
 from file_upload.managers.file_upload_manager import FileUploadManagerABC
-from file_upload.managers.file_upload_registry_manager import FileUploadRegistryManager
+from file_upload.managers.file_upload_registry_manager import (
+    FileUploadRegistryManager,
+    FileUploadRegistryManagerABC,
+)
 from file_upload.pages import FileUploadPage
 
 from montrek.celery_app import app as celery_app
@@ -177,6 +180,13 @@ class MontrekUploadView(FileUploadRegistryView):
 
 
 class RevokeFileUploadTask(MontrekRedirectView):
+    @property
+    def manager_class(self) -> type[FileUploadRegistryManagerABC]:
+        previous_url = self.get_previous_url()
+        previous_match = resolve(urlparse(previous_url).path)
+        view_class = previous_match.func.view_class
+        return view_class.manager_class
+
     def get_redirect_url(self, *args, **kwargs) -> str:
         task_id = self.session_data.get("task_id")
         previous_url = self.get_previous_url()
@@ -186,12 +196,7 @@ class RevokeFileUploadTask(MontrekRedirectView):
         except Exception as e:
             messages.error(self.request, str(e))
             return previous_url
-        if previous_url == "/":
-            return "/"
-        previous_match = resolve(urlparse(previous_url).path)
-        view_class = previous_match.func.view_class
-        repository_class = view_class.manager_class.repository_class
-        registry_repository = repository_class(self.session_data)
+        registry_repository = self.manager.repository
         registry = registry_repository.receive().get(celery_task_id=task_id)
         if not registry:
             messages.error(self.request, f"Task {task_id} not found in registry.")

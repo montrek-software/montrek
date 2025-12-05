@@ -963,7 +963,8 @@ class TestRevokeExampleA1UploadTask(TestCase):
         self.previous_url = "http://127.0.0.1:8002/montrek_example/a1_view_uploads"
 
     @add_logged_in_user
-    def test_revoke_file_upload_task(self):
+    @patch("file_upload.views.celery_app.control.revoke")
+    def test_revoke_file_upload_task(self, mock_revoke):
         registries = (
             me_factories.HubAFileUploadRegistryStaticSatelliteFactory.create_batch(3)
         )
@@ -979,8 +980,8 @@ class TestRevokeExampleA1UploadTask(TestCase):
         self.assertEqual(revoked_registry.upload_status, "revoked")
         self.assertEqual(revoked_registry.upload_message, "Task has been revoked")
 
-    @patch("file_upload.views.celery_app.control.revoke")
     @add_logged_in_user
+    @patch("file_upload.views.celery_app.control.revoke")
     def test_revoke_calls_celery(self, mock_revoke):
         # Patch celery task revoke, since we cannot spin up a worker in test environment
         registry = me_factories.HubAFileUploadRegistryStaticSatelliteFactory()
@@ -996,7 +997,7 @@ class TestRevokeExampleA1UploadTask(TestCase):
 
         mock_revoke.assert_called_once_with(registry.celery_task_id, terminate=True)
 
-    @patch("montrek_example.views.celery_app.control.revoke")
+    @patch("file_upload.views.celery_app.control.revoke")
     @add_logged_in_user
     def test_revoke_broker_down(self, mock_revoke):
         from kombu.exceptions import OperationalError
