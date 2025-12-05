@@ -39,6 +39,12 @@ h2 {
   text-align: center;
 }
 
+.bg-primary-custom {
+  background-color: {% get_color "primary" %}
+}
+.bg-primary-light-custom {
+  background-color: {% get_color "primary_light" %}
+}
 /* =========================================================
    TILES
   ========================================================== */
@@ -126,8 +132,8 @@ h2 {
 .navbar-custom .dropdown-item {
   color: #000000;
 }
-
 .navbar-custom .dropdown-item:hover {
+
   background-color: {% get_color "primary_light" %};
   color: #ffffff;
 }
