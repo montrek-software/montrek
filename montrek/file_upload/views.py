@@ -13,7 +13,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import FileResponse, HttpResponseRedirect
 from django.shortcuts import redirect
-from django.urls import resolve
+from django.urls import resolve, reverse
 from django.utils.decorators import method_decorator
 from file_upload.forms import FieldMapCreateForm, UploadFileForm
 from file_upload.managers.field_map_manager import FieldMapManagerABC
@@ -184,8 +184,11 @@ class RevokeFileUploadTask(MontrekRedirectView):
     def manager_class(self) -> type[FileUploadRegistryManagerABC]:
         previous_url = self.get_previous_url()
         previous_match = resolve(urlparse(previous_url).path)
-        view_class = previous_match.func.view_class
-        return view_class.manager_class
+        try:
+            view_class = previous_match.func.view_class
+            return view_class.manager_class
+        except AttributeError:
+            return FileUploadRegistryManager
 
     def get_redirect_url(self, *args, **kwargs) -> str:
         task_id = self.session_data.get("task_id")
@@ -197,8 +200,8 @@ class RevokeFileUploadTask(MontrekRedirectView):
             messages.error(self.request, str(e))
             return previous_url
         registry_repository = self.manager.repository
-        registry = registry_repository.receive().get(celery_task_id=task_id)
-        if not registry:
+        registry = registry_repository.receive().filter(celery_task_id=task_id).first()
+        if registry is None:
             messages.error(self.request, f"Task {task_id} not found in registry.")
             return previous_url
         registry_dict = registry_repository.object_to_dict(registry)
@@ -208,4 +211,4 @@ class RevokeFileUploadTask(MontrekRedirectView):
         return previous_url
 
     def get_previous_url(self):
-        return self.request.META.get("HTTP_REFERER", "/")
+        return self.request.META.get("HTTP_REFERER", reverse("home"))

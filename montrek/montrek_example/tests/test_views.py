@@ -1014,6 +1014,16 @@ class TestRevokeExampleA1UploadTask(TestCase):
         messages_list = list(response.context["messages"])
         self.assertIn("down", str(messages_list[-1]))
 
+    @add_logged_in_user
+    @patch("file_upload.views.celery_app.control.revoke")
+    def test_revoke_withouut_http_referer(self, mock_revoke):
+        url = reverse("revoke_file_upload_task", kwargs={"task_id": "1234"})
+        response = self.client.get(
+            url,
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "/home")
+
 
 class TestMontrekExampleA1FieldMapCreateView(MontrekCreateViewTestCase):
     viewname = "montrek_example_a1_field_map_create"
