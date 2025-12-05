@@ -179,25 +179,28 @@ class MontrekUploadView(FileUploadRegistryView):
 class RevokeFileUploadTask(MontrekRedirectView):
     def get_redirect_url(self, *args, **kwargs) -> str:
         task_id = self.session_data.get("task_id")
-        previous_url = self.request.META.get("HTTP_REFERER")
+        previous_url = self.get_previous_url()
         try:
             celery_app.control.revoke(task_id, terminate=True)
             messages.info(self.request, f"Task {task_id} has been revoked.")
         except Exception as e:
             messages.error(self.request, str(e))
-        if not previous_url:
+            return previous_url
+        if previous_url == "/":
             return "/"
         previous_match = resolve(urlparse(previous_url).path)
         view_class = previous_match.func.view_class
         repository_class = view_class.manager_class.repository_class
         registry_repository = repository_class(self.session_data)
         registry = registry_repository.receive().get(celery_task_id=task_id)
-        redirect = previous_url
         if not registry:
             messages.error(self.request, f"Task {task_id} not found in registry.")
-            return redirect
+            return previous_url
         registry_dict = registry_repository.object_to_dict(registry)
         registry_dict["upload_status"] = "revoked"
         registry_dict["upload_message"] = "Task has been revoked"
         registry_repository.create_by_dict(registry_dict)
-        return redirect
+        return previous_url
+
+    def get_previous_url(self):
+        return self.request.META.get("HTTP_REFERER", "/")

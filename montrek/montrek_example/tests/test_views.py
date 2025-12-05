@@ -959,6 +959,9 @@ class TestMontrekExampleA1UploadView(MontrekListViewTestCase):
 
 
 class TestRevokeExampleA1UploadTask(TestCase):
+    def setUp(self):
+        self.previous_url = "http://127.0.0.1:8002/montrek_example/a1_view_uploads"
+
     @add_logged_in_user
     def test_revoke_file_upload_task(self):
         registries = (
@@ -967,9 +970,7 @@ class TestRevokeExampleA1UploadTask(TestCase):
         url = reverse(
             "revoke_file_upload_task", kwargs={"task_id": registries[0].celery_task_id}
         )
-        self.client.get(
-            url, HTTP_REFERER="http://127.0.0.1:8002/montrek_example/a1_view_uploads"
-        )
+        self.client.get(url, HTTP_REFERER=self.previous_url)
         revoked_registry = (
             HubAFileUploadRegistryRepository()
             .receive()
@@ -986,15 +987,31 @@ class TestRevokeExampleA1UploadTask(TestCase):
         url = reverse(
             "revoke_file_upload_task", kwargs={"task_id": registry.celery_task_id}
         )
-        previous_url = "http://127.0.0.1:8002/montrek_example/a1_view_uploads"
         response = self.client.get(
             url,
-            HTTP_REFERER=previous_url,
+            HTTP_REFERER=self.previous_url,
         )
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, previous_url)
+        self.assertEqual(response.url, self.previous_url)
 
         mock_revoke.assert_called_once_with(registry.celery_task_id, terminate=True)
+
+    @patch("montrek_example.views.celery_app.control.revoke")
+    @add_logged_in_user
+    def test_revoke_broker_down(self, mock_revoke):
+        from kombu.exceptions import OperationalError
+
+        mock_revoke.side_effect = OperationalError("down")
+
+        registry = me_factories.HubAFileUploadRegistryStaticSatelliteFactory()
+        url = reverse(
+            "revoke_file_upload_task", kwargs={"task_id": registry.celery_task_id}
+        )
+
+        response = self.client.get(url, HTTP_REFERER=self.previous_url, follow=True)
+
+        messages_list = list(response.context["messages"])
+        self.assertIn("down", str(messages_list[-1]))
 
 
 class TestMontrekExampleA1FieldMapCreateView(MontrekCreateViewTestCase):
