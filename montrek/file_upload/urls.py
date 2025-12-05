@@ -17,4 +17,9 @@ urlpatterns = [
         views.FileUploadRegistryView.as_view(),
         name="montrek_upload_file",
     ),
+    path(
+        "revoke_file_upload_task/<str:task_id>",
+        views.revoke_file_upload_task,
+        name="revoke_file_upload_task",
+    ),
 ]
