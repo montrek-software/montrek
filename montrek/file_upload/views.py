@@ -193,21 +193,33 @@ class RevokeFileUploadTask(MontrekRedirectView):
     def get_redirect_url(self, *args, **kwargs) -> str:
         task_id = self.session_data.get("task_id")
         previous_url = self.get_previous_url()
+        success = True
+        registry = None
+
         try:
             celery_app.control.revoke(task_id, terminate=True)
             messages.info(self.request, f"Task {task_id} has been revoked.")
-        except Exception as e:
-            messages.error(self.request, str(e))
-            return previous_url
-        registry_repository = self.manager.repository
-        registry = registry_repository.receive().filter(celery_task_id=task_id).first()
-        if registry is None:
-            messages.error(self.request, f"Task {task_id} not found in registry.")
-            return previous_url
-        registry_dict = registry_repository.object_to_dict(registry)
-        registry_dict["upload_status"] = "revoked"
-        registry_dict["upload_message"] = "Task has been revoked"
-        registry_repository.create_by_dict(registry_dict)
+        except Exception as exc:
+            messages.error(self.request, str(exc))
+            success = False
+
+        repo = self.manager.repository
+        if success:
+            registry = repo.receive().filter(celery_task_id=task_id).first()
+            if registry is None:
+                messages.error(self.request, f"Task {task_id} not found in registry.")
+                success = False
+
+        if success:
+            data = repo.object_to_dict(registry)
+            data.update(
+                {
+                    "upload_status": "revoked",
+                    "upload_message": "Task has been revoked",
+                }
+            )
+            repo.create_by_dict(data)
+
         return previous_url
 
     def get_previous_url(self):
