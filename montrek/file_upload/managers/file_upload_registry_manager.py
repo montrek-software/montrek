@@ -1,14 +1,14 @@
 from file_upload.repositories.file_upload_registry_repository import (
-    FileUploadRegistryRepositoryABC,
     FileUploadRegistryRepository,
+    FileUploadRegistryRepositoryABC,
 )
-from reporting.managers.montrek_table_manager import MontrekTableManager
 from reporting.dataclasses.table_elements import (
     DateTimeTableElement,
     LinkTableElement,
     StringTableElement,
     TextTableElement,
 )
+from reporting.managers.montrek_table_manager import MontrekTableManager
 
 
 class FileUploadRegistryManagerABC(MontrekTableManager):
@@ -37,7 +37,7 @@ class FileUploadRegistryManagerABC(MontrekTableManager):
                 url="revoke_file_upload_task",
                 kwargs={"task_id": "celery_task_id"},
                 hover_text="Revoke Upload Task",
-                icon="stop",
+                icon="sign-stop",
             ),
         ]
         if self.download_log_url != "":

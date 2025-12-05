@@ -1,9 +1,11 @@
 import logging
 from typing import TextIO
+from urllib.parse import urlparse
 
 from baseclasses.views import (
     MontrekCreateView,
     MontrekListView,
+    MontrekRedirectView,
     MontrekTemplateView,
     MontrekUpdateView,
 )
@@ -11,12 +13,18 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import FileResponse, HttpResponseRedirect
 from django.shortcuts import redirect
+from django.urls import resolve, reverse
 from django.utils.decorators import method_decorator
 from file_upload.forms import FieldMapCreateForm, UploadFileForm
 from file_upload.managers.field_map_manager import FieldMapManagerABC
 from file_upload.managers.file_upload_manager import FileUploadManagerABC
-from file_upload.managers.file_upload_registry_manager import FileUploadRegistryManager
+from file_upload.managers.file_upload_registry_manager import (
+    FileUploadRegistryManager,
+    FileUploadRegistryManagerABC,
+)
 from file_upload.pages import FileUploadPage
+
+from montrek.celery_app import app as celery_app
 
 logger = logging.getLogger(__name__)
 # Create your views here.
@@ -169,3 +177,38 @@ class FileUploadRegistryView(MontrekListView):
 # TODO: Remove after refactor
 class MontrekUploadView(FileUploadRegistryView):
     pass
+
+
+class RevokeFileUploadTask(MontrekRedirectView):
+    @property
+    def manager_class(self) -> type[FileUploadRegistryManagerABC]:
+        previous_url = self.get_previous_url()
+        previous_match = resolve(urlparse(previous_url).path)
+        try:
+            view_class = previous_match.func.view_class
+            return view_class.manager_class
+        except AttributeError:
+            return FileUploadRegistryManager
+
+    def get_redirect_url(self, *args, **kwargs) -> str:
+        task_id = self.session_data.get("task_id")
+        previous_url = self.get_previous_url()
+        try:
+            celery_app.control.revoke(task_id, terminate=True)
+            messages.info(self.request, f"Task {task_id} has been revoked.")
+        except Exception as e:
+            messages.error(self.request, str(e))
+            return previous_url
+        registry_repository = self.manager.repository
+        registry = registry_repository.receive().filter(celery_task_id=task_id).first()
+        if registry is None:
+            messages.error(self.request, f"Task {task_id} not found in registry.")
+            return previous_url
+        registry_dict = registry_repository.object_to_dict(registry)
+        registry_dict["upload_status"] = "revoked"
+        registry_dict["upload_message"] = "Task has been revoked"
+        registry_repository.create_by_dict(registry_dict)
+        return previous_url
+
+    def get_previous_url(self):
+        return self.request.META.get("HTTP_REFERER", reverse("home"))

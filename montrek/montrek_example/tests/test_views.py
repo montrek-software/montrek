@@ -2,6 +2,7 @@ import datetime
 import os
 from tempfile import TemporaryDirectory
 from textwrap import dedent
+from unittest.mock import patch
 
 from baseclasses.dataclasses.alert import AlertEnum
 from baseclasses.utils import montrek_time
@@ -958,17 +959,19 @@ class TestMontrekExampleA1UploadView(MontrekListViewTestCase):
 
 
 class TestRevokeExampleA1UploadTask(TestCase):
+    def setUp(self):
+        self.previous_url = "http://127.0.0.1:8002/montrek_example/a1_view_uploads"
+
     @add_logged_in_user
-    def test_revoke_file_upload_task(self):
+    @patch("file_upload.views.celery_app.control.revoke")
+    def test_revoke_file_upload_task(self, mock_revoke):
         registries = (
             me_factories.HubAFileUploadRegistryStaticSatelliteFactory.create_batch(3)
         )
         url = reverse(
             "revoke_file_upload_task", kwargs={"task_id": registries[0].celery_task_id}
         )
-        self.client.get(
-            url, HTTP_REFERER="http://127.0.0.1:8002/montrek_example/a1_view_uploads"
-        )
+        self.client.get(url, HTTP_REFERER=self.previous_url)
         revoked_registry = (
             HubAFileUploadRegistryRepository()
             .receive()
@@ -976,6 +979,50 @@ class TestRevokeExampleA1UploadTask(TestCase):
         )
         self.assertEqual(revoked_registry.upload_status, "revoked")
         self.assertEqual(revoked_registry.upload_message, "Task has been revoked")
+
+    @add_logged_in_user
+    @patch("file_upload.views.celery_app.control.revoke")
+    def test_revoke_calls_celery(self, mock_revoke):
+        # Patch celery task revoke, since we cannot spin up a worker in test environment
+        registry = me_factories.HubAFileUploadRegistryStaticSatelliteFactory()
+        url = reverse(
+            "revoke_file_upload_task", kwargs={"task_id": registry.celery_task_id}
+        )
+        response = self.client.get(
+            url,
+            HTTP_REFERER=self.previous_url,
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, self.previous_url)
+
+        mock_revoke.assert_called_once_with(registry.celery_task_id, terminate=True)
+
+    @patch("file_upload.views.celery_app.control.revoke")
+    @add_logged_in_user
+    def test_revoke_broker_down(self, mock_revoke):
+        from kombu.exceptions import OperationalError
+
+        mock_revoke.side_effect = OperationalError("down")
+
+        registry = me_factories.HubAFileUploadRegistryStaticSatelliteFactory()
+        url = reverse(
+            "revoke_file_upload_task", kwargs={"task_id": registry.celery_task_id}
+        )
+
+        response = self.client.get(url, HTTP_REFERER=self.previous_url, follow=True)
+
+        messages_list = list(response.context["messages"])
+        self.assertIn("down", str(messages_list[-1]))
+
+    @add_logged_in_user
+    @patch("file_upload.views.celery_app.control.revoke")
+    def test_revoke_withouut_http_referer(self, mock_revoke):
+        url = reverse("revoke_file_upload_task", kwargs={"task_id": "1234"})
+        response = self.client.get(
+            url,
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "/home")
 
 
 class TestMontrekExampleA1FieldMapCreateView(MontrekCreateViewTestCase):
