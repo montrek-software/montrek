@@ -5,7 +5,7 @@
   <!-- One row exactly like the old version -->
     <div class="row mb-1">
       <!-- FIELD -->
-      <div class=" col-3 px-1">
+      <div class=" col-lg-3 px-1">
       <div class="input-group input-group-sm w-auto">
         <span class="input-group-text">Field</span>
         {{ f.filter_field|add_class:"form-select" }}
@@ -13,7 +13,7 @@
       </div>
 
       <!-- NEGATE -->
-      <div class=" col-2 px-1">
+      <div class=" col-lg-2 px-1">
       <div class="input-group col-3  px-1 input-group-sm w-auto">
         <span class="input-group-text">Not</span>
         {{ f.filter_negate|add_class:"form-select" }}
@@ -21,7 +21,7 @@
       </div>
 
       <!-- LOOKUP -->
-      <div class=" col-3 px-1">
+      <div class=" col-lg-3 px-1">
       <div class="input-group col-3 px-1 input-group-sm w-auto">
         <span class="input-group-text">Cond</span>
         {{ f.filter_lookup|add_class:"form-select" }}
@@ -29,7 +29,7 @@
       </div>
 
       <!-- VALUE -->
-      <div class=" col-4 px-1">
+      <div class=" col-lg-4 px-1">
       <div class="input-group col-3 px-1 input-group-sm w-auto">
         <span class="input-group-text">Value</span>
         {{ f.filter_value|add_class:"form-control" }}
@@ -42,7 +42,7 @@
       <input type="hidden" id="form-action" name="action" value="">
 
       <div class="row">
-        <div class="col-1">
+        <div class="col-lg-1">
           <button
             type="submit"
             onclick="document.getElementById('form-action').value='filter'"
@@ -52,7 +52,7 @@
           </button>
         </div>
 
-        <div class="col-1">
+        <div class="col-lg-1">
           <button
             type="submit"
             onclick="document.getElementById('form-action').value='reset'"
@@ -62,7 +62,7 @@
           </button>
         </div>
 
-        <div class="col-1">
+        <div class="col-lg-1">
           <button
             type="submit"
             onclick="document.getElementById('form-action').value='add_filter'"
