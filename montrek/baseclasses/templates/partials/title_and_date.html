@@ -8,12 +8,12 @@
 <!-- DATE RANGE SELECTOR -->
 {% if show_date_range_selector %}
 <form method="get">
-  <div class="row tile">
-    <div class="col-2">{{ date_range_form.start_date.label_tag }}</div>
-    <div class="col-2">{{ date_range_form.start_date }}</div>
-    <div class="col-1">{{ date_range_form.end_date.label_tag }}</div>
-    <div class="col-2">{{ date_range_form.end_date }}</div>
-    <div class="col-3">
+  <div class="row tile mb-2 g-2">
+    <div class="col-lg-2">{{ date_range_form.start_date.label_tag }}</div>
+    <div class="col-lg-2">{{ date_range_form.start_date }}</div>
+    <div class="col-lg-1">{{ date_range_form.end_date.label_tag }}</div>
+    <div class="col-lg-2">{{ date_range_form.end_date }}</div>
+    <div class="col-lg-3">
       <input
         id="id_date_range_filter"
         type="submit"
@@ -21,6 +21,7 @@
         class="input-custom"
       />
     </div>
+    <div class="col-lg-2"></div>
   </div>
 </form>
 {% endif %}
