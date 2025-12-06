@@ -1,33 +1,30 @@
 {% extends 'base.html' %}
 {% load data_table_filters %}
 {% block content %}
-  <div class="container-fluid">
-    <div class="row">
-      <div class="col-12">
-        <h2 id="id_montrek_table_title">{{ title }}</h2>
+<div class="row">
+  <h2 id="id_montrek_table_title">{{ title }}</h2>
+</div>
+<div class="row">
+  <div class="col-10">
+  </div>
+  <div class="col-2">
+    <div class="row tile">
+      <div class="col-6">
+      <form method="get">
+        <input type="hidden" name="gen_pdf" value="true" />
+        <button type="submit" class="btn btn-light-custom" title="Export to pdf"><span class="bi bi-file-earmark-pdf"</span></button>
+      </form>
       </div>
-    </div>
-    <div class="row ">
-      <div class="col-9">
-      </div>
-      <div class="col-3 text-right tile">
-        <div class="row">
-          <form action="" method="get" class="col-lg-2">
-            <input type="hidden" name="gen_pdf" value="true" />
-            <button type="submit" class="btn btn-light-custom" title="Export to pdf"><span class="bi bi-file-earmark-pdf"</span></button>
-          </form>
-          <form action="" method="get" class="col-lg-2">
-            <input type="hidden" name="gen_rest_api" value="true" />
-            <button type="submit" class="btn btn-light-custom" title="Get REST Api data"><span class="bi bi-globe"</span></button>
-          </form>
-        </div>
-      </div>
-
-    </div>
-    <div id="id_montrek_table_list" class="row tile">
-      <div class="col-12">
-        {{ table  | safe }}
+      <div class="col-6">
+        <form action="" method="get">
+          <input type="hidden" name="gen_rest_api" value="true" />
+          <button type="submit" class="btn btn-light-custom" title="Get REST Api data"><span class="bi bi-globe"</span></button>
+        </form>
       </div>
     </div>
   </div>
+</div>
+<div id="id_montrek_table_list" class="row tile">
+    {{ table  | safe }}
+</div>
 {% endblock %}
