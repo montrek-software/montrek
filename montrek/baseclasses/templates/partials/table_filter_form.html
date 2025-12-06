@@ -6,43 +6,34 @@
     <div class="row mb-1">
       <!-- FIELD -->
       <div class="col-lg-3 px-1">
-      <div class="input-group input-group-sm w-auto">
-        <span class="input-group-text">Field</span>
+        <span class="input-group-text bg-primary-light-custom">Field</span>
         {{ f.filter_field|add_class:"form-select" }}
-      </div>
       </div>
 
       <!-- NEGATE -->
       <div class="col-lg-2 px-1">
-      <div class="input-group col-3  px-1 input-group-sm w-auto">
-        <span class="input-group-text">Not</span>
+        <span class="input-group-text bg-primary-light-custom">Not</span>
         {{ f.filter_negate|add_class:"form-select" }}
-      </div>
       </div>
 
       <!-- LOOKUP -->
       <div class="col-lg-3 px-1">
-      <div class="input-group col-3 px-1 input-group-sm w-auto">
-        <span class="input-group-text">Cond</span>
+        <span class="input-group-text bg-primary-light-custom">Cond</span>
         {{ f.filter_lookup|add_class:"form-select" }}
-      </div>
       </div>
 
       <!-- VALUE -->
       <div class="col-lg-4 px-1">
-      <div class="input-group col-3 px-1 input-group-sm w-auto">
-        <span class="input-group-text">Value</span>
+        <span class="input-group-text bg-primary-light-custom">Value</span>
         {{ f.filter_value|add_class:"form-control" }}
-      </div>
       </div>
     </div>
   {% endfor %}
-  <div class="row">
-    <form method="get" class="w-100">
+  <form method="get" class="w-100">
+    <div class="row g-2">
       <input type="hidden" id="form-action" name="action" value="">
 
-      <div class="row">
-        <div class="col-lg-1">
+        <div class="col-4 col-lg-9">
           <button
             type="submit"
             onclick="document.getElementById('form-action').value='filter'"
@@ -52,7 +43,7 @@
           </button>
         </div>
 
-        <div class="col-lg-1">
+        <div class="col-4 col-lg-2">
           <button
             type="submit"
             onclick="document.getElementById('form-action').value='reset'"
@@ -62,7 +53,7 @@
           </button>
         </div>
 
-        <div class="col-lg-1">
+        <div class="col-4 col-lg-1">
           <button
             type="submit"
             onclick="document.getElementById('form-action').value='add_filter'"
@@ -72,7 +63,6 @@
             <i class="bi bi-plus fs-6"></i>
           </button>
         </div>
-      </div>
-    </form>
-  </div>
+    </div>
+  </form>
 </form>
