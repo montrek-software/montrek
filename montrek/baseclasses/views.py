@@ -267,8 +267,8 @@ class MontrekListView(
             raise ValueError(
                 f"Manager {self.manager.__class__.__name__} must be of type MontrekTableManager"
             )
-        table = self.manager.to_html()
-        context["table"] = table
+        # table = self.manager.to_html()
+        context["table_manager"] = self.manager
         context["paginator"] = self.manager.paginator
         context["paginate_by"] = self.manager.paginate_by
         context["is_large"] = self.manager.is_large
