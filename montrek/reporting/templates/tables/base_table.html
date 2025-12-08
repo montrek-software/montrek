@@ -13,6 +13,13 @@
               <div style="display: flex; justify-content: space-between; align-items: center;">
             {{ table_element.name }}
               </div>
+              {% if table_element.attr == table_manager.order_field %}
+                {% if table_manager.order_descending %}
+                  <span class="bi bi-arrow-up"></span>
+                {% else %}
+                  <span class="bi bi-arrow-down"></span>
+                {% endif %}
+              {% endif %}
             </button>
           </th>
             {% endfor %}

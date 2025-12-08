@@ -47,6 +47,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         self._document_name: None | str = None
         self._queryset: None | QuerySet = None
         self.is_current_compact_format: bool = self.get_is_compact_format()
+        self.order_descending = False
         self.order_field: None | str = self.get_order_field()
 
     @property
@@ -75,6 +76,10 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         order_field = self.session_data.get("order_field", None)
         if isinstance(order_field, (list, tuple)):
             order_field = order_field[0]
+        if order_field is None:
+            return None
+        if order_field[0] == "-":
+            self.order_descending = True
         return order_field
 
     def set_order_field(self):
