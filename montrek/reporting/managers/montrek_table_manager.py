@@ -14,10 +14,10 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.db.models import QuerySet
 from django.http import HttpResponseRedirect
-from django.template import Context, Template
 from django.template.loader import get_template
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.html import format_html
 from django.views.generic.base import HttpResponse
 from django_pandas.io import read_frame
 from mailing.managers.mailing_manager import MailingManager
@@ -117,9 +117,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
             elements = []
             for table_element in self.table_elements:
                 elements.append(
-                    Template(table_element.get_attribute(query_object, "html")).render(
-                        Context({})
-                    )
+                    format_html(table_element.get_attribute(query_object, "html"))
                 )
             rows.append(elements)
         return rows
