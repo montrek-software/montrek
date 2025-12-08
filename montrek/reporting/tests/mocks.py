@@ -250,6 +250,7 @@ class MockLongRepository:
 
 class MockMontrekTableManager(MontrekTableManager):
     repository_class = MockRepository
+    table_title = "Mock Table"
 
     @property
     def table_elements(

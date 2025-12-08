@@ -8,4 +8,4 @@ register = template.Library()
 @register.simple_tag
 def render_table(table_manager: MontrekTableManagerABC):
     template = get_template("tables/base_table.html")
-    return template.render()
+    return template.render(context={"table_manager": table_manager})
