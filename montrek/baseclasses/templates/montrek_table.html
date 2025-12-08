@@ -1,5 +1,4 @@
 {% extends 'base.html' %}
-{% load montrek_table %}
 {% block content %}
 
 <div class="container-fluid">
@@ -30,7 +29,7 @@
   <!-- DATA TABLE -->
   <div class="row tile">
     <div class="col-12 p-0">
-      {% render_table table_manager %}
+      {{ table }}
     </div>
   </div>
 
