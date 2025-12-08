@@ -7,4 +7,5 @@ class TestMontrekTableTemplatetag(TestCase):
     def test_simple_render_table(self):
         table_manager = MockMontrekTableManager({})
         rendered_template = render_table(table_manager)
+        print(rendered_template)
         self.assertTrue("<h3>Mock Table</h3>" in rendered_template)

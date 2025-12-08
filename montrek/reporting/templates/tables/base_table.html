@@ -1,1 +1,24 @@
-<h3>{{ table_manager.table_title }}</h3>
+{% if table_manager.table_title %}
+  <h3>{{ table_manager.table_title }}</h3>
+{% endif %}
+<div class="row scrollable-content">
+  <form method="get">
+    <input type="hidden" name="order_action" id="form-order_by-action" value="">
+      <table class="table table-custom-striped table-bordered table-hover">
+        <thead>
+          <tr>
+            {% for table_element in table_manager.table_elements %}
+          <th title="{{ table_element.attr }}">
+            <button type="submit" onclick="document.getElementById('form-order_by-action').value='{{ table_element.attr }}'" class="btn-order-field">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+            {{ table_element.name }}
+              </div>
+            </button>
+          </th>
+            {% endfor %}
+          </tr>
+        </thead>
+      </table>
+    </input>
+  </form>
+</div>
