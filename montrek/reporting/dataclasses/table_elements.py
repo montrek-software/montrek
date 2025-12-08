@@ -6,6 +6,8 @@ from decimal import Decimal
 from enum import Enum
 from typing import Any
 from urllib.parse import urlparse
+from django.template.base import mark_safe
+from django.utils.html import format_html
 
 import pandas as pd
 import requests
@@ -111,7 +113,10 @@ class ExternalLinkTableElement(AttrTableElement):
     serializer_field_class = serializers.CharField
 
     def format(self, value):
-        return f'<td style="text-align:left;"><a href="{value}" target="_blank" title="{value}">{value}</a></td>'
+        return format_html(
+            '<td style="text-align:left;"><a href="{value}" target="_blank" title="{value}">{value}</a></td>',
+            value=value,
+        )
 
     def format_latex(self, value):
         return f" \\url{{{value}}} &"
@@ -126,7 +131,7 @@ class BaseLinkTableElement(TableElement):
 
     def format_link(self, value, active: bool = False):
         if active:
-            return f"<b>{value}</b>"
+            return format_html("<b>{value}</b>", value=value)
         return value
 
     @staticmethod
@@ -149,7 +154,7 @@ class BaseLinkTableElement(TableElement):
             return self.format_latex(link_text)
         if tag == "html":
             link = self.get_html_table_link_element(obj, link_text)
-            return f"<td>{link}</td>"
+            return format_html("<td>{link}</td>", link=link)
         return link_text
 
     def get_html_table_link_element(
@@ -275,7 +280,7 @@ class StringTableElement(AttrTableElement):
     chunk_size: int = 56
 
     def format(self, value):
-        return f'<td style="text-align: left">{value}</td>'
+        return format_html('<td style="text-align: left">{value}</td>', value=value)
 
     def get_value(self, obj: Any) -> Any:
         value = super().get_value(obj)
@@ -306,7 +311,10 @@ class TextTableElement(AttrTableElement):
     attr: str
 
     def format(self, value):
-        return f'<td style="text-align: left; white-space: pre-wrap;">{value}</td>'
+        return format_html(
+            '<td style="text-align: left; white-space: pre-wrap;">{value}</td>',
+            value=value,
+        )
 
 
 @dataclass
@@ -319,7 +327,7 @@ class ListTableElement(AttrTableElement):
     def format(self, value):
         values = value.split(self.in_separator)
         out_value = self.out_separator.join(values)
-        return f'<td style="text-align: left">{out_value}</td>'
+        return format_html('<td style="text-align: left">{value}</td>', value=out_value)
 
 
 @dataclass
@@ -329,7 +337,11 @@ class AlertTableElement(AttrTableElement):
 
     def format(self, value):
         status = AlertEnum.get_by_description(value)
-        return f'<td style="text-align: left;color:{status.color.hex};"><b>{value}</b></td>'
+        return format_html(
+            '<td style="text-align: left;color:{status.color.hex};"><b>{value}</b></td>',
+            status=status,
+            value=value,
+        )
 
 
 @dataclass
@@ -343,9 +355,13 @@ class NumberTableElement(AttrTableElement):
             return '<td style="text-align:center;">-</td>'
         if not isinstance(value, (int, float, Decimal)):
             return f'<td style="text-align:left;">{value}</td>'
-        color = _get_value_color(value)
+        color = _get_value_color(value).hex
         formatted_value = self._format_value(value)
-        return f'<td style="text-align:right;color:{color.hex};">{formatted_value}</td>'
+        return format_html(
+            '<td style="text-align:right;color:{color};">{formatted_value}</td>',
+            color=color,
+            formatted_value=formatted_value,
+        )
 
     def format_latex(self, value):
         if not isinstance(value, (int, float, Decimal)):
@@ -413,9 +429,13 @@ class ProgressBarTableElement(NumberTableElement):
     serializer_field_class = serializers.FloatField
     attr: str
 
-    def format(self, value) -> str:
+    def format(self, value: float):
         per_value = value * 100
-        return f"""<td><div class="bar-container"> <div class="bar" style="width: {per_value}%;"></div> <span class="bar-value">{value:,.2%}</span> </div></td>"""
+        return format_html(
+            '<td><div class="bar-container"> <div class="bar" style="width: {per_value}%;"></div> <span class="bar-value">{value:,.2%}</span> </div></td>',
+            per_value=per_value,
+            value=value,
+        )
 
     def format_latex(self, value) -> str:
         per_value = value * 100
@@ -433,7 +453,7 @@ class DateTableBaseElement(AttrTableElement):
     def format(self, value):
         if isinstance(value, timezone.datetime):
             value = value.strftime(self.date_format)
-        return f'<td style="text-align:left;">{value}</td>'
+        return format_html('<td style="text-align:left;">{value}</td>', value=value)
 
     def get_value(self, obj: Any) -> Any:
         value = super().get_value(obj)
@@ -460,12 +480,12 @@ class DateYearTableElement(AttrTableElement):
         try:
             value = pd.to_datetime(value)
             if pd.isnull(value):
-                return '<td style="text-align:center;">-</td>'
+                return mark_safe('<td style="text-align:center;">-</td>')
             else:
                 value = value.strftime("%Y")
         except DateParseError:
-            return f'<td style="text-align:left;">{value}</td>'
-        return f'<td style="text-align:left;">{value}</td>'
+            return format_html('<td style="text-align:left;">{value}</td>', value=value)
+        return format_html('<td style="text-align:left;">{value}</td>', value=value)
 
 
 @dataclass
@@ -475,8 +495,8 @@ class BooleanTableElement(AttrTableElement):
 
     def format(self, value):
         if value:
-            return '<td style="text-align:left;">&#x2713;</td>'
-        return '<td style="text-align:left;">&#x2717;</td>'
+            return mark_safe('<td style="text-align:left;">&#x2713;</td>')
+        return mark_safe('<td style="text-align:left;">&#x2717;</td>')
 
 
 @dataclass
@@ -532,7 +552,12 @@ class ImageTableElement(AttrTableElement):
     alt: str = "image"
 
     def format(self, value):
-        return f'<td style="text-align:left;"><img src="{value}" alt="{self.alt}" style="width:100px;height:100px;"></td>'
+        alt = self.alt
+        return format_html(
+            '<td style="text-align:left;"><img src="{value}" alt="{alt}" style="width:100px;height:100px;"></td>',
+            value=value,
+            alt=alt,
+        )
 
     def format_latex(self, value):
         def _return_string(value):
@@ -571,7 +596,11 @@ class MethodNameTableElement(AttrTableElement):
             func = func.__wrapped__
         doc = inspect.getdoc(func)
         doc = doc or ""
-        return f'<td style="text-align: left" title="{doc}">{value}</td>'
+        return format_html(
+            '<td style="text-align: left" title="{doc}">{value}</td>',
+            doc=doc,
+            value=value,
+        )
 
 
 class HistoryChangeState(Enum):
@@ -593,9 +622,19 @@ class HistoryStringTableElement(StringTableElement):
         if change_format == HistoryChangeState.NONE:
             return super().format(value)
         if change_format == HistoryChangeState.OLD:
-            return f'<td style="text-align: left; color: {ReportingColors.RED.hex}"><strong>{value}</strong></td>'
+            red = ReportingColors.RED.hex
+            return format_html(
+                '<td style="text-align: left; color: {red}"><strong>{value}</strong></td>',
+                red=red,
+                value=value,
+            )
         if change_format == HistoryChangeState.NEW:
-            return f'<td style="text-align: left; color: {ReportingColors.DARK_GREEN.hex}"><strong>{value}</strong></td>'
+            green = ReportingColors.DARK_GREEN.hex
+            return format_html(
+                '<td style="text-align: left; color: {green}"><strong>{value}</strong></td>',
+                green=green,
+                value=value,
+            )
 
     def _get_change_format(self):
         obj_id = self.obj.id
@@ -612,8 +651,12 @@ class ColorCodedStringTableElement(StringTableElement):
         super().__init__(name, attr)
 
     def format(self, value):
-        color = self.color_codes.get(value, ReportingColors.BLUE)
-        return f'<td style="text-align: left; color: {color.hex}">{value}</td>'
+        color = self.color_codes.get(value, ReportingColors.BLUE).hex
+        return format_html(
+            '<td style="text-align: left; color: {color}">{value}</td>',
+            color=color,
+            value=value,
+        )
 
     def format_latex(self, value):
         value_str = str(value)
@@ -628,10 +671,18 @@ class LabelTableElement(StringTableElement):
         super().__init__(name, attr)
 
     def format(self, value):
-        color = self.color_codes.get(value, ReportingColors.BLUE)
-        font_color = ReportingColors.contrast_font_color(color)
-        label_html = f'<span class="badge" style="background-color:{color.hex};color:{font_color.hex};">{value}</span>'
-        return f'<td style="text-align: left;">{label_html}</td>'
+        base_color = self.color_codes.get(value, ReportingColors.BLUE)
+        font_color = ReportingColors.contrast_font_color(base_color).hex
+        color = base_color.hex
+        label_html = format_html(
+            '<span class="badge" style="background-color:{color};color:{font_color};">{value}</span>',
+            color=color,
+            font_color=font_color,
+            value=value,
+        )
+        return format_html(
+            '<td style="text-align: left;">{label_html}</td>', label_html=label_html
+        )
 
     def format_latex(self, value):
         value_str = str(value)
