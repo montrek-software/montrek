@@ -1,6 +1,5 @@
-{% load montrek_table %}
 {% if table_manager.table_title %}
-  <h3>{{ table_manager.table_title }}</h3>
+  <h3>{{ table_title }}</h3>
 {% endif %}
 <div class="row scrollable-content">
   <form method="get">
@@ -8,26 +7,30 @@
       <table class="table table-custom-striped table-bordered table-hover">
         <thead>
           <tr>
-            {% for table_element in table_manager.table_elements %}
+            {% for table_element in table_elements %}
           <th title="{{ table_element.attr }}">
             <button type="submit" onclick="document.getElementById('form-order_by-action').value='{{ table_element.attr }}'" class="btn-order-field">
               <div style="display: flex; justify-content: space-between; align-items: center;">
-            {{ table_element.name }}
-              </div>
-              {% if table_element.attr == table_manager.order_field %}
-                {% if table_manager.order_descending %}
+                {{ table_element.name }}
+              {% if table_element.attr == order_field %}
+                {% if order_descending  %}
                   <span class="bi bi-arrow-up"></span>
                 {% else %}
                   <span class="bi bi-arrow-down"></span>
                 {% endif %}
               {% endif %}
+              </div>
             </button>
           </th>
             {% endfor %}
           </tr>
         </thead>
         <tbody>
-        {% render_table_body table_manager %}
+        {% for row in display_elements %}
+        <tr>
+          {% for element in row %} {{ element }} {% endfor %}
+        </tr>
+        {% endfor %}
         </tbody>
       </table>
     </input>

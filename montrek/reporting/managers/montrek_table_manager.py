@@ -14,6 +14,8 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.db.models import QuerySet
 from django.http import HttpResponseRedirect
+from django.template import Context, Template
+from django.template.loader import get_template
 from django.urls import reverse
 from django.utils import timezone
 from django.views.generic.base import HttpResponse
@@ -23,7 +25,6 @@ from reporting.core import reporting_text as rt
 from reporting.core.table_converter import LatexTableConverter
 from reporting.core.text_converter import HtmlTextConverter
 from reporting.dataclasses import table_elements as te
-from reporting.dataclasses.display_table_element import DisplayTableElement
 from reporting.lib.protocols import ReportElementProtocol
 from reporting.tasks.download_table_task import DownloadTableTask
 from reporting.tasks.refresh_data_task import RefreshDataTask
@@ -79,7 +80,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
             order_field = order_field[0]
         if order_field is None:
             return None
-        if order_field[0] == "-":
+        if len(order_field) > 0 and order_field[0] == "-":
             self.order_descending = True
         return order_field
 
@@ -110,58 +111,34 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
             ele.attr: ele.name for ele in self.table_elements if hasattr(ele, "attr")
         }
 
-    def get_display_elements(self) -> list[list[DisplayTableElement]]:
+    def get_display_elements(self) -> list[list[str]]:
         rows = []
         for query_object in self.get_table():
-            elements = [
-                DisplayTableElement(display_value=te.get_value(query_object))
-                for te in self.table_elements
-            ]
+            elements = []
+            for table_element in self.table_elements:
+                elements.append(
+                    Template(table_element.get_attribute(query_object, "html")).render(
+                        Context({})
+                    )
+                )
             rows.append(elements)
         return rows
 
     def to_html(self):
-        table_id = 'id="compactTable"' if self.is_current_compact_format else ""
-        html_str = (
-            f"<h3>{self.table_title}</h3>"
-            '<div class="row scrollable-content">'
-            '<form method="get">'  # Wrap form outside the table
-            '<input type="hidden" name="order_action" id="form-order_by-action" value="">'
+        template = get_template("tables/base_table.html")
+        if self.order_descending:
+            order_field = self.order_field[1:]
+        else:
+            order_field = self.order_field
+        return template.render(
+            context={
+                "table_title": self.table_title,
+                "table_elements": self.table_elements,
+                "display_elements": self.get_display_elements(),
+                "order_field": order_field,
+                "order_descending": self.order_descending,
+            }
         )
-        table_str = f'<table {table_id} class="table table-custom-striped table-bordered table-hover"><thead><tr>'
-
-        for table_element in self.table_elements:
-            elem_attr = getattr(table_element, "attr", "hub_entity_id")
-            table_str += f"<th title='{elem_attr}'>"
-            table_str += (
-                f'<button type="submit" '
-                f"onclick=\"document.getElementById('form-order_by-action').value='{elem_attr}'\" "
-                'class="btn-order-field">'
-                f'<div style="display: flex; justify-content: space-between; align-items: center;">'
-                f"{table_element.name}"
-            )
-            if elem_attr == self.order_field:
-                table_str += '<span class="bi bi-arrow-down"></span>'
-            if "-" + elem_attr == self.order_field:
-                table_str += '<span class="bi bi-arrow-up"></span>'
-            table_str += "</div></button></th>"
-
-        table_str += "</tr></thead>"
-        table_body_str = "<tbody>"
-
-        for query_object in self.get_table():
-            table_body_str += '<tr style="white-space:nowrap;">'
-            table_body_str += "".join(
-                te.get_attribute(query_object, "html") for te in self.table_elements
-            )
-            table_body_str += "</tr>"
-
-        table_body_str += "</tbody>"
-        table_str += table_body_str
-        table_str += "</table>"
-        html_str += table_str
-        html_str += "</form></div>"
-        return html_str
 
     def to_json(self) -> dict:
         out_json = []
