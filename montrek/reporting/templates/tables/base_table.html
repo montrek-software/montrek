@@ -1,3 +1,4 @@
+{% load montrek_table %}
 {% if table_manager.table_title %}
   <h3>{{ table_manager.table_title }}</h3>
 {% endif %}
@@ -25,6 +26,9 @@
             {% endfor %}
           </tr>
         </thead>
+        <tbody>
+        {% render_table_body table_manager %}
+        </tbody>
       </table>
     </input>
   </form>

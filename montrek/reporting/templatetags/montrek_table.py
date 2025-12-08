@@ -9,3 +9,10 @@ register = template.Library()
 def render_table(table_manager: MontrekTableManagerABC):
     template = get_template("tables/base_table.html")
     return template.render(context={"table_manager": table_manager})
+
+
+@register.simple_tag
+def render_table_body(table_manager: MontrekTableManagerABC):
+    template = get_template("tables/base_table_body.html")
+    display_elements = table_manager.get_display_elements()
+    return template.render(context={"display_elements": display_elements})

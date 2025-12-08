@@ -23,6 +23,7 @@ from reporting.core import reporting_text as rt
 from reporting.core.table_converter import LatexTableConverter
 from reporting.core.text_converter import HtmlTextConverter
 from reporting.dataclasses import table_elements as te
+from reporting.dataclasses.display_table_element import DisplayTableElement
 from reporting.lib.protocols import ReportElementProtocol
 from reporting.tasks.download_table_task import DownloadTableTask
 from reporting.tasks.refresh_data_task import RefreshDataTask
@@ -108,6 +109,16 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         return {
             ele.attr: ele.name for ele in self.table_elements if hasattr(ele, "attr")
         }
+
+    def get_display_elements(self) -> list[list[DisplayTableElement]]:
+        rows = []
+        for query_object in self.get_table():
+            elements = [
+                DisplayTableElement(display_value=te.get_value(query_object))
+                for te in self.table_elements
+            ]
+            rows.append(elements)
+        return rows
 
     def to_html(self):
         table_id = 'id="compactTable"' if self.is_current_compact_format else ""
