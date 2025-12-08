@@ -1,10 +1,20 @@
 import datetime
 import math
+from dataclasses import dataclass
+
+from django.template.loader import get_template
+from django.utils.html import format_html
 
 from baseclasses.managers.montrek_manager import MontrekManager
 from reporting.core import reporting_text as rt
 from reporting.dataclasses import table_elements as te
 from reporting.lib.protocols import ReportElementProtocol
+
+
+@dataclass
+class DisplayField:
+    name: str
+    value: str
 
 
 class MontrekDetailsManager(MontrekManager):
@@ -29,20 +39,42 @@ class MontrekDetailsManager(MontrekManager):
     def footer_text(self) -> ReportElementProtocol:
         return rt.ReportingText("Internal Report")
 
+    def get_details_data(self) -> list[list[DisplayField]]:
+        elements = [
+            DisplayField(
+                name=table_element.name,
+                value=format_html(
+                    table_element.get_attribute(self.object_query, "html")
+                ),
+            )
+            for table_element in self.table_elements
+        ]
+
+        rows = []
+        total = len(elements)
+        rows_per_col = (total + self.table_cols - 1) // self.table_cols
+
+        for row_index in range(rows_per_col):
+            row = []
+            for col_index in range(self.table_cols):
+                idx = col_index * rows_per_col + row_index
+                if idx < total:
+                    row.append(elements[idx])
+            rows.append(row)
+
+        return rows
+
     def to_html(self) -> str:
-        html_str = '<div class="row">'
+        template = get_template("tables/details_table.html")
         bt_col_size = 12 // self.table_cols
-        for i in range(self.table_cols):
-            html_str += f'<div class="col-md-{bt_col_size}">'
-            html_str += '<table class="table table-custom-striped table-bordered table-hover  table-responsive">'
-            start_idx = self.row_size * i
-            end_idx = min(self.row_size * (i + 1), len(self.table_elements))
-            for table_element in self.table_elements[start_idx:end_idx]:
-                html_str += f'<tr><th style="width:33%">{table_element.name}</th>{table_element.get_attribute(self.object_query, "html")}</tr>'
-            html_str += "</table>"
-            html_str += "</div>"
-        html_str += "</div>"
-        return html_str
+        details_data = self.get_details_data()
+        return template.render(
+            context={
+                "bt_col_size": bt_col_size,
+                "table_cols": self.table_cols,
+                "details_data": details_data,
+            }
+        )
 
     def to_latex(self) -> str:
         latex_str = ""

@@ -7,69 +7,70 @@ from reporting.tests.mocks import MockMontrekDetailsManager
 
 class TestMontrekDetailsManager(TestCase):
     @staticmethod
-    def _table_to_map(table_tag):
+    def _table_to_map(table):
         """
         Build a dict mapping <th> text -> <td> Tag for easy lookup.
         """
-        out = {}
-        for tr in table_tag.select("tr"):
-            th = tr.find("th")
-            td = tr.find("td")
-            if th and td:
-                out[th.get_text(strip=True)] = td
-        return out
+        mapping = {}
+        for row in table.find_all("tr"):
+            headers = row.find_all("th")
+            cells = row.find_all("td")
+            # pair headers and cells positionally in this row
+            for i, th in enumerate(headers):
+                if i < len(cells):
+                    key = " ".join(th.get_text(strip=True).split())
+                    mapping[key] = cells[i]
+        return mapping
 
     def test_to_html(self):
         html = MockMontrekDetailsManager().to_html()
-        soup = BeautifulSoup(html, "html.parser")  # use "lxml" if you have it installed
+        soup = BeautifulSoup(html, "html.parser")
 
-        # overall layout
-        cols = soup.select("div.row > div.col-md-6")
-        self.assertEqual(len(cols), 2)
+        # single table now
+        tables = soup.select(
+            "table.table.table-custom-striped.table-bordered.table-hover.table-responsive"
+        )
+        self.assertEqual(len(tables), 1)
+        table = tables[0]
 
-        tables = soup.select("table.table.table-bordered.table-hover.table-responsive")
-        self.assertEqual(len(tables), 2)
+        cell_map = self._table_to_map(table)
 
-        left_map = self._table_to_map(tables[0])
-        right_map = self._table_to_map(tables[1])
+        # --- presence checks ---
+        for label in [
+            "Field A",
+            "Field B",
+            "Field C",
+            "Field D",
+            "Field E",
+            "Link",
+            "Link Text",
+        ]:
+            self.assertIn(label, cell_map)
 
-        # --- Left table checks ---
-        self.assertIn("Field A", left_map)
-        self.assertIn("Field B", left_map)
-        self.assertIn("Field C", left_map)
-        self.assertIn("Field D", left_map)
+        # --- value checks ---
+        self.assertEqual(cell_map["Field A"].get_text(strip=True), "a")
+        self.assertEqual(cell_map["Field B"].get_text(strip=True), "1")
+        self.assertEqual(cell_map["Field C"].get_text(strip=True), "1.000")
+        self.assertIn("2024-07-13", cell_map["Field D"].get_text(strip=True))
 
-        self.assertEqual(left_map["Field A"].get_text(strip=True), "a")
-        self.assertEqual(left_map["Field B"].get_text(strip=True), "1")
-        self.assertEqual(left_map["Field C"].get_text(strip=True), "1.000")
-        self.assertIn("2024-07-13", left_map["Field D"].get_text(strip=True))
-
-        # style checks (don’t overfit exact order/spacing)
-        style_b = left_map["Field B"].get("style", "")
-        self.assertIn("text-align:right", style_b)
-        self.assertIn("#002F6C", style_b)
-
-        style_c = left_map["Field C"].get("style", "")
-        self.assertIn("text-align:right", style_c)
-        self.assertIn("#002F6C", style_c)
-
-        # --- Right table checks ---
-        self.assertIn("Field E", right_map)
-        self.assertTrue(right_map["Field E"].get_text(strip=True).endswith("€"))
-        style_e = right_map["Field E"].get("style", "")
+        # Field E with currency and style
+        field_e_td = cell_map["Field E"]
+        self.assertTrue(field_e_td.get_text(strip=True).endswith("€"))
+        style_e = field_e_td.get("style", "")
         self.assertIn("text-align:right", style_e)
+        self.assertIn("#002F6C", style_e)
 
         # Link cell with icon
-        self.assertIn("Link", right_map)
-        link_a = right_map["Link"].find("a", id="id__home")
+        link_td = cell_map["Link"]
+        link_a = link_td.find("a", id="id__home")
         self.assertIsNotNone(link_a)
         self.assertEqual(link_a.get("href"), "/home")
         self.assertEqual(link_a.get("title"), "Link")
         self.assertIsNotNone(link_a.find("span", class_="bi"))
 
         # Link Text cell with anchor text
-        self.assertIn("Link Text", right_map)
-        link_text_a = right_map["Link Text"].find("a", id="id__home")
+        link_text_td = cell_map["Link Text"]
+        link_text_a = link_text_td.find("a", id="id__home")
         self.assertIsNotNone(link_text_a)
         self.assertEqual(link_text_a.get("href"), "/home")
         self.assertEqual(link_text_a.get("title"), "Link Text")
