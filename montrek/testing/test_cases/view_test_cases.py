@@ -174,7 +174,9 @@ class MontrekListViewTestCase(
         bs = BeautifulSoup(self.response.context["table"], features="html.parser")
         columns = bs.find_all("th")
         for expected_column in self.expected_columns:
-            self.assertIn(expected_column, [column.text for column in columns])
+            self.assertIn(
+                expected_column, [column.get_text(strip=True) for column in columns]
+            )
 
     def test_rest_api_view(self):
         self.rest_api_view_test()

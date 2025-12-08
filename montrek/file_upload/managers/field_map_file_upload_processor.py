@@ -59,7 +59,11 @@ class FieldMapFileUploadProcessor:
         if self.field_map_manager.exceptions:
             self.message = "Errors raised during field mapping:"
             for e in self.field_map_manager.exceptions:
-                self.message += f"<br>{e.source_field, e.database_field, e.function_name, e.function_parameters, e.exception_message}"
+                self.message += f"<br>{e.source_field, e.database_field, e.function_name, e.function_parameters, e.exception_message}".replace(
+                    "{", "{{"
+                ).replace(
+                    "}", "}}"
+                )
             return False
         try:
             mapped_df["comment"] = self.file_upload_registry_hub.file_name
