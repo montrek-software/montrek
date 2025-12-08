@@ -126,7 +126,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
 
     def to_html(self):
         template = get_template("tables/base_table.html")
-        if self.order_descending:
+        if self.order_descending and self.order_field is not None:
             order_field = self.order_field[1:]
         else:
             order_field = self.order_field

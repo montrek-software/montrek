@@ -1,4 +1,4 @@
-{% if table_manager.table_title %}
+{% if table_title %}
   <h3>{{ table_title }}</h3>
 {% endif %}
 <div class="row scrollable-content">
@@ -13,7 +13,7 @@
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 {{ table_element.name }}
               {% if table_element.attr == order_field %}
-                {% if order_descending  %}
+                {% if order_descending %}
                   <span class="bi bi-arrow-up"></span>
                 {% else %}
                   <span class="bi bi-arrow-down"></span>
@@ -33,6 +33,5 @@
         {% endfor %}
         </tbody>
       </table>
-    </input>
   </form>
 </div>
