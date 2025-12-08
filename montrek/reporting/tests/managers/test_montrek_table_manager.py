@@ -31,18 +31,26 @@ class TestMontrekTableManager(TestCase):
     def setUp(self):
         self.user = MontrekUserFactory()
 
+    def normailze_html(self, html: str) -> str:
+        soup = BeautifulSoup(html, "html.parser")
+        return soup.prettify()
+
     def test_to_html_exact_match(self):
         html = MockMontrekTableManager().to_html()
         soup = BeautifulSoup(html, "html.parser")
         table = soup.find("table")
+        normalized = self.normailze_html(str(table))
         if self.rebase:
-            with open(self.BASE_DIR / "data" / "html_exact.html", "w") as f:
-                f.write(str(table))
+            (self.BASE_DIR / "data" / "html_exact.html").write_text(
+                normalized, encoding="utf-8"
+            )
             return
-        with open(self.BASE_DIR / "data" / "html_exact.html") as f:
-            expected_table = f.read()
 
-        self.assertEqual(str(table), expected_table)
+        expected = (self.BASE_DIR / "data" / "html_exact.html").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertEqual(normalized, expected)
 
     def test_to_latex(self):
         test_latex = MockMontrekTableManager().to_latex()
