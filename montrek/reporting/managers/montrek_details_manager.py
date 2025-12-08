@@ -1,15 +1,14 @@
-from dataclasses import dataclass
 import datetime
 import math
+from dataclasses import dataclass
 
 from django.template.loader import get_template
-from typing import Any
+from django.utils.html import format_html
 
 from baseclasses.managers.montrek_manager import MontrekManager
 from reporting.core import reporting_text as rt
 from reporting.dataclasses import table_elements as te
 from reporting.lib.protocols import ReportElementProtocol
-from django.utils.html import format_html
 
 
 @dataclass
