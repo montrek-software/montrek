@@ -1,0 +1,12 @@
+<table
+  class="table table-custom-striped table-bordered table-hover table-responsive"
+>
+  {% for data_row in details_data %}
+  <tr>
+    {% for data_field in data_row %}
+
+    <th>{{data_field.name}}</th>
+    {{data_field.value}} {% endfor %}
+  </tr>
+  {% endfor %}
+</table>
