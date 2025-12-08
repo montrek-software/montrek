@@ -1,6 +1,7 @@
 import datetime
 import io
 from decimal import Decimal
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -24,6 +25,9 @@ from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
 
 class TestMontrekTableManager(TestCase):
+    BASE_DIR = Path(__file__).resolve().parent.parent
+    rebase = False
+
     def setUp(self):
         self.user = MontrekUserFactory()
 
@@ -31,7 +35,12 @@ class TestMontrekTableManager(TestCase):
         html = MockMontrekTableManager().to_html()
         soup = BeautifulSoup(html, "html.parser")
         table = soup.find("table")
-        expected_table = """<table class="table table-custom-striped table-bordered table-hover"><thead><tr><th title="field_a"><button class="btn-order-field" onclick="document.getElementById(\'form-order_by-action\').value=\'field_a\'" type="submit"><div style="display: flex; justify-content: space-between; align-items: center;">Field A</div></button></th><th title="field_b"><button class="btn-order-field" onclick="document.getElementById(\'form-order_by-action\').value=\'field_b\'" type="submit"><div style="display: flex; justify-content: space-between; align-items: center;">Field B</div></button></th><th title="field_c"><button class="btn-order-field" onclick="document.getElementById(\'form-order_by-action\').value=\'field_c\'" type="submit"><div style="display: flex; justify-content: space-between; align-items: center;">Field C</div></button></th><th title="field_d"><button class="btn-order-field" onclick="document.getElementById(\'form-order_by-action\').value=\'field_d\'" type="submit"><div style="display: flex; justify-content: space-between; align-items: center;">Field D</div></button></th><th title="field_e"><button class="btn-order-field" onclick="document.getElementById(\'form-order_by-action\').value=\'field_e\'" type="submit"><div style="display: flex; justify-content: space-between; align-items: center;">Field E</div></button></th><th title="hub_entity_id"><button class="btn-order-field" onclick="document.getElementById(\'form-order_by-action\').value=\'hub_entity_id\'" type="submit"><div style="display: flex; justify-content: space-between; align-items: center;">Link</div></button></th><th title="hub_entity_id"><button class="btn-order-field" onclick="document.getElementById(\'form-order_by-action\').value=\'hub_entity_id\'" type="submit"><div style="display: flex; justify-content: space-between; align-items: center;">Link Text</div></button></th></tr></thead><tbody><tr style="white-space:nowrap;"><td style="text-align: left">a</td><td style="text-align:right;color:#002F6C;">1</td><td style="text-align:right;color:#002F6C;">1.000</td><td style="text-align:left;">2024-07-13 00:00:00</td><td style="text-align:right;color:#002F6C;">1.00€</td><td><a href="/home" id="id__home" title="Link"><span class="bi bi-icon"></span></a></td><td><a href="/home" id="id__home" title="Link Text">a</a></td></tr><tr style="white-space:nowrap;"><td style="text-align: left">b</td><td style="text-align:right;color:#002F6C;">2</td><td style="text-align:right;color:#002F6C;">2.000</td><td style="text-align:left;">2024-07-13 00:00:00</td><td style="text-align:right;color:#002F6C;">2.20€</td><td><a href="/home" id="id__home" title="Link"><span class="bi bi-icon"></span></a></td><td><a href="/home" id="id__home" title="Link Text">b</a></td></tr><tr style="white-space:nowrap;"><td style="text-align: left">c</td><td style="text-align:right;color:#002F6C;">3</td><td style="text-align:right;color:#002F6C;">3.000</td><td style="text-align:left;">2024-07-13 00:00:00</td><td style="text-align:right;color:#002F6C;">3.00€</td><td><a href="/home" id="id__home" title="Link"><span class="bi bi-icon"></span></a></td><td><a href="/home" id="id__home" title="Link Text">c</a></td></tr></tbody></table>"""
+        if self.rebase:
+            with open(self.BASE_DIR / "data" / "html_exact.html", "w") as f:
+                f.write(str(table))
+            return
+        with open(self.BASE_DIR / "data" / "html_exact.html") as f:
+            expected_table = f.read()
 
         self.assertEqual(str(table), expected_table)
 
@@ -272,7 +281,7 @@ class TestMontrekDataFrameTableManager(TestCase):
             "Link",
             "Link Text",
         ]
-        header_texts = [th.get_text() for th in headers]
+        header_texts = [th.get_text(strip=True) for th in headers]
         self.assertEqual(header_texts, expected_headers)
 
     def test_to_latex(self):
@@ -421,6 +430,7 @@ class TestHistoryDataTable(TestCase):
         history_manager = HistoryDataTableManager({}, "SatA1", SatA1.objects.all())
         self.assertEqual(history_manager.title, "SatA1")
         html = history_manager.to_html()
+        soup = BeautifulSoup(html, "html.parser")
         for col in (
             "state_date_start",
             "state_date_end",
@@ -429,10 +439,18 @@ class TestHistoryDataTable(TestCase):
             "field_a1_str",
             "field_a1_int",
         ):
-            self.assertIn(
-                f'<th title=\'{col}\'><button type="submit" onclick="document.getElementById(\'form-order_by-action\').value=\'{col}\'" class="btn-order-field"><div style="display: flex; justify-content: space-between; align-items: center;">{col}</div></button></th>',
-                html,
+            th = soup.find("th", title=col)
+            self.assertIsNotNone(th)
+
+            button = th.find("button", {"class": "btn-order-field"})
+            self.assertIsNotNone(button)
+
+            self.assertEqual(
+                button["onclick"],
+                f"document.getElementById('form-order_by-action').value='{col}'",
             )
+
+            self.assertEqual(button.text.strip(), col)
 
     def test_get_change_map_from_df(self):
         input_df = pd.DataFrame({"id": [1, 2], "col_1": ["A", "A"], "col_2": [2, 3]})

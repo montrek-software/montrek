@@ -12,11 +12,13 @@
             <button type="submit" onclick="document.getElementById('form-order_by-action').value='{{ table_element.attr }}'" class="btn-order-field">
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 {{ table_element.name }}
-              {% if table_element.attr == order_field %}
-                {% if order_descending %}
-                  <span class="bi bi-arrow-up"></span>
-                {% else %}
-                  <span class="bi bi-arrow-down"></span>
+              {% if order_field is not None %}
+                {% if table_element.attr == order_field %}
+                  {% if order_descending %}
+                    <span class="bi bi-arrow-up"></span>
+                  {% else %}
+                    <span class="bi bi-arrow-down"></span>
+                  {% endif %}
                 {% endif %}
               {% endif %}
               </div>
