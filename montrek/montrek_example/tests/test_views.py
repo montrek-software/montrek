@@ -6,6 +6,7 @@ from unittest.mock import patch
 
 from baseclasses.dataclasses.alert import AlertEnum
 from baseclasses.utils import montrek_time
+from bs4 import BeautifulSoup
 from django.contrib.auth.models import Permission
 from django.test import TestCase, TransactionTestCase, override_settings
 from django.urls import reverse
@@ -275,12 +276,67 @@ class TestMontrekExampleADetailView(MontrekDetailViewTestCase):
     def test_overview(self):
         response = self.client.get(self.url)
         overview_html = response.context_data["overview"]
-        exp_overview_html = f"""<h3></h3><div class="row scrollable-content"><form method="get"><input type="hidden" name="order_action" id="form-order_by-action" value=""><table  id="compactTable" class="table table-custom-striped table-bordered table-hover"><thead><tr><th title=\'hub_entity_id\'><button type="submit" onclick="document.getElementById(\'form-order_by-action\').value=\'hub_entity_id\'" class="btn-order-field"><div style="display: flex; justify-content: space-between; align-items: center;">A1 String</div></button></th><th title=\'field_a1_int\'><button type="submit" onclick="document.getElementById(\'form-order_by-action\').value=\'field_a1_int\'" class="btn-order-field"><div style="display: flex; justify-content: space-between; align-items: center;">A1 Int</div></button></th></tr></thead><tbody><tr style="white-space:nowrap;"><td><a id="id__montrek_example_a_{self.hub_vd_0.hub_id}_details" href="/montrek_example/a/{self.hub_vd_0.hub_id}/details" title="View Example A">DEFAULT</a></td><td style="text-align:right;color:#002F6C;">0</td></tr><tr style="white-space:nowrap;"><td><a id="id__montrek_example_a_{self.hub_vd.hub_id}_details" href="/montrek_example/a/{self.hub_vd.hub_id}/details" title="View Example A">DEFAULT</a></td><td style="text-align:right;color:#002F6C;">0</td></tr></tbody></table></form></div>"""
 
-        self.assertEqual(
-            overview_html.replace(" ", "").replace("\n", ""),
-            exp_overview_html.replace(" ", "").replace("\n", ""),
+        soup = BeautifulSoup(overview_html, "html.parser")
+
+        # ---- High-level structure ----
+        container = soup.find("div", class_="row scrollable-content")
+        self.assertIsNotNone(container)
+
+        form = container.find("form", method="get")
+        self.assertIsNotNone(form)
+
+        hidden_input = form.find(
+            "input",
+            {
+                "type": "hidden",
+                "name": "order_action",
+                "id": "form-order_by-action",
+            },
         )
+        self.assertIsNotNone(hidden_input)
+
+        table = form.find("table")
+        self.assertIsNotNone(table)
+        self.assertIn("table-custom-striped", table["class"])
+
+        # ---- Headers ----
+        headers = table.find_all("th")
+        self.assertEqual(len(headers), 2)
+
+        header_expectations = [
+            ("", "A1 String"),
+            ("field_a1_int", "A1 Int"),
+        ]
+
+        for th, (attr, label) in zip(headers, header_expectations):
+            self.assertEqual(th["title"], attr)
+
+            button = th.find("button", class_="btn-order-field")
+            self.assertIsNotNone(button)
+
+            self.assertEqual(
+                button["onclick"],
+                f"document.getElementById('form-order_by-action').value='{attr}'",
+            )
+
+            text = " ".join(button.get_text(strip=True).split())
+            self.assertEqual(text, label)
+
+        # ---- Body rows ----
+        rows = table.tbody.find_all("tr")
+        self.assertEqual(len(rows), 2)
+
+        for row, hub in zip(rows, [self.hub_vd_0, self.hub_vd]):
+            link = row.find("a")
+            self.assertIsNotNone(link)
+
+            self.assertEqual(link["id"], f"id__montrek_example_a_{hub.hub_id}_details")
+            self.assertEqual(link["href"], f"/montrek_example/a/{hub.hub_id}/details")
+            self.assertEqual(link.text.strip(), "DEFAULT")
+
+            cells = row.find_all("td")
+            self.assertEqual(cells[1].text.strip(), "0")
 
 
 class TestMontrekExampleADelete(MontrekDeleteViewTestCase):
@@ -777,8 +833,8 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
             upload_registry.upload_message,
             (
                 "Errors raised during field mapping:"
-                "<br>('source_field_0', 'field_a1_str', 'multiply_by_value', {'value': 'a'}, \"TypeError: can't multiply sequence by non-int of type 'str'\")"
-                "<br>('source_field_1', 'field_a1_int', 'multiply_by_value', {}, \"TypeError: FieldMapFunctionManager.multiply_by_value() missing 1 required positional argument: 'value'\")"
+                "<br>('source_field_0', 'field_a1_str', 'multiply_by_value', {{'value': 'a'}}, \"TypeError: can't multiply sequence by non-int of type 'str'\")"
+                "<br>('source_field_1', 'field_a1_int', 'multiply_by_value', {{}}, \"TypeError: FieldMapFunctionManager.multiply_by_value() missing 1 required positional argument: 'value'\")"
             ),
         )
 

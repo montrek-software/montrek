@@ -1,0 +1,39 @@
+{% if table_title %}
+  <h3>{{ table_title }}</h3>
+{% endif %}
+<div class="row scrollable-content">
+  <form method="get">
+    <input type="hidden" name="order_action" id="form-order_by-action" value="">
+      <table class="table table-custom-striped table-bordered table-hover">
+        <thead>
+          <tr>
+            {% for table_element in table_elements %}
+          <th title="{{ table_element.attr }}">
+            <button type="submit" onclick="document.getElementById('form-order_by-action').value='{{ table_element.attr }}'" class="btn-order-field">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                {{ table_element.name }}
+              {% if order_field is not None %}
+                {% if table_element.attr == order_field %}
+                  {% if order_descending %}
+                    <span class="bi bi-arrow-up"></span>
+                  {% else %}
+                    <span class="bi bi-arrow-down"></span>
+                  {% endif %}
+                {% endif %}
+              {% endif %}
+              </div>
+            </button>
+          </th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+        {% for row in display_elements %}
+        <tr>
+          {% for element in row %} {{ element }} {% endfor %}
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+  </form>
+</div>

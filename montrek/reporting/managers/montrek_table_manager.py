@@ -14,8 +14,10 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.db.models import QuerySet
 from django.http import HttpResponseRedirect
+from django.template.loader import get_template
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.html import format_html
 from django.views.generic.base import HttpResponse
 from django_pandas.io import read_frame
 from mailing.managers.mailing_manager import MailingManager
@@ -47,6 +49,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         self._document_name: None | str = None
         self._queryset: None | QuerySet = None
         self.is_current_compact_format: bool = self.get_is_compact_format()
+        self.order_descending = False
         self.order_field: None | str = self.get_order_field()
 
     @property
@@ -75,6 +78,10 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         order_field = self.session_data.get("order_field", None)
         if isinstance(order_field, (list, tuple)):
             order_field = order_field[0]
+        if order_field is None:
+            return None
+        if len(order_field) > 0 and order_field[0] == "-":
+            self.order_descending = True
         return order_field
 
     def set_order_field(self):
@@ -104,48 +111,32 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
             ele.attr: ele.name for ele in self.table_elements if hasattr(ele, "attr")
         }
 
-    def to_html(self):
-        table_id = 'id="compactTable"' if self.is_current_compact_format else ""
-        html_str = (
-            f"<h3>{self.table_title}</h3>"
-            '<div class="row scrollable-content">'
-            '<form method="get">'  # Wrap form outside the table
-            '<input type="hidden" name="order_action" id="form-order_by-action" value="">'
-        )
-        table_str = f'<table {table_id} class="table table-custom-striped table-bordered table-hover"><thead><tr>'
-
-        for table_element in self.table_elements:
-            elem_attr = getattr(table_element, "attr", "hub_entity_id")
-            table_str += f"<th title='{elem_attr}'>"
-            table_str += (
-                f'<button type="submit" '
-                f"onclick=\"document.getElementById('form-order_by-action').value='{elem_attr}'\" "
-                'class="btn-order-field">'
-                f'<div style="display: flex; justify-content: space-between; align-items: center;">'
-                f"{table_element.name}"
-            )
-            if elem_attr == self.order_field:
-                table_str += '<span class="bi bi-arrow-down"></span>'
-            if "-" + elem_attr == self.order_field:
-                table_str += '<span class="bi bi-arrow-up"></span>'
-            table_str += "</div></button></th>"
-
-        table_str += "</tr></thead>"
-        table_body_str = "<tbody>"
-
+    def get_display_elements(self) -> list[list[str]]:
+        rows = []
         for query_object in self.get_table():
-            table_body_str += '<tr style="white-space:nowrap;">'
-            table_body_str += "".join(
-                te.get_attribute(query_object, "html") for te in self.table_elements
-            )
-            table_body_str += "</tr>"
+            elements = []
+            for table_element in self.table_elements:
+                elements.append(
+                    format_html(table_element.get_attribute(query_object, "html"))
+                )
+            rows.append(elements)
+        return rows
 
-        table_body_str += "</tbody>"
-        table_str += table_body_str
-        table_str += "</table>"
-        html_str += table_str
-        html_str += "</form></div>"
-        return html_str
+    def to_html(self):
+        template = get_template("tables/base_table.html")
+        if self.order_descending and self.order_field is not None:
+            order_field = self.order_field[1:]
+        else:
+            order_field = self.order_field
+        return template.render(
+            context={
+                "table_title": self.table_title,
+                "table_elements": self.table_elements,
+                "display_elements": self.get_display_elements(),
+                "order_field": order_field,
+                "order_descending": self.order_descending,
+            }
+        )
 
     def to_json(self) -> dict:
         out_json = []
