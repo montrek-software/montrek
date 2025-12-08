@@ -7,7 +7,7 @@ from enum import Enum
 from typing import Any
 from urllib.parse import urlparse
 from django.template.base import mark_safe
-from django.utils.html import format_html
+from django.utils.html import format_html, format_html_join
 
 import pandas as pd
 import requests
@@ -239,7 +239,7 @@ class LinkListTableElement(BaseLinkTableElement):
     list_attr: str
     list_kwarg: str
     in_separator: str = ";"
-    out_separator: str = "<br>"
+    out_separator: str = mark_safe("<br>")
 
     def get_attribute(self, obj: Any, tag: str = "html") -> str:
         values = self.get_value(obj)
@@ -247,17 +247,22 @@ class LinkListTableElement(BaseLinkTableElement):
             value = ",".join(link_text for _, link_text in values)
             return self.format_latex(value)
         if tag == "html":
-            result = "<td><div style='max-height: 300px; overflow-y: auto;'>"
-            for i, (list_value, link_text) in enumerate(values):
-                url_kwargs = self._get_url_kwargs(obj)
-                url_kwargs[self.list_kwarg] = list_value
-                url = self._get_url(obj, url_kwargs)
-                link = self._get_link(url, link_text)
-                if i > 0:
-                    result += self.out_separator
-                result += link
-            result += "</div></td>"
-            return result
+
+            def link_iter():
+                for list_value, link_text in values:
+                    url_kwargs = self._get_url_kwargs(obj)
+                    url_kwargs[self.list_kwarg] = list_value
+                    url = self._get_url(obj, url_kwargs)
+                    yield self._get_link(url, link_text)
+
+            return format_html(
+                "<td><div style='max-height: 300px; overflow-y: auto;'>{}</div></td>",
+                format_html_join(
+                    self.out_separator,
+                    "{}",
+                    ((link,) for link in link_iter()),
+                ),
+            )
         return "No tag"
 
     def get_value(self, obj) -> list:
@@ -322,12 +327,19 @@ class ListTableElement(AttrTableElement):
     serializer_field_class = serializers.CharField
     attr: str
     in_separator: str = ","
-    out_separator: str = "<br>"
+    out_separator: str = mark_safe("<br>")
 
     def format(self, value):
         values = value.split(self.in_separator)
-        out_value = self.out_separator.join(values)
-        return format_html('<td style="text-align: left">{value}</td>', value=out_value)
+
+        return format_html(
+            '<td style="text-align: left">{}</td>',
+            format_html_join(
+                self.out_separator,
+                "{}",
+                ((v.strip(),) for v in values),
+            ),
+        )
 
 
 @dataclass
@@ -337,9 +349,10 @@ class AlertTableElement(AttrTableElement):
 
     def format(self, value):
         status = AlertEnum.get_by_description(value)
+        status_color = status.color.hex
         return format_html(
-            '<td style="text-align: left;color:{status.color.hex};"><b>{value}</b></td>',
-            status=status,
+            '<td style="text-align: left;color:{status_color};"><b>{value}</b></td>',
+            status_color=status_color,
             value=value,
         )
 
@@ -431,10 +444,12 @@ class ProgressBarTableElement(NumberTableElement):
 
     def format(self, value: float):
         per_value = value * 100
+        out_value = f"{value * 100: .2f}"
+
         return format_html(
-            '<td><div class="bar-container"> <div class="bar" style="width: {per_value}%;"></div> <span class="bar-value">{value:,.2%}</span> </div></td>',
+            '<td><div class="bar-container"> <div class="bar" style="width: {per_value}%;"></div> <span class="bar-value">{value}%</span> </div></td>',
             per_value=per_value,
-            value=value,
+            value=out_value,
         )
 
     def format_latex(self, value) -> str:
@@ -515,7 +530,9 @@ class MoneyTableElement(NumberTableElement):
 
     def _format_value(self, value) -> str:
         value = self.shortener.shorten(value, ",.2f")
-        return f"{value}{self.ccy_symbol}"
+        return format_html(
+            "{value}{ccy_symbol}", value=value, ccy_symbol=self.ccy_symbol
+        )
 
     def format_latex(self, value):
         formatted_value = super().format_latex(value)
@@ -528,7 +545,7 @@ class MoneyTableElement(NumberTableElement):
 class EuroTableElement(MoneyTableElement):
     @property
     def ccy_symbol(self) -> str:
-        return "&#x20AC;"
+        return mark_safe("&#x20AC;")
 
     @property
     def ccy_symbol_latex(self) -> str:
@@ -538,7 +555,7 @@ class EuroTableElement(MoneyTableElement):
 class DollarTableElement(MoneyTableElement):
     @property
     def ccy_symbol(self) -> str:
-        return "&#0036;"
+        return mark_safe("&#0036;")
 
     @property
     def ccy_symbol_latex(self) -> str:

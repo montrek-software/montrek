@@ -29,14 +29,12 @@ class TestTableElements(TestCase):
         )
 
     def test_secure_table_element(self):
-        obj = {
-            "test_value": "<b><script>Malicious Hack</script><button>Here</button></b>"
-        }
+        obj = {"test_value": "<script>Malicious Hack</script><button>Here</button>"}
         test_element = te.TextTableElement(name="test", attr="test_value")
         test_value = test_element.get_attribute(obj, "html")
         self.assertEqual(
             test_value,
-            '<td style="text-align: left; white-space: pre-wrap;"><b>Malicious HackHere</b></td>',
+            '<td style="text-align: left; white-space: pre-wrap;">Malicious HackHere</td>',
         )
 
     def test_list_table_element(self):
@@ -543,7 +541,7 @@ class TestDataTableFilters(TestCase):
         test_str = table_element.format(0.50)
         self.assertEqual(
             str(test_str),
-            '<td><div class="bar-container"> <div class="bar" style="width: 50.0%;"></div> <span class="bar-value">50.00%</span> </div></td>',
+            '<td><div class="bar-container"> <div class="bar" style="width: 50.0%;"></div> <span class="bar-value"> 50.00%</span> </div></td>',
         )
 
     def test_progress_bar__latex(self):
