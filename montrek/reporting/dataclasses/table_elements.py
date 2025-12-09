@@ -753,6 +753,8 @@ class ColorCodedStringTableElement(StringTableElement):
 
 
 class LabelTableElement(StringTableElement):
+    td_classes: ClassVar[td_classes_type] = ["text-start"]
+
     def __init__(self, name: str, attr: str, color_codes: dict[str, Color]):
         self.color_codes = color_codes
         super().__init__(name, attr)
@@ -761,14 +763,11 @@ class LabelTableElement(StringTableElement):
         base_color = self.color_codes.get(value, ReportingColors.BLUE)
         font_color = ReportingColors.contrast_font_color(base_color).hex
         color = base_color.hex
-        label_html = format_html(
+        return format_html(
             '<span class="badge" style="background-color:{color};color:{font_color};">{value}</span>',
             color=color,
             font_color=font_color,
             value=value,
-        )
-        return format_html(
-            '<td style="text-align: left;">{label_html}</td>', label_html=label_html
         )
 
     def format_latex(self, value):
