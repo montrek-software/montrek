@@ -22,6 +22,7 @@ from encrypted_fields import EncryptedCharField
 from pandas.core.tools.datetimes import DateParseError
 from reporting.core.reporting_colors import Color, ReportingColors
 from reporting.core.text_converter import HtmlLatexConverter
+from reporting.dataclasses.display_field import DisplayField
 from rest_framework import serializers
 
 style_attrs_type = dict[str, str]
@@ -87,6 +88,15 @@ class TableElement:
 
     def get_td_classes_str(self, value: Any) -> str:
         return " ".join(self.get_td_classes(value))
+
+    def get_display_field(self, obj: Any) -> DisplayField:
+        value = self.get_attribute(obj, "html")
+        return DisplayField(
+            name=self.name,
+            display_value=self.format(value),
+            style_attrs_str=self.get_style_attrs_str(value),
+            td_classes_str=self.get_td_classes_str(value),
+        )
 
 
 @dataclass

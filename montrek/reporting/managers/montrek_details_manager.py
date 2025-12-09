@@ -34,15 +34,7 @@ class MontrekDetailsManager(MontrekManager):
     def get_details_data(self) -> list[list[DisplayField]]:
         elements = []
         for table_element in self.table_elements:
-            value = table_element.get_attribute(self.object_query, "html")
-            elements.append(
-                DisplayField(
-                    name=table_element.name,
-                    display_value=table_element.format(value),
-                    style_attrs_str=table_element.get_style_attrs_str(value),
-                    td_classes_str=table_element.get_td_classes_str(value),
-                )
-            )
+            elements.append(table_element.get_display_field(self.object_query))
 
         rows = []
         total = len(elements)
