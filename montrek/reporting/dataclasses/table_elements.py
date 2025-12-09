@@ -6,8 +6,6 @@ from decimal import Decimal
 from enum import Enum
 from typing import Any
 from urllib.parse import urlparse
-from django.template.base import mark_safe
-from django.utils.html import format_html, format_html_join
 
 import pandas as pd
 import requests
@@ -16,8 +14,10 @@ from baseclasses.dataclasses.number_shortener import NoShortening, NumberShorten
 from baseclasses.sanitizer import HtmlSanitizer
 from django.core.exceptions import FieldDoesNotExist
 from django.template import Context, Template
+from django.template.base import mark_safe
 from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
+from django.utils.html import format_html, format_html_join
 from encrypted_fields import EncryptedCharField
 from pandas.core.tools.datetimes import DateParseError
 from reporting.core.reporting_colors import Color, ReportingColors
@@ -61,7 +61,7 @@ class NoneTableElement(TableElement):
     attr: str = field(default="")
 
     def format(self):
-        return '<td style="text-align: center">-</td>'
+        return mark_safe('<td style="text-align: center">-</td>')
 
 
 @dataclass
@@ -365,9 +365,9 @@ class NumberTableElement(AttrTableElement):
 
     def format(self, value):
         if pd.isna(value):
-            return '<td style="text-align:center;">-</td>'
+            return mark_safe('<td style="text-align:center;">-</td>')
         if not isinstance(value, (int, float, Decimal)):
-            return f'<td style="text-align:left;">{value}</td>'
+            return format_html('<td style="text-align:left;">{value}</td>', value=value)
         color = _get_value_color(value).hex
         formatted_value = self._format_value(value)
         return format_html(
@@ -444,7 +444,7 @@ class ProgressBarTableElement(NumberTableElement):
 
     def format(self, value: float):
         per_value = value * 100
-        out_value = f"{value * 100: .2f}"
+        out_value = f"{value * 100:.2f}"
 
         return format_html(
             '<td><div class="bar-container"> <div class="bar" style="width: {per_value}%;"></div> <span class="bar-value">{value}%</span> </div></td>',
