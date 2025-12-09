@@ -80,6 +80,9 @@ class TableElement:
         style_attrs = self.get_style_attrs(value)
         if len(style_attrs) == 0:
             return ""
+        return self.format_style_attr(style_attrs)
+
+    def format_style_attr(self, style_attrs: style_attrs_type) -> str:
         return "; ".join(f"{k}: {v}" for k, v in style_attrs.items()) + ";"
 
     def get_td_classes(self, value: Any) -> td_classes_type:
@@ -87,7 +90,11 @@ class TableElement:
         return self.td_classes
 
     def get_td_classes_str(self, value: Any) -> str:
-        return " ".join(self.get_td_classes(value))
+        td_classes = self.get_td_classes(value)
+        return self.format_td_classes(td_classes)
+
+    def format_td_classes(self, td_classes: td_classes_type) -> str:
+        return " ".join(td_classes)
 
     def get_display_field(self, obj: Any) -> DisplayField:
         value = self.get_attribute(obj, "html")
@@ -395,26 +402,50 @@ class NumberTableElement(AttrTableElement):
     attr: str
     shortener: NumberShortenerABC = NoShortening()
 
-    def get_td_classes(self, value: Any) -> td_classes_type:
-        if pd.isna(value):
-            return ["text-center"]
-        if not isinstance(value, (int, float, Decimal)):
-            return ["text-start"]
-        return ["text-end"]
+    def get_display_field(self, obj: Any) -> DisplayField:
+        value = self.get_attribute(obj, "html")
+        display_value, td_classes, style_attrs = self._analyze_value(value)
+        return DisplayField(
+            name=self.name,
+            display_value=display_value,
+            style_attrs_str=self.format_style_attr(style_attrs),
+            td_classes_str=self.format_td_classes(td_classes),
+        )
 
-    def get_style_attrs(self, value: Any) -> style_attrs_type:
-        if isinstance(value, (int, float, Decimal)):
-            color = _get_value_color(value).hex
-            return {"color": color}
-        return {}
-
-    def format(self, value):
+    def _analyze_value(
+        self, value: Any
+    ) -> tuple[str, td_classes_type, style_attrs_type]:
+        # returns (display_value, classes, style_attrs)
         if pd.isna(value):
-            return "-"
+            return "-", ["text-center"], {}
+
         if not isinstance(value, (int, float, Decimal)):
-            return value
-        formatted_value = self._format_value(value)
-        return formatted_value
+            return value, ["text-start"], {}
+
+        formatted = self._format_value(value)
+        color = _get_value_color(value).hex
+        return formatted, ["text-end"], {"color": color}
+
+    # def get_td_classes(self, value: Any) -> td_classes_type:
+    #     if pd.isna(value):
+    #         return ["text-center"]
+    #     if not isinstance(value, (int, float, Decimal)):
+    #         return ["text-start"]
+    #     return ["text-end"]
+    #
+    # def get_style_attrs(self, value: Any) -> style_attrs_type:
+    #     if isinstance(value, (int, float, Decimal)):
+    #         color = _get_value_color(value).hex
+    #         return {"color": color}
+    #     return {}
+    #
+    # def format(self, value):
+    #     if pd.isna(value):
+    #         return "-"
+    #     if not isinstance(value, (int, float, Decimal)):
+    #         return value
+    #     formatted_value = self._format_value(value)
+    #     return formatted_value
 
     def format_latex(self, value):
         if not isinstance(value, (int, float, Decimal)):
