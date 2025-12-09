@@ -116,10 +116,13 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         for query_object in self.get_table():
             elements = []
             for table_element in self.table_elements:
+                value = table_element.get_attribute(query_object, "html")
                 elements.append(
                     DisplayField(
-                        table_element=table_element,
-                        value=table_element.get_attribute(query_object, "html"),
+                        name=table_element.name,
+                        display_value=table_element.format(value),
+                        style_attrs_str=table_element.get_style_attrs_str(value),
+                        td_classes_str=table_element.get_td_classes_str(value),
                     )
                 )
             rows.append(elements)
