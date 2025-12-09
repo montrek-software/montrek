@@ -651,7 +651,7 @@ class MethodNameTableElement(AttrTableElement):
         doc = inspect.getdoc(func)
         doc = doc or ""
         return format_html(
-            '<td style="text-align: left" title="{doc}">{value}</td>',
+            '<div title="{doc}">{value}</div>',
             doc=doc,
             value=value,
         )
