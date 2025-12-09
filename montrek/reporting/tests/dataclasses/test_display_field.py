@@ -7,6 +7,7 @@ from reporting.dataclasses.table_elements import TableElement
 
 class MockTableElement(TableElement):
     style_attrs: ClassVar[dict[str, str]] = {"mock": "flock", "sock": "rock"}
+    td_classes: ClassVar[list[str]] = ["shock", "block"]
 
 
 class TestDisplayField(TestCase):
@@ -15,3 +16,9 @@ class TestDisplayField(TestCase):
             value="123", table_element=MockTableElement(name="test")
         )
         self.assertEqual(display_field.style_attrs_str, "mock: flock; sock: rock;")
+
+    def test_td_classes_str(self):
+        display_field = DisplayField(
+            value="123", table_element=MockTableElement(name="test")
+        )
+        self.assertEqual(display_field.td_classes_str, "shock block")

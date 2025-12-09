@@ -11,3 +11,7 @@ class DisplayField:
     @property
     def style_attrs_str(self) -> str:
         return self.table_element.get_style_attrs_str(self.value)
+
+    @property
+    def td_classes_str(self) -> str:
+        return self.table_element.get_td_classes_str(self.value)

@@ -37,6 +37,7 @@ def _get_value_color_latex(value):
 class TableElement:
     name: str
     style_attrs: ClassVar[dict[str, str]] = {}
+    td_classes: ClassVar[list[str]] = []
 
     def format(self, value):
         raise NotImplementedError
@@ -61,7 +62,16 @@ class TableElement:
 
     def get_style_attrs_str(self, value: Any) -> str:
         style_attrs = self.get_style_attrs(value)
+        if len(style_attrs) == 0:
+            return ""
         return "; ".join(f"{k}: {v}" for k, v in style_attrs.items()) + ";"
+
+    def get_td_classes(self, value: Any) -> list[str]:
+        # Method can be overwritten by daughter classes if styling changes depending on the value
+        return self.td_classes
+
+    def get_td_classes_str(self, value: Any) -> str:
+        return " ".join(self.get_td_classes(value))
 
 
 @dataclass
@@ -292,7 +302,7 @@ class StringTableElement(AttrTableElement):
     serializer_field_class = serializers.CharField
     attr: str
     chunk_size: int = 56
-    style_attrs: ClassVar[dict[str, str]] = {"text-align": "left"}
+    td_classes: ClassVar[list[str]] = ["text-left"]
 
     def format(self, value):
         return str(value)

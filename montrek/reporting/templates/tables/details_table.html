@@ -3,9 +3,9 @@
 >
   {% for data_row in details_data %}
   <tr>
-    {% for data_field in data_row %}
+    {% for display_field in data_row %}
 
-    <th>{{data_field.table_element.name}}</th>
-    <td style="{{ data_field.style_attrs_str }}">{{data_field.value}}</td> {% endfor %} </tr>
+    <th>{{display_field.table_element.name}}</th>
+    <td class="{{ display_field.td_classes_str }}" style="{{ display_field.style_attrs_str }}">{{display_field.value}}</td> {% endfor %} </tr>
   {% endfor %}
 </table>
