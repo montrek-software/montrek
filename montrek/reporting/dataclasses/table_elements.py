@@ -53,7 +53,7 @@ class TableElement:
 
     def get_attribute(self, obj: Any, tag: str = "html") -> str:
         if tag == "html":
-            value = self.get_html_value(obj)
+            value = self.get_value(obj)
             return value
         elif tag == "latex":
             value = self.get_value(obj)
@@ -61,9 +61,6 @@ class TableElement:
                 return " \\color{black} - &"
             return self.format_latex(value)
         raise KeyError(f"Unknown tag {tag}")
-
-    def get_html_value(self, obj: Any) -> Any:
-        return self.get_value(obj)
 
     def get_value(self, obj: Any) -> Any:
         raise NotImplementedError
@@ -97,21 +94,27 @@ class TableElement:
 
     def get_display_field(self, obj: Any) -> DisplayField:
         value = self.get_attribute(obj, "html")
+        if pd.isna(value):
+            table_element = NoneTableElement()
+        else:
+            table_element = self
         return DisplayField(
-            name=self.name,
-            display_value=self.format(value),
-            style_attrs_str=self.get_style_attrs_str(value),
-            td_classes_str=self.get_td_classes_str(value),
+            name=table_element.name,
+            display_value=table_element.format(value),
+            style_attrs_str=table_element.get_style_attrs_str(value),
+            td_classes_str=table_element.get_td_classes_str(value),
         )
 
 
 @dataclass
 class NoneTableElement(TableElement):
+    name: str = "None"
     serializer_field_class = serializers.CharField
     attr: str = field(default="")
+    td_classes = ["text-center"]
 
-    def format(self):
-        return '<td style="text-align: center">-</td>'
+    def format(self, value: Any) -> str:
+        return "-"
 
 
 @dataclass
@@ -127,15 +130,6 @@ class AttrTableElement(TableElement):
             value = self._get_value_from_field(obj, attr)
         if isinstance(value, str):
             value = HtmlSanitizer().clean_html(value)
-        return value
-
-    def none_return_html(self, obj: Any) -> str:
-        return NoneTableElement(name=self.name, attr=self.attr).format()
-
-    def get_html_value(self, obj: Any) -> Any:
-        value = self.get_value(obj)
-        if pd.isna(value):
-            return self.none_return_html(obj)
         return value
 
     def _get_value_from_field(self, obj: Any, attr: str) -> Any:
