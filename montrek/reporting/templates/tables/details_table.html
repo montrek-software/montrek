@@ -6,6 +6,6 @@
     {% for display_field in data_row %}
 
     <th>{{display_field.table_element.name}}</th>
-    <td class="{{ display_field.td_classes_str }}" style="{{ display_field.style_attrs_str }}">{{display_field.value}}</td> {% endfor %} </tr>
+    <td class="{{ display_field.td_classes_str }}" style="{{ display_field.style_attrs_str }}">{{display_field.display_value}}</td> {% endfor %} </tr>
   {% endfor %}
 </table>

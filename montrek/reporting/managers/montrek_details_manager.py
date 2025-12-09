@@ -3,7 +3,6 @@ import math
 
 from baseclasses.managers.montrek_manager import MontrekManager
 from django.template.loader import get_template
-from django.utils.html import format_html
 from reporting.core import reporting_text as rt
 from reporting.dataclasses import table_elements as te
 from reporting.dataclasses.display_field import DisplayField
@@ -36,9 +35,7 @@ class MontrekDetailsManager(MontrekManager):
         elements = [
             DisplayField(
                 table_element=table_element,
-                value=format_html(
-                    table_element.get_attribute(self.object_query, "html")
-                ),
+                value=table_element.get_attribute(self.object_query, "html"),
             )
             for table_element in self.table_elements
         ]

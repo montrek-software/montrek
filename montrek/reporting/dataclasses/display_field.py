@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Any
 
 from reporting.dataclasses.table_elements import TableElement
 
@@ -6,7 +7,11 @@ from reporting.dataclasses.table_elements import TableElement
 @dataclass
 class DisplayField:
     table_element: TableElement
-    value: str
+    value: Any
+
+    @property
+    def display_value(self) -> str:
+        return self.table_element.format(self.value)
 
     @property
     def style_attrs_str(self) -> str:

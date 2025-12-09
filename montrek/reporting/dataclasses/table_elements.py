@@ -24,6 +24,9 @@ from reporting.core.reporting_colors import Color, ReportingColors
 from reporting.core.text_converter import HtmlLatexConverter
 from rest_framework import serializers
 
+style_attrs_type = dict[str, str]
+td_classes_type = list[str]
+
 
 def _get_value_color(value):
     return ReportingColors.RED if value < 0 else ReportingColors.DARK_BLUE
@@ -36,8 +39,8 @@ def _get_value_color_latex(value):
 @dataclass
 class TableElement:
     name: str
-    style_attrs: ClassVar[dict[str, str]] = {}
-    td_classes: ClassVar[list[str]] = []
+    style_attrs: ClassVar[style_attrs_type] = {}
+    td_classes: ClassVar[td_classes_type] = []
 
     def format(self, value):
         raise NotImplementedError
@@ -47,8 +50,20 @@ class TableElement:
         value_str = HtmlLatexConverter.convert(value_str)
         return f" \\color{{black}} {value_str} &"
 
-    def get_attribute(self, obj: Any, tag: str) -> str:
-        raise NotImplementedError
+    def get_attribute(self, obj: Any, tag: str = "html") -> str:
+        self.obj = obj
+        if tag == "html":
+            value = self.get_html_value(obj)
+            return value
+        elif tag == "latex":
+            value = self.get_value(obj)
+            if pd.isna(value):
+                return " \\color{black} - &"
+            return self.format_latex(value)
+        raise KeyError(f"Unknown tag {tag}")
+
+    def get_html_value(self, obj: Any) -> Any:
+        return self.get_value(obj)
 
     def get_value(self, obj: Any) -> Any:
         raise NotImplementedError
@@ -56,7 +71,7 @@ class TableElement:
     def get_value_len(self, obj: Any) -> int:
         return len(str(self.get_value(obj)))
 
-    def get_style_attrs(self, value: Any) -> dict[str, str]:
+    def get_style_attrs(self, value: Any) -> style_attrs_type:
         # Method can be overwritten by daughter classes if styling changes depending on the value
         return self.style_attrs
 
@@ -66,7 +81,7 @@ class TableElement:
             return ""
         return "; ".join(f"{k}: {v}" for k, v in style_attrs.items()) + ";"
 
-    def get_td_classes(self, value: Any) -> list[str]:
+    def get_td_classes(self, value: Any) -> td_classes_type:
         # Method can be overwritten by daughter classes if styling changes depending on the value
         return self.td_classes
 
@@ -88,19 +103,6 @@ class AttrTableElement(TableElement):
     attr: str = field(default="")
     obj: Any = None
 
-    def get_attribute(self, obj: Any, tag: str = "html") -> str:
-        self.obj = obj
-        value = self.get_value(obj)
-        if tag == "html":
-            if pd.isna(value):
-                return self.none_return_html(obj)
-            return self.format(value)
-        elif tag == "latex":
-            if pd.isna(value):
-                return " \\color{black} - &"
-            return self.format_latex(value)
-        return str(value)
-
     def get_value(self, obj: Any) -> Any:
         attr = self.attr
         if isinstance(obj, dict):
@@ -113,6 +115,12 @@ class AttrTableElement(TableElement):
 
     def none_return_html(self, obj: Any) -> str:
         return NoneTableElement(name=self.name, attr=self.attr).format()
+
+    def get_html_value(self, obj: Any) -> Any:
+        value = self.get_value(obj)
+        if pd.isna(value):
+            return self.none_return_html(obj)
+        return value
 
     def _get_value_from_field(self, obj: Any, attr: str) -> Any:
         try:
@@ -167,14 +175,12 @@ class BaseLinkTableElement(TableElement):
                 obj = getattr(obj, attr, None)
         return obj
 
-    def get_attribute(self, obj: Any, tag: str = "html") -> str:
-        link_text = self.get_value(obj)
-        if tag == "latex":
-            return self.format_latex(link_text)
-        if tag == "html":
-            link = self.get_html_table_link_element(obj, link_text)
-            return format_html("<td>{link}</td>", link=link)
-        return link_text
+    def get_value(self, obj: Any) -> Any:
+        link_text = self.get_link_text(obj)
+        return self.get_html_table_link_element(obj, link_text)
+
+    def format(self, value: Any) -> str:
+        return value
 
     def get_html_table_link_element(
         self, obj: Any, link_text: str, *, active: bool = False
@@ -184,7 +190,7 @@ class BaseLinkTableElement(TableElement):
         link = self._get_link(url, link_text)
         return f"{self.format_link(link, active)}"
 
-    def get_value(self, obj):
+    def get_link_text(self, obj):
         raise NotImplementedError
 
     def _get_url_kwargs(self, obj: Any) -> dict:
@@ -233,7 +239,7 @@ class LinkTableElement(BaseLinkTableElement):
     icon: str
     static_kwargs: dict = field(default_factory=dict)
 
-    def get_value(self, obj):
+    def get_link_text(self, obj):
         if self.icon == "edit":
             icon = "pencil"
         else:
@@ -247,7 +253,7 @@ class LinkTextTableElement(BaseLinkTableElement):
     text: str
     static_kwargs: dict = field(default_factory=dict)
 
-    def get_value(self, obj):
+    def get_link_text(self, obj):
         return BaseLinkTableElement.get_dotted_attr_or_arg(obj, self.text)
 
 
@@ -284,7 +290,7 @@ class LinkListTableElement(BaseLinkTableElement):
             )
         return "No tag"
 
-    def get_value(self, obj) -> list:
+    def get_link_text(self, obj) -> list:
         list_values = self.get_dotted_attr_or_arg(obj, self.list_attr)
         list_values = str(list_values).split(self.in_separator) if list_values else []
         text_values = self.get_dotted_attr_or_arg(obj, self.text)
@@ -302,7 +308,7 @@ class StringTableElement(AttrTableElement):
     serializer_field_class = serializers.CharField
     attr: str
     chunk_size: int = 56
-    td_classes: ClassVar[list[str]] = ["text-left"]
+    td_classes: ClassVar[td_classes_type] = ["text-start"]
 
     def format(self, value):
         return str(value)
@@ -331,15 +337,10 @@ class StringTableElement(AttrTableElement):
 
 
 @dataclass
-class TextTableElement(AttrTableElement):
-    serializer_field_class = serializers.CharField
-    attr: str
+class TextTableElement(StringTableElement): ...
 
-    def format(self, value):
-        return format_html(
-            '<td style="text-align: left; white-space: pre-wrap;">{value}</td>',
-            value=value,
-        )
+
+# TODO: Depricate this class, since text wraping is handled by StringTableElement
 
 
 @dataclass
@@ -348,17 +349,15 @@ class ListTableElement(AttrTableElement):
     attr: str
     in_separator: str = ","
     out_separator: str = mark_safe("<br>")
+    td_classes: ClassVar[td_classes_type] = ["text-start"]
 
     def format(self, value):
         values = value.split(self.in_separator)
 
-        return format_html(
-            '<td style="text-align: left">{}</td>',
-            format_html_join(
-                self.out_separator,
-                "{}",
-                ((v.strip(),) for v in values),
-            ),
+        return format_html_join(
+            self.out_separator,
+            "{}",
+            ((v.strip(),) for v in values),
         )
 
 
@@ -366,13 +365,16 @@ class ListTableElement(AttrTableElement):
 class AlertTableElement(AttrTableElement):
     serializer_field_class = serializers.CharField
     attr: str
+    td_classes: ClassVar[td_classes_type] = ["text-start"]
 
-    def format(self, value):
+    def get_style_attrs(self, value: Any) -> style_attrs_type:
         status = AlertEnum.get_by_description(value)
         status_color = status.color.hex
+        return {"color": status_color}
+
+    def format(self, value):
         return format_html(
-            '<td style="text-align: left;color:{status_color};"><b>{value}</b></td>',
-            status_color=status_color,
+            "<b>{0}</b>",
             value=value,
         )
 
@@ -383,18 +385,26 @@ class NumberTableElement(AttrTableElement):
     attr: str
     shortener: NumberShortenerABC = NoShortening()
 
+    def get_td_classes(self, value: Any) -> td_classes_type:
+        if pd.isna(value):
+            return ["text-center"]
+        if not isinstance(value, (int, float, Decimal)):
+            return ["text-start"]
+        return ["text-end"]
+
+    def get_style_attrs(self, value: Any) -> style_attrs_type:
+        if isinstance(value, (int, float, Decimal)):
+            color = _get_value_color(value).hex
+            return {"color": color}
+        return {}
+
     def format(self, value):
         if pd.isna(value):
-            return mark_safe('<td style="text-align:center;">-</td>')
+            return "-"
         if not isinstance(value, (int, float, Decimal)):
-            return format_html('<td style="text-align:left;">{}</td>', value)
-        color = _get_value_color(value).hex
+            return value
         formatted_value = self._format_value(value)
-        return format_html(
-            '<td style="text-align:right;color:{color};">{formatted_value}</td>',
-            color=color,
-            formatted_value=formatted_value,
-        )
+        return formatted_value
 
     def format_latex(self, value):
         if not isinstance(value, (int, float, Decimal)):
@@ -527,11 +537,12 @@ class DateYearTableElement(AttrTableElement):
 class BooleanTableElement(AttrTableElement):
     serializer_field_class = serializers.BooleanField
     attr: str
+    td_classes: ClassVar[td_classes_type] = ["text-start"]
 
     def format(self, value):
         if value:
-            return mark_safe('<td style="text-align:left;">&#x2713;</td>')
-        return mark_safe('<td style="text-align:left;">&#x2717;</td>')
+            return mark_safe("&#x2713;")
+        return mark_safe("&#x2717;")
 
 
 @dataclass
@@ -587,11 +598,12 @@ class ImageTableElement(AttrTableElement):
     serializer_field_class = serializers.CharField
     attr: str
     alt: str = "image"
+    td_classes: ClassVar[td_classes_type] = ["text-start"]
 
     def format(self, value):
         alt = self.alt
         return format_html(
-            '<td style="text-align:left;"><img src="{value}" alt="{alt}" style="width:100px;height:100px;"></td>',
+            '<img src="{value}" alt="{alt}" style="width:100px;height:100px;">',
             value=value,
             alt=alt,
         )
