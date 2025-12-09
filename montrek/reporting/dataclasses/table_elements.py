@@ -52,7 +52,6 @@ class TableElement:
         return f" \\color{{black}} {value_str} &"
 
     def get_attribute(self, obj: Any, tag: str = "html") -> str:
-        self.obj = obj
         if tag == "html":
             value = self.get_html_value(obj)
             return value
@@ -706,6 +705,10 @@ class HistoryStringTableElement(StringTableElement):
     def __init__(self, attr: str, name: str, change_map: ChangeMapType):
         super().__init__(name=name, attr=attr)
         self.change_map = change_map
+
+    def get_attribute(self, obj: Any, tag: str = "html") -> str:
+        self.obj = obj
+        return super().get_attribute(obj, tag)
 
     def format(self, value: Any) -> str:
         change_format = self._get_change_format()
