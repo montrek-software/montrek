@@ -17,9 +17,8 @@ from django.template import Context, Template
 from django.template.base import mark_safe
 from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
-from django.utils.html import format_html, format_html_join
+from django.utils.html import format_html, format_html_join, strip_tags
 from encrypted_fields import EncryptedCharField
-from pandas.core.tools.datetimes import DateParseError
 from reporting.core.reporting_colors import Color, ReportingColors
 from reporting.core.text_converter import HtmlLatexConverter
 from reporting.dataclasses.display_field import DisplayField
@@ -148,10 +147,11 @@ class AttrTableElement(TableElement):
 @dataclass
 class ExternalLinkTableElement(AttrTableElement):
     serializer_field_class = serializers.CharField
+    td_classes: ClassVar[td_classes_type] = ["test-start"]
 
     def format(self, value):
         return format_html(
-            '<td style="text-align:left;"><a href="{value}" target="_blank" title="{value}">{value}</a></td>',
+            '<a href="{value}" target="_blank" title="{value}">{value}</a>',
             value=value,
         )
 
@@ -191,6 +191,9 @@ class BaseLinkTableElement(TableElement):
 
     def format(self, value: Any) -> str:
         return value
+
+    def format_latex(self, value):
+        return super().format_latex(strip_tags(value))
 
     def get_html_table_link_element(
         self, obj: Any, link_text: str, *, active: bool = False
@@ -419,27 +422,6 @@ class NumberTableElement(AttrTableElement):
         color = _get_value_color(value).hex
         return formatted, ["text-end"], {"color": color}
 
-    # def get_td_classes(self, value: Any) -> td_classes_type:
-    #     if pd.isna(value):
-    #         return ["text-center"]
-    #     if not isinstance(value, (int, float, Decimal)):
-    #         return ["text-start"]
-    #     return ["text-end"]
-    #
-    # def get_style_attrs(self, value: Any) -> style_attrs_type:
-    #     if isinstance(value, (int, float, Decimal)):
-    #         color = _get_value_color(value).hex
-    #         return {"color": color}
-    #     return {}
-    #
-    # def format(self, value):
-    #     if pd.isna(value):
-    #         return "-"
-    #     if not isinstance(value, (int, float, Decimal)):
-    #         return value
-    #     formatted_value = self._format_value(value)
-    #     return formatted_value
-
     def format_latex(self, value):
         if not isinstance(value, (int, float, Decimal)):
             return f"{value} &"
@@ -527,12 +509,12 @@ class ProgressBarTableElement(NumberTableElement):
 @dataclass
 class DateTableBaseElement(AttrTableElement):
     attr: str
-    date_format = "%d/%m/%Y"
+    date_format = "%Y-%m-%d"
+    td_classes: ClassVar[td_classes_type] = ["text-start"]
 
     def format(self, value):
-        if isinstance(value, timezone.datetime):
-            value = value.strftime(self.date_format)
-        return format_html('<td style="text-align:left;">{value}</td>', value=value)
+        value = value.strftime(self.date_format)
+        return format_html("{value}", value=value)
 
     def get_value(self, obj: Any) -> Any:
         value = super().get_value(obj)
@@ -551,20 +533,9 @@ class DateTimeTableElement(DateTableBaseElement):
 
 
 @dataclass
-class DateYearTableElement(AttrTableElement):
+class DateYearTableElement(DateTableBaseElement):
     serializer_field_class = serializers.DateField
-    attr: str
-
-    def format(self, value):
-        try:
-            value = pd.to_datetime(value)
-            if pd.isnull(value):
-                return mark_safe('<td style="text-align:center;">-</td>')
-            else:
-                value = value.strftime("%Y")
-        except DateParseError:
-            return format_html('<td style="text-align:left;">{value}</td>', value=value)
-        return format_html('<td style="text-align:left;">{value}</td>', value=value)
+    date_format = "%Y"
 
 
 @dataclass
