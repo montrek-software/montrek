@@ -1,20 +1,13 @@
 import datetime
 import math
-from dataclasses import dataclass
-
-from django.template.loader import get_template
-from django.utils.html import format_html
 
 from baseclasses.managers.montrek_manager import MontrekManager
+from django.template.loader import get_template
+from django.utils.html import format_html
 from reporting.core import reporting_text as rt
 from reporting.dataclasses import table_elements as te
+from reporting.dataclasses.display_field import DisplayField
 from reporting.lib.protocols import ReportElementProtocol
-
-
-@dataclass
-class DisplayField:
-    name: str
-    value: str
 
 
 class MontrekDetailsManager(MontrekManager):
@@ -42,7 +35,7 @@ class MontrekDetailsManager(MontrekManager):
     def get_details_data(self) -> list[list[DisplayField]]:
         elements = [
             DisplayField(
-                name=table_element.name,
+                table_element=table_element,
                 value=format_html(
                     table_element.get_attribute(self.object_query, "html")
                 ),

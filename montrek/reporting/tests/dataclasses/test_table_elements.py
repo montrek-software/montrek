@@ -14,12 +14,10 @@ from reporting.core.reporting_colors import ReportingColors
 class TestTableElements(TestCase):
     def test_string_table_elements(self):
         test_element = te.StringTableElement(name="test", attr="test_value")
-        self.assertEqual(
-            test_element.format("test"), '<td style="text-align: left">test</td>'
-        )
-        self.assertEqual(
-            test_element.format(1234), '<td style="text-align: left">1234</td>'
-        )
+        self.assertEqual(test_element.get_style_attrs("test"), {"text-align": "left"})
+        self.assertEqual(test_element.get_style_attrs_str("test"), "text-align: left;")
+        self.assertEqual(test_element.format("test"), "test")
+        self.assertEqual(test_element.format(1234), "1234")
 
     def test_text_table_element(self):
         test_element = te.TextTableElement(name="test", attr="test_value")

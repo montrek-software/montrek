@@ -4,7 +4,7 @@ import tempfile
 from dataclasses import dataclass, field
 from decimal import Decimal
 from enum import Enum
-from typing import Any
+from typing import Any, ClassVar
 from urllib.parse import urlparse
 
 import pandas as pd
@@ -36,6 +36,7 @@ def _get_value_color_latex(value):
 @dataclass
 class TableElement:
     name: str
+    style_attrs: ClassVar[dict[str, str]] = {}
 
     def format(self, value):
         raise NotImplementedError
@@ -53,6 +54,14 @@ class TableElement:
 
     def get_value_len(self, obj: Any) -> int:
         return len(str(self.get_value(obj)))
+
+    def get_style_attrs(self, value: Any) -> dict[str, str]:
+        # Method can be overwritten by daughter classes if styling changes depending on the value
+        return self.style_attrs
+
+    def get_style_attrs_str(self, value: Any) -> str:
+        style_attrs = self.get_style_attrs(value)
+        return "; ".join(f"{k}: {v}" for k, v in style_attrs.items()) + ";"
 
 
 @dataclass
@@ -283,9 +292,10 @@ class StringTableElement(AttrTableElement):
     serializer_field_class = serializers.CharField
     attr: str
     chunk_size: int = 56
+    style_attrs: ClassVar[dict[str, str]] = {"text-align": "left"}
 
     def format(self, value):
-        return format_html('<td style="text-align: left">{value}</td>', value=value)
+        return str(value)
 
     def get_value(self, obj: Any) -> Any:
         value = super().get_value(obj)

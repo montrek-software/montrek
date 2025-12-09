@@ -5,8 +5,7 @@
   <tr>
     {% for data_field in data_row %}
 
-    <th>{{data_field.name}}</th>
-    {{data_field.value}} {% endfor %}
-  </tr>
+    <th>{{data_field.table_element.name}}</th>
+    <td style="{{ data_field.style_attrs_str }}">{{data_field.value}}</td> {% endfor %} </tr>
   {% endfor %}
 </table>
