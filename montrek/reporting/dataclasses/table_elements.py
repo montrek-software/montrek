@@ -186,11 +186,11 @@ class BaseLinkTableElement(TableElement):
         return obj
 
     def get_value(self, obj: Any) -> Any:
-        link_text = self.get_link_text(obj)
-        return self.get_html_table_link_element(obj, link_text)
+        self.obj = obj
+        return self.get_link_text(obj)
 
     def format(self, value: Any) -> str:
-        return value
+        return self.get_html_table_link_element(self.obj, value)
 
     def format_latex(self, value):
         return super().format_latex(strip_tags(value))
