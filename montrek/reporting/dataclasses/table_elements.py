@@ -670,32 +670,28 @@ class HistoryStringTableElement(StringTableElement):
     def __init__(self, attr: str, name: str, change_map: ChangeMapType):
         super().__init__(name=name, attr=attr)
         self.change_map = change_map
+        self.change_format = HistoryChangeState.NONE
 
     def get_attribute(self, obj: Any, tag: str = "html") -> str:
-        self.obj = obj
+        self.change_format = self._get_change_format(obj)
         return super().get_attribute(obj, tag)
 
-    def format(self, value: Any) -> str:
-        change_format = self._get_change_format()
-        if change_format == HistoryChangeState.NONE:
-            return super().format(value)
-        if change_format == HistoryChangeState.OLD:
-            red = ReportingColors.RED.hex
-            return format_html(
-                '<td style="text-align: left; color: {red}"><strong>{value}</strong></td>',
-                red=red,
-                value=value,
-            )
-        if change_format == HistoryChangeState.NEW:
-            green = ReportingColors.DARK_GREEN.hex
-            return format_html(
-                '<td style="text-align: left; color: {green}"><strong>{value}</strong></td>',
-                green=green,
-                value=value,
-            )
+    def get_style_attrs(self, value: Any) -> style_attrs_type:
+        if self.change_format == HistoryChangeState.OLD:
+            color = ReportingColors.RED.hex
+        elif self.change_format == HistoryChangeState.NEW:
+            color = ReportingColors.DARK_GREEN.hex
+        else:
+            color = ReportingColors.BLACK.hex
+        return {"color": color}
 
-    def _get_change_format(self):
-        obj_id = self.obj.id
+    def get_td_classes(self, value: Any) -> td_classes_type:
+        if self.change_format in (HistoryChangeState.OLD, HistoryChangeState.NEW):
+            return ["fw-bold"]
+        return []
+
+    def _get_change_format(self, obj: Any):
+        obj_id = obj.id
         if obj_id not in self.change_map:
             return HistoryChangeState.NONE
         if self.attr not in self.change_map[obj_id]:
