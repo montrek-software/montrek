@@ -294,7 +294,7 @@ class LinkListTableElement(BaseLinkTableElement):
                     yield self._get_link(url, link_text)
 
             return format_html(
-                "<td><div style='max-height: 300px; overflow-y: auto;'>{}</div></td>",
+                "><div style='max-height: 300px; overflow-y: auto;'>{}</div>",
                 format_html_join(
                     self.out_separator,
                     "{}",
@@ -488,12 +488,12 @@ class ProgressBarTableElement(NumberTableElement):
     serializer_field_class = serializers.FloatField
     attr: str
 
-    def format(self, value: float):
+    def _format_value(self, value: float) -> str:
         per_value = value * 100
         out_value = f"{value * 100:.2f}"
 
         return format_html(
-            '<td><div class="bar-container"> <div class="bar" style="width: {per_value}%;"></div> <span class="bar-value">{value}%</span> </div></td>',
+            '<div class="bar-container"> <div class="bar" style="width: {per_value}%;"></div> <span class="bar-value">{value}%</span> </div>',
             per_value=per_value,
             value=out_value,
         )
