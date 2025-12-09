@@ -426,6 +426,7 @@ class HistoryDataTableManager(MontrekTableManagerABC):
         super().__init__(session_data)
         self.title = title
         self.queryset = queryset
+        self.change_map = self.get_change_map()
         self.table = self.to_html()
 
     def get_table(self) -> QuerySet | dict:
@@ -435,13 +436,12 @@ class HistoryDataTableManager(MontrekTableManagerABC):
     def table_elements(self) -> list[te.TableElement]:
         columns = self.queryset.model._meta.fields
         elements: list[te.TableElement] = []
-        change_map = self.get_change_map()
         for column in columns:
             if column.name in EXCLUDE_COLUMNS:
                 continue
             elements.append(
                 te.HistoryStringTableElement(
-                    attr=column.name, name=column.name, change_map=change_map
+                    attr=column.name, name=column.name, change_map=self.change_map
                 )
             )
         return elements
@@ -482,5 +482,4 @@ class HistoryDataTableManager(MontrekTableManagerABC):
 
                     changes[int(current_id)][col] = te.HistoryChangeState.NEW
                     changes[int(next_id)][col] = te.HistoryChangeState.OLD
-
         return changes
