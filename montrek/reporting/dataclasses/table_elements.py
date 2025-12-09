@@ -367,7 +367,7 @@ class NumberTableElement(AttrTableElement):
         if pd.isna(value):
             return mark_safe('<td style="text-align:center;">-</td>')
         if not isinstance(value, (int, float, Decimal)):
-            return format_html('<td style="text-align:left;">{value}</td>', value=value)
+            return format_html('<td style="text-align:left;">{}</td>', value)
         color = _get_value_color(value).hex
         formatted_value = self._format_value(value)
         return format_html(
