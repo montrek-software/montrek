@@ -541,7 +541,7 @@ class TestDataTableFilters(TestCase):
         test_str = table_element.format(0.50)
         self.assertEqual(
             str(test_str),
-            '<td><div class="bar-container"> <div class="bar" style="width: 50.0%;"></div> <span class="bar-value"> 50.00%</span> </div></td>',
+            '<td><div class="bar-container"> <div class="bar" style="width: 50.0%;"></div> <span class="bar-value">50.00%</span> </div></td>',
         )
 
     def test_progress_bar__latex(self):
