@@ -1,12 +1,13 @@
 from dataclasses import dataclass
 from enum import Enum
-from reporting.core.reporting_colors import ReportingColors
+
+from reporting.core.reporting_colors import Color, ReportingColors
 
 
 @dataclass
 class Alert:
     description: str
-    color: str
+    color: Color
     sort_order: int
 
 
