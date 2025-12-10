@@ -696,11 +696,8 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         fake_url = "fake_url"
 
         def reverse_side_effect(*args, **kwargs):
-            value_kwargs = kwargs["kwargs"]
-            if "list_kwargs" in value_kwargs:
-                value = value_kwargs["list_kwarg"]
-                return f"/{fake_url}/{value}"
-            return f"/{fake_url}"
+            value = kwargs["kwargs"]["list_kwarg"]
+            return f"/{fake_url}/{value}"
 
         mock_reverse.side_effect = reverse_side_effect
         test_element = te.LinkListTableElement(
@@ -717,7 +714,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_object(
             table_element=test_element,
             test_obj=obj,
-            expected_format='<div style=\'max-height: 300px; overflow-y: auto;\'><a id="id__fake_url" href="/fake_url" title="hover_text">a</a><br><a id="id__fake_url" href="/fake_url" title="hover_text">b</a><br><a id="id__fake_url" href="/fake_url" title="hover_text">c</a></div>',
+            expected_format='<div style=\'max-height: 300px; overflow-y: auto;\'><a id="id__fake_url_1" href="/fake_url/1" title="hover_text">a</a><br><a id="id__fake_url_2" href="/fake_url/2" title="hover_text">b</a><br><a id="id__fake_url_3" href="/fake_url/3" title="hover_text">c</a></div>',
             expected_format_latex=" \\color{black} a,b,c &",
         )
 
