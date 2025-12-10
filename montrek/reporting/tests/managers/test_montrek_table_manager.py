@@ -64,21 +64,21 @@ class TestMontrekTableManager(TestCase):
                 "field_a": "a",
                 "field_b": 1,
                 "field_c": 1.0,
-                "field_d": "2024-07-13T00:00:00",
+                "field_d": "2024-07-13 00:00:00",
                 "field_e": 1.0,
             },
             {
                 "field_a": "b",
                 "field_b": 2,
                 "field_c": 2.0,
-                "field_d": "2024-07-13T00:00:00",
+                "field_d": "2024-07-13 00:00:00",
                 "field_e": 2.2,
             },
             {
                 "field_a": "c",
                 "field_b": 3,
                 "field_c": 3.0,
-                "field_d": "2024-07-13T00:00:00",
+                "field_d": "2024-07-13 00:00:00",
                 "field_e": 3.0,
             },
         ]
@@ -98,7 +98,7 @@ class TestMontrekTableManager(TestCase):
         self.assertRegex(content_disposition, filename_pattern)
         self.assertEqual(
             response.getvalue(),
-            b"Field A,Field B,Field C,Field D,Field E,Link Text\na,1,1.0,2024-07-13,1.0,a\nb,2,2.0,2024-07-13,2.2,b\nc,3,3.0,2024-07-13,3.0,c\n",
+            b"Field A,Field B,Field C,Field D,Field E,Link Text\na,1,1.0,2024-07-13 00:00:00,1.0,a\nb,2,2.0,2024-07-13 00:00:00,2.2,b\nc,3,3.0,2024-07-13 00:00:00,3.0,c\n",
         )
 
     def test_download_excel(self):
@@ -123,9 +123,9 @@ class TestMontrekTableManager(TestCase):
                     "Field B": [1, 2, 3],
                     "Field C": [1.0, 2.0, 3.0],
                     "Field D": [
-                        datetime.datetime(2024, 7, 13),
-                        datetime.datetime(2024, 7, 13),
-                        timezone.datetime(2024, 7, 13),
+                        "2024-07-13 00:00:00",
+                        "2024-07-13 00:00:00",
+                        "2024-07-13 00:00:00",
                     ],
                     "Field E": [1, 2.2, 3],
                     "Link Text": ["a", "b", "c"],

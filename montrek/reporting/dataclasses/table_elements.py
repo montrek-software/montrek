@@ -209,6 +209,7 @@ class BaseLinkTableElement(TableElement):
         return self.get_html_table_link_element(self.obj, value)
 
     def format_latex(self, value):
+        value = HtmlLatexConverter().convert(value)
         return super().format_latex(strip_tags(value))
 
     def get_html_table_link_element(
@@ -517,7 +518,17 @@ class DateTableBaseElement(AttrTableElement):
     td_classes: ClassVar[td_classes_type] = ["text-start"]
 
     def format(self, value):
-        return value
+        return self.format_date(value)
+
+    def format_latex(self, value):
+        return f" \\color{{black}} {self.format_date(value)} &"
+
+    def format_date(self, value):
+        try:
+            stripped_date = pd.to_datetime(value)
+        except DateParseError:
+            return value
+        return stripped_date.strftime(self.date_format)
 
     def get_value(self, obj: Any) -> Any:
         value = super().get_value(obj)
@@ -530,12 +541,7 @@ class DateTableBaseElement(AttrTableElement):
 
         if isinstance(value, datetime.date):
             return value.strftime(self.date_format)
-
-        try:
-            stripped_date = pd.to_datetime(value)
-        except DateParseError:
-            return value
-        return stripped_date.strftime(self.date_format)
+        return value
 
 
 class DateTableElement(DateTableBaseElement):
