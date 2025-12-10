@@ -27,7 +27,33 @@ class TableElementTestingToolMixin(HasAssertEqual):
         expected_td_classes: te.td_classes_type = ["text-start"],
     ):
         test_obj = {table_element.attr: value}
+        self.table_element_test_assertions_from_object(
+            table_element,
+            test_obj,
+            expected_format,
+            expected_format_latex,
+            expected_style_attrs,
+            expected_td_classes,
+        )
+        with self.subTest("Test None Representation"):
+            if value is not None:
+                self.table_element_test_assertions_from_value(
+                    table_element=table_element,
+                    value=None,
+                    expected_format="-",
+                    expected_format_latex=" \\color{black} - &",
+                    expected_td_classes=["text-center"],
+                )
 
+    def table_element_test_assertions_from_object(
+        self,
+        table_element: te.TableElement,
+        test_obj: Any,
+        expected_format: str,
+        expected_format_latex: str,
+        expected_style_attrs: te.style_attrs_type = {},
+        expected_td_classes: te.td_classes_type = ["text-start"],
+    ):
         with self.subTest("Test HTML Representation"):
             self.assert_display_field_properties(
                 table_element,
@@ -41,19 +67,10 @@ class TableElementTestingToolMixin(HasAssertEqual):
             self.assertEqual(
                 table_element.get_attribute(test_obj, "latex"), expected_format_latex
             )
-        with self.subTest("Test None Representation"):
-            if value is not None:
-                self.table_element_test_assertions_from_value(
-                    table_element=table_element,
-                    value=None,
-                    expected_format="-",
-                    expected_format_latex=" \\color{black} - &",
-                    expected_td_classes=["text-center"],
-                )
 
     def assert_display_field_properties(
         self,
-        table_element: te.AttrTableElement,
+        table_element: te.TableElement,
         obj: Any,
         expected_format: str,
         expected_style_attrs: te.style_attrs_type = {},
@@ -535,14 +552,15 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         )
 
     def test_external_link_table_element__html(self):
-        table_element = te.ExternalLinkTableElement(
+        test_element = te.ExternalLinkTableElement(
             name="name",
             attr="test_attr",
         )
-        test_str_html = table_element.format("https://www.google.com")
-        self.assertEqual(
-            str(test_str_html),
-            '<td style="text-align:left;"><a href="https://www.google.com" target="_blank" title="https://www.google.com">https://www.google.com</a></td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="https://www.google.com",
+            expected_format='<a href="https://www.google.com" target="_blank" title="https://www.google.com">https://www.google.com</a>',
+            expected_format_latex=" \\url{https://www.google.com} &",
         )
 
     def test_latex_special_character_is_handled(self):
@@ -643,21 +661,26 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
                 """Returns 2."""
                 return 2
 
-        table_element = te.MethodNameTableElement(
+        test_element = te.MethodNameTableElement(
             name="name", attr="function_name", class_=Functions
         )
-        test_str = table_element.format("do_nothing")
-        self.assertEqual(
-            test_str, '<td style="text-align: left" title="">do_nothing</td>'
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="do_nothing",
+            expected_format='<div title="">do_nothing</div>',
+            expected_format_latex=" \\color{black} do\\_nothing &",
         )
-        test_str = table_element.format("return_one")
-        self.assertEqual(
-            test_str,
-            '<td style="text-align: left" title="Returns 1.\n\nParameters:\narg1 (str): The first argument.\narg2 (int): The second argument.\n\nReturns:\nint: 1">return_one</td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="return_one",
+            expected_format='<div title="Returns 1.\n\nParameters:\narg1 (str): The first argument.\narg2 (int): The second argument.\n\nReturns:\nint: 1">return_one</div>',
+            expected_format_latex=" \\color{black} return\\_one &",
         )
-        test_str = table_element.format("return_two")
-        self.assertEqual(
-            test_str, '<td style="text-align: left" title="Returns 2.">return_two</td>'
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="return_two",
+            expected_format='<div title="Returns 2.">return_two</div>',
+            expected_format_latex=" \\color{black} return\\_two &",
         )
 
     @mock.patch("reporting.dataclasses.table_elements.reverse")
@@ -665,11 +688,14 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         fake_url = "fake_url"
 
         def reverse_side_effect(*args, **kwargs):
-            value = kwargs["kwargs"]["list_kwarg"]
-            return f"/{fake_url}/{value}"
+            value_kwargs = kwargs["kwargs"]
+            if "list_kwargs" in value_kwargs:
+                value = value_kwargs["list_kwarg"]
+                return f"/{fake_url}/{value}"
+            return f"/{fake_url}"
 
         mock_reverse.side_effect = reverse_side_effect
-        table_element = te.LinkListTableElement(
+        test_element = te.LinkListTableElement(
             name="name",
             url=fake_url,
             hover_text="hover_text",
@@ -677,14 +703,14 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             kwargs={},
             list_attr="list_attr",
             list_kwarg="list_kwarg",
+            in_separator=",",
         )
         obj = {"list_attr": "1,2,3", "text_attr": "a,b,c"}
-        latex_str = table_element.get_attribute(obj, "latex")
-        self.assertEqual(latex_str, " \\color{black} a,b,c &")
-        html_str = table_element.get_attribute(obj, "html")
-        self.assertEqual(
-            html_str,
-            '<td><div style=\'max-height: 300px; overflow-y: auto;\'><a id="id__fake_url_1,2,3" href="/fake_url/1,2,3" title="hover_text">a,b,c</a></div></td>',
+        self.table_element_test_assertions_from_object(
+            table_element=test_element,
+            test_obj=obj,
+            expected_format='<div title="Returns 2.">return_two</div>',
+            expected_format_latex=" \\color{black} a,b,c &",
         )
 
 

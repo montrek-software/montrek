@@ -41,7 +41,7 @@ def _get_value_color_latex(value):
 class TableElement:
     name: str
     style_attrs: ClassVar[style_attrs_type] = {}
-    td_classes: ClassVar[td_classes_type] = []
+    td_classes: ClassVar[td_classes_type] = ["text-start"]
 
     def format(self, value):
         raise NotImplementedError
@@ -148,7 +148,6 @@ class AttrTableElement(TableElement):
 @dataclass
 class ExternalLinkTableElement(AttrTableElement):
     serializer_field_class = serializers.CharField
-    td_classes: ClassVar[td_classes_type] = ["test-start"]
 
     def format(self, value):
         return format_html(
@@ -237,15 +236,8 @@ class BaseLinkTableElement(TableElement):
             return ""
         id_tag = url.replace("/", "_")
         hover_text = self.hover_text
-        template_str = '<a id="id_{{ id_tag }}" href="{{ url }}" title="{{ hover_text }}">{{ link_text }}</a>'
-        template = Template(template_str)
-        context = {
-            "url": url,
-            "link_text": link_text,
-            "id_tag": id_tag,
-            "hover_text": hover_text,
-        }
-        return template.render(Context(context))
+        template_str = '<a id="id_{0}" href="{1}" title="{2}">{3}</a>'
+        return format_html(template_str, id_tag, url, hover_text, link_text)
 
 
 @dataclass
@@ -294,13 +286,15 @@ class LinkListTableElement(BaseLinkTableElement):
                     url = self._get_url(obj, url_kwargs)
                     yield self._get_link(url, link_text)
 
-            return format_html(
-                "<div style='max-height: 300px; overflow-y: auto;'>{}</div>",
+            link_join = (
                 format_html_join(
                     self.out_separator,
                     "{}",
                     ((link,) for link in link_iter()),
                 ),
+            )
+            return format_html(
+                "<div style='max-height: 300px; overflow-y: auto;'>{}</div>", link_join
             )
         return "No tag"
 
