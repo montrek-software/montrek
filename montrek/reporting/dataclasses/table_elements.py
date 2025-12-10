@@ -333,7 +333,10 @@ class StringTableElement(AttrTableElement):
             return None
         value = str(value)
         if len(value) > self.chunk_size:
-            return "<br>".join(self._chunk_text(value))
+            chunks = self._chunk_text(value)
+            return format_html_join(
+                mark_safe("<br>"), "{}", ((chunk,) for chunk in chunks)
+            )
         return value
 
     def _chunk_text(self, text: str) -> list[str]:
