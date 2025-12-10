@@ -65,77 +65,93 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
     def test_string_table_elements(self):
         test_element = te.StringTableElement(name="test", attr="test_value")
         self.table_element_test_assertions_from_value(
-            test_element,
-            "test",
-            "test",
-            " \\color{black} test &",
+            table_element=test_element,
+            value="test",
+            expected_format="test",
+            expected_format_latex=" \\color{black} test &",
         )
         self.table_element_test_assertions_from_value(
-            test_element,
-            1234,
-            "1234",
-            " \\color{black} 1234 &",
+            table_element=test_element,
+            value=1234,
+            expected_format="1234",
+            expected_format_latex=" \\color{black} 1234 &",
         )
 
     def test_text_table_element(self):
         test_element = te.TextTableElement(name="test", attr="test_value")
         self.table_element_test_assertions_from_value(
-            test_element,
-            "test",
-            "test",
-            " \\color{black} test &",
+            table_element=test_element,
+            value="test",
+            expected_format="test",
+            expected_format_latex=" \\color{black} test &",
         )
         self.table_element_test_assertions_from_value(
-            test_element,
-            1234,
-            "1234",
-            " \\color{black} 1234 &",
+            table_element=test_element,
+            value=1234,
+            expected_format="1234",
+            expected_format_latex=" \\color{black} 1234 &",
         )
 
     def test_secure_table_element(self):
         test_element = te.TextTableElement(name="test", attr="test_value")
         self.table_element_test_assertions_from_value(
-            test_element,
-            "<script>Malicious Hack</script><button>Here</button>",
-            "Malicious HackHere",
-            " \\color{black} Malicious HackHere &",
+            table_element=test_element,
+            value="<script>Malicious Hack</script><button>Here</button>",
+            expected_format="Malicious HackHere",
+            expected_format_latex=" \\color{black} Malicious HackHere &",
         )
 
     def test_list_table_element(self):
         test_element = te.ListTableElement(name="test", attr="test_value")
         self.table_element_test_assertions_from_value(
-            test_element,
-            "test1,test2",
-            "test1<br>test2",
-            " \\color{black} test1,test2 &",
+            table_element=test_element,
+            value="test1,test2",
+            expected_format="test1<br>test2",
+            expected_format_latex=" \\color{black} test1,test2 &",
         )
 
         test_element = te.ListTableElement(
             name="test", attr="test_value", in_separator=";", out_separator="|"
         )
         self.table_element_test_assertions_from_value(
-            test_element,
-            "test1,2;test2;test4",
-            "test1,2|test2|test4",
-            " \\color{black} test1,2;test2;test4 &",
+            table_element=test_element,
+            value="test1,2;test2;test4",
+            expected_format="test1,2|test2|test4",
+            expected_format_latex=" \\color{black} test1,2;test2;test4 &",
         )
 
     def test_float_table_elements(self):
         test_element = te.FloatTableElement(name="test", attr="test_value")
-        self.assertEqual(
-            test_element.format(1234.5678),
-            '<td style="text-align:right;color:#002F6C;">1,234.568</td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=1234.5678,
+            expected_format="1,234.568",
+            expected_format_latex="\\color{darkblue} 1,234.568 &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={"color": "#002F6C"},
         )
-        self.assertEqual(
-            test_element.format(1234),
-            '<td style="text-align:right;color:#002F6C;">1,234.000</td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=1234,
+            expected_format="1,234.000",
+            expected_format_latex="\\color{darkblue} 1,234.000 &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={"color": "#002F6C"},
         )
-        self.assertEqual(
-            test_element.format(-1234),
-            '<td style="text-align:right;color:#BE0D3E;">-1,234.000</td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=-1234,
+            expected_format="-1,234.000",
+            expected_format_latex="\\color{red} -1,234.000 &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={"color": "#BE0D3E"},
         )
-        self.assertEqual(
-            test_element.format("bla"), '<td style="text-align:left;">bla</td>'
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="bla",
+            expected_format="bla",
+            expected_format_latex="bla &",
+            expected_td_classes=["text-start"],
         )
 
     def test_euro_table_elements(self):

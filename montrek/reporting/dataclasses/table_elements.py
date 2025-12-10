@@ -73,11 +73,11 @@ class TableElement:
 
     def get_style_attrs_str(self, value: Any) -> str:
         style_attrs = self.get_style_attrs(value)
-        if len(style_attrs) == 0:
-            return ""
         return self.format_style_attr(style_attrs)
 
     def format_style_attr(self, style_attrs: style_attrs_type) -> str:
+        if len(style_attrs) == 0:
+            return ""
         return "; ".join(f"{k}: {v}" for k, v in style_attrs.items()) + ";"
 
     def get_td_classes(self, value: Any) -> td_classes_type:
