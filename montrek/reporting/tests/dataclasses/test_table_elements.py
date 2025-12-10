@@ -1,4 +1,5 @@
 import datetime
+from decimal import Decimal
 from functools import wraps
 from typing import Any, Protocol
 from unittest import mock
@@ -7,7 +8,6 @@ import reporting.dataclasses.table_elements as te
 import requests
 from baseclasses.tests.factories.baseclass_factories import TestMontrekSatelliteFactory
 from django.test import TestCase
-from django.utils import timezone
 from reporting.core.reporting_colors import ReportingColors
 
 
@@ -144,6 +144,14 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
+            value=Decimal(1234.5678),
+            expected_format="1,234.568",
+            expected_format_latex="\\color{darkblue} 1,234.568 &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={"color": "#002F6C"},
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
             value=1234,
             expected_format="1,234.000",
             expected_format_latex="\\color{darkblue} 1,234.000 &",
@@ -155,6 +163,48 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             value=-1234,
             expected_format="-1,234.000",
             expected_format_latex="\\color{red} -1,234.000 &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={"color": "#BE0D3E"},
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="bla",
+            expected_format="bla",
+            expected_format_latex="bla &",
+            expected_td_classes=["text-start"],
+        )
+
+    def test_int_table_elements(self):
+        test_element = te.IntTableElement(name="test", attr="test_value")
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=1234.5678,
+            expected_format="1,235",
+            expected_format_latex="\\color{darkblue} 1,235 &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={"color": "#002F6C"},
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=Decimal(1234.5678),
+            expected_format="1,235",
+            expected_format_latex="\\color{darkblue} 1,235 &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={"color": "#002F6C"},
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=1234,
+            expected_format="1,234",
+            expected_format_latex="\\color{darkblue} 1,234 &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={"color": "#002F6C"},
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=-1234,
+            expected_format="-1,234",
+            expected_format_latex="\\color{red} -1,234 &",
             expected_td_classes=["text-end"],
             expected_style_attrs={"color": "#BE0D3E"},
         )
@@ -270,16 +320,138 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
 
     def test_date_table_elements(self):
         test_element = te.DateTableElement(name="test", attr="test_value")
-        self.assertEqual(
-            test_element.format("2021-01-01"),
-            '<td style="text-align:left;">2021-01-01</td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="2021-01-01",
+            expected_format="2021-01-01",
+            expected_format_latex=" \\color{black} 2021-01-01 &",
         )
-        self.assertEqual(
-            test_element.format("bla"), '<td style="text-align:left;">bla</td>'
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="01.01.2021",
+            expected_format="2021-01-01",
+            expected_format_latex=" \\color{black} 2021-01-01 &",
         )
-        self.assertEqual(
-            test_element.format(timezone.datetime(2023, 12, 9)),
-            '<td style="text-align:left;">09/12/2023</td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=datetime.date(2021, 1, 1),
+            expected_format="2021-01-01",
+            expected_format_latex=" \\color{black} 2021-01-01 &",
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=datetime.datetime(2021, 1, 1, 12, 48),
+            expected_format="2021-01-01",
+            expected_format_latex=" \\color{black} 2021-01-01 &",
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="bla",
+            expected_format="bla",
+            expected_format_latex=" \\color{black} bla &",
+            expected_td_classes=["text-start"],
+        )
+
+    def test_date_german_table_elements(self):
+        test_element = te.DateGermanTableElement(name="test", attr="test_value")
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="2021-01-01",
+            expected_format="01.01.2021",
+            expected_format_latex=" \\color{black} 01.01.2021 &",
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="01.01.2021",
+            expected_format="01.01.2021",
+            expected_format_latex=" \\color{black} 01.01.2021 &",
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=datetime.date(2021, 1, 1),
+            expected_format="01.01.2021",
+            expected_format_latex=" \\color{black} 01.01.2021 &",
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=datetime.datetime(2021, 1, 1, 12, 48),
+            expected_format="01.01.2021",
+            expected_format_latex=" \\color{black} 01.01.2021 &",
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="bla",
+            expected_format="bla",
+            expected_format_latex=" \\color{black} bla &",
+            expected_td_classes=["text-start"],
+        )
+
+    def test_date_time_table_elements(self):
+        test_element = te.DateTimeTableElement(name="test", attr="test_value")
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="2021-01-01",
+            expected_format="2021-01-01 00:00:00",
+            expected_format_latex=" \\color{black} 2021-01-01 00:00:00 &",
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="01.01.2021",
+            expected_format="2021-01-01 00:00:00",
+            expected_format_latex=" \\color{black} 2021-01-01 00:00:00 &",
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=datetime.date(2021, 1, 1),
+            expected_format="2021-01-01 00:00:00",
+            expected_format_latex=" \\color{black} 2021-01-01 00:00:00 &",
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=datetime.datetime(2021, 1, 1, 12, 48),
+            expected_format="2021-01-01 12:48:00",
+            expected_format_latex=" \\color{black} 2021-01-01 12:48:00 &",
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="bla",
+            expected_format="bla",
+            expected_format_latex=" \\color{black} bla &",
+            expected_td_classes=["text-start"],
+        )
+
+    def test_date_year_table_elements(self):
+        test_element = te.DateYearTableElement(name="test", attr="test_value")
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="2021-01-01",
+            expected_format="2021",
+            expected_format_latex=" \\color{black} 2021 &",
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="01.01.2021",
+            expected_format="2021",
+            expected_format_latex=" \\color{black} 2021 &",
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=datetime.date(2021, 1, 1),
+            expected_format="2021",
+            expected_format_latex=" \\color{black} 2021 &",
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=datetime.datetime(2021, 1, 1, 12, 48),
+            expected_format="2021",
+            expected_format_latex=" \\color{black} 2021 &",
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="bla",
+            expected_format="bla",
+            expected_format_latex=" \\color{black} bla &",
+            expected_td_classes=["text-start"],
         )
 
     def test_bool_table_elements(self):
@@ -415,21 +587,6 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             test_str_latex,
             f"Image not found: {url} &",
         )
-
-    def test_date_year_table_element(self):
-        table_element = te.DateYearTableElement(name="name", attr="test_attr")
-        test_str = table_element.format("2021-01-01")
-        self.assertEqual(test_str, '<td style="text-align:left;">2021</td>')
-        test_str = table_element.format("bla")
-        self.assertEqual(test_str, '<td style="text-align:left;">bla</td>')
-        test_str = table_element.format(timezone.datetime(2023, 12, 9))
-        self.assertEqual(test_str, '<td style="text-align:left;">2023</td>')
-        test_str = table_element.format(None)
-        self.assertEqual(test_str, '<td style="text-align:center;">-</td>')
-        test_str = table_element.format("")
-        self.assertEqual(test_str, '<td style="text-align:center;">-</td>')
-        test_str = table_element.format(datetime.date(2023, 12, 9))
-        self.assertEqual(test_str, '<td style="text-align:left;">2023</td>')
 
     def test_method_name_table_element(self):
         def my_decorator(func):

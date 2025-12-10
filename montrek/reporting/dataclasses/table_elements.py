@@ -19,6 +19,7 @@ from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
 from django.utils.html import format_html, format_html_join, strip_tags
 from encrypted_fields import EncryptedCharField
+from pandas.core.tools.datetimes import DateParseError
 from reporting.core.reporting_colors import Color, ReportingColors
 from reporting.core.text_converter import HtmlLatexConverter
 from reporting.dataclasses.display_field import DisplayField
@@ -462,13 +463,6 @@ class IntTableElement(NumberTableElement):
         value = round(value)
         return self.shortener.shorten(value, ",.0f")
 
-    def get_value(self, obj: Any) -> Any:
-        value = super().get_value(obj)
-        try:
-            return int(value)
-        except (TypeError, ValueError):
-            return value
-
 
 @dataclass
 class PercentTableElement(NumberTableElement):
@@ -513,14 +507,25 @@ class DateTableBaseElement(AttrTableElement):
     td_classes: ClassVar[td_classes_type] = ["text-start"]
 
     def format(self, value):
-        value = value.strftime(self.date_format)
-        return format_html("{value}", value=value)
+        return value
 
     def get_value(self, obj: Any) -> Any:
         value = super().get_value(obj)
-        if isinstance(value, datetime.datetime) and not timezone.is_naive(value):
-            value = timezone.make_naive(value)
-        return value
+        if value is None:
+            return None
+        if isinstance(value, datetime.datetime):
+            if not timezone.is_naive(value):
+                value = timezone.make_naive(value)
+            return value.strftime(self.date_format)
+
+        if isinstance(value, datetime.date):
+            return value.strftime(self.date_format)
+
+        try:
+            stripped_date = pd.to_datetime(value)
+        except DateParseError:
+            return value
+        return stripped_date.strftime(self.date_format)
 
 
 class DateTableElement(DateTableBaseElement):
@@ -530,6 +535,10 @@ class DateTableElement(DateTableBaseElement):
 class DateTimeTableElement(DateTableBaseElement):
     serializer_field_class = serializers.DateTimeField
     date_format = "%Y-%m-%d %H:%M:%S"
+
+
+class DateGermanTableElement(DateTableBaseElement):
+    date_format = "%d.%m.%Y"
 
 
 @dataclass
