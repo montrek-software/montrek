@@ -501,17 +501,37 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
 
     def test_alert_table_element(self):
         test_element = te.AlertTableElement(name="test", attr="test_value")
-        self.assertEqual(
-            test_element.format("ok"),
-            '<td style="text-align: left;color:#388E3C;"><b>ok</b></td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="ok",
+            expected_format="<b>ok</b>",
+            expected_format_latex=" \\color{black} ok &",
+            expected_td_classes=["text-center"],
+            expected_style_attrs={"color": "#388E3C"},
         )
-        self.assertEqual(
-            test_element.format("warning"),
-            '<td style="text-align: left;color:#FDD835;"><b>warning</b></td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="warning",
+            expected_format="<b>warning</b>",
+            expected_format_latex=" \\color{black} warning &",
+            expected_td_classes=["text-center"],
+            expected_style_attrs={"color": "#FDD835"},
         )
-        self.assertEqual(
-            test_element.format("error"),
-            '<td style="text-align: left;color:#BE0D3E;"><b>error</b></td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="error",
+            expected_format="<b>error</b>",
+            expected_format_latex=" \\color{black} error &",
+            expected_td_classes=["text-center"],
+            expected_style_attrs={"color": "#BE0D3E"},
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="bla",
+            expected_format="<b>bla</b>",
+            expected_format_latex=" \\color{black} bla &",
+            expected_td_classes=["text-center"],
+            expected_style_attrs={"color": "#000000"},
         )
 
     def test_external_link_table_element__html(self):

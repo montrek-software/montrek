@@ -382,7 +382,7 @@ class ListTableElement(AttrTableElement):
 class AlertTableElement(AttrTableElement):
     serializer_field_class = serializers.CharField
     attr: str
-    td_classes: ClassVar[td_classes_type] = ["text-start"]
+    td_classes: ClassVar[td_classes_type] = ["text-center"]
 
     def get_style_attrs(self, value: Any) -> style_attrs_type:
         status = AlertEnum.get_by_description(value)
@@ -392,7 +392,7 @@ class AlertTableElement(AttrTableElement):
     def format(self, value):
         return format_html(
             "<b>{0}</b>",
-            value=value,
+            value,
         )
 
 
