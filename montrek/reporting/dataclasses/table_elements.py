@@ -364,7 +364,7 @@ class StringTableElement(AttrTableElement):
 class TextTableElement(StringTableElement): ...
 
 
-# TODO: Depricate this class, since text wraping is handled by StringTableElement
+# TODO: Deprecate this class, since text wrapping is handled by StringTableElement
 
 
 @dataclass
