@@ -709,7 +709,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_object(
             table_element=test_element,
             test_obj=obj,
-            expected_format='<div title="Returns 2.">return_two</div>',
+            expected_format='<div style=\'max-height: 300px; overflow-y: auto;\'><a id="id__fake_url" href="/fake_url" title="hover_text">a</a><br><a id="id__fake_url" href="/fake_url" title="hover_text">b</a><br><a id="id__fake_url" href="/fake_url" title="hover_text">c</a></div>',
             expected_format_latex=" \\color{black} a,b,c &",
         )
 

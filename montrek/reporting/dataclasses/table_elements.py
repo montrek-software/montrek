@@ -1,3 +1,4 @@
+import collections
 import datetime
 import inspect
 import tempfile
@@ -57,7 +58,7 @@ class TableElement:
             return value
         elif tag == "latex":
             value = self.get_value(obj)
-            if pd.isna(value):
+            if self.empty_value(value):
                 return " \\color{black} - &"
             return self.format_latex(value)
         raise KeyError(f"Unknown tag {tag}")
@@ -94,16 +95,31 @@ class TableElement:
 
     def get_display_field(self, obj: Any) -> DisplayField:
         value = self.get_attribute(obj, "html")
-        if pd.isna(value):
-            table_element = NoneTableElement()
-        else:
-            table_element = self
+
+        table_element = NoneTableElement() if self.empty_value(value) else self
         return DisplayField(
             name=table_element.name,
             display_value=table_element.format(value),
             style_attrs_str=table_element.get_style_attrs_str(value),
             td_classes_str=table_element.get_td_classes_str(value),
         )
+
+    def empty_value(self, value: Any) -> bool:
+        # Check for scalar NA values
+        try:
+            if pd.isna(value):
+                return True
+        except (ValueError, TypeError):
+            # pd.isna() fails on iterables, so check if it's an empty iterable
+            if isinstance(value, collections.abc.Iterable) and not isinstance(
+                value, str
+            ):
+                try:
+                    return len(value) == 0
+                except TypeError:
+                    # No len() available, try to peek at the iterable
+                    return not any(True for _ in value)
+        return False
 
 
 @dataclass
@@ -272,29 +288,24 @@ class LinkListTableElement(BaseLinkTableElement):
     in_separator: str = ";"
     out_separator: str = mark_safe("<br>")
 
-    def get_attribute(self, obj: Any, tag: str = "html") -> str:
-        values = self.get_value(obj)
-        if tag == "latex":
-            value = ",".join(link_text for _, link_text in values)
-            return self.format_latex(value)
-        if tag == "html":
+    def link_iter(self, value, obj):
+        for list_value, link_text in value:
+            url_kwargs = self._get_url_kwargs(obj)
+            url_kwargs[self.list_kwarg] = list_value
+            url = self._get_url(obj, url_kwargs)
+            yield self._get_link(url, link_text)
 
-            def link_iter():
-                for list_value, link_text in values:
-                    url_kwargs = self._get_url_kwargs(obj)
-                    url_kwargs[self.list_kwarg] = list_value
-                    url = self._get_url(obj, url_kwargs)
-                    yield self._get_link(url, link_text)
-
-            link_join = format_html_join(
-                self.out_separator,
-                "{}",
-                ((link,) for link in link_iter()),
-            )
-            return format_html(
-                "<div style='max-height: 300px; overflow-y: auto;'>{}</div>", link_join
-            )
-        return "No tag"
+    def get_html_table_link_element(
+        self, obj: Any, link_text: str, *, active: bool = False
+    ) -> str:
+        link_join = format_html_join(
+            self.out_separator,
+            "{}",
+            ((link,) for link in self.link_iter(link_text, obj)),
+        )
+        return format_html(
+            "<div style='max-height: 300px; overflow-y: auto;'>{}</div>", link_join
+        )
 
     def get_link_text(self, obj) -> list:
         list_values = self.get_dotted_attr_or_arg(obj, self.list_attr)
@@ -307,6 +318,9 @@ class LinkListTableElement(BaseLinkTableElement):
         values = zip(list_values, text_values)
         values = sorted(values, key=lambda x: x[1])
         return values
+
+    def format_latex(self, value):
+        return " \\color{{black}} {} &".format(",".join([val[1] for val in value]))
 
 
 @dataclass
