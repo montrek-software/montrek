@@ -490,6 +490,7 @@ class PercentTableElement(NumberTableElement):
 class ProgressBarTableElement(NumberTableElement):
     serializer_field_class = serializers.FloatField
     attr: str
+    td_classes: ClassVar[td_classes_type] = ["text-center"]
 
     def _format_value(self, value: float) -> str:
         per_value = value * 100
@@ -745,7 +746,7 @@ class ColorCodedStringTableElement(StringTableElement):
 
 
 class LabelTableElement(StringTableElement):
-    td_classes: ClassVar[td_classes_type] = ["text-start"]
+    td_classes: ClassVar[td_classes_type] = ["text-center"]
 
     def __init__(self, name: str, attr: str, color_codes: dict[str, Color]):
         self.color_codes = color_codes

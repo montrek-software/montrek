@@ -11,6 +11,14 @@ from django.test import TestCase
 from reporting.core.reporting_colors import ReportingColors
 
 
+class MockTableElement(te.AttrTableElement):
+    def __init__(self, attr: str) -> None:
+        self.attr = attr
+
+    def format(self, value: str) -> str:
+        return value
+
+
 class HasAssertEqual(Protocol):
     def assertEqual(self, first, second, msg=None): ...
     def subTest(self, msg="", **params) -> Any: ...
@@ -713,16 +721,6 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_format_latex=" \\color{black} a,b,c &",
         )
 
-
-class MockTableElement(te.AttrTableElement):
-    def __init__(self, attr: str) -> None:
-        self.attr = attr
-
-    def format(self, value: str) -> str:
-        return value
-
-
-class TestDataTableFilters(TestCase):
     def test__get_dotted_attr_or_arg(self):
         """
         Test that the function returns the correct value when the
@@ -756,32 +754,34 @@ class TestDataTableFilters(TestCase):
 
     def test__get_link_icon(self):
         test_obj = TestMontrekSatelliteFactory.create()
-        table_element = te.LinkTableElement(
+        test_element = te.LinkTableElement(
             name="name",
             url="dummy_detail",
             kwargs={"pk": "pk"},
             icon="icon",
             hover_text="hover_text",
         )
-        test_link = table_element.get_attribute(test_obj)
-        self.assertEqual(
-            str(test_link),
-            f'<td><a id="id__baseclasses_{test_obj.id}_details" href="/baseclasses/{test_obj.id}/details" title="hover_text"><span class="bi bi-icon"></span></a></td>',
+        self.table_element_test_assertions_from_object(
+            table_element=test_element,
+            test_obj=test_obj,
+            expected_format=f'<a id="id__baseclasses_{test_obj.id}_details" href="/baseclasses/{test_obj.id}/details" title="hover_text"><span class="bi bi-icon"></span></a>',
+            expected_format_latex=f" \\color{{black}}  &",
         )
 
     def test__get_link_text(self):
         test_obj = TestMontrekSatelliteFactory.create()
-        table_element = te.LinkTextTableElement(
+        test_element = te.LinkTextTableElement(
             name="name",
             url="dummy_detail",
             kwargs={"pk": "pk"},
             text="test_name",
             hover_text="hover_text",
         )
-        test_link = table_element.get_attribute(test_obj)
-        self.assertEqual(
-            str(test_link),
-            f'<td><a id="id__baseclasses_{test_obj.id}_details" href="/baseclasses/{test_obj.id}/details" title="hover_text">{test_obj.test_name}</a></td>',
+        self.table_element_test_assertions_from_object(
+            table_element=test_element,
+            test_obj=test_obj,
+            expected_format=f'<a id="id__baseclasses_{test_obj.id}_details" href="/baseclasses/{test_obj.id}/details" title="hover_text">{test_obj.test_name}</a>',
+            expected_format_latex=f" \\color{{black}} {test_obj.test_name} &",
         )
 
     def test__get_link_text__active(self):
@@ -811,7 +811,8 @@ class TestDataTableFilters(TestCase):
             hover_text="hover_text",
             kwargs={"pk": "pk", "filter": "test_name"},
         )
-        test_link = table_element.get_attribute(test_obj)
+        test_display_field = table_element.get_display_field(test_obj)
+        test_link = test_display_field.display_value
         self.assertTrue(
             f"?filter_field=test_name&amp;filter_lookup=in&amp;filter_value={test_obj.test_name}"
             in test_link
@@ -830,7 +831,7 @@ class TestDataTableFilters(TestCase):
         test_kwargs = table_element._get_url_kwargs(test_obj)
         self.assertEqual(test_kwargs["static"], "test_static")
 
-    def test_get_attribute(self):
+    def test_link_icon(self):
         test_obj = TestMontrekSatelliteFactory.create(test_name="Test Name")
         table_element = te.LinkTableElement(
             name="name",
@@ -839,30 +840,12 @@ class TestDataTableFilters(TestCase):
             icon="icon",
             hover_text="hover_text",
         )
-        test_str = table_element.get_attribute(test_obj)
-        self.assertEqual(
-            str(test_str),
-            f'<td><a id="id__baseclasses_{test_obj.id}_details" href="/baseclasses/{test_obj.id}/details" title="hover_text"><span class="bi bi-icon"></span></a></td>',
+        self.table_element_test_assertions_from_object(
+            table_element=table_element,
+            test_obj=test_obj,
+            expected_format=f'<a id="id__baseclasses_{test_obj.id}_details" href="/baseclasses/{test_obj.id}/details" title="hover_text"><span class="bi bi-icon"></span></a>',
+            expected_format_latex=" \\color{black}  &",
         )
-        table_element = te.StringTableElement(
-            name="name",
-            attr="test_name",
-        )
-        test_str = table_element.get_attribute(test_obj)
-        self.assertEqual(str(test_str), '<td style="text-align: left">Test Name</td>')
-
-    def test_get_attribute__value_is_none(self):
-        test_obj = TestMontrekSatelliteFactory.create(test_name="Test Name")
-        for element_class in [
-            te.StringTableElement,
-            te.NumberTableElement,
-        ]:
-            table_element = element_class(
-                name="name",
-                attr="test_value",
-            )
-            test_str = table_element.get_attribute(test_obj)
-            self.assertEqual(str(test_str), '<td style="text-align: center">-</td>')
 
     def test_get_attibute__object_is_dict(self):
         test_obj = {"test_name": "Test Name"}
@@ -885,10 +868,13 @@ class TestDataTableFilters(TestCase):
             name="name",
             attr="test_attr",
         )
-        test_str = table_element.format(0.50)
-        self.assertEqual(
-            str(test_str),
-            '<td><div class="bar-container"> <div class="bar" style="width: 50.0%;"></div> <span class="bar-value">50.00%</span> </div></td>',
+        self.table_element_test_assertions_from_value(
+            table_element=table_element,
+            value=0.50,
+            expected_format='<div class="bar-container"> <div class="bar" style="width: 50.0%;"></div> <span class="bar-value">50.00%</span> </div>',
+            expected_format_latex="\\progressbar{ 50.0 }{ 50.0\\% } &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={"color": "#002F6C"},
         )
 
     def test_progress_bar__latex(self):
@@ -955,20 +941,26 @@ class TestDataTableFilters(TestCase):
         table_element = te.LabelTableElement(
             name="name", attr="test_attr", color_codes=color_codes
         )
-        blue_value = table_element.format("abc")
-        self.assertEqual(
-            blue_value,
-            '<td style="text-align: left;"><span class="badge" style="background-color:#2B6D8B;color:#FFFFFF;">abc</span></td>',
+        self.table_element_test_assertions_from_value(
+            table_element=table_element,
+            value="abc",
+            expected_format='<span class="badge" style="background-color:#2B6D8B;color:#FFFFFF;">abc</span>',
+            expected_format_latex="\\colorbox[rgb]{0.169,0.427,0.545}{\\textcolor[HTML]{FFFFFF}{\\textbf{abc}}} &",
+            expected_td_classes=["text-center"],
         )
-        rose_value = table_element.format("def")
-        self.assertEqual(
-            rose_value,
-            '<td style="text-align: left;"><span class="badge" style="background-color:#D3A9A1;color:#000000;">def</span></td>',
+        self.table_element_test_assertions_from_value(
+            table_element=table_element,
+            value="def",
+            expected_format='<span class="badge" style="background-color:#D3A9A1;color:#000000;">def</span>',
+            expected_format_latex="\\colorbox[rgb]{0.827,0.663,0.631}{\\textcolor[HTML]{000000}{\\textbf{def}}} &",
+            expected_td_classes=["text-center"],
         )
-        default_value = table_element.format("ghi")
-        self.assertEqual(
-            default_value,
-            '<td style="text-align: left;"><span class="badge" style="background-color:#004767;color:#FFFFFF;">ghi</span></td>',
+        self.table_element_test_assertions_from_value(
+            table_element=table_element,
+            value="ghi",
+            expected_format='<span class="badge" style="background-color:#004767;color:#FFFFFF;">ghi</span>',
+            expected_format_latex="\\colorbox[rgb]{0.000,0.278,0.404}{\\textcolor[HTML]{FFFFFF}{\\textbf{ghi}}} &",
+            expected_td_classes=["text-center"],
         )
 
     def test_label_table_element__latex(self):
