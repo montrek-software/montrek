@@ -286,12 +286,10 @@ class LinkListTableElement(BaseLinkTableElement):
                     url = self._get_url(obj, url_kwargs)
                     yield self._get_link(url, link_text)
 
-            link_join = (
-                format_html_join(
-                    self.out_separator,
-                    "{}",
-                    ((link,) for link in link_iter()),
-                ),
+            link_join = format_html_join(
+                self.out_separator,
+                "{}",
+                ((link,) for link in link_iter()),
             )
             return format_html(
                 "<div style='max-height: 300px; overflow-y: auto;'>{}</div>", link_join
