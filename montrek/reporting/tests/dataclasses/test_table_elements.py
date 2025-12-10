@@ -3,7 +3,6 @@ from functools import wraps
 from typing import Any, Protocol
 from unittest import mock
 
-import numpy as np
 import reporting.dataclasses.table_elements as te
 import requests
 from baseclasses.tests.factories.baseclass_factories import TestMontrekSatelliteFactory
@@ -14,6 +13,7 @@ from reporting.core.reporting_colors import ReportingColors
 
 class HasAssertEqual(Protocol):
     def assertEqual(self, first, second, msg=None): ...
+    def subTest(self, msg="", **params) -> Any: ...
 
 
 class TableElementTestingToolMixin(HasAssertEqual):
@@ -27,17 +27,29 @@ class TableElementTestingToolMixin(HasAssertEqual):
         expected_td_classes: te.td_classes_type = ["text-start"],
     ):
         test_obj = {table_element.attr: value}
-        self.assert_display_field_properties(
-            table_element,
-            test_obj,
-            expected_format,
-            expected_style_attrs,
-            expected_td_classes,
-        )
 
-        self.assertEqual(
-            table_element.get_attribute(test_obj, "latex"), expected_format_latex
-        )
+        with self.subTest("Test HTML Representation"):
+            self.assert_display_field_properties(
+                table_element,
+                test_obj,
+                expected_format,
+                expected_style_attrs,
+                expected_td_classes,
+            )
+
+        with self.subTest("Test Latex Representation"):
+            self.assertEqual(
+                table_element.get_attribute(test_obj, "latex"), expected_format_latex
+            )
+        with self.subTest("Test None Representation"):
+            if value is not None:
+                self.table_element_test_assertions_from_value(
+                    table_element=table_element,
+                    value=None,
+                    expected_format="-",
+                    expected_format_latex=" \\color{black} - &",
+                    expected_td_classes=["text-center"],
+                )
 
     def assert_display_field_properties(
         self,
@@ -224,24 +236,36 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
 
     def test_percent_table_elements(self):
         test_element = te.PercentTableElement(name="test", attr="test_value")
-        self.assertEqual(
-            test_element.format(0.2512),
-            '<td style="text-align:right;color:#002F6C;">25.12%</td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=0.2512,
+            expected_format="25.12%",
+            expected_format_latex="\\color{darkblue} 25.12\\% &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={"color": "#002F6C"},
         )
-        self.assertEqual(
-            test_element.format(1.234),
-            '<td style="text-align:right;color:#002F6C;">123.40%</td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=1.234,
+            expected_format="123.40%",
+            expected_format_latex="\\color{darkblue} 123.40\\% &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={"color": "#002F6C"},
         )
-        self.assertEqual(
-            test_element.format(-0.1234),
-            '<td style="text-align:right;color:#BE0D3E;">-12.34%</td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=-1.234,
+            expected_format="-123.40%",
+            expected_format_latex="\\color{red} -123.40\\% &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={"color": "#BE0D3E"},
         )
-        self.assertEqual(
-            test_element.format("bla"), '<td style="text-align:left;">bla</td>'
-        )
-        self.assertEqual(
-            test_element.format(np.nan),
-            '<td style="text-align:center;">-</td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="bla",
+            expected_format="bla",
+            expected_format_latex="bla &",
+            expected_td_classes=["text-start"],
         )
 
     def test_date_table_elements(self):
