@@ -24,6 +24,7 @@ from reporting.core import reporting_text as rt
 from reporting.core.table_converter import LatexTableConverter
 from reporting.core.text_converter import HtmlTextConverter
 from reporting.dataclasses import table_elements as te
+from reporting.dataclasses.display_field import DisplayField
 from reporting.lib.protocols import ReportElementProtocol
 from reporting.tasks.download_table_task import DownloadTableTask
 from reporting.tasks.refresh_data_task import RefreshDataTask
@@ -110,12 +111,12 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
             ele.attr: ele.name for ele in self.table_elements if hasattr(ele, "attr")
         }
 
-    def get_display_elements(self) -> list[list[str]]:
+    def get_display_fields(self) -> list[list[DisplayField]]:
         rows = []
         for query_object in self.get_table():
             elements = []
             for table_element in self.table_elements:
-                elements.append(table_element.get_attribute(query_object, "html"))
+                elements.append(table_element.get_display_field(query_object))
             rows.append(elements)
         return rows
 
@@ -129,7 +130,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
             context={
                 "table_title": self.table_title,
                 "table_elements": self.table_elements,
-                "display_elements": self.get_display_elements(),
+                "display_fields": self.get_display_fields(),
                 "order_field": order_field,
                 "order_descending": self.order_descending,
             }
@@ -425,6 +426,7 @@ class HistoryDataTableManager(MontrekTableManagerABC):
         super().__init__(session_data)
         self.title = title
         self.queryset = queryset
+        self.change_map = self.get_change_map()
         self.table = self.to_html()
 
     def get_table(self) -> QuerySet | dict:
@@ -434,13 +436,12 @@ class HistoryDataTableManager(MontrekTableManagerABC):
     def table_elements(self) -> list[te.TableElement]:
         columns = self.queryset.model._meta.fields
         elements: list[te.TableElement] = []
-        change_map = self.get_change_map()
         for column in columns:
             if column.name in EXCLUDE_COLUMNS:
                 continue
             elements.append(
                 te.HistoryStringTableElement(
-                    attr=column.name, name=column.name, change_map=change_map
+                    attr=column.name, name=column.name, change_map=self.change_map
                 )
             )
         return elements
@@ -481,5 +482,4 @@ class HistoryDataTableManager(MontrekTableManagerABC):
 
                     changes[int(current_id)][col] = te.HistoryChangeState.NEW
                     changes[int(next_id)][col] = te.HistoryChangeState.OLD
-
         return changes

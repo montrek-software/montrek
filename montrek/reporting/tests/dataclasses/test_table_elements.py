@@ -1,158 +1,499 @@
 import datetime
+from decimal import Decimal
 from functools import wraps
+from typing import Any, Protocol
 from unittest import mock
 
-import numpy as np
 import reporting.dataclasses.table_elements as te
 import requests
 from baseclasses.tests.factories.baseclass_factories import TestMontrekSatelliteFactory
 from django.test import TestCase
-from django.utils import timezone
 from reporting.core.reporting_colors import ReportingColors
 
 
-class TestTableElements(TestCase):
+class MockTableElement(te.AttrTableElement):
+    def __init__(self, attr: str) -> None:
+        self.attr = attr
+
+    def format(self, value: str) -> str:
+        return value
+
+
+class HasAssertEqual(Protocol):
+    def assertEqual(self, first, second, msg=None): ...
+    def subTest(self, msg="", **params) -> Any: ...
+
+
+class TableElementTestingToolMixin(HasAssertEqual):
+    def table_element_test_assertions_from_value(
+        self,
+        table_element: te.AttrTableElement,
+        value: Any,
+        expected_format: str,
+        expected_format_latex: str,
+        expected_style_attrs: te.style_attrs_type = {},
+        expected_td_classes: te.td_classes_type = ["text-start"],
+    ):
+        test_obj = {table_element.attr: value}
+        self.table_element_test_assertions_from_object(
+            table_element,
+            test_obj,
+            expected_format,
+            expected_format_latex,
+            expected_style_attrs,
+            expected_td_classes,
+        )
+        with self.subTest("Test None Representation"):
+            if value is not None:
+                self.table_element_test_assertions_from_value(
+                    table_element=table_element,
+                    value=None,
+                    expected_format="-",
+                    expected_format_latex=" \\color{black} - &",
+                    expected_td_classes=["text-center"],
+                )
+
+    def table_element_test_assertions_from_object(
+        self,
+        table_element: te.TableElement,
+        test_obj: Any,
+        expected_format: str,
+        expected_format_latex: str,
+        expected_style_attrs: te.style_attrs_type = {},
+        expected_td_classes: te.td_classes_type = ["text-start"],
+    ):
+        with self.subTest("Test HTML Representation"):
+            self.assert_display_field_properties(
+                table_element,
+                test_obj,
+                expected_format,
+                expected_style_attrs,
+                expected_td_classes,
+            )
+
+        with self.subTest("Test Latex Representation"):
+            self.assertEqual(
+                table_element.get_attribute(test_obj, "latex"), expected_format_latex
+            )
+
+    def assert_display_field_properties(
+        self,
+        table_element: te.TableElement,
+        obj: Any,
+        expected_format: str,
+        expected_style_attrs: te.style_attrs_type = {},
+        expected_td_classes: te.td_classes_type = ["text-start"],
+    ):
+        test_display_field = table_element.get_display_field(obj)
+        self.assertEqual(test_display_field.display_value, expected_format)
+        self.assertEqual(
+            test_display_field.td_classes_str, " ".join(expected_td_classes)
+        )
+        if len(expected_style_attrs) > 0:
+            self.assertEqual(
+                test_display_field.style_attrs_str,
+                "; ".join(f"{k}: {v}" for k, v in expected_style_attrs.items()) + ";",
+            )
+        else:
+            self.assertEqual(test_display_field.style_attrs_str, "")
+
+
+class TestTableElements(TestCase, TableElementTestingToolMixin):
     def test_string_table_elements(self):
         test_element = te.StringTableElement(name="test", attr="test_value")
-        self.assertEqual(
-            test_element.format("test"), '<td style="text-align: left">test</td>'
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="test",
+            expected_format="test",
+            expected_format_latex=" \\color{black} test &",
         )
-        self.assertEqual(
-            test_element.format(1234), '<td style="text-align: left">1234</td>'
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=1234,
+            expected_format="1234",
+            expected_format_latex=" \\color{black} 1234 &",
         )
 
     def test_text_table_element(self):
         test_element = te.TextTableElement(name="test", attr="test_value")
-        self.assertEqual(
-            test_element.format("test"),
-            '<td style="text-align: left; white-space: pre-wrap;">test</td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="test",
+            expected_format="test",
+            expected_format_latex=" \\color{black} test &",
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=1234,
+            expected_format="1234",
+            expected_format_latex=" \\color{black} 1234 &",
         )
 
     def test_secure_table_element(self):
-        obj = {"test_value": "<script>Malicious Hack</script><button>Here</button>"}
         test_element = te.TextTableElement(name="test", attr="test_value")
-        test_value = test_element.get_attribute(obj, "html")
-        self.assertEqual(
-            test_value,
-            '<td style="text-align: left; white-space: pre-wrap;">Malicious HackHere</td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="<script>Malicious Hack</script><button>Here</button>",
+            expected_format="Malicious HackHere",
+            expected_format_latex=" \\color{black} Malicious HackHere &",
         )
 
     def test_list_table_element(self):
         test_element = te.ListTableElement(name="test", attr="test_value")
-        self.assertEqual(
-            test_element.format("test1,test2"),
-            '<td style="text-align: left">test1<br>test2</td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="test1,test2",
+            expected_format="test1<br>test2",
+            expected_format_latex=" \\color{black} test1,test2 &",
         )
+
         test_element = te.ListTableElement(
             name="test", attr="test_value", in_separator=";", out_separator="|"
         )
-        self.assertEqual(
-            test_element.format("test1,2;test3;test4"),
-            '<td style="text-align: left">test1,2|test3|test4</td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="test1,2;test2;test4",
+            expected_format="test1,2|test2|test4",
+            expected_format_latex=" \\color{black} test1,2;test2;test4 &",
         )
 
     def test_float_table_elements(self):
         test_element = te.FloatTableElement(name="test", attr="test_value")
-        self.assertEqual(
-            test_element.format(1234.5678),
-            '<td style="text-align:right;color:#002F6C;">1,234.568</td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=1234.5678,
+            expected_format="1,234.568",
+            expected_format_latex="\\color{darkblue} 1,234.568 &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={"color": "#002F6C"},
         )
-        self.assertEqual(
-            test_element.format(1234),
-            '<td style="text-align:right;color:#002F6C;">1,234.000</td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=Decimal(1234.5678),
+            expected_format="1,234.568",
+            expected_format_latex="\\color{darkblue} 1,234.568 &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={"color": "#002F6C"},
         )
-        self.assertEqual(
-            test_element.format(-1234),
-            '<td style="text-align:right;color:#BE0D3E;">-1,234.000</td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=1234,
+            expected_format="1,234.000",
+            expected_format_latex="\\color{darkblue} 1,234.000 &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={"color": "#002F6C"},
         )
-        self.assertEqual(
-            test_element.format("bla"), '<td style="text-align:left;">bla</td>'
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=-1234,
+            expected_format="-1,234.000",
+            expected_format_latex="\\color{red} -1,234.000 &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={"color": "#BE0D3E"},
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="bla",
+            expected_format="bla",
+            expected_format_latex="bla &",
+            expected_td_classes=["text-start"],
+        )
+
+    def test_int_table_elements(self):
+        test_element = te.IntTableElement(name="test", attr="test_value")
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=1234.5678,
+            expected_format="1,235",
+            expected_format_latex="\\color{darkblue} 1,235 &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={"color": "#002F6C"},
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=Decimal(1234.5678),
+            expected_format="1,235",
+            expected_format_latex="\\color{darkblue} 1,235 &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={"color": "#002F6C"},
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=1234,
+            expected_format="1,234",
+            expected_format_latex="\\color{darkblue} 1,234 &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={"color": "#002F6C"},
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=-1234,
+            expected_format="-1,234",
+            expected_format_latex="\\color{red} -1,234 &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={"color": "#BE0D3E"},
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="bla",
+            expected_format="bla",
+            expected_format_latex="bla &",
+            expected_td_classes=["text-start"],
         )
 
     def test_euro_table_elements(self):
         test_element = te.EuroTableElement(name="test", attr="test_value")
-        self.assertEqual(
-            test_element.format(1234.5678),
-            '<td style="text-align:right;color:#002F6C;">1,234.57&#x20AC;</td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=1234.5678,
+            expected_format="1,234.57&#x20AC;",
+            expected_format_latex="\\color{darkblue} 1,234.57€ &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={"color": "#002F6C"},
         )
-        self.assertEqual(
-            test_element.format(1234),
-            '<td style="text-align:right;color:#002F6C;">1,234.00&#x20AC;</td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=1234,
+            expected_format="1,234.00&#x20AC;",
+            expected_format_latex="\\color{darkblue} 1,234.00€ &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={"color": "#002F6C"},
         )
-        self.assertEqual(
-            test_element.format(-1234),
-            '<td style="text-align:right;color:#BE0D3E;">-1,234.00&#x20AC;</td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=-1234,
+            expected_format="-1,234.00&#x20AC;",
+            expected_format_latex="\\color{red} -1,234.00€ &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={"color": "#BE0D3E"},
         )
-        self.assertEqual(
-            test_element.format("bla"), '<td style="text-align:left;">bla</td>'
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="bla",
+            expected_format="bla",
+            expected_format_latex="bla &",
+            expected_td_classes=["text-start"],
         )
 
     def test_dollar_table_elements(self):
         test_element = te.DollarTableElement(name="test", attr="test_value")
-        self.assertEqual(
-            test_element.format(1234.5678),
-            '<td style="text-align:right;color:#002F6C;">1,234.57&#0036;</td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=1234.5678,
+            expected_format="1,234.57&#0036;",
+            expected_format_latex="\\color{darkblue} 1,234.57\\$ &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={"color": "#002F6C"},
         )
-        self.assertEqual(
-            test_element.format(1234),
-            '<td style="text-align:right;color:#002F6C;">1,234.00&#0036;</td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=1234,
+            expected_format="1,234.00&#0036;",
+            expected_format_latex="\\color{darkblue} 1,234.00\\$ &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={"color": "#002F6C"},
         )
-        self.assertEqual(
-            test_element.format(-1234),
-            '<td style="text-align:right;color:#BE0D3E;">-1,234.00&#0036;</td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=-1234,
+            expected_format="-1,234.00&#0036;",
+            expected_format_latex="\\color{red} -1,234.00\\$ &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={"color": "#BE0D3E"},
         )
-        self.assertEqual(
-            test_element.format("bla"), '<td style="text-align:left;">bla</td>'
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="bla",
+            expected_format="bla",
+            expected_format_latex="bla &",
+            expected_td_classes=["text-start"],
         )
 
     def test_percent_table_elements(self):
         test_element = te.PercentTableElement(name="test", attr="test_value")
-        self.assertEqual(
-            test_element.format(0.2512),
-            '<td style="text-align:right;color:#002F6C;">25.12%</td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=0.2512,
+            expected_format="25.12%",
+            expected_format_latex="\\color{darkblue} 25.12\\% &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={"color": "#002F6C"},
         )
-        self.assertEqual(
-            test_element.format(1.234),
-            '<td style="text-align:right;color:#002F6C;">123.40%</td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=1.234,
+            expected_format="123.40%",
+            expected_format_latex="\\color{darkblue} 123.40\\% &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={"color": "#002F6C"},
         )
-        self.assertEqual(
-            test_element.format(-0.1234),
-            '<td style="text-align:right;color:#BE0D3E;">-12.34%</td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=-1.234,
+            expected_format="-123.40%",
+            expected_format_latex="\\color{red} -123.40\\% &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={"color": "#BE0D3E"},
         )
-        self.assertEqual(
-            test_element.format("bla"), '<td style="text-align:left;">bla</td>'
-        )
-        self.assertEqual(
-            test_element.format(np.nan),
-            '<td style="text-align:center;">-</td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="bla",
+            expected_format="bla",
+            expected_format_latex="bla &",
+            expected_td_classes=["text-start"],
         )
 
     def test_date_table_elements(self):
         test_element = te.DateTableElement(name="test", attr="test_value")
-        self.assertEqual(
-            test_element.format("2021-01-01"),
-            '<td style="text-align:left;">2021-01-01</td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="2021-01-01",
+            expected_format="2021-01-01",
+            expected_format_latex=" \\color{black} 2021-01-01 &",
         )
-        self.assertEqual(
-            test_element.format("bla"), '<td style="text-align:left;">bla</td>'
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="01.01.2021",
+            expected_format="2021-01-01",
+            expected_format_latex=" \\color{black} 2021-01-01 &",
         )
-        self.assertEqual(
-            test_element.format(timezone.datetime(2023, 12, 9)),
-            '<td style="text-align:left;">09/12/2023</td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=datetime.date(2021, 1, 1),
+            expected_format="2021-01-01",
+            expected_format_latex=" \\color{black} 2021-01-01 &",
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=datetime.datetime(2021, 1, 1, 12, 48),
+            expected_format="2021-01-01",
+            expected_format_latex=" \\color{black} 2021-01-01 &",
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="bla",
+            expected_format="bla",
+            expected_format_latex=" \\color{black} bla &",
+            expected_td_classes=["text-start"],
+        )
+
+    def test_date_german_table_elements(self):
+        test_element = te.DateGermanTableElement(name="test", attr="test_value")
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="2021-01-01",
+            expected_format="01.01.2021",
+            expected_format_latex=" \\color{black} 01.01.2021 &",
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="01.01.2021",
+            expected_format="01.01.2021",
+            expected_format_latex=" \\color{black} 01.01.2021 &",
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=datetime.date(2021, 1, 1),
+            expected_format="01.01.2021",
+            expected_format_latex=" \\color{black} 01.01.2021 &",
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=datetime.datetime(2021, 1, 1, 12, 48),
+            expected_format="01.01.2021",
+            expected_format_latex=" \\color{black} 01.01.2021 &",
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="bla",
+            expected_format="bla",
+            expected_format_latex=" \\color{black} bla &",
+            expected_td_classes=["text-start"],
+        )
+
+    def test_date_time_table_elements(self):
+        test_element = te.DateTimeTableElement(name="test", attr="test_value")
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="2021-01-01",
+            expected_format="2021-01-01 00:00:00",
+            expected_format_latex=" \\color{black} 2021-01-01 00:00:00 &",
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="01.01.2021",
+            expected_format="2021-01-01 00:00:00",
+            expected_format_latex=" \\color{black} 2021-01-01 00:00:00 &",
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=datetime.date(2021, 1, 1),
+            expected_format="2021-01-01 00:00:00",
+            expected_format_latex=" \\color{black} 2021-01-01 00:00:00 &",
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=datetime.datetime(2021, 1, 1, 12, 48),
+            expected_format="2021-01-01 12:48:00",
+            expected_format_latex=" \\color{black} 2021-01-01 12:48:00 &",
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="bla",
+            expected_format="bla",
+            expected_format_latex=" \\color{black} bla &",
+            expected_td_classes=["text-start"],
+        )
+
+    def test_date_year_table_elements(self):
+        test_element = te.DateYearTableElement(name="test", attr="test_value")
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="2021-01-01",
+            expected_format="2021",
+            expected_format_latex=" \\color{black} 2021 &",
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="01.01.2021",
+            expected_format="2021",
+            expected_format_latex=" \\color{black} 2021 &",
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=datetime.date(2021, 1, 1),
+            expected_format="2021",
+            expected_format_latex=" \\color{black} 2021 &",
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=datetime.datetime(2021, 1, 1, 12, 48),
+            expected_format="2021",
+            expected_format_latex=" \\color{black} 2021 &",
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="bla",
+            expected_format="bla",
+            expected_format_latex=" \\color{black} bla &",
+            expected_td_classes=["text-start"],
         )
 
     def test_bool_table_elements(self):
         test_element = te.BooleanTableElement(name="test", attr="test_value")
-        self.assertEqual(
-            test_element.format(True),
-            '<td style="text-align:left;">&#x2713;</td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=True,
+            expected_format='<span class="bi bi-check-circle-fill text-success"></span>',
+            expected_format_latex="\\twemoji{white_check_mark} &",
+            expected_td_classes=["text-center"],
         )
-        self.assertEqual(
-            test_element.format(False),
-            '<td style="text-align:left;">&#x2717;</td>',
-        )
-        self.assertEqual(
-            test_element.format("bla"), '<td style="text-align:left;">&#x2713;</td>'
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=False,
+            expected_format='<span class="bi bi-x-circle-fill text-danger"></span>',
+            expected_format_latex="\\twemoji{cross mark} &",
+            expected_td_classes=["text-center"],
         )
 
     def test_wrap_text_in_string_table_element(self):
@@ -185,28 +526,49 @@ class TestTableElements(TestCase):
 
     def test_alert_table_element(self):
         test_element = te.AlertTableElement(name="test", attr="test_value")
-        self.assertEqual(
-            test_element.format("ok"),
-            '<td style="text-align: left;color:#388E3C;"><b>ok</b></td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="ok",
+            expected_format="<b>ok</b>",
+            expected_format_latex=" \\color{black} ok &",
+            expected_td_classes=["text-center"],
+            expected_style_attrs={"color": "#388E3C"},
         )
-        self.assertEqual(
-            test_element.format("warning"),
-            '<td style="text-align: left;color:#FDD835;"><b>warning</b></td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="warning",
+            expected_format="<b>warning</b>",
+            expected_format_latex=" \\color{black} warning &",
+            expected_td_classes=["text-center"],
+            expected_style_attrs={"color": "#FDD835"},
         )
-        self.assertEqual(
-            test_element.format("error"),
-            '<td style="text-align: left;color:#BE0D3E;"><b>error</b></td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="error",
+            expected_format="<b>error</b>",
+            expected_format_latex=" \\color{black} error &",
+            expected_td_classes=["text-center"],
+            expected_style_attrs={"color": "#BE0D3E"},
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="bla",
+            expected_format="<b>bla</b>",
+            expected_format_latex=" \\color{black} bla &",
+            expected_td_classes=["text-center"],
+            expected_style_attrs={"color": "#000000"},
         )
 
     def test_external_link_table_element__html(self):
-        table_element = te.ExternalLinkTableElement(
+        test_element = te.ExternalLinkTableElement(
             name="name",
             attr="test_attr",
         )
-        test_str_html = table_element.format("https://www.google.com")
-        self.assertEqual(
-            str(test_str_html),
-            '<td style="text-align:left;"><a href="https://www.google.com" target="_blank" title="https://www.google.com">https://www.google.com</a></td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="https://www.google.com",
+            expected_format='<a href="https://www.google.com" target="_blank" title="https://www.google.com">https://www.google.com</a>',
+            expected_format_latex=" \\url{https://www.google.com} &",
         )
 
     def test_latex_special_character_is_handled(self):
@@ -275,21 +637,6 @@ class TestTableElements(TestCase):
             f"Image not found: {url} &",
         )
 
-    def test_date_year_table_element(self):
-        table_element = te.DateYearTableElement(name="name", attr="test_attr")
-        test_str = table_element.format("2021-01-01")
-        self.assertEqual(test_str, '<td style="text-align:left;">2021</td>')
-        test_str = table_element.format("bla")
-        self.assertEqual(test_str, '<td style="text-align:left;">bla</td>')
-        test_str = table_element.format(timezone.datetime(2023, 12, 9))
-        self.assertEqual(test_str, '<td style="text-align:left;">2023</td>')
-        test_str = table_element.format(None)
-        self.assertEqual(test_str, '<td style="text-align:center;">-</td>')
-        test_str = table_element.format("")
-        self.assertEqual(test_str, '<td style="text-align:center;">-</td>')
-        test_str = table_element.format(datetime.date(2023, 12, 9))
-        self.assertEqual(test_str, '<td style="text-align:left;">2023</td>')
-
     def test_method_name_table_element(self):
         def my_decorator(func):
             @wraps(func)
@@ -322,21 +669,26 @@ class TestTableElements(TestCase):
                 """Returns 2."""
                 return 2
 
-        table_element = te.MethodNameTableElement(
+        test_element = te.MethodNameTableElement(
             name="name", attr="function_name", class_=Functions
         )
-        test_str = table_element.format("do_nothing")
-        self.assertEqual(
-            test_str, '<td style="text-align: left" title="">do_nothing</td>'
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="do_nothing",
+            expected_format='<div title="">do_nothing</div>',
+            expected_format_latex=" \\color{black} do\\_nothing &",
         )
-        test_str = table_element.format("return_one")
-        self.assertEqual(
-            test_str,
-            '<td style="text-align: left" title="Returns 1.\n\nParameters:\narg1 (str): The first argument.\narg2 (int): The second argument.\n\nReturns:\nint: 1">return_one</td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="return_one",
+            expected_format='<div title="Returns 1.\n\nParameters:\narg1 (str): The first argument.\narg2 (int): The second argument.\n\nReturns:\nint: 1">return_one</div>',
+            expected_format_latex=" \\color{black} return\\_one &",
         )
-        test_str = table_element.format("return_two")
-        self.assertEqual(
-            test_str, '<td style="text-align: left" title="Returns 2.">return_two</td>'
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="return_two",
+            expected_format='<div title="Returns 2.">return_two</div>',
+            expected_format_latex=" \\color{black} return\\_two &",
         )
 
     @mock.patch("reporting.dataclasses.table_elements.reverse")
@@ -348,7 +700,7 @@ class TestTableElements(TestCase):
             return f"/{fake_url}/{value}"
 
         mock_reverse.side_effect = reverse_side_effect
-        table_element = te.LinkListTableElement(
+        test_element = te.LinkListTableElement(
             name="name",
             url=fake_url,
             hover_text="hover_text",
@@ -356,26 +708,16 @@ class TestTableElements(TestCase):
             kwargs={},
             list_attr="list_attr",
             list_kwarg="list_kwarg",
+            in_separator=",",
         )
         obj = {"list_attr": "1,2,3", "text_attr": "a,b,c"}
-        latex_str = table_element.get_attribute(obj, "latex")
-        self.assertEqual(latex_str, " \\color{black} a,b,c &")
-        html_str = table_element.get_attribute(obj, "html")
-        self.assertEqual(
-            html_str,
-            '<td><div style=\'max-height: 300px; overflow-y: auto;\'><a id="id__fake_url_1,2,3" href="/fake_url/1,2,3" title="hover_text">a,b,c</a></div></td>',
+        self.table_element_test_assertions_from_object(
+            table_element=test_element,
+            test_obj=obj,
+            expected_format='<div style=\'max-height: 300px; overflow-y: auto;\'><a id="id__fake_url_1" href="/fake_url/1" title="hover_text">a</a><br><a id="id__fake_url_2" href="/fake_url/2" title="hover_text">b</a><br><a id="id__fake_url_3" href="/fake_url/3" title="hover_text">c</a></div>',
+            expected_format_latex=" \\color{black} a,b,c &",
         )
 
-
-class MockTableElement(te.AttrTableElement):
-    def __init__(self, attr: str) -> None:
-        self.attr = attr
-
-    def format(self, value: str) -> str:
-        return value
-
-
-class TestDataTableFilters(TestCase):
     def test__get_dotted_attr_or_arg(self):
         """
         Test that the function returns the correct value when the
@@ -409,32 +751,34 @@ class TestDataTableFilters(TestCase):
 
     def test__get_link_icon(self):
         test_obj = TestMontrekSatelliteFactory.create()
-        table_element = te.LinkTableElement(
+        test_element = te.LinkTableElement(
             name="name",
             url="dummy_detail",
             kwargs={"pk": "pk"},
             icon="icon",
             hover_text="hover_text",
         )
-        test_link = table_element.get_attribute(test_obj)
-        self.assertEqual(
-            str(test_link),
-            f'<td><a id="id__baseclasses_{test_obj.id}_details" href="/baseclasses/{test_obj.id}/details" title="hover_text"><span class="bi bi-icon"></span></a></td>',
+        self.table_element_test_assertions_from_object(
+            table_element=test_element,
+            test_obj=test_obj,
+            expected_format=f'<a id="id__baseclasses_{test_obj.id}_details" href="/baseclasses/{test_obj.id}/details" title="hover_text"><span class="bi bi-icon"></span></a>',
+            expected_format_latex=f" \\color{{black}}  &",
         )
 
     def test__get_link_text(self):
         test_obj = TestMontrekSatelliteFactory.create()
-        table_element = te.LinkTextTableElement(
+        test_element = te.LinkTextTableElement(
             name="name",
             url="dummy_detail",
             kwargs={"pk": "pk"},
             text="test_name",
             hover_text="hover_text",
         )
-        test_link = table_element.get_attribute(test_obj)
-        self.assertEqual(
-            str(test_link),
-            f'<td><a id="id__baseclasses_{test_obj.id}_details" href="/baseclasses/{test_obj.id}/details" title="hover_text">{test_obj.test_name}</a></td>',
+        self.table_element_test_assertions_from_object(
+            table_element=test_element,
+            test_obj=test_obj,
+            expected_format=f'<a id="id__baseclasses_{test_obj.id}_details" href="/baseclasses/{test_obj.id}/details" title="hover_text">{test_obj.test_name}</a>',
+            expected_format_latex=f" \\color{{black}} {test_obj.test_name} &",
         )
 
     def test__get_link_text__active(self):
@@ -464,7 +808,8 @@ class TestDataTableFilters(TestCase):
             hover_text="hover_text",
             kwargs={"pk": "pk", "filter": "test_name"},
         )
-        test_link = table_element.get_attribute(test_obj)
+        test_display_field = table_element.get_display_field(test_obj)
+        test_link = test_display_field.display_value
         self.assertTrue(
             f"?filter_field=test_name&amp;filter_lookup=in&amp;filter_value={test_obj.test_name}"
             in test_link
@@ -483,7 +828,7 @@ class TestDataTableFilters(TestCase):
         test_kwargs = table_element._get_url_kwargs(test_obj)
         self.assertEqual(test_kwargs["static"], "test_static")
 
-    def test_get_attribute(self):
+    def test_link_icon(self):
         test_obj = TestMontrekSatelliteFactory.create(test_name="Test Name")
         table_element = te.LinkTableElement(
             name="name",
@@ -492,30 +837,12 @@ class TestDataTableFilters(TestCase):
             icon="icon",
             hover_text="hover_text",
         )
-        test_str = table_element.get_attribute(test_obj)
-        self.assertEqual(
-            str(test_str),
-            f'<td><a id="id__baseclasses_{test_obj.id}_details" href="/baseclasses/{test_obj.id}/details" title="hover_text"><span class="bi bi-icon"></span></a></td>',
+        self.table_element_test_assertions_from_object(
+            table_element=table_element,
+            test_obj=test_obj,
+            expected_format=f'<a id="id__baseclasses_{test_obj.id}_details" href="/baseclasses/{test_obj.id}/details" title="hover_text"><span class="bi bi-icon"></span></a>',
+            expected_format_latex=" \\color{black}  &",
         )
-        table_element = te.StringTableElement(
-            name="name",
-            attr="test_name",
-        )
-        test_str = table_element.get_attribute(test_obj)
-        self.assertEqual(str(test_str), '<td style="text-align: left">Test Name</td>')
-
-    def test_get_attribute__value_is_none(self):
-        test_obj = TestMontrekSatelliteFactory.create(test_name="Test Name")
-        for element_class in [
-            te.StringTableElement,
-            te.NumberTableElement,
-        ]:
-            table_element = element_class(
-                name="name",
-                attr="test_value",
-            )
-            test_str = table_element.get_attribute(test_obj)
-            self.assertEqual(str(test_str), '<td style="text-align: center">-</td>')
 
     def test_get_attibute__object_is_dict(self):
         test_obj = {"test_name": "Test Name"}
@@ -538,21 +865,13 @@ class TestDataTableFilters(TestCase):
             name="name",
             attr="test_attr",
         )
-        test_str = table_element.format(0.50)
-        self.assertEqual(
-            str(test_str),
-            '<td><div class="bar-container"> <div class="bar" style="width: 50.0%;"></div> <span class="bar-value">50.00%</span> </div></td>',
-        )
-
-    def test_progress_bar__latex(self):
-        table_element = te.ProgressBarTableElement(
-            name="name",
-            attr="test_attr",
-        )
-        test_str = table_element.format_latex(0.50)
-        self.assertEqual(
-            str(test_str),
-            "\\progressbar{ 50.0 }{ 50.0\\% } &",
+        self.table_element_test_assertions_from_value(
+            table_element=table_element,
+            value=0.50,
+            expected_format='<div class="bar-container"> <div class="bar" style="width: 50.0%;"></div> <span class="bar-value">50.00%</span> </div>',
+            expected_format_latex="\\progressbar{ 50.0 }{ 50.00\\% } &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={"color": "#002F6C"},
         )
 
     def test_color_coded_table_element__html(self):
@@ -608,20 +927,26 @@ class TestDataTableFilters(TestCase):
         table_element = te.LabelTableElement(
             name="name", attr="test_attr", color_codes=color_codes
         )
-        blue_value = table_element.format("abc")
-        self.assertEqual(
-            blue_value,
-            '<td style="text-align: left;"><span class="badge" style="background-color:#2B6D8B;color:#FFFFFF;">abc</span></td>',
+        self.table_element_test_assertions_from_value(
+            table_element=table_element,
+            value="abc",
+            expected_format='<span class="badge" style="background-color:#2B6D8B;color:#FFFFFF;">abc</span>',
+            expected_format_latex="\\colorbox[rgb]{0.169,0.427,0.545}{\\textcolor[HTML]{FFFFFF}{\\textbf{abc}}} &",
+            expected_td_classes=["text-center"],
         )
-        rose_value = table_element.format("def")
-        self.assertEqual(
-            rose_value,
-            '<td style="text-align: left;"><span class="badge" style="background-color:#D3A9A1;color:#000000;">def</span></td>',
+        self.table_element_test_assertions_from_value(
+            table_element=table_element,
+            value="def",
+            expected_format='<span class="badge" style="background-color:#D3A9A1;color:#000000;">def</span>',
+            expected_format_latex="\\colorbox[rgb]{0.827,0.663,0.631}{\\textcolor[HTML]{000000}{\\textbf{def}}} &",
+            expected_td_classes=["text-center"],
         )
-        default_value = table_element.format("ghi")
-        self.assertEqual(
-            default_value,
-            '<td style="text-align: left;"><span class="badge" style="background-color:#004767;color:#FFFFFF;">ghi</span></td>',
+        self.table_element_test_assertions_from_value(
+            table_element=table_element,
+            value="ghi",
+            expected_format='<span class="badge" style="background-color:#004767;color:#FFFFFF;">ghi</span>',
+            expected_format_latex="\\colorbox[rgb]{0.000,0.278,0.404}{\\textcolor[HTML]{FFFFFF}{\\textbf{ghi}}} &",
+            expected_td_classes=["text-center"],
         )
 
     def test_label_table_element__latex(self):

@@ -57,7 +57,7 @@ class TestMontrekDetailsManager(TestCase):
         field_e_td = cell_map["Field E"]
         self.assertTrue(field_e_td.get_text(strip=True).endswith("€"))
         style_e = field_e_td.get("style", "")
-        self.assertIn("text-align:right", style_e)
+        self.assertIn("color", style_e)
         self.assertIn("#002F6C", style_e)
 
         # Link cell with icon
@@ -124,7 +124,7 @@ class TestMontrekDetailsManager(TestCase):
         )
         self.assertRegexPresent(
             latex,
-            r"\\cellcolor{blue}\\color{white}\\textbf{Link}\s*&\s*\\cellcolor{lightblue}\s*\\color{black}\s*<span class=\"bi bi-icon\"></span>\s*\\\\",
+            r"\\cellcolor{blue}\\color{white}\\textbf{Link}\s*&\s*\\cellcolor{lightblue}\s*\\color{black}\s*\\twemoji{pencil}\s*\\+",
         )
         self.assertRegexPresent(
             latex,
@@ -142,7 +142,7 @@ class TestMontrekDetailsManager(TestCase):
                 "field_a": "a",
                 "field_b": 1,
                 "field_c": 1.0,
-                "field_d": "2024-07-13T00:00:00",
+                "field_d": "2024-07-13 00:00:00",
                 "field_e": 1.0,
             },
         )

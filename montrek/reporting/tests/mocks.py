@@ -297,7 +297,7 @@ class MockMontrekDetailsManager(MontrekDetailsManager):
                 url="home",
                 kwargs={},
                 hover_text="Link",
-                icon="icon",
+                icon="pencil",
             ),
             te.LinkTextTableElement(
                 name="Link Text",

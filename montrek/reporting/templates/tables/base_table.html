@@ -28,9 +28,11 @@
           </tr>
         </thead>
         <tbody>
-        {% for row in display_elements %}
+        {% for row in display_fields %}
         <tr>
-          {% for element in row %} {{ element }} {% endfor %}
+          {% for display_field in row %}
+            <td class="{{ display_field.td_classes_str }}" style="{{ display_field.style_attrs_str }}">{{display_field.display_value}}</td>
+          {% endfor %}
         </tr>
         {% endfor %}
         </tbody>
