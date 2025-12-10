@@ -1,5 +1,6 @@
 import datetime
 from functools import wraps
+from typing import Any, Protocol
 from unittest import mock
 
 import numpy as np
@@ -11,15 +12,53 @@ from django.utils import timezone
 from reporting.core.reporting_colors import ReportingColors
 
 
-class TestTableElements(TestCase):
+class HasAssertEqual(Protocol):
+    def assertEqual(self, first, second, msg=None): ...
+
+
+class TableElementTestingToolMixin(HasAssertEqual):
+    def table_element_test_assertions(
+        self,
+        table_element: te.TableElement,
+        value: Any,
+        expected_format: str,
+        expected_format_latex: str,
+        expected_style_attrs: te.style_attrs_type = {},
+        expected_td_classes: te.td_classes_type = [],
+    ):
+        self.assertEqual(table_element.format(value), expected_format)
+        self.assertEqual(table_element.format_latex(value), expected_format_latex)
+        self.assertEqual(table_element.get_style_attrs(value), expected_style_attrs)
+        self.assertEqual(table_element.get_td_classes(value), expected_td_classes)
+        self.assertEqual(
+            table_element.get_td_classes_str(value), " ".join(expected_td_classes)
+        )
+        if len(expected_style_attrs) > 0:
+            self.assertEqual(
+                table_element.get_style_attrs_str(value),
+                "; ".join(f"{k}: {v}" for k, v in expected_style_attrs.items()) + ";",
+            )
+        else:
+            self.assertEqual(table_element.get_style_attrs_str(value), "")
+
+
+class TestTableElements(TestCase, TableElementTestingToolMixin):
     def test_string_table_elements(self):
         test_element = te.StringTableElement(name="test", attr="test_value")
-        self.assertEqual(test_element.get_style_attrs("test"), {})
-        self.assertEqual(test_element.get_style_attrs_str("test"), "")
-        self.assertEqual(test_element.get_td_classes("test"), ["text-start"])
-        self.assertEqual(test_element.get_td_classes_str("test"), "text-start")
-        self.assertEqual(test_element.format("test"), "test")
-        self.assertEqual(test_element.format(1234), "1234")
+        self.table_element_test_assertions(
+            test_element,
+            "test",
+            "test",
+            " \\color{black} test &",
+            expected_td_classes=["text-start"],
+        )
+        self.table_element_test_assertions(
+            test_element,
+            1234,
+            "1234",
+            " \\color{black} 1234 &",
+            expected_td_classes=["text-start"],
+        )
 
     def test_text_table_element(self):
         test_element = te.TextTableElement(name="test", attr="test_value")
