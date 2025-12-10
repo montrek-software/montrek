@@ -1,5 +1,5 @@
-from django.test import TestCase
 from baseclasses.dataclasses.alert import AlertEnum
+from django.test import TestCase
 
 
 class TestAlert(TestCase):
@@ -13,5 +13,7 @@ class TestAlert(TestCase):
             )
 
     def test_get_by_description__invalid_description(self):
-        with self.assertRaises(ValueError):
-            self.alert_enum.get_by_description("invalid")
+        self.assertEqual(self.alert_enum.get_by_description("invalid").sort_order, -3)
+        self.assertEqual(
+            self.alert_enum.get_by_description("invalid").description, "unknown"
+        )

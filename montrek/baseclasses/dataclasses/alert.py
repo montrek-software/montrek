@@ -15,7 +15,7 @@ class AlertEnum(Enum):
     ERROR = Alert("error", ReportingColors.RED, -2)
     WARNING = Alert("warning", ReportingColors.YELLOW, -1)
     OK = Alert("ok", ReportingColors.BRIGHTER_GREEN, 0)
-    UNKNOWN = Alert("unknonw", ReportingColors.BLACK, -3)
+    UNKNOWN = Alert("unknown", ReportingColors.BLACK, -3)
 
     @classmethod
     def get_by_description(cls, description) -> Alert:
