@@ -504,7 +504,7 @@ class ProgressBarTableElement(NumberTableElement):
 
     def format_latex(self, value) -> str:
         per_value = value * 100
-        return f"\\progressbar{{ {per_value} }}{{ {per_value}\\% }} &"
+        return f"\\progressbar{{ {per_value} }}{{ {per_value:0.2f}\\% }} &"
 
     def get_value_len(self, obj: Any) -> int:
         return 14
