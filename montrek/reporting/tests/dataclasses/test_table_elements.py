@@ -17,42 +17,61 @@ class HasAssertEqual(Protocol):
 
 
 class TableElementTestingToolMixin(HasAssertEqual):
-    def table_element_test_assertions(
+    def table_element_test_assertions_from_value(
         self,
-        table_element: te.TableElement,
+        table_element: te.AttrTableElement,
         value: Any,
         expected_format: str,
         expected_format_latex: str,
         expected_style_attrs: te.style_attrs_type = {},
         expected_td_classes: te.td_classes_type = [],
     ):
-        self.assertEqual(table_element.format(value), expected_format)
-        self.assertEqual(table_element.format_latex(value), expected_format_latex)
-        self.assertEqual(table_element.get_style_attrs(value), expected_style_attrs)
-        self.assertEqual(table_element.get_td_classes(value), expected_td_classes)
+        test_obj = {table_element.attr: value}
+        self.assert_display_field_properties(
+            table_element,
+            test_obj,
+            expected_format,
+            expected_style_attrs,
+            expected_td_classes,
+        )
+
         self.assertEqual(
-            table_element.get_td_classes_str(value), " ".join(expected_td_classes)
+            table_element.get_attribute(test_obj, "latex"), expected_format_latex
+        )
+
+    def assert_display_field_properties(
+        self,
+        table_element: te.AttrTableElement,
+        obj: Any,
+        expected_format: str,
+        expected_style_attrs: te.style_attrs_type = {},
+        expected_td_classes: te.td_classes_type = [],
+    ):
+        test_display_field = table_element.get_display_field(obj)
+        self.assertEqual(test_display_field.display_value, expected_format)
+        self.assertEqual(
+            test_display_field.td_classes_str, " ".join(expected_td_classes)
         )
         if len(expected_style_attrs) > 0:
             self.assertEqual(
-                table_element.get_style_attrs_str(value),
+                test_display_field.style_attrs_str,
                 "; ".join(f"{k}: {v}" for k, v in expected_style_attrs.items()) + ";",
             )
         else:
-            self.assertEqual(table_element.get_style_attrs_str(value), "")
+            self.assertEqual(test_display_field.style_attrs_str, "")
 
 
 class TestTableElements(TestCase, TableElementTestingToolMixin):
     def test_string_table_elements(self):
         test_element = te.StringTableElement(name="test", attr="test_value")
-        self.table_element_test_assertions(
+        self.table_element_test_assertions_from_value(
             test_element,
             "test",
             "test",
             " \\color{black} test &",
             expected_td_classes=["text-start"],
         )
-        self.table_element_test_assertions(
+        self.table_element_test_assertions_from_value(
             test_element,
             1234,
             "1234",
@@ -62,18 +81,29 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
 
     def test_text_table_element(self):
         test_element = te.TextTableElement(name="test", attr="test_value")
-        self.assertEqual(
-            test_element.format("test"),
-            '<td style="text-align: left; white-space: pre-wrap;">test</td>',
+        self.table_element_test_assertions_from_value(
+            test_element,
+            "test",
+            "test",
+            " \\color{black} test &",
+            expected_td_classes=["text-start"],
+        )
+        self.table_element_test_assertions_from_value(
+            test_element,
+            1234,
+            "1234",
+            " \\color{black} 1234 &",
+            expected_td_classes=["text-start"],
         )
 
     def test_secure_table_element(self):
-        obj = {"test_value": "<script>Malicious Hack</script><button>Here</button>"}
         test_element = te.TextTableElement(name="test", attr="test_value")
-        test_value = test_element.get_attribute(obj, "html")
-        self.assertEqual(
-            test_value,
-            '<td style="text-align: left; white-space: pre-wrap;">Malicious HackHere</td>',
+        self.table_element_test_assertions_from_value(
+            test_element,
+            "<script>Malicious Hack</script><button>Here</button>",
+            "Malicious HackHere",
+            " \\color{black} Malicious HackHere &",
+            expected_td_classes=["text-start"],
         )
 
     def test_list_table_element(self):
