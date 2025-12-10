@@ -156,38 +156,70 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
 
     def test_euro_table_elements(self):
         test_element = te.EuroTableElement(name="test", attr="test_value")
-        self.assertEqual(
-            test_element.format(1234.5678),
-            '<td style="text-align:right;color:#002F6C;">1,234.57&#x20AC;</td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=1234.5678,
+            expected_format="1,234.57&#x20AC;",
+            expected_format_latex="\\color{darkblue} 1,234.57€ &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={"color": "#002F6C"},
         )
-        self.assertEqual(
-            test_element.format(1234),
-            '<td style="text-align:right;color:#002F6C;">1,234.00&#x20AC;</td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=1234,
+            expected_format="1,234.00&#x20AC;",
+            expected_format_latex="\\color{darkblue} 1,234.00€ &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={"color": "#002F6C"},
         )
-        self.assertEqual(
-            test_element.format(-1234),
-            '<td style="text-align:right;color:#BE0D3E;">-1,234.00&#x20AC;</td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=-1234,
+            expected_format="-1,234.00&#x20AC;",
+            expected_format_latex="\\color{red} -1,234.00€ &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={"color": "#BE0D3E"},
         )
-        self.assertEqual(
-            test_element.format("bla"), '<td style="text-align:left;">bla</td>'
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="bla",
+            expected_format="bla",
+            expected_format_latex="bla &",
+            expected_td_classes=["text-start"],
         )
 
     def test_dollar_table_elements(self):
         test_element = te.DollarTableElement(name="test", attr="test_value")
-        self.assertEqual(
-            test_element.format(1234.5678),
-            '<td style="text-align:right;color:#002F6C;">1,234.57&#0036;</td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=1234.5678,
+            expected_format="1,234.57&#0036;",
+            expected_format_latex="\\color{darkblue} 1,234.57\\$ &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={"color": "#002F6C"},
         )
-        self.assertEqual(
-            test_element.format(1234),
-            '<td style="text-align:right;color:#002F6C;">1,234.00&#0036;</td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=1234,
+            expected_format="1,234.00&#0036;",
+            expected_format_latex="\\color{darkblue} 1,234.00\\$ &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={"color": "#002F6C"},
         )
-        self.assertEqual(
-            test_element.format(-1234),
-            '<td style="text-align:right;color:#BE0D3E;">-1,234.00&#0036;</td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=-1234,
+            expected_format="-1,234.00&#0036;",
+            expected_format_latex="\\color{red} -1,234.00\\$ &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={"color": "#BE0D3E"},
         )
-        self.assertEqual(
-            test_element.format("bla"), '<td style="text-align:left;">bla</td>'
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="bla",
+            expected_format="bla",
+            expected_format_latex="bla &",
+            expected_td_classes=["text-start"],
         )
 
     def test_percent_table_elements(self):
