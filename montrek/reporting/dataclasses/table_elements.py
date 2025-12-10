@@ -127,7 +127,7 @@ class NoneTableElement(TableElement):
     name: str = "None"
     serializer_field_class = serializers.CharField
     attr: str = field(default="")
-    td_classes = ["text-center"]
+    td_classes: ClassVar[td_classes_type] = ["text-center"]
 
     def format(self, value: Any) -> str:
         return "-"
