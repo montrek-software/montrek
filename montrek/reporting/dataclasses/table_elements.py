@@ -294,7 +294,7 @@ class LinkListTableElement(BaseLinkTableElement):
                     yield self._get_link(url, link_text)
 
             return format_html(
-                "><div style='max-height: 300px; overflow-y: auto;'>{}</div>",
+                "<div style='max-height: 300px; overflow-y: auto;'>{}</div>",
                 format_html_join(
                     self.out_separator,
                     "{}",
