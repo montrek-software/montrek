@@ -456,16 +456,19 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
 
     def test_bool_table_elements(self):
         test_element = te.BooleanTableElement(name="test", attr="test_value")
-        self.assertEqual(
-            test_element.format(True),
-            '<td style="text-align:left;">&#x2713;</td>',
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=True,
+            expected_format='<span class="bi bi-check-circle-fill text-success"></span>',
+            expected_format_latex="\\twemoji{white_check_mark} &",
+            expected_td_classes=["text-center"],
         )
-        self.assertEqual(
-            test_element.format(False),
-            '<td style="text-align:left;">&#x2717;</td>',
-        )
-        self.assertEqual(
-            test_element.format("bla"), '<td style="text-align:left;">&#x2713;</td>'
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=False,
+            expected_format='<span class="bi bi-x-circle-fill text-danger"></span>',
+            expected_format_latex="\\twemoji{cross mark} &",
+            expected_td_classes=["text-center"],
         )
 
     def test_wrap_text_in_string_table_element(self):
