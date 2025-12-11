@@ -2,7 +2,10 @@ import re
 
 from bs4 import BeautifulSoup
 from django.test import TestCase
-from reporting.tests.mocks import MockMontrekDetailsManager
+from reporting.tests.mocks import (
+    MockMontrekDetailsManager,
+    MockMontrekDetailsManager5Cols,
+)
 
 
 class TestMontrekDetailsManager(TestCase):
@@ -133,6 +136,16 @@ class TestMontrekDetailsManager(TestCase):
 
         # Each row separated by \hline (we expect 8: one after each row)
         self.assertGreaterEqual(len(re.findall(r"\\hline", latex)), 8)
+
+    def test_montrek_details_column_width(self):
+        context_data = MockMontrekDetailsManager({}).get_context_data()
+        self.assertEqual(context_data["col_range"], range(2))
+        self.assertEqual(context_data["col_widths_head"], 15.0)
+        self.assertEqual(context_data["col_widths_body"], 35.0)
+        context_data = MockMontrekDetailsManager5Cols({}).get_context_data()
+        self.assertEqual(context_data["col_range"], range(5))
+        self.assertEqual(context_data["col_widths_head"], 10.0)
+        self.assertEqual(context_data["col_widths_body"], 10.0)
 
     def test_to_json(self):
         json = MockMontrekDetailsManager().to_json()

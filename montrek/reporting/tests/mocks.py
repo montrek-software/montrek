@@ -309,6 +309,11 @@ class MockMontrekDetailsManager(MontrekDetailsManager):
         )
 
 
+class MockMontrekDetailsManager5Cols(MockMontrekDetailsManager):
+    table_cols: int = 5
+    header_col_width: float = 0.5
+
+
 class MockHtmlMontrekTableManager(MockMontrekTableManager):
     repository_class = MockHtmlRepository
 

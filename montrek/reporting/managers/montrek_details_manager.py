@@ -10,11 +10,12 @@ from reporting.lib.protocols import ReportElementProtocol
 
 
 class MontrekDetailsManager(MontrekManager):
-    table_cols = 2
-    table_title = ""
-    document_title = "Montrek Details"
-    document_name = "details"
-    draft = False
+    table_cols: int = 2
+    header_col_width: float = 0.3
+    table_title: str = ""
+    document_title: str = "Montrek Details"
+    document_name: str = "details"
+    draft: bool = False
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -50,17 +51,19 @@ class MontrekDetailsManager(MontrekManager):
 
         return rows
 
+    def get_context_data(self):
+        details_data = self.get_details_data()
+        col_widths = 100 / self.table_cols
+        return {
+            "details_data": details_data,
+            "col_range": range(self.table_cols),
+            "col_widths_head": self.header_col_width * col_widths,
+            "col_widths_body": (1 - self.header_col_width) * col_widths,
+        }
+
     def to_html(self) -> str:
         template = get_template("tables/details_table.html")
-        bt_col_size = 12 // self.table_cols
-        details_data = self.get_details_data()
-        return template.render(
-            context={
-                "bt_col_size": bt_col_size,
-                "table_cols": self.table_cols,
-                "details_data": details_data,
-            }
-        )
+        return template.render(context=self.get_context_data())
 
     def to_latex(self) -> str:
         latex_str = ""
