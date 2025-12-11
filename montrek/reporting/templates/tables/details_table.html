@@ -1,6 +1,12 @@
 <table
   class="table table-custom-striped table-bordered table-hover table-responsive"
 >
+  <colgroup>
+  {% for _ in  col_range  %}
+    <col style="width:{{ col_widths_head }}%">
+    <col style="width:{{ col_widths_body }}%">
+  {% endfor %}
+  </colgroup>
   {% for data_row in details_data %}
   <tr>
     {% for display_field in data_row %}
