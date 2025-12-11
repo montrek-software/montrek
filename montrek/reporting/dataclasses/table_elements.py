@@ -183,6 +183,9 @@ class AttrTableElement(TableElement):
             value = "*" * len(str(value))
         return value
 
+    def format(self, value):
+        return value
+
 
 @dataclass
 class ExternalLinkTableElement(AttrTableElement):
@@ -714,19 +717,16 @@ class MethodNameTableElement(AttrTableElement):
     attr: str
     class_: type = object
     serializer_field_class = serializers.CharField
+    field_template: ClassVar[str | None] = "method_name"
 
-    def format(self, value):
+    def get_field_context_data(self, value: Any, obj: Any) -> dict[str, Any]:
         func = getattr(self.class_, value)
         # Strip all decorator functions to get the to the original method.
         while hasattr(func, "__wrapped__"):
             func = func.__wrapped__
         doc = inspect.getdoc(func)
         doc = doc or ""
-        return format_html(
-            '<div title="{doc}">{value}</div>',
-            doc=doc,
-            value=value,
-        )
+        return {"doc": doc}
 
 
 class HistoryChangeState(Enum):
