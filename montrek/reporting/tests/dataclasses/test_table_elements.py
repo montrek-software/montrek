@@ -299,7 +299,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             value=1234.5678,
             expected_format="1,234.57€",
-            expected_format_latex="\\color{darkblue} 1,234.57\\€ &",
+            expected_format_latex="\\color{darkblue} 1,234.57€ &",
             expected_td_classes=["text-end"],
             expected_style_attrs={"color": "#002F6C"},
         )
@@ -307,7 +307,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             value=1234,
             expected_format="1,234.00€",
-            expected_format_latex="\\color{darkblue} 1,234.00\\€ &",
+            expected_format_latex="\\color{darkblue} 1,234.00€ &",
             expected_td_classes=["text-end"],
             expected_style_attrs={"color": "#002F6C"},
         )
@@ -315,7 +315,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             value=-1234,
             expected_format="-1,234.00€",
-            expected_format_latex="\\color{red} -1,234.00\\€ &",
+            expected_format_latex="\\color{red} -1,234.00€ &",
             expected_td_classes=["text-end"],
             expected_style_attrs={"color": "#BE0D3E"},
         )
@@ -323,7 +323,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             value="bla",
             expected_format="bla€",
-            expected_format_latex="bla\\€ &",
+            expected_format_latex="bla€ &",
             expected_td_classes=["text-start"],
         )
 

@@ -633,6 +633,7 @@ class MoneyTableElement(NumberTableElement):
     shortener: NumberShortenerABC = NoShortening()
     field_template: ClassVar[str | None] = "money"
     ccy_symbol: ClassVar[str] = ""
+    latex_escape: ClassVar[bool] = False
 
     def get_field_context_data(self, value: Any, obj: Any) -> dict[str, Any]:
         return {"ccy_symbol": self.ccy_symbol}
@@ -642,7 +643,10 @@ class MoneyTableElement(NumberTableElement):
 
     def format_latex(self, value):
         formatted_value = super().format_latex(value)
-        formatted_value = formatted_value.replace(" &", f"\\{self.ccy_symbol} &")
+        latex_ccy_symbol = (
+            f"\\{self.ccy_symbol}" if self.latex_escape else self.ccy_symbol
+        )
+        formatted_value = formatted_value.replace(" &", f"{latex_ccy_symbol} &")
         return formatted_value
 
 
@@ -651,6 +655,7 @@ class EuroTableElement(MoneyTableElement):
 
 
 class DollarTableElement(MoneyTableElement):
+    latex_escape: ClassVar[bool] = True
     ccy_symbol: ClassVar[str] = "$"
 
 
