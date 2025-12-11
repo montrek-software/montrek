@@ -452,12 +452,16 @@ class NumberTableElement(AttrTableElement):
 
     def get_display_field(self, obj: Any) -> DisplayField:
         value = self.get_attribute(obj, "html")
+        table_element = (
+            self.get_none_table_element() if self.empty_value(value) else self
+        )
         display_value, td_classes, style_attrs = self._analyze_value(value)
+        display_value = table_element.render_field_template(display_value, obj)
         return DisplayField(
             name=self.name,
             display_value=display_value,
-            style_attrs_str=self.format_style_attr(style_attrs),
-            td_classes_str=self.format_td_classes(td_classes),
+            style_attrs_str=table_element.format_style_attr(style_attrs),
+            td_classes_str=table_element.format_td_classes(td_classes),
             hover_text=self.get_hover_text(obj),
         )
 
@@ -630,47 +634,27 @@ class MoneyTableElement(NumberTableElement):
     serializer_field_class = serializers.FloatField
     attr: str
     shortener: NumberShortenerABC = NoShortening()
+    field_template: ClassVar[str | None] = "money"
+    ccy_symbol: ClassVar[str] = ""
 
-    @property
-    def ccy_symbol(self) -> str:
-        return ""
-
-    @property
-    def ccy_symbol_latex(self) -> str:
-        return ""
+    def get_field_context_data(self, value: Any, obj: Any) -> dict[str, Any]:
+        return {"ccy_symbol": self.ccy_symbol}
 
     def _format_value(self, value) -> str:
-        value = self.shortener.shorten(value, ",.2f")
-        return format_html(
-            "{value}{ccy_symbol}", value=value, ccy_symbol=self.ccy_symbol
-        )
+        return self.shortener.shorten(value, ",.2f")
 
     def format_latex(self, value):
         formatted_value = super().format_latex(value)
-        formatted_value = formatted_value.replace(
-            self.ccy_symbol, self.ccy_symbol_latex
-        )
+        formatted_value = formatted_value.replace(" &", f"\\{self.ccy_symbol} &")
         return formatted_value
 
 
 class EuroTableElement(MoneyTableElement):
-    @property
-    def ccy_symbol(self) -> str:
-        return mark_safe("&#x20AC;")
-
-    @property
-    def ccy_symbol_latex(self) -> str:
-        return "€"
+    ccy_symbol: ClassVar[str] = "€"
 
 
 class DollarTableElement(MoneyTableElement):
-    @property
-    def ccy_symbol(self) -> str:
-        return mark_safe("&#0036;")
-
-    @property
-    def ccy_symbol_latex(self) -> str:
-        return "\\$"
+    ccy_symbol: ClassVar[str] = "$"
 
 
 @dataclass
