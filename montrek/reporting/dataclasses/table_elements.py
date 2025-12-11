@@ -95,13 +95,18 @@ class TableElement:
     def get_display_field(self, obj: Any) -> DisplayField:
         value = self.get_attribute(obj, "html")
 
-        table_element = NoneTableElement() if self.empty_value(value) else self
+        table_element = (
+            self.get_none_table_element() if self.empty_value(value) else self
+        )
         return DisplayField(
             name=self.name,
             display_value=table_element.format(value),
             style_attrs_str=table_element.get_style_attrs_str(value),
             td_classes_str=table_element.get_td_classes_str(value),
         )
+
+    def get_none_table_element(self):
+        return NoneTableElement()
 
     def empty_value(self, value: Any) -> bool:
         # Check for scalar NA values
@@ -253,7 +258,7 @@ class BaseLinkTableElement(TableElement):
         if not url:
             return ""
         id_tag = url.replace("/", "_")
-        hover_text = self.get_hover_text
+        hover_text = self.get_hover_text()
         template_str = '<a id="id_{0}" href="{1}" title="{2}">{3}</a>'
         return format_html(template_str, id_tag, url, hover_text, link_text)
 
