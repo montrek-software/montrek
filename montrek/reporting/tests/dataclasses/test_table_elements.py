@@ -655,7 +655,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_value(
             table_element=table_element,
             value="pic.png",
-            expected_format='<img src="pic.png" alt="image" style="width:100px;height:100px;">',
+            expected_format='<img src="pic.png" alt="image" width="100px" height="100px">',
             expected_format_latex="\\includegraphics[width=0.3\\textwidth]{pic.png} &",
         )
         table_element = te.ImageTableElement(
@@ -664,7 +664,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_value(
             table_element=table_element,
             value="pic.png",
-            expected_format='<img src="pic.png" alt="alt_image" style="width:100px;height:100px;">',
+            expected_format='<img src="pic.png" alt="alt_image" width="100px" height="100px">',
             expected_format_latex="\\includegraphics[width=0.3\\textwidth]{pic.png} &",
         )
 
