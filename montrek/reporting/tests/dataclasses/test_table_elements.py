@@ -765,8 +765,9 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_object(
             table_element=test_element,
             test_obj=obj,
-            expected_format='<div style=\'max-height: 300px; overflow-y: auto;\'><a id="id__fake_url_1" href="/fake_url/1" title="hover_text">a</a><br><a id="id__fake_url_2" href="/fake_url/2" title="hover_text">b</a><br><a id="id__fake_url_3" href="/fake_url/3" title="hover_text">c</a></div>',
+            expected_format='<div style=\'max-height: 300px; overflow-y: auto;\'><a id="id__fake_url_1" href="/fake_url/1">a</a><br><a id="id__fake_url_2" href="/fake_url/2">b</a><br><a id="id__fake_url_3" href="/fake_url/3">c</a></div>',
             expected_format_latex=" \\color{black} a,b,c &",
+            expected_hover_text="hover_text",
         )
 
     def test__get_dotted_attr_or_arg(self):
@@ -800,22 +801,6 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             te.BaseLinkTableElement.get_dotted_attr_or_arg(test_obj, "no_attr"), None
         )
 
-    def test__get_link_icon(self):
-        test_obj = TestMontrekSatelliteFactory.create()
-        test_element = te.LinkTableElement(
-            name="name",
-            url="dummy_detail",
-            kwargs={"pk": "pk"},
-            icon="icon",
-            hover_text="hover_text",
-        )
-        self.table_element_test_assertions_from_object(
-            table_element=test_element,
-            test_obj=test_obj,
-            expected_format=f'<a id="id__baseclasses_{test_obj.id}_details" href="/baseclasses/{test_obj.id}/details" title="hover_text"><span class="bi bi-icon"></span></a>',
-            expected_format_latex=" \\color{black} \\twemoji{cross mark} &",
-        )
-
     def test__get_link_text(self):
         test_obj = TestMontrekSatelliteFactory.create()
         test_element = te.LinkTextTableElement(
@@ -828,8 +813,9 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_object(
             table_element=test_element,
             test_obj=test_obj,
-            expected_format=f'<a id="id__baseclasses_{test_obj.id}_details" href="/baseclasses/{test_obj.id}/details" title="hover_text">{test_obj.test_name}</a>',
+            expected_format=f'<a id="id__baseclasses_{test_obj.id}_details" href="/baseclasses/{test_obj.id}/details">{test_obj.test_name}</a>',
             expected_format_latex=f" \\color{{black}} {test_obj.test_name} &",
+            expected_hover_text="hover_text",
         )
 
     def test__get_link_text__active(self):
@@ -847,7 +833,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         )
         self.assertEqual(
             str(test_link),
-            f'<b><a id="id__baseclasses_{test_obj.id}_details" href="/baseclasses/{test_obj.id}/details" title="hover_text">{test_obj.test_name}</a></b>',
+            f'<b><a id="id__baseclasses_{test_obj.id}_details" href="/baseclasses/{test_obj.id}/details">{test_obj.test_name}</a></b>',
         )
 
     def test__get_link_text_filter(self):
@@ -891,8 +877,9 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_object(
             table_element=table_element,
             test_obj=test_obj,
-            expected_format=f'<a id="id__baseclasses_{test_obj.id}_details" href="/baseclasses/{test_obj.id}/details" title="hover_text"><span class="bi bi-icon"></span></a>',
+            expected_format=f'<a id="id__baseclasses_{test_obj.id}_details" href="/baseclasses/{test_obj.id}/details"><span class="bi bi-icon"></span></a>',
             expected_format_latex=" \\color{black} \\twemoji{cross mark} &",
+            expected_hover_text="hover_text",
         )
 
     def test_get_attibute__object_is_dict(self):

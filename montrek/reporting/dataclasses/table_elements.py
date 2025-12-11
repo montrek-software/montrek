@@ -264,7 +264,7 @@ class BaseLinkTableElement(TableElement):
         if not url:
             return ""
         id_tag = url.replace("/", "_")
-        template_str = '<a id="id_{0}" href="{1}" >{2}</a>'
+        template_str = '<a id="id_{0}" href="{1}">{2}</a>'
         return format_html(template_str, id_tag, url, link_text)
 
 

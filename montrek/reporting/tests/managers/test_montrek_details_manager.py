@@ -65,18 +65,18 @@ class TestMontrekDetailsManager(TestCase):
 
         # Link cell with icon
         link_td = cell_map["Link"]
+        self.assertEqual(link_td.get("title"), "Link")
         link_a = link_td.find("a", id="id__home")
         self.assertIsNotNone(link_a)
         self.assertEqual(link_a.get("href"), "/home")
-        self.assertEqual(link_a.get("title"), "Link")
         self.assertIsNotNone(link_a.find("span", class_="bi"))
 
         # Link Text cell with anchor text
         link_text_td = cell_map["Link Text"]
+        self.assertEqual(link_text_td.get("title"), "Link Text")
         link_text_a = link_text_td.find("a", id="id__home")
         self.assertIsNotNone(link_text_a)
         self.assertEqual(link_text_a.get("href"), "/home")
-        self.assertEqual(link_text_a.get("title"), "Link Text")
         self.assertEqual(link_text_a.get_text(strip=True), "a")
 
     def assertRegexPresent(self, text: str, pattern: str, msg: str = ""):
