@@ -647,6 +647,27 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             " \\url{https://www.google.com} &",
         )
 
+    def test_image_table_element(self):
+        table_element = te.ImageTableElement(
+            name="name",
+            attr="test_attr",
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=table_element,
+            value="pic.png",
+            expected_format='<img src="pic.png" alt="image" style="width:100px;height:100px;">',
+            expected_format_latex="\\includegraphics[width=0.3\\textwidth]{pic.png} &",
+        )
+        table_element = te.ImageTableElement(
+            name="name", attr="test_attr", alt="alt_image"
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=table_element,
+            value="pic.png",
+            expected_format='<img src="pic.png" alt="alt_image" style="width:100px;height:100px;">',
+            expected_format_latex="\\includegraphics[width=0.3\\textwidth]{pic.png} &",
+        )
+
     def test_image_table_element__latex_image(self):
         table_element = te.ImageTableElement(
             name="name",

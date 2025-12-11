@@ -679,14 +679,10 @@ class ImageTableElement(AttrTableElement):
     attr: str
     alt: str = "image"
     td_classes: ClassVar[td_classes_type] = ["text-start"]
+    field_template: ClassVar[str | None] = "image"
 
-    def format(self, value):
-        alt = self.alt
-        return format_html(
-            '<img src="{value}" alt="{alt}" style="width:100px;height:100px;">',
-            value=value,
-            alt=alt,
-        )
+    def get_field_context_data(self, value: Any, obj: Any) -> dict[str, Any]:
+        return {"alt": self.alt}
 
     def format_latex(self, value):
         def _return_string(value):
