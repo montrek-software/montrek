@@ -763,7 +763,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             test_obj=test_obj,
             expected_format=f'<a id="id__baseclasses_{test_obj.id}_details" href="/baseclasses/{test_obj.id}/details" title="hover_text"><span class="bi bi-icon"></span></a>',
-            expected_format_latex=f" \\color{{black}}  &",
+            expected_format_latex=" \\color{black} \\twemoji{cross mark} &",
         )
 
     def test__get_link_text(self):
@@ -842,7 +842,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=table_element,
             test_obj=test_obj,
             expected_format=f'<a id="id__baseclasses_{test_obj.id}_details" href="/baseclasses/{test_obj.id}/details" title="hover_text"><span class="bi bi-icon"></span></a>',
-            expected_format_latex=" \\color{black}  &",
+            expected_format_latex=" \\color{black} \\twemoji{cross mark} &",
         )
 
     def test_get_attibute__object_is_dict(self):

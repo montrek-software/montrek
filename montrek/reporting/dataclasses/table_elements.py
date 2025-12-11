@@ -14,7 +14,6 @@ from baseclasses.dataclasses.alert import AlertEnum
 from baseclasses.dataclasses.number_shortener import NoShortening, NumberShortenerABC
 from baseclasses.sanitizer import HtmlSanitizer
 from django.core.exceptions import FieldDoesNotExist
-from django.template import Context, Template
 from django.template.base import mark_safe
 from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
@@ -260,13 +259,26 @@ class BaseLinkTableElement(TableElement):
 class LinkTableElement(BaseLinkTableElement):
     icon: str
     static_kwargs: dict = field(default_factory=dict)
+    icon_latex_map: ClassVar[dict[str, str]] = {
+        "pencil": "pencil",
+        "edit": "pencil",
+        "trash": "wastebasket",
+    }
 
     def get_link_text(self, obj):
         if self.icon == "edit":
             icon = "pencil"
         else:
             icon = self.icon
-        return Template(f'<span class="bi bi-{icon}"></span>').render(Context())
+        return icon
+
+    def format(self, value: Any) -> str:
+        icon_value = format_html('<span class="bi bi-{}"></span>', value)
+        return self.get_html_table_link_element(self.obj, icon_value)
+
+    def format_latex(self, value):
+        latex_icon = self.icon_latex_map.get(value, "cross mark")
+        return super().format_latex(f"\\twemoji{{{latex_icon}}}")
 
 
 @dataclass
