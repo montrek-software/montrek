@@ -15,6 +15,7 @@ from baseclasses.dataclasses.number_shortener import NoShortening, NumberShorten
 from baseclasses.sanitizer import HtmlSanitizer
 from django.core.exceptions import FieldDoesNotExist
 from django.template.base import mark_safe
+from django.template.loader import render_to_string
 from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
 from django.utils.html import format_html, format_html_join, strip_tags
@@ -25,8 +26,8 @@ from reporting.core.text_converter import HtmlLatexConverter
 from reporting.dataclasses.display_field import DisplayField
 from rest_framework import serializers
 
-style_attrs_type = dict[str, str]
-td_classes_type = list[str]
+type style_attrs_type = dict[str, str]
+type td_classes_type = list[str]
 
 
 def _get_value_color(value):
@@ -43,7 +44,7 @@ class TableElement:
     hover_text: str | None = field(default=None)
     style_attrs: ClassVar[style_attrs_type] = {}
     td_classes: ClassVar[td_classes_type] = ["text-start"]
-    field_template: str | None = field(default=None)
+    field_template: ClassVar[str | None] = None
 
     def format(self, value):
         raise NotImplementedError
@@ -56,7 +57,6 @@ class TableElement:
     def get_attribute(self, obj: Any, tag: str = "html") -> str:
         if tag == "html":
             value = self.get_value(obj)
-            value = self.render_field_template(value)
             return value
         elif tag == "latex":
             value = self.get_value(obj)
@@ -100,6 +100,7 @@ class TableElement:
         table_element = (
             self.get_none_table_element() if self.empty_value(value) else self
         )
+        value = table_element.render_field_template(value, obj)
         return DisplayField(
             name=self.name,
             display_value=table_element.format(value),
@@ -131,9 +132,17 @@ class TableElement:
     def get_hover_text(self, obj: Any) -> str | None:
         return self.hover_text
 
-    def render_field_template(self, value: Any) -> Any:
+    def render_field_template(self, value: Any, obj: Any) -> str:
         if self.field_template is None:
             return value
+        context_data = self.get_field_context_data(obj)
+        context_data["value"] = value
+        return render_to_string(
+            f"tables/elements/{self.field_template}.html", context_data
+        )
+
+    def get_field_context_data(self, obj: Any) -> dict[str, Any]:
+        return {}
 
 
 @dataclass
@@ -178,12 +187,10 @@ class AttrTableElement(TableElement):
 @dataclass
 class ExternalLinkTableElement(AttrTableElement):
     serializer_field_class = serializers.CharField
+    field_template: ClassVar[str | None] = "external_link"
 
     def format(self, value):
-        return format_html(
-            '<a href="{value}" target="_blank">{value}</a>',
-            value=value,
-        )
+        return value
 
     def get_hover_text(self, obj: Any) -> str | None:
         value = self.get_value(obj)
