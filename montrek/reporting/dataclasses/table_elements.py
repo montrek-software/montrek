@@ -419,6 +419,7 @@ class NumberTableElement(AttrTableElement):
     serializer_field_class = serializers.FloatField
     attr: str
     shortener: NumberShortenerABC = NoShortening()
+    numerical_type: type = float
 
     def get_display_field(self, obj: Any) -> DisplayField:
         value = self.get_attribute(obj, "html")
@@ -456,9 +457,11 @@ class NumberTableElement(AttrTableElement):
 
     def get_value(self, obj: Any) -> Any:
         value = super().get_value(obj)
-        if isinstance(value, Decimal):
-            return float(value)
-        return value
+        try:
+            numerical_value = self.numerical_type(value)
+        except (TypeError, ValueError):
+            return value
+        return numerical_value
 
 
 @dataclass
@@ -478,6 +481,7 @@ class FloatTableElement(NumberTableElement):
 class IntTableElement(NumberTableElement):
     serializer_field_class = serializers.IntegerField
     attr: str
+    numerical_type: type = int
     shortener: NumberShortenerABC = NoShortening()
 
     def _format_value(self, value) -> str:

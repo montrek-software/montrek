@@ -205,22 +205,31 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value=1234.5678,
-            expected_format="1,235",
-            expected_format_latex="\\color{darkblue} 1,235 &",
+            expected_format="1,234",
+            expected_format_latex="\\color{darkblue} 1,234 &",
             expected_td_classes=["text-end"],
             expected_style_attrs={"color": "#002F6C"},
         )
+        self.assertEqual(test_element.get_value({"test_value": 1234.56}), 1234)
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value=Decimal(1234.5678),
-            expected_format="1,235",
-            expected_format_latex="\\color{darkblue} 1,235 &",
+            expected_format="1,234",
+            expected_format_latex="\\color{darkblue} 1,234 &",
             expected_td_classes=["text-end"],
             expected_style_attrs={"color": "#002F6C"},
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value=1234,
+            expected_format="1,234",
+            expected_format_latex="\\color{darkblue} 1,234 &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={"color": "#002F6C"},
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="1234",
             expected_format="1,234",
             expected_format_latex="\\color{darkblue} 1,234 &",
             expected_td_classes=["text-end"],
