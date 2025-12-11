@@ -404,9 +404,6 @@ class StringTableElement(AttrTableElement):
 class TextTableElement(StringTableElement): ...
 
 
-# TODO: Deprecate this class, since text wrapping is handled by StringTableElement
-
-
 @dataclass
 class ListTableElement(AttrTableElement):
     serializer_field_class = serializers.CharField
@@ -414,15 +411,14 @@ class ListTableElement(AttrTableElement):
     in_separator: str = ","
     out_separator: str = mark_safe("<br>")
     td_classes: ClassVar[td_classes_type] = ["text-start"]
+    field_template: ClassVar[str | None] = "list"
 
-    def format(self, value):
+    def get_field_context_data(self, value: Any, obj: Any) -> dict[str, Any]:
         values = value.split(self.in_separator)
-
-        return format_html_join(
-            self.out_separator,
-            "{}",
-            ((v.strip(),) for v in values),
-        )
+        return {
+            "values": (v.strip() for v in values),
+            "out_separator": self.out_separator,
+        }
 
 
 @dataclass

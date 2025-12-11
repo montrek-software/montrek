@@ -186,7 +186,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value="test1,test2",
-            expected_format="test1<br>test2",
+            expected_format="    test1<br>    test2",
             expected_format_latex=" \\color{black} test1,test2 &",
         )
 
@@ -196,7 +196,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value="test1,2;test2;test4",
-            expected_format="test1,2|test2|test4",
+            expected_format="    test1,2|    test2|    test4",
             expected_format_latex=" \\color{black} test1,2;test2;test4 &",
         )
 
