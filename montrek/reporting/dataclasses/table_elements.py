@@ -209,7 +209,6 @@ class BaseLinkTableElement(TableElement):
         return self.get_html_table_link_element(self.obj, value)
 
     def format_latex(self, value):
-        value = HtmlLatexConverter().convert(value)
         return super().format_latex(strip_tags(value))
 
     def get_html_table_link_element(
