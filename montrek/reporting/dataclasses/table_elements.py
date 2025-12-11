@@ -43,6 +43,7 @@ class TableElement:
     hover_text: str | None = field(default=None)
     style_attrs: ClassVar[style_attrs_type] = {}
     td_classes: ClassVar[td_classes_type] = ["text-start"]
+    field_template: str | None = field(default=None)
 
     def format(self, value):
         raise NotImplementedError
@@ -55,6 +56,7 @@ class TableElement:
     def get_attribute(self, obj: Any, tag: str = "html") -> str:
         if tag == "html":
             value = self.get_value(obj)
+            value = self.render_field_template(value)
             return value
         elif tag == "latex":
             value = self.get_value(obj)
@@ -128,6 +130,10 @@ class TableElement:
 
     def get_hover_text(self, obj: Any) -> str | None:
         return self.hover_text
+
+    def render_field_template(self, value: Any) -> Any:
+        if self.field_template is None:
+            return value
 
 
 @dataclass
