@@ -40,6 +40,7 @@ def _get_value_color_latex(value):
 @dataclass
 class TableElement:
     name: str
+    hover_text: str | None = field(default=None)
     style_attrs: ClassVar[style_attrs_type] = {}
     td_classes: ClassVar[td_classes_type] = ["text-start"]
 
@@ -94,14 +95,19 @@ class TableElement:
 
     def get_display_field(self, obj: Any) -> DisplayField:
         value = self.get_attribute(obj, "html")
-
-        table_element = NoneTableElement() if self.empty_value(value) else self
+        table_element = (
+            self.get_none_table_element() if self.empty_value(value) else self
+        )
         return DisplayField(
             name=self.name,
             display_value=table_element.format(value),
             style_attrs_str=table_element.get_style_attrs_str(value),
             td_classes_str=table_element.get_td_classes_str(value),
+            hover_text=self.get_hover_text(obj),
         )
+
+    def get_none_table_element(self):
+        return NoneTableElement()
 
     def empty_value(self, value: Any) -> bool:
         # Check for scalar NA values
@@ -119,6 +125,9 @@ class TableElement:
                     # No len() available, try to peek at the iterable
                     return not any(True for _ in value)
         return False
+
+    def get_hover_text(self, obj: Any) -> str | None:
+        return self.hover_text
 
 
 @dataclass
@@ -166,9 +175,15 @@ class ExternalLinkTableElement(AttrTableElement):
 
     def format(self, value):
         return format_html(
-            '<a href="{value}" target="_blank" title="{value}">{value}</a>',
+            '<a href="{value}" target="_blank">{value}</a>',
             value=value,
         )
+
+    def get_hover_text(self, obj: Any) -> str | None:
+        value = self.get_value(obj)
+        if value is None:
+            return "No link"
+        return value
 
     def format_latex(self, value):
         return f" \\url{{{value}}} &"
@@ -176,9 +191,8 @@ class ExternalLinkTableElement(AttrTableElement):
 
 @dataclass  # noqa
 class BaseLinkTableElement(TableElement):
-    url: str
-    kwargs: dict
-    hover_text: str
+    url: str = field(default="")
+    kwargs: dict = field(default_factory=dict)
     static_kwargs = {}
 
     def format_link(self, value, active: bool = False):
@@ -250,14 +264,13 @@ class BaseLinkTableElement(TableElement):
         if not url:
             return ""
         id_tag = url.replace("/", "_")
-        hover_text = self.hover_text
-        template_str = '<a id="id_{0}" href="{1}" title="{2}">{3}</a>'
-        return format_html(template_str, id_tag, url, hover_text, link_text)
+        template_str = '<a id="id_{0}" href="{1}">{2}</a>'
+        return format_html(template_str, id_tag, url, link_text)
 
 
 @dataclass
 class LinkTableElement(BaseLinkTableElement):
-    icon: str
+    icon: str = field(default="cross")
     static_kwargs: dict = field(default_factory=dict)
     icon_latex_map: ClassVar[dict[str, str]] = {
         "pencil": "pencil",
@@ -284,7 +297,7 @@ class LinkTableElement(BaseLinkTableElement):
 @dataclass
 class LinkTextTableElement(BaseLinkTableElement):
     serializer_field_class = serializers.CharField
-    text: str
+    text: str = field(default="")
     static_kwargs: dict = field(default_factory=dict)
 
     def get_link_text(self, obj):
@@ -294,9 +307,9 @@ class LinkTextTableElement(BaseLinkTableElement):
 @dataclass
 class LinkListTableElement(BaseLinkTableElement):
     serializer_field_class = serializers.CharField
-    text: str
-    list_attr: str
-    list_kwarg: str
+    text: str = field(default="")
+    list_attr: str = field(default="")
+    list_kwarg: str = field(default="")
     in_separator: str = ";"
     out_separator: str = mark_safe("<br>")
 
@@ -429,6 +442,7 @@ class NumberTableElement(AttrTableElement):
             display_value=display_value,
             style_attrs_str=self.format_style_attr(style_attrs),
             td_classes_str=self.format_td_classes(td_classes),
+            hover_text=self.get_hover_text(obj),
         )
 
     def _analyze_value(
@@ -708,14 +722,12 @@ class HistoryChangeState(Enum):
     NONE = "none"
 
 
-ChangeMapType = dict[int, dict[str, HistoryChangeState]]
+type ChangeMapType = dict[int, dict[str, HistoryChangeState]]
 
 
+@dataclass
 class HistoryStringTableElement(StringTableElement):
-    def __init__(self, attr: str, name: str, change_map: ChangeMapType):
-        super().__init__(name=name, attr=attr)
-        self.change_map = change_map
-        self.change_format = HistoryChangeState.NONE
+    change_map: ChangeMapType = field(default_factory=dict)
 
     def get_attribute(self, obj: Any, tag: str = "html") -> str:
         self.change_format = self._get_change_format(obj)
@@ -744,10 +756,9 @@ class HistoryStringTableElement(StringTableElement):
         return self.change_map[obj_id][self.attr]
 
 
+@dataclass
 class ColorCodedStringTableElement(StringTableElement):
-    def __init__(self, name: str, attr: str, color_codes: dict[str, Color]):
-        self.color_codes = color_codes
-        super().__init__(name, attr)
+    color_codes: dict[str, Color] = field(default_factory=dict)
 
     def format(self, value):
         color = self.color_codes.get(value, ReportingColors.BLUE).hex
@@ -764,12 +775,10 @@ class ColorCodedStringTableElement(StringTableElement):
         return f" \\color{{{color.name}}} {value_str} &"
 
 
+@dataclass
 class LabelTableElement(StringTableElement):
     td_classes: ClassVar[td_classes_type] = ["text-center"]
-
-    def __init__(self, name: str, attr: str, color_codes: dict[str, Color]):
-        self.color_codes = color_codes
-        super().__init__(name, attr)
+    color_codes: dict[str, Color] = field(default_factory=dict)
 
     def format(self, value):
         base_color = self.color_codes.get(value, ReportingColors.BLUE)

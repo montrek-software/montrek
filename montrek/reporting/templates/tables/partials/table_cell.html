@@ -1,0 +1,13 @@
+<td
+  {% if display_field.td_classes_str %}
+    class="{{ display_field.td_classes_str }}"
+  {% endif %}
+  {% if display_field.style_attrs_str %}
+    style="{{ display_field.style_attrs_str }}"
+  {% endif %}
+  {% if display_field.hover_text %}
+    title="{{ display_field.hover_text }}"
+  {% endif %}
+>
+  {{ display_field.display_value }}
+</td>

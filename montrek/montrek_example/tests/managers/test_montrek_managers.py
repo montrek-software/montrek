@@ -1,3 +1,4 @@
+from bs4 import BeautifulSoup
 from django.db import connections
 from django.test import TestCase
 from montrek_example.managers.montrek_example_managers import (
@@ -41,8 +42,10 @@ class TestEncryptedFields(TestCase):
 
     def test_field_is_hidden_in_html(self):
         html = self.manager.to_html()
-        self.assertNotIn(">secret</td>", html)
-        self.assertIn(">******</td>", html)
+        soup = BeautifulSoup(html, "html.parser")
+        tds = [td.get_text(strip=True) for td in soup.find_all("td")]
+        self.assertNotIn("secret", tds)
+        self.assertIn("******", tds)
 
     def test_field_is_hidden_in_latex(self):
         latex = self.manager.to_latex()
@@ -52,8 +55,10 @@ class TestEncryptedFields(TestCase):
     def test_secret_in_history_manager_in_html(self):
         history_manager = SatA5HistoryManager({}, "History", SatA5.objects.all())
         html = history_manager.to_html()
-        self.assertNotIn(">secret</td>", html)
-        self.assertIn(">******</td>", html)
+        soup = BeautifulSoup(html, "html.parser")
+        tds = [td.get_text(strip=True) for td in soup.find_all("td")]
+        self.assertNotIn("secret", tds)
+        self.assertIn("******", tds)
 
 
 class TestEncryptedFieldsWithNone(TestCase):
@@ -64,7 +69,9 @@ class TestEncryptedFieldsWithNone(TestCase):
 
     def test_field_is_hidden_in_html(self):
         html = self.manager.to_html()
-        self.assertIn("></td>", html)
+        soup = BeautifulSoup(html, "html.parser")
+        tds = [td.get_text(strip=True) for td in soup.find_all("td")]
+        self.assertIn("", tds)
 
     def test_field_is_hidden_in_latex(self):
         latex = self.manager.to_latex()
@@ -73,4 +80,6 @@ class TestEncryptedFieldsWithNone(TestCase):
     def test_secret_in_history_manager_in_html(self):
         history_manager = SatA5HistoryManager({}, "History", SatA5.objects.all())
         html = history_manager.to_html()
-        self.assertIn("></td>", html)
+        soup = BeautifulSoup(html, "html.parser")
+        tds = [td.get_text(strip=True) for td in soup.find_all("td")]
+        self.assertIn("", tds)
