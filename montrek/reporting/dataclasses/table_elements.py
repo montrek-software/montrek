@@ -541,16 +541,13 @@ class ProgressBarTableElement(NumberTableElement):
     serializer_field_class = serializers.FloatField
     attr: str
     td_classes: ClassVar[td_classes_type] = ["text-center"]
+    field_template: ClassVar[str | None] = "progress_bar"
 
-    def _format_value(self, value: float) -> str:
+    def get_field_context_data(self, value: Any, obj: Any) -> dict[str, Any]:
+        value = float(value)
         per_value = value * 100
         out_value = f"{value * 100:.2f}"
-
-        return format_html(
-            '<div class="bar-container"> <div class="bar" style="width: {per_value}%;"></div> <span class="bar-value">{value}%</span> </div>',
-            per_value=per_value,
-            value=out_value,
-        )
+        return {"per_value": per_value, "out_value": out_value}
 
     def format_latex(self, value) -> str:
         per_value = value * 100
