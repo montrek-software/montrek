@@ -175,9 +175,15 @@ class ExternalLinkTableElement(AttrTableElement):
 
     def format(self, value):
         return format_html(
-            '<a href="{value}" target="_blank" title="{value}">{value}</a>',
+            '<a href="{value}" target="_blank">{value}</a>',
             value=value,
         )
+
+    def get_hover_text(self, obj: Any) -> str | None:
+        value = self.get_value(obj)
+        if value is None:
+            return "No link"
+        return value
 
     def format_latex(self, value):
         return f" \\url{{{value}}} &"
@@ -716,14 +722,12 @@ class HistoryChangeState(Enum):
     NONE = "none"
 
 
-ChangeMapType = dict[int, dict[str, HistoryChangeState]]
+type ChangeMapType = dict[int, dict[str, HistoryChangeState]]
 
 
+@dataclass
 class HistoryStringTableElement(StringTableElement):
-    def __init__(self, attr: str, name: str, change_map: ChangeMapType):
-        super().__init__(name=name, attr=attr)
-        self.change_map = change_map
-        self.change_format = HistoryChangeState.NONE
+    change_map: ChangeMapType = field(default_factory=dict)
 
     def get_attribute(self, obj: Any, tag: str = "html") -> str:
         self.change_format = self._get_change_format(obj)
@@ -752,10 +756,9 @@ class HistoryStringTableElement(StringTableElement):
         return self.change_map[obj_id][self.attr]
 
 
+@dataclass
 class ColorCodedStringTableElement(StringTableElement):
-    def __init__(self, name: str, attr: str, color_codes: dict[str, Color]):
-        self.color_codes = color_codes
-        super().__init__(name, attr)
+    color_codes: dict[str, Color] = field(default_factory=dict)
 
     def format(self, value):
         color = self.color_codes.get(value, ReportingColors.BLUE).hex
@@ -772,12 +775,10 @@ class ColorCodedStringTableElement(StringTableElement):
         return f" \\color{{{color.name}}} {value_str} &"
 
 
+@dataclass
 class LabelTableElement(StringTableElement):
     td_classes: ClassVar[td_classes_type] = ["text-center"]
-
-    def __init__(self, name: str, attr: str, color_codes: dict[str, Color]):
-        self.color_codes = color_codes
-        super().__init__(name, attr)
+    color_codes: dict[str, Color] = field(default_factory=dict)
 
     def format(self, value):
         base_color = self.color_codes.get(value, ReportingColors.BLUE)

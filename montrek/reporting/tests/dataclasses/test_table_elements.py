@@ -39,6 +39,7 @@ class TableElementTestingToolMixin(HasAssertEqual):
         expected_style_attrs: te.style_attrs_type = {},
         expected_td_classes: te.td_classes_type = ["text-start"],
         expected_hover_text: str | None = None,
+        expected_none_hover_text: str | None = None,
     ):
         test_obj = {table_element.attr: value}
         self.table_element_test_assertions_from_object(
@@ -52,13 +53,15 @@ class TableElementTestingToolMixin(HasAssertEqual):
         )
         with self.subTest("Test None Representation"):
             if value is not None:
+                if expected_none_hover_text is None:
+                    expected_none_hover_text = expected_hover_text
                 self.table_element_test_assertions_from_value(
                     table_element=table_element,
                     value=None,
                     expected_format="-",
                     expected_format_latex=" \\color{black} - &",
                     expected_td_classes=["text-center"],
-                    expected_hover_text=expected_hover_text,
+                    expected_hover_text=expected_none_hover_text,
                 )
 
     def table_element_test_assertions_from_object(
@@ -613,8 +616,10 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value="https://www.google.com",
-            expected_format='<a href="https://www.google.com" target="_blank" title="https://www.google.com">https://www.google.com</a>',
+            expected_format='<a href="https://www.google.com" target="_blank">https://www.google.com</a>',
             expected_format_latex=" \\url{https://www.google.com} &",
+            expected_hover_text="https://www.google.com",
+            expected_none_hover_text="No link",
         )
 
     def test_latex_special_character_is_handled(self):
