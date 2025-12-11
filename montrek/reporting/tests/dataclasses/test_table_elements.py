@@ -33,6 +33,7 @@ class TableElementTestingToolMixin(HasAssertEqual):
         expected_format_latex: str,
         expected_style_attrs: te.style_attrs_type = {},
         expected_td_classes: te.td_classes_type = ["text-start"],
+        expected_hover_text: str | None = None,
     ):
         test_obj = {table_element.attr: value}
         self.table_element_test_assertions_from_object(
@@ -42,6 +43,7 @@ class TableElementTestingToolMixin(HasAssertEqual):
             expected_format_latex,
             expected_style_attrs,
             expected_td_classes,
+            expected_hover_text,
         )
         with self.subTest("Test None Representation"):
             if value is not None:
@@ -51,6 +53,7 @@ class TableElementTestingToolMixin(HasAssertEqual):
                     expected_format="-",
                     expected_format_latex=" \\color{black} - &",
                     expected_td_classes=["text-center"],
+                    expected_hover_text=expected_hover_text,
                 )
 
     def table_element_test_assertions_from_object(
@@ -61,6 +64,7 @@ class TableElementTestingToolMixin(HasAssertEqual):
         expected_format_latex: str,
         expected_style_attrs: te.style_attrs_type = {},
         expected_td_classes: te.td_classes_type = ["text-start"],
+        expected_hover_text: str | None = None,
     ):
         with self.subTest("Test HTML Representation"):
             self.assert_display_field_properties(
@@ -69,6 +73,7 @@ class TableElementTestingToolMixin(HasAssertEqual):
                 expected_format,
                 expected_style_attrs,
                 expected_td_classes,
+                expected_hover_text,
             )
 
         with self.subTest("Test Latex Representation"):
@@ -83,10 +88,12 @@ class TableElementTestingToolMixin(HasAssertEqual):
         expected_format: str,
         expected_style_attrs: te.style_attrs_type = {},
         expected_td_classes: te.td_classes_type = ["text-start"],
+        expected_hover_text: str | None = None,
     ):
         test_display_field = table_element.get_display_field(obj)
         self.assertEqual(test_display_field.name, table_element.name)
         self.assertEqual(test_display_field.display_value, expected_format)
+        self.assertEqual(test_display_field.hover_text, expected_hover_text)
         self.assertEqual(
             test_display_field.td_classes_str, " ".join(expected_td_classes)
         )
@@ -113,6 +120,18 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             value=1234,
             expected_format="1234",
             expected_format_latex=" \\color{black} 1234 &",
+        )
+
+    def test_string_table_elements_with_hover_text(self):
+        test_element = te.StringTableElement(
+            name="test", attr="test_value", hover_text="Hallo"
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="test",
+            expected_format="test",
+            expected_format_latex=" \\color{black} test &",
+            expected_hover_text="Hallo",
         )
 
     def test_text_table_element(self):

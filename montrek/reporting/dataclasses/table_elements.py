@@ -40,6 +40,7 @@ def _get_value_color_latex(value):
 @dataclass
 class TableElement:
     name: str
+    hover_text: str | None = field(default=None)
     style_attrs: ClassVar[style_attrs_type] = {}
     td_classes: ClassVar[td_classes_type] = ["text-start"]
 
@@ -103,6 +104,7 @@ class TableElement:
             display_value=table_element.format(value),
             style_attrs_str=table_element.get_style_attrs_str(value),
             td_classes_str=table_element.get_td_classes_str(value),
+            hover_text=self.get_hover_text(),
         )
 
     def get_none_table_element(self):
@@ -124,6 +126,9 @@ class TableElement:
                     # No len() available, try to peek at the iterable
                     return not any(True for _ in value)
         return False
+
+    def get_hover_text(self) -> str | None:
+        return self.hover_text
 
 
 @dataclass
@@ -181,9 +186,8 @@ class ExternalLinkTableElement(AttrTableElement):
 
 @dataclass  # noqa
 class BaseLinkTableElement(TableElement):
-    url: str
-    kwargs: dict
-    hover_text: str
+    url: str = field(default="")
+    kwargs: dict = field(default_factory=dict)
     static_kwargs = {}
 
     def format_link(self, value, active: bool = False):
@@ -226,9 +230,6 @@ class BaseLinkTableElement(TableElement):
     def get_link_text(self, obj):
         raise NotImplementedError
 
-    def get_hover_text(self) -> str:
-        return self.hover_text
-
     def _get_url_kwargs(self, obj: Any) -> dict:
         # TODO Update this such that _get_dotted_attr_or_arg is not used anymore
         kwargs = {
@@ -258,14 +259,13 @@ class BaseLinkTableElement(TableElement):
         if not url:
             return ""
         id_tag = url.replace("/", "_")
-        hover_text = self.get_hover_text()
-        template_str = '<a id="id_{0}" href="{1}" title="{2}">{3}</a>'
-        return format_html(template_str, id_tag, url, hover_text, link_text)
+        template_str = '<a id="id_{0}" href="{1}" >{3}</a>'
+        return format_html(template_str, id_tag, url, link_text)
 
 
 @dataclass
 class LinkTableElement(BaseLinkTableElement):
-    icon: str
+    icon: str = field(default="cross")
     static_kwargs: dict = field(default_factory=dict)
     icon_latex_map: ClassVar[dict[str, str]] = {
         "pencil": "pencil",
@@ -292,7 +292,7 @@ class LinkTableElement(BaseLinkTableElement):
 @dataclass
 class LinkTextTableElement(BaseLinkTableElement):
     serializer_field_class = serializers.CharField
-    text: str
+    text: str = field(default="")
     static_kwargs: dict = field(default_factory=dict)
 
     def get_link_text(self, obj):
@@ -302,9 +302,9 @@ class LinkTextTableElement(BaseLinkTableElement):
 @dataclass
 class LinkListTableElement(BaseLinkTableElement):
     serializer_field_class = serializers.CharField
-    text: str
-    list_attr: str
-    list_kwarg: str
+    text: str = field(default="")
+    list_attr: str = field(default="")
+    list_kwarg: str = field(default="")
     in_separator: str = ";"
     out_separator: str = mark_safe("<br>")
 

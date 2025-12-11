@@ -7,3 +7,4 @@ class DisplayField:
     display_value: str
     style_attrs_str: str
     td_classes_str: str
+    hover_text: str | None
