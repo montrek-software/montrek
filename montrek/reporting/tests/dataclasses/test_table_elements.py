@@ -19,6 +19,11 @@ class MockTableElement(te.AttrTableElement):
         return value
 
 
+class MockTableElementCustomHoverText(te.StringTableElement):
+    def get_hover_text(self, obj: Any) -> str | None:
+        return f"Hover from field {obj[str(self.hover_text)]}"
+
+
 class HasAssertEqual(Protocol):
     def assertEqual(self, first, second, msg=None): ...
     def subTest(self, msg="", **params) -> Any: ...
@@ -132,6 +137,18 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_format="test",
             expected_format_latex=" \\color{black} test &",
             expected_hover_text="Hallo",
+        )
+
+    def test_string_table_elements_with_custom_hover_text(self):
+        test_element = MockTableElementCustomHoverText(
+            name="test", attr="test_value", hover_text="field2"
+        )
+        self.table_element_test_assertions_from_object(
+            table_element=test_element,
+            test_obj={"test_value": "test", "field2": "Hallo"},
+            expected_format="test",
+            expected_format_latex=" \\color{black} test &",
+            expected_hover_text="Hover from field Hallo",
         )
 
     def test_text_table_element(self):

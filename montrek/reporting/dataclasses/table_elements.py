@@ -104,7 +104,7 @@ class TableElement:
             display_value=table_element.format(value),
             style_attrs_str=table_element.get_style_attrs_str(value),
             td_classes_str=table_element.get_td_classes_str(value),
-            hover_text=self.get_hover_text(),
+            hover_text=self.get_hover_text(obj),
         )
 
     def get_none_table_element(self):
@@ -127,7 +127,7 @@ class TableElement:
                     return not any(True for _ in value)
         return False
 
-    def get_hover_text(self) -> str | None:
+    def get_hover_text(self, obj: Any) -> str | None:
         return self.hover_text
 
 
