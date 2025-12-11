@@ -923,41 +923,29 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         table_element = te.ColorCodedStringTableElement(
             name="name", attr="test_attr", color_codes=color_codes
         )
-        blue_value = table_element.format("abc")
-        self.assertEqual(
-            blue_value, '<td style="text-align: left; color: #2B6D8B">abc</td>'
+        self.table_element_test_assertions_from_value(
+            table_element=table_element,
+            value="abc",
+            expected_format="abc",
+            expected_format_latex=" \\color{mediumblue} abc &",
+            expected_td_classes=["text-start"],
+            expected_style_attrs={"color": "#2B6D8B"},
         )
-        rose_value = table_element.format("def")
-        self.assertEqual(
-            rose_value, '<td style="text-align: left; color: #D3A9A1">def</td>'
+        self.table_element_test_assertions_from_value(
+            table_element=table_element,
+            value="def",
+            expected_format="def",
+            expected_format_latex=" \\color{softrose} def &",
+            expected_td_classes=["text-start"],
+            expected_style_attrs={"color": "#D3A9A1"},
         )
-        default_value = table_element.format("ghi")
-        self.assertEqual(
-            default_value, '<td style="text-align: left; color: #004767">ghi</td>'
-        )
-
-    def test_color_coded_table_element__latex(self):
-        color_codes = {
-            "abc": ReportingColors.MEDIUM_BLUE,
-            "def": ReportingColors.SOFT_ROSE,
-        }
-        table_element = te.ColorCodedStringTableElement(
-            name="name", attr="test_attr", color_codes=color_codes
-        )
-        blue_value = table_element.format_latex("abc")
-        self.assertEqual(
-            blue_value,
-            " \\color{mediumblue} abc &",
-        )
-        rose_value = table_element.format_latex("def")
-        self.assertEqual(
-            rose_value,
-            " \\color{softrose} def &",
-        )
-        default_value = table_element.format_latex("ghi")
-        self.assertEqual(
-            default_value,
-            " \\color{blue} ghi &",
+        self.table_element_test_assertions_from_value(
+            table_element=table_element,
+            value="ghi",
+            expected_format="ghi",
+            expected_format_latex=" \\color{blue} ghi &",
+            expected_td_classes=["text-start"],
+            expected_style_attrs={"color": "#004767"},
         )
 
     def test_label_table_element__html(self):
@@ -988,28 +976,4 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_format='<span class="badge" style="background-color:#004767;color:#FFFFFF;">ghi</span>',
             expected_format_latex="\\colorbox[rgb]{0.000,0.278,0.404}{\\textcolor[HTML]{FFFFFF}{\\textbf{ghi}}} &",
             expected_td_classes=["text-center"],
-        )
-
-    def test_label_table_element__latex(self):
-        color_codes = {
-            "abc": ReportingColors.MEDIUM_BLUE,
-            "def": ReportingColors.SOFT_ROSE,
-        }
-        table_element = te.LabelTableElement(
-            name="name", attr="test_attr", color_codes=color_codes
-        )
-        blue_value = table_element.format_latex("abc")
-        self.assertEqual(
-            blue_value,
-            "\\colorbox[rgb]{0.169,0.427,0.545}{\\textcolor[HTML]{FFFFFF}{\\textbf{abc}}} &",
-        )
-        rose_value = table_element.format_latex("def")
-        self.assertEqual(
-            rose_value,
-            "\\colorbox[rgb]{0.827,0.663,0.631}{\\textcolor[HTML]{000000}{\\textbf{def}}} &",
-        )
-        default_value = table_element.format_latex("ghi")
-        self.assertEqual(
-            default_value,
-            "\\colorbox[rgb]{0.000,0.278,0.404}{\\textcolor[HTML]{FFFFFF}{\\textbf{ghi}}} &",
         )

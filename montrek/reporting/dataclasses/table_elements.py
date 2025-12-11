@@ -135,13 +135,13 @@ class TableElement:
     def render_field_template(self, value: Any, obj: Any) -> str:
         if self.field_template is None:
             return value
-        context_data = self.get_field_context_data(obj)
+        context_data = self.get_field_context_data(value, obj)
         context_data["value"] = value
         return render_to_string(
             f"tables/elements/{self.field_template}.html", context_data
         )
 
-    def get_field_context_data(self, obj: Any) -> dict[str, Any]:
+    def get_field_context_data(self, value: Any, obj: Any) -> dict[str, Any]:
         return {}
 
 
@@ -773,13 +773,9 @@ class HistoryStringTableElement(StringTableElement):
 class ColorCodedStringTableElement(StringTableElement):
     color_codes: dict[str, Color] = field(default_factory=dict)
 
-    def format(self, value):
+    def get_style_attrs(self, value: Any) -> style_attrs_type:
         color = self.color_codes.get(value, ReportingColors.BLUE).hex
-        return format_html(
-            '<td style="text-align: left; color: {color}">{value}</td>',
-            color=color,
-            value=value,
-        )
+        return {"color": color}
 
     def format_latex(self, value):
         value_str = str(value)
@@ -792,17 +788,13 @@ class ColorCodedStringTableElement(StringTableElement):
 class LabelTableElement(StringTableElement):
     td_classes: ClassVar[td_classes_type] = ["text-center"]
     color_codes: dict[str, Color] = field(default_factory=dict)
+    field_template: ClassVar[str | None] = "label"
 
-    def format(self, value):
+    def get_field_context_data(self, value: Any, obj: Any) -> dict[str, Any]:
         base_color = self.color_codes.get(value, ReportingColors.BLUE)
         font_color = ReportingColors.contrast_font_color(base_color).hex
         color = base_color.hex
-        return format_html(
-            '<span class="badge" style="background-color:{color};color:{font_color};">{value}</span>',
-            color=color,
-            font_color=font_color,
-            value=value,
-        )
+        return {"color": color, "font_color": font_color}
 
     def format_latex(self, value):
         value_str = str(value)
