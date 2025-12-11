@@ -523,6 +523,8 @@ class DateTableBaseElement(AttrTableElement):
         return f" \\color{{black}} {self.format_date(value)} &"
 
     def format_date(self, value):
+        if isinstance(value, (datetime.date, datetime.datetime)):
+            return value.strftime(self.date_format)
         try:
             stripped_date = pd.to_datetime(value)
         except DateParseError:
@@ -536,10 +538,6 @@ class DateTableBaseElement(AttrTableElement):
         if isinstance(value, datetime.datetime):
             if not timezone.is_naive(value):
                 value = timezone.make_naive(value)
-            return value.strftime(self.date_format)
-
-        if isinstance(value, datetime.date):
-            return value.strftime(self.date_format)
         return value
 
 
