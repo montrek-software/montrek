@@ -22,7 +22,7 @@
         id="group-item1"
       >
 
-          <li class="link-list"><b><a id="id__home" href="/home" title="View Expert Evaluation">None</a></b></li>
+          <li class="link-list"><b><a id="id__home" href="/home">None</a></b></li>
 
       </ul>
     </li>
@@ -47,7 +47,7 @@
         id="group-item2"
       >
 
-          <li class="link-list"><b><a id="id__home" href="/home" title="View Expert Evaluation">None</a></b></li>
+          <li class="link-list"><b><a id="id__home" href="/home">None</a></b></li>
 
       </ul>
     </li>
@@ -72,7 +72,7 @@
         id="group-item3"
       >
 
-          <li class="link-list"><b><a id="id__home" href="/home" title="View Expert Evaluation">None</a></b></li>
+          <li class="link-list"><b><a id="id__home" href="/home">None</a></b></li>
 
       </ul>
     </li>

@@ -35,6 +35,7 @@ class SidebarManagerABC(MontrekTableManagerABC):
             if active:
                 active_group = group
             link_text = str(link.get_value(item))
+            # TODO: rewrite this such that the hover text is passed to the item and it works with a template
             grouped_items[group].append(
                 link.get_html_table_link_element(item, link_text, active=active)
             )
