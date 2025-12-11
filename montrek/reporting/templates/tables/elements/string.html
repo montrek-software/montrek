@@ -1,0 +1,7 @@
+{% if chunks %}
+  {% for value in chunks %}
+    {{ value }}{% if not forloop.last %}<br>{% endif %}
+  {% endfor %}
+{% else %}
+  {{ value }}
+{% endif %}

@@ -370,6 +370,14 @@ class StringTableElement(AttrTableElement):
     attr: str
     chunk_size: int = 56
     td_classes: ClassVar[td_classes_type] = ["text-start"]
+    field_template: ClassVar[str | None] = "string"
+
+    def get_field_context_data(self, value: Any, obj: Any) -> dict[str, Any]:
+        value = str(value)
+        if len(value) > self.chunk_size:
+            chunks = self._chunk_text(value)
+            return {"chunks": chunks}
+        return {"chunks": None}
 
     def format(self, value):
         return str(value)
@@ -378,12 +386,6 @@ class StringTableElement(AttrTableElement):
         value = super().get_value(obj)
         if pd.isna(value):
             return None
-        value = str(value)
-        if len(value) > self.chunk_size:
-            chunks = self._chunk_text(value)
-            return format_html_join(
-                mark_safe("<br>"), "{}", ((chunk,) for chunk in chunks)
-            )
         return value
 
     def _chunk_text(self, text: str) -> list[str]:
@@ -742,7 +744,7 @@ class HistoryStringTableElement(StringTableElement):
 
 
 @dataclass
-class ColorCodedStringTableElement(StringTableElement):
+class ColorCodedStringTableElement(AttrTableElement):
     color_codes: dict[str, Color] = field(default_factory=dict)
 
     def get_style_attrs(self, value: Any) -> style_attrs_type:
@@ -757,7 +759,7 @@ class ColorCodedStringTableElement(StringTableElement):
 
 
 @dataclass
-class LabelTableElement(StringTableElement):
+class LabelTableElement(AttrTableElement):
     td_classes: ClassVar[td_classes_type] = ["text-center"]
     color_codes: dict[str, Color] = field(default_factory=dict)
     field_template: ClassVar[str | None] = "label"

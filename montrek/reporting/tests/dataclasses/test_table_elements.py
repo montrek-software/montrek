@@ -101,8 +101,8 @@ class TableElementTestingToolMixin(HasAssertEqual):
         test_display_field = table_element.get_display_field(obj)
         self.assertEqual(test_display_field.name, table_element.name)
         self.assertEqual(
-            test_display_field.display_value.replace("\n", ""),
-            expected_format.replace("\n", ""),
+            test_display_field.display_value.replace("\n", "").lstrip(),
+            expected_format.replace("\n", "").lstrip(),
         )
         self.assertEqual(test_display_field.hover_text, expected_hover_text)
         self.assertEqual(
@@ -186,7 +186,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value="test1,test2",
-            expected_format="    test1<br>    test2",
+            expected_format="test1<br>    test2",
             expected_format_latex=" \\color{black} test1,test2 &",
         )
 
@@ -196,7 +196,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value="test1,2;test2;test4",
-            expected_format="    test1,2|    test2|    test4",
+            expected_format="test1,2|    test2|    test4",
             expected_format_latex=" \\color{black} test1,2;test2;test4 &",
         )
 
@@ -554,7 +554,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             name="name",
             attr="test_text",
         )
-        value = table_element.get_value(test_obj)
+        value = table_element.get_display_field(test_obj).display_value
         self.assertIn("<br>", value)
 
     def test_wrap_text_in_string_table_element__none(self):
