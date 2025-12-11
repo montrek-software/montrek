@@ -142,7 +142,7 @@ class TestMontrekDetailsManager(TestCase):
                 "field_a": "a",
                 "field_b": 1,
                 "field_c": 1.0,
-                "field_d": "2024-07-13 00:00:00",
+                "field_d": "2024-07-13T00:00:00",
                 "field_e": 1.0,
             },
         )
