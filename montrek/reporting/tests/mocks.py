@@ -248,6 +248,11 @@ class MockLongRepository:
         self._order_field = value
 
 
+class MockIntTableElement(te.IntTableElement):
+    def get_hover_text(self, obj: Any) -> str | None:
+        return obj.field_a
+
+
 class MockMontrekTableManager(MontrekTableManager):
     repository_class = MockRepository
     table_title = "Mock Table"
@@ -258,7 +263,7 @@ class MockMontrekTableManager(MontrekTableManager):
     ) -> tuple[te.TableElement]:
         return (
             te.StringTableElement(attr="field_a", name="Field A"),
-            te.IntTableElement(attr="field_b", name="Field B"),
+            MockIntTableElement(attr="field_b", name="Field B"),
             te.FloatTableElement(attr="field_c", name="Field C"),
             te.DateTimeTableElement(attr="field_d", name="Field D"),
             te.EuroTableElement(attr="field_e", name="Field E"),
