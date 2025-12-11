@@ -95,7 +95,6 @@ class TableElement:
 
     def get_display_field(self, obj: Any) -> DisplayField:
         value = self.get_attribute(obj, "html")
-
         table_element = (
             self.get_none_table_element() if self.empty_value(value) else self
         )
@@ -259,7 +258,7 @@ class BaseLinkTableElement(TableElement):
         if not url:
             return ""
         id_tag = url.replace("/", "_")
-        template_str = '<a id="id_{0}" href="{1}" >{3}</a>'
+        template_str = '<a id="id_{0}" href="{1}" >{2}</a>'
         return format_html(template_str, id_tag, url, link_text)
 
 
@@ -437,6 +436,7 @@ class NumberTableElement(AttrTableElement):
             display_value=display_value,
             style_attrs_str=self.format_style_attr(style_attrs),
             td_classes_str=self.format_td_classes(td_classes),
+            hover_text=self.get_hover_text(obj),
         )
 
     def _analyze_value(

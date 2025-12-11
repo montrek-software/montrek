@@ -31,7 +31,7 @@
         {% for row in display_fields %}
         <tr>
           {% for display_field in row %}
-            <td class="{{ display_field.td_classes_str }}" style="{{ display_field.style_attrs_str }}">{{display_field.display_value}}</td>
+            {% include "tables/partials/table_cell.html" with display_field=display_field %}
           {% endfor %}
         </tr>
         {% endfor %}
