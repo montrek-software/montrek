@@ -612,13 +612,7 @@ class BooleanTableElement(AttrTableElement):
     serializer_field_class = serializers.BooleanField
     attr: str
     td_classes: ClassVar[td_classes_type] = ["text-center"]
-
-    def format(self, value):
-        if value:
-            return mark_safe(
-                '<span class="bi bi-check-circle-fill text-success"></span>'
-            )
-        return mark_safe('<span class="bi bi-x-circle-fill text-danger"></span>')
+    field_template: ClassVar[str | None] = "bool"
 
     def format_latex(self, value) -> str:
         if value:

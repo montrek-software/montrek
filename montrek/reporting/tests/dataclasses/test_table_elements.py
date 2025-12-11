@@ -536,14 +536,14 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value=True,
-            expected_format='<span class="bi bi-check-circle-fill text-success"></span>',
+            expected_format='    <span class="bi bi-check-circle-fill text-success"></span>',
             expected_format_latex="\\twemoji{white_check_mark} &",
             expected_td_classes=["text-center"],
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value=False,
-            expected_format='<span class="bi bi-x-circle-fill text-danger"></span>',
+            expected_format='    <span class="bi bi-x-circle-fill text-danger"></span>',
             expected_format_latex="\\twemoji{cross mark} &",
             expected_td_classes=["text-center"],
         )
