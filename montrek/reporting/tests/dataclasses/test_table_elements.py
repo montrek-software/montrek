@@ -85,6 +85,7 @@ class TableElementTestingToolMixin(HasAssertEqual):
         expected_td_classes: te.td_classes_type = ["text-start"],
     ):
         test_display_field = table_element.get_display_field(obj)
+        self.assertEqual(test_display_field.name, table_element.name)
         self.assertEqual(test_display_field.display_value, expected_format)
         self.assertEqual(
             test_display_field.td_classes_str, " ".join(expected_td_classes)
@@ -204,22 +205,31 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value=1234.5678,
-            expected_format="1,235",
-            expected_format_latex="\\color{darkblue} 1,235 &",
+            expected_format="1,234",
+            expected_format_latex="\\color{darkblue} 1,234 &",
             expected_td_classes=["text-end"],
             expected_style_attrs={"color": "#002F6C"},
         )
+        self.assertEqual(test_element.get_value({"test_value": 1234.56}), 1234)
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value=Decimal(1234.5678),
-            expected_format="1,235",
-            expected_format_latex="\\color{darkblue} 1,235 &",
+            expected_format="1,234",
+            expected_format_latex="\\color{darkblue} 1,234 &",
             expected_td_classes=["text-end"],
             expected_style_attrs={"color": "#002F6C"},
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value=1234,
+            expected_format="1,234",
+            expected_format_latex="\\color{darkblue} 1,234 &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={"color": "#002F6C"},
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="1234",
             expected_format="1,234",
             expected_format_latex="\\color{darkblue} 1,234 &",
             expected_td_classes=["text-end"],
@@ -762,7 +772,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             test_obj=test_obj,
             expected_format=f'<a id="id__baseclasses_{test_obj.id}_details" href="/baseclasses/{test_obj.id}/details" title="hover_text"><span class="bi bi-icon"></span></a>',
-            expected_format_latex=f" \\color{{black}}  &",
+            expected_format_latex=" \\color{black} \\twemoji{cross mark} &",
         )
 
     def test__get_link_text(self):
@@ -841,7 +851,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=table_element,
             test_obj=test_obj,
             expected_format=f'<a id="id__baseclasses_{test_obj.id}_details" href="/baseclasses/{test_obj.id}/details" title="hover_text"><span class="bi bi-icon"></span></a>',
-            expected_format_latex=" \\color{black}  &",
+            expected_format_latex=" \\color{black} \\twemoji{cross mark} &",
         )
 
     def test_get_attibute__object_is_dict(self):

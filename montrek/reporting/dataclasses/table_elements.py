@@ -14,7 +14,6 @@ from baseclasses.dataclasses.alert import AlertEnum
 from baseclasses.dataclasses.number_shortener import NoShortening, NumberShortenerABC
 from baseclasses.sanitizer import HtmlSanitizer
 from django.core.exceptions import FieldDoesNotExist
-from django.template import Context, Template
 from django.template.base import mark_safe
 from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
@@ -98,7 +97,7 @@ class TableElement:
 
         table_element = NoneTableElement() if self.empty_value(value) else self
         return DisplayField(
-            name=table_element.name,
+            name=self.name,
             display_value=table_element.format(value),
             style_attrs_str=table_element.get_style_attrs_str(value),
             td_classes_str=table_element.get_td_classes_str(value),
@@ -209,7 +208,6 @@ class BaseLinkTableElement(TableElement):
         return self.get_html_table_link_element(self.obj, value)
 
     def format_latex(self, value):
-        value = HtmlLatexConverter().convert(value)
         return super().format_latex(strip_tags(value))
 
     def get_html_table_link_element(
@@ -261,13 +259,26 @@ class BaseLinkTableElement(TableElement):
 class LinkTableElement(BaseLinkTableElement):
     icon: str
     static_kwargs: dict = field(default_factory=dict)
+    icon_latex_map: ClassVar[dict[str, str]] = {
+        "pencil": "pencil",
+        "edit": "pencil",
+        "trash": "wastebasket",
+    }
 
     def get_link_text(self, obj):
         if self.icon == "edit":
             icon = "pencil"
         else:
             icon = self.icon
-        return Template(f'<span class="bi bi-{icon}"></span>').render(Context())
+        return icon
+
+    def format(self, value: Any) -> str:
+        icon_value = format_html('<span class="bi bi-{}"></span>', value)
+        return self.get_html_table_link_element(self.obj, icon_value)
+
+    def format_latex(self, value):
+        latex_icon = self.icon_latex_map.get(value, "cross mark")
+        return super().format_latex(f"\\twemoji{{{latex_icon}}}")
 
 
 @dataclass
@@ -408,6 +419,7 @@ class NumberTableElement(AttrTableElement):
     serializer_field_class = serializers.FloatField
     attr: str
     shortener: NumberShortenerABC = NoShortening()
+    numerical_type: type = float
 
     def get_display_field(self, obj: Any) -> DisplayField:
         value = self.get_attribute(obj, "html")
@@ -445,9 +457,11 @@ class NumberTableElement(AttrTableElement):
 
     def get_value(self, obj: Any) -> Any:
         value = super().get_value(obj)
-        if isinstance(value, Decimal):
-            return float(value)
-        return value
+        try:
+            numerical_value = self.numerical_type(value)
+        except (TypeError, ValueError):
+            return value
+        return numerical_value
 
 
 @dataclass
@@ -467,6 +481,7 @@ class FloatTableElement(NumberTableElement):
 class IntTableElement(NumberTableElement):
     serializer_field_class = serializers.IntegerField
     attr: str
+    numerical_type: type = int
     shortener: NumberShortenerABC = NoShortening()
 
     def _format_value(self, value) -> str:
@@ -524,6 +539,8 @@ class DateTableBaseElement(AttrTableElement):
         return f" \\color{{black}} {self.format_date(value)} &"
 
     def format_date(self, value):
+        if isinstance(value, (datetime.date, datetime.datetime)):
+            return value.strftime(self.date_format)
         try:
             stripped_date = pd.to_datetime(value)
         except DateParseError:
@@ -537,10 +554,6 @@ class DateTableBaseElement(AttrTableElement):
         if isinstance(value, datetime.datetime):
             if not timezone.is_naive(value):
                 value = timezone.make_naive(value)
-            return value.strftime(self.date_format)
-
-        if isinstance(value, datetime.date):
-            return value.strftime(self.date_format)
         return value
 
 
