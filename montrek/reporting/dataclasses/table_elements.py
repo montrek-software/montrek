@@ -100,12 +100,14 @@ class TableElement:
         table_element = (
             self.get_none_table_element() if self.empty_value(value) else self
         )
+        style_attrs_str = table_element.get_style_attrs_str(value)
+        td_classes_str = table_element.get_td_classes_str(value)
         value = table_element.render_field_template(value, obj)
         return DisplayField(
             name=self.name,
             display_value=table_element.format(value),
-            style_attrs_str=table_element.get_style_attrs_str(value),
-            td_classes_str=table_element.get_td_classes_str(value),
+            style_attrs_str=style_attrs_str,
+            td_classes_str=td_classes_str,
             hover_text=self.get_hover_text(obj),
         )
 
@@ -428,17 +430,12 @@ class AlertTableElement(AttrTableElement):
     serializer_field_class = serializers.CharField
     attr: str
     td_classes: ClassVar[td_classes_type] = ["text-center"]
+    field_template: ClassVar[str | None] = "alert"
 
     def get_style_attrs(self, value: Any) -> style_attrs_type:
         status = AlertEnum.get_by_description(value)
         status_color = status.color.hex
         return {"color": status_color}
-
-    def format(self, value):
-        return format_html(
-            "<b>{0}</b>",
-            value,
-        )
 
 
 @dataclass
