@@ -221,6 +221,9 @@ class BaseLinkTableElement(TableElement):
     def get_link_text(self, obj):
         raise NotImplementedError
 
+    def get_hover_text(self) -> str:
+        return self.hover_text
+
     def _get_url_kwargs(self, obj: Any) -> dict:
         # TODO Update this such that _get_dotted_attr_or_arg is not used anymore
         kwargs = {
@@ -250,7 +253,7 @@ class BaseLinkTableElement(TableElement):
         if not url:
             return ""
         id_tag = url.replace("/", "_")
-        hover_text = self.hover_text
+        hover_text = self.get_hover_text
         template_str = '<a id="id_{0}" href="{1}" title="{2}">{3}</a>'
         return format_html(template_str, id_tag, url, hover_text, link_text)
 
