@@ -85,6 +85,7 @@ class TableElementTestingToolMixin(HasAssertEqual):
         expected_td_classes: te.td_classes_type = ["text-start"],
     ):
         test_display_field = table_element.get_display_field(obj)
+        self.assertEqual(test_display_field.name, table_element.name)
         self.assertEqual(test_display_field.display_value, expected_format)
         self.assertEqual(
             test_display_field.td_classes_str, " ".join(expected_td_classes)

@@ -98,7 +98,7 @@ class TableElement:
 
         table_element = NoneTableElement() if self.empty_value(value) else self
         return DisplayField(
-            name=table_element.name,
+            name=self.name,
             display_value=table_element.format(value),
             style_attrs_str=table_element.get_style_attrs_str(value),
             td_classes_str=table_element.get_td_classes_str(value),
