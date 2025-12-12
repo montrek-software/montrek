@@ -24,6 +24,15 @@ class MockTableElementCustomHoverText(te.StringTableElement):
         return f"Hover from field {obj[str(self.hover_text)]}"
 
 
+class MockActiveLinkTableElement(te.LinkTextTableElement):
+    def is_active(self, value: Any, obj: Any) -> bool:
+        if value == "is_active":
+            return True
+        if value == "is_not_active":
+            return False
+        return obj["is_active"]
+
+
 class HasAssertEqual(Protocol):
     def assertEqual(self, first, second, msg=None): ...
     def subTest(self, msg="", **params) -> Any: ...
@@ -843,21 +852,47 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         )
 
     def test__get_link_text__active(self):
-        test_obj = TestMontrekSatelliteFactory.create()
-        table_element = te.LinkTextTableElement(
+        test_element = MockActiveLinkTableElement(
             name="name",
             url="dummy_detail",
             kwargs={"pk": "pk"},
             text="test_name",
             hover_text="hover_text",
         )
-        link_text = str(table_element.get_value(test_obj))
-        test_link = table_element.get_html_table_link_element(
-            test_obj, link_text, active=True
+        test_obj = {"pk": 1, "test_name": "Test_Name", "is_active": False}
+        self.table_element_test_assertions_from_object(
+            table_element=test_element,
+            test_obj=test_obj,
+            expected_format='<a id="id__baseclasses_1_details" href="/baseclasses/1/details">Test_Name</a>',
+            expected_format_latex=" \\color{black} Test\\_Name &",
+            expected_hover_text="hover_text",
         )
-        self.assertEqual(
-            str(test_link).replace("\n", ""),
-            f'<b><a id="id__baseclasses_{test_obj.id}_details" href="/baseclasses/{test_obj.id}/details">{test_obj.test_name}</a></b>',
+        test_obj = {"pk": 1, "test_name": "Test_Name", "is_active": True}
+        self.table_element_test_assertions_from_object(
+            table_element=test_element,
+            test_obj=test_obj,
+            expected_format='<a id="id__baseclasses_1_details" href="/baseclasses/1/details">Test_Name</a>',
+            expected_format_latex=" \\color{black} Test\\_Name &",
+            expected_hover_text="hover_text",
+            expected_td_classes=["text-start fw-bold"],
+        )
+        test_obj = {"pk": 1, "test_name": "is_active", "is_active": False}
+        self.table_element_test_assertions_from_object(
+            table_element=test_element,
+            test_obj=test_obj,
+            expected_format='<a id="id__baseclasses_1_details" href="/baseclasses/1/details">is_active</a>',
+            expected_format_latex=" \\color{black} is\\_active &",
+            expected_hover_text="hover_text",
+            expected_td_classes=["text-start fw-bold"],
+        )
+        test_obj = {"pk": 1, "test_name": "is_not_active", "is_active": True}
+        self.table_element_test_assertions_from_object(
+            table_element=test_element,
+            test_obj=test_obj,
+            expected_format='<a id="id__baseclasses_1_details" href="/baseclasses/1/details">is_not_active</a>',
+            expected_format_latex=" \\color{black} is\\_not\\_active &",
+            expected_hover_text="hover_text",
+            expected_td_classes=["text-start"],
         )
 
     def test__get_link_text_filter(self):

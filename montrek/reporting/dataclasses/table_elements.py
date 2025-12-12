@@ -18,7 +18,7 @@ from django.template.base import mark_safe
 from django.template.loader import render_to_string
 from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
-from django.utils.html import format_html, strip_tags
+from django.utils.html import strip_tags
 from encrypted_fields import EncryptedCharField
 from pandas.core.tools.datetimes import DateParseError
 from reporting.core.reporting_colors import Color, ReportingColors
@@ -71,12 +71,12 @@ class TableElement:
     def get_value_len(self, obj: Any) -> int:
         return len(str(self.get_value(obj)))
 
-    def get_style_attrs(self, value: Any) -> style_attrs_type:
+    def get_style_attrs(self, value: Any, obj: Any) -> style_attrs_type:
         # Method can be overwritten by daughter classes if styling changes depending on the value
         return self.style_attrs
 
-    def get_style_attrs_str(self, value: Any) -> str:
-        style_attrs = self.get_style_attrs(value)
+    def get_style_attrs_str(self, value: Any, obj: Any) -> str:
+        style_attrs = self.get_style_attrs(value, obj)
         return self.format_style_attr(style_attrs)
 
     def format_style_attr(self, style_attrs: style_attrs_type) -> str:
@@ -84,12 +84,12 @@ class TableElement:
             return ""
         return "; ".join(f"{k}: {v}" for k, v in style_attrs.items()) + ";"
 
-    def get_td_classes(self, value: Any) -> td_classes_type:
+    def get_td_classes(self, value: Any, obj: Any) -> td_classes_type:
         # Method can be overwritten by daughter classes if styling changes depending on the value
         return self.td_classes
 
-    def get_td_classes_str(self, value: Any) -> str:
-        td_classes = self.get_td_classes(value)
+    def get_td_classes_str(self, value: Any, obj: Any) -> str:
+        td_classes = self.get_td_classes(value, obj)
         return self.format_td_classes(td_classes)
 
     def format_td_classes(self, td_classes: td_classes_type) -> str:
@@ -100,8 +100,8 @@ class TableElement:
         table_element = (
             self.get_none_table_element() if self.empty_value(value) else self
         )
-        style_attrs_str = table_element.get_style_attrs_str(value)
-        td_classes_str = table_element.get_td_classes_str(value)
+        style_attrs_str = table_element.get_style_attrs_str(value, obj)
+        td_classes_str = table_element.get_td_classes_str(value, obj)
         value = table_element.render_field_template(value, obj)
         return DisplayField(
             name=self.name,
@@ -211,12 +211,17 @@ class ExternalLinkTableElement(AttrTableElement):
 class BaseLinkTableElement(TableElement):
     url: str = field(default="")
     kwargs: dict = field(default_factory=dict)
-    static_kwargs = {}
+    static_kwargs: dict = field(default_factory=dict)
 
-    def format_link(self, value, active: bool = False):
-        if active:
-            return format_html("<b>{value}</b>", value=value)
-        return value
+    def is_active(self, value: Any, obj: Any):
+        # May be overwritten with logic
+        return False
+
+    def get_td_classes(self, value: Any, obj: Any):
+        td_classes = ["text-start"]
+        if self.is_active(value, obj):
+            td_classes += ["fw-bold"]
+        return td_classes
 
     @staticmethod
     def get_dotted_attr_or_arg(obj, value):
@@ -248,7 +253,7 @@ class BaseLinkTableElement(TableElement):
         url_kwargs = self._get_url_kwargs(obj)
         url = self._get_url(obj, url_kwargs)
         link = self._get_link(url, link_text)
-        return f"{self.format_link(link, active)}"
+        return link
 
     def get_link_text(self, obj):
         raise NotImplementedError
@@ -426,7 +431,7 @@ class AlertTableElement(AttrTableElement):
     td_classes: ClassVar[td_classes_type] = ["text-center"]
     field_template: ClassVar[str | None] = "alert"
 
-    def get_style_attrs(self, value: Any) -> style_attrs_type:
+    def get_style_attrs(self, value: Any, obj: Any) -> style_attrs_type:
         status = AlertEnum.get_by_description(value)
         status_color = status.color.hex
         return {"color": status_color}
@@ -711,7 +716,7 @@ class HistoryStringTableElement(StringTableElement):
         self.change_format = self._get_change_format(obj)
         return super().get_attribute(obj, tag)
 
-    def get_style_attrs(self, value: Any) -> style_attrs_type:
+    def get_style_attrs(self, value: Any, obj: Any) -> style_attrs_type:
         if self.change_format == HistoryChangeState.OLD:
             color = ReportingColors.RED.hex
         elif self.change_format == HistoryChangeState.NEW:
@@ -720,7 +725,7 @@ class HistoryStringTableElement(StringTableElement):
             color = ReportingColors.BLACK.hex
         return {"color": color}
 
-    def get_td_classes(self, value: Any) -> td_classes_type:
+    def get_td_classes(self, value: Any, obj: Any) -> td_classes_type:
         if self.change_format in (HistoryChangeState.OLD, HistoryChangeState.NEW):
             return ["fw-bold"]
         return []
@@ -738,7 +743,7 @@ class HistoryStringTableElement(StringTableElement):
 class ColorCodedStringTableElement(AttrTableElement):
     color_codes: dict[str, Color] = field(default_factory=dict)
 
-    def get_style_attrs(self, value: Any) -> style_attrs_type:
+    def get_style_attrs(self, value: Any, obj: Any) -> style_attrs_type:
         color = self.color_codes.get(value, ReportingColors.BLUE).hex
         return {"color": color}
 
