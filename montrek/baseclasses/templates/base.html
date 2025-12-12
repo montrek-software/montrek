@@ -7,8 +7,14 @@
   <!-- LEFT SIDEBAR -->
   <div class="col-12 col-lg-2">
     {% if overview %}
-      <h2>Overview</h2>
-      {{ overview }}
+      <div class="tile">
+        <div class="text-center">
+          <h2>Overview</h2>
+        </div>
+        <div class="mt-1">
+          {{ overview }}
+        </div>
+      </div>
     {% endif %}
   </div>
 
