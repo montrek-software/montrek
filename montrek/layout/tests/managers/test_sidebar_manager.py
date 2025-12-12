@@ -45,7 +45,7 @@ class MockSidebarManagerExpanded(MockSidebarManager):
 
 
 class TestSidebarManager(TestCase):
-    rebase = True
+    rebase = False
 
     def test_link_not_implemented(self):
         manager = SidebarManagerABC()
