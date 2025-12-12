@@ -13,12 +13,15 @@ def get_test_file_path(file_name):
     return os.path.join(TEST_DATA_DIR, file_name)
 
 
+class MockSidbarLinkTableElement(te.LinkTextTableElement): ...
+
+
 class MockSidebarManager(SidebarManagerABC):
     repository_class = MockRepository
     group_field = "field"
 
     def link(self) -> te.LinkTextTableElement:
-        return te.LinkTextTableElement(
+        return MockSidbarLinkTableElement(
             name="Test Link",
             url="home",
             kwargs={},
