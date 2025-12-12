@@ -18,7 +18,7 @@ from django.template.base import mark_safe
 from django.template.loader import render_to_string
 from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
-from django.utils.html import format_html, format_html_join, strip_tags
+from django.utils.html import format_html, strip_tags
 from encrypted_fields import EncryptedCharField
 from pandas.core.tools.datetimes import DateParseError
 from reporting.core.reporting_colors import Color, ReportingColors
@@ -282,8 +282,8 @@ class BaseLinkTableElement(TableElement):
         if not url:
             return ""
         id_tag = url.replace("/", "_")
-        template_str = '<a id="id_{0}" href="{1}">{2}</a>'
-        return format_html(template_str, id_tag, url, link_text)
+        context = {"id_tag": id_tag, "url": url, "link_text": link_text}
+        return render_to_string("tables/elements/link.html", context)
 
 
 @dataclass
@@ -343,18 +343,6 @@ class LinkListTableElement(BaseLinkTableElement):
             url = self._get_url(obj, url_kwargs)
             link_list.append(self._get_link(url, link_text))
         return link_list
-
-    def get_html_table_link_element(
-        self, obj: Any, link_text: str, *, active: bool = False
-    ) -> str:
-        link_join = format_html_join(
-            self.out_separator,
-            "{}",
-            ((link,) for link in self.get_link_list(link_text, obj)),
-        )
-        return format_html(
-            "<div style='max-height: 300px; overflow-y: auto;'>{}</div>", link_join
-        )
 
     def get_link_text(self, obj) -> list:
         list_values = self.get_dotted_attr_or_arg(obj, self.list_attr)

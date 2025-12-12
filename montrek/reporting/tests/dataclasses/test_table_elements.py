@@ -856,7 +856,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             test_obj, link_text, active=True
         )
         self.assertEqual(
-            str(test_link),
+            str(test_link).replace("\n", ""),
             f'<b><a id="id__baseclasses_{test_obj.id}_details" href="/baseclasses/{test_obj.id}/details">{test_obj.test_name}</a></b>',
         )
 
