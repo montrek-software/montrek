@@ -1,4 +1,5 @@
 import datetime
+from dataclasses import dataclass
 from decimal import Decimal
 from functools import wraps
 from typing import Any, Protocol
@@ -22,6 +23,15 @@ class MockTableElement(te.AttrTableElement):
 class MockTableElementCustomHoverText(te.StringTableElement):
     def get_hover_text(self, obj: Any) -> str | None:
         return f"Hover from field {obj[str(self.hover_text)]}"
+
+
+class MockActiveLinkTableElement(te.LinkTextTableElement):
+    def is_active(self, value: Any, obj: Any) -> bool:
+        if value == "is_active":
+            return True
+        if value == "is_not_active":
+            return False
+        return obj["is_active"]
 
 
 class HasAssertEqual(Protocol):
@@ -100,7 +110,10 @@ class TableElementTestingToolMixin(HasAssertEqual):
     ):
         test_display_field = table_element.get_display_field(obj)
         self.assertEqual(test_display_field.name, table_element.name)
-        self.assertEqual(test_display_field.display_value, expected_format)
+        self.assertEqual(
+            test_display_field.display_value.replace("\n", "").lstrip(),
+            expected_format.replace("\n", "").lstrip(),
+        )
         self.assertEqual(test_display_field.hover_text, expected_hover_text)
         self.assertEqual(
             test_display_field.td_classes_str, " ".join(expected_td_classes)
@@ -183,7 +196,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value="test1,test2",
-            expected_format="test1<br>test2",
+            expected_format="test1<br>    test2",
             expected_format_latex=" \\color{black} test1,test2 &",
         )
 
@@ -193,7 +206,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value="test1,2;test2;test4",
-            expected_format="test1,2|test2|test4",
+            expected_format="test1,2|    test2|    test4",
             expected_format_latex=" \\color{black} test1,2;test2;test4 &",
         )
 
@@ -295,7 +308,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value=1234.5678,
-            expected_format="1,234.57&#x20AC;",
+            expected_format="1,234.57€",
             expected_format_latex="\\color{darkblue} 1,234.57€ &",
             expected_td_classes=["text-end"],
             expected_style_attrs={"color": "#002F6C"},
@@ -303,7 +316,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value=1234,
-            expected_format="1,234.00&#x20AC;",
+            expected_format="1,234.00€",
             expected_format_latex="\\color{darkblue} 1,234.00€ &",
             expected_td_classes=["text-end"],
             expected_style_attrs={"color": "#002F6C"},
@@ -311,7 +324,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value=-1234,
-            expected_format="-1,234.00&#x20AC;",
+            expected_format="-1,234.00€",
             expected_format_latex="\\color{red} -1,234.00€ &",
             expected_td_classes=["text-end"],
             expected_style_attrs={"color": "#BE0D3E"},
@@ -319,8 +332,8 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value="bla",
-            expected_format="bla",
-            expected_format_latex="bla &",
+            expected_format="bla€",
+            expected_format_latex="bla€ &",
             expected_td_classes=["text-start"],
         )
 
@@ -329,7 +342,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value=1234.5678,
-            expected_format="1,234.57&#0036;",
+            expected_format="1,234.57$",
             expected_format_latex="\\color{darkblue} 1,234.57\\$ &",
             expected_td_classes=["text-end"],
             expected_style_attrs={"color": "#002F6C"},
@@ -337,7 +350,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value=1234,
-            expected_format="1,234.00&#0036;",
+            expected_format="1,234.00$",
             expected_format_latex="\\color{darkblue} 1,234.00\\$ &",
             expected_td_classes=["text-end"],
             expected_style_attrs={"color": "#002F6C"},
@@ -345,7 +358,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value=-1234,
-            expected_format="-1,234.00&#0036;",
+            expected_format="-1,234.00$",
             expected_format_latex="\\color{red} -1,234.00\\$ &",
             expected_td_classes=["text-end"],
             expected_style_attrs={"color": "#BE0D3E"},
@@ -353,8 +366,8 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value="bla",
-            expected_format="bla",
-            expected_format_latex="bla &",
+            expected_format="bla$",
+            expected_format_latex="bla\\$ &",
             expected_td_classes=["text-start"],
         )
 
@@ -533,14 +546,14 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value=True,
-            expected_format='<span class="bi bi-check-circle-fill text-success"></span>',
+            expected_format='    <span class="bi bi-check-circle-fill text-success"></span>',
             expected_format_latex="\\twemoji{white_check_mark} &",
             expected_td_classes=["text-center"],
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value=False,
-            expected_format='<span class="bi bi-x-circle-fill text-danger"></span>',
+            expected_format='    <span class="bi bi-x-circle-fill text-danger"></span>',
             expected_format_latex="\\twemoji{cross mark} &",
             expected_td_classes=["text-center"],
         )
@@ -551,7 +564,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             name="name",
             attr="test_text",
         )
-        value = table_element.get_value(test_obj)
+        value = table_element.get_display_field(test_obj).display_value
         self.assertIn("<br>", value)
 
     def test_wrap_text_in_string_table_element__none(self):
@@ -642,6 +655,27 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.assertEqual(
             test_str_latex,
             " \\url{https://www.google.com} &",
+        )
+
+    def test_image_table_element(self):
+        table_element = te.ImageTableElement(
+            name="name",
+            attr="test_attr",
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=table_element,
+            value="pic.png",
+            expected_format='<img src="pic.png" alt="image" width="100" height="100">',
+            expected_format_latex="\\includegraphics[width=0.3\\textwidth]{pic.png} &",
+        )
+        table_element = te.ImageTableElement(
+            name="name", attr="test_attr", alt="alt_image"
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=table_element,
+            value="pic.png",
+            expected_format='<img src="pic.png" alt="alt_image" width="100" height="100">',
+            expected_format_latex="\\includegraphics[width=0.3\\textwidth]{pic.png} &",
         )
 
     def test_image_table_element__latex_image(self):
@@ -765,7 +799,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_object(
             table_element=test_element,
             test_obj=obj,
-            expected_format='<div style=\'max-height: 300px; overflow-y: auto;\'><a id="id__fake_url_1" href="/fake_url/1">a</a><br><a id="id__fake_url_2" href="/fake_url/2">b</a><br><a id="id__fake_url_3" href="/fake_url/3">c</a></div>',
+            expected_format='<div style="max-height: 300px; overflow-y: auto;">      <div><a id="id__fake_url_1" href="/fake_url/1">a</a></div>      <div><a id="id__fake_url_2" href="/fake_url/2">b</a></div>      <div><a id="id__fake_url_3" href="/fake_url/3">c</a></div>  </div>',
             expected_format_latex=" \\color{black} a,b,c &",
             expected_hover_text="hover_text",
         )
@@ -819,21 +853,47 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         )
 
     def test__get_link_text__active(self):
-        test_obj = TestMontrekSatelliteFactory.create()
-        table_element = te.LinkTextTableElement(
+        test_element = MockActiveLinkTableElement(
             name="name",
             url="dummy_detail",
             kwargs={"pk": "pk"},
             text="test_name",
             hover_text="hover_text",
         )
-        link_text = str(table_element.get_value(test_obj))
-        test_link = table_element.get_html_table_link_element(
-            test_obj, link_text, active=True
+        test_obj = {"pk": 1, "test_name": "Test_Name", "is_active": False}
+        self.table_element_test_assertions_from_object(
+            table_element=test_element,
+            test_obj=test_obj,
+            expected_format='<a id="id__baseclasses_1_details" href="/baseclasses/1/details">Test_Name</a>',
+            expected_format_latex=" \\color{black} Test\\_Name &",
+            expected_hover_text="hover_text",
         )
-        self.assertEqual(
-            str(test_link),
-            f'<b><a id="id__baseclasses_{test_obj.id}_details" href="/baseclasses/{test_obj.id}/details">{test_obj.test_name}</a></b>',
+        test_obj = {"pk": 1, "test_name": "Test_Name", "is_active": True}
+        self.table_element_test_assertions_from_object(
+            table_element=test_element,
+            test_obj=test_obj,
+            expected_format='<a id="id__baseclasses_1_details" href="/baseclasses/1/details">Test_Name</a>',
+            expected_format_latex=" \\color{black} Test\\_Name &",
+            expected_hover_text="hover_text",
+            expected_td_classes=["text-start fw-bold"],
+        )
+        test_obj = {"pk": 1, "test_name": "is_active", "is_active": False}
+        self.table_element_test_assertions_from_object(
+            table_element=test_element,
+            test_obj=test_obj,
+            expected_format='<a id="id__baseclasses_1_details" href="/baseclasses/1/details">is_active</a>',
+            expected_format_latex=" \\color{black} is\\_active &",
+            expected_hover_text="hover_text",
+            expected_td_classes=["text-start fw-bold"],
+        )
+        test_obj = {"pk": 1, "test_name": "is_not_active", "is_active": True}
+        self.table_element_test_assertions_from_object(
+            table_element=test_element,
+            test_obj=test_obj,
+            expected_format='<a id="id__baseclasses_1_details" href="/baseclasses/1/details">is_not_active</a>',
+            expected_format_latex=" \\color{black} is\\_not\\_active &",
+            expected_hover_text="hover_text",
+            expected_td_classes=["text-start"],
         )
 
     def test__get_link_text_filter(self):
@@ -862,7 +922,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             kwargs={"pk": "pk", "filter": "test_name"},
             static_kwargs={"static": "test_static"},
         )
-        test_kwargs = table_element._get_url_kwargs(test_obj)
+        test_kwargs = table_element.get_url_kwargs(test_obj)
         self.assertEqual(test_kwargs["static"], "test_static")
 
     def test_link_icon(self):
@@ -920,41 +980,29 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         table_element = te.ColorCodedStringTableElement(
             name="name", attr="test_attr", color_codes=color_codes
         )
-        blue_value = table_element.format("abc")
-        self.assertEqual(
-            blue_value, '<td style="text-align: left; color: #2B6D8B">abc</td>'
+        self.table_element_test_assertions_from_value(
+            table_element=table_element,
+            value="abc",
+            expected_format="abc",
+            expected_format_latex=" \\color{mediumblue} abc &",
+            expected_td_classes=["text-start"],
+            expected_style_attrs={"color": "#2B6D8B"},
         )
-        rose_value = table_element.format("def")
-        self.assertEqual(
-            rose_value, '<td style="text-align: left; color: #D3A9A1">def</td>'
+        self.table_element_test_assertions_from_value(
+            table_element=table_element,
+            value="def",
+            expected_format="def",
+            expected_format_latex=" \\color{softrose} def &",
+            expected_td_classes=["text-start"],
+            expected_style_attrs={"color": "#D3A9A1"},
         )
-        default_value = table_element.format("ghi")
-        self.assertEqual(
-            default_value, '<td style="text-align: left; color: #004767">ghi</td>'
-        )
-
-    def test_color_coded_table_element__latex(self):
-        color_codes = {
-            "abc": ReportingColors.MEDIUM_BLUE,
-            "def": ReportingColors.SOFT_ROSE,
-        }
-        table_element = te.ColorCodedStringTableElement(
-            name="name", attr="test_attr", color_codes=color_codes
-        )
-        blue_value = table_element.format_latex("abc")
-        self.assertEqual(
-            blue_value,
-            " \\color{mediumblue} abc &",
-        )
-        rose_value = table_element.format_latex("def")
-        self.assertEqual(
-            rose_value,
-            " \\color{softrose} def &",
-        )
-        default_value = table_element.format_latex("ghi")
-        self.assertEqual(
-            default_value,
-            " \\color{blue} ghi &",
+        self.table_element_test_assertions_from_value(
+            table_element=table_element,
+            value="ghi",
+            expected_format="ghi",
+            expected_format_latex=" \\color{blue} ghi &",
+            expected_td_classes=["text-start"],
+            expected_style_attrs={"color": "#004767"},
         )
 
     def test_label_table_element__html(self):
@@ -987,26 +1035,28 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_td_classes=["text-center"],
         )
 
-    def test_label_table_element__latex(self):
-        color_codes = {
-            "abc": ReportingColors.MEDIUM_BLUE,
-            "def": ReportingColors.SOFT_ROSE,
-        }
-        table_element = te.LabelTableElement(
-            name="name", attr="test_attr", color_codes=color_codes
-        )
-        blue_value = table_element.format_latex("abc")
-        self.assertEqual(
-            blue_value,
-            "\\colorbox[rgb]{0.169,0.427,0.545}{\\textcolor[HTML]{FFFFFF}{\\textbf{abc}}} &",
-        )
-        rose_value = table_element.format_latex("def")
-        self.assertEqual(
-            rose_value,
-            "\\colorbox[rgb]{0.827,0.663,0.631}{\\textcolor[HTML]{000000}{\\textbf{def}}} &",
-        )
-        default_value = table_element.format_latex("ghi")
-        self.assertEqual(
-            default_value,
-            "\\colorbox[rgb]{0.000,0.278,0.404}{\\textcolor[HTML]{FFFFFF}{\\textbf{ghi}}} &",
-        )
+
+@dataclass
+class MockObject:
+    name: str
+    nested: dict
+
+
+class TestGetDottedAttrOrArgTests(TestCase):
+    def test_get_dotted_attr_or_arg_dict(self):
+        mixin = te.GetDottetAttrsOrArgMixin
+        obj = {"level1": {"level2": "value"}}
+        result = mixin.get_dotted_attr_or_arg(obj, "level1.level2")
+        self.assertEqual("value", result)
+
+    def test_get_dotted_attr_or_arg_missing(self):
+        mixin = te.GetDottetAttrsOrArgMixin
+        obj = {"level1": {}}
+        result = mixin.get_dotted_attr_or_arg(obj, "level1.missing")
+        self.assertIsNone(result)
+
+    def test_get_dotted_attr_or_arg_obj(self):
+        mixin = te.GetDottetAttrsOrArgMixin
+        obj = MockObject(name="Test Name", nested={"value": "Nested Value"})
+        result = mixin.get_dotted_attr_or_arg(obj, "nested.value")
+        self.assertEqual("Nested Value", result)

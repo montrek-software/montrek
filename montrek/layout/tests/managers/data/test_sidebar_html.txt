@@ -1,12 +1,10 @@
-<div
-  class="sidebar bg-light border-right"
->
+<div>
   <ul class="nav navbar-custom flex-column" id="sideNavAccordion">
 
 
-    <li class="nav-item">
+    <li class="nav-item mt-1">
       <button
-        class="nav-link d-flex justify-content-between p-0"
+        class="nav-link p-0 text-start w-100"
         data-bs-toggle="collapse"
         data-bs-target="#group-item1"
         aria-expanded="false"
@@ -22,16 +20,17 @@
         id="group-item1"
       >
 
-          <li class="link-list"><a id="id__home" href="/home">None</a></li>
+        <li class="link-list text-start"><a id="id__home" href="/home">None</a>
+</li>
 
       </ul>
     </li>
 
 
 
-    <li class="nav-item">
+    <li class="nav-item mt-1">
       <button
-        class="nav-link d-flex justify-content-between p-0"
+        class="nav-link p-0 text-start w-100"
         data-bs-toggle="collapse"
         data-bs-target="#group-item2"
         aria-expanded="false"
@@ -47,16 +46,17 @@
         id="group-item2"
       >
 
-          <li class="link-list"><a id="id__home" href="/home">None</a></li>
+        <li class="link-list text-start"><a id="id__home" href="/home">None</a>
+</li>
 
       </ul>
     </li>
 
 
 
-    <li class="nav-item">
+    <li class="nav-item mt-1">
       <button
-        class="nav-link d-flex justify-content-between p-0"
+        class="nav-link p-0 text-start w-100"
         data-bs-toggle="collapse"
         data-bs-target="#group-item3"
         aria-expanded="false"
@@ -72,7 +72,8 @@
         id="group-item3"
       >
 
-          <li class="link-list"><a id="id__home" href="/home">None</a></li>
+        <li class="link-list text-start"><a id="id__home" href="/home">None</a>
+</li>
 
       </ul>
     </li>

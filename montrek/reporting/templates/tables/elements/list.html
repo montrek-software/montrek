@@ -1,0 +1,3 @@
+{% for value in values %}
+    {{ value }}{% if not forloop.last %}{{ out_separator }}{% endif %}
+{% endfor %}

@@ -15,9 +15,10 @@ from baseclasses.dataclasses.number_shortener import NoShortening, NumberShorten
 from baseclasses.sanitizer import HtmlSanitizer
 from django.core.exceptions import FieldDoesNotExist
 from django.template.base import mark_safe
+from django.template.loader import render_to_string
 from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
-from django.utils.html import format_html, format_html_join, strip_tags
+from django.utils.html import strip_tags
 from encrypted_fields import EncryptedCharField
 from pandas.core.tools.datetimes import DateParseError
 from reporting.core.reporting_colors import Color, ReportingColors
@@ -25,8 +26,8 @@ from reporting.core.text_converter import HtmlLatexConverter
 from reporting.dataclasses.display_field import DisplayField
 from rest_framework import serializers
 
-style_attrs_type = dict[str, str]
-td_classes_type = list[str]
+type style_attrs_type = dict[str, str]
+type td_classes_type = list[str]
 
 
 def _get_value_color(value):
@@ -43,6 +44,7 @@ class TableElement:
     hover_text: str | None = field(default=None)
     style_attrs: ClassVar[style_attrs_type] = {}
     td_classes: ClassVar[td_classes_type] = ["text-start"]
+    field_template: ClassVar[str | None] = None
 
     def format(self, value):
         raise NotImplementedError
@@ -69,12 +71,12 @@ class TableElement:
     def get_value_len(self, obj: Any) -> int:
         return len(str(self.get_value(obj)))
 
-    def get_style_attrs(self, value: Any) -> style_attrs_type:
+    def get_style_attrs(self, value: Any, obj: Any) -> style_attrs_type:
         # Method can be overwritten by daughter classes if styling changes depending on the value
         return self.style_attrs
 
-    def get_style_attrs_str(self, value: Any) -> str:
-        style_attrs = self.get_style_attrs(value)
+    def get_style_attrs_str(self, value: Any, obj: Any) -> str:
+        style_attrs = self.get_style_attrs(value, obj)
         return self.format_style_attr(style_attrs)
 
     def format_style_attr(self, style_attrs: style_attrs_type) -> str:
@@ -82,12 +84,12 @@ class TableElement:
             return ""
         return "; ".join(f"{k}: {v}" for k, v in style_attrs.items()) + ";"
 
-    def get_td_classes(self, value: Any) -> td_classes_type:
+    def get_td_classes(self, value: Any, obj: Any) -> td_classes_type:
         # Method can be overwritten by daughter classes if styling changes depending on the value
         return self.td_classes
 
-    def get_td_classes_str(self, value: Any) -> str:
-        td_classes = self.get_td_classes(value)
+    def get_td_classes_str(self, value: Any, obj: Any) -> str:
+        td_classes = self.get_td_classes(value, obj)
         return self.format_td_classes(td_classes)
 
     def format_td_classes(self, td_classes: td_classes_type) -> str:
@@ -98,11 +100,14 @@ class TableElement:
         table_element = (
             self.get_none_table_element() if self.empty_value(value) else self
         )
+        style_attrs_str = table_element.get_style_attrs_str(value, obj)
+        td_classes_str = table_element.get_td_classes_str(value, obj)
+        value = table_element.render_field_template(value, obj)
         return DisplayField(
             name=self.name,
             display_value=table_element.format(value),
-            style_attrs_str=table_element.get_style_attrs_str(value),
-            td_classes_str=table_element.get_td_classes_str(value),
+            style_attrs_str=style_attrs_str,
+            td_classes_str=td_classes_str,
             hover_text=self.get_hover_text(obj),
         )
 
@@ -128,6 +133,18 @@ class TableElement:
 
     def get_hover_text(self, obj: Any) -> str | None:
         return self.hover_text
+
+    def render_field_template(self, value: Any, obj: Any) -> str:
+        if self.field_template is None:
+            return value
+        context_data = self.get_field_context_data(value, obj)
+        context_data["value"] = value
+        return render_to_string(
+            f"tables/elements/{self.field_template}.html", context_data
+        )
+
+    def get_field_context_data(self, value: Any, obj: Any) -> dict[str, Any]:
+        return {}
 
 
 @dataclass
@@ -168,16 +185,17 @@ class AttrTableElement(TableElement):
             value = "*" * len(str(value))
         return value
 
+    def format(self, value):
+        return value
+
 
 @dataclass
 class ExternalLinkTableElement(AttrTableElement):
     serializer_field_class = serializers.CharField
+    field_template: ClassVar[str | None] = "external_link"
 
     def format(self, value):
-        return format_html(
-            '<a href="{value}" target="_blank">{value}</a>',
-            value=value,
-        )
+        return value
 
     def get_hover_text(self, obj: Any) -> str | None:
         value = self.get_value(obj)
@@ -189,17 +207,7 @@ class ExternalLinkTableElement(AttrTableElement):
         return f" \\url{{{value}}} &"
 
 
-@dataclass  # noqa
-class BaseLinkTableElement(TableElement):
-    url: str = field(default="")
-    kwargs: dict = field(default_factory=dict)
-    static_kwargs = {}
-
-    def format_link(self, value, active: bool = False):
-        if active:
-            return format_html("<b>{value}</b>", value=value)
-        return value
-
+class GetDottetAttrsOrArgMixin:
     @staticmethod
     def get_dotted_attr_or_arg(obj, value):
         """
@@ -214,29 +222,47 @@ class BaseLinkTableElement(TableElement):
                 obj = getattr(obj, attr, None)
         return obj
 
-    def get_value(self, obj: Any) -> Any:
-        self.obj = obj
-        return self.get_link_text(obj)
 
-    def format(self, value: Any) -> str:
-        return self.get_html_table_link_element(self.obj, value)
+@dataclass  # noqa
+class BaseLinkTableElement(TableElement, GetDottetAttrsOrArgMixin):
+    url: str = field(default="")
+    kwargs: dict = field(default_factory=dict)
+    static_kwargs: dict = field(default_factory=dict)
+
+    def get_attribute(self, obj: Any, tag: str = "html") -> str:
+        if tag == "html":
+            value = self.get_link(obj)
+            return value
+        elif tag == "latex":
+            value = self.get_value(obj)
+            if self.empty_value(value):
+                return " \\color{black} - &"
+            return self.format_latex(value)
+        raise KeyError(f"Unknown tag {tag}")
+
+    def is_active(self, value: Any, obj: Any) -> bool:
+        # May be overwritten with logic
+        return False
+
+    def get_td_classes(self, value: Any, obj: Any):
+        td_classes = ["text-start"]
+        if self.is_active(strip_tags(value).replace("\n", ""), obj):
+            td_classes += ["fw-bold"]
+        return td_classes
+
+    def get_value(self, obj: Any) -> Any:
+        return strip_tags(self.get_link_text(obj))
+
+    def format(self, value):
+        return value
 
     def format_latex(self, value):
-        return super().format_latex(strip_tags(value))
-
-    def get_html_table_link_element(
-        self, obj: Any, link_text: str, *, active: bool = False
-    ) -> str:
-        url_kwargs = self._get_url_kwargs(obj)
-        url = self._get_url(obj, url_kwargs)
-        link = self._get_link(url, link_text)
-        return f"{self.format_link(link, active)}"
+        return super().format_latex(strip_tags(value)).replace("\n", "")
 
     def get_link_text(self, obj):
         raise NotImplementedError
 
-    def _get_url_kwargs(self, obj: Any) -> dict:
-        # TODO Update this such that _get_dotted_attr_or_arg is not used anymore
+    def get_url_kwargs(self, obj: Any) -> dict:
         kwargs = {
             key: self.get_dotted_attr_or_arg(obj, value)
             for key, value in self.kwargs.items()
@@ -246,7 +272,8 @@ class BaseLinkTableElement(TableElement):
         kwargs.update(self.static_kwargs)
         return kwargs
 
-    def _get_url(self, obj: Any, url_kwargs: dict) -> str:
+    def get_url(self, obj: Any) -> str:
+        url_kwargs = self.get_url_kwargs(obj)
         try:
             url = reverse(
                 self.url,
@@ -260,12 +287,14 @@ class BaseLinkTableElement(TableElement):
             url += filter_str
         return url
 
-    def _get_link(self, url: str, link_text: str) -> str:
+    def get_link(self, obj: Any) -> str:
+        url = self.get_url(obj)
         if not url:
             return ""
         id_tag = url.replace("/", "_")
-        template_str = '<a id="id_{0}" href="{1}">{2}</a>'
-        return format_html(template_str, id_tag, url, link_text)
+        link_text = self.get_link_text(obj)
+        context = {"id_tag": id_tag, "url": url, "link_text": link_text}
+        return render_to_string("tables/elements/link.html", context)
 
 
 @dataclass
@@ -283,14 +312,11 @@ class LinkTableElement(BaseLinkTableElement):
             icon = "pencil"
         else:
             icon = self.icon
-        return icon
-
-    def format(self, value: Any) -> str:
-        icon_value = format_html('<span class="bi bi-{}"></span>', value)
-        return self.get_html_table_link_element(self.obj, icon_value)
+        context = {"value": icon}
+        return render_to_string("tables/elements/icon_link.html", context)
 
     def format_latex(self, value):
-        latex_icon = self.icon_latex_map.get(value, "cross mark")
+        latex_icon = self.icon_latex_map.get(self.icon, "cross mark")
         return super().format_latex(f"\\twemoji{{{latex_icon}}}")
 
 
@@ -305,47 +331,46 @@ class LinkTextTableElement(BaseLinkTableElement):
 
 
 @dataclass
-class LinkListTableElement(BaseLinkTableElement):
+class LinkListTableElement(TableElement, GetDottetAttrsOrArgMixin):
+    url: str = field(default="")
+    kwargs: dict = field(default_factory=dict)
     serializer_field_class = serializers.CharField
     text: str = field(default="")
     list_attr: str = field(default="")
     list_kwarg: str = field(default="")
     in_separator: str = ";"
-    out_separator: str = mark_safe("<br>")
+    field_template: ClassVar[str | None] = "link_list"
 
-    def link_iter(self, value, obj):
-        for list_value, link_text in value:
-            url_kwargs = self._get_url_kwargs(obj)
-            url_kwargs[self.list_kwarg] = list_value
-            url = self._get_url(obj, url_kwargs)
-            yield self._get_link(url, link_text)
+    def get_field_context_data(self, value: Any, obj: Any) -> dict[str, Any]:
+        return {"link_list": self.get_link_list(value, obj)}
 
-    def get_html_table_link_element(
-        self, obj: Any, link_text: str, *, active: bool = False
-    ) -> str:
-        link_join = format_html_join(
-            self.out_separator,
-            "{}",
-            ((link,) for link in self.link_iter(link_text, obj)),
-        )
-        return format_html(
-            "<div style='max-height: 300px; overflow-y: auto;'>{}</div>", link_join
-        )
-
-    def get_link_text(self, obj) -> list:
+    def get_link_list(self, value, obj):
         list_values = self.get_dotted_attr_or_arg(obj, self.list_attr)
         list_values = str(list_values).split(self.in_separator) if list_values else []
+        link_list = []
+        for i, list_text in enumerate(value):
+            list_value = list_values[i]
+            link_list.append(
+                LinkTextTableElement(
+                    name=list_text,
+                    text=self.text,
+                    hover_text=self.hover_text,
+                    url=self.url,
+                    kwargs={self.list_kwarg: self.list_attr},
+                ).get_display_field({self.text: list_text, self.list_attr: list_value})
+            )
+        return link_list
+
+    def format(self, value):
+        return value
+
+    def get_value(self, obj: Any):
         text_values = self.get_dotted_attr_or_arg(obj, self.text)
         text_values = str(text_values).split(self.in_separator) if text_values else []
-        assert len(list_values) == len(  # nosec b101
-            text_values
-        ), f"list_values: {list_values}, text_values: {text_values}"
-        values = zip(list_values, text_values)
-        values = sorted(values, key=lambda x: x[1])
-        return values
+        return text_values
 
     def format_latex(self, value):
-        return " \\color{{black}} {} &".format(",".join([val[1] for val in value]))
+        return " \\color{{black}} {} &".format(",".join(value))
 
 
 @dataclass
@@ -354,6 +379,14 @@ class StringTableElement(AttrTableElement):
     attr: str
     chunk_size: int = 56
     td_classes: ClassVar[td_classes_type] = ["text-start"]
+    field_template: ClassVar[str | None] = "string"
+
+    def get_field_context_data(self, value: Any, obj: Any) -> dict[str, Any]:
+        value = str(value)
+        if len(value) > self.chunk_size:
+            chunks = self._chunk_text(value)
+            return {"chunks": chunks}
+        return {"chunks": None}
 
     def format(self, value):
         return str(value)
@@ -362,12 +395,6 @@ class StringTableElement(AttrTableElement):
         value = super().get_value(obj)
         if pd.isna(value):
             return None
-        value = str(value)
-        if len(value) > self.chunk_size:
-            chunks = self._chunk_text(value)
-            return format_html_join(
-                mark_safe("<br>"), "{}", ((chunk,) for chunk in chunks)
-            )
         return value
 
     def _chunk_text(self, text: str) -> list[str]:
@@ -388,9 +415,6 @@ class StringTableElement(AttrTableElement):
 class TextTableElement(StringTableElement): ...
 
 
-# TODO: Deprecate this class, since text wrapping is handled by StringTableElement
-
-
 @dataclass
 class ListTableElement(AttrTableElement):
     serializer_field_class = serializers.CharField
@@ -398,15 +422,14 @@ class ListTableElement(AttrTableElement):
     in_separator: str = ","
     out_separator: str = mark_safe("<br>")
     td_classes: ClassVar[td_classes_type] = ["text-start"]
+    field_template: ClassVar[str | None] = "list"
 
-    def format(self, value):
+    def get_field_context_data(self, value: Any, obj: Any) -> dict[str, Any]:
         values = value.split(self.in_separator)
-
-        return format_html_join(
-            self.out_separator,
-            "{}",
-            ((v.strip(),) for v in values),
-        )
+        return {
+            "values": [v.strip() for v in values],
+            "out_separator": self.out_separator,
+        }
 
 
 @dataclass
@@ -414,17 +437,12 @@ class AlertTableElement(AttrTableElement):
     serializer_field_class = serializers.CharField
     attr: str
     td_classes: ClassVar[td_classes_type] = ["text-center"]
+    field_template: ClassVar[str | None] = "alert"
 
-    def get_style_attrs(self, value: Any) -> style_attrs_type:
+    def get_style_attrs(self, value: Any, obj: Any) -> style_attrs_type:
         status = AlertEnum.get_by_description(value)
         status_color = status.color.hex
         return {"color": status_color}
-
-    def format(self, value):
-        return format_html(
-            "<b>{0}</b>",
-            value,
-        )
 
 
 @dataclass
@@ -436,12 +454,16 @@ class NumberTableElement(AttrTableElement):
 
     def get_display_field(self, obj: Any) -> DisplayField:
         value = self.get_attribute(obj, "html")
+        table_element = (
+            self.get_none_table_element() if self.empty_value(value) else self
+        )
         display_value, td_classes, style_attrs = self._analyze_value(value)
+        display_value = table_element.render_field_template(display_value, obj)
         return DisplayField(
             name=self.name,
             display_value=display_value,
-            style_attrs_str=self.format_style_attr(style_attrs),
-            td_classes_str=self.format_td_classes(td_classes),
+            style_attrs_str=table_element.format_style_attr(style_attrs),
+            td_classes_str=table_element.format_td_classes(td_classes),
             hover_text=self.get_hover_text(obj),
         )
 
@@ -521,16 +543,13 @@ class ProgressBarTableElement(NumberTableElement):
     serializer_field_class = serializers.FloatField
     attr: str
     td_classes: ClassVar[td_classes_type] = ["text-center"]
+    field_template: ClassVar[str | None] = "progress_bar"
 
-    def _format_value(self, value: float) -> str:
+    def get_field_context_data(self, value: Any, obj: Any) -> dict[str, Any]:
+        value = float(value)
         per_value = value * 100
         out_value = f"{value * 100:.2f}"
-
-        return format_html(
-            '<div class="bar-container"> <div class="bar" style="width: {per_value}%;"></div> <span class="bar-value">{value}%</span> </div>',
-            per_value=per_value,
-            value=out_value,
-        )
+        return {"per_value": per_value, "out_value": out_value}
 
     def format_latex(self, value) -> str:
         per_value = value * 100
@@ -595,13 +614,7 @@ class BooleanTableElement(AttrTableElement):
     serializer_field_class = serializers.BooleanField
     attr: str
     td_classes: ClassVar[td_classes_type] = ["text-center"]
-
-    def format(self, value):
-        if value:
-            return mark_safe(
-                '<span class="bi bi-check-circle-fill text-success"></span>'
-            )
-        return mark_safe('<span class="bi bi-x-circle-fill text-danger"></span>')
+    field_template: ClassVar[str | None] = "bool"
 
     def format_latex(self, value) -> str:
         if value:
@@ -614,47 +627,32 @@ class MoneyTableElement(NumberTableElement):
     serializer_field_class = serializers.FloatField
     attr: str
     shortener: NumberShortenerABC = NoShortening()
+    field_template: ClassVar[str | None] = "money"
+    ccy_symbol: ClassVar[str] = ""
+    latex_escape: ClassVar[bool] = False
 
-    @property
-    def ccy_symbol(self) -> str:
-        return ""
-
-    @property
-    def ccy_symbol_latex(self) -> str:
-        return ""
+    def get_field_context_data(self, value: Any, obj: Any) -> dict[str, Any]:
+        return {"ccy_symbol": self.ccy_symbol}
 
     def _format_value(self, value) -> str:
-        value = self.shortener.shorten(value, ",.2f")
-        return format_html(
-            "{value}{ccy_symbol}", value=value, ccy_symbol=self.ccy_symbol
-        )
+        return self.shortener.shorten(value, ",.2f")
 
     def format_latex(self, value):
         formatted_value = super().format_latex(value)
-        formatted_value = formatted_value.replace(
-            self.ccy_symbol, self.ccy_symbol_latex
+        latex_ccy_symbol = (
+            f"\\{self.ccy_symbol}" if self.latex_escape else self.ccy_symbol
         )
+        formatted_value = formatted_value.replace(" &", f"{latex_ccy_symbol} &")
         return formatted_value
 
 
 class EuroTableElement(MoneyTableElement):
-    @property
-    def ccy_symbol(self) -> str:
-        return mark_safe("&#x20AC;")
-
-    @property
-    def ccy_symbol_latex(self) -> str:
-        return "€"
+    ccy_symbol: ClassVar[str] = "€"
 
 
 class DollarTableElement(MoneyTableElement):
-    @property
-    def ccy_symbol(self) -> str:
-        return mark_safe("&#0036;")
-
-    @property
-    def ccy_symbol_latex(self) -> str:
-        return "\\$"
+    latex_escape: ClassVar[bool] = True
+    ccy_symbol: ClassVar[str] = "$"
 
 
 @dataclass
@@ -663,14 +661,10 @@ class ImageTableElement(AttrTableElement):
     attr: str
     alt: str = "image"
     td_classes: ClassVar[td_classes_type] = ["text-start"]
+    field_template: ClassVar[str | None] = "image"
 
-    def format(self, value):
-        alt = self.alt
-        return format_html(
-            '<img src="{value}" alt="{alt}" style="width:100px;height:100px;">',
-            value=value,
-            alt=alt,
-        )
+    def get_field_context_data(self, value: Any, obj: Any) -> dict[str, Any]:
+        return {"alt": self.alt}
 
     def format_latex(self, value):
         def _return_string(value):
@@ -701,19 +695,16 @@ class MethodNameTableElement(AttrTableElement):
     attr: str
     class_: type = object
     serializer_field_class = serializers.CharField
+    field_template: ClassVar[str | None] = "method_name"
 
-    def format(self, value):
+    def get_field_context_data(self, value: Any, obj: Any) -> dict[str, Any]:
         func = getattr(self.class_, value)
         # Strip all decorator functions to get the to the original method.
         while hasattr(func, "__wrapped__"):
             func = func.__wrapped__
         doc = inspect.getdoc(func)
         doc = doc or ""
-        return format_html(
-            '<div title="{doc}">{value}</div>',
-            doc=doc,
-            value=value,
-        )
+        return {"doc": doc}
 
 
 class HistoryChangeState(Enum):
@@ -733,7 +724,7 @@ class HistoryStringTableElement(StringTableElement):
         self.change_format = self._get_change_format(obj)
         return super().get_attribute(obj, tag)
 
-    def get_style_attrs(self, value: Any) -> style_attrs_type:
+    def get_style_attrs(self, value: Any, obj: Any) -> style_attrs_type:
         if self.change_format == HistoryChangeState.OLD:
             color = ReportingColors.RED.hex
         elif self.change_format == HistoryChangeState.NEW:
@@ -742,7 +733,7 @@ class HistoryStringTableElement(StringTableElement):
             color = ReportingColors.BLACK.hex
         return {"color": color}
 
-    def get_td_classes(self, value: Any) -> td_classes_type:
+    def get_td_classes(self, value: Any, obj: Any) -> td_classes_type:
         if self.change_format in (HistoryChangeState.OLD, HistoryChangeState.NEW):
             return ["fw-bold"]
         return []
@@ -757,16 +748,12 @@ class HistoryStringTableElement(StringTableElement):
 
 
 @dataclass
-class ColorCodedStringTableElement(StringTableElement):
+class ColorCodedStringTableElement(AttrTableElement):
     color_codes: dict[str, Color] = field(default_factory=dict)
 
-    def format(self, value):
+    def get_style_attrs(self, value: Any, obj: Any) -> style_attrs_type:
         color = self.color_codes.get(value, ReportingColors.BLUE).hex
-        return format_html(
-            '<td style="text-align: left; color: {color}">{value}</td>',
-            color=color,
-            value=value,
-        )
+        return {"color": color}
 
     def format_latex(self, value):
         value_str = str(value)
@@ -776,20 +763,16 @@ class ColorCodedStringTableElement(StringTableElement):
 
 
 @dataclass
-class LabelTableElement(StringTableElement):
+class LabelTableElement(AttrTableElement):
     td_classes: ClassVar[td_classes_type] = ["text-center"]
     color_codes: dict[str, Color] = field(default_factory=dict)
+    field_template: ClassVar[str | None] = "label"
 
-    def format(self, value):
+    def get_field_context_data(self, value: Any, obj: Any) -> dict[str, Any]:
         base_color = self.color_codes.get(value, ReportingColors.BLUE)
         font_color = ReportingColors.contrast_font_color(base_color).hex
         color = base_color.hex
-        return format_html(
-            '<span class="badge" style="background-color:{color};color:{font_color};">{value}</span>',
-            color=color,
-            font_color=font_color,
-            value=value,
-        )
+        return {"color": color, "font_color": font_color}
 
     def format_latex(self, value):
         value_str = str(value)

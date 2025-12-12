@@ -1,4 +1,6 @@
 from collections import defaultdict
+from dataclasses import dataclass, field
+from typing import Any
 
 from django.db.models import QuerySet
 from django.template.loader import render_to_string
@@ -6,14 +8,20 @@ from reporting.dataclasses import table_elements as te
 from reporting.managers.montrek_table_manager import MontrekTableManagerABC
 
 
+@dataclass
+class SidebarLinkTableElement(te.LinkTextTableElement):
+    compare_url: str = field(default="")
+
+    def is_active(self, value: Any, obj: Any) -> bool:
+        url = self.get_url(obj)
+        return url == self.compare_url
+
+
 class SidebarManagerABC(MontrekTableManagerABC):
     group_field: str = "group_field not set"
 
-    def link(self) -> te.LinkTextTableElement:
+    def link(self) -> SidebarLinkTableElement:
         raise NotImplementedError("Method 'link' has to be implemented")
-
-    def compare_url(self) -> str:
-        return ""
 
     def get_full_table(self) -> QuerySet | dict:
         self.set_order_field()
@@ -24,21 +32,13 @@ class SidebarManagerABC(MontrekTableManagerABC):
 
         # Group sections by topic
         grouped_items = defaultdict(list)
-        compare_url = self.compare_url()
         active_group = None
         link = self.link()
         for item in items:
-            url_kwargs = link._get_url_kwargs(item)
-            linked_url = link._get_url(item, url_kwargs)
-            active = linked_url == compare_url
             group = getattr(item, self.group_field)
-            if active:
+            if link.is_active(None, item):
                 active_group = group
-            link_text = str(link.get_value(item))
-            # TODO: rewrite this such that the hover text is passed to the item and it works with a template
-            grouped_items[group].append(
-                link.get_html_table_link_element(item, link_text, active=active)
-            )
+            grouped_items[group].append(link.get_display_field(item))
         # Render using Django template
         html = render_to_string(
             "sidebar.html",
