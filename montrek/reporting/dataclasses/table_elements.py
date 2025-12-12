@@ -316,7 +316,7 @@ class LinkTableElement(BaseLinkTableElement):
         return render_to_string("tables/elements/icon_link.html", context)
 
     def format_latex(self, value):
-        latex_icon = self.icon_latex_map.get(value, "cross mark")
+        latex_icon = self.icon_latex_map.get(self.icon, "cross mark")
         return super().format_latex(f"\\twemoji{{{latex_icon}}}")
 
 
