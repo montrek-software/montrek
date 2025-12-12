@@ -350,7 +350,7 @@ class LinkListTableElement(BaseLinkTableElement):
         link_join = format_html_join(
             self.out_separator,
             "{}",
-            self.get_link_list(link_text, obj),
+            ((link,) for link in self.get_link_list(link_text, obj)),
         )
         return format_html(
             "<div style='max-height: 300px; overflow-y: auto;'>{}</div>", link_join
@@ -429,7 +429,7 @@ class ListTableElement(AttrTableElement):
     def get_field_context_data(self, value: Any, obj: Any) -> dict[str, Any]:
         values = value.split(self.in_separator)
         return {
-            "values": (v.strip() for v in values),
+            "values": [v.strip() for v in values],
             "out_separator": self.out_separator,
         }
 
