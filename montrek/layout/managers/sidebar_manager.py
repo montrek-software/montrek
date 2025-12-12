@@ -1,4 +1,5 @@
 from collections import defaultdict
+from dataclasses import dataclass, field
 
 from django.db.models import QuerySet
 from django.template.loader import render_to_string
@@ -6,14 +7,16 @@ from reporting.dataclasses import table_elements as te
 from reporting.managers.montrek_table_manager import MontrekTableManagerABC
 
 
+@dataclass
+class SidebarLinkTableElement(te.LinkTextTableElement):
+    compare_url: str = field(default="")
+
+
 class SidebarManagerABC(MontrekTableManagerABC):
     group_field: str = "group_field not set"
 
-    def link(self) -> te.LinkTextTableElement:
+    def link(self) -> SidebarLinkTableElement:
         raise NotImplementedError("Method 'link' has to be implemented")
-
-    def compare_url(self) -> str:
-        return ""
 
     def get_full_table(self) -> QuerySet | dict:
         self.set_order_field()
@@ -24,12 +27,11 @@ class SidebarManagerABC(MontrekTableManagerABC):
 
         # Group sections by topic
         grouped_items = defaultdict(list)
-        compare_url = self.compare_url()
         active_group = None
         link = self.link()
         for item in items:
             linked_url = link.get_url(item)
-            active = linked_url == compare_url
+            active = linked_url == link.compare_url
             group = getattr(item, self.group_field)
             if active:
                 active_group = group

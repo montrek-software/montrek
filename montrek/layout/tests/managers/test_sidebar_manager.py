@@ -3,8 +3,7 @@ import os
 from baseclasses.tests.mocks import MockRepository
 from django.test import TestCase
 from django.urls import reverse
-from layout.managers.sidebar_manager import SidebarManagerABC
-from reporting.dataclasses import table_elements as te
+from layout.managers.sidebar_manager import SidebarLinkTableElement, SidebarManagerABC
 
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 
@@ -13,15 +12,15 @@ def get_test_file_path(file_name):
     return os.path.join(TEST_DATA_DIR, file_name)
 
 
-class MockSidbarLinkTableElement(te.LinkTextTableElement): ...
+class MockSidebarLinkTableElement(SidebarLinkTableElement): ...
 
 
 class MockSidebarManager(SidebarManagerABC):
     repository_class = MockRepository
     group_field = "field"
 
-    def link(self) -> te.LinkTextTableElement:
-        return MockSidbarLinkTableElement(
+    def link(self) -> SidebarLinkTableElement:
+        return MockSidebarLinkTableElement(
             name="Test Link",
             url="home",
             kwargs={},
@@ -33,6 +32,16 @@ class MockSidebarManager(SidebarManagerABC):
 class MockSidebarManagerExpanded(MockSidebarManager):
     def compare_url(self):
         return reverse("home", kwargs={})
+
+    def link(self) -> SidebarLinkTableElement:
+        return MockSidebarLinkTableElement(
+            name="Test Link",
+            url="home",
+            kwargs={},
+            text="report_section_list_name",
+            hover_text="View Expert Evaluation",
+            compare_url=self.compare_url(),
+        )
 
 
 class TestSidebarManager(TestCase):
