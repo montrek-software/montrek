@@ -295,6 +295,7 @@ class LinkTableElement(BaseLinkTableElement):
         "edit": "pencil",
         "trash": "wastebasket",
     }
+    field_template: ClassVar[str | None] = "icon_link"
 
     def get_link_text(self, obj):
         if self.icon == "edit":
@@ -302,10 +303,6 @@ class LinkTableElement(BaseLinkTableElement):
         else:
             icon = self.icon
         return icon
-
-    def format(self, value: Any) -> str:
-        icon_value = format_html('<span class="bi bi-{}"></span>', value)
-        return self.get_html_table_link_element(self.obj, icon_value)
 
     def format_latex(self, value):
         latex_icon = self.icon_latex_map.get(value, "cross mark")
