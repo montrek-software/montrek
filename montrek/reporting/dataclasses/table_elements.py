@@ -330,13 +330,19 @@ class LinkListTableElement(BaseLinkTableElement):
     list_kwarg: str = field(default="")
     in_separator: str = ";"
     out_separator: str = mark_safe("<br>")
+    field_template: ClassVar[str | None] = "link_list"
 
-    def link_iter(self, value, obj):
+    def get_field_context_data(self, value: Any, obj: Any) -> dict[str, Any]:
+        return {"link_list": self.get_link_list(value, obj)}
+
+    def get_link_list(self, value, obj):
+        link_list = []
         for list_value, link_text in value:
             url_kwargs = self._get_url_kwargs(obj)
             url_kwargs[self.list_kwarg] = list_value
             url = self._get_url(obj, url_kwargs)
-            yield self._get_link(url, link_text)
+            link_list.append(self._get_link(url, link_text))
+        return link_list
 
     def get_html_table_link_element(
         self, obj: Any, link_text: str, *, active: bool = False
@@ -344,7 +350,7 @@ class LinkListTableElement(BaseLinkTableElement):
         link_join = format_html_join(
             self.out_separator,
             "{}",
-            ((link,) for link in self.link_iter(link_text, obj)),
+            self.get_link_list(link_text, obj),
         )
         return format_html(
             "<div style='max-height: 300px; overflow-y: auto;'>{}</div>", link_join
@@ -364,6 +370,9 @@ class LinkListTableElement(BaseLinkTableElement):
 
     def format_latex(self, value):
         return " \\color{{black}} {} &".format(",".join([val[1] for val in value]))
+
+    def format(self, value: Any) -> str:
+        return value
 
 
 @dataclass
