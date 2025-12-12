@@ -798,7 +798,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_object(
             table_element=test_element,
             test_obj=obj,
-            expected_format='<div style="max-height: 300px; overflow-y: auto;">      <a id="id__fake_url_1" href="/fake_url/1">a</a><br>      <a id="id__fake_url_2" href="/fake_url/2">b</a><br>      <a id="id__fake_url_3" href="/fake_url/3">c</a>  </div>',
+            expected_format='<div style="max-height: 300px; overflow-y: auto;">      <div><a id="id__fake_url_1" href="/fake_url/1">a</a></div>      <div><a id="id__fake_url_2" href="/fake_url/2">b</a></div>      <div><a id="id__fake_url_3" href="/fake_url/3">c</a></div>  </div>',
             expected_format_latex=" \\color{black} a,b,c &",
             expected_hover_text="hover_text",
         )
@@ -921,7 +921,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             kwargs={"pk": "pk", "filter": "test_name"},
             static_kwargs={"static": "test_static"},
         )
-        test_kwargs = table_element._get_url_kwargs(test_obj)
+        test_kwargs = table_element.get_url_kwargs(test_obj)
         self.assertEqual(test_kwargs["static"], "test_static")
 
     def test_link_icon(self):

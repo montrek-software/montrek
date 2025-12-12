@@ -207,22 +207,7 @@ class ExternalLinkTableElement(AttrTableElement):
         return f" \\url{{{value}}} &"
 
 
-@dataclass  # noqa
-class BaseLinkTableElement(TableElement):
-    url: str = field(default="")
-    kwargs: dict = field(default_factory=dict)
-    static_kwargs: dict = field(default_factory=dict)
-
-    def is_active(self, value: Any, obj: Any):
-        # May be overwritten with logic
-        return False
-
-    def get_td_classes(self, value: Any, obj: Any):
-        td_classes = ["text-start"]
-        if self.is_active(value, obj):
-            td_classes += ["fw-bold"]
-        return td_classes
-
+class GetDottetAttrsOrArgMixin:
     @staticmethod
     def get_dotted_attr_or_arg(obj, value):
         """
@@ -237,29 +222,47 @@ class BaseLinkTableElement(TableElement):
                 obj = getattr(obj, attr, None)
         return obj
 
-    def get_value(self, obj: Any) -> Any:
-        self.obj = obj
-        return self.get_link_text(obj)
 
-    def format(self, value: Any) -> str:
-        return self.get_html_table_link_element(self.obj, value)
+@dataclass  # noqa
+class BaseLinkTableElement(TableElement, GetDottetAttrsOrArgMixin):
+    url: str = field(default="")
+    kwargs: dict = field(default_factory=dict)
+    static_kwargs: dict = field(default_factory=dict)
+
+    def get_attribute(self, obj: Any, tag: str = "html") -> str:
+        if tag == "html":
+            value = self.get_link(obj)
+            return value
+        elif tag == "latex":
+            value = self.get_value(obj)
+            if self.empty_value(value):
+                return " \\color{black} - &"
+            return self.format_latex(value)
+        raise KeyError(f"Unknown tag {tag}")
+
+    def is_active(self, value: Any, obj: Any):
+        # May be overwritten with logic
+        return False
+
+    def get_td_classes(self, value: Any, obj: Any):
+        td_classes = ["text-start"]
+        if self.is_active(strip_tags(value).replace("\n", ""), obj):
+            td_classes += ["fw-bold"]
+        return td_classes
+
+    def get_value(self, obj: Any) -> Any:
+        return strip_tags(self.get_link_text(obj))
+
+    def format(self, value):
+        return value
 
     def format_latex(self, value):
-        return super().format_latex(strip_tags(value))
-
-    def get_html_table_link_element(
-        self, obj: Any, link_text: str, *, active: bool = False
-    ) -> str:
-        url_kwargs = self._get_url_kwargs(obj)
-        url = self._get_url(obj, url_kwargs)
-        link = self._get_link(url, link_text)
-        return link
+        return super().format_latex(strip_tags(value)).replace("\n", "")
 
     def get_link_text(self, obj):
         raise NotImplementedError
 
-    def _get_url_kwargs(self, obj: Any) -> dict:
-        # TODO Update this such that _get_dotted_attr_or_arg is not used anymore
+    def get_url_kwargs(self, obj: Any) -> dict:
         kwargs = {
             key: self.get_dotted_attr_or_arg(obj, value)
             for key, value in self.kwargs.items()
@@ -269,7 +272,8 @@ class BaseLinkTableElement(TableElement):
         kwargs.update(self.static_kwargs)
         return kwargs
 
-    def _get_url(self, obj: Any, url_kwargs: dict) -> str:
+    def get_url(self, obj: Any) -> str:
+        url_kwargs = self.get_url_kwargs(obj)
         try:
             url = reverse(
                 self.url,
@@ -283,10 +287,12 @@ class BaseLinkTableElement(TableElement):
             url += filter_str
         return url
 
-    def _get_link(self, url: str, link_text: str) -> str:
+    def get_link(self, obj: Any) -> str:
+        url = self.get_url(obj)
         if not url:
             return ""
         id_tag = url.replace("/", "_")
+        link_text = self.get_link_text(obj)
         context = {"id_tag": id_tag, "url": url, "link_text": link_text}
         return render_to_string("tables/elements/link.html", context)
 
@@ -300,14 +306,14 @@ class LinkTableElement(BaseLinkTableElement):
         "edit": "pencil",
         "trash": "wastebasket",
     }
-    field_template: ClassVar[str | None] = "icon_link"
 
     def get_link_text(self, obj):
         if self.icon == "edit":
             icon = "pencil"
         else:
             icon = self.icon
-        return icon
+        context = {"value": icon}
+        return render_to_string("tables/elements/icon_link.html", context)
 
     def format_latex(self, value):
         latex_icon = self.icon_latex_map.get(value, "cross mark")
@@ -325,44 +331,46 @@ class LinkTextTableElement(BaseLinkTableElement):
 
 
 @dataclass
-class LinkListTableElement(BaseLinkTableElement):
+class LinkListTableElement(TableElement, GetDottetAttrsOrArgMixin):
+    url: str = field(default="")
+    kwargs: dict = field(default_factory=dict)
     serializer_field_class = serializers.CharField
     text: str = field(default="")
     list_attr: str = field(default="")
     list_kwarg: str = field(default="")
     in_separator: str = ";"
-    out_separator: str = mark_safe("<br>")
     field_template: ClassVar[str | None] = "link_list"
 
     def get_field_context_data(self, value: Any, obj: Any) -> dict[str, Any]:
         return {"link_list": self.get_link_list(value, obj)}
 
     def get_link_list(self, value, obj):
-        link_list = []
-        for list_value, link_text in value:
-            url_kwargs = self._get_url_kwargs(obj)
-            url_kwargs[self.list_kwarg] = list_value
-            url = self._get_url(obj, url_kwargs)
-            link_list.append(self._get_link(url, link_text))
-        return link_list
-
-    def get_link_text(self, obj) -> list:
         list_values = self.get_dotted_attr_or_arg(obj, self.list_attr)
         list_values = str(list_values).split(self.in_separator) if list_values else []
+        link_list = []
+        for i, list_text in enumerate(value):
+            list_value = list_values[i]
+            link_list.append(
+                LinkTextTableElement(
+                    name=list_text,
+                    text=self.text,
+                    hover_text=self.hover_text,
+                    url=self.url,
+                    kwargs={self.list_kwarg: self.list_attr},
+                ).get_display_field({self.text: list_text, self.list_attr: list_value})
+            )
+        return link_list
+
+    def format(self, value):
+        return value
+
+    def get_value(self, obj: Any):
         text_values = self.get_dotted_attr_or_arg(obj, self.text)
         text_values = str(text_values).split(self.in_separator) if text_values else []
-        assert len(list_values) == len(  # nosec b101
-            text_values
-        ), f"list_values: {list_values}, text_values: {text_values}"
-        values = zip(list_values, text_values)
-        values = sorted(values, key=lambda x: x[1])
-        return values
+        return text_values
 
     def format_latex(self, value):
-        return " \\color{{black}} {} &".format(",".join([val[1] for val in value]))
-
-    def format(self, value: Any) -> str:
-        return value
+        return " \\color{{black}} {} &".format(",".join(value))
 
 
 @dataclass
