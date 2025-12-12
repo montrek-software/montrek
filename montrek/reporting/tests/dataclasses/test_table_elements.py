@@ -1,4 +1,5 @@
 import datetime
+from dataclasses import dataclass
 from decimal import Decimal
 from functools import wraps
 from typing import Any, Protocol
@@ -1033,3 +1034,29 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_format_latex="\\colorbox[rgb]{0.000,0.278,0.404}{\\textcolor[HTML]{FFFFFF}{\\textbf{ghi}}} &",
             expected_td_classes=["text-center"],
         )
+
+
+@dataclass
+class MockObject:
+    name: str
+    nested: dict
+
+
+class TestGetDottedAttrOrArgTests(TestCase):
+    def test_get_dotted_attr_or_arg_dict(self):
+        mixin = te.GetDottetAttrsOrArgMixin
+        obj = {"level1": {"level2": "value"}}
+        result = mixin.get_dotted_attr_or_arg(obj, "level1.level2")
+        self.assertEqual("value", result)
+
+    def test_get_dotted_attr_or_arg_missing(self):
+        mixin = te.GetDottetAttrsOrArgMixin
+        obj = {"level1": {}}
+        result = mixin.get_dotted_attr_or_arg(obj, "level1.missing")
+        self.assertIsNone(result)
+
+    def test_get_dotted_attr_or_arg_obj(self):
+        mixin = te.GetDottetAttrsOrArgMixin
+        obj = MockObject(name="Test Name", nested={"value": "Nested Value"})
+        result = mixin.get_dotted_attr_or_arg(obj, "nested.value")
+        self.assertEqual("Nested Value", result)
