@@ -1,12 +1,12 @@
 <div
   class="sidebar bg-light border-right"
 >
-  <ul class="nav navbar-custom flex-column" id="sideNavAccordion">
+  <ul class="text-start nav navbar-custom flex-column" id="sideNavAccordion">
     {% for group, links in grouped_items.items %}
     {% with group_slug=group|slugify %}
-    <li class="nav-item text-start">
+    <li class="text-start nav-item">
       <button
-        class="nav-link d-flex justify-content-between p-0"
+        class="nav-link p-0 text-start w-100"
         data-bs-toggle="collapse"
         data-bs-target="#group-{{ group_slug }}"
         aria-expanded="{% if group == active_group %}true{% else %}false{% endif %}"
