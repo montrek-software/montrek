@@ -240,7 +240,7 @@ class BaseLinkTableElement(TableElement, GetDottetAttrsOrArgMixin):
             return self.format_latex(value)
         raise KeyError(f"Unknown tag {tag}")
 
-    def is_active(self, value: Any, obj: Any):
+    def is_active(self, value: Any, obj: Any) -> bool:
         # May be overwritten with logic
         return False
 

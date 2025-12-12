@@ -1,5 +1,6 @@
 from collections import defaultdict
 from dataclasses import dataclass, field
+from typing import Any
 
 from django.db.models import QuerySet
 from django.template.loader import render_to_string
@@ -10,6 +11,10 @@ from reporting.managers.montrek_table_manager import MontrekTableManagerABC
 @dataclass
 class SidebarLinkTableElement(te.LinkTextTableElement):
     compare_url: str = field(default="")
+
+    def is_active(self, value: Any, obj: Any) -> bool:
+        url = self.get_url(obj)
+        return url == self.compare_url
 
 
 class SidebarManagerABC(MontrekTableManagerABC):
@@ -30,10 +35,8 @@ class SidebarManagerABC(MontrekTableManagerABC):
         active_group = None
         link = self.link()
         for item in items:
-            linked_url = link.get_url(item)
-            active = linked_url == link.compare_url
             group = getattr(item, self.group_field)
-            if active:
+            if link.is_active(None, item):
                 active_group = group
             grouped_items[group].append(link.get_display_field(item))
         # Render using Django template

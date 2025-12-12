@@ -22,7 +22,7 @@
         id="group-item1"
       >
 
-          <li class="link-list text-start"><a id="id__home" href="/home">None</a>
+        <li class="link-list text-start fw-bold"><a id="id__home" href="/home">None</a>
 </li>
 
       </ul>
@@ -48,7 +48,7 @@
         id="group-item2"
       >
 
-          <li class="link-list text-start"><a id="id__home" href="/home">None</a>
+        <li class="link-list text-start fw-bold"><a id="id__home" href="/home">None</a>
 </li>
 
       </ul>
@@ -74,7 +74,7 @@
         id="group-item3"
       >
 
-          <li class="link-list text-start"><a id="id__home" href="/home">None</a>
+        <li class="link-list text-start fw-bold"><a id="id__home" href="/home">None</a>
 </li>
 
       </ul>
