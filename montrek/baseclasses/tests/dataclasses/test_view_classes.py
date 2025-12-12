@@ -41,7 +41,7 @@ class TestStandardActionElements(TestCase):
             (RegistryActionElement, "inbox"),
             (ListActionElement, "list"),
             (PlayActionElement, "play"),
-            (ShowActionElement, "eye-open"),
+            (ShowActionElement, "eye"),
             (UpdateActionElement, "pencil"),
             (DownloadActionElement, "download"),
         )
@@ -64,7 +64,7 @@ class TestStandardActionElements(TestCase):
             (RegistryActionElement, "inbox"),
             (ListActionElement, "list"),
             (PlayActionElement, "play"),
-            (ShowActionElement, "eye-open"),
+            (ShowActionElement, "eye"),
             (UpdateActionElement, "pencil"),
             (DownloadActionElement, "download"),
         )
