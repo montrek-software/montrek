@@ -46,8 +46,8 @@ class TableElementTestingToolMixin(HasAssertEqual):
         value: Any,
         expected_format: str,
         expected_format_latex: str,
-        expected_style_attrs: te.style_attrs_type = {},
-        expected_td_classes: te.td_classes_type = ["text-start"],
+        expected_style_attrs: te.StyleAttrsType = {},
+        expected_td_classes: te.TdClassesType = ["text-start"],
         expected_hover_text: str | None = None,
         expected_none_hover_text: str | None = None,
     ):
@@ -80,8 +80,8 @@ class TableElementTestingToolMixin(HasAssertEqual):
         test_obj: Any,
         expected_format: str,
         expected_format_latex: str,
-        expected_style_attrs: te.style_attrs_type = {},
-        expected_td_classes: te.td_classes_type = ["text-start"],
+        expected_style_attrs: te.StyleAttrsType = {},
+        expected_td_classes: te.TdClassesType = ["text-start"],
         expected_hover_text: str | None = None,
     ):
         with self.subTest("Test HTML Representation"):
@@ -104,8 +104,8 @@ class TableElementTestingToolMixin(HasAssertEqual):
         table_element: te.TableElement,
         obj: Any,
         expected_format: str,
-        expected_style_attrs: te.style_attrs_type = {},
-        expected_td_classes: te.td_classes_type = ["text-start"],
+        expected_style_attrs: te.StyleAttrsType = {},
+        expected_td_classes: te.TdClassesType = ["text-start"],
         expected_hover_text: str | None = None,
     ):
         test_display_field = table_element.get_display_field(obj)
