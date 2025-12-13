@@ -1,5 +1,5 @@
 <!-- TITLE -->
-<div class="row">
+<div class="row m-1">
   <div class="col-lg-12 page_title">
     <h1>{{ page_title|safe }}</h1>
   </div>
@@ -8,7 +8,7 @@
 <!-- DATE RANGE SELECTOR -->
 {% if show_date_range_selector %}
 <form method="get">
-  <div class="row tile g-2">
+  <div class="row tile g-2 m-1">
 
     <div class="col-12 col-lg-2">{{ date_range_form.start_date.label_tag }}</div>
     <div class="col-12 col-lg-3">{{ date_range_form.start_date }}</div>

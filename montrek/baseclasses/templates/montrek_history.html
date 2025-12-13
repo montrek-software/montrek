@@ -1,7 +1,6 @@
 {% extends 'base.html' %}
 {% load data_table_filters %}
 {% block content %}
-  <div class="container-fluid">
     {% for history_data_table in history_data_tables %}
       <div class="row">
         <div class="col-12 tile">
@@ -14,5 +13,4 @@
         </div>
       </div>
     {% endfor %}
-  </div>
 {% endblock %}

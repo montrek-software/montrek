@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load data_table_filters %}
 {% block content %}
-    <div class="row g-2">
+    <div class="row m-1">
       <div class="col-9">
         <h2>{{ title }}</h2>
       </div>
@@ -22,7 +22,7 @@
         </div>
       </div>
     </div>
-    <div class="row" style="background-color: white ;padding:5mm; border-style:solid">
+    <div class="row tile m-1">
       {{ report_form  |safe}}
       <div id="report-content"
              hx-get="{{ request.get_full_path }}"
