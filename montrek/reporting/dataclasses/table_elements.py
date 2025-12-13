@@ -194,7 +194,6 @@ class AttrTableElement(TableElement):
 
 @dataclass
 class ExternalLinkTableElement(AttrTableElement):
-    serializer_field_class = serializers.CharField
     field_template: ClassVar[str | None] = "external_link"
 
     def format(self, value):
@@ -228,6 +227,7 @@ class GetDottetAttrsOrArgMixin:
 
 @dataclass  # noqa
 class BaseLinkTableElement(TableElement, GetDottetAttrsOrArgMixin):
+    serializer_field_class = serializers.CharField
     url: str = field(default="")
     kwargs: dict = field(default_factory=dict)
     static_kwargs: dict = field(default_factory=dict)
@@ -325,7 +325,6 @@ class LinkTableElement(BaseLinkTableElement):
 
 @dataclass
 class LinkTextTableElement(BaseLinkTableElement):
-    serializer_field_class = serializers.CharField
     text: str = field(default="")
     static_kwargs: dict = field(default_factory=dict)
 
@@ -378,7 +377,6 @@ class LinkListTableElement(TableElement, GetDottetAttrsOrArgMixin):
 
 @dataclass
 class StringTableElement(AttrTableElement):
-    serializer_field_class = serializers.CharField
     attr: str
     chunk_size: int = 56
     td_classes: ClassVar[TdClassesType] = ["text-start"]
@@ -420,7 +418,6 @@ class TextTableElement(StringTableElement): ...
 
 @dataclass
 class ListTableElement(AttrTableElement):
-    serializer_field_class = serializers.CharField
     attr: str
     in_separator: str = ","
     out_separator: str = mark_safe("<br>")
@@ -437,7 +434,6 @@ class ListTableElement(AttrTableElement):
 
 @dataclass
 class AlertTableElement(AttrTableElement):
-    serializer_field_class = serializers.CharField
     attr: str
     td_classes: ClassVar[TdClassesType] = ["text-center"]
     field_template: ClassVar[str | None] = "alert"
@@ -658,7 +654,6 @@ class DollarTableElement(MoneyTableElement):
 
 @dataclass
 class ImageTableElement(AttrTableElement):
-    serializer_field_class = serializers.CharField
     attr: str
     alt: str = "image"
     td_classes: ClassVar[TdClassesType] = ["text-start"]
@@ -695,7 +690,6 @@ class ImageTableElement(AttrTableElement):
 class MethodNameTableElement(AttrTableElement):
     attr: str
     class_: type = object
-    serializer_field_class = serializers.CharField
     field_template: ClassVar[str | None] = "method_name"
 
     def get_field_context_data(self, value: Any, obj: Any) -> dict[str, Any]:
@@ -763,7 +757,7 @@ class ColorCodedStringTableElement(AttrTableElement):
 @dataclass
 class LabelTableElement(AttrTableElement):
     td_classes: ClassVar[TdClassesType] = ["text-center"]
-    color_codes: dict[str, Color] = field(default_factory=dict)
+    color_codes: ColorCodesType = field(default_factory=dict)
     field_template: ClassVar[str | None] = "label"
 
     def get_field_context_data(self, value: Any, obj: Any) -> dict[str, Any]:
