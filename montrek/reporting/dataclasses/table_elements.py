@@ -26,8 +26,10 @@ from reporting.core.text_converter import HtmlLatexConverter
 from reporting.dataclasses.display_field import DisplayField
 from rest_framework import serializers
 
-type style_attrs_type = dict[str, str]
-type td_classes_type = list[str]
+type StyleAttrsType = dict[str, str]
+type TdClassesType = list[str]
+type ChangeMapType = dict[int, dict[str, HistoryChangeState]]
+type ColorCodesType = dict[str, Color]
 
 
 def _get_value_color(value):
@@ -42,8 +44,8 @@ def _get_value_color_latex(value):
 class TableElement:
     name: str
     hover_text: str | None = field(default=None)
-    style_attrs: ClassVar[style_attrs_type] = {}
-    td_classes: ClassVar[td_classes_type] = ["text-start"]
+    style_attrs: ClassVar[StyleAttrsType] = {}
+    td_classes: ClassVar[TdClassesType] = ["text-start"]
     field_template: ClassVar[str | None] = None
 
     def format(self, value):
@@ -71,7 +73,7 @@ class TableElement:
     def get_value_len(self, obj: Any) -> int:
         return len(str(self.get_value(obj)))
 
-    def get_style_attrs(self, value: Any, obj: Any) -> style_attrs_type:
+    def get_style_attrs(self, value: Any, obj: Any) -> StyleAttrsType:
         # Method can be overwritten by daughter classes if styling changes depending on the value
         return self.style_attrs
 
@@ -79,12 +81,12 @@ class TableElement:
         style_attrs = self.get_style_attrs(value, obj)
         return self.format_style_attr(style_attrs)
 
-    def format_style_attr(self, style_attrs: style_attrs_type) -> str:
+    def format_style_attr(self, style_attrs: StyleAttrsType) -> str:
         if len(style_attrs) == 0:
             return ""
         return "; ".join(f"{k}: {v}" for k, v in style_attrs.items()) + ";"
 
-    def get_td_classes(self, value: Any, obj: Any) -> td_classes_type:
+    def get_td_classes(self, value: Any, obj: Any) -> TdClassesType:
         # Method can be overwritten by daughter classes if styling changes depending on the value
         return self.td_classes
 
@@ -92,7 +94,7 @@ class TableElement:
         td_classes = self.get_td_classes(value, obj)
         return self.format_td_classes(td_classes)
 
-    def format_td_classes(self, td_classes: td_classes_type) -> str:
+    def format_td_classes(self, td_classes: TdClassesType) -> str:
         return " ".join(td_classes)
 
     def get_display_field(self, obj: Any) -> DisplayField:
@@ -152,7 +154,7 @@ class NoneTableElement(TableElement):
     name: str = "None"
     serializer_field_class = serializers.CharField
     attr: str = field(default="")
-    td_classes: ClassVar[td_classes_type] = ["text-center"]
+    td_classes: ClassVar[TdClassesType] = ["text-center"]
 
     def format(self, value: Any) -> str:
         return "-"
@@ -160,6 +162,7 @@ class NoneTableElement(TableElement):
 
 @dataclass
 class AttrTableElement(TableElement):
+    serializer_field_class = serializers.CharField
     attr: str = field(default="")
     obj: Any = None
 
@@ -191,7 +194,6 @@ class AttrTableElement(TableElement):
 
 @dataclass
 class ExternalLinkTableElement(AttrTableElement):
-    serializer_field_class = serializers.CharField
     field_template: ClassVar[str | None] = "external_link"
 
     def format(self, value):
@@ -225,6 +227,7 @@ class GetDottetAttrsOrArgMixin:
 
 @dataclass  # noqa
 class BaseLinkTableElement(TableElement, GetDottetAttrsOrArgMixin):
+    serializer_field_class = serializers.CharField
     url: str = field(default="")
     kwargs: dict = field(default_factory=dict)
     static_kwargs: dict = field(default_factory=dict)
@@ -322,7 +325,6 @@ class LinkTableElement(BaseLinkTableElement):
 
 @dataclass
 class LinkTextTableElement(BaseLinkTableElement):
-    serializer_field_class = serializers.CharField
     text: str = field(default="")
     static_kwargs: dict = field(default_factory=dict)
 
@@ -375,10 +377,9 @@ class LinkListTableElement(TableElement, GetDottetAttrsOrArgMixin):
 
 @dataclass
 class StringTableElement(AttrTableElement):
-    serializer_field_class = serializers.CharField
     attr: str
     chunk_size: int = 56
-    td_classes: ClassVar[td_classes_type] = ["text-start"]
+    td_classes: ClassVar[TdClassesType] = ["text-start"]
     field_template: ClassVar[str | None] = "string"
 
     def get_field_context_data(self, value: Any, obj: Any) -> dict[str, Any]:
@@ -417,11 +418,10 @@ class TextTableElement(StringTableElement): ...
 
 @dataclass
 class ListTableElement(AttrTableElement):
-    serializer_field_class = serializers.CharField
     attr: str
     in_separator: str = ","
     out_separator: str = mark_safe("<br>")
-    td_classes: ClassVar[td_classes_type] = ["text-start"]
+    td_classes: ClassVar[TdClassesType] = ["text-start"]
     field_template: ClassVar[str | None] = "list"
 
     def get_field_context_data(self, value: Any, obj: Any) -> dict[str, Any]:
@@ -434,12 +434,11 @@ class ListTableElement(AttrTableElement):
 
 @dataclass
 class AlertTableElement(AttrTableElement):
-    serializer_field_class = serializers.CharField
     attr: str
-    td_classes: ClassVar[td_classes_type] = ["text-center"]
+    td_classes: ClassVar[TdClassesType] = ["text-center"]
     field_template: ClassVar[str | None] = "alert"
 
-    def get_style_attrs(self, value: Any, obj: Any) -> style_attrs_type:
+    def get_style_attrs(self, value: Any, obj: Any) -> StyleAttrsType:
         status = AlertEnum.get_by_description(value)
         status_color = status.color.hex
         return {"color": status_color}
@@ -467,9 +466,7 @@ class NumberTableElement(AttrTableElement):
             hover_text=self.get_hover_text(obj),
         )
 
-    def _analyze_value(
-        self, value: Any
-    ) -> tuple[str, td_classes_type, style_attrs_type]:
+    def _analyze_value(self, value: Any) -> tuple[str, TdClassesType, StyleAttrsType]:
         # returns (display_value, classes, style_attrs)
         if pd.isna(value):
             return "-", ["text-center"], {}
@@ -542,7 +539,7 @@ class PercentTableElement(NumberTableElement):
 class ProgressBarTableElement(NumberTableElement):
     serializer_field_class = serializers.FloatField
     attr: str
-    td_classes: ClassVar[td_classes_type] = ["text-center"]
+    td_classes: ClassVar[TdClassesType] = ["text-center"]
     field_template: ClassVar[str | None] = "progress_bar"
 
     def get_field_context_data(self, value: Any, obj: Any) -> dict[str, Any]:
@@ -563,7 +560,7 @@ class ProgressBarTableElement(NumberTableElement):
 class DateTableBaseElement(AttrTableElement):
     attr: str
     date_format = "%Y-%m-%d"
-    td_classes: ClassVar[td_classes_type] = ["text-start"]
+    td_classes: ClassVar[TdClassesType] = ["text-start"]
 
     def format(self, value):
         return self.format_date(value)
@@ -613,7 +610,7 @@ class DateYearTableElement(DateTableBaseElement):
 class BooleanTableElement(AttrTableElement):
     serializer_field_class = serializers.BooleanField
     attr: str
-    td_classes: ClassVar[td_classes_type] = ["text-center"]
+    td_classes: ClassVar[TdClassesType] = ["text-center"]
     field_template: ClassVar[str | None] = "bool"
 
     def format_latex(self, value) -> str:
@@ -657,10 +654,9 @@ class DollarTableElement(MoneyTableElement):
 
 @dataclass
 class ImageTableElement(AttrTableElement):
-    serializer_field_class = serializers.CharField
     attr: str
     alt: str = "image"
-    td_classes: ClassVar[td_classes_type] = ["text-start"]
+    td_classes: ClassVar[TdClassesType] = ["text-start"]
     field_template: ClassVar[str | None] = "image"
 
     def get_field_context_data(self, value: Any, obj: Any) -> dict[str, Any]:
@@ -694,7 +690,6 @@ class ImageTableElement(AttrTableElement):
 class MethodNameTableElement(AttrTableElement):
     attr: str
     class_: type = object
-    serializer_field_class = serializers.CharField
     field_template: ClassVar[str | None] = "method_name"
 
     def get_field_context_data(self, value: Any, obj: Any) -> dict[str, Any]:
@@ -713,9 +708,6 @@ class HistoryChangeState(Enum):
     NONE = "none"
 
 
-type ChangeMapType = dict[int, dict[str, HistoryChangeState]]
-
-
 @dataclass
 class HistoryStringTableElement(StringTableElement):
     change_map: ChangeMapType = field(default_factory=dict)
@@ -724,7 +716,7 @@ class HistoryStringTableElement(StringTableElement):
         self.change_format = self._get_change_format(obj)
         return super().get_attribute(obj, tag)
 
-    def get_style_attrs(self, value: Any, obj: Any) -> style_attrs_type:
+    def get_style_attrs(self, value: Any, obj: Any) -> StyleAttrsType:
         if self.change_format == HistoryChangeState.OLD:
             color = ReportingColors.RED.hex
         elif self.change_format == HistoryChangeState.NEW:
@@ -733,7 +725,7 @@ class HistoryStringTableElement(StringTableElement):
             color = ReportingColors.BLACK.hex
         return {"color": color}
 
-    def get_td_classes(self, value: Any, obj: Any) -> td_classes_type:
+    def get_td_classes(self, value: Any, obj: Any) -> TdClassesType:
         if self.change_format in (HistoryChangeState.OLD, HistoryChangeState.NEW):
             return ["fw-bold"]
         return []
@@ -749,9 +741,9 @@ class HistoryStringTableElement(StringTableElement):
 
 @dataclass
 class ColorCodedStringTableElement(AttrTableElement):
-    color_codes: dict[str, Color] = field(default_factory=dict)
+    color_codes: ColorCodesType = field(default_factory=dict)
 
-    def get_style_attrs(self, value: Any, obj: Any) -> style_attrs_type:
+    def get_style_attrs(self, value: Any, obj: Any) -> StyleAttrsType:
         color = self.color_codes.get(value, ReportingColors.BLUE).hex
         return {"color": color}
 
@@ -764,8 +756,8 @@ class ColorCodedStringTableElement(AttrTableElement):
 
 @dataclass
 class LabelTableElement(AttrTableElement):
-    td_classes: ClassVar[td_classes_type] = ["text-center"]
-    color_codes: dict[str, Color] = field(default_factory=dict)
+    td_classes: ClassVar[TdClassesType] = ["text-center"]
+    color_codes: ColorCodesType = field(default_factory=dict)
     field_template: ClassVar[str | None] = "label"
 
     def get_field_context_data(self, value: Any, obj: Any) -> dict[str, Any]:
