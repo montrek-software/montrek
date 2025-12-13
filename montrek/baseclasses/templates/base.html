@@ -6,6 +6,12 @@
 
   <!-- LEFT SIDEBAR -->
   <div class="col-12 col-lg-2">
+    <div>
+      {% include_client_logo %}
+    </div>
+    <div>
+      {% block side_page %}{% endblock %}
+    </div>
     {% if overview %}
       <div class="tile">
         <div class="text-center">
@@ -19,21 +25,10 @@
   </div>
 
   <!-- MAIN -->
-  <div class="col-12 col-lg-8">
+  <div class="col-12 col-lg-10 px-1">
     {% include "partials/title_and_date.html" %}
     {% include "partials/tabs_and_actions.html" %}
     {% block content %}{% endblock %}
   </div>
-
-  <!-- RIGHT SIDEBAR -->
-  <div class="col-12 col-lg-2">
-    <div>
-      {% include_client_logo %}
-    </div>
-    <div>
-      {% block side_page %}{% endblock %}
-    </div>
-  </div>
-
 </div>
 {% endblock %}

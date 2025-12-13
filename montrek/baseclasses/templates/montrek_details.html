@@ -1,10 +1,10 @@
 {% extends 'base.html' %}
 {% load data_table_filters %}
 {% block content %}
-<div class="row">
+<div class="row m-1">
   <h2 id="id_montrek_table_title">{{ title }}</h2>
 </div>
-<div class="row">
+<div class="row m-1">
   <div class="col-10">
   </div>
   <div class="col-2">
@@ -24,7 +24,7 @@
     </div>
   </div>
 </div>
-<div id="id_montrek_table_list" class="row tile">
+<div id="id_montrek_table_list" class="row tile m-1">
     {{ table  }}
 </div>
 {% endblock %}
