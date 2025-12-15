@@ -172,7 +172,7 @@ class MontrekCreateForm(forms.ModelForm):
             if form_field and field.name not in self._meta.exclude:
                 self.fields[field.name] = form_field
                 self.fields[field.name].widget.attrs.update(
-                    {"id": f"id_{field.name}", "style": "width: 100%"}
+                    {"id": f"id_{field.name}", "style": "width: 100%;resize: both;"}
                 )
 
     def _get_form_field(self, field: Field):

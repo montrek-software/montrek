@@ -10,19 +10,9 @@
       <div class="error-message alert alert-danger">{{ error_message }}</div>
     </div>
     {% endif %}
-    <div class="row border p-3">
-      <div class="col">
-        <div>
-          <!-- Made table responsive -->
-          <table class="table table-bordered table-hover">
-            <!-- Applied Bootstrap table styles -->
-            <tr>
-              <th>{{ field.label_tag }}</th>
-              <td>{{ field }}</td>
-            </tr>
-          </table>
-        </div>
-      </div>
+    <div class="row tile">
+      <div class="col-2">{{ field.label_tag }}</div>
+      <div class="col-10">{{ field }}</div>
     </div>
     <div class="row p-2">
       <div class="col-1">
