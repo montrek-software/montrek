@@ -154,11 +154,16 @@ class MontrekCreateForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         self.repository = kwargs.pop("repository", None)
-        if self.repository:
-            self._meta.model = self.repository.hub_class
-        else:
-            raise NotImplementedError("No repository passed ")
+        if not self.repository:
+            raise ValueError("Repository required")
+
+        # Create instance-specific _meta
+        from copy import deepcopy
+
+        self._meta = deepcopy(self._meta)
+        self._meta.model = self.repository.hub_class
         self.session_data = kwargs.pop("session_data", {})
+
         super().__init__(*args, **kwargs)
         self.initial = kwargs.get("initial", {})
 
