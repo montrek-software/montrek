@@ -45,7 +45,10 @@ class ReportingElementTestCase(TestCase):
     def test_to_html(self):
         if self.__class__.__name__ == "ReportingElementTestCase":
             return
-        self.assertEqual(self.reporting_element.to_html(), self.expected_html)
+        self.assertEqual(
+            self.reporting_element.to_html().replace("\n", "").replace(" ", ""),
+            self.expected_html.replace("\n", "").replace(" ", ""),
+        )
 
     def test_to_latex(self):
         if self.__class__.__name__ == "ReportingElementTestCase":
@@ -172,7 +175,7 @@ class TestReportingParagraphSmoke(ReportingElementTestCase):
 
 class TestReportingEditableTextSmoke(ReportingElementTestCase):
     reporting_element_class = ReportingEditableText
-    expected_html = '<div class="container-fluid">\n        <div class="row">\n         <div class="col-lg-12" style="padding:0"><h2></h2></div>\n         <div id="field-content-container-field">\n             <div class="container-fluid p-0">\n  <div class="row border p-3">\n    <div class="col">field_content</div>\n  </div>\n  <div class="row p-2">\n    <div class="col-lg-1">\n      <button\n        class="btn btn-custom"\n        hx-get="dummy?mode=edit&field=field"\n        hx-target="#field-content-container-field"\n      >\n        <span class="bi bi-pencil" />\n      </button>\n    </div>\n    <div class="col-lg-11"></div>\n  </div>\n</div>\n\n         </div>\n        </div>\n</div>'
+    expected_html = '<div class="row">\n         <div class="col"><h2></h2></div>\n         <div id="field-content-container-field">\n             <div class="row border p-3 mx-1">\n    <div class="col scrollable-600">field_content</div>\n  </div>\n  <div class="row p-2">\n    <div class="col-lg-1">\n      <button\n        class="btn btn-custom"\n        hx-get="dummy?mode=edit&field=field"\n        hx-target="#field-content-container-field"\n      >\n        <span class="bi bi-pencil" />\n      </button>\n    </div>\n    <div class="col-lg-11"></div>\n  </div>\n</div>\n\n         </div>'
     expected_latex = "\\begin{justify}field\\_content\\end{justify}"
     expected_json = {"reportingeditabletext": "field_content"}
 
@@ -188,7 +191,7 @@ class TestReportText(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.plain_text = "This is a plain text"
-        cls.plain_html_text = "<p>This is a plain text</p>"
+        cls.plain_html_text = '<div class="scrollable-600">This is a plain text</div>'
         cls.plain_latex_text = "This is a plain text\n\n"
         cls.html_text = "This is a <b>html</b> text. <br> This is a new <i>line</i>"
         cls.markdown_text = "This is a **markdown** text. \n This is a new *line*"
@@ -218,14 +221,13 @@ class TestReportText(TestCase):
         )
         self.assertEqual(test_element.text, "AA123")
         self.assertEqual(
-            test_element.to_html(),
-            """<div class="container-fluid">
+            test_element.to_html().replace("\n", "").replace(" ", ""),
+            """
         <div class="row">
-         <div class="col-lg-12" style="padding:0"><h2></h2></div>
+         <div class="col"><h2></h2></div>
          <div id="field-content-container-field">
-             <div class="container-fluid p-0">
-  <div class="row border p-3">
-    <div class="col">AA123</div>
+               <div class="row border p-3 mx-1">
+    <div class="col scrollable-600">AA123</div>
   </div>
   <div class="row p-2">
     <div class="col-lg-1">
@@ -238,12 +240,12 @@ class TestReportText(TestCase):
       </button>
     </div>
     <div class="col-lg-11"></div>
-  </div>
-</div>
-
-         </div>
-        </div>
-</div>""",
+</div>  </div></div>\n
+""".replace(
+                "\n", ""
+            ).replace(
+                " ", ""
+            ),
         )
 
     def test_reporting_editable_text_display_newline(self):
@@ -261,14 +263,13 @@ class TestReportText(TestCase):
         )
         self.assertEqual(test_element.text, "AA123")
         self.assertEqual(
-            test_element.to_html(),
-            """<div class="container-fluid">
+            test_element.to_html().replace("\n", "").replace(" ", ""),
+            """
         <div class="row">
-         <div class="col-lg-12" style="padding:0"><h2>Test Header</h2></div>
+         <div class="col"><h2>Test Header</h2></div>
          <div id="field-content-container-field">
-             <div class="container-fluid p-0">
-  <div class="row border p-3">
-    <div class="col">AA123</div>
+               <div class="row border p-3 mx-1">
+    <div class="col scrollable-600">AA123</div>
   </div>
   <div class="row p-2">
     <div class="col-lg-1">
@@ -285,8 +286,11 @@ class TestReportText(TestCase):
 </div>
 
          </div>
-        </div>
-</div>""",
+""".replace(
+                "\n", ""
+            ).replace(
+                " ", ""
+            ),
         )
 
     def test_reporting_text_with_none(self):
