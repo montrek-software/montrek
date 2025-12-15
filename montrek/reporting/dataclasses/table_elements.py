@@ -254,7 +254,10 @@ class BaseLinkTableElement(TableElement, GetDottetAttrsOrArgMixin):
         return td_classes
 
     def get_value(self, obj: Any) -> Any:
-        return strip_tags(self.get_link_text(obj))
+        link_text = self.get_link_text(obj)
+        if link_text is None:
+            return None
+        return strip_tags(link_text)
 
     def format(self, value):
         return value
@@ -394,7 +397,7 @@ class StringTableElement(AttrTableElement):
         return {"chunks": None}
 
     def format(self, value):
-        return str(value)
+        return value
 
     def get_value(self, obj: Any) -> Any:
         value = super().get_value(obj)
