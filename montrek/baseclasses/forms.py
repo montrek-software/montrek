@@ -149,6 +149,7 @@ class FilterForm(forms.Form):
 
 class MontrekCreateForm(forms.ModelForm):
     class Meta:
+        # TODO: Rewrite with factory
         exclude = ()
 
     def __init__(self, *args, **kwargs):
@@ -169,7 +170,7 @@ class MontrekCreateForm(forms.ModelForm):
         for field in fields:
             form_field = self._get_form_field(field)
             form_field.validators.extend(field.validators)
-            exclude = set(self.Meta.exclude or ())
+            exclude = set(self._meta.exclude or ())
             if form_field and field.name not in exclude:
                 self.fields[field.name] = form_field
                 attrs = {
