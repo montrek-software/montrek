@@ -1,183 +1,183 @@
 {% load colors %}
 <style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: "Arial", sans-serif;
-  background-color: #f4f4f4;
-}
-
-label {
-  font-weight: bold;
-}
-
-p {
-  margin-top: 15px;
-  margin-bottom: 10px;
-}
-
-li {
-  margin-left: 20px;
-}
-a {
-  color: {% get_color "primary" %};
-  text-decoration: none;
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
   }
-a:hover {
-  color: {% get_color "secondary" %};
-  }
-h2 {
-  color: {% get_color "primary" %};
-}
 
-textarea.resizable {
+  body {
+    font-family: "Arial", sans-serif;
+    background-color: #f4f4f4;
+  }
+
+  label {
+    font-weight: bold;
+  }
+
+  p {
+    margin-top: 15px;
+    margin-bottom: 10px;
+  }
+
+  li {
+    margin-left: 20px;
+  }
+  a {
+    color: {% get_color "primary" %};
+    text-decoration: none;
+  }
+  a:hover {
+    color: {% get_color "secondary" %};
+  }
+  h2 {
+    color: {% get_color "primary" %};
+  }
+
+  textarea.resizable {
     resize: both;
-}
-.page_title h1 {
-  color: {% get_color "primary" %};
-  text-align: center;
-}
+  }
+  .page_title h1 {
+    color: {% get_color "primary" %};
+    text-align: center;
+  }
 
-.bg-primary-custom {
-  background-color: {% get_color "primary" %}
-}
-.bg-primary-light-custom {
-  background-color: {% get_color "primary_light" %}
-}
+  .bg-primary-custom {
+    background-color: {% get_color "primary" %}
+  }
+  .bg-primary-light-custom {
+    background-color: {% get_color "primary_light" %}
+  }
 /* =========================================================
    TILES
   ========================================================== */
 
-.tile {
-  position: relative;       /* allows absolute positioning inside */
-  padding: 15px;
-  border-radius: 10px;
-  background-color: rgba(247, 249, 250, 0.9);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-  margin-bottom: 20px;
-}
+  .tile {
+    position: relative;       /* allows absolute positioning inside */
+    padding: 15px;
+    border-radius: 10px;
+    background-color: rgba(247, 249, 250, 0.9);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
+  }
 
 /* =========================================================
    NAVBAR COLORS (Bootstrap-5-friendly)
    ========================================================= */
-.navbar-custom {
-  color: #ffffff;
-  background-color: {% get_color "primary" %};
-}
-.navbar-brand {
-  font-weight: bold;
-}
-.page-link.custom {
-  background-color: #ffffff;
-  color: {% get_color "primary" %};
-  border: 1px solid {% get_color "primary" %};
-  border-radius: 4px;
-  padding: 0.25rem 0.6rem;
-}
+  .navbar-custom {
+    color: #ffffff;
+    background-color: {% get_color "primary" %};
+  }
+  .navbar-brand {
+    font-weight: bold;
+  }
+  .page-link.custom {
+    background-color: #ffffff;
+    color: {% get_color "primary" %};
+    border: 1px solid {% get_color "primary" %};
+    border-radius: 4px;
+    padding: 0.25rem 0.6rem;
+  }
 
-.page-link.custom:hover {
-  background-color: {% get_color "primary_light" %};
-  color: {% get_color "secondary" %};
-}
+  .page-link.custom:hover {
+    background-color: {% get_color "primary_light" %};
+    color: {% get_color "secondary" %};
+  }
 
-.page-item.disabled .page-link.custom {
+  .page-item.disabled .page-link.custom {
     background-color: #e9ecef;
     color: #6c757d;
     cursor: not-allowed;
-}
+  }
 
 /* Hauptlinks */
-.navbar-custom .nav-link {
-  color: #ffffff;
-}
+  .navbar-custom .nav-link {
+    color: #ffffff;
+  }
 
-.navbar-custom .nav-link:hover,
-.navbar-custom .nav-link:focus {
-  color: {% get_color "secondary" %};
-}
+  .navbar-custom .nav-link:hover,
+  .navbar-custom .nav-link:focus {
+    color: {% get_color "secondary" %};
+  }
 
 /* Brand */
-.navbar-custom .navbar-brand {
-  color: #ffffff;
-}
+  .navbar-custom .navbar-brand {
+    color: #ffffff;
+  }
 
-.navbar-custom .navbar-brand:hover {
-  color: {% get_color "primary_light" %};
-}
+  .navbar-custom .navbar-brand:hover {
+    color: {% get_color "primary_light" %};
+  }
 
 /* Toggler Icon */
-.navbar-custom .navbar-toggler {
-  border-color: rgba(255,255,255,0.4);
-}
+  .navbar-custom .navbar-toggler {
+    border-color: rgba(255,255,255,0.4);
+  }
 
-.navbar-custom .navbar-toggler-icon {
-  background-image: url("data:image/svg+xml;charset=utf8,%3Csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke='rgba%28 255,255,255, 0.8 %29' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
-}
+  .navbar-custom .navbar-toggler-icon {
+    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke='rgba%28 255,255,255, 0.8 %29' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
+  }
 
 /* Navbar-Text (logged in as …) */
-.navbar-custom .navbar-text {
-  display: flex;
-  align-items: center;
-  padding: 0 1rem;
-  color: #ffffff;
-  height: 100%;
-}
+  .navbar-custom .navbar-text {
+    display: flex;
+    align-items: center;
+    padding: 0 1rem;
+    color: #ffffff;
+    height: 100%;
+  }
 
 /* Dropdown (hell, damit lesbar) */
-.navbar-custom .dropdown-menu {
-  background-color: #ffffff;
-}
+  .navbar-custom .dropdown-menu {
+    background-color: #ffffff;
+  }
 
-.navbar-custom .dropdown-item {
-  color: #000000;
-}
-.navbar-custom .dropdown-item:hover {
+  .navbar-custom .dropdown-item {
+    color: #000000;
+  }
+  .navbar-custom .dropdown-item:hover {
 
-  background-color: {% get_color "primary_light" %};
-  color: #ffffff;
-}
+    background-color: {% get_color "primary_light" %};
+    color: #ffffff;
+  }
 
 /* Tabs
 
 /* Tab-Link-Grundfarben */
-.nav-tabs .nav-link {
-  color: {% get_color "primary" %};
-  border: 1px solid {% get_color "primary" %};
-  margin-right: 5px;
-}
+  .nav-tabs .nav-link {
+    color: {% get_color "primary" %};
+    border: 1px solid {% get_color "primary" %};
+    margin-right: 5px;
+  }
 /* Aktiver Tab */
-.nav-tabs .nav-link.active {
-  background-color: {% get_color "primary" %};
-  color: #ffffff;
-  border-color: {% get_color "primary" %};
-}
+  .nav-tabs .nav-link.active {
+    background-color: {% get_color "primary" %};
+    color: #ffffff;
+    border-color: {% get_color "primary" %};
+  }
 /* Hover */
-.nav-tabs .nav-link:hover {
-  background-color: {% get_color "primary_light" %};
-  color: #ffffff;
-}
+  .nav-tabs .nav-link:hover {
+    background-color: {% get_color "primary_light" %};
+    color: #ffffff;
+  }
 
-.nav-link-list {
+  .nav-link-list {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
   }
 
-.nav-link-list a {
-  color: #ffffff;
-  text-decoration: none;
-  display: block;
-  padding: 2px 2px;
-}
+  .nav-link-list a {
+    color: #ffffff;
+    text-decoration: none;
+    display: block;
+    padding: 2px 2px;
+  }
 
-.nav-link-list li:hover {
-  background-color: {% get_color "primary" %};
-  color: {% get_color "secondary" %};
-}
+  .nav-link-list li:hover {
+    background-color: {% get_color "primary" %};
+    color: {% get_color "secondary" %};
+  }
 
 /* =========================================================
    BUTTONS (sauber, ohne Bootstrap-Überschreibung)
@@ -185,221 +185,221 @@ textarea.resizable {
 
 
 /* Sekundärfarbe = dein bisheriger "default button" */
-.btn-custom {
-  background-color: {% get_color "secondary" %};
-  color: #ffffff;
-  border: 2px solid {% get_color "secondary" %};
-}
+  .btn-custom {
+    background-color: {% get_color "secondary" %};
+    color: #ffffff;
+    border: 2px solid {% get_color "secondary" %};
+  }
 
-.btn-custom:hover {
-  background-color: {% get_color "secondary_light" %};
-  border: 2px solid {% get_color "secondary" %};
-  color: #ffffff;
-}
+  .btn-custom:hover {
+    background-color: {% get_color "secondary_light" %};
+    border: 2px solid {% get_color "secondary" %};
+    color: #ffffff;
+  }
 
 /* Leichter Button als Ersatz für dein früheres .btn-light Override */
-.btn-light-custom {
-  background-color: #ffffff;
-  color: {% get_color "primary" %};
-  border: 1px solid {% get_color "primary" %};
-}
+  .btn-light-custom {
+    background-color: #ffffff;
+    color: {% get_color "primary" %};
+    border: 1px solid {% get_color "primary" %};
+  }
 
-.btn-light-custom:hover {
-  background-color: {% get_color "primary_light" %};
-  color: {% get_color "secondary" %};
-}
+  .btn-light-custom:hover {
+    background-color: {% get_color "primary_light" %};
+    color: {% get_color "secondary" %};
+  }
 
 /* Buttons im Tabellen-Kontext */
-.btn-order-field {
-  background: none;
-  border: none;
-  padding: 0;
-  font: inherit;
-}
-.btn-order-field:hover {
-  color: {% get_color "secondary" %};
-}
+  .btn-order-field {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+  }
+  .btn-order-field:hover {
+    color: {% get_color "secondary" %};
+  }
 
 /* =========================================================
    TABLES
    ========================================================= */
 
 /* Keine globalen tr:nth-child mehr. */
-table.table-custom-striped tbody tr:nth-child(even) > td {
-  background-color: {% get_color "primary_light" %} !important;
-}
+  table.table-custom-striped tbody tr:nth-child(even) > td {
+    background-color: {% get_color "primary_light" %}
+  }
 
-.table-custom-striped.table td {
-  padding: 3px !important;
-}
-.table-custom-striped.table thead th .btn-order-field,
-.table-custom-striped.table thead th .btn-order-field *,
-.table-custom-striped.table thead th button,
-.table-custom-striped.table thead th button *,
-.table-custom-striped.table thead th div {
+  .table-custom-striped.table td {
+    padding: 3px !important;
+  }
+  .table-custom-striped.table thead th .btn-order-field,
+  .table-custom-striped.table thead th .btn-order-field *,
+  .table-custom-striped.table thead th button,
+  .table-custom-striped.table thead th button *,
+  .table-custom-striped.table thead th div {
     color: white !important;
-}
-.table.table-custom-striped  th {
-  background-color: {% get_color "primary" %} !important;
-  color: #ffffff !important;
-}
-.table.table-custom-striped > thead > tr > th {
-  background-color: {% get_color "primary" %} !important;
-  color: #ffffff !important;
-}
+  }
+  .table.table-custom-striped  th {
+    background-color: {% get_color "primary" %} !important;
+    color: #ffffff !important;
+  }
+  .table.table-custom-striped > thead > tr > th {
+    background-color: {% get_color "primary" %} !important;
+    color: #ffffff !important;
+  }
 /* Table-Header */
-.table-custom-striped.table thead th {
-  color: white !important;
-  background-color: {% get_color "primary" %} !important;
-  padding: 4px 6px !important;
-  text-align: left;
-  position: sticky;
-  top: 0;
-  z-index: 5;
-}
+  .table-custom-striped.table thead th {
+    color: white !important;
+    background-color: {% get_color "primary" %} !important;
+    padding: 4px 6px !important;
+    text-align: left;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+  }
 /* Cells */
-td {
-  padding: 2px;
-}
+  td {
+    padding: 2px;
+  }
 
 /* Flache Tabelle ohne Styling */
-#noStyleTable,
-#noStyleTable th,
-#noStyleTable td,
-#noStyleTable tr {
-  background-color: initial;
-  border-bottom: initial;
-}
+  #noStyleTable,
+  #noStyleTable th,
+  #noStyleTable td,
+  #noStyleTable tr {
+    background-color: initial;
+    border-bottom: initial;
+  }
 
 /* Kompakte Tabelle */
-#compactTable td {
-  padding: 1px;
-}
-#compactTable th {
-  padding: 2px;
-}
+  #compactTable td {
+    padding: 1px;
+  }
+  #compactTable th {
+    padding: 2px;
+  }
 
 /* =========================================================
    LISTEN-HIGHLIGHTS
    ========================================================= */
-.highlight-list,
-.lowlight-list {
-  list-style: none;
-  padding: 0;
-}
+  .highlight-list,
+  .lowlight-list {
+    list-style: none;
+    padding: 0;
+  }
 
-.highlight-list li,
-.lowlight-list li {
-  padding: 4px 6px;
-  margin: 5px 0;
-  border-radius: 5px;
-  display: flex;
-}
+  .highlight-list li,
+  .lowlight-list li {
+    padding: 4px 6px;
+    margin: 5px 0;
+    border-radius: 5px;
+    display: flex;
+  }
 
-.highlight-list li::before {
-  content: ">";
-  font-weight: bold;
-  color: {% get_color "primary" %};
-  margin-right: 10px;
-}
+  .highlight-list li::before {
+    content: ">";
+    font-weight: bold;
+    color: {% get_color "primary" %};
+    margin-right: 10px;
+  }
 
-.lowlight-list li::before {
-  content: ">";
-  font-weight: bold;
-  color: {% get_color "secondary" %};
-  margin-right: 10px;
-}
-.link-list {
+  .lowlight-list li::before {
+    content: ">";
+    font-weight: bold;
+    color: {% get_color "secondary" %};
+    margin-right: 10px;
+  }
+  .link-list {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
   }
 
-.link-list a {
-  color: #ffffff;
-  text-decoration: none;
-  display: block;
-  padding: 2px 2px;
-}
+  .link-list a {
+    color: #ffffff;
+    text-decoration: none;
+    display: block;
+    padding: 2px 2px;
+  }
 
-.link-list a:hover {
-  background-color: {% get_color "primary_light" %};
-  color: {% get_color "secondary" %};
-}
+  .link-list a:hover {
+    background-color: {% get_color "primary_light" %};
+    color: {% get_color "secondary" %};
+  }
 /* =========================================================
    INPUTS
    ========================================================= */
-input[readonly] {
-  background-color: #e0e0e0;
-  color: #333;
-  cursor: not-allowed;
-}
+  input[readonly] {
+    background-color: #e0e0e0;
+    color: #333;
+    cursor: not-allowed;
+  }
 
-.input-custom {
-  background-color: {% get_color "secondary" %};
-  color: #ffffff;
-  border: 2px solid {% get_color "secondary" %};
-  width: 100px;
-  border-radius: 4px;
-}
+  .input-custom {
+    background-color: {% get_color "secondary" %};
+    color: #ffffff;
+    border: 2px solid {% get_color "secondary" %};
+    width: 100px;
+    border-radius: 4px;
+  }
 
-.input-custom:hover {
-  background-color: {% get_color "secondary_light" %};
-  border: 2px solid {% get_color "secondary" %};
-  color: #ffffff;
-}
+  .input-custom:hover {
+    background-color: {% get_color "secondary_light" %};
+    border: 2px solid {% get_color "secondary" %};
+    color: #ffffff;
+  }
 
 /* =========================================================
    PROGRESS BAR
    ========================================================= */
-.bar-container {
-  position: relative;
-  width: 100%;
-  background-color: #f0f0f0;
-  display: flex;
-  align-items: center;
-}
+  .bar-container {
+    position: relative;
+    width: 100%;
+    background-color: #f0f0f0;
+    display: flex;
+    align-items: center;
+  }
 
-.bar {
-  position: absolute;
-  height: 90%;
-  background-color: #388e3c;
-}
+  .bar {
+    position: absolute;
+    height: 90%;
+    background-color: #388e3c;
+  }
 
-.bar-value {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  text-align: center;
-  color: {% get_color "primary" %};
-  border: 1px solid {% get_color "primary" %};
-  font-weight: bold;
-}
+  .bar-value {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    text-align: center;
+    color: {% get_color "primary" %};
+    border: 1px solid {% get_color "primary" %};
+    font-weight: bold;
+  }
 
 /* =========================================================
    SCROLLABLE CONTENT
    ========================================================= */
-.scrollable-content {
-  max-height: 100vh;
-  overflow-y: auto;
-}
+  .scrollable-content {
+    max-height: 100vh;
+    overflow-y: auto;
+  }
 
 /* =========================================================
    FOOTER
    ========================================================= */
-.footer {
-  position: fixed;
-  bottom: 0;
-  width: 100%;
-  font-size: 0.875rem;
-  background-color: #f8f9fa;
-  padding: 1rem;
-  border-top: 1px solid #dee2e6;
-  z-index: 1030;
-}
+  .footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    font-size: 0.875rem;
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-top: 1px solid #dee2e6;
+    z-index: 1030;
+  }
 
-.scrollable-600 {
-  overflow-y: auto;
-  max-height: 600px;
-}
+  .scrollable-600 {
+    overflow-y: auto;
+    max-height: 600px;
+  }
 </style>
