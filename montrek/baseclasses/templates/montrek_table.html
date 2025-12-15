@@ -1,132 +1,134 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<div class="container-fluid">
+  <div class="container-fluid">
 
   <!-- TITLE -->
-  <div class="row mb-3">
-    <div class="col-12">
-      <h2 id="id_montrek_table_title">{{ title }}</h2>
+    <div class="row mb-3">
+      <div class="col-12">
+        <h2 id="id_montrek_table_title">{{ title }}</h2>
+      </div>
     </div>
-  </div>
 
   <!-- FILTERS + EXPORTS -->
-  <div class="row mb-0 m-1">
+    <div class="row mb-0 m-1">
 
     <!-- LEFT: FILTER FORM -->
-    <div class="col-12 col-lg-9 tile">
-      {% include "partials/table_filter_form.html" %}
-    </div>
+      <div class="col-12 col-lg-9 tile">
+        {% include "partials/table_filter_form.html" %}
+      </div>
 
     <!-- RIGHT: EXPORT BUTTONS -->
-    <div class="col-12 col-lg-3 tile">
+      <div class="col-12 col-lg-3 tile">
 
-      {% include "partials/table_actions.html" %}
+        {% include "partials/table_actions.html" %}
 
+      </div>
     </div>
-  </div>
 
   <!-- DATA TABLE -->
-  <div class="row tile m-1">
-    <div class="col-12 p-0">
-      {{ table }}
+    <div class="row tile m-1">
+      <div class="col-12 p-0">
+        {{ table }}
+      </div>
     </div>
-  </div>
 
   <!-- PAGINATION -->
-  <div class="row align-items-center tile m-1">
+    <div class="row align-items-center tile m-1">
 
     <!-- LEFT SIDE: Pagination nav -->
-    <div class="col-8">
+      <div class="col-8">
 
-      {% if paginator.show_paginator %}
-      <nav aria-label="Pagination">
-        <ul class="pagination mb-0">
+        {% if paginator.show_paginator %}
+          <nav aria-label="Pagination">
+            <ul class="pagination mb-0">
 
-          {% if paginator.has_previous %}
+              {% if paginator.has_previous %}
             <!-- FIRST PAGE -->
-            <li class="page-item">
-              <a class="page-link custom" href="?page=1" title="First Page">
-                <i class="bi bi-skip-backward-fill"></i>
-              </a>
-            </li>
+                <li class="page-item">
+                  <a class="page-link custom" href="?page=1" title="First Page">
+                    <i class="bi bi-skip-backward-fill"></i>
+                  </a>
+                </li>
 
             <!-- PREVIOUS -->
-            <li class="page-item">
-              <a class="page-link custom" href="?page={{ paginator.previous_page_number }}" title="Previous Page">
-                <i class="bi bi-arrow-left-square-fill"></i>
-              </a>
-            </li>
-          {% endif %}
+                <li class="page-item">
+                  <a class="page-link custom" href="?page={{ paginator.previous_page_number }}" title="Previous Page">
+                    <i class="bi bi-arrow-left-square-fill"></i>
+                  </a>
+                </li>
+              {% endif %}
 
           <!-- CURRENT -->
-          <li class="btn btn-light-custom btn-sm disabled">
-              Page {{ paginator.number }}
-              {% if not is_large %} / {{ paginator.num_pages }}{% endif %}
-          </li>
-
-          {% if paginator.has_next %}
-            <!-- NEXT -->
-            <li class="page-item">
-              <a class="page-link custom" href="?page={{ paginator.next_page_number }}" title="Next Page">
-                <i class="bi bi-arrow-right-square-fill"></i>
-              </a>
-            </li>
-
-            {% if not is_large %}
-              <!-- LAST -->
-              <li class="page-item">
-                <a class="page-link custom" href="?page={{ paginator.num_pages }}" title="Last Page">
-                  <i class="bi bi-skip-forward-fill"></i>
-                </a>
+              <li class="btn btn-light-custom btn-sm disabled">
+                Page {{ paginator.number }}
+                {% if not is_large %} / {{ paginator.num_pages }}{% endif %}
               </li>
-            {% endif %}
-          {% endif %}
-        </ul>
-      </nav>
-      {% endif %}
-    </div>
+
+              {% if paginator.has_next %}
+            <!-- NEXT -->
+                <li class="page-item">
+                  <a class="page-link custom" href="?page={{ paginator.next_page_number }}" title="Next Page">
+                    <i class="bi bi-arrow-right-square-fill"></i>
+                  </a>
+                </li>
+
+                {% if not is_large %}
+              <!-- LAST -->
+                  <li class="page-item">
+                    <a class="page-link custom" href="?page={{ paginator.num_pages }}" title="Last Page">
+                      <i class="bi bi-skip-forward-fill"></i>
+                    </a>
+                  </li>
+                {% endif %}
+              {% endif %}
+            </ul>
+          </nav>
+        {% endif %}
+      </div>
 
     <!-- RIGHT SIDE: Format + Pagination Controls -->
-    <div class="col-4">
+      <div class="col-4">
 
-      <div class="d-flex justify-content-end align-items-center gap-2 flex-wrap">
+        <div class="d-flex justify-content-end align-items-center gap-2 flex-wrap">
 
         <!-- FORMAT TOGGLE -->
-        <form method="get">
-          <input type="hidden" name="action" id="form-is_compact_format-action">
-          <button type="submit"
-                  onclick="document.getElementById('form-is_compact_format-action').value='{% if is_compact_format %}is_compact_format_false{% else %}is_compact_format_true{% endif %}'"
-                  class="btn btn-light-custom btn-sm"
-                  title="{% if is_compact_format %}Switch to Large Table format{% else %}Switch to Small Table format{% endif %}">
-            <i class="bi {% if is_compact_format %}bi-arrows-angle-expand{% else %}bi-arrows-angle-contract{% endif %}"></i>
-          </button>
-        </form>
+          <form method="get">
+            <input type="hidden" name="action" id="form-is_compact_format-action">
+            <button type="submit"
+                    onclick="document.getElementById('form-is_compact_format-action').value='{% if is_compact_format %}is_compact_format_false{% else %}is_compact_format_true{% endif %}'"
+                    class="btn btn-light-custom btn-sm"
+                    title="{% if is_compact_format %}Switch to Large Table format{% else %}Switch to Small Table format{% endif %}">
+              <i class="bi {% if is_compact_format %}bi-arrows-angle-expand{% else %}bi-arrows-angle-contract{% endif %}"></i>
+            </button>
+          </form>
 
         <!-- ITEMS PER PAGE DISPLAY -->
-        <div class="btn btn-light-custom btn-sm disabled">
-          {{ paginate_by }}/Page
-        </div>
+          <div class="btn btn-light-custom btn-sm disabled">
+            {{ paginate_by }}/Page
+          </div>
 
         <!-- PAGINATE + / - -->
-        <form class="d-flex align-items-center gap-2">
-          <input type="hidden" name="action" id="form-paginate_by-action">
+          <form class="d-flex align-items-center gap-2">
+            <input type="hidden" name="action" id="form-paginate_by-action">
 
-          <button type="submit"
-                  onclick="document.getElementById('form-paginate_by-action').value='add_paginate_by'"
-                  class="btn btn-light-custom btn-sm"
-                  title="Increase number per page">
-            <i class="bi bi-plus-circle-fill"></i>
-          </button>
+            <button type="submit"
+                    onclick="document.getElementById('form-paginate_by-action').value='add_paginate_by'"
+                    class="btn btn-light-custom btn-sm"
+                    title="Increase number per page">
+              <i class="bi bi-plus-circle-fill"></i>
+            </button>
 
-          <button type="submit"
-                  onclick="document.getElementById('form-paginate_by-action').value='sub_paginate_by'"
-                  class="btn btn-light-custom btn-sm"
-                  title="Decrease number per page">
-            <i class="bi bi-dash-circle-fill"></i>
-          </button>
+            <button type="submit"
+                    onclick="document.getElementById('form-paginate_by-action').value='sub_paginate_by'"
+                    class="btn btn-light-custom btn-sm"
+                    title="Decrease number per page">
+              <i class="bi bi-dash-circle-fill"></i>
+            </button>
 
-        </form>
+          </form>
+
+        </div>
 
       </div>
 
@@ -134,6 +136,9 @@
 
   </div>
 
-</div>
-
+{% endblock %}
+{% block side_page %}
+  {% if do_simple_file_upload %}
+    {{ simple_upload_form }}
+  {% endif %}
 {% endblock %}
