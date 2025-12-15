@@ -32,9 +32,7 @@ class ReportingTextParagraph(ReportingElement):
 
     def _format_to_html(self) -> str:
         if self.text_type == ReportingTextType.PLAIN:
-            return (
-                f'<div style="overflow-y: auto; max-height: 600px;">{self.text}</div>'
-            )
+            return f'<div class="scrollable-600">{self.text}</div>'
         return self.text
 
 
