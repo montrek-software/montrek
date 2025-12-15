@@ -828,7 +828,13 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_object(
             table_element=test_element,
             test_obj=obj,
-            expected_format='<div style="max-height: 300px; overflow-y: auto;">      <div><a id="id__fake_url_1_123" href="/fake_url/1/123">a</a></div>      <div><a id="id__fake_url_2_123" href="/fake_url/2/123">b</a></div>      <div><a id="id__fake_url_3_123" href="/fake_url/3/123">c</a></div>  </div>',
+            expected_format=(
+                '<div style="max-height: 300px; overflow-y: auto;">'
+                '      <div><a id="id__fake_url_1_123" href="/fake_url/1/123">a</a></div>'
+                '      <div><a id="id__fake_url_2_123" href="/fake_url/2/123">b</a></div>'
+                '      <div><a id="id__fake_url_3_123" href="/fake_url/3/123">c</a></div>'
+                '  </div>'
+            ),
             expected_format_latex=" \\color{black} a,b,c &",
             expected_hover_text="hover_text",
         )
