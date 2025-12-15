@@ -335,7 +335,7 @@ class LinkTextTableElement(BaseLinkTableElement):
 @dataclass
 class LinkListTableElement(TableElement, GetDottetAttrsOrArgMixin):
     url: str = field(default="")
-    kwargs: dict = field(default_factory=dict)
+    static_kwargs: dict = field(default_factory=dict)
     serializer_field_class = serializers.CharField
     text: str = field(default="")
     list_attr: str = field(default="")
@@ -347,9 +347,9 @@ class LinkListTableElement(TableElement, GetDottetAttrsOrArgMixin):
         return {"link_list": self.get_link_list(value, obj)}
 
     def get_link_list(self, value, obj):
-        list_values = self.get_dotted_attr_or_arg(obj, self.list_attr)
-        list_values = str(list_values).split(self.in_separator) if list_values else []
+        list_values = self.get_list_values(obj)
         link_list = []
+        kwargs = {self.list_kwarg: self.list_attr}
         for i, list_text in enumerate(value):
             list_value = list_values[i]
             link_list.append(
@@ -358,15 +358,20 @@ class LinkListTableElement(TableElement, GetDottetAttrsOrArgMixin):
                     text=self.text,
                     hover_text=self.hover_text,
                     url=self.url,
-                    kwargs={self.list_kwarg: self.list_attr},
+                    kwargs=kwargs,
+                    static_kwargs=self.static_kwargs,
                 ).get_display_field({self.text: list_text, self.list_attr: list_value})
             )
         return link_list
 
+    def get_list_values(self, obj: Any) -> list[str]:
+        list_values = self.get_dotted_attr_or_arg(obj, self.list_attr)
+        return str(list_values).split(self.in_separator) if list_values else []
+
     def format(self, value):
         return value
 
-    def get_value(self, obj: Any):
+    def get_value(self, obj: Any) -> list[str]:
         text_values = self.get_dotted_attr_or_arg(obj, self.text)
         text_values = str(text_values).split(self.in_separator) if text_values else []
         return text_values

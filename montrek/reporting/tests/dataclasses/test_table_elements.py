@@ -790,7 +790,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             url=fake_url,
             hover_text="hover_text",
             text="text_attr",
-            kwargs={},
+            static_kwargs={},
             list_attr="list_attr",
             list_kwarg="list_kwarg",
             in_separator=",",
@@ -800,6 +800,35 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             test_obj=obj,
             expected_format='<div style="max-height: 300px; overflow-y: auto;">      <div><a id="id__fake_url_1" href="/fake_url/1">a</a></div>      <div><a id="id__fake_url_2" href="/fake_url/2">b</a></div>      <div><a id="id__fake_url_3" href="/fake_url/3">c</a></div>  </div>',
+            expected_format_latex=" \\color{black} a,b,c &",
+            expected_hover_text="hover_text",
+        )
+
+    @mock.patch("reporting.dataclasses.table_elements.reverse")
+    def test_link_list_table_element_with_static_kwargs(self, mock_reverse):
+        fake_url = "fake_url"
+
+        def reverse_side_effect(*args, **kwargs):
+            value = kwargs["kwargs"]["list_kwarg"]
+            static = kwargs["kwargs"]["static"]
+            return f"/{fake_url}/{value}/{static}"
+
+        mock_reverse.side_effect = reverse_side_effect
+        test_element = te.LinkListTableElement(
+            name="name",
+            url=fake_url,
+            hover_text="hover_text",
+            text="text_attr",
+            static_kwargs={"static": "123"},
+            list_attr="list_attr",
+            list_kwarg="list_kwarg",
+            in_separator=",",
+        )
+        obj = {"list_attr": "1,2,3", "text_attr": "a,b,c"}
+        self.table_element_test_assertions_from_object(
+            table_element=test_element,
+            test_obj=obj,
+            expected_format='<div style="max-height: 300px; overflow-y: auto;">      <div><a id="id__fake_url_1_123" href="/fake_url/1/123">a</a></div>      <div><a id="id__fake_url_2_123" href="/fake_url/2/123">b</a></div>      <div><a id="id__fake_url_3_123" href="/fake_url/3/123">c</a></div>  </div>',
             expected_format_latex=" \\color{black} a,b,c &",
             expected_hover_text="hover_text",
         )
