@@ -32,7 +32,9 @@ class ReportingTextParagraph(ReportingElement):
 
     def _format_to_html(self) -> str:
         if self.text_type == ReportingTextType.PLAIN:
-            return f"<p>{self.text}</p>"
+            return (
+                f'<div style="overflow-y: auto; max-height: 600px;">{self.text}</div>'
+            )
         return self.text
 
 
@@ -96,14 +98,14 @@ class ReportingEditableText(ReportingParagraph):
 
     def _html(self, text: str) -> str:
         return Template(
-            f"""<div class="container-fluid">
+            f"""
         <div class="row">
-         <div class="col-lg-12" style="padding:0"><h2>{self.header}</h2></div>
+         <div><h2>{self.header}</h2></div>
          <div id="field-content-container-{self.field}">
              {{% include "partials/display_field.html" %}}
          </div>
         </div>
-</div>"""
+"""
         ).render(
             Context(
                 {
