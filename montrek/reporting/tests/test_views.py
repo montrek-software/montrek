@@ -106,7 +106,7 @@ class TestMontrekReportFieldEditView(TestCase):
         response = self.field_edit_view.as_view()(request)
 
         self.assertEqual(response.status_code, 200)
-        self.assertIn(b"<td>Test</td>", response.content)
+        self.assertIn(b'<div class="col-10">Test</div>', response.content)
 
     def test_get_non_edit_redirects(self):
         """GET without mode=edit should redirect."""

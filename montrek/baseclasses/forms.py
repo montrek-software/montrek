@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, cast
 
 from baseclasses.models import LinkTypeEnum
 from django import forms
@@ -149,15 +149,21 @@ class FilterForm(forms.Form):
 
 class MontrekCreateForm(forms.ModelForm):
     class Meta:
+        # TODO: Rewrite with factory
         exclude = ()
 
     def __init__(self, *args, **kwargs):
         self.repository = kwargs.pop("repository", None)
-        if self.repository:
-            self._meta.model = self.repository.hub_class
-        else:
-            raise NotImplementedError("No repository passed ")
+        if not self.repository:
+            raise ValueError("Repository required")
+
+        # Create instance-specific _meta
+        from copy import deepcopy
+
+        self._meta = deepcopy(self._meta)
+        self._meta.model = self.repository.hub_class
         self.session_data = kwargs.pop("session_data", {})
+
         super().__init__(*args, **kwargs)
         self.initial = kwargs.get("initial", {})
 
@@ -169,11 +175,17 @@ class MontrekCreateForm(forms.ModelForm):
         for field in fields:
             form_field = self._get_form_field(field)
             form_field.validators.extend(field.validators)
-            if form_field and field.name not in self._meta.exclude:
+            exclude = set(self._meta.exclude or ())
+            if form_field and field.name not in exclude:
                 self.fields[field.name] = form_field
-                self.fields[field.name].widget.attrs.update(
-                    {"id": f"id_{field.name}", "style": "width: 100%"}
-                )
+                attrs = {
+                    "id": f"id_{field.name}",
+                    "class": "form-control",
+                }
+                if isinstance(form_field.widget, forms.Textarea):
+                    attrs["class"] += " resizable"
+                widget = cast(forms.Widget, form_field.widget)
+                widget.attrs.update(attrs)
 
     def _get_form_field(self, field: Field):
         if isinstance(field, EncryptedCharField):
