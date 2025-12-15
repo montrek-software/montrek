@@ -186,7 +186,6 @@ class HubBManager(MontrekTableManager):
             te.LinkListTableElement(
                 name="Linked D Objects",
                 url="montrek_example_d_details",
-                kwargs={},
                 hover_text="View D Example",
                 text="field_d1_str",
                 list_attr="hub_d_id",
