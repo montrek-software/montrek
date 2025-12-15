@@ -98,7 +98,7 @@ class ReportingEditableText(ReportingParagraph):
         return Template(
             f"""
         <div class="row">
-         <div><h2>{self.header}</h2></div>
+         <div class="col"><h2>{self.header}</h2></div>
          <div id="field-content-container-{self.field}">
              {{% include "partials/display_field.html" %}}
          </div>
