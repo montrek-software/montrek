@@ -43,6 +43,7 @@ def _get_value_color_latex(value):
 @dataclass
 class TableElement:
     name: str
+    attr: str = field(default="")
     hover_text: str | None = field(default=None)
     style_attrs: ClassVar[StyleAttrsType] = {}
     td_classes: ClassVar[TdClassesType] = ["text-start"]
@@ -56,7 +57,7 @@ class TableElement:
         value_str = HtmlLatexConverter.convert(value_str)
         return f" \\color{{black}} {value_str} &"
 
-    def get_attribute(self, obj: Any, tag: str = "html") -> str:
+    def get_attribute(self, obj: Any, tag: str = "html") -> str | None:
         if tag == "html":
             value = self.get_value(obj)
             return value
@@ -153,7 +154,6 @@ class TableElement:
 class NoneTableElement(TableElement):
     name: str = "None"
     serializer_field_class = serializers.CharField
-    attr: str = field(default="")
     td_classes: ClassVar[TdClassesType] = ["text-center"]
 
     def format(self, value: Any) -> str:
@@ -162,8 +162,8 @@ class NoneTableElement(TableElement):
 
 @dataclass
 class AttrTableElement(TableElement):
+    attr: str
     serializer_field_class = serializers.CharField
-    attr: str = field(default="")
     obj: Any = None
 
     def get_value(self, obj: Any) -> Any:
@@ -232,7 +232,7 @@ class BaseLinkTableElement(TableElement, GetDottetAttrsOrArgMixin):
     kwargs: dict = field(default_factory=dict)
     static_kwargs: dict = field(default_factory=dict)
 
-    def get_attribute(self, obj: Any, tag: str = "html") -> str:
+    def get_attribute(self, obj: Any, tag: str = "html") -> str | None:
         if tag == "html":
             value = self.get_link(obj)
             return value
@@ -290,10 +290,10 @@ class BaseLinkTableElement(TableElement, GetDottetAttrsOrArgMixin):
             url += filter_str
         return url
 
-    def get_link(self, obj: Any) -> str:
+    def get_link(self, obj: Any) -> str | None:
         url = self.get_url(obj)
         if not url:
-            return ""
+            return None
         id_tag = url.replace("/", "_")
         link_text = self.get_link_text(obj)
         context = {"id_tag": id_tag, "url": url, "link_text": link_text}
@@ -382,7 +382,6 @@ class LinkListTableElement(TableElement, GetDottetAttrsOrArgMixin):
 
 @dataclass
 class StringTableElement(AttrTableElement):
-    attr: str
     chunk_size: int = 56
     td_classes: ClassVar[TdClassesType] = ["text-start"]
     field_template: ClassVar[str | None] = "string"
@@ -451,10 +450,10 @@ class AlertTableElement(AttrTableElement):
 
 @dataclass
 class NumberTableElement(AttrTableElement):
-    serializer_field_class = serializers.FloatField
     attr: str
     shortener: NumberShortenerABC = NoShortening()
     numerical_type: type = float
+    serializer_field_class: ClassVar = serializers.FloatField
 
     def get_display_field(self, obj: Any) -> DisplayField:
         value = self.get_attribute(obj, "html")
@@ -659,7 +658,6 @@ class DollarTableElement(MoneyTableElement):
 
 @dataclass
 class ImageTableElement(AttrTableElement):
-    attr: str
     alt: str = "image"
     td_classes: ClassVar[TdClassesType] = ["text-start"]
     field_template: ClassVar[str | None] = "image"
@@ -693,7 +691,6 @@ class ImageTableElement(AttrTableElement):
 
 @dataclass
 class MethodNameTableElement(AttrTableElement):
-    attr: str
     class_: type = object
     field_template: ClassVar[str | None] = "method_name"
 
