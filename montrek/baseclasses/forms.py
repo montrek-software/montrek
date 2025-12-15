@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, cast
 
 from baseclasses.models import LinkTypeEnum
 from django import forms
@@ -169,11 +169,17 @@ class MontrekCreateForm(forms.ModelForm):
         for field in fields:
             form_field = self._get_form_field(field)
             form_field.validators.extend(field.validators)
-            if form_field and field.name not in self._meta.exclude:
+            exclude = set(self.Meta.exclude or ())
+            if form_field and field.name not in exclude:
                 self.fields[field.name] = form_field
-                self.fields[field.name].widget.attrs.update(
-                    {"id": f"id_{field.name}", "style": "width: 100%;resize: both;"}
-                )
+                attrs = {
+                    "id": f"id_{field.name}",
+                    "class": "form-control",
+                }
+                if isinstance(form_field.widget, forms.Textarea):
+                    attrs["class"] += " resizable"
+                widget = cast(forms.Widget, form_field.widget)
+                widget.attrs.update(attrs)
 
     def _get_form_field(self, field: Field):
         if isinstance(field, EncryptedCharField):
