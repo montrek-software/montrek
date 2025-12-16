@@ -70,6 +70,7 @@ class TokenEndpointLiveTests(LiveServerTestCase):
             "value_date": None,
             "field_tsd2_float": None,
             "field_tsd2_int": None,
+            "comment": "",
         }
         self.assertEqual(data, [expected])
 
@@ -107,5 +108,6 @@ class TokenEndpointLiveTests(LiveServerTestCase):
             "value_date": None,
             "field_tsd2_float": None,
             "field_tsd2_int": None,
+            "comment": "",
         }
         self.assertEqual(data, [expected])
