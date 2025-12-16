@@ -2,11 +2,12 @@ import datetime
 import os
 from tempfile import TemporaryDirectory
 from textwrap import dedent
+from typing import cast
 from unittest.mock import patch
 
 from baseclasses.dataclasses.alert import AlertEnum
 from baseclasses.utils import montrek_time
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 from django.contrib.auth.models import Permission
 from django.test import TestCase, TransactionTestCase, override_settings
 from django.urls import reverse
@@ -614,6 +615,52 @@ class TestMontrekExampleDListView(MontrekListViewTestCase):
 
     def build_factories(self):
         me_factories.SatD1Factory.create(field_d1_str="0", field_d1_int=0)
+
+    def test_file_upload_is_shown(self):
+        self.assertTrue(self.response.context["do_simple_file_upload"])
+        upload_form = self.response.content
+        soup = BeautifulSoup(upload_form, "html.parser")
+        with self.subTest("test_attributes"):
+            form = soup.find("form")
+            self.assertIsNotNone(form)
+            form = cast(Tag, form)
+
+            self.assertEqual(form.get("method"), "post")
+            self.assertEqual(form.get("enctype"), "multipart/form-data")
+
+        with self.subTest("test_file_input"):
+            file_input = soup.find("input", {"type": "file"})
+            self.assertIsNotNone(file_input)
+            file_input = cast(Tag, file_input)
+
+            self.assertEqual(file_input.get("name"), "file")
+            self.assertEqual(file_input.get("id"), "id_upload__file")
+            self.assertIn(".xlsx", file_input.get("accept"))
+            self.assertIn(".csv", file_input.get("accept"))
+            self.assertTrue(file_input.has_attr("required"))
+
+        with self.subTest("test_overwrite_checkbox"):
+            checkbox = soup.find("input", {"type": "checkbox"})
+            self.assertIsNotNone(checkbox)
+
+            self.assertEqual(checkbox.get("name"), "overwrite")
+            self.assertEqual(checkbox.get("id"), "id_upload__overwrite")
+
+        with self.subTest("test_labels_are_bound"):
+            file_label = soup.find("label", {"for": "id_upload__file"})
+            overwrite_label = soup.find("label", {"for": "id_upload__overwrite"})
+
+            self.assertIsNotNone(file_label)
+            self.assertIsNotNone(overwrite_label)
+
+            self.assertEqual(file_label.text.strip(), "File:")
+            self.assertEqual(overwrite_label.text.strip(), "Overwrite existing data:")
+        with self.subTest("test_submit_button"):
+            submit = soup.find("input", {"type": "submit"})
+            self.assertIsNotNone(submit)
+
+            self.assertEqual(submit.get("value"), "Upload")
+            self.assertIn("input-custom", submit.get("class", []))
 
     def test_simple_file_upload_csv(self):
         test_file_path = os.path.join(os.path.dirname(__file__), "data", "d_file.csv")

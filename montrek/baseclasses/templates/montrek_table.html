@@ -139,6 +139,6 @@
 {% endblock %}
 {% block side_page %}
   {% if do_simple_file_upload %}
-    {{ simple_upload_form }}
+    {% include "base_upload_form.html" %}
   {% endif %}
 {% endblock %}

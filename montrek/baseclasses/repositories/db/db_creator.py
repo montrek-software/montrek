@@ -95,6 +95,8 @@ class DbCreator:
             self._convert_json(sat_class)
         if "value_date" in self.data and not pd.isnull(self.data["value_date"]):
             self.data["value_date"] = pd.to_datetime(self.data["value_date"]).date()
+        if "comment" in self.data and pd.isnull(self.data["comment"]):
+            self.data["comment"] = ""
 
     def _make_timezone_aware(self, value: datetime.datetime, key: str):
         if value.tzinfo is None:
