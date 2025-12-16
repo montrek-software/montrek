@@ -248,6 +248,7 @@ class HubDManager(MontrekTableManager):
             te.DateTableElement(name="Value Date", attr="value_date"),
             te.FloatTableElement(name="D2 Float", attr="field_tsd2_float"),
             te.IntTableElement(name="D2 Int", attr="field_tsd2_int"),
+            te.StringTableElement(name="Comment", attr="comment"),
             te.LinkTableElement(
                 name="Delete",
                 url="montrek_example_d_delete",

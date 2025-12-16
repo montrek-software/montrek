@@ -496,6 +496,20 @@ class TestMontrekCreateObject(TestCase):
         self.assertEqual(me_models.SatA1.objects.last().comment, "some new comment")
         self.assertEqual(me_models.SatA2.objects.last().comment, "some comment")
 
+    def test_std_create_object_comment_none(self):
+        repository = HubARepository(session_data={"user_id": self.user.id})
+        repository.std_create_object(
+            {
+                "field_a1_int": 5,
+                "field_a1_str": "test",
+                "field_a2_float": 6.0,
+                "field_a2_str": "test2",
+                "comment": None,
+            }
+        )
+        self.assertEqual(me_models.SatA1.objects.first().comment, "")
+        self.assertEqual(me_models.SatA2.objects.first().comment, "")
+
     def test_update_satellite_and_raise_error_when_identifier_field_exists(self):
         existing_sat = me_factories.SatA1Factory(
             field_a1_int=3, field_a1_str="existing"
