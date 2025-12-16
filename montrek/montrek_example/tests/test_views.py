@@ -618,7 +618,7 @@ class TestMontrekExampleDListView(MontrekListViewTestCase):
 
     def test_file_upload_is_shown(self):
         self.assertTrue(self.response.context["do_simple_file_upload"])
-        upload_form = self.response.context["simple_upload_form"]
+        upload_form = self.response.content
         soup = BeautifulSoup(upload_form, "html.parser")
         with self.subTest("test_attributes"):
             form = soup.find("form")

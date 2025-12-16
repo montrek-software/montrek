@@ -17,7 +17,6 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.http import FileResponse, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render
-from django.template.loader import render_to_string
 from django.urls import reverse
 from django.views.decorators.http import require_safe
 from django.views.generic import DetailView, RedirectView, View
@@ -287,9 +286,7 @@ class MontrekListView(
             for i in range(filter_count)
         ]
         if self.do_simple_file_upload:
-            context["simple_upload_form"] = render_to_string(
-                "base_upload_form.html", {"form": SimpleUploadFileForm(".xlsx,.csv")}
-            )
+            context["upload_form"] = SimpleUploadFileForm(".xlsx,.csv")
 
         context["do_simple_file_upload"] = self.do_simple_file_upload
         return context
