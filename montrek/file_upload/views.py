@@ -42,7 +42,7 @@ class MontrekUploadFileView(MontrekTemplateView):
         self.file_upload_manager = None
 
     def get_template_context(self, **kwargs):
-        return {"form": self.upload_form_class(self.accept)}
+        return {"upload_form": self.upload_form_class(self.accept)}
 
     def post(self, request, *args, **kwargs):
         form = self.get_post_form(request)
