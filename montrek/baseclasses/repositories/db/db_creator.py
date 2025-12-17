@@ -1,6 +1,6 @@
 import datetime
 import json
-from typing import Any
+from typing import Any, Optional
 
 import pandas as pd
 from baseclasses.errors.montrek_user_error import MontrekError
@@ -59,25 +59,39 @@ class DbCreator:
 
     def _create_static_satellites(self):
         for sat_class in self.db_staller.get_static_satellite_classes():
-            sat_data = self._get_satellite_data(sat_class)
-            if self._is_sat_data_empty(sat_data):
+            sat = self._create_static_satellite(sat_class)
+            if sat is None:
                 continue
-            sat = sat_class(
-                **sat_data, state_date_start=self.creation_date, hub_entity=self.hub
-            )
             self._process_static_satellite(sat)
 
     def _create_ts_satellites(self):
         for sat_class in self.db_staller.get_ts_satellite_classes():
-            sat_data = self._get_satellite_data(sat_class)
-            if self._is_sat_data_empty(sat_data):
+            sat = self._create_ts_satellite(sat_class)
+            if sat is None:
                 continue
-            sat = sat_class(
-                **sat_data,
-                state_date_start=self.creation_date,
-                hub_value_date=self.hub_value_date,
-            )
             self._process_ts_satellite(sat)
+
+    def _create_static_satellite(
+        self, sat_class: type[MontrekSatelliteABC]
+    ) -> Optional[MontrekSatelliteABC]:
+        sat_data = self._get_satellite_data(sat_class)
+        if self._is_sat_data_empty(sat_data):
+            return None
+        return sat_class(
+            **sat_data, state_date_start=self.creation_date, hub_entity=self.hub
+        )
+
+    def _create_ts_satellite(
+        self, sat_class: type[MontrekSatelliteABC]
+    ) -> Optional[MontrekSatelliteABC]:
+        sat_data = self._get_satellite_data(sat_class)
+        if self._is_sat_data_empty(sat_data):
+            return None
+        return sat_class(
+            **sat_data,
+            state_date_start=self.creation_date,
+            hub_value_date=self.hub_value_date,
+        )
 
     def _create_links(self):
         link_data = self._get_link_data()
