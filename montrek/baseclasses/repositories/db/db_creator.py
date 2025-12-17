@@ -1,6 +1,7 @@
 import datetime
 import json
-from typing import Any, Optional
+from collections import defaultdict
+from typing import Any, Optional, cast
 
 import pandas as pd
 from baseclasses.errors.montrek_user_error import MontrekError
@@ -17,8 +18,11 @@ from baseclasses.sanitizer import HtmlSanitizer
 from django.db.models import JSONField, Q, QuerySet
 from django.utils import timezone
 
-DataDict = dict[str, Any]
-SatelliteDict = dict[type[MontrekSatelliteABC], MontrekSatelliteABC]
+type DataDict = dict[str, Any]
+type SatelliteDict = dict[type[MontrekSatelliteABC], MontrekSatelliteABC]
+type SatHashesMap = dict[type[MontrekSatelliteABC], str]
+type SatHashesDict = dict[type[MontrekSatelliteABC], set[str]]
+type HashSatMap = dict[str, MontrekSatelliteABC]
 
 
 class DbCreator:
@@ -34,6 +38,7 @@ class DbCreator:
         self.existing_satellites: SatelliteDict = {}
         self.updated_satellites: SatelliteDict = {}
         self.sanitizer = HtmlSanitizer()
+        self.cached_queryset: Optional[HashSatMap] = None
 
     def create(self, data: DataDict):
         self.data = self.cleaned_data(data)
@@ -52,6 +57,44 @@ class DbCreator:
             key: self.sanitizer.clean_html(value) if isinstance(value, str) else value
             for key, value in data.items()
         }
+
+    def get_sat_hashes(self, data: DataDict) -> SatHashesMap:
+        self.data = data
+        sat_hashes = {}
+        for sat_class in self.db_staller.get_static_satellite_classes():
+            sat = self._create_static_satellite(sat_class)
+            if sat is None:
+                continue
+            sat_hashes[sat_class] = sat.get_hash_identifier
+
+        for sat_class in self.db_staller.get_ts_satellite_classes():
+            sat = self._create_ts_satellite(sat_class)
+            if sat is None:
+                continue
+            sat_hashes[sat_class] = sat.get_hash_identifier
+        return sat_hashes
+
+    def cache_queryset(self, sat_hashes_dict: SatHashesDict):
+        cache: HashSatMap = defaultdict()
+        now = timezone.now()
+        for sat_class, hashes in sat_hashes_dict.items():
+            if sat_class.is_timeseries:
+                state_date_end_criterion = Q(
+                    hub_value_date__hub__state_date_end__gt=now
+                )
+            else:
+                state_date_end_criterion = Q(hub_entity__state_date_end__gt=now)
+            qs = sat_class.objects.filter(
+                state_date_end_criterion,
+                Q(hash_identifier__in=hashes),
+                state_date_start__lte=now,
+                state_date_end__gt=now,
+            )
+
+            for sat in qs:
+                cache[sat.hash_identifier] = sat
+        cache_queryset = cast(HashSatMap, dict(cache))
+        self.cached_queryset = cache_queryset
 
     def _enrich_data(self):
         self.data["created_by_id"] = self.user_id
@@ -216,16 +259,12 @@ class DbCreator:
         # Check if satellite already exists, if it is updated or if it is new
         sat_hash_identifier = sat.get_hash_identifier
         satellite_class = type(sat)
-        return (
-            satellite_class.objects.filter(
-                state_date_end_criterion,
-                Q(hash_identifier=sat_hash_identifier),
-                state_date_start__lte=self.creation_date,
-                state_date_end__gt=self.creation_date,
-            )
-            .order_by("-state_date_start")
-            .first()
-        )
+        return satellite_class.objects.filter(
+            state_date_end_criterion,
+            Q(hash_identifier=sat_hash_identifier),
+            state_date_start__lte=self.creation_date,
+            state_date_end__gt=self.creation_date,
+        ).first()
 
     def _updated_satellite(
         self, sat: MontrekSatelliteABC, existing_sat: MontrekSatelliteABC
@@ -406,7 +445,19 @@ class DbBatchCreator:
         self.data_collection.append(data)
 
     def create(self):
+        sat_hashes = self.get_sat_hashes()
+        self.db_creator.cache_queryset(sat_hashes)
         for data in self.data_collection:
             self.db_creator.create(data)
             self.hubs.append(self.db_creator.hub)
             self.db_creator.clean()
+
+    def get_sat_hashes(self) -> SatHashesDict:
+        sat_hashes: SatHashesDict = defaultdict(set)
+
+        for data in self.data_collection:
+            sat_hash_map = self.db_creator.get_sat_hashes(data)
+            for sat_class, hash_value in sat_hash_map.items():
+                sat_hashes[sat_class].add(hash_value)
+
+        return dict(sat_hashes)
