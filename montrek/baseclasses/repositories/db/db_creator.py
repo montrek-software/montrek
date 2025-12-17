@@ -372,3 +372,11 @@ class DbCreator:
             raise MontrekError(
                 f"Try to update data with ({existing_id_str}) that already exists!"
             )
+
+    def clean(self):
+        self.hub = None
+        self.hub_value_date = None
+        self.value_date_list = None
+        self.new_satellites = {}
+        self.existing_satellites = {}
+        self.updated_satellites = {}
