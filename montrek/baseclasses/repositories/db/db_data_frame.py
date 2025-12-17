@@ -1,7 +1,5 @@
 import pandas as pd
-from baseclasses.dataclasses.montrek_message import (
-    MontrekMessageWarning,
-)
+from baseclasses.dataclasses.montrek_message import MontrekMessageWarning
 from baseclasses.models import MontrekHubABC
 from baseclasses.repositories.annotator import Annotator
 from baseclasses.repositories.db.db_creator import DbCreator
@@ -51,13 +49,42 @@ class DbDataFrame:
         self._process_data(time_series_columns)
 
     def _process_data(self, columns: list[str]):
-        data_frame = self.data_frame.loc[:, columns]
-        data_frame = self._convert_lists_to_tuples(data_frame)
-        data_frame = data_frame.drop_duplicates()
-        data_frame = self._convert_tuples_to_lists(data_frame)
-        self._raise_for_duplicated_entries(data_frame)
-        self.data_frame = self.data_frame.copy()
-        self.data_frame["hub_entity"] = data_frame.apply(self._process_row, axis=1)
+        df = self.data_frame.loc[:, columns]
+
+        # Convert link columns to hashable types for drop_duplicates
+        for col in self.link_columns:
+            if col in df.columns:
+                df[col] = df[col].map(lambda x: tuple(x) if isinstance(x, list) else x)
+
+        df = df.drop_duplicates()
+
+        # Convert back to lists (tests rely on this)
+        for col in self.link_columns:
+            if col in df.columns:
+                df[col] = df[col].map(lambda x: list(x) if isinstance(x, tuple) else x)
+
+        # Must be done on the deduplicated frame
+        self._raise_for_duplicated_entries(df)
+
+        creator = DbCreator(self.db_staller, self.user_id)
+
+        hubs: dict[int, MontrekHubABC | None] = {}
+        columns = list(df.columns)
+
+        for row in df.itertuples(index=True, name=None):
+            data = dict(zip(columns, row[1:]))
+
+            # Normalize NaN → None (required for many tests)
+            for key, value in data.items():
+                if not isinstance(value, (list, dict)) and pd.isna(value):
+                    data[key] = None
+
+            creator.create(data)
+            hubs[row[0]] = creator.hub
+            creator.clean()
+
+        # Preserve original DataFrame shape semantics
+        self.data_frame["hub_entity"] = hubs
 
     def _process_row(self, row: pd.Series) -> MontrekHubABC | None:
         row_dict = row.to_dict()
