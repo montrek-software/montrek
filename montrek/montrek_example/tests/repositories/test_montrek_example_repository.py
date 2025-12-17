@@ -962,8 +962,14 @@ class TestMontrekCreateObjectDataFrame(TestCase):
         test_query = repository.receive()
         self.assertEqual(test_query.count(), 2)
         self.assertEqual(me_models.HubC.objects.count(), 2)
-        self.assertEqual(me_models.SatC1.objects.count(), 2)
+        static_objs = me_models.SatC1.objects
+        self.assertEqual(static_objs.count(), 3)
         self.assertTrue(test_query[1].field_c1_bool)
+        now = timezone.now()
+        old_entry = static_objs.get(field_c1_str="test_static2", state_date_end__lt=now)
+        self.assertFalse(old_entry.field_c1_bool)
+        old_entry = static_objs.get(field_c1_str="test_static2", state_date_end__gt=now)
+        self.assertTrue(old_entry.field_c1_bool)
 
     def test_create_objects_from_data_frame__ts_data_update(self):
         repository = HubCRepository(session_data={"user_id": self.user.id})
