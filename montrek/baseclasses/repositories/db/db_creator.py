@@ -60,6 +60,10 @@ class DbCreator:
 
     def get_sat_hashes(self, data: DataDict) -> SatHashesMap:
         self.data = data
+        self._get_hub_from_data()
+        self._stall_hub(False)
+        self._set_value_date_list()
+        self._stall_hub_value_date(False)
         sat_hashes = {}
         for sat_class in self.db_staller.get_static_satellite_classes():
             sat = self._create_static_satellite(sat_class)
@@ -72,6 +76,7 @@ class DbCreator:
             if sat is None:
                 continue
             sat_hashes[sat_class] = sat.get_hash_identifier
+        self.clean()
         return sat_hashes
 
     def cache_queryset(self, sat_hashes_dict: SatHashesDict):
@@ -223,15 +228,16 @@ class DbCreator:
                 id=self.data["hub_entity_id"]
             )
 
-    def _stall_hub(self):
+    def _stall_hub(self, stall: bool = True):
         if self.hub:
             return
         self.hub = self.db_staller.hub_class(
             created_by_id=self.user_id, state_date_start=self.creation_date
         )
-        self.db_staller.stall_hub(self.hub)
+        if stall:
+            self.db_staller.stall_hub(self.hub)
 
-    def _stall_hub_value_date(self):
+    def _stall_hub_value_date(self, stall: bool = True):
         if self.hub.id is not None:
             existing_hub_value_date = (
                 self.db_staller.hub_value_date_class.objects.filter(
@@ -244,7 +250,8 @@ class DbCreator:
         self.hub_value_date = self.db_staller.hub_value_date_class(
             hub=self.hub, value_date_list=self.value_date_list
         )
-        self.db_staller.stall_hub_value_date(self.hub_value_date)
+        if stall:
+            self.db_staller.stall_hub_value_date(self.hub_value_date)
 
     def _set_static_satellites_hub(self):
         self._reset_hub_if_new_and_existing()
