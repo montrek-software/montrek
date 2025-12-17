@@ -84,6 +84,7 @@ class DbDataFrame:
             creator.clean()
 
         # Preserve original DataFrame shape semantics
+        self.data_frame = self.data_frame.copy()
         self.data_frame["hub_entity"] = hubs
 
     def _process_row(self, row: pd.Series) -> MontrekHubABC | None:
