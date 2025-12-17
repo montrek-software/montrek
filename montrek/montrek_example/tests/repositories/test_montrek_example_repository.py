@@ -943,6 +943,28 @@ class TestMontrekCreateObjectDataFrame(TestCase):
         self.assertEqual(me_models.HubC.objects.count(), 2)
         self.assertEqual(me_models.SatC1.objects.count(), 2)
 
+    def test_create_objects_from_data_frame__static_data_update(self):
+        repository = HubCRepository(session_data={"user_id": self.user.id})
+        data_frame = pd.DataFrame(
+            {
+                "field_c1_str": ["test_static", "test_static2"],
+                "field_c1_bool": [True, False],
+            }
+        )
+        repository.create_objects_from_data_frame(data_frame)
+        data_frame = pd.DataFrame(
+            {
+                "field_c1_str": ["test_static", "test_static2"],
+                "field_c1_bool": [True, True],
+            }
+        )
+        repository.create_objects_from_data_frame(data_frame)
+        test_query = repository.receive()
+        self.assertEqual(test_query.count(), 2)
+        self.assertEqual(me_models.HubC.objects.count(), 2)
+        self.assertEqual(me_models.SatC1.objects.count(), 2)
+        self.assertTrue(test_query[1].field_c1_bool)
+
     def test_create_objects_from_data_frame__ts_data_update(self):
         repository = HubCRepository(session_data={"user_id": self.user.id})
         hub1 = me_factories.HubCFactory()
