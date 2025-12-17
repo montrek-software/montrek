@@ -51,17 +51,9 @@ class DbDataFrame:
     def _process_data(self, columns: list[str]):
         df = self.data_frame.loc[:, columns]
 
-        # Convert link columns to hashable types for drop_duplicates
-        for col in self.link_columns:
-            if col in df.columns:
-                df[col] = df[col].map(lambda x: tuple(x) if isinstance(x, list) else x)
-
+        df = self._convert_lists_to_tuples(df)
         df = df.drop_duplicates()
-
-        # Convert back to lists (tests rely on this)
-        for col in self.link_columns:
-            if col in df.columns:
-                df[col] = df[col].map(lambda x: list(x) if isinstance(x, tuple) else x)
+        df = self._convert_tuples_to_lists(df)
 
         # Must be done on the deduplicated frame
         self._raise_for_duplicated_entries(df)
@@ -87,14 +79,19 @@ class DbDataFrame:
         self.data_frame = self.data_frame.copy()
         self.data_frame["hub_entity"] = hubs
 
-    def _process_row(self, row: pd.Series) -> MontrekHubABC | None:
-        row_dict = row.to_dict()
-        for key, value in row_dict.items():
-            if not isinstance(value, (list, dict)) and pd.isna(value):
-                row_dict[key] = None
-        db_creator = DbCreator(self.db_staller, self.user_id)
-        db_creator.create(row_dict)
-        return db_creator.hub
+    def _convert_lists_to_tuples(self, df: pd.DataFrame):
+        for col in self.link_columns:
+            if col not in df.columns:
+                continue
+            df[col] = df[col].apply(lambda x: tuple(x) if isinstance(x, list) else x)
+        return df
+
+    def _convert_tuples_to_lists(self, df: pd.DataFrame):
+        for col in self.link_columns:
+            if col not in df.columns:
+                continue
+            df[col] = df[col].apply(lambda x: list(x) if isinstance(x, tuple) else x)
+        return df
 
     def _assign_hubs(self):
         for hubs in self.db_writer.db_staller.get_hubs().values():
@@ -198,20 +195,6 @@ class DbDataFrame:
                 MontrekMessageWarning(f"{dropped_rows} empty rows not uploaded!")
             )
             self.data_frame = dropped_data_frame
-
-    def _convert_lists_to_tuples(self, df: pd.DataFrame):
-        for col in self.link_columns:
-            if col not in df.columns:
-                continue
-            df[col] = df[col].apply(lambda x: tuple(x) if isinstance(x, list) else x)
-        return df
-
-    def _convert_tuples_to_lists(self, df: pd.DataFrame):
-        for col in self.link_columns:
-            if col not in df.columns:
-                continue
-            df[col] = df[col].apply(lambda x: list(x) if isinstance(x, tuple) else x)
-        return df
 
     def _assign_hub(self, x) -> int | None:
         if pd.isna(x):
