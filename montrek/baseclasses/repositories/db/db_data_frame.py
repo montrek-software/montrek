@@ -2,7 +2,7 @@ import pandas as pd
 from baseclasses.dataclasses.montrek_message import MontrekMessageWarning
 from baseclasses.models import MontrekHubABC
 from baseclasses.repositories.annotator import Annotator
-from baseclasses.repositories.db.db_creator import DbCreator
+from baseclasses.repositories.db.db_creator import DbBatchCreator, DbCreator
 from baseclasses.repositories.db.db_staller import DbStaller
 from baseclasses.repositories.db.db_writer import DbWriter
 
@@ -58,22 +58,21 @@ class DbDataFrame:
         # Must be done on the deduplicated frame
         self._raise_for_duplicated_entries(df)
 
-        creator = DbCreator(self.db_staller, self.user_id)
+        creator = DbBatchCreator(DbCreator(self.db_staller, self.user_id))
 
-        hubs: dict[int, MontrekHubABC | None] = {}
         columns = list(df.columns)
 
-        for row in df.itertuples(index=True, name=None):
-            data = dict(zip(columns, row[1:]))
+        for row in df.itertuples(index=False, name=None):
+            data = dict(zip(columns, row))
 
             # Normalize NaN → None (required for many tests)
             for key, value in data.items():
                 if not isinstance(value, (list, dict)) and pd.isna(value):
                     data[key] = None
 
-            creator.create(data)
-            hubs[row[0]] = creator.hub
-            creator.clean()
+            creator.stall_data(data)
+        creator.create()
+        hubs = dict(zip(df.index.tolist(), creator.hubs))
 
         # Preserve original DataFrame shape semantics
         self.data_frame = self.data_frame.copy()

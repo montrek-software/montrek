@@ -380,3 +380,19 @@ class DbCreator:
         self.new_satellites = {}
         self.existing_satellites = {}
         self.updated_satellites = {}
+
+
+class DbBatchCreator:
+    def __init__(self, db_creator: DbCreator):
+        self.db_creator = db_creator
+        self.data_collection: list[DataDict] = []
+        self.hubs: list[MontrekHubABC | None] = []
+
+    def stall_data(self, data: DataDict):
+        self.data_collection.append(data)
+
+    def create(self):
+        for data in self.data_collection:
+            self.db_creator.create(data)
+            self.hubs.append(self.db_creator.hub)
+            self.db_creator.clean()
