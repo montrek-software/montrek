@@ -258,6 +258,8 @@ class DbCreator:
     ) -> MontrekSatelliteABC | None:
         # Check if satellite already exists, if it is updated or if it is new
         sat_hash_identifier = sat.get_hash_identifier
+        if self.cached_queryset is not None:
+            return self.cached_queryset.get(sat_hash_identifier, None)
         satellite_class = type(sat)
         return satellite_class.objects.filter(
             state_date_end_criterion,
