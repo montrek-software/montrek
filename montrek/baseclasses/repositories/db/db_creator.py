@@ -85,9 +85,32 @@ class DbCreator:
         self.clean()
         return sat_hashes
 
-    def cache_hubs(self, hub_ids: list[int]):
+    def cache_hubs(self, hub_ids: set[int]):
+        logger.debug("Start cache hubs")
         hubs = self.db_staller.hub_class.objects.filter(id__in=hub_ids)
         self._cached_hubs = {hub.id: hub for hub in hubs}
+        logger.debug("End cache hubs")
+
+    def cache_value_dates(self, value_dates: set[datetime.date | None]):
+        logger.debug("Start cache value_dates")
+        value_dates_lists = ValueDateList.objects.filter(value_date__in=value_dates)
+        self._cached_value_date_lists = {
+            value_date.value_date: value_date for value_date in value_dates_lists
+        }
+        logger.debug("End cache value_dates")
+
+    def cache_hub_value_dates(
+        self, hub_ids: set[int], value_dates: set[datetime.date | None]
+    ):
+        logger.debug("Start cache hub_value_dates")
+
+        hub_value_dates = self.db_staller.hub_value_date_class.objects.filter(
+            hub__id__in=hub_ids, value_date_list__value_date__in=value_dates
+        )
+        self._cached_hub_value_dates = {
+            (hvd.hub_id, hvd.value_date_list.value_date): hvd for hvd in hub_value_dates
+        }
+        logger.debug("End cache hub_value_dates")
 
     def cache_queryset(self, sat_hashes_dict: SatHashesDict):
         cache: HashSatMap = defaultdict()
@@ -255,6 +278,10 @@ class DbCreator:
 
     def _stall_hub_value_date(self, stall: bool = True):
         if self.hub.id is not None:
+            hub_value_date_index = (self.hub.id, self.value_date_list.value_date)
+            if hub_value_date_index in self._cached_hub_value_dates:
+                self.hub_value_date = self._cached_hub_value_dates[hub_value_date_index]
+                return
             existing_hub_value_date = (
                 self.db_staller.hub_value_date_class.objects.filter(
                     hub=self.hub, value_date_list=self.value_date_list
@@ -490,13 +517,22 @@ class DbBatchCreator:
     def cache_data(self) -> None:
         sat_hashes: SatHashesDict = defaultdict(set)
         hub_ids = []
+        value_dates = []
         for data in self.data_collection:
+            hub_id = None
+            value_date = None
             if "hub_entity_id" in data:
                 hub_id = data["hub_entity_id"]
-                if hub_id is None:
-                    continue
-                hub_ids.append(hub_id)
+                if hub_id is not None:
+                    hub_ids.append(hub_id)
+            if "value_date" in data:
+                value_date = data["value_date"]
+                value_dates.append(value_date)
+        hub_ids = set(hub_ids)
+        value_dates = set(value_dates)
         self.db_creator.cache_hubs(hub_ids)
+        self.db_creator.cache_value_dates(value_dates)
+        self.db_creator.cache_hub_value_dates(hub_ids, value_dates)
         for data in self.data_collection:
             sat_hash_map = self.db_creator.get_sat_hashes(data)
             for sat_class, hash_value in sat_hash_map.items():
