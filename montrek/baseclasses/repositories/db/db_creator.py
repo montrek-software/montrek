@@ -213,13 +213,10 @@ class DbCreator:
 
     def _set_value_date_list(self):
         value_date = self.data.get("value_date", None)
-        existing_value_date_list = ValueDateList.objects.filter(value_date=value_date)
-        if existing_value_date_list.count() == 0:
-            value_date_list = ValueDateList(value_date=value_date)
-            value_date_list.save()
-            self.value_date_list = value_date_list
-        elif existing_value_date_list.count() == 1:
-            self.value_date_list = existing_value_date_list.first()
+        obj = ValueDateList.objects.filter(value_date=value_date).first()
+        if obj is None:
+            obj = ValueDateList.objects.create(value_date=value_date)
+        self.value_date_list = obj
 
     def _get_hub_from_data(self):
         """
@@ -326,12 +323,13 @@ class DbCreator:
     def _close_existing_sat_if_hub_is_forced(self, sat: MontrekSatelliteABC):
         if "hub_entity_id" not in self.data:
             return
-        latest_sats = sat.__class__.objects.filter(
-            hub_entity_id=self.data["hub_entity_id"]
+        latest_sat = (
+            sat.__class__.objects.filter(hub_entity_id=self.data["hub_entity_id"])
+            .order_by("-state_date_start")
+            .first()
         )
-        if latest_sats.count() == 0:
+        if not latest_sat:
             return
-        latest_sat = latest_sats.latest("state_date_start")
 
         latest_sat.state_date_end = self.creation_date
         self.db_staller.stall_updated_satellite(latest_sat)
@@ -398,14 +396,21 @@ class DbCreator:
             "state_date_end__gt": self.creation_date,
             "state_date_start__lte": self.creation_date,
         }
-        existing_links = link_class.objects.filter(**filter_args).all()
+        existing_links = list(link_class.objects.filter(**filter_args))
         if not existing_links:
             return links
         opposite_field = self._get_opposite_field(hub_field)
         opposite_hubs = [getattr(link, opposite_field) for link in links]
-        filter_kwargs = {f"{opposite_field}__in": opposite_hubs}
-        continued_links = existing_links.filter(**filter_kwargs).all()
-        discontinued_links = existing_links.exclude(**filter_kwargs).all()
+        continued_links = [
+            link
+            for link in existing_links
+            if getattr(link, opposite_field) in opposite_hubs
+        ]
+        discontinued_links = [
+            link
+            for link in existing_links
+            if getattr(link, opposite_field) not in opposite_hubs
+        ]
         for link in discontinued_links:
             link.state_date_end = self.creation_date
         self.db_staller.stall_updated_links(discontinued_links)
