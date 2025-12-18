@@ -45,6 +45,7 @@ class DbCreator:
         self._cached_value_date_lists = {}
         self._cached_hub_value_dates = {}
         self._cached_hubs = {}
+        self._cached_links = {}
 
     def create(self, data: DataDict):
         self.data = self.cleaned_data(data)
@@ -119,6 +120,71 @@ class DbCreator:
             (hvd.hub_id, hvd.value_date_list.value_date): hvd for hvd in hub_value_dates
         }
         logger.debug("End cache hub_value_dates")
+
+    def cache_links(self, hub_ids: set[int]):
+        """
+        Cache existing links for the given hub IDs.
+        Stores links in a dict keyed by (link_class, hub_id, hub_field).
+        """
+        logger.debug("Start cache links")
+
+        now = timezone.now()
+        cached_links = defaultdict(list)
+
+        # Get all link classes from the hub
+        link_classes = self._get_all_link_classes()
+
+        for link_class in link_classes:
+            # Query links where hub_in or hub_out matches our hub_ids
+            links = link_class.objects.select_related("hub_in", "hub_out").filter(
+                Q(hub_in_id__in=hub_ids) | Q(hub_out_id__in=hub_ids),
+                state_date_start__lte=now,
+                state_date_end__gt=now,
+            )
+
+            for link in links:
+                # Cache by hub_in
+                if link.hub_in_id in hub_ids:
+                    key = (link_class, link.hub_in_id, "hub_in")
+                    cached_links[key].append(link)
+
+                # Cache by hub_out
+                if link.hub_out_id in hub_ids:
+                    key = (link_class, link.hub_out_id, "hub_out")
+                    cached_links[key].append(link)
+
+        self._cached_links = dict(cached_links)
+        logger.debug("End cache links")
+
+    def _get_all_link_classes(self) -> list[type[MontrekLinkABC]]:
+        """
+        Extract all link classes from the hub's ManyToMany fields.
+        """
+        from django.db.models.fields.related import ManyToOneRel
+
+        link_classes = []
+        for field in self.db_staller.hub_class._meta.get_fields():
+            through_model = None
+
+            # Handle ManyToMany fields
+            if field.many_to_many and hasattr(field, "through"):
+                through_model = field.through
+
+            # Handle ManyToOneRel (reverse ForeignKey relations)
+            elif isinstance(field, ManyToOneRel):
+                through_model = field.related_model
+
+            # Check if it's a MontrekLinkABC subclass
+            if (
+                through_model
+                and hasattr(through_model, "__mro__")
+                and any(
+                    base.__name__ == "MontrekLinkABC" for base in through_model.__mro__
+                )
+            ):
+                link_classes.append(through_model)
+
+        return link_classes
 
     def cache_queryset(self, sat_hashes_dict: SatHashesDict):
         cache: HashSatMap = defaultdict()
@@ -439,19 +505,29 @@ class DbCreator:
     ) -> list[MontrekLinkABC]:
         if not self.hub.pk:
             return links
+
         is_one_to_one_link = issubclass(link_class, MontrekOneToOneLinkABC)
         if is_one_to_one_link and len(links) > 1:
             raise MontrekError(
                 f"Try to link mulitple items to OneToOne Link {link_class}"
             )
-        filter_args = {
-            f"{hub_field}": self.hub,
-            "state_date_end__gt": self.creation_date,
-            "state_date_start__lte": self.creation_date,
-        }
-        existing_links = list(link_class.objects.filter(**filter_args))
+
+        # Try to get from cache first
+        cache_key = (link_class, self.hub.id, hub_field)
+        if cache_key in self._cached_links:
+            existing_links = self._cached_links[cache_key]
+        else:
+            # Fallback to database query if not in cache
+            filter_args = {
+                f"{hub_field}": self.hub,
+                "state_date_end__gt": self.creation_date,
+                "state_date_start__lte": self.creation_date,
+            }
+            existing_links = list(link_class.objects.filter(**filter_args))
+
         if not existing_links:
             return links
+
         opposite_field = self._get_opposite_field(hub_field)
         opposite_hubs = [getattr(link, opposite_field) for link in links]
         continued_links = [
@@ -551,3 +627,4 @@ class DbBatchCreator:
                 sat_hashes[sat_class].add(hash_value)
         sat_hashes = dict(sat_hashes)
         self.db_creator.cache_queryset(sat_hashes)
+        self.db_creator.cache_links(hub_ids)
