@@ -85,6 +85,10 @@ class DbCreator:
         self.clean()
         return sat_hashes
 
+    def cache_hubs(self, hub_ids: list[int]):
+        hubs = self.db_staller.hub_class.objects.filter(id__in=hub_ids)
+        self._cached_hubs = {hub.id: hub for hub in hubs}
+
     def cache_queryset(self, sat_hashes_dict: SatHashesDict):
         cache: HashSatMap = defaultdict()
         now = timezone.now()
@@ -474,21 +478,28 @@ class DbBatchCreator:
         self.data_collection.append(data)
 
     def create(self):
-        logger.debug("Get existing satellites from DB")
-        sat_hashes = self.get_sat_hashes()
-        self.db_creator.cache_queryset(sat_hashes)
+        logger.debug("Cache existing objects from DB")
+        self.cache_data()
+
         logger.debug("Write data to DB")
         for data in self.data_collection:
             self.db_creator.create(data)
             self.hubs.append(self.db_creator.hub)
             self.db_creator.clean()
 
-    def get_sat_hashes(self) -> SatHashesDict:
+    def cache_data(self) -> None:
         sat_hashes: SatHashesDict = defaultdict(set)
-
+        hub_ids = []
+        for data in self.data_collection:
+            if "hub_entity_id" in data:
+                hub_id = data["hub_entity_id"]
+                if hub_id is None:
+                    continue
+                hub_ids.append(hub_id)
+        self.db_creator.cache_hubs(hub_ids)
         for data in self.data_collection:
             sat_hash_map = self.db_creator.get_sat_hashes(data)
             for sat_class, hash_value in sat_hash_map.items():
                 sat_hashes[sat_class].add(hash_value)
-
-        return dict(sat_hashes)
+        sat_hashes = dict(sat_hashes)
+        self.db_creator.cache_queryset(sat_hashes)
