@@ -1,5 +1,6 @@
 import datetime
 import json
+import logging
 from collections import defaultdict
 from typing import Any, Optional, cast
 
@@ -23,6 +24,8 @@ type SatelliteDict = dict[type[MontrekSatelliteABC], MontrekSatelliteABC]
 type SatHashesMap = dict[type[MontrekSatelliteABC], str]
 type SatHashesDict = dict[type[MontrekSatelliteABC], set[str]]
 type HashSatMap = dict[str, MontrekSatelliteABC]
+
+logger = logging.getLogger(__name__)
 
 
 class DbCreator:
@@ -454,8 +457,10 @@ class DbBatchCreator:
         self.data_collection.append(data)
 
     def create(self):
+        logger.debug("Get existing satellites from DB")
         sat_hashes = self.get_sat_hashes()
         self.db_creator.cache_queryset(sat_hashes)
+        logger.debug("Write data to DB")
         for data in self.data_collection:
             self.db_creator.create(data)
             self.hubs.append(self.db_creator.hub)
