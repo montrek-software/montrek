@@ -16,7 +16,7 @@ from baseclasses.models import (
 )
 from baseclasses.repositories.db.db_staller import DbStaller
 from baseclasses.sanitizer import HtmlSanitizer
-from django.db.models import JSONField, Q, QuerySet
+from django.db.models import JSONField, ManyToManyField, Q, QuerySet
 from django.utils import timezone
 
 type DataDict = dict[str, Any]
@@ -121,9 +121,9 @@ class DbCreator:
         }
         logger.debug("End cache hub_value_dates")
 
-    def cache_links(self, hub_ids: set[int]):
+    def cache_links(self, hub_ids: set[int], link_field_names: set[str]):
         """
-        Cache existing links for the given hub IDs.
+        Cache existing links for the given hub IDs and link field names.
         Stores links in a dict keyed by (link_class, hub_id, hub_field).
         """
         logger.debug("Start cache links")
@@ -131,8 +131,8 @@ class DbCreator:
         now = timezone.now()
         cached_links = defaultdict(list)
 
-        # Get all link classes from the hub
-        link_classes = self._get_all_link_classes()
+        # Get only link classes that correspond to fields in the data
+        link_classes = self._get_link_classes_for_fields(link_field_names)
 
         for link_class in link_classes:
             # Query links where hub_in or hub_out matches our hub_ids
@@ -156,14 +156,35 @@ class DbCreator:
         self._cached_links = dict(cached_links)
         logger.debug("End cache links")
 
-    def _get_all_link_classes(self) -> list[type[MontrekLinkABC]]:
+    def _get_link_data_fields(self, data: DataDict) -> set[str]:
         """
-        Extract all link classes from the hub's ManyToMany fields.
+        Extract field names from data that correspond to links.
+        """
+        link_fields = set()
+        for key, value in data.items():
+            if isinstance(value, (HubValueDate, MontrekHubABC)):
+                link_fields.add(key)
+            elif isinstance(value, (list, QuerySet)):
+                if value and any(
+                    isinstance(item, (HubValueDate, MontrekHubABC)) for item in value
+                ):
+                    link_fields.add(key)
+        return link_fields
+
+    def _get_link_classes_for_fields(
+        self, field_names: set[str]
+    ) -> list[type[MontrekLinkABC]]:
+        """
+        Extract link classes that correspond to specific field names in the data.
         """
         from django.db.models.fields.related import ManyToOneRel
 
         link_classes = []
         for field in self.db_staller.hub_class._meta.get_fields():
+            # Skip fields not in our data
+            if field.name not in field_names:
+                continue
+
             through_model = None
 
             # Handle ManyToMany fields
@@ -173,6 +194,8 @@ class DbCreator:
             # Handle ManyToOneRel (reverse ForeignKey relations)
             elif isinstance(field, ManyToOneRel):
                 through_model = field.related_model
+            elif isinstance(field, ManyToManyField):
+                through_model = field.remote_field.through
 
             # Check if it's a MontrekLinkABC subclass
             if (
@@ -627,4 +650,9 @@ class DbBatchCreator:
                 sat_hashes[sat_class].add(hash_value)
         sat_hashes = dict(sat_hashes)
         self.db_creator.cache_queryset(sat_hashes)
-        self.db_creator.cache_links(hub_ids)
+        link_field_names = set()
+        for data in self.data_collection:
+            link_data = self.db_creator._get_link_data_fields(data)
+            link_field_names.update(link_data)
+        if link_field_names:
+            self.db_creator.cache_links(hub_ids, link_field_names)
