@@ -87,13 +87,21 @@ class DbCreator:
 
     def cache_hubs(self, hub_ids: set[int]):
         logger.debug("Start cache hubs")
-        hubs = self.db_staller.hub_class.objects.filter(id__in=hub_ids)
+        hubs = self.db_staller.hub_class.objects.prefetch_related(
+            # Prefetch(
+            #     "hub__companycompanyidentifiersatellite_set",
+            #     queryset=CompanyIdentifierSatellite.objects.order_by("-state_date_end"),
+            #     to_attr="prefetched_identifiers",
+            # )
+        ).filter(id__in=hub_ids)
         self._cached_hubs = {hub.id: hub for hub in hubs}
         logger.debug("End cache hubs")
 
     def cache_value_dates(self, value_dates: set[datetime.date | None]):
         logger.debug("Start cache value_dates")
-        value_dates_lists = ValueDateList.objects.filter(value_date__in=value_dates)
+        value_dates_lists = ValueDateList.objects.filter(
+            Q(value_date__in=value_dates) | Q(value_date__isnull=True)
+        )
         self._cached_value_date_lists = {
             value_date.value_date: value_date for value_date in value_dates_lists
         }
@@ -105,10 +113,13 @@ class DbCreator:
         logger.debug("Start cache hub_value_dates")
 
         hub_value_dates = self.db_staller.hub_value_date_class.objects.select_related(
-            "value_date_list"
+            "value_date_list", "hub"
         ).filter(
-            hub__id__in=hub_ids,
-            value_date_list__value_date__in=value_dates,
+            Q(hub__id__in=hub_ids)
+            & (
+                Q(value_date_list__value_date__in=value_dates)
+                | Q(value_date_list__value_date__isnull=True)
+            )
         )
         self._cached_hub_value_dates = {
             (hvd.hub_id, hvd.value_date_list.value_date): hvd for hvd in hub_value_dates
@@ -389,6 +400,7 @@ class DbCreator:
 
     def _get_link_data(self) -> dict[str, list[MontrekHubABC]]:
         link_data = {}
+        return link_data
         for key, value in self.data.items():
             if isinstance(value, HubValueDate):
                 link_data[key] = [value.hub]
@@ -532,6 +544,8 @@ class DbBatchCreator:
                 value_date = data["value_date"]
                 value_dates.append(value_date)
         hub_ids = set(hub_ids)
+        if value_dates == []:
+            value_dates = [None]
         value_dates = set(value_dates)
         self.db_creator.cache_hubs(hub_ids)
         self.db_creator.cache_value_dates(value_dates)
