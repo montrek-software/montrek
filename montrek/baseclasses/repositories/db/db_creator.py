@@ -104,8 +104,11 @@ class DbCreator:
     ):
         logger.debug("Start cache hub_value_dates")
 
-        hub_value_dates = self.db_staller.hub_value_date_class.objects.filter(
-            hub__id__in=hub_ids, value_date_list__value_date__in=value_dates
+        hub_value_dates = self.db_staller.hub_value_date_class.objects.select_related(
+            "value_date_list"
+        ).filter(
+            hub__id__in=hub_ids,
+            value_date_list__value_date__in=value_dates,
         )
         self._cached_hub_value_dates = {
             (hvd.hub_id, hvd.value_date_list.value_date): hvd for hvd in hub_value_dates
