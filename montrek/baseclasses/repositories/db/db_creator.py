@@ -42,6 +42,9 @@ class DbCreator:
         self.updated_satellites: SatelliteDict = {}
         self.sanitizer = HtmlSanitizer()
         self.cached_queryset: Optional[HashSatMap] = None
+        self._cached_value_date_lists = {}
+        self._cached_hub_value_dates = {}
+        self._cached_hubs = {}
 
     def create(self, data: DataDict):
         self.data = self.cleaned_data(data)
@@ -213,9 +216,13 @@ class DbCreator:
 
     def _set_value_date_list(self):
         value_date = self.data.get("value_date", None)
+        if value_date in self._cached_value_date_lists:
+            self.value_date_list = self._cached_value_date_lists[value_date]
+            return
         obj = ValueDateList.objects.filter(value_date=value_date).first()
         if obj is None:
             obj = ValueDateList.objects.create(value_date=value_date)
+        self._cached_value_date_lists[value_date] = obj
         self.value_date_list = obj
 
     def _get_hub_from_data(self):
@@ -224,9 +231,14 @@ class DbCreator:
         Sets self.hub to the corresponding hub instance.
         """
         if "hub_entity_id" in self.data and not pd.isnull(self.data["hub_entity_id"]):
+            hub_entity_id = self.data["hub_entity_id"]
+            if hub_entity_id in self._cached_hubs:
+                self.hub = self._cached_hubs[hub_entity_id]
+                return
             self.hub = self.db_staller.hub_class.objects.get(
                 id=self.data["hub_entity_id"]
             )
+            self._cached_hubs[hub_entity_id] = self.hub
 
     def _stall_hub(self, stall: bool = True):
         if self.hub:
