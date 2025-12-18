@@ -87,13 +87,7 @@ class DbCreator:
 
     def cache_hubs(self, hub_ids: set[int]):
         logger.debug("Start cache hubs")
-        hubs = self.db_staller.hub_class.objects.prefetch_related(
-            # Prefetch(
-            #     "hub__companycompanyidentifiersatellite_set",
-            #     queryset=CompanyIdentifierSatellite.objects.order_by("-state_date_end"),
-            #     to_attr="prefetched_identifiers",
-            # )
-        ).filter(id__in=hub_ids)
+        hubs = self.db_staller.hub_class.objects.filter(id__in=hub_ids)
         self._cached_hubs = {hub.id: hub for hub in hubs}
         logger.debug("End cache hubs")
 
@@ -134,9 +128,11 @@ class DbCreator:
                 state_date_end_criterion = Q(
                     hub_value_date__hub__state_date_end__gt=now
                 )
+                relate_field = "hub_value_date"
             else:
                 state_date_end_criterion = Q(hub_entity__state_date_end__gt=now)
-            qs = sat_class.objects.filter(
+                relate_field = "hub_entity"
+            qs = sat_class.objects.select_related(relate_field).filter(
                 state_date_end_criterion,
                 Q(hash_identifier__in=hashes),
                 state_date_start__lte=now,
@@ -400,7 +396,6 @@ class DbCreator:
 
     def _get_link_data(self) -> dict[str, list[MontrekHubABC]]:
         link_data = {}
-        return link_data
         for key, value in self.data.items():
             if isinstance(value, HubValueDate):
                 link_data[key] = [value.hub]
