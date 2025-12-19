@@ -21,8 +21,6 @@ from reporting.core.reporting_colors import ReportingColors
 from montrek.filtered_warnings import add_filtered_warnings
 from montrek.utils import get_keycloak_base_url, get_oidc_endpoints
 
-from .logging import get_logging_config
-
 add_filtered_warnings()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -66,6 +64,7 @@ DJANGO_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "querycount",
     "django_extensions",
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
@@ -141,6 +140,7 @@ DJANGO_MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "querycount.middleware.QueryCountMiddleware",
 ]
 
 MONTREK_MIDDLEWARE = [
@@ -344,6 +344,12 @@ LOGGING = {
         "handlers": ["console"],
         "level": config("LOG_LEVEL", default="WARNING"),
     },
+    "loggers": {
+        "django.db.backends": {
+            "handlers": ["console"],
+            "level": "WARNING",
+        },
+    },
 }
 # Testing
 TEST_RUNNER = "montrek.testing.test_runner.MontrekTestRunner"
@@ -360,7 +366,6 @@ SEND_TABLE_BY_MAIL_LIMIT = config("SEND_TABLE_BY_MAIL_LIMIT", default=10000, cas
 ADMIN_MAILING_LIST = config("ADMIN_MAILING_LIST", default="")
 
 LOG_LEVEL = config("LOG_LEVEL", default="WARNING")
-LOGGING = get_logging_config(LOG_LEVEL, MONTREK_EXTENSION_APPS)
 PRIMARY_COLOR = config("PRIMARY_COLOR", default=ReportingColors.BLUE.hex)
 SECONDARY_COLOR = config("SECONDARY_COLOR", default=ReportingColors.RED.hex)
 

@@ -1,10 +1,8 @@
 import pandas as pd
-from baseclasses.dataclasses.montrek_message import (
-    MontrekMessageWarning,
-)
+from baseclasses.dataclasses.montrek_message import MontrekMessageWarning
 from baseclasses.models import MontrekHubABC
 from baseclasses.repositories.annotator import Annotator
-from baseclasses.repositories.db.db_creator import DbCreator
+from baseclasses.repositories.db.db_creator import DbBatchCreator, DbCreator
 from baseclasses.repositories.db.db_staller import DbStaller
 from baseclasses.repositories.db.db_writer import DbWriter
 
@@ -37,7 +35,8 @@ class DbDataFrame:
         self.link_columns = self.get_link_field_names()
         static_columns = self.get_static_satellite_field_names()
         static_columns.extend(self.link_columns)
-        if len(static_columns) == 0:
+        # If there are no static columns or only the hub, which is already there, skip data writing
+        if len(static_columns) == 0 or static_columns == ["hub_entity_id"]:
             return
         self._process_data(static_columns)
         self.db_writer.write_hubs()
@@ -51,22 +50,48 @@ class DbDataFrame:
         self._process_data(time_series_columns)
 
     def _process_data(self, columns: list[str]):
-        data_frame = self.data_frame.loc[:, columns]
-        data_frame = self._convert_lists_to_tuples(data_frame)
-        data_frame = data_frame.drop_duplicates()
-        data_frame = self._convert_tuples_to_lists(data_frame)
-        self._raise_for_duplicated_entries(data_frame)
-        self.data_frame = self.data_frame.copy()
-        self.data_frame["hub_entity"] = data_frame.apply(self._process_row, axis=1)
+        df = self.data_frame.loc[:, columns]
 
-    def _process_row(self, row: pd.Series) -> MontrekHubABC | None:
-        row_dict = row.to_dict()
-        for key, value in row_dict.items():
-            if not isinstance(value, (list, dict)) and pd.isna(value):
-                row_dict[key] = None
-        db_creator = DbCreator(self.db_staller, self.user_id)
-        db_creator.create(row_dict)
-        return db_creator.hub
+        df = self._convert_lists_to_tuples(df)
+        df = df.drop_duplicates()
+        df = self._convert_tuples_to_lists(df)
+
+        # Must be done on the deduplicated frame
+        self._raise_for_duplicated_entries(df)
+
+        creator = DbBatchCreator(DbCreator(self.db_staller, self.user_id))
+
+        columns = list(df.columns)
+
+        for row in df.itertuples(index=False, name=None):
+            data = dict(zip(columns, row))
+
+            # Normalize NaN → None (required for many tests)
+            for key, value in data.items():
+                if not isinstance(value, (list, dict)) and pd.isna(value):
+                    data[key] = None
+
+            creator.stall_data(data)
+        creator.create()
+        hubs = dict(zip(df.index.tolist(), creator.hubs))
+
+        # Preserve original DataFrame shape semantics
+        self.data_frame = self.data_frame.copy()
+        self.data_frame["hub_entity"] = hubs
+
+    def _convert_lists_to_tuples(self, df: pd.DataFrame):
+        for col in self.link_columns:
+            if col not in df.columns:
+                continue
+            df[col] = df[col].apply(lambda x: tuple(x) if isinstance(x, list) else x)
+        return df
+
+    def _convert_tuples_to_lists(self, df: pd.DataFrame):
+        for col in self.link_columns:
+            if col not in df.columns:
+                continue
+            df[col] = df[col].apply(lambda x: list(x) if isinstance(x, tuple) else x)
+        return df
 
     def _assign_hubs(self):
         for hubs in self.db_writer.db_staller.get_hubs().values():
@@ -170,20 +195,6 @@ class DbDataFrame:
                 MontrekMessageWarning(f"{dropped_rows} empty rows not uploaded!")
             )
             self.data_frame = dropped_data_frame
-
-    def _convert_lists_to_tuples(self, df: pd.DataFrame):
-        for col in self.link_columns:
-            if col not in df.columns:
-                continue
-            df[col] = df[col].apply(lambda x: tuple(x) if isinstance(x, list) else x)
-        return df
-
-    def _convert_tuples_to_lists(self, df: pd.DataFrame):
-        for col in self.link_columns:
-            if col not in df.columns:
-                continue
-            df[col] = df[col].apply(lambda x: list(x) if isinstance(x, tuple) else x)
-        return df
 
     def _assign_hub(self, x) -> int | None:
         if pd.isna(x):

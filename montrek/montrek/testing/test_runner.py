@@ -1,5 +1,6 @@
 import tempfile
 
+from django.conf import settings
 from django.test.runner import DiscoverRunner
 from django.test.utils import override_settings
 from django.urls import reverse_lazy
@@ -36,6 +37,11 @@ class MontrekTestRunner(DiscoverRunner):
                 "ADMIN_EMAIL": "test@admin.de",
                 "ADMIN_PASSWORD": "testpassword",
                 "CLIENT_LOGO_PATH": "montrek_logo_variant.png",
+                "MIDDLEWARE": [
+                    m
+                    for m in settings.MIDDLEWARE
+                    if m != "querycount.middleware.QueryCountMiddleware"
+                ],
             }
         self._override = override_settings(**test_settings)
         self._override.enable()
