@@ -1,12 +1,12 @@
 from typing import cast
 
-from baseclasses.models import MontrekHubProtocol
 from baseclasses.repositories.db.db_creator_cache import (
     DbCreatorCacheBlank,
     DbCreatorCacheFactory,
     DbCreatorCacheHubId,
 )
 from baseclasses.repositories.db.db_staller import DbStallerProtocol
+from baseclasses.typing import MontrekHubProtocol
 from django.test import TestCase
 
 
