@@ -219,11 +219,11 @@ class DbCreator:
                     hub_value_date__hub__state_date_end__gt=now
                 )
                 relate_fields = ("hub_value_date",)
-                hub_id_field = "hub_value_date__hub_id"
+                hub_id_field = "hub_value_date__hub"
             else:
                 state_date_end_criterion = Q(hub_entity__state_date_end__gt=now)
                 relate_fields = ("hub_entity",)
-                hub_id_field = "hub_entity_id"
+                hub_id_field = "hub_entity"
             qs = sat_class.objects.select_related(*relate_fields).filter(
                 state_date_end_criterion,
                 Q(hash_identifier__in=hashes),
@@ -233,8 +233,12 @@ class DbCreator:
 
             for sat in qs:
                 cache[(sat_class, sat.hash_identifier)] = sat
-                hub_id = getattr(sat, hub_id_field)
-                self._cached_hubs.setdefault(hub_id, getattr(sat, hub_id_field[:-3]))
+                if sat_class.is_timeseries:
+                    hub = sat.hub_value_date.hub
+                else:
+                    hub = sat.hub_entity
+                hub_id = hub.id
+                self._cached_hubs.setdefault(hub_id, hub)
                 if sat.is_timeseries:
                     self._cached_hub_value_dates.setdefault(
                         (hub_id, sat.hub_value_date.value_date_list.value_date),
@@ -633,7 +637,7 @@ class DbBatchCreator:
         logger.debug("Cache existing objects from DB")
         self.cache_data()
 
-        logger.debug("Write data to DB")
+        logger.debug("Stall data in DbStaller")
         for data in self.data_collection:
             self.db_creator.create(data)
             self.hubs.append(self.db_creator.hub)
