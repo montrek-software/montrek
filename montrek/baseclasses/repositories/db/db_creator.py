@@ -121,7 +121,7 @@ class DbCreator:
         }
         logger.debug("End cache hub_value_dates")
 
-    def cache_links(self, hub_ids: set[int], link_field_names: set[str]):
+    def cache_links(self, link_field_names: set[str]):
         """
         Cache existing links for the given hub IDs and link field names.
         Stores links in a dict keyed by (link_class, hub_id, hub_field).
@@ -133,6 +133,7 @@ class DbCreator:
 
         # Get only link classes that correspond to fields in the data
         link_classes = self._get_link_classes_for_fields(link_field_names)
+        hub_ids = set(self._cached_hubs.keys())
 
         for link_class in link_classes:
             # Query links where hub_in or hub_out matches our hub_ids
@@ -217,11 +218,13 @@ class DbCreator:
                 state_date_end_criterion = Q(
                     hub_value_date__hub__state_date_end__gt=now
                 )
-                relate_field = "hub_value_date"
+                relate_fields = ("hub_value_date",)
+                hub_id_field = "hub_value_date__hub"
             else:
                 state_date_end_criterion = Q(hub_entity__state_date_end__gt=now)
-                relate_field = "hub_entity"
-            qs = sat_class.objects.select_related(relate_field).filter(
+                relate_fields = ("hub_entity",)
+                hub_id_field = "hub_entity"
+            qs = sat_class.objects.select_related(*relate_fields).filter(
                 state_date_end_criterion,
                 Q(hash_identifier__in=hashes),
                 state_date_start__lte=now,
@@ -230,6 +233,21 @@ class DbCreator:
 
             for sat in qs:
                 cache[(sat_class, sat.hash_identifier)] = sat
+                if sat_class.is_timeseries:
+                    hub = sat.hub_value_date.hub
+                else:
+                    hub = sat.hub_entity
+                hub_id = hub.id
+                self._cached_hubs.setdefault(hub_id, hub)
+                if sat_class.is_timeseries:
+                    self._cached_hub_value_dates.setdefault(
+                        (hub_id, sat.hub_value_date.value_date_list.value_date),
+                        sat.hub_value_date,
+                    )
+                else:
+                    self._cached_hub_value_dates.setdefault(
+                        (hub_id, None), sat.hub_entity.hub_value_date
+                    )
         cache_queryset = cast(HashSatMap, dict(cache))
         self.cached_queryset = cache_queryset
 
@@ -619,7 +637,7 @@ class DbBatchCreator:
         logger.debug("Cache existing objects from DB")
         self.cache_data()
 
-        logger.debug("Write data to DB")
+        logger.debug("Stall data in DbStaller")
         for data in self.data_collection:
             self.db_creator.create(data)
             self.hubs.append(self.db_creator.hub)
@@ -657,4 +675,4 @@ class DbBatchCreator:
             link_data = self.db_creator._get_link_data_fields(data)
             link_field_names.update(link_data)
         if link_field_names:
-            self.db_creator.cache_links(hub_ids, link_field_names)
+            self.db_creator.cache_links(link_field_names)
