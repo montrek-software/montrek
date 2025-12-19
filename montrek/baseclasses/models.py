@@ -78,6 +78,7 @@ class ValueDateList(models.Model):
 
 
 class MontrekHubProtocol(Protocol):
+    id: int
     objects: Any
     hub_value_date: models.Model
 

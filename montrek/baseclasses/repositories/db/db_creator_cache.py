@@ -2,14 +2,14 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Iterable
 
-from baseclasses.models import MontrekHubABC
+from baseclasses.models import MontrekHubProtocol
 from baseclasses.repositories.db.db_creator import DataDict
 from baseclasses.repositories.db.db_staller import DbStallerProtocol
 
 logger = logging.getLogger(__name__)
 HUB_ENTITY_COLUMN = "hub_entity_id"
 
-type HubCacheType = dict[str, MontrekHubABC]
+type HubCacheType = dict[int, MontrekHubProtocol]
 
 
 class DbCreatorCacheBase(ABC):
@@ -36,7 +36,8 @@ class DbCreatorCacheBlank(DbCreatorCacheBase):
 
 class DbCreatorCacheHubId(DbCreatorCacheBase):
     def cache_with_data(self, data: Iterable[DataDict]) -> None:
-        self.cached_hubs = {"def": None}
+        hub_ids = self.get_hub_ids(data)
+        self.cache_hubs(hub_ids)
 
     def get_hub_ids(self, data: Iterable[DataDict]) -> set[int]:
         return set(
