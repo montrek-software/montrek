@@ -534,7 +534,7 @@ class DbCreator:
         is_one_to_one_link = issubclass(link_class, MontrekOneToOneLinkABC)
         if is_one_to_one_link and len(links) > 1:
             raise MontrekError(
-                f"Try to link mulitple items to OneToOne Link {link_class}"
+                f"Try to link multiple items to OneToOne Link {link_class}"
             )
 
         # Try to get from cache first
