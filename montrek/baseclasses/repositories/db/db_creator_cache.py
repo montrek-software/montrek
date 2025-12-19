@@ -22,16 +22,11 @@ class DbCreatorCacheBase(ABC):
         pass
 
     def cache_hubs(self, hub_ids: set[int]):
-        logger.debug("Start cache hubs")
+        logger.debug("Caching %d hubs", len(hub_ids))
         hub_class = self.db_staller.hub_class
         hubs = hub_class.objects.filter(id__in=hub_ids)
-        self.cached_hubs = {hub.id: hub for hub in hubs}
+        self.cached_hubs.update({hub.id: hub for hub in hubs})
         logger.debug("End cache hubs")
-
-
-class DbCreatorCacheBlank(DbCreatorCacheBase):
-    def cache_with_data(self, data: Iterable[DataDict]) -> None:
-        self.cached_hubs = {"Abc": None}
 
 
 class DbCreatorCacheHubId(DbCreatorCacheBase):
@@ -40,9 +35,14 @@ class DbCreatorCacheHubId(DbCreatorCacheBase):
         self.cache_hubs(hub_ids)
 
     def get_hub_ids(self, data: Iterable[DataDict]) -> set[int]:
-        return set(
-            [dt[HUB_ENTITY_COLUMN] for dt in data if dt[HUB_ENTITY_COLUMN] is not None]
-        )
+        return {
+            value for dt in data if (value := dt.get(HUB_ENTITY_COLUMN)) is not None
+        }
+
+
+class DbCreatorCacheBlank(DbCreatorCacheBase):
+    def cache_with_data(self, data: Iterable[DataDict]) -> None:
+        self.cached_hubs = {"Abc": None}
 
 
 class DbCreatorCacheFactory:
