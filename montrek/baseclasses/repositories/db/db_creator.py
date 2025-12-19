@@ -219,9 +219,11 @@ class DbCreator:
                     hub_value_date__hub__state_date_end__gt=now
                 )
                 relate_fields = ("hub_value_date",)
+                hub_id_field = "hub_value_date__hub_id"
             else:
                 state_date_end_criterion = Q(hub_entity__state_date_end__gt=now)
                 relate_fields = ("hub_entity",)
+                hub_id_field = "hub_entity_id"
             qs = sat_class.objects.select_related(*relate_fields).filter(
                 state_date_end_criterion,
                 Q(hash_identifier__in=hashes),
@@ -231,6 +233,8 @@ class DbCreator:
 
             for sat in qs:
                 cache[(sat_class, sat.hash_identifier)] = sat
+                hub_id = getattr(sat, hub_id_field)
+                self._cached_hubs.setdefault(hub_id, getattr(sat, hub_id_field[:-3]))
         cache_queryset = cast(HashSatMap, dict(cache))
         self.cached_queryset = cache_queryset
 
