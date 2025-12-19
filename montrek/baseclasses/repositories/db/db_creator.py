@@ -625,10 +625,22 @@ class DbCreator:
 
 
 class DbBatchCreator:
-    def __init__(self, db_creator: DbCreator):
+    def __init__(self, db_creator: DbCreator, df: pd.DataFrame):
         self.db_creator = db_creator
         self.data_collection: list[DataDict] = []
         self.hubs: list[MontrekHubABC | None] = []
+        self.df = df
+        self.columns = list(df.columns)
+
+    def fill_data_collection(self):
+        for row in self.df.itertuples(index=False, name=None):
+            data = dict(zip(self.columns, row))
+            # Normalize NaN → None (required for many tests)
+            for key, value in data.items():
+                if not isinstance(value, (list, dict)) and pd.isna(value):
+                    data[key] = None
+
+            self.stall_data(data)
 
     def stall_data(self, data: DataDict):
         self.data_collection.append(data)
