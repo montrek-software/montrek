@@ -1,6 +1,7 @@
 import datetime
 import hashlib
 from enum import Enum
+from typing import Any, Protocol
 
 from baseclasses.dataclasses.alert import AlertEnum
 from baseclasses.fields import HubForeignKey
@@ -74,6 +75,11 @@ class ValueDateList(models.Model):
 
     def __str__(self):
         return f"value_date: {self.value_date}"
+
+
+class MontrekHubProtocol(Protocol):
+    objects: Any
+    hub_value_date: models.Model
 
 
 # Base Hub Model ABC

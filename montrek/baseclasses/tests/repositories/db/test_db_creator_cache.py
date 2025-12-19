@@ -1,11 +1,39 @@
+from baseclasses.models import MontrekHubProtocol
 from baseclasses.repositories.db.db_creator_cache import (
     DbCreatorCacheBlank,
     DbCreatorCacheFactory,
+    DbCreatorCacheHubId,
 )
+from baseclasses.repositories.db.db_staller import DbStallerProtocol
 from django.test import TestCase
 
 
 class TestDbCreatorCacheFactory(TestCase):
-    def test_get_no_hub_id_cache(self):
+    def test_get_blank_cache(self):
         cache_factory = DbCreatorCacheFactory(["field_1", "field_2"])
-        self.assertIsInstance(cache_factory.get_cache(), DbCreatorCacheBlank)
+        self.assertEqual(cache_factory.get_cache_class(), DbCreatorCacheBlank)
+
+    def test_get_hub_id_cache(self):
+        cache_factory = DbCreatorCacheFactory(["field_1", "field_2", "hub_entity_id"])
+        self.assertEqual(cache_factory.get_cache_class(), DbCreatorCacheHubId)
+
+
+class DummyHub(MontrekHubProtocol): ...
+
+
+class DummyDbStaller(DbStallerProtocol):
+    hub_class = DummyHub
+
+
+class TestDbCreatorCache(TestCase):
+    def setUp(self) -> None:
+        db_staller = DummyDbStaller()
+        self.cache = DbCreatorCacheHubId(db_staller)
+        self.data = [{"hub_entity_id": 1}, {"hub_entity_id": 2}]
+
+    def test_get_hub_ids(self):
+        hub_ids = self.cache.get_hub_ids(self.data)
+        self.assertEqual(hub_ids, {1, 2})
+
+    def test_cache_hubs(self):
+        self.cache.cache_with_data(self.data)
