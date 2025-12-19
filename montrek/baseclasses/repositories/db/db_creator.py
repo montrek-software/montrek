@@ -23,7 +23,7 @@ type DataDict = dict[str, Any]
 type SatelliteDict = dict[type[MontrekSatelliteABC], MontrekSatelliteABC]
 type SatHashesMap = dict[type[MontrekSatelliteABC], str]
 type SatHashesDict = dict[type[MontrekSatelliteABC], set[str]]
-type HashSatMap = dict[str, MontrekSatelliteABC]
+type HashSatMap = dict[tuple[type[MontrekSatelliteABC], str], MontrekSatelliteABC]
 
 logger = logging.getLogger(__name__)
 
@@ -229,7 +229,7 @@ class DbCreator:
             )
 
             for sat in qs:
-                cache[sat.hash_identifier] = sat
+                cache[(sat_class, sat.hash_identifier)] = sat
         cache_queryset = cast(HashSatMap, dict(cache))
         self.cached_queryset = cache_queryset
 
@@ -407,9 +407,11 @@ class DbCreator:
     ) -> MontrekSatelliteABC | None:
         # Check if satellite already exists, if it is updated or if it is new
         sat_hash_identifier = sat.get_hash_identifier
-        if self.cached_queryset is not None:
-            return self.cached_queryset.get(sat_hash_identifier, None)
         satellite_class = type(sat)
+        if self.cached_queryset is not None:
+            return self.cached_queryset.get(
+                (satellite_class, sat_hash_identifier), None
+            )
         return satellite_class.objects.filter(
             state_date_end_criterion,
             Q(hash_identifier=sat_hash_identifier),
