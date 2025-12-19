@@ -131,7 +131,9 @@ class MontrekRepository:
         cls.view_model = view_model  # Save the model class on the class
 
     def receive(self, apply_filter: bool = True) -> QuerySet:
-        return self.receive_raw(apply_filter, False)
+        return self.receive_raw(apply_filter, False).select_related(
+            "hub", "value_date_list"
+        )
 
     def receive_raw(
         self, apply_filter: bool = True, update_view_model: bool = False
