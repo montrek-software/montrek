@@ -235,6 +235,15 @@ class DbCreator:
                 cache[(sat_class, sat.hash_identifier)] = sat
                 hub_id = getattr(sat, hub_id_field)
                 self._cached_hubs.setdefault(hub_id, getattr(sat, hub_id_field[:-3]))
+                if sat.is_timeseries:
+                    self._cached_hub_value_dates.setdefault(
+                        (hub_id, sat.hub_value_date.value_date_list.value_date),
+                        sat.hub_value_date,
+                    )
+                else:
+                    self._cached_hub_value_dates.setdefault(
+                        (hub_id, None), sat.hub_entity.hub_value_date
+                    )
         cache_queryset = cast(HashSatMap, dict(cache))
         self.cached_queryset = cache_queryset
 
