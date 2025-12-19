@@ -239,7 +239,7 @@ class DbCreator:
                     hub = sat.hub_entity
                 hub_id = hub.id
                 self._cached_hubs.setdefault(hub_id, hub)
-                if sat.is_timeseries:
+                if sat_class.is_timeseries:
                     self._cached_hub_value_dates.setdefault(
                         (hub_id, sat.hub_value_date.value_date_list.value_date),
                         sat.hub_value_date,
