@@ -121,7 +121,7 @@ class DbCreator:
         }
         logger.debug("End cache hub_value_dates")
 
-    def cache_links(self, hub_ids: set[int], link_field_names: set[str]):
+    def cache_links(self, link_field_names: set[str]):
         """
         Cache existing links for the given hub IDs and link field names.
         Stores links in a dict keyed by (link_class, hub_id, hub_field).
@@ -133,6 +133,7 @@ class DbCreator:
 
         # Get only link classes that correspond to fields in the data
         link_classes = self._get_link_classes_for_fields(link_field_names)
+        hub_ids = set(self._cached_hubs.keys())
 
         for link_class in link_classes:
             # Query links where hub_in or hub_out matches our hub_ids
@@ -217,10 +218,10 @@ class DbCreator:
                 state_date_end_criterion = Q(
                     hub_value_date__hub__state_date_end__gt=now
                 )
-                relate_fields = "hub_value_date"
+                relate_fields = ("hub_value_date",)
             else:
                 state_date_end_criterion = Q(hub_entity__state_date_end__gt=now)
-                relate_fields = ("hub_entity", "hub_entity__hub_value_date")
+                relate_fields = ("hub_entity",)
             qs = sat_class.objects.select_related(*relate_fields).filter(
                 state_date_end_criterion,
                 Q(hash_identifier__in=hashes),
@@ -657,4 +658,4 @@ class DbBatchCreator:
             link_data = self.db_creator._get_link_data_fields(data)
             link_field_names.update(link_data)
         if link_field_names:
-            self.db_creator.cache_links(hub_ids, link_field_names)
+            self.db_creator.cache_links(link_field_names)
