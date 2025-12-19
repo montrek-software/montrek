@@ -217,11 +217,11 @@ class DbCreator:
                 state_date_end_criterion = Q(
                     hub_value_date__hub__state_date_end__gt=now
                 )
-                relate_field = "hub_value_date"
+                relate_fields = "hub_value_date"
             else:
                 state_date_end_criterion = Q(hub_entity__state_date_end__gt=now)
-                relate_field = "hub_entity"
-            qs = sat_class.objects.select_related(relate_field).filter(
+                relate_fields = ("hub_entity", "hub_entity__hub_value_date")
+            qs = sat_class.objects.select_related(*relate_fields).filter(
                 state_date_end_criterion,
                 Q(hash_identifier__in=hashes),
                 state_date_start__lte=now,
