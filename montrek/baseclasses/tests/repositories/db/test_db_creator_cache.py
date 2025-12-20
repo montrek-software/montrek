@@ -22,6 +22,35 @@ class TestDbCreatorCacheFactory(TestCase):
         self.assertEqual(cache_factory.get_cache_class(), DbCreatorCacheHubId)
 
 
+class DummyValueDateList:
+    def __init__(self, value_date):
+        self.value_date = value_date
+
+
+class DummyHubValueDate:
+    def __init__(self, hub_id: int, value_date):
+        self.hub_id = hub_id
+        self.value_date_list = DummyValueDateList(value_date)
+
+
+class DummyHubValueDateDjangoManager:
+    def __init__(self, objects):
+        self._objects = objects
+
+    def select_related(self, *args):
+        return self
+
+    def filter(self, *args, **kwargs):
+        # we do NOT evaluate Q objects here
+        # filtering is simulated by the test input itself
+        return self._objects
+
+
+class DummyHubValueDateModel:
+    def __init__(self, objects):
+        self.objects = DummyHubValueDateDjangoManager(objects)
+
+
 class DummyHubObject:
     def __init__(self, id: int):
         self.id = id
@@ -40,10 +69,13 @@ class DummyHub(MontrekHubProtocol):
 class DummyDbStaller(DbStallerProtocol):
     hub_class = DummyHub
 
+    def __init__(self, hub_value_dates):
+        self.hub_value_date_class = DummyHubValueDateModel(hub_value_dates)
+
 
 class TestDbCreatorCache(TestCase):
     def setUp(self) -> None:
-        db_staller = DummyDbStaller()
+        db_staller = DummyDbStaller([])
         self.cache = DbCreatorCacheHubId(db_staller)
         ValueDateListFactory.create(value_date=None)
         ValueDateListFactory.create(value_date="2025-12-20")
@@ -106,3 +138,33 @@ class TestDbCreatorCache(TestCase):
         self.assertIn(datetime.date(2025, 12, 20), value_date_ids)
         self.assertIn(datetime.date(2025, 12, 21), value_date_ids)
         self.assertIn(datetime.date(2025, 12, 22), value_date_ids)
+
+    def test_cache_hub_value_dates_with_dummy_objects(self):
+        # given
+        hvd_objects = [
+            DummyHubValueDate(10, None),
+            DummyHubValueDate(10, datetime.date(2025, 12, 20)),
+            DummyHubValueDate(20, datetime.date(2025, 12, 20)),
+            DummyHubValueDate(
+                99, datetime.date(2025, 12, 24)
+            ),  # should be ignored logically
+        ]
+
+        db_staller = DummyDbStaller(hvd_objects)
+        cache = DbCreatorCacheHubId(db_staller)
+
+        # when
+        cache.cache_hub_value_dates(
+            hub_ids={10, 20},
+            value_dates={None, datetime.date(2025, 12, 20)},
+        )
+
+        cached = cache.cached_hub_value_dates
+
+        # then
+        self.assertEqual(len(cached), 4)
+
+        self.assertIn((10, None), cached)
+        self.assertIn((10, datetime.date(2025, 12, 20)), cached)
+        self.assertIn((20, datetime.date(2025, 12, 20)), cached)
+        self.assertIn((99, datetime.date(2025, 12, 24)), cached)

@@ -6,7 +6,7 @@ from typing import Iterable, TypeVar
 from baseclasses.models import ValueDateList
 from baseclasses.repositories.db.db_creator import DataDict
 from baseclasses.repositories.db.db_staller import DbStallerProtocol
-from baseclasses.typing import MontrekHubProtocol
+from baseclasses.typing import HubValueDateProtocol, MontrekHubProtocol
 from baseclasses.utils import to_date
 from django.db.models import Q
 
@@ -16,6 +16,9 @@ VALUE_DATE_COLUMN = "value_date"
 
 type THubCacheType = dict[int, MontrekHubProtocol]
 type TValueDateCacheType = dict[datetime.date | None, ValueDateList]
+type THubValueDateCacheType = dict[
+    tuple[int, datetime.date | None], HubValueDateProtocol
+]
 T = TypeVar("T", int, str)
 
 
@@ -24,6 +27,7 @@ class DbCreatorCacheBase(ABC):
         self.db_staller = db_staller
         self.cached_hubs: THubCacheType = {}
         self.cached_value_date_lists: TValueDateCacheType = {}
+        self.cached_hub_value_dates: THubValueDateCacheType = {}
 
     @abstractmethod
     def cache_with_data(self, data: Iterable[DataDict]) -> None:
@@ -45,6 +49,25 @@ class DbCreatorCacheBase(ABC):
             value_date.value_date: value_date for value_date in value_dates_lists
         }
         logger.debug("End cache value_dates")
+
+    def cache_hub_value_dates(
+        self, hub_ids: set[int], value_dates: set[datetime.date | None]
+    ):
+        logger.debug("Start cache hub_value_dates")
+
+        hub_value_dates = self.db_staller.hub_value_date_class.objects.select_related(
+            "value_date_list", "hub"
+        ).filter(
+            Q(hub__id__in=hub_ids)
+            & (
+                Q(value_date_list__value_date__in=value_dates)
+                | Q(value_date_list__value_date__isnull=True)
+            )
+        )
+        self.cached_hub_value_dates = {
+            (hvd.hub_id, hvd.value_date_list.value_date): hvd for hvd in hub_value_dates
+        }
+        logger.debug("End cache hub_value_dates")
 
 
 class DbCreatorCacheHubId(DbCreatorCacheBase):

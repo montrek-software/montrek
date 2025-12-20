@@ -7,7 +7,7 @@ from baseclasses.models import (
     MontrekSatelliteABC,
 )
 from baseclasses.repositories.annotator import Annotator
-from baseclasses.typing import MontrekHubProtocol
+from baseclasses.typing import HubValueDateProtocol, MontrekHubProtocol
 from django.utils import timezone
 
 StalledSatelliteDict = dict[type[MontrekSatelliteABC], list[MontrekSatelliteABC]]
@@ -26,6 +26,7 @@ StalledDicts = (
 
 class DbStallerProtocol(Protocol):
     hub_class: type[MontrekHubProtocol]
+    hub_value_date_class: type[HubValueDateProtocol]
 
 
 class DbStaller:

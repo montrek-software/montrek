@@ -18,3 +18,8 @@ class ValueDateListProtocol(ModelInstanceProtocol):
 
 class MontrekHubProtocol(ModelInstanceProtocol):
     hub_value_date: models.Model
+
+
+class HubValueDateProtocol(ModelInstanceProtocol):
+    hub: MontrekHubProtocol
+    value_date_list: ValueDateListProtocol
