@@ -3,11 +3,11 @@ from typing import Protocol
 from baseclasses.models import (
     HubValueDate,
     MontrekHubABC,
-    MontrekHubProtocol,
     MontrekLinkABC,
     MontrekSatelliteABC,
 )
 from baseclasses.repositories.annotator import Annotator
+from baseclasses.typing import MontrekHubProtocol
 from django.utils import timezone
 
 StalledSatelliteDict = dict[type[MontrekSatelliteABC], list[MontrekSatelliteABC]]

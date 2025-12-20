@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime
 from typing import Any, Optional, Protocol, Union
 
 from django.db import models

@@ -1,7 +1,7 @@
+import datetime
 import logging
 from abc import ABC, abstractmethod
-from datetime import datetime
-from typing import Iterable
+from typing import Iterable, TypeVar
 
 from baseclasses.models import ValueDateList
 from baseclasses.repositories.db.db_creator import DataDict
@@ -13,11 +13,10 @@ logger = logging.getLogger(__name__)
 HUB_ENTITY_COLUMN = "hub_entity_id"
 
 type HubCacheType = dict[int, MontrekHubProtocol]
+TValueDateList = TypeVar("TValueDateList", bound=ValueDateListProtocol)
 
 
 class DbCreatorCacheBase(ABC):
-    value_date_list_model: type[ValueDateListProtocol] = ValueDateList
-
     def __init__(self, db_staller: DbStallerProtocol):
         self.db_staller = db_staller
         self.cached_hubs: HubCacheType = {}
@@ -35,7 +34,7 @@ class DbCreatorCacheBase(ABC):
 
     def cache_value_dates(self, value_dates: set[datetime.date | None]):
         logger.debug("Start cache value_dates")
-        value_dates_lists = self.value_date_list_model.objects.filter(
+        value_dates_lists = ValueDateList.objects.filter(
             Q(value_date__in=value_dates) | Q(value_date__isnull=True)
         )
         self._cached_value_date_lists = {
