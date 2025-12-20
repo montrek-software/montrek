@@ -28,6 +28,9 @@ class DbStallerProtocol(Protocol):
     hub_class: type[MontrekHubProtocol]
     hub_value_date_class: type[HubValueDateProtocol]
 
+    def get_static_satellite_classes(self) -> list[type[MontrekSatelliteABC]]: ...
+    def get_ts_satellite_classes(self) -> list[type[MontrekSatelliteABC]]: ...
+
 
 class DbStaller:
     def __init__(self, annotator: Annotator):

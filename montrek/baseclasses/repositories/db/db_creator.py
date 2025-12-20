@@ -2,7 +2,7 @@ import datetime
 import json
 import logging
 from collections import defaultdict
-from typing import Any, Optional, cast
+from typing import Optional, cast
 
 import pandas as pd
 from baseclasses.errors.montrek_user_error import MontrekError
@@ -15,15 +15,17 @@ from baseclasses.models import (
     ValueDateList,
 )
 from baseclasses.repositories.db.db_staller import DbStaller
+from baseclasses.repositories.db.satellite_creator import SatelliteCreator
+from baseclasses.repositories.db.typing import (
+    DataDict,
+    HashSatMap,
+    SatelliteDict,
+    SatHashesDict,
+    SatHashesMap,
+)
 from baseclasses.sanitizer import HtmlSanitizer
 from django.db.models import JSONField, ManyToManyField, Q, QuerySet
 from django.utils import timezone
-
-type DataDict = dict[str, Any]
-type SatelliteDict = dict[type[MontrekSatelliteABC], MontrekSatelliteABC]
-type SatHashesMap = dict[type[MontrekSatelliteABC], str]
-type SatHashesDict = dict[type[MontrekSatelliteABC], set[str]]
-type HashSatMap = dict[tuple[type[MontrekSatelliteABC], str], MontrekSatelliteABC]
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +48,7 @@ class DbCreator:
         self._cached_hub_value_dates = {}
         self._cached_hubs = {}
         self._cached_links = {}
+        self.satellite_creator = SatelliteCreator()
 
     def create(self, data: DataDict):
         self.data = self.cleaned_data(data)
@@ -73,13 +76,17 @@ class DbCreator:
         self._stall_hub_value_date(False)
         sat_hashes = {}
         for sat_class in self.db_staller.get_static_satellite_classes():
-            sat = self._create_static_satellite(sat_class)
+            sat = self.satellite_creator.create_static_satellite(
+                sat_class, data, self.creation_date, self.hub
+            )
             if sat is None:
                 continue
             sat_hashes[sat_class] = sat.get_hash_identifier
 
         for sat_class in self.db_staller.get_ts_satellite_classes():
-            sat = self._create_ts_satellite(sat_class)
+            sat = self.satellite_creator.create_ts_satellite(
+                sat_class, data, self.creation_date, self.hub_value_date
+            )
             if sat is None:
                 continue
             sat_hashes[sat_class] = sat.get_hash_identifier
@@ -257,39 +264,21 @@ class DbCreator:
 
     def _create_static_satellites(self):
         for sat_class in self.db_staller.get_static_satellite_classes():
-            sat = self._create_static_satellite(sat_class)
+            sat = self.satellite_creator.create_static_satellite(
+                sat_class, self.data, self.creation_date, self.hub
+            )
             if sat is None:
                 continue
             self._process_static_satellite(sat)
 
     def _create_ts_satellites(self):
         for sat_class in self.db_staller.get_ts_satellite_classes():
-            sat = self._create_ts_satellite(sat_class)
+            sat = self.satellite_creator.create_ts_satellite(
+                sat_class, self.data, self.creation_date, self.hub_value_date
+            )
             if sat is None:
                 continue
             self._process_ts_satellite(sat)
-
-    def _create_static_satellite(
-        self, sat_class: type[MontrekSatelliteABC]
-    ) -> Optional[MontrekSatelliteABC]:
-        sat_data = self._get_satellite_data(sat_class)
-        if self._is_sat_data_empty(sat_data):
-            return None
-        return sat_class(
-            **sat_data, state_date_start=self.creation_date, hub_entity=self.hub
-        )
-
-    def _create_ts_satellite(
-        self, sat_class: type[MontrekSatelliteABC]
-    ) -> Optional[MontrekSatelliteABC]:
-        sat_data = self._get_satellite_data(sat_class)
-        if self._is_sat_data_empty(sat_data):
-            return None
-        return sat_class(
-            **sat_data,
-            state_date_start=self.creation_date,
-            hub_value_date=self.hub_value_date,
-        )
 
     def _create_links(self):
         link_data = self._get_link_data()
@@ -320,13 +309,6 @@ class DbCreator:
                 value = self.data[field.name]
                 if isinstance(value, str):
                     self.data[field.name] = json.loads(value.replace("'", '"'))
-
-    def _get_satellite_data(self, sat_class: type[MontrekSatelliteABC]):
-        return {
-            key: value
-            for key, value in self.data.items()
-            if key in sat_class.get_value_field_names() + ["created_by_id"]
-        }
 
     def _process_static_satellite(self, sat: MontrekSatelliteABC):
         state_date_end_criterion = Q(hub_entity__state_date_end__gt=timezone.now())
@@ -495,13 +477,6 @@ class DbCreator:
 
         latest_sat.state_date_end = self.creation_date
         self.db_staller.stall_updated_satellite(latest_sat)
-
-    def _is_sat_data_empty(self, data: DataDict) -> bool:
-        data = data.copy()
-        data.pop("comment", None)
-        data.pop("created_by_id", None)
-        data.pop("value_date", None)
-        return all(dt is None for dt in data.values())
 
     def _get_link_data(self) -> dict[str, list[MontrekHubABC]]:
         link_data = {}

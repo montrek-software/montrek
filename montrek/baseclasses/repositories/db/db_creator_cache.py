@@ -1,25 +1,23 @@
 import datetime
 import logging
 from abc import ABC, abstractmethod
-from typing import Iterable, TypeVar
+from typing import Iterable
 
 from baseclasses.models import ValueDateList
-from baseclasses.repositories.db.db_creator import DataDict
 from baseclasses.repositories.db.db_staller import DbStallerProtocol
-from baseclasses.typing import HubValueDateProtocol, MontrekHubProtocol
+from baseclasses.repositories.db.typing import (
+    DataDict,
+    SatHashesMap,
+    THubCacheType,
+    THubValueDateCacheType,
+    TValueDateCacheType,
+)
 from baseclasses.utils import to_date
 from django.db.models import Q
 
 logger = logging.getLogger(__name__)
 HUB_ENTITY_COLUMN = "hub_entity_id"
 VALUE_DATE_COLUMN = "value_date"
-
-type THubCacheType = dict[int, MontrekHubProtocol]
-type TValueDateCacheType = dict[datetime.date | None, ValueDateList]
-type THubValueDateCacheType = dict[
-    tuple[int, datetime.date | None], HubValueDateProtocol
-]
-T = TypeVar("T", int, str)
 
 
 class DbCreatorCacheBase(ABC):
@@ -68,6 +66,22 @@ class DbCreatorCacheBase(ABC):
             (hvd.hub_id, hvd.value_date_list.value_date): hvd for hvd in hub_value_dates
         }
         logger.debug("End cache hub_value_dates")
+
+    def get_sat_hashes(self, data: Iterable[DataDict]) -> SatHashesMap:
+        sat_hashes = {}
+        for sat_class in self.db_staller.get_static_satellite_classes():
+            sat = self._create_static_satellite(sat_class)
+            if sat is None:
+                continue
+            sat_hashes[sat_class] = sat.get_hash_identifier
+
+        for sat_class in self.db_staller.get_ts_satellite_classes():
+            sat = self._create_ts_satellite(sat_class)
+            if sat is None:
+                continue
+            sat_hashes[sat_class] = sat.get_hash_identifier
+        self.clean()
+        return sat_hashes
 
 
 class DbCreatorCacheHubId(DbCreatorCacheBase):
