@@ -12,27 +12,31 @@ class SatelliteCreator:
         sat_class: type[MontrekSatelliteABC],
         data: DataDict,
         creation_date: datetime.date,
-        hub: MontrekHubABC,
+        hub: Optional[MontrekHubABC] = None,
     ) -> Optional[MontrekSatelliteABC]:
         sat_data = self.get_satellite_data(sat_class, data)
         if self.is_sat_data_empty(sat_data):
             return None
-        return sat_class(**sat_data, state_date_start=creation_date, hub_entity=hub)
+        sat_data["state_date_start"] = creation_date
+        if hub is not None:
+            sat_data["hub_entity"] = hub
+        return sat_class(**sat_data)
 
     def create_ts_satellite(
         self,
         sat_class: type[MontrekSatelliteABC],
         data: DataDict,
         creation_date: datetime.date,
-        hub_value_date: HubValueDateProtocol,
+        hub_value_date: Optional[HubValueDateProtocol] = None,
     ) -> Optional[MontrekSatelliteABC]:
         sat_data = self.get_satellite_data(sat_class, data)
         if self.is_sat_data_empty(sat_data):
             return None
+        sat_data["state_date_start"] = creation_date
+        if hub_value_date is not None:
+            sat_data["hub_value_date"] = hub_value_date
         return sat_class(
             **sat_data,
-            state_date_start=creation_date,
-            hub_value_date=hub_value_date,
         )
 
     def get_satellite_data(self, sat_class: type[MontrekSatelliteABC], data: DataDict):

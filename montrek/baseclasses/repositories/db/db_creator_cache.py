@@ -5,6 +5,7 @@ from typing import Iterable
 
 from baseclasses.models import ValueDateList
 from baseclasses.repositories.db.db_staller import DbStallerProtocol
+from baseclasses.repositories.db.satellite_creator import SatelliteCreator
 from baseclasses.repositories.db.typing import (
     DataDict,
     SatHashesMap,
@@ -21,8 +22,11 @@ VALUE_DATE_COLUMN = "value_date"
 
 
 class DbCreatorCacheBase(ABC):
+    satellite_creator_class: type[SatelliteCreator] = SatelliteCreator
+
     def __init__(self, db_staller: DbStallerProtocol):
         self.db_staller = db_staller
+        self.satellite_creator = self.satellite_creator_class()
         self.cached_hubs: THubCacheType = {}
         self.cached_value_date_lists: TValueDateCacheType = {}
         self.cached_hub_value_dates: THubValueDateCacheType = {}
@@ -69,8 +73,11 @@ class DbCreatorCacheBase(ABC):
 
     def get_sat_hashes(self, data: Iterable[DataDict]) -> SatHashesMap:
         sat_hashes = {}
+        creation_date = datetime.datetime.now()
         for sat_class in self.db_staller.get_static_satellite_classes():
-            sat = self._create_static_satellite(sat_class)
+            sat = self.satellite_creator.create_static_satellite(
+                sat_class, data, creation_date
+            )
             if sat is None:
                 continue
             sat_hashes[sat_class] = sat.get_hash_identifier
