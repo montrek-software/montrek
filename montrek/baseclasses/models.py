@@ -150,14 +150,19 @@ class MontrekSatelliteBaseABC(TimeStampMixin, StateMixin, UserMixin):
                 f"Satellite {self.__class__.__name__} must have property identifier_fields"
             )
         identifier_string = self._get_identifier_string()
-        sha256_hash = hashlib.sha256(identifier_string.encode()).hexdigest()
-        self.hash_identifier = sha256_hash
-        return sha256_hash
+        hash_identifier = self.convert_string_to_hash(identifier_string)
+        self.hash_identifier = hash_identifier
+        return hash_identifier
 
     def _get_hash_value(self) -> str:
         value_string = self._get_value_string()
-        sha256_hash = hashlib.sha256(value_string.encode()).hexdigest()
-        self.hash_value = sha256_hash
+        hash_value = self.convert_string_to_hash(value_string)
+        self.hash_value = hash_value
+        return hash_value
+
+    @staticmethod
+    def convert_string_to_hash(in_string: str) -> str:
+        sha256_hash = hashlib.sha256(in_string.encode()).hexdigest()
         return sha256_hash
 
     def _get_identifier_string(self):

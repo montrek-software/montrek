@@ -14,6 +14,10 @@ from baseclasses.models import (
     MontrekSatelliteABC,
     ValueDateList,
 )
+from baseclasses.repositories.db.db_creator_cache import (
+    DbCreatorCacheBase,
+    DbCreatorCacheHubId,
+)
 from baseclasses.repositories.db.db_staller import DbStaller
 from baseclasses.repositories.db.satellite_creator import SatelliteCreator
 from baseclasses.repositories.db.typing import (
@@ -43,6 +47,7 @@ class DbCreator:
         self.existing_satellites: SatelliteDict = {}
         self.updated_satellites: SatelliteDict = {}
         self.sanitizer = HtmlSanitizer()
+        self.cache: Optional[DbCreatorCacheBase] = None
         self.cached_queryset: Optional[HashSatMap] = None
         self._cached_value_date_lists = {}
         self._cached_hub_value_dates = {}
@@ -408,10 +413,8 @@ class DbCreator:
         # Check if satellite already exists, if it is updated or if it is new
         sat_hash_identifier = sat.get_hash_identifier
         satellite_class = type(sat)
-        if self.cached_queryset is not None:
-            return self.cached_queryset.get(
-                (satellite_class, sat_hash_identifier), None
-            )
+        if self.cache is not None:
+            return self.cache.get_cached_satellite(satellite_class, sat_hash_identifier)
         return satellite_class.objects.filter(
             state_date_end_criterion,
             Q(hash_identifier=sat_hash_identifier),
@@ -631,35 +634,38 @@ class DbBatchCreator:
             self.db_creator.clean()
 
     def cache_data(self) -> None:
-        sat_hashes: SatHashesDict = defaultdict(set)
-        hub_ids = []
-        value_dates = []
-        for data in self.data_collection:
-            hub_id = None
-            value_date = None
-            if "hub_entity_id" in data:
-                hub_id = data["hub_entity_id"]
-                if hub_id is not None:
-                    hub_ids.append(hub_id)
-            if "value_date" in data:
-                value_date = data["value_date"]
-                value_dates.append(value_date)
-        hub_ids = set(hub_ids)
-        if value_dates == []:
-            value_dates = [None]
-        value_dates = set(value_dates)
-        self.db_creator.cache_hubs(hub_ids)
-        self.db_creator.cache_value_dates(value_dates)
-        self.db_creator.cache_hub_value_dates(hub_ids, value_dates)
-        for data in self.data_collection:
-            sat_hash_map = self.db_creator.get_sat_hashes(data)
-            for sat_class, hash_value in sat_hash_map.items():
-                sat_hashes[sat_class].add(hash_value)
-        sat_hashes = dict(sat_hashes)
-        self.db_creator.cache_queryset(sat_hashes)
-        link_field_names = set()
-        for data in self.data_collection:
-            link_data = self.db_creator._get_link_data_fields(data)
-            link_field_names.update(link_data)
-        if link_field_names:
-            self.db_creator.cache_links(link_field_names)
+        cache = DbCreatorCacheHubId(self.db_creator.db_staller)
+        cache.cache_with_data(self.data_collection)
+        self.db_creator.cache = cache
+        # sat_hashes: SatHashesDict = defaultdict(set)
+        # hub_ids = []
+        # value_dates = []
+        # for data in self.data_collection:
+        #     hub_id = None
+        #     value_date = None
+        #     if "hub_entity_id" in data:
+        #         hub_id = data["hub_entity_id"]
+        #         if hub_id is not None:
+        #             hub_ids.append(hub_id)
+        #     if "value_date" in data:
+        #         value_date = data["value_date"]
+        #         value_dates.append(value_date)
+        # hub_ids = set(hub_ids)
+        # if value_dates == []:
+        #     value_dates = [None]
+        # value_dates = set(value_dates)
+        # self.db_creator.cache_hubs(hub_ids)
+        # self.db_creator.cache_value_dates(value_dates)
+        # self.db_creator.cache_hub_value_dates(hub_ids, value_dates)
+        # for data in self.data_collection:
+        #     sat_hash_map = self.db_creator.get_sat_hashes(data)
+        #     for sat_class, hash_value in sat_hash_map.items():
+        #         sat_hashes[sat_class].add(hash_value)
+        # sat_hashes = dict(sat_hashes)
+        # self.db_creator.cache_queryset(sat_hashes)
+        # link_field_names = set()
+        # for data in self.data_collection:
+        #     link_data = self.db_creator._get_link_data_fields(data)
+        #     link_field_names.update(link_data)
+        # if link_field_names:
+        #     self.db_creator.cache_links(link_field_names)
