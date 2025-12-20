@@ -6,20 +6,24 @@ from typing import Iterable, TypeVar
 from baseclasses.models import ValueDateList
 from baseclasses.repositories.db.db_creator import DataDict
 from baseclasses.repositories.db.db_staller import DbStallerProtocol
-from baseclasses.typing import MontrekHubProtocol, ValueDateListProtocol
+from baseclasses.typing import MontrekHubProtocol
+from baseclasses.utils import to_date
 from django.db.models import Q
 
 logger = logging.getLogger(__name__)
 HUB_ENTITY_COLUMN = "hub_entity_id"
+VALUE_DATE_COLUMN = "value_date"
 
-type HubCacheType = dict[int, MontrekHubProtocol]
-TValueDateList = TypeVar("TValueDateList", bound=ValueDateListProtocol)
+type THubCacheType = dict[int, MontrekHubProtocol]
+type TValueDateCacheType = dict[datetime.date | None, ValueDateList]
+T = TypeVar("T", int, str)
 
 
 class DbCreatorCacheBase(ABC):
     def __init__(self, db_staller: DbStallerProtocol):
         self.db_staller = db_staller
-        self.cached_hubs: HubCacheType = {}
+        self.cached_hubs: THubCacheType = {}
+        self.cached_value_date_lists: TValueDateCacheType = {}
 
     @abstractmethod
     def cache_with_data(self, data: Iterable[DataDict]) -> None:
@@ -37,7 +41,7 @@ class DbCreatorCacheBase(ABC):
         value_dates_lists = ValueDateList.objects.filter(
             Q(value_date__in=value_dates) | Q(value_date__isnull=True)
         )
-        self._cached_value_date_lists = {
+        self.cached_value_date_lists = {
             value_date.value_date: value_date for value_date in value_dates_lists
         }
         logger.debug("End cache value_dates")
@@ -47,11 +51,16 @@ class DbCreatorCacheHubId(DbCreatorCacheBase):
     def cache_with_data(self, data: Iterable[DataDict]) -> None:
         hub_ids = self.get_hub_ids(data)
         self.cache_hubs(hub_ids)
+        value_date_ids = self.get_value_date_ids(data)
+        self.cache_value_dates(value_dates=value_date_ids)
 
     def get_hub_ids(self, data: Iterable[DataDict]) -> set[int]:
         return {
             value for dt in data if (value := dt.get(HUB_ENTITY_COLUMN)) is not None
         }
+
+    def get_value_date_ids(self, data: Iterable[DataDict]) -> set[datetime.date | None]:
+        return {to_date(value) for dt in data if (value := dt.get(VALUE_DATE_COLUMN))}
 
 
 class DbCreatorCacheBlank(DbCreatorCacheBase):
