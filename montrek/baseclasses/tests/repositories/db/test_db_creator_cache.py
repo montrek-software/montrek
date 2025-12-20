@@ -75,7 +75,12 @@ class DummyDbStaller(DbStallerProtocol):
 
 class TestDbCreatorCache(TestCase):
     def setUp(self) -> None:
-        db_staller = DummyDbStaller([])
+        self.hub_value_dates = [
+            DummyHubValueDate(10, None),
+            DummyHubValueDate(10, datetime.date(2025, 12, 20)),
+            DummyHubValueDate(20, datetime.date(2025, 12, 20)),
+        ]
+        db_staller = DummyDbStaller(self.hub_value_dates)
         self.cache = DbCreatorCacheHubId(db_staller)
         ValueDateListFactory.create(value_date=None)
         ValueDateListFactory.create(value_date="2025-12-20")
@@ -92,6 +97,15 @@ class TestDbCreatorCache(TestCase):
             list(self.cache.cached_value_date_lists.keys()),
             [None, datetime.date(2025, 12, 20)],
         )
+        cached_hvd = self.cache.cached_hub_value_dates
+
+        expected_keys = {
+            (10, None),
+            (10, datetime.date(2025, 12, 20)),
+            (20, datetime.date(2025, 12, 20)),
+        }
+
+        self.assertEqual(set(cached_hvd.keys()), expected_keys)
 
     def test_cache_hubs(self):
         self.cache.cache_hubs({10, 20})
@@ -136,7 +150,6 @@ class TestDbCreatorCache(TestCase):
         self.assertEqual(len(value_date_ids), 4)
         self.assertIn(None, value_date_ids)
         self.assertIn(datetime.date(2025, 12, 20), value_date_ids)
-        self.assertIn(datetime.date(2025, 12, 21), value_date_ids)
         self.assertIn(datetime.date(2025, 12, 22), value_date_ids)
 
     def test_cache_hub_value_dates_with_dummy_objects(self):
@@ -168,3 +181,4 @@ class TestDbCreatorCache(TestCase):
         self.assertIn((10, datetime.date(2025, 12, 20)), cached)
         self.assertIn((20, datetime.date(2025, 12, 20)), cached)
         self.assertIn((99, datetime.date(2025, 12, 24)), cached)
+        self.assertIn(datetime.date(2025, 12, 21), value_date_ids)

@@ -76,6 +76,7 @@ class DbCreatorCacheHubId(DbCreatorCacheBase):
         self.cache_hubs(hub_ids)
         value_date_ids = self.get_value_date_ids(data)
         self.cache_value_dates(value_dates=value_date_ids)
+        self.cache_hub_value_dates(hub_ids, value_date_ids)
 
     def get_hub_ids(self, data: Iterable[DataDict]) -> set[int]:
         return {
