@@ -1,6 +1,8 @@
 import datetime
 import logging
 from collections import defaultdict
+from dataclasses import dataclass
+from enum import Enum
 from typing import Iterable, cast
 
 from baseclasses.models import MontrekLinkABC, MontrekSatelliteABC, ValueDateList
@@ -21,173 +23,345 @@ from django.db.models import ManyToManyField, Q
 from django.utils import timezone
 
 logger = logging.getLogger(__name__)
+
 HUB_ENTITY_COLUMN = "hub_entity_id"
 VALUE_DATE_COLUMN = "value_date"
 
 
+class LinkDirection(str, Enum):
+    HUB_IN = "hub_in"
+    HUB_OUT = "hub_out"
+
+
+@dataclass(frozen=True, slots=True)
+class SatelliteKey:
+    sat_class: type[MontrekSatelliteABC]
+    hash_identifier: str
+
+
+@dataclass(frozen=True, slots=True)
+class HubValueDateKey:
+    hub_id: int
+    value_date: datetime.date | None
+
+
+@dataclass(frozen=True, slots=True)
+class LinkKey:
+    link_class: type[MontrekLinkABC]
+    hub_id: int
+    direction: LinkDirection
+
+
 class DbCreatorCache:
+    """
+    Cache object with explicit phases and stable invariants.
+
+    Key invariants:
+    - All cache dicts are always initialized in __init__.
+    - Public entrypoint is cache_with_data(); other methods are implementation details.
+    - Cache methods populate only their own cache; dependency expansion happens via explicit return values.
+    """
+
     satellite_creator_class: type[SatelliteCreator] = SatelliteCreator
 
-    def __init__(self, db_staller: DbStallerProtocol):
+    def __init__(self, db_staller: DbStallerProtocol, *, now=None):
         self.db_staller = db_staller
         self.satellite_creator = self.satellite_creator_class()
-        self.hub_ids: set[int] = {}
+
+        # Time anchor for validity filtering
+        self.now = now or timezone.now()
+
+        # Input/derived ID sets (kept separate)
+        self.initial_hub_ids: set[int] = set()
+        self.derived_hub_ids: set[int] = set()
+
+        # Caches (always initialized)
         self.cached_hubs: THubCacheType = {}
         self.cached_value_date_lists: TValueDateCacheType = {}
         self.cached_hub_value_dates: THubValueDateCacheType = {}
-        self.cached_queryset: HashSatMap = {}
+        self.cached_satellites: HashSatMap = {}
         self.cached_links: TLinkCacheType = {}
-        self.now = timezone.now()
+
+    # -------------------------
+    # Public orchestration
+    # -------------------------
 
     def cache_with_data(self, data: list[DataDict]) -> None:
-        if len(data) == 0:
+        if not data:
             return
-        self.get_hub_ids(data)
-        self.cache_hubs()
-        value_date_ids = self.get_value_date_ids(data)
-        self.cache_value_dates(value_dates=value_date_ids)
-        self.cache_hub_value_dates(value_date_ids)
-        sat_hashes = self.get_sat_hashes(data)
-        self.cache_satellites(sat_hashes)
-        columns = set(data[0].keys())
-        self.cache_links(columns)
 
-    def cache_hubs(self):
-        logger.debug("Caching %d hubs", len(self.hub_ids))
+        self.initial_hub_ids = self._extract_hub_ids(data)
+        value_dates = self._extract_value_dates(data)
+        columns = set(data[0].keys())
+
+        # Phase 1: direct caches from raw inputs
+        self._cache_hubs(self.initial_hub_ids)
+        self._cache_value_dates(value_dates)
+        self._cache_hub_value_dates(self.initial_hub_ids, value_dates)
+
+        # Phase 2: satellites from hashes + dependency expansion
+        sat_hashes = self._compute_sat_hashes(data)
+        sats_by_hash, derived_hubs, derived_hvds = self._cache_satellites_by_hashes(
+            sat_hashes
+        )
+
+        # Expand dependency caches explicitly
+        self.derived_hub_ids = derived_hubs
+        all_hub_ids = set(self.initial_hub_ids) | set(self.derived_hub_ids)
+
+        # Ensure hubs/hvds needed by satellites exist in caches
+        self._cache_hubs(all_hub_ids)
+        self._merge_hub_value_dates(derived_hvds)
+
+        # Phase 3: satellites from hubs (excluding already-known hashes)
+        sats_from_hubs = self._cache_satellites_from_hubs(
+            all_hub_ids=all_hub_ids, sat_hashes=sat_hashes
+        )
+
+        # Finalize satellites cache
+        self.cached_satellites = {}
+        self.cached_satellites.update(sats_by_hash)
+        self.cached_satellites.update(sats_from_hubs)
+
+        # Phase 4: links
+        self._cache_links(columns=columns, hub_ids=all_hub_ids)
+
+    # -------------------------
+    # Extractors
+    # -------------------------
+
+    def _extract_hub_ids(self, data: Iterable[DataDict]) -> set[int]:
+        hub_ids: set[int] = set()
+        for dt in data:
+            value = dt.get(HUB_ENTITY_COLUMN)
+            if value is None:
+                continue
+            hub_ids.add(int(value))
+        return hub_ids
+
+    def _extract_value_dates(
+        self, data: Iterable[DataDict]
+    ) -> set[datetime.date | None]:
+        # Keep None out of this set unless explicitly present in input via to_date
+        value_dates: set[datetime.date | None] = set()
+        for dt in data:
+            value = dt.get(VALUE_DATE_COLUMN)
+            if not value:
+                continue
+            value_dates.add(to_date(value))
+        return value_dates
+
+    # -------------------------
+    # Caching primitives (populate only their own cache)
+    # -------------------------
+
+    def _cache_hubs(self, hub_ids: set[int]) -> None:
+        missing = hub_ids - set(self.cached_hubs.keys())
+        if not missing:
+            return
+
+        logger.debug("Caching %d hubs", len(missing))
         hub_class = self.db_staller.hub_class
-        hubs = hub_class.objects.filter(id__in=self.hub_ids)
-        self.cached_hubs.update({hub.id: hub for hub in hubs})
+        hubs = hub_class.objects.filter(id__in=missing)
+        for hub in hubs:
+            self.cached_hubs[hub.id] = hub
         logger.debug("End cache hubs")
 
-    def cache_value_dates(self, value_dates: set[datetime.date | None]):
+    def _cache_value_dates(self, value_dates: set[datetime.date | None]) -> None:
         logger.debug("Start cache value_dates")
+
+        # If you want True None-support, you may include None explicitly, but existing
+        # code always queried NULL anyway. We keep that behavior.
         value_dates_lists = ValueDateList.objects.filter(
             Q(value_date__in=value_dates) | Q(value_date__isnull=True)
         )
-        self.cached_value_date_lists = {
-            value_date.value_date: value_date for value_date in value_dates_lists
-        }
+        for vdl in value_dates_lists:
+            self.cached_value_date_lists[vdl.value_date] = vdl
+
         logger.debug("End cache value_dates")
 
-    def cache_hub_value_dates(self, value_dates: set[datetime.date | None]):
+    def _cache_hub_value_dates(
+        self, hub_ids: set[int], value_dates: set[datetime.date | None]
+    ) -> None:
         logger.debug("Start cache hub_value_dates")
 
+        # Query all candidate HVDs for these hubs and dates
         hub_value_dates = self.db_staller.hub_value_date_class.objects.select_related(
             "value_date_list", "hub"
         ).filter(
-            Q(hub__id__in=self.hub_ids)
+            Q(hub__id__in=hub_ids)
             & (
                 Q(value_date_list__value_date__in=value_dates)
                 | Q(value_date_list__value_date__isnull=True)
             )
         )
-        self.cached_hub_value_dates = {
-            (hvd.hub_id, hvd.value_date_list.value_date): hvd for hvd in hub_value_dates
-        }
+
+        for hvd in hub_value_dates:
+            key = HubValueDateKey(hvd.hub_id, hvd.value_date_list.value_date)
+            self.cached_hub_value_dates[(key.hub_id, key.value_date)] = hvd
+
         logger.debug("End cache hub_value_dates")
 
-    def get_sat_hashes(self, data: Iterable[DataDict]) -> SatHashesDict:
-        sat_hashes = {}
+    def _merge_hub_value_dates(
+        self, hvds: dict[HubValueDateKey, HubValueDateProtocol]
+    ) -> None:
+        # Merge without overwriting existing entries
+        for key, hvd in hvds.items():
+            self.cached_hub_value_dates.setdefault((key.hub_id, key.value_date), hvd)
 
+    # -------------------------
+    # Satellite caching
+    # -------------------------
+
+    def _compute_sat_hashes(self, data: Iterable[DataDict]) -> SatHashesDict:
+        sat_hashes: SatHashesDict = {}
+
+        # Static satellites: hash from identifier fields in each row
         for sat_class in self.db_staller.get_static_satellite_classes():
-            sat_hashes[sat_class] = []
+            hashes: list[str] = []
             for data_item in data:
-                identifier_string = ""
+                identifier_parts: list[str] = []
                 for id_field in sat_class.identifier_fields:
                     value = data_item.get(id_field, "")
-                    if isinstance(value, (datetime.datetime)):
+                    if isinstance(value, datetime.datetime):
                         value = datetime_to_montrek_time(value)
-                    identifier_string += str(value)
-                sat_hash = sat_class.convert_string_to_hash(identifier_string)
-                sat_hashes[sat_class].append(sat_hash)
+                    identifier_parts.append(str(value))
+                identifier_string = "".join(identifier_parts)
+                hashes.append(sat_class.convert_string_to_hash(identifier_string))
+            sat_hashes[sat_class] = hashes
+
+        # Timeseries satellites: hash from hub_value_date.id
         for sat_class in self.db_staller.get_ts_satellite_classes():
-            sat_hashes[sat_class] = []
-            for hub_value_date in self.cached_hub_value_dates.values():
-                sat_hash = sat_class.convert_string_to_hash(str(hub_value_date.id))
-                sat_hashes[sat_class].append(sat_hash)
+            hashes: list[str] = []
+            for hvd in self.cached_hub_value_dates.values():
+                hashes.append(sat_class.convert_string_to_hash(str(hvd.id)))
+            sat_hashes[sat_class] = hashes
+
         return sat_hashes
 
-    def cache_satellites(self, sat_hashes_dict: SatHashesDict):
-        cache: HashSatMap = defaultdict()
-        for sat_class, hashes in sat_hashes_dict.items():
-            filter_condition = Q(hash_identifier__in=hashes)
-            qs = self.filter_satellites(sat_class, filter_condition)
+    def _cache_satellites_by_hashes(
+        self, sat_hashes: SatHashesDict
+    ) -> tuple[HashSatMap, set[int], dict[HubValueDateKey, HubValueDateProtocol]]:
+        """
+        First pass: fetch satellites by hash_identifier.
+        Returns:
+          - satellites cache map (by SatelliteKey)
+          - derived hub ids referenced by these satellites
+          - derived hub_value_dates referenced by these satellites
+        """
+        cache: dict[SatelliteKey, MontrekSatelliteABC] = {}
+        derived_hub_ids: set[int] = set()
+        derived_hvds: dict[HubValueDateKey, HubValueDateProtocol] = {}
+
+        for sat_class, hashes in sat_hashes.items():
+            if not hashes:
+                continue
+            qs = self._filter_satellites(
+                sat_class=sat_class,
+                extra_filter=Q(hash_identifier__in=hashes),
+            )
             for sat in qs:
-                # TODO: collect every information for a second satellite gathering run with hub and hvd information
-                cache[(sat_class, sat.hash_identifier)] = sat
+                cache[SatelliteKey(sat_class, sat.hash_identifier)] = sat
+
                 if sat_class.is_timeseries:
-                    hub = sat.hub_value_date.hub
+                    hvd = sat.hub_value_date
+                    hub = hvd.hub
+                    derived_hub_ids.add(hub.id)
+                    derived_hvds[
+                        HubValueDateKey(hvd.hub_id, hvd.value_date_list.value_date)
+                    ] = hvd
                 else:
                     hub = sat.hub_entity
-                hub_id = hub.id
-                self.hub_ids.add(hub_id)
-                self.cached_hubs.setdefault(hub_id, hub)
-                if sat_class.is_timeseries:
-                    self.cached_hub_value_dates.setdefault(
-                        (hub_id, sat.hub_value_date.value_date_list.value_date),
-                        sat.hub_value_date,
-                    )
-                else:
-                    self.cached_hub_value_dates.setdefault(
-                        (hub_id, None), sat.hub_entity.hub_value_date
-                    )
-        cache_queryset = cast(HashSatMap, dict(cache))
-        cache_queryset = self.cache_sats_from_hubs(cache_queryset, sat_hashes_dict)
-        self.cached_satellites = cache_queryset
+                    derived_hub_ids.add(hub.id)
+                    # Non-timeseries: key it under (hub_id, None) to preserve prior behavior
+                    hvd = hub.hub_value_date
+                    derived_hvds[HubValueDateKey(hub.id, None)] = hvd
 
-    def cache_sats_from_hubs(
-        self, cache: HashSatMap, sat_hashes_dict: SatHashesDict
+        # Convert to the original HashSatMap shape: (class, hash) tuple keys
+        return (
+            cast(
+                HashSatMap,
+                {(k.sat_class, k.hash_identifier): v for k, v in cache.items()},
+            ),
+            derived_hub_ids,
+            derived_hvds,
+        )
+
+    def _cache_satellites_from_hubs(
+        self, *, all_hub_ids: set[int], sat_hashes: SatHashesDict
     ) -> HashSatMap:
-        for sat_class, hashes in sat_hashes_dict.items():
-            if sat_class.is_timeseries:
-                hub_filter = "hub_value_date__hub_id"
-            else:
-                hub_filter = "hub_entity_id"
-            filter_condition = Q(**{f"{hub_filter}__in": self.hub_ids}) & ~Q(
-                hash_identifier__in=hashes
-            )
-            qs = self.filter_satellites(sat_class, filter_condition)
-            for sat in qs:
-                cache[(sat_class, sat.hash_identifier)] = sat
-        return cache
+        """
+        Second pass: fetch additional satellites for those hubs, excluding the hashes already computed.
+        Populates only satellites; does not mutate hub/hvd caches.
+        """
+        cache: dict[SatelliteKey, MontrekSatelliteABC] = {}
 
-    def filter_satellites(
-        self, sat_class: type[MontrekSatelliteABC], filter_condition: Q
-    ):
-        if sat_class.is_timeseries:
-            state_date_end_criterion = Q(
-                hub_value_date__hub__state_date_end__gt=self.now
+        for sat_class, hashes in sat_hashes.items():
+            hub_filter = (
+                "hub_value_date__hub_id" if sat_class.is_timeseries else "hub_entity_id"
             )
+            extra_filter = Q(**{f"{hub_filter}__in": all_hub_ids}) & ~Q(
+                hash_identifier__in=hashes or []
+            )
+            qs = self._filter_satellites(sat_class=sat_class, extra_filter=extra_filter)
+
+            for sat in qs:
+                cache[SatelliteKey(sat_class, sat.hash_identifier)] = sat
+
+        return cast(
+            HashSatMap, {(k.sat_class, k.hash_identifier): v for k, v in cache.items()}
+        )
+
+    def _filter_satellites(
+        self, *, sat_class: type[MontrekSatelliteABC], extra_filter: Q
+    ):
+        """
+        Centralized validity filtering.
+        """
+        if sat_class.is_timeseries:
             relate_fields = (
                 "hub_value_date",
                 "hub_value_date__value_date_list",
                 "hub_value_date__hub",
             )
+            # Ensure BOTH the satellite and its hub are currently valid
+            validity_filter = (
+                Q(state_date_start__lte=self.now)
+                & Q(state_date_end__gt=self.now)
+                & Q(hub_value_date__hub__state_date_end__gt=self.now)
+            )
         else:
-            state_date_end_criterion = Q(hub_entity__state_date_end__gt=self.now)
             relate_fields = ("hub_entity",)
+            validity_filter = (
+                Q(state_date_start__lte=self.now)
+                & Q(state_date_end__gt=self.now)
+                & Q(hub_entity__state_date_end__gt=self.now)
+            )
+
         return sat_class.objects.select_related(*relate_fields).filter(
-            state_date_end_criterion,
-            filter_condition,
-            state_date_start__lte=self.now,
-            state_date_end__gt=self.now,
+            validity_filter, extra_filter
         )
 
-    def cache_links(self, columns: set[str]):
+    # -------------------------
+    # Link caching
+    # -------------------------
+
+    def _cache_links(self, *, columns: set[str], hub_ids: set[int]) -> None:
         """
         Cache existing links for the given hub IDs and link field names.
-        Stores links in a dict keyed by (link_class, hub_id, hub_field).
+        Stores links in a dict keyed by (link_class, hub_id, direction).
         """
         logger.debug("Start cache links")
 
-        cached_links = defaultdict(list)
+        cached_links: dict[LinkKey, list[MontrekLinkABC]] = defaultdict(list)
 
-        # Get only link classes that correspond to fields in the data
         link_classes = self._get_link_classes_for_fields(columns)
-        hub_ids = set(self.cached_hubs.keys())
+        if not link_classes or not hub_ids:
+            self.cached_links = {}
+            logger.debug("End cache links")
+            return
 
         for link_class in link_classes:
-            # Query links where hub_in or hub_out matches our hub_ids
             links = link_class.objects.select_related("hub_in", "hub_out").filter(
                 Q(hub_in_id__in=hub_ids) | Q(hub_out_id__in=hub_ids),
                 state_date_start__lte=self.now,
@@ -195,17 +369,22 @@ class DbCreatorCache:
             )
 
             for link in links:
-                # Cache by hub_in
                 if link.hub_in_id in hub_ids:
-                    key = (link_class, link.hub_in_id, "hub_in")
-                    cached_links[key].append(link)
-
-                # Cache by hub_out
+                    cached_links[
+                        LinkKey(link_class, link.hub_in_id, LinkDirection.HUB_IN)
+                    ].append(link)
                 if link.hub_out_id in hub_ids:
-                    key = (link_class, link.hub_out_id, "hub_out")
-                    cached_links[key].append(link)
+                    cached_links[
+                        LinkKey(link_class, link.hub_out_id, LinkDirection.HUB_OUT)
+                    ].append(link)
 
-        self.cached_links = dict(cached_links)
+        # Convert to the original TLinkCacheType key shape if needed:
+        # (link_class, hub_id, "hub_in"/"hub_out") -> list[link]
+        self.cached_links = {
+            (k.link_class, k.hub_id, k.direction.value): v
+            for k, v in cached_links.items()
+        }
+
         logger.debug("End cache links")
 
     def _get_link_classes_for_fields(
@@ -213,43 +392,44 @@ class DbCreatorCache:
     ) -> list[type[MontrekLinkABC]]:
         """
         Extract link classes that correspond to specific field names in the data.
+
+        This keeps your introspection approach, but makes the "is link model" check robust
+        by using issubclass() instead of MRO name matching.
         """
         from django.db.models.fields.related import ManyToOneRel
 
-        link_classes = []
+        link_classes: list[type[MontrekLinkABC]] = []
+
         for field in self.db_staller.hub_class._meta.get_fields():
-            # Skip fields not in our data
             if field.name not in field_names:
                 continue
 
             through_model = None
 
-            # Handle ManyToMany fields
-            if field.many_to_many and hasattr(field, "through"):
+            if getattr(field, "many_to_many", False) and hasattr(field, "through"):
                 through_model = field.through
-
-            # Handle ManyToOneRel (reverse ForeignKey relations)
             elif isinstance(field, ManyToOneRel):
                 through_model = field.related_model
             elif isinstance(field, ManyToManyField):
                 through_model = field.remote_field.through
 
-            # Check if it's a MontrekLinkABC subclass
             if (
                 through_model
-                and hasattr(through_model, "__mro__")
-                and any(
-                    base.__name__ == "MontrekLinkABC" for base in through_model.__mro__
-                )
+                and isinstance(through_model, type)
+                and issubclass(through_model, MontrekLinkABC)
             ):
-                link_classes.append(through_model)
+                link_classes.append(cast(type[MontrekLinkABC], through_model))
 
         return link_classes
 
+    # -------------------------
+    # Public accessors
+    # -------------------------
+
     def get_cached_satellite(
-        self, satellite_class: type[MontrekSatelliteABC], hash: str
+        self, satellite_class: type[MontrekSatelliteABC], hash_identifier: str
     ) -> MontrekSatelliteABC | None:
-        return self.cached_satellites.get((satellite_class, hash))
+        return self.cached_satellites.get((satellite_class, hash_identifier))
 
     def get_cached_hub(self, hub_entity_id: int) -> MontrekHubProtocol | None:
         return self.cached_hubs.get(hub_entity_id)
@@ -265,16 +445,15 @@ class DbCreatorCache:
         return self.cached_hub_value_dates.get((hub_entity_id, value_date))
 
     def get_cached_links(
-        self, link_class: type[MontrekLinkABC], hub_entity_id: int, link_type: str
-    ) -> MontrekLinkABC | None:
-        return self.cached_links.get((link_class, hub_entity_id, link_type))
-
-    def get_hub_ids(self, data: Iterable[DataDict]):
-        self.hub_ids = {
-            int(value)
-            for dt in data
-            if (value := dt.get(HUB_ENTITY_COLUMN)) is not None
-        }
-
-    def get_value_date_ids(self, data: Iterable[DataDict]) -> set[datetime.date | None]:
-        return {to_date(value) for dt in data if (value := dt.get(VALUE_DATE_COLUMN))}
+        self,
+        link_class: type[MontrekLinkABC],
+        hub_entity_id: int,
+        direction: LinkDirection | str,
+    ) -> list[MontrekLinkABC]:
+        """
+        Returns a list (possibly empty), not None. This matches how the cache is built.
+        """
+        dir_value = (
+            direction.value if isinstance(direction, LinkDirection) else str(direction)
+        )
+        return self.cached_links.get((link_class, hub_entity_id, dir_value), [])
