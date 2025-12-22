@@ -1,6 +1,5 @@
 import datetime
 import logging
-from abc import ABC, abstractmethod
 from collections import defaultdict
 from typing import Iterable, cast
 
@@ -26,7 +25,7 @@ HUB_ENTITY_COLUMN = "hub_entity_id"
 VALUE_DATE_COLUMN = "value_date"
 
 
-class DbCreatorCacheBase(ABC):
+class DbCreatorCache:
     satellite_creator_class: type[SatelliteCreator] = SatelliteCreator
 
     def __init__(self, db_staller: DbStallerProtocol):
@@ -40,9 +39,18 @@ class DbCreatorCacheBase(ABC):
         self.cached_links: TLinkCacheType = {}
         self.now = timezone.now()
 
-    @abstractmethod
-    def cache_with_data(self, data: Iterable[DataDict]) -> None:
-        pass
+    def cache_with_data(self, data: list[DataDict]) -> None:
+        if len(data) == 0:
+            return
+        self.get_hub_ids(data)
+        self.cache_hubs()
+        value_date_ids = self.get_value_date_ids(data)
+        self.cache_value_dates(value_dates=value_date_ids)
+        self.cache_hub_value_dates(value_date_ids)
+        sat_hashes = self.get_sat_hashes(data)
+        self.cache_satellites(sat_hashes)
+        columns = set(data[0].keys())
+        self.cache_links(columns)
 
     def cache_hubs(self):
         logger.debug("Caching %d hubs", len(self.hub_ids))
@@ -261,21 +269,6 @@ class DbCreatorCacheBase(ABC):
     ) -> MontrekLinkABC | None:
         return self.cached_links.get((link_class, hub_entity_id, link_type))
 
-
-class DbCreatorCacheHubId(DbCreatorCacheBase):
-    def cache_with_data(self, data: list[DataDict]) -> None:
-        if len(data) == 0:
-            return
-        self.get_hub_ids(data)
-        self.cache_hubs()
-        value_date_ids = self.get_value_date_ids(data)
-        self.cache_value_dates(value_dates=value_date_ids)
-        self.cache_hub_value_dates(value_date_ids)
-        sat_hashes = self.get_sat_hashes(data)
-        self.cache_satellites(sat_hashes)
-        columns = set(data[0].keys())
-        self.cache_links(columns)
-
     def get_hub_ids(self, data: Iterable[DataDict]):
         self.hub_ids = {
             int(value)
@@ -285,18 +278,3 @@ class DbCreatorCacheHubId(DbCreatorCacheBase):
 
     def get_value_date_ids(self, data: Iterable[DataDict]) -> set[datetime.date | None]:
         return {to_date(value) for dt in data if (value := dt.get(VALUE_DATE_COLUMN))}
-
-
-class DbCreatorCacheBlank(DbCreatorCacheBase):
-    def cache_with_data(self, data: Iterable[DataDict]) -> None:
-        self.cached_hubs = {"Abc": None}
-
-
-class DbCreatorCacheFactory:
-    def __init__(self, columns: Iterable[str]):
-        self.columns = set(columns)
-
-    def get_cache_class(self) -> type[DbCreatorCacheBase]:
-        if HUB_ENTITY_COLUMN in self.columns:
-            return DbCreatorCacheHubId
-        return DbCreatorCacheBlank

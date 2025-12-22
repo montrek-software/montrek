@@ -13,10 +13,7 @@ from baseclasses.models import (
     MontrekSatelliteABC,
     ValueDateList,
 )
-from baseclasses.repositories.db.db_creator_cache import (
-    DbCreatorCacheBase,
-    DbCreatorCacheHubId,
-)
+from baseclasses.repositories.db.db_creator_cache import DbCreatorCache
 from baseclasses.repositories.db.db_staller import DbStaller
 from baseclasses.repositories.db.satellite_creator import SatelliteCreator
 from baseclasses.repositories.db.typing import DataDict, SatelliteDict
@@ -439,6 +436,6 @@ class DbBatchCreator:
             self.db_creator.clean()
 
     def cache_data(self) -> None:
-        cache = DbCreatorCacheHubId(self.db_creator.db_staller)
+        cache = DbCreatorCache(self.db_creator.db_staller)
         cache.cache_with_data(self.data_collection)
         self.db_creator.cache = cache
