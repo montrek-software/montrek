@@ -11,6 +11,7 @@ from baseclasses.repositories.db.satellite_creator import SatelliteCreator
 from baseclasses.repositories.db.typing import (
     DataDict,
     HashSatMap,
+    HubSatMap,
     SatHashesDict,
     THubCacheType,
     THubValueDateCacheType,
@@ -37,6 +38,12 @@ class LinkDirection(str, Enum):
 class SatelliteKey:
     sat_class: type[MontrekSatelliteABC]
     hash_identifier: str
+
+
+@dataclass(frozen=True, slots=True)
+class SatelliteHubKey:
+    sat_class: type[MontrekSatelliteABC]
+    hub_id: int
 
 
 @dataclass(frozen=True, slots=True)
@@ -80,6 +87,7 @@ class DbCreatorCache:
         self.cached_value_date_lists: TValueDateCacheType = {}
         self.cached_hub_value_dates: THubValueDateCacheType = {}
         self.cached_satellites: HashSatMap = {}
+        self.cached_satellites_by_hub: HubSatMap = {}
         self.cached_links: TLinkCacheType = {}
 
     # -------------------------
@@ -297,8 +305,9 @@ class DbCreatorCache:
         cache: dict[SatelliteKey, MontrekSatelliteABC] = {}
 
         for sat_class, hashes in sat_hashes.items():
+            sat_is_timeseries = sat_class.is_timeseries
             hub_filter = (
-                "hub_value_date__hub_id" if sat_class.is_timeseries else "hub_entity_id"
+                "hub_value_date__hub_id" if sat_is_timeseries else "hub_entity_id"
             )
             extra_filter = Q(**{f"{hub_filter}__in": all_hub_ids}) & ~Q(
                 hash_identifier__in=hashes or []
@@ -307,6 +316,8 @@ class DbCreatorCache:
 
             for sat in qs:
                 cache[SatelliteKey(sat_class, sat.hash_identifier)] = sat
+                if not sat_is_timeseries:
+                    self.cached_satellites_by_hub[(sat_class, sat.hub_entity_id)] = sat
 
         return cast(
             HashSatMap, {(k.sat_class, k.hash_identifier): v for k, v in cache.items()}
@@ -430,6 +441,11 @@ class DbCreatorCache:
         self, satellite_class: type[MontrekSatelliteABC], hash_identifier: str
     ) -> MontrekSatelliteABC | None:
         return self.cached_satellites.get((satellite_class, hash_identifier))
+
+    def get_cached_satellite_by_hub(
+        self, satellite_class: type[MontrekSatelliteABC], hub_id: int
+    ) -> MontrekSatelliteABC | None:
+        return self.cached_satellites_by_hub.get((satellite_class, hub_id))
 
     def get_cached_hub(self, hub_entity_id: int) -> MontrekHubProtocol | None:
         return self.cached_hubs.get(hub_entity_id)

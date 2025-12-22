@@ -1067,6 +1067,41 @@ class TestMontrekCreateObjectDataFrame(TestCase):
             self.assertEqual(sat_a1_objs.count(), 2)
             self.assertEqual(sat_a4_objs.count(), 2)
 
+    def test_std_create_object_update_satellite_id_field_keep_hub(self):
+        # Create one object
+        repository = HubARepository(session_data={"user_id": self.user.id})
+        repository.create_by_data_frame(
+            pd.DataFrame(
+                {
+                    "field_a1_int": [5],
+                    "field_a1_str": ["test"],
+                    "field_a2_float": [6.0],
+                    "field_a2_str": ["test2"],
+                }
+            )
+        )
+
+        a_object = (
+            HubARepository(session_data={"user_id": self.user.id}).receive().get()
+        )
+        repository.create_by_data_frame(
+            pd.DataFrame(
+                {
+                    "field_a1_int": [5],
+                    "field_a1_str": ["test_new"],
+                    "field_a2_float": [6.0],
+                    "field_a2_str": ["test2"],
+                    "hub_entity_id": [a_object.hub_entity_id],
+                }
+            )
+        )
+        # We should still have one Hub
+        self.assertEqual(me_models.HubA.objects.count(), 1)
+
+        # The receive should return the adjusted object
+        b_object = HubARepository().receive().get()
+        self.assertEqual(b_object.field_a1_str, "test_new")
+
 
 class TestMontrekCreateObjectLinks(TestCase):
     def setUp(self):

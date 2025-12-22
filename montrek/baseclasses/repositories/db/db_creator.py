@@ -38,7 +38,7 @@ class DbCreator:
         self.updated_satellites: SatelliteDict = {}
         self.sanitizer = HtmlSanitizer()
         self.satellite_creator = SatelliteCreator()
-        self.cache: Optional[DbCreatorCacheBase] = None
+        self.cache: Optional[DbCreatorCache] = None
 
     def create(self, data: DataDict):
         self.data = self.cleaned_data(data)
@@ -271,11 +271,16 @@ class DbCreator:
     def _close_existing_sat_if_hub_is_forced(self, sat: MontrekSatelliteABC):
         if "hub_entity_id" not in self.data:
             return
-        latest_sat = (
-            sat.__class__.objects.filter(hub_entity_id=self.data["hub_entity_id"])
-            .order_by("-state_date_start")
-            .first()
-        )
+        if self.cache is not None:
+            latest_sat = self.cache.get_cached_satellite_by_hub(
+                sat.__class__, self.data["hub_entity_id"]
+            )
+        else:
+            latest_sat = (
+                sat.__class__.objects.filter(hub_entity_id=self.data["hub_entity_id"])
+                .order_by("-state_date_start")
+                .first()
+            )
         if not latest_sat:
             return
 
