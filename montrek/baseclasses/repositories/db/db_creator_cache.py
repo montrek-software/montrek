@@ -102,24 +102,8 @@ class DbCreatorCacheBase(ABC):
     def cache_satellites(self, sat_hashes_dict: SatHashesDict):
         cache: HashSatMap = defaultdict()
         for sat_class, hashes in sat_hashes_dict.items():
-            if sat_class.is_timeseries:
-                state_date_end_criterion = Q(
-                    hub_value_date__hub__state_date_end__gt=self.now
-                )
-                relate_fields = (
-                    "hub_value_date",
-                    "hub_value_date__value_date_list",
-                    "hub_value_date__hub",
-                )
-            else:
-                state_date_end_criterion = Q(hub_entity__state_date_end__gt=self.now)
-                relate_fields = ("hub_entity",)
-            qs = sat_class.objects.select_related(*relate_fields).filter(
-                state_date_end_criterion,
-                Q(hash_identifier__in=hashes),
-                state_date_start__lte=self.now,
-                state_date_end__gt=self.now,
-            )
+            filter_condition = Q(hash_identifier__in=hashes)
+            qs = self.filter_satellites(sat_class, filter_condition)
             for sat in qs:
                 # TODO: collect every information for a second satellite gathering run with hub and hvd information
                 cache[(sat_class, sat.hash_identifier)] = sat
@@ -140,7 +124,46 @@ class DbCreatorCacheBase(ABC):
                         (hub_id, None), sat.hub_entity.hub_value_date
                     )
         cache_queryset = cast(HashSatMap, dict(cache))
+        cache_queryset = self.cache_sats_from_hubs(cache_queryset, sat_hashes_dict)
         self.cached_satellites = cache_queryset
+
+    def cache_sats_from_hubs(
+        self, cache: HashSatMap, sat_hashes_dict: SatHashesDict
+    ) -> HashSatMap:
+        for sat_class, hashes in sat_hashes_dict.items():
+            if sat_class.is_timeseries:
+                hub_filter = "hub_value_date__hub_id"
+            else:
+                hub_filter = "hub_entity_id"
+            filter_condition = Q(**{f"{hub_filter}__in": self.hub_ids}) & ~Q(
+                hash_identifier__in=hashes
+            )
+            qs = self.filter_satellites(sat_class, filter_condition)
+            for sat in qs:
+                cache[(sat_class, sat.hash_identifier)] = sat
+        return cache
+
+    def filter_satellites(
+        self, sat_class: type[MontrekSatelliteABC], filter_condition: Q
+    ):
+        if sat_class.is_timeseries:
+            state_date_end_criterion = Q(
+                hub_value_date__hub__state_date_end__gt=self.now
+            )
+            relate_fields = (
+                "hub_value_date",
+                "hub_value_date__value_date_list",
+                "hub_value_date__hub",
+            )
+        else:
+            state_date_end_criterion = Q(hub_entity__state_date_end__gt=self.now)
+            relate_fields = ("hub_entity",)
+        return sat_class.objects.select_related(*relate_fields).filter(
+            state_date_end_criterion,
+            filter_condition,
+            state_date_start__lte=self.now,
+            state_date_end__gt=self.now,
+        )
 
     def cache_links(self, columns: set[str]):
         """
