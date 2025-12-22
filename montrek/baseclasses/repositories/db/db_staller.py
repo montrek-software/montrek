@@ -54,6 +54,14 @@ class DbStaller:
         }
         self.creation_date = timezone.now()
 
+    def __repr__(self):
+        return f"""new satellites:\t{self.new_satellites}\n
+        updated_satellites:\t{self.updated_satellites}\n
+        new_hubs:\t{self.hubs}\n
+        updated_hubs:\t{self.updated_hubs}\n
+        links:\t{self.links}\n
+        updated_links:\t{self.updated_links}"""
+
     def stall_hub(self, new_hub: MontrekHubABC):
         self._add_stalled_object(new_hub, self.hubs)
 

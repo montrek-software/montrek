@@ -4,13 +4,7 @@ from abc import ABC, abstractmethod
 from collections import defaultdict
 from typing import Iterable, cast
 
-from baseclasses.models import (
-    HubValueDate,
-    MontrekHubABC,
-    MontrekLinkABC,
-    MontrekSatelliteABC,
-    ValueDateList,
-)
+from baseclasses.models import MontrekLinkABC, MontrekSatelliteABC, ValueDateList
 from baseclasses.repositories.db.db_staller import DbStallerProtocol
 from baseclasses.repositories.db.satellite_creator import SatelliteCreator
 from baseclasses.repositories.db.typing import (
@@ -24,7 +18,7 @@ from baseclasses.repositories.db.typing import (
 )
 from baseclasses.typing import HubValueDateProtocol, MontrekHubProtocol
 from baseclasses.utils import datetime_to_montrek_time, to_date
-from django.db.models import ManyToManyField, Q, QuerySet
+from django.db.models import ManyToManyField, Q
 from django.utils import timezone
 
 logger = logging.getLogger(__name__)
@@ -148,7 +142,7 @@ class DbCreatorCacheBase(ABC):
         cache_queryset = cast(HashSatMap, dict(cache))
         self.cached_satellites = cache_queryset
 
-    def cache_links(self, link_field_names: set[str]):
+    def cache_links(self, columns: set[str]):
         """
         Cache existing links for the given hub IDs and link field names.
         Stores links in a dict keyed by (link_class, hub_id, hub_field).
@@ -158,7 +152,7 @@ class DbCreatorCacheBase(ABC):
         cached_links = defaultdict(list)
 
         # Get only link classes that correspond to fields in the data
-        link_classes = self._get_link_classes_for_fields(link_field_names)
+        link_classes = self._get_link_classes_for_fields(columns)
         hub_ids = set(self.cached_hubs.keys())
 
         for link_class in link_classes:
@@ -182,21 +176,6 @@ class DbCreatorCacheBase(ABC):
 
         self.cached_links = dict(cached_links)
         logger.debug("End cache links")
-
-    def _get_link_data_fields(self, data: DataDict) -> set[str]:
-        """
-        Extract field names from data that correspond to links.
-        """
-        link_fields = set()
-        for key, value in data.items():
-            if isinstance(value, (HubValueDate, MontrekHubABC)):
-                link_fields.add(key)
-            elif isinstance(value, (list, QuerySet)):
-                if value and any(
-                    isinstance(item, (HubValueDate, MontrekHubABC)) for item in value
-                ):
-                    link_fields.add(key)
-        return link_fields
 
     def _get_link_classes_for_fields(
         self, field_names: set[str]
@@ -261,7 +240,9 @@ class DbCreatorCacheBase(ABC):
 
 
 class DbCreatorCacheHubId(DbCreatorCacheBase):
-    def cache_with_data(self, data: Iterable[DataDict]) -> None:
+    def cache_with_data(self, data: list[DataDict]) -> None:
+        if len(data) == 0:
+            return
         self.get_hub_ids(data)
         self.cache_hubs()
         value_date_ids = self.get_value_date_ids(data)
@@ -269,6 +250,8 @@ class DbCreatorCacheHubId(DbCreatorCacheBase):
         self.cache_hub_value_dates(value_date_ids)
         sat_hashes = self.get_sat_hashes(data)
         self.cache_satellites(sat_hashes)
+        columns = set(data[0].keys())
+        self.cache_links(columns)
 
     def get_hub_ids(self, data: Iterable[DataDict]):
         self.hub_ids = {
