@@ -5,7 +5,7 @@ from copy import deepcopy
 from typing import Any
 
 from baseclasses.models import MontrekHubABC, MontrekSatelliteBaseABC
-from baseclasses.repositories.db.db_staller import DbStaller
+from baseclasses.repositories.db.db_staller import DbStaller, StalledSatelliteDict
 from django.db import models, transaction
 from django.db.utils import IntegrityError
 from django.utils import timezone
@@ -101,8 +101,7 @@ class ViewModelRepository:
         """Gather hub IDs that are newly created or belong to new satellites."""
         hub_ids = [hub.pk for hub in db_staller.get_hubs().get(hub_class, [])]
 
-        for satellites in db_staller.get_new_satellites().values():
-            hub_ids += [self._sat_hub_pk(sat) for sat in satellites]
+        hub_ids += self._get_satellite_hub_ids(db_staller.get_new_satellites())
         return hub_ids
 
     def _delete_updated_hubs(
@@ -120,8 +119,7 @@ class ViewModelRepository:
         hub_ids = []
 
         # Satellites
-        for sat_class, satellites in db_staller.get_updated_satellites().items():
-            hub_ids += [self._sat_hub_pk(sat) for sat in satellites]
+        hub_ids += self._get_satellite_hub_ids(db_staller.get_updated_satellites())
 
         # Links (both existing and updated)
         for link_source in [db_staller.links, db_staller.updated_links]:
@@ -142,6 +140,17 @@ class ViewModelRepository:
         hub_field = "hub_in" if hub_in_model == hub_class else "hub_out"
 
         return [getattr(link, hub_field).pk for link in link_instances]
+
+    def _get_satellite_hub_ids(self, sat_dict: StalledSatelliteDict) -> list[int]:
+        hub_ids = []
+        for sat_class, satellites in sat_dict.items():
+            sat_ids = [sat.id for sat in satellites]
+            sat_query = sat_class.objects.filter(id__in=sat_ids)
+            hub_str = (
+                "hub_value_date__hub_id" if sat_class.is_timeseries else "hub_entity_id"
+            )
+            hub_ids += sat_query.values(hub_str)
+        return hub_ids
 
     def store_query_in_view_model(self, query: models.QuerySet, mode: str = "all"):
         self._debug_logging("Start store_query_in_view_model")
