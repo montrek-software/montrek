@@ -20,6 +20,7 @@ from montrek_example.repositories.hub_a_repository import (
     HubARepository2,
     HubARepository3,
     HubARepository4,
+    HubARepository6,
 )
 from montrek_example.repositories.hub_b_repository import (
     HubBRepository,
@@ -1032,6 +1033,74 @@ class TestMontrekCreateObjectDataFrame(TestCase):
             repository.create_objects_from_data_frame,
             data_frame,
         )
+
+    def test_create_by_data_frame_sat_with_hub_entity_id_identifier(self):
+        """
+        When a repository has satellites attached which have a field identifier and the hub entity as identifier field,
+        the right hub entity has to be found
+        """
+        hubs = me_factories.HubAFactory.create_batch(2)
+        me_factories.SatA1Factory(
+            hub_entity=hubs[0], field_a1_str="test_1", field_a1_int=1
+        )
+        me_factories.SatA1Factory(
+            hub_entity=hubs[1], field_a1_str="test_2", field_a1_int=2
+        )
+        me_factories.SatA4Factory(hub_entity=hubs[0], field_a4_str="A4 1")
+        me_factories.SatA4Factory(hub_entity=hubs[1], field_a4_str="A4 2")
+        repository = HubARepository6(session_data={"user_id": self.user.id})
+        with self.subTest("Upload identical DF does not change DB"):
+            upload_df = pd.DataFrame(
+                {
+                    "field_a1_str": ["test_1", "test_2"],
+                    "field_a1_int": [1, 2],
+                    "field_a4_str": ["A4 1", "A4 2"],
+                }
+            )
+            sat_a1_objs = me_models.SatA1.objects.all()
+            sat_a4_objs = me_models.SatA4.objects.all()
+            self.assertEqual(sat_a1_objs.count(), 2)
+            self.assertEqual(sat_a4_objs.count(), 2)
+            repository.create_by_data_frame(upload_df)
+            sat_a1_objs = me_models.SatA1.objects.all()
+            sat_a4_objs = me_models.SatA4.objects.all()
+            self.assertEqual(sat_a1_objs.count(), 2)
+            self.assertEqual(sat_a4_objs.count(), 2)
+
+    def test_std_create_object_update_satellite_id_field_keep_hub(self):
+        # Create one object
+        repository = HubARepository(session_data={"user_id": self.user.id})
+        repository.create_by_data_frame(
+            pd.DataFrame(
+                {
+                    "field_a1_int": [5],
+                    "field_a1_str": ["test"],
+                    "field_a2_float": [6.0],
+                    "field_a2_str": ["test2"],
+                }
+            )
+        )
+
+        a_object = (
+            HubARepository(session_data={"user_id": self.user.id}).receive().get()
+        )
+        repository.create_by_data_frame(
+            pd.DataFrame(
+                {
+                    "field_a1_int": [5],
+                    "field_a1_str": ["test_new"],
+                    "field_a2_float": [6.0],
+                    "field_a2_str": ["test2"],
+                    "hub_entity_id": [a_object.hub_entity_id],
+                }
+            )
+        )
+        # We should still have one Hub
+        self.assertEqual(me_models.HubA.objects.count(), 1)
+
+        # The receive should return the adjusted object
+        b_object = HubARepository().receive().get()
+        self.assertEqual(b_object.field_a1_str, "test_new")
 
 
 class TestMontrekCreateObjectLinks(TestCase):

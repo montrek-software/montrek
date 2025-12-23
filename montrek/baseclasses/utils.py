@@ -1,11 +1,10 @@
-from abc import ABC, abstractmethod
 import datetime
+from abc import ABC, abstractmethod
 from datetime import timedelta
-from typing import Tuple
-
-from django.utils import timezone
+from typing import Any, Tuple
 
 from baseclasses.typing import SessionDataType
+from django.utils import timezone
 
 # TODO Make universal MontrekDateTime class
 
@@ -68,6 +67,25 @@ def get_content_type(filename: str) -> str:
     if file_extension == "zip":
         return "application/zip"
     return "application/octet-stream"
+
+
+def to_date(value: Any) -> datetime.date | None:
+    if value is None:
+        return None
+
+    if isinstance(value, datetime.date) and not isinstance(value, datetime.datetime):
+        return value
+
+    if isinstance(value, datetime.datetime):
+        return value.date()
+
+    if isinstance(value, str):
+        try:
+            return datetime.date.fromisoformat(value)
+        except ValueError:
+            return None
+
+    return None
 
 
 class TableMetaSessionDataElement(ABC):

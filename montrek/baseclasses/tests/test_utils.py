@@ -1,20 +1,23 @@
-from django.test import TestCase, RequestFactory
-from django.contrib.sessions.middleware import SessionMiddleware
-from django.utils import timezone
+import datetime
+
 from baseclasses.utils import (
     FilterCountMetaSessionDataElement,
     FilterMetaSessionDataElement,
+    IsCompactFormatMetaSessionDataElement,
+    OrderFieldMetaSessionDataElement,
     PagesMetaSessionDataElement,
     PaginateByMetaSessionDataElement,
-    OrderFieldMetaSessionDataElement,
     TableMetaSessionData,
-    IsCompactFormatMetaSessionDataElement,
+    get_content_type,
+    get_date_range_dates,
+    montrek_date_string,
     montrek_time,
     montrek_today,
-    montrek_date_string,
-    get_date_range_dates,
-    get_content_type,
+    to_date,
 )
+from django.contrib.sessions.middleware import SessionMiddleware
+from django.test import RequestFactory, TestCase
+from django.utils import timezone
 from freezegun import freeze_time
 
 
@@ -333,6 +336,18 @@ class TestIsCompactFormatCountMetaSessionDataElement(TestCase):
         self.assertIn("is_compact_format", test_data)
         self.assertEqual(test_data["is_compact_format"]["/test-path/"], True)
         self.assertEqual(test_data["current_is_compact_format"], True)
+
+
+class TestToDateHelper(TestCase):
+    def test_to_date(self):
+        data = [
+            ("2025-12-20", datetime.date(2025, 12, 20)),
+            (datetime.datetime(2025, 12, 21), datetime.date(2025, 12, 21)),
+            (datetime.date(2025, 12, 22), datetime.date(2025, 12, 22)),
+            ("abc", None),
+        ]
+        for test_val, expect_result in data:
+            self.assertEqual(to_date(test_val), expect_result)
 
 
 class TestOrderFieldMetaSessionDataElement(TestCase):

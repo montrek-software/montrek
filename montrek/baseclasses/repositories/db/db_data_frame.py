@@ -59,19 +59,8 @@ class DbDataFrame:
         # Must be done on the deduplicated frame
         self._raise_for_duplicated_entries(df)
 
-        creator = DbBatchCreator(DbCreator(self.db_staller, self.user_id))
-
-        columns = list(df.columns)
-
-        for row in df.itertuples(index=False, name=None):
-            data = dict(zip(columns, row))
-
-            # Normalize NaN → None (required for many tests)
-            for key, value in data.items():
-                if not isinstance(value, (list, dict)) and pd.isna(value):
-                    data[key] = None
-
-            creator.stall_data(data)
+        creator = DbBatchCreator(DbCreator(self.db_staller, self.user_id), df)
+        creator.fill_data_collection()
         creator.create()
         hubs = dict(zip(df.index.tolist(), creator.hubs))
 

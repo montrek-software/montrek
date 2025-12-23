@@ -1,10 +1,13 @@
+from typing import Protocol
+
 from baseclasses.models import (
     HubValueDate,
     MontrekHubABC,
-    MontrekSatelliteABC,
     MontrekLinkABC,
+    MontrekSatelliteABC,
 )
 from baseclasses.repositories.annotator import Annotator
+from baseclasses.typing import HubValueDateProtocol, MontrekHubProtocol
 from django.utils import timezone
 
 StalledSatelliteDict = dict[type[MontrekSatelliteABC], list[MontrekSatelliteABC]]
@@ -21,6 +24,14 @@ StalledDicts = (
 )
 
 
+class DbStallerProtocol(Protocol):
+    hub_class: type[MontrekHubProtocol]
+    hub_value_date_class: type[HubValueDateProtocol]
+
+    def get_static_satellite_classes(self) -> list[type[MontrekSatelliteABC]]: ...
+    def get_ts_satellite_classes(self) -> list[type[MontrekSatelliteABC]]: ...
+
+
 class DbStaller:
     def __init__(self, annotator: Annotator):
         self.annotator = annotator
@@ -30,7 +41,7 @@ class DbStaller:
         self.updated_satellites: StalledSatelliteDict = {
             sat_class: [] for sat_class in annotator.annotated_satellite_classes
         }
-        self.hub_class = annotator.hub_class
+        self.hub_class: type[MontrekHubProtocol] = annotator.hub_class
         self.hubs: StalledHubDict = {self.hub_class: []}
         self.updated_hubs: StalledHubDict = {self.hub_class: []}
         self.hub_value_date_class = self.hub_class.hub_value_date.field.model
@@ -42,6 +53,14 @@ class DbStaller:
             link_class: [] for link_class in annotator.annotated_link_classes
         }
         self.creation_date = timezone.now()
+
+    def __repr__(self):
+        return f"""new satellites:\t{self.new_satellites}\n
+        updated_satellites:\t{self.updated_satellites}\n
+        new_hubs:\t{self.hubs}\n
+        updated_hubs:\t{self.updated_hubs}\n
+        links:\t{self.links}\n
+        updated_links:\t{self.updated_links}"""
 
     def stall_hub(self, new_hub: MontrekHubABC):
         self._add_stalled_object(new_hub, self.hubs)
@@ -88,11 +107,20 @@ class DbStaller:
         return self.updated_links
 
     def get_static_satellite_classes(self) -> list[type[MontrekSatelliteABC]]:
-        return [
+        static_hub_classes = [
             sat_class
             for sat_class in self.new_satellites.keys()
             if not sat_class.is_timeseries
         ]
+        hub_as_identifier_sat_classes = [
+            sat for sat in static_hub_classes if "hub_entity_id" in sat.identifier_fields
+        ]
+        hub_not_identifier_sat_classes = [
+            sat
+            for sat in static_hub_classes
+            if "hub_entity_id" not in sat.identifier_fields
+        ]
+        return hub_not_identifier_sat_classes + hub_as_identifier_sat_classes
 
     def get_ts_satellite_classes(self) -> list[type[MontrekSatelliteABC]]:
         return [
