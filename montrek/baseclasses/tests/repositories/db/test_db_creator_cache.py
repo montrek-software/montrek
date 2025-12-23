@@ -87,6 +87,7 @@ class DummyStaticSatellite:
     def __init__(self, hash_identifier, hub_entity):
         self.hash_identifier = hash_identifier
         self.hub_entity = hub_entity
+        self.hub_entity_id = hub_entity.id
         self.state_date_start = datetime.datetime.min
         self.state_date_end = datetime.datetime.max
 
