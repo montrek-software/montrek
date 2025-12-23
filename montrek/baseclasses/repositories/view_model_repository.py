@@ -149,7 +149,7 @@ class ViewModelRepository:
             hub_str = (
                 "hub_value_date__hub_id" if sat_class.is_timeseries else "hub_entity_id"
             )
-            hub_ids += sat_query.values(hub_str)
+            hub_ids += sat_query.values_list(hub_str, flat=True)
         return hub_ids
 
     def store_query_in_view_model(self, query: models.QuerySet, mode: str = "all"):
