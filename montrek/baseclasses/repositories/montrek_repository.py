@@ -26,7 +26,7 @@ from baseclasses.repositories.subquery_builder import (
     TSSatelliteSubqueryBuilder,
 )
 from baseclasses.repositories.view_model_repository import ViewModelRepository
-from baseclasses.utils import datetime_to_montrek_time
+from baseclasses.utils import DJANGO_TO_PANDAS, datetime_to_montrek_time
 from django.core.exceptions import PermissionDenied
 from django.db import models
 from django.db.models import F, QuerySet
@@ -415,3 +415,26 @@ class MontrekRepository:
 
     def _debug_logging(self, msg: str):
         logger.debug("%s: %s", self.__class__.__name__, msg)
+
+    ## Return DF
+
+    def get_df_dtypes(self) -> dict[str, str]:
+        field_map = self.annotator.get_annotated_field_map()
+        dtypes: dict[str, str] = {}
+
+        for field_name, field in field_map.items():
+            # 1. choices override everything
+            if field.choices:
+                dtypes[field_name] = "category"
+                continue
+
+            # 2. type-based mapping
+            for django_type, pandas_type in DJANGO_TO_PANDAS.items():
+                if isinstance(field, django_type):
+                    dtypes[field_name] = pandas_type
+                    break
+            else:
+                # 3. fallback
+                dtypes[field_name] = "object"
+
+        return dtypes

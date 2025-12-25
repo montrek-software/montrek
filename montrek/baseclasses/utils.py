@@ -4,9 +4,23 @@ from datetime import timedelta
 from typing import Any, Tuple
 
 from baseclasses.typing import SessionDataType
+from django.db import models
 from django.utils import timezone
 
 # TODO Make universal MontrekDateTime class
+
+DJANGO_TO_PANDAS = {
+    models.IntegerField: "Int64",
+    models.AutoField: "Int64",
+    models.BigIntegerField: "Int64",
+    models.FloatField: "float64",
+    models.BooleanField: "boolean",
+    models.DateField: "datetime64[ns]",
+    models.DateTimeField: "datetime64[ns]",
+    models.CharField: "string",
+    models.TextField: "string",
+    models.EmailField: "string",
+}
 
 
 def montrek_time(
