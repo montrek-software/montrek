@@ -448,10 +448,13 @@ class MontrekRepository:
         self, apply_filter: bool = True, columns: Optional[list[str]] = None
     ) -> pd.DataFrame:
         query = self.receive(apply_filter)
-        df = read_frame(query)
+        dtypes = self.get_df_dtypes()
+
         if columns is not None:
-            df = df.loc[:, columns]
-        df = df.astype(self.get_df_dtypes())
+            query = query.values(*columns)
+            dtypes = {k: v for k, v in dtypes.items() if k in columns}
+        df = read_frame(query)
+        df = df.astype(dtypes)
         df = self._apply_category_dtype(df)
         return df
 
