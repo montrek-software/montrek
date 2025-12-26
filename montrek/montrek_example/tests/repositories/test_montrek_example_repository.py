@@ -3293,3 +3293,14 @@ class TestRepositoryAsDF(TestCase):
             with self.subTest(f"dtypes for {repo}"):
                 dtypes = repo({}).get_df_dtypes()
                 self.assertEqual(dtypes, expected_result)
+
+    def test_get_df(self):
+        sats = me_factories.SatA1Factory.create_batch(5)
+        for sat in sats:
+            me_factories.SatA2Factory.create(hub_entity=sat.hub_entity)
+            me_factories.SatB1Factory.create(link_a=sat)
+
+        repo = HubARepository({})
+        repo.store_in_view_model()
+        test_df = repo.get_df()
+        self.assertEqual(test_df.shape, (5, 14))

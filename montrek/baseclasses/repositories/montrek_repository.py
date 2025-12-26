@@ -31,6 +31,7 @@ from django.core.exceptions import PermissionDenied
 from django.db import models
 from django.db.models import F, QuerySet
 from django.utils import timezone
+from django_pandas.io import read_frame
 
 logger = logging.getLogger(__name__)
 
@@ -442,3 +443,8 @@ class MontrekRepository:
             dtypes[field_name] = django_field_to_pandas_dtype(field)
 
         return dtypes
+
+    def get_df(self, apply_filter: bool = True) -> pd.DataFrame:
+        query = self.receive(apply_filter)
+        df = read_frame(query)
+        return df

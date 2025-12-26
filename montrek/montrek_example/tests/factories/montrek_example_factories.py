@@ -126,6 +126,14 @@ class SatB1Factory(MontrekSatelliteFactory):
 
     hub_entity = factory.SubFactory(HubBFactory)
 
+    @factory.post_generation
+    def link_a(self, create, extracted):
+        if not create:
+            return
+        if not extracted:
+            return
+        self.hub_entity.link_hub_b_hub_a.add(extracted.hub_entity)
+
 
 class SatB2Factory(MontrekSatelliteFactory):
     class Meta:
