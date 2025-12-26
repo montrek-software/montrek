@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Dict, List, Optional, Type, cast
 
 import pandas as pd
 from baseclasses.errors.montrek_user_error import MontrekError
@@ -31,6 +31,7 @@ from django.core.exceptions import PermissionDenied
 from django.db import models
 from django.db.models import F, QuerySet
 from django.utils import timezone
+from django_pandas.io import read_frame
 
 logger = logging.getLogger(__name__)
 
@@ -442,3 +443,50 @@ class MontrekRepository:
             dtypes[field_name] = django_field_to_pandas_dtype(field)
 
         return dtypes
+
+    def get_df(
+        self, apply_filter: bool = True, columns: Optional[list[str]] = None
+    ) -> pd.DataFrame:
+        query = self.receive(apply_filter)
+        dtypes = self.get_df_dtypes()
+
+        if columns is not None:
+            query = query.values(*columns)
+            dtypes = {k: v for k, v in dtypes.items() if k in columns}
+        df = read_frame(query)
+        df = df.astype(dtypes)
+        df = self._apply_category_dtype(df)
+        return df
+
+    def _apply_category_dtype(
+        self, df: pd.DataFrame, threshold: float = 0.10
+    ) -> pd.DataFrame:
+        df = df.copy()
+
+        for col in df.columns:
+            series = df[col]
+            series = cast(pd.Series, series)
+
+            if not pd.api.types.is_string_dtype(series):
+                continue
+
+            if self._should_use_category(series, threshold):
+                df[col] = series.astype("category")
+
+        return df
+
+    def _should_use_category(self, series: pd.Series, threshold: float) -> bool:
+        n = len(series)
+        if n == 0:
+            return False
+        if series.isna().all():
+            return False
+        k = series.nunique(dropna=True)
+
+        if k <= 20:
+            return True
+
+        if n >= 100 and (k / n) < threshold:
+            return True
+
+        return False
