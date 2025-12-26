@@ -3247,7 +3247,7 @@ class TestRepositoryAsDF(TestCase):
                 {
                     "value_date": "datetime64[ns]",
                     "hub_entity_id": "Int64",
-                    "created_at": "datetime64[ns]",
+                    "created_at": "datetime64[ns, UTC]",
                     "created_by": "string",
                     "comment": "string",
                     "field_a1_int": "Int64",
@@ -3264,7 +3264,7 @@ class TestRepositoryAsDF(TestCase):
                     "alert_level": "category",
                     "alert_message": "string",
                     "comment": "string",
-                    "created_at": "datetime64[ns]",
+                    "created_at": "datetime64[ns, UTC]",
                     "created_by": "string",
                     "field_b1_date": "datetime64[ns]",
                     "field_b1_str": "string",
@@ -3281,7 +3281,7 @@ class TestRepositoryAsDF(TestCase):
                 HubARepository5,
                 {
                     "comment": "string",
-                    "created_at": "datetime64[ns]",
+                    "created_at": "datetime64[ns, UTC]",
                     "created_by": "string",
                     "field_a5_str": "string",
                     "hub_entity_id": "Int64",
