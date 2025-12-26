@@ -4,9 +4,44 @@ from datetime import timedelta
 from typing import Any, Tuple
 
 from baseclasses.typing import SessionDataType
+from django.conf import settings
+from django.db import models
 from django.utils import timezone
 
 # TODO Make universal MontrekDateTime class
+
+DJANGO_TO_PANDAS = {
+    # Numeric
+    models.AutoField: "Int64",
+    models.IntegerField: "Int64",
+    models.BigIntegerField: "Int64",
+    models.BooleanField: "boolean",
+    models.FloatField: "float64",
+    # Temporal
+    models.DateField: "datetime64[ns]",
+    # Respect Django timezone configuration
+    models.DateTimeField: (
+        f"datetime64[ns, {settings.TIME_ZONE}]" if settings.USE_TZ else "datetime64[ns]"
+    ),
+    # Text (safe default only)
+    models.CharField: "string",
+    models.TextField: "string",
+    models.EmailField: "string",
+}
+
+
+def django_field_to_pandas_dtype(field: models.Field) -> str:
+    # 1. choices override everything
+    if field.choices:
+        return "category"
+
+    # 2. walk the MRO (most specific → least specific)
+    for cls in type(field).__mro__:
+        if cls in DJANGO_TO_PANDAS:
+            return DJANGO_TO_PANDAS[cls]
+
+    # 3. fallback
+    return "object"
 
 
 def montrek_time(

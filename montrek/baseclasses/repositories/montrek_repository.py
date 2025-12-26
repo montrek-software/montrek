@@ -26,7 +26,7 @@ from baseclasses.repositories.subquery_builder import (
     TSSatelliteSubqueryBuilder,
 )
 from baseclasses.repositories.view_model_repository import ViewModelRepository
-from baseclasses.utils import datetime_to_montrek_time
+from baseclasses.utils import datetime_to_montrek_time, django_field_to_pandas_dtype
 from django.core.exceptions import PermissionDenied
 from django.db import models
 from django.db.models import F, QuerySet
@@ -415,3 +415,30 @@ class MontrekRepository:
 
     def _debug_logging(self, msg: str):
         logger.debug("%s: %s", self.__class__.__name__, msg)
+
+    ## Return DF
+
+    def get_df_dtypes(self) -> dict[str, str]:
+        """
+        Build a mapping from annotated model field names to pandas dtype strings.
+
+        The fields considered are obtained from ``self.annotator.get_annotated_field_map()``.
+        For each field, the dtype is determined using the following precedence rules:
+
+        1. If the field defines ``choices``, its dtype is set to ``"category"`` regardless
+           of the underlying Django field type.
+        2. Otherwise, the field is matched against the ``DJANGO_TO_PANDAS`` mapping by
+           ``isinstance(field, django_type)``; the first match provides the dtype.
+        3. If no matching Django type is found, the dtype defaults to ``"object"``.
+
+        Returns:
+            dict[str, str]: A mapping where keys are annotated field names and values
+            are pandas dtype names suitable for use when constructing a DataFrame.
+        """
+        field_map = self.annotator.get_annotated_field_map()
+        dtypes: dict[str, str] = {}
+
+        for field_name, field in field_map.items():
+            dtypes[field_name] = django_field_to_pandas_dtype(field)
+
+        return dtypes

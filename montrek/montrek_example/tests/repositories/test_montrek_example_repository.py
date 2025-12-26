@@ -20,6 +20,7 @@ from montrek_example.repositories.hub_a_repository import (
     HubARepository2,
     HubARepository3,
     HubARepository4,
+    HubARepository5,
     HubARepository6,
 )
 from montrek_example.repositories.hub_b_repository import (
@@ -3236,3 +3237,59 @@ class TestRepositoryViewModel(TestCase):
         repo.delete(hub)
         post_objs = repo.receive()
         self.assertEqual(post_objs.count(), 0)
+
+
+class TestRepositoryAsDF(TestCase):
+    def test_get_repository_dtypes(self):
+        for repo, expected_result in (
+            (
+                HubARepository,
+                {
+                    "value_date": "datetime64[ns]",
+                    "hub_entity_id": "Int64",
+                    "created_at": "datetime64[ns, UTC]",
+                    "created_by": "string",
+                    "comment": "string",
+                    "field_a1_int": "Int64",
+                    "field_a1_str": "string",
+                    "field_a2_float": "float64",
+                    "field_a2_str": "string",
+                    "field_b1_str": "string",
+                    "field_b1_date": "datetime64[ns]",
+                },
+            ),
+            (
+                HubBRepository,
+                {
+                    "alert_level": "category",
+                    "alert_message": "string",
+                    "comment": "string",
+                    "created_at": "datetime64[ns, UTC]",
+                    "created_by": "string",
+                    "field_b1_date": "datetime64[ns]",
+                    "field_b1_str": "string",
+                    "field_b2_choice": "category",
+                    "field_b2_str": "string",
+                    "field_d1_int": "string",
+                    "field_d1_str": "string",
+                    "hub_d_id": "string",
+                    "hub_entity_id": "Int64",
+                    "value_date": "datetime64[ns]",
+                },
+            ),
+            (
+                HubARepository5,
+                {
+                    "comment": "string",
+                    "created_at": "datetime64[ns, UTC]",
+                    "created_by": "string",
+                    "field_a5_str": "string",
+                    "hub_entity_id": "Int64",
+                    "secret_field": "string",
+                    "value_date": "datetime64[ns]",
+                },
+            ),
+        ):
+            with self.subTest(f"dtypes for {repo}"):
+                dtypes = repo({}).get_df_dtypes()
+                self.assertEqual(dtypes, expected_result)
