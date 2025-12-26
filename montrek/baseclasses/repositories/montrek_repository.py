@@ -444,8 +444,12 @@ class MontrekRepository:
 
         return dtypes
 
-    def get_df(self, apply_filter: bool = True) -> pd.DataFrame:
+    def get_df(
+        self, apply_filter: bool = True, columns: Optional[list[str]] = None
+    ) -> pd.DataFrame:
         query = self.receive(apply_filter)
         df = read_frame(query)
         df = df.astype(self.get_df_dtypes())
+        if columns is not None:
+            df = df.loc[:, columns]
         return df

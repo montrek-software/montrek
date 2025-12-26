@@ -3306,6 +3306,12 @@ class TestRepositoryAsDF(TestCase):
         test_df = repo.get_df()
         self.assertEqual(test_df.shape, (5, 14))
 
+    def test_get_df_selected_columns(self):
+        repo = HubARepository({})
+        repo.store_in_view_model()
+        test_df = repo.get_df(columns=["field_a1_str", "field_a2_float"])
+        self.assertEqual(test_df.shape, (5, 2))
+
     def test_get_df_dtypes(self):
         repo = HubARepository({})
         repo.store_in_view_model()
