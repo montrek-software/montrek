@@ -3366,3 +3366,79 @@ class TestRepositoryAsDF(TestCase):
             "UTC",
             "created_at should be in UTC",
         )
+
+    def test_get_df_empty(self):
+        repo = HubARepository({})
+
+        # Force empty result
+        df = repo.get_df()
+        df = df.iloc[0:0]
+
+        df2 = repo._apply_category_dtype(df)
+
+        self.assertEqual(len(df2), 0)
+        self.assertEqual(df2.dtypes.to_dict(), df.dtypes.to_dict())
+
+    def test_all_null_string_not_category(self):
+        repo = HubARepository({})
+        repo.store_in_view_model()
+        df = repo.get_df()
+
+        df["comment"] = None  # force all-null string column
+
+        df2 = repo._apply_category_dtype(df)
+
+        self.assertFalse(
+            pd.api.types.is_categorical_dtype(df2["comment"]),
+            "all-null column must not become category",
+        )
+
+    def test_ratio_threshold_respected(self):
+        repo = HubARepository({})
+        repo.store_in_view_model()
+        df = repo.get_df()
+
+        # Expand to N=100
+        df = pd.concat([df] * 20, ignore_index=True)
+
+        # 20 unique values → ratio = 0.20
+        df["field_a2_str"] = [f"v{i % 20}" for i in range(len(df))]
+
+        df2 = repo._apply_category_dtype(df, threshold=0.10)
+
+        self.assertTrue(
+            pd.api.types.is_string_dtype(df2["field_a2_str"]),
+            "high-ratio string column must remain string",
+        )
+
+    def test_choices_always_category(self):
+        repo = HubBRepository({})
+        repo.store_in_view_model()
+        df = repo.get_df()
+
+        self.assertTrue(
+            pd.api.types.is_categorical_dtype(df["field_b2_choice"]),
+            "choices field must always be category",
+        )
+
+    def test_datetime_timezone_preserved(self):
+        repo = HubARepository({})
+        repo.store_in_view_model()
+        df = repo.get_df()
+
+        self.assertTrue(pd.api.types.is_datetime64tz_dtype(df["created_at"]))
+        self.assertEqual(str(df["created_at"].dtype.tz), "UTC")
+
+    def test_free_text_never_category(self):
+        repo = HubARepository({})
+        repo.store_in_view_model()
+        df = repo.get_df()
+
+        df["comment"] = [f"text {i}" for i in range(len(df))]
+
+        df2 = repo._apply_category_dtype(df)
+
+        self.assertTrue(
+            pd.api.types.is_string_dtype(df2["comment"]),
+            "free text must not be converted to category",
+        )

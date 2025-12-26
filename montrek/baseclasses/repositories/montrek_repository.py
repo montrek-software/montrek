@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Dict, List, Optional, Type, cast
 
 import pandas as pd
 from baseclasses.errors.montrek_user_error import MontrekError
@@ -449,7 +449,41 @@ class MontrekRepository:
     ) -> pd.DataFrame:
         query = self.receive(apply_filter)
         df = read_frame(query)
-        df = df.astype(self.get_df_dtypes())
         if columns is not None:
             df = df.loc[:, columns]
+        df = df.astype(self.get_df_dtypes())
+        df = self._apply_category_dtype(df)
         return df
+
+    def _apply_category_dtype(
+        self, df: pd.DataFrame, threshold: float = 0.10
+    ) -> pd.DataFrame:
+        df = df.copy()
+
+        for col in df.columns:
+            series = df[col]
+            series = cast(pd.Series, series)
+
+            if not pd.api.types.is_string_dtype(series):
+                continue
+
+            if self._should_use_category(series, threshold):
+                df[col] = series.astype("category")
+
+        return df
+
+    def _should_use_category(self, series: pd.Series, threshold: float) -> bool:
+        n = len(series)
+        if n == 0:
+            return False
+        if series.isna().all():
+            return False
+        k = series.nunique(dropna=True)
+
+        if k <= 20:
+            return True
+
+        if n >= 100 and (k / n) < threshold:
+            return True
+
+        return False
