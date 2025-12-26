@@ -3240,6 +3240,12 @@ class TestRepositoryViewModel(TestCase):
 
 
 class TestRepositoryAsDF(TestCase):
+    def setUp(self):
+        sats = me_factories.SatA1Factory.create_batch(5)
+        for sat in sats:
+            me_factories.SatA2Factory.create(hub_entity=sat.hub_entity)
+            me_factories.SatB1Factory.create(link_a=sat)
+
     def test_get_repository_dtypes(self):
         for repo, expected_result in (
             (
@@ -3295,12 +3301,62 @@ class TestRepositoryAsDF(TestCase):
                 self.assertEqual(dtypes, expected_result)
 
     def test_get_df(self):
-        sats = me_factories.SatA1Factory.create_batch(5)
-        for sat in sats:
-            me_factories.SatA2Factory.create(hub_entity=sat.hub_entity)
-            me_factories.SatB1Factory.create(link_a=sat)
-
         repo = HubARepository({})
         repo.store_in_view_model()
         test_df = repo.get_df()
         self.assertEqual(test_df.shape, (5, 14))
+
+    def test_get_df_dtypes(self):
+        repo = HubARepository({})
+        repo.store_in_view_model()
+        df = repo.get_df()
+        # integers
+        self.assertTrue(
+            pd.api.types.is_integer_dtype(df["id"]),
+            "id should be an integer dtype",
+        )
+        self.assertTrue(
+            pd.api.types.is_integer_dtype(df["field_a1_int"]),
+            "field_a1_int should be an integer dtype",
+        )
+        self.assertTrue(
+            pd.api.types.is_integer_dtype(df["hub_entity_id"]),
+            "hub_entity_id should be an integer dtype",
+        )
+
+        # floats
+        self.assertTrue(
+            pd.api.types.is_float_dtype(df["field_a2_float"]),
+            "field_a2_float should be a float dtype",
+        )
+
+        # strings
+        for col in [
+            "field_a1_str",
+            "field_a2_str",
+            "field_b1_str",
+            "created_by",
+            "comment",
+        ]:
+            self.assertTrue(
+                pd.api.types.is_string_dtype(df[col]),
+                f"{col} should be a string dtype",
+            )
+
+        # datetimes (naive)
+        for col in ["field_b1_date", "value_date"]:
+            self.assertTrue(
+                pd.api.types.is_datetime64_ns_dtype(df[col]),
+                f"{col} should be a naive datetime64[ns]",
+            )
+
+        # datetime (tz-aware)
+        self.assertTrue(
+            pd.api.types.is_datetime64tz_dtype(df["created_at"]),
+            "created_at should be timezone-aware",
+        )
+        self.assertEqual(
+            str(df["created_at"].dtype.tz),
+            "UTC",
+            "created_at should be in UTC",
+        )

@@ -447,4 +447,5 @@ class MontrekRepository:
     def get_df(self, apply_filter: bool = True) -> pd.DataFrame:
         query = self.receive(apply_filter)
         df = read_frame(query)
+        df = df.astype(self.get_df_dtypes())
         return df
