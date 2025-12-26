@@ -448,6 +448,11 @@ class MontrekRepository:
         self, apply_filter: bool = True, columns: Optional[list[str]] = None
     ) -> pd.DataFrame:
         query = self.receive(apply_filter)
+        return self.get_df_from_queryset(query, columns=columns)
+
+    def get_df_from_queryset(
+        self, query: QuerySet, columns: Optional[list[str]] = None
+    ) -> pd.DataFrame:
         dtypes = self.get_df_dtypes()
 
         if columns is not None:
