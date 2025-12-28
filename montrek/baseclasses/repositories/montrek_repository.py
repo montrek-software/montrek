@@ -29,6 +29,7 @@ from baseclasses.repositories.subquery_builder import (
 from baseclasses.repositories.view_model_repository import ViewModelRepository
 from baseclasses.utils import (
     DJANGO_TO_PANDAS,
+    PANDAS_DATETIME_PREFIX,
     PANDAS_MIN,
     datetime_to_montrek_time,
     django_field_to_pandas_dtype,
@@ -547,4 +548,4 @@ class MontrekRepository:
         return df
 
     def _is_datetime_dtype(self, dtype: str) -> bool:
-        return dtype.startswith("datetime64")
+        return dtype.startswith(PANDAS_DATETIME_PREFIX)

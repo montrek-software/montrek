@@ -11,6 +11,7 @@ from django.utils import timezone
 
 # TODO Make universal MontrekDateTime class
 PANDAS_MIN = pd.Timestamp("1677-09-22")
+PANDAS_DATETIME_PREFIX = "datetime64"
 DJANGO_TO_PANDAS = {
     # Numeric
     models.AutoField: "Int64",
