@@ -26,7 +26,11 @@ from baseclasses.repositories.subquery_builder import (
     TSSatelliteSubqueryBuilder,
 )
 from baseclasses.repositories.view_model_repository import ViewModelRepository
-from baseclasses.utils import datetime_to_montrek_time, django_field_to_pandas_dtype
+from baseclasses.utils import (
+    DJANGO_TO_PANDAS,
+    datetime_to_montrek_time,
+    django_field_to_pandas_dtype,
+)
 from django.core.exceptions import PermissionDenied
 from django.db import models
 from django.db.models import F, QuerySet
@@ -419,7 +423,10 @@ class MontrekRepository:
 
     ## Return DF
 
-    def get_df_dtypes(self) -> dict[str, str]:
+    def get_df_dtypes(
+        self,
+        no_category_columns: Optional[list[str]] = None,
+    ) -> dict[str, str]:
         """
         Build a mapping from annotated model field names to pandas dtype strings.
 
@@ -438,39 +445,58 @@ class MontrekRepository:
         """
         field_map = self.annotator.get_annotated_field_map()
         dtypes: dict[str, str] = {}
+        no_category_columns = [] if no_category_columns is None else no_category_columns
 
         for field_name, field in field_map.items():
-            dtypes[field_name] = django_field_to_pandas_dtype(field)
+            if field_name in no_category_columns:
+                dtypes[field_name] = DJANGO_TO_PANDAS[type(field)]
+            else:
+                dtypes[field_name] = django_field_to_pandas_dtype(field)
 
         return dtypes
 
     def get_df(
-        self, apply_filter: bool = True, columns: Optional[list[str]] = None
+        self,
+        apply_filter: bool = True,
+        columns: Optional[list[str]] = None,
+        no_category_columns: Optional[list[str]] = None,
     ) -> pd.DataFrame:
         query = self.receive(apply_filter)
-        return self.get_df_from_queryset(query, columns=columns)
+        return self.get_df_from_queryset(
+            query, columns=columns, no_category_columns=no_category_columns
+        )
 
     def get_df_from_queryset(
-        self, query: QuerySet, columns: Optional[list[str]] = None
+        self,
+        query: QuerySet,
+        columns: Optional[list[str]] = None,
+        no_category_columns: Optional[list[str]] = None,
     ) -> pd.DataFrame:
-        dtypes = self.get_df_dtypes()
+        dtypes = self.get_df_dtypes(no_category_columns)
 
         if columns is not None:
             query = query.values(*columns)
             dtypes = {k: v for k, v in dtypes.items() if k in columns}
         df = read_frame(query)
         df = df.astype(dtypes)
-        df = self._apply_category_dtype(df)
+        df = self._apply_category_dtype(df, no_category_columns=no_category_columns)
         return df
 
     def _apply_category_dtype(
-        self, df: pd.DataFrame, threshold: float = 0.10
+        self,
+        df: pd.DataFrame,
+        threshold: float = 0.10,
+        no_category_columns: Optional[list[str]] = None,
     ) -> pd.DataFrame:
         df = df.copy()
+
+        no_category_columns = [] if no_category_columns is None else no_category_columns
 
         for col in df.columns:
             series = df[col]
             series = cast(pd.Series, series)
+            if col in no_category_columns:
+                continue
 
             if not pd.api.types.is_string_dtype(series):
                 continue

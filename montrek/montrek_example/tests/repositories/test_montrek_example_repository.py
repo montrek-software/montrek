@@ -3312,6 +3312,11 @@ class TestRepositoryAsDF(TestCase):
         test_df = repo.get_df(columns=["field_a1_str", "field_a2_float"])
         self.assertEqual(test_df.shape, (5, 2))
 
+    def test_get_df_no_category_columns(self):
+        repo = HubBRepository({})
+        df = repo.get_df(no_category_columns=["alert_level"])
+        self.assertEqual(df["alert_level"].dtype, "string")
+
     def test_get_df_dtypes(self):
         repo = HubARepository({})
         repo.store_in_view_model()
