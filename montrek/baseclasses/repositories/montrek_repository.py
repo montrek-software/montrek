@@ -1,3 +1,4 @@
+import datetime
 import logging
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Type, cast
@@ -28,6 +29,7 @@ from baseclasses.repositories.subquery_builder import (
 from baseclasses.repositories.view_model_repository import ViewModelRepository
 from baseclasses.utils import (
     DJANGO_TO_PANDAS,
+    PANDAS_MIN,
     datetime_to_montrek_time,
     django_field_to_pandas_dtype,
 )
@@ -449,7 +451,7 @@ class MontrekRepository:
 
         for field_name, field in field_map.items():
             if field_name in no_category_columns:
-                dtypes[field_name] = DJANGO_TO_PANDAS[type(field)]
+                dtypes[field_name] = DJANGO_TO_PANDAS.get(type(field), "object")
             else:
                 dtypes[field_name] = django_field_to_pandas_dtype(field)
 
@@ -463,7 +465,9 @@ class MontrekRepository:
     ) -> pd.DataFrame:
         query = self.receive(apply_filter)
         return self.get_df_from_queryset(
-            query, columns=columns, no_category_columns=no_category_columns
+            query,
+            columns=columns,
+            no_category_columns=no_category_columns,
         )
 
     def get_df_from_queryset(
@@ -478,6 +482,7 @@ class MontrekRepository:
             query = query.values(*columns)
             dtypes = {k: v for k, v in dtypes.items() if k in columns}
         df = read_frame(query)
+        df = self._normalize_min_dates(df, dtypes)
         df = df.astype(dtypes)
         df = self._apply_category_dtype(df, no_category_columns=no_category_columns)
         return df
@@ -521,3 +526,25 @@ class MontrekRepository:
             return True
 
         return False
+
+    def _normalize_min_dates(
+        self, df: pd.DataFrame, dtypes: dict[str, str]
+    ) -> pd.DataFrame:
+        df = df.copy()
+        datetime_cols = [
+            col for col, ty in dtypes.items() if self._is_datetime_dtype(ty)
+        ]
+        for col in datetime_cols:
+            s = df[col]
+
+            mask = s.isin([datetime.date.min, timezone.datetime.min])
+            if bool(mask.any()):
+                logger.warning(
+                    f"Detected DB min dates in '{col}'; mapped to pandas min sentinel ({PANDAS_MIN})"
+                )
+                df[col] = s.where(~mask, PANDAS_MIN)
+
+        return df
+
+    def _is_datetime_dtype(self, dtype: str) -> bool:
+        return dtype.startswith("datetime64")

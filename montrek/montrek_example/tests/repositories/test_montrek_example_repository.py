@@ -3447,3 +3447,12 @@ class TestRepositoryAsDF(TestCase):
             pd.api.types.is_string_dtype(df2["comment"]),
             "free text must not be converted to category",
         )
+
+    def test_convert_min_dates(self):
+        sat = me_factories.SatA1Factory.create()
+        me_factories.SatA2Factory.create(hub_entity=sat.hub_entity)
+        me_factories.SatB1Factory.create(link_a=sat, field_b1_date=datetime.date.min)
+        repo = HubBRepository({})
+        repo.store_in_view_model()
+        df = repo.get_df()
+        self.assertEqual(df.loc[5, "field_b1_date"].date(), datetime.date(1677, 9, 22))

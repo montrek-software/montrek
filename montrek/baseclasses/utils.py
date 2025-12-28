@@ -3,13 +3,14 @@ from abc import ABC, abstractmethod
 from datetime import timedelta
 from typing import Any, Tuple
 
+import pandas as pd
 from baseclasses.typing import SessionDataType
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
 # TODO Make universal MontrekDateTime class
-
+PANDAS_MIN = pd.Timestamp("1677-09-22")
 DJANGO_TO_PANDAS = {
     # Numeric
     models.AutoField: "Int64",
