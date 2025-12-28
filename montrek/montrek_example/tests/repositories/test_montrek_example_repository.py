@@ -3455,4 +3455,4 @@ class TestRepositoryAsDF(TestCase):
         repo = HubBRepository({})
         repo.store_in_view_model()
         df = repo.get_df()
-        self.assertEqual(df.loc[5, "field_b1_date"].date(), datetime.date(1677, 9, 22))
+        self.assertEqual(df.iloc[0]["field_b1_date"].date(), datetime.date(1677, 9, 22))
