@@ -41,12 +41,19 @@ class QueryBuilder:
         order_fields: tuple[str, ...] = (),
         apply_filter: bool = True,
     ) -> QuerySet:
-        queryset = self.hub_value_date.objects.annotate(
-            **self.annotator.build(reference_date)
-        ).filter(
+        queryset = self.hub_value_date.objects.filter(
             Q(hub__state_date_start__lte=reference_date),
             Q(hub__state_date_end__gt=reference_date),
         )
+        for satellite_alias in self.annotator.satellite_aliases:
+            queryset = queryset.alias(
+                **{
+                    satellite_alias.alias_name: satellite_alias.subquery_builder.build_alias(
+                        reference_date
+                    )
+                }
+            )
+        queryset = queryset.annotate(**self.annotator.field_projections)
         if apply_filter:
             queryset = self._apply_filter(queryset)
         queryset = self._filter_session_data(queryset)

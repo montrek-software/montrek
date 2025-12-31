@@ -2643,10 +2643,8 @@ class TestRepositoryProperties(TestCase):
         expected_values = ["comment", "field_c1_str", "field_c1_bool", "hub_entity_id"]
         self.assertTrue(
             all(
-                [
-                    expected_value in repo_c_static_satellite_fields
-                    for expected_value in expected_values
-                ]
+                expected_value in repo_c_static_satellite_fields
+                for expected_value in expected_values
             )
         )
 
@@ -2666,10 +2664,8 @@ class TestRepositoryProperties(TestCase):
         ]
         self.assertTrue(
             all(
-                [
-                    expected_value in repo_c_time_series_satellite_fields
-                    for expected_value in expected_values
-                ]
+                expected_value in repo_c_time_series_satellite_fields
+                for expected_value in expected_values
             )
         )
 
@@ -2942,7 +2938,7 @@ class TestRepositoryQueryConcept(TestCase):
         tsd2_fac1 = me_factories.SatTSD2Factory(
             field_tsd2_float=10, value_date="2019-09-09"
         )
-        tsd2_fac2 = me_factories.SatTSD2Factory(
+        me_factories.SatTSD2Factory(
             field_tsd2_float=20,
             hub_entity=tsd2_fac1.hub_value_date.hub,
             value_date="2024-09-09",
@@ -3456,3 +3452,27 @@ class TestRepositoryAsDF(TestCase):
         repo.store_in_view_model()
         df = repo.get_df()
         self.assertEqual(df.iloc[5]["field_b1_date"].date(), datetime.date(1677, 9, 22))
+
+
+class TestReceiveWithAliases(TestCase):
+    def test_simple_receive_statement(self):
+        """
+        When a repository has satellites attached which have a field identifier and the hub entity as identifier field,
+        the right hub entity has to be found
+        """
+        hubs = me_factories.HubAFactory.create_batch(2)
+        me_factories.SatA1Factory(
+            hub_entity=hubs[0], field_a1_str="test_1", field_a1_int=1
+        )
+        me_factories.SatA1Factory(
+            hub_entity=hubs[1], field_a1_str="test_2", field_a1_int=2
+        )
+        me_factories.SatA4Factory(hub_entity=hubs[0], field_a4_str="A4 1")
+        me_factories.SatA4Factory(hub_entity=hubs[1], field_a4_str="A4 2")
+        repository = HubARepository6()
+        test_query = repository.receive()
+        self.assertEqual(test_query.count(), 2)
+        self.assertEqual(test_query[0].field_a1_str, "test_1")
+        self.assertEqual(test_query[1].field_a1_str, "test_2")
+        self.assertEqual(test_query[0].field_a4_str, "A4 1")
+        self.assertEqual(test_query[1].field_a4_str, "A4 2")

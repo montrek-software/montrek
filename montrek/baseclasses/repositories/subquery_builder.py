@@ -1,5 +1,6 @@
 from enum import Enum
-from typing import Any, Callable, Type
+from typing import Any
+from collections.abc import Callable
 
 from baseclasses.models import (
     LinkTypeEnum,
@@ -29,18 +30,9 @@ class SatelliteSubqueryBuilderABC(SubqueryBuilder):
 
     def __init__(
         self,
-        satellite_class: Type[MontrekSatelliteABC],
-        field: str,
+        satellite_class: type[MontrekSatelliteABC],
     ):
         self.satellite_class = satellite_class
-        self.field = field
-        field_parts = self.field.split("__")
-        # TODO: get field of related_model right
-        self.field_type = self.satellite_class._meta.get_field(field_parts[0])
-        if isinstance(self.field_type, models.ForeignKey):
-            self.field_type = models.IntegerField(null=True, blank=True)
-        # TODO: remove lookup_string
-        self.lookup_string = "pk"
 
     def get_hub_query(self, reference_date: timezone.datetime) -> QuerySet:
         return self.satellite_class.get_related_hub_class().objects.filter(
@@ -64,7 +56,7 @@ class SatelliteSubqueryBuilderABC(SubqueryBuilder):
     ) -> QuerySet:
         return self.satellite_class.objects.filter(
             **self.subquery_filter(reference_date, lookup_field=lookup_field)
-        ).values(self.field)
+        ).values("pk")
 
     def satellite_subquery(
         self, reference_date: timezone.datetime, lookup_field: str = "pk"
@@ -86,6 +78,9 @@ class SatelliteSubqueryBuilder(SatelliteSubqueryBuilderABC):
             )
             .values(self.field + "sub")
         )
+
+    def build_alias(self, reference_date):
+        return self.satellite_subquery(reference_date, lookup_field="hub_entity")
 
 
 class TSSatelliteSubqueryBuilder(SatelliteSubqueryBuilderABC):
@@ -118,7 +113,7 @@ class ValueDateSubqueryBuilder(SubqueryBuilder):
 class HubDirectFieldSubqueryBuilder(SubqueryBuilder):
     field: str = ""
 
-    def __init__(self, hub_class: Type[MontrekHubABC]):
+    def __init__(self, hub_class: type[MontrekHubABC]):
         self.hub_class = hub_class
 
     def build(self, reference_date: timezone.datetime) -> Subquery:
@@ -150,17 +145,20 @@ class CommentSubqueryBuilder(HubDirectFieldSubqueryBuilder):
 class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
     def __init__(
         self,
-        satellite_class: Type[MontrekSatelliteABC],
+        satellite_class: type[MontrekSatelliteABC],
         field: str,
-        link_class: Type[MontrekLinkABC],
+        link_class: type[MontrekLinkABC],
         *,
         agg_func: str = "string_concat",
-        parent_link_classes: tuple[Type[MontrekLinkABC], ...] = (),
+        parent_link_classes: tuple[type[MontrekLinkABC], ...] = (),
         parent_link_reversed: tuple[bool, ...] | list[bool] = (),
-        link_satellite_filter: dict[str, object] = {},
+        link_satellite_filter: dict[str, object] | None = None,
         separator: str = ";",
     ):
         super().__init__(satellite_class, field)
+        link_satellite_filter = (
+            {} if link_satellite_filter is None else link_satellite_filter
+        )
 
         if link_class.link_type == LinkTypeEnum.NONE:
             raise TypeError(f"{link_class.__name__} must inherit from valid LinkClass!")
@@ -171,9 +169,9 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         if issubclass(link_class, MontrekManyToManyLinkABC) or (
             issubclass(link_class, MontrekOneToManyLinkABC)
             and isinstance(self, ReverseLinkedSatelliteSubqueryBuilder)
+            and agg_func == "string_concat"
         ):
-            if agg_func == "string_concat":
-                self.field_type = CharField(null=True, blank=True)
+            self.field_type = CharField(null=True, blank=True)
 
         self.parent_link_classes = parent_link_classes
         self.parent_link_reversed = parent_link_reversed
@@ -338,10 +336,9 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
                 return self._annotate_mean(query)
             if self.agg_func == LinkAggFunctionEnum.COUNT:
                 return self._annotate_count(query)
-            else:
-                raise NotImplementedError(
-                    f"Aggregation function {self.agg_func} is not implemented!"
-                )
+            raise NotImplementedError(
+                f"Aggregation function {self.agg_func} is not implemented!"
+            )
         return query
 
     def _annotate_sum(self, query: QuerySet) -> QuerySet:
@@ -367,8 +364,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
     def _annotate_latest(self, query: QuerySet) -> QuerySet:
         if self.satellite_class.is_timeseries:
             return query.order_by("-hub_value_date__value_date_list__value_date")[:1]
-        else:
-            return query.order_by(f"{self.field}sub")[:1]
+        return query.order_by(f"{self.field}sub")[:1]
 
     def _annotate_mean(self, query: QuerySet) -> QuerySet:
         return query.annotate(
@@ -405,8 +401,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
                     hub_a, hub_b, reference_date
                 )
             return self._link_hubs_and_get_ts_subquery(hub_a, hub_b, reference_date)
-        else:
-            return self._link_hubs_and_get_subquery(hub_a, hub_b, reference_date)
+        return self._link_hubs_and_get_subquery(hub_a, hub_b, reference_date)
 
 
 class LinkedSatelliteSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
@@ -439,12 +434,11 @@ def get_string_concat_function(separator: str) -> Callable[..., Any]:
     engine = settings.DATABASES["default"]["ENGINE"]
     if "mysql" in engine:
         return lambda *args, **kwargs: GroupConcat(*args, separator=separator, **kwargs)
-    elif "postgresql" in engine:
+    if "postgresql" in engine:
         return lambda *args, **kwargs: StringAgg(*args, separator=separator, **kwargs)
-    else:
-        raise NotImplementedError(
-            f"No function for concatenating list of strings defined for {engine}!"
-        )
+    raise NotImplementedError(
+        f"No function for concatenating list of strings defined for {engine}!"
+    )
 
 
 class LinkAggFunctionEnum(Enum):

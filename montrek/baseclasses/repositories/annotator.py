@@ -1,6 +1,7 @@
+from dataclasses import dataclass
 from typing import Any
 from django.apps.registry import AppRegistryNotReady
-from django.db.models import Field, Subquery
+from django.db.models import Field, OuterRef, Subquery
 from django.utils import timezone
 from baseclasses.repositories.subquery_builder import (
     SubqueryBuilder,
@@ -18,9 +19,17 @@ from baseclasses.models import (
 )
 
 
+@dataclass
+class SatelliteAlias:
+    alias_name: str
+    subquery_builder: SubqueryBuilder
+
+
 class Annotator:
     def __init__(self, hub_class: type[MontrekHubABC]):
         self.hub_class = hub_class
+        self.satellite_aliases: list[SatelliteAlias] = []
+        self.field_projections: dict[str, Subquery] = {}
 
         self.raw_annotations: dict[str, SubqueryBuilder] = self.get_raw_annotations()
         self.annotations: dict[str, SubqueryBuilder] = self.raw_annotations.copy()
@@ -44,24 +53,26 @@ class Annotator:
         satellite_class: type[MontrekSatelliteBaseABC],
         subquery_builder: type[SubqueryBuilder],
         *,
-        rename_field_map: dict[str, str] = {},
+        rename_field_map: dict[str, str] | None = None,
         **kwargs,
     ):
+        rename_field_map = {} if rename_field_map is None else rename_field_map
         if "link_class" in kwargs:
             self.annotated_link_classes.append(kwargs["link_class"])
+        alias_name = satellite_class.__name__.lower()
+
+        self.satellite_aliases.append(
+            SatelliteAlias(
+                alias_name=alias_name,
+                subquery_builder=subquery_builder(satellite_class=satellite_class),
+            )
+        )
 
         for field in fields:
-            outfield = (
-                field if field not in rename_field_map else rename_field_map[field]
+            outfield = rename_field_map.get(field, field)
+            self.field_projections[outfield] = Subquery(
+                satellite_class.objects.filter(pk=OuterRef(alias_name)).values(field)
             )
-            if field in ["value_date"]:
-                if outfield != field:
-                    self.annotations[outfield] = self.annotations[field]
-                continue
-            self.annotations[outfield] = subquery_builder(
-                satellite_class, field, **kwargs
-            )
-            self.add_to_annotated_satellite_classes(satellite_class)
 
     def build(self, reference_date: timezone.datetime) -> dict[str, Subquery]:
         return {
