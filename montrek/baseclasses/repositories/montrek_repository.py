@@ -300,7 +300,7 @@ class MontrekRepository:
                 subquery_builder = TSSatelliteSubqueryBuilder
         else:
             subquery_builder = SatelliteSubqueryBuilder
-        rename_field_map = {} if rename_field_map is not None else rename_field_map
+        rename_field_map = {} if rename_field_map is None else rename_field_map
         rename_field_map = cast(dict[str, str], rename_field_map)
         self.annotator.subquery_builder_to_annotations(
             fields, satellite_class, subquery_builder, rename_field_map=rename_field_map
@@ -330,7 +330,7 @@ class MontrekRepository:
             raise ValueError(
                 "'parent_link_classes' and 'parent_link_reversed' must have same length"
             )
-        rename_field_map = {} if rename_field_map is not None else rename_field_map
+        rename_field_map = {} if rename_field_map is None else rename_field_map
         rename_field_map = cast(dict[str, str], rename_field_map)
         link_satellite_filter = (
             {} if link_satellite_filter is None else link_satellite_filter
