@@ -12,6 +12,11 @@ django_settings_module = "montrek.settings"
 target-version = "py311"
 line-length = 88
 
+exclude = [
+  "migrations",
+  "settings",
+]
+[tool.ruff.lint]
 select = [
   "E",    # pycodestyle errors
   "F",    # pyflakes
@@ -33,16 +38,13 @@ ignore = [
   "S608",    #  SQL injection false positives (Django ORM)
 ]
 
-exclude = [
-  "migrations",
-  "settings",
-]
-
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "**/tests/**" = [
   "PLR0915", # complex test functions
   "S101",    # asserts allowed in tests
 ]
+
+
 
 [tool.bandit]
 exclude_dirs = ["tests", "migrations"]
