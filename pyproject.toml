@@ -1,12 +1,50 @@
 [tool.black]
 line-length = 88
 
-[tool.isort]
-profile = "black"
-line_length = 88
 
 [tool.mypy]
 plugins = ["mypy_django_plugin.main"]
 
 [tool.django-stubs]
 django_settings_module = "montrek.settings"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+
+exclude = [
+  "migrations",
+  "settings",
+]
+[tool.ruff.lint]
+select = [
+  "E",    # pycodestyle errors
+  "F",    # pyflakes
+  "B",    # bugbear
+  "SIM",  # simplify
+  "C4",   # comprehensions
+  "RET",  # return statements
+  "PLR",  # pylint refactor (complexity)
+  "UP",   # pyupgrade
+  "S",    # security rules
+]
+
+ignore = [
+  "E501",    # line length (black handles)
+  "B008",    # function calls in defaults (common in Django)
+  "PLR0913", # too many arguments (views/forms often need this)
+  "PLR2004", # magic values (often clearer than constants)
+  "RET504",
+  "S608",    #  SQL injection false positives (Django ORM)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = [
+  "PLR0915", # complex test functions
+  "S101",    # asserts allowed in tests
+]
+
+
+
+[tool.bandit]
+exclude_dirs = ["tests", "migrations"]

@@ -1,7 +1,7 @@
 import datetime
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Type, cast
+from typing import Any, cast
 
 import pandas as pd
 from baseclasses.errors.montrek_user_error import MontrekError
@@ -46,7 +46,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class TSQueryContainer:
     queryset: QuerySet
-    fields: List[str]
+    fields: list[str]
     satellite_class: type[MontrekTimeSeriesSatelliteABC]
 
 
@@ -61,11 +61,13 @@ class MontrekRepository:
         True  # If this is true only the passed fields will be updated, otherwise empty fields will be set to None
     )
 
-    def __init__(self, session_data: Dict[str, Any] = {}):
+    def __init__(self, session_data: dict[str, Any] | None = None):
         self.annotator = Annotator(self.hub_class)
         self._ts_queryset_containers = []
-        self.session_data = session_data
-        self.query_builder = QueryBuilder(self.annotator, session_data, self.latest_ts)
+        self.session_data = session_data if session_data is not None else {}
+        self.query_builder = QueryBuilder(
+            self.annotator, self.session_data, self.latest_ts
+        )
         self._reference_date = None
         self.messages = []
         self.calculated_fields: list[str] = []
@@ -99,7 +101,7 @@ class MontrekRepository:
         self._debug_logging("End create by dict")
         return db_creator.hub
 
-    def create_by_data_frame(self, data_frame: pd.DataFrame) -> List[MontrekHubABC]:
+    def create_by_data_frame(self, data_frame: pd.DataFrame) -> list[MontrekHubABC]:
         self._debug_logging("raise for anonymous user")
         self._raise_for_anonymous_user()
         self._debug_logging("Get DbDataFrame")
@@ -148,7 +150,7 @@ class MontrekRepository:
         if (
             self.view_model
             and not update_view_model
-            and "reference_date" not in self.session_data.keys()
+            and "reference_date" not in self.session_data
         ):
             return self.get_view_model_query(apply_filter=apply_filter)
         query = self.query_builder.build_queryset(
@@ -217,7 +219,7 @@ class MontrekRepository:
         return self._get_session_date("start_date", timezone.datetime.min)
 
     @property
-    def session_user_id(self) -> Optional[int]:
+    def session_user_id(self) -> int | None:
         return self.session_data.get("user_id")
 
     def _get_session_date(
@@ -232,7 +234,7 @@ class MontrekRepository:
     def reference_date(self, value):
         self._reference_date = value
 
-    def object_to_dict(self, obj: HubValueDate) -> Dict[str, Any]:
+    def object_to_dict(self, obj: HubValueDate) -> dict[str, Any]:
         object_dict = {field: getattr(obj, field) for field in self.get_all_fields()}
         return object_dict
 
@@ -263,32 +265,32 @@ class MontrekRepository:
     def get_all_annotated_fields(self) -> list[str]:
         return self.annotator.get_annotated_field_names()
 
-    def std_create_object(self, data: Dict[str, Any]) -> MontrekHubABC:
+    def std_create_object(self, data: dict[str, Any]) -> MontrekHubABC:
         return self.create_by_dict(data)
 
     @staticmethod
-    def _convert_lists_to_tuples(df: pd.DataFrame, columns: List[str]):
+    def _convert_lists_to_tuples(df: pd.DataFrame, columns: list[str]):
         for col in columns:
             df[col] = df[col].apply(lambda x: tuple(x) if isinstance(x, list) else x)
         return df
 
     @staticmethod
-    def _convert_tuples_to_lists(df: pd.DataFrame, columns: List[str]):
+    def _convert_tuples_to_lists(df: pd.DataFrame, columns: list[str]):
         for col in columns:
             df[col] = df[col].apply(lambda x: list(x) if isinstance(x, tuple) else x)
         return df
 
     def create_objects_from_data_frame(
         self, data_frame: pd.DataFrame
-    ) -> List[MontrekHubABC]:
+    ) -> list[MontrekHubABC]:
         return self.create_by_data_frame(data_frame)
 
     def add_satellite_fields_annotations(
         self,
-        satellite_class: Type[MontrekSatelliteBaseABC],
-        fields: List[str],
+        satellite_class: type[MontrekSatelliteBaseABC],
+        fields: list[str],
         *,
-        rename_field_map: dict[str, str] = {},
+        rename_field_map: dict[str, str] | None = None,
         ts_agg_func: str | None = None,
     ):
         if satellite_class.is_timeseries:
@@ -298,22 +300,24 @@ class MontrekRepository:
                 subquery_builder = TSSatelliteSubqueryBuilder
         else:
             subquery_builder = SatelliteSubqueryBuilder
+        rename_field_map = {} if rename_field_map is None else rename_field_map
+        rename_field_map = cast(dict[str, str], rename_field_map)
         self.annotator.subquery_builder_to_annotations(
             fields, satellite_class, subquery_builder, rename_field_map=rename_field_map
         )
 
     def add_linked_satellites_field_annotations(
         self,
-        satellite_class: Type[MontrekSatelliteABC | MontrekTimeSeriesSatelliteABC],
-        link_class: Type[MontrekLinkABC],
-        fields: List[str],
+        satellite_class: type[MontrekSatelliteABC | MontrekTimeSeriesSatelliteABC],
+        link_class: type[MontrekLinkABC],
+        fields: list[str],
         *,
         reversed_link: bool = False,
-        rename_field_map: dict[str, str] = {},
-        parent_link_classes: tuple[Type[MontrekLinkABC], ...] = (),
+        rename_field_map: dict[str, str] | None = None,
+        parent_link_classes: tuple[type[MontrekLinkABC], ...] = (),
         parent_link_reversed: tuple[bool] | list[bool] | None = None,
         agg_func: str = "string_concat",
-        link_satellite_filter: dict[str, Any] = {},
+        link_satellite_filter: dict[str, Any] | None = None,
         separator: str = ";",
     ):
         if reversed_link:
@@ -326,6 +330,11 @@ class MontrekRepository:
             raise ValueError(
                 "'parent_link_classes' and 'parent_link_reversed' must have same length"
             )
+        rename_field_map = {} if rename_field_map is None else rename_field_map
+        rename_field_map = cast(dict[str, str], rename_field_map)
+        link_satellite_filter = (
+            {} if link_satellite_filter is None else link_satellite_filter
+        )
 
         self.annotator.subquery_builder_to_annotations(
             fields,
@@ -347,7 +356,7 @@ class MontrekRepository:
         for sat in self.annotator.get_satellite_classes():
             if sat.is_timeseries:
                 sat_query = sat.objects.filter(hub_value_date__hub=hub).order_by(
-                    ("-value_date")
+                    "-value_date"
                 )
             else:
                 sat_query = sat.objects.filter(hub_entity=hub).order_by("-created_at")
@@ -401,7 +410,7 @@ class MontrekRepository:
         hubs = [value_to_hub_map.get(value) for value in values]
         return hubs
 
-    def _get_hub_from_data(self, data: Dict[str, Any]) -> MontrekHubABC:
+    def _get_hub_from_data(self, data: dict[str, Any]) -> MontrekHubABC:
         if (
             "hub_entity_id" in data
             and data["hub_entity_id"]
@@ -428,7 +437,7 @@ class MontrekRepository:
 
     def get_df_dtypes(
         self,
-        no_category_columns: Optional[list[str]] = None,
+        no_category_columns: list[str] | None = None,
     ) -> dict[str, str]:
         """
         Build a mapping from annotated model field names to pandas dtype strings.
@@ -461,8 +470,8 @@ class MontrekRepository:
     def get_df(
         self,
         apply_filter: bool = True,
-        columns: Optional[list[str]] = None,
-        no_category_columns: Optional[list[str]] = None,
+        columns: list[str] | None = None,
+        no_category_columns: list[str] | None = None,
     ) -> pd.DataFrame:
         query = self.receive(apply_filter)
         return self.get_df_from_queryset(
@@ -474,8 +483,8 @@ class MontrekRepository:
     def get_df_from_queryset(
         self,
         query: QuerySet,
-        columns: Optional[list[str]] = None,
-        no_category_columns: Optional[list[str]] = None,
+        columns: list[str] | None = None,
+        no_category_columns: list[str] | None = None,
     ) -> pd.DataFrame:
         dtypes = self.get_df_dtypes(no_category_columns)
 
@@ -492,7 +501,7 @@ class MontrekRepository:
         self,
         df: pd.DataFrame,
         threshold: float = 0.10,
-        no_category_columns: Optional[list[str]] = None,
+        no_category_columns: list[str] | None = None,
     ) -> pd.DataFrame:
         df = df.copy()
 
@@ -523,10 +532,7 @@ class MontrekRepository:
         if k <= 20:
             return True
 
-        if n >= 100 and (k / n) < threshold:
-            return True
-
-        return False
+        return n >= 100 and (k / n) < threshold
 
     def _normalize_min_dates(
         self, df: pd.DataFrame, dtypes: dict[str, str]
