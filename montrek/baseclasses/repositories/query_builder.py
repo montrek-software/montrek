@@ -44,7 +44,7 @@ class QueryBuilder:
         queryset = self.hub_value_date.objects.filter(
             Q(hub__state_date_start__lte=reference_date),
             Q(hub__state_date_end__gt=reference_date),
-        )
+        ).annotate(**self.annotator.build(reference_date))
         for satellite_alias in self.annotator.satellite_aliases:
             queryset = queryset.alias(
                 **{

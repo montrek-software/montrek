@@ -117,6 +117,7 @@ class HubDirectFieldSubqueryBuilder(SubqueryBuilder):
         self.hub_class = hub_class
 
     def build(self, reference_date: timezone.datetime) -> Subquery:
+        # TODO: Rearrange this with an alias
         return Subquery(
             self.hub_class.objects.filter(pk=OuterRef("hub")).values(self.field)
         )
