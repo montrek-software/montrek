@@ -27,6 +27,7 @@ class SubqueryBuilder:
 
 class SatelliteSubqueryBuilderABC(SubqueryBuilder):
     lookup_field: str = ""
+    outer_ref: str = ""
 
     def __init__(
         self,
@@ -42,50 +43,49 @@ class SatelliteSubqueryBuilderABC(SubqueryBuilder):
     def subquery_filter(
         self,
         reference_date: timezone.datetime,
-        lookup_field: str = "pk",
-        outer_ref: str = "pk",
+        lookup_field: str | None = None,
+        outer_ref: str | None = None,
     ) -> dict[str, object]:
+        lookup_field = self.lookup_field if lookup_field is None else lookup_field
+        outer_ref = self.outer_ref if outer_ref is None else outer_ref
         return {
             lookup_field: OuterRef(outer_ref),
             "state_date_start__lte": reference_date,
             "state_date_end__gt": reference_date,
         }
 
-    def satellite_query(
-        self, reference_date: timezone.datetime, lookup_field: str = "pk"
-    ) -> QuerySet:
+    def satellite_query(self, reference_date: timezone.datetime) -> QuerySet:
         return self.satellite_class.objects.filter(
-            **self.subquery_filter(reference_date, lookup_field=lookup_field)
+            **self.subquery_filter(reference_date)
         ).values("pk")
 
-    def satellite_subquery(
-        self, reference_date: timezone.datetime, lookup_field: str = "pk"
-    ) -> Subquery:
-        return Subquery(self.satellite_query(reference_date, lookup_field))
+    def satellite_subquery(self, reference_date: timezone.datetime) -> Subquery:
+        return Subquery(self.satellite_query(reference_date))
+
+    def build_alias(self, reference_date: timezone.datetime) -> Subquery:
+        return self.satellite_subquery(reference_date)
 
 
 class SatelliteSubqueryBuilder(SatelliteSubqueryBuilderABC):
-    def build(self, reference_date: timezone.datetime) -> Subquery:
-        return Subquery(
-            self.get_hub_query(reference_date)
-            .annotate(
-                **{
-                    self.field
-                    + "sub": self.satellite_subquery(
-                        reference_date, lookup_field="hub_entity"
-                    ),
-                }
-            )
-            .values(self.field + "sub")
-        )
-
-    def build_alias(self, reference_date):
-        return self.satellite_subquery(reference_date, lookup_field="hub_entity")
+    lookup_field: str = "hub_entity"
+    outer_ref: str = "hub_id"
+    # def build(self, reference_date: timezone.datetime) -> Subquery:
+    #     return Subquery(
+    #         self.get_hub_query(reference_date)
+    #         .annotate(
+    #             **{
+    #                 self.field + "sub": self.satellite_subquery(
+    #                     reference_date, lookup_field="hub_entity"
+    #                 ),
+    #             }
+    #         )
+    #         .values(self.field + "sub")
+    #     )
 
 
 class TSSatelliteSubqueryBuilder(SatelliteSubqueryBuilderABC):
-    def build(self, reference_date: timezone.datetime) -> Subquery:
-        return self.satellite_subquery(reference_date, lookup_field="hub_value_date")
+    lookup_field: str = "hub_value_date"
+    outer_ref: str = "pk"
 
 
 class SumTSSatelliteSubqueryBuilder(SatelliteSubqueryBuilder):

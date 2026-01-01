@@ -67,7 +67,7 @@ class Annotator:
                     satellite_class, field, **kwargs
                 )
             return
-        alias_name = satellite_class.__name__.lower()
+        alias_name = satellite_class.__name__.lower() + "__sat"
 
         self.satellite_aliases.append(
             SatelliteAlias(
