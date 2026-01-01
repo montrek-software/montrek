@@ -155,7 +155,8 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         link_satellite_filter: dict[str, object] | None = None,
         separator: str = ";",
     ):
-        super().__init__(satellite_class, field)
+        super().__init__(satellite_class)
+        self.field = field
         link_satellite_filter = (
             {} if link_satellite_filter is None else link_satellite_filter
         )

@@ -58,7 +58,14 @@ class Annotator:
     ):
         rename_field_map = {} if rename_field_map is None else rename_field_map
         if "link_class" in kwargs:
+            # TODO: Implement link with aliases
             self.annotated_link_classes.append(kwargs["link_class"])
+            for field in fields:
+                outfield = rename_field_map.get(field, field)
+                self.annotations[outfield] = subquery_builder(
+                    satellite_class, field, **kwargs
+                )
+            return
         alias_name = satellite_class.__name__.lower()
 
         self.satellite_aliases.append(

@@ -3467,12 +3467,12 @@ class TestReceiveWithAliases(TestCase):
         me_factories.SatA1Factory(
             hub_entity=hubs[1], field_a1_str="test_2", field_a1_int=2
         )
-        me_factories.SatA4Factory(hub_entity=hubs[0], field_a4_str="A4 1")
-        me_factories.SatA4Factory(hub_entity=hubs[1], field_a4_str="A4 2")
-        repository = HubARepository6()
+        me_factories.SatA2Factory(hub_entity=hubs[0], field_a2_str="A2 1")
+        me_factories.SatA2Factory(hub_entity=hubs[1], field_a2_str="A2 2")
+        repository = HubARepository()
         test_query = repository.receive()
         self.assertEqual(test_query.count(), 2)
         self.assertEqual(test_query[0].field_a1_str, "test_1")
         self.assertEqual(test_query[1].field_a1_str, "test_2")
-        self.assertEqual(test_query[0].field_a4_str, "A4 1")
-        self.assertEqual(test_query[1].field_a4_str, "A4 2")
+        self.assertEqual(test_query[0].field_a2_str, "A2 1")
+        self.assertEqual(test_query[1].field_a2_str, "A2 2")
