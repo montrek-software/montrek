@@ -61,6 +61,7 @@ class Annotator:
         if "link_class" in kwargs:
             # TODO: Implement link with aliases
             self.annotated_link_classes.append(kwargs["link_class"])
+            self.add_to_annotated_satellite_classes(satellite_class)
             for field in fields:
                 outfield = rename_field_map.get(field, field)
                 self.annotations[outfield] = subquery_builder(
