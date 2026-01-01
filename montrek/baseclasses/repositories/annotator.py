@@ -1,6 +1,6 @@
 from dataclasses import dataclass
-from typing import Any
 from django.apps.registry import AppRegistryNotReady
+from django.db import models
 from django.db.models import Field, OuterRef, Subquery
 from django.utils import timezone
 from baseclasses.repositories.subquery_builder import (
@@ -29,6 +29,7 @@ class Annotator:
         self.hub_class = hub_class
         self.satellite_aliases: list[SatelliteAlias] = []
         self.field_projections: dict[str, Subquery] = {}
+        self.field_type_map: dict[str, models.Field] = self.get_raw_field_type_map()
 
         self.raw_annotations: dict[str, SubqueryBuilder] = self.get_raw_annotations()
         self.annotations: dict[str, SubqueryBuilder] = self.raw_annotations.copy()
@@ -46,6 +47,15 @@ class Annotator:
             "created_at": CreatedAtSubqueryBuilder(self.hub_class),
             "created_by": CreatedBySubqueryBuilder(self.hub_class),
             "comment": CommentSubqueryBuilder(self.hub_class),
+        }
+
+    def get_raw_field_type_map(self) -> dict[str, models.Field]:
+        return {
+            "value_date": models.DateField(),
+            "hub_entity_id": models.IntegerField(),
+            "created_at": models.DateTimeField(),
+            "created_by": models.CharField(),
+            "comment": models.CharField(),
         }
 
     def subquery_builder_to_annotations(
@@ -67,6 +77,7 @@ class Annotator:
                 self.annotations[outfield] = subquery_builder(
                     satellite_class, field, **kwargs
                 )
+                self.set_field_type(field, satellite_class)
             return
         alias_name = satellite_class.__name__.lower() + "__sat"
 
@@ -82,12 +93,22 @@ class Annotator:
             self.field_projections[outfield] = Subquery(
                 satellite_class.objects.filter(pk=OuterRef(alias_name)).values(field)
             )
+            self.set_field_type(field, satellite_class)
 
     def build(self, reference_date: timezone.datetime) -> dict[str, Subquery]:
         return {
             field: subquery_builder.build(reference_date)
             for field, subquery_builder in self.annotations.items()
         }
+
+    def set_field_type(
+        self, field: str, satellite_class: type[MontrekSatelliteBaseABC]
+    ) -> None:
+        field_parts = field.split("__")
+        field_type = satellite_class._meta.get_field(field_parts[0])
+        if isinstance(field_type, models.ForeignKey):
+            field_type = models.IntegerField(null=True, blank=True)
+        self.field_type_map[field] = field_type
 
     def satellite_fields(self) -> list[Field]:
         fields = []
@@ -130,11 +151,8 @@ class Annotator:
         except AppRegistryNotReady:
             return
 
-    def get_annotated_field_map(self) -> dict[str, Any]:
-        return {
-            field: subquery_builder.field_type
-            for field, subquery_builder in self.annotations.items()
-        }
+    def get_annotated_field_map(self) -> dict[str, models.Field]:
+        return self.field_type_map
 
     def rename_field(self, old_field: str, new_field: str):
         if old_field in self.annotations:

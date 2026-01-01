@@ -69,18 +69,6 @@ class SatelliteSubqueryBuilderABC(SubqueryBuilder):
 class SatelliteSubqueryBuilder(SatelliteSubqueryBuilderABC):
     lookup_field: str = "hub_entity"
     outer_ref: str = "hub_id"
-    # def build(self, reference_date: timezone.datetime) -> Subquery:
-    #     return Subquery(
-    #         self.get_hub_query(reference_date)
-    #         .annotate(
-    #             **{
-    #                 self.field + "sub": self.satellite_subquery(
-    #                     reference_date, lookup_field="hub_entity"
-    #                 ),
-    #             }
-    #         )
-    #         .values(self.field + "sub")
-    #     )
 
 
 class TSSatelliteSubqueryBuilder(SatelliteSubqueryBuilderABC):
