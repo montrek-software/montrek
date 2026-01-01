@@ -13,7 +13,7 @@ from baseclasses.models import (
 )
 from django.conf import settings
 from django.db import models
-from django.db.models import CharField, F, Func, OuterRef, Q, QuerySet, Subquery
+from django.db.models import CharField, F, Func, OuterRef, Q, QuerySet, Subquery, Sum
 from django.db.models.functions import Cast
 from django.utils import timezone
 
@@ -71,17 +71,23 @@ class TSSatelliteSubqueryBuilder(SatelliteSubqueryBuilderABC):
     outer_ref: str = "pk"
 
 
-class SumTSSatelliteSubqueryBuilder(SatelliteSubqueryBuilder):
-    def satellite_query(
-        self, reference_date: timezone.datetime, lookup_field: str = "pk"
-    ) -> QuerySet:
-        sat_query = super().satellite_query(reference_date, "hub_value_date__hub__pk")
+class TSSumFieldSubqueryBuilder(SubqueryBuilder):
+    def __init__(self, satellite_class, field: str):
+        self.satellite_class = satellite_class
+        self.field = field
 
-        return sat_query.annotate(
-            **{
-                self.field + "agg": Func(self.field, function="Sum"),
-            }
-        ).values(self.field + "agg")
+    def build(self, reference_date):
+        qs = (
+            self.satellite_class.objects.filter(
+                hub_value_date__hub_id=OuterRef("hub_id"),
+                state_date_start__lte=reference_date,
+                state_date_end__gt=reference_date,
+            )
+            .values("hub_value_date__hub_id")
+            .annotate(total=Sum(self.field))
+            .values("total")
+        )
+        return Subquery(qs)
 
 
 class ValueDateSubqueryBuilder(SubqueryBuilder):

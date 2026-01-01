@@ -3470,6 +3470,7 @@ class TestReceiveWithAliases(TestCase):
         me_factories.SatA2Factory(hub_entity=hubs[0], field_a2_str="A2 1")
         me_factories.SatA2Factory(hub_entity=hubs[1], field_a2_str="A2 2")
         repository = HubARepository()
+        repository.store_in_view_model()
         test_query = repository.receive()
         self.assertEqual(test_query.count(), 2)
         self.assertEqual(test_query[0].field_a1_str, "test_1")

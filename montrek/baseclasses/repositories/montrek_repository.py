@@ -23,7 +23,6 @@ from baseclasses.repositories.subquery_builder import (
     LinkedSatelliteSubqueryBuilder,
     ReverseLinkedSatelliteSubqueryBuilder,
     SatelliteSubqueryBuilder,
-    SumTSSatelliteSubqueryBuilder,
     TSSatelliteSubqueryBuilder,
 )
 from baseclasses.repositories.view_model_repository import ViewModelRepository
@@ -294,16 +293,17 @@ class MontrekRepository:
         ts_agg_func: str | None = None,
     ):
         if satellite_class.is_timeseries:
-            if ts_agg_func == "sum":
-                subquery_builder = SumTSSatelliteSubqueryBuilder
-            else:
-                subquery_builder = TSSatelliteSubqueryBuilder
+            subquery_builder = TSSatelliteSubqueryBuilder
         else:
             subquery_builder = SatelliteSubqueryBuilder
         rename_field_map = {} if rename_field_map is None else rename_field_map
         rename_field_map = cast(dict[str, str], rename_field_map)
         self.annotator.subquery_builder_to_annotations(
-            fields, satellite_class, subquery_builder, rename_field_map=rename_field_map
+            fields,
+            satellite_class,
+            subquery_builder,
+            rename_field_map=rename_field_map,
+            ts_agg_func=ts_agg_func,
         )
 
     def add_linked_satellites_field_annotations(

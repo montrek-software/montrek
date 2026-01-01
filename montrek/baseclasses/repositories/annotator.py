@@ -6,6 +6,7 @@ from django.utils import timezone
 from baseclasses.repositories.subquery_builder import (
     ReverseLinkedSatelliteSubqueryBuilder,
     SubqueryBuilder,
+    TSSumFieldSubqueryBuilder,
     ValueDateSubqueryBuilder,
     HubEntityIdSubqueryBuilder,
     CreatedAtSubqueryBuilder,
@@ -96,6 +97,19 @@ class Annotator:
                         null=True, blank=True
                     )
             return
+        ts_agg_func = kwargs["ts_agg_func"]
+        if satellite_class.is_timeseries and ts_agg_func == "sum":
+            self.add_to_annotated_satellite_classes(satellite_class)
+
+            for field in fields:
+                outfield = rename_field_map.get(field, field)
+                self.annotations[outfield] = TSSumFieldSubqueryBuilder(
+                    satellite_class, field
+                )
+                self.set_field_type(field, outfield, satellite_class)
+
+            return
+
         alias_name = satellite_class.__name__.lower() + "__sat"
 
         self.satellite_aliases.append(
@@ -107,9 +121,10 @@ class Annotator:
         self.add_to_annotated_satellite_classes(satellite_class)
         for field in fields:
             outfield = rename_field_map.get(field, field)
-            self.field_projections[outfield] = Subquery(
-                satellite_class.objects.filter(pk=OuterRef(alias_name)).values(field)
-            )
+
+            sat_query = satellite_class.objects.filter(pk=OuterRef(alias_name))
+            self.field_projections[outfield] = Subquery(sat_query.values(field))
+
             self.set_field_type(field, outfield, satellite_class)
 
     def build(self, reference_date: timezone.datetime) -> dict[str, Subquery]:
