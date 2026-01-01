@@ -34,7 +34,7 @@ class Annotator:
         self.raw_annotations: dict[str, SubqueryBuilder] = self.get_raw_annotations()
         self.annotations: dict[str, SubqueryBuilder] = self.raw_annotations.copy()
         self.ts_annotations: dict[str, Subquery] = {}
-        self.annotated_satellite_classes: list[type[MontrekSatelliteABC]] = []
+        self.annotated_satellite_classes: list[type[MontrekSatelliteBaseABC]] = []
         self.annotated_linked_satellite_classes: list[type[MontrekSatelliteABC]] = []
         self.annotated_link_classes: list[type[MontrekLinkABC]] = []
 
@@ -74,6 +74,7 @@ class Annotator:
                 subquery_builder=subquery_builder(satellite_class=satellite_class),
             )
         )
+        self.annotated_satellite_classes.append(satellite_class)
 
         for field in fields:
             outfield = rename_field_map.get(field, field)
