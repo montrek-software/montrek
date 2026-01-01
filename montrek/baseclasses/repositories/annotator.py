@@ -97,7 +97,7 @@ class Annotator:
         return [field.name for field in self.satellite_fields()]
 
     def get_annotated_field_names(self) -> list[str]:
-        return list(self.annotations.keys())
+        return list(self.annotations.keys()) + list(self.field_projections.keys())
 
     def get_satellite_classes(self) -> list[type[MontrekSatelliteABC]]:
         return self.annotated_satellite_classes
@@ -135,7 +135,10 @@ class Annotator:
         }
 
     def rename_field(self, old_field: str, new_field: str):
-        self.annotations[new_field] = self.annotations.pop(old_field)
+        if old_field in self.annotations:
+            self.annotations[new_field] = self.annotations.pop(old_field)
+        if old_field in self.field_projections:
+            self.field_projections[new_field] = self.field_projections.pop(old_field)
 
     def has_only_static_sats(self) -> bool:
         return not (
