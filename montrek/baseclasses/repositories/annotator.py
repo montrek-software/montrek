@@ -13,7 +13,6 @@ from baseclasses.repositories.subquery_builder import (
 )
 from baseclasses.models import (
     MontrekLinkABC,
-    MontrekSatelliteABC,
     MontrekHubABC,
     MontrekSatelliteBaseABC,
 )
@@ -35,7 +34,9 @@ class Annotator:
         self.annotations: dict[str, SubqueryBuilder] = self.raw_annotations.copy()
         self.ts_annotations: dict[str, Subquery] = {}
         self.annotated_satellite_classes: list[type[MontrekSatelliteBaseABC]] = []
-        self.annotated_linked_satellite_classes: list[type[MontrekSatelliteABC]] = []
+        self.annotated_linked_satellite_classes: list[type[MontrekSatelliteBaseABC]] = (
+            []
+        )
         self.annotated_link_classes: list[type[MontrekLinkABC]] = []
 
     def get_raw_annotations(self) -> dict[str, SubqueryBuilder]:
@@ -74,8 +75,7 @@ class Annotator:
                 subquery_builder=subquery_builder(satellite_class=satellite_class),
             )
         )
-        self.annotated_satellite_classes.append(satellite_class)
-
+        self.add_to_annotated_satellite_classes(satellite_class)
         for field in fields:
             outfield = rename_field_map.get(field, field)
             self.field_projections[outfield] = Subquery(
@@ -100,23 +100,23 @@ class Annotator:
     def get_annotated_field_names(self) -> list[str]:
         return list(self.annotations.keys()) + list(self.field_projections.keys())
 
-    def get_satellite_classes(self) -> list[type[MontrekSatelliteABC]]:
+    def get_satellite_classes(self) -> list[type[MontrekSatelliteBaseABC]]:
         return self.annotated_satellite_classes
 
-    def get_ts_satellite_classes(self) -> list[type[MontrekSatelliteABC]]:
+    def get_ts_satellite_classes(self) -> list[type[MontrekSatelliteBaseABC]]:
         return self._get_ts_satellite_classes(self.annotated_satellite_classes)
 
-    def get_linked_satellite_classes(self) -> list[type[MontrekSatelliteABC]]:
+    def get_linked_satellite_classes(self) -> list[type[MontrekSatelliteBaseABC]]:
         return self.annotated_linked_satellite_classes
 
-    def get_ts_linked_satellite_classes(self) -> list[type[MontrekSatelliteABC]]:
+    def get_ts_linked_satellite_classes(self) -> list[type[MontrekSatelliteBaseABC]]:
         return self._get_ts_satellite_classes(self.annotated_linked_satellite_classes)
 
     def get_link_classes(self) -> list[type[MontrekLinkABC]]:
         return self.annotated_link_classes
 
     def add_to_annotated_satellite_classes(
-        self, satellite_class: type[MontrekSatelliteABC]
+        self, satellite_class: type[MontrekSatelliteBaseABC]
     ):
         try:
             related_hub_class = satellite_class.get_related_hub_class()
@@ -148,15 +148,15 @@ class Annotator:
 
     def _add_class(
         self,
-        class_list: list[type[MontrekSatelliteABC]],
-        sat_class: type[MontrekSatelliteABC],
+        class_list: list[type[MontrekSatelliteBaseABC]],
+        sat_class: type[MontrekSatelliteBaseABC],
     ):
         if sat_class not in class_list:
             class_list.append(sat_class)
 
     def _get_ts_satellite_classes(
-        self, satellite_classes: list[type[MontrekSatelliteABC]]
-    ) -> list[type[MontrekSatelliteABC]]:
+        self, satellite_classes: list[type[MontrekSatelliteBaseABC]]
+    ) -> list[type[MontrekSatelliteBaseABC]]:
         return [
             satellite_class
             for satellite_class in satellite_classes
