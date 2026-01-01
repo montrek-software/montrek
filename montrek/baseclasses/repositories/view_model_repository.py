@@ -173,7 +173,6 @@ class ViewModelRepository:
                     datetime.datetime.combine(row["value_date"], datetime.time()),
                     timezone.get_current_timezone(),
                 )
-
         instances = [self.view_model(**item) for item in data]
         if mode == "all":
             self.view_model.objects.all().delete()

@@ -35,11 +35,6 @@ class SatelliteSubqueryBuilderABC(SubqueryBuilder):
     ):
         self.satellite_class = satellite_class
 
-    def get_hub_query(self, reference_date: timezone.datetime) -> QuerySet:
-        return self.satellite_class.get_related_hub_class().objects.filter(
-            **self.subquery_filter(reference_date, outer_ref="hub")
-        )
-
     def subquery_filter(
         self,
         reference_date: timezone.datetime,
@@ -156,12 +151,6 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         self.link_db_name = link_class.__name__.lower()
         self.agg_func = LinkAggFunctionEnum(agg_func)
         self.separator = separator
-        if issubclass(link_class, MontrekManyToManyLinkABC) or (
-            issubclass(link_class, MontrekOneToManyLinkABC)
-            and isinstance(self, ReverseLinkedSatelliteSubqueryBuilder)
-            and agg_func == "string_concat"
-        ):
-            self.field_type = CharField(null=True, blank=True)
 
         self.parent_link_classes = parent_link_classes
         self.parent_link_reversed = parent_link_reversed

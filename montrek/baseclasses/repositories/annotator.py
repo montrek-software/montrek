@@ -4,6 +4,7 @@ from django.db import models
 from django.db.models import Field, OuterRef, Subquery
 from django.utils import timezone
 from baseclasses.repositories.subquery_builder import (
+    ReverseLinkedSatelliteSubqueryBuilder,
     SubqueryBuilder,
     ValueDateSubqueryBuilder,
     HubEntityIdSubqueryBuilder,
@@ -14,6 +15,8 @@ from baseclasses.repositories.subquery_builder import (
 from baseclasses.models import (
     MontrekLinkABC,
     MontrekHubABC,
+    MontrekManyToManyLinkABC,
+    MontrekOneToManyLinkABC,
     MontrekSatelliteBaseABC,
 )
 
@@ -54,7 +57,7 @@ class Annotator:
             "value_date": models.DateField(),
             "hub_entity_id": models.IntegerField(),
             "created_at": models.DateTimeField(),
-            "created_by": models.CharField(),
+            "created_by": models.EmailField(),
             "comment": models.CharField(),
         }
 
@@ -70,14 +73,28 @@ class Annotator:
         rename_field_map = {} if rename_field_map is None else rename_field_map
         if "link_class" in kwargs:
             # TODO: Implement link with aliases
-            self.annotated_link_classes.append(kwargs["link_class"])
+            link_class = kwargs["link_class"]
+            agg_func = kwargs["agg_func"]
+            self.annotated_link_classes.append(link_class)
             self.add_to_annotated_satellite_classes(satellite_class)
             for field in fields:
                 outfield = rename_field_map.get(field, field)
                 self.annotations[outfield] = subquery_builder(
                     satellite_class, field, **kwargs
                 )
-                self.set_field_type(field, satellite_class)
+                self.set_field_type(field, outfield, satellite_class)
+
+                if issubclass(link_class, MontrekManyToManyLinkABC) or (
+                    issubclass(link_class, MontrekOneToManyLinkABC)
+                    and isinstance(
+                        self.annotations[outfield],
+                        ReverseLinkedSatelliteSubqueryBuilder,
+                    )
+                    and agg_func == "string_concat"
+                ):
+                    self.field_type_map[outfield] = models.CharField(
+                        null=True, blank=True
+                    )
             return
         alias_name = satellite_class.__name__.lower() + "__sat"
 
@@ -93,7 +110,7 @@ class Annotator:
             self.field_projections[outfield] = Subquery(
                 satellite_class.objects.filter(pk=OuterRef(alias_name)).values(field)
             )
-            self.set_field_type(field, satellite_class)
+            self.set_field_type(field, outfield, satellite_class)
 
     def build(self, reference_date: timezone.datetime) -> dict[str, Subquery]:
         return {
@@ -102,13 +119,13 @@ class Annotator:
         }
 
     def set_field_type(
-        self, field: str, satellite_class: type[MontrekSatelliteBaseABC]
+        self, field: str, outfield: str, satellite_class: type[MontrekSatelliteBaseABC]
     ) -> None:
         field_parts = field.split("__")
         field_type = satellite_class._meta.get_field(field_parts[0])
         if isinstance(field_type, models.ForeignKey):
             field_type = models.IntegerField(null=True, blank=True)
-        self.field_type_map[field] = field_type
+        self.field_type_map[outfield] = field_type.clone()
 
     def satellite_fields(self) -> list[Field]:
         fields = []
