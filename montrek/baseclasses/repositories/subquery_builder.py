@@ -24,6 +24,12 @@ class SubqueryBuilder:
             f"{self.__class__.__name__} must be subclassed and the build method must be implemented!"
         )
 
+    def build_subquery(
+        self,
+        alias_name: str,
+        field: str,
+    ) -> Subquery: ...
+
 
 class SatelliteSubqueryBuilderABC(SubqueryBuilder):
     lookup_field: str = ""
@@ -59,6 +65,14 @@ class SatelliteSubqueryBuilderABC(SubqueryBuilder):
 
     def build_alias(self, reference_date: timezone.datetime) -> Subquery:
         return self.satellite_subquery(reference_date)
+
+    def build_subquery(
+        self,
+        alias_name: str,
+        field: str,
+    ) -> Subquery:
+        sat_query = self.satellite_class.objects.filter(pk=OuterRef(alias_name))
+        return Subquery(sat_query.values(field))
 
 
 class SatelliteSubqueryBuilder(SatelliteSubqueryBuilderABC):

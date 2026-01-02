@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from django.apps.registry import AppRegistryNotReady
 from django.db import models
-from django.db.models import Field, OuterRef, Subquery
+from django.db.models import Field, Subquery
 from django.utils import timezone
 from baseclasses.repositories.subquery_builder import (
     ReverseLinkedSatelliteSubqueryBuilder,
@@ -144,11 +144,11 @@ class Annotator:
         rename_field_map: dict[str, str],
     ):
         alias_name = f"{satellite_class.__name__.lower()}__sat"
-
+        subquery_builder_inst = subquery_builder(satellite_class=satellite_class)
         self.satellite_aliases.append(
             SatelliteAlias(
                 alias_name=alias_name,
-                subquery_builder=subquery_builder(satellite_class=satellite_class),
+                subquery_builder=subquery_builder_inst,
             )
         )
 
@@ -156,9 +156,9 @@ class Annotator:
 
         for field in fields:
             outfield = rename_field_map.get(field, field)
-
-            sat_query = satellite_class.objects.filter(pk=OuterRef(alias_name))
-            self.field_projections[outfield] = Subquery(sat_query.values(field))
+            self.field_projections[outfield] = subquery_builder_inst.build_subquery(
+                alias_name, field
+            )
 
             self.set_field_type(field, outfield, satellite_class)
 
