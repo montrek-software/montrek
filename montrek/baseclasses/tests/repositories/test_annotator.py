@@ -3,7 +3,11 @@ from django.db import models
 from django.db.models import CharField, ExpressionWrapper, IntegerField, Subquery, Value
 from django.utils import timezone
 
-from baseclasses.repositories.annotator import Annotator, SatelliteAlias
+from baseclasses.repositories.annotator import (
+    Annotator,
+    FieldProjection,
+    SatelliteAlias,
+)
 from baseclasses.repositories.subquery_builder import (
     SubqueryBuilder,
     TSSumFieldSubqueryBuilder,
@@ -139,10 +143,8 @@ class TestAnnotator(TestCase):
         self.assertIsInstance(alias.subquery_builder, DummyScalarSubqueryBuilder)
 
         # Field projection created via build_subquery
-        self.assertIn("field_static", annotator.field_projections)
-        self.assertIsInstance(
-            annotator.field_projections["field_static"], ExpressionWrapper
-        )
+        self.assertEqual(len(annotator.field_projections), 1)
+        self.assertEqual("field_static", annotator.field_projections[0].field)
 
         # Satellite registered
         self.assertIn(StaticSatellite, annotator.annotated_satellite_classes)
@@ -168,7 +170,7 @@ class TestAnnotator(TestCase):
         )
 
         # No scalar projections
-        self.assertEqual(annotator.field_projections, {})
+        self.assertEqual(annotator.field_projections, [])
 
         # Satellite registered
         self.assertIn(TSSatellite, annotator.annotated_satellite_classes)
@@ -204,29 +206,36 @@ class TestAnnotator(TestCase):
     def test_rename_field_updates_all_maps(self):
         annotator = Annotator(DummyHub)
 
-        # Pure, ORM-safe expression (no QuerySet, no objects)
-        dummy_expr = ExpressionWrapper(
-            Value("dummy"),
-            output_field=CharField(),
-        )
-
         annotator.annotations["old"] = DummyScalarSubqueryBuilder(
             satellite_class=StaticSatellite
         )
-        annotator.field_projections["old"] = dummy_expr
+        annotator.field_projections.append(
+            FieldProjection(
+                field="old",
+                outfield="old",
+                satellite_alias=SatelliteAlias(
+                    alias_name="dummy",
+                    subquery_builder=DummyScalarSubqueryBuilder(
+                        satellite_class=StaticSatellite
+                    ),
+                ),
+            )
+        )
 
         annotator.rename_field("old", "new")
 
         self.assertNotIn("old", annotator.annotations)
         self.assertIn("new", annotator.annotations)
 
-        self.assertNotIn("old", annotator.field_projections)
-        self.assertIn("new", annotator.field_projections)
+        self.assertEqual("old", annotator.field_projections[0].field)
+        self.assertEqual("new", annotator.field_projections[0].outfield)
 
         # Optional sanity check: value was preserved, not recreated
-        self.assertIs(
-            annotator.field_projections["new"],
-            dummy_expr,
+        self.assertIsInstance(
+            annotator.field_projections[
+                0
+            ].satellite_alias.subquery_builder.build_subquery("dummy", "old"),
+            ExpressionWrapper,
         )
 
     def test_build_calls_build_on_annotation_builders(self):

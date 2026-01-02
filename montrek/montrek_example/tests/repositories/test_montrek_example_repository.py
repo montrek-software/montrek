@@ -125,9 +125,9 @@ class TestMontrekRepositorySatellite(TestCase):
                 "field_tsc2_float",
                 "my_field_b1_str",
                 "field_a1_int",
+                "my_field_a1_str",
                 "field_a2_float",
                 "field_a2_str",
-                "my_field_a1_str",
             ],
         )
         # direct time series satellite fields

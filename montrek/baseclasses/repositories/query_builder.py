@@ -52,7 +52,8 @@ class QueryBuilder:
             )
         if satellite_aliases_dict:
             queryset = queryset.alias(**satellite_aliases_dict)
-        queryset = queryset.annotate(**self.annotator.field_projections)
+        field_projections = self.annotator.field_projections_to_subqueries()
+        queryset = queryset.annotate(**field_projections)
         queryset = queryset.annotate(**self.annotator.build(reference_date))
         if apply_filter:
             queryset = self._apply_filter(queryset)
