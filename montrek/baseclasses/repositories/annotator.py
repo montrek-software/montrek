@@ -71,46 +71,79 @@ class Annotator:
         rename_field_map: dict[str, str] | None = None,
         **kwargs,
     ):
-        rename_field_map = {} if rename_field_map is None else rename_field_map
+        rename_field_map = rename_field_map or {}
+
         if "link_class" in kwargs:
-            # TODO: Implement link with aliases
-            link_class = kwargs["link_class"]
-            agg_func = kwargs["agg_func"]
-            self.annotated_link_classes.append(link_class)
-            self.add_to_annotated_satellite_classes(satellite_class)
-            for field in fields:
-                outfield = rename_field_map.get(field, field)
-                self.annotations[outfield] = subquery_builder(
-                    satellite_class, field, **kwargs
-                )
-                self.set_field_type(field, outfield, satellite_class)
-
-                if issubclass(link_class, MontrekManyToManyLinkABC) or (
-                    issubclass(link_class, MontrekOneToManyLinkABC)
-                    and isinstance(
-                        self.annotations[outfield],
-                        ReverseLinkedSatelliteSubqueryBuilder,
-                    )
-                    and agg_func == "string_concat"
-                ):
-                    self.field_type_map[outfield] = models.CharField(
-                        null=True, blank=True
-                    )
+            self._handle_linked_satellite(
+                fields, satellite_class, subquery_builder, rename_field_map, **kwargs
+            )
             return
-        ts_agg_func = kwargs["ts_agg_func"]
+
+        ts_agg_func = kwargs.get("ts_agg_func")
         if satellite_class.is_timeseries and ts_agg_func == "sum":
-            self.add_to_annotated_satellite_classes(satellite_class)
-
-            for field in fields:
-                outfield = rename_field_map.get(field, field)
-                self.annotations[outfield] = TSSumFieldSubqueryBuilder(
-                    satellite_class, field
-                )
-                self.set_field_type(field, outfield, satellite_class)
-
+            self._handle_ts_sum_satellite(fields, satellite_class, rename_field_map)
             return
 
-        alias_name = satellite_class.__name__.lower() + "__sat"
+        self._handle_scalar_satellite(
+            fields, satellite_class, subquery_builder, rename_field_map
+        )
+
+    def _handle_linked_satellite(
+        self,
+        fields: list[str],
+        satellite_class: type[MontrekSatelliteBaseABC],
+        subquery_builder: type[SubqueryBuilder],
+        rename_field_map: dict[str, str],
+        **kwargs,
+    ):
+        link_class = kwargs["link_class"]
+        agg_func = kwargs["agg_func"]
+
+        self.annotated_link_classes.append(link_class)
+        self.add_to_annotated_satellite_classes(satellite_class)
+
+        for field in fields:
+            outfield = rename_field_map.get(field, field)
+
+            self.annotations[outfield] = subquery_builder(
+                satellite_class, field, **kwargs
+            )
+            self.set_field_type(field, outfield, satellite_class)
+
+            if issubclass(link_class, MontrekManyToManyLinkABC) or (
+                issubclass(link_class, MontrekOneToManyLinkABC)
+                and isinstance(
+                    self.annotations[outfield],
+                    ReverseLinkedSatelliteSubqueryBuilder,
+                )
+                and agg_func == "string_concat"
+            ):
+                self.field_type_map[outfield] = models.CharField(null=True, blank=True)
+
+    def _handle_ts_sum_satellite(
+        self,
+        fields: list[str],
+        satellite_class: type[MontrekSatelliteBaseABC],
+        rename_field_map: dict[str, str],
+    ):
+        self.add_to_annotated_satellite_classes(satellite_class)
+
+        for field in fields:
+            outfield = rename_field_map.get(field, field)
+
+            self.annotations[outfield] = TSSumFieldSubqueryBuilder(
+                satellite_class, field
+            )
+            self.set_field_type(field, outfield, satellite_class)
+
+    def _handle_scalar_satellite(
+        self,
+        fields: list[str],
+        satellite_class: type[MontrekSatelliteBaseABC],
+        subquery_builder: type[SubqueryBuilder],
+        rename_field_map: dict[str, str],
+    ):
+        alias_name = f"{satellite_class.__name__.lower()}__sat"
 
         self.satellite_aliases.append(
             SatelliteAlias(
@@ -118,7 +151,9 @@ class Annotator:
                 subquery_builder=subquery_builder(satellite_class=satellite_class),
             )
         )
+
         self.add_to_annotated_satellite_classes(satellite_class)
+
         for field in fields:
             outfield = rename_field_map.get(field, field)
 

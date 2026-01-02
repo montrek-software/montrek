@@ -26,6 +26,7 @@ from baseclasses.repositories.subquery_builder import (
     TSSatelliteSubqueryBuilder,
 )
 from baseclasses.repositories.view_model_repository import ViewModelRepository
+from baseclasses.typing import SessionDataType
 from baseclasses.utils import (
     DJANGO_TO_PANDAS,
     PANDAS_DATETIME_PREFIX,
@@ -60,7 +61,7 @@ class MontrekRepository:
         True  # If this is true only the passed fields will be updated, otherwise empty fields will be set to None
     )
 
-    def __init__(self, session_data: dict[str, Any] | None = None):
+    def __init__(self, session_data: SessionDataType | None = None):
         self.annotator = Annotator(self.hub_class)
         self._ts_queryset_containers = []
         self.session_data = session_data if session_data is not None else {}
