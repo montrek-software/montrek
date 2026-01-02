@@ -13,7 +13,17 @@ from baseclasses.models import (
 )
 from django.conf import settings
 from django.db import models
-from django.db.models import CharField, F, Func, OuterRef, Q, QuerySet, Subquery, Sum
+from django.db.models import (
+    CharField,
+    F,
+    ExpressionWrapper,
+    Func,
+    OuterRef,
+    Q,
+    QuerySet,
+    Subquery,
+    Sum,
+)
 from django.db.models.functions import Cast
 from django.utils import timezone
 
@@ -28,7 +38,7 @@ class SubqueryBuilder:
         self,
         alias_name: str,
         field: str,
-    ) -> Subquery: ...
+    ) -> Subquery | ExpressionWrapper: ...
 
 
 class SatelliteSubqueryBuilderABC(SubqueryBuilder):
