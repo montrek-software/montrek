@@ -45,14 +45,13 @@ class QueryBuilder:
             Q(hub__state_date_start__lte=reference_date),
             Q(hub__state_date_end__gt=reference_date),
         )
+        satellite_aliases_dict: dict[str, Any] = {}
         for satellite_alias in self.annotator.satellite_aliases:
-            queryset = queryset.alias(
-                **{
-                    satellite_alias.alias_name: satellite_alias.subquery_builder.build_alias(
-                        reference_date
-                    )
-                }
+            satellite_aliases_dict[satellite_alias.alias_name] = (
+                satellite_alias.subquery_builder.build_alias(reference_date)
             )
+        if satellite_aliases_dict:
+            queryset = queryset.alias(**satellite_aliases_dict)
         queryset = queryset.annotate(**self.annotator.field_projections)
         queryset = queryset.annotate(**self.annotator.build(reference_date))
         if apply_filter:
