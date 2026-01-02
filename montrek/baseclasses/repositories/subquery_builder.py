@@ -38,9 +38,29 @@ class SubqueryBuilder:
         self,
         alias_name: str,
         field: str,
-    ) -> Subquery | ExpressionWrapper: ...
+    ) -> Subquery | ExpressionWrapper:
+        """
+        Build a reusable subquery or expression that can be referenced from an
+        outer queryset by alias.
 
+        This method complements :meth:`build`. While ``build`` typically
+        constructs the primary subquery for a given ``reference_date`` (for
+        example, to be used directly in annotations or filters), ``build_subquery``
+        is intended to construct a subquery or expression that depends on an
+        alias defined in the outer query (for example, an annotated primary key
+        or foreign key).
 
+        Args:
+            alias_name: The name of the field or annotation on the outer query
+                that will be used via ``OuterRef`` inside the subquery.
+            field: The name of the field on the target model whose value should
+                be returned by the subquery or expression.
+
+        Returns:
+            A Django ``Subquery`` or ``ExpressionWrapper`` suitable for use in
+            queryset annotations or filters.
+        """
+        ...
 class SatelliteSubqueryBuilderABC(SubqueryBuilder):
     lookup_field: str = ""
     outer_ref: str = ""
