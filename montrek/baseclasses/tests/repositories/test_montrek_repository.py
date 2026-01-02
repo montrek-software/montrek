@@ -34,12 +34,6 @@ class TestMontrekRepository(TestCase):
             "set_annotations is not implemented for MontrekRepository",
         )
 
-    def test_annotations(self):
-        montrek_repo = TestRepository()
-        expected_anotations = ["test_name", "test_value"]
-        for anno in expected_anotations:
-            self.assertIn(anno, montrek_repo.annotations)
-
     def test_convert_lists_to_tuples(self):
         test_df = pd.DataFrame({"A": [[1, 2], (3, 4), 5]})
         result_df = MontrekRepository._convert_lists_to_tuples(test_df, ["A"])

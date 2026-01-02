@@ -239,6 +239,9 @@ class MontrekSatelliteBaseABC(TimeStampMixin, StateMixin, UserMixin):
             [f"{field} -> {getattr(self, field)}" for field in self.identifier_fields]
         )
 
+    @classmethod
+    def get_related_hub_class(cls) -> type[MontrekHubABC]: ...
+
 
 class MontrekSatelliteABC(MontrekSatelliteBaseABC):
     class Meta:

@@ -2,6 +2,7 @@ from montrek_example.repositories.hub_a_repository import HubARepository
 from montrek_example.repositories.hub_b_repository import HubBRepository
 from montrek_example.repositories.hub_c_repository import HubCRepositoryViewModel
 
+
 HubARepository.generate_view_model()
 HubBRepository.generate_view_model()
 HubCRepositoryViewModel.generate_view_model()

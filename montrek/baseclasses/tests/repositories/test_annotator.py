@@ -1,85 +1,250 @@
-from django.db import models
 from django.test import TestCase
+from django.db import models
+from django.db.models import CharField, ExpressionWrapper, IntegerField, Subquery, Value
 from django.utils import timezone
-from baseclasses.utils import montrek_time
-from baseclasses.repositories.annotator import Annotator
-from baseclasses.models import TestMontrekHub
+
+from baseclasses.repositories.annotator import (
+    Annotator,
+    FieldProjection,
+    SatelliteAlias,
+)
+from baseclasses.repositories.subquery_builder import (
+    SubqueryBuilder,
+    TSSumFieldSubqueryBuilder,
+    ReverseLinkedSatelliteSubqueryBuilder,
+)
+from baseclasses.models import (
+    MontrekHubABC,
+    MontrekSatelliteBaseABC,
+    MontrekManyToManyLinkABC,
+)
 
 
-class MockSubqueryBuilder:
-    def __init__(self, satellite_class: type, field: str):
-        self.satellite_class = satellite_class
-        self.field = field
-        self.field_type = models.CharField()
-
-    def build(self, reference_date: timezone.datetime) -> str:
-        return "Hallo"
+# ----------------------------------------------------------------------
+# Dummy hub
+# ----------------------------------------------------------------------
 
 
-class MockSatellite:
+class DummyHub(MontrekHubABC):
+    class Meta:
+        abstract = True
+
+
+# ----------------------------------------------------------------------
+# Dummy satellites
+# ----------------------------------------------------------------------
+
+
+class StaticSatellite(MontrekSatelliteBaseABC):
+    is_timeseries = False
+
+    field_static = models.CharField(max_length=50)
+
     @classmethod
     def get_related_hub_class(cls):
-        return TestMontrekHub
+        return DummyHub
+
+    @classmethod
+    def get_value_fields(cls):
+        return [cls._meta.get_field("field_static")]
+
+    class Meta:
+        abstract = True
 
 
-class TestAnnotationManager(TestCase):
-    def test_subquery_to_annotation(self):
-        test_annotator = Annotator(TestMontrekHub)
-        test_annotator.subquery_builder_to_annotations(
-            ["test", "test2"], MockSatellite, MockSubqueryBuilder
+class TSSatellite(MontrekSatelliteBaseABC):
+    is_timeseries = True
+
+    field_ts = models.FloatField()
+
+    @classmethod
+    def get_related_hub_class(cls):
+        return DummyHub
+
+    @classmethod
+    def get_value_fields(cls):
+        return [cls._meta.get_field("field_ts")]
+
+    class Meta:
+        abstract = True
+
+
+# ----------------------------------------------------------------------
+# Dummy link
+# ----------------------------------------------------------------------
+
+
+class DummyLink(MontrekManyToManyLinkABC):
+    class Meta:
+        abstract = True
+
+
+# ----------------------------------------------------------------------
+# Dummy subquery builders
+# ----------------------------------------------------------------------
+
+
+class DummyScalarSubqueryBuilder(SubqueryBuilder):
+    def __init__(self, *, satellite_class):
+        self.satellite_class = satellite_class
+
+    def build(self, reference_date):
+        raise AssertionError("build() must not be called")
+
+    def build_subquery(self, alias_name: str, field: str) -> ExpressionWrapper:
+        # Pure ORM expression. No models. No DB. No managers.
+        return ExpressionWrapper(
+            Value("dummy"),
+            output_field=CharField(),
         )
-        self.assertEqual(len(test_annotator.annotations), 7)
-        reference_date = montrek_time(2024, 11, 7)
-        annotations = test_annotator.build(reference_date)
-        self.assertEqual(annotations["test"], "Hallo")
 
-    def test_annotations_field_map(self):
-        test_annotator = Annotator(TestMontrekHub)
-        test_annotator.subquery_builder_to_annotations(
-            ["test", "test2"], MockSatellite, MockSubqueryBuilder
+
+class DummyReverseLinkedBuilder(ReverseLinkedSatelliteSubqueryBuilder):
+    def build(self, reference_date):
+        return Subquery(StaticSatellite.objects.values("field_static")[:1])
+
+
+class StubAnnotationBuilder(SubqueryBuilder):
+    def __init__(self):
+        self.called_with = None
+
+    def build(self, reference_date):
+        # Record the call for verification if needed
+        self.called_with = reference_date
+
+        # Return a safe, ORM-free expression
+        return ExpressionWrapper(
+            Value(1),
+            output_field=IntegerField(),
         )
-        field_map = test_annotator.get_annotated_field_map()
-        expected_map = {
-            "comment": models.CharField,
-            "created_at": models.DateTimeField,
-            "created_by": models.EmailField,
-            "hub_entity_id": models.IntegerField,
-            "test": models.CharField,
-            "test2": models.CharField,
-            "value_date": models.DateField,
-        }
 
-        self.assertEqual(field_map.keys(), expected_map.keys())
-        for field, ftype in expected_map.items():
-            self.assertTrue(type(field_map[field]) is ftype)
 
-    def test_rename_field(self):
-        test_annotator = Annotator(TestMontrekHub)
-        test_annotator.subquery_builder_to_annotations(
-            ["test", "test2"], MockSatellite, MockSubqueryBuilder
+# ----------------------------------------------------------------------
+# Tests
+# ----------------------------------------------------------------------
+
+
+class TestAnnotator(TestCase):
+    def test_scalar_satellite_creates_alias_and_field_projection(self):
+        annotator = Annotator(DummyHub)
+
+        annotator.subquery_builder_to_annotations(
+            fields=["field_static"],
+            satellite_class=StaticSatellite,
+            subquery_builder=DummyScalarSubqueryBuilder,
         )
-        test_sub_queryset = test_annotator.annotations["test"]
-        test_annotator.rename_field("test", "test_renamed")
-        self.assertEqual(test_annotator.annotations["test_renamed"], test_sub_queryset)
-        self.assertNotIn("test", test_annotator.annotations)
 
-    def test_satellite_field_names(self):
-        test_annotator = Annotator(TestMontrekHub)
-        result = test_annotator.satellite_fields_names()
-        self.assertEqual(result, [])
+        # Alias created
+        self.assertEqual(len(annotator.satellite_aliases), 1)
+        alias = annotator.satellite_aliases[0]
 
-    def test_get_linked_satellite_classes(self):
-        test_annotator = Annotator(TestMontrekHub)
-        result = test_annotator.get_linked_satellite_classes()
-        self.assertEqual(result, [])
+        self.assertIsInstance(alias, SatelliteAlias)
+        self.assertEqual(alias.alias_name, "staticsatellite__sat")
+        self.assertIsInstance(alias.subquery_builder, DummyScalarSubqueryBuilder)
 
-    def test_skip_raw_annotations_fields(self):
-        test_annotator = Annotator(TestMontrekHub)
-        raw_fields = ["value_date"]
-        test_annotator.subquery_builder_to_annotations(
-            raw_fields, MockSatellite, MockSubqueryBuilder
+        # Field projection created via build_subquery
+        self.assertEqual(len(annotator.field_projections), 1)
+        self.assertEqual("field_static", annotator.field_projections[0].field)
+
+        # Satellite registered
+        self.assertIn(StaticSatellite, annotator.annotated_satellite_classes)
+
+    def test_ts_sum_satellite_uses_ts_sum_builder(self):
+        annotator = Annotator(DummyHub)
+
+        annotator.subquery_builder_to_annotations(
+            fields=["field_ts"],
+            satellite_class=TSSatellite,
+            subquery_builder=DummyScalarSubqueryBuilder,
+            ts_agg_func="sum",
         )
-        for raw_field in raw_fields:
-            self.assertNotIsInstance(
-                test_annotator.annotations[raw_field], MockSubqueryBuilder
+
+        # No alias for TS sum
+        self.assertEqual(annotator.satellite_aliases, [])
+
+        # Annotation created
+        self.assertIn("field_ts", annotator.annotations)
+        self.assertIsInstance(
+            annotator.annotations["field_ts"],
+            TSSumFieldSubqueryBuilder,
+        )
+
+        # No scalar projections
+        self.assertEqual(annotator.field_projections, [])
+
+        # Satellite registered
+        self.assertIn(TSSatellite, annotator.annotated_satellite_classes)
+
+    def test_linked_satellite_creates_annotation_and_link_registration(self):
+        annotator = Annotator(DummyHub)
+
+        annotator.subquery_builder_to_annotations(
+            fields=["field_static"],
+            satellite_class=StaticSatellite,
+            subquery_builder=DummyReverseLinkedBuilder,
+            link_class=DummyLink,
+            agg_func="string_concat",
+        )
+
+        # Annotation created
+        self.assertIn("field_static", annotator.annotations)
+        self.assertIsInstance(
+            annotator.annotations["field_static"],
+            ReverseLinkedSatelliteSubqueryBuilder,
+        )
+
+        # Link class registered
+        self.assertIn(DummyLink, annotator.annotated_link_classes)
+
+        # Satellite registered
+        self.assertIn(StaticSatellite, annotator.annotated_satellite_classes)
+
+        # Field type overridden to CharField
+        field = annotator.field_type_map["field_static"]
+        self.assertIsInstance(field, models.CharField)
+
+    def test_rename_field_updates_all_maps(self):
+        annotator = Annotator(DummyHub)
+
+        annotator.annotations["old"] = DummyScalarSubqueryBuilder(
+            satellite_class=StaticSatellite
+        )
+        annotator.field_projections.append(
+            FieldProjection(
+                field="old",
+                outfield="old",
+                satellite_alias=SatelliteAlias(
+                    alias_name="dummy",
+                    subquery_builder=DummyScalarSubqueryBuilder(
+                        satellite_class=StaticSatellite
+                    ),
+                ),
             )
+        )
+
+        annotator.rename_field("old", "new")
+
+        self.assertNotIn("old", annotator.annotations)
+        self.assertIn("new", annotator.annotations)
+
+        self.assertEqual("old", annotator.field_projections[0].field)
+        self.assertEqual("new", annotator.field_projections[0].outfield)
+
+        # Optional sanity check: value was preserved, not recreated
+        self.assertIsInstance(
+            annotator.field_projections[
+                0
+            ].satellite_alias.subquery_builder.build_subquery("dummy", "old"),
+            ExpressionWrapper,
+        )
+
+    def test_build_calls_build_on_annotation_builders(self):
+        annotator = Annotator(DummyHub)
+
+        builder = StubAnnotationBuilder()
+        annotator.annotations = {"x": builder}
+
+        result = annotator.build(timezone.now())
+
+        self.assertIn("x", result)
+        self.assertIsInstance(result["x"], ExpressionWrapper)

@@ -1,5 +1,6 @@
 from enum import Enum
-from typing import Any, Callable, Type
+from typing import Any
+from collections.abc import Callable
 
 from baseclasses.models import (
     LinkTypeEnum,
@@ -12,7 +13,17 @@ from baseclasses.models import (
 )
 from django.conf import settings
 from django.db import models
-from django.db.models import CharField, F, Func, OuterRef, Q, QuerySet, Subquery
+from django.db.models import (
+    CharField,
+    F,
+    ExpressionWrapper,
+    Func,
+    OuterRef,
+    Q,
+    QuerySet,
+    Subquery,
+    Sum,
+)
 from django.db.models.functions import Cast
 from django.utils import timezone
 
@@ -23,87 +34,104 @@ class SubqueryBuilder:
             f"{self.__class__.__name__} must be subclassed and the build method must be implemented!"
         )
 
+    def build_subquery(
+        self,
+        alias_name: str,
+        field: str,
+    ) -> Subquery | ExpressionWrapper:
+        """
+        Build a reusable subquery or expression that can be referenced from an
+        outer queryset by alias.
 
+        This method complements :meth:`build`. While ``build`` typically
+        constructs the primary subquery for a given ``reference_date`` (for
+        example, to be used directly in annotations or filters), ``build_subquery``
+        is intended to construct a subquery or expression that depends on an
+        alias defined in the outer query (for example, an annotated primary key
+        or foreign key).
+
+        Args:
+            alias_name: The name of the field or annotation on the outer query
+                that will be used via ``OuterRef`` inside the subquery.
+            field: The name of the field on the target model whose value should
+                be returned by the subquery or expression.
+
+        Returns:
+            A Django ``Subquery`` or ``ExpressionWrapper`` suitable for use in
+            queryset annotations or filters.
+        """
+        ...
 class SatelliteSubqueryBuilderABC(SubqueryBuilder):
     lookup_field: str = ""
+    outer_ref: str = ""
 
     def __init__(
         self,
-        satellite_class: Type[MontrekSatelliteABC],
-        field: str,
+        satellite_class: type[MontrekSatelliteABC],
     ):
         self.satellite_class = satellite_class
-        self.field = field
-        field_parts = self.field.split("__")
-        # TODO: get field of related_model right
-        self.field_type = self.satellite_class._meta.get_field(field_parts[0])
-        if isinstance(self.field_type, models.ForeignKey):
-            self.field_type = models.IntegerField(null=True, blank=True)
-        # TODO: remove lookup_string
-        self.lookup_string = "pk"
-
-    def get_hub_query(self, reference_date: timezone.datetime) -> QuerySet:
-        return self.satellite_class.get_related_hub_class().objects.filter(
-            **self.subquery_filter(reference_date, outer_ref="hub")
-        )
 
     def subquery_filter(
         self,
         reference_date: timezone.datetime,
-        lookup_field: str = "pk",
-        outer_ref: str = "pk",
+        lookup_field: str | None = None,
+        outer_ref: str | None = None,
     ) -> dict[str, object]:
+        lookup_field = self.lookup_field if lookup_field is None else lookup_field
+        outer_ref = self.outer_ref if outer_ref is None else outer_ref
         return {
             lookup_field: OuterRef(outer_ref),
             "state_date_start__lte": reference_date,
             "state_date_end__gt": reference_date,
         }
 
-    def satellite_query(
-        self, reference_date: timezone.datetime, lookup_field: str = "pk"
-    ) -> QuerySet:
+    def satellite_query(self, reference_date: timezone.datetime) -> QuerySet:
         return self.satellite_class.objects.filter(
-            **self.subquery_filter(reference_date, lookup_field=lookup_field)
-        ).values(self.field)
+            **self.subquery_filter(reference_date)
+        ).values("pk")
 
-    def satellite_subquery(
-        self, reference_date: timezone.datetime, lookup_field: str = "pk"
+    def satellite_subquery(self, reference_date: timezone.datetime) -> Subquery:
+        return Subquery(self.satellite_query(reference_date))
+
+    def build_alias(self, reference_date: timezone.datetime) -> Subquery:
+        return self.satellite_subquery(reference_date)
+
+    def build_subquery(
+        self,
+        alias_name: str,
+        field: str,
     ) -> Subquery:
-        return Subquery(self.satellite_query(reference_date, lookup_field))
+        sat_query = self.satellite_class.objects.filter(pk=OuterRef(alias_name))
+        return Subquery(sat_query.values(field))
 
 
 class SatelliteSubqueryBuilder(SatelliteSubqueryBuilderABC):
-    def build(self, reference_date: timezone.datetime) -> Subquery:
-        return Subquery(
-            self.get_hub_query(reference_date)
-            .annotate(
-                **{
-                    self.field
-                    + "sub": self.satellite_subquery(
-                        reference_date, lookup_field="hub_entity"
-                    ),
-                }
-            )
-            .values(self.field + "sub")
-        )
+    lookup_field: str = "hub_entity"
+    outer_ref: str = "hub_id"
 
 
 class TSSatelliteSubqueryBuilder(SatelliteSubqueryBuilderABC):
-    def build(self, reference_date: timezone.datetime) -> Subquery:
-        return self.satellite_subquery(reference_date, lookup_field="hub_value_date")
+    lookup_field: str = "hub_value_date"
+    outer_ref: str = "pk"
 
 
-class SumTSSatelliteSubqueryBuilder(SatelliteSubqueryBuilder):
-    def satellite_query(
-        self, reference_date: timezone.datetime, lookup_field: str = "pk"
-    ) -> QuerySet:
-        sat_query = super().satellite_query(reference_date, "hub_value_date__hub__pk")
+class TSSumFieldSubqueryBuilder(SubqueryBuilder):
+    def __init__(self, satellite_class, field: str):
+        self.satellite_class = satellite_class
+        self.field = field
 
-        return sat_query.annotate(
-            **{
-                self.field + "agg": Func(self.field, function="Sum"),
-            }
-        ).values(self.field + "agg")
+    def build(self, reference_date):
+        qs = (
+            self.satellite_class.objects.filter(
+                hub_value_date__hub_id=OuterRef("hub_id"),
+                state_date_start__lte=reference_date,
+                state_date_end__gt=reference_date,
+            )
+            .values("hub_value_date__hub_id")
+            .annotate(total=Sum(self.field))
+            .values("total")
+        )
+        return Subquery(qs)
 
 
 class ValueDateSubqueryBuilder(SubqueryBuilder):
@@ -118,10 +146,11 @@ class ValueDateSubqueryBuilder(SubqueryBuilder):
 class HubDirectFieldSubqueryBuilder(SubqueryBuilder):
     field: str = ""
 
-    def __init__(self, hub_class: Type[MontrekHubABC]):
+    def __init__(self, hub_class: type[MontrekHubABC]):
         self.hub_class = hub_class
 
     def build(self, reference_date: timezone.datetime) -> Subquery:
+        # TODO: Rearrange this with an alias
         return Subquery(
             self.hub_class.objects.filter(pk=OuterRef("hub")).values(self.field)
         )
@@ -150,17 +179,21 @@ class CommentSubqueryBuilder(HubDirectFieldSubqueryBuilder):
 class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
     def __init__(
         self,
-        satellite_class: Type[MontrekSatelliteABC],
+        satellite_class: type[MontrekSatelliteABC],
         field: str,
-        link_class: Type[MontrekLinkABC],
+        link_class: type[MontrekLinkABC],
         *,
         agg_func: str = "string_concat",
-        parent_link_classes: tuple[Type[MontrekLinkABC], ...] = (),
+        parent_link_classes: tuple[type[MontrekLinkABC], ...] = (),
         parent_link_reversed: tuple[bool, ...] | list[bool] = (),
-        link_satellite_filter: dict[str, object] = {},
+        link_satellite_filter: dict[str, object] | None = None,
         separator: str = ";",
     ):
-        super().__init__(satellite_class, field)
+        super().__init__(satellite_class)
+        self.field = field
+        link_satellite_filter = (
+            {} if link_satellite_filter is None else link_satellite_filter
+        )
 
         if link_class.link_type == LinkTypeEnum.NONE:
             raise TypeError(f"{link_class.__name__} must inherit from valid LinkClass!")
@@ -168,12 +201,6 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         self.link_db_name = link_class.__name__.lower()
         self.agg_func = LinkAggFunctionEnum(agg_func)
         self.separator = separator
-        if issubclass(link_class, MontrekManyToManyLinkABC) or (
-            issubclass(link_class, MontrekOneToManyLinkABC)
-            and isinstance(self, ReverseLinkedSatelliteSubqueryBuilder)
-        ):
-            if agg_func == "string_concat":
-                self.field_type = CharField(null=True, blank=True)
 
         self.parent_link_classes = parent_link_classes
         self.parent_link_reversed = parent_link_reversed
@@ -338,10 +365,9 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
                 return self._annotate_mean(query)
             if self.agg_func == LinkAggFunctionEnum.COUNT:
                 return self._annotate_count(query)
-            else:
-                raise NotImplementedError(
-                    f"Aggregation function {self.agg_func} is not implemented!"
-                )
+            raise NotImplementedError(
+                f"Aggregation function {self.agg_func} is not implemented!"
+            )
         return query
 
     def _annotate_sum(self, query: QuerySet) -> QuerySet:
@@ -367,8 +393,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
     def _annotate_latest(self, query: QuerySet) -> QuerySet:
         if self.satellite_class.is_timeseries:
             return query.order_by("-hub_value_date__value_date_list__value_date")[:1]
-        else:
-            return query.order_by(f"{self.field}sub")[:1]
+        return query.order_by(f"{self.field}sub")[:1]
 
     def _annotate_mean(self, query: QuerySet) -> QuerySet:
         return query.annotate(
@@ -405,8 +430,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
                     hub_a, hub_b, reference_date
                 )
             return self._link_hubs_and_get_ts_subquery(hub_a, hub_b, reference_date)
-        else:
-            return self._link_hubs_and_get_subquery(hub_a, hub_b, reference_date)
+        return self._link_hubs_and_get_subquery(hub_a, hub_b, reference_date)
 
 
 class LinkedSatelliteSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
@@ -439,12 +463,11 @@ def get_string_concat_function(separator: str) -> Callable[..., Any]:
     engine = settings.DATABASES["default"]["ENGINE"]
     if "mysql" in engine:
         return lambda *args, **kwargs: GroupConcat(*args, separator=separator, **kwargs)
-    elif "postgresql" in engine:
+    if "postgresql" in engine:
         return lambda *args, **kwargs: StringAgg(*args, separator=separator, **kwargs)
-    else:
-        raise NotImplementedError(
-            f"No function for concatenating list of strings defined for {engine}!"
-        )
+    raise NotImplementedError(
+        f"No function for concatenating list of strings defined for {engine}!"
+    )
 
 
 class LinkAggFunctionEnum(Enum):

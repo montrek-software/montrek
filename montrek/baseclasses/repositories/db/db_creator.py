@@ -1,7 +1,6 @@
 import datetime
 import json
 import logging
-from typing import Optional
 
 import pandas as pd
 from baseclasses.errors.montrek_user_error import MontrekError
@@ -38,7 +37,7 @@ class DbCreator:
         self.updated_satellites: SatelliteDict = {}
         self.sanitizer = HtmlSanitizer()
         self.satellite_creator = SatelliteCreator()
-        self.cache: Optional[DbCreatorCache] = None
+        self.cache: DbCreatorCache | None = None
 
     def create(self, data: DataDict):
         self.data = self.cleaned_data(data)
@@ -242,7 +241,7 @@ class DbCreator:
         if len(self.new_satellites) == 0:
             return
         if any(
-            [sat_class in self.updated_satellites for sat_class in self.new_satellites]
+            sat_class in self.updated_satellites for sat_class in self.new_satellites
         ):
             return
         if "hub_entity_id" in self.data:
@@ -294,7 +293,7 @@ class DbCreator:
                 link_data[key] = [value.hub]
             elif isinstance(value, MontrekHubABC):
                 link_data[key] = [value]
-            elif isinstance(value, (list, QuerySet)):
+            elif isinstance(value, list | QuerySet):
                 many_links = [
                     item.hub for item in value if isinstance(item, HubValueDate)
                 ]
@@ -315,14 +314,13 @@ class DbCreator:
                 for value in values
             ]
             return self._update_links_if_exist(new_links, "hub_in", link_class)
-        else:
-            new_links = [
-                link_class(
-                    hub_in=value, hub_out=self.hub, state_date_start=self.creation_date
-                )
-                for value in values
-            ]
-            return self._update_links_if_exist(new_links, "hub_out", link_class)
+        new_links = [
+            link_class(
+                hub_in=value, hub_out=self.hub, state_date_start=self.creation_date
+            )
+            for value in values
+        ]
+        return self._update_links_if_exist(new_links, "hub_out", link_class)
 
     def _update_links_if_exist(
         self,
@@ -419,10 +417,10 @@ class DbBatchCreator:
 
     def fill_data_collection(self):
         for row in self.df.itertuples(index=False, name=None):
-            data = dict(zip(self.columns, row))
+            data = dict(zip(self.columns, row, strict=False))
             # Normalize NaN → None (required for many tests)
             for key, value in data.items():
-                if not isinstance(value, (list, dict)) and pd.isna(value):
+                if not isinstance(value, list | dict) and pd.isna(value):
                     data[key] = None
 
             self.stall_data(data)

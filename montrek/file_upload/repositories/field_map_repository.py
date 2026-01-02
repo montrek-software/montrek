@@ -1,4 +1,5 @@
 from baseclasses.repositories.montrek_repository import MontrekRepository
+from baseclasses.typing import SessionDataType
 from file_upload.models import (
     FieldMapHub,
     FieldMapHubABC,
@@ -13,7 +14,7 @@ class FieldMapRepositoryABC(MontrekRepository):
     static_satellite_class = FieldMapStaticSatelliteABC
     defult_order_fields = ("step", "source_field")
 
-    def __init__(self, session_data={}):
+    def __init__(self, session_data: SessionDataType | None = None):
         super().__init__(
             session_data=session_data,
         )
@@ -28,9 +29,10 @@ class FieldMapRepositoryABC(MontrekRepository):
                 "step",
                 "function_name",
                 "function_parameters",
+                "comment",
             ],
+            rename_field_map={"comment": "field_map_static_satellite_comment"},
         )
-        self.rename_field("comment", "field_map_static_satellite_comment")
 
     def get_source_field(self, database_field: str) -> str | None:
         objs = self.receive().filter(database_field=database_field)

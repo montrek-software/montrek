@@ -1,6 +1,4 @@
 import datetime
-import sys
-import unittest
 from unittest.mock import patch
 
 import numpy as np
@@ -10,7 +8,7 @@ from baseclasses.tests.factories.montrek_factory_schemas import ValueDateListFac
 from baseclasses.utils import montrek_time
 from django.core.exceptions import PermissionDenied
 from django.db import ProgrammingError, models
-from django.test import TestCase, TransactionTestCase, tag
+from django.test import TestCase, TransactionTestCase
 from django.utils import timezone
 from freezegun import freeze_time
 from montrek_example.models import example_models as me_models
@@ -94,12 +92,12 @@ class TestMontrekRepositorySatellite(TestCase):
                 "created_at",
                 "created_by",
                 "comment",
+                "field_b1_str",
+                "field_b1_date",
                 "field_a1_int",
                 "field_a1_str",
                 "field_a2_float",
                 "field_a2_str",
-                "field_b1_str",
-                "field_b1_date",
                 "dummy1",
                 "dummy2",
             ],
@@ -123,13 +121,13 @@ class TestMontrekRepositorySatellite(TestCase):
                 "created_at",
                 "created_by",
                 "comment",
-                "field_a1_int",
-                "field_a2_float",
-                "field_a2_str",
                 "field_b1_date",
                 "field_tsc2_float",
-                "my_field_a1_str",
                 "my_field_b1_str",
+                "field_a1_int",
+                "my_field_a1_str",
+                "field_a2_float",
+                "field_a2_str",
             ],
         )
         # direct time series satellite fields
@@ -143,6 +141,12 @@ class TestMontrekRepositorySatellite(TestCase):
                 "created_at",
                 "created_by",
                 "comment",
+                "field_d1_str",
+                "field_d1_int",
+                "field_tsd2_float",
+                "field_tsd2_int",
+                "field_tsd2_float_agg",
+                "field_tsd2_float_latest",
                 "field_tsc2_float",
                 "created_by__email",
                 "field_tsc3_int",
@@ -150,12 +154,6 @@ class TestMontrekRepositorySatellite(TestCase):
                 "field_tsc4_int",
                 "field_c1_bool",
                 "field_c1_str",
-                "field_d1_str",
-                "field_d1_int",
-                "field_tsd2_float",
-                "field_tsd2_int",
-                "field_tsd2_float_agg",
-                "field_tsd2_float_latest",
             ],
         )
 
@@ -2279,34 +2277,33 @@ class TestStaticAggFuncs(TestCase):
 
 
 class TestTimeSeriesPerformance(TestCase):
-    @unittest.skipUnless(
-        "--tag=slow" in sys.argv, "Extremely slow tests only run on demand"
-    )
-    @tag("slow")
     def test_large_datasets_with_filter__performance(self):
         year_range = range(2010, 2021)
         hubs = me_factories.HubCFactory.create_batch(1000)
+        sat_tsc2 = []
+        sat_tsc3 = []
         value_date_lists = {
             year: ValueDateListFactory(value_date=montrek_time(year, 1, 1))
             for year in year_range
         }
-        null_value_date_list = ValueDateListFactory(value_date=None)
         for hub in hubs:
-            me_factories.SatC1Factory.create(
-                hub_value_date=me_factories.CHubValueDateFactory(
-                    hub=hub, value_date_list=null_value_date_list
-                )
-            )
+            me_factories.SatC1Factory.create(hub_entity=hub)
             for year in year_range:
                 hvd = me_factories.CHubValueDateFactory.create(
                     hub=hub, value_date_list=value_date_lists[year]
                 )
-                me_factories.SatTSC2Factory(
-                    hub_value_date=hvd,
+                sat_tsc2.append(
+                    me_models.SatTSC2(
+                        hub_value_date=hvd, value_date=hvd.value_date_list.value_date
+                    )
                 )
-                me_factories.SatTSC3Factory(
-                    hub_value_date=hvd,
+                sat_tsc3.append(
+                    me_models.SatTSC3(
+                        hub_value_date=hvd, value_date=hvd.value_date_list.value_date
+                    )
                 )
+        me_models.SatTSC2.objects.bulk_create(sat_tsc2, batch_size=1000)
+        me_models.SatTSC3.objects.bulk_create(sat_tsc3, batch_size=1000)
         repository = HubCRepository()
         filter_data = {
             "request_path": "test_path",
@@ -2643,10 +2640,8 @@ class TestRepositoryProperties(TestCase):
         expected_values = ["comment", "field_c1_str", "field_c1_bool", "hub_entity_id"]
         self.assertTrue(
             all(
-                [
-                    expected_value in repo_c_static_satellite_fields
-                    for expected_value in expected_values
-                ]
+                expected_value in repo_c_static_satellite_fields
+                for expected_value in expected_values
             )
         )
 
@@ -2666,10 +2661,8 @@ class TestRepositoryProperties(TestCase):
         ]
         self.assertTrue(
             all(
-                [
-                    expected_value in repo_c_time_series_satellite_fields
-                    for expected_value in expected_values
-                ]
+                expected_value in repo_c_time_series_satellite_fields
+                for expected_value in expected_values
             )
         )
 
@@ -2942,7 +2935,7 @@ class TestRepositoryQueryConcept(TestCase):
         tsd2_fac1 = me_factories.SatTSD2Factory(
             field_tsd2_float=10, value_date="2019-09-09"
         )
-        tsd2_fac2 = me_factories.SatTSD2Factory(
+        me_factories.SatTSD2Factory(
             field_tsd2_float=20,
             hub_entity=tsd2_fac1.hub_value_date.hub,
             value_date="2024-09-09",
@@ -3456,3 +3449,28 @@ class TestRepositoryAsDF(TestCase):
         repo.store_in_view_model()
         df = repo.get_df()
         self.assertEqual(df.iloc[5]["field_b1_date"].date(), datetime.date(1677, 9, 22))
+
+
+class TestReceiveWithAliases(TestCase):
+    def test_simple_receive_statement(self):
+        """
+        When a repository has satellites attached which have a field identifier and the hub entity as identifier field,
+        the right hub entity has to be found
+        """
+        hubs = me_factories.HubAFactory.create_batch(2)
+        me_factories.SatA1Factory(
+            hub_entity=hubs[0], field_a1_str="test_1", field_a1_int=1
+        )
+        me_factories.SatA1Factory(
+            hub_entity=hubs[1], field_a1_str="test_2", field_a1_int=2
+        )
+        me_factories.SatA2Factory(hub_entity=hubs[0], field_a2_str="A2 1")
+        me_factories.SatA2Factory(hub_entity=hubs[1], field_a2_str="A2 2")
+        repository = HubARepository()
+        repository.store_in_view_model()
+        test_query = repository.receive()
+        self.assertEqual(test_query.count(), 2)
+        self.assertEqual(test_query[0].field_a1_str, "test_1")
+        self.assertEqual(test_query[1].field_a1_str, "test_2")
+        self.assertEqual(test_query[0].field_a2_str, "A2 1")
+        self.assertEqual(test_query[1].field_a2_str, "A2 2")

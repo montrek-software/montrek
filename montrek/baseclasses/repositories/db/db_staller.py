@@ -109,11 +109,13 @@ class DbStaller:
     def get_static_satellite_classes(self) -> list[type[MontrekSatelliteABC]]:
         static_hub_classes = [
             sat_class
-            for sat_class in self.new_satellites.keys()
+            for sat_class in self.new_satellites
             if not sat_class.is_timeseries
         ]
         hub_as_identifier_sat_classes = [
-            sat for sat in static_hub_classes if "hub_entity_id" in sat.identifier_fields
+            sat
+            for sat in static_hub_classes
+            if "hub_entity_id" in sat.identifier_fields
         ]
         hub_not_identifier_sat_classes = [
             sat
@@ -124,9 +126,7 @@ class DbStaller:
 
     def get_ts_satellite_classes(self) -> list[type[MontrekSatelliteABC]]:
         return [
-            sat_class
-            for sat_class in self.new_satellites.keys()
-            if sat_class.is_timeseries
+            sat_class for sat_class in self.new_satellites if sat_class.is_timeseries
         ]
 
     def clean_hubs(self):

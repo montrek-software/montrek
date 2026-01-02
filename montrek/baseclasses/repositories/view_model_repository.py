@@ -43,7 +43,6 @@ class ViewModelRepository:
             field.blank = True
             field.name = key
             fields[key] = field
-
         fields["value_date_list_id"] = models.IntegerField(null=True, blank=True)
         fields["hub"] = models.ForeignKey(hub_class, on_delete=models.CASCADE)
 
@@ -159,11 +158,11 @@ class ViewModelRepository:
                 with transaction.atomic():
                     self._try_store_query_in_view_model(query, mode)
                 break
-            except (IntegrityError, UniqueViolation):
+            except (IntegrityError, UniqueViolation) as err:
                 if attempt == self.MAX_RETRIES - 1:
                     raise ValueError(
                         "Maximum number of retries exceeded when storing to the view model due to repeated integrity errors."
-                    )
+                    ) from err
                 time.sleep(0.1)  # brief backoff
 
     def _try_store_query_in_view_model(self, query: models.QuerySet, mode: str = "all"):
@@ -174,12 +173,11 @@ class ViewModelRepository:
                     datetime.datetime.combine(row["value_date"], datetime.time()),
                     timezone.get_current_timezone(),
                 )
-
         instances = [self.view_model(**item) for item in data]
         if mode == "all":
             self.view_model.objects.all().delete()
             self.view_model.objects.bulk_create(instances, batch_size=1000)
-        elif mode == "create" or mode == "update":
+        elif mode in {"create", "update"}:
             if instances:
                 self.view_model.objects.filter(
                     pk__in=[inst.pk for inst in instances]
