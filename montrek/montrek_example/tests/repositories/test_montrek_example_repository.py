@@ -1,6 +1,4 @@
 import datetime
-import sys
-import unittest
 from unittest.mock import patch
 
 import numpy as np
@@ -10,7 +8,7 @@ from baseclasses.tests.factories.montrek_factory_schemas import ValueDateListFac
 from baseclasses.utils import montrek_time
 from django.core.exceptions import PermissionDenied
 from django.db import ProgrammingError, models
-from django.test import TestCase, TransactionTestCase, tag
+from django.test import TestCase, TransactionTestCase
 from django.utils import timezone
 from freezegun import freeze_time
 from montrek_example.models import example_models as me_models
@@ -2279,34 +2277,33 @@ class TestStaticAggFuncs(TestCase):
 
 
 class TestTimeSeriesPerformance(TestCase):
-    @unittest.skipUnless(
-        "--tag=slow" in sys.argv, "Extremely slow tests only run on demand"
-    )
-    @tag("slow")
     def test_large_datasets_with_filter__performance(self):
         year_range = range(2010, 2021)
         hubs = me_factories.HubCFactory.create_batch(1000)
+        sat_tsc2 = []
+        sat_tsc3 = []
         value_date_lists = {
             year: ValueDateListFactory(value_date=montrek_time(year, 1, 1))
             for year in year_range
         }
-        null_value_date_list = ValueDateListFactory(value_date=None)
         for hub in hubs:
-            me_factories.SatC1Factory.create(
-                hub_value_date=me_factories.CHubValueDateFactory(
-                    hub=hub, value_date_list=null_value_date_list
-                )
-            )
+            me_factories.SatC1Factory.create(hub_entity=hub)
             for year in year_range:
                 hvd = me_factories.CHubValueDateFactory.create(
                     hub=hub, value_date_list=value_date_lists[year]
                 )
-                me_factories.SatTSC2Factory(
-                    hub_value_date=hvd,
+                sat_tsc2.append(
+                    me_models.SatTSC2(
+                        hub_value_date=hvd, value_date=hvd.value_date_list.value_date
+                    )
                 )
-                me_factories.SatTSC3Factory(
-                    hub_value_date=hvd,
+                sat_tsc3.append(
+                    me_models.SatTSC3(
+                        hub_value_date=hvd, value_date=hvd.value_date_list.value_date
+                    )
                 )
+        me_models.SatTSC2.objects.bulk_create(sat_tsc2, batch_size=1000)
+        me_models.SatTSC3.objects.bulk_create(sat_tsc3, batch_size=1000)
         repository = HubCRepository()
         filter_data = {
             "request_path": "test_path",
