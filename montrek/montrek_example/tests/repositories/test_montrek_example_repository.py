@@ -3297,7 +3297,7 @@ class TestRepositoryAsDF(TestCase):
         repo = HubARepository({})
         repo.store_in_view_model()
         test_df = repo.get_df()
-        self.assertEqual(test_df.shape, (5, 14))
+        self.assertEqual(test_df.shape, (5, 13))
 
     def test_get_df_selected_columns(self):
         repo = HubARepository({})
@@ -3364,6 +3364,13 @@ class TestRepositoryAsDF(TestCase):
             "UTC",
             "created_at should be in UTC",
         )
+
+    def test_ts_df(self):
+        me_factories.SatTSC2Factory(value_date="2023-12-24")
+        me_factories.SatTSC2Factory(value_date="2024-12-24")
+        repo = HubCRepository()
+        df = repo.get_df()
+        self.assertIn("value_date", df.columns)
 
     def test_get_df_empty(self):
         repo = HubARepository({})

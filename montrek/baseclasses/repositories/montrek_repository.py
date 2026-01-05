@@ -487,11 +487,14 @@ class MontrekRepository:
         columns: list[str] | None = None,
         no_category_columns: list[str] | None = None,
     ) -> pd.DataFrame:
+        columns = (
+            self.get_all_annotated_fields() + ["id", "value_date_list_id"]
+            if columns is None
+            else columns
+        )
         dtypes = self.get_df_dtypes(no_category_columns)
-
-        if columns is not None:
-            query = query.values(*columns)
-            dtypes = {k: v for k, v in dtypes.items() if k in columns}
+        dtypes = {k: v for k, v in dtypes.items() if k in columns}
+        query = query.values(*columns)
         df = read_frame(query)
         df = self._normalize_min_dates(df, dtypes)
         df = df.astype(dtypes)
