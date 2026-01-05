@@ -70,5 +70,5 @@ class DbWriter:
                     sat.hub_value_date_id = sat.hub_value_date.id
                 else:
                     sat.hub_entity_id = sat.hub_entity.id
-                _ = sat._get_hash_identifier()
-                _ = sat._get_hash_value()
+                _ = sat.get_hash_identifier
+                _ = sat.get_hash_value
