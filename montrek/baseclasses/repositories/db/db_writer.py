@@ -18,7 +18,6 @@ class DbWriter:
         self.write_updated_satellites()
         self.write_links()
         self.write_updated_links()
-        self.db_staller.setup()
 
     def write_hubs(self):
         new_hubs = self.db_staller.get_hubs()

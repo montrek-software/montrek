@@ -98,6 +98,7 @@ class MontrekRepository:
         db_writer.write()
         self.save_db_staller(db_staller)
         self.store_in_view_model(db_staller)
+        db_staller.setup()
         self._debug_logging("End create by dict")
         return db_creator.hub
 

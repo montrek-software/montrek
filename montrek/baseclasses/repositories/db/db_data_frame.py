@@ -30,6 +30,7 @@ class DbDataFrame:
         self._process_time_series_data()
         self.db_writer.write()
         self._assign_hubs()
+        self.db_staller.setup()
 
     def _process_static_data(self):
         self.link_columns = self.get_link_field_names()
@@ -62,7 +63,7 @@ class DbDataFrame:
         creator = DbBatchCreator(DbCreator(self.db_staller, self.user_id), df)
         creator.fill_data_collection()
         creator.create()
-        hubs = dict(zip(df.index.tolist(), creator.hubs))
+        hubs = dict(zip(df.index.tolist(), creator.hubs, strict=False))
 
         # Preserve original DataFrame shape semantics
         self.data_frame = self.data_frame.copy()
