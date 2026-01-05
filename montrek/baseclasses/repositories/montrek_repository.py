@@ -488,7 +488,9 @@ class MontrekRepository:
         no_category_columns: list[str] | None = None,
     ) -> pd.DataFrame:
         columns = (
-            self.get_all_annotated_fields() + ["id"] if columns is None else columns
+            self.get_all_annotated_fields() + ["id", "value_date_list_id"]
+            if columns is None
+            else columns
         )
         dtypes = self.get_df_dtypes(no_category_columns)
         dtypes = {k: v for k, v in dtypes.items() if k in columns}
