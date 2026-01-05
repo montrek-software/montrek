@@ -490,8 +490,11 @@ class MontrekRepository:
         dtypes = self.get_df_dtypes(no_category_columns)
 
         if columns is not None:
-            query = query.values(*columns)
             dtypes = {k: v for k, v in dtypes.items() if k in columns}
+        else:
+            columns = self.get_all_annotated_fields()
+
+        query = query.values(*columns)
         df = read_frame(query)
         df = self._normalize_min_dates(df, dtypes)
         df = df.astype(dtypes)
