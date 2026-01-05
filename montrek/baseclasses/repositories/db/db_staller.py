@@ -35,22 +35,25 @@ class DbStallerProtocol(Protocol):
 class DbStaller:
     def __init__(self, annotator: Annotator):
         self.annotator = annotator
+        self.setup()
+
+    def setup(self):
         self.new_satellites: StalledSatelliteDict = {
-            sat_class: [] for sat_class in annotator.annotated_satellite_classes
+            sat_class: [] for sat_class in self.annotator.annotated_satellite_classes
         }
         self.updated_satellites: StalledSatelliteDict = {
-            sat_class: [] for sat_class in annotator.annotated_satellite_classes
+            sat_class: [] for sat_class in self.annotator.annotated_satellite_classes
         }
-        self.hub_class: type[MontrekHubProtocol] = annotator.hub_class
+        self.hub_class: type[MontrekHubProtocol] = self.annotator.hub_class
         self.hubs: StalledHubDict = {self.hub_class: []}
         self.updated_hubs: StalledHubDict = {self.hub_class: []}
         self.hub_value_date_class = self.hub_class.hub_value_date.field.model
         self.hub_value_dates: StalledHubValueDateDict = {self.hub_value_date_class: []}
         self.links: StalledLinksDict = {
-            link_class: [] for link_class in annotator.annotated_link_classes
+            link_class: [] for link_class in self.annotator.annotated_link_classes
         }
         self.updated_links: StalledLinksDict = {
-            link_class: [] for link_class in annotator.annotated_link_classes
+            link_class: [] for link_class in self.annotator.annotated_link_classes
         }
         self.creation_date = timezone.now()
 

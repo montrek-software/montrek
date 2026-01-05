@@ -18,6 +18,7 @@ class DbWriter:
         self.write_updated_satellites()
         self.write_links()
         self.write_updated_links()
+        self.db_staller.setup()
 
     def write_hubs(self):
         new_hubs = self.db_staller.get_hubs()
@@ -70,5 +71,5 @@ class DbWriter:
                     sat.hub_value_date_id = sat.hub_value_date.id
                 else:
                     sat.hub_entity_id = sat.hub_entity.id
-                sat.get_hash_identifier
-                sat.get_hash_value
+                sat._get_hash_identifier()
+                sat._get_hash_value()
