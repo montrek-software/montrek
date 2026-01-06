@@ -105,6 +105,7 @@ class MontrekRepository:
         self._debug_logging("raise for anonymous user")
         self._raise_for_anonymous_user()
         self._debug_logging("Get DbDataFrame")
+        data_frame = self.skim_data_frame(data_frame)
         db_data_frame = DbDataFrame(self.annotator, self.session_user_id)
         self._debug_logging("Write to DB")
         db_data_frame.create(data_frame)
@@ -264,6 +265,9 @@ class MontrekRepository:
 
     def get_all_annotated_fields(self) -> list[str]:
         return self.annotator.get_annotated_field_names()
+
+    def get_link_names(self) -> list[str]:
+        return [f.name for f in self.hub_class._meta.many_to_many]
 
     def std_create_object(self, data: dict[str, Any]) -> MontrekHubABC:
         return self.create_by_dict(data)
@@ -500,6 +504,11 @@ class MontrekRepository:
         df = df.astype(dtypes)
         df = self._apply_category_dtype(df, no_category_columns=no_category_columns)
         return df
+
+    def skim_data_frame(self, data_frame: pd.DataFrame) -> pd.DataFrame:
+        columns = self.get_all_annotated_fields() + self.get_link_names()
+        columns = [col for col in columns if col in data_frame.columns]
+        return data_frame.loc[:, columns]
 
     def _apply_category_dtype(
         self,

@@ -123,9 +123,7 @@ class HubARepository6(MontrekRepository):
         )
         self.add_satellite_fields_annotations(
             me_models.SatA1,
-            [
-                "field_a1_str",
-            ],
+            ["field_a1_str", "field_a1_int"],
         )
 
 

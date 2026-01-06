@@ -36,7 +36,7 @@ class DbDataFrame:
         static_columns = self.get_static_satellite_field_names()
         static_columns.extend(self.link_columns)
         # If there are no static columns or only the hub, which is already there, skip data writing
-        if len(static_columns) == 0 or static_columns == ["hub_entity_id"]:
+        if len(static_columns) == 0 or static_columns == ["comment", "hub_entity_id"]:
             return
         self._process_data(static_columns)
         self.db_writer.write_hubs()
@@ -62,7 +62,7 @@ class DbDataFrame:
         creator = DbBatchCreator(DbCreator(self.db_staller, self.user_id), df)
         creator.fill_data_collection()
         creator.create()
-        hubs = dict(zip(df.index.tolist(), creator.hubs))
+        hubs = dict(zip(df.index.tolist(), creator.hubs, strict=False))
 
         # Preserve original DataFrame shape semantics
         self.data_frame = self.data_frame.copy()
