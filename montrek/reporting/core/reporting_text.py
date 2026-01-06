@@ -9,10 +9,22 @@ from baseclasses.models import HubValueDate
 from baseclasses.sanitizer import HtmlSanitizer
 from django.conf import settings
 from django.template import Context, Template
+from django.template.loader import render_to_string
 from reporting.constants import WORKBENCH_PATH, ReportingTextType
-from reporting.core.reporting_protocols import ReportingElement
 from reporting.core.text_converter import HtmlLatexConverter
 from reporting.lib.protocols import ReportElementProtocol
+
+
+class ReportingElement:
+    template_name: str = ""
+
+    def get_context_data(self) -> dict[str, str]:
+        return {}
+
+    def to_html(self) -> str:
+        return render_to_string(
+            f"reporting_elements/{self.template_name}.html", self.get_context_data()
+        )
 
 
 class ReportingTextParagraph(ReportingElement):
@@ -127,14 +139,14 @@ class ReportingHeader1:
     def __init__(self, text: str):
         self.text = text
 
-    def to_html(self) -> str:
-        return f"<h1>{self.text}</h1>"
-
     def to_latex(self) -> str:
         return f"\\section*{{{self.text}}}"
 
     def to_json(self) -> dict[str, str]:
         return {"reporting_header_1": self.text}
+
+    def get_context_data(self) -> dict[str, str]:
+        return {"text": self.text}
 
 
 class ReportingHeader2:
@@ -292,3 +304,19 @@ class MarkdownReportingElement:
 
     def to_json(self) -> dict[str, str]:
         return {"markdown_reporting_element": self.markdown_text}
+
+
+class ReportingError(ReportingElement):
+    template_name = "error"
+
+    def __init__(self, error_text: str):
+        self.error_text = error_text
+
+    def get_context_data(self) -> dict[str, str]:
+        return {"error_text": self.error_text}
+
+    def to_json(self) -> dict[str, str]:
+        return {"error": self.error_text}
+
+    def to_latex(self) -> str:
+        return f"\\textbf{{{self.error_text}}}"

@@ -18,6 +18,7 @@ from reporting.core.reporting_text import (
     ReportingText,
     ReportingTextParagraph,
     Vspace,
+    ReportingError,
 )
 
 
@@ -373,3 +374,13 @@ class TestMarkdownReportingElement(ReportingElementTestCase):
     def get_call_parameters(self) -> dict:
         markdown_text = "This is a **bold** text with a table:\n\n| Header1 | Header2 |\n|---------|---------|\n| Cell1   | Cell2   |"
         return {"markdown_text": markdown_text}
+
+
+class TestReportingError(ReportingElementTestCase):
+    reporting_element_class = ReportingError
+    expected_html = '<div class="alert">Error Text</div>'
+    expected_latex = "\\textbf{Error Text}"
+    expected_json = {"error": "Error Text"}
+
+    def get_call_parameters(self) -> dict:
+        return {"error_text": "Error Text"}
