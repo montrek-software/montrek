@@ -50,16 +50,17 @@ class MontrekReportManager(MontrekManager):
                 html_list.append(report_element.to_html())
         except Exception as e:
             self.cleanup_report_elements()
-            error_html = f'<div class="alert alert-danger"><strong>Error during report generation: {e}</strong></div>'
+            error_header = f"Error during report generation: {e}"
             if settings.DEBUG:
                 error_details = traceback.format_exc()
-                error_details = error_details.replace("\n", "<br>")
-                error_html += f'<div class="alert">{error_details}</div>'
+                error_details = error_details.split("\n")
             else:
-                error_html += (
-                    '<div class="alert"> Contact admin and check Debug mode</div>'
-                )
-            return [error_html]
+                error_details = ["Contact admin and check Debug mode"]
+            return [
+                rt.ReportingError(
+                    error_header=error_header, error_texts=error_details
+                ).to_html()
+            ]
         html_list.append(self._get_footer())
         self.cleanup_report_elements()
         return html_list

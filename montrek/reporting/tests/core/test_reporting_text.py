@@ -378,9 +378,15 @@ class TestMarkdownReportingElement(ReportingElementTestCase):
 
 class TestReportingError(ReportingElementTestCase):
     reporting_element_class = ReportingError
-    expected_html = '<div class="alert">Error Text</div>'
-    expected_latex = "\\textbf{Error Text}"
-    expected_json = {"error": "Error Text"}
+    expected_html = '<divclass="alertalert-danger"><strong>ErrorHeader</strong></div><divclass="alertalert-danger">ErrorText1<br>ErrorText2<br></div>'
+    expected_latex = r"\textbf{Error Header}\\Error Text1\\Error Text2"
+    expected_json = {
+        "error_header": "Error Header",
+        "error_texts": ["Error Text1", "Error Text2"],
+    }
 
     def get_call_parameters(self) -> dict:
-        return {"error_text": "Error Text"}
+        return {
+            "error_texts": ["Error Text1", "Error Text2"],
+            "error_header": "Error Header",
+        }

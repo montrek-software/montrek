@@ -14,11 +14,13 @@ from reporting.constants import WORKBENCH_PATH, ReportingTextType
 from reporting.core.text_converter import HtmlLatexConverter
 from reporting.lib.protocols import ReportElementProtocol
 
+type ContextTypes = dict[str, str | list[str]]
+
 
 class ReportingElement:
     template_name: str = ""
 
-    def get_context_data(self) -> dict[str, str]:
+    def get_context_data(self) -> ContextTypes:
         return {}
 
     def to_html(self) -> str:
@@ -309,14 +311,15 @@ class MarkdownReportingElement:
 class ReportingError(ReportingElement):
     template_name = "error"
 
-    def __init__(self, error_text: str):
-        self.error_text = error_text
+    def __init__(self, error_header: str, error_texts: list[str]):
+        self.error_header = error_header
+        self.error_texts = error_texts
 
-    def get_context_data(self) -> dict[str, str]:
-        return {"error_text": self.error_text}
+    def get_context_data(self) -> ContextTypes:
+        return {"error_header": self.error_header, "error_texts": self.error_texts}
 
-    def to_json(self) -> dict[str, str]:
-        return {"error": self.error_text}
+    def to_json(self) -> ContextTypes:
+        return self.get_context_data()
 
     def to_latex(self) -> str:
-        return f"\\textbf{{{self.error_text}}}"
+        return f"\\textbf{{{self.error_header}}}\\\\{'\\\\'.join(self.error_texts)}"
