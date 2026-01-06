@@ -55,16 +55,6 @@ class ReportGridLayout(ReportingElement):
 
         return {"grid_rows": grid_rows}
 
-    # def to_html(self):
-    #     html_str = ""
-    #     for row in self.report_grid_elements.report_grid_elements_container:
-    #         html_str += '<div class="row">'
-    #         col_len = floor(12 / len(row))
-    #         for element in row:
-    #             html_str += f'<div class="col-lg-{col_len}">{element.to_html()}</div>'
-    #         html_str += "</div>"
-    #     return html_str
-
     def to_latex(self):
         col_str = self._get_latex_column_definition()
         latex_str = "\n\n" if self.is_nested else "\n\n\\begin{table}[H]"
