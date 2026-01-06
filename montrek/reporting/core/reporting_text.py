@@ -12,7 +12,7 @@ from django.template.loader import render_to_string
 from reporting.constants import WORKBENCH_PATH, ReportingTextType
 from reporting.core.text_converter import HtmlLatexConverter
 
-type ContextTypes = dict[str, str | list[str]]
+type ContextTypes = dict[str, str | list[str] | int]
 
 
 class ReportingElement:
@@ -133,12 +133,11 @@ class ReportingHeader1(ReportingText):
         return {"reporting_header_1": self.text}
 
 
-class ReportingHeader2:
+class ReportingHeader2(ReportingText):
+    template_name = "header2"
+
     def __init__(self, text: str):
         self.text = text
-
-    def to_html(self) -> str:
-        return f"<h2>{self.text}</h2>"
 
     def to_latex(self) -> str:
         return f"\\subsection*{{{self.text}}}"
@@ -147,18 +146,20 @@ class ReportingHeader2:
         return {"reporting_header_2": self.text}
 
 
-class Vspace:
+class Vspace(ReportingElement):
+    template_name = "vspace"
+
     def __init__(self, space: int):
         self.space = space
 
     def to_latex(self) -> str:
         return f"\\vspace{{{self.space}mm}}"
 
-    def to_html(self) -> str:
-        return f'<div style="height:{self.space}mm;"></div>'
-
-    def to_json(self) -> dict[str, int]:
+    def to_json(self) -> ContextTypes:
         return {"vspace": self.space}
+
+    def get_context_data(self) -> ContextTypes:
+        return self.to_json()
 
 
 class NewPage:
