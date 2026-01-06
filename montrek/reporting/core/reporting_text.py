@@ -8,7 +8,6 @@ import requests
 from baseclasses.models import HubValueDate
 from baseclasses.sanitizer import HtmlSanitizer
 from django.conf import settings
-from django.template import Context, Template
 from django.template.loader import render_to_string
 from reporting.constants import WORKBENCH_PATH, ReportingTextType
 from reporting.core.text_converter import HtmlLatexConverter
@@ -86,6 +85,8 @@ class ReportingParagraph(ReportingText):
 
 
 class ReportingEditableText(ReportingParagraph):
+    template_name = "editable_text"
+
     def __init__(
         self,
         obj: HubValueDate,
@@ -102,25 +103,13 @@ class ReportingEditableText(ReportingParagraph):
         self.header = header
         self.field = field
 
-    def _html(self, text: str) -> str:
-        return Template(
-            f"""
-        <div class="row">
-         <div class="col"><h2>{self.header}</h2></div>
-         <div id="field-content-container-{self.field}">
-             {{% include "partials/display_field.html" %}}
-         </div>
-        </div>
-"""
-        ).render(
-            Context(
-                {
-                    "object_content": text,
-                    "edit_url": self.edit_url,
-                    "field": self.field,
-                }
-            )
-        )
+    def get_context_data(self) -> ContextTypes:
+        return {
+            "header": self.header,
+            "object_content": self.text,
+            "edit_url": self.edit_url,
+            "field": self.field,
+        }
 
     def to_latex(self) -> str:
         if self.header != "":
