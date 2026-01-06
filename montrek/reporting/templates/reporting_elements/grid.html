@@ -1,0 +1,7 @@
+{% for grid_row in grid_rows %}
+  <div class="row">
+      {% for element in grid_row.html_elements %}
+  <div class="col-lg-{{ grid_row.col_len }}">{{ element }}</div>
+      {% endfor %}
+  </div>
+{% endfor %}

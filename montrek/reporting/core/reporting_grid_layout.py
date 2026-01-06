@@ -1,4 +1,6 @@
 from math import floor
+from dataclasses import dataclass
+from reporting.core.reporting_text import ContextTypes, ReportingElement
 
 from reporting.managers.montrek_report_manager import ReportElementProtocol
 
@@ -20,7 +22,15 @@ class ReportGridElements:
         self.report_grid_elements_container[row][col] = report_element
 
 
-class ReportGridLayout:
+@dataclass
+class GridRowDisplay:
+    html_elements: list[str]
+    col_len: int
+
+
+class ReportGridLayout(ReportingElement):
+    template_name = "grid"
+
     def __init__(self, no_of_rows: int, no_of_cols: int, is_nested=False):
         self.report_grid_elements = ReportGridElements(no_of_rows, no_of_cols)
         self.is_nested = is_nested
@@ -34,15 +44,26 @@ class ReportGridLayout:
     ):
         self.report_grid_elements.add_report_grid_element(report_element, row, col)
 
-    def to_html(self):
-        html_str = ""
+    def get_context_data(self) -> ContextTypes:
+        grid_rows = []
         for row in self.report_grid_elements.report_grid_elements_container:
-            html_str += '<div class="row">'
-            col_len = floor(12 / len(row))
-            for element in row:
-                html_str += f'<div class="col-lg-{col_len}">{element.to_html()}</div>'
-            html_str += "</div>"
-        return html_str
+            html_elements = [element.to_html() for element in row]
+            col_len = floor(12 / len(html_elements))
+            grid_rows.append(
+                GridRowDisplay(html_elements=html_elements, col_len=col_len)
+            )
+
+        return {"grid_rows": grid_rows}
+
+    # def to_html(self):
+    #     html_str = ""
+    #     for row in self.report_grid_elements.report_grid_elements_container:
+    #         html_str += '<div class="row">'
+    #         col_len = floor(12 / len(row))
+    #         for element in row:
+    #             html_str += f'<div class="col-lg-{col_len}">{element.to_html()}</div>'
+    #         html_str += "</div>"
+    #     return html_str
 
     def to_latex(self):
         col_str = self._get_latex_column_definition()
