@@ -222,7 +222,9 @@ class ReportingImage(ReportingElement):
         return {"reporting_image": self.image_path, "width": self.width * 100}
 
 
-class ReportingMap:
+class ReportingMap(ReportingElement):
+    template_name = "map"
+
     def __init__(self, longitude: int, latitude: int, offset: int = 5):
         box_coords = [
             longitude - offset,
@@ -236,10 +238,10 @@ class ReportingMap:
         # TODO: Implement LaTeX conversion for iframe
         return ""
 
-    def to_html(self) -> str:
-        return f'<iframe src="{self.embedded_url}" style="width: 100%; aspect-ratio: 4/3; height: auto; border:2;" loading="lazy" allowfullscreen></iframe>'
-
     def to_json(self) -> dict[str, str]:
+        return {"reporting_map": self.embedded_url}
+
+    def get_context_data(self) -> ContextTypes:
         return {"reporting_map": self.embedded_url}
 
 
@@ -263,12 +265,14 @@ class ClientLogo(ReportingImage):
         return f"\\includegraphics[height=1cm]{{{value}}}"
 
 
-class MarkdownReportingElement:
+class MarkdownReportingElement(ReportingElement):
+    template_name = "markdown"
+
     def __init__(self, markdown_text: str):
         self.markdown_text = markdown_text
 
-    def to_html(self) -> str:
-        return markdown.markdown(
+    def convert_to_html(self) -> str:
+        html = markdown.markdown(
             self.markdown_text,
             extensions=[
                 "markdown.extensions.tables",
@@ -282,14 +286,18 @@ class MarkdownReportingElement:
                 }
             },
         )
+        return HtmlSanitizer().clean_html(html)
 
     def to_latex(self) -> str:
-        html_text = self.to_html()
+        html_text = self.convert_to_html()
         converter = HtmlLatexConverter()
         return converter.convert(html_text)
 
     def to_json(self) -> dict[str, str]:
         return {"markdown_reporting_element": self.markdown_text}
+
+    def get_context_data(self) -> ContextTypes:
+        return {"text": self.convert_to_html()}
 
 
 class ReportingError(ReportingElement):

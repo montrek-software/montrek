@@ -376,6 +376,12 @@ class TestMarkdownReportingElement(ReportingElementTestCase):
         markdown_text = "This is a **bold** text with a table:\n\n| Header1 | Header2 |\n|---------|---------|\n| Cell1   | Cell2   |"
         return {"markdown_text": markdown_text}
 
+    def test_malicious_text(self):
+        text = "<script>HACKERATTACK</script>"
+        rep_element = self.reporting_element_class(text)
+        test_html = rep_element.to_html()
+        self.assertEqual(test_html, "HACKERATTACK\n")
+
 
 class TestReportingError(ReportingElementTestCase):
     reporting_element_class = ReportingError
