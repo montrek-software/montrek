@@ -36,7 +36,9 @@ class DbDataFrame:
         static_columns = self.get_static_satellite_field_names()
         static_columns.extend(self.link_columns)
         # If there are no static columns or only the hub, which is already there, skip data writing
-        if len(static_columns) == 0 or static_columns == ["comment", "hub_entity_id"]:
+        if len(static_columns) == 0 or set(static_columns).issubset(
+            {"comment", "hub_entity_id"}
+        ):
             return
         self._process_data(static_columns)
         self.db_writer.write_hubs()
