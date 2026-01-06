@@ -1,4 +1,7 @@
-{{ report | safe}}
+{% for report_element in report%}
+  {{ report_element }}
+{% endfor %}
+
 <script>
   (function wireAllGraphs() {
     document

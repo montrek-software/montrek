@@ -42,12 +42,12 @@ class MontrekReportManager(MontrekManager):
     def cleanup_report_elements(self) -> None:
         self._report_elements = []
 
-    def to_html(self) -> str:
-        html_str = ""
+    def to_html(self) -> list[str]:
+        html_list = []
         try:
             self.collect_report_elements()
             for report_element in self.report_elements:
-                html_str += report_element.to_html()
+                html_list.append(report_element.to_html())
         except Exception as e:
             self.cleanup_report_elements()
             error_html = f'<div class="alert alert-danger"><strong>Error during report generation: {e}</strong></div>'
@@ -59,10 +59,10 @@ class MontrekReportManager(MontrekManager):
                 error_html += (
                     '<div class="alert"> Contact admin and check Debug mode</div>'
                 )
-            return error_html
-        html_str += self._get_footer()
+            return [error_html]
+        html_list.append(self._get_footer())
         self.cleanup_report_elements()
-        return html_str
+        return html_list
 
     def to_latex(self) -> str:
         latex_str = ""
