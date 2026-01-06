@@ -12,7 +12,7 @@ from django.template.loader import render_to_string
 from reporting.constants import WORKBENCH_PATH, ReportingTextType
 from reporting.core.text_converter import HtmlLatexConverter
 
-type ContextTypes = dict[str, str | list[str] | int]
+type ContextTypes = dict[str, str | list[str] | int | float]
 
 
 class ReportingElement:
@@ -172,7 +172,9 @@ class NewPage(ReportingElement):
         return {"new_page": True}
 
 
-class ReportingImage:
+class ReportingImage(ReportingElement):
+    template_name = "image"
+
     def __init__(self, image_path: str, width: float = 1.0):
         self.image_path = image_path
         self.width = width
@@ -213,11 +215,11 @@ class ReportingImage:
         value = HtmlLatexConverter.convert(value)
         return f"\\includegraphics[width={self.width}\\textwidth]{{{value}}}"
 
-    def to_html(self) -> str:
-        return f'<div style="text-align: right;"><img src="{self.image_path}" alt="image" style="width:{self.width * 100}%;"></div>'
-
     def to_json(self) -> dict[str, str]:
         return {"reporting_image": self.image_path}
+
+    def get_context_data(self) -> ContextTypes:
+        return {"reporting_image": self.image_path, "width": self.width * 100}
 
 
 class ReportingMap:
