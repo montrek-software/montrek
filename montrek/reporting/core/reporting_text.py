@@ -12,7 +12,6 @@ from django.template import Context, Template
 from django.template.loader import render_to_string
 from reporting.constants import WORKBENCH_PATH, ReportingTextType
 from reporting.core.text_converter import HtmlLatexConverter
-from reporting.lib.protocols import ReportElementProtocol
 
 type ContextTypes = dict[str, str | list[str]]
 
@@ -50,7 +49,7 @@ class ReportingTextParagraph(ReportingElement):
         return self.text
 
 
-class ReportingText(ReportElementProtocol):
+class ReportingText(ReportingElement):
     def __init__(
         self,
         text: str,
@@ -71,24 +70,19 @@ class ReportingText(ReportElementProtocol):
                 text = f"\\textbf{{\\color{{red}} Unknown Text Type {self.reporting_text_type}"
         return text
 
-    def to_html(self) -> str:
-        text = HtmlSanitizer().display_text_as_html(self.text)
-        return self._html(text)
+    def get_context_data(self) -> ContextTypes:
+        return {"text": HtmlSanitizer().display_text_as_html(self.text)}
 
     def to_json(self) -> dict[str, str]:
         return {self.__class__.__name__.lower(): self.text}
 
-    def _html(self, text: str) -> str:
-        return text
-
 
 class ReportingParagraph(ReportingText):
+    template_name = "paragraph"
+
     def to_latex(self) -> str:
         text = super().to_latex()
         return f"\\begin{{justify}}{text}\\end{{justify}}"
-
-    def _html(self, text: str) -> str:
-        return f"<p>{text}</p>"
 
 
 class ReportingEditableText(ReportingParagraph):
@@ -137,7 +131,9 @@ class ReportingEditableText(ReportingParagraph):
         return latex_str
 
 
-class ReportingHeader1:
+class ReportingHeader1(ReportingText):
+    template_name = "header1"
+
     def __init__(self, text: str):
         self.text = text
 
@@ -146,9 +142,6 @@ class ReportingHeader1:
 
     def to_json(self) -> dict[str, str]:
         return {"reporting_header_1": self.text}
-
-    def get_context_data(self) -> dict[str, str]:
-        return {"text": self.text}
 
 
 class ReportingHeader2:
@@ -323,3 +316,7 @@ class ReportingError(ReportingElement):
 
     def to_latex(self) -> str:
         return f"\\textbf{{{self.error_header}}}\\\\{'\\\\'.join(self.error_texts)}"
+
+
+class ReportingFooter(ReportingText):
+    template_name = "footer"

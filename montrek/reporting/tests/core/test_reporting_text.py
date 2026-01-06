@@ -16,6 +16,7 @@ from reporting.core.reporting_text import (
     ReportingMap,
     ReportingParagraph,
     ReportingText,
+    ReportingFooter,
     ReportingTextParagraph,
     Vspace,
     ReportingError,
@@ -390,3 +391,15 @@ class TestReportingError(ReportingElementTestCase):
             "error_texts": ["Error Text1", "Error Text2"],
             "error_header": "Error Header",
         }
+
+
+class TestReportingFooter(ReportingElementTestCase):
+    reporting_element_class = ReportingFooter
+    expected_html = (
+        '<divstyle="height:2cm"></div><hr><divstyle="color:grey">FooterText</div>'
+    )
+    expected_latex = "Footer Text"
+    expected_json = {"reportingfooter": "Footer Text"}
+
+    def get_call_parameters(self) -> dict:
+        return {"text": "Footer Text"}

@@ -22,7 +22,7 @@ class MontrekReportManager(MontrekManager):
 
     @property
     def footer_text(self) -> ReportElementProtocol:
-        return rt.ReportingText("Internal Report")
+        return rt.ReportingFooter("Internal Report")
 
     @property
     def report_elements(self) -> list[ReportElementProtocol, ...]:
@@ -78,8 +78,7 @@ class MontrekReportManager(MontrekManager):
         return [report_element.to_json() for report_element in self.report_elements]
 
     def _get_footer(self) -> str:
-        footer = f'<div style="height:2cm"></div><hr><div style="color:grey">{self.footer_text.to_html()}</div>'
-        return footer
+        return self.footer_text.to_html()
 
     def get_mail_message(self) -> str:
         return f"<div>Please find attached the report</div><div>{self.to_html()}</div>"
