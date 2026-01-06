@@ -162,12 +162,11 @@ class Vspace(ReportingElement):
         return self.to_json()
 
 
-class NewPage:
+class NewPage(ReportingElement):
+    template_name = "new_page"
+
     def to_latex(self) -> str:
         return "\\newpage"
-
-    def to_html(self) -> str:
-        return "<div style='page-break-after: always; height:15mm;'><hr></div>"
 
     def to_json(self) -> dict[str, bool]:
         return {"new_page": True}
