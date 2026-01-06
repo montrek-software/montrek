@@ -23,12 +23,12 @@
       </div>
     </div>
     <div class="row tile m-1">
-      {{ report_form  |safe}}
+      {{ report_form }}
       <div id="report-content"
              hx-get="{{ request.get_full_path }}"
              hx-trigger="load"
              hx-target="#report-content">
-            {{ report | safe }}
+            {{ report  }}
         </div>
     </div>
 {% endblock %}

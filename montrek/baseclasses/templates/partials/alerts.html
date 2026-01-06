@@ -1,14 +1,14 @@
 <div class="row">
   <div class="col-lg-12">
     {% for message in messages %} {% if message.tags == 'error' %}
-    <div class="alert alert-danger" role="alert">{{ message | safe }}</div>
+    <div class="alert alert-danger" role="alert">{{ message }}</div>
     {% elif message.tags == 'warning' %}
-    <div class="alert alert-warning" role="alert">{{ message | safe }}</div>
+    <div class="alert alert-warning" role="alert">{{ message }}</div>
     {% elif message.tags == 'info' %}
-    <div class="alert alert-success" role="alert">{{ message | safe }}</div>
+    <div class="alert alert-success" role="alert">{{ message }}</div>
     {% else %}
     <div class="alert {{ message.tags }}" role="alert">
-      {{ message | safe }}
+      {{ message }}
     </div>
     {% endif %} {% endfor %}
   </div>

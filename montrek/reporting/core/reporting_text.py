@@ -49,6 +49,8 @@ class ReportingTextParagraph(ReportingElement):
 
 
 class ReportingText(ReportingElement):
+    template_name = "text"
+
     def __init__(
         self,
         text: str,
@@ -106,7 +108,7 @@ class ReportingEditableText(ReportingParagraph):
     def get_context_data(self) -> ContextTypes:
         return {
             "header": self.header,
-            "object_content": self.text,
+            "object_content": self.text.split("\n"),
             "edit_url": self.edit_url,
             "field": self.field,
         }
