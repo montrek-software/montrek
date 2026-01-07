@@ -74,7 +74,7 @@ class MontrekReportView(
                 # This is the data request - return the content with data
                 context = self.get_template_context(load=True)
                 return render(request, self.display_template_name, context)
-            # This is the first HTMX request - return loading template
+            # For HTMX requests where state is not "loading", return the loading template
             return render(request, self.loading_template_name)
         return super().get(request, *args, **kwargs)
 
