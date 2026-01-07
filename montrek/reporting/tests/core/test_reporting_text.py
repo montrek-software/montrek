@@ -248,7 +248,7 @@ class TestReportText(TestCase):
         content_col = container.find("div", class_="scrollable-600")
         self.assertIsNotNone(content_col)
         self.assertIn("AA123", content_col.get_text())
-        self.assertTrue(content_col.find("br"))
+        self.assertIsNotNone(content_col.find("br"))
 
         # Edit button
         button = soup.find("button", attrs={"hx-get": True})
