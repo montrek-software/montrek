@@ -1,8 +1,10 @@
+from bs4 import BeautifulSoup
 from django.test import TestCase, override_settings
 from mailing.models import MailHub
+from testing.decorators.add_logged_in_user import add_logged_in_user
+
 from reporting.managers.latex_report_manager import LatexReportManager
 from reporting.tests import mocks
-from testing.decorators.add_logged_in_user import add_logged_in_user
 
 
 class TestMontrekReportManager(TestCase):
@@ -70,7 +72,7 @@ class TestMontrekReportManager(TestCase):
         session_data = {}
         manager = mocks.MockMontrekReportManagerError(session_data=session_data)
         manager.append_report_element(mocks.MockReportElement())
-        test_html = manager.to_html()
+        test_html = manager.to_html()[0]
         self.assertIn(
             '<div class="alert alert-danger"><strong>Error during report generation: This fails!</strong></div>',
             test_html,
@@ -90,18 +92,35 @@ class TestMontrekReportManager(TestCase):
         session_data = {}
         manager = mocks.MockMontrekReportManagerError(session_data=session_data)
         manager.append_report_element(mocks.MockReportElement())
-        test_html = manager.to_html()
-        self.assertEqual(
-            test_html,
-            '<div class="alert alert-danger"><strong>Error during report generation: This fails!</strong></div><div class="alert"> Contact admin and check Debug mode</div>',
+        html = manager.to_html()[0]
+        soup = BeautifulSoup(html, "html.parser")
+
+        alerts = soup.find_all("div", class_="alert")
+        self.assertEqual(len(alerts), 2)
+
+        # First alert: error
+        error_alert = alerts[0]
+        self.assertIn("alert-danger", error_alert.get("class", []))
+        self.assertIn(
+            "Error during report generation: This fails!",
+            error_alert.get_text(strip=True),
         )
+
+        # Second alert: non-debug message
+        fallback_alert = alerts[1]
+        self.assertIn(
+            "Contact admin and check Debug mode",
+            fallback_alert.get_text(strip=True),
+        )
+
+        # Report elements must be cleared
         self.assertEqual(manager.report_elements, [])
 
     def test_failing_report_generation_while_to_html(self):
         session_data = {}
         manager = mocks.MockMontrekReportManager(session_data=session_data)
         manager.append_report_element(mocks.MockReportElementError())
-        test_html = manager.to_html()
+        test_html = manager.to_html()[0]
         self.assertIn(
             '<div class="alert alert-danger"><strong>Error during report generation: This fails!</strong></div>',
             test_html,
@@ -121,11 +140,28 @@ class TestMontrekReportManager(TestCase):
         session_data = {}
         manager = mocks.MockMontrekReportManager(session_data=session_data)
         manager.append_report_element(mocks.MockReportElementError())
-        test_html = manager.to_html()
-        self.assertEqual(
-            test_html,
-            '<div class="alert alert-danger"><strong>Error during report generation: This fails!</strong></div><div class="alert"> Contact admin and check Debug mode</div>',
+        html = manager.to_html()[0]
+        soup = BeautifulSoup(html, "html.parser")
+
+        alerts = soup.find_all("div", class_="alert")
+        self.assertEqual(len(alerts), 2)
+
+        # First alert: error message
+        error_alert = alerts[0]
+        self.assertIn("alert-danger", error_alert.get("class", []))
+        self.assertIn(
+            "Error during report generation: This fails!",
+            error_alert.get_text(strip=True),
         )
+
+        # Second alert: non-debug message
+        fallback_alert = alerts[1]
+        self.assertIn(
+            "Contact admin and check Debug mode",
+            fallback_alert.get_text(strip=True),
+        )
+
+        # Report elements must be cleared
         self.assertEqual(manager.report_elements, [])
 
     @add_logged_in_user
