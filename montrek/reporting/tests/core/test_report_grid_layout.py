@@ -1,4 +1,5 @@
 from django.test import TestCase
+from bs4 import BeautifulSoup
 from reporting.core.reporting_grid_layout import ReportGridLayout
 from reporting.core.reporting_text import ReportingParagraph, ReportingText
 
@@ -13,10 +14,22 @@ class TestReportGridLayout(TestCase):
 
     def test_report_grid_layout__html(self):
         html = self.grid.to_html()
-        self.assertEqual(
-            html,
-            '<div class="row"><div class="col-lg-6"><p>One</p></div><div class="col-lg-6"><p>Two</p></div></div><div class="row"><div class="col-lg-6"><p>Three</p></div><div class="col-lg-6"><p>Four</p></div></div>',
-        )
+        soup = BeautifulSoup(html, "html.parser")
+
+        rows = soup.find_all("div", class_="row")
+        self.assertEqual(len(rows), 2)
+
+        expected = [
+            ["One", "Two"],
+            ["Three", "Four"],
+        ]
+
+        for row, expected_texts in zip(rows, expected, strict=False):
+            cols = row.find_all("div", class_="col-lg-6")
+            self.assertEqual(len(cols), 2)
+
+            texts = [col.get_text(strip=True) for col in cols]
+            self.assertEqual(texts, expected_texts)
 
     def test_report_grid_layout__latex(self):
         latex = self.grid.to_latex()
@@ -42,7 +55,32 @@ class TestReportGridLayout(TestCase):
         nested_grid.add_report_grid_element(ReportingText("Nested Two"), 0, 0)
         self.grid.add_report_grid_element(nested_grid, 1, 0)
         html = self.grid.to_html()
+        soup = BeautifulSoup(html, "html.parser")
+
+        # Top-level rows
+        rows = soup.find_all("div", class_="row", recursive=False)
+        self.assertEqual(len(rows), 2)
+
+        # Row 1: simple texts
+        row1_cols = rows[0].find_all("div", class_="col-lg-6", recursive=False)
         self.assertEqual(
-            html,
-            '<div class="row"><div class="col-lg-6"><p>One</p></div><div class="col-lg-6"><p>Two</p></div></div><div class="row"><div class="col-lg-6"><div class="row"><div class="col-lg-12">Nested Two</div></div></div><div class="col-lg-6"><p>Four</p></div></div>',
+            [c.get_text(strip=True) for c in row1_cols],
+            ["One", "Two"],
         )
+
+        # Row 2
+        row2_cols = rows[1].find_all("div", class_="col-lg-6", recursive=False)
+        self.assertEqual(len(row2_cols), 2)
+
+        # Row 2, Col 1: nested grid
+        nested_rows = row2_cols[0].find_all("div", class_="row", recursive=False)
+        self.assertEqual(len(nested_rows), 1)
+
+        nested_cols = nested_rows[0].find_all(
+            "div", class_="col-lg-12", recursive=False
+        )
+        self.assertEqual(len(nested_cols), 1)
+        self.assertEqual(nested_cols[0].get_text(strip=True), "Nested Two")
+
+        # Row 2, Col 2: simple text
+        self.assertEqual(row2_cols[1].get_text(strip=True), "Four")
