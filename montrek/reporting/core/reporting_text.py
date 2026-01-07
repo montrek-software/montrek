@@ -108,7 +108,7 @@ class ReportingEditableText(ReportingParagraph):
     def get_context_data(self) -> ContextTypes:
         return {
             "header": self.header,
-            "object_content": self.text.split("\n"),
+            "object_content": str(self.text).split("\n"),
             "edit_url": self.edit_url,
             "field": self.field,
         }

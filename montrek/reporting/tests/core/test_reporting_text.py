@@ -28,6 +28,11 @@ class MockObject:
     field: str
 
 
+@dataclass
+class MockIntObject:
+    field: int
+
+
 class ReportingElementTestCase(TestCase):
     reporting_element_class = None
     expected_html = ""
@@ -243,6 +248,47 @@ class TestReportText(TestCase):
         content_col = container.find("div", class_="scrollable-600")
         self.assertIsNotNone(content_col)
         self.assertIn("AA123", content_col.get_text())
+        self.assertTrue(content_col.find("br"))
+
+        # Edit button
+        button = soup.find("button", attrs={"hx-get": True})
+        self.assertIsNotNone(button)
+        self.assertEqual(
+            button["hx-get"],
+            "test_url?mode=edit&field=field",
+        )
+        self.assertEqual(
+            button["hx-target"],
+            "#field-content-container-field",
+        )
+
+    def test_reporting_editable_text__no_string(self):
+        mock_object = MockIntObject(field=123)
+        element = ReportingEditableText(
+            obj=mock_object, field="field", edit_url="test_url"
+        )
+
+        self.assertEqual(element.text, 123)
+
+        soup = BeautifulSoup(element.to_html(), "html.parser")
+
+        # Root row
+        root = soup.find("div", class_="row")
+        self.assertIsNotNone(root)
+
+        # Header
+        h2 = root.find("h2")
+        self.assertIsNotNone(h2)
+        self.assertEqual(h2.get_text(strip=True), "")
+
+        # Content container
+        container = soup.find(id="field-content-container-field")
+        self.assertIsNotNone(container)
+
+        # Rendered text with <br>
+        content_col = container.find("div", class_="scrollable-600")
+        self.assertIsNotNone(content_col)
+        self.assertIn("123", content_col.get_text())
         self.assertTrue(content_col.find("br"))
 
         # Edit button
