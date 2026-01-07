@@ -134,7 +134,7 @@ class MontrekReportFieldEditView(
                 request,
                 "partials/display_field.html",
                 {
-                    "object_content": org_field_content,
+                    "object_content": org_field_content.split("\n"),
                     "edit_url": self.session_data["request_path"],
                     "field": field_name,
                 },
@@ -160,7 +160,7 @@ class MontrekReportFieldEditView(
             request,
             "partials/display_field.html",
             {
-                "object_content": field_content,
+                "object_content": field_content.split("\n"),
                 "edit_url": self.session_data["request_path"],
                 "field": field,
             },
