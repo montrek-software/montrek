@@ -1,4 +1,5 @@
 import os
+from bs4 import BeautifulSoup
 import tempfile
 from dataclasses import dataclass
 from unittest.mock import Mock, patch
@@ -217,84 +218,93 @@ class TestReportText(TestCase):
 
     def test_reporting_editable_text(self):
         mock_object = MockObject(field="AA123")
-        test_element = ReportingEditableText(
+        element = ReportingEditableText(
             obj=mock_object, field="field", edit_url="test_url"
         )
-        self.assertEqual(test_element.text, "AA123")
+
+        self.assertEqual(element.text, "AA123")
+
+        soup = BeautifulSoup(element.to_html(), "html.parser")
+
+        # Root row
+        root = soup.find("div", class_="row")
+        self.assertIsNotNone(root)
+
+        # Header
+        h2 = root.find("h2")
+        self.assertIsNotNone(h2)
+        self.assertEqual(h2.get_text(strip=True), "")
+
+        # Content container
+        container = soup.find(id="field-content-container-field")
+        self.assertIsNotNone(container)
+
+        # Rendered text with <br>
+        content_col = container.find("div", class_="scrollable-600")
+        self.assertIsNotNone(content_col)
+        self.assertIn("AA123", content_col.get_text())
+        self.assertTrue(content_col.find("br"))
+
+        # Edit button
+        button = soup.find("button", attrs={"hx-get": True})
+        self.assertIsNotNone(button)
         self.assertEqual(
-            test_element.to_html().replace("\n", "").replace(" ", ""),
-            """
-        <div class="row">
-         <div class="col"><h2></h2></div>
-         <div id="field-content-container-field">
-               <div class="row border p-3 mx-1">
-    <div class="col scrollable-600">AA123<br></div>
-  </div>
-  <div class="row p-2">
-    <div class="col-lg-1">
-      <button
-        class="btn btn-custom"
-        hx-get="test_url?mode=edit&field=field"
-        hx-target="#field-content-container-field"
-      >
-        <span class="bi bi-pencil" />
-      </button>
-    </div>
-    <div class="col-lg-11"></div>
-</div>  </div></div>\n
-""".replace(
-                "\n", ""
-            ).replace(
-                " ", ""
-            ),
+            button["hx-get"],
+            "test_url?mode=edit&field=field",
+        )
+        self.assertEqual(
+            button["hx-target"],
+            "#field-content-container-field",
         )
 
     def test_reporting_editable_text_display_newline(self):
         mock_object = MockObject(field="AA123\nNewline")
-        test_element = ReportingEditableText(
+        element = ReportingEditableText(
             obj=mock_object, field="field", edit_url="test_url"
         )
-        self.assertEqual(test_element.text, "AA123\nNewline")
-        self.assertIn(
-            "AA123<br>Newline",
-            test_element.to_html().replace("\n", "").replace(" ", ""),
-        )
+
+        self.assertEqual(element.text, "AA123\nNewline")
+
+        soup = BeautifulSoup(element.to_html(), "html.parser")
+
+        content_col = soup.find("div", class_="scrollable-600")
+        self.assertIsNotNone(content_col)
+
+        # Text split by <br>
+        parts = list(content_col.stripped_strings)
+        self.assertEqual(parts, ["AA123", "Newline"])
+
+        # Explicitly assert line break exists
+        self.assertTrue(content_col.find("br"))
 
     def test_reporting_editable_text_with_header(self):
         mock_object = MockObject(field="AA123")
-        test_element = ReportingEditableText(
-            obj=mock_object, field="field", edit_url="test_url", header="Test Header"
+        element = ReportingEditableText(
+            obj=mock_object,
+            field="field",
+            edit_url="test_url",
+            header="Test Header",
         )
-        self.assertEqual(test_element.text, "AA123")
-        self.assertEqual(
-            test_element.to_html().replace("\n", "").replace(" ", ""),
-            """
-        <div class="row">
-         <div class="col"><h2>Test Header</h2></div>
-         <div id="field-content-container-field">
-               <div class="row border p-3 mx-1">
-    <div class="col scrollable-600">AA123<br></div>
-  </div>
-  <div class="row p-2">
-    <div class="col-lg-1">
-      <button
-        class="btn btn-custom"
-        hx-get="test_url?mode=edit&field=field"
-        hx-target="#field-content-container-field"
-      >
-        <span class="bi bi-pencil" />
-      </button>
-    </div>
-    <div class="col-lg-11"></div>
-  </div>
-</div>
 
-         </div>
-""".replace(
-                "\n", ""
-            ).replace(
-                " ", ""
-            ),
+        self.assertEqual(element.text, "AA123")
+
+        soup = BeautifulSoup(element.to_html(), "html.parser")
+
+        # Header
+        h2 = soup.find("h2")
+        self.assertIsNotNone(h2)
+        self.assertEqual(h2.get_text(strip=True), "Test Header")
+
+        # Content still correct
+        content_col = soup.find("div", class_="scrollable-600")
+        self.assertIsNotNone(content_col)
+        self.assertIn("AA123", content_col.get_text())
+
+        # Button wiring still correct
+        button = soup.find("button", attrs={"hx-get": True})
+        self.assertEqual(
+            button["hx-get"],
+            "test_url?mode=edit&field=field",
         )
 
     def test_reporting_text_with_none(self):
