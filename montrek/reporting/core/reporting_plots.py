@@ -175,7 +175,6 @@ class ReportingPlot(ReportingPlotBase[ReportingData]):
                 plot_type_str = plot_type.upper()
                 if plot_type_str in dir(ReportingPlotType):
                     return getattr(ReportingPlotType, plot_type_str)
-                raise ValueError(f"{plot_type} is no valid ReportingPlotType")
             raise ValueError(f"{plot_type} is no valid ReportingPlotType")
 
         return [_get_plot_type(plot_type) for plot_type in reporting_data.plot_types]
