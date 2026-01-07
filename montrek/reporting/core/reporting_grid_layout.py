@@ -29,6 +29,18 @@ class ReportGridElements:
 
 @dataclass
 class GridRowDisplay:
+    """
+    Represents a single row in the report grid layout.
+
+    Attributes
+    ----------
+    html_elements:
+        List of rendered HTML fragments for each element in the row, in
+        display order.
+    col_len:
+        Bootstrap column width (out of 12) assigned to each element in the
+        row. This is typically computed as ``floor(12 / len(html_elements))``.
+    """
     html_elements: list[str]
     col_len: int
 
