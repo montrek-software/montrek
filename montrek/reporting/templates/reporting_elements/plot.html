@@ -1,0 +1,8 @@
+
+<div id="plot-{{ plot_id }}"></div>
+<script>
+  (function () {
+  const fig = {{ graph_json|safe }};
+  Plotly.newPlot("plot-{{ plot_id }}", fig.data, fig.layout);
+  })();
+</script>

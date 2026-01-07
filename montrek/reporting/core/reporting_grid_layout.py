@@ -1,4 +1,6 @@
 from math import floor
+from dataclasses import dataclass
+from reporting.core.reporting_text import ContextTypes, ReportingElement
 
 from reporting.managers.montrek_report_manager import ReportElementProtocol
 
@@ -17,10 +19,35 @@ class ReportGridElements:
     def add_report_grid_element(
         self, report_element: ReportElementProtocol, row: int, col: int
     ):
-        self.report_grid_elements_container[row][col] = report_element
+        try:
+            self.report_grid_elements_container[row][col] = report_element
+        except IndexError as err:
+            raise IndexError(
+                f"Row index ({row}) or column index ({col}) does not match grid dimensions({self.no_of_rows},{self.no_of_cols})"
+            ) from err
 
 
-class ReportGridLayout:
+@dataclass
+class GridRowDisplay:
+    """
+    Represents a single row in the report grid layout.
+
+    Attributes
+    ----------
+    html_elements:
+        List of rendered HTML fragments for each element in the row, in
+        display order.
+    col_len:
+        Bootstrap column width (out of 12) assigned to each element in the
+        row. This is typically computed as ``floor(12 / len(html_elements))``.
+    """
+    html_elements: list[str]
+    col_len: int
+
+
+class ReportGridLayout(ReportingElement):
+    template_name = "grid"
+
     def __init__(self, no_of_rows: int, no_of_cols: int, is_nested=False):
         self.report_grid_elements = ReportGridElements(no_of_rows, no_of_cols)
         self.is_nested = is_nested
@@ -34,15 +61,16 @@ class ReportGridLayout:
     ):
         self.report_grid_elements.add_report_grid_element(report_element, row, col)
 
-    def to_html(self):
-        html_str = ""
+    def get_context_data(self) -> ContextTypes:
+        grid_rows = []
         for row in self.report_grid_elements.report_grid_elements_container:
-            html_str += '<div class="row">'
-            col_len = floor(12 / len(row))
-            for element in row:
-                html_str += f'<div class="col-lg-{col_len}">{element.to_html()}</div>'
-            html_str += "</div>"
-        return html_str
+            html_elements = [element.to_html() for element in row]
+            col_len = floor(12 / len(html_elements))
+            grid_rows.append(
+                GridRowDisplay(html_elements=html_elements, col_len=col_len)
+            )
+
+        return {"grid_rows": grid_rows}
 
     def to_latex(self):
         col_str = self._get_latex_column_definition()

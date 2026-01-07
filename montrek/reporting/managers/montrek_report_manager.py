@@ -22,7 +22,7 @@ class MontrekReportManager(MontrekManager):
 
     @property
     def footer_text(self) -> ReportElementProtocol:
-        return rt.ReportingText("Internal Report")
+        return rt.ReportingFooter("Internal Report")
 
     @property
     def report_elements(self) -> list[ReportElementProtocol, ...]:
@@ -42,27 +42,28 @@ class MontrekReportManager(MontrekManager):
     def cleanup_report_elements(self) -> None:
         self._report_elements = []
 
-    def to_html(self) -> str:
-        html_str = ""
+    def to_html(self) -> list[str]:
+        html_list = []
         try:
             self.collect_report_elements()
             for report_element in self.report_elements:
-                html_str += report_element.to_html()
+                html_list.append(report_element.to_html())
         except Exception as e:
             self.cleanup_report_elements()
-            error_html = f'<div class="alert alert-danger"><strong>Error during report generation: {e}</strong></div>'
+            error_header = f"Error during report generation: {e}"
             if settings.DEBUG:
                 error_details = traceback.format_exc()
-                error_details = error_details.replace("\n", "<br>")
-                error_html += f'<div class="alert">{error_details}</div>'
+                error_details = error_details.split("\n")
             else:
-                error_html += (
-                    '<div class="alert"> Contact admin and check Debug mode</div>'
-                )
-            return error_html
-        html_str += self._get_footer()
+                error_details = ["Contact admin and check Debug mode"]
+            return [
+                rt.ReportingError(
+                    error_header=error_header, error_texts=error_details
+                ).to_html()
+            ]
+        html_list.append(self._get_footer())
         self.cleanup_report_elements()
-        return html_str
+        return html_list
 
     def to_latex(self) -> str:
         latex_str = ""
@@ -77,8 +78,7 @@ class MontrekReportManager(MontrekManager):
         return [report_element.to_json() for report_element in self.report_elements]
 
     def _get_footer(self) -> str:
-        footer = f'<div style="height:2cm"></div><hr><div style="color:grey">{self.footer_text.to_html()}</div>'
-        return footer
+        return self.footer_text.to_html()
 
     def get_mail_message(self) -> str:
         return f"<div>Please find attached the report</div><div>{self.to_html()}</div>"

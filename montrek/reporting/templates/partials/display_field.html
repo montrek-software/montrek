@@ -1,5 +1,10 @@
   <div class="row border p-3 mx-1">
-    <div class="col scrollable-600">{{ object_content|safe }}</div>
+    <div class="col scrollable-600">
+      {% for content in object_content %}
+         {{ content }}<br>
+      {% endfor %}
+    </div>
+
   </div>
   <div class="row p-2">
     <div class="col-lg-1">

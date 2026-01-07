@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from unittest.mock import Mock, patch
 
 from django.test import TestCase
-from reporting.constants import ReportingTextType
 from reporting.core.reporting_text import (
     MarkdownReportingElement,
     MontrekLogo,
@@ -16,8 +15,10 @@ from reporting.core.reporting_text import (
     ReportingMap,
     ReportingParagraph,
     ReportingText,
+    ReportingFooter,
     ReportingTextParagraph,
     Vspace,
+    ReportingError,
 )
 
 
@@ -103,14 +104,14 @@ class TestVspace(ReportingElementTestCase):
 
 class TestNewPage(ReportingElementTestCase):
     reporting_element_class = NewPage
-    expected_html = "<div style='page-break-after: always; height:15mm;'><hr></div>"
+    expected_html = '<div style="page-break-after: always; height:15mm;"><hr></div>'
     expected_latex = "\\newpage"
     expected_json = {"new_page": True}
 
 
 class TestReportingImage(ReportingElementTestCase):
     reporting_element_class = ReportingImage
-    expected_html = '<div style="text-align: right;"><img src="https://example.com/properties/lakeside_residences.jpg" alt="image" style="width:100.0%;"></div>'
+    expected_html = '<div style="text-align: right;"><img src="https://example.com/properties/lakeside_residences.jpg" alt="image" width="100.0%" height="auto"></div>'
     expected_latex = (
         "Image not found: https://example.com/properties/lakeside\\_residences.jpg"
     )
@@ -153,7 +154,7 @@ class TestReportingImage(ReportingElementTestCase):
 
 class TestReportingMap(ReportingElementTestCase):
     reporting_element_class = ReportingMap
-    expected_html = '<iframe src="https://www.openstreetmap.org/export/embed.html?bbox=5%2C15%2C15%2C25&layer=mapnik&marker=20%2C10" style="width: 100%; aspect-ratio: 4/3; height: auto; border:2;" loading="lazy" allowfullscreen></iframe>'
+    expected_html = '<iframe src="https://www.openstreetmap.org/export/embed.html?bbox=5%2C15%2C15%2C25&amp;layer=mapnik&amp;marker=20%2C10" style="width: 100%; aspect-ratio: 4/3; height: auto; border:2;" loading="lazy" allowfullscreen></iframe>'
     expected_latex = ""
     expected_json = {
         "reporting_map": "https://www.openstreetmap.org/export/embed.html?bbox=5%2C15%2C15%2C25&layer=mapnik&marker=20%2C10"
@@ -175,7 +176,7 @@ class TestReportingParagraphSmoke(ReportingElementTestCase):
 
 class TestReportingEditableTextSmoke(ReportingElementTestCase):
     reporting_element_class = ReportingEditableText
-    expected_html = '<div class="row">\n         <div class="col"><h2></h2></div>\n         <div id="field-content-container-field">\n             <div class="row border p-3 mx-1">\n    <div class="col scrollable-600">field_content</div>\n  </div>\n  <div class="row p-2">\n    <div class="col-lg-1">\n      <button\n        class="btn btn-custom"\n        hx-get="dummy?mode=edit&field=field"\n        hx-target="#field-content-container-field"\n      >\n        <span class="bi bi-pencil" />\n      </button>\n    </div>\n    <div class="col-lg-11"></div>\n  </div>\n</div>\n\n         </div>'
+    expected_html = '<div class="row">\n         <div class="col"><h2></h2></div>\n         <div id="field-content-container-field">\n             <div class="row border p-3 mx-1">\n    <div class="col scrollable-600">field_content<br></div>\n  </div>\n  <div class="row p-2">\n    <div class="col-lg-1">\n      <button\n        class="btn btn-custom"\n        hx-get="dummy?mode=edit&field=field"\n        hx-target="#field-content-container-field"\n      >\n        <span class="bi bi-pencil" />\n      </button>\n    </div>\n    <div class="col-lg-11"></div>\n  </div>\n</div>\n\n         </div>'
     expected_latex = "\\begin{justify}field\\_content\\end{justify}"
     expected_json = {"reportingeditabletext": "field_content"}
 
@@ -227,7 +228,7 @@ class TestReportText(TestCase):
          <div class="col"><h2></h2></div>
          <div id="field-content-container-field">
                <div class="row border p-3 mx-1">
-    <div class="col scrollable-600">AA123</div>
+    <div class="col scrollable-600">AA123<br></div>
   </div>
   <div class="row p-2">
     <div class="col-lg-1">
@@ -254,7 +255,10 @@ class TestReportText(TestCase):
             obj=mock_object, field="field", edit_url="test_url"
         )
         self.assertEqual(test_element.text, "AA123\nNewline")
-        self.assertIn("AA123<br>Newline", test_element.to_html())
+        self.assertIn(
+            "AA123<br>Newline",
+            test_element.to_html().replace("\n", "").replace(" ", ""),
+        )
 
     def test_reporting_editable_text_with_header(self):
         mock_object = MockObject(field="AA123")
@@ -269,7 +273,7 @@ class TestReportText(TestCase):
          <div class="col"><h2>Test Header</h2></div>
          <div id="field-content-container-field">
                <div class="row border p-3 mx-1">
-    <div class="col scrollable-600">AA123</div>
+    <div class="col scrollable-600">AA123<br></div>
   </div>
   <div class="row p-2">
     <div class="col-lg-1">
@@ -295,7 +299,7 @@ class TestReportText(TestCase):
 
     def test_reporting_text_with_none(self):
         reporting_text = ReportingText(None)
-        self.assertEqual(reporting_text.to_html(), "")
+        self.assertEqual(reporting_text.to_html(), "\n")
         self.assertEqual(reporting_text.to_latex(), "")
 
 
@@ -305,7 +309,9 @@ class TestReportingParagraph(TestCase):
         self.assertEqual(paragraph.text, "This is a plain text")
         self.assertEqual(paragraph.reporting_text_type.name, "HTML")
         test_plain_to_html = paragraph.to_html()
-        self.assertEqual(test_plain_to_html, "<p>This is a plain text</p>")
+        self.assertEqual(
+            test_plain_to_html.replace("\n", ""), "<p>This is a plain text</p>"
+        )
         test_plain_to_latex = paragraph.to_latex()
         self.assertEqual(
             test_plain_to_latex,
@@ -313,31 +319,27 @@ class TestReportingParagraph(TestCase):
         )
 
     def test_bold_text(self):
-        paragraph = ReportingParagraph(
-            "This is a <b>bold</b> text", reporting_text_type=ReportingTextType.HTML
-        )
-        self.assertEqual(paragraph.text, "This is a <b>bold</b> text")
-        self.assertEqual(paragraph.reporting_text_type.name, "HTML")
+        paragraph = MarkdownReportingElement("This is a **bold** text")
+        self.assertEqual(paragraph.markdown_text, "This is a **bold** text")
         test_bold_to_html = paragraph.to_html()
-        self.assertEqual(test_bold_to_html, "<p>This is a <b>bold</b> text</p>")
+        self.assertEqual(
+            test_bold_to_html, "<p>This is a <strong>bold</strong> text</p>\n"
+        )
         test_bold_to_latex = paragraph.to_latex()
         self.assertEqual(
             test_bold_to_latex,
-            "\\begin{justify}This is a \\textbf{bold} text\\end{justify}",
+            "\\begin{justify}This is a \\textbf{bold} text\\end{justify}\n\n",
         )
 
     def test_italic_text(self):
-        paragraph = ReportingParagraph(
-            "This is a <i>italic</i> text", reporting_text_type=ReportingTextType.HTML
-        )
-        self.assertEqual(paragraph.text, "This is a <i>italic</i> text")
-        self.assertEqual(paragraph.reporting_text_type.name, "HTML")
+        paragraph = MarkdownReportingElement("This is a *italic* text")
+        self.assertEqual(paragraph.markdown_text, "This is a *italic* text")
         test_italic_to_html = paragraph.to_html()
-        self.assertEqual(test_italic_to_html, "<p>This is a <i>italic</i> text</p>")
+        self.assertEqual(test_italic_to_html, "<p>This is a <em>italic</em> text</p>\n")
         test_italic_to_latex = paragraph.to_latex()
         self.assertEqual(
             test_italic_to_latex,
-            "\\begin{justify}This is a \\textit{italic} text\\end{justify}",
+            "\\begin{justify}This is a \\textit{italic} text\\end{justify}\n\n",
         )
 
 
@@ -347,7 +349,7 @@ class TestMontrekLogo(TestCase):
         self.assertEqual(logo.width, 0.5)
         self.assertEqual(
             logo.to_html(),
-            '<div style="text-align: right;"><img src="http://static1.squarespace.com/static/673bfbe149f99b59e4a41ee7/t/673bfdb41644c858ec83dc7e/1731984820187/montrek_logo_variant.png?format=1500w" alt="image" style="width:50.0%;"></div>',
+            '<div style="text-align: right;"><img src="http://static1.squarespace.com/static/673bfbe149f99b59e4a41ee7/t/673bfdb41644c858ec83dc7e/1731984820187/montrek_logo_variant.png?format=1500w" alt="image" width="50.0%" height="auto"></div>\n',
         )
         logo_str = logo.to_latex()
         self.assertTrue(logo_str.startswith("\\includegraphics[width=0.5\\textwidth]{"))
@@ -373,3 +375,37 @@ class TestMarkdownReportingElement(ReportingElementTestCase):
     def get_call_parameters(self) -> dict:
         markdown_text = "This is a **bold** text with a table:\n\n| Header1 | Header2 |\n|---------|---------|\n| Cell1   | Cell2   |"
         return {"markdown_text": markdown_text}
+
+    def test_malicious_text(self):
+        text = "<script>HACKERATTACK</script>"
+        rep_element = self.reporting_element_class(text)
+        test_html = rep_element.to_html()
+        self.assertEqual(test_html, "HACKERATTACK\n")
+
+
+class TestReportingError(ReportingElementTestCase):
+    reporting_element_class = ReportingError
+    expected_html = '<divclass="alertalert-danger"><strong>ErrorHeader</strong></div><divclass="alertalert-danger">ErrorText1<br>ErrorText2<br></div>'
+    expected_latex = r"\textbf{Error Header}\\Error Text1\\Error Text2"
+    expected_json = {
+        "error_header": "Error Header",
+        "error_texts": ["Error Text1", "Error Text2"],
+    }
+
+    def get_call_parameters(self) -> dict:
+        return {
+            "error_texts": ["Error Text1", "Error Text2"],
+            "error_header": "Error Header",
+        }
+
+
+class TestReportingFooter(ReportingElementTestCase):
+    reporting_element_class = ReportingFooter
+    expected_html = (
+        '<divstyle="height:2cm"></div><hr><divstyle="color:grey">FooterText</div>'
+    )
+    expected_latex = "Footer Text"
+    expected_json = {"reportingfooter": "Footer Text"}
+
+    def get_call_parameters(self) -> dict:
+        return {"text": "Footer Text"}

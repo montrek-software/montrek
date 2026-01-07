@@ -1,0 +1,6 @@
+<div class="alert alert-danger"><strong>{{ error_header }}</strong></div>
+<div class="alert alert-danger">
+  {% for error_text in error_texts %}
+    {{error_text}}<br>
+  {% endfor %}
+</div>

@@ -8,11 +8,23 @@ import requests
 from baseclasses.models import HubValueDate
 from baseclasses.sanitizer import HtmlSanitizer
 from django.conf import settings
-from django.template import Context, Template
+from django.template.loader import render_to_string
 from reporting.constants import WORKBENCH_PATH, ReportingTextType
-from reporting.core.reporting_protocols import ReportingElement
 from reporting.core.text_converter import HtmlLatexConverter
-from reporting.lib.protocols import ReportElementProtocol
+
+type ContextTypes = dict[str, str | list[str] | int | float]
+
+
+class ReportingElement:
+    template_name: str = ""
+
+    def get_context_data(self) -> ContextTypes:
+        return {}
+
+    def to_html(self) -> str:
+        return render_to_string(
+            f"reporting_elements/{self.template_name}.html", self.get_context_data()
+        )
 
 
 class ReportingTextParagraph(ReportingElement):
@@ -36,7 +48,9 @@ class ReportingTextParagraph(ReportingElement):
         return self.text
 
 
-class ReportingText(ReportElementProtocol):
+class ReportingText(ReportingElement):
+    template_name = "text"
+
     def __init__(
         self,
         text: str,
@@ -57,27 +71,24 @@ class ReportingText(ReportElementProtocol):
                 text = f"\\textbf{{\\color{{red}} Unknown Text Type {self.reporting_text_type}"
         return text
 
-    def to_html(self) -> str:
-        text = HtmlSanitizer().display_text_as_html(self.text)
-        return self._html(text)
+    def get_context_data(self) -> ContextTypes:
+        return {"text": HtmlSanitizer().display_text_as_html(self.text)}
 
     def to_json(self) -> dict[str, str]:
         return {self.__class__.__name__.lower(): self.text}
 
-    def _html(self, text: str) -> str:
-        return text
-
 
 class ReportingParagraph(ReportingText):
+    template_name = "paragraph"
+
     def to_latex(self) -> str:
         text = super().to_latex()
         return f"\\begin{{justify}}{text}\\end{{justify}}"
 
-    def _html(self, text: str) -> str:
-        return f"<p>{text}</p>"
-
 
 class ReportingEditableText(ReportingParagraph):
+    template_name = "editable_text"
+
     def __init__(
         self,
         obj: HubValueDate,
@@ -94,25 +105,13 @@ class ReportingEditableText(ReportingParagraph):
         self.header = header
         self.field = field
 
-    def _html(self, text: str) -> str:
-        return Template(
-            f"""
-        <div class="row">
-         <div class="col"><h2>{self.header}</h2></div>
-         <div id="field-content-container-{self.field}">
-             {{% include "partials/display_field.html" %}}
-         </div>
-        </div>
-"""
-        ).render(
-            Context(
-                {
-                    "object_content": text,
-                    "edit_url": self.edit_url,
-                    "field": self.field,
-                }
-            )
-        )
+    def get_context_data(self) -> ContextTypes:
+        return {
+            "header": self.header,
+            "object_content": self.text.split("\n"),
+            "edit_url": self.edit_url,
+            "field": self.field,
+        }
 
     def to_latex(self) -> str:
         if self.header != "":
@@ -123,12 +122,11 @@ class ReportingEditableText(ReportingParagraph):
         return latex_str
 
 
-class ReportingHeader1:
+class ReportingHeader1(ReportingText):
+    template_name = "header1"
+
     def __init__(self, text: str):
         self.text = text
-
-    def to_html(self) -> str:
-        return f"<h1>{self.text}</h1>"
 
     def to_latex(self) -> str:
         return f"\\section*{{{self.text}}}"
@@ -137,12 +135,11 @@ class ReportingHeader1:
         return {"reporting_header_1": self.text}
 
 
-class ReportingHeader2:
+class ReportingHeader2(ReportingText):
+    template_name = "header2"
+
     def __init__(self, text: str):
         self.text = text
-
-    def to_html(self) -> str:
-        return f"<h2>{self.text}</h2>"
 
     def to_latex(self) -> str:
         return f"\\subsection*{{{self.text}}}"
@@ -151,32 +148,35 @@ class ReportingHeader2:
         return {"reporting_header_2": self.text}
 
 
-class Vspace:
+class Vspace(ReportingElement):
+    template_name = "vspace"
+
     def __init__(self, space: int):
         self.space = space
 
     def to_latex(self) -> str:
         return f"\\vspace{{{self.space}mm}}"
 
-    def to_html(self) -> str:
-        return f'<div style="height:{self.space}mm;"></div>'
-
-    def to_json(self) -> dict[str, int]:
+    def to_json(self) -> ContextTypes:
         return {"vspace": self.space}
 
+    def get_context_data(self) -> ContextTypes:
+        return self.to_json()
 
-class NewPage:
+
+class NewPage(ReportingElement):
+    template_name = "new_page"
+
     def to_latex(self) -> str:
         return "\\newpage"
-
-    def to_html(self) -> str:
-        return "<div style='page-break-after: always; height:15mm;'><hr></div>"
 
     def to_json(self) -> dict[str, bool]:
         return {"new_page": True}
 
 
-class ReportingImage:
+class ReportingImage(ReportingElement):
+    template_name = "image"
+
     def __init__(self, image_path: str, width: float = 1.0):
         self.image_path = image_path
         self.width = width
@@ -217,14 +217,16 @@ class ReportingImage:
         value = HtmlLatexConverter.convert(value)
         return f"\\includegraphics[width={self.width}\\textwidth]{{{value}}}"
 
-    def to_html(self) -> str:
-        return f'<div style="text-align: right;"><img src="{self.image_path}" alt="image" style="width:{self.width * 100}%;"></div>'
-
     def to_json(self) -> dict[str, str]:
         return {"reporting_image": self.image_path}
 
+    def get_context_data(self) -> ContextTypes:
+        return {"reporting_image": self.image_path, "width": self.width * 100}
 
-class ReportingMap:
+
+class ReportingMap(ReportingElement):
+    template_name = "map"
+
     def __init__(self, longitude: int, latitude: int, offset: int = 5):
         box_coords = [
             longitude - offset,
@@ -238,10 +240,10 @@ class ReportingMap:
         # TODO: Implement LaTeX conversion for iframe
         return ""
 
-    def to_html(self) -> str:
-        return f'<iframe src="{self.embedded_url}" style="width: 100%; aspect-ratio: 4/3; height: auto; border:2;" loading="lazy" allowfullscreen></iframe>'
-
     def to_json(self) -> dict[str, str]:
+        return {"reporting_map": self.embedded_url}
+
+    def get_context_data(self) -> ContextTypes:
         return {"reporting_map": self.embedded_url}
 
 
@@ -265,12 +267,14 @@ class ClientLogo(ReportingImage):
         return f"\\includegraphics[height=1cm]{{{value}}}"
 
 
-class MarkdownReportingElement:
+class MarkdownReportingElement(ReportingElement):
+    template_name = "markdown"
+
     def __init__(self, markdown_text: str):
         self.markdown_text = markdown_text
 
-    def to_html(self) -> str:
-        return markdown.markdown(
+    def convert_to_html(self) -> str:
+        html = markdown.markdown(
             self.markdown_text,
             extensions=[
                 "markdown.extensions.tables",
@@ -284,11 +288,36 @@ class MarkdownReportingElement:
                 }
             },
         )
+        return HtmlSanitizer().clean_html(html)
 
     def to_latex(self) -> str:
-        html_text = self.to_html()
+        html_text = self.convert_to_html()
         converter = HtmlLatexConverter()
         return converter.convert(html_text)
 
     def to_json(self) -> dict[str, str]:
         return {"markdown_reporting_element": self.markdown_text}
+
+    def get_context_data(self) -> ContextTypes:
+        return {"text": self.convert_to_html()}
+
+
+class ReportingError(ReportingElement):
+    template_name = "error"
+
+    def __init__(self, error_header: str, error_texts: list[str]):
+        self.error_header = error_header
+        self.error_texts = error_texts
+
+    def get_context_data(self) -> ContextTypes:
+        return {"error_header": self.error_header, "error_texts": self.error_texts}
+
+    def to_json(self) -> ContextTypes:
+        return self.get_context_data()
+
+    def to_latex(self) -> str:
+        return f"\\textbf{{{self.error_header}}}\\\\{'\\\\'.join(self.error_texts)}"
+
+
+class ReportingFooter(ReportingText):
+    template_name = "footer"

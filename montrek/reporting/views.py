@@ -74,9 +74,8 @@ class MontrekReportView(
                 # This is the data request - return the content with data
                 context = self.get_template_context(load=True)
                 return render(request, self.display_template_name, context)
-            else:
-                # This is the first HTMX request - return loading template
-                return render(request, self.loading_template_name)
+            # For HTMX requests where state is not "loading", return the loading template
+            return render(request, self.loading_template_name)
         return super().get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
@@ -120,8 +119,7 @@ class MontrekReportFieldEditView(
                     "field": formfield,
                 },
             )
-        else:
-            return HttpResponseRedirect("")
+        return HttpResponseRedirect("")
 
     def post(self, request, *args, **kwargs):
         edit_data = self.manager.get_object_from_pk_as_dict(self.session_data["pk"])
@@ -136,7 +134,7 @@ class MontrekReportFieldEditView(
                 request,
                 "partials/display_field.html",
                 {
-                    "object_content": org_field_content,
+                    "object_content": org_field_content.split("\n"),
                     "edit_url": self.session_data["request_path"],
                     "field": field_name,
                 },
@@ -162,7 +160,7 @@ class MontrekReportFieldEditView(
             request,
             "partials/display_field.html",
             {
-                "object_content": field_content,
+                "object_content": field_content.split("\n"),
                 "edit_url": self.session_data["request_path"],
                 "field": field,
             },
