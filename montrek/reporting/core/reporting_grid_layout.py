@@ -19,7 +19,12 @@ class ReportGridElements:
     def add_report_grid_element(
         self, report_element: ReportElementProtocol, row: int, col: int
     ):
-        self.report_grid_elements_container[row][col] = report_element
+        try:
+            self.report_grid_elements_container[row][col] = report_element
+        except IndexError as err:
+            raise IndexError(
+                f"Row index ({row}) or column index ({col}) does not match grid dimensions({self.no_of_rows},{self.no_of_cols})"
+            ) from err
 
 
 @dataclass
