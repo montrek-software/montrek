@@ -1,4 +1,7 @@
+from typing import Protocol
 import pandas as pd
+from bs4 import BeautifulSoup
+import json
 import plotly.graph_objects as go
 from django.test import TestCase
 from reporting.constants import ReportingPlotType
@@ -6,7 +9,38 @@ from reporting.core.reporting_data import ReportingData
 from reporting.core.reporting_plots import ReportingPlot
 
 
-class TestReportingPlots(TestCase):
+class HasAssertions(Protocol):
+    def assertEqual(self, first, second, msg=None): ...
+    def assertIn(self, member, container, msg=None): ...
+
+
+class FigureAssertionsMixin(HasAssertions):
+    def assert_figure_properties(self, reporting_plot: ReportingPlot) -> None:
+        reporting_plot_html = reporting_plot.to_html()
+
+        soup = BeautifulSoup(reporting_plot_html, "html.parser")
+
+        # 1. One div with an id
+        divs = soup.find_all("div", id=True)
+        self.assertEqual(len(divs), 1)
+        plot_div = divs[0]
+
+        # 2. One script tag
+        scripts = soup.find_all("script")
+        self.assertEqual(len(scripts), 1)
+        script = scripts[0]
+
+        # 3. Script references the div id
+        self.assertIn(plot_div["id"], script.string)
+
+        # 4. JSON output is valid
+        reporting_plot_json = reporting_plot.to_json()["reporting_plot"]
+        parsed = json.loads(str(reporting_plot_json))
+        self.assertIn("data", parsed)
+        self.assertIn("layout", parsed)
+
+
+class TestReportingPlots(TestCase, FigureAssertionsMixin):
     @classmethod
     def setUpTestData(cls):
         cls.test_df = pd.DataFrame(
@@ -79,11 +113,7 @@ class TestReportingPlots(TestCase):
         self.assertEqual(reporting_plot.figure.data[0].y.tolist(), [10, 25, 15, 30])
         self.assertEqual(reporting_plot.figure.data[1].x.tolist(), ["A", "B", "C", "D"])
         self.assertEqual(reporting_plot.figure.data[1].y.tolist(), [15, 20, 10, 40])
-        reporting_plot_html = reporting_plot.to_html()
-        self.assertTrue(reporting_plot_html.startswith("<div>"))
-        self.assertTrue(reporting_plot_html.endswith("</div>"))
-        reporting_plot_json = reporting_plot.to_json()
-        self.assertTrue("reporting_plot" in reporting_plot_json.keys())
+        self.assert_figure_properties(reporting_plot)
 
     def test_reporting_plots_line_stacked(self):
         reporting_data = ReportingData(
@@ -105,11 +135,7 @@ class TestReportingPlots(TestCase):
         self.assertEqual(reporting_plot.figure.data[0].y.tolist(), [10, 25, 15, 30])
         self.assertEqual(reporting_plot.figure.data[1].x.tolist(), ["A", "B", "C", "D"])
         self.assertEqual(reporting_plot.figure.data[1].y.tolist(), [25, 45, 25, 70])
-        reporting_plot_html = reporting_plot.to_html()
-        self.assertTrue(reporting_plot_html.startswith("<div>"))
-        self.assertTrue(reporting_plot_html.endswith("</div>"))
-        reporting_plot_json = reporting_plot.to_json()
-        self.assertTrue("reporting_plot" in reporting_plot_json.keys())
+        self.assert_figure_properties(reporting_plot)
 
     def test_reporting_plots_line_stacked__str_call(self):
         reporting_data = ReportingData(
@@ -131,9 +157,7 @@ class TestReportingPlots(TestCase):
         self.assertEqual(reporting_plot.figure.data[0].y.tolist(), [10, 25, 15, 30])
         self.assertEqual(reporting_plot.figure.data[1].x.tolist(), ["A", "B", "C", "D"])
         self.assertEqual(reporting_plot.figure.data[1].y.tolist(), [25, 45, 25, 70])
-        reporting_plot_html = reporting_plot.to_html()
-        self.assertTrue(reporting_plot_html.startswith("<div>"))
-        self.assertTrue(reporting_plot_html.endswith("</div>"))
+        self.assert_figure_properties(reporting_plot)
 
     def test_reporting_plots__plot_parameters(self):
         reporting_data = ReportingData(
@@ -210,7 +234,7 @@ class TestReportingPlots(TestCase):
         self.assertEqual(result_plot_types, expected_plot_types)
 
 
-class TestReportingPiePlots(TestCase):
+class TestReportingPiePlots(TestCase, FigureAssertionsMixin):
     def test_pie_plots(self):
         test_df = pd.DataFrame(
             {
@@ -237,10 +261,6 @@ class TestReportingPiePlots(TestCase):
         self.assertEqual(
             reporting_plot.figure.data[0].values.tolist(), [10, 25, 15, 30]
         )
-        reporting_plot_html = reporting_plot.to_html()
-        self.assertTrue(reporting_plot_html.startswith("<div>"))
-        self.assertTrue(reporting_plot_html.endswith("</div>"))
+        self.assert_figure_properties(reporting_plot)
         reporting_plot_latex = reporting_plot.to_latex()
         self.assertTrue(reporting_plot_latex.startswith("\\begin{figure}"))
-        reporting_plot_json = reporting_plot.to_json()
-        self.assertTrue("reporting_plot" in reporting_plot_json.keys())
