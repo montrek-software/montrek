@@ -58,7 +58,7 @@ class ReportingText(ReportingElement):
     ):
         if not text:
             text = ""
-        self.text = text
+        self.text = str(text)
         self.reporting_text_type = reporting_text_type
 
     def to_latex(self) -> str:
