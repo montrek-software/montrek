@@ -268,7 +268,7 @@ class TestReportText(TestCase):
             obj=mock_object, field="field", edit_url="test_url"
         )
 
-        self.assertEqual(element.text, 123)
+        self.assertEqual(element.text, "123")
 
         soup = BeautifulSoup(element.to_html(), "html.parser")
 
