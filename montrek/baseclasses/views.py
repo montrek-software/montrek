@@ -225,7 +225,7 @@ class MontrekListView(
     do_simple_file_upload = False
 
     def get(self, request, *args, **kwargs):
-        q = request.get()
+        q = request.GET
         dispatch = {
             "gen_csv": ("true", self.list_to_csv),
             "gen_excel": ("true", self.list_to_excel),

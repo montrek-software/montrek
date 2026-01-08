@@ -373,6 +373,27 @@ class TestMontrekExampleADeleteReturn(TestCase):
             start_url,
         )
 
+    @add_logged_in_user
+    def test_no_http_referer(self):
+        start_url = reverse("under_construction")
+        response_start = self.client.get(start_url)
+        self.assertEqual(response_start.status_code, 200)
+        self.sata1 = me_factories.SatA1Factory()
+        me_factories.SatA2Factory(hub_entity=self.sata1.hub_entity)
+        delete_url = reverse(
+            "montrek_example_a_delete",
+            kwargs={"pk": self.sata1.get_hub_value_date().id},
+        )
+        response_delete = self.client.get(delete_url)
+        self.assertEqual(response_delete.status_code, 200)
+        return_delete = self.client.post(delete_url)
+        self.assertEqual(return_delete.status_code, 302)
+        expected_url = reverse("montrek_example_a_list")
+        self.assertRedirects(
+            return_delete,
+            expected_url,
+        )
+
 
 class TestMontrekExampleAHistoryView(MontrekViewTestCase):
     viewname = "montrek_example_a_history"
