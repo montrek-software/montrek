@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import Any
+from typing import Any, Protocol
 
 from baseclasses import utils
 from baseclasses.dataclasses.view_classes import ActionElement
@@ -476,6 +476,31 @@ class MontrekDetailView(
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+class ReturnToSenderProtocol(Protocol):
+    do_return_to_referer: bool
+    success_url: str
+    request: Any
+
+    @property
+    def session_data(self) -> SessionDataType: ...
+
+
+class ReturnToSenderMixin(ReturnToSenderProtocol):
+    def get_success_url(self):
+        if self.do_return_to_referer:
+            return_url = self.session_data.get("return_url")
+            if return_url:
+                return return_url
+        ### -> Logic to pick up return_url goes here
+        return reverse(self.success_url)
+
+    def get(self, request, *args, **kwargs):
+        redirect = super().get(request, *args, **kwargs)
+        if self.do_return_to_referer:
+            self.request.session["return_url"] = self.session_data["http_referer"]
+        return redirect
+
+
 class MontrekCreateUpdateView(
     MontrekPermissionRequiredMixin, CreateView, MontrekPageViewMixin, MontrekViewMixin
 ):
@@ -558,31 +583,21 @@ class MontrekUpdateView(MontrekCreateUpdateView):
 
 
 class MontrekDeleteView(
-    MontrekPermissionRequiredMixin, TemplateView, MontrekViewMixin, MontrekPageViewMixin
+    MontrekPermissionRequiredMixin,
+    ReturnToSenderMixin,
+    TemplateView,
+    MontrekViewMixin,
+    MontrekPageViewMixin,
 ):
     manager_class = MontrekManagerNotImplemented
     success_url = "under_construction"
     do_return_to_referer: bool = True
     template_name = "montrek_delete.html"
 
-    def get_success_url(self):
-        if self.do_return_to_referer:
-            return_url = self.session_data.get("return_url")
-            if return_url:
-                return return_url
-        ### -> Logic to pick up return_url goes here
-        return reverse(self.success_url)
-
     def post(self, request, *args, **kwargs):
         if "action" in request.POST and request.POST["action"] == "Delete":
             self.manager.delete_object(pk=self.kwargs["pk"])
         return HttpResponseRedirect(self.get_success_url())
-
-    def get(self, request, *args, **kwargs):
-        redirect = super().get(request, *args, **kwargs)
-        if self.do_return_to_referer:
-            self.request.session["return_url"] = self.session_data["http_referer"]
-        return redirect
 
 
 class MontrekRestApiView(MontrekApiViewMixin, MontrekViewMixin):
