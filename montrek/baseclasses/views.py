@@ -481,9 +481,6 @@ class ReturnToSenderProtocol(Protocol):
     success_url: str
     request: Any
 
-    @property
-    def session_data(self) -> SessionDataType: ...
-
 
 class ReturnToSenderMixin(ReturnToSenderProtocol):
     def get_success_url(self):
@@ -502,11 +499,16 @@ class ReturnToSenderMixin(ReturnToSenderProtocol):
 
 
 class MontrekCreateUpdateView(
-    MontrekPermissionRequiredMixin, CreateView, MontrekPageViewMixin, MontrekViewMixin
+    MontrekPermissionRequiredMixin,
+    ReturnToSenderMixin,
+    CreateView,
+    MontrekPageViewMixin,
+    MontrekViewMixin,
 ):
     manager_class = MontrekManagerNotImplemented
     form_class = MontrekCreateForm
     template_name = "montrek_create.html"
+    do_return_to_referer: bool = True
     success_url = "under_construction"
     title = ""
 
@@ -523,9 +525,6 @@ class MontrekCreateUpdateView(
 
     def get_queryset(self):
         return self.get_view_queryset()
-
-    def get_success_url(self):
-        return reverse(self.success_url)
 
     def form_valid(self, form):
         self.object = self.manager.create_object(data=form.cleaned_data)

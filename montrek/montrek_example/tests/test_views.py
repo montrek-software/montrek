@@ -166,6 +166,120 @@ class TestMontrekExampleACreateView(MontrekCreateViewTestCase):
         )
 
 
+class TestMontrekExampleCreateReturn(TestCase):
+    @add_logged_in_user
+    def test_remember_http_referer(self):
+        start_url = reverse("under_construction")
+        response_start = self.client.get(start_url)
+        self.assertEqual(response_start.status_code, 200)
+        create_url = reverse(
+            "montrek_example_a_create",
+        )
+        response_create = self.client.get(create_url, HTTP_REFERER=start_url)
+        self.assertEqual(response_create.status_code, 200)
+        return_create = self.client.post(
+            create_url,
+            {
+                "field_a1_str": "test",
+                "field_a1_int": 1,
+                "field_a2_str": "test2",
+                "field_a2_float": 2.0,
+            },
+        )
+        self.assertEqual(return_create.status_code, 302)
+        self.assertRedirects(
+            return_create,
+            start_url,
+        )
+
+    @add_logged_in_user
+    def test_no_http_referer(self):
+        start_url = reverse("under_construction")
+        response_start = self.client.get(start_url)
+        self.assertEqual(response_start.status_code, 200)
+        create_url = reverse(
+            "montrek_example_a_create",
+        )
+        response_create = self.client.get(create_url)
+        self.assertEqual(response_create.status_code, 200)
+        return_create = self.client.post(
+            create_url,
+            {
+                "field_a1_str": "test",
+                "field_a1_int": 1,
+                "field_a2_str": "test2",
+                "field_a2_float": 2.0,
+            },
+        )
+        self.assertEqual(return_create.status_code, 302)
+        expected_url = reverse("montrek_example_a_list")
+        self.assertRedirects(
+            return_create,
+            expected_url,
+        )
+
+
+class TestMontrekExampleUpdateReturn(TestCase):
+    @add_logged_in_user
+    def test_remember_http_referer(self):
+        start_url = reverse("under_construction")
+        response_start = self.client.get(start_url)
+        self.assertEqual(response_start.status_code, 200)
+        self.sat_a1 = me_factories.SatA1Factory()
+        me_factories.SatA2Factory(hub_entity=self.sat_a1.hub_entity)
+        HubARepository().store_in_view_model()
+        update_url = reverse(
+            "montrek_example_a_update",
+            kwargs={"pk": self.sat_a1.get_hub_value_date().id},
+        )
+        response_update = self.client.get(update_url, HTTP_REFERER=start_url)
+        self.assertEqual(response_update.status_code, 200)
+        return_update = self.client.post(
+            update_url,
+            {
+                "field_a1_str": "test",
+                "field_a1_int": 1,
+                "field_a2_str": "test2",
+                "field_a2_float": 2.0,
+            },
+        )
+        self.assertEqual(return_update.status_code, 302)
+        self.assertRedirects(
+            return_update,
+            start_url,
+        )
+
+    @add_logged_in_user
+    def test_no_http_referer(self):
+        start_url = reverse("under_construction")
+        response_start = self.client.get(start_url)
+        self.assertEqual(response_start.status_code, 200)
+        self.sat_a1 = me_factories.SatA1Factory()
+        me_factories.SatA2Factory(hub_entity=self.sat_a1.hub_entity)
+        HubARepository().store_in_view_model()
+        update_url = reverse(
+            "montrek_example_a_update",
+            kwargs={"pk": self.sat_a1.get_hub_value_date().id},
+        )
+        response_update = self.client.get(update_url)
+        self.assertEqual(response_update.status_code, 200)
+        return_update = self.client.post(
+            update_url,
+            {
+                "field_a1_str": "test",
+                "field_a1_int": 1,
+                "field_a2_str": "test2",
+                "field_a2_float": 2.0,
+            },
+        )
+        self.assertEqual(return_update.status_code, 302)
+        expected_url = reverse("montrek_example_a_list")
+        self.assertRedirects(
+            return_update,
+            expected_url,
+        )
+
+
 class TestMontrekExampleAUpdateView(MontrekUpdateViewTestCase):
     viewname = "montrek_example_a_update"
     view_class = me_views.MontrekExampleAUpdate
