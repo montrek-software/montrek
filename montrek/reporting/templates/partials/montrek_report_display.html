@@ -9,6 +9,9 @@
     if (graphs.length === 0) {
       console.error("No plotly-graph-div elements found");
     }
+    else {
+      console.info("plotly-graph-div elements found");
+    }
     graphs.forEach((gd) => wireClicks(gd));
   })();
 
