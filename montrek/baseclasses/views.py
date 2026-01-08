@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import Any, Protocol
+from typing import Any, BinaryIO, Protocol
 
 from baseclasses import utils
 from baseclasses.dataclasses.view_classes import ActionElement
@@ -166,14 +166,16 @@ class ToPdfMixin:
         pdf_path = report_manager.compile_report()
         self.show_messages()
         if pdf_path and os.path.exists(pdf_path):
-            with open(pdf_path, "rb") as f:
-                return FileResponse(
-                    f,
-                    content_type="application/pdf",
-                    filename=os.path.basename(pdf_path),
-                )
+            return FileResponse(
+                self.open_file(pdf_path),
+                content_type="application/pdf",
+                filename=os.path.basename(pdf_path),
+            )
         previous_url = self.request.META.get("HTTP_REFERER")
         return HttpResponseRedirect(previous_url)
+
+    def open_file(self, path: str) -> BinaryIO:
+        return open(path, "rb")  # noqa: SIM115    FileResponse needs the file open
 
 
 class MontrekApiViewMixin(APIView):
