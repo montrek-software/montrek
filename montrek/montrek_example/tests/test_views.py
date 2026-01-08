@@ -59,8 +59,8 @@ class TestMontrekExampleAListView(MontrekListViewTestCase):
             hub_entity=other_sata1.hub_entity, field_a2_str="test"
         )
         repo = HubARepository()
-        # repo.store_in_view_model()
-        # self.assertEqual(len(repo.receive()), 2)
+        repo.store_in_view_model()
+        self.assertEqual(len(repo.receive()), 2)
 
         url = reverse(
             "montrek_example_a_list",
@@ -310,7 +310,7 @@ class TestMontrekExampleADetailView(MontrekDetailViewTestCase):
             ("field_a1_int", "A1 Int"),
         ]
 
-        for th, (attr, label) in zip(headers, header_expectations):
+        for th, (attr, label) in zip(headers, header_expectations, strict=False):
             self.assertEqual(th["title"], attr)
 
             button = th.find("button", class_="btn-order-field")
@@ -328,7 +328,7 @@ class TestMontrekExampleADetailView(MontrekDetailViewTestCase):
         rows = table.tbody.find_all("tr")
         self.assertEqual(len(rows), 2)
 
-        for row, hub in zip(rows, [self.hub_vd_0, self.hub_vd]):
+        for row, hub in zip(rows, [self.hub_vd_0, self.hub_vd], strict=False):
             link = row.find("a")
             self.assertIsNotNone(link)
 
@@ -350,6 +350,28 @@ class TestMontrekExampleADelete(MontrekDeleteViewTestCase):
 
     def url_kwargs(self) -> dict:
         return {"pk": self.sata1.get_hub_value_date().id}
+
+
+class TestMontrekExampleADeleteReturn(TestCase):
+    @add_logged_in_user
+    def test_remember_http_referer(self):
+        start_url = reverse("under_construction")
+        response_start = self.client.get(start_url)
+        self.assertEqual(response_start.status_code, 200)
+        self.sata1 = me_factories.SatA1Factory()
+        me_factories.SatA2Factory(hub_entity=self.sata1.hub_entity)
+        delete_url = reverse(
+            "montrek_example_a_delete",
+            kwargs={"pk": self.sata1.get_hub_value_date().id},
+        )
+        response_delete = self.client.get(delete_url)
+        self.assertEqual(response_delete.status_code, 200)
+        return_delete = self.client.post(delete_url)
+        self.assertEqual(return_delete.status_code, 302)
+        self.assertRedirects(
+            return_delete,
+            start_url,
+        )
 
 
 class TestMontrekExampleAHistoryView(MontrekViewTestCase):
