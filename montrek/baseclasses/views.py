@@ -226,35 +226,34 @@ class MontrekListView(
 
     def get(self, request, *args, **kwargs):
         q = request.GET
-        dispatch = {
-            "gen_csv": ("true", self.list_to_csv),
-            "gen_excel": ("true", self.list_to_excel),
-            "gen_pdf": ("true", self.list_to_pdf),
-            "refresh_data": ("true", self.refresh_data),
-            "order_action": (None, self.set_order_field),
-        }
+        response = None
 
-        for key, (expected, handler) in dispatch.items():
-            if key in q and expected is None or q.get(key) == expected:
-                return handler(q.get(key))
+        if q.get("gen_csv") == "true":
+            response = self.list_to_csv()
+        elif q.get("gen_excel") == "true":
+            response = self.list_to_excel()
+        elif q.get("gen_pdf") == "true":
+            response = self.list_to_pdf()
+        elif self._is_rest(request):
+            response = self.list_to_rest_api()
+        elif q.get("refresh_data") == "true":
+            response = self.refresh_data()
+        elif q.get("action") == "reset":
+            response = self.reset_filter()
+        elif q.get("action") == "add_filter":
+            response = self.add_filter()
+        elif q.get("action") == "add_paginate_by":
+            response = self.add_paginate_by()
+        elif q.get("action") == "sub_paginate_by":
+            response = self.sub_paginate_by()
+        elif q.get("action") == "is_compact_format_true":
+            response = self.set_is_compact_format(True)
+        elif q.get("action") == "is_compact_format_false":
+            response = self.set_is_compact_format(False)
+        elif "order_action" in q:
+            response = self.set_order_field(q.get("order_action"))
 
-        action_dispatch = {
-            "reset": self.reset_filter,
-            "add_filter": self.add_filter,
-            "add_paginate_by": self.add_paginate_by,
-            "sub_paginate_by": self.sub_paginate_by,
-            "is_compact_format_true": lambda: self.set_is_compact_format(True),
-            "is_compact_format_false": lambda: self.set_is_compact_format(False),
-        }
-
-        action = q.get("action")
-        if action in action_dispatch:
-            return action_dispatch[action]()
-
-        if self._is_rest(request):
-            return self.list_to_rest_api()
-
-        return super().get(request, *args, **kwargs)
+        return response or super().get(request, *args, **kwargs)
 
     def get_queryset(self):
         return self.manager.get_table()
