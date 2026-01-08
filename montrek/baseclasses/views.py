@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import Any
+from typing import Any, BinaryIO, Protocol
 
 from baseclasses import utils
 from baseclasses.dataclasses.view_classes import ActionElement
@@ -167,12 +167,15 @@ class ToPdfMixin:
         self.show_messages()
         if pdf_path and os.path.exists(pdf_path):
             return FileResponse(
-                open(pdf_path, "rb"),
+                self.open_file(pdf_path),
                 content_type="application/pdf",
                 filename=os.path.basename(pdf_path),
             )
         previous_url = self.request.META.get("HTTP_REFERER")
         return HttpResponseRedirect(previous_url)
+
+    def open_file(self, path: str) -> BinaryIO:
+        return open(path, "rb")  # noqa: SIM115    FileResponse needs the file open
 
 
 class MontrekApiViewMixin(APIView):
@@ -193,9 +196,10 @@ class MontrekApiViewMixin(APIView):
     def initial(self, request, *args, **kwargs):
         super().initial(request, *args, **kwargs)  # JWT auth, DRF perms, throttles
         # If this view also mixes in PermissionRequiredMixin, enforce it here.
-        if isinstance(self, PermissionRequiredMixin):
-            if not self.has_permission():  # from PermissionRequiredMixin
-                raise PermissionDenied
+        if (
+            isinstance(self, PermissionRequiredMixin) and not self.has_permission()
+        ):  # from PermissionRequiredMixin
+            raise PermissionDenied
 
     # Only used on the REST path (because non-REST doesn't hit APIView.dispatch)
     def get_authenticators(self):
@@ -223,32 +227,35 @@ class MontrekListView(
     do_simple_file_upload = False
 
     def get(self, request, *args, **kwargs):
-        request_get = self.request.GET
-        if request_get.get("gen_csv") == "true":
-            return self.list_to_csv()
-        if request_get.get("gen_excel") == "true":
-            return self.list_to_excel()
-        if request_get.get("gen_pdf") == "true":
-            return self.list_to_pdf()
-        if self._is_rest(request):
-            return self.list_to_rest_api()
-        if request_get.get("refresh_data") == "true":
-            return self.refresh_data()
-        if request_get.get("action") == "reset":
-            return self.reset_filter()
-        if request_get.get("action") == "add_filter":
-            return self.add_filter()
-        if request_get.get("action") == "add_paginate_by":
-            return self.add_paginate_by()
-        if request_get.get("action") == "sub_paginate_by":
-            return self.sub_paginate_by()
-        if request_get.get("action") == "is_compact_format_true":
-            return self.set_is_compact_format(True)
-        if request_get.get("action") == "is_compact_format_false":
-            return self.set_is_compact_format(False)
-        if "order_action" in request_get:
-            return self.set_order_field(request_get.get("order_action", None))
-        return super().get(request, *args, **kwargs)
+        q = request.GET
+        response = None
+
+        if q.get("gen_csv") == "true":
+            response = self.list_to_csv()
+        elif q.get("gen_excel") == "true":
+            response = self.list_to_excel()
+        elif q.get("gen_pdf") == "true":
+            response = self.list_to_pdf()
+        elif self._is_rest(request):
+            response = self.list_to_rest_api()
+        elif q.get("refresh_data") == "true":
+            response = self.refresh_data()
+        elif q.get("action") == "reset":
+            response = self.reset_filter()
+        elif q.get("action") == "add_filter":
+            response = self.add_filter()
+        elif q.get("action") == "add_paginate_by":
+            response = self.add_paginate_by()
+        elif q.get("action") == "sub_paginate_by":
+            response = self.sub_paginate_by()
+        elif q.get("action") == "is_compact_format_true":
+            response = self.set_is_compact_format(True)
+        elif q.get("action") == "is_compact_format_false":
+            response = self.set_is_compact_format(False)
+        elif "order_action" in q:
+            response = self.set_order_field(q.get("order_action"))
+
+        return response or super().get(request, *args, **kwargs)
 
     def get_queryset(self):
         return self.manager.get_table()
@@ -450,7 +457,7 @@ class MontrekDetailView(
         request_get = self.request.GET
         if request_get.get("gen_pdf") == "true":
             return self.list_to_pdf()
-        elif self._is_rest(request):
+        if self._is_rest(request):
             return self.list_to_rest_api()
         return super().get(request, *args, **kwargs)
 
@@ -471,12 +478,41 @@ class MontrekDetailView(
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+class ReturnToSenderProtocol(Protocol):
+    do_return_to_referer: bool
+    success_url: str
+    request: Any
+
+
+class ReturnToSenderMixin(ReturnToSenderProtocol):
+    def get_success_url(self):
+        if self.do_return_to_referer:
+            return_url = self.request.session.get("return_url")
+            if return_url:
+                return return_url
+        # Fallback: use the configured success_url name.
+        return reverse(self.success_url)
+
+    def get(self, request, *args, **kwargs):
+        response = super().get(request, *args, **kwargs)
+        if self.do_return_to_referer:
+            http_referer = request.META.get("HTTP_REFERER")
+            if http_referer:
+                request.session["return_url"] = http_referer
+        return response
+
+
 class MontrekCreateUpdateView(
-    MontrekPermissionRequiredMixin, CreateView, MontrekPageViewMixin, MontrekViewMixin
+    MontrekPermissionRequiredMixin,
+    ReturnToSenderMixin,
+    CreateView,
+    MontrekPageViewMixin,
+    MontrekViewMixin,
 ):
     manager_class = MontrekManagerNotImplemented
     form_class = MontrekCreateForm
     template_name = "montrek_create.html"
+    do_return_to_referer: bool = True
     success_url = "under_construction"
     title = ""
 
@@ -493,9 +529,6 @@ class MontrekCreateUpdateView(
 
     def get_queryset(self):
         return self.get_view_queryset()
-
-    def get_success_url(self):
-        return reverse(self.success_url)
 
     def form_valid(self, form):
         self.object = self.manager.create_object(data=form.cleaned_data)
@@ -553,14 +586,16 @@ class MontrekUpdateView(MontrekCreateUpdateView):
 
 
 class MontrekDeleteView(
-    MontrekPermissionRequiredMixin, TemplateView, MontrekViewMixin, MontrekPageViewMixin
+    MontrekPermissionRequiredMixin,
+    ReturnToSenderMixin,
+    TemplateView,
+    MontrekViewMixin,
+    MontrekPageViewMixin,
 ):
     manager_class = MontrekManagerNotImplemented
     success_url = "under_construction"
+    do_return_to_referer: bool = True
     template_name = "montrek_delete.html"
-
-    def get_success_url(self):
-        return reverse(self.success_url)
 
     def post(self, request, *args, **kwargs):
         if "action" in request.POST and request.POST["action"] == "Delete":

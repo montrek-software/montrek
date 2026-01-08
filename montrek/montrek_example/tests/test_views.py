@@ -59,8 +59,8 @@ class TestMontrekExampleAListView(MontrekListViewTestCase):
             hub_entity=other_sata1.hub_entity, field_a2_str="test"
         )
         repo = HubARepository()
-        # repo.store_in_view_model()
-        # self.assertEqual(len(repo.receive()), 2)
+        repo.store_in_view_model()
+        self.assertEqual(len(repo.receive()), 2)
 
         url = reverse(
             "montrek_example_a_list",
@@ -163,6 +163,120 @@ class TestMontrekExampleACreateView(MontrekCreateViewTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(
             response, "Ensure this value is greater than or equal to -1000."
+        )
+
+
+class TestMontrekExampleCreateReturn(TestCase):
+    @add_logged_in_user
+    def test_remember_http_referer(self):
+        start_url = reverse("under_construction")
+        response_start = self.client.get(start_url)
+        self.assertEqual(response_start.status_code, 200)
+        create_url = reverse(
+            "montrek_example_a_create",
+        )
+        response_create = self.client.get(create_url, HTTP_REFERER=start_url)
+        self.assertEqual(response_create.status_code, 200)
+        return_create = self.client.post(
+            create_url,
+            {
+                "field_a1_str": "test",
+                "field_a1_int": 1,
+                "field_a2_str": "test2",
+                "field_a2_float": 2.0,
+            },
+        )
+        self.assertEqual(return_create.status_code, 302)
+        self.assertRedirects(
+            return_create,
+            start_url,
+        )
+
+    @add_logged_in_user
+    def test_no_http_referer(self):
+        start_url = reverse("under_construction")
+        response_start = self.client.get(start_url)
+        self.assertEqual(response_start.status_code, 200)
+        create_url = reverse(
+            "montrek_example_a_create",
+        )
+        response_create = self.client.get(create_url)
+        self.assertEqual(response_create.status_code, 200)
+        return_create = self.client.post(
+            create_url,
+            {
+                "field_a1_str": "test",
+                "field_a1_int": 1,
+                "field_a2_str": "test2",
+                "field_a2_float": 2.0,
+            },
+        )
+        self.assertEqual(return_create.status_code, 302)
+        expected_url = reverse("montrek_example_a_list")
+        self.assertRedirects(
+            return_create,
+            expected_url,
+        )
+
+
+class TestMontrekExampleUpdateReturn(TestCase):
+    @add_logged_in_user
+    def test_remember_http_referer(self):
+        start_url = reverse("under_construction")
+        response_start = self.client.get(start_url)
+        self.assertEqual(response_start.status_code, 200)
+        self.sat_a1 = me_factories.SatA1Factory()
+        me_factories.SatA2Factory(hub_entity=self.sat_a1.hub_entity)
+        HubARepository().store_in_view_model()
+        update_url = reverse(
+            "montrek_example_a_update",
+            kwargs={"pk": self.sat_a1.get_hub_value_date().id},
+        )
+        response_update = self.client.get(update_url, HTTP_REFERER=start_url)
+        self.assertEqual(response_update.status_code, 200)
+        return_update = self.client.post(
+            update_url,
+            {
+                "field_a1_str": "test",
+                "field_a1_int": 1,
+                "field_a2_str": "test2",
+                "field_a2_float": 2.0,
+            },
+        )
+        self.assertEqual(return_update.status_code, 302)
+        self.assertRedirects(
+            return_update,
+            start_url,
+        )
+
+    @add_logged_in_user
+    def test_no_http_referer(self):
+        start_url = reverse("under_construction")
+        response_start = self.client.get(start_url)
+        self.assertEqual(response_start.status_code, 200)
+        self.sat_a1 = me_factories.SatA1Factory()
+        me_factories.SatA2Factory(hub_entity=self.sat_a1.hub_entity)
+        HubARepository().store_in_view_model()
+        update_url = reverse(
+            "montrek_example_a_update",
+            kwargs={"pk": self.sat_a1.get_hub_value_date().id},
+        )
+        response_update = self.client.get(update_url)
+        self.assertEqual(response_update.status_code, 200)
+        return_update = self.client.post(
+            update_url,
+            {
+                "field_a1_str": "test",
+                "field_a1_int": 1,
+                "field_a2_str": "test2",
+                "field_a2_float": 2.0,
+            },
+        )
+        self.assertEqual(return_update.status_code, 302)
+        expected_url = reverse("montrek_example_a_list")
+        self.assertRedirects(
+            return_update,
+            expected_url,
         )
 
 
@@ -310,7 +424,7 @@ class TestMontrekExampleADetailView(MontrekDetailViewTestCase):
             ("field_a1_int", "A1 Int"),
         ]
 
-        for th, (attr, label) in zip(headers, header_expectations):
+        for th, (attr, label) in zip(headers, header_expectations, strict=False):
             self.assertEqual(th["title"], attr)
 
             button = th.find("button", class_="btn-order-field")
@@ -328,7 +442,7 @@ class TestMontrekExampleADetailView(MontrekDetailViewTestCase):
         rows = table.tbody.find_all("tr")
         self.assertEqual(len(rows), 2)
 
-        for row, hub in zip(rows, [self.hub_vd_0, self.hub_vd]):
+        for row, hub in zip(rows, [self.hub_vd_0, self.hub_vd], strict=False):
             link = row.find("a")
             self.assertIsNotNone(link)
 
@@ -350,6 +464,69 @@ class TestMontrekExampleADelete(MontrekDeleteViewTestCase):
 
     def url_kwargs(self) -> dict:
         return {"pk": self.sata1.get_hub_value_date().id}
+
+
+class TestMontrekExampleDeleteReturn(TestCase):
+    @add_logged_in_user
+    def test_remember_http_referer(self):
+        start_url = reverse("under_construction")
+        response_start = self.client.get(start_url)
+        self.assertEqual(response_start.status_code, 200)
+        self.sata1 = me_factories.SatA1Factory()
+        me_factories.SatA2Factory(hub_entity=self.sata1.hub_entity)
+        delete_url = reverse(
+            "montrek_example_a_delete",
+            kwargs={"pk": self.sata1.get_hub_value_date().id},
+        )
+        response_delete = self.client.get(delete_url, HTTP_REFERER=start_url)
+        self.assertEqual(response_delete.status_code, 200)
+        return_delete = self.client.post(delete_url)
+        self.assertEqual(return_delete.status_code, 302)
+        self.assertRedirects(
+            return_delete,
+            start_url,
+        )
+
+    @add_logged_in_user
+    def test_no_http_referer(self):
+        start_url = reverse("under_construction")
+        response_start = self.client.get(start_url)
+        self.assertEqual(response_start.status_code, 200)
+        self.sata1 = me_factories.SatA1Factory()
+        me_factories.SatA2Factory(hub_entity=self.sata1.hub_entity)
+        delete_url = reverse(
+            "montrek_example_a_delete",
+            kwargs={"pk": self.sata1.get_hub_value_date().id},
+        )
+        response_delete = self.client.get(delete_url)
+        self.assertEqual(response_delete.status_code, 200)
+        return_delete = self.client.post(delete_url)
+        self.assertEqual(return_delete.status_code, 302)
+        expected_url = reverse("montrek_example_a_list")
+        self.assertRedirects(
+            return_delete,
+            expected_url,
+        )
+
+    @add_logged_in_user
+    def test_enforce_success_url(self):
+        start_url = reverse("under_construction")
+        response_start = self.client.get(start_url)
+        self.assertEqual(response_start.status_code, 200)
+        self.sata1 = me_factories.SatD1Factory()
+        delete_url = reverse(
+            "montrek_example_d_delete",
+            kwargs={"pk": self.sata1.get_hub_value_date().id},
+        )
+        response_delete = self.client.get(delete_url, HTTP_REFERER=start_url)
+        self.assertEqual(response_delete.status_code, 200)
+        return_delete = self.client.post(delete_url)
+        self.assertEqual(return_delete.status_code, 302)
+        expected_url = reverse("montrek_example_d_list")
+        self.assertRedirects(
+            return_delete,
+            expected_url,
+        )
 
 
 class TestMontrekExampleAHistoryView(MontrekViewTestCase):
