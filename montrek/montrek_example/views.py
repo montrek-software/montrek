@@ -275,6 +275,7 @@ class MontrekExampleDCreate(views.MontrekCreateView):
 class MontrekExampleDDelete(views.MontrekDeleteView):
     manager_class = mem.HubDManager
     page_class = pages.MontrekExampleDAppPage
+    do_return_to_referer: bool = False
     success_url = "montrek_example_d_list"
     title = "Delete Example D"
 

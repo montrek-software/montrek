@@ -352,7 +352,7 @@ class TestMontrekExampleADelete(MontrekDeleteViewTestCase):
         return {"pk": self.sata1.get_hub_value_date().id}
 
 
-class TestMontrekExampleADeleteReturn(TestCase):
+class TestMontrekExampleDeleteReturn(TestCase):
     @add_logged_in_user
     def test_remember_http_referer(self):
         start_url = reverse("under_construction")
@@ -389,6 +389,26 @@ class TestMontrekExampleADeleteReturn(TestCase):
         return_delete = self.client.post(delete_url)
         self.assertEqual(return_delete.status_code, 302)
         expected_url = reverse("montrek_example_a_list")
+        self.assertRedirects(
+            return_delete,
+            expected_url,
+        )
+
+    @add_logged_in_user
+    def test_enforce_success_url(self):
+        start_url = reverse("under_construction")
+        response_start = self.client.get(start_url)
+        self.assertEqual(response_start.status_code, 200)
+        self.sata1 = me_factories.SatD1Factory()
+        delete_url = reverse(
+            "montrek_example_d_delete",
+            kwargs={"pk": self.sata1.get_hub_value_date().id},
+        )
+        response_delete = self.client.get(delete_url, HTTP_REFERER=start_url)
+        self.assertEqual(response_delete.status_code, 200)
+        return_delete = self.client.post(delete_url)
+        self.assertEqual(return_delete.status_code, 302)
+        expected_url = reverse("montrek_example_d_list")
         self.assertRedirects(
             return_delete,
             expected_url,
