@@ -3,6 +3,7 @@ from networkx import DiGraph
 from plotly.graph_objs import Scatter
 from reporting.core.reporting_data import ReportingNetworkData
 from reporting.core.reporting_network_plots import ReportingNetworkPlot
+from bs4 import BeautifulSoup
 
 
 class TestReportingNetworkPlot(TestCase):
@@ -17,12 +18,24 @@ class TestReportingNetworkPlot(TestCase):
         reporting_plot = ReportingNetworkPlot()
         reporting_plot.generate(reporting_data)
         figure_data = reporting_plot.figure.data
-        self.assertTrue(all([isinstance(plot, Scatter) for plot in figure_data]))
+        self.assertTrue(all(isinstance(plot, Scatter) for plot in figure_data))
         edges = figure_data[0]
         nodes = figure_data[1]
         self.assertEqual(edges["mode"], "lines")
         self.assertEqual(nodes["mode"], "markers+text")
         self.assertEqual(nodes["text"], ("<b>A</b>", "<b>B</b>"))
+        html = reporting_plot.to_html()
+        soup = BeautifulSoup(html, "html.parser")
+
+        # Find all plotly divs by id convention
+        plot_divs = soup.select('div[id^="plot-"]')
+        self.assertTrue(plot_divs, "No plot divs rendered")
+
+        for div in plot_divs:
+            classes = div.get("class", [])
+            self.assertIn(
+                "plotly-graph-div", classes, f"Missing plotly-graph-div class on {div}"
+            )
 
     def test_generate_network_plot__with_marker(self):
         graph = DiGraph()

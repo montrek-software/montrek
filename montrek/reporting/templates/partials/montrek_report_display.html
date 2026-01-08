@@ -2,11 +2,14 @@
   {{ report_element }}
 {% endfor %}
 
+
 <script>
   (function wireAllGraphs() {
-    document
-      .querySelectorAll(".plotly-graph-div")
-      .forEach((gd) => wireClicks(gd));
+    const graphs = document.querySelectorAll(".plotly-graph-div");
+    if (graphs.length === 0) {
+      console.error("No plotly-graph-div elements found");
+    }
+    graphs.forEach((gd) => wireClicks(gd));
   })();
 
   function wireClicks(gd) {
