@@ -485,17 +485,19 @@ class ReturnToSenderProtocol(Protocol):
 class ReturnToSenderMixin(ReturnToSenderProtocol):
     def get_success_url(self):
         if self.do_return_to_referer:
-            return_url = self.session_data.get("return_url")
+            return_url = self.request.session.get("return_url")
             if return_url:
                 return return_url
-        ### -> Logic to pick up return_url goes here
+        # Fallback: use the configured success_url name.
         return reverse(self.success_url)
 
     def get(self, request, *args, **kwargs):
-        redirect = super().get(request, *args, **kwargs)
+        response = super().get(request, *args, **kwargs)
         if self.do_return_to_referer:
-            self.request.session["return_url"] = self.session_data["http_referer"]
-        return redirect
+            http_referer = request.META.get("HTTP_REFERER")
+            if http_referer:
+                request.session["return_url"] = http_referer
+        return response
 
 
 class MontrekCreateUpdateView(
