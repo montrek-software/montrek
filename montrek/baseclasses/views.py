@@ -166,11 +166,12 @@ class ToPdfMixin:
         pdf_path = report_manager.compile_report()
         self.show_messages()
         if pdf_path and os.path.exists(pdf_path):
-            return FileResponse(
-                open(pdf_path, "rb"),
-                content_type="application/pdf",
-                filename=os.path.basename(pdf_path),
-            )
+            with open(pdf_path, "rb") as f:
+                return FileResponse(
+                    f,
+                    content_type="application/pdf",
+                    filename=os.path.basename(pdf_path),
+                )
         previous_url = self.request.META.get("HTTP_REFERER")
         return HttpResponseRedirect(previous_url)
 
@@ -193,9 +194,10 @@ class MontrekApiViewMixin(APIView):
     def initial(self, request, *args, **kwargs):
         super().initial(request, *args, **kwargs)  # JWT auth, DRF perms, throttles
         # If this view also mixes in PermissionRequiredMixin, enforce it here.
-        if isinstance(self, PermissionRequiredMixin):
-            if not self.has_permission():  # from PermissionRequiredMixin
-                raise PermissionDenied
+        if (
+            isinstance(self, PermissionRequiredMixin) and not self.has_permission()
+        ):  # from PermissionRequiredMixin
+            raise PermissionDenied
 
     # Only used on the REST path (because non-REST doesn't hit APIView.dispatch)
     def get_authenticators(self):
@@ -223,31 +225,35 @@ class MontrekListView(
     do_simple_file_upload = False
 
     def get(self, request, *args, **kwargs):
-        request_get = self.request.GET
-        if request_get.get("gen_csv") == "true":
-            return self.list_to_csv()
-        if request_get.get("gen_excel") == "true":
-            return self.list_to_excel()
-        if request_get.get("gen_pdf") == "true":
-            return self.list_to_pdf()
+        q = request.get()
+        dispatch = {
+            "gen_csv": ("true", self.list_to_csv),
+            "gen_excel": ("true", self.list_to_excel),
+            "gen_pdf": ("true", self.list_to_pdf),
+            "refresh_data": ("true", self.refresh_data),
+            "order_action": (None, self.set_order_field),
+        }
+
+        for key, (expected, handler) in dispatch.items():
+            if key in q and expected is None or q.get(key) == expected:
+                return handler(q.get(key))
+
+        action_dispatch = {
+            "reset": self.reset_filter,
+            "add_filter": self.add_filter,
+            "add_paginate_by": self.add_paginate_by,
+            "sub_paginate_by": self.sub_paginate_by,
+            "is_compact_format_true": lambda: self.set_is_compact_format(True),
+            "is_compact_format_false": lambda: self.set_is_compact_format(False),
+        }
+
+        action = q.get("action")
+        if action in action_dispatch:
+            return action_dispatch[action]()
+
         if self._is_rest(request):
             return self.list_to_rest_api()
-        if request_get.get("refresh_data") == "true":
-            return self.refresh_data()
-        if request_get.get("action") == "reset":
-            return self.reset_filter()
-        if request_get.get("action") == "add_filter":
-            return self.add_filter()
-        if request_get.get("action") == "add_paginate_by":
-            return self.add_paginate_by()
-        if request_get.get("action") == "sub_paginate_by":
-            return self.sub_paginate_by()
-        if request_get.get("action") == "is_compact_format_true":
-            return self.set_is_compact_format(True)
-        if request_get.get("action") == "is_compact_format_false":
-            return self.set_is_compact_format(False)
-        if "order_action" in request_get:
-            return self.set_order_field(request_get.get("order_action", None))
+
         return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -450,7 +456,7 @@ class MontrekDetailView(
         request_get = self.request.GET
         if request_get.get("gen_pdf") == "true":
             return self.list_to_pdf()
-        elif self._is_rest(request):
+        if self._is_rest(request):
             return self.list_to_rest_api()
         return super().get(request, *args, **kwargs)
 
@@ -557,15 +563,27 @@ class MontrekDeleteView(
 ):
     manager_class = MontrekManagerNotImplemented
     success_url = "under_construction"
+    do_return_to_referer: bool = True
     template_name = "montrek_delete.html"
 
     def get_success_url(self):
+        if self.do_return_to_referer:
+            return_url = self.session_data.get("return_url")
+            if return_url:
+                return return_url
+        ### -> Logic to pick up return_url goes here
         return reverse(self.success_url)
 
     def post(self, request, *args, **kwargs):
         if "action" in request.POST and request.POST["action"] == "Delete":
             self.manager.delete_object(pk=self.kwargs["pk"])
         return HttpResponseRedirect(self.get_success_url())
+
+    def get(self, request, *args, **kwargs):
+        redirect = super().get(request, *args, **kwargs)
+        if self.do_return_to_referer:
+            self.request.session["return_url"] = self.session_data["http_referer"]
+        return redirect
 
 
 class MontrekRestApiView(MontrekApiViewMixin, MontrekViewMixin):

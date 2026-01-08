@@ -364,7 +364,7 @@ class TestMontrekExampleADeleteReturn(TestCase):
             "montrek_example_a_delete",
             kwargs={"pk": self.sata1.get_hub_value_date().id},
         )
-        response_delete = self.client.get(delete_url)
+        response_delete = self.client.get(delete_url, HTTP_REFERER=start_url)
         self.assertEqual(response_delete.status_code, 200)
         return_delete = self.client.post(delete_url)
         self.assertEqual(return_delete.status_code, 302)
