@@ -10,6 +10,7 @@ from reporting.core.reporting_text import (
     MontrekLogo,
     NewPage,
     ReportingEditableText,
+    ReportingElement,
     ReportingHeader1,
     ReportingHeader2,
     ReportingImage,
@@ -66,6 +67,75 @@ class ReportingElementTestCase(TestCase):
         if self.__class__.__name__ == "ReportingElementTestCase":
             return
         self.assertEqual(self.reporting_element.to_json(), self.expected_json)
+
+
+class DummyReportingElement(ReportingElement):
+    template_name = "test"
+
+
+class TestReportinElementGeneral(TestCase):
+    def test_to_latex(self):
+        reporting_element = DummyReportingElement()
+        latex = reporting_element.to_latex()
+        # Headers
+        self.assertIn(r"\section*{Header One}", latex)
+        self.assertIn(r"\subsection*{Header Two}", latex)
+        self.assertIn(r"\textbf{Header Three}\\", latex)
+        self.assertIn(r"\paragraph{Header Four}", latex)
+        self.assertIn(r"\subparagraph{Header Five}", latex)
+
+        # Paragraphs
+        self.assertIn(r"\begin{justify}", latex)
+        self.assertIn(r"\end{justify}", latex)
+
+        # Bold / Italic
+        self.assertIn(r"\textbf{bold}", latex)
+        self.assertIn(r"\textit{italic}", latex)
+
+        # Special characters
+        self.assertIn(r"\#", latex)
+        self.assertIn(r"\_", latex)
+        self.assertIn(r"\%", latex)
+        self.assertIn(r"\&", latex)
+        self.assertIn(r"$<$", latex)
+        self.assertIn(r"$>$", latex)
+        self.assertIn(r"$\cdot$", latex)
+
+        # Sub / Sup
+        self.assertIn(r"$_{1}$", latex)
+        self.assertIn(r"$^{2}$", latex)
+
+        # Line break
+        self.assertIn(r"\newline", latex)
+
+        # Lists
+        self.assertIn(r"\begin{itemize}", latex)
+        self.assertIn(r"\item Item A", latex)
+        self.assertIn(r"\end{itemize}", latex)
+
+        self.assertIn(r"\begin{enumerate}", latex)
+        self.assertIn(r"\item First", latex)
+        self.assertIn(r"\end{enumerate}", latex)
+
+        # Links
+        self.assertIn(
+            r"\textcolor{blue}{\href{https://example.com}{Example}}",
+            latex,
+        )
+
+        # Images
+        self.assertIn(r"\includegraphics{image.png}", latex)
+
+        # Alignment
+        self.assertIn(r"\begin{center} Centered \end{center}", latex)
+
+        # Emojis
+        self.assertIn(r"\twemoji{rocket}", latex)
+        self.assertIn(r"\twemoji{pencil}", latex)
+        self.assertIn(r"\twemoji{wastebasket}", latex)
+
+        # Ignored wrapper div
+        self.assertNotIn("col-md-6", latex)
 
 
 class TestReportingText(ReportingElementTestCase):

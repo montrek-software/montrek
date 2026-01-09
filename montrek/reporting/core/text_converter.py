@@ -77,10 +77,10 @@ class HtmlLatexConverter:
         characters = {
             "#": "\\#",
             "_": "\\_",
-            "&middot;": "$\\cdot$",
+            "·": "$\\cdot$",
             "&amp;": "&",
-            "&lt;": "$<$",
-            "&gt;": "$>$",
+            "<": "$<$",
+            ">": "$>$",
             "%": "\\%",
             "&lowbar;": "\\_",
         }
@@ -91,8 +91,8 @@ class HtmlLatexConverter:
 
     @staticmethod
     def sub_sup_script(text: str) -> str:
-        text = text.replace("<sub>", "$_{").replace("</sub>", "}$")
-        text = text.replace("<sup>", "$^{").replace("</sup>", "}$")
+        text = text.replace("$<$sub$>$", "$_{").replace("$<$/sub$>$", "}$")
+        text = text.replace("$<$sup$>$", "$^{").replace("$<$/sup$>$", "}$")
         return text
 
     @staticmethod
@@ -134,7 +134,7 @@ class HtmlLatexConverter:
 
     @staticmethod
     def emojis(text: str) -> str:
-        text = text.replace("&#128640;", "\\twemoji{rocket}")
+        text = text.replace("🚀", "\\twemoji{rocket}")
         text = text.replace('<span class="bi bi-pencil"></span>', "\\twemoji{pencil}")
         text = text.replace(
             '<span class="bi bi-trash"></span>', "\\twemoji{wastebasket}"

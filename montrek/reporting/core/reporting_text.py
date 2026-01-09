@@ -26,6 +26,10 @@ class ReportingElement:
             f"reporting_elements/{self.template_name}.html", self.get_context_data()
         )
 
+    def to_latex(self) -> str:
+        html_text = self.to_html()
+        return HtmlLatexConverter.convert(html_text)
+
 
 class ReportingTextParagraph(ReportingElement):
     def __init__(
