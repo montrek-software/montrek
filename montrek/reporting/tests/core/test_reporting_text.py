@@ -137,6 +137,13 @@ class TestReportinElementGeneral(TestCase):
         # Ignored wrapper div
         self.assertNotIn("col-md-6", latex)
 
+        # Table
+        self.assertIn(r"\begin{tabular}{|l|l|}", latex)
+        self.assertIn(r"\hline", latex)
+        self.assertIn(r"Name \& Age \\", latex)
+        self.assertIn(r"Alice \& 30 \\", latex)
+        self.assertIn(r"\end{tabular}", latex)
+
 
 class TestReportingText(ReportingElementTestCase):
     reporting_element_class = ReportingText
@@ -493,7 +500,7 @@ class TestMarkdownReportingElement(ReportingElementTestCase):
         "<table>\n<thead>\n<tr>\n<th>Header1</th>\n<th>Header2</th>\n</tr>\n</thead>\n"
         "<tbody>\n<tr>\n<td>Cell1</td>\n<td>Cell2</td>\n</tr>\n</tbody>\n</table>"
     )
-    expected_latex = "\\begin{justify}This is a \\textbf{bold} text with a table:\\end{justify}\n\n\n<table>\n<thead>\n<tr>\n<th>Header1</th>\n<th>Header2</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Cell1</td>\n<td>Cell2</td>\n</tr>\n</tbody>\n</table>"
+    expected_latex = "\\begin{justify}This is a \\textbf{bold} text with a table:\\end{justify}\n\n\n\\begin{tabular}{|l|l|}\n\\hline\nHeader1 \\& Header2 \\\\\n\\hline\nCell1 \\& Cell2 \\\\\n\\hline\n\\end{tabular}"
     expected_json = {
         "markdown_reporting_element": "This is a **bold** text with a table:\n\n| Header1 | Header2 |\n|---------|---------|\n| Cell1   | Cell2   |"
     }
