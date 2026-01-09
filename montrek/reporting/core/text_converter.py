@@ -150,8 +150,11 @@ class HtmlLatexConverter:
 
     @staticmethod
     def sub_sup_script(text: str) -> str:
-        text = text.replace("$<$sub$>$", "$_{").replace("$<$/sub$>$", "}$")
-        text = text.replace("$<$sup$>$", "$^{").replace("$<$/sup$>$", "}$")
+        # Convert HTML subscript and superscript tags to LaTeX math mode.
+        # We match the original HTML tags here; special character escaping
+        # (e.g. `<` -> `$<$`) should not be relied upon for these patterns.
+        text = text.replace("<sub>", "$_{").replace("</sub>", "}$")
+        text = text.replace("<sup>", "$^{").replace("</sup>", "}$")
         return text
 
     @staticmethod
