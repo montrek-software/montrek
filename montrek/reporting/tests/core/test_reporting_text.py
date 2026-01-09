@@ -73,7 +73,7 @@ class DummyReportingElement(ReportingElement):
     template_name = "test"
 
 
-class TestReportinElementGeneral(TestCase):
+class TestReportingElementGeneral(TestCase):
     def test_to_latex(self):
         reporting_element = DummyReportingElement()
         latex = reporting_element.to_latex()
