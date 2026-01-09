@@ -9,6 +9,7 @@ class HtmlLatexConverter:
         text = str(text)
         text = HtmlLatexConverter.ignored(text)
         text = HtmlLatexConverter.tables(text)
+        text = HtmlLatexConverter.ruler(text)
         text = HtmlLatexConverter.paragraphs(text)
         text = HtmlLatexConverter.bold(text)
         text = HtmlLatexConverter.italic(text)
@@ -80,6 +81,12 @@ class HtmlLatexConverter:
             text = re.sub(table_pattern, replace_table, text, count=1)
 
         return text
+
+    @staticmethod
+    def ruler(text: str) -> str:
+        return text.replace(
+            "<hr>", "\n\\newline\\rule{\\linewidth}{0.4pt}\\newline\\vspace{0.5em}"
+        )
 
     @staticmethod
     def paragraphs(text: str) -> str:
