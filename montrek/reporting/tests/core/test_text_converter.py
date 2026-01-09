@@ -17,6 +17,20 @@ class TestHtmlLatexConverter(TestCase):
         expected_text = "Text"
         self.assertEqual(converted_text, expected_text)
 
+    def test_table(self):
+        test_text = " <table> <tr> <th>Name</th> <th>Age</th> </tr> <tr> <td>Alice</td> <td>30</td> </tr> </table> "
+        converted_text = HtmlLatexConverter.convert(test_text)
+        expected_text = " \\begin{tabular}{|l|l|}\n\\hline\nName \\& Age \\\\\n\\hline\nAlice \\& 30 \\\\\n\\hline\n\\end{tabular} "
+        self.assertEqual(converted_text, expected_text)
+
+    def test_rule(self):
+        test_text = " <hr> "
+        converted_text = HtmlLatexConverter.convert(test_text)
+        expected_text = (
+            " \n\\newline\\rule{\\linewidth}{0.4pt}\\newline\\vspace{0.5em} "
+        )
+        self.assertEqual(converted_text, expected_text)
+
     def test_headers(self):
         test_text = "<h1>Header 1</h1><h2>Header 2</h2>"
         converted_text = HtmlLatexConverter.convert(test_text)

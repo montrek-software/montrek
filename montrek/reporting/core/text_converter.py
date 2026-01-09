@@ -8,6 +8,8 @@ class HtmlLatexConverter:
     def convert(text: str) -> str:
         text = str(text)
         text = HtmlLatexConverter.ignored(text)
+        text = HtmlLatexConverter.tables(text)
+        text = HtmlLatexConverter.ruler(text)
         text = HtmlLatexConverter.paragraphs(text)
         text = HtmlLatexConverter.bold(text)
         text = HtmlLatexConverter.italic(text)
@@ -31,6 +33,60 @@ class HtmlLatexConverter:
         while re.search(pattern, text, flags=re.DOTALL):
             text = re.sub(pattern, r"\1", text, flags=re.DOTALL)
         return text
+
+    @staticmethod
+    def tables(text: str) -> str:
+        table_pattern = re.compile(
+            r"<table>(.*?)</table>",
+            re.DOTALL,
+        )
+
+        def replace_table(match):
+            table_html = match.group(1)
+
+            rows = re.findall(r"<tr>(.*?)</tr>", table_html, re.DOTALL)
+            if not rows:
+                return ""
+
+            latex_rows = []
+            col_count = None
+
+            for row in rows:
+                cells = re.findall(
+                    r"<t[hd]>(.*?)</t[hd]>",
+                    row,
+                    re.DOTALL,
+                )
+                cells = [c.strip() for c in cells]
+
+                if col_count is None:
+                    col_count = len(cells)
+
+                latex_rows.append(" & ".join(cells) + r" \\")
+
+            alignment = "|".join(["l"] * col_count)
+            alignment = f"|{alignment}|"
+
+            body = "\n\\hline\n".join(latex_rows)
+
+            return (
+                f"\\begin{{tabular}}{{{alignment}}}\n"
+                "\\hline\n"
+                f"{body}\n"
+                "\\hline\n"
+                "\\end{tabular}"
+            )
+
+        while re.search(table_pattern, text):
+            text = re.sub(table_pattern, replace_table, text, count=1)
+
+        return text
+
+    @staticmethod
+    def ruler(text: str) -> str:
+        return text.replace(
+            "<hr>", "\n\\newline\\rule{\\linewidth}{0.4pt}\\newline\\vspace{0.5em}"
+        )
 
     @staticmethod
     def paragraphs(text: str) -> str:
@@ -77,8 +133,11 @@ class HtmlLatexConverter:
         characters = {
             "#": "\\#",
             "_": "\\_",
+            "·": "$\\cdot$",
             "&middot;": "$\\cdot$",
             "&amp;": "&",
+            "<": "$<$",
+            ">": "$>$",
             "&lt;": "$<$",
             "&gt;": "$>$",
             "%": "\\%",
@@ -91,8 +150,11 @@ class HtmlLatexConverter:
 
     @staticmethod
     def sub_sup_script(text: str) -> str:
-        text = text.replace("<sub>", "$_{").replace("</sub>", "}$")
-        text = text.replace("<sup>", "$^{").replace("</sup>", "}$")
+        # Convert HTML subscript and superscript tags to LaTeX math mode.
+        # We match the original HTML tags here; special character escaping
+        # (e.g. `<` -> `$<$`) should not be relied upon for these patterns.
+        text = text.replace("$<$sub$>$", "$_{").replace("$<$/sub$>$", "}$")
+        text = text.replace("$<$sup$>$", "$^{").replace("$<$/sup$>$", "}$")
         return text
 
     @staticmethod
@@ -134,7 +196,7 @@ class HtmlLatexConverter:
 
     @staticmethod
     def emojis(text: str) -> str:
-        text = text.replace("&#128640;", "\\twemoji{rocket}")
+        text = text.replace("🚀", "\\twemoji{rocket}")
         text = text.replace('<span class="bi bi-pencil"></span>', "\\twemoji{pencil}")
         text = text.replace(
             '<span class="bi bi-trash"></span>', "\\twemoji{wastebasket}"
