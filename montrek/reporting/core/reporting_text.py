@@ -1,4 +1,5 @@
 import hashlib
+import mistune
 import pypandoc
 import os
 from pathlib import Path
@@ -28,7 +29,7 @@ class ReportingElement:
 
     def to_latex(self) -> str:
         html_text = self.to_html()
-        return pypandoc.convert_text(html_text, to="latex", format="html")
+        return HtmlLatexConverter.convert(html_text)
 
 
 class ReportingTextParagraph(ReportingElement):
@@ -278,12 +279,17 @@ class MarkdownReportingElement(ReportingElement):
         self.markdown_text = markdown_text
 
     def convert_to_html(self) -> str:
-        html = pypandoc.convert_text(
-            self.markdown_text,
-            to="html",
-            format="md",
+        markdown_to_html = mistune.create_markdown(
+            escape=False,
+            plugins=[
+                "strikethrough",
+                "table",
+                "task_lists",
+            ],
         )
-        return HtmlSanitizer().clean_html(html)
+
+        markdown_html = markdown_to_html(self.markdown_text)
+        return HtmlSanitizer().clean_html(markdown_html)
 
     def to_latex(self) -> str:
         latex_output = pypandoc.convert_text(

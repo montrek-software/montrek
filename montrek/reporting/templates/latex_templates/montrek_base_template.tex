@@ -17,6 +17,8 @@
 \usepackage{tikz}
 \usepackage{twemojis}
 \usepackage{amssymb}
+\usepackage{longtable}
+\usepackage{booktabs}
 \usepackage[most]{tcolorbox}
 \SetWatermarkText{ {{ watermark_text }} }
 \SetWatermarkScale{1}
@@ -72,7 +74,6 @@
   \textbf{\color{primary} \large #3}
 }
 \captionsetup{format=custom}
-\begin{document}
 
 % Contentboxes
 
@@ -100,6 +101,7 @@
 % Lists
 \providecommand{\tightlist}{%
   \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\begin{document}
 {{ content }}
 
 \end{document}
