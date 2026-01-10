@@ -12,7 +12,7 @@ from django.template.loader import render_to_string
 from reporting.constants import WORKBENCH_PATH, ReportingTextType
 from reporting.core.text_converter import HtmlLatexConverter
 
-type ContextTypes = dict[str, str | list[str] | int | float]
+type ContextTypes = dict[str, str | list[str] | int | float | object]
 
 
 class ReportingElement:
