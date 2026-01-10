@@ -1,9 +1,10 @@
 import hashlib
+import mistune
 import os
 from pathlib import Path
 from urllib.parse import urlparse
 
-import markdown
+import pypandoc
 import requests
 from baseclasses.models import HubValueDate
 from baseclasses.sanitizer import HtmlSanitizer
@@ -12,7 +13,7 @@ from django.template.loader import render_to_string
 from reporting.constants import WORKBENCH_PATH, ReportingTextType
 from reporting.core.text_converter import HtmlLatexConverter
 
-type ContextTypes = dict[str, str | list[str] | int | float]
+type ContextTypes = dict[str, str | list[str] | int | float | object]
 
 
 class ReportingElement:
@@ -278,26 +279,25 @@ class MarkdownReportingElement(ReportingElement):
         self.markdown_text = markdown_text
 
     def convert_to_html(self) -> str:
-        html = markdown.markdown(
-            self.markdown_text,
-            extensions=[
-                "markdown.extensions.tables",
-                "markdown.extensions.fenced_code",  # enables ``` code blocks
-                "markdown.extensions.codehilite",  # adds syntax highlighting via Pygments
+        markdown_to_html = mistune.create_markdown(
+            escape=False,
+            plugins=[
+                "strikethrough",
+                "table",
+                "task_lists",
             ],
-            extension_configs={
-                "markdown.extensions.codehilite": {
-                    "guess_lang": False,  # don't try to auto-detect language
-                    "css_class": "highlight",  # class for styling the code blocks
-                }
-            },
         )
-        return HtmlSanitizer().clean_html(html)
+
+        markdown_html = markdown_to_html(self.markdown_text)
+        return HtmlSanitizer().clean_html(markdown_html)
 
     def to_latex(self) -> str:
-        html_text = self.convert_to_html()
-        converter = HtmlLatexConverter()
-        return converter.convert(html_text)
+        latex_output = pypandoc.convert_text(
+            self.markdown_text,
+            to="latex",
+            format="md",
+        )
+        return f"\\begin{{contentbox}}{latex_output}\\end{{contentbox}}"
 
     def to_json(self) -> dict[str, str]:
         return {"markdown_reporting_element": self.markdown_text}

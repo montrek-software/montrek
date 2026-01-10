@@ -32,6 +32,8 @@ kaleido==1.2.0
 networkx==3.6
 openpyxl==3.1.5
 tblib==3.2.2
+pypandoc==1.16.2
+mistune==3.2.0
 
 Jinja2==3.1.6
 Markdown==3.10

@@ -17,6 +17,9 @@
 \usepackage{tikz}
 \usepackage{twemojis}
 \usepackage{amssymb}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage[most]{tcolorbox}
 \SetWatermarkText{ {{ watermark_text }} }
 \SetWatermarkScale{1}
 
@@ -71,9 +74,34 @@
   \textbf{\color{primary} \large #3}
 }
 \captionsetup{format=custom}
+
+% Contentboxes
+
+\newtcolorbox{tilebox}{
+  breakable,
+  colback=white,
+  colframe=black!30,
+  boxrule=0.4pt,
+  arc=2mm,
+  left=2mm,right=2mm,top=1mm,bottom=1mm
+}
+\newtcolorbox{contentbox}{
+  breakable,
+  colback=white,
+  colframe=white,
+  boxrule=0pt,
+  left=0pt,
+  right=0pt,
+  top=0pt,
+  bottom=0pt,
+  enlarge left by=0pt,
+  enlarge right by=0pt,
+}
+
+% Lists
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
 \begin{document}
-
-
 {{ content }}
 
 \end{document}
