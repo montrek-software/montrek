@@ -22,6 +22,7 @@ RUN apt-get update && \
   libmariadb-dev \
   libpq-dev \
   lsb-release \
+  pandoc \
   pkg-config \
   python3-dev \
   texlive-fonts-recommended \
