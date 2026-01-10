@@ -1,9 +1,9 @@
 import hashlib
+import pypandoc
 import os
 from pathlib import Path
 from urllib.parse import urlparse
 
-import markdown
 import requests
 from baseclasses.models import HubValueDate
 from baseclasses.sanitizer import HtmlSanitizer
@@ -28,7 +28,7 @@ class ReportingElement:
 
     def to_latex(self) -> str:
         html_text = self.to_html()
-        return HtmlLatexConverter.convert(html_text)
+        return pypandoc.convert_text(html_text, to="latex", format="html")
 
 
 class ReportingTextParagraph(ReportingElement):
@@ -278,26 +278,20 @@ class MarkdownReportingElement(ReportingElement):
         self.markdown_text = markdown_text
 
     def convert_to_html(self) -> str:
-        html = markdown.markdown(
+        html = pypandoc.convert_text(
             self.markdown_text,
-            extensions=[
-                "markdown.extensions.tables",
-                "markdown.extensions.fenced_code",  # enables ``` code blocks
-                "markdown.extensions.codehilite",  # adds syntax highlighting via Pygments
-            ],
-            extension_configs={
-                "markdown.extensions.codehilite": {
-                    "guess_lang": False,  # don't try to auto-detect language
-                    "css_class": "highlight",  # class for styling the code blocks
-                }
-            },
+            to="html",
+            format="md",
         )
         return HtmlSanitizer().clean_html(html)
 
     def to_latex(self) -> str:
-        html_text = self.convert_to_html()
-        converter = HtmlLatexConverter()
-        return converter.convert(html_text)
+        latex_output = pypandoc.convert_text(
+            self.markdown_text,
+            to="latex",
+            format="md",
+        )
+        return f"\\begin{{contentbox}}{latex_output}\\end{{contentbox}}"
 
     def to_json(self) -> dict[str, str]:
         return {"markdown_reporting_element": self.markdown_text}
