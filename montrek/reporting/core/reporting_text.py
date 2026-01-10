@@ -1,10 +1,10 @@
 import hashlib
 import mistune
-import pypandoc
 import os
 from pathlib import Path
 from urllib.parse import urlparse
 
+import pypandoc
 import requests
 from baseclasses.models import HubValueDate
 from baseclasses.sanitizer import HtmlSanitizer
