@@ -22,7 +22,6 @@ RUN apt-get update && \
   libmariadb-dev \
   libpq-dev \
   lsb-release \
-  pandoc \
   pkg-config \
   python3-dev \
   texlive-fonts-recommended \
@@ -46,6 +45,11 @@ RUN apt-get update && \
   && chown -R appuser:appgroup ${DOCKERHOME} \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
+# Install pandoc 3.1.3
+RUN curl -L -o /tmp/pandoc-3.1.3-1-amd64.deb \
+  https://github.com/jgm/pandoc/releases/download/3.1.3/pandoc-3.1.3-1-amd64.deb \
+  && dpkg -i /tmp/pandoc-3.1.3-1-amd64.deb \
+  && rm /tmp/pandoc-3.1.3-1-amd64.deb
 # port where the Django app runs
 EXPOSE 8000
 # Copy entrypoint
