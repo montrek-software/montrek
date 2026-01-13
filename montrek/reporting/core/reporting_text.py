@@ -147,6 +147,48 @@ class ReportingItalic(ReportingText):
         return f"\\emph{{{self.text}}}"
 
 
+class ReportingUnderline(ReportingText):
+    template_name = "underline"
+
+    def __init__(self, text: str):
+        self.text = text
+
+    def to_latex(self) -> str:
+        return f"\\underline{{{self.text}}}"
+
+
+class ReportingStrikethrough(ReportingText):
+    template_name = "strikethrough"
+
+    def __init__(self, text: str):
+        self.text = text
+
+    def to_latex(self) -> str:
+        # requires \usepackage{ulem}
+        return f"\\sout{{{self.text}}}"
+
+
+class ReportingCode(ReportingText):
+    template_name = "code"
+
+    def __init__(self, text: str):
+        self.text = text
+
+    def to_latex(self) -> str:
+        return f"\\texttt{{{self.text}}}"
+
+
+class ReportingKeyboard(ReportingText):
+    template_name = "keyboard"
+
+    def __init__(self, text: str):
+        self.text = text
+
+    def to_latex(self) -> str:
+        # approximation
+        return f"\\texttt{{{self.text}}}"
+
+
 class ReportingHeader1(ReportingText):
     template_name = "header1"
 

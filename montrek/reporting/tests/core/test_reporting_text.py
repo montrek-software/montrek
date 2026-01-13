@@ -10,17 +10,21 @@ from reporting.core.reporting_text import (
     MontrekLogo,
     NewPage,
     ReportingBold,
+    ReportingCode,
     ReportingEditableText,
     ReportingElement,
     ReportingHeader1,
     ReportingHeader2,
     ReportingImage,
     ReportingItalic,
+    ReportingKeyboard,
     ReportingMap,
     ReportingParagraph,
+    ReportingStrikethrough,
     ReportingText,
     ReportingFooter,
     ReportingTextParagraph,
+    ReportingUnderline,
     Vspace,
     ReportingError,
 )
@@ -175,6 +179,46 @@ class TestReportingItalic(ReportingElementTestCase):
 
     def get_call_parameters(self) -> dict:
         return {"text": "Dummy Text"}
+
+
+class TestReportingUnderline(ReportingElementTestCase):
+    reporting_element_class = ReportingUnderline
+    expected_html = "<u>Dummy Text</u>"
+    expected_latex = "\\underline{Dummy Text}"
+    expected_json = {"reportingunderline": "Dummy Text"}
+
+    def get_call_parameters(self) -> dict:
+        return {"text": "Dummy Text"}
+
+
+class TestReportingStrikethrough(ReportingElementTestCase):
+    reporting_element_class = ReportingStrikethrough
+    expected_html = "<del>Dummy Text</del>"
+    expected_latex = "\\sout{Dummy Text}"
+    expected_json = {"reportingstrikethrough": "Dummy Text"}
+
+    def get_call_parameters(self) -> dict:
+        return {"text": "Dummy Text"}
+
+
+class TestReportingCode(ReportingElementTestCase):
+    reporting_element_class = ReportingCode
+    expected_html = "<code>Dummy Text</code>"
+    expected_latex = "\\texttt{Dummy Text}"
+    expected_json = {"reportingcode": "Dummy Text"}
+
+    def get_call_parameters(self) -> dict:
+        return {"text": "Dummy Text"}
+
+
+class TestReportingKeyboard(ReportingElementTestCase):
+    reporting_element_class = ReportingKeyboard
+    expected_html = "<kbd>Ctrl+C</kbd>"
+    expected_latex = "\\texttt{Ctrl+C}"
+    expected_json = {"reportingkeyboard": "Ctrl+C"}
+
+    def get_call_parameters(self) -> dict:
+        return {"text": "Ctrl+C"}
 
 
 class TestReportingHeader1(ReportingElementTestCase):
