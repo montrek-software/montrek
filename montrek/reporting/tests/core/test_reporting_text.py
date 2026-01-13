@@ -9,16 +9,21 @@ from reporting.core.reporting_text import (
     MarkdownReportingElement,
     MontrekLogo,
     NewPage,
+    ReportingBold,
+    ReportingCode,
     ReportingEditableText,
     ReportingElement,
     ReportingHeader1,
     ReportingHeader2,
     ReportingImage,
+    ReportingItalic,
+    ReportingKeyboard,
     ReportingMap,
     ReportingParagraph,
+    ReportingStrikethrough,
     ReportingText,
     ReportingFooter,
-    ReportingTextParagraph,
+    ReportingUnderline,
     Vspace,
     ReportingError,
 )
@@ -155,6 +160,66 @@ class TestReportingText(ReportingElementTestCase):
         return {"text": "Dummy Text"}
 
 
+class TestReportingBold(ReportingElementTestCase):
+    reporting_element_class = ReportingBold
+    expected_html = "<strong>Dummy Text</strong>"
+    expected_latex = "\\textbf{Dummy Text}"
+    expected_json = {"reportingbold": "Dummy Text"}
+
+    def get_call_parameters(self) -> dict:
+        return {"text": "Dummy Text"}
+
+
+class TestReportingItalic(ReportingElementTestCase):
+    reporting_element_class = ReportingItalic
+    expected_html = "<em>Dummy Text</em>"
+    expected_latex = "\\emph{Dummy Text}"
+    expected_json = {"reportingitalic": "Dummy Text"}
+
+    def get_call_parameters(self) -> dict:
+        return {"text": "Dummy Text"}
+
+
+class TestReportingUnderline(ReportingElementTestCase):
+    reporting_element_class = ReportingUnderline
+    expected_html = "<u>Dummy Text</u>"
+    expected_latex = "\\underline{Dummy Text}"
+    expected_json = {"reportingunderline": "Dummy Text"}
+
+    def get_call_parameters(self) -> dict:
+        return {"text": "Dummy Text"}
+
+
+class TestReportingStrikethrough(ReportingElementTestCase):
+    reporting_element_class = ReportingStrikethrough
+    expected_html = "<del>Dummy Text</del>"
+    expected_latex = "\\underline{Dummy Text}"
+    expected_json = {"reportingstrikethrough": "Dummy Text"}
+
+    def get_call_parameters(self) -> dict:
+        return {"text": "Dummy Text"}
+
+
+class TestReportingCode(ReportingElementTestCase):
+    reporting_element_class = ReportingCode
+    expected_html = "<code>Dummy Text</code>"
+    expected_latex = "\\texttt{Dummy Text}"
+    expected_json = {"reportingcode": "Dummy Text"}
+
+    def get_call_parameters(self) -> dict:
+        return {"text": "Dummy Text"}
+
+
+class TestReportingKeyboard(ReportingElementTestCase):
+    reporting_element_class = ReportingKeyboard
+    expected_html = "<kbd>Ctrl+C</kbd>"
+    expected_latex = "\\texttt{Ctrl+C}"
+    expected_json = {"reportingkeyboard": "Ctrl+C"}
+
+    def get_call_parameters(self) -> dict:
+        return {"text": "Ctrl+C"}
+
+
 class TestReportingHeader1(ReportingElementTestCase):
     reporting_element_class = ReportingHeader1
     expected_html = "<h1>Dummy Text</h1>"
@@ -288,15 +353,6 @@ class TestReportText(TestCase):
         cls.latex_html_text = (
             "This is a <b>latex</b> text. <br> This is a new <i>line</i>"
         )
-
-    def test_paragraph_plain(self):
-        paragraph = ReportingTextParagraph(self.plain_text)
-        self.assertEqual(paragraph.text, self.plain_text)
-        self.assertEqual(paragraph.text_type.name, "PLAIN")
-        test_plain_to_html = paragraph.format_html()
-        self.assertEqual(test_plain_to_html, self.plain_html_text)
-        test_plain_to_latex = paragraph.format_latex()
-        self.assertEqual(test_plain_to_latex, self.plain_latex_text)
 
     def test_reporting_editable_text(self):
         mock_object = MockObject(field="AA123")
@@ -440,7 +496,6 @@ class TestReportingParagraph(TestCase):
     def test_plain_text(self):
         paragraph = ReportingParagraph("This is a plain text")
         self.assertEqual(paragraph.text, "This is a plain text")
-        self.assertEqual(paragraph.reporting_text_type.name, "HTML")
         test_plain_to_html = paragraph.to_html()
         self.assertEqual(
             test_plain_to_html.replace("\n", ""), "<p>This is a plain text</p>"
