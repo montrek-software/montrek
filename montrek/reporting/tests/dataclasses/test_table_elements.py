@@ -6,7 +6,6 @@ from typing import Any, Protocol
 from unittest import mock
 
 import reporting.dataclasses.table_elements as te
-import requests
 from baseclasses.tests.factories.baseclass_factories import TestMontrekSatelliteFactory
 from django.test import TestCase
 from reporting.core.reporting_colors import ReportingColors
@@ -46,11 +45,15 @@ class TableElementTestingToolMixin(HasAssertEqual):
         value: Any,
         expected_format: str,
         expected_format_latex: str,
-        expected_style_attrs: te.StyleAttrsType = {},
-        expected_td_classes: te.TdClassesType = ["text-start"],
+        expected_style_attrs: te.StyleAttrsType | None = None,
+        expected_td_classes: te.TdClassesType | None = None,
         expected_hover_text: str | None = None,
         expected_none_hover_text: str | None = None,
     ):
+        if expected_style_attrs is None:
+            expected_style_attrs = {}
+        if expected_td_classes is None:
+            expected_td_classes = ["text-start"]
         test_obj = {table_element.attr: value}
         self.table_element_test_assertions_from_object(
             table_element,
@@ -80,10 +83,14 @@ class TableElementTestingToolMixin(HasAssertEqual):
         test_obj: Any,
         expected_format: str,
         expected_format_latex: str,
-        expected_style_attrs: te.StyleAttrsType = {},
-        expected_td_classes: te.TdClassesType = ["text-start"],
+        expected_style_attrs: te.StyleAttrsType | None = None,
+        expected_td_classes: te.TdClassesType | None = None,
         expected_hover_text: str | None = None,
     ):
+        if expected_style_attrs is None:
+            expected_style_attrs = {}
+        if expected_td_classes is None:
+            expected_td_classes = ["text-start"]
         with self.subTest("Test HTML Representation"):
             self.assert_display_field_properties(
                 table_element,
@@ -104,10 +111,14 @@ class TableElementTestingToolMixin(HasAssertEqual):
         table_element: te.TableElement,
         obj: Any,
         expected_format: str,
-        expected_style_attrs: te.StyleAttrsType = {},
-        expected_td_classes: te.TdClassesType = ["text-start"],
+        expected_style_attrs: te.StyleAttrsType | None = None,
+        expected_td_classes: te.TdClassesType | None = None,
         expected_hover_text: str | None = None,
     ):
+        if expected_style_attrs is None:
+            expected_style_attrs = {}
+        if expected_td_classes is None:
+            expected_td_classes = ["text-start"]
         test_display_field = table_element.get_display_field(obj)
         self.assertEqual(test_display_field.name, table_element.name)
         self.assertEqual(
@@ -689,36 +700,57 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             "\\includegraphics[width=0.3\\textwidth]{pic.png} &",
         )
 
-    def test_image_table_element__latex_url(self):
+    @mock.patch("tempfile.NamedTemporaryFile")
+    @mock.patch("requests.get")
+    def test_image_table_element__latex_url(self, mock_get, mock_tmpfile):
         table_element = te.ImageTableElement(
             name="name",
             attr="test_attr",
         )
-        url = "https://upload.wikimedia.org/wikipedia/commons/7/70/Example.png"
-        fake_response = mock.Mock()
-        fake_response.status_code = 200
-        fake_response.content = b"fake image bytes"
 
-        with mock.patch.object(requests, "get", return_value=fake_response):
-            test_str_latex = table_element.format_latex(url)
-        self.assertIn(
-            "\\includegraphics[width=0.3\\textwidth]{/tmp/",
-            test_str_latex,
-        )
-        self.assertIn(
-            ".png} &",
-            test_str_latex,
-        )
+        url = "https://example.com/image.png"
 
-    def test_image_table_element__latex_url_not_found(self):
-        table_element = te.ImageTableElement(
-            name="name",
-            attr="test_attr",
-        )
-        url = "https://upload.wikimedia.org/dummy.png"
-        test_str_latex = table_element.format_latex(url)
+        # mock HTTP response
+        mock_response = mock.Mock()
+        mock_response.status_code = 200
+        mock_response.content = b"fake image bytes"
+        mock_get.return_value = mock_response
+
+        # mock tempfile
+        mock_file = mock.Mock()
+        mock_file.name = "/mock_tmp/fake_image.png"
+        mock_tmpfile.return_value = mock_file
+
+        test_str = table_element.format_latex(url)
+
+        mock_get.assert_called_once_with(url, timeout=10)
+        mock_file.write.assert_called_once_with(b"fake image bytes")
+        mock_file.close.assert_called_once()
+
         self.assertEqual(
-            test_str_latex,
+            test_str,
+            "\\includegraphics[width=0.3\\textwidth]{/mock_tmp/fake_image.png} &",
+        )
+
+    @mock.patch("requests.get")
+    def test_image_table_element__latex_url_not_found(self, mock_get):
+        table_element = te.ImageTableElement(
+            name="name",
+            attr="test_attr",
+        )
+
+        url = "https://example.com/missing.png"
+
+        mock_response = mock.Mock()
+        mock_response.status_code = 404
+        mock_get.return_value = mock_response
+
+        test_str = table_element.format_latex(url)
+
+        mock_get.assert_called_once_with(url, timeout=10)
+
+        self.assertEqual(
+            test_str,
             f"Image not found: {url} &",
         )
 
@@ -833,7 +865,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
                 '      <div><a id="id__fake_url_1_123" href="/fake_url/1/123">a</a></div>'
                 '      <div><a id="id__fake_url_2_123" href="/fake_url/2/123">b</a></div>'
                 '      <div><a id="id__fake_url_3_123" href="/fake_url/3/123">c</a></div>'
-                '  </div>'
+                "  </div>"
             ),
             expected_format_latex=" \\color{black} a,b,c &",
             expected_hover_text="hover_text",

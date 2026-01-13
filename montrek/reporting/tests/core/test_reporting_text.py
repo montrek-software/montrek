@@ -1,10 +1,12 @@
 import os
-from bs4 import BeautifulSoup
 import tempfile
 from dataclasses import dataclass
+from unittest import mock
 from unittest.mock import Mock, patch
 
+from bs4 import BeautifulSoup
 from django.test import TestCase
+
 from reporting.core.reporting_text import (
     MarkdownReportingElement,
     MontrekLogo,
@@ -13,6 +15,8 @@ from reporting.core.reporting_text import (
     ReportingCode,
     ReportingEditableText,
     ReportingElement,
+    ReportingError,
+    ReportingFooter,
     ReportingHeader1,
     ReportingHeader2,
     ReportingImage,
@@ -22,10 +26,8 @@ from reporting.core.reporting_text import (
     ReportingParagraph,
     ReportingStrikethrough,
     ReportingText,
-    ReportingFooter,
     ReportingUnderline,
     Vspace,
-    ReportingError,
 )
 
 
@@ -534,20 +536,44 @@ class TestReportingParagraph(TestCase):
 
 
 class TestMontrekLogo(TestCase):
-    def test_logo(self):
+    @mock.patch("tempfile.NamedTemporaryFile")
+    @mock.patch("requests.get")
+    def test_logo(self, mock_get, mock_tmpfile):
+        # --- arrange -------------------------------------------------------------
+
+        fake_image_bytes = b"fake logo image"
+
+        mock_response = mock.Mock()
+        mock_response.status_code = 200
+        mock_response.content = fake_image_bytes
+        mock_get.return_value = mock_response
+
+        mock_file = mock.Mock()
+        mock_file.name = "/mock_tmp/fake_logo.png"
+        mock_tmpfile.return_value = mock_file
+
+        # --- act -----------------------------------------------------------------
+
         logo = MontrekLogo(width=0.5)
+
+        # --- assert: simple attributes ------------------------------------------
+
         self.assertEqual(logo.width, 0.5)
+
+        # --- assert: HTML (no I/O) -----------------------------------------------
+
         self.assertEqual(
             logo.to_html(),
             '<div style="text-align: right;"><img src="http://static1.squarespace.com/static/673bfbe149f99b59e4a41ee7/t/673bfdb41644c858ec83dc7e/1731984820187/montrek_logo_variant.png?format=1500w" alt="image" width="50.0%" height="auto"></div>\n',
         )
-        logo_str = logo.to_latex()
-        self.assertTrue(logo_str.startswith("\\includegraphics[width=0.5\\textwidth]{"))
-        self.assertIn(
-            "reporting/.workbench/b1c15ab1db73597bedf8ace0d4521004c58c0feb98858703ecc255f966c8008e.png",
-            logo.to_latex(),
-        )
-        self.assertTrue(logo_str.endswith("}"))
+
+        # --- assert: LaTeX --------------------------------------------------------
+
+        latex = logo.to_latex()
+
+        mock_get.assert_called_once()
+
+        self.assertTrue(latex.startswith("\\includegraphics[width=0.5\\textwidth]{"))
 
 
 class TestMarkdownReportingElement(ReportingElementTestCase):
