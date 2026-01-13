@@ -137,6 +137,16 @@ class ReportingBold(ReportingText):
         return f"\\textbf{{{self.text}}}"
 
 
+class ReportingItalic(ReportingText):
+    template_name = "italic"
+
+    def __init__(self, text: str):
+        self.text = text
+
+    def to_latex(self) -> str:
+        return f"\\emph{{{self.text}}}"
+
+
 class ReportingHeader1(ReportingText):
     template_name = "header1"
 

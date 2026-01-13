@@ -15,6 +15,7 @@ from reporting.core.reporting_text import (
     ReportingHeader1,
     ReportingHeader2,
     ReportingImage,
+    ReportingItalic,
     ReportingMap,
     ReportingParagraph,
     ReportingText,
@@ -158,9 +159,19 @@ class TestReportingText(ReportingElementTestCase):
 
 class TestReportingBold(ReportingElementTestCase):
     reporting_element_class = ReportingBold
-    expected_html = "<b>Dummy Text</b>"
+    expected_html = "<strong>Dummy Text</strong>"
     expected_latex = "\\textbf{Dummy Text}"
     expected_json = {"reportingbold": "Dummy Text"}
+
+    def get_call_parameters(self) -> dict:
+        return {"text": "Dummy Text"}
+
+
+class TestReportingItalic(ReportingElementTestCase):
+    reporting_element_class = ReportingItalic
+    expected_html = "<em>Dummy Text</em>"
+    expected_latex = "\\emph{Dummy Text}"
+    expected_json = {"reportingitalic": "Dummy Text"}
 
     def get_call_parameters(self) -> dict:
         return {"text": "Dummy Text"}
