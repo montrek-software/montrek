@@ -23,7 +23,6 @@ from reporting.core.reporting_text import (
     ReportingStrikethrough,
     ReportingText,
     ReportingFooter,
-    ReportingTextParagraph,
     ReportingUnderline,
     Vspace,
     ReportingError,
@@ -355,15 +354,6 @@ class TestReportText(TestCase):
             "This is a <b>latex</b> text. <br> This is a new <i>line</i>"
         )
 
-    def test_paragraph_plain(self):
-        paragraph = ReportingTextParagraph(self.plain_text)
-        self.assertEqual(paragraph.text, self.plain_text)
-        self.assertEqual(paragraph.text_type.name, "PLAIN")
-        test_plain_to_html = paragraph.format_html()
-        self.assertEqual(test_plain_to_html, self.plain_html_text)
-        test_plain_to_latex = paragraph.format_latex()
-        self.assertEqual(test_plain_to_latex, self.plain_latex_text)
-
     def test_reporting_editable_text(self):
         mock_object = MockObject(field="AA123")
         element = ReportingEditableText(
@@ -506,7 +496,6 @@ class TestReportingParagraph(TestCase):
     def test_plain_text(self):
         paragraph = ReportingParagraph("This is a plain text")
         self.assertEqual(paragraph.text, "This is a plain text")
-        self.assertEqual(paragraph.reporting_text_type.name, "HTML")
         test_plain_to_html = paragraph.to_html()
         self.assertEqual(
             test_plain_to_html.replace("\n", ""), "<p>This is a plain text</p>"

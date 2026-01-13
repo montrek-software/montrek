@@ -10,7 +10,7 @@ from baseclasses.models import HubValueDate
 from baseclasses.sanitizer import HtmlSanitizer
 from django.conf import settings
 from django.template.loader import render_to_string
-from reporting.constants import WORKBENCH_PATH, ReportingTextType
+from reporting.constants import WORKBENCH_PATH
 from reporting.core.text_converter import HtmlLatexConverter
 
 type ContextTypes = dict[str, str | list[str] | int | float | object]
@@ -33,24 +33,18 @@ class ReportingElement:
 
 
 class ReportingTextParagraph(ReportingElement):
-    def __init__(
-        self, text: str, text_type: ReportingTextType = ReportingTextType.PLAIN
-    ):
+    def __init__(self, text: str):
         self.text = text
-        self.text_type = text_type
 
     def format_latex(self) -> str:
-        if self.text_type == ReportingTextType.PLAIN:
-            return f"{self.text}\n\n"
         return self.text
 
     def format_html(self) -> str:
         return self._format_to_html()
 
     def _format_to_html(self) -> str:
-        if self.text_type == ReportingTextType.PLAIN:
-            return f'<div class="scrollable-600">{self.text}</div>'
-        return self.text
+        raise NotImplementedError("This needs to be replaced!!")
+        return f'<div class="scrollable-600">{self.text}</div>'
 
 
 class ReportingText(ReportingElement):
@@ -59,22 +53,13 @@ class ReportingText(ReportingElement):
     def __init__(
         self,
         text: str,
-        reporting_text_type: ReportingTextType = ReportingTextType.HTML,
     ):
         if not text:
             text = ""
         self.text = str(text)
-        self.reporting_text_type = reporting_text_type
 
     def to_latex(self) -> str:
-        match self.reporting_text_type:
-            case ReportingTextType.PLAIN:
-                text = self.text
-            case ReportingTextType.HTML:
-                text = HtmlLatexConverter.convert(self.text)
-            case _:
-                text = f"\\textbf{{\\color{{red}} Unknown Text Type {self.reporting_text_type}"
-        return text
+        return HtmlLatexConverter.convert(self.text)
 
     def get_context_data(self) -> ContextTypes:
         return {"text": HtmlSanitizer().display_text_as_html(self.text)}
@@ -129,10 +114,6 @@ class ReportingEditableText(ReportingParagraph):
 
 class ReportingBold(ReportingText):
     template_name = "bold"
-    reporting_text_type: ReportingTextType = ReportingTextType.HTML
-
-    def __init__(self, text: str):
-        self.text = text
 
     def to_latex(self) -> str:
         latex = super().to_latex()
@@ -141,10 +122,6 @@ class ReportingBold(ReportingText):
 
 class ReportingItalic(ReportingText):
     template_name = "italic"
-    reporting_text_type: ReportingTextType = ReportingTextType.HTML
-
-    def __init__(self, text: str):
-        self.text = text
 
     def to_latex(self) -> str:
         latex = super().to_latex()
@@ -153,10 +130,6 @@ class ReportingItalic(ReportingText):
 
 class ReportingUnderline(ReportingText):
     template_name = "underline"
-    reporting_text_type: ReportingTextType = ReportingTextType.HTML
-
-    def __init__(self, text: str):
-        self.text = text
 
     def to_latex(self) -> str:
         latex = super().to_latex()
@@ -165,10 +138,6 @@ class ReportingUnderline(ReportingText):
 
 class ReportingStrikethrough(ReportingText):
     template_name = "strikethrough"
-    reporting_text_type: ReportingTextType = ReportingTextType.HTML
-
-    def __init__(self, text: str):
-        self.text = text
 
     def to_latex(self) -> str:
         # requires \usepackage{ulem}
@@ -178,10 +147,6 @@ class ReportingStrikethrough(ReportingText):
 
 class ReportingCode(ReportingText):
     template_name = "code"
-    reporting_text_type: ReportingTextType = ReportingTextType.HTML
-
-    def __init__(self, text: str):
-        self.text = text
 
     def to_latex(self) -> str:
         latex = super().to_latex()
@@ -190,10 +155,6 @@ class ReportingCode(ReportingText):
 
 class ReportingKeyboard(ReportingText):
     template_name = "keyboard"
-    reporting_text_type: ReportingTextType = ReportingTextType.HTML
-
-    def __init__(self, text: str):
-        self.text = text
 
     def to_latex(self) -> str:
         # approximation

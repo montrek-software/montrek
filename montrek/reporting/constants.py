@@ -4,13 +4,6 @@ from pathlib import Path
 WORKBENCH_PATH = Path(__file__).resolve().parent / ".workbench"
 
 
-class ReportingTextType(Enum):
-    PLAIN = 0
-    MARKDOWN = 1
-    HTML = 2
-    LATEX = 3
-
-
 class ReportingPlotType(Enum):
     NONE = 0
     LINE = 1
