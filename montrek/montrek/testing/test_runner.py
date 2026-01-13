@@ -6,7 +6,11 @@ from django.test.runner import DiscoverRunner
 from django.test.utils import override_settings
 from django.urls import reverse_lazy
 
-_real_create_connection = socket.create_connection
+real_socket = socket.socket
+
+
+def guarded_socket(*args, **kwargs):
+    raise RuntimeError("Network access is forbidden during tests")
 
 
 class MontrekTestRunner(DiscoverRunner):
@@ -48,16 +52,8 @@ class MontrekTestRunner(DiscoverRunner):
             }
         self._override = override_settings(**test_settings)
         self._override.enable()
-        socket.create_connection = self._guarded_create_connection
+        socket.socket = guarded_socket
 
     def teardown_test_environment(self, **kwargs):
         self._override.disable()
         super().teardown_test_environment(**kwargs)
-
-    def _guarded_create_connection(self, address, *args, **kwargs):
-        host, *_ = address
-
-        if host in ("127.0.0.1", "localhost", "::1"):
-            return _real_create_connection(address, *args, **kwargs)
-
-        raise RuntimeError("External network access is forbidden during tests")
