@@ -86,4 +86,4 @@ class TestMailDetailsView(vtc.MontrekDetailViewTestCase):
         self.mail = MailSatelliteFactory()
 
     def url_kwargs(self):
-        return {"pk": self.mail.hub_entity.hub_value_date.first().pk}
+        return {"pk": self.mail.hub_entity.pk}
