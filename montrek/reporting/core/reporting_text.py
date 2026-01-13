@@ -129,6 +129,7 @@ class ReportingEditableText(ReportingParagraph):
 
 class ReportingBold(ReportingText):
     template_name = "bold"
+    reporting_text_type: ReportingTextType = ReportingTextType.HTML
 
     def __init__(self, text: str):
         self.text = text
@@ -140,6 +141,7 @@ class ReportingBold(ReportingText):
 
 class ReportingItalic(ReportingText):
     template_name = "italic"
+    reporting_text_type: ReportingTextType = ReportingTextType.HTML
 
     def __init__(self, text: str):
         self.text = text
@@ -151,6 +153,7 @@ class ReportingItalic(ReportingText):
 
 class ReportingUnderline(ReportingText):
     template_name = "underline"
+    reporting_text_type: ReportingTextType = ReportingTextType.HTML
 
     def __init__(self, text: str):
         self.text = text
@@ -162,6 +165,7 @@ class ReportingUnderline(ReportingText):
 
 class ReportingStrikethrough(ReportingText):
     template_name = "strikethrough"
+    reporting_text_type: ReportingTextType = ReportingTextType.HTML
 
     def __init__(self, text: str):
         self.text = text
@@ -174,6 +178,7 @@ class ReportingStrikethrough(ReportingText):
 
 class ReportingCode(ReportingText):
     template_name = "code"
+    reporting_text_type: ReportingTextType = ReportingTextType.HTML
 
     def __init__(self, text: str):
         self.text = text
@@ -185,6 +190,7 @@ class ReportingCode(ReportingText):
 
 class ReportingKeyboard(ReportingText):
     template_name = "keyboard"
+    reporting_text_type: ReportingTextType = ReportingTextType.HTML
 
     def __init__(self, text: str):
         self.text = text
