@@ -39,11 +39,13 @@ class TestRequestManager(TestCase):
         status_code: int = 200,
         ok: bool = True,
         json_return_value: dict | None = None,
-        url="https://httpbin.org/basic-auth/user/pass?bla=blubb",
+        url: str | None = None,
     ) -> MagicMock:
         # Mock response object
         if json_return_value is None:
             json_return_value = {"authenticated": True, "user": "user"}
+        if url is None:
+            url = "https://httpbin.org/basic-auth/user/pass?bla=blubb"
         mock_response = MagicMock()
         mock_response.status_code = status_code
         mock_response.ok = ok
