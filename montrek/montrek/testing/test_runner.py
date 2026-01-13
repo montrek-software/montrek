@@ -1,4 +1,5 @@
 import tempfile
+import socket
 
 from django.conf import settings
 from django.test.runner import DiscoverRunner
@@ -45,7 +46,11 @@ class MontrekTestRunner(DiscoverRunner):
             }
         self._override = override_settings(**test_settings)
         self._override.enable()
+        socket.socket = self._guarded_socket
 
     def teardown_test_environment(self, **kwargs):
         self._override.disable()
         super().teardown_test_environment(**kwargs)
+
+    def _guarded_socket(self, *args, **kwargs):
+        raise RuntimeError("Network access is forbidden during tests")
