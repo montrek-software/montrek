@@ -193,7 +193,7 @@ class TestReportingUnderline(ReportingElementTestCase):
 class TestReportingStrikethrough(ReportingElementTestCase):
     reporting_element_class = ReportingStrikethrough
     expected_html = "<del>Dummy Text</del>"
-    expected_latex = "\\sout{Dummy Text}"
+    expected_latex = "\\underline{Dummy Text}"
     expected_json = {"reportingstrikethrough": "Dummy Text"}
 
     def get_call_parameters(self) -> dict:

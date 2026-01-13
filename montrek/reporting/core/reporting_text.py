@@ -140,9 +140,8 @@ class ReportingStrikethrough(ReportingText):
     template_name = "strikethrough"
 
     def to_latex(self) -> str:
-        # requires \usepackage{ulem}
         latex = super().to_latex()
-        return f"\\sout{{{latex}}}"
+        return f"\\underline{{{latex}}}"
 
 
 class ReportingCode(ReportingText):
