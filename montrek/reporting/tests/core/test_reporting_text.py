@@ -9,6 +9,7 @@ from reporting.core.reporting_text import (
     MarkdownReportingElement,
     MontrekLogo,
     NewPage,
+    ReportingBold,
     ReportingEditableText,
     ReportingElement,
     ReportingHeader1,
@@ -150,6 +151,16 @@ class TestReportingText(ReportingElementTestCase):
     expected_html = "Dummy Text"
     expected_latex = "Dummy Text"
     expected_json = {"reportingtext": "Dummy Text"}
+
+    def get_call_parameters(self) -> dict:
+        return {"text": "Dummy Text"}
+
+
+class TestReportingBold(ReportingElementTestCase):
+    reporting_element_class = ReportingBold
+    expected_html = "<b>Dummy Text</b>"
+    expected_latex = "\\textbf{Dummy Text}"
+    expected_json = {"reportingbold": "Dummy Text"}
 
     def get_call_parameters(self) -> dict:
         return {"text": "Dummy Text"}

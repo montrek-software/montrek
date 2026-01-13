@@ -127,6 +127,16 @@ class ReportingEditableText(ReportingParagraph):
         return latex_str
 
 
+class ReportingBold(ReportingText):
+    template_name = "bold"
+
+    def __init__(self, text: str):
+        self.text = text
+
+    def to_latex(self) -> str:
+        return f"\\textbf{{{self.text}}}"
+
+
 class ReportingHeader1(ReportingText):
     template_name = "header1"
 
