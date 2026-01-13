@@ -134,7 +134,8 @@ class ReportingBold(ReportingText):
         self.text = text
 
     def to_latex(self) -> str:
-        return f"\\textbf{{{self.text}}}"
+        latex = super().to_latex()
+        return f"\\textbf{{{latex}}}"
 
 
 class ReportingItalic(ReportingText):
@@ -144,7 +145,8 @@ class ReportingItalic(ReportingText):
         self.text = text
 
     def to_latex(self) -> str:
-        return f"\\emph{{{self.text}}}"
+        latex = super().to_latex()
+        return f"\\emph{{{latex}}}"
 
 
 class ReportingUnderline(ReportingText):
@@ -154,7 +156,8 @@ class ReportingUnderline(ReportingText):
         self.text = text
 
     def to_latex(self) -> str:
-        return f"\\underline{{{self.text}}}"
+        latex = super().to_latex()
+        return f"\\underline{{{latex}}}"
 
 
 class ReportingStrikethrough(ReportingText):
@@ -165,7 +168,8 @@ class ReportingStrikethrough(ReportingText):
 
     def to_latex(self) -> str:
         # requires \usepackage{ulem}
-        return f"\\sout{{{self.text}}}"
+        latex = super().to_latex()
+        return f"\\sout{{{latex}}}"
 
 
 class ReportingCode(ReportingText):
@@ -175,7 +179,8 @@ class ReportingCode(ReportingText):
         self.text = text
 
     def to_latex(self) -> str:
-        return f"\\texttt{{{self.text}}}"
+        latex = super().to_latex()
+        return f"\\texttt{{{latex}}}"
 
 
 class ReportingKeyboard(ReportingText):
@@ -186,7 +191,8 @@ class ReportingKeyboard(ReportingText):
 
     def to_latex(self) -> str:
         # approximation
-        return f"\\texttt{{{self.text}}}"
+        latex = super().to_latex()
+        return f"\\texttt{{{latex}}}"
 
 
 class ReportingHeader1(ReportingText):
