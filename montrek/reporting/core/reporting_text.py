@@ -228,9 +228,11 @@ class ReportingImage(ReportingElement):
             is_url = False
 
         if not is_url:
-            local_image_path = self.image_path.replace(
-                settings.STATIC_URL, settings.STATIC_ROOT + os.path.sep
-            )
+            if self.image_path.startswith(settings.STATIC_URL):
+                relative_path = self.image_path[len(settings.STATIC_URL) :]
+                local_image_path = str(Path(settings.STATIC_ROOT) / relative_path.lstrip("/\\"))
+            else:
+                local_image_path = self.image_path
             if not os.path.exists(local_image_path):
                 return ""
             return self._return_string(local_image_path)
