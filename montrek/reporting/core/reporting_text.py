@@ -11,6 +11,7 @@ from baseclasses.sanitizer import HtmlSanitizer
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.templatetags.static import static
+from django.contrib.staticfiles import finders
 from reporting.core.text_converter import HtmlLatexConverter
 
 type ContextTypes = dict[str, str | list[str] | int | float | object]
@@ -230,7 +231,8 @@ class ReportingImage(ReportingElement):
         if not is_url:
             if self.image_path.startswith(settings.STATIC_URL):
                 relative_path = self.image_path[len(settings.STATIC_URL) :]
-                local_image_path = str(Path(settings.STATIC_ROOT) / relative_path.lstrip("/\\"))
+                local_image_path = finders.find(relative_path)
+                local_image_path = "" if local_image_path is None else local_image_path
             else:
                 local_image_path = self.image_path
             if not os.path.exists(local_image_path):
