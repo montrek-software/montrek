@@ -182,7 +182,8 @@ class MontrekListViewTestCase(
     def test_rest_api_view(self):
         self.rest_api_view_test()
 
-    def test_gen_pdf(self):
+    @mock_plotly_write_dummy_png()
+    def test_gen_pdf(self, mock_write_image):
         self.pdf_view_test()
 
 
@@ -270,7 +271,8 @@ class MontrekDetailViewTestCase(
     def test_rest_api_view(self):
         self.rest_api_view_test()
 
-    def test_gen_pdf(self):
+    @mock_plotly_write_dummy_png()
+    def test_gen_pdf(self, mock_write_image):
         self.pdf_view_test()
 
 
