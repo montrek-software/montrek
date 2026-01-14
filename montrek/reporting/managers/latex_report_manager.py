@@ -40,7 +40,7 @@ class LatexReportManager:
         never sent to a browser.
         """
         return str(
-            mark_safe(  # nosec B308 B703 # noqa: S308 - value is sanitized, no thread if Latex code is compiled
+            mark_safe(  # nosec B308 B703 # noqa: S308 - value is sanitized, no threat if LaTeX code is compiled
                 value
             )
         )
