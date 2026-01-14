@@ -1,7 +1,4 @@
 from enum import Enum
-from pathlib import Path
-
-WORKBENCH_PATH = Path(__file__).resolve().parent / ".workbench"
 
 
 class ReportingPlotType(Enum):

@@ -5,6 +5,9 @@ from testing.decorators.add_logged_in_user import add_logged_in_user
 
 from reporting.managers.latex_report_manager import LatexReportManager
 from reporting.tests import mocks
+from testing.decorators.mock_plotly_image_write import (
+    mock_plotly_write_dummy_png,
+)
 
 
 class TestMontrekReportManager(TestCase):
@@ -174,10 +177,12 @@ class TestMontrekReportManager(TestCase):
 
 
 class TestComprehensiveReport(TestCase):
-    def test_generate_report_and_compile(self):
+    @mock_plotly_write_dummy_png()
+    def test_generate_report_and_compile(self, mock_write_image):
         session_data = {}
         manager = mocks.MockComprehensiveReportManager(session_data=session_data)
         self.assertEqual(manager.document_title, "Mock Comprehensive Report")
         report_manager = LatexReportManager(manager)
         pdf_path = report_manager.compile_report()
         self.assertIn("document.pdf", pdf_path)
+        mock_write_image.assert_called_once()

@@ -11,9 +11,10 @@ from django.urls import reverse
 from django.views import View
 from mailing.repositories.mailing_repository import MailingRepository
 from middleware.permission_error_middleware import MISSING_PERMISSION_MESSAGE
+from testing.decorators.mock_plotly_image_write import mock_plotly_write_dummy_png
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
-TEST_USER_PASSWORD = "S3cret!123"  # nosec B105: test-only password
+TEST_USER_PASSWORD = "S3cret!123"  # nosec B105 #noqa S105 : test-only password
 
 
 class NotImplementedView(View):
@@ -181,7 +182,8 @@ class MontrekListViewTestCase(
     def test_rest_api_view(self):
         self.rest_api_view_test()
 
-    def test_gen_pdf(self):
+    @mock_plotly_write_dummy_png()
+    def test_gen_pdf(self, mock_write_image):
         self.pdf_view_test()
 
 
@@ -227,7 +229,7 @@ class MontrekCreateUpdateViewTestCase(MontrekObjectViewBaseTestCase):
             if created_value is None:
                 self.assertEqual(value, "")
                 continue
-            if isinstance(created_value, (datetime.datetime, datetime.date)):
+            if isinstance(created_value, (datetime.datetime | datetime.date)):
                 value = pd.to_datetime(value).date()
                 if isinstance(created_value, datetime.datetime):
                     expected_value = created_value.date()
@@ -269,7 +271,8 @@ class MontrekDetailViewTestCase(
     def test_rest_api_view(self):
         self.rest_api_view_test()
 
-    def test_gen_pdf(self):
+    @mock_plotly_write_dummy_png()
+    def test_gen_pdf(self, mock_write_image):
         self.pdf_view_test()
 
 
@@ -451,7 +454,8 @@ class MontrekReportViewTestCase(MontrekViewTestCase, RestApiTestCaseMixin):
     def _is_base_test_class(self) -> bool:
         return self.__class__.__name__ == "MontrekReportViewTestCase"
 
-    def test_send_report_per_mail(self):
+    @mock_plotly_write_dummy_png()
+    def test_send_report_per_mail(self, mock_write_image):
         if self._is_base_test_class():
             return
         user = MontrekUserFactory()

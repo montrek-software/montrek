@@ -1,9 +1,17 @@
+from pathlib import Path
 import tempfile
+import socket
 
 from django.conf import settings
 from django.test.runner import DiscoverRunner
 from django.test.utils import override_settings
 from django.urls import reverse_lazy
+
+real_socket = socket.socket
+
+
+def guarded_socket(*args, **kwargs):
+    raise RuntimeError("Network access is forbidden during tests")
 
 
 class MontrekTestRunner(DiscoverRunner):
@@ -14,6 +22,7 @@ class MontrekTestRunner(DiscoverRunner):
                 "IS_TEST_RUN": True,
                 "DEBUG": True,
                 "MEDIA_ROOT": temp_dir,
+                "WORKBENCH_PATH": Path(temp_dir),
                 "HOME_URL": "home",
                 "NAVBAR_HOME_URL": "home",
                 "ADMIN_MAILING_LIST": "test_admin@example.com",
@@ -45,7 +54,10 @@ class MontrekTestRunner(DiscoverRunner):
             }
         self._override = override_settings(**test_settings)
         self._override.enable()
+        self._original_socket = socket.socket
+        socket.socket = guarded_socket
 
     def teardown_test_environment(self, **kwargs):
+        socket.socket = self._original_socket
         self._override.disable()
         super().teardown_test_environment(**kwargs)

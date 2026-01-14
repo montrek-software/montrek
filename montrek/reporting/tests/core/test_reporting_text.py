@@ -1,10 +1,12 @@
 import os
-from bs4 import BeautifulSoup
 import tempfile
 from dataclasses import dataclass
 from unittest.mock import Mock, patch
+from django.conf import settings
 
+from bs4 import BeautifulSoup
 from django.test import TestCase
+
 from reporting.core.reporting_text import (
     MarkdownReportingElement,
     MontrekLogo,
@@ -13,6 +15,8 @@ from reporting.core.reporting_text import (
     ReportingCode,
     ReportingEditableText,
     ReportingElement,
+    ReportingError,
+    ReportingFooter,
     ReportingHeader1,
     ReportingHeader2,
     ReportingImage,
@@ -22,10 +26,8 @@ from reporting.core.reporting_text import (
     ReportingParagraph,
     ReportingStrikethrough,
     ReportingText,
-    ReportingFooter,
     ReportingUnderline,
     Vspace,
-    ReportingError,
 )
 
 
@@ -535,19 +537,26 @@ class TestReportingParagraph(TestCase):
 
 class TestMontrekLogo(TestCase):
     def test_logo(self):
+        # --- act -----------------------------------------------------------------
+
         logo = MontrekLogo(width=0.5)
+
+        # --- assert: simple attributes ------------------------------------------
+
         self.assertEqual(logo.width, 0.5)
+
+        # --- assert: HTML (no I/O) -----------------------------------------------
+
         self.assertEqual(
             logo.to_html(),
-            '<div style="text-align: right;"><img src="http://static1.squarespace.com/static/673bfbe149f99b59e4a41ee7/t/673bfdb41644c858ec83dc7e/1731984820187/montrek_logo_variant.png?format=1500w" alt="image" width="50.0%" height="auto"></div>\n',
+            f'<div style="text-align: right;"><img src="{settings.STATIC_URL}logos/montrek_logo_variant.png" alt="image" width="50.0%" height="auto"></div>\n',
         )
-        logo_str = logo.to_latex()
-        self.assertTrue(logo_str.startswith("\\includegraphics[width=0.5\\textwidth]{"))
-        self.assertIn(
-            "reporting/.workbench/b1c15ab1db73597bedf8ace0d4521004c58c0feb98858703ecc255f966c8008e.png",
-            logo.to_latex(),
-        )
-        self.assertTrue(logo_str.endswith("}"))
+
+        # --- assert: LaTeX --------------------------------------------------------
+
+        latex = logo.to_latex()
+
+        self.assertTrue(latex.startswith("\\includegraphics[width=0.5\\textwidth]{"))
 
 
 class TestMarkdownReportingElement(ReportingElementTestCase):

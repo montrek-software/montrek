@@ -393,3 +393,7 @@ SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
 }
+
+# Reporting
+
+WORKBENCH_PATH = Path(__file__).resolve().parent.parent / "reporting" / ".workbench"

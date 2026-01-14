@@ -8,7 +8,6 @@ from baseclasses.dataclasses.montrek_message import MontrekMessageError
 from django.conf import settings
 from django.template import Context, Template
 from django.utils.safestring import mark_safe
-from reporting.constants import WORKBENCH_PATH
 from reporting.core.reporting_colors import Color, ReportingColors
 from reporting.core.reporting_text import ClientLogo
 from reporting.managers.montrek_report_manager import MontrekReportManager
@@ -26,12 +25,25 @@ class LatexReportManager:
         context_data = self.get_context()
         context_data.update(self.get_layout_data())
         for key, value in context_data.items():
-            context_data[key] = mark_safe(value)  # nosec B308 B703 - value is sanitized
+            context_data[key] = self.mark_latex_safe(value)
         context_data["footer_text"] = self.report_manager.footer_text.to_latex()
         context_data["watermark_text"] = "Draft" if self.report_manager.draft else ""
         context = Context(context_data)
         template = Template(self.read_template())
         return template.render(context)
+
+    def mark_latex_safe(self, value: str) -> str:
+        """
+        Mark LaTeX content as safe for Django templates.
+
+        This output is rendered to LaTeX and compiled to PDF,
+        never sent to a browser.
+        """
+        return str(
+            mark_safe(  # nosec B308 B703 # noqa: S308 - value is sanitized, no threat if LaTeX code is compiled
+                value
+            )
+        )
 
     def get_context(self) -> dict:
         return {
@@ -79,34 +91,40 @@ class LatexReportManager:
         template_path = self._get_template_path()
         if template_path is None:
             raise FileNotFoundError(f"Template {self.latex_template} not found")
-        with open(template_path, "r") as file:
+        with open(template_path) as file:
             return file.read()
 
     def compile_report(self) -> str | None:
         report_str = self.generate_report()
+        workbench_path = settings.WORKBENCH_PATH
+        self.clean_workbench()
 
         output_dir = Path(settings.MEDIA_ROOT) / "latex"
         output_dir.mkdir(parents=True, exist_ok=True)
-        WORKBENCH_PATH.mkdir(parents=True, exist_ok=True)
+        workbench_path.mkdir(parents=True, exist_ok=True)
 
         tex_filename = f"{self.report_manager.document_name}.tex"
         pdf_filename = f"{self.report_manager.document_name}.pdf"
 
-        latex_file_path = WORKBENCH_PATH / tex_filename
-        pdf_file_path = WORKBENCH_PATH / pdf_filename
+        latex_file_path = workbench_path / tex_filename
+        pdf_file_path = workbench_path / pdf_filename
         output_pdf_path = output_dir / pdf_filename
-        log_path = WORKBENCH_PATH / f"{self.report_manager.document_name}.log"
+        log_path = workbench_path / f"{self.report_manager.document_name}.log"
 
         # Write LaTeX file explicitly as UTF-8 (XeLaTeX handles UTF-8 well)
         with open(latex_file_path, "w", encoding="utf-8") as f:
             f.write(report_str)
 
         try:
-            proc = subprocess.run(
+            # Safe subprocess invocation:
+            # - executable path is hard-coded
+            # - shell=False (list form)
+            # - no user-controlled input reaches the command
+            proc = subprocess.run(  # noqa: S603
                 [
                     "/usr/bin/xelatex",
                     "-output-directory",
-                    str(WORKBENCH_PATH),
+                    str(workbench_path),
                     "-interaction=nonstopmode",
                     "-halt-on-error",
                     str(latex_file_path),
@@ -115,7 +133,7 @@ class LatexReportManager:
                 check=True,
                 text=False,  # capture raw bytes to avoid UnicodeDecodeError
                 env={**os.environ, "LANG": os.environ.get("LANG", "C.UTF-8")},
-                cwd=str(WORKBENCH_PATH),
+                cwd=str(workbench_path),
             )  # nosec B603
 
         except subprocess.CalledProcessError as e:
@@ -142,11 +160,19 @@ class LatexReportManager:
             stdout = (proc.stdout or b"").decode("latin-1", errors="replace")
             stderr = (proc.stderr or b"").decode("latin-1", errors="replace")
             raise RuntimeError(
-                f"LaTeX did not produce a PDF.\n{stdout[-2000:]}\n{stderr[-2000:]}"
+                f"LaTeX did not produce a PDF at {pdf_file_path}.\n{stdout[-2000:]}\n{stderr[-2000:]}"
             )
 
         output_pdf_path.write_bytes(pdf_file_path.read_bytes())
         return str(output_pdf_path)
+
+    def clean_workbench(self):
+        for suffix in (".pdf", ".aux", ".log", ".out"):
+            path = (
+                settings.WORKBENCH_PATH / f"{self.report_manager.document_name}{suffix}"
+            )
+            if path.exists():
+                path.unlink()
 
     def _get_template_path(self) -> str | None:
         for template_dir in settings.TEMPLATES[0]["DIRS"]:

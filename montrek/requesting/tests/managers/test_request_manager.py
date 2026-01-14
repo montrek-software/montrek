@@ -38,13 +38,19 @@ class TestRequestManager(TestCase):
         self,
         status_code: int = 200,
         ok: bool = True,
-        json_return_value: dict = {"authenticated": True, "user": "user"},
+        json_return_value: dict | None = None,
+        url: str | None = None,
     ) -> MagicMock:
         # Mock response object
+        if json_return_value is None:
+            json_return_value = {"authenticated": True, "user": "user"}
+        if url is None:
+            url = "https://httpbin.org/basic-auth/user/pass?bla=blubb"
         mock_response = MagicMock()
         mock_response.status_code = status_code
         mock_response.ok = ok
         mock_response.json.return_value = json_return_value
+        mock_response.url = url
         return mock_response
 
     @patch("requesting.managers.request_manager.requests.get")
@@ -57,12 +63,30 @@ class TestRequestManager(TestCase):
         self.assertEqual(response_json["authenticated"], True)
         self.assertEqual(response_json["user"], "user")
 
-    def test_request_kwargs(self):
+    @patch("requesting.managers.request_manager.requests.get")
+    def test_request_kwargs(self, mock_get):
+        mock_response = self.get_mock_response()
+        mock_get.return_value = mock_response
+
         manager = MockRequestManager({"user": "user", "password": "pass"})
-        request = manager.get_request("https://httpbin.org/basic-auth/user/pass", {})
-        self.assertEqual(
-            request.url, "https://httpbin.org/basic-auth/user/pass?bla=blubb"
-        )
+
+        endpoint = "https://httpbin.org/basic-auth/user/pass"
+        headers = {"X-Test": "1"}
+
+        response = manager.get_request(endpoint, headers)
+
+        # 1. Return value is passed through
+        self.assertIs(response, mock_response)
+
+        # 2. requests.get was called exactly once
+        mock_get.assert_called_once()
+
+        # 3. Assert call arguments precisely
+        called_args, called_kwargs = mock_get.call_args
+
+        self.assertEqual(called_args[0], endpoint)
+        self.assertEqual(called_kwargs["headers"], headers)
+        self.assertEqual(called_kwargs["timeout"], 30)
 
     @patch("requesting.managers.request_manager.requests.get")
     def test_get_json_unauthorized(self, mock_get):

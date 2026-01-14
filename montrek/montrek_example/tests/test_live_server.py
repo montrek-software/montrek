@@ -1,18 +1,19 @@
 import uuid
 
 import requests
+
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
-from django.test import LiveServerTestCase
 from montrek_example.models.example_models import (  # adjust if your model name differs
     SatD1,
 )
 from montrek_example.tests.factories.montrek_example_factories import SatD1Factory
+from testing.test_cases.montrek_live_server_test_case import MontrekLiveServerTestCase
 from testing.test_cases.view_test_cases import TEST_USER_PASSWORD
 
 
-class TokenEndpointLiveTests(LiveServerTestCase):
+class TokenEndpointLiveTests(MontrekLiveServerTestCase):
     port = 8917
 
     def setUp(self):

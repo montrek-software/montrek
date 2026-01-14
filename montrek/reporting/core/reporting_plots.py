@@ -4,9 +4,10 @@ from typing import Any, Generic, TypeVar
 import uuid
 from _plotly_utils.utils import PlotlyJSONEncoder
 from django.template.loader import render_to_string
+from django.conf import settings
 
 import plotly.graph_objects as go
-from reporting.constants import WORKBENCH_PATH, ReportingPlotType
+from reporting.constants import ReportingPlotType
 from reporting.core.reporting_colors import ReportingColors
 from reporting.core.reporting_data import ReportingData, ReportingDataBase
 
@@ -58,9 +59,9 @@ class ReportingPlotBase(Generic[TData]):
         plot_json = self.figure.to_json()
         hash_digest = hashlib.sha256(plot_json.encode("utf-8")).hexdigest()[:16]
         filename = f"{hash_digest}.png"
-        image_path = WORKBENCH_PATH / filename
+        image_path = settings.WORKBENCH_PATH / filename
         # Ensure the directory exists
-        WORKBENCH_PATH.mkdir(parents=True, exist_ok=True)
+        settings.WORKBENCH_PATH.mkdir(parents=True, exist_ok=True)
         # Write the image if it does not already exist
         if not image_path.exists():
             self.figure.write_image(str(image_path), width=1000, height=500)
