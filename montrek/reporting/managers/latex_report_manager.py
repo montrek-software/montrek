@@ -160,7 +160,7 @@ class LatexReportManager:
             stdout = (proc.stdout or b"").decode("latin-1", errors="replace")
             stderr = (proc.stderr or b"").decode("latin-1", errors="replace")
             raise RuntimeError(
-                f"LaTeX did not produce a PDF.\n{stdout[-2000:]}\n{stderr[-2000:]}"
+                f"LaTeX did not produce a PDF at {pdf_file_path}.\n{stdout[-2000:]}\n{stderr[-2000:]}"
             )
 
         output_pdf_path.write_bytes(pdf_file_path.read_bytes())
