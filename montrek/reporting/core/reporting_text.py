@@ -233,7 +233,7 @@ class ReportingImage(ReportingElement):
             )
             if not os.path.exists(local_image_path):
                 return ""
-            return self._return_string(self.image_path)
+            return self._return_string(local_image_path)
 
         # Remote image: download and save to WORKBENCH_PATH
         response = requests.get(self.image_path, timeout=5)
