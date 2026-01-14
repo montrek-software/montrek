@@ -7,6 +7,9 @@ from django.test import TestCase
 from reporting.constants import ReportingPlotType
 from reporting.core.reporting_data import ReportingData
 from reporting.core.reporting_plots import ReportingPlot
+from testing.decorators.mock_plotly_image_write import (
+    mock_plotly_image_write_disabled,
+)
 
 
 class HasAssertions(Protocol):
@@ -235,7 +238,7 @@ class TestReportingPlots(TestCase, FigureAssertionsMixin):
 
 
 class TestReportingPiePlots(TestCase, FigureAssertionsMixin):
-    def test_pie_plots(self):
+    def setUp(self):
         test_df = pd.DataFrame(
             {
                 "Category": ["A", "B", "C", "D"],
@@ -251,16 +254,18 @@ class TestReportingPiePlots(TestCase, FigureAssertionsMixin):
         )
         reporting_plot = ReportingPlot()
         reporting_plot.generate(reporting_data)
-        self.assertTrue(isinstance(reporting_plot.figure, go.Figure))
-        self.assertEqual(len(reporting_plot.figure.data), 1)
-        self.assertEqual(reporting_plot.figure.data[0].type, "pie")
-        self.assertTrue(isinstance(reporting_plot.figure.data[0], go.Pie))
-        self.assertEqual(
-            reporting_plot.figure.data[0].labels.tolist(), ["A", "B", "C", "D"]
-        )
-        self.assertEqual(
-            reporting_plot.figure.data[0].values.tolist(), [10, 25, 15, 30]
-        )
-        self.assert_figure_properties(reporting_plot)
-        reporting_plot_latex = reporting_plot.to_latex()
+        self.reporting_plot = reporting_plot
+        self.figure = reporting_plot.figure
+
+    @mock_plotly_image_write_disabled()
+    def test_pie_plots(self, mock_write_image):
+        self.assertTrue(isinstance(self.figure, go.Figure))
+        self.assertEqual(len(self.figure.data), 1)
+        self.assertEqual(self.figure.data[0].type, "pie")
+        self.assertTrue(isinstance(self.figure.data[0], go.Pie))
+        self.assertEqual(self.figure.data[0].labels.tolist(), ["A", "B", "C", "D"])
+        self.assertEqual(self.figure.data[0].values.tolist(), [10, 25, 15, 30])
+        self.assert_figure_properties(self.reporting_plot)
+        reporting_plot_latex = self.reporting_plot.to_latex()
         self.assertTrue(reporting_plot_latex.startswith("\\begin{figure}"))
+        mock_write_image.assert_called_once()

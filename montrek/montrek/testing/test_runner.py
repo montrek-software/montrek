@@ -1,3 +1,4 @@
+from pathlib import Path
 import tempfile
 import socket
 
@@ -21,6 +22,7 @@ class MontrekTestRunner(DiscoverRunner):
                 "IS_TEST_RUN": True,
                 "DEBUG": True,
                 "MEDIA_ROOT": temp_dir,
+                "WORKBENCH_PATH": Path(temp_dir),
                 "HOME_URL": "home",
                 "NAVBAR_HOME_URL": "home",
                 "ADMIN_MAILING_LIST": "test_admin@example.com",

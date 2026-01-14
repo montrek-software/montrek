@@ -10,7 +10,6 @@ from baseclasses.models import HubValueDate
 from baseclasses.sanitizer import HtmlSanitizer
 from django.conf import settings
 from django.template.loader import render_to_string
-from reporting.constants import WORKBENCH_PATH
 from reporting.core.text_converter import HtmlLatexConverter
 
 type ContextTypes = dict[str, str | list[str] | int | float | object]
@@ -244,7 +243,7 @@ class ReportingImage(ReportingElement):
             self.image_path.encode("utf-8")
         ).hexdigest()  # nosec B324 - weak MD5 hash is justified
         filename = f"{hash_name}{ext}"
-        image_path = WORKBENCH_PATH / filename
+        image_path = settings.WORKBENCH_PATH / filename
 
         # Save the file to WORKBENCH_PATH
         with open(image_path, "wb") as f:
