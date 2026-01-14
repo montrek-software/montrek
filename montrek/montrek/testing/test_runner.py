@@ -53,7 +53,7 @@ class MontrekTestRunner(DiscoverRunner):
         self._override = override_settings(**test_settings)
         self._override.enable()
         self._original_socket = socket.socket
-        socket.socket = self._guarded_socket
+        socket.socket = guarded_socket
 
     def teardown_test_environment(self, **kwargs):
         socket.socket = self._original_socket
