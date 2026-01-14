@@ -1,8 +1,8 @@
 import os
 import tempfile
 from dataclasses import dataclass
-from unittest import mock
 from unittest.mock import Mock, patch
+from django.conf import settings
 
 from bs4 import BeautifulSoup
 from django.test import TestCase
@@ -536,22 +536,7 @@ class TestReportingParagraph(TestCase):
 
 
 class TestMontrekLogo(TestCase):
-    @mock.patch("tempfile.NamedTemporaryFile")
-    @mock.patch("requests.get")
-    def test_logo(self, mock_get, mock_tmpfile):
-        # --- arrange -------------------------------------------------------------
-
-        fake_image_bytes = b"fake logo image"
-
-        mock_response = mock.Mock()
-        mock_response.status_code = 200
-        mock_response.content = fake_image_bytes
-        mock_get.return_value = mock_response
-
-        mock_file = mock.Mock()
-        mock_file.name = "/mock_tmp/fake_logo.png"
-        mock_tmpfile.return_value = mock_file
-
+    def test_logo(self):
         # --- act -----------------------------------------------------------------
 
         logo = MontrekLogo(width=0.5)
@@ -564,14 +549,12 @@ class TestMontrekLogo(TestCase):
 
         self.assertEqual(
             logo.to_html(),
-            '<div style="text-align: right;"><img src="http://static1.squarespace.com/static/673bfbe149f99b59e4a41ee7/t/673bfdb41644c858ec83dc7e/1731984820187/montrek_logo_variant.png?format=1500w" alt="image" width="50.0%" height="auto"></div>\n',
+            f'<div style="text-align: right;"><img src="{settings.STATIC_URL}logos/montrek_logo_variant.png" alt="image" width="50.0%" height="auto"></div>\n',
         )
 
         # --- assert: LaTeX --------------------------------------------------------
 
         latex = logo.to_latex()
-
-        mock_get.assert_called_once()
 
         self.assertTrue(latex.startswith("\\includegraphics[width=0.5\\textwidth]{"))
 

@@ -1,15 +1,16 @@
 import hashlib
-import mistune
 import os
 from pathlib import Path
 from urllib.parse import urlparse
 
+import mistune
 import pypandoc
 import requests
 from baseclasses.models import HubValueDate
 from baseclasses.sanitizer import HtmlSanitizer
 from django.conf import settings
 from django.template.loader import render_to_string
+from django.templatetags.static import static
 from reporting.core.text_converter import HtmlLatexConverter
 
 type ContextTypes = dict[str, str | list[str] | int | float | object]
@@ -227,7 +228,10 @@ class ReportingImage(ReportingElement):
             is_url = False
 
         if not is_url:
-            if not os.path.exists(self.image_path):
+            local_image_path = self.image_path.replace(
+                settings.STATIC_URL, settings.STATIC_ROOT + os.path.sep
+            )
+            if not os.path.exists(local_image_path):
                 return ""
             return self._return_string(self.image_path)
 
@@ -288,7 +292,7 @@ class ReportingMap(ReportingElement):
 class MontrekLogo(ReportingImage):
     def __init__(self, width: float = 1.0):
         super().__init__(
-            "http://static1.squarespace.com/static/673bfbe149f99b59e4a41ee7/t/673bfdb41644c858ec83dc7e/1731984820187/montrek_logo_variant.png?format=1500w",
+            static("logos/montrek_logo_variant.png"),
             width=width,
         )
 
