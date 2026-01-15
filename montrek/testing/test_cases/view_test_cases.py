@@ -11,6 +11,7 @@ from django.urls import reverse
 from django.views import View
 from mailing.repositories.mailing_repository import MailingRepository
 from middleware.permission_error_middleware import MISSING_PERMISSION_MESSAGE
+from testing.decorators.mock_external_get import mock_external_get__report_image
 from testing.decorators.mock_plotly_image_write import mock_plotly_write_dummy_png
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
@@ -459,7 +460,8 @@ class MontrekReportViewTestCase(MontrekViewTestCase, RestApiTestCaseMixin):
         return self.__class__.__name__ == "MontrekReportViewTestCase"
 
     @mock_plotly_write_dummy_png()
-    def test_send_report_per_mail(self, mock_write_image):
+    @mock_external_get__report_image()
+    def test_send_report_per_mail(self, mock_write_image, mocked_get_image):
         if self._is_base_test_class():
             return
         user = MontrekUserFactory()
