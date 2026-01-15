@@ -322,6 +322,9 @@ class MontrekDeleteViewTestCase(MontrekObjectViewBaseTestCase, GetObjectPkMixin)
 class MontrekDownloadViewTestCase(MontrekViewTestCase):
     @mock_plotly_write_dummy_png()
     def setUp(self, mock_write_image):
+        # The mock_write_image argument is injected by the decorator to ensure
+        # Plotly image writes are mocked during setup; it is not needed directly.
+        _ = mock_write_image
         return super().setUp()
 
     def _is_base_test_class(self) -> bool:
