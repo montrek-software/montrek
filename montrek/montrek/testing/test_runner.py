@@ -1,4 +1,5 @@
 from pathlib import Path
+import shutil
 import tempfile
 import socket
 
@@ -58,4 +59,5 @@ class MontrekTestRunner(DiscoverRunner):
     def teardown_test_environment(self, **kwargs):
         socket.socket = self._original_socket
         self._override.disable()
+        shutil.rmtree(self._temp_dir)
         super().teardown_test_environment(**kwargs)
