@@ -319,6 +319,10 @@ class MontrekDeleteViewTestCase(MontrekObjectViewBaseTestCase, GetObjectPkMixin)
 
 
 class MontrekDownloadViewTestCase(MontrekViewTestCase):
+    @mock_plotly_write_dummy_png()
+    def setUp(self, mock_write_image):
+        return super().setUp()
+
     def _is_base_test_class(self) -> bool:
         # Django runs all tests within these base classes here individually. This is not wanted and hence we skip the tests if django attempts to do this.
         return self.__class__.__name__ == "MontrekDownloadViewTestCase"
