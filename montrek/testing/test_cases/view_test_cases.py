@@ -11,6 +11,7 @@ from django.urls import reverse
 from django.views import View
 from mailing.repositories.mailing_repository import MailingRepository
 from middleware.permission_error_middleware import MISSING_PERMISSION_MESSAGE
+from testing.decorators.mock_external_get import mock_external_get__report_image
 from testing.decorators.mock_plotly_image_write import mock_plotly_write_dummy_png
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
@@ -319,6 +320,13 @@ class MontrekDeleteViewTestCase(MontrekObjectViewBaseTestCase, GetObjectPkMixin)
 
 
 class MontrekDownloadViewTestCase(MontrekViewTestCase):
+    @mock_plotly_write_dummy_png()
+    def setUp(self, mock_write_image):
+        # The mock_write_image argument is injected by the decorator to ensure
+        # Plotly image writes are mocked during setup; it is not needed directly.
+        _ = mock_write_image
+        return super().setUp()
+
     def _is_base_test_class(self) -> bool:
         # Django runs all tests within these base classes here individually. This is not wanted and hence we skip the tests if django attempts to do this.
         return self.__class__.__name__ == "MontrekDownloadViewTestCase"
@@ -455,7 +463,8 @@ class MontrekReportViewTestCase(MontrekViewTestCase, RestApiTestCaseMixin):
         return self.__class__.__name__ == "MontrekReportViewTestCase"
 
     @mock_plotly_write_dummy_png()
-    def test_send_report_per_mail(self, mock_write_image):
+    @mock_external_get__report_image()
+    def test_send_report_per_mail(self, mock_write_image, mocked_get_image):
         if self._is_base_test_class():
             return
         user = MontrekUserFactory()
