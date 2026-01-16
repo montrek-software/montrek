@@ -16,7 +16,6 @@ from baseclasses.repositories.db.db_creator_cache import DbCreatorCache
 from baseclasses.repositories.db.db_staller import DbStaller
 from baseclasses.repositories.db.satellite_creator import SatelliteCreator
 from baseclasses.repositories.db.typing import DataDict, SatelliteDict
-from baseclasses.sanitizer import HtmlSanitizer
 from django.db.models import JSONField, Q, QuerySet
 from django.utils import timezone
 
@@ -35,7 +34,6 @@ class DbCreator:
         self.new_satellites: SatelliteDict = {}
         self.existing_satellites: SatelliteDict = {}
         self.updated_satellites: SatelliteDict = {}
-        self.sanitizer = HtmlSanitizer()
         self.satellite_creator = SatelliteCreator()
         self.cache: DbCreatorCache | None = None
 
