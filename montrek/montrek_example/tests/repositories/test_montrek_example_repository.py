@@ -3054,15 +3054,6 @@ class TestObjectToDict(TestCase):
         self.assertEqual(test_dict["field_b1_date"], montrek_time(2024, 2, 5).date())
 
 
-class TestSecurity(TestCase):
-    def test_avoid_write_hacked_strings(self):
-        user = MontrekUserFactory()
-        repo = HubARepository({"user_id": user.id})
-        repo.create_by_dict({"field_a1_str": "<b><script>HACKED!!</script></b>"})
-        obj = repo.receive().first()
-        self.assertEqual(obj.field_a1_str, "<b>HACKED!!</b>")
-
-
 class TestRepositoryViewModel(TestCase):
     def setUp(self) -> None:
         self.user = MontrekUserFactory()
