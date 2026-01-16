@@ -33,21 +33,6 @@ class ReportingElement:
         return HtmlLatexConverter.convert(html_text)
 
 
-class ReportingTextParagraph(ReportingElement):
-    def __init__(self, text: str):
-        self.text = text
-
-    def format_latex(self) -> str:
-        return self.text
-
-    def format_html(self) -> str:
-        return self._format_to_html()
-
-    def _format_to_html(self) -> str:
-        raise NotImplementedError("This needs to be replaced!!")
-        return f'<div class="scrollable-600">{self.text}</div>'
-
-
 class ReportingText(ReportingElement):
     template_name = "text"
 

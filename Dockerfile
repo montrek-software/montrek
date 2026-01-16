@@ -45,9 +45,13 @@ RUN apt-get update && \
   postgresql-client-16 \
   && chown -R appuser:appgroup ${DOCKERHOME} \
   && apt-get clean \
-  && rm -rf /var/lib/apt/lists/*
-# Install pandoc 3.1.3
-RUN curl -L -o /tmp/pandoc-3.1.3-1-amd64.deb \
+  && rm -rf /var/lib/apt/lists/* \
+  && curl -L \
+  --proto https \
+  --proto-redir https \
+  --tlsv1.2 \
+  -sSf \
+  -o /tmp/pandoc-3.1.3-1-amd64.deb \
   https://github.com/jgm/pandoc/releases/download/3.1.3/pandoc-3.1.3-1-amd64.deb \
   && dpkg -i /tmp/pandoc-3.1.3-1-amd64.deb \
   && rm /tmp/pandoc-3.1.3-1-amd64.deb
