@@ -154,13 +154,12 @@ class MontrekReportFieldEditView(
 
     def form_valid(self, form, edit_data: dict, request, field):
         edit_data[field] = form.cleaned_data[field]
-        field_content = self.html_sanitizer.display_text_as_html(edit_data[field])
         self.manager.repository.create_by_dict(edit_data)
         return render(
             request,
             "partials/display_field.html",
             {
-                "object_content": field_content.split("\n"),
+                "object_content": edit_data[field].split("\n"),
                 "edit_url": self.session_data["request_path"],
                 "field": field,
             },

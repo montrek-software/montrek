@@ -22,7 +22,7 @@ class TestDownloadFileView(TestCase):
     def test_download_view_via_url(self):
         test_file = SimpleUploadedFile(
             name="test_file.txt",
-            content="test".encode("utf-8"),
+            content=b"test",
             content_type="text/plain",
         )
         temp_file_path = default_storage.save("temp/test_file.txt", test_file)
@@ -35,7 +35,7 @@ class TestDownloadFileView(TestCase):
     def test_download_view(self):
         test_file = SimpleUploadedFile(
             name="test_file.txt",
-            content="test".encode("utf-8"),
+            content=b"test",
             content_type="text/plain",
         )
         temp_file_path = default_storage.save("temp/test_file.txt", test_file)
@@ -147,6 +147,21 @@ class TestMontrekReportFieldEditView(TestCase):
         # Check that we got the display partial back
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"new value", response.content)
+
+    def test_post_valid_form_calls_form_valid_and_creates__html(self):
+        """POST valid field value should trigger form_valid and repository create."""
+        request = self.factory.post(
+            "/fake/url/",
+            {"field": "field_a", "field_a": "new value\nschlummi"},
+        )
+        request.user = self.user
+        request.session = {"method": "POST", "pk": 1}
+
+        response = self.field_edit_view.as_view()(request)
+
+        # Check that we got the escaped display partial back
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"new value<br>", response.content)
 
     def test_post_invalid_form_calls_form_invalid(self):
         """POST with invalid data should hit form_invalid branch."""
