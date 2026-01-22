@@ -280,7 +280,15 @@ class DbCreator:
 
     def _get_link_data(self) -> dict[str, list[MontrekHubABC]]:
         link_data = {}
-        hub_fields = [f.name for f in self.hub._meta.get_fields()]
+        # Cache hub field names per hub model class to avoid repeated metadata iteration
+        if not hasattr(self, "_hub_fields_cache"):
+            self._hub_fields_cache: dict[type, set[str]] = {}
+        hub_model = self.hub.__class__
+        if hub_model not in self._hub_fields_cache:
+            self._hub_fields_cache[hub_model] = {
+                f.name for f in self.hub._meta.get_fields()
+            }
+        hub_fields = self._hub_fields_cache[hub_model]
         for key, value in self.data.items():
             if key not in hub_fields:
                 continue
