@@ -563,6 +563,11 @@ class TestMontrekCreateObject(TestCase):
         self.assertFalse(created_sat.field_bool_1)
         self.assertFalse(created_sat.field_bool_2)
 
+    def test_dont_attempt_to_write_link_when_field_is_unknown(self):
+        test_hub = me_factories.HubBFactory()
+        repo = HubARepository({"user_id": self.user.id})
+        repo.create_by_dict({"field_a1_str": "Hallo", "dummy_field": test_hub})
+
 
 class TestMontrekCreateTimeSeriesObject(TestCase):
     def setUp(self):
