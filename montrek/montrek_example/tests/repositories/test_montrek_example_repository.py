@@ -567,6 +567,7 @@ class TestMontrekCreateObject(TestCase):
         test_hub = me_factories.HubBFactory()
         repo = HubARepository({"user_id": self.user.id})
         repo.create_by_dict({"field_a1_str": "Hallo", "dummy_field": test_hub})
+        self.assertEqual(repo.receive().count(), 1)
 
 
 class TestMontrekCreateTimeSeriesObject(TestCase):
