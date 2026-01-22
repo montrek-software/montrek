@@ -280,8 +280,9 @@ class DbCreator:
 
     def _get_link_data(self) -> dict[str, list[MontrekHubABC]]:
         link_data = {}
+        hub_fields = [f.name for f in self.hub._meta.get_fields()]
         for key, value in self.data.items():
-            if key not in self.hub._meta.get_fields():
+            if key not in hub_fields:
                 continue
             if isinstance(value, HubValueDate):
                 link_data[key] = [value.hub]
