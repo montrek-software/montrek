@@ -36,6 +36,7 @@ class DbCreator:
         self.updated_satellites: SatelliteDict = {}
         self.satellite_creator = SatelliteCreator()
         self.cache: DbCreatorCache | None = None
+        self._hub_fields_cache: dict[type, set[str]] = {}
 
     def create(self, data: DataDict):
         self.data = data
@@ -280,7 +281,10 @@ class DbCreator:
 
     def _get_link_data(self) -> dict[str, list[MontrekHubABC]]:
         link_data = {}
+        hub_fields = self._get_hub_fields()
         for key, value in self.data.items():
+            if key not in hub_fields:
+                continue
             if isinstance(value, HubValueDate):
                 link_data[key] = [value.hub]
             elif isinstance(value, MontrekHubABC):
@@ -389,6 +393,15 @@ class DbCreator:
             raise MontrekError(
                 f"Try to update data with ({existing_id_str}) that already exists!"
             )
+
+    def _get_hub_fields(self):
+        # Cache hub field names per hub model class to avoid repeated metadata iteration
+        hub_model = self.hub.__class__
+        if hub_model not in self._hub_fields_cache:
+            self._hub_fields_cache[hub_model] = {
+                f.name for f in self.hub._meta.get_fields()
+            }
+        return self._hub_fields_cache[hub_model]
 
     def clean(self):
         self.hub = None
