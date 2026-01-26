@@ -5,6 +5,11 @@ class ExampleABaseForm(MontrekCreateForm): ...
 
 
 class ExampleACreateForm(ExampleABaseForm):
+    renamed_field_labels = {
+        "field_a2_float": "Renamed Label",
+        "link_hub_a_hub_c": "Renamed Link Label",
+    }
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.add_link_choice_field(

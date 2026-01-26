@@ -19,6 +19,10 @@ class TestMontrekCreateForm(TestCase):
         }
         test_form = ExampleACreateForm(data=test_data, repository=repository)
         self.assertTrue(test_form.is_valid())
+        self.assertEqual(test_form.fields["field_a2_float"].label, "Renamed Label")
+        self.assertEqual(
+            test_form.fields["link_hub_a_hub_c"].label, "Renamed Link Label"
+        )
 
     def test_link_choice_char_field__no_object(self):
         repository = HubARepository({})
