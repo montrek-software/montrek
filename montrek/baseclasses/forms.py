@@ -148,6 +148,8 @@ class FilterForm(forms.Form):
 
 
 class MontrekCreateForm(forms.ModelForm):
+    renamed_field_labels: dict[str, str] = {}
+
     class Meta:
         # TODO: Rewrite with factory
         exclude = ()
@@ -172,14 +174,17 @@ class MontrekCreateForm(forms.ModelForm):
 
     def _add_satellite_fields(self):
         fields = self.repository.std_satellite_fields()
+        exclude = set(self._meta.exclude or ())
         for field in fields:
             form_field = self._get_form_field(field)
             form_field.validators.extend(field.validators)
-            exclude = set(self._meta.exclude or ())
             if form_field and field.name not in exclude:
-                self.fields[field.name] = form_field
+                field_name = field.name
+                if field_name in self.renamed_field_labels:
+                    form_field.label = self.renamed_field_labels[field_name]
+                self.fields[field_name] = form_field
                 attrs = {
-                    "id": f"id_{field.name}",
+                    "id": f"id_{field_name}",
                     "class": "form-control",
                 }
                 if isinstance(form_field.widget, forms.Textarea):
@@ -215,11 +220,10 @@ class MontrekCreateForm(forms.ModelForm):
         if is_many_to_many:
             choice_class = MontrekModelMultipleChoiceField
             kwargs["use_checkboxes_for_many_to_many"] = use_checkboxes_for_many_to_many
+        elif is_char_field:
+            choice_class = MontrekModelCharChoiceField
         else:
-            if is_char_field:
-                choice_class = MontrekModelCharChoiceField
-            else:
-                choice_class = MontrekModelChoiceField
+            choice_class = MontrekModelChoiceField
 
         initial_link = choice_class.get_initial_link(
             self.initial, queryset, display_field, separator
@@ -308,7 +312,7 @@ class MontrekModelCharChoiceField(BaseMontrekChoiceField, forms.CharField):
         if not value:
             if self.required:
                 raise forms.ValidationError("No value given")
-            return
+            return None
         instance = self.queryset.filter(**{self.display_field: value})
         if not instance:
             raise forms.ValidationError("No matching object found!")
