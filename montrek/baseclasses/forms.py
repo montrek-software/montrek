@@ -151,8 +151,7 @@ class MontrekCreateForm(forms.ModelForm):
     renamed_field_labels: dict[str, str] = {}
 
     class Meta:
-        # TODO: Rewrite with factory
-        exclude = ()
+        exclude = ("comment",)
 
     def __init__(self, *args, **kwargs):
         self.repository = kwargs.pop("repository", None)
