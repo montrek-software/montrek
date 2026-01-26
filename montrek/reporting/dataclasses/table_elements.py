@@ -12,7 +12,6 @@ import pandas as pd
 import requests
 from baseclasses.dataclasses.alert import AlertEnum
 from baseclasses.dataclasses.number_shortener import NoShortening, NumberShortenerABC
-from baseclasses.sanitizer import HtmlSanitizer
 from django.core.exceptions import FieldDoesNotExist
 from django.template.base import mark_safe
 from django.template.loader import render_to_string
@@ -61,7 +60,7 @@ class TableElement:
         if tag == "html":
             value = self.get_value(obj)
             return value
-        elif tag == "latex":
+        if tag == "latex":
             value = self.get_value(obj)
             if self.empty_value(value):
                 return " \\color{black} - &"
@@ -172,8 +171,6 @@ class AttrTableElement(TableElement):
             value = obj.get(attr, attr)
         else:
             value = self._get_value_from_field(obj, attr)
-        if isinstance(value, str):
-            value = HtmlSanitizer().clean_html(value)
         return value
 
     def _get_value_from_field(self, obj: Any, attr: str) -> Any:
@@ -236,7 +233,7 @@ class BaseLinkTableElement(TableElement, GetDottetAttrsOrArgMixin):
         if tag == "html":
             value = self.get_link(obj)
             return value
-        elif tag == "latex":
+        if tag == "latex":
             value = self.get_value(obj)
             if self.empty_value(value):
                 return " \\color{black} - &"
@@ -314,10 +311,7 @@ class LinkTableElement(BaseLinkTableElement):
     }
 
     def get_link_text(self, _obj):
-        if self.icon == "edit":
-            icon = "pencil"
-        else:
-            icon = self.icon
+        icon = "pencil" if self.icon == "edit" else self.icon
         context = {"value": icon}
         return render_to_string("tables/elements/icon_link.html", context)
 
@@ -478,7 +472,7 @@ class NumberTableElement(AttrTableElement):
         if pd.isna(value):
             return "-", ["text-center"], {}
 
-        if not isinstance(value, (int, float, Decimal)):
+        if not isinstance(value, (int | float | Decimal)):
             return value, ["text-start"], {}
 
         formatted = self._format_value(value)
@@ -486,7 +480,7 @@ class NumberTableElement(AttrTableElement):
         return formatted, ["text-end"], {"color": color}
 
     def format_latex(self, value):
-        if not isinstance(value, (int, float, Decimal)):
+        if not isinstance(value, (int | float | Decimal)):
             return f"{value} &"
         color = _get_value_color_latex(value)
         formatted_value = self._format_value(value)
@@ -576,7 +570,7 @@ class DateTableBaseElement(AttrTableElement):
         return f" \\color{{black}} {self.format_date(value)} &"
 
     def format_date(self, value):
-        if isinstance(value, (datetime.date, datetime.datetime)):
+        if isinstance(value, (datetime.date | datetime.datetime)):
             return value.strftime(self.date_format)
         try:
             stripped_date = pd.to_datetime(value)
