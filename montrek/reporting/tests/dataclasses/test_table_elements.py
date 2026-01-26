@@ -198,8 +198,8 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value="<script>Malicious Hack</script><button>Here</button>",
-            expected_format="Malicious HackHere",
-            expected_format_latex=" \\color{black} Malicious HackHere &",
+            expected_format="&lt;script&gt;Malicious Hack&lt;/script&gt;&lt;button&gt;Here&lt;/button&gt;",  # Escaped version must appear
+            expected_format_latex=" \\color{black} $<$script$>$Malicious Hack$<$/script$>$$<$button$>$Here$<$/button$>$ &",
         )
 
     def test_list_table_element(self):
