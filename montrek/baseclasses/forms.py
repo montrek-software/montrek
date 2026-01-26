@@ -230,13 +230,16 @@ class MontrekCreateForm(forms.ModelForm):
         )
         if readonly:
             kwargs["widget"] = forms.TextInput(attrs={"readonly": "readonly"})
-        self.fields[link_name] = choice_class(
+        form_field = choice_class(
             display_field=display_field,
             queryset=queryset,
             required=required,
             initial=initial_link,
             **kwargs,
         )
+        if link_name in self.renamed_field_labels:
+            form_field.label = self.renamed_field_labels[link_name]
+        self.fields[link_name] = form_field
 
 
 class BaseMontrekChoiceField:
