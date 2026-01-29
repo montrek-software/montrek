@@ -61,6 +61,8 @@ class SubqueryBuilder:
             queryset annotations or filters.
         """
         ...
+
+
 class SatelliteSubqueryBuilderABC(SubqueryBuilder):
     lookup_field: str = ""
     outer_ref: str = ""
@@ -415,11 +417,25 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
             isinstance(parent_link_class(), MontrekManyToManyLinkABC)
             for parent_link_class in self.parent_link_classes
         )
-        _is_many_to_one = (
-            isinstance(self.link_class(), MontrekOneToManyLinkABC)
-            and hub_field_to == "hub_in"
+        _is_many_to_one_parent = False
+        for i, parent_link_class in enumerate(self.parent_link_classes):
+            parent_reversed = self.parent_link_reversed[i]
+            if (
+                isinstance(parent_link_class(), MontrekOneToManyLinkABC)
+                and parent_reversed
+            ):
+                _is_many_to_many_parent = True
+                break
+
+        _is_many_to_one = isinstance(self.link_class(), MontrekOneToManyLinkABC) and (
+            hub_field_to == "hub_in"
         )
-        return _is_many_to_many or _is_many_to_one or _is_many_to_many_parent
+        return (
+            _is_many_to_many
+            or _is_many_to_one
+            or _is_many_to_many_parent
+            or _is_many_to_one_parent
+        )
 
     def _get_subquery(
         self, hub_a: str, hub_b: str, reference_date: timezone.datetime
