@@ -420,11 +420,10 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         _is_many_to_one_parent = False
         for i, parent_link_class in enumerate(self.parent_link_classes):
             parent_reversed = self.parent_link_reversed[i]
-            _parent_is_many_to_one = (
+            if (
                 isinstance(parent_link_class(), MontrekOneToManyLinkABC)
                 and parent_reversed
-            )
-            if _parent_is_many_to_one:
+            ):
                 _is_many_to_many_parent = True
                 break
 
