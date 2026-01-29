@@ -23,6 +23,14 @@ class HubAFactory(MontrekHubFactory):
     class Meta:
         model = "montrek_example.HubA"
 
+    @factory.post_generation
+    def hub_b(self, created, extracted):
+        if not created:
+            return
+        if not extracted:
+            return
+        self.link_hub_a_hub_b.add(extracted)
+
 
 class HubBFactory(MontrekHubFactory):
     class Meta:
@@ -42,6 +50,16 @@ class HubCFactory(MontrekHubFactory):
         if isinstance(extracted, list):
             for hub in extracted:
                 self.link_hub_c_hub_d.add(hub)
+
+    @factory.post_generation
+    def hub_a(self, created, extracted):
+        if not created:
+            return
+        if not extracted:
+            return
+        if isinstance(extracted, list):
+            for hub in extracted:
+                self.link_hub_c_hub_a.add(hub)
 
 
 class HubDFactory(MontrekHubFactory):

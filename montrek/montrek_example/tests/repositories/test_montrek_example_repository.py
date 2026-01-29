@@ -40,6 +40,7 @@ from montrek_example.repositories.hub_c_repository import (
     HubCRepositorySumTS,
     HubCRepositoryViewModel,
     HubCRepositoryWithManyToManyParents,
+    HubCRepositoryWithManyToOneParents,
 )
 from montrek_example.repositories.hub_d_repository import (
     HubDRepository,
@@ -1483,6 +1484,17 @@ class TestMontrekRepositoryLinks(TestCase):
         test_query = repo.receive()
         test_element = test_query.get(hub_entity_id=hub_c.pk)
         self.assertEqual(test_element.field_e1_str, "Test1;Test2")
+
+    def test_link_with_many_to_one_parents(self):
+        sat_b1 = me_factories.SatB1Factory(field_b1_str="Test1")
+        hub_a1 = me_factories.HubAFactory(hub_b=sat_b1.hub_entity)
+        sat_b2 = me_factories.SatB1Factory(field_b1_str="Test2")
+        hub_a2 = me_factories.HubAFactory(hub_b=sat_b2.hub_entity)
+        hub_c = me_factories.HubCFactory(hub_a=[hub_a1, hub_a2])
+        repo = HubCRepositoryWithManyToOneParents({})
+        test_query = repo.receive()
+        test_element = test_query.get(hub_entity_id=hub_c.pk)
+        self.assertEqual(test_element.field_b1_str, "Test1;Test2")
 
 
 class TestLinkOneToOneUpates(TestCase):

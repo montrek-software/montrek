@@ -256,6 +256,20 @@ class HubCRepositoryWithManyToManyParents(MontrekRepository):
         )
 
 
+class HubCRepositoryWithManyToOneParents(MontrekRepository):
+    hub_class = me_models.HubC
+
+    def set_annotations(self):
+        self.add_linked_satellites_field_annotations(
+            me_models.SatB1,
+            me_models.LinkHubAHubB,
+            ["field_b1_str"],
+            reversed_link=False,
+            parent_link_classes=(me_models.LinkHubAHubC,),
+            parent_link_reversed=(True,),
+        )
+
+
 class HubCRepositoryViewModel(MontrekRepository):
     hub_class = me_models.HubC
 
