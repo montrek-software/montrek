@@ -3469,8 +3469,9 @@ class TestRepositoryAsDF(TestCase):
         repo = HubBRepository({})
         repo.store_in_view_model()
         df = repo.get_df()
+        field_b1_date = df.loc[df["id"] == sat_b1.hub_entity_id, "field_b1_date"].iloc[0]
         self.assertEqual(
-            df.loc[df["id"] == sat_b1.hub_entity_id]["field_b1_date"].iloc[0].date(),
+            field_b1_date.date(),
             datetime.date(1677, 9, 22),
         )
 
