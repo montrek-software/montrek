@@ -7,7 +7,7 @@ from baseclasses.errors.montrek_user_error import MontrekError
 from baseclasses.tests.factories.montrek_factory_schemas import ValueDateListFactory
 from baseclasses.utils import montrek_time
 from django.core.exceptions import PermissionDenied
-from django.db import ProgrammingError, models
+from django.db import models
 from django.test import TestCase, TransactionTestCase
 from django.utils import timezone
 from freezegun import freeze_time
@@ -1452,7 +1452,7 @@ class TestMontrekRepositoryLinks(TestCase):
         self.assertEqual(c_object.field_a1_str, "A1Test")
         self.assertEqual(c_object.field_b1_str, "B1Test")
 
-    def test_link_with_reversed_parent__many_to_many__raise_error(self):
+    def test_link_with_reversed_parent__many_to_many__raise_no_error(self):
         hub_c = me_factories.HubCFactory()
         sat_a = me_factories.SatA1Factory(field_a1_str="A1Test")
         me_factories.LinkHubAHubCFactory(hub_in=sat_a.hub_entity, hub_out=hub_c)
@@ -1465,8 +1465,11 @@ class TestMontrekRepositoryLinks(TestCase):
             hub_in=sat_a.hub_entity, hub_out=satb2.hub_entity
         )
         repository = HubCRepositoryReversedParents()
-        with self.assertRaises(ProgrammingError):
-            repository.receive().get(hub__pk=hub_c.pk)
+        test_element = repository.receive().get(hub__pk=hub_c.pk)
+        test_field = test_element.field_b1_str.split("##")
+        self.assertEqual(len(test_field), 2)
+        self.assertIn("B1Test1", test_field)
+        self.assertIn("B1Test2", test_field)
 
     def test_link_with_reversed_parent__non_matching_items(self):
         def call_repo():
@@ -3460,11 +3463,16 @@ class TestRepositoryAsDF(TestCase):
     def test_convert_min_dates(self):
         sat = me_factories.SatA1Factory.create()
         me_factories.SatA2Factory.create(hub_entity=sat.hub_entity)
-        me_factories.SatB1Factory.create(link_a=sat, field_b1_date=datetime.date.min)
+        sat_b1 = me_factories.SatB1Factory.create(
+            link_a=sat, field_b1_date=datetime.date.min
+        )
         repo = HubBRepository({})
         repo.store_in_view_model()
         df = repo.get_df()
-        self.assertEqual(df.iloc[5]["field_b1_date"].date(), datetime.date(1677, 9, 22))
+        self.assertEqual(
+            df.loc[df["id"] == sat_b1.hub_entity_id]["field_b1_date"].iloc[0].date(),
+            datetime.date(1677, 9, 22),
+        )
 
 
 class TestReceiveWithAliases(TestCase):
