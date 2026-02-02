@@ -1,15 +1,13 @@
 <form method="post" enctype="multipart/form-data">
   {% csrf_token %}
-  <div class="tile">
-    <div class="row m-2">
-      {{ upload_form.as_div }}
-    </div>
-    <div class="row m-2">
-      <div class="col-2"></div>
-      <div class="col-4">
-        <input  type="submit" value="Upload" class="input-custom" />
+  <div class="col-12 col-lg-4">
+    <div class="tile">
+      <div class="row m-2">
+        {{ upload_form.as_div }}
       </div>
-      <div class="col-6"></div>
+      <div class="row m-2">
+          <input  type="submit" value="Upload" class="input-custom" />
+      </div>
     </div>
   </div>
 </form>
