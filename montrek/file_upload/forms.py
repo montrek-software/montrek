@@ -13,7 +13,7 @@ class UploadFileForm(forms.Form):
             widget=forms.FileInput(
                 attrs={
                     "id": "id_upload__file",
-                    "class": "form-control-file",
+                    "class": "form-control mb-2",
                     "accept": self.accept,
                 }
             ),
@@ -42,7 +42,7 @@ class FieldMapCreateForm(MontrekCreateForm):
         self.fields["function_name"] = ChoiceField(
             choices=[(f, f) for f in self._get_function_name_choices()],
         )
-        if "function_name" not in self.initial.keys():
+        if "function_name" not in self.initial:
             self.initial["function_name"] = "no_change"
 
     def _get_function_name_choices(self):
@@ -51,4 +51,4 @@ class FieldMapCreateForm(MontrekCreateForm):
             self.field_map_manager.field_map_function_manager_class, inspect.isfunction
         ):
             function_names.append(name)
-        return sorted(list(set(function_names)))
+        return sorted(set(function_names))
