@@ -1,5 +1,6 @@
 import logging
 import os
+from pathlib import Path
 
 from django.contrib.auth.decorators import login_required
 
@@ -49,8 +50,9 @@ def download_reporting_file_view(request, file_path: str):
         download_registry_manager = DownloadRegistryStorageManager(
             {"user_id": request.user.id}
         )
+        ext = Path(file_path).suffix.lstrip(".").lower()
         download_registry_manager.store_in_download_registry(
-            os.path.basename(file_path), DOWNLOAD_TYPES(file_path.split(".")[-1])
+            os.path.basename(file_path), DOWNLOAD_TYPES(ext)
         )
         return response
 

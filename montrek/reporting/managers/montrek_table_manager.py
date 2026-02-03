@@ -76,7 +76,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
 
     def get_order_field(self) -> None | str:
         order_field = self.session_data.get("order_field", None)
-        if isinstance(order_field, (list | tuple)):
+        if isinstance(order_field, list | tuple):
             order_field = order_field[0]
         if order_field is None:
             return None
@@ -155,7 +155,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
                     value = table_element.get_value(query_object)
                     if pd.isna(value):
                         value = None
-                    elif isinstance(value, (datetime.datetime | datetime.date)):
+                    elif isinstance(value, datetime.datetime | datetime.date):
                         value = value.isoformat()
                     elif isinstance(table_element, (te.StringTableElement)):
                         value = str(value)
