@@ -4,6 +4,7 @@ import os
 from dataclasses import dataclass
 from decimal import Decimal
 from io import BytesIO
+from pathlib import Path
 
 import pandas as pd
 from baseclasses.dataclasses.montrek_message import MontrekMessageInfo
@@ -236,7 +237,8 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         response["Content-Type"] = content_type
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
         self.download_registry_storage_manager.store_in_download_registry(
-            self.document_name, DOWNLOAD_TYPES.XLSX
+            self.document_name,
+            DOWNLOAD_TYPES(Path(filename).suffix.lstrip(".").lower()),
         )
         return response
 

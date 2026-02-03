@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup
 from django.core import mail
 from django.test import TestCase
 from django.utils import timezone
+from info.repositories.download_registry_repositories import DownloadRegistryRepository
 from montrek_example.models.example_models import SatA1
 from montrek_example.tests.factories import montrek_example_factories as me_factories
 from reporting.dataclasses.table_elements import HistoryChangeState
@@ -21,6 +22,7 @@ from reporting.tests.mocks import (
     MockMontrekDataFrameTableManager,
     MockMontrekTableManager,
 )
+from testing.decorators.add_logged_in_user import add_logged_in_user
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
 
@@ -84,8 +86,9 @@ class TestMontrekTableManager(TestCase):
         ]
         self.assertEqual(test_json, expected_json)
 
+    @add_logged_in_user()
     def test_download_csv(self):
-        manager = MockMontrekTableManager()
+        manager = MockMontrekTableManager({"user_id": self.user.id})
         response = manager.download_or_mail_csv()
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
@@ -100,9 +103,12 @@ class TestMontrekTableManager(TestCase):
             response.getvalue(),
             b"Field A,Field B,Field C,Field D,Field E,Link Text\na,1,1.0,2024-07-13,1.0,a\nb,2,2.0,2024-07-13,2.2,b\nc,3,3.0,2024-07-13,3.0,c\n",
         )
+        repo = DownloadRegistryRepository()
+        self.assertEqual(repo.receive().count(), 1)
 
+    @add_logged_in_user()
     def test_download_excel(self):
-        manager = MockMontrekTableManager()
+        manager = MockMontrekTableManager({"user_id": self.user.id})
         response = manager.download_or_mail_excel()
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
@@ -132,6 +138,8 @@ class TestMontrekTableManager(TestCase):
                 }
             )
             pd.testing.assert_frame_equal(excel_file, expected_df, check_dtype=False)
+        repo = DownloadRegistryRepository()
+        self.assertEqual(repo.receive().count(), 1)
 
     def test_get_table_elements_name_to_field_map(self):
         manager = MockMontrekTableManager()
