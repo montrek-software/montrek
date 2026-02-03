@@ -306,27 +306,27 @@ class MontrekListView(
         return context
 
     def list_to_csv(self):
-        response = self.manager.download_or_mail_csv()
-        self.show_messages()
         DownloadRegistryStorageManager(self.session_data).store_in_download_registry(
             self.manager.document_name, DOWNLOAD_TYPES.CSV
         )
+        response = self.manager.download_or_mail_csv()
+        self.show_messages()
         return response
 
     def list_to_excel(self):
-        response = self.manager.download_or_mail_excel()
-        self.show_messages()
         DownloadRegistryStorageManager(self.session_data).store_in_download_registry(
             self.manager.document_name, DOWNLOAD_TYPES.XLSX
         )
+        response = self.manager.download_or_mail_excel()
+        self.show_messages()
         return response
 
     def list_to_rest_api(self):
-        query = self.manager.to_json()
-        serializer = MontrekSerializer(query, manager=self.manager, many=True)
         DownloadRegistryStorageManager(self.session_data).store_in_download_registry(
             self.manager.document_name, DOWNLOAD_TYPES.API
         )
+        query = self.manager.to_json()
+        serializer = MontrekSerializer(query, manager=self.manager, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def refresh_data(self):
