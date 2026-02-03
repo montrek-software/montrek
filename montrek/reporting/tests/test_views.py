@@ -32,7 +32,7 @@ class TestDownloadFileView(TestCase):
             "download_reporting_file", kwargs={"file_path": temp_file_path}
         )
         response = self.client.get(test_url)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 200)
 
     def test_download_view(self):
         test_file = SimpleUploadedFile(
@@ -59,6 +59,7 @@ class TestDownloadFileView(TestCase):
 
     def test_download_view_file_not_found(self):
         request = self.factory.get("/")
+        request.user = self.user
         self.assertRaises(Http404, download_reporting_file_view, request, "Dummy.txt")
 
 
