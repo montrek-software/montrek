@@ -7,6 +7,7 @@ from info.models.download_registry_sat_models import (
 
 class DownloadRegistryRepository(MontrekRepository):
     hub_class = DownloadRegistryHub
+    default_order_fields = ("-created_at",)
 
     def set_annotations(self):
         self.add_satellite_fields_annotations(

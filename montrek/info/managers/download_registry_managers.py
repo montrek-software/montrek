@@ -1,5 +1,3 @@
-from baseclasses.managers.montrek_manager import MontrekManager
-from info.models.download_registry_sat_models import DOWNLOAD_TYPES
 from reporting.dataclasses import table_elements as te
 from reporting.managers.montrek_table_manager import MontrekTableManager
 from reporting.managers.montrek_details_manager import MontrekDetailsManager
@@ -47,14 +45,3 @@ class DownloadRegistryDetailsManager(CommonTableElementsMixin, MontrekDetailsMan
         ]
         table_elements += super().table_elements
         return table_elements
-
-
-class DownloadRegistryManager(MontrekManager):
-    repository_class = DownloadRegistryRepository
-
-    def store_in_download_registry(
-        self, identifier: str, download_type: DOWNLOAD_TYPES
-    ):
-        self.repository.create_by_dict(
-            {"download_name": identifier, "download_type": download_type.value}
-        )
