@@ -17,13 +17,13 @@ class TestInfoDbStructureManager(TestCase):
         self.assertIsInstance(self.info_db_structure_container, DbStructureContainer)
 
     def test_hub_counts(self):
-        self.assertEqual(len(self.info_db_structure_container.hubs), 2)
+        self.assertEqual(len(self.info_db_structure_container.hubs), 3)
 
     def test_hub_value_date_counts(self):
-        self.assertEqual(len(self.info_db_structure_container.hub_value_dates), 2)
+        self.assertEqual(len(self.info_db_structure_container.hub_value_dates), 3)
 
     def test_satellite_counts(self):
-        self.assertEqual(len(self.info_db_structure_container.sats), 4)
+        self.assertEqual(len(self.info_db_structure_container.sats), 5)
 
     def test_time_series_satellite_counts(self):
         self.assertEqual(len(self.info_db_structure_container.ts_sats), 2)
@@ -72,6 +72,13 @@ class TestInfoDbStructureManager(TestCase):
             {
                 "app": "info",
                 "type": "Hub",
+                "name": "DownloadRegistryHub",
+                "db_table_name": "info_downloadregistryhub",
+                "link": "",
+            },
+            {
+                "app": "info",
+                "type": "Hub",
                 "name": "TestHubB",
                 "db_table_name": "info_testhubb",
                 "link": "",
@@ -86,6 +93,13 @@ class TestInfoDbStructureManager(TestCase):
             {
                 "app": "info",
                 "type": "HubValueDate",
+                "name": "DownloadRegistryHubValueDate",
+                "db_table_name": "info_downloadregistryhubvaluedate",
+                "link": "Hub: DownloadRegistryHub",
+            },
+            {
+                "app": "info",
+                "type": "HubValueDate",
                 "name": "TestHubValueDateA",
                 "db_table_name": "info_testhubvaluedatea",
                 "link": "Hub: TestHubA",
@@ -96,6 +110,13 @@ class TestInfoDbStructureManager(TestCase):
                 "name": "TestHubValueDateB",
                 "db_table_name": "info_testhubvaluedateb",
                 "link": "Hub: TestHubB",
+            },
+            {
+                "app": "info",
+                "type": "Satellite",
+                "name": "DownloadRegistrySatellite",
+                "db_table_name": "info_downloadregistrysatellite",
+                "link": "Hub: DownloadRegistryHub",
             },
             {
                 "app": "info",
