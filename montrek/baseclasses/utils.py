@@ -167,7 +167,7 @@ class FilterMetaSessionDataElement(TableMetaSessionDataElement):
                 filter_negates,
                 filter_lookups,
                 filter_values,
-                strict=False,
+                strict=True,
             )
         )
         if len(filter_input_data) > 0:
