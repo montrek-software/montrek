@@ -2,15 +2,15 @@ from testing.test_cases.view_test_cases import (
     MontrekViewTestCase,
     MontrekListViewTestCase,
 )
-from download_registry.tests.factories.download_registry_hub_factories import (
+from info.tests.factories.download_registry_hub_factories import (
     DownloadRegistryHubValueDateFactory,
 )
-from download_registry.tests.factories.download_registry_sat_factories import (
+from info.tests.factories.download_registry_sat_factories import (
     DownloadRegistrySatelliteFactory,
 )
-from download_registry.views.download_registry_views import DownloadRegistryListView
-from download_registry.views.download_registry_views import DownloadRegistryDetailView
-from download_registry.views.download_registry_views import DownloadRegistryHistoryView
+from info.views.download_registry_views import DownloadRegistryListView
+from info.views.download_registry_views import DownloadRegistryDetailView
+from info.views.download_registry_views import DownloadRegistryHistoryView
 
 
 class TestDownloadRegistryListView(MontrekListViewTestCase):

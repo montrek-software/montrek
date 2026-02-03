@@ -5,8 +5,8 @@ from baseclasses.tests.factories.montrek_factory_schemas import (
     MontrekHubValueDateFactory,
     MontrekHubFactory,
 )
-from download_registry.models.download_registry_hub_models import DownloadRegistryHub
-from download_registry.models.download_registry_hub_models import (
+from info.models.download_registry_hub_models import DownloadRegistryHub
+from info.models.download_registry_hub_models import (
     DownloadRegistryHubValueDate,
 )
 

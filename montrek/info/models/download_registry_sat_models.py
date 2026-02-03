@@ -2,7 +2,7 @@ from django.db import models
 
 from baseclasses.models import MontrekSatelliteABC
 from baseclasses.utils import ChoicesEnum
-from download_registry.models.download_registry_hub_models import DownloadRegistryHub
+from info.models.download_registry_hub_models import DownloadRegistryHub
 
 
 class DOWNLOAD_TYPES(ChoicesEnum):

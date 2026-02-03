@@ -1,7 +1,7 @@
 from reporting.dataclasses import table_elements as te
 from reporting.managers.montrek_table_manager import MontrekTableManager
 from reporting.managers.montrek_details_manager import MontrekDetailsManager
-from download_registry.repositories.download_registry_repositories import (
+from info.repositories.download_registry_repositories import (
     DownloadRegistryRepository,
 )
 
@@ -10,20 +10,10 @@ class CommonTableElementsMixin:
     @property
     def table_elements(self):
         return [
-            te.LinkTableElement(
-                name="Edit",
-                url="download_registry_update",
-                icon="edit",
-                kwargs={"pk": "id"},
-                hover_text="Update Download Registry",
-            ),
-            te.LinkTableElement(
-                name="Delete",
-                url="download_registry_delete",
-                icon="trash",
-                kwargs={"pk": "id"},
-                hover_text="Delete Download Registry",
-            ),
+            te.StringTableElement(name="User", attr="created_by"),
+            te.DateTimeTableElement(name="Downloaded At", attr="created_at"),
+            te.StringTableElement(name="Identifier", attr="download_name"),
+            te.StringTableElement(name="Type", attr="download_type"),
         ]
 
 

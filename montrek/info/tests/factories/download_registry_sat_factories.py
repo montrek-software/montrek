@@ -3,10 +3,10 @@ from baseclasses.tests.factories.montrek_factory_schemas import (
     MontrekSatelliteFactory,
 )
 
-from download_registry.tests.factories.download_registry_hub_factories import (
+from info.tests.factories.download_registry_hub_factories import (
     DownloadRegistryHubFactory,
 )
-from download_registry.models.download_registry_sat_models import (
+from info.models.download_registry_sat_models import (
     DownloadRegistrySatellite,
 )
 
