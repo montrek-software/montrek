@@ -1,4 +1,4 @@
-from baseclasses.typing import SessionDataType
+from baseclasses.managers.montrek_manager import MontrekManager
 from info.models.download_registry_sat_models import DOWNLOAD_TYPES
 from reporting.dataclasses import table_elements as te
 from reporting.managers.montrek_table_manager import MontrekTableManager
@@ -49,15 +49,12 @@ class DownloadRegistryDetailsManager(CommonTableElementsMixin, MontrekDetailsMan
         return table_elements
 
 
-class HasSessionData:
-    session_data: SessionDataType
+class DownloadRegistryManager(MontrekManager):
+    repository_class = DownloadRegistryRepository
 
-
-class DownloadRegistryManagerMixin(HasSessionData):
     def store_in_download_registry(
         self, identifier: str, download_type: DOWNLOAD_TYPES
     ):
-        registry_repository = DownloadRegistryRepository(self.session_data)
-        registry_repository.create_by_dict(
+        self.repository.create_by_dict(
             {"download_name": identifier, "download_type": download_type.value}
         )

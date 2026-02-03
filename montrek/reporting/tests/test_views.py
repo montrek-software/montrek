@@ -5,6 +5,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.http import Http404
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
+from info.repositories.download_registry_repositories import DownloadRegistryRepository
 from reporting.tests.mocks import (
     MockMontrekReportFieldEditView,
     MockMontrekReportFieldEditViewValidationError,
@@ -16,6 +17,7 @@ from testing.decorators import add_logged_in_user
 
 
 class TestDownloadFileView(TestCase):
+    @add_logged_in_user()
     def setUp(self):
         self.factory = RequestFactory()
 
@@ -39,8 +41,9 @@ class TestDownloadFileView(TestCase):
             content_type="text/plain",
         )
         temp_file_path = default_storage.save("temp/test_file.txt", test_file)
-        request = self.factory.get("/")
-        response = download_reporting_file_view(request, temp_file_path)
+        url = reverse("download_reporting_file", kwargs={"file_path": temp_file_path})
+
+        response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             response.get("Content-Disposition"), "attachment; filename=test_file.txt"
@@ -51,6 +54,8 @@ class TestDownloadFileView(TestCase):
         )
         response = self.client.get(test_url)
         self.assertRaises(Http404)
+        repo = DownloadRegistryRepository()
+        self.assertEqual(repo.receive().count(), 1)
 
     def test_download_view_file_not_found(self):
         request = self.factory.get("/")
