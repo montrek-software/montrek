@@ -16,6 +16,6 @@ class DownloadRegistrySatellite(MontrekSatelliteABC):
     hub_entity = models.ForeignKey(DownloadRegistryHub, on_delete=models.CASCADE)
 
     download_name = models.CharField()
-    dowload_type = models.CharField(max_length=25, choices=DOWNLOAD_TYPES.to_list())
+    download_type = models.CharField(max_length=25, choices=DOWNLOAD_TYPES.to_list())
 
     identifier_fields = ["hub_entity_id"]

@@ -28,14 +28,13 @@ class InfoPage(MontrekPage):
             link=reverse("admin"),
             html_id="id_admin",
         )
-        download_registry_tab = (
-            TabElement(
-                name=LIST_TAB_NAME,
-                link=reverse("download_registry_list"),
-                html_id="tab_download_registry_list",
-                active="active",
-            ),
+        download_registry_tab = TabElement(
+            name=LIST_TAB_NAME,
+            link=reverse("download_registry_list"),
+            html_id="tab_download_registry_list",
+            active="active",
         )
+
         return (db_structure_tab, info_tab, admin_tab, download_registry_tab)
 
 
