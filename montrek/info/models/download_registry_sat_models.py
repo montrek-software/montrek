@@ -11,6 +11,7 @@ class DOWNLOAD_TYPES(ChoicesEnum):
     API = "api"
     PDF = "pdf"
     TXT = "txt"
+    ZIP = "zip"
 
 
 class DownloadRegistrySatellite(MontrekSatelliteABC):

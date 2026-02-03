@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 from typing import TextIO
 from urllib.parse import urlparse
 
@@ -23,6 +24,10 @@ from file_upload.managers.file_upload_registry_manager import (
     FileUploadRegistryManagerABC,
 )
 from file_upload.pages import FileUploadPage
+from info.managers.download_registry_storage_managers import (
+    DownloadRegistryStorageManager,
+)
+from info.models.download_registry_sat_models import DOWNLOAD_TYPES
 
 from montrek.celery_app import app as celery_app
 
@@ -61,8 +66,7 @@ class MontrekUploadFileView(MontrekTemplateView):
                 messages.error(request, self.file_upload_manager.message)
             logger.debug("End file upload process")
             return HttpResponseRedirect(self.get_success_url())
-        else:
-            return self.render_to_response(self.get_context_data())
+        return self.render_to_response(self.get_context_data())
 
     def get_success_url(self):
         raise NotImplementedError("get_success_url not implemented")
@@ -95,6 +99,11 @@ class MontrekDownloadFileBaseView(MontrekTemplateView):
         if upload_file is None:
             messages.info(request, "No download file available!")
             return redirect(request.META.get("HTTP_REFERER"))
+
+        ext = Path(upload_file.name).suffix.lstrip(".").lower()
+        DownloadRegistryStorageManager(self.session_data).store_in_download_registry(
+            self.manager.document_name, DOWNLOAD_TYPES(ext)
+        )
         return FileResponse(upload_file, as_attachment=True)
 
     def get_template_context(self, **kwargs):
