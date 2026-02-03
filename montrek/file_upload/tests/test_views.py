@@ -15,6 +15,7 @@ from file_upload.views import (
     MontrekDownloadLogFileView,
     MontrekUploadFileView,
 )
+from info.repositories.download_registry_repositories import DownloadRegistryRepository
 from testing.test_cases.view_test_cases import (
     MontrekFileResponseTestCase,
     MontrekListViewTestCase,
@@ -100,6 +101,8 @@ class TestMontrekDownloadFileView(MontrekFileResponseTestCase):
     def test_return_file(self):
         content = b"".join(self.response.streaming_content)
         self.assertEqual(content, b"test")
+        repo = DownloadRegistryRepository()
+        self.assertEqual(repo.receive().count(), 1)
 
 
 class TestMontrekDownloadLogFileView(MontrekFileResponseTestCase):
@@ -118,3 +121,5 @@ class TestMontrekDownloadLogFileView(MontrekFileResponseTestCase):
     def test_return_file(self):
         content = b"".join(self.response.streaming_content)
         self.assertEqual(content, b"test")
+        repo = DownloadRegistryRepository()
+        self.assertEqual(repo.receive().count(), 1)

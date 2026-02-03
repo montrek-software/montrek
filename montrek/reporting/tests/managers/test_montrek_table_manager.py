@@ -21,6 +21,7 @@ from reporting.tests.mocks import (
     MockMontrekDataFrameTableManager,
     MockMontrekTableManager,
 )
+from testing.decorators.add_logged_in_user import add_logged_in_user
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
 
@@ -84,8 +85,9 @@ class TestMontrekTableManager(TestCase):
         ]
         self.assertEqual(test_json, expected_json)
 
+    @add_logged_in_user()
     def test_download_csv(self):
-        manager = MockMontrekTableManager()
+        manager = MockMontrekTableManager({"user_id": self.user.id})
         response = manager.download_or_mail_csv()
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
@@ -101,8 +103,9 @@ class TestMontrekTableManager(TestCase):
             b"Field A,Field B,Field C,Field D,Field E,Link Text\na,1,1.0,2024-07-13,1.0,a\nb,2,2.0,2024-07-13,2.2,b\nc,3,3.0,2024-07-13,3.0,c\n",
         )
 
+    @add_logged_in_user()
     def test_download_excel(self):
-        manager = MockMontrekTableManager()
+        manager = MockMontrekTableManager({"user_id": self.user.id})
         response = manager.download_or_mail_excel()
         self.assertEqual(response.status_code, 200)
         self.assertEqual(

@@ -1,5 +1,8 @@
 import logging
 import os
+from pathlib import Path
+
+from django.contrib.auth.decorators import login_required
 
 from baseclasses.forms import MontrekCreateForm
 from baseclasses.sanitizer import HtmlSanitizer
@@ -16,6 +19,10 @@ from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.views import View
 from django.views.decorators.http import require_safe
+from info.managers.download_registry_storage_managers import (
+    DownloadRegistryStorageManager,
+)
+from info.models.download_registry_sat_models import DOWNLOAD_TYPES
 from reporting.managers.latex_report_manager import LatexReportManager
 from reporting.managers.montrek_report_manager import MontrekReportManager
 from reporting.mixins.view_form_mixin import ViewFormMixin
@@ -28,7 +35,9 @@ logger = logging.getLogger(__name__)
 
 
 @require_safe
+@login_required
 def download_reporting_file_view(request, file_path: str):
+    # TODO: Make this view safe by using FileResponse and not rely on paths
     file_path = os.path.join(settings.MEDIA_ROOT, file_path)
     if not os.path.exists(file_path):
         raise Http404
@@ -38,6 +47,13 @@ def download_reporting_file_view(request, file_path: str):
             f"attachment; filename={os.path.basename(file_path)}"
         )
         os.remove(file_path)
+        download_registry_manager = DownloadRegistryStorageManager(
+            {"user_id": request.user.id}
+        )
+        ext = Path(file_path).suffix.lstrip(".").lower()
+        download_registry_manager.store_in_download_registry(
+            os.path.basename(file_path), DOWNLOAD_TYPES(ext)
+        )
         return response
 
 

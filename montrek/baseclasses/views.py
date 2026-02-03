@@ -25,6 +25,10 @@ from django.views.generic.edit import CreateView
 from django.views.generic.list import ListView
 from file_upload.forms import SimpleUploadFileForm
 from file_upload.managers.simple_upload_file_manager import SimpleUploadFileManager
+from info.managers.download_registry_storage_managers import (
+    DownloadRegistryStorageManager,
+)
+from info.models.download_registry_sat_models import DOWNLOAD_TYPES
 from reporting.managers.latex_report_manager import LatexReportManager
 from reporting.managers.montrek_details_manager import MontrekDetailsManager
 from reporting.managers.montrek_table_manager import (
@@ -166,6 +170,9 @@ class ToPdfMixin:
         pdf_path = report_manager.compile_report()
         self.show_messages()
         if pdf_path and os.path.exists(pdf_path):
+            DownloadRegistryStorageManager(
+                self.session_data
+            ).store_in_download_registry(self.manager.document_name, DOWNLOAD_TYPES.PDF)
             return FileResponse(
                 self.open_file(pdf_path),
                 content_type="application/pdf",
@@ -299,16 +306,25 @@ class MontrekListView(
         return context
 
     def list_to_csv(self):
+        DownloadRegistryStorageManager(self.session_data).store_in_download_registry(
+            self.manager.document_name, DOWNLOAD_TYPES.CSV
+        )
         response = self.manager.download_or_mail_csv()
         self.show_messages()
         return response
 
     def list_to_excel(self):
+        DownloadRegistryStorageManager(self.session_data).store_in_download_registry(
+            self.manager.document_name, DOWNLOAD_TYPES.XLSX
+        )
         response = self.manager.download_or_mail_excel()
         self.show_messages()
         return response
 
     def list_to_rest_api(self):
+        DownloadRegistryStorageManager(self.session_data).store_in_download_registry(
+            self.manager.document_name, DOWNLOAD_TYPES.API
+        )
         query = self.manager.to_json()
         serializer = MontrekSerializer(query, manager=self.manager, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)

@@ -44,7 +44,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
     is_compact_format = False
     is_large: bool = False
 
-    def __init__(self, session_data: SessionDataType = {}):
+    def __init__(self, session_data: SessionDataType | None = None):
         super().__init__(session_data)
         self._document_name: None | str = None
         self._queryset: None | QuerySet = None
@@ -76,7 +76,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
 
     def get_order_field(self) -> None | str:
         order_field = self.session_data.get("order_field", None)
-        if isinstance(order_field, (list, tuple)):
+        if isinstance(order_field, list | tuple):
             order_field = order_field[0]
         if order_field is None:
             return None
@@ -143,7 +143,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
             for table_element in self.table_elements:
                 if isinstance(table_element, (te.LinkTableElement)):
                     continue
-                elif isinstance(table_element, te.LinkTextTableElement):
+                if isinstance(table_element, te.LinkTextTableElement):
                     objects_dict[table_element.text] = str(
                         table_element.get_value(query_object)
                     )
@@ -155,7 +155,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
                     value = table_element.get_value(query_object)
                     if pd.isna(value):
                         value = None
-                    elif isinstance(value, (datetime.datetime, datetime.date)):
+                    elif isinstance(value, datetime.datetime | datetime.date):
                         value = value.isoformat()
                     elif isinstance(table_element, (te.StringTableElement)):
                         value = str(value)
@@ -309,7 +309,7 @@ class MontrekTablePaginator:
 class MontrekTableManager(MontrekTableManagerABC):
     is_paginated = True
 
-    def __init__(self, session_data: SessionDataType = {}):
+    def __init__(self, session_data: SessionDataType | None = None):
         super().__init__(session_data)
         self.paginator: None | MontrekTablePaginator = None
         self.paginate_by: int = self.get_paginate_by()
@@ -384,7 +384,7 @@ class MontrekTableManager(MontrekTableManagerABC):
 
 
 class MontrekDataFrameTableManager(MontrekTableManagerABC):
-    def __init__(self, session_data: SessionDataType = {}):
+    def __init__(self, session_data: SessionDataType | None = None):
         if "df_data" not in session_data:
             raise ValueError("DataFrame data not set in session_data['df_data'].")
         self.df_data = session_data["df_data"]
@@ -452,7 +452,7 @@ class HistoryDataTableManager(MontrekTableManagerABC):
 
     @staticmethod
     def get_change_map_from_df(df: pd.DataFrame) -> te.ChangeMapType:
-        is_timeseries = True if "value_date" in df.columns else False
+        is_timeseries = "value_date" in df.columns
         id_column = "id"
 
         exclude_cols = [id_column, "state_date_start", "state_date_end", "value_date"]

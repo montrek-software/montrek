@@ -1,7 +1,8 @@
 import datetime
 from abc import ABC, abstractmethod
 from datetime import timedelta
-from typing import Any, Tuple
+from enum import Enum
+from typing import Any
 
 import pandas as pd
 from baseclasses.typing import SessionDataType
@@ -81,7 +82,7 @@ def datetime_to_montrek_time(datetime: datetime.datetime) -> timezone.datetime:
     )
 
 
-def get_date_range_dates(request) -> Tuple[str, str]:
+def get_date_range_dates(request) -> tuple[str, str]:
     default_start_date = montrek_date_string(montrek_today() - timedelta(days=30))
     default_end_date = montrek_date_string(montrek_today())
 
@@ -142,10 +143,7 @@ class TableMetaSessionDataElement(ABC):
 
     def _set_data_to_path(self, default: int | str | None) -> SessionDataType:
         data = {}
-        if self.field not in self.session_data:
-            data[self.field] = {}
-        else:
-            data[self.field] = self.session_data[self.field]
+        data[self.field] = self.session_data.get(self.field, {})
         if self.request_path not in data[self.field]:
             data[self.field][self.request_path] = default
         return data
@@ -164,7 +162,13 @@ class FilterMetaSessionDataElement(TableMetaSessionDataElement):
         filter_lookups = self.session_data.pop("filter_lookup", [])
         filter_values = self.session_data.pop("filter_value", [""] * len(filter_fields))
         filter_input_data = list(
-            zip(filter_fields, filter_negates, filter_lookups, filter_values)
+            zip(
+                filter_fields,
+                filter_negates,
+                filter_lookups,
+                filter_values,
+                strict=True,
+            )
         )
         if len(filter_input_data) > 0:
             filter_data[self.field][self.request_path] = {}
@@ -209,9 +213,8 @@ class PagesMetaSessionDataElement(TableMetaSessionDataElement):
         if "page" in self.session_data:
             page = self.session_data["page"]
             pages_data[self.field][self.request_path] = page
-        else:
-            if self.request_path in self.session_data[self.field]:
-                pages_data["page"] = self.session_data[self.field][self.request_path]
+        elif self.request_path in self.session_data[self.field]:
+            pages_data["page"] = self.session_data[self.field][self.request_path]
         return pages_data
 
 
@@ -227,8 +230,9 @@ class PaginateByMetaSessionDataElement(TableMetaSessionDataElement):
 
     def apply_data(self) -> SessionDataType:
         session_data = self._set_data_to_path(default=10)
-        if session_data["paginate_by"][self.request.path] < 5:
-            session_data["paginate_by"][self.request.path] = 5
+        session_data["paginate_by"][self.request.path] = max(
+            session_data["paginate_by"][self.request.path], 5
+        )
         session_data["current_paginate_by"] = session_data["paginate_by"][
             self.request.path
         ]
@@ -276,3 +280,9 @@ class TableMetaSessionData:
             session_data = element.session_data
 
         return session_data
+
+
+class ChoicesEnum(Enum):
+    @classmethod
+    def to_list(cls) -> list[tuple[str, str]]:
+        return [(member.value, member.value) for member in cls]
