@@ -1,7 +1,7 @@
 import logging
 import os
 
-from django.contrib.auth.views import login_required
+from django.contrib.auth.decorators import login_required
 
 from baseclasses.forms import MontrekCreateForm
 from baseclasses.sanitizer import HtmlSanitizer
