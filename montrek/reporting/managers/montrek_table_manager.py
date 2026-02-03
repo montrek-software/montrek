@@ -4,7 +4,6 @@ import os
 from dataclasses import dataclass
 from decimal import Decimal
 from io import BytesIO
-from pathlib import Path
 
 import pandas as pd
 from baseclasses.dataclasses.montrek_message import MontrekMessageInfo
@@ -20,10 +19,6 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.generic.base import HttpResponse
 from django_pandas.io import read_frame
-from info.managers.download_registry_storage_managers import (
-    DownloadRegistryStorageManager,
-)
-from info.models.download_registry_sat_models import DOWNLOAD_TYPES
 from mailing.managers.mailing_manager import MailingManager
 from reporting.core import reporting_text as rt
 from reporting.core.table_converter import LatexTableConverter
@@ -56,9 +51,6 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         self.is_current_compact_format: bool = self.get_is_compact_format()
         self.order_descending = False
         self.order_field: None | str = self.get_order_field()
-        self.download_registry_storage_manager = DownloadRegistryStorageManager(
-            self.session_data
-        )
 
     @property
     def footer_text(self) -> ReportElementProtocol:
@@ -236,10 +228,6 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
     def do_download(self, response, filename, content_type):
         response["Content-Type"] = content_type
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
-        self.download_registry_storage_manager.store_in_download_registry(
-            self.document_name,
-            DOWNLOAD_TYPES(Path(filename).suffix.lstrip(".").lower()),
-        )
         return response
 
     def _make_datetime_naive(self, value):

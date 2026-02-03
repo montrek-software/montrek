@@ -22,6 +22,7 @@ from django.contrib.messages.middleware import MessageMiddleware
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
+from info.repositories.download_registry_repositories import DownloadRegistryRepository
 from reporting.dataclasses import table_elements as te
 from reporting.managers.montrek_table_manager import MontrekTableManager
 from testing.decorators.add_logged_in_user import add_logged_in_user
@@ -242,7 +243,6 @@ class TestMontrekViewMixin(TestCase):
         expected_data = {
             "request_path": "/",
             "host_url": "http://testserver",
-            "pages": {},
             "http_referer": None,
             "filter": {
                 "/": {
@@ -401,17 +401,23 @@ class TestMontrekListView(TestCase):
         response = test_list_view.get(test_list_view.request)
         self.assertEqual(response.status_code, 200)
 
+    @add_logged_in_user()
     def test_list_view_base_csv_generation(self):
         test_list_view = MockMontrekListView("dummy?gen_csv=true")
+        test_list_view.kwargs = {"user_id": self.user.id}
         response = test_list_view.get(test_list_view.request)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Content-Type"], "text/csv")
         self.assertTrue(
             response["Content-Disposition"].startswith('attachment; filename="')
         )
+        repo = DownloadRegistryRepository()
+        self.assertEqual(repo.receive().count(), 1)
 
+    @add_logged_in_user()
     def test_list_view_base_excel_generation(self):
         test_list_view = MockMontrekListView("dummy?gen_excel=true")
+        test_list_view.kwargs = {"user_id": self.user.id}
         response = test_list_view.get(test_list_view.request)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
@@ -421,19 +427,30 @@ class TestMontrekListView(TestCase):
         self.assertTrue(
             response["Content-Disposition"].startswith('attachment; filename="')
         )
+        repo = DownloadRegistryRepository()
+        self.assertEqual(repo.receive().count(), 1)
 
+    @add_logged_in_user()
     def test_list_view_base_pdf_generation(self):
         test_list_view = MockMontrekListView("dummy?gen_pdf=true")
+        test_list_view.kwargs = {"user_id": self.user.id}
+
         response = test_list_view.get(test_list_view.request)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Content-Type"], "application/pdf")
+        repo = DownloadRegistryRepository()
+        self.assertEqual(repo.receive().count(), 1)
 
     @override_settings(IS_TEST_RUN=False)
+    @add_logged_in_user()
     def test_list_view_base_pdf_generation__fails(self):
         test_list_view = MockMontrekListViewPdfFails("dummy?gen_pdf=true")
+        test_list_view.kwargs = {"user_id": self.user.id}
         response = test_list_view.get(test_list_view.request)
         self.assertEqual(response.status_code, 302)
         self.assertGreater(len(test_list_view.manager.messages), 0)
+        repo = DownloadRegistryRepository()
+        self.assertEqual(repo.receive().count(), 0)
 
     def test_list_view_base_filter_reset(self):
         mock_view = MockMontrekListView(
@@ -539,11 +556,15 @@ class TestMontrekListView(TestCase):
 
 
 class TestMontrekDetailView(TestCase):
+    @add_logged_in_user()
     def test_gen_pdf(self):
         test_view = MockMontrekDetailViewWrongManager("dummy?gen_pdf=true")
+        test_view.kwargs = {"user_id": self.user.id}
         response = test_view.get(test_view.request)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Content-Type"], "application/pdf")
+        repo = DownloadRegistryRepository()
+        self.assertEqual(repo.receive().count(), 1)
 
     def test_get_context_data__raise_error(self):
         test_view = MockMontrekDetailViewWrongManager("/")
