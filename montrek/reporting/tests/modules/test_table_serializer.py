@@ -53,12 +53,12 @@ class TableSerializerTestCase(TestCase):
         """Test serialization of LinkTextTableElement."""
         element = Mock(spec=te.LinkTextTableElement)
         element.text = "link_text"
-        element.get_value.return_value = "http://example.com"
+        element.get_value.return_value = "https://example.com"
 
         serializer = TableSerializer([element])
         result = serializer.serialize_object(self.query_object)
 
-        self.assertEqual(result["link_text"], "http://example.com")
+        self.assertEqual(result["link_text"], "https://example.com")
         element.get_value.assert_called_once_with(self.query_object)
 
     def test_serialize_link_list_table_element(self):
@@ -153,7 +153,7 @@ class TableSerializerTestCase(TestCase):
 
         link_text = Mock(spec=te.LinkTextTableElement)
         link_text.text = "url"
-        link_text.get_value.return_value = "http://test.com"
+        link_text.get_value.return_value = "https://test.com"
 
         link_list = Mock(spec=te.LinkListTableElement)
         link_list.text = "related"
@@ -173,7 +173,7 @@ class TableSerializerTestCase(TestCase):
         result = serializer.serialize_object(self.query_object)
 
         self.assertEqual(len(result), 4)  # link_skip is excluded
-        self.assertEqual(result["url"], "http://test.com")
+        self.assertEqual(result["url"], "https://test.com")
         self.assertEqual(result["related"], "['Item 1', 'Item 2']")
         self.assertEqual(result["name"], "Test Name")
         self.assertEqual(result["updated"], "2024-02-01")
