@@ -12,6 +12,7 @@ class DownloadType(ChoicesEnum):
     PDF = "pdf"
     TXT = "txt"
     ZIP = "zip"
+    MD = "md"
 
 
 class DownloadRegistrySatellite(MontrekSatelliteABC):
