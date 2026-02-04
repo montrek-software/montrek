@@ -27,7 +27,7 @@ class TestViewModelRepository(TransactionTestCase):
         # Create DummyHub table once
         with connection.schema_editor() as schema_editor:
             schema_editor.create_model(DummyHub)
-            schema_editor.create_model(MockModel)
+            # schema_editor.create_model(MockModel)
         # Explicitly commit to ensure schema visible outside current atomic block
         connection.commit()
 
