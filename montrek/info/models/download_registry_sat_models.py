@@ -5,7 +5,7 @@ from baseclasses.utils import ChoicesEnum
 from info.models.download_registry_hub_models import DownloadRegistryHub
 
 
-class DOWNLOAD_TYPES(ChoicesEnum):
+class DownloadType(ChoicesEnum):
     XLSX = "xlsx"
     CSV = "csv"
     API = "api"
@@ -18,6 +18,6 @@ class DownloadRegistrySatellite(MontrekSatelliteABC):
     hub_entity = models.ForeignKey(DownloadRegistryHub, on_delete=models.CASCADE)
 
     download_name = models.CharField()
-    download_type = models.CharField(max_length=25, choices=DOWNLOAD_TYPES.to_list())
+    download_type = models.CharField(max_length=25, choices=DownloadType.to_list())
 
     identifier_fields = ["hub_entity_id"]

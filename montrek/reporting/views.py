@@ -22,7 +22,7 @@ from django.views.decorators.http import require_safe
 from info.managers.download_registry_storage_managers import (
     DownloadRegistryStorageManager,
 )
-from info.models.download_registry_sat_models import DOWNLOAD_TYPES
+from info.models.download_registry_sat_models import DownloadType
 from reporting.managers.latex_report_manager import LatexReportManager
 from reporting.managers.montrek_report_manager import MontrekReportManager
 from reporting.mixins.view_form_mixin import ViewFormMixin
@@ -52,7 +52,7 @@ def download_reporting_file_view(request, file_path: str):
         )
         ext = Path(file_path).suffix.lstrip(".").lower()
         download_registry_manager.store_in_download_registry(
-            os.path.basename(file_path), DOWNLOAD_TYPES(ext)
+            os.path.basename(file_path), DownloadType(ext)
         )
         return response
 

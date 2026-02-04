@@ -26,6 +26,7 @@ from reporting.core.text_converter import HtmlTextConverter
 from reporting.dataclasses import table_elements as te
 from reporting.dataclasses.display_field import DisplayField
 from reporting.lib.protocols import ReportElementProtocol
+from reporting.modules.table_serializer import TableSerializer
 from reporting.tasks.download_table_task import DownloadTableTask
 from reporting.tasks.refresh_data_task import RefreshDataTask
 
@@ -137,31 +138,8 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         )
 
     def to_json(self) -> dict:
-        out_json = []
-        for query_object in self.get_full_table():
-            objects_dict = {}
-            for table_element in self.table_elements:
-                if isinstance(table_element, (te.LinkTableElement)):
-                    continue
-                if isinstance(table_element, te.LinkTextTableElement):
-                    objects_dict[table_element.text] = str(
-                        table_element.get_value(query_object)
-                    )
-                elif isinstance(table_element, te.LinkListTableElement):
-                    values = table_element.get_value(query_object)
-
-                    objects_dict[table_element.text] = str([val[1] for val in values])
-                else:
-                    value = table_element.get_value(query_object)
-                    if pd.isna(value):
-                        value = None
-                    elif isinstance(value, datetime.datetime | datetime.date):
-                        value = value.isoformat()
-                    elif isinstance(table_element, (te.StringTableElement)):
-                        value = str(value)
-                    objects_dict[table_element.attr] = value
-            out_json.append(objects_dict)
-        return out_json
+        serializer = TableSerializer(self.table_elements)
+        return serializer.serialize_all(self.get_full_table())
 
     def to_latex(self):
         return LatexTableConverter(

@@ -27,7 +27,7 @@ from file_upload.pages import FileUploadPage
 from info.managers.download_registry_storage_managers import (
     DownloadRegistryStorageManager,
 )
-from info.models.download_registry_sat_models import DOWNLOAD_TYPES
+from info.models.download_registry_sat_models import DownloadType
 
 from montrek.celery_app import app as celery_app
 
@@ -102,7 +102,7 @@ class MontrekDownloadFileBaseView(MontrekTemplateView):
 
         ext = Path(upload_file.name).suffix.lstrip(".").lower()
         DownloadRegistryStorageManager(self.session_data).store_in_download_registry(
-            self.manager.document_name, DOWNLOAD_TYPES(ext)
+            self.manager.document_name, DownloadType(ext)
         )
         return FileResponse(upload_file, as_attachment=True)
 
