@@ -48,6 +48,8 @@ class DownloadType(ChoicesEnum):
 
     # Interfaces / special
     API = "api"
+    MD = "md"
+
 
 
 class DownloadRegistrySatellite(MontrekSatelliteABC):
