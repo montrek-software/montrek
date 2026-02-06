@@ -1,4 +1,6 @@
+import os
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db.utils import settings
 
 import factory
 
@@ -34,8 +36,8 @@ class FileUploadRegistryStaticSatelliteFactory(MontrekSatelliteFactory):
             return
         if extracted:
             self.test_file = SimpleUploadedFile(
-                name="test_file.txt",
-                content="test".encode("utf-8"),
+                name=self.file_name,
+                content=b"test",
                 content_type="text/plain",
             )
             upload_file = FileUploadFileStaticSatelliteFactory.create(
@@ -52,7 +54,7 @@ class FileUploadRegistryStaticSatelliteFactory(MontrekSatelliteFactory):
         if extracted:
             self.test_file = SimpleUploadedFile(
                 name="test_file.txt",
-                content="test".encode("utf-8"),
+                content=b"test",
                 content_type="text/plain",
             )
             log_file = FileUploadFileStaticSatelliteFactory.create(file=self.test_file)
@@ -71,3 +73,10 @@ class FileUploadFileStaticSatelliteFactory(MontrekSatelliteFactory):
         model = "file_upload.FileUploadFileStaticSatellite"
 
     hub_entity = factory.SubFactory(FileUploadFileHubFactory)
+
+
+def get_file_path(registry: FileUploadRegistryStaticSatelliteFactory) -> str:
+    return os.path.join(
+        settings.MEDIA_ROOT,
+        str(registry.file_name),
+    )
