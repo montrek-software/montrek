@@ -1,6 +1,6 @@
 import os
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.db.utils import settings
+from django.conf import settings
 
 import factory
 
