@@ -193,6 +193,7 @@ class MontrekCreateForm(forms.ModelForm):
 
     def _get_form_field(self, field: Field):
         if isinstance(field, EncryptedCharField):
+            # TODO: This is not safe, as the value can be stolen! Set render_value to False, but make sure montrek behaviour still works!
             return field.formfield(widget=forms.PasswordInput())
         if isinstance(field, DateField):
             return field.formfield(
