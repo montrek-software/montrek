@@ -56,6 +56,7 @@ class MontrekRepository:
     default_order_fields: tuple[str, ...] = ()
     latest_ts: bool = False
     view_model: None | type[models.Model] = None
+    display_field_names: dict[str, str] = {}
 
     update: bool = (
         True  # If this is true only the passed fields will be updated, otherwise empty fields will be set to None

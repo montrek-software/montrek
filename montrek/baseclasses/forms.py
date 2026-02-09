@@ -148,8 +148,6 @@ class FilterForm(forms.Form):
 
 
 class MontrekCreateForm(forms.ModelForm):
-    renamed_field_labels: dict[str, str] = {}
-
     class Meta:
         exclude = ("comment",)
 
@@ -179,8 +177,8 @@ class MontrekCreateForm(forms.ModelForm):
             form_field.validators.extend(field.validators)
             if form_field and field.name not in exclude:
                 field_name = field.name
-                if field_name in self.renamed_field_labels:
-                    form_field.label = self.renamed_field_labels[field_name]
+                if field_name in self.repository.display_field_names:
+                    form_field.label = self.repository.display_field_names[field_name]
                 self.fields[field_name] = form_field
                 attrs = {
                     "id": f"id_{field_name}",

@@ -36,9 +36,16 @@ class MontrekManager:
 
     def get_std_queryset_field_choices(self) -> list[tuple]:
         field_names = self.repository.get_all_fields()
-        field_names = sorted(set(field_names))
-        field_descriptions = [name.replace("_", " ").title() for name in field_names]
-        return list(zip(field_names, field_descriptions))
+        field_descriptions = []
+        for field_name in field_names:
+            display_name = self.repository.display_field_names.get(field_name)
+            if not display_name:
+                display_name = field_name.replace("_", " ").title()
+            field_descriptions.append(display_name)
+        return sorted(
+            zip(field_names, field_descriptions, strict=True),
+            key=lambda x: x[1].casefold(),
+        )
 
     def collect_messages(self):
         if self._repository:
@@ -56,7 +63,7 @@ class MontrekManager:
 
 
 class MontrekManagerNotImplemented(MontrekManager):
-    def __init__(self, session_data: dict[str, Any] = {}):
+    def __init__(self, session_data: dict[str, Any] | None = None):
         raise NotImplementedError(
             "Assign valid MontrekManager class to views manager_class attribute"
         )
