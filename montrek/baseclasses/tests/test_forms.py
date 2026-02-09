@@ -1,11 +1,18 @@
 from django.contrib.admin.widgets import FilteredSelectMultiple
-from django.db.models import QuerySet
-from django.forms import CheckboxSelectMultiple, forms
+from django.db.models import QuerySet, DateField
+from django.forms import (
+    CheckboxSelectMultiple,
+    PasswordInput,
+    DateInput,
+    ValidationError,
+)
 from django.test import TestCase
+from encrypted_fields import EncryptedCharField
 
 from baseclasses.forms import (
     BaseMontrekChoiceField,
     FilterForm,
+    MontrekCreateForm,
     MontrekModelCharChoiceField,
     MontrekModelMultipleChoiceField,
 )
@@ -51,6 +58,27 @@ class TestFilterForm(TestCase):
         self.assertFalse(form.fields["filter_value"].initial)
 
 
+class MockHubClass: ...
+
+
+class MockRepository:
+    hub_class = MockHubClass
+
+    def std_satellite_fields(self):
+        return [
+            EncryptedCharField(name="encrypted_field"),
+            DateField(name="field_date"),
+        ]
+
+
+class TestMontrekCreateForm(TestCase):
+    def test_special_widgets(self):
+        test_form = MontrekCreateForm(repository=MockRepository())
+        fields = test_form.fields
+        self.assertIsInstance(fields["encrypted_field"].widget, PasswordInput)
+        self.assertIsInstance(fields["field_date"].widget, DateInput)
+
+
 class TestMontrekModelMultipleChoiceField(TestCase):
     def test_init__widget(self):
         field_kwargs = {"display_field": "field1", "queryset": QuerySet()}
@@ -86,7 +114,7 @@ class TestBaseMontrekChoiceField(TestCase):
 class TestMontrekModelCharChoiceField(TestCase):
     def test_raise_error_when_empty(self):
         test_field = MontrekModelCharChoiceField(display_field="abc")
-        self.assertRaises(forms.ValidationError, test_field.clean, None)
+        self.assertRaises(ValidationError, test_field.clean, None)
 
     def test_get_initial_link(self):
         test_field = MontrekModelCharChoiceField(
