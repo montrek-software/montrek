@@ -3,7 +3,7 @@ from typing import Any, cast
 from baseclasses.models import LinkTypeEnum
 from django import forms
 from django.contrib.admin.widgets import FilteredSelectMultiple
-from django.db.models import Field, QuerySet, TextChoices
+from django.db.models import DateField, Field, QuerySet, TextChoices
 from django.forms.widgets import ChoiceWidget
 from encrypted_fields import EncryptedCharField
 
@@ -193,7 +193,12 @@ class MontrekCreateForm(forms.ModelForm):
 
     def _get_form_field(self, field: Field):
         if isinstance(field, EncryptedCharField):
-            return forms.CharField(widget=forms.PasswordInput(render_value=True))
+            # TODO: This is not safe, as the value can be stolen! Set render_value to False, but make sure montrek behaviour still works!
+            return field.formfield(widget=forms.PasswordInput())
+        if isinstance(field, DateField):
+            return field.formfield(
+                widget=forms.DateInput(attrs={"type": "date"}),
+            )
         return field.formfield()
 
     def _add_hub_entity_id_field(self):
