@@ -13,6 +13,10 @@ from montrek_example.repositories.hub_c_repository import HubCRepository
 class HubARepository(MontrekRepository):
     hub_class = me_models.HubA
     default_order_fields = ("hub_id",)
+    display_field_names = {
+        "field_a2_float": "Renamed Label",
+        "link_hub_a_hub_c": "Renamed Link Label",
+    }
 
     def set_annotations(self):
         self.add_satellite_fields_annotations(

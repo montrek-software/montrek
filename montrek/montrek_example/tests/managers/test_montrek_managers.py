@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 from django.db import connections
 from django.test import TestCase
 from montrek_example.managers.montrek_example_managers import (
+    CompactHubAManager,
     SatA5HistoryManager,
     SatA5Manager,
 )
@@ -27,7 +28,7 @@ def _read_raw_column(model, pk, field_name, using="default"):
 
 class TestEncryptedFields(TestCase):
     def setUp(self):
-        self.secret = "secret"  # nosec b105 Test Purposes
+        self.secret = "secret"  # nosec b105 Test Purposes # noqa
         self.sat = SatA5Factory.create(secret_field=self.secret)
         self.manager = SatA5Manager()
 
@@ -83,3 +84,14 @@ class TestEncryptedFieldsWithNone(TestCase):
         soup = BeautifulSoup(html, "html.parser")
         tds = [td.get_text(strip=True) for td in soup.find_all("td")]
         self.assertIn("", tds)
+
+
+class TestManagerFunctionality(TestCase):
+    def test_renmings_in_filter_fields(self):
+        manager = CompactHubAManager()
+        field_choices = manager.get_std_queryset_field_choices()
+        for field, description in field_choices:
+            if field == "field_a2_float":
+                self.assertEqual(description, "Renamed Label")
+            else:
+                self.assertEqual(description, field.replace("_", " ").title())

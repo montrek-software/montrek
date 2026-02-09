@@ -239,8 +239,8 @@ class MontrekCreateForm(forms.ModelForm):
             initial=initial_link,
             **kwargs,
         )
-        if link_name in self.renamed_field_labels:
-            form_field.label = self.renamed_field_labels[link_name]
+        if link_name in self.repository.display_field_names:
+            form_field.label = self.repository.display_field_names[link_name]
         self.fields[link_name] = form_field
 
 
