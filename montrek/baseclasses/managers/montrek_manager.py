@@ -36,14 +36,16 @@ class MontrekManager:
 
     def get_std_queryset_field_choices(self) -> list[tuple]:
         field_names = self.repository.get_all_fields()
+        # De-duplicate field names while preserving order to avoid duplicate choices.
+        unique_field_names = list(dict.fromkeys(field_names))
         field_descriptions = []
-        for field_name in field_names:
+        for field_name in unique_field_names:
             display_name = self.repository.display_field_names.get(field_name)
             if not display_name:
                 display_name = field_name.replace("_", " ").title()
             field_descriptions.append(display_name)
         return sorted(
-            zip(field_names, field_descriptions, strict=True),
+            zip(unique_field_names, field_descriptions, strict=True),
             key=lambda x: x[1].casefold(),
         )
 
