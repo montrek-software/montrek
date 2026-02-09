@@ -87,7 +87,7 @@ class TestEncryptedFieldsWithNone(TestCase):
 
 
 class TestManagerFunctionality(TestCase):
-    def test_renmings_in_filter_fields(self):
+    def test_renamings_in_filter_fields(self):
         manager = CompactHubAManager()
         field_choices = manager.get_std_queryset_field_choices()
         for field, description in field_choices:
