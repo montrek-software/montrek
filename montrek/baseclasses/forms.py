@@ -193,7 +193,7 @@ class MontrekCreateForm(forms.ModelForm):
 
     def _get_form_field(self, field: Field):
         if isinstance(field, EncryptedCharField):
-            return field.formfield(widget=forms.PasswordInput(render_value=True))
+            return field.formfield(widget=forms.PasswordInput())
         if isinstance(field, DateField):
             return field.formfield(
                 widget=forms.DateInput(attrs={"type": "date"}),
