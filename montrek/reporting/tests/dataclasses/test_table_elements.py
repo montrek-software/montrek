@@ -837,7 +837,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         )
 
     @mock.patch("reporting.dataclasses.table_elements.reverse")
-    def test_link_list_table_element__with_recuring_elements(self, mock_reverse):
+    def test_link_list_table_element__with_recurring_elements(self, mock_reverse):
         fake_url = "fake_url"
 
         def reverse_side_effect(*args, **kwargs):
