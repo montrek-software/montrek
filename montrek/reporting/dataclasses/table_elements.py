@@ -347,8 +347,10 @@ class LinkListTableElement(TableElement, GetDottetAttrsOrArgMixin):
         list_values = self.get_list_values(obj)
         link_list = []
         kwargs = {self.list_kwarg: self.list_attr}
-        for i, list_text in enumerate(value):
-            list_value = list_values[i]
+
+        for list_value, list_text in self._unique_list(
+            zip(list_values, value, strict=True)
+        ):
             link_list.append(
                 LinkTextTableElement(
                     name=list_text,
@@ -374,7 +376,10 @@ class LinkListTableElement(TableElement, GetDottetAttrsOrArgMixin):
         return text_values
 
     def format_latex(self, value):
-        return " \\color{{black}} {} &".format(",".join(value))
+        return " \\color{{black}} {} &".format(",".join(self._unique_list(value)))
+
+    def _unique_list(self, inlist: list) -> list:
+        return list(dict.fromkeys(inlist))
 
 
 @dataclass
