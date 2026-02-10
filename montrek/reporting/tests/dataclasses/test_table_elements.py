@@ -837,6 +837,34 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         )
 
     @mock.patch("reporting.dataclasses.table_elements.reverse")
+    def test_link_list_table_element__with_recurring_elements(self, mock_reverse):
+        fake_url = "fake_url"
+
+        def reverse_side_effect(*args, **kwargs):
+            value = kwargs["kwargs"]["list_kwarg"]
+            return f"/{fake_url}/{value}"
+
+        mock_reverse.side_effect = reverse_side_effect
+        test_element = te.LinkListTableElement(
+            name="name",
+            url=fake_url,
+            hover_text="hover_text",
+            text="text_attr",
+            static_kwargs={},
+            list_attr="list_attr",
+            list_kwarg="list_kwarg",
+            in_separator=",",
+        )
+        obj = {"list_attr": "1,2,1", "text_attr": "a,b,a"}
+        self.table_element_test_assertions_from_object(
+            table_element=test_element,
+            test_obj=obj,
+            expected_format='<div style="max-height: 300px; overflow-y: auto;">      <div><a id="id__fake_url_1" href="/fake_url/1">a</a></div>      <div><a id="id__fake_url_2" href="/fake_url/2">b</a></div>  </div>',
+            expected_format_latex=" \\color{black} a,b &",
+            expected_hover_text="hover_text",
+        )
+
+    @mock.patch("reporting.dataclasses.table_elements.reverse")
     def test_link_list_table_element_with_static_kwargs(self, mock_reverse):
         fake_url = "fake_url"
 
