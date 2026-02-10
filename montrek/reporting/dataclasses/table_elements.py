@@ -5,7 +5,8 @@ import tempfile
 from dataclasses import dataclass, field
 from decimal import Decimal
 from enum import Enum
-from typing import Any, ClassVar
+from typing import Any, ClassVar, TypeVar
+from collections.abc import Iterable
 from urllib.parse import urlparse
 
 import pandas as pd
@@ -29,6 +30,8 @@ type StyleAttrsType = dict[str, str]
 type TdClassesType = list[str]
 type ChangeMapType = dict[int, dict[str, HistoryChangeState]]
 type ColorCodesType = dict[str, Color]
+
+T = TypeVar("T")
 
 
 def _get_value_color(value):
@@ -378,8 +381,9 @@ class LinkListTableElement(TableElement, GetDottetAttrsOrArgMixin):
     def format_latex(self, value):
         return " \\color{{black}} {} &".format(",".join(self._unique_list(value)))
 
-    def _unique_list(self, inlist: list) -> list:
-        return list(dict.fromkeys(inlist))
+    @staticmethod
+    def _unique_list(items: Iterable[T]) -> list[T]:
+        return list(dict.fromkeys(items))
 
 
 @dataclass
