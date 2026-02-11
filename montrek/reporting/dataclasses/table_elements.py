@@ -466,27 +466,37 @@ class NumberTableElement(AttrTableElement):
         table_element = (
             self.get_none_table_element() if self.empty_value(value) else self
         )
-        display_value, td_classes, style_attrs = self._analyze_value(value)
+        display_value, style_attrs = self._analyze_value(value)
         display_value = table_element.render_field_template(display_value, obj)
         return DisplayField(
             name=self.name,
             display_value=display_value,
             style_attrs_str=table_element.format_style_attr(style_attrs),
-            td_classes_str=table_element.format_td_classes(td_classes),
+            td_classes_str=table_element.format_td_classes(
+                self.get_td_classes(value, obj)
+            ),
             hover_text=self.get_hover_text(obj),
         )
 
-    def _analyze_value(self, value: Any) -> tuple[str, TdClassesType, StyleAttrsType]:
+    def get_td_classes(self, _value: Any, _obj: Any) -> TdClassesType:
+        if pd.isna(_value):
+            return ["text-center"]
+
+        if not isinstance(_value, (int | float | Decimal)):
+            return ["text-start"]
+        return ["text-end"]
+
+    def _analyze_value(self, value: Any) -> tuple[str, StyleAttrsType]:
         # returns (display_value, classes, style_attrs)
         if pd.isna(value):
-            return "-", ["text-center"], {}
+            return "-", {}
 
         if not isinstance(value, (int | float | Decimal)):
-            return value, ["text-start"], {}
+            return value, {}
 
         formatted = self._format_value(value)
         color = _get_value_color(value).hex
-        return formatted, ["text-end"], {"color": color}
+        return formatted, {"color": color}
 
     def format_latex(self, value):
         if not isinstance(value, (int | float | Decimal)):
