@@ -482,24 +482,24 @@ class NumberTableElement(AttrTableElement):
         if pd.isna(_value):
             return ["text-center"]
 
-        if not isinstance(_value, (int | float | Decimal)):
+        if not isinstance(_value, int | float | Decimal):
             return ["text-start"]
         return ["text-end"]
 
     def _analyze_value(self, value: Any) -> tuple[str, StyleAttrsType]:
-        # returns (display_value, classes, style_attrs)
+        # returns (display_value, style_attrs)
         if pd.isna(value):
             return "-", {}
 
-        if not isinstance(value, (int | float | Decimal)):
-            return value, {}
+        if not isinstance(value, int | float | Decimal):
+            return str(value), {}
 
         formatted = self._format_value(value)
         color = _get_value_color(value).hex
         return formatted, {"color": color}
 
     def format_latex(self, value):
-        if not isinstance(value, (int | float | Decimal)):
+        if not isinstance(value, int | float | Decimal):
             return f"{value} &"
         color = _get_value_color_latex(value)
         formatted_value = self._format_value(value)
