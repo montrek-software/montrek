@@ -56,9 +56,13 @@ class MontrekExcelFormatter:
                         cell.alignment = Alignment(horizontal="left")
         # Adjust column widths to fit content
         for col in worksheet.columns:
+            # Materialize the column in case 'col' is a generator, and guard against empty columns
+            col_cells = list(col)
+            if not col_cells:
+                continue
             max_length = 0
-            column = get_column_letter(col[0].column)  # Get column name
-            for cell in col:
+            column = get_column_letter(col_cells[0].column)  # Get column name
+            for cell in col_cells:
                 value = cell.value
                 if value is not None:
                     # Get the length of the cell value (converted to string)
