@@ -2,6 +2,8 @@ from enum import Enum
 from typing import Any
 from collections.abc import Callable
 
+from django.db.models.expressions import BaseExpression
+
 from baseclasses.models import (
     LinkTypeEnum,
     MontrekHubABC,
@@ -29,7 +31,7 @@ from django.utils import timezone
 
 
 class SubqueryBuilder:
-    def build(self, reference_date: timezone.datetime) -> Subquery:
+    def build(self, reference_date: timezone.datetime) -> BaseExpression:
         raise NotImplementedError(
             f"{self.__class__.__name__} must be subclassed and the build method must be implemented!"
         )
