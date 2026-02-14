@@ -1,16 +1,8 @@
 import logging
 import os
+from pathlib import Path
 from typing import Any, BinaryIO, Protocol
 
-from baseclasses import utils
-from baseclasses.dataclasses.view_classes import ActionElement
-from baseclasses.forms import DateRangeForm, FilterForm, MontrekCreateForm
-from baseclasses.managers.montrek_manager import MontrekManagerNotImplemented
-from baseclasses.pages import NoPage
-from baseclasses.sanitizer import HtmlSanitizer
-from baseclasses.serializers import MontrekSerializer
-from baseclasses.typing import SessionDataType
-from baseclasses.utils import TableMetaSessionData, get_content_type
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
@@ -40,6 +32,16 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
+
+from baseclasses import utils
+from baseclasses.dataclasses.view_classes import ActionElement
+from baseclasses.forms import DateRangeForm, FilterForm, MontrekCreateForm
+from baseclasses.managers.montrek_manager import MontrekManagerNotImplemented
+from baseclasses.pages import NoPage
+from baseclasses.sanitizer import HtmlSanitizer
+from baseclasses.serializers import MontrekSerializer
+from baseclasses.typing import SessionDataType
+from baseclasses.utils import TableMetaSessionData, get_content_type
 
 logger = logging.getLogger(__name__)
 
@@ -653,5 +655,9 @@ class MontrekDownloadView(MontrekViewMixin, View):
         content_type = get_content_type(filename)
         response["Content-Type"] = content_type
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        ext = Path(filename).suffix.lstrip(".").lower()
+        DownloadRegistryStorageManager(self.session_data).store_in_download_registry(
+            self.manager.document_name, DownloadType(ext)
+        )
         self.show_messages()
         return response
