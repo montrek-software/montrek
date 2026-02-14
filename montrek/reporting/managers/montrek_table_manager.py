@@ -26,6 +26,7 @@ from reporting.core.text_converter import HtmlTextConverter
 from reporting.dataclasses import table_elements as te
 from reporting.dataclasses.display_field import DisplayField
 from reporting.lib.protocols import ReportElementProtocol
+from reporting.modules.excel_formatter import MontrekExcelFormatter
 from reporting.modules.table_serializer import TableSerializer
 from reporting.tasks.download_table_task import DownloadTableTask
 from reporting.tasks.refresh_data_task import RefreshDataTask
@@ -44,6 +45,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
     draft = False
     is_compact_format = False
     is_large: bool = False
+    excel_formatter_class: type[MontrekExcelFormatter] = MontrekExcelFormatter
 
     def __init__(self, session_data: SessionDataType | None = None):
         super().__init__(session_data)
@@ -147,11 +149,12 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         ).to_latex()
 
     def to_excel(
-        self, output: HttpResponse | BytesIO | str
+        self, output: HttpResponse | BytesIO | str, sheet_name: str = "Montrek Data"
     ) -> HttpResponse | BytesIO | str:
         table_df = self.get_df()
-        with pd.ExcelWriter(output) as excel_writer:
-            table_df.to_excel(excel_writer, index=False)
+        with pd.ExcelWriter(output, engine="openpyxl") as excel_writer:
+            table_df.to_excel(excel_writer, index=False, sheet_name=sheet_name)
+            self.excel_formatter_class.format_excel(excel_writer, sheet_name=sheet_name)
         return output
 
     def to_csv(self, output: HttpResponse | str) -> HttpResponse | str:
