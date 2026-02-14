@@ -9,6 +9,7 @@ from django.http import FileResponse
 from django.test import TestCase
 from django.urls import reverse
 from django.views import View
+from info.repositories.download_registry_repositories import DownloadRegistryRepository
 from mailing.repositories.mailing_repository import MailingRepository
 from middleware.permission_error_middleware import MISSING_PERMISSION_MESSAGE
 from testing.decorators.mock_external_get import mock_external_get__report_image
@@ -345,7 +346,12 @@ class MontrekDownloadViewTestCase(MontrekViewTestCase):
         self.assertRegex(
             content_disposition, f'attachment; filename="{self.expected_filename()}"'
         )
+        self.assert_entry_in_download_registry()
         self.additional_download_assertions()
+
+    def assert_entry_in_download_registry(self):
+        download_registry = DownloadRegistryRepository()
+        self.assertEqual(download_registry.receive().count(), 1)
 
     def expected_filename(self) -> str:
         raise NotImplementedError(
