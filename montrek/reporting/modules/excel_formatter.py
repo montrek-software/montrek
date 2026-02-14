@@ -1,21 +1,27 @@
 from openpyxl.styles import PatternFill, Border, Side, Alignment, Font
 from openpyxl.utils import get_column_letter
 
+from baseclasses.templatetags.colors import get_color
+
 
 class MontrekExcelFormatter:
     @staticmethod
     def format_excel(writer, sheet_name="Sheet1"):
         # Access the workbook and sheet
         worksheet = writer.sheets[sheet_name]
+        primary_light = get_color("primary_light").lstrip("#").upper()
+        primary = get_color("primary").lstrip("#").upper()
 
         # Define the styles
         header_fill = PatternFill(
-            start_color="004767", end_color="004767", fill_type="solid"
+            start_color=primary, end_color=primary, fill_type="solid"
         )  # Dark blue background
         header_font = Font(color="FFFFFF", bold=True)  # White, bold text
 
         even_row_fill = PatternFill(
-            start_color="E6F2F8", end_color="E6F2F8", fill_type="solid"
+            start_color=primary_light,
+            end_color=primary_light,
+            fill_type="solid",
         )  # Pale blue background
         odd_row_fill = PatternFill(
             start_color="FFFFFF", end_color="FFFFFF", fill_type="solid"
