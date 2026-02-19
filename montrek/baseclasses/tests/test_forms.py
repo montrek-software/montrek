@@ -64,6 +64,7 @@ class MockHubClass: ...
 class MockRepository:
     hub_class = MockHubClass
     display_field_names = {"field_date": "Field Date"}
+    field_help_texts = {"field_date": "Help Field Date"}
 
     def std_satellite_fields(self):
         return [
@@ -92,6 +93,11 @@ class TestMontrekCreateForm(TestCase):
         test_form = MockCreateForm(repository=MockRepository())
         test_form.set_field_order()
         self.assertEqual(test_form.field_order, ["field_a", "field_b", "hub_entity_id"])
+
+    def test_field_help_texts(self):
+        test_form = MontrekCreateForm(repository=MockRepository())
+        fields = test_form.fields
+        self.assertEqual(fields["field_date"].help_text, "Help Field Date")
 
 
 class TestMontrekModelMultipleChoiceField(TestCase):

@@ -187,6 +187,8 @@ class MontrekCreateForm(forms.ModelForm):
             if field.name in self.repository.display_field_names:
                 form_field.label = self.repository.display_field_names[field.name]
 
+            if field.name in self.repository.field_help_texts:
+                form_field.help_text = self.repository.field_help_texts[field.name]
             self.fields[field.name] = form_field
 
     def _get_form_field(self, field):
@@ -296,6 +298,9 @@ class MontrekCreateForm(forms.ModelForm):
         )
         if link_name in self.repository.display_field_names:
             form_field.label = self.repository.display_field_names[link_name]
+
+        if link_name in self.repository.field_help_texts:
+            form_field.help_text = self.repository.field_help_texts[link_name]
         self.fields[link_name] = form_field
 
 
