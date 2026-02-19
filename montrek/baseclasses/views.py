@@ -612,7 +612,7 @@ class MontrekDeleteView(
 ):
     manager_class = MontrekManagerNotImplemented
     success_url = "under_construction"
-    do_return_to_referer: bool = True
+    do_return_to_referer: bool = False
     template_name = "montrek_delete.html"
 
     def post(self, request, *args, **kwargs):
