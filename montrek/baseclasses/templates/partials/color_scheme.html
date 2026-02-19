@@ -219,7 +219,18 @@
   .btn-order-field:hover {
     color: {% get_color "secondary" %};
   }
+  .form-check-input {
+    border: 2px solid {% get_color "secondary" %};
+  }
 
+  .form-check-input:checked {
+    background-color: {% get_color "secondary" %};
+    border-color: {% get_color "secondary" %};
+  }
+
+  .form-check-input:focus {
+    box-shadow: 0 0 0 0.25rem rgba(0,0,0,0.1);
+  }
 /* =========================================================
    TABLES
    ========================================================= */

@@ -1,9 +1,9 @@
-from typing import Any, cast
+from typing import Any
 
 from baseclasses.models import LinkTypeEnum
 from django import forms
 from django.contrib.admin.widgets import FilteredSelectMultiple
-from django.db.models import DateField, Field, QuerySet, TextChoices
+from django.db.models import DateField, QuerySet, TextChoices
 from django.forms.widgets import ChoiceWidget
 from encrypted_fields import EncryptedCharField
 
@@ -156,53 +156,90 @@ class MontrekCreateForm(forms.ModelForm):
         if not self.repository:
             raise ValueError("Repository required")
 
-        # Create instance-specific _meta
         from copy import deepcopy
 
         self._meta = deepcopy(self._meta)
         self._meta.model = self.repository.hub_class
-        self.session_data = kwargs.pop("session_data", {})
 
+        self.session_data = kwargs.pop("session_data", {})
         self.satellite_fields = self.repository.std_satellite_fields()
+
         super().__init__(*args, **kwargs)
-        self.initial = kwargs.get("initial", {})
 
         self._add_satellite_fields()
         self._add_hub_entity_id_field()
+        self._apply_bootstrap_classes()
+
+    # -------------------------
+    # Field Creation
+    # -------------------------
 
     def _add_satellite_fields(self):
         exclude = set(self._meta.exclude or ())
+
         for field in self.satellite_fields:
             form_field = self._get_form_field(field)
-            form_field.validators.extend(field.validators)
-            if form_field and field.name not in exclude:
-                field_name = field.name
-                if field_name in self.repository.display_field_names:
-                    form_field.label = self.repository.display_field_names[field_name]
-                self.fields[field_name] = form_field
-                attrs = {
-                    "id": f"id_{field_name}",
-                    "class": "form-control",
-                }
-                if isinstance(form_field.widget, forms.Textarea):
-                    attrs["class"] += " resizable"
-                widget = cast(forms.Widget, form_field.widget)
-                widget.attrs.update(attrs)
+            if not form_field or field.name in exclude:
+                continue
 
-    def _get_form_field(self, field: Field):
+            form_field.validators.extend(field.validators)
+
+            if field.name in self.repository.display_field_names:
+                form_field.label = self.repository.display_field_names[field.name]
+
+            self.fields[field.name] = form_field
+
+    def _get_form_field(self, field):
         if isinstance(field, EncryptedCharField):
             # TODO: This is not safe, as the value can be stolen! Set render_value to False, but make sure montrek behaviour still works!
-            return field.formfield(widget=forms.PasswordInput())
+            return field.formfield(widget=forms.PasswordInput(render_value=True))
+
         if isinstance(field, DateField):
-            return field.formfield(
-                widget=forms.DateInput(attrs={"type": "date"}),
-            )
+            return field.formfield(widget=forms.DateInput(attrs={"type": "date"}))
+
         return field.formfield()
 
     def _add_hub_entity_id_field(self):
         self.fields["hub_entity_id"] = forms.IntegerField(required=False)
-        self.fields["hub_entity_id"].widget.attrs.update({"id": "id_hub_entity_id"})
         self.fields["hub_entity_id"].widget.attrs.update({"readonly": True})
+
+    # -------------------------
+    # Bootstrap Styling
+    # -------------------------
+
+    def _apply_bootstrap_classes(self):
+        for name, field in self.fields.items():
+            widget = field.widget
+
+            # Checkbox
+            if isinstance(widget, forms.CheckboxInput):
+                widget.attrs["class"] = "form-check-input"
+
+            # Select
+            elif isinstance(widget, forms.Select):
+                widget.attrs["class"] = "form-select"
+
+            # Textarea
+            elif isinstance(widget, forms.Textarea):
+                widget.attrs["class"] = "form-control resizable"
+
+            # Date input
+            elif isinstance(widget, forms.DateInput):
+                widget.attrs["class"] = "form-control w-auto"
+
+            # Default text-like inputs
+            else:
+                widget.attrs["class"] = "form-control"
+
+            widget.attrs["id"] = f"id_{name}"
+
+            # Readonly styling
+            if widget.attrs.get("readonly"):
+                existing_class = widget.attrs.get("class", "")
+                if existing_class:
+                    widget.attrs["class"] = f"{existing_class} form-control-plaintext"
+                else:
+                    widget.attrs["class"] = "form-control-plaintext"
 
     def set_field_order(self):
         """
@@ -221,6 +258,7 @@ class MontrekCreateForm(forms.ModelForm):
         # Store on the instance so it no longer relies on a class-level list.
         self.field_order = field_order
         self.order_fields(field_order)
+
     def add_link_choice_field(
         self,
         link_name: str,
@@ -265,6 +303,10 @@ class BaseMontrekChoiceField:
     def __init__(self, display_field: str, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.display_field = display_field
+        # Ensure Bootstrap styling
+        if hasattr(self, "widget"):
+            css_class = self.widget.attrs.get("class", "")
+            self.widget.attrs["class"] = f"{css_class} form-select".strip()
 
     def label_from_instance(self, obj):
         return getattr(obj, self.display_field)

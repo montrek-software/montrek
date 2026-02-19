@@ -8,31 +8,58 @@
 <script src="{% static 'admin_copy/js/SelectBox.js' %}"></script>
 <script src="{% static 'admin_copy/js/SelectFilter2.js' %}"></script>
 <!--End: needed for FilteredSelectMultiple widget used in MontrekCreateForm-->
-<div class="container-fluid"> <!-- Added margin-top for spacing -->
-  <div class="col-12">
-    <div class="row"> <!-- Centered the title for better alignment -->
-      <h2 id="id_title">{{ tag }}</h2> <!-- Centered the title and added bottom margin -->
-    </div>
-    <div class="row tile"> <!-- Centered the title for better alignment -->
-      <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        <div class="table-responsive"> <!-- Made table responsive -->
-          <table class="table table-custom-striped table-bordered table-hover"> <!-- Applied Bootstrap table styles -->
-            {% for field in form %}
-            <tr>
-              <th style="width: 30%" scope="row">{{ field.label_tag }}</th>
-              <td>{{ field }}</td>
-            </tr>
-            {% endfor %}
-            <tr>
-              <td colspan="2" class="text-center"> <!-- Centered the submit button -->
-                <button type="submit" class="btn btn-custom" id="id_submit">{{ tag }}</button> <!-- Used button instead of input for better styling -->
-              </td>
-            </tr>
-          </table>
+<div class="container-fluid">
+  <div class="tile p-4">
+
+    <h2 id="id_title" class="mb-4">{{ tag }}</h2>
+
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      {% for field in form %}
+        {% if field.field.widget.input_type == "checkbox" %}
+          <div class="row mb-3">
+            <div class="col-sm-3 col-lg-2"></div>
+            <div class="col-sm-9 col-lg-10">
+              <div class="form-check">
+                <label class="form-check-label">
+                  {{ field }}
+                  {{ field.label }}
+                </label>
+              </div>
+              {% if field.errors %}
+                <div class="text-danger small mt-1">
+                  {{ field.errors }}
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        {% else %}
+          <div class="row mb-3 align-items-center">
+            <label class="col-sm-3 col-lg-2 col-form-label text-sm-end">
+              {{ field.label }}
+            </label>
+            <div class="col-sm-9 col-lg-10">
+              {{ field }}
+              {% if field.errors %}
+                <div class="text-danger small mt-1">
+                  {{ field.errors }}
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        {% endif %}
+      {% endfor %}
+
+      <div class="row mt-4">
+        <div class="col-sm-9 offset-sm-3 col-lg-10 offset-lg-2">
+          <button type="submit" class="btn btn-custom" id="id_submit">
+            {{ tag }}
+          </button>
         </div>
-      </form>
-    </div>
+      </div>
+
+    </form>
   </div>
 </div>
 {% endblock %}
