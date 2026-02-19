@@ -490,15 +490,16 @@ class TestMontrekExampleDeleteReturn(TestCase):
 
     @add_logged_in_user
     def test_error_from_details(self):
-        self.satd1 = me_factories.SatD1Factory.create()
+        self.sata1 = me_factories.SatA1Factory.create()
+        HubARepository().store_in_view_model()
         start_url = reverse(
-            "montrek_example_d_details",
-            kwargs={"pk": self.satd1.hub_entity_id},
+            "montrek_example_a_details",
+            kwargs={"pk": self.sata1.hub_entity_id},
         )
         self.client.get(start_url)
         delete_url = reverse(
-            "montrek_example_d_delete",
-            kwargs={"pk": self.satd1.get_hub_value_date().id},
+            "montrek_example_a_delete",
+            kwargs={"pk": self.sata1.get_hub_value_date().id},
         )
         response_delete = self.client.get(delete_url, HTTP_REFERER=start_url)
         self.assertEqual(response_delete.status_code, 200)
