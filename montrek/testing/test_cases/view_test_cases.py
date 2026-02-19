@@ -245,8 +245,6 @@ class MontrekCreateUpdateViewTestCase(MontrekObjectViewBaseTestCase):
         self.additional_assertions(created_object)
 
     def test_form_fields(self):
-        # if self._is_base_test_class:
-        #     return
         if self.expected_fields is not None:
             form = self.view.get_form()
             self.assertEqual(list(form.fields.keys()), self.expected_fields)
