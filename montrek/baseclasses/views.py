@@ -561,9 +561,11 @@ class MontrekCreateUpdateView(
         return HttpResponseRedirect(self.get_success_url())
 
     def get_form(self, form_class=None):
-        return self.form_class(
+        form = self.form_class(
             repository=self.manager.repository, session_data=self.session_data
         )
+        form.set_field_order()
+        return form
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

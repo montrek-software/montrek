@@ -163,6 +163,7 @@ class MontrekCreateForm(forms.ModelForm):
         self._meta.model = self.repository.hub_class
         self.session_data = kwargs.pop("session_data", {})
 
+        self.satellite_fields = self.repository.std_satellite_fields()
         super().__init__(*args, **kwargs)
         self.initial = kwargs.get("initial", {})
 
@@ -170,9 +171,8 @@ class MontrekCreateForm(forms.ModelForm):
         self._add_hub_entity_id_field()
 
     def _add_satellite_fields(self):
-        fields = self.repository.std_satellite_fields()
         exclude = set(self._meta.exclude or ())
-        for field in fields:
+        for field in self.satellite_fields:
             form_field = self._get_form_field(field)
             form_field.validators.extend(field.validators)
             if form_field and field.name not in exclude:
@@ -204,6 +204,23 @@ class MontrekCreateForm(forms.ModelForm):
         self.fields["hub_entity_id"].widget.attrs.update({"id": "id_hub_entity_id"})
         self.fields["hub_entity_id"].widget.attrs.update({"readonly": True})
 
+    def set_field_order(self):
+        """
+        Ensure 'hub_entity_id' is ordered last without mutating any class-level
+        field_order list in-place.
+        """
+        if self.field_order:
+            # Work on a copy so we don't mutate a potentially shared class attribute.
+            field_order = list(self.field_order)
+        else:
+            field_order = [field for field in self.fields if field != "hub_entity_id"]
+
+        if "hub_entity_id" not in field_order:
+            field_order.append("hub_entity_id")
+
+        # Store on the instance so it no longer relies on a class-level list.
+        self.field_order = field_order
+        self.order_fields(field_order)
     def add_link_choice_field(
         self,
         link_name: str,

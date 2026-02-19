@@ -213,6 +213,8 @@ class MontrekObjectViewBaseTestCase(MontrekViewTestCase):
 
 
 class MontrekCreateUpdateViewTestCase(MontrekObjectViewBaseTestCase):
+    expected_fields: list[str] | None = None
+
     def _is_base_test_class(self) -> bool:
         return self.__class__.__name__ == "MontrekCreateUpdateViewTestCase"
 
@@ -241,6 +243,11 @@ class MontrekCreateUpdateViewTestCase(MontrekObjectViewBaseTestCase):
                 expected_value = created_value
             self.assertEqual(expected_value, value)
         self.additional_assertions(created_object)
+
+    def test_form_fields(self):
+        if self.expected_fields is not None:
+            form = self.view.get_form()
+            self.assertEqual(list(form.fields.keys()), self.expected_fields)
 
 
 class GetObjectLastMixin:
