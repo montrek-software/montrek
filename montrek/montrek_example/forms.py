@@ -34,6 +34,8 @@ class ExampleBCreateForm(MontrekCreateForm):
 
 
 class ExampleCCreateForm(MontrekCreateForm):
+    field_order = ["field_c1_str"]
+
     class Meta:
         exclude = []
 

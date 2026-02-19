@@ -796,6 +796,17 @@ class TestMontrekExampleCListView(MontrekListViewTestCase):
 class TestMontrekExampleCCreate(MontrekCreateViewTestCase):
     viewname = "montrek_example_c_create"
     view_class = me_views.MontrekExampleCCreate
+    expected_fields = [
+        "field_c1_str",
+        "hub_entity_id",
+        "comment",
+        "value_date",
+        "field_tsc2_float",
+        "field_tsc3_int",
+        "field_tsc3_str",
+        "field_tsc4_int",
+        "field_c1_bool",
+    ]
 
     def creation_data(self):
         return {

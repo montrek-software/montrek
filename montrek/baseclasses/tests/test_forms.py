@@ -72,6 +72,10 @@ class MockRepository:
         ]
 
 
+class MockCreateForm(MontrekCreateForm):
+    field_order = ["field_a", "field_b"]
+
+
 class TestMontrekCreateForm(TestCase):
     def test_special_widgets(self):
         test_form = MontrekCreateForm(repository=MockRepository())
@@ -83,6 +87,11 @@ class TestMontrekCreateForm(TestCase):
         test_form = MontrekCreateForm(repository=MockRepository())
         fields = test_form.fields
         self.assertEqual(fields["field_date"].label, "Field Date")
+
+    def test_field_order(self):
+        test_form = MockCreateForm(repository=MockRepository())
+        test_form.set_field_order()
+        self.assertEqual(test_form.field_order, ["field_a", "field_b", "hub_entity_id"])
 
 
 class TestMontrekModelMultipleChoiceField(TestCase):
