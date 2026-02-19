@@ -22,8 +22,10 @@
             <div class="col-sm-3 col-lg-2"></div>
             <div class="col-sm-9 col-lg-10">
               <div class="form-check">
-                {{ field }}
-                {{ field.label_tag }}
+                <label class="form-check-label">
+                  {{ field }}
+                  {{ field.label }}
+                </label>
               </div>
               {% if field.errors %}
                 <div class="text-danger small mt-1">

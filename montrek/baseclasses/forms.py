@@ -191,7 +191,8 @@ class MontrekCreateForm(forms.ModelForm):
 
     def _get_form_field(self, field):
         if isinstance(field, EncryptedCharField):
-            return field.formfield(widget=forms.PasswordInput(render_value=False))
+            # TODO: This is not safe, as the value can be stolen! Set render_value to False, but make sure montrek behaviour still works!
+            return field.formfield(widget=forms.PasswordInput(render_value=True))
 
         if isinstance(field, DateField):
             return field.formfield(widget=forms.DateInput(attrs={"type": "date"}))
@@ -234,7 +235,11 @@ class MontrekCreateForm(forms.ModelForm):
 
             # Readonly styling
             if widget.attrs.get("readonly"):
-                widget.attrs["class"] = "form-control-plaintext"
+                existing_class = widget.attrs.get("class", "")
+                if existing_class:
+                    widget.attrs["class"] = f"{existing_class} form-control-plaintext"
+                else:
+                    widget.attrs["class"] = "form-control-plaintext"
 
     def set_field_order(self):
         """
