@@ -205,13 +205,22 @@ class MontrekCreateForm(forms.ModelForm):
         self.fields["hub_entity_id"].widget.attrs.update({"readonly": True})
 
     def set_field_order(self):
-        if self.field_order is None:
-            self.field_order = [
-                field for field in self.fields if field != "hub_entity_id"
-            ]
-        self.field_order.append("hub_entity_id")
-        self.order_fields(self.field_order)
+        """
+        Ensure 'hub_entity_id' is ordered last without mutating any class-level
+        field_order list in-place.
+        """
+        if self.field_order:
+            # Work on a copy so we don't mutate a potentially shared class attribute.
+            field_order = list(self.field_order)
+        else:
+            field_order = [field for field in self.fields if field != "hub_entity_id"]
 
+        if "hub_entity_id" not in field_order:
+            field_order.append("hub_entity_id")
+
+        # Store on the instance so it no longer relies on a class-level list.
+        self.field_order = field_order
+        self.order_fields(field_order)
     def add_link_choice_field(
         self,
         link_name: str,
