@@ -34,6 +34,13 @@
               <div class="mb-1">
                 <label class="form-label">
                   {{ field.label }}
+                  {% if field.help_text %}
+                    <span
+                      data-bs-toggle="tooltip"
+                      data-bs-title="{{ field.help_text }}"
+                      style="cursor: help;"
+                    ><i class="bi bi-info-circle"></i></span>
+                  {% endif %}
                 </label>
               </div>
               <div class="mb-2">

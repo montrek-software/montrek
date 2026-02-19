@@ -24,3 +24,8 @@
   integrity="sha256-y7cjwwXPbWMVyJCQmBVSNYhQni4JKln4z8SohYKWidU="
   crossorigin="anonymous"
 ></script>
+<script>
+  document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+    new bootstrap.Tooltip(el)
+  })
+</script>
