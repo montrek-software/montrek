@@ -304,8 +304,9 @@ class BaseMontrekChoiceField:
         super().__init__(*args, **kwargs)
         self.display_field = display_field
         # Ensure Bootstrap styling
-        css_class = self.widget.attrs.get("class", "")
-        self.widget.attrs["class"] = f"{css_class} form-select".strip()
+        if hasattr(self, "widget"):
+            css_class = self.widget.attrs.get("class", "")
+            self.widget.attrs["class"] = f"{css_class} form-select".strip()
 
     def label_from_instance(self, obj):
         return getattr(obj, self.display_field)
