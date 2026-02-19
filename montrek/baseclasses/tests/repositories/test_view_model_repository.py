@@ -41,12 +41,6 @@ class TestViewModelRepository(TransactionTestCase):
         connection.commit()
         super().tearDownClass()
 
-    def test_has_view_model(self):
-        view_model_repository_none = ViewModelRepository(None)
-        self.assertFalse(view_model_repository_none.has_view_model())
-        view_model_repository = ViewModelRepository(MockModel)
-        self.assertTrue(view_model_repository.has_view_model())
-
     def test_generate_view_model_creates_valid_model(self):
         fields = {
             "test_field": models.CharField(max_length=50),

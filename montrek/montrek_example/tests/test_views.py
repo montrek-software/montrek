@@ -489,6 +489,27 @@ class TestMontrekExampleDeleteReturn(TestCase):
         )
 
     @add_logged_in_user
+    def test_error_from_details(self):
+        self.satd1 = me_factories.SatD1Factory.create()
+        start_url = reverse(
+            "montrek_example_d_details",
+            kwargs={"pk": self.satd1.hub_entity_id},
+        )
+        self.client.get(start_url)
+        delete_url = reverse(
+            "montrek_example_d_delete",
+            kwargs={"pk": self.satd1.get_hub_value_date().id},
+        )
+        response_delete = self.client.get(delete_url, HTTP_REFERER=start_url)
+        self.assertEqual(response_delete.status_code, 200)
+        return_delete = self.client.post(delete_url)
+        self.assertEqual(return_delete.status_code, 302)
+        self.assertRedirects(
+            return_delete,
+            start_url,
+        )
+
+    @add_logged_in_user
     def test_no_http_referer(self):
         start_url = reverse("under_construction")
         response_start = self.client.get(start_url)

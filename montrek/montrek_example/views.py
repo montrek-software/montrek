@@ -122,6 +122,7 @@ class MontrekExampleADelete(views.MontrekDeleteView):
     page_class = pages.ExampleAPage
     success_url = "montrek_example_a_list"
     title = "Delete Example A"
+    do_return_to_referer = True
 
 
 class MontrekExampleADetails(views.MontrekDetailView):
@@ -278,6 +279,7 @@ class MontrekExampleDDelete(views.MontrekDeleteView):
     do_return_to_referer: bool = False
     success_url = "montrek_example_d_list"
     title = "Delete Example D"
+    do_return_to_referer = True
 
 
 class MontrekExampleA1UploadFileView(MontrekUploadFileView):
