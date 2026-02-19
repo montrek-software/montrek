@@ -1,19 +1,9 @@
+from django.test import TransactionTestCase
+from django.db import connection, models
+from django.apps import apps
 from copy import deepcopy
 
 from baseclasses.repositories.view_model_repository import ViewModelRepository
-from django.apps import apps
-from django.db import connection, models
-from django.test import TransactionTestCase
-
-
-class MockModel(models.Model): ...
-
-
-class DummyHub(models.Model):
-    name = models.CharField(max_length=100)
-
-    class Meta:
-        app_label = "testapp"
 
 
 class TestViewModelRepository(TransactionTestCase):
@@ -22,46 +12,90 @@ class TestViewModelRepository(TransactionTestCase):
     reset_sequences = True
 
     @classmethod
+    def _make_models(cls):
+        # Use a fake app label that is NOT in INSTALLED_APPS
+        # Django won't generate migrations for it
+        app_label = "dynamic_test_app"
+
+        cls.DummyHub = type(
+            "DummyHub",
+            (models.Model,),
+            {
+                "name": models.CharField(max_length=100),
+                "__module__": __name__,
+                "Meta": type(
+                    "Meta",
+                    (),
+                    {
+                        "app_label": app_label,
+                    },
+                ),
+            },
+        )
+
+        cls.MockModel = type(
+            "MockModel",
+            (models.Model,),
+            {
+                "hub": models.ForeignKey(
+                    cls.DummyHub,
+                    on_delete=models.CASCADE,
+                    related_name="mock_set",
+                ),
+                "__module__": __name__,
+                "Meta": type(
+                    "Meta",
+                    (),
+                    {
+                        "app_label": app_label,
+                    },
+                ),
+            },
+        )
+
+    @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        # Create DummyHub table once
+        cls._make_models()
         with connection.schema_editor() as schema_editor:
-            schema_editor.create_model(DummyHub)
-            # schema_editor.create_model(MockModel)
-        # Explicitly commit to ensure schema visible outside current atomic block
+            schema_editor.create_model(cls.DummyHub)
+            schema_editor.create_model(cls.MockModel)
         connection.commit()
 
     @classmethod
     def tearDownClass(cls):
-        # Drop DummyHub safely
-        connection.rollback()  # clear any failed tx
+        connection.rollback()
         with connection.schema_editor() as schema_editor:
-            schema_editor.delete_model(DummyHub)
-            schema_editor.delete_model(MockModel)
+            schema_editor.delete_model(cls.MockModel)
+            schema_editor.delete_model(cls.DummyHub)
         connection.commit()
         super().tearDownClass()
+
+    def test_has_view_model(self):
+        view_model_repository_none = ViewModelRepository(None)
+        self.assertFalse(view_model_repository_none.has_view_model())
+
+        view_model_repository = ViewModelRepository(self.MockModel)
+        self.assertTrue(view_model_repository.has_view_model())
 
     def test_generate_view_model_creates_valid_model(self):
         fields = {
             "test_field": models.CharField(max_length=50),
             "number": models.IntegerField(),
         }
-
         model_cls = ViewModelRepository.generate_view_model(
             module_name="myproject.testapp.repositories.some_repo",
             repository_name="TestRepo",
-            hub_class=DummyHub,
+            hub_class=self.DummyHub,
             fields=deepcopy(fields),
         )
 
-        # Register and create its table
         apps.register_model("testapp", model_cls)
         with connection.schema_editor() as schema_editor:
             schema_editor.create_model(model_cls)
         connection.commit()
 
-        # --- ORM usage works fine now ---
-        hub = DummyHub.objects.create(name="Main Hub")
+        hub = self.DummyHub.objects.create(name="Main Hub")
         instance = model_cls.objects.create(
             test_field="example",
             number=42,
@@ -69,7 +103,6 @@ class TestViewModelRepository(TransactionTestCase):
         )
         self.assertEqual(instance.test_field, "example")
 
-        # Clean up the table (not strictly required)
         with connection.schema_editor() as schema_editor:
             schema_editor.delete_model(model_cls)
         connection.commit()
