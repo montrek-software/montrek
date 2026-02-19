@@ -536,7 +536,7 @@ class MontrekCreateUpdateView(
 ):
     manager_class = MontrekManagerNotImplemented
     form_class = MontrekCreateForm
-    template_name = "montrek_create.html"
+    is_compact_form: bool = False
     do_return_to_referer: bool = True
     success_url = "under_construction"
     title = ""
@@ -550,6 +550,14 @@ class MontrekCreateUpdateView(
                 action_id="id_back",
                 hover_text="Go back",
             ),
+        )
+
+    @property
+    def template_name(self):
+        return (
+            "montrek_create_compact.html"
+            if self.is_compact_form
+            else "montrek_create.html"
         )
 
     def get_queryset(self):

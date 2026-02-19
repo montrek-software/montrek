@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block content %}
+<!--Start: needed for FilteredSelectMultiple widget used in MontrekCreateForm-->
+{% load static %}
+<link href="{% static 'admin_copy/css/widgets.css' %}" type="text/css" rel="stylesheet">
+<script src="{% url 'jsi18n' %}"></script>
+<script src="{% static 'admin_copy/js/core.js' %}"></script>
+<script src="{% static 'admin_copy/js/SelectBox.js' %}"></script>
+<script src="{% static 'admin_copy/js/SelectFilter2.js' %}"></script>
+<!--End: needed for FilteredSelectMultiple widget used in MontrekCreateForm-->
+<div class="container-fluid">
+  <div class="row justify-content-center">
+    <div class="col-12 col-lg-6 col-xl-4">
+
+      <div class="tile p-4">
+        <h2 id="id_title" class="mb-4 text-center">{{ tag }}</h2>
+
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+
+          {% for field in form %}
+            {% if field.field.widget.input_type == "checkbox" %}
+              <div class="mb-3">
+                <div class="form-check">
+                  {{ field }}
+                  {{ field.label_tag }}
+                </div>
+                {% if field.errors %}
+                  <div class="text-danger small">{{ field.errors }}</div>
+                {% endif %}
+              </div>
+            {% else %}
+              <div class="mb-1">
+                <label class="form-label">
+                  {{ field.label }}
+                </label>
+              </div>
+              <div class="mb-2">
+                {{ field }}
+                {% if field.errors %}
+                  <div class="text-danger small">{{ field.errors }}</div>
+                {% endif %}
+              </div>
+            {% endif %}
+          {% endfor %}
+
+          <div class="text-center mt-4">
+            <button type="submit" class="btn btn-custom" id="id_submit">
+              {{ tag }}
+            </button>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
