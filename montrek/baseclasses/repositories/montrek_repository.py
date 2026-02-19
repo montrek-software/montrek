@@ -58,6 +58,7 @@ class MontrekRepository:
     latest_ts: bool = False
     view_model: None | type[models.Model] = None
     display_field_names: Mapping[str, str] = {}
+    field_help_texts: Mapping[str, str] = {}
 
     update: bool = (
         True  # If this is true only the passed fields will be updated, otherwise empty fields will be set to None

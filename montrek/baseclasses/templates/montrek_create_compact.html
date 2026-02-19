@@ -24,6 +24,13 @@
                 <div class="form-check">
                   <label class="form-check-label" for="{{ field.id_for_label }}">
                     {{ field }} {{ field.label }}
+                  {% if field.help_text %}
+                    <span
+                      data-bs-toggle="tooltip"
+                      data-bs-title="{{ field.help_text }}"
+                      style="cursor: help;"
+                    ><i class="bi bi-info-circle"></i></span>
+                  {% endif %}
                   </label>
                 </div>
                 {% if field.errors %}

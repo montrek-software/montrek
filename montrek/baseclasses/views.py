@@ -9,7 +9,7 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.http import FileResponse, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render
-from django.urls import Resolver404, resolve, reverse
+from django.urls import reverse
 from django.views.decorators.http import require_safe
 from django.views.generic import DetailView, RedirectView, View
 from django.views.generic.base import TemplateView
@@ -506,7 +506,7 @@ class ReturnToSenderMixin(ReturnToSenderProtocol):
     def get_success_url(self):
         if self.do_return_to_referer:
             return_url = self.request.session.get("return_url")
-            if return_url and self.is_valid_internal_url(return_url, self.request):
+            if return_url:
                 return return_url
         # Fallback: use the configured success_url name.
         return reverse(self.success_url)
@@ -518,13 +518,6 @@ class ReturnToSenderMixin(ReturnToSenderProtocol):
             if http_referer:
                 request.session["return_url"] = http_referer
         return response
-
-    def is_valid_internal_url(self, url: str, request: Any) -> bool:
-        try:
-            resolve(url)
-        except Resolver404:
-            return False
-        return True
 
 
 class MontrekCreateUpdateView(

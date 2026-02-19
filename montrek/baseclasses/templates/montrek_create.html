@@ -25,6 +25,13 @@
                 <label class="form-check-label">
                   {{ field }}
                   {{ field.label }}
+                  {% if field.help_text %}
+                    <span
+                      data-bs-toggle="tooltip"
+                      data-bs-title="{{ field.help_text }}"
+                      style="cursor: help;"
+                    ><i class="bi bi-info-circle"></i></span>
+                  {% endif %}
                 </label>
               </div>
               {% if field.errors %}
@@ -38,6 +45,13 @@
           <div class="row mb-3 align-items-center">
             <label class="col-sm-3 col-lg-2 col-form-label text-sm-end">
               {{ field.label }}
+              {% if field.help_text %}
+                <span
+                  data-bs-toggle="tooltip"
+                  data-bs-title="{{ field.help_text }}"
+                  style="cursor: help;"
+                ><i class="bi bi-info-circle"></i></span>
+              {% endif %}
             </label>
             <div class="col-sm-9 col-lg-10">
               {{ field }}
