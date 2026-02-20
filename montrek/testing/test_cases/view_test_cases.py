@@ -121,6 +121,9 @@ class MontrekViewTestCase(TestCase):
         if self._is_base_test_class():
             return
         self.assertEqual(self.response.status_code, self.expected_status_code)
+        self.assert_correct_template()
+
+    def assert_correct_template(self):
         self.assertTemplateUsed(self.response, self.view_class.template_name)
 
     def test_view_page(self):
@@ -248,6 +251,13 @@ class MontrekCreateUpdateViewTestCase(MontrekObjectViewBaseTestCase):
         if self.expected_fields is not None:
             form = self.view.get_form()
             self.assertEqual(list(form.fields.keys()), self.expected_fields)
+
+    def assert_correct_template(self):
+        if not self.view_class.is_compact_form:
+            template_name = self.view_class.template_name
+        else:
+            template_name = self.view_class.compact_template_name
+        self.assertTemplateUsed(self.response, template_name)
 
 
 class GetObjectLastMixin:
