@@ -3672,3 +3672,82 @@ class TestCrossSatelliteFilter(TestCase):
         self.assertEqual(queryset.count(), 2)
         self.assertEqual(queryset[0].field_b1_str, "B-pass")
         self.assertIsNone(queryset[1].field_b1_str)
+
+    def test_cross_satellite_filter_with_ts_cross_satellite_matching(self):
+        """Cross-satellite is a timeseries satellite — matching case.
+
+        HubB → HubD (SatD1 fetched) cross-filtered via LinkHubCHubD by SatTSC2 on HubC.
+        The ORM path from SatD1's hub (HubD) to SatTSC2 on HubC is:
+            hub_entity__linkhubchubd__hub_in__hub_value_date__sattsc2__field_tsc2_float
+
+        (hub_in because reversed_link=True: HubD is hub_out in LinkHubCHubD)
+        """
+
+        class HubBRepositoryWithTSCrossSatFilter(MontrekRepository):
+            hub_class = me_models.HubB
+
+            def set_annotations(self):
+                self.add_linked_satellites_field_annotations(
+                    me_models.SatD1,
+                    me_models.LinkHubBHubD,
+                    ["field_d1_str"],
+                    cross_satellite_filters=(
+                        CrossSatelliteFilter(
+                            satellite_class=me_models.SatTSC2,
+                            link_class=me_models.LinkHubCHubD,
+                            filter_dict={"field_tsc2_float__gte": 5.0},
+                            reversed_link=True,
+                        ),
+                    ),
+                )
+
+        # HubB1 → HubD1 linked to HubC1 (SatTSC2 field_tsc2_float=10.0 → passes)
+        satb1 = me_factories.SatB1Factory(field_b1_str="B-ts-pass")
+        satd1 = me_factories.SatD1Factory(field_d1_str="D1-ts-match")
+        me_factories.LinkHubBHubDFactory(
+            hub_in=satb1.hub_entity, hub_out=satd1.hub_entity
+        )
+        chvd1 = me_factories.CHubValueDateFactory(hub=me_factories.HubCFactory())
+        me_factories.SatTSC2Factory(hub_value_date=chvd1, field_tsc2_float=10.0)
+        me_factories.LinkHubCHubDFactory(hub_in=chvd1.hub, hub_out=satd1.hub_entity)
+
+        repo = HubBRepositoryWithTSCrossSatFilter()
+        queryset = repo.receive().filter(hub=satb1.hub_entity)
+        self.assertEqual(queryset.count(), 1)
+        self.assertEqual(queryset[0].field_d1_str, "D1-ts-match")
+
+    def test_cross_satellite_filter_with_ts_cross_satellite_not_matching(self):
+        """Cross-satellite is a timeseries satellite — non-matching case returns None."""
+
+        class HubBRepositoryWithTSCrossSatFilter(MontrekRepository):
+            hub_class = me_models.HubB
+
+            def set_annotations(self):
+                self.add_linked_satellites_field_annotations(
+                    me_models.SatD1,
+                    me_models.LinkHubBHubD,
+                    ["field_d1_str"],
+                    cross_satellite_filters=(
+                        CrossSatelliteFilter(
+                            satellite_class=me_models.SatTSC2,
+                            link_class=me_models.LinkHubCHubD,
+                            filter_dict={"field_tsc2_float__gte": 5.0},
+                            reversed_link=True,
+                        ),
+                    ),
+                )
+
+        # HubB2 → HubD2 linked to HubC2 (SatTSC2 field_tsc2_float=2.0 → fails filter)
+        satb2 = me_factories.SatB1Factory(field_b1_str="B-ts-fail")
+        satd2 = me_factories.SatD1Factory(field_d1_str="D2-ts-no-match")
+        me_factories.LinkHubBHubDFactory(
+            hub_in=satb2.hub_entity, hub_out=satd2.hub_entity
+        )
+        chvd2 = me_factories.CHubValueDateFactory(hub=me_factories.HubCFactory())
+        me_factories.SatTSC2Factory(hub_value_date=chvd2, field_tsc2_float=2.0)
+        me_factories.LinkHubCHubDFactory(hub_in=chvd2.hub, hub_out=satd2.hub_entity)
+
+        repo = HubBRepositoryWithTSCrossSatFilter()
+        queryset = repo.receive().filter(hub=satb2.hub_entity)
+        self.assertEqual(queryset.count(), 1)
+        self.assertIsNone(queryset[0].field_d1_str)

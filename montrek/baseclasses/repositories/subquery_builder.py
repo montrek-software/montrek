@@ -326,7 +326,10 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
             link_path = f"{hub_prefix}__{link_lower}"
             hub_path = f"{link_path}__{hub_field}"
             if getattr(csf.satellite_class, "is_timeseries", False):
-                sat_path = f"{hub_path}__{sat_lower}_value_date__{sat_lower}"
+                # TS satellites are not directly reachable from the cross-hub;
+                # HubForeignKey sets related_name="hub_value_date" on all hub-value-date
+                # models, so the path is hub → hub_value_date → satellite.
+                sat_path = f"{hub_path}__hub_value_date__{sat_lower}"
             else:
                 sat_path = f"{hub_path}__{sat_lower}"
 
