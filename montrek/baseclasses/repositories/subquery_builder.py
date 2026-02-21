@@ -325,7 +325,10 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
 
             link_path = f"{hub_prefix}__{link_lower}"
             hub_path = f"{link_path}__{hub_field}"
-            sat_path = f"{hub_path}__{sat_lower}"
+            if getattr(csf.satellite_class, "is_timeseries", False):
+                sat_path = f"{hub_path}__{sat_lower}_value_date__{sat_lower}"
+            else:
+                sat_path = f"{hub_path}__{sat_lower}"
 
             # Link validity
             result[f"{link_path}__state_date_start__lte"] = reference_date
