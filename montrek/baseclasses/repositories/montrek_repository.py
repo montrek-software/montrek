@@ -21,6 +21,7 @@ from baseclasses.repositories.db.db_staller import DbStaller
 from baseclasses.repositories.db.db_writer import DbWriter
 from baseclasses.repositories.query_builder import QueryBuilder
 from baseclasses.repositories.subquery_builder import (
+    CrossSatelliteFilter,
     LinkedSatelliteSubqueryBuilder,
     ReverseLinkedSatelliteSubqueryBuilder,
     SatelliteSubqueryBuilder,
@@ -326,6 +327,7 @@ class MontrekRepository:
         parent_link_reversed: tuple[bool] | list[bool] | None = None,
         agg_func: str = "string_concat",
         link_satellite_filter: dict[str, Any] | None = None,
+        cross_satellite_filters: tuple[CrossSatelliteFilter, ...] = (),
         separator: str = ";",
     ):
         if reversed_link:
@@ -354,6 +356,7 @@ class MontrekRepository:
             parent_link_reversed=parent_link_reversed,
             agg_func=agg_func,
             link_satellite_filter=link_satellite_filter,
+            cross_satellite_filters=cross_satellite_filters,
             separator=separator,
         )
         self.linked_fields.extend(fields)
