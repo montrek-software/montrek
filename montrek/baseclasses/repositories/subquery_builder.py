@@ -1,3 +1,4 @@
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 from collections.abc import Callable
@@ -28,6 +29,29 @@ from django.db.models import (
 )
 from django.db.models.functions import Cast
 from django.utils import timezone
+
+
+@dataclass
+class CrossSatelliteFilter:
+    """Filter based on a satellite belonging to a different hub, reached from
+    the linked hub via a second link.
+
+    Example (HubA perspective, fetching SatB from HubB):
+        HubA --LinkHubAHubB--> HubB --SatB (fetch field_b1)
+                                   \\
+                                    --LinkHubBHubC--> HubC --SatC (filter: field_c = "X")
+
+    satellite_class: the satellite on the cross-hub to filter on (e.g. SatC)
+    link_class:      the link connecting the fetched hub to the cross-hub (e.g. LinkHubBHubC)
+    filter_dict:     ORM filter kwargs applied to the cross satellite (e.g. {"field_c": "X"})
+    reversed_link:   True if the fetched hub sits on the hub_out side of link_class
+                     (i.e. the cross hub is reached via hub_in)
+    """
+
+    satellite_class: type
+    link_class: type
+    filter_dict: dict[str, Any] = field(default_factory=dict)
+    reversed_link: bool = False
 
 
 class SubqueryBuilder:
@@ -191,6 +215,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         parent_link_classes: tuple[type[MontrekLinkABC], ...] = (),
         parent_link_reversed: tuple[bool, ...] | list[bool] = (),
         link_satellite_filter: dict[str, object] | None = None,
+        cross_satellite_filters: tuple[CrossSatelliteFilter, ...] = (),
         separator: str = ";",
     ):
         super().__init__(satellite_class)
@@ -209,6 +234,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         self.parent_link_classes = parent_link_classes
         self.parent_link_reversed = parent_link_reversed
         self.link_satellite_filter = link_satellite_filter
+        self.cross_satellite_filters = cross_satellite_filters
 
     def get_link_query(
         self, hub_field: str, reference_date: timezone.datetime, outer_ref: str = "hub"
@@ -280,6 +306,42 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
             )
         return parent_link_filters
 
+    def _build_cross_satellite_filter_dict(
+        self, reference_date: timezone.datetime
+    ) -> dict:
+        """Build ORM filter kwargs that traverse from the fetched satellite's hub
+        through a second link to a different hub's satellite."""
+        result = {}
+        hub_prefix = (
+            "hub_value_date__hub"
+            if self.satellite_class.is_timeseries
+            else "hub_entity"
+        )
+
+        for csf in self.cross_satellite_filters:
+            link_lower = csf.link_class.__name__.lower()
+            hub_field = "hub_in" if csf.reversed_link else "hub_out"
+            sat_lower = csf.satellite_class.__name__.lower()
+
+            link_path = f"{hub_prefix}__{link_lower}"
+            hub_path = f"{link_path}__{hub_field}"
+            sat_path = f"{hub_path}__{sat_lower}"
+
+            # Link validity
+            result[f"{link_path}__state_date_start__lte"] = reference_date
+            result[f"{link_path}__state_date_end__gt"] = reference_date
+            # Target hub validity
+            result[f"{hub_path}__state_date_start__lte"] = reference_date
+            result[f"{hub_path}__state_date_end__gt"] = reference_date
+            # Cross satellite validity
+            result[f"{sat_path}__state_date_start__lte"] = reference_date
+            result[f"{sat_path}__state_date_end__gt"] = reference_date
+            # User-supplied field filters
+            for key, value in csf.filter_dict.items():
+                result[f"{sat_path}__{key}"] = value
+
+        return result
+
     def _link_hubs_and_get_subquery(
         self,
         hub_field_to: str,
@@ -288,6 +350,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
     ) -> Subquery:
         sat_query = self.satellite_class.objects.filter(
             **self.link_satellite_filter,
+            **self._build_cross_satellite_filter_dict(reference_date),
             **self.subquery_filter(
                 reference_date,
                 lookup_field="hub_entity",
@@ -350,6 +413,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
                             )
                         ),
                         Q(**self.link_satellite_filter),
+                        Q(**self._build_cross_satellite_filter_dict(reference_date)),
                     )
                     .annotate(**{self.field + "sub": F(self.field)})
                     .values(self.field),

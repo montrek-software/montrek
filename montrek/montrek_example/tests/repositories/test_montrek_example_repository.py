@@ -4,6 +4,8 @@ from unittest.mock import patch
 import numpy as np
 import pandas as pd
 from baseclasses.errors.montrek_user_error import MontrekError
+from baseclasses.repositories.montrek_repository import MontrekRepository
+from baseclasses.repositories.subquery_builder import CrossSatelliteFilter
 from baseclasses.tests.factories.montrek_factory_schemas import ValueDateListFactory
 from baseclasses.utils import montrek_time
 from django.core.exceptions import PermissionDenied
@@ -24,6 +26,7 @@ from montrek_example.repositories.hub_a_repository import (
 from montrek_example.repositories.hub_b_repository import (
     HubBRepository,
     HubBRepository2,
+    HubBRepositoryWithCrossSatFilter,
 )
 from montrek_example.repositories.hub_c_repository import (
     HubCBooleanRepository,
@@ -3469,7 +3472,9 @@ class TestRepositoryAsDF(TestCase):
         repo = HubBRepository({})
         repo.store_in_view_model()
         df = repo.get_df()
-        field_b1_date = df.loc[df["id"] == sat_b1.hub_entity_id, "field_b1_date"].iloc[0]
+        field_b1_date = df.loc[df["id"] == sat_b1.hub_entity_id, "field_b1_date"].iloc[
+            0
+        ]
         self.assertEqual(
             field_b1_date.date(),
             datetime.date(1677, 9, 22),
@@ -3499,3 +3504,171 @@ class TestReceiveWithAliases(TestCase):
         self.assertEqual(test_query[1].field_a1_str, "test_2")
         self.assertEqual(test_query[0].field_a2_str, "A2 1")
         self.assertEqual(test_query[1].field_a2_str, "A2 2")
+
+
+class TestCrossSatelliteFilter(TestCase):
+    """Tests for the cross_satellite_filters parameter of add_linked_satellites_field_annotations.
+
+    Model structure used:
+        HubB --LinkHubBHubD--> HubD --SatD1 (fetched field)
+                                   \\
+                                    <--LinkHubCHubD-- HubC --SatC1 (cross filter)
+
+    HubBRepositoryWithCrossSatFilter fetches SatD1.field_d1_str but only for HubDs
+    that have a linked HubC (via LinkHubCHubD reversed) with SatC1.field_c1_str == "matched".
+    """
+
+    def _make_hub_b_with_matching_hub_d(self, b1_str: str, d1_str: str):
+        """Create a HubB → HubD link where HubD has a matching SatC1 via HubC."""
+        satb = me_factories.SatB1Factory(field_b1_str=b1_str)
+        satd = me_factories.SatD1Factory(field_d1_str=d1_str)
+        me_factories.LinkHubBHubDFactory(
+            hub_in=satb.hub_entity, hub_out=satd.hub_entity
+        )
+        hubc = me_factories.HubCFactory()
+        me_factories.SatC1Factory(hub_entity=hubc, field_c1_str="matched")
+        me_factories.LinkHubCHubDFactory(hub_in=hubc, hub_out=satd.hub_entity)
+        return satb, satd
+
+    def _make_hub_b_with_non_matching_hub_d(self, b1_str: str, d1_str: str):
+        """Create a HubB → HubD link where HubD has no SatC1 with field_c1_str='matched'."""
+        satb = me_factories.SatB1Factory(field_b1_str=b1_str)
+        satd = me_factories.SatD1Factory(field_d1_str=d1_str)
+        me_factories.LinkHubBHubDFactory(
+            hub_in=satb.hub_entity, hub_out=satd.hub_entity
+        )
+        return satb, satd
+
+    def test_matching_hub_d_returns_field_value(self):
+        satb, satd = self._make_hub_b_with_matching_hub_d("B-match", "D-match")
+        repo = HubBRepositoryWithCrossSatFilter()
+        queryset = repo.receive().filter(hub=satb.hub_entity)
+        self.assertEqual(queryset.count(), 1)
+        self.assertEqual(queryset[0].field_d1_str, "D-match")
+
+    def test_non_matching_hub_d_returns_none(self):
+        """HubD has a HubC link but SatC1.field_c1_str does not match."""
+        satb, satd = self._make_hub_b_with_non_matching_hub_d(
+            "B-no-match", "D-no-match"
+        )
+        hubc = me_factories.HubCFactory()
+        me_factories.SatC1Factory(hub_entity=hubc, field_c1_str="wrong-value")
+        me_factories.LinkHubCHubDFactory(hub_in=hubc, hub_out=satd.hub_entity)
+
+        repo = HubBRepositoryWithCrossSatFilter()
+        queryset = repo.receive().filter(hub=satb.hub_entity)
+        self.assertEqual(queryset.count(), 1)
+        self.assertIsNone(queryset[0].field_d1_str)
+
+    def test_hub_d_with_no_cross_link_returns_none(self):
+        """HubD has no HubC link at all — cross filter excludes it."""
+        satb, satd = self._make_hub_b_with_non_matching_hub_d("B-no-link", "D-no-link")
+        repo = HubBRepositoryWithCrossSatFilter()
+        queryset = repo.receive().filter(hub=satb.hub_entity)
+        self.assertEqual(queryset.count(), 1)
+        self.assertIsNone(queryset[0].field_d1_str)
+
+    def test_mixed_hub_bs_only_matching_gets_value(self):
+        """Two HubBs: one with a matching HubD, one without."""
+        satb1, satd1 = self._make_hub_b_with_matching_hub_d("B1", "D1-match")
+        satb2, satd2 = self._make_hub_b_with_non_matching_hub_d("B2", "D2-no-match")
+
+        repo = HubBRepositoryWithCrossSatFilter()
+        queryset = repo.receive().order_by("field_b1_str")
+        self.assertEqual(queryset.count(), 2)
+        self.assertEqual(queryset[0].field_d1_str, "D1-match")
+        self.assertIsNone(queryset[1].field_d1_str)
+
+    def test_cross_satellite_filter_with_count_agg(self):
+        """Count aggregation respects the cross-satellite filter."""
+
+        class HubBCountCrossSatFilter(MontrekRepository):
+            hub_class = me_models.HubB
+
+            def set_annotations(self):
+                self.add_linked_satellites_field_annotations(
+                    me_models.SatD1,
+                    me_models.LinkHubBHubD,
+                    ["field_d1_str"],
+                    agg_func="count",
+                    cross_satellite_filters=(
+                        CrossSatelliteFilter(
+                            satellite_class=me_models.SatC1,
+                            link_class=me_models.LinkHubCHubD,
+                            filter_dict={"field_c1_str": "matched"},
+                            reversed_link=True,
+                        ),
+                    ),
+                )
+
+        satb, _ = self._make_hub_b_with_matching_hub_d("B-count", "D-count")
+        # Add a second matching HubD to the same HubB
+        satd2 = me_factories.SatD1Factory(field_d1_str="D-count-2")
+        me_factories.LinkHubBHubDFactory(
+            hub_in=satb.hub_entity, hub_out=satd2.hub_entity
+        )
+        hubc2 = me_factories.HubCFactory()
+        me_factories.SatC1Factory(hub_entity=hubc2, field_c1_str="matched")
+        me_factories.LinkHubCHubDFactory(hub_in=hubc2, hub_out=satd2.hub_entity)
+
+        # Also add a non-matching HubD linked to the same HubB — should NOT be counted
+        satd3 = me_factories.SatD1Factory(field_d1_str="D-count-3")
+        me_factories.LinkHubBHubDFactory(
+            hub_in=satb.hub_entity, hub_out=satd3.hub_entity
+        )
+
+        repo = HubBCountCrossSatFilter()
+        queryset = repo.receive().filter(hub=satb.hub_entity)
+        self.assertEqual(queryset.count(), 1)
+        # Only the 2 matching HubDs are counted, the non-matching one is excluded
+        self.assertEqual(int(queryset[0].field_d1_str), 2)
+
+    def test_cross_satellite_filter_reversed_link_false(self):
+        """Test with reversed_link=False: filter on a satellite reached via hub_out.
+
+        HubA --LinkHubAHubB (hub_in=HubA, hub_out=HubB)--> HubB --SatB1 (fetched)
+        Cross filter: HubB --LinkHubBHubD (hub_in=HubB, hub_out=HubD)--> HubD --SatD1
+        Only HubBs where the linked HubD has SatD1.field_d1_int >= 5 are included.
+        """
+
+        class HubARepositoryWithCrossSatFilter(MontrekRepository):
+            hub_class = me_models.HubA
+
+            def set_annotations(self):
+                self.add_linked_satellites_field_annotations(
+                    me_models.SatB1,
+                    me_models.LinkHubAHubB,
+                    ["field_b1_str"],
+                    cross_satellite_filters=(
+                        CrossSatelliteFilter(
+                            satellite_class=me_models.SatD1,
+                            link_class=me_models.LinkHubBHubD,
+                            filter_dict={"field_d1_int__gte": 5},
+                            reversed_link=False,
+                        ),
+                    ),
+                )
+
+        # HubA1 → HubB1 → HubD1 (field_d1_int=10, passes filter)
+        huba1 = me_factories.HubAFactory()
+        satb1 = me_factories.SatB1Factory(field_b1_str="B-pass")
+        me_factories.LinkHubAHubBFactory(hub_in=huba1, hub_out=satb1.hub_entity)
+        satd1 = me_factories.SatD1Factory(field_d1_int=10)
+        me_factories.LinkHubBHubDFactory(
+            hub_in=satb1.hub_entity, hub_out=satd1.hub_entity
+        )
+
+        # HubA2 → HubB2 → HubD2 (field_d1_int=3, fails filter)
+        huba2 = me_factories.HubAFactory()
+        satb2 = me_factories.SatB1Factory(field_b1_str="B-fail")
+        me_factories.LinkHubAHubBFactory(hub_in=huba2, hub_out=satb2.hub_entity)
+        satd2 = me_factories.SatD1Factory(field_d1_int=3)
+        me_factories.LinkHubBHubDFactory(
+            hub_in=satb2.hub_entity, hub_out=satd2.hub_entity
+        )
+
+        repo = HubARepositoryWithCrossSatFilter()
+        queryset = repo.receive().order_by("hub_entity_id")
+        self.assertEqual(queryset.count(), 2)
+        self.assertEqual(queryset[0].field_b1_str, "B-pass")
+        self.assertIsNone(queryset[1].field_b1_str)
