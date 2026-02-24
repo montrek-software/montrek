@@ -3,6 +3,8 @@ branch = True
 parallel = True
 concurrency = multiprocessing
 omit =
+    */_remote_module_non_scriptable*
+    */site-packages/*
     */migrations/*
     baseclasses/static/*
     */scripts/*
