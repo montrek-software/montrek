@@ -22,7 +22,7 @@
             <div class="col-sm-3 col-lg-2"></div>
             <div class="col-sm-9 col-lg-10">
               <div class="form-check">
-                <label class="form-check-label">
+                <label class="form-check-label" for="{{ field.id_for_label }}">
                   {{ field }}
                   {{ field.label }}
                   {% if field.help_text %}
@@ -43,7 +43,7 @@
           </div>
         {% else %}
           <div class="row mb-3 align-items-center">
-            <label class="col-sm-3 col-lg-2 col-form-label text-sm-end">
+            <label class="col-sm-3 col-lg-2 col-form-label text-sm-end" for="{{ field.id_for_label }}">
               {{ field.label }}
               {% if field.help_text %}
                 <span

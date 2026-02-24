@@ -39,7 +39,7 @@
               </div>
             {% else %}
               <div class="mb-1">
-                <label class="form-label">
+                <label class="form-label" for="{{ field.id_for_label }}">
                   {{ field.label }}
                   {% if field.help_text %}
                     <span
