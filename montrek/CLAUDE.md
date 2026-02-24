@@ -19,6 +19,7 @@ make sync-local-python-env               # Sync dependencies after requirements 
 ```
 
 When running locally, start only the DB in Docker and set `DB_HOST=localhost` in `.env`:
+
 ```bash
 docker compose up db -d
 python manage.py migrate
@@ -62,6 +63,7 @@ coverage html
 ```
 
 Via Docker:
+
 ```bash
 make docker-django-manage test
 make docker-django-manage test <app_name>
@@ -81,6 +83,8 @@ pre-commit run --all-files               # Run all pre-commit hooks manually
 ```
 
 Pre-commit hooks run automatically on `git commit` and include: ruff, black, djlint (templates), bandit (security), plus standard checks (trailing whitespace, YAML, debug statements).
+
+Make sure that the produced code is ruff and sonarcube compliant
 
 ## Architecture
 
@@ -143,11 +147,11 @@ Base views in `baseclasses/views/` provide permissions, form handling, and HTMX 
 
 Three worker queues defined in `montrek/celery.py` and `settings.py`:
 
-| Queue | Purpose |
-|---|---|
+| Queue              | Purpose                              |
+| ------------------ | ------------------------------------ |
 | `SEQUENTIAL_QUEUE` | Long-running, must run one at a time |
-| `PARALLEL_QUEUE` | Parallel-safe tasks |
-| `FAST_QUEUE` | Short, quick tasks |
+| `PARALLEL_QUEUE`   | Parallel-safe tasks                  |
+| `FAST_QUEUE`       | Short, quick tasks                   |
 
 Tasks are auto-discovered from each app's `tasks.py` using `@shared_task`.
 
@@ -177,5 +181,6 @@ All configuration is via `.env` (one level up, at `montrek_competo/.env`). See `
 ### Authentication
 
 Supports two modes configured via `.env`:
+
 - **Django built-in** auth (default)
 - **Keycloak/OIDC** (`USE_KEYCLOAK=true`) — integrates via `mozilla-django-oidc`

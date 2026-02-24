@@ -3540,7 +3540,7 @@ class TestCrossSatelliteFilter(TestCase):
         return satb, satd
 
     def test_matching_hub_d_returns_field_value(self):
-        satb, satd = self._make_hub_b_with_matching_hub_d("B-match", "D-match")
+        satb, _ = self._make_hub_b_with_matching_hub_d("B-match", "D-match")
         repo = HubBRepositoryWithCrossSatFilter()
         queryset = repo.receive().filter(hub=satb.hub_entity)
         self.assertEqual(queryset.count(), 1)
@@ -3562,7 +3562,7 @@ class TestCrossSatelliteFilter(TestCase):
 
     def test_hub_d_with_no_cross_link_returns_none(self):
         """HubD has no HubC link at all — cross filter excludes it."""
-        satb, satd = self._make_hub_b_with_non_matching_hub_d("B-no-link", "D-no-link")
+        satb, _ = self._make_hub_b_with_non_matching_hub_d("B-no-link", "D-no-link")
         repo = HubBRepositoryWithCrossSatFilter()
         queryset = repo.receive().filter(hub=satb.hub_entity)
         self.assertEqual(queryset.count(), 1)
@@ -3570,8 +3570,8 @@ class TestCrossSatelliteFilter(TestCase):
 
     def test_mixed_hub_bs_only_matching_gets_value(self):
         """Two HubBs: one with a matching HubD, one without."""
-        satb1, satd1 = self._make_hub_b_with_matching_hub_d("B1", "D1-match")
-        satb2, satd2 = self._make_hub_b_with_non_matching_hub_d("B2", "D2-no-match")
+        self._make_hub_b_with_matching_hub_d("B1", "D1-match")
+        self._make_hub_b_with_non_matching_hub_d("B2", "D2-no-match")
 
         repo = HubBRepositoryWithCrossSatFilter()
         queryset = repo.receive().order_by("field_b1_str")

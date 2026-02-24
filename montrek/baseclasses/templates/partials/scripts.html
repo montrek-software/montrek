@@ -25,7 +25,6 @@
   crossorigin="anonymous"
 ></script>
 <script>
-  document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
-    new bootstrap.Tooltip(el)
-  })
+  const tooltips = [...document.querySelectorAll('[data-bs-toggle="tooltip"]')]
+    .map(el => new bootstrap.Tooltip(el))
 </script>

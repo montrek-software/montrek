@@ -176,6 +176,7 @@ class MontrekCreateForm(forms.ModelForm):
 
     def _add_satellite_fields(self):
         exclude = set(self._meta.exclude or ())
+        self._encrypted_field_names: list[str] = []
 
         for field in self.satellite_fields:
             form_field = self._get_form_field(field)
@@ -191,15 +192,32 @@ class MontrekCreateForm(forms.ModelForm):
                 form_field.help_text = self.repository.field_help_texts[field.name]
             self.fields[field.name] = form_field
 
+            if isinstance(field, EncryptedCharField):
+                self._encrypted_field_names.append(field.name)
+
     def _get_form_field(self, field):
         if isinstance(field, EncryptedCharField):
-            # TODO: This is not safe, as the value can be stolen! Set render_value to False, but make sure montrek behaviour still works!
-            return field.formfield(widget=forms.PasswordInput(render_value=True))
+            form_field = field.formfield(widget=forms.PasswordInput(render_value=False))
+            # On update an existing value is present in self.initial. Allow blank
+            # so the user can leave the field untouched; clean() restores the
+            # existing value in that case.
+            if self.initial.get(field.name):
+                form_field.required = False
+            return form_field
 
         if isinstance(field, DateField):
             return field.formfield(widget=forms.DateInput(attrs={"type": "date"}))
 
         return field.formfield()
+
+    def clean(self):
+        cleaned_data = super().clean()
+        for field_name in self._encrypted_field_names:
+            if not cleaned_data.get(field_name):
+                initial_value = self.initial.get(field_name)
+                if initial_value:
+                    cleaned_data[field_name] = initial_value
+        return cleaned_data
 
     def _add_hub_entity_id_field(self):
         self.fields["hub_entity_id"] = forms.IntegerField(required=False)
