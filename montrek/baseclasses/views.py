@@ -598,13 +598,28 @@ class MontrekCreateView(MontrekCreateUpdateView):
 
 
 class MontrekUpdateView(MontrekCreateUpdateView):
+    def _get_initial(self) -> dict:
+        return self.manager.get_object_from_pk_as_dict(self.kwargs["pk"])
+
     def get_form(self, form_class=None):
-        initial = self.manager.get_object_from_pk_as_dict(self.kwargs["pk"])
         return self.form_class(
             repository=self.manager.repository,
-            initial=initial,
+            initial=self._get_initial(),
             session_data=self.session_data,
         )
+
+    def post(self, request, *args, **kwargs):
+        self.object = None
+        form = self.form_class(
+            self.request.POST,
+            repository=self.manager.repository,
+            session_data=self.session_data,
+            initial=self._get_initial(),
+        )
+        if form.is_valid():
+            return self.form_valid(form)
+        logger.error(f"Form errors: {form.errors}")
+        return self.form_invalid(form)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
