@@ -45,5 +45,6 @@ class ReportDateReportForm(MontrekReportForm):
     form_template = "report_date_report_form.html"
     report_date = DateField(
         widget=DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+        input_formats=["%Y-%m-%d"],
         initial=date.today,
     )

@@ -1,6 +1,7 @@
 from datetime import date
 
 from django.test import TestCase
+from freezegun import freeze_time
 from reporting.forms import ReportDateReportForm
 from reporting.tests.mocks import (
     MockMontrekReportForm,
@@ -33,6 +34,7 @@ class TestMontrekReportForm(TestCase):
         )
 
 
+@freeze_time("2026-01-15")
 class TestReportDateReportForm(TestCase):
     def test_initial_is_callable(self):
         """Guards against date.today() being frozen at class definition time."""

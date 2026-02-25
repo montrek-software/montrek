@@ -397,4 +397,3 @@ SIMPLE_JWT = {
 # Reporting
 
 WORKBENCH_PATH = Path(__file__).resolve().parent.parent / "reporting" / ".workbench"
-DATE_INPUT_FORMATS = ["%Y-%m-%d"]
