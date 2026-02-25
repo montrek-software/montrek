@@ -273,7 +273,7 @@ LOGIN_REDIRECT_URL = reverse_lazy("home")
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
-LANGUAGE_CODE = "de-de"
+LANGUAGE_CODE = "en-us"
 
 TIME_ZONE = "UTC"
 
