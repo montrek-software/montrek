@@ -1,7 +1,8 @@
 import os
+from datetime import date
 
 from django.conf import settings
-from django.forms import Form
+from django.forms import DateField, DateInput, Form
 from django.template import Context, Template, loader
 
 
@@ -17,7 +18,7 @@ class MontrekReportForm(Form):
         if not self.form_template:
             raise NotImplementedError("MontrekReportForm needs template attribute")
         template_path = self._get_template_path()
-        with open(template_path, "r", encoding="utf-8") as file:
+        with open(template_path, encoding="utf-8") as file:
             return file.read()
 
     def _get_template_path(self) -> str:
@@ -38,3 +39,12 @@ class MontrekReportForm(Form):
 class NoMontrekReportForm(MontrekReportForm):
     def to_html(self) -> str:
         return ""
+
+
+class ReportDateReportForm(MontrekReportForm):
+    form_template = "report_date_report_form.html"
+    report_date = DateField(
+        widget=DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+        input_formats=["%Y-%m-%d"],
+        initial=date.today,
+    )
