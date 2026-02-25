@@ -24,7 +24,27 @@
   integrity="sha256-y7cjwwXPbWMVyJCQmBVSNYhQni4JKln4z8SohYKWidU="
   crossorigin="anonymous"
 ></script>
+<script
+  src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"
+  crossorigin="anonymous"
+></script>
 <script>
   const tooltips = [...document.querySelectorAll('[data-bs-toggle="tooltip"]')]
     .map(el => new bootstrap.Tooltip(el))
+
+  function initFlatpickr(root) {
+    var scope = (root instanceof Element) ? root : document;
+    scope.querySelectorAll('input[type="date"]:not(.flatpickr-input)').forEach(function(el) {
+      flatpickr(el, {
+        dateFormat: "Y-m-d",
+        altInput: true,
+        altFormat: "d/m/Y",
+        allowInput: true,
+        defaultDate: el.value || new Date(),
+      });
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", function() { initFlatpickr(); });
+  document.addEventListener("htmx:afterSwap", function(e) { initFlatpickr(e.detail.elt); });
 </script>

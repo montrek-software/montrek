@@ -273,7 +273,7 @@ LOGIN_REDIRECT_URL = reverse_lazy("home")
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
-LANGUAGE_CODE = "en-us"
+LANGUAGE_CODE = "de-de"
 
 TIME_ZONE = "UTC"
 
@@ -397,3 +397,4 @@ SIMPLE_JWT = {
 # Reporting
 
 WORKBENCH_PATH = Path(__file__).resolve().parent.parent / "reporting" / ".workbench"
+DATE_INPUT_FORMATS = ["%Y-%m-%d"]
