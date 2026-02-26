@@ -51,7 +51,7 @@ class ReportingTimelinePlot(ReportingPlotBase[ReportingTimelineData]):
                 x=reporting_data.report_date,
                 line_width=2,
                 line_dash="dash",
-                line_color="red",
+                line_color=ReportingColors.RED.hex,
             )
         return fig
 
