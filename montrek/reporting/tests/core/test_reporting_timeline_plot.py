@@ -33,6 +33,7 @@ class TestReportingTimelinePlot(TestCase):
         self.assertEqual(tr.type, "bar")
         self.assertEqual(tr.orientation, "h")
         self.assertFalse(tr.showlegend)
+        self.assertEqual(len(self.fig.layout.shapes), 0)
         self.assertFalse(self.fig.layout.showlegend)
 
     def test_axes_and_title(self):
