@@ -46,3 +46,5 @@ class ReportingTimelineData(ReportingDataBase):
     reversed_order: bool = False
     color_col: str | None = None
     color_descrete_map: dict[str, str] | None = None
+    bar_color: str | None = None
+    vline_color: str | None = None

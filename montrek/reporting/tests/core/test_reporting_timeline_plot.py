@@ -1,8 +1,10 @@
 from datetime import date
+from unittest.mock import patch
 import numpy as np
 import pandas as pd
 import plotly.io as pio
 from django.test import TestCase
+from reporting.core.reporting_colors import ReportingColors
 from reporting.core.reporting_data import ReportingTimelineData
 from reporting.core.reporting_timeline_plot import ReportingTimelinePlot
 
@@ -22,6 +24,7 @@ class TestReportingTimelinePlot(TestCase):
             item_name_col="topic",
             start_date_col="start_date",
             end_date_col="end_date",
+            bar_color=ReportingColors.BLUE.hex,
         )
         timeline_plot = ReportingTimelinePlot()
         timeline_plot.generate(report_data)
@@ -47,12 +50,13 @@ class TestReportingTimelinePlot(TestCase):
 
     def test_categories_and_bases(self):
         tr = self.fig.data[0]
+        # Default reversed_order=False uses ascending=False, so latest start_date first.
         np.testing.assert_array_equal(
-            tr.y, np.array(["step_1", "step_2"], dtype=object)
+            tr.y, np.array(["step_2", "step_1"], dtype=object)
         )
-        # base carries start dates as strings that Plotly can parse
+        # base carries start dates in the same sorted order
         dates_list = [np.datetime_as_string(fdate, unit="D") for fdate in tr.base]
-        self.assertEqual(dates_list, ["2025-10-12", "2025-10-19"])
+        self.assertEqual(dates_list, ["2025-10-19", "2025-10-12"])
 
     def test_durations_are_7_days_in_ms(self):
         tr = self.fig.data[0]
@@ -228,3 +232,80 @@ class TestAdditionalTimelineFeatures(TestCase):
         timeline_plot.generate(report_data)
         fig = timeline_plot.figure
         self.assertEqual(fig.layout.yaxis.autorange, "reversed")
+
+
+class TestColorAdjustability(TestCase):
+    _TL_DF = pd.DataFrame(
+        {
+            "start_date": ["2025-10-12", "2025-10-19"],
+            "end_date": ["2025-10-19", "2025-10-26"],
+            "topic": ["step_1", "step_2"],
+            "category": ["A", "B"],
+        }
+    )
+
+    def _make_fig(self, **kwargs):
+        report_data = ReportingTimelineData(
+            title="Color Test",
+            timeline_df=self._TL_DF.copy(),
+            item_name_col="topic",
+            start_date_col="start_date",
+            end_date_col="end_date",
+            **kwargs,
+        )
+        plot = ReportingTimelinePlot()
+        plot.generate(report_data)
+        return plot.figure
+
+    def test_custom_bar_color_is_applied(self):
+        fig = self._make_fig(bar_color="#FF0000")
+        self.assertEqual(fig.data[0].marker.color, "#FF0000")
+
+    def test_default_bar_color_uses_primary_light(self):
+        with patch(
+            "reporting.core.reporting_timeline_plot.get_color",
+            return_value="#AABBCC",
+        ) as mock_get_color:
+            fig = self._make_fig()
+        mock_get_color.assert_called_once_with("primary_light")
+        self.assertEqual(fig.data[0].marker.color, "#AABBCC")
+
+    def test_bar_color_ignored_when_color_col_set(self):
+        # When color_col is used, Plotly manages per-category colours;
+        # update_traces must NOT override them with a single bar_color.
+        color_map = {"A": "#111111", "B": "#222222"}
+        fig = self._make_fig(
+            color_col="category",
+            color_descrete_map=color_map,
+            bar_color="#FF0000",
+        )
+        # There are two traces (one per category); neither should be #FF0000.
+        for trace in fig.data:
+            self.assertNotEqual(trace.marker.color, "#FF0000")
+
+    def test_custom_vline_color_is_applied(self):
+        fig = self._make_fig(
+            report_date=date(2025, 10, 15),
+            vline_color="#00FF00",
+        )
+        self.assertEqual(len(fig.layout.shapes), 1)
+        self.assertEqual(fig.layout.shapes[0].line.color, "#00FF00")
+
+    def test_default_vline_color_is_red(self):
+        fig = self._make_fig(report_date=date(2025, 10, 15))
+        self.assertEqual(len(fig.layout.shapes), 1)
+        self.assertEqual(fig.layout.shapes[0].line.color, ReportingColors.RED.hex)
+
+    def test_no_vline_when_report_date_is_none(self):
+        fig = self._make_fig(vline_color="#00FF00")
+        self.assertEqual(len(fig.layout.shapes), 0)
+
+    def test_color_col_with_discrete_map(self):
+        color_map = {"A": "#AAAAAA", "B": "#BBBBBB"}
+        fig = self._make_fig(
+            color_col="category",
+            color_descrete_map=color_map,
+        )
+        # Each category gets its own trace.
+        self.assertEqual(len(fig.data), 2)
+        self.assertFalse(fig.layout.showlegend)

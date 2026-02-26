@@ -68,15 +68,18 @@ class ReportingTimelinePlot(ReportingPlotBase[ReportingTimelineData]):
                 x=reporting_data.report_date,
                 line_width=2,
                 line_dash="dash",
-                line_color=ReportingColors.RED.hex,
+                line_color=reporting_data.vline_color or ReportingColors.RED.hex,
             )
 
         return fig
 
     def update_axis_layout(self, reporting_data: ReportingTimelineData):
         if reporting_data.color_col is None:
-            self.figure.update_traces(marker_color=get_color("primary_light"))
+            bar_color = reporting_data.bar_color or get_color("primary_light")
+            self.figure.update_traces(marker_color=bar_color)
         self.figure.update_layout(
             showlegend=False,
             yaxis_title=None,
         )
+        if reporting_data.reversed_order:
+            self.figure.update_layout(yaxis_autorange="reversed")
