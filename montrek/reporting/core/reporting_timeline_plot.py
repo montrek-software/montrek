@@ -81,5 +81,3 @@ class ReportingTimelinePlot(ReportingPlotBase[ReportingTimelineData]):
             showlegend=False,
             yaxis_title=None,
         )
-        if reporting_data.reversed_order:
-            self.figure.update_layout(yaxis_autorange="reversed")

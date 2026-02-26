@@ -212,27 +212,6 @@ class TestAdditionalTimelineFeatures(TestCase):
         timeline_plot = ReportingTimelinePlot()
         self.assertRaises(TypeError, timeline_plot.generate, report_data)
 
-    def test_timeline_plot__with_reversed_order(self):
-        tl_df = pd.DataFrame(
-            {
-                "start_date": ["2025-10-12", "2025-10-19"],
-                "end_date": ["2025-10-19", "2025-10-26"],
-                "topic": ["step_1", "step_2"],
-            }
-        )
-        report_data = ReportingTimelineData(
-            title="Test Timeline",
-            timeline_df=tl_df,
-            item_name_col="topic",
-            start_date_col="start_date",
-            end_date_col="end_date",
-            reversed_order=True,
-        )
-        timeline_plot = ReportingTimelinePlot()
-        timeline_plot.generate(report_data)
-        fig = timeline_plot.figure
-        self.assertEqual(fig.layout.yaxis.autorange, "reversed")
-
 
 class TestColorAdjustability(TestCase):
     _TL_DF = pd.DataFrame(
