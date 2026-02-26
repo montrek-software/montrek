@@ -43,3 +43,4 @@ class ReportingTimelineData(ReportingDataBase):
     start_date_col: str
     end_date_col: str
     report_date: date | None = None
+    reversed_order: bool = False
