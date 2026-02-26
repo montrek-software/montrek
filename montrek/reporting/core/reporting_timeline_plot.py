@@ -1,3 +1,4 @@
+from datetime import date
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -30,6 +31,13 @@ class ReportingTimelinePlot(ReportingPlotBase[ReportingTimelineData]):
             raise ValueError(
                 f"Column '{name_col}' must be of string or categorical type."
             )
+        if reporting_data.report_date is not None and not isinstance(
+            reporting_data.report_date, date
+        ):
+            raise TypeError(
+                f"report_date must be a datetime.date object, "
+                f"not {type(reporting_data.report_date).__name__}"
+            )
 
     def get_figure(self, reporting_data: ReportingTimelineData) -> go.Figure:
         fig = px.timeline(
@@ -38,6 +46,13 @@ class ReportingTimelinePlot(ReportingPlotBase[ReportingTimelineData]):
             x_end=reporting_data.end_date_col,
             y=reporting_data.item_name_col,
         )
+        if reporting_data.report_date is not None:
+            fig.add_vline(
+                x=reporting_data.report_date,
+                line_width=2,
+                line_dash="dash",
+                line_color=ReportingColors.RED.hex,
+            )
         return fig
 
     def update_axis_layout(self, reporting_data: ReportingTimelineData):

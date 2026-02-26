@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import date
 from typing import Any
 
 import pandas as pd
@@ -41,3 +42,4 @@ class ReportingTimelineData(ReportingDataBase):
     item_name_col: str
     start_date_col: str
     end_date_col: str
+    report_date: date | None = None

@@ -1,3 +1,4 @@
+from datetime import date
 import numpy as np
 import pandas as pd
 import plotly.io as pio
@@ -32,6 +33,7 @@ class TestReportingTimelinePlot(TestCase):
         self.assertEqual(tr.type, "bar")
         self.assertEqual(tr.orientation, "h")
         self.assertFalse(tr.showlegend)
+        self.assertEqual(len(self.fig.layout.shapes), 0)
         self.assertFalse(self.fig.layout.showlegend)
 
     def test_axes_and_title(self):
@@ -150,3 +152,57 @@ class TestReportingTimelinePlot(TestCase):
         )
         timeline_plot = ReportingTimelinePlot()
         self.assertRaises(ValueError, timeline_plot.generate, report_data)
+
+
+class TestAdditionalTimelineFeatures(TestCase):
+    def test_timeline_plot__with_report_date(self):
+        tl_df = pd.DataFrame(
+            {
+                "start_date": ["2025-10-12", "2025-10-19"],
+                "end_date": ["2025-10-19", "2025-10-26"],
+                "topic": ["step_1", "step_2"],
+            }
+        )
+        report_data = ReportingTimelineData(
+            title="Test Timeline",
+            timeline_df=tl_df,
+            item_name_col="topic",
+            start_date_col="start_date",
+            end_date_col="end_date",
+            report_date=date(2025, 10, 18),
+        )
+        timeline_plot = ReportingTimelinePlot()
+        timeline_plot.generate(report_data)
+        fig = timeline_plot.figure
+        # Verify a vertical line shape was added
+        shapes = fig.layout.shapes
+        self.assertEqual(len(shapes), 1)
+
+        vline = shapes[0]
+        self.assertEqual(vline.type, "line")
+        self.assertEqual(vline.x0, vline.x1)  # x0 == x1 confirms it's vertical
+
+        # Verify it's positioned at the correct date
+        # add_vline stores the x value as a millisecond timestamp internally
+        expected_report_date = date(2025, 10, 18)
+        vline_date = vline.x0
+        self.assertEqual(vline_date, expected_report_date)
+
+    def test_timeline_plot__raise_error_wrong_report_date_type(self):
+        tl_df = pd.DataFrame(
+            {
+                "start_date": ["2025-10-12", "2025-10-19"],
+                "end_date": ["2025-10-19", "2025-10-26"],
+                "topic": ["step_1", "step_2"],
+            }
+        )
+        report_data = ReportingTimelineData(
+            title="Test Timeline",
+            timeline_df=tl_df,
+            item_name_col="topic",
+            start_date_col="start_date",
+            end_date_col="end_date",
+            report_date=[date(2025, 10, 18)],
+        )
+        timeline_plot = ReportingTimelinePlot()
+        self.assertRaises(TypeError, timeline_plot.generate, report_data)
