@@ -172,4 +172,34 @@ class TestAdditionalTimelineFeatures(TestCase):
         )
         timeline_plot = ReportingTimelinePlot()
         timeline_plot.generate(report_data)
-        self.fig = timeline_plot.figure
+        fig = timeline_plot.figure
+        # Verify a vertical line shape was added
+        shapes = fig.layout.shapes
+        self.assertEqual(len(shapes), 1)
+
+        vline = shapes[0]
+        self.assertEqual(vline.type, "line")
+        self.assertEqual(vline.x0, vline.x1)  # x0 == x1 confirms it's vertical
+
+        # Verify it's positioned at the correct date
+        # add_vline stores the x value as a millisecond timestamp internally
+        self.assertAlmostEqual(vline.x0, date(2025, 10, 18))
+
+    def test_timeline_plot__raise_error_wrong_report_date_type(self):
+        tl_df = pd.DataFrame(
+            {
+                "start_date": ["2025-10-12", "2025-10-19"],
+                "end_date": ["2025-10-19", "2025-10-26"],
+                "topic": ["step_1", "step_2"],
+            }
+        )
+        report_data = ReportingTimelineData(
+            title="Test Timeline",
+            timeline_df=tl_df,
+            item_name_col="topic",
+            start_date_col="start_date",
+            end_date_col="end_date",
+            report_date=[date(2025, 10, 18)],
+        )
+        timeline_plot = ReportingTimelinePlot()
+        self.assertRaises(TypeError, timeline_plot.generate, report_data)
