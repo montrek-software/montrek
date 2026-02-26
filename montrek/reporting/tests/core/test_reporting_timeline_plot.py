@@ -185,7 +185,7 @@ class TestAdditionalTimelineFeatures(TestCase):
         # Verify it's positioned at the correct date
         # add_vline stores the x value as a millisecond timestamp internally
         expected_report_date = date(2025, 10, 18)
-        vline_date = pd.to_datetime(vline.x0, unit="ms").date()
+        vline_date = vline.x0
         self.assertEqual(vline_date, expected_report_date)
 
     def test_timeline_plot__raise_error_wrong_report_date_type(self):
