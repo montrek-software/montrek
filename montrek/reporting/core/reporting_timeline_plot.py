@@ -2,6 +2,7 @@ from datetime import date
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+from baseclasses.templatetags.colors import get_color
 from reporting.core.reporting_colors import ReportingColors
 from reporting.core.reporting_data import ReportingTimelineData
 from reporting.core.reporting_plots import ReportingPlotBase
@@ -40,15 +41,28 @@ class ReportingTimelinePlot(ReportingPlotBase[ReportingTimelineData]):
             )
 
     def get_figure(self, reporting_data: ReportingTimelineData) -> go.Figure:
-        timeline_df = reporting_data.timeline_df
+        timeline_df = reporting_data.timeline_df.copy()
+        timeline_df[reporting_data.start_date_col] = pd.to_datetime(
+            timeline_df[reporting_data.start_date_col]
+        )
+        timeline_df = timeline_df.sort_values(
+            reporting_data.start_date_col, ascending=reporting_data.reversed_order
+        ).reset_index(drop=True)
+
         fig = px.timeline(
             timeline_df,
             x_start=reporting_data.start_date_col,
             x_end=reporting_data.end_date_col,
             y=reporting_data.item_name_col,
+            color=reporting_data.color_col,
+            color_discrete_map=reporting_data.color_descrete_map,
+            category_orders={
+                reporting_data.item_name_col: (
+                    timeline_df[reporting_data.item_name_col].drop_duplicates().tolist()
+                )
+            },
         )
-        if reporting_data.reversed_order:
-            fig.update_yaxes(autorange="reversed")
+
         if reporting_data.report_date is not None:
             fig.add_vline(
                 x=reporting_data.report_date,
@@ -56,12 +70,12 @@ class ReportingTimelinePlot(ReportingPlotBase[ReportingTimelineData]):
                 line_dash="dash",
                 line_color=ReportingColors.RED.hex,
             )
+
         return fig
 
     def update_axis_layout(self, reporting_data: ReportingTimelineData):
-        self.figure.update_traces(
-            marker_color=ReportingColors.BLUE.hex,
-        )
+        if reporting_data.color_col is None:
+            self.figure.update_traces(marker_color=get_color("primary_light"))
         self.figure.update_layout(
             showlegend=False,
             yaxis_title=None,
