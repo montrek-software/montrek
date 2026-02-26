@@ -40,12 +40,15 @@ class ReportingTimelinePlot(ReportingPlotBase[ReportingTimelineData]):
             )
 
     def get_figure(self, reporting_data: ReportingTimelineData) -> go.Figure:
+        timeline_df = reporting_data.timeline_df
         fig = px.timeline(
-            reporting_data.timeline_df,
+            timeline_df,
             x_start=reporting_data.start_date_col,
             x_end=reporting_data.end_date_col,
             y=reporting_data.item_name_col,
         )
+        if reporting_data.reversed_order:
+            fig.update_yaxes(autorange="reversed")
         if reporting_data.report_date is not None:
             fig.add_vline(
                 x=reporting_data.report_date,
