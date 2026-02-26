@@ -55,7 +55,7 @@ class ReportingTimelinePlot(ReportingPlotBase[ReportingTimelineData]):
             x_end=reporting_data.end_date_col,
             y=reporting_data.item_name_col,
             color=reporting_data.color_col,
-            color_discrete_map=reporting_data.color_descrete_map,
+            color_discrete_map=reporting_data.color_discrete_map,
             category_orders={
                 reporting_data.item_name_col: (
                     timeline_df[reporting_data.item_name_col].drop_duplicates().tolist()

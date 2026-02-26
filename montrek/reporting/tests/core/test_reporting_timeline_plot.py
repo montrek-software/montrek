@@ -255,7 +255,7 @@ class TestColorAdjustability(TestCase):
         color_map = {"A": "#111111", "B": "#222222"}
         fig = self._make_fig(
             color_col="category",
-            color_descrete_map=color_map,
+            color_discrete_map=color_map,
             bar_color="#FF0000",
         )
         # There are two traces (one per category); neither should be #FF0000.
@@ -283,7 +283,7 @@ class TestColorAdjustability(TestCase):
         color_map = {"A": "#AAAAAA", "B": "#BBBBBB"}
         fig = self._make_fig(
             color_col="category",
-            color_descrete_map=color_map,
+            color_discrete_map=color_map,
         )
         # Each category gets its own trace.
         self.assertEqual(len(fig.data), 2)

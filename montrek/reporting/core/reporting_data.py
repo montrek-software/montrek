@@ -45,6 +45,6 @@ class ReportingTimelineData(ReportingDataBase):
     report_date: date | None = None
     reversed_order: bool = False
     color_col: str | None = None
-    color_descrete_map: dict[str, str] | None = None
+    color_discrete_map: dict[str, str] | None = None
     bar_color: str | None = None
     vline_color: str | None = None
