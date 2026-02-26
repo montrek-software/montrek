@@ -34,7 +34,10 @@ class ReportingTimelinePlot(ReportingPlotBase[ReportingTimelineData]):
         if reporting_data.report_date is not None and not isinstance(
             reporting_data.report_date, date
         ):
-            raise TypeError("report_date is not a date type!")
+            raise TypeError(
+                f"report_date must be a datetime.date object, "
+                f"not {type(reporting_data.report_date).__name__}"
+            )
 
     def get_figure(self, reporting_data: ReportingTimelineData) -> go.Figure:
         fig = px.timeline(
