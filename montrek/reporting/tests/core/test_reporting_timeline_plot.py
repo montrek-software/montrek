@@ -1,3 +1,4 @@
+from datetime import date
 import numpy as np
 import pandas as pd
 import plotly.io as pio
@@ -150,3 +151,25 @@ class TestReportingTimelinePlot(TestCase):
         )
         timeline_plot = ReportingTimelinePlot()
         self.assertRaises(ValueError, timeline_plot.generate, report_data)
+
+
+class TestAdditionalTimelineFeatures(TestCase):
+    def test_timeline_plot__with_report_date(self):
+        tl_df = pd.DataFrame(
+            {
+                "start_date": ["2025-10-12", "2025-10-19"],
+                "end_date": ["2025-10-19", "2025-10-26"],
+                "topic": ["step_1", "step_2"],
+            }
+        )
+        report_data = ReportingTimelineData(
+            title="Test Timeline",
+            timeline_df=tl_df,
+            item_name_col="topic",
+            start_date_col="start_date",
+            end_date_col="end_date",
+            report_date=date(2025, 10, 18),
+        )
+        timeline_plot = ReportingTimelinePlot()
+        timeline_plot.generate(report_data)
+        self.fig = timeline_plot.figure
