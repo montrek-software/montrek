@@ -1,0 +1,21 @@
+from baseclasses.fields import HubForeignKey
+from baseclasses.models import HubValueDate, MontrekOneToManyLinkABC
+from django.db import models
+from file_upload.models import FileUploadFileHub, FileUploadRegistryHubABC
+
+
+class {{ registry_hub_cls_name }}(FileUploadRegistryHubABC):
+    link_file_upload_registry_file_upload_file = models.ManyToManyField(
+        "file_upload.FileUploadFileHub",
+        related_name="link_file_upload_file_{{ prefix }}_registry",
+        through="{{ registry_link_file_upload_cls_name }}",
+    )
+
+
+class {{ registry_hub_value_date_cls_name }}(HubValueDate):
+    hub = HubForeignKey({{ registry_hub_cls_name }})
+
+
+class {{ registry_link_file_upload_cls_name }}(MontrekOneToManyLinkABC):
+    hub_in = models.ForeignKey({{ registry_hub_cls_name }}, on_delete=models.CASCADE)
+    hub_out = models.ForeignKey(FileUploadFileHub, on_delete=models.CASCADE)

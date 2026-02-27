@@ -1,0 +1,21 @@
+class TestEntityFileUploadProcessor:
+    message = "Not implemented"
+
+    def __init__(self, file_upload_registry_hub, session_data, **kwargs):
+        self.file_upload_registry_hub = file_upload_registry_hub
+        self.session_data = session_data
+
+    def pre_check(self, file_path: str) -> bool:
+        raise NotImplementedError(
+            "Please implement TestEntityFileUploadProcessor.pre_check"
+        )
+
+    def process(self, file_path: str) -> bool:
+        raise NotImplementedError(
+            "Please implement TestEntityFileUploadProcessor.process"
+        )
+
+    def post_check(self, file_path: str) -> bool:
+        raise NotImplementedError(
+            "Please implement TestEntityFileUploadProcessor.post_check"
+        )

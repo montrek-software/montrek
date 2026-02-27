@@ -1,0 +1,96 @@
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import TestCase, TransactionTestCase
+from django.urls import reverse
+from testing.test_cases.view_test_cases import (
+    MontrekListViewTestCase,
+    MontrekViewTestCase,
+)
+from testing.decorators.add_logged_in_user import add_logged_in_user
+{{ registry_sat_factory_cls_import }}
+{{ registry_hub_factory_cls_import }}
+{{ registry_list_view_cls_import }}
+{{ registry_upload_file_view_cls_import }}
+{{ registry_history_view_cls_import }}
+{{ registry_processor_cls_import }}
+
+
+class {{ registry_list_view_test_cls_name }}(MontrekListViewTestCase):
+    viewname = "{{ registry_list_view_url_name }}"
+    view_class = {{ registry_list_view_cls_name }}
+    expected_no_of_rows = 3
+
+    def build_factories(self):
+        {{ registry_sat_factory_cls_name }}.create_batch(3)
+
+
+class {{ registry_upload_file_test_cls_name }}(TestCase):
+    @add_logged_in_user
+    def setUp(self):
+        self.url = reverse("{{ registry_upload_file_view_url_name }}")
+
+    def test_view_return_correct_html(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "upload_form.html")
+
+
+class {{ registry_upload_file_test_cls_name }}Post(TransactionTestCase):
+    """Skeleton upload test — adjust file content and assertions to match your processor."""
+
+    @add_logged_in_user
+    def setUp(self):
+        self.url = reverse("{{ registry_upload_file_view_url_name }}")
+
+    def _make_upload_file(self):
+        # TODO: Replace the dummy content with a realistic file for your processor.
+        # For CSV files use b"col1,col2\nval1,val2\n", for Excel use a real .xlsx bytes, etc.
+        content = b"col1,col2\nval1,val2\n"
+        return SimpleUploadedFile(
+            name="test_upload.csv",
+            content=content,
+            content_type="text/csv",
+        )
+
+    def test_view_post_upload(self):
+        upload_file = self._make_upload_file()
+        response = self.client.post(
+            self.url,
+            data={"file": upload_file},
+            follow=True,
+        )
+
+        # TODO: Adjust the expected redirect target once the processor is implemented.
+        self.assertRedirects(response, reverse("{{ registry_list_view_url_name }}"))
+
+        # TODO: Add assertions that verify the upload was processed correctly, e.g.:
+        # self.assertEqual({{ registry_hub_cls_name }}.objects.count(), 1)
+        # hub = {{ registry_hub_cls_name }}.objects.first()
+        # self.assertEqual(hub.<field>, <expected_value>)
+
+
+class {{ registry_history_view_test_cls_name }}(MontrekViewTestCase):
+    viewname = "{{ registry_history_view_url_name }}"
+    view_class = {{ registry_history_view_cls_name }}
+
+    def build_factories(self):
+        self.hub = {{ registry_hub_factory_cls_name }}()
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.hub.pk}
+
+
+class {{ registry_processor_test_cls_name }}(TestCase):
+    """These tests fail with NotImplementedError until the processor is implemented."""
+
+    def setUp(self):
+        self.hub = {{ registry_hub_factory_cls_name }}()
+        self.processor = {{ registry_processor_cls_name }}(self.hub, {})
+
+    def test_pre_check(self):
+        self.processor.pre_check("")
+
+    def test_process(self):
+        self.processor.process("")
+
+    def test_post_check(self):
+        self.processor.post_check("")

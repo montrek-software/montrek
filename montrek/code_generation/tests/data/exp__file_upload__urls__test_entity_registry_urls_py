@@ -1,0 +1,34 @@
+from django.shortcuts import redirect
+from django.urls import path
+from code_generation.tests.data.output_file_upload.views.test_entity_registry_views import TestEntityRegistryListView
+from code_generation.tests.data.output_file_upload.views.test_entity_registry_views import TestEntityRegistryUploadFileView
+from code_generation.tests.data.output_file_upload.views.test_entity_registry_views import TestEntityRegistryDownloadView
+from code_generation.tests.data.output_file_upload.views.test_entity_registry_views import TestEntityRegistryHistoryView
+
+urlpatterns = [
+    path(
+        "test_entity_registry",
+        lambda _: redirect("test_entity_registry_list"),
+        name="test_entity_registry",
+    ),
+    path(
+        "test_entity_registry/list",
+        TestEntityRegistryListView.as_view(),
+        name="test_entity_registry_list",
+    ),
+    path(
+        "test_entity_registry/upload",
+        TestEntityRegistryUploadFileView.as_view(),
+        name="test_entity_registry_upload_file",
+    ),
+    path(
+        "test_entity_registry/<int:pk>/download",
+        TestEntityRegistryDownloadView.as_view(),
+        name="test_entity_registry_download",
+    ),
+    path(
+        "test_entity_registry/<int:pk>/history",
+        TestEntityRegistryHistoryView.as_view(),
+        name="test_entity_registry_history",
+    ),
+]

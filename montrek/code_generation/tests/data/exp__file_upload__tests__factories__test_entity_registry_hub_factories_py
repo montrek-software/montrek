@@ -1,0 +1,24 @@
+import factory
+
+from file_upload.tests.factories.file_upload_factories import (
+    FileUploadRegistryHubFactory,
+)
+from baseclasses.tests.factories.baseclass_factories import ValueDateListFactory
+from baseclasses.tests.factories.montrek_factory_schemas import (
+    MontrekHubValueDateFactory,
+)
+from code_generation.tests.data.output_file_upload.models.test_entity_registry_hub_models import TestEntityRegistryHub
+from code_generation.tests.data.output_file_upload.models.test_entity_registry_hub_models import TestEntityRegistryHubValueDate
+
+
+class TestEntityRegistryHubFactory(FileUploadRegistryHubFactory):
+    class Meta:
+        model = TestEntityRegistryHub
+
+
+class TestEntityRegistryHubValueDateFactory(MontrekHubValueDateFactory):
+    class Meta:
+        model = TestEntityRegistryHubValueDate
+
+    hub = factory.SubFactory(TestEntityRegistryHubFactory)
+    value_date_list = factory.SubFactory(ValueDateListFactory)

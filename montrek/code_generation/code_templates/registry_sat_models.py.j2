@@ -1,0 +1,8 @@
+from django.db import models
+
+from file_upload.models import FileUploadRegistryStaticSatelliteABC
+{{ registry_hub_cls_import }}
+
+
+class {{ registry_sat_cls_name }}(FileUploadRegistryStaticSatelliteABC):
+    hub_entity = models.ForeignKey({{ registry_hub_cls_name }}, on_delete=models.CASCADE)

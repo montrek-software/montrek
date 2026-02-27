@@ -1,0 +1,53 @@
+from django.urls import reverse
+
+from baseclasses import views
+from baseclasses.dataclasses.view_classes import ListActionElement, UploadActionElement
+from file_upload.views import (
+    FileUploadRegistryView,
+    MontrekDownloadFileView,
+    MontrekUploadFileView,
+)
+{{ registry_manager_cls_import }}
+{{ registry_upload_manager_cls_import }}
+{{ registry_page_cls_import }}
+
+
+class {{ registry_list_view_cls_name }}(FileUploadRegistryView):
+    manager_class = {{ registry_manager_cls_name }}
+    page_class = {{ registry_page_cls_name }}
+    tab = "{{ registry_list_tab_id }}"
+    title = "{{ registry_list_view_title }}"
+
+    @property
+    def actions(self) -> tuple:
+        action_upload = UploadActionElement(
+            url_name="{{ registry_upload_file_view_url_name }}",
+            hover_text="Upload {{ registry_list_tab_name }} file",
+        )
+        return (action_upload,)
+
+
+class {{ registry_upload_file_view_cls_name }}(MontrekUploadFileView):
+    page_class = {{ registry_page_cls_name }}
+    title = "{{ registry_upload_file_title }}"
+    file_upload_manager_class = {{ registry_upload_manager_cls_name }}
+    accept = ".csv"
+
+    def get_success_url(self):
+        return reverse("{{ registry_list_view_url_name }}")
+
+
+class {{ registry_download_view_cls_name }}(MontrekDownloadFileView):
+    manager_class = {{ registry_manager_cls_name }}
+
+
+class {{ registry_history_view_cls_name }}(views.MontrekHistoryListView):
+    manager_class = {{ registry_manager_cls_name }}
+    page_class = {{ registry_page_cls_name }}
+    tab = "{{ registry_list_tab_id }}"
+    title = "{{ registry_history_view_title }}"
+
+    @property
+    def actions(self) -> tuple:
+        action_back = ListActionElement("{{ registry_list_view_url_name }}")
+        return (action_back,)

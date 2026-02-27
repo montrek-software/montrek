@@ -1,0 +1,18 @@
+from django.urls import reverse
+
+from baseclasses.dataclasses.view_classes import TabElement
+from baseclasses.pages import MontrekPage
+
+
+class {{ registry_page_cls_name }}(MontrekPage):
+    page_title = "{{ registry_page_title }}"
+
+    def get_tabs(self):
+        return (
+            TabElement(
+                name="{{ registry_list_tab_name }}",
+                link=reverse("{{ registry_list_view_url_name }}"),
+                html_id="{{ registry_list_tab_id }}",
+                active="active",
+            ),
+        )
