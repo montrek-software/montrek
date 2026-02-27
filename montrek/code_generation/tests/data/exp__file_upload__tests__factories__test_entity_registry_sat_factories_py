@@ -1,0 +1,14 @@
+import factory
+
+from file_upload.tests.factories.file_upload_factories import (
+    FileUploadRegistryStaticSatelliteFactory,
+)
+from code_generation.tests.data.output_file_upload.tests.factories.test_entity_registry_hub_factories import TestEntityRegistryHubFactory
+from code_generation.tests.data.output_file_upload.models.test_entity_registry_sat_models import TestEntityRegistrySatellite
+
+
+class TestEntityRegistrySatelliteFactory(FileUploadRegistryStaticSatelliteFactory):
+    class Meta:
+        model = TestEntityRegistrySatellite
+
+    hub_entity = factory.SubFactory(TestEntityRegistryHubFactory)

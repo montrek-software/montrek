@@ -1,0 +1,10 @@
+from file_upload.managers.file_upload_registry_manager import (
+    FileUploadRegistryManagerABC,
+)
+from code_generation.tests.data.output_file_upload.repositories.test_entity_registry_repositories import TestEntityRegistryRepository
+
+
+class TestEntityRegistryTableManager(FileUploadRegistryManagerABC):
+    repository_class = TestEntityRegistryRepository
+    download_url = "test_entity_registry_download"
+    history_url = "test_entity_registry_history"

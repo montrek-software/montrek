@@ -1,0 +1,12 @@
+from file_upload.repositories.file_upload_registry_repository import (
+    FileUploadRegistryRepositoryABC,
+)
+from code_generation.tests.data.output_file_upload.models.test_entity_registry_hub_models import TestEntityRegistryHub
+from code_generation.tests.data.output_file_upload.models.test_entity_registry_sat_models import TestEntityRegistrySatellite
+from code_generation.tests.data.output_file_upload.models.test_entity_registry_hub_models import LinkTestEntityRegistryFileUploadFile
+
+
+class TestEntityRegistryRepository(FileUploadRegistryRepositoryABC):
+    hub_class = TestEntityRegistryHub
+    static_satellite_class = TestEntityRegistrySatellite
+    link_file_upload_registry_file_upload_file_class = LinkTestEntityRegistryFileUploadFile

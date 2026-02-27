@@ -1,0 +1,53 @@
+from django.urls import reverse
+
+from baseclasses import views
+from baseclasses.dataclasses.view_classes import ListActionElement, UploadActionElement
+from file_upload.views import (
+    FileUploadRegistryView,
+    MontrekDownloadFileView,
+    MontrekUploadFileView,
+)
+from code_generation.tests.data.output_file_upload.managers.test_entity_registry_managers import TestEntityRegistryTableManager
+from code_generation.tests.data.output_file_upload.managers.test_entity_registry_upload_manager import TestEntityFileUploadManager
+from code_generation.tests.data.output_file_upload.pages.test_entity_registry_pages import TestEntityRegistryPage
+
+
+class TestEntityRegistryListView(FileUploadRegistryView):
+    manager_class = TestEntityRegistryTableManager
+    page_class = TestEntityRegistryPage
+    tab = "tab_test_entity_registry_list"
+    title = "Test Entity Registry List"
+
+    @property
+    def actions(self) -> tuple:
+        action_upload = UploadActionElement(
+            url_name="test_entity_registry_upload_file",
+            hover_text="Upload Test Entity Registry file",
+        )
+        return (action_upload,)
+
+
+class TestEntityRegistryUploadFileView(MontrekUploadFileView):
+    page_class = TestEntityRegistryPage
+    title = "Test Entity Registry Upload File"
+    file_upload_manager_class = TestEntityFileUploadManager
+    accept = ".csv"
+
+    def get_success_url(self):
+        return reverse("test_entity_registry_list")
+
+
+class TestEntityRegistryDownloadView(MontrekDownloadFileView):
+    manager_class = TestEntityRegistryTableManager
+
+
+class TestEntityRegistryHistoryView(views.MontrekHistoryListView):
+    manager_class = TestEntityRegistryTableManager
+    page_class = TestEntityRegistryPage
+    tab = "tab_test_entity_registry_list"
+    title = "Test Entity Registry History"
+
+    @property
+    def actions(self) -> tuple:
+        action_back = ListActionElement("test_entity_registry_list")
+        return (action_back,)
