@@ -1,0 +1,24 @@
+import factory
+
+from file_upload.tests.factories.file_upload_factories import (
+    FileUploadRegistryHubFactory,
+)
+from baseclasses.tests.factories.baseclass_factories import ValueDateListFactory
+from baseclasses.tests.factories.montrek_factory_schemas import (
+    MontrekHubValueDateFactory,
+)
+{{ registry_hub_cls_import }}
+{{ registry_hub_value_date_cls_import }}
+
+
+class {{ registry_hub_factory_cls_name }}(FileUploadRegistryHubFactory):
+    class Meta:
+        model = {{ registry_hub_cls_name }}
+
+
+class {{ registry_hub_value_date_factory_cls_name }}(MontrekHubValueDateFactory):
+    class Meta:
+      model = {{ registry_hub_value_date_cls_name }}
+
+    hub = factory.SubFactory({{ registry_hub_factory_cls_name }})
+    value_date_list = factory.SubFactory(ValueDateListFactory)

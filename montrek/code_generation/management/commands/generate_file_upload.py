@@ -18,6 +18,7 @@ class Command(StdArgumentsMixin, BaseCommand):
         }
         call_command("generate_registry_view_tests", *std_args, **std_kwargs)
         call_command("generate_registry_sat_factories", *std_args, **std_kwargs)
+        call_command("generate_registry_hub_factories", *std_args, **std_kwargs)
         # call_command("generate_hub_models", *std_args, **std_kwargs)
         # call_command("generate_satellite_models", *std_args, **std_kwargs)
         # call_command("generate_models_init", *std_args, **std_kwargs)
@@ -29,5 +30,3 @@ class Command(StdArgumentsMixin, BaseCommand):
         # call_command("generate_views", *std_args, **std_kwargs)
         # call_command("generate_urls_init", *std_args, **std_kwargs)
         # call_command("generate_urls", *std_args, **std_kwargs)
-        # call_command("generate_hub_factories", *std_args, **std_kwargs)
-        # call_command("generate_sat_factories", *std_args, **std_kwargs)

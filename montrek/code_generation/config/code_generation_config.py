@@ -30,6 +30,8 @@ class CodeGenerationConfig:
             "view_tests": "view_tests.py.j2",
             "registry_view_tests": "registry_view_tests.py.j2",
             "registry_sat_factories": "registry_sat_factories.py.j2",
+            "registry_hub_factories": "registry_hub_factories.py.j2",
+            "registry_hub_models": "registry_hub_models.py.j2",
         }
 
         self.output_paths_patterns = {
@@ -57,7 +59,13 @@ class CodeGenerationConfig:
                 "factories",
                 f"{prefix}_registry_sat_factories.py",
             ],
+            "registry_hub_factories": [
+                "tests",
+                "factories",
+                f"{prefix}_registry_hub_factories.py",
+            ],
             "registry_sat_models": ["models", f"{prefix}_registry_sat_models.py"],
+            "registry_hub_models": ["models", f"{prefix}_registry_hub_models.py"],
         }
         self.output_paths = {
             k: os.path.join(self.app_path, *v)
@@ -85,10 +93,14 @@ class CodeGenerationConfig:
         sat_cls_name = f"{c_prefix}Satellite"
         sat_factory_cls_name = f"{sat_cls_name}Factory"
         registry_list_view_cls_name = f"{c_prefix}RegistryListView"
-        registry_sat_factory_cls_name = f"{sat_cls_name}RegistryFactory"
-        registry_hub_cls_name = f"{c_prefix}RegistryHub"
-        registry_hub_factory_cls_name = f"{hub_cls_name}RegistryFactory"
         registry_sat_cls_name = f"{c_prefix}RegistrySatellite"
+        registry_sat_factory_cls_name = f"{registry_sat_cls_name}Factory"
+        registry_hub_cls_name = f"{c_prefix}RegistryHub"
+        registry_hub_factory_cls_name = f"{registry_hub_cls_name}Factory"
+        registry_hub_value_date_cls_name = f"{registry_hub_cls_name}ValueDate"
+        registry_hub_value_date_factory_cls_name = (
+            f"{registry_hub_value_date_cls_name}Factory"
+        )
 
         self.context = {
             "create_action_hover": f"Create new {ui_prefix}",
@@ -207,7 +219,7 @@ class CodeGenerationConfig:
             # "registry_list_view_url": f"{prefix}/list",
             "registry_list_view_url_name": f"{prefix}_registry_list",
             "registry_hub_factory_cls_import": self._get_import(
-                "hub_factories", registry_hub_factory_cls_name
+                "registry_hub_factories", registry_hub_factory_cls_name
             ),
             "registry_hub_factory_cls_name": registry_hub_factory_cls_name,
             "registry_sat_cls_name": registry_sat_cls_name,
@@ -219,15 +231,15 @@ class CodeGenerationConfig:
             ),
             "registry_hub_cls_import_rel": f"from .{prefix}_registry_hub_models import {registry_hub_cls_name}",
             "registry_hub_cls_name": registry_hub_cls_name,
-            # "hub_value_date_cls_import": self._get_import(
-            #     "hub_models", hub_value_date_cls_name
-            # ),
-            # "hub_value_date_cls_import_rel": f"from .{prefix}_hub_models import {hub_value_date_cls_name}",
-            # "hub_value_date_cls_name": hub_value_date_cls_name,
-            # "hub_value_date_factory_cls_import": self._get_import(
-            #     "hub_factories", hub_value_date_factory_cls_name
-            # ),
-            # "hub_value_date_factory_cls_name": hub_value_date_factory_cls_name,
+            "registry_hub_value_date_cls_import": self._get_import(
+                "registry_hub_models", registry_hub_value_date_cls_name
+            ),
+            "registry_hub_value_date_cls_import_rel": f"from .{prefix}_hub_models import {hub_value_date_cls_name}",
+            "registry_hub_value_date_cls_name": registry_hub_value_date_cls_name,
+            "registry_hub_value_date_factory_cls_import": self._get_import(
+                "registry_hub_factories", registry_hub_value_date_factory_cls_name
+            ),
+            "registry_hub_value_date_factory_cls_name": registry_hub_value_date_factory_cls_name,
         }
 
     def _get_import(self, key: str, class_name: str) -> str:
