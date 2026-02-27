@@ -32,6 +32,13 @@ class CodeGenerationConfig:
             "registry_sat_factories": "registry_sat_factories.py.j2",
             "registry_hub_factories": "registry_hub_factories.py.j2",
             "registry_hub_models": "registry_hub_models.py.j2",
+            "registry_sat_models": "registry_sat_models.py.j2",
+            "registry_repositories": "registry_repositories.py.j2",
+            "registry_managers": "registry_managers.py.j2",
+            "registry_views": "registry_views.py.j2",
+            "registry_pages": "registry_pages.py.j2",
+            "registry_urls": "registry_urls.py.j2",
+            "registry_urls_init": "registry_urls_init.py.j2",
         }
 
         self.output_paths_patterns = {
@@ -66,6 +73,15 @@ class CodeGenerationConfig:
             ],
             "registry_sat_models": ["models", f"{prefix}_registry_sat_models.py"],
             "registry_hub_models": ["models", f"{prefix}_registry_hub_models.py"],
+            "registry_repositories": [
+                "repositories",
+                f"{prefix}_registry_repositories.py",
+            ],
+            "registry_managers": ["managers", f"{prefix}_registry_managers.py"],
+            "registry_views": ["views", f"{prefix}_registry_views.py"],
+            "registry_pages": ["pages", f"{prefix}_registry_pages.py"],
+            "registry_urls": ["urls", f"{prefix}_registry_urls.py"],
+            "registry_urls_init": ["urls", "__init__.py"],
         }
         self.output_paths = {
             k: os.path.join(self.app_path, *v)
@@ -101,6 +117,11 @@ class CodeGenerationConfig:
         registry_hub_value_date_factory_cls_name = (
             f"{registry_hub_value_date_cls_name}Factory"
         )
+        registry_link_file_upload_cls_name = f"Link{c_prefix}RegistryFileUploadFile"
+        registry_repo_cls_name = f"{c_prefix}RegistryRepository"
+        registry_manager_cls_name = f"{c_prefix}RegistryTableManager"
+        registry_page_cls_name = f"{c_prefix}RegistryPage"
+        registry_download_view_cls_name = f"{c_prefix}RegistryDownloadView"
 
         self.context = {
             "create_action_hover": f"Create new {ui_prefix}",
@@ -203,43 +224,64 @@ class CodeGenerationConfig:
             "update_view_url": f"{prefix}/<int:pk>/update",
             "update_view_url_name": f"{prefix}_update",
             "urlpatterns_import_rel": f"from .{prefix}_urls import urlpatterns",
-            "registry_list_tab_id": f"tab_{prefix}_list",
-            "registry_list_tab_name": f"{ui_prefix}",
-            "registry_list_view_cls_import": self._get_import(
-                "views", registry_list_view_cls_name
-            ),
-            # "registry_list_view_cls_import_rel": f"from .{prefix}_views import {registry_list_view_cls_name}",
-            "registry_list_view_cls_name": registry_list_view_cls_name,
-            "registry_list_view_test_cls_name": f"Test{c_prefix}RegistryListView",
-            "registry_sat_factory_cls_import": self._get_import(
-                "registry_sat_factories", registry_sat_factory_cls_name
-            ),
-            "registry_sat_factory_cls_name": registry_sat_factory_cls_name,
-            # "registry_list_view_title": f"{ui_prefix} List",
-            # "registry_list_view_url": f"{prefix}/list",
-            "registry_list_view_url_name": f"{prefix}_registry_list",
-            "registry_hub_factory_cls_import": self._get_import(
-                "registry_hub_factories", registry_hub_factory_cls_name
-            ),
-            "registry_hub_factory_cls_name": registry_hub_factory_cls_name,
-            "registry_sat_cls_name": registry_sat_cls_name,
-            "registry_sat_cls_import": self._get_import(
-                "registry_sat_models", registry_sat_cls_name
+            "registry_download_url_name": f"{prefix}_registry_download",
+            "registry_download_view_cls_name": registry_download_view_cls_name,
+            "registry_download_view_cls_import": self._get_import(
+                "registry_views", registry_download_view_cls_name
             ),
             "registry_hub_cls_import": self._get_import(
                 "registry_hub_models", registry_hub_cls_name
             ),
             "registry_hub_cls_import_rel": f"from .{prefix}_registry_hub_models import {registry_hub_cls_name}",
             "registry_hub_cls_name": registry_hub_cls_name,
+            "registry_hub_factory_cls_import": self._get_import(
+                "registry_hub_factories", registry_hub_factory_cls_name
+            ),
+            "registry_hub_factory_cls_name": registry_hub_factory_cls_name,
             "registry_hub_value_date_cls_import": self._get_import(
                 "registry_hub_models", registry_hub_value_date_cls_name
             ),
-            "registry_hub_value_date_cls_import_rel": f"from .{prefix}_hub_models import {hub_value_date_cls_name}",
+            "registry_hub_value_date_cls_import_rel": f"from .{prefix}_registry_hub_models import {registry_hub_value_date_cls_name}",
             "registry_hub_value_date_cls_name": registry_hub_value_date_cls_name,
             "registry_hub_value_date_factory_cls_import": self._get_import(
                 "registry_hub_factories", registry_hub_value_date_factory_cls_name
             ),
             "registry_hub_value_date_factory_cls_name": registry_hub_value_date_factory_cls_name,
+            "registry_link_file_upload_cls_name": registry_link_file_upload_cls_name,
+            "registry_link_file_upload_cls_import": self._get_import(
+                "registry_hub_models", registry_link_file_upload_cls_name
+            ),
+            "registry_list_tab_id": f"tab_{prefix}_registry_list",
+            "registry_list_tab_name": f"{ui_prefix} Registry",
+            "registry_list_view_cls_import": self._get_import(
+                "registry_views", registry_list_view_cls_name
+            ),
+            "registry_list_view_cls_name": registry_list_view_cls_name,
+            "registry_list_view_test_cls_name": f"Test{c_prefix}RegistryListView",
+            "registry_list_view_title": f"{ui_prefix} Registry List",
+            "registry_list_view_url_name": f"{prefix}_registry_list",
+            "registry_manager_cls_name": registry_manager_cls_name,
+            "registry_manager_cls_import": self._get_import(
+                "registry_managers", registry_manager_cls_name
+            ),
+            "registry_page_cls_name": registry_page_cls_name,
+            "registry_page_cls_import": self._get_import(
+                "registry_pages", registry_page_cls_name
+            ),
+            "registry_page_title": f"{ui_prefix} Registry",
+            "registry_repo_cls_name": registry_repo_cls_name,
+            "registry_repo_cls_import": self._get_import(
+                "registry_repositories", registry_repo_cls_name
+            ),
+            "registry_sat_cls_import": self._get_import(
+                "registry_sat_models", registry_sat_cls_name
+            ),
+            "registry_sat_cls_name": registry_sat_cls_name,
+            "registry_sat_factory_cls_import": self._get_import(
+                "registry_sat_factories", registry_sat_factory_cls_name
+            ),
+            "registry_sat_factory_cls_name": registry_sat_factory_cls_name,
+            "registry_urlpatterns_import_rel": f"from .{prefix}_registry_urls import urlpatterns",
         }
 
     def _get_import(self, key: str, class_name: str) -> str:

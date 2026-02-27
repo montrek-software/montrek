@@ -1,0 +1,12 @@
+from file_upload.repositories.file_upload_registry_repository import (
+    FileUploadRegistryRepositoryABC,
+)
+{{ registry_hub_cls_import }}
+{{ registry_sat_cls_import }}
+{{ registry_link_file_upload_cls_import }}
+
+
+class {{ registry_repo_cls_name }}(FileUploadRegistryRepositoryABC):
+    hub_class = {{ registry_hub_cls_name }}
+    static_satellite_class = {{ registry_sat_cls_name }}
+    link_file_upload_registry_file_upload_file_class = {{ registry_link_file_upload_cls_name }}

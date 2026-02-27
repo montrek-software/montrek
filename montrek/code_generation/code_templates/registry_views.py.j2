@@ -1,0 +1,19 @@
+from baseclasses import views
+from file_upload.views import MontrekDownloadFileView
+{{ registry_manager_cls_import }}
+{{ registry_page_cls_import }}
+
+
+class {{ registry_list_view_cls_name }}(views.MontrekListView):
+    manager_class = {{ registry_manager_cls_name }}
+    page_class = {{ registry_page_cls_name }}
+    tab = "{{ registry_list_tab_id }}"
+    title = "{{ registry_list_view_title }}"
+
+    @property
+    def actions(self) -> tuple:
+        return ()
+
+
+class {{ registry_download_view_cls_name }}(MontrekDownloadFileView):
+    manager_class = {{ registry_manager_cls_name }}

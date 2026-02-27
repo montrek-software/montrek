@@ -1,0 +1,9 @@
+from file_upload.managers.file_upload_registry_manager import (
+    FileUploadRegistryManagerABC,
+)
+{{ registry_repo_cls_import }}
+
+
+class {{ registry_manager_cls_name }}(FileUploadRegistryManagerABC):
+    repository_class = {{ registry_repo_cls_name }}
+    download_url = "{{ registry_download_url_name }}"

@@ -18,7 +18,7 @@ class {{ registry_hub_factory_cls_name }}(FileUploadRegistryHubFactory):
 
 class {{ registry_hub_value_date_factory_cls_name }}(MontrekHubValueDateFactory):
     class Meta:
-      model = {{ registry_hub_value_date_cls_name }}
+        model = {{ registry_hub_value_date_cls_name }}
 
     hub = factory.SubFactory({{ registry_hub_factory_cls_name }})
     value_date_list = factory.SubFactory(ValueDateListFactory)

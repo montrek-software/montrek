@@ -1,0 +1,22 @@
+from django.shortcuts import redirect
+from django.urls import path
+{{ registry_list_view_cls_import }}
+{{ registry_download_view_cls_import }}
+
+urlpatterns = [
+    path(
+        "{{ prefix }}_registry",
+        lambda _: redirect("{{ registry_list_view_url_name }}"),
+        name="{{ prefix }}_registry",
+    ),
+    path(
+        "{{ prefix }}_registry/list",
+        {{ registry_list_view_cls_name }}.as_view(),
+        name="{{ registry_list_view_url_name }}",
+    ),
+    path(
+        "{{ prefix }}_registry/<int:pk>/download",
+        {{ registry_download_view_cls_name }}.as_view(),
+        name="{{ registry_download_url_name }}",
+    ),
+]
