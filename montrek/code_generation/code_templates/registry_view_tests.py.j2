@@ -1,0 +1,16 @@
+from testing.test_cases.view_test_cases import (
+    MontrekListViewTestCase,
+)
+{{ registry_sat_factory_cls_import }}
+{{ registry_list_view_cls_import }}
+
+
+
+
+class {{ registry_list_view_test_cls_name }}(MontrekListViewTestCase):
+    viewname = "{{ registry_list_view_url_name }}"
+    view_class = {{ registry_list_view_cls_name }}
+    expected_no_of_rows = 3
+
+    def build_factories(self):
+        {{ registry_sat_factory_cls_name }}.create_batch(3)

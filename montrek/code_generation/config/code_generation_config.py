@@ -28,6 +28,7 @@ class CodeGenerationConfig:
             "views": "views.py.j2",
             "views_init": "views_init.py.j2",
             "view_tests": "view_tests.py.j2",
+            "registry_view_tests": "registry_view_tests.py.j2",
         }
 
         self.output_paths = {
@@ -45,6 +46,11 @@ class CodeGenerationConfig:
             "views": ["views", f"{prefix}_views.py"],
             "views_init": ["views", "__init__.py"],
             "view_tests": ["tests", "views", f"test_{prefix}_views.py"],
+            "registry_view_tests": [
+                "tests",
+                "views",
+                f"test_{prefix}_registry_views.py",
+            ],
         }
         self.output_paths = {
             k: os.path.join(self.app_path, *v) for k, v in self.output_paths.items()
@@ -70,6 +76,8 @@ class CodeGenerationConfig:
         repo_cls_name = f"{c_prefix}Repository"
         sat_cls_name = f"{c_prefix}Satellite"
         sat_factory_cls_name = f"{sat_cls_name}Factory"
+        registry_list_view_cls_name = f"{c_prefix}RegistryListView"
+        registry_sat_factory_cls_name = f"{sat_cls_name}RegistryFactory"
 
         self.context = {
             "create_action_hover": f"Create new {ui_prefix}",
@@ -172,6 +180,21 @@ class CodeGenerationConfig:
             "update_view_url": f"{prefix}/<int:pk>/update",
             "update_view_url_name": f"{prefix}_update",
             "urlpatterns_import_rel": f"from .{prefix}_urls import urlpatterns",
+            "registry_list_tab_id": f"tab_{prefix}_list",
+            "registry_list_tab_name": f"{ui_prefix}",
+            "registry_list_view_cls_import": self._get_import(
+                "views", registry_list_view_cls_name
+            ),
+            # "registry_list_view_cls_import_rel": f"from .{prefix}_views import {registry_list_view_cls_name}",
+            "registry_list_view_cls_name": registry_list_view_cls_name,
+            "registry_list_view_test_cls_name": f"Test{c_prefix}RegistryListView",
+            "registry_sat_factory_cls_import": self._get_import(
+                "sat_factories", registry_sat_factory_cls_name
+            ),
+            "registry_sat_factory_cls_name": registry_sat_factory_cls_name,
+            # "registry_list_view_title": f"{ui_prefix} List",
+            # "registry_list_view_url": f"{prefix}/list",
+            "registry_list_view_url_name": f"{prefix}_registry_list",
         }
 
     def _get_import(self, key: str, class_name: str) -> str:
