@@ -20,6 +20,8 @@ class Command(StdArgumentsMixin, BaseCommand):
         call_command("generate_registry_sat_models", *std_args, **std_kwargs)
         call_command("generate_registry_repositories", *std_args, **std_kwargs)
         call_command("generate_registry_managers", *std_args, **std_kwargs)
+        call_command("generate_registry_processor", *std_args, **std_kwargs)
+        call_command("generate_registry_upload_manager", *std_args, **std_kwargs)
         call_command("generate_registry_pages", *std_args, **std_kwargs)
         call_command("generate_registry_views", *std_args, **std_kwargs)
         call_command("generate_registry_urls", *std_args, **std_kwargs)

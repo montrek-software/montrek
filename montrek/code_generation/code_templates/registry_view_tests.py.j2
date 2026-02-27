@@ -1,10 +1,16 @@
+from django.test import TestCase
+from django.urls import reverse
 from testing.test_cases.view_test_cases import (
     MontrekListViewTestCase,
+    MontrekViewTestCase,
 )
+from user.tests.factories.montrek_user_factories import MontrekUserFactory
 {{ registry_sat_factory_cls_import }}
+{{ registry_hub_factory_cls_import }}
 {{ registry_list_view_cls_import }}
-
-
+{{ registry_upload_file_view_cls_import }}
+{{ registry_history_view_cls_import }}
+{{ registry_processor_cls_import }}
 
 
 class {{ registry_list_view_test_cls_name }}(MontrekListViewTestCase):
@@ -14,3 +20,43 @@ class {{ registry_list_view_test_cls_name }}(MontrekListViewTestCase):
 
     def build_factories(self):
         {{ registry_sat_factory_cls_name }}.create_batch(3)
+
+
+class {{ registry_upload_file_test_cls_name }}(TestCase):
+    def setUp(self):
+        self.user = MontrekUserFactory()
+        self.client.force_login(self.user)
+        self.url = reverse("{{ registry_upload_file_view_url_name }}")
+
+    def test_view_return_correct_html(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "upload_form.html")
+
+
+class {{ registry_history_view_test_cls_name }}(MontrekViewTestCase):
+    viewname = "{{ registry_history_view_url_name }}"
+    view_class = {{ registry_history_view_cls_name }}
+
+    def build_factories(self):
+        self.hub = {{ registry_hub_factory_cls_name }}()
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.hub.pk}
+
+
+class {{ registry_processor_test_cls_name }}(TestCase):
+    """These tests fail with NotImplementedError until the processor is implemented."""
+
+    def setUp(self):
+        self.hub = {{ registry_hub_factory_cls_name }}()
+        self.processor = {{ registry_processor_cls_name }}(self.hub, {})
+
+    def test_pre_check(self):
+        self.processor.pre_check("")
+
+    def test_process(self):
+        self.processor.process("")
+
+    def test_post_check(self):
+        self.processor.post_check("")

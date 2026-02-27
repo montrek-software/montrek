@@ -39,6 +39,8 @@ class CodeGenerationConfig:
             "registry_pages": "registry_pages.py.j2",
             "registry_urls": "registry_urls.py.j2",
             "registry_urls_init": "registry_urls_init.py.j2",
+            "registry_processor": "registry_processor.py.j2",
+            "registry_upload_manager": "registry_upload_manager.py.j2",
         }
 
         self.output_paths_patterns = {
@@ -82,6 +84,11 @@ class CodeGenerationConfig:
             "registry_pages": ["pages", f"{prefix}_registry_pages.py"],
             "registry_urls": ["urls", f"{prefix}_registry_urls.py"],
             "registry_urls_init": ["urls", "__init__.py"],
+            "registry_processor": ["managers", f"{prefix}_registry_processor.py"],
+            "registry_upload_manager": [
+                "managers",
+                f"{prefix}_registry_upload_manager.py",
+            ],
         }
         self.output_paths = {
             k: os.path.join(self.app_path, *v)
@@ -122,6 +129,10 @@ class CodeGenerationConfig:
         registry_manager_cls_name = f"{c_prefix}RegistryTableManager"
         registry_page_cls_name = f"{c_prefix}RegistryPage"
         registry_download_view_cls_name = f"{c_prefix}RegistryDownloadView"
+        registry_processor_cls_name = f"{c_prefix}FileUploadProcessor"
+        registry_upload_manager_cls_name = f"{c_prefix}FileUploadManager"
+        registry_upload_file_view_cls_name = f"{c_prefix}RegistryUploadFileView"
+        registry_history_view_cls_name = f"{c_prefix}RegistryHistoryView"
 
         self.context = {
             "create_action_hover": f"Create new {ui_prefix}",
@@ -282,6 +293,29 @@ class CodeGenerationConfig:
             ),
             "registry_sat_factory_cls_name": registry_sat_factory_cls_name,
             "registry_urlpatterns_import_rel": f"from .{prefix}_registry_urls import urlpatterns",
+            "registry_processor_cls_name": registry_processor_cls_name,
+            "registry_processor_cls_import": self._get_import(
+                "registry_processor", registry_processor_cls_name
+            ),
+            "registry_processor_test_cls_name": f"Test{c_prefix}FileUploadProcessor",
+            "registry_upload_manager_cls_name": registry_upload_manager_cls_name,
+            "registry_upload_manager_cls_import": self._get_import(
+                "registry_upload_manager", registry_upload_manager_cls_name
+            ),
+            "registry_upload_file_view_cls_name": registry_upload_file_view_cls_name,
+            "registry_upload_file_view_cls_import": self._get_import(
+                "registry_views", registry_upload_file_view_cls_name
+            ),
+            "registry_upload_file_view_url_name": f"{prefix}_registry_upload_file",
+            "registry_upload_file_title": f"{ui_prefix} Registry Upload File",
+            "registry_upload_file_test_cls_name": f"Test{c_prefix}RegistryUploadFileView",
+            "registry_history_view_cls_name": registry_history_view_cls_name,
+            "registry_history_view_cls_import": self._get_import(
+                "registry_views", registry_history_view_cls_name
+            ),
+            "registry_history_view_url_name": f"{prefix}_registry_history",
+            "registry_history_view_title": f"{ui_prefix} Registry History",
+            "registry_history_view_test_cls_name": f"Test{c_prefix}RegistryHistoryView",
         }
 
     def _get_import(self, key: str, class_name: str) -> str:

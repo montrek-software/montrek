@@ -1,7 +1,9 @@
 from django.shortcuts import redirect
 from django.urls import path
 {{ registry_list_view_cls_import }}
+{{ registry_upload_file_view_cls_import }}
 {{ registry_download_view_cls_import }}
+{{ registry_history_view_cls_import }}
 
 urlpatterns = [
     path(
@@ -15,8 +17,18 @@ urlpatterns = [
         name="{{ registry_list_view_url_name }}",
     ),
     path(
+        "{{ prefix }}_registry/upload",
+        {{ registry_upload_file_view_cls_name }}.as_view(),
+        name="{{ registry_upload_file_view_url_name }}",
+    ),
+    path(
         "{{ prefix }}_registry/<int:pk>/download",
         {{ registry_download_view_cls_name }}.as_view(),
         name="{{ registry_download_url_name }}",
+    ),
+    path(
+        "{{ prefix }}_registry/<int:pk>/history",
+        {{ registry_history_view_cls_name }}.as_view(),
+        name="{{ registry_history_view_url_name }}",
     ),
 ]
