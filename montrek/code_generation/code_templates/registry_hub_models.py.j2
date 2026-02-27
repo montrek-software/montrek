@@ -5,7 +5,7 @@ from file_upload.models import FileUploadFileHub, FileUploadRegistryHubABC
 
 
 class {{ registry_hub_cls_name }}(FileUploadRegistryHubABC):
-    link_{{ prefix }}_registry_file_upload_file = models.ManyToManyField(
+    link_file_upload_registry_file_upload_file = models.ManyToManyField(
         "file_upload.FileUploadFileHub",
         related_name="link_file_upload_file_{{ prefix }}_registry",
         through="{{ registry_link_file_upload_cls_name }}",
