@@ -1,5 +1,6 @@
 import logging
 import os
+from pathlib import Path
 from typing import Any, Protocol
 
 from baseclasses.managers.montrek_manager import MontrekManager
@@ -139,11 +140,12 @@ class FileUploadManagerABC(MontrekManager):
 
     def register_file_in_db(self, file: File) -> int:
         file_name = file.name
+        file_name = Path(file_name).name
         file_type = file_name.split(".")[-1]
         upload_file_hub = self.get_upload_file_hub(file)
         file_upload_registry_hub = self.registry_manager.repository.std_create_object(
             {
-                "file_name": upload_file_hub.file,
+                "file_name": file_name,
                 "file_type": file_type,
                 "upload_status": "pending",
                 "upload_message": "Upload is pending",
