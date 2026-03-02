@@ -1,4 +1,3 @@
-from io import BytesIO
 import os
 from django.contrib import messages
 from django.core.files import File
@@ -96,14 +95,25 @@ class FileUploadRegistryRepositoryABC(MontrekRepository):
     def _get_file_from_registry(
         self, file_registry_path: str | None, request
     ) -> File | None:
+        """
+        Returns an open File handle for streaming. The caller is responsible
+        for closing it, or passing it to FileResponse which will close it automatically.
+        """
         if not file_registry_path:
             return None
         file_registry_path = os.path.join(settings.MEDIA_ROOT, file_registry_path)
         if not os.path.exists(file_registry_path):
             messages.error(request, f"File {file_registry_path} not found")
             return None
-        with open(file_registry_path, "rb") as f:
-            return File(BytesIO(f.read()), name=os.path.basename(file_registry_path))
+        return File(
+            open(  # noqa: SIM115 # FileResponse takes ownership and closes the handle after streaming
+                file_registry_path, "rb"
+            ),
+            name=os.path.basename(file_registry_path),
+        )
+
+
+# FileResponse streams and closes the handle when done
 
 
 class FileUploadRegistryRepository(FileUploadRegistryRepositoryABC):
