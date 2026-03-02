@@ -34,10 +34,17 @@ class LogFileMixin(LogFileChecksMixin):
         self._add_log_file_link(excel_log_file)
 
     def generate_log_file_txt(
-        self, message: str, *, additional_data: pd.DataFrame | None = None
+        self,
+        message: str,
+        *,
+        additional_data: pd.DataFrame | None = None,
+        plain_text: bool = False,
     ):
         self._check_attributes()
-        txt_log_file = self._generate_txt_file(message, additional_data)
+        if not plain_text:
+            txt_log_file = self._generate_txt_file(message, additional_data)
+        else:
+            txt_log_file = self._get_content_file(message)
         self._add_log_file_link(txt_log_file)
 
     def _generate_excel_file(
@@ -63,7 +70,7 @@ class LogFileMixin(LogFileChecksMixin):
         file_content = log_sr.to_string()
         if isinstance(additional_data, pd.DataFrame):
             file_content += additional_data.to_string()
-        content_file = ContentFile(file_content.encode("utf-8"), name="upload_log.txt")
+        content_file = self._get_content_file(file_content)
         return content_file
 
     def _get_log_sr(self, message) -> pd.Series:
@@ -102,6 +109,9 @@ class LogFileMixin(LogFileChecksMixin):
             create_data
         )
         registry_log_file_link.add(file_log_hub)
+
+    def _get_content_file(self, file_content: str) -> ContentFile:
+        return ContentFile(file_content.encode("utf-8"), name="upload_log.txt")
 
     @staticmethod
     def _add_suffix_before_extension(filename: str, suffix: str) -> str:

@@ -12,8 +12,7 @@ from file_upload.tests.utils import LogFileTestMixin
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
 
-class MockUploadRegistryHub:
-    ...
+class MockUploadRegistryHub: ...
 
 
 class MockNoLinkNameProcessor(LogFileMixin):
@@ -122,6 +121,14 @@ class TestExcelLogFileMixin(TestCase, LogFileTestMixin):
             MockRegistryRepository(self.processor),
             test_message,
             additional_data=test_additional_data,
+        )
+
+    def test_log_txt_file__plain_text(self):
+        test_message = "Test with additional data sheet"
+        self.processor.generate_log_file_txt(test_message, plain_text=True)
+        self.assert_log_txt_file(
+            MockRegistryRepository(self.processor),
+            test_message,
         )
 
     def test_muktiple_log_files(self):
