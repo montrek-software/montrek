@@ -2,6 +2,9 @@ import logging
 from pathlib import Path
 from typing import TextIO
 from urllib.parse import urlparse
+from django.forms import Form
+
+from django.template.response import TemplateResponse
 
 from baseclasses.views import (
     MontrekCreateView,
@@ -52,24 +55,31 @@ class MontrekUploadFileView(MontrekTemplateView):
     def post(self, request, *args, **kwargs):
         form = self.get_post_form(request)
         if form.is_valid():
-            logger.debug("Start file upload process")
-            if not self._check_file_type(request.FILES["file"]):
-                return self.render_to_response(self.get_context_data())
-            self.file_upload_manager = self.file_upload_manager_class(
-                session_data=self.session_data,
-            )
-            logger.debug("file_upload_manager: %s", self.file_upload_manager)
-            result = self.file_upload_manager.upload_and_process(request.FILES["file"])
-            if result:
-                messages.info(request, self.file_upload_manager.message)
-            else:
-                messages.error(request, self.file_upload_manager.message)
-            logger.debug("End file upload process")
-            return HttpResponseRedirect(self.get_success_url())
+            return self.form_valid(form, request)
         return self.render_to_response(self.get_context_data())
+
+    def form_valid(self, form, request) -> HttpResponseRedirect | TemplateResponse:
+        logger.debug("Start file upload process")
+        file = self.get_file(form)
+        if not self._check_file_type(file):
+            return self.render_to_response(self.get_context_data())
+        self.file_upload_manager = self.file_upload_manager_class(
+            session_data=self.session_data,
+        )
+        logger.debug("file_upload_manager: %s", self.file_upload_manager)
+        result = self.file_upload_manager.upload_and_process(file)
+        if result:
+            messages.info(request, self.file_upload_manager.message)
+        else:
+            messages.error(request, self.file_upload_manager.message)
+        logger.debug("End file upload process")
+        return HttpResponseRedirect(self.get_success_url())
 
     def get_success_url(self):
         raise NotImplementedError("get_success_url not implemented")
+
+    def get_file(self, form: Form) -> str:
+        return form.cleaned_data["file"]
 
     def _check_file_type(self, file: TextIO) -> bool:
         expected_file_types = self.accept.split(",")
@@ -99,7 +109,6 @@ class MontrekDownloadFileBaseView(MontrekTemplateView):
         if upload_file is None:
             messages.info(request, "No download file available!")
             return redirect(request.META.get("HTTP_REFERER"))
-
         ext = Path(upload_file.name).suffix.lstrip(".").lower()
         DownloadRegistryStorageManager(self.session_data).store_in_download_registry(
             self.manager.document_name, DownloadType(ext)

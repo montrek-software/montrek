@@ -3,6 +3,7 @@ from django.contrib import messages
 from django.core.files import File
 from django.conf import settings
 from baseclasses.repositories.montrek_repository import MontrekRepository
+from baseclasses.typing import SessionDataType
 from file_upload.models import FileUploadRegistryHubABC
 from file_upload.models import FileUploadRegistryStaticSatelliteABC
 from file_upload.models import FileUploadFileStaticSatellite
@@ -29,7 +30,7 @@ class FileUploadRegistryRepositoryABC(MontrekRepository):
     )
     default_order_fields = ("-upload_date",)
 
-    def __init__(self, session_data={}):
+    def __init__(self, session_data: SessionDataType | None = None):
         self._setup_checks()
         super().__init__(session_data=session_data)
 
@@ -87,22 +88,32 @@ class FileUploadRegistryRepositoryABC(MontrekRepository):
     def get_log_file_from_registry(
         self, file_log_registry_id: int, request
     ) -> File | None:
-        file_log_registry_path = (
-            self.receive().get(hub__pk=file_log_registry_id).log_file
-        )
+        file_log_registry_path = self.receive().get(pk=file_log_registry_id).log_file
 
         return self._get_file_from_registry(file_log_registry_path, request)
 
     def _get_file_from_registry(
         self, file_registry_path: str | None, request
     ) -> File | None:
+        """
+        Returns an open File handle for streaming. The caller is responsible
+        for closing it, or passing it to FileResponse which will close it automatically.
+        """
         if not file_registry_path:
             return None
         file_registry_path = os.path.join(settings.MEDIA_ROOT, file_registry_path)
         if not os.path.exists(file_registry_path):
             messages.error(request, f"File {file_registry_path} not found")
             return None
-        return open(file_registry_path, "rb")
+        return File(
+            open(  # noqa: SIM115 # FileResponse takes ownership and closes the handle after streaming
+                file_registry_path, "rb"
+            ),
+            name=os.path.basename(file_registry_path),
+        )
+
+
+# FileResponse streams and closes the handle when done
 
 
 class FileUploadRegistryRepository(FileUploadRegistryRepositoryABC):

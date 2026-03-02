@@ -1,6 +1,7 @@
 import logging
 import os
-from typing import Any, Dict, Protocol
+from pathlib import Path
+from typing import Any, Protocol
 
 from baseclasses.managers.montrek_manager import MontrekManager
 from baseclasses.models import MontrekHubABC
@@ -26,7 +27,7 @@ class FileUploadProcessorProtocol(Protocol):
     def __init__(
         self,
         file_upload_registry_hub: FileUploadRegistryHubABC,
-        session_data: Dict[str, Any],
+        session_data: dict[str, Any],
         **kwargs,
     ): ...
 
@@ -43,7 +44,7 @@ class NotDefinedFileUploadProcessor:
     def __init__(
         self,
         file_upload_registry_hub: FileUploadRegistryHubABC,
-        session_data: Dict[str, Any],
+        session_data: dict[str, Any],
         **kwargs,
     ) -> None:
         raise NotImplementedError(self.message)
@@ -77,7 +78,7 @@ class FileUploadManagerABC(MontrekManager):
 
     def __init__(
         self,
-        session_data: Dict[str, Any],
+        session_data: dict[str, Any],
     ) -> None:
         super().__init__(session_data=session_data)
         self.registry_manager = self.file_registry_manager_class(session_data)
@@ -132,16 +133,16 @@ class FileUploadManagerABC(MontrekManager):
             )
             logger.debug("Done processing")
             return True
-        else:
-            self._update_file_upload_registry(
-                upload_status="failed", upload_message=self.processor.message
-            )
-            return False
+        self._update_file_upload_registry(
+            upload_status="failed", upload_message=self.processor.message
+        )
+        return False
 
     def register_file_in_db(self, file: File) -> int:
         file_name = file.name
+        file_name = Path(file_name).name
         file_type = file_name.split(".")[-1]
-        upload_file_hub = self.repository.std_create_object({"file": file})
+        upload_file_hub = self.get_upload_file_hub(file)
         file_upload_registry_hub = self.registry_manager.repository.std_create_object(
             {
                 "file_name": file_name,
@@ -153,6 +154,9 @@ class FileUploadManagerABC(MontrekManager):
             }
         )
         return file_upload_registry_hub.pk
+
+    def get_upload_file_hub(self, file):
+        return self.repository.std_create_object({"file": file})
 
     def _update_file_upload_registry(self, **kwargs) -> None:
         att_dict = self.registry_manager.repository.object_to_dict(
