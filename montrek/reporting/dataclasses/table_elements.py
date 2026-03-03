@@ -199,6 +199,12 @@ class ExternalLinkTableElement(AttrTableElement):
     def format(self, value):
         return value
 
+    def get_value(self, obj: Any) -> Any:
+        url = super().get_value(obj)
+        if url and not urlparse(url).scheme:
+            return f"https://{url}"
+        return url
+
     def get_hover_text(self, obj: Any) -> str | None:
         value = self.get_value(obj)
         if value is None:
