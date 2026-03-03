@@ -201,6 +201,9 @@ class ExternalLinkTableElement(AttrTableElement):
 
     def get_value(self, obj: Any) -> Any:
         url = super().get_value(obj)
+        # Ensure url is string-like before attempting to parse; otherwise, return as-is.
+        if not isinstance(url, (str, bytes)):
+            return url
         if not url:
             return url
         parsed = urlparse(url)
