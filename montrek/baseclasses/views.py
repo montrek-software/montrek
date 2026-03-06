@@ -153,6 +153,10 @@ class MontrekViewMixin:
                 messages.error(self.request, message.message)
             elif message.message_type == "info":
                 messages.info(self.request, message.message)
+            elif message.message_type == "warning":
+                messages.warning(self.request, message.message)
+            else:
+                messages.success(self.request, message.message)
 
     def get_view_queryset(self):
         return self.manager.repository.receive()

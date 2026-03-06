@@ -1,6 +1,7 @@
 from baseclasses.dataclasses.montrek_message import (
     MontrekMessageError,
     MontrekMessageInfo,
+    MontrekMessageWarning,
 )
 from baseclasses.managers.montrek_manager import MontrekManager
 from baseclasses.pages import MontrekPage
@@ -333,6 +334,7 @@ class TestMontrekViewMixin(TestCase):
         ]
         mock_view.manager.messages = [
             MontrekMessageInfo("Info message"),
+            MontrekMessageWarning("Warning message"),
         ]
         mock_view.show_messages()
         # Retrieve messages from the request
@@ -348,6 +350,12 @@ class TestMontrekViewMixin(TestCase):
         self.assertTrue(
             any(
                 msg.message == "Info message" and msg.level_tag == "info"
+                for msg in messages
+            )
+        )
+        self.assertTrue(
+            any(
+                msg.message == "Warning message" and msg.level_tag == "warning"
                 for msg in messages
             )
         )
