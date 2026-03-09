@@ -505,6 +505,11 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
                 **{
                     min_field: Func(
                         Case(
+                            When(
+                                **{f"{self.field}sub__isnull": True},
+                                then=Value(None, output_field=IntegerField()),
+                            ),
+
                             When(falsy_condition, then=Value(0)),
                             default=Value(1),
                             output_field=IntegerField(),
