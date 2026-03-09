@@ -2302,7 +2302,7 @@ class TestStaticAggFuncs(TestCase):
 
 
 class TestStaticAggFuncsAll(TestCase):
-    """Tests for agg_func="all": True iff every linked value is truthy."""
+    """Tests for agg_func="all": True iff every linked non-NULL value is truthy; NULL values are ignored (treated as not applicable)."""
 
     def _hub_c_with_d1s(self, *int_values):
         sat_c1 = me_factories.SatC1Factory()
