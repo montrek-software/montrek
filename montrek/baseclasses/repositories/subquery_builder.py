@@ -499,22 +499,36 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         # A separate Q is used instead of __in=[False, 0] to avoid type-coercion errors
         # when the field is e.g. IntegerField (which rejects "").
         falsy_condition = Q(**{f"{self.field}sub": False})
-        return query.annotate(
-            **{
-                self.field
-                + "agg": Cast(
-                    Func(
+        min_field = f"{self.field}_all_min"
+        return (
+            query.annotate(
+                **{
+                    min_field: Func(
                         Case(
                             When(falsy_condition, then=Value(0)),
                             default=Value(1),
                             output_field=IntegerField(),
                         ),
                         function="Min",
-                    ),
-                    output_field=BooleanField(),
-                )
-            }
-        ).values(self.field + "agg")
+                    )
+                }
+            )
+            .annotate(
+                **{
+                    self.field
+                    + "agg": Case(
+                        When(
+                            **{f"{min_field}__isnull": True},
+                            then=Value(None, output_field=BooleanField()),
+                        ),
+                        When(**{min_field: 0}, then=Value(False)),
+                        default=Value(True),
+                        output_field=BooleanField(),
+                    )
+                }
+            )
+            .values(self.field + "agg")
+        )
 
     def _is_multiple_allowed(self, hub_field_to: str) -> bool:
         _is_many_to_many = isinstance(self.link_class(), MontrekManyToManyLinkABC)
