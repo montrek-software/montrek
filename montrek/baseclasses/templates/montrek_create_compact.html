@@ -14,28 +14,36 @@
 
       <div class="tile p-4">
         <h2 id="id_title" class="mb-4 text-center">{{ tag }}</h2>
-
         <form method="post" enctype="multipart/form-data">
           {% csrf_token %}
 
           {% for field in form %}
             {% if field.field.widget.input_type == "checkbox" %}
               <div class="mb-3">
-                <div class="form-check">
-                  <label class="form-check-label" for="{{ field.id_for_label }}">
-                    {{ field }} {{ field.label }}
-                  {% if field.help_text %}
-                    <span
-                      data-bs-toggle="tooltip"
-                      data-bs-title="{{ field.help_text }}"
-                      style="cursor: help;"
-                    ><i class="bi bi-info-circle"></i></span>
-                  {% endif %}
+                <div class="col-sm-3 col-lg-2 col-form-label text-sm-end ">
+                  <label for="{{ field.id_for_label }}-label">
+                  {{ field.label }}
                   </label>
                 </div>
-                {% if field.errors %}
-                  <div class="text-danger small">{{ field.errors }}</div>
-                {% endif %}
+                <div class="col-sm-9 col-lg-10">
+                  <div class="form-check">
+                    <label class="form-check-label" for="{{ field.id_for_label }}">
+                      {{ field }}
+                      {% if field.help_text %}
+                        <span
+                          data-bs-toggle="tooltip"
+                          data-bs-title="{{ field.help_text }}"
+                          style="cursor: help;"
+                        ><i class="bi bi-info-circle"></i></span>
+                      {% endif %}
+                    </label>
+                  </div>
+                  {% if field.errors %}
+                    <div class="text-danger small mt-1">
+                      {{ field.errors }}
+                    </div>
+                  {% endif %}
+                </div>
               </div>
             {% else %}
               <div class="mb-1">

@@ -20,7 +20,7 @@
         {% if field.field.widget.input_type == "checkbox" %}
           <div class="row mb-3">
             <div class="col-sm-3 col-lg-2 col-form-label text-sm-end ">
-              <label>
+              <label for="{{ field.id_for_label }}-label">
               {{ field.label }}
               </label>
             </div>
