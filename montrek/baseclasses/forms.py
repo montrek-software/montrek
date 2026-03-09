@@ -373,7 +373,6 @@ class MontrekModelMultipleChoiceField(
     def get_widget(display_field, use_checkboxes: bool) -> ChoiceWidget:
         if use_checkboxes:
             widget = forms.CheckboxSelectMultiple()
-            widget.attrs = {}
             return widget
         return FilteredSelectMultiple(verbose_name=display_field, is_stacked=False)
 
