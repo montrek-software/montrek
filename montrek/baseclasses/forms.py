@@ -230,7 +230,8 @@ class MontrekCreateForm(forms.ModelForm):
     def _apply_bootstrap_classes(self):
         for name, field in self.fields.items():
             widget = field.widget
-
+            if isinstance(widget, forms.CheckboxSelectMultiple):
+                pass  # form-select must not be applied; styled via form-check-input in template
             # Checkbox
             if isinstance(widget, forms.CheckboxInput):
                 widget.attrs["class"] = "form-check-input"
