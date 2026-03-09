@@ -218,6 +218,17 @@ class TestMontrekModelMultipleChoiceField(TestCase):
         self.assertTrue(isinstance(list_field.widget, FilteredSelectMultiple))
         self.assertEqual(list_field.widget.verbose_name, "field1")
 
+    def test_init__widget_css_classes(self):
+        field_kwargs = {"display_field": "field1", "queryset": QuerySet()}
+        checkbox_field = MontrekModelMultipleChoiceField(
+            **field_kwargs, use_checkboxes_for_many_to_many=True
+        )
+        list_field = MontrekModelMultipleChoiceField(
+            **field_kwargs, use_checkboxes_for_many_to_many=False
+        )
+        self.assertNotIn("form-select", checkbox_field.widget.attrs.get("class", ""))
+        self.assertIn("form-select", list_field.widget.attrs.get("class", ""))
+
 
 class TestBaseMontrekChoiceField(TestCase):
     def test_init__widget(self):

@@ -230,7 +230,8 @@ class MontrekCreateForm(forms.ModelForm):
     def _apply_bootstrap_classes(self):
         for name, field in self.fields.items():
             widget = field.widget
-
+            if isinstance(widget, forms.CheckboxSelectMultiple):
+                pass  # form-select must not be applied; styled via form-check-input in template
             # Checkbox
             if isinstance(widget, forms.CheckboxInput):
                 widget.attrs["class"] = "form-check-input"
@@ -327,7 +328,9 @@ class BaseMontrekChoiceField:
         super().__init__(*args, **kwargs)
         self.display_field = display_field
         # Ensure Bootstrap styling
-        if hasattr(self, "widget"):
+        if hasattr(self, "widget") and not isinstance(
+            self.widget, forms.CheckboxSelectMultiple
+        ):
             css_class = self.widget.attrs.get("class", "")
             self.widget.attrs["class"] = f"{css_class} form-select".strip()
 
@@ -370,7 +373,8 @@ class MontrekModelMultipleChoiceField(
     @staticmethod
     def get_widget(display_field, use_checkboxes: bool) -> ChoiceWidget:
         if use_checkboxes:
-            return forms.CheckboxSelectMultiple()
+            widget = forms.CheckboxSelectMultiple()
+            return widget
         return FilteredSelectMultiple(verbose_name=display_field, is_stacked=False)
 
     @staticmethod
