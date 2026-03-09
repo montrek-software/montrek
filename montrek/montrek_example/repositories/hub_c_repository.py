@@ -289,3 +289,22 @@ class HubCBooleanRepository(MontrekRepository):
             me_models.SatCBoolean,
             ["field_bool_1", "field_bool_2"],
         )
+
+
+class HubCRepositoryAll(MontrekRepository):
+    hub_class = me_models.HubC
+
+    def set_annotations(self):
+        self.add_linked_satellites_field_annotations(
+            me_models.SatD1,
+            me_models.LinkHubCHubD,
+            ["field_d1_int"],
+            agg_func="all",
+        )
+        self.add_linked_satellites_field_annotations(
+            me_models.SatA2,
+            me_models.LinkHubAHubC,
+            ["field_a2_float"],
+            reversed_link=True,
+            agg_func="all",
+        )

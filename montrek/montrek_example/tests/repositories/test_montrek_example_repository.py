@@ -32,6 +32,7 @@ from montrek_example.repositories.hub_c_repository import (
     HubCBooleanRepository,
     HubCRepository,
     HubCRepository2,
+    HubCRepositoryAll,
     HubCRepositoryCommonFields,
     HubCRepositoryCount,
     HubCRepositoryLast,
@@ -2298,6 +2299,78 @@ class TestStaticAggFuncs(TestCase):
         self.assertEqual(test_query[0].field_d1_int, 2)
         self.assertEqual(test_query[0].a2_counter, 2)
         self.assertEqual(test_query[0].a2_counter_w_filter, 1)
+
+
+class TestStaticAggFuncsAll(TestCase):
+    """Tests for agg_func="all": True iff every linked value is truthy."""
+
+    def _hub_c_with_d1s(self, *int_values):
+        sat_c1 = me_factories.SatC1Factory()
+        for val in int_values:
+            sat_d1 = me_factories.SatD1Factory(field_d1_int=val)
+            sat_c1.hub_entity.link_hub_c_hub_d.add(sat_d1.hub_entity)
+        return sat_c1
+
+    def _hub_c_with_a2s(self, *float_values):
+        sat_c1 = me_factories.SatC1Factory()
+        for val in float_values:
+            sat_a2 = me_factories.SatA2Factory(field_a2_float=val)
+            sat_a2.hub_entity.link_hub_a_hub_c.add(sat_c1.hub_entity)
+        return sat_c1
+
+    def test_all_true_when_all_direct_link_values_are_truthy(self):
+        self._hub_c_with_d1s(1, 2)
+        repo = HubCRepositoryAll()
+        result = repo.receive()
+        self.assertEqual(result.count(), 1)
+        self.assertTrue(result[0].field_d1_int)
+
+    def test_all_false_when_one_direct_link_value_is_zero(self):
+        self._hub_c_with_d1s(1, 0)
+        repo = HubCRepositoryAll()
+        result = repo.receive()
+        self.assertEqual(result.count(), 1)
+        self.assertFalse(result[0].field_d1_int)
+
+    def test_all_false_when_all_direct_link_values_are_zero(self):
+        self._hub_c_with_d1s(0, 0)
+        repo = HubCRepositoryAll()
+        result = repo.receive()
+        self.assertEqual(result.count(), 1)
+        self.assertFalse(result[0].field_d1_int)
+
+    def test_all_true_reversed_link_when_all_values_are_truthy(self):
+        self._hub_c_with_a2s(2.5, 3.0)
+        repo = HubCRepositoryAll()
+        result = repo.receive()
+        self.assertEqual(result.count(), 1)
+        self.assertTrue(result[0].field_a2_float)
+
+    def test_all_true_reversed_link_when_one_value_is_none(self):
+        # NULL is skipped (treated as not-applicable, like SQL aggregate NULL handling),
+        # so all([truthy, NULL]) is still True.
+        self._hub_c_with_a2s(2.5, None)
+        repo = HubCRepositoryAll()
+        result = repo.receive()
+        self.assertEqual(result.count(), 1)
+        self.assertTrue(result[0].field_a2_float)
+
+    def test_all_false_reversed_link_when_one_value_is_zero(self):
+        self._hub_c_with_a2s(2.5, 0.0)
+        repo = HubCRepositoryAll()
+        result = repo.receive()
+        self.assertEqual(result.count(), 1)
+        self.assertFalse(result[0].field_a2_float)
+
+    def test_multiple_hubs_each_evaluated_independently(self):
+        """Two HubC objects: one with all-truthy links, one with a falsy link."""
+        self._hub_c_with_d1s(1, 2)
+        self._hub_c_with_d1s(1, 0)
+        repo = HubCRepositoryAll()
+        result = repo.receive().order_by("pk")
+        self.assertEqual(result.count(), 2)
+        self.assertTrue(result[0].field_d1_int)
+        self.assertFalse(result[1].field_d1_int)
 
 
 class TestTimeSeriesPerformance(TestCase):
