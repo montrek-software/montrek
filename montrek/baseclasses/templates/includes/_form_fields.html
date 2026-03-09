@@ -1,9 +1,14 @@
 {% for field in form %}
   {% if field.field.widget.input_type == "checkbox" %}
     <div class="row mb-3">
-      <div class="col-sm-3 col-lg-2 col-form-label text-sm-end">
-        <label for="{{ field.id_for_label }}-label">{{ field.label }}</label>
-      </div>
+      <label class="col-sm-3 col-lg-2 col-form-label text-sm-end pt-0">
+        {{ field.label }}
+        {% if field.help_text %}
+          <span data-bs-toggle="tooltip" data-bs-title="{{ field.help_text }}" style="cursor: help;">
+            <i class="bi bi-info-circle"></i>
+          </span>
+        {% endif %}
+      </label>
       <div class="col-sm-9 col-lg-10">
         <div class="form-check">
           <label class="form-check-label" for="{{ field.id_for_label }}">
