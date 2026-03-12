@@ -267,7 +267,7 @@ class TestMontrekModelCharChoiceField(TestCase):
             test_field.get_initial_link({"abc": "def"}, [], "abc", ",", None), "def"
         )
 
-    def test_get_initial_link__sat_field_none__uses_display_field(self):
+    def test_get_initial_link__source_field_none__uses_display_field(self):
         self.assertEqual(
             MontrekModelCharChoiceField.get_initial_link(
                 {"abc": "def"}, [], "abc", ",", None
@@ -275,8 +275,8 @@ class TestMontrekModelCharChoiceField(TestCase):
             "def",
         )
 
-    def test_get_initial_link__sat_field_set__uses_sat_field_key(self):
-        """When sat_field differs from display_field, look up initial by sat_field."""
+    def test_get_initial_link__source_field_set__uses_source_field_key(self):
+        """When source_field differs from display_field, look up initial by source_field."""
         self.assertEqual(
             MontrekModelCharChoiceField.get_initial_link(
                 {"source_id": "def"}, [], "abc", ",", "source_id"
@@ -284,8 +284,8 @@ class TestMontrekModelCharChoiceField(TestCase):
             "def",
         )
 
-    def test_get_initial_link__sat_field_set__ignores_display_field_key(self):
-        """If initial only has display_field key but sat_field differs, return None."""
+    def test_get_initial_link__source_field_set__ignores_display_field_key(self):
+        """If initial only has display_field key but source_field differs, return None."""
         self.assertIsNone(
             MontrekModelCharChoiceField.get_initial_link(
                 {"abc": "def"}, [], "abc", ",", "source_id"
@@ -294,7 +294,7 @@ class TestMontrekModelCharChoiceField(TestCase):
 
 
 class TestMontrekModelChoiceFieldGetInitialLink(TestCase):
-    """Tests for MontrekModelChoiceField.get_initial_link with the sat_field parameter."""
+    """Tests for MontrekModelChoiceField.get_initial_link with the source_field parameter."""
 
     def setUp(self):
         self.hub = TestMontrekHubFactory()
@@ -303,28 +303,28 @@ class TestMontrekModelChoiceFieldGetInitialLink(TestCase):
         )
         self.qs = TestMontrekSatellite.objects.all()
 
-    def test_sat_field_none__uses_display_field_as_key(self):
-        """sat_field=None falls back to display_field for the initial dict lookup."""
+    def test_source_field_none__uses_display_field_as_key(self):
+        """source_field=None falls back to display_field for the initial dict lookup."""
         result = MontrekModelChoiceField.get_initial_link(
             {"test_name": "ALPHA"}, self.qs, "test_name", ";", None
         )
         self.assertEqual(result, self.satellite)
 
-    def test_sat_field_set__uses_sat_field_key_to_find_initial(self):
-        """When the source table field name differs, sat_field carries the right key."""
+    def test_source_field_set__uses_source_field_key_to_find_initial(self):
+        """When the source table field name differs, source_field carries the right key."""
         result = MontrekModelChoiceField.get_initial_link(
             {"source_name": "ALPHA"}, self.qs, "test_name", ";", "source_name"
         )
         self.assertEqual(result, self.satellite)
 
-    def test_sat_field_set__wrong_key_returns_none(self):
-        """If initial only has the display_field key but sat_field differs, no match."""
+    def test_source_field_set__wrong_key_returns_none(self):
+        """If initial only has the display_field key but source_field differs, no match."""
         result = MontrekModelChoiceField.get_initial_link(
             {"test_name": "ALPHA"}, self.qs, "test_name", ";", "source_name"
         )
         self.assertIsNone(result)
 
-    def test_sat_field_set__no_matching_row_returns_none(self):
+    def test_source_field_set__no_matching_row_returns_none(self):
         """Returns None when the looked-up value doesn't match any queryset row."""
         result = MontrekModelChoiceField.get_initial_link(
             {"source_name": "DOES_NOT_EXIST"}, self.qs, "test_name", ";", "source_name"
@@ -333,7 +333,7 @@ class TestMontrekModelChoiceFieldGetInitialLink(TestCase):
 
 
 class TestMontrekModelMultipleChoiceFieldGetInitialLink(TestCase):
-    """Tests for MontrekModelMultipleChoiceField.get_initial_link with sat_field."""
+    """Tests for MontrekModelMultipleChoiceField.get_initial_link with source_field."""
 
     def setUp(self):
         self.sat_a = TestMontrekSatelliteFactory(
@@ -344,22 +344,22 @@ class TestMontrekModelMultipleChoiceFieldGetInitialLink(TestCase):
         )
         self.qs = TestMontrekSatellite.objects.all()
 
-    def test_sat_field_none__uses_display_field_as_key(self):
-        """sat_field=None falls back to display_field for the initial dict lookup."""
+    def test_source_field_none__uses_display_field_as_key(self):
+        """source_field=None falls back to display_field for the initial dict lookup."""
         result = MontrekModelMultipleChoiceField.get_initial_link(
             {"test_name": "ALPHA;BETA"}, self.qs, "test_name", ";", None
         )
         self.assertQuerySetEqual(result, [self.sat_a, self.sat_b], ordered=False)
 
-    def test_sat_field_set__uses_sat_field_key(self):
-        """When the source field name differs, sat_field carries the right key."""
+    def test_source_field_set__uses_source_field_key(self):
+        """When the source field name differs, source_field carries the right key."""
         result = MontrekModelMultipleChoiceField.get_initial_link(
             {"source_names": "ALPHA;BETA"}, self.qs, "test_name", ";", "source_names"
         )
         self.assertQuerySetEqual(result, [self.sat_a, self.sat_b], ordered=False)
 
-    def test_sat_field_set__wrong_key_returns_none(self):
-        """If initial only has the display_field key but sat_field differs, no match."""
+    def test_source_field_set__wrong_key_returns_none(self):
+        """If initial only has the display_field key but source_field differs, no match."""
         result = MontrekModelMultipleChoiceField.get_initial_link(
             {"test_name": "ALPHA;BETA"}, self.qs, "test_name", ";", "source_names"
         )

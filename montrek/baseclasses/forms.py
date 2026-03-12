@@ -285,7 +285,7 @@ class MontrekCreateForm(forms.ModelForm):
         link_name: str,
         queryset: QuerySet,
         display_field: str,
-        sat_field: str | None = None,
+        source_field: str | None = None,
         required: bool = False,
         is_char_field: bool = False,
         use_checkboxes_for_many_to_many: bool = True,
@@ -305,7 +305,7 @@ class MontrekCreateForm(forms.ModelForm):
             choice_class = MontrekModelChoiceField
 
         initial_link = choice_class.get_initial_link(
-            self.initial, queryset, display_field, separator, sat_field
+            self.initial, queryset, display_field, separator, source_field
         )
         if readonly:
             kwargs["widget"] = forms.TextInput(attrs={"readonly": "readonly"})
@@ -344,7 +344,7 @@ class BaseMontrekChoiceField:
         queryset: QuerySet,
         display_field: str,
         separator: str,
-        sat_field: str | None,
+        source_field: str | None,
     ) -> object | None:
         raise NotImplementedError("Subclasses must implement this method.")
 
@@ -356,11 +356,11 @@ class MontrekModelChoiceField(BaseMontrekChoiceField, forms.ModelChoiceField):
         queryset: QuerySet,
         display_field: str,
         separator: str,
-        sat_field: str | None,
+        source_field: str | None,
     ) -> object | None:
-        sat_field = display_field if sat_field is None else sat_field
+        source_field = display_field if source_field is None else source_field
         initial_link = queryset.filter(
-            **{display_field: initial.get(sat_field)}
+            **{display_field: initial.get(source_field)}
         ).first()
         return initial_link
 
@@ -393,10 +393,10 @@ class MontrekModelMultipleChoiceField(
         queryset: QuerySet,
         display_field: str,
         separator: str,
-        sat_field: str | None,
+        source_field: str | None,
     ) -> object | None | QuerySet:
-        sat_field = display_field if sat_field is None else sat_field
-        initial_links_str = initial.get(sat_field)
+        source_field = display_field if source_field is None else source_field
+        initial_links_str = initial.get(source_field)
         if not isinstance(initial_links_str, str):
             return None
         filter_kwargs = {f"{display_field}__in": initial_links_str.split(separator)}
@@ -414,10 +414,10 @@ class MontrekModelCharChoiceField(BaseMontrekChoiceField, forms.CharField):
         queryset: QuerySet,
         display_field: str,
         separator: str,
-        sat_field: str | None,
+        source_field: str | None,
     ) -> object | None:
-        sat_field = display_field if sat_field is None else sat_field
-        return initial.get(sat_field)
+        source_field = display_field if source_field is None else source_field
+        return initial.get(source_field)
 
     def clean(self, value):
         if not value:
