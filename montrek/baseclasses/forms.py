@@ -285,6 +285,7 @@ class MontrekCreateForm(forms.ModelForm):
         link_name: str,
         queryset: QuerySet,
         display_field: str,
+        source_field: str | None = None,
         required: bool = False,
         is_char_field: bool = False,
         use_checkboxes_for_many_to_many: bool = True,
@@ -304,7 +305,7 @@ class MontrekCreateForm(forms.ModelForm):
             choice_class = MontrekModelChoiceField
 
         initial_link = choice_class.get_initial_link(
-            self.initial, queryset, display_field, separator
+            self.initial, queryset, display_field, separator, source_field
         )
         if readonly:
             kwargs["widget"] = forms.TextInput(attrs={"readonly": "readonly"})
@@ -339,7 +340,11 @@ class BaseMontrekChoiceField:
 
     @staticmethod
     def get_initial_link(
-        initial: dict[str, Any], queryset: QuerySet, display_field: str, separator: str
+        initial: dict[str, Any],
+        queryset: QuerySet,
+        display_field: str,
+        separator: str,
+        source_field: str | None,
     ) -> object | None:
         raise NotImplementedError("Subclasses must implement this method.")
 
@@ -347,10 +352,15 @@ class BaseMontrekChoiceField:
 class MontrekModelChoiceField(BaseMontrekChoiceField, forms.ModelChoiceField):
     @staticmethod
     def get_initial_link(
-        initial: dict[str, Any], queryset: QuerySet, display_field: str, separator: str
+        initial: dict[str, Any],
+        queryset: QuerySet,
+        display_field: str,
+        separator: str,
+        source_field: str | None,
     ) -> object | None:
+        source_field = display_field if source_field is None else source_field
         initial_link = queryset.filter(
-            **{display_field: initial.get(display_field)}
+            **{display_field: initial.get(source_field)}
         ).first()
         return initial_link
 
@@ -379,9 +389,14 @@ class MontrekModelMultipleChoiceField(
 
     @staticmethod
     def get_initial_link(
-        initial: dict[str, Any], queryset: QuerySet, display_field: str, separator: str
+        initial: dict[str, Any],
+        queryset: QuerySet,
+        display_field: str,
+        separator: str,
+        source_field: str | None,
     ) -> object | None | QuerySet:
-        initial_links_str = initial.get(display_field)
+        source_field = display_field if source_field is None else source_field
+        initial_links_str = initial.get(source_field)
         if not isinstance(initial_links_str, str):
             return None
         filter_kwargs = {f"{display_field}__in": initial_links_str.split(separator)}
@@ -395,9 +410,14 @@ class MontrekModelCharChoiceField(BaseMontrekChoiceField, forms.CharField):
 
     @staticmethod
     def get_initial_link(
-        initial: dict[str, Any], queryset: QuerySet, display_field: str, separator: str
+        initial: dict[str, Any],
+        queryset: QuerySet,
+        display_field: str,
+        separator: str,
+        source_field: str | None,
     ) -> object | None:
-        return initial.get(display_field)
+        source_field = display_field if source_field is None else source_field
+        return initial.get(source_field)
 
     def clean(self, value):
         if not value:

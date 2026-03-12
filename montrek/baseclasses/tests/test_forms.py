@@ -14,8 +14,14 @@ from baseclasses.forms import (
     FilterForm,
     MontrekCreateForm,
     MontrekModelCharChoiceField,
+    MontrekModelChoiceField,
     MontrekModelMultipleChoiceField,
 )
+from baseclasses.tests.factories.baseclass_factories import (
+    TestMontrekSatelliteFactory,
+    TestMontrekHubFactory,
+)
+from baseclasses.models import TestMontrekSatellite
 
 
 class TestFilterForm(TestCase):
@@ -245,7 +251,7 @@ class TestBaseMontrekChoiceField(TestCase):
     def test_get_initial_link_not_implemented(self):
         field = BaseMontrekChoiceField(display_field="field1")
         with self.assertRaises(NotImplementedError):
-            field.get_initial_link(None, None, None, None)
+            field.get_initial_link(None, None, None, None, None)
 
 
 class TestMontrekModelCharChoiceField(TestCase):
@@ -258,5 +264,110 @@ class TestMontrekModelCharChoiceField(TestCase):
             display_field="abc",
         )
         self.assertEqual(
-            test_field.get_initial_link({"abc": "def"}, [], "abc", ","), "def"
+            test_field.get_initial_link({"abc": "def"}, [], "abc", ",", None), "def"
         )
+
+    def test_get_initial_link__source_field_none__uses_display_field(self):
+        self.assertEqual(
+            MontrekModelCharChoiceField.get_initial_link(
+                {"abc": "def"}, [], "abc", ",", None
+            ),
+            "def",
+        )
+
+    def test_get_initial_link__source_field_set__uses_source_field_key(self):
+        """When source_field differs from display_field, look up initial by source_field."""
+        self.assertEqual(
+            MontrekModelCharChoiceField.get_initial_link(
+                {"source_id": "def"}, [], "abc", ",", "source_id"
+            ),
+            "def",
+        )
+
+    def test_get_initial_link__source_field_set__ignores_display_field_key(self):
+        """If initial only has display_field key but source_field differs, return None."""
+        self.assertIsNone(
+            MontrekModelCharChoiceField.get_initial_link(
+                {"abc": "def"}, [], "abc", ",", "source_id"
+            )
+        )
+
+
+class TestMontrekModelChoiceFieldGetInitialLink(TestCase):
+    """Tests for MontrekModelChoiceField.get_initial_link with the source_field parameter."""
+
+    def setUp(self):
+        self.hub = TestMontrekHubFactory()
+        self.satellite = TestMontrekSatelliteFactory(
+            hub_entity=self.hub, test_name="ALPHA"
+        )
+        self.qs = TestMontrekSatellite.objects.all()
+
+    def test_source_field_none__uses_display_field_as_key(self):
+        """source_field=None falls back to display_field for the initial dict lookup."""
+        result = MontrekModelChoiceField.get_initial_link(
+            {"test_name": "ALPHA"}, self.qs, "test_name", ";", None
+        )
+        self.assertEqual(result, self.satellite)
+
+    def test_source_field_set__uses_source_field_key_to_find_initial(self):
+        """When the source table field name differs, source_field carries the right key."""
+        result = MontrekModelChoiceField.get_initial_link(
+            {"source_name": "ALPHA"}, self.qs, "test_name", ";", "source_name"
+        )
+        self.assertEqual(result, self.satellite)
+
+    def test_source_field_set__wrong_key_returns_none(self):
+        """If initial only has the display_field key but source_field differs, no match."""
+        result = MontrekModelChoiceField.get_initial_link(
+            {"test_name": "ALPHA"}, self.qs, "test_name", ";", "source_name"
+        )
+        self.assertIsNone(result)
+
+    def test_source_field_set__no_matching_row_returns_none(self):
+        """Returns None when the looked-up value doesn't match any queryset row."""
+        result = MontrekModelChoiceField.get_initial_link(
+            {"source_name": "DOES_NOT_EXIST"}, self.qs, "test_name", ";", "source_name"
+        )
+        self.assertIsNone(result)
+
+
+class TestMontrekModelMultipleChoiceFieldGetInitialLink(TestCase):
+    """Tests for MontrekModelMultipleChoiceField.get_initial_link with source_field."""
+
+    def setUp(self):
+        self.sat_a = TestMontrekSatelliteFactory(
+            hub_entity=TestMontrekHubFactory(), test_name="ALPHA"
+        )
+        self.sat_b = TestMontrekSatelliteFactory(
+            hub_entity=TestMontrekHubFactory(), test_name="BETA"
+        )
+        self.qs = TestMontrekSatellite.objects.all()
+
+    def test_source_field_none__uses_display_field_as_key(self):
+        """source_field=None falls back to display_field for the initial dict lookup."""
+        result = MontrekModelMultipleChoiceField.get_initial_link(
+            {"test_name": "ALPHA;BETA"}, self.qs, "test_name", ";", None
+        )
+        self.assertQuerySetEqual(result, [self.sat_a, self.sat_b], ordered=False)
+
+    def test_source_field_set__uses_source_field_key(self):
+        """When the source field name differs, source_field carries the right key."""
+        result = MontrekModelMultipleChoiceField.get_initial_link(
+            {"source_names": "ALPHA;BETA"}, self.qs, "test_name", ";", "source_names"
+        )
+        self.assertQuerySetEqual(result, [self.sat_a, self.sat_b], ordered=False)
+
+    def test_source_field_set__wrong_key_returns_none(self):
+        """If initial only has the display_field key but source_field differs, no match."""
+        result = MontrekModelMultipleChoiceField.get_initial_link(
+            {"test_name": "ALPHA;BETA"}, self.qs, "test_name", ";", "source_names"
+        )
+        self.assertIsNone(result)
+
+    def test_non_string_initial_returns_none(self):
+        """If the initial value is not a string (e.g. None), return None."""
+        result = MontrekModelMultipleChoiceField.get_initial_link(
+            {"test_name": None}, self.qs, "test_name", ";", None
+        )
+        self.assertIsNone(result)
