@@ -148,6 +148,45 @@ class MontrekRepository:
     def receive(self, apply_filter: bool = True) -> QuerySet:
         return self.receive_raw(apply_filter, False).select_related("hub")
 
+    def filter_by_linked_hub(
+        self,
+        queryset: QuerySet,
+        link_class: type[MontrekLinkABC],
+        hub: MontrekHubABC,
+        *,
+        reversed_link: bool = False,
+    ) -> QuerySet:
+        """Filter a queryset returned by receive() to rows linked to a specific hub.
+
+        This is the ORM equivalent of filtering on a fund_id / hub_entity_id
+        annotation that was built by LinkedSatelliteSubqueryBuilder.  Filtering
+        on a Subquery annotation forces a correlated subquery per row (slow);
+        this method generates a JOIN instead.
+
+        The link_class name and reversed_link convention match those used in
+        add_linked_satellites_field_annotations so the two always stay in sync.
+
+        Args:
+            queryset:      A queryset produced by receive().
+            link_class:    The link model connecting this repository's hub to
+                           the target hub (e.g. LinkDatevTransactionFund).
+            hub:           The target hub instance to filter by.
+            reversed_link: True when this hub sits on hub_out and the target hub
+                           is on hub_in (mirrors the reversed_link flag used in
+                           add_linked_satellites_field_annotations).
+        """
+        link_name = link_class.__name__.lower()
+        target_field = "hub_in" if reversed_link else "hub_out"
+        return queryset.filter(
+            **{
+                f"hub__{link_name}__{target_field}": hub,
+                f"hub__{link_name}__state_date_start__lte": self.reference_date,
+                f"hub__{link_name}__state_date_end__gt": self.reference_date,
+                f"hub__{link_name}__{target_field}__state_date_start__lte": self.reference_date,
+                f"hub__{link_name}__{target_field}__state_date_end__gt": self.reference_date,
+            }
+        )
+
     def receive_raw(
         self, apply_filter: bool = True, update_view_model: bool = False
     ) -> QuerySet:
