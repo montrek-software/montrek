@@ -68,7 +68,7 @@ class Command(BaseCommand):
         code: str,
         import_statements: tuple[str, ...] = (),
     ):
-        with open(path, "r") as f:
+        with open(path) as f:
             old_code = f.read()
         if search_string in old_code:
             self.stdout.write(f"{search_string} exists already in {path}!")
@@ -166,22 +166,28 @@ class {self.model_out_name}{self.model_in_name}CreateView({self.model_in_name}Cr
             self.path_out, "repositories", f"{self.model_out}_repositories.py"
         )
         class_name = f"{self.model_out_name}{self.model_in_name}sRepository"
+        link_class_name = f"Link{self.model_in_name}{self.model_out_name}"
         code = f"""class {class_name}({self.model_in_name}Repository):
     def receive(self, apply_filter=True):
         {self.model_out}_hub = {self.model_out_name}HubValueDate.objects.get(
             pk=self.session_data.get("pk")
         ).hub
-        return super().receive(apply_filter).filter({self.model_out}_id={self.model_out}_hub.id)
+        return self.filter_by_linked_hub(
+            super().receive(apply_filter),
+            {link_class_name},
+            {self.model_out}_hub,
+        )
                 """
         import_statements = (
             f"from {self.python_path_in}.repositories.{self.model_in}_repositories import {self.model_in_name}Repository",
             f"from {self.python_path_out}.models.{self.model_out}_hub_models import {self.model_out_name}HubValueDate",
+            f"from {self.python_path_in}.models.{self.model_in}_hub_models import {link_class_name}",
         )
         self._add_code(repository_path, class_name, code, import_statements)
 
     def add_urls(self):
         urls_path = os.path.join(self.path_out, "urls", f"{self.model_out}_urls.py")
-        with open(urls_path, "r") as f:
+        with open(urls_path) as f:
             old_code = f.read()
         code = f"""path(
         "{self.model_out}/<int:pk>/{self.model_in}s/list",
