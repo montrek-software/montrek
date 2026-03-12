@@ -185,7 +185,7 @@ class MontrekRepository:
                 f"hub__{link_name}__{target_field}__state_date_start__lte": self.reference_date,
                 f"hub__{link_name}__{target_field}__state_date_end__gt": self.reference_date,
             }
-        ).distinct()
+        )
 
     def receive_raw(
         self, apply_filter: bool = True, update_view_model: bool = False
