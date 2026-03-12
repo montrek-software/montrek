@@ -395,7 +395,8 @@ class MontrekModelMultipleChoiceField(
         separator: str,
         sat_field: str | None,
     ) -> object | None | QuerySet:
-        initial_links_str = initial.get(display_field)
+        sat_field = display_field if sat_field is None else sat_field
+        initial_links_str = initial.get(sat_field)
         if not isinstance(initial_links_str, str):
             return None
         filter_kwargs = {f"{display_field}__in": initial_links_str.split(separator)}
@@ -415,7 +416,8 @@ class MontrekModelCharChoiceField(BaseMontrekChoiceField, forms.CharField):
         separator: str,
         sat_field: str | None,
     ) -> object | None:
-        return initial.get(display_field)
+        sat_field = display_field if sat_field is None else sat_field
+        return initial.get(sat_field)
 
     def clean(self, value):
         if not value:
