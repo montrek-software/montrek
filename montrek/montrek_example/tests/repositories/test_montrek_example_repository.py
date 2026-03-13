@@ -3824,3 +3824,115 @@ class TestCrossSatelliteFilter(TestCase):
         queryset = repo.receive().filter(hub=satb2.hub_entity)
         self.assertEqual(queryset.count(), 1)
         self.assertIsNone(queryset[0].field_d1_str)
+
+
+class TestFilterByLinkedHub(TestCase):
+    """Tests for MontrekRepository.filter_by_linked_hub.
+
+    Uses LinkHubBHubD (hub_in=HubB, hub_out=HubD) as a concrete link so the
+    tests stay within the example app.
+
+    Forward direction (reversed_link=False):
+        HubBRepository rows filtered by a specific HubD  →  hub_out is the target.
+
+    Reversed direction (reversed_link=True):
+        HubDRepository rows filtered by a specific HubB  →  hub_in is the target.
+    """
+
+    def setUp(self):
+        self.satb1 = me_factories.SatB1Factory()
+        self.satb2 = me_factories.SatB1Factory()
+        self.satb_unlinked = me_factories.SatB1Factory()
+
+        self.satd1 = me_factories.SatD1Factory()
+        self.satd2 = me_factories.SatD1Factory()
+
+        me_factories.LinkHubBHubDFactory.create(
+            hub_in=self.satb1.hub_entity,
+            hub_out=self.satd1.hub_entity,
+        )
+        me_factories.LinkHubBHubDFactory.create(
+            hub_in=self.satb2.hub_entity,
+            hub_out=self.satd2.hub_entity,
+        )
+        # satb_unlinked has no link to any HubD
+        # Passing reference_date bypasses the view model so the annotated
+        # queryset is built fresh against the in-transaction test data.
+        self.ref = timezone.now()
+
+    def _hub_b_repo(self):
+        return HubBRepository({"reference_date": self.ref})
+
+    # ------------------------------------------------------------------
+    # Forward direction: filter HubB rows by HubD (hub_out)
+    # ------------------------------------------------------------------
+
+    def test_forward_link__returns_only_linked_row(self):
+        """Only the HubB linked to hub_d1 should be returned."""
+        repo = self._hub_b_repo()
+        qs = repo.filter_by_linked_hub(
+            repo.receive(), me_models.LinkHubBHubD, self.satd1.hub_entity
+        )
+        self.assertEqual(qs.count(), 1)
+        self.assertEqual(qs[0].hub, self.satb1.hub_entity)
+
+    def test_forward_link__excludes_unlinked_row(self):
+        """HubB with no link to hub_d1 must not appear."""
+        repo = self._hub_b_repo()
+        qs = repo.filter_by_linked_hub(
+            repo.receive(), me_models.LinkHubBHubD, self.satd1.hub_entity
+        )
+        hub_ids = list(qs.values_list("hub_id", flat=True))
+        self.assertNotIn(self.satb_unlinked.hub_entity_id, hub_ids)
+
+    def test_forward_link__excludes_row_linked_to_different_target(self):
+        """HubB linked to hub_d2 must not appear when filtering by hub_d1."""
+        repo = self._hub_b_repo()
+        qs = repo.filter_by_linked_hub(
+            repo.receive(), me_models.LinkHubBHubD, self.satd1.hub_entity
+        )
+        hub_ids = list(qs.values_list("hub_id", flat=True))
+        self.assertNotIn(self.satb2.hub_entity_id, hub_ids)
+
+    def test_forward_link__expired_link_is_excluded(self):
+        """A link whose state_date_end lies in the past must not match."""
+        hub_b_expired = me_factories.SatB1Factory().hub_entity
+        me_factories.LinkHubBHubDFactory.create(
+            hub_in=hub_b_expired,
+            hub_out=self.satd1.hub_entity,
+            state_date_end=montrek_time(2020, 1, 1),
+        )
+        repo = self._hub_b_repo()
+        qs = repo.filter_by_linked_hub(
+            repo.receive(), me_models.LinkHubBHubD, self.satd1.hub_entity
+        )
+        hub_ids = list(qs.values_list("hub_id", flat=True))
+        self.assertNotIn(hub_b_expired.id, hub_ids)
+
+    # ------------------------------------------------------------------
+    # Reversed direction: filter HubD rows by HubB (hub_in)
+    # ------------------------------------------------------------------
+
+    def test_reversed_link__returns_only_linked_row(self):
+        """Only the HubD linked to hub_b1 should be returned."""
+        repo = HubDRepository()
+        qs = repo.filter_by_linked_hub(
+            repo.receive(),
+            me_models.LinkHubBHubD,
+            self.satb1.hub_entity,
+            reversed_link=True,
+        )
+        self.assertEqual(qs.count(), 1)
+        self.assertEqual(qs[0].hub, self.satd1.hub_entity)
+
+    def test_reversed_link__excludes_row_linked_to_different_target(self):
+        """HubD linked to hub_b2 must not appear when filtering by hub_b1."""
+        repo = HubDRepository()
+        qs = repo.filter_by_linked_hub(
+            repo.receive(),
+            me_models.LinkHubBHubD,
+            self.satb1.hub_entity,
+            reversed_link=True,
+        )
+        hub_ids = list(qs.values_list("hub_id", flat=True))
+        self.assertNotIn(self.satd2.hub_entity_id, hub_ids)
