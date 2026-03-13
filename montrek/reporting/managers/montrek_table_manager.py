@@ -387,6 +387,9 @@ class MontrekDataFrameTableManager(MontrekTableManagerABC):
     def _get_table_dimensions(self) -> int:
         return self.df.shape[0] * self.df.shape[1]
 
+    def download(self) -> HttpResponse:
+        return self.to_excel(HttpResponse())
+
 
 EXCLUDE_COLUMNS = [
     "id",
