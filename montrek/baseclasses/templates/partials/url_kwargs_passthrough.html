@@ -1,4 +1,4 @@
 {# Pass through all current GET params, excluding `exclude_key`. #}
 {# Usage: {% include "partials/url_kwargs_passthrough.html" with exclude_key="gen_pdf" %} #}
-{% for key, value in request.GET.items %}{% if key != exclude_key %}
-  <input type="hidden" name="{{ key }}" value="{{ value }}" />{% endif %}{% endfor %}
+{% for key, values in request.GET.lists %}{% if key != exclude_key %}{% for value in values %}
+  <input type="hidden" name="{{ key }}" value="{{ value }}" />{% endfor %}{% endif %}{% endfor %}
