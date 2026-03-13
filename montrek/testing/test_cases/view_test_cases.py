@@ -492,7 +492,8 @@ class MontrekReportViewTestCase(MontrekViewTestCase, RestApiTestCaseMixin):
             return
         user = MontrekUserFactory()
         self.client.force_login(user)
-        response = self.client.get(self.url + "?send_mail=true")
+        query_parms = self.query_params() | {"send_mail": "true"}
+        response = self.client.get(self.url, query_params=query_parms)
         self.assertRedirects(response, self.mail_success_url)
 
     def test_report_content(self):
