@@ -350,7 +350,9 @@ class MontrekDownloadViewTestCase(MontrekViewTestCase):
         return self.__class__.__name__ == "MontrekDownloadViewTestCase"
 
     def get_response(self):
-        response = self.client.get(self.url, follow=True)
+        response = self.client.get(
+            self.url, follow=True, query_params=self.query_params()
+        )
         response.context = {"view": None}
         return response
 
