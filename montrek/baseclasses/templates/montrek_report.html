@@ -8,16 +8,25 @@
       <div class="col-3">
         <div class="row tile">
           <form action="" method="get" class="col-lg-4">
+            {% include "partials/url_kwargs_passthrough.html" with exclude_key="gen_pdf" %}
             <input type="hidden" name="gen_pdf" value="true" />
-            <button type="submit" class="btn btn-light-custom" title="Export to pdf"><span class="bi bi-file-earmark-pdf"></span></button>
+            <button type="submit" class="btn btn-light-custom" title="Export to pdf">
+              <span class="bi bi-file-earmark-pdf"></span>
+            </button>
           </form>
           <form action="" method="get" class="col-lg-4">
+            {% include "partials/url_kwargs_passthrough.html" with exclude_key="send_mail" %}
             <input type="hidden" name="send_mail" value="true" />
-            <button type="submit" class="btn btn-light-custom" title="Send report per mail"><span class="bi bi-envelope"></span></button>
+            <button type="submit" class="btn btn-light-custom" title="Send report per mail">
+              <span class="bi bi-envelope"></span>
+            </button>
           </form>
           <form action="" method="get" class="col-lg-4">
+            {% include "partials/url_kwargs_passthrough.html" with exclude_key="gen_rest_api" %}
             <input type="hidden" name="gen_rest_api" value="true" />
-            <button type="submit" class="btn btn-light-custom" title="Get REST Api data"><span class="bi bi-globe"></span></button>
+            <button type="submit" class="btn btn-light-custom" title="Get REST Api data">
+              <span class="bi bi-globe"></span>
+            </button>
           </form>
         </div>
       </div>

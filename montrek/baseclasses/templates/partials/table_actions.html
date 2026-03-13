@@ -2,6 +2,7 @@
   <!-- CSV -->
   <div class="col">
     <form method="get">
+      {% include "partials/url_kwargs_passthrough.html" with exclude_key="gen_csv" %}
       <input type="hidden" name="gen_csv" value="true" />
       <button type="submit" class="btn btn-light-custom" title="Export to CSV">
         <i class="bi bi-download"></i>
@@ -12,6 +13,7 @@
   <!-- Excel -->
   <div class="col">
     <form method="get">
+      {% include "partials/url_kwargs_passthrough.html" with exclude_key="gen_excel" %}
       <input type="hidden" name="gen_excel" value="true" />
       <button
         type="submit"
@@ -26,15 +28,18 @@
   <!-- PDF -->
   <div class="col">
     <form method="get">
+      {% include "partials/url_kwargs_passthrough.html" with exclude_key="gen_pdf" %}
       <input type="hidden" name="gen_pdf" value="true" />
       <button type="submit" class="btn btn-light-custom" title="Export to PDF">
         <i class="bi bi-file-earmark-pdf"></i>
       </button>
     </form>
   </div>
+
   <!-- REST -->
   <div class="col">
     <form method="get">
+      {% include "partials/url_kwargs_passthrough.html" with exclude_key="gen_rest_api" %}
       <input type="hidden" name="gen_rest_api" value="true" />
       <button
         type="submit"
@@ -49,6 +54,7 @@
   <!-- Refresh -->
   <div class="col">
     <form method="get">
+      {% include "partials/url_kwargs_passthrough.html" with exclude_key="refresh_data" %}
       <input type="hidden" name="refresh_data" value="true" />
       <button type="submit" class="btn btn-light-custom" title="Refresh data">
         <i class="bi bi-arrow-repeat"></i>
