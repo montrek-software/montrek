@@ -306,7 +306,7 @@ class BaseLinkTableElement(TableElement, GetDottetAttrsOrArgMixin):
         except NoReverseMatch:
             return ""
         filter_params = self.get_filter(obj)
-        query = urlencode(filter_params)
+        query = urlencode(filter_params, doseq=True)
         return f"{url}?{query}" if query else url
 
     def get_filter(self, obj: Any) -> dict[str, Any]:
