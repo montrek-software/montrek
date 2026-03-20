@@ -7,7 +7,7 @@ from decimal import Decimal
 from enum import Enum
 from typing import Any, ClassVar, TypeVar
 from collections.abc import Iterable
-from urllib.parse import urlparse
+from urllib.parse import urlencode, urlparse
 
 import pandas as pd
 import requests
@@ -202,7 +202,7 @@ class ExternalLinkTableElement(AttrTableElement):
     def get_value(self, obj: Any) -> Any:
         url = super().get_value(obj)
         # Ensure url is string-like before attempting to parse; otherwise, return as-is.
-        if not isinstance(url, (str, bytes)):
+        if not isinstance(url, str | bytes):
             return url
         if not url:
             return url
@@ -305,11 +305,18 @@ class BaseLinkTableElement(TableElement, GetDottetAttrsOrArgMixin):
             )
         except NoReverseMatch:
             return ""
+        filter = self.get_filter(obj)
+        return f"{url}?{urlencode(filter)}"
+
+    def get_filter(self, obj: Any) -> dict[str, Any]:
         filter_field = self.kwargs.get("filter")
         if filter_field:
-            filter_str = f"?filter_field={filter_field}&filter_lookup=in&filter_value={self.get_dotted_attr_or_arg(obj, filter_field)}"
-            url += filter_str
-        return url
+            return {
+                "filter_field": filter_field,
+                "filter_lookup": "in",
+                "filter_value": self.get_dotted_attr_or_arg(obj, filter_field),
+            }
+        return {}
 
     def get_link(self, obj: Any) -> str | None:
         url = self.get_url(obj)
