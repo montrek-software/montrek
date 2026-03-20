@@ -7,7 +7,7 @@ from decimal import Decimal
 from enum import Enum
 from typing import Any, ClassVar, TypeVar
 from collections.abc import Iterable
-from urllib.parse import urlencode, urlparse
+from urllib.parse import quote, urlencode, urlparse
 
 import pandas as pd
 import requests
@@ -306,7 +306,7 @@ class BaseLinkTableElement(TableElement, GetDottetAttrsOrArgMixin):
         except NoReverseMatch:
             return ""
         filter_params = self.get_filter(obj)
-        query = urlencode(filter_params, doseq=True)
+        query = urlencode(filter_params, doseq=True, quote_via=quote)
         return f"{url}?{query}" if query else url
 
     def get_filter(self, obj: Any) -> dict[str, Any]:

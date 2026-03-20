@@ -1031,7 +1031,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         test_display_field = table_element.get_display_field(test_obj)
         test_link = test_display_field.display_value
         self.assertTrue(
-            f"?filter_field=test_name&amp;filter_lookup=in&amp;filter_value={test_obj.test_name}"
+            f"?filter_field=test_name&amp;filter_lookup=in&amp;filter_value={test_obj.test_name.replace(' ', '%20')}"
             in test_link
         )
 
