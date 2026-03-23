@@ -8,6 +8,10 @@ help: # Show help for each of the Makefile recipes.
 local-init: # Install local python environment and necessary packages
 	@$(SECURE_WRAPPER) bin/local/init.sh
 
+.PHONY: local-init-win
+local-init-win: # Install local python environment and necessary packages on windows
+	@powershell -ExecutionPolicy Bypass -File bin/local/init.ps1
+
 .PHONY: local-runserver
 local-runserver: # Run the montrek django app locally (non-docker).
 	@$(SECURE_WRAPPER) bin/local/runserver.sh
@@ -15,6 +19,10 @@ local-runserver: # Run the montrek django app locally (non-docker).
 .PHONY: sync-local-python-env
 sync-local-python-env: # Sync the local (non-docker) python environment with the requirements specified in the montrek repositories.
 	@$(SECURE_WRAPPER) bin/local/sync-python-env.sh
+
+.PHONY: sync-local-python-env-win
+sync-local-python-env-win: # Sync the local (non-docker) python environment with the requirements specified in the montrek repositories on windows
+	@powershell -ExecutionPolicy Bypass -File bin/local/sync-python-env.ps1
 
 .PHONY: local-sonarqube-scan
 local-sonarqube-scan: # Run a SonarQube scan and open in SonarQube (Add NO_TESTS=true to skip tests)

@@ -9,7 +9,7 @@ Get-ChildItem -Recurse -Filter requirements.in | ForEach-Object {
   ""
 } | Set-Content $temporary_requirements_file -Encoding utf8
 
-# Compile and sync using uv
+# Compile and sync using piptools
 python -m piptools compile $temporary_requirements_file --output-file requirements.txt
 python -m piptools sync requirements.txt
 
