@@ -515,7 +515,7 @@ class NumberTableElement(AttrTableElement):
         return ["text-end"]
 
     def _analyze_value(self, value: Any) -> str:
-        # returns (display_value, style_attrs)
+        # returns a display string for the given value
         if pd.isna(value):
             return "-"
 
