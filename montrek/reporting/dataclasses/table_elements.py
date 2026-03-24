@@ -492,12 +492,14 @@ class NumberTableElement(AttrTableElement):
         table_element = (
             self.get_none_table_element() if self.empty_value(value) else self
         )
-        display_value, style_attrs = self._analyze_value(value)
+        display_value = self._analyze_value(value)
         display_value = table_element.render_field_template(display_value, obj)
         return DisplayField(
             name=self.name,
             display_value=display_value,
-            style_attrs_str=table_element.format_style_attr(style_attrs),
+            style_attrs_str=table_element.format_style_attr(
+                self.get_style_attrs(value, obj)
+            ),
             td_classes_str=table_element.format_td_classes(
                 self.get_td_classes(value, obj)
             ),
@@ -512,17 +514,25 @@ class NumberTableElement(AttrTableElement):
             return ["text-start"]
         return ["text-end"]
 
-    def _analyze_value(self, value: Any) -> tuple[str, StyleAttrsType]:
+    def _analyze_value(self, value: Any) -> str:
         # returns (display_value, style_attrs)
         if pd.isna(value):
-            return "-", {}
+            return "-"
 
         if not isinstance(value, int | float | Decimal):
-            return str(value), {}
+            return str(value)
 
         formatted = self._format_value(value)
-        color = _get_value_color(value).hex
-        return formatted, {"color": color}
+        return formatted
+
+    def get_style_attrs(self, _value: Any, _obj: Any) -> StyleAttrsType:
+        if pd.isna(_value):
+            return {}
+
+        if not isinstance(_value, int | float | Decimal):
+            return {}
+        color = _get_value_color(_value).hex
+        return {"color": color}
 
     def format_latex(self, value):
         if not isinstance(value, int | float | Decimal):
