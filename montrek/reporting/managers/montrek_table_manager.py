@@ -151,16 +151,19 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
     def to_excel(
         self, output: HttpResponse | BytesIO | str, sheet_name: str = "Montrek Data"
     ) -> HttpResponse | BytesIO | str:
-        table_df = self.get_df()
+        table_df = self.get_output_df()
         with pd.ExcelWriter(output, engine="openpyxl") as excel_writer:
             table_df.to_excel(excel_writer, index=False, sheet_name=sheet_name)
             self.excel_formatter_class.format_excel(excel_writer, sheet_name=sheet_name)
         return output
 
     def to_csv(self, output: HttpResponse | str) -> HttpResponse | str:
-        table_df = self.get_df()
+        table_df = self.get_output_df()
         table_df.to_csv(output, index=False)
         return output
+
+    def get_output_df(self):
+        return self.get_df()
 
     def download_or_mail_csv(self) -> HttpResponse:
         return self._download_or_mail("csv", self._download_csv)
