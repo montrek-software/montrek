@@ -162,7 +162,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         table_df.to_csv(output, index=False)
         return output
 
-    def get_output_df(self):
+    def get_output_df(self) -> pd.DataFrame:
         return self.get_df()
 
     def download_or_mail_csv(self) -> HttpResponse:
