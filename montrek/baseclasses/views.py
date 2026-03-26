@@ -644,8 +644,9 @@ class MontrekDeleteView(
     template_name = "montrek_delete.html"
 
     def post(self, request, *args, **kwargs):
+        self.deleted_object = None
         if "action" in request.POST and request.POST["action"] == "Delete":
-            self.manager.delete_object(pk=self.kwargs["pk"])
+            self.deleted_object = self.manager.delete_object(pk=self.kwargs["pk"])
         return HttpResponseRedirect(self.get_success_url())
 
 
