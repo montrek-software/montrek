@@ -498,6 +498,8 @@ class NumberTableElement(AttrTableElement):
     @property
     def excel_format_str(self) -> str:
         dec = self._excel_decimal_places
+        if not dec:
+            return "#,##0"
         return "#,##0." + dec * "0"
 
     def get_display_field(self, obj: Any) -> DisplayField:
