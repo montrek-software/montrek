@@ -13,11 +13,11 @@ class MontrekExcelFormatter:
     NORMAL_FONT_MULTIPLIER = 1.1
 
     @staticmethod
-    def format_excel(writer, sheet_name="Sheet1"):
+    def format_excel(writer, sheet_name="Sheet1", col_formats=None):
         """Format an Excel worksheet with styled headers, alternating rows, and auto-sized columns."""
         worksheet = writer.sheets[sheet_name]
 
-        MontrekExcelFormatter._apply_cell_styles(worksheet)
+        MontrekExcelFormatter._apply_cell_styles(worksheet, col_formats or {})
         MontrekExcelFormatter._adjust_column_widths(worksheet)
 
     @staticmethod
@@ -41,16 +41,19 @@ class MontrekExcelFormatter:
         }
 
     @staticmethod
-    def _apply_cell_styles(worksheet):
+    def _apply_cell_styles(worksheet, col_formats: dict[int, str | None]):
         """Apply styles to all cells in the worksheet."""
         styles = MontrekExcelFormatter._get_style_objects()
 
         for row_idx, row in enumerate(worksheet.iter_rows(), 1):
-            for cell in row:
+            for col_idx, cell in enumerate(row):
                 if row_idx == 1:
                     MontrekExcelFormatter._style_header_cell(cell, styles)
                 else:
                     MontrekExcelFormatter._style_data_cell(cell, row_idx, styles)
+                    MontrekExcelFormatter._format_data_cell(
+                        cell, col_formats.get(col_idx)
+                    )
 
     @staticmethod
     def _style_header_cell(cell, styles):
@@ -63,15 +66,16 @@ class MontrekExcelFormatter:
     @staticmethod
     def _style_data_cell(cell, row_idx, styles):
         """Apply styling to a data cell with alternating row colors."""
-        # Apply alternating row fill
         cell.fill = (
             styles["even_row_fill"] if row_idx % 2 == 0 else styles["odd_row_fill"]
         )
         cell.border = styles["thin_border"]
 
-        # Format based on cell value type
-        if isinstance(cell.value, float):
-            cell.number_format = "#,##0.00"
+    @staticmethod
+    def _format_data_cell(cell, excel_format_str: str | None):
+        """Apply number format and alignment to a data cell."""
+        if excel_format_str is not None:
+            cell.number_format = excel_format_str
             cell.alignment = Alignment(horizontal="right")
         else:
             cell.alignment = Alignment(horizontal="left")

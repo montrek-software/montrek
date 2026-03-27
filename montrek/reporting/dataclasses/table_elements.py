@@ -154,6 +154,10 @@ class TableElement:
     def get_field_context_data(self, _value: Any, _obj: Any) -> dict[str, Any]:
         return {}
 
+    @property
+    def excel_format_str(self) -> str | None:
+        return None
+
 
 @dataclass
 class NoneTableElement(TableElement):
@@ -489,6 +493,18 @@ class NumberTableElement(AttrTableElement):
     shortener: NumberShortenerABC = NoShortening()
     numerical_type: type = float
     serializer_field_class: ClassVar = serializers.FloatField
+    _excel_decimal_places: ClassVar[int] = 2
+
+    @property
+    def excel_format_str(self) -> str:
+        dec = self._excel_decimal_places
+        is_de = (
+            getattr(settings, "NUMBER_FORMATTING", SystemFormatting.EN)
+            == SystemFormatting.DE
+        )
+        decimal_part = f"{',' if is_de else '.'}{'0' * dec}" if dec > 0 else ""
+        thousands_sep = "." if is_de else ","
+        return f"#{thousands_sep}##0{decimal_part}"
 
     def get_display_field(self, obj: Any) -> DisplayField:
         value = self.get_attribute(obj, "html")
@@ -561,6 +577,7 @@ class FloatTableElement(NumberTableElement):
     serializer_field_class = serializers.FloatField
     attr: str
     shortener: NumberShortenerABC = NoShortening()
+    _excel_decimal_places: ClassVar[int] = 3
 
     def _format_value(self, value) -> str:
         return self.shortener.shorten(value, 3)
@@ -575,6 +592,7 @@ class IntTableElement(NumberTableElement):
     attr: str
     numerical_type: type = int
     shortener: NumberShortenerABC = NoShortening()
+    _excel_decimal_places: ClassVar[int] = 0
 
     def _format_value(self, value) -> str:
         value = round(value)
@@ -585,6 +603,10 @@ class IntTableElement(NumberTableElement):
 class PercentTableElement(NumberTableElement):
     serializer_field_class = serializers.FloatField
     attr: str
+
+    @property
+    def excel_format_str(self) -> str:
+        return "0.00%"
 
     def _format_value(self, value) -> str:
         return self.shortener.shorten(value * 100, 2) + "%"

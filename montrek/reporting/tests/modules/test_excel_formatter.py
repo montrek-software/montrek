@@ -77,7 +77,7 @@ class MontrekExcelFormatterTests(TestCase):
         self.worksheet["A1"] = "Header 1"
         self.worksheet["B1"] = "Header 2"
 
-        MontrekExcelFormatter._apply_cell_styles(self.worksheet)
+        MontrekExcelFormatter._apply_cell_styles(self.worksheet, {})
 
         # Check header cells have bold white font
         self.assertTrue(self.worksheet["A1"].font.bold)
@@ -91,7 +91,7 @@ class MontrekExcelFormatterTests(TestCase):
         self.worksheet["A3"] = "Row 3 (odd)"
         self.worksheet["A4"] = "Row 4 (even)"
 
-        MontrekExcelFormatter._apply_cell_styles(self.worksheet)
+        MontrekExcelFormatter._apply_cell_styles(self.worksheet, {})
 
         # Row 2 (even) and Row 4 (even) should have the same fill
         self.assertEqual(
@@ -142,24 +142,22 @@ class MontrekExcelFormatterTests(TestCase):
 
         self.assertEqual(cell.fill, styles["odd_row_fill"])
 
-    def test_style_data_cell_float_formatting(self):
-        """Test that float values get proper number formatting and right alignment."""
+    def test_format_data_cell_with_format_str(self):
+        """Test that a cell gets number format and right alignment when format string is given."""
         cell = self.worksheet["A2"]
         cell.value = 1234.56
-        styles = MontrekExcelFormatter._get_style_objects()
 
-        MontrekExcelFormatter._style_data_cell(cell, 2, styles)
+        MontrekExcelFormatter._format_data_cell(cell, "#,##0.00")
 
         self.assertEqual(cell.number_format, "#,##0.00")
         self.assertEqual(cell.alignment.horizontal, "right")
 
-    def test_style_data_cell_text_alignment(self):
-        """Test that non-float values get left alignment."""
+    def test_format_data_cell_without_format_str(self):
+        """Test that a cell gets left alignment when no format string is given."""
         cell = self.worksheet["A2"]
         cell.value = "Text Value"
-        styles = MontrekExcelFormatter._get_style_objects()
 
-        MontrekExcelFormatter._style_data_cell(cell, 2, styles)
+        MontrekExcelFormatter._format_data_cell(cell, None)
 
         self.assertEqual(cell.alignment.horizontal, "left")
 
@@ -306,18 +304,21 @@ class MontrekExcelFormatterTests(TestCase):
         self.worksheet["B3"] = 9876543.21
         self.worksheet["C3"] = 0.25
 
-        MontrekExcelFormatter.format_excel(self.mock_writer, "Sheet1")
+        col_formats = {1: "#,##0.00", 2: "0.00%"}
+        MontrekExcelFormatter.format_excel(
+            self.mock_writer, "Sheet1", col_formats=col_formats
+        )
 
         # Verify headers are bold
         self.assertTrue(self.worksheet["A1"].font.bold)
         self.assertTrue(self.worksheet["B1"].font.bold)
         self.assertTrue(self.worksheet["C1"].font.bold)
 
-        # Verify float formatting
+        # Verify column-specific number formats
         self.assertEqual(self.worksheet["B2"].number_format, "#,##0.00")
-        self.assertEqual(self.worksheet["C2"].number_format, "#,##0.00")
+        self.assertEqual(self.worksheet["C2"].number_format, "0.00%")
 
-        # Verify alignment
+        # Verify alignment: text column left, number columns right
         self.assertEqual(self.worksheet["A2"].alignment.horizontal, "left")
         self.assertEqual(self.worksheet["B2"].alignment.horizontal, "right")
 
