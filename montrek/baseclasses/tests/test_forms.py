@@ -1,22 +1,33 @@
+from decimal import Decimal
+
 from django.contrib.admin.widgets import FilteredSelectMultiple
+from django.db.models import DecimalField as ModelDecimalField
+from django.db.models import FloatField as ModelFloatField
 from django.db.models import QuerySet, DateField
 from django.forms import (
     CheckboxSelectMultiple,
+    DecimalField as FormDecimalField,
+    FloatField as FormFloatField,
+    NumberInput,
     PasswordInput,
     DateInput,
+    TextInput,
     ValidationError,
 )
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from encrypted_fields import EncryptedCharField
 
 from baseclasses.forms import (
     BaseMontrekChoiceField,
     FilterForm,
+    GermanDecimalFormField,
+    GermanFloatFormField,
     MontrekCreateForm,
     MontrekModelCharChoiceField,
     MontrekModelChoiceField,
     MontrekModelMultipleChoiceField,
 )
+from montrek.utils import SystemFormatting
 from baseclasses.tests.factories.baseclass_factories import (
     TestMontrekSatelliteFactory,
     TestMontrekHubFactory,
@@ -371,3 +382,112 @@ class TestMontrekModelMultipleChoiceFieldGetInitialLink(TestCase):
             {"test_name": None}, self.qs, "test_name", ";", None
         )
         self.assertIsNone(result)
+
+
+class TestGermanDecimalFormField(TestCase):
+    def setUp(self):
+        self.field = GermanDecimalFormField(max_digits=10, decimal_places=2)
+
+    def test_widget_is_text_input(self):
+        """Must use TextInput so the browser allows comma as decimal separator."""
+        self.assertIsInstance(self.field.widget, TextInput)
+        self.assertNotIsInstance(self.field.widget, NumberInput)
+
+    def test_comma_as_decimal_separator(self):
+        self.assertEqual(self.field.clean("1234,56"), Decimal("1234.56"))
+
+    def test_german_thousands_and_decimal(self):
+        self.assertEqual(self.field.clean("1.234,56"), Decimal("1234.56"))
+
+    def test_dot_passthrough_when_no_comma(self):
+        """When the user enters a dot (no comma present), treat it as decimal."""
+        self.assertEqual(self.field.clean("1234.56"), Decimal("1234.56"))
+
+    def test_integer_value(self):
+        self.assertEqual(self.field.clean("1234"), Decimal("1234"))
+
+    def test_negative_with_comma(self):
+        self.assertEqual(self.field.clean("-1234,56"), Decimal("-1234.56"))
+
+    def test_invalid_input_raises(self):
+        with self.assertRaises(ValidationError):
+            self.field.clean("not_a_number")
+
+    def test_respects_decimal_places_constraint(self):
+        strict_field = GermanDecimalFormField(max_digits=10, decimal_places=1)
+        with self.assertRaises(ValidationError):
+            strict_field.clean("1234,56")  # 2 decimal places, only 1 allowed
+
+
+class TestGermanFloatFormField(TestCase):
+    def setUp(self):
+        self.field = GermanFloatFormField()
+
+    def test_widget_is_text_input(self):
+        self.assertIsInstance(self.field.widget, TextInput)
+        self.assertNotIsInstance(self.field.widget, NumberInput)
+
+    def test_comma_as_decimal_separator(self):
+        self.assertAlmostEqual(self.field.clean("3,14"), 3.14)
+
+    def test_german_thousands_and_decimal(self):
+        self.assertAlmostEqual(self.field.clean("1.234,56"), 1234.56)
+
+    def test_dot_passthrough_when_no_comma(self):
+        self.assertAlmostEqual(self.field.clean("3.14"), 3.14)
+
+    def test_integer_value(self):
+        self.assertAlmostEqual(self.field.clean("42"), 42.0)
+
+    def test_negative_with_comma(self):
+        self.assertAlmostEqual(self.field.clean("-1,5"), -1.5)
+
+    def test_invalid_input_raises(self):
+        with self.assertRaises(ValidationError):
+            self.field.clean("not_a_number")
+
+
+class _MockNumberRepository:
+    hub_class = MockHubClass
+    display_field_names = {}
+    field_help_texts = {}
+
+    def std_satellite_fields(self):
+        decimal_field = ModelDecimalField(max_digits=10, decimal_places=2)
+        decimal_field.name = "amount"
+        float_field = ModelFloatField()
+        float_field.name = "rate"
+        return [decimal_field, float_field]
+
+
+class TestGetFormFieldNumberFormatting(TestCase):
+    """_get_form_field returns German form fields when NUMBER_FORMATTING=DE
+    and standard form fields otherwise."""
+
+    @override_settings(NUMBER_FORMATTING=SystemFormatting.DE)
+    def test_de_decimal_field_yields_german_form_field(self):
+        form = MontrekCreateForm(repository=_MockNumberRepository())
+        self.assertIsInstance(form.fields["amount"], GermanDecimalFormField)
+
+    @override_settings(NUMBER_FORMATTING=SystemFormatting.DE)
+    def test_de_float_field_yields_german_form_field(self):
+        form = MontrekCreateForm(repository=_MockNumberRepository())
+        self.assertIsInstance(form.fields["rate"], GermanFloatFormField)
+
+    @override_settings(NUMBER_FORMATTING=SystemFormatting.DE)
+    def test_de_fields_use_text_input_widget(self):
+        form = MontrekCreateForm(repository=_MockNumberRepository())
+        self.assertIsInstance(form.fields["amount"].widget, TextInput)
+        self.assertIsInstance(form.fields["rate"].widget, TextInput)
+
+    @override_settings(NUMBER_FORMATTING=SystemFormatting.EN)
+    def test_en_decimal_field_uses_standard_form_field(self):
+        form = MontrekCreateForm(repository=_MockNumberRepository())
+        self.assertIsInstance(form.fields["amount"], FormDecimalField)
+        self.assertNotIsInstance(form.fields["amount"], GermanDecimalFormField)
+
+    @override_settings(NUMBER_FORMATTING=SystemFormatting.EN)
+    def test_en_float_field_uses_standard_form_field(self):
+        form = MontrekCreateForm(repository=_MockNumberRepository())
+        self.assertIsInstance(form.fields["rate"], FormFloatField)
+        self.assertNotIsInstance(form.fields["rate"], GermanFloatFormField)
