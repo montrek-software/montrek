@@ -542,7 +542,7 @@ class NumberTableElement(AttrTableElement):
         return f"{color} {formatted_value} &"
 
     def _format_value(self, value) -> str:
-        return self.shortener.shorten(value, "")
+        return self.shortener.shorten(value, 2)
 
     def get_value(self, obj: Any) -> Any:
         value = super().get_value(obj)
@@ -560,7 +560,7 @@ class FloatTableElement(NumberTableElement):
     shortener: NumberShortenerABC = NoShortening()
 
     def _format_value(self, value) -> str:
-        return self.shortener.shorten(value, ",.3f")
+        return self.shortener.shorten(value, 3)
 
     def get_value_len(self, obj: Any) -> int:
         return super().get_value_len(obj) + 4
@@ -575,7 +575,7 @@ class IntTableElement(NumberTableElement):
 
     def _format_value(self, value) -> str:
         value = round(value)
-        return self.shortener.shorten(value, ",.0f")
+        return self.shortener.shorten(value, 0)
 
 
 @dataclass
@@ -584,7 +584,7 @@ class PercentTableElement(NumberTableElement):
     attr: str
 
     def _format_value(self, value) -> str:
-        return f"{value:,.2%}"
+        return self.shortener.shorten(value * 100, 2) + "%"
 
     def format_latex(self, value) -> str:
         value = super().format_latex(value)
@@ -687,7 +687,7 @@ class MoneyTableElement(NumberTableElement):
         return {"ccy_symbol": self.ccy_symbol}
 
     def _format_value(self, value) -> str:
-        return self.shortener.shorten(value, ",.2f")
+        return self.shortener.shorten(value, 2)
 
     def format_latex(self, value):
         formatted_value = super().format_latex(value)

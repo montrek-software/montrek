@@ -1,5 +1,6 @@
 # utils/keycloak_config.py
 
+from enum import Enum
 from django.conf import settings
 
 
@@ -16,3 +17,8 @@ def get_oidc_endpoints():
         "jwks": base + "/protocol/openid-connect/certs",
         "logout": base + "/protocol/openid-connect/logout",
     }
+
+
+class SystemFormatting(Enum):
+    EN = "en"
+    DE = "de"

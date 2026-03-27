@@ -19,7 +19,7 @@ from django.urls import reverse_lazy
 from reporting.core.reporting_colors import ReportingColors
 
 from montrek.filtered_warnings import add_filtered_warnings
-from montrek.utils import get_keycloak_base_url, get_oidc_endpoints
+from montrek.utils import SystemFormatting, get_keycloak_base_url, get_oidc_endpoints
 
 add_filtered_warnings()
 
@@ -269,6 +269,9 @@ else:
     LOGIN_URL = reverse_lazy("login")
 LOGIN_REDIRECT_URL = reverse_lazy("home")
 
+
+# Number formatting
+NUMBER_FORMATTING = SystemFormatting(config("NUMBER_FORMATTING", default="en"))
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/

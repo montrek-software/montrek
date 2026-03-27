@@ -2,22 +2,40 @@ from abc import abstractmethod
 
 
 class NumberShortenerABC:
+    def get_format_str(self, decimal_places: int) -> str:
+        return f",.{decimal_places}f"
+
+    def _localize(self, value: str) -> str:
+        from django.conf import settings
+        from montrek.utils import SystemFormatting
+
+        if (
+            getattr(settings, "NUMBER_FORMATTING", SystemFormatting.EN)
+            == SystemFormatting.DE
+        ):
+            return value.replace(",", "X").replace(".", ",").replace("X", ".")
+        return value
+
     @abstractmethod
-    def shorten(self, number: float, format: str) -> str:
-        ...  # pragma: no cover
+    def shorten(
+        self, number: float, decimal_places: int
+    ) -> str: ...  # pragma: no cover
 
 
 class NoShortening(NumberShortenerABC):
-    def shorten(self, number: float, format: str) -> str:
-        return f"{{0:{format}}}".format(number)
+    def shorten(self, number: float, decimal_places: int) -> str:
+        fmt = self.get_format_str(decimal_places)
+        return self._localize(f"{number:{fmt}}")
 
 
 class BaseShortening(NumberShortenerABC):
     order: int = 1
     symbol: str = ""
 
-    def shorten(self, number: float, format: str) -> str:
-        return f"{{0:{format}}}{self.symbol}".format(number / 10**self.order)
+    def shorten(self, number: float, decimal_places: int) -> str:
+        fmt = self.get_format_str(decimal_places)
+        formatted_number = f"{number / 10**self.order:{fmt}}"
+        return self._localize(formatted_number) + self.symbol
 
 
 class KiloShortening(BaseShortening):
