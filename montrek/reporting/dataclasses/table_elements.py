@@ -2,17 +2,18 @@ import collections
 import datetime
 import inspect
 import tempfile
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from decimal import Decimal
 from enum import Enum
 from typing import Any, ClassVar, TypeVar
-from collections.abc import Iterable
 from urllib.parse import quote, urlencode, urlparse
 
 import pandas as pd
 import requests
 from baseclasses.dataclasses.alert import AlertEnum
 from baseclasses.dataclasses.number_shortener import NoShortening, NumberShortenerABC
+from django.conf import settings
 from django.core.exceptions import FieldDoesNotExist
 from django.template.base import mark_safe
 from django.template.loader import render_to_string
@@ -25,6 +26,8 @@ from reporting.core.reporting_colors import Color, ReportingColors
 from reporting.core.text_converter import HtmlLatexConverter
 from reporting.dataclasses.display_field import DisplayField
 from rest_framework import serializers
+
+from montrek.utils import SystemFormatting
 
 type StyleAttrsType = dict[str, str]
 type TdClassesType = list[str]
@@ -615,8 +618,16 @@ class ProgressBarTableElement(NumberTableElement):
 @dataclass
 class DateTableBaseElement(AttrTableElement):
     attr: str
-    date_format = "%Y-%m-%d"
     td_classes: ClassVar[TdClassesType] = ["text-start"]
+
+    @property
+    def date_format(self) -> str:
+        if (
+            getattr(settings, "NUMBER_FORMATTING", SystemFormatting.EN)
+            == SystemFormatting.DE
+        ):
+            return "%d.%m.%Y"
+        return "%Y-%m-%d"
 
     def format(self, value):
         return self.format_date(value)
@@ -648,17 +659,25 @@ class DateTableElement(DateTableBaseElement):
 
 class DateTimeTableElement(DateTableBaseElement):
     serializer_field_class = serializers.DateTimeField
-    date_format = "%Y-%m-%d %H:%M:%S"
+
+    @property
+    def date_format(self) -> str:
+        return super().date_format + " %H:%M:%S"
 
 
 class DateGermanTableElement(DateTableBaseElement):
-    date_format = "%d.%m.%Y"
+    @property
+    def date_format(self) -> str:
+        return "%d.%m.%Y"
 
 
 @dataclass
 class DateYearTableElement(DateTableBaseElement):
     serializer_field_class = serializers.DateField
-    date_format = "%Y"
+
+    @property
+    def date_format(self) -> str:
+        return "%Y"
 
 
 @dataclass

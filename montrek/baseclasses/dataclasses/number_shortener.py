@@ -1,14 +1,15 @@
 from abc import abstractmethod
 
+from django.conf import settings
+
+from montrek.utils import SystemFormatting
+
 
 class NumberShortenerABC:
     def get_format_str(self, decimal_places: int) -> str:
         return f",.{decimal_places}f"
 
     def _localize(self, value: str) -> str:
-        from django.conf import settings
-        from montrek.utils import SystemFormatting
-
         if (
             getattr(settings, "NUMBER_FORMATTING", SystemFormatting.EN)
             == SystemFormatting.DE

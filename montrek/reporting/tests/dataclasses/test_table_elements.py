@@ -4,10 +4,11 @@ from decimal import Decimal
 from functools import wraps
 from typing import Any, Protocol
 from unittest import mock
+from montrek.utils import SystemFormatting
 
 import reporting.dataclasses.table_elements as te
 from baseclasses.tests.factories.baseclass_factories import TestMontrekSatelliteFactory
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from reporting.core.reporting_colors import ReportingColors
 
 
@@ -450,6 +451,41 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_td_classes=["text-start"],
         )
 
+    @override_settings(NUMBER_FORMATTING=SystemFormatting.DE)
+    def test_date_de_table_elements(self):
+        test_element = te.DateTableElement(name="test", attr="test_value")
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="2021-01-01",
+            expected_format="01.01.2021",
+            expected_format_latex=" \\color{black} 01.01.2021 &",
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="01.01.2021",
+            expected_format="01.01.2021",
+            expected_format_latex=" \\color{black} 01.01.2021 &",
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=datetime.date(2021, 1, 1),
+            expected_format="01.01.2021",
+            expected_format_latex=" \\color{black} 01.01.2021 &",
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=datetime.datetime(2021, 1, 1, 12, 48),
+            expected_format="01.01.2021",
+            expected_format_latex=" \\color{black} 01.01.2021 &",
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="bla",
+            expected_format="bla",
+            expected_format_latex=" \\color{black} bla &",
+            expected_td_classes=["text-start"],
+        )
+
     def test_date_german_table_elements(self):
         test_element = te.DateGermanTableElement(name="test", attr="test_value")
         self.table_element_test_assertions_from_value(
@@ -509,6 +545,43 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             value=datetime.datetime(2021, 1, 1, 12, 48),
             expected_format="2021-01-01 12:48:00",
             expected_format_latex=" \\color{black} 2021-01-01 12:48:00 &",
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="bla",
+            expected_format="bla",
+            expected_format_latex=" \\color{black} bla &",
+            expected_td_classes=["text-start"],
+        )
+
+    @override_settings(
+        NUMBER_FORMATTING=SystemFormatting.DE,
+    )
+    def test_date_time_de_table_elements(self):
+        test_element = te.DateTimeTableElement(name="test", attr="test_value")
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="2021-01-01",
+            expected_format="01.01.2021 00:00:00",
+            expected_format_latex=" \\color{black} 01.01.2021 00:00:00 &",
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="01.01.2021",
+            expected_format="01.01.2021 00:00:00",
+            expected_format_latex=" \\color{black} 01.01.2021 00:00:00 &",
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=datetime.date(2021, 1, 1),
+            expected_format="01.01.2021 00:00:00",
+            expected_format_latex=" \\color{black} 01.01.2021 00:00:00 &",
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=datetime.datetime(2021, 1, 1, 12, 48),
+            expected_format="01.01.2021 12:48:00",
+            expected_format_latex=" \\color{black} 01.01.2021 12:48:00 &",
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
