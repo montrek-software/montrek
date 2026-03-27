@@ -52,7 +52,7 @@ class MontrekTestRunner(DiscoverRunner):
                 for m in settings.MIDDLEWARE
                 if m != "querycount.middleware.QueryCountMiddleware"
             ],
-            "NUMBER_FORMATTING": SystemFormatting.DE,
+            "NUMBER_FORMATTING": SystemFormatting.EN,
             "LANGUAGE_CODE": "en-us",
         }
         self._override = override_settings(**test_settings)
