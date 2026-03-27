@@ -51,6 +51,7 @@ class MontrekTestRunner(DiscoverRunner):
                 if m != "querycount.middleware.QueryCountMiddleware"
             ],
             "NUMBER_FORMATTING": "en",
+            "LANGUAGE_CODE": "en-us",
         }
         self._override = override_settings(**test_settings)
         self._override.enable()

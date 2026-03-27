@@ -280,10 +280,9 @@ NUMBER_FORMATTING = SystemFormatting(config("NUMBER_FORMATTING", default="en"))
 TIME_ZONE = "UTC"
 
 USE_I18N = True
-USE_L10N = True
 
 USE_TZ = True
-LANGUAGE_CODE = "de"
+LANGUAGE_CODE = config("LANGUAGE_CODE", default="en-us")
 
 
 # Static files (CSS, JavaScript, Images)
