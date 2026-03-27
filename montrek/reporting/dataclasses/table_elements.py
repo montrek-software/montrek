@@ -498,13 +498,7 @@ class NumberTableElement(AttrTableElement):
     @property
     def excel_format_str(self) -> str:
         dec = self._excel_decimal_places
-        is_de = (
-            getattr(settings, "NUMBER_FORMATTING", SystemFormatting.EN)
-            == SystemFormatting.DE
-        )
-        decimal_part = f"{',' if is_de else '.'}{'0' * dec}" if dec > 0 else ""
-        thousands_sep = "." if is_de else ","
-        return f"#{thousands_sep}##0{decimal_part}"
+        return "#,##0." + dec * "0"
 
     def get_display_field(self, obj: Any) -> DisplayField:
         value = self.get_attribute(obj, "html")
