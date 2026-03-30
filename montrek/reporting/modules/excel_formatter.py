@@ -12,16 +12,16 @@ class MontrekExcelFormatter:
     BOLD_FONT_MULTIPLIER = 1.2
     NORMAL_FONT_MULTIPLIER = 1.1
 
-    @staticmethod
-    def format_excel(writer, sheet_name="Sheet1", col_formats=None):
+    @classmethod
+    def format_excel(cls, writer, sheet_name="Sheet1", col_formats=None):
         """Format an Excel worksheet with styled headers, alternating rows, and auto-sized columns."""
         worksheet = writer.sheets[sheet_name]
 
-        MontrekExcelFormatter._apply_cell_styles(worksheet, col_formats or {})
-        MontrekExcelFormatter._adjust_column_widths(worksheet)
+        cls._apply_cell_styles(worksheet, col_formats or {})
+        cls._adjust_column_widths(worksheet)
 
-    @staticmethod
-    def _get_style_objects():
+    @classmethod
+    def _get_style_objects(cls):
         """Create and return all style objects needed for formatting."""
         primary_light = get_color("primary_light").lstrip("#").upper()
         primary = get_color("primary").lstrip("#").upper()
@@ -40,39 +40,37 @@ class MontrekExcelFormatter:
             "thin_border": Border(bottom=Side(style="thin", color="E0E0E0")),
         }
 
-    @staticmethod
-    def _apply_cell_styles(worksheet, col_formats: dict[int, str | None]):
+    @classmethod
+    def _apply_cell_styles(cls, worksheet, col_formats: dict[int, str | None]):
         """Apply styles to all cells in the worksheet."""
-        styles = MontrekExcelFormatter._get_style_objects()
+        styles = cls._get_style_objects()
 
         for row_idx, row in enumerate(worksheet.iter_rows(), 1):
             for col_idx, cell in enumerate(row):
                 if row_idx == 1:
-                    MontrekExcelFormatter._style_header_cell(cell, styles)
+                    cls._style_header_cell(cell, styles)
                 else:
-                    MontrekExcelFormatter._style_data_cell(cell, row_idx, styles)
-                    MontrekExcelFormatter._format_data_cell(
-                        cell, col_formats.get(col_idx)
-                    )
+                    cls._style_data_cell(cell, row_idx, styles)
+                    cls._format_data_cell(cell, col_formats.get(col_idx))
 
-    @staticmethod
-    def _style_header_cell(cell, styles):
+    @classmethod
+    def _style_header_cell(cls, cell, styles):
         """Apply styling to a header cell."""
         cell.fill = styles["header_fill"]
         cell.font = styles["header_font"]
         cell.alignment = Alignment(horizontal="left")
         cell.border = styles["thin_border"]
 
-    @staticmethod
-    def _style_data_cell(cell, row_idx, styles):
+    @classmethod
+    def _style_data_cell(cls, cell, row_idx, styles):
         """Apply styling to a data cell with alternating row colors."""
         cell.fill = (
             styles["even_row_fill"] if row_idx % 2 == 0 else styles["odd_row_fill"]
         )
         cell.border = styles["thin_border"]
 
-    @staticmethod
-    def _format_data_cell(cell, excel_format_str: str | None):
+    @classmethod
+    def _format_data_cell(cls, cell, excel_format_str: str | None):
         """Apply number format and alignment to a data cell."""
         if excel_format_str is not None:
             cell.number_format = excel_format_str
@@ -80,8 +78,8 @@ class MontrekExcelFormatter:
         else:
             cell.alignment = Alignment(horizontal="left")
 
-    @staticmethod
-    def _adjust_column_widths(worksheet):
+    @classmethod
+    def _adjust_column_widths(cls, worksheet):
         """Auto-size columns based on content with reasonable bounds."""
         for col in worksheet.columns:
             col_cells = list(col)
@@ -89,30 +87,30 @@ class MontrekExcelFormatter:
                 continue
 
             column_letter = get_column_letter(col_cells[0].column)
-            max_width = MontrekExcelFormatter._calculate_column_width(col_cells)
+            max_width = cls._calculate_column_width(col_cells)
             worksheet.column_dimensions[column_letter].width = max_width
 
-    @staticmethod
-    def _calculate_column_width(col_cells):
+    @classmethod
+    def _calculate_column_width(cls, col_cells):
         """Calculate the optimal width for a column based on its cells."""
         max_length = 0
 
         for cell in col_cells:
             if cell.value is not None:
-                display_length = MontrekExcelFormatter._get_display_length(cell)
+                display_length = cls._get_display_length(cell)
                 max_length = max(max_length, display_length)
 
         # Apply bounds and padding
         return min(
             max(
-                max_length + MontrekExcelFormatter.COLUMN_PADDING,
-                MontrekExcelFormatter.MIN_COLUMN_WIDTH,
+                max_length + cls.COLUMN_PADDING,
+                cls.MIN_COLUMN_WIDTH,
             ),
-            MontrekExcelFormatter.MAX_COLUMN_WIDTH,
+            cls.MAX_COLUMN_WIDTH,
         )
 
-    @staticmethod
-    def _get_display_length(cell):
+    @classmethod
+    def _get_display_length(cls, cell):
         """Calculate the display length of a cell's content."""
         value = cell.value
 
@@ -124,9 +122,7 @@ class MontrekExcelFormatter:
 
         # Apply font multiplier
         multiplier = (
-            MontrekExcelFormatter.BOLD_FONT_MULTIPLIER
-            if cell.row == 1
-            else MontrekExcelFormatter.NORMAL_FONT_MULTIPLIER
+            cls.BOLD_FONT_MULTIPLIER if cell.row == 1 else cls.NORMAL_FONT_MULTIPLIER
         )
 
         return base_length * multiplier
