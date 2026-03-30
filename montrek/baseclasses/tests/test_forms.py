@@ -511,8 +511,8 @@ class TestDateFieldWidgetFormat(TestCase):
         )
 
     def test_widget_format_attribute_is_iso(self):
-        """formfield_callback must set format='%Y-%m-%d' on the DateInput widget so
-        locale-driven format selection is bypassed at the source."""
+        """MontrekCreateForm._get_form_field must construct a DateInput widget with
+        format='%Y-%m-%d' so locale-driven format selection is bypassed at the source."""
         self.assertEqual(self.widget.format, "%Y-%m-%d")
 
     def test_format_value_is_iso_under_english_locale(self):
