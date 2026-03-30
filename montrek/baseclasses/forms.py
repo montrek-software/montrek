@@ -233,7 +233,9 @@ class MontrekCreateForm(forms.ModelForm):
             return form_field
 
         if isinstance(field, DateField):
-            return field.formfield(widget=forms.DateInput(attrs={"type": "date"}))
+            return field.formfield(
+                widget=forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d")
+            )
 
         if isinstance(field, FloatField | DecimalField):
             is_de = (

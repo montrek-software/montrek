@@ -1,3 +1,4 @@
+from datetime import date
 from decimal import Decimal
 
 from django.contrib.admin.widgets import FilteredSelectMultiple
@@ -15,6 +16,7 @@ from django.forms import (
     ValidationError,
 )
 from django.test import TestCase, override_settings
+from django.utils import translation
 from encrypted_fields import EncryptedCharField
 
 from baseclasses.forms import (
@@ -491,3 +493,34 @@ class TestGetFormFieldNumberFormatting(TestCase):
         form = MontrekCreateForm(repository=_MockNumberRepository())
         self.assertIsInstance(form.fields["rate"], FormFloatField)
         self.assertNotIsInstance(form.fields["rate"], GermanFloatFormField)
+
+
+class TestDateFieldWidgetFormat(TestCase):
+    """The DateInput widget for date fields must always serialise values as YYYY-MM-DD.
+
+    <input type="date"> requires ISO 8601 (YYYY-MM-DD). Django's DateInput normally
+    defers to the active locale when no explicit format is set, which causes German
+    locales to emit DD.MM.YYYY — a value the browser cannot parse, resulting in the
+    field showing an incorrect default (Jan 1st of the year, today, or blank)
+    instead of the value from the database.
+    """
+
+    def setUp(self):
+        self.widget = (
+            MontrekCreateForm(repository=MockRepository()).fields["field_date"].widget
+        )
+
+    def test_widget_format_attribute_is_iso(self):
+        """formfield_callback must set format='%Y-%m-%d' on the DateInput widget so
+        locale-driven format selection is bypassed at the source."""
+        self.assertEqual(self.widget.format, "%Y-%m-%d")
+
+    def test_format_value_is_iso_under_english_locale(self):
+        with translation.override("en"):
+            self.assertEqual(self.widget.format_value(date(2024, 3, 15)), "2024-03-15")
+
+    def test_format_value_is_iso_under_german_locale(self):
+        """Even when the German locale is active the rendered value must remain
+        YYYY-MM-DD, not the German DD.MM.YYYY that would break the browser picker."""
+        with translation.override("de"):
+            self.assertEqual(self.widget.format_value(date(2024, 3, 15)), "2024-03-15")
