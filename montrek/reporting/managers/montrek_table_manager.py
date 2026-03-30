@@ -155,7 +155,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         col_formats = self._get_excel_col_formats()
         with pd.ExcelWriter(output, engine="openpyxl") as excel_writer:
             table_df.to_excel(excel_writer, index=False, sheet_name=sheet_name)
-            self.excel_formatter_class.format_excel(
+            self.excel_formatter_class().format_excel(
                 excel_writer, sheet_name=sheet_name, col_formats=col_formats
             )
         return output
