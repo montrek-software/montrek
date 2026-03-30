@@ -17,6 +17,7 @@ class MontrekExcelFormatterTests(TestCase):
         # Create a mock writer object
         self.mock_writer = Mock()
         self.mock_writer.sheets = {"Sheet1": self.worksheet}
+        self.excel_formatter = MontrekExcelFormatter()
 
     def tearDown(self):
         """Clean up after tests."""
@@ -30,7 +31,7 @@ class MontrekExcelFormatterTests(TestCase):
         self.worksheet["A1"] = "Header"
         self.worksheet["A2"] = "Data"
 
-        MontrekExcelFormatter.format_excel(self.mock_writer, "Sheet1")
+        self.excel_formatter.format_excel(self.mock_writer, "Sheet1")
 
         # Verify header cell was styled
         self.assertIsNotNone(self.worksheet["A1"].fill)
@@ -43,7 +44,7 @@ class MontrekExcelFormatterTests(TestCase):
 
     def test_get_style_objects_returns_all_styles(self):
         """Test that _get_style_objects returns a dictionary with all required styles."""
-        styles = MontrekExcelFormatter._get_style_objects()
+        styles = self.excel_formatter._get_style_objects()
 
         self.assertIn("header_fill", styles)
         self.assertIn("header_font", styles)
@@ -59,7 +60,7 @@ class MontrekExcelFormatterTests(TestCase):
 
     def test_get_style_objects_creates_valid_styles(self):
         """Test that style objects are created with valid properties."""
-        styles = MontrekExcelFormatter._get_style_objects()
+        styles = self.excel_formatter._get_style_objects()
 
         # Verify header font is bold and white
         self.assertTrue(styles["header_font"].bold)
@@ -77,7 +78,7 @@ class MontrekExcelFormatterTests(TestCase):
         self.worksheet["A1"] = "Header 1"
         self.worksheet["B1"] = "Header 2"
 
-        MontrekExcelFormatter._apply_cell_styles(self.worksheet, {})
+        self.excel_formatter._apply_cell_styles(self.worksheet, {})
 
         # Check header cells have bold white font
         self.assertTrue(self.worksheet["A1"].font.bold)
@@ -91,7 +92,7 @@ class MontrekExcelFormatterTests(TestCase):
         self.worksheet["A3"] = "Row 3 (odd)"
         self.worksheet["A4"] = "Row 4 (even)"
 
-        MontrekExcelFormatter._apply_cell_styles(self.worksheet, {})
+        self.excel_formatter._apply_cell_styles(self.worksheet, {})
 
         # Row 2 (even) and Row 4 (even) should have the same fill
         self.assertEqual(
@@ -111,9 +112,9 @@ class MontrekExcelFormatterTests(TestCase):
         """Test that header cells get the correct fill, font, alignment, and border."""
         cell = self.worksheet["A1"]
         cell.value = "Test Header"
-        styles = MontrekExcelFormatter._get_style_objects()
+        styles = self.excel_formatter._get_style_objects()
 
-        MontrekExcelFormatter._style_header_cell(cell, styles)
+        self.excel_formatter._style_header_cell(cell, styles, 0)
 
         self.assertEqual(cell.fill, styles["header_fill"])
         self.assertEqual(cell.font, styles["header_font"])
@@ -126,9 +127,9 @@ class MontrekExcelFormatterTests(TestCase):
         """Test that even row data cells get the correct fill."""
         cell = self.worksheet["A2"]
         cell.value = "Test Data"
-        styles = MontrekExcelFormatter._get_style_objects()
+        styles = self.excel_formatter._get_style_objects()
 
-        MontrekExcelFormatter._style_data_cell(cell, 2, styles)
+        self.excel_formatter._style_data_cell(cell, 2, styles, [])
 
         self.assertEqual(cell.fill, styles["even_row_fill"])
 
@@ -136,9 +137,9 @@ class MontrekExcelFormatterTests(TestCase):
         """Test that odd row data cells get the correct fill."""
         cell = self.worksheet["A3"]
         cell.value = "Test Data"
-        styles = MontrekExcelFormatter._get_style_objects()
+        styles = self.excel_formatter._get_style_objects()
 
-        MontrekExcelFormatter._style_data_cell(cell, 3, styles)
+        self.excel_formatter._style_data_cell(cell, 3, styles, [])
 
         self.assertEqual(cell.fill, styles["odd_row_fill"])
 
@@ -147,7 +148,7 @@ class MontrekExcelFormatterTests(TestCase):
         cell = self.worksheet["A2"]
         cell.value = 1234.56
 
-        MontrekExcelFormatter._format_data_cell(cell, "#,##0.00")
+        self.excel_formatter._format_data_cell(cell, "#,##0.00")
 
         self.assertEqual(cell.number_format, "#,##0.00")
         self.assertEqual(cell.alignment.horizontal, "right")
@@ -157,7 +158,7 @@ class MontrekExcelFormatterTests(TestCase):
         cell = self.worksheet["A2"]
         cell.value = "Text Value"
 
-        MontrekExcelFormatter._format_data_cell(cell, None)
+        self.excel_formatter._format_data_cell(cell, None)
 
         self.assertEqual(cell.alignment.horizontal, "left")
 
@@ -168,7 +169,7 @@ class MontrekExcelFormatterTests(TestCase):
         self.worksheet["A1"] = "Short"
         self.worksheet["B1"] = "Very Long Header Text"
 
-        MontrekExcelFormatter._adjust_column_widths(self.worksheet)
+        self.excel_formatter._adjust_column_widths(self.worksheet)
 
         # Column B should be wider than column A
         self.assertGreater(
@@ -183,7 +184,7 @@ class MontrekExcelFormatterTests(TestCase):
 
         # Should not raise an exception
         try:
-            MontrekExcelFormatter._adjust_column_widths(self.worksheet)
+            self.excel_formatter._adjust_column_widths(self.worksheet)
         except Exception as e:
             self.fail(f"_adjust_column_widths raised an exception: {e}")
 
@@ -194,18 +195,18 @@ class MontrekExcelFormatterTests(TestCase):
         cell = self.worksheet["A1"]
         cell.value = "A"  # Very short content
 
-        width = MontrekExcelFormatter._calculate_column_width([cell])
+        width = self.excel_formatter._calculate_column_width([cell])
 
-        self.assertGreaterEqual(width, MontrekExcelFormatter.MIN_COLUMN_WIDTH)
+        self.assertGreaterEqual(width, self.excel_formatter.MIN_COLUMN_WIDTH)
 
     def test_calculate_column_width_respects_max_width(self):
         """Test that calculated width respects maximum width constraint."""
         cell = self.worksheet["A1"]
         cell.value = "A" * 100  # Very long content
 
-        width = MontrekExcelFormatter._calculate_column_width([cell])
+        width = self.excel_formatter._calculate_column_width([cell])
 
-        self.assertLessEqual(width, MontrekExcelFormatter.MAX_COLUMN_WIDTH)
+        self.assertLessEqual(width, self.excel_formatter.MAX_COLUMN_WIDTH)
 
     def test_calculate_column_width_with_empty_cells(self):
         """Test that empty cells are handled correctly."""
@@ -214,20 +215,20 @@ class MontrekExcelFormatterTests(TestCase):
         cell2 = self.worksheet["A2"]
         cell2.value = "Data"
 
-        width = MontrekExcelFormatter._calculate_column_width([cell1, cell2])
+        width = self.excel_formatter._calculate_column_width([cell1, cell2])
 
         # Should still calculate based on non-empty cell
-        self.assertEqual(width, MontrekExcelFormatter.MIN_COLUMN_WIDTH)
+        self.assertEqual(width, self.excel_formatter.MIN_COLUMN_WIDTH)
 
     def test_calculate_column_width_includes_padding(self):
         """Test that calculated width includes padding."""
         cell = self.worksheet["A1"]
         cell.value = "Test"
 
-        width = MontrekExcelFormatter._calculate_column_width([cell])
+        width = self.excel_formatter._calculate_column_width([cell])
 
         # Width should be greater than just the content due to padding
-        base_length = len("Test") * MontrekExcelFormatter.BOLD_FONT_MULTIPLIER
+        base_length = len("Test") * self.excel_formatter.BOLD_FONT_MULTIPLIER
         self.assertGreater(width, base_length)
 
     # ==================== Tests for _get_display_length ====================
@@ -237,11 +238,11 @@ class MontrekExcelFormatterTests(TestCase):
         cell = self.worksheet["A2"]
         cell.value = 1234567.89
 
-        display_length = MontrekExcelFormatter._get_display_length(cell)
+        display_length = self.excel_formatter._get_display_length(cell)
 
         # "1,234,567.89" = 12 characters * 1.1 = 13.2
         expected_length = (
-            len("1,234,567.89") * MontrekExcelFormatter.NORMAL_FONT_MULTIPLIER
+            len("1,234,567.89") * self.excel_formatter.NORMAL_FONT_MULTIPLIER
         )
         self.assertAlmostEqual(display_length, expected_length, places=1)
 
@@ -250,11 +251,9 @@ class MontrekExcelFormatterTests(TestCase):
         cell = self.worksheet["A2"]
         cell.value = "Test Text"
 
-        display_length = MontrekExcelFormatter._get_display_length(cell)
+        display_length = self.excel_formatter._get_display_length(cell)
 
-        expected_length = (
-            len("Test Text") * MontrekExcelFormatter.NORMAL_FONT_MULTIPLIER
-        )
+        expected_length = len("Test Text") * self.excel_formatter.NORMAL_FONT_MULTIPLIER
         self.assertAlmostEqual(display_length, expected_length, places=1)
 
     def test_get_display_length_for_header_cell(self):
@@ -262,9 +261,9 @@ class MontrekExcelFormatterTests(TestCase):
         cell = self.worksheet["A1"]
         cell.value = "Header"
 
-        display_length = MontrekExcelFormatter._get_display_length(cell)
+        display_length = self.excel_formatter._get_display_length(cell)
 
-        expected_length = len("Header") * MontrekExcelFormatter.BOLD_FONT_MULTIPLIER
+        expected_length = len("Header") * self.excel_formatter.BOLD_FONT_MULTIPLIER
         self.assertAlmostEqual(display_length, expected_length, places=1)
 
     def test_get_display_length_for_data_cell(self):
@@ -272,9 +271,9 @@ class MontrekExcelFormatterTests(TestCase):
         cell = self.worksheet["A2"]
         cell.value = "Data"
 
-        display_length = MontrekExcelFormatter._get_display_length(cell)
+        display_length = self.excel_formatter._get_display_length(cell)
 
-        expected_length = len("Data") * MontrekExcelFormatter.NORMAL_FONT_MULTIPLIER
+        expected_length = len("Data") * self.excel_formatter.NORMAL_FONT_MULTIPLIER
         self.assertAlmostEqual(display_length, expected_length, places=1)
 
     def test_get_display_length_for_integer(self):
@@ -282,9 +281,9 @@ class MontrekExcelFormatterTests(TestCase):
         cell = self.worksheet["A2"]
         cell.value = 12345
 
-        display_length = MontrekExcelFormatter._get_display_length(cell)
+        display_length = self.excel_formatter._get_display_length(cell)
 
-        expected_length = len("12345") * MontrekExcelFormatter.NORMAL_FONT_MULTIPLIER
+        expected_length = len("12345") * self.excel_formatter.NORMAL_FONT_MULTIPLIER
         self.assertAlmostEqual(display_length, expected_length, places=1)
 
     # ==================== Integration Tests ====================
@@ -305,7 +304,7 @@ class MontrekExcelFormatterTests(TestCase):
         self.worksheet["C3"] = 0.25
 
         col_formats = {1: "#,##0.00", 2: "0.00%"}
-        MontrekExcelFormatter.format_excel(
+        self.excel_formatter.format_excel(
             self.mock_writer, "Sheet1", col_formats=col_formats
         )
 
@@ -331,7 +330,7 @@ class MontrekExcelFormatterTests(TestCase):
         """Test that formatting handles empty worksheets gracefully."""
         # Don't add any data
         try:
-            MontrekExcelFormatter.format_excel(self.mock_writer, "Sheet1")
+            self.excel_formatter.format_excel(self.mock_writer, "Sheet1")
         except Exception as e:
             self.fail(f"Formatting empty worksheet raised an exception: {e}")
 
@@ -342,7 +341,7 @@ class MontrekExcelFormatterTests(TestCase):
         cell = self.worksheet["A2"]
         cell.value = -1234.56
 
-        display_length = MontrekExcelFormatter._get_display_length(cell)
+        display_length = self.excel_formatter._get_display_length(cell)
 
         # "-1,234.56" should be properly calculated
         self.assertGreater(display_length, 0)
@@ -352,10 +351,10 @@ class MontrekExcelFormatterTests(TestCase):
         cell = self.worksheet["A2"]
         cell.value = 0.01
 
-        display_length = MontrekExcelFormatter._get_display_length(cell)
+        display_length = self.excel_formatter._get_display_length(cell)
 
         # "0.01" = 4 characters
-        expected_length = len("0.01") * MontrekExcelFormatter.NORMAL_FONT_MULTIPLIER
+        expected_length = len("0.01") * self.excel_formatter.NORMAL_FONT_MULTIPLIER
         self.assertAlmostEqual(display_length, expected_length, places=1)
 
     def test_handles_special_characters(self):
@@ -364,7 +363,7 @@ class MontrekExcelFormatterTests(TestCase):
         cell.value = "Test™ © Data®"
 
         try:
-            display_length = MontrekExcelFormatter._get_display_length(cell)
+            display_length = self.excel_formatter._get_display_length(cell)
             self.assertGreater(display_length, 0)
         except Exception as e:
             self.fail(f"Special characters raised an exception: {e}")
