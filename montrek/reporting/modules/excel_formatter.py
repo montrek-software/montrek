@@ -12,10 +12,16 @@ class MontrekExcelFormatter:
     BOLD_FONT_MULTIPLIER = 1.2
     NORMAL_FONT_MULTIPLIER = 1.1
 
-    def format_excel(self, writer, sheet_name="Sheet1", col_formats=None):
+    @classmethod
+    def format_excel(cls, writer, sheet_name="Sheet1", col_formats=None):
+        """Public API — supports both class-level calls (legacy) and instance calls.
+        Uses cls() so subclasses inherit correct behavior when called as MyFormatter.format_excel(...).
+        """
+        cls()._format_excel_impl(writer, sheet_name, col_formats)
+
+    def _format_excel_impl(self, writer, sheet_name="Sheet1", col_formats=None):
         """Format an Excel worksheet with styled headers, alternating rows, and auto-sized columns."""
         worksheet = writer.sheets[sheet_name]
-
         self._apply_cell_styles(worksheet, col_formats or {})
         self._adjust_column_widths(worksheet)
 
