@@ -8,3 +8,4 @@ class DisplayField:
     style_attrs_str: str
     td_classes_str: str
     hover_text: str | None
+    value: str | float | bool | None

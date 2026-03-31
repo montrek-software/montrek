@@ -104,19 +104,20 @@ class TableElement:
         return " ".join(td_classes)
 
     def get_display_field(self, obj: Any) -> DisplayField:
-        value = self.get_attribute(obj, "html")
+        obj_value = self.get_attribute(obj, "html")
         table_element = (
-            self.get_none_table_element() if self.empty_value(value) else self
+            self.get_none_table_element() if self.empty_value(obj_value) else self
         )
-        style_attrs_str = table_element.get_style_attrs_str(value, obj)
-        td_classes_str = table_element.get_td_classes_str(value, obj)
-        value = table_element.render_field_template(value, obj)
+        style_attrs_str = table_element.get_style_attrs_str(obj_value, obj)
+        td_classes_str = table_element.get_td_classes_str(obj_value, obj)
+        value = table_element.render_field_template(obj_value, obj)
         return DisplayField(
             name=self.name,
             display_value=table_element.format(value),
             style_attrs_str=style_attrs_str,
             td_classes_str=td_classes_str,
             hover_text=self.get_hover_text(obj),
+            value=obj_value,
         )
 
     def get_none_table_element(self):
@@ -519,6 +520,7 @@ class NumberTableElement(AttrTableElement):
                 self.get_td_classes(value, obj)
             ),
             hover_text=self.get_hover_text(obj),
+            value=value,
         )
 
     def get_td_classes(self, _value: Any, _obj: Any) -> TdClassesType:
