@@ -57,8 +57,8 @@ class MontrekDetailsManager(MontrekManager):
         return {
             "details_data": details_data,
             "col_range": range(self.table_cols),
-            "col_widths_head": self.header_col_width * col_widths,
-            "col_widths_body": (1 - self.header_col_width) * col_widths,
+            "col_widths_head": int(self.header_col_width * col_widths),
+            "col_widths_body": int((1 - self.header_col_width) * col_widths),
         }
 
     def to_html(self) -> str:
@@ -99,7 +99,7 @@ class MontrekDetailsManager(MontrekManager):
         return latex_str
 
     def to_json(self) -> dict:
-        out_json = dict()
+        out_json = {}
         for table_element in self.table_elements:
             if isinstance(table_element, (te.LinkTableElement)):
                 continue
@@ -113,7 +113,7 @@ class MontrekDetailsManager(MontrekManager):
                 out_json[table_element.text] = str([val[1] for val in values])
             else:
                 value = table_element.get_value(self.object_query)
-                if isinstance(value, (datetime.datetime, datetime.date)):
+                if isinstance(value, datetime.datetime | datetime.date):
                     value = value.isoformat()
 
                 out_json[table_element.attr] = value
