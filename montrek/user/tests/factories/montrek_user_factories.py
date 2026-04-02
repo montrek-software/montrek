@@ -19,6 +19,10 @@ class MontrekUserFactory(factory.django.DjangoModelFactory):
         if not create:
             return
 
-        if extracted:
-            for group in extracted:
-                self.groups.add(group)
+        if not extracted:
+            return
+
+        if isinstance(extracted, (list, tuple, set)):
+            self.groups.add(*extracted)
+        else:
+            self.groups.add(extracted)
