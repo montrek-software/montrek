@@ -45,7 +45,7 @@ class FileUploadTask(MontrekTask):
         message = manager.processor.message
         subject = self.success_message if result else self.failure_message
         self.mailing_manager_class(session_data=session_data).send_montrek_mail(
-            ",".join([str(rec.email) for rec in self.recipients(session_data)]),
+            ",".join(str(rec.email) for rec in self.recipients(session_data)),
             subject,
             message,
         )
