@@ -44,7 +44,7 @@ for app in settings.INSTALLED_APPS:
         urlpatterns.append(path(app_path, include(f"{app}.urls")))
 
 
-if settings.DEBUG:
+if settings.DEBUG and "debug_toolbar" in settings.INSTALLED_APPS:
     from debug_toolbar.toolbar import debug_toolbar_urls
 
     urlpatterns += debug_toolbar_urls()

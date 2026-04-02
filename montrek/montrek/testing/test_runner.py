@@ -23,7 +23,7 @@ class MontrekTestRunner(DiscoverRunner):
         self._temp_dir = tempfile.mkdtemp()
         test_settings = {
             "IS_TEST_RUN": True,
-            "DEBUG": False,
+            "DEBUG": True,
             "MEDIA_ROOT": self._temp_dir,
             "WORKBENCH_PATH": Path(self._temp_dir),
             "HOME_URL": "home",
