@@ -5,6 +5,7 @@ from baseclasses.typing import SessionDataType
 from django.contrib.auth import get_user_model
 from mailing.managers.mailing_manager import MailingManager
 from tasks.montrek_task import MontrekTask
+from user.models import MontrekUser
 
 logger = logging.getLogger(__name__)
 
@@ -34,16 +35,18 @@ class FileUploadTask(MontrekTask):
         logger.debug("End task run")
         return message
 
+    def recipients(self, session_data: SessionDataType) -> list[MontrekUser]:
+        user = get_user_model().objects.get(pk=session_data["user_id"])
+        return [user]
+
     def send_result_mail(
         self, manager: MontrekManager, session_data: SessionDataType, result: bool
     ) -> str:
         message = manager.processor.message
-        user = get_user_model().objects.get(pk=session_data["user_id"])
-        if result:
-            subject = self.success_message
-        else:
-            subject = self.failure_message
+        subject = self.success_message if result else self.failure_message
         self.mailing_manager_class(session_data=session_data).send_montrek_mail(
-            user.email, subject, message
+            ",".join([str(rec.email) for rec in self.recipients(session_data)]),
+            subject,
+            message,
         )
         return message
