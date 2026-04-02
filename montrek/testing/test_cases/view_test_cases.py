@@ -76,7 +76,11 @@ class MontrekViewTestCase(TestCase):
         self.store_in_view_model()
         self._login_user()
         self.response = self.get_response()
-        self.view = self.response.context.get("view")
+        context = self.response.context
+        if context is not None:
+            self.view = context.get("view")
+        else:
+            self.view = None
 
     def _check_view_class(self):
         if self.view_class == NotImplementedView:
