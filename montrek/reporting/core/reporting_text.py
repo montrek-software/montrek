@@ -298,6 +298,30 @@ class ClientLogo(ReportingImage):
         return f"\\includegraphics[height=1cm]{{{value}}}"
 
 
+class StyledRenderer(mistune.HTMLRenderer):
+    def heading(self, text, level, **attrs):
+        # h2 has color styling via `h2 { color: ... }`
+        return f'<h{level} class="mt-4">{text}</h{level}>\n'
+
+    def paragraph(self, text):
+        # `p { margin-top: 15px; margin-bottom: 10px; }`
+        return f'<p class="mt-2">{text}</p>\n'
+
+    def list(self, text, ordered, **attrs):
+        # `li { margin-left: 20px; }`
+        tag = "ol" if ordered else "ul"
+        return f"<{tag}>{text}</{tag}>\n"
+
+    def table(self, text):
+        # `table.table-custom-striped` with thead/td/th styling
+        return f'<table class="table table-custom-striped">\n{text}</table>\n'
+
+    def link(self, text, url, title=None):
+        # `a { color: primary; }` and `a:hover { color: secondary; }`
+        title_attr = f' title="{title}"' if title else ""
+        return f'<a href="{url}"{title_attr}>{text}</a>'
+
+
 class MarkdownReportingElement(ReportingElement):
     template_name = "markdown"
 
@@ -307,6 +331,7 @@ class MarkdownReportingElement(ReportingElement):
     def convert_to_html(self) -> str:
         markdown_to_html = mistune.create_markdown(
             escape=False,
+            renderer=StyledRenderer(),
             plugins=[
                 "strikethrough",
                 "table",
