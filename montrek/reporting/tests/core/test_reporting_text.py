@@ -513,7 +513,8 @@ class TestReportingParagraph(TestCase):
         self.assertEqual(paragraph.markdown_text, "This is a **bold** text")
         test_bold_to_html = paragraph.to_html()
         self.assertEqual(
-            test_bold_to_html, "<p>This is a <strong>bold</strong> text</p>\n\n"
+            test_bold_to_html,
+            '<p class="mt-2">This is a <strong>bold</strong> text</p>\n\n',
         )
         test_bold_to_latex = paragraph.to_latex()
         self.assertEqual(
@@ -526,7 +527,8 @@ class TestReportingParagraph(TestCase):
         self.assertEqual(paragraph.markdown_text, "This is a *italic* text")
         test_italic_to_html = paragraph.to_html()
         self.assertEqual(
-            test_italic_to_html, "<p>This is a <em>italic</em> text</p>\n\n"
+            test_italic_to_html,
+            '<p class="mt-2">This is a <em>italic</em> text</p>\n\n',
         )
         test_italic_to_latex = paragraph.to_latex()
         self.assertEqual(
@@ -561,11 +563,7 @@ class TestMontrekLogo(TestCase):
 
 class TestMarkdownReportingElement(ReportingElementTestCase):
     reporting_element_class = MarkdownReportingElement
-    expected_html = (
-        "<p>This is a <strong>bold</strong> text with a table:</p>\n"
-        "<table>\n<thead>\n<tr>\n<th>Header1</th>\n<th>Header2</th>\n</tr>\n</thead>\n"
-        "<tbody>\n<tr>\n<td>Cell1</td>\n<td>Cell2</td>\n</tr>\n</tbody>\n</table>"
-    )
+    expected_html = '<pclass="mt-2">Thisisa<strong>bold</strong>textwithatable:</p><tableclass="tabletable-custom-striped"><thead><tr><th>Header1</th><th>Header2</th></tr></thead><tbody><tr><td>Cell1</td><td>Cell2</td></tr></tbody></table>'
     expected_latex = "\\begin{contentbox}This is a \\textbf{bold} text with a table:\n\n\\begin{longtable}[]{@{}ll@{}}\n\\toprule\\noalign{}\nHeader1 & Header2 \\\\\n\\midrule\\noalign{}\n\\endhead\n\\bottomrule\\noalign{}\n\\endlastfoot\nCell1 & Cell2 \\\\\n\\end{longtable}\n\\end{contentbox}"
     expected_json = {
         "markdown_reporting_element": "This is a **bold** text with a table:\n\n| Header1 | Header2 |\n|---------|---------|\n| Cell1   | Cell2   |"
@@ -579,7 +577,9 @@ class TestMarkdownReportingElement(ReportingElementTestCase):
         text = "<script>HACKERATTACK</script>"
         rep_element = self.reporting_element_class(text)
         test_html = rep_element.to_html()
-        self.assertEqual(test_html, "HACKERATTACK\n\n\n")
+        self.assertEqual(
+            test_html, "<p>&lt;script&gt;HACKERATTACK&lt;/script&gt;</p>\n\n"
+        )
 
 
 class TestReportingError(ReportingElementTestCase):
