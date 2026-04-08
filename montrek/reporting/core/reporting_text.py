@@ -106,6 +106,14 @@ class ReportingBold(ReportingText):
         return f"\\textbf{{{latex}}}"
 
 
+class ReportingBoldParagraph(ReportingText):
+    template_name = "bold_paragraph"
+
+    def to_latex(self) -> str:
+        latex = super().to_latex()
+        return f"\\begin{{justify}}\\textbf{{{latex}}}\\end{{justify}}"
+
+
 class ReportingItalic(ReportingText):
     template_name = "italic"
 
@@ -114,12 +122,28 @@ class ReportingItalic(ReportingText):
         return f"\\emph{{{latex}}}"
 
 
+class ReportingItalicParagraph(ReportingText):
+    template_name = "italic_paragraph"
+
+    def to_latex(self) -> str:
+        latex = super().to_latex()
+        return f"\\begin{{justify}}\\emph{{{latex}}}\\end{{justify}}"
+
+
 class ReportingUnderline(ReportingText):
     template_name = "underline"
 
     def to_latex(self) -> str:
         latex = super().to_latex()
         return f"\\underline{{{latex}}}"
+
+
+class ReportingUnderlineParagraph(ReportingText):
+    template_name = "underline_paragraph"
+
+    def to_latex(self) -> str:
+        latex = super().to_latex()
+        return f"\\begin{{justify}}\\underline{{{latex}}}\\end{{justify}}"
 
 
 class ReportingStrikethrough(ReportingText):
