@@ -234,7 +234,8 @@ class CodeGenerationConfig:
             "update_view_title": f"{ui_prefix} Update",
             "update_view_url": f"{prefix}/<int:pk>/update",
             "update_view_url_name": f"{prefix}_update",
-            "urlpatterns_import_rel": f"from .{prefix}_urls import urlpatterns",
+            "urlpatterns_import_rel": f"from .{prefix}_urls import urlpatterns as {prefix}_urls",
+            "urlpatterns_statement": f"urlpatterns = {prefix}_urls",
             "registry_download_url_name": f"{prefix}_registry_download",
             "registry_download_view_cls_name": registry_download_view_cls_name,
             "registry_download_view_cls_import": self._get_import(
