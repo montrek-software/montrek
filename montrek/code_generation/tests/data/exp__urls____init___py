@@ -1,1 +1,3 @@
-from .company_urls import urlpatterns
+from .company_urls import urlpatterns as company_urls
+
+urlpatterns = company_urls
