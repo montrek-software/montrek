@@ -320,6 +320,13 @@ class MontrekTableManager(MontrekTableManagerABC):
 
     def get_df(self) -> pd.DataFrame:
         queryset = list(self.repository.receive())
+        self._preload_container(queryset)
+        return self._build_df(queryset)
+
+    def _preload_container(self, *args, **kwargs) -> None:
+        """Hook for subclasses to bulk-prefetch data before row iteration."""
+
+    def _build_df(self, queryset: list) -> pd.DataFrame:
         table_data = {}
         table_elements = [
             table_element
