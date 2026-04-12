@@ -312,14 +312,24 @@ class MontrekTableManager(MontrekTableManagerABC):
         return max(paginate_by, 5)
 
     def get_table(self) -> QuerySet | dict:
-        return self._get_queryset(self.get_paginated_queryset)
+        queryset = self._get_queryset(self.get_paginated_queryset)
+        self._preload_container(queryset)
+        return queryset
 
     def get_full_table(self) -> QuerySet | dict:
         self.set_order_field()
         return self.repository.receive()
 
     def get_df(self) -> pd.DataFrame:
-        queryset = list(self.repository.receive())
+        queryset = self.repository.receive()
+        self._preload_container(queryset)
+        queryset = list(queryset)
+        return self._build_df(queryset)
+
+    def _preload_container(self, queryset: QuerySet | dict) -> None:
+        """Hook for subclasses to bulk-prefetch data before row iteration."""
+
+    def _build_df(self, queryset: list) -> pd.DataFrame:
         table_data = {}
         table_elements = [
             table_element
@@ -338,7 +348,7 @@ class MontrekTableManager(MontrekTableManagerABC):
             return self._paginate_queryset(queryset)
         return queryset
 
-    def _paginate_queryset(self, queryset):
+    def _paginate_queryset(self, queryset: QuerySet | dict):
         page_number = int(self.session_data.get("page", [1])[0])
         paginate_by = self.paginate_by
         offset = (page_number - 1) * paginate_by
