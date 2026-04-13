@@ -44,12 +44,25 @@ class {{ registry_upload_file_test_cls_name }}Post(TransactionTestCase):
     def _make_upload_file(self):
         # TODO: Replace the dummy content with a realistic file for your processor.
         # For CSV files use b"col1,col2\nval1,val2\n", for Excel use a real .xlsx bytes, etc.
-        content = b"col1,col2\nval1,val2\n"
-        return SimpleUploadedFile(
-            name="test_upload.csv",
-            content=content,
-            content_type="text/csv",
-        )
+        #
+        # CSV EXAMPLE
+        #
+        # content = b"col1,col2\nval1,val2\n"
+        # return SimpleUploadedFile(
+        #     name="test_upload.csv",
+        #     content=content,
+        #     content_type="text/csv",
+        # )
+        #
+        # XLSX EXAMPLE
+        #
+        # file_path = os.path.join(TEST_DATA_DIR, "test_upload.xlsx")
+          with open(file_path, "rb") as f:
+              return SimpleUploadedFile(
+                  name="test_upload.xlsx",
+                  content=f.read(),
+                  content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+              )
 
     def test_view_post_upload(self):
         upload_file = self._make_upload_file()
