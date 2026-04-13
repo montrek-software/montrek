@@ -43,4 +43,4 @@ else
 fi
 pip install uv
 make sync-local-python-env
-python -m pre_commit install
+pre-commit install
