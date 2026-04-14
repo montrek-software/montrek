@@ -1,3 +1,5 @@
+import os
+
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, TransactionTestCase
 from django.urls import reverse
@@ -14,6 +16,7 @@ from testing.decorators.add_logged_in_user import add_logged_in_user
 {{ registry_processor_cls_import }}
 {{ registry_repo_cls_import }}
 
+TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 
 class {{ registry_list_view_test_cls_name }}(MontrekListViewTestCase):
     viewname = "{{ registry_list_view_url_name }}"
