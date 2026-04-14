@@ -1,1 +1,3 @@
 from .test_entity_registry_urls import urlpatterns as test_entity_registry_urls
+
+urlpatterns = test_entity_registry_urls
