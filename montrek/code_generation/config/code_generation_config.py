@@ -294,7 +294,7 @@ class CodeGenerationConfig:
             ),
             "registry_sat_factory_cls_name": registry_sat_factory_cls_name,
             "registry_urlpatterns_import_rel": f"from .{prefix}_registry_urls import urlpatterns as {prefix}_registry_urls",
-            "registry_urlpatterns_statement": f"urlpatterns += {prefix}_registry_urls",
+            "registry_urlpatterns_statement": f"urlpatterns = {prefix}_registry_urls",
             "registry_processor_cls_name": registry_processor_cls_name,
             "registry_processor_cls_import": self._get_import(
                 "registry_processor", registry_processor_cls_name
