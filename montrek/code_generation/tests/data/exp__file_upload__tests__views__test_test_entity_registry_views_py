@@ -1,3 +1,5 @@
+import os
+
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, TransactionTestCase
 from django.urls import reverse
@@ -12,7 +14,9 @@ from code_generation.tests.data.output_file_upload.views.test_entity_registry_vi
 from code_generation.tests.data.output_file_upload.views.test_entity_registry_views import TestEntityRegistryUploadFileView
 from code_generation.tests.data.output_file_upload.views.test_entity_registry_views import TestEntityRegistryHistoryView
 from code_generation.tests.data.output_file_upload.managers.test_entity_registry_processor import TestEntityFileUploadProcessor
+from code_generation.tests.data.output_file_upload.repositories.test_entity_registry_repositories import TestEntityRegistryRepository
 
+TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 
 class TestTestEntityRegistryListView(MontrekListViewTestCase):
     viewname = "test_entity_registry_list"
@@ -44,12 +48,26 @@ class TestTestEntityRegistryUploadFileViewPost(TransactionTestCase):
     def _make_upload_file(self):
         # TODO: Replace the dummy content with a realistic file for your processor.
         # For CSV files use b"col1,col2\nval1,val2\n", for Excel use a real .xlsx bytes, etc.
-        content = b"col1,col2\nval1,val2\n"
-        return SimpleUploadedFile(
-            name="test_upload.csv",
-            content=content,
-            content_type="text/csv",
-        )
+        #
+        # CSV EXAMPLE
+        #
+        # content = b"col1,col2\nval1,val2\n"
+        # return SimpleUploadedFile(
+        #     name="test_upload.csv",
+        #     content=content,
+        #     content_type="text/csv",
+        # )
+        #
+        # XLSX EXAMPLE
+        #
+        # file_path = os.path.join(TEST_DATA_DIR, "test_upload.xlsx")
+        #  with open(file_path, "rb") as f:
+        #      return SimpleUploadedFile(
+        #          name="test_upload.xlsx",
+        #          content=f.read(),
+        #          content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        #      )
+        pass
 
     def test_view_post_upload(self):
         upload_file = self._make_upload_file()
@@ -58,14 +76,23 @@ class TestTestEntityRegistryUploadFileViewPost(TransactionTestCase):
             data={"file": upload_file},
             follow=True,
         )
-
         # TODO: Adjust the expected redirect target once the processor is implemented.
-        self.assertRedirects(response, reverse("test_entity_registry_list"))
-
+        with self.subTest("Test Redirects"):
+          self.assertRedirects(response, reverse("test_entity_registry_list"))
         # TODO: Add assertions that verify the upload was processed correctly, e.g.:
-        # self.assertEqual(TestEntityRegistryHub.objects.count(), 1)
-        # hub = TestEntityRegistryHub.objects.first()
-        # self.assertEqual(hub.<field>, <expected_value>)
+        with self.subTest("Test Processor status"):
+          registry_query = TestEntityRegistryRepository().receive()
+
+          self.assertEqual(registry_query.count(), 1)
+          created_registry = registry_query.first()
+          self.assertEqual(created_registry.upload_message, "Expected Message")
+          self.assertEqual(created_registry.upload_status, "processed")
+
+        with self.subTest("Test Additional Assertions"):
+        # TODO: Additional assertions here:
+          pass
+
+
 
 
 class TestTestEntityRegistryHistoryView(MontrekViewTestCase):
