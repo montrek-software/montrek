@@ -60,6 +60,7 @@ class MontrekRepository:
     view_model: None | type[models.Model] = None
     display_field_names: Mapping[str, str] = {}
     field_help_texts: Mapping[str, str] = {}
+    consider_session_dates: bool = True
 
     update: bool = (
         True  # If this is true only the passed fields will be updated, otherwise empty fields will be set to None
@@ -70,7 +71,11 @@ class MontrekRepository:
         self._ts_queryset_containers = []
         self.session_data = session_data if session_data is not None else {}
         self.query_builder = QueryBuilder(
-            self.annotator, self.session_data, self.latest_ts
+            self.annotator,
+            self.session_data,
+            self.latest_ts,
+            self.session_start_date,
+            self.session_end_date,
         )
         self._reference_date = None
         self.messages = []
@@ -208,7 +213,13 @@ class MontrekRepository:
     def get_view_model_query(self, apply_filter: bool = True) -> QuerySet:
         query = self.view_model.objects.all()
         if apply_filter:
-            query_builder = QueryBuilder(self.annotator, self.session_data)
+            query_builder = QueryBuilder(
+                self.annotator,
+                self.session_data,
+                self.latest_ts,
+                self.session_start_date,
+                self.session_end_date,
+            )
             query = query_builder._apply_order(query, self.order_fields())
             query = query_builder._apply_filter(query)
         return query
@@ -256,11 +267,15 @@ class MontrekRepository:
 
     @property
     def session_end_date(self) -> timezone.datetime:
-        return self._get_session_date("end_date", timezone.datetime.max)
+        if self.consider_session_dates:
+            return self._get_session_date("end_date", timezone.datetime.max)
+        return timezone.datetime.max
 
     @property
     def session_start_date(self) -> timezone.datetime:
-        return self._get_session_date("start_date", timezone.datetime.min)
+        if self.consider_session_dates:
+            return self._get_session_date("start_date", timezone.datetime.min)
+        return timezone.datetime.min
 
     @property
     def session_user_id(self) -> int | None:

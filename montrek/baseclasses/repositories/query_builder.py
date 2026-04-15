@@ -17,12 +17,24 @@ class QueryBuilder:
         annotator: Annotator,
         session_data: dict[str, Any],
         latest_ts: bool = False,
+        session_start_date: timezone.datetime | None = None,
+        session_end_date: timezone.datetime | None = None,
     ):
         self.annotator = annotator
         self.hub_class = annotator.hub_class
         self.session_data = session_data
         self.messages: list[MontrekMessage] = []
         self.latest_ts = latest_ts
+        self.session_start_date = (
+            self.session_data.get("start_date", timezone.datetime.min)
+            if session_start_date is None
+            else session_start_date
+        )
+        self.session_end_date = (
+            self.session_data.get("end_date", timezone.datetime.max)
+            if session_end_date is None
+            else session_end_date
+        )
 
     @property
     def query_filter(self) -> Q:
@@ -101,8 +113,8 @@ class QueryBuilder:
     def _filter_session_data(self, queryset: QuerySet) -> QuerySet:
         if not self.annotator.get_ts_satellite_classes():
             return queryset
-        end_date = self.session_data.get("end_date", timezone.datetime.max)
-        start_date = self.session_data.get("start_date", timezone.datetime.min)
+        end_date = self.session_end_date
+        start_date = self.session_start_date
         return queryset.filter(
             (Q(value_date__lte=end_date) & Q(value_date__gte=start_date))
             | Q(value_date__isnull=True)
