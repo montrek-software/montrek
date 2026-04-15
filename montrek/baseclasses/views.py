@@ -536,7 +536,7 @@ class MontrekCreateUpdateView(
     is_compact_form: bool = False
     template_name = "montrek_create.html"
     compact_template_name = "montrek_create_compact.html"
-    do_return_to_referer: bool = True
+    do_return_to_referer: bool = False
     success_url = "under_construction"
     title = ""
 
@@ -602,6 +602,8 @@ class MontrekCreateView(MontrekCreateUpdateView):
 
 
 class MontrekUpdateView(MontrekCreateUpdateView):
+    go_to_details: bool = False
+
     def _get_initial(self) -> dict:
         return self.manager.get_object_from_pk_as_dict(self.kwargs["pk"])
 
@@ -629,6 +631,20 @@ class MontrekUpdateView(MontrekCreateUpdateView):
         context = super().get_context_data(**kwargs)
         context["tag"] = "Update"
         return context
+
+    def get_success_url(self):
+        """
+        Redirect to the appropriate details view
+
+        """
+        if self.do_return_to_referer:
+            return super().get_success_url()
+        if not self.go_to_details:
+            return reverse(self.success_url)
+        contract_pk = self.session_data.get("pk")
+        if contract_pk is not None:
+            return reverse(self.success_url, kwargs={"pk": contract_pk})
+        return reverse(self.success_url)
 
 
 class MontrekDeleteView(

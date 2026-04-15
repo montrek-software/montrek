@@ -69,6 +69,7 @@ class MontrekExampleACreate(views.MontrekCreateView):
     form_class = forms.ExampleACreateForm
     success_url = "montrek_example_a_list"
     title = "Create Example A"
+    do_return_to_referer = True
 
 
 class MontrekExampleAUpdate(views.MontrekUpdateView):
@@ -76,6 +77,7 @@ class MontrekExampleAUpdate(views.MontrekUpdateView):
     page_class = pages.ExampleAPage
     form_class = forms.ExampleACreateForm
     success_url = "montrek_example_a_list"
+    do_return_to_referer = True
     title = "Update Example A"
 
 
@@ -160,9 +162,17 @@ class MontrekExampleBCreate(views.MontrekCreateView):
 class MontrekExampleBUpdate(views.MontrekUpdateView):
     manager_class = mem.HubBManager
     page_class = pages.MontrekExampleBAppPage
-    success_url = "montrek_example_b_list"
+    success_url = "montrek_example_b_details"
     form_class = forms.ExampleBCreateForm
     title = "Update Example B"
+    go_to_details = True
+
+
+class MontrekExampleBDetails(views.MontrekDetailView):
+    manager_class = mem.HubBDetailsManager
+    page_class = pages.MontrekExampleBAppPage
+    tab = "tab_details"
+    title = "Example B Details"
 
 
 class MontrekExampleBList(views.MontrekListView):
