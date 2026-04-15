@@ -753,7 +753,7 @@ class TestMontrekExampleBUpdate(MontrekUpdateViewTestCase):
             response,
             reverse(
                 "montrek_example_b_details",
-                kwargs={"pk": satb1.pk},
+                kwargs={"pk": satb1.hub.id},
             ),
         )
         links = LinkHubBHubD.objects.all()
