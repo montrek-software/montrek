@@ -269,17 +269,24 @@ class MontrekRepository:
     def session_end_date(self) -> timezone.datetime:
         if self.consider_session_dates:
             return self._get_session_date("end_date", timezone.datetime.max)
-        return timezone.datetime.max
+        return self._ensure_aware_datetime(timezone.datetime.max)
 
     @property
     def session_start_date(self) -> timezone.datetime:
         if self.consider_session_dates:
             return self._get_session_date("start_date", timezone.datetime.min)
-        return timezone.datetime.min
+        return self._ensure_aware_datetime(timezone.datetime.min)
 
     @property
     def session_user_id(self) -> int | None:
         return self.session_data.get("user_id")
+
+    def _ensure_aware_datetime(
+        self, value: timezone.datetime
+    ) -> timezone.datetime:
+        if timezone.is_naive(value):
+            return timezone.make_aware(value, timezone.get_current_timezone())
+        return value
 
     def _get_session_date(
         self, date_type: str, default: timezone.datetime
@@ -287,7 +294,7 @@ class MontrekRepository:
         date_value = self.session_data.get(date_type, default)
         if isinstance(date_value, str):
             date_value = timezone.datetime.strptime(date_value, "%Y-%m-%d")
-        return timezone.make_aware(date_value, timezone.get_current_timezone())
+        return self._ensure_aware_datetime(date_value)
 
     @reference_date.setter
     def reference_date(self, value):
