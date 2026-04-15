@@ -648,9 +648,9 @@ class MontrekUpdateView(MontrekCreateUpdateView):
             return super().get_success_url()
         if not self.go_to_details:
             return reverse(self.success_url)
-        contract_pk = self.session_data.get("pk")
-        if contract_pk is not None:
-            return reverse(self.success_url, kwargs={"pk": contract_pk})
+        object_pk = self.session_data.get("pk")
+        if object_pk is not None:
+            return reverse(self.success_url, kwargs={"pk": object_pk})
         return reverse(self.success_url)
 
 
