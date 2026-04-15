@@ -634,8 +634,15 @@ class MontrekUpdateView(MontrekCreateUpdateView):
 
     def get_success_url(self):
         """
-        Redirect to the appropriate details view
+        Return the post-update redirect target.
 
+        If ``do_return_to_referer`` is enabled, defer to the parent
+        implementation so the user is sent back to the referring page.
+        Otherwise, return the configured ``success_url`` directly when
+        ``go_to_details`` is false, or reverse ``success_url`` with the
+        session ``pk`` when redirecting to a details view. If no session
+        ``pk`` is available, fall back to reversing ``success_url``
+        without kwargs.
         """
         if self.do_return_to_referer:
             return super().get_success_url()
