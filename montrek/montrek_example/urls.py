@@ -70,6 +70,11 @@ urlpatterns = [
         name="montrek_example_a_history",
     ),
     path(
+        "b/<int:pk>/details",
+        views.MontrekExampleBDetails.as_view(),
+        name="montrek_example_b_details",
+    ),
+    path(
         "c/<int:pk>/history",
         views.MontrekExampleCHistory.as_view(),
         name="montrek_example_c_history",

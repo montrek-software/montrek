@@ -278,3 +278,13 @@ class HubDDetailsManager(MontrekDetailsManager):
                 hover_text="Delete Example D",
             ),
         ]
+
+
+class HubBDetailsManager(MontrekDetailsManager):
+    repository_class = HubBRepository
+
+    @property
+    def table_elements(self) -> list:
+        return [
+            te.StringTableElement(name="B1 String", attr="field_b1_str"),
+        ]

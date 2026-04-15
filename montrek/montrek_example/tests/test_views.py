@@ -714,7 +714,13 @@ class TestMontrekExampleBUpdate(MontrekUpdateViewTestCase):
         self.assertEqual(satb1.hub.link_hub_b_hub_d.count(), 2)
         self.assertEqual(satb1.field_d1_str, "test1,test2")
         response = self.client.post(self.url, data=self.update_data())
-        self.assertRedirects(response, reverse("montrek_example_b_list"))
+        self.assertRedirects(
+            response,
+            reverse(
+                "montrek_example_b_details",
+                kwargs={"pk": satb1.hub_id},
+            ),
+        )
         links = LinkHubBHubD.objects.all()
         self.assertEqual(links.count(), 2)
         self.assertEqual(
@@ -743,7 +749,13 @@ class TestMontrekExampleBUpdate(MontrekUpdateViewTestCase):
         update_data = self.update_data()
         update_data["link_hub_b_hub_d"] = []
         response = self.client.post(self.url, data=update_data)
-        self.assertRedirects(response, reverse("montrek_example_b_list"))
+        self.assertRedirects(
+            response,
+            reverse(
+                "montrek_example_b_details",
+                kwargs={"pk": satb1.hub.id},
+            ),
+        )
         links = LinkHubBHubD.objects.all()
         self.assertEqual(links.count(), 2)
         self.assertLess(

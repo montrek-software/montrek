@@ -536,7 +536,7 @@ class MontrekCreateUpdateView(
     is_compact_form: bool = False
     template_name = "montrek_create.html"
     compact_template_name = "montrek_create_compact.html"
-    do_return_to_referer: bool = True
+    do_return_to_referer: bool = False
     success_url = "under_construction"
     title = ""
 
@@ -602,6 +602,8 @@ class MontrekCreateView(MontrekCreateUpdateView):
 
 
 class MontrekUpdateView(MontrekCreateUpdateView):
+    go_to_details: bool = False
+
     def _get_initial(self) -> dict:
         return self.manager.get_object_from_pk_as_dict(self.kwargs["pk"])
 
@@ -629,6 +631,27 @@ class MontrekUpdateView(MontrekCreateUpdateView):
         context = super().get_context_data(**kwargs)
         context["tag"] = "Update"
         return context
+
+    def get_success_url(self):
+        """
+        Return the post-update redirect target.
+
+        If ``do_return_to_referer`` is enabled, defer to the parent
+        implementation so the user is sent back to the referring page.
+        Otherwise, return the configured ``success_url`` directly when
+        ``go_to_details`` is false, or reverse ``success_url`` with the
+        session ``pk`` when redirecting to a details view. If no session
+        ``pk`` is available, fall back to reversing ``success_url``
+        without kwargs.
+        """
+        if self.do_return_to_referer:
+            return super().get_success_url()
+        if not self.go_to_details:
+            return reverse(self.success_url)
+        object_pk = self.session_data.get("pk")
+        if object_pk is not None:
+            return reverse(self.success_url, kwargs={"pk": object_pk})
+        return reverse(self.success_url)
 
 
 class MontrekDeleteView(
