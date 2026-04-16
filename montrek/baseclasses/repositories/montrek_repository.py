@@ -286,6 +286,8 @@ class MontrekRepository:
             value, datetime.datetime
         ):
             value = datetime.datetime(value.year, value.month, value.day)
+        if not isinstance(value, datetime.datetime):
+            return value
         if timezone.is_naive(value):
             return datetime_to_montrek_time(value)
         return value

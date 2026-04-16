@@ -143,3 +143,4 @@ class TestMontrekRepository(TestCase):
             TestRepository({"start_date": test_date})
         except AttributeError as e:
             self.fail(f"Date object is not converted correctly: {e}")
+        TestRepository({"start_date": ["2026-01-01"]})
