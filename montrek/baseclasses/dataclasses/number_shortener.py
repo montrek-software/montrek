@@ -6,8 +6,8 @@ from montrek.utils import SystemFormatting
 
 
 class NumberShortenerABC:
-    def get_format_str(self, decimal_places: int) -> str:
-        return f",.{decimal_places}f"
+    def get_format_str(self, decimal_places: int, thousands=",") -> str:
+        return f"{thousands}.{decimal_places}f"
 
     def _localize(self, value: str) -> str:
         if (
@@ -19,13 +19,13 @@ class NumberShortenerABC:
 
     @abstractmethod
     def shorten(
-        self, number: float, decimal_places: int
+        self, number: float, decimal_places: int, thousands=","
     ) -> str: ...  # pragma: no cover
 
 
 class NoShortening(NumberShortenerABC):
-    def shorten(self, number: float, decimal_places: int) -> str:
-        fmt = self.get_format_str(decimal_places)
+    def shorten(self, number: float, decimal_places: int, thousands=",") -> str:
+        fmt = self.get_format_str(decimal_places, thousands)
         return self._localize(f"{number:{fmt}}")
 
 
@@ -33,7 +33,7 @@ class BaseShortening(NumberShortenerABC):
     order: int = 1
     symbol: str = ""
 
-    def shorten(self, number: float, decimal_places: int) -> str:
+    def shorten(self, number: float, decimal_places: int, thousands=",") -> str:
         fmt = self.get_format_str(decimal_places)
         formatted_number = f"{number / 10**self.order:{fmt}}"
         return self._localize(formatted_number) + self.symbol
