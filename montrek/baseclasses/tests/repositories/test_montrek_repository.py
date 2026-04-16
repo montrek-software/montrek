@@ -1,3 +1,4 @@
+import datetime
 import pandas as pd
 from django.db.models import Q
 from django.test import TestCase
@@ -135,3 +136,10 @@ class TestMontrekRepository(TestCase):
         hub = montrek_repo._get_hub_from_data(data)
         self.assertTrue(isinstance(hub, TestMontrekHub))
         self.assertTrue(hub.pk is None)
+
+    def test__ensure_aware_datetime(self):
+        test_date = datetime.date(2026, 1, 1)
+        try:
+            TestRepository({"start_date": test_date})
+        except AttributeError as e:
+            self.fail(f"Date object is not converted correctly: {e}")
