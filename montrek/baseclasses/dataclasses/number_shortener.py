@@ -7,8 +7,16 @@ from montrek.utils import SystemFormatting
 
 class NumberShortenerABC:
     def get_format_str(self, decimal_places: int, thousands=",") -> str:
-        return f"{thousands}.{decimal_places}f"
+        if thousands in (None, False, ""):
+            normalized_thousands = ""
+        elif thousands in (",", "_"):
+            normalized_thousands = thousands
+        else:
+            raise ValueError(
+                "thousands must be one of ',', '_', or empty to disable grouping"
+            )
 
+        return f"{normalized_thousands}.{decimal_places}f"
     def _localize(self, value: str) -> str:
         if (
             getattr(settings, "NUMBER_FORMATTING", SystemFormatting.EN)
