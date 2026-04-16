@@ -29,6 +29,26 @@ class TestNumberShortener(TestCase):
         self.assertEqual(test_shortener.shorten(1234e9, 0), "1,234bn")
         self.assertEqual(test_shortener.shorten(-1234.5678e9, 2), "-1,234.57bn")
 
+    def test_no_shortening_no_thousands(self):
+        test_shortener = ns.NoShortening()
+        self.assertEqual(test_shortener.shorten(1234.5678, 4, ""), "1234.5678")
+        self.assertEqual(test_shortener.shorten(1234, 0, ""), "1234")
+        self.assertEqual(test_shortener.shorten(-1234.5678, 2, ""), "-1234.57")
+
+    def test_no_shortening_thousands_dash(self):
+        test_shortener = ns.NoShortening()
+        self.assertEqual(test_shortener.shorten(1234.5678, 4, "_"), "1_234.5678")
+        self.assertEqual(test_shortener.shorten(1234, 0, "_"), "1_234")
+        self.assertEqual(test_shortener.shorten(-1234.5678, 2, "_"), "-1_234.57")
+
+    def test_no_shortening_thousands_not_valid(self):
+        test_shortener = ns.NoShortening()
+        with self.assertRaisesMessage(
+            ValueError,
+            "thousands must be one of ',', '_', or empty to disable grouping",
+        ):
+            self.assertEqual(test_shortener.shorten(1234.5678, 4, "x"), "1_234.5678")
+
 
 @override_settings(NUMBER_FORMATTING=SystemFormatting.DE)
 class TestNumberShortenerGerman(TestCase):
