@@ -43,7 +43,7 @@ class BaseShortening(NumberShortenerABC):
     symbol: str = ""
 
     def shorten(self, number: float, decimal_places: int, thousands: str = ",") -> str:
-        fmt = self.get_format_str(decimal_places)
+        fmt = self.get_format_str(decimal_places, thousands)
         formatted_number = f"{number / 10**self.order:{fmt}}"
         return self._localize(formatted_number) + self.symbol
 
