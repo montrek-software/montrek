@@ -281,11 +281,15 @@ class MontrekRepository:
     def session_user_id(self) -> int | None:
         return self.session_data.get("user_id")
 
-    def _ensure_aware_datetime(
-        self, value: timezone.datetime
-    ) -> timezone.datetime:
+    def _ensure_aware_datetime(self, value: timezone.datetime) -> timezone.datetime:
+        if isinstance(value, datetime.date) and not isinstance(
+            value, datetime.datetime
+        ):
+            value = datetime.datetime(value.year, value.month, value.day)
+        if not isinstance(value, datetime.datetime):
+            return value
         if timezone.is_naive(value):
-            return timezone.make_aware(value, timezone.get_current_timezone())
+            return datetime_to_montrek_time(value)
         return value
 
     def _get_session_date(

@@ -1,3 +1,4 @@
+import datetime
 import pandas as pd
 from django.db.models import Q
 from django.test import TestCase
@@ -135,3 +136,16 @@ class TestMontrekRepository(TestCase):
         hub = montrek_repo._get_hub_from_data(data)
         self.assertTrue(isinstance(hub, TestMontrekHub))
         self.assertTrue(hub.pk is None)
+
+    def test__ensure_aware_datetime(self):
+        test_date = datetime.date(2026, 1, 1)
+        repository = TestRepository({"start_date": test_date})
+
+        self.assertIsInstance(repository.session_start_date, datetime.datetime)
+        self.assertTrue(timezone.is_aware(repository.session_start_date))
+        self.assertEqual(repository.session_start_date.date(), test_date)
+        self.assertEqual(
+            repository.session_start_date.time(),
+            datetime.time(0, 0),
+        )
+        TestRepository({"start_date": ["2026-01-01"]})
