@@ -139,8 +139,13 @@ class TestMontrekRepository(TestCase):
 
     def test__ensure_aware_datetime(self):
         test_date = datetime.date(2026, 1, 1)
-        try:
-            TestRepository({"start_date": test_date})
-        except AttributeError as e:
-            self.fail(f"Date object is not converted correctly: {e}")
+        repository = TestRepository({"start_date": test_date})
+
+        self.assertIsInstance(repository.session_start_date, datetime.datetime)
+        self.assertTrue(timezone.is_aware(repository.session_start_date))
+        self.assertEqual(repository.session_start_date.date(), test_date)
+        self.assertEqual(
+            repository.session_start_date.time(),
+            datetime.time(0, 0),
+        )
         TestRepository({"start_date": ["2026-01-01"]})
