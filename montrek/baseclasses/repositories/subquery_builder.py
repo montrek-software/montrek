@@ -589,11 +589,11 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
                 lookup_field="hub_entity",
                 outer_ref=hub_field_to,
             ),
-        ).values("pk")
+        ).values("pk")[:1]
         return Subquery(
             self.get_link_query(hub_field_from, reference_date)
             .annotate(_lsat_pk=Subquery(sat_pk_qs))
-            .values("_lsat_pk")
+            .values("_lsat_pk")[:1]
         )
 
     def _get_subquery(

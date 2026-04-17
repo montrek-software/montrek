@@ -247,6 +247,25 @@ class TestAnnotator(TestCase):
             ExpressionWrapper,
         )
 
+    def test_rename_field_updates_field_type_map(self):
+        annotator = Annotator(DummyHub)
+
+        annotator.subquery_builder_to_annotations(
+            fields=["field_static"],
+            satellite_class=StaticSatellite,
+            subquery_builder=DummyScalarSubqueryBuilder,
+        )
+        original_type = annotator.field_type_map["field_static"]
+
+        annotator.rename_field("field_static", "renamed")
+
+        self.assertNotIn("field_static", annotator.field_type_map)
+        self.assertIn("renamed", annotator.field_type_map)
+        self.assertIs(annotator.field_type_map["renamed"], original_type)
+        # get_annotated_field_map and get_annotated_field_names stay in sync
+        self.assertIn("renamed", annotator.get_annotated_field_names())
+        self.assertIn("renamed", annotator.get_annotated_field_map())
+
     def test_build_calls_build_on_annotation_builders(self):
         annotator = Annotator(DummyHub)
 

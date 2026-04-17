@@ -205,6 +205,8 @@ class Annotator:
         for linked_field_projection in self.linked_field_projections:
             if linked_field_projection.outfield == old_field:
                 linked_field_projection.outfield = new_field
+        if old_field in self.field_type_map:
+            self.field_type_map[new_field] = self.field_type_map.pop(old_field)
         for i, name in enumerate(self._field_names_in_order):
             if name == old_field:
                 self._field_names_in_order[i] = new_field
