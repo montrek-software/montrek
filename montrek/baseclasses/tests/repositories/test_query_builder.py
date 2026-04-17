@@ -1,16 +1,19 @@
-from django.db.models import QuerySet
 from django.test import TestCase
 from django.utils import timezone
 
+from baseclasses import models as bc_models
 from baseclasses.models import TestMontrekHub, TestMontrekSatellite
 from baseclasses.repositories.annotator import (
     Annotator,
 )
 from baseclasses.repositories.query_builder import QueryBuilder
 from baseclasses.repositories.subquery_builder import (
+    LinkedSatelliteSubqueryBuilder,
     SatelliteSubqueryBuilder,
 )
 from baseclasses.tests.factories.baseclass_factories import (
+    LinkTestMontrekTestLinkFactory,
+    TestLinkSatelliteFactory,
     TestMontrekSatelliteFactory,
 )
 from baseclasses.utils import montrek_time
@@ -89,8 +92,13 @@ class TestQueryBuilder(TestCase):
         )
         filter_dict = {
             "filter": {
-                "": {"test_value__gte": {"filter_value": 1, "filter_negate": False},
-                     "test_name__exact": {"filter_value": "Test Name 1", "filter_negate": False}}
+                "": {
+                    "test_value__gte": {"filter_value": 1, "filter_negate": False},
+                    "test_name__exact": {
+                        "filter_value": "Test Name 1",
+                        "filter_negate": False,
+                    },
+                }
             }
         }
         query_builder = QueryBuilder(self.annotator, session_data=filter_dict)
@@ -116,8 +124,18 @@ class TestQueryBuilder(TestCase):
         )
         filter_dict = {
             "filter": {
-                "":  {"or": {"test_value__exact": {"filter_value": 1, "filter_negate": False},
-                     "test_name__exact": {"filter_value": "Test Name 0", "filter_negate": False}}}
+                "": {
+                    "or": {
+                        "test_value__exact": {
+                            "filter_value": 1,
+                            "filter_negate": False,
+                        },
+                        "test_name__exact": {
+                            "filter_value": "Test Name 0",
+                            "filter_negate": False,
+                        },
+                    }
+                }
             }
         }
         query_builder = QueryBuilder(self.annotator, session_data=filter_dict)
@@ -125,6 +143,60 @@ class TestQueryBuilder(TestCase):
         self.assertEqual(test_query.count(), 2)
         self.assertEqual(test_query.first().test_name, "Test Name 0")
         self.assertEqual(test_query.last().test_name, "Test Name 1")
+
+    def test_query_builder__build_queryset__with_scalar_linked_satellite_alias(self):
+        reference_date = montrek_time(2023, 6, 25)
+        link = LinkTestMontrekTestLinkFactory()
+        sat = TestLinkSatelliteFactory(hub_entity=link.hub_out)
+
+        annotator = Annotator(TestMontrekHub)
+        query_builder = QueryBuilder(annotator, {})
+        annotator.subquery_builder_to_annotations(
+            ["test_id"],
+            bc_models.TestLinkSatellite,
+            LinkedSatelliteSubqueryBuilder,
+            link_class=bc_models.LinkTestMontrekTestLink,
+            agg_func="string_concat",
+        )
+
+        # Alias path should be taken for OneToOne link
+        self.assertEqual(len(annotator.linked_satellite_aliases), 1)
+
+        queryset = query_builder.build_queryset(reference_date)
+        self.assertEqual(queryset.count(), 1)
+        self.assertEqual(queryset.first().test_id, sat.test_id)
+
+    def test_query_builder__build_queryset__linked_alias_shared_across_fields(self):
+        reference_date = montrek_time(2023, 6, 25)
+        link = LinkTestMontrekTestLinkFactory()
+        sat = TestLinkSatelliteFactory(hub_entity=link.hub_out)
+
+        annotator = Annotator(TestMontrekHub)
+        query_builder = QueryBuilder(annotator, {})
+        # Register the same satellite twice with different fields — should share one alias
+        annotator.subquery_builder_to_annotations(
+            ["test_id"],
+            bc_models.TestLinkSatellite,
+            LinkedSatelliteSubqueryBuilder,
+            link_class=bc_models.LinkTestMontrekTestLink,
+            agg_func="string_concat",
+        )
+        annotator.subquery_builder_to_annotations(
+            ["test_id"],
+            bc_models.TestLinkSatellite,
+            LinkedSatelliteSubqueryBuilder,
+            link_class=bc_models.LinkTestMontrekTestLink,
+            agg_func="string_concat",
+            rename_field_map={"test_id": "test_id_copy"},
+        )
+
+        self.assertEqual(len(annotator.linked_satellite_aliases), 1)
+
+        queryset = query_builder.build_queryset(reference_date)
+        self.assertEqual(queryset.count(), 1)
+        row = queryset.first()
+        self.assertEqual(row.test_id, sat.test_id)
+        self.assertEqual(row.test_id_copy, sat.test_id)
 
     def test_failure_with_filter(self):
         TestMontrekSatelliteFactory.create(

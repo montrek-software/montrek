@@ -6,9 +6,12 @@ from django.utils import timezone
 from baseclasses.repositories.annotator import (
     Annotator,
     FieldProjection,
+    LinkedFieldProjection,
+    LinkedSatelliteAlias,
     SatelliteAlias,
 )
 from baseclasses.repositories.subquery_builder import (
+    LinkedSatelliteSubqueryBuilder,
     SubqueryBuilder,
     TSSumFieldSubqueryBuilder,
     ReverseLinkedSatelliteSubqueryBuilder,
@@ -17,6 +20,7 @@ from baseclasses.models import (
     MontrekHubABC,
     MontrekSatelliteBaseABC,
     MontrekManyToManyLinkABC,
+    MontrekOneToOneLinkABC,
 )
 
 
@@ -75,6 +79,11 @@ class TSSatellite(MontrekSatelliteBaseABC):
 
 
 class DummyLink(MontrekManyToManyLinkABC):
+    class Meta:
+        abstract = True
+
+
+class DummyOneToOneLink(MontrekOneToOneLinkABC):
     class Meta:
         abstract = True
 
@@ -238,6 +247,25 @@ class TestAnnotator(TestCase):
             ExpressionWrapper,
         )
 
+    def test_rename_field_updates_field_type_map(self):
+        annotator = Annotator(DummyHub)
+
+        annotator.subquery_builder_to_annotations(
+            fields=["field_static"],
+            satellite_class=StaticSatellite,
+            subquery_builder=DummyScalarSubqueryBuilder,
+        )
+        original_type = annotator.field_type_map["field_static"]
+
+        annotator.rename_field("field_static", "renamed")
+
+        self.assertNotIn("field_static", annotator.field_type_map)
+        self.assertIn("renamed", annotator.field_type_map)
+        self.assertIs(annotator.field_type_map["renamed"], original_type)
+        # get_annotated_field_map and get_annotated_field_names stay in sync
+        self.assertIn("renamed", annotator.get_annotated_field_names())
+        self.assertIn("renamed", annotator.get_annotated_field_map())
+
     def test_build_calls_build_on_annotation_builders(self):
         annotator = Annotator(DummyHub)
 
@@ -248,3 +276,96 @@ class TestAnnotator(TestCase):
 
         self.assertIn("x", result)
         self.assertIsInstance(result["x"], ExpressionWrapper)
+
+    def test_scalar_linked_satellite_creates_linked_alias_not_annotation(self):
+        annotator = Annotator(DummyHub)
+
+        annotator.subquery_builder_to_annotations(
+            fields=["field_static"],
+            satellite_class=StaticSatellite,
+            subquery_builder=LinkedSatelliteSubqueryBuilder,
+            link_class=DummyOneToOneLink,
+            agg_func="string_concat",
+        )
+
+        # Alias registered, direct annotation NOT created
+        self.assertEqual(len(annotator.linked_satellite_aliases), 1)
+        alias = annotator.linked_satellite_aliases[0]
+        self.assertIsInstance(alias, LinkedSatelliteAlias)
+        self.assertIn("staticsatellite", alias.alias_name)
+        self.assertIn("dummyonetoonelink", alias.alias_name)
+
+        # Field projection created
+        self.assertEqual(len(annotator.linked_field_projections), 1)
+        lfp = annotator.linked_field_projections[0]
+        self.assertIsInstance(lfp, LinkedFieldProjection)
+        self.assertEqual(lfp.field, "field_static")
+        self.assertEqual(lfp.outfield, "field_static")
+        self.assertIs(lfp.linked_satellite_alias, alias)
+
+        # NOT in regular annotations
+        self.assertNotIn("field_static", annotator.annotations)
+
+        # Satellite and link registered
+        self.assertIn(DummyOneToOneLink, annotator.annotated_link_classes)
+        self.assertIn(StaticSatellite, annotator.annotated_satellite_classes)
+
+    def test_scalar_linked_satellite_reuses_alias_for_multiple_fields(self):
+        annotator = Annotator(DummyHub)
+
+        annotator.subquery_builder_to_annotations(
+            fields=["field_static"],
+            satellite_class=StaticSatellite,
+            subquery_builder=LinkedSatelliteSubqueryBuilder,
+            link_class=DummyOneToOneLink,
+            agg_func="string_concat",
+        )
+        # Second call with a different field but identical config
+        annotator.subquery_builder_to_annotations(
+            fields=["field_static"],
+            satellite_class=StaticSatellite,
+            subquery_builder=LinkedSatelliteSubqueryBuilder,
+            link_class=DummyOneToOneLink,
+            agg_func="string_concat",
+        )
+
+        # Only one alias created despite two calls
+        self.assertEqual(len(annotator.linked_satellite_aliases), 1)
+        # Two field projections, both pointing at the same alias
+        self.assertEqual(len(annotator.linked_field_projections), 2)
+        self.assertIs(
+            annotator.linked_field_projections[0].linked_satellite_alias,
+            annotator.linked_field_projections[1].linked_satellite_alias,
+        )
+
+    def test_get_annotated_field_names_includes_linked_projections(self):
+        annotator = Annotator(DummyHub)
+
+        annotator.subquery_builder_to_annotations(
+            fields=["field_static"],
+            satellite_class=StaticSatellite,
+            subquery_builder=LinkedSatelliteSubqueryBuilder,
+            link_class=DummyOneToOneLink,
+            agg_func="string_concat",
+        )
+
+        names = annotator.get_annotated_field_names()
+        self.assertIn("field_static", names)
+
+    def test_rename_field_updates_linked_projections(self):
+        annotator = Annotator(DummyHub)
+
+        annotator.subquery_builder_to_annotations(
+            fields=["field_static"],
+            satellite_class=StaticSatellite,
+            subquery_builder=LinkedSatelliteSubqueryBuilder,
+            link_class=DummyOneToOneLink,
+            agg_func="string_concat",
+        )
+
+        annotator.rename_field("field_static", "renamed_field")
+
+        self.assertEqual(
+            annotator.linked_field_projections[0].outfield, "renamed_field"
+        )
+        self.assertEqual(annotator.linked_field_projections[0].field, "field_static")

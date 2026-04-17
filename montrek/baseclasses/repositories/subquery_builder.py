@@ -210,6 +210,13 @@ class CommentSubqueryBuilder(HubDirectFieldSubqueryBuilder):
 
 
 class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
+    # Subclasses declare which hub side is the *destination* (satellite owner)
+    # and which side anchors the outer-query reference.  Used by the alias
+    # optimisation to determine the correct hub fields without re-instantiating
+    # a builder just for an isinstance check.
+    _hub_field_to: str = ""
+    _hub_field_from: str = ""
+
     def __init__(
         self,
         satellite_class: type[MontrekSatelliteABC],
@@ -509,7 +516,6 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
                                 **{f"{self.field}sub__isnull": True},
                                 then=Value(None, output_field=IntegerField()),
                             ),
-
                             When(falsy_condition, then=Value(0)),
                             default=Value(1),
                             output_field=IntegerField(),
@@ -536,22 +542,22 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         )
 
     def _is_multiple_allowed(self, hub_field_to: str) -> bool:
-        _is_many_to_many = isinstance(self.link_class(), MontrekManyToManyLinkABC)
+        _is_many_to_many = issubclass(self.link_class, MontrekManyToManyLinkABC)
         _is_many_to_many_parent = any(
-            isinstance(parent_link_class(), MontrekManyToManyLinkABC)
+            issubclass(parent_link_class, MontrekManyToManyLinkABC)
             for parent_link_class in self.parent_link_classes
         )
         _is_many_to_one_parent = False
         for i, parent_link_class in enumerate(self.parent_link_classes):
             parent_reversed = self.parent_link_reversed[i]
             if (
-                isinstance(parent_link_class(), MontrekOneToManyLinkABC)
+                issubclass(parent_link_class, MontrekOneToManyLinkABC)
                 and parent_reversed
             ):
                 _is_many_to_many_parent = True
                 break
 
-        _is_many_to_one = isinstance(self.link_class(), MontrekOneToManyLinkABC) and (
+        _is_many_to_one = issubclass(self.link_class, MontrekOneToManyLinkABC) and (
             hub_field_to == "hub_in"
         )
         return (
@@ -559,6 +565,35 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
             or _is_many_to_one
             or _is_many_to_many_parent
             or _is_many_to_one_parent
+        )
+
+    def _build_scalar_alias(
+        self,
+        hub_field_to: str,
+        hub_field_from: str,
+        reference_date: timezone.datetime,
+    ) -> Subquery:
+        """Return a scalar subquery that resolves to the linked satellite's pk.
+
+        Mirrors :meth:`_link_hubs_and_get_subquery` but returns ``pk`` instead
+        of a field value so the result can be stored as a queryset alias and
+        reused by multiple cheap single-column field projections.
+
+        Only valid for scalar (non-multiple) links.
+        """
+        sat_pk_qs = self.satellite_class.objects.filter(
+            **self.link_satellite_filter,
+            **self._build_cross_satellite_filter_dict(reference_date),
+            **self.subquery_filter(
+                reference_date,
+                lookup_field="hub_entity",
+                outer_ref=hub_field_to,
+            ),
+        ).values("pk")[:1]
+        return Subquery(
+            self.get_link_query(hub_field_from, reference_date)
+            .annotate(_lsat_pk=Subquery(sat_pk_qs))
+            .values("_lsat_pk")[:1]
         )
 
     def _get_subquery(
@@ -574,13 +609,25 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
 
 
 class LinkedSatelliteSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
+    _hub_field_to: str = "hub_out"
+    _hub_field_from: str = "hub_in"
+
     def build(self, reference_date: timezone.datetime) -> Subquery:
         return self._get_subquery("hub_out", "hub_in", reference_date)
 
+    def build_alias(self, reference_date: timezone.datetime) -> Subquery:
+        return self._build_scalar_alias("hub_out", "hub_in", reference_date)
+
 
 class ReverseLinkedSatelliteSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
+    _hub_field_to: str = "hub_in"
+    _hub_field_from: str = "hub_out"
+
     def build(self, reference_date: timezone.datetime) -> Subquery:
         return self._get_subquery("hub_in", "hub_out", reference_date)
+
+    def build_alias(self, reference_date: timezone.datetime) -> Subquery:
+        return self._build_scalar_alias("hub_in", "hub_out", reference_date)
 
 
 class StringAgg(Func):
