@@ -186,4 +186,9 @@ urlpatterns = [
         views.HubARedirectView.as_view(),
         name="hub_a_redirect",
     ),
+    path(
+        "hub_c/<int:pk>/details",
+        views.MontrekExampleCLastTSDetails.as_view(),
+        name="montrek_example_c_last_ts_details",
+    ),
 ]

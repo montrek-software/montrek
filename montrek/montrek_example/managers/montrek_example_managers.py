@@ -6,7 +6,10 @@ from montrek_example.repositories.hub_a_repository import (
     HubARepository5,
 )
 from montrek_example.repositories.hub_b_repository import HubBRepository
-from montrek_example.repositories.hub_c_repository import HubCRepository
+from montrek_example.repositories.hub_c_repository import (
+    HubCRepository,
+    HubCRepositoryLastTS,
+)
 from montrek_example.repositories.hub_d_repository import HubDRepository
 from montrek_example.repositories.sat_a1_repository import SatA1Repository
 from reporting.core import reporting_text as rt
@@ -234,6 +237,19 @@ class HubCManager(MontrekTableManager):
             te.DateTableElement(name="Value Date", attr="value_date"),
             te.StringTableElement(name="C1 String", attr="field_c1_str"),
             te.IntTableElement(name="C1 Bool", attr="field_c1_bool"),
+        )
+
+
+class HubCLastTSDetailsManager(MontrekDetailsManager):
+    repository_class = HubCRepositoryLastTS
+
+    @property
+    def table_elements(self) -> list:
+        return (
+            te.DateTableElement(name="Value Date", attr="value_date"),
+            te.StringTableElement(name="C1 String", attr="field_c1_str"),
+            te.IntTableElement(name="C1 Bool", attr="field_c1_bool"),
+            te.FloatTableElement(name="TSC2 Float", attr="field_tsc2_float"),
         )
 
 
