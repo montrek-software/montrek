@@ -485,9 +485,9 @@ class MontrekDetailView(
 
     def _set_hub_value_date_pk(self, kwargs: dict[str, Any]) -> dict[str, Any]:
         hub_value_date_pk = (
-            self.manager_class.repository_class.hub_class.objects.all()
-            .get(pk=kwargs["pk"])
-            .get_hub_value_date()
+            self.manager_class.repository_class()
+            .receive()
+            .get(hub_entity_id=kwargs["pk"])
             .pk
         )
         kwargs["pk"] = hub_value_date_pk

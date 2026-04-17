@@ -1605,3 +1605,18 @@ class TestTableDataWithReferenceDate(MontrekListViewTestCase):
     def test_assign_old_data(self):
         test_object = self.view.object_list[0]
         self.assertEqual(test_object.field_a1_int, 6)
+
+
+class TestMontrekExampleCLastTSDetails(MontrekDetailViewTestCase):
+    viewname = "montrek_example_c_last_ts_details"
+    view_class = me_views.MontrekExampleCLastTSDetails
+
+    def build_factories(self):
+        base_vd = me_factories.CHubValueDateFactory(value_date=None)
+        self.hub_vd = me_factories.CHubValueDateFactory(
+            hub=base_vd.hub, value_date="2026-04-19"
+        )
+        me_factories.SatTSC2Factory(hub_entity=self.hub_vd.hub)
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.hub_vd.hub.id}

@@ -73,6 +73,7 @@ class HubCRepository(MontrekRepository):
 
 class HubCRepositoryLastTS(HubCRepository):
     latest_ts = True
+    consider_session_dates: bool = False
 
 
 class HubCRepositorySumTS(MontrekRepository):

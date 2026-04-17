@@ -151,6 +151,13 @@ class MontrekExampleDDetails(views.MontrekDetailView):
     title = "Example D Details"
 
 
+class MontrekExampleCLastTSDetails(views.MontrekDetailView):
+    manager_class = mem.HubCLastTSDetailsManager
+    page_class = pages.MontrekExampleCAppPage
+    tab = "tab_details"
+    title = "Example C Details"
+
+
 class MontrekExampleBCreate(views.MontrekCreateView):
     manager_class = mem.HubBManager
     page_class = pages.MontrekExampleBAppPage
