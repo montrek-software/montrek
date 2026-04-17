@@ -97,12 +97,12 @@ class TestMontrekRepositorySatellite(TestCase):
                 "created_at",
                 "created_by",
                 "comment",
-                "field_b1_str",
-                "field_b1_date",
                 "field_a1_int",
                 "field_a1_str",
                 "field_a2_float",
                 "field_a2_str",
+                "field_b1_str",
+                "field_b1_date",
                 "dummy1",
                 "dummy2",
             ],
@@ -118,6 +118,11 @@ class TestMontrekRepositorySatellite(TestCase):
         repo.rename_field("field_a1_str", "my_field_a1_str")  # direct satellite field
         repo.rename_field("field_b1_str", "my_field_b1_str")  # linked field
         test_fields = repo.get_all_annotated_fields()
+        # Fields are returned in registration order (set_annotations call order),
+        # with renames applied in-place.  HubARepository.set_annotations registers:
+        #   SatA1 (field_a1_int, field_a1_str), SatA2 (field_a2_float, field_a2_str),
+        #   SatB1 via LinkHubAHubB (field_b1_str, field_b1_date).
+        # The test then adds SatTSC2 (field_tsc2_float) and renames two fields.
         self.assertEqual(
             test_fields,
             [
@@ -126,16 +131,18 @@ class TestMontrekRepositorySatellite(TestCase):
                 "created_at",
                 "created_by",
                 "comment",
-                "field_b1_date",
-                "field_tsc2_float",
-                "my_field_b1_str",
                 "field_a1_int",
                 "my_field_a1_str",
                 "field_a2_float",
                 "field_a2_str",
+                "my_field_b1_str",
+                "field_b1_date",
+                "field_tsc2_float",
             ],
         )
-        # direct time series satellite fields
+        # Fields are returned in registration order.  HubCRepository.set_annotations
+        # registers direct satellite fields (SatTSC2, SatTSC3, SatTSC4, SatC1) first,
+        # then linked satellite fields (SatD1, SatTSD2 via LinkHubCHubD).
         repo = HubCRepository()
         test_fields = repo.get_all_annotated_fields()
         self.assertEqual(
@@ -146,12 +153,6 @@ class TestMontrekRepositorySatellite(TestCase):
                 "created_at",
                 "created_by",
                 "comment",
-                "field_d1_str",
-                "field_d1_int",
-                "field_tsd2_float",
-                "field_tsd2_int",
-                "field_tsd2_float_agg",
-                "field_tsd2_float_latest",
                 "field_tsc2_float",
                 "created_by__email",
                 "field_tsc3_int",
@@ -159,6 +160,12 @@ class TestMontrekRepositorySatellite(TestCase):
                 "field_tsc4_int",
                 "field_c1_bool",
                 "field_c1_str",
+                "field_d1_str",
+                "field_d1_int",
+                "field_tsd2_float",
+                "field_tsd2_int",
+                "field_tsd2_float_agg",
+                "field_tsd2_float_latest",
             ],
         )
 

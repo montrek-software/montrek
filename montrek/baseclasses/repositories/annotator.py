@@ -66,6 +66,10 @@ class Annotator:
         self.annotated_link_classes: list[type[MontrekLinkABC]] = []
         self.linked_satellite_aliases: list[LinkedSatelliteAlias] = []
         self.linked_field_projections: list[LinkedFieldProjection] = []
+        # Tracks all field names (outfields) in registration order so that
+        # get_annotated_field_names preserves insertion order across annotations,
+        # field_projections, and linked_field_projections.
+        self._field_names_in_order: list[str] = list(self.raw_annotations.keys())
 
     def get_raw_annotations(self) -> dict[str, SubqueryBuilder]:
         return {
@@ -158,11 +162,7 @@ class Annotator:
         return [field.name for field in self.satellite_fields()]
 
     def get_annotated_field_names(self) -> list[str]:
-        return (
-            list(self.annotations.keys())
-            + [fp.outfield for fp in self.field_projections]
-            + [lfp.outfield for lfp in self.linked_field_projections]
-        )
+        return list(self._field_names_in_order)
 
     def get_satellite_classes(self) -> list[type[MontrekSatelliteBaseABC]]:
         return self.annotated_satellite_classes
@@ -205,6 +205,10 @@ class Annotator:
         for linked_field_projection in self.linked_field_projections:
             if linked_field_projection.outfield == old_field:
                 linked_field_projection.outfield = new_field
+        for i, name in enumerate(self._field_names_in_order):
+            if name == old_field:
+                self._field_names_in_order[i] = new_field
+                break
 
     def has_only_static_sats(self) -> bool:
         return not (
@@ -249,6 +253,7 @@ class Annotator:
                     )
                 )
                 self.set_field_type(field, outfield, satellite_class)
+                self._field_names_in_order.append(outfield)
         else:
             for field in fields:
                 outfield = rename_field_map.get(field, field)
@@ -256,6 +261,7 @@ class Annotator:
                     satellite_class, field, **kwargs
                 )
                 self.set_field_type(field, outfield, satellite_class)
+                self._field_names_in_order.append(outfield)
 
                 if issubclass(link_class, MontrekManyToManyLinkABC) or (
                     issubclass(link_class, MontrekOneToManyLinkABC)
@@ -328,6 +334,7 @@ class Annotator:
                 satellite_class, field
             )
             self.set_field_type(field, outfield, satellite_class)
+            self._field_names_in_order.append(outfield)
 
     def _handle_scalar_satellite(
         self,
@@ -354,6 +361,7 @@ class Annotator:
                 )
             )
             self.set_field_type(field, outfield, satellite_class)
+            self._field_names_in_order.append(outfield)
 
     def _add_class(
         self,
