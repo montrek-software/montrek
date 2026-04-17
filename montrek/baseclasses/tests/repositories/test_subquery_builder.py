@@ -4,6 +4,7 @@ from baseclasses import models as bc_models
 from baseclasses.repositories.subquery_builder import (
     GroupConcat,
     LinkedSatelliteSubqueryBuilder,
+    ReverseLinkedSatelliteSubqueryBuilder,
     StringAgg,
     SubqueryBuilder,
     get_string_concat_function,
@@ -13,7 +14,7 @@ from baseclasses.tests.factories.baseclass_factories import (
     TestLinkSatelliteFactory,
 )
 from baseclasses.utils import montrek_time
-from django.db.models import CharField
+from django.db.models import CharField, OuterRef, Subquery
 from django.test import TestCase
 from django.utils import timezone
 
@@ -88,6 +89,34 @@ class TestLinkedSatelliteSubqueryBuilder(TestCase):
         self.assertEqual(query[0].test_id, self.sat_1.test_id)
         # self.assertEqual(query[1].test_id, self.sat_2_1.test_id)
         #
+
+    def test_build_alias_returns_satellite_pk(self):
+        builder = LinkedSatelliteSubqueryBuilder(
+            satellite_class=bc_models.TestLinkSatellite,
+            field="test_id",
+            link_class=bc_models.LinkTestMontrekTestLink,
+        )
+        alias_subquery = builder.build_alias(self.reference_date)
+        query = bc_models.TestHubValueDate.objects.alias(
+            linked_sat_pk=alias_subquery
+        ).annotate(
+            test_id=Subquery(
+                bc_models.TestLinkSatellite.objects.filter(
+                    pk=OuterRef("linked_sat_pk")
+                ).values("test_id")
+            )
+        )
+        self.assertEqual(len(query), 2)
+        self.assertEqual(query[0].test_id, self.sat_1.test_id)
+        self.assertEqual(query[1].test_id, self.sat_2_2.test_id)
+
+    def test_build_alias_hub_field_to_attributes(self):
+        self.assertEqual(LinkedSatelliteSubqueryBuilder._hub_field_to, "hub_out")
+        self.assertEqual(LinkedSatelliteSubqueryBuilder._hub_field_from, "hub_in")
+        self.assertEqual(ReverseLinkedSatelliteSubqueryBuilder._hub_field_to, "hub_in")
+        self.assertEqual(
+            ReverseLinkedSatelliteSubqueryBuilder._hub_field_from, "hub_out"
+        )
 
     def test_no_agg_func(self):
         builder = MockLinkedSatelliteSubqueryBuilder(
