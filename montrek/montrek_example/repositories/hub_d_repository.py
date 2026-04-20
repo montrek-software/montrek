@@ -49,3 +49,16 @@ class HubDRepositoryReversedParentLink(MontrekRepository):
             parent_link_classes=(me_models.LinkHubCHubD,),
             reversed_link=True,
         )
+
+
+class HubDTSLinkAggRepositorySum(MontrekRepository):
+    hub_class = me_models.HubD
+
+    def set_annotations(self):
+        self.add_linked_satellites_field_annotations(
+            me_models.SatTSC2,
+            me_models.LinkHubCHubD,
+            ["field_tsc2_float"],
+            reversed_link=True,
+            agg_func="sum_value_date",
+        )

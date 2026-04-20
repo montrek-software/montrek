@@ -50,6 +50,7 @@ from montrek_example.repositories.hub_d_repository import (
     HubDRepository,
     HubDRepositoryReversedParentLink,
     HubDRepositoryTSReverseLink,
+    HubDTSLinkAggRepositorySum,
 )
 from montrek_example.repositories.hub_e_repository import HubERepository
 from montrek_example.tests.factories import montrek_example_factories as me_factories
@@ -2306,6 +2307,41 @@ class TestStaticAggFuncs(TestCase):
         self.assertEqual(test_query[0].field_d1_int, 2)
         self.assertEqual(test_query[0].a2_counter, 2)
         self.assertEqual(test_query[0].a2_counter_w_filter, 1)
+
+
+class TestTSAggFuncs(TestCase):
+    def setUp(self) -> None:
+        self.test_date_1 = "2026-04-20"
+        self.test_date_2 = "2026-04-21"
+        sat_d1 = me_factories.SatD1Factory()
+
+        self.hvd_1 = me_factories.DHubValueDateFactory(
+            hub=sat_d1.hub_entity, value_date=self.test_date_1
+        )
+        self.hvd_2 = me_factories.DHubValueDateFactory(
+            hub=sat_d1.hub_entity, value_date=self.test_date_2
+        )
+        tsc2_sats = (
+            me_factories.SatTSC2Factory(
+                field_tsc2_float=2.5, value_date=self.test_date_1
+            ),
+            me_factories.SatTSC2Factory(
+                field_tsc2_float=3.5, value_date=self.test_date_1
+            ),
+            me_factories.SatTSC2Factory(
+                field_tsc2_float=4.5, value_date=self.test_date_2
+            ),
+        )
+        for sat in tsc2_sats:
+            sat.hub_value_date.hub.link_hub_c_hub_d.add(sat_d1.hub_entity)
+
+    def test_sum(self):
+        repo = HubDTSLinkAggRepositorySum()
+        test_query = repo.receive()
+        first_entry = test_query.get(pk=self.hvd_1.pk)
+        second_entry = test_query.get(pk=self.hvd_2.pk)
+        self.assertEqual(first_entry.field_tsc2_float, 6)
+        self.assertEqual(second_entry.field_tsc2_float, 4.5)
 
 
 class TestStaticAggFuncsAll(TestCase):
