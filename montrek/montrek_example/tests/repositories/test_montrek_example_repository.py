@@ -2339,7 +2339,9 @@ class TestTSAggFuncs(TestCase):
         repo = HubDTSLinkAggRepositorySum()
         test_query = repo.receive()
         first_entry = test_query.get(pk=self.hvd_1.pk)
+        second_entry = test_query.get(pk=self.hvd_2.pk)
         self.assertEqual(first_entry.field_tsc2_float, 6)
+        self.assertEqual(second_entry.field_tsc2_float, 4.5)
 
 
 class TestStaticAggFuncsAll(TestCase):
