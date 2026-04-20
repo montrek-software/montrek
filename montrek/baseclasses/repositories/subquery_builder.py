@@ -444,6 +444,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
             return query
         annotators = {
             LinkAggFunctionEnum.SUM: lambda q: self._annotate_sum(q),
+            LinkAggFunctionEnum.SUM_VALUE_DATE: lambda q: self._annotate_sum(q),
             LinkAggFunctionEnum.STRING_CONCAT: lambda q: self._annotate_string_concat(
                 q, self.separator
             ),
@@ -659,6 +660,7 @@ def get_string_concat_function(separator: str) -> Callable[..., Any]:
 
 class LinkAggFunctionEnum(Enum):
     SUM = "sum"
+    SUM_VALUE_DATE = "sum_value_date"
     STRING_CONCAT = "string_concat"
     LATEST = "latest"
     MEAN = "mean"
