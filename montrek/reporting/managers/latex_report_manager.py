@@ -1,4 +1,5 @@
 import locale
+import uuid
 import logging
 import os
 import subprocess  # nosec B404
@@ -96,7 +97,8 @@ class LatexReportManager:
 
     def compile_report(self) -> str | None:
         report_str = self.generate_report()
-        workbench_path = settings.WORKBENCH_PATH
+        workbench_path = settings.WORKBENCH_PATH / str(uuid.uuid4())
+        workbench_path.mkdir(parents=True, exist_ok=True)
         self.clean_workbench()
 
         output_dir = Path(settings.MEDIA_ROOT) / "latex"
