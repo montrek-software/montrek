@@ -1423,10 +1423,12 @@ class TestMontrekRepositoryLinks(TestCase):
         user = MontrekUserFactory()
         session_data = {"user_id": user.id}
         repository = HubARepository3(session_data)
-        repository.create_by_dict({"field_a1_str": "Test", "link_hub_a_hub_c": hubc2})
+        new_hub = repository.create_by_dict(
+            {"field_a1_str": "Test", "link_hub_a_hub_c": hubc2}
+        )
         queryset = repository.receive()
         self.assertEqual(queryset.count(), 2)
-        self.assertEqual(queryset[0].field_d1_str, "Test2")
+        self.assertEqual(queryset.get(hub_entity_id=new_hub.pk).field_d1_str, "Test2")
 
     def test_link_reversed_with_parent_links(self):
         satd = me_factories.SatD1Factory()

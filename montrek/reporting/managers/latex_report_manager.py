@@ -1,7 +1,9 @@
 import locale
 import logging
 import os
+import shutil
 import subprocess  # nosec B404
+import uuid
 from pathlib import Path
 
 from baseclasses.dataclasses.montrek_message import MontrekMessageError
@@ -96,12 +98,11 @@ class LatexReportManager:
 
     def compile_report(self) -> str | None:
         report_str = self.generate_report()
-        workbench_path = settings.WORKBENCH_PATH
-        self.clean_workbench()
+        workbench_path = settings.WORKBENCH_PATH / str(uuid.uuid4())
+        workbench_path.mkdir(parents=True, exist_ok=True)
 
         output_dir = Path(settings.MEDIA_ROOT) / "latex"
         output_dir.mkdir(parents=True, exist_ok=True)
-        workbench_path.mkdir(parents=True, exist_ok=True)
 
         tex_filename = f"{self.report_manager.document_name}.tex"
         pdf_filename = f"{self.report_manager.document_name}.pdf"
@@ -109,9 +110,7 @@ class LatexReportManager:
         latex_file_path = workbench_path / tex_filename
         pdf_file_path = workbench_path / pdf_filename
         output_pdf_path = output_dir / pdf_filename
-        log_path = workbench_path / f"{self.report_manager.document_name}.log"
 
-        # Write LaTeX file explicitly as UTF-8 (XeLaTeX handles UTF-8 well)
         with open(latex_file_path, "w", encoding="utf-8") as f:
             f.write(report_str)
 
@@ -136,43 +135,29 @@ class LatexReportManager:
                 cwd=str(workbench_path),
             )  # nosec B603
 
+            if not pdf_file_path.exists():
+                stdout = (proc.stdout or b"").decode("latin-1", errors="replace")
+                stderr = (proc.stderr or b"").decode("latin-1", errors="replace")
+                raise RuntimeError(
+                    f"LaTeX did not produce a PDF at {pdf_file_path}.\n{stdout[-2000:]}\n{stderr[-2000:]}"
+                )
+
+            output_pdf_path.write_bytes(pdf_file_path.read_bytes())
+            return str(output_pdf_path)
+
         except subprocess.CalledProcessError as e:
-            # Decode safely for the exception message
             err = (e.stderr or b"") + b"\n" + (e.stdout or b"")
             preferred_encoding = locale.getpreferredencoding(False)
             err_txt = err.decode(preferred_encoding, errors="replace")
-            # Optionally dump to .log for debugging
-            try:
-                log_path.write_text(err_txt, encoding="utf-8", errors="replace")
-            except (OSError, UnicodeError) as log_exc:
-                # Writing the debug log isn't critical; warn and continue.
-                logger.warning("Failed to write LaTeX log to %s: %s", log_path, log_exc)
             self.report_manager.messages.append(
                 MontrekMessageError(
-                    message=f"LaTeX compilation failed. See log at {log_path}.\n{err_txt[-4000:]}"
+                    message=f"LaTeX compilation failed.\n{err_txt[-4000:]}"
                 )
             )
             return None
 
-        # Move/copy the resulting PDF to media output
-        if not pdf_file_path.exists():
-            # If XeLaTeX didn't produce it, surface the log
-            stdout = (proc.stdout or b"").decode("latin-1", errors="replace")
-            stderr = (proc.stderr or b"").decode("latin-1", errors="replace")
-            raise RuntimeError(
-                f"LaTeX did not produce a PDF at {pdf_file_path}.\n{stdout[-2000:]}\n{stderr[-2000:]}"
-            )
-
-        output_pdf_path.write_bytes(pdf_file_path.read_bytes())
-        return str(output_pdf_path)
-
-    def clean_workbench(self):
-        for suffix in (".pdf", ".aux", ".log", ".out"):
-            path = (
-                settings.WORKBENCH_PATH / f"{self.report_manager.document_name}{suffix}"
-            )
-            if path.exists():
-                path.unlink()
+        finally:
+            shutil.rmtree(workbench_path, ignore_errors=True)
 
     def _get_template_path(self) -> str | None:
         for template_dir in settings.TEMPLATES[0]["DIRS"]:
