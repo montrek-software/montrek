@@ -1428,7 +1428,7 @@ class TestMontrekRepositoryLinks(TestCase):
         )
         queryset = repository.receive()
         self.assertEqual(queryset.count(), 2)
-        self.assertEqual(queryset.get(pk=new_hub.pk).field_d1_str, "Test2")
+        self.assertEqual(queryset.get(hub_entity_id=new_hub.pk).field_d1_str, "Test2")
 
     def test_link_reversed_with_parent_links(self):
         satd = me_factories.SatD1Factory()
