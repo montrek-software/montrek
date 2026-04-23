@@ -412,9 +412,11 @@ class CollapsibleSection(ReportingElement):
 
     template_name = "collapsible_section"
 
-    def __init__(self, header: str, content: object, collapsed: bool = True):
+    def __init__(
+        self, header: str, content: ReportingElement, collapsed: bool = True
+    ):
         self.header = header
-        self.content = content
+        self.content: ReportingElement = content
         self.collapsed = collapsed
         self._id = (
             "cs-" + hashlib.md5(header.encode(), usedforsecurity=False).hexdigest()[:8]
