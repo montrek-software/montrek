@@ -8,6 +8,7 @@ from bs4 import BeautifulSoup
 from django.test import TestCase
 
 from reporting.core.reporting_text import (
+    CollapsibleSection,
     MarkdownReportingElement,
     MontrekLogo,
     NewPage,
@@ -629,6 +630,107 @@ class TestReportingError(ReportingElementTestCase):
             "error_texts": ["Error Text1", "Error Text2"],
             "error_header": "Error Header",
         }
+
+
+class TestCollapsibleSection(TestCase):
+    def setUp(self):
+        self.content = ReportingParagraph("Table content")
+        self.section = CollapsibleSection("Tilgung", self.content)
+        self.section_expanded = CollapsibleSection(
+            "Zinsen", self.content, collapsed=False
+        )
+
+    # ------------------------------------------------------------------
+    # HTML structure
+    # ------------------------------------------------------------------
+
+    def test_collapsed_by_default(self):
+        soup = BeautifulSoup(self.section.to_html(), "html.parser")
+        collapse_div = soup.find("div", class_="collapse")
+        self.assertIsNotNone(collapse_div)
+        self.assertNotIn("show", collapse_div.get("class", []))
+
+    def test_aria_expanded_false_when_collapsed(self):
+        soup = BeautifulSoup(self.section.to_html(), "html.parser")
+        button = soup.find("button")
+        self.assertEqual(button["aria-expanded"], "false")
+
+    def test_expanded_state(self):
+        soup = BeautifulSoup(self.section_expanded.to_html(), "html.parser")
+        collapse_div = soup.find("div", class_="collapse")
+        self.assertIn("show", collapse_div.get("class", []))
+
+    def test_aria_expanded_true_when_expanded(self):
+        soup = BeautifulSoup(self.section_expanded.to_html(), "html.parser")
+        button = soup.find("button")
+        self.assertEqual(button["aria-expanded"], "true")
+
+    def test_button_has_required_classes(self):
+        soup = BeautifulSoup(self.section.to_html(), "html.parser")
+        button = soup.find("button")
+        classes = button.get("class", [])
+        for expected in ("btn", "btn-light-custom", "btn-sm", "w-100"):
+            self.assertIn(expected, classes)
+
+    def test_header_text_in_button(self):
+        soup = BeautifulSoup(self.section.to_html(), "html.parser")
+        button = soup.find("button")
+        self.assertIn("Tilgung", button.get_text())
+
+    def test_chevron_icon_present(self):
+        soup = BeautifulSoup(self.section.to_html(), "html.parser")
+        chevron = soup.find("span", class_="collapsible-chevron")
+        self.assertIsNotNone(chevron)
+        self.assertIn("bi-chevron-down", chevron.get("class", []))
+
+    def test_content_rendered_unescaped_inside_collapse_div(self):
+        soup = BeautifulSoup(self.section.to_html(), "html.parser")
+        collapse_div = soup.find("div", class_="collapse")
+        self.assertIn("Table content", collapse_div.get_text())
+
+    def test_collapse_id_links_button_target_to_div(self):
+        soup = BeautifulSoup(self.section.to_html(), "html.parser")
+        button = soup.find("button")
+        collapse_div = soup.find("div", class_="collapse")
+        target = button["data-bs-target"].lstrip("#")
+        self.assertEqual(target, collapse_div["id"])
+        self.assertEqual(button["aria-controls"], collapse_div["id"])
+
+    # ------------------------------------------------------------------
+    # ID stability
+    # ------------------------------------------------------------------
+
+    def test_same_header_produces_same_id(self):
+        s1 = CollapsibleSection("Tilgung", self.content)
+        s2 = CollapsibleSection("Tilgung", self.content)
+        self.assertEqual(s1._id, s2._id)
+
+    def test_different_headers_produce_different_ids(self):
+        self.assertNotEqual(self.section._id, self.section_expanded._id)
+
+    # ------------------------------------------------------------------
+    # to_latex
+    # ------------------------------------------------------------------
+
+    def test_to_latex_contains_header_and_content(self):
+        latex = self.section.to_latex()
+        self.assertIn("Tilgung", latex)
+        self.assertIn(self.content.to_latex(), latex)
+
+    def test_to_latex_header_before_content(self):
+        latex = self.section.to_latex()
+        header_pos = latex.index("Tilgung")
+        content_pos = latex.index("Table content")
+        self.assertLess(header_pos, content_pos)
+
+    # ------------------------------------------------------------------
+    # to_json
+    # ------------------------------------------------------------------
+
+    def test_to_json(self):
+        result = self.section.to_json()
+        self.assertEqual(result["header"], "Tilgung")
+        self.assertEqual(result["content"], self.content.to_json())
 
 
 class TestReportingFooter(ReportingElementTestCase):
