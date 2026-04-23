@@ -400,3 +400,39 @@ class ReportingError(ReportingElement):
 
 class ReportingFooter(ReportingText):
     template_name = "footer"
+
+
+class CollapsibleSection(ReportingElement):
+    """Wraps a header and any reporting element in a Bootstrap collapse toggle.
+
+    In HTML output the section starts collapsed by default; the user clicks
+    the header to expand it.  In LaTeX output the header is rendered as a
+    level-2 section title followed by the content unchanged.
+    """
+
+    template_name = "collapsible_section"
+
+    def __init__(
+        self, header: str, content: ReportingElement, collapsed: bool = True
+    ):
+        self.header = header
+        self.content: ReportingElement = content
+        self.collapsed = collapsed
+        self._id = (
+            "cs-" + hashlib.md5(header.encode(), usedforsecurity=False).hexdigest()[:8]
+        )
+
+    def get_context_data(self) -> ContextTypes:
+        return {
+            "header": self.header,
+            "content": self.content.to_html(),
+            "collapse_id": self._id,
+            "show": not self.collapsed,
+        }
+
+    def to_latex(self) -> str:
+        header_latex = HtmlLatexConverter.convert(f"<h2>{self.header}</h2>")
+        return header_latex + self.content.to_latex()
+
+    def to_json(self) -> dict:
+        return {"header": self.header, "content": self.content.to_json()}
