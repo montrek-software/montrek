@@ -200,16 +200,38 @@
     color: #ffffff;
   }
 
-/* Leichter Button als Ersatz für dein früheres .btn-light Override */
+/* Section-toggle button — used alongside Bootstrap's .btn base class */
   .btn-light-custom {
-    background-color: #ffffff;
+    background-color: {% get_color "primary_light" %};
     color: {% get_color "primary" %};
     border: 1px solid {% get_color "primary" %};
+    border-left: 3px solid {% get_color "primary" %};
+    font-weight: 600;
+    letter-spacing: 0.1px;
   }
 
   .btn-light-custom:hover {
-    background-color: {% get_color "primary_light" %};
-    color: {% get_color "secondary" %};
+    background-color: {% get_color "primary" %};
+    color: #ffffff;
+    border-color: {% get_color "primary" %};
+  }
+
+  .btn-light-custom:focus,
+  .btn-light-custom:active {
+    background-color: {% get_color "primary" %};
+    color: #ffffff;
+    border-color: {% get_color "primary" %};
+    box-shadow: 0 0 0 0.15rem rgba(0, 0, 0, 0.15);
+  }
+
+/* Chevron icon inside collapsible section toggle */
+  .collapsible-chevron {
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+  }
+
+  [aria-expanded="true"] .collapsible-chevron {
+    transform: rotate(180deg);
   }
 
 /* Buttons im Tabellen-Kontext */
