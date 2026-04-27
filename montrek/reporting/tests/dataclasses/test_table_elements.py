@@ -1108,6 +1108,40 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             in test_link
         )
 
+    def test__get_link_text_filter__with_filter_field(self):
+        test_obj = TestMontrekSatelliteFactory.create()
+        table_element = te.LinkTextTableElement(
+            name="name",
+            url="dummy_detail",
+            text="test_name",
+            hover_text="hover_text",
+            kwargs={
+                "pk": "pk",
+                "filter": "test_name",
+                "filter_field": "custom_filter_field",
+            },
+        )
+        test_display_field = table_element.get_display_field(test_obj)
+        test_link = test_display_field.display_value
+        self.assertIn(
+            f"?filter_field=custom_filter_field&amp;filter_lookup=in&amp;filter_value={test_obj.test_name.replace(' ', '%20')}",
+            test_link,
+        )
+        self.assertNotIn("custom_filter_field", table_element.get_url_kwargs(test_obj))
+
+    def test__get_link_text_filter__filter_field_falls_back_to_filter(self):
+        test_obj = TestMontrekSatelliteFactory.create()
+        table_element = te.LinkTextTableElement(
+            name="name",
+            url="dummy_detail",
+            text="test_name",
+            hover_text="hover_text",
+            kwargs={"pk": "pk", "filter": "test_name"},
+        )
+        filter_params = table_element.get_filter(test_obj)
+        self.assertEqual(filter_params["filter_field"], "test_name")
+        self.assertEqual(filter_params["filter_value"], test_obj.test_name)
+
     def test__get_link_static_kwargs(self):
         test_obj = TestMontrekSatelliteFactory.create()
         table_element = te.LinkTextTableElement(

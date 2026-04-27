@@ -298,7 +298,7 @@ class BaseLinkTableElement(TableElement, GetDottetAttrsOrArgMixin):
         kwargs = {
             key: self.get_dotted_attr_or_arg(obj, value)
             for key, value in self.kwargs.items()
-            if key != "filter"
+            if key not in ["filter", "filter_field"]
         }
         kwargs = {key: str(value).replace("/", "_") for key, value in kwargs.items()}
         kwargs.update(self.static_kwargs)
@@ -318,12 +318,15 @@ class BaseLinkTableElement(TableElement, GetDottetAttrsOrArgMixin):
         return f"{url}?{query}" if query else url
 
     def get_filter(self, obj: Any) -> dict[str, Any]:
-        filter_field = self.kwargs.get("filter")
-        if filter_field:
+        filter_field = self.kwargs.get("filter_field")
+        filter_value_field = self.kwargs.get("filter")
+        if filter_field is None:
+            filter_field = filter_value_field
+        if filter_field is not None:
             return {
                 "filter_field": filter_field,
                 "filter_lookup": "in",
-                "filter_value": self.get_dotted_attr_or_arg(obj, filter_field),
+                "filter_value": self.get_dotted_attr_or_arg(obj, filter_value_field),
             }
         return {}
 
