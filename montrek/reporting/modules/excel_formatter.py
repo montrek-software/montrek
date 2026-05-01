@@ -58,6 +58,7 @@ class MontrekExcelFormatter:
 
     def _style_header_cell(self, cell, styles, col_idx: int) -> None:
         """Apply styling to a header cell."""
+        _ = col_idx  # Available for subclass overrides
         cell.fill = styles["header_fill"]
         cell.font = styles["header_font"]
         cell.alignment = Alignment(horizontal="left")

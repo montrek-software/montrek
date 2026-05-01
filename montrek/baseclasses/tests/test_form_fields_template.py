@@ -60,7 +60,7 @@ class TestFormFieldsTemplate(TestCase):
 
     def test_multiple_choice_field_uses_col_lg_3_label(self):
         soup = self._render(_MultipleChoiceForm())
-        label = soup.find("label", class_="col-lg-3")
+        label = soup.find("legend", class_="col-lg-3")
         self.assertIsNotNone(label)
 
     def test_multiple_choice_field_uses_col_lg_9(self):
@@ -82,7 +82,7 @@ class TestFormFieldsTemplate(TestCase):
     def test_multiple_choice_uses_align_items_start(self):
         """Multi-choice uses align-items-start (not align-items-center)."""
         soup = self._render(_MultipleChoiceForm())
-        row = soup.find("div", class_="align-items-start")
+        row = soup.find("fieldset", class_="align-items-start")
         self.assertIsNotNone(row)
 
     def test_single_checkbox_uses_align_items_center(self):
@@ -128,5 +128,5 @@ class TestFormFieldsTemplate(TestCase):
 
     def test_multiple_choice_label_has_word_break_style(self):
         soup = self._render(_MultipleChoiceForm())
-        label = soup.find("label", style=lambda s: s and "word-break" in s)
+        label = soup.find("legend", style=lambda s: s and "word-break" in s)
         self.assertIsNotNone(label)

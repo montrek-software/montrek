@@ -264,7 +264,7 @@ class TestBaseMontrekChoiceField(TestCase):
     def test_get_initial_link_not_implemented(self):
         field = BaseMontrekChoiceField(display_field="field1")
         with self.assertRaises(NotImplementedError):
-            field.get_initial_link(None, None, None, None, None)
+            field.get_initial_link({}, QuerySet(), "", "", None)
 
 
 class TestMontrekModelCharChoiceField(TestCase):
@@ -512,7 +512,8 @@ class TestDateFieldWidgetFormat(TestCase):
 
     def test_widget_format_attribute_is_iso(self):
         """MontrekCreateForm._get_form_field must construct a DateInput widget with
-        format='%Y-%m-%d' so locale-driven format selection is bypassed at the source."""
+        format='%Y-%m-%d' so locale-driven format selection is bypassed at the source.
+        """
         self.assertEqual(self.widget.format, "%Y-%m-%d")
 
     def test_format_value_is_iso_under_english_locale(self):
