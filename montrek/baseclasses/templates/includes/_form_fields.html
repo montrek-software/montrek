@@ -1,8 +1,7 @@
 {% load widget_tags %}
 {% for field in form %}
   {% if field|is_checkbox_select_multiple %}
-    <div class="row mb-3 align-items-start">
-      <fieldset class="row w-100">
+    <fieldset class="row mb-3 align-items-start">
         <legend class="col-sm-3 col-lg-3 col-form-label text-sm-end" style="word-break: break-word;">
           {{ field.label }}
           {% if field.help_text %}
@@ -24,8 +23,7 @@
             <div class="text-danger small mt-1">{{ field.errors }}</div>
           {% endif %}
         </div>
-      </fieldset>
-    </div>
+    </fieldset>
   {% elif field.field.widget.input_type == "checkbox" %}
     <div class="row mb-3 align-items-center">
       <div class="col-sm-3 col-lg-3 text-sm-end">

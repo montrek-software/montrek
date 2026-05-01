@@ -82,7 +82,7 @@ class TestFormFieldsTemplate(TestCase):
     def test_multiple_choice_uses_align_items_start(self):
         """Multi-choice uses align-items-start (not align-items-center)."""
         soup = self._render(_MultipleChoiceForm())
-        row = soup.find("div", class_="align-items-start")
+        row = soup.find("fieldset", class_="align-items-start")
         self.assertIsNotNone(row)
 
     def test_single_checkbox_uses_align_items_center(self):
