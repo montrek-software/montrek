@@ -22,6 +22,7 @@ class FileUploadRegistryStaticSatelliteABC(baseclass_models.MontrekSatelliteABC)
         XLSX = "xlsx"
         XLS = "xls"
         TXT = "txt"
+        TOML = "toml"
         NONE = "none"
 
     class UploadStatus(models.TextChoices):
