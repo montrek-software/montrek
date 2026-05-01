@@ -5,6 +5,7 @@ from montrek_example.repositories.hub_d_repository import HubDRepository
 
 class HubCRepository(MontrekRepository):
     hub_class = me_models.HubC
+    consider_session_dates = True
 
     def set_annotations(self):
         self.add_satellite_fields_annotations(
