@@ -3,6 +3,7 @@ import math
 
 from baseclasses.managers.montrek_manager import MontrekManager
 from django.template.loader import get_template
+from baseclasses.typing import TableElementsType
 from reporting.core import reporting_text as rt
 from reporting.dataclasses import table_elements as te
 from reporting.dataclasses.display_field import DisplayField
@@ -25,7 +26,7 @@ class MontrekDetailsManager(MontrekManager):
         self.row_size = math.ceil(len(self.table_elements) / self.table_cols)
 
     @property
-    def table_elements(self) -> tuple[te.TableElement, ...]:
+    def table_elements(self) -> TableElementsType:
         return ()
 
     @property
