@@ -11,6 +11,8 @@ from baseclasses.tests.factories.baseclass_factories import TestMontrekHubFactor
 
 
 class MockMontrekRepository(MontrekRepository):
+    consider_session_dates = True
+
     def set_annotations(self):
         pass
 
@@ -18,6 +20,7 @@ class MockMontrekRepository(MontrekRepository):
 class TestRepository(MontrekRepository):
     hub_class = TestMontrekHub
     default_order_fields: tuple[str] = ("test_name",)
+    consider_session_dates = True
 
     def set_annotations(self):
         self.add_satellite_fields_annotations(
