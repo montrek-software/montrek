@@ -232,7 +232,7 @@ class HubCManager(MontrekTableManager):
     repository_class = HubCRepository
 
     @property
-    def table_elements(self) -> list:
+    def table_elements(self) -> tuple:
         return (
             te.DateTableElement(name="Value Date", attr="value_date"),
             te.StringTableElement(name="C1 String", attr="field_c1_str"),
@@ -244,7 +244,7 @@ class HubCLastTSDetailsManager(MontrekDetailsManager):
     repository_class = HubCRepositoryLastTS
 
     @property
-    def table_elements(self) -> list:
+    def table_elements(self) -> tuple:
         return (
             te.DateTableElement(name="Value Date", attr="value_date"),
             te.StringTableElement(name="C1 String", attr="field_c1_str"),
