@@ -60,7 +60,7 @@ class TestFormFieldsTemplate(TestCase):
 
     def test_multiple_choice_field_uses_col_lg_3_label(self):
         soup = self._render(_MultipleChoiceForm())
-        label = soup.find("label", class_="col-lg-3")
+        label = soup.find("legend", class_="col-lg-3")
         self.assertIsNotNone(label)
 
     def test_multiple_choice_field_uses_col_lg_9(self):
@@ -128,5 +128,5 @@ class TestFormFieldsTemplate(TestCase):
 
     def test_multiple_choice_label_has_word_break_style(self):
         soup = self._render(_MultipleChoiceForm())
-        label = soup.find("label", style=lambda s: s and "word-break" in s)
+        label = soup.find("legend", style=lambda s: s and "word-break" in s)
         self.assertIsNotNone(label)
