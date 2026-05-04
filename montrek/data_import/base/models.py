@@ -1,10 +1,13 @@
-
 from django.db import models
 from baseclasses import models as baseclass_models
 from baseclasses.fields import HubForeignKey
+from process_pipeline.models.pipeline_registry_hub_models import PipelineRegistryHubABC
+from process_pipeline.models.pipeline_registry_sat_models import (
+    PipelineRegistrySatelliteABC,
+)
 
 
-class DataImportRegistryBaseSatelliteABC(baseclass_models.MontrekSatelliteABC):
+class DataImportRegistryBaseSatelliteABC(PipelineRegistrySatelliteABC):
     class Meta:
         abstract = True
 
@@ -22,8 +25,7 @@ class DataImportRegistryBaseSatelliteABC(baseclass_models.MontrekSatelliteABC):
     identifier_fields = ["hub_entity_id"]
 
 
-class TestRegistryHub(baseclass_models.MontrekHubABC):
-    ...
+class TestRegistryHub(PipelineRegistryHubABC): ...
 
 
 class TestRegistryHubValueDate(baseclass_models.HubValueDate):

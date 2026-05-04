@@ -30,7 +30,7 @@ class DataImportManagerABC(MontrekManager):
         self._update_registry(status="processed", message=self.get_message())
 
     def get_message(self) -> str:
-        return self.processor.get_message()
+        return self.processor.message
 
     def get_registry(self):
         return self.registry_repository.receive().get(pk=self.registry_hub_pk)
