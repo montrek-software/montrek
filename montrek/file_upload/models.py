@@ -2,16 +2,20 @@ from django.db import models
 
 from baseclasses import models as baseclass_models
 from baseclasses.fields import HubForeignKey
+from process_pipeline.models.pipeline_registry_hub_models import PipelineRegistryHubABC
+from process_pipeline.models.pipeline_registry_sat_models import (
+    PipelineRegistrySatelliteABC,
+)
 
 # Create your models here.
 
 
-class FileUploadRegistryHubABC(baseclass_models.MontrekHubABC):
+class FileUploadRegistryHubABC(PipelineRegistryHubABC):
     class Meta:
         abstract = True
 
 
-class FileUploadRegistryStaticSatelliteABC(baseclass_models.MontrekSatelliteABC):
+class FileUploadRegistryStaticSatelliteABC(PipelineRegistrySatelliteABC):
     class Meta:
         abstract = True
 
@@ -43,14 +47,13 @@ class FileUploadRegistryStaticSatelliteABC(baseclass_models.MontrekSatelliteABC)
         max_length=20, choices=UploadStatus.choices, default=UploadStatus.PENDING
     )
     upload_message = models.TextField(default="")
-    celery_task_id = models.CharField(max_length=255, default="")
 
     def clean(self):
         super().clean()
         if self.file_type == self.FileTypes.NONE:
-            raise IOError(f'File "{self.file_name}" has no file type')
+            raise OSError(f'File "{self.file_name}" has no file type')
         if self.file_type not in self.FileTypes.values:
-            raise IOError(f'File type "{self.file_type}" is not valid')
+            raise OSError(f'File type "{self.file_type}" is not valid')
 
     def save(self, *args, **kwargs):
         if self.file_type == self.FileTypes.NONE and "." in self.file_name:
