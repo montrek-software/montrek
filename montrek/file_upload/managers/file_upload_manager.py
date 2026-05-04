@@ -1,7 +1,7 @@
 import logging
 import os
 from pathlib import Path
-from typing import Any, Protocol
+from typing import Any
 
 from baseclasses.managers.montrek_manager import MontrekManager
 from baseclasses.models import MontrekHubABC
@@ -15,15 +15,16 @@ from file_upload.repositories.file_upload_file_repository import (
 from file_upload.tasks.file_upload_task import FileUploadTask
 
 from montrek.celery_app import PARALLEL_QUEUE_NAME
+from process_pipeline.managers.process_pipeline_processor_abc import (
+    PipelineProcessorABC,
+)
 
 TASK_SCHEDULED_MESSAGE = "Successfully scheduled background task for processing file. You will receive an email once the task has finished execution."
 
 logger = logging.getLogger(__name__)
 
 
-class FileUploadProcessorProtocol(Protocol):
-    message: str
-
+class FileUploadProcessorProtocol(PipelineProcessorABC):
     def __init__(
         self,
         file_upload_registry_hub: FileUploadRegistryHubABC,
@@ -31,39 +32,10 @@ class FileUploadProcessorProtocol(Protocol):
         **kwargs,
     ): ...
 
-    def pre_check(self, file_path: str) -> bool: ...
-
-    def process(self, file_path: str) -> bool: ...
-
-    def post_check(self, file_path: str) -> bool: ...
-
-
-class NotDefinedFileUploadProcessor:
-    message = "FileUploadManager needs proper FileUploadProcessor assigned to file_upload_processor_class"
-
-    def __init__(
-        self,
-        file_upload_registry_hub: FileUploadRegistryHubABC,
-        session_data: dict[str, Any],
-        **kwargs,
-    ) -> None:
-        raise NotImplementedError(self.message)
-
-    def process(self, file_path: str):
-        raise NotImplementedError(self.message)
-
-    def pre_check(self, file_path: str):
-        raise NotImplementedError(self.message)
-
-    def post_check(self, file_path: str):
-        raise NotImplementedError(self.message)
-
 
 class FileUploadManagerABC(MontrekManager):
     repository_class = FileUploadFileRepository
-    file_upload_processor_class: type[FileUploadProcessorProtocol] = (
-        NotDefinedFileUploadProcessor
-    )
+    file_upload_processor_class: type[FileUploadProcessorProtocol]
     file_registry_manager_class = FileUploadRegistryManager
     do_process_file_async: bool = True
     upload_file_task_class: type[FileUploadTask] = FileUploadTask
