@@ -28,7 +28,7 @@ class ApiDataImportProcessorBase(ProcessorBaseABC):
 
     def apply_import_data(self):
         raise NotImplementedError(
-            f"Add process_import_data method for {self.__class__.__name__}"
+            f"Add apply_import_data method for {self.__class__.__name__}"
         )
 
     def get_endpoint_url(self) -> str:
