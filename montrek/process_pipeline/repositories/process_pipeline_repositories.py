@@ -14,6 +14,7 @@ class ProcessPipelineRepositoryABC(MontrekRepository):
             self.registry_satellite,
             [
                 "created_at",
+                "celery_task_id",
             ]
             + self.registry_fields,
         )
