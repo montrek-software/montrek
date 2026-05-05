@@ -17,7 +17,9 @@ class DataImportManagerABC(MontrekPipelineManagerABC):
 
     # ---- public entry point ----
 
-    def process_import_data(self, import_data: ImportDataType) -> bool:
+    def process_import_data(self, import_data: ImportDataType | None = None) -> bool:
+        if import_data is None:
+            import_data = {}
         return self.trigger_pipeline(pipeline_data={"import_data": import_data})
 
     # ---- required overrides ----

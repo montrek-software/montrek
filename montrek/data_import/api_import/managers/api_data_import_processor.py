@@ -16,17 +16,17 @@ class ApiDataImportProcessorBase(ProcessorBaseABC):
     def pre_check(self) -> bool:
         self._read_import_data()
         if self.request_manager.status_code != 200:
-            self.message = self.request_manager.message
+            self.set_message(self.request_manager.message)
             return False
         return True
 
     def process(self) -> bool:
-        return self.process_import_data()
+        return self.apply_import_data()
 
     def _read_import_data(self):
         self.import_data = self.request_manager.get_response(self.endpoint)
 
-    def process_import_data(self):
+    def apply_import_data(self):
         raise NotImplementedError(
             f"Add process_import_data method for {self.__class__.__name__}"
         )

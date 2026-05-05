@@ -25,7 +25,7 @@ class MockApiDataImportProcessor(ApiDataImportProcessorBase):
     request_manager_class = MockRequestManager
     endpoint = "endpoint"
 
-    def process_import_data(self) -> bool:
+    def apply_import_data(self) -> bool:
         message = "proccess ok"
         message += self.import_data["some"]
         self.set_message(message)
@@ -43,3 +43,18 @@ class MockApiRegistryRepository(ApiDataImportRegistryRepository):
 class MockApiDataImportManager(ApiDataImportManager):
     processor_class = MockApiDataImportProcessor
     registry_repository_class = MockApiRegistryRepository
+
+
+class MockFailedRequestManager(MockRequestManager):
+    def get_response(self, endpoint: str) -> dict:
+        self.status_code = 0
+        self.message = "request error"
+        return {}
+
+
+class MockFailedApiDataImportProcessor(MockApiDataImportProcessor):
+    request_manager_class = MockFailedRequestManager
+
+
+class MockFailedApiDataImportManager(MockApiDataImportManager):
+    processor_class = MockFailedApiDataImportProcessor
