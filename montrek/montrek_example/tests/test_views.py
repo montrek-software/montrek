@@ -1570,7 +1570,7 @@ class TestA2ApiDirectUploadView(ProcessPipelineViewTestCase):
     viewname = "do_a2_direct_upload"
 
     def expected_url(self) -> str:
-        return "hub_a_view_api_uploads"
+        return reverse("hub_a_view_api_uploads")
 
     def query_params(self) -> dict:
         return {"user": "schmuser", "password": "schmassword"}
