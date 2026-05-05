@@ -39,6 +39,8 @@ class FileUploadManagerABC(MontrekPipelineManagerABC):
 
     # ---- pipeline config ----
     processor_class: type[FileUploadProcessorProtocol]
+    file_upload_processor_class: type[FileUploadProcessorProtocol]
+    do_process_file_async: bool
     pipeline_task_class: type[FileUploadTask] = FileUploadTask
     registry_repository_class = FileUploadRegistryManager.repository_class
     status_field_name = "upload_status"
@@ -46,11 +48,16 @@ class FileUploadManagerABC(MontrekPipelineManagerABC):
     registry_session_key = "file_upload_registry_id"
 
     def __init_subclass__(cls, task_queue: str = PARALLEL_QUEUE_NAME, **kwargs):
+        # Migrate old class attribute namings to new ones
+        super().__init_subclass__(task_queue, **kwargs)
         if hasattr(cls, "file_registry_manager_class"):
             cls.registry_repository_class = (
                 cls.file_registry_manager_class.repository_class
             )
-        super().__init_subclass__(task_queue=task_queue, **kwargs)
+        if hasattr(cls, "file_upload_processor_class"):
+            cls.processor_class = cls.file_upload_processor_class
+        if hasattr(cls, "do_process_file_async"):
+            cls.do_process_async = cls.do_process_file_async
 
     def __init__(self, session_data: dict[str, Any]) -> None:
         super().__init__(session_data=session_data)

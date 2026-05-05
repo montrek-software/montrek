@@ -74,7 +74,7 @@ class TestFileUploadManager(TestCase):
             session_data=self.session_data,
         )
         for do_process_file_async in (False, True):
-            fum.do_process_file_async = do_process_file_async
+            fum.do_process_async = do_process_file_async
             fum.upload_and_process(self.test_file)
             file_upload_registry_query = FileUploadRegistryRepository().receive()
             self.assertEqual(file_upload_registry_query.count(), 1)
@@ -104,7 +104,7 @@ class TestFileUploadManager(TestCase):
             session_data=self.session_data,
         )
         for do_process_file_async in (False, True):
-            fum.do_process_file_async = do_process_file_async
+            fum.do_process_async = do_process_file_async
             fum.upload_and_process(self.test_file)
             file_upload_registry_query = FileUploadRegistryRepository().receive()
             self.assertEqual(file_upload_registry_query.count(), 1)
@@ -133,7 +133,7 @@ class TestFileUploadManager(TestCase):
             session_data=self.session_data,
         )
         for do_process_file_async in (False, True):
-            fum.do_process_file_async = do_process_file_async
+            fum.do_process_async = do_process_file_async
             fum.upload_and_process(self.test_file)
             file_upload_registry_query = FileUploadRegistryRepository().receive()
             self.assertEqual(file_upload_registry_query.count(), 1)
@@ -149,7 +149,7 @@ class TestFileUploadManager(TestCase):
             session_data=self.session_data,
         )
         for do_process_file_async in (False, True):
-            fum.do_process_file_async = do_process_file_async
+            fum.do_process_async = do_process_file_async
             fum.upload_and_process(self.test_file)
             file_upload_registry_query = FileUploadRegistryRepository().receive()
             self.assertEqual(file_upload_registry_query.count(), 1)
