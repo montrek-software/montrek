@@ -24,9 +24,11 @@ class DataImportTask(MontrekTask):
         )
         super().__init__(task_name, self.queue)
 
-
-
-    def run(self, session_data: dict[str, Any], import_data: ImportDataType = {} ) -> str:
+    def run(
+        self, session_data: dict[str, Any], import_data: ImportDataType | None = None
+    ) -> str:
+        if import_data is None:
+            import_data = {}
         self.session_data = session_data
         self.manager = self.manager_class(session_data)
         self.manager.process_import_data(import_data)
@@ -35,7 +37,7 @@ class DataImportTask(MontrekTask):
 
     def send_mail(self):
         user = get_user_model().objects.get(pk=self.session_data["user_id"])
-        registry_entry = self.manager.get_registry()
+        registry_entry = self.manager.registry
         subject_name = self.get_subject_name()
         if registry_entry.import_status == "processed":
             if not self.manager.send_mail():
@@ -49,7 +51,7 @@ class DataImportTask(MontrekTask):
         )
 
     def get_message(self) -> str:
-        return self.manager.get_message()
+        return self.manager.message
 
     def get_subject_name(self) -> str:
         return re.sub(r"(?<=[a-z])(?=[A-Z])", " ", self.__class__.__name__)

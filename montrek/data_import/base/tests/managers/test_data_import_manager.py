@@ -14,7 +14,9 @@ class TestDataImportManager(TestCase):
         self.test_data = {"test_data": [1, 2, 3]}
         self.data_import_manager = MockDataImportManager({"user_id": self.user.id})
 
-    def test_setup_registry(self):
+    def test_init_registry(self):
+        self.data_import_manager.create_registry()
+        self.data_import_manager._load_registry()
         test_registry_entry = self.data_import_manager.get_registry()
         self.assertEqual(test_registry_entry.import_status, "pending")
         self.assertEqual(test_registry_entry.import_message, "Initialize Import")

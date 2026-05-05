@@ -55,7 +55,7 @@ class MontrekPipelineManagerABC(MontrekManager):
     ) -> bool:
         if pipeline_data is None:
             pipeline_data = {}
-        self.session_data[self.registry_session_key] = self._init_registry(**kwargs)
+        self.create_registry(**kwargs)
         if self.do_process_async:
             task_result = self.pipeline_task.delay(
                 session_data=self.session_data,
@@ -66,6 +66,9 @@ class MontrekPipelineManagerABC(MontrekManager):
             self.message = TASK_SCHEDULED_MESSAGE
             return True
         return self.process(pipeline_data=pipeline_data)
+
+    def create_registry(self, **kwargs):
+        self.session_data[self.registry_session_key] = self._init_registry(**kwargs)
 
     # ---- called by Celery task ----
 
@@ -88,11 +91,16 @@ class MontrekPipelineManagerABC(MontrekManager):
             return False
         self._on_pipeline_success()
         self._set_status("processed", self.processor.message)
-        self.message = self.processor.message
         return True
 
     def send_mail(self) -> bool:
         return self.processor.send_mail
+
+    def get_registry(self) -> Any:
+        return self.registry
+
+    def get_message(self) -> str:
+        return self.message
 
     # ---- internal ----
 
@@ -109,6 +117,7 @@ class MontrekPipelineManagerABC(MontrekManager):
                 self.message_field_name: message,
             }
         )
+        self.message = self.processor.message
 
     # ---- default implementations (may override if repo interface differs) ----
 
