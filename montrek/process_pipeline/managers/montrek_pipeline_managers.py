@@ -43,9 +43,7 @@ class MontrekPipelineManagerABC(MontrekManager):
                 f"{cls.__name__} must define pipeline_task_class when "
                 "do_process_async=True."
             )
-        cls.pipeline_task = cls.pipeline_task_class(
-            manager_class=cls, queue=task_queue
-        )
+        cls.pipeline_task = cls.pipeline_task_class(manager_class=cls, queue=task_queue)
 
     def __init__(self, session_data: dict[str, Any]) -> None:
         super().__init__(session_data=session_data)
@@ -124,7 +122,7 @@ class MontrekPipelineManagerABC(MontrekManager):
                 self.message_field_name: message,
             }
         )
-        self.message = self.processor.message
+        self.message = message
 
     def _build_processor_if_not_exists(
         self, pipeline_data: dict[str, Any]
