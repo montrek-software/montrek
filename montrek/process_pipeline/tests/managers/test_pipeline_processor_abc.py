@@ -78,7 +78,5 @@ class TestPipelineProcessorABCNotImplemented(unittest.TestCase):
             self.processor.post_check()
 
     def test_error_message_includes_class_name(self):
-        try:
+        with self.assertRaisesRegex(NotImplementedError, "NoStepsProcessor"):
             self.processor.pre_check()
-        except NotImplementedError as e:
-            self.assertIn("NoStepsProcessor", str(e))
