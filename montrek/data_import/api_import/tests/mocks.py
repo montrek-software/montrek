@@ -23,11 +23,9 @@ class MockRequestManager(RequestJsonManager):
 
 class MockApiDataImportProcessor(ApiDataImportProcessorBase):
     request_manager_class = MockRequestManager
+    endpoint = "endpoint"
 
-    def pre_check(self) -> bool:
-        return True
-
-    def process(self) -> bool:
+    def process_import_data(self) -> bool:
         message = "proccess ok"
         message += self.import_data["some"]
         self.set_message(message)
@@ -43,6 +41,5 @@ class MockApiRegistryRepository(ApiDataImportRegistryRepository):
 
 
 class MockApiDataImportManager(ApiDataImportManager):
-    endpoint = "endpoint"
     processor_class = MockApiDataImportProcessor
     registry_repository_class = MockApiRegistryRepository
