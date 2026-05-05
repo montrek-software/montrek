@@ -59,7 +59,6 @@ class MontrekPipelineManagerABC(MontrekManager):
     ) -> bool:
         if pipeline_data is None:
             pipeline_data = {}
-        self.processor = self._build_processor_if_not_exists(pipeline_data)
         self.create_registry(**kwargs)
         if self.do_process_async:
             task_result = self.pipeline_task.delay(
@@ -80,8 +79,8 @@ class MontrekPipelineManagerABC(MontrekManager):
     def process(self, pipeline_data: dict[str, Any] | None = None) -> bool:
         if pipeline_data is None:
             pipeline_data = {}
-        self.processor = self._build_processor_if_not_exists(pipeline_data)
         self._load_registry()
+        self.processor = self._build_processor_if_not_exists(pipeline_data)
         self._update_registry(
             **{
                 self.status_field_name: "in_progress",

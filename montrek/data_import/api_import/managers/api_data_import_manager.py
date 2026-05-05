@@ -12,4 +12,4 @@ class ApiDataImportManager(DataImportManagerABC):
     processor_class: type[ApiDataImportProcessorBase]
 
     def additional_registry_data(self) -> dict:
-        return {"import_url": self.processor.get_endpoint_url()}
+        return {"import_url": self.processor_class.get_endpoint_url()}

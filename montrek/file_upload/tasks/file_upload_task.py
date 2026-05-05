@@ -1,9 +1,11 @@
 import logging
 
-from baseclasses.managers.montrek_manager import MontrekManager
 from baseclasses.typing import SessionDataType
 from django.contrib.auth import get_user_model
 from mailing.managers.mailing_manager import MailingManager
+from process_pipeline.managers.montrek_pipeline_managers import (
+    MontrekPipelineManagerABC,
+)
 from tasks.montrek_task import MontrekTask
 from user.models import MontrekUser
 
@@ -17,7 +19,7 @@ class FileUploadTask(MontrekTask):
 
     def __init__(
         self,
-        manager_class: type[MontrekManager],
+        manager_class: type[MontrekPipelineManagerABC],
         queue: str,
     ):
         self.manager_class = manager_class
@@ -26,7 +28,7 @@ class FileUploadTask(MontrekTask):
         )
         super().__init__(task_name, queue)
 
-    def run(self, session_data: SessionDataType):
+    def run(self, session_data: SessionDataType, pipeline_data=None):
         logger.debug("Start task run")
         manager = self.manager_class(session_data)
         logger.debug("%s: manager: %s", self.__class__.__name__, manager)
@@ -40,7 +42,10 @@ class FileUploadTask(MontrekTask):
         return [user]
 
     def send_result_mail(
-        self, manager: MontrekManager, session_data: SessionDataType, result: bool
+        self,
+        manager: MontrekPipelineManagerABC,
+        session_data: SessionDataType,
+        result: bool,
     ) -> str:
         message = manager.processor.message
         subject = self.success_message if result else self.failure_message
