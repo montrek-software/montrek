@@ -22,10 +22,9 @@ class TestProcessPipelineViewABCProcess(unittest.TestCase):
 
     def test_error_message_is_descriptive(self):
         view = ProcessPipelineViewABC()
-        try:
+        with self.assertRaises(NotImplementedError) as exc_info:
             view.process()
-        except NotImplementedError as e:
-            self.assertIn("process", str(e).lower())
+        self.assertIn("process", str(exc_info.exception).lower())
 
 
 class TestProcessPipelineViewABCGetRedirectUrl(unittest.TestCase):
