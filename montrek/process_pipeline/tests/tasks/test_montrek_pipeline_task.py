@@ -103,26 +103,18 @@ class TestMontrekPipelineTaskMail(TestCase):
         self.task.manager.message = "all done"
 
     def test_send_result_mail_success_subject(self):
-        with (
-            patch.object(
-                self.task.mailing_manager_class, "send_montrek_mail"
-            ) as mock_send,
-            patch("django.contrib.auth.get_user_model") as mock_get_user,
-        ):
-            mock_get_user.return_value.objects.get.return_value = self.user
+        with patch.object(
+            self.task.mailing_manager_class, "send_montrek_mail"
+        ) as mock_send:
             self.task._send_result_mail(self.session_data, result=True)
             subject = mock_send.call_args[0][1]
             self.assertNotIn("ERROR", subject)
             self.assertIn("successful", subject)
 
     def test_send_result_mail_failure_subject_has_error_prefix(self):
-        with (
-            patch.object(
-                self.task.mailing_manager_class, "send_montrek_mail"
-            ) as mock_send,
-            patch("django.contrib.auth.get_user_model") as mock_get_user,
-        ):
-            mock_get_user.return_value.objects.get.return_value = self.user
+        with patch.object(
+            self.task.mailing_manager_class, "send_montrek_mail"
+        ) as mock_send:
             self.task._send_result_mail(self.session_data, result=False)
             subject = mock_send.call_args[0][1]
             self.assertTrue(subject.startswith("ERROR"))
