@@ -7,6 +7,7 @@ class ProcessPipelineViewABC(MontrekRedirectView):
 
     def get_redirect_url(self, *args, **kwargs) -> str:
         self.process()
+        self.show_messages()
         return reverse(self.success_url)
 
     def process(self):
