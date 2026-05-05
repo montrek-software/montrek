@@ -9,7 +9,6 @@ from file_upload.models import FileUploadRegistryHubABC
 from file_upload.repositories.file_upload_file_repository import (
     FileUploadFileRepository,
 )
-from file_upload.tasks.file_upload_task import FileUploadTask
 from montrek.celery_app import PARALLEL_QUEUE_NAME
 from process_pipeline.managers.montrek_pipeline_managers import (
     MontrekPipelineManagerABC,
@@ -17,6 +16,7 @@ from process_pipeline.managers.montrek_pipeline_managers import (
 from process_pipeline.managers.process_pipeline_processor_abc import (
     PipelineProcessorABC,
 )
+from process_pipeline.tasks.montrek_pipeline_task import MontrekPipelineTask
 
 
 class FileUploadProcessorProtocol(PipelineProcessorABC):
@@ -41,7 +41,7 @@ class FileUploadManagerABC(MontrekPipelineManagerABC):
     processor_class: type[FileUploadProcessorProtocol]
     file_upload_processor_class: type[FileUploadProcessorProtocol]
     do_process_file_async: bool
-    pipeline_task_class: type[FileUploadTask] = FileUploadTask
+    pipeline_task_class: type[MontrekPipelineTask] = MontrekPipelineTask
     registry_repository_class = FileUploadRegistryManager.repository_class
     status_field_name = "upload_status"
     message_field_name = "upload_message"
