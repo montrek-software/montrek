@@ -20,7 +20,7 @@ class TestFileUploadManager(TestCase):
     def setUp(self):
         self.test_file = SimpleUploadedFile(
             name="test_file.txt",
-            content="test".encode("utf-8"),
+            content=b"test",
             content_type="text/plain",
         )
         self.user = MontrekUserFactory()
@@ -39,17 +39,17 @@ class TestFileUploadManager(TestCase):
         self.session_data.update(filter_data)
 
     def test_init_subclass(self):
-        task = MockFileUploadManager.upload_file_task
+        task = MockFileUploadManager.pipeline_task
         self.assertEqual(
             task.name,
-            f"file_upload.tests.mocks.MockFileUploadManager_process_file_task",
+            "file_upload.tests.mocks.MockFileUploadManager_process_file_task",
         )
         self.assertEqual(task.queue, PARALLEL_QUEUE_NAME)
         self.assertEqual(task.manager_class, MockFileUploadManager)
-        task = MockFileUploadManagerSeq.upload_file_task
+        task = MockFileUploadManagerSeq.pipeline_task
         self.assertEqual(
             task.name,
-            f"file_upload.tests.mocks.MockFileUploadManagerSeq_process_file_task",
+            "file_upload.tests.mocks.MockFileUploadManagerSeq_process_file_task",
         )
         self.assertEqual(task.queue, SEQUENTIAL_QUEUE_NAME)
         self.assertEqual(task.manager_class, MockFileUploadManagerSeq)
@@ -58,7 +58,7 @@ class TestFileUploadManager(TestCase):
         manager = MockFileUploadManager(
             session_data=self.session_data,
         )
-        manager.register_file_in_db(self.test_file)
+        manager._init_registry(self.test_file)
         file_upload_registry_query = FileUploadRegistryRepository().receive()
         self.assertEqual(file_upload_registry_query.count(), 1)
         file_upload_registry = file_upload_registry_query.first()

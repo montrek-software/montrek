@@ -31,5 +31,6 @@ class ApiDataImportProcessorBase(ProcessorBaseABC):
             f"Add apply_import_data method for {self.__class__.__name__}"
         )
 
-    def get_endpoint_url(self) -> str:
-        return self.request_manager.get_endpoint_url(self.endpoint)
+    @classmethod
+    def get_endpoint_url(cls) -> str:
+        return cls.request_manager_class.get_endpoint_url(cls.endpoint)
