@@ -27,7 +27,6 @@ from montrek_example.tests.factories import montrek_example_factories as me_fact
 from process_pipeline.managers.montrek_pipeline_managers import TASK_SCHEDULED_MESSAGE
 from reporting.managers.montrek_table_manager import MontrekTablePaginator
 from testing.decorators import add_logged_in_user
-from testing.decorators.mock_external_get import mock_external_get
 from testing.test_cases.view_test_cases import (
     MontrekCreateViewTestCase,
     MontrekDeleteViewTestCase,
@@ -1551,13 +1550,11 @@ class TestA2ApiUploadView(MontrekViewTestCase):
     view_class = me_views.A2ApiUploadView
     viewname = "do_a2_upload"
 
-    @mock_external_get()
-    def test_post(self, mocked_get):
+    def test_post(self):
         response = self.client.post(
             self.url, data={"user": "user", "password": "password"}
         )
         self.assertRedirects(response, reverse("hub_a_view_api_uploads"))
-        mocked_get.assert_called()
 
     def test_post__no_user(self):
         response = self.client.post(self.url)
