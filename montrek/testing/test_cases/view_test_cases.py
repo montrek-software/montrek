@@ -572,3 +572,8 @@ class MontrekReportFieldEditViewTestCase(MontrekObjectViewBaseTestCase):
     def test_view_return_correct_html(self): ...
 
     def test_context_data(self): ...
+
+
+class ProcessPipelineViewTestCase(MontrekRedirectViewTestCase):
+    def _is_base_test_class(self) -> bool:
+        return self.__class__.__name__ == "ProcessPipelineViewTestCase"

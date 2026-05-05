@@ -165,6 +165,11 @@ urlpatterns = [
         name="do_a2_upload",
     ),
     path(
+        "do_a2_direct_upload",
+        views.A2ApiDirectUploadView.as_view(),
+        name="do_a2_direct_upload",
+    ),
+    path(
         "a1_file_upload_history/<int:pk>",
         views.MontrekExampleA1UploadHistoryView.as_view(),
         name="a1_file_upload_history",

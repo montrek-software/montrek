@@ -10,6 +10,7 @@ from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.views.decorators.http import require_safe
+from data_import.base.views.data_import_views import DataImportView
 from file_upload.views import (
     FileUploadRegistryView,
     MontrekDownloadFileView,
@@ -376,20 +377,6 @@ class MontrekExampleHubAApiUploadView(views.MontrekListView):
         return (action_do_a2_upload,)
 
 
-def do_a2_upload(request):
-    manager = A2ApiUploadManager(
-        session_data={
-            "user_id": request.user.id,
-            "user": "user",
-            "password": "password",
-        },
-    )
-    manager.process_import_data({})
-    for m in manager.messages:
-        getattr(messages, m.message_type)(request, m.message)
-    return HttpResponseRedirect(reverse("hub_a_view_api_uploads"))
-
-
 class A2ApiUploadView(AuthenticatorUserPasswordView):
     page_class = pages.MontrekExampleAAppPage
     title = "A2 Api Upload"
@@ -402,6 +389,11 @@ class A2ApiUploadView(AuthenticatorUserPasswordView):
         manager.process_import_data({})
         for m in manager.messages:
             getattr(messages, m.message_type)(self.request, m.message)
+
+
+class A2ApiDirectUploadView(DataImportView):
+    success_url = "hub_a_view_api_uploads"
+    manager_class = A2ApiUploadManager
 
 
 class MontrekExampleA1DownloadFileView(MontrekDownloadFileView):
