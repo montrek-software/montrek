@@ -11,6 +11,7 @@ from file_upload.models import (
     LinkFileUploadRegistryFileUploadFile,
 )
 from montrek.celery_app import SEQUENTIAL_QUEUE_NAME
+from process_pipeline.tasks.montrek_pipeline_task import MontrekPipelineTask
 
 
 class MockFileUploadRegistryRepository(FileUploadRegistryRepositoryABC):
@@ -94,5 +95,10 @@ class MockFileUploadManagerProcessorPostCheckFail(FileUploadManagerABC):
     file_upload_processor_class = MockFileUploadProcessorPostCheckFail
 
 
-class MockFileUploadManagerSeq(FileUploadManagerABC, task_queue=SEQUENTIAL_QUEUE_NAME):
+class MockSeqFileUploadTask(MontrekPipelineTask):
+    queue: str = SEQUENTIAL_QUEUE_NAME
+
+
+class MockFileUploadManagerSeq(FileUploadManagerABC):
     file_upload_processor_class = MockFileUploadProcessor
+    pipeline_task_class = MockSeqFileUploadTask

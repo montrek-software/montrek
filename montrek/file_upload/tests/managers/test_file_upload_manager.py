@@ -42,14 +42,14 @@ class TestFileUploadManager(TestCase):
         task = MockFileUploadManager.pipeline_task
         self.assertEqual(
             task.name,
-            "file_upload.tests.mocks.MockFileUploadManager_process_file_task",
+            "file_upload.tests.mocks.MockFileUploadManager_pipeline_task",
         )
         self.assertEqual(task.queue, PARALLEL_QUEUE_NAME)
         self.assertEqual(task.manager_class, MockFileUploadManager)
         task = MockFileUploadManagerSeq.pipeline_task
         self.assertEqual(
             task.name,
-            "file_upload.tests.mocks.MockFileUploadManagerSeq_process_file_task",
+            "file_upload.tests.mocks.MockFileUploadManagerSeq_pipeline_task",
         )
         self.assertEqual(task.queue, SEQUENTIAL_QUEUE_NAME)
         self.assertEqual(task.manager_class, MockFileUploadManagerSeq)
@@ -92,7 +92,7 @@ class TestFileUploadManager(TestCase):
                 sent_email = mail.outbox[0]
                 self.assertEqual(
                     sent_email.subject,
-                    "Background file processing finished successfully.",
+                    "Mock File Upload Manager successful",
                 )
                 self.assertEqual(sent_email.to, [self.user.email])
                 self.assertTrue(processor_message in sent_email.message().as_string())
@@ -121,7 +121,7 @@ class TestFileUploadManager(TestCase):
                 sent_email = mail.outbox[0]
                 self.assertEqual(
                     sent_email.subject,
-                    "ERROR: Background file processing did not finish successfully!",
+                    "ERROR: Mock File Upload Manager Processor Fail unsuccessful",
                 )
                 self.assertEqual(sent_email.to, [self.user.email])
                 self.assertTrue(processor_message in sent_email.message().as_string())

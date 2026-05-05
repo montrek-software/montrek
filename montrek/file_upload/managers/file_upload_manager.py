@@ -9,14 +9,13 @@ from file_upload.models import FileUploadRegistryHubABC
 from file_upload.repositories.file_upload_file_repository import (
     FileUploadFileRepository,
 )
-from file_upload.tasks.file_upload_task import FileUploadTask
-from montrek.celery_app import PARALLEL_QUEUE_NAME
 from process_pipeline.managers.montrek_pipeline_managers import (
     MontrekPipelineManagerABC,
 )
 from process_pipeline.managers.process_pipeline_processor_abc import (
     PipelineProcessorABC,
 )
+from process_pipeline.tasks.montrek_pipeline_task import MontrekPipelineTask
 
 
 class FileUploadProcessorProtocol(PipelineProcessorABC):
@@ -41,13 +40,13 @@ class FileUploadManagerABC(MontrekPipelineManagerABC):
     processor_class: type[FileUploadProcessorProtocol]
     file_upload_processor_class: type[FileUploadProcessorProtocol]
     do_process_file_async: bool
-    pipeline_task_class: type[FileUploadTask] = FileUploadTask
+    pipeline_task_class: type[MontrekPipelineTask] = MontrekPipelineTask
     registry_repository_class = FileUploadRegistryManager.repository_class
     status_field_name = "upload_status"
     message_field_name = "upload_message"
     registry_session_key = "file_upload_registry_id"
 
-    def __init_subclass__(cls, task_queue: str = PARALLEL_QUEUE_NAME, **kwargs):
+    def __init_subclass__(cls, **kwargs):
         # Migrate old class attribute namings to new ones
         if hasattr(cls, "file_registry_manager_class"):
             cls.registry_repository_class = (
@@ -57,7 +56,7 @@ class FileUploadManagerABC(MontrekPipelineManagerABC):
             cls.processor_class = cls.file_upload_processor_class
         if hasattr(cls, "do_process_file_async"):
             cls.do_process_async = cls.do_process_file_async
-        super().__init_subclass__(task_queue, **kwargs)
+        super().__init_subclass__(**kwargs)
 
     def __init__(self, session_data: dict[str, Any]) -> None:
         super().__init__(session_data=session_data)
