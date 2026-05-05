@@ -36,10 +36,16 @@ class MontrekPipelineManagerABC(MontrekManager):
 
     def __init_subclass__(cls, task_queue: str = PARALLEL_QUEUE_NAME, **kwargs):
         super().__init_subclass__(**kwargs)
-        if cls.do_process_async and hasattr(cls, "pipeline_task_class"):
-            cls.pipeline_task = cls.pipeline_task_class(
-                manager_class=cls, queue=task_queue
+        if not cls.do_process_async:
+            return
+        if not hasattr(cls, "pipeline_task_class"):
+            raise NotImplementedError(
+                f"{cls.__name__} must define pipeline_task_class when "
+                "do_process_async=True."
             )
+        cls.pipeline_task = cls.pipeline_task_class(
+            manager_class=cls, queue=task_queue
+        )
 
     def __init__(self, session_data: dict[str, Any]) -> None:
         super().__init__(session_data=session_data)
