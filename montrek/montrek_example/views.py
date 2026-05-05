@@ -28,6 +28,7 @@ from montrek_example.managers.a_upload_table_manager import (
     HubAFileUploadRegistryManager,
     HubAUploadTableManager,
 )
+from process_pipeline.views.process_pipline_view import ProcessPipelineViewABC
 from reporting.views import MontrekReportFieldEditView, MontrekReportView
 from requesting.views.authenticator_views import AuthenticatorUserPasswordView
 
@@ -376,20 +377,6 @@ class MontrekExampleHubAApiUploadView(views.MontrekListView):
         return (action_do_a2_upload,)
 
 
-def do_a2_upload(request):
-    manager = A2ApiUploadManager(
-        session_data={
-            "user_id": request.user.id,
-            "user": "user",
-            "password": "password",
-        },
-    )
-    manager.process_import_data({})
-    for m in manager.messages:
-        getattr(messages, m.message_type)(request, m.message)
-    return HttpResponseRedirect(reverse("hub_a_view_api_uploads"))
-
-
 class A2ApiUploadView(AuthenticatorUserPasswordView):
     page_class = pages.MontrekExampleAAppPage
     title = "A2 Api Upload"
@@ -402,6 +389,14 @@ class A2ApiUploadView(AuthenticatorUserPasswordView):
         manager.process_import_data({})
         for m in manager.messages:
             getattr(messages, m.message_type)(self.request, m.message)
+
+
+class A2ApiDirectUploadView(ProcessPipelineViewABC):
+    success_url = "hub_a_view_api_uploads"
+    manager_class = A2ApiUploadManager
+
+    def process(self):
+        self.manager.process_import_data()
 
 
 class MontrekExampleA1DownloadFileView(MontrekDownloadFileView):

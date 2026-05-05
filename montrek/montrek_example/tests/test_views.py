@@ -41,6 +41,7 @@ from testing.test_cases.view_test_cases import (
     MontrekRestApiViewTestCase,
     MontrekUpdateViewTestCase,
     MontrekViewTestCase,
+    ProcessPipelineViewTestCase,
 )
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
@@ -1565,6 +1566,17 @@ class TestA2ApiUploadView(MontrekViewTestCase):
     def test_post__no_password(self):
         response = self.client.post(self.url, data={"user": "user"})
         self.assertEqual(response.status_code, 200)
+
+
+class TestA2ApiDirectUploadView(ProcessPipelineViewTestCase):
+    view_class = me_views.A2ApiDirectUploadView
+    viewname = "do_a2_direct_upload"
+
+    def expected_url(self) -> str:
+        return "hub_a_view_api_uploads"
+
+    def query_params(self) -> dict:
+        return {"user": "schmuser", "password": "schmassword"}
 
 
 class TestTableDataWithReferenceDate(MontrekListViewTestCase):
