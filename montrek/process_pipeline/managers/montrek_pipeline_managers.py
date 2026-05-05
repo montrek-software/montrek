@@ -4,9 +4,6 @@ from baseclasses.managers.montrek_manager import MontrekManager
 from process_pipeline.managers.process_pipeline_processor_abc import (
     PipelineProcessorABC,
 )
-from montrek.celery_app import (
-    PARALLEL_QUEUE_NAME,
-)
 from process_pipeline.repositories.pipeline_registry_repositories import (
     PipelineRegistryRepositoryABC,
 )
@@ -34,7 +31,7 @@ class MontrekPipelineManagerABC(MontrekManager):
     # ---- set by __init_subclass__ ----
     pipeline_task: MontrekPipelineTask
 
-    def __init_subclass__(cls, task_queue: str = PARALLEL_QUEUE_NAME, **kwargs):
+    def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         if not cls.do_process_async:
             return
@@ -43,7 +40,7 @@ class MontrekPipelineManagerABC(MontrekManager):
                 f"{cls.__name__} must define pipeline_task_class when "
                 "do_process_async=True."
             )
-        cls.pipeline_task = cls.pipeline_task_class(manager_class=cls, queue=task_queue)
+        cls.pipeline_task = cls.pipeline_task_class(manager_class=cls)
 
     def __init__(self, session_data: dict[str, Any]) -> None:
         super().__init__(session_data=session_data)
@@ -96,9 +93,6 @@ class MontrekPipelineManagerABC(MontrekManager):
         self._on_pipeline_success()
         self._set_status("processed", self.processor.message)
         return True
-
-    def send_mail(self) -> bool:
-        return self.processor.send_mail
 
     def get_registry(self) -> Any:
         return self.registry

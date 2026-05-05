@@ -76,13 +76,11 @@ class MockDataImportManagerNoMail(MockDataImportManager):
     processor_class = MockProcessorNoMail
 
 
-class MockDataImportTask(DataImportTask):
-    manager_class = MockDataImportManager
+class MockDataImportTask(DataImportTask): ...
 
 
-class MockDataImportTaskFail(DataImportTask):
-    manager_class = MockDataImportManagerFailProcess
+class MockDataImportTaskFail(DataImportTask): ...
 
 
 class MockDataImportTaskNoMail(DataImportTask):
-    manager_class = MockDataImportManagerNoMail
+    do_send_mail = False
