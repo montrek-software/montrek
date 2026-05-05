@@ -1,4 +1,7 @@
 from data_import.api_import.managers.api_data_import_manager import ApiDataImportManager
+from data_import.api_import.managers.api_data_import_processor import (
+    ApiDataImportProcessorBase,
+)
 from data_import.api_import.models import (
     MockApiRegistryHub,
     MockApiRegistrySatellite,
@@ -6,7 +9,6 @@ from data_import.api_import.models import (
 from data_import.api_import.repositories.api_data_import_registry_repositories import (
     ApiDataImportRegistryRepository,
 )
-from data_import.base.managers.processor_base import ProcessorBaseABC
 from requesting.managers.request_manager import RequestJsonManager
 
 
@@ -19,7 +21,9 @@ class MockRequestManager(RequestJsonManager):
         return {"some": "data"}
 
 
-class MockApiDataImportProcessor(ProcessorBaseABC):
+class MockApiDataImportProcessor(ApiDataImportProcessorBase):
+    request_manager_class = MockRequestManager
+
     def pre_check(self) -> bool:
         return True
 
@@ -32,6 +36,7 @@ class MockApiDataImportProcessor(ProcessorBaseABC):
     def post_check(self) -> bool:
         return True
 
+
 class MockApiRegistryRepository(ApiDataImportRegistryRepository):
     registry_satellite = MockApiRegistrySatellite
     hub_class = MockApiRegistryHub
@@ -39,6 +44,5 @@ class MockApiRegistryRepository(ApiDataImportRegistryRepository):
 
 class MockApiDataImportManager(ApiDataImportManager):
     endpoint = "endpoint"
-    request_manager_class = MockRequestManager
     processor_class = MockApiDataImportProcessor
     registry_repository_class = MockApiRegistryRepository

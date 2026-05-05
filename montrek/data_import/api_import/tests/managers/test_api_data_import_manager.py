@@ -4,7 +4,6 @@ from user.tests.factories.montrek_user_factories import MontrekUserFactory
 from data_import.api_import.tests.mocks import MockApiDataImportManager
 
 
-
 class TestApiUploadManager(TestCase):
     def setUp(self):
         self.user = MontrekUserFactory()
@@ -12,6 +11,11 @@ class TestApiUploadManager(TestCase):
         self.api_data_import_manager = MockApiDataImportManager(self.session_data)
 
     def test_setup_registry(self):
+        self.api_data_import_manager.processor = (
+            self.api_data_import_manager._build_processor({})
+        )
+        self.api_data_import_manager.create_registry()
+        self.api_data_import_manager._load_registry()
         test_registry_entry = self.api_data_import_manager.get_registry()
         self.assertEqual(test_registry_entry.import_status, "pending")
         self.assertEqual(test_registry_entry.import_message, "Initialize Import")
@@ -20,7 +24,7 @@ class TestApiUploadManager(TestCase):
         )
 
     def test_process_import_data(self):
-        self.api_data_import_manager.process_import_data()
+        self.api_data_import_manager.process_import_data({})
         test_registry_entry = self.api_data_import_manager.get_registry()
         self.assertEqual(test_registry_entry.import_status, "processed")
         self.assertEqual(test_registry_entry.import_message, "proccess okdata")

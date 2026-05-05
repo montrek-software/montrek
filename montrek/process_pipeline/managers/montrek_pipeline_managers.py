@@ -55,6 +55,7 @@ class MontrekPipelineManagerABC(MontrekManager):
     ) -> bool:
         if pipeline_data is None:
             pipeline_data = {}
+        self.processor = self._build_processor(pipeline_data)
         self.create_registry(**kwargs)
         if self.do_process_async:
             task_result = self.pipeline_task.delay(
@@ -82,7 +83,6 @@ class MontrekPipelineManagerABC(MontrekManager):
                 self.message_field_name: "Processing in progress",
             }
         )
-        self.processor = self._build_processor(pipeline_data)
         if not self._apply_step("pre_check"):
             return False
         if not self._apply_step("process"):
