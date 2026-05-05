@@ -1,10 +1,7 @@
-import logging
 import os
 from pathlib import Path
 from typing import Any
 
-from baseclasses.managers.montrek_manager import MontrekManager
-from baseclasses.models import MontrekHubABC
 from django.conf import settings
 from django.core.files import File
 from file_upload.managers.file_upload_registry_manager import FileUploadRegistryManager
@@ -13,15 +10,13 @@ from file_upload.repositories.file_upload_file_repository import (
     FileUploadFileRepository,
 )
 from file_upload.tasks.file_upload_task import FileUploadTask
-
 from montrek.celery_app import PARALLEL_QUEUE_NAME
+from process_pipeline.managers.montrek_pipeline_managers import (
+    MontrekPipelineManagerABC,
+)
 from process_pipeline.managers.process_pipeline_processor_abc import (
     PipelineProcessorABC,
 )
-
-TASK_SCHEDULED_MESSAGE = "Successfully scheduled background task for processing file. You will receive an email once the task has finished execution."
-
-logger = logging.getLogger(__name__)
 
 
 class FileUploadProcessorProtocol(PipelineProcessorABC):
@@ -33,120 +28,69 @@ class FileUploadProcessorProtocol(PipelineProcessorABC):
     ): ...
 
 
-class FileUploadManagerABC(MontrekManager):
-    repository_class = FileUploadFileRepository
-    file_upload_processor_class: type[FileUploadProcessorProtocol]
-    file_registry_manager_class = FileUploadRegistryManager
-    do_process_file_async: bool = True
-    upload_file_task_class: type[FileUploadTask] = FileUploadTask
-    upload_file_task: FileUploadTask
-    message: str
+class FileUploadManagerABC(MontrekPipelineManagerABC):
+    # ---- file storage (actual uploaded bytes) ----
+    repository_class: type[FileUploadFileRepository] = FileUploadFileRepository
+
+    # ---- registry display manager (used by views) ----
+    file_registry_manager_class: type[FileUploadRegistryManager] = (
+        FileUploadRegistryManager
+    )
+
+    # ---- pipeline config ----
+    processor_class: type[FileUploadProcessorProtocol]
+    pipeline_task_class: type[FileUploadTask] = FileUploadTask
+    registry_repository_class = FileUploadRegistryManager.repository_class
+    status_field_name = "upload_status"
+    message_field_name = "upload_message"
+    registry_session_key = "file_upload_registry_id"
 
     def __init_subclass__(cls, task_queue: str = PARALLEL_QUEUE_NAME, **kwargs):
-        if cls.do_process_file_async:
-            cls.upload_file_task = cls.upload_file_task_class(
-                manager_class=cls, queue=task_queue
+        if hasattr(cls, "file_registry_manager_class"):
+            cls.registry_repository_class = (
+                cls.file_registry_manager_class.repository_class
             )
+        super().__init_subclass__(task_queue=task_queue, **kwargs)
 
-    def __init__(
-        self,
-        session_data: dict[str, Any],
-    ) -> None:
+    def __init__(self, session_data: dict[str, Any]) -> None:
         super().__init__(session_data=session_data)
-        self.registry_manager = self.file_registry_manager_class(session_data)
-        self.file_upload_registry: MontrekHubABC | Any = None
         self.file_path = ""
-        self.processor: FileUploadProcessorProtocol | None = None
-        self.task_id = ""
+
+    # ---- public entry point ----
 
     def upload_and_process(self, file: File) -> bool:
-        # Called by view
-        self.session_data["file_upload_registry_id"] = self.register_file_in_db(file)
-        logger.debug("do_process_file_async: %s", self.do_process_file_async)
-        if self.do_process_file_async:
-            task_result = self.upload_file_task.delay(
-                session_data=self.session_data,
-            )
-            self.task_id = task_result.id
-            self._load_file_upload_registry()
-            self._update_file_upload_registry(celery_task_id=self.task_id)
-            result = True
-            self.message = TASK_SCHEDULED_MESSAGE
-        else:
-            result = self.process()
-            self.message = self.processor.message
-        return result
+        return self.trigger_pipeline(file=file)
 
-    def process(self) -> bool:
-        # Called by task
-        self._load_file_upload_registry()
-        self._load_file_path()
-        self.processor = self.file_upload_processor_class(
-            self.file_upload_registry,
-            self.session_data,
-        )
-        logger.debug("Start pre_check")
-        if not self.processor.pre_check(self.file_path):
-            self._update_file_upload_registry(
-                upload_status="failed", upload_message=self.processor.message
-            )
-            return False
-        logger.debug("Start process")
-        if self.processor.process(self.file_path):
-            logger.debug("Start post_check")
-            if not self.processor.post_check(self.file_path):
-                self._update_file_upload_registry(
-                    upload_status="failed", upload_message=self.processor.message
-                )
-                return False
-            logger.debug("Update registry")
-            self._update_file_upload_registry(
-                upload_status="processed", upload_message=self.processor.message
-            )
-            logger.debug("Done processing")
-            return True
-        self._update_file_upload_registry(
-            upload_status="failed", upload_message=self.processor.message
-        )
-        return False
+    # ---- pipeline hooks ----
 
-    def register_file_in_db(self, file: File) -> int:
-        file_name = file.name
-        file_name = Path(file_name).name
-        file_type = file_name.split(".")[-1]
-        upload_file_hub = self.get_upload_file_hub(file)
-        file_upload_registry_hub = self.registry_manager.repository.std_create_object(
+    def _init_registry(self, file: File = None, **kwargs) -> int:
+        file_name = Path(file.name).name
+        return self.registry_repository.std_create_object(
             {
                 "file_name": file_name,
-                "file_type": file_type,
-                "upload_status": "pending",
-                "upload_message": "Upload is pending",
-                "link_file_upload_registry_file_upload_file": upload_file_hub,
+                "file_type": file_name.split(".")[-1],
+                self.status_field_name: "pending",
+                self.message_field_name: "Upload is pending",
+                "link_file_upload_registry_file_upload_file": self._get_upload_file_hub(
+                    file
+                ),
                 "celery_task_id": "",
             }
-        )
-        return file_upload_registry_hub.pk
+        ).pk
 
-    def get_upload_file_hub(self, file):
+    def _build_processor(self, pipeline_data: dict[str, Any]) -> PipelineProcessorABC:
+        self.file_path = os.path.join(settings.MEDIA_ROOT, self.registry.file)
+        return self.processor_class(self.registry, self.session_data)
+
+    def _apply_step(self, step: str) -> bool:
+        # Existing processors pass file_path to each step.
+        # Remove once all processors are migrated to no-argument steps.
+        if not getattr(self.processor, step)(self.file_path):
+            self._set_status("failed", self.processor.message)
+            return False
+        return True
+
+    # ---- helpers ----
+
+    def _get_upload_file_hub(self, file: File):
         return self.repository.std_create_object({"file": file})
-
-    def _update_file_upload_registry(self, **kwargs) -> None:
-        att_dict = self.registry_manager.repository.object_to_dict(
-            self.file_upload_registry
-        )
-        att_dict.update(kwargs)
-        self.file_upload_registry = self.registry_manager.repository.std_create_object(
-            att_dict
-        )
-
-    def _load_file_upload_registry(self) -> None:
-        file_upload_registry_id = self.session_data["file_upload_registry_id"]
-        self.file_upload_registry = self.registry_manager.repository.receive(
-            apply_filter=False
-        ).get(hub__pk=file_upload_registry_id)
-
-    def _load_file_path(self) -> None:
-        self.file_path = os.path.join(
-            settings.MEDIA_ROOT,
-            self.file_upload_registry.file,
-        )
