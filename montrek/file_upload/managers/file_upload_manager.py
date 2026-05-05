@@ -49,7 +49,6 @@ class FileUploadManagerABC(MontrekPipelineManagerABC):
 
     def __init_subclass__(cls, task_queue: str = PARALLEL_QUEUE_NAME, **kwargs):
         # Migrate old class attribute namings to new ones
-        super().__init_subclass__(task_queue, **kwargs)
         if hasattr(cls, "file_registry_manager_class"):
             cls.registry_repository_class = (
                 cls.file_registry_manager_class.repository_class
@@ -58,6 +57,7 @@ class FileUploadManagerABC(MontrekPipelineManagerABC):
             cls.processor_class = cls.file_upload_processor_class
         if hasattr(cls, "do_process_file_async"):
             cls.do_process_async = cls.do_process_file_async
+        super().__init_subclass__(task_queue, **kwargs)
 
     def __init__(self, session_data: dict[str, Any]) -> None:
         super().__init__(session_data=session_data)
@@ -70,7 +70,7 @@ class FileUploadManagerABC(MontrekPipelineManagerABC):
 
     # ---- pipeline hooks ----
 
-    def _init_registry(self, file: File = None, **kwargs) -> int:
+    def _init_registry(self, file: File, **kwargs) -> int:
         file_name = Path(file.name).name
         return self.registry_repository.std_create_object(
             {
