@@ -10,6 +10,7 @@ from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.views.decorators.http import require_safe
+from data_import.base.views.data_import_views import DataImportView
 from file_upload.views import (
     FileUploadRegistryView,
     MontrekDownloadFileView,
@@ -28,7 +29,6 @@ from montrek_example.managers.a_upload_table_manager import (
     HubAFileUploadRegistryManager,
     HubAUploadTableManager,
 )
-from process_pipeline.views.process_pipline_view import ProcessPipelineViewABC
 from reporting.views import MontrekReportFieldEditView, MontrekReportView
 from requesting.views.authenticator_views import AuthenticatorUserPasswordView
 
@@ -391,12 +391,9 @@ class A2ApiUploadView(AuthenticatorUserPasswordView):
             getattr(messages, m.message_type)(self.request, m.message)
 
 
-class A2ApiDirectUploadView(ProcessPipelineViewABC):
+class A2ApiDirectUploadView(DataImportView):
     success_url = "hub_a_view_api_uploads"
     manager_class = A2ApiUploadManager
-
-    def process(self):
-        self.manager.process_import_data()
 
 
 class MontrekExampleA1DownloadFileView(MontrekDownloadFileView):
