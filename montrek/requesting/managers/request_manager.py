@@ -1,7 +1,8 @@
 from abc import abstractmethod
 from functools import wraps
 from time import sleep
-from typing import Any, Callable
+from typing import Any
+from collections.abc import Callable
 
 import pandas as pd
 import requests
@@ -33,8 +34,9 @@ class RequestManagerABC(MontrekManager):
         self, endpoint: str, data: dict, json: dict
     ) -> dict | list | pd.DataFrame: ...
 
-    def get_endpoint_url(self, endpoint: str) -> str:
-        return f"{self.base_url}{endpoint}"
+    @classmethod
+    def get_endpoint_url(cls, endpoint: str) -> str:
+        return f"{cls.base_url}{endpoint}"
 
 
 class RequestJsonManager(RequestManagerABC):
@@ -59,7 +61,7 @@ class RequestJsonManager(RequestManagerABC):
                 except (
                     requests.exceptions.RequestException,
                     requests.exceptions.ChunkedEncodingError,
-                ) as e:
+                ):
                     sleep(self.sleep_time)
             self.message = f"No request made after {self.no_of_retries} attempts"
             self.status_code = 0
@@ -104,8 +106,10 @@ class RequestJsonManager(RequestManagerABC):
     @retry_on_failure
     @process_response
     def post_response(
-        self, endpoint: str, data: dict, json: dict = {}
+        self, endpoint: str, data: dict, json: dict | None = None
     ) -> dict | list | pd.DataFrame:
+        if json is None:
+            json = {}
         endpoint_url = self.get_endpoint_url(endpoint)
         headers = self.get_headers()
         return self.post_request(endpoint_url, headers, data, json)
@@ -118,8 +122,14 @@ class RequestJsonManager(RequestManagerABC):
         )
 
     def post_request(
-        self, endpoint_url: str, headers: dict[str, Any], data: dict, json: dict = {}
+        self,
+        endpoint_url: str,
+        headers: dict[str, Any],
+        data: dict,
+        json: dict | None = None,
     ) -> requests.models.Response:
+        if json is None:
+            json = {}
         return requests.post(
             endpoint_url,
             self.request_kwargs,
