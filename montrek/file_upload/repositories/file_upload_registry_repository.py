@@ -12,8 +12,8 @@ from file_upload.models import (
     LinkFileUploadRegistryFileUploadFile,
     LinkFileUploadRegistryFileLogFile,
 )
-from process_pipeline.repositories.process_pipeline_repositories import (
-    ProcessPipelineRepositoryABC,
+from process_pipeline.repositories.pipeline_registry_repositories import (
+    PipelineRegistryRepositoryABC,
 )
 
 
@@ -21,7 +21,7 @@ class NotImplementedLinkFileUploadRegistryFile:
     pass
 
 
-class FileUploadRegistryRepositoryABC(ProcessPipelineRepositoryABC):
+class FileUploadRegistryRepositoryABC(PipelineRegistryRepositoryABC):
     hub_class = FileUploadRegistryHubABC
     registry_fields = [
         "file_name",

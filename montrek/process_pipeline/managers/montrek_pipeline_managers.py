@@ -122,7 +122,10 @@ class MontrekPipelineManagerABC(MontrekManager):
         att_dict = self.registry_repository.object_to_dict(self.registry)
         att_dict.update(kwargs)
         att_dict.update(self.additional_registry_data())
-        self.registry = self.registry_repository.std_create_object(att_dict)
+        registry_hub = self.registry_repository.std_create_object(att_dict)
+        self.registry = self.registry_repository.receive(apply_filter=False).get(
+            hub__pk=registry_hub.pk
+        )
 
     def additional_registry_data(self) -> dict:
         return {}

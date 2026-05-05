@@ -1,9 +1,9 @@
-from process_pipeline.repositories.process_pipeline_repositories import (
-    ProcessPipelineRepositoryABC,
+from process_pipeline.repositories.pipeline_registry_repositories import (
+    PipelineRegistryRepositoryABC,
 )
 
 
-class RegistryRepositoryABC(ProcessPipelineRepositoryABC):
+class RegistryRepositoryABC(PipelineRegistryRepositoryABC):
     registry_fields = [
         "import_status",
         "import_message",
