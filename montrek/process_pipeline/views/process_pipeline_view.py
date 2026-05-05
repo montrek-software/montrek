@@ -1,3 +1,4 @@
+from django.urls import reverse
 from baseclasses.views import MontrekRedirectView
 
 
@@ -6,7 +7,7 @@ class ProcessPipelineViewABC(MontrekRedirectView):
 
     def get_redirect_url(self, *args, **kwargs) -> str:
         self.process()
-        return self.success_url
+        return reverse(self.success_url)
 
     def process(self):
         raise NotImplementedError("Implement process method")
