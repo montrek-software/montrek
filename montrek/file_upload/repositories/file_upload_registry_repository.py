@@ -2,7 +2,6 @@ import os
 from django.contrib import messages
 from django.core.files import File
 from django.conf import settings
-from baseclasses.repositories.montrek_repository import MontrekRepository
 from baseclasses.typing import SessionDataType
 from file_upload.models import FileUploadRegistryHubABC
 from file_upload.models import FileUploadRegistryStaticSatelliteABC
@@ -13,14 +12,23 @@ from file_upload.models import (
     LinkFileUploadRegistryFileUploadFile,
     LinkFileUploadRegistryFileLogFile,
 )
+from process_pipeline.repositories.process_pipeline_repositories import (
+    ProcessPipelineRepositoryABC,
+)
 
 
 class NotImplementedLinkFileUploadRegistryFile:
     pass
 
 
-class FileUploadRegistryRepositoryABC(MontrekRepository):
+class FileUploadRegistryRepositoryABC(ProcessPipelineRepositoryABC):
     hub_class = FileUploadRegistryHubABC
+    registry_fields = [
+        "file_name",
+        "file_type",
+        "upload_status",
+        "upload_message",
+    ]
     static_satellite_class = FileUploadRegistryStaticSatelliteABC
     link_file_upload_registry_file_upload_file_class = (
         NotImplementedLinkFileUploadRegistryFile
@@ -32,19 +40,11 @@ class FileUploadRegistryRepositoryABC(MontrekRepository):
 
     def __init__(self, session_data: SessionDataType | None = None):
         self._setup_checks()
+        self.registry_satellite = self.static_satellite_class
         super().__init__(session_data=session_data)
 
     def set_annotations(self, **kwargs):
-        self.add_satellite_fields_annotations(
-            self.static_satellite_class,
-            [
-                "file_name",
-                "file_type",
-                "upload_status",
-                "upload_message",
-                "celery_task_id",
-            ],
-        )
+        super().set_annotations()
         if (
             self.link_file_upload_registry_file_log_file_class
             is not NotImplementedLinkFileUploadRegistryFile
