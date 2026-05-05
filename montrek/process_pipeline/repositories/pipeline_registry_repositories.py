@@ -4,7 +4,7 @@ from process_pipeline.models.pipeline_registry_sat_models import (
 )
 
 
-class ProcessPipelineRepositoryABC(MontrekRepository):
+class PipelineRegistryRepositoryABC(MontrekRepository):
     registry_satellite: type[PipelineRegistrySatelliteABC]
     registry_fields: list[str]
     default_order_fields = ("-created_at",)

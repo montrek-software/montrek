@@ -1,14 +1,16 @@
 from django.conf import settings
 import pandas as pd
-from data_import.base.managers.processor_base import ProcessorBaseABC
+from data_import.api_import.managers.api_data_import_processor import (
+    ApiDataImportProcessorBase,
+)
+from montrek_example.managers.a2_request_manager import A2RequestManager
 from montrek_example.repositories.hub_a_repository import HubARepository
 
 
-class A2ApiUploadProcessor(ProcessorBaseABC):
+class A2ApiUploadProcessor(ApiDataImportProcessorBase):
     message = "Not implemented"
-
-    def pre_check(self) -> bool:
-        return True
+    endpoint = "a2_endpoint"
+    request_manager_class = A2RequestManager
 
     def process(self) -> bool:
         try:
