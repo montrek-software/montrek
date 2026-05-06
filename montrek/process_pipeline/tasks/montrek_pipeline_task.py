@@ -14,7 +14,7 @@ from mailing.managers.mailing_manager import MailingManager
 from tasks.montrek_task import MontrekTask
 from user.models import MontrekUser
 
-from montrek.celery_app import PARALLEL_QUEUE_NAME
+from montrek.celery_app import PARALLEL_QUEUE_NAME, SEQUENTIAL_QUEUE_NAME
 
 
 class MontrekPipelineTask(MontrekTask):
@@ -62,3 +62,7 @@ class MontrekPipelineTask(MontrekTask):
     def _get_subject(self, result: bool) -> str:
         name = self._message_name()
         return f"{name} successful" if result else f"ERROR: {name} unsuccessful"
+
+
+class MontrekPipelineSequentialTask(MontrekPipelineTask):
+    queue: str = SEQUENTIAL_QUEUE_NAME
