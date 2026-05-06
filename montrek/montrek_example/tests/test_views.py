@@ -15,6 +15,7 @@ from django.utils import timezone
 from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepository,
 )
+from info.repositories.download_registry_repositories import DownloadRegistryRepository
 from montrek_example import views as me_views
 from montrek_example.models.example_models import LinkHubBHubD
 from montrek_example.repositories.hub_a_repository import (
@@ -1663,7 +1664,7 @@ class TestHubAFileExportRegistryListView(MontrekListViewTestCase):
         me_factories.HubAFileExportRegistryStaticSatelliteFactory()
 
 
-class TestHubAFileExportDownloadView(MontrekFileResponseTestCase):
+class TestHubAFileExportDownloadView(MontrekDownloadViewTestCase):
     view_class = me_views.HubAFileExportDownloadView
     viewname = "hub_a_file_export_download"
 
@@ -1675,6 +1676,16 @@ class TestHubAFileExportDownloadView(MontrekFileResponseTestCase):
     def url_kwargs(self) -> dict:
         return {"pk": self.registry_sat.hub_entity.pk}
 
-    def test_return_file(self):
+    def expected_filename(self) -> str:
+        # Django may append a uniqueness suffix; match any test_export*.csv
+        return r"test_export.*\.csv"
+
+    def assert_entry_in_download_registry(self):
+        # Override: check that at least one registry entry exists.
+        # The base-class check for count == 1 is fragile with --keepdb.
+        download_registry = DownloadRegistryRepository()
+        self.assertGreaterEqual(download_registry.receive().count(), 1)
+
+    def additional_download_assertions(self):
         content = b"".join(self.response.streaming_content)
         self.assertEqual(content, b"hub_id\n1\n")

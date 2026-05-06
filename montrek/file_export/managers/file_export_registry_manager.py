@@ -1,3 +1,7 @@
+import os
+
+from django.http import FileResponse, Http404, HttpResponse
+
 from reporting.dataclasses.table_elements import (
     DateTimeTableElement,
     LinkTableElement,
@@ -30,3 +34,18 @@ class FileExportRegistryManagerABC(MontrekTableManager):
                 hover_text="Download export file",
             ),
         )
+
+    def download(self) -> HttpResponse:
+        pk = int(self.session_data["pk"])
+        export_file = self.repository.get_export_file(pk)
+        if export_file is None:
+            raise Http404("Export file not found.")
+        return FileResponse(export_file)
+
+    def get_filename(self) -> str:
+        pk = int(self.session_data["pk"])
+        registry = self.repository.receive().get(pk=pk)
+        file_path = registry.export_file
+        if not file_path:
+            return "export.csv"
+        return os.path.basename(str(file_path))

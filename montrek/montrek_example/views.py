@@ -479,8 +479,6 @@ class HubAFileExportTriggerView(FileExportTriggerView):
 
 class HubAFileExportDownloadView(FileExportDownloadView):
     manager_class = HubAFileExportRegistryManager
-    page_class = pages.MontrekExampleAAppPage
-    title = "Download Hub A Export"
 
 
 class HubAFileExportRegistryListView(FileExportRegistryListView):
