@@ -1674,7 +1674,7 @@ class TestHubAFileExportDownloadView(MontrekDownloadViewTestCase):
         )
 
     def url_kwargs(self) -> dict:
-        return {"pk": self.registry_sat.hub_entity.pk}
+        return {"pk": self.registry_sat.get_hub_value_date().pk}
 
     def expected_filename(self) -> str:
         # Django may append a uniqueness suffix; match any test_export*.csv
