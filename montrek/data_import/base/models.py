@@ -34,3 +34,8 @@ class TestRegistryHubValueDate(baseclass_models.HubValueDate):
 
 class TestRegistrySatellite(DataImportRegistryBaseSatelliteABC):
     hub_entity = models.ForeignKey(TestRegistryHub, on_delete=models.CASCADE)
+
+
+class TestApiRegistrySatellite(DataImportRegistryBaseSatelliteABC):
+    hub_entity = models.ForeignKey(TestRegistryHub, on_delete=models.CASCADE)
+    import_url = models.URLField(default="", blank=True, null=True)

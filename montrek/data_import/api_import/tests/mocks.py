@@ -2,13 +2,10 @@ from data_import.api_import.managers.api_data_import_manager import ApiDataImpor
 from data_import.api_import.managers.api_data_import_processor import (
     ApiDataImportProcessorBase,
 )
-from data_import.api_import.models import (
-    MockApiRegistryHub,
-    MockApiRegistrySatellite,
-)
 from data_import.api_import.repositories.api_data_import_registry_repositories import (
     ApiDataImportRegistryRepository,
 )
+from data_import.base.models import TestApiRegistrySatellite, TestRegistryHub
 from requesting.managers.request_manager import RequestJsonManager
 
 
@@ -36,8 +33,8 @@ class MockApiDataImportProcessor(ApiDataImportProcessorBase):
 
 
 class MockApiRegistryRepository(ApiDataImportRegistryRepository):
-    registry_satellite = MockApiRegistrySatellite
-    hub_class = MockApiRegistryHub
+    registry_satellite = TestApiRegistrySatellite
+    hub_class = TestRegistryHub
 
 
 class MockApiDataImportManager(ApiDataImportManager):
