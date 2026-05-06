@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
 from django.test import TestCase
+from montrek.celery_app import PARALLEL_QUEUE_NAME, SEQUENTIAL_QUEUE_NAME
 from testing.decorators.add_logged_in_user import add_logged_in_user
 
 from process_pipeline.tests.mocks import (
@@ -9,7 +10,7 @@ from process_pipeline.tests.mocks import (
 )
 
 
-def _make_task(manager_class=ConcreteTestManager):
+def _make_task(manager_class=ConcreteTestManager, **kwargs):
     """Instantiate MontrekPipelineTask, patching Celery registration to avoid name conflicts."""
     from process_pipeline.tasks.montrek_pipeline_task import MontrekPipelineTask
 
@@ -17,7 +18,20 @@ def _make_task(manager_class=ConcreteTestManager):
         patch("tasks.montrek_task.celery_app.register_task"),
         patch.object(MontrekPipelineTask, "raise_for_conflicting_task_name"),
     ):
-        return MontrekPipelineTask(manager_class)
+        return MontrekPipelineTask(manager_class, **kwargs)
+
+
+def _make_sequential_task(manager_class=ConcreteTestManager):
+    """Instantiate MontrekPipelineSequentialTask, patching Celery registration."""
+    from process_pipeline.tasks.montrek_pipeline_task import (
+        MontrekPipelineSequentialTask,
+    )
+
+    with (
+        patch("tasks.montrek_task.celery_app.register_task"),
+        patch.object(MontrekPipelineSequentialTask, "raise_for_conflicting_task_name"),
+    ):
+        return MontrekPipelineSequentialTask(manager_class)
 
 
 class TestMontrekPipelineTaskInit(TestCase):
@@ -166,3 +180,18 @@ class TestMontrekPipelineTaskRecipients(TestCase):
     def test_recipients_returns_correct_user(self):
         recipients = self.task.recipients(self.session_data)
         self.assertEqual(recipients[0].id, self.user.id)
+
+
+class TestMontrekPipelineTaskQueueRouting(TestCase):
+    def test_default_queue_is_parallel(self):
+        task = _make_task()
+        self.assertEqual(task.queue, PARALLEL_QUEUE_NAME)
+
+    def test_sequential_subclass_queue_is_sequential(self):
+        task = _make_sequential_task()
+        self.assertEqual(task.queue, SEQUENTIAL_QUEUE_NAME)
+
+    def test_base_class_queue_unaffected_by_sequential_subclass(self):
+        from process_pipeline.tasks.montrek_pipeline_task import MontrekPipelineTask
+
+        self.assertEqual(MontrekPipelineTask.queue, PARALLEL_QUEUE_NAME)
