@@ -1,7 +1,5 @@
 from django.db import models
 
-from baseclasses import models as baseclass_models
-from baseclasses.fields import HubForeignKey
 from process_pipeline.models.pipeline_registry_hub_models import PipelineRegistryHubABC
 from process_pipeline.models.pipeline_registry_sat_models import (
     PipelineRegistrySatelliteABC,
@@ -29,16 +27,3 @@ class FileExportRegistryStaticSatelliteABC(PipelineRegistrySatelliteABC):
     export_message = models.TextField(default="")
     export_file = models.FileField(upload_to="file_exports/", null=True, blank=True)
     identifier_fields = ["hub_entity_id"]
-
-
-# Concrete models used only in base-class tests — not part of any consumer domain.
-class TestFileExportRegistryHub(FileExportRegistryHubABC):
-    pass
-
-
-class TestFileExportRegistryHubValueDate(baseclass_models.HubValueDate):
-    hub = HubForeignKey(TestFileExportRegistryHub)
-
-
-class TestFileExportRegistryStaticSatellite(FileExportRegistryStaticSatelliteABC):
-    hub_entity = models.ForeignKey(TestFileExportRegistryHub, on_delete=models.CASCADE)

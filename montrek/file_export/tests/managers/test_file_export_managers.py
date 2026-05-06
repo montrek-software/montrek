@@ -1,4 +1,4 @@
-from django.test import TestCase
+import unittest
 
 from file_export.tests.mocks import (
     MockFileExportManager,
@@ -6,64 +6,89 @@ from file_export.tests.mocks import (
     MockFileExportManagerFailPreCheck,
     MockFileExportManagerFailProcess,
     MockFileExportManagerNoFile,
-    MockFileExportRegistryRepository,
 )
-from testing.decorators import add_logged_in_user
+
+SESSION = {"user_id": 1}
 
 
-class TestFileExportManager(TestCase):
-    @add_logged_in_user
+class TestFileExportManager(unittest.TestCase):
     def setUp(self):
-        self.manager = MockFileExportManager({"user_id": self.user.id})
+        self.manager = MockFileExportManager(SESSION)
 
-    def test_init_registry(self):
+    def _last_update(self, manager=None):
+        m = manager or self.manager
+        return m._registry_updates[-1]
+
+    def _file_update(self, manager=None):
+        m = manager or self.manager
+        return next((u for u in m._registry_updates if "export_file" in u), None)
+
+    # ---- registry initialisation ----
+
+    def test_create_registry_sets_session_key(self):
         self.manager.create_registry()
-        self.manager._load_registry()
-        registry = self.manager.get_registry()
-        self.assertEqual(registry.export_status, "pending")
-        self.assertEqual(registry.export_message, "Export is pending")
+        self.assertEqual(
+            self.manager.session_data[self.manager.registry_session_key], 1
+        )
 
-    def test_trigger_export__success(self):
+    # ---- happy path ----
+
+    def test_trigger_export__returns_true(self):
+        self.assertTrue(self.manager.trigger_export())
+
+    def test_trigger_export__final_status_processed(self):
         self.manager.trigger_export()
-        registry = self.manager.get_registry()
-        self.assertEqual(registry.export_status, "processed")
-        self.assertEqual(registry.export_message, "Export successful")
+        self.assertEqual(self._last_update()["export_status"], "processed")
 
-    def test_trigger_export__file_attached(self):
+    def test_trigger_export__final_message(self):
         self.manager.trigger_export()
-        registry = self.manager.get_registry()
-        self.assertTrue(bool(registry.export_file))
+        self.assertEqual(self._last_update()["export_message"], "Export successful")
 
-    def test_trigger_export__pre_check_fails(self):
-        manager = MockFileExportManagerFailPreCheck({"user_id": self.user.id})
-        manager.trigger_export()
-        registry = manager.get_registry()
-        self.assertEqual(registry.export_status, "failed")
-        self.assertEqual(registry.export_message, "Pre Check Failed")
-
-    def test_trigger_export__process_fails(self):
-        manager = MockFileExportManagerFailProcess({"user_id": self.user.id})
-        manager.trigger_export()
-        registry = manager.get_registry()
-        self.assertEqual(registry.export_status, "failed")
-        self.assertEqual(registry.export_message, "Process Failed")
-
-    def test_trigger_export__post_check_fails(self):
-        manager = MockFileExportManagerFailPostCheck({"user_id": self.user.id})
-        manager.trigger_export()
-        registry = manager.get_registry()
-        self.assertEqual(registry.export_status, "failed")
-        self.assertEqual(registry.export_message, "Post Check Failed")
-
-    def test_trigger_export__no_file_does_not_crash(self):
-        manager = MockFileExportManagerNoFile({"user_id": self.user.id})
-        result = manager.trigger_export()
-        self.assertTrue(result)
-        registry = manager.get_registry()
-        self.assertEqual(registry.export_status, "processed")
-        self.assertFalse(bool(registry.export_file))
-
-    def test_registry_count_after_export(self):
+    def test_trigger_export__file_attached_to_registry(self):
         self.manager.trigger_export()
-        registry_query = MockFileExportRegistryRepository().receive()
-        self.assertEqual(registry_query.count(), 1)
+        file_update = self._file_update()
+        self.assertIsNotNone(
+            file_update, "expected an _update_registry call with export_file"
+        )
+        self.assertIsNotNone(file_update["export_file"])
+
+    def test_trigger_export__in_progress_set_before_steps(self):
+        self.manager.trigger_export()
+        first = self.manager._registry_updates[0]
+        self.assertEqual(first["export_status"], "in_progress")
+
+    # ---- failure paths ----
+
+    def test_pre_check_fails__status_failed(self):
+        m = MockFileExportManagerFailPreCheck(SESSION)
+        m.trigger_export()
+        self.assertEqual(self._last_update(m)["export_status"], "failed")
+        self.assertEqual(self._last_update(m)["export_message"], "Pre Check Failed")
+
+    def test_process_fails__status_failed(self):
+        m = MockFileExportManagerFailProcess(SESSION)
+        m.trigger_export()
+        self.assertEqual(self._last_update(m)["export_status"], "failed")
+        self.assertEqual(self._last_update(m)["export_message"], "Process Failed")
+
+    def test_post_check_fails__status_failed(self):
+        m = MockFileExportManagerFailPostCheck(SESSION)
+        m.trigger_export()
+        self.assertEqual(self._last_update(m)["export_status"], "failed")
+        self.assertEqual(self._last_update(m)["export_message"], "Post Check Failed")
+
+    # ---- no-file path ----
+
+    def test_no_file__returns_true(self):
+        m = MockFileExportManagerNoFile(SESSION)
+        self.assertTrue(m.trigger_export())
+
+    def test_no_file__no_export_file_update(self):
+        m = MockFileExportManagerNoFile(SESSION)
+        m.trigger_export()
+        self.assertIsNone(self._file_update(m))
+
+    def test_no_file__status_processed(self):
+        m = MockFileExportManagerNoFile(SESSION)
+        m.trigger_export()
+        self.assertEqual(self._last_update(m)["export_status"], "processed")
