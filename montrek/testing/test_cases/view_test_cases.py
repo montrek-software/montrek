@@ -608,12 +608,12 @@ class ProcessPipelineViewTestCase(MontrekRedirectViewTestCase):
         self.assertEqual(registry_query.count(), 1)
         registry_entry = registry_query.first()
         self.assertEqual(
-            getattr(registry_entry, manager_class.status_field_name),
-            self.expected_status,
-        )
-        self.assertEqual(
             getattr(registry_entry, manager_class.message_field_name),
             self.expected_message,
+        )
+        self.assertEqual(
+            getattr(registry_entry, manager_class.status_field_name),
+            self.expected_status,
         )
         self.additional_assertions()
 
