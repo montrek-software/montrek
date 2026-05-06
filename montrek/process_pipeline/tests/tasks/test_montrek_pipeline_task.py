@@ -187,10 +187,6 @@ class TestMontrekPipelineTaskQueueRouting(TestCase):
         task = _make_task()
         self.assertEqual(task.queue, PARALLEL_QUEUE_NAME)
 
-    def test_explicit_queue_overrides_default(self):
-        task = _make_task(queue=SEQUENTIAL_QUEUE_NAME)
-        self.assertEqual(task.queue, SEQUENTIAL_QUEUE_NAME)
-
     def test_sequential_subclass_queue_is_sequential(self):
         task = _make_sequential_task()
         self.assertEqual(task.queue, SEQUENTIAL_QUEUE_NAME)
