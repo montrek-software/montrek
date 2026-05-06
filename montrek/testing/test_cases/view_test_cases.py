@@ -606,6 +606,8 @@ class ProcessPipelineViewTestCase(MontrekRedirectViewTestCase):
         )
 
     def test_happy_path(self):
+        if self._is_base_test_class():
+            return
         manager_class = self.view_class.manager_class
         registry_query = manager_class.registry_repository_class().receive()
         self.assertEqual(registry_query.count(), self.expected_no_of_registries)
