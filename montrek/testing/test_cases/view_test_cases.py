@@ -577,6 +577,8 @@ class MontrekReportFieldEditViewTestCase(MontrekObjectViewBaseTestCase):
 
 class ProcessPipelineViewTestCase(MontrekRedirectViewTestCase):
     real_view_class: type[View] | None = None
+    expected_status: str = "processed"
+    expected_message: str
 
     def setUp(self):
         if not self._is_base_test_class() and self.real_view_class is not None:
@@ -599,3 +601,22 @@ class ProcessPipelineViewTestCase(MontrekRedirectViewTestCase):
             issubclass(self.view_class, self.real_view_class),
             f"{self.view_class.__name__} must inherit from {self.real_view_class.__name__}",
         )
+
+    def test_happy_path(self):
+        manager_class = self.view_class.manager_class
+        registry_query = manager_class.registry_repository_class().receive()
+        self.assertEqual(registry_query.count(), 1)
+        registry_entry = registry_query.first()
+        self.assertEqual(
+            getattr(registry_entry, manager_class.status_field_name),
+            self.expected_status,
+        )
+        self.assertEqual(
+            getattr(registry_entry, manager_class.message_field_name),
+            self.expected_message,
+        )
+        self.additional_assertions()
+
+    def additional_assertions(self):
+        # Overwrite by daughter class
+        return
