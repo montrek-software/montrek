@@ -14,6 +14,10 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
 from encrypted_fields import EncryptedCharField
+from file_export.models import (
+    FileExportRegistryHubABC,
+    FileExportRegistryStaticSatelliteABC,
+)
 from file_upload.models import (
     FieldMapHubABC,
     FieldMapStaticSatelliteABC,
@@ -317,3 +321,15 @@ class SatE2(MontrekSatelliteABC):
     field_e2_str = models.CharField(max_length=50, default="DEFAULT")
     field_e2_int = models.IntegerField(default=0)
     identifier_fields = ["field_e2_str", "hub_entity_id"]
+
+
+class HubAFileExportRegistryHub(FileExportRegistryHubABC):
+    pass
+
+
+class HubAFileExportRegistryHubValueDate(HubValueDate):
+    hub = HubForeignKey(HubAFileExportRegistryHub)
+
+
+class HubAFileExportRegistryStaticSatellite(FileExportRegistryStaticSatelliteABC):
+    hub_entity = models.ForeignKey(HubAFileExportRegistryHub, on_delete=models.CASCADE)

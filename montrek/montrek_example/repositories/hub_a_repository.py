@@ -2,6 +2,9 @@ from baseclasses.repositories.montrek_repository import MontrekRepository
 from data_import.api_import.repositories.api_data_import_registry_repositories import (
     ApiDataImportRegistryRepository,
 )
+from file_export.repositories.file_export_registry_repository import (
+    FileExportRegistryRepositoryABC,
+)
 from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepositoryABC,
 )
@@ -158,3 +161,8 @@ class HubAJsonRepository(MontrekRepository):
                 "field_a3_json",
             ],
         )
+
+
+class HubAFileExportRegistryRepository(FileExportRegistryRepositoryABC):
+    hub_class = me_models.HubAFileExportRegistryHub
+    registry_satellite = me_models.HubAFileExportRegistryStaticSatellite

@@ -196,4 +196,19 @@ urlpatterns = [
         views.MontrekExampleCLastTSDetails.as_view(),
         name="montrek_example_c_last_ts_details",
     ),
+    path(
+        "hub_a/file_export/trigger",
+        views.HubAFileExportTriggerView.as_view(),
+        name="hub_a_file_export_trigger",
+    ),
+    path(
+        "hub_a/file_export/list",
+        views.HubAFileExportRegistryListView.as_view(),
+        name="hub_a_file_export_list",
+    ),
+    path(
+        "hub_a/file_export/download/<int:pk>",
+        views.HubAFileExportDownloadView.as_view(),
+        name="hub_a_file_export_download",
+    ),
 ]

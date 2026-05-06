@@ -298,3 +298,30 @@ class SatA1FieldMapStaticSatelliteFactory(FieldMapStaticSatelliteFactory):
         model = "montrek_example.SatA1FieldMapStaticSatellite"
 
     hub_entity = factory.SubFactory(SatA1FieldMapHubFactory)
+
+
+class HubAFileExportRegistryHubFactory(MontrekHubFactory):
+    class Meta:
+        model = "montrek_example.HubAFileExportRegistryHub"
+
+
+class HubAFileExportRegistryStaticSatelliteFactory(MontrekSatelliteFactory):
+    class Meta:
+        model = "montrek_example.HubAFileExportRegistryStaticSatellite"
+
+    hub_entity = factory.SubFactory(HubAFileExportRegistryHubFactory)
+    export_status = "processed"
+    export_message = "Exported 1 records."
+    celery_task_id = ""
+
+    @factory.post_generation
+    def generate_export_file(self, create, extracted, **kwargs):
+        if not create or not extracted:
+            return
+        from django.core.files.base import ContentFile
+
+        self.export_file.save(
+            "test_export.csv",
+            ContentFile(b"hub_id\n1\n"),
+            save=True,
+        )

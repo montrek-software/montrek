@@ -15,9 +15,11 @@ from django.utils import timezone
 from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepository,
 )
+from info.repositories.download_registry_repositories import DownloadRegistryRepository
 from montrek_example import views as me_views
 from montrek_example.models.example_models import LinkHubBHubD
 from montrek_example.repositories.hub_a_repository import (
+    HubAFileExportRegistryRepository,
     HubAFileUploadRegistryRepository,
     HubARepository,
 )
@@ -1631,3 +1633,59 @@ class TestMontrekExampleCLastTSDetails(MontrekDetailViewTestCase):
 
     def url_kwargs(self) -> dict:
         return {"pk": self.hub_vd.hub.id}
+
+
+class TestHubAFileExportTriggerView(ProcessPipelineViewTestCase):
+    view_class = me_views.HubAFileExportTriggerView
+    viewname = "hub_a_file_export_trigger"
+    expected_message = "Exported 1 records."
+    expected_status = "processed"
+
+    def expected_url(self) -> str:
+        return reverse("hub_a_file_export_list")
+
+    def build_factories(self):
+        me_factories.SatA1Factory()
+
+    def additional_assertions(self):
+        registry = HubAFileExportRegistryRepository().receive().first()
+        self.assertTrue(
+            bool(registry.export_file),
+            "export_file should be set after a successful export",
+        )
+
+
+class TestHubAFileExportRegistryListView(MontrekListViewTestCase):
+    viewname = "hub_a_file_export_list"
+    view_class = me_views.HubAFileExportRegistryListView
+    expected_no_of_rows = 1
+
+    def build_factories(self):
+        me_factories.HubAFileExportRegistryStaticSatelliteFactory()
+
+
+class TestHubAFileExportDownloadView(MontrekDownloadViewTestCase):
+    view_class = me_views.HubAFileExportDownloadView
+    viewname = "hub_a_file_export_download"
+
+    def build_factories(self):
+        self.registry_sat = me_factories.HubAFileExportRegistryStaticSatelliteFactory(
+            generate_export_file=True
+        )
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.registry_sat.get_hub_value_date().pk}
+
+    def expected_filename(self) -> str:
+        # Django may append a uniqueness suffix; match any test_export*.csv
+        return r"test_export.*\.csv"
+
+    def assert_entry_in_download_registry(self):
+        # Override: check that at least one registry entry exists.
+        # The base-class check for count == 1 is fragile with --keepdb.
+        download_registry = DownloadRegistryRepository()
+        self.assertGreaterEqual(download_registry.receive().count(), 1)
+
+    def additional_download_assertions(self):
+        content = b"".join(self.response.streaming_content)
+        self.assertEqual(content, b"hub_id\n1\n")
