@@ -1,6 +1,7 @@
 import datetime
 
 import pandas as pd
+from unittest.mock import patch
 from baseclasses.views import MontrekDeleteView
 from bs4 import BeautifulSoup
 from django.contrib.auth.models import Permission
@@ -575,5 +576,18 @@ class MontrekReportFieldEditViewTestCase(MontrekObjectViewBaseTestCase):
 
 
 class ProcessPipelineViewTestCase(MontrekRedirectViewTestCase):
+    real_view_class: type[View] | None = None
+
+    def setUp(self):
+        if not self._is_base_test_class() and self.real_view_class is not None:
+            patcher = patch.object(
+                self.real_view_class,
+                "manager_class",
+                self.view_class.manager_class,
+            )
+            patcher.start()
+            self.addCleanup(patcher.stop)
+        super().setUp()
+
     def _is_base_test_class(self) -> bool:
         return self.__class__.__name__ == "ProcessPipelineViewTestCase"
