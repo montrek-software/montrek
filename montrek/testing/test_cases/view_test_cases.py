@@ -576,19 +576,22 @@ class MontrekReportFieldEditViewTestCase(MontrekObjectViewBaseTestCase):
 
 
 class ProcessPipelineViewTestCase(MontrekRedirectViewTestCase):
+    expected_message: str
     real_view_class: type[View] | None = None
     expected_status: str = "processed"
-    expected_message: str
+    expected_no_of_registries: int = 1
+    additional_patched_view_attrs: list[str] = []
 
     def setUp(self):
         if not self._is_base_test_class() and self.real_view_class is not None:
-            patcher = patch.object(
-                self.real_view_class,
-                "manager_class",
-                self.view_class.manager_class,
-            )
-            patcher.start()
-            self.addCleanup(patcher.stop)
+            for view_attr in ["manager_class"] + self.additional_patched_view_attrs:
+                patcher = patch.object(
+                    self.real_view_class,
+                    view_attr,
+                    getattr(self.view_class, view_attr),
+                )
+                patcher.start()
+                self.addCleanup(patcher.stop)
         super().setUp()
 
     def _is_base_test_class(self) -> bool:
@@ -605,7 +608,7 @@ class ProcessPipelineViewTestCase(MontrekRedirectViewTestCase):
     def test_happy_path(self):
         manager_class = self.view_class.manager_class
         registry_query = manager_class.registry_repository_class().receive()
-        self.assertEqual(registry_query.count(), 1)
+        self.assertEqual(registry_query.count(), self.expected_no_of_registries)
         registry_entry = registry_query.first()
         self.assertEqual(
             getattr(registry_entry, manager_class.message_field_name),
