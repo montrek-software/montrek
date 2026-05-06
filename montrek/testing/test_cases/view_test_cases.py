@@ -591,3 +591,11 @@ class ProcessPipelineViewTestCase(MontrekRedirectViewTestCase):
 
     def _is_base_test_class(self) -> bool:
         return self.__class__.__name__ == "ProcessPipelineViewTestCase"
+
+    def test_view_class_inherits_from_real_view_class(self):
+        if self._is_base_test_class() or self.real_view_class is None:
+            return
+        self.assertTrue(
+            issubclass(self.view_class, self.real_view_class),
+            f"{self.view_class.__name__} must inherit from {self.real_view_class.__name__}",
+        )
