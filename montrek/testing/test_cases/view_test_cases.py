@@ -1,6 +1,7 @@
 import datetime
 
 import pandas as pd
+from unittest.mock import patch
 from baseclasses.views import MontrekDeleteView
 from bs4 import BeautifulSoup
 from django.contrib.auth.models import Permission
@@ -575,5 +576,52 @@ class MontrekReportFieldEditViewTestCase(MontrekObjectViewBaseTestCase):
 
 
 class ProcessPipelineViewTestCase(MontrekRedirectViewTestCase):
+    expected_message: str
+    real_view_class: type[View] | None = None
+    expected_status: str = "processed"
+    expected_no_of_registries: int = 1
+    additional_patched_view_attrs: list[str] = []
+
+    def setUp(self):
+        if not self._is_base_test_class() and self.real_view_class is not None:
+            for view_attr in ["manager_class"] + self.additional_patched_view_attrs:
+                patcher = patch.object(
+                    self.real_view_class,
+                    view_attr,
+                    getattr(self.view_class, view_attr),
+                )
+                patcher.start()
+                self.addCleanup(patcher.stop)
+        super().setUp()
+
     def _is_base_test_class(self) -> bool:
         return self.__class__.__name__ == "ProcessPipelineViewTestCase"
+
+    def test_view_class_inherits_from_real_view_class(self):
+        if self._is_base_test_class() or self.real_view_class is None:
+            return
+        self.assertTrue(
+            issubclass(self.view_class, self.real_view_class),
+            f"{self.view_class.__name__} must inherit from {self.real_view_class.__name__}",
+        )
+
+    def test_happy_path(self):
+        if self._is_base_test_class():
+            return
+        manager_class = self.view_class.manager_class
+        registry_query = manager_class.registry_repository_class().receive()
+        self.assertEqual(registry_query.count(), self.expected_no_of_registries)
+        registry_entry = registry_query.first()
+        self.assertEqual(
+            getattr(registry_entry, manager_class.message_field_name),
+            self.expected_message,
+        )
+        self.assertEqual(
+            getattr(registry_entry, manager_class.status_field_name),
+            self.expected_status,
+        )
+        self.additional_assertions()
+
+    def additional_assertions(self):
+        # Overwrite by daughter class
+        return

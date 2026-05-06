@@ -1568,6 +1568,8 @@ class TestA2ApiUploadView(MontrekViewTestCase):
 class TestA2ApiDirectUploadView(ProcessPipelineViewTestCase):
     view_class = me_views.A2ApiDirectUploadView
     viewname = "do_a2_direct_upload"
+    expected_message = "Not implemented"
+    expected_status = "failed"
 
     def expected_url(self) -> str:
         return reverse("hub_a_view_api_uploads")
