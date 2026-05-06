@@ -18,6 +18,7 @@ from file_upload.repositories.file_upload_registry_repository import (
 from montrek_example import views as me_views
 from montrek_example.models.example_models import LinkHubBHubD
 from montrek_example.repositories.hub_a_repository import (
+    HubAFileExportRegistryRepository,
     HubAFileUploadRegistryRepository,
     HubARepository,
 )
@@ -1631,3 +1632,49 @@ class TestMontrekExampleCLastTSDetails(MontrekDetailViewTestCase):
 
     def url_kwargs(self) -> dict:
         return {"pk": self.hub_vd.hub.id}
+
+
+class TestHubAFileExportTriggerView(ProcessPipelineViewTestCase):
+    view_class = me_views.HubAFileExportTriggerView
+    viewname = "hub_a_file_export_trigger"
+    expected_message = "Exported 1 records."
+    expected_status = "processed"
+
+    def expected_url(self) -> str:
+        return reverse("hub_a_file_export_list")
+
+    def build_factories(self):
+        me_factories.SatA1Factory()
+
+    def additional_assertions(self):
+        registry = HubAFileExportRegistryRepository().receive().first()
+        self.assertTrue(
+            bool(registry.export_file),
+            "export_file should be set after a successful export",
+        )
+
+
+class TestHubAFileExportRegistryListView(MontrekListViewTestCase):
+    viewname = "hub_a_file_export_list"
+    view_class = me_views.HubAFileExportRegistryListView
+    expected_no_of_rows = 1
+
+    def build_factories(self):
+        me_factories.HubAFileExportRegistryStaticSatelliteFactory()
+
+
+class TestHubAFileExportDownloadView(MontrekFileResponseTestCase):
+    view_class = me_views.HubAFileExportDownloadView
+    viewname = "hub_a_file_export_download"
+
+    def build_factories(self):
+        self.registry_sat = me_factories.HubAFileExportRegistryStaticSatelliteFactory(
+            generate_export_file=True
+        )
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.registry_sat.hub_entity.pk}
+
+    def test_return_file(self):
+        content = b"".join(self.response.streaming_content)
+        self.assertEqual(content, b"hub_id\n1\n")

@@ -11,6 +11,11 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.views.decorators.http import require_safe
 from data_import.base.views.data_import_views import DataImportView
+from file_export.views.file_export_views import (
+    FileExportDownloadView,
+    FileExportRegistryListView,
+    FileExportTriggerView,
+)
 from file_upload.views import (
     FileUploadRegistryView,
     MontrekDownloadFileView,
@@ -25,6 +30,10 @@ from montrek_example.managers import montrek_example_managers as mem
 from montrek_example.managers.a1_field_map_manager import A1FieldMapManager
 from montrek_example.managers.a1_file_upload_manager import A1FileUploadManager
 from montrek_example.managers.a2_api_upload_manager import A2ApiUploadManager
+from montrek_example.managers.a_file_export_manager import (
+    HubAFileExportManager,
+    HubAFileExportRegistryManager,
+)
 from montrek_example.managers.a_upload_table_manager import (
     HubAFileUploadRegistryManager,
     HubAUploadTableManager,
@@ -461,3 +470,20 @@ class HubARedirectView(views.MontrekRedirectView):
 
     def get_redirect_url(self, *args, **kwargs):
         return reverse("montrek_example_a_list")
+
+
+class HubAFileExportTriggerView(FileExportTriggerView):
+    manager_class = HubAFileExportManager
+    success_url = "hub_a_file_export_list"
+
+
+class HubAFileExportDownloadView(FileExportDownloadView):
+    manager_class = HubAFileExportRegistryManager
+    page_class = pages.MontrekExampleAAppPage
+    title = "Download Hub A Export"
+
+
+class HubAFileExportRegistryListView(FileExportRegistryListView):
+    manager_class = HubAFileExportRegistryManager
+    page_class = pages.MontrekExampleAAppPage
+    title = "Hub A File Exports"
