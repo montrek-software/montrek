@@ -1,5 +1,6 @@
 from typing import Any
 from baseclasses.managers.montrek_manager import MontrekManager
+from montrek.celery_app import PARALLEL_QUEUE_NAME
 
 from process_pipeline.managers.process_pipeline_processor_abc import (
     PipelineProcessorABC,
@@ -31,7 +32,7 @@ class MontrekPipelineManagerABC(MontrekManager):
     # ---- set by __init_subclass__ ----
     pipeline_task: MontrekPipelineTask
 
-    def __init_subclass__(cls, **kwargs):
+    def __init_subclass__(cls, task_queue: str = PARALLEL_QUEUE_NAME, **kwargs):
         super().__init_subclass__(**kwargs)
         if not cls.do_process_async:
             return
@@ -40,7 +41,7 @@ class MontrekPipelineManagerABC(MontrekManager):
                 f"{cls.__name__} must define pipeline_task_class when "
                 "do_process_async=True."
             )
-        cls.pipeline_task = cls.pipeline_task_class(manager_class=cls)
+        cls.pipeline_task = cls.pipeline_task_class(manager_class=cls, queue=task_queue)
 
     def __init__(self, session_data: dict[str, Any]) -> None:
         super().__init__(session_data=session_data)

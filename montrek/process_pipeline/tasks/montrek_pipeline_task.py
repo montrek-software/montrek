@@ -22,11 +22,15 @@ class MontrekPipelineTask(MontrekTask):
     queue: str = PARALLEL_QUEUE_NAME
     do_send_mail: bool = True
 
-    def __init__(self, manager_class: type[MontrekPipelineManagerABC]):
+    def __init__(
+        self,
+        manager_class: type[MontrekPipelineManagerABC],
+        queue: str = PARALLEL_QUEUE_NAME,
+    ):
         task_name = f"{manager_class.__module__}.{manager_class.__name__}_pipeline_task"
         self.manager: MontrekPipelineManagerABC | None = None
         self.manager_class = manager_class
-        super().__init__(task_name, self.queue)
+        super().__init__(task_name, queue)
 
     def run(
         self, session_data: dict[str, Any], pipeline_data: dict[str, Any] | None = None
