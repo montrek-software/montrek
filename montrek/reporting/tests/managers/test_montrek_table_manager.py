@@ -146,11 +146,11 @@ class TestMontrekTableManager(TestCase):
         wb = load_workbook(output, read_only=True)
         ws = wb.active
 
-        self.assertEqual(ws.cell(row=1, column=1).value, manager.table_title)
-        header = [ws.cell(row=6, column=col).value for col in range(1, 7)]
+        self.assertEqual(ws.cell(row=2, column=1).value, manager.table_title)
+        header = [ws.cell(row=4, column=col).value for col in range(1, 7)]
         self.assertIn("Field A", header)
         self.assertIn("Field B", header)
-        data_row = [ws.cell(row=7, column=col).value for col in range(1, 7)]
+        data_row = [ws.cell(row=5, column=col).value for col in range(1, 7)]
         self.assertIn("a", data_row)
 
     def test_to_excel_without_show_table_title_data_starts_at_row_1(self):
