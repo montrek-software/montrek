@@ -154,22 +154,11 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         table_df = self.get_output_df()
         col_formats = self._get_excel_col_formats()
         with pd.ExcelWriter(output, engine="openpyxl") as excel_writer:
-            self.excel_to_writer(table_df, excel_writer, sheet_name, col_formats)
+            table_df.to_excel(excel_writer, index=False, sheet_name=sheet_name)
+            self.excel_formatter_class().format_excel(
+                excel_writer, sheet_name=sheet_name, col_formats=col_formats
+            )
         return output
-
-    def excel_to_writer(
-        self,
-        table_df: pd.DataFrame,
-        excel_writer: pd.ExcelWriter,
-        sheet_name: str = "Montrek Data",
-        col_formats: dict[int, str | None] | None = None,
-    ):
-        if col_formats is None:
-            col_formats = self._get_excel_col_formats()
-        table_df.to_excel(excel_writer, index=False, sheet_name=sheet_name)
-        self.excel_formatter_class().format_excel(
-            excel_writer, sheet_name=sheet_name, col_formats=col_formats
-        )
 
     def _get_excel_col_formats(self) -> dict[int, str | None]:
         elements = [
