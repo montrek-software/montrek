@@ -3,6 +3,7 @@ from unittest.mock import Mock
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Border, Font
 
+from baseclasses.templatetags.colors import get_color
 from reporting.modules.excel_formatter import MontrekExcelFormatter
 
 
@@ -257,9 +258,12 @@ class MontrekExcelFormatterTests(TestCase):
         self.assertAlmostEqual(display_length, expected_length, places=1)
 
     def test_get_display_length_for_header_cell(self):
-        """Test that header cells (row 1) use bold font multiplier."""
+        """Test that bold cells use the bold font multiplier."""
+        from openpyxl.styles import Font
+
         cell = self.worksheet["A1"]
         cell.value = "Header"
+        cell.font = Font(bold=True)
 
         display_length = self.excel_formatter._get_display_length(cell)
 
@@ -285,6 +289,109 @@ class MontrekExcelFormatterTests(TestCase):
 
         expected_length = len("12345") * self.excel_formatter.NORMAL_FONT_MULTIPLIER
         self.assertAlmostEqual(display_length, expected_length, places=1)
+
+    # ==================== Tests for _write_title ====================
+
+    def test_write_title_sets_cell_value(self):
+        self.worksheet.cell(row=6, column=1).value = "Header"
+        self.excel_formatter._write_title(self.worksheet, "My Report Title")
+        self.assertEqual(self.worksheet["A1"].value, "My Report Title")
+
+    def test_write_title_applies_bold_14pt_font(self):
+        self.worksheet.cell(row=6, column=1).value = "Header"
+        self.excel_formatter._write_title(self.worksheet, "Title")
+        self.assertTrue(self.worksheet["A1"].font.bold)
+        self.assertEqual(self.worksheet["A1"].font.size, 14)
+
+    def test_write_title_sets_alignment(self):
+        self.worksheet.cell(row=6, column=1).value = "Header"
+        self.excel_formatter._write_title(self.worksheet, "Title")
+        self.assertEqual(self.worksheet["A1"].alignment.horizontal, "left")
+        self.assertEqual(self.worksheet["A1"].alignment.vertical, "center")
+
+    def test_write_title_sets_row_height(self):
+        self.worksheet.cell(row=6, column=1).value = "Header"
+        self.excel_formatter._write_title(self.worksheet, "Title")
+        self.assertEqual(self.worksheet.row_dimensions[1].height, 24)
+
+    def test_write_title_merges_across_all_columns(self):
+        for col in range(1, 4):
+            self.worksheet.cell(row=6, column=col).value = f"Header {col}"
+        self.excel_formatter._write_title(self.worksheet, "Title")
+        merged_ranges = [str(r) for r in self.worksheet.merged_cells.ranges]
+        self.assertIn("A1:C1", merged_ranges)
+
+    def test_write_title_does_not_merge_for_single_column(self):
+        self.worksheet.cell(row=6, column=1).value = "Header"
+        self.excel_formatter._write_title(self.worksheet, "Title")
+        self.assertEqual(len(list(self.worksheet.merged_cells.ranges)), 0)
+
+    # ==================== Tests for _apply_cell_styles with row_offset ====================
+
+    def test_apply_cell_styles_with_offset_header_at_offset_plus_one(self):
+        """Row offset+1 must receive header styling; rows before it must not."""
+        for col in range(1, 3):
+            self.worksheet.cell(row=6, column=col).value = f"Header {col}"
+        self.worksheet.cell(row=7, column=1).value = "Data"
+
+        self.excel_formatter._apply_cell_styles(self.worksheet, {}, row_offset=5)
+
+        self.assertTrue(self.worksheet.cell(row=6, column=1).font.bold)
+        self.assertFalse(self.worksheet.cell(row=7, column=1).font.bold)
+
+    def test_apply_cell_styles_with_offset_skips_title_rows(self):
+        """Rows inside the offset area must not receive header or data styles."""
+        self.worksheet["A1"] = "Title"
+        self.worksheet.cell(row=6, column=1).value = "Header"
+        primary = get_color("primary").lstrip("#").upper()
+
+        self.excel_formatter._apply_cell_styles(self.worksheet, {}, row_offset=5)
+
+        self.assertNotEqual(self.worksheet["A1"].fill.start_color.rgb, primary)
+
+    def test_apply_cell_styles_with_offset_data_rows_alternate(self):
+        """Data rows must alternate correctly relative to the offset."""
+        self.worksheet.cell(row=6, column=1).value = "Header"
+        for row in range(7, 10):
+            self.worksheet.cell(row=row, column=1).value = f"Row {row}"
+
+        self.excel_formatter._apply_cell_styles(self.worksheet, {}, row_offset=5)
+
+        # logical row 2 (row 7) and logical row 4 (row 9) both even → same fill
+        self.assertEqual(
+            self.worksheet.cell(row=7, column=1).fill.start_color.rgb,
+            self.worksheet.cell(row=9, column=1).fill.start_color.rgb,
+        )
+        # logical row 3 (row 8) is odd → different fill
+        self.assertNotEqual(
+            self.worksheet.cell(row=7, column=1).fill.start_color.rgb,
+            self.worksheet.cell(row=8, column=1).fill.start_color.rgb,
+        )
+
+    # ==================== Tests for _adjust_column_widths with row_offset ====================
+
+    def test_adjust_column_widths_with_offset_ignores_title_rows(self):
+        """A very long title must not inflate the column width beyond what the data requires."""
+        self.worksheet["A1"] = "A" * 80  # would exceed MAX_COLUMN_WIDTH if included
+        self.worksheet.cell(row=6, column=1).value = "Short"  # 5 chars → min width
+
+        self.excel_formatter._adjust_column_widths(self.worksheet, row_offset=5)
+
+        self.assertLessEqual(
+            self.worksheet.column_dimensions["A"].width,
+            self.excel_formatter.MIN_COLUMN_WIDTH + self.excel_formatter.COLUMN_PADDING,
+        )
+
+    def test_adjust_column_widths_with_offset_uses_header_and_data_rows(self):
+        """Rows after the offset must still drive column width calculation."""
+        self.worksheet.cell(row=6, column=1).value = "A" * 40  # wide header
+
+        self.excel_formatter._adjust_column_widths(self.worksheet, row_offset=5)
+
+        self.assertGreater(
+            self.worksheet.column_dimensions["A"].width,
+            self.excel_formatter.MIN_COLUMN_WIDTH,
+        )
 
     # ==================== Integration Tests ====================
 
@@ -333,6 +440,36 @@ class MontrekExcelFormatterTests(TestCase):
             self.excel_formatter.format_excel(self.mock_writer, "Sheet1")
         except Exception as e:
             self.fail(f"Formatting empty worksheet raised an exception: {e}")
+
+    def test_format_excel_with_table_title_writes_title_and_offsets_header(self):
+        """Integration: title in A1, header at row 6, data styled correctly."""
+        headers = ["Name", "Amount"]
+        for col, header in enumerate(headers, 1):
+            self.worksheet.cell(row=6, column=col).value = header
+        self.worksheet.cell(row=7, column=1).value = "Product A"
+        self.worksheet.cell(row=7, column=2).value = 1234.56
+        self.worksheet.cell(row=8, column=1).value = "Product B"
+        self.worksheet.cell(row=8, column=2).value = 9876.54
+
+        self.excel_formatter.format_excel(
+            self.mock_writer, "Sheet1", table_title="Sales Report"
+        )
+
+        self.assertEqual(self.worksheet["A1"].value, "Sales Report")
+        self.assertTrue(self.worksheet["A1"].font.bold)
+        self.assertTrue(self.worksheet.cell(row=6, column=1).font.bold)
+        self.assertFalse(self.worksheet.cell(row=7, column=1).font.bold)
+        self.assertGreater(self.worksheet.column_dimensions["A"].width, 0)
+
+    def test_format_excel_without_table_title_unchanged_behavior(self):
+        """No title: header stays at row 1, no title rows, identical to original."""
+        self.worksheet["A1"] = "Header"
+        self.worksheet["A2"] = "Data"
+
+        self.excel_formatter.format_excel(self.mock_writer, "Sheet1")
+
+        self.assertTrue(self.worksheet["A1"].font.bold)
+        self.assertFalse(self.worksheet["A2"].font.bold)
 
     # ==================== Edge Case Tests ====================
 

@@ -136,6 +136,38 @@ class TestMontrekTableManager(TestCase):
             )
             pd.testing.assert_frame_equal(excel_file, expected_df, check_dtype=False)
 
+    def test_to_excel_with_show_table_title_places_title_and_offsets_data(self):
+        from openpyxl import load_workbook
+
+        manager = MockMontrekTableManager()
+        output = io.BytesIO()
+        manager.to_excel(output, show_table_title=True)
+        output.seek(0)
+        wb = load_workbook(output, read_only=True)
+        ws = wb.active
+
+        self.assertEqual(ws.cell(row=1, column=1).value, manager.table_title)
+        header = [ws.cell(row=6, column=col).value for col in range(1, 7)]
+        self.assertIn("Field A", header)
+        self.assertIn("Field B", header)
+        data_row = [ws.cell(row=7, column=col).value for col in range(1, 7)]
+        self.assertIn("a", data_row)
+
+    def test_to_excel_without_show_table_title_data_starts_at_row_1(self):
+        from openpyxl import load_workbook
+
+        manager = MockMontrekTableManager()
+        output = io.BytesIO()
+        manager.to_excel(output)
+        output.seek(0)
+        wb = load_workbook(output, read_only=True)
+        ws = wb.active
+
+        header = [ws.cell(row=1, column=col).value for col in range(1, 7)]
+        self.assertIn("Field A", header)
+        data_row = [ws.cell(row=2, column=col).value for col in range(1, 7)]
+        self.assertIn("a", data_row)
+
     def test_get_table_elements_name_to_field_map(self):
         manager = MockMontrekTableManager()
         name_to_field_map = manager.get_table_elements_name_to_field_map()

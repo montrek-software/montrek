@@ -13,17 +13,33 @@ class MontrekExcelFormatter:
     NORMAL_FONT_MULTIPLIER = 1.1
 
     @classmethod
-    def format_excel(cls, writer, sheet_name="Sheet1", col_formats=None):
+    def format_excel(
+        cls,
+        writer,
+        sheet_name="Sheet1",
+        col_formats=None,
+        table_title: None | str = None,
+    ):
         """Public API — supports both class-level calls (legacy) and instance calls.
         Uses cls() so subclasses inherit correct behavior when called as MyFormatter.format_excel(...).
         """
-        cls()._format_excel_impl(writer, sheet_name, col_formats)
+        cls()._format_excel_impl(writer, sheet_name, col_formats, table_title)
 
-    def _format_excel_impl(self, writer, sheet_name="Sheet1", col_formats=None):
+    def _format_excel_impl(
+        self,
+        writer,
+        sheet_name="Sheet1",
+        col_formats=None,
+        table_title: None | str = None,
+    ):
         """Format an Excel worksheet with styled headers, alternating rows, and auto-sized columns."""
         worksheet = writer.sheets[sheet_name]
-        self._apply_cell_styles(worksheet, col_formats or {})
-        self._adjust_column_widths(worksheet)
+        row_offset = 0
+        if table_title is not None:
+            row_offset = 5
+            self._write_title(worksheet, table_title)
+        self._apply_cell_styles(worksheet, col_formats or {}, row_offset)
+        self._adjust_column_widths(worksheet, row_offset)
 
     def _get_style_objects(self):
         """Create and return all style objects needed for formatting."""
@@ -44,16 +60,34 @@ class MontrekExcelFormatter:
             "thin_border": Border(bottom=Side(style="thin", color="E0E0E0")),
         }
 
-    def _apply_cell_styles(self, worksheet, col_formats: dict[int, str | None]):
+    def _write_title(self, worksheet, title: str) -> None:
+        """Write the table title into the header area above the data (rows 1–5)."""
+        title_cell = worksheet.cell(row=1, column=1)
+        title_cell.value = title
+        title_cell.font = Font(bold=True, size=14)
+        title_cell.alignment = Alignment(horizontal="left", vertical="center")
+        worksheet.row_dimensions[1].height = 24
+        num_cols = worksheet.max_column
+        if num_cols and num_cols > 1:
+            worksheet.merge_cells(
+                start_row=1, start_column=1, end_row=1, end_column=num_cols
+            )
+
+    def _apply_cell_styles(
+        self, worksheet, col_formats: dict[int, str | None], row_offset: int = 0
+    ):
         """Apply styles to all cells in the worksheet."""
         styles = self._get_style_objects()
 
         for row_idx, row in enumerate(worksheet.iter_rows(), 1):
+            if row_idx <= row_offset:
+                continue
+            logical_row = row_idx - row_offset
             for col_idx, cell in enumerate(row):
-                if row_idx == 1:
+                if logical_row == 1:
                     self._style_header_cell(cell, styles, col_idx)
                 else:
-                    self._style_data_cell(cell, row_idx, styles, row)
+                    self._style_data_cell(cell, logical_row, styles, row)
                     self._format_data_cell(cell, col_formats.get(col_idx))
 
     def _style_header_cell(self, cell, styles, col_idx: int) -> None:
@@ -79,10 +113,10 @@ class MontrekExcelFormatter:
         else:
             cell.alignment = Alignment(horizontal="left")
 
-    def _adjust_column_widths(self, worksheet):
+    def _adjust_column_widths(self, worksheet, row_offset: int = 0):
         """Auto-size columns based on content with reasonable bounds."""
         for col in worksheet.columns:
-            col_cells = list(col)
+            col_cells = [cell for cell in col if cell.row > row_offset]
             if not col_cells:
                 continue
 
@@ -120,7 +154,9 @@ class MontrekExcelFormatter:
 
         # Apply font multiplier
         multiplier = (
-            self.BOLD_FONT_MULTIPLIER if cell.row == 1 else self.NORMAL_FONT_MULTIPLIER
+            self.BOLD_FONT_MULTIPLIER
+            if cell.font and cell.font.bold
+            else self.NORMAL_FONT_MULTIPLIER
         )
 
         return base_length * multiplier

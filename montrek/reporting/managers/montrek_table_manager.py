@@ -149,14 +149,23 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         ).to_latex()
 
     def to_excel(
-        self, output: HttpResponse | BytesIO | str, sheet_name: str = "Montrek Data"
+        self,
+        output: HttpResponse | BytesIO | str,
+        sheet_name: str = "Montrek Data",
+        show_table_title: bool = False,
     ) -> HttpResponse | BytesIO | str:
         table_df = self.get_output_df()
         col_formats = self._get_excel_col_formats()
         with pd.ExcelWriter(output, engine="openpyxl") as excel_writer:
-            table_df.to_excel(excel_writer, index=False, sheet_name=sheet_name)
-            self.excel_formatter_class().format_excel(
-                excel_writer, sheet_name=sheet_name, col_formats=col_formats
+            row_offset = 5 if show_table_title else 0
+            table_df.to_excel(
+                excel_writer, index=False, sheet_name=sheet_name, startrow=row_offset
+            )
+            self.excel_formatter_class.format_excel(
+                excel_writer,
+                sheet_name=sheet_name,
+                col_formats=col_formats,
+                table_title=self.table_title if show_table_title else None,
             )
         return output
 
