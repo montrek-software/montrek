@@ -157,7 +157,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
         table_df = self.get_output_df()
         col_formats = self._get_excel_col_formats()
         with pd.ExcelWriter(output, engine="openpyxl") as excel_writer:
-            row_offset = 5 if show_table_title else 0
+            row_offset = 3 if show_table_title else 0
             table_df.to_excel(
                 excel_writer, index=False, sheet_name=sheet_name, startrow=row_offset
             )

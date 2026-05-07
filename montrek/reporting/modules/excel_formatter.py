@@ -36,7 +36,7 @@ class MontrekExcelFormatter:
         worksheet = writer.sheets[sheet_name]
         row_offset = 0
         if table_title is not None:
-            row_offset = 5
+            row_offset = 3
             self._write_title(worksheet, table_title)
         self._apply_cell_styles(worksheet, col_formats or {}, row_offset)
         self._adjust_column_widths(worksheet, row_offset)
@@ -62,15 +62,15 @@ class MontrekExcelFormatter:
 
     def _write_title(self, worksheet, title: str) -> None:
         """Write the table title into the header area above the data (rows 1–5)."""
-        title_cell = worksheet.cell(row=1, column=1)
+        title_cell = worksheet.cell(row=2, column=1)
         title_cell.value = title
         title_cell.font = Font(bold=True, size=14)
-        title_cell.alignment = Alignment(horizontal="left", vertical="center")
-        worksheet.row_dimensions[1].height = 24
+        title_cell.alignment = Alignment(horizontal="center", vertical="center")
+        worksheet.row_dimensions[2].height = 24
         num_cols = worksheet.max_column
         if num_cols and num_cols > 1:
             worksheet.merge_cells(
-                start_row=1, start_column=1, end_row=1, end_column=num_cols
+                start_row=2, start_column=1, end_row=2, end_column=num_cols
             )
 
     def _apply_cell_styles(
