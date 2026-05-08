@@ -94,24 +94,31 @@ class QueryBuilder:
         return queryset.order_by(*order_fields)
 
     def _filter_ts_rows(self, queryset: QuerySet) -> QuerySet:
-        # Subquery to check if there's another row with the same hub_entity_id and  only a non-null value_date
+        # Use hub_id (direct FK column) instead of the hub_entity_id annotation
+        # (which is itself a subquery) to avoid unnecessary nesting.
         non_null_value_date_exists = self.hub_value_date.objects.filter(
-            hub_id=OuterRef("hub_entity_id"),
+            hub_id=OuterRef("hub_id"),
             value_date_list__value_date__isnull=False,
         ).exclude(id=OuterRef("id"))
         if self.latest_ts:
-            latest_value_date = (
-                queryset.filter(hub=OuterRef("hub"), value_date__isnull=False)
-                .order_by("-value_date")
-                .values("value_date")[:1]
+            # Build from the bare model (no annotations) to avoid dragging all
+            # annotation subqueries into this inner query.  Compare value_date_list_id
+            # integers directly instead of going through the value_date annotation.
+            latest_value_date_list_id = (
+                self.hub_value_date.objects.filter(
+                    hub_id=OuterRef("hub_id"),
+                    value_date_list__value_date__isnull=False,
+                )
+                .order_by("-value_date_list__value_date")
+                .values("value_date_list_id")[:1]
             )
             filtered_query = queryset.filter(
-                Q(value_date=latest_value_date) | ~Exists(non_null_value_date_exists)
+                Q(value_date_list_id=latest_value_date_list_id)
+                | ~Exists(non_null_value_date_exists)
             )
         elif self.annotator.has_only_static_sats():
             filtered_query = queryset.filter(value_date_list__value_date__isnull=True)
         else:
-            # Main query to exclude rows with None value_date if another row with the same hub_entity_id exists with a non-null value_date
             filtered_query = queryset.filter(
                 Q(value_date__isnull=False) | ~Exists(non_null_value_date_exists)
             )

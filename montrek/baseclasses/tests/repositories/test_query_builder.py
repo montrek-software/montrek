@@ -1,8 +1,14 @@
+import datetime
+
 from django.test import TestCase
 from django.utils import timezone
 
 from baseclasses import models as bc_models
-from baseclasses.models import TestMontrekHub, TestMontrekSatellite
+from baseclasses.models import (
+    TestMontrekHub,
+    TestMontrekSatellite,
+    TestMontrekTimeSeriesSatellite,
+)
 from baseclasses.repositories.annotator import (
     Annotator,
 )
@@ -10,12 +16,17 @@ from baseclasses.repositories.query_builder import QueryBuilder
 from baseclasses.repositories.subquery_builder import (
     LinkedSatelliteSubqueryBuilder,
     SatelliteSubqueryBuilder,
+    TSSatelliteSubqueryBuilder,
 )
 from baseclasses.tests.factories.baseclass_factories import (
     LinkTestMontrekTestLinkFactory,
+    TestHubValueDateFactory,
     TestLinkSatelliteFactory,
+    TestMontrekHubFactory,
     TestMontrekSatelliteFactory,
+    TestMontrekTimeSeriesSatelliteFactory,
 )
+from baseclasses.tests.factories.montrek_factory_schemas import ValueDateListFactory
 from baseclasses.utils import montrek_time
 
 
@@ -223,3 +234,54 @@ class TestQueryBuilder(TestCase):
         query_builder = QueryBuilder(self.annotator, session_data=filter_dict)
         query_builder.build_queryset(self.reference_date)
         self.assertEqual(query_builder.messages[0].message_type, "error")
+
+
+class TestQueryBuilderLatestTs(TestCase):
+    """Tests for _filter_ts_rows with latest_ts=True."""
+
+    def _build_queryset(self):
+        annotator = Annotator(TestMontrekHub)
+        annotator.subquery_builder_to_annotations(
+            ["test_decimal"], TestMontrekTimeSeriesSatellite, TSSatelliteSubqueryBuilder
+        )
+        return QueryBuilder(annotator, {}, latest_ts=True).build_queryset(
+            timezone.now()
+        )
+
+    def test_only_latest_non_null_date_per_hub_is_returned(self):
+        """Hub with two non-null dates: only the latest row is returned and the older one excluded."""
+        sat_old = TestMontrekTimeSeriesSatelliteFactory.create(
+            value_date=datetime.date(2024, 1, 15)
+        )
+        hub = sat_old.hub_value_date.hub
+        vdl_new = ValueDateListFactory.create(value_date=datetime.date(2024, 1, 20))
+        hvd_new = TestHubValueDateFactory.create(hub=hub, value_date_list=vdl_new)
+        TestMontrekTimeSeriesSatelliteFactory.create(hub_value_date=hvd_new)
+
+        hub_rows = self._build_queryset().filter(hub=hub)
+
+        self.assertEqual(hub_rows.count(), 1)
+        self.assertEqual(hub_rows.first().value_date, datetime.date(2024, 1, 20))
+        dates = list(hub_rows.values_list("value_date", flat=True))
+        self.assertNotIn(datetime.date(2024, 1, 15), dates)
+
+    def test_hub_with_only_null_value_date_is_included(self):
+        """A hub that has no non-null value_date rows is still returned with value_date=None."""
+        hub = TestMontrekHubFactory.create()
+
+        hub_rows = self._build_queryset().filter(hub=hub)
+
+        self.assertEqual(hub_rows.count(), 1)
+        self.assertIsNone(hub_rows.first().value_date)
+
+    def test_null_value_date_row_excluded_when_non_null_exists(self):
+        """The static (null) HubValueDate row is dropped once any non-null row exists for the hub."""
+        sat = TestMontrekTimeSeriesSatelliteFactory.create(
+            value_date=datetime.date(2024, 1, 15)
+        )
+        hub = sat.hub_value_date.hub
+
+        hub_rows = self._build_queryset().filter(hub=hub)
+
+        self.assertEqual(hub_rows.count(), 1)
+        self.assertIsNotNone(hub_rows.first().value_date)
