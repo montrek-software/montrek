@@ -5,7 +5,10 @@ import numpy as np
 import pandas as pd
 from baseclasses.errors.montrek_user_error import MontrekError
 from baseclasses.repositories.montrek_repository import MontrekRepository
-from baseclasses.repositories.subquery_builder import CrossSatelliteFilter
+from baseclasses.repositories.subquery_builder import (
+    CrossSatelliteFilter,
+    ReverseLinkedSatelliteSubqueryBuilder,
+)
 from baseclasses.tests.factories.montrek_factory_schemas import ValueDateListFactory
 from baseclasses.utils import montrek_time
 from django.core.exceptions import PermissionDenied
@@ -3981,3 +3984,79 @@ class TestFilterByLinkedHub(TestCase):
         )
         hub_ids = list(qs.values_list("hub_id", flat=True))
         self.assertNotIn(self.satd2.hub_entity_id, hub_ids)
+
+
+class TestTSSatelliteLinkSatelliteFilterCount(TestCase):
+    """
+    Regression: link_satellite_filter on a TS satellite with agg_func="count" must
+    return 0 when all satellites fail the filter — not the total unfiltered count.
+
+    Root cause: SQL COUNT() returns 0 (not NULL) for empty sets, so the outer COUNT
+    in _link_hubs_and_get_ts_subquery was treating those zeros as valid (non-NULL)
+    entries and counting them.  The fix applies NullIf(inner_subquery, 0) to convert
+    zero inner counts to NULL so the outer COUNT skips them.
+
+    Setup: DHubValueDate (outer) ← LinkHubCHubD (M2M) ← HubC ← CHubValueDate ← SatTSC2
+    """
+
+    def setUp(self):
+        self.reference_date = montrek_time(2023, 6, 25)
+        shared_vdl = ValueDateListFactory()
+
+        hub_d = me_factories.HubDFactory()
+        self.outer_hvd = me_factories.DHubValueDateFactory(
+            hub=hub_d, value_date_list=shared_vdl
+        )
+
+        hub_c_1 = me_factories.HubCFactory()
+        inner_hvd_1 = me_factories.CHubValueDateFactory(
+            hub=hub_c_1, value_date_list=shared_vdl
+        )
+        me_factories.LinkHubCHubDFactory(hub_in=hub_c_1, hub_out=hub_d)
+        self.sat_1 = me_factories.SatTSC2Factory(
+            hub_value_date=inner_hvd_1, field_tsc2_float=0.0
+        )
+
+        hub_c_2 = me_factories.HubCFactory()
+        inner_hvd_2 = me_factories.CHubValueDateFactory(
+            hub=hub_c_2, value_date_list=shared_vdl
+        )
+        me_factories.LinkHubCHubDFactory(hub_in=hub_c_2, hub_out=hub_d)
+        self.sat_2 = me_factories.SatTSC2Factory(
+            hub_value_date=inner_hvd_2, field_tsc2_float=0.0
+        )
+
+    def _annotate(self, link_satellite_filter=None):
+        builder = ReverseLinkedSatelliteSubqueryBuilder(
+            satellite_class=me_models.SatTSC2,
+            field="hub_value_date_id",
+            link_class=me_models.LinkHubCHubD,
+            agg_func="count",
+            link_satellite_filter=link_satellite_filter,
+        )
+        return me_models.DHubValueDate.objects.annotate(
+            linked_count=builder.build(self.reference_date)
+        ).get(pk=self.outer_hvd.pk)
+
+    def test_count_without_filter_returns_total(self):
+        self.assertEqual(self._annotate().linked_count, 2)
+
+    def test_count_with_filter_matching_none_returns_zero(self):
+        # field_tsc2_float=0.0 for both → __gt=0 excludes everything → must be 0, not 2.
+        # Before the fix this returned 2 because COUNT(0, 0) = 2.
+        result = self._annotate(link_satellite_filter={"field_tsc2_float__gt": 0})
+        self.assertEqual(result.linked_count, 0)
+
+    def test_count_with_filter_matching_one_returns_one(self):
+        self.sat_1.field_tsc2_float = 1.0
+        self.sat_1.save()
+        result = self._annotate(link_satellite_filter={"field_tsc2_float__gt": 0})
+        self.assertEqual(result.linked_count, 1)
+
+    def test_count_with_filter_matching_all_returns_total(self):
+        self.sat_1.field_tsc2_float = 1.0
+        self.sat_1.save()
+        self.sat_2.field_tsc2_float = 1.0
+        self.sat_2.save()
+        result = self._annotate(link_satellite_filter={"field_tsc2_float__gt": 0})
+        self.assertEqual(result.linked_count, 2)
