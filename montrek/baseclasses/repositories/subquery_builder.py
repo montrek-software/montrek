@@ -32,7 +32,7 @@ from django.db.models import (
     Value,
     When,
 )
-from django.db.models.functions import Cast
+from django.db.models.functions import Cast, NullIf
 from django.utils import timezone
 
 
@@ -417,27 +417,29 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         outer_ref_field: str,
         lookup_field: str,
     ) -> dict:
-        return {
-            self.field
-            + "sub": Subquery(
-                self._annotate_agg_field(
-                    hub_field_to,
-                    self.satellite_class.objects.filter(
-                        Q(
-                            **self.subquery_filter(
-                                reference_date,
-                                lookup_field=lookup_field,
-                                outer_ref=outer_ref_field,
-                            )
-                        ),
-                        Q(**self.link_satellite_filter),
-                        Q(**self._build_cross_satellite_filter_dict(reference_date)),
+        inner_qs = self._annotate_agg_field(
+            hub_field_to,
+            self.satellite_class.objects.filter(
+                Q(
+                    **self.subquery_filter(
+                        reference_date,
+                        lookup_field=lookup_field,
+                        outer_ref=outer_ref_field,
                     )
-                    .annotate(**{self.field + "sub": F(self.field)})
-                    .values(self.field),
-                )
+                ),
+                Q(**self.link_satellite_filter),
+                Q(**self._build_cross_satellite_filter_dict(reference_date)),
             )
-        }
+            .annotate(**{self.field + "sub": F(self.field)})
+            .values(self.field),
+        )
+        inner_subquery = Subquery(inner_qs)
+        # COUNT returns 0 (not NULL) for empty sets, unlike other aggregates.
+        # The outer COUNT in _link_hubs_and_get_ts_subquery relies on NULL to
+        # skip HVDs with no matching satellites, so convert 0 → NULL here.
+        if self.agg_func == LinkAggFunctionEnum.COUNT:
+            inner_subquery = NullIf(inner_subquery, Value(0))
+        return {self.field + "sub": inner_subquery}
 
     def _annotate_agg_field(self, hub_field_to: str, query: QuerySet) -> QuerySet:
         if not self._is_multiple_allowed(hub_field_to):
