@@ -42,6 +42,7 @@ from montrek_example.repositories.hub_c_repository import (
     HubCRepositoryLastTS,
     HubCRepositoryMean,
     HubCRepositoryOnlyStatic,
+    HubCRepositoryPropertyFilter,
     HubCRepositoryReversedParents,
     HubCRepositoryReversedParentsNoMatchingReversedParents,
     HubCRepositorySumTS,
@@ -2242,13 +2243,16 @@ class TestTSRepoLatestTS(TestCase):
         self.assertEqual(test_query.count(), 3)
         qs1 = test_query.get(field_c1_str="Hallo")
         self.assertEqual(qs1.field_tsc2_float, 3.0)
+        self.assertEqual(qs1.prev_field_tsc2_float, 1.0)
         self.assertEqual(qs1.value_date, montrek_time(2024, 11, 16).date())
         qs2 = test_query.get(field_c1_str="Bonjour")
         self.assertEqual(qs2.field_tsc2_float, 4.0)
+        self.assertEqual(qs2.prev_field_tsc2_float, 2.0)
         self.assertEqual(qs2.value_date, montrek_time(2024, 11, 16).date())
         qs3 = test_query.get(field_c1_str="Hola")
-        self.assertEqual(qs3.field_tsc2_float, None)
-        self.assertEqual(qs3.value_date, None)
+        self.assertIsNone(qs3.field_tsc2_float)
+        self.assertIsNone(qs3.prev_field_tsc2_float)
+        self.assertIsNone(qs3.value_date)
 
     def test_ts_sum_repo(self):
         hub_vd1 = me_factories.CHubValueDateFactory.create(
@@ -4060,3 +4064,98 @@ class TestTSSatelliteLinkSatelliteFilterCount(TestCase):
         self.sat_2.save()
         result = self._annotate(link_satellite_filter={"field_tsc2_float__gt": 0})
         self.assertEqual(result.linked_count, 2)
+
+
+class TestHubSatelliteFilter(TestCase):
+    """Tests for hub_satellite_filter on add_satellite_fields_annotations.
+
+    hub_satellite_filter switches the TS satellite lookup from per-HVD to
+    hub-level, returning the latest satellite matching the filter criteria
+    across the hub's full history.  Requires latest_ts=True on the repository.
+    """
+
+    def setUp(self):
+        # hub_c_1: three time-series entries at ascending dates
+        sat_jan = me_factories.SatTSC2Factory.create(
+            value_date="2026-01-01", field_tsc2_float=1.0
+        )
+        self.hub_c_1 = sat_jan.hub_value_date.hub
+        hvd_feb = me_factories.CHubValueDateFactory.create(
+            hub=self.hub_c_1,
+            value_date_list=ValueDateListFactory.create(value_date="2026-02-01"),
+        )
+        me_factories.SatTSC2Factory.create(hub_value_date=hvd_feb, field_tsc2_float=2.0)
+        hvd_mar = me_factories.CHubValueDateFactory.create(
+            hub=self.hub_c_1,
+            value_date_list=ValueDateListFactory.create(value_date="2026-03-01"),
+        )
+        me_factories.SatTSC2Factory.create(hub_value_date=hvd_mar, field_tsc2_float=3.0)
+
+        # hub_c_2: single entry — no previous value exists
+        sat_only = me_factories.SatTSC2Factory.create(
+            value_date="2026-01-01", field_tsc2_float=5.0
+        )
+        self.hub_c_2 = sat_only.hub_value_date.hub
+
+    # --- previous-value filter ---
+
+    def test_prev_value_is_the_immediately_preceding_entry(self):
+        repo = HubCRepositoryLastTS()
+        qs = repo.receive().get(hub_entity_id=self.hub_c_1.pk)
+        self.assertEqual(qs.field_tsc2_float, 3.0)
+        self.assertEqual(qs.prev_field_tsc2_float, 2.0)
+
+    def test_prev_value_is_none_when_only_one_entry_exists(self):
+        repo = HubCRepositoryLastTS()
+        qs = repo.receive().get(hub_entity_id=self.hub_c_2.pk)
+        self.assertEqual(qs.field_tsc2_float, 5.0)
+        self.assertIsNone(qs.prev_field_tsc2_float)
+
+    def test_prev_value_is_not_the_oldest_but_the_second_latest(self):
+        # Verifies that ORDER BY date DESC LIMIT 1 picks the entry just before
+        # the latest, not the oldest one in the history.
+        repo = HubCRepositoryLastTS()
+        qs = repo.receive().get(hub_entity_id=self.hub_c_1.pk)
+        self.assertNotEqual(qs.prev_field_tsc2_float, 1.0)
+        self.assertEqual(qs.prev_field_tsc2_float, 2.0)
+
+    # --- property filter ---
+
+    def test_property_filter_returns_latest_satellite_matching_condition(self):
+        # hub_c_1 has values [1.0, 2.0, 3.0]; filter __gte=2.0 → latest match is 3.0
+        repo = HubCRepositoryPropertyFilter()
+        qs = repo.receive().get(hub_entity_id=self.hub_c_1.pk)
+        self.assertEqual(qs.field_tsc2_float, 3.0)
+
+    def test_property_filter_skips_non_matching_satellites(self):
+        # hub_c_2 has only value 5.0 which satisfies __gte=2.0
+        repo = HubCRepositoryPropertyFilter()
+        qs = repo.receive().get(hub_entity_id=self.hub_c_2.pk)
+        self.assertEqual(qs.field_tsc2_float, 5.0)
+
+    def test_property_filter_returns_none_when_no_satellite_matches(self):
+        sat = me_factories.SatTSC2Factory.create(
+            value_date="2026-01-01", field_tsc2_float=0.5
+        )
+        hub_no_match = sat.hub_value_date.hub
+        repo = HubCRepositoryPropertyFilter()
+        qs = repo.receive().get(hub_entity_id=hub_no_match.pk)
+        self.assertIsNone(qs.field_tsc2_float)
+
+    # --- warning ---
+
+    def test_warning_emitted_when_hub_satellite_filter_used_with_latest_ts_false(self):
+        class _MisconfiguredRepo(MontrekRepository):
+            hub_class = me_models.HubC
+            latest_ts = False
+
+            def set_annotations(self):
+                self.add_satellite_fields_annotations(
+                    me_models.SatTSC2,
+                    ["field_tsc2_float"],
+                    hub_satellite_filter={"field_tsc2_float__gte": 2.0},
+                )
+
+        with self.assertWarns(UserWarning) as cm:
+            _MisconfiguredRepo({})
+        self.assertIn("hub_satellite_filter", str(cm.warning))

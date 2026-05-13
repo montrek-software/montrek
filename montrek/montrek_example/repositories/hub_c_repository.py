@@ -1,3 +1,4 @@
+from django.db.models import OuterRef
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from montrek_example.models import example_models as me_models
 from montrek_example.repositories.hub_d_repository import HubDRepository
@@ -74,7 +75,31 @@ class HubCRepository(MontrekRepository):
 
 class HubCRepositoryLastTS(HubCRepository):
     latest_ts = True
-    consider_session_dates: bool = False
+
+    def set_annotations(self):
+        super().set_annotations()
+        self.add_satellite_fields_annotations(
+            me_models.SatTSC2,
+            ["field_tsc2_float"],
+            rename_field_map={"field_tsc2_float": "prev_field_tsc2_float"},
+            hub_satellite_filter={
+                "hub_value_date__value_date_list__value_date__lt": OuterRef(
+                    "value_date_list__value_date"
+                ),
+            },
+        )
+
+
+class HubCRepositoryPropertyFilter(MontrekRepository):
+    hub_class = me_models.HubC
+    latest_ts = True
+
+    def set_annotations(self):
+        self.add_satellite_fields_annotations(
+            me_models.SatTSC2,
+            ["field_tsc2_float"],
+            hub_satellite_filter={"field_tsc2_float__gte": 2.0},
+        )
 
 
 class HubCRepositorySumTS(MontrekRepository):
