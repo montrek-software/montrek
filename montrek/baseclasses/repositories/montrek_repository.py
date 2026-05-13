@@ -378,7 +378,7 @@ class MontrekRepository:
         HVDs for the hub and returns the latest satellite that matches the
         filter.  The filter accepts any ORM lookup, including:
 
-        - A satellite field value: ``{"probability": 0.1}``
+        - A satellite field value: ``{"field": 0.1}``
         - A date constraint: ``{"hub_value_date__value_date_list__value_date": some_date}``
         - A relative date via OuterRef (e.g. previous period):
           ``{"hub_value_date__value_date_list__value_date__lt": OuterRef("value_date_list__value_date")}``
