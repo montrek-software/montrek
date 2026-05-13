@@ -887,13 +887,16 @@ class LabelTableElement(AttrTableElement):
 class CompValues(Enum):
     EQUAL = 0
     GREATER = 1
+    MUCH_GREATER = 2
     LESS = -1
+    MUCH_LESS = -2
 
 
 @dataclass
 class ComparisonTableElement(AttrTableElement):
     comp_attr: str = field(default="")
     field_template: ClassVar[str | None] = "comparison"
+    much_comp_limit: ClassVar[float] = 0.5
 
     def get_value(self, obj: Any) -> Any:
         value = super().get_value(obj)
@@ -901,7 +904,11 @@ class ComparisonTableElement(AttrTableElement):
         if value == comp_value:
             return CompValues.EQUAL.value
         if value < comp_value:
+            if abs(value - comp_value) / comp_value > self.much_comp_limit:
+                return CompValues.MUCH_LESS.value
             return CompValues.LESS.value
+        if abs(value - comp_value) / comp_value > self.much_comp_limit:
+            return CompValues.MUCH_GREATER.value
         return CompValues.GREATER.value
 
     def format_latex(self, value) -> str:
