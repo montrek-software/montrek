@@ -1276,7 +1276,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             test_obj=test_obj,
             expected_format='<span class="bi bi-arrow-right-circle-fill text-success"></span>',
             expected_format_latex="{\\color{green}$\\rightarrow$} &",
-            expected_hover_text="=",
+            expected_hover_text="1 = 1",
         )
 
 
