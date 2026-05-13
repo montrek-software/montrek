@@ -101,11 +101,13 @@ class SatelliteSubqueryBuilderABC(SubqueryBuilder):
     def __init__(
         self,
         satellite_class: type[MontrekSatelliteABC],
-        satellite_filter: dict[str, str] | None = None,
+        hub_satellite_filter: dict[str, Any] | None = None,
     ):
-        satellite_filter = {} if satellite_filter is None else satellite_filter
+        hub_satellite_filter = (
+            {} if hub_satellite_filter is None else hub_satellite_filter
+        )
         self.satellite_class = satellite_class
-        self.satellite_filter = satellite_filter
+        self.hub_satellite_filter = hub_satellite_filter
 
     def subquery_filter(
         self,
@@ -120,7 +122,7 @@ class SatelliteSubqueryBuilderABC(SubqueryBuilder):
             "state_date_start__lte": reference_date,
             "state_date_end__gt": reference_date,
         }
-        subquery_filter.update(self.satellite_filter)
+        subquery_filter.update(self.hub_satellite_filter)
         return subquery_filter
 
     def satellite_query(self, reference_date: timezone.datetime) -> QuerySet:
@@ -153,14 +155,14 @@ class TSSatelliteSubqueryBuilder(SatelliteSubqueryBuilderABC):
     outer_ref: str = "pk"
 
     def build_alias(self, reference_date: timezone.datetime) -> Subquery:
-        if not self.satellite_filter:
+        if not self.hub_satellite_filter:
             return super().build_alias(reference_date)
         return Subquery(
             self.satellite_class.objects.filter(
                 hub_value_date__hub_id=OuterRef("hub_id"),
                 state_date_start__lte=reference_date,
                 state_date_end__gt=reference_date,
-                **self.satellite_filter,
+                **self.hub_satellite_filter,
             )
             .order_by("-hub_value_date__value_date_list__value_date")
             .values("pk")[:1]

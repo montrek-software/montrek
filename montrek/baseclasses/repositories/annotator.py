@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Any
 from django.apps.registry import AppRegistryNotReady
 from django.db import models
 from django.db.models import ExpressionWrapper, Field, Subquery
@@ -107,11 +108,9 @@ class Annotator:
             return
 
         ts_agg_func = kwargs.get("ts_agg_func")
-        satellite_filter = kwargs.get("satellite_filter")
+        hub_satellite_filter = kwargs.get("hub_satellite_filter")
         if satellite_class.is_timeseries and ts_agg_func == "sum":
-            self._handle_ts_sum_satellite(
-                fields, satellite_class, rename_field_map, satellite_filter
-            )
+            self._handle_ts_sum_satellite(fields, satellite_class, rename_field_map)
             return
 
         self._handle_scalar_satellite(
@@ -119,7 +118,7 @@ class Annotator:
             satellite_class,
             subquery_builder,
             rename_field_map,
-            satellite_filter,
+            hub_satellite_filter,
         )
 
     def field_projections_to_subqueries(
@@ -351,10 +350,10 @@ class Annotator:
         satellite_class: type[MontrekSatelliteBaseABC],
         subquery_builder: type[SubqueryBuilder],
         rename_field_map: dict[str, str],
-        satellite_filter: dict[str, str],
+        hub_satellite_filter: dict[str, Any] | None,
     ):
         satellite_alias = self._get_or_create_satellite_alias(
-            satellite_class, subquery_builder, satellite_filter
+            satellite_class, subquery_builder, hub_satellite_filter
         )
         self.add_to_annotated_satellite_classes(satellite_class)
 
@@ -372,14 +371,15 @@ class Annotator:
         self,
         satellite_class: type[MontrekSatelliteBaseABC],
         subquery_builder: type[SubqueryBuilder],
-        satellite_filter: dict[str, str],
+        hub_satellite_filter: dict[str, Any] | None,
     ) -> SatelliteAlias:
+        hub_satellite_filter = hub_satellite_filter or {}
         for existing in self.satellite_aliases:
             b = existing.subquery_builder
             if (
                 type(b) is subquery_builder
                 and b.satellite_class is satellite_class
-                and b.satellite_filter == satellite_filter
+                and b.hub_satellite_filter == hub_satellite_filter
             ):
                 return existing
 
@@ -394,7 +394,8 @@ class Annotator:
         new_alias = SatelliteAlias(
             alias_name=alias_name,
             subquery_builder=subquery_builder(
-                satellite_class=satellite_class, satellite_filter=satellite_filter
+                satellite_class=satellite_class,
+                hub_satellite_filter=hub_satellite_filter,
             ),
         )
         self.satellite_aliases.append(new_alias)

@@ -366,11 +366,40 @@ class MontrekRepository:
         *,
         rename_field_map: dict[str, str] | None = None,
         ts_agg_func: str | None = None,
-        satellite_filter: dict[str, str] | None = None,
+        hub_satellite_filter: dict[str, Any] | None = None,
     ):
-        if satellite_class.is_timeseries and satellite_filter and not self.latest_ts:
+        """Annotate fields from a satellite onto the queryset.
+
+        For timeseries satellites, each HubValueDate row is annotated with the
+        satellite that belongs to that specific HVD (one-to-one, by date).
+
+        ``hub_satellite_filter`` changes this behaviour: instead of looking up
+        the satellite for the current HVD, the subquery searches across *all*
+        HVDs for the hub and returns the latest satellite that matches the
+        filter.  The filter accepts any ORM lookup, including:
+
+        - A satellite field value: ``{"probability": 0.1}``
+        - A date constraint: ``{"hub_value_date__value_date_list__value_date": some_date}``
+        - A relative date via OuterRef (e.g. previous period):
+          ``{"hub_value_date__value_date_list__value_date__lt": OuterRef("value_date_list__value_date")}``
+
+        Because hub_satellite_filter annotates the same hub-level value onto
+        every HVD row, it only makes sense when ``latest_ts=True`` (one row per
+        hub).  A UserWarning is raised if ``hub_satellite_filter`` is set while
+        ``latest_ts=False``.
+
+        The same satellite class may be annotated multiple times with different
+        filters (e.g. current values without a filter and previous values with
+        one); each distinct filter gets its own alias subquery so no work is
+        duplicated.
+        """
+        if (
+            satellite_class.is_timeseries
+            and hub_satellite_filter
+            and not self.latest_ts
+        ):
             warnings.warn(
-                f"satellite_filter on TS satellite '{satellite_class.__name__}' in "
+                f"hub_satellite_filter on TS satellite '{satellite_class.__name__}' in "
                 f"'{type(self).__name__}' switches to hub-level correlation, which only "
                 f"makes sense with latest_ts=True. With latest_ts=False every HVD row is "
                 f"annotated with the same filtered value — set latest_ts=True on the repository.",
@@ -383,14 +412,13 @@ class MontrekRepository:
             subquery_builder = SatelliteSubqueryBuilder
         rename_field_map = {} if rename_field_map is None else rename_field_map
         rename_field_map = cast(dict[str, str], rename_field_map)
-        satellite_filter = {} if satellite_filter is None else satellite_filter
         self.annotator.subquery_builder_to_annotations(
             fields,
             satellite_class,
             subquery_builder,
             rename_field_map=rename_field_map,
             ts_agg_func=ts_agg_func,
-            satellite_filter=satellite_filter,
+            hub_satellite_filter=hub_satellite_filter,
         )
 
     def add_linked_satellites_field_annotations(
