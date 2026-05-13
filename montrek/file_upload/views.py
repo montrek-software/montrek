@@ -81,7 +81,7 @@ class MontrekUploadFileView(MontrekTemplateView):
     def get_file(self, form: Form) -> str:
         return form.cleaned_data["file"]
 
-    def _check_file_type(self, file: TextIO) -> bool:
+    def _check_file_type(self, file: TextIO | None) -> bool:
         expected_file_types = self.accept.split(",")
         expected_file_types = [e.lstrip(".").upper() for e in expected_file_types]
         if file is None:
