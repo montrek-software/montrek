@@ -1577,7 +1577,10 @@ class TestA2ApiDirectUploadView(ProcessPipelineViewTestCase):
         return reverse("hub_a_view_api_uploads")
 
     def query_params(self) -> dict:
-        return {"user": "schmuser", "password": "schmassword"}
+        return {
+            "user": "schmuser",
+            "password": "schmassword",  # nosec B105 #noqa S105 : test-only password
+        }
 
 
 class TestTableDataWithReferenceDate(MontrekListViewTestCase):
