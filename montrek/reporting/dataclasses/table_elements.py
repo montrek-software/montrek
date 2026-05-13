@@ -890,6 +890,7 @@ class CompValues(Enum):
     MUCH_GREATER = 2
     LESS = -1
     MUCH_LESS = -2
+    NONE = 99
 
 
 @dataclass
@@ -901,6 +902,8 @@ class ComparisonTableElement(AttrTableElement):
     def get_value(self, obj: Any) -> Any:
         value = super().get_value(obj)
         comp_value = self._get_value_from_attr(obj, self.comp_attr)
+        if pd.isna(value) or pd.isna(comp_value):
+            return CompValues.NONE.value
         if value == comp_value:
             return CompValues.EQUAL.value
         if value < comp_value:
