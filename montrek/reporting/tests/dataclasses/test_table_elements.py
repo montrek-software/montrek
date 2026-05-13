@@ -1348,7 +1348,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_object(
             table_element=table_element,
             test_obj=test_obj,
-            expected_format="<div/>",
+            expected_format="<span></span>",
             expected_format_latex=" &",
             expected_hover_text="None Unknown 10",
         )
@@ -1362,7 +1362,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_object(
             table_element=table_element,
             test_obj=test_obj,
-            expected_format="<div/>",
+            expected_format="<span></span>",
             expected_format_latex=" &",
             expected_hover_text="10 Unknown None",
         )
@@ -1390,6 +1390,36 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_format='<span class="bi bi-arrow-down-circle-fill text-danger"></span>',
             expected_format_latex="{\\color{red}$\\downarrow$} &",
             expected_hover_text="8 << 10",
+        )
+
+    def test_comparison_table_element__comp_value_zero_greater(self):
+        # comp_value == 0 with a positive value → always MUCH_GREATER (no division)
+        test_obj = {"value_1": 5, "value_2": 0}
+        table_element = te.ComparisonTableElement(
+            name="name", attr="value_1", comp_attr="value_2"
+        )
+
+        self.table_element_test_assertions_from_object(
+            table_element=table_element,
+            test_obj=test_obj,
+            expected_format='<span class="bi bi-arrow-up-circle-fill text-danger"></span>',
+            expected_format_latex="{\\color{red}$\\uparrow$} &",
+            expected_hover_text="5 >> 0",
+        )
+
+    def test_comparison_table_element__comp_value_zero_less(self):
+        # comp_value == 0 with a negative value → always MUCH_LESS (no division)
+        test_obj = {"value_1": -5, "value_2": 0}
+        table_element = te.ComparisonTableElement(
+            name="name", attr="value_1", comp_attr="value_2"
+        )
+
+        self.table_element_test_assertions_from_object(
+            table_element=table_element,
+            test_obj=test_obj,
+            expected_format='<span class="bi bi-arrow-down-circle-fill text-danger"></span>',
+            expected_format_latex="{\\color{red}$\\downarrow$} &",
+            expected_hover_text="-5 << 0",
         )
 
 

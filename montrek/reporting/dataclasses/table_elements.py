@@ -916,13 +916,16 @@ class ComparisonTableElement(AttrTableElement):
             return CompValues.NONE.value
         if value == comp_value:
             return CompValues.EQUAL.value
-        if value < comp_value:
-            if abs(value - comp_value) / comp_value > self.much_comp_limit:
-                return CompValues.MUCH_LESS.value
-            return CompValues.LESS.value
-        if abs(value - comp_value) / comp_value > self.much_comp_limit:
-            return CompValues.MUCH_GREATER.value
-        return CompValues.GREATER.value
+        is_greater = value > comp_value
+        is_much = (
+            comp_value == 0
+            or abs(value - comp_value) / comp_value > self.much_comp_limit
+        )
+        if is_greater:
+            return (
+                CompValues.MUCH_GREATER.value if is_much else CompValues.GREATER.value
+            )
+        return CompValues.MUCH_LESS.value if is_much else CompValues.LESS.value
 
     def format_latex(self, value) -> str:
         return value.latex_val + " &"

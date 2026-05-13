@@ -249,7 +249,7 @@ class MockLongRepository:
 
 
 class MockIntTableElement(te.IntTableElement):
-    def get_hover_text(self, obj: Any) -> str | None:
+    def get_hover_text(self, obj: Any, _value: Any) -> str | None:
         return obj.field_a
 
 
