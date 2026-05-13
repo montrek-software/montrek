@@ -42,6 +42,7 @@ class TestTriggerPipelineAsync(unittest.TestCase):
     def setUp(self):
         class MockTask:
             def __init__(self, manager_class):
+                # Mock task to setup test
                 pass
 
         class AsyncManager(ConcreteTestManager):

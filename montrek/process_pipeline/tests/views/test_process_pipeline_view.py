@@ -8,9 +8,11 @@ class ConcreteView(ProcessPipelineViewABC):
     success_url = "montrek_example_a_list"
 
     def process(self):
+        # Mock task to setup test
         pass
 
     def show_messages(self):
+        # Mock task to setup test
         pass
 
 

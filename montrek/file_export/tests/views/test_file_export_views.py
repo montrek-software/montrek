@@ -7,9 +7,6 @@ from file_export.views.file_export_views import FileExportTriggerView
 class ConcreteExportTriggerView(FileExportTriggerView):
     success_url = "montrek_example_a_list"
 
-    def show_messages(self):
-        pass
-
 
 class TestFileExportTriggerViewProcess(unittest.TestCase):
     def test_process_calls_trigger_export(self):
