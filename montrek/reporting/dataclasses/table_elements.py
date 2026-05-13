@@ -116,7 +116,7 @@ class TableElement:
             display_value=table_element.format(value),
             style_attrs_str=style_attrs_str,
             td_classes_str=td_classes_str,
-            hover_text=self.get_hover_text(obj),
+            hover_text=self.get_hover_text(obj, obj_value),
             value=obj_value,
         )
 
@@ -140,7 +140,7 @@ class TableElement:
                     return not any(True for _ in value)
         return False
 
-    def get_hover_text(self, _obj: Any) -> str | None:
+    def get_hover_text(self, _obj: Any, _value: Any) -> str | None:
         return self.hover_text
 
     def render_field_template(self, value: Any, obj: Any) -> str:
@@ -178,6 +178,9 @@ class AttrTableElement(TableElement):
 
     def get_value(self, obj: Any) -> Any:
         attr = self.attr
+        return self._get_value_from_attr(obj, attr)
+
+    def _get_value_from_attr(self, obj: Any, attr: str) -> Any:
         if isinstance(obj, dict):
             value = obj.get(attr, attr)
         else:
@@ -225,8 +228,7 @@ class ExternalLinkTableElement(AttrTableElement):
             return "https://" + url
         return url
 
-    def get_hover_text(self, obj: Any) -> str | None:
-        value = self.get_value(obj)
+    def get_hover_text(self, obj: Any, value: Any) -> str | None:
         if value is None:
             return "No link"
         return value
@@ -523,7 +525,7 @@ class NumberTableElement(AttrTableElement):
             td_classes_str=table_element.format_td_classes(
                 self.get_td_classes(value, obj)
             ),
-            hover_text=self.get_hover_text(obj),
+            hover_text=self.get_hover_text(obj, value),
             value=value,
         )
 
@@ -879,6 +881,59 @@ class LabelTableElement(AttrTableElement):
             f"{{\\textcolor[HTML]{{{font_color.hex.lstrip('#')}}}"
             f"{{\\textbf{{{value_str}}}}}}} &"
         )
+
+
+@dataclass
+class CompData:
+    num: int
+    latex_val: str
+    hover_text: str
+
+
+class CompValues(Enum):
+    EQUAL = CompData(num=0, latex_val="{\\color{green}$\\rightarrow$}", hover_text="=")
+    GREATER = CompData(num=1, latex_val="{\\color{orange}$\\nearrow$}", hover_text=">")
+    MUCH_GREATER = CompData(
+        num=2, latex_val="{\\color{red}$\\uparrow$}", hover_text=">>"
+    )
+    LESS = CompData(num=-1, latex_val="{\\color{orange}$\\searrow$}", hover_text="<")
+    MUCH_LESS = CompData(
+        num=-2, latex_val="{\\color{red}$\\downarrow$}", hover_text="<<"
+    )
+    NONE = CompData(num=99, latex_val="", hover_text="Unknown")
+
+
+@dataclass
+class ComparisonTableElement(AttrTableElement):
+    comp_attr: str = field(default="")
+    field_template: ClassVar[str | None] = "comparison"
+    much_comp_limit: ClassVar[float] = 0.5
+
+    def get_value(self, obj: Any) -> Any:
+        value = super().get_value(obj)
+        comp_value = self._get_value_from_attr(obj, self.comp_attr)
+        if pd.isna(value) or pd.isna(comp_value):
+            return CompValues.NONE.value
+        if value == comp_value:
+            return CompValues.EQUAL.value
+        is_greater = value > comp_value
+        is_much = (
+            comp_value == 0
+            or abs(value - comp_value) / comp_value > self.much_comp_limit
+        )
+        if is_greater:
+            return (
+                CompValues.MUCH_GREATER.value if is_much else CompValues.GREATER.value
+            )
+        return CompValues.MUCH_LESS.value if is_much else CompValues.LESS.value
+
+    def format_latex(self, value) -> str:
+        return value.latex_val + " &"
+
+    def get_hover_text(self, obj: Any, value: Any) -> str | None:
+        start_value = super().get_value(obj)
+        comp_value = self._get_value_from_attr(obj, self.comp_attr)
+        return f"{start_value} {value.hover_text} {comp_value}"
 
 
 class SecretStringTableElement(StringTableElement):

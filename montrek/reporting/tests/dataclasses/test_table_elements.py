@@ -21,7 +21,7 @@ class MockTableElement(te.AttrTableElement):
 
 
 class MockTableElementCustomHoverText(te.StringTableElement):
-    def get_hover_text(self, obj: Any) -> str | None:
+    def get_hover_text(self, obj: Any, _val: Any) -> str | None:
         return f"Hover from field {obj[str(self.hover_text)]}"
 
 
@@ -1263,6 +1263,163 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_format='<span class="badge" style="background-color:#004767;color:#FFFFFF;">ghi</span>',
             expected_format_latex="\\colorbox[rgb]{0.000,0.278,0.404}{\\textcolor[HTML]{FFFFFF}{\\textbf{ghi}}} &",
             expected_td_classes=["text-center"],
+        )
+
+    def test_comparison_table_element__equal(self):
+        test_obj = {"value_1": 1, "value_2": 1}
+        table_element = te.ComparisonTableElement(
+            name="name", attr="value_1", comp_attr="value_2"
+        )
+
+        self.table_element_test_assertions_from_object(
+            table_element=table_element,
+            test_obj=test_obj,
+            expected_format='<span class="bi bi-arrow-right-circle-fill text-success"></span>',
+            expected_format_latex="{\\color{green}$\\rightarrow$} &",
+            expected_hover_text="1 = 1",
+        )
+
+    def test_comparison_table_element__greater(self):
+        # 20 % above comp_value → within much_comp_limit (0.5) → GREATER
+        test_obj = {"value_1": 12, "value_2": 10}
+        table_element = te.ComparisonTableElement(
+            name="name", attr="value_1", comp_attr="value_2"
+        )
+
+        self.table_element_test_assertions_from_object(
+            table_element=table_element,
+            test_obj=test_obj,
+            expected_format='<span class="bi bi-arrow-up-right-circle-fill text-warning"></span>',
+            expected_format_latex="{\\color{orange}$\\nearrow$} &",
+            expected_hover_text="12 > 10",
+        )
+
+    def test_comparison_table_element__much_greater(self):
+        # 60 % above comp_value → exceeds much_comp_limit (0.5) → MUCH_GREATER
+        test_obj = {"value_1": 16, "value_2": 10}
+        table_element = te.ComparisonTableElement(
+            name="name", attr="value_1", comp_attr="value_2"
+        )
+
+        self.table_element_test_assertions_from_object(
+            table_element=table_element,
+            test_obj=test_obj,
+            expected_format='<span class="bi bi-arrow-up-circle-fill text-danger"></span>',
+            expected_format_latex="{\\color{red}$\\uparrow$} &",
+            expected_hover_text="16 >> 10",
+        )
+
+    def test_comparison_table_element__less(self):
+        # 20 % below comp_value → within much_comp_limit (0.5) → LESS
+        test_obj = {"value_1": 8, "value_2": 10}
+        table_element = te.ComparisonTableElement(
+            name="name", attr="value_1", comp_attr="value_2"
+        )
+
+        self.table_element_test_assertions_from_object(
+            table_element=table_element,
+            test_obj=test_obj,
+            expected_format='<span class="bi bi-arrow-down-right-circle-fill text-warning"></span>',
+            expected_format_latex="{\\color{orange}$\\searrow$} &",
+            expected_hover_text="8 < 10",
+        )
+
+    def test_comparison_table_element__much_less(self):
+        # 60 % below comp_value → exceeds much_comp_limit (0.5) → MUCH_LESS
+        test_obj = {"value_1": 4, "value_2": 10}
+        table_element = te.ComparisonTableElement(
+            name="name", attr="value_1", comp_attr="value_2"
+        )
+
+        self.table_element_test_assertions_from_object(
+            table_element=table_element,
+            test_obj=test_obj,
+            expected_format='<span class="bi bi-arrow-down-circle-fill text-danger"></span>',
+            expected_format_latex="{\\color{red}$\\downarrow$} &",
+            expected_hover_text="4 << 10",
+        )
+
+    def test_comparison_table_element__none_value(self):
+        test_obj = {"value_1": None, "value_2": 10}
+        table_element = te.ComparisonTableElement(
+            name="name", attr="value_1", comp_attr="value_2"
+        )
+
+        self.table_element_test_assertions_from_object(
+            table_element=table_element,
+            test_obj=test_obj,
+            expected_format="<span></span>",
+            expected_format_latex=" &",
+            expected_hover_text="None Unknown 10",
+        )
+
+    def test_comparison_table_element__none_comp_value(self):
+        test_obj = {"value_1": 10, "value_2": None}
+        table_element = te.ComparisonTableElement(
+            name="name", attr="value_1", comp_attr="value_2"
+        )
+
+        self.table_element_test_assertions_from_object(
+            table_element=table_element,
+            test_obj=test_obj,
+            expected_format="<span></span>",
+            expected_format_latex=" &",
+            expected_hover_text="10 Unknown None",
+        )
+
+    def test_comparison_table_element__custom_much_comp_limit(self):
+        # With a tighter limit of 0.1, a 20 % difference triggers MUCH_GREATER/MUCH_LESS
+
+        class TightComparisonTableElement(te.ComparisonTableElement):
+            much_comp_limit = 0.1
+
+        table_element = TightComparisonTableElement(
+            name="name", attr="value_1", comp_attr="value_2"
+        )
+
+        self.table_element_test_assertions_from_object(
+            table_element=table_element,
+            test_obj={"value_1": 12, "value_2": 10},
+            expected_format='<span class="bi bi-arrow-up-circle-fill text-danger"></span>',
+            expected_format_latex="{\\color{red}$\\uparrow$} &",
+            expected_hover_text="12 >> 10",
+        )
+        self.table_element_test_assertions_from_object(
+            table_element=table_element,
+            test_obj={"value_1": 8, "value_2": 10},
+            expected_format='<span class="bi bi-arrow-down-circle-fill text-danger"></span>',
+            expected_format_latex="{\\color{red}$\\downarrow$} &",
+            expected_hover_text="8 << 10",
+        )
+
+    def test_comparison_table_element__comp_value_zero_greater(self):
+        # comp_value == 0 with a positive value → always MUCH_GREATER (no division)
+        test_obj = {"value_1": 5, "value_2": 0}
+        table_element = te.ComparisonTableElement(
+            name="name", attr="value_1", comp_attr="value_2"
+        )
+
+        self.table_element_test_assertions_from_object(
+            table_element=table_element,
+            test_obj=test_obj,
+            expected_format='<span class="bi bi-arrow-up-circle-fill text-danger"></span>',
+            expected_format_latex="{\\color{red}$\\uparrow$} &",
+            expected_hover_text="5 >> 0",
+        )
+
+    def test_comparison_table_element__comp_value_zero_less(self):
+        # comp_value == 0 with a negative value → always MUCH_LESS (no division)
+        test_obj = {"value_1": -5, "value_2": 0}
+        table_element = te.ComparisonTableElement(
+            name="name", attr="value_1", comp_attr="value_2"
+        )
+
+        self.table_element_test_assertions_from_object(
+            table_element=table_element,
+            test_obj=test_obj,
+            expected_format='<span class="bi bi-arrow-down-circle-fill text-danger"></span>',
+            expected_format_latex="{\\color{red}$\\downarrow$} &",
+            expected_hover_text="-5 << 0",
         )
 
 
