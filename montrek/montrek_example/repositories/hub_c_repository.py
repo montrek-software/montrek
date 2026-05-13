@@ -73,15 +73,11 @@ class HubCRepository(MontrekRepository):
         return HubDRepository().receive()
 
 
-class HubCRepositoryLastTS(MontrekRepository):
-    hub_class = me_models.HubC
+class HubCRepositoryLastTS(HubCRepository):
     latest_ts = True
 
     def set_annotations(self):
-        self.add_satellite_fields_annotations(
-            me_models.SatTSC2,
-            ["field_tsc2_float"],
-        )
+        super().set_annotations()
         self.add_satellite_fields_annotations(
             me_models.SatTSC2,
             ["field_tsc2_float"],
@@ -91,10 +87,6 @@ class HubCRepositoryLastTS(MontrekRepository):
                     "value_date_list__value_date"
                 ),
             },
-        )
-        self.add_satellite_fields_annotations(
-            me_models.SatC1,
-            ["field_c1_str"],
         )
 
 

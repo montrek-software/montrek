@@ -94,8 +94,9 @@ class DummyOneToOneLink(MontrekOneToOneLinkABC):
 
 
 class DummyScalarSubqueryBuilder(SubqueryBuilder):
-    def __init__(self, *, satellite_class):
+    def __init__(self, *, satellite_class, hub_satellite_filter=None):
         self.satellite_class = satellite_class
+        self.hub_satellite_filter = hub_satellite_filter
 
     def build(self, reference_date):
         raise AssertionError("build() must not be called")
