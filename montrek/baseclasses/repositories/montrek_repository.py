@@ -1,5 +1,6 @@
 import datetime
 import logging
+import warnings
 from dataclasses import dataclass
 from typing import Any, cast
 from collections.abc import Mapping
@@ -365,19 +366,31 @@ class MontrekRepository:
         *,
         rename_field_map: dict[str, str] | None = None,
         ts_agg_func: str | None = None,
+        satellite_filter: dict[str, str] | None = None,
     ):
+        if satellite_class.is_timeseries and satellite_filter and not self.latest_ts:
+            warnings.warn(
+                f"satellite_filter on TS satellite '{satellite_class.__name__}' in "
+                f"'{type(self).__name__}' switches to hub-level correlation, which only "
+                f"makes sense with latest_ts=True. With latest_ts=False every HVD row is "
+                f"annotated with the same filtered value — set latest_ts=True on the repository.",
+                UserWarning,
+                stacklevel=2,
+            )
         if satellite_class.is_timeseries:
             subquery_builder = TSSatelliteSubqueryBuilder
         else:
             subquery_builder = SatelliteSubqueryBuilder
         rename_field_map = {} if rename_field_map is None else rename_field_map
         rename_field_map = cast(dict[str, str], rename_field_map)
+        satellite_filter = {} if satellite_filter is None else satellite_filter
         self.annotator.subquery_builder_to_annotations(
             fields,
             satellite_class,
             subquery_builder,
             rename_field_map=rename_field_map,
             ts_agg_func=ts_agg_func,
+            satellite_filter=satellite_filter,
         )
 
     def add_linked_satellites_field_annotations(

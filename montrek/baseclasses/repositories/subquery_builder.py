@@ -101,8 +101,11 @@ class SatelliteSubqueryBuilderABC(SubqueryBuilder):
     def __init__(
         self,
         satellite_class: type[MontrekSatelliteABC],
+        satellite_filter: dict[str, str] | None = None,
     ):
+        satellite_filter = {} if satellite_filter is None else satellite_filter
         self.satellite_class = satellite_class
+        self.satellite_filter = satellite_filter
 
     def subquery_filter(
         self,
@@ -112,11 +115,13 @@ class SatelliteSubqueryBuilderABC(SubqueryBuilder):
     ) -> dict[str, object]:
         lookup_field = self.lookup_field if lookup_field is None else lookup_field
         outer_ref = self.outer_ref if outer_ref is None else outer_ref
-        return {
+        subquery_filter = {
             lookup_field: OuterRef(outer_ref),
             "state_date_start__lte": reference_date,
             "state_date_end__gt": reference_date,
         }
+        subquery_filter.update(self.satellite_filter)
+        return subquery_filter
 
     def satellite_query(self, reference_date: timezone.datetime) -> QuerySet:
         return self.satellite_class.objects.filter(
@@ -134,7 +139,7 @@ class SatelliteSubqueryBuilderABC(SubqueryBuilder):
         alias_name: str,
         field: str,
     ) -> Subquery:
-        sat_query = self.satellite_class.objects.filter(pk=OuterRef(alias_name))
+        sat_query = self.satellite_class.objects.filter(Q(pk=OuterRef(alias_name)))
         return Subquery(sat_query.values(field))
 
 
@@ -146,6 +151,20 @@ class SatelliteSubqueryBuilder(SatelliteSubqueryBuilderABC):
 class TSSatelliteSubqueryBuilder(SatelliteSubqueryBuilderABC):
     lookup_field: str = "hub_value_date"
     outer_ref: str = "pk"
+
+    def build_alias(self, reference_date: timezone.datetime) -> Subquery:
+        if not self.satellite_filter:
+            return super().build_alias(reference_date)
+        return Subquery(
+            self.satellite_class.objects.filter(
+                hub_value_date__hub_id=OuterRef("hub_id"),
+                state_date_start__lte=reference_date,
+                state_date_end__gt=reference_date,
+                **self.satellite_filter,
+            )
+            .order_by("-hub_value_date__value_date_list__value_date")
+            .values("pk")[:1]
+        )
 
 
 class TSSumFieldSubqueryBuilder(SubqueryBuilder):
