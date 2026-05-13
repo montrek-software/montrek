@@ -1,14 +1,14 @@
-{% if value == 1 %}
+{% if value.num == 1 %}
     <span class="bi bi-arrow-up-right-circle-fill text-warning"></span>
-{% elif value == 0 %}
+{% elif value.num == 0 %}
     <span class="bi bi-arrow-right-circle-fill text-success"></span>
-{% elif value == -1 %}
+{% elif value.num == -1 %}
     <span class="bi bi-arrow-down-right-circle-fill text-warning"></span>
-{% elif value == 2 %}
+{% elif value.num == 2 %}
     <span class="bi bi-arrow-up-circle-fill text-danger"></span>
-{% elif value == 2 %}
+{% elif value.num == 2 %}
     <span class="bi bi-arrow-down-circle-fill text-danger"></span>
-{% elif value == 99 %}
+{% elif value.num == 99 %}
     <div/>
 {% else %}
     <span class="bi bi-x-circle-fill text-danger"></span>

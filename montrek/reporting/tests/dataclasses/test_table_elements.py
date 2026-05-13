@@ -1274,9 +1274,9 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_object(
             table_element=table_element,
             test_obj=test_obj,
-            expected_format='<a id="id__baseclasses__details" href="/baseclasses//details"><span class="bi bi-icon"></span></a>',
-            expected_format_latex=" \\color{black} \\twemoji{cross mark} &",
-            expected_hover_text="hover_text",
+            expected_format='<span class="bi bi-arrow-right-circle-fill text-success"></span>',
+            expected_format_latex="{\\color{green}$\\rightarrow$} &",
+            expected_hover_text="=",
         )
 
 
