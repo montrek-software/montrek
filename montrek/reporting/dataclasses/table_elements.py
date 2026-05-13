@@ -178,6 +178,9 @@ class AttrTableElement(TableElement):
 
     def get_value(self, obj: Any) -> Any:
         attr = self.attr
+        return self._get_value_from_attr(obj, attr)
+
+    def _get_value_from_attr(self, obj: Any, attr: str) -> Any:
         if isinstance(obj, dict):
             value = obj.get(attr, attr)
         else:
@@ -879,6 +882,32 @@ class LabelTableElement(AttrTableElement):
             f"{{\\textcolor[HTML]{{{font_color.hex.lstrip('#')}}}"
             f"{{\\textbf{{{value_str}}}}}}} &"
         )
+
+
+class CompValues(Enum):
+    EQUAL = 0
+    GREATER = 1
+    LESS = -1
+
+
+@dataclass
+class ComparisonTableElement(AttrTableElement):
+    comp_attr: str = field(default="")
+    field_template: ClassVar[str | None] = "comparison"
+
+    def get_value(self, obj: Any) -> Any:
+        value = super().get_value(obj)
+        comp_value = self._get_value_from_attr(obj, self.comp_attr)
+        if value == comp_value:
+            return CompValues.EQUAL.value
+        if value < comp_value:
+            return CompValues.LESS.value
+        return CompValues.GREATER.value
+
+    def format_latex(self, value) -> str:
+        if value == CompValues.EQUAL.value:
+            return "\\twemoji{white_check_mark} &"
+        return "\\twemoji{cross mark} &"
 
 
 class SecretStringTableElement(StringTableElement):

@@ -1265,6 +1265,20 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_td_classes=["text-center"],
         )
 
+    def test_comparison_table_element__equal(self):
+        test_obj = {"value_1": 1, "value_2": 1}
+        table_element = te.ComparisonTableElement(
+            name="name", attr="value_1", comp_attr="value_2"
+        )
+
+        self.table_element_test_assertions_from_object(
+            table_element=table_element,
+            test_obj=test_obj,
+            expected_format='<a id="id__baseclasses__details" href="/baseclasses//details"><span class="bi bi-icon"></span></a>',
+            expected_format_latex=" \\color{black} \\twemoji{cross mark} &",
+            expected_hover_text="hover_text",
+        )
+
 
 @dataclass
 class MockObject:
