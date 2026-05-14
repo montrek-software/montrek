@@ -230,6 +230,34 @@ class CommentSubqueryBuilder(HubDirectFieldSubqueryBuilder):
     field_type = models.CharField()
 
 
+class LinkedHubIdSubqueryBuilder(SubqueryBuilder):
+    """Annotates the hub_out_id (or hub_in_id for reversed links) directly from
+    the link table, without requiring a satellite record on the linked hub.
+
+    # TODO: Add parent_link support so the link can be reached via one or more
+    #       intermediate links, mirroring the parent_link_classes mechanism in
+    #       LinkedSatelliteSubqueryBuilderBase. Also add aggregation (e.g.
+    #       string_concat / sum) for M2M scenarios with multiple linked hubs.
+    """
+
+    field_type = models.IntegerField(null=True, blank=True)
+
+    def __init__(self, link_class: type[MontrekLinkABC], reversed_link: bool = False):
+        self.link_class = link_class
+        self.reversed_link = reversed_link
+
+    def build(self, reference_date: timezone.datetime) -> Subquery:
+        filter_field = "hub_out" if self.reversed_link else "hub_in"
+        value_field = "hub_in_id" if self.reversed_link else "hub_out_id"
+        return Subquery(
+            self.link_class.objects.filter(
+                **{filter_field: OuterRef("hub")},
+                state_date_start__lte=reference_date,
+                state_date_end__gt=reference_date,
+            ).values(value_field)[:1]
+        )
+
+
 class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
     # Subclasses declare which hub side is the *destination* (satellite owner)
     # and which side anchors the outer-query reference.  Used by the alias

@@ -51,6 +51,25 @@ class HubBRepository2(MontrekRepository):
         )
 
 
+class HubBRepositoryDirectLinkHub(MontrekRepository):
+    hub_class = me_models.HubB
+
+    def set_annotations(self):
+        self.add_satellite_fields_annotations(
+            me_models.SatB1,
+            [
+                "field_b1_str",
+            ],
+        )
+        self.add_linked_satellites_field_annotations(
+            me_models.SatD1,
+            me_models.LinkHubBHubD,
+            ["hub_entity_id"],
+            rename_field_map={"hub_entity_id": "hub_d_id"},
+        )
+        self.add_linked_hub_id(me_models.LinkHubBHubD, "hub_d_direct_id")
+
+
 class HubBRepositoryWithCrossSatFilter(MontrekRepository):
     """HubB repository that fetches SatD1.field_d1_str via LinkHubBHubD,
     filtered to only include HubDs that have a linked HubC (via LinkHubCHubD)

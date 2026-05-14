@@ -23,6 +23,7 @@ from baseclasses.repositories.db.db_writer import DbWriter
 from baseclasses.repositories.query_builder import QueryBuilder
 from baseclasses.repositories.subquery_builder import (
     CrossSatelliteFilter,
+    LinkedHubIdSubqueryBuilder,
     LinkedSatelliteSubqueryBuilder,
     ReverseLinkedSatelliteSubqueryBuilder,
     SatelliteSubqueryBuilder,
@@ -466,6 +467,24 @@ class MontrekRepository:
             separator=separator,
         )
         self.linked_fields.extend(fields)
+
+    def add_linked_hub_id(
+        self,
+        link_class: type[MontrekLinkABC],
+        output_name: str,
+        *,
+        reversed_link: bool = False,
+    ):
+        if link_class not in self.annotator.get_link_classes():
+            self.annotator.link_classes.append(link_class)
+
+        self.annotator.annotations[output_name] = LinkedHubIdSubqueryBuilder(
+            link_class, reversed_link
+        )
+        self.annotator.field_type_map[output_name] = models.IntegerField(
+            null=True, blank=True
+        )
+        self.annotator._field_names_in_order.append(output_name)
 
     def get_history_queryset(self, pk: int, **kwargs) -> dict[str, QuerySet]:
         hub = self.get_hub_by_id(pk=pk)
