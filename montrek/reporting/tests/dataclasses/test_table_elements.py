@@ -1196,7 +1196,22 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_value(
             table_element=table_element,
             value=0.50,
-            expected_format='<div class="bar-container"> <div class="bar" style="width: 50.0%;"></div> <span class="bar-value">50.00%</span> </div>',
+            expected_format='<div class="bar-container"> <div class="bar" style="width: 50.0%;"></div> <span class="bar-value">50%</span> </div>',
+            expected_format_latex="\\progressbar{ 50.0 }{ 50.00\\% } &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={"color": "#002F6C"},
+        )
+
+    @override_settings(NUMBER_FORMATTING=SystemFormatting.DE)
+    def test_progress_bar__html_german(self):
+        table_element = te.ProgressBarTableElement(
+            name="name",
+            attr="test_attr",
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=table_element,
+            value=0.50,
+            expected_format='<div class="bar-container"> <div class="bar" style="width: 50.0%;"></div> <span class="bar-value">50%</span> </div>',
             expected_format_latex="\\progressbar{ 50.0 }{ 50.00\\% } &",
             expected_td_classes=["text-end"],
             expected_style_attrs={"color": "#002F6C"},

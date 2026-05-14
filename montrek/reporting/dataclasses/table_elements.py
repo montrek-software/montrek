@@ -628,7 +628,7 @@ class ProgressBarTableElement(NumberTableElement):
     field_template: ClassVar[str | None] = "progress_bar"
 
     def get_field_context_data(self, value: Any, _obj: Any) -> dict[str, Any]:
-        if settings.NUMBER_FORMATTING.value == "de":
+        if settings.NUMBER_FORMATTING == SystemFormatting.DE:
             value = value.replace(".", "").replace(",", ".")
         value = float(value)
         per_value = value * 100
