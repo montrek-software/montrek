@@ -628,10 +628,12 @@ class ProgressBarTableElement(NumberTableElement):
     field_template: ClassVar[str | None] = "progress_bar"
 
     def get_field_context_data(self, value: Any, _obj: Any) -> dict[str, Any]:
+        if settings.NUMBER_FORMATTING.value == "de":
+            value = value.replace(".", "").replace(",", ".")
         value = float(value)
         per_value = value * 100
-        out_value = f"{value * 100:.2f}"
-        return {"per_value": per_value, "out_value": out_value}
+        out_value = f"{value * 100:.0f}"
+        return {"per_value": str(per_value), "out_value": out_value}
 
     def format_latex(self, value) -> str:
         per_value = value * 100
