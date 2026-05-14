@@ -29,6 +29,7 @@ from montrek_example.repositories.hub_a_repository import (
 from montrek_example.repositories.hub_b_repository import (
     HubBRepository,
     HubBRepository2,
+    HubBRepositoryDirectLinkHub,
     HubBRepositoryWithCrossSatFilter,
 )
 from montrek_example.repositories.hub_c_repository import (
@@ -1297,6 +1298,20 @@ class TestDeleteObject(TestCase):
         self.assertEqual(me_models.SatA1.objects.count(), 2)
         self.assertEqual(me_models.HubA.objects.count(), 2)
         self.assertEqual(len(repository.receive()), 1)
+
+
+class TestreceiveLinkedHubIds(TestCase):
+    def test_get_linked_hub_without_sat(self):
+        # Consider a scenario, where two hubs are linked, but one has no
+        # entry in the satellite
+        sat_b = me_factories.SatB1Factory.create(field_b1_str="Test")
+        hub_d = me_factories.HubDFactory()
+        sat_b.hub_entity.link_hub_b_hub_d.add(hub_d)
+        test_data = HubBRepositoryDirectLinkHub({}).receive()
+        self.assertEqual(test_data.count(), 1)
+        # A hub reached via add_linked_satellites_field_annotations will be empty
+        self.assertIsNone(test_data.first().hub_d_id)
+        self.assertEqual(test_data.first().hub_d_direct_id)
 
 
 class TestMontrekRepositoryLinks(TestCase):

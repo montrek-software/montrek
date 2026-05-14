@@ -467,6 +467,8 @@ class MontrekRepository:
         )
         self.linked_fields.extend(fields)
 
+    def add_linked_hub_id(self, link_class: type[MontrekLinkABC], output_name: str): ...
+
     def get_history_queryset(self, pk: int, **kwargs) -> dict[str, QuerySet]:
         hub = self.get_hub_by_id(pk=pk)
         satellite_querys = {}
