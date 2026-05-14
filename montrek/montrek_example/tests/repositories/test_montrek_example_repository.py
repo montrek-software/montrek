@@ -1311,7 +1311,7 @@ class TestreceiveLinkedHubIds(TestCase):
         self.assertEqual(test_data.count(), 1)
         # A hub reached via add_linked_satellites_field_annotations will be empty
         self.assertIsNone(test_data.first().hub_d_id)
-        self.assertEqual(test_data.first().hub_d_direct_id)
+        self.assertEqual(test_data.first().hub_d_direct_id, hub_d.pk)
 
 
 class TestMontrekRepositoryLinks(TestCase):
