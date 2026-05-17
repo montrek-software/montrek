@@ -476,7 +476,7 @@ class MontrekRepository:
         reversed_link: bool = False,
     ):
         if link_class not in self.annotator.get_link_classes():
-            self.annotator.link_classes.append(link_class)
+            self.annotator.annotated_link_classes.append(link_class)
 
         self.annotator.annotations[output_name] = LinkedHubIdSubqueryBuilder(
             link_class, reversed_link
