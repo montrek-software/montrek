@@ -140,7 +140,7 @@ class TableElement:
                     return not any(True for _ in value)
         return False
 
-    def get_hover_text(self, *args, **kwargs) -> str | None:
+    def get_hover_text(self, _obj: Any, _value: Any) -> str | None:
         return self.hover_text
 
     def render_field_template(self, value: Any, obj: Any) -> str:
