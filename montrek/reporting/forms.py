@@ -9,6 +9,10 @@ from django.template import Context, Template, loader
 class MontrekReportForm(Form):
     form_template: str | None = None
 
+    def __init__(self, *args, **kwargs):
+        self.session_data = kwargs.pop("session_data", {})
+        super().__init__(*args, **kwargs)
+
     def to_html(self) -> str:
         inner = Template(self.read_template()).render(Context({"form": self}))
         wrapper = loader.get_template("report_form_templates/report_form_base.html")
