@@ -52,6 +52,6 @@ class ViewFormMixin(HasFormInvalid, HasSessionData):
 
     def get_form(self, request):
         self._report_form = self.report_form_class(
-            data=request.GET, session_data=self.session_data
+            data=request.GET or None, session_data=self.session_data
         )
         return self._report_form
