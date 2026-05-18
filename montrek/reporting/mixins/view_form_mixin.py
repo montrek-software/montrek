@@ -3,6 +3,7 @@ from typing import Protocol
 from urllib.parse import urlencode
 
 from django.http import HttpResponseRedirect
+from baseclasses.typing import SessionDataType
 from reporting.forms import MontrekReportForm, NoMontrekReportForm
 
 logger = logging.getLogger(__name__)
@@ -12,18 +13,22 @@ class HasFormInvalid(Protocol):
     def form_invalid(self, form): ...
 
 
-class ViewFormMixin(HasFormInvalid):
+class HasSessionData(Protocol):
+    session_data: SessionDataType
+
+
+class ViewFormMixin(HasFormInvalid, HasSessionData):
     report_form_class = NoMontrekReportForm
     _report_form: MontrekReportForm | None = None
 
     @property
     def report_form(self) -> MontrekReportForm:
         if self._report_form is None:
-            self._report_form = self.report_form_class()
+            self._report_form = self.report_form_class(session_data=self.session_data)
         return self._report_form
 
     def post_form(self, request, *args, **kwargs):
-        form = self.report_form_class(request.POST)
+        form = self.report_form_class(request.POST, session_data=self.session_data)
         if form.is_valid():
             # Build query string from cleaned_data
             params = {}
@@ -46,5 +51,7 @@ class ViewFormMixin(HasFormInvalid):
         return self.form_invalid(form)
 
     def get_form(self, request):
-        self._report_form = self.report_form_class(data=request.GET)
+        self._report_form = self.report_form_class(
+            data=request.GET, session_data=self.session_data
+        )
         return self._report_form
