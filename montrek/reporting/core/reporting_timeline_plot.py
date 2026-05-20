@@ -93,7 +93,7 @@ class ReportingTimelinePlot(ReportingPlotBase[ReportingTimelineData]):
                     "title": reporting_data.legend_title or reporting_data.color_col,
                     "orientation": reporting_data.legend_orientation
                     or "v",  # "v" or "h"
-                    "x": 1.02,
+                    "x": 0.98,
                     "xanchor": "left",
                     "y": 1,
                     "yanchor": "top",

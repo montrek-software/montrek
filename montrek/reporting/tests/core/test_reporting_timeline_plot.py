@@ -347,7 +347,7 @@ class TestLegendControl(TestCase):
 
     def test_legend_position(self):
         fig = self._make_fig(color_col="category", show_legend=True)
-        self.assertAlmostEqual(fig.layout.legend.x, 1.02)
+        self.assertAlmostEqual(fig.layout.legend.x, 0.98)
         self.assertEqual(fig.layout.legend.xanchor, "left")
         self.assertAlmostEqual(fig.layout.legend.y, 1)
         self.assertEqual(fig.layout.legend.yanchor, "top")
