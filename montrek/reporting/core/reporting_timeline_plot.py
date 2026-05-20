@@ -99,5 +99,9 @@ class ReportingTimelinePlot(ReportingPlotBase[ReportingTimelineData]):
                     "yanchor": "top",
                 },
             )
+            if reporting_data.legend_labels:
+                for trace in fig.data:
+                    if trace.name in reporting_data.legend_labels:
+                        trace.name = reporting_data.legend_labels[trace.name]
         else:
             fig.update_layout(showlegend=False)

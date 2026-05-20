@@ -351,3 +351,38 @@ class TestLegendControl(TestCase):
         self.assertEqual(fig.layout.legend.xanchor, "left")
         self.assertAlmostEqual(fig.layout.legend.y, 1)
         self.assertEqual(fig.layout.legend.yanchor, "top")
+
+    def test_legend_labels_renames_traces(self):
+        labels = {"A": "Group Alpha", "B": "Group Beta"}
+        fig = self._make_fig(
+            color_col="category", show_legend=True, legend_labels=labels
+        )
+        trace_names = {trace.name for trace in fig.data}
+        self.assertIn("Group Alpha", trace_names)
+        self.assertIn("Group Beta", trace_names)
+        self.assertNotIn("A", trace_names)
+        self.assertNotIn("B", trace_names)
+
+    def test_legend_labels_partial_mapping(self):
+        labels = {"A": "Group Alpha"}
+        fig = self._make_fig(
+            color_col="category", show_legend=True, legend_labels=labels
+        )
+        trace_names = {trace.name for trace in fig.data}
+        self.assertIn("Group Alpha", trace_names)
+        self.assertIn("B", trace_names)
+
+    def test_legend_labels_ignored_when_show_legend_false(self):
+        labels = {"A": "Group Alpha", "B": "Group Beta"}
+        fig = self._make_fig(
+            color_col="category", show_legend=False, legend_labels=labels
+        )
+        trace_names = {trace.name for trace in fig.data}
+        self.assertNotIn("Group Alpha", trace_names)
+        self.assertNotIn("Group Beta", trace_names)
+
+    def test_legend_labels_none_leaves_trace_names_unchanged(self):
+        fig = self._make_fig(color_col="category", show_legend=True)
+        trace_names = {trace.name for trace in fig.data}
+        self.assertIn("A", trace_names)
+        self.assertIn("B", trace_names)

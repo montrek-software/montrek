@@ -51,3 +51,4 @@ class ReportingTimelineData(ReportingDataBase):
     show_legend: bool = False
     legend_orientation: str = "v"
     legend_title: str | None = None
+    legend_labels: dict[str, str] | None = None
