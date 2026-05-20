@@ -75,6 +75,7 @@ class HubCRepository(MontrekRepository):
 
 class HubCRepositoryLastTS(HubCRepository):
     latest_ts = True
+    consider_session_dates = False
 
     def set_annotations(self):
         super().set_annotations()

@@ -70,6 +70,7 @@ class ReportingTimelinePlot(ReportingPlotBase[ReportingTimelineData]):
                 line_dash="dash",
                 line_color=reporting_data.vline_color or ReportingColors.RED.hex,
             )
+        self._legend_control(fig, reporting_data)
 
         return fig
 
@@ -78,6 +79,29 @@ class ReportingTimelinePlot(ReportingPlotBase[ReportingTimelineData]):
             bar_color = reporting_data.bar_color or get_color("primary_light")
             self.figure.update_traces(marker_color=bar_color)
         self.figure.update_layout(
-            showlegend=False,
+            showlegend=reporting_data.show_legend,
             yaxis_title=None,
         )
+
+    def _legend_control(
+        self, fig: go.Figure, reporting_data: ReportingTimelineData
+    ) -> None:
+        if reporting_data.show_legend:
+            fig.update_layout(
+                showlegend=True,
+                legend={
+                    "title": reporting_data.legend_title or reporting_data.color_col,
+                    "orientation": reporting_data.legend_orientation
+                    or "v",  # "v" or "h"
+                    "x": 0.98,
+                    "xanchor": "left",
+                    "y": 1,
+                    "yanchor": "top",
+                },
+            )
+            if reporting_data.legend_labels:
+                for trace in fig.data:
+                    if trace.name in reporting_data.legend_labels:
+                        trace.name = reporting_data.legend_labels[trace.name]
+        else:
+            fig.update_layout(showlegend=False)
