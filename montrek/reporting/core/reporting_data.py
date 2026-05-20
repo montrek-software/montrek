@@ -48,3 +48,6 @@ class ReportingTimelineData(ReportingDataBase):
     color_discrete_map: dict[str, str] | None = None
     bar_color: str | None = None
     vline_color: str | None = None
+    show_legend: bool = False
+    legend_orientation: str = "v"
+    legend_title: str | None = None

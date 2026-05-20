@@ -288,3 +288,66 @@ class TestColorAdjustability(TestCase):
         # Each category gets its own trace.
         self.assertEqual(len(fig.data), 2)
         self.assertFalse(fig.layout.showlegend)
+
+
+class TestLegendControl(TestCase):
+    _TL_DF = pd.DataFrame(
+        {
+            "start_date": ["2025-10-12", "2025-10-19"],
+            "end_date": ["2025-10-19", "2025-10-26"],
+            "topic": ["step_1", "step_2"],
+            "category": ["A", "B"],
+        }
+    )
+
+    def _make_fig(self, **kwargs):
+        report_data = ReportingTimelineData(
+            title="Legend Test",
+            timeline_df=self._TL_DF.copy(),
+            item_name_col="topic",
+            start_date_col="start_date",
+            end_date_col="end_date",
+            **kwargs,
+        )
+        plot = ReportingTimelinePlot()
+        plot.generate(report_data)
+        return plot.figure
+
+    def test_legend_hidden_by_default(self):
+        fig = self._make_fig()
+        self.assertFalse(fig.layout.showlegend)
+
+    def test_show_legend_false_hides_legend(self):
+        fig = self._make_fig(color_col="category", show_legend=False)
+        self.assertFalse(fig.layout.showlegend)
+
+    def test_show_legend_true_enables_legend(self):
+        fig = self._make_fig(color_col="category", show_legend=True)
+        self.assertTrue(fig.layout.showlegend)
+
+    def test_legend_title_defaults_to_color_col(self):
+        fig = self._make_fig(color_col="category", show_legend=True)
+        self.assertEqual(fig.layout.legend.title.text, "category")
+
+    def test_legend_title_custom_overrides_color_col(self):
+        fig = self._make_fig(
+            color_col="category", show_legend=True, legend_title="My Legend"
+        )
+        self.assertEqual(fig.layout.legend.title.text, "My Legend")
+
+    def test_legend_orientation_defaults_to_vertical(self):
+        fig = self._make_fig(color_col="category", show_legend=True)
+        self.assertEqual(fig.layout.legend.orientation, "v")
+
+    def test_legend_orientation_horizontal(self):
+        fig = self._make_fig(
+            color_col="category", show_legend=True, legend_orientation="h"
+        )
+        self.assertEqual(fig.layout.legend.orientation, "h")
+
+    def test_legend_position(self):
+        fig = self._make_fig(color_col="category", show_legend=True)
+        self.assertAlmostEqual(fig.layout.legend.x, 1.02)
+        self.assertEqual(fig.layout.legend.xanchor, "left")
+        self.assertAlmostEqual(fig.layout.legend.y, 1)
+        self.assertEqual(fig.layout.legend.yanchor, "top")
