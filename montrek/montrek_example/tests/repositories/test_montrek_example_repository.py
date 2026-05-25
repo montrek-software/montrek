@@ -4179,17 +4179,11 @@ class TestHubSatelliteFilter(TestCase):
 
 class TestQuerysetForwardedToSubqueryBuilder(TestCase):
     """
-    Red test for the queryset forwarding to SubqueryBuilder.build().
+    Regression test for forwarding the intermediate queryset to SubqueryBuilder.build().
 
     ``_QuerysetAwareSubqueryBuilder`` performs a Python-side computation that
     requires the intermediate queryset (carrying ``field_projections``
-    annotations).  Without forwarding it returns ``None`` for every row.
-
-    This test fails until:
-      1. ``QueryBuilder.build_queryset()`` passes the annotated queryset to
-         ``Annotator.build()``.
-      2. ``Annotator.build()`` forwards it to each ``SubqueryBuilder.build()``.
-      3. ``SubqueryBuilder.build()`` accepts the optional ``queryset`` kwarg.
+    annotations). Without forwarding it returns ``None`` for every row.
     """
 
     def setUp(self):
