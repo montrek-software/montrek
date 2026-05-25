@@ -73,7 +73,9 @@ class QueryBuilder:
             self.annotator.linked_field_projections_to_subqueries()
         )
         queryset = queryset.annotate(**field_projections, **linked_field_projections)
-        queryset = queryset.annotate(**self.annotator.build(reference_date))
+        queryset = queryset.annotate(
+            **self.annotator.build(reference_date, queryset=queryset)
+        )
         if apply_filter:
             queryset = self._apply_filter(queryset)
         queryset = self._filter_session_data(queryset)
