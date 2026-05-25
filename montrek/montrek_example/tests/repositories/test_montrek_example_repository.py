@@ -19,6 +19,7 @@ from freezegun import freeze_time
 from montrek_example.models import example_models as me_models
 from montrek_example.repositories.hub_a_repository import (
     HubAJsonRepository,
+    HubAQuerysetAwareRepository,
     HubARepository,
     HubARepository2,
     HubARepository3,
@@ -4174,3 +4175,28 @@ class TestHubSatelliteFilter(TestCase):
         with self.assertWarns(UserWarning) as cm:
             _MisconfiguredRepo({})
         self.assertIn("hub_satellite_filter", str(cm.warning))
+
+
+class TestQuerysetForwardedToSubqueryBuilder(TestCase):
+    """
+    Red test for the queryset forwarding to SubqueryBuilder.build().
+
+    ``_QuerysetAwareSubqueryBuilder`` performs a Python-side computation that
+    requires the intermediate queryset (carrying ``field_projections``
+    annotations).  Without forwarding it returns ``None`` for every row.
+
+    This test fails until:
+      1. ``QueryBuilder.build_queryset()`` passes the annotated queryset to
+         ``Annotator.build()``.
+      2. ``Annotator.build()`` forwards it to each ``SubqueryBuilder.build()``.
+      3. ``SubqueryBuilder.build()`` accepts the optional ``queryset`` kwarg.
+    """
+
+    def setUp(self):
+        me_factories.SatA1Factory(field_a1_int=5)
+        me_factories.SatA1Factory(field_a1_int=10)
+
+    def test_queryset_forwarded_to_subquery_builder(self):
+        qs = HubAQuerysetAwareRepository().receive().order_by("field_a1_int")
+        self.assertEqual(qs[0].field_a1_int_doubled, 10)
+        self.assertEqual(qs[1].field_a1_int_doubled, 20)
