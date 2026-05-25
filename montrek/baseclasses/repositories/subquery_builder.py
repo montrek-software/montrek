@@ -60,7 +60,11 @@ class CrossSatelliteFilter:
 
 
 class SubqueryBuilder:
-    def build(self, reference_date: timezone.datetime) -> BaseExpression:
+    def build(
+        self,
+        reference_date: timezone.datetime,
+        queryset: QuerySet | None = None,
+    ) -> BaseExpression:
         raise NotImplementedError(
             f"{self.__class__.__name__} must be subclassed and the build method must be implemented!"
         )

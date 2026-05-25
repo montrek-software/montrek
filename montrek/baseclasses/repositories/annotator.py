@@ -1,8 +1,9 @@
+import inspect
 from dataclasses import dataclass
 from typing import Any
 from django.apps.registry import AppRegistryNotReady
 from django.db import models
-from django.db.models import ExpressionWrapper, Field, Subquery
+from django.db.models import ExpressionWrapper, Field, QuerySet, Subquery
 from django.utils import timezone
 from baseclasses.repositories.subquery_builder import (
     LinkedSatelliteSubqueryBuilderBase,
@@ -143,9 +144,17 @@ class Annotator:
             subquery_map[lfp.outfield] = builder.build_subquery(alias_name, lfp.field)
         return subquery_map
 
-    def build(self, reference_date: timezone.datetime) -> dict[str, Subquery]:
+    def build(
+        self,
+        reference_date: timezone.datetime,
+        queryset: QuerySet | None = None,
+    ) -> dict[str, Subquery]:
         return {
-            field: subquery_builder.build(reference_date)
+            field: (
+                subquery_builder.build(reference_date, queryset=queryset)
+                if "queryset" in inspect.signature(subquery_builder.build).parameters
+                else subquery_builder.build(reference_date)
+            )
             for field, subquery_builder in self.annotations.items()
         }
 
