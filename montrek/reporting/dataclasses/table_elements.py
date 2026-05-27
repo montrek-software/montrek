@@ -905,11 +905,55 @@ class CompValues(Enum):
     NONE = CompData(num=99, latex_val="", hover_text="Unknown")
 
 
+class CompDataField(serializers.Field):
+    """DRF field that serializes a :class:`CompData` instance as a plain dict.
+
+    Accepts both a raw ``CompData`` dataclass instance and an already-converted
+    ``dict`` (the latter arises when the value has been pre-processed by
+    :class:`~reporting.modules.table_serializer.TableSerializer`).
+    """
+
+    _REQUIRED_KEYS = frozenset({"num", "latex_val", "hover_text"})
+
+    def to_representation(self, value):
+        if value is None:
+            return None
+        if isinstance(value, CompData):
+            import dataclasses
+
+            return dataclasses.asdict(value)
+        if isinstance(value, dict):
+            return value
+        raise serializers.ValidationError(
+            f"Expected a CompData instance or dict, got {type(value).__name__!r}."
+        )
+
+    def to_internal_value(self, data):
+        if not isinstance(data, dict):
+            raise serializers.ValidationError(
+                f"Expected a dict, got {type(data).__name__!r}."
+            )
+        missing = self._REQUIRED_KEYS - data.keys()
+        if missing:
+            raise serializers.ValidationError(
+                f"Missing required keys: {sorted(missing)}."
+            )
+        try:
+            return CompData(
+                num=int(data["num"]),
+                latex_val=data["latex_val"],
+                hover_text=data["hover_text"],
+            )
+        except (TypeError, ValueError) as exc:
+            raise serializers.ValidationError(str(exc)) from exc
+
+
 @dataclass
 class ComparisonTableElement(AttrTableElement):
     comp_attr: str = field(default="")
     field_template: ClassVar[str | None] = "comparison"
     much_comp_limit: ClassVar[float] = 0.5
+    serializer_field_class: ClassVar = CompDataField
 
     def get_value(self, obj: Any) -> Any:
         value = super().get_value(obj)

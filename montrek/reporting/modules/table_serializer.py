@@ -1,5 +1,7 @@
-import pandas as pd
+import dataclasses
 import datetime
+
+import pandas as pd
 from reporting.dataclasses import table_elements as te
 
 
@@ -50,6 +52,9 @@ class TableSerializer:
 
         if isinstance(value, datetime.datetime | datetime.date):
             return value.isoformat()
+
+        if isinstance(value, te.CompData):
+            return dataclasses.asdict(value)
 
         if isinstance(table_element, te.StringTableElement):
             return str(value)

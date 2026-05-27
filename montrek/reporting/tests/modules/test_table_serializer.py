@@ -195,3 +195,47 @@ class TableSerializerTestCase(TestCase):
         result = serializer.serialize_object(self.query_object)
 
         self.assertIsNone(result["score"])
+
+    def test_format_value_with_comp_data(self):
+        """CompData is serialized to a plain dict, not left as a Python object.
+
+        This ensures manager.to_json() and the DRF response agree on the type,
+        so the REST API test assertion ``assertEqual(response_json, manager.to_json())``
+        passes without a string-vs-object mismatch.
+        """
+        element = Mock()
+        element.attr = "comparison"
+        element.get_value.return_value = te.CompValues.EQUAL.value
+
+        serializer = TableSerializer([element])
+        result = serializer.serialize_object(self.query_object)
+
+        self.assertIsInstance(result["comparison"], dict)
+        self.assertEqual(
+            result["comparison"],
+            {
+                "num": 0,
+                "latex_val": "{\\color{green}$\\rightarrow$}",
+                "hover_text": "=",
+            },
+        )
+
+    def test_format_value_with_comp_data_all_variants(self):
+        """Every CompValues variant is serialized to a dict with the correct keys."""
+        for comp_value in te.CompValues:
+            with self.subTest(comp_value=comp_value.name):
+                element = Mock()
+                element.attr = "comparison"
+                element.get_value.return_value = comp_value.value
+
+                serializer = TableSerializer([element])
+                result = serializer.serialize_object(self.query_object)
+
+                self.assertEqual(
+                    result["comparison"],
+                    {
+                        "num": comp_value.value.num,
+                        "latex_val": comp_value.value.latex_val,
+                        "hover_text": comp_value.value.hover_text,
+                    },
+                )
