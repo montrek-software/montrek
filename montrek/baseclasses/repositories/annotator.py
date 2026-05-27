@@ -247,14 +247,13 @@ class Annotator:
         self.add_to_annotated_satellite_classes(satellite_class)
 
         # Use a probe instance to determine whether this link is scalar (one
-        # satellite per hub row).  Scalar, non-timeseries links can share a
-        # single satellite-pk alias so each additional field costs only a cheap
-        # pk-lookup instead of a full link traversal.
+        # satellite per hub row).  Scalar links — both static and timeseries —
+        # can share a single satellite-pk alias so each additional field costs
+        # only a cheap pk-lookup instead of a full link traversal.  For
+        # timeseries satellites the alias is built via _build_ts_scalar_alias,
+        # which matches the linked hub's HubValueDate at the same value date.
         probe_builder = subquery_builder(satellite_class, fields[0], **kwargs)
-        is_scalar = (
-            not satellite_class.is_timeseries
-            and not probe_builder._is_multiple_allowed(probe_builder._hub_field_to)
-        )
+        is_scalar = not probe_builder._is_multiple_allowed(probe_builder._hub_field_to)
 
         if is_scalar:
             linked_alias = self._get_or_create_linked_satellite_alias(

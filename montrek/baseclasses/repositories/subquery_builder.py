@@ -635,7 +635,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         of a field value so the result can be stored as a queryset alias and
         reused by multiple cheap single-column field projections.
 
-        Only valid for scalar (non-multiple) links.
+        Only valid for scalar (non-multiple), non-timeseries links.
         """
         sat_pk_qs = self.satellite_class.objects.filter(
             **self.link_satellite_filter,
@@ -648,6 +648,36 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         ).values("pk")[:1]
         return Subquery(
             self.get_link_query(hub_field_from, reference_date)
+            .annotate(_lsat_pk=Subquery(sat_pk_qs))
+            .values("_lsat_pk")[:1]
+        )
+
+    def _build_ts_scalar_alias(
+        self,
+        hub_field_from: str,
+        reference_date: timezone.datetime,
+    ) -> Subquery:
+        """Return a scalar subquery that resolves to the linked TS satellite's pk.
+
+        Mirrors :meth:`_build_scalar_alias` for timeseries satellites.  Instead
+        of navigating the link table directly, it starts from the linked hub's
+        ``HubValueDate`` at the **same value date** as the outer row (via
+        :meth:`get_link_hub_value_date_query`), then finds the TS satellite on
+        that ``HubValueDate`` with valid state dates and returns its pk.
+
+        Only valid for scalar (non-multiple), timeseries links.
+        """
+        sat_pk_qs = self.satellite_class.objects.filter(
+            **self.link_satellite_filter,
+            **self._build_cross_satellite_filter_dict(reference_date),
+            **self.subquery_filter(
+                reference_date,
+                lookup_field="hub_value_date",
+                outer_ref="pk",
+            ),
+        ).values("pk")[:1]
+        return Subquery(
+            self.get_link_hub_value_date_query(hub_field_from, reference_date)
             .annotate(_lsat_pk=Subquery(sat_pk_qs))
             .values("_lsat_pk")[:1]
         )
@@ -672,6 +702,8 @@ class LinkedSatelliteSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
         return self._get_subquery("hub_out", "hub_in", reference_date)
 
     def build_alias(self, reference_date: timezone.datetime) -> Subquery:
+        if self.satellite_class.is_timeseries:
+            return self._build_ts_scalar_alias("hub_in", reference_date)
         return self._build_scalar_alias("hub_out", "hub_in", reference_date)
 
 
@@ -683,6 +715,8 @@ class ReverseLinkedSatelliteSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
         return self._get_subquery("hub_in", "hub_out", reference_date)
 
     def build_alias(self, reference_date: timezone.datetime) -> Subquery:
+        if self.satellite_class.is_timeseries:
+            return self._build_ts_scalar_alias("hub_out", reference_date)
         return self._build_scalar_alias("hub_in", "hub_out", reference_date)
 
 
