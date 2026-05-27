@@ -1488,6 +1488,17 @@ class TestCompDataField(TestCase):
         """None is returned as-is (represents a missing value)."""
         self.assertIsNone(self.field.to_representation(None))
 
+    def test_to_representation_with_unexpected_type_raises(self):
+        """Any type other than CompData, dict, or None raises ValidationError.
+
+        Without this guard, dataclasses.asdict() would raise TypeError and
+        surface as a 500 instead of a clean API error.
+        """
+        from rest_framework.exceptions import ValidationError
+
+        with self.assertRaises(ValidationError):
+            self.field.to_representation("CompData(num=0, ...)")  # stale string
+
     def test_to_internal_value_reconstructs_comp_data(self):
         """A dict round-trips back to a CompData instance."""
         data = {
@@ -1499,6 +1510,26 @@ class TestCompDataField(TestCase):
         self.assertIsInstance(result, te.CompData)
         self.assertEqual(result.num, -1)
         self.assertEqual(result.hover_text, "<")
+
+    def test_to_internal_value_coerces_num_to_int(self):
+        """num is coerced to int so e.g. "0" from a JSON string body still works."""
+        data = {"num": "0", "latex_val": "", "hover_text": "="}
+        result = self.field.to_internal_value(data)
+        self.assertIsInstance(result.num, int)
+
+    def test_to_internal_value_not_a_dict_raises(self):
+        """Passing a non-dict raises ValidationError, not TypeError → no 500."""
+        from rest_framework.exceptions import ValidationError
+
+        with self.assertRaises(ValidationError):
+            self.field.to_internal_value("bad input")
+
+    def test_to_internal_value_missing_keys_raises(self):
+        """A dict missing any required key raises ValidationError."""
+        from rest_framework.exceptions import ValidationError
+
+        with self.assertRaises(ValidationError):
+            self.field.to_internal_value({"num": 0})  # latex_val and hover_text absent
 
     def test_comparison_table_element_uses_comp_data_field(self):
         """ComparisonTableElement.serializer_field_class is CompDataField."""

@@ -913,17 +913,39 @@ class CompDataField(serializers.Field):
     :class:`~reporting.modules.table_serializer.TableSerializer`).
     """
 
+    _REQUIRED_KEYS = frozenset({"num", "latex_val", "hover_text"})
+
     def to_representation(self, value):
         if value is None:
             return None
+        if isinstance(value, CompData):
+            import dataclasses
+
+            return dataclasses.asdict(value)
         if isinstance(value, dict):
             return value
-        import dataclasses
-
-        return dataclasses.asdict(value)
+        raise serializers.ValidationError(
+            f"Expected a CompData instance or dict, got {type(value).__name__!r}."
+        )
 
     def to_internal_value(self, data):
-        return CompData(**data)
+        if not isinstance(data, dict):
+            raise serializers.ValidationError(
+                f"Expected a dict, got {type(data).__name__!r}."
+            )
+        missing = self._REQUIRED_KEYS - data.keys()
+        if missing:
+            raise serializers.ValidationError(
+                f"Missing required keys: {sorted(missing)}."
+            )
+        try:
+            return CompData(
+                num=int(data["num"]),
+                latex_val=data["latex_val"],
+                hover_text=data["hover_text"],
+            )
+        except (TypeError, ValueError) as exc:
+            raise serializers.ValidationError(str(exc)) from exc
 
 
 @dataclass
