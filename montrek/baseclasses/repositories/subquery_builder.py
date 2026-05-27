@@ -670,9 +670,11 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         sat_pk_qs = self.satellite_class.objects.filter(
             **self.link_satellite_filter,
             **self._build_cross_satellite_filter_dict(reference_date),
-            hub_value_date=OuterRef("pk"),
-            state_date_start__lte=reference_date,
-            state_date_end__gt=reference_date,
+            **self.subquery_filter(
+                reference_date,
+                lookup_field="hub_value_date",
+                outer_ref="pk",
+            ),
         ).values("pk")[:1]
         return Subquery(
             self.get_link_hub_value_date_query(hub_field_from, reference_date)
