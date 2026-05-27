@@ -905,11 +905,33 @@ class CompValues(Enum):
     NONE = CompData(num=99, latex_val="", hover_text="Unknown")
 
 
+class CompDataField(serializers.Field):
+    """DRF field that serializes a :class:`CompData` instance as a plain dict.
+
+    Accepts both a raw ``CompData`` dataclass instance and an already-converted
+    ``dict`` (the latter arises when the value has been pre-processed by
+    :class:`~reporting.modules.table_serializer.TableSerializer`).
+    """
+
+    def to_representation(self, value):
+        if value is None:
+            return None
+        if isinstance(value, dict):
+            return value
+        import dataclasses
+
+        return dataclasses.asdict(value)
+
+    def to_internal_value(self, data):
+        return CompData(**data)
+
+
 @dataclass
 class ComparisonTableElement(AttrTableElement):
     comp_attr: str = field(default="")
     field_template: ClassVar[str | None] = "comparison"
     much_comp_limit: ClassVar[float] = 0.5
+    serializer_field_class: ClassVar = CompDataField
 
     def get_value(self, obj: Any) -> Any:
         value = super().get_value(obj)
