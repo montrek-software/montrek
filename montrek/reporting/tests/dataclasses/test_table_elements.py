@@ -1438,6 +1438,74 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         )
 
 
+class TestCompDataField(TestCase):
+    """Tests for CompDataField and its wiring into ComparisonTableElement.
+
+    Before the fix, ComparisonTableElement inherited ``serializer_field_class =
+    serializers.CharField`` from AttrTableElement, which caused DRF to call
+    ``str()`` on CompData instances.  That made the DRF JSON response contain a
+    plain string while ``manager.to_json()`` returned the raw Python object —
+    the two sides of the REST-API test assertion would differ in type.
+
+    The fix introduces CompDataField (which emits a structured dict) and
+    TableSerializer._format_value also converts CompData → dict, so both
+    serialisation paths agree.
+    """
+
+    def setUp(self):
+        self.field = te.CompDataField()
+
+    def test_to_representation_with_comp_data_instance(self):
+        """A raw CompData instance is converted to a dict."""
+        comp_data = te.CompValues.EQUAL.value
+        result = self.field.to_representation(comp_data)
+        self.assertIsInstance(result, dict)
+        self.assertEqual(
+            result,
+            {
+                "num": 0,
+                "latex_val": "{\\color{green}$\\rightarrow$}",
+                "hover_text": "=",
+            },
+        )
+
+    def test_to_representation_with_already_converted_dict(self):
+        """A pre-converted dict (from TableSerializer) is returned unchanged.
+
+        manager.to_json() pre-processes values via TableSerializer._format_value,
+        so by the time DRF's CompDataField.to_representation is called the value
+        is already a dict.  The field must pass it through without raising.
+        """
+        already_dict = {
+            "num": 1,
+            "latex_val": "{\\color{orange}$\\nearrow$}",
+            "hover_text": ">",
+        }
+        result = self.field.to_representation(already_dict)
+        self.assertEqual(result, already_dict)
+
+    def test_to_representation_with_none(self):
+        """None is returned as-is (represents a missing value)."""
+        self.assertIsNone(self.field.to_representation(None))
+
+    def test_to_internal_value_reconstructs_comp_data(self):
+        """A dict round-trips back to a CompData instance."""
+        data = {
+            "num": -1,
+            "latex_val": "{\\color{orange}$\\searrow$}",
+            "hover_text": "<",
+        }
+        result = self.field.to_internal_value(data)
+        self.assertIsInstance(result, te.CompData)
+        self.assertEqual(result.num, -1)
+        self.assertEqual(result.hover_text, "<")
+
+    def test_comparison_table_element_uses_comp_data_field(self):
+        """ComparisonTableElement.serializer_field_class is CompDataField."""
+        elem = te.ComparisonTableElement(name="test", attr="val", comp_attr="other")
+        self.assertIs(elem.serializer_field_class, te.CompDataField)
+
+
 @dataclass
 class MockObject:
     name: str
