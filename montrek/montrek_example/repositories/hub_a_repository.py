@@ -220,3 +220,23 @@ class HubAJsonRepository(MontrekRepository):
 class HubAFileExportRegistryRepository(FileExportRegistryRepositoryABC):
     hub_class = me_models.HubAFileExportRegistryHub
     registry_satellite = me_models.HubAFileExportRegistryStaticSatellite
+
+
+class HubATSLinkedRepository(MontrekRepository):
+    """Fetches multiple TS fields from SatTSC3 via the scalar LinkHubAHubC link.
+
+    Used to exercise the ``_build_ts_scalar_alias`` optimization path: both
+    fields from the same scalar timeseries linked satellite share a single
+    alias subquery that resolves the satellite pk at the matching value_date,
+    and each field is then resolved via a cheap pk-lookup projection.
+    """
+
+    hub_class = me_models.HubA
+    latest_ts = True
+
+    def set_annotations(self):
+        self.add_linked_satellites_field_annotations(
+            me_models.SatTSC3,
+            me_models.LinkHubAHubC,
+            ["field_tsc3_int", "field_tsc3_str"],
+        )

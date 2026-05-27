@@ -26,6 +26,7 @@ from montrek_example.repositories.hub_a_repository import (
     HubARepository4,
     HubARepository5,
     HubARepository6,
+    HubATSLinkedRepository,
 )
 from montrek_example.repositories.hub_b_repository import (
     HubBRepository,
@@ -4194,3 +4195,102 @@ class TestQuerysetForwardedToSubqueryBuilder(TestCase):
         qs = HubAQuerysetAwareRepository().receive().order_by("field_a1_int")
         self.assertEqual(qs[0].field_a1_int_doubled, 10)
         self.assertEqual(qs[1].field_a1_int_doubled, 20)
+
+
+class TestScalarLinkedTSSatelliteAlias(TestCase):
+    """Tests for the TS alias optimization path (_build_ts_scalar_alias).
+
+    When annotating multiple fields from a scalar linked timeseries satellite
+    (one satellite row per hub row), the Annotator shares a single alias
+    subquery that resolves the satellite pk at the matching value_date_list,
+    and each field is then resolved via a cheap pk-lookup projection.
+
+    The four cases cover:
+    - correct field values when value_dates match
+    - isolation: only the satellite at the matching value_date is used
+    - expired satellite (state_date_end before reference_date) → null
+    - no link → null
+    """
+
+    def test_correct_fields_returned_for_matching_value_date(self):
+        """Both projected fields from the linked TS satellite are returned
+        correctly, confirming that the shared alias resolves the right pk."""
+        sat_tsc3 = me_factories.SatTSC3Factory(
+            value_date="2024-01-15", field_tsc3_int=42, field_tsc3_str="hello"
+        )
+        hvd_a = me_factories.AHubValueDateFactory(value_date="2024-01-15")
+        me_factories.LinkHubAHubCFactory(
+            hub_in=hvd_a.hub, hub_out=sat_tsc3.hub_value_date.hub
+        )
+
+        qs = HubATSLinkedRepository().receive()
+        self.assertEqual(qs.count(), 1)
+        obj = qs.get()
+        self.assertEqual(obj.field_tsc3_int, 42)
+        self.assertEqual(obj.field_tsc3_str, "hello")
+
+    def test_value_date_isolation(self):
+        """A HubA row at value_date A retrieves the satellite for date A only —
+        not the satellite at date B — even when both HubA rows are linked to the
+        same HubC that has satellites at both dates."""
+        hub_c = me_factories.HubCFactory()
+
+        # January CHubValueDate + SatTSC3
+        hvd_c_jan = me_factories.CHubValueDateFactory.create(
+            hub=hub_c,
+            value_date_list=ValueDateListFactory.create(value_date="2024-01-15"),
+        )
+        me_factories.SatTSC3Factory.create(hub_value_date=hvd_c_jan, field_tsc3_int=10)
+
+        # February CHubValueDate + SatTSC3
+        hvd_c_feb = me_factories.CHubValueDateFactory.create(
+            hub=hub_c,
+            value_date_list=ValueDateListFactory.create(value_date="2024-02-01"),
+        )
+        me_factories.SatTSC3Factory.create(hub_value_date=hvd_c_feb, field_tsc3_int=20)
+
+        # HubA linked for January value date
+        hvd_a_jan = me_factories.AHubValueDateFactory.create(value_date="2024-01-15")
+        me_factories.LinkHubAHubCFactory(hub_in=hvd_a_jan.hub, hub_out=hub_c)
+
+        # HubA linked for February value date
+        hvd_a_feb = me_factories.AHubValueDateFactory.create(value_date="2024-02-01")
+        me_factories.LinkHubAHubCFactory(hub_in=hvd_a_feb.hub, hub_out=hub_c)
+
+        qs = HubATSLinkedRepository().receive().order_by("value_date")
+        self.assertEqual(qs.count(), 2)
+        self.assertEqual(qs[0].field_tsc3_int, 10)  # Jan row → Jan satellite
+        self.assertEqual(qs[1].field_tsc3_int, 20)  # Feb row → Feb satellite
+
+    def test_expired_satellite_returns_null(self):
+        """A satellite whose state_date_end is before the reference_date is not
+        matched by the alias subquery (state validity filter fails), so both
+        projected fields are null."""
+        ref_date = montrek_time(2024, 6, 1)
+        sat_tsc3 = me_factories.SatTSC3Factory(
+            value_date="2024-01-15",
+            field_tsc3_int=42,
+            field_tsc3_str="hello",
+            state_date_end=montrek_time(2024, 5, 1),  # expires before ref_date
+        )
+        hvd_a = me_factories.AHubValueDateFactory(value_date="2024-01-15")
+        me_factories.LinkHubAHubCFactory(
+            hub_in=hvd_a.hub, hub_out=sat_tsc3.hub_value_date.hub
+        )
+
+        repo = HubATSLinkedRepository({"reference_date": ref_date})
+        obj = repo.receive().get()
+        self.assertIsNone(obj.field_tsc3_int)
+        self.assertIsNone(obj.field_tsc3_str)
+
+    def test_no_link_returns_null(self):
+        """A HubA row with no link to any HubC yields null for all projected
+        fields from the linked TS satellite."""
+        me_factories.AHubValueDateFactory(value_date="2024-01-15")
+        # No LinkHubAHubCFactory — intentionally unlinked
+
+        qs = HubATSLinkedRepository().receive()
+        self.assertEqual(qs.count(), 1)
+        obj = qs.get()
+        self.assertIsNone(obj.field_tsc3_int)
+        self.assertIsNone(obj.field_tsc3_str)
