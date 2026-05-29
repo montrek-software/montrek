@@ -57,6 +57,13 @@ class QueryBuilder:
             Q(hub__state_date_start__lte=reference_date),
             Q(hub__state_date_end__gt=reference_date),
         )
+        # For latest_ts repositories narrow to the latest row per hub BEFORE
+        # annotator.build() so that queryset_aware SubqueryBuilders receive a
+        # small, focused queryset instead of every historical HubValueDate row.
+        # The latest_ts branch of _filter_ts_rows only touches direct FK columns
+        # (hub_id, value_date_list_id) — never annotations — so it is safe here.
+        if self.latest_ts:
+            queryset = self._filter_ts_rows(queryset)
         satellite_aliases_dict: dict[str, Any] = {}
         for satellite_alias in self.annotator.satellite_aliases:
             satellite_aliases_dict[satellite_alias.alias_name] = (
@@ -79,7 +86,8 @@ class QueryBuilder:
         if apply_filter:
             queryset = self._apply_filter(queryset)
         queryset = self._filter_session_data(queryset)
-        queryset = self._filter_ts_rows(queryset)
+        if not self.latest_ts:
+            queryset = self._filter_ts_rows(queryset)
         queryset = self._apply_order(queryset, order_fields)
         return queryset
 
