@@ -503,6 +503,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
             LinkAggFunctionEnum.STRING_CONCAT: lambda q: self._annotate_string_concat(
                 q, self.separator
             ),
+            LinkAggFunctionEnum.JSON_AGG: lambda q: self._annotate_json_agg(q),
             LinkAggFunctionEnum.LATEST: lambda q: self._annotate_latest(q),
             LinkAggFunctionEnum.MEAN: lambda q: self._annotate_mean(q),
             LinkAggFunctionEnum.COUNT: lambda q: self._annotate_count(q),
@@ -533,6 +534,22 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
                 )
             }
         ).values(self.field + "agg")
+
+    def _annotate_json_agg(self, query: QuerySet) -> QuerySet:
+        func = get_json_agg_function()
+        return (
+            query.filter(**{self.field + "sub__isnull": False})
+            .annotate(
+                **{
+                    self.field
+                    + "agg": Cast(
+                        func(Cast(self.field + "sub", CharField())),
+                        CharField(),
+                    )
+                }
+            )
+            .values(self.field + "agg")
+        )
 
     def _annotate_latest(self, query: QuerySet) -> QuerySet:
         if self.satellite_class.is_timeseries:
@@ -747,10 +764,30 @@ def get_string_concat_function(separator: str) -> Callable[..., Any]:
     )
 
 
+class JsonAgg(Func):
+    function = "JSON_AGG"
+    template = "%(function)s(%(expressions)s)"
+
+
+class JsonArrayAgg(Func):
+    function = "JSON_ARRAYAGG"
+    template = "%(function)s(%(expressions)s)"
+
+
+def get_json_agg_function() -> type[Func]:
+    engine = settings.DATABASES["default"]["ENGINE"]
+    if "mysql" in engine:
+        return JsonArrayAgg
+    if "postgresql" in engine:
+        return JsonAgg
+    raise NotImplementedError(f"No JSON aggregation function defined for {engine}!")
+
+
 class LinkAggFunctionEnum(Enum):
     SUM = "sum"
     SUM_VALUE_DATE = "sum_value_date"
     STRING_CONCAT = "string_concat"
+    JSON_AGG = "json_agg"
     LATEST = "latest"
     MEAN = "mean"
     COUNT = "count"
