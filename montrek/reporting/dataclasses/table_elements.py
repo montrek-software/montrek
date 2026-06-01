@@ -1,6 +1,7 @@
 import collections
 import datetime
 import inspect
+import json
 import tempfile
 from collections.abc import Iterable
 from dataclasses import dataclass, field
@@ -380,7 +381,7 @@ class LinkListTableElement(TableElement, GetDottetAttrsOrArgMixin):
     text: str = field(default="")
     list_attr: str = field(default="")
     list_kwarg: str = field(default="")
-    in_separator: str = ";"
+    in_separator: str | None = ";"
     field_template: ClassVar[str | None] = "link_list"
 
     def get_field_context_data(self, value: Any, obj: Any) -> dict[str, Any]:
@@ -408,15 +409,22 @@ class LinkListTableElement(TableElement, GetDottetAttrsOrArgMixin):
 
     def get_list_values(self, obj: Any) -> list[str]:
         list_values = self.get_dotted_attr_or_arg(obj, self.list_attr)
-        return str(list_values).split(self.in_separator) if list_values else []
+        if not list_values:
+            return []
+        if self.in_separator is None:
+            return json.loads(str(list_values))
+        return str(list_values).split(self.in_separator)
 
     def format(self, value):
         return value
 
     def get_value(self, obj: Any) -> list[str]:
         text_values = self.get_dotted_attr_or_arg(obj, self.text)
-        text_values = str(text_values).split(self.in_separator) if text_values else []
-        return text_values
+        if not text_values:
+            return []
+        if self.in_separator is None:
+            return json.loads(str(text_values))
+        return str(text_values).split(self.in_separator)
 
     def format_latex(self, value):
         return " \\color{{black}} {} &".format(",".join(self._unique_list(value)))

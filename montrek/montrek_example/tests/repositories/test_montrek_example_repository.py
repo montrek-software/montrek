@@ -1,4 +1,5 @@
 import datetime
+import json
 from unittest.mock import patch
 
 import numpy as np
@@ -41,6 +42,7 @@ from montrek_example.repositories.hub_c_repository import (
     HubCRepositoryAll,
     HubCRepositoryCommonFields,
     HubCRepositoryCount,
+    HubCRepositoryJsonAgg,
     HubCRepositoryLast,
     HubCRepositoryLastTS,
     HubCRepositoryMean,
@@ -4294,3 +4296,50 @@ class TestScalarLinkedTSSatelliteAlias(TestCase):
         obj = qs.get()
         self.assertIsNone(obj.field_tsc3_int)
         self.assertIsNone(obj.field_tsc3_str)
+
+
+class TestJsonAggLinks(TestCase):
+    def setUp(self):
+        self.hub_c = me_factories.HubCFactory()
+
+    def test_json_agg__no_linked_value(self):
+        obj = HubCRepositoryJsonAgg().receive().get()
+        self.assertIsNone(obj.field_d1_str)
+
+    def test_json_agg__single_value(self):
+        sat_d = me_factories.SatD1Factory(field_d1_str="hello")
+        self.hub_c.link_hub_c_hub_d.add(sat_d.hub_entity)
+        obj = HubCRepositoryJsonAgg().receive().get()
+        self.assertEqual(json.loads(obj.field_d1_str), ["hello"])
+
+    def test_json_agg__multiple_values(self):
+        sat_d1 = me_factories.SatD1Factory(field_d1_str="first")
+        sat_d2 = me_factories.SatD1Factory(field_d1_str="second")
+        self.hub_c.link_hub_c_hub_d.add(sat_d1.hub_entity)
+        self.hub_c.link_hub_c_hub_d.add(sat_d2.hub_entity)
+        obj = HubCRepositoryJsonAgg().receive().get()
+        self.assertCountEqual(json.loads(obj.field_d1_str), ["first", "second"])
+
+    def test_json_agg__value_containing_separator(self):
+        sat_d = me_factories.SatD1Factory(field_d1_str="prompt; important")
+        self.hub_c.link_hub_c_hub_d.add(sat_d.hub_entity)
+        obj = HubCRepositoryJsonAgg().receive().get()
+        self.assertEqual(json.loads(obj.field_d1_str), ["prompt; important"])
+
+    def test_json_agg__value_containing_comma(self):
+        sat_d = me_factories.SatD1Factory(field_d1_str="A, B")
+        self.hub_c.link_hub_c_hub_d.add(sat_d.hub_entity)
+        obj = HubCRepositoryJsonAgg().receive().get()
+        self.assertEqual(json.loads(obj.field_d1_str), ["A, B"])
+
+    def test_json_agg__hub_d_ids_aggregated(self):
+        sat_d1 = me_factories.SatD1Factory(field_d1_str="x")
+        sat_d2 = me_factories.SatD1Factory(field_d1_str="y")
+        self.hub_c.link_hub_c_hub_d.add(sat_d1.hub_entity)
+        self.hub_c.link_hub_c_hub_d.add(sat_d2.hub_entity)
+        obj = HubCRepositoryJsonAgg().receive().get()
+        hub_d_ids = json.loads(obj.hub_d_id)
+        self.assertCountEqual(
+            hub_d_ids,
+            [str(sat_d1.hub_entity_id), str(sat_d2.hub_entity_id)],
+        )
