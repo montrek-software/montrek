@@ -336,3 +336,16 @@ class HubCRepositoryAll(MontrekRepository):
             reversed_link=True,
             agg_func="all",
         )
+
+
+class HubCRepositoryJsonAgg(MontrekRepository):
+    hub_class = me_models.HubC
+
+    def set_annotations(self):
+        self.add_linked_satellites_field_annotations(
+            me_models.SatD1,
+            me_models.LinkHubCHubD,
+            ["field_d1_str", "hub_entity_id"],
+            rename_field_map={"hub_entity_id": "hub_d_id"},
+            agg_func="json_agg",
+        )
