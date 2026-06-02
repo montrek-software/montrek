@@ -26,6 +26,7 @@ class HubBRepository(MontrekRepository):
             me_models.LinkHubBHubD,
             ["hub_entity_id", "field_d1_str", "field_d1_int"],
             rename_field_map={"hub_entity_id": "hub_d_id"},
+            agg_func="string_concat",
             separator=",",
         )
 
