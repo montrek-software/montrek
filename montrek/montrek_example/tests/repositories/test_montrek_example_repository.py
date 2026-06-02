@@ -1390,24 +1390,24 @@ class TestMontrekRepositoryLinks(TestCase):
         repository.reference_date = montrek_time(2023, 7, 8)
         queryset = repository.receive()
         self.assertEqual(queryset.count(), 2)
-        self.assertEqual(json.loads(queryset[0].field_a1_int), ["5"])
+        self.assertEqual(json.loads(queryset[0].field_a1_int), [5])
         self.assertEqual(queryset[1].field_a1_int, None)
         repository.reference_date = montrek_time(2023, 7, 15)
         queryset = repository.receive()
         self.assertEqual(queryset.count(), 2)
-        self.assertEqual(json.loads(queryset[0].field_a1_int), ["5"])
+        self.assertEqual(json.loads(queryset[0].field_a1_int), [5])
         self.assertEqual(queryset[1].field_a1_int, None)
 
     def test_link_reversed__session_data(self):
         repository = HubCRepository2({"reference_date": "2023-07-08"})
         queryset = repository.receive()
         self.assertEqual(queryset.count(), 2)
-        self.assertEqual(json.loads(queryset[0].field_a1_int), ["5"])
+        self.assertEqual(json.loads(queryset[0].field_a1_int), [5])
         self.assertEqual(queryset[1].field_a1_int, None)
         repository = HubCRepository2({"reference_date": ["2023-07-15"]})
         queryset = repository.receive()
         self.assertEqual(queryset.count(), 2)
-        self.assertEqual(json.loads(queryset[0].field_a1_int), ["5"])
+        self.assertEqual(json.loads(queryset[0].field_a1_int), [5])
         self.assertEqual(queryset[1].field_a1_int, None)
 
     def test_link_reversed_ts(self):
@@ -1418,7 +1418,7 @@ class TestMontrekRepositoryLinks(TestCase):
         sat_tsc2.hub_value_date.hub.link_hub_c_hub_d.add(d_hub)
         queryset = HubDRepositoryTSReverseLink({}).receive()
         self.assertEqual(queryset.count(), 1)
-        self.assertEqual(json.loads(queryset[0].field_tsc2_float), ["2.5"])
+        self.assertEqual(json.loads(queryset[0].field_tsc2_float), [2.5])
 
     def test_link_with_parent_links(self):
         hubc = me_factories.HubCFactory()
@@ -2640,7 +2640,7 @@ class TestMontrekManyToManyRelations(TestCase):
         self.assertEqual(satd_queryset.count(), 2)
         self.assertCountEqual(
             json.loads(satd_queryset[0].hub_b_id),
-            [str(self.satb1.hub_entity_id), str(self.satb2.hub_entity_id)],
+            [self.satb1.hub_entity_id, self.satb2.hub_entity_id],
         )
         self.assertCountEqual(
             json.loads(satd_queryset[0].field_b1_str),
@@ -4348,5 +4348,5 @@ class TestJsonAggLinks(TestCase):
         hub_d_ids = json.loads(obj.hub_d_id)
         self.assertCountEqual(
             hub_d_ids,
-            [str(sat_d1.hub_entity_id), str(sat_d2.hub_entity_id)],
+            [sat_d1.hub_entity_id, sat_d2.hub_entity_id],
         )
