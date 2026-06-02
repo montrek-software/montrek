@@ -551,7 +551,7 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
                 **{
                     self.field
                     + "agg": Cast(
-                        func(Cast(self.field + "sub", CharField())),
+                        func(self.field + "sub"),
                         CharField(),
                     )
                 }
