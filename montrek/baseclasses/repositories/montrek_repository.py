@@ -432,7 +432,7 @@ class MontrekRepository:
         rename_field_map: dict[str, str] | None = None,
         parent_link_classes: tuple[type[MontrekLinkABC], ...] = (),
         parent_link_reversed: tuple[bool] | list[bool] | None = None,
-        agg_func: str = "string_concat",
+        agg_func: str = "json_agg",
         link_satellite_filter: dict[str, Any] | None = None,
         cross_satellite_filters: tuple[CrossSatelliteFilter, ...] = (),
         separator: str = ";",

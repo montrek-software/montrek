@@ -51,6 +51,7 @@ class HubCRepository(MontrekRepository):
             me_models.LinkHubCHubD,
             ["field_tsd2_float", "field_tsd2_int"],
             link_satellite_filter={"field_tsd2_float__gte": 0},
+            agg_func="string_concat",
         )
         self.add_linked_satellites_field_annotations(
             me_models.SatTSD2,

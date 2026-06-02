@@ -1390,24 +1390,24 @@ class TestMontrekRepositoryLinks(TestCase):
         repository.reference_date = montrek_time(2023, 7, 8)
         queryset = repository.receive()
         self.assertEqual(queryset.count(), 2)
-        self.assertEqual(queryset[0].field_a1_int, "5")
+        self.assertEqual(json.loads(queryset[0].field_a1_int), ["5"])
         self.assertEqual(queryset[1].field_a1_int, None)
         repository.reference_date = montrek_time(2023, 7, 15)
         queryset = repository.receive()
         self.assertEqual(queryset.count(), 2)
-        self.assertEqual(queryset[0].field_a1_int, "5")
+        self.assertEqual(json.loads(queryset[0].field_a1_int), ["5"])
         self.assertEqual(queryset[1].field_a1_int, None)
 
     def test_link_reversed__session_data(self):
         repository = HubCRepository2({"reference_date": "2023-07-08"})
         queryset = repository.receive()
         self.assertEqual(queryset.count(), 2)
-        self.assertEqual(queryset[0].field_a1_int, "5")
+        self.assertEqual(json.loads(queryset[0].field_a1_int), ["5"])
         self.assertEqual(queryset[1].field_a1_int, None)
         repository = HubCRepository2({"reference_date": ["2023-07-15"]})
         queryset = repository.receive()
         self.assertEqual(queryset.count(), 2)
-        self.assertEqual(queryset[0].field_a1_int, "5")
+        self.assertEqual(json.loads(queryset[0].field_a1_int), ["5"])
         self.assertEqual(queryset[1].field_a1_int, None)
 
     def test_link_reversed_ts(self):
@@ -1418,7 +1418,7 @@ class TestMontrekRepositoryLinks(TestCase):
         sat_tsc2.hub_value_date.hub.link_hub_c_hub_d.add(d_hub)
         queryset = HubDRepositoryTSReverseLink({}).receive()
         self.assertEqual(queryset.count(), 1)
-        self.assertEqual(queryset[0].field_tsc2_float, "2.5")
+        self.assertEqual(json.loads(queryset[0].field_tsc2_float), ["2.5"])
 
     def test_link_with_parent_links(self):
         hubc = me_factories.HubCFactory()
@@ -1429,7 +1429,7 @@ class TestMontrekRepositoryLinks(TestCase):
         repository = HubARepository3()
         queryset = repository.receive()
         self.assertEqual(queryset.count(), 2)
-        self.assertEqual(queryset[0].field_d1_str, "Test")
+        self.assertEqual(json.loads(queryset[0].field_d1_str), ["Test"])
 
     def test_link_with_parent_links__reference_date_filter_on_parent_link_class(self):
         # Initial setup
@@ -1451,7 +1451,9 @@ class TestMontrekRepositoryLinks(TestCase):
         )
         queryset = repository.receive()
         self.assertEqual(queryset.count(), 2)
-        self.assertEqual(queryset.get(hub_entity_id=new_hub.pk).field_d1_str, "Test2")
+        self.assertEqual(
+            json.loads(queryset.get(hub_entity_id=new_hub.pk).field_d1_str), ["Test2"]
+        )
 
     def test_link_reversed_with_parent_links(self):
         satd = me_factories.SatD1Factory()
@@ -1466,7 +1468,9 @@ class TestMontrekRepositoryLinks(TestCase):
         repository = HubDRepositoryReversedParentLink()
         queryset = repository.receive()
         self.assertEqual(queryset.count(), 1)
-        self.assertEqual(queryset.first().field_a1_str, "Test;Extra Test")
+        self.assertCountEqual(
+            json.loads(queryset.first().field_a1_str), ["Test", "Extra Test"]
+        )
 
     def test_link_reversed_with_parent_links__many_to_many(self):
         satd = me_factories.SatD1Factory()
@@ -1474,7 +1478,7 @@ class TestMontrekRepositoryLinks(TestCase):
         repository = HubDRepositoryReversedParentLink()
         queryset = repository.receive()
         self.assertEqual(queryset.count(), 1)
-        self.assertEqual(queryset.first().field_a1_str, "Test")
+        self.assertEqual(json.loads(queryset.first().field_a1_str), ["Test"])
 
     def test_link_with_reversed_parent(self):
         hub_c = me_factories.HubCFactory()
@@ -1486,8 +1490,8 @@ class TestMontrekRepositoryLinks(TestCase):
         )
         repository = HubCRepositoryReversedParents()
         c_object = repository.receive().get(hub__pk=hub_c.pk)
-        self.assertEqual(c_object.field_a1_str, "A1Test")
-        self.assertEqual(c_object.field_b1_str, "B1Test")
+        self.assertEqual(json.loads(c_object.field_a1_str), ["A1Test"])
+        self.assertEqual(json.loads(c_object.field_b1_str), ["B1Test"])
 
     def test_link_with_reversed_parent__many_to_many__raise_no_error(self):
         hub_c = me_factories.HubCFactory()
@@ -1503,7 +1507,7 @@ class TestMontrekRepositoryLinks(TestCase):
         )
         repository = HubCRepositoryReversedParents()
         test_element = repository.receive().get(hub__pk=hub_c.pk)
-        test_field = test_element.field_b1_str.split("##")
+        test_field = json.loads(test_element.field_b1_str)
         self.assertEqual(len(test_field), 2)
         self.assertIn("B1Test1", test_field)
         self.assertIn("B1Test2", test_field)
@@ -1523,7 +1527,7 @@ class TestMontrekRepositoryLinks(TestCase):
         repo = HubCRepositoryWithManyToManyParents({})
         test_query = repo.receive()
         test_element = test_query.get(hub_entity_id=hub_c.pk)
-        self.assertEqual(test_element.field_e1_str, "Test1;Test2")
+        self.assertCountEqual(json.loads(test_element.field_e1_str), ["Test1", "Test2"])
 
     def test_link_with_many_to_one_parents(self):
         sat_b1 = me_factories.SatB1Factory(field_b1_str="Test1")
@@ -1534,7 +1538,7 @@ class TestMontrekRepositoryLinks(TestCase):
         repo = HubCRepositoryWithManyToOneParents({})
         test_query = repo.receive()
         test_element = test_query.get(hub_entity_id=hub_c.pk)
-        self.assertEqual(test_element.field_b1_str, "Test1;Test2")
+        self.assertCountEqual(json.loads(test_element.field_b1_str), ["Test1", "Test2"])
 
 
 class TestLinkOneToOneUpates(TestCase):
@@ -2634,15 +2638,17 @@ class TestMontrekManyToManyRelations(TestCase):
         repository_d = HubDRepository()
         satd_queryset = repository_d.receive()
         self.assertEqual(satd_queryset.count(), 2)
-        self.assertEqual(
-            satd_queryset[0].hub_b_id,
-            f"{self.satb1.hub_entity_id},{self.satb2.hub_entity_id}",
+        self.assertCountEqual(
+            json.loads(satd_queryset[0].hub_b_id),
+            [str(self.satb1.hub_entity_id), str(self.satb2.hub_entity_id)],
+        )
+        self.assertCountEqual(
+            json.loads(satd_queryset[0].field_b1_str),
+            [self.satb1.field_b1_str, self.satb2.field_b1_str],
         )
         self.assertEqual(
-            satd_queryset[0].field_b1_str,
-            f"{self.satb1.field_b1_str},{self.satb2.field_b1_str}",
+            json.loads(satd_queryset[1].field_b1_str), [self.satb1.field_b1_str]
         )
-        self.assertEqual(satd_queryset[1].field_b1_str, self.satb1.field_b1_str)
 
     def test_add_new_many_to_many_relation(self):
         input_data = {
@@ -3011,7 +3017,7 @@ class TestRepositoryQueryConcept(TestCase):
         query = repo.receive()
         self.assertEqual(query.count(), 1)
         self.assertEqual(query.first().field_c1_str, c_sat1.field_c1_str)
-        self.assertEqual(query.first().field_d1_str, d_sat1.field_d1_str)
+        self.assertEqual(json.loads(query.first().field_d1_str), [d_sat1.field_d1_str])
 
     def test_ts_satellite_concept__linked_ts_sat(self):
         value_date_list = me_factories.ValueDateListFactory()
@@ -3092,11 +3098,12 @@ class TestRepositoryQueryConcept(TestCase):
         query = repo.receive()
         self.assertEqual(query.count(), 2)
         self.assertEqual(query.first().field_c1_str, c_sat1.field_c1_str)
-        self.assertEqual(
-            query.first().field_d1_str, f"{d_sat1.field_d1_str},{d_sat2.field_d1_str}"
+        self.assertCountEqual(
+            json.loads(query.first().field_d1_str),
+            [d_sat1.field_d1_str, d_sat2.field_d1_str],
         )
         self.assertEqual(query.last().field_c1_str, c_sat2.field_c1_str)
-        self.assertEqual(query.last().field_d1_str, d_sat1.field_d1_str)
+        self.assertEqual(json.loads(query.last().field_d1_str), [d_sat1.field_d1_str])
 
     def test_ts_satellite_concept__multiple_ts_links_aggregated_to_one(self):
         c_sat1 = me_factories.SatC1Factory()
@@ -3144,8 +3151,8 @@ class TestCommonFields(TestCase):
         test_obj = query.last()
         self.assertEqual(test_obj.comment_tsc2, "First Comment")
         self.assertEqual(test_obj.comment_c1, "Second Comment")
-        self.assertEqual(test_obj.comment_tsd2, "Third Comment")
-        self.assertEqual(test_obj.comment_d1, "Fourth Comment")
+        self.assertEqual(json.loads(test_obj.comment_tsd2), ["Third Comment"])
+        self.assertEqual(json.loads(test_obj.comment_d1), ["Fourth Comment"])
         self.assertEqual(test_obj.comment, "")
 
 
@@ -3688,7 +3695,7 @@ class TestCrossSatelliteFilter(TestCase):
         repo = HubBRepositoryWithCrossSatFilter()
         queryset = repo.receive().filter(hub=satb.hub_entity)
         self.assertEqual(queryset.count(), 1)
-        self.assertEqual(queryset[0].field_d1_str, "D-match")
+        self.assertEqual(json.loads(queryset[0].field_d1_str), ["D-match"])
 
     def test_non_matching_hub_d_returns_none(self):
         """HubD has a HubC link but SatC1.field_c1_str does not match."""
@@ -3720,7 +3727,7 @@ class TestCrossSatelliteFilter(TestCase):
         repo = HubBRepositoryWithCrossSatFilter()
         queryset = repo.receive().order_by("field_b1_str")
         self.assertEqual(queryset.count(), 2)
-        self.assertEqual(queryset[0].field_d1_str, "D1-match")
+        self.assertEqual(json.loads(queryset[0].field_d1_str), ["D1-match"])
         self.assertIsNone(queryset[1].field_d1_str)
 
     def test_cross_satellite_filter_with_count_agg(self):
@@ -3858,7 +3865,7 @@ class TestCrossSatelliteFilter(TestCase):
         repo = HubBRepositoryWithTSCrossSatFilter()
         queryset = repo.receive().filter(hub=satb1.hub_entity)
         self.assertEqual(queryset.count(), 1)
-        self.assertEqual(queryset[0].field_d1_str, "D1-ts-match")
+        self.assertEqual(json.loads(queryset[0].field_d1_str), ["D1-ts-match"])
 
     def test_cross_satellite_filter_with_ts_cross_satellite_not_matching(self):
         """Cross-satellite is a timeseries satellite — non-matching case returns None."""

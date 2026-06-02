@@ -470,22 +470,30 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
         outer_ref_field: str,
         lookup_field: str,
     ) -> dict:
-        inner_qs = self._annotate_agg_field(
-            hub_field_to,
-            self.satellite_class.objects.filter(
-                Q(
-                    **self.subquery_filter(
-                        reference_date,
-                        lookup_field=lookup_field,
-                        outer_ref=outer_ref_field,
-                    )
-                ),
-                Q(**self.link_satellite_filter),
-                Q(**self._build_cross_satellite_filter_dict(reference_date)),
-            )
-            .annotate(**{self.field + "sub": F(self.field)})
-            .values(self.field),
+        sat_qs = self.satellite_class.objects.filter(
+            Q(
+                **self.subquery_filter(
+                    reference_date,
+                    lookup_field=lookup_field,
+                    outer_ref=outer_ref_field,
+                )
+            ),
+            Q(**self.link_satellite_filter),
+            Q(**self._build_cross_satellite_filter_dict(reference_date)),
         )
+        if self.agg_func == LinkAggFunctionEnum.JSON_AGG:
+            # For json_agg the outer _annotate_agg_field already builds the JSON
+            # array across linked hubs.  Applying JSON_AGG here on the inner
+            # satellite records would produce a double-wrapped result like
+            # [["value"]] instead of ["value"].  Use a scalar subquery instead.
+            inner_qs = sat_qs.values(self.field)[:1]
+        else:
+            inner_qs = self._annotate_agg_field(
+                hub_field_to,
+                sat_qs.annotate(**{self.field + "sub": F(self.field)}).values(
+                    self.field
+                ),
+            )
         inner_subquery = Subquery(inner_qs)
         # COUNT returns 0 (not NULL) for empty sets, unlike other aggregates.
         # The outer COUNT in _link_hubs_and_get_ts_subquery relies on NULL to

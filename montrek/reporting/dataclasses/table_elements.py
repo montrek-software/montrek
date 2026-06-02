@@ -381,7 +381,7 @@ class LinkListTableElement(TableElement, GetDottetAttrsOrArgMixin):
     text: str = field(default="")
     list_attr: str = field(default="")
     list_kwarg: str = field(default="")
-    in_separator: str | None = ";"
+    in_separator: str | None = None
     field_template: ClassVar[str | None] = "link_list"
 
     def get_field_context_data(self, value: Any, obj: Any) -> dict[str, Any]:
