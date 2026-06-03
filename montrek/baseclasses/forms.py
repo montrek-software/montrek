@@ -1,3 +1,4 @@
+import json
 from typing import Any
 
 from django import forms
@@ -331,7 +332,7 @@ class MontrekCreateForm(forms.ModelForm):
         required: bool = False,
         is_char_field: bool = False,
         use_checkboxes_for_many_to_many: bool = True,
-        separator: str = ";",
+        separator: str | None = None,
         readonly: bool = False,
         **kwargs,
     ):
@@ -397,7 +398,7 @@ class MontrekModelChoiceField(BaseMontrekChoiceField, forms.ModelChoiceField):
         initial: dict[str, Any],
         queryset: QuerySet,
         display_field: str,
-        separator: str,
+        separator: str | None,
         source_field: str | None,
     ) -> object | None:
         source_field = display_field if source_field is None else source_field
@@ -434,15 +435,21 @@ class MontrekModelMultipleChoiceField(
         initial: dict[str, Any],
         queryset: QuerySet,
         display_field: str,
-        separator: str,
+        separator: str | None,
         source_field: str | None,
     ) -> object | None | QuerySet:
         source_field = display_field if source_field is None else source_field
         initial_links_str = initial.get(source_field)
         if not isinstance(initial_links_str, str):
             return None
-        filter_kwargs = {f"{display_field}__in": initial_links_str.split(separator)}
-        return queryset.filter(**filter_kwargs).all()
+        if separator is None:
+            try:
+                values = json.loads(initial_links_str)
+            except (json.JSONDecodeError, ValueError):
+                return None
+        else:
+            values = initial_links_str.split(separator)
+        return queryset.filter(**{f"{display_field}__in": values}).all()
 
 
 class MontrekModelCharChoiceField(BaseMontrekChoiceField, forms.CharField):
