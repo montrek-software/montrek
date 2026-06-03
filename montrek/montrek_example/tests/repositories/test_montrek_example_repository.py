@@ -4366,10 +4366,10 @@ class TestJsonAggLinks(TestCase):
 
 class TestGetLinkNames(TestCase):
     def _assert_get_links(
-        self, repo: type[MontrekRepository], expeceted_links: list[str]
+        self, repo: type[MontrekRepository], expected_links: list[str]
     ):
         links = repo().get_link_names()
-        self.assertEqual(links, expeceted_links)
+        self.assertEqual(links, expected_links)
 
     def test_get_repository_link_names(self):
         for repo, expected_links in [
