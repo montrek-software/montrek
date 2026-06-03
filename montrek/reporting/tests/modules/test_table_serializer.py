@@ -174,7 +174,7 @@ class TableSerializerTestCase(TestCase):
 
         self.assertEqual(len(result), 4)  # link_skip is excluded
         self.assertEqual(result["url"], "https://test.com")
-        self.assertEqual(result["related"], "[('1', 'Item 1'), ('2', 'Item 2')]")
+        self.assertEqual(result["related"], str(link_list.get_value.return_value))
         self.assertEqual(result["name"], "Test Name")
         self.assertEqual(result["updated"], "2024-02-01")
 
