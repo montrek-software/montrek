@@ -4362,3 +4362,32 @@ class TestJsonAggLinks(TestCase):
             hub_d_ids,
             [sat_d1.hub_entity_id, sat_d2.hub_entity_id],
         )
+
+
+class TestGetLinkNames(TestCase):
+    def _assert_get_links(
+        self, repo: type[MontrekRepository], expeceted_links: list[str]
+    ):
+        links = repo().get_link_names()
+        self.assertEqual(links, expeceted_links)
+
+    def test_get_repository_link_names(self):
+        for repo, expected_links in [
+            (
+                HubARepository,
+                [
+                    "link_hub_a_hub_b",
+                    "link_hub_a_hub_c",
+                    "link_hub_a_file_upload_registry",
+                    "link_hub_a_api_upload_registry",
+                ],
+            ),
+            (HubBRepository, ["link_hub_b_hub_d", "link_hub_b_hub_a"]),
+            (HubCRepository, ["link_hub_c_hub_d", "link_hub_c_hub_a"]),
+            (
+                HubDRepository,
+                ["link_hub_d_hub_e", "link_hub_d_hub_b", "link_hub_d_hub_c"],
+            ),
+        ]:
+            with self.subTest(f"Asert links for {repo}"):
+                self._assert_get_links(repo, expected_links)
