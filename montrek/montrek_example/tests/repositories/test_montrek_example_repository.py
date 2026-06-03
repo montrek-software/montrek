@@ -744,7 +744,7 @@ class TestMontrekCreateTimeSeriesObject(TestCase):
         test_data = repository.receive()
         self.assertEqual(test_data.count(), 1)
         self.assertEqual(test_data[0].field_d1_str, "Test D")
-        self.assertEqual(test_data[0].field_b1_str, '["Test B"]')
+        self.assertEqual(json.loads(test_data[0].field_b1_str), ["Test B"])
 
 
 class TestMontrekCreateObjectDataFrame(TestCase):
