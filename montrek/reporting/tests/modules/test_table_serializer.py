@@ -74,7 +74,9 @@ class TableSerializerTestCase(TestCase):
         serializer = TableSerializer([element])
         result = serializer.serialize_object(self.query_object)
 
-        self.assertEqual(result["links"], "['Link 1', 'Link 2', 'Link 3']")
+        self.assertEqual(
+            result["links"], "[('id1', 'Link 1'), ('id2', 'Link 2'), ('id3', 'Link 3')]"
+        )
 
     def test_serialize_string_table_element(self):
         """Test serialization of StringTableElement."""
@@ -174,7 +176,7 @@ class TableSerializerTestCase(TestCase):
 
         self.assertEqual(len(result), 4)  # link_skip is excluded
         self.assertEqual(result["url"], "https://test.com")
-        self.assertEqual(result["related"], "['Item 1', 'Item 2']")
+        self.assertEqual(result["related"], "[('1', 'Item 1'), ('2', 'Item 2')]")
         self.assertEqual(result["name"], "Test Name")
         self.assertEqual(result["updated"], "2024-02-01")
 

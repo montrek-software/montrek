@@ -40,7 +40,7 @@ class TableSerializer:
             return table_element.text, str(raw_value)
 
         if isinstance(table_element, te.LinkListTableElement):
-            return table_element.text, str([val[1] for val in raw_value])
+            return table_element.text, str(raw_value)
 
         # Handle regular table elements
         return table_element.attr, self._format_value(raw_value, table_element)
