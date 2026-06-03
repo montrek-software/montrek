@@ -4389,5 +4389,5 @@ class TestGetLinkNames(TestCase):
                 ["link_hub_d_hub_e", "link_hub_d_hub_b", "link_hub_d_hub_c"],
             ),
         ]:
-            with self.subTest(f"Asert links for {repo}"):
+            with self.subTest(f"Assert links for {repo}"):
                 self._assert_get_links(repo, expected_links)
