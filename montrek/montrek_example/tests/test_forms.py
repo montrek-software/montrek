@@ -586,6 +586,22 @@ class TestMontrekModelMultipleChoiceField(TestCase):
         )
         self.assertIsNone(result)
 
+    def test_get_initial_link_invalid_json_returns_none(self):
+        queryset = HubCRepositoryOnlyStatic().receive()
+        initial = {"field_c1_str": "not valid json {["}
+        result = MontrekModelMultipleChoiceField.get_initial_link(
+            initial, queryset, "field_c1_str", None, None
+        )
+        self.assertIsNone(result)
+
+    def test_get_initial_link_empty_string_json_returns_none(self):
+        queryset = HubCRepositoryOnlyStatic().receive()
+        initial = {"field_c1_str": ""}
+        result = MontrekModelMultipleChoiceField.get_initial_link(
+            initial, queryset, "field_c1_str", None, None
+        )
+        self.assertIsNone(result)
+
 
 # ---------------------------------------------------------------------------
 # MontrekModelCharChoiceField.clean
