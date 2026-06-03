@@ -734,6 +734,18 @@ class TestMontrekCreateTimeSeriesObject(TestCase):
         queried_object = repository.receive().get()
         self.assertEqual(queried_object.field_a2_float, 0.0)
 
+    def test_write_reversed_links_via_data_frame(self):
+        repository = HubDRepository(session_data={"user_id": self.user.id})
+        sat_b = me_factories.SatB1Factory(field_b1_str="Test B")
+        input_data = pd.DataFrame(
+            {"field_d1_str": ["Test D"], "link_hub_d_hub_b": [sat_b.hub_entity]}
+        )
+        repository.create_by_data_frame(input_data)
+        test_data = repository.receive()
+        self.assertEqual(test_data.count(), 1)
+        self.assertEqual(test_data[0].field_d1_str, "Test D")
+        self.assertEqual(json.loads(test_data[0].field_b1_str), ["Test B"])
+
 
 class TestMontrekCreateObjectDataFrame(TestCase):
     def setUp(self):
@@ -4350,3 +4362,32 @@ class TestJsonAggLinks(TestCase):
             hub_d_ids,
             [sat_d1.hub_entity_id, sat_d2.hub_entity_id],
         )
+
+
+class TestGetLinkNames(TestCase):
+    def _assert_get_links(
+        self, repo: type[MontrekRepository], expected_links: list[str]
+    ):
+        links = repo().get_link_names()
+        self.assertEqual(links, expected_links)
+
+    def test_get_repository_link_names(self):
+        for repo, expected_links in [
+            (
+                HubARepository,
+                [
+                    "link_hub_a_hub_b",
+                    "link_hub_a_hub_c",
+                    "link_hub_a_file_upload_registry",
+                    "link_hub_a_api_upload_registry",
+                ],
+            ),
+            (HubBRepository, ["link_hub_b_hub_d", "link_hub_b_hub_a"]),
+            (HubCRepository, ["link_hub_c_hub_d", "link_hub_c_hub_a"]),
+            (
+                HubDRepository,
+                ["link_hub_d_hub_e", "link_hub_d_hub_b", "link_hub_d_hub_c"],
+            ),
+        ]:
+            with self.subTest(f"Assert links for {repo}"):
+                self._assert_get_links(repo, expected_links)

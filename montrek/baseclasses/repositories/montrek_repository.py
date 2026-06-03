@@ -41,6 +41,7 @@ from baseclasses.utils import (
 from django.core.exceptions import PermissionDenied
 from django.db import models
 from django.db.models import F, QuerySet
+from django.db.models.fields.related import ManyToManyRel
 from django.utils import timezone
 from django_pandas.io import read_frame
 
@@ -338,7 +339,13 @@ class MontrekRepository:
         return self.annotator.get_annotated_field_names()
 
     def get_link_names(self) -> list[str]:
-        return [f.name for f in self.hub_class._meta.many_to_many]
+        forward = [f.name for f in self.hub_class._meta.many_to_many]
+        reverse = [
+            f.get_accessor_name()
+            for f in self.hub_class._meta.get_fields()
+            if isinstance(f, ManyToManyRel)
+        ]
+        return forward + reverse
 
     def std_create_object(self, data: dict[str, Any]) -> MontrekHubABC:
         return self.create_by_dict(data)
