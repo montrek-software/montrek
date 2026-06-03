@@ -734,6 +734,18 @@ class TestMontrekCreateTimeSeriesObject(TestCase):
         queried_object = repository.receive().get()
         self.assertEqual(queried_object.field_a2_float, 0.0)
 
+    def test_write_reversed_links_via_data_frame(self):
+        repository = HubDRepository(session_data={"user_id": self.user.id})
+        sat_b = me_factories.SatB1Factory(field_b1_str="Test B")
+        input_data = pd.DataFrame(
+            {"field_d1_str": ["Test D"], "link_hub_d_hub_b": [sat_b.hub_entity]}
+        )
+        repository.create_by_data_frame(input_data)
+        test_data = repository.receive()
+        self.assertEqual(test_data.count(), 1)
+        self.assertEqual(test_data[0].field_d1_str, "Test D")
+        self.assertEqual(test_data[0].field_b1_str, '["Test B"]')
+
 
 class TestMontrekCreateObjectDataFrame(TestCase):
     def setUp(self):
