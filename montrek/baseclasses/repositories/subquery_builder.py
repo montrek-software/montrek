@@ -451,12 +451,14 @@ class LinkedHubIdSubqueryBuilder(
             & Q(**parent_link_filters)
         )
         if not self._is_multiple_allowed(self.field):
-            return Subquery(qs.values(value_field))
+            return Subquery(qs.values(value_field)[:1])
+
         func = get_json_agg_function()
         agg_qs = (
             qs.filter(**{f"{value_field}__isnull": False})
+            .values(hub_db_field_name)
             .annotate(_hub_id_agg=Cast(func(value_field), CharField()))
-            .values("_hub_id_agg")
+            .values("_hub_id_agg")[:1]
         )
         return Subquery(agg_qs)
 
