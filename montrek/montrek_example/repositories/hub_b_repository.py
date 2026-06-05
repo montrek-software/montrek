@@ -68,7 +68,17 @@ class HubBRepositoryDirectLinkHub(MontrekRepository):
             ["hub_entity_id"],
             rename_field_map={"hub_entity_id": "hub_d_id"},
         )
+        self.add_linked_satellites_field_annotations(
+            me_models.SatA1,
+            me_models.LinkHubAHubB,
+            ["hub_entity_id"],
+            rename_field_map={"hub_entity_id": "hub_a_id"},
+            reversed_link=True,
+        )
         self.add_linked_hub_id(me_models.LinkHubBHubD, "hub_d_direct_id")
+        self.add_linked_hub_id(
+            me_models.LinkHubAHubB, "hub_a_direct_id", reversed_link=True
+        )
 
 
 class HubBRepositoryWithCrossSatFilter(MontrekRepository):

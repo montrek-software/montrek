@@ -1327,7 +1327,35 @@ class TestreceiveLinkedHubIds(TestCase):
         self.assertEqual(test_data.count(), 1)
         # A hub reached via add_linked_satellites_field_annotations will be empty
         self.assertIsNone(test_data.first().hub_d_id)
-        self.assertEqual(test_data.first().hub_d_direct_id, hub_d.pk)
+        self.assertEqual(test_data.first().hub_d_direct_id, json.dumps([hub_d.pk]))
+
+    def test_get_linked_hub_without_sat__single_entry(self):
+        # Consider a scenario, where two hubs are linked, but one has no
+        # entry in the satellite
+        sat_b = me_factories.SatB1Factory.create(field_b1_str="Test")
+        hub_a = me_factories.HubAFactory()
+        sat_b.hub_entity.link_hub_b_hub_a.add(hub_a)
+        test_data = HubBRepositoryDirectLinkHub({}).receive()
+        self.assertEqual(test_data.count(), 1)
+        # A hub reached via add_linked_satellites_field_annotations will be empty
+        self.assertIsNone(test_data.first().hub_a_id)
+        self.assertEqual(test_data.first().hub_a_direct_id, hub_a.pk)
+
+    def test_get_linked_hub_without_sat__aggregation(self):
+        # Consider a scenario, where two hubs are linked, but one has no
+        # entry in the satellite
+        sat_b = me_factories.SatB1Factory.create(field_b1_str="Test")
+        hub_d_1 = me_factories.HubDFactory()
+        hub_d_2 = me_factories.HubDFactory()
+        sat_b.hub_entity.link_hub_b_hub_d.add(hub_d_1)
+        sat_b.hub_entity.link_hub_b_hub_d.add(hub_d_2)
+        test_data = HubBRepositoryDirectLinkHub({}).receive()
+        self.assertEqual(test_data.count(), 1)
+        # A hub reached via add_linked_satellites_field_annotations will be empty
+        self.assertIsNone(test_data.first().hub_d_id)
+        self.assertEqual(
+            test_data.first().hub_d_direct_id, json.dumps([hub_d_1.pk, hub_d_2.pk])
+        )
 
 
 class TestMontrekRepositoryLinks(TestCase):
