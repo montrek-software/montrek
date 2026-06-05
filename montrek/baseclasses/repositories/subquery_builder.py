@@ -247,7 +247,6 @@ class MultipleLinksCheckMixin(HasLinkAttrs):
             issubclass(parent_link_class, MontrekManyToManyLinkABC)
             for parent_link_class in self.parent_link_classes
         )
-        _is_many_to_one_parent = False
         for i, parent_link_class in enumerate(self.parent_link_classes):
             parent_reversed = self.parent_link_reversed[i]
             if (
@@ -260,12 +259,7 @@ class MultipleLinksCheckMixin(HasLinkAttrs):
         _is_many_to_one = issubclass(self.link_class, MontrekOneToManyLinkABC) and (
             hub_field_to == "hub_in"
         )
-        return (
-            _is_many_to_many
-            or _is_many_to_one
-            or _is_many_to_many_parent
-            or _is_many_to_one_parent
-        )
+        return _is_many_to_many or _is_many_to_one or _is_many_to_many_parent
 
     def _get_parent_db_name_und_link_string(
         self, hub_field: str
