@@ -236,8 +236,8 @@ class CommentSubqueryBuilder(HubDirectFieldSubqueryBuilder):
 
 class HasLinkAttrs(Protocol):
     link_class: type[MontrekLinkABC]
-    parent_link_classes: tuple[type[MontrekLinkABC]]
-    parent_link_reversed: tuple[bool]
+    parent_link_classes: tuple[type[MontrekLinkABC], ...]
+    parent_link_reversed: tuple[bool, ...]
 
 
 class MultipleLinksCheckMixin(HasLinkAttrs):
