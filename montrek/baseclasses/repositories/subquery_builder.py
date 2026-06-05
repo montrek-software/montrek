@@ -267,6 +267,32 @@ class MultipleLinksCheckMixin(HasLinkAttrs):
             or _is_many_to_one_parent
         )
 
+    def _get_parent_db_name_und_link_string(
+        self, hub_field: str
+    ) -> tuple[str, list[str]]:
+        db_name = hub_field
+        parent_link_strings = []
+        for i, link_class in enumerate(self.parent_link_classes):
+            is_reversed = self.parent_link_reversed[i]
+            parent_hub_field = "hub_out" if is_reversed else "hub_in"
+            db_name += "__" + link_class.__name__.lower()
+            parent_link_strings.append(db_name)
+            db_name += f"__{parent_hub_field}"
+        return db_name, parent_link_strings
+
+    def _get_parent_link_filters(
+        self, reference_date: timezone.datetime, parent_link_strings: list[str]
+    ) -> dict[str, timezone.datetime]:
+        parent_link_filters = {}
+        for parent_link_string in parent_link_strings:
+            parent_link_filters[parent_link_string + "__state_date_end__gt"] = (
+                reference_date
+            )
+            parent_link_filters[parent_link_string + "__state_date_start__lte"] = (
+                reference_date
+            )
+        return parent_link_filters
+
 
 class AggregationMixin:
     field: str
@@ -378,28 +404,51 @@ class LinkedHubIdSubqueryBuilder(
     """Annotates the hub_out_id (or hub_in_id for reversed links) directly from
     the link table, without requiring a satellite record on the linked hub.
 
-    # TODO: Add parent_link support so the link can be reached via one or more
-    #       intermediate links, mirroring the parent_link_classes mechanism in
-    #       LinkedSatelliteSubqueryBuilderBase. Also add aggregation (e.g.
-    #       string_concat / sum) for M2M scenarios with multiple linked hubs.
+    Supports parent_link_classes to traverse intermediate links before reaching
+    the target link, mirroring the mechanism in LinkedSatelliteSubqueryBuilderBase.
+    Many-to-many scenarios return a JSON array string; one-to-one returns a scalar.
     """
 
     field_type = models.IntegerField(null=True, blank=True)
 
-    def __init__(self, link_class: type[MontrekLinkABC], reversed_link: bool = False):
+    def __init__(
+        self,
+        link_class: type[MontrekLinkABC],
+        reversed_link: bool = False,
+        parent_link_classes: tuple[type[MontrekLinkABC], ...] = (),
+        parent_link_reversed: tuple[bool, ...] | list[bool] | None = None,
+    ):
         self.link_class = link_class
         self.reversed_link = reversed_link
-        # TODO: Implement this
-        self.parent_link_classes = ()
-        self.parent_link_reversed = ()
+        self.parent_link_classes = parent_link_classes
+        if parent_link_reversed is None:
+            parent_link_reversed = [reversed_link for _ in parent_link_classes]
+        self.parent_link_reversed = parent_link_reversed
         self.field = "hub_out" if self.reversed_link else "hub_in"
 
     def build(self, reference_date: timezone.datetime) -> Subquery:
         value_field = "hub_in_id" if self.reversed_link else "hub_out_id"
+        hub_db_field_name, parent_link_strings = (
+            self._get_parent_db_name_und_link_string(self.field)
+        )
+        parent_link_filters = self._get_parent_link_filters(
+            reference_date, parent_link_strings
+        )
         qs = self.link_class.objects.filter(
-            **{self.field: OuterRef("hub")},
-            state_date_start__lte=reference_date,
-            state_date_end__gt=reference_date,
+            Q(
+                **{
+                    hub_db_field_name: OuterRef("hub"),
+                    "state_date_start__lte": reference_date,
+                    "state_date_end__gt": reference_date,
+                }
+            )
+            & Q(
+                **{
+                    f"{hub_db_field_name}__state_date_start__lte": reference_date,
+                    f"{hub_db_field_name}__state_date_end__gt": reference_date,
+                }
+            )
+            & Q(**parent_link_filters)
         )
         if not self._is_multiple_allowed(self.field):
             return Subquery(qs.values(value_field))
@@ -496,32 +545,6 @@ class LinkedSatelliteSubqueryBuilderBase(
                 }
             ),
         )
-
-    def _get_parent_db_name_und_link_string(
-        self, hub_field: str
-    ) -> tuple[str, list[str]]:
-        db_name = hub_field
-        parent_link_strings = []
-        for i, link_class in enumerate(self.parent_link_classes):
-            is_reversed = self.parent_link_reversed[i]
-            parent_hub_field = "hub_out" if is_reversed else "hub_in"
-            db_name += "__" + link_class.__name__.lower()
-            parent_link_strings.append(db_name)
-            db_name += f"__{parent_hub_field}"
-        return db_name, parent_link_strings
-
-    def _get_parent_link_filters(
-        self, reference_date: timezone.datetime, parent_link_strings: list[str]
-    ) -> dict[str, timezone.datetime]:
-        parent_link_filters = {}
-        for parent_link_string in parent_link_strings:
-            parent_link_filters[parent_link_string + "__state_date_end__gt"] = (
-                reference_date
-            )
-            parent_link_filters[parent_link_string + "__state_date_start__lte"] = (
-                reference_date
-            )
-        return parent_link_filters
 
     def _build_cross_satellite_filter_dict(
         self, reference_date: timezone.datetime
