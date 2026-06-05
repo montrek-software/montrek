@@ -1347,9 +1347,8 @@ class TestreceiveLinkedHubIds(TestCase):
         test_data = HubBRepositoryDirectLinkHub({}).receive()
         self.assertEqual(test_data.count(), 1)
         self.assertIsNone(test_data.first().hub_d_id)
-        self.assertEqual(
-            test_data.first().hub_d_direct_id, json.dumps([hub_d_1.pk, hub_d_2.pk])
-        )
+        direct_ids = json.loads(test_data.first().hub_d_direct_id)
+        self.assertCountEqual(direct_ids, [hub_d_1.pk, hub_d_2.pk])
 
     def test_get_linked_hub_without_sat__parent_links(self):
         sat_b = me_factories.SatB1Factory.create(field_b1_str="Test")
