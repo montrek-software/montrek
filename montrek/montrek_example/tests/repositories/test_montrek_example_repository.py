@@ -42,6 +42,7 @@ from montrek_example.repositories.hub_c_repository import (
     HubCRepositoryAll,
     HubCRepositoryCommonFields,
     HubCRepositoryCount,
+    HubCRepositoryDirectLinkHub,
     HubCRepositoryJsonAgg,
     HubCRepositoryLast,
     HubCRepositoryLastTS,
@@ -1327,7 +1328,127 @@ class TestreceiveLinkedHubIds(TestCase):
         self.assertEqual(test_data.count(), 1)
         # A hub reached via add_linked_satellites_field_annotations will be empty
         self.assertIsNone(test_data.first().hub_d_id)
-        self.assertEqual(test_data.first().hub_d_direct_id, hub_d.pk)
+        self.assertEqual(test_data.first().hub_d_direct_id, json.dumps([hub_d.pk]))
+
+    def test_get_linked_hub_without_sat__single_entry(self):
+        sat_b = me_factories.SatB1Factory.create(field_b1_str="Test")
+        hub_a = me_factories.HubAFactory()
+        sat_b.hub_entity.link_hub_b_hub_a.add(hub_a)
+        test_data = HubBRepositoryDirectLinkHub({}).receive()
+        self.assertEqual(test_data.count(), 1)
+        self.assertIsNone(test_data.first().hub_a_id)
+        self.assertEqual(test_data.first().hub_a_direct_id, hub_a.pk)
+
+    def test_get_linked_hub_without_sat__aggregation(self):
+        sat_b = me_factories.SatB1Factory.create(field_b1_str="Test")
+        hub_d_1 = me_factories.HubDFactory()
+        hub_d_2 = me_factories.HubDFactory()
+        sat_b.hub_entity.link_hub_b_hub_d.add(hub_d_1)
+        sat_b.hub_entity.link_hub_b_hub_d.add(hub_d_2)
+        test_data = HubBRepositoryDirectLinkHub({}).receive()
+        self.assertEqual(test_data.count(), 1)
+        self.assertIsNone(test_data.first().hub_d_id)
+        direct_ids = json.loads(test_data.first().hub_d_direct_id)
+        self.assertCountEqual(direct_ids, [hub_d_1.pk, hub_d_2.pk])
+
+    def test_get_linked_hub_without_sat__parent_links(self):
+        sat_b = me_factories.SatB1Factory.create(field_b1_str="Test")
+        hub_d = me_factories.HubDFactory()
+        sat_b.hub_entity.link_hub_b_hub_d.add(hub_d)
+        hub_cs = me_factories.HubCFactory.create_batch(3)
+        for hub_c in hub_cs:
+            hub_d.link_hub_d_hub_c.add(hub_c)
+        test_data = HubBRepositoryDirectLinkHub({}).receive()
+        self.assertEqual(test_data.count(), 1)
+        self.assertIsNone(test_data.first().hub_c_id)
+        direct_ids = json.loads(test_data.first().hub_c_direct_id)
+        self.assertCountEqual(direct_ids, [hub_c.pk for hub_c in hub_cs])
+
+    def test_no_link__returns_null(self):
+        me_factories.SatB1Factory.create(field_b1_str="Test")
+        test_data = HubBRepositoryDirectLinkHub({}).receive()
+        self.assertEqual(test_data.count(), 1)
+        self.assertIsNone(test_data.first().hub_d_direct_id)
+        self.assertIsNone(test_data.first().hub_a_direct_id)
+        self.assertIsNone(test_data.first().hub_c_direct_id)
+
+    def test_expired_link__is_excluded(self):
+        sat_b = me_factories.SatB1Factory.create(field_b1_str="Test")
+        hub_d = me_factories.HubDFactory()
+        me_factories.LinkHubBHubDFactory(
+            hub_in=sat_b.hub_entity,
+            hub_out=hub_d,
+            state_date_end=montrek_time(2020, 1, 1),
+        )
+        test_data = HubBRepositoryDirectLinkHub({}).receive()
+        self.assertEqual(test_data.count(), 1)
+        self.assertIsNone(test_data.first().hub_d_direct_id)
+
+    def test_multiple_hub_bs__results_are_isolated(self):
+        sat_b1 = me_factories.SatB1Factory.create(field_b1_str="B1")
+        sat_b2 = me_factories.SatB1Factory.create(field_b1_str="B2")
+        hub_d1 = me_factories.HubDFactory()
+        hub_d2 = me_factories.HubDFactory()
+        sat_b1.hub_entity.link_hub_b_hub_d.add(hub_d1)
+        sat_b2.hub_entity.link_hub_b_hub_d.add(hub_d2)
+        test_data = HubBRepositoryDirectLinkHub({}).receive()
+        self.assertEqual(test_data.count(), 2)
+        b1_row = test_data.get(field_b1_str="B1")
+        b2_row = test_data.get(field_b1_str="B2")
+        self.assertEqual(b1_row.hub_d_direct_id, json.dumps([hub_d1.pk]))
+        self.assertEqual(b2_row.hub_d_direct_id, json.dumps([hub_d2.pk]))
+
+    def test_parent_link__multiple_hub_ds_aggregated(self):
+        # HubB → HubD1 → HubC1, HubB → HubD2 → HubC2: both HubC IDs aggregated
+        sat_b = me_factories.SatB1Factory.create(field_b1_str="Test")
+        hub_d1 = me_factories.HubDFactory()
+        hub_d2 = me_factories.HubDFactory()
+        sat_b.hub_entity.link_hub_b_hub_d.add(hub_d1)
+        sat_b.hub_entity.link_hub_b_hub_d.add(hub_d2)
+        hub_c1 = me_factories.HubCFactory()
+        hub_c2 = me_factories.HubCFactory()
+        hub_d1.link_hub_d_hub_c.add(hub_c1)
+        hub_d2.link_hub_d_hub_c.add(hub_c2)
+        test_data = HubBRepositoryDirectLinkHub({}).receive()
+        self.assertEqual(test_data.count(), 1)
+        direct_ids = json.loads(test_data.first().hub_c_direct_id)
+        self.assertCountEqual(direct_ids, [hub_c1.pk, hub_c2.pk])
+
+    def test_parent_link__expired_parent_link__returns_null(self):
+        # Expired B→D link means HubC reached via that HubD must not appear
+        sat_b = me_factories.SatB1Factory.create(field_b1_str="Test")
+        hub_d = me_factories.HubDFactory()
+        me_factories.LinkHubBHubDFactory(
+            hub_in=sat_b.hub_entity,
+            hub_out=hub_d,
+            state_date_end=montrek_time(2020, 1, 1),
+        )
+        hub_c = me_factories.HubCFactory()
+        hub_d.link_hub_d_hub_c.add(hub_c)
+        test_data = HubBRepositoryDirectLinkHub({}).receive()
+        self.assertEqual(test_data.count(), 1)
+        self.assertIsNone(test_data.first().hub_c_direct_id)
+
+    def test_parent_link__unrelated_hub_d_does_not_bleed(self):
+        # HubD → HubC exists, but this HubB has no link to that HubD
+        me_factories.SatB1Factory.create(field_b1_str="Test")
+        hub_d = me_factories.HubDFactory()
+        hub_c = me_factories.HubCFactory()
+        hub_d.link_hub_d_hub_c.add(hub_c)
+        test_data = HubBRepositoryDirectLinkHub({}).receive()
+        self.assertEqual(test_data.count(), 1)
+        self.assertIsNone(test_data.first().hub_c_direct_id)
+
+    def test_reversed_link__one_to_many(self):
+        sat_c = me_factories.SatC1Factory.create(field_c1_str="Test")
+        hub_as = me_factories.HubAFactory.create_batch(3)
+        for hub_a in hub_as:
+            hub_a.link_hub_a_hub_c.add(sat_c.hub_entity)
+
+        test_data = HubCRepositoryDirectLinkHub({}).receive()
+        self.assertIsNone(test_data.first().hub_a_id)
+        direct_ids = json.loads(test_data.first().hub_a_direct_id)
+        self.assertCountEqual(direct_ids, [hub_a.pk for hub_a in hub_as])
 
 
 class TestMontrekRepositoryLinks(TestCase):

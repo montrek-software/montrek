@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import Any, Protocol
 from collections.abc import Callable
 
 from django.db.models.expressions import BaseExpression
@@ -234,35 +234,233 @@ class CommentSubqueryBuilder(HubDirectFieldSubqueryBuilder):
     field_type = models.CharField()
 
 
-class LinkedHubIdSubqueryBuilder(SubqueryBuilder):
+class HasLinkAttrs(Protocol):
+    link_class: type[MontrekLinkABC]
+    parent_link_classes: tuple[type[MontrekLinkABC], ...]
+    parent_link_reversed: tuple[bool, ...]
+
+
+class MultipleLinksCheckMixin(HasLinkAttrs):
+    def _is_multiple_allowed(self, hub_field_to: str) -> bool:
+        _is_many_to_many = issubclass(self.link_class, MontrekManyToManyLinkABC)
+        _is_many_to_many_parent = any(
+            issubclass(parent_link_class, MontrekManyToManyLinkABC)
+            for parent_link_class in self.parent_link_classes
+        )
+        for i, parent_link_class in enumerate(self.parent_link_classes):
+            parent_reversed = self.parent_link_reversed[i]
+            if (
+                issubclass(parent_link_class, MontrekOneToManyLinkABC)
+                and parent_reversed
+            ):
+                _is_many_to_many_parent = True
+                break
+
+        _is_many_to_one = issubclass(self.link_class, MontrekOneToManyLinkABC) and (
+            hub_field_to == "hub_in"
+        )
+        return _is_many_to_many or _is_many_to_one or _is_many_to_many_parent
+
+    def _get_parent_db_name_und_link_string(
+        self, hub_field: str
+    ) -> tuple[str, list[str]]:
+        db_name = hub_field
+        parent_link_strings = []
+        for i, link_class in enumerate(self.parent_link_classes):
+            is_reversed = self.parent_link_reversed[i]
+            parent_hub_field = "hub_out" if is_reversed else "hub_in"
+            db_name += "__" + link_class.__name__.lower()
+            parent_link_strings.append(db_name)
+            db_name += f"__{parent_hub_field}"
+        return db_name, parent_link_strings
+
+    def _get_parent_link_filters(
+        self, reference_date: timezone.datetime, parent_link_strings: list[str]
+    ) -> dict[str, timezone.datetime]:
+        parent_link_filters = {}
+        for parent_link_string in parent_link_strings:
+            parent_link_filters[parent_link_string + "__state_date_end__gt"] = (
+                reference_date
+            )
+            parent_link_filters[parent_link_string + "__state_date_start__lte"] = (
+                reference_date
+            )
+        return parent_link_filters
+
+
+class AggregationMixin:
+    field: str
+    satellite_class: MontrekSatelliteABC
+
+    def _annotate_sum(self, query: QuerySet) -> QuerySet:
+        return query.annotate(
+            **{
+                self.field + "agg": Func(self.field + "sub", function="Sum"),
+            }
+        ).values(self.field + "agg")
+
+    def _annotate_string_concat(self, query: QuerySet, separator: str) -> QuerySet:
+        func = get_string_concat_function(separator)
+        field_type = CharField
+        return query.annotate(
+            **{
+                self.field
+                + "agg": Cast(
+                    func(Cast(self.field + "sub", field_type())),
+                    field_type(),
+                )
+            }
+        ).values(self.field + "agg")
+
+    def _annotate_json_agg(self, query: QuerySet) -> QuerySet:
+        func = get_json_agg_function()
+        return (
+            query.filter(**{self.field + "sub__isnull": False})
+            .annotate(
+                **{
+                    self.field
+                    + "agg": Cast(
+                        func(self.field + "sub"),
+                        CharField(),
+                    )
+                }
+            )
+            .values(self.field + "agg")
+        )
+
+    def _annotate_latest(self, query: QuerySet) -> QuerySet:
+        if self.satellite_class.is_timeseries:
+            return query.order_by("-hub_value_date__value_date_list__value_date")[:1]
+        return query.order_by(f"{self.field}sub")[:1]
+
+    def _annotate_mean(self, query: QuerySet) -> QuerySet:
+        return query.annotate(
+            **{
+                self.field + "agg": Func(self.field + "sub", function="Avg"),
+            }
+        ).values(self.field + "agg")
+
+    def _annotate_count(self, query: QuerySet) -> QuerySet:
+        return query.annotate(
+            **{
+                self.field + "agg": Func(self.field + "sub", function="Count"),
+            }
+        ).values(self.field + "agg")
+
+    def _annotate_all(self, query: QuerySet) -> QuerySet:
+        # Map each value to 1 (truthy) or 0 (falsy), then take MIN across all rows.
+        # MIN = 1 iff every value was truthy → True; any falsy value → MIN = 0 → False.
+        # Only explicit False/0 is treated as falsy. NULL (no matching satellite, e.g.
+        # excluded by a CrossSatelliteFilter) is skipped, consistent with how SQL
+        # aggregates handle NULL (they ignore NULL values).
+        # A separate Q is used instead of __in=[False, 0] to avoid type-coercion errors
+        # when the field is e.g. IntegerField (which rejects "").
+        falsy_condition = Q(**{f"{self.field}sub": False})
+        min_field = f"{self.field}_all_min"
+        return (
+            query.annotate(
+                **{
+                    min_field: Func(
+                        Case(
+                            When(
+                                **{f"{self.field}sub__isnull": True},
+                                then=Value(None, output_field=IntegerField()),
+                            ),
+                            When(falsy_condition, then=Value(0)),
+                            default=Value(1),
+                            output_field=IntegerField(),
+                        ),
+                        function="Min",
+                    )
+                }
+            )
+            .annotate(
+                **{
+                    self.field
+                    + "agg": Case(
+                        When(
+                            **{f"{min_field}__isnull": True},
+                            then=Value(None, output_field=BooleanField()),
+                        ),
+                        When(**{min_field: 0}, then=Value(False)),
+                        default=Value(True),
+                        output_field=BooleanField(),
+                    )
+                }
+            )
+            .values(self.field + "agg")
+        )
+
+
+class LinkedHubIdSubqueryBuilder(
+    SubqueryBuilder, MultipleLinksCheckMixin, AggregationMixin
+):
     """Annotates the hub_out_id (or hub_in_id for reversed links) directly from
     the link table, without requiring a satellite record on the linked hub.
 
-    # TODO: Add parent_link support so the link can be reached via one or more
-    #       intermediate links, mirroring the parent_link_classes mechanism in
-    #       LinkedSatelliteSubqueryBuilderBase. Also add aggregation (e.g.
-    #       string_concat / sum) for M2M scenarios with multiple linked hubs.
+    Supports parent_link_classes to traverse intermediate links before reaching
+    the target link, mirroring the mechanism in LinkedSatelliteSubqueryBuilderBase.
+    Many-to-many scenarios return a JSON array string; one-to-one returns a scalar.
     """
 
     field_type = models.IntegerField(null=True, blank=True)
 
-    def __init__(self, link_class: type[MontrekLinkABC], reversed_link: bool = False):
+    def __init__(
+        self,
+        link_class: type[MontrekLinkABC],
+        reversed_link: bool = False,
+        parent_link_classes: tuple[type[MontrekLinkABC], ...] = (),
+        parent_link_reversed: tuple[bool, ...] | list[bool] | None = None,
+    ):
         self.link_class = link_class
         self.reversed_link = reversed_link
+        self.parent_link_classes = parent_link_classes
+        if parent_link_reversed is None:
+            parent_link_reversed = [reversed_link for _ in parent_link_classes]
+        self.parent_link_reversed = parent_link_reversed
+        self.field = "hub_out" if self.reversed_link else "hub_in"
+        self.to_field = "hub_in" if self.reversed_link else "hub_out"
 
     def build(self, reference_date: timezone.datetime) -> Subquery:
-        filter_field = "hub_out" if self.reversed_link else "hub_in"
         value_field = "hub_in_id" if self.reversed_link else "hub_out_id"
-        return Subquery(
-            self.link_class.objects.filter(
-                **{filter_field: OuterRef("hub")},
-                state_date_start__lte=reference_date,
-                state_date_end__gt=reference_date,
-            ).values(value_field)[:1]
+        hub_db_field_name, parent_link_strings = (
+            self._get_parent_db_name_und_link_string(self.field)
         )
+        parent_link_filters = self._get_parent_link_filters(
+            reference_date, parent_link_strings
+        )
+        qs = self.link_class.objects.filter(
+            Q(
+                **{
+                    hub_db_field_name: OuterRef("hub"),
+                    "state_date_start__lte": reference_date,
+                    "state_date_end__gt": reference_date,
+                }
+            )
+            & Q(
+                **{
+                    f"{hub_db_field_name}__state_date_start__lte": reference_date,
+                    f"{hub_db_field_name}__state_date_end__gt": reference_date,
+                }
+            )
+            & Q(**parent_link_filters)
+        )
+        if not self._is_multiple_allowed(self.to_field):
+            return Subquery(qs.values(value_field)[:1])
+
+        func = get_json_agg_function()
+        agg_qs = (
+            qs.filter(**{f"{value_field}__isnull": False})
+            .values(hub_db_field_name)
+            .annotate(_hub_id_agg=Cast(func(value_field), CharField()))
+            .values("_hub_id_agg")[:1]
+        )
+        return Subquery(agg_qs)
 
 
-class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
+class LinkedSatelliteSubqueryBuilderBase(
+    SatelliteSubqueryBuilderABC, MultipleLinksCheckMixin, AggregationMixin
+):
     # Subclasses declare which hub side is the *destination* (satellite owner)
     # and which side anchors the outer-query reference.  Used by the alias
     # optimisation to determine the correct hub fields without re-instantiating
@@ -344,32 +542,6 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
                 }
             ),
         )
-
-    def _get_parent_db_name_und_link_string(
-        self, hub_field: str
-    ) -> tuple[str, list[str]]:
-        db_name = hub_field
-        parent_link_strings = []
-        for i, link_class in enumerate(self.parent_link_classes):
-            is_reversed = self.parent_link_reversed[i]
-            parent_hub_field = "hub_out" if is_reversed else "hub_in"
-            db_name += "__" + link_class.__name__.lower()
-            parent_link_strings.append(db_name)
-            db_name += f"__{parent_hub_field}"
-        return db_name, parent_link_strings
-
-    def _get_parent_link_filters(
-        self, reference_date: timezone.datetime, parent_link_strings: list[str]
-    ) -> dict[str, timezone.datetime]:
-        parent_link_filters = {}
-        for parent_link_string in parent_link_strings:
-            parent_link_filters[parent_link_string + "__state_date_end__gt"] = (
-                reference_date
-            )
-            parent_link_filters[parent_link_string + "__state_date_start__lte"] = (
-                reference_date
-            )
-        return parent_link_filters
 
     def _build_cross_satellite_filter_dict(
         self, reference_date: timezone.datetime
@@ -522,131 +694,6 @@ class LinkedSatelliteSubqueryBuilderBase(SatelliteSubqueryBuilderABC):
                 f"Aggregation function {self.agg_func} is not implemented!"
             )
         return annotators[self.agg_func](query)
-
-    def _annotate_sum(self, query: QuerySet) -> QuerySet:
-        return query.annotate(
-            **{
-                self.field + "agg": Func(self.field + "sub", function="Sum"),
-            }
-        ).values(self.field + "agg")
-
-    def _annotate_string_concat(self, query: QuerySet, separator: str) -> QuerySet:
-        func = get_string_concat_function(separator)
-        field_type = CharField
-        return query.annotate(
-            **{
-                self.field
-                + "agg": Cast(
-                    func(Cast(self.field + "sub", field_type())),
-                    field_type(),
-                )
-            }
-        ).values(self.field + "agg")
-
-    def _annotate_json_agg(self, query: QuerySet) -> QuerySet:
-        func = get_json_agg_function()
-        return (
-            query.filter(**{self.field + "sub__isnull": False})
-            .annotate(
-                **{
-                    self.field
-                    + "agg": Cast(
-                        func(self.field + "sub"),
-                        CharField(),
-                    )
-                }
-            )
-            .values(self.field + "agg")
-        )
-
-    def _annotate_latest(self, query: QuerySet) -> QuerySet:
-        if self.satellite_class.is_timeseries:
-            return query.order_by("-hub_value_date__value_date_list__value_date")[:1]
-        return query.order_by(f"{self.field}sub")[:1]
-
-    def _annotate_mean(self, query: QuerySet) -> QuerySet:
-        return query.annotate(
-            **{
-                self.field + "agg": Func(self.field + "sub", function="Avg"),
-            }
-        ).values(self.field + "agg")
-
-    def _annotate_count(self, query: QuerySet) -> QuerySet:
-        return query.annotate(
-            **{
-                self.field + "agg": Func(self.field + "sub", function="Count"),
-            }
-        ).values(self.field + "agg")
-
-    def _annotate_all(self, query: QuerySet) -> QuerySet:
-        # Map each value to 1 (truthy) or 0 (falsy), then take MIN across all rows.
-        # MIN = 1 iff every value was truthy → True; any falsy value → MIN = 0 → False.
-        # Only explicit False/0 is treated as falsy. NULL (no matching satellite, e.g.
-        # excluded by a CrossSatelliteFilter) is skipped, consistent with how SQL
-        # aggregates handle NULL (they ignore NULL values).
-        # A separate Q is used instead of __in=[False, 0] to avoid type-coercion errors
-        # when the field is e.g. IntegerField (which rejects "").
-        falsy_condition = Q(**{f"{self.field}sub": False})
-        min_field = f"{self.field}_all_min"
-        return (
-            query.annotate(
-                **{
-                    min_field: Func(
-                        Case(
-                            When(
-                                **{f"{self.field}sub__isnull": True},
-                                then=Value(None, output_field=IntegerField()),
-                            ),
-                            When(falsy_condition, then=Value(0)),
-                            default=Value(1),
-                            output_field=IntegerField(),
-                        ),
-                        function="Min",
-                    )
-                }
-            )
-            .annotate(
-                **{
-                    self.field
-                    + "agg": Case(
-                        When(
-                            **{f"{min_field}__isnull": True},
-                            then=Value(None, output_field=BooleanField()),
-                        ),
-                        When(**{min_field: 0}, then=Value(False)),
-                        default=Value(True),
-                        output_field=BooleanField(),
-                    )
-                }
-            )
-            .values(self.field + "agg")
-        )
-
-    def _is_multiple_allowed(self, hub_field_to: str) -> bool:
-        _is_many_to_many = issubclass(self.link_class, MontrekManyToManyLinkABC)
-        _is_many_to_many_parent = any(
-            issubclass(parent_link_class, MontrekManyToManyLinkABC)
-            for parent_link_class in self.parent_link_classes
-        )
-        _is_many_to_one_parent = False
-        for i, parent_link_class in enumerate(self.parent_link_classes):
-            parent_reversed = self.parent_link_reversed[i]
-            if (
-                issubclass(parent_link_class, MontrekOneToManyLinkABC)
-                and parent_reversed
-            ):
-                _is_many_to_many_parent = True
-                break
-
-        _is_many_to_one = issubclass(self.link_class, MontrekOneToManyLinkABC) and (
-            hub_field_to == "hub_in"
-        )
-        return (
-            _is_many_to_many
-            or _is_many_to_one
-            or _is_many_to_many_parent
-            or _is_many_to_one_parent
-        )
 
     def _build_scalar_alias(
         self,

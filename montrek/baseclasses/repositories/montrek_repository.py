@@ -481,12 +481,14 @@ class MontrekRepository:
         output_name: str,
         *,
         reversed_link: bool = False,
+        parent_link_classes: tuple[type[MontrekLinkABC], ...] = (),
+        parent_link_reversed: tuple[bool] | list[bool] | None = None,
     ):
         if link_class not in self.annotator.get_link_classes():
             self.annotator.annotated_link_classes.append(link_class)
 
         self.annotator.annotations[output_name] = LinkedHubIdSubqueryBuilder(
-            link_class, reversed_link
+            link_class, reversed_link, parent_link_classes, parent_link_reversed
         )
         self.annotator.field_type_map[output_name] = models.IntegerField(
             null=True, blank=True
