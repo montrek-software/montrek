@@ -42,6 +42,7 @@ from montrek_example.repositories.hub_c_repository import (
     HubCRepositoryAll,
     HubCRepositoryCommonFields,
     HubCRepositoryCount,
+    HubCRepositoryDirectLinkHub,
     HubCRepositoryJsonAgg,
     HubCRepositoryLast,
     HubCRepositoryLastTS,
@@ -1437,6 +1438,17 @@ class TestreceiveLinkedHubIds(TestCase):
         test_data = HubBRepositoryDirectLinkHub({}).receive()
         self.assertEqual(test_data.count(), 1)
         self.assertIsNone(test_data.first().hub_c_direct_id)
+
+    def test_reversed_link__one_to_many(self):
+        sat_c = me_factories.SatC1Factory.create(field_c1_str="Test")
+        hub_as = me_factories.HubAFactory.create_batch(3)
+        for hub_a in hub_as:
+            hub_a.link_hub_a_hub_c.add(sat_c.hub_entity)
+
+        test_data = HubCRepositoryDirectLinkHub({}).receive()
+        self.assertIsNone(test_data.first().hub_a_id)
+        direct_ids = json.loads(test_data.first().hub_a_direct_id)
+        self.assertCountEqual(direct_ids, [hub_a.pk for hub_a in hub_as])
 
 
 class TestMontrekRepositoryLinks(TestCase):

@@ -419,6 +419,7 @@ class LinkedHubIdSubqueryBuilder(
             parent_link_reversed = [reversed_link for _ in parent_link_classes]
         self.parent_link_reversed = parent_link_reversed
         self.field = "hub_out" if self.reversed_link else "hub_in"
+        self.to_field = "hub_in" if self.reversed_link else "hub_out"
 
     def build(self, reference_date: timezone.datetime) -> Subquery:
         value_field = "hub_in_id" if self.reversed_link else "hub_out_id"
@@ -444,7 +445,7 @@ class LinkedHubIdSubqueryBuilder(
             )
             & Q(**parent_link_filters)
         )
-        if not self._is_multiple_allowed(self.field):
+        if not self._is_multiple_allowed(self.to_field):
             return Subquery(qs.values(value_field)[:1])
 
         func = get_json_agg_function()
