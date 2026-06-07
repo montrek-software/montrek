@@ -55,6 +55,7 @@ from montrek_example.repositories.hub_c_repository import (
     HubCRepositoryViewModel,
     HubCRepositoryWithManyToManyParents,
     HubCRepositoryWithManyToOneParents,
+    HubCRepositoryWithPairedJsonAnnotation,
     HubCRepositoryWithValueDateScopedLink,
 )
 from montrek_example.repositories.hub_d_repository import (
@@ -1687,6 +1688,37 @@ class TestMontrekRepositoryLinks(TestCase):
             self.assertEqual(
                 json.loads(row.field_e1_str), [expected[str(row.value_date)]]
             )
+
+    def test_link_with_paired_json_annotation_keeps_fields_paired_per_row(self):
+        """Independently JSON_AGG-ing the TS satellite field and the field from
+        the secondary linked hub gives no guarantee that the database returns
+        both arrays in the same row order, making positional zip() pairing on
+        the consuming side unreliable. The combined annotation instead builds
+        a {field: ..., extra_key: ...} JSON object per linked HubValueDate row
+        at the SQL level, so pairing is guaranteed by construction."""
+        hub_c = me_factories.HubCFactory()
+        value_dates = ["2024-01-01", "2025-01-01", "2026-01-01"]
+        expected = {}
+        for value_date in value_dates:
+            me_factories.CHubValueDateFactory(hub=hub_c, value_date=value_date)
+            sat_e1 = me_factories.SatE1Factory(field_e1_str=f"E-{value_date}")
+            hub_d = me_factories.HubDFactory(hub_e=sat_e1.hub_entity)
+            me_factories.LinkHubCHubDFactory(hub_in=hub_c, hub_out=hub_d)
+            d_hvd = me_factories.DHubValueDateFactory(hub=hub_d, value_date=value_date)
+            sat_tsd2 = me_factories.SatTSD2Factory(
+                hub_value_date=d_hvd, field_tsd2_float=float(value_date[:4])
+            )
+            expected[value_date] = {
+                "field_tsd2_float": sat_tsd2.field_tsd2_float,
+                "field_e1_str": sat_e1.field_e1_str,
+            }
+
+        repo = HubCRepositoryWithPairedJsonAnnotation({})
+        results = repo.receive().filter(hub_entity_id=hub_c.pk)
+        self.assertEqual(results.count(), len(value_dates))
+        for row in results:
+            details = json.loads(row.tsd2_with_e1_details)
+            self.assertEqual(details, [expected[str(row.value_date)]])
 
     def test_link_with_many_to_one_parents(self):
         sat_b1 = me_factories.SatB1Factory(field_b1_str="Test1")

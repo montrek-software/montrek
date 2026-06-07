@@ -520,6 +520,7 @@ class MontrekRepository:
         that the database returns them in the same row order, so positional
         pairing (e.g. via zip()) on the consuming side is unreliable.
         """
+        self.annotator.add_to_annotated_satellite_classes(satellite_class)
         if link_class not in self.annotator.get_link_classes():
             self.annotator.annotated_link_classes.append(link_class)
 

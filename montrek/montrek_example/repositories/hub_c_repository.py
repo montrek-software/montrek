@@ -1,5 +1,6 @@
 from django.db.models import OuterRef
 from baseclasses.repositories.montrek_repository import MontrekRepository
+from baseclasses.repositories.subquery_builder import LinkedHubJsonField
 from montrek_example.models import example_models as me_models
 from montrek_example.repositories.hub_d_repository import HubDRepository
 
@@ -300,6 +301,26 @@ class HubCRepositoryWithValueDateScopedLink(MontrekRepository):
             ["field_e1_str"],
             parent_link_classes=(me_models.LinkHubCHubD,),
             value_date_scope_path="hub_in__hub_value_date",
+        )
+
+
+class HubCRepositoryWithPairedJsonAnnotation(MontrekRepository):
+    hub_class = me_models.HubC
+
+    def set_annotations(self):
+        self.add_linked_hub_paired_json_annotation(
+            me_models.SatTSD2,
+            "field_tsd2_float",
+            me_models.LinkHubCHubD,
+            (
+                LinkedHubJsonField(
+                    output_key="field_e1_str",
+                    satellite_class=me_models.SatE1,
+                    field="field_e1_str",
+                    hub_lookup_path="linkhubdhube__hub_in",
+                ),
+            ),
+            "tsd2_with_e1_details",
         )
 
 
