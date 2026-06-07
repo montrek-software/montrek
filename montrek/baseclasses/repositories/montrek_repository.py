@@ -24,6 +24,8 @@ from baseclasses.repositories.query_builder import QueryBuilder
 from baseclasses.repositories.subquery_builder import (
     CrossSatelliteFilter,
     LinkedHubIdSubqueryBuilder,
+    LinkedHubJsonField,
+    LinkedHubPairedJsonSubqueryBuilder,
     LinkedSatelliteSubqueryBuilder,
     ReverseLinkedSatelliteSubqueryBuilder,
     SatelliteSubqueryBuilder,
@@ -496,6 +498,44 @@ class MontrekRepository:
             null=True, blank=True
         )
         self.annotator._field_names_in_order.append(output_name)
+
+    def add_linked_hub_paired_json_annotation(
+        self,
+        satellite_class: type[MontrekSatelliteABC],
+        field: str,
+        link_class: type[MontrekLinkABC],
+        extra_json_fields: tuple[LinkedHubJsonField, ...],
+        output_name: str,
+        *,
+        reversed_link: bool = False,
+        link_satellite_filter: dict[str, object] | None = None,
+    ):
+        """Annotate output_name with a JSON array of paired objects, one per
+        linked hub-value-date row, combining `field` from `satellite_class`
+        with the fields described in `extra_json_fields`.
+
+        Use this instead of separate add_linked_satellites_field_annotations
+        calls with agg_func="json_agg" when the resulting arrays must stay
+        pointwise paired: independently aggregated arrays carry no guarantee
+        that the database returns them in the same row order, so positional
+        pairing (e.g. via zip()) on the consuming side is unreliable.
+        """
+        if link_class not in self.annotator.get_link_classes():
+            self.annotator.annotated_link_classes.append(link_class)
+
+        self.annotator.annotations[output_name] = LinkedHubPairedJsonSubqueryBuilder(
+            satellite_class,
+            field,
+            link_class,
+            extra_json_fields,
+            reversed_link=reversed_link,
+            link_satellite_filter=link_satellite_filter,
+        )
+        self.annotator.field_type_map[output_name] = models.CharField(
+            null=True, blank=True
+        )
+        self.annotator._field_names_in_order.append(output_name)
+        self.linked_fields.append(output_name)
 
     def get_history_queryset(self, pk: int, **kwargs) -> dict[str, QuerySet]:
         hub = self.get_hub_by_id(pk=pk)

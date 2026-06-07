@@ -33,7 +33,7 @@ from django.db.models import (
     Value,
     When,
 )
-from django.db.models.functions import Cast, NullIf
+from django.db.models.functions import Cast, JSONObject, NullIf
 from django.utils import timezone
 
 
@@ -814,6 +814,113 @@ class ReverseLinkedSatelliteSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
         if self.satellite_class.is_timeseries:
             return self._build_ts_scalar_alias("hub_out", reference_date)
         return self._build_scalar_alias("hub_in", "hub_out", reference_date)
+
+
+@dataclass
+class LinkedHubJsonField:
+    """Describes one extra field paired into a combined JSON object alongside
+    the primary TS satellite field of a LinkedHubPairedJsonSubqueryBuilder.
+
+    hub_lookup_path is an ORM path, relative to the extra satellite's
+    hub_entity, that reaches the linked hub identified by the outer
+    HubValueDate row's `hub` (mirrors the value_date_scope_path convention:
+    a string the caller supplies because it cannot be derived generically).
+    """
+
+    output_key: str
+    satellite_class: type[MontrekSatelliteABC]
+    field: str
+    hub_lookup_path: str
+
+
+class LinkedHubPairedJsonSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
+    """Builds a JSON array of paired objects, one per linked HubValueDate row,
+    combining the primary TS satellite field with fields fetched from other
+    linked hubs (extra_json_fields).
+
+    Independently JSON_AGG-ing each field and re-pairing them positionally
+    (e.g. via zip()) is unreliable: nothing guarantees the database returns
+    both aggregates in the same row order. This builder instead constructs
+    the {field: ..., extra_key: ...} object at the SQL row level, so pairing
+    is guaranteed by construction.
+    """
+
+    def __init__(
+        self,
+        satellite_class: type[MontrekSatelliteABC],
+        field: str,
+        link_class: type[MontrekLinkABC],
+        extra_json_fields: tuple[LinkedHubJsonField, ...],
+        *,
+        reversed_link: bool = False,
+        **kwargs,
+    ):
+        super().__init__(satellite_class, field, link_class, **kwargs)
+        self.extra_json_fields = extra_json_fields
+        self._hub_field_to = "hub_in" if reversed_link else "hub_out"
+        self._hub_field_from = "hub_out" if reversed_link else "hub_in"
+
+    def _build_primary_field_subquery(
+        self, reference_date: timezone.datetime
+    ) -> Subquery:
+        return Subquery(
+            self.satellite_class.objects.filter(
+                Q(
+                    **self.subquery_filter(
+                        reference_date,
+                        lookup_field="hub_value_date",
+                        outer_ref="pk",
+                    )
+                ),
+                Q(**self.link_satellite_filter),
+                Q(**self._build_cross_satellite_filter_dict(reference_date)),
+            ).values(self.field)[:1]
+        )
+
+    def _build_extra_field_subquery(
+        self, json_field: LinkedHubJsonField, reference_date: timezone.datetime
+    ) -> Subquery:
+        return Subquery(
+            json_field.satellite_class.objects.filter(
+                **{f"hub_entity__{json_field.hub_lookup_path}": OuterRef("hub")},
+                hub_entity__state_date_start__lte=reference_date,
+                hub_entity__state_date_end__gt=reference_date,
+                state_date_start__lte=reference_date,
+                state_date_end__gt=reference_date,
+            ).values(json_field.field)[:1]
+        )
+
+    def build(self, reference_date: timezone.datetime) -> Subquery:
+        rows = self.get_link_hub_value_date_query(
+            self._hub_field_from, reference_date
+        ).annotate(
+            **{self.field: self._build_primary_field_subquery(reference_date)},
+            **{
+                json_field.output_key: self._build_extra_field_subquery(
+                    json_field, reference_date
+                )
+                for json_field in self.extra_json_fields
+            },
+        )
+
+        non_null = Q(**{f"{self.field}__isnull": False})
+        for json_field in self.extra_json_fields:
+            non_null &= Q(**{f"{json_field.output_key}__isnull": False})
+
+        json_object_kwargs = {self.field: F(self.field)}
+        json_object_kwargs.update(
+            {jf.output_key: F(jf.output_key) for jf in self.extra_json_fields}
+        )
+
+        agg_func = get_json_agg_function()
+        query = (
+            rows.filter(non_null)
+            .annotate(_paired_json=JSONObject(**json_object_kwargs))
+            .values("_paired_json")
+            .annotate(_paired_json_agg=Cast(agg_func("_paired_json"), CharField()))
+            .values("_paired_json_agg")
+        )
+        return Subquery(query)
 
 
 class StringAgg(Func):
