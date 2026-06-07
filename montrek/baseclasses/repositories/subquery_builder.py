@@ -821,16 +821,23 @@ class LinkedHubJsonField:
     """Describes one extra field paired into a combined JSON object alongside
     the primary TS satellite field of a LinkedHubPairedJsonSubqueryBuilder.
 
-    hub_lookup_path is an ORM path, relative to the extra satellite's
-    hub_entity, that reaches the linked hub identified by the outer
-    HubValueDate row's `hub` (mirrors the value_date_scope_path convention:
-    a string the caller supplies because it cannot be derived generically).
+    link_class connects the extra satellite's hub to the primary satellite's
+    hub (the one identified by the outer HubValueDate row's `hub`). Mirrors
+    LinkedHubIdSubqueryBuilder: reversed_link=False means the extra satellite
+    sits on link_class.hub_out (so the primary hub is reached via hub_in),
+    reversed_link=True means it sits on hub_in (primary hub via hub_out).
     """
 
     output_key: str
     satellite_class: type[MontrekSatelliteABC]
     field: str
-    hub_lookup_path: str
+    link_class: type[MontrekLinkABC]
+    reversed_link: bool = False
+
+    def hub_lookup_path(self) -> str:
+        link_db_name = self.link_class.__name__.lower()
+        anchor_hub_field = "hub_out" if self.reversed_link else "hub_in"
+        return f"{link_db_name}__{anchor_hub_field}"
 
 
 class LinkedHubPairedJsonSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
@@ -880,9 +887,13 @@ class LinkedHubPairedJsonSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
     def _build_extra_field_subquery(
         self, json_field: LinkedHubJsonField, reference_date: timezone.datetime
     ) -> Subquery:
+        if json_field.link_class.link_type == LinkTypeEnum.NONE:
+            raise TypeError(
+                f"{json_field.link_class.__name__} must inherit from valid LinkClass!"
+            )
         return Subquery(
             json_field.satellite_class.objects.filter(
-                **{f"hub_entity__{json_field.hub_lookup_path}": OuterRef("hub")},
+                **{f"hub_entity__{json_field.hub_lookup_path()}": OuterRef("hub")},
                 hub_entity__state_date_start__lte=reference_date,
                 hub_entity__state_date_end__gt=reference_date,
                 state_date_start__lte=reference_date,

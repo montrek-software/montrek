@@ -317,7 +317,7 @@ class HubCRepositoryWithPairedJsonAnnotation(MontrekRepository):
                     output_key="field_e1_str",
                     satellite_class=me_models.SatE1,
                     field="field_e1_str",
-                    hub_lookup_path="linkhubdhube__hub_in",
+                    link_class=me_models.LinkHubDHubE,
                 ),
             ),
             "tsd2_with_e1_details",
