@@ -286,6 +286,23 @@ class HubCRepositoryWithManyToManyParents(MontrekRepository):
         )
 
 
+class HubCRepositoryWithValueDateScopedLink(MontrekRepository):
+    hub_class = me_models.HubC
+
+    def set_annotations(self):
+        self.add_satellite_fields_annotations(
+            me_models.SatTSC2,
+            ["field_tsc2_float"],
+        )
+        self.add_linked_satellites_field_annotations(
+            me_models.SatE1,
+            me_models.LinkHubDHubE,
+            ["field_e1_str"],
+            parent_link_classes=(me_models.LinkHubCHubD,),
+            value_date_scope_path="hub_in__hub_value_date",
+        )
+
+
 class HubCRepositoryWithManyToOneParents(MontrekRepository):
     hub_class = me_models.HubC
 

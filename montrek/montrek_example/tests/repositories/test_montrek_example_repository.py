@@ -55,6 +55,7 @@ from montrek_example.repositories.hub_c_repository import (
     HubCRepositoryViewModel,
     HubCRepositoryWithManyToManyParents,
     HubCRepositoryWithManyToOneParents,
+    HubCRepositoryWithValueDateScopedLink,
 )
 from montrek_example.repositories.hub_d_repository import (
     HubDRepository,
@@ -1662,6 +1663,31 @@ class TestMontrekRepositoryLinks(TestCase):
         test_element = test_query.get(hub_entity_id=hub_c.pk)
         self.assertCountEqual(json.loads(test_element.field_e1_str), ["Test1", "Test2"])
 
+    def test_link_with_value_date_scope_path_restricts_to_matching_value_date(self):
+        """Plain hub-level links (LinkHubCHubD, LinkHubDHubE) carry no value_date
+        of their own, so without value_date_scope_path the traversal would match
+        every HubD ever linked to HubC, across all value dates. With it set, each
+        CHubValueDate row should only pick up the SatE1 value reachable through
+        the HubD that was linked for that exact value date."""
+        hub_c = me_factories.HubCFactory()
+        value_dates = ["2024-01-01", "2025-01-01", "2026-01-01"]
+        expected = {}
+        for value_date in value_dates:
+            me_factories.CHubValueDateFactory(hub=hub_c, value_date=value_date)
+            sat_e1 = me_factories.SatE1Factory(field_e1_str=f"E-{value_date}")
+            hub_d = me_factories.HubDFactory(hub_e=sat_e1.hub_entity)
+            me_factories.LinkHubCHubDFactory(hub_in=hub_c, hub_out=hub_d)
+            me_factories.DHubValueDateFactory(hub=hub_d, value_date=value_date)
+            expected[value_date] = sat_e1.field_e1_str
+
+        repo = HubCRepositoryWithValueDateScopedLink({})
+        results = repo.receive().filter(hub_entity_id=hub_c.pk)
+        self.assertEqual(results.count(), len(value_dates))
+        for row in results:
+            self.assertEqual(
+                json.loads(row.field_e1_str), [expected[str(row.value_date)]]
+            )
+
     def test_link_with_many_to_one_parents(self):
         sat_b1 = me_factories.SatB1Factory(field_b1_str="Test1")
         hub_a1 = me_factories.HubAFactory(hub_b=sat_b1.hub_entity)
@@ -2462,7 +2488,7 @@ class TestStaticAggFuncs(TestCase):
         repo = HubCRepositoryMean()
         test_query = repo.receive()
         self.assertEqual(test_query.count(), 1)
-        self.assertEqual(test_query[0].field_d1_int, 3)
+        self.assertEqual(test_query[0].field_d1_int, 3.5)
         self.assertAlmostEqual(test_query[0].field_a2_float, 2.75, delta=0.01)
 
     def test_count(self):

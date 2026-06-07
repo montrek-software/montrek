@@ -22,6 +22,7 @@ from django.db.models import (
     CharField,
     F,
     ExpressionWrapper,
+    FloatField,
     Func,
     IntegerField,
     OuterRef,
@@ -336,14 +337,20 @@ class AggregationMixin:
     def _annotate_mean(self, query: QuerySet) -> QuerySet:
         return query.annotate(
             **{
-                self.field + "agg": Func(self.field + "sub", function="Avg"),
+                self.field
+                + "agg": Func(
+                    self.field + "sub", function="Avg", output_field=FloatField()
+                ),
             }
         ).values(self.field + "agg")
 
     def _annotate_count(self, query: QuerySet) -> QuerySet:
         return query.annotate(
             **{
-                self.field + "agg": Func(self.field + "sub", function="Count"),
+                self.field
+                + "agg": Func(
+                    self.field + "sub", function="Count", output_field=IntegerField()
+                ),
             }
         ).values(self.field + "agg")
 
@@ -480,6 +487,7 @@ class LinkedSatelliteSubqueryBuilderBase(
         link_satellite_filter: dict[str, object] | None = None,
         cross_satellite_filters: tuple[CrossSatelliteFilter, ...] = (),
         separator: str = ";",
+        value_date_scope_path: str = "",
     ):
         super().__init__(satellite_class)
         self.field = field
@@ -498,6 +506,7 @@ class LinkedSatelliteSubqueryBuilderBase(
         self.parent_link_reversed = parent_link_reversed
         self.link_satellite_filter = link_satellite_filter
         self.cross_satellite_filters = cross_satellite_filters
+        self.value_date_scope_path = value_date_scope_path
 
     def get_link_query(
         self, hub_field: str, reference_date: timezone.datetime, outer_ref: str = "hub"
@@ -508,6 +517,20 @@ class LinkedSatelliteSubqueryBuilderBase(
         parent_link_filters = self._get_parent_link_filters(
             reference_date, parent_link_strings
         )
+        # Plain hub-level links carry no value_date of their own, so without this
+        # the link traversal matches every linked hub ever connected (across all
+        # value dates). value_date_scope_path points (relative to link_class) at
+        # a HubValueDate-derived relation whose value_date_list must match the
+        # outer row's, restricting the traversal to hubs active on that date.
+        value_date_scope = Q()
+        if self.value_date_scope_path:
+            value_date_scope = Q(
+                **{
+                    f"{self.value_date_scope_path}__value_date_list": OuterRef(
+                        "value_date_list"
+                    )
+                }
+            )
         return self.link_class.objects.filter(
             Q(
                 **self.subquery_filter(
@@ -523,6 +546,7 @@ class LinkedSatelliteSubqueryBuilderBase(
                 }
             )
             & Q(**parent_link_filters)
+            & value_date_scope
         )
 
     def get_link_hub_value_date_query(
