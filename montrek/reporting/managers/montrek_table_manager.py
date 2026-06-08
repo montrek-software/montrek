@@ -418,7 +418,7 @@ class MontrekDataFrameTableManager(MontrekTableManagerABC):
             return self._paginate_table(full_table)
         return full_table
 
-    def get_full_table(self) -> QuerySet | dict:
+    def get_full_table(self) -> list[dict]:
         return self.df_data
 
     def _paginate_table(self, full_table: list) -> list:
