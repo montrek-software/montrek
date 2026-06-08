@@ -25,6 +25,7 @@ from reporting.managers.latex_report_manager import LatexReportManager
 from reporting.managers.montrek_details_manager import MontrekDetailsManager
 from reporting.managers.montrek_table_manager import (
     HistoryDataTableManager,
+    MontrekDataFrameTableManager,
     MontrekTableManager,
 )
 from rest_framework import status
@@ -283,7 +284,9 @@ class MontrekListView(
         context = super().get_context_data(**kwargs)
         context = self.get_page_context(context, **kwargs)
         self.show_messages()
-        if not isinstance(self.manager, MontrekTableManager):
+        if not isinstance(
+            self.manager, MontrekTableManager | MontrekDataFrameTableManager
+        ):
             raise ValueError(
                 f"Manager {self.manager.__class__.__name__} must be of type MontrekTableManager"
             )
