@@ -412,7 +412,7 @@ class MontrekDataFrameTableManager(MontrekTableManagerABC):
         paginate_by = self.session_data.get("current_paginate_by", 10)
         return max(paginate_by, 5)
 
-    def get_table(self) -> QuerySet | dict:
+    def get_table(self) -> list[dict]:
         full_table = self.get_full_table()
         if self.is_paginated:
             return self._paginate_table(full_table)
