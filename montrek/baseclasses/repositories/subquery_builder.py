@@ -854,7 +854,7 @@ class LinkedHubPairedJsonSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
 
     def __init__(
         self,
-        satellite_class: type[MontrekSatelliteABC],
+        satellite_class: type,
         field: str,
         link_class: type[MontrekLinkABC],
         extra_json_fields: tuple[LinkedHubJsonField, ...],
@@ -862,11 +862,14 @@ class LinkedHubPairedJsonSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
         reversed_link: bool = False,
         **kwargs,
     ):
+        if not getattr(satellite_class, "is_timeseries", False):
+            raise TypeError(
+                f"{type(self).__name__} requires a timeseries satellite_class; got {satellite_class.__name__}"
+            )
         super().__init__(satellite_class, field, link_class, **kwargs)
         self.extra_json_fields = extra_json_fields
         self._hub_field_to = "hub_in" if reversed_link else "hub_out"
         self._hub_field_from = "hub_out" if reversed_link else "hub_in"
-
     def _build_primary_field_subquery(
         self, reference_date: timezone.datetime
     ) -> Subquery:
