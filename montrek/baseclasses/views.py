@@ -288,7 +288,7 @@ class MontrekListView(
             self.manager, MontrekTableManager | MontrekDataFrameTableManager
         ):
             raise ValueError(
-                f"Manager {self.manager.__class__.__name__} must be of type MontrekTableManager"
+                f"Manager {self.manager.__class__.__name__} must be of type MontrekTableManager or MontrekDataFrameTableManager"
             )
         table = self.manager.to_html()
         context["table"] = table
