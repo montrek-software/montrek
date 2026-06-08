@@ -501,7 +501,7 @@ class MontrekRepository:
 
     def add_linked_hub_paired_json_annotation(
         self,
-        satellite_class: type[MontrekSatelliteABC],
+        satellite_class: type[MontrekSatelliteABC | MontrekTimeSeriesSatelliteABC],
         field: str,
         link_class: type[MontrekLinkABC],
         extra_json_fields: tuple[LinkedHubJsonField, ...],
