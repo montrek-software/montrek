@@ -1,6 +1,7 @@
-from baseclasses.typing import TableElementsType
+from baseclasses.typing import SessionDataType, TableElementsType
 from django.http import HttpResponse
 from django.urls import reverse
+from django_pandas.io import read_frame
 from montrek_example.repositories.hub_a_repository import (
     HubARepository,
     HubARepository5,
@@ -18,6 +19,7 @@ from reporting.managers.montrek_details_manager import MontrekDetailsManager
 from reporting.managers.montrek_report_manager import MontrekReportManager
 from reporting.managers.montrek_table_manager import (
     HistoryDataTableManager,
+    MontrekDataFrameTableManager,
     MontrekTableManager,
 )
 
@@ -128,6 +130,33 @@ class HubAManager(MontrekTableManager):
 
     def get_filename(self) -> str:
         return "example_md.txt"
+
+
+class HubADataFrameManager(MontrekDataFrameTableManager):
+    repository_class = HubARepository
+    table_title = "Example A DataFrame List"
+    field_names = (
+        "field_a1_str",
+        "field_a1_int",
+        "field_a2_str",
+        "field_a2_float",
+    )
+
+    def __init__(self, session_data: SessionDataType | None = None):
+        session_data = {} if session_data is None else session_data
+        self.session_data = session_data
+        df = read_frame(self.repository.receive(), fieldnames=self.field_names)
+        session_data = session_data | {"df_data": df.to_dict(orient="records")}
+        super().__init__(session_data)
+
+    @property
+    def table_elements(self) -> TableElementsType:
+        return (
+            te.StringTableElement(name="A1 String", attr="field_a1_str"),
+            te.IntTableElement(name="A1 Int", attr="field_a1_int"),
+            te.StringTableElement(name="A2 String", attr="field_a2_str"),
+            te.FloatTableElement(name="A2 Float", attr="field_a2_float"),
+        )
 
 
 class SatA1Manager(MontrekTableManager):

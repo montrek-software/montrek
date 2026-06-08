@@ -124,6 +124,13 @@ class MontrekExampleAList(views.MontrekListView):
         )
 
 
+class MontrekExampleADataFrameList(views.MontrekListView):
+    manager_class = mem.HubADataFrameManager
+    page_class = pages.MontrekExampleAAppPage
+    tab = "tab_example_a_df_list"
+    title = "Example A DataFrame List"
+
+
 class MontrekExampleADownloadView(views.MontrekDownloadView):
     manager_class = mem.HubAManager
     page_class = pages.ExampleAPage

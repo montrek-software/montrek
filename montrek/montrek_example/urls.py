@@ -14,6 +14,11 @@ urlpatterns = [
     ),
     path("a/list", views.MontrekExampleAList.as_view(), name="montrek_example_a_list"),
     path(
+        "a/df_list",
+        views.MontrekExampleADataFrameList.as_view(),
+        name="montrek_example_a_df_list",
+    ),
+    path(
         "a/download",
         views.MontrekExampleADownloadView.as_view(),
         name="montrek_example_a_download",
