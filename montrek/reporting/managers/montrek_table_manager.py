@@ -399,6 +399,7 @@ class MontrekDataFrameTableManager(MontrekTableManagerABC):
     is_paginated = True
 
     def __init__(self, session_data: SessionDataType | None = None):
+        session_data = {} if session_data is None else session_data
         if "df_data" not in session_data:
             raise ValueError("DataFrame data not set in session_data['df_data'].")
         self.df_data = session_data["df_data"]
