@@ -32,8 +32,19 @@ class MontrekExampleAAppPage(MontrekPage):
             link=reverse("hub_a_view_api_uploads"),
             html_id="tab_a2_uploads",
         )
+        df_list_tab = TabElement(
+            name="Example A DataFrame List",
+            link=reverse("montrek_example_a_df_list"),
+            html_id="tab_example_a_df_list",
+        )
 
-        return (overview_tab, file_upload_tab, a1_field_map_tab, a2_api_upload_tab)
+        return (
+            overview_tab,
+            file_upload_tab,
+            a1_field_map_tab,
+            a2_api_upload_tab,
+            df_list_tab,
+        )
 
 
 class ExampleAPage(MontrekDetailsPage):

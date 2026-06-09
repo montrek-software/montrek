@@ -140,6 +140,43 @@ class TestMontrekExampleAListViewPages(MontrekListViewTestCase):
         self.assertEqual(test_page.number, 1)
 
 
+class TestMontrekExampleADataFrameListView(MontrekListViewTestCase):
+    viewname = "montrek_example_a_df_list"
+    view_class = me_views.MontrekExampleADataFrameList
+    expected_no_of_rows = 1
+    expected_columns = ["A1 String", "A1 Int", "A2 String", "A2 Float"]
+
+    def build_factories(self):
+        sata1 = me_factories.SatA1Factory()
+        me_factories.SatA2Factory(hub_entity=sata1.hub_entity)
+
+
+class TestMontrekExampleADataFrameListViewPages(MontrekListViewTestCase):
+    viewname = "montrek_example_a_df_list"
+    view_class = me_views.MontrekExampleADataFrameList
+    expected_no_of_rows = 10
+
+    def build_factories(self):
+        for i in range(15):
+            sata1 = me_factories.SatA1Factory(field_a1_str=f"field_{i}")
+            me_factories.SatA2Factory(hub_entity=sata1.hub_entity)
+
+    def test_paginator_in_context(self):
+        response = self.client.get(self.url)
+        test_page = response.context_data["paginator"]
+        self.assertIsInstance(test_page, MontrekTablePaginator)
+        self.assertEqual(test_page.number, 1)
+        self.assertEqual(test_page.num_pages, 2)
+        self.assertTrue(test_page.show_paginator)
+
+    def test_second_page_returns_remaining_rows(self):
+        response = self.client.get(self.url, data={"page": 2})
+        object_list = response.context_data["object_list"]
+        self.assertEqual(len(object_list), 5)
+        test_page = response.context_data["paginator"]
+        self.assertEqual(test_page.number, 2)
+
+
 class TestMontrekExampleACreateView(MontrekCreateViewTestCase):
     viewname = "montrek_example_a_create"
     view_class = me_views.MontrekExampleACreate
