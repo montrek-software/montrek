@@ -1,0 +1,381 @@
+{% load colors %}
+<style>
+  /* =========================================================
+     GOLD THEME — design-token layer
+     Loads after color_scheme.html and overrides it.
+     Remove the include in base_common.html to revert.
+     ========================================================== */
+
+  :root {
+    --mt-accent: {% get_color "primary" %};
+    --mt-accent-hover: color-mix(in srgb, {% get_color "primary" %} 85%, #000);
+    --mt-accent-tint: color-mix(in srgb, {% get_color "primary" %} 6%, transparent);
+    --mt-accent-ring: color-mix(in srgb, {% get_color "primary" %} 25%, transparent);
+
+    --mt-bg: #f6f7f9;
+    --mt-surface: #ffffff;
+    --mt-surface-muted: #f1f3f5;
+    --mt-border: #e5e8ec;
+    --mt-border-strong: #d2d7dd;
+
+    --mt-text: #1d2430;
+    --mt-text-muted: #5b6573;
+    --mt-text-faint: #8a93a1;
+
+    --mt-radius: 10px;
+    --mt-radius-sm: 6px;
+    --mt-shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.05);
+    --mt-shadow: 0 1px 3px rgba(16, 24, 40, 0.07), 0 1px 2px rgba(16, 24, 40, 0.04);
+  }
+
+  /* =========================================================
+     TYPOGRAPHY
+     ========================================================== */
+
+  body {
+    font-family: "Inter Variable", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    background-color: var(--mt-bg);
+    color: var(--mt-text);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h2 {
+    color: var(--mt-text);
+    font-size: 1.15rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  h3 {
+    color: var(--mt-text);
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .page_title h1 {
+    color: var(--mt-text);
+    text-align: left;
+    font-size: 1.6rem;
+    font-weight: 650;
+    letter-spacing: -0.015em;
+  }
+
+  a {
+    color: var(--mt-accent);
+    transition: color 0.15s ease;
+  }
+
+  a:hover {
+    color: var(--mt-accent-hover);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--mt-accent-ring);
+    outline-offset: 2px;
+  }
+
+  /* =========================================================
+     SURFACES (tiles -> cards)
+     ========================================================== */
+
+  .tile {
+    background-color: var(--mt-surface);
+    border: 1px solid var(--mt-border);
+    border-radius: var(--mt-radius);
+    box-shadow: var(--mt-shadow-sm);
+    padding: 1rem 1.25rem;
+  }
+
+  /* =========================================================
+     NAVBAR (white, hairline border)
+     ========================================================== */
+
+  .navbar-custom {
+    background-color: var(--mt-surface);
+    color: var(--mt-text);
+    border-bottom: 1px solid var(--mt-border);
+    box-shadow: var(--mt-shadow-sm);
+  }
+
+  .navbar-custom .navbar-brand,
+  .navbar-custom .navbar-brand:hover {
+    color: var(--mt-text);
+  }
+
+  .navbar-custom .nav-link {
+    color: var(--mt-text-muted);
+    font-weight: 500;
+    transition: color 0.15s ease;
+  }
+
+  .navbar-custom .nav-link:hover,
+  .navbar-custom .nav-link:focus {
+    color: var(--mt-accent);
+  }
+
+  .navbar-custom .navbar-text {
+    color: var(--mt-text-faint);
+  }
+
+  .navbar-custom .navbar-toggler {
+    border-color: var(--mt-border-strong);
+  }
+
+  .navbar-custom .navbar-toggler-icon {
+    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke='rgba%2891, 101, 115, 0.9%29' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
+  }
+
+  .navbar-custom .dropdown-menu {
+    border: 1px solid var(--mt-border);
+    border-radius: var(--mt-radius-sm);
+    box-shadow: var(--mt-shadow);
+  }
+
+  .navbar-custom .dropdown-item {
+    color: var(--mt-text);
+  }
+
+  .navbar-custom .dropdown-item:hover {
+    background-color: var(--mt-accent-tint);
+    color: var(--mt-text);
+  }
+
+  /* =========================================================
+     TABS (underline style, no boxes)
+     ========================================================== */
+
+  .nav-tabs {
+    border-bottom: 1px solid var(--mt-border);
+    gap: 0.25rem;
+  }
+
+  .nav-tabs .nav-link {
+    color: var(--mt-text-muted);
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    margin-right: 0;
+    margin-bottom: -1px;
+    padding: 0.45rem 0.8rem;
+    font-weight: 500;
+    transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+  }
+
+  .nav-tabs .nav-link:hover {
+    color: var(--mt-text);
+    background-color: var(--mt-accent-tint);
+    border-bottom-color: var(--mt-border-strong);
+  }
+
+  .nav-tabs .nav-link.active {
+    color: var(--mt-accent);
+    background-color: transparent;
+    border: none;
+    border-bottom: 2px solid var(--mt-accent);
+    font-weight: 600;
+  }
+
+  /* =========================================================
+     BUTTONS (ghost by default, accent only on primary actions)
+     ========================================================== */
+
+  .btn-custom {
+    background-color: var(--mt-surface);
+    color: var(--mt-text-muted);
+    border: 1px solid var(--mt-border-strong);
+    border-radius: var(--mt-radius-sm);
+    transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+  }
+
+  .btn-custom:hover {
+    background-color: var(--mt-accent-tint);
+    color: var(--mt-accent);
+    border: 1px solid var(--mt-accent);
+  }
+
+  .btn-light-custom {
+    background-color: var(--mt-surface);
+    color: var(--mt-text-muted);
+    border: 1px solid var(--mt-border-strong);
+    border-radius: var(--mt-radius-sm);
+    font-weight: 500;
+    transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+  }
+
+  .btn-light-custom:hover,
+  .btn-light-custom:focus,
+  .btn-light-custom:active {
+    background-color: var(--mt-accent-tint);
+    color: var(--mt-accent);
+    border-color: var(--mt-accent);
+    box-shadow: none;
+  }
+
+  .input-custom {
+    background-color: var(--mt-accent);
+    color: #ffffff;
+    border: 1px solid var(--mt-accent);
+    border-radius: var(--mt-radius-sm);
+    font-weight: 500;
+    transition: background-color 0.15s ease;
+  }
+
+  .input-custom:hover {
+    background-color: var(--mt-accent-hover);
+    border: 1px solid var(--mt-accent-hover);
+    color: #ffffff;
+  }
+
+  /* =========================================================
+     TABLES (neutral header, hairline rows, tabular figures)
+     ========================================================== */
+
+  .table.table-custom-striped {
+    background-color: var(--mt-surface);
+    margin-bottom: 0;
+  }
+
+  .table.table-custom-striped thead th,
+  .table.table-custom-striped > thead > tr > th {
+    background-color: var(--mt-surface-muted) !important;
+    color: var(--mt-text-muted) !important;
+    font-size: 0.9em;
+    font-weight: 600;
+    border-bottom: 1px solid var(--mt-border-strong);
+    padding: 6px 10px !important;
+  }
+
+  .table-custom-striped.table thead th .btn-order-field,
+  .table-custom-striped.table thead th .btn-order-field *,
+  .table-custom-striped.table thead th button,
+  .table-custom-striped.table thead th button *,
+  .table-custom-striped.table thead th div {
+    color: var(--mt-text-muted) !important;
+    font-weight: 600;
+  }
+
+  .table-custom-striped.table thead th .btn-order-field:hover,
+  .table-custom-striped.table thead th .btn-order-field:hover * {
+    color: var(--mt-accent) !important;
+  }
+
+  /* no zebra striping — hairline dividers instead */
+  table.table-custom-striped tbody tr:nth-child(even) > td {
+    background-color: transparent;
+  }
+
+  .table.table-custom-striped td {
+    border-bottom: 1px solid var(--mt-border);
+    padding: 5px 10px !important;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .table.table-custom-striped td,
+  .table.table-custom-striped th {
+    border-left: 0;
+    border-right: 0;
+  }
+
+  .table.table-custom-striped tbody tr:hover > td {
+    background-color: var(--mt-accent-tint);
+  }
+
+  /* =========================================================
+     FORMS
+     ========================================================== */
+
+  input[type="text"],
+  input[type="date"],
+  input[type="number"],
+  input[type="email"],
+  input[type="password"],
+  select,
+  textarea {
+    border: 1px solid var(--mt-border-strong);
+    border-radius: var(--mt-radius-sm);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  input[type="text"]:focus,
+  input[type="date"]:focus,
+  input[type="number"]:focus,
+  input[type="email"]:focus,
+  input[type="password"]:focus,
+  select:focus,
+  textarea:focus {
+    outline: none;
+    border-color: var(--mt-accent);
+    box-shadow: 0 0 0 3px var(--mt-accent-ring);
+  }
+
+  /* =========================================================
+     PAGINATION
+     ========================================================== */
+
+  .page-link.custom {
+    color: var(--mt-text-muted);
+    border: 1px solid var(--mt-border-strong);
+    border-radius: var(--mt-radius-sm);
+  }
+
+  .page-link.custom:hover {
+    background-color: var(--mt-accent-tint);
+    color: var(--mt-accent);
+  }
+
+  /* =========================================================
+     REPORT LOADING (skeleton shimmer)
+     ========================================================== */
+
+  .loader-container {
+    text-align: center;
+    padding: 2.5rem 1rem;
+    color: var(--mt-text-muted);
+  }
+
+  .loader-container h2 {
+    font-size: 1rem;
+    color: var(--mt-text-muted);
+  }
+
+  .loader {
+    height: 8px;
+    max-width: 320px;
+    margin: 1rem auto;
+    border-radius: 999px;
+    background: linear-gradient(
+      90deg,
+      var(--mt-border) 25%,
+      var(--mt-surface-muted) 50%,
+      var(--mt-border) 75%
+    );
+    background-size: 200% 100%;
+    animation: mt-shimmer 1.2s linear infinite;
+  }
+
+  @keyframes mt-shimmer {
+    from {
+      background-position: 200% 0;
+    }
+    to {
+      background-position: -200% 0;
+    }
+  }
+
+  .spinner-border {
+    color: var(--mt-accent);
+  }
+
+  /* =========================================================
+     FOOTER
+     ========================================================== */
+
+  .footer {
+    background-color: var(--mt-surface);
+    border-top: 1px solid var(--mt-border);
+    color: var(--mt-text-faint);
+    font-size: 0.8rem;
+    padding: 0.6rem 1rem;
+  }
+</style>
