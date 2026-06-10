@@ -446,6 +446,7 @@ class MontrekRepository:
         cross_satellite_filters: tuple[CrossSatelliteFilter, ...] = (),
         separator: str = ";",
         value_date_scope_path: str = "",
+        link_hub_value_date_filter: dict[str, Any] | None = None,
     ):
         if reversed_link:
             link_subquery_builder_class = ReverseLinkedSatelliteSubqueryBuilder
@@ -476,6 +477,7 @@ class MontrekRepository:
             cross_satellite_filters=cross_satellite_filters,
             separator=separator,
             value_date_scope_path=value_date_scope_path,
+            link_hub_value_date_filter=link_hub_value_date_filter,
         )
         self.linked_fields.extend(fields)
 

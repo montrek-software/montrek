@@ -488,11 +488,15 @@ class LinkedSatelliteSubqueryBuilderBase(
         cross_satellite_filters: tuple[CrossSatelliteFilter, ...] = (),
         separator: str = ";",
         value_date_scope_path: str = "",
+        link_hub_value_date_filter: dict[str, object] | None = None,
     ):
         super().__init__(satellite_class)
         self.field = field
         link_satellite_filter = (
             {} if link_satellite_filter is None else link_satellite_filter
+        )
+        link_hub_value_date_filter = (
+            {} if link_hub_value_date_filter is None else link_hub_value_date_filter
         )
 
         if link_class.link_type == LinkTypeEnum.NONE:
@@ -507,6 +511,7 @@ class LinkedSatelliteSubqueryBuilderBase(
         self.link_satellite_filter = link_satellite_filter
         self.cross_satellite_filters = cross_satellite_filters
         self.value_date_scope_path = value_date_scope_path
+        self.link_hub_value_date_filter = link_hub_value_date_filter
 
     def get_link_query(
         self, hub_field: str, reference_date: timezone.datetime, outer_ref: str = "hub"
@@ -554,10 +559,20 @@ class LinkedSatelliteSubqueryBuilderBase(
     ) -> QuerySet:
         hub_value_date_class = self.satellite_class.hub_value_date.field.related_model
 
+        # By default the linked HVD must share the outer row's value_date_list,
+        # i.e. the linked satellite is read at the same value date as the outer
+        # row. link_hub_value_date_filter overrides this with an explicit
+        # filter (e.g. a fixed/previous value date), decoupling the linked
+        # satellite's value date from the outer row's.
+        if self.link_hub_value_date_filter:
+            value_date_list_filter = Q(**self.link_hub_value_date_filter)
+        else:
+            value_date_list_filter = Q(value_date_list=OuterRef("value_date_list"))
+
         return hub_value_date_class.objects.filter(
             Q(**{f"hub__{self.link_db_name}__state_date_end__gt": reference_date})
             & Q(**{f"hub__{self.link_db_name}__state_date_start__lte": reference_date})
-            & Q(value_date_list=OuterRef("value_date_list"))
+            & value_date_list_filter
             & Q(**{f"hub__{self.link_db_name}__{hub_field}": OuterRef("hub")})
             & Q(
                 **{
@@ -651,13 +666,43 @@ class LinkedSatelliteSubqueryBuilderBase(
         self, hub_field_to: str, hub_field_from: str, reference_date: timezone.datetime
     ) -> Subquery:
         query = self.get_link_query(hub_field_from, reference_date)
+        query, value_date_filter = self._apply_ts_satellite_value_date_filter(
+            query, "hub_value_date"
+        )
         query = query.annotate(
             **self._annotate_ts_satellite_dict(
-                hub_field_to, reference_date, hub_field_to, "hub_value_date__hub"
+                hub_field_to,
+                reference_date,
+                hub_field_to,
+                "hub_value_date__hub",
+                value_date_filter=value_date_filter,
             )
         ).values(self.field + "sub")
         query = self._annotate_sum(query)
         return Subquery(query)
+
+    def _apply_ts_satellite_value_date_filter(
+        self, query: QuerySet, lookup_prefix: str
+    ) -> tuple[QuerySet, dict]:
+        """Build a filter restricting a linked TS satellite to a single,
+        explicit value date, anchored at ``lookup_prefix__value_date_list``.
+
+        Without ``link_hub_value_date_filter``, summing/latest-picking a
+        linked TS satellite across hubs aggregates across all value dates
+        ever recorded for each linked hub (existing behaviour, left
+        unchanged). When ``link_hub_value_date_filter`` is given, it pins the
+        aggregation to one explicit value date instead, decoupling it from
+        both the outer row's value date and the linked satellite's full
+        history.
+        """
+        if not self.link_hub_value_date_filter:
+            return query, {}
+
+        value_date_filter = {
+            f"{lookup_prefix}__{key}": value
+            for key, value in self.link_hub_value_date_filter.items()
+        }
+        return query, value_date_filter
 
     def _annotate_ts_satellite_dict(
         self,
@@ -665,6 +710,7 @@ class LinkedSatelliteSubqueryBuilderBase(
         reference_date: timezone.datetime,
         outer_ref_field: str,
         lookup_field: str,
+        value_date_filter: dict[str, object] | None = None,
     ) -> dict:
         sat_qs = self.satellite_class.objects.filter(
             Q(
@@ -676,6 +722,7 @@ class LinkedSatelliteSubqueryBuilderBase(
             ),
             Q(**self.link_satellite_filter),
             Q(**self._build_cross_satellite_filter_dict(reference_date)),
+            Q(**(value_date_filter or {})),
         )
         if self.agg_func == LinkAggFunctionEnum.JSON_AGG:
             # For json_agg the outer _annotate_agg_field already builds the JSON

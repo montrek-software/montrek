@@ -63,6 +63,7 @@ from montrek_example.repositories.hub_d_repository import (
     HubDRepositoryReversedParentLink,
     HubDRepositoryTSReverseLink,
     HubDTSLinkAggRepositorySum,
+    HubDTSLinkAggRepositoryWithLinkHubValueDateFilter,
 )
 from montrek_example.repositories.hub_e_repository import HubERepository
 from montrek_example.tests.factories import montrek_example_factories as me_factories
@@ -1564,7 +1565,9 @@ class TestMontrekRepositoryLinks(TestCase):
         repository = HubARepository3()
         queryset = repository.receive()
         self.assertEqual(queryset.count(), 2)
-        self.assertEqual(json.loads(queryset[0].field_d1_str), ["Test"])
+        self.assertEqual(
+            json.loads(queryset.get(field_d1_str__isnull=False).field_d1_str), ["Test"]
+        )
 
     def test_link_with_parent_links__reference_date_filter_on_parent_link_class(self):
         # Initial setup
@@ -1709,7 +1712,9 @@ class TestMontrekRepositoryLinks(TestCase):
                 )
                 hub_d = me_factories.HubDFactory(hub_e=sat_e1.hub_entity)
                 me_factories.LinkHubCHubDFactory(hub_in=hub_c, hub_out=hub_d)
-                d_hvd = me_factories.DHubValueDateFactory(hub=hub_d, value_date=value_date)
+                d_hvd = me_factories.DHubValueDateFactory(
+                    hub=hub_d, value_date=value_date
+                )
                 sat_tsd2 = me_factories.SatTSD2Factory(
                     hub_value_date=d_hvd, field_tsd2_float=float(value_date[:4])
                 )
@@ -1729,6 +1734,7 @@ class TestMontrekRepositoryLinks(TestCase):
                 sorted(details, key=lambda d: d["field_e1_str"]),
                 sorted(expected[str(row.value_date)], key=lambda d: d["field_e1_str"]),
             )
+
     def test_link_with_many_to_one_parents(self):
         sat_b1 = me_factories.SatB1Factory(field_b1_str="Test1")
         hub_a1 = me_factories.HubAFactory(hub_b=sat_b1.hub_entity)
@@ -2574,6 +2580,38 @@ class TestTSAggFuncs(TestCase):
         second_entry = test_query.get(pk=self.hvd_2.pk)
         self.assertEqual(first_entry.field_tsc2_float, 6)
         self.assertEqual(second_entry.field_tsc2_float, 4.5)
+
+    def test_link_hub_value_date_filter_decouples_linked_value_date_from_outer_row(
+        self,
+    ):
+        """With latest_ts=True, the outer row is the HubD HVD at test_date_2.
+        The default-dated annotation aggregates linked SatTSC2 values at the
+        same value date as the outer row (test_date_2: just 4.5), while
+        link_hub_value_date_filter pins the second annotation to test_date_1
+        (2.5 and 3.5, mean 3.0) regardless of the outer row's value date."""
+        repo = HubDTSLinkAggRepositoryWithLinkHubValueDateFilter(
+            {"prev_value_date": self.test_date_1}
+        )
+        test_query = repo.receive()
+        self.assertEqual(test_query.count(), 1)
+        entry = test_query.get()
+        self.assertEqual(entry.field_tsc2_float, 4.5)
+        self.assertAlmostEqual(entry.prev_field_tsc2_float, 3.0)
+
+    def test_link_hub_value_date_filter_with_sum_pins_aggregation_to_explicit_date(
+        self,
+    ):
+        """agg_func="sum" combined with link_hub_value_date_filter sums the
+        linked SatTSC2 values across all linked HubC hubs at the pinned
+        value date (test_date_1: 2.5 + 3.5 = 6.0), excluding the linked
+        hub's value at test_date_2 (4.5), regardless of the outer row's own
+        value date."""
+        repo = HubDTSLinkAggRepositoryWithLinkHubValueDateFilter(
+            {"prev_value_date": self.test_date_1}
+        )
+        test_query = repo.receive()
+        entry = test_query.get()
+        self.assertAlmostEqual(entry.prev_field_tsc2_float_sum, 6.0)
 
 
 class TestStaticAggFuncsAll(TestCase):
