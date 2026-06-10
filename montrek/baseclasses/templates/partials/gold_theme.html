@@ -266,11 +266,6 @@
     color: var(--mt-accent) !important;
   }
 
-  /* no zebra striping — hairline dividers instead */
-  table.table-custom-striped tbody tr:nth-child(even) > td {
-    background-color: transparent;
-  }
-
   .table.table-custom-striped td {
     border-bottom: 1px solid var(--mt-border);
     padding: 5px 10px !important;
@@ -283,7 +278,17 @@
     border-right: 0;
   }
 
-  .table.table-custom-striped tbody tr:hover > td {
+  /* Row labels in detail views (tbody th, e.g. details_table.html) */
+  .table.table-custom-striped tbody th {
+    background-color: transparent;
+    color: var(--mt-text);
+    font-weight: 600;
+    border-bottom: 1px solid var(--mt-border);
+    padding: 5px 10px;
+  }
+
+  .table.table-custom-striped tbody tr:hover > td,
+  .table.table-custom-striped tbody tr:hover > th {
     background-color: var(--mt-accent-tint);
   }
 
