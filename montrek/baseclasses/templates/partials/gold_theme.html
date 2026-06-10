@@ -418,6 +418,99 @@
   }
 
   /* =========================================================
+     HOME: HERO + LAUNCHPAD
+     ========================================================== */
+
+  .home-hero {
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--mt-accent) 10%, var(--mt-surface)),
+      var(--mt-surface) 60%
+    );
+    padding: 1.75rem 2rem;
+  }
+
+  .home-hero-date {
+    margin: 0;
+    color: var(--mt-text-faint);
+    font-size: 0.85rem;
+  }
+
+  .home-hero-greeting {
+    margin: 0.15rem 0 0;
+    color: color-mix(in srgb, var(--mt-accent) 75%, var(--mt-text));
+    font-size: 1.8rem;
+    font-weight: 650;
+    letter-spacing: -0.015em;
+  }
+
+  .home-hero-subtitle {
+    margin: 0.35rem 0 0;
+    color: var(--mt-text-muted);
+  }
+
+  .launchpad-group-title {
+    margin: 1.25rem 0 0.6rem;
+    color: var(--mt-text-faint);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .launchpad-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .launchpad-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.9rem 1rem;
+    background-color: var(--mt-surface);
+    border: 1px solid var(--mt-border);
+    border-radius: var(--mt-radius);
+    box-shadow: var(--mt-shadow-sm);
+    color: var(--mt-text);
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease,
+      transform 0.15s ease;
+  }
+
+  .launchpad-card:hover {
+    color: var(--mt-accent);
+    border-color: var(--mt-accent);
+    box-shadow: var(--mt-shadow);
+    transform: translateY(-1px);
+  }
+
+  .launchpad-monogram {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    border-radius: var(--mt-radius-sm);
+    background-color: var(--mt-accent-tint);
+    color: var(--mt-accent);
+    font-weight: 650;
+  }
+
+  .launchpad-card-arrow {
+    margin-left: auto;
+    color: var(--mt-text-faint);
+    transition: color 0.15s ease;
+  }
+
+  .launchpad-card:hover .launchpad-card-arrow {
+    color: var(--mt-accent);
+  }
+
+  /* =========================================================
      EMPTY STATE
      ========================================================== */
 
