@@ -316,6 +316,8 @@ class Annotator:
                 and b.link_satellite_filter == probe_builder.link_satellite_filter
                 and b.cross_satellite_filters == probe_builder.cross_satellite_filters
                 and b.value_date_scope_path == probe_builder.value_date_scope_path
+                and b.link_hub_value_date_filter
+                == probe_builder.link_hub_value_date_filter
             ):
                 return alias
 
