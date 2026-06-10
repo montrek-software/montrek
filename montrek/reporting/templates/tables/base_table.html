@@ -8,9 +8,9 @@
         <thead>
           <tr>
             {% for table_element in table_elements %}
-          <th title="{{ table_element.attr }}">
+          <th title="{{ table_element.attr }}" class="{{ table_element.th_classes_str }}">
             <button type="submit" onclick="document.getElementById('form-order_by-action').value='{{ table_element.attr }}'" class="btn-order-field">
-              <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div class="th-flex">
                 {{ table_element.name }}
               {% if order_field is not None %}
                 {% if table_element.attr == order_field %}
@@ -37,5 +37,11 @@
         {% endfor %}
         </tbody>
       </table>
+      {% if not display_fields %}
+        <div class="empty-state">
+          <i class="bi bi-inbox"></i>
+          <p>No entries found</p>
+        </div>
+      {% endif %}
   </form>
 </div>

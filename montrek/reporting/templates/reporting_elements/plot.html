@@ -3,6 +3,23 @@
 <script>
   (function () {
   const fig = {{ graph_json|safe }};
-  Plotly.newPlot("plot-{{ plot_id }}", fig.data, fig.layout);
+  // Slim, de-branded modebar: keep screenshot + reset; drag-zoom,
+  // hover and double-click-reset still work natively without buttons.
+  Plotly.newPlot("plot-{{ plot_id }}", fig.data, fig.layout, {
+    displaylogo: false,
+    modeBarButtonsToRemove: [
+      "zoom2d",
+      "pan2d",
+      "select2d",
+      "lasso2d",
+      "zoomIn2d",
+      "zoomOut2d",
+      "autoScale2d",
+      "hoverClosestCartesian",
+      "hoverCompareCartesian",
+      "toggleSpikelines",
+      "hoverClosestPie",
+    ],
+  });
   })();
 </script>

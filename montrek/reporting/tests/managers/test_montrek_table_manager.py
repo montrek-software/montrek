@@ -15,6 +15,7 @@ from montrek_example.tests.factories import montrek_example_factories as me_fact
 from reporting.dataclasses.table_elements import HistoryChangeState
 from reporting.managers.montrek_table_manager import HistoryDataTableManager
 from reporting.tests.mocks import (
+    MockEmptyMontrekTableManager,
     MockHtmlMontrekTableManager,
     MockLongMontrekTableManager,
     MockLongMontrekTableManager2,
@@ -35,6 +36,15 @@ class TestMontrekTableManager(TestCase):
     def normailze_html(self, html: str) -> str:
         soup = BeautifulSoup(html, "html.parser")
         return soup.prettify()
+
+    def test_to_html_empty_table_shows_empty_state(self):
+        html = MockEmptyMontrekTableManager().to_html()
+        self.assertIn("empty-state", html)
+        self.assertIn("No entries found", html)
+
+    def test_to_html_with_data_has_no_empty_state(self):
+        html = MockMontrekTableManager().to_html()
+        self.assertNotIn("empty-state", html)
 
     def test_to_html_exact_match(self):
         html = MockMontrekTableManager().to_html()

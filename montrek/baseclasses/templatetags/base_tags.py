@@ -9,8 +9,12 @@ from baseclasses.dataclasses.nav_bar_model import NavBarDropdownModel, NavBarMod
 register = template.Library()
 
 
-@register.inclusion_tag("navbar.html", takes_context=True)
-def include_navbar(context):
+@register.simple_tag
+def project_display_name() -> str:
+    return settings.PROJECT_NAME.replace("mt_", "").replace("_", " ").title()
+
+
+def build_nav_structure() -> tuple[list[NavBarModel], list[NavBarDropdownModel]]:
     navbar_apps_config = settings.NAVBAR_APPS
     navbar_rename_config = settings.NAVBAR_RENAME
     navbar_apps = []
@@ -39,12 +43,27 @@ def include_navbar(context):
             navbar_apps.append(
                 NavBarModel(app, force_display_name=navbar_rename_config.get(app))
             )
+    return navbar_apps, list(navbar_dropdowns.values())
+
+
+@register.inclusion_tag("navbar.html", takes_context=True)
+def include_navbar(context):
+    navbar_apps, navbar_dropdowns = build_nav_structure()
     return {
         "nav_apps": navbar_apps,
-        "navbar_dropdowns": navbar_dropdowns.values(),
+        "navbar_dropdowns": navbar_dropdowns,
         "home_url": reverse(settings.NAVBAR_HOME_URL),
         "home_label": settings.NAVBAR_HOME_LABEL,
         "user": context["user"],
+    }
+
+
+@register.inclusion_tag("launchpad.html")
+def include_launchpad():
+    navbar_apps, navbar_dropdowns = build_nav_structure()
+    return {
+        "nav_apps": navbar_apps,
+        "navbar_dropdowns": navbar_dropdowns,
     }
 
 

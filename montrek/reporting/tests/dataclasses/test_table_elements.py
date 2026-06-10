@@ -140,6 +140,34 @@ class TableElementTestingToolMixin(HasAssertEqual):
 
 
 class TestTableElements(TestCase, TableElementTestingToolMixin):
+    def test_th_classes_str_follows_td_classes_by_default(self):
+        self.assertEqual(
+            te.StringTableElement(name="test", attr="a").th_classes_str, "text-start"
+        )
+        self.assertEqual(
+            te.BooleanTableElement(name="test", attr="a").th_classes_str, "text-center"
+        )
+
+    def test_th_classes_str_right_aligns_number_headers(self):
+        for element_class in (
+            te.NumberTableElement,
+            te.FloatTableElement,
+            te.IntTableElement,
+            te.PercentTableElement,
+            te.EuroTableElement,
+        ):
+            self.assertEqual(
+                element_class(name="test", attr="a").th_classes_str,
+                "text-end",
+                msg=element_class.__name__,
+            )
+
+    def test_th_classes_str_centers_progress_bar_header(self):
+        self.assertEqual(
+            te.ProgressBarTableElement(name="test", attr="a").th_classes_str,
+            "text-center",
+        )
+
     def test_string_table_elements(self):
         test_element = te.StringTableElement(name="test", attr="test_value")
         self.table_element_test_assertions_from_value(
@@ -230,7 +258,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_format="1,234.568",
             expected_format_latex="\\color{darkblue} 1,234.568 &",
             expected_td_classes=["text-end"],
-            expected_style_attrs={"color": "#002F6C"},
+            expected_style_attrs={},
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
@@ -238,7 +266,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_format="1,234.568",
             expected_format_latex="\\color{darkblue} 1,234.568 &",
             expected_td_classes=["text-end"],
-            expected_style_attrs={"color": "#002F6C"},
+            expected_style_attrs={},
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
@@ -246,7 +274,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_format="1,234.000",
             expected_format_latex="\\color{darkblue} 1,234.000 &",
             expected_td_classes=["text-end"],
-            expected_style_attrs={"color": "#002F6C"},
+            expected_style_attrs={},
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
@@ -272,7 +300,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_format="1,234",
             expected_format_latex="\\color{darkblue} 1,234 &",
             expected_td_classes=["text-end"],
-            expected_style_attrs={"color": "#002F6C"},
+            expected_style_attrs={},
         )
         self.assertEqual(test_element.get_value({"test_value": 1234.56}), 1234)
         self.table_element_test_assertions_from_value(
@@ -281,7 +309,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_format="1,234",
             expected_format_latex="\\color{darkblue} 1,234 &",
             expected_td_classes=["text-end"],
-            expected_style_attrs={"color": "#002F6C"},
+            expected_style_attrs={},
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
@@ -289,7 +317,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_format="1,234",
             expected_format_latex="\\color{darkblue} 1,234 &",
             expected_td_classes=["text-end"],
-            expected_style_attrs={"color": "#002F6C"},
+            expected_style_attrs={},
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
@@ -297,7 +325,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_format="1,234",
             expected_format_latex="\\color{darkblue} 1,234 &",
             expected_td_classes=["text-end"],
-            expected_style_attrs={"color": "#002F6C"},
+            expected_style_attrs={},
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
@@ -323,7 +351,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_format="1,234.57€",
             expected_format_latex="\\color{darkblue} 1,234.57€ &",
             expected_td_classes=["text-end"],
-            expected_style_attrs={"color": "#002F6C"},
+            expected_style_attrs={},
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
@@ -331,7 +359,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_format="1,234.00€",
             expected_format_latex="\\color{darkblue} 1,234.00€ &",
             expected_td_classes=["text-end"],
-            expected_style_attrs={"color": "#002F6C"},
+            expected_style_attrs={},
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
@@ -357,7 +385,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_format="1,234.57$",
             expected_format_latex="\\color{darkblue} 1,234.57\\$ &",
             expected_td_classes=["text-end"],
-            expected_style_attrs={"color": "#002F6C"},
+            expected_style_attrs={},
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
@@ -365,7 +393,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_format="1,234.00$",
             expected_format_latex="\\color{darkblue} 1,234.00\\$ &",
             expected_td_classes=["text-end"],
-            expected_style_attrs={"color": "#002F6C"},
+            expected_style_attrs={},
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
@@ -391,7 +419,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_format="25.12%",
             expected_format_latex="\\color{darkblue} 25.12\\% &",
             expected_td_classes=["text-end"],
-            expected_style_attrs={"color": "#002F6C"},
+            expected_style_attrs={},
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
@@ -399,7 +427,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_format="123.40%",
             expected_format_latex="\\color{darkblue} 123.40\\% &",
             expected_td_classes=["text-end"],
-            expected_style_attrs={"color": "#002F6C"},
+            expected_style_attrs={},
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
@@ -1255,7 +1283,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_format='<div class="bar-container"> <div class="bar" style="width: 50.0%;"></div> <span class="bar-value">50%</span> </div>',
             expected_format_latex="\\progressbar{ 50.0 }{ 50.00\\% } &",
             expected_td_classes=["text-end"],
-            expected_style_attrs={"color": "#002F6C"},
+            expected_style_attrs={},
         )
 
     @override_settings(NUMBER_FORMATTING=SystemFormatting.DE)
@@ -1270,7 +1298,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_format='<div class="bar-container"> <div class="bar" style="width: 50.0%;"></div> <span class="bar-value">50%</span> </div>',
             expected_format_latex="\\progressbar{ 50.0 }{ 50.00\\% } &",
             expected_td_classes=["text-end"],
-            expected_style_attrs={"color": "#002F6C"},
+            expected_style_attrs={},
         )
 
     def test_color_coded_table_element__html(self):

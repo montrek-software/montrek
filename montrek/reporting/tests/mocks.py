@@ -253,6 +253,11 @@ class MockIntTableElement(te.IntTableElement):
         return obj.field_a
 
 
+class MockEmptyRepository(MockRepository):
+    def receive(self):
+        return MockQuerySet()
+
+
 class MockMontrekTableManager(MontrekTableManager):
     repository_class = MockRepository
     table_title = "Mock Table"
@@ -282,6 +287,10 @@ class MockMontrekTableManager(MontrekTableManager):
                 text="field_a",
             ),
         )
+
+
+class MockEmptyMontrekTableManager(MockMontrekTableManager):
+    repository_class = MockEmptyRepository
 
 
 class MockMontrekDetailsManager(MontrekDetailsManager):

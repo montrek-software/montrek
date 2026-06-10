@@ -1,11 +1,13 @@
 {% extends 'base.html' %}
-{% block title %}Montrek{% endblock %}
+{% load base_tags %}
 {% block content %}
-    <div class="container">
-        <div class="row">
-            <div class="col-md-12">
-              <p>Welcome to {{ project_name }}.</p>
-            </div>
-        </div>
+    <div class="home-hero tile">
+      <p class="home-hero-date">{{ today|date:"d.m.Y" }}</p>
+      <h1 class="home-hero-greeting">
+        {{ greeting }}{% if first_name %}, {{ first_name }}{% endif %}
+      </h1>
+      <p class="home-hero-subtitle">Willkommen bei {{ project_name }}.</p>
     </div>
+
+    {% include_launchpad %}
 {% endblock %}

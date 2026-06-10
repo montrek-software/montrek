@@ -53,6 +53,7 @@ class TableElement:
     hover_text: str | None = field(default=None)
     style_attrs: ClassVar[StyleAttrsType] = {}
     td_classes: ClassVar[TdClassesType] = ["text-start"]
+    th_classes: ClassVar[TdClassesType | None] = None
     field_template: ClassVar[str | None] = None
 
     def format(self, _value):
@@ -103,6 +104,12 @@ class TableElement:
 
     def format_td_classes(self, td_classes: TdClassesType) -> str:
         return " ".join(td_classes)
+
+    @property
+    def th_classes_str(self) -> str:
+        # Header alignment follows the column's static cell alignment
+        classes = self.th_classes if self.th_classes is not None else self.td_classes
+        return self.format_td_classes(classes)
 
     def get_display_field(self, obj: Any) -> DisplayField:
         obj_value = self.get_attribute(obj, "html")
@@ -508,6 +515,7 @@ class NumberTableElement(AttrTableElement):
     shortener: NumberShortenerABC = NoShortening()
     numerical_type: type = float
     serializer_field_class: ClassVar = serializers.FloatField
+    th_classes: ClassVar[TdClassesType | None] = ["text-end"]
     _excel_decimal_places: ClassVar[int] = 2
 
     @property
@@ -562,8 +570,10 @@ class NumberTableElement(AttrTableElement):
 
         if not isinstance(_value, int | float | Decimal):
             return {}
-        color = _get_value_color(_value).hex
-        return {"color": color}
+        if _value < 0:
+            return {"color": _get_value_color(_value).hex}
+        # Non-negative numbers inherit the table text color (gold theme)
+        return {}
 
     def format_latex(self, value):
         if not isinstance(value, int | float | Decimal):
@@ -633,6 +643,7 @@ class ProgressBarTableElement(NumberTableElement):
     serializer_field_class = serializers.FloatField
     attr: str
     td_classes: ClassVar[TdClassesType] = ["text-center"]
+    th_classes: ClassVar[TdClassesType | None] = ["text-center"]
     field_template: ClassVar[str | None] = "progress_bar"
 
     def get_field_context_data(self, value: Any, _obj: Any) -> dict[str, Any]:

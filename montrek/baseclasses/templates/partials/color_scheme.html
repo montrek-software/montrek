@@ -91,6 +91,23 @@
     border: none;
     padding: 0;
     font: inherit;
+    width: 100%;
+  }
+
+/* Header cell layout: name + sort icon; alignment follows th class */
+  .th-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  th.text-end .th-flex {
+    justify-content: flex-end;
+  }
+
+  th.text-center .th-flex {
+    justify-content: center;
   }
 
   .form-check-input {

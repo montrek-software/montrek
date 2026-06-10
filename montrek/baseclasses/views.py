@@ -10,11 +10,13 @@ from django.core.exceptions import PermissionDenied
 from django.http import FileResponse, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.utils import timezone
 from django.views.decorators.http import require_safe
 from django.views.generic import DetailView, RedirectView, View
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import CreateView
 from django.views.generic.list import ListView
+from baseclasses.templatetags.base_tags import project_display_name
 from file_upload.forms import SimpleUploadFileForm
 from file_upload.managers.simple_upload_file_manager import SimpleUploadFileManager
 from info.managers.download_registry_storage_managers import (
@@ -53,10 +55,29 @@ def redirect_home(request):
     return redirect(reverse(redirect_url))
 
 
+def _get_greeting() -> str:
+    hour = timezone.localtime().hour
+    if hour < 12:
+        return "Guten Morgen"
+    if hour < 18:
+        return "Guten Tag"
+    return "Guten Abend"
+
+
 @require_safe
 def home(request):
-    project_name = settings.PROJECT_NAME.replace("mt_", "").replace("_", " ").title()
-    return render(request, "home.html", context={"project_name": project_name})
+    project_name = project_display_name()
+    first_name = getattr(request.user, "first_name", "")
+    return render(
+        request,
+        "home.html",
+        context={
+            "project_name": project_name,
+            "greeting": _get_greeting(),
+            "first_name": first_name,
+            "today": timezone.localdate(),
+        },
+    )
 
 
 @require_safe
