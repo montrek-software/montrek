@@ -396,7 +396,7 @@ class MontrekTableManager(MontrekTableManagerABC):
 
 
 class MontrekDataFrameTableManager(MontrekTableManagerABC):
-    is_paginated = True
+    is_paginated = False
 
     def __init__(self, session_data: SessionDataType | None = None):
         session_data = {} if session_data is None else session_data

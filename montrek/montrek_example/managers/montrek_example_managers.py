@@ -141,6 +141,7 @@ class HubADataFrameManager(MontrekDataFrameTableManager):
         "field_a2_str",
         "field_a2_float",
     )
+    is_paginated = True
 
     def __init__(self, session_data: SessionDataType | None = None):
         session_data = {} if session_data is None else session_data
