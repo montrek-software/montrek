@@ -1565,7 +1565,9 @@ class TestMontrekRepositoryLinks(TestCase):
         repository = HubARepository3()
         queryset = repository.receive()
         self.assertEqual(queryset.count(), 2)
-        self.assertEqual(json.loads(queryset[0].field_d1_str), ["Test"])
+        self.assertEqual(
+            json.loads(queryset.get(field_d1_str__isnull=False).field_d1_str), ["Test"]
+        )
 
     def test_link_with_parent_links__reference_date_filter_on_parent_link_class(self):
         # Initial setup
