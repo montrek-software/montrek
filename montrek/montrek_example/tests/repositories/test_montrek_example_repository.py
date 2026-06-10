@@ -2596,6 +2596,21 @@ class TestTSAggFuncs(TestCase):
         self.assertEqual(entry.field_tsc2_float, 4.5)
         self.assertAlmostEqual(entry.prev_field_tsc2_float, 3.0)
 
+    def test_link_hub_value_date_filter_with_sum_pins_aggregation_to_explicit_date(
+        self,
+    ):
+        """agg_func="sum" combined with link_hub_value_date_filter sums the
+        linked SatTSC2 values across all linked HubC hubs at the pinned
+        value date (test_date_1: 2.5 + 3.5 = 6.0), excluding the linked
+        hub's value at test_date_2 (4.5), regardless of the outer row's own
+        value date."""
+        repo = HubDTSLinkAggRepositoryWithLinkHubValueDateFilter(
+            {"prev_value_date": self.test_date_1}
+        )
+        test_query = repo.receive()
+        entry = test_query.get()
+        self.assertAlmostEqual(entry.prev_field_tsc2_float_sum, 6.0)
+
 
 class TestStaticAggFuncsAll(TestCase):
     """Tests for agg_func="all": True iff every linked non-NULL value is truthy; NULL values are ignored (treated as not applicable)."""

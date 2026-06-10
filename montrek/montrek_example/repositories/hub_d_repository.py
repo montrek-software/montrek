@@ -92,3 +92,14 @@ class HubDTSLinkAggRepositoryWithLinkHubValueDateFilter(MontrekRepository):
                 "value_date_list__value_date": self.session_data.get("prev_value_date")
             },
         )
+        self.add_linked_satellites_field_annotations(
+            me_models.SatTSC2,
+            me_models.LinkHubCHubD,
+            ["field_tsc2_float"],
+            reversed_link=True,
+            agg_func="sum",
+            rename_field_map={"field_tsc2_float": "prev_field_tsc2_float_sum"},
+            link_hub_value_date_filter={
+                "value_date_list__value_date": self.session_data.get("prev_value_date")
+            },
+        )
