@@ -25,6 +25,10 @@
     --mt-text-muted: #5b6573;
     --mt-text-faint: #8a93a1;
 
+    --mt-success: #388e3c;
+    --mt-warning: #b54708;
+    --mt-danger: #be0d3e;
+
     --mt-radius: 10px;
     --mt-radius-sm: 6px;
     --mt-shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.05);
@@ -415,6 +419,60 @@
     background: var(--mt-accent);
     border-color: var(--mt-accent);
     color: #ffffff;
+  }
+
+  /* =========================================================
+     TOASTS (action feedback)
+     ========================================================== */
+
+  .mt-toast-container {
+    top: 4rem;
+    z-index: 1080;
+  }
+
+  .mt-toast {
+    background-color: var(--mt-surface);
+    border: 1px solid var(--mt-border);
+    border-left-width: 3px;
+    border-radius: var(--mt-radius-sm);
+    box-shadow: var(--mt-shadow);
+    color: var(--mt-text);
+    animation: mt-toast-in 0.25s ease;
+  }
+
+  @keyframes mt-toast-in {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .mt-toast-success {
+    border-left-color: var(--mt-success);
+  }
+
+  .mt-toast-success .bi {
+    color: var(--mt-success);
+  }
+
+  .mt-toast-warning {
+    border-left-color: var(--mt-warning);
+  }
+
+  .mt-toast-warning .bi {
+    color: var(--mt-warning);
+  }
+
+  .mt-toast-danger {
+    border-left-color: var(--mt-danger);
+  }
+
+  .mt-toast-danger .bi {
+    color: var(--mt-danger);
   }
 
   /* =========================================================
