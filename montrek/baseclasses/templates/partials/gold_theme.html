@@ -2,13 +2,12 @@
 <style>
   /* =========================================================
      GOLD THEME — design-token layer
-     Loads after color_scheme.html and overrides it.
-     Remove the include in base_common.html to revert.
+     Owns all colors and component theming; loads after
+     color_scheme.html, which holds only structural base styles.
      ========================================================== */
 
   :root {
     --mt-accent: {% get_color "primary" %};
-    --mt-accent-hover: color-mix(in srgb, {% get_color "primary" %} 85%, #000);
     --mt-accent-tint: color-mix(in srgb, {% get_color "primary" %} 6%, transparent);
     --mt-accent-ring: color-mix(in srgb, {% get_color "primary" %} 25%, transparent);
 
@@ -91,7 +90,7 @@
   }
 
   /* =========================================================
-     NAVBAR (white, hairline border)
+     NAVBAR (solid primary, white-tinted link states)
      ========================================================== */
 
   .navbar-custom {
