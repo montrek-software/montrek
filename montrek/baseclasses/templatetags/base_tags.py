@@ -9,6 +9,11 @@ from baseclasses.dataclasses.nav_bar_model import NavBarDropdownModel, NavBarMod
 register = template.Library()
 
 
+@register.simple_tag
+def project_display_name() -> str:
+    return settings.PROJECT_NAME.replace("mt_", "").replace("_", " ").title()
+
+
 def build_nav_structure() -> tuple[list[NavBarModel], list[NavBarDropdownModel]]:
     navbar_apps_config = settings.NAVBAR_APPS
     navbar_rename_config = settings.NAVBAR_RENAME

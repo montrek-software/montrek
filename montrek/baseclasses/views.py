@@ -16,6 +16,7 @@ from django.views.generic import DetailView, RedirectView, View
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import CreateView
 from django.views.generic.list import ListView
+from baseclasses.templatetags.base_tags import project_display_name
 from file_upload.forms import SimpleUploadFileForm
 from file_upload.managers.simple_upload_file_manager import SimpleUploadFileManager
 from info.managers.download_registry_storage_managers import (
@@ -65,7 +66,7 @@ def _get_greeting() -> str:
 
 @require_safe
 def home(request):
-    project_name = settings.PROJECT_NAME.replace("mt_", "").replace("_", " ").title()
+    project_name = project_display_name()
     first_name = getattr(request.user, "first_name", "")
     return render(
         request,
