@@ -6,12 +6,17 @@
   hx-target="#report-content"
 >
   <div class="loader-container">
-    <h2>Processing Data</h2>
-    <div class="loader"></div>
-    <p>Analyzing and formatting report data...</p>
+    <output aria-live="polite" class="visually-hidden">Loading...</output>
+    <div class="skeleton-table" aria-hidden="true">
+      <div class="skeleton-row skeleton-row-header">
+        {% for _ in "12345" %}<span class="skeleton-cell"></span>{% endfor %}
+      </div>
+      {% for _ in "1234" %}
+        <div class="skeleton-row">
+          {% for _ in "12345" %}<span class="skeleton-cell"></span>{% endfor %}
+        </div>
+      {% endfor %}
+    </div>
+    <p class="loader-text">Processing data…</p>
   </div>
-</div>
-<div class="d-flex justify-content-center m-5">
-  <output aria-live="polite" class="visually-hidden"> Loading... </output>
-  <div class="spinner-border" aria-hidden="true"></div>
 </div>

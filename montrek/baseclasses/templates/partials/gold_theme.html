@@ -609,29 +609,58 @@
      ========================================================== */
 
   .loader-container {
+    padding: 1.25rem 0.5rem;
+  }
+
+  .loader-text {
+    margin: 1rem 0 0;
     text-align: center;
-    padding: 2.5rem 1rem;
     color: var(--mt-text-muted);
+    font-size: 0.9rem;
   }
 
-  .loader-container h2 {
-    font-size: 1rem;
-    color: var(--mt-text-muted);
+  .skeleton-table {
+    border: 1px solid var(--mt-border);
+    border-radius: var(--mt-radius-sm);
+    overflow: hidden;
+    background-color: var(--mt-surface);
   }
 
-  .loader {
-    height: 8px;
-    max-width: 320px;
-    margin: 1rem auto;
+  .skeleton-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1.5fr;
+    gap: 1.5rem;
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid var(--mt-border);
+  }
+
+  .skeleton-row:last-child {
+    border-bottom: none;
+  }
+
+  .skeleton-row-header {
+    background-color: var(--mt-surface-muted);
+  }
+
+  .skeleton-cell {
+    height: 0.85rem;
     border-radius: 999px;
     background: linear-gradient(
       90deg,
-      color-mix(in srgb, var(--mt-accent) 20%, var(--mt-surface-muted)) 25%,
+      color-mix(in srgb, var(--mt-accent) 12%, var(--mt-surface-muted)) 25%,
       var(--mt-surface-muted) 50%,
-      color-mix(in srgb, var(--mt-accent) 20%, var(--mt-surface-muted)) 75%
+      color-mix(in srgb, var(--mt-accent) 12%, var(--mt-surface-muted)) 75%
     );
     background-size: 200% 100%;
     animation: mt-shimmer 1.2s linear infinite;
+  }
+
+  .skeleton-row .skeleton-cell:nth-child(2) {
+    width: 70%;
+  }
+
+  .skeleton-row .skeleton-cell:nth-child(4) {
+    width: 55%;
   }
 
   @keyframes mt-shimmer {
@@ -641,10 +670,6 @@
     to {
       background-position: -200% 0;
     }
-  }
-
-  .spinner-border {
-    color: var(--mt-accent);
   }
 
   /* =========================================================

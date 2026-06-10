@@ -1,3 +1,6 @@
+import datetime
+from unittest.mock import patch
+
 from baseclasses.dataclasses.montrek_message import (
     MontrekMessageError,
     MontrekMessageInfo,
@@ -5,6 +8,7 @@ from baseclasses.dataclasses.montrek_message import (
 )
 from baseclasses.managers.montrek_manager import MontrekManager
 from baseclasses.pages import MontrekPage
+from baseclasses.templatetags.base_tags import project_display_name
 from baseclasses.tests.mocks import MockRepository
 from baseclasses.views import (
     MontrekCreateUpdateView,
@@ -14,6 +18,7 @@ from baseclasses.views import (
     MontrekRedirectView,
     MontrekTemplateView,
     MontrekViewMixin,
+    _get_greeting,
 )
 from bs4 import BeautifulSoup
 from django.conf import settings
@@ -184,6 +189,56 @@ class TestHomeView(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertRedirects(response, reverse(settings.HOME_URL))
         self.assertTemplateUsed(response, "under_construction.html")
+
+    def test_get_greeting_boundaries(self):
+        cases = [
+            (0, "Guten Morgen"),
+            (11, "Guten Morgen"),
+            (12, "Guten Tag"),
+            (17, "Guten Tag"),
+            (18, "Guten Abend"),
+            (23, "Guten Abend"),
+        ]
+        for hour, expected in cases:
+            with patch("baseclasses.views.timezone.localtime") as mock_localtime:
+                mock_localtime.return_value = datetime.datetime(2026, 6, 10, hour, 0)
+                self.assertEqual(_get_greeting(), expected, msg=f"hour={hour}")
+
+    @add_logged_in_user
+    def test_home_page_shows_greeting_and_launchpad(self):
+        response = self.client.get(reverse("home"))
+        self.assertEqual(response.status_code, 200)
+        soup = BeautifulSoup(response.content, "html.parser")
+
+        greeting = soup.find(class_="home-hero-greeting")
+        self.assertIsNotNone(greeting)
+        self.assertTrue(greeting.text.strip().startswith("Guten"))
+
+        cards = soup.find_all("a", class_="launchpad-card")
+        self.assertGreater(len(cards), 0)
+        card_hrefs = [card["href"] for card in cards]
+        self.assertIn("/montrek_example/", card_hrefs)
+        self.assertIn("/mailing/overview", card_hrefs)
+
+    def test_project_display_name_formatting(self):
+        with override_settings(PROJECT_NAME="mt_test_project"):
+            self.assertEqual(project_display_name(), "Test Project")
+
+    @add_logged_in_user
+    @override_settings(PROJECT_NAME="mt_test_project")
+    def test_browser_title_shows_project_name(self):
+        response = self.client.get(reverse("home"))
+        soup = BeautifulSoup(response.content, "html.parser")
+        self.assertEqual(soup.title.text.strip(), "Test Project")
+
+    @add_logged_in_user
+    @override_settings(PROJECT_NAME="mt_test_project")
+    def test_browser_title_prefixes_page_title(self):
+        response = self.client.get("/montrek_example/")
+        soup = BeautifulSoup(response.content, "html.parser")
+        title = soup.title.text.strip()
+        self.assertTrue(title.endswith("– Test Project"), msg=title)
+        self.assertGreater(len(title), len("– Test Project"))
 
 
 class TestUnderConstruction(TestCase):

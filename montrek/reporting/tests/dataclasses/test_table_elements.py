@@ -140,6 +140,34 @@ class TableElementTestingToolMixin(HasAssertEqual):
 
 
 class TestTableElements(TestCase, TableElementTestingToolMixin):
+    def test_th_classes_str_follows_td_classes_by_default(self):
+        self.assertEqual(
+            te.StringTableElement(name="test", attr="a").th_classes_str, "text-start"
+        )
+        self.assertEqual(
+            te.BooleanTableElement(name="test", attr="a").th_classes_str, "text-center"
+        )
+
+    def test_th_classes_str_right_aligns_number_headers(self):
+        for element_class in (
+            te.NumberTableElement,
+            te.FloatTableElement,
+            te.IntTableElement,
+            te.PercentTableElement,
+            te.EuroTableElement,
+        ):
+            self.assertEqual(
+                element_class(name="test", attr="a").th_classes_str,
+                "text-end",
+                msg=element_class.__name__,
+            )
+
+    def test_th_classes_str_centers_progress_bar_header(self):
+        self.assertEqual(
+            te.ProgressBarTableElement(name="test", attr="a").th_classes_str,
+            "text-center",
+        )
+
     def test_string_table_elements(self):
         test_element = te.StringTableElement(name="test", attr="test_value")
         self.table_element_test_assertions_from_value(
