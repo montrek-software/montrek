@@ -15,6 +15,7 @@ from reporting.core.reporting_colors import Color, ReportingColors
 # Mirrors the neutral --mt-* tokens in gold_theme.html
 TEXT = Color("text", "#1d2430")
 TEXT_MUTED = Color("text_muted", "#5b6573")
+TEXT_FAINT = Color("text_faint", "#8a93a1")
 BORDER = Color("border", "#e5e8ec")
 BORDER_STRONG = Color("border_strong", "#d2d7dd")
 SURFACE = ReportingColors.WHITE
@@ -64,6 +65,11 @@ def gold_layout(title: str | None = None) -> dict:
         "plot_bgcolor": SURFACE.hex,
         "margin": {"l": 0, "r": 0},
         "legend": {"font": {"color": TEXT_MUTED.hex}},
+        "modebar": {
+            "bgcolor": "rgba(0, 0, 0, 0)",
+            "color": TEXT_FAINT.hex,
+            "activecolor": _primary_color().hex,
+        },
     }
 
 
