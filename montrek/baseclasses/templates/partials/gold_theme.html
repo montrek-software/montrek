@@ -12,6 +12,10 @@
     --mt-accent-tint: color-mix(in srgb, {% get_color "primary" %} 6%, transparent);
     --mt-accent-ring: color-mix(in srgb, {% get_color "primary" %} 25%, transparent);
 
+    --mt-secondary: {% get_color "secondary" %};
+    --mt-secondary-hover: color-mix(in srgb, {% get_color "secondary" %} 85%, #000);
+    --mt-secondary-tint: color-mix(in srgb, {% get_color "secondary" %} 8%, transparent);
+
     --mt-bg: #f6f7f9;
     --mt-surface: #ffffff;
     --mt-surface-muted: #f1f3f5;
@@ -40,7 +44,7 @@
   }
 
   h2 {
-    color: var(--mt-text);
+    color: color-mix(in srgb, var(--mt-accent) 65%, var(--mt-text));
     font-size: 1.15rem;
     font-weight: 600;
     letter-spacing: -0.01em;
@@ -53,7 +57,7 @@
   }
 
   .page_title h1 {
-    color: var(--mt-text);
+    color: color-mix(in srgb, var(--mt-accent) 75%, var(--mt-text));
     text-align: left;
     font-size: 1.6rem;
     font-weight: 650;
@@ -66,7 +70,7 @@
   }
 
   a:hover {
-    color: var(--mt-accent-hover);
+    color: color-mix(in srgb, var(--mt-secondary) 80%, var(--mt-text));
   }
 
   :focus-visible {
@@ -91,38 +95,40 @@
      ========================================================== */
 
   .navbar-custom {
-    background-color: var(--mt-surface);
-    color: var(--mt-text);
-    border-bottom: 1px solid var(--mt-border);
-    box-shadow: var(--mt-shadow-sm);
+    background-color: var(--mt-accent);
+    color: #ffffff;
+    border-bottom: none;
+    box-shadow: var(--mt-shadow);
   }
 
   .navbar-custom .navbar-brand,
   .navbar-custom .navbar-brand:hover {
-    color: var(--mt-text);
+    color: #ffffff;
   }
 
   .navbar-custom .nav-link {
-    color: var(--mt-text-muted);
+    color: rgba(255, 255, 255, 0.85);
     font-weight: 500;
-    transition: color 0.15s ease;
+    border-radius: var(--mt-radius-sm);
+    transition: color 0.15s ease, background-color 0.15s ease;
   }
 
   .navbar-custom .nav-link:hover,
   .navbar-custom .nav-link:focus {
-    color: var(--mt-accent);
+    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.12);
   }
 
   .navbar-custom .navbar-text {
-    color: var(--mt-text-faint);
+    color: rgba(255, 255, 255, 0.7);
   }
 
   .navbar-custom .navbar-toggler {
-    border-color: var(--mt-border-strong);
+    border-color: rgba(255, 255, 255, 0.4);
   }
 
   .navbar-custom .navbar-toggler-icon {
-    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke='rgba%2891, 101, 115, 0.9%29' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke='rgba%28255, 255, 255, 0.85%29' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
   }
 
   .navbar-custom .dropdown-menu {
@@ -170,7 +176,7 @@
 
   .nav-tabs .nav-link.active {
     color: var(--mt-accent);
-    background-color: transparent;
+    background-color: var(--mt-accent-tint);
     border: none;
     border-bottom: 2px solid var(--mt-accent);
     font-weight: 600;
@@ -182,16 +188,16 @@
 
   .btn-custom {
     background-color: var(--mt-surface);
-    color: var(--mt-text-muted);
-    border: 1px solid var(--mt-border-strong);
+    color: var(--mt-secondary);
+    border: 1px solid var(--mt-secondary);
     border-radius: var(--mt-radius-sm);
     transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
   }
 
   .btn-custom:hover {
-    background-color: var(--mt-accent-tint);
-    color: var(--mt-accent);
-    border: 1px solid var(--mt-accent);
+    background-color: var(--mt-secondary);
+    color: #ffffff;
+    border: 1px solid var(--mt-secondary);
   }
 
   .btn-light-custom {
@@ -206,24 +212,24 @@
   .btn-light-custom:hover,
   .btn-light-custom:focus,
   .btn-light-custom:active {
-    background-color: var(--mt-accent-tint);
-    color: var(--mt-accent);
-    border-color: var(--mt-accent);
+    background-color: var(--mt-secondary-tint);
+    color: var(--mt-secondary);
+    border-color: var(--mt-secondary);
     box-shadow: none;
   }
 
   .input-custom {
-    background-color: var(--mt-accent);
+    background-color: var(--mt-secondary);
     color: #ffffff;
-    border: 1px solid var(--mt-accent);
+    border: 1px solid var(--mt-secondary);
     border-radius: var(--mt-radius-sm);
     font-weight: 500;
     transition: background-color 0.15s ease;
   }
 
   .input-custom:hover {
-    background-color: var(--mt-accent-hover);
-    border: 1px solid var(--mt-accent-hover);
+    background-color: var(--mt-secondary-hover);
+    border: 1px solid var(--mt-secondary-hover);
     color: #ffffff;
   }
 
@@ -242,7 +248,7 @@
     color: var(--mt-text-muted) !important;
     font-size: 0.9em;
     font-weight: 600;
-    border-bottom: 1px solid var(--mt-border-strong);
+    border-bottom: 2px solid var(--mt-accent);
     padding: 6px 10px !important;
   }
 
@@ -346,9 +352,9 @@
     border-radius: 999px;
     background: linear-gradient(
       90deg,
-      var(--mt-border) 25%,
+      color-mix(in srgb, var(--mt-accent) 20%, var(--mt-surface-muted)) 25%,
       var(--mt-surface-muted) 50%,
-      var(--mt-border) 75%
+      color-mix(in srgb, var(--mt-accent) 20%, var(--mt-surface-muted)) 75%
     );
     background-size: 200% 100%;
     animation: mt-shimmer 1.2s linear infinite;
