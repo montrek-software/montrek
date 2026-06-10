@@ -373,6 +373,72 @@
   }
 
   /* =========================================================
+     FLATPICKR (date picker matched to tokens)
+     ========================================================== */
+
+  .flatpickr-calendar {
+    border: 1px solid var(--mt-border);
+    border-radius: var(--mt-radius-sm);
+    box-shadow: var(--mt-shadow);
+    font-family: inherit;
+  }
+
+  .flatpickr-months .flatpickr-month,
+  .flatpickr-current-month .flatpickr-monthDropdown-months,
+  .flatpickr-months .flatpickr-prev-month,
+  .flatpickr-months .flatpickr-next-month {
+    color: var(--mt-text);
+    fill: var(--mt-text);
+  }
+
+  span.flatpickr-weekday {
+    color: var(--mt-text-faint);
+  }
+
+  .flatpickr-day {
+    color: var(--mt-text);
+  }
+
+  .flatpickr-day:hover,
+  .flatpickr-day.prevMonthDay:hover,
+  .flatpickr-day.nextMonthDay:hover {
+    background: var(--mt-accent-tint);
+    border-color: transparent;
+  }
+
+  .flatpickr-day.today {
+    border-color: var(--mt-accent);
+  }
+
+  .flatpickr-day.selected,
+  .flatpickr-day.selected:hover {
+    background: var(--mt-accent);
+    border-color: var(--mt-accent);
+    color: #ffffff;
+  }
+
+  /* =========================================================
+     EMPTY STATE
+     ========================================================== */
+
+  .empty-state {
+    text-align: center;
+    padding: 2.5rem 1rem;
+    color: var(--mt-text-faint);
+  }
+
+  .empty-state .bi {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  .empty-state p {
+    margin: 0;
+    color: var(--mt-text-muted);
+  }
+
+  /* =========================================================
      PAGINATION
      ========================================================== */
 

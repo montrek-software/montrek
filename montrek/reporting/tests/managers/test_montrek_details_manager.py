@@ -59,9 +59,9 @@ class TestMontrekDetailsManager(TestCase):
         # Field E with currency and style
         field_e_td = cell_map["Field E"]
         self.assertTrue(field_e_td.get_text(strip=True).endswith("€"))
+        # Non-negative numbers inherit the table text color (no inline style)
         style_e = field_e_td.get("style", "")
-        self.assertIn("color", style_e)
-        self.assertIn("#002F6C", style_e)
+        self.assertNotIn("color", style_e)
 
         # Link cell with icon
         link_td = cell_map["Link"]
