@@ -147,6 +147,59 @@
   }
 
   /* =========================================================
+     SIDEBAR (grouped nav, ghost rows, accent on active)
+     ========================================================== */
+
+  .sidebar-nav .sidebar-group + .sidebar-group {
+    margin-top: 0.25rem;
+  }
+
+  .sidebar-nav .sidebar-group-toggle {
+    color: var(--mt-text-muted);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.4rem 0.5rem;
+    border-radius: var(--mt-radius-sm);
+    transition: color 0.15s ease, background-color 0.15s ease;
+  }
+
+  .sidebar-nav .sidebar-group-toggle:hover,
+  .sidebar-nav .sidebar-group-toggle[aria-expanded="true"] {
+    color: var(--mt-text);
+  }
+
+  .sidebar-nav .sidebar-group-toggle:hover {
+    background-color: var(--mt-accent-tint);
+  }
+
+  .sidebar-nav .sidebar-links {
+    margin: 0.15rem 0 0.35rem 0.65rem;
+    padding-left: 0.5rem;
+    border-left: 1px solid var(--mt-border);
+  }
+
+  .sidebar-nav .link-list a {
+    color: var(--mt-text-muted);
+    font-weight: 500;
+    padding: 0.3rem 0.5rem;
+    border-radius: var(--mt-radius-sm);
+    transition: color 0.15s ease, background-color 0.15s ease;
+  }
+
+  .sidebar-nav .link-list a:hover {
+    color: var(--mt-accent);
+    background-color: var(--mt-accent-tint);
+  }
+
+  .sidebar-nav .link-list.fw-bold a {
+    color: var(--mt-accent);
+    background-color: var(--mt-accent-tint);
+    font-weight: 600;
+  }
+
+  /* =========================================================
      TABS (underline style, no boxes)
      ========================================================== */
 

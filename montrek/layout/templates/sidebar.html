@@ -1,22 +1,22 @@
-<div>
-  <ul class="nav navbar-custom flex-column" id="sideNavAccordion">
+<nav class="sidebar-nav">
+  <ul class="list-unstyled mb-0" id="sideNavAccordion">
     {% for group, links in grouped_items.items %}
     {% with group_slug=group|slugify %}
-    <li class="nav-item mt-1">
+    <li class="sidebar-group">
       <button
-        class="nav-link p-0 text-start w-100"
+        class="sidebar-group-toggle d-flex justify-content-between align-items-center w-100 text-start"
         data-bs-toggle="collapse"
         data-bs-target="#group-{{ group_slug }}"
         aria-expanded="{% if group == active_group %}true{% else %}false{% endif %}"
         aria-controls="group-{{ group_slug }}"
         type="button"
       >
-        <strong>{{ group }}</strong>
-        <span class="caret"></span>
+        <span>{{ group }}</span>
+        <span class="bi bi-chevron-down collapsible-chevron"></span>
       </button>
 
       <ul
-        class="collapse list-unstyled ms-1 {% if group == active_group %}show{% endif %}"
+        class="collapse list-unstyled sidebar-links {% if group == active_group %}show{% endif %}"
         id="group-{{ group_slug }}"
       >
         {% for link in links %}
@@ -27,4 +27,4 @@
     {% endwith %}
     {% endfor %}
   </ul>
-</div>
+</nav>

@@ -1,22 +1,22 @@
-<div>
-  <ul class="nav navbar-custom flex-column" id="sideNavAccordion">
+<nav class="sidebar-nav">
+  <ul class="list-unstyled mb-0" id="sideNavAccordion">
 
 
-    <li class="nav-item mt-1">
+    <li class="sidebar-group">
       <button
-        class="nav-link p-0 text-start w-100"
+        class="sidebar-group-toggle d-flex justify-content-between align-items-center w-100 text-start"
         data-bs-toggle="collapse"
         data-bs-target="#group-item1"
         aria-expanded="false"
         aria-controls="group-item1"
         type="button"
       >
-        <strong>item1</strong>
-        <span class="caret"></span>
+        <span>item1</span>
+        <span class="bi bi-chevron-down collapsible-chevron"></span>
       </button>
 
       <ul
-        class="collapse list-unstyled ms-1 "
+        class="collapse list-unstyled sidebar-links "
         id="group-item1"
       >
 
@@ -28,21 +28,21 @@
 
 
 
-    <li class="nav-item mt-1">
+    <li class="sidebar-group">
       <button
-        class="nav-link p-0 text-start w-100"
+        class="sidebar-group-toggle d-flex justify-content-between align-items-center w-100 text-start"
         data-bs-toggle="collapse"
         data-bs-target="#group-item2"
         aria-expanded="false"
         aria-controls="group-item2"
         type="button"
       >
-        <strong>item2</strong>
-        <span class="caret"></span>
+        <span>item2</span>
+        <span class="bi bi-chevron-down collapsible-chevron"></span>
       </button>
 
       <ul
-        class="collapse list-unstyled ms-1 "
+        class="collapse list-unstyled sidebar-links "
         id="group-item2"
       >
 
@@ -54,21 +54,21 @@
 
 
 
-    <li class="nav-item mt-1">
+    <li class="sidebar-group">
       <button
-        class="nav-link p-0 text-start w-100"
+        class="sidebar-group-toggle d-flex justify-content-between align-items-center w-100 text-start"
         data-bs-toggle="collapse"
         data-bs-target="#group-item3"
         aria-expanded="false"
         aria-controls="group-item3"
         type="button"
       >
-        <strong>item3</strong>
-        <span class="caret"></span>
+        <span>item3</span>
+        <span class="bi bi-chevron-down collapsible-chevron"></span>
       </button>
 
       <ul
-        class="collapse list-unstyled ms-1 "
+        class="collapse list-unstyled sidebar-links "
         id="group-item3"
       >
 
@@ -80,4 +80,4 @@
 
 
   </ul>
-</div>
+</nav>
