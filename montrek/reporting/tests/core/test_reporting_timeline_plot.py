@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import plotly.io as pio
 from django.test import TestCase
+from reporting.core.gold_plotly_theme import TEXT_MUTED
 from reporting.core.reporting_colors import ReportingColors
 from reporting.core.reporting_data import ReportingTimelineData
 from reporting.core.reporting_timeline_plot import ReportingTimelinePlot
@@ -76,7 +77,7 @@ class TestReportingTimelinePlot(TestCase):
         tr = self.fig.data[0]
         # Bar color and font color as shown
         self.assertEqual(tr.marker.color, "#004767")
-        self.assertEqual(self.fig.layout.font.color, "#004767")
+        self.assertEqual(self.fig.layout.font.color, TEXT_MUTED.hex)
         # Backgrounds per layout
         self.assertEqual(self.fig.layout.paper_bgcolor, "#FFFFFF")
         self.assertEqual(self.fig.layout.plot_bgcolor, "#FFFFFF")

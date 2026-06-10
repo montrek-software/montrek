@@ -8,7 +8,7 @@ from django.conf import settings
 
 import plotly.graph_objects as go
 from reporting.constants import ReportingPlotType
-from reporting.core.reporting_colors import ReportingColors
+from reporting.core.gold_plotly_theme import gold_axis, gold_color_palette, gold_layout
 from reporting.core.reporting_data import ReportingData, ReportingDataBase
 
 TData = TypeVar("TData", bound=ReportingDataBase)
@@ -22,18 +22,7 @@ class ReportingPlotBase(Generic[TData]):
         self._check_reporting_data(reporting_data)
         self.figure = self.get_figure(reporting_data)
 
-        self.figure.update_layout(
-            title_text=reporting_data.title,  # Adding Title
-            title_font_color=ReportingColors.BLUE.hex,  # Customizing Title Color
-            font={
-                "family": "Arial, sans-serif",
-                "size": 14,
-                "color": ReportingColors.BLUE.hex,  # Customizing Font Color
-            },
-            paper_bgcolor=ReportingColors.WHITE.hex,  # Customizing Background Color
-            plot_bgcolor=ReportingColors.WHITE.hex,  # Customizing Plot Background Color
-            margin={"l": 0, "r": 0},
-        )
+        self.figure.update_layout(**gold_layout(reporting_data.title))
         self.update_axis_layout(reporting_data)
 
     def get_figure(self, reporting_data: TData) -> go.Figure:
@@ -109,7 +98,7 @@ class ReportingPlot(ReportingPlotBase[ReportingData]):
         plot_types = self._set_plot_types(reporting_data)
         plot_parameters = self._set_plot_parameters(reporting_data)
         figure_data = []
-        color_palette = ReportingColors().hex_color_palette()
+        color_palette = gold_color_palette()
         _y = None
         for i, (y_axis_column, plot_type) in enumerate(
             zip(reporting_data.y_axis_columns, plot_types, strict=False)
@@ -188,15 +177,4 @@ class ReportingPlot(ReportingPlotBase[ReportingData]):
         return reporting_data.plot_parameters
 
     def update_axis_layout(self, reporting_data: ReportingData):
-        self.figure.update_layout(
-            xaxis={
-                "color": ReportingColors.BLUE.hex,  # Axis text and line color
-                "gridcolor": ReportingColors.GREY.hex,  # Grid line color
-                "zerolinecolor": ReportingColors.GREY.hex,  # Zero line color
-            },
-            yaxis={
-                "color": ReportingColors.BLUE.hex,  # Axis text and line color
-                "gridcolor": ReportingColors.GREY.hex,  # Grid line color
-                "zerolinecolor": ReportingColors.GREY.hex,  # Zero line color
-            },
-        )
+        self.figure.update_layout(xaxis=gold_axis(), yaxis=gold_axis())
