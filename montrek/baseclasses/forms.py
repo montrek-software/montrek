@@ -445,7 +445,7 @@ class MontrekModelMultipleChoiceField(
         if separator is None:
             try:
                 values = json.loads(initial_links_str)
-            except (json.JSONDecodeError, ValueError):
+            except ValueError:
                 return None
         else:
             values = initial_links_str.split(separator)
@@ -460,10 +460,10 @@ class MontrekModelCharChoiceField(BaseMontrekChoiceField, forms.CharField):
     @staticmethod
     def get_initial_link(
         initial: dict[str, Any],
-        queryset: QuerySet,
+        queryset: QuerySet | None,
         display_field: str,
-        separator: str,
-        source_field: str | None,
+        separator: str | None = None,
+        source_field: str | None = None,
     ) -> object | None:
         source_field = display_field if source_field is None else source_field
         return initial.get(source_field)

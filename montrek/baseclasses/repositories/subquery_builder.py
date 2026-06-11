@@ -952,7 +952,7 @@ class LinkedHubPairedJsonSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
             ).values(json_field.field)[:1]
         )
 
-    def build(self, reference_date: timezone.datetime) -> Subquery:
+    def build(self, reference_date: timezone.datetime, _queryset=None) -> Subquery:
         rows = self.get_link_hub_value_date_query(
             self._hub_field_from, reference_date
         ).annotate(
