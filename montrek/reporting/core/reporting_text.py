@@ -284,7 +284,7 @@ class ReportingImage(ReportingElement):
 class ReportingMap(ReportingElement):
     template_name = "map"
 
-    def __init__(self, longitude: int, latitude: int, offset: int = 5):
+    def __init__(self, longitude: float, latitude: float, offset: int = 5):
         box_coords = [
             float(longitude) - offset,
             float(latitude) + offset,
