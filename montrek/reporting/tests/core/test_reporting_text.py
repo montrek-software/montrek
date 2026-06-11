@@ -295,7 +295,7 @@ class TestNewPage(ReportingElementTestCase):
 
 class TestReportingImage(ReportingElementTestCase):
     reporting_element_class = ReportingImage
-    expected_html = '<div style="text-align: right;"><img src="https://example.com/properties/lakeside_residences.jpg" alt="reporting" width="100.0%" height="auto"></div>'
+    expected_html = '<div class="d-flex h-100 align-items-center justify-content-end"><img src="https://example.com/properties/lakeside_residences.jpg" alt="reporting" style="width: 100%; height: auto;"></div>'
     expected_latex = (
         "Image not found: https://example.com/properties/lakeside\\_residences.jpg"
     )
@@ -338,10 +338,10 @@ class TestReportingImage(ReportingElementTestCase):
 
 class TestReportingMap(ReportingElementTestCase):
     reporting_element_class = ReportingMap
-    expected_html = '<iframe src="https://www.openstreetmap.org/export/embed.html?bbox=5%2C15%2C15%2C25&amp;layer=mapnik&amp;marker=20%2C10" style="width: 100%; aspect-ratio: 4/3; height: auto; border:2;" loading="lazy" title="reporting_map" allowfullscreen></iframe>'
+    expected_html = '<iframe src="https://www.openstreetmap.org/export/embed.html?bbox=5.0%2C15.0%2C15.0%2C25.0&amp;layer=mapnik&amp;marker=20%2C10" style="width: 100%; aspect-ratio: 4/3; height: auto; border:2;" loading="lazy" title="reporting_map" allowfullscreen></iframe>'
     expected_latex = ""
     expected_json = {
-        "reporting_map": "https://www.openstreetmap.org/export/embed.html?bbox=5%2C15%2C15%2C25&layer=mapnik&marker=20%2C10"
+        "reporting_map": "https://www.openstreetmap.org/export/embed.html?bbox=5.0%2C15.0%2C15.0%2C25.0&layer=mapnik&marker=20%2C10"
     }
 
     def get_call_parameters(self) -> dict:
@@ -585,7 +585,7 @@ class TestMontrekLogo(TestCase):
 
         self.assertEqual(
             logo.to_html(),
-            f'<div style="text-align: right;"><img src="{settings.STATIC_URL}logos/montrek_logo_variant.png" alt="reporting" width="50.0%" height="auto"></div>\n',
+            f'\n<div class="d-flex h-100 align-items-center justify-content-end"><img src="{settings.STATIC_URL}logos/montrek_logo_variant.png" alt="reporting" style="width: 50%; height: auto;"></div>\n\n',
         )
 
         # --- assert: LaTeX --------------------------------------------------------
