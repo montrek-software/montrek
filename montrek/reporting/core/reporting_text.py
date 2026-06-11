@@ -276,8 +276,8 @@ class ReportingImage(ReportingElement):
         return {"reporting_image": self.image_path}
 
     def get_context_data(self) -> ContextTypes:
-        # int avoids locale-dependent decimal separators (e.g. "100,0" in de)
-        # that break the HTML width attribute parsing
+        # Use an integer percentage to avoid locale-dependent decimal separators (e.g. "100,0" in de)
+        # that can break parsing of the HTML width/size attributes
         return {"reporting_image": self.image_path, "width": round(self.width * 100)}
 
 
