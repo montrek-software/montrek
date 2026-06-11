@@ -276,7 +276,9 @@ class ReportingImage(ReportingElement):
         return {"reporting_image": self.image_path}
 
     def get_context_data(self) -> ContextTypes:
-        return {"reporting_image": self.image_path, "width": self.width * 100}
+        # int avoids locale-dependent decimal separators (e.g. "100,0" in de)
+        # that break the HTML width attribute parsing
+        return {"reporting_image": self.image_path, "width": round(self.width * 100)}
 
 
 class ReportingMap(ReportingElement):
@@ -284,10 +286,10 @@ class ReportingMap(ReportingElement):
 
     def __init__(self, longitude: int, latitude: int, offset: int = 5):
         box_coords = [
-            longitude - offset,
-            latitude + offset,
-            longitude + offset,
-            latitude - offset,
+            float(longitude) - offset,
+            float(latitude) + offset,
+            float(longitude) + offset,
+            float(latitude) - offset,
         ]
         self.embedded_url = f"https://www.openstreetmap.org/export/embed.html?bbox={box_coords[0]}%2C{box_coords[3]}%2C{box_coords[2]}%2C{box_coords[1]}&layer=mapnik&marker={latitude}%2C{longitude}"
 
@@ -412,9 +414,7 @@ class CollapsibleSection(ReportingElement):
 
     template_name = "collapsible_section"
 
-    def __init__(
-        self, header: str, content: ReportingElement, collapsed: bool = True
-    ):
+    def __init__(self, header: str, content: ReportingElement, collapsed: bool = True):
         self.header = header
         self.content: ReportingElement = content
         self.collapsed = collapsed
