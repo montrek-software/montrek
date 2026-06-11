@@ -585,7 +585,7 @@ class TestMontrekLogo(TestCase):
 
         self.assertEqual(
             logo.to_html(),
-            f'<div class="d-flex h-100 align-items-center justify-content-end"><img src="{settings.STATIC_URL}logos/montrek_logo_variant.png" alt="reporting" style="width: 50%; height: auto;"></div>\n',
+            f'\n<div class="d-flex h-100 align-items-center justify-content-end"><img src="{settings.STATIC_URL}logos/montrek_logo_variant.png" alt="reporting" style="width: 50%; height: auto;"></div>\n\n',
         )
 
         # --- assert: LaTeX --------------------------------------------------------
