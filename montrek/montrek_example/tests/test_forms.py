@@ -650,14 +650,14 @@ class TestMontrekModelCharChoiceFieldClean(TestCase):
     def test_get_initial_link_returns_value_from_initial(self):
         initial = {"my_key": "expected_value"}
         result = MontrekModelCharChoiceField.get_initial_link(
-            initial, None, "display_field", None, "my_key"
+            initial, None, "display_field", source_field="my_key"
         )
         self.assertEqual(result, "expected_value")
 
     def test_get_initial_link_defaults_to_display_field(self):
         initial = {"display_field": "from_display"}
         result = MontrekModelCharChoiceField.get_initial_link(
-            initial, None, "display_field", None, None
+            initial, None, "display_field"
         )
         self.assertEqual(result, "from_display")
 
