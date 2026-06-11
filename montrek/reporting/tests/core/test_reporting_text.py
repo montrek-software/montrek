@@ -338,10 +338,10 @@ class TestReportingImage(ReportingElementTestCase):
 
 class TestReportingMap(ReportingElementTestCase):
     reporting_element_class = ReportingMap
-    expected_html = '<iframe src="https://www.openstreetmap.org/export/embed.html?bbox=5%2C15%2C15%2C25&amp;layer=mapnik&amp;marker=20%2C10" style="width: 100%; aspect-ratio: 4/3; height: auto; border:2;" loading="lazy" title="reporting_map" allowfullscreen></iframe>'
+    expected_html = '<iframe src="https://www.openstreetmap.org/export/embed.html?bbox=5.0%2C15.0%2C15.0%2C25.0&amp;layer=mapnik&amp;marker=20%2C10" style="width: 100%; aspect-ratio: 4/3; height: auto; border:2;" loading="lazy" title="reporting_map" allowfullscreen></iframe>'
     expected_latex = ""
     expected_json = {
-        "reporting_map": "https://www.openstreetmap.org/export/embed.html?bbox=5%2C15%2C15%2C25&layer=mapnik&marker=20%2C10"
+        "reporting_map": "https://www.openstreetmap.org/export/embed.html?bbox=5.0%2C15.0%2C15.0%2C25.0&layer=mapnik&marker=20%2C10"
     }
 
     def get_call_parameters(self) -> dict:
