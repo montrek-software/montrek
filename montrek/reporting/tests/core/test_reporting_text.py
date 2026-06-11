@@ -295,7 +295,7 @@ class TestNewPage(ReportingElementTestCase):
 
 class TestReportingImage(ReportingElementTestCase):
     reporting_element_class = ReportingImage
-    expected_html = '<div class="d-flex h-100 align-items-center justify-content-end"><img src="https://example.com/properties/lakeside_residences.jpg" alt="reporting" width="100%" height="auto"></div>'
+    expected_html = '<div class="d-flex h-100 align-items-center justify-content-end"><img src="https://example.com/properties/lakeside_residences.jpg" alt="reporting" style="width: 100%; height: auto;"></div>'
     expected_latex = (
         "Image not found: https://example.com/properties/lakeside\\_residences.jpg"
     )
@@ -585,7 +585,7 @@ class TestMontrekLogo(TestCase):
 
         self.assertEqual(
             logo.to_html(),
-            f'<div class="d-flex h-100 align-items-center justify-content-end"><img src="{settings.STATIC_URL}logos/montrek_logo_variant.png" alt="reporting" width="50%" height="auto"></div>\n',
+            f'<div class="d-flex h-100 align-items-center justify-content-end"><img src="{settings.STATIC_URL}logos/montrek_logo_variant.png" alt="reporting" style="width: 50%; height: auto;"></div>\n',
         )
 
         # --- assert: LaTeX --------------------------------------------------------
