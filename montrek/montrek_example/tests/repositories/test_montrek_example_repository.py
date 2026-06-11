@@ -175,6 +175,7 @@ class TestMontrekRepositorySatellite(TestCase):
                 "field_c1_bool",
                 "field_c1_str",
                 "field_d1_str",
+                "hub_d_id",
                 "field_d1_int",
                 "field_tsd2_float",
                 "field_tsd2_int",
