@@ -1001,6 +1001,25 @@ class ComparisonTableElement(AttrTableElement):
         return f"{start_value} {value.hover_text} {comp_value}"
 
 
+@dataclass
+class IconTableElement(AttrTableElement):
+    icon: str = field(default="sign-stop")
+    static_kwargs: dict = field(default_factory=dict)
+    field_template: ClassVar[str | None] = "icon"
+    icon_latex_map: ClassVar[dict[str, str]] = {
+        "pencil": "pencil",
+        "edit": "pencil",
+        "trash": "wastebasket",
+    }
+
+    def get_value(self, _obj):
+        return self.icon
+
+    def format_latex(self, _value):
+        latex_icon = self.icon_latex_map.get(self.icon, "cross mark")
+        return super().format_latex(f"\\twemoji{{{latex_icon}}}")
+
+
 class SecretStringTableElement(StringTableElement):
     def get_value(self, obj: Any) -> Any:
         value = super().get_value(obj)
