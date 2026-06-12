@@ -1001,6 +1001,25 @@ class ComparisonTableElement(AttrTableElement):
         return f"{start_value} {value.hover_text} {comp_value}"
 
 
+@dataclass
+class IconTableElement(AttrTableElement):
+    icon: str = field(default="sign-stop")
+    field_template: ClassVar[str | None] = "icon"
+    icon_latex_map: ClassVar[dict[str, str]] = {
+        "pencil": "pencil",
+        "edit": "pencil",
+        "trash": "wastebasket",
+    }
+
+    def get_value(self, _obj: Any) -> str:
+        # Keep HTML icon names consistent with LinkTableElement / Bootstrap icon set.
+        return "pencil" if self.icon == "edit" else self.icon
+
+    def format_latex(self, value: str) -> str:
+        latex_icon = self.icon_latex_map.get(value, "cross mark")
+        return super().format_latex(f"\\twemoji{{{latex_icon}}}")
+
+
 class SecretStringTableElement(StringTableElement):
     def get_value(self, obj: Any) -> Any:
         value = super().get_value(obj)

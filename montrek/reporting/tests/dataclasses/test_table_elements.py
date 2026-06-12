@@ -1256,6 +1256,67 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_hover_text="hover_text",
         )
 
+    def test_icon_table_element(self):
+        test_element = te.IconTableElement(
+            name="test", attr="test_value", icon="pencil"
+        )
+        self.table_element_test_assertions_from_object(
+            table_element=test_element,
+            test_obj={"test_value": "ignored"},
+            expected_format='<span class="bi bi-pencil"></span>',
+            expected_format_latex=" \\color{black} \\twemoji{pencil} &",
+        )
+
+    def test_icon_table_element__default_icon(self):
+        test_element = te.IconTableElement(name="test", attr="test_value")
+        self.table_element_test_assertions_from_object(
+            table_element=test_element,
+            test_obj={"test_value": "ignored"},
+            expected_format='<span class="bi bi-sign-stop"></span>',
+            expected_format_latex=" \\color{black} \\twemoji{cross mark} &",
+        )
+
+    def test_icon_table_element__with_hover_text(self):
+        test_element = te.IconTableElement(
+            name="test", attr="test_value", icon="trash", hover_text="Delete"
+        )
+        self.table_element_test_assertions_from_object(
+            table_element=test_element,
+            test_obj={"test_value": "ignored"},
+            expected_format='<span class="bi bi-trash"></span>',
+            expected_format_latex=" \\color{black} \\twemoji{wastebasket} &",
+            expected_hover_text="Delete",
+        )
+
+    def test_icon_table_element__get_value_ignores_object(self):
+        test_element = te.IconTableElement(name="test", attr="test_value", icon="trash")
+        self.assertEqual(test_element.get_value({"test_value": "something"}), "trash")
+        self.assertEqual(test_element.get_value(None), "trash")
+
+    def test_icon_table_element__latex_icon_map(self):
+        for icon, latex_icon in (
+            ("pencil", "pencil"),
+            ("edit", "pencil"),
+            ("trash", "wastebasket"),
+            ("unknown-icon", "cross mark"),
+        ):
+            with self.subTest(icon=icon):
+                test_element = te.IconTableElement(
+                    name="test", attr="test_value", icon=icon
+                )
+                self.assertEqual(
+                    test_element.format_latex(icon),
+                    f" \\color{{black}} \\twemoji{{{latex_icon}}} &",
+                )
+
+    def test_icon_table_element__html_icon_map(self):
+        test_element = te.IconTableElement(name="test", attr="test_value", icon="edit")
+        self.table_element_test_assertions_from_object(
+            table_element=test_element,
+            test_obj={"test_value": "ignored"},
+            expected_format='<span class="bi bi-pencil"></span>',
+            expected_format_latex=" \\color{black} \\twemoji{pencil} &",
+        )
     def test_get_attibute__object_is_dict(self):
         test_obj = {"test_name": "Test Name"}
         table_element = MockTableElement(
