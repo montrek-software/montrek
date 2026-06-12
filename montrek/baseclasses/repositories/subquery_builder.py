@@ -1043,3 +1043,15 @@ class LinkAggFunctionEnum(Enum):
     MEAN = "mean"
     COUNT = "count"
     ALL = "all"
+
+
+LINK_AGG_FIELD_TYPE_MAP = {
+    LinkAggFunctionEnum.SUM.value: models.IntegerField,
+    LinkAggFunctionEnum.SUM_VALUE_DATE.value: models.DateTimeField,
+    LinkAggFunctionEnum.STRING_CONCAT.value: models.CharField,
+    LinkAggFunctionEnum.JSON_AGG.value: models.CharField,
+    LinkAggFunctionEnum.LATEST.value: None,
+    LinkAggFunctionEnum.MEAN.value: models.FloatField,
+    LinkAggFunctionEnum.COUNT.value: models.IntegerField,
+    LinkAggFunctionEnum.ALL.value: models.BooleanField,
+}
