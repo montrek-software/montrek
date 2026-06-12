@@ -278,6 +278,7 @@ class Annotator:
                 self._field_names_in_order.append(outfield)
 
                 field_type = LINK_AGG_FIELD_TYPE_MAP[agg_func]
+
                 if field_type is not None:
                     self.field_type_map[outfield] = field_type(null=True, blank=True)
 
