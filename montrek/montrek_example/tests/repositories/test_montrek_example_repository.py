@@ -175,6 +175,7 @@ class TestMontrekRepositorySatellite(TestCase):
                 "field_c1_bool",
                 "field_c1_str",
                 "field_d1_str",
+                "hub_d_id",
                 "field_d1_int",
                 "field_tsd2_float",
                 "field_tsd2_int",
@@ -3256,6 +3257,11 @@ class TestRepositoryQueryConcept(TestCase):
         self.assertEqual(query.count(), 1)
         self.assertEqual(query.first().field_c1_str, c_sat1.field_c1_str)
         self.assertEqual(json.loads(query.first().field_d1_str), [d_sat1.field_d1_str])
+
+    def test_json_agg_field_type(self):
+        annotator = HubCRepository({}).annotator
+        field_map = annotator.get_annotated_field_map()
+        self.assertIsInstance(field_map["hub_d_id"], models.CharField)
 
     def test_ts_satellite_concept__linked_ts_sat(self):
         value_date_list = me_factories.ValueDateListFactory()

@@ -241,7 +241,6 @@ class Annotator:
         **kwargs,
     ):
         link_class = kwargs["link_class"]
-        agg_func = kwargs["agg_func"]
 
         self.annotated_link_classes.append(link_class)
         self.add_to_annotated_satellite_classes(satellite_class)
@@ -285,7 +284,6 @@ class Annotator:
                         self.annotations[outfield],
                         ReverseLinkedSatelliteSubqueryBuilder,
                     )
-                    and agg_func == "string_concat"
                 ):
                     self.field_type_map[outfield] = models.CharField(
                         null=True, blank=True
