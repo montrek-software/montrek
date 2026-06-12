@@ -1011,11 +1011,12 @@ class IconTableElement(AttrTableElement):
         "trash": "wastebasket",
     }
 
-    def get_value(self, _obj):
-        return self.icon
+    def get_value(self, _obj: Any) -> str:
+        # Keep HTML icon names consistent with LinkTableElement / Bootstrap icon set.
+        return "pencil" if self.icon == "edit" else self.icon
 
-    def format_latex(self, _value):
-        latex_icon = self.icon_latex_map.get(self.icon, "cross mark")
+    def format_latex(self, value: str) -> str:
+        latex_icon = self.icon_latex_map.get(value, "cross mark")
         return super().format_latex(f"\\twemoji{{{latex_icon}}}")
 
 
