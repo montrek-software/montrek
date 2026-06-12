@@ -921,19 +921,31 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value="do_nothing",
-            expected_format='<div title="">do_nothing</div>',
+            expected_format=(
+                '<div data-bs-toggle="tooltip" data-bs-html="true" '
+                'data-bs-title="">do_nothing</div>'
+            ),
             expected_format_latex=" \\color{black} do\\_nothing &",
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value="return_one",
-            expected_format='<div title="Returns 1.\n\nParameters:\narg1 (str): The first argument.\narg2 (int): The second argument.\n\nReturns:\nint: 1">return_one</div>',
+            expected_format=(
+                '<div data-bs-toggle="tooltip" data-bs-html="true" '
+                'data-bs-title="Returns 1.<br><br>Parameters:<br>'
+                "arg1 (str): The first argument.<br>"
+                "arg2 (int): The second argument.<br><br>"
+                'Returns:<br>int: 1">return_one</div>'
+            ),
             expected_format_latex=" \\color{black} return\\_one &",
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value="return_two",
-            expected_format='<div title="Returns 2.">return_two</div>',
+            expected_format=(
+                '<div data-bs-toggle="tooltip" data-bs-html="true" '
+                'data-bs-title="Returns 2.">return_two</div>'
+            ),
             expected_format_latex=" \\color{black} return\\_two &",
         )
 

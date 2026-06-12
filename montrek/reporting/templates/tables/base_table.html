@@ -8,7 +8,7 @@
         <thead>
           <tr>
             {% for table_element in table_elements %}
-          <th title="{{ table_element.attr }}" class="{{ table_element.th_classes_str }}">
+          <th data-bs-toggle="tooltip" data-bs-title="{{ table_element.attr }}" class="{{ table_element.th_classes_str }}">
             <button type="submit" onclick="document.getElementById('form-order_by-action').value='{{ table_element.attr }}'" class="btn-order-field">
               <div class="th-flex">
                 {{ table_element.name }}

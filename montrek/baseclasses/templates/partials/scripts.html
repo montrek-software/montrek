@@ -30,8 +30,8 @@
   crossorigin="anonymous"
 ></script>
 <script>
-  const tooltips = [...document.querySelectorAll('[data-bs-toggle="tooltip"]')]
-    .map(el => new bootstrap.Tooltip(el))
+  // Delegated tooltip: one instance covers current and HTMX-swapped elements
+  new bootstrap.Tooltip(document.body, { selector: '[data-bs-toggle="tooltip"]' });
 
   function initFlatpickr(root) {
     if (typeof flatpickr !== "function") {
