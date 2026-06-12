@@ -1047,7 +1047,7 @@ class LinkAggFunctionEnum(Enum):
 
 LINK_AGG_FIELD_TYPE_MAP = {
     LinkAggFunctionEnum.SUM.value: None,
-    LinkAggFunctionEnum.SUM_VALUE_DATE.value: models.DateTimeField,
+    LinkAggFunctionEnum.SUM_VALUE_DATE.value: None,
     LinkAggFunctionEnum.STRING_CONCAT.value: models.CharField,
     LinkAggFunctionEnum.JSON_AGG.value: models.CharField,
     LinkAggFunctionEnum.LATEST.value: None,
