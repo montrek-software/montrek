@@ -3262,6 +3262,8 @@ class TestRepositoryQueryConcept(TestCase):
         annotator = HubCRepository({}).annotator
         field_map = annotator.get_annotated_field_map()
         self.assertIsInstance(field_map["hub_d_id"], models.CharField)
+        self.assertIsInstance(field_map["field_d1_int"], models.IntegerField)
+        self.assertIsInstance(field_map["field_tsd2_float"], models.FloatField)
 
     def test_ts_satellite_concept__linked_ts_sat(self):
         value_date_list = me_factories.ValueDateListFactory()
