@@ -492,7 +492,7 @@ class TestHistoryDataTable(TestCase):
             "field_a1_str",
             "field_a1_int",
         ):
-            th = soup.find("th", title=col)
+            th = soup.find("th", attrs={"data-bs-title": col})
             self.assertIsNotNone(th)
 
             button = th.find("button", {"class": "btn-order-field"})
