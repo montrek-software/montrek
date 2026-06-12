@@ -1004,7 +1004,6 @@ class ComparisonTableElement(AttrTableElement):
 @dataclass
 class IconTableElement(AttrTableElement):
     icon: str = field(default="sign-stop")
-    static_kwargs: dict = field(default_factory=dict)
     field_template: ClassVar[str | None] = "icon"
     icon_latex_map: ClassVar[dict[str, str]] = {
         "pencil": "pencil",
