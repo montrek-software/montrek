@@ -1,0 +1,106 @@
+/* =========================================================
+   MONTREK THEME — Keycloak login
+   Mirrors the design tokens from
+   montrek/baseclasses/templates/partials/gold_theme.html
+   so the Keycloak login page matches the Django app.
+   ========================================================== */
+
+:root {
+  /* Defaults match the Django app's PRIMARY_COLOR/SECONDARY_COLOR fallbacks.
+     Overridden per deployment by colors.css, generated from .env at container startup. */
+  --mt-accent: #004767;
+  --mt-secondary: #be0d3e;
+  --mt-secondary-hover: color-mix(in srgb, var(--mt-secondary) 85%, #000);
+
+  --mt-bg: #f6f7f9;
+  --mt-surface: #ffffff;
+  --mt-border: #e5e8ec;
+  --mt-border-strong: #d2d7dd;
+
+  --mt-text: #1d2430;
+  --mt-text-muted: #5b6573;
+
+  --mt-radius: 10px;
+  --mt-radius-sm: 6px;
+  --mt-shadow: 0 1px 3px rgba(16, 24, 40, 0.07), 0 1px 2px rgba(16, 24, 40, 0.04);
+
+  /* PatternFly v5 tokens used by the keycloak.v2 theme */
+  --pf-v5-global--primary-color--100: var(--mt-secondary);
+  --pf-v5-global--primary-color--200: var(--mt-accent);
+  --pf-v5-global--link--Color: var(--mt-accent);
+  --pf-v5-global--link--Color--hover: var(--mt-secondary);
+  --pf-v5-global--link--Color--visited: var(--mt-accent);
+  --pf-v5-global--FontFamily--text: "Inter Variable", "Inter", system-ui, -apple-system,
+    "Segoe UI", sans-serif;
+  --pf-v5-global--FontFamily--heading: "Inter Variable", "Inter", system-ui, -apple-system,
+    "Segoe UI", sans-serif;
+  --pf-v5-global--BorderRadius--sm: var(--mt-radius-sm);
+  --pf-v5-global--BorderRadius--lg: var(--mt-radius);
+}
+
+body {
+  background-color: var(--mt-bg);
+  font-family: var(--pf-v5-global--FontFamily--text);
+}
+
+/* =========================================================
+   CARD
+   ========================================================== */
+
+.pf-v5-c-login__main {
+  background-color: var(--mt-surface);
+  border-radius: var(--mt-radius);
+  box-shadow: var(--mt-shadow);
+}
+
+.pf-v5-c-login__main-header .pf-v5-c-title,
+#kc-page-title {
+  color: color-mix(in srgb, var(--mt-accent) 75%, var(--mt-text));
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+
+.pf-v5-c-brand img {
+  max-height: 48px;
+}
+
+/* =========================================================
+   BUTTONS
+   ========================================================== */
+
+.pf-v5-c-button.pf-m-primary {
+  background-color: var(--mt-secondary);
+  border-radius: var(--mt-radius-sm);
+}
+
+.pf-v5-c-button.pf-m-primary:hover,
+.pf-v5-c-button.pf-m-primary:focus {
+  background-color: var(--mt-secondary-hover);
+}
+
+/* =========================================================
+   FORM CONTROLS
+   ========================================================== */
+
+.pf-v5-c-form-control {
+  border-radius: var(--mt-radius-sm);
+  border-color: var(--mt-border-strong);
+}
+
+.pf-v5-c-form-control:focus {
+  border-color: var(--mt-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mt-accent) 25%, transparent);
+}
+
+/* =========================================================
+   LINKS
+   ========================================================== */
+
+a {
+  color: var(--mt-accent);
+  transition: color 0.15s ease;
+}
+
+a:hover {
+  color: var(--mt-secondary);
+}

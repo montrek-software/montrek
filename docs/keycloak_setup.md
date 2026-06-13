@@ -185,3 +185,32 @@ You should be redirected to the Keycloak login screen for your realm. Log in wit
 ## Notes on this setup
 
 - The realm import runs only on first boot. Changes to flows (e.g., setting Browser – Conditional OTP to **Required**) are usually done via the Admin UI or scripted using `kcadm.sh` after startup.
+
+---
+
+## Login theme (matching the Django app)
+
+A custom Keycloak theme lives in `keycloak/themes/montrek/login/` and mirrors the
+design tokens from `gold_theme.html` (colors, border radius, font). It's mounted
+into the container at `/opt/keycloak/themes/montrek`.
+
+- Colors come from `PRIMARY_COLOR` / `SECONDARY_COLOR` in `.env` — `init-realm.sh`
+  writes them into `keycloak/themes/montrek/login/resources/css/colors.css` on
+  every container start, so the login page stays in sync with the Django app's
+  color scheme without rebuilding the theme.
+- The realm import sets `"loginTheme": "montrek"` automatically, but **only on
+  first boot** (same as everything else in `realm.json`).
+
+### Activating/updating the theme on an existing realm
+
+If Keycloak was already provisioned before this theme existed (or the colors
+changed), apply it manually:
+
+1. Restart the `keycloak` container (`make docker-restart`) so the mounted
+   theme directory and refreshed `colors.css` are picked up.
+2. In the Admin Console, go to **Realm Settings → Themes** and set **Login
+   theme** to `montrek`. Save.
+3. If you don't see `montrek` in the dropdown, the theme cache may need
+   clearing — restart the container again, or temporarily set
+   `KC_SPI_THEME_CACHE_THEMES=false` and `KC_SPI_THEME_STATIC_MAX_AGE=-1` while
+   iterating on styles.

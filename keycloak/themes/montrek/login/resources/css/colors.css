@@ -1,0 +1,7 @@
+/* Generated at container startup by keycloak/bin/init-realm.sh from
+   PRIMARY_COLOR / SECONDARY_COLOR in .env. This checked-in copy is the
+   fallback used until the container has started at least once. */
+:root {
+  --mt-accent: #004767;
+  --mt-secondary: #be0d3e;
+}

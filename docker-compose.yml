@@ -119,8 +119,11 @@ services:
       PROJECT_NAME: ${PROJECT_NAME}
       DEPLOY_HOST: ${DEPLOY_HOST}
       ADMIN_EMAIL: ${ADMIN_EMAIL}
+      PRIMARY_COLOR: ${PRIMARY_COLOR}
+      SECONDARY_COLOR: ${SECONDARY_COLOR}
     volumes:
       - ./keycloak/bin/init-realm.sh:/usr/local/bin/init-realm.sh:ro
+      - ./keycloak/themes/montrek:/opt/keycloak/themes/montrek
     entrypoint: ["/bin/sh", "/usr/local/bin/init-realm.sh"]
     depends_on:
       - keycloak-db

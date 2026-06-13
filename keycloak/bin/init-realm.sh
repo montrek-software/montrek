@@ -12,11 +12,26 @@ mkdir -p "$IMPORT_DIR"
 # You can override REDIRECT_URI if needed; otherwise we derive it
 REDIRECT_URI="${REDIRECT_URI:-https://${PROJECT_NAME}.${DEPLOY_HOST}/*}"
 
+# Match the login theme colors to the Django app's PRIMARY_COLOR/SECONDARY_COLOR
+PRIMARY_COLOR="${PRIMARY_COLOR:-#004767}"
+SECONDARY_COLOR="${SECONDARY_COLOR:-#BE0D3E}"
+THEME_CSS_DIR="/opt/keycloak/themes/montrek/login/resources/css"
+if [ -d "$THEME_CSS_DIR" ]; then
+  cat >"${THEME_CSS_DIR}/colors.css" <<CSS
+/* Generated from PRIMARY_COLOR/SECONDARY_COLOR in .env by init-realm.sh */
+:root {
+  --mt-accent: ${PRIMARY_COLOR};
+  --mt-secondary: ${SECONDARY_COLOR};
+}
+CSS
+fi
+
 # Write the realm import JSON (public client, no secret)
 cat >"${IMPORT_DIR}/realm.json" <<JSON
 {
   "realm": "${KEYCLOAK_REALM}",
   "enabled": true,
+  "loginTheme": "montrek",
   "requiredActions": [
     {
       "alias": "CONFIGURE_TOTP",
