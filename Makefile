@@ -60,6 +60,10 @@ docker-db-restore: # Restore the docker database from a backup.
 docker-keycloak-db-backup: # Make a backup of the keycloak database.
 	@$(SECURE_WRAPPER) bin/docker/keycloak-db.sh backup
 
+.PHONY: docker-keycloak-db-restore
+docker-keycloak-db-restore: # Restore the keycloak database from a backup.
+	@$(SECURE_WRAPPER) bin/docker/keycloak-db.sh restore
+
 .PHONY: docker-django-manage
 docker-django-manage: # Run Django management commands inside the docker container.
 	@$(SECURE_WRAPPER) bin/docker/django-manage.sh $(filter-out $@,$(MAKECMDGOALS))
