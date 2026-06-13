@@ -65,7 +65,8 @@ class TestMontrekDetailsManager(TestCase):
 
         # Link cell with icon
         link_td = cell_map["Link"]
-        self.assertEqual(link_td.get("title"), "Link")
+        self.assertEqual(link_td.get("data-bs-title"), "Link")
+        self.assertEqual(link_td.get("data-bs-toggle"), "tooltip")
         link_a = link_td.find("a", id="id__home")
         self.assertIsNotNone(link_a)
         self.assertEqual(link_a.get("href"), "/home")
@@ -73,7 +74,7 @@ class TestMontrekDetailsManager(TestCase):
 
         # Link Text cell with anchor text
         link_text_td = cell_map["Link Text"]
-        self.assertEqual(link_text_td.get("title"), "Link Text")
+        self.assertEqual(link_text_td.get("data-bs-title"), "Link Text")
         link_text_a = link_text_td.find("a", id="id__home")
         self.assertIsNotNone(link_text_a)
         self.assertEqual(link_text_a.get("href"), "/home")
