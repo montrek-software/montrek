@@ -109,6 +109,42 @@ body {
 }
 
 /* =========================================================
+   USERNAME / RESTART-LOGIN CAPTION
+   (e.g. OTP screen: "you@example.com" + "Restart login")
+   ========================================================== */
+
+#kc-username {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--mt-border);
+  font-size: 0.9rem;
+  color: var(--mt-text-muted);
+}
+
+#kc-attempted-username {
+  font-weight: 600;
+  color: var(--mt-text);
+}
+
+#kc-username .kc-login-tooltip i {
+  display: none;
+}
+
+#kc-username .kc-tooltip-text {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* Hide the empty "remember me" options block on screens that don't use it
+   (e.g. OTP), so it doesn't leave a dead gap before the submit button. */
+#kc-form-options:has(> :empty:only-child) {
+  display: none;
+}
+
+/* =========================================================
    LINKS
    ========================================================== */
 
