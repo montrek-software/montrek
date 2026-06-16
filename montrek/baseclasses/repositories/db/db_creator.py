@@ -290,7 +290,7 @@ class DbCreator:
             elif isinstance(value, MontrekHubABC):
                 link_data[key] = [value]
             elif value is None:
-                link_data[key] = [None]
+                link_data[key] = []
             elif isinstance(value, list | QuerySet):
                 many_links = [
                     item.hub for item in value if isinstance(item, HubValueDate)
