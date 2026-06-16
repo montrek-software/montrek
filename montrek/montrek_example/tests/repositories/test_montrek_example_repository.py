@@ -1234,6 +1234,34 @@ class TestMontrekCreateObjectLinks(TestCase):
         queried_object = repository.receive().get()
         self.assertEqual(queried_object.field_b1_str, sat_b_1.field_b1_str)
 
+    def test_create_hub_a_with_link_to_hub_b_remove(self):
+        sat_b_1 = me_factories.SatB1Factory()
+        hub_b_1 = sat_b_1.hub_entity
+        repository = HubARepository(session_data={"user_id": self.user.id})
+        repository.std_create_object(
+            {
+                "field_a1_int": 5,
+                "field_a1_str": "test",
+                "field_a2_float": 6.0,
+                "field_a2_str": "test2",
+                "link_hub_a_hub_b": hub_b_1,
+            }
+        )
+        queried_object = repository.receive().get()
+        self.assertEqual(queried_object.field_b1_str, sat_b_1.field_b1_str)
+        repository.std_create_object(
+            {
+                "field_a1_int": 5,
+                "field_a1_str": "test",
+                "field_a2_float": 6.0,
+                "field_a2_str": "test2",
+                "link_hub_a_hub_b": None,
+            }
+        )
+        self.assertEqual(me_models.LinkHubAHubB.objects.count(), 1)
+        queried_object = repository.receive().get()
+        self.assertIsNone(queried_object.field_b1_str)
+
     def test_update_one_to_many_link(self):
         sat_c_1 = me_factories.SatC1Factory(
             field_c1_str="test1",

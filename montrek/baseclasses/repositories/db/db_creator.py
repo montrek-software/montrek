@@ -75,7 +75,10 @@ class DbCreator:
     def _create_links(self):
         link_data = self._get_link_data()
         for field, values in link_data.items():
-            link_class = getattr(self.hub.__class__, field).through
+            link = getattr(self.hub.__class__, field)
+            if not hasattr(link, "through"):
+                continue
+            link_class = link.through
             values = [v for v in values if v]
             new_links = self._create_new_links(link_class, values)
             self.db_staller.stall_links(new_links)
@@ -289,6 +292,8 @@ class DbCreator:
                 link_data[key] = [value.hub]
             elif isinstance(value, MontrekHubABC):
                 link_data[key] = [value]
+            elif value is None:
+                link_data[key] = []
             elif isinstance(value, list | QuerySet):
                 many_links = [
                     item.hub for item in value if isinstance(item, HubValueDate)
