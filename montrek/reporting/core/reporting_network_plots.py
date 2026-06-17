@@ -27,13 +27,23 @@ class ReportingNetworkPlot(ReportingPlotBase[ReportingNetworkData]):
 
     def update_axis_layout(self, reporting_data: ReportingNetworkData):
         self.figure.update_layout(
-            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            xaxis={"showgrid": False, "zeroline": False, "showticklabels": False},
+            yaxis={"showgrid": False, "zeroline": False, "showticklabels": False},
             height=reporting_data.fig_height,
             showlegend=False,
+            meta={"node_edge_map": self._build_node_edge_map(reporting_data.graph)},
         )
         self.figure.update_xaxes(automargin=True)
         self.figure.update_yaxes(automargin=True)
+
+    @staticmethod
+    def _build_node_edge_map(graph: nx.DiGraph) -> dict[int, list[int]]:
+        node_index = {node: i for i, node in enumerate(graph.nodes())}
+        node_edge_map: dict[int, list[int]] = {i: [] for i in range(len(node_index))}
+        for edge_idx, (src, dst) in enumerate(graph.edges()):
+            node_edge_map[node_index[src]].append(edge_idx)
+            node_edge_map[node_index[dst]].append(edge_idx)
+        return node_edge_map
 
     def get_pos(self, layout: str, reporting_data: ReportingNetworkData) -> Pos:
         return NetworkLayoutsFactory.get(layout).pos(reporting_data)
@@ -49,7 +59,7 @@ class ReportingNetworkPlot(ReportingPlotBase[ReportingNetworkData]):
         return Scatter(
             x=edge_x,
             y=edge_y,
-            line=dict(width=1, color="#888"),
+            line={"width": 1, "color": "#888"},
             mode="lines",
             hoverinfo="none",
         )
