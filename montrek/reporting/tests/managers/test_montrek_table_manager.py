@@ -188,7 +188,7 @@ class TestMontrekTableManager(TestCase):
             "Field D": "field_d",
             "Field E": "field_e",
             "Link": "",
-            "Link Text": "",
+            "Link Text": "field_a",
         }
         self.assertEqual(name_to_field_map, expected_map)
 
@@ -401,7 +401,7 @@ class TestMontrekDataFrameTableManager(TestCase):
             "Field D": "field_d",
             "Field E": "field_e",
             "Link": "",
-            "Link Text": "",
+            "Link Text": "field_a",
         }
         self.assertEqual(name_to_field_map, expected_map)
 

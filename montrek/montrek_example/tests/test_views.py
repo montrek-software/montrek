@@ -1027,6 +1027,69 @@ class TestMontrekExampleDListView(MontrekListViewTestCase):
         _write_temporary_file_and_upload(upload_csv_data)
         _assert_database_values(expected_values)
 
+    def test_simple_file_upload_missing_identifier_field(self):
+        csv_data = "D1 Int\n1\n2\n"
+        with TemporaryDirectory() as temp_dir:
+            file_path = os.path.join(temp_dir, "upload.csv")
+            with open(file_path, "w") as f:
+                f.write(csv_data)
+            with open(file_path, "rb") as f:
+                self.client.post(self.url, {"file": f}, follow=True)
+        queryset = HubDRepository().receive()
+        self.assertEqual(len(queryset), 1)
+        registry = FileUploadRegistryRepository().receive().last()
+        self.assertEqual(registry.upload_status, "failed")
+        self.assertIn("not in input data", registry.upload_message)
+
+
+class TestMontrekExampleDListRestrictedUpload(MontrekListViewTestCase):
+    viewname = "montrek_example_d_list_restricted"
+    view_class = me_views.MontrekExampleDListRestricted
+    expected_no_of_rows = 1
+
+    def _create_perm(self, codename, name):
+        from django.contrib.contenttypes.models import ContentType
+        from montrek_example.models.example_models import SatD1
+
+        ct = ContentType.objects.get_for_model(SatD1)
+        perm, _ = Permission.objects.get_or_create(
+            codename=codename, content_type=ct, defaults={"name": name}
+        )
+        return perm
+
+    def build_factories(self):
+        me_factories.SatD1Factory.create(field_d1_str="0", field_d1_int=0)
+
+    def required_user_permissions(self) -> list[Permission]:
+        return [self._create_perm("show_hubd", "Can show hubd")]
+
+    def test_upload_denied_without_upload_permission(self):
+        csv_data = "D1 String,D1 Int\na,1\n"
+        with TemporaryDirectory() as temp_dir:
+            file_path = os.path.join(temp_dir, "upload.csv")
+            with open(file_path, "w") as f:
+                f.write(csv_data)
+            with open(file_path, "rb") as f:
+                response = self.client.post(
+                    self.url, {"file": f}, HTTP_REFERER=self.url, follow=True
+                )
+        msg_list = list(response.context["messages"])
+        self.assertTrue(any("permission" in m.message.lower() for m in msg_list))
+        queryset = HubDRepository().receive()
+        self.assertEqual(len(queryset), 1)
+
+    def test_upload_allowed_with_upload_permission(self):
+        add_perm = self._create_perm("add_hubd", "Can add hubd")
+        self.user.user_permissions.add(add_perm)
+        test_file_path = os.path.join(os.path.dirname(__file__), "data", "d_file.csv")
+        with open(test_file_path, "rb") as f:
+            self.client.post(self.url, {"file": f}, follow=True)
+        queryset = HubDRepository().receive()
+        self.assertEqual(len(queryset), 4)
+
+    def test_upload_permission_does_not_affect_get(self):
+        self.assertEqual(self.response.status_code, 200)
+
 
 class TestMontrekExampleDCreate(MontrekCreateViewTestCase):
     viewname = "montrek_example_d_create"

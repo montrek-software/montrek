@@ -260,6 +260,7 @@ class MontrekListView(
     template_name = "montrek_table.html"
     manager_class = MontrekManagerNotImplemented
     do_simple_file_upload = False
+    simple_file_upload_permission: list[str] = []
 
     def get(self, request, *args, **kwargs):
         q = request.GET
@@ -404,6 +405,10 @@ class MontrekListView(
         return HttpResponseRedirect(self.request.path)
 
     def post(self, request, *args, **kwargs):
+        if self.simple_file_upload_permission and not request.user.has_perms(
+            self.simple_file_upload_permission
+        ):
+            raise PermissionDenied
         form = SimpleUploadFileForm(".xlsx,.csv", request.POST, request.FILES)
         if form.is_valid():
             session_data = self.session_data.copy()

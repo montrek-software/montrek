@@ -122,6 +122,24 @@ class TestMontrekRepositorySatellite(TestCase):
             ],
         )
 
+    def test_get_identifier_fields(self):
+        repo = HubARepository()
+        id_fields = repo.get_identifier_fields()
+        self.assertCountEqual(id_fields, ["field_a1_str", "field_a2_str"])
+
+    def test_get_identifier_fields_with_linked_satellites(self):
+        repo = HubDRepository()
+        id_fields = repo.get_identifier_fields()
+        self.assertCountEqual(id_fields, ["field_d1_str", "hub_value_date_id"])
+
+    def test_get_identifier_fields_excludes_linked_satellite_ids(self):
+        repo = HubBRepository()
+        id_fields = repo.get_identifier_fields()
+        self.assertCountEqual(
+            id_fields, ["field_b1_str", "field_b2_str", "hub_entity_id"]
+        )
+        self.assertNotIn("field_d1_str", id_fields)
+
     def test_get_all_annotated_fields(self):
         repo = HubARepository()
         repo.add_linked_satellites_field_annotations(
