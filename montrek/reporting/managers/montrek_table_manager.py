@@ -106,7 +106,10 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
     def get_table_elements_name_to_field_map(self) -> dict[str, str]:
         name_to_field_map = {}
         for element in self.table_elements:
-            name_to_field_map[element.name] = getattr(element, "attr", "")
+            te_field = (
+                "text" if isinstance(element, te.LinkTextTableElement) else "attr"
+            )
+            name_to_field_map[element.name] = getattr(element, te_field, "")
         return name_to_field_map
 
     def get_field_table_elements_name_map(self) -> dict[str, str]:
