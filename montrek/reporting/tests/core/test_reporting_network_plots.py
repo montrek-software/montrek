@@ -123,6 +123,23 @@ class TestReportingNetworkPlot(TestCase):
         self.assertIn("#BE0D3E", figure_data[1]["marker"]["color"])
         self.assertIn("#004767", figure_data[1]["marker"]["color"])
 
+    def test_plot_template_click_handler(self):
+        graph = DiGraph()
+        graph.add_node("A", link="/detail/1")
+        graph.add_node("B", link="/detail/2")
+        graph.add_edge("A", "B")
+
+        reporting_data = ReportingNetworkData(graph=graph, title="Test Network Graph")
+
+        reporting_plot = ReportingNetworkPlot()
+        reporting_plot.generate(reporting_data)
+        html = reporting_plot.to_html()
+        soup = BeautifulSoup(html, "html.parser")
+        script = soup.find("script").string
+        self.assertIn("plotly_click", script)
+        self.assertIn("customdata", script)
+        self.assertIn("window.location.href", script)
+
     def test_reporting_network_plot__left_to_right_layout(self):
         graph = DiGraph()
         graph.add_node("A")
