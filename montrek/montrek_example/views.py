@@ -297,6 +297,7 @@ class MontrekExampleDList(views.MontrekListView):
 
 class MontrekExampleDListRestricted(MontrekExampleDList):
     permission_required = ["montrek_example.show_hubd"]
+    simple_file_upload_permission = ["montrek_example.add_hubd"]
 
 
 class MontrekExampleDCreate(views.MontrekCreateView):
