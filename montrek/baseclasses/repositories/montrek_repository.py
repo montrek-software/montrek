@@ -335,11 +335,10 @@ class MontrekRepository:
         return self._get_satellite_field_names(is_time_series=True)
 
     def get_identifier_fields(self) -> list[str]:
-        fields = []
+        fields: list[str] = []
         for satellite_class in self.annotator.annotated_satellite_classes:
-            id_fields = satellite_class.identifier_fields
-            fields += id_fields
-        return list(set(fields))
+            fields.extend(satellite_class.identifier_fields)
+        return list(dict.fromkeys(fields))
 
     def get_all_fields(self) -> list[str]:
         return self.annotator.get_annotated_field_names() + self.calculated_fields
