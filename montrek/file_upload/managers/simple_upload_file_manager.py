@@ -30,7 +30,7 @@ class SimpleFileUploadProcessor(FileUploadProcessorProtocol):
         self.target_repository: MontrekRepository | None = None
 
     def pre_check(self, file_path: str) -> bool:
-        file_type = file_path.split(".")[-1]
+        file_type = file_path.rsplit(".", 1)[-1].lower()
         if file_type == "csv":
             input_df = pd.read_csv(file_path)
         elif file_type == "xlsx":
