@@ -5,7 +5,8 @@
   const fig = {{ graph_json|safe }};
   // Slim, de-branded modebar: keep screenshot + reset; drag-zoom,
   // hover and double-click-reset still work natively without buttons.
-  Plotly.newPlot("plot-{{ plot_id }}", fig.data, fig.layout, {
+  const plotEl = document.getElementById("plot-{{ plot_id }}");
+  Plotly.newPlot(plotEl, fig.data, fig.layout, {
     displaylogo: false,
     modeBarButtonsToRemove: [
       "zoom2d",
@@ -20,6 +21,37 @@
       "toggleSpikelines",
       "hoverClosestPie",
     ],
+  });
+  plotEl.on("plotly_click", function (data) {
+    const point = data.points[0];
+    const url = point.customdata;
+    if (typeof url === "string" && url.length) {
+      const w = window.open(url, "_blank", "noopener,noreferrer");
+      if (w) w.opener = null;
+    }
+  });
+  plotEl.on("plotly_hover", function (data) {
+    const meta = plotEl.layout.meta;
+    if (!meta || !meta.node_edge_map) return;
+    const nodeIdx = data.points[0].pointIndex;
+    const edgeIndices = meta.node_edge_map[nodeIdx];
+    if (!edgeIndices || !edgeIndices.length) return;
+    const et = plotEl.data[0];
+    const hx = [], hy = [];
+    for (const ei of edgeIndices) {
+      hx.push(et.x[3 * ei], et.x[3 * ei + 1], null);
+      hy.push(et.y[3 * ei], et.y[3 * ei + 1], null);
+    }
+    const color = (plotEl.layout.modebar || {}).activecolor || "#004767";
+    Plotly.addTraces(plotEl, {
+      x: hx, y: hy, mode: "lines",
+      line: { width: 3, color: color },
+      hoverinfo: "none", name: "_edge_hl",
+    });
+  });
+  plotEl.on("plotly_unhover", function () {
+    const idx = plotEl.data.findIndex(function (t) { return t.name === "_edge_hl"; });
+    if (idx !== -1) Plotly.deleteTraces(plotEl, idx);
   });
   })();
 </script>
