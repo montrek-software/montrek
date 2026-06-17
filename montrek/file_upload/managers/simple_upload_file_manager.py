@@ -42,8 +42,11 @@ class SimpleFileUploadProcessor(FileUploadProcessorProtocol):
         field_to_name_map = {v: k for k, v in name_to_field_map.items()}
         self.input_df = input_df.rename(columns=name_to_field_map)
         self.target_repository = self.table_manager.repository
+        uploadable_fields = {v for v in name_to_field_map.values() if v}
         has_all_id_fields = True
         for id_field in self.target_repository.get_identifier_fields():
+            if id_field not in uploadable_fields:
+                continue
             if id_field not in self.input_df.columns:
                 display_name = field_to_name_map.get(id_field, id_field)
                 self.set_message(self.message + f"{display_name} not in input data")

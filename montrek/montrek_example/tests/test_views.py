@@ -1027,6 +1027,20 @@ class TestMontrekExampleDListView(MontrekListViewTestCase):
         _write_temporary_file_and_upload(upload_csv_data)
         _assert_database_values(expected_values)
 
+    def test_simple_file_upload_missing_identifier_field(self):
+        csv_data = "D1 Int\n1\n2\n"
+        with TemporaryDirectory() as temp_dir:
+            file_path = os.path.join(temp_dir, "upload.csv")
+            with open(file_path, "w") as f:
+                f.write(csv_data)
+            with open(file_path, "rb") as f:
+                self.client.post(self.url, {"file": f}, follow=True)
+        queryset = HubDRepository().receive()
+        self.assertEqual(len(queryset), 1)
+        registry = FileUploadRegistryRepository().receive().last()
+        self.assertEqual(registry.upload_status, "failed")
+        self.assertIn("not in input data", registry.upload_message)
+
 
 class TestMontrekExampleDCreate(MontrekCreateViewTestCase):
     viewname = "montrek_example_d_create"
