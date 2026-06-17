@@ -25,7 +25,10 @@
   plotEl.on("plotly_click", function (data) {
     const point = data.points[0];
     const url = point.customdata;
-    if (url) { window.open(url, "_blank"); }
+    if (typeof url === "string" && url.length) {
+      const w = window.open(url, "_blank", "noopener,noreferrer");
+      if (w) w.opener = null;
+    }
   });
   plotEl.on("plotly_hover", function (data) {
     const meta = plotEl.layout.meta;
