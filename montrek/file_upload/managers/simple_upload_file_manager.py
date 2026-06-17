@@ -1,23 +1,31 @@
-from django.conf import settings
-from django.urls import resolve
-from django.db import transaction
 from typing import Any
+
 import pandas as pd
+from django.conf import settings
+from django.db import transaction
+from django.urls import resolve
+
 from baseclasses.repositories.montrek_repository import MontrekRepository
-from file_upload.managers.file_upload_manager import FileUploadManagerABC
+from file_upload.managers.file_upload_manager import (
+    FileUploadManagerABC,
+    FileUploadProcessorProtocol,
+)
+from file_upload.models import FileUploadRegistryHubABC
+from reporting.managers.montrek_table_manager import MontrekTableManagerABC
 
 
-class SimpleFileUploadProcessor:
+class SimpleFileUploadProcessor(FileUploadProcessorProtocol):
     def __init__(
         self,
-        file_upload_registry_hub,
+        file_upload_registry_hub: FileUploadRegistryHubABC,
         session_data: dict[str, Any],
-        **kwargs,
+        **kwargs: Any,
     ):
-        self.message = ""
         view_class = resolve(session_data["request_path"]).func.view_class
-        self.table_manager = view_class.manager_class(session_data)
-        self.overwrite = session_data["overwrite"]
+        self.table_manager: MontrekTableManagerABC = view_class.manager_class(
+            session_data
+        )
+        self.overwrite: bool = session_data["overwrite"]
         self.input_df: pd.DataFrame | None = None
         self.target_repository: MontrekRepository | None = None
 
@@ -28,7 +36,7 @@ class SimpleFileUploadProcessor:
         elif file_type == "xlsx":
             input_df = pd.read_excel(file_path)
         else:
-            self.message = f"File type {file_type} not supported"
+            self.set_message(f"File type {file_type} not supported")
             return False
         name_to_field_map = self.table_manager.get_table_elements_name_to_field_map()
         field_to_name_map = {v: k for k, v in name_to_field_map.items()}
@@ -37,13 +45,16 @@ class SimpleFileUploadProcessor:
         has_all_id_fields = True
         for id_field in self.target_repository.get_identifier_fields():
             if id_field not in self.input_df.columns:
-                id_field = field_to_name_map.get(id_field, id_field)
-                self.message += f"{id_field} not in input data"
+                display_name = field_to_name_map.get(id_field, id_field)
+                self.set_message(self.message + f"{display_name} not in input data")
                 has_all_id_fields = False
 
         return has_all_id_fields
 
     def process(self, _: str) -> bool:
+        if self.target_repository is None or self.input_df is None:
+            self.set_message("pre_check must run before process")
+            return False
         try:
             if self.overwrite:
                 with transaction.atomic():
@@ -55,7 +66,7 @@ class SimpleFileUploadProcessor:
         except Exception as e:
             if settings.IS_TEST_RUN:
                 raise e
-            self.message = str(e)
+            self.set_message(str(e))
             return False
 
         return True
