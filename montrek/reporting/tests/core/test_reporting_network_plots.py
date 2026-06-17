@@ -185,7 +185,7 @@ class TestReportingNetworkPlot(TestCase):
         script = soup.find("script").string
         self.assertIn("plotly_click", script)
         self.assertIn("customdata", script)
-        self.assertIn("window.location.href", script)
+        self.assertIn("window.open", script)
 
     def test_reporting_network_plot__left_to_right_layout(self):
         graph = DiGraph()
