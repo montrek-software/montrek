@@ -5,7 +5,8 @@
   const fig = {{ graph_json|safe }};
   // Slim, de-branded modebar: keep screenshot + reset; drag-zoom,
   // hover and double-click-reset still work natively without buttons.
-  Plotly.newPlot("plot-{{ plot_id }}", fig.data, fig.layout, {
+  const plotEl = document.getElementById("plot-{{ plot_id }}");
+  Plotly.newPlot(plotEl, fig.data, fig.layout, {
     displaylogo: false,
     modeBarButtonsToRemove: [
       "zoom2d",
@@ -20,6 +21,11 @@
       "toggleSpikelines",
       "hoverClosestPie",
     ],
+  });
+  plotEl.on("plotly_click", function (data) {
+    const point = data.points[0];
+    const url = point.customdata;
+    if (url) { window.location.href = url; }
   });
   })();
 </script>
