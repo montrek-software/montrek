@@ -43,16 +43,23 @@ class SimpleFileUploadProcessor(FileUploadProcessorProtocol):
         self.input_df = input_df.rename(columns=name_to_field_map)
         self.target_repository = self.table_manager.repository
         uploadable_fields = {v for v in name_to_field_map.values() if v}
-        has_all_id_fields = True
+        missing_display_names: list[str] = []
         for id_field in self.target_repository.get_identifier_fields():
             if id_field not in uploadable_fields:
                 continue
             if id_field not in self.input_df.columns:
-                display_name = field_to_name_map.get(id_field, id_field)
-                self.set_message(self.message + f"{display_name} not in input data")
-                has_all_id_fields = False
+                missing_display_names.append(field_to_name_map.get(id_field, id_field))
 
-        return has_all_id_fields
+        if missing_display_names:
+            self.set_message(
+                "Missing identifier field(s): "
+                + ", ".join(
+                    f"{name} not in input data" for name in missing_display_names
+                )
+            )
+            return False
+
+        return True
 
     def process(self, _: str) -> bool:
         if self.target_repository is None or self.input_df is None:
