@@ -914,6 +914,8 @@ class LinkedHubPairedJsonSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
                 f"{type(self).__name__} requires a timeseries satellite_class; got {satellite_class.__name__} --> Please contact Christoph and we will fix this"
             )
         self.fields = [fields] if isinstance(fields, str) else list(fields)
+        if not self.fields:
+            raise ValueError(f"{type(self).__name__} requires at least one field name")
         super().__init__(satellite_class, self.fields[0], link_class, **kwargs)
         self.extra_json_fields = extra_json_fields
         self._hub_field_to = "hub_in" if reversed_link else "hub_out"
