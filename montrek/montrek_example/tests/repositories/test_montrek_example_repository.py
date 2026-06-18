@@ -1753,7 +1753,9 @@ class TestMontrekRepositoryLinks(TestCase):
             me_factories.CHubValueDateFactory(hub=hub_c, value_date=value_date)
 
             expected[value_date] = []
-            for suffix in ("1", "2") if value_date == value_dates[0] else ("1",):
+            for idx, suffix in enumerate(
+                ("1", "2") if value_date == value_dates[0] else ("1",)
+            ):
                 sat_e1 = me_factories.SatE1Factory(
                     field_e1_str=f"E-{value_date}-{suffix}"
                 )
@@ -1763,11 +1765,14 @@ class TestMontrekRepositoryLinks(TestCase):
                     hub=hub_d, value_date=value_date
                 )
                 sat_tsd2 = me_factories.SatTSD2Factory(
-                    hub_value_date=d_hvd, field_tsd2_float=float(value_date[:4])
+                    hub_value_date=d_hvd,
+                    field_tsd2_float=float(value_date[:4]),
+                    field_tsd2_int=idx + 1,
                 )
                 expected[value_date].append(
                     {
                         "field_tsd2_float": sat_tsd2.field_tsd2_float,
+                        "field_tsd2_int": sat_tsd2.field_tsd2_int,
                         "field_e1_str": sat_e1.field_e1_str,
                     }
                 )

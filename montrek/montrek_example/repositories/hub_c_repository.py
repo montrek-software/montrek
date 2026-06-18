@@ -310,7 +310,7 @@ class HubCRepositoryWithPairedJsonAnnotation(MontrekRepository):
     def set_annotations(self):
         self.add_linked_hub_paired_json_annotation(
             me_models.SatTSD2,
-            "field_tsd2_float",
+            ["field_tsd2_float", "field_tsd2_int"],
             me_models.LinkHubCHubD,
             (
                 LinkedHubJsonField(
