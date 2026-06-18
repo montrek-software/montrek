@@ -973,8 +973,6 @@ class LinkedHubPairedJsonSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
         )
 
         non_null = Q()
-        for f_name in self.fields:
-            non_null &= Q(**{f"{f_name}__isnull": False})
         for json_field in self.extra_json_fields:
             non_null &= Q(**{f"{json_field.output_key}__isnull": False})
 
