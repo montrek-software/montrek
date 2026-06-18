@@ -889,7 +889,7 @@ class LinkedHubJsonField:
 
 class LinkedHubPairedJsonSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
     """Builds a JSON array of paired objects, one per linked HubValueDate row,
-    combining the primary TS satellite field with fields fetched from other
+    combining primary TS satellite fields with fields fetched from other
     linked hubs (extra_json_fields).
 
     Independently JSON_AGG-ing each field and re-pairing them positionally
@@ -902,7 +902,7 @@ class LinkedHubPairedJsonSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
     def __init__(
         self,
         satellite_class: type,
-        field: str,
+        fields: str | list[str],
         link_class: type[MontrekLinkABC],
         extra_json_fields: tuple[LinkedHubJsonField, ...],
         *,
@@ -913,13 +913,14 @@ class LinkedHubPairedJsonSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
             raise TypeError(
                 f"{type(self).__name__} requires a timeseries satellite_class; got {satellite_class.__name__} --> Please contact Christoph and we will fix this"
             )
-        super().__init__(satellite_class, field, link_class, **kwargs)
+        self.fields = [fields] if isinstance(fields, str) else list(fields)
+        super().__init__(satellite_class, self.fields[0], link_class, **kwargs)
         self.extra_json_fields = extra_json_fields
         self._hub_field_to = "hub_in" if reversed_link else "hub_out"
         self._hub_field_from = "hub_out" if reversed_link else "hub_in"
 
     def _build_primary_field_subquery(
-        self, reference_date: timezone.datetime
+        self, field: str, reference_date: timezone.datetime
     ) -> Subquery:
         return Subquery(
             self.satellite_class.objects.filter(
@@ -932,7 +933,7 @@ class LinkedHubPairedJsonSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
                 ),
                 Q(**self.link_satellite_filter),
                 Q(**self._build_cross_satellite_filter_dict(reference_date)),
-            ).values(self.field)[:1]
+            ).values(field)[:1]
         )
 
     def _build_extra_field_subquery(
@@ -959,7 +960,10 @@ class LinkedHubPairedJsonSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
         rows = self.get_link_hub_value_date_query(
             self._hub_field_from, reference_date
         ).annotate(
-            **{self.field: self._build_primary_field_subquery(reference_date)},
+            **{
+                f_name: self._build_primary_field_subquery(f_name, reference_date)
+                for f_name in self.fields
+            },
             **{
                 json_field.output_key: self._build_extra_field_subquery(
                     json_field, reference_date
@@ -968,11 +972,13 @@ class LinkedHubPairedJsonSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
             },
         )
 
-        non_null = Q(**{f"{self.field}__isnull": False})
+        non_null = Q()
+        for f_name in self.fields:
+            non_null &= Q(**{f"{f_name}__isnull": False})
         for json_field in self.extra_json_fields:
             non_null &= Q(**{f"{json_field.output_key}__isnull": False})
 
-        json_object_kwargs = {self.field: F(self.field)}
+        json_object_kwargs = {f_name: F(f_name) for f_name in self.fields}
         json_object_kwargs.update(
             {jf.output_key: F(jf.output_key) for jf in self.extra_json_fields}
         )

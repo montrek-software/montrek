@@ -510,7 +510,7 @@ class MontrekRepository:
     def add_linked_hub_paired_json_annotation(
         self,
         satellite_class: type[MontrekSatelliteABC | MontrekTimeSeriesSatelliteABC],
-        field: str,
+        fields: str | list[str],
         link_class: type[MontrekLinkABC],
         extra_json_fields: tuple[LinkedHubJsonField, ...],
         output_name: str,
@@ -519,7 +519,7 @@ class MontrekRepository:
         link_satellite_filter: dict[str, object] | None = None,
     ):
         """Annotate output_name with a JSON array of paired objects, one per
-        linked hub-value-date row, combining `field` from `satellite_class`
+        linked hub-value-date row, combining `fields` from `satellite_class`
         with the fields described in `extra_json_fields`.
 
         Use this instead of separate add_linked_satellites_field_annotations
@@ -534,7 +534,7 @@ class MontrekRepository:
 
         self.annotator.annotations[output_name] = LinkedHubPairedJsonSubqueryBuilder(
             satellite_class,
-            field,
+            fields,
             link_class,
             extra_json_fields,
             reversed_link=reversed_link,
