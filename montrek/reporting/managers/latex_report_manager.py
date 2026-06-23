@@ -129,32 +129,33 @@ class LatexReportManager:
                     str(latex_file_path),
                 ],
                 capture_output=True,
-                check=True,
+                check=False,
                 text=False,  # capture raw bytes to avoid UnicodeDecodeError
                 env={**os.environ, "LANG": os.environ.get("LANG", "C.UTF-8")},
                 cwd=str(workbench_path),
             )  # nosec B603
 
             if not pdf_file_path.exists():
-                stdout = (proc.stdout or b"").decode("latin-1", errors="replace")
+                err = (proc.stderr or b"") + b"\n" + (proc.stdout or b"")
+                preferred_encoding = locale.getpreferredencoding(False)
+                err_txt = err.decode(preferred_encoding, errors="replace")
+                self.report_manager.messages.append(
+                    MontrekMessageError(
+                        message=f"LaTeX compilation failed.\n{err_txt[-4000:]}"
+                    )
+                )
+                return None
+
+            if proc.returncode != 0:
                 stderr = (proc.stderr or b"").decode("latin-1", errors="replace")
-                raise RuntimeError(
-                    f"LaTeX did not produce a PDF at {pdf_file_path}.\n{stdout[-2000:]}\n{stderr[-2000:]}"
+                logger.warning(
+                    "XeLaTeX exited with code %d but produced a PDF: %s",
+                    proc.returncode,
+                    stderr[-500:],
                 )
 
             output_pdf_path.write_bytes(pdf_file_path.read_bytes())
             return str(output_pdf_path)
-
-        except subprocess.CalledProcessError as e:
-            err = (e.stderr or b"") + b"\n" + (e.stdout or b"")
-            preferred_encoding = locale.getpreferredencoding(False)
-            err_txt = err.decode(preferred_encoding, errors="replace")
-            self.report_manager.messages.append(
-                MontrekMessageError(
-                    message=f"LaTeX compilation failed.\n{err_txt[-4000:]}"
-                )
-            )
-            return None
 
         finally:
             shutil.rmtree(workbench_path, ignore_errors=True)
