@@ -28,6 +28,8 @@ from baseclasses.forms import (
     MontrekModelCharChoiceField,
     MontrekModelChoiceField,
     MontrekModelMultipleChoiceField,
+    PercentDecimalFormField,
+    PercentFloatFormField,
 )
 from montrek.utils import SystemFormatting
 from baseclasses.tests.factories.baseclass_factories import (
@@ -384,6 +386,87 @@ class TestMontrekModelMultipleChoiceFieldGetInitialLink(TestCase):
             {"test_name": None}, self.qs, "test_name", ";", None
         )
         self.assertIsNone(result)
+
+
+class TestPercentDecimalFormField(TestCase):
+    def setUp(self):
+        self.field = PercentDecimalFormField(max_digits=10, decimal_places=4)
+
+    def test_widget_is_text_input(self):
+        self.assertIsInstance(self.field.widget, TextInput)
+
+    def test_converts_percent_to_absolute(self):
+        self.assertEqual(self.field.clean("5"), Decimal("0.05"))
+
+    def test_converts_fractional_percent(self):
+        self.assertEqual(self.field.clean("5.5"), Decimal("0.055"))
+
+    def test_converts_german_comma_notation(self):
+        self.assertEqual(self.field.clean("5,5"), Decimal("0.055"))
+
+    def test_converts_hundred_percent(self):
+        self.assertEqual(self.field.clean("100"), Decimal("1"))
+
+    def test_converts_zero(self):
+        self.assertEqual(self.field.clean("0"), Decimal("0"))
+
+    def test_converts_negative_percent(self):
+        self.assertEqual(self.field.clean("-2.5"), Decimal("-0.025"))
+
+    def test_prepare_value_multiplies_absolute_to_percent(self):
+        self.assertEqual(self.field.prepare_value(Decimal("0.05")), "5")
+
+    def test_prepare_value_fractional(self):
+        self.assertEqual(self.field.prepare_value(Decimal("0.055")), "5.5")
+
+    def test_prepare_value_one_hundred_percent(self):
+        self.assertEqual(self.field.prepare_value(Decimal("1")), "100")
+
+    def test_prepare_value_passes_through_string(self):
+        """On re-render after validation failure, the POST string should not be multiplied."""
+        self.assertEqual(self.field.prepare_value("5.5"), "5.5")
+
+    def test_prepare_value_none(self):
+        self.assertIsNone(self.field.prepare_value(None))
+
+    def test_invalid_input_raises(self):
+        with self.assertRaises(ValidationError):
+            self.field.clean("not_a_number")
+
+
+class TestPercentFloatFormField(TestCase):
+    def setUp(self):
+        self.field = PercentFloatFormField()
+
+    def test_widget_is_text_input(self):
+        self.assertIsInstance(self.field.widget, TextInput)
+
+    def test_converts_percent_to_absolute(self):
+        self.assertAlmostEqual(self.field.clean("5"), 0.05)
+
+    def test_converts_fractional_percent(self):
+        self.assertAlmostEqual(self.field.clean("5.5"), 0.055)
+
+    def test_converts_german_comma_notation(self):
+        self.assertAlmostEqual(self.field.clean("5,5"), 0.055)
+
+    def test_prepare_value_multiplies_absolute_to_percent(self):
+        self.assertEqual(self.field.prepare_value(0.05), "5")
+
+    def test_prepare_value_fractional(self):
+        self.assertEqual(self.field.prepare_value(0.055), "5.5")
+
+    def test_prepare_value_does_not_use_scientific_notation(self):
+        self.assertEqual(self.field.prepare_value(0.0000005), "0.00005")
+    def test_prepare_value_passes_through_string(self):
+        self.assertEqual(self.field.prepare_value("5.5"), "5.5")
+
+    def test_prepare_value_none(self):
+        self.assertIsNone(self.field.prepare_value(None))
+
+    def test_invalid_input_raises(self):
+        with self.assertRaises(ValidationError):
+            self.field.clean("not_a_number")
 
 
 class TestGermanDecimalFormField(TestCase):

@@ -1,4 +1,6 @@
+import contextlib
 import json
+from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from django import forms
@@ -34,6 +36,58 @@ class GermanFloatFormField(forms.FloatField):
         if isinstance(value, str) and "," in value:
             value = value.replace(".", "").replace(",", ".")
         return super().to_python(value)
+
+
+class PercentDecimalFormField(forms.DecimalField):
+    """DecimalField where users enter percent values (e.g. 5 for 5%)
+    that are stored as absolute values (0.05)."""
+
+    widget = forms.TextInput
+
+    def to_python(self, value):
+        if isinstance(value, str) and "," in value:
+            value = value.replace(".", "").replace(",", ".")
+        result = super().to_python(value)
+        if result is not None:
+            result = result / 100
+        return result
+
+    def prepare_value(self, value):
+        if value is not None and not isinstance(value, str):
+            try:
+                result = Decimal(str(value)) * 100
+                value = format(result, "f")
+                if "." in value:
+                    value = value.rstrip("0").rstrip(".")
+            except (InvalidOperation, TypeError, ValueError):
+                pass
+        return super().prepare_value(value)
+
+
+class PercentFloatFormField(forms.FloatField):
+    """FloatField where users enter percent values (e.g. 5 for 5%)
+    that are stored as absolute values (0.05)."""
+
+    widget = forms.TextInput
+
+    def to_python(self, value):
+        if isinstance(value, str) and "," in value:
+            value = value.replace(".", "").replace(",", ".")
+        result = super().to_python(value)
+        if result is not None:
+            result = result / 100
+        return result
+
+    def prepare_value(self, value):
+        if value is not None and not isinstance(value, str):
+            with contextlib.suppress(
+                InvalidOperation, TypeError, ValueError, OverflowError
+            ):
+                result = Decimal(str(value)) * 100
+                value = format(result, "f")
+                if "." in value:
+                    value = value.rstrip("0").rstrip(".")
+        return super().prepare_value(value)
 
 
 class DateRangeForm(forms.Form):
