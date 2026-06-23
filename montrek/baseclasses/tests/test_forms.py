@@ -456,6 +456,8 @@ class TestPercentFloatFormField(TestCase):
     def test_prepare_value_fractional(self):
         self.assertEqual(self.field.prepare_value(0.055), "5.5")
 
+    def test_prepare_value_does_not_use_scientific_notation(self):
+        self.assertEqual(self.field.prepare_value(0.0000005), "0.00005")
     def test_prepare_value_passes_through_string(self):
         self.assertEqual(self.field.prepare_value("5.5"), "5.5")
 
