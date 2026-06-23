@@ -80,8 +80,13 @@ class PercentFloatFormField(forms.FloatField):
 
     def prepare_value(self, value):
         if value is not None and not isinstance(value, str):
-            with contextlib.suppress(TypeError, ValueError):
-                value = f"{float(value) * 100:g}"
+            with contextlib.suppress(
+                InvalidOperation, TypeError, ValueError, OverflowError
+            ):
+                result = Decimal(str(value)) * 100
+                value = format(result, "f")
+                if "." in value:
+                    value = value.rstrip("0").rstrip(".")
         return super().prepare_value(value)
 
 
