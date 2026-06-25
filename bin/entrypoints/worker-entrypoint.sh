@@ -32,5 +32,10 @@ if [[ $CONCURRENCY -gt $MAX_CONCURRENCY ]]; then
   CONCURRENCY=$MAX_CONCURRENCY
 fi
 
+MAX_TASKS_ARGS=""
+if [[ "$POOL" == "prefork" ]]; then
+  MAX_TASKS_ARGS="--max-tasks-per-child=5"
+fi
+
 cd montrek
-python -m celery --app=montrek worker --loglevel=info -Q $QUEUE --concurrency=$CONCURRENCY -n $SERVICE@%h --pool=$POOL
+python -m celery --app=montrek worker --loglevel=info -Q $QUEUE --concurrency=$CONCURRENCY -n $SERVICE@%h --pool=$POOL $MAX_TASKS_ARGS
