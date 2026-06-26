@@ -434,7 +434,7 @@ class LinkListTableElement(TableElement, GetDottetAttrsOrArgMixin):
         return str(text_values).split(self.in_separator)
 
     def format_latex(self, value):
-        return " \\color{{black}} {} &".format(",".join(self._unique_list(value)))
+        return " \\color{{textdark}} {} &".format(",".join(self._unique_list(value)))
 
     @staticmethod
     def _unique_list(items: Iterable[T]) -> list[T]:

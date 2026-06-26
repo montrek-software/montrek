@@ -130,7 +130,7 @@ class TestReportingElementGeneral(TestCase):
 
         # Links
         self.assertIn(
-            r"\textcolor{blue}{\href{https://example.com}{Example}}",
+            r"\textcolor{primary}{\href{https://example.com}{Example}}",
             latex,
         )
 
@@ -316,7 +316,7 @@ class TestReportingImage(ReportingElementTestCase):
             reporting_image = ReportingImage(tmp_path)
             latex_path = reporting_image.to_latex()
             cleaned_tmp_path = tmp_path.replace("_", r"\_")
-            expected = rf"\includegraphics[width=1.0\textwidth]{{{cleaned_tmp_path}}}"
+            expected = rf"\includegraphics[width=1.0\linewidth]{{{cleaned_tmp_path}}}"
             self.assertEqual(latex_path, expected)
         finally:
             os.remove(tmp_path)  # Clean up the temporary file
@@ -553,7 +553,7 @@ class TestReportingParagraph(TestCase):
         test_bold_to_latex = paragraph.to_latex()
         self.assertEqual(
             test_bold_to_latex,
-            "\\begin{contentbox}This is a \\textbf{bold} text\n\\end{contentbox}",
+            "\\begin{tilebox}This is a \\textbf{bold} text\n\\end{tilebox}",
         )
 
     def test_italic_text(self):
@@ -567,7 +567,7 @@ class TestReportingParagraph(TestCase):
         test_italic_to_latex = paragraph.to_latex()
         self.assertEqual(
             test_italic_to_latex,
-            "\\begin{contentbox}This is a \\emph{italic} text\n\\end{contentbox}",
+            "\\begin{tilebox}This is a \\emph{italic} text\n\\end{tilebox}",
         )
 
 
@@ -592,13 +592,13 @@ class TestMontrekLogo(TestCase):
 
         latex = logo.to_latex()
 
-        self.assertTrue(latex.startswith("\\includegraphics[width=0.5\\textwidth]{"))
+        self.assertTrue(latex.startswith("\\includegraphics[width=0.5\\linewidth]{"))
 
 
 class TestMarkdownReportingElement(ReportingElementTestCase):
     reporting_element_class = MarkdownReportingElement
     expected_html = '<pclass="mt-2">Thisisa<strong>bold</strong>textwithatable:</p><tableclass="tabletable-custom-striped"><thead><tr><th>Header1</th><th>Header2</th></tr></thead><tbody><tr><td>Cell1</td><td>Cell2</td></tr></tbody></table>'
-    expected_latex = "\\begin{contentbox}This is a \\textbf{bold} text with a table:\n\n\\begin{longtable}[]{@{}ll@{}}\n\\toprule\\noalign{}\nHeader1 & Header2 \\\\\n\\midrule\\noalign{}\n\\endhead\n\\bottomrule\\noalign{}\n\\endlastfoot\nCell1 & Cell2 \\\\\n\\end{longtable}\n\\end{contentbox}"
+    expected_latex = "\\begin{tilebox}This is a \\textbf{bold} text with a table:\n\n\\begin{longtable}[]{@{}ll@{}}\n\\toprule\\noalign{}\nHeader1 & Header2 \\\\\n\\midrule\\noalign{}\n\\endhead\n\\bottomrule\\noalign{}\n\\endlastfoot\nCell1 & Cell2 \\\\\n\\end{longtable}\n\\end{tilebox}"
     expected_json = {
         "markdown_reporting_element": "This is a **bold** text with a table:\n\n| Header1 | Header2 |\n|---------|---------|\n| Cell1   | Cell2   |"
     }
@@ -619,7 +619,15 @@ class TestMarkdownReportingElement(ReportingElementTestCase):
 class TestReportingError(ReportingElementTestCase):
     reporting_element_class = ReportingError
     expected_html = '<divclass="alertalert-danger"><strong>ErrorHeader</strong></div><divclass="alertalert-danger">ErrorText1<br>ErrorText2<br></div>'
-    expected_latex = r"\textbf{Error Header}\\Error Text1\\Error Text2"
+    expected_latex = (
+        "\\begin{tcolorbox}["
+        "colback=secondary_light,colframe=secondary,"
+        "boxrule=0.5pt,arc=3mm,left=4mm,right=4mm,top=2mm,bottom=2mm"
+        "]\n"
+        "\\textcolor{secondary}{\\textbf{Error Header}}\\\\\n"
+        "Error Text1\\\\Error Text2\n"
+        "\\end{tcolorbox}"
+    )
     expected_json = {
         "error_header": "Error Header",
         "error_texts": ["Error Text1", "Error Text2"],

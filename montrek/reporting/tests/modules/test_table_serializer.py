@@ -215,7 +215,7 @@ class TableSerializerTestCase(TestCase):
             result["comparison"],
             {
                 "num": 0,
-                "latex_val": "{\\color{green}$\\rightarrow$}",
+                "latex_val": "{\\color{brightergreen}$\\rightarrow$}",
                 "hover_text": "=",
             },
         )
