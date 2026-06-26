@@ -13,7 +13,7 @@ _LATEX_ESCAPE_RULES: tuple[tuple[str, str], ...] = (
     ("&lt;", "<"),
     ("&gt;", ">"),
     ("&middot;", "$\\cdot$"),
-    ("&lowbar;", "\\_"),
+    ("&lowbar;", "_"),
     # Raw character escaping
     ("#", "\\#"),
     ("%", "\\%"),
@@ -39,7 +39,7 @@ class LaTeXEscaper:
     """
 
     @staticmethod
-    def escape(text: str) -> str:
+    def escape(text: Any) -> str:
         text = str(text)
         for raw, escaped in _LATEX_RAW_ESCAPE_RULES:
             text = text.replace(raw, escaped)
