@@ -146,9 +146,9 @@
 <body>
 
   <!-- Running: logo (top-left) -->
-  {% if client_logo_path %}
+  {% if client_logo_src %}
   <div id="page-header-logo">
-    <img class="header-logo-img" src="file://{{ client_logo_path }}" width="80" height="27" alt="">
+    <img class="header-logo-img" src="{{ client_logo_src }}" width="80" height="27" alt="">
   </div>
   {% endif %}
 

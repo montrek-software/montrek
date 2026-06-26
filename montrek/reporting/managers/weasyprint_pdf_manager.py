@@ -43,7 +43,7 @@ class WeasyPrintPdfManager:
                 "primary_color": settings.PRIMARY_COLOR,
                 "secondary_color": settings.SECONDARY_COLOR,
                 "montrek_logo_path": self._montrek_logo_path(),
-                "client_logo_path": self._client_logo_path(),
+                "client_logo_src": self._client_logo_src(),
                 "page_orientation": getattr(
                     self.manager, "pdf_orientation", "landscape"
                 ),
@@ -70,8 +70,12 @@ class WeasyPrintPdfManager:
         return path if os.path.exists(path) else ""
 
     @staticmethod
-    def _client_logo_path() -> str:
+    def _client_logo_src() -> str:
         path = getattr(settings, "CLIENT_LOGO_PATH", "")
-        if path and os.path.exists(path):
+        if not path:
+            return ""
+        if path.startswith(("http://", "https://")):
             return path
+        if os.path.exists(path):
+            return f"file://{path}"
         return ""
