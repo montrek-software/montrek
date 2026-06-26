@@ -30,28 +30,33 @@ class LatexTableConverter:
 
     def get_table_start_str(self) -> str:
         table_start_str = "\n\\begin{table}[H]\n\\centering\n\\small\n"
-        table_start_str += "\\arrayrulecolor{lightgrey}\n"
-        table_start_str += "\\setlength{\\tabcolsep}{1pt}\n"
-        table_start_str += "\\renewcommand{\\arraystretch}{0.5}\n"
+        table_start_str += "\\arrayrulecolor{bordercolor}\n"
+        table_start_str += "\\setlength{\\tabcolsep}{5pt}\n"
+        table_start_str += "\\renewcommand{\\arraystretch}{1.2}\n"
         table_start_str += f"\\caption{{{self.table_title}}}\n"
-        table_start_str += "\\begin{tabularx}{\\textwidth}{|"
+        table_start_str += "\\begin{tabularx}{\\textwidth}{"
         column_def_str = ""
-        column_header_str = "\\rowcolor{primary}"
+        column_header_str = "\\rowcolor{surfacemuted}"
         column_sizes = self.get_column_sizes()
 
         for table_element in self.table_elements:
             if isinstance(table_element, te.LinkTableElement):
                 continue
             column_size = column_sizes.get(table_element.name, 0)
-            column_def_str += f">{{\\hsize={column_size}\\hsize}}X|"
+            column_def_str += f">{{\\hsize={column_size}\\hsize}}X "
             element_header = HtmlLatexConverter.convert(table_element.name)
             element_header = " ".join(
                 [f"\\mbox{{{head}}}" for head in element_header.split(" ")]
             )
-            column_header_str += f"\\color{{white}}\\textbf{{{element_header}}} & "
-        table_start_str += column_def_str
+            column_header_str += (
+                f"\\textcolor{{textmuted}}{{\\textbf{{{element_header}}}}} & "
+            )
+        table_start_str += column_def_str.rstrip()
         table_start_str += "}\n\\hline\n"
-        table_start_str += column_header_str[:-2] + "\\\\\n\\hline\n"
+        table_start_str += column_header_str[:-2] + "\\\\\n"
+        table_start_str += (
+            "\\arrayrulecolor{primary}\\hline\\arrayrulecolor{bordercolor}\n"
+        )
         return table_start_str
 
     def get_table_end_str(self) -> str:
@@ -61,8 +66,6 @@ class LatexTableConverter:
         table_str = ""
 
         for i, query_object in enumerate(self.table):
-            if i % 2 == 0:
-                table_str += "\\rowcolor{primary_light}"
             for table_element in self.table_elements:
                 if isinstance(table_element, te.LinkTableElement):
                     continue

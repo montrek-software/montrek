@@ -27,6 +27,13 @@
 % Define colors
 {{ colors }}
 
+% Static design-system tokens (gold theme)
+\definecolor{surfacemuted}{HTML}{F1F3F5}
+\definecolor{bordercolor}{HTML}{E5E8EC}
+\definecolor{textmuted}{HTML}{5B6573}
+\definecolor{textfaint}{HTML}{8A93A1}
+\definecolor{textdark}{HTML}{1D2430}
+
 % Page geometry
 \geometry{left=1.7cm, right=1.2cm, top=1in, bottom=2in}
 \pagestyle{fancy}
@@ -34,13 +41,15 @@
 \fancyhead[L]{ { {{ client_logo }}  } }
 \fancyhead[C]{\color{primary}\large\textbf{ {{document_title}} }}
 \fancyfoot[R]{\includegraphics[height=0.5cm]{ {{ montrek_logo }}  }\hspace{1cm}\color{primary}\thepage}
-\fancyfoot[L]{\color{grey}\footnotesize {{ footer_text }}   }
+\fancyfoot[L]{\color{textmuted}\footnotesize {{ footer_text }}   }
 \renewcommand{\headrulewidth}{2pt}
 \renewcommand{\headrule}{\hbox to\headwidth{\color{primary}\leaders\hrule height \headrulewidth\hfill}}
+\renewcommand{\footrulewidth}{0.5pt}
+\renewcommand{\footrule}{\hbox to\headwidth{\color{bordercolor}\leaders\hrule height \footrulewidth\hfill}}
 \setlength{\headsep}{1in}
-\renewcommand{\footrulewidth}{1pt}
-\setstretch{0.9}
+\setstretch{1.0}
 \setlength{\headheight}{40pt}
+\setlength{\parskip}{4pt}
 
 % Fonts and colors
 \usepackage{fontspec}
@@ -49,9 +58,11 @@
 % Title formats
 \titleformat*{\section}{\large\bfseries\color{primary}}
 \titleformat*{\subsection}{\bfseries\color{primary}}
+\titlespacing*{\section}{0pt}{10pt}{4pt}
+\titlespacing*{\subsection}{0pt}{8pt}{3pt}
 
 % Table settings
-\renewcommand{\arraystretch}{0.9}
+\renewcommand{\arraystretch}{1.0}
 
 % Progress bars
 \newcommand{\progressbar}[2]{
@@ -81,10 +92,10 @@
 \newtcolorbox{tilebox}{
   breakable,
   colback=white,
-  colframe=black!30,
-  boxrule=0.4pt,
-  arc=2mm,
-  left=2mm,right=2mm,top=1mm,bottom=1mm
+  colframe=bordercolor,
+  boxrule=0.5pt,
+  arc=5mm,
+  left=5mm,right=5mm,top=3mm,bottom=3mm
 }
 \newtcolorbox{contentbox}{
   breakable,
