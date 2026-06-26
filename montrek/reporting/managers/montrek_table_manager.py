@@ -165,6 +165,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
                 "display_fields": self.get_all_display_fields(),
                 "order_field": None,
                 "order_descending": False,
+                "pdf_mode": True,
             }
         )
 

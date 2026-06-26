@@ -12,20 +12,24 @@
             class="{{ table_element.th_classes_str }}"
             {% if table_element.attr %}data-bs-toggle="tooltip" data-bs-title="{{ table_element.attr }}"{% endif %}
           >
-            <button type="submit" onclick="document.getElementById('form-order_by-action').value='{{ table_element.attr }}'" class="btn-order-field">
-              <div class="th-flex">
-                {{ table_element.name }}
-              {% if order_field is not None %}
-                {% if table_element.attr == order_field %}
-                  {% if order_descending %}
-                    <span class="bi bi-arrow-up"></span>
-                  {% else %}
-                    <span class="bi bi-arrow-down"></span>
+            {% if pdf_mode %}
+              {{ table_element.name }}
+            {% else %}
+              <button type="submit" onclick="document.getElementById('form-order_by-action').value='{{ table_element.attr }}'" class="btn-order-field">
+                <div class="th-flex">
+                  {{ table_element.name }}
+                {% if order_field is not None %}
+                  {% if table_element.attr == order_field %}
+                    {% if order_descending %}
+                      <span class="bi bi-arrow-up"></span>
+                    {% else %}
+                      <span class="bi bi-arrow-down"></span>
+                    {% endif %}
                   {% endif %}
                 {% endif %}
-              {% endif %}
-              </div>
-            </button>
+                </div>
+              </button>
+            {% endif %}
           </th>
             {% endfor %}
           </tr>

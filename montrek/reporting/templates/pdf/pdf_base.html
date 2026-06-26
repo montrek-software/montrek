@@ -140,23 +140,7 @@
 
     /* ---- Hide elements meaningless in a printed PDF ---- */
     button, input, select, textarea { display: none; }
-    .btn-order-field, .pagination, .empty-state { display: none; }
-    .bi-arrow-up, .bi-arrow-down { display: none; }
-
-    /* Header text lives inside sort buttons — render as plain inline text.
-       .th-flex (div) must also be inline to avoid block-level height inflation.
-       Specificity (0,1,2) beats .btn-order-field (0,1,0). */
-    thead th .btn-order-field,
-    thead th .th-flex {
-      display: inline;
-      background: none;
-      border: none;
-      padding: 0;
-      margin: 0;
-      font-weight: inherit;
-      font-size: inherit;
-      color: inherit;
-    }
+    .pagination, .empty-state { display: none; }
   </style>
 </head>
 <body>
