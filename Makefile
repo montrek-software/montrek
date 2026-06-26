@@ -101,5 +101,8 @@ secrets-decrypt: # Decrypt the .env file
 .PHONY: secrets-edit-env
 secrets-edit-env: # Edit the .env file
 	@$(SECURE_WRAPPER) bin/secrets/edit-env.sh
+.PHONY: claude-fix-sonarqube
+claude-fix-sonarqube: # Run a SonarQube scan and open in SonarQube (Add NO_TESTS=true to skip tests)
+	@$(SECURE_WRAPPER) bin/claude/fix_sonarqube.sh  $(filter-out $@,$(MAKECMDGOALS))
 %:
 	@:
