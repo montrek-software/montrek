@@ -43,7 +43,7 @@ def _get_value_color(value):
 
 
 def _get_value_color_latex(value):
-    return "\\color{red}" if value < 0 else "\\color{darkblue}"
+    return "\\color{red}" if value < 0 else "\\color{textdark}"
 
 
 @dataclass
@@ -62,7 +62,7 @@ class TableElement:
     def format_latex(self, value):
         value_str = str(value)
         value_str = HtmlLatexConverter.convert(value_str)
-        return f" \\color{{black}} {value_str} &"
+        return f" \\color{{textdark}} {value_str} &"
 
     def get_attribute(self, obj: Any, tag: str = "html") -> str | None:
         if tag == "html":
@@ -71,7 +71,7 @@ class TableElement:
         if tag == "latex":
             value = self.get_value(obj)
             if self.empty_value(value):
-                return " \\color{black} - &"
+                return " \\color{textfaint} -- &"
             return self.format_latex(value)
         raise KeyError(f"Unknown tag {tag}")
 
@@ -275,7 +275,7 @@ class BaseLinkTableElement(TableElement, GetDottetAttrsOrArgMixin):
         if tag == "latex":
             value = self.get_value(obj)
             if self.empty_value(value):
-                return " \\color{black} - &"
+                return " \\color{textfaint} -- &"
             return self.format_latex(value)
         raise KeyError(f"Unknown tag {tag}")
 
@@ -434,7 +434,7 @@ class LinkListTableElement(TableElement, GetDottetAttrsOrArgMixin):
         return str(text_values).split(self.in_separator)
 
     def format_latex(self, value):
-        return " \\color{{black}} {} &".format(",".join(self._unique_list(value)))
+        return " \\color{{textdark}} {} &".format(",".join(self._unique_list(value)))
 
     @staticmethod
     def _unique_list(items: Iterable[T]) -> list[T]:
@@ -680,7 +680,7 @@ class DateTableBaseElement(AttrTableElement):
         return self.format_date(value)
 
     def format_latex(self, value):
-        return f" \\color{{black}} {self.format_date(value)} &"
+        return f" \\color{{textdark}} {self.format_date(value)} &"
 
     def format_date(self, value):
         if isinstance(value, (datetime.date | datetime.datetime)):
@@ -784,7 +784,7 @@ class ImageTableElement(AttrTableElement):
 
     def format_latex(self, value):
         def _return_string(value):
-            return f"\\includegraphics[width=0.3\\textwidth]{{{value}}} &"
+            return f"\\includegraphics[width=0.3\\linewidth]{{{value}}} &"
 
         # Check if value is a valid URL. If so, download the image and include it in the latex document.
         try:
@@ -912,12 +912,18 @@ class CompData:
 
 
 class CompValues(Enum):
-    EQUAL = CompData(num=0, latex_val="{\\color{green}$\\rightarrow$}", hover_text="=")
-    GREATER = CompData(num=1, latex_val="{\\color{orange}$\\nearrow$}", hover_text=">")
+    EQUAL = CompData(
+        num=0, latex_val="{\\color{brightergreen}$\\rightarrow$}", hover_text="="
+    )
+    GREATER = CompData(
+        num=1, latex_val="{\\color{brighterorange}$\\nearrow$}", hover_text=">"
+    )
     MUCH_GREATER = CompData(
         num=2, latex_val="{\\color{red}$\\uparrow$}", hover_text=">>"
     )
-    LESS = CompData(num=-1, latex_val="{\\color{orange}$\\searrow$}", hover_text="<")
+    LESS = CompData(
+        num=-1, latex_val="{\\color{brighterorange}$\\searrow$}", hover_text="<"
+    )
     MUCH_LESS = CompData(
         num=-2, latex_val="{\\color{red}$\\downarrow$}", hover_text="<<"
     )

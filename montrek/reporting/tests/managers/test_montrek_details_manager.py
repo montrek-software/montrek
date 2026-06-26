@@ -99,40 +99,40 @@ class TestMontrekDetailsManager(TestCase):
         self.assertEqual(len(re.findall(r"\\end\{table\}", latex)), 2)
 
         # Common table preamble bits
-        self.assertIn(r"\arrayrulecolor{lightgrey}", latex)
-        self.assertIn(r"\setlength{\tabcolsep}{2pt}", latex)
-        self.assertIn(r"\renewcommand{\arraystretch}{1.0}", latex)
+        self.assertIn(r"\arrayrulecolor{bordercolor}", latex)
+        self.assertIn(r"\setlength{\tabcolsep}{5pt}", latex)
+        self.assertIn(r"\renewcommand{\arraystretch}{1.2}", latex)
 
         # --- Left table rows ---
         self.assertRegexPresent(
             latex,
-            r"\\cellcolor{blue}\\color{white}\\textbf{Field A}\s*&\s*\\color{black}\s*a\s*\\\\",
+            r"\\cellcolor{surfacemuted}\\textcolor{textmuted}{\\textbf{Field A}}\s*&\s*\\color{textdark}\s*a\s*\\\\",
         )
         self.assertRegexPresent(
             latex,
-            r"\\cellcolor{blue}\\color{white}\\textbf{Field B}\s*&\s*\\cellcolor{lightblue}\s*\\color{darkblue}\s*1\s*\\\\",
+            r"\\cellcolor{surfacemuted}\\textcolor{textmuted}{\\textbf{Field B}}\s*&\s*\\color{textdark}\s*1\s*\\\\",
         )
         self.assertRegexPresent(
             latex,
-            r"\\cellcolor{blue}\\color{white}\\textbf{Field C}\s*&\s*\\color{darkblue}\s*1\.000\s*\\\\",
+            r"\\cellcolor{surfacemuted}\\textcolor{textmuted}{\\textbf{Field C}}\s*&\s*\\color{textdark}\s*1\.000\s*\\\\",
         )
         self.assertRegexPresent(
             latex,
-            r"\\cellcolor{blue}\\color{white}\\textbf{Field D}\s*&\s*\\cellcolor{lightblue}\s*\\color{black}\s*2024-07-13 00:00:00\s*\\\\",
+            r"\\cellcolor{surfacemuted}\\textcolor{textmuted}{\\textbf{Field D}}\s*&\s*\\color{textdark}\s*2024-07-13 00:00:00\s*\\\\",
         )
 
         # --- Right table rows ---
         self.assertRegexPresent(
             latex,
-            r"\\cellcolor{blue}\\color{white}\\textbf{Field E}\s*&\s*\\color{darkblue}\s*1\.00€\s*\\\\",
+            r"\\cellcolor{surfacemuted}\\textcolor{textmuted}{\\textbf{Field E}}\s*&\s*\\color{textdark}\s*1\.00€\s*\\\\",
         )
         self.assertRegexPresent(
             latex,
-            r"\\cellcolor{blue}\\color{white}\\textbf{Link}\s*&\s*\\cellcolor{lightblue}\s*\\color{black}\s*\\twemoji{pencil}\s*\\+",
+            r"\\cellcolor{surfacemuted}\\textcolor{textmuted}{\\textbf{Link}}\s*&\s*\\color{textdark}\s*\\twemoji{pencil}\s*\\\\",
         )
         self.assertRegexPresent(
             latex,
-            r"\\cellcolor{blue}\\color{white}\\textbf{Link Text}\s*&\s*\\color{black}\s*a\s*\\\\",
+            r"\\cellcolor{surfacemuted}\\textcolor{textmuted}{\\textbf{Link Text}}\s*&\s*\\color{textdark}\s*a\s*\\\\",
         )
 
         # Each row separated by \hline (we expect 8: one after each row)
