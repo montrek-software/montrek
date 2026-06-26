@@ -301,7 +301,7 @@ class MontrekListView(
             response = self.list_to_csv()
         elif q.get("gen_excel") == "true":
             response = self.list_to_excel()
-        elif q.get("gen_pdf"):
+        elif q.get("gen_pdf") in ("true", "latex"):
             response = (
                 self.list_to_pdf_latex()
                 if q.get("gen_pdf") == "latex"
