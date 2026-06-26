@@ -2,6 +2,49 @@ import re
 from html import unescape
 from typing import Any
 
+# Ordered escaping rules for LaTeX special characters.
+# Rules are applied via successive str.replace() calls, so order matters:
+#   1. HTML entity decoding must come before raw-char escaping so that e.g.
+#      "&amp;" decodes to "&" which is then caught by the final "&" rule.
+#   2. "&" must be last — it catches both literal "&" and "&amp;"-decoded values.
+_LATEX_ESCAPE_RULES: tuple[tuple[str, str], ...] = (
+    # HTML entity decoding
+    ("&amp;", "&"),
+    ("&lt;", "<"),
+    ("&gt;", ">"),
+    ("&middot;", "$\\cdot$"),
+    ("&lowbar;", "_"),
+    # Raw character escaping
+    ("#", "\\#"),
+    ("%", "\\%"),
+    ("_", "\\_"),
+    ("·", "$\\cdot$"),
+    ("<", "$<$"),
+    (">", "$>$"),
+    ("&", "\\&"),  # must be last
+)
+
+# Rules for escaping plain (non-HTML) text — omits the HTML entity decoding
+# step since raw values won't contain "&amp;" etc. as HTML entities.
+_LATEX_RAW_ESCAPE_RULES: tuple[tuple[str, str], ...] = tuple(
+    rule for rule in _LATEX_ESCAPE_RULES if not rule[0].startswith("&")
+) + (("&", "\\&"),)
+
+
+class LaTeXEscaper:
+    """Escape a plain-text string for safe embedding in a LaTeX document.
+
+    Use for raw data values that contain no HTML markup.
+    For HTML source text use HtmlLatexConverter.convert() instead.
+    """
+
+    @staticmethod
+    def escape(text: Any) -> str:
+        text = str(text)
+        for raw, escaped in _LATEX_RAW_ESCAPE_RULES:
+            text = text.replace(raw, escaped)
+        return text
+
 
 class HtmlLatexConverter:
     @staticmethod
@@ -130,22 +173,8 @@ class HtmlLatexConverter:
 
     @staticmethod
     def special_characters(text: str) -> str:
-        characters = {
-            "#": "\\#",
-            "_": "\\_",
-            "·": "$\\cdot$",
-            "&middot;": "$\\cdot$",
-            "&amp;": "&",
-            "<": "$<$",
-            ">": "$>$",
-            "&lt;": "$<$",
-            "&gt;": "$>$",
-            "%": "\\%",
-            "&lowbar;": "\\_",
-        }
-        for key, value in characters.items():
-            text = text.replace(key, value)
-        text = text.replace("&", "\\&")
+        for raw, escaped in _LATEX_ESCAPE_RULES:
+            text = text.replace(raw, escaped)
         return text
 
     @staticmethod

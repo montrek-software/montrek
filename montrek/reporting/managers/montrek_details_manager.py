@@ -5,6 +5,7 @@ from baseclasses.managers.montrek_manager import MontrekManager
 from django.template.loader import get_template
 from baseclasses.typing import TableElementsType
 from reporting.core import reporting_text as rt
+from reporting.core.text_converter import LaTeXEscaper
 from reporting.dataclasses import table_elements as te
 from reporting.dataclasses.display_field import DisplayField
 from reporting.lib.protocols import ReportElementProtocol
@@ -85,7 +86,7 @@ class MontrekDetailsManager(MontrekManager):
             start_idx = self.row_size * i
             end_idx = min(self.row_size * (i + 1), len(self.table_elements))
             for j, table_element in enumerate(self.table_elements[start_idx:end_idx]):
-                element_name = table_element.name
+                element_name = LaTeXEscaper.escape(table_element.name)
                 element_attribute = table_element.get_attribute(
                     self.object_query, "latex"
                 )[:-2]
@@ -95,8 +96,6 @@ class MontrekDetailsManager(MontrekManager):
 
             latex_str += "\\end{tabularx}\n\\end{table}\n"
             latex_str += "\\end{minipage}"
-        with open("test.txt", "w") as f:
-            f.write(latex_str)
         return latex_str
 
     def to_json(self) -> dict:

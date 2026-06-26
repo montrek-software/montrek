@@ -12,6 +12,7 @@ from django.template import Context, Template
 from django.utils.safestring import mark_safe
 from reporting.core.reporting_colors import Color, ReportingColors
 from reporting.core.reporting_text import ClientLogo
+from reporting.core.text_converter import LaTeXEscaper
 from reporting.managers.montrek_report_manager import MontrekReportManager
 
 logger = logging.getLogger(__name__)
@@ -62,7 +63,7 @@ class LatexReportManager:
                 "montrek_logo_variant.png",
             ),
             "client_logo": ClientLogo().to_latex(),
-            "document_title": self.report_manager.document_title,
+            "document_title": LaTeXEscaper.escape(self.report_manager.document_title),
             "footer_text": self.report_manager.footer_text,
             "colors": self.get_colors(),
         }
