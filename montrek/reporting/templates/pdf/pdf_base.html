@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="description" content="Montrek PDF export">
+  <meta name="keywords" content="montrek,report,export">
+  <title>{{ title }}</title>
+  <style>
+    /* ---- Page ---- */
+    @page {
+      size: A4 {{ page_orientation }};
+      margin: 2.2cm 1.5cm 2.2cm 1.5cm;
+
+      @top-left {
+        content: element(page-header-logo);
+        vertical-align: bottom;
+      }
+      @top-center {
+        content: element(page-header-title);
+        vertical-align: bottom;
+      }
+      @bottom-left {
+        content: element(page-footer-brand);
+        vertical-align: top;
+      }
+      @bottom-right {
+        content: "Page " counter(page) " / " counter(pages);
+        font-family: Arial, sans-serif;
+        font-size: 7.5pt;
+        color: #5b6573;
+        vertical-align: top;
+      }
+    }
+
+    /* ---- Running elements ---- */
+    #page-header-logo  { position: running(page-header-logo); }
+    #page-header-title { position: running(page-header-title); }
+    #page-footer-brand { position: running(page-footer-brand); }
+
+    /* ---- Base typography ---- */
+    body {
+      font-family: Arial, "DejaVu Sans", sans-serif;
+      font-size: 9pt;
+      line-height: 1.35;
+      color: #1d2430;
+      background: #ffffff;
+      margin: 0;
+      padding: 0;
+    }
+
+    h2, h3 {
+      color: {{ primary_color }};
+      font-weight: 600;
+      margin: 0 0 6pt 0;
+    }
+    h2 { font-size: 12pt; }
+    h3 { font-size: 10pt; }
+
+    a { color: {{ primary_color }}; text-decoration: none; }
+
+    /* ---- Header running element ---- */
+    .page-header-title-text {
+      color: {{ primary_color }};
+      font-family: Arial, sans-serif;
+      font-size: 11pt;
+      font-weight: 700;
+    }
+    .header-rule {
+      border: none;
+      border-bottom: 1.5pt solid {{ primary_color }};
+      margin: 3pt 0 0 0;
+      width: 100%;
+    }
+    .header-logo-img { height: 20pt; }
+    .footer-logo-img { height: 11pt; vertical-align: middle; }
+    .footer-brand-text {
+      font-family: Arial, sans-serif;
+      font-size: 7.5pt;
+      color: #5b6573;
+      vertical-align: middle;
+    }
+
+    /* ---- List table (pdf_table.html) ---- */
+    table.pdf-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 8.5pt;
+      table-layout: auto;
+    }
+    table.pdf-table thead th {
+      background-color: #f1f3f5;
+      color: #5b6573;
+      font-weight: 600;
+      font-size: 8pt;
+      padding: 5pt 7pt;
+      border-bottom: 2pt solid {{ primary_color }};
+      text-align: left;
+      white-space: nowrap;
+    }
+    table.pdf-table tbody td {
+      padding: 4pt 7pt;
+      border-bottom: 0.5pt solid #e5e8ec;
+      color: #1d2430;
+      vertical-align: top;
+    }
+
+    /* ---- Details table (details_table.html via table-custom-striped) ---- */
+    table.table-custom-striped {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 8.5pt;
+    }
+    table.table-custom-striped thead th {
+      background-color: #f1f3f5;
+      color: #5b6573;
+      font-weight: 600;
+      font-size: 8pt;
+      padding: 5pt 7pt;
+      border-bottom: 2pt solid {{ primary_color }};
+      text-align: left;
+    }
+    table.table-custom-striped tbody th {
+      color: #1d2430;
+      font-weight: 600;
+      padding: 4pt 7pt;
+      border-bottom: 0.5pt solid #e5e8ec;
+      text-align: left;
+      width: 28%;
+      white-space: nowrap;
+    }
+    table.table-custom-striped tbody td {
+      padding: 4pt 7pt;
+      border-bottom: 0.5pt solid #e5e8ec;
+      color: #1d2430;
+      vertical-align: top;
+    }
+
+    /* ---- Alert / label badges (render as plain text in PDF) ---- */
+    .badge, .label { font-weight: 600; }
+
+    /* ---- Hide elements meaningless in a printed PDF ---- */
+    button, input, select, textarea { display: none; }
+    .btn-order-field, .pagination, .empty-state { display: none; }
+    .bi-arrow-up, .bi-arrow-down { display: none; }
+  </style>
+</head>
+<body>
+
+  <!-- Running: logo (top-left) -->
+  {% if client_logo_path %}
+  <div id="page-header-logo">
+    <img class="header-logo-img" src="file://{{ client_logo_path }}" width="80" height="27" alt="">
+  </div>
+  {% endif %}
+
+  <!-- Running: title + rule (top-center) -->
+  <div id="page-header-title">
+    <span class="page-header-title-text">{{ title }}</span>
+    <hr class="header-rule">
+  </div>
+
+  <!-- Running: brand (bottom-left) -->
+  <div id="page-footer-brand">
+    {% if montrek_logo_path %}
+      <img class="footer-logo-img" src="file://{{ montrek_logo_path }}" width="60" height="15" alt="Montrek">
+    {% endif %}
+    <span class="footer-brand-text">Montrek</span>
+  </div>
+
+  <main>
+    {{ content|safe }}
+  </main>
+
+</body>
+</html>

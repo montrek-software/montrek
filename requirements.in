@@ -50,3 +50,4 @@ python-decouple==3.8
 requests==2.32.5
 sf-hamilton==1.89.0
 tinycss2==1.5.1
+weasyprint==69.0

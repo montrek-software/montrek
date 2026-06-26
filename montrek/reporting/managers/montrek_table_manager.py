@@ -142,6 +142,32 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
             }
         )
 
+    def get_all_display_fields(self) -> list[list[DisplayField]]:
+        """All rows (unpaginated) for PDF rendering."""
+        try:
+            table = self.get_full_table()
+        except NotImplementedError:
+            table = self.get_table()
+        pdf_elements = [
+            e for e in self.table_elements if not isinstance(e, te.LinkTableElement)
+        ]
+        return [[e.get_display_field(obj) for e in pdf_elements] for obj in table]
+
+    def to_pdf_html(self) -> str:
+        template = get_template("tables/base_table.html")
+        pdf_elements = [
+            e for e in self.table_elements if not isinstance(e, te.LinkTableElement)
+        ]
+        return template.render(
+            context={
+                "table_title": self.table_title,
+                "table_elements": pdf_elements,
+                "display_fields": self.get_all_display_fields(),
+                "order_field": None,
+                "order_descending": False,
+            }
+        )
+
     def to_json(self) -> dict:
         serializer = TableSerializer(self.table_elements)
         return serializer.serialize_all(self.get_full_table())

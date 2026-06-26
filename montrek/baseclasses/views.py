@@ -24,6 +24,7 @@ from info.managers.download_registry_storage_managers import (
 )
 from info.models.download_registry_sat_models import DownloadType
 from reporting.managers.latex_report_manager import LatexReportManager
+from reporting.managers.weasyprint_pdf_manager import WeasyPrintPdfManager
 from reporting.managers.montrek_details_manager import MontrekDetailsManager
 from reporting.managers.montrek_table_manager import (
     HistoryDataTableManager,
@@ -194,6 +195,23 @@ class MontrekPermissionRequiredMixin(PermissionRequiredMixin):
 
 class ToPdfMixin:
     def list_to_pdf(self):
+        """Default PDF path: HTML → PDF via WeasyPrint."""
+        manager = WeasyPrintPdfManager(self.manager)
+        pdf_bytes = manager.generate_pdf()
+        self.show_messages()
+        if pdf_bytes:
+            DownloadRegistryStorageManager(
+                self.session_data
+            ).store_in_download_registry(self.manager.document_name, DownloadType.PDF)
+            filename = f"{self.manager.document_name}.pdf"
+            response = HttpResponse(pdf_bytes, content_type="application/pdf")
+            response["Content-Disposition"] = f'attachment; filename="{filename}"'
+            return response
+        previous_url = self.request.META.get("HTTP_REFERER")
+        return HttpResponseRedirect(previous_url)
+
+    def list_to_pdf_latex(self):
+        """Opt-in LaTeX path: full XeLaTeX typesetting (?gen_pdf=latex)."""
         report_manager = LatexReportManager(self.manager)
         pdf_path = report_manager.compile_report()
         self.show_messages()
@@ -270,8 +288,12 @@ class MontrekListView(
             response = self.list_to_csv()
         elif q.get("gen_excel") == "true":
             response = self.list_to_excel()
-        elif q.get("gen_pdf") == "true":
-            response = self.list_to_pdf()
+        elif q.get("gen_pdf"):
+            response = (
+                self.list_to_pdf_latex()
+                if q.get("gen_pdf") == "latex"
+                else self.list_to_pdf()
+            )
         elif self._is_rest(request):
             response = self.list_to_rest_api()
         elif q.get("refresh_data") == "true":
@@ -508,6 +530,8 @@ class MontrekDetailView(
         request_get = self.request.GET
         if request_get.get("gen_pdf") == "true":
             return self.list_to_pdf()
+        if request_get.get("gen_pdf") == "latex":
+            return self.list_to_pdf_latex()
         if self._is_rest(request):
             return self.list_to_rest_api()
         return super().get(request, *args, **kwargs)
