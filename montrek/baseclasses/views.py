@@ -23,6 +23,7 @@ from info.managers.download_registry_storage_managers import (
     DownloadRegistryStorageManager,
 )
 from info.models.download_registry_sat_models import DownloadType
+from reporting.constants import PdfGenMethod
 from reporting.managers.latex_report_manager import LatexReportManager
 from reporting.managers.weasyprint_pdf_manager import WeasyPrintPdfManager
 from reporting.managers.montrek_details_manager import MontrekDetailsManager
@@ -194,8 +195,15 @@ class MontrekPermissionRequiredMixin(PermissionRequiredMixin):
 
 
 class ToPdfMixin:
+    pdf_gen_method: PdfGenMethod = PdfGenMethod.WEASYPRINT
+
     def list_to_pdf(self):
-        """Default PDF path: HTML → PDF via WeasyPrint."""
+        if self.pdf_gen_method == PdfGenMethod.LATEX:
+            return self.list_to_pdf_latex()
+        return self._list_to_pdf_weasyprint()
+
+    def _list_to_pdf_weasyprint(self):
+        """HTML → PDF via WeasyPrint."""
         manager = WeasyPrintPdfManager(self.manager)
         pdf_bytes = manager.generate_pdf()
         self.show_messages()

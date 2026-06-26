@@ -60,9 +60,6 @@ def download_reporting_file_view(request, file_path: str):
 class MontrekReportView(
     MontrekTemplateView, ToPdfMixin, MontrekApiViewMixin, ViewFormMixin
 ):
-    def list_to_pdf(self):
-        return self.list_to_pdf_latex()
-
     manager_class = MontrekReportManager
     template_name = "montrek_report.html"
     loading_template_name = "partials/montrek_report_loading.html"

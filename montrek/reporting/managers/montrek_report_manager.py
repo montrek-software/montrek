@@ -65,6 +65,9 @@ class MontrekReportManager(MontrekManager):
         self.cleanup_report_elements()
         return html_list
 
+    def to_pdf_html(self) -> str:
+        return "".join(self.to_html())
+
     def to_latex(self) -> str:
         latex_str = ""
         self.collect_report_elements()
