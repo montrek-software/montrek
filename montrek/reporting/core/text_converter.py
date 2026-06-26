@@ -13,7 +13,7 @@ _LATEX_ESCAPE_RULES: tuple[tuple[str, str], ...] = (
     ("&lt;", "<"),
     ("&gt;", ">"),
     ("&middot;", "$\\cdot$"),
-    ("&lowbar;", "\\_"),
+    ("&lowbar;", "_"),
     # Raw character escaping
     ("#", "\\#"),
     ("%", "\\%"),
