@@ -51,13 +51,21 @@ class ReportingPlotBase(Generic[TData]):
         image_path = settings.WORKBENCH_PATH / filename
         # Ensure the directory exists
         settings.WORKBENCH_PATH.mkdir(parents=True, exist_ok=True)
-        # Write the image if it does not already exist
+        # Write the image if it does not already exist (scale=2 → print-ready 300 DPI)
         if not image_path.exists():
-            self.figure.write_image(str(image_path), width=1000, height=500)
+            self.figure.write_image(str(image_path), width=1200, height=600, scale=2)
 
-        # Build the LaTeX string
-        latex_str = "\\begin{figure}[H]\n"
-        latex_str += f"\\includegraphics[width=\\textwidth]{{{image_path}}}\n"
+        plot_title = getattr(self.figure.layout, "title", None)
+        title_text = getattr(plot_title, "text", None) if plot_title else None
+
+        latex_str = "\\begin{figure}[H]\n\\centering\n"
+        latex_str += (
+            f"\\includegraphics[width={self.width}\\linewidth]{{{image_path}}}\n"
+        )
+        if title_text:
+            from reporting.core.text_converter import HtmlLatexConverter
+
+            latex_str += f"\\caption*{{{HtmlLatexConverter.convert(title_text)}}}\n"
         latex_str += "\\end{figure}"
 
         return latex_str

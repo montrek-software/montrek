@@ -178,7 +178,8 @@ class ReportingHeader1(ReportingText):
         self.text = text
 
     def to_latex(self) -> str:
-        return f"\\section*{{{self.text}}}"
+        escaped = HtmlLatexConverter.convert(self.text)
+        return f"\\section*{{{escaped}}}"
 
     def to_json(self) -> dict[str, str]:
         return {"reporting_header_1": self.text}
@@ -191,7 +192,8 @@ class ReportingHeader2(ReportingText):
         self.text = text
 
     def to_latex(self) -> str:
-        return f"\\subsection*{{{self.text}}}"
+        escaped = HtmlLatexConverter.convert(self.text)
+        return f"\\subsection*{{{escaped}}}"
 
     def to_json(self) -> dict[str, str]:
         return {"reporting_header_2": self.text}
@@ -270,7 +272,7 @@ class ReportingImage(ReportingElement):
 
     def _return_string(self, value) -> str:
         value = HtmlLatexConverter.convert(value)
-        return f"\\includegraphics[width={self.width}\\textwidth]{{{value}}}"
+        return f"\\includegraphics[width={self.width}\\linewidth]{{{value}}}"
 
     def to_json(self) -> dict[str, str]:
         return {"reporting_image": self.image_path}
@@ -374,7 +376,7 @@ class MarkdownReportingElement(ReportingElement):
             to="latex",
             format="md",
         )
-        return f"\\begin{{contentbox}}{latex_output}\\end{{contentbox}}"
+        return f"\\begin{{tilebox}}{latex_output}\\end{{tilebox}}"
 
     def to_json(self) -> dict[str, str]:
         return {"markdown_reporting_element": self.markdown_text}
@@ -397,7 +399,17 @@ class ReportingError(ReportingElement):
         return self.get_context_data()
 
     def to_latex(self) -> str:
-        return f"\\textbf{{{self.error_header}}}\\\\{'\\\\'.join(self.error_texts)}"
+        header = HtmlLatexConverter.convert(self.error_header)
+        texts = "\\\\".join(HtmlLatexConverter.convert(t) for t in self.error_texts)
+        return (
+            "\\begin{tcolorbox}["
+            "colback=secondary_light,colframe=secondary,"
+            "boxrule=0.5pt,arc=3mm,left=4mm,right=4mm,top=2mm,bottom=2mm"
+            "]\n"
+            f"\\textcolor{{secondary}}{{\\textbf{{{header}}}}}\\\\\n"
+            f"{texts}\n"
+            "\\end{tcolorbox}"
+        )
 
 
 class ReportingFooter(ReportingText):
