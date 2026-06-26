@@ -220,7 +220,7 @@ class ToPdfMixin:
             response = HttpResponse(pdf_bytes, content_type="application/pdf")
             response["Content-Disposition"] = f'attachment; filename="{filename}"'
             return response
-        previous_url = self.request.META.get("HTTP_REFERER")
+        previous_url = self.request.META.get("HTTP_REFERER") or self.request.path
         return HttpResponseRedirect(previous_url)
 
     def list_to_pdf_latex(self):
