@@ -39,6 +39,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from baseclasses import utils
+from baseclasses.dataclasses.montrek_message import MontrekMessageError
 from baseclasses.dataclasses.view_classes import ActionElement
 from baseclasses.forms import DateRangeForm, FilterForm, MontrekCreateForm
 from baseclasses.managers.montrek_manager import MontrekManagerNotImplemented
@@ -206,6 +207,10 @@ class ToPdfMixin:
         """HTML → PDF via WeasyPrint."""
         manager = WeasyPrintPdfManager(self.manager)
         pdf_bytes = manager.generate_pdf()
+        if not pdf_bytes:
+            self.manager.messages.append(
+                MontrekMessageError("PDF generation failed. Please try again.")
+            )
         self.show_messages()
         if pdf_bytes:
             DownloadRegistryStorageManager(

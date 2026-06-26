@@ -86,6 +86,9 @@ class MockManager2(MontrekManager):
     def to_latex(self):
         return "Hallo!"
 
+    def to_pdf_html(self) -> str:
+        return "<p>Test PDF content</p>"
+
 
 class MockMontrekView(MontrekViewMixin, MockRequester, MontrekPageViewMixin):
     manager_class = MockManager
@@ -443,6 +446,9 @@ class MockManagerPdfFails(MontrekTableManager):
 
     def to_latex(self):
         return "\\textbf{This is a bold text with a missing closing brace."
+
+    def to_pdf_html(self) -> str:
+        raise RuntimeError("WeasyPrint PDF generation intentionally broken")
 
 
 class MockMontrekListViewPdfFails(MontrekListView, MockRequester):

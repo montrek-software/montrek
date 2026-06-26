@@ -271,6 +271,30 @@ class TestMontrekTableManager(TestCase):
         test_df = manager.get_df()
         self.assertEqual(test_df.loc[0, "Field A"], " · &  <  < >  > and _ ")
 
+    def test_to_pdf_html_has_no_sort_buttons(self):
+        html = MockMontrekTableManager().to_pdf_html()
+        soup = BeautifulSoup(html, "html.parser")
+        self.assertEqual(len(soup.find_all("button")), 0)
+
+    def test_to_pdf_html_column_names_in_th(self):
+        html = MockMontrekTableManager().to_pdf_html()
+        soup = BeautifulSoup(html, "html.parser")
+        header_texts = [th.get_text(strip=True) for th in soup.find_all("th")]
+        for col in ("Field A", "Field B", "Field C", "Field D", "Field E"):
+            self.assertIn(col, header_texts)
+
+    def test_to_pdf_html_excludes_link_table_elements(self):
+        html = MockMontrekTableManager().to_pdf_html()
+        soup = BeautifulSoup(html, "html.parser")
+        header_texts = [th.get_text(strip=True) for th in soup.find_all("th")]
+        self.assertNotIn("Link", header_texts)
+
+    def test_to_pdf_html_includes_all_data_rows(self):
+        html = MockMontrekTableManager().to_pdf_html()
+        soup = BeautifulSoup(html, "html.parser")
+        rows = soup.find("tbody").find_all("tr")
+        self.assertEqual(len(rows), 3)
+
 
 class TestMontrekDataFrameTableManager(TestCase):
     def setUp(self):
