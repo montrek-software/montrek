@@ -23,7 +23,9 @@ from info.managers.download_registry_storage_managers import (
     DownloadRegistryStorageManager,
 )
 from info.models.download_registry_sat_models import DownloadType
+from reporting.constants import PdfGenMethod
 from reporting.managers.latex_report_manager import LatexReportManager
+from reporting.managers.weasyprint_pdf_manager import WeasyPrintPdfManager
 from reporting.managers.montrek_details_manager import MontrekDetailsManager
 from reporting.managers.montrek_table_manager import (
     HistoryDataTableManager,
@@ -37,6 +39,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from baseclasses import utils
+from baseclasses.dataclasses.montrek_message import MontrekMessageError
 from baseclasses.dataclasses.view_classes import ActionElement
 from baseclasses.forms import DateRangeForm, FilterForm, MontrekCreateForm
 from baseclasses.managers.montrek_manager import MontrekManagerNotImplemented
@@ -193,7 +196,35 @@ class MontrekPermissionRequiredMixin(PermissionRequiredMixin):
 
 
 class ToPdfMixin:
+    pdf_gen_method: PdfGenMethod = PdfGenMethod.WEASYPRINT
+
     def list_to_pdf(self):
+        if self.pdf_gen_method == PdfGenMethod.LATEX:
+            return self.list_to_pdf_latex()
+        return self._list_to_pdf_weasyprint()
+
+    def _list_to_pdf_weasyprint(self):
+        """HTML → PDF via WeasyPrint."""
+        manager = WeasyPrintPdfManager(self.manager)
+        pdf_bytes = manager.generate_pdf()
+        if not pdf_bytes:
+            self.manager.messages.append(
+                MontrekMessageError("PDF generation failed. Please try again.")
+            )
+        self.show_messages()
+        if pdf_bytes:
+            DownloadRegistryStorageManager(
+                self.session_data
+            ).store_in_download_registry(self.manager.document_name, DownloadType.PDF)
+            filename = f"{self.manager.document_name}.pdf"
+            response = HttpResponse(pdf_bytes, content_type="application/pdf")
+            response["Content-Disposition"] = f'attachment; filename="{filename}"'
+            return response
+        previous_url = self.request.META.get("HTTP_REFERER") or self.request.path
+        return HttpResponseRedirect(previous_url)
+
+    def list_to_pdf_latex(self):
+        """Opt-in LaTeX path: full XeLaTeX typesetting (?gen_pdf=latex)."""
         report_manager = LatexReportManager(self.manager)
         pdf_path = report_manager.compile_report()
         self.show_messages()
@@ -270,8 +301,12 @@ class MontrekListView(
             response = self.list_to_csv()
         elif q.get("gen_excel") == "true":
             response = self.list_to_excel()
-        elif q.get("gen_pdf") == "true":
-            response = self.list_to_pdf()
+        elif q.get("gen_pdf") in ("true", "latex"):
+            response = (
+                self.list_to_pdf_latex()
+                if q.get("gen_pdf") == "latex"
+                else self.list_to_pdf()
+            )
         elif self._is_rest(request):
             response = self.list_to_rest_api()
         elif q.get("refresh_data") == "true":
@@ -508,6 +543,8 @@ class MontrekDetailView(
         request_get = self.request.GET
         if request_get.get("gen_pdf") == "true":
             return self.list_to_pdf()
+        if request_get.get("gen_pdf") == "latex":
+            return self.list_to_pdf_latex()
         if self._is_rest(request):
             return self.list_to_rest_api()
         return super().get(request, *args, **kwargs)

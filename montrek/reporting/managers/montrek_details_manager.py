@@ -67,6 +67,9 @@ class MontrekDetailsManager(MontrekManager):
         template = get_template("tables/details_table.html")
         return template.render(context=self.get_context_data())
 
+    def to_pdf_html(self) -> str:
+        return self.to_html()
+
     def to_latex(self) -> str:
         latex_str = ""
         minipage_width = 0.98 / self.table_cols

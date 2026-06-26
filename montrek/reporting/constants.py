@@ -1,6 +1,11 @@
 from enum import Enum
 
 
+class PdfGenMethod(Enum):
+    WEASYPRINT = "weasyprint"
+    LATEX = "latex"
+
+
 class ReportingPlotType(Enum):
     NONE = 0
     LINE = 1
