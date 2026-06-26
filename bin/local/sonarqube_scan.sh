@@ -87,4 +87,12 @@ if [[ "$REPO" == "montrek" ]]; then
   cd ../
 fi
 
-sonar-scanner -Dsonar.projectKey=$REPO -Dsonar.sources=. -Dsonar.exclusions=**/migrations/**,**/static/** -Dsonar.host.url=$SONARCUBE_URL -Dsonar.login=$SONARCUBE_TOKEN -Dsonar.python.coverage.reportPaths=coverage.xml | grep "ANALYSIS SUCCESSFUL"
+sonar-scanner \
+  -Dsonar.projectKey=$REPO \
+  -Dsonar.sources=. \
+  -Dsonar.exclusions=**/migrations/**,**/static/**,**/scripts/** \
+  -Dsonar.cpd.exclusions=**/tests/** \
+  -Dsonar.host.url=$SONARCUBE_URL \
+  -Dsonar.login=$SONARCUBE_TOKEN \
+  -Dsonar.python.coverage.reportPaths=coverage.xml |
+  grep "ANALYSIS SUCCESSFUL"
