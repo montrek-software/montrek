@@ -1,7 +1,11 @@
 import datetime
 
 from django.test import TestCase
-from reporting.core.text_converter import HtmlLatexConverter, HtmlTextConverter
+from reporting.core.text_converter import (
+    HtmlLatexConverter,
+    HtmlTextConverter,
+    LaTeXEscaper,
+)
 
 
 class TestHtmlLatexConverter(TestCase):
@@ -98,6 +102,36 @@ class TestHtmlLatexConverter(TestCase):
         converted_text = HtmlLatexConverter.convert(test_text)
         expected_text = "2025-10-23 00:00:00"
         self.assertEqual(converted_text, expected_text)
+
+
+class TestLaTeXEscaper(TestCase):
+    def test_ampersand(self):
+        self.assertEqual(LaTeXEscaper.escape("Revenue & Costs"), "Revenue \\& Costs")
+
+    def test_underscore(self):
+        self.assertEqual(LaTeXEscaper.escape("field_name"), "field\\_name")
+
+    def test_hash(self):
+        self.assertEqual(LaTeXEscaper.escape("item #1"), "item \\#1")
+
+    def test_percent(self):
+        self.assertEqual(LaTeXEscaper.escape("50%"), "50\\%")
+
+    def test_angle_brackets(self):
+        self.assertEqual(LaTeXEscaper.escape("a < b > c"), "a $<$ b $>$ c")
+
+    def test_combined(self):
+        self.assertEqual(
+            LaTeXEscaper.escape("Fund & Partners_A #2 (50%)"),
+            "Fund \\& Partners\\_A \\#2 (50\\%)",
+        )
+
+    def test_html_entity_not_decoded(self):
+        # Raw text: "&amp;" is the literal 5-char sequence, & gets escaped
+        self.assertEqual(LaTeXEscaper.escape("&amp;"), "\\&amp;")
+
+    def test_non_string_coerced(self):
+        self.assertEqual(LaTeXEscaper.escape(42), "42")
 
 
 class TestHtmlTextConverter(TestCase):
