@@ -191,7 +191,9 @@ class HtmlLatexConverter:
         # Replace hrefs with a simplified LaTeX hyperlink command
 
         text = re.sub(
-            r'<a href="([^"]*)">([^<]*)</a>', r"\\textcolor{blue}{\\href{\1}{\2}}", text
+            r'<a href="([^"]*)">([^<]*)</a>',
+            r"\\textcolor{primary}{\\href{\1}{\2}}",
+            text,
         )
         return text
 

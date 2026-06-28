@@ -44,7 +44,7 @@ class TestHtmlLatexConverter(TestCase):
     def test_links(self):
         test_text = '<a href="http://example.com">Example</a>'
         converted_text = HtmlLatexConverter.convert(test_text)
-        expected_text = "\\textcolor{blue}{\\href{http://example.com}{Example}}"
+        expected_text = "\\textcolor{primary}{\\href{http://example.com}{Example}}"
         self.assertEqual(converted_text, expected_text)
 
     def test_images(self):

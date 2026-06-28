@@ -73,7 +73,7 @@ class TableElementTestingToolMixin(HasAssertEqual):
                     table_element=table_element,
                     value=None,
                     expected_format="-",
-                    expected_format_latex=" \\color{black} - &",
+                    expected_format_latex=" \\color{textfaint} -- &",
                     expected_td_classes=["text-center"],
                     expected_hover_text=expected_none_hover_text,
                 )
@@ -174,13 +174,13 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             value="test",
             expected_format="test",
-            expected_format_latex=" \\color{black} test &",
+            expected_format_latex=" \\color{textdark} test &",
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value=1234,
             expected_format="1234",
-            expected_format_latex=" \\color{black} 1234 &",
+            expected_format_latex=" \\color{textdark} 1234 &",
         )
 
     def test_string_table_elements_with_hover_text(self):
@@ -191,7 +191,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             value="test",
             expected_format="test",
-            expected_format_latex=" \\color{black} test &",
+            expected_format_latex=" \\color{textdark} test &",
             expected_hover_text="Hallo",
         )
 
@@ -203,7 +203,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             test_obj={"test_value": "test", "field2": "Hallo"},
             expected_format="test",
-            expected_format_latex=" \\color{black} test &",
+            expected_format_latex=" \\color{textdark} test &",
             expected_hover_text="Hover from field Hallo",
         )
 
@@ -213,13 +213,13 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             value="test",
             expected_format="test",
-            expected_format_latex=" \\color{black} test &",
+            expected_format_latex=" \\color{textdark} test &",
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value=1234,
             expected_format="1234",
-            expected_format_latex=" \\color{black} 1234 &",
+            expected_format_latex=" \\color{textdark} 1234 &",
         )
 
     def test_secure_table_element(self):
@@ -228,7 +228,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             value="<script>Malicious Hack</script><button>Here</button>",
             expected_format="&lt;script&gt;Malicious Hack&lt;/script&gt;&lt;button&gt;Here&lt;/button&gt;",  # Escaped version must appear
-            expected_format_latex=" \\color{black} $<$script$>$Malicious Hack$<$/script$>$$<$button$>$Here$<$/button$>$ &",
+            expected_format_latex=" \\color{textdark} $<$script$>$Malicious Hack$<$/script$>$$<$button$>$Here$<$/button$>$ &",
         )
 
     def test_list_table_element(self):
@@ -237,7 +237,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             value="test1,test2",
             expected_format="test1<br>    test2",
-            expected_format_latex=" \\color{black} test1,test2 &",
+            expected_format_latex=" \\color{textdark} test1,test2 &",
         )
 
         test_element = te.ListTableElement(
@@ -247,7 +247,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             value="test1,2;test2;test4",
             expected_format="test1,2|    test2|    test4",
-            expected_format_latex=" \\color{black} test1,2;test2;test4 &",
+            expected_format_latex=" \\color{textdark} test1,2;test2;test4 &",
         )
 
     def test_float_table_elements(self):
@@ -256,7 +256,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             value=1234.5678,
             expected_format="1,234.568",
-            expected_format_latex="\\color{darkblue} 1,234.568 &",
+            expected_format_latex="\\color{textdark} 1,234.568 &",
             expected_td_classes=["text-end"],
             expected_style_attrs={},
         )
@@ -264,7 +264,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             value=Decimal(1234.5678),
             expected_format="1,234.568",
-            expected_format_latex="\\color{darkblue} 1,234.568 &",
+            expected_format_latex="\\color{textdark} 1,234.568 &",
             expected_td_classes=["text-end"],
             expected_style_attrs={},
         )
@@ -272,7 +272,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             value=1234,
             expected_format="1,234.000",
-            expected_format_latex="\\color{darkblue} 1,234.000 &",
+            expected_format_latex="\\color{textdark} 1,234.000 &",
             expected_td_classes=["text-end"],
             expected_style_attrs={},
         )
@@ -298,7 +298,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             value=1234.5678,
             expected_format="1,234",
-            expected_format_latex="\\color{darkblue} 1,234 &",
+            expected_format_latex="\\color{textdark} 1,234 &",
             expected_td_classes=["text-end"],
             expected_style_attrs={},
         )
@@ -307,7 +307,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             value=Decimal(1234.5678),
             expected_format="1,234",
-            expected_format_latex="\\color{darkblue} 1,234 &",
+            expected_format_latex="\\color{textdark} 1,234 &",
             expected_td_classes=["text-end"],
             expected_style_attrs={},
         )
@@ -315,7 +315,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             value=1234,
             expected_format="1,234",
-            expected_format_latex="\\color{darkblue} 1,234 &",
+            expected_format_latex="\\color{textdark} 1,234 &",
             expected_td_classes=["text-end"],
             expected_style_attrs={},
         )
@@ -323,7 +323,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             value="1234",
             expected_format="1,234",
-            expected_format_latex="\\color{darkblue} 1,234 &",
+            expected_format_latex="\\color{textdark} 1,234 &",
             expected_td_classes=["text-end"],
             expected_style_attrs={},
         )
@@ -349,7 +349,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             value=1234.5678,
             expected_format="1,234.57€",
-            expected_format_latex="\\color{darkblue} 1,234.57€ &",
+            expected_format_latex="\\color{textdark} 1,234.57€ &",
             expected_td_classes=["text-end"],
             expected_style_attrs={},
         )
@@ -357,7 +357,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             value=1234,
             expected_format="1,234.00€",
-            expected_format_latex="\\color{darkblue} 1,234.00€ &",
+            expected_format_latex="\\color{textdark} 1,234.00€ &",
             expected_td_classes=["text-end"],
             expected_style_attrs={},
         )
@@ -383,7 +383,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             value=1234.5678,
             expected_format="1,234.57$",
-            expected_format_latex="\\color{darkblue} 1,234.57\\$ &",
+            expected_format_latex="\\color{textdark} 1,234.57\\$ &",
             expected_td_classes=["text-end"],
             expected_style_attrs={},
         )
@@ -391,7 +391,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             value=1234,
             expected_format="1,234.00$",
-            expected_format_latex="\\color{darkblue} 1,234.00\\$ &",
+            expected_format_latex="\\color{textdark} 1,234.00\\$ &",
             expected_td_classes=["text-end"],
             expected_style_attrs={},
         )
@@ -417,7 +417,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             value=0.2512,
             expected_format="25.12%",
-            expected_format_latex="\\color{darkblue} 25.12\\% &",
+            expected_format_latex="\\color{textdark} 25.12\\% &",
             expected_td_classes=["text-end"],
             expected_style_attrs={},
         )
@@ -425,7 +425,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             value=1.234,
             expected_format="123.40%",
-            expected_format_latex="\\color{darkblue} 123.40\\% &",
+            expected_format_latex="\\color{textdark} 123.40\\% &",
             expected_td_classes=["text-end"],
             expected_style_attrs={},
         )
@@ -451,31 +451,31 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             value="2021-01-01",
             expected_format="2021-01-01",
-            expected_format_latex=" \\color{black} 2021-01-01 &",
+            expected_format_latex=" \\color{textdark} 2021-01-01 &",
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value="01.01.2021",
             expected_format="2021-01-01",
-            expected_format_latex=" \\color{black} 2021-01-01 &",
+            expected_format_latex=" \\color{textdark} 2021-01-01 &",
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value=datetime.date(2021, 1, 1),
             expected_format="2021-01-01",
-            expected_format_latex=" \\color{black} 2021-01-01 &",
+            expected_format_latex=" \\color{textdark} 2021-01-01 &",
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value=datetime.datetime(2021, 1, 1, 12, 48),
             expected_format="2021-01-01",
-            expected_format_latex=" \\color{black} 2021-01-01 &",
+            expected_format_latex=" \\color{textdark} 2021-01-01 &",
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value="bla",
             expected_format="bla",
-            expected_format_latex=" \\color{black} bla &",
+            expected_format_latex=" \\color{textdark} bla &",
             expected_td_classes=["text-start"],
         )
 
@@ -486,31 +486,31 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             value="2021-01-01",
             expected_format="01.01.2021",
-            expected_format_latex=" \\color{black} 01.01.2021 &",
+            expected_format_latex=" \\color{textdark} 01.01.2021 &",
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value="01.01.2021",
             expected_format="01.01.2021",
-            expected_format_latex=" \\color{black} 01.01.2021 &",
+            expected_format_latex=" \\color{textdark} 01.01.2021 &",
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value=datetime.date(2021, 1, 1),
             expected_format="01.01.2021",
-            expected_format_latex=" \\color{black} 01.01.2021 &",
+            expected_format_latex=" \\color{textdark} 01.01.2021 &",
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value=datetime.datetime(2021, 1, 1, 12, 48),
             expected_format="01.01.2021",
-            expected_format_latex=" \\color{black} 01.01.2021 &",
+            expected_format_latex=" \\color{textdark} 01.01.2021 &",
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value="bla",
             expected_format="bla",
-            expected_format_latex=" \\color{black} bla &",
+            expected_format_latex=" \\color{textdark} bla &",
             expected_td_classes=["text-start"],
         )
 
@@ -520,31 +520,31 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             value="2021-01-01",
             expected_format="01.01.2021",
-            expected_format_latex=" \\color{black} 01.01.2021 &",
+            expected_format_latex=" \\color{textdark} 01.01.2021 &",
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value="01.01.2021",
             expected_format="01.01.2021",
-            expected_format_latex=" \\color{black} 01.01.2021 &",
+            expected_format_latex=" \\color{textdark} 01.01.2021 &",
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value=datetime.date(2021, 1, 1),
             expected_format="01.01.2021",
-            expected_format_latex=" \\color{black} 01.01.2021 &",
+            expected_format_latex=" \\color{textdark} 01.01.2021 &",
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value=datetime.datetime(2021, 1, 1, 12, 48),
             expected_format="01.01.2021",
-            expected_format_latex=" \\color{black} 01.01.2021 &",
+            expected_format_latex=" \\color{textdark} 01.01.2021 &",
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value="bla",
             expected_format="bla",
-            expected_format_latex=" \\color{black} bla &",
+            expected_format_latex=" \\color{textdark} bla &",
             expected_td_classes=["text-start"],
         )
 
@@ -554,31 +554,31 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             value="2021-01-01",
             expected_format="2021-01-01 00:00:00",
-            expected_format_latex=" \\color{black} 2021-01-01 00:00:00 &",
+            expected_format_latex=" \\color{textdark} 2021-01-01 00:00:00 &",
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value="01.01.2021",
             expected_format="2021-01-01 00:00:00",
-            expected_format_latex=" \\color{black} 2021-01-01 00:00:00 &",
+            expected_format_latex=" \\color{textdark} 2021-01-01 00:00:00 &",
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value=datetime.date(2021, 1, 1),
             expected_format="2021-01-01 00:00:00",
-            expected_format_latex=" \\color{black} 2021-01-01 00:00:00 &",
+            expected_format_latex=" \\color{textdark} 2021-01-01 00:00:00 &",
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value=datetime.datetime(2021, 1, 1, 12, 48),
             expected_format="2021-01-01 12:48:00",
-            expected_format_latex=" \\color{black} 2021-01-01 12:48:00 &",
+            expected_format_latex=" \\color{textdark} 2021-01-01 12:48:00 &",
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value="bla",
             expected_format="bla",
-            expected_format_latex=" \\color{black} bla &",
+            expected_format_latex=" \\color{textdark} bla &",
             expected_td_classes=["text-start"],
         )
 
@@ -591,31 +591,31 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             value="2021-01-01",
             expected_format="01.01.2021 00:00:00",
-            expected_format_latex=" \\color{black} 01.01.2021 00:00:00 &",
+            expected_format_latex=" \\color{textdark} 01.01.2021 00:00:00 &",
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value="01.01.2021",
             expected_format="01.01.2021 00:00:00",
-            expected_format_latex=" \\color{black} 01.01.2021 00:00:00 &",
+            expected_format_latex=" \\color{textdark} 01.01.2021 00:00:00 &",
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value=datetime.date(2021, 1, 1),
             expected_format="01.01.2021 00:00:00",
-            expected_format_latex=" \\color{black} 01.01.2021 00:00:00 &",
+            expected_format_latex=" \\color{textdark} 01.01.2021 00:00:00 &",
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value=datetime.datetime(2021, 1, 1, 12, 48),
             expected_format="01.01.2021 12:48:00",
-            expected_format_latex=" \\color{black} 01.01.2021 12:48:00 &",
+            expected_format_latex=" \\color{textdark} 01.01.2021 12:48:00 &",
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value="bla",
             expected_format="bla",
-            expected_format_latex=" \\color{black} bla &",
+            expected_format_latex=" \\color{textdark} bla &",
             expected_td_classes=["text-start"],
         )
 
@@ -625,31 +625,31 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             value="2021-01-01",
             expected_format="2021",
-            expected_format_latex=" \\color{black} 2021 &",
+            expected_format_latex=" \\color{textdark} 2021 &",
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value="01.01.2021",
             expected_format="2021",
-            expected_format_latex=" \\color{black} 2021 &",
+            expected_format_latex=" \\color{textdark} 2021 &",
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value=datetime.date(2021, 1, 1),
             expected_format="2021",
-            expected_format_latex=" \\color{black} 2021 &",
+            expected_format_latex=" \\color{textdark} 2021 &",
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value=datetime.datetime(2021, 1, 1, 12, 48),
             expected_format="2021",
-            expected_format_latex=" \\color{black} 2021 &",
+            expected_format_latex=" \\color{textdark} 2021 &",
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value="bla",
             expected_format="bla",
-            expected_format_latex=" \\color{black} bla &",
+            expected_format_latex=" \\color{textdark} bla &",
             expected_td_classes=["text-start"],
         )
 
@@ -704,7 +704,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             value="ok",
             expected_format="<b>ok</b>",
-            expected_format_latex=" \\color{black} ok &",
+            expected_format_latex=" \\color{textdark} ok &",
             expected_td_classes=["text-center"],
             expected_style_attrs={"color": "#388E3C"},
         )
@@ -712,7 +712,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             value="warning",
             expected_format="<b>warning</b>",
-            expected_format_latex=" \\color{black} warning &",
+            expected_format_latex=" \\color{textdark} warning &",
             expected_td_classes=["text-center"],
             expected_style_attrs={"color": "#FDD835"},
         )
@@ -720,7 +720,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             value="error",
             expected_format="<b>error</b>",
-            expected_format_latex=" \\color{black} error &",
+            expected_format_latex=" \\color{textdark} error &",
             expected_td_classes=["text-center"],
             expected_style_attrs={"color": "#BE0D3E"},
         )
@@ -728,7 +728,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             value="bla",
             expected_format="<b>bla</b>",
-            expected_format_latex=" \\color{black} bla &",
+            expected_format_latex=" \\color{textdark} bla &",
             expected_td_classes=["text-center"],
             expected_style_attrs={"color": "#000000"},
         )
@@ -783,7 +783,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         test_str_latex = table_element.format_latex("this & that = 100%")
         self.assertEqual(
             test_str_latex,
-            " \\color{black} this \\& that = 100\\% &",
+            " \\color{textdark} this \\& that = 100\\% &",
         )
 
     def test_external_link_table_element__latex(self):
@@ -806,7 +806,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=table_element,
             value="pic.png",
             expected_format='<img src="pic.png" alt="image" width="100" height="100">',
-            expected_format_latex="\\includegraphics[width=0.3\\textwidth]{pic.png} &",
+            expected_format_latex="\\includegraphics[width=0.3\\linewidth]{pic.png} &",
         )
         table_element = te.ImageTableElement(
             name="name", attr="test_attr", alt="alt_image"
@@ -815,7 +815,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=table_element,
             value="pic.png",
             expected_format='<img src="pic.png" alt="alt_image" width="100" height="100">',
-            expected_format_latex="\\includegraphics[width=0.3\\textwidth]{pic.png} &",
+            expected_format_latex="\\includegraphics[width=0.3\\linewidth]{pic.png} &",
         )
 
     def test_image_table_element__latex_image(self):
@@ -826,7 +826,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         test_str = table_element.format_latex("pic.png")
         self.assertEqual(
             test_str,
-            "\\includegraphics[width=0.3\\textwidth]{pic.png} &",
+            "\\includegraphics[width=0.3\\linewidth]{pic.png} &",
         )
 
     @mock.patch("tempfile.NamedTemporaryFile")
@@ -858,7 +858,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
 
         self.assertEqual(
             test_str,
-            "\\includegraphics[width=0.3\\textwidth]{/mock_tmp/fake_image.png} &",
+            "\\includegraphics[width=0.3\\linewidth]{/mock_tmp/fake_image.png} &",
         )
 
     @mock.patch("requests.get")
@@ -925,7 +925,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
                 '<div data-bs-toggle="tooltip" data-bs-html="true" '
                 'data-bs-title="">do_nothing</div>'
             ),
-            expected_format_latex=" \\color{black} do\\_nothing &",
+            expected_format_latex=" \\color{textdark} do\\_nothing &",
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
@@ -937,7 +937,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
                 "arg2 (int): The second argument.<br><br>"
                 'Returns:<br>int: 1">return_one</div>'
             ),
-            expected_format_latex=" \\color{black} return\\_one &",
+            expected_format_latex=" \\color{textdark} return\\_one &",
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
@@ -946,7 +946,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
                 '<div data-bs-toggle="tooltip" data-bs-html="true" '
                 'data-bs-title="Returns 2.">return_two</div>'
             ),
-            expected_format_latex=" \\color{black} return\\_two &",
+            expected_format_latex=" \\color{textdark} return\\_two &",
         )
 
     @mock.patch("reporting.dataclasses.table_elements.reverse")
@@ -973,7 +973,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             test_obj=obj,
             expected_format='<div style="max-height: 300px; overflow-y: auto;">      <div><a id="id__fake_url_1" href="/fake_url/1">a</a></div>      <div><a id="id__fake_url_2" href="/fake_url/2">b</a></div>      <div><a id="id__fake_url_3" href="/fake_url/3">c</a></div>  </div>',
-            expected_format_latex=" \\color{black} a,b,c &",
+            expected_format_latex=" \\color{textdark} a,b,c &",
             expected_hover_text="hover_text",
         )
 
@@ -1001,7 +1001,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             test_obj=obj,
             expected_format='<div style="max-height: 300px; overflow-y: auto;">      <div><a id="id__fake_url_1" href="/fake_url/1">a</a></div>      <div><a id="id__fake_url_2" href="/fake_url/2">b</a></div>  </div>',
-            expected_format_latex=" \\color{black} a,b &",
+            expected_format_latex=" \\color{textdark} a,b &",
             expected_hover_text="hover_text",
         )
 
@@ -1036,7 +1036,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
                 '      <div><a id="id__fake_url_3_123" href="/fake_url/3/123">c</a></div>'
                 "  </div>"
             ),
-            expected_format_latex=" \\color{black} a,b,c &",
+            expected_format_latex=" \\color{textdark} a,b,c &",
             expected_hover_text="hover_text",
         )
 
@@ -1064,7 +1064,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             test_obj=obj,
             expected_format='<div style="max-height: 300px; overflow-y: auto;">      <div><a id="id__fake_url_1" href="/fake_url/1">a</a></div>      <div><a id="id__fake_url_2" href="/fake_url/2">b</a></div>      <div><a id="id__fake_url_3" href="/fake_url/3">c</a></div>  </div>',
-            expected_format_latex=" \\color{black} a,b,c &",
+            expected_format_latex=" \\color{textdark} a,b,c &",
             expected_hover_text="hover_text",
         )
 
@@ -1092,7 +1092,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             test_obj=obj,
             expected_format='<div style="max-height: 300px; overflow-y: auto;">      <div><a id="id__fake_url_1" href="/fake_url/1">prompt; important</a></div>  </div>',
-            expected_format_latex=" \\color{black} prompt; important &",
+            expected_format_latex=" \\color{textdark} prompt; important &",
             expected_hover_text="hover_text",
         )
 
@@ -1140,7 +1140,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             test_obj=test_obj,
             expected_format=f'<a id="id__baseclasses_{test_obj.id}_details" href="/baseclasses/{test_obj.id}/details">{test_obj.test_name}</a>',
-            expected_format_latex=f" \\color{{black}} {test_obj.test_name} &",
+            expected_format_latex=f" \\color{{textdark}} {test_obj.test_name} &",
             expected_hover_text="hover_text",
         )
 
@@ -1157,7 +1157,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             test_obj=test_obj,
             expected_format='<a id="id__baseclasses_1_details" href="/baseclasses/1/details">Test_Name</a>',
-            expected_format_latex=" \\color{black} Test\\_Name &",
+            expected_format_latex=" \\color{textdark} Test\\_Name &",
             expected_hover_text="hover_text",
         )
         test_obj = {"pk": 1, "test_name": "Test_Name", "is_active": True}
@@ -1165,7 +1165,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             test_obj=test_obj,
             expected_format='<a id="id__baseclasses_1_details" href="/baseclasses/1/details">Test_Name</a>',
-            expected_format_latex=" \\color{black} Test\\_Name &",
+            expected_format_latex=" \\color{textdark} Test\\_Name &",
             expected_hover_text="hover_text",
             expected_td_classes=["text-start fw-bold"],
         )
@@ -1174,7 +1174,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             test_obj=test_obj,
             expected_format='<a id="id__baseclasses_1_details" href="/baseclasses/1/details">is_active</a>',
-            expected_format_latex=" \\color{black} is\\_active &",
+            expected_format_latex=" \\color{textdark} is\\_active &",
             expected_hover_text="hover_text",
             expected_td_classes=["text-start fw-bold"],
         )
@@ -1183,7 +1183,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             test_obj=test_obj,
             expected_format='<a id="id__baseclasses_1_details" href="/baseclasses/1/details">is_not_active</a>',
-            expected_format_latex=" \\color{black} is\\_not\\_active &",
+            expected_format_latex=" \\color{textdark} is\\_not\\_active &",
             expected_hover_text="hover_text",
             expected_td_classes=["text-start"],
         )
@@ -1264,7 +1264,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=table_element,
             test_obj=test_obj,
             expected_format=f'<a id="id__baseclasses_{test_obj.id}_details" href="/baseclasses/{test_obj.id}/details"><span class="bi bi-icon"></span></a>',
-            expected_format_latex=" \\color{black} \\twemoji{cross mark} &",
+            expected_format_latex=" \\color{textdark} \\twemoji{cross mark} &",
             expected_hover_text="hover_text",
         )
 
@@ -1276,7 +1276,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             test_obj={"test_value": "ignored"},
             expected_format='<span class="bi bi-pencil"></span>',
-            expected_format_latex=" \\color{black} \\twemoji{pencil} &",
+            expected_format_latex=" \\color{textdark} \\twemoji{pencil} &",
         )
 
     def test_icon_table_element__default_icon(self):
@@ -1285,7 +1285,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             test_obj={"test_value": "ignored"},
             expected_format='<span class="bi bi-sign-stop"></span>',
-            expected_format_latex=" \\color{black} \\twemoji{cross mark} &",
+            expected_format_latex=" \\color{textdark} \\twemoji{cross mark} &",
         )
 
     def test_icon_table_element__with_hover_text(self):
@@ -1296,7 +1296,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             test_obj={"test_value": "ignored"},
             expected_format='<span class="bi bi-trash"></span>',
-            expected_format_latex=" \\color{black} \\twemoji{wastebasket} &",
+            expected_format_latex=" \\color{textdark} \\twemoji{wastebasket} &",
             expected_hover_text="Delete",
         )
 
@@ -1318,7 +1318,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
                 )
                 self.assertEqual(
                     test_element.format_latex(icon),
-                    f" \\color{{black}} \\twemoji{{{latex_icon}}} &",
+                    f" \\color{{textdark}} \\twemoji{{{latex_icon}}} &",
                 )
 
     def test_icon_table_element__html_icon_map(self):
@@ -1327,7 +1327,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             test_obj={"test_value": "ignored"},
             expected_format='<span class="bi bi-pencil"></span>',
-            expected_format_latex=" \\color{black} \\twemoji{pencil} &",
+            expected_format_latex=" \\color{textdark} \\twemoji{pencil} &",
         )
 
     def test_get_attibute__object_is_dict(self):
@@ -1448,7 +1448,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=table_element,
             test_obj=test_obj,
             expected_format='<span class="bi bi-arrow-right-circle-fill text-success"></span>',
-            expected_format_latex="{\\color{green}$\\rightarrow$} &",
+            expected_format_latex="{\\color{brightergreen}$\\rightarrow$} &",
             expected_hover_text="1 = 1",
         )
 
@@ -1463,7 +1463,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=table_element,
             test_obj=test_obj,
             expected_format='<span class="bi bi-arrow-up-right-circle-fill text-warning"></span>',
-            expected_format_latex="{\\color{orange}$\\nearrow$} &",
+            expected_format_latex="{\\color{brighterorange}$\\nearrow$} &",
             expected_hover_text="12 > 10",
         )
 
@@ -1493,7 +1493,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=table_element,
             test_obj=test_obj,
             expected_format='<span class="bi bi-arrow-down-right-circle-fill text-warning"></span>',
-            expected_format_latex="{\\color{orange}$\\searrow$} &",
+            expected_format_latex="{\\color{brighterorange}$\\searrow$} &",
             expected_hover_text="8 < 10",
         )
 
@@ -1622,7 +1622,7 @@ class TestCompDataField(TestCase):
             result,
             {
                 "num": 0,
-                "latex_val": "{\\color{green}$\\rightarrow$}",
+                "latex_val": "{\\color{brightergreen}$\\rightarrow$}",
                 "hover_text": "=",
             },
         )
@@ -1636,7 +1636,7 @@ class TestCompDataField(TestCase):
         """
         already_dict = {
             "num": 1,
-            "latex_val": "{\\color{orange}$\\nearrow$}",
+            "latex_val": "{\\color{brighterorange}$\\nearrow$}",
             "hover_text": ">",
         }
         result = self.field.to_representation(already_dict)
@@ -1661,7 +1661,7 @@ class TestCompDataField(TestCase):
         """A dict round-trips back to a CompData instance."""
         data = {
             "num": -1,
-            "latex_val": "{\\color{orange}$\\searrow$}",
+            "latex_val": "{\\color{brighterorange}$\\searrow$}",
             "hover_text": "<",
         }
         result = self.field.to_internal_value(data)
