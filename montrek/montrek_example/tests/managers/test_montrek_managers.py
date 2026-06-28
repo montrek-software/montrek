@@ -51,7 +51,7 @@ class TestEncryptedFields(TestCase):
     def test_field_is_hidden_in_latex(self):
         latex = self.manager.to_latex()
         self.assertNotIn("& \\color{black} secret\\\\", latex)
-        self.assertIn("& \\color{black} ******\\\\", latex)
+        self.assertIn("& \\color{textdark} ******\\\\", latex)
 
     def test_secret_in_history_manager_in_html(self):
         history_manager = SatA5HistoryManager({}, "History", SatA5.objects.all())
@@ -76,7 +76,7 @@ class TestEncryptedFieldsWithNone(TestCase):
 
     def test_field_is_hidden_in_latex(self):
         latex = self.manager.to_latex()
-        self.assertIn("& \\color{black} \\\\", latex)
+        self.assertIn("& \\color{textdark} \\\\", latex)
 
     def test_secret_in_history_manager_in_html(self):
         history_manager = SatA5HistoryManager({}, "History", SatA5.objects.all())
