@@ -101,6 +101,32 @@ class MockReportElementError:
         raise ValueError("This fails!")
 
 
+class MockReportElementWithPdfHtml:
+    """Element that implements both to_html() and to_pdf_html()."""
+
+    def to_html(self):
+        return "html"
+
+    def to_pdf_html(self):
+        return "pdf_html"
+
+    def to_latex(self):
+        return "latex"
+
+
+class MockReportElementPdfHtmlError:
+    """Element whose to_pdf_html() raises."""
+
+    def to_html(self):
+        return "html"
+
+    def to_pdf_html(self):
+        raise ValueError("This fails!")
+
+    def to_latex(self):
+        return "latex"
+
+
 class MockLatexReportManagerNoTemplate(LatexReportManager):
     latex_template = "no_template.tex"
 

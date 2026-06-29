@@ -66,7 +66,28 @@ class MontrekReportManager(MontrekManager):
         return html_list
 
     def to_pdf_html(self) -> str:
-        return "".join(self.to_html())
+        html_list = []
+        try:
+            self.collect_report_elements()
+            for report_element in self.report_elements:
+                if hasattr(report_element, "to_pdf_html"):
+                    html_list.append(report_element.to_pdf_html())
+                else:
+                    html_list.append(report_element.to_html())
+        except Exception as e:
+            self.cleanup_report_elements()
+            error_header = f"Error during report generation: {e}"
+            if settings.DEBUG:
+                error_details = traceback.format_exc()
+                error_details = error_details.split("\n")
+            else:
+                error_details = ["Contact admin and check Debug mode"]
+            return rt.ReportingError(
+                error_header=error_header, error_texts=error_details
+            ).to_html()
+        html_list.append(self._get_footer())
+        self.cleanup_report_elements()
+        return "".join(html_list)
 
     def to_latex(self) -> str:
         latex_str = ""
