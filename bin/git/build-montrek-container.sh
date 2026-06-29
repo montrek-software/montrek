@@ -12,7 +12,7 @@ if [[ -z "$GIT_PAT" ]]; then
   echo "GIT_PAT"
   exit 1
 fi
-echo $PAT | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-stdin
+echo $PAT | docker login ${CONTAINER_REGISTRY:-ghcr.io} -u YOUR_GITHUB_USERNAME --password-stdin
 
-docker build -t ghcr.io/montrek-software/montrek-container:latest .
-docker push ghcr.io/montrek-software/montrek-container:latest
+docker build -t ${CONTAINER_REGISTRY:-ghcr.io}/montrek-software/montrek-container:latest .
+docker push ${CONTAINER_REGISTRY:-ghcr.io}/montrek-software/montrek-container:latest
