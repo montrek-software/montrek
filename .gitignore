@@ -24,3 +24,9 @@ montrek/*.sqlite
 .aider*
 secrets/*
 .env
+keycloak/themes/montrek/login/resources/css/colors.css
+db_backups/*
+requirements.txt
+coverage.xml
+montrek/mt_*/
+.scannerwork
