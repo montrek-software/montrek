@@ -21,7 +21,7 @@ def _element_to_latex(element, font_scale: float) -> str:
     """Call to_latex(), passing font_scale only when the element supports it."""
     params = inspect.signature(element.to_latex).parameters
     if "font_scale" in params:
-        return element.to_latex(font_scale=font_scale)
+        return element.to_latex(font_scale=font_scale * 1.2)
     return element.to_latex()
 
 
