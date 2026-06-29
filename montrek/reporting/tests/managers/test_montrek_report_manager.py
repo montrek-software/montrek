@@ -176,6 +176,68 @@ class TestMontrekReportManager(TestCase):
         self.assertEqual(redirect.status_code, 302)
 
 
+class TestMontrekReportManagerToPdfHtml(TestCase):
+    def test_calls_to_pdf_html_on_element_when_available(self):
+        manager = mocks.MockMontrekReportManager(session_data={})
+        manager.append_report_element(mocks.MockReportElementWithPdfHtml())
+        result = manager.to_pdf_html()
+        self.assertIn("pdf_html", result)
+        self.assertNotIn("html", result.replace("pdf_html", ""))
+
+    def test_falls_back_to_to_html_when_no_to_pdf_html(self):
+        manager = mocks.MockMontrekReportManager(session_data={})
+        manager.append_report_element(mocks.MockReportElement())
+        result = manager.to_pdf_html()
+        self.assertIn("html", result)
+
+    def test_mixed_elements_use_correct_method_each(self):
+        manager = mocks.MockMontrekReportManager(session_data={})
+        manager.append_report_element(mocks.MockReportElementWithPdfHtml())
+        manager.append_report_element(mocks.MockReportElement())
+        result = manager.to_pdf_html()
+        self.assertIn("pdf_html", result)
+        self.assertIn("html", result)
+
+    def test_returns_string_not_list(self):
+        manager = mocks.MockMontrekReportManager(session_data={})
+        manager.append_report_element(mocks.MockReportElement())
+        result = manager.to_pdf_html()
+        self.assertIsInstance(result, str)
+
+    def test_cleanup_after_success(self):
+        manager = mocks.MockMontrekReportManager(session_data={})
+        manager.append_report_element(mocks.MockReportElementWithPdfHtml())
+        manager.to_pdf_html()
+        self.assertEqual(manager.report_elements, [])
+
+    def test_error_in_collect_returns_error_html(self):
+        manager = mocks.MockMontrekReportManagerError(session_data={})
+        manager.append_report_element(mocks.MockReportElement())
+        result = manager.to_pdf_html()
+        self.assertIn("Error during report generation: This fails!", result)
+        self.assertIn("ValueError: This fails!", result)
+        self.assertEqual(manager.report_elements, [])
+
+    def test_error_in_element_to_pdf_html_returns_error_html(self):
+        manager = mocks.MockMontrekReportManager(session_data={})
+        manager.append_report_element(mocks.MockReportElementPdfHtmlError())
+        result = manager.to_pdf_html()
+        self.assertIn("Error during report generation: This fails!", result)
+        self.assertEqual(manager.report_elements, [])
+
+    @override_settings(DEBUG=False)
+    def test_error_no_debug_omits_traceback(self):
+        manager = mocks.MockMontrekReportManagerError(session_data={})
+        result = manager.to_pdf_html()
+        soup = BeautifulSoup(result, "html.parser")
+        alerts = soup.find_all("div", class_="alert")
+        self.assertEqual(len(alerts), 2)
+        texts = [a.get_text(strip=True) for a in alerts]
+        self.assertTrue(any("Error during report generation" in t for t in texts))
+        self.assertTrue(any("Contact admin and check Debug mode" in t for t in texts))
+        self.assertNotIn("Traceback", result)
+
+
 class TestComprehensiveReport(TestCase):
     @mock_plotly_write_dummy_png()
     def test_generate_report_and_compile(self, mock_write_image):
