@@ -134,6 +134,37 @@ class TestLaTeXEscaper(TestCase):
         self.assertEqual(LaTeXEscaper.escape(42), "42")
 
 
+class TestSoftHyphenate(TestCase):
+    def test_short_word_unchanged(self):
+        text = "Kostenrisiko"  # 12 chars, below threshold
+        self.assertEqual(HtmlLatexConverter.soft_hyphenate(text), text)
+
+    def test_word_at_threshold_unchanged(self):
+        text = "A" * 20  # exactly threshold, not above it
+        self.assertEqual(HtmlLatexConverter.soft_hyphenate(text), text)
+
+    def test_word_one_above_threshold_broken(self):
+        text = "A" * 21  # threshold + 1
+        expected = "A" * 10 + "\\-" + "A" * 10 + "\\-" + "A"
+        self.assertEqual(HtmlLatexConverter.soft_hyphenate(text), expected)
+
+    def test_long_german_word(self):
+        word = "Kostenüberschreitungsrisiko"  # 27 chars → 10 + 10 + 7
+        result = HtmlLatexConverter.soft_hyphenate(word)
+        expected = word[:10] + "\\-" + word[10:20] + "\\-" + word[20:]
+        self.assertEqual(result, expected)
+
+    def test_latex_command_not_broken(self):
+        # backslash immediately before a letter sequence prevents matching
+        text = "\\A" * 11  # no pure-letter run of > 20 chars without backslash prefix
+        self.assertEqual(HtmlLatexConverter.soft_hyphenate(text), text)
+
+    def test_non_letter_chars_break_run(self):
+        # digit and '$' split the run so no match occurs
+        text = "$<$script$>$MaliciousHack"  # "MaliciousHack" = 13 chars, no match
+        self.assertEqual(HtmlLatexConverter.soft_hyphenate(text), text)
+
+
 class TestHtmlTextConverter(TestCase):
     def test_special_characters__no_strings(self):
         for value in (12, False, 32.1, None, "test"):

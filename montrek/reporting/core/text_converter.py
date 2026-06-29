@@ -48,6 +48,20 @@ class LaTeXEscaper:
 
 class HtmlLatexConverter:
     @staticmethod
+    def soft_hyphenate(text: str, threshold: int = 20, chunk_size: int = 10) -> str:
+        def _insert_breaks(m: re.Match) -> str:
+            word = m.group()
+            return "\\-".join(
+                word[i : i + chunk_size] for i in range(0, len(word), chunk_size)
+            )
+
+        return re.sub(
+            r"(?<!\\)[A-Za-zÄÖÜäöüß]{" + str(threshold + 1) + r",}",
+            _insert_breaks,
+            text,
+        )
+
+    @staticmethod
     def convert(text: str) -> str:
         text = str(text)
         text = HtmlLatexConverter.ignored(text)
