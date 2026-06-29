@@ -16,7 +16,7 @@ parallel_worker)
   if [[ $SET_CONCURRENCY ]]; then
     CONCURRENCY=$SET_CONCURRENCY
   else
-    CONCURRENCY=$((CPU_COUNT - 2))
+    CONCURRENCY=4
   fi
   ;;
 fast_worker)
