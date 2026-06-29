@@ -1,7 +1,47 @@
 from django.test import TestCase
 from bs4 import BeautifulSoup
-from reporting.core.reporting_grid_layout import ReportGridLayout
+from reporting.core.reporting_grid_layout import (
+    EmptyReportGridElement,
+    ReportGridLayout,
+)
 from reporting.core.reporting_text import ReportingParagraph, ReportingText
+
+
+class _PdfAwareElement:
+    """Stub element that returns different content for to_html vs to_pdf_html."""
+
+    def to_html(self):
+        return "<span>html</span>"
+
+    def to_pdf_html(self):
+        return "<span>pdf</span>"
+
+
+class _FontScaleAwareElement:
+    """Stub element that captures the font_scale it receives."""
+
+    def __init__(self):
+        self.received_pdf_font_scale = None
+        self.received_latex_font_scale = None
+
+    def to_html(self):
+        return "<span>html</span>"
+
+    def to_pdf_html(self, font_scale: float = 1.0):
+        self.received_pdf_font_scale = font_scale
+        return f"<span>scale={font_scale}</span>"
+
+    def to_latex(self, font_scale: float = 1.0):
+        self.received_latex_font_scale = font_scale
+        return f"% scale={font_scale}"
+
+    def to_json(self):
+        return {}
+
+
+class _HtmlOnlyElement:
+    def to_html(self):
+        return "<span>html-only</span>"
 
 
 class TestReportGridLayout(TestCase):
@@ -131,3 +171,91 @@ class TestReportGridLayout(TestCase):
         nested_grid.add_report_grid_element(ReportingText("Nested One"), 0, 0)
         with self.assertRaises(IndexError, msg=""):
             nested_grid.add_report_grid_element(ReportingText("Nested Two"), 1, 0)
+
+
+class TestReportGridLayoutToPdfHtml(TestCase):
+    def test_calls_to_pdf_html_on_capable_elements(self):
+        grid = ReportGridLayout(1, 1)
+        grid.add_report_grid_element(_PdfAwareElement(), 0, 0)
+        html = grid.to_pdf_html()
+        self.assertIn("pdf", html)
+        self.assertNotIn("html-only", html)
+
+    def test_falls_back_to_to_html_when_no_to_pdf_html(self):
+        grid = ReportGridLayout(1, 1)
+        grid.add_report_grid_element(_HtmlOnlyElement(), 0, 0)
+        html = grid.to_pdf_html()
+        self.assertIn("html-only", html)
+
+    def test_mixed_row_uses_correct_method_per_element(self):
+        grid = ReportGridLayout(1, 2)
+        grid.add_report_grid_element(_PdfAwareElement(), 0, 0)
+        grid.add_report_grid_element(_HtmlOnlyElement(), 0, 1)
+        html = grid.to_pdf_html()
+        self.assertIn("pdf", html)
+        self.assertIn("html-only", html)
+
+    def test_preserves_grid_structure(self):
+        grid = ReportGridLayout(2, 2)
+        for row in range(2):
+            for col in range(2):
+                grid.add_report_grid_element(_PdfAwareElement(), row, col)
+        soup = BeautifulSoup(grid.to_pdf_html(), "html.parser")
+        rows = soup.find_all("div", class_="row")
+        self.assertEqual(len(rows), 2)
+        for row in rows:
+            cols = row.find_all("div", class_="col-lg-6")
+            self.assertEqual(len(cols), 2)
+
+    def test_empty_element_returns_empty_string(self):
+        self.assertEqual(EmptyReportGridElement().to_pdf_html(), "")
+
+    def test_font_scale_passed_for_two_column_grid(self):
+        element = _FontScaleAwareElement()
+        grid = ReportGridLayout(1, 2)
+        grid.add_report_grid_element(element, 0, 0)
+        grid.to_pdf_html()
+        self.assertEqual(element.received_pdf_font_scale, 2.0)
+
+    def test_font_scale_passed_for_three_column_grid(self):
+        element = _FontScaleAwareElement()
+        grid = ReportGridLayout(1, 3)
+        grid.add_report_grid_element(element, 0, 0)
+        grid.to_pdf_html()
+        self.assertEqual(element.received_pdf_font_scale, 3.0)
+
+    def test_font_scale_is_one_for_single_column_grid(self):
+        element = _FontScaleAwareElement()
+        grid = ReportGridLayout(1, 1)
+        grid.add_report_grid_element(element, 0, 0)
+        grid.to_pdf_html()
+        self.assertEqual(element.received_pdf_font_scale, 1.0)
+
+    def test_font_scale_not_passed_to_elements_without_parameter(self):
+        # _PdfAwareElement.to_pdf_html() has no font_scale param — must not crash.
+        element = _PdfAwareElement()
+        grid = ReportGridLayout(1, 2)
+        grid.add_report_grid_element(element, 0, 0)
+        html = grid.to_pdf_html()
+        self.assertIn("pdf", html)
+
+    def test_latex_font_scale_passed_for_two_column_grid(self):
+        element = _FontScaleAwareElement()
+        grid = ReportGridLayout(1, 2)
+        grid.add_report_grid_element(element, 0, 0)
+        grid.to_latex()
+        self.assertEqual(element.received_latex_font_scale, 2.4)
+
+    def test_latex_font_scale_passed_for_three_column_grid(self):
+        element = _FontScaleAwareElement()
+        grid = ReportGridLayout(1, 3)
+        grid.add_report_grid_element(element, 0, 0)
+        grid.to_latex()
+        self.assertAlmostEqual(element.received_latex_font_scale, 3.6)
+
+    def test_latex_font_scale_is_1_2_for_single_column_grid(self):
+        element = _FontScaleAwareElement()
+        grid = ReportGridLayout(1, 1)
+        grid.add_report_grid_element(element, 0, 0)
+        grid.to_latex()
+        self.assertEqual(element.received_latex_font_scale, 1.2)

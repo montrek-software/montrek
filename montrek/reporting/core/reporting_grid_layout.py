@@ -1,8 +1,30 @@
+import inspect
 from math import floor
 from dataclasses import dataclass
+from django.template.loader import render_to_string
 from reporting.core.reporting_text import ContextTypes, ReportingElement
 
 from reporting.managers.montrek_report_manager import ReportElementProtocol
+
+LATEX_FONT_SCALE_MULTIPLIER = 1.2
+
+
+def _element_to_pdf_html(element, font_scale: float) -> str:
+    """Call to_pdf_html(), passing font_scale only when the element supports it."""
+    if not hasattr(element, "to_pdf_html"):
+        return element.to_html()
+    params = inspect.signature(element.to_pdf_html).parameters
+    if "font_scale" in params:
+        return element.to_pdf_html(font_scale=font_scale)
+    return element.to_pdf_html()
+
+
+def _element_to_latex(element, font_scale: float) -> str:
+    """Call to_latex(), passing font_scale only when the element supports it."""
+    params = inspect.signature(element.to_latex).parameters
+    if "font_scale" in params:
+        return element.to_latex(font_scale=font_scale * LATEX_FONT_SCALE_MULTIPLIER)
+    return element.to_latex()
 
 
 class ReportGridElements:
@@ -41,6 +63,7 @@ class GridRowDisplay:
         Bootstrap column width (out of 12) assigned to each element in the
         row. This is typically computed as ``floor(12 / len(html_elements))``.
     """
+
     html_elements: list[str]
     col_len: int
 
@@ -72,7 +95,23 @@ class ReportGridLayout(ReportingElement):
 
         return {"grid_rows": grid_rows}
 
+    def to_pdf_html(self) -> str:
+        font_scale = float(self.report_grid_elements.no_of_cols)
+        grid_rows = []
+        for row in self.report_grid_elements.report_grid_elements_container:
+            html_elements = [
+                _element_to_pdf_html(element, font_scale) for element in row
+            ]
+            col_len = floor(12 / len(html_elements))
+            grid_rows.append(
+                GridRowDisplay(html_elements=html_elements, col_len=col_len)
+            )
+        return render_to_string(
+            "reporting_elements/grid.html", {"grid_rows": grid_rows}
+        )
+
     def to_latex(self):
+        font_scale = float(self.report_grid_elements.no_of_cols)
         col_str = self._get_latex_column_definition()
         latex_str = "\n\n" if self.is_nested else "\n\n\\begin{table}[H]"
 
@@ -81,7 +120,7 @@ class ReportGridLayout(ReportingElement):
             latex_str += "\n"
             for element in row:
                 latex_str += f"\\begin{{minipage}}[t]{{{self.report_grid_elements.width}\\textwidth}}\n"
-                latex_str += f"{element.to_latex()} "
+                latex_str += f"{_element_to_latex(element, font_scale)} "
                 latex_str += "\\end{minipage} &\n"
             latex_str = latex_str[:-3] + " \\\\\n"
         latex_str += "\n\\end{tabular}"
@@ -120,6 +159,9 @@ class ReportGridLayout(ReportingElement):
 
 class EmptyReportGridElement:
     def to_html(self) -> str:
+        return ""
+
+    def to_pdf_html(self) -> str:
         return ""
 
     def to_latex(self) -> str:

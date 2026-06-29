@@ -1,3 +1,4 @@
+import base64
 import hashlib
 import json
 from typing import Any, Generic, TypeVar
@@ -5,6 +6,7 @@ import uuid
 from _plotly_utils.utils import PlotlyJSONEncoder
 from django.template.loader import render_to_string
 from django.conf import settings
+from django.utils.safestring import mark_safe
 
 import plotly.graph_objects as go
 from reporting.constants import ReportingPlotType
@@ -43,17 +45,41 @@ class ReportingPlotBase(Generic[TData]):
             },
         )
 
-    def to_latex(self) -> str:
-        # Generate a deterministic filename based on the plot data
-        plot_json = self.figure.to_json()
-        hash_digest = hashlib.sha256(plot_json.encode("utf-8")).hexdigest()[:16]
-        filename = f"{hash_digest}.png"
-        image_path = settings.WORKBENCH_PATH / filename
-        # Ensure the directory exists
-        settings.WORKBENCH_PATH.mkdir(parents=True, exist_ok=True)
-        # Write the image if it does not already exist (scale=2 → print-ready 300 DPI)
-        if not image_path.exists():
-            self.figure.write_image(str(image_path), width=1200, height=600, scale=2)
+    def to_pdf_html(self, font_scale: float = 1.0) -> str:
+        original_size = self.figure.layout.font.size or 13
+        if font_scale != 1.0:
+            self.figure.update_layout(font={"size": original_size * font_scale})
+        try:
+            png_bytes = self.figure.to_image(
+                format="png", width=1200, height=600, scale=2
+            )
+        finally:
+            if font_scale != 1.0:
+                self.figure.update_layout(font={"size": original_size})
+        b64 = base64.b64encode(png_bytes).decode("ascii")
+        # b64 contains only [A-Za-z0-9+/=] — no HTML injection possible.
+        return mark_safe(  # noqa: S308  # nosec B308 B703
+            f'<img src="data:image/png;base64,{b64}" style="max-width:100%;height:auto;">'
+        )
+
+    def to_latex(self, font_scale: float = 1.0) -> str:
+        original_size = self.figure.layout.font.size or 13
+        if font_scale != 1.0:
+            self.figure.update_layout(font={"size": original_size * font_scale})
+        try:
+            # Hash is computed after scaling so different font_scale values get separate cache files.
+            plot_json = self.figure.to_json()
+            hash_digest = hashlib.sha256(plot_json.encode("utf-8")).hexdigest()[:16]
+            filename = f"{hash_digest}.png"
+            image_path = settings.WORKBENCH_PATH / filename
+            settings.WORKBENCH_PATH.mkdir(parents=True, exist_ok=True)
+            if not image_path.exists():
+                self.figure.write_image(
+                    str(image_path), width=1200, height=600, scale=2
+                )
+        finally:
+            if font_scale != 1.0:
+                self.figure.update_layout(font={"size": original_size})
 
         plot_title = getattr(self.figure.layout, "title", None)
         title_text = getattr(plot_title, "text", None) if plot_title else None

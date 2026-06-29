@@ -1,4 +1,5 @@
 from typing import Protocol
+from unittest import mock
 import pandas as pd
 from bs4 import BeautifulSoup
 import json
@@ -269,3 +270,152 @@ class TestReportingPiePlots(TestCase, FigureAssertionsMixin):
         reporting_plot_latex = self.reporting_plot.to_latex()
         self.assertTrue(reporting_plot_latex.startswith("\\begin{figure}"))
         mock_write_image.assert_called_once()
+
+
+def _make_tiny_png() -> bytes:
+    import io
+    from PIL import Image
+
+    buf = io.BytesIO()
+    Image.new("RGB", (1, 1), "white").save(buf, format="PNG")
+    return buf.getvalue()
+
+
+class TestReportingPlotPdfHtml(TestCase):
+    def _make_plot(self) -> ReportingPlot:
+        test_df = pd.DataFrame({"Category": ["A", "B"], "Value": [10, 20]})
+        reporting_data = ReportingData(
+            data_df=test_df,
+            x_axis_column="Category",
+            y_axis_columns=["Value"],
+            plot_types=[ReportingPlotType.BAR],
+            title="PDF Test Plot",
+        )
+        plot = ReportingPlot()
+        plot.generate(reporting_data)
+        return plot
+
+    def test_to_pdf_html_returns_img_tag(self):
+        fake_png = _make_tiny_png()
+        with mock.patch.object(go.Figure, "to_image", return_value=fake_png):
+            html = self._make_plot().to_pdf_html()
+        soup = BeautifulSoup(html, "html.parser")
+        self.assertEqual(len(soup.find_all("img")), 1)
+
+    def test_to_pdf_html_src_is_png_data_uri(self):
+        fake_png = _make_tiny_png()
+        with mock.patch.object(go.Figure, "to_image", return_value=fake_png):
+            html = self._make_plot().to_pdf_html()
+        src = BeautifulSoup(html, "html.parser").find("img")["src"]
+        self.assertTrue(src.startswith("data:image/png;base64,"))
+
+    def test_to_pdf_html_base64_decodes_to_png(self):
+        import base64
+
+        fake_png = _make_tiny_png()
+        with mock.patch.object(go.Figure, "to_image", return_value=fake_png):
+            html = self._make_plot().to_pdf_html()
+        src = BeautifulSoup(html, "html.parser").find("img")["src"]
+        decoded = base64.b64decode(src.split(",", 1)[1])
+        self.assertTrue(decoded.startswith(b"\x89PNG"))
+
+    def test_to_pdf_html_contains_no_script(self):
+        fake_png = _make_tiny_png()
+        with mock.patch.object(go.Figure, "to_image", return_value=fake_png):
+            html = self._make_plot().to_pdf_html()
+        self.assertEqual(len(BeautifulSoup(html, "html.parser").find_all("script")), 0)
+
+    def test_to_pdf_html_calls_to_image_with_png_format(self):
+        fake_png = _make_tiny_png()
+        with mock.patch.object(
+            go.Figure, "to_image", return_value=fake_png
+        ) as mock_img:
+            self._make_plot().to_pdf_html()
+        call_kwargs = mock_img.call_args
+        self.assertEqual(call_kwargs.kwargs.get("format") or call_kwargs.args[0], "png")
+
+    def test_font_scale_multiplies_base_font_size(self):
+        plot = self._make_plot()
+        base_size = plot.figure.layout.font.size or 13
+        fake_png = _make_tiny_png()
+
+        def _assert_scaled(*args, **kwargs):
+            self.assertEqual(plot.figure.layout.font.size, base_size * 2.0)
+            return fake_png
+
+        with mock.patch.object(go.Figure, "to_image", side_effect=_assert_scaled):
+            plot.to_pdf_html(font_scale=2.0)
+
+        # Font must be restored after rendering.
+        self.assertEqual(plot.figure.layout.font.size, base_size)
+    def test_font_scale_restores_original_size_after_render(self):
+        plot = self._make_plot()
+        original_size = plot.figure.layout.font.size or 13
+        fake_png = _make_tiny_png()
+        with mock.patch.object(go.Figure, "to_image", return_value=fake_png):
+            plot.to_pdf_html(font_scale=3.0)
+        self.assertEqual(plot.figure.layout.font.size, original_size)
+
+    def test_font_scale_restores_on_render_error(self):
+        plot = self._make_plot()
+        original_size = plot.figure.layout.font.size or 13
+        with mock.patch.object(
+            go.Figure, "to_image", side_effect=RuntimeError("fail")
+        ), self.assertRaises(RuntimeError):
+            plot.to_pdf_html(font_scale=2.0)
+        self.assertEqual(plot.figure.layout.font.size, original_size)
+
+    def test_font_scale_one_does_not_mutate_layout(self):
+        plot = self._make_plot()
+        original_size = plot.figure.layout.font.size or 13
+        fake_png = _make_tiny_png()
+        with mock.patch.object(go.Figure, "to_image", return_value=fake_png):
+            plot.to_pdf_html(font_scale=1.0)
+        self.assertEqual(plot.figure.layout.font.size, original_size)
+
+
+class TestReportingPlotLatexFontScale(TestCase):
+    def _make_plot(self) -> ReportingPlot:
+        test_df = pd.DataFrame({"Category": ["A", "B"], "Value": [10, 20]})
+        reporting_data = ReportingData(
+            data_df=test_df,
+            x_axis_column="Category",
+            y_axis_columns=["Value"],
+            plot_types=[ReportingPlotType.BAR],
+            title="LaTeX Font Scale Test",
+        )
+        plot = ReportingPlot()
+        plot.generate(reporting_data)
+        return plot
+
+    @mock_plotly_image_write_disabled()
+    def test_latex_font_scale_restores_original_size(self, mock_write_image):
+        plot = self._make_plot()
+        original_size = plot.figure.layout.font.size or 13
+        plot.to_latex(font_scale=2.0)
+        self.assertEqual(plot.figure.layout.font.size, original_size)
+
+    @mock_plotly_image_write_disabled()
+    def test_latex_font_scale_one_does_not_mutate_layout(self, mock_write_image):
+        plot = self._make_plot()
+        original_size = plot.figure.layout.font.size or 13
+        plot.to_latex(font_scale=1.0)
+        self.assertEqual(plot.figure.layout.font.size, original_size)
+
+    @mock_plotly_image_write_disabled(exists=False)
+    def test_latex_font_scale_produces_different_hash_per_scale(self, mock_write_image):
+        plot = self._make_plot()
+        plot.to_latex(font_scale=1.0)
+        call_path_1 = mock_write_image.call_args[0][0]
+        plot.to_latex(font_scale=2.0)
+        call_path_2 = mock_write_image.call_args[0][0]
+        self.assertNotEqual(call_path_1, call_path_2)
+
+    @mock_plotly_image_write_disabled(exists=False)
+    def test_latex_font_scale_restores_on_write_error(self, mock_write_image):
+        mock_write_image.side_effect = RuntimeError("disk full")
+        plot = self._make_plot()
+        original_size = plot.figure.layout.font.size or 13
+        with self.assertRaises(RuntimeError):
+            plot.to_latex(font_scale=2.0)
+        self.assertEqual(plot.figure.layout.font.size, original_size)
