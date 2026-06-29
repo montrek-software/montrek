@@ -138,6 +138,18 @@
     /* ---- Alert / label badges (render as plain text in PDF) ---- */
     .badge, .label { font-weight: 600; }
 
+    /* ---- Bootstrap-compatible grid (Bootstrap CSS is not loaded in WeasyPrint) ---- */
+    .row { display: flex; flex-wrap: wrap; margin-bottom: 6pt; }
+    .col-lg-1  { width:  8.333%; box-sizing: border-box; padding: 0 4pt; }
+    .col-lg-2  { width: 16.667%; box-sizing: border-box; padding: 0 4pt; }
+    .col-lg-3  { width:   25%;   box-sizing: border-box; padding: 0 4pt; }
+    .col-lg-4  { width: 33.333%; box-sizing: border-box; padding: 0 4pt; }
+    .col-lg-6  { width:   50%;   box-sizing: border-box; padding: 0 4pt; }
+    .col-lg-8  { width: 66.667%; box-sizing: border-box; padding: 0 4pt; }
+    .col-lg-9  { width:   75%;   box-sizing: border-box; padding: 0 4pt; }
+    .col-lg-10 { width: 83.333%; box-sizing: border-box; padding: 0 4pt; }
+    .col-lg-12 { width:  100%;   box-sizing: border-box; padding: 0 4pt; }
+
     /* ---- Hide elements meaningless in a printed PDF ---- */
     button, input, select, textarea { display: none; }
     .pagination, .empty-state { display: none; }

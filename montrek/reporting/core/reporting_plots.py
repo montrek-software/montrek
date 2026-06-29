@@ -1,3 +1,4 @@
+import base64
 import hashlib
 import json
 from typing import Any, Generic, TypeVar
@@ -5,6 +6,7 @@ import uuid
 from _plotly_utils.utils import PlotlyJSONEncoder
 from django.template.loader import render_to_string
 from django.conf import settings
+from django.utils.safestring import mark_safe
 
 import plotly.graph_objects as go
 from reporting.constants import ReportingPlotType
@@ -41,6 +43,14 @@ class ReportingPlotBase(Generic[TData]):
                 "graph_json": json.dumps(self.figure, cls=PlotlyJSONEncoder),
                 "plot_id": plot_id,
             },
+        )
+
+    def to_pdf_html(self) -> str:
+        png_bytes = self.figure.to_image(format="png", width=1200, height=600, scale=2)
+        b64 = base64.b64encode(png_bytes).decode("ascii")
+        # b64 contains only [A-Za-z0-9+/=] — no HTML injection possible.
+        return mark_safe(  # noqa: S308  # nosec B308 B703
+            f'<img src="data:image/png;base64,{b64}" style="max-width:100%;height:auto;">'
         )
 
     def to_latex(self) -> str:

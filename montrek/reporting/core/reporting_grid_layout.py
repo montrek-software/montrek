@@ -1,5 +1,6 @@
 from math import floor
 from dataclasses import dataclass
+from django.template.loader import render_to_string
 from reporting.core.reporting_text import ContextTypes, ReportingElement
 
 from reporting.managers.montrek_report_manager import ReportElementProtocol
@@ -41,6 +42,7 @@ class GridRowDisplay:
         Bootstrap column width (out of 12) assigned to each element in the
         row. This is typically computed as ``floor(12 / len(html_elements))``.
     """
+
     html_elements: list[str]
     col_len: int
 
@@ -71,6 +73,25 @@ class ReportGridLayout(ReportingElement):
             )
 
         return {"grid_rows": grid_rows}
+
+    def to_pdf_html(self) -> str:
+        grid_rows = []
+        for row in self.report_grid_elements.report_grid_elements_container:
+            html_elements = [
+                (
+                    element.to_pdf_html()
+                    if hasattr(element, "to_pdf_html")
+                    else element.to_html()
+                )
+                for element in row
+            ]
+            col_len = floor(12 / len(html_elements))
+            grid_rows.append(
+                GridRowDisplay(html_elements=html_elements, col_len=col_len)
+            )
+        return render_to_string(
+            "reporting_elements/grid.html", {"grid_rows": grid_rows}
+        )
 
     def to_latex(self):
         col_str = self._get_latex_column_definition()
@@ -120,6 +141,9 @@ class ReportGridLayout(ReportingElement):
 
 class EmptyReportGridElement:
     def to_html(self) -> str:
+        return ""
+
+    def to_pdf_html(self) -> str:
         return ""
 
     def to_latex(self) -> str:
