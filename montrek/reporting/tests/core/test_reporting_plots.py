@@ -338,11 +338,16 @@ class TestReportingPlotPdfHtml(TestCase):
         plot = self._make_plot()
         base_size = plot.figure.layout.font.size or 13
         fake_png = _make_tiny_png()
-        with mock.patch.object(go.Figure, "to_image", return_value=fake_png):
+
+        def _assert_scaled(*args, **kwargs):
+            self.assertEqual(plot.figure.layout.font.size, base_size * 2.0)
+            return fake_png
+
+        with mock.patch.object(go.Figure, "to_image", side_effect=_assert_scaled):
             plot.to_pdf_html(font_scale=2.0)
+
         # Font must be restored after rendering.
         self.assertEqual(plot.figure.layout.font.size, base_size)
-
     def test_font_scale_restores_original_size_after_render(self):
         plot = self._make_plot()
         original_size = plot.figure.layout.font.size or 13
