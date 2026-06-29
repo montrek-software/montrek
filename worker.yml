@@ -1,6 +1,6 @@
 services:
   sequential_worker:
-    image: ghcr.io/montrek-software/montrek-container:latest
+    image: ${CONTAINER_REGISTRY:-ghcr.io}/montrek-software/montrek-container:latest
     user: "0:0"
     environment:
       - SERVICE=sequential_worker
@@ -23,7 +23,7 @@ services:
       - montrek_network
 
   parallel_worker:
-    image: ghcr.io/montrek-software/montrek-container:latest
+    image: ${CONTAINER_REGISTRY:-ghcr.io}/montrek-software/montrek-container:latest
     user: "0:0"
     environment:
       - SERVICE=parallel_worker
@@ -46,7 +46,7 @@ services:
     networks:
       - montrek_network
   fast_worker:
-    image: ghcr.io/montrek-software/montrek-container:latest
+    image: ${CONTAINER_REGISTRY:-ghcr.io}/montrek-software/montrek-container:latest
     user: "0:0"
     environment:
       - SERVICE=fast_worker
