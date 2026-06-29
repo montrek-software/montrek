@@ -45,8 +45,17 @@ class ReportingPlotBase(Generic[TData]):
             },
         )
 
-    def to_pdf_html(self) -> str:
-        png_bytes = self.figure.to_image(format="png", width=1200, height=600, scale=2)
+    def to_pdf_html(self, font_scale: float = 1.0) -> str:
+        original_size = self.figure.layout.font.size or 13
+        if font_scale != 1.0:
+            self.figure.update_layout(font={"size": original_size * font_scale})
+        try:
+            png_bytes = self.figure.to_image(
+                format="png", width=1200, height=600, scale=2
+            )
+        finally:
+            if font_scale != 1.0:
+                self.figure.update_layout(font={"size": original_size})
         b64 = base64.b64encode(png_bytes).decode("ascii")
         # b64 contains only [A-Za-z0-9+/=] — no HTML injection possible.
         return mark_safe(  # noqa: S308  # nosec B308 B703

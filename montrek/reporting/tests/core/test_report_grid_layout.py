@@ -17,6 +17,20 @@ class _PdfAwareElement:
         return "<span>pdf</span>"
 
 
+class _FontScaleAwareElement:
+    """Stub element that captures the font_scale it receives."""
+
+    def __init__(self):
+        self.received_font_scale = None
+
+    def to_html(self):
+        return "<span>html</span>"
+
+    def to_pdf_html(self, font_scale: float = 1.0):
+        self.received_font_scale = font_scale
+        return f"<span>scale={font_scale}</span>"
+
+
 class _HtmlOnlyElement:
     def to_html(self):
         return "<span>html-only</span>"
@@ -187,3 +201,32 @@ class TestReportGridLayoutToPdfHtml(TestCase):
 
     def test_empty_element_returns_empty_string(self):
         self.assertEqual(EmptyReportGridElement().to_pdf_html(), "")
+
+    def test_font_scale_passed_for_two_column_grid(self):
+        element = _FontScaleAwareElement()
+        grid = ReportGridLayout(1, 2)
+        grid.add_report_grid_element(element, 0, 0)
+        grid.to_pdf_html()
+        self.assertEqual(element.received_font_scale, 2.0)
+
+    def test_font_scale_passed_for_three_column_grid(self):
+        element = _FontScaleAwareElement()
+        grid = ReportGridLayout(1, 3)
+        grid.add_report_grid_element(element, 0, 0)
+        grid.to_pdf_html()
+        self.assertEqual(element.received_font_scale, 3.0)
+
+    def test_font_scale_is_one_for_single_column_grid(self):
+        element = _FontScaleAwareElement()
+        grid = ReportGridLayout(1, 1)
+        grid.add_report_grid_element(element, 0, 0)
+        grid.to_pdf_html()
+        self.assertEqual(element.received_font_scale, 1.0)
+
+    def test_font_scale_not_passed_to_elements_without_parameter(self):
+        # _PdfAwareElement.to_pdf_html() has no font_scale param — must not crash.
+        element = _PdfAwareElement()
+        grid = ReportGridLayout(1, 2)
+        grid.add_report_grid_element(element, 0, 0)
+        html = grid.to_pdf_html()
+        self.assertIn("pdf", html)

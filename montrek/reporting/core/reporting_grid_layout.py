@@ -1,9 +1,20 @@
+import inspect
 from math import floor
 from dataclasses import dataclass
 from django.template.loader import render_to_string
 from reporting.core.reporting_text import ContextTypes, ReportingElement
 
 from reporting.managers.montrek_report_manager import ReportElementProtocol
+
+
+def _element_to_pdf_html(element, font_scale: float) -> str:
+    """Call to_pdf_html(), passing font_scale only when the element supports it."""
+    if not hasattr(element, "to_pdf_html"):
+        return element.to_html()
+    params = inspect.signature(element.to_pdf_html).parameters
+    if "font_scale" in params:
+        return element.to_pdf_html(font_scale=font_scale)
+    return element.to_pdf_html()
 
 
 class ReportGridElements:
@@ -75,15 +86,11 @@ class ReportGridLayout(ReportingElement):
         return {"grid_rows": grid_rows}
 
     def to_pdf_html(self) -> str:
+        font_scale = float(self.report_grid_elements.no_of_cols)
         grid_rows = []
         for row in self.report_grid_elements.report_grid_elements_container:
             html_elements = [
-                (
-                    element.to_pdf_html()
-                    if hasattr(element, "to_pdf_html")
-                    else element.to_html()
-                )
-                for element in row
+                _element_to_pdf_html(element, font_scale) for element in row
             ]
             col_len = floor(12 / len(html_elements))
             grid_rows.append(

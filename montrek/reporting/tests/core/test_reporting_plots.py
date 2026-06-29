@@ -333,3 +333,37 @@ class TestReportingPlotPdfHtml(TestCase):
             self._make_plot().to_pdf_html()
         call_kwargs = mock_img.call_args
         self.assertEqual(call_kwargs.kwargs.get("format") or call_kwargs.args[0], "png")
+
+    def test_font_scale_multiplies_base_font_size(self):
+        plot = self._make_plot()
+        base_size = plot.figure.layout.font.size or 13
+        fake_png = _make_tiny_png()
+        with mock.patch.object(go.Figure, "to_image", return_value=fake_png):
+            plot.to_pdf_html(font_scale=2.0)
+        # Font must be restored after rendering.
+        self.assertEqual(plot.figure.layout.font.size, base_size)
+
+    def test_font_scale_restores_original_size_after_render(self):
+        plot = self._make_plot()
+        original_size = plot.figure.layout.font.size or 13
+        fake_png = _make_tiny_png()
+        with mock.patch.object(go.Figure, "to_image", return_value=fake_png):
+            plot.to_pdf_html(font_scale=3.0)
+        self.assertEqual(plot.figure.layout.font.size, original_size)
+
+    def test_font_scale_restores_on_render_error(self):
+        plot = self._make_plot()
+        original_size = plot.figure.layout.font.size or 13
+        with mock.patch.object(
+            go.Figure, "to_image", side_effect=RuntimeError("fail")
+        ), self.assertRaises(RuntimeError):
+            plot.to_pdf_html(font_scale=2.0)
+        self.assertEqual(plot.figure.layout.font.size, original_size)
+
+    def test_font_scale_one_does_not_mutate_layout(self):
+        plot = self._make_plot()
+        original_size = plot.figure.layout.font.size or 13
+        fake_png = _make_tiny_png()
+        with mock.patch.object(go.Figure, "to_image", return_value=fake_png):
+            plot.to_pdf_html(font_scale=1.0)
+        self.assertEqual(plot.figure.layout.font.size, original_size)
