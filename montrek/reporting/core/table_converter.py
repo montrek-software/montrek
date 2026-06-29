@@ -16,7 +16,7 @@ class LatexTableConverter:
         self.table_title = table_title
         self.table_elements = table_elements
         self.table = table
-        self.column_sizer: dict[str, list[int]] = {}
+        self.column_sizer: dict[int, list[int]] = {}
 
     def to_latex(self) -> str:
         table_str = self.get_table_str()
@@ -39,10 +39,11 @@ class LatexTableConverter:
         column_header_str = "\\rowcolor{surfacemuted}"
         column_sizes = self.get_column_sizes()
 
+        col_idx = 0
         for table_element in self.table_elements:
             if isinstance(table_element, te.LinkTableElement):
                 continue
-            column_size = column_sizes.get(table_element.name, 0)
+            column_size = column_sizes.get(col_idx, 0)
             column_def_str += f">{{\\hsize={column_size}\\hsize}}X "
             element_header = HtmlLatexConverter.convert(table_element.name)
             element_header = " ".join(
@@ -51,6 +52,7 @@ class LatexTableConverter:
             column_header_str += (
                 f"\\textcolor{{textmuted}}{{\\textbf{{{element_header}}}}} & "
             )
+            col_idx += 1
         table_start_str += column_def_str.rstrip()
         table_start_str += "}\n\\hline\n"
         table_start_str += column_header_str[:-2] + "\\\\\n"
@@ -66,24 +68,27 @@ class LatexTableConverter:
         table_str = ""
 
         for i, query_object in enumerate(self.table):
+            col_idx = 0
             for table_element in self.table_elements:
                 if isinstance(table_element, te.LinkTableElement):
                     continue
-                self.add_to_column_sizer(table_element, query_object)
+                self.add_to_column_sizer(table_element, query_object, col_idx)
                 table_str += table_element.get_attribute(query_object, "latex")
+                col_idx += 1
             table_str = table_str[:-2] + "\\\\\n\\hline\n"
             if (i + 1) % 25 == 0:
                 table_str += self.get_table_end_str()
                 table_str += self.get_table_start_str()
         return table_str
 
-    def add_to_column_sizer(self, table_element: te.TableElement, query_object: Any):
-        field = table_element.name
+    def add_to_column_sizer(
+        self, table_element: te.TableElement, query_object: Any, col_idx: int
+    ):
         value_len = table_element.get_value_len(query_object)
-        if field not in self.column_sizer:
-            self.column_sizer[field] = [value_len]
+        if col_idx not in self.column_sizer:
+            self.column_sizer[col_idx] = [value_len]
         else:
-            self.column_sizer[field].append(value_len)
+            self.column_sizer[col_idx].append(value_len)
 
     def get_column_sizes(self):
         total_size = 0
@@ -111,7 +116,7 @@ class LatexTableConverter:
         adj_total_size = 0
         for col, val in max_col_size.items():
             min_size = total_size / (5 * cols_len)
-            max_size = total_size / cols_len
+            max_size = 3 * total_size / cols_len
             val = min(max(val, min_size), max_size)
             adj_total_size += val
             max_col_size[col] = val

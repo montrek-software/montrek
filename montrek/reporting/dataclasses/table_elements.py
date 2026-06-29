@@ -62,6 +62,7 @@ class TableElement:
     def format_latex(self, value):
         value_str = str(value)
         value_str = HtmlLatexConverter.convert(value_str)
+        value_str = HtmlLatexConverter.soft_hyphenate(value_str)
         return f" \\color{{textdark}} {value_str} &"
 
     def get_attribute(self, obj: Any, tag: str = "html") -> str | None:
@@ -911,21 +912,43 @@ class CompData:
     hover_text: str
 
 
+def _circle_icon(color: str, start: str, end: str) -> str:
+    return (
+        f"\\tikz[baseline=-0.6ex]"
+        f"{{\\fill[{color}] (0,0) circle (0.45em);"
+        f" \\draw[->,white,line width=1.2pt,xshift=0.07em] {start} -- {end};}}"
+    )
+
+
 class CompValues(Enum):
     EQUAL = CompData(
-        num=0, latex_val="{\\color{brightergreen}$\\rightarrow$}", hover_text="="
+        num=0,
+        latex_val=_circle_icon("brightergreen", "(-0.22em,0)", "(0.15em,0)"),
+        hover_text="=",
     )
     GREATER = CompData(
-        num=1, latex_val="{\\color{brighterorange}$\\nearrow$}", hover_text=">"
+        num=1,
+        latex_val=_circle_icon(
+            "brighterorange", "(-0.17em,-0.17em)", "(0.14em,0.14em)"
+        ),
+        hover_text=">",
     )
     MUCH_GREATER = CompData(
-        num=2, latex_val="{\\color{red}$\\uparrow$}", hover_text=">>"
+        num=2,
+        latex_val=_circle_icon("red", "(0,-0.22em)", "(0,0.15em)"),
+        hover_text=">>",
     )
     LESS = CompData(
-        num=-1, latex_val="{\\color{brighterorange}$\\searrow$}", hover_text="<"
+        num=-1,
+        latex_val=_circle_icon(
+            "brighterorange", "(-0.17em,0.17em)", "(0.14em,-0.14em)"
+        ),
+        hover_text="<",
     )
     MUCH_LESS = CompData(
-        num=-2, latex_val="{\\color{red}$\\downarrow$}", hover_text="<<"
+        num=-2,
+        latex_val=_circle_icon("red", "(0,0.22em)", "(0,-0.15em)"),
+        hover_text="<<",
     )
     NONE = CompData(num=99, latex_val="", hover_text="Unknown")
 
@@ -979,6 +1002,7 @@ class ComparisonTableElement(AttrTableElement):
     field_template: ClassVar[str | None] = "comparison"
     much_comp_limit: ClassVar[float] = 0.5
     serializer_field_class: ClassVar = CompDataField
+    td_classes: ClassVar[TdClassesType] = ["align-middle", "text-start", "ps-1"]
 
     def get_value(self, obj: Any) -> Any:
         value = super().get_value(obj)
@@ -997,6 +1021,9 @@ class ComparisonTableElement(AttrTableElement):
                 CompValues.MUCH_GREATER.value if is_much else CompValues.GREATER.value
             )
         return CompValues.MUCH_LESS.value if is_much else CompValues.LESS.value
+
+    def get_value_len(self, _obj: Any) -> int:
+        return 1
 
     def format_latex(self, value) -> str:
         return value.latex_val + " &"

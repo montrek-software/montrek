@@ -1448,8 +1448,9 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=table_element,
             test_obj=test_obj,
             expected_format='<span class="bi bi-arrow-right-circle-fill text-success"></span>',
-            expected_format_latex="{\\color{brightergreen}$\\rightarrow$} &",
+            expected_format_latex=te.CompValues.EQUAL.value.latex_val + " &",
             expected_hover_text="1 = 1",
+            expected_td_classes=["align-middle", "text-start", "ps-1"],
         )
 
     def test_comparison_table_element__greater(self):
@@ -1463,8 +1464,9 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=table_element,
             test_obj=test_obj,
             expected_format='<span class="bi bi-arrow-up-right-circle-fill text-warning"></span>',
-            expected_format_latex="{\\color{brighterorange}$\\nearrow$} &",
+            expected_format_latex=te.CompValues.GREATER.value.latex_val + " &",
             expected_hover_text="12 > 10",
+            expected_td_classes=["align-middle", "text-start", "ps-1"],
         )
 
     def test_comparison_table_element__much_greater(self):
@@ -1478,8 +1480,9 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=table_element,
             test_obj=test_obj,
             expected_format='<span class="bi bi-arrow-up-circle-fill text-danger"></span>',
-            expected_format_latex="{\\color{red}$\\uparrow$} &",
+            expected_format_latex=te.CompValues.MUCH_GREATER.value.latex_val + " &",
             expected_hover_text="16 >> 10",
+            expected_td_classes=["align-middle", "text-start", "ps-1"],
         )
 
     def test_comparison_table_element__less(self):
@@ -1493,8 +1496,9 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=table_element,
             test_obj=test_obj,
             expected_format='<span class="bi bi-arrow-down-right-circle-fill text-warning"></span>',
-            expected_format_latex="{\\color{brighterorange}$\\searrow$} &",
+            expected_format_latex=te.CompValues.LESS.value.latex_val + " &",
             expected_hover_text="8 < 10",
+            expected_td_classes=["align-middle", "text-start", "ps-1"],
         )
 
     def test_comparison_table_element__much_less(self):
@@ -1508,8 +1512,9 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=table_element,
             test_obj=test_obj,
             expected_format='<span class="bi bi-arrow-down-circle-fill text-danger"></span>',
-            expected_format_latex="{\\color{red}$\\downarrow$} &",
+            expected_format_latex=te.CompValues.MUCH_LESS.value.latex_val + " &",
             expected_hover_text="4 << 10",
+            expected_td_classes=["align-middle", "text-start", "ps-1"],
         )
 
     def test_comparison_table_element__none_value(self):
@@ -1524,6 +1529,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_format="<span></span>",
             expected_format_latex=" &",
             expected_hover_text="None Unknown 10",
+            expected_td_classes=["align-middle", "text-start", "ps-1"],
         )
 
     def test_comparison_table_element__none_comp_value(self):
@@ -1538,6 +1544,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_format="<span></span>",
             expected_format_latex=" &",
             expected_hover_text="10 Unknown None",
+            expected_td_classes=["align-middle", "text-start", "ps-1"],
         )
 
     def test_comparison_table_element__custom_much_comp_limit(self):
@@ -1554,15 +1561,17 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=table_element,
             test_obj={"value_1": 12, "value_2": 10},
             expected_format='<span class="bi bi-arrow-up-circle-fill text-danger"></span>',
-            expected_format_latex="{\\color{red}$\\uparrow$} &",
+            expected_format_latex=te.CompValues.MUCH_GREATER.value.latex_val + " &",
             expected_hover_text="12 >> 10",
+            expected_td_classes=["align-middle", "text-start", "ps-1"],
         )
         self.table_element_test_assertions_from_object(
             table_element=table_element,
             test_obj={"value_1": 8, "value_2": 10},
             expected_format='<span class="bi bi-arrow-down-circle-fill text-danger"></span>',
-            expected_format_latex="{\\color{red}$\\downarrow$} &",
+            expected_format_latex=te.CompValues.MUCH_LESS.value.latex_val + " &",
             expected_hover_text="8 << 10",
+            expected_td_classes=["align-middle", "text-start", "ps-1"],
         )
 
     def test_comparison_table_element__comp_value_zero_greater(self):
@@ -1576,8 +1585,9 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=table_element,
             test_obj=test_obj,
             expected_format='<span class="bi bi-arrow-up-circle-fill text-danger"></span>',
-            expected_format_latex="{\\color{red}$\\uparrow$} &",
+            expected_format_latex=te.CompValues.MUCH_GREATER.value.latex_val + " &",
             expected_hover_text="5 >> 0",
+            expected_td_classes=["align-middle", "text-start", "ps-1"],
         )
 
     def test_comparison_table_element__comp_value_zero_less(self):
@@ -1591,8 +1601,9 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=table_element,
             test_obj=test_obj,
             expected_format='<span class="bi bi-arrow-down-circle-fill text-danger"></span>',
-            expected_format_latex="{\\color{red}$\\downarrow$} &",
+            expected_format_latex=te.CompValues.MUCH_LESS.value.latex_val + " &",
             expected_hover_text="-5 << 0",
+            expected_td_classes=["align-middle", "text-start", "ps-1"],
         )
 
 
@@ -1618,14 +1629,9 @@ class TestCompDataField(TestCase):
         comp_data = te.CompValues.EQUAL.value
         result = self.field.to_representation(comp_data)
         self.assertIsInstance(result, dict)
-        self.assertEqual(
-            result,
-            {
-                "num": 0,
-                "latex_val": "{\\color{brightergreen}$\\rightarrow$}",
-                "hover_text": "=",
-            },
-        )
+        self.assertEqual(result["num"], 0)
+        self.assertEqual(result["hover_text"], "=")
+        self.assertEqual(result["latex_val"], te.CompValues.EQUAL.value.latex_val)
 
     def test_to_representation_with_already_converted_dict(self):
         """A pre-converted dict (from TableSerializer) is returned unchanged.

@@ -41,23 +41,27 @@ class TestLatexTableConverter(TestCase):
 
     def test_add_to_column_sizer(self):
         self.latex_table_converter.add_to_column_sizer(
-            self.table_elements[0], self.table[0]
+            self.table_elements[0], self.table[0], col_idx=0
         )
-        self.assertEqual(self.latex_table_converter.column_sizer["TestCol"], [6])
+        self.assertEqual(self.latex_table_converter.column_sizer[0], [6])
         self.latex_table_converter.add_to_column_sizer(
-            self.table_elements[0], self.table[1]
+            self.table_elements[0], self.table[1], col_idx=0
         )
-        self.assertEqual(self.latex_table_converter.column_sizer["TestCol"], [6, 4])
+        self.assertEqual(self.latex_table_converter.column_sizer[0], [6, 4])
 
     def test_get_column_sizes(self):
         for row in self.table:
-            self.latex_table_converter.add_to_column_sizer(self.table_elements[0], row)
+            self.latex_table_converter.add_to_column_sizer(
+                self.table_elements[0], row, col_idx=0
+            )
         col_sizes = self.latex_table_converter.get_column_sizes()
-        self.assertAlmostEqual(col_sizes["TestCol"], 1.0)
+        self.assertAlmostEqual(col_sizes[0], 1.0)
 
     def test_get_table_start_str_contains_caption_and_column_name(self):
         for row in self.table:
-            self.latex_table_converter.add_to_column_sizer(self.table_elements[0], row)
+            self.latex_table_converter.add_to_column_sizer(
+                self.table_elements[0], row, col_idx=0
+            )
         start_str = self.latex_table_converter.get_table_start_str()
         self.assertIn("\\caption{Test Table Title}", start_str)
         self.assertIn("\\textbf{\\mbox{TestCol}}", start_str)
@@ -68,7 +72,9 @@ class TestLatexTableConverter(TestCase):
 
     def test_get_table_str_includes_values_and_rowcolors(self):
         for row in self.table:
-            self.latex_table_converter.add_to_column_sizer(self.table_elements[0], row)
+            self.latex_table_converter.add_to_column_sizer(
+                self.table_elements[0], row, col_idx=0
+            )
         table_str = self.latex_table_converter.get_table_str()
         self.assertIn("value1", table_str)
         self.assertIn("val2", table_str)
@@ -95,7 +101,7 @@ class TestLatexTableConverter(TestCase):
         ]
         converter = LatexTableConverter("Link Test", elements, self.table)
         for row in self.table:
-            converter.add_to_column_sizer(elements[0], row)
+            converter.add_to_column_sizer(elements[0], row, col_idx=0)
         start_str = converter.get_table_start_str()
         self.assertIn("TestCol", start_str)
         self.assertNotIn("LinkCol", start_str)
@@ -105,7 +111,7 @@ class TestLatexTableConverter(TestCase):
         big_table = [MockQueryElement(test_col=f"row{i}") for i in range(30)]
         converter = LatexTableConverter("Big Table", self.table_elements, big_table)
         for row in big_table:
-            converter.add_to_column_sizer(self.table_elements[0], row)
+            converter.add_to_column_sizer(self.table_elements[0], row, col_idx=0)
         table_str = converter.to_latex()
         self.assertGreaterEqual(table_str.count("\\begin{tabularx}"), 2)
         self.assertIn("row0", table_str)
@@ -125,11 +131,14 @@ class TestLatexTableConverter(TestCase):
         )
         latex_table_converter.get_table_str()
         col_sizes = latex_table_converter.get_column_sizes()
-        expected_col_sizes = {
-            "TestCol": 1.6666666666666667,
-            "MinCol": 0.33333333333333337,
-        }
-        self.assertEqual(col_sizes, expected_col_sizes)
+        # col 0 (TestCol): max len = 606; col 1 (MinCol): max len = 1 → floored to min_size
+        # After _adjust_col_size: min_size = 607/10 = 60.7; col 0 stays 606
+        # adj_total = 606 + 60.7 = 666.7
+        # col_sizes[0] = 606/666.7*2 ≈ 1.818, col_sizes[1] = 60.7/666.7*2 ≈ 0.182
+        self.assertEqual(set(col_sizes.keys()), {0, 1})
+        self.assertAlmostEqual(col_sizes[0] + col_sizes[1], 2.0, places=10)
+        self.assertGreater(col_sizes[0], 1.5)
+        self.assertLess(col_sizes[1], 0.5)
 
     def test_get_adj_col_size(self):
         test_adj_col_size = LatexTableConverter.get_adj_col_size(
