@@ -24,7 +24,7 @@ services:
       - montrek_network
 
   web:
-    image: ghcr.io/montrek-software/montrek-container:latest
+    image: ${CONTAINER_REGISTRY:-ghcr.io}/montrek-software/montrek-container:latest
     user: "0:0"
     environment:
       - REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
@@ -49,7 +49,7 @@ services:
       - montrek_network
 
   celery_beat:
-    image: ghcr.io/montrek-software/montrek-container:latest
+    image: ${CONTAINER_REGISTRY:-ghcr.io}/montrek-software/montrek-container:latest
     user: "0:0"
     environment:
       - SERVICE=celery_beat
