@@ -253,7 +253,7 @@ class TestReportGridLayoutToPdfHtml(TestCase):
         grid.to_latex()
         self.assertAlmostEqual(element.received_latex_font_scale, 3.6)
 
-    def test_latex_font_scale_is_one_for_single_column_grid(self):
+    def test_latex_font_scale_is_1_2_for_single_column_grid(self):
         element = _FontScaleAwareElement()
         grid = ReportGridLayout(1, 1)
         grid.add_report_grid_element(element, 0, 0)
