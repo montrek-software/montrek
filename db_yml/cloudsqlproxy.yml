@@ -3,6 +3,7 @@
 services:
   db:
     image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.1
+    restart: "unless-stopped"
     networks:
       - montrek_network
     volumes:

@@ -11,5 +11,6 @@ services:
       - "${DB_PORT}:${DB_PORT}"
     volumes:
       - db_data:/var/lib/mysql
+    restart: "unless-stopped"
     networks:
       - montrek_network
