@@ -7,5 +7,6 @@ services:
         "-c",
         "echo 'Dummy DB service — using External DB instead'; sleep infinity",
       ]
+    restart: "unless-stopped"
     networks:
       - montrek_network

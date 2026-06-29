@@ -19,7 +19,7 @@ services:
       - ENABLE_KEYCLOAK=${ENABLE_KEYCLOAK}
       - KEYCLOAK_PORT=${KEYCLOAK_PORT}
       - FLOWER_PORT=${FLOWER_PORT}
-    restart: "on-failure"
+    restart: "unless-stopped"
     networks:
       - montrek_network
 
@@ -44,6 +44,7 @@ services:
     depends_on:
       - db
       - redis
+    restart: "unless-stopped"
     networks:
       - montrek_network
 
@@ -65,11 +66,13 @@ services:
       - parallel_worker
       - sequential_worker
       - fast_worker
+    restart: "unless-stopped"
     networks:
       - montrek_network
 
   redis:
     image: redis:7-alpine
+    restart: "unless-stopped"
     networks:
       - montrek_network
 
@@ -86,6 +89,7 @@ services:
       - sequential_worker
       - parallel_worker
       - fast_worker
+    restart: "unless-stopped"
     networks:
       - montrek_network
 
@@ -97,6 +101,7 @@ services:
       POSTGRES_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
     volumes:
       - keycloak_db_data:/var/lib/postgresql/data
+    restart: "unless-stopped"
     networks:
       - montrek_network
     profiles:
@@ -127,6 +132,7 @@ services:
     entrypoint: ["/bin/sh", "/usr/local/bin/init-realm.sh"]
     depends_on:
       - keycloak-db
+    restart: "unless-stopped"
     networks:
       - montrek_network
     profiles:
