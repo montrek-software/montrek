@@ -6,6 +6,8 @@ from reporting.core.reporting_text import ContextTypes, ReportingElement
 
 from reporting.managers.montrek_report_manager import ReportElementProtocol
 
+LATEX_FONT_SCALE_MULTIPLIER = 1.2
+
 
 def _element_to_pdf_html(element, font_scale: float) -> str:
     """Call to_pdf_html(), passing font_scale only when the element supports it."""
@@ -21,7 +23,7 @@ def _element_to_latex(element, font_scale: float) -> str:
     """Call to_latex(), passing font_scale only when the element supports it."""
     params = inspect.signature(element.to_latex).parameters
     if "font_scale" in params:
-        return element.to_latex(font_scale=font_scale * 1.2)
+        return element.to_latex(font_scale=font_scale * LATEX_FONT_SCALE_MULTIPLIER)
     return element.to_latex()
 
 
