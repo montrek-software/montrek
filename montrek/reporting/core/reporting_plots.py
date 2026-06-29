@@ -62,17 +62,24 @@ class ReportingPlotBase(Generic[TData]):
             f'<img src="data:image/png;base64,{b64}" style="max-width:100%;height:auto;">'
         )
 
-    def to_latex(self) -> str:
-        # Generate a deterministic filename based on the plot data
-        plot_json = self.figure.to_json()
-        hash_digest = hashlib.sha256(plot_json.encode("utf-8")).hexdigest()[:16]
-        filename = f"{hash_digest}.png"
-        image_path = settings.WORKBENCH_PATH / filename
-        # Ensure the directory exists
-        settings.WORKBENCH_PATH.mkdir(parents=True, exist_ok=True)
-        # Write the image if it does not already exist (scale=2 → print-ready 300 DPI)
-        if not image_path.exists():
-            self.figure.write_image(str(image_path), width=1200, height=600, scale=2)
+    def to_latex(self, font_scale: float = 1.0) -> str:
+        original_size = self.figure.layout.font.size or 13
+        if font_scale != 1.0:
+            self.figure.update_layout(font={"size": original_size * font_scale})
+        try:
+            # Hash is computed after scaling so different font_scale values get separate cache files.
+            plot_json = self.figure.to_json()
+            hash_digest = hashlib.sha256(plot_json.encode("utf-8")).hexdigest()[:16]
+            filename = f"{hash_digest}.png"
+            image_path = settings.WORKBENCH_PATH / filename
+            settings.WORKBENCH_PATH.mkdir(parents=True, exist_ok=True)
+            if not image_path.exists():
+                self.figure.write_image(
+                    str(image_path), width=1200, height=600, scale=2
+                )
+        finally:
+            if font_scale != 1.0:
+                self.figure.update_layout(font={"size": original_size})
 
         plot_title = getattr(self.figure.layout, "title", None)
         title_text = getattr(plot_title, "text", None) if plot_title else None

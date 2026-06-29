@@ -17,6 +17,14 @@ def _element_to_pdf_html(element, font_scale: float) -> str:
     return element.to_pdf_html()
 
 
+def _element_to_latex(element, font_scale: float) -> str:
+    """Call to_latex(), passing font_scale only when the element supports it."""
+    params = inspect.signature(element.to_latex).parameters
+    if "font_scale" in params:
+        return element.to_latex(font_scale=font_scale)
+    return element.to_latex()
+
+
 class ReportGridElements:
     def __init__(self, no_of_rows: int, no_of_cols: int):
         self.report_grid_elements_container = []
@@ -101,6 +109,7 @@ class ReportGridLayout(ReportingElement):
         )
 
     def to_latex(self):
+        font_scale = float(self.report_grid_elements.no_of_cols)
         col_str = self._get_latex_column_definition()
         latex_str = "\n\n" if self.is_nested else "\n\n\\begin{table}[H]"
 
@@ -109,7 +118,7 @@ class ReportGridLayout(ReportingElement):
             latex_str += "\n"
             for element in row:
                 latex_str += f"\\begin{{minipage}}[t]{{{self.report_grid_elements.width}\\textwidth}}\n"
-                latex_str += f"{element.to_latex()} "
+                latex_str += f"{_element_to_latex(element, font_scale)} "
                 latex_str += "\\end{minipage} &\n"
             latex_str = latex_str[:-3] + " \\\\\n"
         latex_str += "\n\\end{tabular}"

@@ -367,3 +367,50 @@ class TestReportingPlotPdfHtml(TestCase):
         with mock.patch.object(go.Figure, "to_image", return_value=fake_png):
             plot.to_pdf_html(font_scale=1.0)
         self.assertEqual(plot.figure.layout.font.size, original_size)
+
+
+class TestReportingPlotLatexFontScale(TestCase):
+    def _make_plot(self) -> ReportingPlot:
+        test_df = pd.DataFrame({"Category": ["A", "B"], "Value": [10, 20]})
+        reporting_data = ReportingData(
+            data_df=test_df,
+            x_axis_column="Category",
+            y_axis_columns=["Value"],
+            plot_types=[ReportingPlotType.BAR],
+            title="LaTeX Font Scale Test",
+        )
+        plot = ReportingPlot()
+        plot.generate(reporting_data)
+        return plot
+
+    @mock_plotly_image_write_disabled()
+    def test_latex_font_scale_restores_original_size(self, mock_write_image):
+        plot = self._make_plot()
+        original_size = plot.figure.layout.font.size or 13
+        plot.to_latex(font_scale=2.0)
+        self.assertEqual(plot.figure.layout.font.size, original_size)
+
+    @mock_plotly_image_write_disabled()
+    def test_latex_font_scale_one_does_not_mutate_layout(self, mock_write_image):
+        plot = self._make_plot()
+        original_size = plot.figure.layout.font.size or 13
+        plot.to_latex(font_scale=1.0)
+        self.assertEqual(plot.figure.layout.font.size, original_size)
+
+    @mock_plotly_image_write_disabled(exists=False)
+    def test_latex_font_scale_produces_different_hash_per_scale(self, mock_write_image):
+        plot = self._make_plot()
+        plot.to_latex(font_scale=1.0)
+        call_path_1 = mock_write_image.call_args[0][0]
+        plot.to_latex(font_scale=2.0)
+        call_path_2 = mock_write_image.call_args[0][0]
+        self.assertNotEqual(call_path_1, call_path_2)
+
+    @mock_plotly_image_write_disabled(exists=False)
+    def test_latex_font_scale_restores_on_write_error(self, mock_write_image):
+        mock_write_image.side_effect = RuntimeError("disk full")
+        plot = self._make_plot()
+        original_size = plot.figure.layout.font.size or 13
+        with self.assertRaises(RuntimeError):
+            plot.to_latex(font_scale=2.0)
+        self.assertEqual(plot.figure.layout.font.size, original_size)
