@@ -130,15 +130,29 @@ class TestLatexTableConverter(TestCase):
             "Test Table Title", table_elements, table
         )
         latex_table_converter.get_table_str()
+        # col 0 (TestCol): max len = 606 (data dominates over header seed of 7)
+        # col 1 (MinCol): max len = 6 (header "MinCol" dominates over data "v"=1) → floored to min_size
+        # After _adjust_col_size: total=612, min_size = 612/10 = 61.2; col 0 stays 606
+        # adj_total = 606 + 61.2 = 667.2
+        # col_sizes[0] = 606/667.2*2 ≈ 1.817, col_sizes[1] = 61.2/667.2*2 ≈ 0.183
         col_sizes = latex_table_converter.get_column_sizes()
-        # col 0 (TestCol): max len = 606; col 1 (MinCol): max len = 1 → floored to min_size
-        # After _adjust_col_size: min_size = 607/10 = 60.7; col 0 stays 606
-        # adj_total = 606 + 60.7 = 666.7
-        # col_sizes[0] = 606/666.7*2 ≈ 1.818, col_sizes[1] = 60.7/666.7*2 ≈ 0.182
         self.assertEqual(set(col_sizes.keys()), {0, 1})
         self.assertAlmostEqual(col_sizes[0] + col_sizes[1], 2.0, places=10)
         self.assertGreater(col_sizes[0], 1.5)
         self.assertLess(col_sizes[1], 0.5)
+
+    def test_header_length_sets_column_size_floor(self):
+        elements = [
+            DummyTableElement(name="LongHeaderName", attr="test_col"),
+            DummyTableElement(name="X", attr="other_col"),
+        ]
+        table = [MockQueryElement(test_col="a", other_col="b")]
+        converter = LatexTableConverter("T", elements, table)
+        converter.get_table_str()
+        # "LongHeaderName" (14 chars) > data "a" (1 char) — header must set the floor
+        self.assertEqual(max(converter.column_sizer[0]), len("LongHeaderName"))
+        # "X" (1 char) < data "b" (1 char) — equal; seed and data both contribute
+        self.assertGreaterEqual(max(converter.column_sizer[1]), 1)
 
     def test_get_adj_col_size(self):
         test_adj_col_size = LatexTableConverter.get_adj_col_size(
