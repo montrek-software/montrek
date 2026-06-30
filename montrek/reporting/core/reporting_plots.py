@@ -81,17 +81,10 @@ class ReportingPlotBase(Generic[TData]):
             if font_scale != 1.0:
                 self.figure.update_layout(font={"size": original_size})
 
-        plot_title = getattr(self.figure.layout, "title", None)
-        title_text = getattr(plot_title, "text", None) if plot_title else None
-
         latex_str = "\\begin{figure}[H]\n\\centering\n"
         latex_str += (
             f"\\includegraphics[width={self.width}\\linewidth]{{{image_path}}}\n"
         )
-        if title_text:
-            from reporting.core.text_converter import HtmlLatexConverter
-
-            latex_str += f"\\caption*{{{HtmlLatexConverter.convert(title_text)}}}\n"
         latex_str += "\\end{figure}"
 
         return latex_str
