@@ -17,6 +17,8 @@ class LatexTableConverter:
         self.table_title = table_title
         self.table_elements = table_elements
         self.table = table
+        if rows_per_page < 1:
+            raise ValueError("rows_per_page must be >= 1")
         self.rows_per_page = rows_per_page
         self.column_sizer: dict[int, list[int]] = {}
 
