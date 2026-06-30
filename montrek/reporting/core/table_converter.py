@@ -66,6 +66,7 @@ class LatexTableConverter:
 
     def get_table_str(self) -> str:
         table_str = ""
+        self._seed_column_sizer_from_headers()
 
         for i, query_object in enumerate(self.table):
             col_idx = 0
@@ -80,6 +81,14 @@ class LatexTableConverter:
                 table_str += self.get_table_end_str()
                 table_str += self.get_table_start_str()
         return table_str
+
+    def _seed_column_sizer_from_headers(self) -> None:
+        col_idx = 0
+        for table_element in self.table_elements:
+            if isinstance(table_element, te.LinkTableElement):
+                continue
+            self.column_sizer[col_idx] = [len(str(table_element.name))]
+            col_idx += 1
 
     def add_to_column_sizer(
         self, table_element: te.TableElement, query_object: Any, col_idx: int

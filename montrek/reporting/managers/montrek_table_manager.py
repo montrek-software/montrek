@@ -340,6 +340,7 @@ class MontrekTablePaginator:
 
 class MontrekTableManager(MontrekTableManagerABC):
     is_paginated = True
+    table_title = ""
 
     def __init__(self, session_data: SessionDataType | None = None):
         super().__init__(session_data)

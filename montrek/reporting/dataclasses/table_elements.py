@@ -634,6 +634,12 @@ class PercentTableElement(NumberTableElement):
     def _format_value(self, value) -> str:
         return self.shortener.shorten(value * 100, 2) + "%"
 
+    def get_value_len(self, obj: Any) -> int:
+        value = self.get_value(obj)
+        if not isinstance(value, int | float | Decimal):
+            return super().get_value_len(obj)
+        return len(self._format_value(value))
+
     def format_latex(self, value) -> str:
         value = super().format_latex(value)
         return value.replace("%", "\\%")
@@ -755,6 +761,12 @@ class MoneyTableElement(NumberTableElement):
 
     def _format_value(self, value) -> str:
         return self.shortener.shorten(value, 2)
+
+    def get_value_len(self, obj: Any) -> int:
+        value = self.get_value(obj)
+        if not isinstance(value, int | float | Decimal):
+            return super().get_value_len(obj)
+        return len(self._format_value(value)) + len(self.ccy_symbol)
 
     def format_latex(self, value):
         formatted_value = super().format_latex(value)
