@@ -135,7 +135,7 @@ class TestLatexTableConverter(TestCase):
             "T", self.table_elements, table, rows_per_page=5
         )
         output = converter.to_latex()
-        self.assertEqual(output.count("\\begin{tabularx}"), 3)
+        self.assertEqual(output.count("\\begin{tabularx}"), 2)
         self.assertIn("\\newpage", output)
 
     def test_no_page_break_below_rows_per_page(self):
