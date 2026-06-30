@@ -107,7 +107,7 @@ class TestLatexTableConverter(TestCase):
         self.assertNotIn("LinkCol", start_str)
 
     def test_multiple_page_table_output(self):
-        # create 30 rows to trigger page break logic
+        # create 30 rows to trigger page break logic (default rows_per_page=25 → 1 break)
         big_table = [MockQueryElement(test_col=f"row{i}") for i in range(30)]
         converter = LatexTableConverter("Big Table", self.table_elements, big_table)
         for row in big_table:
@@ -116,6 +116,37 @@ class TestLatexTableConverter(TestCase):
         self.assertGreaterEqual(table_str.count("\\begin{tabularx}"), 2)
         self.assertIn("row0", table_str)
         self.assertIn("row29", table_str)
+
+    def test_default_rows_per_page(self):
+        converter = LatexTableConverter("T", self.table_elements, self.table)
+        self.assertEqual(converter.rows_per_page, 25)
+
+    def test_custom_rows_per_page_is_stored(self):
+        converter = LatexTableConverter(
+            "T", self.table_elements, self.table, rows_per_page=5
+        )
+        self.assertEqual(converter.rows_per_page, 5)
+
+    def test_page_break_inserted_at_rows_per_page_boundary(self):
+        # 10 rows with rows_per_page=5: breaks after row 5 and row 10
+        # → 2 extra \begin{tabularx} from breaks + 1 outer = 3 total
+        table = [MockQueryElement(test_col=f"row{i}") for i in range(10)]
+        converter = LatexTableConverter(
+            "T", self.table_elements, table, rows_per_page=5
+        )
+        output = converter.to_latex()
+        self.assertEqual(output.count("\\begin{tabularx}"), 3)
+        self.assertIn("\\newpage", output)
+
+    def test_no_page_break_below_rows_per_page(self):
+        # 4 rows with rows_per_page=5: no break → 1 outer \begin{tabularx} only
+        table = [MockQueryElement(test_col=f"row{i}") for i in range(4)]
+        converter = LatexTableConverter(
+            "T", self.table_elements, table, rows_per_page=5
+        )
+        output = converter.to_latex()
+        self.assertEqual(output.count("\\begin{tabularx}"), 1)
+        self.assertNotIn("\\newpage", output)
 
     def test_min_col_size(self):
         table_elements = [

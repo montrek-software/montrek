@@ -68,6 +68,28 @@ class TestMontrekTableManager(TestCase):
         self.assertTrue(test_latex.startswith("\n\\begin{table}"))
         self.assertTrue(test_latex.endswith("\\end{table}\n\n"))
 
+    def test_latex_rows_per_page_default(self):
+        self.assertEqual(MockMontrekTableManager().latex_rows_per_page, 25)
+
+    def test_latex_rows_per_page_custom_controls_page_breaks(self):
+        # MockMontrekTableManager has 3 rows; rows_per_page=2 → break after row 2
+        # → 1 extra \begin{tabularx} from the break + 1 outer = 2 total
+        class TwoRowPageManager(MockMontrekTableManager):
+            latex_rows_per_page = 2
+
+        output = TwoRowPageManager().to_latex()
+        self.assertEqual(output.count("\\begin{tabularx}"), 2)
+        self.assertIn("\\newpage", output)
+
+    def test_latex_rows_per_page_no_break_when_rows_fit(self):
+        # MockMontrekTableManager has 3 rows; rows_per_page=10 → no break
+        class LargePageManager(MockMontrekTableManager):
+            latex_rows_per_page = 10
+
+        output = LargePageManager().to_latex()
+        self.assertEqual(output.count("\\begin{tabularx}"), 1)
+        self.assertNotIn("\\newpage", output)
+
     def test_to_json(self):
         test_json = MockMontrekTableManager().to_json()
         expected_json = [
