@@ -445,6 +445,24 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_td_classes=["text-start"],
         )
 
+    def test_euro_get_value_len(self):
+        element = te.EuroTableElement(name="test", attr="test_value")
+        # Large value: formatted "1,292,100.00€" = 13 chars
+        self.assertEqual(element.get_value_len({"test_value": 1292100.0}), 13)
+        # Small value: formatted "1,234.57€" = 9 chars
+        self.assertEqual(element.get_value_len({"test_value": 1234.57}), 9)
+        # Non-numeric falls back to str() length
+        self.assertEqual(element.get_value_len({"test_value": "bla"}), 3)
+
+    def test_percent_get_value_len(self):
+        element = te.PercentTableElement(name="test", attr="test_value")
+        # 100% edge case: formatted "100.00%" = 7 chars (previously returned 3 from str(1.0))
+        self.assertEqual(element.get_value_len({"test_value": 1.0}), 7)
+        # Typical value: formatted "40.22%" = 6 chars
+        self.assertEqual(element.get_value_len({"test_value": 0.4022}), 6)
+        # Non-numeric falls back to str() length
+        self.assertEqual(element.get_value_len({"test_value": "bla"}), 3)
+
     def test_date_table_elements(self):
         test_element = te.DateTableElement(name="test", attr="test_value")
         self.table_element_test_assertions_from_value(
