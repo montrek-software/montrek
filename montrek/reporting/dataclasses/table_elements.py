@@ -199,8 +199,8 @@ class AttrTableElement(TableElement):
     def _get_value_from_field(self, obj: Any, attr: str) -> Any:
         try:
             field = obj._meta.get_field(attr)
-        except FieldDoesNotExist:
-            # Not a model field → just return the attribute (or the name if missing)
+        except (FieldDoesNotExist, AttributeError):
+            # Not a model field, or obj has no _meta (e.g. SimpleNamespace)
             return getattr(obj, attr, attr)
         value = getattr(obj, attr, attr)
 

@@ -12,10 +12,14 @@ class LatexTableConverter:
         table_title: str,
         table_elements: TableElementsType,
         table: QuerySet | dict,
+        rows_per_page: int = 25,
     ) -> None:
         self.table_title = table_title
         self.table_elements = table_elements
         self.table = table
+        if rows_per_page < 1:
+            raise ValueError("rows_per_page must be >= 1")
+        self.rows_per_page = rows_per_page
         self.column_sizer: dict[int, list[int]] = {}
 
     def to_latex(self) -> str:
@@ -67,6 +71,7 @@ class LatexTableConverter:
     def get_table_str(self) -> str:
         table_str = ""
         self._seed_column_sizer_from_headers()
+        table_len = len(self.table)
 
         for i, query_object in enumerate(self.table):
             col_idx = 0
@@ -77,8 +82,9 @@ class LatexTableConverter:
                 table_str += table_element.get_attribute(query_object, "latex")
                 col_idx += 1
             table_str = table_str[:-2] + "\\\\\n\\hline\n"
-            if (i + 1) % 25 == 0:
+            if (i + 1) % self.rows_per_page == 0 and (i + 1) != table_len:
                 table_str += self.get_table_end_str()
+                table_str += "\\newpage\n"
                 table_str += self.get_table_start_str()
         return table_str
 

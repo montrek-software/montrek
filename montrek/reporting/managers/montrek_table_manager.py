@@ -45,6 +45,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
     draft = False
     is_compact_format = False
     is_large: bool = False
+    latex_rows_per_page: int = 25
     excel_formatter_class: type[MontrekExcelFormatter] = MontrekExcelFormatter
 
     def __init__(self, session_data: SessionDataType | None = None):
@@ -175,7 +176,10 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
 
     def to_latex(self):
         return LatexTableConverter(
-            self.table_title, self.table_elements, self.get_full_table()
+            self.table_title,
+            self.table_elements,
+            self.get_full_table(),
+            rows_per_page=self.latex_rows_per_page,
         ).to_latex()
 
     def to_excel(
