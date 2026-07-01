@@ -1,5 +1,9 @@
+from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
+
+from baseclasses.fields import HubForeignKey
+from baseclasses.models import HubValueDate, MontrekHubABC, MontrekSatelliteABC
 
 
 class MontrekUserManager(BaseUserManager):
@@ -33,3 +37,26 @@ class MontrekUser(AbstractUser):
 
     def __str__(self):
         return self.email
+
+
+class UserAssignmentHub(MontrekHubABC):
+    def __str__(self):
+        sat = self.userassignmentsatellite_set.order_by("-state_date_end").first()
+        if sat and sat.user_id:
+            return str(sat.user)
+        return super().__str__()
+
+
+class UserAssignmentHubValueDate(HubValueDate):
+    hub = HubForeignKey(UserAssignmentHub)
+
+
+class UserAssignmentSatellite(MontrekSatelliteABC):
+    hub_entity = models.ForeignKey(UserAssignmentHub, on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="user_assignment_satellites",
+    )
+
+    identifier_fields = ["user_id"]
