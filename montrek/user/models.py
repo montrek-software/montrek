@@ -41,7 +41,11 @@ class MontrekUser(AbstractUser):
 
 class UserAssignmentHub(MontrekHubABC):
     def __str__(self):
-        sat = self.userassignmentsatellite_set.order_by("-state_date_end").first()
+        sat = (
+            self.userassignmentsatellite_set.select_related("user")
+            .order_by("-state_date_end")
+            .first()
+        )
         if sat and sat.user_id:
             return str(sat.user)
         return super().__str__()
@@ -60,3 +64,16 @@ class UserAssignmentSatellite(MontrekSatelliteABC):
     )
 
     identifier_fields = ["user_id"]
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["hash_identifier"]),
+            models.Index(fields=["hash_value"]),
+            models.Index(fields=["hub_entity"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user"],
+                name="unique_user_assignment_satellite_per_user",
+            )
+        ]

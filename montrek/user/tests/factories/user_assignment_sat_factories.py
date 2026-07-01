@@ -9,6 +9,7 @@ from user.tests.factories.user_assignment_hub_factories import UserAssignmentHub
 class UserAssignmentSatelliteFactory(MontrekSatelliteFactory):
     class Meta:
         model = UserAssignmentSatellite
+        django_get_or_create = ("user",)
 
     hub_entity = factory.SubFactory(UserAssignmentHubFactory)
     user = factory.SubFactory(MontrekUserFactory)

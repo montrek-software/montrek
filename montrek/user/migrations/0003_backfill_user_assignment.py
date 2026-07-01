@@ -10,13 +10,15 @@ def backfill_user_assignments(apps, schema_editor):
     UserAssignmentSatellite = apps.get_model("user", "UserAssignmentSatellite")
     ValueDateList = apps.get_model("baseclasses", "ValueDateList")
 
-    value_date_list, _ = ValueDateList.objects.get_or_create(value_date=None)
+    value_date_list = ValueDateList.objects.filter(value_date=None).first()
+    if value_date_list is None:
+        value_date_list = ValueDateList.objects.create(value_date=None)
 
-    already_registered = set(
-        UserAssignmentSatellite.objects.values_list("user_id", flat=True)
+    already_registered = UserAssignmentSatellite.objects.values_list(
+        "user_id", flat=True
     )
 
-    for user in User.objects.exclude(pk__in=already_registered):
+    for user in User.objects.exclude(pk__in=already_registered).iterator():
         hub = UserAssignmentHub.objects.create()
         UserAssignmentHubValueDate.objects.create(
             hub=hub, value_date_list=value_date_list
