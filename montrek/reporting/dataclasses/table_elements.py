@@ -487,15 +487,23 @@ class ListTableElement(AttrTableElement):
     attr: str
     in_separator: str = ","
     out_separator: str = mark_safe("<br>")
+    parse_as_json: bool = True
     td_classes: ClassVar[TdClassesType] = ["text-start"]
     field_template: ClassVar[str | None] = "list"
 
     def get_field_context_data(self, value: Any, _obj: Any) -> dict[str, Any]:
-        values = value.split(self.in_separator)
+        values = self._parse_values(value)
         return {
-            "values": [v.strip() for v in values],
+            "values": [str(v).strip() for v in values],
             "out_separator": self.out_separator,
         }
+
+    def _parse_values(self, value: Any) -> list[Any]:
+        if not self.parse_as_json:
+            return value.split(self.in_separator)
+        if isinstance(value, list):
+            return value
+        return json.loads(value)
 
 
 @dataclass

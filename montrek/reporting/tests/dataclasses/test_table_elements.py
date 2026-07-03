@@ -232,7 +232,49 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         )
 
     def test_list_table_element(self):
+        # Default behaviour parses the attribute value as JSON.
         test_element = te.ListTableElement(name="test", attr="test_value")
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value='["test1", "test2"]',
+            expected_format="test1<br>    test2",
+            expected_format_latex=' \\color{textdark} ["test1", "test2"] &',
+        )
+
+        # A custom out_separator is respected in JSON mode too.
+        test_element = te.ListTableElement(
+            name="test", attr="test_value", out_separator="|"
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value='["test1,2", "test2", "test4"]',
+            expected_format="test1,2|    test2|    test4",
+            expected_format_latex=' \\color{textdark} ["test1,2", "test2", "test4"] &',
+        )
+
+        # Non-string JSON entries are stringified.
+        test_element = te.ListTableElement(name="test", attr="test_value")
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="[1, 2, 3]",
+            expected_format="1<br>    2<br>    3",
+            expected_format_latex=" \\color{textdark} [1, 2, 3] &",
+        )
+
+        # A value that is already a Python list (e.g. pre-parsed JSON) is accepted directly.
+        test_element = te.ListTableElement(name="test", attr="test_value")
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=["test1", "test2"],
+            expected_format="test1<br>    test2",
+            expected_format_latex=" \\color{textdark} ['test1', 'test2'] &",
+        )
+
+    def test_list_table_element_legacy_separator_mode(self):
+        # The legacy comma-separated behaviour is still available via parse_as_json=False.
+        test_element = te.ListTableElement(
+            name="test", attr="test_value", parse_as_json=False
+        )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
             value="test1,test2",
@@ -241,7 +283,11 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         )
 
         test_element = te.ListTableElement(
-            name="test", attr="test_value", in_separator=";", out_separator="|"
+            name="test",
+            attr="test_value",
+            in_separator=";",
+            out_separator="|",
+            parse_as_json=False,
         )
         self.table_element_test_assertions_from_value(
             table_element=test_element,
