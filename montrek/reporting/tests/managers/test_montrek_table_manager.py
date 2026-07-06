@@ -63,6 +63,27 @@ class TestMontrekTableManager(TestCase):
 
         self.assertEqual(normalized, expected)
 
+    def test_render_single_row_has_one_row_with_all_cells(self):
+        manager = MockMontrekTableManager()
+        row_obj = list(manager.get_table())[0]
+        soup = BeautifulSoup(manager.render_single_row(row_obj), "html.parser")
+        rows = soup.find_all("tr")
+        self.assertEqual(len(rows), 1)
+        # One <td> per table element, exactly like a full-table row.
+        self.assertEqual(len(rows[0].find_all("td")), len(manager.table_elements))
+
+    def test_render_single_row_markup_matches_full_table_row(self):
+        manager = MockMontrekTableManager()
+        row_obj = list(manager.get_table())[0]
+        single_tr = BeautifulSoup(
+            manager.render_single_row(row_obj), "html.parser"
+        ).find("tr")
+        full_first_tr = (
+            BeautifulSoup(manager.to_html(), "html.parser").find("tbody").find("tr")
+        )
+        # A swapped-in row is byte-for-byte the same markup as the table's row.
+        self.assertEqual(single_tr.prettify(), full_first_tr.prettify())
+
     def test_to_latex(self):
         test_latex = MockMontrekTableManager().to_latex()
         self.assertTrue(test_latex.startswith("\n\\begin{table}"))

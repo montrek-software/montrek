@@ -41,9 +41,17 @@ class TestToastsTemplate(TestCase):
         self.assertIn("data-bs-delay", html)
         self.assertNotIn('data-bs-autohide="false"', html)
 
-    def test_no_messages_renders_nothing(self):
+    def test_no_messages_renders_empty_container(self):
         html = self.render_toasts()
-        self.assertNotIn("toast-container", html)
+        # The container is always present so it can be targeted by HTMX
+        # out-of-band swaps, but it holds no toasts.
+        self.assertIn('id="mt-toast-container"', html)
+        self.assertNotIn('role="alert"', html)
+
+    def test_container_has_stable_oob_target_id(self):
+        html = self.render_toasts(FakeMessage("info", "Saved"))
+        # Stable id lets an HTMX partial refresh the toasts out-of-band.
+        self.assertIn('id="mt-toast-container"', html)
 
     def test_one_toast_per_message(self):
         html = self.render_toasts(

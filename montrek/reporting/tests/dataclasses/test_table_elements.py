@@ -1670,6 +1670,44 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_td_classes=["align-middle", "text-start", "ps-1"],
         )
 
+    @mock.patch("reporting.dataclasses.table_elements.reverse")
+    def test_htmx_link_table_element_renders_hx_attributes(self, mock_reverse):
+        mock_reverse.return_value = "/do/action/1"
+        element = te.HtmxLinkTableElement(
+            name="", url="do_action", icon="chevron-left", kwargs={"pk": "pk"}
+        )
+        link = element.get_link({"pk": 1})
+        self.assertIn('hx-get="/do/action/1"', link)
+        # Default: swap the row the button lives in.
+        self.assertIn('hx-target="closest tr"', link)
+        self.assertIn('hx-swap="outerHTML"', link)
+        self.assertIn("bi-chevron-left", link)
+        # Plain href kept as a no-JS progressive-enhancement fallback.
+        self.assertIn('href="/do/action/1"', link)
+
+    @mock.patch("reporting.dataclasses.table_elements.reverse")
+    def test_htmx_link_table_element_custom_target_and_swap(self, mock_reverse):
+        mock_reverse.return_value = "/do/action/1"
+        element = te.HtmxLinkTableElement(
+            name="",
+            url="do_action",
+            icon="check",
+            kwargs={"pk": "pk"},
+            hx_target="#summary",
+            hx_swap="innerHTML",
+        )
+        link = element.get_link({"pk": 1})
+        self.assertIn('hx-target="#summary"', link)
+        self.assertIn('hx-swap="innerHTML"', link)
+
+    def test_htmx_link_table_element_without_url_renders_none(self):
+        # No reverse match -> get_url returns "" -> no link (cell shows "-").
+        element = te.HtmxLinkTableElement(
+            name="", url="nonexistent_url_name", icon="x", kwargs={}
+        )
+        self.assertIsNone(element.get_link({}))
+        self.assertEqual(element.get_display_field({}).display_value, "-")
+
 
 class TestCompDataField(TestCase):
     """Tests for CompDataField and its wiring into ComparisonTableElement.
