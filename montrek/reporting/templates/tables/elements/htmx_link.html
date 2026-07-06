@@ -1,0 +1,8 @@
+<a id="id_{{ id_tag }}"
+   href="{{ url }}"
+   hx-get="{{ url }}"
+   hx-swap="{{ hx_swap }}"
+   {% if hx_target %}hx-target="{{ hx_target }}"{% endif %}
+   role="button">
+  <span class="bi bi-{{ icon }}"></span>
+</a>

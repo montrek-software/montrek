@@ -36,11 +36,7 @@
         </thead>
         <tbody>
         {% for row in display_fields %}
-        <tr>
-          {% for display_field in row %}
-            {% include "tables/partials/table_cell.html" with display_field=display_field %}
-          {% endfor %}
-        </tr>
+          {% include "tables/partials/table_row.html" with cells=row %}
         {% endfor %}
         </tbody>
       </table>

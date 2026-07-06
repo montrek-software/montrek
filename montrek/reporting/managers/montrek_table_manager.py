@@ -14,7 +14,7 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.db.models import QuerySet
 from django.http import HttpResponseRedirect
-from django.template.loader import get_template
+from django.template.loader import get_template, render_to_string
 from django.urls import reverse
 from django.utils import timezone
 from django.views.generic.base import HttpResponse
@@ -142,6 +142,19 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
                 "order_descending": self.order_descending,
             }
         )
+
+    def render_single_row(self, query_object) -> str:
+        """Render a single ``<tr>`` using the same markup as the full table.
+
+        Used for HTMX swaps that replace one table row in place (``hx-target``
+        ``closest tr``, ``hx-swap`` ``outerHTML``) without re-rendering (or
+        re-querying) the whole report.
+        """
+        cells = [
+            table_element.get_display_field(query_object)
+            for table_element in self.table_elements
+        ]
+        return render_to_string("tables/partials/table_row.html", {"cells": cells})
 
     def get_all_display_fields(self) -> list[list[DisplayField]]:
         """All rows (unpaginated) for PDF rendering."""

@@ -1,41 +1,6 @@
-{% if messages %}
-  <div class="toast-container position-fixed end-0 p-3 mt-toast-container">
-    {% for message in messages %}
-      <div
-        class="toast mt-toast {% if message.tags == 'error' %}mt-toast-danger{% elif message.tags == 'warning' %}mt-toast-warning{% else %}mt-toast-success{% endif %}"
-        role="alert"
-        aria-live="assertive"
-        aria-atomic="true"
-        {% if message.tags == 'error' or message.tags == 'warning' %}
-          data-bs-autohide="false"
-        {% else %}
-          data-bs-delay="4000"
-        {% endif %}
-      >
-        <div class="toast-body d-flex align-items-center gap-2">
-          {% if message.tags == 'error' %}
-            <i class="bi bi-x-circle-fill"></i>
-          {% elif message.tags == 'warning' %}
-            <i class="bi bi-exclamation-triangle-fill"></i>
-          {% else %}
-            <i class="bi bi-check-circle-fill"></i>
-          {% endif %}
-          <span>{{ message }}</span>
-          <button
-            type="button"
-            class="btn-close ms-auto"
-            data-bs-dismiss="toast"
-            aria-label="Close"
-          ></button>
-        </div>
-      </div>
-    {% endfor %}
-  </div>
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      document.querySelectorAll(".mt-toast").forEach(function (el) {
-        new bootstrap.Toast(el).show();
-      });
-    });
-  </script>
-{% endif %}
+<div
+  id="mt-toast-container"
+  class="toast-container position-fixed end-0 p-3 mt-toast-container"
+>
+  {% include "partials/toast_items.html" %}
+</div>

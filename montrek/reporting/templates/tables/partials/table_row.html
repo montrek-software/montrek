@@ -1,0 +1,5 @@
+<tr>
+  {% for display_field in cells %}
+    {% include "tables/partials/table_cell.html" with display_field=display_field %}
+  {% endfor %}
+</tr>

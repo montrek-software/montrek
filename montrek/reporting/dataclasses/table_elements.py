@@ -373,6 +373,34 @@ class LinkTableElement(BaseLinkTableElement):
 
 
 @dataclass
+class HtmxLinkTableElement(LinkTableElement):
+    """An icon link that triggers its action via HTMX instead of a full-page load.
+
+    By default the response replaces the row the button lives in
+    (``hx-target="closest tr"``, ``hx-swap="outerHTML"``), which lets a view
+    swap a single re-rendered row in place. The plain ``href`` is kept as a
+    progressive-enhancement fallback for when JavaScript/HTMX is unavailable.
+    """
+
+    hx_target: str = field(default="closest tr")
+    hx_swap: str = field(default="outerHTML")
+
+    def get_link(self, obj: Any) -> str | None:
+        url = self.get_url(obj)
+        if not url:
+            return None
+        icon = "pencil" if self.icon == "edit" else self.icon
+        context = {
+            "id_tag": url.replace("/", "_"),
+            "url": url,
+            "icon": icon,
+            "hx_target": self.hx_target,
+            "hx_swap": self.hx_swap,
+        }
+        return render_to_string("tables/elements/htmx_link.html", context)
+
+
+@dataclass
 class LinkTextTableElement(BaseLinkTableElement):
     text: str = field(default="")
     static_kwargs: dict = field(default_factory=dict)
