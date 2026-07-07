@@ -1435,7 +1435,7 @@ class TestDeleteObject(TestCase):
         link.state_date_end = already_closed_date
         link.save()
 
-        HubBRepository({"user_id": self.user.id}).delete(hub_b)
+        HubBRepository(session_data={"user_id": self.user.id}).delete(hub_b)
 
         link.refresh_from_db()
         self.assertEqual(link.state_date_end, already_closed_date)
