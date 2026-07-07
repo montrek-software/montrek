@@ -27,6 +27,7 @@ from montrek_example.repositories.hub_a_repository import (
     HubARepository4,
     HubARepository5,
     HubARepository6,
+    HubARepository7,
     HubATSLinkedRepository,
 )
 from montrek_example.repositories.hub_b_repository import (
@@ -1365,6 +1366,17 @@ class TestDeleteObject(TestCase):
         self.assertEqual(me_models.SatA1.objects.count(), 2)
         self.assertEqual(me_models.HubA.objects.count(), 2)
         self.assertEqual(len(repository.receive()), 1)
+
+    def test_delete_object_with_links(self):
+        sat_d = me_factories.SatD1Factory(field_d1_str="blummsi")
+        sat_a = me_factories.SatA1Factory()
+        sat_b = me_factories.SatB1Factory(link_d=sat_d, link_a=sat_a)
+
+        pre_delete_query = HubARepository7().receive()
+        self.assertEqual(pre_delete_query.first().field_d1_str, "blummsi")
+        HubBRepository({"user_id": self.user.id}).delete(sat_b.hub_entity)
+        pre_delete_query = HubARepository7().receive()
+        self.assertIsNone(pre_delete_query.first().field_d1_str)
 
 
 class TestreceiveLinkedHubIds(TestCase):
