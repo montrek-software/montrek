@@ -248,7 +248,13 @@ class MontrekRepository:
     def _get_link_fields_for_hub(
         self, hub_class: type[MontrekHubABC]
     ) -> list[tuple[type[MontrekLinkABC], list[str]]]:
-        link_fields = []
+        cls = type(self)
+        cache = getattr(cls, "_link_fields_cache", None)
+        if cache is None:
+            cache = cls._link_fields_cache = {}
+        if hub_class in cache:
+            return cache[hub_class]
+        link_fields: list[tuple[type[MontrekLinkABC], list[str]]] = []
         for model in apps.get_models():
             if not issubclass(model, MontrekLinkABC):
                 continue
@@ -259,6 +265,7 @@ class MontrekRepository:
             ]
             if fields:
                 link_fields.append((model, fields))
+        cache[hub_class] = link_fields
         return link_fields
 
     def delete_from_view_model(self, obj: MontrekHubABC):
