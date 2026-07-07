@@ -1383,7 +1383,7 @@ class TestDeleteObject(TestCase):
         hub_d = me_factories.HubDFactory()
         hub_b.link_hub_b_hub_d.add(hub_d)
 
-        HubBRepository({"user_id": self.user.id}).delete(hub_b)
+        HubBRepository(session_data={"user_id": self.user.id}).delete(hub_b)
 
         link = me_models.LinkHubBHubD.objects.get(hub_in=hub_b, hub_out=hub_d)
         self.assertLessEqual(link.state_date_end, timezone.now())
