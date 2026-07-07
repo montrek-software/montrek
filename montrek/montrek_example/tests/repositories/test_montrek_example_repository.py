@@ -1374,7 +1374,7 @@ class TestDeleteObject(TestCase):
 
         pre_delete_query = HubARepository7().receive()
         self.assertEqual(pre_delete_query.first().field_d1_str, "blummsi")
-        HubBRepository({"user_id": self.user.id}).delete(sat_b.hub_entity)
+        HubBRepository(session_data={"user_id": self.user.id}).delete(sat_b.hub_entity)
         pre_delete_query = HubARepository7().receive()
         self.assertIsNone(pre_delete_query.first().field_d1_str)
 
