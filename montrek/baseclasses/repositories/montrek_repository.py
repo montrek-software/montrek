@@ -231,7 +231,8 @@ class MontrekRepository:
         return query
 
     def delete(self, obj: MontrekHubABC):
-        obj.state_date_end = timezone.now()
+        closing_date = timezone.now()
+        obj.state_date_end = closing_date
         obj.save()
         for satellite_class in self.annotator.get_satellite_classes():
             if satellite_class.is_timeseries:
@@ -239,10 +240,10 @@ class MontrekRepository:
             else:
                 filter_kwargs = {"hub_entity": obj}
             satellite_class.objects.filter(**filter_kwargs).update(
-                state_date_end=timezone.now()
+                state_date_end=closing_date
             )
         self.delete_from_view_model(obj)
-        self._delete_links(obj)
+        self._delete_links(obj, closing_date)
 
     def _get_link_fields_for_hub(
         self, hub_class: type[MontrekHubABC]
@@ -263,15 +264,14 @@ class MontrekRepository:
     def delete_from_view_model(self, obj: MontrekHubABC):
         self.view_model_repository.delete_from_view_model(obj)
 
-    def _delete_links(self, obj: MontrekHubABC):
-        now = timezone.now()
+    def _delete_links(self, obj: MontrekHubABC, closing_date: timezone.datetime):
         for link_class, field_names in self._get_link_fields_for_hub(type(obj)):
             link_filter = Q()
             for field_name in field_names:
                 link_filter |= Q(**{field_name: obj})
-            link_class.objects.filter(link_filter, state_date_end__gt=now).update(
-                state_date_end=now
-            )
+            link_class.objects.filter(
+                link_filter, state_date_end__gt=closing_date
+            ).update(state_date_end=closing_date)
 
     def order_fields(self) -> tuple[str, ...]:
         if self._order_fields:
