@@ -1378,6 +1378,68 @@ class TestDeleteObject(TestCase):
         pre_delete_query = HubARepository7().receive()
         self.assertIsNone(pre_delete_query.first().field_d1_str)
 
+    def test_delete_object_closes_link_where_hub_is_hub_in(self):
+        hub_b = me_factories.HubBFactory()
+        hub_d = me_factories.HubDFactory()
+        hub_b.link_hub_b_hub_d.add(hub_d)
+
+        HubBRepository({"user_id": self.user.id}).delete(hub_b)
+
+        link = me_models.LinkHubBHubD.objects.get(hub_in=hub_b, hub_out=hub_d)
+        self.assertLessEqual(link.state_date_end, timezone.now())
+
+    def test_delete_object_closes_link_where_hub_is_hub_out(self):
+        hub_a = me_factories.HubAFactory()
+        hub_b = me_factories.HubBFactory()
+        hub_a.link_hub_a_hub_b.add(hub_b)
+
+        HubBRepository({"user_id": self.user.id}).delete(hub_b)
+
+        link = me_models.LinkHubAHubB.objects.get(hub_in=hub_a, hub_out=hub_b)
+        self.assertLessEqual(link.state_date_end, timezone.now())
+
+    def test_delete_object_closes_all_links_of_same_class(self):
+        hub_b = me_factories.HubBFactory()
+        hub_ds = me_factories.HubDFactory.create_batch(3)
+        for hub_d in hub_ds:
+            hub_b.link_hub_b_hub_d.add(hub_d)
+
+        HubBRepository({"user_id": self.user.id}).delete(hub_b)
+
+        links = me_models.LinkHubBHubD.objects.filter(hub_in=hub_b)
+        self.assertEqual(links.count(), 3)
+        for link in links:
+            self.assertLessEqual(link.state_date_end, timezone.now())
+
+    def test_delete_object_does_not_close_unrelated_links(self):
+        hub_b1 = me_factories.HubBFactory()
+        hub_d1 = me_factories.HubDFactory()
+        hub_b1.link_hub_b_hub_d.add(hub_d1)
+        hub_b2 = me_factories.HubBFactory()
+        hub_d2 = me_factories.HubDFactory()
+        hub_b2.link_hub_b_hub_d.add(hub_d2)
+
+        HubBRepository({"user_id": self.user.id}).delete(hub_b1)
+
+        untouched_link = me_models.LinkHubBHubD.objects.get(
+            hub_in=hub_b2, hub_out=hub_d2
+        )
+        self.assertGreater(untouched_link.state_date_end, timezone.now())
+
+    def test_delete_object_does_not_reopen_already_closed_links(self):
+        hub_b = me_factories.HubBFactory()
+        hub_d = me_factories.HubDFactory()
+        hub_b.link_hub_b_hub_d.add(hub_d)
+        link = me_models.LinkHubBHubD.objects.get(hub_in=hub_b, hub_out=hub_d)
+        already_closed_date = timezone.now() - datetime.timedelta(days=1)
+        link.state_date_end = already_closed_date
+        link.save()
+
+        HubBRepository({"user_id": self.user.id}).delete(hub_b)
+
+        link.refresh_from_db()
+        self.assertEqual(link.state_date_end, already_closed_date)
+
 
 class TestreceiveLinkedHubIds(TestCase):
     def test_get_linked_hub_without_sat(self):
