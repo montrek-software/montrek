@@ -40,9 +40,10 @@ from baseclasses.utils import (
     datetime_to_montrek_time,
     django_field_to_pandas_dtype,
 )
+from django.apps import apps
 from django.core.exceptions import PermissionDenied
 from django.db import models
-from django.db.models import F, QuerySet
+from django.db.models import F, Q, QuerySet
 from django.db.models.fields.related import ManyToManyRel
 from django.utils import timezone
 from django_pandas.io import read_frame
@@ -241,9 +242,36 @@ class MontrekRepository:
                 state_date_end=timezone.now()
             )
         self.delete_from_view_model(obj)
+        self._delete_links(obj)
+
+    def _get_link_fields_for_hub(
+        self, hub_class: type[MontrekHubABC]
+    ) -> list[tuple[type[MontrekLinkABC], list[str]]]:
+        link_fields = []
+        for model in apps.get_models():
+            if not issubclass(model, MontrekLinkABC):
+                continue
+            fields = [
+                field_name
+                for field_name in ("hub_in", "hub_out")
+                if model._meta.get_field(field_name).related_model == hub_class
+            ]
+            if fields:
+                link_fields.append((model, fields))
+        return link_fields
 
     def delete_from_view_model(self, obj: MontrekHubABC):
         self.view_model_repository.delete_from_view_model(obj)
+
+    def _delete_links(self, obj: MontrekHubABC):
+        now = timezone.now()
+        for link_class, field_names in self._get_link_fields_for_hub(type(obj)):
+            link_filter = Q()
+            for field_name in field_names:
+                link_filter |= Q(**{field_name: obj})
+            link_class.objects.filter(link_filter, state_date_end__gt=now).update(
+                state_date_end=now
+            )
 
     def order_fields(self) -> tuple[str, ...]:
         if self._order_fields:
