@@ -1419,7 +1419,7 @@ class TestDeleteObject(TestCase):
         hub_d2 = me_factories.HubDFactory()
         hub_b2.link_hub_b_hub_d.add(hub_d2)
 
-        HubBRepository({"user_id": self.user.id}).delete(hub_b1)
+        HubBRepository(session_data={"user_id": self.user.id}).delete(hub_b1)
 
         untouched_link = me_models.LinkHubBHubD.objects.get(
             hub_in=hub_b2, hub_out=hub_d2
