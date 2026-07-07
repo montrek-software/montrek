@@ -1404,7 +1404,7 @@ class TestDeleteObject(TestCase):
         for hub_d in hub_ds:
             hub_b.link_hub_b_hub_d.add(hub_d)
 
-        HubBRepository({"user_id": self.user.id}).delete(hub_b)
+        HubBRepository(session_data={"user_id": self.user.id}).delete(hub_b)
 
         links = me_models.LinkHubBHubD.objects.filter(hub_in=hub_b)
         self.assertEqual(links.count(), 3)
