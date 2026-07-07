@@ -40,9 +40,10 @@ from baseclasses.utils import (
     datetime_to_montrek_time,
     django_field_to_pandas_dtype,
 )
+from django.apps import apps
 from django.core.exceptions import PermissionDenied
 from django.db import models
-from django.db.models import F, QuerySet
+from django.db.models import F, Q, QuerySet
 from django.db.models.fields.related import ManyToManyRel
 from django.utils import timezone
 from django_pandas.io import read_frame
@@ -230,7 +231,8 @@ class MontrekRepository:
         return query
 
     def delete(self, obj: MontrekHubABC):
-        obj.state_date_end = timezone.now()
+        closing_date = timezone.now()
+        obj.state_date_end = closing_date
         obj.save()
         for satellite_class in self.annotator.get_satellite_classes():
             if satellite_class.is_timeseries:
@@ -238,12 +240,45 @@ class MontrekRepository:
             else:
                 filter_kwargs = {"hub_entity": obj}
             satellite_class.objects.filter(**filter_kwargs).update(
-                state_date_end=timezone.now()
+                state_date_end=closing_date
             )
         self.delete_from_view_model(obj)
+        self._delete_links(obj, closing_date)
+
+    def _get_link_fields_for_hub(
+        self, hub_class: type[MontrekHubABC]
+    ) -> list[tuple[type[MontrekLinkABC], list[str]]]:
+        cls = type(self)
+        cache = getattr(cls, "_link_fields_cache", None)
+        if cache is None:
+            cache = cls._link_fields_cache = {}
+        if hub_class in cache:
+            return cache[hub_class]
+        link_fields: list[tuple[type[MontrekLinkABC], list[str]]] = []
+        for model in apps.get_models():
+            if not issubclass(model, MontrekLinkABC):
+                continue
+            fields = [
+                field_name
+                for field_name in ("hub_in", "hub_out")
+                if model._meta.get_field(field_name).related_model == hub_class
+            ]
+            if fields:
+                link_fields.append((model, fields))
+        cache[hub_class] = link_fields
+        return link_fields
 
     def delete_from_view_model(self, obj: MontrekHubABC):
         self.view_model_repository.delete_from_view_model(obj)
+
+    def _delete_links(self, obj: MontrekHubABC, closing_date: timezone.datetime):
+        for link_class, field_names in self._get_link_fields_for_hub(type(obj)):
+            link_filter = Q()
+            for field_name in field_names:
+                link_filter |= Q(**{field_name: obj})
+            link_class.objects.filter(
+                link_filter, state_date_end__gt=closing_date
+            ).update(state_date_end=closing_date)
 
     def order_fields(self) -> tuple[str, ...]:
         if self._order_fields:
