@@ -1012,6 +1012,15 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             ),
             expected_format_latex=" \\color{textdark} return\\_two &",
         )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value="unknown",
+            expected_format=(
+                '<div data-bs-toggle="tooltip" data-bs-html="true" '
+                'data-bs-title="">unknown</div>'
+            ),
+            expected_format_latex=" \\color{textdark} unknown &",
+        )
 
     @mock.patch("reporting.dataclasses.table_elements.reverse")
     def test_link_list_table_element(self, mock_reverse):

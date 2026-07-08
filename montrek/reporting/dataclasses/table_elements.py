@@ -861,7 +861,7 @@ class MethodNameTableElement(AttrTableElement):
     field_template: ClassVar[str | None] = "method_name"
 
     def get_field_context_data(self, value: Any, _obj: Any) -> dict[str, Any]:
-        func = getattr(self.class_, value)
+        func = getattr(self.class_, value, None)
         # Strip all decorator functions to get the to the original method.
         while hasattr(func, "__wrapped__"):
             func = func.__wrapped__
