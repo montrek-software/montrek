@@ -5,6 +5,7 @@ from baseclasses.managers.montrek_manager import MontrekManager
 from django.conf import settings
 from django.http import HttpResponseRedirect
 from django.urls import reverse
+from django.utils.safestring import mark_safe
 from mailing.repositories.mailing_repository import MailingRepository
 from reporting.core import reporting_text as rt
 from reporting.lib.protocols import ReportElementProtocol
@@ -87,7 +88,12 @@ class MontrekReportManager(MontrekManager):
             ).to_html()
         html_list.append(self._get_footer())
         self.cleanup_report_elements()
-        return "".join(html_list)
+        # Each entry was produced by Django's autoescaping template render
+        # (to_html()/to_pdf_html() on each element), but str.join() strips the
+        # SafeString marking off the concatenated result. Re-mark it safe here,
+        # at the point the trust decision is actually made, rather than relying
+        # on the blanket `|safe` in pdf_base.html to paper over the lost flag.
+        return mark_safe("".join(html_list))  # noqa: S308  # nosec B308 B703
 
     def to_latex(self) -> str:
         latex_str = ""
