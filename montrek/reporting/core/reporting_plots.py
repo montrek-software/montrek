@@ -1,6 +1,7 @@
 import base64
 import hashlib
 import json
+import math
 from typing import Any, Generic, TypeVar
 import uuid
 from _plotly_utils.utils import PlotlyJSONEncoder
@@ -47,14 +48,15 @@ class ReportingPlotBase(Generic[TData]):
 
     def to_pdf_html(self, font_scale: float = 1.0) -> str:
         original_size = self.figure.layout.font.size or 13
-        if font_scale != 1.0:
+        scaled = not math.isclose(font_scale, 1.0)
+        if scaled:
             self.figure.update_layout(font={"size": original_size * font_scale})
         try:
             png_bytes = self.figure.to_image(
                 format="png", width=1200, height=600, scale=2
             )
         finally:
-            if font_scale != 1.0:
+            if scaled:
                 self.figure.update_layout(font={"size": original_size})
         b64 = base64.b64encode(png_bytes).decode("ascii")
         # b64 contains only [A-Za-z0-9+/=] — no HTML injection possible.
@@ -64,7 +66,8 @@ class ReportingPlotBase(Generic[TData]):
 
     def to_latex(self, font_scale: float = 1.0) -> str:
         original_size = self.figure.layout.font.size or 13
-        if font_scale != 1.0:
+        scaled = not math.isclose(font_scale, 1.0)
+        if scaled:
             self.figure.update_layout(font={"size": original_size * font_scale})
         try:
             # Hash is computed after scaling so different font_scale values get separate cache files.
@@ -78,7 +81,7 @@ class ReportingPlotBase(Generic[TData]):
                     str(image_path), width=1200, height=600, scale=2
                 )
         finally:
-            if font_scale != 1.0:
+            if scaled:
                 self.figure.update_layout(font={"size": original_size})
 
         latex_str = "\\begin{figure}[H]\n\\centering\n"
