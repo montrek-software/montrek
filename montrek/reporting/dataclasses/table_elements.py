@@ -687,6 +687,7 @@ class PercentTableElement(NumberTableElement):
 class ProgressBarTableElement(NumberTableElement):
     serializer_field_class = serializers.FloatField
     attr: str
+    td_classes: ClassVar[TdClassesType] = ["text-center"]
     th_classes: ClassVar[TdClassesType | None] = ["text-center"]
     field_template: ClassVar[str | None] = "progress_bar"
 
