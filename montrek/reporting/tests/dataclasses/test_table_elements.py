@@ -1045,7 +1045,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_object(
             table_element=test_element,
             test_obj=obj,
-            expected_format='<div style="max-height: 300px; overflow-y: auto;">      <div><a id="id__fake_url_1" href="/fake_url/1">a</a></div>      <div><a id="id__fake_url_2" href="/fake_url/2">b</a></div>      <div><a id="id__fake_url_3" href="/fake_url/3">c</a></div>  </div>',
+            expected_format='<div style="max-height: 300px; overflow-y: auto;">      <div><a id="id__fake_url_1" href="/fake_url/1" class="fw-bold">a</a></div>      <div><a id="id__fake_url_2" href="/fake_url/2" class="fw-bold">b</a></div>      <div><a id="id__fake_url_3" href="/fake_url/3" class="fw-bold">c</a></div>  </div>',
             expected_format_latex=" \\color{textdark} a,b,c &",
             expected_hover_text="hover_text",
         )
@@ -1073,7 +1073,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_object(
             table_element=test_element,
             test_obj=obj,
-            expected_format='<div style="max-height: 300px; overflow-y: auto;">      <div><a id="id__fake_url_1" href="/fake_url/1">a</a></div>      <div><a id="id__fake_url_2" href="/fake_url/2">b</a></div>  </div>',
+            expected_format='<div style="max-height: 300px; overflow-y: auto;">      <div><a id="id__fake_url_1" href="/fake_url/1" class="fw-bold">a</a></div>      <div><a id="id__fake_url_2" href="/fake_url/2" class="fw-bold">b</a></div>  </div>',
             expected_format_latex=" \\color{textdark} a,b &",
             expected_hover_text="hover_text",
         )
@@ -1104,9 +1104,9 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             test_obj=obj,
             expected_format=(
                 '<div style="max-height: 300px; overflow-y: auto;">'
-                '      <div><a id="id__fake_url_1_123" href="/fake_url/1/123">a</a></div>'
-                '      <div><a id="id__fake_url_2_123" href="/fake_url/2/123">b</a></div>'
-                '      <div><a id="id__fake_url_3_123" href="/fake_url/3/123">c</a></div>'
+                '      <div><a id="id__fake_url_1_123" href="/fake_url/1/123" class="fw-bold">a</a></div>'
+                '      <div><a id="id__fake_url_2_123" href="/fake_url/2/123" class="fw-bold">b</a></div>'
+                '      <div><a id="id__fake_url_3_123" href="/fake_url/3/123" class="fw-bold">c</a></div>'
                 "  </div>"
             ),
             expected_format_latex=" \\color{textdark} a,b,c &",
@@ -1136,7 +1136,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_object(
             table_element=test_element,
             test_obj=obj,
-            expected_format='<div style="max-height: 300px; overflow-y: auto;">      <div><a id="id__fake_url_1" href="/fake_url/1">a</a></div>      <div><a id="id__fake_url_2" href="/fake_url/2">b</a></div>      <div><a id="id__fake_url_3" href="/fake_url/3">c</a></div>  </div>',
+            expected_format='<div style="max-height: 300px; overflow-y: auto;">      <div><a id="id__fake_url_1" href="/fake_url/1" class="fw-bold">a</a></div>      <div><a id="id__fake_url_2" href="/fake_url/2" class="fw-bold">b</a></div>      <div><a id="id__fake_url_3" href="/fake_url/3" class="fw-bold">c</a></div>  </div>',
             expected_format_latex=" \\color{textdark} a,b,c &",
             expected_hover_text="hover_text",
         )
@@ -1164,7 +1164,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_object(
             table_element=test_element,
             test_obj=obj,
-            expected_format='<div style="max-height: 300px; overflow-y: auto;">      <div><a id="id__fake_url_1" href="/fake_url/1">prompt; important</a></div>  </div>',
+            expected_format='<div style="max-height: 300px; overflow-y: auto;">      <div><a id="id__fake_url_1" href="/fake_url/1" class="fw-bold">prompt; important</a></div>  </div>',
             expected_format_latex=" \\color{textdark} prompt; important &",
             expected_hover_text="hover_text",
         )
@@ -1212,7 +1212,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_object(
             table_element=test_element,
             test_obj=test_obj,
-            expected_format=f'<a id="id__baseclasses_{test_obj.id}_details" href="/baseclasses/{test_obj.id}/details">{test_obj.test_name}</a>',
+            expected_format=f'<a id="id__baseclasses_{test_obj.id}_details" href="/baseclasses/{test_obj.id}/details" class="fw-bold">{test_obj.test_name}</a>',
             expected_format_latex=f" \\color{{textdark}} {test_obj.test_name} &",
             expected_hover_text="hover_text",
         )
@@ -1229,7 +1229,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_object(
             table_element=test_element,
             test_obj=test_obj,
-            expected_format='<a id="id__baseclasses_1_details" href="/baseclasses/1/details">Test_Name</a>',
+            expected_format='<a id="id__baseclasses_1_details" href="/baseclasses/1/details" class="fw-bold">Test_Name</a>',
             expected_format_latex=" \\color{textdark} Test\\_Name &",
             expected_hover_text="hover_text",
         )
@@ -1237,7 +1237,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_object(
             table_element=test_element,
             test_obj=test_obj,
-            expected_format='<a id="id__baseclasses_1_details" href="/baseclasses/1/details">Test_Name</a>',
+            expected_format='<a id="id__baseclasses_1_details" href="/baseclasses/1/details" class="fw-bold">Test_Name</a>',
             expected_format_latex=" \\color{textdark} Test\\_Name &",
             expected_hover_text="hover_text",
             expected_td_classes=["text-start fw-bold"],
@@ -1246,7 +1246,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_object(
             table_element=test_element,
             test_obj=test_obj,
-            expected_format='<a id="id__baseclasses_1_details" href="/baseclasses/1/details">is_active</a>',
+            expected_format='<a id="id__baseclasses_1_details" href="/baseclasses/1/details" class="fw-bold">is_active</a>',
             expected_format_latex=" \\color{textdark} is\\_active &",
             expected_hover_text="hover_text",
             expected_td_classes=["text-start fw-bold"],
@@ -1255,7 +1255,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_object(
             table_element=test_element,
             test_obj=test_obj,
-            expected_format='<a id="id__baseclasses_1_details" href="/baseclasses/1/details">is_not_active</a>',
+            expected_format='<a id="id__baseclasses_1_details" href="/baseclasses/1/details" class="fw-bold">is_not_active</a>',
             expected_format_latex=" \\color{textdark} is\\_not\\_active &",
             expected_hover_text="hover_text",
             expected_td_classes=["text-start"],
@@ -1336,9 +1336,10 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.table_element_test_assertions_from_object(
             table_element=table_element,
             test_obj=test_obj,
-            expected_format=f'<a id="id__baseclasses_{test_obj.id}_details" href="/baseclasses/{test_obj.id}/details"><span class="bi bi-icon"></span></a>',
+            expected_format=f'<a id="id__baseclasses_{test_obj.id}_details" href="/baseclasses/{test_obj.id}/details" class="fw-bold"><span class="bi bi-icon mt-prominent-icon"></span></a>',
             expected_format_latex=" \\color{textdark} \\twemoji{cross mark} &",
             expected_hover_text="hover_text",
+            expected_td_classes=["text-center"],
         )
 
     def test_icon_table_element(self):
@@ -1523,7 +1524,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_format='<span class="bi bi-arrow-right-circle-fill text-success"></span>',
             expected_format_latex=te.CompValues.EQUAL.value.latex_val + " &",
             expected_hover_text="1 = 1",
-            expected_td_classes=["align-middle", "text-start", "ps-1"],
+            expected_td_classes=["align-top", "text-start", "ps-1"],
         )
 
     def test_comparison_table_element__greater(self):
@@ -1539,7 +1540,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_format='<span class="bi bi-arrow-up-right-circle-fill text-warning"></span>',
             expected_format_latex=te.CompValues.GREATER.value.latex_val + " &",
             expected_hover_text="12 > 10",
-            expected_td_classes=["align-middle", "text-start", "ps-1"],
+            expected_td_classes=["align-top", "text-start", "ps-1"],
         )
 
     def test_comparison_table_element__much_greater(self):
@@ -1555,7 +1556,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_format='<span class="bi bi-arrow-up-circle-fill text-danger"></span>',
             expected_format_latex=te.CompValues.MUCH_GREATER.value.latex_val + " &",
             expected_hover_text="16 >> 10",
-            expected_td_classes=["align-middle", "text-start", "ps-1"],
+            expected_td_classes=["align-top", "text-start", "ps-1"],
         )
 
     def test_comparison_table_element__less(self):
@@ -1571,7 +1572,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_format='<span class="bi bi-arrow-down-right-circle-fill text-warning"></span>',
             expected_format_latex=te.CompValues.LESS.value.latex_val + " &",
             expected_hover_text="8 < 10",
-            expected_td_classes=["align-middle", "text-start", "ps-1"],
+            expected_td_classes=["align-top", "text-start", "ps-1"],
         )
 
     def test_comparison_table_element__much_less(self):
@@ -1587,7 +1588,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_format='<span class="bi bi-arrow-down-circle-fill text-danger"></span>',
             expected_format_latex=te.CompValues.MUCH_LESS.value.latex_val + " &",
             expected_hover_text="4 << 10",
-            expected_td_classes=["align-middle", "text-start", "ps-1"],
+            expected_td_classes=["align-top", "text-start", "ps-1"],
         )
 
     def test_comparison_table_element__none_value(self):
@@ -1602,7 +1603,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_format="<span></span>",
             expected_format_latex=" &",
             expected_hover_text="None Unknown 10",
-            expected_td_classes=["align-middle", "text-start", "ps-1"],
+            expected_td_classes=["align-top", "text-start", "ps-1"],
         )
 
     def test_comparison_table_element__none_comp_value(self):
@@ -1617,7 +1618,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_format="<span></span>",
             expected_format_latex=" &",
             expected_hover_text="10 Unknown None",
-            expected_td_classes=["align-middle", "text-start", "ps-1"],
+            expected_td_classes=["align-top", "text-start", "ps-1"],
         )
 
     def test_comparison_table_element__custom_much_comp_limit(self):
@@ -1636,7 +1637,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_format='<span class="bi bi-arrow-up-circle-fill text-danger"></span>',
             expected_format_latex=te.CompValues.MUCH_GREATER.value.latex_val + " &",
             expected_hover_text="12 >> 10",
-            expected_td_classes=["align-middle", "text-start", "ps-1"],
+            expected_td_classes=["align-top", "text-start", "ps-1"],
         )
         self.table_element_test_assertions_from_object(
             table_element=table_element,
@@ -1644,7 +1645,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_format='<span class="bi bi-arrow-down-circle-fill text-danger"></span>',
             expected_format_latex=te.CompValues.MUCH_LESS.value.latex_val + " &",
             expected_hover_text="8 << 10",
-            expected_td_classes=["align-middle", "text-start", "ps-1"],
+            expected_td_classes=["align-top", "text-start", "ps-1"],
         )
 
     def test_comparison_table_element__comp_value_zero_greater(self):
@@ -1660,7 +1661,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_format='<span class="bi bi-arrow-up-circle-fill text-danger"></span>',
             expected_format_latex=te.CompValues.MUCH_GREATER.value.latex_val + " &",
             expected_hover_text="5 >> 0",
-            expected_td_classes=["align-middle", "text-start", "ps-1"],
+            expected_td_classes=["align-top", "text-start", "ps-1"],
         )
 
     def test_comparison_table_element__comp_value_zero_less(self):
@@ -1676,7 +1677,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_format='<span class="bi bi-arrow-down-circle-fill text-danger"></span>',
             expected_format_latex=te.CompValues.MUCH_LESS.value.latex_val + " &",
             expected_hover_text="-5 << 0",
-            expected_td_classes=["align-middle", "text-start", "ps-1"],
+            expected_td_classes=["align-top", "text-start", "ps-1"],
         )
 
     @mock.patch("reporting.dataclasses.table_elements.reverse")
