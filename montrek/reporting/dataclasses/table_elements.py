@@ -285,7 +285,7 @@ class BaseLinkTableElement(TableElement, GetDottetAttrsOrArgMixin):
         return False
 
     def get_td_classes(self, value: Any, obj: Any):
-        td_classes = ["text-start"]
+        td_classes = [*self.td_classes]
         if self.is_active(strip_tags(value).replace("\n", ""), obj):
             td_classes += ["fw-bold"]
         return td_classes
@@ -354,6 +354,7 @@ class BaseLinkTableElement(TableElement, GetDottetAttrsOrArgMixin):
 
 @dataclass
 class LinkTableElement(BaseLinkTableElement):
+    td_classes: ClassVar[TdClassesType] = ["text-center"]
     icon: str = field(default="cross")
     static_kwargs: dict = field(default_factory=dict)
     icon_latex_map: ClassVar[dict[str, str]] = {
@@ -384,6 +385,7 @@ class HtmxLinkTableElement(LinkTableElement):
 
     hx_target: str = field(default="closest tr")
     hx_swap: str = field(default="outerHTML")
+    td_classes: ClassVar[TdClassesType] = ["text-center"]
 
     def get_link(self, obj: Any) -> str | None:
         url = self.get_url(obj)
@@ -685,7 +687,6 @@ class PercentTableElement(NumberTableElement):
 class ProgressBarTableElement(NumberTableElement):
     serializer_field_class = serializers.FloatField
     attr: str
-    td_classes: ClassVar[TdClassesType] = ["text-center"]
     th_classes: ClassVar[TdClassesType | None] = ["text-center"]
     field_template: ClassVar[str | None] = "progress_bar"
 
@@ -1050,7 +1051,7 @@ class ComparisonTableElement(AttrTableElement):
     field_template: ClassVar[str | None] = "comparison"
     much_comp_limit: ClassVar[float] = 0.5
     serializer_field_class: ClassVar = CompDataField
-    td_classes: ClassVar[TdClassesType] = ["align-middle", "text-start", "ps-1"]
+    td_classes: ClassVar[TdClassesType] = ["align-top", "text-start", "ps-1"]
 
     def get_value(self, obj: Any) -> Any:
         value = super().get_value(obj)
