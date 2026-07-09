@@ -402,9 +402,6 @@ class HtmxLinkTableElement(LinkTableElement):
         }
         return render_to_string("tables/elements/htmx_link.html", context)
 
-    def get_icon(self, _obj: Any) -> str:
-        return "pencil" if self.icon == "edit" else self.icon
-
 
 @dataclass
 class LinkTextTableElement(BaseLinkTableElement):
