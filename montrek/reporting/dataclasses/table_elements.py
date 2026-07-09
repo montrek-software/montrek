@@ -364,9 +364,11 @@ class LinkTableElement(BaseLinkTableElement):
     }
 
     def get_link_text(self, _obj):
-        icon = "pencil" if self.icon == "edit" else self.icon
-        context = {"value": icon}
+        context = {"value": self.get_icon(_obj)}
         return render_to_string("tables/elements/icon_link.html", context)
+
+    def get_icon(self, _obj: Any) -> str:
+        return "pencil" if self.icon == "edit" else self.icon
 
     def format_latex(self, _value):
         latex_icon = self.icon_latex_map.get(self.icon, "cross mark")
@@ -391,15 +393,17 @@ class HtmxLinkTableElement(LinkTableElement):
         url = self.get_url(obj)
         if not url:
             return None
-        icon = "pencil" if self.icon == "edit" else self.icon
         context = {
             "id_tag": url.replace("/", "_"),
             "url": url,
-            "icon": icon,
+            "icon": self.get_icon(obj),
             "hx_target": self.hx_target,
             "hx_swap": self.hx_swap,
         }
         return render_to_string("tables/elements/htmx_link.html", context)
+
+    def get_icon(self, _obj: Any) -> str:
+        return "pencil" if self.icon == "edit" else self.icon
 
 
 @dataclass
