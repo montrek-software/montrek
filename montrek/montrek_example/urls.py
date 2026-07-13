@@ -34,6 +34,11 @@ urlpatterns = [
         name="montrek_example_a_edit_field",
     ),
     path(
+        "a/<int:pk>/inline_edit",
+        views.MontrekExampleAInlineFieldEdit.as_view(),
+        name="montrek_example_a_inline_edit",
+    ),
+    path(
         "b/create",
         views.MontrekExampleBCreate.as_view(),
         name="montrek_example_b_create",

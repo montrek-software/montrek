@@ -809,11 +809,13 @@ class MontrekHtmxRowRenderMixin:
     def render_htmx_row(self) -> HttpResponse | None:
         """Return the re-rendered ``<tr>``, or None if the row is gone."""
         table_manager = self.row_table_manager
-        row = (
-            table_manager.get_full_table()
-            .filter(**self.get_row_filter_kwargs())
-            .first()
-        )
+        full_table = table_manager.get_full_table()
+        if not hasattr(full_table, "filter"):
+            raise TypeError(
+                f"{table_manager.__class__.__name__}.get_full_table() must return "
+                "a QuerySet to support HTMX row rendering"
+            )
+        row = full_table.filter(**self.get_row_filter_kwargs()).first()
         if row is None:
             return None
         response = HttpResponse(table_manager.render_single_row(row))
@@ -888,6 +890,8 @@ class MontrekInlineFieldEditView(
         return self.render_edit_row(request, form)
 
     def post(self, request, *args, **kwargs):
+        if not request.headers.get("HX-Request"):
+            return HttpResponseRedirect(self.get_fallback_url())
         if request.POST.get("action") == "cancel":
             return self.htmx_row_response()
         edit_data = self.get_edit_data()

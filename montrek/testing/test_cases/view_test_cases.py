@@ -636,14 +636,22 @@ class MontrekInlineFieldEditViewTestCase(MontrekViewTestCase):
     def test_post_cancel_keeps_field(self):
         if self._is_base_test_class():
             return
+        original_value = getattr(self._get_object(), self.update_field)
         response = self.client.post(
             self.url, self.post_data("cancel"), HTTP_HX_REQUEST="true"
         )
         self.assertEqual(response.status_code, 200)
         test_object = self._get_object()
-        self.assertNotEqual(
-            getattr(test_object, self.update_field), self.updated_content
-        )
+        self.assertEqual(getattr(test_object, self.update_field), original_value)
+
+    def test_post_without_htmx_redirects(self):
+        if self._is_base_test_class():
+            return
+        original_value = getattr(self._get_object(), self.update_field)
+        response = self.client.post(self.url, self.post_data("save"))
+        self.assertEqual(response.status_code, 302)
+        test_object = self._get_object()
+        self.assertEqual(getattr(test_object, self.update_field), original_value)
 
     def additional_assertions(self, test_object):
         pass
