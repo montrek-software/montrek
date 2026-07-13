@@ -404,6 +404,19 @@ class HtmxLinkTableElement(LinkTableElement):
 
 
 @dataclass
+class InlineEditTableElement(HtmxLinkTableElement):
+    """Pencil icon that swaps its row for an inline single-field edit form.
+
+    Point ``url`` at a ``MontrekInlineFieldEditView`` subclass: it returns the
+    edit row on GET and the re-rendered data row after save/cancel, so the
+    whole edit happens in place. The plain ``href`` fallback redirects
+    non-HTMX visitors to the view's ``get_fallback_url()``.
+    """
+
+    icon: str = field(default="pencil-square")
+
+
+@dataclass
 class LinkTextTableElement(BaseLinkTableElement):
     text: str = field(default="")
     static_kwargs: dict = field(default_factory=dict)

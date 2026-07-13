@@ -575,6 +575,80 @@ class MontrekReportFieldEditViewTestCase(MontrekObjectViewBaseTestCase):
     def test_context_data(self): ...
 
 
+class MontrekInlineFieldEditViewTestCase(MontrekViewTestCase):
+    """Covers a MontrekInlineFieldEditView subclass: GET (HTMX) returns the
+    inline edit row, POST save persists the field, POST cancel leaves it
+    unchanged and non-HTMX GETs are redirected to the fallback URL."""
+
+    update_field = ""
+    updated_content = ""
+
+    def _is_base_test_class(self) -> bool:
+        return self.__class__.__name__ == "MontrekInlineFieldEditViewTestCase"
+
+    def get_response(self):
+        return self.client.get(self.url, HTTP_HX_REQUEST="true")
+
+    def assert_correct_template(self):
+        self.assertTemplateUsed(self.response, self.view_class.template_name)
+
+    def test_view_page(self): ...
+
+    def test_context_data(self): ...
+
+    def _get_object(self):
+        return (
+            self.view_class.manager_class(self.url_kwargs())
+            .repository.receive()
+            .get(pk=self.url_kwargs()["pk"])
+        )
+
+    def post_data(self, action: str) -> dict:
+        return {"action": action, self.update_field: self.updated_content}
+
+    def test_get_returns_edit_row(self):
+        if self._is_base_test_class():
+            return
+        content = self.response.content.decode()
+        self.assertIn("<tr", content)
+        self.assertIn(f'name="{self.update_field}"', content)
+        self.assertIn('value="save"', content)
+        self.assertIn('value="cancel"', content)
+
+    def test_get_without_htmx_redirects(self):
+        if self._is_base_test_class():
+            return
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+
+    def test_post_save_updates_field_and_returns_row(self):
+        if self._is_base_test_class():
+            return
+        response = self.client.post(
+            self.url, self.post_data("save"), HTTP_HX_REQUEST="true"
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("<tr", response.content.decode())
+        test_object = self._get_object()
+        self.assertEqual(getattr(test_object, self.update_field), self.updated_content)
+        self.additional_assertions(test_object)
+
+    def test_post_cancel_keeps_field(self):
+        if self._is_base_test_class():
+            return
+        response = self.client.post(
+            self.url, self.post_data("cancel"), HTTP_HX_REQUEST="true"
+        )
+        self.assertEqual(response.status_code, 200)
+        test_object = self._get_object()
+        self.assertNotEqual(
+            getattr(test_object, self.update_field), self.updated_content
+        )
+
+    def additional_assertions(self, test_object):
+        pass
+
+
 class ProcessPipelineViewTestCase(MontrekRedirectViewTestCase):
     expected_message: str
     real_view_class: type[View] | None = None
