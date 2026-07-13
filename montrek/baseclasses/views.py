@@ -550,14 +550,22 @@ class MontrekDetailView(
         return super().get(request, *args, **kwargs)
 
     def _set_hub_value_date_pk(self, kwargs: dict[str, Any]) -> dict[str, Any]:
+        # Expose the requested hub pk to the repository so hub-scoped
+        # repositories can anchor value date selection to this hub instead of
+        # a globally computed date.
+        hub_pk = kwargs["pk"]
+        self.session_data["hub_pk"] = hub_pk
         hub_value_date_pk = (
-            self.manager_class.repository_class()
+            self.manager_class.repository_class(dict(self.session_data))
             .receive()
-            .get(hub_entity_id=kwargs["pk"])
+            .get(hub_entity_id=hub_pk)
             .pk
         )
         kwargs["pk"] = hub_value_date_pk
         self.kwargs["pk"] = hub_value_date_pk
+        # session_data is cached at this point; the manager expects the
+        # hub value date pk, not the hub pk.
+        self._session_data["pk"] = hub_value_date_pk
         return kwargs
 
     def list_to_rest_api(self):
