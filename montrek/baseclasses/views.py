@@ -556,7 +556,7 @@ class MontrekDetailView(
         hub_pk = kwargs["pk"]
         self.session_data["hub_pk"] = hub_pk
         hub_value_date_pk = (
-            self.manager_class.repository_class({"hub_pk": hub_pk})
+            self.manager_class.repository_class(dict(self.session_data))
             .receive()
             .get(hub_entity_id=hub_pk)
             .pk
