@@ -1,7 +1,11 @@
 <a id="id_{{ id_tag }}"
+   class="mt-htmx-link"
    href="{{ url }}"
    hx-get="{{ url }}"
    hx-swap="{{ hx_swap }}"
    {% if hx_target %}hx-target="{{ hx_target }}"{% endif %}>
   <span class="bi bi-{{ icon }} mt-prominent-icon"></span>
+  <span class="spinner-border spinner-border-sm htmx-indicator"
+        role="status"
+        aria-hidden="true"></span>
 </a>
