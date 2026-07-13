@@ -35,6 +35,7 @@ from testing.test_cases.view_test_cases import (
     MontrekDetailViewTestCase,
     MontrekDownloadViewTestCase,
     MontrekFileResponseTestCase,
+    MontrekInlineFieldEditViewTestCase,
     MontrekListViewTestCase,
     MontrekRedirectViewTestCase,
     MontrekReportFieldEditViewTestCase,
@@ -399,6 +400,38 @@ class TestMontrekExampleAReportFieldEditViewInt(MontrekReportFieldEditViewTestCa
 
     def additional_assertions(self, created_object):
         self.assertEqual(created_object.field_a1_str, "test")
+
+
+class TestMontrekExampleAInlineFieldEditView(MontrekInlineFieldEditViewTestCase):
+    """Covers and illustrates the inline row edit mechanism: the
+    InlineEditTableElement in HubAManager targets this view, which swaps the
+    list row for a one-field editor (GET) and back to the re-rendered data
+    row (POST save/cancel)."""
+
+    viewname = "montrek_example_a_inline_edit"
+    view_class = me_views.MontrekExampleAInlineFieldEdit
+    update_field = "field_a2_str"
+    updated_content = "edited inline"
+
+    def build_factories(self):
+        self.sat_a1 = me_factories.SatA1Factory(field_a1_str="test", field_a1_int=12)
+        me_factories.SatA2Factory(
+            hub_entity=self.sat_a1.hub_entity, field_a2_str="original"
+        )
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.sat_a1.get_hub_value_date().id}
+
+    def additional_assertions(self, test_object):
+        # Sibling satellite fields survive the single-field update.
+        self.assertEqual(test_object.field_a1_str, "test")
+        self.assertEqual(test_object.field_a1_int, 12)
+
+    def test_saved_row_shows_new_value(self):
+        response = self.client.post(
+            self.url, self.post_data("save"), HTTP_HX_REQUEST="true"
+        )
+        self.assertIn(self.updated_content, response.content.decode())
 
 
 class TestMontrekExampleADownloadView(MontrekDownloadViewTestCase):

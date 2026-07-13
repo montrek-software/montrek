@@ -70,6 +70,16 @@ class MontrekExampleAReportFieldEditView(MontrekReportFieldEditView):
     manager_class = mem.HubAManager
 
 
+class MontrekExampleAInlineFieldEdit(views.MontrekInlineFieldEditView):
+    """Illustrates MontrekInlineFieldEditView: the pencil rendered by the
+    InlineEditTableElement in HubAManager swaps the Example A list row for a
+    single-field editor and back, without leaving the list."""
+
+    manager_class = mem.HubAManager
+    row_table_manager_class = mem.HubAManager
+    field_name = "field_a2_str"
+
+
 # Create your views here.
 
 

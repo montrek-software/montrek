@@ -6,7 +6,7 @@ from typing import Any, BinaryIO, Protocol
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.http import FileResponse, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -762,6 +762,180 @@ class MontrekRedirectView(MontrekViewMixin, RedirectView):
 
     def get_redirect_url(self, *args, **kwargs) -> str:
         raise NotImplementedError("Please implement this method in your subclass!")
+
+
+class MontrekHtmxRowRenderMixin:
+    """Answer an HTMX request with a single re-rendered table row.
+
+    Counterpart of table elements that target their own row
+    (``hx-target="closest tr"``, ``hx-swap="outerHTML"``, e.g.
+    ``HtmxLinkTableElement``): the view re-renders only the affected row via
+    ``row_table_manager_class`` instead of reloading the whole page. Configure
+
+    - ``row_table_manager_class``: the ``MontrekTableManager`` of the table
+      the row lives in,
+    - ``get_row_table_session_data()``: session data for that manager (e.g.
+      to swap the ``pk`` for the parent object's), and
+    - ``get_row_filter_kwargs()``: how to find the row in the manager's
+      full table (defaults to the session ``pk``).
+
+    Set ``hx_trigger_event`` to additionally fire a client-side event so
+    other page fragments (summaries, counters) can refresh themselves.
+    """
+
+    row_table_manager_class: type[MontrekTableManager] | None = None
+    hx_trigger_event: str | None = None
+    _row_table_manager: MontrekTableManager | None = None
+
+    @property
+    def row_table_manager(self) -> MontrekTableManager:
+        if self._row_table_manager is None:
+            if self.row_table_manager_class is None:
+                raise NotImplementedError(
+                    "Assign the table manager of the table containing the row "
+                    "to row_table_manager_class"
+                )
+            self._row_table_manager = self.row_table_manager_class(
+                self.get_row_table_session_data()
+            )
+        return self._row_table_manager
+
+    def get_row_table_session_data(self) -> SessionDataType:
+        return self.session_data
+
+    def get_row_filter_kwargs(self) -> dict[str, Any]:
+        return {"pk": self.session_data.get("pk")}
+
+    def render_htmx_row(self) -> HttpResponse | None:
+        """Return the re-rendered ``<tr>``, or None if the row is gone."""
+        table_manager = self.row_table_manager
+        full_table = table_manager.get_full_table()
+        if not hasattr(full_table, "filter"):
+            raise TypeError(
+                f"{table_manager.__class__.__name__}.get_full_table() must return "
+                "a QuerySet to support HTMX row rendering"
+            )
+        row = full_table.filter(**self.get_row_filter_kwargs()).first()
+        if row is None:
+            return None
+        response = HttpResponse(table_manager.render_single_row(row))
+        if self.hx_trigger_event:
+            response["HX-Trigger"] = self.hx_trigger_event
+        return response
+
+    def htmx_row_response(self) -> HttpResponse:
+        """Row response with a full-page-refresh fallback if the row is gone
+        (e.g. it dropped out of the filtered table after the action)."""
+        response = self.render_htmx_row()
+        if response is None:
+            response = HttpResponse()
+            response["HX-Refresh"] = "true"
+        return response
+
+
+class MontrekHtmxRowActionView(MontrekHtmxRowRenderMixin, MontrekRedirectView):
+    """Run a manager method and swap the affected table row in place.
+
+    On HTMX requests the response is just the re-rendered ``<tr>`` (plus an
+    optional ``HX-Trigger`` event); without HTMX the view degrades to a
+    normal redirect, so ``get_redirect_url`` must still be implemented.
+    """
+
+    method: str = ""
+
+    def run_action(self) -> None:
+        getattr(self.manager, self.method)()
+
+    def get(self, request, *args, **kwargs):
+        self.run_action()
+        self.show_messages()
+        if request.headers.get("HX-Request"):
+            partial = self.render_htmx_row()
+            if partial is not None:
+                return partial
+        return super().get(request, *args, **kwargs)
+
+
+class MontrekInlineFieldEditView(
+    MontrekPermissionRequiredMixin, MontrekHtmxRowRenderMixin, View, MontrekViewMixin
+):
+    """Edit a single satellite field inline within a table row via HTMX.
+
+    Pair with an ``InlineEditTableElement`` pointing at this view:
+
+    - GET returns an edit row (label, one form field, save/cancel buttons)
+      that replaces the data row in place,
+    - POST with action "save" validates the field, persists it through the
+      manager's repository and returns the re-rendered data row,
+    - POST with action "cancel" returns the unchanged data row.
+
+    Configure ``field_name`` (the repository field to edit) alongside the
+    ``MontrekHtmxRowRenderMixin`` attributes. Field label and validation come
+    from the repository (``display_field_names``, satellite validators).
+    Non-HTMX requests are redirected to ``get_fallback_url()``.
+    """
+
+    form_class = MontrekCreateForm
+    field_name: str = ""
+    template_name = "tables/partials/inline_edit_row.html"
+
+    def get(self, request, *args, **kwargs):
+        if not request.headers.get("HX-Request"):
+            return HttpResponseRedirect(self.get_fallback_url())
+        form = self.form_class(
+            repository=self.manager.repository,
+            initial=self.get_edit_data(),
+            session_data=self.session_data,
+        )
+        return self.render_edit_row(request, form)
+
+    def post(self, request, *args, **kwargs):
+        if not request.headers.get("HX-Request"):
+            return HttpResponseRedirect(self.get_fallback_url())
+        if request.POST.get("action") == "cancel":
+            return self.htmx_row_response()
+        edit_data = self.get_edit_data()
+        form = self.form_class(
+            request.POST,
+            repository=self.manager.repository,
+            initial=edit_data,
+            session_data=self.session_data,
+        )
+        try:
+            field_value = form.fields[self.field_name].clean(
+                request.POST.get(self.field_name)
+            )
+        except ValidationError as error:
+            return self.render_edit_row(
+                request, form, error_message=", ".join(error.messages)
+            )
+        edit_data[self.field_name] = field_value
+        self.save_field(edit_data)
+        self.show_messages()
+        return self.htmx_row_response()
+
+    def get_edit_data(self) -> dict:
+        return self.manager.get_object_from_pk_as_dict(self.session_data["pk"])
+
+    def save_field(self, edit_data: dict) -> None:
+        self.manager.repository.create_by_dict(edit_data)
+
+    def get_fallback_url(self) -> str:
+        return self.session_data.get("http_referer") or reverse(settings.HOME_URL)
+
+    def render_edit_row(
+        self, request, form, error_message: str | None = None
+    ) -> HttpResponse:
+        return render(
+            request,
+            self.template_name,
+            {
+                "field": form[self.field_name],
+                "post_url": self.session_data["request_path"],
+                "colspan": len(self.row_table_manager.table_elements),
+                "error_message": error_message,
+            },
+        )
 
 
 class MontrekDownloadView(MontrekViewMixin, View):

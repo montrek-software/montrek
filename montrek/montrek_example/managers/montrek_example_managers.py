@@ -96,6 +96,12 @@ class HubAManager(MontrekTableManager):
             te.StringTableElement(name="A1 String", attr="field_a1_str"),
             te.IntTableElement(name="A1 Int", attr="field_a1_int"),
             te.StringTableElement(name="A2 String", attr="field_a2_str"),
+            te.InlineEditTableElement(
+                name="",
+                url="montrek_example_a_inline_edit",
+                kwargs={"pk": "id"},
+                hover_text="Edit A2 String inline",
+            ),
             te.FloatTableElement(name="A2 Float", attr="field_a2_float"),
             te.StringTableElement(name="B1 String", attr="field_b1_str"),
             ExampleIndividualTableElement(name="TestField", attr="individual_field"),
