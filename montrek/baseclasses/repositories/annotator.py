@@ -232,10 +232,11 @@ class Annotator:
         Lets a subclass repository reuse a parent's ``set_annotations()`` and
         prune fields it never renders — every removed field is one correlated
         subquery less in the final SELECT. Satellite aliases whose projections
-        are all removed stay registered; ``queryset.alias()`` entries are only
-        compiled into SQL when referenced, so they cost nothing.
+        are all removed stay registered; unreferenced ``queryset.alias()``
+        entries never reach the compiled SQL, though they are still
+        constructed in Python.
         """
-        names = set(field_names)
+        names = {field_names} if isinstance(field_names, str) else set(field_names)
         for name in names:
             self.annotations.pop(name, None)
             self.field_type_map.pop(name, None)
