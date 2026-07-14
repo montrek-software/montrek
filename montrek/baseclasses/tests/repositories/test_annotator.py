@@ -353,6 +353,85 @@ class TestAnnotator(TestCase):
         names = annotator.get_annotated_field_names()
         self.assertIn("field_static", names)
 
+    def test_remove_annotations_removes_scalar_field_projection(self):
+        annotator = Annotator(DummyHub)
+
+        annotator.subquery_builder_to_annotations(
+            fields=["field_static"],
+            satellite_class=StaticSatellite,
+            subquery_builder=DummyScalarSubqueryBuilder,
+        )
+
+        annotator.remove_annotations(["field_static"])
+
+        self.assertEqual(annotator.field_projections, [])
+        self.assertNotIn("field_static", annotator.field_type_map)
+        self.assertNotIn("field_static", annotator.get_annotated_field_names())
+        # Satellite alias stays registered; unreferenced aliases cost nothing
+        self.assertEqual(len(annotator.satellite_aliases), 1)
+
+    def test_remove_annotations_removes_annotation_entry(self):
+        annotator = Annotator(DummyHub)
+
+        annotator.subquery_builder_to_annotations(
+            fields=["field_ts"],
+            satellite_class=TSSatellite,
+            subquery_builder=DummyScalarSubqueryBuilder,
+            ts_agg_func="sum",
+        )
+
+        annotator.remove_annotations(["field_ts"])
+
+        self.assertNotIn("field_ts", annotator.annotations)
+        self.assertNotIn("field_ts", annotator.field_type_map)
+        self.assertNotIn("field_ts", annotator.get_annotated_field_names())
+
+    def test_remove_annotations_removes_linked_field_projection(self):
+        annotator = Annotator(DummyHub)
+
+        annotator.subquery_builder_to_annotations(
+            fields=["field_static"],
+            satellite_class=StaticSatellite,
+            subquery_builder=LinkedSatelliteSubqueryBuilder,
+            link_class=DummyOneToOneLink,
+            agg_func="string_concat",
+        )
+        annotator.subquery_builder_to_annotations(
+            fields=["field_static"],
+            satellite_class=StaticSatellite,
+            subquery_builder=LinkedSatelliteSubqueryBuilder,
+            link_class=DummyOneToOneLink,
+            agg_func="string_concat",
+            rename_field_map={"field_static": "renamed_field"},
+        )
+
+        annotator.remove_annotations(["renamed_field"])
+
+        # Only the projection with the removed outfield is dropped
+        self.assertEqual(len(annotator.linked_field_projections), 1)
+        self.assertEqual(annotator.linked_field_projections[0].outfield, "field_static")
+        self.assertNotIn("renamed_field", annotator.field_type_map)
+        self.assertNotIn("renamed_field", annotator.get_annotated_field_names())
+        # The kept field and the shared alias are untouched
+        self.assertIn("field_static", annotator.get_annotated_field_names())
+        self.assertEqual(len(annotator.linked_satellite_aliases), 1)
+
+    def test_remove_annotations_unknown_field_is_noop(self):
+        annotator = Annotator(DummyHub)
+
+        annotator.subquery_builder_to_annotations(
+            fields=["field_static"],
+            satellite_class=StaticSatellite,
+            subquery_builder=DummyScalarSubqueryBuilder,
+        )
+        names_before = annotator.get_annotated_field_names()
+
+        annotator.remove_annotations(["does_not_exist"])
+
+        self.assertEqual(annotator.get_annotated_field_names(), names_before)
+        self.assertEqual(len(annotator.field_projections), 1)
+        self.assertIn("field_static", annotator.field_type_map)
+
     def test_rename_field_updates_linked_projections(self):
         annotator = Annotator(DummyHub)
 
