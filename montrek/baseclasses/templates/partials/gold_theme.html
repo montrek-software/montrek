@@ -672,6 +672,26 @@
     }
   }
 
+  /* HTMX action links: swap the icon for a spinner while the
+     request is in flight (htmx toggles .htmx-request on the anchor). */
+
+  .mt-htmx-link .htmx-indicator {
+    display: none;
+  }
+
+  .mt-htmx-link.htmx-request .htmx-indicator {
+    display: inline-block;
+    opacity: 1;
+  }
+
+  .mt-htmx-link.htmx-request .mt-prominent-icon {
+    display: none;
+  }
+
+  .mt-htmx-link.htmx-request {
+    pointer-events: none;
+  }
+
   /* =========================================================
      TOOLTIPS
      ========================================================== */
