@@ -1,4 +1,5 @@
 import inspect
+from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Any
 from django.apps.registry import AppRegistryNotReady
@@ -224,6 +225,29 @@ class Annotator:
             if name == old_field:
                 self._field_names_in_order[i] = new_field
                 break
+
+    def remove_annotations(self, field_names: Iterable[str]) -> None:
+        """Drop previously registered output fields by name.
+
+        Lets a subclass repository reuse a parent's ``set_annotations()`` and
+        prune fields it never renders — every removed field is one correlated
+        subquery less in the final SELECT. Satellite aliases whose projections
+        are all removed stay registered; ``queryset.alias()`` entries are only
+        compiled into SQL when referenced, so they cost nothing.
+        """
+        names = set(field_names)
+        for name in names:
+            self.annotations.pop(name, None)
+            self.field_type_map.pop(name, None)
+        self.field_projections = [
+            fp for fp in self.field_projections if fp.outfield not in names
+        ]
+        self.linked_field_projections = [
+            lfp for lfp in self.linked_field_projections if lfp.outfield not in names
+        ]
+        self._field_names_in_order = [
+            name for name in self._field_names_in_order if name not in names
+        ]
 
     def has_only_static_sats(self) -> bool:
         return not (
