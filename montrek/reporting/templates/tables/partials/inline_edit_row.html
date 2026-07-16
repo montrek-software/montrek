@@ -7,9 +7,13 @@ tables/base_table.html), so the buttons collect the row's inputs via hx-include.
   <td colspan="{{ colspan }}">
     {% csrf_token %}
     {% if error_message %}<div class="alert alert-danger p-1 mb-1">{{ error_message }}</div>{% endif %}
-    <div class="d-flex align-items-center gap-2">
+    <div class="d-flex align-items-center gap-2 mb-1">
       <label for="{{ field.id_for_label }}" class="form-label mb-0 text-nowrap">{{ field.label }}</label>
-      {{ field }}
+      <div style="max-width: 520px;">
+        {{ field }}
+      </div>
+    </div>
+    <div class="d-flex align-items-center gap-2">
       <button type="button"
               class="btn-custom p-1"
               name="action"

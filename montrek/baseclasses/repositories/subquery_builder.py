@@ -484,7 +484,7 @@ class LinkedSatelliteSubqueryBuilderBase(
         agg_func: str = "string_concat",
         parent_link_classes: tuple[type[MontrekLinkABC], ...] = (),
         parent_link_reversed: tuple[bool, ...] | list[bool] = (),
-        link_satellite_filter: dict[str, object] | None = None,
+        link_satellite_filter: dict[str, object] | Q | None = None,
         cross_satellite_filters: tuple[CrossSatelliteFilter, ...] = (),
         separator: str = ";",
         value_date_scope_path: str = "",
@@ -492,9 +492,12 @@ class LinkedSatelliteSubqueryBuilderBase(
     ):
         super().__init__(satellite_class)
         self.field = field
-        link_satellite_filter = (
-            {} if link_satellite_filter is None else link_satellite_filter
-        )
+        # Accept either plain filter kwargs or a Q object (needed for
+        # negations/OR conditions); normalise to Q for uniform handling.
+        if link_satellite_filter is None:
+            link_satellite_filter = Q()
+        elif not isinstance(link_satellite_filter, Q):
+            link_satellite_filter = Q(**link_satellite_filter)
         link_hub_value_date_filter = (
             {} if link_hub_value_date_filter is None else link_hub_value_date_filter
         )
@@ -631,7 +634,7 @@ class LinkedSatelliteSubqueryBuilderBase(
         reference_date: timezone.datetime,
     ) -> Subquery:
         sat_query = self.satellite_class.objects.filter(
-            **self.link_satellite_filter,
+            self.link_satellite_filter,
             **self._build_cross_satellite_filter_dict(reference_date),
             **self.subquery_filter(
                 reference_date,
@@ -720,7 +723,7 @@ class LinkedSatelliteSubqueryBuilderBase(
                     outer_ref=outer_ref_field,
                 )
             ),
-            Q(**self.link_satellite_filter),
+            self.link_satellite_filter,
             Q(**self._build_cross_satellite_filter_dict(reference_date)),
             Q(**(value_date_filter or {})),
         )
@@ -781,7 +784,7 @@ class LinkedSatelliteSubqueryBuilderBase(
         Only valid for scalar (non-multiple), non-timeseries links.
         """
         sat_pk_qs = self.satellite_class.objects.filter(
-            **self.link_satellite_filter,
+            self.link_satellite_filter,
             **self._build_cross_satellite_filter_dict(reference_date),
             **self.subquery_filter(
                 reference_date,
@@ -811,7 +814,7 @@ class LinkedSatelliteSubqueryBuilderBase(
         Only valid for scalar (non-multiple), timeseries links.
         """
         sat_pk_qs = self.satellite_class.objects.filter(
-            **self.link_satellite_filter,
+            self.link_satellite_filter,
             **self._build_cross_satellite_filter_dict(reference_date),
             **self.subquery_filter(
                 reference_date,
@@ -933,7 +936,7 @@ class LinkedHubPairedJsonSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
                         outer_ref="pk",
                     )
                 ),
-                Q(**self.link_satellite_filter),
+                self.link_satellite_filter,
                 Q(**self._build_cross_satellite_filter_dict(reference_date)),
             ).values(field)[:1]
         )

@@ -1,4 +1,5 @@
-from django.db.models import OuterRef
+from django.db.models import OuterRef, Q, Value
+from django.db.models.functions import Coalesce
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from baseclasses.repositories.subquery_builder import LinkedHubJsonField
 from montrek_example.models import example_models as me_models
@@ -387,6 +388,52 @@ class HubCRepositoryJsonAgg(MontrekRepository):
             ["field_d1_str", "hub_entity_id"],
             rename_field_map={"hub_entity_id": "hub_d_id"},
             agg_func="json_agg",
+        )
+
+
+class HubCRepositoryLinkSatelliteQFilter(MontrekRepository):
+    """Demonstrates link_satellite_filter with a Q object instead of plain
+    filter kwargs. Q objects are required for negated conditions, which
+    cannot be expressed as ``filter(**kwargs)``.
+    """
+
+    hub_class = me_models.HubC
+
+    def set_annotations(self):
+        self.add_linked_satellites_field_annotations(
+            me_models.SatD1,
+            me_models.LinkHubCHubD,
+            ["field_d1_str"],
+            link_satellite_filter=~Q(field_d1_str="EXCLUDED"),
+        )
+
+
+class HubCRepositoryLinkSatelliteQOuterRefFilter(MontrekRepository):
+    """Demonstrates a link_satellite_filter Q object referencing an annotation
+    of the outer queryset: linked SatD1 rows whose ``field_d1_int`` equals the
+    outer row's ``field_tsc3_int`` are excluded.
+
+    The linked-satellite subquery is nested two levels below the main queryset
+    (satellite subquery inside the link subquery), so the outer annotation must
+    be referenced with a double OuterRef. Coalesce keeps all linked rows when
+    the outer annotation is NULL — ``NOT (x = NULL)`` is NULL in SQL and would
+    silently drop them all.
+    """
+
+    hub_class = me_models.HubC
+
+    def set_annotations(self):
+        self.add_satellite_fields_annotations(
+            me_models.SatTSC3,
+            ["field_tsc3_int"],
+        )
+        self.add_linked_satellites_field_annotations(
+            me_models.SatD1,
+            me_models.LinkHubCHubD,
+            ["field_d1_int"],
+            link_satellite_filter=~Q(
+                field_d1_int=Coalesce(OuterRef(OuterRef("field_tsc3_int")), Value(-1))
+            ),
         )
 
 

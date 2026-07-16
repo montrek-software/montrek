@@ -9,7 +9,7 @@ from file_export.repositories.file_export_registry_repository import (
 from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepositoryABC,
 )
-from django.db.models import Case, IntegerField, QuerySet, Value, When
+from django.db.models import Case, IntegerField, Q, QuerySet, Value, When
 from django.utils import timezone
 
 from montrek_example.models import example_models as me_models
@@ -64,6 +64,25 @@ class HubAQuerysetAwareRepository(MontrekRepository):
         self.add_satellite_fields_annotations(me_models.SatA1, ["field_a1_int"])
         self.annotator.annotations["field_a1_int_doubled"] = (
             _QuerysetAwareSubqueryBuilder()
+        )
+
+
+class HubARepositoryLinkSatelliteQFilter(MontrekRepository):
+    """Q-object link_satellite_filter on a scalar (one-to-one) link.
+
+    Exercises the alias optimization path (``_build_scalar_alias``), which
+    consumes ``link_satellite_filter`` separately from the multi-link
+    annotation path.
+    """
+
+    hub_class = me_models.HubA
+
+    def set_annotations(self):
+        self.add_linked_satellites_field_annotations(
+            me_models.SatB1,
+            me_models.LinkHubAHubB,
+            ["field_b1_str"],
+            link_satellite_filter=~Q(field_b1_str="EXCLUDED"),
         )
 
 
