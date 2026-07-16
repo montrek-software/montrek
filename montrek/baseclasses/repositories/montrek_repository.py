@@ -483,7 +483,7 @@ class MontrekRepository:
         parent_link_classes: tuple[type[MontrekLinkABC], ...] = (),
         parent_link_reversed: tuple[bool] | list[bool] | None = None,
         agg_func: str = "json_agg",
-        link_satellite_filter: dict[str, Any] | None = None,
+        link_satellite_filter: dict[str, Any] | Q | None = None,
         cross_satellite_filters: tuple[CrossSatelliteFilter, ...] = (),
         separator: str = ";",
         value_date_scope_path: str = "",
@@ -501,9 +501,6 @@ class MontrekRepository:
             )
         rename_field_map = {} if rename_field_map is None else rename_field_map
         rename_field_map = cast(dict[str, str], rename_field_map)
-        link_satellite_filter = (
-            {} if link_satellite_filter is None else link_satellite_filter
-        )
 
         self.annotator.subquery_builder_to_annotations(
             fields,
@@ -551,7 +548,7 @@ class MontrekRepository:
         output_name: str,
         *,
         reversed_link: bool = False,
-        link_satellite_filter: dict[str, object] | None = None,
+        link_satellite_filter: dict[str, object] | Q | None = None,
     ):
         """Annotate output_name with a JSON array of paired objects, one per
         linked hub-value-date row, combining `fields` from `satellite_class`
