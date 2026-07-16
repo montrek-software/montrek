@@ -14,6 +14,7 @@ from baseclasses.tests.factories.montrek_factory_schemas import ValueDateListFac
 from baseclasses.utils import montrek_time
 from django.core.exceptions import PermissionDenied
 from django.db import models
+from django.db.models import Q
 from django.test import TestCase, TransactionTestCase
 from django.utils import timezone
 from freezegun import freeze_time
@@ -28,6 +29,7 @@ from montrek_example.repositories.hub_a_repository import (
     HubARepository5,
     HubARepository6,
     HubARepository7,
+    HubARepositoryLinkSatelliteQFilter,
     HubATSLinkedRepository,
 )
 from montrek_example.repositories.hub_b_repository import (
@@ -47,6 +49,8 @@ from montrek_example.repositories.hub_c_repository import (
     HubCRepositoryJsonAgg,
     HubCRepositoryLast,
     HubCRepositoryLastTS,
+    HubCRepositoryLinkSatelliteQFilter,
+    HubCRepositoryLinkSatelliteQOuterRefFilter,
     HubCRepositoryMean,
     HubCRepositoryOnlyStatic,
     HubCRepositoryPropertyFilter,
@@ -4462,6 +4466,14 @@ class TestTSSatelliteLinkSatelliteFilterCount(TestCase):
         result = self._annotate(link_satellite_filter={"field_tsc2_float__gt": 0})
         self.assertEqual(result.linked_count, 2)
 
+    def test_count_with_negated_q_filter(self):
+        # Q objects are accepted alongside plain dicts and support negation;
+        # covers the TS satellite path (_annotate_ts_satellite_dict).
+        self.sat_1.field_tsc2_float = 1.0
+        self.sat_1.save()
+        result = self._annotate(link_satellite_filter=~Q(field_tsc2_float=0.0))
+        self.assertEqual(result.linked_count, 1)
+
 
 class TestHubSatelliteFilter(TestCase):
     """Tests for hub_satellite_filter on add_satellite_fields_annotations.
@@ -4750,3 +4762,69 @@ class TestGetLinkNames(TestCase):
         ]:
             with self.subTest(f"Assert links for {repo}"):
                 self._assert_get_links(repo, expected_links)
+
+
+class TestLinkSatelliteFilterQObjects(TestCase):
+    """link_satellite_filter accepts Q objects in addition to plain filter
+    dicts. Q objects allow negated conditions (~Q), which cannot be expressed
+    as filter kwargs.
+    """
+
+    def test_negated_q_excludes_matching_linked_satellites(self):
+        # Multi-link annotation path (_link_hubs_and_get_subquery).
+        hub_c = me_factories.HubCFactory()
+        for name in ("first", "second", "EXCLUDED"):
+            sat_d = me_factories.SatD1Factory(field_d1_str=name)
+            hub_c.link_hub_c_hub_d.add(sat_d.hub_entity)
+
+        obj = HubCRepositoryLinkSatelliteQFilter().receive().get()
+        self.assertCountEqual(json.loads(obj.field_d1_str), ["first", "second"])
+
+    def test_negated_q_on_scalar_link_alias_path(self):
+        # Scalar (one-to-one) links resolve the satellite through a shared
+        # alias subquery (_build_scalar_alias) instead of the multi-link path.
+        sat_b_keep = me_factories.SatB1Factory(field_b1_str="kept")
+        sat_b_excluded = me_factories.SatB1Factory(field_b1_str="EXCLUDED")
+        hub_a_keep = me_factories.HubAFactory(hub_b=sat_b_keep.hub_entity)
+        hub_a_excluded = me_factories.HubAFactory(hub_b=sat_b_excluded.hub_entity)
+
+        queryset = HubARepositoryLinkSatelliteQFilter().receive()
+        self.assertEqual(queryset.get(hub_entity_id=hub_a_keep.pk).field_b1_str, "kept")
+        self.assertIsNone(queryset.get(hub_entity_id=hub_a_excluded.pk).field_b1_str)
+
+
+class TestLinkSatelliteFilterQOuterRef(TestCase):
+    """A link_satellite_filter Q object can reference an annotation of the
+    outer queryset via a double OuterRef (the satellite subquery is nested two
+    levels below the main queryset).
+
+    HubCRepositoryLinkSatelliteQOuterRefFilter excludes linked SatD1 rows whose
+    field_d1_int equals the outer row's field_tsc3_int annotation, coalescing
+    NULL to a sentinel so rows without an outer value keep all linked entries.
+    """
+
+    def _make_hub_c_with_linked_d_ints(self, field_tsc3_int):
+        sat_tsc3 = me_factories.SatTSC3Factory(
+            value_date="2024-01-15", field_tsc3_int=field_tsc3_int
+        )
+        hub_c = sat_tsc3.hub_value_date.hub
+        for d_int in (7, 8):
+            sat_d = me_factories.SatD1Factory(field_d1_int=d_int)
+            hub_c.link_hub_c_hub_d.add(sat_d.hub_entity)
+        return hub_c
+
+    def test_linked_satellite_matching_outer_annotation_is_excluded(self):
+        self._make_hub_c_with_linked_d_ints(field_tsc3_int=7)
+
+        obj = HubCRepositoryLinkSatelliteQOuterRefFilter().receive().get()
+        self.assertEqual(obj.field_tsc3_int, 7)
+        self.assertEqual(json.loads(obj.field_d1_int), [8])
+
+    def test_all_linked_satellites_kept_when_outer_annotation_is_null(self):
+        # Without the Coalesce in the repository's filter, comparing against
+        # NULL would evaluate to NULL and drop every linked row.
+        self._make_hub_c_with_linked_d_ints(field_tsc3_int=None)
+
+        obj = HubCRepositoryLinkSatelliteQOuterRefFilter().receive().get()
+        self.assertIsNone(obj.field_tsc3_int)
+        self.assertCountEqual(json.loads(obj.field_d1_int), [7, 8])
