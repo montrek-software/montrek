@@ -64,11 +64,15 @@ class PercentDecimalFormField(forms.DecimalField):
         return super().prepare_value(value)
 
 
+class PercentTextInput(forms.TextInput):
+    template_name = "widgets/percent_input.html"
+
+
 class PercentFloatFormField(forms.FloatField):
     """FloatField where users enter percent values (e.g. 5 for 5%)
     that are stored as absolute values (0.05)."""
 
-    widget = forms.TextInput
+    widget = PercentTextInput
 
     def to_python(self, value):
         if isinstance(value, str) and "," in value:
