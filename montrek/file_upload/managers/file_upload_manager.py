@@ -71,18 +71,18 @@ class FileUploadManagerABC(MontrekPipelineManagerABC):
 
     def _init_registry(self, file: File, **kwargs) -> int:
         file_name = Path(file.name).name
-        return self.registry_repository.std_create_object(
-            {
-                "file_name": file_name,
-                "file_type": file_name.split(".")[-1],
-                self.status_field_name: "pending",
-                self.message_field_name: "Upload is pending",
-                "link_file_upload_registry_file_upload_file": self._get_upload_file_hub(
-                    file
-                ),
-                "celery_task_id": "",
-            }
-        ).pk
+        init_registry_data = {
+            "file_name": file_name,
+            "file_type": file_name.split(".")[-1],
+            self.status_field_name: "pending",
+            self.message_field_name: "Upload is pending",
+            "link_file_upload_registry_file_upload_file": self._get_upload_file_hub(
+                file
+            ),
+            "celery_task_id": "",
+        }
+        init_registry_data.update(self.additional_registry_data())
+        return self.registry_repository.std_create_object(init_registry_data).pk
 
     def _build_processor(self, pipeline_data: dict[str, Any]) -> PipelineProcessorABC:
         self.file_path = os.path.join(settings.MEDIA_ROOT, self.registry.file)
