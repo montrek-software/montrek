@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, patch
 from process_pipeline.tests.mocks import (
     SESSION_DATA,
     ConcreteTestManager,
+    ConcreteTestManagerBroken,
     ConcreteTestManagerFailPostCheck,
     ConcreteTestManagerFailPreCheck,
     ConcreteTestManagerFailProcess,
@@ -177,3 +178,18 @@ class TestManagerDefaults(unittest.TestCase):
 
     def test_message_is_empty_on_init(self):
         self.assertEqual(self.manager.message, "")
+
+
+class TestBrokenProcess(unittest.TestCase):
+    def setUp(self):
+        self.manager = ConcreteTestManagerBroken(SESSION_DATA)
+        self.manager._load_registry()
+
+    def test_catch_broken_process(self):
+        self.manager.process()
+        update = self.manager._registry_updates[-1]
+        self.assertIn("process_status", update)
+        self.assertEqual(update["process_status"], "failed")
+        self.assertEqual(
+            update["process_message"], "ERROR (ValueError): Simulated Error"
+        )

@@ -27,6 +27,7 @@ class MontrekPipelineManagerABC(MontrekManager):
     # ---- configuration ----
     do_process_async: bool = True
     registry_session_key: str = "pipeline_registry_id"
+    caught_errors: tuple[type[Exception], ...] = (ValueError, KeyError, AttributeError)
 
     # ---- set by __init_subclass__ ----
     pipeline_task: MontrekPipelineTask
@@ -74,25 +75,33 @@ class MontrekPipelineManagerABC(MontrekManager):
     # ---- called by Celery task ----
 
     def process(self, pipeline_data: dict[str, Any] | None = None) -> bool:
-        if pipeline_data is None:
-            pipeline_data = {}
-        self._load_registry()
-        self.processor = self._build_processor_if_not_exists(pipeline_data)
-        self._update_registry(
-            **{
-                self.status_field_name: "in_progress",
-                self.message_field_name: "Processing in progress",
-            }
-        )
-        if not self._apply_step("pre_check"):
+        try:
+            if pipeline_data is None:
+                pipeline_data = {}
+            self._load_registry()
+            self.processor = self._build_processor_if_not_exists(pipeline_data)
+            self._update_registry(
+                **{
+                    self.status_field_name: "in_progress",
+                    self.message_field_name: "Processing in progress",
+                }
+            )
+            if not self._apply_step("pre_check"):
+                return False
+            if not self._apply_step("process"):
+                return False
+            if not self._apply_step("post_check"):
+                return False
+            self._on_pipeline_success()
+            self._set_status("processed", self.processor.message)
+            return True
+        except self.caught_errors as e:
+            message = f"ERROR ({type(e).__name__}): {e}"
+            if self.registry is not None:
+                self._set_status("failed", message)
+            else:
+                self.message = message
             return False
-        if not self._apply_step("process"):
-            return False
-        if not self._apply_step("post_check"):
-            return False
-        self._on_pipeline_success()
-        self._set_status("processed", self.processor.message)
-        return True
 
     def get_registry(self) -> Any:
         return self.registry

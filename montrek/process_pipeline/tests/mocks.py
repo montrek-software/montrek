@@ -49,6 +49,11 @@ class MockProcessorNoMail(MockProcessor):
     send_mail = False
 
 
+class MockProcessorBroken(MockProcessor):
+    def process(self) -> bool:
+        raise ValueError("Simulated Error")
+
+
 # ---- managers ----
 # ConcreteTestManager avoids all DB operations so pipeline logic can be unit-tested
 # without models or migrations.
@@ -92,3 +97,7 @@ class ConcreteTestManagerFailPostCheck(ConcreteTestManager):
 
 class ConcreteTestManagerNoMail(ConcreteTestManager):
     processor_class = MockProcessorNoMail
+
+
+class ConcreteTestManagerBroken(ConcreteTestManager):
+    processor_class = MockProcessorBroken
