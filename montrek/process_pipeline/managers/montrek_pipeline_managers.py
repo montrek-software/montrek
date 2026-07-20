@@ -95,8 +95,12 @@ class MontrekPipelineManagerABC(MontrekManager):
             self._on_pipeline_success()
             self._set_status("processed", self.processor.message)
             return True
-        except self.catched_errors as e:
-            self._set_status("failed", f"ERROR: {e}")
+        except self.caught_errors as e:
+            message = f"ERROR ({type(e).__name__}): {e}"
+            if self.registry is not None:
+                self._set_status("failed", message)
+            else:
+                self.message = message
             return False
 
     def get_registry(self) -> Any:
