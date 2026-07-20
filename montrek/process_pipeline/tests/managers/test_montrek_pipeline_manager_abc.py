@@ -190,4 +190,6 @@ class TestBrokenProcess(unittest.TestCase):
         update = self.manager._registry_updates[-1]
         self.assertIn("process_status", update)
         self.assertEqual(update["process_status"], "failed")
-        self.assertEqual(update["process_message"], "ERROR: Simulated Error")
+        self.assertEqual(
+            update["process_message"], "ERROR (ValueError): Simulated Error"
+        )
