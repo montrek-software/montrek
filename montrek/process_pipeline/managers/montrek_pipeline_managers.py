@@ -27,7 +27,7 @@ class MontrekPipelineManagerABC(MontrekManager):
     # ---- configuration ----
     do_process_async: bool = True
     registry_session_key: str = "pipeline_registry_id"
-    catched_errors: tuple[type[Exception], ...] = (ValueError, KeyError, AttributeError)
+    caught_errors: tuple[type[Exception], ...] = (ValueError, KeyError, AttributeError)
 
     # ---- set by __init_subclass__ ----
     pipeline_task: MontrekPipelineTask
