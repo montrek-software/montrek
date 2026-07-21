@@ -1100,7 +1100,9 @@ class TestMontrekCreateObjectDataFrame(TestCase):
         self.assertEqual(test_query.count(), 3)
         self.assertEqual(me_models.HubC.objects.count(), 2)
         self.assertEqual(me_models.SatC1.objects.count(), 2)
-        self.assertEqual(test_query[0].field_tsc2_float, 5.0)
+        self.assertEqual(
+            test_query.get(value_date=datetime.date(2024, 8, 1)).field_tsc2_float, 5.0
+        )
 
     def test_create_with_nan_in_data_frame(self):
         repository = HubARepository(session_data={"user_id": self.user.id})
