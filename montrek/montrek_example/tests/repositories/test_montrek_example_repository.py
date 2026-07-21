@@ -622,7 +622,6 @@ class TestMontrekCreateObject(TestCase):
     def test_create_dont_overwrite_existing_data_in_satellite(self):
         existing_sat = me_factories.SatA1Factory(field_a1_str="Hallo", field_a1_int=5)
         repo = HubARepository({"user_id": self.user.id})
-        # self.assertEqual(repo.receive().count(), 1)
         repo.create_by_dict(
             {"field_a1_int": 6, "hub_entity_id": existing_sat.hub_entity.id}
         )
