@@ -3637,6 +3637,21 @@ class TestObjectToDict(TestCase):
         self.assertEqual(test_dict["field_b1_str"], "TestB")
         self.assertEqual(test_dict["field_b1_date"], montrek_time(2024, 2, 5).date())
 
+    def test_object_to_dict_with_none(self):
+        me_factories.SatA1Factory.create(field_a1_str="TestA", field_a1_int=1)
+        repo = HubARepository()
+        repo.store_in_view_model()
+        query = repo.receive().first()
+        test_dict = repo.object_to_dict(query)
+        expected_keys = [
+            "hub_entity_id",
+            "created_at",
+            "comment",
+            "field_a1_int",
+            "field_a1_str",
+        ]
+        self.assertEqual(list(test_dict.keys()), expected_keys)
+
 
 class TestRepositoryViewModel(TestCase):
     def setUp(self) -> None:
