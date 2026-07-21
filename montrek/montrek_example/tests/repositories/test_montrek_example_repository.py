@@ -622,12 +622,34 @@ class TestMontrekCreateObject(TestCase):
     def test_create_dont_overwrite_existing_data_in_satellite(self):
         existing_sat = me_factories.SatA1Factory(field_a1_str="Hallo", field_a1_int=5)
         repo = HubARepository({"user_id": self.user.id})
+        # self.assertEqual(repo.receive().count(), 1)
         repo.create_by_dict(
             {"field_a1_int": 6, "hub_entity_id": existing_sat.hub_entity.id}
         )
         self.assertEqual(repo.receive().count(), 1)
         test_element = repo.receive().first()
         self.assertEqual(test_element.field_a1_int, 6)
+        self.assertEqual(test_element.field_a1_str, "Hallo")
+
+    def test_create_explicitely_overwrite_existing_data_in_satellite(self):
+        existing_sat = me_factories.SatA1Factory.create(
+            field_a1_str="Hallo", field_a1_int=5
+        )
+        me_factories.SatA2Factory(
+            field_a2_float=2.5, hub_entity=existing_sat.hub_entity
+        )
+        repo = HubARepository({"user_id": self.user.id})
+        repo.store_in_view_model()
+        self.assertEqual(repo.receive().count(), 1)
+        repo.create_by_dict(
+            {
+                "field_a2_float": None,
+                "hub_entity_id": existing_sat.hub_entity.id,
+            }
+        )
+        self.assertEqual(repo.receive().count(), 1)
+        test_element = repo.receive().first()
+        self.assertIsNone(test_element.field_a2_float)
         self.assertEqual(test_element.field_a1_str, "Hallo")
 
 

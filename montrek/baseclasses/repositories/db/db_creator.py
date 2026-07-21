@@ -56,8 +56,13 @@ class DbCreator:
 
     def _create_static_satellites(self):
         for sat_class in self.db_staller.get_static_satellite_classes():
+            existing_sat = self._get_previous_static_satellite(sat_class)
             sat = self.satellite_creator.create_static_satellite(
-                sat_class, self.data, self.creation_date, self.hub
+                sat_class,
+                self.data,
+                self.creation_date,
+                self.hub,
+                existing_sat=existing_sat,
             )
             if sat is None:
                 continue
@@ -65,12 +70,55 @@ class DbCreator:
 
     def _create_ts_satellites(self):
         for sat_class in self.db_staller.get_ts_satellite_classes():
+            existing_sat = self._get_previous_ts_satellite(sat_class)
             sat = self.satellite_creator.create_ts_satellite(
-                sat_class, self.data, self.creation_date, self.hub_value_date
+                sat_class,
+                self.data,
+                self.creation_date,
+                self.hub_value_date,
+                existing_sat=existing_sat,
             )
             if sat is None:
                 continue
             self._process_ts_satellite(sat)
+
+    def _get_previous_static_satellite(
+        self, sat_class: type[MontrekSatelliteABC]
+    ) -> MontrekSatelliteABC | None:
+        # Source of truth for fields not explicitly provided in this update.
+        if self.hub is None or self.hub.pk is None:
+            return None
+        if self.cache is not None:
+            return self.cache.get_cached_satellite_by_hub(sat_class, self.hub.id)
+        return (
+            sat_class.objects.filter(
+                hub_entity=self.hub,
+                state_date_start__lte=self.creation_date,
+                state_date_end__gt=self.creation_date,
+            )
+            .order_by("-state_date_start")
+            .first()
+        )
+
+    def _get_previous_ts_satellite(
+        self, sat_class: type[MontrekSatelliteABC]
+    ) -> MontrekSatelliteABC | None:
+        # Source of truth for fields not explicitly provided in this update.
+        if self.hub_value_date is None or self.hub_value_date.pk is None:
+            return None
+        if self.cache is not None:
+            return self.cache.get_cached_satellite_by_hub_value_date(
+                sat_class, self.hub_value_date.id
+            )
+        return (
+            sat_class.objects.filter(
+                hub_value_date=self.hub_value_date,
+                state_date_start__lte=self.creation_date,
+                state_date_end__gt=self.creation_date,
+            )
+            .order_by("-state_date_start")
+            .first()
+        )
 
     def _create_links(self):
         link_data = self._get_link_data()
