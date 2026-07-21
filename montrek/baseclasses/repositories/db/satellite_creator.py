@@ -13,9 +13,10 @@ class SatelliteCreator:
         creation_date: datetime.date,
         hub: MontrekHubABC | None = None,
         existing_sat: MontrekSatelliteABC | None = None,
+        strict_none_semantics: bool = False,
     ) -> MontrekSatelliteABC | None:
         sat_data = self.get_satellite_data(sat_class, data)
-        if self.is_sat_data_empty(sat_data):
+        if self.is_sat_data_empty(sat_data, strict_none_semantics):
             return None
         if existing_sat is not None:
             sat_data = self._fill_missing_fields_from_existing(
@@ -33,9 +34,10 @@ class SatelliteCreator:
         creation_date: datetime.date,
         hub_value_date: HubValueDateProtocol | None = None,
         existing_sat: MontrekSatelliteABC | None = None,
+        strict_none_semantics: bool = False,
     ) -> MontrekSatelliteABC | None:
         sat_data = self.get_satellite_data(sat_class, data)
-        if self.is_sat_data_empty(sat_data):
+        if self.is_sat_data_empty(sat_data, strict_none_semantics):
             return None
         if existing_sat is not None:
             sat_data = self._fill_missing_fields_from_existing(
@@ -74,9 +76,19 @@ class SatelliteCreator:
             if key in sat_class.get_value_field_names() + ["created_by_id"]
         }
 
-    def is_sat_data_empty(self, data: DataDict) -> bool:
+    def is_sat_data_empty(
+        self, data: DataDict, strict_none_semantics: bool = False
+    ) -> bool:
         data = data.copy()
         data.pop("comment", None)
         data.pop("created_by_id", None)
         data.pop("value_date", None)
+        if strict_none_semantics:
+            # Caller (e.g. a single explicit create_by_dict update) only ever
+            # includes keys it actually means to set, so an explicit None is a
+            # real "clear this field" instruction and must not be treated as
+            # "nothing to do here". Batch/DataFrame rows can't make that
+            # distinction (a NaN cell may just mean "not applicable to this
+            # row"), so they keep the value-based emptiness check below.
+            return len(data) == 0
         return all(dt is None for dt in data.values())

@@ -107,7 +107,9 @@ class MontrekRepository:
         self._debug_logging("Start create by dict")
         self._raise_for_anonymous_user()
         db_staller = DbStaller(self.annotator)
-        db_creator = DbCreator(db_staller, self.session_user_id)
+        db_creator = DbCreator(
+            db_staller, self.session_user_id, strict_none_semantics=True
+        )
         db_creator.create(data)
         db_writer = DbWriter(db_staller)
         db_writer.write()

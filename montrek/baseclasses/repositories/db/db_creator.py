@@ -23,10 +23,20 @@ logger = logging.getLogger(__name__)
 
 
 class DbCreator:
-    def __init__(self, db_staller: DbStaller, user_id: int):
+    def __init__(
+        self,
+        db_staller: DbStaller,
+        user_id: int,
+        strict_none_semantics: bool = False,
+    ):
         self.db_staller = db_staller
         self.data: DataDict = {}
         self.user_id = user_id
+        # Single explicit updates (create_by_dict) only ever include keys they
+        # mean to set, so an explicit None must clear the field. Batch/DataFrame
+        # rows can't make that distinction (a NaN cell may just be "not
+        # applicable to this row"), so they keep the old value-based behavior.
+        self.strict_none_semantics = strict_none_semantics
         self.hub: MontrekHubABC | None = None
         self.hub_value_date: HubValueDate | None = None
         self.value_date_list: ValueDateList | None = None
@@ -63,6 +73,7 @@ class DbCreator:
                 self.creation_date,
                 self.hub,
                 existing_sat=existing_sat,
+                strict_none_semantics=self.strict_none_semantics,
             )
             if sat is None:
                 continue
@@ -77,6 +88,7 @@ class DbCreator:
                 self.creation_date,
                 self.hub_value_date,
                 existing_sat=existing_sat,
+                strict_none_semantics=self.strict_none_semantics,
             )
             if sat is None:
                 continue
