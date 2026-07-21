@@ -296,8 +296,6 @@ class DbCreatorCache:
                 value_date_list__value_date__isnull=True,
             )
             for candidate in candidate_hvds:
-                if candidate.value_date_list.value_date is not None:
-                    continue
                 # Non-timeseries: key it under (hub_id, None) to preserve prior behavior
                 derived_hvds[HubValueDateKey(candidate.hub_id, None)] = candidate
 
