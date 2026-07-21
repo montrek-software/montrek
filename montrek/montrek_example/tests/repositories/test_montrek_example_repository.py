@@ -631,7 +631,7 @@ class TestMontrekCreateObject(TestCase):
         self.assertEqual(test_element.field_a1_int, 6)
         self.assertEqual(test_element.field_a1_str, "Hallo")
 
-    def test_create_explicitely_overwrite_existing_data_in_satellite(self):
+    def test_create_explicitly_overwrite_existing_data_in_satellite(self):
         existing_sat = me_factories.SatA1Factory.create(
             field_a1_str="Hallo", field_a1_int=5
         )
