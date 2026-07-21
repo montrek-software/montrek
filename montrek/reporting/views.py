@@ -139,6 +139,7 @@ class MontrekReportFieldEditView(
 
     def post(self, request, *args, **kwargs):
         edit_data = self.manager.get_object_from_pk_as_dict(self.session_data["pk"])
+        edit_data = {k: v for k, v in edit_data.items() if v is not None}
         form = self.form_class(self.request.POST, repository=self.manager.repository)
         action = request.POST.get("action")
         field_name = request.POST.get("field")

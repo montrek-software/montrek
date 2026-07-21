@@ -3,7 +3,8 @@ import logging
 from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum
-from typing import Iterable, cast
+from typing import cast
+from collections.abc import Iterable
 
 from baseclasses.models import MontrekLinkABC, MontrekSatelliteABC, ValueDateList
 from baseclasses.repositories.db.db_staller import DbStallerProtocol
@@ -88,6 +89,9 @@ class DbCreatorCache:
         self.cached_hub_value_dates: THubValueDateCacheType = {}
         self.cached_satellites: HashSatMap = {}
         self.cached_satellites_by_hub: HubSatMap = {}
+        self.cached_satellites_by_hvd: dict[
+            tuple[type[MontrekSatelliteABC], int], MontrekSatelliteABC
+        ] = {}
         self.cached_links: TLinkCacheType = {}
 
     # -------------------------
@@ -260,6 +264,7 @@ class DbCreatorCache:
         cache: dict[SatelliteKey, MontrekSatelliteABC] = {}
         derived_hub_ids: set[int] = set()
         derived_hvds: dict[HubValueDateKey, HubValueDateProtocol] = {}
+        static_hub_ids_needing_hvd: set[int] = set()
 
         for sat_class, hashes in sat_hashes.items():
             if not hashes:
@@ -281,9 +286,18 @@ class DbCreatorCache:
                 else:
                     hub = sat.hub_entity
                     derived_hub_ids.add(hub.id)
-                    # Non-timeseries: key it under (hub_id, None) to preserve prior behavior
-                    hvd = hub.hub_value_date
-                    derived_hvds[HubValueDateKey(hub.id, None)] = hvd
+                    static_hub_ids_needing_hvd.add(hub.id)
+
+        # Batch-fetch the "static" (value_date=None) hub_value_date for every hub
+        # discovered above, instead of issuing one query per matched satellite.
+        if static_hub_ids_needing_hvd:
+            candidate_hvds = self.db_staller.hub_value_date_class.objects.filter(
+                hub_id__in=static_hub_ids_needing_hvd,
+                value_date_list__value_date__isnull=True,
+            )
+            for candidate in candidate_hvds:
+                # Non-timeseries: key it under (hub_id, None) to preserve prior behavior
+                derived_hvds[HubValueDateKey(candidate.hub_id, None)] = candidate
 
         # Convert to the original HashSatMap shape: (class, hash) tuple keys
         return (
@@ -299,24 +313,32 @@ class DbCreatorCache:
         self, *, all_hub_ids: set[int], sat_hashes: SatHashesDict
     ) -> HashSatMap:
         """
-        Second pass: fetch additional satellites for those hubs, excluding the hashes already computed.
-        Populates only satellites; does not mutate hub/hvd caches.
+        Second pass: fetch the currently active satellites for those hubs.
+
+        Unlike the hash-based pass, this is not restricted to already-known hashes -
+        it also populates cached_satellites_by_hub / cached_satellites_by_hvd for
+        satellites that were already found by hash, so that satellite defaulting
+        (carrying over fields missing from partial updates) can look up "the current
+        satellite for this hub/hub_value_date" regardless of whether the incoming
+        data's identifier fields happened to match.
         """
         cache: dict[SatelliteKey, MontrekSatelliteABC] = {}
 
-        for sat_class, hashes in sat_hashes.items():
+        for sat_class in sat_hashes:
             sat_is_timeseries = sat_class.is_timeseries
             hub_filter = (
                 "hub_value_date__hub_id" if sat_is_timeseries else "hub_entity_id"
             )
-            extra_filter = Q(**{f"{hub_filter}__in": all_hub_ids}) & ~Q(
-                hash_identifier__in=hashes or []
-            )
+            extra_filter = Q(**{f"{hub_filter}__in": all_hub_ids})
             qs = self._filter_satellites(sat_class=sat_class, extra_filter=extra_filter)
 
             for sat in qs:
                 cache[SatelliteKey(sat_class, sat.hash_identifier)] = sat
-                if not sat_is_timeseries:
+                if sat_is_timeseries:
+                    self.cached_satellites_by_hvd[
+                        (sat_class, sat.hub_value_date.id)
+                    ] = sat
+                else:
                     self.cached_satellites_by_hub[(sat_class, sat.hub_entity_id)] = sat
 
         return cast(
@@ -446,6 +468,11 @@ class DbCreatorCache:
         self, satellite_class: type[MontrekSatelliteABC], hub_id: int
     ) -> MontrekSatelliteABC | None:
         return self.cached_satellites_by_hub.get((satellite_class, hub_id))
+
+    def get_cached_satellite_by_hub_value_date(
+        self, satellite_class: type[MontrekSatelliteABC], hub_value_date_id: int
+    ) -> MontrekSatelliteABC | None:
+        return self.cached_satellites_by_hvd.get((satellite_class, hub_value_date_id))
 
     def get_cached_hub(self, hub_entity_id: int) -> MontrekHubProtocol | None:
         return self.cached_hubs.get(hub_entity_id)

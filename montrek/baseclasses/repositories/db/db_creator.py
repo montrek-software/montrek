@@ -23,10 +23,20 @@ logger = logging.getLogger(__name__)
 
 
 class DbCreator:
-    def __init__(self, db_staller: DbStaller, user_id: int):
+    def __init__(
+        self,
+        db_staller: DbStaller,
+        user_id: int,
+        strict_none_semantics: bool = False,
+    ):
         self.db_staller = db_staller
         self.data: DataDict = {}
         self.user_id = user_id
+        # Single explicit updates (create_by_dict) only ever include keys they
+        # mean to set, so an explicit None must clear the field. Batch/DataFrame
+        # rows can't make that distinction (a NaN cell may just be "not
+        # applicable to this row"), so they keep the old value-based behavior.
+        self.strict_none_semantics = strict_none_semantics
         self.hub: MontrekHubABC | None = None
         self.hub_value_date: HubValueDate | None = None
         self.value_date_list: ValueDateList | None = None
@@ -56,8 +66,14 @@ class DbCreator:
 
     def _create_static_satellites(self):
         for sat_class in self.db_staller.get_static_satellite_classes():
+            existing_sat = self._get_previous_static_satellite(sat_class)
             sat = self.satellite_creator.create_static_satellite(
-                sat_class, self.data, self.creation_date, self.hub
+                sat_class,
+                self.data,
+                self.creation_date,
+                self.hub,
+                existing_sat=existing_sat,
+                strict_none_semantics=self.strict_none_semantics,
             )
             if sat is None:
                 continue
@@ -65,12 +81,56 @@ class DbCreator:
 
     def _create_ts_satellites(self):
         for sat_class in self.db_staller.get_ts_satellite_classes():
+            existing_sat = self._get_previous_ts_satellite(sat_class)
             sat = self.satellite_creator.create_ts_satellite(
-                sat_class, self.data, self.creation_date, self.hub_value_date
+                sat_class,
+                self.data,
+                self.creation_date,
+                self.hub_value_date,
+                existing_sat=existing_sat,
+                strict_none_semantics=self.strict_none_semantics,
             )
             if sat is None:
                 continue
             self._process_ts_satellite(sat)
+
+    def _get_previous_static_satellite(
+        self, sat_class: type[MontrekSatelliteABC]
+    ) -> MontrekSatelliteABC | None:
+        # Source of truth for fields not explicitly provided in this update.
+        if self.hub is None or self.hub.pk is None:
+            return None
+        if self.cache is not None:
+            return self.cache.get_cached_satellite_by_hub(sat_class, self.hub.id)
+        return (
+            sat_class.objects.filter(
+                hub_entity=self.hub,
+                state_date_start__lte=self.creation_date,
+                state_date_end__gt=self.creation_date,
+            )
+            .order_by("-state_date_start")
+            .first()
+        )
+
+    def _get_previous_ts_satellite(
+        self, sat_class: type[MontrekSatelliteABC]
+    ) -> MontrekSatelliteABC | None:
+        # Source of truth for fields not explicitly provided in this update.
+        if self.hub_value_date is None or self.hub_value_date.pk is None:
+            return None
+        if self.cache is not None:
+            return self.cache.get_cached_satellite_by_hub_value_date(
+                sat_class, self.hub_value_date.id
+            )
+        return (
+            sat_class.objects.filter(
+                hub_value_date=self.hub_value_date,
+                state_date_start__lte=self.creation_date,
+                state_date_end__gt=self.creation_date,
+            )
+            .order_by("-state_date_start")
+            .first()
+        )
 
     def _create_links(self):
         link_data = self._get_link_data()
