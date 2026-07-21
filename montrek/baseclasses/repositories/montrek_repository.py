@@ -348,6 +348,7 @@ class MontrekRepository:
 
     def object_to_dict(self, obj: HubValueDate) -> dict[str, Any]:
         object_dict = {field: getattr(obj, field) for field in self.get_all_fields()}
+        object_dict = {k: v for k, v in object_dict.items() if v is not None}
         return object_dict
 
     def std_satellite_fields(self):
