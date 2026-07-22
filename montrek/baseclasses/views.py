@@ -880,10 +880,9 @@ class MontrekInlineFieldEditView(
 
     Pair with an ``InlineEditTableElement`` pointing at this view:
 
-    - GET replaces the row with a copy that keeps every other column's value
-      visible read-only, plus one trailing cell holding the field editor and
-      save/cancel buttons — so the row's context (other columns) isn't lost
-      while editing,
+    - GET replaces the clicked data row (``hx-swap="outerHTML"``) with two rows: a
+      freshly rendered copy of the data row, followed by a full-width editor row
+      directly below it containing the field editor and save/cancel buttons,
     - POST with action "save" validates the field, persists it through the
       manager's repository and returns the plain re-rendered data row,
     - POST with action "cancel" returns the unchanged data row.
