@@ -51,6 +51,11 @@ from baseclasses.utils import TableMetaSessionData, get_content_type
 
 logger = logging.getLogger(__name__)
 
+# Response header set on a successful inline-field-edit save/cancel; the inline
+# editor row (see tables/partials/inline_edit_row.html) reads it to know it may
+# remove itself once the re-rendered data row has been swapped in above it.
+INLINE_EDIT_DONE_HEADER = "HX-Inline-Edit-Done"
+
 
 @require_safe
 def redirect_home(request):
@@ -814,8 +819,8 @@ class MontrekHtmxRowRenderMixin:
     def get_row_filter_kwargs(self) -> dict[str, Any]:
         return {"pk": self.session_data.get("pk")}
 
-    def render_htmx_row(self) -> HttpResponse | None:
-        """Return the re-rendered ``<tr>``, or None if the row is gone."""
+    def get_htmx_row_object(self) -> Any | None:
+        """Fetch the row this view acts on, or None if it's gone."""
         table_manager = self.row_table_manager
         full_table = table_manager.get_full_table()
         if not hasattr(full_table, "filter"):
@@ -823,10 +828,14 @@ class MontrekHtmxRowRenderMixin:
                 f"{table_manager.__class__.__name__}.get_full_table() must return "
                 "a QuerySet to support HTMX row rendering"
             )
-        row = full_table.filter(**self.get_row_filter_kwargs()).first()
+        return full_table.filter(**self.get_row_filter_kwargs()).first()
+
+    def render_htmx_row(self) -> HttpResponse | None:
+        """Return the re-rendered ``<tr>``, or None if the row is gone."""
+        row = self.get_htmx_row_object()
         if row is None:
             return None
-        response = HttpResponse(table_manager.render_single_row(row))
+        response = HttpResponse(self.row_table_manager.render_single_row(row))
         if self.hx_trigger_event:
             response["HX-Trigger"] = self.hx_trigger_event
         return response
@@ -871,10 +880,11 @@ class MontrekInlineFieldEditView(
 
     Pair with an ``InlineEditTableElement`` pointing at this view:
 
-    - GET returns an edit row (label, one form field, save/cancel buttons)
-      that replaces the data row in place,
+    - GET replaces the clicked data row (``hx-swap="outerHTML"``) with two rows: a
+      freshly rendered copy of the data row, followed by a full-width editor row
+      directly below it containing the field editor and save/cancel buttons,
     - POST with action "save" validates the field, persists it through the
-      manager's repository and returns the re-rendered data row,
+      manager's repository and returns the plain re-rendered data row,
     - POST with action "cancel" returns the unchanged data row.
 
     Configure ``field_name`` (the repository field to edit) alongside the
@@ -901,7 +911,7 @@ class MontrekInlineFieldEditView(
         if not request.headers.get("HX-Request"):
             return HttpResponseRedirect(self.get_fallback_url())
         if request.POST.get("action") == "cancel":
-            return self.htmx_row_response()
+            return self._row_done_response()
         edit_data = self.get_edit_data()
         form = self.form_class(
             request.POST,
@@ -915,12 +925,23 @@ class MontrekInlineFieldEditView(
             )
         except ValidationError as error:
             return self.render_edit_row(
-                request, form, error_message=", ".join(error.messages)
+                request,
+                form,
+                error_message=", ".join(error.messages),
+                include_data_row=False,
             )
         edit_data[self.field_name] = field_value
         self.save_field(edit_data)
         self.show_messages()
-        return self.htmx_row_response()
+        return self._row_done_response()
+
+    def _row_done_response(self) -> HttpResponse:
+        """The re-rendered data row plus a marker header telling the inline
+        editor row (which triggered this request) to remove itself once the
+        data row above it has been swapped in — see ``inline_edit_row.html``."""
+        response = self.htmx_row_response()
+        response[INLINE_EDIT_DONE_HEADER] = "1"
+        return response
 
     def get_edit_data(self) -> dict:
         return self.manager.get_object_from_pk_as_dict(self.session_data["pk"])
@@ -931,19 +952,46 @@ class MontrekInlineFieldEditView(
     def get_fallback_url(self) -> str:
         return self.session_data.get("http_referer") or reverse(settings.HOME_URL)
 
+    def get_display_cells(self) -> list:
+        row = self.get_htmx_row_object()
+        if row is None:
+            return []
+        return [
+            table_element.get_display_field(row)
+            for table_element in self.row_table_manager.table_elements
+        ]
+
+    def get_edit_row_id(self) -> str:
+        return f"inline-edit-{self.session_data['pk']}"
+
     def render_edit_row(
-        self, request, form, error_message: str | None = None
+        self,
+        request,
+        form,
+        error_message: str | None = None,
+        include_data_row: bool = True,
     ) -> HttpResponse:
-        return render(
+        edit_row_id = self.get_edit_row_id()
+        response = render(
             request,
             self.template_name,
             {
+                "cells": self.get_display_cells() if include_data_row else [],
+                "include_data_row": include_data_row,
+                "colspan": len(self.row_table_manager.table_elements),
+                "edit_row_id": edit_row_id,
                 "field": form[self.field_name],
                 "post_url": self.session_data["request_path"],
-                "colspan": len(self.row_table_manager.table_elements),
                 "error_message": error_message,
             },
         )
+        if not include_data_row:
+            # Validation re-render: the buttons normally target the data row
+            # above (``previous tr``); retarget so the editor row replaces
+            # itself in place and the data row is left untouched.
+            response["HX-Retarget"] = f"#{edit_row_id}"
+            response["HX-Reswap"] = "outerHTML"
+        return response
 
 
 class MontrekDownloadView(MontrekViewMixin, View):

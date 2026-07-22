@@ -400,20 +400,32 @@ class HtmxLinkTableElement(LinkTableElement):
             "hx_target": self.hx_target,
             "hx_swap": self.hx_swap,
         }
+        context.update(self.get_extra_link_context(obj))
         return render_to_string("tables/elements/htmx_link.html", context)
+
+    def get_extra_link_context(self, _obj: Any) -> dict[str, Any]:
+        return {}
 
 
 @dataclass
 class InlineEditTableElement(HtmxLinkTableElement):
-    """Pencil icon that swaps its row for an inline single-field edit form.
+    """Pencil icon that opens an inline single-field edit form below its row.
 
-    Point ``url`` at a ``MontrekInlineFieldEditView`` subclass: it returns the
-    edit row on GET and the re-rendered data row after save/cancel, so the
-    whole edit happens in place. The plain ``href`` fallback redirects
-    non-HTMX visitors to the view's ``get_fallback_url()``.
+    Point ``url`` at a ``MontrekInlineFieldEditView`` subclass: GET keeps the
+    data row and adds an editor row directly below it, save/cancel swap the
+    fresh data row back and the editor row removes itself. The plain ``href``
+    fallback redirects non-HTMX visitors to the view's ``get_fallback_url()``.
     """
 
     icon: str = field(default="pencil-square")
+
+    def get_extra_link_context(self, obj: Any) -> dict[str, Any]:
+        # The editor row this trigger opens is ``inline-edit-{pk}`` (see
+        # MontrekInlineFieldEditView.get_edit_row_id). Passing that id lets the
+        # trigger remove an already-open editor for the same row before opening
+        # a fresh one, so re-clicking the pencil can't orphan a second editor.
+        pk = self.get_url_kwargs(obj).get("pk")
+        return {"remove_editor_id": f"inline-edit-{pk}"}
 
 
 @dataclass

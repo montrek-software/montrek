@@ -582,6 +582,10 @@ class MontrekInlineFieldEditViewTestCase(MontrekViewTestCase):
 
     update_field = ""
     updated_content = ""
+    # Optional: a value that fails the field's validation, used to cover the
+    # validation-error path (editor stays open, no done-header). Left as None
+    # by subclasses whose field can't fail validation (e.g. a plain TextField).
+    invalid_content = None
 
     def _is_base_test_class(self) -> bool:
         return self.__class__.__name__ == "MontrekInlineFieldEditViewTestCase"
@@ -621,6 +625,18 @@ class MontrekInlineFieldEditViewTestCase(MontrekViewTestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 302)
 
+    def test_get_open_keeps_data_row_and_adds_editor_row(self):
+        if self._is_base_test_class():
+            return
+        # The data row is kept (its cells re-rendered) and the editor row is
+        # added below it with the id the pencil trigger targets for cleanup.
+        soup = BeautifulSoup(self.response.content.decode(), "html.parser")
+        rows = soup.find_all("tr")
+        self.assertGreaterEqual(len(rows), 2)
+        self.assertTrue(
+            any(row.get("id", "").startswith("inline-edit-") for row in rows)
+        )
+
     def test_post_save_updates_field_and_returns_row(self):
         if self._is_base_test_class():
             return
@@ -629,6 +645,9 @@ class MontrekInlineFieldEditViewTestCase(MontrekViewTestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertIn("<tr", response.content.decode())
+        # The done-header lets the editor row remove itself after the data row
+        # above it has been swapped in.
+        self.assertEqual(response["HX-Inline-Edit-Done"], "1")
         test_object = self._get_object()
         self.assertEqual(getattr(test_object, self.update_field), self.updated_content)
         self.additional_assertions(test_object)
@@ -641,8 +660,27 @@ class MontrekInlineFieldEditViewTestCase(MontrekViewTestCase):
             self.url, self.post_data("cancel"), HTTP_HX_REQUEST="true"
         )
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["HX-Inline-Edit-Done"], "1")
         test_object = self._get_object()
         self.assertEqual(getattr(test_object, self.update_field), original_value)
+
+    def test_post_invalid_reopens_editor_without_done_header(self):
+        if self._is_base_test_class() or self.invalid_content is None:
+            return
+        original_value = getattr(self._get_object(), self.update_field)
+        response = self.client.post(
+            self.url,
+            {"action": "save", self.update_field: self.invalid_content},
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertEqual(response.status_code, 200)
+        # No done-header: the editor row must stay open, not remove itself.
+        self.assertNotIn("HX-Inline-Edit-Done", response)
+        # Retargeted onto the editor row so the data row above is untouched.
+        self.assertTrue(response["HX-Retarget"].startswith("#inline-edit-"))
+        self.assertEqual(response["HX-Reswap"], "outerHTML")
+        # The invalid value is not persisted.
+        self.assertEqual(getattr(self._get_object(), self.update_field), original_value)
 
     def test_post_without_htmx_redirects(self):
         if self._is_base_test_class():
