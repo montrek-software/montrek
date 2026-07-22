@@ -15,7 +15,7 @@ tables/base_table.html), so the buttons collect the editor's inputs via hx-inclu
 {% if include_data_row %}
   {% include "tables/partials/table_row.html" with cells=cells %}
 {% endif %}
-<tr>
+<tr id="{{ edit_row_id }}">
   <td colspan="{{ colspan }}">
     {% csrf_token %}
     {% if error_message %}<div class="alert alert-danger p-1 mb-1">{{ error_message }}</div>{% endif %}

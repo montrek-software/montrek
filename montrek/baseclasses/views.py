@@ -962,6 +962,9 @@ class MontrekInlineFieldEditView(
             for table_element in self.row_table_manager.table_elements
         ]
 
+    def get_edit_row_id(self) -> str:
+        return f"inline-edit-{self.session_data['pk']}"
+
     def render_edit_row(
         self,
         request,
@@ -969,6 +972,7 @@ class MontrekInlineFieldEditView(
         error_message: str | None = None,
         include_data_row: bool = True,
     ) -> HttpResponse:
+        edit_row_id = self.get_edit_row_id()
         response = render(
             request,
             self.template_name,
@@ -976,6 +980,7 @@ class MontrekInlineFieldEditView(
                 "cells": self.get_display_cells() if include_data_row else [],
                 "include_data_row": include_data_row,
                 "colspan": len(self.row_table_manager.table_elements),
+                "edit_row_id": edit_row_id,
                 "field": form[self.field_name],
                 "post_url": self.session_data["request_path"],
                 "error_message": error_message,
@@ -985,7 +990,7 @@ class MontrekInlineFieldEditView(
             # Validation re-render: the buttons normally target the data row
             # above (``previous tr``); retarget so the editor row replaces
             # itself in place and the data row is left untouched.
-            response["HX-Retarget"] = "closest tr"
+            response["HX-Retarget"] = f"#{edit_row_id}"
             response["HX-Reswap"] = "outerHTML"
         return response
 
