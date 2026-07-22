@@ -412,6 +412,8 @@ class TestMontrekExampleAInlineFieldEditView(MontrekInlineFieldEditViewTestCase)
     view_class = me_views.MontrekExampleAInlineFieldEdit
     update_field = "field_a2_str"
     updated_content = "edited inline"
+    # field_a2_str is a CharField(max_length=50); 51 chars fails validation.
+    invalid_content = "x" * 51
 
     def build_factories(self):
         self.sat_a1 = me_factories.SatA1Factory(field_a1_str="test", field_a1_int=12)

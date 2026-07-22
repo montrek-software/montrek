@@ -3,7 +3,8 @@
    href="{{ url }}"
    hx-get="{{ url }}"
    hx-swap="{{ hx_swap }}"
-   {% if hx_target %}hx-target="{{ hx_target }}"{% endif %}>
+   {% if hx_target %}hx-target="{{ hx_target }}"{% endif %}
+   {% if remove_editor_id %}hx-on:click="var _e=document.getElementById('{{ remove_editor_id }}');if(_e){_e.remove();}"{% endif %}>
   <span class="bi bi-{{ icon }} mt-prominent-icon"></span>
   <span class="spinner-border spinner-border-sm htmx-indicator" role="status">
     <span class="visually-hidden">Loading...</span>
