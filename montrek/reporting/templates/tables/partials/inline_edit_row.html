@@ -1,8 +1,20 @@
 {% comment %}
-Inline single-field editor swapped in place of a data row (MontrekInlineFieldEditView).
+Inline single-field editor (MontrekInlineFieldEditView). The actual data row is
+kept intact and the editor is shown in a full-width row directly BELOW it.
+
+On open (GET) the clicked row is replaced (hx-swap outerHTML) with the
+re-rendered data row plus this editor row. Save/Cancel target the data row above
+(``previous tr``) to swap in the fresh row, and this editor row removes itself
+via hx-on::after-request once the "HX-Inline-Edit-Done" response header is seen.
+On a validation error the server retargets the response to this row (see
+render_edit_row), so include_data_row is false and only the editor is re-rendered.
+
 No <form> element: the whole table already lives inside a GET form (see
-tables/base_table.html), so the buttons collect the row's inputs via hx-include.
+tables/base_table.html), so the buttons collect the editor's inputs via hx-include.
 {% endcomment %}
+{% if include_data_row %}
+  {% include "tables/partials/table_row.html" with cells=cells %}
+{% endif %}
 <tr>
   <td colspan="{{ colspan }}">
     {% csrf_token %}
@@ -21,8 +33,9 @@ tables/base_table.html), so the buttons collect the row's inputs via hx-include.
               title="Speichern"
               hx-post="{{ post_url }}"
               hx-include="closest tr"
-              hx-target="closest tr"
-              hx-swap="outerHTML">
+              hx-target="previous tr"
+              hx-swap="outerHTML"
+              hx-on::after-request="if(event.detail.successful && event.detail.xhr.getResponseHeader('HX-Inline-Edit-Done')){this.closest('tr').remove()}">
         <span class="bi bi-floppy mt-prominent-icon"></span>
       </button>
       <button type="button"
@@ -32,8 +45,9 @@ tables/base_table.html), so the buttons collect the row's inputs via hx-include.
               title="Abbrechen"
               hx-post="{{ post_url }}"
               hx-include="closest tr"
-              hx-target="closest tr"
-              hx-swap="outerHTML">
+              hx-target="previous tr"
+              hx-swap="outerHTML"
+              hx-on::after-request="if(event.detail.successful && event.detail.xhr.getResponseHeader('HX-Inline-Edit-Done')){this.closest('tr').remove()}">
         <span class="bi bi-x-lg mt-prominent-icon"></span>
       </button>
     </div>
