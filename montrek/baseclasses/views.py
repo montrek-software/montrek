@@ -533,9 +533,12 @@ class MontrekDetailView(
     @property
     def manager(self):
         if self._manager is None:
-            self._manager = self.manager_class(
-                self.session_data, object_query=self._prefetched_object
-            )
+            if issubclass(self.manager_class, MontrekDetailsManager):
+                self._manager = self.manager_class(
+                    self.session_data, object_query=self._prefetched_object
+                )
+            else:
+                self._manager = self.manager_class(self.session_data)
         return self._manager
 
     def get_queryset(self):
