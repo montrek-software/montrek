@@ -607,15 +607,21 @@ class MontrekInlineFieldEditViewTestCase(MontrekViewTestCase):
             .get(pk=self.url_kwargs()["pk"])
         )
 
+    def posted_field_name(self) -> str:
+        # The editor form is prefixed with the edit row id so open editors on
+        # different rows never submit under the same input name (see
+        # MontrekInlineFieldEditView docstring).
+        return f"inline-edit-{self.url_kwargs()['pk']}-{self.update_field}"
+
     def post_data(self, action: str) -> dict:
-        return {"action": action, self.update_field: self.updated_content}
+        return {"action": action, self.posted_field_name(): self.updated_content}
 
     def test_get_returns_edit_row(self):
         if self._is_base_test_class():
             return
         content = self.response.content.decode()
         self.assertIn("<tr", content)
-        self.assertIn(f'name="{self.update_field}"', content)
+        self.assertIn(f'name="{self.posted_field_name()}"', content)
         self.assertIn('value="save"', content)
         self.assertIn('value="cancel"', content)
 
@@ -652,6 +658,19 @@ class MontrekInlineFieldEditViewTestCase(MontrekViewTestCase):
         self.assertEqual(getattr(test_object, self.update_field), self.updated_content)
         self.additional_assertions(test_object)
 
+    def test_post_save_ignores_other_open_editors(self):
+        if self._is_base_test_class():
+            return
+        # When a second editor for the same field is open on another row, the
+        # enclosing table form submits its (empty) textarea too. Only the
+        # value posted under this row's prefixed name may be saved.
+        data = self.post_data("save")
+        data[f"inline-edit-999999-{self.update_field}"] = ""
+        response = self.client.post(self.url, data, HTTP_HX_REQUEST="true")
+        self.assertEqual(response.status_code, 200)
+        test_object = self._get_object()
+        self.assertEqual(getattr(test_object, self.update_field), self.updated_content)
+
     def test_post_cancel_keeps_field(self):
         if self._is_base_test_class():
             return
@@ -670,7 +689,7 @@ class MontrekInlineFieldEditViewTestCase(MontrekViewTestCase):
         original_value = getattr(self._get_object(), self.update_field)
         response = self.client.post(
             self.url,
-            {"action": "save", self.update_field: self.invalid_content},
+            {"action": "save", self.posted_field_name(): self.invalid_content},
             HTTP_HX_REQUEST="true",
         )
         self.assertEqual(response.status_code, 200)

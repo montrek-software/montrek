@@ -891,6 +891,16 @@ class MontrekInlineFieldEditView(
     ``MontrekHtmxRowRenderMixin`` attributes. Field label and validation come
     from the repository (``display_field_names``, satellite validators).
     Non-HTMX requests are redirected to ``get_fallback_url()``.
+
+    The editor form uses ``get_edit_row_id()`` as its form prefix, so the
+    input is named e.g. ``inline-edit-42-damage_value_comment``. This is
+    required for correctness: the whole table lives inside a form (see
+    ``tables/base_table.html``) whose values HTMX submits with every non-GET
+    request, so when editors are open on several rows at once all their
+    textareas are posted together — without the per-row prefix they would
+    share one name and ``request.POST.get()`` would return whichever textarea
+    comes last in the DOM, silently saving another row's (possibly empty)
+    value.
     """
 
     form_class = MontrekCreateForm
@@ -904,6 +914,7 @@ class MontrekInlineFieldEditView(
             repository=self.manager.repository,
             initial=self.get_edit_data(),
             session_data=self.session_data,
+            prefix=self.get_edit_row_id(),
         )
         return self.render_edit_row(request, form)
 
@@ -918,10 +929,15 @@ class MontrekInlineFieldEditView(
             repository=self.manager.repository,
             initial=edit_data,
             session_data=self.session_data,
+            prefix=self.get_edit_row_id(),
         )
         try:
+            # Read the value under its row-prefixed name (see the prefix note
+            # in the class docstring): a bare ``self.field_name`` lookup would
+            # pick up a same-named textarea of another open editor row, since
+            # the enclosing table form submits every open editor's inputs.
             field_value = form.fields[self.field_name].clean(
-                request.POST.get(self.field_name)
+                request.POST.get(form.add_prefix(self.field_name))
             )
         except ValidationError as error:
             return self.render_edit_row(
