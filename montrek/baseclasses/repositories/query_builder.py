@@ -19,12 +19,14 @@ class QueryBuilder:
         latest_ts: bool = False,
         session_start_date: timezone.datetime | None = None,
         session_end_date: timezone.datetime | None = None,
+        hub_scope_pk: int | None = None,
     ):
         self.annotator = annotator
         self.hub_class = annotator.hub_class
         self.session_data = session_data
         self.messages: list[MontrekMessage] = []
         self.latest_ts = latest_ts
+        self.hub_scope_pk = hub_scope_pk
         self.session_start_date = (
             self.session_data.get("start_date", timezone.datetime.min)
             if session_start_date is None
@@ -57,6 +59,11 @@ class QueryBuilder:
             Q(hub__state_date_start__lte=reference_date),
             Q(hub__state_date_end__gt=reference_date),
         )
+        # Scope to a single hub BEFORE annotations are built so that
+        # queryset-aware subquery builders (which extract hub ids from the
+        # intermediate queryset) only precompute data for this hub.
+        if self.hub_scope_pk is not None:
+            queryset = queryset.filter(hub_id=self.hub_scope_pk)
         if self.latest_ts:
             queryset = self._filter_ts_rows(queryset)
         satellite_aliases_dict: dict[str, Any] = {}

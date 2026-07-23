@@ -97,6 +97,15 @@ class MontrekRepository:
             f"set_annotations is not implemented for {self.__class__.__name__}"
         )
 
+    def set_hub_scope(self, hub_pk: int | None) -> None:
+        """Scope this instance's queryset to a single hub BEFORE annotations
+        are built, so queryset-aware subquery builders only precompute data
+        for that hub instead of the entire table. Callers may only use this
+        when the hub pk is known to belong to this repository's own hub class
+        — e.g. a detail view resolving its URL pk, or a details page after
+        get_hub_by_id."""
+        self.query_builder.hub_scope_pk = hub_pk
+
     def save_db_staller(self, db_staller: DbStaller):
         self._db_staller = db_staller
 
