@@ -528,9 +528,23 @@ class MontrekDetailView(
     template_name = "montrek_details.html"
     manager_class = MontrekManagerNotImplemented
     is_hub_based = True
+    _prefetched_object = None
+
+    @property
+    def manager(self):
+        if self._manager is None:
+            self._manager = self.manager_class(
+                self.session_data, object_query=self._prefetched_object
+            )
+        return self._manager
 
     def get_queryset(self):
         return self.get_view_queryset()
+
+    def get_object(self, queryset=None):
+        if self._prefetched_object is not None:
+            return self._prefetched_object
+        return super().get_object(queryset)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -560,12 +574,14 @@ class MontrekDetailView(
         # a globally computed date.
         hub_pk = kwargs["pk"]
         self.session_data["hub_pk"] = hub_pk
-        hub_value_date_pk = (
+        # Keep the fetched row so the manager and get_object() can reuse it
+        # instead of re-running the (potentially expensive) annotated query.
+        self._prefetched_object = (
             self.manager_class.repository_class(dict(self.session_data))
             .receive()
             .get(hub_entity_id=hub_pk)
-            .pk
         )
+        hub_value_date_pk = self._prefetched_object.pk
         kwargs["pk"] = hub_value_date_pk
         self.kwargs["pk"] = hub_value_date_pk
         # session_data is cached at this point; the manager expects the
