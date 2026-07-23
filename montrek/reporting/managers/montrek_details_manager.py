@@ -19,10 +19,14 @@ class MontrekDetailsManager(MontrekManager):
     document_name: str = "details"
     draft: bool = False
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, object_query=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.object_query = self.get_object_from_pk(
-            self.session_data.get("pk", "Unknown")
+        # Reuse an already fetched row (e.g. from MontrekDetailView's hub pk
+        # resolution) instead of re-running the annotated repository query.
+        self.object_query = (
+            object_query
+            if object_query is not None
+            else self.get_object_from_pk(self.session_data.get("pk", "Unknown"))
         )
         self.row_size = math.ceil(len(self.table_elements) / self.table_cols)
 
