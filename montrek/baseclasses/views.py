@@ -577,13 +577,14 @@ class MontrekDetailView(
         # a globally computed date.
         hub_pk = kwargs["pk"]
         self.session_data["hub_pk"] = hub_pk
+        repository = self.manager_class.repository_class(dict(self.session_data))
+        # The URL pk is a hub pk of this repository's own hub class, so the
+        # queryset (and its queryset-aware annotation builders) can be scoped
+        # to that hub before the query is built.
+        repository.set_hub_scope(hub_pk)
         # Keep the fetched row so the manager and get_object() can reuse it
         # instead of re-running the (potentially expensive) annotated query.
-        self._prefetched_object = (
-            self.manager_class.repository_class(dict(self.session_data))
-            .receive()
-            .get(hub_entity_id=hub_pk)
-        )
+        self._prefetched_object = repository.receive().get(hub_entity_id=hub_pk)
         hub_value_date_pk = self._prefetched_object.pk
         kwargs["pk"] = hub_value_date_pk
         self.kwargs["pk"] = hub_value_date_pk
