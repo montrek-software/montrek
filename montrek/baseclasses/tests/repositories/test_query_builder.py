@@ -52,7 +52,7 @@ class TestQueryBuilder(TestCase):
     def test_query_builder__build_queryset__hub_scope_pk_restricts_to_hub(self):
         scoped_sat = TestMontrekSatelliteFactory.create(test_name="Scoped")
         other_sat = TestMontrekSatelliteFactory.create(test_name="Other")
-        scoped_hub_pk = scoped_sat.hub_value_date.hub_id
+        scoped_hub_pk = scoped_sat.hub_entity_id
         self.annotator.subquery_builder_to_annotations(
             ["test_name"], TestMontrekSatellite, SatelliteSubqueryBuilder
         )
