@@ -49,6 +49,35 @@ class TestQueryBuilder(TestCase):
         test_query = self.query_builder.build_queryset(self.reference_date)
         self.assertEqual(test_query.count(), 0)
 
+    def test_query_builder__build_queryset__hub_scope_pk_restricts_to_hub(self):
+        scoped_sat = TestMontrekSatelliteFactory.create(test_name="Scoped")
+        other_sat = TestMontrekSatelliteFactory.create(test_name="Other")
+        scoped_hub_pk = scoped_sat.hub_value_date.hub_id
+        self.annotator.subquery_builder_to_annotations(
+            ["test_name"], TestMontrekSatellite, SatelliteSubqueryBuilder
+        )
+
+        scoped_builder = QueryBuilder(self.annotator, {}, hub_scope_pk=scoped_hub_pk)
+        scoped_query = scoped_builder.build_queryset(self.reference_date)
+
+        self.assertEqual(scoped_query.count(), 1)
+        self.assertEqual(scoped_query.first().test_name, scoped_sat.test_name)
+        self.assertNotIn(
+            other_sat.test_name, list(scoped_query.values_list("test_name", flat=True))
+        )
+
+    def test_query_builder__build_queryset__hub_scope_pk_none_returns_all(self):
+        TestMontrekSatelliteFactory.create(test_name="First")
+        TestMontrekSatelliteFactory.create(test_name="Second")
+        self.annotator.subquery_builder_to_annotations(
+            ["test_name"], TestMontrekSatellite, SatelliteSubqueryBuilder
+        )
+
+        unscoped_query = self.query_builder.build_queryset(self.reference_date)
+
+        self.assertIsNone(self.query_builder.hub_scope_pk)
+        self.assertEqual(unscoped_query.count(), 2)
+
     def test_query_builder__build_queryset__with_reference_date(self):
         TestMontrekSatelliteFactory.create(
             test_name="Test Name", hub_entity__state_date_end=montrek_time(2024, 11, 7)
