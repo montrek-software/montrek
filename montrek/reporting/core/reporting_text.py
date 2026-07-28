@@ -1,4 +1,5 @@
 import hashlib
+import logging
 import os
 from pathlib import Path
 from urllib.parse import urlparse
@@ -13,6 +14,8 @@ from django.template.loader import render_to_string
 from django.templatetags.static import static
 from django.contrib.staticfiles import finders
 from reporting.core.text_converter import HtmlLatexConverter
+
+logger = logging.getLogger(__name__)
 
 type ContextTypes = dict[str, str | list[str] | int | float | object]
 
@@ -231,19 +234,16 @@ class ReportingImage(ReportingElement):
     def __init__(self, image_path: str, width: float = 1.0):
         self.image_path = image_path
         self.width = width
+        self._resolved_path: str | None = None
 
     def to_latex(self) -> str:
-        if not self._is_url():
-            local_image_path = self._resolve_local_path()
-            if not local_image_path:
-                return ""
+        local_image_path = self.resolve_path()
+        if local_image_path:
             return self._return_string(local_image_path)
-
-        local_image_path = self._download_to_workbench()
-        if not local_image_path:
+        if self._is_url():
             image_path = HtmlLatexConverter.convert(self.image_path)
             return f"Image not found: {image_path}"
-        return self._return_string(local_image_path)
+        return ""
 
     def resolve_path(self) -> str:
         """Local filesystem path of the image, downloading remote sources.
@@ -251,10 +251,18 @@ class ReportingImage(ReportingElement):
         Returns an empty string when the image cannot be resolved. Templates
         that need to size the image themselves take this instead of the ready
         made ``\\includegraphics`` string produced by :meth:`to_latex`.
+
+        Resolved once per instance: a report asks the same image for both the
+        ready-made string and the raw path, and a remote image must not be
+        fetched twice to answer that.
         """
-        if not self._is_url():
-            return self._resolve_local_path()
-        return self._download_to_workbench()
+        if self._resolved_path is None:
+            self._resolved_path = (
+                self._download_to_workbench()
+                if self._is_url()
+                else self._resolve_local_path()
+            )
+        return self._resolved_path
 
     def _is_url(self) -> bool:
         try:
@@ -271,16 +279,22 @@ class ReportingImage(ReportingElement):
         return local_image_path if os.path.exists(local_image_path) else ""
 
     def _download_to_workbench(self) -> str:
-        """Download a remote image into WORKBENCH_PATH and return its path."""
-        response = requests.get(self.image_path, timeout=5)
+        """Download a remote image into WORKBENCH_PATH and return its path.
+
+        A logo hosted off-site must not be able to fail a report: an
+        unreachable host is reported as a missing image, like a 404.
+        """
+        try:
+            response = requests.get(self.image_path, timeout=5)
+        except requests.RequestException:
+            logger.warning("Could not download report image %s", self.image_path)
+            return ""
         if response.status_code != 200:
             return ""
 
         # Derive a unique filename from the URL (safe and repeatable)
         ext = Path(self.image_path).suffix.split("?")[0] or ".png"
-        hash_name = hashlib.sha256(
-            self.image_path.encode("utf-8")
-        ).hexdigest()  # nosec B324 - weak MD5 hash is justified
+        hash_name = hashlib.sha256(self.image_path.encode("utf-8")).hexdigest()
         image_path = settings.WORKBENCH_PATH / f"{hash_name}{ext}"
 
         settings.WORKBENCH_PATH.mkdir(parents=True, exist_ok=True)
