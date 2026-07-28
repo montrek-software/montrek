@@ -79,10 +79,8 @@ class MontrekDetailsManager(MontrekManager):
         minipage_width = 0.98 / self.table_cols
         for i in range(self.table_cols):
             latex_str += f"\\begin{{minipage}}[t]{{{minipage_width}\\textwidth}}\n"
-            latex_str += "\\begin{table}[H]\n\\centering\n\\small\n"
+            latex_str += "\\begin{table}[H]\n\\centering\n\\montrektablesetup\n"
             latex_str += "\\arrayrulecolor{bordercolor}\n"
-            latex_str += "\\setlength{\\tabcolsep}{5pt}\n"
-            latex_str += "\\renewcommand{\\arraystretch}{1.2}\n"
             latex_str += f"\\caption{{{self.table_title}}}\n"
             latex_str += "\\begin{tabularx}{\\textwidth}{"
 
@@ -97,7 +95,10 @@ class MontrekDetailsManager(MontrekManager):
                     self.object_query, "latex"
                 )[:-2]
 
-                latex_str += f"\\cellcolor{{surfacemuted}}\\textcolor{{textmuted}}{{\\textbf{{{element_name}}}}} & {element_attribute} \\\\\n\\hline\n"
+                latex_str += (
+                    f"\\montrekdetailsheadcell{{{element_name}}}"
+                    f" & {element_attribute} \\\\\n\\hline\n"
+                )
 
             latex_str += "\\end{tabularx}\n\\end{table}\n"
             latex_str += "\\end{minipage}"

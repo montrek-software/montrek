@@ -64,7 +64,9 @@ class TestLatexTableConverter(TestCase):
             )
         start_str = self.latex_table_converter.get_table_start_str()
         self.assertIn("\\caption{Test Table Title}", start_str)
-        self.assertIn("\\textbf{\\mbox{TestCol}}", start_str)
+        self.assertIn("\\montrektablesetup", start_str)
+        self.assertIn("\\montrektableheadrow", start_str)
+        self.assertIn("\\montrektableheadcell{\\mbox{TestCol}}", start_str)
 
     def test_get_table_end_str(self):
         end_str = self.latex_table_converter.get_table_end_str()

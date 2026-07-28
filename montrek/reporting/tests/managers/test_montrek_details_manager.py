@@ -100,39 +100,40 @@ class TestMontrekDetailsManager(TestCase):
 
         # Common table preamble bits
         self.assertIn(r"\arrayrulecolor{bordercolor}", latex)
-        self.assertIn(r"\setlength{\tabcolsep}{5pt}", latex)
-        self.assertIn(r"\renewcommand{\arraystretch}{1.2}", latex)
+        # Font size, padding and row height are the template's job
+        # (\montrektablesetup), not the converter's.
+        self.assertIn(r"\montrektablesetup", latex)
 
         # --- Left table rows ---
         self.assertRegexPresent(
             latex,
-            r"\\cellcolor{surfacemuted}\\textcolor{textmuted}{\\textbf{Field A}}\s*&\s*\\color{textdark}\s*a\s*\\\\",
+            r"\\montrekdetailsheadcell{Field A}\s*&\s*\\color{textdark}\s*a\s*\\\\",
         )
         self.assertRegexPresent(
             latex,
-            r"\\cellcolor{surfacemuted}\\textcolor{textmuted}{\\textbf{Field B}}\s*&\s*\\color{textdark}\s*1\s*\\\\",
+            r"\\montrekdetailsheadcell{Field B}\s*&\s*\\color{textdark}\s*1\s*\\\\",
         )
         self.assertRegexPresent(
             latex,
-            r"\\cellcolor{surfacemuted}\\textcolor{textmuted}{\\textbf{Field C}}\s*&\s*\\color{textdark}\s*1\.000\s*\\\\",
+            r"\\montrekdetailsheadcell{Field C}\s*&\s*\\color{textdark}\s*1\.000\s*\\\\",
         )
         self.assertRegexPresent(
             latex,
-            r"\\cellcolor{surfacemuted}\\textcolor{textmuted}{\\textbf{Field D}}\s*&\s*\\color{textdark}\s*2024-07-13 00:00:00\s*\\\\",
+            r"\\montrekdetailsheadcell{Field D}\s*&\s*\\color{textdark}\s*2024-07-13 00:00:00\s*\\\\",
         )
 
         # --- Right table rows ---
         self.assertRegexPresent(
             latex,
-            r"\\cellcolor{surfacemuted}\\textcolor{textmuted}{\\textbf{Field E}}\s*&\s*\\color{textdark}\s*1\.00€\s*\\\\",
+            r"\\montrekdetailsheadcell{Field E}\s*&\s*\\color{textdark}\s*1\.00€\s*\\\\",
         )
         self.assertRegexPresent(
             latex,
-            r"\\cellcolor{surfacemuted}\\textcolor{textmuted}{\\textbf{Link}}\s*&\s*\\color{textdark}\s*\\twemoji{pencil}\s*\\\\",
+            r"\\montrekdetailsheadcell{Link}\s*&\s*\\color{textdark}\s*\\twemoji{pencil}\s*\\\\",
         )
         self.assertRegexPresent(
             latex,
-            r"\\cellcolor{surfacemuted}\\textcolor{textmuted}{\\textbf{Link Text}}\s*&\s*\\color{textdark}\s*a\s*\\\\",
+            r"\\montrekdetailsheadcell{Link Text}\s*&\s*\\color{textdark}\s*a\s*\\\\",
         )
 
         # Each row separated by \hline (we expect 8: one after each row)

@@ -33,14 +33,15 @@ class LatexTableConverter:
         return latex_str
 
     def get_table_start_str(self) -> str:
-        table_start_str = "\n\\begin{table}[H]\n\\centering\n\\small\n"
+        # Font size, column padding and row height come from \montrektablesetup
+        # so that a report's .tex template owns the table look; see
+        # latex_templates/montrek_base_template.tex for the defaults.
+        table_start_str = "\n\\begin{table}[H]\n\\centering\n\\montrektablesetup\n"
         table_start_str += "\\arrayrulecolor{bordercolor}\n"
-        table_start_str += "\\setlength{\\tabcolsep}{5pt}\n"
-        table_start_str += "\\renewcommand{\\arraystretch}{1.2}\n"
         table_start_str += f"\\caption{{{self.table_title}}}\n"
         table_start_str += "\\begin{tabularx}{\\textwidth}{"
         column_def_str = ""
-        column_header_str = "\\rowcolor{surfacemuted}"
+        column_header_str = "\\montrektableheadrow "
         column_sizes = self.get_column_sizes()
 
         col_idx = 0
@@ -53,9 +54,7 @@ class LatexTableConverter:
             element_header = " ".join(
                 [f"\\mbox{{{head}}}" for head in element_header.split(" ")]
             )
-            column_header_str += (
-                f"\\textcolor{{textmuted}}{{\\textbf{{{element_header}}}}} & "
-            )
+            column_header_str += f"\\montrektableheadcell{{{element_header}}} & "
             col_idx += 1
         table_start_str += column_def_str.rstrip()
         table_start_str += "}\n\\hline\n"
@@ -93,8 +92,20 @@ class LatexTableConverter:
         for table_element in self.table_elements:
             if isinstance(table_element, te.LinkTableElement):
                 continue
-            self.column_sizer[col_idx] = [len(str(table_element.name))]
+            self.column_sizer[col_idx] = [self._header_width(table_element.name)]
             col_idx += 1
+
+    @staticmethod
+    def _header_width(name: str) -> int:
+        """Width a header demands, in characters.
+
+        Header words are set in individual \\mbox es, so the header wraps
+        between them and only needs to fit its longest word. Charging the
+        column for the full header instead starves the data columns next to a
+        verbose header such as "gestres. Limit Auslastung".
+        """
+        words = str(name).split()
+        return max((len(word) for word in words), default=0)
 
     def add_to_column_sizer(
         self, table_element: te.TableElement, query_object: Any, col_idx: int

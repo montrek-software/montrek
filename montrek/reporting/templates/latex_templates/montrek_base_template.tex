@@ -67,6 +67,19 @@
 % Table settings
 \renewcommand{\arraystretch}{1.0}
 
+% Table look, applied by the LaTeX table/details converters. Templates that
+% want a different table style redefine these three and nothing else.
+\newcommand{\montrektablesetup}{%
+  \small
+  \setlength{\tabcolsep}{5pt}%
+  \renewcommand{\arraystretch}{1.2}%
+}
+\newcommand{\montrektableheadrow}{\rowcolor{surfacemuted}}
+\newcommand{\montrektableheadcell}[1]{\textcolor{textmuted}{\textbf{#1}}}
+\newcommand{\montrekdetailsheadcell}[1]{%
+  \cellcolor{surfacemuted}\textcolor{textmuted}{\textbf{#1}}%
+}
+
 % Progress bars
 \newcommand{\progressbar}[2]{
     % #1: Width percentage (0-100)

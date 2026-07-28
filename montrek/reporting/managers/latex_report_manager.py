@@ -24,6 +24,19 @@ class LatexReportManager:
     def __init__(self, report_manager: MontrekReportManager):
         self.report_manager = report_manager
 
+    @property
+    def template_name(self) -> str:
+        """The .tex template this report is typeset with.
+
+        A report manager routes itself to a dedicated template by setting
+        ``latex_template``; everything else falls back to the shared base
+        template. Resolved per instance so that every call site building a
+        ``LatexReportManager`` picks the report's template up automatically.
+        """
+        return getattr(self.report_manager, "latex_template", None) or (
+            self.latex_template
+        )
+
     def generate_report(self) -> str:
         context_data = self.get_context()
         context_data.update(self.get_layout_data())
@@ -49,11 +62,19 @@ class LatexReportManager:
         )
 
     def get_context(self) -> dict:
-        return {
+        context = {
             "content": self.report_manager.to_latex(),
         }
+        # A report on a dedicated template may need more than the content
+        # block, e.g. the parts of a cover page the base template has no
+        # notion of. Values must already be LaTeX-escaped by the report.
+        get_latex_context = getattr(self.report_manager, "get_latex_context", None)
+        if callable(get_latex_context):
+            context.update(get_latex_context())
+        return context
 
     def get_layout_data(self) -> dict:
+        client_logo = ClientLogo()
         return {
             "montrek_logo": os.path.join(
                 settings.BASE_DIR,
@@ -62,7 +83,10 @@ class LatexReportManager:
                 "logos",
                 "montrek_logo_variant.png",
             ),
-            "client_logo": ClientLogo().to_latex(),
+            "client_logo": client_logo.to_latex(),
+            # Raw path as well, so a template can size the logo itself instead
+            # of taking the fixed-height \includegraphics of `client_logo`.
+            "client_logo_path": client_logo.resolve_path(),
             "document_title": LaTeXEscaper.escape(self.report_manager.document_title),
             "footer_text": self.report_manager.footer_text,
             "colors": self.get_colors(),
@@ -93,7 +117,7 @@ class LatexReportManager:
     def read_template(self) -> str:
         template_path = self._get_template_path()
         if template_path is None:
-            raise FileNotFoundError(f"Template {self.latex_template} not found")
+            raise FileNotFoundError(f"Template {self.template_name} not found")
         with open(template_path) as file:
             return file.read()
 
@@ -164,7 +188,7 @@ class LatexReportManager:
     def _get_template_path(self) -> str | None:
         for template_dir in settings.TEMPLATES[0]["DIRS"]:
             potential_path = os.path.join(
-                settings.BASE_DIR, template_dir, "latex_templates", self.latex_template
+                settings.BASE_DIR, template_dir, "latex_templates", self.template_name
             )
             if os.path.exists(potential_path):
                 return potential_path

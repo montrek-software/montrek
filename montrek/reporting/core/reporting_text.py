@@ -233,42 +233,61 @@ class ReportingImage(ReportingElement):
         self.width = width
 
     def to_latex(self) -> str:
-        try:
-            parsed = urlparse(self.image_path)
-            is_url = parsed.scheme in {"http", "https"}
-        except ValueError:
-            is_url = False
-
-        if not is_url:
-            if self.image_path.startswith(settings.STATIC_URL):
-                relative_path = self.image_path[len(settings.STATIC_URL) :]
-                local_image_path = finders.find(relative_path)
-                local_image_path = "" if local_image_path is None else local_image_path
-            else:
-                local_image_path = self.image_path
-            if not os.path.exists(local_image_path):
+        if not self._is_url():
+            local_image_path = self._resolve_local_path()
+            if not local_image_path:
                 return ""
             return self._return_string(local_image_path)
 
-        # Remote image: download and save to WORKBENCH_PATH
-        response = requests.get(self.image_path, timeout=5)
-        if response.status_code != 200:
+        local_image_path = self._download_to_workbench()
+        if not local_image_path:
             image_path = HtmlLatexConverter.convert(self.image_path)
             return f"Image not found: {image_path}"
+        return self._return_string(local_image_path)
+
+    def resolve_path(self) -> str:
+        """Local filesystem path of the image, downloading remote sources.
+
+        Returns an empty string when the image cannot be resolved. Templates
+        that need to size the image themselves take this instead of the ready
+        made ``\\includegraphics`` string produced by :meth:`to_latex`.
+        """
+        if not self._is_url():
+            return self._resolve_local_path()
+        return self._download_to_workbench()
+
+    def _is_url(self) -> bool:
+        try:
+            return urlparse(self.image_path).scheme in {"http", "https"}
+        except ValueError:
+            return False
+
+    def _resolve_local_path(self) -> str:
+        if self.image_path.startswith(settings.STATIC_URL):
+            relative_path = self.image_path[len(settings.STATIC_URL) :]
+            local_image_path = finders.find(relative_path) or ""
+        else:
+            local_image_path = self.image_path
+        return local_image_path if os.path.exists(local_image_path) else ""
+
+    def _download_to_workbench(self) -> str:
+        """Download a remote image into WORKBENCH_PATH and return its path."""
+        response = requests.get(self.image_path, timeout=5)
+        if response.status_code != 200:
+            return ""
 
         # Derive a unique filename from the URL (safe and repeatable)
         ext = Path(self.image_path).suffix.split("?")[0] or ".png"
         hash_name = hashlib.sha256(
             self.image_path.encode("utf-8")
         ).hexdigest()  # nosec B324 - weak MD5 hash is justified
-        filename = f"{hash_name}{ext}"
-        image_path = settings.WORKBENCH_PATH / filename
+        image_path = settings.WORKBENCH_PATH / f"{hash_name}{ext}"
 
-        # Save the file to WORKBENCH_PATH
+        settings.WORKBENCH_PATH.mkdir(parents=True, exist_ok=True)
         with open(image_path, "wb") as f:
             f.write(response.content)
 
-        return self._return_string(str(image_path))
+        return str(image_path)
 
     def _return_string(self, value) -> str:
         value = HtmlLatexConverter.convert(value)

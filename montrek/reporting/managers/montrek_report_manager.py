@@ -16,6 +16,9 @@ class MontrekReportManager(MontrekManager):
     document_title = "Montrek Report"
     send_mail_url = "send_mail"
     draft = False
+    # Name of a .tex file under any app's templates/latex_templates/ that this
+    # report is typeset with. None keeps the shared montrek_base_template.tex.
+    latex_template: str | None = None
 
     def __init__(self, session_data: dict[str, str], **kwargs) -> None:
         super().__init__(session_data=session_data, **kwargs)
