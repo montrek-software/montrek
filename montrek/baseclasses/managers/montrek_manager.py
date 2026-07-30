@@ -29,8 +29,11 @@ class MontrekManager:
         return object_query
 
     def get_object_from_pk(self, pk: int):
-        hub = self.repository.get_hub_value_date_object(pk).hub
-        return self.repository.receive().get(hub__id=hub.pk)
+        try:
+            return self.repository.receive().get(pk=pk)
+        except self.repository.hub_class.get_hub_value_date_model().DoesNotExist:
+            hub_value_date = self.repository.get_hub_value_date_object(pk)
+            return self.repository.receive().get(hub=hub_value_date.hub)
 
     def get_object_from_pk_as_dict(self, pk: int) -> dict:
         object_query = self.get_object_from_pk(pk)
