@@ -1,6 +1,7 @@
 import datetime
 import hashlib
 from enum import Enum
+from typing import Any
 
 from baseclasses.dataclasses.alert import AlertEnum
 from baseclasses.fields import HubForeignKey
@@ -85,6 +86,10 @@ class MontrekHubABC(TimeStampMixin, StateMixin, UserMixin):
 
     def get_hub_value_date(self):
         return self.hub_value_date.get(value_date_list__value_date=None)
+
+    @classmethod
+    def get_hub_value_date_model(cls) -> type[models.Model] | Any:
+        return cls._meta.get_field("hub_value_date").related_model
 
     def __str__(self):
         sat_class = None

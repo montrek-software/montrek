@@ -15,6 +15,7 @@ from montrek_example.tests.factories import montrek_example_factories as me_fact
 from reporting.dataclasses.table_elements import HistoryChangeState
 from reporting.managers.montrek_table_manager import HistoryDataTableManager
 from reporting.tests.mocks import (
+    MockCountingTableElementsManager,
     MockEmptyMontrekTableManager,
     MockHtmlMontrekTableManager,
     MockLongMontrekTableManager,
@@ -62,6 +63,30 @@ class TestMontrekTableManager(TestCase):
         )
 
         self.assertEqual(normalized, expected)
+
+    def test_get_display_fields_reads_table_elements_once(self):
+        manager = MockCountingTableElementsManager()
+
+        rows = manager.get_display_fields()
+
+        self.assertEqual(len(rows), 3)
+        self.assertEqual(manager.table_elements_reads, 1)
+
+    def test_to_html_reads_table_elements_once(self):
+        manager = MockCountingTableElementsManager()
+
+        manager.to_html()
+
+        self.assertEqual(manager.table_elements_reads, 1)
+
+    def test_get_display_fields_accepts_prebuilt_table_elements(self):
+        manager = MockCountingTableElementsManager()
+        table_elements = manager.table_elements
+
+        rows = manager.get_display_fields(table_elements)
+
+        self.assertEqual(len(rows), 3)
+        self.assertEqual(manager.table_elements_reads, 1)
 
     def test_render_single_row_has_one_row_with_all_cells(self):
         manager = MockMontrekTableManager()

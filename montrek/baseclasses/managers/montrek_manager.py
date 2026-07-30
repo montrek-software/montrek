@@ -29,7 +29,8 @@ class MontrekManager:
         return object_query
 
     def get_object_from_pk(self, pk: int):
-        return self.repository.receive().get(pk=pk)
+        hub = self.repository.get_hub_value_date_object(pk).hub
+        return self.repository.receive().get(hub__id=hub.pk)
 
     def get_object_from_pk_as_dict(self, pk: int) -> dict:
         object_query = self.get_object_from_pk(pk)

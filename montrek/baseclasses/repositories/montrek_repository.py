@@ -670,6 +670,9 @@ class MontrekRepository:
     def get_hub_by_id(self, pk: int) -> MontrekHubABC:
         return self.hub_class.objects.get(hub_value_date__pk=pk)
 
+    def get_hub_value_date_object(self, pk: int) -> HubValueDate:
+        return self.hub_class.get_hub_value_date_model().objects.get(pk=pk)
+
     def _debug_logging(self, msg: str):
         logger.debug("%s: %s", self.__class__.__name__, msg)
 

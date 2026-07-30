@@ -358,6 +358,23 @@ class MockHtmlMontrekTableManager(MockMontrekTableManager):
     repository_class = MockHtmlRepository
 
 
+class MockCountingTableElementsManager(MockMontrekTableManager):
+    """Records how often the ``table_elements`` property is read.
+
+    Subclasses may build per-table state in that property (caches, shared
+    containers), which is lost if it is re-evaluated for every row.
+    """
+
+    def __init__(self, session_data: dict | None = None):
+        self.table_elements_reads = 0
+        super().__init__(session_data)
+
+    @property
+    def table_elements(self) -> tuple[te.TableElement]:
+        self.table_elements_reads += 1
+        return MockMontrekTableManager.table_elements.fget(self)
+
+
 class MockLongMontrekTableManager(MockMontrekTableManager):
     repository_class = MockLongRepository
 

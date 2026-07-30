@@ -118,14 +118,17 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
             ele.attr: ele.name for ele in self.table_elements if hasattr(ele, "attr")
         }
 
-    def get_display_fields(self) -> list[list[DisplayField]]:
-        rows = []
-        for query_object in self.get_table():
-            elements = []
-            for table_element in self.table_elements:
-                elements.append(table_element.get_display_field(query_object))
-            rows.append(elements)
-        return rows
+    def get_display_fields(
+        self, table_elements: TableElementsType | None = None
+    ) -> list[list[DisplayField]]:
+        # Resolve table_elements once: the property may build per-table state
+        # (caches, containers), which is lost when re-read for every row.
+        if table_elements is None:
+            table_elements = self.table_elements
+        return [
+            [element.get_display_field(query_object) for element in table_elements]
+            for query_object in self.get_table()
+        ]
 
     def to_html(self):
         template = get_template("tables/base_table.html")
@@ -133,11 +136,12 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
             order_field = self.order_field[1:]
         else:
             order_field = self.order_field
+        table_elements = self.table_elements
         return template.render(
             context={
                 "table_title": self.table_title,
-                "table_elements": self.table_elements,
-                "display_fields": self.get_display_fields(),
+                "table_elements": table_elements,
+                "display_fields": self.get_display_fields(table_elements),
                 "order_field": order_field,
                 "order_descending": self.order_descending,
             }
