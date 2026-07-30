@@ -1,5 +1,5 @@
 import datetime
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import Any
 
@@ -208,9 +208,29 @@ class MockQuerySet:
         return self.items[0]
 
 
+@dataclass
+class MockHub:
+    pk: int = 1
+
+
+@dataclass
+class MockHubValueDate:
+    """Stand-in for the HubValueDate a pk is resolved through.
+
+    ``MontrekManager.get_object_from_pk`` looks the pk up as a HubValueDate and
+    then fetches the row by its hub, so a repository mock has to offer both.
+    """
+
+    pk: int = 1
+    hub: MockHub = field(default_factory=MockHub)
+
+
 class MockRepository:
     def __init__(self, session_data: dict):
         self.session_data = session_data
+
+    def get_hub_value_date_object(self, pk: int) -> MockHubValueDate:
+        return MockHubValueDate(pk=pk)
 
     def receive(self):
         return MockQuerySet(
