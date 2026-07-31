@@ -22,8 +22,21 @@ class MontrekExcelFormatter:
     ):
         """Public API — supports both class-level calls (legacy) and instance calls.
         Uses cls() so subclasses inherit correct behavior when called as MyFormatter.format_excel(...).
+
+        Note that this discards any state on an already-built formatter; use
+        ``format_worksheet`` when the formatter carries per-report state.
         """
-        cls()._format_excel_impl(writer, sheet_name, col_formats, table_title)
+        cls().format_worksheet(writer, sheet_name, col_formats, table_title)
+
+    def format_worksheet(
+        self,
+        writer,
+        sheet_name="Sheet1",
+        col_formats=None,
+        table_title: None | str = None,
+    ):
+        """Instance API — keeps state configured on ``self`` (see ``format_excel``)."""
+        self._format_excel_impl(writer, sheet_name, col_formats, table_title)
 
     def _format_excel_impl(
         self,

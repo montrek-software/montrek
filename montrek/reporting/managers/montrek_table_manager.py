@@ -212,13 +212,17 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
             table_df.to_excel(
                 excel_writer, index=False, sheet_name=sheet_name, startrow=row_offset
             )
-            self.excel_formatter_class.format_excel(
+            self.get_excel_formatter().format_worksheet(
                 excel_writer,
                 sheet_name=sheet_name,
                 col_formats=col_formats,
                 table_title=self.table_title if show_table_title else None,
             )
         return output
+
+    def get_excel_formatter(self) -> MontrekExcelFormatter:
+        """Hook for subclasses that need a formatter carrying report state."""
+        return self.excel_formatter_class()
 
     def _get_excel_col_formats(self) -> dict[int, str | None]:
         elements = [
