@@ -8,6 +8,7 @@ from baseclasses.errors.montrek_user_error import MontrekError
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from baseclasses.repositories.subquery_builder import (
     CrossSatelliteFilter,
+    PreviousTSValueSubqueryBuilder,
     ReverseLinkedSatelliteSubqueryBuilder,
 )
 from baseclasses.tests.factories.montrek_factory_schemas import ValueDateListFactory
@@ -53,6 +54,9 @@ from montrek_example.repositories.hub_c_repository import (
     HubCRepositoryLinkSatelliteQOuterRefFilter,
     HubCRepositoryMean,
     HubCRepositoryOnlyStatic,
+    HubCRepositoryPreviousValueFiltered,
+    HubCRepositoryPreviousValueLatest,
+    HubCRepositoryPreviousValueTS,
     HubCRepositoryPropertyFilter,
     HubCRepositoryReversedParents,
     HubCRepositoryReversedParentsNoMatchingReversedParents,
@@ -4877,3 +4881,230 @@ class TestLinkSatelliteFilterQOuterRef(TestCase):
         obj = HubCRepositoryLinkSatelliteQOuterRefFilter().receive().get()
         self.assertIsNone(obj.field_tsc3_int)
         self.assertCountEqual(json.loads(obj.field_d1_int), [7, 8])
+
+
+class PreviousTSValueTestCaseMixin:
+    """Builds HubC timeseries fixtures for the previous-value builders."""
+
+    def _make_series(self, values_by_date: dict[str, float], hub=None):
+        """Create one SatTSC2 per date on a single hub and return the hub."""
+        for value_date, value in values_by_date.items():
+            if hub is None:
+                sat = me_factories.SatTSC2Factory.create(
+                    value_date=value_date, field_tsc2_float=value
+                )
+                hub = sat.hub_value_date.hub
+                continue
+            hvd = me_factories.CHubValueDateFactory.create(
+                hub=hub,
+                value_date_list=ValueDateListFactory.create(value_date=value_date),
+            )
+            me_factories.SatTSC2Factory.create(
+                hub_value_date=hvd, field_tsc2_float=value
+            )
+        return hub
+
+
+class TestPreviousTSValueLatest(PreviousTSValueTestCaseMixin, TestCase):
+    """PreviousTSValueSubqueryBuilder / TSRelativeChangeSubqueryBuilder on a
+    repository with latest_ts=True.
+
+    The queryset holds one row per hub, so the predecessor is read from the
+    satellite history with a correlated subquery.
+    """
+
+    def setUp(self):
+        self.hub = self._make_series(
+            {"2026-01-01": 1.0, "2026-02-01": 2.0, "2026-03-01": 3.0}
+        )
+
+    def _row(self, hub=None):
+        return (
+            HubCRepositoryPreviousValueLatest()
+            .receive()
+            .get(hub_entity_id=(hub or self.hub).pk)
+        )
+
+    def test_previous_value_is_the_immediately_preceding_entry(self):
+        row = self._row()
+        self.assertEqual(row.field_tsc2_float, 3.0)
+        self.assertEqual(row.previous_float, 2.0)
+
+    def test_previous_value_reaches_into_rows_outside_the_queryset(self):
+        # The queryset itself only contains the 2026-03-01 row; the predecessor
+        # still comes from the hub's history.
+        self.assertEqual(HubCRepositoryPreviousValueLatest().receive().count(), 1)
+        self.assertEqual(self._row().previous_float, 2.0)
+
+    def test_previous_value_skips_gaps_in_the_timeseries(self):
+        hub = self._make_series({"2020-01-01": 4.0, "2026-06-01": 9.0})
+        self.assertEqual(self._row(hub).previous_float, 4.0)
+
+    def test_previous_value_is_none_without_predecessor(self):
+        hub = self._make_series({"2026-01-01": 5.0})
+        row = self._row(hub)
+        self.assertEqual(row.field_tsc2_float, 5.0)
+        self.assertIsNone(row.previous_float)
+
+    def test_relative_change_against_previous_entry(self):
+        self.assertEqual(self._row().relative_change, (3.0 - 2.0) / 2.0)
+
+    def test_relative_change_is_negative_for_a_falling_value(self):
+        hub = self._make_series({"2026-01-01": 4.0, "2026-02-01": 2.0})
+        self.assertEqual(self._row(hub).relative_change, (2.0 - 4.0) / 4.0)
+
+    def test_relative_change_is_none_without_predecessor(self):
+        hub = self._make_series({"2026-01-01": 5.0})
+        self.assertIsNone(self._row(hub).relative_change)
+
+    def test_relative_change_is_none_when_previous_value_is_zero(self):
+        # No division by zero: NULLIF turns the zero denominator into NULL.
+        hub = self._make_series({"2026-01-01": 0.0, "2026-02-01": 5.0})
+        self.assertIsNone(self._row(hub).relative_change)
+
+    def test_previous_value_is_per_hub(self):
+        other = self._make_series({"2026-01-05": 10.0, "2026-02-05": 20.0})
+        self.assertEqual(self._row().previous_float, 2.0)
+        self.assertEqual(self._row(other).previous_float, 10.0)
+
+    def test_satellite_filter_skips_non_matching_predecessors(self):
+        # Values are [1.0, 2.0, 3.0]; only satellites with value <= 1.0 qualify,
+        # so 2.0 is skipped and the predecessor of the latest row is 1.0.
+        row = (
+            HubCRepositoryPreviousValueFiltered()
+            .receive()
+            .get(hub_entity_id=self.hub.pk)
+        )
+        self.assertEqual(row.previous_float, 1.0)
+
+
+class TestPreviousTSValueTimeSeries(PreviousTSValueTestCaseMixin, TestCase):
+    """Same builders on a repository with latest_ts=False.
+
+    Every value date is its own row, so the predecessor is the preceding row of
+    the queryset, computed with a LAG window function.
+    """
+
+    def setUp(self):
+        self.hub = self._make_series(
+            {"2026-01-01": 1.0, "2026-02-01": 2.0, "2026-03-01": 4.0}
+        )
+
+    def _rows(self, queryset=None):
+        queryset = (
+            HubCRepositoryPreviousValueTS().receive() if queryset is None else queryset
+        )
+        return {row.value_date: row for row in queryset}
+
+    def test_each_row_gets_the_preceding_rows_value(self):
+        rows = self._rows()
+        self.assertIsNone(rows[datetime.date(2026, 1, 1)].previous_float)
+        self.assertEqual(rows[datetime.date(2026, 2, 1)].previous_float, 1.0)
+        self.assertEqual(rows[datetime.date(2026, 3, 1)].previous_float, 2.0)
+
+    def test_relative_change_per_row(self):
+        rows = self._rows()
+        self.assertIsNone(rows[datetime.date(2026, 1, 1)].relative_change)
+        self.assertEqual(
+            rows[datetime.date(2026, 2, 1)].relative_change, (2.0 - 1.0) / 1.0
+        )
+        self.assertEqual(
+            rows[datetime.date(2026, 3, 1)].relative_change, (4.0 - 2.0) / 2.0
+        )
+
+    def test_filter_on_the_returned_queryset_is_respected(self):
+        # Dropping the middle row makes 2026-01-01 the predecessor of
+        # 2026-03-01 — the window is evaluated after the WHERE clause.
+        queryset = (
+            HubCRepositoryPreviousValueTS()
+            .receive()
+            .filter(~Q(value_date=datetime.date(2026, 2, 1)))
+        )
+        rows = self._rows(queryset)
+        self.assertEqual(rows[datetime.date(2026, 3, 1)].previous_float, 1.0)
+        self.assertEqual(
+            rows[datetime.date(2026, 3, 1)].relative_change, (4.0 - 1.0) / 1.0
+        )
+
+    def test_limiting_the_queryset_does_not_truncate_the_window(self):
+        # first() adds LIMIT 1, which is applied after the window function, so
+        # the newest row still sees its predecessor.
+        row = HubCRepositoryPreviousValueTS().receive().first()
+        self.assertEqual(row.value_date, datetime.date(2026, 3, 1))
+        self.assertEqual(row.previous_float, 2.0)
+
+    def test_result_is_independent_of_the_queryset_ordering(self):
+        ascending = self._rows(
+            HubCRepositoryPreviousValueTS().receive().order_by("value_date")
+        )
+        descending = self._rows(
+            HubCRepositoryPreviousValueTS().receive().order_by("-value_date")
+        )
+        for value_date, row in ascending.items():
+            self.assertEqual(row.previous_float, descending[value_date].previous_float)
+
+    def test_window_does_not_cross_hub_boundaries(self):
+        other = self._make_series({"2026-01-15": 10.0, "2026-02-15": 20.0})
+        rows = {
+            (row.hub_entity_id, row.value_date): row
+            for row in HubCRepositoryPreviousValueTS().receive()
+        }
+        self.assertIsNone(rows[(other.pk, datetime.date(2026, 1, 15))].previous_float)
+        self.assertEqual(
+            rows[(other.pk, datetime.date(2026, 2, 15))].previous_float, 10.0
+        )
+        self.assertEqual(
+            rows[(self.hub.pk, datetime.date(2026, 2, 1))].previous_float, 1.0
+        )
+
+    def test_relative_change_is_none_when_previous_value_is_zero(self):
+        hub = self._make_series({"2026-05-01": 0.0, "2026-06-01": 5.0})
+        rows = {
+            (row.hub_entity_id, row.value_date): row
+            for row in HubCRepositoryPreviousValueTS().receive()
+        }
+        row = rows[(hub.pk, datetime.date(2026, 6, 1))]
+        self.assertEqual(row.previous_float, 0.0)
+        self.assertIsNone(row.relative_change)
+
+
+class TestPreviousTSValueBuilderMechanics(TestCase):
+    """Registration and configuration of the previous-value builders."""
+
+    def test_builder_defaults_to_the_history_subquery(self):
+        builder = PreviousTSValueSubqueryBuilder(me_models.SatTSC2, "field_tsc2_float")
+        self.assertFalse(builder.use_window)
+
+    def test_bind_context_switches_to_the_window_on_a_timeseries_repository(self):
+        builder = HubCRepositoryPreviousValueTS().annotator.annotations[
+            "previous_float"
+        ]
+        self.assertTrue(builder.use_window)
+
+    def test_bind_context_keeps_the_history_subquery_on_a_latest_repository(self):
+        builder = HubCRepositoryPreviousValueLatest().annotator.annotations[
+            "previous_float"
+        ]
+        self.assertFalse(builder.use_window)
+
+    def test_non_timeseries_satellite_is_rejected(self):
+        with self.assertRaises(TypeError):
+            PreviousTSValueSubqueryBuilder(me_models.SatC1, "field_c1_str")
+
+    def test_add_annotation_registers_the_field_and_its_type(self):
+        repo = HubCRepositoryPreviousValueLatest()
+        self.assertIn("previous_float", repo.get_all_fields())
+        self.assertIn("relative_change", repo.get_all_fields())
+        field_map = repo.annotator.get_annotated_field_map()
+        # The previous value keeps the satellite field's type, the relative
+        # change is a float regardless of the underlying field.
+        self.assertIsInstance(field_map["previous_float"], models.FloatField)
+        self.assertIsInstance(field_map["relative_change"], models.FloatField)
+
+    def test_annotated_fields_are_available_in_the_data_frame(self):
+        me_factories.SatTSC2Factory.create(
+            value_date="2026-01-01", field_tsc2_float=1.0
+        )
+        df = HubCRepositoryPreviousValueLatest().get_df()
+        self.assertIn("previous_float", df.columns)
+        self.assertIn("relative_change", df.columns)

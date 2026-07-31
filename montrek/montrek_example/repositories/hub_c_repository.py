@@ -1,7 +1,11 @@
 from django.db.models import OuterRef, Q, Value
 from django.db.models.functions import Coalesce
 from baseclasses.repositories.montrek_repository import MontrekRepository
-from baseclasses.repositories.subquery_builder import LinkedHubJsonField
+from baseclasses.repositories.subquery_builder import (
+    LinkedHubJsonField,
+    PreviousTSValueSubqueryBuilder,
+    TSRelativeChangeSubqueryBuilder,
+)
 from montrek_example.models import example_models as me_models
 from montrek_example.repositories.hub_d_repository import HubDRepository
 
@@ -91,6 +95,70 @@ class HubCRepositoryLastTS(HubCRepository):
                     "value_date_list__value_date"
                 ),
             },
+        )
+
+
+class HubCRepositoryPreviousValueLatest(MontrekRepository):
+    """Previous value and relative change on a latest-value repository.
+
+    With ``latest_ts=True`` the queryset holds a single row per hub, so the
+    builders reach into the satellite history to find the preceding value date.
+    """
+
+    hub_class = me_models.HubC
+    latest_ts = True
+
+    def set_annotations(self):
+        self.add_satellite_fields_annotations(me_models.SatTSC2, ["field_tsc2_float"])
+        self.add_annotation(
+            "previous_float",
+            PreviousTSValueSubqueryBuilder(me_models.SatTSC2, "field_tsc2_float"),
+        )
+        self.add_annotation(
+            "relative_change",
+            TSRelativeChangeSubqueryBuilder(me_models.SatTSC2, "field_tsc2_float"),
+        )
+
+
+class HubCRepositoryPreviousValueTS(MontrekRepository):
+    """Previous value and relative change on a timeseries repository.
+
+    With ``latest_ts=False`` every value date is its own row, so the builders
+    use a LAG window function and the values follow whatever the caller
+    filtered the queryset down to.
+    """
+
+    hub_class = me_models.HubC
+    latest_ts = False
+    default_order_fields = ("-value_date",)
+
+    def set_annotations(self):
+        self.add_satellite_fields_annotations(me_models.SatTSC2, ["field_tsc2_float"])
+        self.add_annotation(
+            "previous_float",
+            PreviousTSValueSubqueryBuilder(me_models.SatTSC2, "field_tsc2_float"),
+        )
+        self.add_annotation(
+            "relative_change",
+            TSRelativeChangeSubqueryBuilder(me_models.SatTSC2, "field_tsc2_float"),
+        )
+
+
+class HubCRepositoryPreviousValueFiltered(MontrekRepository):
+    """``satellite_filter`` narrows which satellites qualify as predecessor."""
+
+    hub_class = me_models.HubC
+    latest_ts = True
+
+    def set_annotations(self):
+        self.add_satellite_fields_annotations(me_models.SatTSC2, ["field_tsc2_float"])
+        self.add_annotation(
+            "previous_float",
+            PreviousTSValueSubqueryBuilder(
+                me_models.SatTSC2,
+                "field_tsc2_float",
+                satellite_filter={"field_tsc2_float__lte": 1.0},
+            ),
         )
 
 
