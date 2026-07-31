@@ -121,6 +121,26 @@ class Annotator:
             hub_satellite_filter,
         )
 
+    def add_annotation(
+        self,
+        output_name: str,
+        subquery_builder: SubqueryBuilder,
+        field_type: models.Field | None = None,
+    ) -> None:
+        """Register a hand-built subquery builder as an output field.
+
+        Keeps annotations, field types and field order in sync so a computed
+        value is treated like any satellite-derived field (data frames, view
+        models, field listings) instead of only existing on the queryset.
+        The field type falls back to the builder's own ``field_type``.
+        """
+        self.annotations[output_name] = subquery_builder
+        field_type = field_type or getattr(subquery_builder, "field_type", None)
+        if field_type is not None:
+            self.field_type_map[output_name] = field_type
+        if output_name not in self._field_names_in_order:
+            self._field_names_in_order.append(output_name)
+
     def field_projections_to_subqueries(
         self,
     ) -> dict[str, Subquery | ExpressionWrapper]:

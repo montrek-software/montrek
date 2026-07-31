@@ -22,6 +22,7 @@ from baseclasses.repositories.db.db_staller import DbStaller
 from baseclasses.repositories.db.db_writer import DbWriter
 from baseclasses.repositories.query_builder import QueryBuilder
 from baseclasses.repositories.subquery_builder import (
+    AnnotationContext,
     CrossSatelliteFilter,
     LinkedHubIdSubqueryBuilder,
     LinkedHubJsonField,
@@ -29,6 +30,7 @@ from baseclasses.repositories.subquery_builder import (
     LinkedSatelliteSubqueryBuilder,
     ReverseLinkedSatelliteSubqueryBuilder,
     SatelliteSubqueryBuilder,
+    SubqueryBuilder,
     TSSatelliteSubqueryBuilder,
 )
 from baseclasses.repositories.view_model_repository import ViewModelRepository
@@ -530,6 +532,24 @@ class MontrekRepository:
             link_hub_value_date_filter=link_hub_value_date_filter,
         )
         self.linked_fields.extend(fields)
+
+    def add_annotation(
+        self,
+        output_name: str,
+        subquery_builder: SubqueryBuilder,
+        field_type: models.Field | None = None,
+    ):
+        """Annotate ``output_name`` with a hand-built subquery builder.
+
+        Use this for values that are computed rather than read from a single
+        satellite field (e.g. a relative change against the previous value
+        date); it registers the field type and ordering as well, so the value
+        behaves like any other annotated field.  Builders that adapt to the
+        repository's row semantics are told about them via
+        ``SubqueryBuilder.bind_context``.
+        """
+        subquery_builder.bind_context(AnnotationContext(latest_ts=self.latest_ts))
+        self.annotator.add_annotation(output_name, subquery_builder, field_type)
 
     def add_linked_hub_id(
         self,
