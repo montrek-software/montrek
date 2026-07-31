@@ -118,6 +118,12 @@ class HubCRepositoryPreviousValueLatest(MontrekRepository):
             "relative_change",
             TSRelativeChangeSubqueryBuilder(me_models.SatTSC2, "field_tsc2_float"),
         )
+        self.add_annotation(
+            "cumulated_change",
+            TSRelativeChangeSubqueryBuilder(
+                me_models.SatTSC2, "field_tsc2_float", is_cumulated=True
+            ),
+        )
 
 
 class HubCRepositoryPreviousValueTS(MontrekRepository):
@@ -141,6 +147,12 @@ class HubCRepositoryPreviousValueTS(MontrekRepository):
         self.add_annotation(
             "relative_change",
             TSRelativeChangeSubqueryBuilder(me_models.SatTSC2, "field_tsc2_float"),
+        )
+        self.add_annotation(
+            "cumulated_change",
+            TSRelativeChangeSubqueryBuilder(
+                me_models.SatTSC2, "field_tsc2_float", is_cumulated=True
+            ),
         )
 
 

@@ -35,7 +35,7 @@ from django.db.models import (
     When,
     Window,
 )
-from django.db.models.functions import Cast, JSONObject, Lag, NullIf
+from django.db.models.functions import Cast, FirstValue, JSONObject, Lag, NullIf
 from django.utils import timezone
 
 
@@ -276,7 +276,8 @@ class PreviousTSValueSubqueryBuilder(SubqueryBuilder):
 
     def previous_filter(self) -> Q:
         """Satellites of the same hub at earlier value dates; combined with the
-        ordering in :meth:`value_subquery` this picks the latest of them."""
+        descending ordering in :meth:`value_subquery` this picks the latest of
+        them."""
         return Q(
             hub_value_date__hub_id=OuterRef("hub_id"),
             hub_value_date__value_date_list__value_date__lt=OuterRef(
@@ -284,9 +285,19 @@ class PreviousTSValueSubqueryBuilder(SubqueryBuilder):
             ),
         )
 
+    def hub_filter(self) -> Q:
+        """All satellites of the same hub; combined with the ascending ordering
+        in :meth:`value_subquery` this picks the earliest of them."""
+        return Q(hub_value_date__hub_id=OuterRef("hub_id"))
+
     def value_subquery(
-        self, reference_date: timezone.datetime, value_date_filter: Q
+        self,
+        reference_date: timezone.datetime,
+        value_date_filter: Q,
+        *,
+        latest: bool = True,
     ) -> Subquery:
+        order_field = "hub_value_date__value_date_list__value_date"
         return Subquery(
             self.satellite_class.objects.filter(
                 value_date_filter,
@@ -294,44 +305,88 @@ class PreviousTSValueSubqueryBuilder(SubqueryBuilder):
                 state_date_start__lte=reference_date,
                 state_date_end__gt=reference_date,
             )
-            .order_by("-hub_value_date__value_date_list__value_date")
+            .order_by(f"-{order_field}" if latest else order_field)
             .values(self.field)[:1],
             output_field=self.value_field_type,
+        )
+
+    def window(self, function: type[Func], reference_date: timezone.datetime) -> Window:
+        """Apply a window function to the row's own value, over the rows of the
+        queryset: per hub, ordered by value date."""
+        return Window(
+            expression=function(
+                self.value_subquery(reference_date, self.current_filter())
+            ),
+            partition_by=[F("hub_id")],
+            order_by=F("value_date_list__value_date").asc(),
         )
 
     def previous_value(self, reference_date: timezone.datetime) -> Subquery | Window:
         if not self.use_window:
             return self.value_subquery(reference_date, self.previous_filter())
-        return Window(
-            expression=Lag(self.value_subquery(reference_date, self.current_filter())),
-            partition_by=[F("hub_id")],
-            order_by=F("value_date_list__value_date").asc(),
-        )
+        return self.window(Lag, reference_date)
+
+    def first_value(self, reference_date: timezone.datetime) -> Subquery | Window:
+        """Value at the start of the series: the hub's earliest value date, or —
+        in window mode — the first row the queryset holds for that hub.
+
+        Unlike :meth:`previous_value` this never yields NULL for a row that has
+        a value of its own: the start row's own value is its start value.
+        """
+        if not self.use_window:
+            return self.value_subquery(reference_date, self.hub_filter(), latest=False)
+        # The default window frame of an ordered window is UNBOUNDED PRECEDING
+        # to CURRENT ROW, so FIRST_VALUE is the first row of the partition.
+        return self.window(FirstValue, reference_date)
 
     def build(self, reference_date: timezone.datetime) -> Subquery | Window:
         return self.previous_value(reference_date)
 
 
 class TSRelativeChangeSubqueryBuilder(PreviousTSValueSubqueryBuilder):
-    """Relative change of a timeseries satellite field against its value at the
-    preceding value date: ``(current - previous) / previous``.
+    """Relative change of a timeseries satellite field against an earlier value
+    of the same series: ``(current - base) / base``.
 
-    The predecessor is determined as described on
-    :class:`PreviousTSValueSubqueryBuilder`. Yields NULL where no predecessor
-    exists or where the previous value is zero, so no division by zero can
-    occur.
+    ``is_cumulated`` selects the base value:
+
+    * ``False`` (default) — the preceding value date, giving the change from
+      one entry to the next.  NULL for a series' first entry.
+    * ``True`` — the value at the start of the series, giving the change
+      accumulated since then.  ``0.0`` for the start entry itself.
+
+    Both are determined as described on
+    :class:`PreviousTSValueSubqueryBuilder`, i.e. over the queryset's rows in
+    window mode and over the satellite history otherwise.
+
+    Chaining the stepwise changes yields the cumulated one:
+    ``∏(1 + rᵢ) = ∏(vᵢ / vᵢ₋₁) = v_t / v₀``, so the cumulated change needs no
+    accumulation and is computed directly against the start value.  This holds
+    for a pure value series; it does not account for cash flows in or out of
+    the measured quantity.
+
+    Yields NULL where no base value exists or where it is zero, so no division
+    by zero can occur.
     """
 
-    def __init__(self, *args, **kwargs):
+    is_cumulated: bool = False
+
+    def __init__(self, *args, is_cumulated: bool | None = None, **kwargs):
         super().__init__(*args, **kwargs)
+        if is_cumulated is not None:
+            self.is_cumulated = is_cumulated
         self.field_type = FloatField(null=True, blank=True)
+
+    def base_value(self, reference_date: timezone.datetime) -> Subquery | Window:
+        if self.is_cumulated:
+            return self.first_value(reference_date)
+        return self.previous_value(reference_date)
 
     def build(self, reference_date: timezone.datetime) -> ExpressionWrapper:
         current = self.value_subquery(reference_date, self.current_filter())
-        previous = self.previous_value(reference_date)
+        base = self.base_value(reference_date)
         return ExpressionWrapper(
-            (current - previous)
-            / NullIf(previous, Value(0, output_field=self.value_field_type)),
+            (current - base)
+            / NullIf(base, Value(0, output_field=self.value_field_type)),
             output_field=self.field_type,
         )
 

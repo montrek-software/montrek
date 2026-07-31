@@ -10,6 +10,7 @@ from baseclasses.repositories.subquery_builder import (
     CrossSatelliteFilter,
     PreviousTSValueSubqueryBuilder,
     ReverseLinkedSatelliteSubqueryBuilder,
+    TSRelativeChangeSubqueryBuilder,
 )
 from baseclasses.tests.factories.montrek_factory_schemas import ValueDateListFactory
 from baseclasses.utils import montrek_time
@@ -5068,6 +5069,95 @@ class TestPreviousTSValueTimeSeries(PreviousTSValueTestCaseMixin, TestCase):
         self.assertIsNone(row.relative_change)
 
 
+class TestCumulatedRelativeChange(PreviousTSValueTestCaseMixin, TestCase):
+    """``is_cumulated=True`` measures against the start of the series instead of
+    against the preceding entry."""
+
+    def setUp(self):
+        self.hub = self._make_series(
+            {"2026-01-01": 1.0, "2026-02-01": 2.0, "2026-03-01": 4.0}
+        )
+
+    def _ts_rows(self, queryset=None):
+        queryset = (
+            HubCRepositoryPreviousValueTS().receive() if queryset is None else queryset
+        )
+        return {row.value_date: row for row in queryset}
+
+    def test_every_row_is_measured_against_the_start_value(self):
+        rows = self._ts_rows()
+        self.assertEqual(rows[datetime.date(2026, 2, 1)].cumulated_change, 1.0)
+        self.assertEqual(rows[datetime.date(2026, 3, 1)].cumulated_change, 3.0)
+
+    def test_start_row_is_zero_not_none(self):
+        # The start row has a base value — itself — unlike the stepwise change,
+        # which has no predecessor there.
+        start = self._ts_rows()[datetime.date(2026, 1, 1)]
+        self.assertEqual(start.cumulated_change, 0.0)
+        self.assertIsNone(start.relative_change)
+
+    def test_chained_stepwise_changes_equal_the_cumulated_change(self):
+        # The identity the cumulated change relies on:
+        # prod(1 + r_i) = prod(v_i / v_i-1) = v_t / v_0
+        rows = sorted(self._ts_rows().values(), key=lambda row: row.value_date)
+        chained = 1.0
+        for row in rows:
+            chained *= 1.0 + (row.relative_change or 0.0)
+            self.assertAlmostEqual(chained - 1.0, row.cumulated_change)
+
+    def test_filter_on_the_returned_queryset_moves_the_start_point(self):
+        # Dropping the first row makes 2026-02-01 the start of the series.
+        queryset = (
+            HubCRepositoryPreviousValueTS()
+            .receive()
+            .filter(~Q(value_date=datetime.date(2026, 1, 1)))
+        )
+        rows = self._ts_rows(queryset)
+        self.assertEqual(rows[datetime.date(2026, 2, 1)].cumulated_change, 0.0)
+        self.assertEqual(
+            rows[datetime.date(2026, 3, 1)].cumulated_change, (4.0 - 2.0) / 2.0
+        )
+
+    def test_window_does_not_cross_hub_boundaries(self):
+        other = self._make_series({"2026-01-15": 10.0, "2026-02-15": 25.0})
+        rows = {
+            (row.hub_entity_id, row.value_date): row
+            for row in HubCRepositoryPreviousValueTS().receive()
+        }
+        self.assertEqual(
+            rows[(other.pk, datetime.date(2026, 1, 15))].cumulated_change, 0.0
+        )
+        self.assertEqual(
+            rows[(other.pk, datetime.date(2026, 2, 15))].cumulated_change, 1.5
+        )
+        self.assertEqual(
+            rows[(self.hub.pk, datetime.date(2026, 3, 1))].cumulated_change, 3.0
+        )
+
+    def test_none_when_the_start_value_is_zero(self):
+        hub = self._make_series({"2026-05-01": 0.0, "2026-06-01": 5.0})
+        rows = {
+            (row.hub_entity_id, row.value_date): row
+            for row in HubCRepositoryPreviousValueTS().receive()
+        }
+        self.assertIsNone(rows[(hub.pk, datetime.date(2026, 6, 1))].cumulated_change)
+
+    def test_latest_repository_measures_against_the_oldest_entry(self):
+        # latest_ts=True holds a single row per hub, so the start value comes
+        # from the satellite history rather than from a preceding row.
+        row = (
+            HubCRepositoryPreviousValueLatest().receive().get(hub_entity_id=self.hub.pk)
+        )
+        self.assertEqual(row.field_tsc2_float, 4.0)
+        self.assertEqual(row.cumulated_change, (4.0 - 1.0) / 1.0)
+
+    def test_latest_repository_start_row_is_zero_for_a_single_entry(self):
+        hub = self._make_series({"2026-01-01": 5.0})
+        row = HubCRepositoryPreviousValueLatest().receive().get(hub_entity_id=hub.pk)
+        self.assertEqual(row.cumulated_change, 0.0)
+        self.assertIsNone(row.relative_change)
+
+
 class TestPreviousTSValueBuilderMechanics(TestCase):
     """Registration and configuration of the previous-value builders."""
 
@@ -5086,6 +5176,23 @@ class TestPreviousTSValueBuilderMechanics(TestCase):
             "previous_float"
         ]
         self.assertFalse(builder.use_window)
+
+    def test_is_cumulated_defaults_to_the_stepwise_change(self):
+        builder = TSRelativeChangeSubqueryBuilder(me_models.SatTSC2, "field_tsc2_float")
+        self.assertFalse(builder.is_cumulated)
+
+    def test_is_cumulated_can_be_set_per_instance_or_per_class(self):
+        by_argument = TSRelativeChangeSubqueryBuilder(
+            me_models.SatTSC2, "field_tsc2_float", is_cumulated=True
+        )
+        self.assertTrue(by_argument.is_cumulated)
+
+        class _CumulatedBuilder(TSRelativeChangeSubqueryBuilder):
+            is_cumulated = True
+
+        self.assertTrue(
+            _CumulatedBuilder(me_models.SatTSC2, "field_tsc2_float").is_cumulated
+        )
 
     def test_non_timeseries_satellite_is_rejected(self):
         with self.assertRaises(TypeError):
