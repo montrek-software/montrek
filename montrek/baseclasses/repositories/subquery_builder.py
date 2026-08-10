@@ -339,7 +339,11 @@ class PreviousTSValueSubqueryBuilder(SubqueryBuilder):
         # to CURRENT ROW, so FIRST_VALUE is the first row of the partition.
         return self.window(FirstValue, reference_date)
 
-    def build(self, reference_date: timezone.datetime) -> Subquery | Window:
+    def build(
+        self,
+        reference_date: timezone.datetime,
+        queryset: QuerySet | None = None,
+    ) -> Subquery | Window:
         return self.previous_value(reference_date)
 
 
@@ -626,7 +630,11 @@ class LinkedHubIdSubqueryBuilder(
         self.field = "hub_out" if self.reversed_link else "hub_in"
         self.to_field = "hub_in" if self.reversed_link else "hub_out"
 
-    def build(self, reference_date: timezone.datetime) -> Subquery:
+    def build(
+        self,
+        reference_date: timezone.datetime,
+        queryset: QuerySet | None = None,
+    ) -> Subquery:
         value_field = "hub_in_id" if self.reversed_link else "hub_out_id"
         hub_db_field_name, parent_link_strings = (
             self._get_parent_db_name_und_link_string(self.field)
@@ -1042,7 +1050,11 @@ class LinkedSatelliteSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
     _hub_field_to: str = "hub_out"
     _hub_field_from: str = "hub_in"
 
-    def build(self, reference_date: timezone.datetime) -> Subquery:
+    def build(
+        self,
+        reference_date: timezone.datetime,
+        queryset: QuerySet | None = None,
+    ) -> Subquery:
         return self._get_subquery("hub_out", "hub_in", reference_date)
 
     def build_alias(self, reference_date: timezone.datetime) -> Subquery:
@@ -1055,7 +1067,11 @@ class ReverseLinkedSatelliteSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
     _hub_field_to: str = "hub_in"
     _hub_field_from: str = "hub_out"
 
-    def build(self, reference_date: timezone.datetime) -> Subquery:
+    def build(
+        self,
+        reference_date: timezone.datetime,
+        queryset: QuerySet | None = None,
+    ) -> Subquery:
         return self._get_subquery("hub_in", "hub_out", reference_date)
 
     def build_alias(self, reference_date: timezone.datetime) -> Subquery:
