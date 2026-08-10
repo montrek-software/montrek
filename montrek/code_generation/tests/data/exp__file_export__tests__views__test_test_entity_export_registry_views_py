@@ -1,0 +1,109 @@
+from unittest.mock import patch
+
+from django.core.files.base import ContentFile
+from django.test import TestCase
+from django.urls import reverse
+from testing.test_cases.view_test_cases import (
+    MontrekDownloadViewTestCase,
+    MontrekListViewTestCase,
+    ProcessPipelineViewTestCase,
+)
+from code_generation.tests.data.output_file_export.tests.factories.test_entity_export_registry_sat_factories import TestEntityExportRegistrySatelliteFactory
+from code_generation.tests.data.output_file_export.tests.factories.test_entity_export_registry_hub_factories import TestEntityExportRegistryHubFactory
+from code_generation.tests.data.output_file_export.views.test_entity_export_registry_views import TestEntityExportRegistryListView
+from code_generation.tests.data.output_file_export.views.test_entity_export_registry_views import TestEntityExportTriggerView
+from code_generation.tests.data.output_file_export.views.test_entity_export_registry_views import TestEntityExportDownloadView
+from code_generation.tests.data.output_file_export.managers.test_entity_export_processor import TestEntityFileExportProcessor
+from code_generation.tests.data.output_file_export.repositories.test_entity_export_registry_repositories import TestEntityExportRegistryRepository
+
+
+class TestTestEntityExportRegistryListView(MontrekListViewTestCase):
+    viewname = "test_entity_export_registry_list"
+    view_class = TestEntityExportRegistryListView
+    expected_no_of_rows = 3
+
+    def build_factories(self):
+        TestEntityExportRegistrySatelliteFactory.create_batch(3)
+
+
+class TestTestEntityExportDownloadView(MontrekDownloadViewTestCase):
+    viewname = "test_entity_export_download"
+    view_class = TestEntityExportDownloadView
+
+    def build_factories(self):
+        self.registry_sat = TestEntityExportRegistrySatelliteFactory(
+            generate_export_file=True
+        )
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.registry_sat.get_hub_value_date().pk}
+
+    def expected_filename(self) -> str:
+        # Django may append a uniqueness suffix; match any test_export*.csv
+        return r"test_export.*\.csv"
+
+
+class TestTestEntityExportTriggerView(ProcessPipelineViewTestCase):
+    """Exercises the export wiring: URL, view, manager and registry write.
+
+    TestEntityFileExportProcessor is stubbed out so this runs green before the
+    processor exists. Once it is implemented, drop ``_stub_processor``, build the
+    data the export needs in ``build_factories`` and adjust the expectations below.
+    """
+
+    viewname = "test_entity_export_trigger"
+    view_class = TestEntityExportTriggerView
+    expected_message = "Export successful"
+    expected_status = "processed"
+
+    def build_factories(self):
+        # TODO: Remove once TestEntityFileExportProcessor is implemented and
+        # create the records the export is supposed to write out instead.
+        self._stub_processor()
+
+    def _stub_processor(self):
+        def process(processor) -> bool:
+            processor.set_result_file(
+                ContentFile(b"col1,col2\ncell1,cell2\n", name="test_entity_export.csv")
+            )
+            processor.set_message(self.expected_message)
+            return True
+
+        stubs = {
+            "pre_check": lambda processor: True,
+            "process": process,
+            "post_check": lambda processor: True,
+        }
+        for method_name, stub in stubs.items():
+            patcher = patch.object(
+                TestEntityFileExportProcessor, method_name, stub
+            )
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    def expected_url(self) -> str:
+        return reverse("test_entity_export_registry_list")
+
+    def additional_assertions(self):
+        registry = TestEntityExportRegistryRepository().receive().first()
+        self.assertTrue(
+            bool(registry.export_file),
+            "export_file should be set after a successful export",
+        )
+
+
+class TestTestEntityFileExportProcessor(TestCase):
+    """These tests fail with NotImplementedError until the processor is implemented."""
+
+    def setUp(self):
+        self.hub = TestEntityExportRegistryHubFactory()
+        self.processor = TestEntityFileExportProcessor(self.hub, {})
+
+    def test_pre_check(self):
+        self.processor.pre_check()
+
+    def test_process(self):
+        self.processor.process()
+
+    def test_post_check(self):
+        self.processor.post_check()

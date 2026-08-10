@@ -1,0 +1,109 @@
+from unittest.mock import patch
+
+from django.core.files.base import ContentFile
+from django.test import TestCase
+from django.urls import reverse
+from testing.test_cases.view_test_cases import (
+    MontrekDownloadViewTestCase,
+    MontrekListViewTestCase,
+    ProcessPipelineViewTestCase,
+)
+{{ export_registry_sat_factory_cls_import }}
+{{ export_registry_hub_factory_cls_import }}
+{{ export_registry_list_view_cls_import }}
+{{ export_trigger_view_cls_import }}
+{{ export_download_view_cls_import }}
+{{ export_processor_cls_import }}
+{{ export_registry_repo_cls_import }}
+
+
+class {{ export_registry_list_view_test_cls_name }}(MontrekListViewTestCase):
+    viewname = "{{ export_registry_list_view_url_name }}"
+    view_class = {{ export_registry_list_view_cls_name }}
+    expected_no_of_rows = 3
+
+    def build_factories(self):
+        {{ export_registry_sat_factory_cls_name }}.create_batch(3)
+
+
+class {{ export_download_view_test_cls_name }}(MontrekDownloadViewTestCase):
+    viewname = "{{ export_download_url_name }}"
+    view_class = {{ export_download_view_cls_name }}
+
+    def build_factories(self):
+        self.registry_sat = {{ export_registry_sat_factory_cls_name }}(
+            generate_export_file=True
+        )
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.registry_sat.get_hub_value_date().pk}
+
+    def expected_filename(self) -> str:
+        # Django may append a uniqueness suffix; match any test_export*.csv
+        return r"test_export.*\.csv"
+
+
+class {{ export_trigger_view_test_cls_name }}(ProcessPipelineViewTestCase):
+    """Exercises the export wiring: URL, view, manager and registry write.
+
+    {{ export_processor_cls_name }} is stubbed out so this runs green before the
+    processor exists. Once it is implemented, drop ``_stub_processor``, build the
+    data the export needs in ``build_factories`` and adjust the expectations below.
+    """
+
+    viewname = "{{ export_trigger_view_url_name }}"
+    view_class = {{ export_trigger_view_cls_name }}
+    expected_message = "Export successful"
+    expected_status = "processed"
+
+    def build_factories(self):
+        # TODO: Remove once {{ export_processor_cls_name }} is implemented and
+        # create the records the export is supposed to write out instead.
+        self._stub_processor()
+
+    def _stub_processor(self):
+        def process(processor) -> bool:
+            processor.set_result_file(
+                ContentFile(b"col1,col2\ncell1,cell2\n", name="{{ prefix }}_export.csv")
+            )
+            processor.set_message(self.expected_message)
+            return True
+
+        stubs = {
+            "pre_check": lambda processor: True,
+            "process": process,
+            "post_check": lambda processor: True,
+        }
+        for method_name, stub in stubs.items():
+            patcher = patch.object(
+                {{ export_processor_cls_name }}, method_name, stub
+            )
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    def expected_url(self) -> str:
+        return reverse("{{ export_registry_list_view_url_name }}")
+
+    def additional_assertions(self):
+        registry = {{ export_registry_repo_cls_name }}().receive().first()
+        self.assertTrue(
+            bool(registry.export_file),
+            "export_file should be set after a successful export",
+        )
+
+
+class {{ export_processor_test_cls_name }}(TestCase):
+    """These tests fail with NotImplementedError until the processor is implemented."""
+
+    def setUp(self):
+        self.hub = {{ export_registry_hub_factory_cls_name }}()
+        self.processor = {{ export_processor_cls_name }}(self.hub, {})
+
+    def test_pre_check(self):
+        self.processor.pre_check()
+
+    def test_process(self):
+        self.processor.process()
+
+    def test_post_check(self):
+        self.processor.post_check()

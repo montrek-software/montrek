@@ -1,0 +1,10 @@
+from file_export.repositories.file_export_registry_repository import (
+    FileExportRegistryRepositoryABC,
+)
+{{ export_registry_hub_cls_import }}
+{{ export_registry_sat_cls_import }}
+
+
+class {{ export_registry_repo_cls_name }}(FileExportRegistryRepositoryABC):
+    hub_class = {{ export_registry_hub_cls_name }}
+    registry_satellite = {{ export_registry_sat_cls_name }}

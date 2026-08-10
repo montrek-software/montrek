@@ -1,0 +1,11 @@
+from baseclasses.fields import HubForeignKey
+from baseclasses.models import HubValueDate
+from file_export.models import FileExportRegistryHubABC
+
+
+class TestEntityExportRegistryHub(FileExportRegistryHubABC):
+    pass
+
+
+class TestEntityExportRegistryHubValueDate(HubValueDate):
+    hub = HubForeignKey(TestEntityExportRegistryHub)

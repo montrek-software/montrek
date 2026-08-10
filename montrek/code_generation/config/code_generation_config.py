@@ -41,6 +41,19 @@ class CodeGenerationConfig:
             "registry_urls_init": "registry_urls_init.py.j2",
             "registry_processor": "registry_processor.py.j2",
             "registry_upload_manager": "registry_upload_manager.py.j2",
+            "export_registry_hub_models": "export_registry_hub_models.py.j2",
+            "export_registry_sat_models": "export_registry_sat_models.py.j2",
+            "export_registry_repositories": "export_registry_repositories.py.j2",
+            "export_registry_managers": "export_registry_managers.py.j2",
+            "export_processor": "export_processor.py.j2",
+            "export_manager": "export_manager.py.j2",
+            "export_registry_pages": "export_registry_pages.py.j2",
+            "export_registry_views": "export_registry_views.py.j2",
+            "export_registry_urls": "export_registry_urls.py.j2",
+            "export_registry_urls_init": "export_registry_urls_init.py.j2",
+            "export_registry_hub_factories": "export_registry_hub_factories.py.j2",
+            "export_registry_sat_factories": "export_registry_sat_factories.py.j2",
+            "export_registry_view_tests": "export_registry_view_tests.py.j2",
         }
 
         self.output_paths_patterns = {
@@ -88,6 +101,43 @@ class CodeGenerationConfig:
             "registry_upload_manager": [
                 "managers",
                 f"{prefix}_registry_upload_manager.py",
+            ],
+            "export_registry_hub_models": [
+                "models",
+                f"{prefix}_export_registry_hub_models.py",
+            ],
+            "export_registry_sat_models": [
+                "models",
+                f"{prefix}_export_registry_sat_models.py",
+            ],
+            "export_registry_repositories": [
+                "repositories",
+                f"{prefix}_export_registry_repositories.py",
+            ],
+            "export_registry_managers": [
+                "managers",
+                f"{prefix}_export_registry_managers.py",
+            ],
+            "export_processor": ["managers", f"{prefix}_export_processor.py"],
+            "export_manager": ["managers", f"{prefix}_export_manager.py"],
+            "export_registry_pages": ["pages", f"{prefix}_export_registry_pages.py"],
+            "export_registry_views": ["views", f"{prefix}_export_registry_views.py"],
+            "export_registry_urls": ["urls", f"{prefix}_export_registry_urls.py"],
+            "export_registry_urls_init": ["urls", "__init__.py"],
+            "export_registry_hub_factories": [
+                "tests",
+                "factories",
+                f"{prefix}_export_registry_hub_factories.py",
+            ],
+            "export_registry_sat_factories": [
+                "tests",
+                "factories",
+                f"{prefix}_export_registry_sat_factories.py",
+            ],
+            "export_registry_view_tests": [
+                "tests",
+                "views",
+                f"test_{prefix}_export_registry_views.py",
             ],
         }
         self.output_paths = {
@@ -318,6 +368,105 @@ class CodeGenerationConfig:
             "registry_history_view_url_name": f"{prefix}_registry_history",
             "registry_history_view_title": f"{ui_prefix} Registry History",
             "registry_history_view_test_cls_name": f"Test{c_prefix}RegistryHistoryView",
+        }
+        self.context.update(
+            self._build_export_context(prefix, c_prefix, ui_prefix),
+        )
+
+    def _build_export_context(
+        self, prefix: str, c_prefix: str, ui_prefix: str
+    ) -> dict[str, str]:
+        export_registry_hub_cls_name = f"{c_prefix}ExportRegistryHub"
+        export_registry_hub_factory_cls_name = f"{export_registry_hub_cls_name}Factory"
+        export_registry_hub_value_date_cls_name = (
+            f"{export_registry_hub_cls_name}ValueDate"
+        )
+        export_registry_hub_value_date_factory_cls_name = (
+            f"{export_registry_hub_value_date_cls_name}Factory"
+        )
+        export_registry_sat_cls_name = f"{c_prefix}ExportRegistrySatellite"
+        export_registry_sat_factory_cls_name = f"{export_registry_sat_cls_name}Factory"
+        export_registry_repo_cls_name = f"{c_prefix}ExportRegistryRepository"
+        export_registry_manager_cls_name = f"{c_prefix}ExportRegistryTableManager"
+        export_processor_cls_name = f"{c_prefix}FileExportProcessor"
+        export_manager_cls_name = f"{c_prefix}FileExportManager"
+        export_registry_page_cls_name = f"{c_prefix}ExportRegistryPage"
+        export_registry_list_view_cls_name = f"{c_prefix}ExportRegistryListView"
+        export_trigger_view_cls_name = f"{c_prefix}ExportTriggerView"
+        export_download_view_cls_name = f"{c_prefix}ExportDownloadView"
+
+        return {
+            "export_registry_hub_cls_name": export_registry_hub_cls_name,
+            "export_registry_hub_cls_import": self._get_import(
+                "export_registry_hub_models", export_registry_hub_cls_name
+            ),
+            "export_registry_hub_cls_import_rel": f"from .{prefix}_export_registry_hub_models import {export_registry_hub_cls_name}",
+            "export_registry_hub_value_date_cls_name": export_registry_hub_value_date_cls_name,
+            "export_registry_hub_value_date_cls_import": self._get_import(
+                "export_registry_hub_models", export_registry_hub_value_date_cls_name
+            ),
+            "export_registry_hub_value_date_cls_import_rel": f"from .{prefix}_export_registry_hub_models import {export_registry_hub_value_date_cls_name}",
+            "export_registry_hub_factory_cls_name": export_registry_hub_factory_cls_name,
+            "export_registry_hub_factory_cls_import": self._get_import(
+                "export_registry_hub_factories", export_registry_hub_factory_cls_name
+            ),
+            "export_registry_hub_value_date_factory_cls_name": export_registry_hub_value_date_factory_cls_name,
+            "export_registry_sat_cls_name": export_registry_sat_cls_name,
+            "export_registry_sat_cls_import": self._get_import(
+                "export_registry_sat_models", export_registry_sat_cls_name
+            ),
+            "export_registry_sat_cls_import_rel": f"from .{prefix}_export_registry_sat_models import {export_registry_sat_cls_name}",
+            "export_registry_sat_factory_cls_name": export_registry_sat_factory_cls_name,
+            "export_registry_sat_factory_cls_import": self._get_import(
+                "export_registry_sat_factories", export_registry_sat_factory_cls_name
+            ),
+            "export_registry_repo_cls_name": export_registry_repo_cls_name,
+            "export_registry_repo_cls_import": self._get_import(
+                "export_registry_repositories", export_registry_repo_cls_name
+            ),
+            "export_registry_manager_cls_name": export_registry_manager_cls_name,
+            "export_registry_manager_cls_import": self._get_import(
+                "export_registry_managers", export_registry_manager_cls_name
+            ),
+            "export_registry_document_name": f"{ui_prefix} Export Registry",
+            "export_processor_cls_name": export_processor_cls_name,
+            "export_processor_cls_import": self._get_import(
+                "export_processor", export_processor_cls_name
+            ),
+            "export_processor_test_cls_name": f"Test{c_prefix}FileExportProcessor",
+            "export_manager_cls_name": export_manager_cls_name,
+            "export_manager_cls_import": self._get_import(
+                "export_manager", export_manager_cls_name
+            ),
+            "export_registry_page_cls_name": export_registry_page_cls_name,
+            "export_registry_page_cls_import": self._get_import(
+                "export_registry_pages", export_registry_page_cls_name
+            ),
+            "export_registry_page_title": f"{ui_prefix} Exports",
+            "export_registry_list_view_cls_name": export_registry_list_view_cls_name,
+            "export_registry_list_view_cls_import": self._get_import(
+                "export_registry_views", export_registry_list_view_cls_name
+            ),
+            "export_registry_list_view_test_cls_name": f"Test{c_prefix}ExportRegistryListView",
+            "export_registry_list_view_title": f"{ui_prefix} Export Registry List",
+            "export_registry_list_view_url_name": f"{prefix}_export_registry_list",
+            "export_registry_list_tab_id": f"tab_{prefix}_export_registry_list",
+            "export_registry_list_tab_name": f"{ui_prefix} Exports",
+            "export_trigger_view_cls_name": export_trigger_view_cls_name,
+            "export_trigger_view_cls_import": self._get_import(
+                "export_registry_views", export_trigger_view_cls_name
+            ),
+            "export_trigger_view_test_cls_name": f"Test{c_prefix}ExportTriggerView",
+            "export_trigger_view_url_name": f"{prefix}_export_trigger",
+            "export_trigger_hover": f"Trigger {ui_prefix} export",
+            "export_download_view_cls_name": export_download_view_cls_name,
+            "export_download_view_cls_import": self._get_import(
+                "export_registry_views", export_download_view_cls_name
+            ),
+            "export_download_view_test_cls_name": f"Test{c_prefix}ExportDownloadView",
+            "export_download_url_name": f"{prefix}_export_download",
+            "export_urlpatterns_import_rel": f"from .{prefix}_export_registry_urls import urlpatterns as {prefix}_export_registry_urls",
+            "export_urlpatterns_statement": f"urlpatterns = {prefix}_export_registry_urls",
         }
 
     def _get_import(self, key: str, class_name: str) -> str:

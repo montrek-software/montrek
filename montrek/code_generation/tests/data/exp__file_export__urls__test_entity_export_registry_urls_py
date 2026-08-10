@@ -1,0 +1,28 @@
+from django.shortcuts import redirect
+from django.urls import path
+from code_generation.tests.data.output_file_export.views.test_entity_export_registry_views import TestEntityExportRegistryListView
+from code_generation.tests.data.output_file_export.views.test_entity_export_registry_views import TestEntityExportTriggerView
+from code_generation.tests.data.output_file_export.views.test_entity_export_registry_views import TestEntityExportDownloadView
+
+urlpatterns = [
+    path(
+        "test_entity_export_registry",
+        lambda _: redirect("test_entity_export_registry_list"),
+        name="test_entity_export_registry",
+    ),
+    path(
+        "test_entity_export_registry/list",
+        TestEntityExportRegistryListView.as_view(),
+        name="test_entity_export_registry_list",
+    ),
+    path(
+        "test_entity_export_registry/trigger",
+        TestEntityExportTriggerView.as_view(),
+        name="test_entity_export_trigger",
+    ),
+    path(
+        "test_entity_export_registry/<int:pk>/download",
+        TestEntityExportDownloadView.as_view(),
+        name="test_entity_export_download",
+    ),
+]

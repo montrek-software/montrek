@@ -1,0 +1,36 @@
+from file_export.managers.file_export_processor_abc import FileExportProcessorABC
+
+
+class {{ export_processor_cls_name }}(FileExportProcessorABC):
+    """Skeleton for the {{ page_title }} file export.
+
+    The pipeline calls ``pre_check``, ``process`` and ``post_check`` in that
+    order and aborts as soon as one of them returns ``False``. Build the export
+    file in ``process`` and hand it over via ``set_result_file`` so the manager
+    can attach it to the registry.
+    """
+
+    def pre_check(self) -> bool:
+        raise NotImplementedError(
+            "Please implement {{ export_processor_cls_name }}.pre_check"
+        )
+
+    def process(self) -> bool:
+        # TODO: Build the export file and attach it, e.g.:
+        #
+        # from django.core.files.base import ContentFile
+        #
+        # content = b"col1,col2\ncell1,cell2\n"
+        # self.set_result_file(
+        #     ContentFile(content, name="{{ prefix }}_export.csv")
+        # )
+        # self.set_message("Export successful")
+        # return True
+        raise NotImplementedError(
+            "Please implement {{ export_processor_cls_name }}.process"
+        )
+
+    def post_check(self) -> bool:
+        raise NotImplementedError(
+            "Please implement {{ export_processor_cls_name }}.post_check"
+        )

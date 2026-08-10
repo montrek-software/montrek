@@ -1,0 +1,28 @@
+from django.shortcuts import redirect
+from django.urls import path
+{{ export_registry_list_view_cls_import }}
+{{ export_trigger_view_cls_import }}
+{{ export_download_view_cls_import }}
+
+urlpatterns = [
+    path(
+        "{{ prefix }}_export_registry",
+        lambda _: redirect("{{ export_registry_list_view_url_name }}"),
+        name="{{ prefix }}_export_registry",
+    ),
+    path(
+        "{{ prefix }}_export_registry/list",
+        {{ export_registry_list_view_cls_name }}.as_view(),
+        name="{{ export_registry_list_view_url_name }}",
+    ),
+    path(
+        "{{ prefix }}_export_registry/trigger",
+        {{ export_trigger_view_cls_name }}.as_view(),
+        name="{{ export_trigger_view_url_name }}",
+    ),
+    path(
+        "{{ prefix }}_export_registry/<int:pk>/download",
+        {{ export_download_view_cls_name }}.as_view(),
+        name="{{ export_download_url_name }}",
+    ),
+]

@@ -1,0 +1,33 @@
+from baseclasses.dataclasses.view_classes import PlayActionElement
+from file_export.views.file_export_views import (
+    FileExportDownloadView,
+    FileExportRegistryListView,
+    FileExportTriggerView,
+)
+{{ export_registry_manager_cls_import }}
+{{ export_manager_cls_import }}
+{{ export_registry_page_cls_import }}
+
+
+class {{ export_registry_list_view_cls_name }}(FileExportRegistryListView):
+    manager_class = {{ export_registry_manager_cls_name }}
+    page_class = {{ export_registry_page_cls_name }}
+    tab = "{{ export_registry_list_tab_id }}"
+    title = "{{ export_registry_list_view_title }}"
+
+    @property
+    def actions(self) -> tuple:
+        action_export = PlayActionElement(
+            url_name="{{ export_trigger_view_url_name }}",
+            hover_text="{{ export_trigger_hover }}",
+        )
+        return (action_export,)
+
+
+class {{ export_trigger_view_cls_name }}(FileExportTriggerView):
+    manager_class = {{ export_manager_cls_name }}
+    success_url = "{{ export_registry_list_view_url_name }}"
+
+
+class {{ export_download_view_cls_name }}(FileExportDownloadView):
+    manager_class = {{ export_registry_manager_cls_name }}

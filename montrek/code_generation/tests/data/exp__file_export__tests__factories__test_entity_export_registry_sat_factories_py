@@ -1,0 +1,14 @@
+import factory
+
+from file_export.tests.factories.file_export_factories import (
+    FileExportRegistryStaticSatelliteFactory,
+)
+from code_generation.tests.data.output_file_export.tests.factories.test_entity_export_registry_hub_factories import TestEntityExportRegistryHubFactory
+from code_generation.tests.data.output_file_export.models.test_entity_export_registry_sat_models import TestEntityExportRegistrySatellite
+
+
+class TestEntityExportRegistrySatelliteFactory(FileExportRegistryStaticSatelliteFactory):
+    class Meta:
+        model = TestEntityExportRegistrySatellite
+
+    hub_entity = factory.SubFactory(TestEntityExportRegistryHubFactory)

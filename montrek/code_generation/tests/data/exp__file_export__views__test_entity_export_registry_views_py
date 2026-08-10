@@ -1,0 +1,33 @@
+from baseclasses.dataclasses.view_classes import PlayActionElement
+from file_export.views.file_export_views import (
+    FileExportDownloadView,
+    FileExportRegistryListView,
+    FileExportTriggerView,
+)
+from code_generation.tests.data.output_file_export.managers.test_entity_export_registry_managers import TestEntityExportRegistryTableManager
+from code_generation.tests.data.output_file_export.managers.test_entity_export_manager import TestEntityFileExportManager
+from code_generation.tests.data.output_file_export.pages.test_entity_export_registry_pages import TestEntityExportRegistryPage
+
+
+class TestEntityExportRegistryListView(FileExportRegistryListView):
+    manager_class = TestEntityExportRegistryTableManager
+    page_class = TestEntityExportRegistryPage
+    tab = "tab_test_entity_export_registry_list"
+    title = "Test Entity Export Registry List"
+
+    @property
+    def actions(self) -> tuple:
+        action_export = PlayActionElement(
+            url_name="test_entity_export_trigger",
+            hover_text="Trigger Test Entity export",
+        )
+        return (action_export,)
+
+
+class TestEntityExportTriggerView(FileExportTriggerView):
+    manager_class = TestEntityFileExportManager
+    success_url = "test_entity_export_registry_list"
+
+
+class TestEntityExportDownloadView(FileExportDownloadView):
+    manager_class = TestEntityExportRegistryTableManager

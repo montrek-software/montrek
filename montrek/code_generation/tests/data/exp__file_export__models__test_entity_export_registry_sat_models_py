@@ -1,0 +1,8 @@
+from django.db import models
+
+from file_export.models import FileExportRegistryStaticSatelliteABC
+from code_generation.tests.data.output_file_export.models.test_entity_export_registry_hub_models import TestEntityExportRegistryHub
+
+
+class TestEntityExportRegistrySatellite(FileExportRegistryStaticSatelliteABC):
+    hub_entity = models.ForeignKey(TestEntityExportRegistryHub, on_delete=models.CASCADE)

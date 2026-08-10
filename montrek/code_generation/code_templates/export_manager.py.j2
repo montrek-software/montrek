@@ -1,0 +1,8 @@
+from file_export.managers.file_export_manager import FileExportManagerABC
+{{ export_processor_cls_import }}
+{{ export_registry_repo_cls_import }}
+
+
+class {{ export_manager_cls_name }}(FileExportManagerABC):
+    processor_class = {{ export_processor_cls_name }}
+    registry_repository_class = {{ export_registry_repo_cls_name }}

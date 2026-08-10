@@ -1,0 +1,10 @@
+from file_export.managers.file_export_registry_manager import (
+    FileExportRegistryManagerABC,
+)
+from code_generation.tests.data.output_file_export.repositories.test_entity_export_registry_repositories import TestEntityExportRegistryRepository
+
+
+class TestEntityExportRegistryTableManager(FileExportRegistryManagerABC):
+    repository_class = TestEntityExportRegistryRepository
+    document_name = "Test Entity Export Registry"
+    download_url = "test_entity_export_download"

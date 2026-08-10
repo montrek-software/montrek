@@ -1,0 +1,14 @@
+import factory
+
+from file_export.tests.factories.file_export_factories import (
+    FileExportRegistryStaticSatelliteFactory,
+)
+{{ export_registry_hub_factory_cls_import }}
+{{ export_registry_sat_cls_import }}
+
+
+class {{ export_registry_sat_factory_cls_name }}(FileExportRegistryStaticSatelliteFactory):
+    class Meta:
+        model = {{ export_registry_sat_cls_name }}
+
+    hub_entity = factory.SubFactory({{ export_registry_hub_factory_cls_name }})

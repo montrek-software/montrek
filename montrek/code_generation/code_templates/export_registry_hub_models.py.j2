@@ -1,0 +1,11 @@
+from baseclasses.fields import HubForeignKey
+from baseclasses.models import HubValueDate
+from file_export.models import FileExportRegistryHubABC
+
+
+class {{ export_registry_hub_cls_name }}(FileExportRegistryHubABC):
+    pass
+
+
+class {{ export_registry_hub_value_date_cls_name }}(HubValueDate):
+    hub = HubForeignKey({{ export_registry_hub_cls_name }})
