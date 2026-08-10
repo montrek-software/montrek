@@ -3,6 +3,6 @@ from .company_sat_models import CompanySatellite
 
 
 __all__ = [
-  "CompanyHub",
-  "CompanySatellite",
+    "CompanyHub",
+    "CompanySatellite",
 ]

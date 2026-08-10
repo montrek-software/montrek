@@ -1,3 +1,5 @@
-from .test_entity_export_registry_urls import urlpatterns as test_entity_export_registry_urls
+from .test_entity_export_registry_urls import (
+    urlpatterns as test_entity_export_registry_urls,
+)
 
 urlpatterns = test_entity_export_registry_urls

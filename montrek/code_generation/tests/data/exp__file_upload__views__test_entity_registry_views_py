@@ -7,9 +7,15 @@ from file_upload.views import (
     MontrekDownloadFileView,
     MontrekUploadFileView,
 )
-from code_generation.tests.data.output_file_upload.managers.test_entity_registry_managers import TestEntityRegistryTableManager
-from code_generation.tests.data.output_file_upload.managers.test_entity_registry_upload_manager import TestEntityFileUploadManager
-from code_generation.tests.data.output_file_upload.pages.test_entity_registry_pages import TestEntityRegistryPage
+from code_generation.tests.data.output_file_upload.managers.test_entity_registry_managers import (
+    TestEntityRegistryTableManager,
+)
+from code_generation.tests.data.output_file_upload.managers.test_entity_registry_upload_manager import (
+    TestEntityFileUploadManager,
+)
+from code_generation.tests.data.output_file_upload.pages.test_entity_registry_pages import (
+    TestEntityRegistryPage,
+)
 
 
 class TestEntityRegistryListView(FileUploadRegistryView):

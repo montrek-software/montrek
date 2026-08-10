@@ -1,6 +1,10 @@
 from file_upload.managers.file_upload_manager import FileUploadManagerABC
-from code_generation.tests.data.output_file_upload.managers.test_entity_registry_processor import TestEntityFileUploadProcessor
-from code_generation.tests.data.output_file_upload.managers.test_entity_registry_managers import TestEntityRegistryTableManager
+from code_generation.tests.data.output_file_upload.managers.test_entity_registry_processor import (
+    TestEntityFileUploadProcessor,
+)
+from code_generation.tests.data.output_file_upload.managers.test_entity_registry_managers import (
+    TestEntityRegistryTableManager,
+)
 
 
 class TestEntityFileUploadManager(FileUploadManagerABC):

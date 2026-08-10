@@ -8,13 +8,27 @@ from testing.test_cases.view_test_cases import (
     MontrekListViewTestCase,
     ProcessPipelineViewTestCase,
 )
-from code_generation.tests.data.output_file_export.tests.factories.test_entity_export_registry_sat_factories import TestEntityExportRegistrySatelliteFactory
-from code_generation.tests.data.output_file_export.tests.factories.test_entity_export_registry_hub_factories import TestEntityExportRegistryHubFactory
-from code_generation.tests.data.output_file_export.views.test_entity_export_registry_views import TestEntityExportRegistryListView
-from code_generation.tests.data.output_file_export.views.test_entity_export_registry_views import TestEntityExportTriggerView
-from code_generation.tests.data.output_file_export.views.test_entity_export_registry_views import TestEntityExportDownloadView
-from code_generation.tests.data.output_file_export.managers.test_entity_export_processor import TestEntityFileExportProcessor
-from code_generation.tests.data.output_file_export.repositories.test_entity_export_registry_repositories import TestEntityExportRegistryRepository
+from code_generation.tests.data.output_file_export.tests.factories.test_entity_export_registry_sat_factories import (
+    TestEntityExportRegistrySatelliteFactory,
+)
+from code_generation.tests.data.output_file_export.tests.factories.test_entity_export_registry_hub_factories import (
+    TestEntityExportRegistryHubFactory,
+)
+from code_generation.tests.data.output_file_export.views.test_entity_export_registry_views import (
+    TestEntityExportRegistryListView,
+)
+from code_generation.tests.data.output_file_export.views.test_entity_export_registry_views import (
+    TestEntityExportTriggerView,
+)
+from code_generation.tests.data.output_file_export.views.test_entity_export_registry_views import (
+    TestEntityExportDownloadView,
+)
+from code_generation.tests.data.output_file_export.managers.test_entity_export_processor import (
+    TestEntityFileExportProcessor,
+)
+from code_generation.tests.data.output_file_export.repositories.test_entity_export_registry_repositories import (
+    TestEntityExportRegistryRepository,
+)
 
 
 class TestTestEntityExportRegistryListView(MontrekListViewTestCase):
@@ -74,10 +88,9 @@ class TestTestEntityExportTriggerView(ProcessPipelineViewTestCase):
             "process": process,
             "post_check": lambda processor: True,
         }
+        processor_class = TestEntityFileExportProcessor
         for method_name, stub in stubs.items():
-            patcher = patch.object(
-                TestEntityFileExportProcessor, method_name, stub
-            )
+            patcher = patch.object(processor_class, method_name, stub)
             patcher.start()
             self.addCleanup(patcher.stop)
 

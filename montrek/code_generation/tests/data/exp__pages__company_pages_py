@@ -1,11 +1,14 @@
 from django.urls import reverse
 from baseclasses.dataclasses.view_classes import TabElement
 from baseclasses.pages import MontrekDetailsPage, MontrekPage
-from code_generation.tests.data.output.repositories.company_repositories import CompanyRepository
+from code_generation.tests.data.output.repositories.company_repositories import (
+    CompanyRepository,
+)
 
-PAGE_TITLE="Company"
-LIST_TAB_NAME="Company"
-DETAILS_TAB_NAME="Company"
+PAGE_TITLE = "Company"
+LIST_TAB_NAME = "Company"
+DETAILS_TAB_NAME = "Company"
+
 
 class CompanyPage(MontrekPage):
     page_title = PAGE_TITLE

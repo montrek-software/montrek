@@ -8,11 +8,7 @@ from code_generation.tests.data.output.views.company_views import CompanyDetailV
 from code_generation.tests.data.output.views.company_views import CompanyHistoryView
 
 urlpatterns = [
-    path(
-        "company",
-        lambda _: redirect("company_list"),
-        name="company"
-    ),
+    path("company", lambda _: redirect("company_list"), name="company"),
     path(
         "company/list",
         CompanyListView.as_view(),

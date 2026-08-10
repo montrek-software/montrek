@@ -1,7 +1,9 @@
 from file_upload.managers.file_upload_registry_manager import (
     FileUploadRegistryManagerABC,
 )
-from code_generation.tests.data.output_file_upload.repositories.test_entity_registry_repositories import TestEntityRegistryRepository
+from code_generation.tests.data.output_file_upload.repositories.test_entity_registry_repositories import (
+    TestEntityRegistryRepository,
+)
 
 
 class TestEntityRegistryTableManager(FileUploadRegistryManagerABC):

@@ -7,8 +7,12 @@ from baseclasses.tests.factories.montrek_factory_schemas import (
 from file_export.tests.factories.file_export_factories import (
     FileExportRegistryHubFactory,
 )
-from code_generation.tests.data.output_file_export.models.test_entity_export_registry_hub_models import TestEntityExportRegistryHub
-from code_generation.tests.data.output_file_export.models.test_entity_export_registry_hub_models import TestEntityExportRegistryHubValueDate
+from code_generation.tests.data.output_file_export.models.test_entity_export_registry_hub_models import (
+    TestEntityExportRegistryHub,
+)
+from code_generation.tests.data.output_file_export.models.test_entity_export_registry_hub_models import (
+    TestEntityExportRegistryHubValueDate,
+)
 
 
 class TestEntityExportRegistryHubFactory(FileExportRegistryHubFactory):

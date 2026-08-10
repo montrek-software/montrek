@@ -4,9 +4,15 @@ from file_export.views.file_export_views import (
     FileExportRegistryListView,
     FileExportTriggerView,
 )
-from code_generation.tests.data.output_file_export.managers.test_entity_export_registry_managers import TestEntityExportRegistryTableManager
-from code_generation.tests.data.output_file_export.managers.test_entity_export_manager import TestEntityFileExportManager
-from code_generation.tests.data.output_file_export.pages.test_entity_export_registry_pages import TestEntityExportRegistryPage
+from code_generation.tests.data.output_file_export.managers.test_entity_export_registry_managers import (
+    TestEntityExportRegistryTableManager,
+)
+from code_generation.tests.data.output_file_export.managers.test_entity_export_manager import (
+    TestEntityFileExportManager,
+)
+from code_generation.tests.data.output_file_export.pages.test_entity_export_registry_pages import (
+    TestEntityExportRegistryPage,
+)
 
 
 class TestEntityExportRegistryListView(FileExportRegistryListView):

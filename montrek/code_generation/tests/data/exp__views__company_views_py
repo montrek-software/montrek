@@ -1,8 +1,12 @@
 from django.urls import reverse
 from baseclasses.dataclasses.view_classes import ActionElement, ListActionElement
 from baseclasses import views
-from code_generation.tests.data.output.managers.company_managers import CompanyTableManager
-from code_generation.tests.data.output.managers.company_managers import CompanyDetailsManager
+from code_generation.tests.data.output.managers.company_managers import (
+    CompanyTableManager,
+)
+from code_generation.tests.data.output.managers.company_managers import (
+    CompanyDetailsManager,
+)
 from code_generation.tests.data.output.pages.company_pages import CompanyPage
 from code_generation.tests.data.output.pages.company_pages import CompanyDetailsPage
 from code_generation.tests.data.output.forms.company_forms import CompanyCreateForm
@@ -49,6 +53,7 @@ class CompanyListView(views.MontrekListView):
             hover_text="Create new Company",
         )
         return (action_new,)
+
 
 class CompanyDetailView(views.MontrekDetailView):
     manager_class = CompanyDetailsManager

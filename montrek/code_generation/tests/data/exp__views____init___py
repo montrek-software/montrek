@@ -6,9 +6,9 @@ from .company_views import CompanyHistoryView
 
 
 __all__ = [
-  "CompanyCreateView",
-  "CompanyListView",
-  "CompanyUpdateView",
-  "CompanyDeleteView",
-  "CompanyHistoryView",
+    "CompanyCreateView",
+    "CompanyListView",
+    "CompanyUpdateView",
+    "CompanyDeleteView",
+    "CompanyHistoryView",
 ]

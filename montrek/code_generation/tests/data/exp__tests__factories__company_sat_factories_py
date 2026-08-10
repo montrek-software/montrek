@@ -1,9 +1,11 @@
 import factory
 from baseclasses.tests.factories.montrek_factory_schemas import (
     MontrekSatelliteFactory,
-    )
+)
 
-from code_generation.tests.data.output.tests.factories.company_hub_factories import CompanyHubFactory
+from code_generation.tests.data.output.tests.factories.company_hub_factories import (
+    CompanyHubFactory,
+)
 from code_generation.tests.data.output.models.company_sat_models import CompanySatellite
 
 

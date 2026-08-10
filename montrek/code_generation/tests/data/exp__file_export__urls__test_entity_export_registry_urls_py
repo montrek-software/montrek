@@ -1,8 +1,14 @@
 from django.shortcuts import redirect
 from django.urls import path
-from code_generation.tests.data.output_file_export.views.test_entity_export_registry_views import TestEntityExportRegistryListView
-from code_generation.tests.data.output_file_export.views.test_entity_export_registry_views import TestEntityExportTriggerView
-from code_generation.tests.data.output_file_export.views.test_entity_export_registry_views import TestEntityExportDownloadView
+from code_generation.tests.data.output_file_export.views.test_entity_export_registry_views import (
+    TestEntityExportRegistryListView,
+)
+from code_generation.tests.data.output_file_export.views.test_entity_export_registry_views import (
+    TestEntityExportTriggerView,
+)
+from code_generation.tests.data.output_file_export.views.test_entity_export_registry_views import (
+    TestEntityExportDownloadView,
+)
 
 urlpatterns = [
     path(

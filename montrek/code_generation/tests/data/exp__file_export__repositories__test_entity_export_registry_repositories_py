@@ -1,8 +1,12 @@
 from file_export.repositories.file_export_registry_repository import (
     FileExportRegistryRepositoryABC,
 )
-from code_generation.tests.data.output_file_export.models.test_entity_export_registry_hub_models import TestEntityExportRegistryHub
-from code_generation.tests.data.output_file_export.models.test_entity_export_registry_sat_models import TestEntityExportRegistrySatellite
+from code_generation.tests.data.output_file_export.models.test_entity_export_registry_hub_models import (
+    TestEntityExportRegistryHub,
+)
+from code_generation.tests.data.output_file_export.models.test_entity_export_registry_sat_models import (
+    TestEntityExportRegistrySatellite,
+)
 
 
 class TestEntityExportRegistryRepository(FileExportRegistryRepositoryABC):

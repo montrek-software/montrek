@@ -11,10 +11,24 @@ from django.test import TestCase
 class TestGenerateTableCommand(TestCase):
     def setUp(self):
         self.maxDiff = None
+        self._cleanup_dirs = []
+
+    def tearDown(self):
+        # Without this a failing assertion leaves the output behind, and because
+        # the generator appends by default the next run compares against doubled
+        # content instead of the real mismatch.
+        for output_dir in self._cleanup_dirs:
+            shutil.rmtree(output_dir, ignore_errors=True)
+
+    def _make_output_dir(self, name: str) -> str:
+        output_dir = os.path.relpath(get_test_file_path(name))
+        shutil.rmtree(output_dir, ignore_errors=True)
+        os.makedirs(output_dir, exist_ok=True)
+        self._cleanup_dirs.append(output_dir)
+        return output_dir
 
     def test_files_as_expected(self):
-        output_dir = os.path.relpath(get_test_file_path("output"))
-        os.makedirs(output_dir, exist_ok=True)
+        output_dir = self._make_output_dir("output")
         rebase = False
         with patch("sys.stdout", new_callable=io.StringIO):
             call_command("generate_table", output_dir, "company")
@@ -45,16 +59,14 @@ class TestGenerateTableCommand(TestCase):
             test_file_path = get_test_file_path(test_file_name)
             if rebase:
                 shutil.copyfile(path, test_file_path)
-            actual = open(path).read().strip()
-            expected = open(test_file_path).read().strip()
+            with open(path) as f:
+                actual = f.read().strip()
+            with open(test_file_path) as f:
+                expected = f.read().strip()
             self.assertEqual(actual, expected)
-        shutil.rmtree(output_dir)
 
     def test_handle_camel_case_prefixes(self):
-        output_dir = os.path.relpath(
-            get_test_file_path("output_handle_camel_case_prefixes")
-        )
-        os.makedirs(output_dir, exist_ok=True)
+        output_dir = self._make_output_dir("output_handle_camel_case_prefixes")
         with patch("sys.stdout", new_callable=io.StringIO):
             call_command("generate_table", output_dir, "TestCompany")
         expected_paths = {
@@ -78,7 +90,6 @@ class TestGenerateTableCommand(TestCase):
             if "__init__" not in path:
                 with open(path) as f:
                     self.assertIn("TestCompany", f.read())
-        shutil.rmtree(output_dir)
 
 
 class TestStartMontrekAppCommand(TestCase):

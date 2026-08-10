@@ -5,8 +5,12 @@ from testing.test_cases.view_test_cases import (
     MontrekListViewTestCase,
     MontrekDeleteViewTestCase,
 )
-from code_generation.tests.data.output.tests.factories.company_hub_factories import CompanyHubValueDateFactory
-from code_generation.tests.data.output.tests.factories.company_sat_factories import CompanySatelliteFactory
+from code_generation.tests.data.output.tests.factories.company_hub_factories import (
+    CompanyHubValueDateFactory,
+)
+from code_generation.tests.data.output.tests.factories.company_sat_factories import (
+    CompanySatelliteFactory,
+)
 from code_generation.tests.data.output.views.company_views import CompanyCreateView
 from code_generation.tests.data.output.views.company_views import CompanyUpdateView
 from code_generation.tests.data.output.views.company_views import CompanyListView
@@ -55,7 +59,6 @@ class TestCompanyDeleteView(MontrekDeleteViewTestCase):
 
     def url_kwargs(self) -> dict:
         return {"pk": self.sat_obj.get_hub_value_date().id}
-
 
 
 class TestCompanyDetailView(MontrekViewTestCase):

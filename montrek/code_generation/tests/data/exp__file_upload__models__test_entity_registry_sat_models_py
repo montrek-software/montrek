@@ -1,7 +1,9 @@
 from django.db import models
 
 from file_upload.models import FileUploadRegistryStaticSatelliteABC
-from code_generation.tests.data.output_file_upload.models.test_entity_registry_hub_models import TestEntityRegistryHub
+from code_generation.tests.data.output_file_upload.models.test_entity_registry_hub_models import (
+    TestEntityRegistryHub,
+)
 
 
 class TestEntityRegistrySatellite(FileUploadRegistryStaticSatelliteABC):

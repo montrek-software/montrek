@@ -1,7 +1,10 @@
 from reporting.dataclasses import table_elements as te
 from reporting.managers.montrek_table_manager import MontrekTableManager
 from reporting.managers.montrek_details_manager import MontrekDetailsManager
-from code_generation.tests.data.output.repositories.company_repositories import CompanyRepository
+from code_generation.tests.data.output.repositories.company_repositories import (
+    CompanyRepository,
+)
+
 
 class CommonTableElementsMixin:
     @property
@@ -22,6 +25,7 @@ class CommonTableElementsMixin:
                 hover_text="Delete Company",
             ),
         ]
+
 
 class CompanyTableManager(CommonTableElementsMixin, MontrekTableManager):
     repository_class = CompanyRepository

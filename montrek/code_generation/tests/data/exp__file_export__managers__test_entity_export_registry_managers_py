@@ -1,7 +1,9 @@
 from file_export.managers.file_export_registry_manager import (
     FileExportRegistryManagerABC,
 )
-from code_generation.tests.data.output_file_export.repositories.test_entity_export_registry_repositories import TestEntityExportRegistryRepository
+from code_generation.tests.data.output_file_export.repositories.test_entity_export_registry_repositories import (
+    TestEntityExportRegistryRepository,
+)
 
 
 class TestEntityExportRegistryTableManager(FileExportRegistryManagerABC):
