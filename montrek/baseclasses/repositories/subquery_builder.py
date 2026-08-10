@@ -385,7 +385,11 @@ class TSRelativeChangeSubqueryBuilder(PreviousTSValueSubqueryBuilder):
             return self.first_value(reference_date)
         return self.previous_value(reference_date)
 
-    def build(self, reference_date: timezone.datetime) -> ExpressionWrapper:
+    def build(
+        self,
+        reference_date: timezone.datetime,
+        queryset: QuerySet | None = None,
+    ) -> ExpressionWrapper:
         current = self.value_subquery(reference_date, self.current_filter())
         base = self.base_value(reference_date)
         return ExpressionWrapper(

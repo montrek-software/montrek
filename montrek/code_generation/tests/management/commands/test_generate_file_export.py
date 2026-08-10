@@ -56,6 +56,8 @@ def patch_stdout():
 
 
 class TestGenerateFileExportCommand(TestCase):
+    rebase = False
+
     def setUp(self):
         self.maxDiff = None
         self._cleanup_dirs = []
@@ -73,7 +75,6 @@ class TestGenerateFileExportCommand(TestCase):
 
     def test_files_as_expected(self):
         output_dir = self._make_output_dir("output_file_export")
-        rebase = False
         with patch_stdout():
             call_command("generate_file_export", output_dir, "test_entity")
 
@@ -83,7 +84,7 @@ class TestGenerateFileExportCommand(TestCase):
             )
             path = os.path.join(output_dir, *path_list)
             self.assertTrue(os.path.exists(path), msg=f"Missing: {path}")
-            if rebase:
+            if self.rebase:
                 shutil.copyfile(path, expected_file_path)
             with open(path) as f:
                 actual = f.read().strip()

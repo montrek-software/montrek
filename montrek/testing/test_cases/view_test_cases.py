@@ -711,6 +711,7 @@ class MontrekInlineFieldEditViewTestCase(MontrekViewTestCase):
         self.assertEqual(getattr(test_object, self.update_field), original_value)
 
     def additional_assertions(self, test_object):
+        # Method to be overwritten
         pass
 
 

@@ -3,9 +3,16 @@ import re
 import shutil
 import subprocess  # noqa: S404  # nosec B404 - only used to run the pinned ruff binary
 from django.core.management.base import BaseCommand
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 from code_generation import CODE_TEMPLATE_DIR
 from code_generation.config.code_generation_config import CodeGenerationConfig
+
+# The code templates render Python source (``*.py.j2``), so HTML escaping would
+# corrupt what they produce, turning quotes in the generated code into entities.
+# Escaping is therefore off for those, but kept on for any markup template that
+# may join them later, so a new ``*.html.j2`` is safe by default rather than by
+# whoever adds it remembering to be.
+MARKUP_TEMPLATE_EXTENSIONS = ("html", "htm", "xml", "html.j2", "htm.j2", "xml.j2")
 
 
 class StdArgumentsMixin:
@@ -42,11 +49,13 @@ class CodeGenerationCommandBase(StdArgumentsMixin, BaseCommand):
         config = CodeGenerationConfig(app_path, prefix)
         output_path = config.output_paths[self.key]
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        env = Environment(  # nosec B701 - renders Python source, not HTML
+        env = Environment(
             loader=FileSystemLoader(CODE_TEMPLATE_DIR),
-            # These templates render Python source. HTML escaping would corrupt it,
-            # turning quotes in the generated code into entities.
-            autoescape=False,  # noqa: S701
+            autoescape=select_autoescape(
+                enabled_extensions=MARKUP_TEMPLATE_EXTENSIONS,
+                default_for_string=False,
+                default=False,
+            ),
             # Without this Jinja drops the final newline, so appending one template
             # after another runs the two together on one line.
             keep_trailing_newline=True,
