@@ -19,7 +19,7 @@ from process_pipeline.functions.processor_settings import resolve_settings
 FUNCTIONS_CLASS_KEY = "functions_class"
 FUNCTION_KEY = "function"
 SETTINGS_KEY = "settings"
-SETTINGS_FILE_KEY = "settings_file"
+SETTINGS_FILE_KEY = "settings_file_name"
 
 
 def get_dotted_path(cls: type) -> str:
@@ -33,21 +33,21 @@ class FunctionSelection:
     functions_class_path: str
     function_name: str
     settings_name: str | None = None
-    settings_file_path: str | None = None
+    settings_file_name: str | None = None
 
     @classmethod
     def from_cleaned_data(
         cls,
         functions_class: type,
         cleaned_data: dict[str, Any],
-        settings_file_path: str | None = None,
+        settings_file_name: str | None = None,
     ) -> "FunctionSelection":
         """Build a selection from a validated form's ``cleaned_data``."""
         return cls(
             functions_class_path=get_dotted_path(functions_class),
             function_name=cleaned_data[FUNCTION_KEY],
             settings_name=cleaned_data.get(SETTINGS_KEY) or None,
-            settings_file_path=settings_file_path,
+            settings_file_name=settings_file_name,
         )
 
     @classmethod
@@ -56,7 +56,7 @@ class FunctionSelection:
             functions_class_path=pipeline_data[FUNCTIONS_CLASS_KEY],
             function_name=pipeline_data[FUNCTION_KEY],
             settings_name=pipeline_data.get(SETTINGS_KEY),
-            settings_file_path=pipeline_data.get(SETTINGS_FILE_KEY),
+            settings_file_name=pipeline_data.get(SETTINGS_FILE_KEY),
         )
 
     def to_pipeline_data(self) -> dict[str, Any]:
@@ -64,7 +64,7 @@ class FunctionSelection:
             FUNCTIONS_CLASS_KEY: self.functions_class_path,
             FUNCTION_KEY: self.function_name,
             SETTINGS_KEY: self.settings_name,
-            SETTINGS_FILE_KEY: self.settings_file_path,
+            SETTINGS_FILE_KEY: self.settings_file_name,
         }
 
     @property
@@ -78,5 +78,5 @@ class FunctionSelection:
         return resolve_settings(
             self.functions_class,
             settings_name=self.settings_name,
-            settings_file_path=self.settings_file_path,
+            settings_file_name=self.settings_file_name,
         )

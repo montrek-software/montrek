@@ -35,11 +35,23 @@ def build_excel_file(
 
 
 def build_zip_file(file_paths: list[str], file_name: str) -> ContentFile:
-    """Zip the files at *file_paths*, flattening them to their base names."""
+    """Zip the files at *file_paths*, flattening them to their base names.
+
+    Raises ``ValueError`` when two paths share a base name: the archive would
+    hold two members of the same name and extracting it would silently drop one
+    of them, so the export would lose data.
+    """
+    arc_names = [os.path.basename(file_path) for file_path in file_paths]
+    duplicates = sorted({name for name in arc_names if arc_names.count(name) > 1})
+    if duplicates:
+        raise ValueError(
+            "Cannot build the archive: these file names occur more than once and "
+            f"would overwrite each other on extraction: {', '.join(duplicates)}."
+        )
     buffer = BytesIO()
     with ZipFile(buffer, "w", compression=ZIP_DEFLATED) as zip_file:
-        for file_path in file_paths:
-            zip_file.write(file_path, arcname=os.path.basename(file_path))
+        for file_path, arc_name in zip(file_paths, arc_names, strict=True):
+            zip_file.write(file_path, arcname=arc_name)
     buffer.seek(0)
     return ContentFile(buffer.read(), name=file_name)
 

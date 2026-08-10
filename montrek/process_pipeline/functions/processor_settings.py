@@ -11,6 +11,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, ClassVar, cast
 
+from django.core.files.storage import default_storage
+
 SETTINGS_FILETYPE = "toml"
 
 
@@ -25,8 +27,19 @@ class SettingsData:
 
 
 def load_settings_file(file_path: str | Path) -> dict[str, Any]:
-    """Load a TOML file from disk."""
+    """Load a TOML file that ships with the code, from disk."""
     with open(file_path, "rb") as settings_file:
+        return tomllib.load(settings_file)
+
+
+def load_stored_settings_file(storage_name: str) -> dict[str, Any]:
+    """Load an uploaded TOML file back through the storage backend.
+
+    Uploads are read by name rather than by filesystem path so that a Celery
+    worker on another host — or a non-filesystem storage backend — can still
+    reach the file the web process saved.
+    """
+    with default_storage.open(storage_name, "rb") as settings_file:
         return tomllib.load(settings_file)
 
 
@@ -58,7 +71,9 @@ class ProcessorSettingsMixin:
         if not cls.has_settings:
             return []
         settings_folder = cls.get_settings_path()
-        settings_folder.mkdir(exist_ok=True, parents=True)
+        # Deliberately not created here: discovery must stay read-only so that
+        # rendering settings choices works on a read-only deployment. glob()
+        # yields nothing when the folder is absent, which the check below handles.
         settings_files = sorted(settings_folder.glob(f"*.{SETTINGS_FILETYPE}"))
         if not settings_files and cls.require_packaged_settings:
             raise FileNotFoundError(
@@ -93,16 +108,18 @@ class ProcessorSettingsMixin:
 def resolve_settings(
     functions_class: type,
     settings_name: str | None = None,
-    settings_file_path: str | Path | None = None,
+    settings_file_name: str | None = None,
 ) -> dict[str, Any]:
     """Return the settings to run a processor function with.
 
     An uploaded settings file wins outright over a packaged one, so a user who
     brings their own configuration gets exactly what they uploaded. Returns an
     empty dict when the functions class has no settings and none were uploaded.
+
+    *settings_file_name* is a name in the default storage, not a filesystem path.
     """
-    if settings_file_path:
-        return load_settings_file(settings_file_path)
+    if settings_file_name:
+        return load_stored_settings_file(settings_file_name)
     if not getattr(functions_class, "has_settings", False):
         return {}
     if not settings_name:
