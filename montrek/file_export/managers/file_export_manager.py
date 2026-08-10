@@ -3,22 +3,26 @@ from typing import Any
 from process_pipeline.managers.montrek_pipeline_managers import (
     MontrekPipelineManagerABC,
 )
+from process_pipeline.tasks.montrek_pipeline_task import MontrekPipelineTask
 
 from file_export.managers.file_export_processor_abc import FileExportProcessorABC
 from file_export.repositories.file_export_registry_repository import (
     FileExportRegistryRepositoryABC,
 )
+from file_export.tasks.file_export_task import FileExportTask
 
 
 class FileExportManagerABC(MontrekPipelineManagerABC):
     processor_class: type[FileExportProcessorABC]
     registry_repository_class: type[FileExportRegistryRepositoryABC]
+    pipeline_task_class: type[MontrekPipelineTask] = FileExportTask
     status_field_name = "export_status"
     message_field_name = "export_message"
     do_process_async = False
 
-    def trigger_export(self) -> bool:
-        return self.trigger_pipeline()
+    def trigger_export(self, pipeline_data: dict[str, Any] | None = None) -> bool:
+        """Run the export, optionally parameterised by what the user picked."""
+        return self.trigger_pipeline(pipeline_data=pipeline_data)
 
     def _init_registry(self, **kwargs) -> int:
         init_data = {

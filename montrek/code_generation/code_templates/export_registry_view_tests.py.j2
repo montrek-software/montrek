@@ -74,10 +74,9 @@ class {{ export_trigger_view_test_cls_name }}(ProcessPipelineViewTestCase):
             "process": process,
             "post_check": lambda processor: True,
         }
+        processor_class = {{ export_processor_cls_name }}
         for method_name, stub in stubs.items():
-            patcher = patch.object(
-                {{ export_processor_cls_name }}, method_name, stub
-            )
+            patcher = patch.object(processor_class, method_name, stub)
             patcher.start()
             self.addCleanup(patcher.stop)
 

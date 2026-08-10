@@ -18,7 +18,11 @@ from django.views.generic.edit import CreateView
 from django.views.generic.list import ListView
 from baseclasses.templatetags.base_tags import project_display_name
 from file_upload.forms import SimpleUploadFileForm
-from file_upload.managers.simple_upload_file_manager import SimpleUploadFileManager
+from file_upload.managers.simple_upload_file_manager import (
+    TABLE_MANAGER_KEY,
+    SimpleUploadFileManager,
+)
+from process_pipeline.functions.selection import get_dotted_path
 from info.managers.download_registry_storage_managers import (
     DownloadRegistryStorageManager,
 )
@@ -456,6 +460,9 @@ class MontrekListView(
             file_upload_manager = SimpleUploadFileManager(
                 session_data=session_data,
                 **self.kwargs,
+            )
+            file_upload_manager.set_pipeline_data(
+                {TABLE_MANAGER_KEY: get_dotted_path(self.manager_class)}
             )
             result = file_upload_manager.upload_and_process(request.FILES["file"])
             if result:

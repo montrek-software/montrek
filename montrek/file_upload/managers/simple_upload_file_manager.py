@@ -3,7 +3,7 @@ from typing import Any
 import pandas as pd
 from django.conf import settings
 from django.db import transaction
-from django.urls import resolve
+from django.utils.module_loading import import_string
 
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from file_upload.managers.file_upload_manager import (
@@ -13,6 +13,8 @@ from file_upload.managers.file_upload_manager import (
 from file_upload.models import FileUploadRegistryHubABC
 from reporting.managers.montrek_table_manager import MontrekTableManagerABC
 
+TABLE_MANAGER_KEY = "table_manager_class"
+
 
 class SimpleFileUploadProcessor(FileUploadProcessorProtocol):
     def __init__(
@@ -21,13 +23,19 @@ class SimpleFileUploadProcessor(FileUploadProcessorProtocol):
         session_data: dict[str, Any],
         **kwargs: Any,
     ):
-        view_class = resolve(session_data["request_path"]).func.view_class
-        self.table_manager: MontrekTableManagerABC = view_class.manager_class(
-            session_data
-        )
+        self.session_data = session_data
         self.overwrite: bool = session_data["overwrite"]
         self.input_df: pd.DataFrame | None = None
         self.target_repository: MontrekRepository | None = None
+        self._table_manager: MontrekTableManagerABC | None = None
+
+    @property
+    def table_manager(self) -> MontrekTableManagerABC:
+        """The table manager of the list view the file was dropped on."""
+        if self._table_manager is None:
+            manager_class = import_string(self.pipeline_data[TABLE_MANAGER_KEY])
+            self._table_manager = manager_class(self.session_data)
+        return self._table_manager
 
     def pre_check(self, file_path: str) -> bool:
         file_type = file_path.rsplit(".", 1)[-1].lower()

@@ -2,38 +2,25 @@ import os
 
 from django.http import FileResponse, Http404, HttpResponse
 
-from reporting.dataclasses.table_elements import (
-    DateTimeTableElement,
-    LinkTableElement,
-    StringTableElement,
-    TextTableElement,
+from process_pipeline.managers.pipeline_registry_manager import (
+    PipelineRegistryManagerABC,
 )
-from reporting.managers.montrek_table_manager import MontrekTableManager
 
 from file_export.repositories.file_export_registry_repository import (
     FileExportRegistryRepositoryABC,
 )
 
 
-class FileExportRegistryManagerABC(MontrekTableManager):
+class FileExportRegistryManagerABC(PipelineRegistryManagerABC):
     repository_class: type[FileExportRegistryRepositoryABC]
     document_name: str = "File Export Registry"
     download_url: str = "under_construction"
 
-    @property
-    def table_elements(self) -> tuple:
-        return (
-            DateTimeTableElement(name="Created At", attr="created_at"),
-            StringTableElement(name="Export Status", attr="export_status"),
-            TextTableElement(name="Export Message", attr="export_message"),
-            LinkTableElement(
-                name="Download",
-                url=self.download_url,
-                kwargs={"pk": "id"},
-                icon="download",
-                hover_text="Download export file",
-            ),
-        )
+    status_attr = "export_status"
+    message_attr = "export_message"
+    status_column_name = "Export Status"
+    message_column_name = "Export Message"
+    download_hover_text = "Download export file"
 
     def download(self) -> HttpResponse:
         pk = int(self.session_data["pk"])

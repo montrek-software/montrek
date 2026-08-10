@@ -49,14 +49,24 @@ class MontrekPipelineManagerABC(MontrekManager):
         self.registry: Any = None
         self.processor: PipelineProcessorABC | None = None
         self.message: str = ""
+        self.pipeline_data: dict[str, Any] = {}
 
     # ---- public entry point (called from view or directly) ----
+
+    def set_pipeline_data(self, pipeline_data: dict[str, Any] | None) -> None:
+        """Record what the user chose, for the pipeline to run with.
+
+        Set this before triggering when the entry point takes no pipeline_data of
+        its own — ``upload_and_process`` is overridden in a number of managers, so
+        it cannot grow the argument without breaking them.
+        """
+        self.pipeline_data = dict(pipeline_data or {})
 
     def trigger_pipeline(
         self, pipeline_data: dict[str, Any] | None = None, **kwargs
     ) -> bool:
         if pipeline_data is None:
-            pipeline_data = {}
+            pipeline_data = self.pipeline_data
         self.create_registry(**kwargs)
         if self.do_process_async:
             task_result = self.pipeline_task.delay(
@@ -129,9 +139,20 @@ class MontrekPipelineManagerABC(MontrekManager):
     def _build_processor_if_not_exists(
         self, pipeline_data: dict[str, Any]
     ) -> PipelineProcessorABC:
-        if self.processor is not None:
-            return self.processor
-        return self._build_processor(pipeline_data)
+        processor = self.processor
+        if processor is None:
+            processor = self._build_processor(pipeline_data)
+        self._set_pipeline_data(processor, pipeline_data)
+        return processor
+
+    @staticmethod
+    def _set_pipeline_data(
+        processor: PipelineProcessorABC, pipeline_data: dict[str, Any]
+    ) -> None:
+        # Not every processor inherits PipelineProcessorABC — a number of them are
+        # plain duck-typed classes. Those simply do not receive the selection.
+        if hasattr(processor, "set_pipeline_data"):
+            processor.set_pipeline_data(pipeline_data)
 
     # ---- default implementations (may override if repo interface differs) ----
 

@@ -1,66 +1,47 @@
+from process_pipeline.managers.pipeline_registry_manager import (
+    PipelineRegistryManagerABC,
+)
+from reporting.dataclasses.table_elements import StringTableElement
+
 from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepository,
     FileUploadRegistryRepositoryABC,
 )
-from reporting.dataclasses.table_elements import (
-    DateTimeTableElement,
-    LinkTableElement,
-    StringTableElement,
-    TextTableElement,
-)
-from reporting.managers.montrek_table_manager import MontrekTableManager
 
 
-class FileUploadRegistryManagerABC(MontrekTableManager):
+class FileUploadRegistryManagerABC(PipelineRegistryManagerABC):
     repository_class = FileUploadRegistryRepositoryABC
     download_url = "please define download_url in subclass"
     download_log_url = ""
     history_url = ""
 
+    status_attr = "upload_status"
+    message_attr = "upload_message"
+    status_column_name = "Upload Status"
+    message_column_name = "Upload Message"
+    date_attr = "upload_date"
+    date_column_name = "Upload Date"
+    created_by_column_name = "Uploaded By"
+    download_column_name = "File"
+    revoke_url = "revoke_file_upload_task"
+    revoke_hover_text = "Revoke Upload Task"
+
+    @property
+    def file_name_element(self) -> StringTableElement:
+        return StringTableElement(name="File Name", attr="file_name")
+
     @property
     def table_elements(self) -> tuple:
-        table_elements = [
-            StringTableElement(name="File Name", attr="file_name"),
-            StringTableElement(name="Upload Status", attr="upload_status"),
-            TextTableElement(name="Upload Message", attr="upload_message"),
-            DateTimeTableElement(name="Upload Date", attr="upload_date"),
-            StringTableElement(name="Uploaded By", attr="created_by"),
-            LinkTableElement(
-                name="File",
-                url=self.download_url,
-                kwargs={"pk": "id"},
-                icon="download",
-                hover_text="Download",
-            ),
-            LinkTableElement(
-                name="Stop",
-                url="revoke_file_upload_task",
-                kwargs={"task_id": "celery_task_id"},
-                hover_text="Revoke Upload Task",
-                icon="sign-stop",
-            ),
-        ]
-        if self.download_log_url != "":
-            table_elements.append(
-                LinkTableElement(
-                    name="Log",
-                    url=self.download_log_url,
-                    kwargs={"pk": "id"},
-                    icon="download",
-                    hover_text="Download Log",
-                )
-            )
-        if self.history_url != "":
-            table_elements.append(
-                LinkTableElement(
-                    name="History",
-                    url=self.history_url,
-                    kwargs={"pk": "id"},
-                    icon="road",
-                    hover_text="History",
-                )
-            )
-        return tuple(table_elements)
+        return (
+            self.file_name_element,
+            self.status_element,
+            self.message_element,
+            self.date_element,
+            self.created_by_element,
+            self.download_element,
+            self.revoke_element,
+            *self.optional_elements,
+        )
 
 
 class FileUploadRegistryManager(FileUploadRegistryManagerABC):

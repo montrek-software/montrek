@@ -1,0 +1,13 @@
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  <div class="col-12">
+    <div class="tile">
+      <div class="row m-2">
+        {{ export_form.as_div }}
+      </div>
+      <div class="row m-2">
+          <input type="submit" value="{{ submit_label }}" class="input-custom" />
+      </div>
+    </div>
+  </div>
+</form>

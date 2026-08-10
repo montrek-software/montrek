@@ -66,6 +66,7 @@ class MontrekUploadFileView(MontrekTemplateView):
         self.file_upload_manager = self.file_upload_manager_class(
             session_data=self.session_data,
         )
+        self.file_upload_manager.set_pipeline_data(self.get_pipeline_data(form))
         logger.debug("file_upload_manager: %s", self.file_upload_manager)
         result = self.file_upload_manager.upload_and_process(file)
         if result:
@@ -77,6 +78,15 @@ class MontrekUploadFileView(MontrekTemplateView):
 
     def get_success_url(self):
         raise NotImplementedError("get_success_url not implemented")
+
+    def get_pipeline_data(self, form: Form) -> dict:
+        """Return what the processor needs from the validated form.
+
+        Override to hand the processor the user's choices instead of letting it
+        resolve this view from the request path. Must be JSON serializable — it
+        travels to the Celery worker.
+        """
+        return {}
 
     def get_file(self, form: Form) -> str:
         return form.cleaned_data["file"]
