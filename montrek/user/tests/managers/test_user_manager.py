@@ -10,7 +10,7 @@ class TestMontrekUserManager(TestCase):
             user_manager.get_superuser()
         get_user_model().objects.create_superuser(
             email="test@example.com",
-            password="testpassword",  # noqa: S106 # nosec B106
+            password="testpassword",  # nosec: B106: Testpasswort
         )
         superuser = user_manager.get_superuser()
         self.assertIsNotNone(superuser)
