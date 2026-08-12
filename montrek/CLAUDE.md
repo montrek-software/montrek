@@ -134,6 +134,24 @@ All domain models inherit from abstract base classes in `baseclasses/models.py`:
 - **`StateMixin`**: Adds `state_date_start`, `state_date_end`, `comment` for temporal validity.
 - **`AlertMixin`**: Adds `alert_level` and `alert_message` for status tracking.
 
+### Repositories & Query Pipeline
+
+Domain queries are built by **repositories** (`*/repositories/*.py`), not ad-hoc ORM calls. Pipeline: `MontrekRepository.set_annotations()` registers fields (via `add_satellite_fields_annotations`, `add_linked_satellites_field_annotations`, `add_linked_hub_id`, or `annotator.annotations[name] = SomeSubqueryBuilder(...)`) → `Annotator` collects them → `QueryBuilder.build_queryset()` applies them → each `SubqueryBuilder.build()` returns the expression.
+
+- Most annotations are **correlated subqueries** — cheap individually, but they add up per row.
+- **Filtering/ordering on an annotation re-runs its subquery per row.** To filter by a linked hub use `filter_by_linked_hub()` or a direct FK column (`hub_id`), not the annotation.
+- Subclasses reuse a parent's `set_annotations()` and prune with `annotator.remove_annotations((...))` — each removed field is one subquery fewer.
+- `queryset_aware=True` builders receive the intermediate queryset to pre-compute in Python and emit literal `Value()`s (e.g. `DerivedDamageValueSubqueryBuilder`).
+
+### Query Performance: SQL vs Python
+
+Do set-based work (filter, sort, paginate, aggregate, join) in SQL — always. But a **display-only, per-row derived value** is often cheaper in Python:
+
+- Postgres can't reference a sibling `SELECT` alias, so a Django annotation referencing **other annotations** re-inlines their full SQL — duplicating expensive subqueries already selected as columns. A `CASE` over `risk_values_count`/`derived_damage_value` can double the query.
+- Move such a value to Python **only if** it's never used in `.filter()`/`.order_by()`/`.aggregate()`, its inputs are already-selected columns, and the row set is bounded. Compute it in the table element's `get_value()` (see `compute_risk_value_status`, `compute_risk_profile_status_tag`).
+- When porting SQL→Python, mirror SQL semantics exactly: NULL comparisons (`NOT (x = NULL)` is NULL, not `True`) and rounding mode (Postgres half-away-from-zero vs Python banker's `round()`).
+- Verify with `len(str(qs.query))` + `SELECT` count before/after, and `qs.explain(analyze=True)`.
+
 ### View Architecture
 
 Base views in `baseclasses/views/` provide permissions, form handling, and HTMX support:

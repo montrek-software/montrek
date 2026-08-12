@@ -43,6 +43,8 @@ RUN apt-get update && \
   && apt-get install -y --no-install-recommends \
   ttf-mscorefonts-installer \
   postgresql-client-16 \
+  && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+  && apt-get install -y --no-install-recommends nodejs \
   && chown -R appuser:appgroup ${DOCKERHOME} \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/* \
