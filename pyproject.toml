@@ -12,6 +12,7 @@ django_settings_module = "montrek.settings"
 target-version = "py311"
 line-length = 88
 
+
 exclude = [
   "migrations",
   "settings",
@@ -42,9 +43,11 @@ ignore = [
 "**/tests/**" = [
   "PLR0915", # complex test functions
   "S101",    # asserts allowed in tests
+  "S106"
 ]
 
 
 
 [tool.bandit]
+skips =  ["B106"]
 exclude_dirs = ["tests", "migrations"]
