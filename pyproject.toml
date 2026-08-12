@@ -43,7 +43,7 @@ ignore = [
 "**/tests/**" = [
   "PLR0915", # complex test functions
   "S101",    # asserts allowed in tests
-  "S106"
+  "S106",    # hardcoded password literals are common/acceptable in tests
 ]
 
 
