@@ -49,5 +49,4 @@ ignore = [
 
 
 [tool.bandit]
-skips =  ["B106"]
 exclude_dirs = ["tests", "migrations"]
