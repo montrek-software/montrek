@@ -67,6 +67,7 @@ class ExampleAReportManager(MontrekReportManager):
 class CompactHubAManager(MontrekTableManager):
     repository_class = HubARepository
     is_compact_format = True
+    has_table_elements_filter_field = False
 
     @property
     def table_elements(self) -> TableElementsType:

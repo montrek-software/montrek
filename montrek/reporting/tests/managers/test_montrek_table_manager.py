@@ -17,11 +17,13 @@ from reporting.managers.montrek_table_manager import HistoryDataTableManager
 from reporting.tests.mocks import (
     MockCountingTableElementsManager,
     MockEmptyMontrekTableManager,
+    MockFilterFieldsTableManager,
     MockHtmlMontrekTableManager,
     MockLongMontrekTableManager,
     MockLongMontrekTableManager2,
     MockMontrekDataFrameTableManager,
     MockMontrekTableManager,
+    MockRepositoryFilterFieldsManager,
 )
 from testing.decorators.add_logged_in_user import add_logged_in_user
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
@@ -362,6 +364,96 @@ class TestMontrekTableManager(TestCase):
         soup = BeautifulSoup(html, "html.parser")
         rows = soup.find("tbody").find_all("tr")
         self.assertEqual(len(rows), 3)
+
+
+class TestTableElementFilterFields(TestCase):
+    """Filter fields of a table manager are derived from its table elements.
+
+    With ``has_table_elements_filter_field`` the user filters on what the table
+    actually shows, labelled by the column header, instead of on every field the
+    repository happens to annotate. Managers can opt out and fall back to the
+    repository.
+    """
+
+    def test_all_fields_are_the_fields_of_the_table_elements(self):
+        manager = MockFilterFieldsTableManager()
+        self.assertEqual(manager.get_all_fields(), ["field_a", "field_b"])
+
+    def test_all_fields_match_the_display_field_names(self):
+        manager = MockFilterFieldsTableManager()
+        self.assertEqual(
+            manager.get_all_fields(), list(manager.get_display_field_names())
+        )
+
+    def test_display_field_names_are_the_column_headers(self):
+        manager = MockMontrekTableManager()
+        display_field_names = manager.get_display_field_names()
+        self.assertEqual(display_field_names["field_b"], "Field B")
+        self.assertEqual(display_field_names["field_e"], "Field E")
+
+    def test_link_text_element_contributes_its_text_field(self):
+        # ``LinkTextTableElement`` holds its field in ``text``, not in ``attr``.
+        manager = MockFilterFieldsTableManager()
+        self.assertIn("field_a", manager.get_all_fields())
+
+    def test_field_less_elements_are_not_filterable(self):
+        # The icon-only ``LinkTableElement`` has no field to filter on.
+        manager = MockFilterFieldsTableManager()
+        self.assertNotIn("", manager.get_all_fields())
+        self.assertNotIn("", manager.get_display_field_names())
+        self.assertNotIn("Link", manager.get_display_field_names().values())
+
+    def test_field_used_by_several_elements_appears_once(self):
+        # ``field_a`` is reached by a string, a link text and a link list column.
+        manager = MockFilterFieldsTableManager()
+        fields = manager.get_all_fields()
+        self.assertEqual(fields.count("field_a"), 1)
+
+    def test_field_used_by_several_elements_is_labelled_by_the_last_one(self):
+        manager = MockFilterFieldsTableManager()
+        self.assertEqual(manager.get_display_field_names()["field_a"], "Link List")
+
+    def test_field_choices_are_labelled_and_sorted_by_label(self):
+        manager = MockFilterFieldsTableManager()
+        self.assertEqual(
+            manager.get_std_queryset_field_choices(),
+            [("field_b", "Field B"), ("field_a", "Link List")],
+        )
+
+    def test_field_choices_never_contain_an_empty_choice(self):
+        manager = MockMontrekTableManager()
+        for field, description in manager.get_std_queryset_field_choices():
+            with self.subTest(field=field):
+                self.assertTrue(field)
+                self.assertTrue(description)
+
+    def test_opting_out_falls_back_to_the_repository_fields(self):
+        manager = MockRepositoryFilterFieldsManager()
+        self.assertEqual(
+            manager.get_all_fields(),
+            manager.repository.get_all_fields(),
+        )
+
+    def test_opting_out_falls_back_to_the_repository_display_names(self):
+        manager = MockRepositoryFilterFieldsManager()
+        choices = dict(manager.get_std_queryset_field_choices())
+        # ``field_a`` is renamed by the repository, ``field_b`` is titleised.
+        self.assertEqual(choices["field_a"], "Repository Field A")
+        self.assertEqual(choices["field_b"], "Field B")
+
+    def test_opting_out_ignores_the_table_elements(self):
+        # ``MockRepository`` knows nothing about the link columns.
+        manager = MockRepositoryFilterFieldsManager()
+        descriptions = [
+            description for _, description in manager.get_std_queryset_field_choices()
+        ]
+        self.assertNotIn("Link Text", descriptions)
+        self.assertEqual(descriptions.count("Field A"), 0)
+
+    def test_table_elements_are_read_once_per_choices_call(self):
+        manager = MockCountingTableElementsManager()
+        manager.get_std_queryset_field_choices()
+        self.assertEqual(manager.table_elements_reads, 1)
 
 
 class TestMontrekDataFrameTableManager(TestCase):

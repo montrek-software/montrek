@@ -1837,3 +1837,51 @@ class TestGetDottedAttrOrArgTests(TestCase):
         obj = MockObject(name="Test Name", nested={"value": "Nested Value"})
         result = mixin.get_dotted_attr_or_arg(obj, "nested.value")
         self.assertEqual("Nested Value", result)
+
+
+class TestTableElementFieldName(TestCase):
+    """``field_name`` is the single source of truth for the queryset field.
+
+    Filter fields, serializers and column maps all need to know which field an
+    element reads. Most elements answer with ``attr``, the link elements that
+    render a value answer with ``text``, and elements that render no field at
+    all (icon links, inline-edit pencils) answer with an empty string.
+    """
+
+    def test_attr_elements_report_their_attr(self):
+        elements = (
+            te.StringTableElement(name="A", attr="field_a"),
+            te.IntTableElement(name="B", attr="field_b"),
+            te.FloatTableElement(name="C", attr="field_c"),
+            te.DateTableElement(name="D", attr="field_d"),
+            te.AlertTableElement(name="E", attr="alert_level"),
+        )
+        for element in elements:
+            with self.subTest(element=type(element).__name__):
+                self.assertEqual(element.field_name, element.attr)
+
+    def test_link_text_element_reports_its_text(self):
+        element = te.LinkTextTableElement(
+            name="Link Text", url="home", kwargs={}, text="field_a"
+        )
+        self.assertEqual(element.field_name, "field_a")
+
+    def test_link_list_element_reports_its_text_not_its_list_attr(self):
+        element = te.LinkListTableElement(
+            name="Link List",
+            url="home",
+            text="field_a",
+            list_attr="hub_b_id",
+            list_kwarg="pk",
+        )
+        self.assertEqual(element.field_name, "field_a")
+
+    def test_field_less_elements_report_empty_string(self):
+        elements = (
+            te.LinkTableElement(name="Link", url="home", kwargs={}, icon="eye-open"),
+            te.InlineEditTableElement(name="", url="home", kwargs={}),
+            te.NoneTableElement(name="None"),
+        )
+        for element in elements:
+            with self.subTest(element=type(element).__name__):
+                self.assertEqual(element.field_name, "")

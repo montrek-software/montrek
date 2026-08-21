@@ -226,8 +226,13 @@ class MockHubValueDate:
 
 
 class MockRepository:
+    display_field_names = {"field_a": "Repository Field A"}
+
     def __init__(self, session_data: dict):
         self.session_data = session_data
+
+    def get_all_fields(self) -> list[str]:
+        return ["field_a", "field_b", "field_c", "field_d", "field_e"]
 
     def get_hub_value_date_object(self, pk: int) -> MockHubValueDate:
         return MockHubValueDate(pk=pk)
@@ -337,6 +342,52 @@ class MockMontrekTableManager(MontrekTableManager):
 
 class MockEmptyMontrekTableManager(MockMontrekTableManager):
     repository_class = MockEmptyRepository
+
+
+class MockRepositoryFilterFieldsManager(MockMontrekTableManager):
+    """Opts out of table-element filter fields: falls back to the repository."""
+
+    has_table_elements_filter_field = False
+
+
+class MockFilterFieldsTableManager(MockMontrekTableManager):
+    """Covers every way an element maps (or fails to map) to a filter field.
+
+    ``LinkTableElement`` carries no field at all, ``LinkTextTableElement`` and
+    ``LinkListTableElement`` carry theirs in ``text`` rather than ``attr``, and
+    ``field_a`` is reached by three elements at once.
+    """
+
+    @property
+    def table_elements(
+        self,
+    ) -> tuple[te.TableElement]:
+        return (
+            te.StringTableElement(attr="field_a", name="Field A"),
+            te.IntTableElement(attr="field_b", name="Field B"),
+            te.LinkTableElement(
+                name="Link",
+                url="home",
+                kwargs={},
+                hover_text="Link",
+                icon="icon",
+            ),
+            te.LinkTextTableElement(
+                name="Link Text",
+                url="home",
+                kwargs={},
+                hover_text="Link Text",
+                text="field_a",
+            ),
+            te.LinkListTableElement(
+                name="Link List",
+                url="home",
+                hover_text="Link List",
+                text="field_a",
+                list_attr="field_b",
+                list_kwarg="pk",
+            ),
+        )
 
 
 class MockMontrekDetailsManager(MontrekDetailsManager):

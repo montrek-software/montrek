@@ -3,6 +3,8 @@ from django.db import connections
 from django.test import TestCase
 from montrek_example.managers.montrek_example_managers import (
     CompactHubAManager,
+    HubAManager,
+    HubBManager,
     SatA5HistoryManager,
     SatA5Manager,
 )
@@ -103,6 +105,83 @@ class TestManagerFunctionality(TestCase):
                 self.assertEqual(description, "Renamed Label")
             else:
                 self.assertEqual(description, field.replace("_", " ").title())
+
+
+class TestTableElementFilterFields(TestCase):
+    """Table managers offer their own columns as filter fields.
+
+    ``CompactHubAManager`` opts out with ``has_table_elements_filter_field`` and
+    keeps the repository fields (see ``test_renamings_in_filter_fields``); the
+    other managers derive fields and labels from their table elements.
+    """
+
+    def test_filter_fields_are_the_columns_of_the_table(self):
+        manager = HubAManager()
+        self.assertEqual(
+            sorted(manager.get_all_fields()),
+            [
+                "field_a1_int",
+                "field_a1_str",
+                "field_a2_float",
+                "field_a2_str",
+                "field_b1_str",
+                "individual_field",
+            ],
+        )
+
+    def test_filter_labels_are_the_column_headers(self):
+        manager = HubAManager()
+        field_choices = dict(manager.get_std_queryset_field_choices())
+        self.assertEqual(field_choices["field_a1_str"], "A1 String")
+        self.assertEqual(field_choices["individual_field"], "TestField")
+
+    def test_column_header_wins_over_the_repository_renaming(self):
+        # ``HubARepository`` renames ``field_a2_float`` to "Renamed Label"; the
+        # column header the user actually sees is "A2 Float".
+        manager = HubAManager()
+        field_choices = dict(manager.get_std_queryset_field_choices())
+        self.assertEqual(field_choices["field_a2_float"], "A2 Float")
+
+    def test_repository_only_fields_are_not_offered(self):
+        # ``field_b1_date`` is annotated by the repository but has no column.
+        manager = HubAManager()
+        self.assertIn("field_b1_date", manager.repository.get_all_fields())
+        self.assertNotIn("field_b1_date", manager.get_all_fields())
+
+    def test_icon_link_columns_are_not_offered(self):
+        # View/Update/Delete and the inline-edit pencil carry no field.
+        manager = HubAManager()
+        field_choices = manager.get_std_queryset_field_choices()
+        self.assertNotIn("", [field for field, _ in field_choices])
+        self.assertNotIn("View", [description for _, description in field_choices])
+
+    def test_link_columns_contribute_the_field_they_display(self):
+        # "D1 String" is a link, "Linked D Objects" a link list: both display
+        # ``field_d1_str`` through ``text`` rather than through ``attr``.
+        manager = HubBManager()
+        fields = manager.get_all_fields()
+        self.assertEqual(fields.count("field_d1_str"), 1)
+        # Both columns claim the field; the last one labels it.
+        field_choices = dict(manager.get_std_queryset_field_choices())
+        self.assertEqual(field_choices["field_d1_str"], "Linked D Objects")
+
+    def test_filter_choices_are_sorted_by_label(self):
+        manager = HubBManager()
+        descriptions = [
+            description for _, description in manager.get_std_queryset_field_choices()
+        ]
+        self.assertEqual(descriptions, sorted(descriptions, key=str.casefold))
+
+    def test_columns_computed_in_python_are_offered_without_a_queryset_field(self):
+        """Known gap: a column computed in Python has nothing to filter on.
+
+        ``ExampleIndividualTableElement`` derives its value in ``get_value`` and
+        its ``attr`` never reaches the queryset, so "TestField" is offered as a
+        filter field although the repository cannot filter by it.
+        """
+        manager = HubAManager()
+        self.assertIn("individual_field", manager.get_all_fields())
+        self.assertNotIn("individual_field", manager.repository.get_all_fields())
 
 
 class HubCManager(MontrekManager):

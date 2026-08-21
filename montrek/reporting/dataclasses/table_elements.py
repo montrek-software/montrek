@@ -56,6 +56,11 @@ class TableElement:
     th_classes: ClassVar[TdClassesType | None] = None
     field_template: ClassVar[str | None] = None
 
+    @property
+    def field_name(self) -> str:
+        """Queryset field this element displays (empty when it displays none)."""
+        return self.attr
+
     def format(self, _value):
         raise NotImplementedError
 
@@ -433,6 +438,10 @@ class LinkTextTableElement(BaseLinkTableElement):
     text: str = field(default="")
     static_kwargs: dict = field(default_factory=dict)
 
+    @property
+    def field_name(self) -> str:
+        return self.text
+
     def get_link_text(self, obj):
         return BaseLinkTableElement.get_dotted_attr_or_arg(obj, self.text)
 
@@ -447,6 +456,10 @@ class LinkListTableElement(TableElement, GetDottetAttrsOrArgMixin):
     list_kwarg: str = field(default="")
     in_separator: str | None = None
     field_template: ClassVar[str | None] = "link_list"
+
+    @property
+    def field_name(self) -> str:
+        return self.text
 
     def get_field_context_data(self, value: Any, obj: Any) -> dict[str, Any]:
         return {"link_list": self.get_link_list(value, obj)}
