@@ -4,6 +4,7 @@ import os
 from dataclasses import dataclass
 from decimal import Decimal
 from io import BytesIO
+from collections.abc import Mapping
 
 import pandas as pd
 from baseclasses.dataclasses.montrek_message import MontrekMessageInfo
@@ -44,6 +45,7 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
     document_title = "Montrek Table"
     draft = False
     is_compact_format = False
+    has_table_elements_filter_field: bool = True
     is_large: bool = False
     latex_rows_per_page: int = 25
     excel_formatter_class: type[MontrekExcelFormatter] = MontrekExcelFormatter
@@ -159,6 +161,28 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
             for table_element in self.table_elements
         ]
         return render_to_string("tables/partials/table_row.html", {"cells": cells})
+
+    def get_all_fields(self) -> list[str]:
+        if not self.has_table_elements_filter_field:
+            return super().get_all_fields()
+        table_fields = []
+        for e in self.table_elements:
+            if isinstance(e, te.LinkTextTableElement | te.LinkListTableElement):
+                table_fields.append(e.text)
+            else:
+                table_fields.append(e.attr)
+        return table_fields
+
+    def get_display_field_names(self) -> Mapping[str, str]:
+        if not self.has_table_elements_filter_field:
+            return super().get_display_field_names()
+        display_fields = {}
+        for e in self.table_elements:
+            if isinstance(e, te.LinkTextTableElement | te.LinkListTableElement):
+                display_fields[e.text] = e.name
+            else:
+                display_fields[e.attr] = e.name
+        return display_fields
 
     def get_all_display_fields(self) -> list[list[DisplayField]]:
         """All rows (unpaginated) for PDF rendering."""
