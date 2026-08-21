@@ -1,6 +1,7 @@
 from django.http import HttpResponse
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from typing import Any
+from collections.abc import Mapping
 from baseclasses.dataclasses.montrek_message import MontrekMessage
 
 
@@ -40,12 +41,13 @@ class MontrekManager:
         return self.repository.object_to_dict(object_query)
 
     def get_std_queryset_field_choices(self) -> list[tuple]:
-        field_names = self.repository.get_all_fields()
+        field_names = self.get_all_fields()
         # De-duplicate field names while preserving order to avoid duplicate choices.
         unique_field_names = list(dict.fromkeys(field_names))
         field_descriptions = []
+        display_field_names = self.get_display_field_names()
         for field_name in unique_field_names:
-            display_name = self.repository.display_field_names.get(field_name)
+            display_name = display_field_names.get(field_name)
             if not display_name:
                 display_name = field_name.replace("_", " ").title()
             field_descriptions.append(display_name)
@@ -53,6 +55,12 @@ class MontrekManager:
             zip(unique_field_names, field_descriptions, strict=True),
             key=lambda x: x[1].casefold(),
         )
+
+    def get_all_fields(self) -> list[str]:
+        return self.repository.get_all_fields()
+
+    def get_display_field_names(self) -> Mapping[str, str]:
+        return self.repository.display_field_names
 
     def collect_messages(self):
         if self._repository:
