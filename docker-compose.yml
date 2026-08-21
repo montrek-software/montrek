@@ -9,6 +9,9 @@ services:
     volumes:
       - static_volume:/montrek/static
       - uploads_volume:/montrek/uploads
+      # Defaults to the repo's own certs; point TLS_CERT_DIR at /etc/letsencrypt
+      # on internet-facing hosts to serve an auto-renewed certificate.
+      - ${TLS_CERT_DIR:-./nginx/certs}:/etc/tls:ro
     depends_on:
       - web
     environment:
@@ -19,6 +22,9 @@ services:
       - ENABLE_KEYCLOAK=${ENABLE_KEYCLOAK}
       - KEYCLOAK_PORT=${KEYCLOAK_PORT}
       - FLOWER_PORT=${FLOWER_PORT}
+      - SSL_CERT_PATH=${SSL_CERT_PATH:-/etc/tls/fullchain.crt}
+      - SSL_KEY_PATH=${SSL_KEY_PATH:-/etc/tls/cert.key}
+      - DNS_RESOLVER=${DNS_RESOLVER:-127.0.0.11}
     restart: "unless-stopped"
     networks:
       - montrek_network
@@ -34,7 +40,9 @@ services:
     volumes:
       - .:/montrek
       - static_volume:/montrek/static
-      - uploads_volume:/montrek/uploads
+      # MEDIA_ROOT resolves to /montrek/montrek/uploads inside the container;
+      # mount the volume there so nginx serves the files Django writes.
+      - uploads_volume:/montrek/montrek/uploads
     env_file:
       - .env
     expose:

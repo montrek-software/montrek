@@ -88,6 +88,14 @@ git-build-montrek-container: # Build the container to run montrek in docker or g
 server-generate-https-certs: # Generate HTTPS certificates for the montrek django app.
 	@$(SECURE_WRAPPER) bin/server/generate-https-certs.sh
 
+.PHONY: server-enable-letsencrypt
+server-enable-letsencrypt: # Wire an existing Let's Encrypt cert into nginx and auto-reload on renewal (run with sudo).
+	@$(SECURE_WRAPPER) bin/server/enable-letsencrypt.sh
+
+.PHONY: server-tls-status
+server-tls-status: # Show which certificate nginx is serving and when it expires.
+	@$(SECURE_WRAPPER) bin/server/tls-status.sh
+
 .PHONY: server-update
 server-update: # Stop all docker containers, update the repositories to the latest git tags, and start the containers again.
 	@$(SECURE_WRAPPER) bin/server/update.sh

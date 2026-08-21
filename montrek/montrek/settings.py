@@ -155,6 +155,10 @@ if DEBUG:
             "debug_toolbar.panels.templates.TemplatesPanel",
             "debug_toolbar.panels.history.HistoryPanel",
             "debug_toolbar.panels.redirects.RedirectsPanel",
+            # cProfile allows one profiler per process, so parallel requests on
+            # the threaded dev server 500 with "Another profiling tool is
+            # already active" — most visibly when a page loads several images.
+            "debug_toolbar.panels.profiling.ProfilingPanel",
         },
     }
 
@@ -303,7 +307,7 @@ LANGUAGE_CODE = config("LANGUAGE_CODE", default="en-us")
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = "/static/"
-STATIC_ROOT = os.path.join(BASE_DIR, "../static")
+STATIC_ROOT = os.path.normpath(os.path.join(BASE_DIR, "..", "static"))
 
 MEDIA_URL = "/uploads/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "uploads")
