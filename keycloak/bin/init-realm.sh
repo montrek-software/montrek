@@ -3,6 +3,7 @@
 # Required env (fail fast with a clear message if any are missing)
 : "${KEYCLOAK_REALM:?Set KEYCLOAK_REALM in .env}"
 : "${KEYCLOAK_CLIENT_ID:?Set KEYCLOAK_CLIENT_ID in .env}"
+: "${KEYCLOAK_CLIENT_SECRET:?Set KEYCLOAK_CLIENT_SECRET in .env}"
 : "${PROJECT_NAME:?Set PROJECT_NAME in .env}"
 : "${DEPLOY_HOST:?Set DEPLOY_HOST in .env}"
 
@@ -26,7 +27,8 @@ if [ -d "$THEME_CSS_DIR" ]; then
 CSS
 fi
 
-# Write the realm import JSON (public client, no secret)
+# Write the realm import JSON. The client is confidential, so the secret is
+# pinned from .env -- otherwise Keycloak generates one the app cannot know.
 cat >"${IMPORT_DIR}/realm.json" <<JSON
 {
   "realm": "${KEYCLOAK_REALM}",
@@ -57,6 +59,7 @@ cat >"${IMPORT_DIR}/realm.json" <<JSON
       "clientId": "${KEYCLOAK_CLIENT_ID}",
       "protocol": "openid-connect",
       "publicClient": false,
+      "secret": "${KEYCLOAK_CLIENT_SECRET}",
       "redirectUris": ["${REDIRECT_URI}"],
       "attributes": { "pkce.code.challenge.method": "S256" }
     }
