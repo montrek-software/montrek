@@ -7,6 +7,7 @@ from unittest.mock import patch
 
 from baseclasses.dataclasses.alert import AlertEnum
 from baseclasses.utils import montrek_time
+from baseclasses.views import REST_API_QUERY_PARAM
 from bs4 import BeautifulSoup, Tag
 from django.contrib.auth.models import Permission
 from django.test import TestCase, TransactionTestCase, override_settings
@@ -30,6 +31,7 @@ from process_pipeline.managers.montrek_pipeline_managers import TASK_SCHEDULED_M
 from reporting.managers.montrek_table_manager import MontrekTablePaginator
 from testing.decorators import add_logged_in_user
 from testing.test_cases.view_test_cases import (
+    TEST_USER_PASSWORD,
     MontrekCreateViewTestCase,
     MontrekDeleteViewTestCase,
     MontrekDetailViewTestCase,
@@ -1329,6 +1331,83 @@ class TestMontrekExampleA1UploadFileView(TransactionTestCase):
             "The following database fields are defined in the field map but are not in the target repository: not_in_repository_field_0, not_in_repository_field_1, not_in_repository_field_2",
         )
         self.assertEqual(len(a_hubs), 0)
+
+
+class TestMontrekExampleA1UploadFileViewApi(TransactionTestCase):
+    """End-to-end upload through the REST API: a JWT authenticated multipart
+    POST runs the very same pipeline as the browser upload."""
+
+    def setUp(self):
+        self.user = MontrekUserFactory(password=TEST_USER_PASSWORD)
+        self.url = reverse("a1_upload_file")
+        self.test_file_path = os.path.join(
+            os.path.dirname(__file__), "data", "a_file.csv"
+        )
+        self.registry_repo = HubAFileUploadRegistryRepository({})
+        me_factories.SatA1FieldMapStaticSatelliteFactory(
+            source_field="source_field_0",
+            database_field="field_a1_str",
+            function_name="append_source_field_1",
+        )
+        me_factories.SatA1FieldMapStaticSatelliteFactory(
+            source_field="source_field_1",
+            database_field="field_a1_int",
+            function_name="multiply_by_value",
+            function_parameters={"value": 1000},
+        )
+
+    def get_headers(self) -> dict[str, str]:
+        payload = {"email": self.user.email, "password": TEST_USER_PASSWORD}
+        response = self.client.post(reverse("token_obtain_pair"), payload)
+        self.assertEqual(response.status_code, 200, response.content)
+        return {"Authorization": f"Bearer {response.data['access']}"}
+
+    def post_file(self, headers=None):
+        with open(self.test_file_path, "rb") as file:
+            return self.client.post(
+                self.url,
+                data={"file": file},
+                query_params={REST_API_QUERY_PARAM: "true"},
+                headers=self.get_headers() if headers is None else headers,
+            )
+
+    def test_upload_without_token_is_unauthorized(self):
+        response = self.post_file(headers={})
+
+        self.assertEqual(response.status_code, 401, response.content)
+        self.assertEqual(self.registry_repo.receive().count(), 0)
+
+    def test_upload_runs_the_pipeline_and_reports_the_registry(self):
+        response = self.post_file()
+
+        self.assertEqual(response.status_code, 202, response.content)
+        registry = self.registry_repo.receive().last()
+        self.assertEqual(response.json()["registry_id"], registry.hub_id)
+        self.assertEqual(response.json()["message"], TASK_SCHEDULED_MESSAGE)
+        self.assertEqual(registry.upload_status, "processed")
+        # created_by is annotated as the e-mail: the JWT user reached the pipeline
+        self.assertEqual(registry.created_by, self.user.email)
+
+        a_hubs = HubARepository().receive()
+        self.assertEqual(len(a_hubs), 3)
+        self.assertEqual([hub.field_a1_str for hub in a_hubs], ["a1", "b2", "c3"])
+        self.assertEqual([hub.field_a1_int for hub in a_hubs], [1000, 2000, 3000])
+
+    def test_uploaded_registry_is_readable_through_the_registry_api(self):
+        # How a caller learns the outcome: the upload registry list view is a
+        # MontrekListView and therefore already answers gen_rest_api requests.
+        self.post_file()
+
+        response = self.client.get(
+            reverse("a1_view_uploads"),
+            query_params={REST_API_QUERY_PARAM: "true"},
+            headers=self.get_headers(),
+        )
+
+        self.assertEqual(response.status_code, 200, response.content)
+        rows = response.json()
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["upload_status"], "processed")
 
 
 class TestMontrekExampleA1UploadHistoryView(MontrekViewTestCase):

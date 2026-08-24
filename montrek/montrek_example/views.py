@@ -331,6 +331,9 @@ class MontrekExampleA1UploadFileView(MontrekUploadFileView):
     title = "Upload A1 File"
     file_upload_manager_class = A1FileUploadManager
     accept = ".csv"
+    # Reference implementation of the upload API: an outside service POSTs the
+    # file to this URL with ?gen_rest_api=true and a JWT bearer token.
+    do_rest_upload = True
 
     def get_success_url(self):
         return reverse("a1_view_uploads")
