@@ -2,9 +2,10 @@ import datetime
 
 import pandas as pd
 from unittest.mock import patch
-from baseclasses.views import MontrekDeleteView
+from baseclasses.views import REST_API_QUERY_PARAM, MontrekDeleteView
 from bs4 import BeautifulSoup
 from django.contrib.auth.models import Permission
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db.models import QuerySet
 from django.http import FileResponse
 from django.test import TestCase
@@ -48,6 +49,67 @@ class RestApiTestCaseMixin:
         manager = self.view.manager_class(self.view.session_data)
 
         self.assertEqual(response_json, manager.to_json())
+
+
+class RestApiUploadTestCaseMixin(RestApiTestCaseMixin):
+    """Standard REST coverage for a MontrekUploadFileView with do_rest_upload.
+
+    The test class sets ``upload_viewname`` and ``upload_file_path``, provides a
+    ``self.user`` created with TEST_USER_PASSWORD holding the permissions the
+    view requires, and calls the ``*_test`` methods from its own test methods.
+    """
+
+    upload_viewname: str = ""
+    upload_file_path: str = ""
+    # An extension no view accepts, to provoke the file type rejection.
+    unsupported_file_name: str = "unsupported_file_type.zzz"
+
+    @property
+    def upload_url(self) -> str:
+        return reverse(self.upload_viewname)
+
+    def post_upload(self, file=None, headers=None):
+        headers = self.get_headers() if headers is None else headers
+        if file is not None:
+            return self._post_upload(file, headers)
+        with open(self.upload_file_path, "rb") as upload_file:
+            return self._post_upload(upload_file, headers)
+
+    def _post_upload(self, file, headers: dict[str, str]):
+        return self.client.post(
+            self.upload_url,
+            data={"file": file},
+            query_params={REST_API_QUERY_PARAM: "true"},
+            headers=headers,
+        )
+
+    def rest_api_upload_test(self):
+        response = self.post_upload()
+
+        self.assertEqual(response.status_code, 202, response.content)
+        payload = response.json()
+        self.assertIsNotNone(payload["registry_id"])
+        for key in ("celery_task_id", "status", "message"):
+            self.assertIn(key, payload)
+
+    def rest_api_upload_without_token_test(self):
+        response = self.post_upload(headers={})
+
+        self.assertEqual(response.status_code, 401, response.content)
+
+    def rest_api_upload_wrong_file_type_test(self):
+        file = SimpleUploadedFile(self.unsupported_file_name, b"not an upload")
+
+        response = self.post_upload(file=file)
+
+        self.assertEqual(response.status_code, 415, response.content)
+
+    def rest_api_upload_without_permission_test(self):
+        self.user.user_permissions.clear()
+
+        response = self.post_upload()
+
+        self.assertEqual(response.status_code, 403, response.content)
 
 
 class PdfTestCaseMixin:
