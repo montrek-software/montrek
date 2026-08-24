@@ -1,5 +1,6 @@
 import logging
 import os
+from functools import wraps
 from pathlib import Path
 from typing import Any, BinaryIO, Protocol
 
@@ -11,6 +12,7 @@ from django.http import FileResponse, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_safe
 from django.views.generic import DetailView, RedirectView, View
 from django.views.generic.base import TemplateView
@@ -59,6 +61,11 @@ logger = logging.getLogger(__name__)
 # editor row (see tables/partials/inline_edit_row.html) reads it to know it may
 # remove itself once the re-rendered data row has been swapped in above it.
 INLINE_EDIT_DONE_HEADER = "HX-Inline-Edit-Done"
+
+# Query parameter that switches a view from its HTML behaviour to the DRF
+# (JWT authenticated) one. Set on the request by API clients, see
+# MontrekApiViewMixin.
+REST_API_QUERY_PARAM = "gen_rest_api"
 
 
 @require_safe
@@ -256,8 +263,40 @@ class ToPdfMixin:
 class MontrekApiViewMixin(APIView):
     permission_classes = [AllowAny]
 
+    @classmethod
+    def as_view(cls, **initkwargs):
+        """Exempt the REST path from CSRF, keep it for the browser path.
+
+        ``APIView.as_view()`` wraps the view in ``csrf_exempt`` because token
+        authenticated clients carry no CSRF cookie. That exemption is a flag on
+        the URL callable and therefore applies to *every* method: on a view that
+        also answers browser form POSTs it would silently drop their CSRF
+        protection. So re-run ``csrf_protect`` for non-REST requests.
+        """
+        api_view = super().as_view(**initkwargs)
+
+        def call_api_view(request, *args, **kwargs):
+            # A plain callable without the ``csrf_exempt`` marker DRF put on
+            # ``api_view`` -- ``csrf_protect`` skips any view carrying it.
+            return api_view(request, *args, **kwargs)
+
+        browser_view = csrf_protect(call_api_view)
+
+        @wraps(api_view)  # carries over cls/initkwargs/view_class and csrf_exempt
+        def view(request, *args, **kwargs):
+            if cls.is_rest_request(request):
+                return api_view(request, *args, **kwargs)
+            return browser_view(request, *args, **kwargs)
+
+        return view
+
+    @classmethod
+    def is_rest_request(cls, request) -> bool:
+        """Whether this request is to be served by DRF instead of as HTML."""
+        return request.GET.get(REST_API_QUERY_PARAM) == "true"
+
     def _is_rest(self, request) -> bool:
-        return request.GET.get("gen_rest_api") == "true"
+        return self.is_rest_request(request)
 
     def dispatch(self, request, *args, **kwargs):
         if self._is_rest(request):
@@ -782,7 +821,8 @@ class MontrekDeleteView(
 class MontrekRestApiView(MontrekApiViewMixin, MontrekViewMixin):
     manager_class = MontrekManagerNotImplemented
 
-    def _is_rest(self, request) -> bool:
+    @classmethod
+    def is_rest_request(cls, request) -> bool:
         return True
 
     def get(self, request, *args, **kwargs):
