@@ -13,10 +13,12 @@ class MontrekReportForm(Form):
         self.session_data = kwargs.pop("session_data", {})
         super().__init__(*args, **kwargs)
 
-    def to_html(self) -> str:
+    def to_html(self, request=None) -> str:
+        """Render the form. The request is needed for the CSRF token of the
+        surrounding form tag - without it the POST is rejected."""
         inner = Template(self.read_template()).render(Context({"form": self}))
         wrapper = loader.get_template("report_form_templates/report_form_base.html")
-        return wrapper.render({"inner": inner})
+        return wrapper.render({"inner": inner}, request=request)
 
     def read_template(self) -> str:
         if not self.form_template:
@@ -41,7 +43,7 @@ class MontrekReportForm(Form):
 
 
 class NoMontrekReportForm(MontrekReportForm):
-    def to_html(self) -> str:
+    def to_html(self, request=None) -> str:
         return ""
 
 

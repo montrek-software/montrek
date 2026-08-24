@@ -93,8 +93,31 @@ class TestMontrekReportFormView(TestCase):
         request = self.factory.post("/example/", data=form_data)
         request.user = self.user
         request.session = {}
+        # RequestFactory, unlike the test client, does not set this, so the
+        # CSRF check of the report POST would reject the request.
+        request._dont_enforce_csrf_checks = True
+
         response = MockMontrekReportWithFormView.as_view()(request)
+
         self.assertEqual(response.url, "/example/?field_1=ABC")
+
+    def test_report_form_post_without_csrf_token_is_forbidden(self):
+        request = self.factory.post("/example/", data={"field_1": "ABC"})
+        request.user = self.user
+        request.session = {}
+
+        response = MockMontrekReportWithFormView.as_view()(request)
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_report_form_renders_a_csrf_token(self):
+        request = self.factory.get("/example/")
+        request.user = self.user
+        request.session = {}
+
+        response = MockMontrekReportWithFormView.as_view()(request)
+
+        self.assertIn("csrfmiddlewaretoken", response.context_data["report_form"])
 
 
 class TestMontrekReportFieldEditView(TestCase):

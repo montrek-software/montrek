@@ -1,6 +1,6 @@
 from datetime import date
 
-from django.test import TestCase
+from django.test import RequestFactory, TestCase
 from freezegun import freeze_time
 from reporting.forms import ReportDateReportForm
 from reporting.tests.mocks import (
@@ -25,13 +25,24 @@ class TestMontrekReportForm(TestCase):
 
     def test_render_template(self):
         form = MockMontrekReportForm()
-        test_html = form.to_html()
-        self.assertEqual(
-            test_html.replace(" ", ""),
-            '<form method="post" class="tile">\n  <fieldset>\n  <legend>Test</legend>\n  <input type="text" name="field_1" required id="id_field_1">\n</fieldset>\n\n    <button type="submit" class="btn btn-custom">Submit</button>\n    </form>\n'.replace(
-                " ", ""
-            ),
+
+        test_html = form.to_html(RequestFactory().get("/"))
+
+        self.assertIn('<form method="post" class="tile">', test_html)
+        self.assertIn(
+            '<input type="text" name="field_1" required id="id_field_1">', test_html
         )
+        self.assertIn(
+            '<button type="submit" class="btn btn-custom">Submit</button>', test_html
+        )
+
+    def test_render_template_carries_a_csrf_token(self):
+        """The wrapper posts, so it needs the token of the rendering request."""
+        form = MockMontrekReportForm()
+
+        test_html = form.to_html(RequestFactory().get("/"))
+
+        self.assertIn('name="csrfmiddlewaretoken"', test_html)
 
 
 @freeze_time("2026-01-15")
@@ -51,7 +62,7 @@ class TestReportDateReportForm(TestCase):
         """to_html() output contains today's date so flatpickr can read it."""
         form = ReportDateReportForm()
         expected = date.today().strftime("%Y-%m-%d")
-        self.assertIn(expected, form.to_html())
+        self.assertIn(expected, form.to_html(RequestFactory().get("/")))
 
     def test_widget_format_is_iso(self):
         """Widget format must be %Y-%m-%d so flatpickr receives a parseable value."""

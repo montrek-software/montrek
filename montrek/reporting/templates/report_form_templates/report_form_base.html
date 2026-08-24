@@ -1,4 +1,5 @@
 <form method="post" class="tile">
+  {% csrf_token %}
   {{ inner }}
   <button type="submit" class="btn btn-custom">Submit</button>
 </form>

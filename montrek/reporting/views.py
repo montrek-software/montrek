@@ -69,10 +69,10 @@ class MontrekReportView(
         if load:
             return {
                 "report": self.manager.to_html(),
-                "report_form": self.report_form.to_html(),
+                "report_form": self.report_form.to_html(self.request),
             }
         return {
-            "report_form": self.report_form.to_html(),
+            "report_form": self.report_form.to_html(self.request),
         }
 
     def get(self, request, *args, **kwargs):
