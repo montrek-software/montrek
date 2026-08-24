@@ -1,12 +1,13 @@
 import logging
 from pathlib import Path
-from typing import TextIO
+from typing import Any, TextIO
 from urllib.parse import urlparse
 from django.forms import Form
 
 from django.template.response import TemplateResponse
 
 from baseclasses.views import (
+    MontrekApiViewMixin,
     MontrekCreateView,
     MontrekListView,
     MontrekRedirectView,
@@ -14,11 +15,10 @@ from baseclasses.views import (
     MontrekUpdateView,
 )
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.views import redirect_to_login
 from django.http import FileResponse, HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import resolve, reverse
-from django.utils.decorators import method_decorator
 from file_upload.forms import FieldMapCreateForm, UploadFileForm
 from file_upload.managers.field_map_manager import FieldMapManagerABC
 from file_upload.managers.file_upload_manager import FileUploadManagerABC
@@ -33,21 +33,48 @@ from info.managers.download_registry_storage_managers import (
 from info.models.download_registry_sat_models import DownloadType
 
 from montrek.celery_app import app as celery_app
+from rest_framework import status
+from rest_framework.response import Response
 
 logger = logging.getLogger(__name__)
 # Create your views here.
 
 
-@method_decorator(login_required, name="dispatch")
-class MontrekUploadFileView(MontrekTemplateView):
+NO_FILE_ATTACHED_MESSAGE = "No file attached"
+
+
+class MontrekUploadFileView(MontrekApiViewMixin, MontrekTemplateView):
+    """Upload a file through the browser form or, opt-in, through the REST API.
+
+    Set ``do_rest_upload`` to also accept a multipart POST carrying a JWT
+    (``?gen_rest_api=true``, see MontrekApiViewMixin). The REST path runs the
+    very same form, permission check and pipeline as the browser path; only the
+    responses differ - JSON instead of messages plus a redirect.
+    """
+
     template_name = "upload_form.html"
     file_upload_manager_class = FileUploadManagerABC
     accept = ""
     upload_form_class = UploadFileForm
+    # Opt-in per view: an upload endpoint writes data, so it is only reachable
+    # for API clients where the view explicitly says so.
+    do_rest_upload = False
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.file_upload_manager = None
+
+    @classmethod
+    def is_rest_request(cls, request) -> bool:
+        return cls.do_rest_upload and super().is_rest_request(request)
+
+    def dispatch(self, request, *args, **kwargs):
+        # The browser path used to be guarded by a login_required decorator.
+        # That cannot stay a decorator: it would run before DRF authenticates
+        # and bounce every token client to the login page.
+        if not self.is_rest_request(request) and not request.user.is_authenticated:
+            return redirect_to_login(request.get_full_path())
+        return super().dispatch(request, *args, **kwargs)
 
     def get_template_context(self, **kwargs):
         return {"upload_form": self.upload_form_class(self.accept)}
@@ -56,25 +83,75 @@ class MontrekUploadFileView(MontrekTemplateView):
         form = self.get_post_form(request)
         if form.is_valid():
             return self.form_valid(form, request)
-        return self.render_to_response(self.get_context_data())
+        return self.form_invalid_response(form)
 
-    def form_valid(self, form, request) -> HttpResponseRedirect | TemplateResponse:
+    def form_valid(
+        self, form, request
+    ) -> HttpResponseRedirect | TemplateResponse | Response:
         logger.debug("Start file upload process")
         file = self.get_file(form)
-        if not self._check_file_type(file):
-            return self.render_to_response(self.get_context_data())
+        file_type_error = self.get_file_type_error(file)
+        if file_type_error is not None:
+            return self.file_type_error_response(file_type_error)
         self.file_upload_manager = self.file_upload_manager_class(
             session_data=self.session_data,
         )
         self.file_upload_manager.set_pipeline_data(self.get_pipeline_data(form))
         logger.debug("file_upload_manager: %s", self.file_upload_manager)
         result = self.file_upload_manager.upload_and_process(file)
+        logger.debug("End file upload process")
+        if self._is_rest(request):
+            return self.upload_rest_response(result)
         if result:
             messages.info(request, self.file_upload_manager.message)
         else:
             messages.error(request, self.file_upload_manager.message)
-        logger.debug("End file upload process")
         return HttpResponseRedirect(self.get_success_url())
+
+    # ---- responses ----
+
+    def form_invalid_response(self, form: Form) -> TemplateResponse | Response:
+        if self._is_rest(self.request):
+            return Response(
+                {"detail": "Invalid upload request.", "errors": form.errors},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return self.render_to_response(self.get_context_data())
+
+    def file_type_error_response(self, error: str) -> TemplateResponse | Response:
+        if self._is_rest(self.request):
+            return Response(
+                {"detail": error},
+                status=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            )
+        messages.error(self.request, error)
+        return self.render_to_response(self.get_context_data())
+
+    def upload_rest_response(self, result: bool) -> Response:
+        """Report the registry entry the caller has to poll for the outcome.
+
+        Processing usually runs on a Celery worker, so a successful call means
+        "accepted", not "imported" - the caller follows ``registry_id`` on the
+        upload registry endpoint to learn how it ended.
+        """
+        manager = self.file_upload_manager
+        payload = {
+            "registry_id": self.session_data.get(manager.registry_session_key),
+            "celery_task_id": self.get_registry_value("celery_task_id"),
+            "status": self.get_registry_value(manager.status_field_name),
+            "message": manager.message,
+        }
+        if manager.do_process_async:
+            return Response(payload, status=status.HTTP_202_ACCEPTED)
+        if result:
+            return Response(payload, status=status.HTTP_200_OK)
+        return Response(payload, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+    def get_registry_value(self, field_name: str) -> Any:
+        registry = self.file_upload_manager.get_registry()
+        return getattr(registry, field_name, None)
+
+    # ---- hooks ----
 
     def get_success_url(self):
         raise NotImplementedError("get_success_url not implemented")
@@ -91,24 +168,15 @@ class MontrekUploadFileView(MontrekTemplateView):
     def get_file(self, form: Form) -> str:
         return form.cleaned_data["file"]
 
-    def _check_file_type(self, file: TextIO | None) -> bool:
-        expected_file_types = self.accept.split(",")
-        expected_file_types = [e.lstrip(".").upper() for e in expected_file_types]
+    def get_file_type_error(self, file: TextIO | None) -> str | None:
+        """Return why the file is not acceptable, or None if it is."""
         if file is None:
-            messages.error(
-                self.request,
-                "No file attached",
-            )
-            return False
-
+            return NO_FILE_ATTACHED_MESSAGE
+        expected_file_types = [e.lstrip(".").upper() for e in self.accept.split(",")]
         actual_file_type = file.name.split(".")[-1].upper()
         if actual_file_type not in expected_file_types:
-            messages.error(
-                self.request,
-                f"File type {actual_file_type} not allowed",
-            )
-            return False
-        return True
+            return f"File type {actual_file_type} not allowed"
+        return None
 
     def get_post_form(self, request):
         return self.upload_form_class(self.accept, request.POST, request.FILES)

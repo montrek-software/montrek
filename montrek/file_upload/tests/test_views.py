@@ -94,38 +94,40 @@ class TestMontrekUploadFileView(TestCase):
         response = test_file_upload_view.get(self.view.request)
         self.assertEqual(response.status_code, 200)
 
-    # --- _check_file_type ---
+    # --- get_file_type_error ---
 
-    def test_check_file_type_returns_false_when_file_is_none(self):
+    def test_get_file_type_error_reports_missing_file(self):
         view = MockUploadableFileView()
         view.configure_request()
 
-        result = view._check_file_type(None)
+        self.assertEqual(view.get_file_type_error(None), "No file attached")
 
-        self.assertFalse(result)
-        self.assertIn("No file attached", [str(m) for m in get_messages(view.request)])
-
-    def test_check_file_type_returns_false_on_wrong_extension(self):
+    def test_get_file_type_error_reports_wrong_extension(self):
         view = MockUploadableFileView()
         view.configure_request()
         file = SimpleUploadedFile("data.csv", b"col1,col2")
 
-        result = view._check_file_type(file)
+        self.assertEqual(view.get_file_type_error(file), "File type CSV not allowed")
 
-        self.assertFalse(result)
-        self.assertIn(
-            "File type CSV not allowed",
-            [str(m) for m in get_messages(view.request)],
-        )
-
-    def test_check_file_type_returns_true_on_correct_extension(self):
+    def test_get_file_type_error_returns_none_on_correct_extension(self):
         view = MockUploadableFileView()
         view.configure_request()
         file = SimpleUploadedFile("report.xlsx", b"data")
 
-        result = view._check_file_type(file)
+        self.assertIsNone(view.get_file_type_error(file))
 
-        self.assertTrue(result)
+    def test_post_shows_file_type_message_and_renders_form(self):
+        view = MockUploadableFileView()
+        file = SimpleUploadedFile("data.csv", b"col1,col2")
+        request = view.configure_request(method="POST", file=file)
+
+        response = view.post(request)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            "File type CSV not allowed",
+            [str(m) for m in get_messages(request)],
+        )
 
     # --- post ---
 
