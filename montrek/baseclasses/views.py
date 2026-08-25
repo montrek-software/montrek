@@ -962,7 +962,7 @@ class MontrekInlineFieldEditView(
     Non-HTMX requests are redirected to ``get_fallback_url()``.
 
     The editor form uses ``get_edit_row_id()`` as its form prefix, so the
-    input is named e.g. ``inline-edit-42-risk_value_comment``. This is
+    input is named e.g. ``inline-edit-42-<field_name>``. This is
     required for correctness: the whole table lives inside a form (see
     ``tables/base_table.html``) whose values HTMX submits with every non-GET
     request, so when editors are open on several rows at once all their
