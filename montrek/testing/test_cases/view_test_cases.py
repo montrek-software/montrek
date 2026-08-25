@@ -207,6 +207,14 @@ class MontrekViewTestCase(TestCase):
             return
         self.assertIsInstance(self.view, self.view_class)
 
+    def _clear_pending_messages(self):
+        """Drop messages queued but never rendered by an earlier request."""
+        self.client.cookies.pop("messages", None)
+        session = self.client.session
+        if "_messages" in session:
+            del session["_messages"]
+            session.save()
+
     def test_view_without_required_permission(self):
         if self._is_base_test_class():
             return
@@ -214,6 +222,7 @@ class MontrekViewTestCase(TestCase):
         if not required_user_permissions:
             return
         self.user.user_permissions.clear()
+        self._clear_pending_messages()
         previous_url = reverse("home")
         response = self.client.get(self.url, HTTP_REFERER=previous_url, follow=True)
         messages = list(response.context["messages"])
@@ -561,6 +570,7 @@ class MontrekReportViewTestCase(MontrekViewTestCase, RestApiTestCaseMixin):
             return
         user = MontrekUserFactory()
         self.client.force_login(user)
+        user.user_permissions.set(self.required_user_permissions())
         query_params = self.query_params() | {"send_mail": "true"}
         response = self.client.get(self.url, query_params=query_params)
         self.assertRedirects(response, self.mail_success_url)
