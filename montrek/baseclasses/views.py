@@ -837,7 +837,9 @@ class MontrekRestApiView(MontrekApiViewMixin, MontrekViewMixin):
         return table_meta_session_data.update_session_data(session_data)
 
 
-class MontrekRedirectView(MontrekViewMixin, RedirectView):
+class MontrekRedirectView(
+    MontrekPermissionRequiredMixin, MontrekViewMixin, RedirectView
+):
     manager_class = MontrekManagerNotImplemented
 
     def get_redirect_url(self, *args, **kwargs) -> str:
@@ -960,7 +962,7 @@ class MontrekInlineFieldEditView(
     Non-HTMX requests are redirected to ``get_fallback_url()``.
 
     The editor form uses ``get_edit_row_id()`` as its form prefix, so the
-    input is named e.g. ``inline-edit-42-damage_value_comment``. This is
+    input is named e.g. ``inline-edit-42-risk_value_comment``. This is
     required for correctness: the whole table lives inside a form (see
     ``tables/base_table.html``) whose values HTMX submits with every non-GET
     request, so when editors are open on several rows at once all their
@@ -1077,7 +1079,7 @@ class MontrekInlineFieldEditView(
         return response
 
 
-class MontrekDownloadView(MontrekViewMixin, View):
+class MontrekDownloadView(MontrekPermissionRequiredMixin, MontrekViewMixin, View):
     manager_class = MontrekManagerNotImplemented
 
     def get(self, request, *args, **kwargs) -> HttpResponse:
