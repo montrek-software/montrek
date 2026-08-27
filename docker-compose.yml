@@ -8,7 +8,10 @@ services:
       - ${DEPLOY_PORT}:${DEPLOY_PORT}
     volumes:
       - static_volume:/montrek/static
-      - uploads_volume:/montrek/uploads
+      # MEDIA_ROOT is the repo-relative montrek/uploads, shared by the host and
+      # every container through the .:/montrek bind mount; nginx has no repo
+      # mount of its own, so it binds the same directory directly.
+      - ./montrek/uploads:/montrek/uploads
       # Defaults to the repo's own certs; point TLS_CERT_DIR at /etc/letsencrypt
       # on internet-facing hosts to serve an auto-renewed certificate.
       - ${TLS_CERT_DIR:-./nginx/certs}:/etc/tls:ro
@@ -40,9 +43,6 @@ services:
     volumes:
       - .:/montrek
       - static_volume:/montrek/static
-      # MEDIA_ROOT resolves to /montrek/montrek/uploads inside the container;
-      # mount the volume there so nginx serves the files Django writes.
-      - uploads_volume:/montrek/montrek/uploads
     env_file:
       - .env
     expose:
@@ -65,7 +65,6 @@ services:
       - PGUD=${GROUP_ID}
     volumes:
       - .:/montrek
-      - uploads_volume:/montrek/montrek/uploads
     env_file:
       - .env
     depends_on:
@@ -151,7 +150,6 @@ services:
 volumes:
   db_data:
   static_volume:
-  uploads_volume:
   keycloak_db_data:
 
 networks:
