@@ -11,7 +11,7 @@ services:
       # MEDIA_ROOT is the repo-relative montrek/uploads, shared by the host and
       # every container through the .:/montrek bind mount; nginx has no repo
       # mount of its own, so it binds the same directory directly.
-      - ./montrek/uploads:/montrek/uploads
+      - ./montrek/uploads:/montrek/uploads:ro
       # Defaults to the repo's own certs; point TLS_CERT_DIR at /etc/letsencrypt
       # on internet-facing hosts to serve an auto-renewed certificate.
       - ${TLS_CERT_DIR:-./nginx/certs}:/etc/tls:ro
