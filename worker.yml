@@ -11,7 +11,9 @@ services:
     volumes:
       - .:/montrek
       - static_volume:/montrek/static
-      - uploads_volume:/montrek/uploads
+      # Mount at MEDIA_ROOT, as in docker-compose.yml: the worker writes the
+      # export files that nginx and web serve from this volume.
+      - uploads_volume:/montrek/montrek/uploads
     env_file:
       - .env
     depends_on:
@@ -35,7 +37,9 @@ services:
     volumes:
       - .:/montrek
       - static_volume:/montrek/static
-      - uploads_volume:/montrek/uploads
+      # Mount at MEDIA_ROOT, as in docker-compose.yml: the worker writes the
+      # export files that nginx and web serve from this volume.
+      - uploads_volume:/montrek/montrek/uploads
     env_file:
       - .env
     depends_on:
@@ -57,7 +61,9 @@ services:
     volumes:
       - .:/montrek
       - static_volume:/montrek/static
-      - uploads_volume:/montrek/uploads
+      # Mount at MEDIA_ROOT, as in docker-compose.yml: the worker writes the
+      # export files that nginx and web serve from this volume.
+      - uploads_volume:/montrek/montrek/uploads
     env_file:
       - .env
     depends_on:

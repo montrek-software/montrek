@@ -65,6 +65,7 @@ services:
       - PGUD=${GROUP_ID}
     volumes:
       - .:/montrek
+      - uploads_volume:/montrek/montrek/uploads
     env_file:
       - .env
     depends_on:
