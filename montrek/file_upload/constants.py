@@ -1,10 +1,13 @@
-from process_pipeline.constants import RegistryStatusTextChoices
+from process_pipeline.constants import (
+    RegistryStatusDataClass,
+    RegistryStatusTextChoices,
+)
 
 
 class UploadStatus(RegistryStatusTextChoices):
-    PENDING = "pending"
-    UPLOADED = "uploaded"
-    IN_PROGRESS = "in_progress"
-    PROCESSED = "processed"
-    FAILED = "failed"
-    REVOKED = "revoked"
+    PENDING = RegistryStatusDataClass("pending")
+    UPLOADED = RegistryStatusDataClass("uploaded")
+    IN_PROGRESS = RegistryStatusDataClass("in_progress")
+    PROCESSED = RegistryStatusDataClass("processed")
+    FAILED = RegistryStatusDataClass("failed")
+    REVOKED = RegistryStatusDataClass("revoked")
