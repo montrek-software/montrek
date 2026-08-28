@@ -5,8 +5,10 @@ out of it — so the column building blocks live here. Subclasses name the statu
 and message fields and assemble the columns in whatever order suits them.
 """
 
+from process_pipeline.constants import RegistryStatusTextChoices
 from reporting.dataclasses.table_elements import (
     DateTimeTableElement,
+    LabelTableElement,
     LinkTableElement,
     StringTableElement,
     TextTableElement,
@@ -15,6 +17,8 @@ from reporting.managers.montrek_table_manager import MontrekTableManager
 
 
 class PipelineRegistryManagerABC(MontrekTableManager):
+    registry_status_text_choices: type[RegistryStatusTextChoices]
+
     status_attr: str = "status"
     message_attr: str = "message"
     status_column_name: str = "Status"
@@ -34,8 +38,12 @@ class PipelineRegistryManagerABC(MontrekTableManager):
     # ---- column building blocks ----
 
     @property
-    def status_element(self) -> StringTableElement:
-        return StringTableElement(name=self.status_column_name, attr=self.status_attr)
+    def status_element(self) -> LabelTableElement:
+        return LabelTableElement(
+            name=self.status_column_name,
+            attr=self.status_attr,
+            color_codes=self.registry_status_text_choices.label_colors(),
+        )
 
     @property
     def message_element(self) -> TextTableElement:

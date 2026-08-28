@@ -1,4 +1,5 @@
 from django.db import models
+from file_export.constants import ExportStatus
 
 from process_pipeline.models.pipeline_registry_hub_models import PipelineRegistryHubABC
 from process_pipeline.models.pipeline_registry_sat_models import (
@@ -15,14 +16,10 @@ class FileExportRegistryStaticSatelliteABC(PipelineRegistrySatelliteABC):
     class Meta:
         abstract = True
 
-    class ExportStatus(models.TextChoices):
-        PENDING = "pending"
-        IN_PROGRESS = "in_progress"
-        PROCESSED = "processed"
-        FAILED = "failed"
-
     export_status = models.CharField(
-        max_length=20, choices=ExportStatus.choices, default=ExportStatus.PENDING
+        max_length=20,
+        choices=ExportStatus.to_list(),
+        default=ExportStatus.PENDING.value.label,
     )
     export_message = models.TextField(default="")
     export_file = models.FileField(upload_to="file_exports/", null=True, blank=True)

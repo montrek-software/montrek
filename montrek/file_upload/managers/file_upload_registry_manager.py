@@ -1,3 +1,4 @@
+from file_upload.constants import UploadStatus
 from process_pipeline.managers.pipeline_registry_manager import (
     PipelineRegistryManagerABC,
 )
@@ -11,6 +12,7 @@ from file_upload.repositories.file_upload_registry_repository import (
 
 class FileUploadRegistryManagerABC(PipelineRegistryManagerABC):
     repository_class = FileUploadRegistryRepositoryABC
+    registry_status_text_choices = UploadStatus
     download_url = "please define download_url in subclass"
     download_log_url = ""
     history_url = ""

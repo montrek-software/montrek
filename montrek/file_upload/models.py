@@ -2,6 +2,7 @@ from django.db import models
 
 from baseclasses import models as baseclass_models
 from baseclasses.fields import HubForeignKey
+from file_upload.constants import UploadStatus
 from process_pipeline.models.pipeline_registry_hub_models import PipelineRegistryHubABC
 from process_pipeline.models.pipeline_registry_sat_models import (
     PipelineRegistrySatelliteABC,
@@ -29,14 +30,6 @@ class FileUploadRegistryStaticSatelliteABC(PipelineRegistrySatelliteABC):
         TOML = "toml"
         NONE = "none"
 
-    class UploadStatus(models.TextChoices):
-        PENDING = "pending"
-        UPLOADED = "uploaded"
-        IN_PROGRESS = "in_progress"
-        PROCESSED = "processed"
-        FAILED = "failed"
-        REVOKED = "revoked"
-
     hub_entity = models.ForeignKey(FileUploadRegistryHubABC, on_delete=models.CASCADE)
     identifier_fields = ["file_name", "file_type"]
     file_name = models.CharField(max_length=255)
@@ -44,7 +37,9 @@ class FileUploadRegistryStaticSatelliteABC(PipelineRegistrySatelliteABC):
         max_length=5, choices=FileTypes.choices, default=FileTypes.NONE
     )
     upload_status = models.CharField(
-        max_length=20, choices=UploadStatus.choices, default=UploadStatus.PENDING
+        max_length=20,
+        choices=UploadStatus.to_list(),
+        default=UploadStatus.PENDING.value.label,
     )
     upload_message = models.TextField(default="")
 
