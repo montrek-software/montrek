@@ -13,7 +13,9 @@ class DataImportRegistryBaseSatelliteABC(PipelineRegistrySatelliteABC):
         abstract = True
 
     import_status = models.CharField(
-        max_length=20, choices=ImportStatus.to_list(), default=ImportStatus.PENDING
+        max_length=20,
+        choices=ImportStatus.to_list(),
+        default=ImportStatus.PENDING.value.label,
     )
     import_message = models.TextField(default="")
     identifier_fields = ["hub_entity_id"]

@@ -17,7 +17,9 @@ class FileExportRegistryStaticSatelliteABC(PipelineRegistrySatelliteABC):
         abstract = True
 
     export_status = models.CharField(
-        max_length=20, choices=ExportStatus.to_list(), default=ExportStatus.PENDING
+        max_length=20,
+        choices=ExportStatus.to_list(),
+        default=ExportStatus.PENDING.value.label,
     )
     export_message = models.TextField(default="")
     export_file = models.FileField(upload_to="file_exports/", null=True, blank=True)

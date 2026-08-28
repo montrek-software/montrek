@@ -37,7 +37,9 @@ class FileUploadRegistryStaticSatelliteABC(PipelineRegistrySatelliteABC):
         max_length=5, choices=FileTypes.choices, default=FileTypes.NONE
     )
     upload_status = models.CharField(
-        max_length=20, choices=UploadStatus.to_list(), default=UploadStatus.PENDING
+        max_length=20,
+        choices=UploadStatus.to_list(),
+        default=UploadStatus.PENDING.value.label,
     )
     upload_message = models.TextField(default="")
 
