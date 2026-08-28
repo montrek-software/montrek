@@ -1,4 +1,5 @@
 from typing import Any
+from data_import.base.constants import ImportStatus
 
 from data_import.base.managers.processor_base import ProcessorBaseABC
 from data_import.base.repositories.registry_repositories import RegistryRepositoryABC
@@ -11,6 +12,7 @@ from process_pipeline.managers.montrek_pipeline_managers import (
 class DataImportManagerABC(MontrekPipelineManagerABC):
     registry_repository_class: type[RegistryRepositoryABC]
     processor_class: type[ProcessorBaseABC]
+    registry_status_text_choices = ImportStatus
     status_field_name = "import_status"
     message_field_name = "import_message"
     do_process_async = False

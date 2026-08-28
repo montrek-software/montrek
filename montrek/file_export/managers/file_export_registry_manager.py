@@ -1,6 +1,7 @@
 import os
 
 from django.http import FileResponse, Http404, HttpResponse
+from file_export.constants import ExportStatus
 
 from process_pipeline.managers.pipeline_registry_manager import (
     PipelineRegistryManagerABC,
@@ -15,6 +16,7 @@ class FileExportRegistryManagerABC(PipelineRegistryManagerABC):
     repository_class: type[FileExportRegistryRepositoryABC]
     document_name: str = "File Export Registry"
     download_url: str = "under_construction"
+    registry_status_text_choices = ExportStatus
 
     status_attr = "export_status"
     message_attr = "export_message"
