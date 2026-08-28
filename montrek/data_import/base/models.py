@@ -1,6 +1,7 @@
 from django.db import models
 from baseclasses import models as baseclass_models
 from baseclasses.fields import HubForeignKey
+from data_import.base.constants import ImportStatus
 from process_pipeline.models.pipeline_registry_hub_models import PipelineRegistryHubABC
 from process_pipeline.models.pipeline_registry_sat_models import (
     PipelineRegistrySatelliteABC,
@@ -10,13 +11,6 @@ from process_pipeline.models.pipeline_registry_sat_models import (
 class DataImportRegistryBaseSatelliteABC(PipelineRegistrySatelliteABC):
     class Meta:
         abstract = True
-
-    class ImportStatus(models.TextChoices):
-        PENDING = "pending"
-        UPLOADED = "uploaded"
-        IN_PROGRESS = "in_progress"
-        PROCESSED = "processed"
-        FAILED = "failed"
 
     import_status = models.CharField(
         max_length=20, choices=ImportStatus.choices, default=ImportStatus.PENDING
