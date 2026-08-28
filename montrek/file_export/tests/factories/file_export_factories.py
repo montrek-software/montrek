@@ -5,8 +5,8 @@ from baseclasses.tests.factories.montrek_factory_schemas import (
     MontrekHubFactory,
     MontrekSatelliteFactory,
 )
+from file_export.constants import ExportStatus
 
-from file_export.models import FileExportRegistryStaticSatelliteABC
 
 EXPORT_FILE_CONTENT = b"col1,col2\n1,2\n"
 EXPORT_FILE_NAME = "test_export.csv"
@@ -25,7 +25,7 @@ class FileExportRegistryStaticSatelliteFactory(MontrekSatelliteFactory):
     Subclasses need to declare ``Meta.model`` and a ``hub_entity`` sub factory.
     """
 
-    export_status = FileExportRegistryStaticSatelliteABC.ExportStatus.PROCESSED
+    export_status = ExportStatus.PROCESSED.value.label
     export_message = "Export successful"
     celery_task_id = ""
 
