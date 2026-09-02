@@ -12,6 +12,7 @@ from django.http import FileResponse, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.datastructures import MultiValueDict
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_safe
 from django.views.generic import DetailView, RedirectView, View
@@ -683,6 +684,7 @@ class MontrekCreateUpdateView(
     compact_template_name = "montrek_create_compact.html"
     do_return_to_referer: bool = False
     success_url = "under_construction"
+    has_file_upload_field: bool = False
     title = ""
 
     @property
@@ -721,10 +723,21 @@ class MontrekCreateUpdateView(
         context = self.get_page_context(context, **kwargs)
         return context
 
+    def get_form_files(self) -> MultiValueDict | None:
+        """The uploaded files for views that declare a file field, else None.
+
+        ``None`` is what ``BaseForm`` already defaults ``files`` to, so a view
+        that does not opt in builds its form exactly as it did before.
+        """
+        if not self.has_file_upload_field:
+            return None
+        return self.request.FILES
+
     def post(self, request, *args, **kwargs):
         self.object = None
         form = self.form_class(
             self.request.POST,
+            self.get_form_files(),
             repository=self.manager.repository,
             session_data=self.session_data,
         )
@@ -763,6 +776,7 @@ class MontrekUpdateView(MontrekCreateUpdateView):
         self.object = None
         form = self.form_class(
             self.request.POST,
+            self.get_form_files(),
             repository=self.manager.repository,
             session_data=self.session_data,
             initial=self._get_initial(),
