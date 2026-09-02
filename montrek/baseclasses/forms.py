@@ -269,7 +269,12 @@ class MontrekCreateForm(forms.ModelForm):
             if not form_field or field.name in exclude:
                 continue
 
-            form_field.validators.extend(field.validators)
+            if not isinstance(form_field, forms.ChoiceField):
+                # A ChoiceField already restricts the value to the model's
+                # declared choices, and it validates before coercing: an
+                # IntegerField's range validators would then be handed the raw
+                # string and raise TypeError instead of a ValidationError.
+                form_field.validators.extend(field.validators)
 
             if field.name in self.repository.display_field_names:
                 form_field.label = self.repository.display_field_names[field.name]
