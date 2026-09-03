@@ -52,6 +52,11 @@ from django_pandas.io import read_frame
 
 logger = logging.getLogger(__name__)
 
+FROZEN_REFERENCE_DATE_WRITE_MESSAGE = (
+    "Die Ansicht zeigt einen eingefrorenen Datenstand. "
+    "In diesem Zustand können keine Daten gespeichert werden."
+)
+
 
 @dataclass
 class TSQueryContainer:
@@ -117,6 +122,7 @@ class MontrekRepository:
     def create_by_dict(self, data: DataDict) -> MontrekHubABC:
         self._debug_logging("Start create by dict")
         self._raise_for_anonymous_user()
+        self._raise_for_frozen_reference_date()
         db_staller = DbStaller(self.annotator)
         db_creator = DbCreator(
             db_staller, self.session_user_id, strict_none_semantics=True
@@ -132,6 +138,7 @@ class MontrekRepository:
     def create_by_data_frame(self, data_frame: pd.DataFrame) -> list[MontrekHubABC]:
         self._debug_logging("raise for anonymous user")
         self._raise_for_anonymous_user()
+        self._raise_for_frozen_reference_date()
         self._debug_logging("Get DbDataFrame")
         data_frame = self.skim_data_frame(data_frame)
         db_data_frame = DbDataFrame(self.annotator, self.session_user_id)
@@ -218,11 +225,10 @@ class MontrekRepository:
         if (
             self.view_model
             and not update_view_model
-            and "reference_date" not in self.session_data
-            # A reference date assigned through the property setter pins the
-            # system time axis just as one in session_data does; the view model
-            # only ever holds the present state, so it must be bypassed here too.
-            and self._reference_date is None
+            # The view model only ever holds the present state, so any pinned
+            # reference date -- from session_data or through the setter -- has
+            # to bypass it.
+            and self.explicit_reference_date is None
         ):
             return self.get_view_model_query(apply_filter=apply_filter)
         query = self.query_builder.build_queryset(
@@ -248,6 +254,7 @@ class MontrekRepository:
         return query
 
     def delete(self, obj: MontrekHubABC):
+        self._raise_for_frozen_reference_date()
         closing_date = timezone.now()
         obj.state_date_end = closing_date
         obj.save()
@@ -311,16 +318,30 @@ class MontrekRepository:
 
     @property
     def reference_date(self) -> timezone.datetime:
-        if self._reference_date is None:
-            reference_date = self.session_data.get("reference_date", timezone.now())
-            if isinstance(reference_date, list):
-                reference_date = reference_date[0]
-            if isinstance(reference_date, str):
-                reference_date = datetime_to_montrek_time(
-                    pd.to_datetime(reference_date)
-                )
-            return reference_date
-        return self._reference_date
+        explicit_reference_date = self.explicit_reference_date
+        if explicit_reference_date is None:
+            return timezone.now()
+        return explicit_reference_date
+
+    @property
+    def explicit_reference_date(self) -> timezone.datetime | None:
+        """The reference date a caller pinned, or None when this runs at now().
+
+        Reading the pin separately from ``reference_date`` is what lets the
+        write guard and the view model bypass tell "as of a past state" apart
+        from "as of the present", which the ``timezone.now()`` fallback would
+        otherwise hide.
+        """
+        if self._reference_date is not None:
+            return self._reference_date
+        reference_date = self.session_data.get("reference_date")
+        if isinstance(reference_date, list):
+            reference_date = reference_date[0] if reference_date else None
+        if reference_date is None:
+            return None
+        if isinstance(reference_date, str):
+            reference_date = datetime_to_montrek_time(pd.to_datetime(reference_date))
+        return reference_date
 
     @property
     def session_end_date(self) -> timezone.datetime:
@@ -690,6 +711,27 @@ class MontrekRepository:
     def _raise_for_anonymous_user(self):
         if not self.session_user_id:
             raise PermissionDenied("User not authenticated!")
+
+    def _raise_for_frozen_reference_date(self):
+        """Refuse to change data while this repository reads an as-of state.
+
+        Writes always land at ``timezone.now()`` -- ``DbStaller.creation_date``
+        for a create, ``closing_date`` for a delete -- so a form rendered over a
+        pinned reference date would change a present the caller cannot see: the
+        edit disappears from the very page it was made on.
+
+        Any pin refuses, not only one in the past.  Comparing against ``now()``
+        cannot separate a freeze recorded a millisecond ago from a caller
+        passing ``timezone.now()`` through session data, and every tolerance
+        that tries is an arbitrary number.  The rule is the intent instead: a
+        caller that pinned the system time axis is doing an as-of read, and a
+        write from there is a bug in the caller.  A repository that must write
+        while its callers pass a reference date drops the key on the way in --
+        see ``DownloadRegistryRepository``, which records the act of
+        downloading rather than the state being downloaded.
+        """
+        if self.explicit_reference_date is not None:
+            raise MontrekError(FROZEN_REFERENCE_DATE_WRITE_MESSAGE)
 
     def get_hub_by_id(self, pk: int) -> MontrekHubABC:
         return self.hub_class.objects.get(hub_value_date__pk=pk)
