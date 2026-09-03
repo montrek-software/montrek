@@ -17,6 +17,7 @@ from baseclasses.views import (
     MontrekPageViewMixin,
     MontrekRedirectView,
     MontrekTemplateView,
+    MontrekUpdateView,
     MontrekViewMixin,
     _get_greeting,
 )
@@ -26,6 +27,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.contrib.messages import get_messages
 from django.contrib.messages.middleware import MessageMiddleware
 from django.contrib.sessions.middleware import SessionMiddleware
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 from info.repositories.download_registry_repositories import DownloadRegistryRepository
@@ -142,20 +144,26 @@ class MockErrors:
         return [("bla", "blubb")]
 
 
-class MockFormClass:
+class MockFormBase:
+    """Records how the view constructed it, so tests can inspect data and files."""
+
     errors = MockErrors()
 
-    def __init__(self, request, repository, session_data): ...
+    def __init__(
+        self, data=None, files=None, *, repository=None, session_data=None, initial=None
+    ):
+        self.data = data
+        self.files = files
+        self.initial = initial
 
+
+class MockFormClass(MockFormBase):
     def is_valid(self):
         return False
 
 
-class MockFormClassValid:
-    errors = MockErrors()
+class MockFormClassValid(MockFormBase):
     cleaned_data = {}
-
-    def __init__(self, request, repository, session_data): ...
 
     def is_valid(self):
         return True
@@ -175,6 +183,30 @@ class MockMontrekCreateView(MontrekCreateUpdateView, MockRequester):
 
 class MockMontrekCreateValidView(MockMontrekCreateView):
     form_class = MockFormClassValid
+
+    def form_valid(self, form):
+        # Keep the form the view built; post() itself does not hold on to it.
+        self.captured_form = form
+        return super().form_valid(form)
+
+
+class MockMontrekUpdateView(MontrekUpdateView, MockRequester):
+    manager_class = MockManager
+    is_hub_based = False
+    form_class = MockFormClassValid
+    page_class = MockPage
+
+    def __init__(self, url: str):
+        super().__init__()
+        self.add_mock_request(url)
+        self.kwargs = {"pk": 1}
+
+    def _get_initial(self) -> dict:
+        return {"item1": 1}
+
+    def form_valid(self, form):
+        self.captured_form = form
+        return super().form_valid(form)
 
 
 class TestHomeView(TestCase):
@@ -721,6 +753,49 @@ class TestMontrekCreateView(TestCase):
         test_form = test_view.post(test_view.request)
         self.assertEqual(test_form.status_code, 302)
         self.assertIsNotNone(test_view.object)
+
+
+class TestFileUploadFieldOptIn(TestCase):
+    """``has_file_upload_field`` is what hands ``request.FILES`` to the form.
+
+    Both create and update views must honour it: ``MontrekUpdateView`` builds
+    its own form (it needs ``initial``) instead of calling ``super().post()``,
+    so the flag has to work through the shared ``get_form_files`` hook rather
+    than a single ``post`` implementation.
+    """
+
+    def post_with_file(self, test_view):
+        test_view.add_mock_request_post(
+            "/", {"transcript": SimpleUploadedFile("transcript.txt", b"hello")}
+        )
+        test_view.post(test_view.request)
+        return test_view.captured_form
+
+    def test_create_view_ignores_files_by_default(self):
+        test_view = MockMontrekCreateValidView("/")
+        test_form = self.post_with_file(test_view)
+        # None is BaseForm's own default for files, so an opted-out view builds
+        # its form exactly as it did before the flag existed.
+        self.assertIsNone(test_form.files)
+
+    def test_create_view_passes_files_when_declared(self):
+        test_view = MockMontrekCreateValidView("/")
+        test_view.has_file_upload_field = True
+        test_form = self.post_with_file(test_view)
+        self.assertIn("transcript", test_form.files)
+        self.assertEqual(test_form.files["transcript"].read(), b"hello")
+
+    def test_update_view_ignores_files_by_default(self):
+        test_view = MockMontrekUpdateView("/")
+        test_form = self.post_with_file(test_view)
+        self.assertIsNone(test_form.files)
+
+    def test_update_view_passes_files_and_keeps_initial(self):
+        test_view = MockMontrekUpdateView("/")
+        test_view.has_file_upload_field = True
+        test_form = self.post_with_file(test_view)
+        self.assertIn("transcript", test_form.files)
+        self.assertEqual(test_form.initial, {"item1": 1})
 
 
 class TestMontrekRedirectView(TestCase):
