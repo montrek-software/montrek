@@ -33,3 +33,14 @@
     {% endfor %}
   </div>
 </div>
+
+<!-- FROZEN PROCEDURE NOTICE -->
+{% if frozen_notice %}
+  <div class="row m-2">
+    <div class="col-12">
+      <div id="id_frozen_notice" class="alert alert-warning py-1 px-2 mb-0" role="status">
+        <span class="bi bi-lock"></span> {{ frozen_notice }}
+      </div>
+    </div>
+  </div>
+{% endif %}
