@@ -254,6 +254,7 @@ class MontrekRepository:
         return query
 
     def delete(self, obj: MontrekHubABC):
+        self._raise_for_frozen_reference_date()
         closing_date = timezone.now()
         obj.state_date_end = closing_date
         obj.save()
@@ -712,22 +713,24 @@ class MontrekRepository:
             raise PermissionDenied("User not authenticated!")
 
     def _raise_for_frozen_reference_date(self):
-        """Refuse to write while this repository reads a past state.
+        """Refuse to change data while this repository reads an as-of state.
 
-        Writes always land at ``DbStaller.creation_date``, i.e. ``now()``, so a
-        form rendered over a pinned reference date would save into a present the
-        caller cannot see -- the change disappears from the very page it was
-        made on.  Catching it here covers every write path, including ones added
-        after this guard.
+        Writes always land at ``timezone.now()`` -- ``DbStaller.creation_date``
+        for a create, ``closing_date`` for a delete -- so a form rendered over a
+        pinned reference date would change a present the caller cannot see: the
+        edit disappears from the very page it was made on.
 
-        A reference date at or after ``now()`` is left alone: it cannot hide a
-        write, and rejecting it would break callers that pass a harmless
-        ``timezone.now()`` through session data.
+        Any pin refuses, not only one in the past.  Comparing against ``now()``
+        cannot separate a freeze recorded a millisecond ago from a caller
+        passing ``timezone.now()`` through session data, and every tolerance
+        that tries is an arbitrary number.  The rule is the intent instead: a
+        caller that pinned the system time axis is doing an as-of read, and a
+        write from there is a bug in the caller.  A repository that must write
+        while its callers pass a reference date drops the key on the way in --
+        see ``DownloadRegistryRepository``, which records the act of
+        downloading rather than the state being downloaded.
         """
-        explicit_reference_date = self.explicit_reference_date
-        if explicit_reference_date is None:
-            return
-        if explicit_reference_date < timezone.now():
+        if self.explicit_reference_date is not None:
             raise MontrekError(FROZEN_REFERENCE_DATE_WRITE_MESSAGE)
 
     def get_hub_by_id(self, pk: int) -> MontrekHubABC:

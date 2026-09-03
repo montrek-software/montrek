@@ -78,11 +78,23 @@ class TestCreateByDictUnderAFrozenReferenceDate(
         self.build_repository().create_by_dict(self.creation_data())
         self.assertEqual(me_models.SatA1.objects.count(), 1)
 
-    def test_a_reference_date_of_now_still_writes(self):
-        """A pin at the present cannot hide anything, so it must not block."""
+    def test_a_reference_date_of_now_also_refuses(self):
+        """Any pin refuses, not only one that is measurably in the past.
+
+        A freeze recorded a millisecond ago and a caller passing
+        ``timezone.now()`` are the same value; the rule is the caller's intent
+        to read as-of, not the distance to the clock.
+        """
+        repository = self.build_repository(reference_date=timezone.now())
+        with self.assertRaises(MontrekError):
+            repository.create_by_dict(self.creation_data())
+        self.assertEqual(me_models.SatA1.objects.count(), 0)
+
+    def test_a_reference_date_in_the_future_also_refuses(self):
         repository = self.build_repository(reference_date=timezone.now() + AN_HOUR)
-        repository.create_by_dict(self.creation_data())
-        self.assertEqual(me_models.SatA1.objects.count(), 1)
+        with self.assertRaises(MontrekError):
+            repository.create_by_dict(self.creation_data())
+        self.assertEqual(me_models.SatA1.objects.count(), 0)
 
     def test_an_empty_reference_date_list_is_treated_as_unset(self):
         """A stripped query parameter must not read as a pin at the epoch."""
@@ -103,6 +115,28 @@ class TestCreateByDataFrameUnderAFrozenReferenceDate(
     def test_without_a_reference_date_the_write_goes_through(self):
         self.build_repository().create_by_data_frame(self.creation_data_frame())
         self.assertEqual(me_models.SatA1.objects.count(), 1)
+
+
+class TestDeleteUnderAFrozenReferenceDate(FrozenReferenceDateWriteGuardTestCaseBase):
+    """``delete()`` closes hub, satellites and links at ``now()`` too.
+
+    It is a write in every sense that matters here, and it does not go through
+    ``create_by_dict``, so it needs the guard of its own.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.hub = self.build_repository().create_by_dict(self.creation_data())
+
+    def test_a_pinned_repository_refuses_to_delete(self):
+        repository = self.build_repository(reference_date=timezone.now() - AN_HOUR)
+        with self.assertRaises(MontrekError):
+            repository.delete(self.hub)
+        self.assertEqual(self.build_repository().receive().count(), 1)
+
+    def test_without_a_pin_the_delete_goes_through(self):
+        self.build_repository().delete(self.hub)
+        self.assertEqual(self.build_repository().receive().count(), 0)
 
 
 class TestExplicitReferenceDate(FrozenReferenceDateWriteGuardTestCaseBase):
