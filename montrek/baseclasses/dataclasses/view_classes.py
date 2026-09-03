@@ -18,11 +18,11 @@ class StandardActionElementBase(ActionElement):
     def __init__(
         self,
         url_name: str,
-        kwargs: dict = {},
+        kwargs: dict | None = None,
         action_id: str = "",
         hover_text: str = "",
     ):
-        self.link = reverse(url_name, kwargs=kwargs)
+        self.link = reverse(url_name, kwargs=kwargs or {})
         self.action_id = action_id or f"id_action_{url_name}"
         self.hover_text = hover_text or f"Go to {url_name.replace('_', ' ').title()}"
 
@@ -75,6 +75,16 @@ class PlayActionElement(StandardActionElementBase):
 @dataclass(init=False)
 class ShowActionElement(StandardActionElementBase):
     icon = "eye"
+
+
+@dataclass(init=False)
+class LockActionElement(StandardActionElementBase):
+    icon = "lock"
+
+
+@dataclass(init=False)
+class UnlockActionElement(StandardActionElementBase):
+    icon = "unlock"
 
 
 @dataclass
