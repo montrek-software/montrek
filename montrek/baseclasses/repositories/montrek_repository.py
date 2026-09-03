@@ -219,6 +219,10 @@ class MontrekRepository:
             self.view_model
             and not update_view_model
             and "reference_date" not in self.session_data
+            # A reference date assigned through the property setter pins the
+            # system time axis just as one in session_data does; the view model
+            # only ever holds the present state, so it must be bypassed here too.
+            and self._reference_date is None
         ):
             return self.get_view_model_query(apply_filter=apply_filter)
         query = self.query_builder.build_queryset(
