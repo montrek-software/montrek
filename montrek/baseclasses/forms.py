@@ -106,14 +106,14 @@ class DateRangeForm(forms.Form):
 
 
 @dataclass(frozen=True)
-class LookupChoice:
-    """A filter lookup together with its caption per supported UI language.
+class LocalizedChoice:
+    """A choice together with its caption per supported UI language.
 
     The caption is resolved on access rather than at import time, so tests (and a
     settings reload) see the language currently configured.
     """
 
-    value: str
+    value: Any
     label_en: str
     label_de: str
 
@@ -122,43 +122,57 @@ class LookupChoice:
         language_code = str(getattr(settings, "LANGUAGE_CODE", "") or "").lower()
         return self.label_de if language_code.startswith("de") else self.label_en
 
-    def as_choice(self) -> tuple[str, str]:
+    def as_choice(self) -> tuple[Any, str]:
         return self.value, self.label
 
 
+class LocalizedChoices:
+    """Base for choice groups whose captions follow ``settings.LANGUAGE_CODE``.
+
+    Members are declared as ``LocalizedChoice`` class attributes; ``choices``
+    keeps their declaration order.
+    """
+
+    @classproperty
+    def members(cls) -> list[LocalizedChoice]:
+        return [
+            member
+            for member in vars(cls).values()
+            if isinstance(member, LocalizedChoice)
+        ]
+
+    @classproperty
+    def choices(cls) -> list[tuple[Any, str]]:
+        return [member.as_choice() for member in cls.members]
+
+    @classproperty
+    def values(cls) -> list[Any]:
+        return [member.value for member in cls.members]
+
+
 class FilterForm(forms.Form):
-    class LookupChoices:
+    class LookupChoices(LocalizedChoices):
         """Lookups offered in the filter row, captioned in the active language."""
 
-        CONTAINS = LookupChoice("contains", "contains", "enthält")
-        ENDS_WITH = LookupChoice("endswith", "ends with", "endet mit")
-        EQUALS = LookupChoice(
+        CONTAINS = LocalizedChoice("contains", "contains", "enthält")
+        ENDS_WITH = LocalizedChoice("endswith", "ends with", "endet mit")
+        EQUALS = LocalizedChoice(
             "exact", "equals (case-sensitive)", "gleich (Groß-/Kleinschreibung)"
         )
-        I_EQUALS = LookupChoice("iexact", "equals", "gleich")
-        GREATER_THAN = LookupChoice("gt", ">", ">")
-        GREATER_THAN_OR_EQUAL = LookupChoice("gte", ">=", ">=")
-        IN = LookupChoice("in", "in", "in")
-        IS_NULL = LookupChoice("isnull", "is null", "ist leer")
-        LESS_THAN = LookupChoice("lt", "<", "<")
-        LESS_THAN_OR_EQUAL = LookupChoice("lte", "<=", "<=")
-        STARTS_WITH = LookupChoice("startswith", "starts with", "beginnt mit")
+        I_EQUALS = LocalizedChoice("iexact", "equals", "gleich")
+        GREATER_THAN = LocalizedChoice("gt", ">", ">")
+        GREATER_THAN_OR_EQUAL = LocalizedChoice("gte", ">=", ">=")
+        IN = LocalizedChoice("in", "in", "in")
+        IS_NULL = LocalizedChoice("isnull", "is null", "ist leer")
+        LESS_THAN = LocalizedChoice("lt", "<", "<")
+        LESS_THAN_OR_EQUAL = LocalizedChoice("lte", "<=", "<=")
+        STARTS_WITH = LocalizedChoice("startswith", "starts with", "beginnt mit")
 
-        @classproperty
-        def members(cls) -> list[LookupChoice]:
-            return [
-                member
-                for member in vars(cls).values()
-                if isinstance(member, LookupChoice)
-            ]
+    class NegateChoices(LocalizedChoices):
+        """Negation of the filter row, captioned in the active language."""
 
-        @classproperty
-        def choices(cls) -> list[tuple[str, str]]:
-            return [member.as_choice() for member in cls.members]
-
-        @classproperty
-        def values(cls) -> list[str]:
-            return [member.value for member in cls.members]
+        AFFIRM = LocalizedChoice(False, "", "")
+        NEGATE = LocalizedChoice(True, "not", "nicht")
 
     def __init__(
         self,
@@ -256,10 +270,7 @@ class FilterForm(forms.Form):
         )
         self.fields["filter_negate"] = forms.ChoiceField(
             initial=filter_negate,
-            choices=[
-                (False, ""),
-                (True, "not"),
-            ],
+            choices=self.NegateChoices.choices,
             required=False,
             widget=forms.Select(attrs={"id": "id_negate", "class": "form-control"}),
         )

@@ -50,7 +50,7 @@ class TestFilterForm(TestCase):
 
         self.assertTrue(form.fields["filter_field"].choices == [("field1", "Field 1")])
         self.assertEqual(
-            form.fields["filter_negate"].choices, [(False, ""), (True, "not")]
+            form.fields["filter_negate"].choices, form.NegateChoices.choices
         )
         self.assertTrue(
             form.fields["filter_lookup"].choices == form.LookupChoices.choices
@@ -63,6 +63,16 @@ class TestFilterForm(TestCase):
         self.assertEqual(captions["contains"], "contains")
         self.assertEqual(captions["iexact"], "equals")
         self.assertEqual(captions["isnull"], "is null")
+
+    @override_settings(LANGUAGE_CODE="en-us")
+    def test_negate_captions_english(self):
+        self.assertEqual(FilterForm.NegateChoices.choices, [(False, ""), (True, "not")])
+
+    @override_settings(LANGUAGE_CODE="de")
+    def test_negate_captions_german(self):
+        self.assertEqual(
+            FilterForm.NegateChoices.choices, [(False, ""), (True, "nicht")]
+        )
 
     @override_settings(LANGUAGE_CODE="de")
     def test_lookup_captions_german(self):
