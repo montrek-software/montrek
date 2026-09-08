@@ -105,6 +105,43 @@ class DateRangeForm(forms.Form):
     )
 
 
+def prefers_german_captions() -> bool:
+    """Whether UI captions should be shown in German, per ``settings.LANGUAGE_CODE``."""
+    language_code = str(getattr(settings, "LANGUAGE_CODE", "") or "").lower()
+    return language_code.startswith("de")
+
+
+@dataclass(frozen=True)
+class LocalizedText:
+    """A caption in each supported UI language.
+
+    Rendering the instance (``str()``, or a template variable) yields the caption
+    for the language currently configured.
+    """
+
+    en: str
+    de: str
+
+    def __str__(self) -> str:
+        return self.de if prefers_german_captions() else self.en
+
+
+class LocalizedTexts:
+    """Base for caption groups whose captions follow ``settings.LANGUAGE_CODE``.
+
+    Members are declared as ``LocalizedText`` class attributes; ``texts`` maps the
+    lowercased member name to the caption in the active language.
+    """
+
+    @classproperty
+    def texts(cls) -> dict[str, str]:
+        return {
+            name.lower(): str(member)
+            for name, member in vars(cls).items()
+            if isinstance(member, LocalizedText)
+        }
+
+
 @dataclass(frozen=True)
 class LocalizedChoice:
     """A choice together with its caption per supported UI language.
@@ -119,8 +156,7 @@ class LocalizedChoice:
 
     @property
     def label(self) -> str:
-        language_code = str(getattr(settings, "LANGUAGE_CODE", "") or "").lower()
-        return self.label_de if language_code.startswith("de") else self.label_en
+        return self.label_de if prefers_german_captions() else self.label_en
 
     def as_choice(self) -> tuple[Any, str]:
         return self.value, self.label
@@ -173,6 +209,17 @@ class FilterForm(forms.Form):
 
         AFFIRM = LocalizedChoice(False, "", "")
         NEGATE = LocalizedChoice(True, "not", "nicht")
+
+    class Captions(LocalizedTexts):
+        """Static captions rendered by ``partials/table_filter_form.html``."""
+
+        FIELD = LocalizedText("Field", "Feld")
+        NEGATE = LocalizedText("Not", "Nicht")
+        LOOKUP = LocalizedText("Cond", "Bedingung")
+        VALUE = LocalizedText("Value", "Wert")
+        FILTER = LocalizedText("Filter", "Filtern")
+        RESET = LocalizedText("Reset", "Zurücksetzen")
+        ADD_FILTER = LocalizedText("Add filter", "Filter hinzufügen")
 
     def __init__(
         self,
