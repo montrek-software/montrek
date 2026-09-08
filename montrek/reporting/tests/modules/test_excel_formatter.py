@@ -1,9 +1,12 @@
+from decimal import Decimal
+
 from django.test import TestCase
 from unittest.mock import Mock
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Border, Font
 
 from baseclasses.templatetags.colors import get_color
+from reporting.core.reporting_colors import ReportingColors
 from reporting.modules.excel_formatter import MontrekExcelFormatter
 
 
@@ -52,6 +55,9 @@ class MontrekExcelFormatterTests(TestCase):
         self.assertIn("even_row_fill", styles)
         self.assertIn("odd_row_fill", styles)
         self.assertIn("thin_border", styles)
+        self.assertIn("bold_font", styles)
+        self.assertIn("negative_font", styles)
+        self.assertIn("negative_bold_font", styles)
 
         self.assertIsInstance(styles["header_fill"], PatternFill)
         self.assertIsInstance(styles["header_font"], Font)
@@ -71,6 +77,13 @@ class MontrekExcelFormatterTests(TestCase):
         self.assertEqual(styles["header_fill"].fill_type, "solid")
         self.assertEqual(styles["even_row_fill"].fill_type, "solid")
         self.assertEqual(styles["odd_row_fill"].fill_type, "solid")
+
+        # Verify the negative-number fonts use the reporting red
+        expected_red = "FF" + ReportingColors.RED.hex.lstrip("#").upper()
+        self.assertEqual(styles["negative_font"].color.rgb, expected_red)
+        self.assertEqual(styles["negative_bold_font"].color.rgb, expected_red)
+        self.assertTrue(styles["negative_bold_font"].bold)
+        self.assertFalse(styles["negative_font"].bold)
 
     # ==================== Tests for _apply_cell_styles ====================
 
@@ -143,6 +156,92 @@ class MontrekExcelFormatterTests(TestCase):
         self.excel_formatter._style_data_cell(cell, 3, styles, [])
 
         self.assertEqual(cell.fill, styles["odd_row_fill"])
+
+    # ============ Tests for negative numbers being red ============
+
+    def _style_value(self, value):
+        """Style a data cell holding ``value`` and return the cell."""
+        cell = self.worksheet["A2"]
+        cell.value = value
+        styles = self.excel_formatter._get_style_objects()
+
+        self.excel_formatter._style_data_cell(cell, 2, styles, [])
+
+        return cell
+
+    def test_negative_float_gets_red_font(self):
+        """Negative numbers are red, mirroring the HTML and LaTeX tables."""
+        styles = self.excel_formatter._get_style_objects()
+
+        cell = self._style_value(-1234.56)
+
+        self.assertEqual(cell.font, styles["negative_font"])
+
+    def test_negative_int_gets_red_font(self):
+        """Negative integers are red too."""
+        styles = self.excel_formatter._get_style_objects()
+
+        cell = self._style_value(-1)
+
+        self.assertEqual(cell.font, styles["negative_font"])
+
+    def test_negative_decimal_gets_red_font(self):
+        """Decimals - the type domain values arrive as - are red as well."""
+        styles = self.excel_formatter._get_style_objects()
+
+        cell = self._style_value(Decimal("-0.01"))
+
+        self.assertEqual(cell.font, styles["negative_font"])
+
+    def test_positive_number_keeps_default_font(self):
+        """Non-negative numbers inherit the default font."""
+        cell = self._style_value(1234.56)
+
+        self.assertFalse(cell.font.color and cell.font.color.rgb == "FFBE0D3E")
+
+    def test_zero_keeps_default_font(self):
+        """Zero is not negative."""
+        styles = self.excel_formatter._get_style_objects()
+
+        cell = self._style_value(0)
+
+        self.assertNotEqual(cell.font, styles["negative_font"])
+
+    def test_text_starting_with_minus_keeps_default_font(self):
+        """Pre-formatted strings are not numbers and stay unstyled."""
+        styles = self.excel_formatter._get_style_objects()
+
+        cell = self._style_value("-1,5 %")
+
+        self.assertNotEqual(cell.font, styles["negative_font"])
+
+    def test_false_keeps_default_font(self):
+        """Booleans must not be read as negative numbers."""
+        styles = self.excel_formatter._get_style_objects()
+
+        cell = self._style_value(False)
+
+        self.assertNotEqual(cell.font, styles["negative_font"])
+
+    def test_style_font_bold_and_negative_combined(self):
+        """Bold rows keep their weight while turning red."""
+        styles = self.excel_formatter._get_style_objects()
+        cell = self.worksheet["A2"]
+        cell.value = -5.0
+
+        self.excel_formatter._style_font(cell, styles, is_bold=True)
+
+        self.assertEqual(cell.font, styles["negative_bold_font"])
+
+    def test_style_font_bold_and_positive(self):
+        """Bold rows with non-negative values stay plain bold."""
+        styles = self.excel_formatter._get_style_objects()
+        cell = self.worksheet["A2"]
+        cell.value = 5.0
+
+        self.excel_formatter._style_font(cell, styles, is_bold=True)
+
+        self.assertEqual(cell.font, styles["bold_font"])
 
     def test_format_data_cell_with_format_str(self):
         """Test that a cell gets number format and right alignment when format string is given."""

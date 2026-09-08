@@ -1,7 +1,10 @@
+from decimal import Decimal
+
 from openpyxl.styles import PatternFill, Border, Side, Alignment, Font
 from openpyxl.utils import get_column_letter
 
 from baseclasses.templatetags.colors import get_color
+from reporting.core.reporting_colors import ReportingColors
 
 
 class MontrekExcelFormatter:
@@ -58,6 +61,7 @@ class MontrekExcelFormatter:
         """Create and return all style objects needed for formatting."""
         primary_light = get_color("primary_light").lstrip("#").upper()
         primary = get_color("primary").lstrip("#").upper()
+        negative = "FF" + ReportingColors.RED.hex.lstrip("#").upper()
 
         return {
             "header_fill": PatternFill(
@@ -71,6 +75,9 @@ class MontrekExcelFormatter:
                 start_color="FFFFFF", end_color="FFFFFF", fill_type="solid"
             ),
             "thin_border": Border(bottom=Side(style="thin", color="E0E0E0")),
+            "bold_font": Font(bold=True),
+            "negative_font": Font(color=negative),
+            "negative_bold_font": Font(bold=True, color=negative),
         }
 
     def _write_title(self, worksheet, title: str) -> None:
@@ -117,6 +124,25 @@ class MontrekExcelFormatter:
             styles["even_row_fill"] if row_idx % 2 == 0 else styles["odd_row_fill"]
         )
         cell.border = styles["thin_border"]
+        self._style_font(cell, styles, is_bold=False)
+
+    @classmethod
+    def _style_font(cls, cell, styles, *, is_bold: bool) -> None:
+        """Colour negative numbers red, keeping the cell bold where requested.
+
+        Mirrors the HTML and LaTeX tables, which also render negatives in red.
+        """
+        if cls._is_negative_number(cell.value):
+            cell.font = styles["negative_bold_font" if is_bold else "negative_font"]
+        elif is_bold:
+            cell.font = styles["bold_font"]
+
+    @staticmethod
+    def _is_negative_number(value) -> bool:
+        """Booleans and non-numeric values (strings, dates) never count as negative."""
+        if isinstance(value, bool) or not isinstance(value, int | float | Decimal):
+            return False
+        return value < 0
 
     def _format_data_cell(self, cell, excel_format_str: str | None):
         """Apply number format and alignment to a data cell."""
