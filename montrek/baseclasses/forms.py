@@ -1,13 +1,15 @@
 import contextlib
 import json
+from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from django import forms
 from django.conf import settings
 from django.contrib.admin.widgets import FilteredSelectMultiple
-from django.db.models import DateField, DecimalField, FloatField, QuerySet, TextChoices
+from django.db.models import DateField, DecimalField, FloatField, QuerySet
 from django.forms.widgets import ChoiceWidget
+from django.utils.functional import classproperty
 from encrypted_fields import EncryptedCharField
 
 from baseclasses.models import LinkTypeEnum
@@ -103,19 +105,60 @@ class DateRangeForm(forms.Form):
     )
 
 
+@dataclass(frozen=True)
+class LookupChoice:
+    """A filter lookup together with its caption per supported UI language.
+
+    The caption is resolved on access rather than at import time, so tests (and a
+    settings reload) see the language currently configured.
+    """
+
+    value: str
+    label_en: str
+    label_de: str
+
+    @property
+    def label(self) -> str:
+        language_code = str(getattr(settings, "LANGUAGE_CODE", "") or "").lower()
+        return self.label_de if language_code.startswith("de") else self.label_en
+
+    def as_choice(self) -> tuple[str, str]:
+        return self.value, self.label
+
+
 class FilterForm(forms.Form):
-    class LookupChoices(TextChoices):
-        CONTAINS = "contains", "contains"
-        ENDS_WITH = "endswith", "ends with"
-        EQUALS = "exact", "equals (case-sensitive)"
-        I_EQUALS = "iexact", "equals"
-        GREATER_THAN = "gt", ">"
-        GREATER_THAN_OR_EQUAL = "gte", ">="
-        IN = "in", "in"
-        IS_NULL = "isnull", "is null"
-        LESS_THAN = "lt", "<"
-        LESS_THAN_OR_EQUAL = "lte", "<="
-        STARTS_WITH = "startswith", "starts with"
+    class LookupChoices:
+        """Lookups offered in the filter row, captioned in the active language."""
+
+        CONTAINS = LookupChoice("contains", "contains", "enthält")
+        ENDS_WITH = LookupChoice("endswith", "ends with", "endet mit")
+        EQUALS = LookupChoice(
+            "exact", "equals (case-sensitive)", "gleich (Groß-/Kleinschreibung)"
+        )
+        I_EQUALS = LookupChoice("iexact", "equals", "gleich")
+        GREATER_THAN = LookupChoice("gt", ">", ">")
+        GREATER_THAN_OR_EQUAL = LookupChoice("gte", ">=", ">=")
+        IN = LookupChoice("in", "in", "in")
+        IS_NULL = LookupChoice("isnull", "is null", "ist leer")
+        LESS_THAN = LookupChoice("lt", "<", "<")
+        LESS_THAN_OR_EQUAL = LookupChoice("lte", "<=", "<=")
+        STARTS_WITH = LookupChoice("startswith", "starts with", "beginnt mit")
+
+        @classproperty
+        def members(cls) -> list[LookupChoice]:
+            return [
+                member
+                for member in vars(cls).values()
+                if isinstance(member, LookupChoice)
+            ]
+
+        @classproperty
+        def choices(cls) -> list[tuple[str, str]]:
+            return [member.as_choice() for member in cls.members]
+
+        @classproperty
+        def values(cls) -> list[str]:
+            return [member.value for member in cls.members]
 
     def __init__(
         self,
@@ -222,7 +265,7 @@ class FilterForm(forms.Form):
         )
         self.fields["filter_lookup"] = forms.ChoiceField(
             initial=filter_lookup,
-            choices=self.LookupChoices,
+            choices=self.LookupChoices.choices,
             widget=forms.Select(attrs={"id": "id_lookup", "class": "form-control"}),
             required=False,
         )

@@ -56,6 +56,38 @@ class TestFilterForm(TestCase):
             form.fields["filter_lookup"].choices == form.LookupChoices.choices
         )
 
+    @override_settings(LANGUAGE_CODE="en-us")
+    def test_lookup_captions_english(self):
+        captions = dict(FilterForm.LookupChoices.choices)
+
+        self.assertEqual(captions["contains"], "contains")
+        self.assertEqual(captions["iexact"], "equals")
+        self.assertEqual(captions["isnull"], "is null")
+
+    @override_settings(LANGUAGE_CODE="de")
+    def test_lookup_captions_german(self):
+        captions = dict(FilterForm.LookupChoices.choices)
+
+        self.assertEqual(captions["contains"], "enthält")
+        self.assertEqual(captions["iexact"], "gleich")
+        self.assertEqual(captions["isnull"], "ist leer")
+
+    @override_settings(LANGUAGE_CODE="de-de")
+    def test_filter_lookup_field_uses_german_captions(self):
+        form = FilterForm(filter_field_choices=[("field1", "Field 1")])
+
+        self.assertIn(
+            ("startswith", "beginnt mit"), form.fields["filter_lookup"].choices
+        )
+
+    @override_settings(LANGUAGE_CODE="de")
+    def test_lookup_values_are_language_independent(self):
+        self.assertEqual(
+            FilterForm.LookupChoices.values,
+            [value for value, _ in FilterForm.LookupChoices.choices],
+        )
+        self.assertIn("iexact", FilterForm.LookupChoices.values)
+
     def test_filter_form_filter(self):
         form = FilterForm(
             filter={
@@ -458,6 +490,7 @@ class TestPercentFloatFormField(TestCase):
 
     def test_prepare_value_does_not_use_scientific_notation(self):
         self.assertEqual(self.field.prepare_value(0.0000005), "0.00005")
+
     def test_prepare_value_passes_through_string(self):
         self.assertEqual(self.field.prepare_value("5.5"), "5.5")
 
