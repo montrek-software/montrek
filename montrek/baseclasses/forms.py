@@ -1,13 +1,15 @@
 import contextlib
 import json
+from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from django import forms
 from django.conf import settings
 from django.contrib.admin.widgets import FilteredSelectMultiple
-from django.db.models import DateField, DecimalField, FloatField, QuerySet, TextChoices
+from django.db.models import DateField, DecimalField, FloatField, QuerySet
 from django.forms.widgets import ChoiceWidget
+from django.utils.functional import classproperty
 from encrypted_fields import EncryptedCharField
 
 from baseclasses.models import LinkTypeEnum
@@ -103,19 +105,121 @@ class DateRangeForm(forms.Form):
     )
 
 
+def prefers_german_captions() -> bool:
+    """Whether UI captions should be shown in German, per ``settings.LANGUAGE_CODE``."""
+    language_code = str(getattr(settings, "LANGUAGE_CODE", "") or "").lower()
+    return language_code.startswith("de")
+
+
+@dataclass(frozen=True)
+class LocalizedText:
+    """A caption in each supported UI language.
+
+    Rendering the instance (``str()``, or a template variable) yields the caption
+    for the language currently configured.
+    """
+
+    en: str
+    de: str
+
+    def __str__(self) -> str:
+        return self.de if prefers_german_captions() else self.en
+
+
+class LocalizedTexts:
+    """Base for caption groups whose captions follow ``settings.LANGUAGE_CODE``.
+
+    Members are declared as ``LocalizedText`` class attributes; ``texts`` maps the
+    lowercased member name to the caption in the active language.
+    """
+
+    @classproperty
+    def texts(cls) -> dict[str, str]:
+        return {
+            name.lower(): str(member)
+            for name, member in vars(cls).items()
+            if isinstance(member, LocalizedText)
+        }
+
+
+@dataclass(frozen=True)
+class LocalizedChoice:
+    """A choice together with its caption per supported UI language.
+
+    The caption is resolved on access rather than at import time, so tests (and a
+    settings reload) see the language currently configured.
+    """
+
+    value: Any
+    label_en: str
+    label_de: str
+
+    @property
+    def label(self) -> str:
+        return self.label_de if prefers_german_captions() else self.label_en
+
+    def as_choice(self) -> tuple[Any, str]:
+        return self.value, self.label
+
+
+class LocalizedChoices:
+    """Base for choice groups whose captions follow ``settings.LANGUAGE_CODE``.
+
+    Members are declared as ``LocalizedChoice`` class attributes; ``choices``
+    keeps their declaration order.
+    """
+
+    @classproperty
+    def members(cls) -> list[LocalizedChoice]:
+        return [
+            member
+            for member in vars(cls).values()
+            if isinstance(member, LocalizedChoice)
+        ]
+
+    @classproperty
+    def choices(cls) -> list[tuple[Any, str]]:
+        return [member.as_choice() for member in cls.members]
+
+    @classproperty
+    def values(cls) -> list[Any]:
+        return [member.value for member in cls.members]
+
+
 class FilterForm(forms.Form):
-    class LookupChoices(TextChoices):
-        CONTAINS = "contains", "contains"
-        ENDS_WITH = "endswith", "ends with"
-        EQUALS = "exact", "equals (case-sensitive)"
-        I_EQUALS = "iexact", "equals"
-        GREATER_THAN = "gt", ">"
-        GREATER_THAN_OR_EQUAL = "gte", ">="
-        IN = "in", "in"
-        IS_NULL = "isnull", "is null"
-        LESS_THAN = "lt", "<"
-        LESS_THAN_OR_EQUAL = "lte", "<="
-        STARTS_WITH = "startswith", "starts with"
+    class LookupChoices(LocalizedChoices):
+        """Lookups offered in the filter row, captioned in the active language."""
+
+        CONTAINS = LocalizedChoice("contains", "contains", "enthält")
+        ENDS_WITH = LocalizedChoice("endswith", "ends with", "endet mit")
+        EQUALS = LocalizedChoice(
+            "exact", "equals (case-sensitive)", "gleich (Groß-/Kleinschreibung)"
+        )
+        I_EQUALS = LocalizedChoice("iexact", "equals", "gleich")
+        GREATER_THAN = LocalizedChoice("gt", ">", ">")
+        GREATER_THAN_OR_EQUAL = LocalizedChoice("gte", ">=", ">=")
+        IN = LocalizedChoice("in", "in", "in")
+        IS_NULL = LocalizedChoice("isnull", "is null", "ist leer")
+        LESS_THAN = LocalizedChoice("lt", "<", "<")
+        LESS_THAN_OR_EQUAL = LocalizedChoice("lte", "<=", "<=")
+        STARTS_WITH = LocalizedChoice("startswith", "starts with", "beginnt mit")
+
+    class NegateChoices(LocalizedChoices):
+        """Negation of the filter row, captioned in the active language."""
+
+        AFFIRM = LocalizedChoice(False, "", "")
+        NEGATE = LocalizedChoice(True, "not", "nicht")
+
+    class Captions(LocalizedTexts):
+        """Static captions rendered by ``partials/table_filter_form.html``."""
+
+        FIELD = LocalizedText("Field", "Feld")
+        NEGATE = LocalizedText("Not", "Nicht")
+        LOOKUP = LocalizedText("Cond", "Bedingung")
+        VALUE = LocalizedText("Value", "Wert")
+        FILTER = LocalizedText("Filter", "Filtern")
+        RESET = LocalizedText("Reset", "Zurücksetzen")
+        ADD_FILTER = LocalizedText("Add filter", "Filter hinzufügen")
 
     def __init__(
         self,
@@ -213,16 +317,13 @@ class FilterForm(forms.Form):
         )
         self.fields["filter_negate"] = forms.ChoiceField(
             initial=filter_negate,
-            choices=[
-                (False, ""),
-                (True, "not"),
-            ],
+            choices=self.NegateChoices.choices,
             required=False,
             widget=forms.Select(attrs={"id": "id_negate", "class": "form-control"}),
         )
         self.fields["filter_lookup"] = forms.ChoiceField(
             initial=filter_lookup,
-            choices=self.LookupChoices,
+            choices=self.LookupChoices.choices,
             widget=forms.Select(attrs={"id": "id_lookup", "class": "form-control"}),
             required=False,
         )

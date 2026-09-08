@@ -15,6 +15,7 @@ from django.forms import (
     TextInput,
     ValidationError,
 )
+from django.template.loader import render_to_string
 from django.test import TestCase, override_settings
 from django.utils import translation
 from encrypted_fields import EncryptedCharField
@@ -31,6 +32,7 @@ from baseclasses.forms import (
     PercentDecimalFormField,
     PercentFloatFormField,
 )
+from baseclasses.templatetags.data_table_filters import filter_caption
 from montrek.utils import SystemFormatting
 from baseclasses.tests.factories.baseclass_factories import (
     TestMontrekSatelliteFactory,
@@ -50,11 +52,99 @@ class TestFilterForm(TestCase):
 
         self.assertTrue(form.fields["filter_field"].choices == [("field1", "Field 1")])
         self.assertEqual(
-            form.fields["filter_negate"].choices, [(False, ""), (True, "not")]
+            form.fields["filter_negate"].choices, form.NegateChoices.choices
         )
         self.assertTrue(
             form.fields["filter_lookup"].choices == form.LookupChoices.choices
         )
+
+    @override_settings(LANGUAGE_CODE="en-us")
+    def test_lookup_captions_english(self):
+        captions = dict(FilterForm.LookupChoices.choices)
+
+        self.assertEqual(captions["contains"], "contains")
+        self.assertEqual(captions["iexact"], "equals")
+        self.assertEqual(captions["isnull"], "is null")
+
+    @override_settings(LANGUAGE_CODE="en-us")
+    def test_negate_captions_english(self):
+        self.assertEqual(FilterForm.NegateChoices.choices, [(False, ""), (True, "not")])
+
+    @override_settings(LANGUAGE_CODE="de")
+    def test_negate_captions_german(self):
+        self.assertEqual(
+            FilterForm.NegateChoices.choices, [(False, ""), (True, "nicht")]
+        )
+
+    @override_settings(LANGUAGE_CODE="de")
+    def test_lookup_captions_german(self):
+        captions = dict(FilterForm.LookupChoices.choices)
+
+        self.assertEqual(captions["contains"], "enthält")
+        self.assertEqual(captions["iexact"], "gleich")
+        self.assertEqual(captions["isnull"], "ist leer")
+
+    @override_settings(LANGUAGE_CODE="de-de")
+    def test_filter_lookup_field_uses_german_captions(self):
+        form = FilterForm(filter_field_choices=[("field1", "Field 1")])
+
+        self.assertIn(
+            ("startswith", "beginnt mit"), form.fields["filter_lookup"].choices
+        )
+
+    @override_settings(LANGUAGE_CODE="de")
+    def test_lookup_values_are_language_independent(self):
+        self.assertEqual(
+            FilterForm.LookupChoices.values,
+            [value for value, _ in FilterForm.LookupChoices.choices],
+        )
+        self.assertIn("iexact", FilterForm.LookupChoices.values)
+
+    @override_settings(LANGUAGE_CODE="en-us")
+    def test_captions_english(self):
+        captions = FilterForm.Captions.texts
+
+        self.assertEqual(captions["field"], "Field")
+        self.assertEqual(captions["lookup"], "Cond")
+        self.assertEqual(captions["add_filter"], "Add filter")
+
+    @override_settings(LANGUAGE_CODE="de")
+    def test_captions_german(self):
+        captions = FilterForm.Captions.texts
+
+        self.assertEqual(captions["field"], "Feld")
+        self.assertEqual(captions["lookup"], "Bedingung")
+        self.assertEqual(captions["add_filter"], "Filter hinzufügen")
+
+    @override_settings(LANGUAGE_CODE="de")
+    def test_filter_form_template_renders_german_captions(self):
+        html = render_to_string(
+            "partials/table_filter_form.html",
+            {"filter_forms": [FilterForm(filter_field_choices=[("f1", "Field 1")])]},
+        )
+
+        for caption in (
+            "Feld",
+            "Nicht",
+            "Bedingung",
+            "Wert",
+            "Filtern",
+            "Zurücksetzen",
+        ):
+            self.assertIn(caption, html)
+
+    @override_settings(LANGUAGE_CODE="en-us")
+    def test_filter_form_template_renders_english_captions(self):
+        html = render_to_string(
+            "partials/table_filter_form.html",
+            {"filter_forms": [FilterForm(filter_field_choices=[("f1", "Field 1")])]},
+        )
+
+        for caption in ("Field", "Not", "Cond", "Value", "Filter", "Reset"):
+            self.assertIn(caption, html)
+
+    def test_unknown_filter_caption_renders_empty(self):
+        self.assertEqual(filter_caption("does_not_exist"), "")
 
     def test_filter_form_filter(self):
         form = FilterForm(
@@ -458,6 +548,7 @@ class TestPercentFloatFormField(TestCase):
 
     def test_prepare_value_does_not_use_scientific_notation(self):
         self.assertEqual(self.field.prepare_value(0.0000005), "0.00005")
+
     def test_prepare_value_passes_through_string(self):
         self.assertEqual(self.field.prepare_value("5.5"), "5.5")
 

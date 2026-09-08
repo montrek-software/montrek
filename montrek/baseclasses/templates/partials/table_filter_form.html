@@ -6,25 +6,25 @@
     <div class="row mb-1">
       <!-- FIELD -->
       <div class="col-lg-3 px-1">
-        <span class="input-group-text bg-primary-light-custom">Field</span>
+        <span class="input-group-text bg-primary-light-custom">{% filter_caption "field" %}</span>
         {{ f.filter_field|add_class:"form-select" }}
       </div>
 
       <!-- NEGATE -->
       <div class="col-lg-2 px-1">
-        <span class="input-group-text bg-primary-light-custom">Not</span>
+        <span class="input-group-text bg-primary-light-custom">{% filter_caption "negate" %}</span>
         {{ f.filter_negate|add_class:"form-select" }}
       </div>
 
       <!-- LOOKUP -->
       <div class="col-lg-3 px-1">
-        <span class="input-group-text bg-primary-light-custom">Cond</span>
+        <span class="input-group-text bg-primary-light-custom">{% filter_caption "lookup" %}</span>
         {{ f.filter_lookup|add_class:"form-select" }}
       </div>
 
       <!-- VALUE -->
       <div class="col-lg-4 px-1">
-        <span class="input-group-text bg-primary-light-custom">Value</span>
+        <span class="input-group-text bg-primary-light-custom">{% filter_caption "value" %}</span>
         {{ f.filter_value|add_class:"form-control" }}
       </div>
     </div>
@@ -39,7 +39,7 @@
             onclick="document.getElementById('form-action').value='filter'"
             class="btn btn-custom py-0"
           >
-            Filter
+            {% filter_caption "filter" %}
           </button>
         </div>
 
@@ -49,7 +49,7 @@
             onclick="document.getElementById('form-action').value='reset'"
             class="btn btn-light-custom py-0"
           >
-            Reset
+            {% filter_caption "reset" %}
           </button>
         </div>
 
@@ -58,7 +58,7 @@
             type="submit"
             onclick="document.getElementById('form-action').value='add_filter'"
             class="btn btn-light-custom py-0"
-            title="Add filter"
+            title="{% filter_caption 'add_filter' %}"
           >
             <i class="bi bi-plus fs-6"></i>
           </button>
