@@ -933,12 +933,47 @@ class MontrekHtmxRowRenderMixin:
         return response
 
 
-class MontrekHtmxRowActionView(MontrekHtmxRowRenderMixin, MontrekRedirectView):
+class MontrekPostActionView(MontrekRedirectView):
+    """Run a state change from a POST, then redirect.
+
+    GET is deliberately not allowed. An endpoint that writes must not sit
+    behind a plain link: links carry no CSRF token, so any other site can
+    trigger the action for a logged-in user, and they may be replayed by
+    prefetchers or crawlers. Pair with ``PostActionTableElement``, which
+    renders an HTMX ``<button>`` instead of an ``<a href>``.
+
+    Subclasses implement ``run_action`` and ``get_redirect_url``.
+    """
+
+    http_method_names = ["post"]
+
+    def run_action(self) -> None:
+        raise NotImplementedError("Please implement run_action in your subclass!")
+
+    def post(self, request, *args, **kwargs):
+        self.run_action()
+        self.show_messages()
+        return self.action_response(request, *args, **kwargs)
+
+    def action_response(self, request, *args, **kwargs) -> HttpResponse:
+        url = self.get_redirect_url(*args, **kwargs)
+        if request.headers.get("HX-Request"):
+            # htmx would swap the whole redirect target into the element's
+            # hx-target, so ask it to navigate instead.
+            response = HttpResponse(status=204)
+            response["HX-Redirect"] = url
+            return response
+        return HttpResponseRedirect(url)
+
+
+class MontrekHtmxRowActionView(MontrekHtmxRowRenderMixin, MontrekPostActionView):
     """Run a manager method and swap the affected table row in place.
 
     On HTMX requests the response is just the re-rendered ``<tr>`` (plus an
-    optional ``HX-Trigger`` event); without HTMX the view degrades to a
-    normal redirect, so ``get_redirect_url`` must still be implemented.
+    optional ``HX-Trigger`` event); when the row is gone, or the request did
+    not come from HTMX, the view falls back to the redirect of
+    ``MontrekPostActionView``, so ``get_redirect_url`` must still be
+    implemented.
     """
 
     method: str = ""
@@ -946,14 +981,12 @@ class MontrekHtmxRowActionView(MontrekHtmxRowRenderMixin, MontrekRedirectView):
     def run_action(self) -> None:
         getattr(self.manager, self.method)()
 
-    def get(self, request, *args, **kwargs):
-        self.run_action()
-        self.show_messages()
+    def action_response(self, request, *args, **kwargs) -> HttpResponse:
         if request.headers.get("HX-Request"):
             partial = self.render_htmx_row()
             if partial is not None:
                 return partial
-        return super().get(request, *args, **kwargs)
+        return super().action_response(request, *args, **kwargs)
 
 
 class MontrekInlineFieldEditView(

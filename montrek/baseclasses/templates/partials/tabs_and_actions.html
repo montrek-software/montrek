@@ -21,15 +21,30 @@
 <div class="row m-2">
   <div class="col-12 p-2">
     {% for action in actions %}
-    <a
-      id="{{ action.action_id }}"
-      href="{{ action.link }}"
-      class="btn btn-custom py-0 px-1"
-      data-bs-toggle="tooltip"
-      data-bs-title="{{ action.hover_text }}"
-    >
-      <span class="bi bi-{{ action.icon }} fs-4" />
-    </a>
+      {% if action.method == "post" %}
+        {# A writing action posts, so it stays CSRF-protected and cannot be
+           triggered by following a link. #}
+        <button
+          type="button"
+          id="{{ action.action_id }}"
+          hx-post="{{ action.link }}"
+          class="btn btn-custom py-0 px-1"
+          data-bs-toggle="tooltip"
+          data-bs-title="{{ action.hover_text }}"
+        >
+          <span class="bi bi-{{ action.icon }} fs-4" />
+        </button>
+      {% else %}
+        <a
+          id="{{ action.action_id }}"
+          href="{{ action.link }}"
+          class="btn btn-custom py-0 px-1"
+          data-bs-toggle="tooltip"
+          data-bs-title="{{ action.hover_text }}"
+        >
+          <span class="bi bi-{{ action.icon }} fs-4" />
+        </a>
+      {% endif %}
     {% endfor %}
   </div>
 </div>

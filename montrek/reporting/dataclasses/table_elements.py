@@ -413,6 +413,49 @@ class HtmxLinkTableElement(LinkTableElement):
 
 
 @dataclass
+class PostActionTableElement(LinkTableElement):
+    """An icon button that triggers a state change with an HTMX POST.
+
+    Use this instead of ``LinkTableElement``/``HtmxLinkTableElement`` whenever
+    the target endpoint writes: a GET link carries no CSRF protection, so any
+    other site can trigger it for a logged-in user, and it may be replayed by
+    prefetchers or crawlers. The rendered ``<button>`` has no ``href``
+    fallback - that is the point, the action must not be reachable by GET.
+
+    The CSRF token rides along via ``hx-headers`` on ``<body>`` (see
+    ``base_common.html``). ``type="button"`` is required because every table
+    sits inside the column-sorting ``<form>`` in ``base_table.html``.
+
+    Pair with ``MontrekPostActionView`` (redirect afterwards) or
+    ``MontrekHtmxRowActionView`` (swap the row in place). Override
+    ``get_method`` for an element whose URL is a plain navigation link for
+    some rows and an action for others.
+    """
+
+    hx_target: str = field(default="closest tr")
+    hx_swap: str = field(default="outerHTML")
+    td_classes: ClassVar[TdClassesType] = ["text-center"]
+
+    def get_method(self, _obj: Any) -> str:
+        return "post"
+
+    def get_link(self, obj: Any) -> str | None:
+        url = self.get_url(obj)
+        if not url:
+            return None
+        context = {
+            "id_tag": url.replace("/", "_"),
+            "url": url,
+            "icon": self.get_icon(obj),
+            "hx_target": self.hx_target,
+            "hx_swap": self.hx_swap,
+        }
+        if self.get_method(obj) == "get":
+            return render_to_string("tables/elements/htmx_link.html", context)
+        return render_to_string("tables/elements/post_action.html", context)
+
+
+@dataclass
 class InlineEditTableElement(HtmxLinkTableElement):
     """Pencil icon that opens an inline single-field edit form below its row.
 
