@@ -549,6 +549,30 @@ class MontrekRedirectViewTestCase(MontrekViewTestCase):
         raise NotImplementedError("Please set the expected_url method in the subclass")
 
 
+class MontrekPostActionViewTestCase(MontrekRedirectViewTestCase):
+    """Test case for a ``MontrekPostActionView``.
+
+    The action runs on POST, so ``setUp`` posts instead of getting, and every
+    subclass inherits the check that GET is refused - a mutating endpoint
+    reachable by GET would be neither CSRF-protected nor safe to prefetch.
+    """
+
+    def _is_base_test_class(self) -> bool:
+        return self.__class__.__name__ == "MontrekPostActionViewTestCase"
+
+    def post_data(self) -> dict:
+        return {}
+
+    def get_response(self):
+        return self.client.post(self.url, self.post_data())
+
+    def test_get_is_not_allowed(self):
+        if self._is_base_test_class():
+            return
+        response = self.client.get(self.url)
+        self.assertEqual(405, response.status_code)
+
+
 class MontrekReportViewTestCase(MontrekViewTestCase, RestApiTestCaseMixin):
     expected_number_of_report_elements: int = -1
 

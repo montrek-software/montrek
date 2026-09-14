@@ -39,7 +39,10 @@
     {% include "partials/gold_theme.html" %}
   </head>
 
-  <body class="d-flex flex-column min-vh-100">
+  {# hx-headers puts the CSRF token on every htmx request, so mutating
+     endpoints can require POST and stay CSRF-protected. #}
+  <body class="d-flex flex-column min-vh-100"
+        hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
     <main class="flex-grow-1">
       <div class="container-fluid px-3 py-4 pb-5">
         <!-- NAVBAR -->

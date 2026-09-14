@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import ClassVar
 
 from django.urls import reverse
 
@@ -9,6 +10,10 @@ class ActionElement:
     link: str
     action_id: str
     hover_text: str
+    # Actions that write must not be plain links: a link carries no CSRF token
+    # and can be replayed by prefetchers. Such an action sets method = "post",
+    # and the template renders an HTMX button instead of an <a href>.
+    method: ClassVar[str] = "get"
 
 
 @dataclass
@@ -80,11 +85,13 @@ class ShowActionElement(StandardActionElementBase):
 @dataclass(init=False)
 class LockActionElement(StandardActionElementBase):
     icon = "lock"
+    method = "post"
 
 
 @dataclass(init=False)
 class UnlockActionElement(StandardActionElementBase):
     icon = "unlock"
+    method = "post"
 
 
 @dataclass

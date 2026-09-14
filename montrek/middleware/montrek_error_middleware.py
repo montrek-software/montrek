@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.http import HttpResponseRedirect
+from baseclasses.utils import get_safe_redirect_url
 from django.urls import reverse
 
 from baseclasses.errors.montrek_user_error import MontrekError
@@ -20,5 +21,8 @@ class MontrekErrorMiddleware:
                 request,
                 msg,
             )
-            redirect_url = request.META.get("HTTP_REFERER") or reverse("home")
+            redirect_url = get_safe_redirect_url(
+                request, request.META.get("HTTP_REFERER"), reverse("home")
+            )
             return HttpResponseRedirect(redirect_url)
+        return None

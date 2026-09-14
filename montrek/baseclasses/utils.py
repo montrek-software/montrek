@@ -9,6 +9,7 @@ from baseclasses.typing import SessionDataType
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 
 # TODO Make universal MontrekDateTime class
 PANDAS_MIN = pd.Timestamp("1677-09-22")
@@ -286,3 +287,20 @@ class ChoicesEnum(Enum):
     @classmethod
     def to_list(cls) -> list[tuple[str, str]]:
         return [(member.value, member.value) for member in cls]
+
+
+def get_safe_redirect_url(request, url: str | None, fallback: str) -> str:
+    """Return ``url`` only if it points at this host, else ``fallback``.
+
+    Redirect targets taken from the request - ``HTTP_REFERER`` above all - are
+    caller-controlled. Passing one straight to a redirect is an open redirect:
+    another site can link to an endpoint here and have the user bounced back to
+    a page it chose, e.g. a lookalike login form.
+    """
+    if url and url_has_allowed_host_and_scheme(
+        url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return url
+    return fallback

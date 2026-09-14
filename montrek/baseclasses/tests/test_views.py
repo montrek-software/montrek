@@ -15,6 +15,7 @@ from baseclasses.views import (
     MontrekDetailView,
     MontrekListView,
     MontrekPageViewMixin,
+    MontrekPostActionView,
     MontrekRedirectView,
     MontrekTemplateView,
     MontrekUpdateView,
@@ -802,6 +803,62 @@ class TestMontrekRedirectView(TestCase):
     def test_no_get_redirect_url(self):
         test_view = MontrekRedirectView()
         self.assertRaises(NotImplementedError, test_view.get_redirect_url)
+
+
+class MockPostActionView(MontrekPostActionView):
+    manager_class = MockManager
+    redirect_url = "/target/"
+    # Class level, because as_view() builds a fresh instance per request.
+    action_runs = 0
+
+    def run_action(self) -> None:
+        type(self).action_runs += 1
+
+    def get_redirect_url(self, *args, **kwargs) -> str:
+        return self.redirect_url
+
+
+class TestMontrekPostActionView(TestCase, MockRequester):
+    """The contract of the base class for state-changing views."""
+
+    def setUp(self):
+        MockPostActionView.action_runs = 0
+
+    def _call(self, method: str = "post", **headers):
+        if method == "post":
+            self.add_mock_request_post("/switch/1", {})
+        else:
+            self.add_mock_request("/switch/1")
+        self.request.META.update(headers)
+        view = MockPostActionView.as_view()
+        return view(self.request)
+
+    def test_get_is_not_allowed_and_writes_nothing(self):
+        # A view that writes must not be reachable by following a link.
+        response = self._call(method="get")
+        self.assertEqual(405, response.status_code)
+        self.assertEqual(0, MockPostActionView.action_runs)
+
+    def test_only_post_is_listed_as_allowed_method(self):
+        self.assertEqual(["post"], MontrekPostActionView.http_method_names)
+
+    def test_post_runs_the_action_and_redirects(self):
+        response = self._call()
+        self.assertEqual(1, MockPostActionView.action_runs)
+        self.assertEqual(302, response.status_code)
+        self.assertEqual("/target/", response.url)
+
+    def test_htmx_post_navigates_via_hx_redirect(self):
+        # htmx would swap the redirect target into the triggering element,
+        # so the response asks it to navigate instead.
+        response = self._call(HTTP_HX_REQUEST="true")
+        self.assertEqual(1, MockPostActionView.action_runs)
+        self.assertEqual(204, response.status_code)
+        self.assertEqual("/target/", response.headers["HX-Redirect"])
+        self.assertEqual(b"", response.content)
+
+    def test_run_action_must_be_implemented(self):
+        self.assertRaises(NotImplementedError, MontrekPostActionView().run_action)
 
 
 class ClientLogoViewTest(TestCase):
