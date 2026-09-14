@@ -452,6 +452,9 @@ class PostActionTableElement(LinkTableElement):
         }
         if self.get_method(obj) == "get":
             return render_to_string("tables/elements/htmx_link.html", context)
+        # A button holding only an icon would be announced unnamed, so the
+        # hover text doubles as its accessible name.
+        context["aria_label"] = self.get_hover_text(obj, None) or self.name
         return render_to_string("tables/elements/post_action.html", context)
 
 

@@ -237,7 +237,9 @@ class ToPdfMixin:
             response = HttpResponse(pdf_bytes, content_type="application/pdf")
             response["Content-Disposition"] = f'attachment; filename="{filename}"'
             return response
-        previous_url = self.request.META.get("HTTP_REFERER") or self.request.path
+        previous_url = utils.get_safe_redirect_url(
+            self.request, self.request.META.get("HTTP_REFERER"), self.request.path
+        )
         return HttpResponseRedirect(previous_url)
 
     def list_to_pdf_latex(self):
@@ -254,7 +256,9 @@ class ToPdfMixin:
                 content_type="application/pdf",
                 filename=os.path.basename(pdf_path),
             )
-        previous_url = self.request.META.get("HTTP_REFERER")
+        previous_url = utils.get_safe_redirect_url(
+            self.request, self.request.META.get("HTTP_REFERER"), self.request.path
+        )
         return HttpResponseRedirect(previous_url)
 
     def open_file(self, path: str) -> BinaryIO:
@@ -664,7 +668,11 @@ class ReturnToSenderMixin(ReturnToSenderProtocol):
     def get(self, request, *args, **kwargs):
         response = super().get(request, *args, **kwargs)
         if self.do_return_to_referer:
-            http_referer = request.META.get("HTTP_REFERER")
+            # Only remember a referer on this host - it is handed straight back
+            # to a redirect later on.
+            http_referer = utils.get_safe_redirect_url(
+                request, request.META.get("HTTP_REFERER"), ""
+            )
             if http_referer:
                 request.session["return_url"] = http_referer
         return response

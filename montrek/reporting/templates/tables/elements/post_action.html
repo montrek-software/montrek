@@ -1,6 +1,7 @@
 <button type="button"
         id="id_{{ id_tag }}"
         class="btn-custom p-1 mt-htmx-link"
+        {% if aria_label %}aria-label="{{ aria_label }}"{% endif %}
         hx-post="{{ url }}"
         hx-swap="{{ hx_swap }}"
         {% if hx_target %}hx-target="{{ hx_target }}"{% endif %}>

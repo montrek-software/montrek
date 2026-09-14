@@ -1710,6 +1710,66 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         self.assertIn('hx-target="#summary"', link)
         self.assertIn('hx-swap="innerHTML"', link)
 
+    @mock.patch("reporting.dataclasses.table_elements.reverse")
+    def test_post_action_table_element_renders_a_posting_button(self, mock_reverse):
+        mock_reverse.return_value = "/do/action/1"
+        element = te.PostActionTableElement(
+            name="",
+            url="do_action",
+            icon="arrow-repeat",
+            kwargs={"pk": "pk"},
+            hover_text="Setze um",
+        )
+        link = element.get_link({"pk": 1})
+        self.assertIn('hx-post="/do/action/1"', link)
+        self.assertIn('hx-target="closest tr"', link)
+        self.assertIn('hx-swap="outerHTML"', link)
+        self.assertIn("bi-arrow-repeat", link)
+        # A state change must not be reachable by following a link.
+        self.assertNotIn("href=", link)
+        self.assertNotIn("hx-get=", link)
+        self.assertIn("<button", link)
+        # The icon-only button takes its accessible name from the hover text.
+        self.assertIn('aria-label="Setze um"', link)
+
+    @mock.patch("reporting.dataclasses.table_elements.reverse")
+    def test_post_action_table_element_custom_target_and_swap(self, mock_reverse):
+        mock_reverse.return_value = "/do/action/1"
+        element = te.PostActionTableElement(
+            name="",
+            url="do_action",
+            icon="check",
+            kwargs={"pk": "pk"},
+            hx_target="#summary",
+            hx_swap="innerHTML",
+        )
+        link = element.get_link({"pk": 1})
+        self.assertIn('hx-target="#summary"', link)
+        self.assertIn('hx-swap="innerHTML"', link)
+
+    @mock.patch("reporting.dataclasses.table_elements.reverse")
+    def test_post_action_table_element_get_method_renders_a_link(self, mock_reverse):
+        # Rows whose target is a navigation URL rather than an action opt out.
+        mock_reverse.return_value = "/open/editor/1"
+
+        class NavigationElement(te.PostActionTableElement):
+            def get_method(self, _obj):
+                return "get"
+
+        element = NavigationElement(
+            name="", url="open_editor", icon="pencil-square", kwargs={"pk": "pk"}
+        )
+        link = element.get_link({"pk": 1})
+        self.assertIn('hx-get="/open/editor/1"', link)
+        self.assertNotIn("hx-post=", link)
+
+    def test_post_action_table_element_without_url_renders_none(self):
+        element = te.PostActionTableElement(
+            name="", url="nonexistent_url_name", icon="x", kwargs={}
+        )
+        self.assertIsNone(element.get_link({}))
+        self.assertEqual(element.get_display_field({}).display_value, "-")
+
     def test_htmx_link_table_element_without_url_renders_none(self):
         # No reverse match -> get_url returns "" -> no link (cell shows "-").
         element = te.HtmxLinkTableElement(
