@@ -8,9 +8,9 @@ from django.core.exceptions import FieldError
 from baseclasses.repositories.annotator import Annotator
 from baseclasses.repositories.filter_decoder import FilterDecoder
 from django.db.models import (
+    BigIntegerField,
     Exists,
     F,
-    IntegerField,
     OuterRef,
     Q,
     QuerySet,
@@ -156,9 +156,15 @@ class QueryBuilder:
             .order_by("-value_date_list__value_date")
             .values("value_date_list_id")[:1]
         )
+        # Both sides are typed explicitly: value_date_list_id is a BigAutoField
+        # target, so without a matching output_field the two branches count as
+        # mixed types and anything that reads the expression's output_field -
+        # an annotate(), an order_by() - raises FieldError.  A filter() alone
+        # resolves against the left-hand column and would not notice.
         return Coalesce(
-            Subquery(latest, output_field=IntegerField()),
+            Subquery(latest, output_field=BigIntegerField()),
             F("value_date_list_id"),
+            output_field=BigIntegerField(),
         )
 
     def _filter_session_data(self, queryset: QuerySet) -> QuerySet:
