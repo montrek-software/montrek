@@ -4,6 +4,7 @@ from io import BytesIO
 from bs4 import BeautifulSoup
 from django.test import TestCase
 from openpyxl import load_workbook
+from reporting.dataclasses import table_elements as te
 from reporting.managers.excel_export import write_excel_workbook
 from reporting.tests.mocks import (
     MockMontrekDetailsManager,
@@ -276,3 +277,44 @@ class TestMontrekDetailsManagerExcel(TestCase):
         # The table sheet keeps its header row; the details sheet has none.
         self.assertTrue(workbook["Table"]["A1"].font.bold)
         self.assertEqual(workbook["Details"]["A1"].value, "Field A")
+
+
+class FormulaTextTableElement(te.StringTableElement):
+    """A field whose stored text looks like a spreadsheet formula."""
+
+    def get_value(self, _obj):
+        return "=1+1"
+
+
+class MockFormulaDetailsManager(MockMontrekDetailsManager):
+    @property
+    def table_elements(self):
+        return (FormulaTextTableElement(attr="field_a", name="Field A"),)
+
+
+class MockFormulaTableManager(MockMontrekTableManager):
+    @property
+    def table_elements(self):
+        return (FormulaTextTableElement(attr="field_a", name="Field A"),)
+
+
+class TestExcelFormulaText(TestCase):
+    """Exported fields carry text people typed, and openpyxl types a string
+    starting with "=" as a formula - so it has to be written back as text, or
+    opening an export runs whatever was entered."""
+
+    def get_value_cell(self, manager, column: str):
+        output = manager.to_excel(BytesIO())
+        return load_workbook(BytesIO(output.getvalue())).active[column]
+
+    def test_details_export_writes_formula_text_as_text(self):
+        cell = self.get_value_cell(MockFormulaDetailsManager(), "B1")
+
+        self.assertEqual(cell.data_type, "s")
+        self.assertEqual(cell.value, "=1+1")
+
+    def test_table_export_writes_formula_text_as_text(self):
+        cell = self.get_value_cell(MockFormulaTableManager(), "A2")
+
+        self.assertEqual(cell.data_type, "s")
+        self.assertEqual(cell.value, "=1+1")

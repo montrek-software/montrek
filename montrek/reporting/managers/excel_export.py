@@ -98,12 +98,28 @@ class ExcelSheetMixin:
             sheet_name=sheet_name,
             startrow=row_offset,
         )
+        self.disarm_formula_cells(excel_writer.sheets[sheet_name])
         self.get_excel_formatter().format_worksheet(
             excel_writer,
             sheet_name=sheet_name,
             col_formats=self.get_excel_col_formats(),
             table_title=self.table_title if show_table_title else None,
         )
+
+    @staticmethod
+    def disarm_formula_cells(worksheet) -> None:
+        """Store exported text that looks like a formula as text.
+
+        openpyxl types any string starting with "=" as a formula, and exported
+        fields carry text people typed - so a field holding "=..." would be
+        executed by whatever spreadsheet opens the file. Retyping the cell
+        leaves the text exactly as it was entered, where the usual apostrophe
+        prefix would become part of the value.
+        """
+        for row in worksheet.iter_rows():
+            for cell in row:
+                if cell.data_type == "f":
+                    cell.data_type = "s"
 
     def get_excel_frame(self) -> pd.DataFrame:
         raise NotImplementedError(
