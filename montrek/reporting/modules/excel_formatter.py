@@ -199,3 +199,47 @@ class MontrekExcelFormatter:
         )
 
         return base_length * multiplier
+
+
+class MontrekDetailsExcelFormatter(MontrekExcelFormatter):
+    """Formats a details sheet: label/value pairs, as the HTML view lays them
+    out, rather than a header row above data rows.
+
+    Two things follow from that. The header styling belongs on every label
+    column instead of on the first row, and the number formats are keyed by
+    cell rather than by column - one value column holds a different field in
+    every row, so a per-column format would apply one field's format to all
+    of them.
+    """
+
+    def __init__(
+        self, cell_formats: dict[tuple[int, int], str | None] | None = None
+    ) -> None:
+        self.cell_formats = cell_formats or {}
+
+    def _apply_cell_styles(
+        self, worksheet, col_formats: dict[int, str | None], row_offset: int = 0
+    ):
+        # Per-column formats mean nothing on a label/value grid; the formats
+        # this sheet needs are per cell and come from the constructor.
+        _ = col_formats
+        styles = self._get_style_objects()
+
+        for row_idx, row in enumerate(worksheet.iter_rows(), 1):
+            if row_idx <= row_offset:
+                continue
+            logical_row = row_idx - row_offset
+            for col_idx, cell in enumerate(row):
+                if self._is_label_column(col_idx):
+                    self._style_header_cell(cell, styles, col_idx)
+                    continue
+                self._style_data_cell(cell, logical_row, styles, row)
+                self._format_data_cell(
+                    cell, self.cell_formats.get((logical_row, col_idx))
+                )
+
+    @staticmethod
+    def _is_label_column(col_idx: int) -> bool:
+        """Columns alternate label, value, label, value - one pair per column
+        of the HTML grid."""
+        return col_idx % 2 == 0

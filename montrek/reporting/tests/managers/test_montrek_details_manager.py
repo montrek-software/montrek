@@ -1,10 +1,14 @@
 import re
+from io import BytesIO
 
 from bs4 import BeautifulSoup
 from django.test import TestCase
+from openpyxl import load_workbook
+from reporting.managers.excel_export import write_excel_workbook
 from reporting.tests.mocks import (
     MockMontrekDetailsManager,
     MockMontrekDetailsManager5Cols,
+    MockMontrekTableManager,
 )
 
 
@@ -161,3 +165,90 @@ class TestMontrekDetailsManager(TestCase):
                 "field_e": 1.0,
             },
         )
+
+
+class TestMontrekDetailsManagerExcel(TestCase):
+    """The details sheet mirrors the HTML block: label/value pairs laid out
+    down the columns, a pair per column of the grid."""
+
+    def get_sheet(self, manager_class=MockMontrekDetailsManager):
+        output = manager_class().to_excel(BytesIO())
+        return load_workbook(BytesIO(output.getvalue())).active
+
+    def get_cells(self, manager_class=MockMontrekDetailsManager):
+        return [
+            [cell.value for cell in row] for row in self.get_sheet(manager_class).rows
+        ]
+
+    def test_columns_alternate_label_and_value(self):
+        rows = self.get_cells()
+
+        for row in rows:
+            self.assertIn(row[0], ("Field A", "Field B", "Field C", "Field D"))
+            self.assertIn(row[2], ("Field E", "Link Text", None))
+
+    def test_pairs_per_row_follow_table_cols(self):
+        """Two grid columns means two label/value pairs, so four cells."""
+        self.assertTrue(all(len(row) == 4 for row in self.get_cells()))
+
+        wide_rows = self.get_cells(MockMontrekDetailsManager5Cols)
+
+        self.assertTrue(all(len(row) == 10 for row in wide_rows))
+
+    def test_the_order_is_the_order_of_the_html_block(self):
+        manager = MockMontrekDetailsManager()
+        html_labels = [
+            field.name for row in manager.get_details_data() for field in row
+        ]
+        excel_labels = [
+            cell
+            for row in self.get_cells()
+            for index, cell in enumerate(row)
+            if index % 2 == 0 and cell is not None
+        ]
+
+        self.assertEqual(excel_labels, [label for label in html_labels if label])
+
+    def test_icon_links_are_left_out_but_link_text_is_kept(self):
+        """An icon link carries no value and nothing to click in a
+        spreadsheet; a link text column carries its text."""
+        labels = [cell for row in self.get_cells() for cell in row]
+
+        self.assertNotIn("Link", labels)
+        self.assertIn("Link Text", labels)
+
+    def test_values_keep_their_number_format(self):
+        """The format has to follow the field, not the column: one value
+        column holds a different field in every row."""
+        sheet = self.get_sheet()
+        formats = {}
+        for row in sheet.rows:
+            for index, cell in enumerate(row):
+                if index % 2 == 0 and cell.value is not None:
+                    formats[cell.value] = row[index + 1].number_format
+
+        self.assertEqual(formats["Field E"], "#,##0.00 €")
+        self.assertEqual(formats["Field A"], "General")
+
+    def test_labels_are_styled_like_the_html_headers(self):
+        sheet = self.get_sheet()
+
+        self.assertTrue(sheet["A1"].font.bold)
+        self.assertFalse(sheet["B1"].font.bold)
+
+    def test_a_details_block_and_a_table_share_one_workbook(self):
+        """The point of the sheet mechanic: a download can put the details
+        block and a table side by side."""
+        output = write_excel_workbook(
+            BytesIO(),
+            {
+                "Details": MockMontrekDetailsManager(),
+                "Table": MockMontrekTableManager(),
+            },
+        )
+        workbook = load_workbook(BytesIO(output.getvalue()))
+
+        self.assertEqual(workbook.sheetnames, ["Details", "Table"])
+        # The table sheet keeps its header row; the details sheet has none.
+        self.assertTrue(workbook["Table"]["A1"].font.bold)
+        self.assertEqual(workbook["Details"]["A1"].value, "Field A")
