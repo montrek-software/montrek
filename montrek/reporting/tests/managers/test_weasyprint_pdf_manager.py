@@ -62,8 +62,9 @@ class TestWeasyPrintPdfManagerClientLogoSrc(TestCase):
             )
 
     def test_valid_local_path_prefixed_with_file_scheme(self):
-        with tempfile.NamedTemporaryFile(suffix=".png") as f, override_settings(
-            CLIENT_LOGO_PATH=f.name
+        with (
+            tempfile.NamedTemporaryFile(suffix=".png") as f,
+            override_settings(CLIENT_LOGO_PATH=f.name),
         ):
             result = WeasyPrintPdfManager._client_logo_src()
             self.assertEqual(result, f"file://{f.name}")

@@ -1,6 +1,8 @@
 import datetime
+from io import BytesIO
 
 import pandas as pd
+from openpyxl import load_workbook
 from unittest.mock import patch
 from baseclasses.views import REST_API_QUERY_PARAM, MontrekDeleteView
 from bs4 import BeautifulSoup
@@ -124,6 +126,26 @@ class PdfTestCaseMixin:
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Content-Type"], "application/pdf")
+
+
+class ExcelTestCaseMixin:
+    def excel_view_test(self):
+        """Every details view offers the Excel export, so every details view
+        test covers it - a manager whose fields cannot be written shows up
+        here rather than the first time somebody clicks the button."""
+        if self._is_base_test_class():
+            return
+        query_params = self.query_params()
+        query_params.update({"gen_excel": "true"})
+        response = self.client.get(self.url, query_params=query_params)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response["Content-Type"],
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        self.assertIn("attachment;", response["Content-Disposition"])
+        workbook = load_workbook(BytesIO(response.content))
+        self.assertEqual(len(workbook.sheetnames), 1)
 
 
 class MontrekViewTestCase(TestCase):
@@ -353,6 +375,7 @@ class MontrekDetailViewTestCase(
     GetObjectPkMixin,
     RestApiTestCaseMixin,
     PdfTestCaseMixin,
+    ExcelTestCaseMixin,
 ):
     def _is_base_test_class(self) -> bool:
         return self.__class__.__name__ == "MontrekDetailViewTestCase"
@@ -369,6 +392,9 @@ class MontrekDetailViewTestCase(
     @mock_plotly_write_dummy_png()
     def test_gen_pdf(self, mock_write_image):
         self.pdf_view_test()
+
+    def test_gen_excel(self):
+        self.excel_view_test()
 
 
 class MontrekCreateViewTestCase(MontrekCreateUpdateViewTestCase, GetObjectLastMixin):

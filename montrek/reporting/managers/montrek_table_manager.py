@@ -27,6 +27,7 @@ from reporting.core.text_converter import HtmlTextConverter
 from reporting.dataclasses import table_elements as te
 from reporting.dataclasses.display_field import DisplayField
 from reporting.lib.protocols import ReportElementProtocol
+from reporting.managers.excel_export import ExcelSheetMixin
 from reporting.modules.excel_formatter import MontrekExcelFormatter
 from reporting.modules.table_serializer import TableSerializer
 from reporting.tasks.download_table_task import DownloadTableTask
@@ -40,7 +41,9 @@ class MontrekTableMetaClass(type):
         super().__init__(name, bases, dct)
 
 
-class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
+class MontrekTableManagerABC(
+    ExcelSheetMixin, MontrekManager, metaclass=MontrekTableMetaClass
+):
     table_title = ""
     document_title = "Montrek Table"
     draft = False
@@ -226,32 +229,10 @@ class MontrekTableManagerABC(MontrekManager, metaclass=MontrekTableMetaClass):
             rows_per_page=self.latex_rows_per_page,
         ).to_latex()
 
-    def to_excel(
-        self,
-        output: HttpResponse | BytesIO | str,
-        sheet_name: str = "Montrek Data",
-        show_table_title: bool = False,
-    ) -> HttpResponse | BytesIO | str:
-        table_df = self.get_output_df()
-        col_formats = self._get_excel_col_formats()
-        with pd.ExcelWriter(output, engine="openpyxl") as excel_writer:
-            row_offset = 3 if show_table_title else 0
-            table_df.to_excel(
-                excel_writer, index=False, sheet_name=sheet_name, startrow=row_offset
-            )
-            self.get_excel_formatter().format_worksheet(
-                excel_writer,
-                sheet_name=sheet_name,
-                col_formats=col_formats,
-                table_title=self.table_title if show_table_title else None,
-            )
-        return output
+    def get_excel_frame(self) -> pd.DataFrame:
+        return self.get_output_df()
 
-    def get_excel_formatter(self) -> MontrekExcelFormatter:
-        """Hook for subclasses that need a formatter carrying report state."""
-        return self.excel_formatter_class()
-
-    def _get_excel_col_formats(self) -> dict[int, str | None]:
+    def get_excel_col_formats(self) -> dict[int, str | None]:
         elements = [
             e for e in self.table_elements if not isinstance(e, te.LinkTableElement)
         ]

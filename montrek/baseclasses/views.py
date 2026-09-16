@@ -579,6 +579,7 @@ class MontrekDetailView(
     template_name = "montrek_details.html"
     manager_class = MontrekManagerNotImplemented
     is_hub_based = True
+    excel_sheet_name = "Details"
     _prefetched_object = None
 
     @property
@@ -618,9 +619,29 @@ class MontrekDetailView(
             return self.list_to_pdf()
         if request_get.get("gen_pdf") == "latex":
             return self.list_to_pdf_latex()
+        if request_get.get("gen_excel") == "true":
+            return self.details_to_excel()
         if self._is_rest(request):
             return self.list_to_rest_api()
         return super().get(request, *args, **kwargs)
+
+    def details_to_excel(self) -> HttpResponse:
+        """The details block as a one-sheet workbook.
+
+        Answered from this view rather than a download view of its own, the
+        way the PDF and REST exports are, so every details view offers it
+        without its app wiring up a second URL.
+        """
+        response = HttpResponse()
+        self.manager.to_excel(response, sheet_name=self.excel_sheet_name)
+        filename = f"{self.manager.document_name}.xlsx"
+        DownloadRegistryStorageManager(self.session_data).store_in_download_registry(
+            self.manager.document_name, DownloadType.XLSX
+        )
+        response["Content-Type"] = get_content_type(filename)
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        self.show_messages()
+        return response
 
     def _set_hub_value_date_pk(self, kwargs: dict[str, Any]) -> dict[str, Any]:
         # Expose the requested hub pk to the repository so hub-scoped
