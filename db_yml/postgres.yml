@@ -8,7 +8,8 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_USER: ${DB_USER}
     ports:
-      - "${DB_PORT}:${DB_PORT}"
+      # Bound to loopback: host tooling still reaches it, the network does not.
+      - "127.0.0.1:${DB_PORT}:${DB_PORT}"
     volumes:
       - db_data:/var/lib/postgresql/data
     restart: "unless-stopped"

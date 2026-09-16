@@ -1,27 +1,33 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ENV_FILE=".env"
+# shellcheck source=../lib/load-env.sh
+. "$(dirname "${BASH_SOURCE[0]}")/../lib/load-env.sh"
 
-if [[ ! -f "$ENV_FILE" ]]; then
-  echo ".env file not found!"
-  exit 1
-fi
+# Registry push credentials live in .env.build, not .env: .env is handed to
+# every app container via `env_file:`, and a registry write token there turns
+# an application compromise into a supply-chain one. .env is still read as a
+# fallback so existing checkouts keep working.
+montrek_load_env .env.build
+montrek_load_env .env
 
-# Load variables from .env. Using `source` (instead of `export $(... | xargs)`)
-# so that values containing spaces or commas are kept intact.
-set -a
-# shellcheck disable=SC1090
-source "$ENV_FILE"
-set +a
+# Rebuilding for a local restart needs no registry credentials, and the push
+# creds now live in .env.build rather than .env, so requiring them
+# unconditionally would block the common case.
+PUSH=true
+for arg in "$@"; do
+  case "$arg" in
+  --no-push) PUSH=false ;;
+  *)
+    echo "Unknown argument: $arg" >&2
+    echo "Usage: $0 [--no-push]" >&2
+    exit 1
+    ;;
+  esac
+done
 
-missing=()
-[[ -n "${GIT_USER:-}" ]] || missing+=("GIT_USER")
-[[ -n "${GIT_PAT:-}" ]] || missing+=("GIT_PAT")
-if [[ ${#missing[@]} -gt 0 ]]; then
-  echo "One or more required environment variables are missing in $ENV_FILE:"
-  printf '  %s\n' "${missing[@]}"
-  exit 1
+if $PUSH; then
+  montrek_require_env GIT_USER GIT_PAT || exit 1
 fi
 
 CONTAINER_REGISTRY="${CONTAINER_REGISTRY:-ghcr.io}"
@@ -31,13 +37,19 @@ CONTAINER_TAG="${CONTAINER_TAG:-latest}"
 
 IMAGE="${CONTAINER_REGISTRY}/${CONTAINER_NAMESPACE}/${CONTAINER_IMAGE}:${CONTAINER_TAG}"
 
-echo "🔑 Logging in to ${CONTAINER_REGISTRY} as ${GIT_USER}..."
-printf '%s' "$GIT_PAT" | docker login "$CONTAINER_REGISTRY" --username "$GIT_USER" --password-stdin
+if $PUSH; then
+  echo "🔑 Logging in to ${CONTAINER_REGISTRY} as ${GIT_USER}..."
+  printf '%s' "$GIT_PAT" | docker login "$CONTAINER_REGISTRY" --username "$GIT_USER" --password-stdin
+fi
 
 echo "🐳 Building ${IMAGE}..."
 docker build -t "$IMAGE" .
 
-echo "⬆️  Pushing ${IMAGE}..."
-docker push "$IMAGE"
+if $PUSH; then
+  echo "⬆️  Pushing ${IMAGE}..."
+  docker push "$IMAGE"
+else
+  echo "⏭️  Skipping push (--no-push); the local tag is what compose uses."
+fi
 
 echo "✅ Done: ${IMAGE}"

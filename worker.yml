@@ -1,16 +1,50 @@
+# Anchors are file-local in compose, so the hardening applied to web and
+# celery_beat in docker-compose.yml is repeated here for the workers. Same
+# rationale: start as root for the CA install, drop to PUID:PGID via gosu, and
+# keep only the capabilities gosu needs to do that.
+x-worker-hardening: &worker-hardening
+  user: "0:0"
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  cap_add:
+    # SETUID/SETGID: gosu changing uid. CHOWN: giving the dropped-to uid a
+    # writable HOME. Nothing else -- the default set is ~14 capabilities.
+    - SETUID
+    - SETGID
+    - CHOWN
+
+# Shadow the plaintext .env that the repo mount would otherwise expose inside
+# the container; env_file already injects the values.
+x-worker-volumes: &worker-volumes
+  - .:/montrek
+  - /dev/null:/montrek/.env:ro
+  - static_volume:/montrek/static
+
+x-worker-identity: &worker-identity
+  PUID: ${USER_ID:-}
+  PGID: ${GROUP_ID:-}
+  # Cache/config dirs for the unprivileged uid, which has no passwd entry and
+  # so no home directory. montrek-entrypoint.sh sets these too, but only a
+  # rebuilt image has that entrypoint -- and gosu rewrites HOME while leaving
+  # these alone, so setting them here keeps matplotlib, uv and fontconfig
+  # working against an older image as well. /tmp is world-writable, so the
+  # dirs need no pre-creation.
+  XDG_CACHE_HOME: /tmp/montrek-home/.cache
+  XDG_CONFIG_HOME: /tmp/montrek-home/.config
+  MPLCONFIGDIR: /tmp/montrek-home/.config/matplotlib
+
 services:
   sequential_worker:
     image: ${CONTAINER_REGISTRY:-ghcr.io}/montrek-software/montrek-container:latest
-    user: "0:0"
+    <<: *worker-hardening
     environment:
-      - SERVICE=sequential_worker
-      - QUEUE=sequential_queue
-      - POOL=prefork
-      - PIUD=${USER_ID}
-      - PGUD=${GROUP_ID}
-    volumes:
-      - .:/montrek
-      - static_volume:/montrek/static
+      <<: *worker-identity
+      SERVICE: sequential_worker
+      QUEUE: sequential_queue
+      POOL: prefork
+    volumes: *worker-volumes
     env_file:
       - .env
     depends_on:
@@ -23,17 +57,14 @@ services:
 
   parallel_worker:
     image: ${CONTAINER_REGISTRY:-ghcr.io}/montrek-software/montrek-container:latest
-    user: "0:0"
+    <<: *worker-hardening
     environment:
-      - SERVICE=parallel_worker
-      - QUEUE=parallel_queue
-      - POOL=prefork
-      - PIUD=${USER_ID}
-      - PGUD=${GROUP_ID}
-      - SET_CONCURRENCY=${SET_CONCURRENCY}
-    volumes:
-      - .:/montrek
-      - static_volume:/montrek/static
+      <<: *worker-identity
+      SERVICE: parallel_worker
+      QUEUE: parallel_queue
+      POOL: prefork
+      SET_CONCURRENCY: ${SET_CONCURRENCY:-}
+    volumes: *worker-volumes
     env_file:
       - .env
     depends_on:
@@ -43,18 +74,16 @@ services:
     restart: "unless-stopped"
     networks:
       - montrek_network
+
   fast_worker:
     image: ${CONTAINER_REGISTRY:-ghcr.io}/montrek-software/montrek-container:latest
-    user: "0:0"
+    <<: *worker-hardening
     environment:
-      - SERVICE=fast_worker
-      - QUEUE=fast_queue
-      - POOL=gevent
-      - PIUD=${USER_ID}
-      - PGUD=${GROUP_ID}
-    volumes:
-      - .:/montrek
-      - static_volume:/montrek/static
+      <<: *worker-identity
+      SERVICE: fast_worker
+      QUEUE: fast_queue
+      POOL: gevent
+    volumes: *worker-volumes
     env_file:
       - .env
     depends_on:

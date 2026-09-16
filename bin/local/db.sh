@@ -1,19 +1,13 @@
 #!/bin/bash
 
-# Load variables from .env file
-if [ -f .env ]; then
-  export $(grep -v '^#' .env | xargs)
-else
-  echo ".env file not found!"
-  exit 1
-fi
+# Configuration comes from the environment first and only then from .env, so
+# this works unchanged on the host and inside a container where .env is
+# deliberately shadowed.
+# shellcheck source=../lib/load-env.sh
+. "$(dirname "${BASH_SOURCE[0]}")/../lib/load-env.sh"
+montrek_load_env
 
-# Check if required variables are set
-if [[ -z "$DB_ENGINE" || -z "$DB_NAME" || -z "$DB_USER" || -z "$DB_PASSWORD" || -z "$DB_HOST" || -z "$DB_PORT" ]]; then
-  echo "One or more required environment variables are missing in .env:"
-  echo "DB_ENGINE, DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT"
-  exit 1
-fi
+montrek_require_env DB_ENGINE DB_NAME DB_USER DB_PASSWORD DB_HOST DB_PORT || exit 1
 # Set default for DB_BACKUP_KEEP_DAYS if not provided
 : "${DB_BACKUP_KEEP_DAYS:=30}"
 

@@ -1,18 +1,13 @@
 #!/bin/bash
 
-# Load variables from .env file
-if [ -f .env ]; then
-  export $(grep -v '^#' .env | xargs)
-else
-  echo ".env file not found!"
-  exit 1
-fi
+# Configuration comes from the environment first and only then from .env, so
+# this works unchanged on the host and inside a container where .env is
+# deliberately shadowed.
+# shellcheck source=../lib/load-env.sh
+. "$(dirname "${BASH_SOURCE[0]}")/../lib/load-env.sh"
+montrek_load_env
 
-# Check if required variables are set
-if [[ -z "$KEYCLOAK_DB_PASSWORD" ]]; then
-  echo "KEYCLOAK_DB_PASSWORD is missing in .env"
-  exit 1
-fi
+montrek_require_env KEYCLOAK_DB_PASSWORD || exit 1
 
 KEYCLOAK_DB_HOST="${KEYCLOAK_DB_HOST:-keycloak-db}"
 KEYCLOAK_DB_PORT="${KEYCLOAK_DB_PORT:-5432}"

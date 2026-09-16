@@ -4,31 +4,11 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
-# Load variables from .env file
-if [ -f .env ]; then
-  set -a
-  # shellcheck source=/dev/null
-  source .env
-  set +a
-else
-  echo ".env file not found!" >&2
-  exit 1
-fi
-
-missing_vars=()
-
-if [[ -z "$SONARCUBE_URL" ]]; then
-  missing_vars+=("SONARCUBE_URL")
-fi
-
-if [[ -z "$SONARCUBE_TOKEN" ]]; then
-  missing_vars+=("SONARCUBE_TOKEN")
-fi
-
-if [[ ${#missing_vars[@]} -gt 0 ]]; then
-  echo "Error: missing required environment variables: ${missing_vars[*]}" >&2
-  exit 1
-fi
+# shellcheck source=../lib/load-env.sh
+. "$SCRIPT_DIR/../lib/load-env.sh"
+montrek_load_env .env.build
+montrek_load_env
+montrek_require_env SONARCUBE_URL SONARCUBE_TOKEN || exit 1
 
 REPO="${1:-montrek}"
 SONARCUBE_URL="${SONARCUBE_URL%/}"  # strip trailing slash

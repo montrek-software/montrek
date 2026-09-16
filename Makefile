@@ -81,8 +81,16 @@ git-update-repositories: # Update all montrek repositories to the latest git tag
 	@$(SECURE_WRAPPER) bin/git/update-repositories-to-latest-tags.sh
 
 .PHONY: git-build-montrek-container
-git-build-montrek-container: # Build the container to run montrek in docker or github actions
+git-build-montrek-container: # Build the container to run montrek in docker or github actions, and push it to the registry
 	@$(SECURE_WRAPPER) bin/git/build-montrek-container.sh
+
+.PHONY: git-check-registry-auth
+git-check-registry-auth: # Check the registry host, credentials and push scope before building
+	@$(SECURE_WRAPPER) bin/git/check-registry-auth.sh
+
+.PHONY: local-build-montrek-container
+local-build-montrek-container: # Build the montrek container locally without pushing it (no registry credentials needed)
+	@$(SECURE_WRAPPER) bin/git/build-montrek-container.sh --no-push
 
 .PHONY: server-generate-https-certs
 server-generate-https-certs: # Generate HTTPS certificates for the montrek django app.

@@ -1,30 +1,15 @@
 #!/bin/bash
 
-# Load variables from .env file
-if [ -f .env ]; then
-  export $(grep -v '^#' .env | xargs)
-else
-  echo ".env file not found!"
-  exit 1
-fi
-# Check if required variables are set
-missing_vars=()
-
-if [[ -z "$SONARCUBE_URL" ]]; then
-  missing_vars+=("SONARCUBE_URL")
-fi
-
-if [[ -z "$SONARCUBE_TOKEN" ]]; then
-  missing_vars+=("SONARCUBE_TOKEN")
-fi
-
-if [[ ${#missing_vars[@]} -ne 0 ]]; then
-  echo "One or more required environment variables are missing in .env:"
-  for var in "${missing_vars[@]}"; do
-    echo "$var"
-  done
-  exit 1
-fi
+# Configuration comes from the environment first and only then from .env, so
+# this works unchanged on the host and inside a container where .env is
+# deliberately shadowed.
+# shellcheck source=../lib/load-env.sh
+. "$(dirname "${BASH_SOURCE[0]}")/../lib/load-env.sh"
+# The analysis token is a CI credential, so .env.build takes precedence
+# over the runtime .env.
+montrek_load_env .env.build
+montrek_load_env
+montrek_require_env SONARCUBE_URL SONARCUBE_TOKEN || exit 1
 RUN_TESTS=true
 REPO=montrek
 for arg in "$@"; do

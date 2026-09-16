@@ -25,6 +25,13 @@ repos:
     rev: 1.7.5
     hooks:
       - id: bandit
+  # bandit finds insecure code; gitleaks finds committed credentials. .env is
+  # gitignored, but a `git add -f` or a new *.env variant should still be caught
+  # before it reaches a remote.
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.21.2
+    hooks:
+      - id: gitleaks
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v2.3.0
     hooks:
