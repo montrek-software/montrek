@@ -7,6 +7,10 @@ from baseclasses.dataclasses.montrek_message import (
     MontrekMessageWarning,
 )
 from baseclasses.managers.montrek_manager import MontrekManager
+from baseclasses.dataclasses.view_classes import (
+    ListActionElement,
+    LockActionElement,
+)
 from baseclasses.pages import MontrekPage
 from baseclasses.templatetags.base_tags import project_display_name
 from baseclasses.tests.mocks import MockRepository
@@ -29,6 +33,7 @@ from django.contrib.messages import get_messages
 from django.contrib.messages.middleware import MessageMiddleware
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.template.loader import render_to_string
 from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 from info.repositories.download_registry_repositories import DownloadRegistryRepository
@@ -859,6 +864,49 @@ class TestMontrekPostActionView(TestCase, MockRequester):
 
     def test_run_action_must_be_implemented(self):
         self.assertRaises(NotImplementedError, MontrekPostActionView().run_action)
+
+
+class TestActionsRendering(TestCase):
+    """How an ActionElement reaches the page.
+
+    A writing action must render as a posting button, a navigating one as a
+    link - and neither may leak template source into the toolbar.
+    """
+
+    def _render(self, action) -> str:
+        return render_to_string(
+            "partials/tabs_and_actions.html",
+            {"tab_elements": [], "actions": [action]},
+        )
+
+    def test_writing_action_renders_a_posting_button(self):
+        action = LockActionElement(
+            url_name="home", action_id="id_close", hover_text="Schließen"
+        )
+        markup = self._render(action)
+        self.assertIn("<button", markup)
+        self.assertIn(f'hx-post="{action.link}"', markup)
+        # No link to follow, or the endpoint would be reachable by GET.
+        self.assertNotIn(f'href="{action.link}"', markup)
+
+    def test_navigating_action_renders_a_link(self):
+        action = ListActionElement(url_name="home", action_id="id_list")
+        markup = self._render(action)
+        self.assertIn(f'href="{action.link}"', markup)
+        self.assertNotIn("hx-post", markup)
+
+    def test_no_template_source_leaks_into_the_toolbar(self):
+        # A {# #} comment spanning two lines is not a comment - Django's lexer
+        # does not match across newlines and emits it as text.
+        for action in (
+            LockActionElement(url_name="home", action_id="id_close"),
+            ListActionElement(url_name="home", action_id="id_list"),
+        ):
+            with self.subTest(action=type(action).__name__):
+                markup = self._render(action)
+                self.assertNotIn("{#", markup)
+                self.assertNotIn("#}", markup)
+                self.assertNotIn("{%", markup)
 
 
 class ClientLogoViewTest(TestCase):

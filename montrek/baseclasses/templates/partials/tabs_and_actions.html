@@ -22,8 +22,7 @@
   <div class="col-12 p-2">
     {% for action in actions %}
       {% if action.method == "post" %}
-        {# A writing action posts, so it stays CSRF-protected and cannot be
-           triggered by following a link. #}
+        {# A writing action posts, so it cannot be triggered by a link. #}
         <button
           type="button"
           id="{{ action.action_id }}"
