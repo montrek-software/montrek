@@ -181,11 +181,18 @@ class TestMontrekDetailsManagerExcel(TestCase):
         ]
 
     def test_columns_alternate_label_and_value(self):
+        """Label, value, label, value - a pair per column of the grid."""
         rows = self.get_cells()
 
-        for row in rows:
-            self.assertIn(row[0], ("Field A", "Field B", "Field C", "Field D"))
-            self.assertIn(row[2], ("Field E", "Link Text", None))
+        self.assertEqual(
+            [[row[0], row[2]] for row in rows],
+            [
+                ["Field A", "Field D"],
+                ["Field B", "Field E"],
+                ["Field C", "Link Text"],
+            ],
+        )
+        self.assertEqual([row[1] for row in rows], ["a", 1, 1.0])
 
     def test_pairs_per_row_follow_table_cols(self):
         """Two grid columns means two label/value pairs, so four cells."""
@@ -195,10 +202,19 @@ class TestMontrekDetailsManagerExcel(TestCase):
 
         self.assertTrue(all(len(row) == 10 for row in wide_rows))
 
-    def test_the_order_is_the_order_of_the_html_block(self):
+    def test_labels_follow_the_grids_reading_order(self):
+        """Down the columns, as the HTML block reads.
+
+        Not a cell-for-cell copy of that block: the icon link is dropped
+        before the layout, so six fields fall into three rows where the seven
+        on screen fall into four. What carries over is the reading order over
+        the fields that can be exported.
+        """
         manager = MockMontrekDetailsManager()
-        html_labels = [
-            field.name for row in manager.get_details_data() for field in row
+        expected = [
+            element.name
+            for grid_row in manager.arrange_in_grid(manager.excel_table_elements)
+            for element in grid_row
         ]
         excel_labels = [
             cell
@@ -207,7 +223,7 @@ class TestMontrekDetailsManagerExcel(TestCase):
             if index % 2 == 0 and cell is not None
         ]
 
-        self.assertEqual(excel_labels, [label for label in html_labels if label])
+        self.assertEqual(excel_labels, expected)
 
     def test_icon_links_are_left_out_but_link_text_is_kept(self):
         """An icon link carries no value and nothing to click in a
@@ -217,9 +233,12 @@ class TestMontrekDetailsManagerExcel(TestCase):
         self.assertNotIn("Link", labels)
         self.assertIn("Link Text", labels)
 
-    def test_values_keep_their_number_format(self):
-        """The format has to follow the field, not the column: one value
-        column holds a different field in every row."""
+    def test_values_keep_their_own_number_format(self):
+        """The format follows the field, not the column.
+
+        Field D and Field E share the second value column and want different
+        formats, which a per-column mapping could not give them.
+        """
         sheet = self.get_sheet()
         formats = {}
         for row in sheet.rows:
@@ -227,8 +246,13 @@ class TestMontrekDetailsManagerExcel(TestCase):
                 if index % 2 == 0 and cell.value is not None:
                     formats[cell.value] = row[index + 1].number_format
 
-        self.assertEqual(formats["Field E"], "#,##0.00 €")
+        self.assertEqual(formats["Field E"], "#,##0.00")
+        self.assertEqual(formats["Field C"], "#,##0.000")
         self.assertEqual(formats["Field A"], "General")
+        # A datetime brings its own format from openpyxl, which is only
+        # reachable because the value is written as a datetime rather than as
+        # its rendered text.
+        self.assertEqual(formats["Field D"], "YYYY-MM-DD HH:MM:SS")
 
     def test_labels_are_styled_like_the_html_headers(self):
         sheet = self.get_sheet()
