@@ -84,7 +84,7 @@ services:
       - montrek_network
 
   web:
-    image: ${CONTAINER_REGISTRY:-ghcr.io}/montrek-software/montrek-container:latest
+    image: ${CONTAINER_REGISTRY:-ghcr.io}/${CONTAINER_NAMESPACE:-montrek-software}/${CONTAINER_IMAGE:-montrek-container}:${CONTAINER_TAG:-latest}
     <<: *montrek-hardening
     environment:
       <<: *montrek-identity
@@ -122,7 +122,7 @@ services:
       - montrek_network
 
   celery_beat:
-    image: ${CONTAINER_REGISTRY:-ghcr.io}/montrek-software/montrek-container:latest
+    image: ${CONTAINER_REGISTRY:-ghcr.io}/${CONTAINER_NAMESPACE:-montrek-software}/${CONTAINER_IMAGE:-montrek-container}:${CONTAINER_TAG:-latest}
     <<: *montrek-hardening
     environment:
       <<: *montrek-identity

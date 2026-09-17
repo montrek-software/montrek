@@ -48,7 +48,7 @@ x-worker-identity: &worker-identity
 
 services:
   sequential_worker:
-    image: ${CONTAINER_REGISTRY:-ghcr.io}/montrek-software/montrek-container:latest
+    image: ${CONTAINER_REGISTRY:-ghcr.io}/${CONTAINER_NAMESPACE:-montrek-software}/${CONTAINER_IMAGE:-montrek-container}:${CONTAINER_TAG:-latest}
     <<: *worker-hardening
     environment:
       <<: *worker-identity
@@ -67,7 +67,7 @@ services:
       - montrek_network
 
   parallel_worker:
-    image: ${CONTAINER_REGISTRY:-ghcr.io}/montrek-software/montrek-container:latest
+    image: ${CONTAINER_REGISTRY:-ghcr.io}/${CONTAINER_NAMESPACE:-montrek-software}/${CONTAINER_IMAGE:-montrek-container}:${CONTAINER_TAG:-latest}
     <<: *worker-hardening
     environment:
       <<: *worker-identity
@@ -87,7 +87,7 @@ services:
       - montrek_network
 
   fast_worker:
-    image: ${CONTAINER_REGISTRY:-ghcr.io}/montrek-software/montrek-container:latest
+    image: ${CONTAINER_REGISTRY:-ghcr.io}/${CONTAINER_NAMESPACE:-montrek-software}/${CONTAINER_IMAGE:-montrek-container}:${CONTAINER_TAG:-latest}
     <<: *worker-hardening
     environment:
       <<: *worker-identity

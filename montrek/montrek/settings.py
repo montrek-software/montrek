@@ -10,8 +10,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+import ipaddress
 import os
-import re
 import sys
 from datetime import timedelta
 from pathlib import Path
@@ -74,15 +74,24 @@ _LOCAL_HOST_SUFFIXES = (".lan", ".local", ".localhost", ".internal", ".test")
 
 
 def _is_local_host(host):
-    host = (host or "").strip().lower()
-    if host in ("", "localhost", "127.0.0.1", "::1"):
+    host = (host or "").strip().lower().strip("[]")
+    if host in ("", "localhost"):
         return True
-    if host.endswith(_LOCAL_HOST_SUFFIXES) or "." not in host:
-        return True
-    # RFC1918 / link-local.
-    return host.startswith(("10.", "192.168.", "169.254.")) or bool(
-        re.match(r"^172\.(1[6-9]|2\d|3[01])\.", host)
-    )
+
+    # An address is classified by parsing it, not by its leading characters.
+    # Matching on "10." etc. also matched names like "10.attacker.example",
+    # which is a perfectly routable public hostname -- and that was enough to
+    # wave DEBUG=1 through on an internet-facing deployment.
+    try:
+        address = ipaddress.ip_address(host)
+    except ValueError:
+        pass
+    else:
+        return address.is_private or address.is_loopback or address.is_link_local
+
+    # Not an address, so a name: only the reserved local suffixes and a
+    # single-label hostname (no dot, therefore not publicly resolvable) count.
+    return host.endswith(_LOCAL_HOST_SUFFIXES) or "." not in host
 
 
 # DEBUG=1 renders settings, SQL and local variables on every error page, so on
