@@ -7,7 +7,16 @@ from baseclasses.dataclasses.montrek_message import (
 from django.core.exceptions import FieldError
 from baseclasses.repositories.annotator import Annotator
 from baseclasses.repositories.filter_decoder import FilterDecoder
-from django.db.models import Q, QuerySet, OuterRef, Exists
+from django.db.models import (
+    BigIntegerField,
+    Exists,
+    F,
+    OuterRef,
+    Q,
+    QuerySet,
+    Subquery,
+)
+from django.db.models.functions import Coalesce
 from django.utils import timezone
 
 
@@ -106,35 +115,57 @@ class QueryBuilder:
         return queryset.order_by(*order_fields)
 
     def _filter_ts_rows(self, queryset: QuerySet) -> QuerySet:
+        if self.latest_ts:
+            return queryset.filter(value_date_list_id=self._latest_value_date_list_id())
         # Use hub_id (direct FK column) instead of the hub_entity_id annotation
         # (which is itself a subquery) to avoid unnecessary nesting.
         non_null_value_date_exists = self.hub_value_date.objects.filter(
             hub_id=OuterRef("hub_id"),
             value_date_list__value_date__isnull=False,
         ).exclude(id=OuterRef("id"))
-        if self.latest_ts:
-            # Build from the bare model (no annotations) to avoid dragging all
-            # annotation subqueries into this inner query.  Compare value_date_list_id
-            # integers directly instead of going through the value_date annotation.
-            latest_value_date_list_id = (
-                self.hub_value_date.objects.filter(
-                    hub_id=OuterRef("hub_id"),
-                    value_date_list__value_date__isnull=False,
-                )
-                .order_by("-value_date_list__value_date")
-                .values("value_date_list_id")[:1]
-            )
-            filtered_query = queryset.filter(
-                Q(value_date_list_id=latest_value_date_list_id)
-                | ~Exists(non_null_value_date_exists)
-            )
-        elif self.annotator.has_only_static_sats():
+        if self.annotator.has_only_static_sats():
             filtered_query = queryset.filter(value_date_list__value_date__isnull=True)
         else:
             filtered_query = queryset.filter(
                 Q(value_date__isnull=False) | ~Exists(non_null_value_date_exists)
             )
         return filtered_query
+
+    def _latest_value_date_list_id(self) -> Coalesce:
+        """The value date list a row must sit on to be the hub's latest one.
+
+        Built from the bare model so none of the annotation subqueries are
+        dragged into this inner query, and compared as ``value_date_list_id``
+        integers rather than through the ``value_date`` annotation.
+
+        A hub without any dated row has no latest one to compare against, and
+        its undated rows have to survive the filter.  Coalescing to the row's
+        own value date list makes the comparison trivially true for exactly
+        those rows.  Written as this one scalar subquery rather than as an
+        ``OR`` against a ``NOT EXISTS`` over the sibling rows: the two are
+        equivalent - a hub with a dated row never satisfies that
+        ``NOT EXISTS`` unless it is the sole dated row, which is the latest one
+        anyway - but Postgres cannot turn the ``OR`` into a semi join and
+        re-runs the whole sibling scan once per candidate row.
+        """
+        latest = (
+            self.hub_value_date.objects.filter(
+                hub_id=OuterRef("hub_id"),
+                value_date_list__value_date__isnull=False,
+            )
+            .order_by("-value_date_list__value_date")
+            .values("value_date_list_id")[:1]
+        )
+        # Both sides are typed explicitly: value_date_list_id is a BigAutoField
+        # target, so without a matching output_field the two branches count as
+        # mixed types and anything that reads the expression's output_field -
+        # an annotate(), an order_by() - raises FieldError.  A filter() alone
+        # resolves against the left-hand column and would not notice.
+        return Coalesce(
+            Subquery(latest, output_field=BigIntegerField()),
+            F("value_date_list_id"),
+            output_field=BigIntegerField(),
+        )
 
     def _filter_session_data(self, queryset: QuerySet) -> QuerySet:
         if not self.annotator.get_ts_satellite_classes():
