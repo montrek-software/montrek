@@ -3,6 +3,8 @@ set -euo pipefail
 
 # shellcheck source=../lib/load-env.sh
 . "$(dirname "${BASH_SOURCE[0]}")/../lib/load-env.sh"
+# shellcheck source=../lib/secrets.sh
+. "$(dirname "${BASH_SOURCE[0]}")/../lib/secrets.sh"
 montrek_load_env
 montrek_require_env DB_ENGINE || exit 1
 
@@ -12,6 +14,16 @@ COMPOSE_ARGS=(-f docker-compose.yml)
 while IFS= read -r -d '' file; do
   COMPOSE_ARGS+=(-f "$file")
 done < <(find . -mindepth 2 -name "docker-compose.yml" -not -path "./.venv/*" -print0)
+
+# The file-based secrets overlay, once `make secrets-init` has created every
+# file it declares. Compose fails outright on a missing `file:` source, so this
+# is all-or-nothing rather than per secret, and an install that has not migrated
+# keeps reading everything from .env.
+if montrek_secrets_initialized; then
+  COMPOSE_ARGS+=(-f secrets.yml)
+else
+  echo "Secrets are in .env; run 'make secrets-init' to move them into ${MONTREK_SECRETS_DIR_HOST}/." >&2
+fi
 
 # The container entrypoint drops privileges to this uid/gid, which has to be
 # the owner of the bind-mounted repo. Exported rather than written into .env:
@@ -44,6 +56,16 @@ if [[ -f .env ]] && grep -qE '^(USER_ID|GROUP_ID)=' .env; then
   echo "Removing stale USER_ID/GROUP_ID entries from .env"
   sed -i -E '/^(USER_ID|GROUP_ID)=/d' .env
 fi
+
+# montrek_load_env resolves secrets into the environment for the scripts that
+# need them; compose must not see them. Every value in its environment is a
+# candidate for `${...}` interpolation, and interpolating a secret is exactly
+# what this whole overlay exists to stop -- it would put the value straight back
+# into the container config, and set POSTGRES_PASSWORD alongside
+# POSTGRES_PASSWORD_FILE, which postgres refuses to start with.
+for secret_name in "${MONTREK_SECRET_NAMES[@]}"; do
+  unset "$(montrek_secret_variable "$secret_name")"
+done
 
 set -x
 docker compose "${COMPOSE_ARGS[@]}" "${PROFILE[@]}" "${COMMAND[@]}" --remove-orphans
