@@ -15,11 +15,22 @@ x-worker-hardening: &worker-hardening
     - SETGID
     - CHOWN
 
-# Shadow the plaintext .env that the repo mount would otherwise expose inside
-# the container; env_file already injects the values.
+# Shadow the plaintext .env, the build-time .env.build and the secrets/
+# directory that the repo mount would otherwise expose inside the container.
+# env_file already injects the runtime values, and each worker's own secrets are
+# mounted at /run/secrets by secrets.yml. Same rationale as docker-compose.yml.
 x-worker-volumes: &worker-volumes
   - .:/montrek
   - /dev/null:/montrek/.env:ro
+  - /dev/null:/montrek/.env.build:ro
+  - type: tmpfs
+    target: /montrek/secrets
+    tmpfs:
+      # Docker mounts a tmpfs 0700 root:root, which the app user cannot
+      # even list -- and sync-python-env.sh walks /montrek with `find`,
+      # which then fails the whole boot. The intent is an empty
+      # directory, not a forbidden one.
+      mode: 0555
   - static_volume:/montrek/static
 
 x-worker-identity: &worker-identity

@@ -30,8 +30,22 @@ repair_owner() {
   local path="$1"
   [[ -e "$path" ]] || return 0
 
-  local wrong
-  wrong="$(find "$path" \( -not -user "$PUID" -o -not -group "$PGID" \) -print -quit 2>/dev/null)"
+  # `|| true` is load-bearing. `-quit` makes find exit 0 as soon as it finds a
+  # wrongly-owned entry, but when everything is already correct it walks the
+  # whole tree -- and exits 1 if any directory is unreadable. This runs as root
+  # with cap_drop: ALL, so root has no CAP_DAC_OVERRIDE and cannot enter a
+  # 0700 directory it does not own. Without `|| true`, `set -e` then killed the
+  # entrypoint inside the command substitution, with stderr suppressed: the boot
+  # simply stopped after the CA install, printing nothing, and the container
+  # restart-looped. A healthy boot is exactly the case that triggered it.
+  local wrong find_errors
+  find_errors="$(mktemp)"
+  wrong="$(find "$path" \( -not -user "$PUID" -o -not -group "$PGID" \) -print -quit 2>"$find_errors" || true)"
+  if [[ -s "$find_errors" ]]; then
+    echo "WARN: could not fully scan $path for ownership:" >&2
+    sed 's/^/  /' "$find_errors" >&2
+  fi
+  rm -f "$find_errors"
   [[ -z "$wrong" ]] && return 0
 
   echo "Repairing ownership under $path (-> ${PUID}:${PGID})..."

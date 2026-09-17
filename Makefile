@@ -108,6 +108,10 @@ server-tls-status: # Show which certificate nginx is serving and when it expires
 server-update: # Stop all docker containers, update the repositories to the latest git tags, and start the containers again.
 	@$(SECURE_WRAPPER) bin/server/update.sh
 
+.PHONY: secrets-init
+secrets-init: # Move the secrets out of .env into per-secret files under secrets/, for the compose secrets overlay
+	@$(SECURE_WRAPPER) bin/secrets/init-secrets.sh
+
 .PHONY: secrets-encrypt
 secrets-encrypt: # Encrypt the .env file with a generated password
 	@bash bin/secrets/encrypt.sh $(filter-out $@,$(MAKECMDGOALS))

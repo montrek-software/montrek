@@ -16,11 +16,11 @@ import sys
 from datetime import timedelta
 from pathlib import Path
 
-from decouple import Config, RepositoryEnv
 from django.core.exceptions import ImproperlyConfigured
 from django.urls import reverse_lazy
 from reporting.core.reporting_colors import ReportingColors
 
+from montrek.configuration import config
 from montrek.filtered_warnings import add_filtered_warnings
 from montrek.utils import SystemFormatting, get_keycloak_base_url, get_oidc_endpoints
 
@@ -28,7 +28,10 @@ add_filtered_warnings()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-config = Config(RepositoryEnv(BASE_DIR / "../.env"))
+
+# `config` resolves each key from the environment, then from a `NAME_FILE` path
+# or a secret mounted under /run/secrets, then from ../.env -- see
+# montrek/configuration.py and docs/secrets.md.
 
 
 # Quick-start development settings - unsuitable for production

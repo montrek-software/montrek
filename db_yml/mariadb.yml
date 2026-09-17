@@ -4,9 +4,9 @@ services:
     command: --max_allowed_packet=64M --port=${DB_PORT}
     environment:
       MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-}
       MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-}
     ports:
       # Bound to loopback: host tooling still reaches it, the network does not.
       - "127.0.0.1:${DB_PORT}:${DB_PORT}"
