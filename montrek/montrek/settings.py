@@ -68,6 +68,13 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 # every view assertion into a 301.
 TESTING = "test" in sys.argv
 
+# Running under `manage.py runserver`, which serves plain HTTP only and is
+# never a deployment target. The same settings break it the same way: with
+# DEBUG=0 every request is 301'd to an https:// port nothing listens on, and
+# browsers cache that 301 for the host, so the dev server stays unreachable
+# even after the redirect is switched off.
+RUNNING_DEV_SERVER = "runserver" in sys.argv
+
 # A host that only exists on the local network or the machine itself. Used to
 # decide whether DEBUG=1 is a development convenience or a production mistake.
 _LOCAL_HOST_SUFFIXES = (".lan", ".local", ".localhost", ".internal", ".test")
@@ -109,7 +116,7 @@ if (
     )
 
 # Transport hardening, applied whenever this is not a development or test run.
-if not DEBUG and not TESTING:
+if not DEBUG and not TESTING and not RUNNING_DEV_SERVER:
     SESSION_COOKIE_SECURE = True
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"
