@@ -1,4 +1,8 @@
-.env
+# Every .env variant: .env, .env.build, .env.bak, .env.*.bak, .env.enc ...
+# Only the checked-in templates are exceptions.
+.env*
+!.env.template
+!.env.build.template
 montrek/*/__pycache__
 montrek/*/*/__pycache__
 venv_montrek/*
@@ -9,6 +13,14 @@ montrek/mt_accounting/*
 montrek/mt_economic_common/*
 montrek/baseclasses/static/logos/effectual_logo.png
 nginx/certs/*
+# Private key material, wherever it lands. generate-https-certs.sh creates
+# rootCA.key and cert.key in the repo root and only removes them on the happy
+# path, so an interrupted run must not leave the CA key committable.
+*.key
+*.pem
+!rootCert.pem
+*.p12
+*.pfx
 montrek/reporting/.workbench/*
 montrek/*/.coverage
 montrek/*/*/.coverage
@@ -23,10 +35,9 @@ montrek/*/*.sqlite
 montrek/*.sqlite
 .aider*
 secrets/*
-.env
 keycloak/themes/montrek/login/resources/css/colors.css
 db_backups/*
 requirements.txt
 coverage.xml
-montrek/mt_*/
+#montrek/mt_*/
 .scannerwork

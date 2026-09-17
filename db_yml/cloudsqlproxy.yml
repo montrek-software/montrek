@@ -9,7 +9,8 @@ services:
     volumes:
       - ./secrets/${SQLPROXY_KEYFILE}:/db/key.json:ro
     ports:
-      - "${DB_PORT}:${DB_PORT}"
+      # Bound to loopback: host tooling still reaches it, the network does not.
+      - "127.0.0.1:${DB_PORT}:${DB_PORT}"
     command: >
       --address=0.0.0.0
       --port=${DB_PORT}

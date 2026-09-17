@@ -1,5 +1,22 @@
 #!/bin/sh
 
+# Values the secrets.yml overlay hands over as a file rather than as an
+# environment variable, so they stay out of `docker inspect`. Keycloak 24 has no
+# *_FILE support of its own, and this script is the entrypoint anyway: it is the
+# only place the client secret and the admin password are used, when the realm
+# JSON below is templated.
+#
+# A missing or empty file leaves the variable as it is, so an install that still
+# keeps these in .env is unaffected.
+for secret_var in KEYCLOAK_ADMIN_PASSWORD KC_DB_PASSWORD KEYCLOAK_CLIENT_SECRET; do
+  eval "secret_file=\${${secret_var}_FILE:-}"
+  [ -n "$secret_file" ] && [ -s "$secret_file" ] || continue
+  # $(cat) drops the trailing newline, matching montrek/configuration.py.
+  eval "${secret_var}=\$(cat \"\$secret_file\")"
+  export "${secret_var}"
+done
+unset secret_var secret_file
+
 # Required env (fail fast with a clear message if any are missing)
 : "${KEYCLOAK_REALM:?Set KEYCLOAK_REALM in .env}"
 : "${KEYCLOAK_CLIENT_ID:?Set KEYCLOAK_CLIENT_ID in .env}"

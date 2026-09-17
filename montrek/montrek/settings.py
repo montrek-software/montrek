@@ -10,14 +10,17 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+import ipaddress
 import os
+import sys
 from datetime import timedelta
 from pathlib import Path
 
-from decouple import Config, RepositoryEnv
+from django.core.exceptions import ImproperlyConfigured
 from django.urls import reverse_lazy
 from reporting.core.reporting_colors import ReportingColors
 
+from montrek.configuration import config
 from montrek.filtered_warnings import add_filtered_warnings
 from montrek.utils import SystemFormatting, get_keycloak_base_url, get_oidc_endpoints
 
@@ -25,7 +28,10 @@ add_filtered_warnings()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-config = Config(RepositoryEnv(BASE_DIR / "../.env"))
+
+# `config` resolves each key from the environment, then from a `NAME_FILE` path
+# or a secret mounted under /run/secrets, then from ../.env -- see
+# montrek/configuration.py and docs/secrets.md.
 
 
 # Quick-start development settings - unsuitable for production
@@ -51,7 +57,70 @@ ALLOWED_HOSTS = [
     f"{PROJECT_NAME}.{DEPLOY_HOST}",
 ]
 USE_X_FORWARDED_HOST = True
+# Only safe because nginx is the sole ingress and always sets this header.
+# Nothing may publish the gunicorn port directly -- a client that can reach it
+# sets its own X-Forwarded-Proto and every check below becomes a no-op.
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# Running under `manage.py test`. The secure-cookie and SSL-redirect settings
+# below would otherwise break the suite: the test client speaks plain HTTP, so
+# secure-only session cookies are never returned and SECURE_SSL_REDIRECT turns
+# every view assertion into a 301.
+TESTING = "test" in sys.argv
+
+# A host that only exists on the local network or the machine itself. Used to
+# decide whether DEBUG=1 is a development convenience or a production mistake.
+_LOCAL_HOST_SUFFIXES = (".lan", ".local", ".localhost", ".internal", ".test")
+
+
+def _is_local_host(host):
+    host = (host or "").strip().lower().strip("[]")
+    if host in ("", "localhost"):
+        return True
+
+    # An address is classified by parsing it, not by its leading characters.
+    # Matching on "10." etc. also matched names like "10.attacker.example",
+    # which is a perfectly routable public hostname -- and that was enough to
+    # wave DEBUG=1 through on an internet-facing deployment.
+    try:
+        address = ipaddress.ip_address(host)
+    except ValueError:
+        pass
+    else:
+        return address.is_private or address.is_loopback or address.is_link_local
+
+    # Not an address, so a name: only the reserved local suffixes and a
+    # single-label hostname (no dot, therefore not publicly resolvable) count.
+    return host.endswith(_LOCAL_HOST_SUFFIXES) or "." not in host
+
+
+# DEBUG=1 renders settings, SQL and local variables on every error page, so on
+# a host that is reachable from outside treat it as a deployment error rather
+# than a warning. MONTREK_ALLOW_DEBUG=1 overrides it deliberately.
+if (
+    DEBUG
+    and not _is_local_host(DEPLOY_HOST)
+    and not config("MONTREK_ALLOW_DEBUG", default=False, cast=bool)
+):
+    raise ImproperlyConfigured(
+        f"DEBUG=1 with DEPLOY_HOST={DEPLOY_HOST!r}, which is not a local "
+        "address. Error pages would expose settings, SQL and local variables. "
+        "Set DEBUG=0, or MONTREK_ALLOW_DEBUG=1 if this is intentional."
+    )
+
+# Transport hardening, applied whenever this is not a development or test run.
+if not DEBUG and not TESTING:
+    SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = "Lax"
+    CSRF_COOKIE_SECURE = True
+    CSRF_COOKIE_SAMESITE = "Lax"
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_REFERRER_POLICY = "same-origin"
 
 # Application definition
 

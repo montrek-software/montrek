@@ -47,6 +47,26 @@ It contains sensitive information and should be handled carefully.
 
 2. Fill in all required configuration values inside `.env`.
 
+3. If you build or push the container image, or run SonarQube scans, copy the
+   build template too:
+
+   ```bash
+   cp .env.build.template .env.build
+   ```
+
+`.env` holds **runtime** configuration and is injected into every application
+container via `env_file:`. `.env.build` holds **build- and CI-time**
+credentials -- the registry access token and the SonarQube token -- and is
+never given to a container. Keeping them apart means an application
+compromise cannot reach into the registry.
+
+Both files are read environment-first: any value already exported wins over
+the file, so CI and containers can be configured without a file at all.
+
+> Set `KEYCLOAK_ADMIN_PASSWORD` and `FLOWER_PASSWORD` rather than letting them
+> fall back to `ADMIN_PASSWORD`. Sharing one password between the Django admin,
+> the Keycloak realm admin and the Flower UI means one leak exposes all three.
+
 ---
 
 ### Generate HTTPS Certificates
@@ -127,6 +147,13 @@ If you want to make adjustments to the .env file, you can do so by running.
 ```
 make secrets-edit-env
 ```
+
+Be aware of what this does and does not protect. The file is plaintext for as
+long as any wrapped command runs, and the stack keeps running long after that,
+so this guards only against reading the file while everything is stopped.
+Anyone with access to the Docker socket can read the same values out of
+`docker inspect` regardless. See `docs/secrets.md` for the threat model and
+the stronger options.
 
 ---
 

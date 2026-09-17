@@ -1,6 +1,57 @@
 include:
   - db_yml/${DB_ENGINE}.yml
   - worker.yml
+
+# Anchors shared by every service built from the montrek image. Each of those
+# starts as root so the entrypoint can install the instance CA, then drops to
+# PUID:PGID via gosu -- so the container needs exactly the two capabilities
+# gosu uses to change uid/gid, and nothing else.
+x-montrek-hardening: &montrek-hardening
+  user: "0:0"
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  cap_add:
+    # SETUID/SETGID: gosu changing uid. CHOWN: giving the dropped-to uid a
+    # writable HOME. Nothing else -- the default set is ~14 capabilities.
+    - SETUID
+    - SETGID
+    - CHOWN
+
+x-montrek-identity: &montrek-identity
+  PUID: ${USER_ID:-}
+  PGID: ${GROUP_ID:-}
+  # Cache/config dirs for the unprivileged uid, which has no passwd entry and
+  # so no home directory. montrek-entrypoint.sh sets these too, but only a
+  # rebuilt image has that entrypoint -- and gosu rewrites HOME while leaving
+  # these alone, so setting them here keeps matplotlib, uv and fontconfig
+  # working against an older image as well. /tmp is world-writable, so the
+  # dirs need no pre-creation.
+  XDG_CACHE_HOME: /tmp/montrek-home/.cache
+  XDG_CONFIG_HOME: /tmp/montrek-home/.config
+  MPLCONFIGDIR: /tmp/montrek-home/.config/matplotlib
+
+# The repo bind mount would otherwise put the plaintext .env, the build-time
+# .env.build and the secrets/ directory inside every app container, which is the
+# most likely thing to be compromised. `env_file:` already injects the runtime
+# values and montrek/configuration.py reads the environment and /run/secrets
+# before the file, so shadowing all three costs nothing. A registry token in an
+# app container turns an application compromise into a supply-chain one, which
+# is why .env.build is shadowed too even though nothing reads it at runtime.
+x-montrek-volumes: &montrek-volumes
+  - .:/montrek
+  - /dev/null:/montrek/.env:ro
+  - /dev/null:/montrek/.env.build:ro
+  - type: tmpfs
+    target: /montrek/secrets
+    tmpfs:
+      # Docker mounts a tmpfs 0700 root:root, which the app user cannot
+      # even list -- and sync-python-env.sh walks /montrek with `find`,
+      # which then fails the whole boot. The intent is an empty
+      # directory, not a forbidden one.
+      mode: 0555
+
 services:
   nginx:
     build: ./nginx
@@ -22,8 +73,8 @@ services:
       - DEPLOY_PORT=${DEPLOY_PORT}
       - DEPLOY_HOST=${DEPLOY_HOST}
       - PROJECT_NAME=${PROJECT_NAME}
-      - ENABLE_KEYCLOAK=${ENABLE_KEYCLOAK}
-      - KEYCLOAK_PORT=${KEYCLOAK_PORT}
+      - ENABLE_KEYCLOAK=${ENABLE_KEYCLOAK:-0}
+      - KEYCLOAK_PORT=${KEYCLOAK_PORT:-8080}
       - FLOWER_PORT=${FLOWER_PORT}
       - SSL_CERT_PATH=${SSL_CERT_PATH:-/etc/tls/fullchain.crt}
       - SSL_KEY_PATH=${SSL_KEY_PATH:-/etc/tls/cert.key}
@@ -33,22 +84,36 @@ services:
       - montrek_network
 
   web:
-    image: ${CONTAINER_REGISTRY:-ghcr.io}/montrek-software/montrek-container:latest
-    user: "0:0"
+    image: ${CONTAINER_REGISTRY:-ghcr.io}/${CONTAINER_NAMESPACE:-montrek-software}/${CONTAINER_IMAGE:-montrek-container}:${CONTAINER_TAG:-latest}
+    <<: *montrek-hardening
     environment:
-      - REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
-      - SERVICE=web
-      - PIUD=${USER_ID}
-      - PGUD=${GROUP_ID}
+      <<: *montrek-identity
+      REQUESTS_CA_BUNDLE: /etc/ssl/certs/ca-certificates.crt
+      SERVICE: web
     volumes:
       - .:/montrek
+      - /dev/null:/montrek/.env:ro
+      # Same shadowing as the x-montrek-volumes anchor above: .env and .env.build
+      # are handed over by env_file:/the build scripts instead, and each service's
+      # own secrets arrive at /run/secrets. An empty tmpfs is needed for the
+      # directory -- /dev/null only shadows a file.
+      - /dev/null:/montrek/.env.build:ro
+      - type: tmpfs
+        target: /montrek/secrets
+        tmpfs:
+          # Docker mounts a tmpfs 0700 root:root, which the app user cannot
+          # even list -- and sync-python-env.sh walks /montrek with `find`,
+          # which then fails the whole boot. The intent is an empty
+          # directory, not a forbidden one.
+          mode: 0555
       - static_volume:/montrek/static
     env_file:
       - .env
+    # Reachable only through nginx. Publishing APP_PORT served gunicorn over
+    # plaintext HTTP alongside the TLS vhost, and let a client set its own
+    # X-Forwarded-Proto past SECURE_PROXY_SSL_HEADER.
     expose:
       - ${APP_PORT}
-    ports:
-      - ${APP_PORT}:${APP_PORT}
     depends_on:
       - db
       - redis
@@ -57,14 +122,12 @@ services:
       - montrek_network
 
   celery_beat:
-    image: ${CONTAINER_REGISTRY:-ghcr.io}/montrek-software/montrek-container:latest
-    user: "0:0"
+    image: ${CONTAINER_REGISTRY:-ghcr.io}/${CONTAINER_NAMESPACE:-montrek-software}/${CONTAINER_IMAGE:-montrek-container}:${CONTAINER_TAG:-latest}
+    <<: *montrek-hardening
     environment:
-      - SERVICE=celery_beat
-      - PIUD=${USER_ID}
-      - PGUD=${GROUP_ID}
-    volumes:
-      - .:/montrek
+      <<: *montrek-identity
+      SERVICE: celery_beat
+    volumes: *montrek-volumes
     env_file:
       - .env
     depends_on:
@@ -86,11 +149,27 @@ services:
 
   flower:
     image: mher/flower:2.0.1
-    command: celery flower -A montrek.celery_app --port=${FLOWER_PORT} --broker={CELERY_BROKER_URL} --basic_auth=admin:${ADMIN_PASSWORD}
-    ports:
-      - ${FLOWER_PORT}:${FLOWER_PORT}
-    env_file:
-      - .env
+    # `celery --broker` is required, not optional: Celery does not read
+    # CELERY_BROKER_URL from the environment. That only works for the Django
+    # app, which maps it via config_from_object(namespace="CELERY"). A bare
+    # Celery() app -- which is what flower runs -- defaults to amqp://localhost,
+    # which is why flower reported 0 workers while the control channel was fine.
+    #
+    # The value is expanded by the container's shell ($$ keeps compose out of
+    # it) rather than interpolated into argv, so `docker inspect` and
+    # `docker compose config` record only the variable name. That matters once
+    # the broker URL carries a password. The basic-auth password stays in the
+    # environment for the same reason.
+    entrypoint: ["sh", "-c"]
+    command: ['exec celery --broker="$$CELERY_BROKER_URL" flower --port="$$FLOWER_PORT"']
+    environment:
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - FLOWER_PORT=${FLOWER_PORT}
+      - FLOWER_BASIC_AUTH=admin:${FLOWER_PASSWORD:-${ADMIN_PASSWORD:-}}
+    # Served by the flower-${PROJECT_NAME} nginx vhost over TLS; no direct
+    # published port.
+    expose:
+      - ${FLOWER_PORT}
     depends_on:
       - web
       - redis
@@ -106,7 +185,7 @@ services:
     environment:
       POSTGRES_DB: keycloak
       POSTGRES_USER: keycloak
-      POSTGRES_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
+      POSTGRES_PASSWORD: ${KEYCLOAK_DB_PASSWORD:-}
     volumes:
       - keycloak_db_data:/var/lib/postgresql/data
     restart: "unless-stopped"
@@ -118,23 +197,26 @@ services:
     image: quay.io/keycloak/keycloak:24.0
     environment:
       KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      # Falls back to ADMIN_PASSWORD so existing installs keep working, but set
+      # KEYCLOAK_ADMIN_PASSWORD: the Django superuser and the Keycloak realm
+      # admin should not share one credential.
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-${ADMIN_PASSWORD:-}}
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
       KC_DB_USERNAME: keycloak
-      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:-}
       KC_PROXY: edge
       KC_HTTP_ENABLED: "true"
       KC_HOSTNAME: auth-${PROJECT_NAME}.${DEPLOY_HOST}
       KC_HOSTNAME_STRICT: "false"
-      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
-      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID}
-      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM:-}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-}
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-}
       PROJECT_NAME: ${PROJECT_NAME}
       DEPLOY_HOST: ${DEPLOY_HOST}
-      ADMIN_EMAIL: ${ADMIN_EMAIL}
-      PRIMARY_COLOR: ${PRIMARY_COLOR}
-      SECONDARY_COLOR: ${SECONDARY_COLOR}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      PRIMARY_COLOR: ${PRIMARY_COLOR:-}
+      SECONDARY_COLOR: ${SECONDARY_COLOR:-}
     volumes:
       - ./keycloak/bin/init-realm.sh:/usr/local/bin/init-realm.sh:ro
       - ./keycloak/themes/montrek:/opt/keycloak/themes/montrek

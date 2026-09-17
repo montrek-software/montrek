@@ -1,18 +1,12 @@
 #!/bin/bash
-# Load variables from .env file
-if [ -f .env ]; then
-	export $(grep -v '^#' .env | xargs)
-else
-	echo ".env file not found!"
-	exit 1
-fi
+# Configuration comes from the environment first and only then from .env, so
+# this works unchanged on the host and inside a container where .env is
+# deliberately shadowed.
+# shellcheck source=../lib/load-env.sh
+. "$(dirname "${BASH_SOURCE[0]}")/../lib/load-env.sh"
+montrek_load_env
 
-# Check if required variables are set
-if [[ -z "$APP_PORT" ]]; then
-	echo "One or more required environment variables are missing in .env:"
-	echo "APP_PORT"
-	exit 1
-fi
+montrek_require_env APP_PORT || exit 1
 
 echo "Environment variables loaded successfully."
 echo "App Port: $APP_PORT"

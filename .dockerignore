@@ -1,2 +1,12 @@
-.git
-.venv
+# Deny everything, then allow only what the Dockerfile actually COPYs.
+#
+# Deliberately an allowlist. The context otherwise included montrek/uploads
+# (customer files) and db_backups (SQL dumps) -- 18GB shipped to the daemon on
+# every build, and one `COPY . .` away from being baked into an image that gets
+# pushed to a registry.
+#
+# If you add a COPY/ADD to the Dockerfile, add a matching `!` line here or the
+# build will fail with "file not found".
+*
+
+!bin/entrypoints/montrek-entrypoint.sh
