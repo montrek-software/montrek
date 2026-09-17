@@ -6,7 +6,7 @@ cannot be re-read under a patched environment.
 """
 
 import os
-from unittest import mock
+from unittest import mock, skipIf
 
 from decouple import UndefinedValueError
 from django.core.exceptions import ImproperlyConfigured
@@ -62,6 +62,21 @@ class TolerantRepositoryEnvTest(ConfigurationTestCase):
 
         self.assertNotIn("SECRET_KEY", repository.data)
 
+    def test_unopenable_env_file_is_an_empty_repository(self):
+        """A path that cannot be opened at all, whatever the uid.
+
+        A directory raises IsADirectoryError for root as well, so this holds in
+        CI -- which runs the suite as root (`--user 0:0` in django.yml) -- as
+        well as on a developer machine.
+        """
+        repository = TolerantRepositoryEnv(self.root)
+
+        self.assertEqual(repository.data, {})
+
+    @skipIf(
+        hasattr(os, "geteuid") and os.geteuid() == 0,
+        "root bypasses the permission bits, so a 0o000 file is still readable",
+    )
     def test_unreadable_env_file_is_an_empty_repository(self):
         self.write_env("SECRET_KEY=from-file\n")
         self.env_file.chmod(0o000)
