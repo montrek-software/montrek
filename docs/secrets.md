@@ -5,34 +5,55 @@ against, and what it does not.
 
 ## Where configuration lives
 
-| File           | Contents                                             | Reaches a container? |
-| -------------- | ---------------------------------------------------- | -------------------- |
-| `.env`         | Runtime config: `SECRET_KEY`, DB, mail, Celery       | Yes, via `env_file:` |
-| `.env.build`   | Registry token (`GIT_PAT`), `SONARCUBE_TOKEN`        | No                   |
-
-Both are loaded by `bin/lib/load-env.sh`, which fills in only the variables
-that are not already set. The environment always wins over the file. This is
-the same precedence `python-decouple` uses in `settings.py`, so the shell
-scripts and Django agree, and it means a container or a CI job can be
-configured entirely through the environment with no file present.
+| File           | Contents                                       | Reaches a container?         |
+| -------------- | ---------------------------------------------- | ---------------------------- |
+| `.env`         | Runtime config: DB name, hosts, mail, Celery   | Yes, via `env_file:`         |
+| `secrets/*`    | One secret per file: passwords, `SECRET_KEY`   | Only where declared, as a file |
+| `.env.build`   | Registry token (`GIT_PAT`), `SONARCUBE_TOKEN`  | No                           |
 
 Anything not needed at runtime belongs in `.env.build`. A registry write token
 in `.env` turns an application compromise into a supply-chain compromise,
 because every app container can read it.
 
+### Resolution order
+
+Every value resolves the same way in Django (`montrek/configuration.py`) and in
+the shell scripts (`montrek_load_secrets` in `bin/lib/load-env.sh`):
+
+```
+environment  >  NAME_FILE  >  /run/secrets/name  >  .env  >  built-in default
+```
+
+The environment winning means a local override or a CI variable still takes
+effect against an install that has secret files mounted. A missing `.env` is not
+an error at any layer: a container is configured through `env_file:` and
+`secrets:` and deliberately has no readable one.
+
+An **empty** secret file counts as unset and falls through to the next source.
+Compose refuses to start when a declared `secrets: file:` source is missing, so
+`make secrets-init` creates a file for every secret in the overlay and leaves
+the ones this install does not use empty.
+
 ## What the containers can and cannot see
 
-The repo is bind-mounted at `/montrek`, which would put the plaintext `.env`
-inside the containers most likely to be compromised. It is therefore shadowed:
+The repo is bind-mounted at `/montrek`, which would put the plaintext `.env`,
+the build-time `.env.build` and the whole of `secrets/` inside the containers
+most likely to be compromised. All three are therefore shadowed:
 
 ```yaml
 volumes:
   - .:/montrek
   - /dev/null:/montrek/.env:ro
+  - /dev/null:/montrek/.env.build:ro
+  - type: tmpfs
+    target: /montrek/secrets
 ```
 
-`env_file:` has already injected the values, so nothing breaks, and
-`/montrek/.env` reads as empty from inside the container.
+`env_file:` has already injected the runtime values and each service's own
+secrets are mounted at `/run/secrets`, so nothing breaks. `/dev/null` only works
+for a file, hence the empty tmpfs for the directory. Scoping secrets per service
+would be pointless if the repo mount handed every container the whole `secrets/`
+directory anyway.
 
 ## Privilege model
 
@@ -90,22 +111,78 @@ It does not cover:
   `encrypt.sh`, where any local user can read it out of `ps`.
 
 Treat it as tidiness, not as a control, and do not let it justify weaker
-handling elsewhere.
+handling elsewhere. The section below removes the second and third of those
+problems for the values that matter; it does not replace the encryption, which
+is what SOPS is for.
+
+## Compose file-based secrets
+
+`make secrets-init` moves each secret out of `.env` into its own file under
+`secrets/`, and `bin/docker/run.sh` then layers `secrets.yml` on top of the
+compose files. Each secret becomes a read-only bind mount at
+`/run/secrets/<name>` in only the services that declare it.
+
+What that buys, over `env_file:`:
+
+- The container config records a **path**, not a value, so `docker inspect` and
+  `docker compose config` no longer hand out the secrets.
+- A secret is no longer inherited by every child process of the entrypoint.
+- Each secret is scoped: `admin_password` reaches `web` and nothing else,
+  `flower_password` reaches `flower` and nothing else.
+
+A secret file is named after the variable it replaces, lowercased --
+`secrets/db_password` provides `DB_PASSWORD` -- so nothing needs per-variable
+wiring and nothing can drift. The list lives in `bin/lib/secrets.sh` and must
+match the `secrets:` block in `secrets.yml`; `init-secrets.sh` checks that on
+every run.
+
+The third-party images cannot follow that rule, so they are wired explicitly
+through the `*_FILE` convention they already support: `POSTGRES_PASSWORD_FILE`
+and `MYSQL_*_PASSWORD_FILE` for `db`, `KC_DB_PASSWORD_FILE` and friends for
+`keycloak` (read by `keycloak/bin/init-realm.sh`, which is the entrypoint).
+Flower has no `*_FILE` support at all, so its basic-auth credential is assembled
+in the shell that already wraps its command -- into that process's environment
+rather than into argv, where `ps` inside the container would show it.
+
+### Migrating
+
+```bash
+make secrets-init      # run as the user that runs `make docker-up`
+make docker-restart
+```
+
+It is idempotent and reversible: a value left in `.env` still wins, so putting
+one back is enough to undo the move for that secret. `run.sh` adds the overlay
+only once every declared file exists, so an install that has not migrated keeps
+running exactly as before.
+
+### File permissions
+
+Compose **ignores** the `uid`, `gid` and `mode` fields of a file secret outside
+swarm -- it warns about it and bind-mounts the host file as it is. So the host
+file's ownership is what the container sees, which is why `init-secrets.sh` must
+run as the user the app containers drop to, and why the secrets read by postgres
+(uid 999), flower and keycloak (uid 1000) are `0644` rather than `0600`.
+
+That costs less than it looks like. The montrek containers run as the host user,
+who *owns* every one of these files, so `0600` would not stop a compromised
+montrek container from reading the ones mounted into it either. The host-side
+gate is the `0700` `secrets/` directory.
+
+### What it still does not do
+
+It does not encrypt anything at rest, and it does not hide anything from root or
+from the `docker` group. For encryption at rest, see below.
 
 ## Stronger options, in increasing order of effort
 
-1. **Compose file-based secrets.** Top-level `secrets:` with `file:`, mounted
-   read-only at `/run/secrets/<name>`, declared per service. Keeps values out
-   of `docker inspect` and out of child process environments, and scopes each
-   secret to the services that need it. Needs a `*_FILE` convention in
-   `settings.py`. Does not encrypt anything at rest.
-2. **SOPS + age** (or `git-crypt`). Encrypts values rather than the whole file,
+1. **SOPS + age** (or `git-crypt`). Encrypts values rather than the whole file,
    so config stays diffable and reviewable in git, with keys in `age` or a KMS
    and decryption at deploy time. This is the proper replacement for
    `make secrets-encrypt`: no argv password, no marker-file state, no plaintext
    window tied to a trap handler. For many customer installs: one encrypted
    file per install, per-install keys.
-3. **A secret manager** (Vault/OpenBao, Infisical, or AWS/GCP/Azure native).
+2. **A secret manager** (Vault/OpenBao, Infisical, or AWS/GCP/Azure native).
    Central rotation, an audit log, short-lived dynamic database credentials and
    per-service policy. Needs an HA service and a trust bootstrap on every host.
    On GCP, Secret Manager plus workload identity is the low-friction version,
@@ -119,6 +196,14 @@ handling elsewhere.
 - `DEBUG=1` with a non-local `DEPLOY_HOST` raises `ImproperlyConfigured` at
   startup rather than serving error pages full of settings and SQL. Override
   with `MONTREK_ALLOW_DEBUG=1` if you really mean it.
+- After `make secrets-init`, check what is left in the container config:
+  `docker compose -f docker-compose.yml -f secrets.yml config | grep -i -e password -e secret_key`
+  should show only `/run/secrets/...` paths.
+- An extension app can add its own secret: put the value in
+  `secrets/<lowercased variable>`, add it to `MONTREK_SECRET_NAMES` in
+  `bin/lib/secrets.sh` and to both blocks in `secrets.yml`. No Python change is
+  needed -- `config("AZURE_CLIENT_SECRET")` finds
+  `/run/secrets/azure_client_secret` on its own.
 - Changes to `bin/entrypoints/montrek-entrypoint.sh` need
   `make git-build-montrek-container`: that one file is `COPY`'d into the image,
   unlike the scripts it calls, which come from the bind mount.
