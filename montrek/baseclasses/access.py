@@ -1,0 +1,134 @@
+"""Per-app access policy for Montrek views.
+
+Montrek's historical default is *open*: a view lets everybody through unless it
+declares its own ``permission_required``.  ``MontrekPermissionRequiredMixin``
+keeps that default, but an app can reverse it for itself by declaring
+
+    class FooConfig(MontrekAppConfig):
+        name = "some.package.foo"
+        default = True
+        access_policy = AccessPolicy.RESTRICTED
+        access_permissions = {
+            AccessKind.VIEW: FooPermissions.CAN_VIEW,
+            AccessKind.CREATE: FooPermissions.CAN_CREATE,
+            AccessKind.UPDATE: FooPermissions.CAN_UPDATE,
+            AccessKind.DELETE: FooPermissions.CAN_DELETE,
+        }
+
+Every view in a restricted app then needs a permission: the one its
+``access_kind`` maps to, unless the view names an explicit
+``permission_required``, which always wins.  Apps that say nothing stay open,
+so adding this module changes nothing for existing apps.
+"""
+
+import logging
+from collections.abc import Mapping
+from dataclasses import dataclass, field
+from enum import Enum
+from functools import cache
+from typing import Protocol
+
+from django.apps import apps
+
+logger = logging.getLogger(__name__)
+
+# Handed out when a restricted app has no permission configured for the access
+# kind a view asks for.  No such permission is ever created in the database, so
+# the request is denied instead of silently waved through - a misconfigured app
+# must not be more permissive than a configured one.  The startup checks report
+# the misconfiguration; this constant only keeps the gate closed until it is
+# fixed.
+UNCONFIGURED_PERMISSION = "montrek.access_policy_not_configured"
+
+
+class AccessPolicy(Enum):
+    """What an app does with a view that declares no permission of its own."""
+
+    OPEN = "open"
+    RESTRICTED = "restricted"
+
+
+class AccessKind(Enum):
+    """The kind of access a view grants, mapped to a permission per app."""
+
+    VIEW = "view"
+    CREATE = "create"
+    UPDATE = "update"
+    DELETE = "delete"
+
+
+class NamespacedPermission(Protocol):
+    """A permission enum member as used across the Montrek apps.
+
+    See e.g. ``RiskContributorPermissions``: ``namespaced_codename`` is the
+    ``"<app_label>.<codename>"`` string ``User.has_perms`` expects.
+    """
+
+    namespaced_codename: str
+
+
+@dataclass(frozen=True)
+class AppAccessPolicy:
+    """The resolved access policy of a single app."""
+
+    policy: AccessPolicy = AccessPolicy.OPEN
+    permissions: Mapping[AccessKind, NamespacedPermission] = field(default_factory=dict)
+    app_label: str = ""
+
+    @property
+    def is_restricted(self) -> bool:
+        return self.policy is AccessPolicy.RESTRICTED
+
+    def permissions_for(self, access_kind: AccessKind) -> tuple[str, ...]:
+        """The permissions a view of ``access_kind`` needs in this app.
+
+        Empty for an open app - that is the historical "everybody may" default.
+        """
+        if not self.is_restricted:
+            return ()
+        permission = self.permissions.get(access_kind)
+        if permission is None:
+            logger.error(
+                "App %r is restricted but configures no permission for access "
+                "kind %r; denying access.",
+                self.app_label,
+                access_kind.value,
+            )
+            return (UNCONFIGURED_PERMISSION,)
+        return (permission.namespaced_codename,)
+
+
+OPEN_POLICY = AppAccessPolicy()
+
+
+@cache
+def resolve_app_policy(module: str) -> AppAccessPolicy:
+    """The access policy of the app ``module`` belongs to.
+
+    ``module`` is a view class' ``__module__``.  Modules outside any installed
+    app - shared base classes, helper packages without an ``apps.py`` - have no
+    app config and therefore stay open.
+    """
+    app_config = apps.get_containing_app_config(module)
+    if app_config is None:
+        return OPEN_POLICY
+    policy = getattr(app_config, "access_policy", AccessPolicy.OPEN)
+    if policy is not AccessPolicy.RESTRICTED:
+        return OPEN_POLICY
+    return AppAccessPolicy(
+        policy=policy,
+        permissions=dict(getattr(app_config, "access_permissions", {})),
+        app_label=app_config.label,
+    )
+
+
+def permissions_for_view(module: str, access_kind: AccessKind) -> tuple[str, ...]:
+    """The default permissions for a view in ``module`` accessed as
+    ``access_kind``."""
+    return resolve_app_policy(module).permissions_for(access_kind)
+
+
+def clear_access_policy_cache() -> None:
+    """Drop the resolution cache.  App configs do not change at runtime, so
+    this is only needed by tests that swap a policy in."""
+    resolve_app_policy.cache_clear()
