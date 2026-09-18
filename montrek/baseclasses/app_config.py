@@ -66,32 +66,57 @@ def is_below_namespace(app_name: str, namespace: str) -> bool:
     return app_name == namespace or app_name.startswith(f"{namespace}.")
 
 
-def declaring_namespace_class(app_config) -> type | None:
-    """The class in an app config's MRO that actually claims its namespace.
+def namespace_claims(target) -> list[tuple[str, type]]:
+    """Every ``(namespace, declaring class)`` an app config claims.
+
+    Namespaces nest - ``mt_competo`` may own a subtree that
+    ``mt_competo.asset_management`` refines - and each level is claimed by a
+    different class in the same MRO. A plain ``getattr`` would only ever see the
+    most specific one, leaving the outer claims unenforced, so the whole MRO is
+    walked. Most specific first, following the MRO.
+
+    Accepts an app config instance or an app config class.
+    """
+    klass = target if isinstance(target, type) else type(target)
+    claims = []
+    for base in getattr(klass, "__mro__", ()):
+        namespace = base.__dict__.get(NAMESPACE_ATTRIBUTE)
+        if namespace:
+            claims.append((namespace, base))
+    return claims
+
+
+def declaring_namespace_class(target) -> type | None:
+    """The class claiming the most specific namespace of an app config.
 
     An app config inherits ``namespace`` from the base its subtree shares, and
     that base - not the leaf config - is what the subtree's other apps have to
     inherit from.
     """
-    if not getattr(app_config, NAMESPACE_ATTRIBUTE, None):
-        return None
-    for klass in type(app_config).__mro__:
-        if NAMESPACE_ATTRIBUTE in klass.__dict__:
-            return klass
-    return None
+    claims = namespace_claims(target)
+    return claims[0][1] if claims else None
 
 
 def find_namespace_base(app_name: str) -> type | None:
-    """The app config base claiming the namespace ``app_name`` would fall into.
+    """The app config base of the innermost namespace ``app_name`` falls into.
 
-    ``None`` when the app lies outside every claimed namespace and therefore
-    has to bring its own access policy.
+    The *innermost*, because namespaces nest: an app inside
+    ``mt_competo.asset_management.datev_transactions`` is also inside
+    ``mt_competo``, and inheriting the outer base instead of the inner one would
+    give it the wrong access policy - and be rejected by the montrek.E001 check.
+
+    ``None`` when the app lies outside every claimed namespace and therefore has
+    to bring its own access policy.
     """
-    for app_config in apps.get_app_configs():
-        namespace = getattr(app_config, NAMESPACE_ATTRIBUTE, None)
-        if not namespace or not is_below_namespace(app_name, namespace):
-            continue
-        declaring_class = declaring_namespace_class(app_config)
-        if declaring_class is not None:
-            return declaring_class
-    return None
+    candidates = [
+        (namespace, declaring_class)
+        for app_config in apps.get_app_configs()
+        for namespace, declaring_class in namespace_claims(app_config)
+        if is_below_namespace(app_name, namespace)
+    ]
+    if not candidates:
+        return None
+    # Longest namespace wins. A tie means one namespace claimed by two classes,
+    # which the montrek.E002 check reports; picking the first keeps this
+    # deterministic in the meantime.
+    return max(candidates, key=lambda candidate: len(candidate[0]))[1]

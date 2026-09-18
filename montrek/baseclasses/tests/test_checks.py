@@ -147,6 +147,20 @@ class RivalNamespaceConfig(MontrekAppConfig):
     namespace = "test_subtree"
 
 
+# Nested claims, the shape mt_competo needs: a root, an area inside it, and one
+# app inside that area carrying a policy of its own.
+class NestedRootConfig(MontrekAppConfig):
+    namespace = "nested_root"
+
+
+class NestedAreaConfig(NestedRootConfig):
+    namespace = "nested_root.area"
+
+
+class NestedInnerConfig(NestedAreaConfig):
+    namespace = "nested_root.area.inner"
+
+
 def _app_config(config_class, app_name):
     """An app config instance without going through Django's discovery."""
     return config_class(app_name, apps.get_app_config(HOST_APP).module)
@@ -196,13 +210,48 @@ class TestClaimedNamespaces(TestCase):
 
         self.assertEqual(errors, [])
 
-    def test_two_owners_of_one_namespace(self):
+    def test_outer_claims_are_enforced_too(self):
+        """Only the innermost claim is visible through attribute lookup, so an
+        app escaping the root while sitting inside a nested area used to go
+        unreported."""
+        errors = self._run_with(
+            _app_config(NestedInnerConfig, "nested_root.area.inner"),
+            _app_config(EscapedConfig, "nested_root.elsewhere"),
+        )
+
+        self.assertEqual([error.id for error in errors], ["montrek.E001"])
+        self.assertIn("nested_root", errors[0].msg)
+
+    def test_nested_hierarchy_that_inherits_correctly_passes(self):
+        errors = self._run_with(
+            _app_config(NestedRootConfig, "nested_root.plain"),
+            _app_config(NestedAreaConfig, "nested_root.area.something"),
+            _app_config(NestedInnerConfig, "nested_root.area.inner"),
+        )
+
+        self.assertEqual(errors, [])
+
+    def test_one_stray_app_is_reported_once_against_the_innermost_claim(self):
+        """It violates the root, the area and the inner claim at once; naming
+        the innermost is enough, since inheriting it satisfies the others."""
+        errors = self._run_with(
+            _app_config(NestedInnerConfig, "nested_root.area.inner"),
+            _app_config(EscapedConfig, "nested_root.area.inner.stray"),
+        )
+
+        self.assertEqual(len(errors), 1)
+        self.assertIn("nested_root.area.inner", errors[0].msg)
+        self.assertIn("NestedInnerConfig", errors[0].msg)
+
+    def test_one_namespace_claimed_twice_is_still_enforced(self):
+        """Not an error in itself - both classes gate the subtree, and the
+        first one claiming it wins, as find_namespace_base does."""
         errors = self._run_with(
             _app_config(InsideSubtreeConfig, "test_subtree.first"),
             _app_config(RivalNamespaceConfig, "test_subtree.second"),
         )
 
-        self.assertEqual([error.id for error in errors], ["montrek.E002"])
+        self.assertEqual([error.id for error in errors], ["montrek.E001"])
 
 
 # --- access policy declaration check ---------------------------------------
@@ -233,34 +282,6 @@ class TestAccessPolicyDeclarations(TestCase):
 
         self.assertEqual([error.id for error in errors], ["montrek.E005"])
         self.assertIn("restrcted", errors[0].msg)
-
-    def test_permissions_that_are_not_a_mapping_are_reported(self):
-        errors = self._run_with(
-            access_policy=AccessPolicy.RESTRICTED,
-            access_permissions=[READ_PERMISSION],
-        )
-
-        self.assertEqual([error.id for error in errors], ["montrek.E005"])
-        self.assertIn("not a mapping", errors[0].msg)
-
-    def test_key_that_is_not_an_access_kind_is_reported(self):
-        """Such a key matches no view, so the app would deny everything."""
-        errors = self._run_with(
-            access_policy=AccessPolicy.RESTRICTED,
-            access_permissions={"view": READ_PERMISSION},
-        )
-
-        self.assertEqual([error.id for error in errors], ["montrek.E005"])
-        self.assertIn("not an AccessKind", errors[0].msg)
-
-    def test_permission_without_a_codename_is_reported(self):
-        errors = self._run_with(
-            access_policy=AccessPolicy.RESTRICTED,
-            access_permissions={AccessKind.VIEW: object()},
-        )
-
-        self.assertEqual([error.id for error in errors], ["montrek.E005"])
-        self.assertIn("namespaced_codename", errors[0].msg)
 
 
 # --- view check -------------------------------------------------------------

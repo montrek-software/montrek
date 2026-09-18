@@ -13,6 +13,7 @@ from enum import Enum
 from uuid import uuid4
 from unittest.mock import patch
 
+from django.apps import apps
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase
@@ -346,3 +347,51 @@ class TestOpenSubtree(StartMontrekAppTestCaseBase):
         self.assertIn("class OpenSubtreeAppConfig(OpenNamespaceBaseConfig):", source)
         self.assertIn("# Access policy: open, inherited from", source)
         self.assertNotIn("access_policy =", source)
+
+
+class TestNestedSubtrees(StartMontrekAppTestCaseBase):
+    """Namespaces nest - mt_competo owns a subtree that asset_management
+    refines, which datev_transactions refines again. The generator has to land
+    on the innermost base; the outer one carries a different access policy and
+    would be rejected by the montrek.E001 check.
+
+    Unlike the classes above this one lets the real find_namespace_base run, so
+    the claims are built to match the directory the app is generated into.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.root_namespace = os.path.dirname(self.output_dir).replace(os.sep, ".")
+        self.area_namespace = self.dotted_output_dir
+        self.root_config = type(
+            "NestedRootConfig",
+            (MontrekAppConfig,),
+            {
+                "namespace": self.root_namespace,
+                "access_policy": AccessPolicy.RESTRICTED,
+            },
+        )
+        self.area_config = type(
+            "NestedAreaConfig", (self.root_config,), {"namespace": self.area_namespace}
+        )
+        module = apps.get_app_config("code_generation").module
+        installed = [
+            self.root_config(f"{self.root_namespace}.outer", module),
+            self.area_config(f"{self.area_namespace}.inner", module),
+        ]
+        patcher = patch.object(apps, "get_app_configs", return_value=installed)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_generated_config_inherits_the_innermost_base(self):
+        app_path = self.call("nested_app", access="restricted")
+
+        source = self.app_config_source(app_path)
+        self.assertIn("class NestedAppConfig(NestedAreaConfig):", source)
+        self.assertNotIn("NestedRootConfig", source)
+
+    def test_generated_config_names_the_innermost_subtree(self):
+        app_path = self.call("nested_app", access="restricted")
+
+        source = self.app_config_source(app_path)
+        self.assertIn(f"owns the {self.area_namespace} subtree", source)

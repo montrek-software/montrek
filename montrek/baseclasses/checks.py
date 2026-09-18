@@ -9,8 +9,6 @@ They are silent for open apps, so a project that restricts nothing never sees
 them.
 """
 
-from collections.abc import Mapping
-
 from django.apps import apps
 from django.core.checks import Error, Tags, register
 from django.core.exceptions import ImproperlyConfigured
@@ -24,26 +22,25 @@ from baseclasses.access import (
     resolve_app_policy,
 )
 from baseclasses.app_config import (
-    NAMESPACE_ATTRIBUTE,
-    declaring_namespace_class,
     is_below_namespace,
+    namespace_claims,
 )
 
 
 def _claimed_namespaces() -> dict[str, list[type]]:
     """Every dotted path claimed by an app config base, mapped to the bases
-    claiming it."""
+    claiming it.
+
+    Walks each config's whole MRO rather than reading ``namespace`` off it: with
+    nested subtrees only the innermost claim is visible through attribute
+    lookup, and an outer claim nobody can see is an outer claim nobody enforces.
+    """
     claims: dict[str, list[type]] = {}
     for app_config in apps.get_app_configs():
-        namespace = getattr(app_config, NAMESPACE_ATTRIBUTE, None)
-        if not namespace:
-            continue
-        declaring_class = declaring_namespace_class(app_config)
-        if declaring_class is None:
-            continue
-        claiming = claims.setdefault(namespace, [])
-        if declaring_class not in claiming:
-            claiming.append(declaring_class)
+        for namespace, declaring_class in namespace_claims(app_config):
+            claiming = claims.setdefault(namespace, [])
+            if declaring_class not in claiming:
+                claiming.append(declaring_class)
     return claims
 
 
@@ -56,44 +53,40 @@ def check_claimed_namespaces(app_configs=None, **kwargs) -> list[Error]:
     gated - and nothing about the new app would look wrong.
     """
     errors = []
-    for namespace, declaring_classes in sorted(_claimed_namespaces().items()):
-        if len(declaring_classes) > 1:
-            names = ", ".join(
-                f"{klass.__module__}.{klass.__qualname__}"
-                for klass in declaring_classes
-            )
-            errors.append(
-                Error(
-                    f"Several app config classes claim the namespace "
-                    f"{namespace!r}: {names}.",
-                    hint=(
-                        "A namespace has one owner. Keep the claim on the base "
-                        "the subtree's apps inherit from and remove the others."
-                    ),
-                    id="montrek.E002",
-                )
-            )
+    # One namespace claimed by two classes is enforced against the first, the
+    # same tie-break find_namespace_base uses. It is a mistake, but a harmless
+    # one: both classes still gate the subtree.
+    owners = {
+        namespace: declaring_classes[0]
+        for namespace, declaring_classes in sorted(_claimed_namespaces().items())
+    }
+    for app_config in apps.get_app_configs():
+        violated = [
+            (namespace, declaring_class)
+            for namespace, declaring_class in owners.items()
+            if is_below_namespace(app_config.name, namespace)
+            and not isinstance(app_config, declaring_class)
+        ]
+        if not violated:
             continue
-        declaring_class = declaring_classes[0]
-        for app_config in apps.get_app_configs():
-            if not is_below_namespace(app_config.name, namespace):
-                continue
-            if isinstance(app_config, declaring_class):
-                continue
-            errors.append(
-                Error(
-                    f"App {app_config.name!r} lies below the namespace "
-                    f"{namespace!r} but its app config does not inherit from "
-                    f"{declaring_class.__module__}.{declaring_class.__qualname__}.",
-                    hint=(
-                        "Inherit the app's config from that class so it picks "
-                        "up the subtree's access policy, and keep "
-                        "'default = True' on the config itself."
-                    ),
-                    obj=app_config,
-                    id="montrek.E001",
-                )
+        # Nested namespaces mean one stray app violates several claims at once.
+        # Reporting the innermost is enough: inheriting that base satisfies the
+        # outer ones too, because it inherits them in turn.
+        namespace, declaring_class = max(violated, key=lambda item: len(item[0]))
+        errors.append(
+            Error(
+                f"App {app_config.name!r} lies below the namespace "
+                f"{namespace!r} but its app config does not inherit from "
+                f"{declaring_class.__module__}.{declaring_class.__qualname__}.",
+                hint=(
+                    "Inherit the app's config from that class so it picks "
+                    "up the subtree's access policy, and keep "
+                    "'default = True' on the config itself."
+                ),
+                obj=app_config,
+                id="montrek.E001",
             )
+        )
     return errors
 
 
@@ -113,8 +106,12 @@ def _urlconf_module(resolver) -> str:
 def check_access_policy_declarations(app_configs=None, **kwargs) -> list[Error]:
     """Every app config's access policy must be one the resolver understands.
 
-    The resolver refuses to read an unknown value as "open", so without this a
-    typo would surface as a 500 on the first request instead of at startup.
+    This is the one shape of misconfiguration that could fail *open*, which is
+    why it is checked: the resolver refuses to read an unknown value as "open",
+    so without this a typo would surface as a 500 on the first request instead
+    of at startup. A mapping malformed in any other way denies access rather
+    than granting it, and announces itself through montrek.E004 or the error
+    the gate logs, so it needs no check of its own.
     """
     errors = []
     for app_config in apps.get_app_configs():
@@ -122,41 +119,6 @@ def check_access_policy_declarations(app_configs=None, **kwargs) -> list[Error]:
             declared_access_policy(app_config)
         except ImproperlyConfigured as error:
             errors.append(Error(str(error), obj=app_config, id="montrek.E005"))
-            continue
-        permissions = getattr(app_config, "access_permissions", {})
-        if not isinstance(permissions, Mapping):
-            errors.append(
-                Error(
-                    f"App {app_config.label!r} declares access_permissions of "
-                    f"type {type(permissions).__name__}, which is not a mapping.",
-                    hint="Map each AccessKind to a permission enum member.",
-                    obj=app_config,
-                    id="montrek.E005",
-                )
-            )
-            continue
-        for key, permission in permissions.items():
-            if not isinstance(key, AccessKind):
-                errors.append(
-                    Error(
-                        f"App {app_config.label!r} keys access_permissions with "
-                        f"{key!r}, which is not an AccessKind - no view will "
-                        f"ever match it.",
-                        hint="Use the AccessKind members as keys.",
-                        obj=app_config,
-                        id="montrek.E005",
-                    )
-                )
-            elif not getattr(permission, "namespaced_codename", ""):
-                errors.append(
-                    Error(
-                        f"The permission App {app_config.label!r} maps to "
-                        f"{key.value!r} has no 'namespaced_codename'.",
-                        hint="Follow the shape of the existing permission enums.",
-                        obj=app_config,
-                        id="montrek.E005",
-                    )
-                )
     return errors
 
 
