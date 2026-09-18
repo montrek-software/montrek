@@ -10,6 +10,7 @@ import io
 import os
 import shutil
 from enum import Enum
+from uuid import uuid4
 from unittest.mock import patch
 
 from django.core.management import call_command
@@ -84,12 +85,20 @@ class OpenNamespaceBaseConfig(MontrekAppConfig):
 class StartMontrekAppTestCaseBase(TestCase):
     def setUp(self):
         self.maxDiff = None
-        self.output_dir = os.path.relpath(get_test_file_path("start_app_output"))
-        shutil.rmtree(self.output_dir, ignore_errors=True)
+        # A directory of its own per test. The suite runs under --parallel,
+        # which spreads test classes over processes; a shared output directory
+        # would have one class' setUp delete the app another class had just
+        # generated, in a different process.
+        unique = f"{type(self).__name__}_{uuid4().hex[:8]}"
+        self.output_dir = os.path.relpath(get_test_file_path(f"start_app_{unique}"))
         os.makedirs(self.output_dir, exist_ok=True)
         self.addCleanup(shutil.rmtree, self.output_dir, ignore_errors=True)
 
     def call(self, app_name, **options):
+        # startapp creates the app in the working directory before the command
+        # moves it, so a failure part way through would leave it behind for the
+        # next test in this class to trip over.
+        self.addCleanup(shutil.rmtree, app_name, ignore_errors=True)
         with patch("sys.stdout", new_callable=io.StringIO):
             call_command("start_montrek_app", app_name, path=self.output_dir, **options)
         return os.path.join(self.output_dir, app_name)
@@ -326,14 +335,14 @@ class TestOpenSubtree(StartMontrekAppTestCaseBase):
 
     def test_restricted_inside_an_open_subtree_is_refused(self):
         with self.assertRaises(CommandError) as ctx:
-            self.call("subtree_app", access="restricted")
+            self.call("open_subtree_app", access="restricted")
 
         self.assertIn("--access open", str(ctx.exception))
 
     def test_open_inside_an_open_subtree_inherits_the_base(self):
-        app_path = self.call("subtree_app", access="open")
+        app_path = self.call("open_subtree_app", access="open")
 
         source = self.app_config_source(app_path)
-        self.assertIn("class SubtreeAppConfig(OpenNamespaceBaseConfig):", source)
+        self.assertIn("class OpenSubtreeAppConfig(OpenNamespaceBaseConfig):", source)
         self.assertIn("# Access policy: open, inherited from", source)
         self.assertNotIn("access_policy =", source)
