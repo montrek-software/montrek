@@ -1,5 +1,5 @@
-from django.shortcuts import redirect
 from django.urls import path
+{{ registry_nav_view_cls_import }}
 {{ registry_list_view_cls_import }}
 {{ registry_upload_file_view_cls_import }}
 {{ registry_download_view_cls_import }}
@@ -8,7 +8,9 @@ from django.urls import path
 urlpatterns = [
     path(
         "{{ prefix }}_registry",
-        lambda _: redirect("{{ registry_list_view_url_name }}"),
+        {{ registry_nav_view_cls_name }}.as_view(
+            pattern_name="{{ registry_list_view_url_name }}"
+        ),
         name="{{ prefix }}_registry",
     ),
     path(
