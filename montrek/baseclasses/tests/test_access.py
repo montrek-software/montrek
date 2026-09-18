@@ -20,6 +20,7 @@ from baseclasses.access import (
     AccessPolicy,
     AppAccessPolicy,
     clear_access_policy_cache,
+    declared_access_permissions,
     declared_access_policy,
     permissions_for_view,
     resolve_app_policy,
@@ -321,3 +322,83 @@ class TestAppAccessPolicyDefaults(TestCase):
         policy = AppAccessPolicy(policy=AccessPolicy.OPEN, permissions=FULL_PERMISSIONS)
 
         self.assertEqual(policy.permissions_for(AccessKind.DELETE), ())
+
+
+class TestMalformedPermissionsDenyRatherThanRaise(TestCase):
+    """A misconfigured app must close the gate, not raise.
+
+    Raising would reach the user as a 500, and - worse - would abort the startup
+    checks part way through, since they resolve permissions through the same
+    code to report the misconfiguration.
+    """
+
+    def _app_config(self, access_permissions):
+        return type(
+            "StubAppConfig",
+            (),
+            {"label": "stub_app", "access_permissions": access_permissions},
+        )()
+
+    def _policy(self, access_permissions):
+        return AppAccessPolicy(
+            policy=AccessPolicy.RESTRICTED,
+            permissions=declared_access_permissions(
+                self._app_config(access_permissions)
+            ),
+            app_label="stub_app",
+        )
+
+    def test_permissions_that_cannot_become_a_mapping_deny(self):
+        for description, declared in (
+            ("a list of non-pairs", [object()]),
+            ("a string", "restricted"),
+            ("an integer", 7),
+        ):
+            with self.subTest(description):
+                with self.assertLogs("baseclasses.access", level="ERROR"):
+                    policy = self._policy(declared)
+                    permissions = policy.permissions_for(AccessKind.VIEW)
+
+                self.assertEqual(permissions, (UNCONFIGURED_PERMISSION,))
+
+    def test_a_mapping_given_as_pairs_is_accepted(self):
+        policy = self._policy([(AccessKind.VIEW, AccessTestPermissions.CAN_VIEW)])
+
+        self.assertEqual(
+            policy.permissions_for(AccessKind.VIEW),
+            (AccessTestPermissions.CAN_VIEW.namespaced_codename,),
+        )
+
+    def test_permission_without_a_namespaced_codename_denies(self):
+        policy = self._policy({AccessKind.VIEW: object()})
+
+        with self.assertLogs("baseclasses.access", level="ERROR"):
+            permissions = policy.permissions_for(AccessKind.VIEW)
+
+        self.assertEqual(permissions, (UNCONFIGURED_PERMISSION,))
+
+    def test_permission_with_an_empty_codename_denies(self):
+        blank = type("Blank", (), {"namespaced_codename": ""})()
+        policy = self._policy({AccessKind.VIEW: blank})
+
+        with self.assertLogs("baseclasses.access", level="ERROR"):
+            permissions = policy.permissions_for(AccessKind.VIEW)
+
+        self.assertEqual(permissions, (UNCONFIGURED_PERMISSION,))
+
+
+class TestStartupChecksSurviveAMalformedApp(RestrictedAppTestCaseMixin, TestCase):
+    """The checks must report a malformed app, not die on it."""
+
+    access_permissions = [object()]
+
+    def test_view_check_reports_instead_of_raising(self):
+        from baseclasses.checks import check_restricted_app_views
+
+        with self.assertLogs("baseclasses.access", level="ERROR"):
+            errors = check_restricted_app_views()
+
+        # The gated views resolve to the unobtainable permission, which is what
+        # E004 reports. That the call returned at all is the point: before the
+        # resolver was made to fail closed it raised here.
+        self.assertIn("montrek.E004", {error.id for error in errors})

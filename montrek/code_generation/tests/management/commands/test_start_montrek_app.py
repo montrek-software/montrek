@@ -13,6 +13,7 @@ from enum import Enum
 from uuid import uuid4
 from unittest.mock import patch
 
+from django.apps import apps
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase
@@ -26,7 +27,8 @@ class StartAppTestPermissions(Enum):
     """Shaped like the permission enums an app declares.
 
     Defined here rather than borrowed from an extension repository: the montrek
-    base has to build on its own, so its tests cannot reach into mt_competo.
+    base has to build on its own, so its tests cannot reach into an
+    extension repository.
     """
 
     CAN_VIEW = "Kann Testdaten sehen"
@@ -346,3 +348,87 @@ class TestOpenSubtree(StartMontrekAppTestCaseBase):
         self.assertIn("class OpenSubtreeAppConfig(OpenNamespaceBaseConfig):", source)
         self.assertIn("# Access policy: open, inherited from", source)
         self.assertNotIn("access_policy =", source)
+
+
+class TestNestedSubtrees(StartMontrekAppTestCaseBase):
+    """Namespaces nest - a package owns a subtree that one of its areas
+    refines, which a single app inside it refines again. The generator has to
+    land on the innermost base; an outer one carries a different access policy
+    and would be rejected by the montrek.E001 check.
+
+    Unlike the classes above this one lets the real find_namespace_base run, so
+    the claims are built to match the directory the app is generated into.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.root_namespace = os.path.dirname(self.output_dir).replace(os.sep, ".")
+        self.area_namespace = self.dotted_output_dir
+        # The two levels disagree on purpose. Picking the outer base would not
+        # merely name the wrong class, it would contradict '--access restricted'
+        # and be refused - so the assertions below cannot pass by accident.
+        self.root_config = self._register(
+            "NestedRootConfig",
+            (MontrekAppConfig,),
+            namespace=self.root_namespace,
+            access_policy=AccessPolicy.OPEN,
+        )
+        self.area_config = self._register(
+            "NestedAreaConfig",
+            (self.root_config,),
+            namespace=self.area_namespace,
+            access_policy=AccessPolicy.RESTRICTED,
+        )
+        module = apps.get_app_config("code_generation").module
+        installed = [
+            self.root_config(f"{self.root_namespace}.outer", module),
+            self.area_config(f"{self.area_namespace}.inner", module),
+        ]
+        patcher = patch.object(apps, "get_app_configs", return_value=installed)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def _register(self, name, bases, **attributes) -> type:
+        """Build a config class and bind it in this module under its own name.
+
+        The namespaces have to match the per-test output directory, so the
+        classes cannot be written out at module level. Binding them here anyway
+        is what makes the generated apps.py importable: it carries
+        ``from <this module> import <name>``, which only resolves if the name is
+        actually an attribute of the module.
+        """
+        config_class = type(name, bases, dict(attributes))
+        globals()[name] = config_class
+        self.addCleanup(globals().pop, name, None)
+        return config_class
+
+    def test_generated_config_inherits_the_innermost_base(self):
+        app_path = self.call("nested_app", access="restricted")
+
+        source = self.app_config_source(app_path)
+        self.assertIn("class NestedAppConfig(NestedAreaConfig):", source)
+        self.assertNotIn("NestedRootConfig", source)
+
+    def test_generated_config_names_the_innermost_subtree(self):
+        app_path = self.call("nested_app", access="restricted")
+
+        source = self.app_config_source(app_path)
+        self.assertIn(f"owns the {self.area_namespace} subtree", source)
+
+    def test_generated_config_imports_and_carries_the_inner_policy(self):
+        """Source text alone would not show that the import the template wrote
+        resolves, nor that the inherited policy is the inner one."""
+        app_path = self.call("nested_app", access="restricted")
+
+        config_class = self.import_app_config(app_path, "NestedAppConfig")
+
+        self.assertTrue(issubclass(config_class, self.area_config))
+        self.assertIs(config_class.access_policy, AccessPolicy.RESTRICTED)
+        self.assertEqual(config_class.namespace, self.area_namespace)
+
+    def test_asking_for_the_outer_policy_is_refused(self):
+        """The innermost subtree owns the policy, and it is restricted."""
+        with self.assertRaises(CommandError) as ctx:
+            self.call("nested_app", access="open")
+
+        self.assertIn("--access restricted", str(ctx.exception))
