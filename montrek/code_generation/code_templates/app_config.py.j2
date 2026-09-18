@@ -1,0 +1,35 @@
+{% if namespace_base_cls_name -%}
+from {{ namespace_base_module }} import {{ namespace_base_cls_name }}
+{%- else -%}
+{% if is_restricted -%}
+from baseclasses.access import AccessKind, AccessPolicy
+{%- else -%}
+from baseclasses.access import AccessPolicy
+{%- endif %}
+from baseclasses.app_config import MontrekAppConfig
+{%- if is_restricted %}
+
+from {{ permissions_module }} import {{ permissions_cls_name }}
+{%- endif %}
+{%- endif %}
+
+{% if namespace_base_cls_name %}
+# Access policy: {{ subtree_policy }}, inherited from
+# {{ namespace_base_cls_name }}, which owns the {{ namespace }} subtree.
+{%- endif %}
+class {{ config_cls_name }}({{ base_cls_name }}):
+    # Django skips an app config that inherits 'default = False' from
+    # MontrekAppConfig, so this has to be declared here.
+    default = True
+    name = "{{ app_dotted_path }}"
+{%- if not namespace_base_cls_name %}
+    access_policy = AccessPolicy.{{ "RESTRICTED" if is_restricted else "OPEN" }}
+{%- endif %}
+{%- if is_restricted and not namespace_base_cls_name %}
+    access_permissions = {
+        AccessKind.VIEW: {{ permissions_cls_name }}.CAN_VIEW,
+        AccessKind.CREATE: {{ permissions_cls_name }}.CAN_CREATE,
+        AccessKind.UPDATE: {{ permissions_cls_name }}.CAN_UPDATE,
+        AccessKind.DELETE: {{ permissions_cls_name }}.CAN_DELETE,
+    }
+{%- endif %}

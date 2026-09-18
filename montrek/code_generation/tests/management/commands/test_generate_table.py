@@ -101,18 +101,23 @@ class TestStartMontrekAppCommand(TestCase):
         output_dir = os.path.relpath(get_test_file_path("output_start_app"))
         os.makedirs(output_dir, exist_ok=True)
         with patch("sys.stdout", new_callable=io.StringIO):
-            call_command("start_montrek_app", self.new_app_name, path=output_dir)
+            call_command(
+                "start_montrek_app",
+                self.new_app_name,
+                path=output_dir,
+                access="open",
+            )
         self._test_app_assertions(os.path.join(output_dir, self.new_app_name))
         with open(os.path.join(output_dir, self.new_app_name, "apps.py")) as f:
             search_str = (
-                f"name = '{output_dir.replace(os.sep, '.')}.{self.new_app_name}'"
+                f'name = "{output_dir.replace(os.sep, ".")}.{self.new_app_name}"'
             )
             self.assertIn(search_str, f.read())
         shutil.rmtree(output_dir)
 
     def test_startmontrekapp__wo_path(self):
         with patch("sys.stdout", new_callable=io.StringIO):
-            call_command("start_montrek_app", self.new_app_name)
+            call_command("start_montrek_app", self.new_app_name, access="open")
         self._test_app_assertions(self.new_app_name)
         shutil.rmtree(self.new_app_name)
 

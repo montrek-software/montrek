@@ -4,6 +4,7 @@ from pathlib import Path
 
 from django.contrib.auth.decorators import login_required
 
+from baseclasses.access import AccessKind
 from baseclasses.forms import MontrekCreateForm
 from baseclasses.sanitizer import HtmlSanitizer
 from baseclasses.views import (
@@ -109,6 +110,7 @@ class MontrekReportView(
 class MontrekReportFieldEditView(
     MontrekPermissionRequiredMixin, View, MontrekViewMixin
 ):
+    access_kind = AccessKind.UPDATE
     form_class = MontrekCreateForm
     html_sanitizer = HtmlSanitizer()
 

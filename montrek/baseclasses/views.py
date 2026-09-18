@@ -46,6 +46,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from baseclasses import utils
+from baseclasses.access import AccessKind, permissions_for_view
 from baseclasses.dataclasses.montrek_message import MontrekMessageError
 from baseclasses.dataclasses.view_classes import ActionElement
 from baseclasses.forms import DateRangeForm, FilterForm, MontrekCreateForm
@@ -205,7 +206,28 @@ class MontrekViewMixin:
 
 
 class MontrekPermissionRequiredMixin(PermissionRequiredMixin):
-    permission_required = []
+    """Permission gate of every Montrek view.
+
+    An explicit ``permission_required`` always wins. Without one the gate falls
+    back to the policy of the app the concrete view class lives in: open apps
+    (the default, and every app that says nothing) let everybody through as
+    before, restricted apps require the permission their ``access_permissions``
+    maps ``access_kind`` to. See ``baseclasses.access``.
+    """
+
+    permission_required: list[str] = []
+    # Deliberately the weakest kind: a view that forgets to declare one is far
+    # more likely to be a read view, and the write bases below all set their
+    # own. ``MontrekCreateUpdateView`` sets UPDATE so that a subclass of it
+    # cannot end up on a read permission by accident.
+    access_kind: AccessKind = AccessKind.VIEW
+
+    def get_permission_required(self) -> tuple[str, ...]:
+        if self.permission_required:
+            # Normalised to a tuple so that the method has one return type
+            # whichever branch produced the permissions.
+            return tuple(super().get_permission_required())
+        return permissions_for_view(type(self).__module__, self.access_kind)
 
     def handle_no_permission(self):
         # handled by PermissionErrorMiddleware
@@ -492,10 +514,20 @@ class MontrekListView(
         self.request.session[field][request_path] = [val]
         return HttpResponseRedirect(self.request.path)
 
+    def get_simple_file_upload_permission(self) -> tuple[str, ...]:
+        """Permissions the simple file upload needs.
+
+        The upload writes, while the list view around it only reads, so
+        in a restricted app it falls back to the app's CREATE permission
+        rather than to the list view's own (read) gate.
+        """
+        if self.simple_file_upload_permission:
+            return tuple(self.simple_file_upload_permission)
+        return permissions_for_view(type(self).__module__, AccessKind.CREATE)
+
     def post(self, request, *args, **kwargs):
-        if self.simple_file_upload_permission and not request.user.has_perms(
-            self.simple_file_upload_permission
-        ):
+        upload_permission = self.get_simple_file_upload_permission()
+        if upload_permission and not request.user.has_perms(upload_permission):
             raise PermissionDenied
         form = SimpleUploadFileForm(".xlsx,.csv", request.POST, request.FILES)
         if form.is_valid():
@@ -706,6 +738,7 @@ class MontrekCreateUpdateView(
     MontrekPageViewMixin,
     MontrekViewMixin,
 ):
+    access_kind = AccessKind.UPDATE
     manager_class = MontrekManagerNotImplemented
     form_class = MontrekCreateForm
     is_compact_form: bool = False
@@ -782,6 +815,8 @@ class MontrekCreateUpdateView(
 
 
 class MontrekCreateView(MontrekCreateUpdateView):
+    access_kind = AccessKind.CREATE
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["tag"] = "Create"
@@ -789,6 +824,7 @@ class MontrekCreateView(MontrekCreateUpdateView):
 
 
 class MontrekUpdateView(MontrekCreateUpdateView):
+    access_kind = AccessKind.UPDATE
     go_to_details: bool = False
 
     def _get_initial(self) -> dict:
@@ -849,6 +885,7 @@ class MontrekDeleteView(
     MontrekViewMixin,
     MontrekPageViewMixin,
 ):
+    access_kind = AccessKind.DELETE
     manager_class = MontrekManagerNotImplemented
     success_url = "under_construction"
     do_return_to_referer: bool = False
@@ -861,7 +898,17 @@ class MontrekDeleteView(
         return HttpResponseRedirect(self.get_success_url())
 
 
-class MontrekRestApiView(MontrekApiViewMixin, MontrekViewMixin):
+class MontrekRestApiView(
+    MontrekApiViewMixin, MontrekPermissionRequiredMixin, MontrekViewMixin
+):
+    """Read-only JSON endpoint.
+
+    Carries ``MontrekPermissionRequiredMixin`` so that
+    ``MontrekApiViewMixin.initial`` enforces the Django permission after
+    JWT authentication - without it the isinstance check there is False
+    and any authenticated token would be enough.
+    """
+
     manager_class = MontrekManagerNotImplemented
 
     @classmethod
@@ -883,6 +930,18 @@ class MontrekRestApiView(MontrekApiViewMixin, MontrekViewMixin):
 class MontrekRedirectView(
     MontrekPermissionRequiredMixin, MontrekViewMixin, RedirectView
 ):
+    """Redirect after doing work in ``get_redirect_url``.
+
+    Counted as a write. ``get_redirect_url`` is the override point subclasses
+    use to change state before redirecting - ``RevokeFileUploadTask`` kills a
+    task and writes a registry record there, ``ProcessPipelineViewABC`` runs a
+    pipeline - and every subclass in the project mutates something. A purely
+    navigational redirect in a restricted app can say so with
+    ``access_kind = AccessKind.VIEW``; that way the declaration is what opens
+    the view up, rather than the default quietly doing it.
+    """
+
+    access_kind = AccessKind.UPDATE
     manager_class = MontrekManagerNotImplemented
 
     def get_redirect_url(self, *args, **kwargs) -> str:
@@ -974,6 +1033,7 @@ class MontrekPostActionView(MontrekRedirectView):
     Subclasses implement ``run_action`` and ``get_redirect_url``.
     """
 
+    access_kind = AccessKind.UPDATE
     http_method_names = ["post"]
 
     def run_action(self) -> None:
@@ -1048,6 +1108,7 @@ class MontrekInlineFieldEditView(
     value.
     """
 
+    access_kind = AccessKind.UPDATE
     form_class = MontrekCreateForm
     field_name: str = ""
     template_name = "tables/partials/inline_edit_row.html"
