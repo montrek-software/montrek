@@ -12,7 +12,7 @@ from django.apps import apps
 from django.core.checks import registry
 from django.http import HttpResponse
 from django.test import TestCase, override_settings
-from django.urls import path
+from django.urls import include, path
 
 from baseclasses.access import (
     AccessKind,
@@ -53,6 +53,20 @@ class ExplicitlyGatedListView(MontrekListView):
     permission_required = ["some_app.explicit_permission"]
 
 
+class OutsideAppListView(MontrekListView):
+    """A view class living outside any app - as the classes in a ``utils/`` or
+    ``user_groups/`` package do, since those carry no ``apps.py``."""
+
+    __module__ = "some.helper.package"
+
+
+class OutsideAppExplicitListView(MontrekListView):
+    """Same, but carrying its own permission, which is the documented fix."""
+
+    __module__ = "some.helper.package"
+    permission_required = ["some_app.explicit_permission"]
+
+
 def ungated_function_view(request):
     return HttpResponse("no gate at all")
 
@@ -69,6 +83,21 @@ urlpatterns = [
 
 FUNCTION_VIEW_URLPATTERNS = urlpatterns + [
     path("ungated/", ungated_function_view, name="test_ungated"),
+]
+
+# Views whose class lives outside the app routing them.
+OUTSIDE_APP_URLPATTERNS = [
+    path("outside/", OutsideAppListView.as_view(), name="test_outside"),
+    path(
+        "outside-explicit/",
+        OutsideAppExplicitListView.as_view(),
+        name="test_outside_explicit",
+    ),
+]
+
+# The routing module of a plain ``include([...])`` is the one of its parent.
+NESTED_URLPATTERNS = [
+    path("nested/", include(OUTSIDE_APP_URLPATTERNS)),
 ]
 
 
@@ -234,6 +263,36 @@ class TestUngatedFunctionView(RestrictHostAppMixin, TestCase):
         self.assertIn("ungated_function_view", errors[0].obj)
 
 
+class TestViewClassOutsideTheRoutingApp(RestrictHostAppMixin, TestCase):
+    """The gate resolves the policy from the view class' module, so a class
+    routed from a restricted app but defined outside it is ungated."""
+
+    def _check_with(self, urlpatterns_):
+        with (
+            override_settings(ROOT_URLCONF=__name__),
+            mock.patch(f"{__name__}.urlpatterns", urlpatterns_),
+        ):
+            return check_restricted_app_views()
+
+    def test_foreign_view_class_is_reported(self):
+        errors = self._check_with(OUTSIDE_APP_URLPATTERNS)
+
+        self.assertEqual([error.id for error in errors], ["montrek.E003"])
+        self.assertIn("OutsideAppListView", errors[0].obj)
+        self.assertIn(__name__, errors[0].msg)
+
+    def test_foreign_view_class_with_its_own_permission_passes(self):
+        errors = self._check_with([OUTSIDE_APP_URLPATTERNS[1]])
+
+        self.assertEqual(errors, [])
+
+    def test_routing_module_is_inherited_through_a_plain_include(self):
+        errors = self._check_with(NESTED_URLPATTERNS)
+
+        self.assertEqual([error.id for error in errors], ["montrek.E003"])
+        self.assertIn("OutsideAppListView", errors[0].obj)
+
+
 @override_settings(ROOT_URLCONF=__name__)
 class TestOpenAppViews(TestCase):
     def setUp(self):
@@ -244,6 +303,10 @@ class TestOpenAppViews(TestCase):
     def test_open_app_reports_nothing(self):
         """Including the ungated function view - that is the old default."""
         with mock.patch(f"{__name__}.urlpatterns", FUNCTION_VIEW_URLPATTERNS):
+            self.assertEqual(check_restricted_app_views(), [])
+
+    def test_open_app_routing_a_foreign_view_class_reports_nothing(self):
+        with mock.patch(f"{__name__}.urlpatterns", OUTSIDE_APP_URLPATTERNS):
             self.assertEqual(check_restricted_app_views(), [])
 
 

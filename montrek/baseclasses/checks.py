@@ -106,9 +106,23 @@ def check_claimed_namespaces(app_configs=None, **kwargs) -> list[Error]:
     return errors
 
 
-def _iter_url_patterns(resolver=None):
-    """Every ``URLPattern`` reachable from the root URLconf."""
+def _urlconf_module(resolver) -> str:
+    """Dotted name of the module a resolver's patterns were included from.
+
+    ``include()`` accepts a bare list of patterns as well as a module; such a
+    resolver has no module of its own and inherits the one of its parent.
+    """
+    urlconf_name = getattr(resolver, "urlconf_name", None)
+    if isinstance(urlconf_name, str):
+        return urlconf_name
+    return getattr(urlconf_name, "__name__", "")
+
+
+def _iter_url_patterns(resolver=None, urlconf_module=""):
+    """Every ``URLPattern`` reachable from the root URLconf, paired with the
+    module it was routed from."""
     resolver = resolver or get_resolver()
+    module = _urlconf_module(resolver) or urlconf_module
     try:
         url_patterns = resolver.url_patterns
     except Exception:
@@ -116,16 +130,17 @@ def _iter_url_patterns(resolver=None):
         return
     for pattern in url_patterns:
         if isinstance(pattern, URLResolver):
-            yield from _iter_url_patterns(pattern)
+            yield from _iter_url_patterns(pattern, module)
         elif isinstance(pattern, URLPattern):
-            yield pattern
+            yield pattern, module
 
 
 def _effective_permissions(view_class: type) -> tuple[str, ...]:
     """What the gate would require, resolved from class attributes only.
 
     Mirrors ``MontrekPermissionRequiredMixin.get_permission_required`` without
-    instantiating the view.
+    instantiating the view - including the fact that it resolves the policy
+    from the view class' own module, not from wherever the view is routed.
     """
     permission_required = getattr(view_class, "permission_required", None)
     if permission_required:
@@ -136,20 +151,30 @@ def _effective_permissions(view_class: type) -> tuple[str, ...]:
 
 @register(Tags.security)
 def check_restricted_app_views(app_configs=None, **kwargs) -> list[Error]:
-    """No view in a restricted app may be reachable without a permission."""
+    """No view routed from a restricted app may be reachable without a
+    permission.
+
+    A view is in scope when either its own module or the ``urls.py`` routing it
+    belongs to a restricted app. The two differ when an app routes a view class
+    that lives outside it - in a helper package without an ``apps.py``, say, or
+    in a neighbouring app. The gate resolves the policy from the view class'
+    module alone, so in that case it grants access to everybody while the app
+    around it is locked down, which is exactly the silent hole worth reporting.
+    """
     from baseclasses.views import MontrekPermissionRequiredMixin
 
     errors = []
     seen: set = set()
-    for pattern in _iter_url_patterns():
+    for pattern, urlconf_module in _iter_url_patterns():
         callback = pattern.callback
         view_class = getattr(callback, "view_class", None)
         target = view_class if view_class is not None else callback
         module = getattr(target, "__module__", "")
-        if target in seen or not module:
+        if not module or (target, urlconf_module) in seen:
             continue
-        seen.add(target)
-        if not resolve_app_policy(module).is_restricted:
+        seen.add((target, urlconf_module))
+        routed_from_restricted_app = resolve_app_policy(urlconf_module).is_restricted
+        if not (routed_from_restricted_app or resolve_app_policy(module).is_restricted):
             continue
         name = f"{module}.{getattr(target, '__qualname__', target)}"
         if view_class is None or not issubclass(
@@ -172,8 +197,13 @@ def check_restricted_app_views(app_configs=None, **kwargs) -> list[Error]:
         if not permissions:
             errors.append(
                 Error(
-                    f"{name} resolves to no permission although its app is restricted.",
-                    hint="Declare 'permission_required' on the view.",
+                    f"{name} is routed from the restricted app "
+                    f"{urlconf_module!r}, but its view class lives outside "
+                    f"that app, so the gate resolves to no permission.",
+                    hint=(
+                        "Declare 'permission_required' on the view, or move "
+                        "the class into the restricted app."
+                    ),
                     obj=name,
                     id="montrek.E003",
                 )
