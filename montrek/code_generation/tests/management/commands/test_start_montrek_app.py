@@ -364,16 +364,20 @@ class TestNestedSubtrees(StartMontrekAppTestCaseBase):
         super().setUp()
         self.root_namespace = os.path.dirname(self.output_dir).replace(os.sep, ".")
         self.area_namespace = self.dotted_output_dir
-        self.root_config = type(
+        # The two levels disagree on purpose. Picking the outer base would not
+        # merely name the wrong class, it would contradict '--access restricted'
+        # and be refused - so the assertions below cannot pass by accident.
+        self.root_config = self._register(
             "NestedRootConfig",
             (MontrekAppConfig,),
-            {
-                "namespace": self.root_namespace,
-                "access_policy": AccessPolicy.RESTRICTED,
-            },
+            namespace=self.root_namespace,
+            access_policy=AccessPolicy.OPEN,
         )
-        self.area_config = type(
-            "NestedAreaConfig", (self.root_config,), {"namespace": self.area_namespace}
+        self.area_config = self._register(
+            "NestedAreaConfig",
+            (self.root_config,),
+            namespace=self.area_namespace,
+            access_policy=AccessPolicy.RESTRICTED,
         )
         module = apps.get_app_config("code_generation").module
         installed = [
@@ -383,6 +387,20 @@ class TestNestedSubtrees(StartMontrekAppTestCaseBase):
         patcher = patch.object(apps, "get_app_configs", return_value=installed)
         patcher.start()
         self.addCleanup(patcher.stop)
+
+    def _register(self, name, bases, **attributes) -> type:
+        """Build a config class and bind it in this module under its own name.
+
+        The namespaces have to match the per-test output directory, so the
+        classes cannot be written out at module level. Binding them here anyway
+        is what makes the generated apps.py importable: it carries
+        ``from <this module> import <name>``, which only resolves if the name is
+        actually an attribute of the module.
+        """
+        config_class = type(name, bases, dict(attributes))
+        globals()[name] = config_class
+        self.addCleanup(globals().pop, name, None)
+        return config_class
 
     def test_generated_config_inherits_the_innermost_base(self):
         app_path = self.call("nested_app", access="restricted")
@@ -396,3 +414,21 @@ class TestNestedSubtrees(StartMontrekAppTestCaseBase):
 
         source = self.app_config_source(app_path)
         self.assertIn(f"owns the {self.area_namespace} subtree", source)
+
+    def test_generated_config_imports_and_carries_the_inner_policy(self):
+        """Source text alone would not show that the import the template wrote
+        resolves, nor that the inherited policy is the inner one."""
+        app_path = self.call("nested_app", access="restricted")
+
+        config_class = self.import_app_config(app_path, "NestedAppConfig")
+
+        self.assertTrue(issubclass(config_class, self.area_config))
+        self.assertIs(config_class.access_policy, AccessPolicy.RESTRICTED)
+        self.assertEqual(config_class.namespace, self.area_namespace)
+
+    def test_asking_for_the_outer_policy_is_refused(self):
+        """The innermost subtree owns the policy, and it is restricted."""
+        with self.assertRaises(CommandError) as ctx:
+            self.call("nested_app", access="open")
+
+        self.assertIn("--access restricted", str(ctx.exception))

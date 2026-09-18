@@ -117,6 +117,7 @@ def find_namespace_base(app_name: str) -> type | None:
     if not candidates:
         return None
     # Longest namespace wins. A tie means one namespace claimed by two classes,
-    # which the montrek.E002 check reports; picking the first keeps this
-    # deterministic in the meantime.
+    # in which case the first one claiming it is used - the same choice
+    # check_claimed_namespaces makes when it enforces montrek.E001, so the
+    # generated app inherits the base that app is then checked against.
     return max(candidates, key=lambda candidate: len(candidate[0]))[1]

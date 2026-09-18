@@ -97,7 +97,21 @@ class AppAccessPolicy:
                 access_kind.value,
             )
             return (UNCONFIGURED_PERMISSION,)
-        return (permission.namespaced_codename,)
+        # getattr rather than attribute access: a misconfigured app must deny,
+        # not raise. Raising here would also abort the startup checks, which
+        # resolve permissions through this method to report the very same
+        # misconfiguration.
+        codename = getattr(permission, "namespaced_codename", "")
+        if not codename:
+            logger.error(
+                "The permission app %r maps to access kind %r has no "
+                "'namespaced_codename' (%r); denying access.",
+                self.app_label,
+                access_kind.value,
+                permission,
+            )
+            return (UNCONFIGURED_PERMISSION,)
+        return (codename,)
 
 
 OPEN_POLICY = AppAccessPolicy()
@@ -127,6 +141,28 @@ def declared_access_policy(app_config) -> AccessPolicy:
         ) from error
 
 
+def declared_access_permissions(app_config) -> dict:
+    """The ``access_permissions`` of an app config as a mapping.
+
+    Anything that will not convert is reported and treated as empty rather than
+    raised: an empty mapping leaves every access kind unconfigured, which denies
+    access and is reported by the montrek.E004 check, while an exception here
+    would reach the user as a 500 and would abort that check before it could
+    report anything.
+    """
+    declared = getattr(app_config, "access_permissions", {})
+    try:
+        return dict(declared)
+    except (TypeError, ValueError):
+        logger.error(
+            "App %r declares access_permissions that are not a mapping (%r); "
+            "treating them as empty, which denies every access kind.",
+            getattr(app_config, "label", app_config),
+            declared,
+        )
+        return {}
+
+
 @cache
 def resolve_app_policy(module: str) -> AppAccessPolicy:
     """The access policy of the app ``module`` belongs to.
@@ -143,7 +179,7 @@ def resolve_app_policy(module: str) -> AppAccessPolicy:
         return OPEN_POLICY
     return AppAccessPolicy(
         policy=policy,
-        permissions=dict(getattr(app_config, "access_permissions", {})),
+        permissions=declared_access_permissions(app_config),
         app_label=app_config.label,
     )
 
