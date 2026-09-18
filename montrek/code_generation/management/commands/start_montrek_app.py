@@ -15,7 +15,7 @@ from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError
 from django.utils.module_loading import import_string
 
-from baseclasses.access import AccessKind
+from baseclasses.access import AccessKind, AccessPolicy, declared_access_policy
 from baseclasses.app_config import find_namespace_base
 from code_generation.rendering import format_python_file, render_template
 
@@ -125,9 +125,13 @@ class Command(BaseCommand):
 
     def _render_app_config(self, access: str, permissions_path: str) -> str:
         is_restricted = access == ACCESS_RESTRICTED
-        namespace_base = (
-            find_namespace_base(self.dotted_app_path) if is_restricted else None
-        )
+        # Resolved for both policies, not just 'restricted': an app created as
+        # 'open' inside a restricted subtree would be rejected by
+        # check_claimed_namespaces at startup, so the app has to be refused
+        # here rather than created and then found unusable.
+        namespace_base = find_namespace_base(self.dotted_app_path)
+        if namespace_base is not None:
+            self._raise_for_policy_against_subtree(namespace_base, is_restricted)
         if not is_restricted and permissions_path:
             raise CommandError("--permissions only applies to '--access restricted'.")
         if namespace_base is not None and permissions_path:
@@ -146,6 +150,7 @@ class Command(BaseCommand):
             "namespace": "",
             "permissions_module": "",
             "permissions_cls_name": "",
+            "subtree_policy": "",
         }
         if namespace_base is not None:
             context.update(
@@ -153,6 +158,7 @@ class Command(BaseCommand):
                 namespace_base_cls_name=namespace_base.__name__,
                 namespace_base_module=namespace_base.__module__,
                 namespace=namespace_base.namespace,
+                subtree_policy=declared_access_policy(namespace_base).value,
             )
         elif is_restricted:
             permissions_module, permissions_cls_name = self._validated_permissions(
@@ -163,6 +169,23 @@ class Command(BaseCommand):
                 permissions_cls_name=permissions_cls_name,
             )
         return render_template(APP_CONFIG_TEMPLATE, **context)
+
+    def _raise_for_policy_against_subtree(
+        self, namespace_base: type, is_restricted: bool
+    ) -> None:
+        """A claimed subtree owns the policy of every app inside it."""
+        subtree_policy = declared_access_policy(namespace_base)
+        subtree_is_restricted = subtree_policy is AccessPolicy.RESTRICTED
+        if subtree_is_restricted == is_restricted:
+            return
+        wanted = ACCESS_RESTRICTED if subtree_is_restricted else ACCESS_OPEN
+        raise CommandError(
+            f"{self.dotted_app_path!r} lies inside the subtree owned by "
+            f"{namespace_base.__name__}, which declares "
+            f"{subtree_policy.value!r} for all of its apps. An app config that "
+            f"disagrees is rejected at startup by the montrek.E001 check. Pass "
+            f"'--access {wanted}'."
+        )
 
     def _validated_permissions(self, permissions_path: str) -> tuple[str, str]:
         """Resolve --permissions and make sure it covers every access kind."""

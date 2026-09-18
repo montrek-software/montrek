@@ -10,6 +10,7 @@ from unittest import mock
 
 from django.apps import apps
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase
 
 from baseclasses import views
@@ -19,6 +20,7 @@ from baseclasses.access import (
     AccessPolicy,
     AppAccessPolicy,
     clear_access_policy_cache,
+    declared_access_policy,
     permissions_for_view,
     resolve_app_policy,
 )
@@ -139,6 +141,56 @@ class TestUnconfiguredAccessKind(RestrictedAppTestCaseMixin, TestCase):
         )
 
 
+class TestDeclaredAccessPolicy(TestCase):
+    """An unusable access_policy must never be read as the permissive one."""
+
+    def _app_config(self, access_policy):
+        return type(
+            "StubAppConfig", (), {"label": "stub_app", "access_policy": access_policy}
+        )()
+
+    def test_enum_member_is_returned_unchanged(self):
+        for policy in AccessPolicy:
+            with self.subTest(policy=policy):
+                self.assertIs(declared_access_policy(self._app_config(policy)), policy)
+
+    def test_app_config_without_a_policy_is_open(self):
+        self.assertIs(declared_access_policy(object()), AccessPolicy.OPEN)
+
+    def test_matching_string_is_accepted(self):
+        """'restricted' is the obvious thing to write, so it works."""
+        self.assertIs(
+            declared_access_policy(self._app_config("restricted")),
+            AccessPolicy.RESTRICTED,
+        )
+
+    def test_typo_raises_instead_of_opening_the_app(self):
+        with self.assertRaises(ImproperlyConfigured) as ctx:
+            declared_access_policy(self._app_config("restrcted"))
+
+        self.assertIn("restrcted", str(ctx.exception))
+        self.assertIn("stub_app", str(ctx.exception))
+
+    def test_non_string_value_raises(self):
+        with self.assertRaises(ImproperlyConfigured):
+            declared_access_policy(self._app_config(True))
+
+
+class TestPolicyTypoDoesNotDisableTheGate(TestCase):
+    def setUp(self):
+        super().setUp()
+        clear_access_policy_cache()
+        self.addCleanup(clear_access_policy_cache)
+
+    def test_resolver_refuses_a_misspelled_policy(self):
+        app_config = apps.get_app_config(HOST_APP)
+        with (
+            mock.patch.object(app_config, "access_policy", "restrcted", create=True),
+            self.assertRaises(ImproperlyConfigured),
+        ):
+            resolve_app_policy(HOST_MODULE)
+
+
 class GateTestView(views.MontrekPermissionRequiredMixin):
     """Stands in for a concrete view; ``__module__`` is what gets resolved."""
 
@@ -188,7 +240,6 @@ class TestBaseViewAccessKinds(TestCase):
         views.MontrekTemplateView: AccessKind.VIEW,
         views.MontrekHistoryListView: AccessKind.VIEW,
         views.MontrekDetailView: AccessKind.VIEW,
-        views.MontrekRedirectView: AccessKind.VIEW,
         views.MontrekDownloadView: AccessKind.VIEW,
         views.MontrekRestApiView: AccessKind.VIEW,
         MontrekReportView: AccessKind.VIEW,
@@ -196,6 +247,7 @@ class TestBaseViewAccessKinds(TestCase):
         views.MontrekCreateUpdateView: AccessKind.UPDATE,
         views.MontrekUpdateView: AccessKind.UPDATE,
         views.MontrekInlineFieldEditView: AccessKind.UPDATE,
+        views.MontrekRedirectView: AccessKind.UPDATE,
         views.MontrekPostActionView: AccessKind.UPDATE,
         views.MontrekHtmxRowActionView: AccessKind.UPDATE,
         MontrekReportFieldEditView: AccessKind.UPDATE,
@@ -216,6 +268,11 @@ class TestBaseViewAccessKinds(TestCase):
         """A subclass of the shared create/update base that declares no kind
         must not fall back to the read permission."""
         self.assertIs(views.MontrekCreateUpdateView.access_kind, AccessKind.UPDATE)
+
+    def test_redirect_base_defaults_to_a_write_permission(self):
+        """Subclasses change state inside get_redirect_url, so the base cannot
+        fall back to the read permission either."""
+        self.assertIs(views.MontrekRedirectView.access_kind, AccessKind.UPDATE)
 
 
 class TestSimpleFileUploadPermission(RestrictedAppTestCaseMixin, TestCase):

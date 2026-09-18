@@ -14,8 +14,8 @@ from {{ permissions_module }} import {{ permissions_cls_name }}
 {%- endif %}
 
 {% if namespace_base_cls_name %}
-# Access policy: inherited from {{ namespace_base_cls_name }}, which restricts
-# the whole {{ namespace }} subtree.
+# Access policy: {{ subtree_policy }}, inherited from
+# {{ namespace_base_cls_name }}, which owns the {{ namespace }} subtree.
 {%- endif %}
 class {{ config_cls_name }}({{ base_cls_name }}):
     # Django skips an app config that inherits 'default = False' from

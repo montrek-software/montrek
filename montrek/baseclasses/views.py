@@ -930,6 +930,18 @@ class MontrekRestApiView(
 class MontrekRedirectView(
     MontrekPermissionRequiredMixin, MontrekViewMixin, RedirectView
 ):
+    """Redirect after doing work in ``get_redirect_url``.
+
+    Counted as a write. ``get_redirect_url`` is the override point subclasses
+    use to change state before redirecting - ``RevokeFileUploadTask`` kills a
+    task and writes a registry record there, ``ProcessPipelineViewABC`` runs a
+    pipeline - and every subclass in the project mutates something. A purely
+    navigational redirect in a restricted app can say so with
+    ``access_kind = AccessKind.VIEW``; that way the declaration is what opens
+    the view up, rather than the default quietly doing it.
+    """
+
+    access_kind = AccessKind.UPDATE
     manager_class = MontrekManagerNotImplemented
 
     def get_redirect_url(self, *args, **kwargs) -> str:

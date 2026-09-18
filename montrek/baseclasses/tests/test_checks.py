@@ -21,6 +21,7 @@ from baseclasses.access import (
 )
 from baseclasses.app_config import MontrekAppConfig
 from baseclasses.checks import (
+    check_access_policy_declarations,
     check_claimed_namespaces,
     check_restricted_app_views,
 )
@@ -204,6 +205,64 @@ class TestClaimedNamespaces(TestCase):
         self.assertEqual([error.id for error in errors], ["montrek.E002"])
 
 
+# --- access policy declaration check ---------------------------------------
+
+
+class TestAccessPolicyDeclarations(TestCase):
+    """A declaration the resolver cannot read has to surface at startup, not as
+    a 500 on the first request that reaches a gated view."""
+
+    def _run_with(self, **attributes):
+        app_config = type("StubAppConfig", (), {"label": "stub_app", **attributes})()
+        with mock.patch.object(apps, "get_app_configs", return_value=[app_config]):
+            return check_access_policy_declarations()
+
+    def test_valid_declaration_passes(self):
+        errors = self._run_with(
+            access_policy=AccessPolicy.RESTRICTED,
+            access_permissions={AccessKind.VIEW: READ_PERMISSION},
+        )
+
+        self.assertEqual(errors, [])
+
+    def test_app_declaring_nothing_passes(self):
+        self.assertEqual(self._run_with(), [])
+
+    def test_misspelled_policy_is_reported(self):
+        errors = self._run_with(access_policy="restrcted")
+
+        self.assertEqual([error.id for error in errors], ["montrek.E005"])
+        self.assertIn("restrcted", errors[0].msg)
+
+    def test_permissions_that_are_not_a_mapping_are_reported(self):
+        errors = self._run_with(
+            access_policy=AccessPolicy.RESTRICTED,
+            access_permissions=[READ_PERMISSION],
+        )
+
+        self.assertEqual([error.id for error in errors], ["montrek.E005"])
+        self.assertIn("not a mapping", errors[0].msg)
+
+    def test_key_that_is_not_an_access_kind_is_reported(self):
+        """Such a key matches no view, so the app would deny everything."""
+        errors = self._run_with(
+            access_policy=AccessPolicy.RESTRICTED,
+            access_permissions={"view": READ_PERMISSION},
+        )
+
+        self.assertEqual([error.id for error in errors], ["montrek.E005"])
+        self.assertIn("not an AccessKind", errors[0].msg)
+
+    def test_permission_without_a_codename_is_reported(self):
+        errors = self._run_with(
+            access_policy=AccessPolicy.RESTRICTED,
+            access_permissions={AccessKind.VIEW: object()},
+        )
+
+        self.assertEqual([error.id for error in errors], ["montrek.E005"])
+        self.assertIn("namespaced_codename", errors[0].msg)
+
+
 # --- view check -------------------------------------------------------------
 
 
@@ -311,8 +370,9 @@ class TestOpenAppViews(TestCase):
 
 
 class TestChecksAreRegistered(TestCase):
-    def test_both_checks_run_at_startup(self):
+    def test_every_check_runs_at_startup(self):
         registered = set(registry.registry.get_checks())
 
+        self.assertIn(check_access_policy_declarations, registered)
         self.assertIn(check_claimed_namespaces, registered)
         self.assertIn(check_restricted_app_views, registered)

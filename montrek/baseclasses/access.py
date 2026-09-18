@@ -29,6 +29,7 @@ from functools import cache
 from typing import Protocol
 
 from django.apps import apps
+from django.core.exceptions import ImproperlyConfigured
 
 logger = logging.getLogger(__name__)
 
@@ -101,6 +102,30 @@ class AppAccessPolicy:
 OPEN_POLICY = AppAccessPolicy()
 
 
+def declared_access_policy(app_config) -> AccessPolicy:
+    """The ``access_policy`` of an app config, as an ``AccessPolicy``.
+
+    A plain string is accepted and converted, since ``access_policy =
+    "restricted"`` is the obvious thing to write. Anything that is not a policy
+    raises instead of being read as "open": a typo must not be able to turn the
+    gate off, and treating an unknown value as the permissive one would do
+    exactly that, silently and without the startup checks noticing either.
+    """
+    policy = getattr(app_config, "access_policy", AccessPolicy.OPEN)
+    if isinstance(policy, AccessPolicy):
+        return policy
+    try:
+        return AccessPolicy(policy)
+    except ValueError as error:
+        app_label = getattr(app_config, "label", app_config)
+        valid = ", ".join(repr(member.value) for member in AccessPolicy)
+        raise ImproperlyConfigured(
+            f"App {app_label!r} declares access_policy={policy!r}, which is "
+            f"not an access policy. Use AccessPolicy.OPEN / "
+            f"AccessPolicy.RESTRICTED, or one of {valid}."
+        ) from error
+
+
 @cache
 def resolve_app_policy(module: str) -> AppAccessPolicy:
     """The access policy of the app ``module`` belongs to.
@@ -112,7 +137,7 @@ def resolve_app_policy(module: str) -> AppAccessPolicy:
     app_config = apps.get_containing_app_config(module)
     if app_config is None:
         return OPEN_POLICY
-    policy = getattr(app_config, "access_policy", AccessPolicy.OPEN)
+    policy = declared_access_policy(app_config)
     if policy is not AccessPolicy.RESTRICTED:
         return OPEN_POLICY
     return AppAccessPolicy(

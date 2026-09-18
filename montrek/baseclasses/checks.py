@@ -9,13 +9,17 @@ They are silent for open apps, so a project that restricts nothing never sees
 them.
 """
 
+from collections.abc import Mapping
+
 from django.apps import apps
 from django.core.checks import Error, Tags, register
+from django.core.exceptions import ImproperlyConfigured
 from django.urls import URLPattern, URLResolver, get_resolver
 
 from baseclasses.access import (
     UNCONFIGURED_PERMISSION,
     AccessKind,
+    declared_access_policy,
     permissions_for_view,
     resolve_app_policy,
 )
@@ -103,6 +107,57 @@ def _urlconf_module(resolver) -> str:
     if isinstance(urlconf_name, str):
         return urlconf_name
     return getattr(urlconf_name, "__name__", "")
+
+
+@register(Tags.security)
+def check_access_policy_declarations(app_configs=None, **kwargs) -> list[Error]:
+    """Every app config's access policy must be one the resolver understands.
+
+    The resolver refuses to read an unknown value as "open", so without this a
+    typo would surface as a 500 on the first request instead of at startup.
+    """
+    errors = []
+    for app_config in apps.get_app_configs():
+        try:
+            declared_access_policy(app_config)
+        except ImproperlyConfigured as error:
+            errors.append(Error(str(error), obj=app_config, id="montrek.E005"))
+            continue
+        permissions = getattr(app_config, "access_permissions", {})
+        if not isinstance(permissions, Mapping):
+            errors.append(
+                Error(
+                    f"App {app_config.label!r} declares access_permissions of "
+                    f"type {type(permissions).__name__}, which is not a mapping.",
+                    hint="Map each AccessKind to a permission enum member.",
+                    obj=app_config,
+                    id="montrek.E005",
+                )
+            )
+            continue
+        for key, permission in permissions.items():
+            if not isinstance(key, AccessKind):
+                errors.append(
+                    Error(
+                        f"App {app_config.label!r} keys access_permissions with "
+                        f"{key!r}, which is not an AccessKind - no view will "
+                        f"ever match it.",
+                        hint="Use the AccessKind members as keys.",
+                        obj=app_config,
+                        id="montrek.E005",
+                    )
+                )
+            elif not getattr(permission, "namespaced_codename", ""):
+                errors.append(
+                    Error(
+                        f"The permission App {app_config.label!r} maps to "
+                        f"{key.value!r} has no 'namespaced_codename'.",
+                        hint="Follow the shape of the existing permission enums.",
+                        obj=app_config,
+                        id="montrek.E005",
+                    )
+                )
+    return errors
 
 
 def _iter_url_patterns(resolver=None, urlconf_module=""):

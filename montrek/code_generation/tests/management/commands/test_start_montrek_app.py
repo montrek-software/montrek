@@ -31,6 +31,13 @@ class NamespaceBaseConfig(MontrekAppConfig):
     access_policy = AccessPolicy.RESTRICTED
 
 
+class OpenNamespaceBaseConfig(MontrekAppConfig):
+    """A claimed subtree that keeps its apps open."""
+
+    namespace = "test_open_namespace"
+    access_policy = AccessPolicy.OPEN
+
+
 class StartMontrekAppTestCaseBase(TestCase):
     def setUp(self):
         self.maxDiff = None
@@ -215,8 +222,10 @@ class TestRestrictedAppInsideASubtree(StartMontrekAppTestCaseBase):
         source = self.app_config_source(app_path)
         self.assertNotIn("access_policy =", source)
         self.assertNotIn("access_permissions =", source)
-        self.assertIn("inherited from NamespaceBaseConfig", source)
-        self.assertIn("test_namespace", source)
+        self.assertIn("# Access policy: restricted, inherited from", source)
+        self.assertIn(
+            "NamespaceBaseConfig, which owns the test_namespace subtree", source
+        )
 
     def test_generated_app_config_is_importable_and_restricted(self):
         app_path = self.call("subtree_app", access="restricted")
@@ -232,3 +241,46 @@ class TestRestrictedAppInsideASubtree(StartMontrekAppTestCaseBase):
             self.call("subtree_app", access="restricted", permissions=RISK_PERMISSIONS)
 
         self.assertIn("NamespaceBaseConfig", str(ctx.exception))
+
+    def test_open_inside_a_restricted_subtree_is_refused(self):
+        """Creating it would produce an app the montrek.E001 check rejects at
+        startup, so it is refused before anything is written."""
+        with self.assertRaises(CommandError) as ctx:
+            self.call("subtree_app", access="open")
+
+        message = str(ctx.exception)
+        self.assertIn("NamespaceBaseConfig", message)
+        self.assertIn("--access restricted", message)
+
+    def test_nothing_is_created_when_the_policy_contradicts_the_subtree(self):
+        with self.assertRaises(CommandError):
+            self.call("subtree_app", access="open")
+
+        self.assertFalse(os.path.exists(os.path.join(self.output_dir, "subtree_app")))
+
+
+class TestOpenSubtree(StartMontrekAppTestCaseBase):
+    """A namespace may also be claimed by a base that keeps its apps open."""
+
+    def setUp(self):
+        super().setUp()
+        patcher = patch(
+            "code_generation.management.commands.start_montrek_app.find_namespace_base",
+            return_value=OpenNamespaceBaseConfig,
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_restricted_inside_an_open_subtree_is_refused(self):
+        with self.assertRaises(CommandError) as ctx:
+            self.call("subtree_app", access="restricted")
+
+        self.assertIn("--access open", str(ctx.exception))
+
+    def test_open_inside_an_open_subtree_inherits_the_base(self):
+        app_path = self.call("subtree_app", access="open")
+
+        source = self.app_config_source(app_path)
+        self.assertIn("class SubtreeAppConfig(OpenNamespaceBaseConfig):", source)
+        self.assertIn("# Access policy: open, inherited from", source)
+        self.assertNotIn("access_policy =", source)
