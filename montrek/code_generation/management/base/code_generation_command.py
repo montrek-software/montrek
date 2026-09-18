@@ -1,18 +1,13 @@
 import os
 import re
-import shutil
-import subprocess  # noqa: S404  # nosec B404 - only used to run the pinned ruff binary
-from django.core.management.base import BaseCommand
-from jinja2 import Environment, FileSystemLoader, select_autoescape
-from code_generation import CODE_TEMPLATE_DIR
-from code_generation.config.code_generation_config import CodeGenerationConfig
 
-# The code templates render Python source (``*.py.j2``), so HTML escaping would
-# corrupt what they produce, turning quotes in the generated code into entities.
-# Escaping is therefore off for those, but kept on for any markup template that
-# may join them later, so a new ``*.html.j2`` is safe by default rather than by
-# whoever adds it remembering to be.
-MARKUP_TEMPLATE_EXTENSIONS = ("html", "htm", "xml", "html.j2", "htm.j2", "xml.j2")
+from django.core.management.base import BaseCommand
+
+from code_generation.config.code_generation_config import CodeGenerationConfig
+from code_generation.rendering import (
+    build_template_environment,
+    format_python_file,
+)
 
 
 class StdArgumentsMixin:
@@ -49,17 +44,7 @@ class CodeGenerationCommandBase(StdArgumentsMixin, BaseCommand):
         config = CodeGenerationConfig(app_path, prefix)
         output_path = config.output_paths[self.key]
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        env = Environment(
-            loader=FileSystemLoader(CODE_TEMPLATE_DIR),
-            autoescape=select_autoescape(
-                enabled_extensions=MARKUP_TEMPLATE_EXTENSIONS,
-                default_for_string=False,
-                default=False,
-            ),
-            # Without this Jinja drops the final newline, so appending one template
-            # after another runs the two together on one line.
-            keep_trailing_newline=True,
-        )
+        env = build_template_environment()
         template = env.get_template(config.template_files[self.key])
         rendered_content = template.render(**config.context)
         msg = f"Generating code at '{output_path}'."
@@ -73,32 +58,9 @@ class CodeGenerationCommandBase(StdArgumentsMixin, BaseCommand):
         self._generate_init_files(output_path)
 
     def _format_generated_file(self, output_path: str) -> None:
-        """Format the generated file so it matches the project's style.
-
-        Templates cannot know how long a prefix will be, so lines such as a class
-        header with a long name overflow for some prefixes and not others.
-        Formatting the result sidesteps that for every template at once.
-        """
-        ruff_path = shutil.which("ruff")
-        if ruff_path is None:
-            self.stdout.write(
-                self.style.WARNING("ruff not found; generated code is not formatted.")
-            )
-            return
-        # Fixed argv: the resolved ruff binary, a literal subcommand and the path
-        # this command just wrote. No shell, no caller-supplied arguments.
-        result = subprocess.run(  # noqa: S603  # nosec B603
-            [ruff_path, "format", output_path],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        if result.returncode != 0:
-            self.stdout.write(
-                self.style.WARNING(
-                    f"Could not format '{output_path}': {result.stderr.strip()}"
-                )
-            )
+        message = format_python_file(output_path)
+        if message:
+            self.stdout.write(self.style.WARNING(message))
 
     def _generate_init_files(self, output_path):
         parts = output_path.split("/")

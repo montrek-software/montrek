@@ -7,10 +7,13 @@ keeps exactly one ``AppConfig`` candidate for Django's autodiscovery.
 See ``baseclasses.access`` for what the policy does.
 """
 
-from django.apps import AppConfig
+from django.apps import AppConfig, apps
 from django.core.exceptions import ImproperlyConfigured
 
 from baseclasses.access import AccessKind, AccessPolicy, NamespacedPermission
+
+# Attribute an app config base uses to claim a dotted path for its subtree.
+NAMESPACE_ATTRIBUTE = "namespace"
 
 
 class MontrekAppConfig(AppConfig):
@@ -52,3 +55,43 @@ class MontrekAppConfig(AppConfig):
                 f"back to a plain AppConfig, silently dropping the app's "
                 f"access policy. Add 'default = True' to the class."
             )
+
+
+def is_below_namespace(app_name: str, namespace: str) -> bool:
+    """Whether ``app_name`` lies inside ``namespace``.
+
+    Matches whole path segments only, so ``test_subtree_other`` is not below
+    ``test_subtree``.
+    """
+    return app_name == namespace or app_name.startswith(f"{namespace}.")
+
+
+def declaring_namespace_class(app_config) -> type | None:
+    """The class in an app config's MRO that actually claims its namespace.
+
+    An app config inherits ``namespace`` from the base its subtree shares, and
+    that base - not the leaf config - is what the subtree's other apps have to
+    inherit from.
+    """
+    if not getattr(app_config, NAMESPACE_ATTRIBUTE, None):
+        return None
+    for klass in type(app_config).__mro__:
+        if NAMESPACE_ATTRIBUTE in klass.__dict__:
+            return klass
+    return None
+
+
+def find_namespace_base(app_name: str) -> type | None:
+    """The app config base claiming the namespace ``app_name`` would fall into.
+
+    ``None`` when the app lies outside every claimed namespace and therefore
+    has to bring its own access policy.
+    """
+    for app_config in apps.get_app_configs():
+        namespace = getattr(app_config, NAMESPACE_ATTRIBUTE, None)
+        if not namespace or not is_below_namespace(app_name, namespace):
+            continue
+        declaring_class = declaring_namespace_class(app_config)
+        if declaring_class is not None:
+            return declaring_class
+    return None

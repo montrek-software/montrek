@@ -19,20 +19,11 @@ from baseclasses.access import (
     permissions_for_view,
     resolve_app_policy,
 )
-
-NAMESPACE_ATTRIBUTE = "namespace"
-
-
-def _declaring_class(cls: type, attribute: str) -> type | None:
-    """The class in ``cls``'s MRO that actually defines ``attribute``.
-
-    An app config inherits ``namespace`` from the base its subtree shares, and
-    that base - not the leaf config - is what the other apps have to use.
-    """
-    for klass in cls.__mro__:
-        if attribute in klass.__dict__:
-            return klass
-    return None
+from baseclasses.app_config import (
+    NAMESPACE_ATTRIBUTE,
+    declaring_namespace_class,
+    is_below_namespace,
+)
 
 
 def _claimed_namespaces() -> dict[str, list[type]]:
@@ -43,17 +34,13 @@ def _claimed_namespaces() -> dict[str, list[type]]:
         namespace = getattr(app_config, NAMESPACE_ATTRIBUTE, None)
         if not namespace:
             continue
-        declaring_class = _declaring_class(type(app_config), NAMESPACE_ATTRIBUTE)
+        declaring_class = declaring_namespace_class(app_config)
         if declaring_class is None:
             continue
         claiming = claims.setdefault(namespace, [])
         if declaring_class not in claiming:
             claiming.append(declaring_class)
     return claims
-
-
-def _is_below(app_name: str, namespace: str) -> bool:
-    return app_name == namespace or app_name.startswith(f"{namespace}.")
 
 
 @register(Tags.security)
@@ -85,7 +72,7 @@ def check_claimed_namespaces(app_configs=None, **kwargs) -> list[Error]:
             continue
         declaring_class = declaring_classes[0]
         for app_config in apps.get_app_configs():
-            if not _is_below(app_config.name, namespace):
+            if not is_below_namespace(app_config.name, namespace):
                 continue
             if isinstance(app_config, declaring_class):
                 continue
