@@ -76,8 +76,8 @@ class TestConcreteConfigMustOptIntoDiscovery(TestCase):
         self.assertEqual(LeafConfig.access_permissions, SubtreeBase.access_permissions)
 
 
-# Mirrors the shape mt_competo needs: a root subtree, an area inside it, and a
-# single app inside that area with a policy of its own.
+# A root subtree, an area inside it, and a single app inside that area with a
+# policy of its own.
 ROOT_NAMESPACE = "nested_root"
 AREA_NAMESPACE = "nested_root.area"
 INNER_NAMESPACE = "nested_root.area.inner"

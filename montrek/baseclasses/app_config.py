@@ -69,11 +69,11 @@ def is_below_namespace(app_name: str, namespace: str) -> bool:
 def namespace_claims(target) -> list[tuple[str, type]]:
     """Every ``(namespace, declaring class)`` an app config claims.
 
-    Namespaces nest - ``mt_competo`` may own a subtree that
-    ``mt_competo.asset_management`` refines - and each level is claimed by a
-    different class in the same MRO. A plain ``getattr`` would only ever see the
-    most specific one, leaving the outer claims unenforced, so the whole MRO is
-    walked. Most specific first, following the MRO.
+    Namespaces nest - a package may own a subtree that one of its areas
+    refines - and each level is claimed by a different class in the same MRO. A
+    plain ``getattr`` would only ever see the most specific one, leaving the
+    outer claims unenforced, so the whole MRO is walked. Most specific first,
+    following the MRO.
 
     Accepts an app config instance or an app config class.
     """
@@ -100,10 +100,10 @@ def declaring_namespace_class(target) -> type | None:
 def find_namespace_base(app_name: str) -> type | None:
     """The app config base of the innermost namespace ``app_name`` falls into.
 
-    The *innermost*, because namespaces nest: an app inside
-    ``mt_competo.asset_management.datev_transactions`` is also inside
-    ``mt_competo``, and inheriting the outer base instead of the inner one would
-    give it the wrong access policy - and be rejected by the montrek.E001 check.
+    The *innermost*, because namespaces nest: an app inside ``a.b.c`` is also
+    inside ``a.b`` and ``a``, and inheriting an outer base instead of the
+    innermost one would give it the wrong access policy - and be rejected by the
+    montrek.E001 check.
 
     ``None`` when the app lies outside every claimed namespace and therefore has
     to bring its own access policy.

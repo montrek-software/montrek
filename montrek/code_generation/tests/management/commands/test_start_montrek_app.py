@@ -27,7 +27,8 @@ class StartAppTestPermissions(Enum):
     """Shaped like the permission enums an app declares.
 
     Defined here rather than borrowed from an extension repository: the montrek
-    base has to build on its own, so its tests cannot reach into mt_competo.
+    base has to build on its own, so its tests cannot reach into an
+    extension repository.
     """
 
     CAN_VIEW = "Kann Testdaten sehen"
@@ -350,10 +351,10 @@ class TestOpenSubtree(StartMontrekAppTestCaseBase):
 
 
 class TestNestedSubtrees(StartMontrekAppTestCaseBase):
-    """Namespaces nest - mt_competo owns a subtree that asset_management
-    refines, which datev_transactions refines again. The generator has to land
-    on the innermost base; the outer one carries a different access policy and
-    would be rejected by the montrek.E001 check.
+    """Namespaces nest - a package owns a subtree that one of its areas
+    refines, which a single app inside it refines again. The generator has to
+    land on the innermost base; an outer one carries a different access policy
+    and would be rejected by the montrek.E001 check.
 
     Unlike the classes above this one lets the real find_namespace_base run, so
     the claims are built to match the directory the app is generated into.

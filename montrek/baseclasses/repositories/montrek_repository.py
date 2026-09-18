@@ -200,7 +200,7 @@ class MontrekRepository:
         Args:
             queryset:      A queryset produced by receive().
             link_class:    The link model connecting this repository's hub to
-                           the target hub (e.g. LinkDatevTransactionFund).
+                           the target hub (e.g. LinkOrderCustomer).
             hub:           The target hub instance to filter by.
             reversed_link: True when this hub sits on hub_out and the target hub
                            is on hub_in (mirrors the reversed_link flag used in

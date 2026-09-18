@@ -147,8 +147,8 @@ class RivalNamespaceConfig(MontrekAppConfig):
     namespace = "test_subtree"
 
 
-# Nested claims, the shape mt_competo needs: a root, an area inside it, and one
-# app inside that area carrying a policy of its own.
+# Nested claims: a root, an area inside it, and one app inside that area
+# carrying a policy of its own.
 class NestedRootConfig(MontrekAppConfig):
     namespace = "nested_root"
 
