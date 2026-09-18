@@ -34,8 +34,7 @@ HOST_MODULE = "montrek_example.views"
 
 
 class AccessTestPermissions(Enum):
-    """Shaped like the permission enums the apps declare, e.g.
-    ``RiskContributorPermissions``."""
+    """Shaped like the permission enums the apps declare."""
 
     CAN_VIEW = "Kann Testdaten sehen"
     CAN_CREATE = "Kann Testdaten erstellen"

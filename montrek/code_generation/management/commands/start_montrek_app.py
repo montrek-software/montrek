@@ -24,9 +24,9 @@ APP_CONFIG_TEMPLATE = "app_config.py.j2"
 ACCESS_OPEN = "open"
 ACCESS_RESTRICTED = "restricted"
 
-# The permission enums name their members after the access kinds, see e.g.
-# RiskContributorPermissions. A restricted app has to cover all four, otherwise
-# views of the uncovered kind deny everybody.
+# An app's permission enum names its members after the access kinds. A
+# restricted app has to cover all four, otherwise views of the uncovered kind
+# deny everybody.
 PERMISSION_MEMBER_NAMES = {
     AccessKind.VIEW: "CAN_VIEW",
     AccessKind.CREATE: "CAN_CREATE",

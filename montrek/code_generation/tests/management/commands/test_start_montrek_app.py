@@ -9,6 +9,7 @@ import importlib.util
 import io
 import os
 import shutil
+from enum import Enum
 from unittest.mock import patch
 
 from django.core.management import call_command
@@ -19,9 +20,51 @@ from baseclasses.access import AccessPolicy
 from baseclasses.app_config import MontrekAppConfig
 from code_generation.tests import get_test_file_path
 
-RISK_PERMISSIONS = (
-    "mt_competo.risk_management.user_groups.constants.RiskContributorPermissions"
-)
+
+class StartAppTestPermissions(Enum):
+    """Shaped like the permission enums an app declares.
+
+    Defined here rather than borrowed from an extension repository: the montrek
+    base has to build on its own, so its tests cannot reach into mt_competo.
+    """
+
+    CAN_VIEW = "Kann Testdaten sehen"
+    CAN_CREATE = "Kann Testdaten erstellen"
+    CAN_UPDATE = "Kann Testdaten aendern"
+    CAN_DELETE = "Kann Testdaten loeschen"
+
+    def __init__(self, permission_name: str):
+        self.app_label = "start_app_test"
+        self.permission_name = permission_name
+        self.codename = permission_name.lower().replace(" ", "_")
+        self.namespaced_codename = f"{self.app_label}.{self.codename}"
+
+
+class IncompleteTestPermissions(Enum):
+    """Covers only the writes, as e.g. an upload-only permission set does."""
+
+    CAN_UPDATE = "Kann Testdaten aendern"
+    CAN_DELETE = "Kann Testdaten loeschen"
+
+    def __init__(self, permission_name: str):
+        self.namespaced_codename = f"start_app_test.{permission_name}"
+
+
+class CodenamelessTestPermissions(Enum):
+    """All four members, but none of them usable by ``has_perms``."""
+
+    CAN_VIEW = "sehen"
+    CAN_CREATE = "erstellen"
+    CAN_UPDATE = "aendern"
+    CAN_DELETE = "loeschen"
+
+    def __init__(self, permission_name: str):
+        self.namespaced_codename = ""
+
+
+TEST_PERMISSIONS = f"{__name__}.StartAppTestPermissions"
+INCOMPLETE_PERMISSIONS = f"{__name__}.IncompleteTestPermissions"
+CODENAMELESS_PERMISSIONS = f"{__name__}.CodenamelessTestPermissions"
 
 
 class NamespaceBaseConfig(MontrekAppConfig):
@@ -128,7 +171,7 @@ class TestOpenApp(StartMontrekAppTestCaseBase):
 
     def test_permissions_are_rejected_for_an_open_app(self):
         with self.assertRaises(CommandError) as ctx:
-            self.call("plain_app", access="open", permissions=RISK_PERMISSIONS)
+            self.call("plain_app", access="open", permissions=TEST_PERMISSIONS)
 
         self.assertIn("restricted", str(ctx.exception))
 
@@ -148,21 +191,20 @@ class TestRestrictedAppOutsideAnySubtree(StartMontrekAppTestCaseBase):
 
     def test_app_config_carries_the_full_permission_mapping(self):
         app_path = self.call(
-            "lonely_app", access="restricted", permissions=RISK_PERMISSIONS
+            "lonely_app", access="restricted", permissions=TEST_PERMISSIONS
         )
 
         source = self.app_config_source(app_path)
         self.assertIn("access_policy = AccessPolicy.RESTRICTED", source)
         for access_kind in ("VIEW", "CREATE", "UPDATE", "DELETE"):
             self.assertIn(
-                f"AccessKind.{access_kind}: "
-                f"RiskContributorPermissions.CAN_{access_kind}",
+                f"AccessKind.{access_kind}: StartAppTestPermissions.CAN_{access_kind}",
                 source,
             )
 
     def test_generated_app_config_is_importable(self):
         app_path = self.call(
-            "lonely_app", access="restricted", permissions=RISK_PERMISSIONS
+            "lonely_app", access="restricted", permissions=TEST_PERMISSIONS
         )
 
         config_class = self.import_app_config(app_path, "LonelyAppConfig")
@@ -186,13 +228,24 @@ class TestRestrictedAppOutsideAnySubtree(StartMontrekAppTestCaseBase):
             self.call(
                 "lonely_app",
                 access="restricted",
-                permissions=(
-                    "mt_competo.asset_management.user_groups.constants"
-                    ".DatevTransactionPermissions"
-                ),
+                permissions=INCOMPLETE_PERMISSIONS,
             )
 
-        self.assertIn("CAN_VIEW", str(ctx.exception))
+        message = str(ctx.exception)
+        self.assertIn("CAN_VIEW", message)
+        self.assertIn("CAN_CREATE", message)
+
+    def test_permission_enum_without_codenames_is_refused(self):
+        """has_perms matches on the namespaced codename, so an empty one would
+        gate the app with a permission nobody can ever hold."""
+        with self.assertRaises(CommandError) as ctx:
+            self.call(
+                "lonely_app",
+                access="restricted",
+                permissions=CODENAMELESS_PERMISSIONS,
+            )
+
+        self.assertIn("namespaced_codename", str(ctx.exception))
 
 
 class TestRestrictedAppInsideASubtree(StartMontrekAppTestCaseBase):
@@ -238,7 +291,7 @@ class TestRestrictedAppInsideASubtree(StartMontrekAppTestCaseBase):
 
     def test_own_permissions_are_refused(self):
         with self.assertRaises(CommandError) as ctx:
-            self.call("subtree_app", access="restricted", permissions=RISK_PERMISSIONS)
+            self.call("subtree_app", access="restricted", permissions=TEST_PERMISSIONS)
 
         self.assertIn("NamespaceBaseConfig", str(ctx.exception))
 

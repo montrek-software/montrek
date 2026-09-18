@@ -61,8 +61,9 @@ class AccessKind(Enum):
 class NamespacedPermission(Protocol):
     """A permission enum member as used across the Montrek apps.
 
-    See e.g. ``RiskContributorPermissions``: ``namespaced_codename`` is the
-    ``"<app_label>.<codename>"`` string ``User.has_perms`` expects.
+    An app declares its permissions as an enum whose members carry a
+    ``namespaced_codename``: the ``"<app_label>.<codename>"`` string
+    ``User.has_perms`` expects.
     """
 
     namespaced_codename: str
