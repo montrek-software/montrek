@@ -428,7 +428,7 @@ class TestNavigationRedirectView(TestCase):
         )
 
     def test_as_view_accepts_the_configuration_the_urlconf_passes(self):
-        for key in ("pattern_name", "url", "pattern_kwargs"):
+        for key in ("pattern_name", "url", "pattern_kwargs", "access_module"):
             with self.subTest(key):
                 self.assertTrue(hasattr(views.MontrekNavigationRedirectView, key))
 
@@ -462,3 +462,36 @@ class TestNavigationRedirectView(TestCase):
         view = self._view(url="somewhere/else")
 
         self.assertEqual(view.get_redirect_url(), "somewhere/else")
+
+
+class TestNavigationRedirectAccessModule(RestrictedAppTestCaseMixin, TestCase):
+    """The class lives in ``baseclasses``, an open app, so it has to be told
+    which app's policy applies to it."""
+
+    def _view(self, **attributes):
+        view = views.MontrekNavigationRedirectView()
+        for key, value in attributes.items():
+            setattr(view, key, value)
+        return view
+
+    def test_it_uses_the_policy_of_the_module_it_is_given(self):
+        view = self._view(access_module=HOST_MODULE)
+
+        self.assertEqual(
+            view.get_permission_required(),
+            (AccessTestPermissions.CAN_VIEW.namespaced_codename,),
+        )
+
+    def test_without_one_it_falls_back_to_its_own_module_and_stays_open(self):
+        """Which is why the montrek.E003 check reports a missing access_module
+        rather than the URL quietly letting everybody through."""
+        view = self._view()
+
+        self.assertEqual(view.get_permission_required(), ())
+
+    def test_an_explicit_permission_still_wins(self):
+        view = self._view(
+            access_module=HOST_MODULE, permission_required=["app.some_permission"]
+        )
+
+        self.assertEqual(view.get_permission_required(), ("app.some_permission",))

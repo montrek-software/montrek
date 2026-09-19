@@ -77,12 +77,3 @@ class CompanyHistoryView(views.MontrekHistoryListView):
     def actions(self) -> tuple:
         action_back = ListActionElement("company_list")
         return (action_back,)
-
-
-class CompanyNavigationRedirectView(views.MontrekNavigationRedirectView):
-    """Entry URL of this app, sending the visitor to the list view.
-
-    A view class rather than a lambda so that the entry URL passes through the
-    permission gate, and defined here rather than reused from ``baseclasses``
-    because a view's access policy is resolved from its own module.
-    """

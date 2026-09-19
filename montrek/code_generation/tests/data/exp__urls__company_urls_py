@@ -1,7 +1,5 @@
 from django.urls import path
-from code_generation.tests.data.output.views.company_views import (
-    CompanyNavigationRedirectView,
-)
+from baseclasses.views import MontrekNavigationRedirectView
 from code_generation.tests.data.output.views.company_views import CompanyListView
 from code_generation.tests.data.output.views.company_views import CompanyCreateView
 from code_generation.tests.data.output.views.company_views import CompanyUpdateView
@@ -12,7 +10,10 @@ from code_generation.tests.data.output.views.company_views import CompanyHistory
 urlpatterns = [
     path(
         "company",
-        CompanyNavigationRedirectView.as_view(pattern_name="company_list"),
+        MontrekNavigationRedirectView.as_view(
+            access_module=__name__,
+            pattern_name="company_list",
+        ),
         name="company",
     ),
     path(

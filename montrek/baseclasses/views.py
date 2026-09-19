@@ -943,15 +943,27 @@ class MontrekNavigationRedirectView(MontrekPermissionRequiredMixin, RedirectView
     Configured from the URLconf, with ``pattern_kwargs`` for a target taking
     arguments the URL itself does not carry::
 
-        path("fund", FundNavigationRedirectView.as_view(
-            pattern_name="fund_list"), name="fund"),
+        path("fund", MontrekNavigationRedirectView.as_view(
+            pattern_name="fund_list", access_module=__name__), name="fund"),
 
-    Subclass it inside the app it serves: the policy is resolved from the view
-    class' own module, so a shared class here would resolve to ``baseclasses``.
+    ``access_module`` names the app the URL belongs to. It is needed because the
+    access policy of a view is resolved from its module, and this class lives in
+    ``baseclasses``: without it the view would resolve to the open ``baseclasses``
+    app and let everybody through. Passing ``__name__`` from the app's own
+    ``urls.py`` is right by construction; omitting it in a restricted app is
+    reported by the montrek.E003 check rather than silently opening the URL.
     """
 
     access_kind = AccessKind.VIEW
+    access_module: str = ""
     pattern_kwargs: dict | None = None
+
+    def get_permission_required(self) -> tuple[str, ...]:
+        if self.permission_required:
+            return tuple(self.permission_required)
+        return permissions_for_view(
+            self.access_module or type(self).__module__, self.access_kind
+        )
 
     def get_redirect_url(self, *args, **kwargs):
         # Merged rather than reversed separately, so RedirectView's own

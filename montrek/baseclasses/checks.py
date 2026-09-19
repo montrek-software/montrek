@@ -99,17 +99,21 @@ def _iter_url_patterns(resolver=None, urlconf_module=""):
             yield pattern, module
 
 
-def _effective_permissions(view_class: type) -> tuple[str, ...]:
-    """What the gate would require, from class attributes only.
+def _effective_permissions(view_class: type, initkwargs: dict) -> tuple[str, ...]:
+    """What the gate would require, without instantiating the view.
 
-    Mirrors ``get_permission_required`` without instantiating the view, policy
-    resolved from the view class' own module rather than where it is routed.
+    ``initkwargs`` are the arguments the URLconf passed to ``as_view``, which is
+    where a shared view is told which app's policy applies to it - see
+    ``MontrekNavigationRedirectView.access_module``.
     """
-    permission_required = getattr(view_class, "permission_required", None)
+    permission_required = initkwargs.get("permission_required") or getattr(
+        view_class, "permission_required", None
+    )
     if permission_required:
         return tuple(permission_required)
     access_kind = getattr(view_class, "access_kind", AccessKind.VIEW)
-    return permissions_for_view(view_class.__module__, access_kind)
+    module = initkwargs.get("access_module") or view_class.__module__
+    return permissions_for_view(module, access_kind)
 
 
 @register(Tags.security)
@@ -129,11 +133,13 @@ def check_restricted_app_views(app_configs=None, **kwargs) -> list[Error]:
     for pattern, urlconf_module in _iter_url_patterns():
         callback = pattern.callback
         view_class = getattr(callback, "view_class", None)
+        initkwargs = getattr(callback, "view_initkwargs", {}) or {}
         target = view_class if view_class is not None else callback
         module = getattr(target, "__module__", "")
-        if not module or (target, urlconf_module) in seen:
+        key = (target, urlconf_module, initkwargs.get("access_module"))
+        if not module or key in seen:
             continue
-        seen.add((target, urlconf_module))
+        seen.add(key)
         routed_from_restricted_app = resolve_app_policy(urlconf_module).is_restricted
         if not (routed_from_restricted_app or resolve_app_policy(module).is_restricted):
             continue
@@ -154,7 +160,7 @@ def check_restricted_app_views(app_configs=None, **kwargs) -> list[Error]:
                 )
             )
             continue
-        permissions = _effective_permissions(view_class)
+        permissions = _effective_permissions(view_class, initkwargs)
         if not permissions:
             errors.append(
                 Error(
@@ -162,8 +168,9 @@ def check_restricted_app_views(app_configs=None, **kwargs) -> list[Error]:
                     f"{urlconf_module!r}, but its view class lives outside "
                     f"that app, so the gate resolves to no permission.",
                     hint=(
-                        "Declare 'permission_required' on the view, or move "
-                        "the class into the restricted app."
+                        "Pass 'access_module=__name__' from the app's urls.py, "
+                        "declare 'permission_required', or move the class into "
+                        "the app."
                     ),
                     obj=name,
                     id="montrek.E003",

@@ -23,17 +23,11 @@ from code_generation import CODE_TEMPLATE_DIR
 from code_generation.config.code_generation_config import CodeGenerationConfig
 from code_generation.rendering import render_template
 
-URL_TEMPLATES = {
-    "urls.py.j2": "nav_view_cls_name",
-    "registry_urls.py.j2": "registry_nav_view_cls_name",
-    "export_registry_urls.py.j2": "export_registry_nav_view_cls_name",
-}
-
-VIEW_TEMPLATES = {
-    "views.py.j2": "nav_view_cls_name",
-    "registry_views.py.j2": "registry_nav_view_cls_name",
-    "export_registry_views.py.j2": "export_registry_nav_view_cls_name",
-}
+URL_TEMPLATES = (
+    "urls.py.j2",
+    "registry_urls.py.j2",
+    "export_registry_urls.py.j2",
+)
 
 
 def _template(name: str) -> str:
@@ -46,39 +40,17 @@ class TestUrlTemplatesUseAGatedEntryView(TestCase):
             with self.subTest(name):
                 self.assertNotIn("lambda", _template(name))
 
-    def test_each_url_template_routes_its_navigation_view(self):
-        for name, context_key in URL_TEMPLATES.items():
+    def test_each_url_template_routes_the_navigation_view(self):
+        for name in URL_TEMPLATES:
             with self.subTest(name):
-                source = _template(name)
-                self.assertIn(f"{{{{ {context_key} }}}}.as_view(", source)
+                self.assertIn("MontrekNavigationRedirectView.as_view(", _template(name))
 
-    def test_each_view_template_defines_that_navigation_view(self):
-        """The class has to be generated into the app itself - a shared one in
-        baseclasses would resolve to that app's access policy."""
-        for name, context_key in VIEW_TEMPLATES.items():
+    def test_each_entry_url_names_the_app_it_belongs_to(self):
+        """The shared class lives in baseclasses, so without access_module the
+        generated URL would resolve to that app's policy and be open."""
+        for name in URL_TEMPLATES:
             with self.subTest(name):
-                source = _template(name)
-                self.assertIn(
-                    f"class {{{{ {context_key} }}}}"
-                    "(views.MontrekNavigationRedirectView):",
-                    source,
-                )
-
-
-class TestGeneratedEntryViewNamesAreDistinct(TestCase):
-    def test_a_table_and_its_registries_do_not_collide(self):
-        from code_generation.config.code_generation_config import (
-            CodeGenerationConfig,
-        )
-
-        context = CodeGenerationConfig("some/app", "company").context
-        names = {
-            context["nav_view_cls_name"],
-            context["registry_nav_view_cls_name"],
-            context["export_registry_nav_view_cls_name"],
-        }
-
-        self.assertEqual(len(names), 3)
+                self.assertIn("access_module=__name__", _template(name))
 
 
 # Rendered from the start_montrek_app context rather than this one, and covered
@@ -125,7 +97,7 @@ class TestTemplatesBindEveryNameTheyUse(TestCase):
     def test_the_guard_notices_a_missing_import(self):
         """Without this, a change that broke the check would look like a pass."""
         context = CodeGenerationConfig("some/app", "company").context
-        rendered = render_template("export_registry_views.py.j2", **context)
+        rendered = render_template("registry_views.py.j2", **context)
 
         without_the_import = rendered.replace("from baseclasses import views\n", "")
 
