@@ -11,6 +11,8 @@ from unittest import mock
 from django.apps import apps
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import ImproperlyConfigured
+from django.test import RequestFactory
+from django.urls import reverse
 from django.test import TestCase
 
 from baseclasses import views
@@ -402,3 +404,61 @@ class TestStartupChecksSurviveAMalformedApp(RestrictedAppTestCaseMixin, TestCase
         # E004 reports. That the call returned at all is the point: before the
         # resolver was made to fail closed it raised here.
         self.assertIn("montrek.E004", {error.id for error in errors})
+
+
+class TestNavigationRedirectView(TestCase):
+    """The navigational redirect reads; MontrekRedirectView writes."""
+
+    def test_it_is_a_read(self):
+        self.assertIs(views.MontrekNavigationRedirectView.access_kind, AccessKind.VIEW)
+
+    def test_it_does_not_inherit_the_write_redirect_base(self):
+        """Inheriting MontrekRedirectView would bring its UPDATE kind and its
+        get_redirect_url, which raises."""
+        self.assertFalse(
+            issubclass(views.MontrekNavigationRedirectView, views.MontrekRedirectView)
+        )
+
+    def test_it_carries_the_permission_gate(self):
+        self.assertTrue(
+            issubclass(
+                views.MontrekNavigationRedirectView,
+                views.MontrekPermissionRequiredMixin,
+            )
+        )
+
+    def test_as_view_accepts_the_configuration_the_urlconf_passes(self):
+        for key in ("pattern_name", "url", "pattern_kwargs"):
+            with self.subTest(key):
+                self.assertTrue(hasattr(views.MontrekNavigationRedirectView, key))
+
+    def _view(self, **attributes):
+        view = views.MontrekNavigationRedirectView()
+        # RedirectView reads the query string off the request, so one is needed
+        # even for a redirect that ignores it.
+        view.request = RequestFactory().get("/")
+        for key, value in attributes.items():
+            setattr(view, key, value)
+        return view
+
+    def test_fixed_kwargs_are_reversed_into_the_target(self):
+        docs_name = "01_montrek_software_architecture"
+        view = self._view(
+            pattern_name="montrek_docs", pattern_kwargs={"docs_name": docs_name}
+        )
+
+        self.assertEqual(
+            view.get_redirect_url(),
+            reverse("montrek_docs", kwargs={"docs_name": docs_name}),
+        )
+
+    def test_without_fixed_kwargs_it_behaves_like_redirect_view(self):
+        view = self._view(pattern_name="home")
+
+        self.assertEqual(view.get_redirect_url(), reverse("home"))
+
+    def test_a_plain_url_is_passed_through_unchanged(self):
+        """Some entry URLs redirect to a path rather than a reversed name."""
+        view = self._view(url="somewhere/else")
+
+        self.assertEqual(view.get_redirect_url(), "somewhere/else")

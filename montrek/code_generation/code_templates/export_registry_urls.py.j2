@@ -1,5 +1,5 @@
-from django.shortcuts import redirect
 from django.urls import path
+{{ export_registry_nav_view_cls_import }}
 {{ export_registry_list_view_cls_import }}
 {{ export_trigger_view_cls_import }}
 {{ export_download_view_cls_import }}
@@ -7,7 +7,9 @@ from django.urls import path
 urlpatterns = [
     path(
         "{{ prefix }}_export_registry",
-        lambda _: redirect("{{ export_registry_list_view_url_name }}"),
+        {{ export_registry_nav_view_cls_name }}.as_view(
+            pattern_name="{{ export_registry_list_view_url_name }}"
+        ),
         name="{{ prefix }}_export_registry",
     ),
     path(

@@ -1,5 +1,5 @@
-from django.shortcuts import redirect
 from django.urls import path
+{{ nav_view_cls_import }}
 {{ list_view_cls_import }}
 {{ create_view_cls_import }}
 {{ update_view_cls_import }}
@@ -10,7 +10,7 @@ from django.urls import path
 urlpatterns = [
     path(
         "{{ prefix }}",
-        lambda _: redirect("{{ list_view_url_name }}"),
+        {{ nav_view_cls_name }}.as_view(pattern_name="{{ list_view_url_name }}"),
         name="{{ prefix }}"
     ),
     path(

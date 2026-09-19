@@ -1,3 +1,4 @@
+from baseclasses import views
 from baseclasses.dataclasses.view_classes import PlayActionElement
 from file_export.views.file_export_views import (
     FileExportDownloadView,
@@ -37,3 +38,14 @@ class TestEntityExportTriggerView(FileExportTriggerView):
 
 class TestEntityExportDownloadView(FileExportDownloadView):
     manager_class = TestEntityExportRegistryTableManager
+
+
+class TestEntityExportRegistryNavigationRedirectView(
+    views.MontrekNavigationRedirectView
+):
+    """Entry URL of this app, sending the visitor to the list view.
+
+    A view class rather than a lambda so that the entry URL passes through the
+    permission gate, and defined here rather than reused from ``baseclasses``
+    because a view's access policy is resolved from its own module.
+    """

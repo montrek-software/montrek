@@ -948,6 +948,37 @@ class MontrekRedirectView(
         raise NotImplementedError("Please implement this method in your subclass!")
 
 
+class MontrekNavigationRedirectView(MontrekPermissionRequiredMixin, RedirectView):
+    """A redirect that only navigates - typically an app's entry URL sending
+    the visitor to its list view.
+
+    Distinct from ``MontrekRedirectView``, whose subclasses change state inside
+    ``get_redirect_url`` and which therefore counts as a write. This one does
+    nothing but reverse a URL, so it reads, and in a restricted app it needs
+    the read permission rather than the update one.
+
+    Configured entirely from the URLconf, so an app needs no view class per
+    entry URL::
+
+        path("fund", MontrekNavigationRedirectView.as_view(
+            pattern_name="fund_list"), name="fund"),
+
+    ``pattern_kwargs`` supplies fixed kwargs to reverse with, for a target that
+    takes arguments the URL itself does not carry.
+    """
+
+    access_kind = AccessKind.VIEW
+    pattern_kwargs: dict | None = None
+
+    def get_redirect_url(self, *args, **kwargs):
+        # Merged in rather than reversed separately, so that everything
+        # RedirectView does with the result - ``url``, ``query_string`` - keeps
+        # working on this path too.
+        if self.pattern_kwargs:
+            kwargs = {**kwargs, **self.pattern_kwargs}
+        return super().get_redirect_url(*args, **kwargs)
+
+
 class MontrekHtmxRowRenderMixin:
     """Answer an HTMX request with a single re-rendered table row.
 
