@@ -51,6 +51,35 @@ class MontrekAppConfig(AppConfig):
                 f"back to a plain AppConfig, silently dropping the app's "
                 f"access policy. Add 'default = True' to the class."
             )
+        cls._raise_for_nested_namespaces()
+
+    @classmethod
+    def _raise_for_nested_namespaces(cls) -> None:
+        """Namespaces are siblings, never nested.
+
+        Everything that reads a claim - ``declaring_namespace_class``,
+        ``find_namespace_base``, the montrek.E001 check - takes the one claim a
+        config has. With two claims in one MRO they would silently see only the
+        inner one, leaving the outer subtree unenforced. Supporting nesting means
+        walking the MRO in all three places, so it is refused here instead until
+        something actually needs it.
+        """
+        claims = [
+            base for base in cls.__mro__ if base.__dict__.get(NAMESPACE_ATTRIBUTE)
+        ]
+        if len(claims) > 1:
+            claimed = ", ".join(
+                f"{base.__qualname__} claims {base.__dict__[NAMESPACE_ATTRIBUTE]!r}"
+                for base in claims
+            )
+            raise ImproperlyConfigured(
+                f"{cls.__module__}.{cls.__qualname__} inherits more than one "
+                f"namespace claim ({claimed}), and nested namespaces are not "
+                f"supported: only the innermost would be enforced. Keep the "
+                f"claims siblings, or teach declaring_namespace_class, "
+                f"find_namespace_base and check_claimed_namespaces to walk the "
+                f"MRO."
+            )
 
 
 def is_below_namespace(app_name: str, namespace: str) -> bool:
@@ -75,15 +104,22 @@ def declaring_namespace_class(app_config) -> type | None:
 
 
 def find_namespace_base(app_name: str) -> type | None:
-    """The app config base of the namespace ``app_name`` falls into.
+    """The app config base of the innermost namespace ``app_name`` falls into.
+
+    The innermost, because ``_raise_for_nested_namespaces`` only refuses two
+    claims in one class hierarchy: two independent configs can still claim ``a``
+    and ``a.b``. Taking the first match would then let app registration order
+    decide which policy a generated app inherits.
 
     ``None`` outside every claimed namespace, so the app has to bring its own
     access policy.
     """
+    candidates = []
     for app_config in apps.get_app_configs():
         namespace = getattr(app_config, NAMESPACE_ATTRIBUTE, None)
-        if namespace and is_below_namespace(app_name, namespace):
-            declaring_class = declaring_namespace_class(app_config)
-            if declaring_class is not None:
-                return declaring_class
-    return None
+        declaring_class = declaring_namespace_class(app_config)
+        if namespace and declaring_class and is_below_namespace(app_name, namespace):
+            candidates.append((namespace, declaring_class))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda candidate: len(candidate[0]))[1]

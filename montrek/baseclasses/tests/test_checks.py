@@ -21,6 +21,7 @@ from baseclasses.access import (
 )
 from baseclasses.app_config import MontrekAppConfig
 from baseclasses.checks import (
+    check_access_policy_declarations,
     check_claimed_namespaces,
     check_restricted_app_views,
 )
@@ -316,5 +317,40 @@ class TestChecksAreRegistered(TestCase):
     def test_every_check_runs_at_startup(self):
         registered = set(registry.registry.get_checks())
 
+        self.assertIn(check_access_policy_declarations, registered)
         self.assertIn(check_claimed_namespaces, registered)
         self.assertIn(check_restricted_app_views, registered)
+
+
+class TestAccessPolicyDeclarations(TestCase):
+    """A policy the resolver cannot read has to be reported, not raised: the
+    resolver's exception would surface inside the URL walk and abort the run."""
+
+    def setUp(self):
+        super().setUp()
+        clear_access_policy_cache()
+        self.addCleanup(clear_access_policy_cache)
+
+    def _run_with(self, access_policy):
+        app_config = type(
+            "StubAppConfig", (), {"label": "stub_app", "access_policy": access_policy}
+        )()
+        with mock.patch.object(apps, "get_app_configs", return_value=[app_config]):
+            return check_access_policy_declarations()
+
+    def test_a_valid_policy_passes(self):
+        self.assertEqual(self._run_with(AccessPolicy.RESTRICTED), [])
+
+    def test_a_misspelled_policy_is_reported(self):
+        errors = self._run_with("restrcted")
+
+        self.assertEqual([error.id for error in errors], ["montrek.E005"])
+        self.assertIn("restrcted", errors[0].msg)
+
+    def test_the_url_walk_survives_a_misspelled_policy(self):
+        """Otherwise the checks run ends in a traceback and the E005 above is
+        never shown."""
+        app_config = apps.get_app_config(HOST_APP)
+        with mock.patch.object(app_config, "access_policy", "restrcted", create=True):
+            clear_access_policy_cache()
+            check_restricted_app_views()

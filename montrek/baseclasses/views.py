@@ -213,17 +213,23 @@ class MontrekPermissionRequiredMixin(PermissionRequiredMixin):
     ``baseclasses.access``.
     """
 
-    permission_required: list[str] = []
+    permission_required: list[str] | str = []
     # The weakest kind: a view that declares none is most likely a read, and
     # every write base below sets its own.
     access_kind: AccessKind = AccessKind.VIEW
+    # The app whose policy applies, for a view class that does not live in it.
+    # Only needed by views shared out of ``baseclasses`` and routed from an app,
+    # which pass ``access_module=__name__`` from that app's ``urls.py``.
+    access_module: str = ""
 
     def get_permission_required(self) -> tuple[str, ...]:
         if self.permission_required:
-            # Normalised to a tuple so that the method has one return type
-            # whichever branch produced the permissions.
+            # Delegated, because Django accepts a bare string as well as a
+            # list and normalises it; tuple() over a string would check its
+            # characters one by one.
             return tuple(super().get_permission_required())
-        return permissions_for_view(type(self).__module__, self.access_kind)
+        module = self.access_module or type(self).__module__
+        return permissions_for_view(module, self.access_kind)
 
     def handle_no_permission(self):
         # handled by PermissionErrorMiddleware
@@ -955,15 +961,7 @@ class MontrekNavigationRedirectView(MontrekPermissionRequiredMixin, RedirectView
     """
 
     access_kind = AccessKind.VIEW
-    access_module: str = ""
     pattern_kwargs: dict | None = None
-
-    def get_permission_required(self) -> tuple[str, ...]:
-        if self.permission_required:
-            return tuple(self.permission_required)
-        return permissions_for_view(
-            self.access_module or type(self).__module__, self.access_kind
-        )
 
     def get_redirect_url(self, *args, **kwargs):
         # Merged rather than reversed separately, so RedirectView's own

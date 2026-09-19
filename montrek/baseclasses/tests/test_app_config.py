@@ -123,3 +123,65 @@ class TestFindNamespaceBase(TestCase):
 
     def test_app_outside_it_gets_nothing(self):
         self.assertIsNone(self._find("somewhere.else.new_app"))
+
+
+class TestNestedNamespacesAreRefused(TestCase):
+    """Everything that reads a claim takes the one claim a config has, so two in
+    one MRO would leave the outer subtree unenforced. Refused at import."""
+
+    def test_a_second_claim_in_the_same_hierarchy_is_refused(self):
+        with self.assertRaises(ImproperlyConfigured) as ctx:
+
+            class NestedConfig(SubtreeBaseConfig):
+                namespace = f"{ROOT_NAMESPACE}.inner"
+
+        message = str(ctx.exception)
+        self.assertIn(ROOT_NAMESPACE, message)
+        self.assertIn("nested namespaces are not supported", message)
+
+    def test_sibling_claims_are_fine(self):
+        class SiblingConfig(MontrekAppConfig):
+            namespace = "other_subtree"
+
+        self.assertEqual(
+            declaring_namespace_class(SiblingConfig).namespace, "other_subtree"
+        )
+
+    def test_inheriting_a_claim_without_adding_one_is_fine(self):
+        class LeafConfig(SubtreeBaseConfig):
+            name = "baseclasses"
+            default = True
+
+        self.assertIs(declaring_namespace_class(LeafConfig), SubtreeBaseConfig)
+
+
+class TestFindNamespaceBaseWithIndependentNestedClaims(TestCase):
+    """``_raise_for_nested_namespaces`` only sees one hierarchy, so two separate
+    configs can still claim ``a`` and ``a.b``. Which one a generated app
+    inherits must not depend on app registration order."""
+
+    def setUp(self):
+        self.outer = type(
+            "OuterConfig", (MontrekAppConfig,), {"namespace": "outer_root"}
+        )
+        self.inner = type(
+            "InnerConfig", (MontrekAppConfig,), {"namespace": "outer_root.area"}
+        )
+
+    def _find(self, *order):
+        module = apps.get_app_config("baseclasses").module
+        installed = [cls(f"{cls.namespace}.app", module) for cls in order]
+        with mock.patch.object(apps, "get_app_configs", return_value=installed):
+            return find_namespace_base("outer_root.area.new_app")
+
+    def test_the_innermost_claim_wins_whatever_the_order(self):
+        self.assertIs(self._find(self.outer, self.inner), self.inner)
+        self.assertIs(self._find(self.inner, self.outer), self.inner)
+
+    def test_an_app_outside_the_inner_claim_gets_the_outer_one(self):
+        module = apps.get_app_config("baseclasses").module
+        installed = [
+            cls(f"{cls.namespace}.app", module) for cls in (self.inner, self.outer)
+        ]
+        with mock.patch.object(apps, "get_app_configs", return_value=installed):
+            self.assertIs(find_namespace_base("outer_root.other"), self.outer)

@@ -495,3 +495,79 @@ class TestNavigationRedirectAccessModule(RestrictedAppTestCaseMixin, TestCase):
         )
 
         self.assertEqual(view.get_permission_required(), ("app.some_permission",))
+
+
+class TestStringPermissionRequired(TestCase):
+    """Django accepts a bare string as well as a list. Normalising it by hand
+    would check the characters of one permission instead of the permission."""
+
+    PERMISSION = "app.some_permission"
+
+    def _resolved(self, view):
+        view.permission_required = self.PERMISSION
+        return view.get_permission_required()
+
+    def test_the_gate_keeps_the_permission_whole(self):
+        self.assertEqual(self._resolved(views.MontrekListView()), (self.PERMISSION,))
+
+    def test_the_navigation_redirect_keeps_it_whole(self):
+        self.assertEqual(
+            self._resolved(views.MontrekNavigationRedirectView()), (self.PERMISSION,)
+        )
+
+    def test_the_startup_check_keeps_it_whole(self):
+        from baseclasses.checks import _effective_permissions
+
+        view_class = type(
+            "StringPermissionView",
+            (views.MontrekListView,),
+            {"permission_required": self.PERMISSION},
+        )
+
+        self.assertEqual(_effective_permissions(view_class, {}), (self.PERMISSION,))
+
+    def test_the_startup_check_keeps_it_whole_from_the_urlconf(self):
+        from baseclasses.checks import _effective_permissions
+
+        self.assertEqual(
+            _effective_permissions(
+                views.MontrekListView, {"permission_required": self.PERMISSION}
+            ),
+            (self.PERMISSION,),
+        )
+
+
+class TestExplicitlyEmptyPermissionRequired(TestCase):
+    """``as_view(permission_required=[])`` clears a class-level permission so the
+    app policy applies. The startup check has to read presence, not truthiness,
+    or it disagrees with the gate about which routes are open."""
+
+    def test_the_check_honours_an_empty_init_kwarg(self):
+        from baseclasses.checks import _effective_permissions
+
+        view_class = type(
+            "ClassPermissionView",
+            (views.MontrekListView,),
+            {"permission_required": ["cls.perm"]},
+        )
+
+        self.assertEqual(
+            _effective_permissions(view_class, {"permission_required": []}), ()
+        )
+
+    def test_an_absent_init_kwarg_still_uses_the_class_permission(self):
+        from baseclasses.checks import _effective_permissions
+
+        view_class = type(
+            "ClassPermissionView",
+            (views.MontrekListView,),
+            {"permission_required": ["cls.perm"]},
+        )
+
+        self.assertEqual(_effective_permissions(view_class, {}), ("cls.perm",))
+
+    def test_the_gate_agrees(self):
+        view = views.MontrekListView()
+        view.permission_required = []
+
+        self.assertEqual(view.get_permission_required(), ())
