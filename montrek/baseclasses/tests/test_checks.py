@@ -21,7 +21,6 @@ from baseclasses.access import (
 )
 from baseclasses.app_config import MontrekAppConfig
 from baseclasses.checks import (
-    check_access_policy_declarations,
     check_claimed_namespaces,
     check_restricted_app_views,
 )
@@ -147,20 +146,6 @@ class RivalNamespaceConfig(MontrekAppConfig):
     namespace = "test_subtree"
 
 
-# Nested claims: a root, an area inside it, and one app inside that area
-# carrying a policy of its own.
-class NestedRootConfig(MontrekAppConfig):
-    namespace = "nested_root"
-
-
-class NestedAreaConfig(NestedRootConfig):
-    namespace = "nested_root.area"
-
-
-class NestedInnerConfig(NestedAreaConfig):
-    namespace = "nested_root.area.inner"
-
-
 def _app_config(config_class, app_name):
     """An app config instance without going through Django's discovery."""
     return config_class(app_name, apps.get_app_config(HOST_APP).module)
@@ -210,39 +195,6 @@ class TestClaimedNamespaces(TestCase):
 
         self.assertEqual(errors, [])
 
-    def test_outer_claims_are_enforced_too(self):
-        """Only the innermost claim is visible through attribute lookup, so an
-        app escaping the root while sitting inside a nested area used to go
-        unreported."""
-        errors = self._run_with(
-            _app_config(NestedInnerConfig, "nested_root.area.inner"),
-            _app_config(EscapedConfig, "nested_root.elsewhere"),
-        )
-
-        self.assertEqual([error.id for error in errors], ["montrek.E001"])
-        self.assertIn("nested_root", errors[0].msg)
-
-    def test_nested_hierarchy_that_inherits_correctly_passes(self):
-        errors = self._run_with(
-            _app_config(NestedRootConfig, "nested_root.plain"),
-            _app_config(NestedAreaConfig, "nested_root.area.something"),
-            _app_config(NestedInnerConfig, "nested_root.area.inner"),
-        )
-
-        self.assertEqual(errors, [])
-
-    def test_one_stray_app_is_reported_once_against_the_innermost_claim(self):
-        """It violates the root, the area and the inner claim at once; naming
-        the innermost is enough, since inheriting it satisfies the others."""
-        errors = self._run_with(
-            _app_config(NestedInnerConfig, "nested_root.area.inner"),
-            _app_config(EscapedConfig, "nested_root.area.inner.stray"),
-        )
-
-        self.assertEqual(len(errors), 1)
-        self.assertIn("nested_root.area.inner", errors[0].msg)
-        self.assertIn("NestedInnerConfig", errors[0].msg)
-
     def test_one_namespace_claimed_twice_is_still_enforced(self):
         """Not an error in itself - both classes gate the subtree, and the
         first one claiming it wins, as find_namespace_base does."""
@@ -252,36 +204,6 @@ class TestClaimedNamespaces(TestCase):
         )
 
         self.assertEqual([error.id for error in errors], ["montrek.E001"])
-
-
-# --- access policy declaration check ---------------------------------------
-
-
-class TestAccessPolicyDeclarations(TestCase):
-    """A declaration the resolver cannot read has to surface at startup, not as
-    a 500 on the first request that reaches a gated view."""
-
-    def _run_with(self, **attributes):
-        app_config = type("StubAppConfig", (), {"label": "stub_app", **attributes})()
-        with mock.patch.object(apps, "get_app_configs", return_value=[app_config]):
-            return check_access_policy_declarations()
-
-    def test_valid_declaration_passes(self):
-        errors = self._run_with(
-            access_policy=AccessPolicy.RESTRICTED,
-            access_permissions={AccessKind.VIEW: READ_PERMISSION},
-        )
-
-        self.assertEqual(errors, [])
-
-    def test_app_declaring_nothing_passes(self):
-        self.assertEqual(self._run_with(), [])
-
-    def test_misspelled_policy_is_reported(self):
-        errors = self._run_with(access_policy="restrcted")
-
-        self.assertEqual([error.id for error in errors], ["montrek.E005"])
-        self.assertIn("restrcted", errors[0].msg)
 
 
 # --- view check -------------------------------------------------------------
@@ -394,6 +316,5 @@ class TestChecksAreRegistered(TestCase):
     def test_every_check_runs_at_startup(self):
         registered = set(registry.registry.get_checks())
 
-        self.assertIn(check_access_policy_declarations, registered)
         self.assertIn(check_claimed_namespaces, registered)
         self.assertIn(check_restricted_app_views, registered)

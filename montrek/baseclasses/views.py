@@ -208,18 +208,14 @@ class MontrekViewMixin:
 class MontrekPermissionRequiredMixin(PermissionRequiredMixin):
     """Permission gate of every Montrek view.
 
-    An explicit ``permission_required`` always wins. Without one the gate falls
-    back to the policy of the app the concrete view class lives in: open apps
-    (the default, and every app that says nothing) let everybody through as
-    before, restricted apps require the permission their ``access_permissions``
-    maps ``access_kind`` to. See ``baseclasses.access``.
+    An explicit ``permission_required`` wins. Without one the gate falls back to
+    the policy of the app the concrete view class lives in - see
+    ``baseclasses.access``.
     """
 
     permission_required: list[str] = []
-    # Deliberately the weakest kind: a view that forgets to declare one is far
-    # more likely to be a read view, and the write bases below all set their
-    # own. ``MontrekCreateUpdateView`` sets UPDATE so that a subclass of it
-    # cannot end up on a read permission by accident.
+    # The weakest kind: a view that declares none is most likely a read, and
+    # every write base below sets its own.
     access_kind: AccessKind = AccessKind.VIEW
 
     def get_permission_required(self) -> tuple[str, ...]:
@@ -517,9 +513,8 @@ class MontrekListView(
     def get_simple_file_upload_permission(self) -> tuple[str, ...]:
         """Permissions the simple file upload needs.
 
-        The upload writes, while the list view around it only reads, so
-        in a restricted app it falls back to the app's CREATE permission
-        rather than to the list view's own (read) gate.
+        The upload writes while the list view around it reads, so it falls back
+        to CREATE rather than to the list view's own gate.
         """
         if self.simple_file_upload_permission:
             return tuple(self.simple_file_upload_permission)
@@ -903,10 +898,8 @@ class MontrekRestApiView(
 ):
     """Read-only JSON endpoint.
 
-    Carries ``MontrekPermissionRequiredMixin`` so that
-    ``MontrekApiViewMixin.initial`` enforces the Django permission after
-    JWT authentication - without it the isinstance check there is False
-    and any authenticated token would be enough.
+    Carries ``MontrekPermissionRequiredMixin`` so ``MontrekApiViewMixin.initial``
+    enforces the permission after JWT auth; without it any valid token suffices.
     """
 
     manager_class = MontrekManagerNotImplemented
@@ -932,13 +925,9 @@ class MontrekRedirectView(
 ):
     """Redirect after doing work in ``get_redirect_url``.
 
-    Counted as a write. ``get_redirect_url`` is the override point subclasses
-    use to change state before redirecting - ``RevokeFileUploadTask`` kills a
-    task and writes a registry record there, ``ProcessPipelineViewABC`` runs a
-    pipeline - and every subclass in the project mutates something. A purely
-    navigational redirect in a restricted app can say so with
-    ``access_kind = AccessKind.VIEW``; that way the declaration is what opens
-    the view up, rather than the default quietly doing it.
+    Counted as a write: ``get_redirect_url`` is where subclasses change state
+    before redirecting, and every subclass in the project mutates something. Use
+    ``MontrekNavigationRedirectView`` for one that only navigates.
     """
 
     access_kind = AccessKind.UPDATE
@@ -949,31 +938,24 @@ class MontrekRedirectView(
 
 
 class MontrekNavigationRedirectView(MontrekPermissionRequiredMixin, RedirectView):
-    """A redirect that only navigates - typically an app's entry URL sending
-    the visitor to its list view.
+    """A redirect that only navigates, so it reads rather than writes.
 
-    Distinct from ``MontrekRedirectView``, whose subclasses change state inside
-    ``get_redirect_url`` and which therefore counts as a write. This one does
-    nothing but reverse a URL, so it reads, and in a restricted app it needs
-    the read permission rather than the update one.
+    Configured from the URLconf, with ``pattern_kwargs`` for a target taking
+    arguments the URL itself does not carry::
 
-    Configured entirely from the URLconf, so an app needs no view class per
-    entry URL::
-
-        path("fund", MontrekNavigationRedirectView.as_view(
+        path("fund", FundNavigationRedirectView.as_view(
             pattern_name="fund_list"), name="fund"),
 
-    ``pattern_kwargs`` supplies fixed kwargs to reverse with, for a target that
-    takes arguments the URL itself does not carry.
+    Subclass it inside the app it serves: the policy is resolved from the view
+    class' own module, so a shared class here would resolve to ``baseclasses``.
     """
 
     access_kind = AccessKind.VIEW
     pattern_kwargs: dict | None = None
 
     def get_redirect_url(self, *args, **kwargs):
-        # Merged in rather than reversed separately, so that everything
-        # RedirectView does with the result - ``url``, ``query_string`` - keeps
-        # working on this path too.
+        # Merged rather than reversed separately, so RedirectView's own
+        # handling of ``url`` and ``query_string`` still applies.
         if self.pattern_kwargs:
             kwargs = {**kwargs, **self.pattern_kwargs}
         return super().get_redirect_url(*args, **kwargs)

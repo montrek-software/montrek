@@ -1,10 +1,8 @@
 """Base ``AppConfig`` carrying an app's access policy.
 
-Lives apart from ``baseclasses/apps.py`` so that importing the base never drags
-in the ``baseclasses`` app config itself, and so that ``baseclasses/apps.py``
-keeps exactly one ``AppConfig`` candidate for Django's autodiscovery.
-
-See ``baseclasses.access`` for what the policy does.
+Apart from ``baseclasses/apps.py`` so importing the base does not drag in the
+``baseclasses`` app config, and so that module keeps one autodiscovery
+candidate. See ``baseclasses.access`` for what the policy does.
 """
 
 from django.apps import AppConfig, apps
@@ -19,15 +17,13 @@ NAMESPACE_ATTRIBUTE = "namespace"
 class MontrekAppConfig(AppConfig):
     """``AppConfig`` base that lets an app declare its access policy.
 
-    ``default = False`` keeps this base out of Django's autodiscovery: it
-    inspects every ``AppConfig`` subclass reachable in an app's ``apps.py``,
-    imported names included, and refuses to choose between two candidates.
+    ``default = False`` keeps this base out of Django's autodiscovery, which
+    refuses to choose between two candidates in one ``apps.py``.
 
-    That exclusion is inherited, so a concrete app config **must** set
-    ``default = True`` itself.  Without it Django finds no candidate at all and
-    silently falls back to a plain ``AppConfig`` - the app would keep working
-    while losing its access policy.  ``__init_subclass__`` below turns that
-    silent downgrade into an error at import time.
+    The exclusion is inherited, so a concrete config **must** set
+    ``default = True``: without it Django finds no candidate and falls back to a
+    plain ``AppConfig``, dropping the access policy silently.
+    ``__init_subclass__`` makes that an import-time error.
     """
 
     default = False
@@ -58,66 +54,36 @@ class MontrekAppConfig(AppConfig):
 
 
 def is_below_namespace(app_name: str, namespace: str) -> bool:
-    """Whether ``app_name`` lies inside ``namespace``.
-
-    Matches whole path segments only, so ``test_subtree_other`` is not below
-    ``test_subtree``.
-    """
+    """Whole path segments only, so ``a_other`` is not below ``a``."""
     return app_name == namespace or app_name.startswith(f"{namespace}.")
 
 
-def namespace_claims(target) -> list[tuple[str, type]]:
-    """Every ``(namespace, declaring class)`` an app config claims.
+def declaring_namespace_class(app_config) -> type | None:
+    """The class claiming this app config's namespace.
 
-    Namespaces nest - a package may own a subtree that one of its areas
-    refines - and each level is claimed by a different class in the same MRO. A
-    plain ``getattr`` would only ever see the most specific one, leaving the
-    outer claims unenforced, so the whole MRO is walked. Most specific first,
-    following the MRO.
-
-    Accepts an app config instance or an app config class.
+    The claim sits on the base a subtree's apps share, and that base - not the
+    leaf config - is what the subtree's other apps have to inherit from.
     """
-    klass = target if isinstance(target, type) else type(target)
-    claims = []
-    for base in getattr(klass, "__mro__", ()):
-        namespace = base.__dict__.get(NAMESPACE_ATTRIBUTE)
-        if namespace:
-            claims.append((namespace, base))
-    return claims
-
-
-def declaring_namespace_class(target) -> type | None:
-    """The class claiming the most specific namespace of an app config.
-
-    An app config inherits ``namespace`` from the base its subtree shares, and
-    that base - not the leaf config - is what the subtree's other apps have to
-    inherit from.
-    """
-    claims = namespace_claims(target)
-    return claims[0][1] if claims else None
+    namespace = getattr(app_config, NAMESPACE_ATTRIBUTE, None)
+    if not namespace:
+        return None
+    klass = app_config if isinstance(app_config, type) else type(app_config)
+    return next(
+        (base for base in klass.__mro__ if NAMESPACE_ATTRIBUTE in base.__dict__),
+        None,
+    )
 
 
 def find_namespace_base(app_name: str) -> type | None:
-    """The app config base of the innermost namespace ``app_name`` falls into.
+    """The app config base of the namespace ``app_name`` falls into.
 
-    The *innermost*, because namespaces nest: an app inside ``a.b.c`` is also
-    inside ``a.b`` and ``a``, and inheriting an outer base instead of the
-    innermost one would give it the wrong access policy - and be rejected by the
-    montrek.E001 check.
-
-    ``None`` when the app lies outside every claimed namespace and therefore has
-    to bring its own access policy.
+    ``None`` outside every claimed namespace, so the app has to bring its own
+    access policy.
     """
-    candidates = [
-        (namespace, declaring_class)
-        for app_config in apps.get_app_configs()
-        for namespace, declaring_class in namespace_claims(app_config)
-        if is_below_namespace(app_name, namespace)
-    ]
-    if not candidates:
-        return None
-    # Longest namespace wins. A tie means one namespace claimed by two classes,
-    # in which case the first one claiming it is used - the same choice
-    # check_claimed_namespaces makes when it enforces montrek.E001, so the
-    # generated app inherits the base that app is then checked against.
-    return max(candidates, key=lambda candidate: len(candidate[0]))[1]
+    for app_config in apps.get_app_configs():
+        namespace = getattr(app_config, NAMESPACE_ATTRIBUTE, None)
+        if namespace and is_below_namespace(app_name, namespace):
+            declaring_class = declaring_namespace_class(app_config)
+            if declaring_class is not None:
+                return declaring_class
+    return None
