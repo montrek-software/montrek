@@ -1,7 +1,5 @@
 from django.urls import path
-from code_generation.tests.data.output_file_upload.views.test_entity_registry_views import (
-    TestEntityRegistryNavigationRedirectView,
-)
+from baseclasses.views import MontrekNavigationRedirectView
 from code_generation.tests.data.output_file_upload.views.test_entity_registry_views import (
     TestEntityRegistryListView,
 )
@@ -18,8 +16,9 @@ from code_generation.tests.data.output_file_upload.views.test_entity_registry_vi
 urlpatterns = [
     path(
         "test_entity_registry",
-        TestEntityRegistryNavigationRedirectView.as_view(
-            pattern_name="test_entity_registry_list"
+        MontrekNavigationRedirectView.as_view(
+            access_module=__name__,
+            pattern_name="test_entity_registry_list",
         ),
         name="test_entity_registry",
     ),

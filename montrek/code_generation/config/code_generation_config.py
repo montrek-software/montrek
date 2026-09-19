@@ -183,13 +183,6 @@ class CodeGenerationConfig:
         registry_upload_manager_cls_name = f"{c_prefix}FileUploadManager"
         registry_upload_file_view_cls_name = f"{c_prefix}RegistryUploadFileView"
         registry_history_view_cls_name = f"{c_prefix}RegistryHistoryView"
-        # Entry URL of each generated URL set. A view class rather than a
-        # lambda, and one inside the app rather than a shared one, because
-        # the access policy of a view is resolved from its own module: a
-        # lambda carries no permission gate at all, and a shared class in
-        # baseclasses would resolve to that app's policy.
-        nav_view_cls_name = f"{c_prefix}NavigationRedirectView"
-        registry_nav_view_cls_name = f"{c_prefix}RegistryNavigationRedirectView"
 
         self.context = {
             "create_action_hover": f"Create new {ui_prefix}",
@@ -259,8 +252,6 @@ class CodeGenerationConfig:
             "hub_value_date_factory_cls_name": hub_value_date_factory_cls_name,
             "list_tab_id": f"tab_{prefix}_list",
             "list_tab_name": f"{ui_prefix}",
-            "nav_view_cls_name": nav_view_cls_name,
-            "nav_view_cls_import": self._get_import("views", nav_view_cls_name),
             "list_view_cls_import": self._get_import("views", list_view_cls_name),
             "list_view_cls_import_rel": f"from .{prefix}_views import {list_view_cls_name}",
             "list_view_cls_name": list_view_cls_name,
@@ -324,10 +315,6 @@ class CodeGenerationConfig:
             ),
             "registry_list_tab_id": f"tab_{prefix}_registry_list",
             "registry_list_tab_name": f"{ui_prefix} Registry",
-            "registry_nav_view_cls_name": registry_nav_view_cls_name,
-            "registry_nav_view_cls_import": self._get_import(
-                "registry_views", registry_nav_view_cls_name
-            ),
             "registry_list_view_cls_import": self._get_import(
                 "registry_views", registry_list_view_cls_name
             ),
@@ -457,13 +444,6 @@ class CodeGenerationConfig:
             ),
             "export_registry_page_title": f"{ui_prefix} Exports",
             "export_registry_list_view_cls_name": export_registry_list_view_cls_name,
-            "export_registry_nav_view_cls_name": (
-                f"{c_prefix}ExportRegistryNavigationRedirectView"
-            ),
-            "export_registry_nav_view_cls_import": self._get_import(
-                "export_registry_views",
-                f"{c_prefix}ExportRegistryNavigationRedirectView",
-            ),
             "export_registry_list_view_cls_import": self._get_import(
                 "export_registry_views", export_registry_list_view_cls_name
             ),

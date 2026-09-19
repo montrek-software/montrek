@@ -1,24 +1,12 @@
 """Per-app access policy for Montrek views.
 
-Montrek's historical default is *open*: a view lets everybody through unless it
-declares its own ``permission_required``.  ``MontrekPermissionRequiredMixin``
-keeps that default, but an app can reverse it for itself by declaring
-
-    class FooConfig(MontrekAppConfig):
-        name = "some.package.foo"
-        default = True
-        access_policy = AccessPolicy.RESTRICTED
-        access_permissions = {
-            AccessKind.VIEW: FooPermissions.CAN_VIEW,
-            AccessKind.CREATE: FooPermissions.CAN_CREATE,
-            AccessKind.UPDATE: FooPermissions.CAN_UPDATE,
-            AccessKind.DELETE: FooPermissions.CAN_DELETE,
-        }
-
-Every view in a restricted app then needs a permission: the one its
-``access_kind`` maps to, unless the view names an explicit
-``permission_required``, which always wins.  Apps that say nothing stay open,
-so adding this module changes nothing for existing apps.
+Montrek's default is open: a view lets everybody through unless it declares its
+own ``permission_required``. An app reverses that for itself by declaring
+``access_policy = AccessPolicy.RESTRICTED`` on its ``MontrekAppConfig``, plus an
+``access_permissions`` mapping from ``AccessKind`` to a permission enum member.
+Every view in it then needs the permission its ``access_kind`` maps to, unless
+it names a ``permission_required``, which always wins. Apps that say nothing
+stay open.
 """
 
 import logging
@@ -33,12 +21,10 @@ from django.core.exceptions import ImproperlyConfigured
 
 logger = logging.getLogger(__name__)
 
-# Handed out when a restricted app has no permission configured for the access
-# kind a view asks for.  No such permission is ever created in the database, so
-# the request is denied instead of silently waved through - a misconfigured app
-# must not be more permissive than a configured one.  The startup checks report
-# the misconfiguration; this constant only keeps the gate closed until it is
-# fixed.
+# Handed out when a restricted app maps no permission to the access kind a view
+# asks for. Never created in the database, so the request is denied rather than
+# waved through: a misconfigured app must not be more permissive than a
+# configured one. The montrek.E004 check reports it at startup.
 UNCONFIGURED_PERMISSION = "montrek.access_policy_not_configured"
 
 
@@ -59,12 +45,8 @@ class AccessKind(Enum):
 
 
 class NamespacedPermission(Protocol):
-    """A permission enum member as used across the Montrek apps.
-
-    An app declares its permissions as an enum whose members carry a
-    ``namespaced_codename``: the ``"<app_label>.<codename>"`` string
-    ``User.has_perms`` expects.
-    """
+    """A permission enum member: ``namespaced_codename`` is the
+    ``"<app_label>.<codename>"`` string ``User.has_perms`` expects."""
 
     namespaced_codename: str
 
@@ -82,10 +64,8 @@ class AppAccessPolicy:
         return self.policy is AccessPolicy.RESTRICTED
 
     def permissions_for(self, access_kind: AccessKind) -> tuple[str, ...]:
-        """The permissions a view of ``access_kind`` needs in this app.
-
-        Empty for an open app - that is the historical "everybody may" default.
-        """
+        """The permissions a view of ``access_kind`` needs. Empty for an open
+        app, which is the "everybody may" default."""
         if not self.is_restricted:
             return ()
         permission = self.permissions.get(access_kind)
@@ -98,9 +78,8 @@ class AppAccessPolicy:
             )
             return (UNCONFIGURED_PERMISSION,)
         # getattr rather than attribute access: a misconfigured app must deny,
-        # not raise. Raising here would also abort the startup checks, which
-        # resolve permissions through this method to report the very same
-        # misconfiguration.
+        # not raise. Raising would also abort the startup checks, which resolve
+        # permissions through here to report that very misconfiguration.
         codename = getattr(permission, "namespaced_codename", "")
         if not codename:
             logger.error(
@@ -120,11 +99,8 @@ OPEN_POLICY = AppAccessPolicy()
 def declared_access_policy(app_config) -> AccessPolicy:
     """The ``access_policy`` of an app config, as an ``AccessPolicy``.
 
-    A plain string is accepted and converted, since ``access_policy =
-    "restricted"`` is the obvious thing to write. Anything that is not a policy
-    raises instead of being read as "open": a typo must not be able to turn the
-    gate off, and treating an unknown value as the permissive one would do
-    exactly that, silently and without the startup checks noticing either.
+    A matching string is converted. Anything else raises rather than being read
+    as "open": a typo must not be able to turn the gate off silently.
     """
     policy = getattr(app_config, "access_policy", AccessPolicy.OPEN)
     if isinstance(policy, AccessPolicy):
@@ -144,11 +120,9 @@ def declared_access_policy(app_config) -> AccessPolicy:
 def declared_access_permissions(app_config) -> dict:
     """The ``access_permissions`` of an app config as a mapping.
 
-    Anything that will not convert is reported and treated as empty rather than
-    raised: an empty mapping leaves every access kind unconfigured, which denies
-    access and is reported by the montrek.E004 check, while an exception here
-    would reach the user as a 500 and would abort that check before it could
-    report anything.
+    Anything that will not convert is logged and treated as empty: that leaves
+    every access kind unconfigured, which denies and is reported by
+    montrek.E004, where raising would be a 500 and would abort that check.
     """
     declared = getattr(app_config, "access_permissions", {})
     try:
@@ -167,9 +141,8 @@ def declared_access_permissions(app_config) -> dict:
 def resolve_app_policy(module: str) -> AppAccessPolicy:
     """The access policy of the app ``module`` belongs to.
 
-    ``module`` is a view class' ``__module__``.  Modules outside any installed
-    app - shared base classes, helper packages without an ``apps.py`` - have no
-    app config and therefore stay open.
+    ``module`` is a view class' ``__module__``. Modules outside any installed
+    app - shared bases, packages without an ``apps.py`` - stay open.
     """
     app_config = apps.get_containing_app_config(module)
     if app_config is None:
@@ -191,6 +164,5 @@ def permissions_for_view(module: str, access_kind: AccessKind) -> tuple[str, ...
 
 
 def clear_access_policy_cache() -> None:
-    """Drop the resolution cache.  App configs do not change at runtime, so
-    this is only needed by tests that swap a policy in."""
+    """Drop the resolution cache. Only needed by tests that swap a policy in."""
     resolve_app_policy.cache_clear()

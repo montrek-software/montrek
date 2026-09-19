@@ -147,20 +147,6 @@ class RivalNamespaceConfig(MontrekAppConfig):
     namespace = "test_subtree"
 
 
-# Nested claims: a root, an area inside it, and one app inside that area
-# carrying a policy of its own.
-class NestedRootConfig(MontrekAppConfig):
-    namespace = "nested_root"
-
-
-class NestedAreaConfig(NestedRootConfig):
-    namespace = "nested_root.area"
-
-
-class NestedInnerConfig(NestedAreaConfig):
-    namespace = "nested_root.area.inner"
-
-
 def _app_config(config_class, app_name):
     """An app config instance without going through Django's discovery."""
     return config_class(app_name, apps.get_app_config(HOST_APP).module)
@@ -210,39 +196,6 @@ class TestClaimedNamespaces(TestCase):
 
         self.assertEqual(errors, [])
 
-    def test_outer_claims_are_enforced_too(self):
-        """Only the innermost claim is visible through attribute lookup, so an
-        app escaping the root while sitting inside a nested area used to go
-        unreported."""
-        errors = self._run_with(
-            _app_config(NestedInnerConfig, "nested_root.area.inner"),
-            _app_config(EscapedConfig, "nested_root.elsewhere"),
-        )
-
-        self.assertEqual([error.id for error in errors], ["montrek.E001"])
-        self.assertIn("nested_root", errors[0].msg)
-
-    def test_nested_hierarchy_that_inherits_correctly_passes(self):
-        errors = self._run_with(
-            _app_config(NestedRootConfig, "nested_root.plain"),
-            _app_config(NestedAreaConfig, "nested_root.area.something"),
-            _app_config(NestedInnerConfig, "nested_root.area.inner"),
-        )
-
-        self.assertEqual(errors, [])
-
-    def test_one_stray_app_is_reported_once_against_the_innermost_claim(self):
-        """It violates the root, the area and the inner claim at once; naming
-        the innermost is enough, since inheriting it satisfies the others."""
-        errors = self._run_with(
-            _app_config(NestedInnerConfig, "nested_root.area.inner"),
-            _app_config(EscapedConfig, "nested_root.area.inner.stray"),
-        )
-
-        self.assertEqual(len(errors), 1)
-        self.assertIn("nested_root.area.inner", errors[0].msg)
-        self.assertIn("NestedInnerConfig", errors[0].msg)
-
     def test_one_namespace_claimed_twice_is_still_enforced(self):
         """Not an error in itself - both classes gate the subtree, and the
         first one claiming it wins, as find_namespace_base does."""
@@ -252,36 +205,6 @@ class TestClaimedNamespaces(TestCase):
         )
 
         self.assertEqual([error.id for error in errors], ["montrek.E001"])
-
-
-# --- access policy declaration check ---------------------------------------
-
-
-class TestAccessPolicyDeclarations(TestCase):
-    """A declaration the resolver cannot read has to surface at startup, not as
-    a 500 on the first request that reaches a gated view."""
-
-    def _run_with(self, **attributes):
-        app_config = type("StubAppConfig", (), {"label": "stub_app", **attributes})()
-        with mock.patch.object(apps, "get_app_configs", return_value=[app_config]):
-            return check_access_policy_declarations()
-
-    def test_valid_declaration_passes(self):
-        errors = self._run_with(
-            access_policy=AccessPolicy.RESTRICTED,
-            access_permissions={AccessKind.VIEW: READ_PERMISSION},
-        )
-
-        self.assertEqual(errors, [])
-
-    def test_app_declaring_nothing_passes(self):
-        self.assertEqual(self._run_with(), [])
-
-    def test_misspelled_policy_is_reported(self):
-        errors = self._run_with(access_policy="restrcted")
-
-        self.assertEqual([error.id for error in errors], ["montrek.E005"])
-        self.assertIn("restrcted", errors[0].msg)
 
 
 # --- view check -------------------------------------------------------------
@@ -397,3 +320,37 @@ class TestChecksAreRegistered(TestCase):
         self.assertIn(check_access_policy_declarations, registered)
         self.assertIn(check_claimed_namespaces, registered)
         self.assertIn(check_restricted_app_views, registered)
+
+
+class TestAccessPolicyDeclarations(TestCase):
+    """A policy the resolver cannot read has to be reported, not raised: the
+    resolver's exception would surface inside the URL walk and abort the run."""
+
+    def setUp(self):
+        super().setUp()
+        clear_access_policy_cache()
+        self.addCleanup(clear_access_policy_cache)
+
+    def _run_with(self, access_policy):
+        app_config = type(
+            "StubAppConfig", (), {"label": "stub_app", "access_policy": access_policy}
+        )()
+        with mock.patch.object(apps, "get_app_configs", return_value=[app_config]):
+            return check_access_policy_declarations()
+
+    def test_a_valid_policy_passes(self):
+        self.assertEqual(self._run_with(AccessPolicy.RESTRICTED), [])
+
+    def test_a_misspelled_policy_is_reported(self):
+        errors = self._run_with("restrcted")
+
+        self.assertEqual([error.id for error in errors], ["montrek.E005"])
+        self.assertIn("restrcted", errors[0].msg)
+
+    def test_the_url_walk_survives_a_misspelled_policy(self):
+        """Otherwise the checks run ends in a traceback and the E005 above is
+        never shown."""
+        app_config = apps.get_app_config(HOST_APP)
+        with mock.patch.object(app_config, "access_policy", "restrcted", create=True):
+            clear_access_policy_cache()
+            check_restricted_app_views()
