@@ -4,9 +4,15 @@ from io import BytesIO
 import pandas as pd
 from openpyxl import load_workbook
 from unittest.mock import patch
-from baseclasses.views import REST_API_QUERY_PARAM, MontrekDeleteView
+from baseclasses.access import UNCONFIGURED_PERMISSION
+from baseclasses.views import (
+    REST_API_QUERY_PARAM,
+    MontrekDeleteView,
+    MontrekPermissionRequiredMixin,
+)
 from bs4 import BeautifulSoup
 from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db.models import QuerySet
 from django.http import FileResponse
@@ -148,6 +154,19 @@ class ExcelTestCaseMixin:
         self.assertEqual(len(workbook.sheetnames), 1)
 
 
+class WithoutPermissions:
+    """Give the test user nothing, for a test that asserts the gate refuses.
+
+    ``required_user_permissions`` defaults to whatever the view under test
+    demands, so a test class that wants an unauthorised user has to say so:
+    without this it would silently be testing a permitted one, and its
+    assertions about being turned away would fail.
+    """
+
+    def required_user_permissions(self) -> list[Permission]:
+        return []
+
+
 class MontrekViewTestCase(TestCase):
     viewname: str = "Please set the viewname in the subclass"
     view_class: type[View] = NotImplementedView
@@ -197,7 +216,53 @@ class MontrekViewTestCase(TestCase):
         return {}
 
     def required_user_permissions(self) -> list[Permission]:
-        return []
+        """The permissions the test user is given.
+
+        Defaults to exactly what the view under test demands, so a view in a
+        restricted app is exercised by someone allowed to use it without every
+        test case having to name the permission. Views in open apps demand
+        nothing and the list stays empty, as before.
+
+        Because the list is then non-empty, ``test_view_without_required
+        _permission`` starts running for those views too: the gate is exercised
+        in both directions without anything being written per test case.
+
+        Override to test with a different grant than the view asks for.
+        """
+        return [
+            self._permission_row(namespaced_codename)
+            for namespaced_codename in self._permissions_the_view_requires()
+        ]
+
+    def _permissions_the_view_requires(self) -> tuple[str, ...]:
+        if not issubclass(self.view_class, MontrekPermissionRequiredMixin):
+            return ()
+        return tuple(self.view_class().get_permission_required())
+
+    def _permission_row(self, namespaced_codename: str) -> Permission:
+        """The Permission the view's codename refers to, created if missing.
+
+        These permissions are model independent - they gate views, not objects -
+        so they hang off a placeholder ContentType, the same one
+        ``user.managers.user_group_manager`` creates them under.
+        """
+        if namespaced_codename == UNCONFIGURED_PERMISSION:
+            raise AssertionError(
+                f"{self.view_class.__name__} resolves to the unconfigured "
+                f"permission: its app is restricted but maps no permission to "
+                f"access kind '{self.view_class.access_kind.value}'. The "
+                f"montrek.E004 check reports the same thing at startup."
+            )
+        app_label, _, codename = namespaced_codename.partition(".")
+        content_type, _ = ContentType.objects.get_or_create(
+            app_label=app_label, model="model independent"
+        )
+        permission, _ = Permission.objects.get_or_create(
+            content_type=content_type,
+            codename=codename,
+            defaults={"name": codename.replace("_", " ").capitalize()},
+        )
+        return permission
 
     @property
     def url(self):
